@@ -5,8 +5,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using TVGL.Numerics;
-using TVGL.TwoDimensional;
 
 namespace TVGL
 {
@@ -293,7 +291,7 @@ namespace TVGL
         /// <param name="topVertex"></param>
         /// <returns>System.Double.</returns>
         public static (double, double) GetDistanceToExtremeVertex<T>(this IEnumerable<Vector3> vertices, Vector3 direction,
-            out Vector3 bottomVertex, out Vector3 topVertex) 
+            out Vector3 bottomVertex, out Vector3 topVertex)
         {
             var dir = direction.Normalize();
             var minD = double.PositiveInfinity;
@@ -748,11 +746,10 @@ namespace TVGL
                         else border.AddBegin(currentEdge, correctDirection);
                         currentVertex = currentEdge.OtherVertex(currentVertex);
                     } while (currentEdge != null && currentVertex != startVertex);
-                    border.IsClosed = currentVertex == startVertex && border.NumPoints > 2;
 #if PRESENT
                     //TVGL.Presenter.ShowVertexPathsWithSolid(new [] {border.GetVertices().Select(v => v.Coordinates) }, new[] { debugSolid }, false);
 #endif
-                    if (border.IsClosed) break;
+                    if (border.UpdateIsClosed()) break;
                     var currentEdgeAndDir = border[0];
                     currentEdge = currentEdgeAndDir.edge;
                     currentVertex = currentEdgeAndDir.dir ? currentEdge.From : currentEdge.To;

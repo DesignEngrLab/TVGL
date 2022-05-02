@@ -5,7 +5,7 @@
 using System;
 using System.Linq;
 
-namespace TVGL.Voxelization
+namespace TVGL
 {
     /// <summary>
     /// VoxelRowDense represents the dense array of bits for this line of voxels

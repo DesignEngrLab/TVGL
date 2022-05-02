@@ -3,7 +3,7 @@
 // https://github.com/DesignEngrLab/TVGL
 // It is licensed under MIT License (see LICENSE.txt for details)
 using System;
-namespace TVGL.Numerics
+namespace TVGL
 {
     /// <summary>
     /// The main class in the StarMathLib. All functions are static

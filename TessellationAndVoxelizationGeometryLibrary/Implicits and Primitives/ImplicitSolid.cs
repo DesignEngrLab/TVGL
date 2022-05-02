@@ -3,7 +3,7 @@
 // https://github.com/DesignEngrLab/TVGL
 // It is licensed under MIT License (see LICENSE.txt for details)
 using System;
-using TVGL.Numerics;
+
 
 namespace TVGL
 {

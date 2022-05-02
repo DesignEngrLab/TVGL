@@ -5,14 +5,11 @@ using Snapshooter.Xunit;
 using Snapshooter;
 #endif
 
-using TVGL.Numerics;
+
 using TVGL;
 using System.IO;
-using TVGL.TwoDimensional;
-using TVGL.IOFunctions;
 using System.Linq;
-using TVGL.Boolean_Operations;
-using TVGL.Voxelization;
+
 
 namespace TVGLUnitTestsAndBenchmarking
 {

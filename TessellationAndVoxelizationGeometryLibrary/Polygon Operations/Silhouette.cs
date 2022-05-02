@@ -5,10 +5,10 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using TVGL.Numerics;
 
 
-namespace TVGL.TwoDimensional
+
+namespace TVGL
 {
     /// <summary>
     /// The outline of a solid from a particular direction.
@@ -140,8 +140,8 @@ namespace TVGL.TwoDimensional
                         foreach (var edge in nextVertex.Edges)
                         {
                             if (edge == current.Key) continue;
-                            if (outerEdges.ContainsKey(edge))
-                                viableEdges.Add(new KeyValuePair<Edge, bool>(edge, outerEdges[edge]));
+                            if (outerEdges.TryGetValue(edge, out var thisDir))
+                                viableEdges.Add(new KeyValuePair<Edge, bool>(edge, thisDir));
                         }
                     }
                     if (viableEdges.Count == 1) current = viableEdges[0];
@@ -168,8 +168,8 @@ namespace TVGL.TwoDimensional
                         foreach (var edge in nextVertex.Edges)
                         {
                             if (edge == current.Key) continue;
-                            if (outerEdges.ContainsKey(edge))
-                                viableEdges.Add(new KeyValuePair<Edge, bool>(edge, outerEdges[edge]));
+                            if (outerEdges.TryGetValue(edge, out var thisDir))
+                                viableEdges.Add(new KeyValuePair<Edge, bool>(edge, thisDir));
                         }
                         if (viableEdges.Count == 1) current = viableEdges[0];
                         else if (viableEdges.Count > 1)

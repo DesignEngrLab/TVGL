@@ -8,7 +8,6 @@
 // the reliance on the 'Node classes cannot be produced without having to create
 // a dictionary. This is actually what the SimplePriorityQueue does (although
 // the name implies that it is simpler.
-using System;
 using System.Collections.Generic;
 
 namespace Priority_Queue

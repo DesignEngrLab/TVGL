@@ -1,30 +1,30 @@
-﻿using System;
+﻿using MIConvexHull;
 using System.Collections.Generic;
-using TVGL.Numerics;
 
-namespace TVGL.TwoDimensional
+
+namespace TVGL
 {
-    public readonly struct StraightLine : I2DCurve
+    public readonly struct StraightLine2D : ICurve
     {
 
         public readonly Vector2 Anchor;
 
         public readonly Vector2 Direction;
 
-        public StraightLine(Vector2 anchor, Vector2 direction)
+        public StraightLine2D(Vector2 anchor, Vector2 direction)
         {
             Anchor = anchor;
             Direction = direction;
         }
 
-        public double SquaredErrorOfNewPoint(Vector2 point)
+        public double SquaredErrorOfNewPoint<T>(T point) where T : IVertex2D
         {
-            var fromAnchor = point - Anchor;
+            var fromAnchor =new Vector2(point.X - Anchor.X, point.Y - Anchor.Y);
             var cross = fromAnchor.Cross(Direction);
             return cross * cross;
         }
 
-        public static bool CreateFromPoints(IEnumerable<Vector2> points, out StraightLine straightLine, out double error)
+        public static bool CreateFromPoints<T>(IEnumerable<T> points, out ICurve curve, out double error) where T : IVertex2D
         {
             double xCoeff;
             double yCoeff;
@@ -43,7 +43,7 @@ namespace TVGL.TwoDimensional
             }
             if (numPoints < 2)
             {
-                straightLine = new StraightLine();
+                curve = new StraightLine2D();
                 error = double.PositiveInfinity;
                 return false;
             }
@@ -69,15 +69,15 @@ namespace TVGL.TwoDimensional
                 xCoeff = (m - yCoeff * h) / g;
             }
             if (yCoeff == 0) //line is vertical
-                straightLine = new StraightLine(new Vector2(1 / xCoeff, 0), Vector2.UnitY);
+                curve = new StraightLine2D(new Vector2(1 / xCoeff, 0), Vector2.UnitY);
             else
             {
                 var anchor = ConstantIsZero ? Vector2.Zero : new Vector2(0, 1 / yCoeff);
-                straightLine = new StraightLine(anchor, new Vector2(yCoeff, -xCoeff).Normalize());
+                curve = new StraightLine2D(anchor, new Vector2(yCoeff, -xCoeff).Normalize());
             }
             error = 0.0;
             foreach (var p in points)
-                error += straightLine.SquaredErrorOfNewPoint(p);
+                error += curve.SquaredErrorOfNewPoint(p);
             error /= numPoints;
             return true;
         }

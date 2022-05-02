@@ -7,9 +7,9 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using TVGL.Numerics;
 
-namespace TVGL.IOFunctions
+
+namespace TVGL
 {
     internal class OBJFileData : IO
     {
@@ -121,11 +121,12 @@ namespace TVGL.IOFunctions
         private static void CreateRegionsFromPolylineAndFaceGroups(OBJFileData objFileData, TessellatedSolid ts, out List<int[]> faceGroupsThatAreBodies)
         {
             faceGroupsThatAreBodies = new List<int[]>();
-            ts.NonsmoothEdges = new HashSet<Edge>();
+            ts.NonsmoothEdges = new List<EdgePath>();
             var remainingFaces = new HashSet<PolygonalFace>(ts.Faces);
 
             foreach (var borderIndices in objFileData.SurfaceEdges)
             {
+                var loop = new EdgePath();
                 for (int k = 1, j = 0; k < borderIndices.Length; j = k++) //clever loop to have j always one step behind k
                 {
                     var vertexJ = ts.Vertices[borderIndices[j]];
@@ -140,10 +141,12 @@ namespace TVGL.IOFunctions
                         }
                     }
                     if (discontinuousEdge == null) continue; //The edge may have been part of a duplicate face or otherwise removed
-                    ts.NonsmoothEdges.Add(discontinuousEdge);
+                    loop.AddEnd(discontinuousEdge);
                 }
+                loop.UpdateIsClosed();
+                ts.NonsmoothEdges.Add(loop);
             }
-             if (objFileData.FaceGroups.Count > 1) // && !objFileData.SurfaceEdges.Any())
+            if (objFileData.FaceGroups.Count > 1) // && !objFileData.SurfaceEdges.Any())
             {
                 foreach (var faceIndices in objFileData.FaceGroups)
                 {
@@ -152,47 +155,51 @@ namespace TVGL.IOFunctions
                     else
                     {
                         foreach (var discontinuousEdge in outerEdges)
-                            ts.NonsmoothEdges.Add(discontinuousEdge);
+                        {
+                            var edgePath = new EdgePath();
+                            edgePath.AddEnd(discontinuousEdge);
+                            ts.NonsmoothEdges.Add(edgePath);
+                        }
                     }
                 }
             }
-            if (!ts.NonsmoothEdges.Any())
-            {
-                //Try setting the edges. This is less accurate tha
-                var dotMinSmoothAngle = Math.Abs(Math.Cos(Constants.TwoPi - Constants.MinSmoothAngle));
-                var vertexNormals = objFileData.VertexNormals.Keys.Select(n => n.Normalize()).ToList();
-                foreach (var possibleEdge in ts.Edges)
-                {
-                    if (ts.NonsmoothEdges.Contains(possibleEdge)) continue;
-                    var index = possibleEdge.OwnedFace.IndexInList;
-                    var ownedFace = ts.Faces[index];
-                    if (index >= objFileData.FaceToNormalIndices.Count) continue;
-                    var ownedNormalIndices = objFileData.FaceToNormalIndices[index];
-                    index = possibleEdge.OtherFace.IndexInList;
-                    var otherFace = ts.Faces[index];
-                    if (index >= objFileData.FaceToNormalIndices.Count) continue;
-                    var otherNormalIndices = objFileData.FaceToNormalIndices[index];
-                    index = ownedFace.Vertices.IndexOf(possibleEdge.From);
-                    var fromOwnedIndex = ownedNormalIndices[index];
-                    var fromOwnedNormal = vertexNormals[fromOwnedIndex];
-                    index = otherFace.Vertices.IndexOf(possibleEdge.From);
-                    var fromOtherIndex = ownedNormalIndices[index];
-                    var fromOtherNormal = vertexNormals[fromOtherIndex];
-                    if (fromOwnedNormal.Dot(fromOtherNormal) < dotMinSmoothAngle)
-                        ts.NonsmoothEdges.Add(possibleEdge);
-                    else
-                    {
-                        index = ownedFace.Vertices.IndexOf(possibleEdge.To);
-                        var toOwnedIndex = ownedNormalIndices[index];
-                        var toOwnedNormal = vertexNormals[toOwnedIndex];
-                        index = otherFace.Vertices.IndexOf(possibleEdge.To);
-                        var toOtherIndex = ownedNormalIndices[index];
-                        var toOtherNormal = vertexNormals[toOtherIndex];
-                        if (toOwnedNormal.Dot(toOtherNormal) < dotMinSmoothAngle)
-                            ts.NonsmoothEdges.Add(possibleEdge);
-                    }
-                }
-            }   
+            //if (!ts.NonsmoothEdges.Any())
+            //{
+            //    //Try setting the edges. This is less accurate tha
+            //    var dotMinSmoothAngle = Math.Abs(Math.Cos(Constants.TwoPi - Constants.MinSmoothAngle));
+            //    var vertexNormals = objFileData.VertexNormals.Keys.Select(n => n.Normalize()).ToList();
+            //    foreach (var possibleEdge in ts.Edges)
+            //    {
+            //        if (ts.NonsmoothEdges.Contains(possibleEdge)) continue;
+            //        var index = possibleEdge.OwnedFace.IndexInList;
+            //        var ownedFace = ts.Faces[index];
+            //        if (index >= objFileData.FaceToNormalIndices.Count) continue;
+            //        var ownedNormalIndices = objFileData.FaceToNormalIndices[index];
+            //        index = possibleEdge.OtherFace.IndexInList;
+            //        var otherFace = ts.Faces[index];
+            //        if (index >= objFileData.FaceToNormalIndices.Count) continue;
+            //        var otherNormalIndices = objFileData.FaceToNormalIndices[index];
+            //        index = ownedFace.Vertices.IndexOf(possibleEdge.From);
+            //        var fromOwnedIndex = ownedNormalIndices[index];
+            //        var fromOwnedNormal = vertexNormals[fromOwnedIndex];
+            //        index = otherFace.Vertices.IndexOf(possibleEdge.From);
+            //        var fromOtherIndex = ownedNormalIndices[index];
+            //        var fromOtherNormal = vertexNormals[fromOtherIndex];
+            //        if (fromOwnedNormal.Dot(fromOtherNormal) < dotMinSmoothAngle)
+            //            ts.NonsmoothEdges.Add(possibleEdge);
+            //        else
+            //        {
+            //            index = ownedFace.Vertices.IndexOf(possibleEdge.To);
+            //            var toOwnedIndex = ownedNormalIndices[index];
+            //            var toOwnedNormal = vertexNormals[toOwnedIndex];
+            //            index = otherFace.Vertices.IndexOf(possibleEdge.To);
+            //            var toOtherIndex = ownedNormalIndices[index];
+            //            var toOtherNormal = vertexNormals[toOtherIndex];
+            //            if (toOwnedNormal.Dot(toOtherNormal) < dotMinSmoothAngle)
+            //                ts.NonsmoothEdges.Add(possibleEdge);
+            //        }
+            //    }
+            //}
         }
 
 
@@ -205,7 +212,7 @@ namespace TVGL.IOFunctions
         /// <returns>True if the model was loaded successfully.</returns>  
         private static bool TryRead(Stream stream, string filename, out List<OBJFileData> objData)
         {
-            objData = new List<OBJFileData>();  
+            objData = new List<OBJFileData>();
             var reader = new StreamReader(stream);
             var numDecimalPointsCoords = 8;
             var numDecimalPointsNormals = 3;
@@ -238,15 +245,15 @@ namespace TVGL.IOFunctions
                         //ToDo: Read the materials file if needed.
                         break;
                     case "usemtl":
-                            if (faceGroup.Any()) // but before we do that, better be sure to capture any file GeometrySets
-                            {
-                                objSolid.FaceGroups.Add(faceGroup.ToArray());
-                                faceGroup = new List<int>();
-                            }
+                        if (faceGroup.Any()) // but before we do that, better be sure to capture any file GeometrySets
+                        {
+                            objSolid.FaceGroups.Add(faceGroup.ToArray());
+                            faceGroup = new List<int>();
+                        }
                         break;
                     case "g":
                         if (objSolid.FaceToVertexIndices.Count == 0)
-                        {   
+                        {
                             // often, the solid is not defined until one gets to the faces. So, if encountering the "g" before any faces
                             // have been defined, then this simply defines the name for the sub-solid
                             if (!string.IsNullOrWhiteSpace(values)) objSolid.Name = values;

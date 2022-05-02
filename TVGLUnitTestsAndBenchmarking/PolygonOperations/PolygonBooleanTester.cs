@@ -2,13 +2,8 @@ using BenchmarkDotNet.Attributes;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
 using System.Linq;
 using TVGL;
-using TVGL.IOFunctions;
-using TVGL.Numerics;
-using TVGL.TwoDimensional;
-using TVGL.Voxelization;
 
 namespace TVGLUnitTestsAndBenchmarking
 {
@@ -17,7 +12,7 @@ namespace TVGLUnitTestsAndBenchmarking
         [Benchmark]
         [ArgumentsSource(nameof(Data))]
         public static List<Polygon> TVGLUnion(Polygon polygon1, Polygon polygon2)
-            => TVGL.TwoDimensional.PolygonOperations.Union(polygon1, polygon2, PolygonCollection.SeparateLoops);
+            => TVGL.PolygonOperations.Union(polygon1, polygon2, PolygonCollection.SeparateLoops);
 
 
        // [Benchmark]
@@ -279,7 +274,7 @@ namespace TVGLUnitTestsAndBenchmarking
             var tvglError = false;
             var clipperError = false;
             var tvglVResult = new VoxelizedSolid(tvglResult,numVoxels, new[] { min, max });
-            var clipperShallowPolyTree = TVGL.TwoDimensional.PolygonOperations.
+            var clipperShallowPolyTree = TVGL.PolygonOperations.
                    CreateShallowPolygonTrees(clipperResult, true);
             var clipperVResult = new VoxelizedSolid(clipperShallowPolyTree, numVoxels, new[] { min, max });
             if (tvglVResult.SubtractToNewSolid(correctVoxels).Count == 0 && correctVoxels.SubtractToNewSolid(tvglVResult).Count == 0)
@@ -410,7 +405,7 @@ namespace TVGLUnitTestsAndBenchmarking
 
         public static void CompareOffsetResults(List<Polygon> tvglResult, List<Polygon> clipperResult, double offset)
         {
-            var clipperShallowPolyTree = TVGL.TwoDimensional.PolygonOperations.                   CreateShallowPolygonTrees(clipperResult, true);
+            var clipperShallowPolyTree = TVGL.PolygonOperations.CreateShallowPolygonTrees(clipperResult, true);
             var tolerance = Math.Sqrt(tvglResult.Sum(r => r.Area));
             var numPolygonsTVGL = tvglResult.Sum(poly => poly.AllPolygons.Count());
             var numPolygonsClipper = clipperShallowPolyTree.Sum(poly => poly.AllPolygons.Count());

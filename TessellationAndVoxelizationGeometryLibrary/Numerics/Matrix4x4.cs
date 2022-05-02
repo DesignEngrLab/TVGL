@@ -2,13 +2,14 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using Newtonsoft.Json;
 using System;
 using System.Globalization;
 using System.Runtime.InteropServices;
 // COMMENTEDCHANGE using System.Runtime.Intrinsics;
 // COMMENTEDCHANGE using System.Runtime.Intrinsics.X86;
 
-namespace TVGL.Numerics  
+namespace TVGL  
 {
     /// <summary>
     /// A structure encapsulating a 4x4 matrix.
@@ -166,6 +167,7 @@ namespace TVGL.Numerics
         /// in the new coordinate frame.
         /// </summary>
         /// <value>The x basis vector.</value>
+        [JsonIgnore]
         public Vector3 XBasisVector => new Vector3(M11, M12, M13);
         /// <summary>
         /// Gets the y basis vector. This is the second column not including the 
@@ -173,6 +175,7 @@ namespace TVGL.Numerics
         /// in the new coordinate frame.
         /// </summary>
         /// <value>The y basis vector.</value>
+        [JsonIgnore]
         public Vector3 YBasisVector => new Vector3(M21, M22, M23);
         /// <summary>
         /// Gets the z basis vector. This is the third column not including the 
@@ -180,6 +183,7 @@ namespace TVGL.Numerics
         /// in the new coordinate frame.
         /// </summary>
         /// <value>The z basis vector.</value>
+        [JsonIgnore]
         public Vector3 ZBasisVector => new Vector3(M31, M32, M33);
 
         /// <summary>

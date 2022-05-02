@@ -1,13 +1,14 @@
-﻿using System;
+﻿using MIConvexHull;
+using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
-using TVGL.Numerics;
 
-namespace TVGL.TwoDimensional
+namespace TVGL
 {
     /// <summary>
     ///     Public circle structure, given a center point and radius
     /// </summary>
-    public readonly struct Circle : I2DCurve
+    public readonly struct Circle : ICurve
     {
         /// <summary>
         ///     Center Point of circle
@@ -17,6 +18,7 @@ namespace TVGL.TwoDimensional
         /// <summary>
         ///     Radius of circle
         /// </summary>
+        [JsonIgnore]
         public readonly double Radius;
 
         /// <summary>
@@ -27,16 +29,19 @@ namespace TVGL.TwoDimensional
         /// <summary>
         ///     Area of circle
         /// </summary>
+        [JsonIgnore]
         public readonly double Area;
 
         /// <summary>
         ///     Circumference of circle
         /// </summary>
+        [JsonIgnore]
         public readonly double Circumference;
 
         /// <summary>Creates a circle, given the center point and the radius Squared</summary>
         /// <param name="center">The center.</param>
         /// <param name="radiusSquared">The radius squared.</param>
+        [JsonConstructor]
         public Circle(Vector2 center, double radiusSquared)
         {
             Center = center;
@@ -46,9 +51,10 @@ namespace TVGL.TwoDimensional
             Circumference = Constants.TwoPi * Radius;
         }
 
-        public double SquaredErrorOfNewPoint(Vector2 point)
+
+        public double SquaredErrorOfNewPoint<T>(T point) where T : IVertex2D
         {
-            var diff = point - Center;
+            var diff =new Vector2(point.X - Center.X, point.Y - Center.Y);
             var error = Math.Sqrt(diff.Dot(diff)) - Radius;
             return error * error;
         }
@@ -58,7 +64,7 @@ namespace TVGL.TwoDimensional
         /// </summary>
         /// <param name="points">The points.</param>
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
-        public static bool CreateFromPoints(IEnumerable<Vector2> points, out Circle circle, out double error)
+        public static bool CreateFromPoints<T>(IEnumerable<T> points, out ICurve curve, out double error) where T : IVertex2D
         {
             // Updates the circle using Landau's method ( https://doi.org/10.1016/0734-189X(89)90088-1 ), which
             // seems like it would be same as the Minimum Least Squares approach, but this is a million times
@@ -90,7 +96,7 @@ namespace TVGL.TwoDimensional
             }
             if (n < 3)
             {
-                circle = new Circle();
+                curve = new Circle();
                 error = double.PositiveInfinity;
                 return false;
             }
@@ -103,7 +109,7 @@ namespace TVGL.TwoDimensional
             var cross = (a1 * b2) - (a2 * b1);
             if (cross.IsNegligible())
             {
-                circle = new Circle();
+                curve = new Circle();
                 error = double.PositiveInfinity;
                 return false;
             }
@@ -123,18 +129,17 @@ namespace TVGL.TwoDimensional
                 angle = Math.Atan2(yMin - yc, xMin - xc) - Math.Atan2(yMax - yc, xMax - xc);
             if (angle < 0.02) // which is about 1 degree
             {
-                circle = new Circle();
+                curve = new Circle();
                 error = double.PositiveInfinity;
                 return false;
             }
             #endregion
-            circle = new Circle(center, radiusSquared);
+            curve = new Circle(center, radiusSquared);
             error = 0.0;
             foreach (var p in points)
-                error += circle.SquaredErrorOfNewPoint(p);
+                error += curve.SquaredErrorOfNewPoint(p);
             error /= n;
             return true;
         }
-
     }
 }

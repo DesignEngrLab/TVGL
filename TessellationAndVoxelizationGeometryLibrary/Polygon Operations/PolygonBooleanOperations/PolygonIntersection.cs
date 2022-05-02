@@ -2,10 +2,9 @@
 // This file is a part of TVGL, Tessellation and Voxelization Geometry Library
 // https://github.com/DesignEngrLab/TVGL
 // It is licensed under MIT License (see LICENSE.txt for details)
-using System;
 using System.Collections.Generic;
 
-namespace TVGL.TwoDimensional
+namespace TVGL
 {
     /// <summary>
     /// A set of general operation for points and paths

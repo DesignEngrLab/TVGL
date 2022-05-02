@@ -14,10 +14,10 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Xml.Serialization;
-using TVGL.TwoDimensional;
-using TVGL.Voxelization;
 
-namespace TVGL.IOFunctions
+
+
+namespace TVGL
 {
     /// <summary>
     ///     The IO or input/output class contains static functions for saving and loading files in common formats.
@@ -201,19 +201,19 @@ namespace TVGL.IOFunctions
                         break;
 
                     default:
-                        var serializer = new JsonSerializer();
+                        var serializer = new JsonSerializer() { TypeNameHandling = TypeNameHandling.Objects };
                         var sr = new StreamReader(s);
                         using (var reader = new JsonTextReader(sr))
                             solid = serializer.Deserialize<TessellatedSolid>(reader);
                         break;
                 }
-            }
+        }
             catch (Exception exc)
             {
                 Console.WriteLine("Cannot open file. Message: " + exc.Message);
                 solid = null;
             }
-        }
+}
 
         /// <summary>
         /// Opens the specified s.

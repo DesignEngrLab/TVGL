@@ -6,9 +6,9 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using TVGL.Numerics;
 
-namespace TVGL.IOFunctions
+
+namespace TVGL
 {
     internal class ShellFileData : IO
     {

@@ -5,7 +5,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using TVGL.Numerics;
+
 
 namespace TVGL
 {
@@ -137,5 +137,46 @@ namespace TVGL
             return center + majorRadius * dirToCircle;
         }
 
+        private Vector3 faceXDir = Vector3.Null;
+        private Vector3 faceYDir = Vector3.Null;
+        private Vector3 faceZDir = Vector3.Null;
+        public override Vector2 TransformFrom3DTo2D(Vector3 point)
+        {
+            if (faceXDir.IsNull())
+            {
+                faceZDir = Axis;
+                faceYDir = Axis.GetPerpendicularDirection();
+                faceXDir = faceYDir.Cross(faceZDir);
+            }
+            var planeDist = Center.Dot(Axis);
+            var d = planeDist - point.Dot(Axis);
+            var ptInPlane = point + d * Axis;
+            var vectorToPiP = ptInPlane - Center;
+            var deltaRing = vectorToPiP.Length() - MajorRadius;
+            var hoopAngle = Math.Atan2(-d,deltaRing);
+            var polarAngle = Math.Atan2(vectorToPiP.Dot(faceYDir), vectorToPiP.Dot(faceXDir));
+
+            return new Vector2(polarAngle * MajorRadius, hoopAngle * MinorRadius);
+        }
+
+        public override Vector3 TransformFrom2DTo3D(Vector2 point)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override IEnumerable<Vector2> TransformFrom3DTo2D(IEnumerable<Vector3> points, bool pathIsClosed)
+        {
+            if (pathIsClosed && BorderEncirclesAxis(points, Axis, Center))
+            {
+                var transform = Axis.TransformToXYPlane(out _);
+                foreach (var point in points)
+                    yield return point.ConvertTo2DCoordinates(transform);
+                yield break;
+            }
+            foreach (var p in points)
+            {
+                yield return TransformFrom3DTo2D(p);
+            }
+        }
     }
 }
