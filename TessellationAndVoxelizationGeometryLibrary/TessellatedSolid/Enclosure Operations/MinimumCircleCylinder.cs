@@ -339,6 +339,10 @@ namespace TVGL
             return new Circle(centerPoint, shortestDistance);
         }
 
+        public static Cylinder MinimumBoundingCylinder(TessellatedSolid ts, BoundingBox box)
+        {
+            return MinimumBoundingCylinder(ts.ConvexHull.Vertices, box.Directions);
+        }
 
         /// <summary>
         ///     Gets the minimum bounding cylinder using 13 guesses for the depth direction
@@ -356,35 +360,30 @@ namespace TVGL
             directions.Add(new Vector3(0, 1, 0));
             directions.Add(new Vector3(0, 1, 1));
             directions.Add(new Vector3(0, -1, 1));
+            return MinimumBoundingCylinder(convexHullVertices, directions);
+        }
 
+        public static Cylinder MinimumBoundingCylinder<T>(IEnumerable<T> convexHullVertices, IEnumerable<Vector3> directions) where T : IVertex3D
+        {
             Cylinder minCylinder = null;
-            var minCylinderVolume = double.PositiveInfinity;
             var cvxHullVertsList = convexHullVertices as IList<T> ?? convexHullVertices.ToList();
-            for (var i = 0; i < 13; i++)
+            var minCylinderVolume = double.PositiveInfinity;
+            foreach (var direction in directions)
             {
-                var box = new BoundingBox<T>(new[] { double.PositiveInfinity, 1, 1 },
-                    new[] { directions[i], Vector3.Null, Vector3.Null }, default, default,
-                    default);
-                box = Find_via_ChanTan_AABB_Approach(cvxHullVertsList, box);
-                for (var j = 0; j < 3; j++)
-                {
-                    var axis = box.Directions[j];
-                    var pointsOnFace_i = cvxHullVertsList.ProjectTo2DCoordinates(axis, out var backTransform);
-                    var circle = MinimumCircle(pointsOnFace_i);
-                    var height = box.Dimensions[j];
-                    var volume = height * circle.Area;
-                    if (minCylinderVolume > volume)
-                    {
-                        minCylinderVolume = volume;
-                        var anchor = circle.Center.ConvertTo3DLocation(backTransform);
-                        var dxOfBottomPlane = box.PointsOnFaces[2 * j][0].Dot(axis);
-
-                        minCylinder = new Cylinder(axis, anchor,
-                                circle.Radius, dxOfBottomPlane, dxOfBottomPlane + height);
-                    }
-                }
+                var cylinder = MinimumBoundingCylinder(cvxHullVertsList, direction);
+                if (minCylinderVolume > cylinder.Volume)
+                    minCylinder = cylinder;
             }
             return minCylinder;
+        }
+
+        private static Cylinder MinimumBoundingCylinder<T>(IList<T> convexHullVertices, Vector3 direction) where T : IVertex3D
+        {
+            var pointsOnFace = convexHullVertices.ProjectTo2DCoordinates(direction, out var backTransform);
+            var circle = MinimumCircle(pointsOnFace);
+            var (min, max) = GetDistanceToExtremeVertex(convexHullVertices, direction, out _, out _);
+            var anchor = circle.Center.ConvertTo3DLocation(backTransform);
+            return new Cylinder(direction, anchor, circle, min, max);
         }
 
         const int MaxMinBoundCylIterations = 120;

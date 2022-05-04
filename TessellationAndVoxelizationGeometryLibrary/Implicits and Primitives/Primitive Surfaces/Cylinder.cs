@@ -68,6 +68,8 @@ namespace TVGL
         /// <value>The direction.</value>
         public Vector3 Axis { get; set; }
 
+        public Circle Circle { get; set; }
+
         /// <summary>
         ///     Gets the radius.
         /// </summary>
@@ -92,6 +94,8 @@ namespace TVGL
         /// </summary>
         /// <value>The height.</value>
         public double Height { get; set; }
+
+        public double Volume => Height * Math.PI * Radius * Radius;
 
         #endregion
 
@@ -141,12 +145,13 @@ namespace TVGL
         /// <param name="radius">The radius.</param>
         /// <param name="dxOfBottomPlane">The dx of bottom plane.</param>
         /// <param name="dxOfTopPlane">The dx of top plane.</param>
-        public Cylinder(Vector3 axis, Vector3 anchor, double radius, double minDistanceAlongAxis,
+        public Cylinder(Vector3 axis, Vector3 anchor, Circle circle, double minDistanceAlongAxis,
             double maxDistanceAlongAxis)
         {
             Axis = axis;
             Anchor = anchor;
-            Radius = radius;
+            Circle = circle;
+            Radius = circle.Radius;
             MinDistanceAlongAxis = minDistanceAlongAxis;
             MaxDistanceAlongAxis = maxDistanceAlongAxis;
             Height = MaxDistanceAlongAxis - MinDistanceAlongAxis;
