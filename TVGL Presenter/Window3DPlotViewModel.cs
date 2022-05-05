@@ -308,13 +308,13 @@ namespace TVGL
 
             // setup lighting            
             this.AmbientLightColor = System.Windows.Media.Color.FromArgb(1, 12, 12, 12);
-            this.DirectionalLightColor = System.Windows.Media.Color.FromArgb(1, 188, 188, 188);
-            this.DirectionalLightDirection1 = new Vector3D(10, -20, 10);
-            this.DirectionalLightDirection2 = new Vector3D(10, 20, 10);
-            this.DirectionalLightDirection3 = new Vector3D(20, 10, 10);
-            this.DirectionalLightDirection4 = new Vector3D(-20, 10, 10);
-            this.DirectionalLightDirection5 = new Vector3D(10, 10, 20);
-            this.DirectionalLightDirection6 = new Vector3D(10, 10, -20);
+            this.DirectionalLightColor = System.Windows.Media.Color.FromArgb(1, 128, 128, 128);
+            this.DirectionalLightDirection1 = new Vector3D(-10, -20, 10);
+            this.DirectionalLightDirection2 = new Vector3D(10, 20, -10);
+            this.DirectionalLightDirection3 = new Vector3D(20, -10, 10);
+            this.DirectionalLightDirection4 = new Vector3D(-20, 10, -10);
+            this.DirectionalLightDirection5 = new Vector3D(-10, 10, 20);
+            this.DirectionalLightDirection6 = new Vector3D(10, -10, -20);
         }
 
         internal void SetUpCamera(Viewport3DX view)
