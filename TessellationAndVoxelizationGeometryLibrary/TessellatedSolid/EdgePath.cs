@@ -20,6 +20,16 @@ namespace TVGL
         /// <value>The edges and direction.</value>
         public List<bool> DirectionList { get; } = new List<bool>();
 
+        private double _length = -1.0;
+        public double Length
+        {
+            get
+            {
+                if (_length.Equals(-1))
+                    _length = EdgeList.Sum(e => e.Length);
+                return _length;
+            }
+        }
 
         /// <summary>
         /// Gets or sets a value indicating whether [border is closed].
