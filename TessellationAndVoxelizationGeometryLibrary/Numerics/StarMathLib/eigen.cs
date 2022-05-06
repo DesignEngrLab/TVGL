@@ -20,6 +20,7 @@
 *************************************************************************/
 
 using System;
+using System.Runtime.CompilerServices;
 using TVGL;
 
 namespace StarMathLib
@@ -44,6 +45,7 @@ namespace StarMathLib
         /// <param name="A">the matrix in question, A.</param>
         /// <param name="eigenVectors">The eigenvectors as an array of arrays/vectors.</param>
         /// <returns></returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static ComplexNumber[] GetEigenValuesAndVectors(this double[,] A, out double[][] eigenVectors)
         {
             var length = A.GetLength(0);

@@ -12,6 +12,7 @@
 // <summary></summary>
 // ***********************************************************************
 using System;
+using System.Runtime.CompilerServices;
 using TVGL;
 
 namespace StarMathLib
@@ -86,6 +87,7 @@ namespace StarMathLib
         /// <param name="vt">The vt.</param>
         /// <returns>System.Double[].</returns>
         /// <exception cref="System.ArithmeticException">SVD did not converge.</exception>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static double[] SingularValueDecomposition(bool computeVectors, double[,] A, out double[,] u,
             out double[,] vt)
         {
@@ -578,6 +580,7 @@ namespace StarMathLib
         /// <param name="cosAngle">Contains the parameter c associated with the Givens rotation</param>
         /// <param name="sinAngle">Contains the parameter s associated with the Givens rotation</param>
         /// <remarks>This is equivalent to the DROTG LAPACK routine.</remarks>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static void fromCartesianToPolar(ref double x, ref double y, out double cosAngle, out double sinAngle)
         {
             var absX = Math.Abs(x);

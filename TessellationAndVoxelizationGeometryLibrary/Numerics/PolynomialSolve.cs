@@ -166,6 +166,8 @@ namespace TVGL
             var constant = enumerator.Current;
             return Quartic(fourthOrderCoeff, cubedCoeff, squaredCoeff, linearCoeff, constant);
         }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static IEnumerable<ComplexNumber> Quartic(ComplexNumber fourthOrderCoeff,
             ComplexNumber cubedCoeff, ComplexNumber squaredCoeff, ComplexNumber linearCoeff, ComplexNumber offset)
         {
@@ -196,6 +198,7 @@ namespace TVGL
             yield return (minusBAddQ7 - addedSqrtTerm) / 4;
             yield return (minusBAddQ7 + addedSqrtTerm) / 4;
         }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static IEnumerable<ComplexNumber> Quartic(double fourthOrderCoeff,
             double cubedCoeff, double squaredCoeff, double linearCoeff, double offset)
         {

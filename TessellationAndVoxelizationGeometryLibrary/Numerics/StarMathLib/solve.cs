@@ -13,6 +13,7 @@
 // ***********************************************************************
 using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 
 namespace StarMathLib
 {
@@ -45,6 +46,7 @@ namespace StarMathLib
             return solveBig(A, b, out answer, IsASymmetric);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static bool solveViaCramersRule3(this double[,] a, IList<double> b, out double[] answer)
         {
             var denominator = determinant(a);
@@ -78,6 +80,7 @@ namespace StarMathLib
             return true;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static bool solveViaCramersRule2(double[,] a, IList<double> b, out double[] answer)
         {
             var denominator = a[0, 0] * a[1, 1] - a[0, 1] * a[1, 0];
@@ -104,6 +107,7 @@ namespace StarMathLib
         /// <param name="IsASymmetric">Is A known to be Symmetric?</param>
         /// <param name="potentialDiagonals">The potential diagonals.</param>
         /// <returns>System.Double[].</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static bool solveBig(double[,] A, IList<double> b, out double[] answer, bool IsASymmetric = false)
         {
             var length = b.Count;
