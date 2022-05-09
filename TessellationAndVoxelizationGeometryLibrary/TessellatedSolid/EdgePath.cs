@@ -31,6 +31,17 @@ namespace TVGL
         [JsonIgnore]
         public List<bool> DirectionList { get; protected set; }
 
+        private double _length = -1.0;
+        [JsonIgnore]
+        public double Length
+        {
+            get
+            {
+                if (_length.Equals(-1))
+                    _length = EdgeList.Sum(e => e.Length);
+                return _length;
+            }
+        }
 
         /// <summary>
         /// Gets or sets a value indicating whether [border is closed].
@@ -171,8 +182,6 @@ namespace TVGL
         {
             return EdgeList.IndexOf(edge);
         }
-        [JsonIgnore]
-        public double Length => EdgeList.Sum(edge => edge.Length);
 
         /// <summary>
         /// Inserts an item to the <see cref="T:System.Collections.Generic.IList`1" /> at the specified index.

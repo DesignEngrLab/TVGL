@@ -380,5 +380,35 @@ namespace TVGL
         {
             foreach (var face in Faces) face.Color = color;
         }
+
+        private HashSet<PrimitiveSurface> _adjacentSurfaces;
+        public HashSet<PrimitiveSurface> GetAdjacentPrimitives(
+             Dictionary<Edge, (PrimitiveSurface, PrimitiveSurface)> edgePrimitiveMap)
+        {
+            if (_adjacentSurfaces == null)
+            {
+                _adjacentSurfaces = new HashSet<PrimitiveSurface>();
+                foreach (var edge in OuterEdges)
+                    _adjacentSurfaces.Add(Other(edgePrimitiveMap[edge]));//Will not add duplicated as a hash set.
+                _adjacentSurfaces.Remove(this); // just in case the edge map had an edge with both primitives as this prim, remove it.
+            }    
+            return _adjacentSurfaces;
+        }
+
+        private PrimitiveSurface Other((PrimitiveSurface, PrimitiveSurface) edgePrimitives)
+        {
+            return this == edgePrimitives.Item1 ? edgePrimitives.Item2 : edgePrimitives.Item1;
+        }
+
+        public List<Edge> GetSharedEdges(PrimitiveSurface other)
+        {
+            var shared = new List<Edge>();
+            foreach(var edge in OuterEdges)
+            {
+                if (other.OuterEdges.Contains(edge))
+                    shared.Add(edge);
+            }
+            return shared;
+        }
     }
 }

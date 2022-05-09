@@ -123,6 +123,8 @@ namespace TVGL
         /// <value>The direction.</value>
         public Vector3 Axis { get; set; }
 
+        public Circle Circle => new Circle(TransformFrom3DTo2D(Axis), Radius * Radius);
+        
         /// <summary>
         ///     Gets the radius.
         /// </summary>
@@ -147,6 +149,8 @@ namespace TVGL
         /// </summary>
         /// <value>The height.</value>
         public double Height { get; set; } = double.PositiveInfinity;
+
+        public double Volume => Height * Math.PI * Radius * Radius;
 
         #endregion
 
@@ -219,6 +223,18 @@ namespace TVGL
             MaxDistanceAlongAxis = originalToBeCopied.MaxDistanceAlongAxis;
             Height = originalToBeCopied.Height;
         }
+
+        public Cylinder(Vector3 axis, Vector3 anchor, Circle circle, double minDistanceAlongAxis,
+            double maxDistanceAlongAxis)
+        {
+            Axis = axis;
+            Anchor = anchor;
+            Radius = circle.Radius;
+            MinDistanceAlongAxis = minDistanceAlongAxis;
+            MaxDistanceAlongAxis = maxDistanceAlongAxis;
+            Height = MaxDistanceAlongAxis - MinDistanceAlongAxis;
+        }
+
 
         public bool PointIsInside(Vector3 x)
         {
