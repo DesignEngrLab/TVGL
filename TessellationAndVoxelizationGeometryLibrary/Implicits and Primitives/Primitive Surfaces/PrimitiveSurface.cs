@@ -492,7 +492,8 @@ namespace TVGL
 
         private HashSet<PrimitiveSurface> _adjacentSurfaces;
         public HashSet<PrimitiveSurface> GetAdjacentPrimitives(
-             Dictionary<Edge, (PrimitiveSurface, PrimitiveSurface)> edgePrimitiveMap)
+             Dictionary<Edge, (PrimitiveSurface, PrimitiveSurface)> edgePrimitiveMap,
+             HashSet<PrimitiveSurface> surfacesToConsider = null)
         {
             if (_adjacentSurfaces == null)
             {
@@ -500,7 +501,10 @@ namespace TVGL
                 foreach (var edge in OuterEdges)
                     _adjacentSurfaces.Add(Other(edgePrimitiveMap[edge]));//Will not add duplicated as a hash set.
                 _adjacentSurfaces.Remove(this); // just in case the edge map had an edge with both primitives as this prim, remove it.
-            }    
+            }
+            //If given a subset of surface to consider, return those surfaces which are in both hashes. Don't permanently alter _adjacentSurfaces.
+            if (surfacesToConsider != null)
+                return new HashSet<PrimitiveSurface>(_adjacentSurfaces.Where(p => surfacesToConsider.Contains(p)));
             return _adjacentSurfaces;
         }
 
