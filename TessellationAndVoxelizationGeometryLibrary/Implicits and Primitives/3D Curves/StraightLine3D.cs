@@ -91,15 +91,25 @@ namespace TVGL
                 { xy - x * y,   ySqd - y * y, yz - y * z }   ,
                 { xz - x * z,   yz - y * z,   zSqd - z * z }
             };
-            var eigens = StarMath.GetEigenValuesAndVectors(matrix, out var eigenVectors);
-            var indexOfLargestEigenvalue =
-                (Math.Abs(eigens[0].Real) >= Math.Abs(eigens[1].Real) &&
-                Math.Abs(eigens[0].Real) >= Math.Abs(eigens[2].Real))
-                ? 0 :
-                (Math.Abs(eigens[1].Real) >= Math.Abs(eigens[0].Real) &&
-                Math.Abs(eigens[1].Real) >= Math.Abs(eigens[2].Real))
-                ? 1 : 2;
-            var direction = new Vector3(eigenVectors[indexOfLargestEigenvalue]);
+            var direction = Vector3.Null;
+            if (matrix.IsSingular())
+            {
+                if (!matrix[0, 0].IsNegligible()) direction = Vector3.UnitX;
+                else if (!matrix[1,1].IsNegligible()) direction = Vector3.UnitY;
+                direction = Vector3.UnitZ;
+            }
+            else
+            {
+                var eigens = StarMath.GetEigenValuesAndVectors(matrix, out var eigenVectors);
+                var indexOfLargestEigenvalue =
+                    (Math.Abs(eigens[0].Real) >= Math.Abs(eigens[1].Real) &&
+                    Math.Abs(eigens[0].Real) >= Math.Abs(eigens[2].Real))
+                    ? 0 :
+                    (Math.Abs(eigens[1].Real) >= Math.Abs(eigens[0].Real) &&
+                    Math.Abs(eigens[1].Real) >= Math.Abs(eigens[2].Real))
+                    ? 1 : 2;
+                direction = new Vector3(eigenVectors[indexOfLargestEigenvalue]);
+            }
             curve = new StraightLine3D(new Vector3(x, y, z), direction.Normalize());
             //var result = new StraightLine3D(new Vector3(x, y, z), direction.Normalize());
             error = 0.0;

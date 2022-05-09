@@ -400,7 +400,7 @@ namespace StarMathLib
             LUMatrix = (double[,])A.Clone();
             var length = A.GetLength(0);
             if (length != A.GetLength(1)) return false;
-               // throw new ArithmeticException("Cholesky Decomposition can only be determined for square matrices.");
+            // throw new ArithmeticException("Cholesky Decomposition can only be determined for square matrices.");
 
             for (var i = 0; i < length; i++)
             {
@@ -476,6 +476,47 @@ namespace StarMathLib
                 for (var j = 0; j != numCols; j++)
                     C[i, j] = A[j, i];
             return C;
+        }
+
+        #endregion
+
+        #region IsSingular
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool IsSingular(this double[,] A)
+        {
+            var length = A.GetLength(0);
+            if (length != A.GetLength(1)) return true;
+            if (length > 6)
+            { // if matrix has length greater than 7 it'll take
+                //fewer computations to first check for a row or
+                //column of all zeros
+                for (int i = 0; i < length; i++)
+                {
+                    // first check for row of all zeros
+                    var nonZeroFound = false;
+                    for (int j = 0; j < length; j++)
+                    {
+                        if (!A[i, j].IsNegligible())
+                        {
+                            nonZeroFound = true;
+                            break;
+                        }
+                    }
+                    if (!nonZeroFound) return true;
+                    // now check for column of all zeros
+                    nonZeroFound = false;
+                    for (int j = 0; j < length; j++)
+                    {
+                        if (!A[j, i].IsNegligible())
+                        {
+                            nonZeroFound = true;
+                            break;
+                        }
+                    }
+                    if (!nonZeroFound) return true;
+                }
+            }
+                return A.determinant().IsNegligible();
         }
 
         #endregion

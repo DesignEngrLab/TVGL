@@ -293,7 +293,7 @@ namespace StarMathLib
                     iter++;
                     if (iter >= 30 * length)
                     {
-                        throw new ArithmeticException("Eigen decomposition does not converge.");
+                            throw new ArithmeticException("Eigen decomposition does not converge.");
                     }
 
                     // Look for two consecutive small sub-diagonal elements
