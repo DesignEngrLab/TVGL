@@ -218,8 +218,8 @@ namespace TVGL
                 }
                 catch 
                 {
-                    IO.Save(polygon, "errorPolygon" + DateTime.Now.ToOADate() + ".json");
-                    throw new Exception("Unable to triangulate polygon.");
+                    //IO.Save(polygon, "errorPolygon" + DateTime.Now.ToOADate() + ".json");
+                    //throw new Exception("Unable to triangulate polygon.");
                 }
                 successful = 2 * Math.Abs(polygon.Area - triangleArea) / (polygon.Area + triangleArea) < 0.01;
                 System.Diagnostics.Debug.WriteLineIf(!successful && !double.IsNegativeInfinity(triangleArea),

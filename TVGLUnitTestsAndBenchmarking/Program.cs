@@ -18,15 +18,15 @@ namespace TVGLUnitTestsAndBenchmarking
         private static void Main(string[] args)
 
         {
-            TestConicIntersection();
-            TVGL.Message.Verbosity = VerbosityLevels.Everything;
             DirectoryInfo dir = BackOutToFolder();
+             Polygon_Testing_Functions.TestSimplify(dir);
+            //TestConicIntersection();
+            TVGL.Message.Verbosity = VerbosityLevels.Everything;
             //Voxels.TestVoxelization(dir);
             //TS_Testing_Functions.TestModify();
             //TVGL3Dto2DTests.TestSilhouette();
-            // Polygon_Testing_Functions.TestSimplify();
             //TS_Testing_Functions.TestClassify();
-            //TVGL3Dto2DTests.TestXSectionAndMonotoneTriangulate();
+            TVGL3Dto2DTests.TestXSectionAndMonotoneTriangulate(dir);
 
 #if PRESENT
 

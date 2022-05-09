@@ -17,24 +17,8 @@ namespace TVGLUnitTestsAndBenchmarking
     {
 
         //[Fact]
-        public static void TestSimplify()
+        public static void TestSimplify(DirectoryInfo dir)
         {
-            DirectoryInfo dir;
-            if (Directory.Exists("../../../../TestFiles"))
-            {
-                //x64
-                dir = new DirectoryInfo("../../../../TestFiles");
-            }
-            else
-            {
-                //x86
-                dir = new DirectoryInfo("../../../TestFiles");
-            }
-            //            brace.stl - holes showing up?
-            // radiobox - missing holes - weird skip in outline
-            // KnuckleTopOp flecks
-            // mendel_extruder - one show up blank
-            //var fileNames = dir.GetFiles("Obliq*").ToArray();
             var fileNames = dir.GetFiles("poly*.json").ToArray();
             for (var i = 0; i < fileNames.Length - 0; i++)
             {

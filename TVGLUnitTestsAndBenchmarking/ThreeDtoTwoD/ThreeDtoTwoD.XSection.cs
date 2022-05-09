@@ -9,18 +9,10 @@ namespace TVGLUnitTestsAndBenchmarking
 {
     public static partial class TVGL3Dto2DTests
     {
-        const string inputFolder = "TestFiles\\polygons";
-        //[Fact]
-        public static void TestXSectionAndMonotoneTriangulate()
+        public static void TestXSectionAndMonotoneTriangulate(DirectoryInfo dir)
         {
-            var dir = new DirectoryInfo(".");
-            while (!Directory.Exists(Path.Combine(dir.FullName, inputFolder)))
-                dir = dir.Parent;
-            dir = new DirectoryInfo(Path.Combine(dir.FullName, inputFolder));
-
-            //var fileName = dir.FullName + Path.DirectorySeparatorChar + "test.json";
-            var fileNames = dir.GetFiles("*").OrderByDescending(x => x.Length).ToArray();
-            for (var i = 0; i < 20; i++)
+            var fileNames = dir.GetFiles("*.json").OrderByDescending(x => x.Length).ToArray();
+            for (var i = 0; i < fileNames.Length; i++)
             {
                 var filename = fileNames[i].FullName;
                 var name = fileNames[i].Name;
