@@ -187,8 +187,8 @@ namespace TVGL
                     selfIntersections = polygon.GetSelfIntersections().Where(intersect => intersect.Relationship != SegmentRelationship.NoOverlap).ToList();
                     if (selfIntersections.Count > 0)
                     {
-                        IO.Save(polygon, "errorPolygon" + DateTime.Now.ToOADate() + ".json");
-                        throw new Exception("Self-Intersecting Polygon cannot be triangulated.");
+                        //IO.Save(polygon, "errorPolygon" + DateTime.Now.ToOADate() + ".json");
+                        //throw new Exception("Self-Intersecting Polygon cannot be triangulated.");
                     }
                 }
             }
