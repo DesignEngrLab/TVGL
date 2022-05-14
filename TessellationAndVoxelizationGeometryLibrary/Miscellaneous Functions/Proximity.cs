@@ -5,8 +5,11 @@
 
 
 
+using System.Collections.Generic;
+
 namespace TVGL
-{    public static class Proximity
+{
+    public static class Proximity
     {
         /// <summary>
         /// Finds the closest vertex (3D Point) on a triangle (a,b,c) to the given vertex (p).
@@ -186,6 +189,44 @@ namespace TVGL
             distanceToSegment = distanceToSegment / line.Length;
             return new Vector2(fromPoint.X + lineVector.X * distanceToSegment,
                 fromPoint.Y + lineVector.Y * distanceToSegment);
+        }
+
+        public static Vector2 ClosestPointToLines(IEnumerable<(Vector2 anchor, Vector2 dir)> lines)
+        {
+            var n = 0;
+            double dxdx = 0.0, dydy = 0.0, dxdy = 0.0;
+            double pxdxdy = 0.0, pxdydy = 0.0, pydxdy = 0.0, pydxdx = 0.0;
+            double pix = double.NaN, piy = double.NaN;
+            foreach (var line in lines)
+            {
+                pix = line.anchor.X;
+                piy = line.anchor.Y;
+                var dix = line.dir.X;
+                var diy = line.dir.Y;
+                var dixdix = dix * dix;
+                var diydiy = diy * diy;
+                var dixdiy = dix * diy;
+                dxdx += dixdix;
+                dxdy += dixdiy;
+                dydy += diydiy;
+                pxdxdy += pix * dixdiy;
+                pxdydy += pix * diydiy;
+                pydxdy += piy * dixdiy;
+                pydxdx += piy * dixdix;
+                n++;
+            }
+            if (n == 0) return Vector2.Null;
+            if (n == 1) return new Vector2(pix, piy);
+            var d1 = dydy;
+            var d2 = dxdx;
+            var g = dxdy; //off-diagonal term
+            var b1 = pxdydy - pydxdy;
+            var b2 = pydxdx - pxdxdy;
+            // d1*x - g*y = b1
+            // -g*x - d2*y = b2
+            var cx = (b1 * d2 + b2 * g) / (d1 * d2 - g * g);
+            var cy = (b2 + g * cx) / d2;
+            return new Vector2(cx, cy);
         }
     }
 }

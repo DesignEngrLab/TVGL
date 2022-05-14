@@ -84,13 +84,13 @@ namespace TVGL
         public Vector3 Axis { get; set; }
 
         /// <summary>
-        ///     Gets the major radius.
+        ///     Gets the major radius, which is the distance from the center of the tube to the center of the torus
         /// </summary>
         /// <value>The major radius.</value>
         public double MajorRadius { get; set; }
 
         /// <summary>
-        ///     Gets the minor radius.
+        ///     Gets the minor radius, which the radius of the tube. 
         /// </summary>
         /// <value>The minor radius.</value>
         public double MinorRadius { get; set; }

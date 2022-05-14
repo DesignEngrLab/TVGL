@@ -64,7 +64,7 @@ namespace TVGL
         /// </summary>
         /// <param name="points">The points.</param>
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
-        public static bool CreateFromPoints<T>(IEnumerable<T> points, out ICurve curve, out double error) where T : IVertex2D
+        public static bool CreateFromPoints<T>(IEnumerable<T> points, out Circle curve, out double error) where T : IVertex2D
         {
             // Updates the circle using Landau's method ( https://doi.org/10.1016/0734-189X(89)90088-1 ), which
             // seems like it would be same as the Minimum Least Squares approach, but this is a million times

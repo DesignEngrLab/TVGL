@@ -16,8 +16,8 @@ namespace TVGLUnitTestsAndBenchmarking
 
         [STAThread]
         private static void Main(string[] args)
-
         {
+            //ProximityTests.TestClosestPointToLines();
             DirectoryInfo dir = BackOutToFolder();
              Polygon_Testing_Functions.TestSimplify(dir);
             //TestConicIntersection();
@@ -27,9 +27,7 @@ namespace TVGLUnitTestsAndBenchmarking
             //TVGL3Dto2DTests.TestSilhouette();
             //TS_Testing_Functions.TestClassify();
             TVGL3Dto2DTests.TestXSectionAndMonotoneTriangulate(dir);
-
 #if PRESENT
-
             foreach (var fileName in dir.GetFiles("*").Skip(1))
             {
                 Debug.WriteLine("\n\n\nAttempting to open: " + fileName.Name);

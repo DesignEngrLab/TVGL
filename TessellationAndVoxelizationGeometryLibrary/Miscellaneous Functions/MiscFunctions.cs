@@ -138,7 +138,7 @@ namespace TVGL
             return distances;
         }
 
-        internal static void DefineInnerOuterEdges(IEnumerable<PolygonalFace> faces, out HashSet<Edge> innerEdgeHash, out HashSet<Edge> outerEdgeHash)
+        public static void DefineInnerOuterEdges(IEnumerable<PolygonalFace> faces, out HashSet<Edge> innerEdgeHash, out HashSet<Edge> outerEdgeHash)
         {
             innerEdgeHash = new HashSet<Edge>();
             outerEdgeHash = new HashSet<Edge>();
