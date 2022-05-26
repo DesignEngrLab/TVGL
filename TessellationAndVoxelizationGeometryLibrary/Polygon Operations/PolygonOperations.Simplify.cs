@@ -315,7 +315,7 @@ namespace TVGL.TwoDimensional
         /// <param name="polygons">The polygons.</param>
         /// <param name="targetNumberOfPoints">The target number of points.</param>
         /// <returns>IEnumerable&lt;Polygon&gt;.</returns>
-        public static void SimplifyMinLength(this IEnumerable<Polygon> polygons, int targetNumberOfPoints)
+        public static void SimplifyMinLength(this IList<Polygon> polygons, int targetNumberOfPoints)
         {
             // first remove collinear points and set up lists
             var allPolygons = polygons.SelectMany(p => p.AllPolygons).ToList();
@@ -330,11 +330,15 @@ namespace TVGL.TwoDimensional
                 foreach (var edge in polygon.Edges)
                     edgeLengthQueue.Enqueue(edge, edge.Length);
             }
-
             while (numToRemove-- > 0)
             {
                 var edge = edgeLengthQueue.Dequeue();
-                if (edge.ToPoint == edge.FromPoint) continue;
+                if (edge.ToPoint == edge.FromPoint)
+                {
+                    edge.ToPoint.EndLine = null;
+                    edge.ToPoint.StartLine = null;
+                    continue;
+                }
                 var center = edge.Center;
                 Vertex2D deleteVertex, keepVertex;
                 PolygonEdge otherEdge;
@@ -359,8 +363,23 @@ namespace TVGL.TwoDimensional
             {
                 Polygon polygon = allPolygons[i];
                 RecreateVertices(polygon);
-                if (polygon.Edges.Length < 2) 
-                    allPolygons.RemoveAt(i);
+                if (polygon.Edges.Length < 2)
+                {
+                    for (int j = polygons.Count - 1; j >= 0; j--)
+                    {
+                        Polygon origOuterPolygon = polygons[j];
+                        if (polygon == origOuterPolygon)
+                        {
+                            polygons.RemoveAt(j);
+                            break;
+                        }
+                        else
+                        {
+                            if (origOuterPolygon.RemoveHole(polygon))
+                                break;
+                        }
+                    }
+                }
             }
         }
 
@@ -806,7 +825,7 @@ namespace TVGL.TwoDimensional
             double slopeTolerance = Constants.LineSlopeTolerance)
         {
             var output = new List<Polygon>(polygons.Count);
-            foreach(var poly in polygons)
+            foreach (var poly in polygons)
             {
                 output.Add(SimplifyFast(poly, lengthTolerance, slopeTolerance));
             }
@@ -1216,20 +1235,29 @@ namespace TVGL.TwoDimensional
         private static void RecreateVertices(this Polygon polygon, bool topOnly = true)
         {
             var index = 0;
-            while (polygon.Vertices[index].EndLine == null || polygon.Vertices[index].StartLine == null)
+            polygon.Edges = null;
+            while (index < polygon.Vertices.Count && (polygon.Vertices[index].EndLine == null
+                || polygon.Vertices[index].StartLine == null))
                 index++;
-            var firstVertex = polygon.Vertices[index];
-            var current = firstVertex;
-            polygon.Vertices.Clear();
-            //polygon.Edges.Clear();
-            index = 0;
-            do
+
+            if (index == polygon.Vertices.Count)
+            {  // the polygon is completely disconnected! it should stay empty
+                polygon.Vertices.Clear();
+            }
+            else
             {
-                current.IndexInList = index++;
-                current.LoopID = polygon.Index;
-                polygon.Vertices.Add(current);
-                current = current.StartLine.ToPoint;
-            } while (current != firstVertex);
+                var firstVertex = polygon.Vertices[index];
+                var current = firstVertex;
+                polygon.Vertices.Clear();
+                index = 0;
+                do
+                {
+                    current.IndexInList = index++;
+                    current.LoopID = polygon.Index;
+                    polygon.Vertices.Add(current);
+                    current = current.StartLine.ToPoint;
+                } while (current != firstVertex);
+            }
             polygon.Reset();
             if (!topOnly)
             {

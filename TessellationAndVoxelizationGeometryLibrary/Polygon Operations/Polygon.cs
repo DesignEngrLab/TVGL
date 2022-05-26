@@ -107,13 +107,14 @@ namespace TVGL.TwoDimensional
                 MakePolygonEdgesIfNonExistent();
                 return _edges;
             }
+            internal set { _edges = value; }
         }
 
         public void MakePolygonEdgesIfNonExistent()
         {
-                if (_edges != null && _edges.Length == Vertices.Count) return;
-                foreach (var poly in AllPolygons)
-                    poly.MakeThisPolygonsEdges();
+            if (_edges != null && _edges.Length == Vertices.Count) return;
+            foreach (var poly in AllPolygons)
+                poly.MakeThisPolygonsEdges();
         }
 
         private void MakeThisPolygonsEdges()
@@ -179,9 +180,9 @@ namespace TVGL.TwoDimensional
         /// Removes the hole from the polygon.
         /// </summary>
         /// <param name="polygon">The polygon.</param>
-        public void RemoveHole(Polygon polygon)
+        public bool RemoveHole(Polygon polygon)
         {
-            _innerPolygons.Remove(polygon);
+            return _innerPolygons.Remove(polygon);
         }
         /// <summary>
         /// Gets the inner polygons.
