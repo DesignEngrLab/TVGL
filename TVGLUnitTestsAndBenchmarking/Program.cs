@@ -13,7 +13,7 @@ namespace TVGLUnitTestsAndBenchmarking
 {
     internal static class Program
     {
-        const string inputFolder = @"C:\Users\matth\OneDrive - medemalabs.com\Documents - Executive Team\PartAnalyzer\OBJ Testing";
+        const string inputFolder = @"Downloads";
         //const string inputFolder = "TestFiles\\bad";
         static Random r = new Random();
         static double r1 => 2.0 * r.NextDouble() - 1.0;
@@ -23,23 +23,23 @@ namespace TVGLUnitTestsAndBenchmarking
         private static void Main(string[] args)
 
         {
-            //TestVoxelization();
-            //TS_Testing_Functions.TestModify();
-            //TVGL3Dto2DTests.TestSilhouette();
-            // Polygon_Testing_Functions.TestSimplify();
-            //TS_Testing_Functions.TestClassify();
-            //TVGL3Dto2DTests.TestXSectionAndMonotoneTriangulate();
-
-//#if PRESENT
-
             TVGL.Message.Verbosity = VerbosityLevels.Everything;
             // 1. bubble up from the bin directories to find the TestFiles directory
             var dir = new DirectoryInfo(".");
             while (!Directory.Exists(Path.Combine(dir.FullName, inputFolder)))
                 dir = dir.Parent;
             dir = new DirectoryInfo(Path.Combine(dir.FullName, inputFolder));
+            //TestVoxelization();
+            //TS_Testing_Functions.TestModify();
+            //TVGL3Dto2DTests.TestSilhouette();
+            Polygon_Testing_Functions.TestSimplify(dir);
+            //TS_Testing_Functions.TestClassify();
+            //TVGL3Dto2DTests.TestXSectionAndMonotoneTriangulate();
+
+//#if PRESENT
+
             var dirName = dir.FullName;
-            foreach (var fileName in dir.GetFiles("*"))
+             foreach (var fileName in dir.GetFiles("*"))
             {
                 Debug.WriteLine("\n\n\nAttempting to open: " + fileName.Name);
                 var stopwatch = new Stopwatch();

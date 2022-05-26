@@ -334,6 +334,7 @@ namespace TVGL.TwoDimensional
             while (numToRemove-- > 0)
             {
                 var edge = edgeLengthQueue.Dequeue();
+                if (edge.ToPoint == edge.FromPoint) continue;
                 var center = edge.Center;
                 Vertex2D deleteVertex, keepVertex;
                 PolygonEdge otherEdge;
@@ -354,8 +355,13 @@ namespace TVGL.TwoDimensional
                 edgeLengthQueue.Remove(otherEdge);
                 edgeLengthQueue.Enqueue(newEdge, newEdge.Length);
             }
-            foreach (var polygon in allPolygons)
+            for (int i = allPolygons.Count - 1; i >= 0; i--)
+            {
+                Polygon polygon = allPolygons[i];
                 RecreateVertices(polygon);
+                if (polygon.Edges.Length < 2) 
+                    allPolygons.RemoveAt(i);
+            }
         }
 
         /// <summary>

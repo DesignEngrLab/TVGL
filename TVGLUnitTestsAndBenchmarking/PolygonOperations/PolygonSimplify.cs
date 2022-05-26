@@ -20,39 +20,26 @@ namespace TVGLUnitTestsAndBenchmarking
     {
 
         //[Fact]
-        public static void TestSimplify()
+        public static void TestSimplify(DirectoryInfo dir)
         {
-            DirectoryInfo dir;
-            if (Directory.Exists("../../../../TestFiles"))
-            {
-                //x64
-                dir = new DirectoryInfo("../../../../TestFiles");
-            }
-            else
-            {
-                //x86
-                dir = new DirectoryInfo("../../../TestFiles");
-            }
-            //            brace.stl - holes showing up?
-            // radiobox - missing holes - weird skip in outline
-            // KnuckleTopOp flecks
-            // mendel_extruder - one show up blank
-            //var fileNames = dir.GetFiles("Obliq*").ToArray();
-            var fileNames = dir.GetFiles("poly*.json").ToArray();
+            var fileNames = dir.GetFiles("err*.json").ToArray();
+            var polygons = new List<Polygon>();
             for (var i = 0; i < fileNames.Length - 0; i++)
             {
                 var filename = fileNames[i].FullName;
                 var name = fileNames[i].Name;
                 Console.WriteLine("Attempting: " + filename);
                 IO.Open(filename, out Polygon polygon);
-                Presenter.ShowAndHang(polygon);
-                var polygonSimple = polygon.SimplifyMinLengthToNewPolygon(100);
-                Presenter.ShowAndHang(new[] { polygon, polygonSimple });
-
-
+                polygons.Add(polygon);
             }
+            Presenter.ShowAndHang(polygons);
+            var polygonSimple = polygons.SimplifyMinLengthToNewPolygons(300).ToList();
+            Presenter.ShowAndHang(polygonSimple);
+
 
         }
+
+
 
         internal static void TestSimplify2()
         {
