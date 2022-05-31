@@ -14,7 +14,7 @@ namespace TVGL
     /// </summary>
     public class Cone : PrimitiveSurface
     {
-        internal Cone() { }
+        public Cone() { }
         /// <summary>
         /// Cone
         /// </summary>

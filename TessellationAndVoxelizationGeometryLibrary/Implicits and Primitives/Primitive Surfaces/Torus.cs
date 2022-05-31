@@ -14,7 +14,7 @@ namespace TVGL
     /// </summary>
     public class Torus : PrimitiveSurface
     {
-        internal Torus() { }
+        public Torus() { }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="Torus"/> class.

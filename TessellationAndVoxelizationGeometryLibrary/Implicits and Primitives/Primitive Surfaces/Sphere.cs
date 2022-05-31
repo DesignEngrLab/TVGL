@@ -193,7 +193,7 @@ namespace TVGL
             Radius = radius;
         }
 
-        internal Sphere() { }
+        public Sphere() { }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="Sphere"/> class.

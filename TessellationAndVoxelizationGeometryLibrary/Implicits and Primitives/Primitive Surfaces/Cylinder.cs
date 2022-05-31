@@ -156,7 +156,7 @@ namespace TVGL
 
         #region Constructors
 
-        internal Cylinder() { }
+        public Cylinder() { }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="Cylinder"/> class.
