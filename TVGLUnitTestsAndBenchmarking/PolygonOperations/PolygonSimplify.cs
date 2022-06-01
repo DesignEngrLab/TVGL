@@ -19,21 +19,25 @@ namespace TVGLUnitTestsAndBenchmarking
         //[Fact]
         public static void TestSimplify(DirectoryInfo dir)
         {
-            var fileNames = dir.GetFiles("poly*.json").ToArray();
+            var fileNames = dir.GetFiles("err*.json").ToArray();
+            var polygons = new List<Polygon>();
             for (var i = 0; i < fileNames.Length - 0; i++)
             {
                 var filename = fileNames[i].FullName;
                 var name = fileNames[i].Name;
                 Console.WriteLine("Attempting: " + filename);
                 IO.Open(filename, out Polygon polygon);
-                Presenter.ShowAndHang(polygon);
-                var polygonSimple = polygon.SimplifyMinLengthToNewPolygon(100);
-                Presenter.ShowAndHang(new[] { polygon, polygonSimple });
-
-
+                polygons.Add(polygon);
             }
+            Presenter.ShowAndHang(polygons);
+            var t = polygons.Sum(p => p.AllPolygons.Sum(pp => pp.Edges.Length));
+            polygons.SimplifyMinLength(300);
+            Presenter.ShowAndHang(polygons);
+            t = polygons.Sum(p => p.AllPolygons.Sum(pp => pp.Edges.Length));
 
         }
+
+
 
         internal static void TestSimplify2()
         {

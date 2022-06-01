@@ -1144,19 +1144,23 @@ namespace TVGL
         /// The resulting Solid should be located at the origin, and only in the positive X, Y, Z octant.
         /// </summary>
         /// <returns></returns>
-        public void SetToOriginAndSquare(out BoundingBox originalBoundingBox)
+        public void SetToOriginAndSquare(out BoundingBox originalBoundingBox, bool ignorePrimitives = false)
         {
             originalBoundingBox = this.OrientedBoundingBox();
             Matrix4x4.Invert(originalBoundingBox.Transform, out var transform);
-            Transform(transform);
+            Transform(transform, ignorePrimitives);
         }
-
 
         /// <summary>
         /// Transforms the specified transform matrix.
         /// </summary>
         /// <param name="transformMatrix">The transform matrix.</param>
         public override void Transform(Matrix4x4 transformMatrix)
+        {
+            Transform(transformMatrix, false);
+        }
+
+        public void Transform(Matrix4x4 transformMatrix, bool ignorePrimitives)
         {
             var xMin = double.PositiveInfinity;
             var yMin = double.PositiveInfinity;
@@ -1192,11 +1196,12 @@ namespace TVGL
                     transformMatrix.M21, transformMatrix.M22, transformMatrix.M23,
                     transformMatrix.M31, transformMatrix.M32, transformMatrix.M33);
             _inertiaTensor *= rotMatrix;
-            if (Primitives != null)
+            if (Primitives != null && !ignorePrimitives)
                 foreach (var primitive in Primitives)
                     primitive.Transform(transformMatrix);
             this.SetNegligibleAreaFaceNormals(true);
         }
+
         /// <summary>
         /// Gets a new solid by transforming its vertices.
         /// </summary>

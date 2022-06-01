@@ -107,6 +107,7 @@ namespace TVGL
                 MakePolygonEdgesIfNonExistent();
                 return _edges;
             }
+            internal set { _edges = value; }
         }
 
         public void MakePolygonEdgesIfNonExistent()
@@ -179,9 +180,9 @@ namespace TVGL
         /// Removes the hole from the polygon.
         /// </summary>
         /// <param name="polygon">The polygon.</param>
-        public void RemoveHole(Polygon polygon)
+        public bool RemoveHole(Polygon polygon)
         {
-            _innerPolygons.Remove(polygon);
+            return _innerPolygons.Remove(polygon);
         }
         /// <summary>
         /// Gets the inner polygons.
