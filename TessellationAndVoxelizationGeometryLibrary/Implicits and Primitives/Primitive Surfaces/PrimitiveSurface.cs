@@ -55,6 +55,13 @@ namespace TVGL
         public abstract Vector2 TransformFrom3DTo2D(Vector3 point);
         public abstract Vector3 TransformFrom2DTo3D(Vector2 point);
 
+        public List<List<int>> TriangleVertexIndices
+        {
+            get =>  _triangleVertexIndices;
+            set => _triangleVertexIndices = value;
+        }
+        List<List<int>> _triangleVertexIndices;
+
         public int[] FaceIndices
         {
             get
