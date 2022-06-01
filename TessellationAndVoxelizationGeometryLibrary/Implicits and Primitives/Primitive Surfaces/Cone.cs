@@ -104,17 +104,17 @@ namespace TVGL
                 ((List<Vector3>)vertices).AddRange(InnerEdges.Select(edge => (edge.To.Coordinates + edge.From.Coordinates) / 2));
                 ((List<Vector3>)vertices).AddRange(OuterEdges.Select(edge => (edge.To.Coordinates + edge.From.Coordinates) / 2));
             }
-            var sqDistanceSum = 0.0;
-            var numVerts = 0;
-            var cosApertureSquared = 1 / (1 + Aperture);
+            var maxError = 0.0;
+            var cosAperture = Math.Sqrt(1 / (1 + Aperture));
             foreach (var c in vertices)
             {
-                var d = (c - Apex).Cross(Axis).Length()
-                    - Math.Abs(Aperture * (c - Apex).Dot(Axis));
-                sqDistanceSum += d * d * cosApertureSquared;
-                numVerts++;
+                var d = Math.Abs((c - Apex).Cross(Axis).Length()
+                    - Math.Abs(Aperture * (c - Apex).Dot(Axis)));
+                var error =  d * cosAperture;
+                if (error > maxError)
+                    maxError = error;
             }
-            return sqDistanceSum / numVerts;
+            return maxError;
         }
 
 

@@ -116,16 +116,15 @@ namespace TVGL
                 ((List<Vector3>)vertices).AddRange(OuterEdges.Select(edge => (edge.To.Coordinates + edge.From.Coordinates) / 2));
             }
             var planeDist = Center.Dot(Axis);
-            var sqDistanceSum = 0.0;
-            var numVerts = 0;
+            var maxError = 0.0;
             foreach (var c in vertices)
             {
                 Vector3 ptOnCircle = ClosestPointOnCenterRingToPoint(Axis, Center, MajorRadius, c, planeDist);
-                var d = (c - ptOnCircle).Length() - MinorRadius;
-                sqDistanceSum += d * d;
-                numVerts++;
+                var d = Math.Abs((c - ptOnCircle).Length() - MinorRadius);
+                if (d > maxError)
+                    maxError = d;
             }
-            return sqDistanceSum / numVerts;
+            return maxError;
         }
 
         public static Vector3 ClosestPointOnCenterRingToPoint(Vector3 axis, Vector3 center, double majorRadius, Vector3 vertexCoord, double planeDist = double.NaN)

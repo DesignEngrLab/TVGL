@@ -38,15 +38,14 @@ namespace TVGL
                 ((List<Vector3>)vertices).AddRange(InnerEdges.Select(edge => (edge.To.Coordinates + edge.From.Coordinates) / 2));
                 ((List<Vector3>)vertices).AddRange(OuterEdges.Select(edge => (edge.To.Coordinates + edge.From.Coordinates) / 2));
             }
-            var sqDistanceSum = 0.0;
-            var numVerts = 0;
+            var maxError = 0.0;
             foreach (var c in vertices)
             {
-                var d = (c - Anchor).Cross(Axis).Length() - Radius;
-                sqDistanceSum += d * d;
-                numVerts++;
+                var d = Math.Abs((c - Anchor).Cross(Axis).Length() - Radius);
+                if(d > maxError)
+                    maxError = d;
             }
-            return sqDistanceSum / numVerts;
+            return maxError;
         }
 
         private Vector3 faceXDir = Vector3.Null;
