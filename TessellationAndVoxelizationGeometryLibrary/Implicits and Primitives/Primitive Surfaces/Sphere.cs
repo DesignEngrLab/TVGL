@@ -43,16 +43,16 @@ namespace TVGL
                 vertices = Vertices.Select(v => v.Coordinates).ToList();
                 ((List<Vector3>)vertices).AddRange(InnerEdges.Select(edge => (edge.To.Coordinates + edge.From.Coordinates) / 2));
                 ((List<Vector3>)vertices).AddRange(OuterEdges.Select(edge => (edge.To.Coordinates + edge.From.Coordinates) / 2));
-            }
-            var sqDistanceSum = 0.0;
-            var numVerts = 0;
+            }   
+            
+            var maxError = 0.0;
             foreach (var c in vertices)
             {
-                var d = (c - Center).Length() - Radius;
-                sqDistanceSum += d * d;
-                numVerts++;
+                var d = Math.Abs((c - Center).Length() - Radius);
+                if (d > maxError)
+                    maxError = d;
             }
-            return sqDistanceSum / numVerts;
+            return maxError;
         }
 
         /// <summary>
