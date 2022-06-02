@@ -664,7 +664,7 @@ namespace TVGL
                         var face = new PolygonalFace(vertexSet, normal, doublyLinkToVertices);
                         if (!HasUniformColor) face.Color = color;
                         tempFaceIndices[i].Add(face);
-                    }                   
+                    }
                 }
             }
             //Set the faces and their indices
@@ -672,7 +672,7 @@ namespace TVGL
             NumberOfFaces = Faces.GetLength(0);
             for (var i = 0; i < NumberOfFaces; i++)
                 Faces[i].IndexInList = i;
-            
+
             //Connect the primitives to their faces through the vertex triangle[] and checksums
             Primitives ??= new List<PrimitiveSurface>();
             var addNonSmoothEdges = NonsmoothEdges == null;
@@ -680,7 +680,7 @@ namespace TVGL
                 NonsmoothEdges = new List<EdgePath>();
             if (primitives != null)
             {
-                foreach(var primitive in primitives)
+                foreach (var primitive in primitives)
                 {
                     //Get all the faces 
                     //var faceIndi
@@ -693,7 +693,7 @@ namespace TVGL
                     primitive.FaceIndices = faceIndices.ToArray();
                     Primitives.Add(primitive);
                 }
-            }  
+            }
         }
 
         private long FaceChecksum(List<long> checksumMultiplier, IEnumerable<int> vertexIndices, out List<int> orderedIndices)
@@ -1144,11 +1144,11 @@ namespace TVGL
         /// The resulting Solid should be located at the origin, and only in the positive X, Y, Z octant.
         /// </summary>
         /// <returns></returns>
-        public void SetToOriginAndSquare(out BoundingBox originalBoundingBox, bool ignorePrimitives = false)
+        public void SetToOriginAndSquare(out BoundingBox originalBoundingBox)
         {
             originalBoundingBox = this.OrientedBoundingBox();
             Matrix4x4.Invert(originalBoundingBox.Transform, out var transform);
-            Transform(transform, ignorePrimitives);
+            Transform(transform);
         }
 
         /// <summary>
@@ -1156,11 +1156,6 @@ namespace TVGL
         /// </summary>
         /// <param name="transformMatrix">The transform matrix.</param>
         public override void Transform(Matrix4x4 transformMatrix)
-        {
-            Transform(transformMatrix, false);
-        }
-
-        public void Transform(Matrix4x4 transformMatrix, bool ignorePrimitives)
         {
             var xMin = double.PositiveInfinity;
             var yMin = double.PositiveInfinity;
@@ -1196,9 +1191,8 @@ namespace TVGL
                     transformMatrix.M21, transformMatrix.M22, transformMatrix.M23,
                     transformMatrix.M31, transformMatrix.M32, transformMatrix.M33);
             _inertiaTensor *= rotMatrix;
-            if (Primitives != null && !ignorePrimitives)
-                foreach (var primitive in Primitives)
-                    primitive.Transform(transformMatrix);
+            foreach (var primitive in Primitives)
+                primitive.Transform(transformMatrix);
             this.SetNegligibleAreaFaceNormals(true);
         }
 
