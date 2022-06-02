@@ -19,16 +19,23 @@ namespace TVGL
         /// Transforms the shape by the provided transformation matrix.
         /// </summary>
         /// <param name="transformMatrix">The transform matrix.</param>
-        /// <exception cref="System.NotImplementedException"></exception>
         public override void Transform(Matrix4x4 transformMatrix)
         {
-            Anchor = Anchor.Multiply(transformMatrix);
-            Axis = Axis.Multiply(transformMatrix);
+            Anchor = Anchor.Transform(transformMatrix);
+            Axis = Axis.TransformNoTranslate(transformMatrix);
             Axis = Axis.Normalize();
-            //how to adjust the radii?
-            //throw new NotImplementedException();
+            // we assume here that the scaling of the transform is the same
+            // in all directions so that the circular cylinder is still
+            // a circular cylinder and not an elliptical cylinder. Thus, 
+            // we simply scale the radius by the ScaleX from the matrix
+            Radius*=transformMatrix.M11;
         }
 
+        /// <summary>
+        /// Calculates the error.
+        /// </summary>
+        /// <param name="vertices">The vertices.</param>
+        /// <returns>System.Double.</returns>
         public override double CalculateError(IEnumerable<Vector3> vertices = null)
         {
             if (vertices == null)
@@ -51,6 +58,12 @@ namespace TVGL
 
         private Vector3 faceXDir = Vector3.Null;
         private Vector3 faceYDir = Vector3.Null;
+
+        /// <summary>
+        /// Transforms the from 3d to 2d.
+        /// </summary>
+        /// <param name="point">The point.</param>
+        /// <returns>Vector2.</returns>
         public override Vector2 TransformFrom3DTo2D(Vector3 point)
         {
             var v = point - Anchor;
@@ -66,6 +79,11 @@ namespace TVGL
             return new Vector2(angle * Radius, v.Dot(Axis));
         }
 
+        /// <summary>
+        /// Transforms the from 2d to 3d.
+        /// </summary>
+        /// <param name="point">The point.</param>
+        /// <returns>Vector3.</returns>
         public override Vector3 TransformFrom2DTo3D(Vector2 point)
         {
             var angle = (point.X / Radius) % Constants.TwoPi;
@@ -75,8 +93,17 @@ namespace TVGL
             return result;
         }
 
+        /// <summary>
+        /// Transforms the from 3d to 2d.
+        /// </summary>
+        /// <param name="points">The points.</param>
+        /// <param name="pathIsClosed">if set to <c>true</c> [path is closed].</param>
+        /// <returns>IEnumerable&lt;Vector2&gt;.</returns>
         public override IEnumerable<Vector2> TransformFrom3DTo2D(IEnumerable<Vector3> points, bool pathIsClosed)
         {
+            // when the points are a closed path and they encircle the axis, basically we see the simplest resulting
+            // polygon as a circle. Perhaps this doesn't capture what was intended but it is the best choice given
+            // alternatives
             if (pathIsClosed && BorderEncirclesAxis(points, Axis, Anchor))
             {
                 var transform = Axis.TransformToXYPlane(out _);
@@ -84,23 +111,31 @@ namespace TVGL
                     yield return point.ConvertTo2DCoordinates(transform);
                 yield break;
             }
+            // the cylinder will be unrolled, and the tangential angle around the cylinder will be transformed
+            // into the x (horizontal coordinate). The first point is provides a reference for the additional points
             var horizRepeat = Radius * Constants.TwoPi;
-            var lastPoint = points.First();
-            var last2DVertex = TransformFrom3DTo2D(lastPoint);
-            yield return last2DVertex;
+            // the first point is called the prevPoint, just to set up the following loop - so that the previous
+            // visited point is always known when processing each subsequent point.
+            var prevPoint = points.First();
+            var prev2DVertex = TransformFrom3DTo2D(prevPoint);
+            yield return prev2DVertex;
             foreach (var point in points.Skip(1))
             {
-                var vector = point - lastPoint;
+                // the next 5 lines are to determine how to advance the x-value if the shape wraps around more than
+                // 360-degrees of the cylinder
+                var vector = point - prevPoint;
                 var rightIsOutward = vector.Cross(Axis);
                 var step = rightIsOutward.Dot(point - Anchor) > 0 ? 1 : -1;
+                // step will be +1 if the move from the prevPoint to this point is CCW about the axis - thus it should
+                // have a higher value of x than the prevPoint
                 var coord2D = TransformFrom3DTo2D(point);
                 var coord2Dx = coord2D.X;
-                while (coord2Dx * step < last2DVertex.X * step)
+                while (coord2Dx * step < prev2DVertex.X * step)
                     coord2Dx += step * horizRepeat;
                 coord2D = new Vector2(coord2Dx, coord2D.Y);
                 yield return coord2D;
-                lastPoint = point;
-                last2DVertex = coord2D;
+                prevPoint = point;
+                prev2DVertex = coord2D;
             }
         }
 
@@ -224,6 +259,14 @@ namespace TVGL
             Height = originalToBeCopied.Height;
         }
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Cylinder"/> class.
+        /// </summary>
+        /// <param name="axis">The axis.</param>
+        /// <param name="anchor">The anchor.</param>
+        /// <param name="circle">The circle.</param>
+        /// <param name="minDistanceAlongAxis">The minimum distance along axis.</param>
+        /// <param name="maxDistanceAlongAxis">The maximum distance along axis.</param>
         public Cylinder(Vector3 axis, Vector3 anchor, Circle circle, double minDistanceAlongAxis,
             double maxDistanceAlongAxis)
         {
@@ -236,6 +279,11 @@ namespace TVGL
         }
 
 
+        /// <summary>
+        /// Returns where the given point is inside the cylinder.
+        /// </summary>
+        /// <param name="x">The x.</param>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         public bool PointIsInside(Vector3 x)
         {
             var dxAlong = x.Dot(Axis);

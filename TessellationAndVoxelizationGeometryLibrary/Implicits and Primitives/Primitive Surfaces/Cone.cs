@@ -88,13 +88,22 @@ namespace TVGL
         /// Transforms the shape by the provided transformation matrix.
         /// </summary>
         /// <param name="transformMatrix">The transform matrix.</param>
-        /// <exception cref="System.NotImplementedException"></exception>
         public override void Transform(Matrix4x4 transformMatrix)
         {
             Axis = Axis.Multiply(transformMatrix);
             Apex = Apex.Multiply(transformMatrix);
+            // we assume here that the scaling of the transform is the same
+            // in all directions so that the circular cone is still
+            // a circular cone and not an elliptical cone. Thus, 
+            // we simply scale the radius by the ScaleX from the matrix
+            Aperture *= transformMatrix.M11;
         }
 
+        /// <summary>
+        /// Calculates the error.
+        /// </summary>
+        /// <param name="vertices">The vertices.</param>
+        /// <returns>System.Double.</returns>
         public override double CalculateError(IEnumerable<Vector3> vertices = null)
         {
             if (vertices == null)
@@ -120,6 +129,12 @@ namespace TVGL
 
         private Vector3 faceXDir = Vector3.Null;
         private Vector3 faceYDir = Vector3.Null;
+
+        /// <summary>
+        /// Transforms the from 3d to 2d.
+        /// </summary>
+        /// <param name="point">The point.</param>
+        /// <returns>Vector2.</returns>
         public override Vector2 TransformFrom3DTo2D(Vector3 point)
         {
             var v = new Vector3(point.X, point.Y, point.Z) - Apex;
@@ -128,26 +143,81 @@ namespace TVGL
                 faceXDir = Axis.GetPerpendicularDirection();
                 faceYDir = faceXDir.Cross(Axis);
             }
+            var distanceDownCone = v.Length();
             var x = faceXDir.Dot(v);
             var y = faceYDir.Dot(v);
-            var angle = Math.Atan2(y, x);
-            var dxAlong = v.Dot(Axis);
-            var radius = dxAlong * Aperture;
-            return new Vector2(angle * radius, v.Dot(Axis));
+            /* originally doing the following, which makes intuitive sense, but
+             * since we take the cosine (and sine) of an inverse tangent, we can reduce the computation
+            var angle = Math.Atan2(y, x) * betaFactor;
+            return new Vector2(distanceDownCone * Math.Cos(angle), distanceDownCone * Math.Sin(angle));
+        */
+            var hypotenuse = Math.Sqrt(x * x + y * y);
+            var cosAngle = betaFactor * x / hypotenuse;
+            var sinAngle = betaFactor * y / hypotenuse;
+            return new Vector2(distanceDownCone * cosAngle, distanceDownCone * sinAngle);
         }
 
+        /// <summary>
+        /// Transforms the from 2d to 3d.
+        /// </summary>
+        /// <param name="point">The point.</param>
+        /// <returns>Vector3.</returns>
         public override Vector3 TransformFrom2DTo3D(Vector2 point)
         {
-            var radius = point.Y * Aperture;
-            var angle = (point.X / radius) % Constants.TwoPi;
-            var result = Apex + radius * Math.Cos(angle) * faceXDir;
+            var angle = Math.Atan2(point.Y, point.X) / betaFactor;
+            var distanceDownCone = point.Length();
+            var radius = betaFactor * distanceDownCone;
+            var height = radius / Aperture;
+            if (faceXDir.IsNull())
+            {
+                faceXDir = Axis.GetPerpendicularDirection();
+                faceYDir = faceXDir.Cross(Axis);
+            }
+            var result = Apex + height * Axis;
             result += radius * Math.Sin(angle) * faceYDir;
-            result += point.Y * Axis;
+            result += radius * Math.Sin(angle) * faceYDir;
             return result;
         }
 
+        private double betaFactor
+        {
+            get
+            {
+                if (double.IsNaN(_betaFactor))
+                    _betaFactor = FlattenConeSpanningAngleFraction(Aperture);
+                return _betaFactor;
+            }
+        }
+        private double _betaFactor = double.NaN;
+        private static double FlattenConeSpanningAngleFraction(double aperture)
+        {
+            // you know how you can make a cone by cutting an arc from flat stock
+            // (paper, sheet metal, etc) and rolling it up? well what angle is that
+            // flattened sheet of the full 360-degrees?
+            // I call this angle, beta.
+            // Visualize or draw out both the 3d cone and the flattened arc. 
+            // The bottom of the cone (some perpendicular cut through the cone),
+            // the base circle is the same as the outside of the arc and has a
+            // length, c. This is equal to both:
+            // c = beta * d (where d is the distance down the outside of the cone; 
+            // note that d is Sqrt(h^2 + r^2) ),
+            // c = 2*pi*r e.g. circumference of the circle at the bottom of the cone
+            // here r is also aperture*height.
+            // Equate the c equations and solve for beta. 
+            // which reduces to h*sqrt(1+a^2).
+            return aperture / Math.Sqrt(1 + aperture * aperture);
+        }
+
+        /// <summary>
+        /// Transforms the from 3d points on the cone to a 2d.
+        /// </summary>
+        /// <param name="points">The points.</param>
+        /// <param name="pathIsClosed">if set to <c>true</c> [path is closed].</param>
+        /// <returns>IEnumerable&lt;Vector2&gt;.</returns>
         public override IEnumerable<Vector2> TransformFrom3DTo2D(IEnumerable<Vector3> points, bool pathIsClosed)
         {
+            // when the points are a closed path and they encircle the axis, then we define the resulting polygon
+            // by looking down the axis of the cone
             if (pathIsClosed && BorderEncirclesAxis(points, Axis, Apex))
             {
                 var transform = Axis.TransformToXYPlane(out _);
@@ -155,23 +225,34 @@ namespace TVGL
                     yield return point.ConvertTo2DCoordinates(transform);
                 yield break;
             }
-            var lastPoint = points.First();
-            var last2DVertex = TransformFrom3DTo2D(lastPoint);
-            yield return last2DVertex;
-            foreach (var point in points.Skip(1))
+            if (faceXDir.IsNull())
             {
-                var vector = point - lastPoint;
-                var rightIsOutward = vector.Cross(Axis);
-                var step = rightIsOutward.Dot(point - Apex) > 0 ? 1 : -1;
-                var coord2D = TransformFrom3DTo2D(point);
-                var coord2Dx = coord2D.X;
-                var horizRepeat =Math.Abs(coord2D.Y * Aperture * Constants.TwoPi);
-                 while (coord2Dx * step < last2DVertex.X * step)
-                    coord2Dx += step * horizRepeat;
-                coord2D = new Vector2(coord2Dx, coord2D.Y);
-                yield return coord2D;
-                lastPoint = point;
-                last2DVertex = coord2D;
+                faceXDir = Axis.GetPerpendicularDirection();
+                faceYDir = faceXDir.Cross(Axis);
+            }
+            // like a cylinder, we don't want to break the 2D shape just because it doesn't fit on our initial
+            // 2D sheet. Therefore we need to continue the around the polar coordinates when you wrap
+            // around the cone. This is done by keeping tack of the direction of movement from the previous point
+            var halfRepeatAngle = betaFactor * Constants.TwoPi;
+            // the first point is called the prevPoint, just to set up the following loop - so that the previous
+            // visited point is always known when processing each subsequent point.
+            var prevAngle = double.NaN;
+            foreach (var point in points)
+            {
+                var v = new Vector3(point.X, point.Y, point.Z) - Apex;
+                var distanceDownCone = v.Length();
+                var x = faceXDir.Dot(v);
+                var y = faceYDir.Dot(v);
+                var angle = Math.Atan2(y, x) * betaFactor;
+                if (!double.IsNaN(prevAngle))
+                {
+                    if (angle - prevAngle > halfRepeatAngle)
+                        angle -= 2 * halfRepeatAngle;
+                    else if (prevAngle - angle > halfRepeatAngle)
+                        angle += halfRepeatAngle;
+                }
+                yield return new Vector2(distanceDownCone * Math.Cos(angle), distanceDownCone * Math.Sin(angle));
+                prevAngle = angle;
             }
         }
     }

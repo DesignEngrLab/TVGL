@@ -100,10 +100,12 @@ namespace TVGL
         /// Transforms the shape by the provided transformation matrix.
         /// </summary>
         /// <param name="transformMatrix">The transform matrix.</param>
-        /// <exception cref="System.NotImplementedException"></exception>
         public override void Transform(Matrix4x4 transformMatrix)
         {
-            throw new NotImplementedException();
+            Center = Center.Transform(transformMatrix);
+            Axis = Axis.TransformNoTranslate(transformMatrix);
+            Axis = Axis.Normalize();
+            // todo: how to adjust the radii?
         }
 
         public override double CalculateError(IEnumerable<Vector3> vertices = null)
@@ -150,7 +152,7 @@ namespace TVGL
             }
             var planeDist = Center.Dot(Axis);
             var d = planeDist - point.Dot(Axis);
-            var ptInPlane = point + d * Axis;
+            var ptInPlane = point + d * Axis;  // project the point back to the plane cutting through the torus
             var vectorToPiP = ptInPlane - Center;
             var deltaRing = vectorToPiP.Length() - MajorRadius;
             var hoopAngle = Math.Atan2(-d,deltaRing);
@@ -161,7 +163,32 @@ namespace TVGL
 
         public override Vector3 TransformFrom2DTo3D(Vector2 point)
         {
-            throw new NotImplementedException();
+            if (faceXDir.IsNull())
+            {
+                faceZDir = Axis;
+                faceYDir = Axis.GetPerpendicularDirection();
+                faceXDir = faceYDir.Cross(faceZDir);
+            }
+            // reverse final set of 3D to 2D to get angles
+            var polarAngle = point.X / MajorRadius;
+            var hoopAngle = point.Y / MinorRadius;
+            // create the transformation to rotate about the torus axis by the polarAngle amount
+            var rotToSlicePlane = Matrix4x4.CreateFromAxisAngle(faceZDir, polarAngle);
+            // apply this transfrom to rotate the X-dir to the location of the point on the torus
+            // think of this as a slice through the torus (like you're cutting a donut in half)
+            // it is called dirToTubeCenter
+            var dirToTubeCenter = faceXDir.TransformNoTranslate(rotToSlicePlane);
+            // now lets start the return point. starting from the center. move along this vector
+            // by the amount of the majorRadius to get to the center of the tube at the correct slice location
+            var result = Center + dirToTubeCenter * MajorRadius;
+            // next we create a new vector to rotate to a point on the tube.
+            // this is done by further rotating the ditToTubeCenter by the angle hoopAngle 
+            // the axis of rotate though is the initial Y-axis rotated by the same previous transform
+            var rotYAxis = faceYDir.TransformNoTranslate(rotToSlicePlane);
+            // this next rotYAxis is in the negative direction, so we put a negative in front of the angle
+            var rotToHoopDir = Matrix4x4.CreateFromAxisAngle(rotYAxis, -hoopAngle);
+            result += MinorRadius * dirToTubeCenter.TransformNoTranslate(rotToHoopDir);
+            return result;
         }
 
         public override IEnumerable<Vector2> TransformFrom3DTo2D(IEnumerable<Vector3> points, bool pathIsClosed)
