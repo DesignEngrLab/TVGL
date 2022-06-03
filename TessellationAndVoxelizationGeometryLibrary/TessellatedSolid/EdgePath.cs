@@ -24,6 +24,19 @@ namespace TVGL
         public ICurve Curve { get; set; }
 
         /// <summary>
+        /// Gets whether the [edge path is circular].
+        /// </summary>
+        [JsonIgnore]
+        public bool IsCircular
+        {
+            get
+            {
+                if (Curve == null) return false;
+                return Curve is Circle;
+            }
+        }
+
+        /// <summary>
         /// Gets the edges and direction.
         /// </summary>
         /// <value>The edges and direction.</value>

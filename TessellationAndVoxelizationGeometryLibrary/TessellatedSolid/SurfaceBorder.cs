@@ -13,6 +13,7 @@
 // ***********************************************************************
 using Newtonsoft.Json;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -38,11 +39,6 @@ namespace TVGL
         public List<bool> PathDirectionList { get; protected set; }
 
         /// <summary>
-        /// Gets or sets the curve.
-        /// </summary>
-        /// <value>The curve.</value>
-        public ICurve Curve { get; set; }
-        /// <summary>
         /// Gets or sets the plane.
         /// </summary>
         /// <value>The plane.</value>
@@ -66,16 +62,19 @@ namespace TVGL
         /// </summary>
         /// <value><c>true</c> if [encircles axis]; otherwise, <c>false</c>.</value>
         public bool EncirclesAxis { get; set; }
+
         /// <summary>
         /// Gets or sets a value indicating whether [border is fully concave].
         /// </summary>
         /// <value><c>true</c> if [encircles axis]; otherwise, <c>false</c>.</value>
         public bool FullyConcave { get; set; }
+
         /// <summary>
         /// Gets or sets a value indicating whether [border is fully concave].
         /// </summary>
         /// <value><c>true</c> if [encircles axis]; otherwise, <c>false</c>.</value>
         public bool FullyConvex { get; set; }
+
         /// <summary>
         /// Gets or sets a value indicating whether [border is flush/flat - not concave or convex].
         /// </summary>
@@ -87,12 +86,11 @@ namespace TVGL
         /// </summary>
         /// <value><c>true</c> if [encircles axis]; otherwise, <c>false</c>.</value>
         [JsonIgnore]
-        public bool IsCircular
+        public new bool IsCircular
         {
             get
             {
-                if (Curve == null) return false;
-                return Curve is Circle;
+                return EdgePaths.Count == 1 && EdgePaths[0].IsCircular;
             }
         }
 
@@ -105,18 +103,12 @@ namespace TVGL
         {
             get
             {
-                if (Curve is Circle circle)
-                    return Surface.TransformFrom2DTo3D(circle.Center);
+                if (IsCircular)
+                    return Surface.TransformFrom2DTo3D(((Circle)EdgePaths[0].Curve).Center);
                 return Vector3.Null;
 
             }
         }
-
-        /// <summary>
-        /// Gets or sets a value indicating whether [both sides same primitive].
-        /// </summary>
-        /// <value><c>true</c> if [both sides same primitive]; otherwise, <c>false</c>.</value>
-        public bool BothSidesSamePrimitive { get; set; }
 
         public SurfaceBorder(ICurve curve, PrimitiveSurface surface, EdgePath path, double curveError,
             double surfError) : this(curve, surface, path.EdgeList, path.DirectionList, curveError, surfError)
@@ -148,8 +140,6 @@ namespace TVGL
         private double CalcPlaneError(Vector3 point)
         {
             return Surface.CalculateError(new[] { point });
-            //var d = Surface.Normal.Dot(point);
-            //return (d - Surface.DistanceToOrigin) * (d - Surface.DistanceToOrigin);
         }
 
         public double CurveResidualRatio(Vector3 coordinates, double tolerance)
@@ -163,14 +153,13 @@ namespace TVGL
             return Curve.SquaredErrorOfNewPoint(Surface.TransformFrom3DTo2D(point));
         }
 
-
         [JsonIgnore]
         public Polygon AsPolygon
         {
             get
             {
                 if (_polygon == null)
-                    _polygon = new Polygon(Surface.TransformFrom3DTo2D(GetVertices().Select(v => v.Coordinates), IsClosed));
+                    _polygon = new Polygon(Surface.TransformFrom3DTo2D(AsVectors(), IsClosed));
                 return _polygon;
             }
         }
@@ -179,7 +168,7 @@ namespace TVGL
         /// <summary>
         /// Prevents a default instance of the <see cref="SurfaceBorder"/> class from being created.
         /// </summary>
-        public SurfaceBorder() 
+        public SurfaceBorder()
         {
             EdgePaths = new List<EdgePath>();
             PathDirectionList = new List<bool>();
@@ -199,57 +188,33 @@ namespace TVGL
             return copy;
         }
 
-        public new IEnumerable<Vector3> AsVectors()
-        {
-            return GetVertices().Select(v => v.Coordinates);
-        }
-
         public void AddEnd(EdgePath edgePath, bool dir)
         {
             EdgePaths.Add(edgePath);
             PathDirectionList.Add(dir);
-        }
-
-        public void AddEnd(EdgePath edgePath)
-        {
-            if (LastVertex == null) PathDirectionList.Add(true);
-            else PathDirectionList.Add(edgePath.From == LastVertex);
-            EdgePaths.Add(edgePath);
+            foreach (var (edge, dir2) in edgePath)
+            {
+                EdgeList.Add(edge);
+                DirectionList.Add(dir2 == dir);
+            }
         }
 
         public void AddBegin(EdgePath edgePath, bool dir)
         {
             EdgePaths.Insert(0, edgePath);
             PathDirectionList.Insert(0, dir);
-        }
-
-        public void AddBegin(EdgePath edgePath)
-        {
-            if (LastVertex == null) PathDirectionList.Add(true);
-            PathDirectionList.Insert(0, edgePath.To == FirstVertex);
-            EdgePaths.Insert(0, edgePath);
-        }
-
-        /// <summary>
-        /// Gets the vertices.
-        /// </summary>
-        /// <returns>IEnumerable&lt;Vertex&gt;.</returns>
-        public new IEnumerable<Vertex> GetVertices()
-        {
-            if (EdgePaths.Count == 0) new List<Vertex>();
-            var vertices = new List<Vertex>();
-            foreach (var edgePath in EdgePaths)
-                vertices.AddRange(edgePath.GetVertices());
-            if(IsClosed)
-                vertices.RemoveAt(vertices.Count - 1);//Remove the last vertex. This is duplicate=            
-            return vertices;
+            foreach (var (edge, dir2) in edgePath)
+            {
+                EdgeList.Insert(0, edge);
+                DirectionList.Insert(0, dir2 == dir);
+            }
         }
 
         public new bool UpdateIsClosed()
         {
             if (EdgePaths == null)
                 IsClosed = false;
-            else if(EdgePaths.Count == 1 && EdgePaths[0].IsClosed)
+            else if (EdgePaths.Count == 1 && EdgePaths[0].IsClosed)
                 IsClosed = true;
             else
             {
@@ -257,6 +222,19 @@ namespace TVGL
                 IsClosed = (FirstVertex == lastVertex);
             }
             return IsClosed;
+        }
+
+        public new void Clear()
+        {
+            EdgePaths.Clear();
+            PathDirectionList.Clear();
+            EdgeList.Clear();
+            DirectionList.Clear();
+        }
+
+        internal bool Contains(EdgePath path)
+        {
+            return EdgePaths.Contains(path);
         }
 
         /// <summary>
