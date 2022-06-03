@@ -420,5 +420,10 @@ namespace TVGL
             }
             return shared;
         }
+
+        public IEnumerable<Vector3[]> GetVectors()
+        {
+            return OuterEdges.Select(e => new[] { e.From.Coordinates, e.To.Coordinates });
+        }
     }
 }

@@ -28,6 +28,19 @@ namespace TVGL
         /// Gets or sets the curve.
         /// </summary>
         /// <value>The curve.</value>
+        public List<EdgePath> EdgePaths { get; set; }
+
+        /// <summary>
+        /// Gets the edges and direction.
+        /// </summary>
+        /// <value>The edges and direction.</value>
+        [JsonIgnore]
+        public List<bool> PathDirectionList { get; protected set; }
+
+        /// <summary>
+        /// Gets or sets the curve.
+        /// </summary>
+        /// <value>The curve.</value>
         public ICurve Curve { get; set; }
         /// <summary>
         /// Gets or sets the plane.
@@ -166,8 +179,11 @@ namespace TVGL
         /// <summary>
         /// Prevents a default instance of the <see cref="SurfaceBorder"/> class from being created.
         /// </summary>
-        public SurfaceBorder() { }
-
+        public SurfaceBorder() 
+        {
+            EdgePaths = new List<EdgePath>();
+            PathDirectionList = new List<bool>();
+        }
 
         public SurfaceBorder Copy(PrimitiveSurface copiedSurface, bool reverse = false, TessellatedSolid copiedTessellatedSolid = null,
             int startIndex = 0, int endIndex = -1)
@@ -181,6 +197,100 @@ namespace TVGL
             copy.FullyConvex = FullyConvex;
             CopyEdgesPathData(copy, reverse, copiedTessellatedSolid, startIndex, endIndex);
             return copy;
+        }
+
+        public new IEnumerable<Vector3> AsVectors()
+        {
+            return GetVertices().Select(v => v.Coordinates);
+        }
+
+        public void AddEnd(EdgePath edgePath, bool dir)
+        {
+            EdgePaths.Add(edgePath);
+            PathDirectionList.Add(dir);
+        }
+
+        public void AddEnd(EdgePath edgePath)
+        {
+            if (LastVertex == null) PathDirectionList.Add(true);
+            else PathDirectionList.Add(edgePath.From == LastVertex);
+            EdgePaths.Add(edgePath);
+        }
+
+        public void AddBegin(EdgePath edgePath, bool dir)
+        {
+            EdgePaths.Insert(0, edgePath);
+            PathDirectionList.Insert(0, dir);
+        }
+
+        public void AddBegin(EdgePath edgePath)
+        {
+            if (LastVertex == null) PathDirectionList.Add(true);
+            PathDirectionList.Insert(0, edgePath.To == FirstVertex);
+            EdgePaths.Insert(0, edgePath);
+        }
+
+        /// <summary>
+        /// Gets the vertices.
+        /// </summary>
+        /// <returns>IEnumerable&lt;Vertex&gt;.</returns>
+        public new IEnumerable<Vertex> GetVertices()
+        {
+            if (EdgePaths.Count == 0) new List<Vertex>();
+            var vertices = new List<Vertex>();
+            foreach (var edgePath in EdgePaths)
+                vertices.AddRange(edgePath.GetVertices());
+            if(IsClosed)
+                vertices.RemoveAt(vertices.Count - 1);//Remove the last vertex. This is duplicate=            
+            return vertices;
+        }
+
+        public new bool UpdateIsClosed()
+        {
+            if (EdgePaths == null)
+                IsClosed = false;
+            else if(EdgePaths.Count == 1 && EdgePaths[0].IsClosed)
+                IsClosed = true;
+            else
+            {
+                var lastVertex = PathDirectionList[^1] ? EdgePaths[^1].To : EdgePaths[^1].From;
+                IsClosed = (FirstVertex == lastVertex);
+            }
+            return IsClosed;
+        }
+
+        /// <summary>
+        /// Gets the first vertex.
+        /// </summary>
+        /// <value>The first vertex.</value>
+        [JsonIgnore]
+        public new Vertex FirstVertex
+        {
+            get
+            {
+                if (PathDirectionList == null || PathDirectionList.Count == 0) return null;
+                return PathDirectionList[0] ? EdgePaths[0].From : EdgePaths[0].To;
+            }
+        }
+
+        /// <summary>
+        /// Gets the last vertex.
+        /// </summary>
+        /// <value>The last vertex.</value>
+        [JsonIgnore]
+        public new Vertex LastVertex
+        {
+            get
+            {
+                if (PathDirectionList == null || PathDirectionList.Count == 0) return null;
+                // the following condition uses the edge direction of course, but it also checks
+                // to see if it is closed because - if it is closed then the last and the first would
+                // be repeated. To prevent this, we quickly check that if direction is true use To
+                // unless it's closed, then use From (True-False), go through the four cases in your mind
+                // and you see that this checks out.
+                if (PathDirectionList[^1] != IsClosed) return EdgePaths[^1].To;
+                else return EdgePaths[^1].From;
+            }
         }
     }
 }

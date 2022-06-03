@@ -18,6 +18,12 @@ namespace TVGL
         }
 
         /// <summary>
+        /// Gets or sets the curve.
+        /// </summary>
+        /// <value>The curve.</value>
+        public ICurve Curve { get; set; }
+
+        /// <summary>
         /// Gets the edges and direction.
         /// </summary>
         /// <value>The edges and direction.</value>
@@ -48,7 +54,7 @@ namespace TVGL
         /// </summary>
         /// <value><c>true</c> if [border is closed]; otherwise, <c>false</c>.</value>
 
-        public bool IsClosed { get; private set; }
+        public bool IsClosed { get; internal set; }
 
         public bool UpdateIsClosed()
         {
@@ -75,6 +81,13 @@ namespace TVGL
                 return EdgeList.Count + 1;
             }
         }
+
+        /// <summary>
+        /// From and To are alternate ways to call first and last vertex that match the same naming as Edges.
+        /// </summary>
+        public Vertex From => FirstVertex;
+        public Vertex To => LastVertex;
+
         /// <summary>
         /// Gets the first vertex.
         /// </summary>
@@ -88,6 +101,7 @@ namespace TVGL
                 return DirectionList[0] ? EdgeList[0].From : EdgeList[0].To;
             }
         }
+
         /// <summary>
         /// Gets the last vertex.
         /// </summary>
@@ -115,6 +129,8 @@ namespace TVGL
         [JsonIgnore]
         public bool IsReadOnly => true;
 
+        public PrimitiveSurface OwnedPrimitive { get; set; }
+        public PrimitiveSurface OtherPrimitive { get; set; }
 
         [JsonIgnore]
         public (Edge edge, bool dir) this[int index]
@@ -145,6 +161,11 @@ namespace TVGL
                 if (DirectionList[^1]) yield return EdgeList[^1].To;
                 else yield return EdgeList[^1].From;
             }
+        }
+
+        public IEnumerable<Vector3> AsVectors()
+        {
+            return GetVertices().Select(v => v.Coordinates);
         }
 
         public void AddEnd(Edge edge, bool dir)
