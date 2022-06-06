@@ -44,6 +44,16 @@ namespace TVGL
         /// <value>The plane.</value>
         [JsonIgnore]
         public PrimitiveSurface Surface { get; set; }
+        public new PrimitiveSurface OwnedPrimitive => throw new NotImplementedException();
+        public new PrimitiveSurface OtherPrimitive => throw new NotImplementedException();
+
+        public IEnumerable<PrimitiveSurface> AdjacentPrimitives()
+        {
+            foreach(var edgePath in EdgePaths)
+            {
+                yield return edgePath.OwnedPrimitive == Surface ? edgePath.OtherPrimitive : edgePath.OwnedPrimitive;
+            }
+        }
 
         /// <summary>
         /// Gets or sets the plane error.
@@ -62,6 +72,12 @@ namespace TVGL
         /// </summary>
         /// <value><c>true</c> if [encircles axis]; otherwise, <c>false</c>.</value>
         public bool EncirclesAxis { get; set; }
+
+        [JsonIgnore]
+        public new double InternalAngle => throw new NotImplementedException("Internal Angle does not make much sense for a border. Refer to individual edgePaths.");
+
+        [JsonIgnore]
+        public new CurvatureType Curvature => throw new NotImplementedException("Curvature does not make much sense for a border. Refer to individual edgePaths and below booleans.");
 
         /// <summary>
         /// Gets or sets a value indicating whether [border is fully concave].
@@ -188,26 +204,61 @@ namespace TVGL
             return copy;
         }
 
-        public void AddEnd(EdgePath edgePath, bool dir)
+        public void Add(EdgePath edgePath, bool addToEnd, bool dir)
+        {
+            if (addToEnd)
+                AddEnd(edgePath, dir);
+            else 
+                AddBegin(edgePath, dir);
+        }
+
+        private void AddEnd(EdgePath edgePath, bool dir)
         {
             EdgePaths.Add(edgePath);
             PathDirectionList.Add(dir);
-            foreach (var (edge, dir2) in edgePath)
+            //If addToEnd (true) == dir, iterate forward. Otherwise, add in reverse order.
+            if (dir)
             {
-                EdgeList.Add(edge);
-                DirectionList.Add(dir2 == dir);
+                foreach (var (edge, dir2) in edgePath)
+                {
+                    EdgeList.Add(edge);
+                    DirectionList.Add(dir2 == dir);
+                }
             }
+            else
+            {
+                for (var i = edgePath.Count - 1; i >= 0; i--)
+                {
+                    var (edge, dir2) = edgePath[i];
+                    EdgeList.Add(edge);
+                    DirectionList.Add(dir2 == dir);
+                }
+            }
+
         }
 
-        public void AddBegin(EdgePath edgePath, bool dir)
+        private void AddBegin(EdgePath edgePath, bool dir)
         {
             EdgePaths.Insert(0, edgePath);
             PathDirectionList.Insert(0, dir);
-            foreach (var (edge, dir2) in edgePath)
+            //If addToEnd (false) == dir, iterate forward. Otherwise, insert in reverse order.
+            if (!dir)
             {
-                EdgeList.Insert(0, edge);
-                DirectionList.Insert(0, dir2 == dir);
+                foreach(var (edge, dir2) in edgePath)
+                {
+                    EdgeList.Insert(0, edge);
+                    DirectionList.Insert(0, dir2 == dir);
+                }
             }
+            else
+            {
+                for (var i = edgePath.Count - 1; i >= 0; i--)
+                {
+                    var (edge, dir2) = edgePath[i];
+                    EdgeList.Insert(0, edge);
+                    DirectionList.Insert(0, dir2 == dir);
+                }
+            }  
         }
 
         public new bool UpdateIsClosed()

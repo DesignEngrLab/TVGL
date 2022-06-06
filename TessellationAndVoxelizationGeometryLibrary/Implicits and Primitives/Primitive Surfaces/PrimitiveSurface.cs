@@ -272,6 +272,13 @@ namespace TVGL
             return adjacentFaces;
         }
 
+        public IEnumerable<PrimitiveSurface> AdjacentPrimitives()
+        {
+            foreach(var border in Borders)
+                foreach(var prim in border.AdjacentPrimitives())
+                    yield return prim;
+        }
+
         public List<SurfaceBorder> Borders { get; set; }
 
         public IEnumerable<SurfaceBorder> BordersEncirclingAxis(Vector3 axis, Vector3 anchor)
@@ -302,31 +309,6 @@ namespace TVGL
             var borderPolygon = new Polygon(coords.Select(c => new Vector2(c.X, c.Y)));
             var center3d = anchor.ConvertTo2DCoordinates(transform);
             return borderPolygon.IsPointInsidePolygon(true, center3d);
-        }
-
-        private static void SetBorderConvexity(SurfaceBorder border)
-        {
-            var concave = 0;
-            var convex = 0;
-            var flat = 0;
-            foreach (var (edge, _) in border)
-            {
-                var p1 = edge.OwnedFace.OtherVertex(edge);
-                var p2 = edge.OtherFace.OtherVertex(edge);
-                var v1 = p2.Coordinates - p1.Coordinates;
-                var dot1 = v1.Dot(edge.OwnedFace.Normal);
-                var v2 = p1.Coordinates - p2.Coordinates;
-                var dot2 = v2.Dot(edge.OtherFace.Normal);
-                if (Math.Sign(dot1) != Math.Sign(dot2)) { }
-                if (dot1 < 0 && edge.Curvature == CurvatureType.Concave) { }
-                if (dot1 > 0 && edge.Curvature == CurvatureType.Convex && !edge.InternalAngle.IsNegligible(0.001)) { }
-                if (edge.InternalAngle.IsPracticallySame(Math.PI, Constants.SameFaceNormalDotTolerance)) flat++;
-                else if (edge.InternalAngle > Math.PI) concave++;
-                else convex++;
-            }
-            border.FullyFlush = flat > 0 && convex == 0 && concave == 0;
-            border.FullyConcave = concave > 0 && flat == 0 && convex == 0;
-            border.FullyConvex = convex > 0 && flat == 0 && concave == 0;
         }
 
         [JsonIgnore]
@@ -419,6 +401,16 @@ namespace TVGL
                     shared.Add(edge);
             }
             return shared;
+        }
+
+
+        public EdgePath GetSharedEdgePath(PrimitiveSurface other)
+        {
+            foreach (var border in Borders)
+                foreach (var edgePath in border.EdgePaths)
+                    if (edgePath.GetSecondPrimitive(this) == other)
+                        return edgePath;
+            return null;
         }
 
         public IEnumerable<Vector3[]> GetVectors()

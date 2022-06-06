@@ -62,6 +62,54 @@ namespace TVGL
             }
         }
 
+        private double _internalAngle = -10.0;
+        [JsonIgnore]
+        public double InternalAngle
+        {
+            get
+            {
+                if (_internalAngle.Equals(-10.0))
+                    _internalAngle = EdgeList.Average(e => e.InternalAngle);
+                return _internalAngle;
+            }
+        }
+
+        private CurvatureType _curvature = CurvatureType.Undefined;
+        [JsonIgnore]
+        public CurvatureType Curvature
+        {
+            get
+            {
+                if (_curvature == CurvatureType.Undefined)
+                    SetCurvature();
+                return _curvature;
+            }
+        }
+
+        private void SetCurvature()
+        {
+            var concave = 0;
+            var convex = 0;
+            var flat = 0;
+            foreach (var (edge, _) in this)
+            {
+                if (edge.InternalAngle.IsPracticallySame(Math.PI / 2, Constants.SameFaceNormalDotTolerance)) flat++;
+                else if (edge.Curvature == CurvatureType.Concave) concave++;
+                else if (edge.Curvature == CurvatureType.Convex) convex++;
+            }
+            var flush = flat > 0 && convex == 0 && concave == 0;
+            var fullyConcave = concave > 0 && flat == 0 && convex == 0;
+            var fullyConvex = convex > 0 && flat == 0 && concave == 0;
+            if (flush)
+                _curvature = CurvatureType.SaddleOrFlat;
+            else if (fullyConcave)
+                _curvature = CurvatureType.Concave;
+            else if (fullyConvex)
+                _curvature = CurvatureType.Convex;
+            else
+                _curvature = CurvatureType.SaddleOrFlat;
+        }
+
         /// <summary>
         /// Gets or sets a value indicating whether [border is closed].
         /// </summary>
@@ -144,6 +192,10 @@ namespace TVGL
 
         public PrimitiveSurface OwnedPrimitive { get; set; }
         public PrimitiveSurface OtherPrimitive { get; set; }
+        public PrimitiveSurface GetSecondPrimitive(PrimitiveSurface prim)
+        {
+            return prim == OwnedPrimitive ? OtherPrimitive : OwnedPrimitive;
+        }
 
         [JsonIgnore]
         public (Edge edge, bool dir) this[int index]
@@ -160,7 +212,7 @@ namespace TVGL
         /// Gets the vertices.
         /// </summary>
         /// <returns>IEnumerable&lt;Vertex&gt;.</returns>
-        public IEnumerable<Vertex> GetVertices()
+        public IEnumerable<Vertex> GetVertices(bool keepLastVertex = false)
         {
             if (EdgeList.Count == 0) yield break;
             for (int i = 0; i < EdgeList.Count; i++)
@@ -168,7 +220,7 @@ namespace TVGL
                 if (DirectionList[i]) yield return EdgeList[i].From;
                 else yield return EdgeList[i].To;
             }
-            if (!IsClosed) //only add the last one if not a closed loop since it would otherwise
+            if (!keepLastVertex && !IsClosed) //only add the last one if not a closed loop since it would otherwise
                            // repeat the first point
             {
                 if (DirectionList[^1]) yield return EdgeList[^1].To;
@@ -176,9 +228,9 @@ namespace TVGL
             }
         }
 
-        public IEnumerable<Vector3> AsVectors()
+        public IEnumerable<Vector3> AsVectors(bool keepLastVertex = false)
         {
-            return GetVertices().Select(v => v.Coordinates);
+            return GetVertices(keepLastVertex).Select(v => v.Coordinates);
         }
 
         public void AddEnd(Edge edge, bool dir)
