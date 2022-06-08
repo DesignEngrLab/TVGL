@@ -458,6 +458,17 @@ namespace TVGL
             Normal = originalToBeCopied.Normal;
         }
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Plane"/> class.
+        /// </summary>
+        /// <param name="originalToBeCopied">The original to be copied.</param>
+        public Plane(Plane originalToBeCopied, int[] newFaceIndices, TessellatedSolid copiedTessellatedSolid)
+            : base(newFaceIndices, copiedTessellatedSolid)
+        {
+            DistanceToOrigin = originalToBeCopied.DistanceToOrigin;
+            Normal = originalToBeCopied.Normal;
+        }
+
         public override double CalculateError(IEnumerable<Vector3> vertices = null)
         {
             if (vertices == null)

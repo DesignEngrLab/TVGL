@@ -59,6 +59,18 @@ namespace TVGL
             Axis = originalToBeCopied.Axis;
         }
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Cone"/> class.
+        /// </summary>
+        /// <param name="originalToBeCopied">The original to be copied.</param>
+        public Cone(Cone originalToBeCopied, int[] newFaceIndices, TessellatedSolid copiedTessellatedSolid)
+            : base(newFaceIndices, copiedTessellatedSolid)
+        {
+            IsPositive = originalToBeCopied.IsPositive;
+            Aperture = originalToBeCopied.Aperture;
+            Apex = originalToBeCopied.Apex;
+            Axis = originalToBeCopied.Axis;
+        }
 
         /// <summary>
         ///     Is the cone positive? (false is negative)

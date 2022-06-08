@@ -33,6 +33,13 @@ namespace TVGL
             FaceIndices = originalToBeCopied.Faces.Select(f => f.IndexInList).ToArray();
             CompletePostSerialization(copiedTessellatedSolid);
         }
+
+        protected PrimitiveSurface(int[] newFaceIndices, TessellatedSolid copiedTessellatedSolid)
+        {
+            FaceIndices = newFaceIndices;
+            CompletePostSerialization(copiedTessellatedSolid);
+            _area = Faces.Sum(f => f.Area);
+        }
         /// <summary>
         ///     Initializes a new instance of the <see cref="PrimitiveSurface" /> class.
         /// </summary>

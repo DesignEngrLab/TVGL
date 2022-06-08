@@ -24,6 +24,12 @@ namespace TVGL
         public ICurve Curve { get; set; }
 
         /// <summary>
+        /// Gets or sets the curve error.
+        /// </summary>
+        /// <value>The curve error.</value>
+        public double CurveError { get; set; }
+
+        /// <summary>
         /// Gets whether the [edge path is circular].
         /// </summary>
         [JsonIgnore]

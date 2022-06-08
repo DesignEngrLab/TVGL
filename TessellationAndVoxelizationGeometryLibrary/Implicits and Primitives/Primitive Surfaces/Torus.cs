@@ -66,6 +66,20 @@ namespace TVGL
         }
 
         /// <summary>
+        /// Initializes a new instance of the <see cref="Torus"/> class.
+        /// </summary>
+        /// <param name="originalToBeCopied">The original to be copied.</param>
+        public Torus(Torus originalToBeCopied, int[] newFaceIndices, TessellatedSolid copiedTessellatedSolid)
+            : base(newFaceIndices, copiedTessellatedSolid)
+        {
+            IsPositive = originalToBeCopied.IsPositive;
+            Center = originalToBeCopied.Center;
+            Axis = originalToBeCopied.Axis;
+            MajorRadius = originalToBeCopied.MajorRadius;
+            MinorRadius = originalToBeCopied.MinorRadius;
+        }
+
+        /// <summary>
         ///     Is the torus positive? (false is negative)
         /// </summary>
         public bool IsPositive;

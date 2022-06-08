@@ -62,22 +62,10 @@ namespace TVGL
         public double SurfaceError { get; set; }
 
         /// <summary>
-        /// Gets or sets the curve error.
-        /// </summary>
-        /// <value>The curve error.</value>
-        public double CurveError { get; set; }
-
-        /// <summary>
         /// Gets or sets a value indicating whether [encircles axis].
         /// </summary>
         /// <value><c>true</c> if [encircles axis]; otherwise, <c>false</c>.</value>
         public bool EncirclesAxis { get; set; }
-
-        [JsonIgnore]
-        public new double InternalAngle => throw new NotImplementedException("Internal Angle does not make much sense for a border. Refer to individual edgePaths.");
-
-        [JsonIgnore]
-        public new CurvatureType Curvature => throw new NotImplementedException("Curvature does not make much sense for a border. Refer to individual edgePaths and below booleans.");
 
         /// <summary>
         /// Gets or sets a value indicating whether [border is fully concave].
@@ -98,19 +86,6 @@ namespace TVGL
         public bool FullyFlush { get; set; }
 
         /// <summary>
-        /// Gets whether the [border is circular].
-        /// </summary>
-        /// <value><c>true</c> if [encircles axis]; otherwise, <c>false</c>.</value>
-        [JsonIgnore]
-        public new bool IsCircular
-        {
-            get
-            {
-                return EdgePaths.Count == 1 && EdgePaths[0].IsCircular;
-            }
-        }
-
-        /// <summary>
         /// Gets the center of the circle if the border is a circle.
         /// </summary>
         /// <value>The plane.</value>
@@ -120,9 +95,8 @@ namespace TVGL
             get
             {
                 if (IsCircular)
-                    return Surface.TransformFrom2DTo3D(((Circle)EdgePaths[0].Curve).Center);
+                    return Surface.TransformFrom2DTo3D(((Circle)Curve).Center);
                 return Vector3.Null;
-
             }
         }
 

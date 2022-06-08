@@ -295,6 +295,18 @@ namespace TVGL
             Radius = originalToBeCopied.Radius;
         }
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Sphere"/> class.
+        /// </summary>
+        /// <param name="originalToBeCopied">The original to be copied.</param>
+        public Sphere(Sphere originalToBeCopied, int[] newFaceIndices, TessellatedSolid copiedTessellatedSolid)
+            : base(newFaceIndices, copiedTessellatedSolid)
+        {
+            IsPositive = originalToBeCopied.IsPositive;
+            Center = originalToBeCopied.Center;
+            Radius = originalToBeCopied.Radius;
+        }
+
         #endregion
 
         #region Public Properties
