@@ -13,7 +13,6 @@
 // ***********************************************************************
 using Newtonsoft.Json;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -23,35 +22,42 @@ namespace TVGL
     /// Class PrimitiveSurfaceBorder.
     /// </summary>
     [JsonObject]
-    public class SurfaceBorder : EdgePath
+    public class PrimitiveBorder : EdgePath
     {
+        /// <summary>
+        /// Default instance of the <see cref="PrimitiveBorder"/>.
+        /// </summary>
+        public PrimitiveBorder() : base()
+        {
+            Segments = new List<BorderSegment>();
+            SegmentDirections = new List<bool>();
+        }
+
         /// <summary>
         /// Gets or sets the curve.
         /// </summary>
         /// <value>The curve.</value>
-        public List<EdgePath> EdgePaths { get; set; }
+        public List<BorderSegment> Segments { get; set; }
 
         /// <summary>
         /// Gets the edges and direction.
         /// </summary>
         /// <value>The edges and direction.</value>
         [JsonIgnore]
-        public List<bool> PathDirectionList { get; protected set; }
+        public List<bool> SegmentDirections { get; protected set; }
 
         /// <summary>
         /// Gets or sets the plane.
         /// </summary>
         /// <value>The plane.</value>
         [JsonIgnore]
-        public PrimitiveSurface Surface { get; set; }
-        public new PrimitiveSurface OwnedPrimitive => throw new NotImplementedException();
-        public new PrimitiveSurface OtherPrimitive => throw new NotImplementedException();
+        public PrimitiveSurface OwnedPrimitive { get; set; }
 
         public IEnumerable<PrimitiveSurface> AdjacentPrimitives()
         {
-            foreach(var edgePath in EdgePaths)
+            foreach(var segment in Segments)
             {
-                yield return edgePath.OwnedPrimitive == Surface ? edgePath.OtherPrimitive : edgePath.OwnedPrimitive;
+                yield return segment.OwnedPrimitive == OwnedPrimitive ? segment.OtherPrimitive : segment.OwnedPrimitive;
             }
         }
 
@@ -86,6 +92,31 @@ namespace TVGL
         public bool FullyFlush { get; set; }
 
         /// <summary>
+        /// Gets or sets the curve.
+        /// </summary>
+        /// <value>The curve.</value>
+        public ICurve Curve { get; set; }
+
+        /// <summary>
+        /// Gets or sets the curve error.
+        /// </summary>
+        /// <value>The curve error.</value>
+        public double CurveError { get; set; }
+
+        /// <summary>
+        /// Gets whether the [edge path is circular].
+        /// </summary>
+        [JsonIgnore]
+        public bool IsCircular
+        {
+            get
+            {
+                if (Curve == null) return false;
+                return Curve is Circle;
+            }
+        }
+
+        /// <summary>
         /// Gets the center of the circle if the border is a circle.
         /// </summary>
         /// <value>The plane.</value>
@@ -95,52 +126,31 @@ namespace TVGL
             get
             {
                 if (IsCircular)
-                    return Surface.TransformFrom2DTo3D(((Circle)Curve).Center);
+                    return OwnedPrimitive.TransformFrom2DTo3D(((Circle)Curve).Center);
                 return Vector3.Null;
             }
         }
 
-        public SurfaceBorder(ICurve curve, PrimitiveSurface surface, EdgePath path, double curveError,
+        public PrimitiveBorder(ICurve curve, PrimitiveSurface surface, EdgePath path, double curveError,
             double surfError) : this(curve, surface, path.EdgeList, path.DirectionList, curveError, surfError)
         {
             EdgeList = path.EdgeList;
             DirectionList = path.DirectionList;
             Curve = curve;
-            Surface = surface;
+            OwnedPrimitive = surface;
             CurveError = curveError;
             SurfaceError = surfError;
         }
-        public SurfaceBorder(ICurve curve, PrimitiveSurface surface, List<Edge> edges, List<bool> directions,
+
+        public PrimitiveBorder(ICurve curve, PrimitiveSurface surface, List<Edge> edges, List<bool> directions,
             double curveError, double surfError)
         {
             EdgeList = edges;
             DirectionList = directions;
             Curve = curve;
-            Surface = surface;
+            OwnedPrimitive = surface;
             CurveError = curveError;
             SurfaceError = surfError;
-        }
-
-        public double PlaneResidualRatio(Vector3 coordinates, double tolerance)
-        {
-            var denominator = Math.Max(SurfaceError, tolerance);
-            return CalcPlaneError(coordinates) / denominator;
-        }
-
-        private double CalcPlaneError(Vector3 point)
-        {
-            return Surface.CalculateError(new[] { point });
-        }
-
-        public double CurveResidualRatio(Vector3 coordinates, double tolerance)
-        {
-            var denominator = Math.Max(CurveError, tolerance);
-            return CalcError(coordinates) / denominator;
-        }
-
-        private double CalcError(Vector3 point)
-        {
-            return Curve.SquaredErrorOfNewPoint(Surface.TransformFrom3DTo2D(point));
         }
 
         [JsonIgnore]
@@ -149,26 +159,17 @@ namespace TVGL
             get
             {
                 if (_polygon == null)
-                    _polygon = new Polygon(Surface.TransformFrom3DTo2D(AsVectors(), IsClosed));
+                    _polygon = new Polygon(OwnedPrimitive.TransformFrom3DTo2D(AsVectors(), IsClosed));
                 return _polygon;
             }
         }
         private Polygon _polygon;
 
-        /// <summary>
-        /// Prevents a default instance of the <see cref="SurfaceBorder"/> class from being created.
-        /// </summary>
-        public SurfaceBorder()
-        {
-            EdgePaths = new List<EdgePath>();
-            PathDirectionList = new List<bool>();
-        }
-
-        public SurfaceBorder Copy(PrimitiveSurface copiedSurface, bool reverse = false, TessellatedSolid copiedTessellatedSolid = null,
+        public PrimitiveBorder Copy(PrimitiveSurface copiedSurface, bool reverse = false, TessellatedSolid copiedTessellatedSolid = null,
             int startIndex = 0, int endIndex = -1)
         {
-            var copy = new SurfaceBorder();
-            copy.Surface = copiedSurface;
+            var copy = new PrimitiveBorder();
+            copy.OwnedPrimitive = copiedSurface;
             copy.Curve = Curve;
             copy.EncirclesAxis = EncirclesAxis;
             copy.FullyFlush = FullyFlush;
@@ -178,22 +179,22 @@ namespace TVGL
             return copy;
         }
 
-        public void Add(EdgePath edgePath, bool addToEnd, bool dir)
+        public void Add(BorderSegment segment, bool addToEnd, bool dir)
         {
             if (addToEnd)
-                AddEnd(edgePath, dir);
+                AddEnd(segment, dir);
             else 
-                AddBegin(edgePath, dir);
+                AddBegin(segment, dir);
         }
 
-        private void AddEnd(EdgePath edgePath, bool dir)
+        private void AddEnd(BorderSegment segment, bool dir)
         {
-            EdgePaths.Add(edgePath);
-            PathDirectionList.Add(dir);
+            Segments.Add(segment);
+            SegmentDirections.Add(dir);
             //If addToEnd (true) == dir, iterate forward. Otherwise, add in reverse order.
             if (dir)
             {
-                foreach (var (edge, dir2) in edgePath)
+                foreach (var (edge, dir2) in segment)
                 {
                     EdgeList.Add(edge);
                     DirectionList.Add(dir2 == dir);
@@ -201,9 +202,9 @@ namespace TVGL
             }
             else
             {
-                for (var i = edgePath.Count - 1; i >= 0; i--)
+                for (var i = segment.Count - 1; i >= 0; i--)
                 {
-                    var (edge, dir2) = edgePath[i];
+                    var (edge, dir2) = segment[i];
                     EdgeList.Add(edge);
                     DirectionList.Add(dir2 == dir);
                 }
@@ -211,14 +212,14 @@ namespace TVGL
 
         }
 
-        private void AddBegin(EdgePath edgePath, bool dir)
+        private void AddBegin(BorderSegment segment, bool dir)
         {
-            EdgePaths.Insert(0, edgePath);
-            PathDirectionList.Insert(0, dir);
+            Segments.Insert(0, segment);
+            SegmentDirections.Insert(0, dir);
             //If addToEnd (false) == dir, iterate forward. Otherwise, insert in reverse order.
             if (!dir)
             {
-                foreach(var (edge, dir2) in edgePath)
+                foreach(var (edge, dir2) in segment)
                 {
                     EdgeList.Insert(0, edge);
                     DirectionList.Insert(0, dir2 == dir);
@@ -226,9 +227,9 @@ namespace TVGL
             }
             else
             {
-                for (var i = edgePath.Count - 1; i >= 0; i--)
+                for (var i = segment.Count - 1; i >= 0; i--)
                 {
-                    var (edge, dir2) = edgePath[i];
+                    var (edge, dir2) = segment[i];
                     EdgeList.Insert(0, edge);
                     DirectionList.Insert(0, dir2 == dir);
                 }
@@ -237,13 +238,13 @@ namespace TVGL
 
         public new bool UpdateIsClosed()
         {
-            if (EdgePaths == null)
+            if (Segments == null)
                 IsClosed = false;
-            else if (EdgePaths.Count == 1 && EdgePaths[0].IsClosed)
+            else if (Segments.Count == 1 && Segments[0].IsClosed)
                 IsClosed = true;
             else
             {
-                var lastVertex = PathDirectionList[^1] ? EdgePaths[^1].To : EdgePaths[^1].From;
+                var lastVertex = SegmentDirections[^1] ? Segments[^1].LastVertex : Segments[^1].FirstVertex;
                 IsClosed = (FirstVertex == lastVertex);
             }
             return IsClosed;
@@ -251,15 +252,15 @@ namespace TVGL
 
         public new void Clear()
         {
-            EdgePaths.Clear();
-            PathDirectionList.Clear();
+            Segments.Clear();
+            SegmentDirections.Clear();
             EdgeList.Clear();
             DirectionList.Clear();
         }
 
         internal bool Contains(EdgePath path)
         {
-            return EdgePaths.Contains(path);
+            return Segments.Contains(path);
         }
 
         /// <summary>
@@ -271,8 +272,8 @@ namespace TVGL
         {
             get
             {
-                if (PathDirectionList == null || PathDirectionList.Count == 0) return null;
-                return PathDirectionList[0] ? EdgePaths[0].From : EdgePaths[0].To;
+                if (SegmentDirections == null || SegmentDirections.Count == 0) return null;
+                return SegmentDirections[0] ? Segments[0].FirstVertex : Segments[0].LastVertex;
             }
         }
 
@@ -285,14 +286,14 @@ namespace TVGL
         {
             get
             {
-                if (PathDirectionList == null || PathDirectionList.Count == 0) return null;
+                if (SegmentDirections == null || SegmentDirections.Count == 0) return null;
                 // the following condition uses the edge direction of course, but it also checks
                 // to see if it is closed because - if it is closed then the last and the first would
                 // be repeated. To prevent this, we quickly check that if direction is true use To
                 // unless it's closed, then use From (True-False), go through the four cases in your mind
                 // and you see that this checks out.
-                if (PathDirectionList[^1] != IsClosed) return EdgePaths[^1].To;
-                else return EdgePaths[^1].From;
+                if (SegmentDirections[^1] != IsClosed) return Segments[^1].LastVertex;
+                else return Segments[^1].FirstVertex;
             }
         }
     }

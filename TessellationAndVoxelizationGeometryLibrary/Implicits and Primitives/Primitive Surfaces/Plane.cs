@@ -469,6 +469,19 @@ namespace TVGL
             Normal = originalToBeCopied.Normal;
         }
 
+        public static double CalculateError(IEnumerable<Vector3> vertices, out Vector3 normal, out double dto)
+        {
+            DefineNormalAndDistanceFromVertices(vertices, out dto, out normal);
+            var maxError = 0.0;
+            foreach (var c in vertices)
+            {
+                var d = Math.Abs(c.Dot(normal) - dto);
+                if (d > maxError)
+                    maxError = d;
+            }
+            return maxError;
+        }
+
         public override double CalculateError(IEnumerable<Vector3> vertices = null)
         {
             if (vertices == null)

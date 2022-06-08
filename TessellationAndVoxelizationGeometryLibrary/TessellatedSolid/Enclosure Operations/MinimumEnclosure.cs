@@ -698,7 +698,7 @@ namespace TVGL
         /// <param name="edges">The edges.</param>
         /// <param name="FacesToContain">The faces to contain.</param>
         /// <returns>IEnumerable&lt;SurfaceBorder&gt;.</returns>
-        public static IEnumerable<SurfaceBorder> GetLoops(this HashSet<Edge> edges, HashSet<PolygonalFace> FacesToContain)
+        public static IEnumerable<PrimitiveBorder> GetLoops(this HashSet<Edge> edges, HashSet<PolygonalFace> FacesToContain)
         {
             while (edges.Any())
             {
@@ -707,7 +707,7 @@ namespace TVGL
                 var correctDirection = FacesToContain.Contains(currentEdge.OwnedFace);
                 var startVertex = correctDirection ? currentEdge.From : currentEdge.To;
                 var currentVertex = correctDirection ? currentEdge.To : currentEdge.From;
-                var border = new SurfaceBorder();
+                var border = new PrimitiveBorder();
                 border.AddEnd(currentEdge, correctDirection);
                 foreach (var forwardDir in new[] { true, false })
                 {

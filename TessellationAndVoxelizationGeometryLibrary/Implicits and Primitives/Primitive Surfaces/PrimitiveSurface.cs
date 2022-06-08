@@ -286,9 +286,9 @@ namespace TVGL
                     yield return prim;
         }
 
-        public List<SurfaceBorder> Borders { get; set; }
+        public List<PrimitiveBorder> Borders { get; set; }
 
-        public IEnumerable<SurfaceBorder> BordersEncirclingAxis(Vector3 axis, Vector3 anchor)
+        public IEnumerable<PrimitiveBorder> BordersEncirclingAxis(Vector3 axis, Vector3 anchor)
         {
             var transform = axis.TransformToXYPlane(out _);
             foreach (var border in Borders)
@@ -411,12 +411,12 @@ namespace TVGL
         }
 
 
-        public EdgePath GetSharedEdgePath(PrimitiveSurface other)
+        public BorderSegment GetSharedBorderSegment(PrimitiveSurface other)
         {
             foreach (var border in Borders)
-                foreach (var edgePath in border.EdgePaths)
-                    if (edgePath.GetSecondPrimitive(this) == other)
-                        return edgePath;
+                foreach (var segment in border.Segments)
+                    if (segment.GetSecondPrimitive(this) == other)
+                        return segment;
             return null;
         }
 
