@@ -15,6 +15,11 @@ namespace TVGL
     [JsonObject(MemberSerialization.OptOut)]
     public abstract class PrimitiveSurface
     {
+        public string Type()
+        {
+            return GetType().ToString().Replace("TVGL.", "");
+        }
+
         #region Constructors
 
         /// <summary>
