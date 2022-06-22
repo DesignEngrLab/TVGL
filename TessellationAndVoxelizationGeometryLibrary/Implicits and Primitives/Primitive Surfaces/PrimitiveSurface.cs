@@ -20,6 +20,19 @@ namespace TVGL
             return GetType().ToString().Replace("TVGL.", "");
         }
 
+        private double _residual = -1.0;
+        [JsonIgnore]
+        public double Residual 
+        {
+            get 
+            {
+                if (_residual == -1.0)
+                    _residual = CalculateError();
+                return _residual;
+            }
+            set { _residual = value; }
+        }
+
         #region Constructors
 
         /// <summary>
