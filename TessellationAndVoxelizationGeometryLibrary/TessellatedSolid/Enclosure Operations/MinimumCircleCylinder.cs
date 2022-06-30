@@ -328,7 +328,7 @@ namespace TVGL
             //   The shortest distance determines the diameter of the inner circle.
             foreach (var point in polygon.Path)
             {
-                var d = point.Distance(centerPoint);
+                var d = point.DistanceSquared(centerPoint);
                 if (d < shortestDistance) shortestDistance = d;
             }
 
