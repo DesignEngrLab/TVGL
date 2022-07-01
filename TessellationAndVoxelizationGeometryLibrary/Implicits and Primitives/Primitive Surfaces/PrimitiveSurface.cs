@@ -39,10 +39,10 @@ namespace TVGL
         ///     Initializes a new instance of the <see cref="PrimitiveSurface" /> class.
         /// </summary>
         /// <param name="faces">The faces.</param>
-        protected PrimitiveSurface(IEnumerable<PolygonalFace> faces)
+        protected PrimitiveSurface(IEnumerable<PolygonalFace> faces, bool connectFacesToPrimitive = true)
         {
             if (faces == null) return;
-            SetFacesAndVertices(faces);
+            SetFacesAndVertices(faces, connectFacesToPrimitive);
         }
 
         protected PrimitiveSurface(PrimitiveSurface originalToBeCopied, TessellatedSolid copiedTessellatedSolid)
@@ -67,11 +67,12 @@ namespace TVGL
 
         #endregion Constructors
 
-        public void SetFacesAndVertices(IEnumerable<PolygonalFace> faces)
+        public void SetFacesAndVertices(IEnumerable<PolygonalFace> faces, bool connectFacesToPrimitive = true)
         {
             Faces = new HashSet<PolygonalFace>(faces);
-            foreach (var face in Faces)
-                face.BelongsToPrimitive = this;
+            if(connectFacesToPrimitive)
+                foreach (var face in Faces)
+                    face.BelongsToPrimitive = this;
             Vertices = new HashSet<Vertex>(Faces.SelectMany(f => f.Vertices).Distinct());
         }
 
