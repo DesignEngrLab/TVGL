@@ -245,7 +245,8 @@ namespace TVGL
             reverseVertexOrder = !suggestedNormal.IsNull() && suggestedNormal.Dot(areaVector) < 0;
             // to be more accurate, call another function to best fit a plane through the points
             Plane.DefineNormalAndDistanceFromVertices(vertices, out var distance, out var normal);
-            if ((!suggestedNormal.IsNull() && suggestedNormal.Dot(normal) < 0) || (areaVector.Dot(normal) < 0))
+            if ((!suggestedNormal.IsNull() && suggestedNormal.Dot(normal) < 0) || 
+                (suggestedNormal.IsNull() && areaVector.Dot(normal) < 0))
             {
                 normal *= -1;
                 distance *= -1;
