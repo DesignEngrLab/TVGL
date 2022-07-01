@@ -295,6 +295,69 @@ namespace TVGL
         }
 
         /// <summary>
+        ///     Gets all the flat patches, given a list of primitives.
+        /// </summary>
+        /// <param name="faces">The faces.</param>
+        /// <param name="tolerance">The toleranceForCombiningPoints.</param>
+        /// <param name="minSurfaceArea">The minimum surface area.</param>
+        /// <returns>List&lt;Flat&gt;.</returns>
+        public static IEnumerable<Plane> FindFlatPatches(this IEnumerable<PrimitiveSurface> primitives)
+        {
+            // to avoid re-enumerating the faces - make a list. If it's already a list, then you're fine to use directly. 
+            foreach (var prim in primitives)
+            {
+                if (prim is Plane plane)
+                {
+                    yield return plane;
+                    continue;
+                }
+                //Else
+                var usedFaces = new HashSet<PolygonalFace>();
+                foreach (var face in prim.Faces)
+                {
+                    if (usedFaces.Contains(face))
+                        continue;
+                    //Start a new flat patch
+                    usedFaces.Add(face);
+                    var flatPatch = new HashSet<PolygonalFace> { face };
+                    var stack = new Stack<PolygonalFace>(new[] { face });
+                    var flatVertices = new List<Vertex>(face.Vertices);
+                    var area = 0.0;
+                    var numFaces = 0;
+                    while (stack.Any())
+                    {
+                        var newFace = stack.Pop();
+                        //Add new adjacent faces to the stack for consideration
+                        //if the faces are already listed in the flat faces, the first
+                        //"if" statement in the while locations will ignore them.
+                        foreach (var edge in newFace.Edges)
+                        {
+                            var adjacentFace = edge.OwnedFace == newFace ? edge.OtherFace : edge.OwnedFace;
+                            if (adjacentFace == null || adjacentFace.BelongsToPrimitive != prim || usedFaces.Contains(adjacentFace)) continue;
+                            if (newFace.Normal.IsAligned(adjacentFace.Normal, Constants.SameFaceNormalDotTolerance)) continue;
+                            var otherVertex = adjacentFace.A != edge.From && adjacentFace.A != edge.To ? adjacentFace.A :
+                                adjacentFace.B != edge.From && adjacentFace.B != edge.To ? adjacentFace.B :
+                                adjacentFace.C;
+                            flatVertices.Add(otherVertex);
+                            if (!Plane.DefineNormalAndDistanceFromVertices(flatVertices, out double distanceToPlane, out Vector3 normal)
+                               || !distanceToPlane.IsPracticallySame(otherVertex.Dot(normal), Constants.SameFaceNormalDotTolerance * 10))
+                                flatVertices.RemoveAt(flatVertices.Count - 1);
+                            else
+                            {
+                                stack.Push(adjacentFace);
+                                usedFaces.Add(adjacentFace);
+                                flatPatch.Add(adjacentFace);
+                                area += adjacentFace.Area;
+                                numFaces++;
+                            }
+                        }
+                    }
+                    yield return new Plane(flatPatch, false);
+                }
+            }
+        }
+
+        /// <summary>
         ///     Gets a list of flats for a given list of faces.
         /// </summary>
         /// <param name="faces">The faces.</param>
