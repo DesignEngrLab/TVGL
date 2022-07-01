@@ -375,6 +375,27 @@ namespace TVGL
         }
 
         /// <summary>
+        /// Returns whether a point is within the X,Y,Z bounds of the primitive.
+        /// This is a fast, crude first step to determining interference.
+        /// </summary>
+        /// <param name="v"></param>
+        /// <returns></returns>
+        public bool WithinBounds(Vector3 v)
+        {
+            SetBounds();//ignores if already set.
+            var x = v.X;
+            if (x > MaxX) return false;
+            if (x < MinX) return false;
+            var y = v.Y;
+            if (y > MaxY) return false;
+            if (y < MinY) return false;
+            var z = v.Z;
+            if (z > MaxZ) return false;
+            if (z < MinZ) return false;
+            return true;
+        }
+
+        /// <summary>
         /// Gets the center of the bounding box.
         /// </summary>
         /// <value>The center of the bounding box.</value>
