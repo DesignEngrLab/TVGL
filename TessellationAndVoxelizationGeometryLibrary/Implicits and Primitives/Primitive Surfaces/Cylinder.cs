@@ -226,6 +226,10 @@ namespace TVGL
             Anchor = anchor;
             Radius = radius;
             IsPositive = isPositive;
+            var (min, max) = MinimumEnclosure.GetDistanceToExtremeVertex(Vertices, axis, out _, out _);//vertices are set in base constructor
+            MinDistanceAlongAxis = min;
+            MaxDistanceAlongAxis = max;
+            Height = MaxDistanceAlongAxis - MinDistanceAlongAxis;
         }
 
         /// <summary>
