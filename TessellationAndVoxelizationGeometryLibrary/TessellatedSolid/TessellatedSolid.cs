@@ -1191,8 +1191,9 @@ namespace TVGL
                     transformMatrix.M21, transformMatrix.M22, transformMatrix.M23,
                     transformMatrix.M31, transformMatrix.M32, transformMatrix.M33);
             _inertiaTensor *= rotMatrix;
-            foreach (var primitive in Primitives)
-                primitive.Transform(transformMatrix);
+            if(Primitives != null)
+                foreach (var primitive in Primitives)
+                    primitive.Transform(transformMatrix);
             this.SetNegligibleAreaFaceNormals(true);
         }
 

@@ -256,6 +256,12 @@ namespace TVGL
             face.BelongsToPrimitive = this;
         }
 
+        public void UpdateBelongsToPrimitive()
+        {
+            foreach (var face in Faces)
+                face.BelongsToPrimitive = this;
+        }
+
         public void CompletePostSerialization(TessellatedSolid ts)
         {
             Faces = new HashSet<PolygonalFace>();
