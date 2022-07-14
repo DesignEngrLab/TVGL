@@ -155,6 +155,8 @@ namespace TVGL
         [JsonProperty(ItemTypeNameHandling = TypeNameHandling.Auto, TypeNameHandling = TypeNameHandling.Auto)]
         public List<PrimitiveSurface> Primitives { get; set; }
 
+        public double TessellationError { get; set; }
+
         public double SameTolerance { get; set; }
 
         #endregion Fields and Properties
