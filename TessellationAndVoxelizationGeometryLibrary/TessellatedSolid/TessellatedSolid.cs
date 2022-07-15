@@ -163,10 +163,13 @@ namespace TVGL
         {
             //if (serializationData == null)
             serializationData = new Dictionary<string, JToken>();
-            serializationData.Add("ConvexHullVertices",
+            if(ConvexHull != null)
+            {
+                serializationData.Add("ConvexHullVertices",
                 JToken.FromObject(ConvexHull.Vertices.Select(v => v.IndexInList)));
-            serializationData.Add("ConvexHullFaces",
-                JToken.FromObject(ConvexHull.Faces.SelectMany(face => face.Vertices.Select(v => v.IndexInList))));
+                serializationData.Add("ConvexHullFaces",
+                    JToken.FromObject(ConvexHull.Faces.SelectMany(face => face.Vertices.Select(v => v.IndexInList))));
+            }
             serializationData.Add("FaceIndices",
                 JToken.FromObject(Faces.SelectMany(face => face.Vertices.Select(v => v.IndexInList)).ToArray()));
             serializationData.Add("VertexCoords",
@@ -176,7 +179,6 @@ namespace TVGL
             ? SolidColor.ToString()
             : JToken.FromObject(Faces.Select(f => f.Color)));
         }
-
 
         [OnDeserialized]
         protected void OnDeserializedMethod(StreamingContext context)
@@ -237,7 +239,6 @@ namespace TVGL
                 foreach (var surface in Primitives)
                     surface.CompletePostSerialization(this);
             }
-
         }
 
         /// <summary>
