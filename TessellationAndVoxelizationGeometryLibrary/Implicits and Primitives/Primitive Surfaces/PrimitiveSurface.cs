@@ -98,6 +98,26 @@ namespace TVGL
 
         public abstract double CalculateError(IEnumerable<Vector3> vertices = null);
 
+
+        [JsonIgnore]
+        //A tempory class used when importing primitives 
+        public List<List<int>> TriangleVertexIndices { get; set; }
+
+        public int[] FaceIndices
+        {
+            get
+            {
+                if (Faces == null && _faceIndices == null)
+                    return Array.Empty<int>();
+                if (Faces != null && (_faceIndices == null || _faceIndices.Length < Faces.Count))
+                    _faceIndices = Faces.Select(f => f.IndexInList).ToArray();
+                return _faceIndices;
+            }
+            set => _faceIndices = value;
+        }
+        int[] _faceIndices;
+
+        [JsonIgnore]
         public int Index { get; set; }
 
         /// <summary>
@@ -120,17 +140,6 @@ namespace TVGL
         /// <value>The polygonal faces.</value>
         [JsonIgnore]
         public HashSet<PolygonalFace> Faces { get; protected set; }
-
-        public int[] FaceIndices
-        {
-            get
-            {
-                if (Faces != null)
-                    return Faces.Select(f => f.IndexInList).ToArray();
-                return Array.Empty<int>();
-            }
-            set => _faceIndices = value;
-        }
 
         /// <summary>
         ///     Gets the vertices.
@@ -218,7 +227,6 @@ namespace TVGL
 
         private HashSet<Edge> _innerEdges;
         private HashSet<Edge> _outerEdges;
-        private int[] _faceIndices;
         private int[] _innerEdgeIndices;
         private int[] _outerEdgeIndices;
         private int[] _vertexIndices;

@@ -575,6 +575,114 @@ namespace TVGL
         }
 
         /// <summary>
+        /// Makes the faces, avoiding duplicates.
+        /// </summary>
+        /// <param name="faceToVertexIndices">The face to vertex indices.</param>
+        /// <param name="colors">The colors.</param>
+        /// <param name="doublyLinkToVertices">if set to <c>true</c> [doubly link to vertices].</param>
+        /// 
+        internal void MakeFaces(IList<int[]> faceToVertexIndices, IList<PrimitiveSurface> primitives, IList<Color> colors,
+            bool doublyLinkToVertices = true)
+        {
+            var duplicateFaceCheck = true;
+            HasUniformColor = true;
+            if (colors == null || !colors.Any() || colors.All(c => c == null))
+                SolidColor = new Color(Constants.DefaultColor);
+            else SolidColor = colors[0];
+            NumberOfFaces = faceToVertexIndices.Count;
+            var tempFaceIndices = new Dictionary<int, List<PolygonalFace>>(NumberOfFaces);
+            var faceChecksums = new Dictionary<long, int>();
+            if (NumberOfVertices > Constants.CubeRootOfLongMaxValue)
+            {
+                Message.output("Repeat Face check is disabled since the number of vertices exceeds "
+                               + Constants.CubeRootOfLongMaxValue);
+                duplicateFaceCheck = false;
+            }
+            var checksumMultiplier = duplicateFaceCheck
+                ? new List<long> { 1, NumberOfVertices, NumberOfVertices * NumberOfVertices }
+                : null;
+            for (var i = 0; i < NumberOfFaces; i++)
+            {
+                var faceToVertexIndexList = faceToVertexIndices[i];
+                if (duplicateFaceCheck)
+                {
+                    // first check to be sure that this is a new face and not a duplicate or a degenerate
+                    var checksum = FaceChecksum(checksumMultiplier, faceToVertexIndexList, out var orderedIndices);
+                    if (faceChecksums.ContainsKey(checksum)) continue; //Duplicate face. Do not create
+                    if (orderedIndices.Count < 3 || ContainsDuplicateIndices(orderedIndices)) continue;
+                    // if you made it passed these to "continue" conditions, then this is a valid new face
+                    faceChecksums.Add(checksum, i);
+                }
+                var faceVertices =
+                    faceToVertexIndexList.Select(vertexMatchingIndex => Vertices[vertexMatchingIndex]).ToArray();
+
+                var color = SolidColor;
+                if (colors != null)
+                {
+                    var j = i < colors.Count - 1 ? i : colors.Count - 1;
+                    if (colors[j] != null) color = colors[j];
+                    if (SolidColor == null || !SolidColor.Equals(color)) HasUniformColor = false;
+                }
+                if (faceVertices.Length == 3)
+                {
+                    var face = new PolygonalFace(faceVertices, doublyLinkToVertices);
+                    if (!HasUniformColor) face.Color = color;
+                    tempFaceIndices.Add(i, new List<PolygonalFace> { face });
+                }
+                else
+                {
+                    var normal = MiscFunctions.DetermineNormalForA3DPolygon(faceVertices, faceVertices.Length, out _, Vector3.Null, out _);
+                    var triangulatedList = faceVertices.Triangulate(normal);
+                    tempFaceIndices[i] = new List<PolygonalFace>();
+                    foreach (var vertexSet in triangulatedList)
+                    {
+                        var face = new PolygonalFace(vertexSet, normal, doublyLinkToVertices);
+                        if (!HasUniformColor) face.Color = color;
+                        tempFaceIndices[i].Add(face);
+                    }
+                }
+            }
+            //Set the faces and their indices
+            Faces = tempFaceIndices.Values.SelectMany(p => p).ToArray();
+            NumberOfFaces = Faces.GetLength(0);
+            for (var i = 0; i < NumberOfFaces; i++)
+                Faces[i].IndexInList = i;
+
+            //Connect the primitives to their faces through the vertex triangle[] and checksums
+            Primitives ??= new List<PrimitiveSurface>();
+            var addNonSmoothEdges = NonsmoothEdges == null;
+            if (addNonSmoothEdges)
+                NonsmoothEdges = new HashSet<Edge>();
+            if (primitives != null)
+            {
+                foreach (var primitive in primitives)
+                {
+                    //Get all the faces 
+                    //var faceIndi
+                    var faceIndices = new List<int>();
+                    foreach (var face in primitive.TriangleVertexIndices)
+                    {
+                        var checksum = FaceChecksum(checksumMultiplier, face, out var orderedIndices);
+                        faceIndices.AddRange(tempFaceIndices[faceChecksums[checksum]].Select(p => p.IndexInList));
+                    }
+                    primitive.FaceIndices = faceIndices.ToArray();
+                    primitive.TriangleVertexIndices.Clear();//Don't need these anymore
+                    Primitives.Add(primitive);
+                }
+            }
+        }
+
+        private long FaceChecksum(List<long> checksumMultiplier, IEnumerable<int> vertexIndices, out List<int> orderedIndices)
+        {
+            orderedIndices =
+                   new List<int>(vertexIndices.Select(index => Vertices[index].IndexInList));
+            orderedIndices.Sort();
+            while (orderedIndices.Count > checksumMultiplier.Count)
+                checksumMultiplier.Add((long)Math.Pow(NumberOfVertices, checksumMultiplier.Count));
+            return orderedIndices.Select((index, p) => index * checksumMultiplier[p]).Sum();
+        }
+
+        /// <summary>
         ///     Makes the vertices.
         /// </summary>
         /// <param name="vertsPerFace">The verts per face.</param>

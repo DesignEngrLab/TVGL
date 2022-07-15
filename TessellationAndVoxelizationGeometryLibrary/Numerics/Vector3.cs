@@ -56,6 +56,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <param name="y">The Y component.</param>
         /// <param name="z">The Z component.</param>
         [Intrinsic]
+        [JsonConstructor]
         public Vector3(double x, double y, double z)
         {
             X = x;
