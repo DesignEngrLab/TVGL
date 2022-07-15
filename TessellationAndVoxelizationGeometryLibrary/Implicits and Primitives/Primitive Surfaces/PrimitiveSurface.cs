@@ -81,12 +81,9 @@ namespace TVGL
         public abstract Vector2 TransformFrom3DTo2D(Vector3 point);
         public abstract Vector3 TransformFrom2DTo3D(Vector2 point);
 
-        public List<List<int>> TriangleVertexIndices
-        {
-            get =>  _triangleVertexIndices;
-            set => _triangleVertexIndices = value;
-        }
-        List<List<int>> _triangleVertexIndices;
+        [JsonIgnore]
+        //A tempory class used when importing primitives 
+        public List<List<int>> TriangleVertexIndices { get; set; }
 
         public int[] FaceIndices
         {
@@ -101,7 +98,6 @@ namespace TVGL
             set => _faceIndices = value;
         }
         int[] _faceIndices;
-
 
         [JsonIgnore]
         public int Index { get; set; }
@@ -127,8 +123,6 @@ namespace TVGL
         /// <value>The polygonal faces.</value>
         [JsonIgnore]
         public HashSet<PolygonalFace> Faces { get; protected set; }
-
-
 
         /// <summary>
         ///     Gets the vertices.

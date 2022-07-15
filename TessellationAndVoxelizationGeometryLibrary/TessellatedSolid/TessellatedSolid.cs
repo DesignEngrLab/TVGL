@@ -691,6 +691,7 @@ namespace TVGL
                         faceIndices.AddRange(tempFaceIndices[faceChecksums[checksum]].Select(p => p.IndexInList));
                     }
                     primitive.FaceIndices = faceIndices.ToArray();
+                    primitive.TriangleVertexIndices.Clear();//Don't need these anymore
                     Primitives.Add(primitive);
                 }
             }
