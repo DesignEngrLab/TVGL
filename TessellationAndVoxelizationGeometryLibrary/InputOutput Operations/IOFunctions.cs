@@ -1012,7 +1012,7 @@ namespace TVGL.IOFunctions
         {
             if (fileType == FileType.unspecified)
                 fileType = GetFileTypeFromExtension(Path.GetExtension(filename));
-            filename = Path.GetFileNameWithoutExtension(filename) + "." + GetExtensionFromFileType(fileType);
+            filename = Path.ChangeExtension(filename, GetExtensionFromFileType(fileType));
             using var fileStream = File.OpenWrite(filename);
             return Save(fileStream, solids, fileType);
         }
