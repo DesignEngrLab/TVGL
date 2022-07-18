@@ -27,6 +27,8 @@
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Implicits and Primitives\ImplicitSolid.cs" Link="TVGL\Implicits and Primitives\ImplicitSolid.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Implicits and Primitives\3D Curves\Helix.cs" Link="TVGL\Implicits and Primitives\Primitive Surfaces\3D Curves\Helix.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Implicits and Primitives\3D Curves\StraightLine3D.cs" Link="TVGL\Implicits and Primitives\Primitive Surfaces\3D Curves\StraightLine3D.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Implicits and Primitives\3D Curves\BorderSegment.cs" Link="TVGL\Implicits and Primitives\Primitive Surfaces\3D Curves\BorderSegment.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Implicits and Primitives\3D Curves\PrimitiveBorder.cs" Link="TVGL\Implicits and Primitives\Primitive Surfaces\3D Curves\PrimitiveBorder.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Implicits and Primitives\Primitive Surfaces\Cone.cs" Link="TVGL\Implicits and Primitives\Primitive Surfaces\Cone.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Implicits and Primitives\Primitive Surfaces\Cylinder.cs" Link="TVGL\Implicits and Primitives\Primitive Surfaces\Cylinder.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Implicits and Primitives\Primitive Surfaces\Plane.cs" Link="TVGL\Implicits and Primitives\Primitive Surfaces\Plane.cs" />
@@ -94,7 +96,6 @@
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Polygon Operations\Vertex2D.cs" Link="TVGL\Polygon Operations\Vertex2D.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\TessellatedSolid\Edge.cs" Link="TVGL\TessellatedSolid\Edge.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\TessellatedSolid\EdgePath.cs" Link="TVGL\TessellatedSolid\EdgePath.cs" />
-		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\TessellatedSolid\SurfaceBorder.cs" Link="TVGL\TessellatedSolid\SurfaceBorder.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\TessellatedSolid\Enclosure Operations\ConvexHull2D.cs" Link="TVGL\TessellatedSolid\Enclosure Operations\ConvexHull2D.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\TessellatedSolid\Enclosure Operations\GaussianSphere.cs" Link="TVGL\TessellatedSolid\Enclosure Operations\GaussianSphere.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\TessellatedSolid\Enclosure Operations\MinimumCircleCylinder.cs" Link="TVGL\TessellatedSolid\Enclosure Operations\MinimumCircleCylinder.cs" />
