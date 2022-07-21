@@ -374,9 +374,14 @@ namespace TVGL
         SHELL,
 
         /// <summary>
-        ///     A serialized version of the TessellatedSolid object
+        ///     A human-readable, serialized version of TVGL Solid objects
         /// </summary>
-        TVGL
+        TVGL,
+
+        /// <summary>
+        ///     A compressed version of TVGL Solid objects. About 4X smaller than TVGL.
+        /// </summary>
+        TVGLz
     }
 
     internal enum FormatEndiannessType
