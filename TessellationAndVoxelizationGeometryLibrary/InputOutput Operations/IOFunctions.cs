@@ -245,11 +245,11 @@ namespace TVGL
                         throw new Exception("Attempting to open multiple solids with a " + extension.ToString() + " file.");
                     case FileType.TVGL:
                         OpenTVGL(s, out var solidAssembly);
-                        tessellatedSolids = solidAssembly.RootAssembly.AllPartsInGlobalCoordinateSystem().Where(s => s is TessellatedSolid).Cast<TessellatedSolid>().ToArray();
+                        tessellatedSolids = solidAssembly.RootAssembly.AllTessellatedSolidsInGlobalCoordinateSystem();
                         break;
                     case FileType.TVGLz:
                         OpenTVGLz(s, out solidAssembly);
-                        tessellatedSolids = solidAssembly.RootAssembly.AllPartsInGlobalCoordinateSystem().Where(s => s is TessellatedSolid).Cast<TessellatedSolid>().ToArray();
+                    tessellatedSolids = solidAssembly.RootAssembly.AllTessellatedSolidsInGlobalCoordinateSystem();
                         break;
                 default:
                         Message.output(filename + " is not a recognized 3D format.");
@@ -1234,7 +1234,7 @@ namespace TVGL
 
         public static bool SaveToTVGL(SolidAssembly solidAssembly, string filename)
         {
-            using var fileStream = File.OpenWrite(filename);
+            using var fileStream = File.OpenWrite(Path.ChangeExtension(filename, GetExtensionFromFileType(FileType.TVGL)));
             return SaveToTVGL(fileStream, solidAssembly);
         }
 
@@ -1255,7 +1255,7 @@ namespace TVGL
 
         public static bool SaveToTVGLz(SolidAssembly solidAssembly, string filename)
         {
-            using var fileStream = File.OpenWrite(filename);
+            using var fileStream = File.OpenWrite(Path.ChangeExtension(filename, GetExtensionFromFileType(FileType.TVGLz)));
             return SaveToTVGLz(fileStream, solidAssembly);
         }          
 
