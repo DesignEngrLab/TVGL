@@ -158,6 +158,24 @@ namespace TVGL
             MakeFaces(faceToVertexIndices, colors);
             if (createFullVersion) CompleteInitiation();
         }
+
+        public TessellatedSolid(IList<Vector3> vertices, IList<int[]> faceToVertexIndices, bool createFullVersion,
+          IList<PrimitiveSurface> primitives, IList<Color> colors, UnitType units = UnitType.unspecified, string name = "", string filename = "",
+          List<string> comments = null, string language = "") : base(units, name, filename, comments, language)
+        {
+            DefineAxisAlignedBoundingBoxAndTolerance(vertices);
+            MakeVertices(vertices);
+            //Complete Construction with Common Functions
+            MakeFaces(faceToVertexIndices, primitives, colors);
+            CompleteInitiation();
+            if (createFullVersion)
+            {
+                //Create edges and then update primitives with links to Faces, Vertices, and Edges
+                foreach (var prim in Primitives)
+                    prim.CompletePostSerialization(this);
+            }
+        }
+
         [OnSerializing]
         protected void OnSerializingMethod(StreamingContext context)
         {
@@ -210,6 +228,7 @@ namespace TVGL
             MakeVertices(coords);
             MakeFaces(faceIndices, colors);
             MakeEdges();
+
 
             if (serializationData.ContainsKey("ConvexHullVertices"))
             {
@@ -411,9 +430,23 @@ namespace TVGL
 
         internal void CompleteInitiation(bool fromSTL = false)
         {
-            MakeEdges(fromSTL);
+            try
+            {
+                MakeEdges(fromSTL);
+            }
+            catch
+            {
+                //Continue
+            }
             CalculateVolume();
-            this.CheckModelIntegrity();
+            try
+            {
+                this.CheckModelIntegrity();
+            }
+            catch
+            {
+                //Continue
+            }
 
             //If the volume is zero, creating the convex hull may cause a null exception
             if (this.Volume.IsNegligible()) return;
@@ -1093,6 +1126,7 @@ namespace TVGL
                     copy.NonsmoothEdges.Add(copy.Edges[edge.IndexInList]);
                 }
             }
+            copy.ReferenceIndex = ReferenceIndex;
             return copy;
         }
 
@@ -1165,9 +1199,12 @@ namespace TVGL
                 face.Update();// Transform(transformMatrix);
             }
             //Update the edges
-            foreach (var edge in Edges)
+            if(NumberOfEdges > 1)
             {
-                edge.Update(true);
+                foreach (var edge in Edges)
+                {
+                    edge.Update(true);
+                }
             }
             _center = _center.Transform(transformMatrix);
             // I'm not sure this is right, but I'm just using the 3x3 rotational submatrix to rotate the inertia tensor
@@ -1189,7 +1226,15 @@ namespace TVGL
         public override Solid TransformToNewSolid(Matrix4x4 transformationMatrix)
         {
             var copy = this.Copy();
-            copy.Transform(transformationMatrix);
+            try
+            {
+                copy.Transform(transformationMatrix);
+            }
+            catch
+            {
+                copy = new TessellatedSolid(copy.Faces, false, true);
+                copy.Transform(transformationMatrix);
+            }
             return copy;
         }
 
