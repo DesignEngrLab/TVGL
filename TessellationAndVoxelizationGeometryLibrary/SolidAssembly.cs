@@ -1,7 +1,9 @@
 ﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.Serialization;
 
 namespace TVGL
 {
@@ -16,10 +18,16 @@ namespace TVGL
         [JsonIgnore]
         internal Dictionary<Solid, int> _distinctSolids { get; set; }
 
+        [JsonIgnore]
         public Solid[] Solids { get; set; }
-  
-        public SolidAssembly()
+
+        public SolidAssembly() 
+        { //Empty Constructor for JSON
+        }
+
+        public SolidAssembly(string name)
         {
+            Name = name;
             RootAssembly = new SubAssembly(this);
             _distinctSolids = new Dictionary<Solid, int>();
         }
@@ -48,6 +56,27 @@ namespace TVGL
         {
             return !Solids.Any();
         }
+
+        [OnSerializing]
+        protected void OnSerializingMethod(StreamingContext context)
+        {
+            serializationData = new Dictionary<string, JToken>();            
+            serializationData.Add("TessellatedSolids", JToken.FromObject(Solids.Where(p => p is TessellatedSolid)));
+            serializationData.Add("CrossSectionSolids", JToken.FromObject(Solids.Where(p => p is CrossSectionSolid)));
+            serializationData.Add("VolizedSolids", JToken.FromObject(Solids.Where(p => p is VoxelizedSolid)));
+        }
+
+        [OnDeserialized]
+        protected void OnDeserializedMethod(StreamingContext context)
+        {
+            JArray jArray = (JArray)serializationData["TessellatedSolids"];
+            Solids = jArray.ToObject<TessellatedSolid[]>();
+            RootAssembly.SetGlobalAssembly(this);
+        }
+
+        // everything else gets stored here
+        [JsonExtensionData]
+        protected IDictionary<string, JToken> serializationData;
     }
 
     //A wrapper class for solids that recursively contains subassemblies and solid parts. 
@@ -56,7 +85,15 @@ namespace TVGL
     {
         [JsonIgnore]
         //Pointer to the global parent, where the Tessellated solids and file information are stored.
-        public SolidAssembly SolidAssemblyGlobalInfo { get; set; }
+        private SolidAssembly SolidAssemblyGlobalInfo { get; set; }
+
+        //Recursively set GlobalAssembly. Used on deserialization.
+        public void SetGlobalAssembly(SolidAssembly global)
+        {
+            SolidAssemblyGlobalInfo = global;
+            foreach (var (subAssembly, _) in SubAssemblies)
+                subAssembly.SetGlobalAssembly(global);
+        }
 
         //List of assemblies with their backtransform to the global assembly space.
         //Not a dictionary, so that items can be referenced in multiple transform locations (i.e., duplicate keys)
@@ -91,16 +128,25 @@ namespace TVGL
             return !AllParts().Any();
         }
 
-
-        public IEnumerable<(TessellatedSolid, Matrix4x4)> AllTessellatedSolidsInGlobalCoordinateSystem()
+        public TessellatedSolid[] AllTessellatedSolidsInGlobalCoordinateSystem()
         {
-            return AllPartsInGlobalCoordinateSystem.Where(s => s.Item1 is TessellatedSolid).Cast<(TessellatedSolid, Matrix4x4)> ();
+            return AllPartsInGlobalCoordinateSystem.Where(s => s.Item1 is TessellatedSolid).Select(s => s.Item1).Cast<TessellatedSolid>().ToArray();
+        }
+
+        public IEnumerable<(TessellatedSolid, Matrix4x4)> AllTessellatedSolidsWithGlobalCoordinateSystemTransform()
+        {
+            var returnList = new List<(TessellatedSolid, Matrix4x4)>();
+            var allParts = AllPartsInGlobalCoordinateSystem.Where(s => s.Item1 is TessellatedSolid);
+            foreach(var part in allParts)
+                returnList.Add(((TessellatedSolid)part.Item1, part.Item2));
+            return returnList;
         }
 
         //Recursive call to get all the parts in the assembly. Transforms each instance of each part 
         //into the global coordinate system (GCS) by using TransformToNewSolid(). 
         //Parts that are referenced more than once are duplicated into mutliple positions within the GCS.
         private IEnumerable<(Solid, Matrix4x4)> _allPartsInGlobalCoordinateSystem;
+        [JsonIgnore]
         public IEnumerable<(Solid, Matrix4x4)> AllPartsInGlobalCoordinateSystem
         {
             get
