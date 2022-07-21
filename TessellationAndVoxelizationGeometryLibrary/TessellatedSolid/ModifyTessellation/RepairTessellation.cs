@@ -52,7 +52,7 @@ namespace TVGL
             foreach (var edge in ts.Edges)
             {
                 if (!edge.OwnedFace.Edges.Contains(edge)) StoreFaceDoesNotLinkBackToEdge(ts, edge, edge.OwnedFace);
-                if (!edge.OtherFace.Edges.Contains(edge)) StoreFaceDoesNotLinkBackToEdge(ts, edge, edge.OtherFace);
+                if (edge.OtherFace != null && !edge.OtherFace.Edges.Contains(edge)) StoreFaceDoesNotLinkBackToEdge(ts, edge, edge.OtherFace);
                 if (!edge.To.Edges.Contains(edge)) StoreVertDoesNotLinkBackToEdge(ts, edge, edge.To);
                 if (!edge.From.Edges.Contains(edge)) StoreVertDoesNotLinkBackToEdge(ts, edge, edge.From);
                 if (double.IsNaN(edge.InternalAngle) || edge.InternalAngle < 0 || edge.InternalAngle > Constants.TwoPi)
@@ -448,6 +448,7 @@ namespace TVGL
             var allEdgesToUpdate = new HashSet<Edge>();
             foreach (var face in facesToConsider)
             {
+                if (face == null) continue;
                 var edgesToUpdate = new List<Edge>();
                 foreach (var edge in face.Edges)
                 {
