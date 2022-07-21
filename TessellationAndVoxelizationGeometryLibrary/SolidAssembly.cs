@@ -31,7 +31,7 @@ namespace TVGL
             Solids = _distinctSolids.Keys.ToArray();
             //Set the index for each of the solids.
             for(var i = 0; i < Solids.Length; i++)
-                Solids[i].Index = i;
+                Solids[i].ReferenceIndex = i;
             _distinctSolids.Clear();
         }
 
@@ -138,16 +138,28 @@ namespace TVGL
             return !AllParts().Any();
         }
 
+        private IEnumerable<(TessellatedSolid, Matrix4x4)> _allPartsInGlobalCoordinateSystem;
+
         //Recursive call to get all the parts in the assembly. Transforms each instance of each part 
         //into the global coordinate system (GCS) by using TransformToNewSolid(). 
         //Parts that are referenced more than once are duplicated into mutliple positions within the GCS.
-        public IEnumerable<TessellatedSolid> AllPartsInGlobalCoordinateSystem()
+        public IEnumerable<(TessellatedSolid, Matrix4x4)> AllPartsInGlobalCoordinateSystem
+        {
+            get
+            {
+                if (_allPartsInGlobalCoordinateSystem == null)
+                    _allPartsInGlobalCoordinateSystem = GetAllPartsInGlobalCoordinateSystem();
+                return _allPartsInGlobalCoordinateSystem;
+            }
+        }
+
+        private IEnumerable<(TessellatedSolid, Matrix4x4)> GetAllPartsInGlobalCoordinateSystem()
         {
             foreach (var (part, backTransform) in AllParts())
             {
                 var transformed = part.TransformToNewSolid(backTransform);
-                yield return (TessellatedSolid)transformed;
-            }             
+                yield return ((TessellatedSolid)transformed, backTransform);
+            }
         }
 
         //Recursive call to get all the parts in the assembly. Returns the Transform to get each instance

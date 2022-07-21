@@ -25,7 +25,7 @@ namespace TVGL
         ///     Gets the solid index in the SolidAssembly.DistinctParts Array.
         /// </summary>
         /// <value>The index</value>
-        public int Index { get; set; }
+        public int ReferenceIndex { get; set; }
 
         /// <summary>
         ///     Gets the center.
