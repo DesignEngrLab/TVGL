@@ -62,10 +62,36 @@ namespace TVGL
         /// </summary>
         /// <param name="ts">The ts.</param>
         /// <returns>BoundingBox.</returns>
+        public static BoundingBox OrientedBoundingBox(this List<TessellatedSolid> solids)
+        {
+            foreach(var solid in solids)
+                if (solid.ConvexHull == null) solid.CompleteInitiation();
+            var vertices = new List<Vertex>();
+            foreach (var solid in solids)
+                vertices.AddRange(solid.ConvexHull.Vertices.Any() ? solid.ConvexHull.Vertices : solid.Vertices);
+            var convexHull = new TVGLConvexHull(vertices, solids.First().SameTolerance);
+            return OrientedBoundingBox(convexHull.Vertices);
+        }
+
+        /// <summary>
+        ///     Finds the minimum bounding box.
+        /// </summary>
+        /// <param name="ts">The ts.</param>
+        /// <returns>BoundingBox.</returns>
         public static BoundingBox OrientedBoundingBox(this TessellatedSolid ts)
         {
             if (ts.ConvexHull == null) ts.CompleteInitiation();
             return OrientedBoundingBox(ts.ConvexHull.Vertices.Any() ? ts.ConvexHull.Vertices : ts.Vertices);
+        }
+
+        /// <summary>
+        ///     Finds the minimum bounding box.
+        /// </summary>
+        /// <param name="ts">The ts.</param>
+        /// <returns>BoundingBox.</returns>
+        public static BoundingBox OrientedBoundingBox(this TVGLConvexHull convexHull)
+        {
+            return OrientedBoundingBox(convexHull.Vertices);
         }
 
         /// <summary>
@@ -626,6 +652,36 @@ namespace TVGL
                 new[] { Vector3.UnitX, Vector3.UnitY, Vector3.UnitZ },
                 pointsOnBox);
         }
+
+
+        public static BoundingBox FindAxisAlignedBoundingBox(this IEnumerable<TessellatedSolid> solids) 
+        {
+            var pointsOnBox = new List<Vertex>[6];
+            for (int i = 0; i < 6; i++)
+                pointsOnBox[i] = new List<Vertex>();
+            var xMin = double.PositiveInfinity;
+            var yMin = double.PositiveInfinity;
+            var zMin = double.PositiveInfinity;
+            var xMax = double.NegativeInfinity;
+            var yMax = double.NegativeInfinity;
+            var zMax = double.NegativeInfinity;
+            foreach (var solid in solids)
+            {
+                foreach(var v in solid.ConvexHull.Vertices)
+                {
+                    UpdateLimitsAndBox(v, v.X, ref xMin, pointsOnBox[0], true);
+                    UpdateLimitsAndBox(v, v.X, ref xMax, pointsOnBox[1], false);
+                    UpdateLimitsAndBox(v, v.Y, ref yMin, pointsOnBox[2], true);
+                    UpdateLimitsAndBox(v, v.Y, ref yMax, pointsOnBox[3], false);
+                    UpdateLimitsAndBox(v, v.Z, ref zMin, pointsOnBox[4], true);
+                    UpdateLimitsAndBox(v, v.Z, ref zMax, pointsOnBox[5], false);
+                } 
+            }
+            return new BoundingBox<Vertex>(new[] { xMax - xMin, yMax - yMin, zMax - zMin },
+                new[] { Vector3.UnitX, Vector3.UnitY, Vector3.UnitZ },
+                pointsOnBox);
+        }
+
 
         private static void UpdateLimitsAndBox<T>(T vertex, double value, ref double limit, List<T> pointsOnBox, bool isMinimum)
         {
