@@ -8,6 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Reflection;
 using System.Text;
@@ -164,36 +165,19 @@ namespace TVGL.IOFunctions
                 {
                     case FileType.STL_ASCII:
                     case FileType.STL_Binary:
-                        solid = STLFileData.OpenSolids(s, filename)[0]; // Standard Tessellation or StereoLithography
-                        break;
-
                     case FileType.ThreeMF:
-                        solid = ThreeMFFileData.OpenSolids(s, filename)[0];
-                        break;
-
                     case FileType.Model3MF:
-                        solid = ThreeMFFileData.OpenModelFile(s, filename)[0];
-                        break;
-
                     case FileType.AMF:
-                        solid = AMFFileData.OpenSolids(s, filename)[0];
-                        break;
-
                     case FileType.OBJ:
-                        solid = OBJFileData.OpenSolids(s, filename)[0];
-                        break;
-
                     case FileType.OFF:
-                        solid = OFFFileData.OpenSolid(s, filename);
+                    case FileType.SHELL:
+                        Open(s, filename, out TessellatedSolid[] solids);
+                        solid = solids[0];
                         break;
-
+                        
                     case FileType.PLY_ASCII:
                     case FileType.PLY_Binary:
                         solid = PLYFileData.OpenSolid(s, filename);
-                        break;
-
-                    case FileType.SHELL:
-                        solid = ShellFileData.OpenSolids(s, filename)[0];
                         break;
 
                     case FileType.unspecified:
@@ -260,13 +244,14 @@ namespace TVGL.IOFunctions
                     case FileType.PLY_Binary:
                         throw new Exception("Attempting to open multiple solids with a " + extension.ToString() + " file.");
                     case FileType.TVGL:
-                        var serializer = new JsonSerializer();
-                        var sr = new StreamReader(s);
-                        using (var reader = new JsonTextReader(sr))
-                            // note this is a hack...<T> is overly specific
-                            tessellatedSolids = serializer.Deserialize<TessellatedSolid[]>(reader);
+                        OpenTVGL(s, out var solidAssembly);
+                        tessellatedSolids = solidAssembly.RootAssembly.AllPartsInGlobalCoordinateSystem().Where(s => s is TessellatedSolid).Cast<TessellatedSolid>().ToArray();
                         break;
-                    default:
+                    case FileType.TVGLz:
+                        OpenTVGLz(s, out solidAssembly);
+                        tessellatedSolids = solidAssembly.RootAssembly.AllPartsInGlobalCoordinateSystem().Where(s => s is TessellatedSolid).Cast<TessellatedSolid>().ToArray();
+                        break;
+                default:
                         Message.output(filename + " is not a recognized 3D format.");
                         tessellatedSolids = new TessellatedSolid[0];
                         break;
@@ -462,6 +447,7 @@ namespace TVGL.IOFunctions
                 case "shell": return FileType.SHELL;
                 case "tvgl":
                 case "json": return FileType.TVGL;
+                case "tvglz": return FileType.TVGLz;
                 default: return FileType.unspecified;
             }
         }
@@ -480,10 +466,10 @@ namespace TVGL.IOFunctions
                 case FileType.PLY_ASCII:
                 case FileType.PLY_Binary: return "ply";
                 case FileType.SHELL: return "shell";
+                case FileType.TVGL: return "tvgl";
+                case FileType.TVGLz: return "tvglz";
                 default:
-                    //case FileType.TVGL:
-                    return "tvgl";
-                    //return "";
+                    throw new NotImplementedException("Filetype " + fileType + " has not been setup for import/export within TVGL.");
             }
         }
 
@@ -1029,8 +1015,7 @@ namespace TVGL.IOFunctions
             if (fileType == FileType.unspecified)
                 fileType = GetFileTypeFromExtension(Path.GetExtension(filename));
             var dir = Path.GetDirectoryName(filename);
-            filename = Path.GetFileNameWithoutExtension(filename)
-                + "." + GetExtensionFromFileType(fileType);
+            filename = Path.ChangeExtension(filename, GetExtensionFromFileType(fileType));
             if (!string.IsNullOrWhiteSpace(dir)) filename = dir + Path.DirectorySeparatorChar + filename;
             using var fileStream = File.OpenWrite(filename);
             return Save(fileStream, solid, fileType);
@@ -1068,17 +1053,20 @@ namespace TVGL.IOFunctions
                     return ThreeMFFileData.SaveModel(stream, solids.Cast<TessellatedSolid>().ToArray());
 
                 case FileType.OFF:
-                    throw new NotSupportedException(
-                        "The OFF format does not support saving multiple solids to a single file.");
                 case FileType.PLY_ASCII:
-                    throw new NotSupportedException(
-                        "The PLY format does not support saving multiple solids to a single file.");
                 case FileType.PLY_Binary:
                     throw new NotSupportedException(
-                        "The PLY format does not support saving multiple solids to a single file.");
+                        "The " + fileType.ToString() + "format does not support saving multiple solids to a single file."); 
+
+                case FileType.TVGL:
+                    return SaveToTVGL(stream, new SolidAssembly(solids));
+
+                case FileType.TVGLz:
+                    return SaveToTVGLz(stream, new SolidAssembly(solids));
+    
                 default:
-                    solids.Select(solid => Save(stream, solid, fileType));
-                    return true;
+                    throw new NotSupportedException(
+                        "Saving to the " + fileType.ToString() + "format is not yet supported in TVGL.");
             }
         }
 
@@ -1093,24 +1081,18 @@ namespace TVGL.IOFunctions
         {
             switch (fileType)
             {
+                //File types that save to an array of solids
                 case FileType.STL_ASCII:
-                    return STLFileData.SaveASCII(stream, new[] { (TessellatedSolid)solid });
-
                 case FileType.STL_Binary:
-                    return STLFileData.SaveBinary(stream, new[] { (TessellatedSolid)solid });
-
                 case FileType.AMF:
-                    return AMFFileData.SaveSolids(stream, new[] { (TessellatedSolid)solid });
-
                 case FileType.OBJ:
-                    return OBJFileData.SaveSolids(stream, new[] { (TessellatedSolid)solid });
-
                 case FileType.ThreeMF:
-                    return ThreeMFFileData.Save(stream, new[] { (TessellatedSolid)solid });
-
                 case FileType.Model3MF:
-                    return ThreeMFFileData.SaveModel(stream, new[] { (TessellatedSolid)solid });
+                case FileType.TVGL:
+                case FileType.TVGLz:
+                    return Save(stream, new[] { solid });
 
+                //Filetypes that save as single solids
                 case FileType.OFF:
                     return OFFFileData.SaveSolid(stream, (TessellatedSolid)solid);
 
@@ -1121,27 +1103,11 @@ namespace TVGL.IOFunctions
                     return PLYFileData.SaveSolidBinary(stream, (TessellatedSolid)solid);
 
                 case FileType.SHELL:
-                    return ShellFileData.Save(stream, (TessellatedSolid)solid);
+                    return ShellFileData.Save(stream, (TessellatedSolid)solid);               
 
                 default:
-                    JsonSerializer serializer = new JsonSerializer
-                    {
-                        NullValueHandling = NullValueHandling.Ignore,
-                        DefaultValueHandling = DefaultValueHandling.Ignore,
-                        TypeNameHandling = TypeNameHandling.Auto,
-                        ReferenceLoopHandling = ReferenceLoopHandling.Ignore,
-                    };
-                    var sw = new StreamWriter(stream);
-                    using (var writer = new JsonTextWriter(sw))
-                    {
-                        var jObject = JObject.FromObject(solid, serializer);
-                        var solidType = solid.GetType();
-                        jObject.AddFirst(new JProperty("TVGLSolidType", solid.GetType().FullName));
-                        if (!Assembly.GetExecutingAssembly().Equals(solidType.Assembly))
-                            jObject.AddFirst(new JProperty("InAssembly", solidType.Assembly.Location));
-                        jObject.WriteTo(writer);
-                    }
-                    return true;
+                    throw new NotSupportedException(
+                        "Saving to the " + fileType.ToString() + "format is not yet supported in TVGL.");
             }
         }
 
@@ -1266,6 +1232,64 @@ namespace TVGL.IOFunctions
             }
         }
 
-#endregion Save/Write
+        public static bool SaveToTVGL(SolidAssembly solidAssembly, string filename)
+        {
+            using var fileStream = File.OpenWrite(filename);
+            return SaveToTVGL(fileStream, solidAssembly);
+        }
+
+        public static bool SaveToTVGL(Stream s, SolidAssembly solidAssembly)
+        {
+            try
+            {
+                var jsonString = JsonConvert.SerializeObject(solidAssembly, Formatting.None);
+                using var writer = new StreamWriter(s);
+                writer.WriteLine(jsonString);
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        public static bool SaveToTVGLz(SolidAssembly solidAssembly, string filename)
+        {
+            using var fileStream = File.OpenWrite(filename);
+            return SaveToTVGLz(fileStream, solidAssembly);
+        }          
+
+        public static bool SaveToTVGLz(Stream s, SolidAssembly solidAssembly)
+        {
+            try
+            {
+                var jsonString = JsonConvert.SerializeObject(solidAssembly, Formatting.None);
+                using var archive = new ZipArchive(s, ZipArchiveMode.Create, true);
+                using StreamWriter writer = new StreamWriter(archive.CreateEntry(solidAssembly.Name).Open());
+                writer.WriteLine(jsonString);
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        public static void OpenTVGL(Stream s, out SolidAssembly solidAssembly)
+        {
+            var serializer = new JsonSerializer();
+            using var reader = new JsonTextReader(new StreamReader(s));
+            solidAssembly = serializer.Deserialize<SolidAssembly>(reader);
+        }
+
+        public static void OpenTVGLz(Stream s, out SolidAssembly solidAssembly)
+        {
+            var serializer = new JsonSerializer();
+            using var archive = new ZipArchive(s, ZipArchiveMode.Read, true);
+            using var reader = new JsonTextReader(new StreamReader(archive.Entries[0].Open()));
+            solidAssembly = serializer.Deserialize<SolidAssembly>(reader);
+        }
+
+        #endregion Save/Write
     }
 }
