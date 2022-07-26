@@ -68,26 +68,29 @@ namespace TVGL
             }
 
             //Always perform any "repair" functions for issues that are not considered errors
-            SetNegligibleAreaFaceNormals(ts);
-            if (ts.Errors.NoErrors)
+            var repairSuccess = SetNegligibleAreaFaceNormals(ts);
+            if (repairSuccess)
             {
-                Message.output("** Model contains no errors.", 3);
-                ts.Errors = null;
-                return true;
-            }
-            if (repairAutomatically)
-            {
-                Message.output("Some errors found. Attempting to Repair...", 2);
-                var success = Repair(ts);
-                if (success)
+                if (ts.Errors.NoErrors)
                 {
+                    Message.output("** Model contains no errors.", 3);
                     ts.Errors = null;
-                    Message.output("Repairs functions completed successfully.", 2);
+                    return true;
                 }
-                else Message.output("Repair did not successfully fix all the problems.", 1);
-                return CheckModelIntegrity(ts, false);
+                if (repairAutomatically)
+                {
+                    Message.output("Some errors found. Attempting to Repair...", 2);
+                    var success = Repair(ts);
+                    if (success)
+                    {
+                        ts.Errors = null;
+                        Message.output("Repairs functions completed successfully.", 2);
+                    }
+                    else Message.output("Repair did not successfully fix all the problems.", 1);
+                    return CheckModelIntegrity(ts, false);
+                }
             }
-
+                     
             #region Report details
 
             if ((int)Message.Verbosity < 3) return false;
