@@ -165,13 +165,14 @@ namespace TVGL
             MakeVertices(vertices);
             //Complete Construction with Common Functions
             MakeFaces(faceToVertexIndices, primitives, colors);
-            CompleteInitiation();
             if (createFullVersion)
             {
+                CompleteInitiation();
                 //Create edges and then update primitives with links to Faces, Vertices, and Edges
                 foreach (var prim in Primitives)
                     prim.CompletePostSerialization(this);
             }
+            else CalculateVolume();
         }
 
         [OnSerializing]
