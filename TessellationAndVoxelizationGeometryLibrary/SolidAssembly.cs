@@ -32,15 +32,23 @@ namespace TVGL
             _distinctSolids = new Dictionary<Solid, int>();
         }
 
-        public SolidAssembly(IEnumerable<Solid> solids)
+        public SolidAssembly(IEnumerable<Solid> solids, string fileName = "")
         {
-            Name = solids.First().Name;
-            if (Name.Length == 0)
-                Name = "SolidAssembly";
+            if(fileName.Length > 0)
+                Name = fileName;
+            else
+            {
+                Name = solids.First().Name;
+                if (Name.Length == 0)
+                    Name = "SolidAssembly";
+            }
+
             RootAssembly = new SubAssembly(this);
             foreach (var solid in solids)
                 RootAssembly.Add(solid, Matrix4x4.Identity);
+
             _distinctSolids = new Dictionary<Solid, int>();
+            Solids = solids.ToArray();
         }
 
         public void CompleteInitialization()
