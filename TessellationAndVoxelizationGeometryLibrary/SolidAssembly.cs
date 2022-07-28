@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.Serialization;
+using TVGL.Numerics;
 
 namespace TVGL
 {
@@ -71,7 +72,7 @@ namespace TVGL
             serializationData = new Dictionary<string, JToken>();            
             serializationData.Add("TessellatedSolids", JToken.FromObject(Solids.Where(p => p is TessellatedSolid)));
             serializationData.Add("CrossSectionSolids", JToken.FromObject(Solids.Where(p => p is CrossSectionSolid)));
-            serializationData.Add("VolizedSolids", JToken.FromObject(Solids.Where(p => p is VoxelizedSolid)));
+            //serializationData.Add("VolizedSolids", JToken.FromObject(Solids.Where(p => p is VoxelizedSolid)));
         }
 
         [OnDeserialized]
