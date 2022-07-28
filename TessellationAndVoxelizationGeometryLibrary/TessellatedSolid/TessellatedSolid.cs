@@ -258,6 +258,11 @@ namespace TVGL
             {
                 foreach (var surface in Primitives)
                     surface.CompletePostSerialization(this);
+
+                NonsmoothEdges = new HashSet<Edge>();
+                foreach (var prim in Primitives)
+                    foreach(var outerEdge in prim.OuterEdges)
+                        NonsmoothEdges.Add(outerEdge);
             }
         }
 

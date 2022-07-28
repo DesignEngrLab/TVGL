@@ -309,17 +309,16 @@ namespace TVGL
                 Faces.Add(face);
                 face.BelongsToPrimitive = this;
             }
+
             Vertices = new HashSet<Vertex>();
-            foreach (var i in _vertexIndices)
-                Vertices.Add(ts.Vertices[i]);
+            foreach(var face in Faces)
+            {
+                Vertices.Add(face.A);
+                Vertices.Add(face.B);
+                Vertices.Add(face.C);
+            }
 
-            _innerEdges = new HashSet<Edge>();
-            foreach (var i in _innerEdgeIndices)
-                InnerEdges.Add(ts.Edges[i]);
-
-            _outerEdges = new HashSet<Edge>();
-            foreach (var i in _outerEdgeIndices)
-                OuterEdges.Add(ts.Edges[i]);
+            DefineInnerOuterEdges();
         }
 
         public HashSet<PolygonalFace> GetAdjacentFaces()

@@ -249,7 +249,7 @@ namespace TVGL.IOFunctions
                         break;
                     case FileType.TVGLz:
                         OpenTVGLz(s, out solidAssembly);
-                    tessellatedSolids = solidAssembly.RootAssembly.AllTessellatedSolidsInGlobalCoordinateSystem();
+                        tessellatedSolids = solidAssembly.RootAssembly.AllTessellatedSolidsInGlobalCoordinateSystem();
                         break;
                 default:
                         Message.output(filename + " is not a recognized 3D format.");
