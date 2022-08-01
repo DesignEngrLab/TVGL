@@ -44,10 +44,10 @@ namespace TVGL
             }
 
             RootAssembly = new SubAssembly(this);
+            _distinctSolids = new Dictionary<Solid, int>();
             foreach (var solid in solids)
                 RootAssembly.Add(solid, Matrix4x4.Identity);
 
-            _distinctSolids = new Dictionary<Solid, int>();
             Solids = solids.ToArray();
         }
 
