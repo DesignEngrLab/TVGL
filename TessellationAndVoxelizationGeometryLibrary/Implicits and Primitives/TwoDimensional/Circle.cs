@@ -141,5 +141,19 @@ namespace TVGL
             error /= n;
             return true;
         }
+
+
+        public List<Vector2> CreatePath(int numPoints)
+        {
+            if (numPoints <= 1)
+                return new List<Vector2>();
+            var increment = Math.PI * 2 / numPoints;
+            var path = new List<Vector2>();
+            for (var theta = 0.0; theta < Math.PI * 2; theta += increment)
+            {
+                path.Add(new Vector2(Radius * Math.Cos(theta) + Center.X, Radius * Math.Sin(theta) + Center.Y));
+            }
+            return new List<Vector2>(path);
+        }
     }
 }
