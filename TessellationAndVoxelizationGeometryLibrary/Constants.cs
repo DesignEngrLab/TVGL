@@ -123,6 +123,9 @@ namespace TVGL
 
         internal const int MarchingCubesMissedFactor = 4;
 
+        internal const double DefaultTessellationError = 0.08;
+
+        internal const double DefaultTessellationMaxAngleError = 15; 
         /// <summary>
         /// The tessellation to voxelization intersection combinations. This is used in the unction that
         /// produces voxels on the edges and faces of a tessellated shape.

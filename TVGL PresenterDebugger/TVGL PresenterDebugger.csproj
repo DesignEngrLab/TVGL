@@ -130,6 +130,7 @@
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Comparators.cs" Link="TVGL\Comparators.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Constants.cs" Link="TVGL\Constants.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Solid.cs" Link="TVGL\Solid.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\SolidAssembly.cs" Link="TVGL\SolidAssembly.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Verbosity.cs" Link="TVGL\Verbosity.cs" />
 		<Compile Include="..\TVGL Presenter\Window3DPlotViewModel.cs" Link="Presenter\Window3DPlotViewModel.cs" />
 		<Compile Include="..\TVGL Presenter\Presenter.cs" Link="Presenter\Presenter.cs" />

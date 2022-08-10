@@ -79,7 +79,7 @@ namespace TVGL
 
         /// <summary>
         ///     Gets the aperture. This is a slope, like m, not an angle. It is dimensionless and NOT radians.
-        ///     like y = mx + b
+        ///     like y = mx + b. aperture = tan(cone_angle)
         /// </summary>
         /// <value>The aperture.</value>
         public double Aperture { get; set; }

@@ -23,6 +23,10 @@ namespace TVGL
     public partial class TessellatedSolid : Solid
     {
         #region Fields and Properties
+        public double TessellationError { get; set; } = Constants.DefaultTessellationError;
+
+        public double TessellationMaxAngleError { get; set; } = Constants.DefaultTessellationMaxAngleError;
+
         /// <summary>
         ///     Gets the faces.
         /// </summary>

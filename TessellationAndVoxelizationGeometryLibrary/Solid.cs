@@ -160,10 +160,6 @@ namespace TVGL
         [JsonProperty(ItemTypeNameHandling = TypeNameHandling.Auto, TypeNameHandling = TypeNameHandling.Auto)]
         public List<PrimitiveSurface> Primitives { get; set; }
 
-        public double TessellationError { get; set; } = 0.08; //0.08 mm default
-
-        public double TessellationMaxAngleError { get; set; } = 15; //15 degrees default
-
         public double SameTolerance { get; set; }
 
         #endregion Fields and Properties
