@@ -182,6 +182,8 @@ namespace TVGL
         /// <param name="polygon">The polygon.</param>
         public bool RemoveHole(Polygon polygon)
         {
+            if (_innerPolygons is null)
+                return false;
             return _innerPolygons.Remove(polygon);
         }
         /// <summary>

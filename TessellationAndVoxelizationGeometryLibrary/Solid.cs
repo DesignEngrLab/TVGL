@@ -21,6 +21,11 @@ namespace TVGL
     public abstract class Solid
     {
         #region Fields and Properties
+        /// <summary>
+        ///     Gets the solid index in the SolidAssembly.DistinctParts Array.
+        /// </summary>
+        /// <value>The index</value>
+        public int ReferenceIndex { get; set; }
 
         /// <summary>
         ///     Gets the center.

@@ -15,16 +15,34 @@ namespace TVGL
     [JsonObject(MemberSerialization.OptOut)]
     public abstract class PrimitiveSurface
     {
+        public string Type()
+        {
+            return GetType().ToString().Replace("TVGL.", "");
+        }
+
+        private double _residual = -1.0;
+        [JsonIgnore]
+        public double Residual 
+        {
+            get 
+            {
+                if (_residual == -1.0)
+                    _residual = CalculateError();
+                return _residual;
+            }
+            set { _residual = value; }
+        }
+
         #region Constructors
 
         /// <summary>
         ///     Initializes a new instance of the <see cref="PrimitiveSurface" /> class.
         /// </summary>
         /// <param name="faces">The faces.</param>
-        protected PrimitiveSurface(IEnumerable<PolygonalFace> faces)
+        protected PrimitiveSurface(IEnumerable<PolygonalFace> faces, bool connectFacesToPrimitive = true)
         {
             if (faces == null) return;
-            SetFacesAndVertices(faces);
+            SetFacesAndVertices(faces, connectFacesToPrimitive);
         }
 
         protected PrimitiveSurface(PrimitiveSurface originalToBeCopied, TessellatedSolid copiedTessellatedSolid)
@@ -32,6 +50,13 @@ namespace TVGL
             _area = originalToBeCopied._area;
             FaceIndices = originalToBeCopied.Faces.Select(f => f.IndexInList).ToArray();
             CompletePostSerialization(copiedTessellatedSolid);
+        }
+
+        protected PrimitiveSurface(int[] newFaceIndices, TessellatedSolid copiedTessellatedSolid)
+        {
+            FaceIndices = newFaceIndices;
+            CompletePostSerialization(copiedTessellatedSolid);
+            _area = Faces.Sum(f => f.Area);
         }
         /// <summary>
         ///     Initializes a new instance of the <see cref="PrimitiveSurface" /> class.
@@ -42,11 +67,12 @@ namespace TVGL
 
         #endregion Constructors
 
-        public void SetFacesAndVertices(IEnumerable<PolygonalFace> faces)
+        public void SetFacesAndVertices(IEnumerable<PolygonalFace> faces, bool connectFacesToPrimitive = true)
         {
             Faces = new HashSet<PolygonalFace>(faces);
-            foreach (var face in Faces)
-                face.BelongsToPrimitive = this;
+            if(connectFacesToPrimitive)
+                foreach (var face in Faces)
+                    face.BelongsToPrimitive = this;
             Vertices = new HashSet<Vertex>(Faces.SelectMany(f => f.Vertices).Distinct());
         }
 
@@ -55,12 +81,9 @@ namespace TVGL
         public abstract Vector2 TransformFrom3DTo2D(Vector3 point);
         public abstract Vector3 TransformFrom2DTo3D(Vector2 point);
 
-        public List<List<int>> TriangleVertexIndices
-        {
-            get =>  _triangleVertexIndices;
-            set => _triangleVertexIndices = value;
-        }
-        List<List<int>> _triangleVertexIndices;
+        [JsonIgnore]
+        //A tempory class used when importing primitives 
+        public List<List<int>> TriangleVertexIndices { get; set; }
 
         public int[] FaceIndices
         {
@@ -75,7 +98,6 @@ namespace TVGL
             set => _faceIndices = value;
         }
         int[] _faceIndices;
-
 
         [JsonIgnore]
         public int Index { get; set; }
@@ -101,8 +123,6 @@ namespace TVGL
         /// <value>The polygonal faces.</value>
         [JsonIgnore]
         public HashSet<PolygonalFace> Faces { get; protected set; }
-
-
 
         /// <summary>
         ///     Gets the vertices.
@@ -230,6 +250,12 @@ namespace TVGL
             face.BelongsToPrimitive = this;
         }
 
+        public void UpdateBelongsToPrimitive()
+        {
+            foreach (var face in Faces)
+                face.BelongsToPrimitive = this;
+        }
+
         public void CompletePostSerialization(TessellatedSolid ts)
         {
             Faces = new HashSet<PolygonalFace>();
@@ -272,9 +298,16 @@ namespace TVGL
             return adjacentFaces;
         }
 
-        public List<SurfaceBorder> Borders { get; set; }
+        public IEnumerable<PrimitiveSurface> AdjacentPrimitives()
+        {
+            foreach(var border in Borders)
+                foreach(var prim in border.AdjacentPrimitives())
+                    yield return prim;
+        }
 
-        public IEnumerable<SurfaceBorder> BordersEncirclingAxis(Vector3 axis, Vector3 anchor)
+        public List<PrimitiveBorder> Borders { get; set; }
+
+        public IEnumerable<PrimitiveBorder> BordersEncirclingAxis(Vector3 axis, Vector3 anchor)
         {
             var transform = axis.TransformToXYPlane(out _);
             foreach (var border in Borders)
@@ -302,31 +335,6 @@ namespace TVGL
             var borderPolygon = new Polygon(coords.Select(c => new Vector2(c.X, c.Y)));
             var center3d = anchor.ConvertTo2DCoordinates(transform);
             return borderPolygon.IsPointInsidePolygon(true, center3d);
-        }
-
-        private static void SetBorderConvexity(SurfaceBorder border)
-        {
-            var concave = 0;
-            var convex = 0;
-            var flat = 0;
-            foreach (var (edge, _) in border)
-            {
-                var p1 = edge.OwnedFace.OtherVertex(edge);
-                var p2 = edge.OtherFace.OtherVertex(edge);
-                var v1 = p2.Coordinates - p1.Coordinates;
-                var dot1 = v1.Dot(edge.OwnedFace.Normal);
-                var v2 = p1.Coordinates - p2.Coordinates;
-                var dot2 = v2.Dot(edge.OtherFace.Normal);
-                if (Math.Sign(dot1) != Math.Sign(dot2)) { }
-                if (dot1 < 0 && edge.Curvature == CurvatureType.Concave) { }
-                if (dot1 > 0 && edge.Curvature == CurvatureType.Convex && !edge.InternalAngle.IsNegligible(0.001)) { }
-                if (edge.InternalAngle.IsPracticallySame(Math.PI, Constants.SameFaceNormalDotTolerance)) flat++;
-                else if (edge.InternalAngle > Math.PI) concave++;
-                else convex++;
-            }
-            border.FullyFlush = flat > 0 && convex == 0 && concave == 0;
-            border.FullyConcave = concave > 0 && flat == 0 && convex == 0;
-            border.FullyConvex = convex > 0 && flat == 0 && concave == 0;
         }
 
         [JsonIgnore]
@@ -365,6 +373,27 @@ namespace TVGL
                 if (z > MaxZ) MaxZ = z;
                 if (z < MinZ) MinZ = z;
             }
+        }
+
+        /// <summary>
+        /// Returns whether a point is within the X,Y,Z bounds of the primitive.
+        /// This is a fast, crude first step to determining interference.
+        /// </summary>
+        /// <param name="v"></param>
+        /// <returns></returns>
+        public bool WithinBounds(Vector3 v)
+        {
+            SetBounds();//ignores if already set.
+            var x = v.X;
+            if (x > MaxX) return false;
+            if (x < MinX) return false;
+            var y = v.Y;
+            if (y > MaxY) return false;
+            if (y < MinY) return false;
+            var z = v.Z;
+            if (z > MaxZ) return false;
+            if (z < MinZ) return false;
+            return true;
         }
 
         /// <summary>
@@ -419,6 +448,21 @@ namespace TVGL
                     shared.Add(edge);
             }
             return shared;
+        }
+
+
+        public BorderSegment GetSharedBorderSegment(PrimitiveSurface other)
+        {
+            foreach (var border in Borders)
+                foreach (var segment in border.Segments)
+                    if (segment.GetSecondPrimitive(this) == other)
+                        return segment;
+            return null;
+        }
+
+        public IEnumerable<Vector3[]> GetVectors()
+        {
+            return OuterEdges.Select(e => new[] { e.From.Coordinates, e.To.Coordinates });
         }
     }
 }

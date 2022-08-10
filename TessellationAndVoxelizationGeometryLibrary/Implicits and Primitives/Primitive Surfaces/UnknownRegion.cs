@@ -24,6 +24,11 @@ namespace TVGL
         {
         }
 
+        public UnknownRegion(UnknownRegion originalToBeCopied, int[] newFaceIndices, TessellatedSolid copiedTessellatedSolid)
+            : base(newFaceIndices, copiedTessellatedSolid)
+        {
+        }
+
 
         /// <summary>
         /// Transforms the shape by the provided transformation matrix.

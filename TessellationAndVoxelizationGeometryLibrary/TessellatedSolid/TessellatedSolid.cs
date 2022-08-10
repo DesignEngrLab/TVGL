@@ -23,6 +23,10 @@ namespace TVGL
     public partial class TessellatedSolid : Solid
     {
         #region Fields and Properties
+        public double TessellationError { get; set; } = Constants.DefaultTessellationError;
+
+        public double TessellationMaxAngleError { get; set; } = Constants.DefaultTessellationMaxAngleError;
+
         /// <summary>
         ///     Gets the faces.
         /// </summary>
@@ -167,11 +171,12 @@ namespace TVGL
             MakeFaces(faceToVertexIndices, primitives, colors);
             if (createFullVersion)
             {
-                //Create edges and then update primitives with links to Faces, Vertices, and Edges
                 CompleteInitiation();
+                //Create edges and then update primitives with links to Faces, Vertices, and Edges
                 foreach (var prim in Primitives)
                     prim.CompletePostSerialization(this);
             }
+            else CalculateVolume();
         }
 
         [OnSerializing]
@@ -179,10 +184,13 @@ namespace TVGL
         {
             //if (serializationData == null)
             serializationData = new Dictionary<string, JToken>();
-            serializationData.Add("ConvexHullVertices",
+            if(ConvexHull != null)
+            {
+                serializationData.Add("ConvexHullVertices",
                 JToken.FromObject(ConvexHull.Vertices.Select(v => v.IndexInList)));
-            serializationData.Add("ConvexHullFaces",
-                JToken.FromObject(ConvexHull.Faces.SelectMany(face => face.Vertices.Select(v => v.IndexInList))));
+                serializationData.Add("ConvexHullFaces",
+                    JToken.FromObject(ConvexHull.Faces.SelectMany(face => face.Vertices.Select(v => v.IndexInList))));
+            }
             serializationData.Add("FaceIndices",
                 JToken.FromObject(Faces.SelectMany(face => face.Vertices.Select(v => v.IndexInList)).ToArray()));
             serializationData.Add("VertexCoords",
@@ -201,7 +209,6 @@ namespace TVGL
                 serializationData.Add("Colors", JToken.FromObject(colorList));
             }
         }
-
 
         [OnDeserialized]
         protected void OnDeserializedMethod(StreamingContext context)
@@ -234,6 +241,7 @@ namespace TVGL
             MakeFaces(faceIndices, colors);
             MakeEdges();
 
+
             if (serializationData.ContainsKey("ConvexHullVertices"))
             {
                 jArray = (JArray)serializationData["ConvexHullVertices"];
@@ -262,7 +270,6 @@ namespace TVGL
                 foreach (var surface in Primitives)
                     surface.CompletePostSerialization(this);
             }
-
         }
 
         /// <summary>
@@ -435,9 +442,23 @@ namespace TVGL
 
         internal void CompleteInitiation(bool fromSTL = false)
         {
-            MakeEdges(fromSTL);
+            try
+            {
+                MakeEdges(fromSTL);
+            }
+            catch
+            {
+                //Continue
+            }
             CalculateVolume();
-            this.CheckModelIntegrity();
+            try
+            {
+                this.CheckModelIntegrity();
+            }
+            catch
+            {
+                //Continue
+            }
 
             //If the volume is zero, creating the convex hull may cause a null exception
             if (this.Volume.IsNegligible()) return;
@@ -691,6 +712,7 @@ namespace TVGL
                         faceIndices.AddRange(tempFaceIndices[faceChecksums[checksum]].Select(p => p.IndexInList));
                     }
                     primitive.FaceIndices = faceIndices.ToArray();
+                    primitive.TriangleVertexIndices.Clear();//Don't need these anymore
                     Primitives.Add(primitive);
                 }
             }
@@ -1114,6 +1136,7 @@ namespace TVGL
                     copy.NonsmoothEdges.Add(copiedPath);
                 }
             }
+            copy.ReferenceIndex = ReferenceIndex;
             return copy;
         }
 
@@ -1181,9 +1204,12 @@ namespace TVGL
                 face.Update();// Transform(transformMatrix);
             }
             //Update the edges
-            foreach (var edge in Edges)
+            if(NumberOfEdges > 1)
             {
-                edge.Update(true);
+                foreach (var edge in Edges)
+                {
+                    edge.Update(true);
+                }
             }
             _center = _center.Transform(transformMatrix);
             // I'm not sure this is right, but I'm just using the 3x3 rotational submatrix to rotate the inertia tensor
@@ -1191,8 +1217,9 @@ namespace TVGL
                     transformMatrix.M21, transformMatrix.M22, transformMatrix.M23,
                     transformMatrix.M31, transformMatrix.M32, transformMatrix.M33);
             _inertiaTensor *= rotMatrix;
-            foreach (var primitive in Primitives)
-                primitive.Transform(transformMatrix);
+            if(Primitives != null)
+                foreach (var primitive in Primitives)
+                    primitive.Transform(transformMatrix);
             this.SetNegligibleAreaFaceNormals(true);
         }
 
@@ -1204,7 +1231,15 @@ namespace TVGL
         public override Solid TransformToNewSolid(Matrix4x4 transformationMatrix)
         {
             var copy = this.Copy();
-            copy.Transform(transformationMatrix);
+            try
+            {
+                copy.Transform(transformationMatrix);
+            }
+            catch
+            {
+                copy = new TessellatedSolid(copy.Faces, false, true);
+                copy.Transform(transformationMatrix);
+            }
             return copy;
         }
 

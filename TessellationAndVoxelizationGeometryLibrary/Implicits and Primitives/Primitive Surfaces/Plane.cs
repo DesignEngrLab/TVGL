@@ -73,8 +73,8 @@ namespace TVGL
         /// Initializes a new instance of the <see cref="Plane" /> class.
         /// </summary>
         /// <param name="faces">The faces.</param>
-        public Plane(IEnumerable<PolygonalFace> faces)
-            : base(faces)
+        public Plane(IEnumerable<PolygonalFace> faces, bool connectFacesToPrimitive = true)
+            : base(faces, connectFacesToPrimitive)
         {
             Vertices = new HashSet<Vertex>(faces.SelectMany(f => f.Vertices).Distinct());
             DefineNormalAndDistanceFromVertices(Vertices, out var dto, out var normal);
@@ -456,6 +456,30 @@ namespace TVGL
         {
             DistanceToOrigin = originalToBeCopied.DistanceToOrigin;
             Normal = originalToBeCopied.Normal;
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Plane"/> class.
+        /// </summary>
+        /// <param name="originalToBeCopied">The original to be copied.</param>
+        public Plane(Plane originalToBeCopied, int[] newFaceIndices, TessellatedSolid copiedTessellatedSolid)
+            : base(newFaceIndices, copiedTessellatedSolid)
+        {
+            DistanceToOrigin = originalToBeCopied.DistanceToOrigin;
+            Normal = originalToBeCopied.Normal;
+        }
+
+        public static double CalculateError(IEnumerable<Vector3> vertices, out Vector3 normal, out double dto)
+        {
+            DefineNormalAndDistanceFromVertices(vertices, out dto, out normal);
+            var maxError = 0.0;
+            foreach (var c in vertices)
+            {
+                var d = Math.Abs(c.Dot(normal) - dto);
+                if (d > maxError)
+                    maxError = d;
+            }
+            return maxError;
         }
 
         public override double CalculateError(IEnumerable<Vector3> vertices = null)

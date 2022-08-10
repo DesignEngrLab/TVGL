@@ -116,10 +116,12 @@ namespace TVGL
                 edge.IndexInList = i;
                 SetAndGetEdgeChecksum(edge);
                 edge.OtherFace = otherFace;
-                otherFace.AddEdge(edge);
+                if(otherFace != null)
+                    otherFace.AddEdge(edge);
                 Edges[i] = edge;
             }
-            AddFaces(newFaces);
+            //var t = newFaces.Where(p => !p.Edges.Any());
+            AddFaces(newFaces.Where(p => p.Edges.Count() == 3).ToList());
 
             // The neighbor's normal (in the next 2 lines) if the original face has no area (collapsed to a line).
             // This happens with T-Edges. We want to give the face the normal of the two smaller edges' other faces,

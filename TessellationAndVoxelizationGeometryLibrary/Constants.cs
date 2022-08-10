@@ -123,6 +123,9 @@ namespace TVGL
 
         internal const int MarchingCubesMissedFactor = 4;
 
+        internal const double DefaultTessellationError = 0.08;
+
+        internal const double DefaultTessellationMaxAngleError = 15; 
         /// <summary>
         /// The tessellation to voxelization intersection combinations. This is used in the unction that
         /// produces voxels on the edges and faces of a tessellated shape.
@@ -374,9 +377,14 @@ namespace TVGL
         SHELL,
 
         /// <summary>
-        ///     A serialized version of the TessellatedSolid object
+        ///     A human-readable, serialized version of TVGL Solid objects
         /// </summary>
-        TVGL
+        TVGL,
+
+        /// <summary>
+        ///     A compressed version of TVGL Solid objects. About 4X smaller than TVGL.
+        /// </summary>
+        TVGLz
     }
 
     internal enum FormatEndiannessType

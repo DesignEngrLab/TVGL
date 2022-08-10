@@ -60,10 +60,36 @@ namespace TVGL
         /// </summary>
         /// <param name="ts">The ts.</param>
         /// <returns>BoundingBox.</returns>
+        public static BoundingBox OrientedBoundingBox(this List<TessellatedSolid> solids)
+        {
+            foreach(var solid in solids)
+                if (solid.ConvexHull == null) solid.CompleteInitiation();
+            var vertices = new List<Vertex>();
+            foreach (var solid in solids)
+                vertices.AddRange(solid.ConvexHull.Vertices.Any() ? solid.ConvexHull.Vertices : solid.Vertices);
+            var convexHull = new TVGLConvexHull(vertices, solids.First().SameTolerance);
+            return OrientedBoundingBox(convexHull.Vertices);
+        }
+
+        /// <summary>
+        ///     Finds the minimum bounding box.
+        /// </summary>
+        /// <param name="ts">The ts.</param>
+        /// <returns>BoundingBox.</returns>
         public static BoundingBox OrientedBoundingBox(this TessellatedSolid ts)
         {
-            if (ts.ConvexHull == null) ts.CompleteInitiation();
+            if (ts.ConvexHull == null) ts.CompleteInitiation(ts.FileName.EndsWith(".stl", StringComparison.OrdinalIgnoreCase));
             return OrientedBoundingBox(ts.ConvexHull.Vertices.Any() ? ts.ConvexHull.Vertices : ts.Vertices);
+        }
+
+        /// <summary>
+        ///     Finds the minimum bounding box.
+        /// </summary>
+        /// <param name="ts">The ts.</param>
+        /// <returns>BoundingBox.</returns>
+        public static BoundingBox OrientedBoundingBox(this TVGLConvexHull convexHull)
+        {
+            return OrientedBoundingBox(convexHull.Vertices);
         }
 
         /// <summary>
@@ -625,6 +651,36 @@ namespace TVGL
                 pointsOnBox);
         }
 
+
+        public static BoundingBox FindAxisAlignedBoundingBox(this IEnumerable<TessellatedSolid> solids) 
+        {
+            var pointsOnBox = new List<Vertex>[6];
+            for (int i = 0; i < 6; i++)
+                pointsOnBox[i] = new List<Vertex>();
+            var xMin = double.PositiveInfinity;
+            var yMin = double.PositiveInfinity;
+            var zMin = double.PositiveInfinity;
+            var xMax = double.NegativeInfinity;
+            var yMax = double.NegativeInfinity;
+            var zMax = double.NegativeInfinity;
+            foreach (var solid in solids)
+            {
+                foreach(var v in solid.ConvexHull.Vertices)
+                {
+                    UpdateLimitsAndBox(v, v.X, ref xMin, pointsOnBox[0], true);
+                    UpdateLimitsAndBox(v, v.X, ref xMax, pointsOnBox[1], false);
+                    UpdateLimitsAndBox(v, v.Y, ref yMin, pointsOnBox[2], true);
+                    UpdateLimitsAndBox(v, v.Y, ref yMax, pointsOnBox[3], false);
+                    UpdateLimitsAndBox(v, v.Z, ref zMin, pointsOnBox[4], true);
+                    UpdateLimitsAndBox(v, v.Z, ref zMax, pointsOnBox[5], false);
+                } 
+            }
+            return new BoundingBox<Vertex>(new[] { xMax - xMin, yMax - yMin, zMax - zMin },
+                new[] { Vector3.UnitX, Vector3.UnitY, Vector3.UnitZ },
+                pointsOnBox);
+        }
+
+
         private static void UpdateLimitsAndBox<T>(T vertex, double value, ref double limit, List<T> pointsOnBox, bool isMinimum)
         {
             if ((isMinimum && value.IsLessThanNonNegligible(limit)) ||
@@ -698,7 +754,7 @@ namespace TVGL
         /// <param name="edges">The edges.</param>
         /// <param name="FacesToContain">The faces to contain.</param>
         /// <returns>IEnumerable&lt;SurfaceBorder&gt;.</returns>
-        public static IEnumerable<SurfaceBorder> GetLoops(this HashSet<Edge> edges, HashSet<PolygonalFace> FacesToContain)
+        public static IEnumerable<PrimitiveBorder> GetLoops(this HashSet<Edge> edges, HashSet<PolygonalFace> FacesToContain)
         {
             while (edges.Any())
             {
@@ -707,7 +763,7 @@ namespace TVGL
                 var correctDirection = FacesToContain.Contains(currentEdge.OwnedFace);
                 var startVertex = correctDirection ? currentEdge.From : currentEdge.To;
                 var currentVertex = correctDirection ? currentEdge.To : currentEdge.From;
-                var border = new SurfaceBorder();
+                var border = new PrimitiveBorder();
                 border.AddEnd(currentEdge, correctDirection);
                 foreach (var forwardDir in new[] { true, false })
                 {

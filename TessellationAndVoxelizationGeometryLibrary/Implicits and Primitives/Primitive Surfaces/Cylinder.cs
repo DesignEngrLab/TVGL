@@ -226,6 +226,10 @@ namespace TVGL
             Anchor = anchor;
             Radius = radius;
             IsPositive = isPositive;
+            var (min, max) = MinimumEnclosure.GetDistanceToExtremeVertex(Vertices, axis, out _, out _);//vertices are set in base constructor
+            MinDistanceAlongAxis = min;
+            MaxDistanceAlongAxis = max;
+            Height = MaxDistanceAlongAxis - MinDistanceAlongAxis;
         }
 
         /// <summary>
@@ -248,6 +252,22 @@ namespace TVGL
         /// <param name="originalToBeCopied">The original to be copied.</param>
         public Cylinder(Cylinder originalToBeCopied, TessellatedSolid copiedTessellatedSolid = null)
             : base(originalToBeCopied, copiedTessellatedSolid)
+        {
+            Axis = originalToBeCopied.Axis;
+            Anchor = originalToBeCopied.Anchor;
+            Radius = originalToBeCopied.Radius;
+            IsPositive = originalToBeCopied.IsPositive;
+            MinDistanceAlongAxis = originalToBeCopied.MinDistanceAlongAxis;
+            MaxDistanceAlongAxis = originalToBeCopied.MaxDistanceAlongAxis;
+            Height = originalToBeCopied.Height;
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Cylinder"/> class.
+        /// </summary>
+        /// <param name="originalToBeCopied">The original to be copied.</param>
+        public Cylinder(Cylinder originalToBeCopied, int[] newFaceIndices, TessellatedSolid copiedTessellatedSolid)
+            : base(newFaceIndices, copiedTessellatedSolid)
         {
             Axis = originalToBeCopied.Axis;
             Anchor = originalToBeCopied.Anchor;

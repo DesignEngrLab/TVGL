@@ -274,6 +274,9 @@ namespace TVGL
                 var random = new Random(0);
                 _tessellatedSolid = new TessellatedSolid(faces, true, false, vertices, new[] {
                     new Color(0.6f,(float)random.NextDouble(), (float)random.NextDouble(), (float)random.NextDouble()) });
+                _tessellatedSolid.Primitives = new List<PrimitiveSurface>();
+                for (var i = 0; i < 12; i+=2)
+                    _tessellatedSolid.Primitives.Add(new Plane(new List<PolygonalFace> { faces[i], faces[i + 1] }));
             }
             return _tessellatedSolid;
         }

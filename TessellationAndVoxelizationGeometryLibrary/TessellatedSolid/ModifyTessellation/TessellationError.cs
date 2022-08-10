@@ -129,7 +129,6 @@ namespace TVGL
 
         public int Count()
         {
-            if (NoErrors) return 0;
             int count = 0;
             if (DegenerateFaces != null) count += DegenerateFaces.Count;
             if (DuplicateFaces != null) count += DuplicateFaces.Count;
@@ -152,7 +151,7 @@ namespace TVGL
 
         public string Report()
         {
-            if (NoErrors) return "No Errors";
+            //if (NoErrors) return "No Errors";
             string report = "";
             if (DegenerateFaces != null) report += "Degenerate faces: " + DegenerateFaces.Count + "\n";
             if (DuplicateFaces != null) report += "Duplicate faces: " + DuplicateFaces.Count + "\n";
