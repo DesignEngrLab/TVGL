@@ -48,7 +48,7 @@ namespace TVGL
         /// </summary>
         /// <value><c>true</c> if [border is closed]; otherwise, <c>false</c>.</value>
 
-        public bool IsClosed { get; internal set; }
+        public bool IsClosed { get; set; }
 
         public bool UpdateIsClosed()
         {

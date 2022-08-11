@@ -749,11 +749,11 @@ namespace TVGL
 
 
         /// <summary>
-        /// Arranges the edges into loops, which are now stored in a SurfaceBorder object.
+        /// Arranges the edges into loops, which are now stored in a BorderSegment object.
         /// </summary>
         /// <param name="edges">The edges.</param>
         /// <param name="FacesToContain">The faces to contain.</param>
-        /// <returns>IEnumerable&lt;SurfaceBorder&gt;.</returns>
+        /// <returns>IEnumerable&lt;BorderSegment&gt;.</returns>
         public static IEnumerable<PrimitiveBorder> GetLoops(this HashSet<Edge> edges, HashSet<PolygonalFace> FacesToContain)
         {
             while (edges.Any())
