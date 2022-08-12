@@ -17,6 +17,10 @@ namespace TVGLUnitTestsAndBenchmarking
         [STAThread]
         private static void Main(string[] args)
         {
+            var plane1 = new Plane(17.0, Vector3.UnitZ);
+            var matrix = Matrix4x4.CreateRotationY(Math.PI / 2);
+            matrix *= Matrix4x4.CreateTranslation(0, 4, 5);
+            plane1.Transform(matrix);
             //ProximityTests.TestClosestPointToLines();
             DirectoryInfo dir = BackOutToFolder();
              Polygon_Testing_Functions.TestSimplify(dir);

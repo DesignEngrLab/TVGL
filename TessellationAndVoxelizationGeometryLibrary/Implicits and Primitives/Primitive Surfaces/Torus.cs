@@ -119,7 +119,19 @@ namespace TVGL
             Center = Center.Transform(transformMatrix);
             Axis = Axis.TransformNoTranslate(transformMatrix);
             Axis = Axis.Normalize();
-            // todo: how to adjust the radii?
+
+            var unitVector1 = Axis.GetPerpendicularDirection();
+            var rVector1 = MajorRadius * unitVector1;
+            var rVector2 = MajorRadius * Axis.Cross(unitVector1);
+            rVector1 = rVector1.TransformNoTranslate(transformMatrix);
+            rVector2 = rVector2.TransformNoTranslate(transformMatrix);
+            MajorRadius = Math.Sqrt((rVector1.LengthSquared() + rVector2.LengthSquared()) / 2);
+
+            rVector1 = MinorRadius * unitVector1;
+            rVector2 = MinorRadius * Axis;
+            rVector1 = rVector1.TransformNoTranslate(transformMatrix);
+            rVector2 = rVector2.TransformNoTranslate(transformMatrix);
+            MinorRadius = Math.Sqrt((rVector1.LengthSquared() + rVector2.LengthSquared()) / 2);
         }
 
         public override double CalculateError(IEnumerable<Vector3> vertices = null)

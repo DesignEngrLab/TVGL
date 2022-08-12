@@ -24,11 +24,17 @@ namespace TVGL
             Anchor = Anchor.Transform(transformMatrix);
             Axis = Axis.TransformNoTranslate(transformMatrix);
             Axis = Axis.Normalize();
-            // we assume here that the scaling of the transform is the same
-            // in all directions so that the circular cylinder is still
-            // a circular cylinder and not an elliptical cylinder. Thus, 
-            // we simply scale the radius by the ScaleX from the matrix
-            Radius*=transformMatrix.M11;
+            var rVector1 = Axis.GetPerpendicularDirection();
+            var rVector2 = Radius * Axis.Cross(rVector1);
+            rVector1 *= Radius;
+            rVector1 = rVector1.TransformNoTranslate(transformMatrix);
+            rVector2 = rVector2.TransformNoTranslate(transformMatrix);
+            Radius = Math.Sqrt((rVector1.LengthSquared() + rVector2.LengthSquared()) / 2);
+            // we currently don't allow the cylinder to be squished into an elliptical cylinder
+            // so the radius is the average of the two radius component vectors after the 
+            // transform. Earlier, we were doing 
+            //Radius*=transformMatrix.M11;
+            // but this is not correct since M11 is often non-unity during rotation
         }
 
         /// <summary>
@@ -49,7 +55,7 @@ namespace TVGL
             foreach (var c in vertices)
             {
                 var d = Math.Abs((c - Anchor).Cross(Axis).Length() - Radius);
-                if(d > maxError)
+                if (d > maxError)
                     maxError = d;
             }
             return maxError;
@@ -158,7 +164,7 @@ namespace TVGL
         public Vector3 Axis { get; set; }
 
         public Circle Circle => new Circle(TransformFrom3DTo2D(Axis), Radius * Radius);
-        
+
         /// <summary>
         ///     Gets the radius.
         /// </summary>

@@ -21,7 +21,7 @@ namespace TVGL
     /// <summary>
     /// A structure encapsulating a 3D Plane
     /// </summary>
-    public class Plane : PrimitiveSurface 
+    public class Plane : PrimitiveSurface
     {
         /// <summary>
         /// The normal vector of the Plane.
@@ -311,14 +311,11 @@ namespace TVGL
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public override void Transform(Matrix4x4 matrix)
         {
-            Matrix4x4.Invert(matrix, out var invMatrix);
-
-            Normal = new Vector3(
-                Normal.X * invMatrix.M11 + Normal.Y * invMatrix.M12 + Normal.Z * invMatrix.M13 + DistanceToOrigin * invMatrix.M14,
-                Normal.X * invMatrix.M21 + Normal.Y * invMatrix.M22 + Normal.Z * invMatrix.M23 + DistanceToOrigin * invMatrix.M24,
-                Normal.X * invMatrix.M31 + Normal.Y * invMatrix.M32 + Normal.Z * invMatrix.M33 + DistanceToOrigin * invMatrix.M34);
-
-            this.DistanceToOrigin = Normal.X * invMatrix.M41 + Normal.Y * invMatrix.M42 + Normal.Z * invMatrix.M43 + DistanceToOrigin * invMatrix.M44;
+            var pointOnPlane = DistanceToOrigin * Normal;
+            pointOnPlane = pointOnPlane.Transform(matrix);
+            Normal = Normal.TransformNoTranslate(matrix);
+            DistanceToOrigin = Normal.Dot(pointOnPlane);
+            // it seems like there is a quicker way to do this, but I run into problems when DistanceToOrigin = 0
         }
 
 
@@ -496,7 +493,7 @@ namespace TVGL
             foreach (var c in vertices)
             {
                 var d = Math.Abs(c.Dot(Normal) - DistanceToOrigin);
-                if(d > maxError)
+                if (d > maxError)
                     maxError = d;
             }
             return maxError;

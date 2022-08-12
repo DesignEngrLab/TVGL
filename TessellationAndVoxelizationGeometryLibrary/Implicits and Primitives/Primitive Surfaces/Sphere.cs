@@ -22,12 +22,15 @@ namespace TVGL
         /// <param name="transformMatrix">The transform matrix.</param>
         public override void Transform(Matrix4x4 transformMatrix)
         {
-            Center = Center.Multiply(transformMatrix);
-            // we assume here that the scaling of the transform is the same
-            // in all directions so that the spher is still
-            // a sphere and not an ellipsoid. Thus, 
-            // we simply scale the radius by the ScaleX from the matrix
-            Radius *= transformMatrix.M11;
+            Center = Center.Transform(transformMatrix);
+            var rVector1 = Radius * Vector3.UnitX;
+            rVector1 = rVector1.TransformNoTranslate(transformMatrix);
+            var rVector2 = Radius * Vector3.UnitY;
+            rVector2 = rVector2.TransformNoTranslate(transformMatrix);
+            var rVector3 = Radius * Vector3.UnitZ;
+            rVector3 = rVector3.TransformNoTranslate(transformMatrix);
+            rVector1 *= Radius;
+            Radius = Math.Sqrt((rVector1.LengthSquared() + rVector2.LengthSquared() + rVector3.LengthSquared()) / 3);
         }
 
         /// <summary>
@@ -43,8 +46,8 @@ namespace TVGL
                 vertices = Vertices.Select(v => v.Coordinates).ToList();
                 ((List<Vector3>)vertices).AddRange(InnerEdges.Select(edge => (edge.To.Coordinates + edge.From.Coordinates) / 2));
                 ((List<Vector3>)vertices).AddRange(OuterEdges.Select(edge => (edge.To.Coordinates + edge.From.Coordinates) / 2));
-            }   
-            
+            }
+
             var maxError = 0.0;
             foreach (var c in vertices)
             {
@@ -203,7 +206,7 @@ namespace TVGL
         {
             return ConvertToSphericalAngles(point - center);
         }
-        
+
         /// <summary>
         /// Converts a cartesian coordinate to spherical angles based at the origin.
         /// </summary>

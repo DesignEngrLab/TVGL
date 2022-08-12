@@ -102,13 +102,18 @@ namespace TVGL
         /// <param name="transformMatrix">The transform matrix.</param>
         public override void Transform(Matrix4x4 transformMatrix)
         {
-            Axis = Axis.Multiply(transformMatrix);
-            Apex = Apex.Multiply(transformMatrix);
-            // we assume here that the scaling of the transform is the same
-            // in all directions so that the circular cone is still
-            // a circular cone and not an elliptical cone. Thus, 
-            // we simply scale the radius by the ScaleX from the matrix
-            Aperture *= transformMatrix.M11;
+            Apex = Apex.Transform(transformMatrix);
+            Axis = Axis.TransformNoTranslate(transformMatrix);
+            Axis = Axis.Normalize();
+            var rVector1 = Axis.GetPerpendicularDirection();
+            var rVector2 = Aperture * Axis.Cross(rVector1);
+            rVector1 *= Aperture;
+            rVector1 = rVector1.TransformNoTranslate(transformMatrix);
+            rVector2 = rVector2.TransformNoTranslate(transformMatrix);
+            Aperture = Math.Sqrt((rVector1.LengthSquared() + rVector2.LengthSquared()) / 2);
+            // this is the same procedure for how Radius is determined in the cylinder
+            // transform. Its like we've moved done the cone by 1 unit and the aperture 
+            // is the radius at that cross-section
         }
 
         /// <summary>
