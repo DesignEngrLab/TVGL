@@ -506,7 +506,7 @@ namespace TVGL
                         e.From == lastVertex && remainingEdgesInner.Contains(e));
                     if (bestNext != null)
                     {
-                        loop.AddBegin(bestNext);
+                        loop.AddEnd(bestNext);
                         removedEdges.Add(bestNext);
                         remainingEdgesInner.Remove(bestNext);
                         successful = true;

@@ -141,7 +141,7 @@ namespace TVGL
                 else yield return EdgeList[i].To;
             }
             if (!keepLastVertex && !IsClosed) //only add the last one if not a closed loop since it would otherwise
-                           // repeat the first point
+                                              // repeat the first point
             {
                 if (DirectionList[^1]) yield return EdgeList[^1].To;
                 else yield return EdgeList[^1].From;
@@ -160,8 +160,12 @@ namespace TVGL
         }
         public void AddEnd(Edge edge)
         {
-            if (LastVertex == null) DirectionList.Add(true);
-            else DirectionList.Add(edge.From == LastVertex);
+            // lastVertex is a local variable that breaks the rule of the LastVertex property. It should not
+            // depend on IsClosed
+            var lastVertex = !DirectionList.Any() ? null : DirectionList[^1] ? EdgeList[^1].To : EdgeList[^1].From;
+
+            if (lastVertex == null) DirectionList.Add(true);
+            else DirectionList.Add(edge.From == lastVertex);
             EdgeList.Add(edge);
         }
         public void AddBegin(Edge edge, bool dir)

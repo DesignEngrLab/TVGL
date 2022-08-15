@@ -31,7 +31,10 @@ namespace TVGL
             }
         }
 
-        internal TriangulationLoop() : base() { }
+        internal TriangulationLoop() : base() 
+        {
+            IsClosed = true;
+        }
 
         internal double Score { get; set; }
         internal Vector3 Normal { get; set; }
