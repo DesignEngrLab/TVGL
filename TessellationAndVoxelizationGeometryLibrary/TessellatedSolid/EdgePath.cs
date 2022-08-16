@@ -153,6 +153,12 @@ namespace TVGL
             return GetVertices(keepLastVertex).Select(v => v.Coordinates);
         }
 
+        public IEnumerable<Vector3> GetCenters()
+        {
+            foreach(var edge in EdgeList)
+                yield return edge.Center();
+        }
+
         public void AddEnd(Edge edge, bool dir)
         {
             EdgeList.Add(edge);

@@ -65,7 +65,7 @@ namespace TVGL
         /// Gets or sets the plane error.
         /// </summary>
         /// <value>The plane error.</value>
-        public double SurfaceError { get; set; }
+        public double PlaneError { get; set; }
 
         /// <summary>
         /// Gets or sets a value indicating whether [encircles axis].
@@ -139,7 +139,7 @@ namespace TVGL
             Curve = curve;
             OwnedPrimitive = surface;
             CurveError = curveError;
-            SurfaceError = surfError;
+            PlaneError = surfError;
         }
 
         public PrimitiveBorder(ICurve curve, PrimitiveSurface surface, List<Edge> edges, List<bool> directions,
@@ -150,7 +150,7 @@ namespace TVGL
             Curve = curve;
             OwnedPrimitive = surface;
             CurveError = curveError;
-            SurfaceError = surfError;
+            PlaneError = surfError;
         }
 
         [JsonIgnore]
