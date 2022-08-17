@@ -53,12 +53,31 @@ namespace TVGL
         [JsonIgnore]
         public PrimitiveSurface OwnedPrimitive { get; set; }
 
+        /// <summary>
+        /// Returns all primitives that share an edge segment with this border
+        /// </summary>
+        /// <returns></returns>
         public IEnumerable<PrimitiveSurface> AdjacentPrimitives()
         {
             foreach(var segment in Segments)
             {
                 yield return segment.OwnedPrimitive == OwnedPrimitive ? segment.OtherPrimitive : segment.OwnedPrimitive;
             }
+        }
+
+        /// <summary>
+        /// Returns all primitives that share a vertex with this border
+        /// </summary>
+        /// <returns></returns>
+        public IEnumerable<PrimitiveSurface> AdjacentPrimitivesByVertex()
+        {
+            var adjacents = new HashSet<PrimitiveSurface>();
+            foreach (var segment in Segments)
+                foreach(var vertex in segment.GetVertices())
+                    foreach(var face in vertex.Faces)
+                        if (face.BelongsToPrimitive != OwnedPrimitive)
+                            adjacents.Add(face.BelongsToPrimitive);
+            return adjacents;
         }
 
         /// <summary>
