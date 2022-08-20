@@ -178,7 +178,7 @@ namespace TVGL
             get
             {
                 if (_polygon == null)
-                    _polygon = new Polygon(OwnedPrimitive.TransformFrom3DTo2D(AsVectors(), IsClosed));
+                    _polygon = new Polygon(OwnedPrimitive.TransformFrom3DTo2D(GetVectors(), IsClosed));
                 return _polygon;
             }
         }
