@@ -1083,11 +1083,23 @@ namespace TVGL
             {
                 //File types that save to an array of solids
                 case FileType.STL_ASCII:
+                    return STLFileData.SaveASCII(stream, new[] { (TessellatedSolid)solid });
+
                 case FileType.STL_Binary:
+                    return STLFileData.SaveBinary(stream, new[] { (TessellatedSolid)solid });
+
                 case FileType.AMF:
+                    return AMFFileData.SaveSolids(stream, new[] { (TessellatedSolid)solid });
+
                 case FileType.OBJ:
+                    return OBJFileData.SaveSolids(stream, new[] { (TessellatedSolid)solid });
+
                 case FileType.ThreeMF:
+                    return ThreeMFFileData.Save(stream, new[] { (TessellatedSolid)solid });
+
                 case FileType.Model3MF:
+                    return ThreeMFFileData.SaveModel(stream, new[] { (TessellatedSolid)solid });
+
                 case FileType.TVGL:
                 case FileType.TVGLz:
                     return Save(stream, new[] { solid });
