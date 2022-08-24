@@ -22,8 +22,14 @@ namespace TVGL
         /// <param name="transformMatrix">The transform matrix.</param>
         public override void Transform(Matrix4x4 transformMatrix)
         {
+            var rVector1 = Radius * Vector3.UnitX;
+            rVector1 = rVector1.TransformNoTranslate(transformMatrix);
+            var rVector2 = Radius * Vector3.UnitY;
+            rVector2 = rVector2.TransformNoTranslate(transformMatrix);
+            var rVector3 = Radius * Vector3.UnitZ;
+            rVector3 = rVector3.TransformNoTranslate(transformMatrix);
+            Radius = Math.Sqrt((rVector1.LengthSquared() + rVector2.LengthSquared() + rVector3.LengthSquared()) / 3);
             Center = Center.Transform(transformMatrix);
-            //Radius does not need to be modified.
         }
 
         /// <summary>
