@@ -307,6 +307,8 @@ namespace TVGL
 
         public List<PrimitiveBorder> Borders { get; set; }
 
+        public List<BorderSegment> BorderSegments { get; set; } = new List<BorderSegment>();//initialize to an empty list
+
         public IEnumerable<PrimitiveBorder> BordersEncirclingAxis(Vector3 axis, Vector3 anchor)
         {
             var transform = axis.TransformToXYPlane(out _);

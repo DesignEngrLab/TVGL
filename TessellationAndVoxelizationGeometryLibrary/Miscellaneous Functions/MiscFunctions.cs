@@ -1082,7 +1082,7 @@ namespace TVGL
             Vector3 dir;
             //If the vector is only in the y-direction, then return the x direction
             if (direction.X.IsNegligible() && direction.Z.IsNegligible())
-                dir = Vector3.UnitX;
+                return Vector3.UnitX;
             // otherwise we will return something in the x-z plane, which is created by
             // taking the cross product of the Y-direction with this vector.
             // The thinking is that - since this is used in the function above (to translate

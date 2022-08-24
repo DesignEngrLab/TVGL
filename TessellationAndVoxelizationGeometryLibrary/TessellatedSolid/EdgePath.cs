@@ -148,9 +148,15 @@ namespace TVGL
             }
         }
 
-        public IEnumerable<Vector3> AsVectors(bool keepLastVertex = false)
+        public IEnumerable<Vector3> GetVectors(bool keepLastVertex = false)
         {
             return GetVertices(keepLastVertex).Select(v => v.Coordinates);
+        }
+
+        public IEnumerable<Vector3> GetCenters()
+        {
+            foreach(var edge in EdgeList)
+                yield return edge.Center();
         }
 
         public void AddEnd(Edge edge, bool dir)

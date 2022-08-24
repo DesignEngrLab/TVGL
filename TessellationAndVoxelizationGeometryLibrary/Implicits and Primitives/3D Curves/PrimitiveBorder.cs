@@ -53,6 +53,10 @@ namespace TVGL
         [JsonIgnore]
         public PrimitiveSurface OwnedPrimitive { get; set; }
 
+        /// <summary>
+        /// Returns all primitives that share an edge segment with this border
+        /// </summary>
+        /// <returns></returns>
         public IEnumerable<PrimitiveSurface> AdjacentPrimitives()
         {
             foreach(var segment in Segments)
@@ -62,10 +66,25 @@ namespace TVGL
         }
 
         /// <summary>
+        /// Returns all primitives that share a vertex with this border
+        /// </summary>
+        /// <returns></returns>
+        public IEnumerable<PrimitiveSurface> AdjacentPrimitivesByVertex()
+        {
+            var adjacents = new HashSet<PrimitiveSurface>();
+            foreach (var segment in Segments)
+                foreach(var vertex in segment.GetVertices())
+                    foreach(var face in vertex.Faces)
+                        if (face.BelongsToPrimitive != OwnedPrimitive)
+                            adjacents.Add(face.BelongsToPrimitive);
+            return adjacents;
+        }
+
+        /// <summary>
         /// Gets or sets the plane error.
         /// </summary>
         /// <value>The plane error.</value>
-        public double SurfaceError { get; set; }
+        public double PlaneError { get; set; }
 
         /// <summary>
         /// Gets or sets a value indicating whether [encircles axis].
@@ -139,7 +158,7 @@ namespace TVGL
             Curve = curve;
             OwnedPrimitive = surface;
             CurveError = curveError;
-            SurfaceError = surfError;
+            PlaneError = surfError;
         }
 
         public PrimitiveBorder(ICurve curve, PrimitiveSurface surface, List<Edge> edges, List<bool> directions,
@@ -150,7 +169,7 @@ namespace TVGL
             Curve = curve;
             OwnedPrimitive = surface;
             CurveError = curveError;
-            SurfaceError = surfError;
+            PlaneError = surfError;
         }
 
         [JsonIgnore]
@@ -159,7 +178,7 @@ namespace TVGL
             get
             {
                 if (_polygon == null)
-                    _polygon = new Polygon(OwnedPrimitive.TransformFrom3DTo2D(AsVectors(), IsClosed));
+                    _polygon = new Polygon(OwnedPrimitive.TransformFrom3DTo2D(GetVectors(), IsClosed));
                 return _polygon;
             }
         }
