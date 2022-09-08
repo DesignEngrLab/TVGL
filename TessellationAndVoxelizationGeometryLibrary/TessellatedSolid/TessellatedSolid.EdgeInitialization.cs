@@ -73,6 +73,8 @@ namespace TVGL
             List<Vertex> removedVertices;
             if (singleSidedEdges.Any())
             {
+                if (singleSidedEdges.Count > 1000)
+                    throw new Exception(singleSidedEdges.Count + " Single-sided edges. Likely a shell.");
                 edgeList.AddRange(MatchUpRemainingSingleSidedEdge(singleSidedEdges,
                     Math.Pow(expansionFactor, numberOfAttemptsDefault) * this.SameTolerance, out var remainingEdges,
                     out removedVertices));
