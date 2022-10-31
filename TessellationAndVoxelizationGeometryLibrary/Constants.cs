@@ -82,6 +82,8 @@ namespace TVGL
 
         /// <summary>
         ///     The tolerance for the same normal of a face when two are dot-producted.
+        ///     the angle would be acos(1 - SameFaceNormalDotTolerance). 
+        ///     so, 0.01 would be 8-deg
         /// </summary>
         public const double SameFaceNormalDotTolerance = 1e-2;
 
