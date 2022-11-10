@@ -6,12 +6,6 @@ using System.Linq;
 
 namespace TVGL
 {
-    internal enum BooleanOperationType
-    {
-        Union,
-        Intersection
-    };
-
     public enum PolygonFillType //http://www.angusj.com/delphi/clipper/documentation/Docs/Units/ClipperLib/Types/PolyFillType.htm
     {
         Positive, // (Most common if polygons are ordered correctly and not self-intersecting) All sub-regions with winding counts > 0 are filled.

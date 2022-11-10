@@ -64,5 +64,10 @@ namespace TVGL
                 yield return point.ConvertTo2DCoordinates(transform);
             }
         }
+
+        public override double PointMembership(Vector3 point)
+        {
+            return double.NaN;
+        }
     }
 }

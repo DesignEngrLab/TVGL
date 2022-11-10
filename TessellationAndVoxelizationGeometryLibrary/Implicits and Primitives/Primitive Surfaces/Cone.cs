@@ -272,5 +272,10 @@ namespace TVGL
                 prevAngle = angle;
             }
         }
+
+        public override double PointMembership(Vector3 point)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

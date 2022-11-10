@@ -318,6 +318,14 @@ namespace TVGL
             return rSqd < Radius * Radius;
         }
 
+        public override double PointMembership(Vector3 point)
+        {
+            var dxAlong = point.Dot(Axis);
+            if (dxAlong < MinDistanceAlongAxis) return MinDistanceAlongAxis - dxAlong;
+            if (dxAlong > MaxDistanceAlongAxis) return dxAlong - MaxDistanceAlongAxis;
+            return (point - Anchor).Cross(Axis).Length() - Radius;
+        }
+
 
 
         //public TessellatedSolid AsTessellatedSolid()

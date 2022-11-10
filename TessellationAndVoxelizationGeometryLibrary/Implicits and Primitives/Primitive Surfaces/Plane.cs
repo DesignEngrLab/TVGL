@@ -518,5 +518,11 @@ namespace TVGL
                 yield return TransformFrom3DTo2D(point);
             }
         }
+
+        public override double PointMembership(Vector3 point)
+        {
+            var d = point.Dot(Normal);
+            return d - DistanceToOrigin;
+        }
     }
 }

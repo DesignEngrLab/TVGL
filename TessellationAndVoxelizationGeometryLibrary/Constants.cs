@@ -596,6 +596,14 @@ namespace TVGL
         AtStartOfB,
         BothStarts
     }
+    public enum BooleanOperationType
+    {
+        Union,
+        Intersect,
+        SubtractAB,
+        SubtractBA,
+        XOR
+    }
 
     /// <summary>
     ///     A comparer for optimization that can be used for either

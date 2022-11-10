@@ -15,11 +15,6 @@ namespace TVGL
     [JsonObject(MemberSerialization.OptOut)]
     public abstract class PrimitiveSurface
     {
-        public string Type()
-        {
-            return GetType().ToString().Replace("TVGL.", "");
-        }
-
         private double _residual = -1.0;
         [JsonIgnore]
         public double Residual 
@@ -80,6 +75,7 @@ namespace TVGL
         public abstract IEnumerable<Vector2> TransformFrom3DTo2D(IEnumerable<Vector3> points, bool pathIsClosed);
         public abstract Vector2 TransformFrom3DTo2D(Vector3 point);
         public abstract Vector3 TransformFrom2DTo3D(Vector2 point);
+        public abstract double PointMembership(Vector3 point);
 
         [JsonIgnore]
         //A tempory class used when importing primitives 

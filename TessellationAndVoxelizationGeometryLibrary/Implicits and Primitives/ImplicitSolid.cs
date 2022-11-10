@@ -4,18 +4,67 @@
 // It is licensed under MIT License (see LICENSE.txt for details)
 using System;
 
-
 namespace TVGL
 {
     public class ImplicitSolid : Solid
     {
         public double SurfaceLevel { get; set; }
+        public double Discretization { get; set; }
+        private BooleanOperation operationTree;
 
         public ImplicitSolid()
         {
-            Bounds = new[] { new Vector3(0.0, 0.0, 0.0), new Vector3(10.0, 10.0, 10.0) };
         }
 
+        public ImplicitSolid(PrimitiveSurface surface1) : this()
+        {
+            operationTree = new LeafSurface(surface1);
+        }
+        public ImplicitSolid(PrimitiveSurface surfaceA, PrimitiveSurface surfaceB, BooleanOperationType booleanOperation) : this()
+        {
+            operationTree = MakeBooleanOperation(new LeafSurface(surfaceA), new LeafSurface(surfaceB), booleanOperation);
+        }
+
+        private BooleanOperation MakeBooleanOperation(BooleanOperation boolOperA, BooleanOperation boolOperB, BooleanOperationType booleanOperation)
+        {
+            switch (booleanOperation)
+            {
+                case BooleanOperationType.Union:
+                    return new Union(boolOperA, boolOperB);
+                case BooleanOperationType.Intersect:
+                    return new Intersect(boolOperA, boolOperB);
+                case BooleanOperationType.SubtractAB:
+                    return new SubtractAB(boolOperA, boolOperB);
+                case BooleanOperationType.SubtractBA:
+                    return new SubtractAB(boolOperB, boolOperA);
+                case BooleanOperationType.XOR:
+                    return new XOR(boolOperA, boolOperB);
+                default:
+                    throw new ArgumentException("Unexpected boolean operation.");
+            }
+        }
+        public void AddNewTopOfTree(ImplicitSolid csgSolidA, BooleanOperationType booleanOperation)
+        {
+            var top = MakeBooleanOperation(csgSolidA.operationTree, operationTree, booleanOperation);
+            operationTree = top;
+        }
+
+        public void AddNewTopOfTree(BooleanOperationType booleanOperation, ImplicitSolid csgSolidB)
+        {
+            var top = MakeBooleanOperation(operationTree, csgSolidB.operationTree, booleanOperation);
+            operationTree = top;
+        }
+        public void AddNewTopOfTree(PrimitiveSurface primitiveSurfaceA, BooleanOperationType booleanOperation)
+        {
+            var top = MakeBooleanOperation(new LeafSurface(primitiveSurfaceA), operationTree, booleanOperation);
+            operationTree = top;
+        }
+
+        public void AddNewTopOfTree(BooleanOperationType booleanOperation, PrimitiveSurface primitiveSurfaceB)
+        {
+            var top = MakeBooleanOperation(operationTree, new LeafSurface(primitiveSurfaceB), booleanOperation);
+            operationTree = top;
+        }
 
         public override void Transform(Matrix4x4 transformMatrix)
         {
@@ -27,19 +76,12 @@ namespace TVGL
             throw new NotImplementedException();
         }
 
-        public double this[double x, double y, double z] => Evaluate(x, y, z);
+        public double this[double x, double y, double z] => operationTree.Run(new Vector3(x, y, z));
 
-        private double Evaluate(double x, double y, double z)
-        {
-            var center = new Vector3(5, 5, 5);
-            var queriedPoint = new Vector3(x, y, z);
-            var radius = 3.0;
-            return (queriedPoint - center).Length() - radius;
-        }
 
-        public TessellatedSolid ConvertToTessellatedSolid()
+        public TessellatedSolid ConvertToTessellatedSolid(double meshSize)
         {
-            var marchingCubesAlgorithm = new MarchingCubesImplicit(this, 0.7);
+            var marchingCubesAlgorithm = new MarchingCubesImplicit(this, meshSize);
             return marchingCubesAlgorithm.Generate();
         }
 
@@ -61,6 +103,109 @@ namespace TVGL
         protected override void CalculateInertiaTensor()
         {
             throw new NotImplementedException();
+        }
+
+        abstract class BooleanOperation
+        {
+            internal abstract double Run(Vector3 point);
+
+        }
+        class LeafSurface : BooleanOperation
+        {
+            private PrimitiveSurface surface;
+            internal LeafSurface(PrimitiveSurface surface)
+            {
+                this.surface = surface;
+            }
+            internal override double Run(Vector3 point)
+            {
+                return surface.PointMembership(point);
+            }
+        }
+        class Union : BooleanOperation
+        {
+            BooleanOperation surface1;
+            BooleanOperation surface2;
+
+            internal Union(BooleanOperation surface1, BooleanOperation surface2)
+            {
+                this.surface1 = surface1;
+                this.surface2 = surface2;
+            }
+            internal override double Run(Vector3 point)
+            {
+                var pmc = surface1.Run(point);
+                if (pmc < 0) return pmc;
+                return Math.Min(pmc, surface2.Run(point));
+                //var pmc1 = surface1.Run(point);
+                //var pmc2 = surface2.Run(point);
+                //if (pmc1 > 0 && pmc2 > 0) return Math.Min(pmc1, pmc2);
+                //if (pmc1 < 0 && pmc2 < 0) return Math.Max(pmc1, pmc2);
+
+                //return Math.Min(pmc1, pmc2);
+            }
+        }
+        class Intersect : BooleanOperation
+        {
+            BooleanOperation surface1;
+            BooleanOperation surface2;
+
+            internal Intersect(BooleanOperation surface1, BooleanOperation surface2)
+            {
+                this.surface1 = surface1;
+                this.surface2 = surface2;
+            }
+            internal override double Run(Vector3 point)
+            {
+                var pmc = surface1.Run(point);
+                if (pmc > 0) return pmc;
+                return Math.Max(pmc, surface2.Run(point));
+            }
+        }
+        class SubtractAB : BooleanOperation
+        {
+            BooleanOperation surfaceA;
+            BooleanOperation surfaceB;
+
+            internal SubtractAB(BooleanOperation surfaceA, BooleanOperation surfaceB)
+            {
+                this.surfaceA = surfaceA;
+                this.surfaceB = surfaceB;
+            }
+            internal override double Run(Vector3 point)
+            {
+                var pmcA = surfaceA.Run(point);
+                var pmcB = surfaceB.Run(point);
+                if (pmcA > 0 && pmcB > 0)
+                    return Math.Min(pmcA, pmcB);
+                if (pmcA < 0 && pmcB < 0)
+                    return Math.Min(-pmcA, -pmcB);
+                //if (pmcA < 0) // && pmcB > 0)
+                //    return Math.Min(pmcA, -pmcB);
+                //if //(pmcA > 0 && pmcB < 0)
+                return Math.Max(pmcA, -pmcB);
+            }
+        }
+        class XOR : BooleanOperation
+        {
+            BooleanOperation surfaceA;
+            BooleanOperation surfaceB;
+
+            internal XOR(BooleanOperation surfaceA, BooleanOperation surfaceB)
+            {
+                this.surfaceA = surfaceA;
+                this.surfaceB = surfaceB;
+            }
+            internal override double Run(Vector3 point)
+            {
+                var pmcA = surfaceA.Run(point);
+                var pmcB = surfaceB.Run(point);
+                if (pmcA < 0 && pmcB < 0)
+                    return -Math.Min(pmcA, pmcB);
+                if (pmcA > 0 && pmcB > 0)
+                    return Math.Min(pmcA, pmcB);
+                return Math.Min(pmcA, pmcB);
+            }
         }
     }
 }

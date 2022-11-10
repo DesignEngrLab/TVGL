@@ -230,5 +230,10 @@ namespace TVGL
                 yield return TransformFrom3DTo2D(p);
             }
         }
+
+        public override double PointMembership(Vector3 point)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

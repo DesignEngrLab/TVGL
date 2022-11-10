@@ -252,6 +252,11 @@ namespace TVGL
             return new Vector3(radius * cosAzimuth * sinPolar, radius * sinAzimuth * sinPolar, radius * cosPolar);
         }
 
+        public override double PointMembership(Vector3 point)
+        {
+            return (point - Center).Length() - Radius;
+        }
+
 
         #region Constructor
 
