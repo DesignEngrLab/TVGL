@@ -7,7 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using StarMathLib;
 using MIConvexHull;
-
+using System.Diagnostics.CodeAnalysis;
 
 namespace TVGL
 {
@@ -245,7 +245,7 @@ namespace TVGL
             reverseVertexOrder = !suggestedNormal.IsNull() && suggestedNormal.Dot(areaVector) < 0;
             // to be more accurate, call another function to best fit a plane through the points
             Plane.DefineNormalAndDistanceFromVertices(vertices, out var distance, out var normal);
-            if ((!suggestedNormal.IsNull() && suggestedNormal.Dot(normal) < 0) || 
+            if ((!suggestedNormal.IsNull() && suggestedNormal.Dot(normal) < 0) ||
                 (suggestedNormal.IsNull() && areaVector.Dot(normal) < 0))
             {
                 normal *= -1;
@@ -696,7 +696,7 @@ namespace TVGL
 
                     nonSmoothEdgesForSolid = new Dictionary<(Vector3, Vector3), int>();
                     var i = 0;
-                    foreach(var edgePath in ts.NonsmoothEdges)
+                    foreach (var edgePath in ts.NonsmoothEdges)
                     {
                         //Check if this edge path belong entirely to this solid.
                         var belongs = true;
@@ -706,7 +706,7 @@ namespace TVGL
                             {
                                 belongs = false;
                                 break;
-                            }                                    
+                            }
                         }
                         if (belongs)
                         {
@@ -720,9 +720,9 @@ namespace TVGL
                 var newSolid = new TessellatedSolid(seperateSolid, true, false);
 
                 if (nonSmoothEdgesForSolid != null)
-                {                    
-                    var nonSmoothEdges = new Dictionary<int,EdgePath>();
-                    foreach(var i in nonSmoothEdgesForSolid.Values.Distinct())
+                {
+                    var nonSmoothEdges = new Dictionary<int, EdgePath>();
+                    foreach (var i in nonSmoothEdgesForSolid.Values.Distinct())
                         nonSmoothEdges.Add(i, new EdgePath());
                     foreach (var edge in newSolid.Edges)
                     {
@@ -731,7 +731,7 @@ namespace TVGL
                             || nonSmoothEdgesForSolid.TryGetValue((edge.To.Coordinates, edge.From.Coordinates), out pathIndex))
                             nonSmoothEdges[pathIndex].AddEnd(edge);
                     }
-                    newSolid.NonsmoothEdges = nonSmoothEdges.Values.ToList(); 
+                    newSolid.NonsmoothEdges = nonSmoothEdges.Values.ToList();
                 }
 
                 solids.Add(newSolid);
@@ -2246,6 +2246,42 @@ namespace TVGL
                 }
             }
             return bestEdge;
+        }
+
+        /// <summary>
+        /// ns the equidistant sphere points kogan.
+        /// https://scholar.rose-hulman.edu/cgi/viewcontent.cgi?article=1387&context=rhumj
+        /// </summary>
+        /// <param name="n">The n.</param>
+        /// <returns>System.Collections.Generic.IEnumerable&lt;TVGL.Vector2&gt;.</returns>
+        public static IEnumerable<Vector2> NEquidistantSpherePointsKogan(int n)
+        {
+            var x = 0.1 + 1.2 * n;
+            var nMinus1 = n - 1.0;
+            var start = -1 + 1.0 / nMinus1;
+            var increment = (2.0 - 2.0 / nMinus1) / nMinus1;
+            for (int j = 0; j < n; j++)
+            {
+                var s = start + j * increment;
+                yield return
+                    new Vector2(s * x, Constants.HalfPi * Math.Sign(s) * (1 - Math.Sqrt(1 - Math.Abs(s))));
+            }
+        }
+        /// <summary>
+        /// ns the equidistant sphere points kogan.
+        /// https://scholar.rose-hulman.edu/cgi/viewcontent.cgi?article=1387&context=rhumj
+        /// </summary>
+        /// <param name="n">The n.</param>
+        /// <param name="radius">The radius.</param>
+        /// <returns>System.Collections.Generic.IEnumerable&lt;TVGL.Vector3&gt;.</returns>
+        public static IEnumerable<Vector3> NEquidistantSpherePointsKogan(int n, double radius)
+        {
+            foreach (var anglePair in NEquidistantSpherePointsKogan(n))
+            {
+                var x = anglePair.X;
+                var y = anglePair.Y;
+                yield return new Vector3(Math.Cos(x) * Math.Cos(y), Math.Sin(x) * Math.Cos(y), Math.Sin(y));
+            }
         }
     }
 }
