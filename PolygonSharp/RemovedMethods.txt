@@ -1,0 +1,248 @@
+﻿***************** These methods were removed when files copied from TVGL *******************
+**** because they have references to 3D classes. You will need to reinstate these in TVGL
+**** when all polygon functions are removed (possibly as extensions where needed?)
+
+from Silhouette.cs
+        /// <summary>
+        /// Arranges the outer edges into polygons.
+        /// </summary>
+        /// <param name="outerEdges">The outer edges.</param>
+        /// <param name="isPositive">if set to <c>true</c> [positive].</param>
+        /// <param name="transform">The transform.</param>
+        /// <returns>List&lt;Polygon&gt;.</returns>
+        private static List<Polygon> ArrangeOuterEdgesIntoPolygon(Dictionary<Edge, bool> outerEdges, bool isPositive, Matrix4x4 transform)
+        {
+            var polygons = new List<Polygon>();
+            var negativePolygons = new List<Polygon>();
+            while (outerEdges.Any())
+            {   // outer while loop begins a new polygon with the outerEdges. There may easily be multiple polygons in the outer edges as it can represent
+                // holes within the polygon
+                var polyCoordinates = new List<Vector2>();
+                #region build the loop forwards
+                var start = outerEdges.First(); // the separate "start" variable is only in case we need to work backwards. see 
+                var current = start;
+                var startVertex = current.Value == isPositive ? current.Key.From : current.Key.To; //used to define the end of the loop - when you get back to the startVertex
+                var successfulLoop = false;
+                while (outerEdges.Any())
+                {   // inner loop adds to the current polygon
+                    outerEdges.Remove(current.Key);
+                    if (current.Value == isPositive) //if ownedEdge and positive, then edge is in the right direction. OR if not-owned and negative, then also in the proper
+                        // direction.
+                        polyCoordinates.Add(current.Key.From.Coordinates.ConvertTo2DCoordinates(transform));
+                    else polyCoordinates.Add(current.Key.To.Coordinates.ConvertTo2DCoordinates(transform));
+                    // set the nextVertex and check if it is the same as the startVertex
+                    var nextVertex = current.Value == isPositive ? current.Key.To : current.Key.From;
+                    if (nextVertex == startVertex || nextVertex.ConvertTo2DCoordinates(transform).IsPracticallySame(polyCoordinates[0]))
+                    {
+                        successfulLoop = true;
+                        break;
+                    }
+                    // the viable edges should hopefully be only one, but to be robust - let us find all the edges that emanate from the 
+                    // nextVertex and are in the collection of outerEdges
+                    var viableEdges = new List<KeyValuePair<Edge, bool>>();
+                    if (outerEdges.Any())
+                    {
+                        foreach (var edge in nextVertex.Edges)
+                        {
+                            if (edge == current.Key) continue;
+                            if (outerEdges.TryGetValue(edge, out var thisDir))
+                                viableEdges.Add(new KeyValuePair<Edge, bool>(edge, thisDir));
+                        }
+                    }
+                    if (viableEdges.Count == 1) current = viableEdges[0];
+                    else break;//if (viableEdges.Count == 0) 
+                               //current = new KeyValuePair<Edge, bool>(null, false);
+                               // when there are more than one, we can try "ChooseBestNextEdge", but it has been found
+                               // that it works better to just move to the backwards direction
+                               //else current = ChooseBestNextEdge(current.Key, current.Value, viableEdges, transform);
+                }
+                #endregion
+                #region if you get stuch, then work backwards
+                // if the loop was unsuccessful in the forward direction, work backwards. This code is similar to the above loop. Note that instead
+                // of "polyCoordinates.Add", we use "polyCoordinates.Insert(0,"
+                if (!successfulLoop)
+                {
+                    startVertex = current.Value == isPositive ? current.Key.From : current.Key.To; //assign startVertex to the last one added above
+                    current = start; //assign current back to the start
+                    var nextVertex = current.Value == isPositive ? current.Key.From : current.Key.To; // notice that the condition for traversing the edges
+                    // is switched in this loop
+                    while (outerEdges.Any())
+                    {   // this loop is similar to the above but the code has been staggered so that viable edges are checked first - since
+                        // the last edge has been added already
+                        var viableEdges = new List<KeyValuePair<Edge, bool>>();
+                        foreach (var edge in nextVertex.Edges)
+                        {
+                            if (edge == current.Key) continue;
+                            if (outerEdges.TryGetValue(edge, out var thisDir))
+                                viableEdges.Add(new KeyValuePair<Edge, bool>(edge, thisDir));
+                        }
+                        if (viableEdges.Count == 1) current = viableEdges[0];
+                        else if (viableEdges.Count > 1)
+                            current = ChooseBestNextEdge(current.Key, current.Value, viableEdges, transform);
+                        else break;
+
+                        outerEdges.Remove(current.Key);
+                        if (current.Value != isPositive)
+                            polyCoordinates.Insert(0, current.Key.From.Coordinates.ConvertTo2DCoordinates(transform));
+                        else polyCoordinates.Insert(0, current.Key.To.Coordinates.ConvertTo2DCoordinates(transform));
+                        nextVertex = current.Value == isPositive ? current.Key.From : current.Key.To;
+
+                        if (nextVertex == startVertex || nextVertex.ConvertTo2DCoordinates(transform).IsPracticallySame(polyCoordinates[^1]))
+                        {
+                            successfulLoop = true;
+                            break;
+                        }
+                    }
+                }
+                #endregion
+                #region handle unsuccessful loops
+                // if the loop is still not successfully closed - what should we do? I'm open to suggestions, but what I ended
+                // up with is to make the decision to keep or discard based on how far apart the first and last vertices are.
+                // this is done by find the area enclosed by the current edges. If the additional edge to close the polygon 
+                // represents a 25% change in area (or whatever the const "closeTheLoopAreaFraction" is set to), then just discard
+                // it.
+                const double closeTheLoopAreaFraction = 0.25;
+                if (!successfulLoop)
+                {
+                    var center = polyCoordinates.Aggregate((result, coord) => result + coord) / polyCoordinates.Count;
+                    var area = 0.0;
+                    for (int i = 1; i < polyCoordinates.Count; i++)
+                        area += (polyCoordinates[i - 1] - center).Cross(polyCoordinates[i] - center);
+                    // if closing the polygon is a substantial part of the area then don't include it
+                    var closingArea = (polyCoordinates[^1] - center).Cross(polyCoordinates[0] - center);
+                    if (MathF.Abs(closingArea / area) > closeTheLoopAreaFraction)
+                    {
+                        //Presenter.ShowAndHang(polyCoordinates);
+                        polyCoordinates.Clear();
+                    }
+                }
+                #endregion
+                if (polyCoordinates.Count > 2)
+                {
+                    var xDim = polyCoordinates.Max(c => c.X) - polyCoordinates.Min(c => c.X);
+                    var yDim = polyCoordinates.Max(c => c.Y) - polyCoordinates.Min(c => c.Y);
+                    var tolerance = MathF.Min(xDim, yDim) * Constants.PolygonSameTolerance;
+                    var newPolygons = new Polygon(polyCoordinates.SimplifyMinLengthToNewList(tolerance)).RemoveSelfIntersections(ResultType.BothPermitted);
+                    // make the coordinates into polygons. Simplify and remove self intersections. 
+                    foreach (var newPolygon in newPolygons)
+                    {
+                        if (newPolygon.IsPositive) polygons.Add(newPolygon);
+                        else negativePolygons.Add(newPolygon);
+                    }
+                }
+            }
+            var areaTolerance = polygons.Sum(p=>p.Area) * Constants.BaseTolerance;
+            for (int i = polygons.Count - 1; i >= 0; i--)
+            {   // before we return, we cycle over the generated polygons and remove any that are too small as well as separate
+                // out other negative polygons
+                var polygon = polygons[i];
+                if (polygon.Area.IsNegligible(areaTolerance)) polygons.RemoveAt(i);
+                else if (!polygon.IsPositive)
+                {
+                    polygons.RemoveAt(i);
+                    negativePolygons.Add(polygon);
+                }
+            }
+            // This seems to be the biggest problem. Holes may be through or blind and can still be occluded by other material. We don't want to union them away. But if 
+            // each hole is properly nested in a positive polygon - even if it is not from that same polygon, then we can move to union the set of them. The small function
+            // "AddHoleToLargerPostivePolygon" places negatives in a positive
+            foreach (var hole in negativePolygons)
+                AddHoleToLargerPostivePolygon(polygons, hole);
+            //now union this result before returning to the main loop - to, again, union with the other polygons
+            polygons = polygons.UnionPolygons(PolygonCollection.PolygonWithHoles);
+            return polygons;
+        }
+
+* from PolygonOperations.Triangulate.cs
+        /// <summary>
+        /// Triangulates the specified loop of 3D vertices using the projection from the provided normal.
+        /// </summary>
+        /// <param name="vertexLoop">The vertex loop.</param>
+        /// <param name="normal">The normal direction.</param>
+        /// <returns>IEnumerable&lt;Vertex[]&gt; where each represents a triangular polygonal face.</returns>
+        /// <exception cref="ArgumentException">The vertices must all have a unique IndexInList value - vertexLoop</exception>
+        public static IEnumerable<Vertex[]> Triangulate(this IEnumerable<Vertex> vertexLoop, Vector3 normal, bool forceToPositive = false)
+        {
+            var transform = normal.TransformToXYPlane(out _);
+            var coords = new List<Vertex2D>();
+            var indexToVertexDict = new Dictionary<int, Vertex>();
+            foreach (var vertex in vertexLoop)
+            {
+                coords.Add(new Vertex2D(vertex.ConvertTo2DCoordinates(transform), vertex.IndexInList, -1));
+                if (indexToVertexDict.ContainsKey(vertex.IndexInList))
+                    throw new ArgumentException("The vertices must all have a unique IndexInList value", nameof(vertexLoop));
+                indexToVertexDict.Add(vertex.IndexInList, vertex);
+            }
+            var polygon = new Polygon(coords);
+            if (forceToPositive && !polygon.IsPositive) polygon.IsPositive = true;
+            foreach (var triangleIndices in polygon.TriangulateToIndices())
+            {
+                if (indexToVertexDict[triangleIndices.A] != indexToVertexDict[triangleIndices.B]
+                    && indexToVertexDict[triangleIndices.B] != indexToVertexDict[triangleIndices.C]
+                    && indexToVertexDict[triangleIndices.C] != indexToVertexDict[triangleIndices.A])
+                    yield return new[]
+                        {indexToVertexDict[triangleIndices.A], indexToVertexDict[triangleIndices.B],
+                        indexToVertexDict[triangleIndices.C]};
+            }
+        }
+        /// <summary>
+        /// Triangulates the specified loop of 3D vertices using the projection from the provided normal.
+        /// </summary>
+        /// <param name="vertexLoops">The vertex loops.</param>
+        /// <param name="normal">The normal direction.</param>
+        /// <returns>IEnumerable&lt;Vertex[]&gt; where each represents a triangular polygonal face.</returns>
+        /// <exception cref="ArgumentException">The vertices must all have a unique IndexInList value - vertexLoop</exception>
+        public static IEnumerable<Vertex[]> Triangulate(this IEnumerable<IList<Vertex>> vertexLoops, Vector3 normal)
+        {
+            var transform = normal.TransformToXYPlane(out _);
+            var polygons = new List<Polygon>();
+            var indexToVertexDict = new Dictionary<int, Vertex>();
+            foreach (var vertexLoop in vertexLoops)
+            {
+                var coords = new List<Vertex2D>();
+                foreach (var vertex in vertexLoop)
+                {
+                    coords.Add(new Vertex2D(vertex.ConvertTo2DCoordinates(transform), vertex.IndexInList, -1));
+                    if (indexToVertexDict.ContainsKey(vertex.IndexInList))
+                        throw new ArgumentException("The vertices must all have a unique IndexInList value", nameof(vertexLoops));
+                    indexToVertexDict.Add(vertex.IndexInList, vertex);
+                }
+                polygons.Add(new Polygon(coords));
+            }
+            polygons = polygons.CreateShallowPolygonTrees(false);
+            foreach (var polygon in polygons)
+            {
+                foreach (var triangleIndices in polygon.TriangulateToIndices())
+                    yield return new[]
+                        {indexToVertexDict[triangleIndices.A], indexToVertexDict[triangleIndices.B],
+                        indexToVertexDict[triangleIndices.C]};
+            }
+        }
+
+* EqualityExtensions.cs
+
+        /// <summary>
+        /// Determines whether [is practically same] [the specified x].
+        /// the norm is within 1e-15
+        /// </summary>
+        /// <param name="a">The v1.</param>
+        /// <param name="b">The v2.</param>
+        /// <param name="optionalTolerance">An optional tolerance.</param>
+        /// <returns><c>true</c> if [is practically same] [the specified x]; otherwise, <c>false</c>.</returns>
+        internal static bool IsPracticallySame(this ComplexNumber a, ComplexNumber b, double optionalTolerance = DefaultEqualityTolerance)
+        {
+            return IsNegligible(a - b, optionalTolerance);
+
+        }
+
+        
+        /// <summary>
+        /// Determines whether the specified v1 is negligible (|x| lte 1e-15).
+        /// </summary>
+        /// <param name="v1">The vector.</param>
+        /// <param name="optionalTolerance">An optional tolerance.</param>
+        /// <returns><c>true</c> if the specified x is negligible; otherwise, <c>false</c>.</returns>
+        public static bool IsNegligible(this ComplexNumber a, double optionalTolerance = DefaultEqualityTolerance)
+        {
+            return Math.Abs(a.Real) <= optionalTolerance && Math.Abs(a.Imaginary) <= optionalTolerance;
+        }
