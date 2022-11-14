@@ -58,8 +58,8 @@ namespace PolygonSharp
         public Vertex2D(Vector2 currentPoint, int referenceID, int loopID)
         {
             LoopID = loopID;
-            Coordinates = Vector128.Create((long)(realToLongScale * currentPoint.X),
-                (long)(realToLongScale * currentPoint.Y));
+            Coordinates = Vector128.Create((long)(Constants.realToLongScale * currentPoint.X),
+                (long)(Constants.realToLongScale * currentPoint.Y));
             IndexInList = referenceID;
         }
 

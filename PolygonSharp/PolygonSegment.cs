@@ -3,6 +3,8 @@
 // https://github.com/DesignEngrLab/TVGL
 // It is licensed under MIT License (see LICENSE.txt for details)
 
+using System.Runtime.Intrinsics;
+
 namespace PolygonSharp
 {
     /// <summary>
@@ -33,17 +35,17 @@ namespace PolygonSharp
         /// Gets the length of the line.
         /// </summary>
         /// <value>The length.</value>
-        public Vector2 Vector
+        public Vector128<long> Vector
         {
             get
             {
                 if (_vector.IsNull())
-                    _vector = ToPoint.Coordinates - FromPoint.Coordinates;
+                    _vector =Vector128.ToPoint.Coordinates - FromPoint.Coordinates;
                 return _vector;
             }
         }
 
-        private Vector2 _vector = Constants.NullVector;
+        private Vector128<long> _vector = Constants.NullVectorLong;
 
         public Vector2 Center
         {

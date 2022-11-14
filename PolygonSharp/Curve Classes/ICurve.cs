@@ -23,14 +23,7 @@ namespace  PolygonSharp
         /// </summary>
         /// <param name="points">The points.</param>
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
-        public static bool CreateFromPoints<T>(IEnumerable<T> points, out ICurve curve, out double error)
-        {
-            throw new NotImplementedException("please implement static method in curve: static ICurve " +
-                "CreateFromPoints(IEnumerable<Vector2> points)");
-        }
-
-        // Switch to this when C#10 comes out
-        //public static abstract bool CreateFromPoints<T>(IEnumerable<T> points, out ICurve curve, out double error)
-        //    where T : IVertex2D;
+        public static abstract bool CreateFromPoints<T>(IEnumerable<T> points, out ICurve curve, out double error)
+            where T : IVertex2D;
     }
 }

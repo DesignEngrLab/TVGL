@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
+using System.Runtime.Intrinsics;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -15,7 +16,9 @@ namespace PolygonSharp
         internal const float HalfPi = MathF.PI / 2;
         internal const double HighConfidence = 0.997;
         internal static float coordinateMaxValue = longToRealScale * MathF.Pow(2, 31.5f); //7,971;
-        internal static Vector2 NullVector = new Vector2(float.NaN);
+        internal static Vector2 NullVector2 = new Vector2(float.NaN);
+        internal static Vector128<long> NullVectorLong = Vector128.Create(long.MinValue, long.MinValue);
+
 
         internal static PolyRelInternal SwitchAAndBPolygonRelationship(this PolyRelInternal relationship)
         {

@@ -2,12 +2,8 @@
 // This file is a part of TVGL, Tessellation and Voxelization Geometry Library
 // https://github.com/DesignEngrLab/TVGL
 // It is licensed under MIT License (see LICENSE.txt for details)
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Numerics;
-using System.Runtime.Serialization;
-using System.Text.Json;
+using System.Runtime.Intrinsics;
 using System.Text.Json.Serialization;
 
 namespace PolygonSharp
@@ -71,8 +67,6 @@ namespace PolygonSharp
         /// The vertices
         /// </summary>
         List<Vertex2D> _vertices;
-
-        internal int NumSigDigits { get; private set; }
 
 
         /// <summary>
@@ -481,32 +475,27 @@ namespace PolygonSharp
             MakeVerticesFromPath(RemovePointsLessThanTolerance);
         }
 
-        private void MakeVerticesFromPath(bool RemovePointsLessThanTolerance = true)
+        private void MakeVerticesFromPath(bool RemoveDuplicatePoints = true)
         {
-            var tolerance = (MaxX - MinX + MaxY - MinY) * Constants.PolygonSameTolerance / 2;
-            NumSigDigits = 0;
-            while (tolerance < 1 && NumSigDigits < 15)
-            {
-                NumSigDigits++;
-                tolerance *= 10;
-            }
             _vertices = new List<Vertex2D>();
-            var prevX = MathF.Round(_path[0].X, NumSigDigits);
-            var prevY = MathF.Round(_path[0].Y, NumSigDigits);
+
+            var prevCoords = Vector128.Create((long)(Constants.realToLongScale * _path[0].X),
+                (long)(Constants.realToLongScale * _path[0].Y));
 
             for (int i = _path.Count - 1; i >= 0; i--)
             {
-                var x = MathF.Round(_path[i].X, NumSigDigits);
-                var y = MathF.Round(_path[i].Y, NumSigDigits);
-                if (!RemovePointsLessThanTolerance || x != prevX || y != prevY)
+                var coords = Vector128.Create((long)(Constants.realToLongScale * _path[i].X),
+                    (long)(Constants.realToLongScale * _path[i].Y));
+                if (RemoveDuplicatePoints && coords.Equals(prevCoords))
+                    _path.RemoveAt(i);
+                else
                 {
-                    var coord = new Vector2(x, y);
+                    var coord = new Vector2(Constants.longToRealScale * coords.GetUpper().ToScalar(),
+                        Constants.longToRealScale * coords.GetLower().ToScalar());
                     _path[i] = coord;
                     _vertices.Add(new Vertex2D(coord, i, Index));
-                    prevX = x;
-                    prevY = y;
+                    prevCoords = coords;
                 }
-                else _path.RemoveAt(i);
             }
             _vertices.Reverse();
         }
@@ -527,30 +516,6 @@ namespace PolygonSharp
             _vertices = vertices as List<Vertex2D> ?? vertices.ToList();
             SetBounds();
             Index = index;
-
-            var tolerance = (MaxX - MinX + MaxY - MinY) * Constants.PolygonSameTolerance / 2;
-            NumSigDigits = 0;
-            while (tolerance < 1 && NumSigDigits < 15)
-            {
-                NumSigDigits++;
-                tolerance *= 10;
-            }
-            var prevX = MathF.Round(_vertices[0].X, NumSigDigits);
-            var prevY = MathF.Round(_vertices[0].Y, NumSigDigits);
-
-            for (int i = _vertices.Count - 1; i >= 0; i--)
-            {
-                var x = MathF.Round(_vertices[i].X, NumSigDigits);
-                var y = MathF.Round(_vertices[i].Y, NumSigDigits);
-                if (x != prevX || y != prevY)
-                {
-                    _vertices[i].Coordinates = new Vector2(x, y);
-                    prevX = x;
-                    prevY = y;
-                }
-                else
-                    _vertices.RemoveAt(i);
-            }
         }
 
         /// <summary>
@@ -612,7 +577,6 @@ namespace PolygonSharp
             foreach (var secondLine in Edges)
             {
                 var cross = firstLine.Vector.Cross(secondLine.Vector);
-                if (secondLine.Length.IsNegligible(Constants.PolygonSameTolerance)) continue; // without updating the first line             
                 if (cross < 0)
                     return false;
                 firstLine = secondLine;
@@ -680,27 +644,28 @@ namespace PolygonSharp
             pathArea = float.NaN;
             perimeter = double.NaN;
             _centroid = Constants.NullVector;
-  
+
         }
 
-        [JsonExtensionData]
-        protected IDictionary<string, JToken> serializationData;
+        //[JsonExtensionData]
+        //protected IDictionary<string, JsonObject> serializationData;
 
-        [OnSerializing]
-        protected void OnSerializingMethod(StreamingContext context)
-        {
-            serializationData = new Dictionary<string, JToken>();
-            serializationData.Add("Coordinates", JToken.FromObject(Path.ConvertTo1DDoublesCollection()));
-        }
+        //[OnSerializing]
+        //protected void OnSerializingMethod(StreamingContext context)
+        //{
+        //    serializationData = new Dictionary<string, JsonObject>();
+        //    JsonElement.
+        //    serializationData.Add("Coordinates", JsonArray..FromObject(Path.ConvertTo1DDoublesCollection()));
+        //}
 
-        [OnDeserialized]
-        protected void OnDeserializedMethod(StreamingContext context)
-        {
-            JArray jArray = (JArray)serializationData["Coordinates"];
-            _path = PolygonOperations.ConvertToVector2s(jArray.ToObject<IEnumerable<double>>()).ToList();
-            SetBounds();
-            MakeVerticesFromPath(false);
-        }
+        //[OnDeserialized]
+        //protected void OnDeserializedMethod(StreamingContext context)
+        //{
+        //    JArray jArray = (JArray)serializationData["Coordinates"];
+        //    _path = PolygonOperations.ConvertToVector2s(jArray.ToObject<IEnumerable<double>>()).ToList();
+        //    SetBounds();
+        //    MakeVerticesFromPath(false);
+        //}
     }
 
     internal class VertexSortedByXFirst : IComparer<Vertex2D>
