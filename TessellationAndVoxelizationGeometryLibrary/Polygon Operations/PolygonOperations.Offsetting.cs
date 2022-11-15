@@ -7,10 +7,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using TVGL.Enclosure_Operations;
-using TVGL.Numerics;
 
-namespace TVGL.TwoDimensional
+namespace TVGL
 {
     /// <summary>
     /// A set of general operation for points and paths

@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using TVGL.TwoDimensional;
 
 namespace TVGL
 {
@@ -68,7 +69,7 @@ namespace TVGL
             var layers = ts.GetUniformlySpacedCrossSections(direction, stepDistances[0], numberOfLayers, stepSize);
             var layerDict = new Dictionary<int, IList<Polygon>>();
             for (int i = 0; i < layers.Length; i++)
-                layerDict.Add(i, layers[i]);
+                layerDict.Add(i, (IList<Polygon>)layers[i]);
             return new CrossSectionSolid(direction, stepDistances, ts.SameTolerance, layerDict, bounds, ts.Units);
         }
 
@@ -165,7 +166,7 @@ namespace TVGL
         }
 
 
-        public Vector3[][][] GetCrossSectionsAs3DLoops()
+        public Vector3[][][] GetCrossSectionsAs3DLoopsSimple()
         {
             var result = new Vector3[Layer2D.Count][][];
             int k = 0;

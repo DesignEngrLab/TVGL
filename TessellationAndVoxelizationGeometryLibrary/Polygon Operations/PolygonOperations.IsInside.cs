@@ -5,9 +5,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using TVGL.Numerics;
+using TVGL;
 
-namespace TVGL.TwoDimensional
+namespace TVGL
 {
     /// <summary>
     /// A set of general operation for points and paths
@@ -862,7 +862,7 @@ namespace TVGL.TwoDimensional
                   lineB.ToPoint.Coordinates, out var intersectionCoordinates, out var t_a, out var t_b))
                 return false;
             {
-                if (!double.IsNaN(t_a) && !double.IsNaN(t_b) && t_a)
+                if (!double.IsNaN(t_a) && !double.IsNaN(t_b))
                     var where = WhereIsIntersection.Intermediate;
                 if (intersectionCoordinates == aTo && intersectionCoordinates == bTo)
                     possibleDuplicates.Insert(0, (intersections.Count, lineA.ToPoint.StartLine, lineB.ToPoint.StartLine));
@@ -1283,7 +1283,8 @@ namespace TVGL.TwoDimensional
                             edgesToCompare[j]--;
                 }
                 if (newEdgeInserted) continue;
-                var yStartOfOther =
+                // todo...how to fix this method, or is it useless and should be discarded
+                // var yStartOfOther =
 
             }
             return edgesToCompare;
