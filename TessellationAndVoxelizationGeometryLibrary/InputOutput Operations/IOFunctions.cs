@@ -170,11 +170,9 @@ namespace TVGL
                     case FileType.AMF:
                     case FileType.OBJ:
                     case FileType.OFF:
-                    case FileType.SHELL:
-                        Open(s, filename, out TessellatedSolid[] solids);
-                        solid = solids[0];
+                        solid = OFFFileData.OpenSolid(s, filename);
                         break;
-                        
+
                     case FileType.PLY_ASCII:
                     case FileType.PLY_Binary:
                         solid = PLYFileData.OpenSolid(s, filename);
@@ -211,33 +209,33 @@ namespace TVGL
         {
             //try
             //{
-                var extension = GetFileTypeFromExtension(Path.GetExtension(filename));
-                switch (extension)
-                {
-                    case FileType.STL_ASCII:
-                    case FileType.STL_Binary:
-                        tessellatedSolids = STLFileData.OpenSolids(s, filename); // Standard Tessellation or StereoLithography
-                        break;
+            var extension = GetFileTypeFromExtension(Path.GetExtension(filename));
+            switch (extension)
+            {
+                case FileType.STL_ASCII:
+                case FileType.STL_Binary:
+                    tessellatedSolids = STLFileData.OpenSolids(s, filename); // Standard Tessellation or StereoLithography
+                    break;
 
-                    case FileType.ThreeMF:
-                        tessellatedSolids = ThreeMFFileData.OpenSolids(s, filename);
-                        break;
+                case FileType.ThreeMF:
+                    tessellatedSolids = ThreeMFFileData.OpenSolids(s, filename);
+                    break;
 
-                    case FileType.Model3MF:
-                        tessellatedSolids = ThreeMFFileData.OpenModelFile(s, filename);
-                        break;
+                case FileType.Model3MF:
+                    tessellatedSolids = ThreeMFFileData.OpenModelFile(s, filename);
+                    break;
 
-                    case FileType.AMF:
-                        tessellatedSolids = AMFFileData.OpenSolids(s, filename);
-                        break;
+                case FileType.AMF:
+                    tessellatedSolids = AMFFileData.OpenSolids(s, filename);
+                    break;
 
-                    case FileType.SHELL:
-                        tessellatedSolids = ShellFileData.OpenSolids(s, filename);
-                        break;
+                case FileType.SHELL:
+                    tessellatedSolids = ShellFileData.OpenSolids(s, filename);
+                    break;
 
-                    case FileType.OBJ:
-                        tessellatedSolids = OBJFileData.OpenSolids(s, filename);
-                        break;
+                case FileType.OBJ:
+                    tessellatedSolids = OBJFileData.OpenSolids(s, filename);
+                    break;
 
                     case FileType.OFF:
                     case FileType.PLY_ASCII:
@@ -983,9 +981,9 @@ namespace TVGL
             return Double.NaN;
         }
 
-#endregion Open/Load/Read
+        #endregion Open/Load/Read
 
-#region Save/Write
+        #region Save/Write
 
         /// <summary>
         /// Saves the specified solids to a file.

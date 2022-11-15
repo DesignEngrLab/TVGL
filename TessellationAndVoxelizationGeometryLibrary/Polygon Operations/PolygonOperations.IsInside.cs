@@ -5,27 +5,15 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using TVGL.Numerics;
 
-
-namespace TVGL
+namespace TVGL.TwoDimensional
 {
     /// <summary>
     /// A set of general operation for points and paths
     /// </summary>
     public static partial class PolygonOperations
     {
-        /// <summary>
-        /// Returns the single polygon that is encompasses the point or is closest to it. This will be a 
-        /// simple polygon as the method transverses each input as a polygon tree and simply find the loop
-        /// (positive or negative/hole) the polygon.
-        /// </summary>
-        /// <param name="polygons">The polygons.</param>
-        /// <param name="point">The point.</param>
-        /// <returns>Polygon.</returns>
-        //public Polygon ClosestPolygon(this IEnumerable<Polygon> polygons, Vector2 point)
-        //{
-
-        //}
         #region IsPointInSidePolygon methods 
         /// <summary>
         /// Determines whether the inner polygon is inside the specified outer polygon. This is a simpler and faster check
@@ -597,34 +585,6 @@ namespace TVGL
             }
             return intersections;
         }
-        /// <summary>
-        /// Find all the polygon intersection points along a single horizontal line.
-        /// Returns a list of intersections from lowest to highest along with the vertex that the line starts from.
-        /// </summary>
-        /// <param name="polygon">The polygon.</param>
-        /// <param name="YValue">The y value.</param>
-        /// <returns>SortedList&lt;System.Double, Vertex2D&gt;.</returns>
-        public static SortedList<double, Vertex2D> AllPolygonIntersectionPointsAlongHorizontalLine(this Polygon polygon, double YValue)
-        {
-            SortedList<double, Vertex2D> result = new SortedList<double, Vertex2D>(new NoEqualSort());
-            foreach (var poly in polygon.AllPolygons)
-            {
-                var startVertex = poly.Vertices[0];
-                var current = startVertex;
-                var currentIsAbove = startVertex.Y >= YValue;
-                do
-                {
-                    var line = current.StartLine;
-                    var next = line.ToPoint;
-                    var nextIsAbove = next.Y >= YValue;
-                    if (nextIsAbove != currentIsAbove)
-                        result.Add(line.FindXGivenY(YValue, out _), current);
-                    current = next;
-                    currentIsAbove = nextIsAbove;
-                } while (current != startVertex);
-            }
-            return result;
-        }
         #endregion
 
         /// <summary>
@@ -716,6 +676,10 @@ namespace TVGL
                 subPolygonA.MinY > subPolygonB.MaxY ||
                 subPolygonA.MaxY < subPolygonB.MinY)
                 return PolyRelInternal.Separated;
+            if (subPolygonA.Vertices == null && double.IsPositiveInfinity(subPolygonA.MaxX))
+                return PolyRelInternal.BInsideA;
+            if (subPolygonB.Vertices == null && double.IsPositiveInfinity(subPolygonB.MaxX))
+                return PolyRelInternal.AInsideB;
 
             subPolygonA.MakePolygonEdgesIfNonExistent();
             subPolygonB.MakePolygonEdgesIfNonExistent();
@@ -894,147 +858,99 @@ namespace TVGL
             List<SegmentIntersection> intersections, List<(int, PolygonEdge, PolygonEdge)> possibleDuplicates, int numSigDigs,
             bool needToRoundA, bool needToRoundB)
         {
-            #region initialize local variables
-            var aFrom = needToRoundA ? new Vector2(Math.Round(lineA.FromPoint.X, numSigDigs), Math.Round(lineA.FromPoint.Y, numSigDigs))
-                : lineA.FromPoint.Coordinates;
-            var aTo = needToRoundA ? new Vector2(Math.Round(lineA.ToPoint.X, numSigDigs), Math.Round(lineA.ToPoint.Y, numSigDigs))
-                : lineA.ToPoint.Coordinates;
-            if (needToRoundA && aTo == aFrom) return false;
-            var aVector = aTo - aFrom;
-            var bFrom = needToRoundB ? new Vector2(Math.Round(lineB.FromPoint.X, numSigDigs), Math.Round(lineB.FromPoint.Y, numSigDigs))
-                : lineB.FromPoint.Coordinates;
-            var bTo = needToRoundB ? new Vector2(Math.Round(lineB.ToPoint.X, numSigDigs), Math.Round(lineB.ToPoint.Y, numSigDigs))
-                : lineB.ToPoint.Coordinates;
-            if (needToRoundB && bTo == bFrom) return false;
-            var bVector = bTo - bFrom;
-            #endregion
-
-            // first check if bounding boxes overlap. Actually, we don't need to check the x values (lineA.XMax < lineB.XMin || 
-            // lineB.XMax < lineA.XMin)- this is already known from the calling function and the way it calls based on sorted x values
-            if (Math.Max(aFrom.Y, aTo.Y) < Math.Min(bFrom.Y, bTo.Y) || Math.Max(bFrom.Y, bTo.Y) < Math.Min(aFrom.Y, aTo.Y))
-                // the two lines do not touch since their bounding boxes do not overlap
+            if (!MiscFunctions.SegmentSegment2DIntersection(lineA.FromPoint.Coordinates, lineA.ToPoint.Coordinates, lineB.FromPoint.Coordinates,
+                  lineB.ToPoint.Coordinates, out var intersectionCoordinates, out var t_a, out var t_b))
                 return false;
-            // okay, so bounding boxes DO overlap
-            var intersectionCoordinates = Vector2.Null;
-            var where = WhereIsIntersection.Intermediate;
+            {
+                if (!double.IsNaN(t_a) && !double.IsNaN(t_b) && t_a)
+                    var where = WhereIsIntersection.Intermediate;
+                if (intersectionCoordinates == aTo && intersectionCoordinates == bTo)
+                    possibleDuplicates.Insert(0, (intersections.Count, lineA.ToPoint.StartLine, lineB.ToPoint.StartLine));
+                else if (intersectionCoordinates == aTo)
+                    possibleDuplicates.Insert(0, (intersections.Count, lineA.ToPoint.StartLine, lineB));
+                else if (intersectionCoordinates == bTo)
+                    possibleDuplicates.Insert(0, (intersections.Count, lineA, lineB.ToPoint.StartLine));
 
-            var lineACrossLineB = aVector.Cross(bVector); //2D cross product, determines if parallel
-            //first a quick check to see if points are the same
-            if (aFrom == bFrom)
-            {
-                intersectionCoordinates = aFrom;
-                where = WhereIsIntersection.BothStarts;
-            }
-            else
-            {
-                var fromPointVector = bFrom - aFrom; // the vector connecting starts
-                if (lineACrossLineB == 0) // the two lines are parallel (cross product will be zero)
+                #region initialize local variables
+                var aFrom = needToRoundA ? new Vector2(Math.Round(lineA.FromPoint.X, numSigDigs), Math.Round(lineA.FromPoint.Y, numSigDigs))
+                    : lineA.FromPoint.Coordinates;
+                var aTo = needToRoundA ? new Vector2(Math.Round(lineA.ToPoint.X, numSigDigs), Math.Round(lineA.ToPoint.Y, numSigDigs))
+                    : lineA.ToPoint.Coordinates;
+                if (needToRoundA && aTo == aFrom) return false;
+                var aVector = aTo - aFrom;
+                var bFrom = needToRoundB ? new Vector2(Math.Round(lineB.FromPoint.X, numSigDigs), Math.Round(lineB.FromPoint.Y, numSigDigs))
+                    : lineB.FromPoint.Coordinates;
+                var bTo = needToRoundB ? new Vector2(Math.Round(lineB.ToPoint.X, numSigDigs), Math.Round(lineB.ToPoint.Y, numSigDigs))
+                    : lineB.ToPoint.Coordinates;
+                if (needToRoundB && bTo == bFrom) return false;
+                var bVector = bTo - bFrom;
+                #endregion
+
+                // first check if bounding boxes overlap. Actually, we don't need to check the x values (lineA.XMax < lineB.XMin || 
+                // lineB.XMax < lineA.XMin)- this is already known from the calling function and the way it calls based on sorted x values
+                if (Math.Max(aFrom.Y, aTo.Y) < Math.Min(bFrom.Y, bTo.Y) || Math.Max(bFrom.Y, bTo.Y) < Math.Min(aFrom.Y, aTo.Y))
+                    // the two lines do not touch since their bounding boxes do not overlap
+                    return false;
+                // okay, so bounding boxes DO overlap
+                var intersectionCoordinates = Vector2.Null;
+                var where = WhereIsIntersection.Intermediate;
+
+                var lineACrossLineB = aVector.Cross(bVector); //2D cross product, determines if parallel
+                                                              //first a quick check to see if points are the same
+                if (aFrom == bFrom)
                 {
-                    var intersectionFound = false;
-                    if (fromPointVector.Cross(aVector) == 0)
-                    {
-                        // if fromPointCross is also parallel with the line vector (either lineA or lineB since they are parallel to each other)
-                        // and since bounding boxes do overlap, then the lines are collinear and overlapping
-                        // While there are technically infinite points that are intersecting, we only record when the start of the line
-                        // is common. It is possible that the starts (FromPoints) are not overlapping at all - in which case nothing is added.
-                        // It is also possible that both FromPoints are on the other line - if so, then we add both. This is the one other place 
-                        // where a second IntersectionData is added
-                        if ((bTo - aFrom).Dot(fromPointVector) < 0)
-                        {   // since fromPointVector goes from lineA.FromPoint to lineB.FromPoint - if going from line.FromPoint to lineB.ToPoint is
-                            // opposite then lineA.FromPoint is on lineB
-                            intersectionCoordinates = aFrom;
-                            where = WhereIsIntersection.AtStartOfA;
-                            intersectionFound = true;
-                        }
-                        if ((bFrom - aTo).Dot(fromPointVector) < 0)
-                        { // now check the other way. Note, since fromPointVector is backwards here, we just make the other vector backwards as well
-
-                            if (intersectionFound) // okay, well, you need to add TWO points. Going to go ahead and finish off the lineB point here
-                            {
-                                CollinearityTypes collinearB;
-                                SegmentRelationship relationshipB;
-                                (relationshipB, collinearB) = DeterminePolygonSegmentRelationship(lineA, lineB, aVector, bVector, numSigDigs, needToRoundA, needToRoundB,
-                                    WhereIsIntersection.AtStartOfB, lineACrossLineB);
-
-                                intersections.Add(new SegmentIntersection(lineA, lineB, bFrom, relationshipB,
-                                    WhereIsIntersection.AtStartOfB, collinearB));
-                            }
-                            else
-                            {
-                                where = WhereIsIntersection.AtStartOfB;
-                                intersectionCoordinates = bFrom;
-                                intersectionFound = true;
-                            }
-                        }
-                        //technically the lines overlap even if the previous two condition are not met, but since the overlap doesn't include
-                        // either from Point, then we do not record it. It will be recorded when the next segment is checked
-                    }
-                    if (!intersectionFound) return false; // otherwise the lines are parallel but not at same distance/intercept. Or, they are
-                                                          //inline but the from's other both segments are outside of the intersection - we consider this not an intersection. 
-                                                          //Instead those will be solved in the next/adjacent polygon segment
+                    intersectionCoordinates = aFrom;
+                    where = WhereIsIntersection.BothStarts;
                 }
                 else
                 {
-                    // now check the intersection by detecting where non-parallel lines cross
-                    // solve for the t scalar values for the two lines.
-                    // the line is define as all values of t from 0 to 1 in the equations
-                    // line1(t_1) = (1 - t_1)*line1.From + t_1*line1.To
-                    // line2(t_2) = (1 - t_2)*line2.From + t_2*line2.To
-                    // ...solving for the x-value at the intersection...
-                    // xIntersect =  (1 - t_1)*line1.From.X + t_1*line1.To.X = (1 - t_2)*line2.From.X + t_2*line2.To.X (Eq.1)
-                    // yIntersect =  (1 - t_1)*line1.From.Y + t_1*line1.To.Y = (1 - t_2)*line2.From.Y + t_2*line2.To.Y (Eq.2)
-                    //rewriting Eq.1 as...
-                    // t_1*(line1.To.X - line1.From.X) + t_2*(line2.From.X - line2.To.X) = line2.From.X - line1.From.X 
-                    // which can be simplified to...
-                    // t_1*(line1.Vector.X) - t_2*(line2.Vector.X) = vStart.X
-                    // similiarly for Y
-                    // t_1*(line1.Vector.Y) - t_2*(line2.Vector.Y) = vStart.Y
-                    // solve as a system of two equations
-                    //   |   line1.Vector.X      -line2.Vector.X   | |  t_1  |    | vStart.X  |
-                    //   |                                         |*|       | =  |           |
-                    //   |   line1.Vector.Y      -line2.Vector.Y   | |  t_2  |    | vStart.Y  |
-                    var oneOverdeterminnant = 1 / lineACrossLineB;
-                    var t_1 = oneOverdeterminnant * (bVector.Y * fromPointVector.X - bVector.X * fromPointVector.Y);
-                    if (t_1 < 0 || t_1 >= 1)
-                        //if (t_1.IsLessThanNonNegligible(0, Constants.PolygonSameTolerance)
-                        //    || !t_1.IsLessThanNonNegligible(1.0, Constants.PolygonSameTolerance))
-                        return false;
-                    var t_2 = oneOverdeterminnant * (aVector.Y * fromPointVector.X - aVector.X * fromPointVector.Y);
-                    if (t_2 < 0 || t_2 >= 1)
-                        return false;
-                    var aIntersection = new Vector2(
-                            Math.Round(aFrom.X + t_1 * aVector.X, numSigDigs),
-                            Math.Round(aFrom.Y + t_1 * aVector.Y, numSigDigs));
-                    var bIntersection = new Vector2(
-                            Math.Round(bFrom.X + t_2 * bVector.X, numSigDigs),
-                            Math.Round(bFrom.Y + t_2 * bVector.Y, numSigDigs));
-                    if (aIntersection == aFrom)
+                    var fromPointVector = bFrom - aFrom; // the vector connecting starts
+                    if (lineACrossLineB == 0) // the two lines are parallel (cross product will be zero)
                     {
-                        intersectionCoordinates = aFrom;
-                        where = WhereIsIntersection.AtStartOfA;
-                        if (aFrom == bTo)
-                            possibleDuplicates.Insert(0, (intersections.Count, lineA, lineB.ToPoint.StartLine));
+                        var intersectionFound = false;
+                        if (fromPointVector.Cross(aVector) == 0)
+                        {
+                            // if fromPointCross is also parallel with the line vector (either lineA or lineB since they are parallel to each other)
+                            // and since bounding boxes do overlap, then the lines are collinear and overlapping
+                            // While there are technically infinite points that are intersecting, we only record when the start of the line
+                            // is common. It is possible that the starts (FromPoints) are not overlapping at all - in which case nothing is added.
+                            // It is also possible that both FromPoints are on the other line - if so, then we add both. This is the one other place 
+                            // where a second IntersectionData is added
+                            if ((bTo - aFrom).Dot(fromPointVector) < 0)
+                            {   // since fromPointVector goes from lineA.FromPoint to lineB.FromPoint - if going from line.FromPoint to lineB.ToPoint is
+                                // opposite then lineA.FromPoint is on lineB
+                                intersectionCoordinates = aFrom;
+                                where = WhereIsIntersection.AtStartOfA;
+                                intersectionFound = true;
+                            }
+                            if ((bFrom - aTo).Dot(fromPointVector) < 0)
+                            { // now check the other way. Note, since fromPointVector is backwards here, we just make the other vector backwards as well
+
+                                if (intersectionFound) // okay, well, you need to add TWO points. Going to go ahead and finish off the lineB point here
+                                {
+                                    CollinearityTypes collinearB;
+                                    SegmentRelationship relationshipB;
+                                    (relationshipB, collinearB) = DeterminePolygonSegmentRelationship(lineA, lineB, aVector, bVector, numSigDigs, needToRoundA, needToRoundB,
+                                        WhereIsIntersection.AtStartOfB, lineACrossLineB);
+
+                                    intersections.Add(new SegmentIntersection(lineA, lineB, bFrom, relationshipB,
+                                        WhereIsIntersection.AtStartOfB, collinearB));
+                                }
+                                else
+                                {
+                                    where = WhereIsIntersection.AtStartOfB;
+                                    intersectionCoordinates = bFrom;
+                                    intersectionFound = true;
+                                }
+                            }
+                            //technically the lines overlap even if the previous two condition are not met, but since the overlap doesn't include
+                            // either from Point, then we do not record it. It will be recorded when the next segment is checked
+                        }
+                        if (!intersectionFound) return false; // otherwise the lines are parallel but not at same distance/intercept. Or, they are
+                                                              //inline but the from's other both segments are outside of the intersection - we consider this not an intersection. 
+                                                              //Instead those will be solved in the next/adjacent polygon segment
                     }
-                    else if (bIntersection == bFrom)
-                    {
-                        intersectionCoordinates = bFrom;
-                        where = WhereIsIntersection.AtStartOfB;
-                        if (bFrom == aTo)
-                            possibleDuplicates.Insert(0, (intersections.Count, lineA.ToPoint.StartLine, lineB));
-                    }
-                    else
-                    {
-                        intersectionCoordinates = new Vector2(
-                            Math.Round((aFrom.X + t_1 * aVector.X + bFrom.X + t_2 * bVector.X) / 2, numSigDigs),
-                            Math.Round((aFrom.Y + t_1 * aVector.Y + bFrom.Y + t_2 * bVector.Y) / 2, numSigDigs));
-                        where = WhereIsIntersection.Intermediate;
-                        if (intersectionCoordinates == aTo && intersectionCoordinates == bTo)
-                            possibleDuplicates.Insert(0, (intersections.Count, lineA.ToPoint.StartLine, lineB.ToPoint.StartLine));
-                        else if (intersectionCoordinates == aTo)
-                            possibleDuplicates.Insert(0, (intersections.Count, lineA.ToPoint.StartLine, lineB));
-                        else if (intersectionCoordinates == bTo)
-                            possibleDuplicates.Insert(0, (intersections.Count, lineA, lineB.ToPoint.StartLine));
-                    }
+
                 }
             }
             CollinearityTypes collinear;
@@ -1251,10 +1167,9 @@ namespace TVGL
                 && polygonA.MinY <= polygonB.MinY);
         }
 
-
         private static PolygonEdge[] GetOrderedLines(Vertex2D[] orderedPoints)
         {
-            var length = orderedPoints.Length;
+            var length = orderedPoints != null ? orderedPoints.Length : 0;
             var result = new PolygonEdge[length];
             var k = 0;
             for (int i = 0; i < length; i++)
@@ -1269,27 +1184,110 @@ namespace TVGL
             return result;
         }
 
-        private static List<SegmentIntersection> GetSelfIntersections(this Polygon polygonA)
+        private static PolygonEdge[] GetOrderedLines(Vertex2D[] orderedPoints, HashSet<int> edgesToIgnore)
         {
-            var intersections = new List<SegmentIntersection>();
-            var possibleDuplicates = new List<(int index, PolygonEdge lineA, PolygonEdge lineB)>();
-            var numLines = polygonA.Edges.Length;
-            var orderedLines = GetOrderedLines(polygonA.OrderedXVertices);
-            for (int i = 0; i < numLines - 1; i++)
+            var length = orderedPoints != null ? orderedPoints.Length : 0;
+            var result = new PolygonEdge[length - edgesToIgnore.Count];
+            var resultIndex = 0;
+            for (int i = 0; i < length; i++)
             {
-                var current = orderedLines[i];
-                for (int j = i + 1; j < numLines; j++)
-                {
-                    var other = orderedLines[j];
-                    if (current.XMax < other.XMin) break;
-                    if (current.IsAdjacentTo(other)) continue;
-                    AddIntersectionBetweenLines(current, other, intersections, possibleDuplicates, polygonA.NumSigDigits, false, false);
-                }
+                var point = orderedPoints[i];
+                if (!edgesToIgnore.Contains(point.StartLine.IndexInList) && point.StartLine.OtherPoint(point).X >= point.X)
+                    result[resultIndex++] = point.StartLine;
+                if (!edgesToIgnore.Contains(point.EndLine.IndexInList) && point.EndLine.OtherPoint(point).X > point.X)
+                    result[resultIndex++] = point.EndLine;
+                if (resultIndex >= length - edgesToIgnore.Count) break;
             }
-            RemoveDuplicateIntersections(possibleDuplicates, intersections);
-            return intersections;
+            return result;
         }
 
+        private static List<SegmentIntersection> GetSelfIntersections(this Polygon polygonA, HashSet<int> edgesToIgnore = null)
+        {
+            lock (polygonA)
+            {
+                polygonA.MakePolygonEdgesIfNonExistent();
+                var intersections = new List<SegmentIntersection>();
+                var possibleDuplicates = new List<(int index, PolygonEdge lineA, PolygonEdge lineB)>();
+                var orderedLines = edgesToIgnore == null ? GetOrderedLines(polygonA.OrderedXVertices) :
+                     GetOrderedLines(polygonA.OrderedXVertices, edgesToIgnore);
+                var numLines = orderedLines.Length;
 
+                for (int i = 0; i < numLines - 1; i++)
+                {
+                    var current = orderedLines[i];
+                    for (int j = i + 1; j < numLines; j++)
+                    {
+                        var other = orderedLines[j];
+                        if (current.XMax < orderedLines[j].XMin) break;
+                        if (current.IsAdjacentTo(other)) continue;
+                        AddIntersectionBetweenLines(current, other, intersections, possibleDuplicates,
+                            polygonA.NumSigDigits, false, false);
+                    }
+                }
+                RemoveDuplicateIntersections(possibleDuplicates, intersections);
+                return intersections;
+            }
+        }
+        private static List<SegmentIntersection> GetSelfIntersections2(this Polygon polygonA, HashSet<int> edgesToIgnore = null)
+        {
+            lock (polygonA)
+            {
+                polygonA.MakePolygonEdgesIfNonExistent();
+                var intersections = new List<SegmentIntersection>();
+                var possibleDuplicates = new List<(int index, PolygonEdge lineA, PolygonEdge lineB)>();
+                var orderedLines = edgesToIgnore == null ? GetOrderedLines(polygonA.OrderedXVertices) :
+                     GetOrderedLines(polygonA.OrderedXVertices, edgesToIgnore);
+                var numLines = orderedLines.Length;
+                var yOrderedLines = new List<PolygonEdge>();
+                for (int i = 0; i < numLines - 1; i++)
+                {
+                    var index = InsertYLine(yOrderedLines, orderedLines[i]);
+                    for (int j = i + 1; j < numLines; j++)
+                    {
+                        var other = orderedLines[j];
+                        if (current.XMax < orderedLines[j].XMin) break;
+                        if (current.IsAdjacentTo(other)) continue;
+                        AddIntersectionBetweenLines(current, other, intersections, possibleDuplicates,
+                            polygonA.NumSigDigits, false, false);
+                    }
+                }
+                RemoveDuplicateIntersections(possibleDuplicates, intersections);
+                return intersections;
+            }
+        }
+
+        private static List<int> InsertLineAndFindComparisons(List<PolygonEdge> yOrderedLines, PolygonEdge polygonEdge)
+        {
+            var minPoint = (polygonEdge.FromPoint.X <= polygonEdge.ToPoint.X) ? polygonEdge.FromPoint : polygonEdge.ToPoint;
+            var newEdgeInserted = false;
+            var edgesToCompare = new List<int>();
+            for (int i = yOrderedLines.Count - 1; i >= 0; i--)
+            {
+                var otherEdge = yOrderedLines[i];
+                double yStartOfOther, xEndOfOther;
+                if (otherEdge.FromPoint.X <= otherEdge.ToPoint.X)
+                {
+                    yStartOfOther = otherEdge.FromPoint.Y;
+                    xEndOfOther = otherEdge.ToPoint.X;
+                }
+                else
+                {
+                    yStartOfOther = otherEdge.ToPoint.Y;
+                    xEndOfOther = otherEdge.FromPoint.X;
+                }
+                if (xEndOfOther <= minPoint.X)
+                {
+                    yOrderedLines.RemoveAt(i);
+                    if (newEdgeInserted)
+                        for (int j = 0; j < edgesToCompare.Count; j++)
+                            edgesToCompare[j]--;
+                }
+                if (newEdgeInserted) continue;
+                var yStartOfOther =
+
+            }
+            return edgesToCompare;
+
+        }
     }
 }

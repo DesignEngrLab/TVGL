@@ -163,7 +163,6 @@ namespace TVGL
             }
             return result;
         }
-
         private static bool ContainsDuplicatePoints(IList<Polygon> layer)
         {
             var allPoints = new HashSet<Vector2>();

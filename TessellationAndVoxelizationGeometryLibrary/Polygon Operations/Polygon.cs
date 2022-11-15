@@ -8,9 +8,9 @@ using System.Linq;
 using System.Runtime.Serialization;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using TVGL.Numerics;
 
-
-namespace TVGL
+namespace TVGL.TwoDimensional
 {
 
     /// <summary>
@@ -18,29 +18,109 @@ namespace TVGL
     /// </summary>
     public class Polygon
     {
+        #region Constructors and Copy
+
+        // the following argument-less constructor is only used in the copy function
+        // and in deserialization
+        /// <summary>
+        /// Prevents a default instance of the <see cref="Polygon"/> class from being created.
+        /// </summary>
+        public Polygon() { }
+
+        public Polygon(IEnumerable<Vector2> coordinates, int index = -1)
+        {
+            Index = index;
+            _path = coordinates as List<Vector2> ?? coordinates.ToList();
+        }
+
+
+        public Polygon(IEnumerable<IList<Vector2>> loops) : this(loops.First())
+        {
+            foreach (var innerLoop in loops.Skip(1))
+                AddInnerPolygon(new Polygon(innerLoop));
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Polygon" /> class.
+        /// </summary>
+        /// <param name="vertices">The vertices.</param>
+        /// <param name="index">The index.</param>
+        public Polygon(IEnumerable<Vertex2D> vertices, int index = -1)
+        {
+            _vertices = vertices as List<Vertex2D> ?? vertices.ToList();
+            Index = index;
+            //SetBounds();
+
+            /*
+            var prevX = Math.Round(_vertices[0].X, NumSigDigits);
+            var prevY = Math.Round(_vertices[0].Y, NumSigDigits);
+
+            for (int i = _vertices.Count - 1; i >= 0; i--)
+            {
+                var x = Math.Round(_vertices[i].X, NumSigDigits);
+                var y = Math.Round(_vertices[i].Y, NumSigDigits);
+                if (x != prevX || y != prevY)
+                {
+                    _vertices[i].Coordinates = new Vector2(x, y);
+                    prevX = x;
+                    prevY = y;
+                }
+                else
+                    _vertices.RemoveAt(i);
+            }
+            */
+            _path = _vertices.Select(v => v.Coordinates).ToList();
+        }
+
+        /// <summary>
+        /// Copies the specified copy inner polygons.
+        /// </summary>
+        /// <param name="copyInnerPolygons">The copy inner polygons.</param>
+        /// <param name="invert">The invert.</param>
+        /// <returns>TVGL.TwoDimensional.Polygon.</returns>
+        public Polygon Copy(bool copyInnerPolygons, bool invert)
+        {
+            List<Vector2> thisPath = null;
+            if (invert)
+            {
+                thisPath = new List<Vector2>(Path);
+                thisPath.Reverse();
+                // now the following three lines are to aid with mapping old polygon data to new polygon data.
+                // we are simply moving the first element to the end - the polygon doesn't change but not the 
+                // original first line will be the last flipped line. The second original line will be the second
+                // to last flipped line.
+                var front = thisPath[0];
+                thisPath.RemoveAt(0);
+                thisPath.Add(front);
+            }
+            else thisPath = Path;
+            var thisInnerPolygons = _innerPolygons != null && copyInnerPolygons ?
+                _innerPolygons.Where(p => p.Vertices.Count > 0)
+                .Select(p => p.Copy(true, invert)).ToList() : null;
+            var copiedArea = copyInnerPolygons ? this.area : this.pathArea;
+            if (invert) copiedArea *= -1;
+            var copiedPolygon = new Polygon(thisPath, this.index)
+            {
+                area = copiedArea,
+                maxX = this.maxX,
+                maxY = this.maxY,
+                minX = this.minX,
+                minY = this.minY,
+                _innerPolygons = thisInnerPolygons
+            };
+            return copiedPolygon;
+        }
+
+
+        #endregion
+
+        #region Fields and Properties
         /// <summary>
         /// The list of 2D points that make up a polygon.
         /// </summary>
         /// <value>The path.</value>
         [JsonIgnore]
-        public List<Vector2> Path
-        {
-            get
-            {
-                if (_path == null || _path.Count < _vertices.Count)
-                {
-                    lock (_vertices)
-                    {
-                        _path = new List<Vector2>();
-                        foreach (var point in _vertices)
-                        {
-                            _path.Add(new Vector2(point.X, point.Y));
-                        }
-                    }
-                }
-                return _path;
-            }
-        }
+        public List<Vector2> Path => _path;
 
         /// <summary>
         /// The list of 2D points that make up a polygon and its inner polygons
@@ -66,14 +146,28 @@ namespace TVGL
         /// </summary>
         /// <value>The vertices.</value>
         [JsonIgnore]
-        public List<Vertex2D> Vertices => _vertices;
+        public List<Vertex2D> Vertices
+        {
+            get
+            {
+                if (_vertices == null && _path != null) MakeVerticesFromPath();
+                return _vertices;
+            }
+        }
         /// <summary>
         /// The vertices
         /// </summary>
         List<Vertex2D> _vertices;
 
-        internal int NumSigDigits { get; private set; }
-
+        internal int NumSigDigits
+        {
+            get
+            {
+                if (_numSigDigits < 0) SetBounds();
+                return _numSigDigits;
+            }
+        }
+        int _numSigDigits = int.MinValue;
 
         /// <summary>
         /// Gets the ordered x vertices.
@@ -84,9 +178,8 @@ namespace TVGL
         {
             get
             {
-                lock (_vertices)
-                    if (_orderedXVertices == null || _orderedXVertices.Length != Vertices.Count)
-                        _orderedXVertices = Vertices.OrderBy(v => v, new VertexSortedByXFirst()).ToArray();
+                if (Vertices != null && (_orderedXVertices == null || _orderedXVertices.Length != Vertices.Count))
+                    _orderedXVertices = Vertices.OrderBy(v => v, new VertexSortedByXFirst()).ToArray();
                 return _orderedXVertices;
             }
         }
@@ -107,8 +200,8 @@ namespace TVGL
                 MakePolygonEdgesIfNonExistent();
                 return _edges;
             }
-            internal set { _edges = value; }
         }
+        #endregion
 
         public void MakePolygonEdgesIfNonExistent()
         {
@@ -119,7 +212,7 @@ namespace TVGL
 
         private void MakeThisPolygonsEdges()
         {
-            var numPoints = Vertices.Count;
+            var numPoints = (Vertices != null) ? Vertices.Count : 0;
             _edges = new PolygonEdge[numPoints];
             for (int i = 0, j = numPoints - 1; i < numPoints; j = i++)
             // note this compact approach to setting i and j. 
@@ -153,38 +246,21 @@ namespace TVGL
         /// </summary>
         /// <param name="polygon">The polygon.</param>
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
-        public bool AddInnerPolygon(Polygon polygon)
+        public void AddInnerPolygon(Polygon polygon)
         {
-            if (polygon is null || (polygon._path is null && polygon._vertices is null)) return false;
-            //if (this.IsNonIntersectingPolygonInside(polygon, false, out _) == false) return false;
-            //if (polygon.IsPositive) polygon.Reverse();
             _innerPolygons ??= new List<Polygon>();
-            //for (int i = _holes.Count - 1; i >= 0; i--)
-            //{
-            //    if (polygon.IsNonIntersectingPolygonInside(_holes[i], true, out _) == true)
-            //        _holes.RemoveAt(i);
-            //}
-            // this text was removed from the method description since this code was commented out above
-            // This method assumes that there are no intersections between the hole polygon and the host polygon. However, 
-            // it does check and remove holes in the host that are fully inside of the  new hole.
-
-
             _innerPolygons.Add(polygon);
             perimeter = double.NaN;
             area = double.NaN;
-
-            return true;
         }
 
         /// <summary>
         /// Removes the hole from the polygon.
         /// </summary>
         /// <param name="polygon">The polygon.</param>
-        public bool RemoveHole(Polygon polygon)
+        public void RemoveHole(Polygon polygon)
         {
-            if (_innerPolygons is null)
-                return false;
-            return _innerPolygons.Remove(polygon);
+            _innerPolygons.Remove(polygon);
         }
         /// <summary>
         /// Gets the inner polygons.
@@ -260,12 +336,7 @@ namespace TVGL
         [JsonIgnore]
         public bool IsPositive
         {
-            get => PathArea > 0;
-            set
-            {
-                if (value != (PathArea > 0))
-                    Reverse();
-            }
+            get => Area >= 0;
         }
 
 
@@ -275,7 +346,10 @@ namespace TVGL
         /// <param name="reverseInnerPolygons">if set to <c>true</c> [reverse inner polygons].</param>
         public void Reverse(bool reverseInnerPolygons = false)
         {
-            _vertices.Reverse();
+            if (_path == null) return;
+            _path.Reverse();
+            if (_vertices != null)
+                _vertices.Reverse();
             Reset();
         }
 
@@ -289,9 +363,17 @@ namespace TVGL
         {
             get
             {
-                lock (_vertices)
-                    if (double.IsNaN(area))
-                        area = PathArea + InnerPolygons.Sum(p => p.Area);
+                if (_path == null || _path.Count == 0)
+                {
+                    if (_innerPolygons != null && _innerPolygons.Count > 0) area = double.PositiveInfinity;
+                    else area = 0.0;
+                }
+                else
+                {
+                    lock (_path)
+                        if (double.IsNaN(area))
+                            area = PathArea + InnerPolygons.Sum(p => p.Area);
+                }
                 return area;
             }
         }
@@ -311,9 +393,13 @@ namespace TVGL
         {
             get
             {
-                lock (_vertices)
-                    if (double.IsNaN(pathArea))
-                        pathArea = Path.Area();
+                if (_path == null || _path.Count == 0) pathArea = 0.0;
+                else
+                {
+                    lock (_path)
+                        if (double.IsNaN(pathArea))
+                            pathArea = Path.Area();
+                }
                 return pathArea;
             }
         }
@@ -333,7 +419,7 @@ namespace TVGL
         {
             get
             {
-                lock (_vertices)
+                lock (_path)
                     if (double.IsNaN(perimeter))
                         perimeter = Path.Perimeter();
                 return perimeter + InnerPolygons.Sum(p => p.Perimeter);
@@ -354,7 +440,7 @@ namespace TVGL
         {
             get
             {
-                if (double.IsInfinity(maxX))
+                if (double.IsNegativeInfinity(maxX))
                     SetBounds();
                 return maxX;
             }
@@ -374,7 +460,7 @@ namespace TVGL
         {
             get
             {
-                if (double.IsInfinity(minX))
+                if (double.IsPositiveInfinity(minX))
                     SetBounds();
                 return minX;
             }
@@ -394,7 +480,7 @@ namespace TVGL
         {
             get
             {
-                if (double.IsInfinity(maxY))
+                if (double.IsNegativeInfinity(maxY))
                     SetBounds();
                 return maxY;
             }
@@ -406,6 +492,21 @@ namespace TVGL
         private double maxY = double.NegativeInfinity;
 
         /// <summary>
+        /// Gets the minimum y.
+        /// </summary>
+        /// <value>The minimum y.</value>
+        [JsonIgnore]
+        public double MinY
+        {
+            get
+            {
+                if (double.IsPositiveInfinity(minY))
+                    SetBounds();
+                return minY;
+            }
+        }
+
+        /// <summary>
         /// Minimum Y value
         /// </summary>
         private double minY = double.PositiveInfinity;
@@ -415,20 +516,6 @@ namespace TVGL
         /// </summary>
         private int index = -1;
 
-        /// <summary>
-        /// Gets the minimum y.
-        /// </summary>
-        /// <value>The minimum y.</value>
-        [JsonIgnore]
-        public double MinY
-        {
-            get
-            {
-                if (double.IsInfinity(minY))
-                    SetBounds();
-                return minY;
-            }
-        }
 
         public Vector2 Centroid
         {
@@ -467,39 +554,18 @@ namespace TVGL
         /// <param name="index">The index.</param>
 
 
-        public Polygon(IEnumerable<Vector2> coordinates, int index = -1, bool RemovePointsLessThanTolerance = true)
+        private void MakeVerticesFromPath()
         {
-            Index = index;
-            _path = new List<Vector2>();
-            foreach (var p in coordinates)
-            {
-                if (p.X > maxX) maxX = p.X;
-                if (p.X < minX) minX = p.X;
-                if (p.Y > maxY) maxY = p.Y;
-                if (p.Y < minY) minY = p.Y;
-                _path.Add(p);
-            }
-            MakeVerticesFromPath(RemovePointsLessThanTolerance);
-        }
-
-        private void MakeVerticesFromPath(bool RemovePointsLessThanTolerance = true)
-        {
-            var tolerance = (MaxX - MinX + MaxY - MinY) * Constants.PolygonSameTolerance / 2;
-            NumSigDigits = 0;
-            while (tolerance < 1 && NumSigDigits < 15)
-            {
-                NumSigDigits++;
-                tolerance *= 10;
-            }
             _vertices = new List<Vertex2D>();
-            var prevX = Math.Round(_path[0].X, NumSigDigits);
-            var prevY = Math.Round(_path[0].Y, NumSigDigits);
+            if (_path.Count == 0) return;
+            var prevX = Math.Round(_path[^1].X, NumSigDigits);
+            var prevY = Math.Round(_path[^1].Y, NumSigDigits);
 
-            for (int i = _path.Count - 1; i >= 0; i--)
+            for (int i = 0; i < _path.Count; i++)
             {
                 var x = Math.Round(_path[i].X, NumSigDigits);
                 var y = Math.Round(_path[i].Y, NumSigDigits);
-                if (!RemovePointsLessThanTolerance || x != prevX || y != prevY)
+                if (x != prevX || y != prevY)
                 {
                     var coord = new Vector2(x, y);
                     _path[i] = coord;
@@ -507,98 +573,50 @@ namespace TVGL
                     prevX = x;
                     prevY = y;
                 }
-                else _path.RemoveAt(i);
-            }
-            _vertices.Reverse();
-        }
-
-        public Polygon(IEnumerable<IList<Vector2>> loops) : this(loops.First())
-        {
-            foreach (var innerLoop in loops.Skip(1))
-                AddInnerPolygon(new Polygon(innerLoop));
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="Polygon" /> class.
-        /// </summary>
-        /// <param name="vertices">The vertices.</param>
-        /// <param name="index">The index.</param>
-        public Polygon(IEnumerable<Vertex2D> vertices, int index = -1)
-        {
-            _vertices = vertices as List<Vertex2D> ?? vertices.ToList();
-            SetBounds();
-            Index = index;
-
-            var tolerance = (MaxX - MinX + MaxY - MinY) * Constants.PolygonSameTolerance / 2;
-            NumSigDigits = 0;
-            while (tolerance < 1 && NumSigDigits < 15)
-            {
-                NumSigDigits++;
-                tolerance *= 10;
-            }
-            var prevX = Math.Round(_vertices[0].X, NumSigDigits);
-            var prevY = Math.Round(_vertices[0].Y, NumSigDigits);
-
-            for (int i = _vertices.Count - 1; i >= 0; i--)
-            {
-                var x = Math.Round(_vertices[i].X, NumSigDigits);
-                var y = Math.Round(_vertices[i].Y, NumSigDigits);
-                if (x != prevX || y != prevY)
-                {
-                    _vertices[i].Coordinates = new Vector2(x, y);
-                    prevX = x;
-                    prevY = y;
-                }
                 else
-                    _vertices.RemoveAt(i);
+                {
+                    _path.RemoveAt(i);
+                    i--;
+                }
             }
         }
 
-        /// <summary>
-        /// Copies the specified copy inner polygons.
-        /// </summary>
-        /// <param name="copyInnerPolygons">The copy inner polygons.</param>
-        /// <param name="invert">The invert.</param>
-        /// <returns>TVGL.TwoDimensional.Polygon.</returns>
-        public Polygon Copy(bool copyInnerPolygons, bool invert)
-        {
-            List<Vector2> thisPath = null;
-            if (invert)
-            {
-                thisPath = new List<Vector2>(Path);
-                thisPath.Reverse();
-                // now the following three lines are to aid with mapping old polygon data to new polygon data.
-                // we are simply moving the first element to the end - the polygon doesn't change but not the 
-                // original first line will be the last flipped line. The second original line will be the second
-                // to last flipped line.
-                var front = thisPath[0];
-                thisPath.RemoveAt(0);
-                thisPath.Add(front);
-            }
-            else thisPath = new List<Vector2>(Path); //Create a new list
-            var thisInnerPolygons = _innerPolygons != null && copyInnerPolygons ?
-                _innerPolygons.Select(p => p.Copy(true, invert)).ToList() : null;
-            var copiedArea = copyInnerPolygons ? this.area : this.pathArea;
-            if (invert) copiedArea *= -1;
-            var copiedPolygon = new Polygon(thisPath, this.index)
-            {
-                area = copiedArea,
-                maxX = this.maxX,
-                maxY = this.maxY,
-                minX = this.minX,
-                minY = this.minY,
-                _innerPolygons = thisInnerPolygons
-            };
-            return copiedPolygon;
-        }
 
-        // the following argument-less constructor is only used in the copy function
-        // and in deserialization
-        /// <summary>
-        /// Prevents a default instance of the <see cref="Polygon"/> class from being created.
-        /// </summary>
-        public Polygon()
+        internal void RecreateVertices(bool topOnly = true)
         {
+            var index = 0;
+            // first, remove any vertices from the front of the list, by simply finding a value of 'index'
+            // to properly start from
+            while (_vertices[index].EndLine == null || _vertices[index].StartLine == null)
+            {
+                index++;
+                // if you end up going through all the vertices then the polygon is nil
+                if (_vertices.Count == index)
+                {
+                    _vertices.Clear();
+                    Reset();
+                    return;
+                }
+            }
+            var firstVertex = _vertices[index];
+            // now that the first vertex is found, walk from here to create the list
+            var current = firstVertex;
+            _vertices.Clear();
+            index = 0;
+            do
+            {
+                current.IndexInList = index++;
+                current.LoopID = this.Index;
+                _vertices.Add(current);
+                current = current.StartLine.ToPoint;
+            } while (current != firstVertex);
+            _path = _vertices.Select(v => v.Coordinates).ToList();
+            Reset();
+            if (!topOnly)
+            {
+                foreach (var innerP in InnerPolygons)
+                    innerP.RecreateVertices();
+            }
         }
 
 
@@ -626,7 +644,7 @@ namespace TVGL
         /// </summary>
         private void SetBounds()
         {
-            if (_path != null)
+            if (_path != null && _path.Count > 0)
             {
                 foreach (var point in _path)
                 {
@@ -635,16 +653,21 @@ namespace TVGL
                     if (point.Y > maxY) maxY = point.Y;
                     if (point.Y < minY) minY = point.Y;
                 }
-            }
-            else
-            {
-                foreach (var point in _vertices)
+                var tolerance = (maxX - minX + maxY - minY) * Constants.PolygonSameTolerance / 2;
+                _numSigDigits = 0;
+                while (tolerance < 1 && _numSigDigits < 15)
                 {
-                    if (point.X > maxX) maxX = point.X;
-                    if (point.X < minX) minX = point.X;
-                    if (point.Y > maxY) maxY = point.Y;
-                    if (point.Y < minY) minY = point.Y;
+                    _numSigDigits++;
+                    tolerance *= 10;
                 }
+            }
+            else if (_innerPolygons.Count > 0 && !_innerPolygons[0].IsPositive)
+            {
+                maxX = double.PositiveInfinity;
+                minX = double.NegativeInfinity;
+                maxY = double.PositiveInfinity;
+                minY = double.NegativeInfinity;
+                _numSigDigits = 0;
             }
         }
 
@@ -674,8 +697,6 @@ namespace TVGL
 
         public void Reset()
         {
-            _path = null;
-            _edges = null;
             _orderedXVertices = null;
             area = double.NaN;
             pathArea = double.NaN;
@@ -698,8 +719,6 @@ namespace TVGL
         {
             JArray jArray = (JArray)serializationData["Coordinates"];
             _path = PolygonOperations.ConvertToVector2s(jArray.ToObject<IEnumerable<double>>()).ToList();
-            SetBounds();
-            MakeVerticesFromPath(false);
         }
     }
 

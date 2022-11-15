@@ -9,16 +9,16 @@ namespace TVGLUnitTestsAndBenchmarking
 {
     public class PolygonBooleanTester
     {
-        [Benchmark]
+        //[Benchmark]
         [ArgumentsSource(nameof(Data))]
         public static List<Polygon> TVGLUnion(Polygon polygon1, Polygon polygon2)
-            => TVGL.PolygonOperations.Union(polygon1, polygon2, PolygonCollection.SeparateLoops);
+            => TVGL.TwoDimensional.PolygonOperations.Union(polygon1, polygon2, PolygonSimplify.CanSimplifyOriginal, PolygonCollection.SeparateLoops);
 
 
-       // [Benchmark]
-       // [ArgumentsSource(nameof(Data))]
-       // public static List<List<PointLight>> ClipperUnion(Polygon polygon1, Polygon polygon2, out long ticks)
-       //=> OldTVGL.PolygonOperations.Union(cpolygon1, cpolygon2, out ticks);
+        // [Benchmark]
+        // [ArgumentsSource(nameof(Data))]
+        // public static List<List<PointLight>> ClipperUnion(Polygon polygon1, Polygon polygon2, out long ticks)
+        //=> OldTVGL.PolygonOperations.Union(cpolygon1, cpolygon2, out ticks);
 
 
 
@@ -28,42 +28,42 @@ namespace TVGLUnitTestsAndBenchmarking
             int numTVGLErrors = 0;
             int numClipperErrors = 0;
             (Vector2[][], Vector2[][]) polys;
-            
-              for (var n = 10; n < 8000; n = (int)(n * 3.7782794))
-              {
-                  polys = TestCases.BenchKnown(n);
+
+            for (var n = 10; n < 8000; n = (int)(n * 3.7782794))
+            {
+                polys = TestCases.BenchKnown(n);
                 var errors = SingleCompare(stats, TestCases.C2Poly(polys.Item1), TestCases.C2Poly(polys.Item2));
                 numTVGLErrors += errors.Item1;
                 numClipperErrors += errors.Item2;
             }
-              polys = TestCases.LoadWlrPolygonSet();
-              SingleCompare(stats, TestCases.C2Poly(polys.Item1), TestCases.C2Poly(polys.Item2));
-                var radius = 100;
-              for (int numVerts = 10; numVerts < 10000; numVerts = (int)(3.5 * numVerts))
-              {
-                  for (int delta = 0; delta < radius / 25; delta = 1 + (2 * delta))
-                  {
-                      polys = TestCases.MakeBumpyRings(numVerts, radius, delta);
+            polys = TestCases.LoadWlrPolygonSet();
+            SingleCompare(stats, TestCases.C2Poly(polys.Item1), TestCases.C2Poly(polys.Item2));
+            var radius = 100;
+            for (int numVerts = 10; numVerts < 10000; numVerts = (int)(3.5 * numVerts))
+            {
+                for (int delta = 0; delta < radius / 25; delta = 1 + (2 * delta))
+                {
+                    polys = TestCases.MakeBumpyRings(numVerts, radius, delta);
                     Console.WriteLine("Bumpy Rings:{0}, {1}, {2}", numVerts, radius, delta);
                     var errors = SingleCompare(stats, TestCases.C2Poly(polys.Item1), TestCases.C2Poly(polys.Item2));
-                                     numTVGLErrors += errors.Item1;
+                    numTVGLErrors += errors.Item1;
                     numClipperErrors += errors.Item2;
                 }
-              }
+            }
 
-              for (int numVerts = 10; numVerts < 5000; numVerts = (int)(3 * numVerts))
-              {
-                  for (int delta = 2; delta < 3; delta = (int)(1.5 * delta))
-                  {
-                      var poly1 = TestCases.MakeChunkySquarePolygon(numVerts, delta);
-                      var poly2 = TestCases.MakeChunkySquarePolygon(numVerts, delta);
+            for (int numVerts = 10; numVerts < 5000; numVerts = (int)(3 * numVerts))
+            {
+                for (int delta = 2; delta < 3; delta = (int)(1.5 * delta))
+                {
+                    var poly1 = TestCases.MakeChunkySquarePolygon(numVerts, delta);
+                    var poly2 = TestCases.MakeChunkySquarePolygon(numVerts, delta);
                     //Console.WriteLine("Chunky Square: numVerts = {0}, thick={1}", numVerts, delta);
                     var errors = SingleCompare(stats, poly1, poly2);
                     numTVGLErrors += errors.Item1;
                     numClipperErrors += errors.Item2;
                 }
-              }
-            
+            }
+
             foreach (var kvp in TestCases.TessellatedSolidCrossSections())
             {
                 var poly1 = kvp.Value.Item1;
@@ -74,7 +74,7 @@ namespace TVGLUnitTestsAndBenchmarking
                 numTVGLErrors += errors.Item1;
                 numClipperErrors += errors.Item2;
             }
-            
+
             Console.WriteLine("Number of TVGL Errors = " + numTVGLErrors);
             Console.WriteLine("Number of Clipper Errors = " + numClipperErrors);
             System.IO.StreamWriter SaveFile = new System.IO.StreamWriter("stats.csv");
@@ -93,7 +93,7 @@ namespace TVGLUnitTestsAndBenchmarking
             List<Polygon> tvglResult = null;
             List<Polygon> clipperResult = null;
             long elapsedTVGL;
-            long elapsedClipper=0;
+            long elapsedClipper = 0;
             int numTVGLErrors = 0;
             int numClipperErrors = 0;
             //Presenter.ShowAndHang(new[] { p1, p2 });
@@ -116,7 +116,7 @@ namespace TVGLUnitTestsAndBenchmarking
             numTVGLErrors += errors.Item1;
             numClipperErrors += errors.Item2;
             /********** Intersection *********/
-            p1 = tvglResult.LargestPolygon();
+            p1 = tvglResult.LargestPolygonWithHoles();
             //v1 = clipperResult;
             operationString = "Intersect";
             Console.WriteLine("testing " + operationString + ": " + numVerts + " vertices");
@@ -273,8 +273,8 @@ namespace TVGLUnitTestsAndBenchmarking
             var showResult = false;
             var tvglError = false;
             var clipperError = false;
-            var tvglVResult = new VoxelizedSolid(tvglResult,numVoxels, new[] { min, max });
-            var clipperShallowPolyTree = TVGL.PolygonOperations.
+            var tvglVResult = new VoxelizedSolid(tvglResult, numVoxels, new[] { min, max });
+            var clipperShallowPolyTree = TVGL.TwoDimensional.PolygonOperations.
                    CreateShallowPolygonTrees(clipperResult, true);
             var clipperVResult = new VoxelizedSolid(clipperShallowPolyTree, numVoxels, new[] { min, max });
             if (tvglVResult.SubtractToNewSolid(correctVoxels).Count == 0 && correctVoxels.SubtractToNewSolid(tvglVResult).Count == 0)
@@ -385,14 +385,14 @@ namespace TVGLUnitTestsAndBenchmarking
             //var polygon1 = new Polygon(coords1, true);
             // Presenter.ShowAndHang(polygon1);
             //var polygons3 = polygon1.OffsetRound(88);
-            var offsetBase = Math.Sqrt(polygons.LargestPolygon().Area);
+            var offsetBase = Math.Sqrt(polygons.MostPositivePolygon().PathArea);
             var factors = new[] { -.01, 0.01, -.03, 0.03, -.1, 0.1, -.3, 0.3, -1, 1, -3, 3, -10 };
             foreach (var factor in factors)
             {
                 var offset = factor * offsetBase;
-               // var pl3 = OldTVGL.PolygonOperations.OffsetRound(TestCases.Poly2PLs(polygons[0]), offset, .00254);
-                var polygonsClipper = polygons[0].OffsetRound(offset, 0.00254);
-                var polygonsTVGL = polygons[0].OffsetRound(offset, 0.00254);
+                // var pl3 = OldTVGL.PolygonOperations.OffsetRound(TestCases.Poly2PLs(polygons[0]), offset, .00254);
+                var polygonsClipper = polygons[0].OffsetRound(offset, tolerance: 0.00254);
+                var polygonsTVGL = polygons[0].OffsetRound(offset, tolerance: 0.00254);
                 PolygonBooleanTester.CompareOffsetResults(polygonsTVGL, polygonsClipper, offset);
             }
 
@@ -405,7 +405,7 @@ namespace TVGLUnitTestsAndBenchmarking
 
         public static void CompareOffsetResults(List<Polygon> tvglResult, List<Polygon> clipperResult, double offset)
         {
-            var clipperShallowPolyTree = TVGL.PolygonOperations.CreateShallowPolygonTrees(clipperResult, true);
+            var clipperShallowPolyTree = TVGL.TwoDimensional.PolygonOperations.CreateShallowPolygonTrees(clipperResult, true);
             var tolerance = Math.Sqrt(tvglResult.Sum(r => r.Area));
             var numPolygonsTVGL = tvglResult.Sum(poly => poly.AllPolygons.Count());
             var numPolygonsClipper = clipperShallowPolyTree.Sum(poly => poly.AllPolygons.Count());

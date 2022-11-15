@@ -9,7 +9,10 @@
     <PackageId>TVGL</PackageId>
     <Authors>Matt Campbell, Brandon Massoni</Authors>
     <Company>Design Engineering Lab</Company>
-    <Description>This dynamic library is focused on Computational Geometry functions likes the ones you would find in CGAL. As opposed to copying directly others work, we have sought to create functions from scratch that are optimized or straightforward as a C# implementation. As a .NET Standard library (and a legacy portable class library), the functions can be accessed from other managed code.</Description>
+    <Description>This dynamic library is focused on Computational Geometry functions likes the ones you would find in CGAL. As opposed
+    to copying directly others work, we have sought to create functions from scratch that are optimized or straightforward as a C#
+    implementation. As a .NET Standard library (and a legacy portable class library), the functions can be accessed from other managed 
+    code.</Description>
     <Copyright>2014</Copyright>
     <PackageLicenseUrl>https://github.com/DesignEngrLab/TVGL/blob/master/LICENSE</PackageLicenseUrl>
     <PackageProjectUrl>http://designengrlab.github.io/TVGL/</PackageProjectUrl>
@@ -17,6 +20,7 @@
     <RepositoryType>git</RepositoryType>
     <PackageTags>3d, solid modeling, computational geometry, geometric modeling, mesh, tessellation, voxelization</PackageTags>
     <NeutralLanguage />
+    <PlatformTarget>AnyCPU</PlatformTarget>
   </PropertyGroup>
 	
 	<!--<PropertyGroup>

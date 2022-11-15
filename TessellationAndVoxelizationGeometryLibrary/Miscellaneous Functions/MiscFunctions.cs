@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using StarMathLib;
 using MIConvexHull;
 using System.Diagnostics.CodeAnalysis;
@@ -1118,7 +1119,9 @@ namespace TVGL
         /// <returns>System.Double.</returns>
         public static double SmallerAngleBetweenVectors(this Vector2 vector1, Vector2 vector2)
         {
-            return Math.PI - Math.Acos(vector1.Dot(vector2) / (vector1.Length() * vector2.Length()));
+            var angle = Math.Atan2(vector1.Cross(vector2), vector1.Dot(vector2));
+            if (angle >= 0) return angle;
+            return Math.PI + angle;
         }
 
         /// <summary>
@@ -1191,35 +1194,25 @@ namespace TVGL
         /// <summary>
         /// Determines if Two Lines intersect. Outputs intersection point if they do.
         /// If two lines are collinear, they are not considered intersecting.
+        /// This method has been renamed ...Conventional because the Projective Geometric Algebra version (see below)
+        /// proves to be faster. Using BenchmarkDotNet, this version is 23.75 ns while the one below is 15 ns.
         /// </summary>
         /// <param name="aFrom">The starting point on the a-Line.</param>
         /// <param name="aTo">The end point on the a-Line.</param>
         /// <param name="bFrom">The starting point on the b-Line.</param>
         /// <param name="bTo">The end point on the b-Line.</param>
         /// <param name="intersectionPoint">The intersection point.</param>
+        /// <param name="t_a">The t a.</param>
+        /// <param name="t_b">The t b.</param>
         /// <param name="considerCollinearOverlapAsIntersect">The consider collinear overlap as intersect.</param>
         /// <returns>System.Boolean.</returns>
-        public static bool SegmentSegment2DIntersection(Vector2 aFrom, Vector2 aTo, Vector2 bFrom, Vector2 bTo,
-            out Vector2 intersectionPoint, bool considerCollinearOverlapAsIntersect = false)
+        /*
+        private static bool SegmentSegment2DIntersectionConventional(Vector2 aFrom, Vector2 aTo, Vector2 bFrom, Vector2 bTo,
+            out Vector2 intersectionPoint, out double t_a, out double t_b, bool considerCollinearOverlapAsIntersect = false)
         {
+            t_a = double.NaN;
+            t_b = double.NaN;
             intersectionPoint = Vector2.Null;
-            // first check if bounding boxes overlap. If they don't then return false here
-            if (Math.Max(aFrom.X, aTo.X) < Math.Min(bFrom.X, bTo.X) || Math.Max(bFrom.X, bTo.X) < Math.Min(aFrom.X, aTo.X) ||
-                Math.Max(aFrom.Y, aTo.Y) < Math.Min(bFrom.Y, bTo.Y) || Math.Max(aFrom.Y, aTo.Y) < Math.Min(bFrom.Y, bTo.Y))
-                return false;
-            // okay, so bounding boxes overlap
-            //first a quick check to see if points are the same
-            if (aFrom.IsPracticallySame(bFrom) || aFrom.IsPracticallySame(bTo))
-            {
-                intersectionPoint = aFrom;
-                return true;
-            }
-            if (aTo.IsPracticallySame(bFrom) || aTo.IsPracticallySame(bTo))
-            {
-                intersectionPoint = aTo;
-                return true;
-            }
-
             var aVector = aTo - aFrom; //vector along p-line
             var bVector = bTo - bFrom; //vector along q-line
             var vCross = aVector.Cross(bVector); //2D cross product, determines if parallel
@@ -1243,12 +1236,12 @@ namespace TVGL
             //   |                    |*|       | =  |            |
             //   |   vp_y      vq_y   | |  t_q  |    | vStarts_y  |
             var oneOverdeterminnant = 1 / vCross;
-            var t_a = oneOverdeterminnant * (bVector.Y * fromPointVector.X - bVector.X * fromPointVector.Y);
+            t_a = oneOverdeterminnant * (bVector.Y * fromPointVector.X - bVector.X * fromPointVector.Y);
             if (t_a < 0 || t_a > 1)
                 //if (t_1.IsLessThanNonNegligible(0, Constants.PolygonSameTolerance)
                 //    || !t_1.IsLessThanNonNegligible(1.0, Constants.PolygonSameTolerance))
                 return false;
-            var t_b = oneOverdeterminnant * (aVector.Y * fromPointVector.X - aVector.X * fromPointVector.Y);
+            t_b = oneOverdeterminnant * (aVector.Y * fromPointVector.X - aVector.X * fromPointVector.Y);
             if (t_b < 0 || t_b >= 1)
                 return false;
 
@@ -1256,6 +1249,71 @@ namespace TVGL
                 0.5 * (aFrom.Y + t_a * aVector.Y + bFrom.Y + t_b * bVector.Y));
             return true;
         }
+        */
+
+        /// <summary>
+        /// Determines if Two Lines intersect. Outputs intersection point if they do.
+        /// If two lines are collinear, they are not considered intersecting.
+        /// </summary>
+        /// <param name="aFrom">The starting point on the a-Line.</param>
+        /// <param name="aTo">The end point on the a-Line.</param>
+        /// <param name="bFrom">The starting point on the b-Line.</param>
+        /// <param name="bTo">The end point on the b-Line.</param>
+        /// <param name="intersectionPoint">The intersection point.</param>
+        /// <param name="t_a">The fractional amount along line-a.</param>
+        /// <param name="t_b">The fractional amount along line-b.</param>
+        /// <returns>System.Boolean.</returns>
+
+        [Intrinsic]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool SegmentSegment2DIntersection(Vector2 aFrom, Vector2 aTo, Vector2 bFrom, Vector2 bTo,
+            out Vector2 intersectionPoint, out double t_a, out double t_b)
+        {
+            // first create descriptions of the lines using the Join operator from Project Geometric Algebra (PGA2D; https://bivector.net/2DPGA.pdf)
+            var aLine = new Vector3(aTo.Y - aFrom.Y, aFrom.X - aTo.X, aFrom.Y * aTo.X - aFrom.X * aTo.Y); //JoinPointsIntoLineDescriptor(aFrom, aTo);
+            var bLine = new Vector3(bTo.Y - bFrom.Y, bFrom.X - bTo.X, bFrom.Y * bTo.X - bFrom.X * bTo.Y); // JoinPointsIntoLineDescriptor(bFrom, bTo);
+
+            // now use the Meet operator to find the intersection point in homogeneous coordinates.
+            var interPoint3 = new Vector3(bLine.Z * aLine.Y - bLine.Y * aLine.Z, bLine.X * aLine.Z - bLine.Z * aLine.X, bLine.Y * aLine.X - bLine.X * aLine.Y); // MeetAtProjective2DPointUA(lg1, lg2);
+
+            // there are several ways to check whether to intersection point is in between the endpoints (see https://observablehq.com/@skydog23/point-in-segment)
+            // but since one may also want to know the fraction along the line as indicated by the return values t_a and t_b, we define one
+            // based on dot products with the sub line to to the total line
+            var aLineIPFrom = new Vector3(interPoint3.Y - aFrom.Y * interPoint3.Z, aFrom.X * interPoint3.Z - interPoint3.X, aFrom.Y * interPoint3.X - aFrom.X * interPoint3.Y); // JoinPointsIntoLineDescriptor(aFrom, ip);
+            var aLineIPTo = new Vector3(interPoint3.Y - aTo.Y * interPoint3.Z, aTo.X * interPoint3.Z - interPoint3.X, aTo.Y * interPoint3.X - aTo.X * interPoint3.Y); // JoinPointsIntoLineDescriptor(aTo, ip);
+            var dotFromA = aLineIPFrom.X * aLine.X + aLineIPFrom.Y * aLine.Y;  // PGAInnerProductUA(iVfg1, lg1);
+            var dotToA = -aLineIPTo.X * aLine.X - aLineIPTo.Y * aLine.Y; // -PGAInnerProductUA(iVtg1, lg1);
+
+            // note that the dotToA is actually a negative of the dot product. if both are positive or both are negative then you are in between
+            // the end points
+            if ((dotFromA < 0 && dotToA >= 0) || (dotFromA >= 0 && dotToA < 0))
+            {
+                t_a = double.NaN;
+                t_b = double.NaN;
+                intersectionPoint = Vector2.Null;
+                return false;
+            }
+
+            // now the same for the b-Line
+            var blineIPFrom = new Vector3(interPoint3.Y - bFrom.Y * interPoint3.Z, bFrom.X * interPoint3.Z - interPoint3.X, bFrom.Y * interPoint3.X - bFrom.X * interPoint3.Y); // JoinPointsIntoLineDescriptor(bFrom, ip);
+            var blineIPTo = new Vector3(interPoint3.Y - bTo.Y * interPoint3.Z, bTo.X * interPoint3.Z - interPoint3.X, bTo.Y * interPoint3.X - bTo.X * interPoint3.Y); // JoinPointsIntoLineDescriptor(bTo, ip);
+            var dotFromB = blineIPFrom.X * bLine.X + blineIPFrom.Y * bLine.Y; // PGAInnerProductUA(iVfg2, lg2);
+            var dotToB = -blineIPTo.X * bLine.X - blineIPTo.Y * bLine.Y; // -PGAInnerProductUA(iVtg2, lg2);
+            if ((dotFromB < 0 && dotToB >= 0) || (dotFromB >= 0 && dotToB < 0))
+            {
+                t_a = double.NaN;
+                t_b = double.NaN;
+                intersectionPoint = Vector2.Null;
+                return false;
+            }
+            t_a = dotFromA / (dotFromA + dotToA);
+            t_b = dotFromB / (dotFromB + dotToB);
+            intersectionPoint = new Vector2(interPoint3.X / interPoint3.Z, interPoint3.Y / interPoint3.Z);
+            return true;
+        }
+
+
+
 
         /// <summary>
         /// Determines if Two Lines intersect. Outputs intersection point if they do.
