@@ -2,7 +2,6 @@
 
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
-    <LangVersion>8.0</LangVersion>
     <AssemblyName>TessellationAndVoxelizationGeometryLibrary</AssemblyName>
     <RootNamespace>TVGL</RootNamespace>
     <Version>1.0.17.1019</Version>
