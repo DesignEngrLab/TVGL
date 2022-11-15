@@ -8,9 +8,9 @@ using System.Linq;
 using System.Runtime.Serialization;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using TVGL.Numerics;
 
-namespace TVGL.TwoDimensional
+
+namespace TVGL
 {
 
     /// <summary>
@@ -29,69 +29,20 @@ namespace TVGL.TwoDimensional
 
         public Polygon(IEnumerable<Vector2> coordinates, int index = -1)
         {
-            Index = index;
-            _path = coordinates as List<Vector2> ?? coordinates.ToList();
-        }
-
-
-        public Polygon(IEnumerable<IList<Vector2>> loops) : this(loops.First())
-        {
-            foreach (var innerLoop in loops.Skip(1))
-                AddInnerPolygon(new Polygon(innerLoop));
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="Polygon" /> class.
-        /// </summary>
-        /// <param name="vertices">The vertices.</param>
-        /// <param name="index">The index.</param>
-        public Polygon(IEnumerable<Vertex2D> vertices, int index = -1)
-        {
-            _vertices = vertices as List<Vertex2D> ?? vertices.ToList();
-            Index = index;
-            //SetBounds();
-
-            /*
-            var prevX = Math.Round(_vertices[0].X, NumSigDigits);
-            var prevY = Math.Round(_vertices[0].Y, NumSigDigits);
-
-            for (int i = _vertices.Count - 1; i >= 0; i--)
+            get
             {
-                var x = Math.Round(_vertices[i].X, NumSigDigits);
-                var y = Math.Round(_vertices[i].Y, NumSigDigits);
-                if (x != prevX || y != prevY)
+                if (_path == null)
                 {
-                    _vertices[i].Coordinates = new Vector2(x, y);
-                    prevX = x;
-                    prevY = y;
+                    lock (_vertices)
+                    {
+                        _path = new List<Vector2>();
+                        foreach (var point in _vertices)
+                        {
+                            _path.Add(new Vector2(point.X, point.Y));
+                        }
+                    }
                 }
-                else
-                    _vertices.RemoveAt(i);
-            }
-            */
-            _path = _vertices.Select(v => v.Coordinates).ToList();
-        }
-
-        /// <summary>
-        /// Copies the specified copy inner polygons.
-        /// </summary>
-        /// <param name="copyInnerPolygons">The copy inner polygons.</param>
-        /// <param name="invert">The invert.</param>
-        /// <returns>TVGL.TwoDimensional.Polygon.</returns>
-        public Polygon Copy(bool copyInnerPolygons, bool invert)
-        {
-            List<Vector2> thisPath = null;
-            if (invert)
-            {
-                thisPath = new List<Vector2>(Path);
-                thisPath.Reverse();
-                // now the following three lines are to aid with mapping old polygon data to new polygon data.
-                // we are simply moving the first element to the end - the polygon doesn't change but not the 
-                // original first line will be the last flipped line. The second original line will be the second
-                // to last flipped line.
-                var front = thisPath[0];
-                thisPath.RemoveAt(0);
-                thisPath.Add(front);
+                return _path;
             }
             else thisPath = Path;
             var thisInnerPolygons = _innerPolygons != null && copyInnerPolygons ?
@@ -200,6 +151,7 @@ namespace TVGL.TwoDimensional
                 MakePolygonEdgesIfNonExistent();
                 return _edges;
             }
+            internal set { _edges = value; }
         }
         #endregion
 
@@ -258,9 +210,11 @@ namespace TVGL.TwoDimensional
         /// Removes the hole from the polygon.
         /// </summary>
         /// <param name="polygon">The polygon.</param>
-        public void RemoveHole(Polygon polygon)
+        public bool RemoveHole(Polygon polygon)
         {
-            _innerPolygons.Remove(polygon);
+            if (_innerPolygons is null)
+                return false;
+            return _innerPolygons.Remove(polygon);
         }
         /// <summary>
         /// Gets the inner polygons.
@@ -554,6 +508,23 @@ namespace TVGL.TwoDimensional
         /// <param name="index">The index.</param>
 
 
+        public Polygon(IEnumerable<Vector2> coordinates, int index = -1)
+        {
+            Index = index;
+            Vector2 prevCoordinate = Vector2.Null;
+            _path = new List<Vector2>();
+            foreach (var p in coordinates)
+            {
+                if (p.X > maxX) maxX = p.X;
+                if (p.X < minX) minX = p.X;
+                if (p.Y > maxY) maxY = p.Y;
+                if (p.Y < minY) minY = p.Y;
+                prevCoordinate = p;
+                _path.Add(p);
+            }
+            MakeVerticesFromPath();
+        }
+
         private void MakeVerticesFromPath()
         {
             _vertices = new List<Vertex2D>();
@@ -565,7 +536,7 @@ namespace TVGL.TwoDimensional
             {
                 var x = Math.Round(_path[i].X, NumSigDigits);
                 var y = Math.Round(_path[i].Y, NumSigDigits);
-                if (x != prevX || y != prevY)
+                if (!RemovePointsLessThanTolerance || x != prevX || y != prevY)
                 {
                     var coord = new Vector2(x, y);
                     _path[i] = coord;
@@ -574,11 +545,16 @@ namespace TVGL.TwoDimensional
                     prevY = y;
                 }
                 else
-                {
+
                     _path.RemoveAt(i);
-                    i--;
-                }
             }
+            _vertices.Reverse();
+        }
+
+        public Polygon(IEnumerable<IList<Vector2>> loops) : this(loops.First())
+        {
+            foreach (var innerLoop in loops.Skip(1))
+                AddInnerPolygon(new Polygon(innerLoop));
         }
 
 
@@ -605,14 +581,22 @@ namespace TVGL.TwoDimensional
             index = 0;
             do
             {
-                current.IndexInList = index++;
-                current.LoopID = this.Index;
-                _vertices.Add(current);
-                current = current.StartLine.ToPoint;
-            } while (current != firstVertex);
-            _path = _vertices.Select(v => v.Coordinates).ToList();
-            Reset();
-            if (!topOnly)
+                thisPath = new List<Vector2>(Path);
+                thisPath.Reverse();
+                // now the following three lines are to aid with mapping old polygon data to new polygon data.
+                // we are simply moving the first element to the end - the polygon doesn't change but not the 
+                // original first line will be the last flipped line. The second original line will be the second
+                // to last flipped line.
+                var front = thisPath[0];
+                thisPath.RemoveAt(0);
+                thisPath.Add(front);
+            }
+            else thisPath = Path;
+            var thisInnerPolygons = _innerPolygons != null && copyInnerPolygons ?
+                _innerPolygons.Select(p => p.Copy(true, invert)).ToList() : null;
+            var copiedArea = copyInnerPolygons ? this.area : this.pathArea;
+            if (invert) copiedArea *= -1;
+            var copiedPolygon = new Polygon(thisPath, this.index)
             {
                 foreach (var innerP in InnerPolygons)
                     innerP.RecreateVertices();
@@ -719,6 +703,8 @@ namespace TVGL.TwoDimensional
         {
             JArray jArray = (JArray)serializationData["Coordinates"];
             _path = PolygonOperations.ConvertToVector2s(jArray.ToObject<IEnumerable<double>>()).ToList();
+            SetBounds();
+            MakeVerticesFromPath();
         }
     }
 

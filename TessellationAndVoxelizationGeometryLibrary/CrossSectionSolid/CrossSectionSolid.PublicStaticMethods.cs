@@ -163,6 +163,32 @@ namespace TVGL
             }
             return result;
         }
+
+
+        public Vector3[][][] GetCrossSectionsAs3DLoops()
+        {
+            var result = new Vector3[Layer2D.Count][][];
+            int k = 0;
+            foreach (var layerKeyValuePair in Layer2D)
+            {
+                var index = layerKeyValuePair.Key;
+                var zValue = StepDistances[index];
+                var numLoops = layerKeyValuePair.Value.Sum(poly => 1 + poly.NumberOfInnerPolygons);
+                var layer = new Vector3[numLoops][];
+                result[k++] = layer;
+                int j = 0;
+                foreach (var poly in layerKeyValuePair.Value)
+                    foreach (var innerPoly in poly.AllPolygons)
+                    {
+                        var loop = new Vector3[innerPoly.Path.Count];
+                        layer[j] = loop;
+                        for (int i = 0; i < loop.Length; i++)
+                            loop[i] = (new Vector3(innerPoly.Path[i], zValue)).Transform(BackTransform);
+                        j++;
+                    }
+            }
+            return result;
+        }
         private static bool ContainsDuplicatePoints(IList<Polygon> layer)
         {
             var allPoints = new HashSet<Vector2>();
