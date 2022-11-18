@@ -279,14 +279,15 @@ namespace TVGL
             Vector3.UnitZ,Vector3.UnitZ,Vector3.UnitZ,Vector3.UnitZ
         };
 
+        /// <summary>
+        /// The direction table is simply the enumerator version of the EdgeDirectionTable
+        /// </summary>
         protected static readonly CartesianDirections[] directionTable = new CartesianDirections[]
           {
               CartesianDirections.XPositive,CartesianDirections.YPositive,
               CartesianDirections.XPositive,CartesianDirections.YPositive,
               CartesianDirections.XPositive,CartesianDirections.YPositive,
-              //CartesianDirections.XNegative,CartesianDirections.YNegative,
               CartesianDirections.XPositive,CartesianDirections.YPositive,
-              //CartesianDirections.XNegative,CartesianDirections.YNegative,
               CartesianDirections.ZPositive, CartesianDirections.ZPositive,
               CartesianDirections.ZPositive,CartesianDirections.ZPositive
           };

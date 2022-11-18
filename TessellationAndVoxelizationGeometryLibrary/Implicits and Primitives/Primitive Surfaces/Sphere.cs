@@ -256,6 +256,28 @@ namespace TVGL
         {
             return (point - Center).Length() - Radius;
         }
+        public double PointMembership(Vector3 point, out Vector3 gradient)
+        {
+            var v = point - Center;
+            var vLength = v.Length();
+            gradient = v / vLength;
+            return vLength - Radius;
+        }
+        public double PointMembership(Vector3 point, out Vector3 gradient, out Vector3 curvatureDiagonalTerms,
+            out Vector3 curvatureCrossTerms)
+        {
+            var v = point - Center;
+            var vLength = v.Length();
+            gradient = (point - Center) / vLength;
+            var denominator = vLength * v.LengthSquared();
+            curvatureDiagonalTerms = new Vector3((v.Y * v.Y + v.Z * v.Z) / denominator,
+                (v.X * v.X + v.Z * v.Z) / denominator,
+            (v.X * v.X + v.Y * v.Y) / denominator);
+            curvatureCrossTerms = new Vector3(-v.X * v.Y / denominator,
+                -v.X * v.Z / denominator,
+                -v.Y * v.Z / denominator);
+            return vLength - Radius;
+        }
 
 
         #region Constructor
