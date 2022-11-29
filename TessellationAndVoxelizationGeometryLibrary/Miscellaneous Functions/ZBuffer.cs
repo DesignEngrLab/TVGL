@@ -25,7 +25,7 @@ namespace TVGL
         /// <param name="pixelBorder">The pixel border is the number of pixels to add around the model.</param>
         /// <param name="subsetFaces">The subset of the solid's faces to find the z-buffer for.</param>
         /// <returns>System.ValueTuple&lt;PolygonalFace, System.Double&gt;[].</returns>
-        public static (PolygonalFace, double)[,] GetZBufferWithFaces(TessellatedSolid solid, Vector3 direction, int pixelsPerRow, out double[] ProjectedFaceAreas,
+        public static (PolygonalFace, double)[,] GetZBufferWithFaces(TessellatedSolid solid, Vector3 direction, int pixelsPerRow, out Dictionary<PolygonalFace, double> ProjectedFaceAreas,
             int pixelBorder = 0, IList<PolygonalFace> subsetFaces = null)
         {
             #region Initialize
@@ -77,11 +77,10 @@ namespace TVGL
             //Then, for each pixel, find its first intesection from it's subset of potential faces.
             //Stop at the first intersection from the ordered Z values.
             var faces = subsetFaces != null ? subsetFaces : solid.Faces;
-            ProjectedFaceAreas = new double[faces.Count];
+            ProjectedFaceAreas = new Dictionary<PolygonalFace, double>();
 
-            for (int k = 0; k < faces.Count; k++)
+            foreach (PolygonalFace face in faces)
             {
-                PolygonalFace face = faces[k];
                 var facePoints = new Vector2[3];
                 var faceZHeights = new double[3];
                 for (int i = 0; i < 3; i++)
@@ -90,7 +89,7 @@ namespace TVGL
                     faceZHeights[i] = zHeights[face.Vertices[i].IndexInList];
                 }
                 var faceArea = UpdateZBufferWithFace(face, grid, facePoints, zHeights, PixelSideLength, inversePixelSideLength, minX, minY);
-                ProjectedFaceAreas[k] = faceArea;
+                ProjectedFaceAreas.Add(face, faceArea);
             }
             return grid;
         }
