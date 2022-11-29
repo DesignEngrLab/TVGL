@@ -709,7 +709,8 @@ namespace TVGL
                     foreach (var face in primitive.TriangleVertexIndices)
                     {
                         var checksum = FaceChecksum(checksumMultiplier, face, out var orderedIndices);
-                        faceIndices.AddRange(tempFaceIndices[faceChecksums[checksum]].Select(p => p.IndexInList));
+                        if (!faceChecksums.TryGetValue(checksum, out var faceIndex)) continue;//This may be an invalid face - such as duplicated vertices.
+                        faceIndices.AddRange(tempFaceIndices[faceIndex].Select(p => p.IndexInList));
                     }
                     primitive.FaceIndices = faceIndices.ToArray();
                     primitive.TriangleVertexIndices.Clear();//Don't need these anymore
