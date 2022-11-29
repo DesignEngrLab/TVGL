@@ -1113,7 +1113,8 @@ namespace TVGL
         /// <returns>TessellatedSolid.</returns>
         public TessellatedSolid Copy()
         {
-            var copy = new TessellatedSolid(Faces, Edges != null, true, Vertices, Faces.Select(p => p.Color).ToList(), Units, Name + "_Copy",
+            //Copy the solid. Do not check Edges[], rather use _edges, so that MakeEdges() does not get triggered.
+            var copy = new TessellatedSolid(Faces, _edges != null, true, Vertices, Faces.Select(p => p.Color).ToList(), Units, Name + "_Copy",
                 FileName, Comments, Language);
             if (Primitives != null && Primitives.Any())
             {
