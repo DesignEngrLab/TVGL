@@ -722,7 +722,11 @@ namespace TVGL
             var direction2 = new Vector3(boundingRectangle.Direction1, 0);
             direction2 = direction2.Multiply(backTransform).Normalize();
             var direction3 = direction1.Cross(direction2); // you could also get this from the bounding rectangle
-            // but this is quicker and more accurate to reproduce with cross-product 
+                                                           // but this is quicker and more accurate to reproduce with cross-product 
+
+            if ((depth * boundingRectangle.Length1 * boundingRectangle.Length2).IsNegligible())
+                throw new Exception("Volume should never be negligible, unless the input data is bad");
+     
             IEnumerable<T>[] verticesOnFaces = new IEnumerable<T>[6];
             verticesOnFaces[0] = bottomVertices;
             verticesOnFaces[1] = topVertices;
@@ -738,8 +742,6 @@ namespace TVGL
             verticesOnFaces[4] = boundingRectangle.PointsOnSides[2].SelectMany(p => pointsDict[p]);
             verticesOnFaces[5] = boundingRectangle.PointsOnSides[3].SelectMany(p => pointsDict[p]);
             //}
-            if ((depth * boundingRectangle.Length1 * boundingRectangle.Length2).IsNegligible())
-                throw new Exception("Volume should never be negligible, unless the input data is bad");
             return new BoundingBox<T>(new[] { depth, boundingRectangle.Length1, boundingRectangle.Length2 },
                 new[] { direction1, direction2, direction3 }, verticesOnFaces);
         }
