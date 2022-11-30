@@ -111,7 +111,7 @@ namespace TVGL
             ProjectedFaceAreas = new Dictionary<PolygonalFace, double>();
 
             foreach (PolygonalFace face in faces)
-                ProjectedFaceAreas.Add(face, UpdateZBufferWithFace(face));
+                ProjectedFaceAreas.Add(face, UpdateZBufferWithFaceScan(face));
         }
 
         public IEnumerable<(int, int, double)> GetLinePixels(Edge edge)
@@ -178,23 +178,37 @@ namespace TVGL
             var xStartIndex = (int)((vMin.X - MinX) * InversePixelSideLength);
             var xEndIndex = (int)((vMax.X - MinX) * InversePixelSideLength);
             var xSwitchIndex = (int)((vMed.X - MinX) * InversePixelSideLength);
+            var x = vMin.X;
+            var yBtm = vMin.Y;
+            var yTop = vMin.Y;
 
             double slopeStepBtm, slopeStepTop;
             var switchOnBottom = vMed.Y <= vMax.Y;
             if (switchOnBottom)
             {
-                slopeStepBtm = PixelSideLength * (vMed.Y - vMin.Y) / (vMed.X - vMin.X);
                 slopeStepTop = PixelSideLength * (vMax.Y - vMin.Y) / (vMax.X - vMin.X);
+                if (xStartIndex == xSwitchIndex)
+                {
+                    xSwitchIndex = -1;
+                    slopeStepBtm = PixelSideLength * (vMax.Y - vMed.Y) / (vMax.X - vMed.X);
+                    yBtm = vMed.Y;
+                }
+                else
+                    slopeStepBtm = PixelSideLength * (vMed.Y - vMin.Y) / (vMed.X - vMin.X);
             }
             else
             {
                 slopeStepBtm = PixelSideLength * (vMax.Y - vMin.Y) / (vMax.X - vMin.X);
-                slopeStepTop = PixelSideLength * (vMed.Y - vMin.Y) / (vMed.X - vMin.X);
+                if (xStartIndex == xSwitchIndex)
+                {
+                    xSwitchIndex = -1;
+                    slopeStepTop = PixelSideLength * (vMax.Y - vMed.Y) / (vMax.X - vMed.X);
+                    yTop = vMed.Y;
+                }
+                else
+                    slopeStepTop = PixelSideLength * (vMed.Y - vMin.Y) / (vMed.X - vMin.X);
             }
 
-            var x = vMin.X;
-            var yBtm = vMin.Y;
-            var yTop = vMin.Y;
             for (var xIndex = xStartIndex; xIndex <= xEndIndex; xIndex++)
             {
                 var yIndex = (int)((yBtm - MinY) * InversePixelSideLength);
@@ -220,10 +234,10 @@ namespace TVGL
                             }
                         }
                     }
-                    yBtm += slopeStepBtm;
-                    yTop += slopeStepTop;
                     yIndex++;
                 }
+                yBtm += slopeStepBtm;
+                yTop += slopeStepTop;
                 x += PixelSideLength;
                 if (xIndex == xSwitchIndex)
                 {
