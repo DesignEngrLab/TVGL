@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using TVGL;
+using TVGLUnitTestsAndBenchmarking.Misc_Tests;
 
 namespace TVGLUnitTestsAndBenchmarking
 {
@@ -19,6 +20,8 @@ namespace TVGLUnitTestsAndBenchmarking
         [STAThread]
         private static void Main(string[] args)
         {
+            ZbufferTesting.Test();
+            return;
             var sphere1 = new Sphere(new Vector3(2, 3, 4), 10, true);
             var sphere2 = new Sphere(new Vector3(8,7,6), 10, true);
             var implicitSolid = new ImplicitSolid(sphere1, sphere2, BooleanOperationType.SubtractAB);
@@ -30,7 +33,7 @@ namespace TVGLUnitTestsAndBenchmarking
             var tessellatedSolid = implicitSolid.ConvertToTessellatedSolid(0.25);
             Presenter.ShowAndHang(new[] { tessellatedSolid });
 
-            return;
+            //return;
 
             var plane1 = new Plane(17.0, Vector3.UnitZ);
             var matrix = Matrix4x4.CreateRotationY(Math.PI / 2);
@@ -82,7 +85,7 @@ namespace TVGLUnitTestsAndBenchmarking
             }
         }
 
-        private static DirectoryInfo BackOutToFolder()
+        public static DirectoryInfo BackOutToFolder()
         {
             // 1. bubble up from the bin directories to find the TestFiles directory
             var dir = new DirectoryInfo(".");

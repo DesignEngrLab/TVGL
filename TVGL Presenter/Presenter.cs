@@ -227,11 +227,6 @@ namespace TVGL
         {
             ShowVertexPathsWithSolids(vertices, new List<Solid> { solid }, lineThickness, colors, closePaths);
         }
-        public static void ShowVertexPathsWithMultipleSolid(IEnumerable<IEnumerable<IEnumerable<Vector3>>> vertices,
-            IEnumerable<Solid> solids, double lineThickness = 1, IEnumerable<Color> colors = null, bool closePaths = false)
-        {
-            ShowVertexPathsWithSolids(vertices.SelectMany(v => v), solids, lineThickness, colors, closePaths);
-        }
         public static void ShowVertexPathsWithSolids(IEnumerable<Vertex> vertices, IEnumerable<Solid> solids,
             double thickness = 0, IEnumerable<Color> colors = null, bool closePaths = false)
         {
