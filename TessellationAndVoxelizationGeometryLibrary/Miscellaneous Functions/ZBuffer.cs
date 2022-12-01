@@ -334,11 +334,11 @@ namespace TVGL
                     var area2 = vBAx * qVaY - vBAy_multiply_qVaX;
                     if (area2 >= 0 && area2 <= area)
                     {
-                        var v = area2 / area;
                         //Area = (q - vA).Cross(vC - vA)
                         var area3 = vCAy_multiply_qVaX - qVaY * vCAx;
                         if (area3 >= 0 && area3 <= area)
                         {
+                            var v = area2 / area;
                             var u = area3 / area;
                             var w = 1 - v - u;
                             if (w >= 0 && w <= 1)
