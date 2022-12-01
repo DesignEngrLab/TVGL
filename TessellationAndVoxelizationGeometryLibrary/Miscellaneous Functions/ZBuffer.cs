@@ -1,10 +1,16 @@
 using System;
 using System.Collections.Generic;
+using System.Threading;
 
 namespace TVGL
 {
-    public class ZBuffer
+    public sealed class ZBuffer
     {
+        /// <summary>
+        /// Gets the z-heights as a matrix of doubles. There is no time saved in getting this by itself as the main 
+        /// method keeps track of faces. In other words, ZHeightsWithFaces is what is found by the Run routine.
+        /// </summary>
+        /// <value>The z heights only.</value>
         public double[,] ZHeightsOnly
         {
             get
@@ -20,26 +26,92 @@ namespace TVGL
             }
         }
         double[,] zHeightsOnly;
-        public (PolygonalFace, double)[,] ZHeightsWithFaces  { get; private set; }
-        public (PolygonalFace, double)[,] ZHeightsWithFacesTris { get; private set; }
+        /// <summary>
+        /// Gets the z-heights and the associated face that created it.
+        /// </summary>
+        /// <value>The z heights with faces.</value>
+        public (PolygonalFace, double)[,] ZHeightsWithFaces { get; private set; }
+        /// <summary>
+        /// Gets the projected face areas in the z-buffer direction. This is found through
+        /// the course of the "Run" computation and might be useful elsewhere.
+        /// </summary>
+        /// <value>The projected face areas.</value>
         public Dictionary<PolygonalFace, double> ProjectedFaceAreas { get; private set; }
+        /// <summary>
+        /// Gets the projected 2D vertices of all the 3D vertices of the tessellated solid.
+        /// This is found through the course of the "Run" computation and might be useful elsewhere.
+        /// </summary>
+        /// <value>The vertices.</value>
         public Vector2[] Vertices { get; private set; }
+        /// <summary>
+        /// Gets the z-heightsof all the 3D vertices of the tessellated solid on the project plane.
+        /// This is found through the course of the "Run" computation and might be useful elsewhere.
+        /// </summary>
+        /// <value>The vertex z heights.</value>
         public double[] VertexZHeights { get; private set; }
+        /// <summary>
+        /// Gets the minimum x of the projected grid of 2D points.
+        /// </summary>
+        /// <value>The minimum x.</value>
         public double MinX { get; private set; }
+        /// <summary>
+        /// Gets the minimum y of the projected grid of 2D points.
+        /// </summary>
+        /// <value>The minimum y.</value>
         public double MinY { get; private set; }
+        /// <summary>
+        /// Gets the maximum x of the projected grid of 2D points.
+        /// </summary>
+        /// <value>The maximum x.</value>
         public double MaxX { get; private set; }
+        /// <summary>
+        /// Gets the maximum y of the projected grid of 2D points.
+        /// </summary>
+        /// <value>The maximum y.</value>
         public double MaxY { get; private set; }
+        /// <summary>
+        /// Gets the x-length of the projected grid of 2D points.
+        /// </summary>
+        /// <value>The length of the x.</value>
         public double XLength { get; private set; }
+        /// <summary>
+        /// Gets the y-length of the projected grid of 2D points.
+        /// </summary>
+        /// <value>The length of the y.</value>
         public double YLength { get; private set; }
+        /// <summary>      
+        /// Gets which ever length is longer (XLength or YLength)
+        /// This is found through the course of the "Run" computation and might be useful elsewhere.
+        /// </summary>
+        /// <value>The maximum length.</value>
         public double MaxLength { get; private set; }
+        /// <summary>
+        /// Gets the length of the pixel side.
+        /// </summary>
+        /// <value>The length of the pixel side.</value>
         public double PixelSideLength { get; private set; }
-        public double InversePixelSideLength { get; private set; }
+        /// <summary>
+        /// Gets the count of pixels in the x-direction.
+        /// </summary>
+        /// <value>The x count.</value>
         public int XCount { get; private set; }
+        /// <summary>
+        /// Gets the count of pixels in the y-direction.
+        /// </summary>
+        /// <value>The y count.</value>
         public int YCount { get; private set; }
         private Matrix4x4 transform;
         private Matrix4x4 backTransform;
         private PolygonalFace[] solidFaces;
+        private double inversePixelSideLength;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ZBuffer"/> class.
+        /// </summary>
+        /// <param name="solid">The solid.</param>
+        /// <param name="direction">The direction.</param>
+        /// <param name="pixelsPerRow">The pixels per row.</param>
+        /// <param name="pixelBorder">The pixel border.</param>
         public ZBuffer(TessellatedSolid solid, Vector3 direction, int pixelsPerRow, int pixelBorder = 1)
         {
             Vertices = new Vector2[solid.NumberOfVertices];
@@ -71,9 +143,9 @@ namespace TVGL
             //Calculate the size of each pixel based on the max of the two dimensions in question. 
             //Subtract pixelsPerRow by 1, since we will be adding a half a pixel to each side.
             PixelSideLength = MaxLength / (pixelsPerRow - pixelBorder * 2);
-            InversePixelSideLength = 1 / PixelSideLength;
-            XCount = (int)Math.Ceiling(XLength * InversePixelSideLength);
-            YCount = (int)Math.Ceiling(YLength * InversePixelSideLength);
+            inversePixelSideLength = 1 / PixelSideLength;
+            XCount = (int)Math.Ceiling(XLength * inversePixelSideLength);
+            YCount = (int)Math.Ceiling(YLength * inversePixelSideLength);
             // shift the grid slightly so that the part grid points are better aligned with the solid
             var xStickout = XLength - XCount * PixelSideLength;
             MinX += xStickout / 2;
@@ -98,30 +170,11 @@ namespace TVGL
         public void Run(IList<PolygonalFace> subsetFaces = null)
         {
             ZHeightsWithFaces = new (PolygonalFace, double)[XCount, YCount];
-            ZHeightsWithFacesTris = new (PolygonalFace, double)[XCount, YCount];
-            //Foreach face in the surfaces, project it along the transform.
-            //For each pixel in the min/max X/Y of the projectect points, add this triangle as a potential intersection.
-            //Also store the Z value. 
-            //Then, for each pixel, find its first intesection from it's subset of potential faces.
-            //Stop at the first intersection from the ordered Z values.
             var faces = subsetFaces != null ? subsetFaces : solidFaces;
             ProjectedFaceAreas = new Dictionary<PolygonalFace, double>();
 
             foreach (PolygonalFace face in faces)
-            {
-               // ProjectedFaceAreas.Add(face, UpdateZBufferWithFaceTriScan(face));
-                var area1 = UpdateZBufferWithFace(face);
-                var area2 = UpdateZBufferWithFaceTriScan(face);
-
-                for (int i = 0; i < XCount; i++)
-                {
-                    for (int j = 0; j < YCount; j++)
-                    {
-                        if (ZHeightsWithFaces[i, j].Item2.IsGreaterThanNonNegligible(ZHeightsWithFacesTris[i, j].Item2))
-                            Console.WriteLine(i + "," + j + "       " + ZHeightsWithFaces[i, j].Item2 + "::" + ZHeightsWithFacesTris[i, j].Item2);
-                    }
-                }
-            }
+                ProjectedFaceAreas.Add(face, UpdateZBufferWithFace(face));
         }
 
         public IEnumerable<(int, int, double)> GetLinePixels(Edge edge)
@@ -129,18 +182,32 @@ namespace TVGL
             throw new NotImplementedException();
         }
 
-        private double UpdateZBufferWithFaceTriScan(PolygonalFace face)
+        /// <summary>
+        /// Updates the z-buffer with information from each face.
+        /// This is the big tricky function. In the end, implemented a custom function
+        /// that scans the triangle from left to right. This is similar to the approach 
+        /// described here: http://www.sunshine2k.de/coding/java/TriangleRasterization/TriangleRasterization.html
+        /// </summary>
+        /// <param name="face">The face.</param>
+        /// <returns>System.Double.</returns>
+        private double UpdateZBufferWithFace(PolygonalFace face)
         {
+            #region Initialization
+            // get the 3 vertices and their zheights
             var vA = Vertices[face.A.IndexInList];
             var zA = VertexZHeights[face.A.IndexInList];
             var vB = Vertices[face.B.IndexInList];
             var zB = VertexZHeights[face.B.IndexInList];
             var vC = Vertices[face.C.IndexInList];
             var zC = VertexZHeights[face.C.IndexInList];
-            var area = (vB - vA).Cross(vC - vA);
-            if (area <= 0) return area;
-            Vector2 vMin, vMed, vMax;
 
+            var area = (vB - vA).Cross(vC - vA);
+            // if the area is negative the triangle is facing the wrong way.
+            if (area <= 0) return area;
+            
+            // next re-organize the vertices as vMin, vMed, vMax - ordered by 
+            // their x-values
+            Vector2 vMin, vMed, vMax;
             if (vA.X <= vB.X && vA.X <= vC.X)
             {
                 vMin = vA;
@@ -183,14 +250,22 @@ namespace TVGL
                     vMax = vA;
                 }
             }
-            var xStartIndex = (int)((vMin.X - MinX) * InversePixelSideLength);
-            var xEndIndex = (int)((vMax.X - MinX) * InversePixelSideLength);
-            var xSwitchIndex = (int)((vMed.X - MinX) * InversePixelSideLength);
+            // the following 3 indices are the pixels where the 3 vertices reside in x
+            var xStartIndex = (int)((vMin.X - MinX) * inversePixelSideLength);
+            var xSwitchIndex = (int)((vMed.X - MinX) * inversePixelSideLength);
+            var xEndIndex = (int)((vMax.X - MinX) * inversePixelSideLength);
+            // x is snapped to the grid. This value should be a little less than vMin.X
             var x = xStartIndex * PixelSideLength + MinX;  //snapped vMin.X value;
-            var yBtm = vMin.Y; // ((int)((vMin.Y - MinY) * InversePixelSideLength)) * PixelSideLength + MinY;
-            var yTop = vMin.Y; // + PixelSideLength / 2;
 
-            // assume an answer - switch if wrong
+            // set the y heights at the start to the same as the y-value of vMin
+            var yBtm = vMin.Y; 
+            var yTop = vMin.Y; 
+
+            // define the lines emanating from vMin. Assume the intermediate vertex
+            // is on the bottom path. Swith if that's wrong.
+            // note the main variable below is called "slopeStep". Following the Bresanham
+            // approach we don't need to deal with slopes, but rather the amount that we step
+            // change from one pixel to the next. Hence, we multiple the slope by the pixel length.
             var slopeStepBtm = PixelSideLength * (vMed.Y - vMin.Y) / (vMed.X - vMin.X);
             var slopeStepTop = PixelSideLength * (vMax.Y - vMin.Y) / (vMax.X - vMin.X);
             var switchOnBottom = slopeStepBtm < slopeStepTop;
@@ -200,11 +275,14 @@ namespace TVGL
                 slopeStepTop = slopeStepBtm;
                 slopeStepBtm = temp;
             }
+            //next, we have to handle the special case where the x-values of vMin and vMed 
+            //(actually all 3 vertices could be in same column) are in the same column
             if (xStartIndex == xSwitchIndex)
             {
-                xSwitchIndex = -1;
+                xSwitchIndex = -1; // this is to avoid problems in the loop below where we check when the index should switch
                 if (switchOnBottom)
                 {
+                    // like above, but not the starting line goes from vMed to vMax
                     slopeStepBtm = PixelSideLength * (vMax.Y - vMed.Y) / (vMax.X - vMed.X);
                     yBtm = vMed.Y;
                 }
@@ -214,24 +292,34 @@ namespace TVGL
                     yTop = vMed.Y;
                 }
             }
+            // infinite slope will be bad for us, but setting to an arbitrary value (like 1)
+            // causes no problem since we'll never increment the slope-step
             if (double.IsInfinity(slopeStepTop)) slopeStepTop = 1;
             if (double.IsInfinity(slopeStepBtm)) slopeStepBtm = 1;
+            // very subtle issue! remember above where we set yBtm and yTop to vMin.Y. 
+            // well, since x will be on the grid we need to move these slightly to be on the closest
+            // grid.
             if (switchOnBottom && xSwitchIndex < 0)
-                yBtm += (x - vMed.X) * slopeStepBtm * InversePixelSideLength;
-            else yBtm += (x - vMin.X) * slopeStepBtm * InversePixelSideLength;
+                yBtm += (x - vMed.X) * slopeStepBtm * inversePixelSideLength;
+            else yBtm += (x - vMin.X) * slopeStepBtm * inversePixelSideLength;
             if (!switchOnBottom && xSwitchIndex < 0)
-                yTop += (x - vMed.X) * slopeStepTop * InversePixelSideLength;
-            else yTop += (x - vMin.X) * slopeStepTop * InversePixelSideLength;
-            //yTop += 0.1 * PixelSideLength;
-
+                yTop += (x - vMed.X) * slopeStepTop * inversePixelSideLength;
+            else yTop += (x - vMin.X) * slopeStepTop * inversePixelSideLength;
+            // it doesn't hurt to move yTop up a little more to avoid rounding errors in the loop's 
+            // exit condition. One-hundredth of the pixel side length doesn't require anymore iteration
+            // but ensures that y<= yTop won't mess up
+            yTop += 0.01 * PixelSideLength;
+            #endregion
+            // *** main loop ***
             for (var xIndex = xStartIndex; xIndex <= xEndIndex; xIndex++)
             {
-                var yIndex = (int)((yBtm - MinY) * InversePixelSideLength);
+                var yIndex = (int)((yBtm - MinY) * inversePixelSideLength);
                 var yBtmSnapped = yIndex * PixelSideLength + MinY;
                 for (var y = yBtmSnapped; y <= yTop; y += PixelSideLength)
                 {
-                    //borrowing notation from:https://www.scratchapixel.com/lessons/3d-basic-rendering/ray-tracing-rendering-a-triangle/barycentric-coordinates
                     var q = new Vector2(x, y);
+                    // check the values of x and y  with the barycentric approach
+                    //borrowing notation from:https://www.scratchapixel.com/lessons/3d-basic-rendering/ray-tracing-rendering-a-triangle/barycentric-coordinates
                     var area2 = (vB - vA).Cross(q - vA);
                     if (area2 >= 0 && area2 <= area)
                     {
@@ -245,16 +333,20 @@ namespace TVGL
                             if (w >= 0 && w <= 1)
                             {
                                 var zIntercept = w * zA + u * zB + v * zC;
-                                if (ZHeightsWithFacesTris[xIndex, yIndex] == default || zIntercept > ZHeightsWithFacesTris[xIndex, yIndex].Item2)
-                                    ZHeightsWithFacesTris[xIndex, yIndex] = (face, zIntercept);
+                                // since the grid is not initialized, we update it if the grid cell is empty or if we found a better face
+                                if (ZHeightsWithFaces[xIndex, yIndex] == default || zIntercept > ZHeightsWithFaces[xIndex, yIndex].Item2)
+                                    ZHeightsWithFaces[xIndex, yIndex] = (face, zIntercept);
                             }
                         }
                     }
                     yIndex++;
                 }
+                // step change in the y values.
+                x += PixelSideLength;
                 yBtm += slopeStepBtm;
                 yTop += slopeStepTop;
-                x += PixelSideLength;
+                // if we are at the intermediate vertex, then we switch. Should this be before the step change? No, that produces
+                // incorrect results. Why? I don't know.
                 if (xIndex == xSwitchIndex)
                 {
                     if (switchOnBottom)
@@ -263,70 +355,35 @@ namespace TVGL
                         slopeStepTop = PixelSideLength * (vMax.Y - vMed.Y) / (vMax.X - vMed.X);
                 }
             }
-            return area / 2;
+            return area / 2; // the areas in this function were actually parallelogram areas. need to divide by 2 for triangle area
         }
 
-        private double UpdateZBufferWithFace(PolygonalFace face)
-        {
-            var vA = Vertices[face.A.IndexInList];
-            var zA = VertexZHeights[face.A.IndexInList];
-            var vB = Vertices[face.B.IndexInList];
-            var zB = VertexZHeights[face.B.IndexInList];
-            var vC = Vertices[face.C.IndexInList];
-            var zC = VertexZHeights[face.C.IndexInList];
-            var area = (vB - vA).Cross(vC - vA);
-            if (area <= 0) return area;
-            var xMin = Math.Min(vA.X, Math.Min(vB.X, vC.X));
-            var xMax = Math.Max(vA.X, Math.Max(vB.X, vC.X));
-            var yMin = Math.Min(vA.Y, Math.Min(vB.Y, vC.Y));
-            var yMax = Math.Max(vA.Y, Math.Max(vB.Y, vC.Y));
-
-            var xStartIndex = (int)((xMin - MinX) * InversePixelSideLength);
-            var yStartIndex = (int)((yMin - MinY) * InversePixelSideLength);
-            var xEndIndex = (int)((xMax - MinX) * InversePixelSideLength);
-            var yEndIndex = (int)((yMax - MinY) * InversePixelSideLength);
-
-            var x = MinX + xStartIndex * PixelSideLength;
-            for (var xIndex = xStartIndex; xIndex <= xEndIndex; xIndex++)
-            {
-                var y = MinY + yStartIndex * PixelSideLength;
-                for (var yIndex = yStartIndex; yIndex <= yEndIndex; yIndex++)
-                {
-                    //borrowing notation from:https://www.scratchapixel.com/lessons/3d-basic-rendering/ray-tracing-rendering-a-triangle/barycentric-coordinates
-                    var q = new Vector2(x, y);
-                    var area2 = (vB - vA).Cross(q - vA);
-                    if (area2 >= 0 && area2 <= area)
-                    {
-                        var v = area2 / area;
-                        var area3 = (q - vA).Cross(vC - vA);
-                        if (area3 >= 0 && area3 <= area)
-                        {
-                            var u = area3 / area;
-                            var w = 1 - v - u;
-
-                            if (w >= 0 && w <= 1)
-                            {
-                                var zIntercept = w * zA + u * zB + v * zC;
-                                if (ZHeightsWithFaces[xIndex, yIndex] == default || zIntercept < ZHeightsWithFaces[xIndex, yIndex].Item2)
-                                    ZHeightsWithFaces[xIndex, yIndex] = (face, zIntercept);
-                            }
-                        }
-                    }
-                    y += PixelSideLength;
-                }
-                x += PixelSideLength;
-            }
-            return area / 2;
-        }
-
+        /// <summary>
+        /// Gets the 2D point of pixel i,j.
+        /// </summary>
+        /// <param name="i">The i.</param>
+        /// <param name="j">The j.</param>
+        /// <returns>Vector2.</returns>
         public Vector2 Get2DPoint(int i, int j)
         {
             return new Vector2(MinX + i * PixelSideLength, MinY + j * PixelSideLength);
         }
+        /// <summary>
+        /// Gets the 3D transformed point of pixel i,j to the x-y plane, with z being the z-buffer height.
+        /// </summary>
+        /// <param name="i">The i.</param>
+        /// <param name="j">The j.</param>
+        /// <returns>Vector3.</returns>
         public Vector3 Get3DPointTransformed(int i, int j)
         {
             return new Vector3(MinX + i * PixelSideLength, MinY + j * PixelSideLength, ZHeightsWithFaces[i, j].Item2);
         }
+        /// <summary>
+        /// Gets the 3D point on the solid corresponding to pixel i, j.
+        /// </summary>
+        /// <param name="i">The i.</param>
+        /// <param name="j">The j.</param>
+        /// <returns>Vector3.</returns>
         public Vector3 Get3DPoint(int i, int j)
         {
             return Get3DPointTransformed(i, j).Transform(backTransform);

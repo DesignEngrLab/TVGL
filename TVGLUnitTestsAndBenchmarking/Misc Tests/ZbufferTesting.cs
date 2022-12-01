@@ -26,11 +26,11 @@ namespace TVGLUnitTestsAndBenchmarking.Misc_Tests
                 var displacement = (minD-maxD) * direction;
                 Console.Write("zbuffer start...");
                 var sw = Stopwatch.StartNew();
-                var zbuffer = new ZBuffer(solid, direction, 100);
+                var zbuffer = new ZBuffer(solid, direction, 1000);
                 zbuffer.Run();
                 sw.Stop();
                 Console.WriteLine("end:  "+sw.Elapsed);
-                continue;
+                //continue; 
                 var paths = new List<List<Vector3>>();
                 for (int i = 0; i < zbuffer.XCount; i++)
                 {
