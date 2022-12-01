@@ -20,7 +20,7 @@ namespace TVGL
                     zHeightsOnly = new double[XCount, YCount];
                     for (int i = 0; i < XCount; i++)
                         for (int j = 0; j < YCount; j++)
-                            zHeightsOnly[i, j] = ZHeightsWithFaces[i, j].Item2;
+                            zHeightsOnly[i, j] = ZHeightsWithFaces[i][j].Item2;
                 }
                 return zHeightsOnly;
             }
@@ -30,7 +30,7 @@ namespace TVGL
         /// Gets the z-heights and the associated face that created it.
         /// </summary>
         /// <value>The z heights with faces.</value>
-        public (PolygonalFace, double)[,] ZHeightsWithFaces { get; private set; }
+        public (PolygonalFace, double)[][] ZHeightsWithFaces { get; private set; }
         /// <summary>
         /// Gets the projected face areas in the z-buffer direction. This is found through
         /// the course of the "Run" computation and might be useful elsewhere.
@@ -169,7 +169,9 @@ namespace TVGL
         /// <returns>System.ValueTuple&lt;PolygonalFace, System.Double&gt;[].</returns>
         public void Run(IList<PolygonalFace> subsetFaces = null)
         {
-            ZHeightsWithFaces = new (PolygonalFace, double)[XCount, YCount];
+            ZHeightsWithFaces = new (PolygonalFace, double)[XCount][];
+            for (var x = 0; x < XCount; x++)
+                ZHeightsWithFaces[x] = new (PolygonalFace, double)[YCount];
             var faces = subsetFaces != null ? subsetFaces : solidFaces;
             ProjectedFaceAreas = new Dictionary<PolygonalFace, double>();
 
@@ -311,38 +313,48 @@ namespace TVGL
             yTop += 0.01 * PixelSideLength;
             #endregion
             // *** main loop ***
+            var vBAx = vB.X - vA.X;
+            var vBAy = vB.Y - vA.Y;
+            var qVaX = x - vA.X;
+            var vCAx = vC.X - vA.X;
+            var vCAy = vC.Y - vA.Y;
             for (var xIndex = xStartIndex; xIndex <= xEndIndex; xIndex++)
             {
                 var yIndex = (int)((yBtm - MinY) * inversePixelSideLength);
                 var yBtmSnapped = yIndex * PixelSideLength + MinY;
+                var vBAy_multiply_qVaX = vBAy * qVaX;
+                var vCAy_multiply_qVaX = vCAy * qVaX;
+                var ZHeightsWithFacesAtX = ZHeightsWithFaces[xIndex];
                 for (var y = yBtmSnapped; y <= yTop; y += PixelSideLength)
                 {
-                    var q = new Vector2(x, y);
+                    var qVaY = y - vA.Y;
                     // check the values of x and y  with the barycentric approach
                     //borrowing notation from:https://www.scratchapixel.com/lessons/3d-basic-rendering/ray-tracing-rendering-a-triangle/barycentric-coordinates
-                    var area2 = (vB - vA).Cross(q - vA);
+                    //Area = (vB - vA).Cross(q - vA)
+                    var area2 = vBAx * qVaY - vBAy_multiply_qVaX;
                     if (area2 >= 0 && area2 <= area)
                     {
                         var v = area2 / area;
-                        var area3 = (q - vA).Cross(vC - vA);
+                        //Area = (q - vA).Cross(vC - vA)
+                        var area3 = vCAy_multiply_qVaX - qVaY * vCAx;
                         if (area3 >= 0 && area3 <= area)
                         {
                             var u = area3 / area;
                             var w = 1 - v - u;
-
                             if (w >= 0 && w <= 1)
                             {
                                 var zIntercept = w * zA + u * zB + v * zC;
                                 // since the grid is not initialized, we update it if the grid cell is empty or if we found a better face
-                                if (ZHeightsWithFaces[xIndex, yIndex] == default || zIntercept > ZHeightsWithFaces[xIndex, yIndex].Item2)
-                                    ZHeightsWithFaces[xIndex, yIndex] = (face, zIntercept);
+                                var tuple = ZHeightsWithFacesAtX[yIndex];
+                                if (tuple == default || zIntercept > tuple.Item2)
+                                    ZHeightsWithFacesAtX[yIndex] = (face, zIntercept);
                             }
                         }
                     }
                     yIndex++;
                 }
                 // step change in the y values.
-                x += PixelSideLength;
+                qVaX += PixelSideLength;
                 yBtm += slopeStepBtm;
                 yTop += slopeStepTop;
                 // if we are at the intermediate vertex, then we switch. Should this be before the step change? No, that produces
@@ -376,7 +388,7 @@ namespace TVGL
         /// <returns>Vector3.</returns>
         public Vector3 Get3DPointTransformed(int i, int j)
         {
-            return new Vector3(MinX + i * PixelSideLength, MinY + j * PixelSideLength, ZHeightsWithFaces[i, j].Item2);
+            return new Vector3(MinX + i * PixelSideLength, MinY + j * PixelSideLength, ZHeightsWithFaces[i][j].Item2);
         }
         /// <summary>
         /// Gets the 3D point on the solid corresponding to pixel i, j.
