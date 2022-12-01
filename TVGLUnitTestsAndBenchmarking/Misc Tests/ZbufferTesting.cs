@@ -1,4 +1,5 @@
 ﻿using BenchmarkDotNet.ConsoleArguments.ListBenchmarks;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -14,17 +15,22 @@ namespace TVGLUnitTestsAndBenchmarking.Misc_Tests
         {
             DirectoryInfo dir = Program.BackOutToFolder();
 
-            foreach (var fileName in dir.GetFiles("*").Skip(22))
+            foreach (var fileName in dir.GetFiles("*").Skip(0))
             {
-                Debug.WriteLine("\n\n\nAttempting to open: " + fileName.Name);
+                Console.WriteLine("\n\n\nAttempting to open: " + fileName.Name);
                 IO.Open(fileName.FullName, out TessellatedSolid solid);
                 //Presenter.ShowAndHang(solid);
-                //var direction = Vector3.UnitZ;
-                var direction = new Vector3(1,1,1).Normalize();
-                var (_,shift) = solid.Vertices.GetDistanceToExtremeVertex(direction, out _, out _);
-                var displacement = shift * direction;
-                var zbuffer = new ZBuffer(solid, direction, 100, 0);
+                var direction = -Vector3.UnitY;
+                //var direction = new Vector3(1,1,1).Normalize();
+                var (minD,maxD) = solid.Vertices.GetDistanceToExtremeVertex(direction, out _, out _);
+                var displacement = (minD-maxD) * direction;
+                Console.Write("zbuffer start...");
+                var sw = Stopwatch.StartNew();
+                var zbuffer = new ZBuffer(solid, direction, 100);
                 zbuffer.Run();
+                sw.Stop();
+                Console.WriteLine("end:  "+sw.Elapsed);
+                continue;
                 var paths = new List<List<Vector3>>();
                 for (int i = 0; i < zbuffer.XCount; i++)
                 {

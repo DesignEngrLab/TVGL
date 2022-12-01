@@ -1,10 +1,5 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Collections.Specialized;
-using System.ComponentModel;
-using System.Reflection;
-using System.Reflection.Metadata.Ecma335;
 
 namespace TVGL
 {
@@ -25,7 +20,8 @@ namespace TVGL
             }
         }
         double[,] zHeightsOnly;
-        public (PolygonalFace, double)[,] ZHeightsWithFaces { get; private set; }
+        public (PolygonalFace, double)[,] ZHeightsWithFaces  { get; private set; }
+        public (PolygonalFace, double)[,] ZHeightsWithFacesTris { get; private set; }
         public Dictionary<PolygonalFace, double> ProjectedFaceAreas { get; private set; }
         public Vector2[] Vertices { get; private set; }
         public double[] VertexZHeights { get; private set; }
@@ -44,7 +40,7 @@ namespace TVGL
         private Matrix4x4 backTransform;
         private PolygonalFace[] solidFaces;
 
-        public ZBuffer(TessellatedSolid solid, Vector3 direction, int pixelsPerRow, int pixelBorder = 0)
+        public ZBuffer(TessellatedSolid solid, Vector3 direction, int pixelsPerRow, int pixelBorder = 1)
         {
             Vertices = new Vector2[solid.NumberOfVertices];
             VertexZHeights = new double[solid.NumberOfVertices];
@@ -53,7 +49,7 @@ namespace TVGL
             MaxX = double.NegativeInfinity;
             MaxY = double.NegativeInfinity;
             // get the transform matrix to apply to every point
-            transform = direction.TransformToXYPlane(out backTransform);
+            transform = (-direction).TransformToXYPlane(out backTransform);
             solidFaces = solid.Faces;
             // transform points so that z-axis is aligned for the z-buffer. 
             // store x-y pairs as Vector2's (points) and z values in zHeights
@@ -102,6 +98,7 @@ namespace TVGL
         public void Run(IList<PolygonalFace> subsetFaces = null)
         {
             ZHeightsWithFaces = new (PolygonalFace, double)[XCount, YCount];
+            ZHeightsWithFacesTris = new (PolygonalFace, double)[XCount, YCount];
             //Foreach face in the surfaces, project it along the transform.
             //For each pixel in the min/max X/Y of the projectect points, add this triangle as a potential intersection.
             //Also store the Z value. 
@@ -111,7 +108,20 @@ namespace TVGL
             ProjectedFaceAreas = new Dictionary<PolygonalFace, double>();
 
             foreach (PolygonalFace face in faces)
-                ProjectedFaceAreas.Add(face, UpdateZBufferWithFaceScan(face));
+            {
+               // ProjectedFaceAreas.Add(face, UpdateZBufferWithFaceTriScan(face));
+                var area1 = UpdateZBufferWithFace(face);
+                var area2 = UpdateZBufferWithFaceTriScan(face);
+
+                for (int i = 0; i < XCount; i++)
+                {
+                    for (int j = 0; j < YCount; j++)
+                    {
+                        if (ZHeightsWithFaces[i, j].Item2.IsGreaterThanNonNegligible(ZHeightsWithFacesTris[i, j].Item2))
+                            Console.WriteLine(i + "," + j + "       " + ZHeightsWithFaces[i, j].Item2 + "::" + ZHeightsWithFacesTris[i, j].Item2);
+                    }
+                }
+            }
         }
 
         public IEnumerable<(int, int, double)> GetLinePixels(Edge edge)
@@ -119,9 +129,7 @@ namespace TVGL
             throw new NotImplementedException();
         }
 
-        private double UpdateZBufferWithFaceScan(PolygonalFace face)
-        //, (PolygonalFace, double)[,] grid, Vector2[] points,
-        //double[] zHeigts, double PixelSideLength, double inversePixelSideLength, double XMinGlobal, double YMinGlobal)
+        private double UpdateZBufferWithFaceTriScan(PolygonalFace face)
         {
             var vA = Vertices[face.A.IndexInList];
             var zA = VertexZHeights[face.A.IndexInList];
@@ -178,41 +186,49 @@ namespace TVGL
             var xStartIndex = (int)((vMin.X - MinX) * InversePixelSideLength);
             var xEndIndex = (int)((vMax.X - MinX) * InversePixelSideLength);
             var xSwitchIndex = (int)((vMed.X - MinX) * InversePixelSideLength);
-            var x = vMin.X;
-            var yBtm = vMin.Y;
-            var yTop = vMin.Y;
+            var x = xStartIndex * PixelSideLength + MinX;  //snapped vMin.X value;
+            var yBtm = vMin.Y; // ((int)((vMin.Y - MinY) * InversePixelSideLength)) * PixelSideLength + MinY;
+            var yTop = vMin.Y; // + PixelSideLength / 2;
 
-            double slopeStepBtm, slopeStepTop;
-            var switchOnBottom = vMed.Y <= vMax.Y;
-            if (switchOnBottom)
+            // assume an answer - switch if wrong
+            var slopeStepBtm = PixelSideLength * (vMed.Y - vMin.Y) / (vMed.X - vMin.X);
+            var slopeStepTop = PixelSideLength * (vMax.Y - vMin.Y) / (vMax.X - vMin.X);
+            var switchOnBottom = slopeStepBtm < slopeStepTop;
+            if (!switchOnBottom)
             {
-                slopeStepTop = PixelSideLength * (vMax.Y - vMin.Y) / (vMax.X - vMin.X);
-                if (xStartIndex == xSwitchIndex)
+                var temp = slopeStepTop;
+                slopeStepTop = slopeStepBtm;
+                slopeStepBtm = temp;
+            }
+            if (xStartIndex == xSwitchIndex)
+            {
+                xSwitchIndex = -1;
+                if (switchOnBottom)
                 {
-                    xSwitchIndex = -1;
                     slopeStepBtm = PixelSideLength * (vMax.Y - vMed.Y) / (vMax.X - vMed.X);
                     yBtm = vMed.Y;
                 }
                 else
-                    slopeStepBtm = PixelSideLength * (vMed.Y - vMin.Y) / (vMed.X - vMin.X);
-            }
-            else
-            {
-                slopeStepBtm = PixelSideLength * (vMax.Y - vMin.Y) / (vMax.X - vMin.X);
-                if (xStartIndex == xSwitchIndex)
                 {
-                    xSwitchIndex = -1;
                     slopeStepTop = PixelSideLength * (vMax.Y - vMed.Y) / (vMax.X - vMed.X);
                     yTop = vMed.Y;
                 }
-                else
-                    slopeStepTop = PixelSideLength * (vMed.Y - vMin.Y) / (vMed.X - vMin.X);
             }
+            if (double.IsInfinity(slopeStepTop)) slopeStepTop = 1;
+            if (double.IsInfinity(slopeStepBtm)) slopeStepBtm = 1;
+            if (switchOnBottom && xSwitchIndex < 0)
+                yBtm += (x - vMed.X) * slopeStepBtm * InversePixelSideLength;
+            else yBtm += (x - vMin.X) * slopeStepBtm * InversePixelSideLength;
+            if (!switchOnBottom && xSwitchIndex < 0)
+                yTop += (x - vMed.X) * slopeStepTop * InversePixelSideLength;
+            else yTop += (x - vMin.X) * slopeStepTop * InversePixelSideLength;
+            //yTop += 0.1 * PixelSideLength;
 
             for (var xIndex = xStartIndex; xIndex <= xEndIndex; xIndex++)
             {
                 var yIndex = (int)((yBtm - MinY) * InversePixelSideLength);
-                for (var y = yBtm; y <= yTop; y += PixelSideLength)
+                var yBtmSnapped = yIndex * PixelSideLength + MinY;
+                for (var y = yBtmSnapped; y <= yTop; y += PixelSideLength)
                 {
                     //borrowing notation from:https://www.scratchapixel.com/lessons/3d-basic-rendering/ray-tracing-rendering-a-triangle/barycentric-coordinates
                     var q = new Vector2(x, y);
@@ -229,8 +245,8 @@ namespace TVGL
                             if (w >= 0 && w <= 1)
                             {
                                 var zIntercept = w * zA + u * zB + v * zC;
-                                if (ZHeightsWithFaces[xIndex, yIndex] == default || zIntercept < ZHeightsWithFaces[xIndex, yIndex].Item2)
-                                    ZHeightsWithFaces[xIndex, yIndex] = (face, zIntercept);
+                                if (ZHeightsWithFacesTris[xIndex, yIndex] == default || zIntercept > ZHeightsWithFacesTris[xIndex, yIndex].Item2)
+                                    ZHeightsWithFacesTris[xIndex, yIndex] = (face, zIntercept);
                             }
                         }
                     }
@@ -247,7 +263,7 @@ namespace TVGL
                         slopeStepTop = PixelSideLength * (vMax.Y - vMed.Y) / (vMax.X - vMed.X);
                 }
             }
-            return area;
+            return area / 2;
         }
 
         private double UpdateZBufferWithFace(PolygonalFace face)
@@ -271,9 +287,9 @@ namespace TVGL
             var yEndIndex = (int)((yMax - MinY) * InversePixelSideLength);
 
             var x = MinX + xStartIndex * PixelSideLength;
-            var y = MinY + yStartIndex * PixelSideLength;
             for (var xIndex = xStartIndex; xIndex <= xEndIndex; xIndex++)
             {
+                var y = MinY + yStartIndex * PixelSideLength;
                 for (var yIndex = yStartIndex; yIndex <= yEndIndex; yIndex++)
                 {
                     //borrowing notation from:https://www.scratchapixel.com/lessons/3d-basic-rendering/ray-tracing-rendering-a-triangle/barycentric-coordinates
