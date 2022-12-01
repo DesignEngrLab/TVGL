@@ -11,21 +11,25 @@ namespace TVGL
         /// method keeps track of faces. In other words, ZHeightsWithFaces is what is found by the Run routine.
         /// </summary>
         /// <value>The z heights only.</value>
-        public double[,] ZHeightsOnly
+        public double[][] ZHeightsOnly
         {
             get
             {
                 if (zHeightsOnly == null)
                 {
-                    zHeightsOnly = new double[XCount, YCount];
+                    zHeightsOnly = new double[XCount][];
                     for (int i = 0; i < XCount; i++)
+                    {
+                        zHeightsOnly[i] = new double[YCount];
                         for (int j = 0; j < YCount; j++)
-                            zHeightsOnly[i, j] = ZHeightsWithFaces[i][j].Item2;
+                            zHeightsOnly[i][j] = ZHeightsWithFaces[i][j].Item2;
+                    }
+                        
                 }
                 return zHeightsOnly;
             }
         }
-        double[,] zHeightsOnly;
+        double[][] zHeightsOnly;
         /// <summary>
         /// Gets the z-heights and the associated face that created it.
         /// </summary>
