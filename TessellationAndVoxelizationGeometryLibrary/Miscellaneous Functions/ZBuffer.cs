@@ -11,30 +11,30 @@ namespace TVGL
         /// method keeps track of faces. In other words, ZHeightsWithFaces is what is found by the Run routine.
         /// </summary>
         /// <value>The z heights only.</value>
-        public double[][] ZHeightsOnly
+        public double[,] ZHeightsOnly
         {
             get
             {
                 if (zHeightsOnly == null)
                 {
-                    zHeightsOnly = new double[XCount][];
+                    zHeightsOnly = new double[XCount,YCount];
                     for (int i = 0; i < XCount; i++)
                     {
-                        zHeightsOnly[i] = new double[YCount];
+                        var index = YCount * i;
                         for (int j = 0; j < YCount; j++)
-                            zHeightsOnly[i][j] = ZHeightsWithFaces[i][j].Item2;
+                            zHeightsOnly[i,j] = ZHeightsWithFaces[index++].Item2;
                     }
-                        
+
                 }
                 return zHeightsOnly;
             }
         }
-        double[][] zHeightsOnly;
+        double[,] zHeightsOnly;
         /// <summary>
         /// Gets the z-heights and the associated face that created it.
         /// </summary>
         /// <value>The z heights with faces.</value>
-        public (PolygonalFace, double)[][] ZHeightsWithFaces { get; private set; }
+        public (PolygonalFace, double)[] ZHeightsWithFaces { get; private set; }
         /// <summary>
         /// Gets the projected face areas in the z-buffer direction. This is found through
         /// the course of the "Run" computation and might be useful elsewhere.
@@ -173,9 +173,7 @@ namespace TVGL
         /// <returns>System.ValueTuple&lt;PolygonalFace, System.Double&gt;[].</returns>
         public void Run(IList<PolygonalFace> subsetFaces = null)
         {
-            ZHeightsWithFaces = new (PolygonalFace, double)[XCount][];
-            for (var x = 0; x < XCount; x++)
-                ZHeightsWithFaces[x] = new (PolygonalFace, double)[YCount];
+            ZHeightsWithFaces = new (PolygonalFace, double)[XCount * YCount];
             var faces = subsetFaces != null ? subsetFaces : solidFaces;
             ProjectedFaceAreas = new Dictionary<PolygonalFace, double>();
 
@@ -210,7 +208,7 @@ namespace TVGL
             var area = (vB - vA).Cross(vC - vA);
             // if the area is negative the triangle is facing the wrong way.
             if (area <= 0) return area;
-            
+
             // next re-organize the vertices as vMin, vMed, vMax - ordered by 
             // their x-values
             Vector2 vMin, vMed, vMax;
@@ -264,8 +262,8 @@ namespace TVGL
             var x = xStartIndex * PixelSideLength + MinX;  //snapped vMin.X value;
 
             // set the y heights at the start to the same as the y-value of vMin
-            var yBtm = vMin.Y; 
-            var yTop = vMin.Y; 
+            var yBtm = vMin.Y;
+            var yTop = vMin.Y;
 
             // define the lines emanating from vMin. Assume the intermediate vertex
             // is on the bottom path. Swith if that's wrong.
@@ -328,7 +326,7 @@ namespace TVGL
                 var yBtmSnapped = yIndex * PixelSideLength + MinY;
                 var vBAy_multiply_qVaX = vBAy * qVaX;
                 var vCAy_multiply_qVaX = vCAy * qVaX;
-                var ZHeightsWithFacesAtX = ZHeightsWithFaces[xIndex];
+                var index = YCount * xIndex+yIndex;
                 for (var y = yBtmSnapped; y <= yTop; y += PixelSideLength)
                 {
                     var qVaY = y - vA.Y;
@@ -349,13 +347,13 @@ namespace TVGL
                             {
                                 var zIntercept = w * zA + u * zB + v * zC;
                                 // since the grid is not initialized, we update it if the grid cell is empty or if we found a better face
-                                var tuple = ZHeightsWithFacesAtX[yIndex];
+                                var tuple = ZHeightsWithFaces[index];
                                 if (tuple == default || zIntercept > tuple.Item2)
-                                    ZHeightsWithFacesAtX[yIndex] = (face, zIntercept);
+                                    ZHeightsWithFaces[index] = (face, zIntercept);
                             }
                         }
                     }
-                    yIndex++;
+                    index++;
                 }
                 // step change in the y values.
                 qVaX += PixelSideLength;
@@ -392,7 +390,7 @@ namespace TVGL
         /// <returns>Vector3.</returns>
         public Vector3 Get3DPointTransformed(int i, int j)
         {
-            return new Vector3(MinX + i * PixelSideLength, MinY + j * PixelSideLength, ZHeightsWithFaces[i][j].Item2);
+            return new Vector3(MinX + i * PixelSideLength, MinY + j * PixelSideLength, ZHeightsWithFaces[YCount * i + j].Item2);
         }
         /// <summary>
         /// Gets the 3D point on the solid corresponding to pixel i, j.
