@@ -266,7 +266,7 @@ namespace TVGL
             var yTop = vMin.Y;
 
             // define the lines emanating from vMin. Assume the intermediate vertex
-            // is on the bottom path. Swith if that's wrong.
+            // is on the bottom path. Switch if that's wrong.
             // note the main variable below is called "slopeStep". Following the Bresanham
             // approach we don't need to deal with slopes, but rather the amount that we step
             // change from one pixel to the next. Hence, we multiple the slope by the pixel length.
@@ -401,6 +401,16 @@ namespace TVGL
         public Vector3 Get3DPoint(int i, int j)
         {
             return Get3DPointTransformed(i, j).Transform(backTransform);
+        }
+
+        public int GetXIndex(double x)
+        {
+            return (int)((x - MinX) * inversePixelSideLength);
+        }
+
+        public int GetYIndex(double y)
+        {
+            return (int)((y - MinY) * inversePixelSideLength);
         }
     }
 }
