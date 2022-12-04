@@ -319,7 +319,7 @@ namespace TVGL
 
                 //Now we need to figure out if the lines intersect
                 if (!MiscFunctions.SegmentSegment2DIntersection(line.FromPoint.Coordinates, line.ToPoint.Coordinates,
-                    centerPoint, pointOnLine, out _)) continue;
+                    centerPoint, pointOnLine, out _, out _, out _)) continue;
                 //if(intersectionPoint != tempPoint) throw new Exception("Error in implementation. This should always be true.");
                 shortestDistance = d;
             }

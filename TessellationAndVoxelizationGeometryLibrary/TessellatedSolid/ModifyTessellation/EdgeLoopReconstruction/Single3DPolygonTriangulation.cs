@@ -289,9 +289,9 @@ namespace TVGL
             }
             if (double.IsInfinity(fLimit))
             {
-#if PRESENT
-                Presenter.ShowVertexPaths(startDomain.EdgeList.Select(eg => new[] { eg.From.Coordinates, eg.To.Coordinates }));
-#endif
+//#if PRESENT
+//                Presenter.ShowVertexPathsWithSolid(startDomain.EdgeList.Select(eg => new[] { eg.From.Coordinates, eg.To.Coordinates }), new TessellatedSolid[] { });
+//#endif
                 return false;
             }
             return true;

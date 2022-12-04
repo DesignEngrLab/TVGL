@@ -72,15 +72,18 @@ namespace TVGL
             return false;
         }
 
-        protected override bool SwitchAtThisIntersection(SegmentIntersection intersectionData, bool currentEdgeIsFromPolygonA)
+        protected override bool SwitchAtThisIntersection(SegmentIntersection intersectionData, bool currentEdgeIsFromPolygonA, bool shapeIsOnlyNegative)
         {
-            if ((currentEdgeIsFromPolygonA && intersectionData.Relationship == SegmentRelationship.AEnclosesB) ||
-                (!currentEdgeIsFromPolygonA && intersectionData.Relationship == SegmentRelationship.BEnclosesA))
-                return false;
+            if ((currentEdgeIsFromPolygonA && (intersectionData.Relationship == SegmentRelationship.AEnclosesB ||
+                intersectionData.Relationship==SegmentRelationship.CrossOver_AOutsideAfter))
+                ||
+                (!currentEdgeIsFromPolygonA && (intersectionData.Relationship == SegmentRelationship.BEnclosesA
+                || intersectionData.Relationship == SegmentRelationship.CrossOver_BOutsideAfter)))
+                return shapeIsOnlyNegative;
             return true;
         }
 
-        protected override bool PolygonCompleted(SegmentIntersection currentIntersection, SegmentIntersection startingIntersection, PolygonEdge currentEdge, PolygonEdge startingEdge)
+        protected override bool? PolygonCompleted(SegmentIntersection currentIntersection, SegmentIntersection startingIntersection, PolygonEdge currentEdge, PolygonEdge startingEdge)
         {
             if ((currentEdge == currentIntersection.EdgeA && currentIntersection.VisitedA) ||
              (currentEdge == currentIntersection.EdgeB && currentIntersection.VisitedB))
