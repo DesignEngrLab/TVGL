@@ -49,20 +49,6 @@ namespace TVGL
 
 
         /// <summary>
-        /// Gets the length along the EdgeA - normalized between 0 and 1 that the intersection exists.</summary>
-        /// </summary>
-        /// <value>The tA.</value>
-        internal double tA { get; }
-
-
-        /// <summary>
-        /// Gets the length along the EdgeB - normalized between 0 and 1 that the intersection exists.</summary>
-        /// </summary>
-        /// <value>The tB.</value>
-        internal double tB { get; }
-
-
-        /// <summary>
         /// Initializes a new instance of the <see cref="SegmentIntersection"/> class.
         /// </summary>
         /// <param name="edgeA">The edge a.</param>

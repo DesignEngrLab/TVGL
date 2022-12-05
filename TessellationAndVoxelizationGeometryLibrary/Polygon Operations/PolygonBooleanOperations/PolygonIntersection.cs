@@ -73,18 +73,16 @@ namespace TVGL
             return false;
         }
 
-        protected override bool SwitchAtThisIntersection(SegmentIntersection intersectionData, bool currentEdgeIsFromPolygonA, bool shapeIsOnlyNegative)
+        protected override bool SwitchAtThisIntersection(SegmentIntersection intersectionData, bool currentEdgeIsFromPolygonA)
         {
             if (intersectionData.Relationship == SegmentRelationship.DoubleOverlap) return true;
-            if ((currentEdgeIsFromPolygonA && (intersectionData.Relationship == SegmentRelationship.BEnclosesA ||
-                intersectionData.Relationship == SegmentRelationship.CrossOver_BOutsideAfter)) ||
-                (!currentEdgeIsFromPolygonA && (intersectionData.Relationship == SegmentRelationship.AEnclosesB ||
-                intersectionData.Relationship == SegmentRelationship.CrossOver_AOutsideAfter)))
-                return shapeIsOnlyNegative;
+            if ((currentEdgeIsFromPolygonA && intersectionData.Relationship == SegmentRelationship.BEnclosesA) ||
+                (!currentEdgeIsFromPolygonA && intersectionData.Relationship == SegmentRelationship.AEnclosesB))
+                return false;
             return true;
         }
 
-        protected override bool? PolygonCompleted(SegmentIntersection currentIntersection, SegmentIntersection startingIntersection, PolygonEdge currentEdge, PolygonEdge startingEdge)
+        protected override bool PolygonCompleted(SegmentIntersection currentIntersection, SegmentIntersection startingIntersection, PolygonEdge currentEdge, PolygonEdge startingEdge)
         {
             //if (currentIntersection.Relationship == SegmentRelationship.NoOverlap) return null;
             // can't reach a NoOverlap in Intersection, but this happens sometimes when following a collinear edge

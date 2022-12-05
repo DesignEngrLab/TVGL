@@ -2,7 +2,6 @@
 // This file is a part of TVGL, Tessellation and Voxelization Geometry Library
 // https://github.com/DesignEngrLab/TVGL
 // It is licensed under MIT License (see LICENSE.txt for details)
-using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -51,19 +50,17 @@ namespace TVGL
         /// <param name="strayHoles">The stray holes.</param>
         /// <returns>List&lt;Polygon&gt;.</returns>
         public static List<Polygon> CreateShallowPolygonTrees(this IEnumerable<Polygon> polygons, bool vertexNegPosOrderIsGuaranteedCorrect,
-            bool alreadyOrderedInIncreasingArea = false, bool keepStrayHoles = false)
+            bool alreadyOrderedInIncreasingArea = false)
         {
-            var polygonTrees = CreatePolygonTree(polygons, vertexNegPosOrderIsGuaranteedCorrect, alreadyOrderedInIncreasingArea, keepStrayHoles);
+            var polygonTrees = CreatePolygonTree(polygons, vertexNegPosOrderIsGuaranteedCorrect, alreadyOrderedInIncreasingArea);
 
             var polygonList = new List<Polygon>();
             foreach (var polygon in polygonTrees.SelectMany(p => p.AllPolygons))
                 if (polygon.IsPositive) polygonList.Add(polygon);
 
             foreach (var polygon in polygonList)
-            {
                 foreach (var hole in polygon.InnerPolygons)
                     hole.RemoveAllInnerPolygon();
-            }
             foreach (var strayHole in polygonTrees.Where(p => !p.IsPositive))
                 polygonList.Add(strayHole);
             return polygonList;
@@ -77,7 +74,7 @@ namespace TVGL
         /// <param name="strayHoles">The stray holes.</param>
         /// <returns>List&lt;Polygon&gt;.</returns>
         public static List<Polygon> CreatePolygonTree(this IEnumerable<Polygon> polygons, bool polygonSignIsCorrect,
-            bool alreadyOrderedInIncreasingArea = false, bool keepStrayHoles = false)
+            bool alreadyOrderedInIncreasingArea = false)
         {
             var branches = new List<Polygon>();
             var orderedPolygons = alreadyOrderedInIncreasingArea ? polygons : polygons.OrderBy(p => Math.Abs(p.Area));
@@ -95,15 +92,12 @@ namespace TVGL
                 }
                 branches.Add(polygon);
             }
-            if (!keepStrayHoles)
-                branches.RemoveAll(b => !b.IsPositive);
             foreach (var branch in branches)
             {
                 if (polygonSignIsCorrect) RecurseDownPolygonTreeCleanUp(branch);
                 else
                 {
-                    if (!branch.IsPositive) 
-                        branch.Reverse();
+                    branch.IsPositive = true;
                     RecurseDownPolygonTreeAndFlipSigns(branch);
                 }
             }
@@ -131,9 +125,7 @@ namespace TVGL
             var childIsPositive = !parent.IsPositive;
             foreach (var child in parent.InnerPolygons)
             {
-                //child.IsPositive = childIsPositive;
-                if (child.IsPositive != childIsPositive)
-                    child.Reverse();
+                child.IsPositive = childIsPositive;
                 RecurseDownPolygonTreeAndFlipSigns(child);
             }
         }

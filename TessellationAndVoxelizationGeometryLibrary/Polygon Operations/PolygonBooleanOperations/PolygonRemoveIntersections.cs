@@ -4,7 +4,6 @@
 // It is licensed under MIT License (see LICENSE.txt for details)
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 
 
@@ -25,33 +24,33 @@ namespace TVGL
         /// <param name="strayHoles">The stray holes.</param>
         /// <returns>List&lt;Polygon&gt;.</returns>
         internal List<Polygon> Run(Polygon polygon, List<SegmentIntersection> intersections, ResultType resultType,
-            bool shapeIsOnlyNegative, HashSet<int> edgesToIgnore)
+            List<bool> knownWrongPoints, int maxNumberOfPolygons)
         {
             var interaction = new PolygonInteractionRecord(polygon, null);
             interaction.IntersectionData.AddRange(intersections);
             var delimiters = NumberVerticesAndGetPolygonVertexDelimiter(polygon);
-            var intersectionLookup = interaction.MakeIntersectionLookupList(delimiters[^1], false);
+            var intersectionLookup = interaction.MakeIntersectionLookupList(delimiters[^1]);
             var newPolygons = new List<Polygon>();
             var indexIntersectionStart = 0;
             while (GetNextStartingIntersection(intersections, out var startingIntersection,
-                out var startEdge, ref indexIntersectionStart))
+                out var startEdge, out var switchPolygon, ref indexIntersectionStart))
             {
                 var polyCoordinates = MakePolygonThroughIntersections(intersectionLookup, intersections, startingIntersection,
-                    startEdge, shapeIsOnlyNegative, edgesToIgnore).ToList();
-
+                    startEdge, switchPolygon, out var includesWrongPoints, knownWrongPoints).ToList();
+                if (includesWrongPoints) continue;
                 var area = polyCoordinates.Area();
-                if (area.IsNegligible(Math.Abs(polygon.Area * Constants.PolygonSameTolerance))) continue;
+                if (area.IsNegligible(polygon.Area * Constants.PolygonSameTolerance)) continue;
                 if (area * (int)resultType < 0) // note that the ResultType enum has assigned negative values that are used
-                {                                //in conjunction with the area of the sign. Only if the product is negative - do we do something 
+                                                //in conjunction with the area of the sign. Only if the product is negative - do we do something 
+                {
                     if (resultType == ResultType.OnlyKeepNegative || resultType == ResultType.OnlyKeepPositive) continue;
                     else polyCoordinates.Reverse();
                 }
-#if PRESENT
-                Presenter.ShowAndHang(polyCoordinates);
-#endif
-                newPolygons.Add(new Polygon(polyCoordinates));
+                newPolygons.Add(new Polygon(polyCoordinates.SimplifyMinLengthToNewList(Math.Pow(10, -polygon.NumSigDigits))));
             }
-            return newPolygons.CreateShallowPolygonTrees(true, false, shapeIsOnlyNegative);
+            return newPolygons.OrderByDescending(p => Math.Abs(p.Area))
+                .Take(maxNumberOfPolygons).Reverse()
+                .CreateShallowPolygonTrees(true, true);
         }
 
         protected override bool ValidStartingIntersection(SegmentIntersection intersectionData, out PolygonEdge currentEdge, out bool startAgain)
@@ -83,30 +82,23 @@ namespace TVGL
             return true;
         }
 
-        protected override bool? PolygonCompleted(SegmentIntersection currentIntersection, SegmentIntersection startingIntersection,
+        protected override bool PolygonCompleted(SegmentIntersection currentIntersection, SegmentIntersection startingIntersection,
             PolygonEdge currentEdge, PolygonEdge startingEdge)
         {
-            if (startingIntersection == currentIntersection && currentEdge == startingEdge) return true;
-            //if (currentIntersection.VisitedA && currentIntersection.VisitedB) return null;
-            return false;
+            return startingIntersection == currentIntersection && currentEdge == startingEdge;
         }
 
-        internal bool SwitchAtThisIntersectionFromOffsetting(SegmentIntersection intersectionData, bool currentEdgeIsFromPolygonA,
-            bool shapeIsOnlyNegative)
-        {
-            return SwitchAtThisIntersection(intersectionData, currentEdgeIsFromPolygonA, shapeIsOnlyNegative);
-        }
-        protected override bool SwitchAtThisIntersection(SegmentIntersection intersectionData, bool currentEdgeIsFromPolygonA,
-            bool shapeIsOnlyNegative)
+        //private bool lastSwitch = false;
+        protected override bool SwitchAtThisIntersection(SegmentIntersection intersectionData, bool currentEdgeIsFromPolygonA)
         {
             if (intersectionData.Relationship == SegmentRelationship.CrossOver_AOutsideAfter ||
                 intersectionData.Relationship == SegmentRelationship.CrossOver_BOutsideAfter ||
                 intersectionData.Relationship == SegmentRelationship.DoubleOverlap)
                 return true;
-            if (intersectionData.Relationship == SegmentRelationship.AEnclosesB)
-                return currentEdgeIsFromPolygonA != shapeIsOnlyNegative;
-            if (intersectionData.Relationship == SegmentRelationship.BEnclosesA)
-                return currentEdgeIsFromPolygonA == shapeIsOnlyNegative;
+            //if (intersectionData.Relationship == SegmentRelationship.AEnclosesB)
+            //    return !currentEdgeIsFromPolygonA;
+            //if (intersectionData.Relationship == SegmentRelationship.BEnclosesA)
+            //    return currentEdgeIsFromPolygonA;
             //if (intersectionData.Relationship == SegmentRelationship.NoOverlap)
             return false;
         }
@@ -132,7 +124,5 @@ namespace TVGL
             return true;
             //newPolygons.Add(subPolygon.Copy(false, false));  //add the positive as a positive or add the negative as a negative
         }
-
-
     }
 }

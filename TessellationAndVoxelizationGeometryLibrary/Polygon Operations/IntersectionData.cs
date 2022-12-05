@@ -242,7 +242,7 @@ namespace TVGL
         /// <param name="numLines">The number lines.</param>
         /// <param name="intersections">The intersections.</param>
         /// <returns>System.Collections.Generic.List&lt;System.Int32&gt;[].</returns>
-        internal List<int>[] MakeIntersectionLookupList(int numVertices, bool resetVisited)
+        internal List<int>[] MakeIntersectionLookupList(int numVertices)
         {
             // now make the lookupList. One list per vertex. If the vertex does not intersect, then it is left as null.
             // this is potentially memory intensive but speeds up the matching  when creating new polygons
@@ -251,11 +251,8 @@ namespace TVGL
             for (int i = 0; i < IntersectionData.Count; i++)
             {
                 var intersection = IntersectionData[i];
-                if (resetVisited)
-                {
-                    intersection.VisitedA = false;
-                    intersection.VisitedB = false;
-                }
+                intersection.VisitedA = false;
+                intersection.VisitedB = false;
                 var index = intersection.EdgeA.IndexInList;
                 lookupList[index] ??= new List<int>();
                 lookupList[index].Add(i);

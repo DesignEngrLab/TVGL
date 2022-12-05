@@ -131,7 +131,7 @@ namespace TVGL
             }
 
             //Setup Clipper
-            var clipper = new Clipper();
+            var clipper = new ClipperLib.Clipper() { StrictlySimple = true };
             clipper.AddPaths(clipperSubject, PolyType.ptSubject, subjectIsClosed);
 
             //Don't add the clip unless it is not null (and has not been set to be the subject - see a few lines above) 
@@ -140,7 +140,7 @@ namespace TVGL
 
             //Begin an evaluation
             var clipperSolution = new List<List<IntPoint>>();
-            var result = clipper.Execute(clipType, clipperSolution, fillMethod);
+            var result = clipper.Execute(clipType, clipperSolution, fillMethod, fillMethod);
             if (!result) throw new Exception("Clipper Union Failed");
 
             //Convert back to points and return solution

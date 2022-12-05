@@ -8,9 +8,6 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
-using TVGL.Numerics;
-using ClipperLib;
-using ClipperLib2Beta;
 
 
 namespace TVGL
@@ -20,6 +17,8 @@ namespace TVGL
     /// </summary>
     public static partial class PolygonOperations
     {
+        const double areaSimplificationFraction = 1e-5;
+
         static Stopwatch sw = new Stopwatch();
         const string timeFiles = "times.csv";
         private static bool Compare(List<Polygon> tvglResult, List<Polygon> clipperResult, string operationString, TimeSpan clipTime, TimeSpan tvglTime)
@@ -60,7 +59,7 @@ namespace TVGL
                     //((double)Math.Abs(numPolygonsTVGL - numPolygonsClipper) / (numPolygonsTVGL + numPolygonsClipper + tolerance)).IsNegligible(tolerance) &&
                     //((double)Math.Abs(vertsTVGL - vertsClipper) / (vertsTVGL + vertsClipper + tolerance)).IsNegligible(tolerance) &&
                     (Math.Abs(areaTVGL - areaClipper) / (areaTVGL + areaClipper + tolerance)).IsNegligible(tolerance)  //&&
-                    || (areaTVGL < 0.15 && areaClipper < 0.15)
+                    || (areaTVGL<0.15 && areaClipper<0.15)
                     //(Math.Abs(perimeterTVGL - perimeterClipper) / Math.Abs(perimeterTVGL + perimeterClipper + tolerance)).IsNegligible(tolerance) &&
                     //tvglMinX.IsPracticallySame(clipperMinX, extremaTolerance) &&
                     //tvglMinY.IsPracticallySame(clipperMinY, extremaTolerance) &&
@@ -80,20 +79,20 @@ namespace TVGL
                     //if (numPolygonsTVGL == numPolygonsClipper)
                     //    Debug.WriteLine("+++ both have {0} polygon(s)", numPolygonsTVGL, numPolygonsClipper);
                     //else 
-                    Debug.WriteLine("    --- polygons: TVGL={0}  : Clipper={1} ", numPolygonsTVGL, numPolygonsClipper);
+                        Debug.WriteLine("    --- polygons: TVGL={0}  : Clipper={1} ", numPolygonsTVGL, numPolygonsClipper);
                     //if (vertsTVGL == vertsClipper)
                     //    Debug.WriteLine("+++ both have {0} vertices(s)", vertsTVGL);
                     //else
-                    Debug.WriteLine("    --- verts: TVGL= {0}  : Clipper={1} ", vertsTVGL, vertsClipper);
+                        Debug.WriteLine("    --- verts: TVGL= {0}  : Clipper={1} ", vertsTVGL, vertsClipper);
 
                     //if (areaTVGL.IsPracticallySame(areaClipper, tolerance))
                     //    Debug.WriteLine("+++ both have area of {0}", areaTVGL);
                     //else
-                    Debug.WriteLine("    --- area: TVGL= {0}  : Clipper={1} ", areaTVGL, areaClipper);
+                        Debug.WriteLine("    --- area: TVGL= {0}  : Clipper={1} ", areaTVGL, areaClipper);
                     //if (perimeterTVGL.IsPracticallySame(perimeterClipper, tolerance))
                     //    Debug.WriteLine("+++ both have perimeter of {0}", perimeterTVGL);
                     //else
-                    Debug.WriteLine("    --- perimeter: TVGL={0}  : Clipper={1} ", perimeterTVGL, perimeterClipper);
+                        Debug.WriteLine("    --- perimeter: TVGL={0}  : Clipper={1} ", perimeterTVGL, perimeterClipper);
                     if (perimeterClipper - perimeterTVGL > 0 && Math.Round(perimeterClipper - perimeterTVGL) % 2 == 0)
                         Debug.WriteLine("<><><><><><><> clipper is connecting separate poly's :", (int)(perimeterClipper - perimeterTVGL) / 2);
                     return true;
@@ -119,42 +118,34 @@ namespace TVGL
         /// <param name="outputAsCollectionType">Type of the output as collection.</param>
         /// <param name="tolerance">The tolerance.</param>
         /// <returns>System.Collections.Generic.List&lt;TVGL.TwoDimensional.Polygon&gt;.</returns>
-        public static List<Polygon> Union(this Polygon polygonA, Polygon polygonB, PolygonSimplify polygonSimplify = PolygonSimplify.CanSimplifyOriginal,
+        public static List<Polygon> Union(this Polygon polygonA, Polygon polygonB,
             PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles)
         {
-            polygonA = polygonA.CleanUpForBooleanOperations(polygonSimplify);
-            polygonB = polygonB?.CleanUpForBooleanOperations(polygonSimplify);
-#if CLIPPER
-            return BooleanViaClipper(PolyFillType.Positive, ClipType.Union, new[] { polygonA },
-                  new[] { polygonB });
-            sw.Restart();
-            var pClipper = BooleanViaClipper(PolyFillType.Positive, ClipType.Union, new[] { polygonA },
-                  new[] { polygonB });
-            sw.Stop();
-            var clipTime = sw.Elapsed;
-
-            sw.Restart();
-            var pClipper2B = PolygonOperationsV2.BooleanViaClipper(FillRule.Positive, ClipType2.Union, new[] { polygonA },
-                new[] { polygonB });
-            sw.Stop();
-            var clipBTime = sw.Elapsed;
-            if (Compare(pClipper, pClipper2B, "Union", clipTime, clipBTime))
+            if (areaSimplificationFraction > 0)
             {
-                var fileNameStart = "unionFail" + DateTime.Now.ToOADate().ToString();
-                IOFunctions.IO.Save(polygonA, fileNameStart + ".A.json");
-                IOFunctions.IO.Save(polygonB, fileNameStart + ".B.json");
+                polygonA = polygonA.SimplifyFast();
+                //polygonA = polygonA.SimplifyByAreaChangeToNewPolygon(areaSimplificationFraction);
+                if (polygonB != null)
+                {
+                    polygonB = polygonB?.SimplifyFast();
+                    //polygonB = polygonB?.SimplifyByAreaChangeToNewPolygon(areaSimplificationFraction);
+                }
             }
-            return pClipper;
+#if CLIPPER
+            return BooleanViaClipper(ClipperLib.PolyFillType.Positive, ClipperLib.ClipType.Union, new[] { polygonA },
+                  new[] { polygonB });
 #elif !COMPARE
-            return UnionTVGL(polygonA, polygonB, polygonSimplify, outputAsCollectionType);
+            var relationship = GetPolygonInteraction(polygonA, polygonB);
+            return Union(polygonA, polygonB, relationship, outputAsCollectionType);
 #else
             sw.Restart();
-            var pClipper = BooleanViaClipper(PolyFillType.Positive, ClipType.Union, new[] { polygonA },
+            var pClipper = BooleanViaClipper(ClipperLib.PolyFillType.pftPositive, ClipperLib.ClipType.ctUnion, new[] { polygonA },
                   new[] { polygonB });
             sw.Stop();
             var clipTime = sw.Elapsed;
             sw.Restart();
-            var pTVGL = UnionTVGL(polygonA, polygonB, polygonSimplify, outputAsCollectionType);
+            var relationship = GetPolygonInteraction(polygonA, polygonB);
+            var pTVGL = Union(polygonA, polygonB, relationship, outputAsCollectionType);
             sw.Stop();
 
             var tvglTime = sw.Elapsed;
@@ -174,23 +165,6 @@ namespace TVGL
 #endif
         }
 
-        /// <summary>
-        /// Returns the list of polygons that exist in either A OR B.
-        /// </summary>
-        /// <param name="polygonA">The polygon a.</param>
-        /// <param name="polygonB">The polygon b.</param>
-        /// <param name="outputAsCollectionType">Type of the output as collection.</param>
-        /// <param name="tolerance">The tolerance.</param>
-        /// <returns>System.Collections.Generic.List&lt;TVGL.TwoDimensional.Polygon&gt;.</returns>
-        public static List<Polygon> UnionTVGL(this Polygon polygonA, Polygon polygonB, PolygonSimplify polygonSimplify = PolygonSimplify.CanSimplifyOriginal,
-            PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles)
-        {
-            //polygonA = polygonA.CleanUpForBooleanOperations(polygonSimplify);
-            //polygonB = polygonB?.CleanUpForBooleanOperations(polygonSimplify);
-            var relationship = GetPolygonInteraction(polygonA, polygonB);
-            return UnionTVGL(polygonA, polygonB, relationship, outputAsCollectionType);
-        }
-
 
         /// <summary>
         /// Returns the list of polygons that exist in either A OR B.By providing the intersections
@@ -204,7 +178,7 @@ namespace TVGL
         /// <returns>System.Collections.Generic.List&lt;TVGL.TwoDimensional.Polygon&gt;.</returns>
         /// <exception cref="ArgumentException">A negative polygon (i.e. hole) is provided to Union which results in infinite shape. - polygonA</exception>
         /// <exception cref="ArgumentException">A negative polygon (i.e. hole) is provided to Union which results in infinite shape. - polygonB</exception>
-        public static List<Polygon> UnionTVGL(this Polygon polygonA, Polygon polygonB, PolygonInteractionRecord polygonInteraction,
+        public static List<Polygon> Union(this Polygon polygonA, Polygon polygonB, PolygonInteractionRecord polygonInteraction,
             PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles, double tolerance = double.NaN)
         {
             if (!polygonA.IsPositive) throw new ArgumentException("A negative polygon (i.e. hole) is provided to Union which results in infinite shape.", nameof(polygonA));
@@ -219,7 +193,7 @@ namespace TVGL
             if (polygonInteraction.Relationship == PolygonRelationship.AInsideB)
                 return new List<Polygon> { polygonB.Copy(true, false) };
             polygonUnion ??= new PolygonUnion();
-            return polygonUnion.Run(polygonA, polygonB, polygonInteraction, outputAsCollectionType, tolerance).Where(p => p.IsPositive).ToList();
+            return polygonUnion.Run(polygonA, polygonB, polygonInteraction, outputAsCollectionType, tolerance);
         }
 
         /// <summary>
@@ -230,11 +204,14 @@ namespace TVGL
         /// <param name="outputAsCollectionType">Type of the output as collection.</param>
         /// <param name="tolerance">The tolerance.</param>
         /// <returns>System.Collections.Generic.List&lt;TVGL.TwoDimensional.Polygon&gt;.</returns>
-        private static List<Polygon> UnionPolygonsTVGL(this IEnumerable<Polygon> polygons,
-            PolygonSimplify polygonSimplify = PolygonSimplify.CanSimplifyOriginal,
-            PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles)
+        public static List<Polygon> UnionPolygons(this IEnumerable<Polygon> polygons, PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles)
         {
-            //polygons = polygons.CleanUpForBooleanOperations(polygonSimplify);
+            if (areaSimplificationFraction > 0)
+                polygons = polygons.Select(p=>SimplifyFast(p));
+                //polygons = polygons.SimplifyByAreaChangeToNewPolygons(areaSimplificationFraction);
+#if CLIPPER
+            return BooleanViaClipper(ClipperLib.PolyFillType.Positive, ClipperLib.ClipType.Union, polygons);
+#elif !COMPARE
             var polygonList = polygons.ToList();
             for (int i = polygonList.Count - 1; i > 0; i--)
             {
@@ -256,7 +233,7 @@ namespace TVGL
                     {
                         //if (i == 1 && j == 0)
                         //Presenter.ShowAndHang(new[] { polygonList[i], polygonList[j] });
-                        var newPolygons = UnionTVGL(polygonList[i], polygonList[j], interaction, outputAsCollectionType);
+                        var newPolygons = Union(polygonList[i], polygonList[j], interaction, outputAsCollectionType);
                         //Debug.WriteLine("i = {0}, j = {1}", i, j);
                         //if (i == 1 && j == 0)
                         //Presenter.ShowAndHang(newPolygons);
@@ -269,45 +246,46 @@ namespace TVGL
                 }
             }
             return polygonList;
-        }
-
-        /// <summary>
-        /// Returns the list of polygons that are the subshapes of ANY of the provided polygons. Notice this is called UnionPolygons here to distinguish
-        /// it from the LINQ function Union, which is also a valid extension for any IEnumerable collection.
-        /// </summary>
-        /// <param name="polygons">The polygons.</param>
-        /// <param name="outputAsCollectionType">Type of the output as collection.</param>
-        /// <param name="tolerance">The tolerance.</param>
-        /// <returns>System.Collections.Generic.List&lt;TVGL.TwoDimensional.Polygon&gt;.</returns>
-        public static List<Polygon> UnionPolygons(this IEnumerable<Polygon> polygons,
-            PolygonSimplify polygonSimplify = PolygonSimplify.CanSimplifyOriginal, PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles)
-        {
-            polygons = polygons.CleanUpForBooleanOperations(polygonSimplify);
-#if CLIPPER
-            return BooleanViaClipper(PolyFillType.Positive, ClipType.Union, polygons);
-            sw.Restart();
-            var pClipper = BooleanViaClipper(PolyFillType.Positive, ClipType.Union, polygons);
-            sw.Stop();
-            var clipTime = sw.Elapsed;
-
-            sw.Restart();
-            var pClipper2B = PolygonOperationsV2.BooleanViaClipper(FillRule.Positive, ClipType2.Union, polygons);
-            sw.Stop();
-            var clipBTime = sw.Elapsed;
-            if (Compare(pClipper, pClipper2B, "Union", clipTime, clipBTime))
-            {
-            }
-            return pClipper;
-#elif !COMPARE
-            return UnionPolygonsTVGL(polygons, polygonSimplify, outputAsCollectionType);
 #else
             sw.Restart();
-            var pClipper = BooleanViaClipper(PolyFillType.Positive, ClipType.Union, polygons);
+            var pClipper = BooleanViaClipper(ClipperLib.PolyFillType.pftPositive, ClipperLib.ClipType.ctUnion, polygons);
             sw.Stop();
             var clipTime = sw.Elapsed;
 
             sw.Restart();
-            var polygonList = UnionPolygonsTVGL(polygons, polygonSimplify, outputAsCollectionType);
+            var polygonList = polygons.ToList();
+            for (int i = polygonList.Count - 1; i > 0; i--)
+            {
+                for (int j = i - 1; j >= 0; j--)
+                {
+                    var interaction = GetPolygonInteraction(polygonList[i], polygonList[j]);
+                    if (interaction.Relationship == PolygonRelationship.BInsideA
+                        || interaction.Relationship == PolygonRelationship.Equal)
+                    {  // remove polygon B
+                        polygonList.RemoveAt(j);
+                        i--;
+                    }
+                    else if (interaction.Relationship == PolygonRelationship.AInsideB)
+                    {                            // remove polygon A
+                        polygonList.RemoveAt(i);
+                        break; // to stop the inner loop
+                    }
+                    else if (interaction.CoincidentEdges || interaction.Relationship == PolygonRelationship.Intersection)
+                    {
+                        //if (i == 1 && j == 0)
+                        //Presenter.ShowAndHang(new[] { polygonList[i], polygonList[j] });
+                        var newPolygons = Union(polygonList[i], polygonList[j], interaction, outputAsCollectionType);
+                        //Debug.WriteLine("i = {0}, j = {1}", i, j);
+                        //if (i == 1 && j == 0)
+                        //Presenter.ShowAndHang(newPolygons);
+                        polygonList.RemoveAt(i);
+                        polygonList.RemoveAt(j);
+                        polygonList.AddRange(newPolygons);
+                        i = polygonList.Count; // to restart the outer loop
+                        break; // to stop the inner loop
+                    }
+                }
+            }
             sw.Stop();
             var tvglTime = sw.Elapsed;
             if (Compare(polygonList, pClipper, "UnionLists", clipTime, tvglTime))
@@ -336,56 +314,97 @@ namespace TVGL
         /// <param name="outputAsCollectionType">Type of the output as collection.</param>
         /// <param name="tolerance">The tolerance.</param>
         /// <returns>System.Collections.Generic.List&lt;TVGL.TwoDimensional.Polygon&gt;.</returns>
-        public static List<Polygon> UnionPolygonsTVGL(this IEnumerable<Polygon> polygonsA, IEnumerable<Polygon> polygonsB,
-            PolygonSimplify polygonSimplify = PolygonSimplify.CanSimplifyOriginal,
-            PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles, double tolerance = double.NaN)
+        public static List<Polygon> UnionPolygons(this IEnumerable<Polygon> polygonsA, IEnumerable<Polygon> polygonsB, PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles,
+            double tolerance = double.NaN)
         {
-            var pTVGL = polygonsA.ToList();
-            if (polygonsB is null) return pTVGL;
-            pTVGL.AddRange(polygonsB);
-            return UnionPolygonsTVGL(pTVGL, polygonSimplify, outputAsCollectionType);
-        }
-
-        /// <summary>
-        /// Returns the list of polygons that are the subshapes of the two collections of polygons. Notice this is called UnionPolygons 
-        /// here to distinguish it from the LINQ function Union, which is also a valid extension for any IEnumerable collection.
-        /// </summary>
-        /// <param name="polygonsA">The polygons a.</param>
-        /// <param name="polygonsB">The polygons b.</param>
-        /// <param name="outputAsCollectionType">Type of the output as collection.</param>
-        /// <param name="tolerance">The tolerance.</param>
-        /// <returns>System.Collections.Generic.List&lt;TVGL.TwoDimensional.Polygon&gt;.</returns>
-        public static List<Polygon> UnionPolygons(this IEnumerable<Polygon> polygonsA, IEnumerable<Polygon> polygonsB,
-            PolygonSimplify polygonSimplify = PolygonSimplify.CanSimplifyOriginal,
-            PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles, double tolerance = double.NaN)
-        {
-            polygonsA = polygonsA.CleanUpForBooleanOperations(polygonSimplify);
-            polygonsB = polygonsB?.CleanUpForBooleanOperations(polygonSimplify);
-#if CLIPPER
-            return BooleanViaClipper(PolyFillType.Positive, ClipType.Union, polygonsA, polygonsB);
-            sw.Restart();
-            var pClipper = BooleanViaClipper(PolyFillType.Positive, ClipType.Union, polygonsA, polygonsB);
-            sw.Stop();
-            var clipTime = sw.Elapsed;
-
-            sw.Restart();
-            var pClipper2B = PolygonOperationsV2.BooleanViaClipper(FillRule.Positive, ClipType2.Union, polygonsA, polygonsB);
-            sw.Stop();
-            var clipBTime = sw.Elapsed;
-            if (Compare(pClipper, pClipper2B, "Union", clipTime, clipBTime))
+            if (areaSimplificationFraction > 0)
             {
+                polygonsA = polygonsA.Select(p => SimplifyFast(p));
+                //polygonsA = polygonsA.SimplifyByAreaChangeToNewPolygons(areaSimplificationFraction);
+                if (polygonsB != null)
+                    polygonsB = polygonsB?.Select(p => SimplifyFast(p));
+                    //polygonsB = polygonsB?.SimplifyByAreaChangeToNewPolygons(areaSimplificationFraction);
             }
-            return pClipper;
+#if CLIPPER
+            return BooleanViaClipper(ClipperLib.PolyFillType.Positive, ClipperLib.ClipType.Union, polygonsA, polygonsB);
 #elif !COMPARE
-            return UnionPolygonsTVGL(polygonsA, polygonsB, polygonSimplify, outputAsCollectionType, tolerance);
+            if (polygonsB is null)
+                return UnionPolygons(polygonsA, outputAsCollectionType);
+            var unionedPolygons = polygonsA.ToList();
+            var polygonBList = polygonsB.ToList();
+            for (int i = unionedPolygons.Count - 1; i >= 0; i--)
+            {
+                for (int j = polygonBList.Count - 1; j >= 0; j--)
+                {
+                    var interaction = GetPolygonInteraction(unionedPolygons[i], polygonBList[j]);
+                    if (interaction.Relationship == PolygonRelationship.BInsideA
+                        || interaction.Relationship == PolygonRelationship.Equal)
+                    {  // remove polygon B
+                        polygonBList.RemoveAt(j);
+                    }
+                    else if (interaction.Relationship == PolygonRelationship.AInsideB)
+                    {                            // remove polygon A
+                        unionedPolygons[i] = polygonBList[j];
+                        polygonBList.RemoveAt(j);
+                        break; // to stop the inner loop
+                    }
+                    else if (interaction.CoincidentEdges || interaction.Relationship == PolygonRelationship.Intersection)
+                    {
+                        var newPolygons = Union(unionedPolygons[i], polygonBList[j], interaction, outputAsCollectionType, tolerance);
+                        unionedPolygons.RemoveAt(i);
+                        polygonBList.RemoveAt(j);
+                        unionedPolygons.AddRange(newPolygons);
+                        i = unionedPolygons.Count; // to restart the outer loop
+                        break; // to stop the inner loop
+                    }
+                }
+            }
+            return UnionPolygons(unionedPolygons.Where(p => p.IsPositive), outputAsCollectionType);
 #else
+            if (polygonsB is null)
+                return UnionPolygons(polygonsA, outputAsCollectionType);
+            var unionedPolygons = polygonsA.ToList();
+            var polygonBList = polygonsB.ToList();
             sw.Restart();
-            var pClipper = BooleanViaClipper(PolyFillType.Positive, ClipType.Union, polygonsA, polygonsB);
+            var pClipper = BooleanViaClipper(ClipperLib.PolyFillType.pftPositive, ClipperLib.ClipType.ctUnion, polygonsA, polygonsB);
             sw.Stop();
             var clipTime = sw.Elapsed;
 
             sw.Restart();
-            var pTVGL = UnionPolygonsTVGL(polygonsA, polygonsB, polygonSimplify, outputAsCollectionType, tolerance);
+            List<Polygon> pTVGL = null;
+            for (int i = unionedPolygons.Count - 1; i >= 0; i--)
+            {
+                for (int j = polygonBList.Count - 1; j >= 0; j--)
+                {
+                    var interaction = GetPolygonInteraction(unionedPolygons[i], polygonBList[j]);
+                    if (interaction.Relationship == PolygonRelationship.BInsideA
+                        || interaction.Relationship == PolygonRelationship.Equal)
+                    {  // remove polygon B
+                        polygonBList.RemoveAt(j);
+                    }
+                    else if (interaction.Relationship == PolygonRelationship.AInsideB)
+                    {                            // remove polygon A
+                        unionedPolygons[i] = polygonBList[j];
+                        polygonBList.RemoveAt(j);
+                        break; // to stop the inner loop
+                    }
+                    else if (interaction.CoincidentEdges || interaction.Relationship == PolygonRelationship.Intersection)
+                    {
+                        //if (i == 1 && j == 0)
+                        //Presenter.ShowAndHang(new[] { polygonList[i], polygonList[j] });
+                        var newPolygons = Union(unionedPolygons[i], polygonBList[j], interaction, outputAsCollectionType, tolerance);
+                        //Debug.WriteLine("i = {0}, j = {1}", i, j);
+                        //if (i == 1 && j == 0)
+                        //Presenter.ShowAndHang(newPolygons);
+                        unionedPolygons.RemoveAt(i);
+                        polygonBList.RemoveAt(j);
+                        unionedPolygons.AddRange(newPolygons);
+                        i = unionedPolygons.Count; // to restart the outer loop
+                        break; // to stop the inner loop
+                    }
+                }
+            }
+            pTVGL = UnionPolygons(unionedPolygons.Where(p => p.IsPositive), outputAsCollectionType);
             sw.Stop();
             var tvglTime = sw.Elapsed;
             if (Compare(pTVGL, pClipper, "UnionTwoLists", clipTime, tvglTime))
@@ -395,7 +414,7 @@ namespace TVGL
                 all.AddRange(polygonsB);
                 Presenter.ShowAndHang(all);
                 Presenter.ShowAndHang(pClipper);
-                Presenter.ShowAndHang(pTVGL);
+                Presenter.ShowAndHang(unionedPolygons);
 #else
                 var fileNameStart = "unionFail" + DateTime.Now.ToOADate().ToString();
                 int i = 0;
@@ -414,66 +433,43 @@ namespace TVGL
 
         #region Intersect Public Methods
 
-
         /// <summary>
         /// Returns the list of polygons that result from the subshapes common to both A and B.
         /// </summary>
         /// <param name="polygonA">The polygon a.</param>
         /// <param name="polygonB">The polygon b.</param>
         /// <param name="outputAsCollectionType">Type of the output as collection.</param>
-        /// <param name="minAllowableArea">The tolerance.</param>
-        /// <returns>System.Collections.Generic.List&lt;TVGL.TwoDimensional.Polygon&gt;.</returns>
-        private static List<Polygon> IntersectTVGL(this Polygon polygonA, Polygon polygonB,
-            PolygonSimplify polygonSimplify = PolygonSimplify.CanSimplifyOriginal,
-            PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles, double minAllowableArea = double.NaN)
-        {
-            //polygonA = polygonA.CleanUpForBooleanOperations(polygonSimplify);
-            //polygonB = polygonB?.CleanUpForBooleanOperations(polygonSimplify);
-
-            var relationship = GetPolygonInteraction(polygonA, polygonB);
-            return IntersectTVGL(polygonA, polygonB, relationship, outputAsCollectionType, minAllowableArea);
-        }
-        /// <summary>
-        /// Returns the list of polygons that result from the subshapes common to both A and B.
-        /// </summary>
-        /// <param name="polygonA">The polygon a.</param>
-        /// <param name="polygonB">The polygon b.</param>
-        /// <param name="outputAsCollectionType">Type of the output as collection.</param>
-        /// <param name="minAllowableArea">The tolerance.</param>
+        /// <param name="tolerance">The tolerance.</param>
         /// <returns>System.Collections.Generic.List&lt;TVGL.TwoDimensional.Polygon&gt;.</returns>
         public static List<Polygon> Intersect(this Polygon polygonA, Polygon polygonB,
-            PolygonSimplify polygonSimplify = PolygonSimplify.CanSimplifyOriginal,
-            PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles, double minAllowableArea = double.NaN)
+            PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles, double tolerance = double.NaN)
         {
-            polygonA = polygonA.CleanUpForBooleanOperations(polygonSimplify);
-            polygonB = polygonB?.CleanUpForBooleanOperations(polygonSimplify);
-
-#if CLIPPER
-            return BooleanViaClipper(PolyFillType.Positive, ClipType.Intersection, new[] { polygonA }, new[] { polygonB });
-
-            sw.Restart();
-            var pClipper = BooleanViaClipper(PolyFillType.Positive, ClipType.Intersection, new[] { polygonA },
-                    new[] { polygonB });
-            sw.Stop();
-            var clipTime = sw.Elapsed;
-
-            sw.Restart();
-            var pClipper2B = PolygonOperationsV2.BooleanViaClipper(FillRule.Positive, ClipType2.Intersection, new[] { polygonA },
-                    new[] { polygonB });
-            var clipBTime = sw.Elapsed;
-            if (Compare(pClipper, pClipper2B, "Intersection", clipTime, clipBTime))
+            if (areaSimplificationFraction > 0)
             {
+                polygonA = polygonA.SimplifyFast();
+                //polygonA = polygonA.SimplifyByAreaChangeToNewPolygon(areaSimplificationFraction);
+                if (polygonB != null)
+                {
+                    //If not null
+                    polygonB = polygonB?.SimplifyFast();
+                    //polygonB = polygonB?.SimplifyByAreaChangeToNewPolygon(areaSimplificationFraction);
+                }
             }
-            return pClipper;
+#if CLIPPER
+            return BooleanViaClipper(ClipperLib.PolyFillType.Positive, ClipperLib.ClipType.Intersection, new[] { polygonA },
+                    new[] { polygonB });
 #elif !COMPARE
-            return IntersectTVGL(polygonA, polygonB, polygonSimplify, outputAsCollectionType, minAllowableArea);
+            var relationship = GetPolygonInteraction(polygonA, polygonB);
+            return Intersect(polygonA, polygonB, relationship, outputAsCollectionType, tolerance);
 #else
             sw.Restart();
-            var pClipper = BooleanViaClipper(PolyFillType.Positive, ClipType.Intersection, new[] { polygonA }, new[] { polygonB });
+            var pClipper = BooleanViaClipper(ClipperLib.PolyFillType.pftPositive, ClipperLib.ClipType.ctIntersection, new[] { polygonA },
+                    new[] { polygonB });
             sw.Stop();
             var clipTime = sw.Elapsed;
             sw.Restart();
-            var pTVGL = IntersectTVGL(polygonA, polygonB, polygonSimplify, outputAsCollectionType, minAllowableArea);
+            var relationship = GetPolygonInteraction(polygonA, polygonB);
+            var pTVGL = Intersect(polygonA, polygonB, relationship, outputAsCollectionType, tolerance);
             sw.Stop();
             var tvglTime = sw.Elapsed;
             if (Compare(pTVGL, pClipper, "Intersect", clipTime, tvglTime))
@@ -500,20 +496,19 @@ namespace TVGL
         /// <param name="polygonB">The polygon b.</param>
         /// <param name="interaction">The interaction.</param>
         /// <param name="outputAsCollectionType">Type of the output as collection.</param>
-        /// <param name="minAllowableArea">The minimum allowable area.</param>
+        /// <param name="tolerance">The minimum allowable area.</param>
         /// <returns>System.Collections.Generic.List&lt;TVGL.TwoDimensional.Polygon&gt;.</returns>
-        public static List<Polygon> IntersectTVGL(this Polygon polygonA, Polygon polygonB, PolygonInteractionRecord interaction,
-            PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles, double minAllowableArea = double.NaN)
+        public static List<Polygon> Intersect(this Polygon polygonA, Polygon polygonB, PolygonInteractionRecord interaction,
+            PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles, double tolerance = double.NaN)
         {
             if (interaction.IntersectionWillBeEmpty())
                 return new List<Polygon>();
             else
             {
                 polygonIntersection ??= new PolygonIntersection();
-                return polygonIntersection.Run(polygonA, polygonB, interaction, outputAsCollectionType, minAllowableArea);
+                return polygonIntersection.Run(polygonA, polygonB, interaction, outputAsCollectionType, tolerance);
             }
         }
-
 
         /// <summary>
         /// Returns the list of polygons that are the sub-shapes of the two collections of polygons. Notice this is called IntersectPolygons here 
@@ -526,166 +521,61 @@ namespace TVGL
         /// <param name="outputAsCollectionType">Type of the output as collection.</param>
         /// <param name="tolerance">The tolerance.</param>
         /// <returns>System.Collections.Generic.List&lt;TVGL.TwoDimensional.Polygon&gt;.</returns>
-        public static List<Polygon> IntersectTVGL(this Polygon polygonA, IEnumerable<Polygon> polygonsB,
-            PolygonSimplify polygonSimplify = PolygonSimplify.CanSimplifyOriginal,
-            PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles, double minAllowableArea = double.NaN)
+        public static List<Polygon> IntersectPolygons(this IEnumerable<Polygon> polygonsA, IEnumerable<Polygon> polygonsB, PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles)
         {
-            //polygonA = polygonA.CleanUpForBooleanOperations(polygonSimplify);
-            //polygonsB = polygonsB.CleanUpForBooleanOperations(polygonSimplify).ToList();
-
-            var polygonsBList = polygonsB as IList<Polygon> ?? polygonsB.ToList();
-            if (polygonsBList.All(p => p.IsPositive))
-                return polygonsBList.SelectMany(p => polygonA.IntersectTVGL(p, PolygonSimplify.DoNotSimplify, outputAsCollectionType)).ToList();
-            else if (polygonsBList.All(p => !p.IsPositive))
+            if (areaSimplificationFraction > 0)
             {
-                //errror here!! fix me!!
-                var c = new Polygon();
-                foreach (var hole in polygonsBList)
-                    c.AddInnerPolygon(hole);
-                return polygonA.IntersectTVGL(c, PolygonSimplify.DoNotSimplify, outputAsCollectionType, minAllowableArea);
+                polygonsA = polygonsA.Select(p=>SimplifyFast(p));
+                //polygonsA = polygonsA.SimplifyByAreaChangeToNewPolygons(areaSimplificationFraction);
+                if (polygonsB != null)
+                    polygonsB = polygonsB.Select(p => SimplifyFast(p));
+                    //polygonsB = polygonsB?.SimplifyByAreaChangeToNewPolygons(areaSimplificationFraction);
             }
-            else throw new ArgumentException("PolgyonsB is a mix of positive and negative polygons, which are not handled by this Intersect function.");
-        }
-
-        /// <summary>
-        /// Returns the list of polygons that are the sub-shapes of the two collections of polygons. Notice this is called IntersectPolygons here 
-        /// to distinguish it from the LINQ function Intersect, which is also a valid extension for any IEnumerable collection.
-        /// Notice also that any overlap between the polygons in A or the polygons in B are ignored. Finally, all inputs must be positive.
-        /// 
-        /// </summary>
-        /// <param name="polygonsA">The polygons a.</param>
-        /// <param name="polygonsB">The polygons b.</param>
-        /// <param name="outputAsCollectionType">Type of the output as collection.</param>
-        /// <param name="tolerance">The tolerance.</param>
-        /// <returns>System.Collections.Generic.List&lt;TVGL.TwoDimensional.Polygon&gt;.</returns>
-        public static List<Polygon> Intersect(this Polygon polygonA, IEnumerable<Polygon> polygonsB,
-            PolygonSimplify polygonSimplify = PolygonSimplify.CanSimplifyOriginal,
-            PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles, double minAllowableArea = double.NaN)
-        {
-            polygonA = polygonA.CleanUpForBooleanOperations(polygonSimplify);
-            polygonsB = polygonsB.CleanUpForBooleanOperations(polygonSimplify).ToList();
 #if CLIPPER
-            return  BooleanViaClipper(PolyFillType.Positive, ClipType.Intersection, new[] { polygonA }, polygonsB);
-            sw.Restart();
-            var pClipper =  BooleanViaClipper(PolyFillType.Positive, ClipType.Intersection, new[] { polygonA }, polygonsB);
-            sw.Stop();
-            var clipTime = sw.Elapsed;
-
-            sw.Restart();
-            var pClipper2B = PolygonOperationsV2.BooleanViaClipper(FillRule.Positive, ClipType2.Intersection, polygonsA, polygonsB);
-            var clipBTime = sw.Elapsed;
-            if (Compare(pClipper, pClipper2B, "Intersection", clipTime, clipBTime))
-            {
-            }
-            return pClipper;
+            return BooleanViaClipper(ClipperLib.PolyFillType.Positive, ClipperLib.ClipType.Intersection, polygonsA, polygonsB);
 #elif !COMPARE
-            return IntersectTVGL(polygonA, polygonsB, polygonSimplify, outputAsCollectionType, minAllowableArea);
-#else
-            sw.Restart();
-            var pClipper = BooleanViaClipper(PolyFillType.Positive, ClipType.Intersection, new[] { polygonA }, polygonsB);
-            sw.Stop();
-            var clipTime = sw.Elapsed;
-            sw.Restart();
-            var newPolygons = IntersectTVGL(polygonA, polygonsB, polygonSimplify, outputAsCollectionType, minAllowableArea);
-            sw.Stop();
-            var tvglTime = sw.Elapsed;
-            if (Compare(newPolygons, pClipper, "IntersectTwoList", clipTime, tvglTime))
+            if (polygonsB is null)
+                return UnionPolygons(polygonsA, outputAsCollectionType);
+
+            var result = polygonsA.ToList();
+            foreach (var polygon in polygonsB)
             {
-#if PRESENT
-                var all = polygonsB.ToList();
-                all.Add(polygonA);
-                Presenter.ShowAndHang(all);
-                Presenter.ShowAndHang(pClipper);
-                Presenter.ShowAndHang(newPolygons);
-#else
-                var fileNameStart = "intersectFail" + DateTime.Now.ToOADate().ToString();
-                int i = 0;
-                    TVGL.IOFunctions.IO.Save(polygonA, fileNameStart + "." + (i).ToString() + "A.json");
-                               foreach (var poly in polygonsB)
-                    TVGL.IOFunctions.IO.Save(poly, fileNameStart + "." + (i++).ToString() + "B.json");
-#endif
+                if (!result.Any()) break;
+                result = result.SelectMany(r => r.Intersect(polygon)).ToList();
             }
-            return pClipper;
-#endif
-        }
-
-
-        /// <summary>
-        /// Returns the list of polygons that are the sub-shapes of the two collections of polygons. Notice this is called IntersectPolygons here 
-        /// to distinguish it from the LINQ function Intersect, which is also a valid extension for any IEnumerable collection.
-        /// Notice also that any overlap between the polygons in A or the polygons in B are ignored. Finally, all inputs must be positive.
-        /// 
-        /// </summary>
-        /// <param name="polygonsA">The polygons a.</param>
-        /// <param name="polygonsB">The polygons b.</param>
-        /// <param name="outputAsCollectionType">Type of the output as collection.</param>
-        /// <param name="tolerance">The tolerance.</param>
-        /// <returns>System.Collections.Generic.List&lt;TVGL.TwoDimensional.Polygon&gt;.</returns>
-        public static List<Polygon> IntersectPolygonsTVGL(this IEnumerable<Polygon> polygonsA, IEnumerable<Polygon> polygonsB,
-            PolygonSimplify polygonSimplify = PolygonSimplify.CanSimplifyOriginal,
-            PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles, double minAllowableArea = double.NaN)
-        {
-            //polygonsA = polygonsA.CleanUpForBooleanOperations(polygonSimplify);
-            //polygonsB = polygonsB.CleanUpForBooleanOperations(polygonSimplify);
-
+            return result;
+#else
+            if (polygonsB is null)
+                return UnionPolygons(polygonsA, outputAsCollectionType);
             var polygonAList = new List<Polygon>(polygonsA);
-            var newPolygons = new List<Polygon>();
-            foreach (var polyB in polygonsB)
-                foreach (var polyA in polygonAList)
-                    newPolygons.AddRange(polyA.IntersectTVGL(polyB, PolygonSimplify.DoNotSimplify, outputAsCollectionType, minAllowableArea));
-            return newPolygons;
-        }
-
-        /// <summary>
-        /// Returns the list of polygons that are the sub-shapes of the two collections of polygons. Notice this is called IntersectPolygons here 
-        /// to distinguish it from the LINQ function Intersect, which is also a valid extension for any IEnumerable collection.
-        /// Notice also that any overlap between the polygons in A or the polygons in B are ignored. Finally, all inputs must be positive.
-        /// 
-        /// </summary>
-        /// <param name="polygonsA">The polygons a.</param>
-        /// <param name="polygonsB">The polygons b.</param>
-        /// <param name="outputAsCollectionType">Type of the output as collection.</param>
-        /// <param name="tolerance">The tolerance.</param>
-        /// <returns>System.Collections.Generic.List&lt;TVGL.TwoDimensional.Polygon&gt;.</returns>
-        public static List<Polygon> IntersectPolygons(this IEnumerable<Polygon> polygonsA, IEnumerable<Polygon> polygonsB,
-            PolygonSimplify polygonSimplify = PolygonSimplify.CanSimplifyOriginal,
-            PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles, double minAllowableArea = double.NaN)
-        {
-            polygonsA = polygonsA.CleanUpForBooleanOperations(polygonSimplify);
-            polygonsB = polygonsB.CleanUpForBooleanOperations(polygonSimplify);
-#if CLIPPER
-            return BooleanViaClipper(PolyFillType.Positive, ClipType.Intersection, polygonsA, polygonsB);
+            var polygonBList = polygonsB.ToList();
             sw.Restart();
-            var pClipper = BooleanViaClipper(PolyFillType.Positive, ClipType.Intersection, polygonsA, polygonsB);
+            var pClipper = BooleanViaClipper(ClipperLib.PolyFillType.pftPositive, ClipperLib.ClipType.ctIntersection, polygonsA, polygonsB);
             sw.Stop();
             var clipTime = sw.Elapsed;
-
             sw.Restart();
-            var pClipper2B = PolygonOperationsV2.BooleanViaClipper(FillRule.Positive, ClipType2.Intersection, polygonsA, polygonsB);
-            var clipBTime = sw.Elapsed;
-            if (Compare(pClipper, pClipper2B, "Intersection", clipTime, clipBTime))
+
+            foreach (var polyB in polygonBList)
             {
+                for (int i = polygonAList.Count - 1; i >= 0; i--)
+                {
+                    var newPolygons = polygonAList[i].Intersect(polyB, outputAsCollectionType);
+                    polygonAList.RemoveAt(i);
+                    foreach (var newPoly in newPolygons)
+                        polygonAList.Insert(i, newPoly);
+                }
             }
-            return pClipper;
-#elif !COMPARE
-            return IntersectPolygonsTVGL(polygonsA, polygonsB, polygonSimplify, outputAsCollectionType, minAllowableArea);
-#else
-            sw.Restart();
-            var pClipper = BooleanViaClipper(PolyFillType.Positive, ClipType.Intersection, polygonsA, polygonsB);
-            sw.Stop();
-            var clipTime = sw.Elapsed;
-            sw.Restart();
-            var newPolygons = IntersectPolygonsTVGL(polygonsA, polygonsB, polygonSimplify, outputAsCollectionType, minAllowableArea);
+            //return polygonAList;
             sw.Stop();
             var tvglTime = sw.Elapsed;
-            if (Compare(newPolygons, pClipper, "IntersectTwoList", clipTime, tvglTime))
+            if (Compare(polygonAList, pClipper, "IntersectTwoList", clipTime, tvglTime))
             {
 #if PRESENT
                 var all = polygonsA.ToList();
                 all.AddRange(polygonsB);
                 Presenter.ShowAndHang(all);
                 Presenter.ShowAndHang(pClipper);
-                Presenter.ShowAndHang(newPolygons);
+                Presenter.ShowAndHang(polygonAList);
 #else
                 var fileNameStart = "intersectFail" + DateTime.Now.ToOADate().ToString();
                 int i = 0;
@@ -709,59 +599,42 @@ namespace TVGL
         /// <param name="outputAsCollectionType">Type of the output as collection.</param>
         /// <param name="tolerance">The tolerance.</param>
         /// <returns>System.Collections.Generic.List&lt;TVGL.TwoDimensional.Polygon&gt;.</returns>
-        public static List<Polygon> IntersectPolygonsTVGL(this IEnumerable<Polygon> polygons,
-            PolygonSimplify polygonSimplify = PolygonSimplify.CanSimplifyOriginal,
-            PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles, double minAllowableArea = double.NaN)
+        public static List<Polygon> IntersectPolygons(this IEnumerable<Polygon> polygons, PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles)
         {
-            var polygonList = polygons as IList<Polygon> ?? polygons.ToList();
-
-            //polygonList = polygonList.CleanUpForBooleanOperations(polygonSimplify).ToList();
-
-            var result = new List<Polygon>();
-            if (!polygonList.Any()) return result;
-            else return polygonList[0].IntersectTVGL(polygonList.Skip(1), PolygonSimplify.DoNotSimplify, outputAsCollectionType, minAllowableArea);
-        }
-
-        /// <summary>
-        /// Returns the list of polygons that are the sub-shapes of ALL of the provided polygons. Notice this is called IntersectPolygons here 
-        /// to distinguish it from the LINQ function Intersect, which is also a valid extension for any IEnumerable collection.
-        /// </summary>
-        /// <param name="polygons">The polygons.</param>
-        /// <param name="outputAsCollectionType">Type of the output as collection.</param>
-        /// <param name="tolerance">The tolerance.</param>
-        /// <returns>System.Collections.Generic.List&lt;TVGL.TwoDimensional.Polygon&gt;.</returns>
-        public static List<Polygon> IntersectPolygons(this IEnumerable<Polygon> polygons,
-            PolygonSimplify polygonSimplify = PolygonSimplify.CanSimplifyOriginal,
-            PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles, double minAllowableArea = double.NaN)
-        {
-            var polygonList = polygons as IList<Polygon> ?? polygons.ToList();
-            polygonList = polygonList.CleanUpForBooleanOperations(polygonSimplify).ToList();
+            if (areaSimplificationFraction > 0)
+                polygons = polygons.Select(p=>SimplifyFast(p));
+                //polygons = polygons.SimplifyByAreaChangeToNewPolygons(areaSimplificationFraction);
 #if CLIPPER
-            return BooleanViaClipper(PolyFillType.Positive, ClipType.Intersection, polygons);
-            sw.Restart();
-            var pClipper = BooleanViaClipper(PolyFillType.Positive, ClipType.Intersection, polygons);
-            sw.Stop();
-            var clipTime = sw.Elapsed;
-
-            sw.Restart();
-            var pClipper2B = PolygonOperationsV2.BooleanViaClipper(FillRule.Positive, ClipType2.Intersection, polygons);
-            var clipBTime = sw.Elapsed;
-            if (Compare(pClipper, pClipper2B, "Intersection", clipTime, clipBTime))
-            {
-            }
-            return pClipper;
+            return BooleanViaClipper(ClipperLib.PolyFillType.Positive, ClipperLib.ClipType.Intersection, polygons);
 #elif !COMPARE
-            return IntersectPolygonsTVGL(polygons, polygonSimplify, outputAsCollectionType, minAllowableArea);
+            var result = new List<Polygon>();
+            if (!polygons.Any()) return result;
+            else result.Add(polygons.First());
+            foreach (var polygon in polygons.Skip(1))
+            {
+                if (!result.Any()) break;
+                result = result.SelectMany(r => r.Intersect(polygon)).ToList();
+            }
+            return result;
 #else
+            var polygonList = polygons.ToList();
             sw.Restart();
-            var pClipper = BooleanViaClipper(PolyFillType.Positive, ClipType.Intersection, polygons);
+            var pClipper = BooleanViaClipper(ClipperLib.PolyFillType.pftPositive, ClipperLib.ClipType.ctIntersection, polygons);
             sw.Stop();
             var clipTime = sw.Elapsed;
             sw.Restart();
-            var result = IntersectPolygonsTVGL(polygons, polygonSimplify, outputAsCollectionType);
+            var result = new List<Polygon>();
+            if (!polygons.Any()) return result;
+            else result.Add(polygons.First());
+            foreach (var polygon in polygons.Skip(1))
+            {
+                if (!result.Any()) break;
+                result = result.SelectMany(r => r.Intersect(polygon)).ToList() ;
+            }
+            return result;
             sw.Stop();
             var tvglTime = sw.Elapsed;
-            if (Compare((List<Polygon>)polygonList, pClipper, "IntersectList", clipTime, tvglTime))
+            if (Compare(polygonList, pClipper, "IntersectList", clipTime, tvglTime))
             {
 #if PRESENT
                 Presenter.ShowAndHang(polygons);
@@ -781,26 +654,15 @@ namespace TVGL
         #endregion Intersect Public Methods
 
         #region Direct Access to Clipper API
-        public static List<Polygon> BooleanViaClipper(IEnumerable<Polygon> polygonsA, IEnumerable<Polygon> polygonsB, PolyFillType fillType,
-            ClipType clipType)
+        public static List<Polygon> BooleanViaClipper(IEnumerable<Polygon> polygonsA, IEnumerable<Polygon> polygonsB, ClipperLib.PolyFillType fillType,
+            ClipperLib.ClipType clipType)
         {
             return BooleanViaClipper(fillType, clipType, polygonsA, polygonsB);
         }
 
-        public static List<Polygon> BooleanViaClipper(Polygon polygonA, Polygon polygonB, PolyFillType fillType, ClipType clipType)
+        public static List<Polygon> BooleanViaClipper(Polygon polygonA, Polygon polygonB, ClipperLib.PolyFillType fillType, ClipperLib.ClipType clipType)
         {
-            return BooleanViaClipper(fillType, clipType, new[] { polygonA }, new[] { polygonB });
-        }
-
-        public static List<Polygon> BooleanViaClipper(IEnumerable<Polygon> polygonsA, IEnumerable<Polygon> polygonsB, FillRule fillType,
-           ClipType2 clipType)
-        {
-            return PolygonOperationsV2.BooleanViaClipper(fillType, clipType, polygonsA, polygonsB);
-        }
-
-        public static List<Polygon> BooleanViaClipper(Polygon polygonA, Polygon polygonB, FillRule fillType, ClipType2 clipType)
-        {
-            return PolygonOperationsV2.BooleanViaClipper(fillType, clipType, new[] { polygonA }, new[] { polygonB });
+            return BooleanViaClipper(fillType, clipType, new[] { polygonA }, new[] { polygonB});
         }
         #endregion
 
@@ -812,213 +674,156 @@ namespace TVGL
         /// <param name="minuend">The polygon a.</param>
         /// <param name="subtrahend">The polygon b.</param>
         /// <param name="outputAsCollectionType">Type of the output as collection.</param>
-        /// <param name="minAllowableArea">The tolerance.</param>
-        /// <returns>System.Collections.Generic.List&lt;TVGL.TwoDimensional.Polygon&gt;.</returns>
-        public static List<Polygon> SubtractTVGL(this Polygon minuend, Polygon subtrahend,
-            PolygonSimplify polygonSimplify = PolygonSimplify.CanSimplifyOriginal,
-                    PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles, double minAllowableArea = double.NaN)
-        {
-            var polygonBInverted = subtrahend.Copy(true, true);
-
-            //minuend = minuend.CleanUpForBooleanOperations(polygonSimplify);
-            //if (polygonSimplify != PolygonSimplify.DoNotSimplify)
-            //    polygonBInverted = polygonBInverted.CleanUpForBooleanOperations(PolygonSimplify.CanSimplifyOriginal);
-
-            return IntersectTVGL(minuend, polygonBInverted, PolygonSimplify.DoNotSimplify, outputAsCollectionType, minAllowableArea);
-        }
-
-        /// <summary>
-        /// Returns the list of polygons that are the sub-shapes of the two collections of polygons. Notice this is called IntersectPolygons here 
-        /// to distinguish it from the LINQ function Intersect, which is also a valid extension for any IEnumerable collection.
-        /// Notice also that any overlap between the polygons in A or the polygons in B are ignored. Finally, all inputs must be positive.
-        /// 
-        /// </summary>
-        /// <param name="polygonsA">The polygons a.</param>
-        /// <param name="subtrahends">The polygons b.</param>
-        /// <param name="outputAsCollectionType">Type of the output as collection.</param>
         /// <param name="tolerance">The tolerance.</param>
-        /// <returns>System.Collections.Generic.List&lt;TVGL.TwoDimensional.Polygon&gt;.</returns>
-        public static List<Polygon> SubtractTVGL(this Polygon minuend, IEnumerable<Polygon> subtrahends,
-            PolygonSimplify polygonSimplify = PolygonSimplify.CanSimplifyOriginal,
-            PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles, double minAllowableArea = double.NaN)
-        {
-            var polygonBInverted = subtrahends.Select(p => p.Copy(true, true));
-
-            //minuend = minuend.CleanUpForBooleanOperations(polygonSimplify);
-            //if (polygonSimplify != PolygonSimplify.DoNotSimplify)
-            //    polygonBInverted = polygonBInverted.CleanUpForBooleanOperations(PolygonSimplify.CanSimplifyOriginal);
-
-            return IntersectTVGL(minuend, polygonBInverted, PolygonSimplify.DoNotSimplify, outputAsCollectionType, minAllowableArea);
-        }
-        /// <summary>
-        /// Returns the list of polygons that result from A-B (subtracting polygon B from polygon A).
-        /// </summary>
-        /// <param name="minuend">The polygon a.</param>
-        /// <param name="subtrahend">The polygon b.</param>
-        /// <param name="outputAsCollectionType">Type of the output as collection.</param>
-        /// <param name="minAllowableArea">The tolerance.</param>
         /// <returns>System.Collections.Generic.List&lt;TVGL.TwoDimensional.Polygon&gt;.</returns>
         public static List<Polygon> Subtract(this Polygon minuend, Polygon subtrahend,
-            PolygonSimplify polygonSimplify = PolygonSimplify.CanSimplifyOriginal,
-                    PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles, double minAllowableArea = double.NaN)
-        {
-            minuend = minuend.CleanUpForBooleanOperations(polygonSimplify);
-            subtrahend = subtrahend?.CleanUpForBooleanOperations(polygonSimplify);
-#if CLIPPER
-            return BooleanViaClipper(PolyFillType.Positive, ClipType.Difference, new[] { minuend },
-            new[] { subtrahend });
-            sw.Restart();
-            var pClipper = BooleanViaClipper(PolyFillType.Positive, ClipType.Difference, new[] { minuend },
+                    PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles, double tolerance = double.NaN)
+                {
+                    if (areaSimplificationFraction > 0)
+                    {
+                        minuend = minuend.SimplifyFast();
+                        //minuend = minuend.SimplifyByAreaChangeToNewPolygon(areaSimplificationFraction);
+                        if (subtrahend != null)
+                            subtrahend = subtrahend?.SimplifyFast();
+                        //    subtrahend = subtrahend?.SimplifyByAreaChangeToNewPolygon(areaSimplificationFraction);
+                    }
+        #if CLIPPER
+                    return BooleanViaClipper(ClipperLib.PolyFillType.Positive, ClipperLib.ClipType.Difference, new[] { minuend },
                                     new[] { subtrahend });
-            sw.Stop();
-            var clipTime = sw.Elapsed;
+        #elif !COMPARE
+                    var polygonBInverted = subtrahend.Copy(true, true);
+                    var relationship = GetPolygonInteraction(minuend, polygonBInverted);
+                    return Intersect(minuend, polygonBInverted, relationship, outputAsCollectionType, tolerance);
+        #else
+                    sw.Restart();
+                    var pClipper = BooleanViaClipper(ClipperLib.PolyFillType.pftPositive, ClipperLib.ClipType.ctDifference, new[] { minuend },
+                        new[] { subtrahend });
+                    sw.Stop();
+                    var clipTime = sw.Elapsed;
+                    sw.Restart();
+                    var polygonBInverted = subtrahend.Copy(true, true);
+                    var relationship = GetPolygonInteraction(minuend, polygonBInverted);
+                    var pTVGL = Intersect(minuend, polygonBInverted, relationship, outputAsCollectionType, tolerance);
 
-            sw.Restart();
-            var pClipper2B = PolygonOperationsV2.BooleanViaClipper(FillRule.Positive, ClipType2.Difference, new[] { minuend },
-                                    new[] { subtrahend });
-            var clipBTime = sw.Elapsed;
-            if (Compare(pClipper, pClipper2B, "Difference", clipTime, clipBTime))
-            {
-            }
-            return pClipper;
-#elif !COMPARE
-            return SubtractTVGL(minuend, subtrahend, polygonSimplify, outputAsCollectionType, minAllowableArea);
-#else
-            sw.Restart();
-            var pClipper = BooleanViaClipper(PolyFillType.Positive, ClipType.Difference, new[] { minuend },
-                                    new[] { subtrahend });
-            sw.Stop();
-            var clipTime = sw.Elapsed;
-            sw.Restart();
-            var pTVGL = SubtractTVGL(minuend, subtrahend, polygonSimplify, outputAsCollectionType, minAllowableArea);
-            sw.Stop();
-            var tvglTime = sw.Elapsed;
-            if (Compare(pTVGL, pClipper, "Subtract", clipTime, tvglTime))
-            {
-#if PRESENT
+                    sw.Stop();
+                    var tvglTime = sw.Elapsed;
+                    if (Compare(pTVGL, pClipper, "Subtract", clipTime, tvglTime))
+                    {
+        #if PRESENT
 
-                Presenter.ShowAndHang(new[] { minuend, subtrahend });
-                Presenter.ShowAndHang(pClipper);
-                Presenter.ShowAndHang(pTVGL);
-#else
-                var fileNameStart = "subtractFail" + DateTime.Now.ToOADate().ToString();
-                TVGL.IOFunctions.IO.Save(minuend, fileNameStart + "." + "min.json");
-                TVGL.IOFunctions.IO.Save(subtrahend, fileNameStart + "." + "sub.json");
-#endif
-            }
-            return pClipper;
-#endif
-        }
+                        Presenter.ShowAndHang(new[] { minuend, subtrahend });
+                        Presenter.ShowAndHang(pClipper);
+                        Presenter.ShowAndHang(pTVGL);
+        #else
+                        var fileNameStart = "subtractFail" + DateTime.Now.ToOADate().ToString();
+                        TVGL.IO.Save(minuend, fileNameStart + "." + "min.json");
+                        TVGL.IO.Save(subtrahend, fileNameStart + "." + "sub.json");
+        #endif
+                    }
+                    return pClipper;
+        #endif
+                }
 
-        /// <summary>
-        /// Returns the list of polygons that result from A-B (subtracting polygon B from polygon A). By providing the intersections
-        /// between the two polygons, the operation will be performed with less time and memory.
-        /// </summary>
-        /// <param name="minuend">The polygon a.</param>
-        /// <param name="subtrahend">The polygon b.</param>
-        /// <param name="interaction">The polygon relationship.</param>
-        /// <param name="outputAsCollectionType">Type of the output as collection.</param>
-        /// <param name="tolerance">The tolerance.</param>
-        /// <returns>System.Collections.Generic.List&lt;TVGL.TwoDimensional.Polygon&gt;.</returns>
-        /// <exception cref="ArgumentException">The minuend is already a negative polygon (i.e. hole). Consider another operation"
-        /// +" to accomplish this function, like Intersect. - polygonA</exception>
-        public static List<Polygon> SubtractTVGL(this Polygon minuend, Polygon subtrahend, PolygonInteractionRecord interaction,
-            PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles, double tolerance = double.NaN)
-        {
-            interaction = interaction.InvertPolygonInRecord(subtrahend, out var invertedPolygonB);
-            return IntersectTVGL(minuend, invertedPolygonB, interaction, outputAsCollectionType, tolerance);
-        }
+                /// <summary>
+                /// Returns the list of polygons that result from A-B (subtracting polygon B from polygon A). By providing the intersections
+                /// between the two polygons, the operation will be performed with less time and memory.
+                /// </summary>
+                /// <param name="minuend">The polygon a.</param>
+                /// <param name="subtrahend">The polygon b.</param>
+                /// <param name="interaction">The polygon relationship.</param>
+                /// <param name="outputAsCollectionType">Type of the output as collection.</param>
+                /// <param name="tolerance">The tolerance.</param>
+                /// <returns>System.Collections.Generic.List&lt;TVGL.TwoDimensional.Polygon&gt;.</returns>
+                /// <exception cref="ArgumentException">The minuend is already a negative polygon (i.e. hole). Consider another operation"
+                /// +" to accomplish this function, like Intersect. - polygonA</exception>
+                public static List<Polygon> Subtract(this Polygon minuend, Polygon subtrahend, PolygonInteractionRecord interaction,
+                    PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles, double tolerance = double.NaN)
+                {
+                    interaction = interaction.InvertPolygonInRecord(subtrahend, out var invertedPolygonB);
+                    return Intersect(minuend, invertedPolygonB, interaction, outputAsCollectionType, tolerance);
+                }
 
 
-        /// <summary>
-        /// Returns the list of polygons that are the sub-shapes of the minuends and that are not part of the subtrahends. 
-        /// Notice also that any overlap between the polygons in A or the polygons in B are ignored. Finally, all inputs must be positive.
-        /// 
-        /// </summary>
-        /// <param name="minuends">The polygons a.</param>
-        /// <param name="subtrahends">The polygons b.</param>
-        /// <param name="outputAsCollectionType">Type of the output as collection.</param>
-        /// <param name="minAllowableArea">The tolerance.</param>
-        /// <returns>System.Collections.Generic.List&lt;TVGL.TwoDimensional.Polygon&gt;.</returns>
-        public static List<Polygon> SubtractTVGL(this IEnumerable<Polygon> minuends, IEnumerable<Polygon> subtrahends,
-            PolygonSimplify polygonSimplify = PolygonSimplify.CanSimplifyOriginal,
-            PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles, double minAllowableArea = double.NaN)
-        {
-            minuends = minuends.CleanUpForBooleanOperations(polygonSimplify);
-            subtrahends = subtrahends?.CleanUpForBooleanOperations(polygonSimplify).ToList();
-            var result = new List<Polygon>();
-            foreach (var minuend in minuends)
-                result.AddRange(minuend.SubtractTVGL(subtrahends, PolygonSimplify.DoNotSimplify, outputAsCollectionType, minAllowableArea));
-            return result;
-        }
+                /// <summary>
+                /// Returns the list of polygons that are the sub-shapes of the minuends and that are not part of the subtrahends. 
+                /// Notice also that any overlap between the polygons in A or the polygons in B are ignored. Finally, all inputs must be positive.
+                /// 
+                /// </summary>
+                /// <param name="minuends">The polygons a.</param>
+                /// <param name="subtrahends">The polygons b.</param>
+                /// <param name="outputAsCollectionType">Type of the output as collection.</param>
+                /// <param name="tolerance">The tolerance.</param>
+                /// <returns>System.Collections.Generic.List&lt;TVGL.TwoDimensional.Polygon&gt;.</returns>
+                public static List<Polygon> Subtract(this IEnumerable<Polygon> minuends, IEnumerable<Polygon> subtrahends,
+                    PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles, double tolerance = double.NaN)
+                {
+                    if (areaSimplificationFraction > 0)
+                    {
+                        minuends = minuends.Select(p => SimplifyFast(p));
+                        //minuends = minuends.SimplifyByAreaChangeToNewPolygons(areaSimplificationFraction);
+                        if (subtrahends != null)
+                            subtrahends = subtrahends.Select(p => SimplifyFast(p));
+                            //subtrahends = subtrahends.SimplifyByAreaChangeToNewPolygons(areaSimplificationFraction);
+                    }
+        #if CLIPPER
+                    return BooleanViaClipper(ClipperLib.PolyFillType.Positive, ClipperLib.ClipType.Difference, minuends, subtrahends);
+        #elif !COMPARE
+                    var minuendsList = minuends.ToList();
+        foreach (var polyB in subtrahends)
+                    {
+                        for (int i = minuendsList.Count - 1; i >= 0; i--)
+                        {
+                            var newPolygons = minuendsList[i].Subtract(polyB, outputAsCollectionType, tolerance);
+                            minuendsList.RemoveAt(i);
+                            foreach (var newPoly in newPolygons)
+                                minuendsList.Insert(i, newPoly);
+                        }
+                    }
+                    return minuendsList;
+        #else
+                    var minuendsList = minuends.ToList();
+                    sw.Restart();
+                    var pClipper = BooleanViaClipper(ClipperLib.PolyFillType.pftPositive, ClipperLib.ClipType.ctDifference, minuends, subtrahends);
+                    sw.Stop();
+                    var clipTime = sw.Elapsed;
+                    sw.Restart();
+
+                    foreach (var polyB in subtrahends)
+                    {
+                        for (int i = minuendsList.Count - 1; i >= 0; i--)
+                        {
+                            var newPolygons = minuendsList[i].Subtract(polyB, outputAsCollectionType, tolerance);
+                            minuendsList.RemoveAt(i);
+                            foreach (var newPoly in newPolygons)
+                                minuendsList.Insert(i, newPoly);
+                        }
+                    }
+                    sw.Stop();
+                    var tvglTime = sw.Elapsed;
+                    if (Compare(minuendsList, pClipper, "SubtractLists", clipTime, tvglTime))
+                    {
+        #if PRESENT
+                        var all = minuends.ToList();
+                        all.AddRange(subtrahends);
+                        Presenter.ShowAndHang(all);
+                        Presenter.ShowAndHang(pClipper);
+                        Presenter.ShowAndHang(minuendsList);
+        #else
+                        var fileNameStart = "subtractFail" + DateTime.Now.ToOADate().ToString();
+                        int i = 0;
+                        foreach (var poly in minuends)
+                            TVGL.IO.Save(poly, fileNameStart + "." + (i++).ToString() + "min.json");
+                        i = 0;
+                        foreach (var poly in subtrahends)
+                            TVGL.IO.Save(poly, fileNameStart + "." + (i++).ToString() + "sub.json");
+        #endif
+                    }
+                    return pClipper;
+        #endif
+                }
 
 
-
-        /// <summary>
-        /// Returns the list of polygons that are the sub-shapes of the minuends and that are not part of the subtrahends. 
-        /// Notice also that any overlap between the polygons in A or the polygons in B are ignored. Finally, all inputs must be positive.
-        /// 
-        /// </summary>
-        /// <param name="minuends">The polygons a.</param>
-        /// <param name="subtrahends">The polygons b.</param>
-        /// <param name="outputAsCollectionType">Type of the output as collection.</param>
-        /// <param name="minAllowableArea">The tolerance.</param>
-        /// <returns>System.Collections.Generic.List&lt;TVGL.TwoDimensional.Polygon&gt;.</returns>
-        public static List<Polygon> Subtract(this IEnumerable<Polygon> minuends, IEnumerable<Polygon> subtrahends,
-            PolygonSimplify polygonSimplify = PolygonSimplify.CanSimplifyOriginal,
-            PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles, double minAllowableArea = double.NaN)
-        {
-            minuends = minuends.CleanUpForBooleanOperations(polygonSimplify);
-            subtrahends = subtrahends?.CleanUpForBooleanOperations(polygonSimplify);
-#if CLIPPER
-            return BooleanViaClipper(PolyFillType.Positive, ClipType.Difference, minuends, subtrahends);
-            sw.Restart();
-            var pClipper = BooleanViaClipper(PolyFillType.Positive, ClipType.Difference, minuends, subtrahends);
-            sw.Stop();
-            var clipTime = sw.Elapsed;
-
-            sw.Restart();
-            var pClipper2B = PolygonOperationsV2.BooleanViaClipper(FillRule.Positive, ClipType2.Difference, minuends, subtrahends);
-            var clipBTime = sw.Elapsed;
-            if (Compare(pClipper, pClipper2B, "Difference", clipTime, clipBTime))
-            {
-            }
-            return pClipper;
-#elif !COMPARE
-            return SubtractTVGL(minuends, subtrahends, polygonSimplify, outputAsCollectionType, minAllowableArea);
-#else
-            sw.Restart();
-            var pClipper = BooleanViaClipper(PolyFillType.Positive, ClipType.Difference, minuends, subtrahends);
-            sw.Stop();
-            var clipTime = sw.Elapsed;
-            sw.Restart();
-            var minuendsList = SubtractTVGL(minuends, subtrahends, polygonSimplify, outputAsCollectionType, minAllowableArea);
-            sw.Stop();
-            var tvglTime = sw.Elapsed;
-            if (Compare(minuendsList, pClipper, "SubtractLists", clipTime, tvglTime))
-            {
-#if PRESENT
-                var all = minuends.ToList();
-                all.AddRange(subtrahends);
-                Presenter.ShowAndHang(all);
-                Presenter.ShowAndHang(pClipper);
-                Presenter.ShowAndHang(minuendsList);
-#else
-                var fileNameStart = "subtractFail" + DateTime.Now.ToOADate().ToString();
-                int i = 0;
-                foreach (var poly in minuends)
-                    TVGL.IOFunctions.IO.Save(poly, fileNameStart + "." + (i++).ToString() + "min.json");
-                i = 0;
-                foreach (var poly in subtrahends)
-                    TVGL.IOFunctions.IO.Save(poly, fileNameStart + "." + (i++).ToString() + "sub.json");
-#endif
-            }
-            return pClipper;
-#endif
-        }
-
-
-        #endregion Subtract Public Methods
+                #endregion Subtract Public Methods
 
         #region Exclusive-OR Public Methods
 
@@ -1032,31 +837,24 @@ namespace TVGL
         /// <param name="tolerance">The tolerance.</param>
         /// <returns>System.Collections.Generic.List&lt;TVGL.TwoDimensional.Polygon&gt;.</returns>
         public static List<Polygon> ExclusiveOr(this Polygon polygonA, Polygon polygonB,
-            PolygonSimplify polygonSimplify = PolygonSimplify.CanSimplifyOriginal,
             PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles)
         {
-            polygonA = polygonA.CleanUpForBooleanOperations(polygonSimplify);
-            polygonB = polygonB?.CleanUpForBooleanOperations(polygonSimplify);
-#if CLIPPER
-            return BooleanViaClipper(PolyFillType.Positive, ClipType.Xor, new[] { polygonA }, new[] { polygonB });
-            sw.Restart();
-            var pClipper = BooleanViaClipper(PolyFillType.Positive, ClipType.Xor, new[] { polygonA }, new[] { polygonB });
-            sw.Stop();
-            var clipTime = sw.Elapsed;
-
-            sw.Restart();
-            var pClipper2B = PolygonOperationsV2.BooleanViaClipper(FillRule.Positive, ClipType2.Xor, new[] { polygonA }, new[] { polygonB });
-            var clipBTime = sw.Elapsed;
-            if (Compare(pClipper, pClipper2B, "Xor", clipTime, clipBTime))
+            if (areaSimplificationFraction > 0)
             {
+                polygonA = polygonA.SimplifyFast();
+                //polygonA = polygonA.SimplifyByAreaChangeToNewPolygon(areaSimplificationFraction);
+                if (polygonB != null)
+                    polygonB = polygonB.SimplifyFast();
+                    //polygonB = polygonB?.SimplifyByAreaChangeToNewPolygon(areaSimplificationFraction);
             }
-            return pClipper;
+#if CLIPPER
+            return BooleanViaClipper(ClipperLib.PolyFillType.Positive, ClipperLib.ClipType.Xor, new[] { polygonA }, new[] { polygonB });
 #elif !COMPARE
             var relationship = GetPolygonInteraction(polygonA, polygonB);
             return ExclusiveOr(polygonA, polygonB, relationship, outputAsCollectionType);
 #else
             sw.Restart();
-            var pClipper = BooleanViaClipper(PolyFillType.Positive, ClipType.Xor, new[] { polygonA }, new[] { polygonB });
+            var pClipper = BooleanViaClipper(ClipperLib.PolyFillType.pftPositive, ClipperLib.ClipType.ctXor, new[] { polygonA }, new[] { polygonB });
             sw.Stop();
             var clipTime = sw.Elapsed;
             sw.Restart();
@@ -1093,7 +891,7 @@ namespace TVGL
         /// <param name="tolerance">The tolerance.</param>
         /// <returns>System.Collections.Generic.List&lt;TVGL.TwoDimensional.Polygon&gt;.</returns>
         public static List<Polygon> ExclusiveOr(this Polygon polygonA, Polygon polygonB, PolygonInteractionRecord interactionRecord,
-        PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles, double tolerance = double.NaN)
+       PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles, double tolerance = double.NaN)
         {
             if (interactionRecord.IntersectionWillBeEmpty())
                 return new List<Polygon> { polygonA.Copy(true, false), polygonB.Copy(true, false) };
@@ -1113,8 +911,8 @@ namespace TVGL
             }
             else
             {
-                var result = polygonA.SubtractTVGL(polygonB, interactionRecord, outputAsCollectionType, tolerance);
-                result.AddRange(polygonB.SubtractTVGL(polygonA, interactionRecord, outputAsCollectionType, tolerance));
+                var result = polygonA.Subtract(polygonB, interactionRecord, outputAsCollectionType, tolerance);
+                result.AddRange(polygonB.Subtract(polygonA, interactionRecord, outputAsCollectionType, tolerance));
                 return result;
             }
         }
@@ -1130,20 +928,18 @@ namespace TVGL
         /// <param name="resultType">Type of the result.</param>
         /// <param name="tolerance">The tolerance.</param>
         /// <param name="knownWrongPoints">The known wrong points.</param>
+        /// <param name="maxNumberOfPolygons">The maximum number of polygons.</param>
         /// <returns>List&lt;Polygon&gt;.</returns>
         public static List<Polygon> RemoveSelfIntersections(this Polygon polygon, ResultType resultType,
-            bool shapeIsOnlyNegative = false)
+            List<bool> knownWrongPoints = null, int maxNumberOfPolygons = int.MaxValue)
         {
             var intersections = polygon.GetSelfIntersections().Where(intersect => intersect.Relationship != SegmentRelationship.NoOverlap).ToList();
             if (intersections.Count == 0)
                 return new List<Polygon> { polygon };
             polygonRemoveIntersections ??= new PolygonRemoveIntersections();
-            return polygonRemoveIntersections.Run(polygon, intersections, resultType, shapeIsOnlyNegative, null);
-
+            return polygonRemoveIntersections.Run(polygon, intersections, resultType, knownWrongPoints, maxNumberOfPolygons);
         }
 
         #endregion RemoveSelfIntersections Public Method
-
-
     }
 }

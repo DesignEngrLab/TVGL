@@ -59,7 +59,7 @@ namespace TVGL
         /// <returns></returns>
         public IEnumerable<PrimitiveSurface> AdjacentPrimitives()
         {
-            foreach(var segment in Segments)
+            foreach (var segment in Segments)
             {
                 yield return segment.OwnedPrimitive == OwnedPrimitive ? segment.OtherPrimitive : segment.OwnedPrimitive;
             }
@@ -73,8 +73,8 @@ namespace TVGL
         {
             var adjacents = new HashSet<PrimitiveSurface>();
             foreach (var segment in Segments)
-                foreach(var vertex in segment.GetVertices())
-                    foreach(var face in vertex.Faces)
+                foreach (var vertex in segment.GetVertices())
+                    foreach (var face in vertex.Faces)
                         if (face.BelongsToPrimitive != OwnedPrimitive)
                             adjacents.Add(face.BelongsToPrimitive);
             return adjacents;
@@ -202,7 +202,7 @@ namespace TVGL
         {
             if (addToEnd)
                 AddEnd(segment, dir);
-            else 
+            else
                 AddBegin(segment, dir);
         }
 
@@ -238,7 +238,7 @@ namespace TVGL
             //If addToEnd (false) == dir, iterate forward. Otherwise, insert in reverse order.
             if (!dir)
             {
-                foreach(var (edge, dir2) in segment)
+                foreach (var (edge, dir2) in segment)
                 {
                     EdgeList.Insert(0, edge);
                     DirectionList.Insert(0, dir2 == dir);
@@ -252,7 +252,7 @@ namespace TVGL
                     EdgeList.Insert(0, edge);
                     DirectionList.Insert(0, dir2 == dir);
                 }
-            }  
+            }
         }
 
         public new bool UpdateIsClosed()

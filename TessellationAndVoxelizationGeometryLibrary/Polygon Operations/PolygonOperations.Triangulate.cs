@@ -42,7 +42,7 @@ namespace TVGL
                 indexToVertexDict.Add(vertex.IndexInList, vertex);
             }
             var polygon = new Polygon(coords);
-            if (forceToPositive && !polygon.IsPositive) polygon.Reverse();
+            if (forceToPositive && !polygon.IsPositive) polygon.IsPositive = true;
             foreach (var triangleIndices in polygon.TriangulateToIndices())
             {
                 if (indexToVertexDict[triangleIndices.A] != indexToVertexDict[triangleIndices.B]
@@ -183,7 +183,7 @@ namespace TVGL
                 else 
                 {
                     //Try to simplify and then re-check to see if it is valid now. This will also fix threading issues.
-                    SimplifyFast(polygon);//SimplifyByAreaChangeToNewPolygon(polygon, areaSimplificationFraction); 
+                    polygon = SimplifyByAreaChangeToNewPolygon(polygon, areaSimplificationFraction); 
                     selfIntersections = polygon.GetSelfIntersections().Where(intersect => intersect.Relationship != SegmentRelationship.NoOverlap).ToList();
                     if (selfIntersections.Count > 0)
                     {
@@ -239,7 +239,7 @@ namespace TVGL
                 else
                 {
                     //Try to simplify and then re-check to see if it is valid now.
-                    SimplifyFast(polygon);//SimplifyByAreaChangeToNewPolygon(polygon, areaSimplificationFraction);
+                    polygon = SimplifyByAreaChangeToNewPolygon(polygon, areaSimplificationFraction);
                     selfIntersections = polygon.GetSelfIntersections().Where(intersect => intersect.Relationship != SegmentRelationship.NoOverlap).ToList();
                     if (selfIntersections.Count > 0)
                     {

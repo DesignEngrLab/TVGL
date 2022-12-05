@@ -811,8 +811,6 @@ namespace TVGL
                     //TVGL.Presenter.ShowVertexPathsWithSolid(new [] {border.GetVertices().Select(v => v.Coordinates) }, new[] { debugSolid }, false);
 //#endif
                     if (border.IsClosed) break;
-#endif
-                    if (border.UpdateIsClosed()) break;
                     var currentEdgeAndDir = border[0];
                     currentEdge = currentEdgeAndDir.edge;
                     currentVertex = currentEdgeAndDir.dir ? currentEdge.From : currentEdge.To;

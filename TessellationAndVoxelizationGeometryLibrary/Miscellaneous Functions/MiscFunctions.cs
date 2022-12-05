@@ -1264,7 +1264,6 @@ namespace TVGL
         /// <param name="t_b">The fractional amount along line-b.</param>
         /// <returns>System.Boolean.</returns>
 
-        [Intrinsic]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool SegmentSegment2DIntersection(Vector2 aFrom, Vector2 aTo, Vector2 bFrom, Vector2 bTo,
             out Vector2 intersectionPoint, out double t_a, out double t_b)
