@@ -178,7 +178,19 @@ namespace TVGL
             ProjectedFaceAreas = new Dictionary<PolygonalFace, double>();
 
             foreach (PolygonalFace face in faces)
-                ProjectedFaceAreas.Add(face, UpdateZBufferWithFace(face));
+                ProjectedFaceAreas.Add(face, UpdateZBufferWithFace(face, out _, out _));
+        }
+
+        public void DebugSetup()
+        {
+            ZHeightsWithFaces = new (PolygonalFace, double)[XCount * YCount];
+            ProjectedFaceAreas = new Dictionary<PolygonalFace, double>();
+        }
+
+        public (Polygon, IEnumerable<Vector2>) DebugUpdateZBufferWithFace(PolygonalFace face)
+        {
+            ProjectedFaceAreas.Add(face, UpdateZBufferWithFace(face, out var polygon, out var pixels));
+            return(polygon, pixels);
         }
 
         public IEnumerable<(int, int, double)> GetLinePixels(Edge edge)
@@ -194,8 +206,12 @@ namespace TVGL
         /// </summary>
         /// <param name="face">The face.</param>
         /// <returns>System.Double.</returns>
-        private double UpdateZBufferWithFace(PolygonalFace face)
+        private double UpdateZBufferWithFace(PolygonalFace face, out Polygon projection, out IList<Vector2> pixelsConsidered)
         {
+            var view = false;
+            var debug = true;
+            projection = null;
+            pixelsConsidered = new List<Vector2>();
             #region Initialization
             // get the 3 vertices and their zheights
             var vA = Vertices[face.A.IndexInList];
@@ -255,7 +271,7 @@ namespace TVGL
                 }
             }
             // the following 3 indices are the pixels where the 3 vertices reside in x
-            var xStartIndex = (int)((vMin.X - MinX) * inversePixelSideLength);
+            var xStartIndex = (int)Math.Ceiling((vMin.X - MinX) * inversePixelSideLength);
             var xSwitchIndex = (int)((vMed.X - MinX) * inversePixelSideLength);
             var xEndIndex = (int)((vMax.X - MinX) * inversePixelSideLength);
             // x is snapped to the grid. This value should be a little less than vMin.X
@@ -307,12 +323,12 @@ namespace TVGL
                 yBtm += (x - vMed.X) * slopeStepBtm * inversePixelSideLength;
             else yBtm += (x - vMin.X) * slopeStepBtm * inversePixelSideLength;
             if (!switchOnBottom && xSwitchIndex < 0)
-                yTop += (x - vMed.X) * slopeStepTop * inversePixelSideLength;
-            else yTop += (x - vMin.X) * slopeStepTop * inversePixelSideLength;
+                yTop -= (x - vMed.X) * slopeStepTop * inversePixelSideLength;
+            else yTop -= (x - vMin.X) * slopeStepTop * inversePixelSideLength;
             // it doesn't hurt to move yTop up a little more to avoid rounding errors in the loop's 
             // exit condition. One-hundredth of the pixel side length doesn't require anymore iteration
             // but ensures that y<= yTop won't mess up
-            yTop += 0.01 * PixelSideLength;
+            //yTop;// += 0.01 * PixelSideLength;
             #endregion
             // *** main loop ***
             var vBAx = vB.X - vA.X;
@@ -320,6 +336,7 @@ namespace TVGL
             var qVaX = x - vA.X;
             var vCAx = vC.X - vA.X;
             var vCAy = vC.Y - vA.Y;
+            var pixels = new HashSet<(double, double)>();
             for (var xIndex = xStartIndex; xIndex <= xEndIndex; xIndex++)
             {
                 var yIndex = (int)((yBtm - MinY) * inversePixelSideLength);
@@ -327,9 +344,10 @@ namespace TVGL
                 var vBAy_multiply_qVaX = vBAy * qVaX;
                 var vCAy_multiply_qVaX = vCAy * qVaX;
                 var index = YCount * xIndex+yIndex;
-                for (var y = yBtmSnapped; y <= yTop; y += PixelSideLength)
+                for (var y = yBtmSnapped + 1; y <= yTop; y += PixelSideLength)
                 {
                     var qVaY = y - vA.Y;
+                    if(debug) pixels.Add((qVaX + vA.X, y));
                     // check the values of x and y  with the barycentric approach
                     //borrowing notation from:https://www.scratchapixel.com/lessons/3d-basic-rendering/ray-tracing-rendering-a-triangle/barycentric-coordinates
                     //Area = (vB - vA).Cross(q - vA)
@@ -351,8 +369,11 @@ namespace TVGL
                                 if (tuple == default || zIntercept > tuple.Item2)
                                     ZHeightsWithFaces[index] = (face, zIntercept);
                             }
+                            else { view = true; }
                         }
+                        else { view = true; }
                     }
+                    else { view = true; }
                     index++;
                 }
                 // step change in the y values.
@@ -368,6 +389,12 @@ namespace TVGL
                     else
                         slopeStepTop = PixelSideLength * (vMax.Y - vMed.Y) / (vMax.X - vMed.X);
                 }
+            }
+            if (debug && view)
+            {
+                projection = new Polygon(new List<Vector2> { vA, vB, vC });
+                foreach (var pixel in pixels)
+                    pixelsConsidered.Add(new Vector2(pixel.Item1, pixel.Item2));
             }
             return area / 2; // the areas in this function were actually parallelogram areas. need to divide by 2 for triangle area
         }
