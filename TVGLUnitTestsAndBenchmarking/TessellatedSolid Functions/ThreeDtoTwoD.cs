@@ -53,7 +53,7 @@ namespace TVGLUnitTestsAndBenchmarking
                     Console.WriteLine(direction[0] + ", " + direction[1] + ", " + direction[2]);
                     //var silhouette = solid.CreateSilhouetteSimple(direction);
                     //Presenter.ShowAndHang(silhouette);
-                    var polys = solid.GetCrossSection(new Plane(solid.Center, direction));
+                    var polys = solid.GetCrossSection(new Plane(solid.Center, direction), out _);
                     //solid.SliceOnInfiniteFlat(new Plane(solid.Center, direction),out var solids, out var contactData);
                     Presenter.ShowAndHang(polys);
                     IO.Save(polys[0], "ring.json");
