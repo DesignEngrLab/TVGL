@@ -13,7 +13,7 @@ namespace TVGLUnitTestsAndBenchmarking.Misc_Tests
     {
         internal static void Test()
         {
-            DirectoryInfo dir = Program.BackoutToFolder();
+            DirectoryInfo dir = Program.BackoutToFolder(Program.inputFolder);
 
             foreach (var fileName in dir.GetFiles("*").Skip(0))
             {

@@ -12,7 +12,7 @@ namespace TVGLUnitTestsAndBenchmarking
 {
     internal class Program
     {
-        static string inputFolder = "TestFiles";
+       public static string inputFolder = "TestFiles";
         //const string inputFolder = "TestFiles\\bad";
         static Random r = new Random();
         static double r1 => 2.0 * r.NextDouble() - 1.0;
@@ -43,7 +43,7 @@ namespace TVGLUnitTestsAndBenchmarking
             matrix *= Matrix4x4.CreateTranslation(0, 4, 5);
             plane1.Transform(matrix);
             //ProximityTests.TestClosestPointToLines();
-            DirectoryInfo dir = Program.BackoutToFolder();
+            DirectoryInfo dir = Program.    BackoutToFolder();
             Polygon_Testing_Functions.TestSimplify(dir);
             //TestConicIntersection();
             TVGL.Message.Verbosity = VerbosityLevels.Everything;
