@@ -374,7 +374,7 @@ namespace TVGL
             return minCylinder;
         }
 
-        private static Cylinder MinimumBoundingCylinder<T>(IList<T> convexHullVertices, Vector3 direction) where T : IVertex3D
+        public static Cylinder MinimumBoundingCylinder<T>(IList<T> convexHullVertices, Vector3 direction) where T : IVertex3D
         {
             var pointsOnFace = convexHullVertices.ProjectTo2DCoordinates(direction, out var backTransform);
             var circle = MinimumCircle(pointsOnFace);
