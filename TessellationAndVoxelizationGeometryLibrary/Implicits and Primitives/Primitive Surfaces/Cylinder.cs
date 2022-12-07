@@ -303,6 +303,25 @@ namespace TVGL
             Height = MaxDistanceAlongAxis - MinDistanceAlongAxis;
         }
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Cylinder"/> class.
+        /// </summary>
+        /// <param name="axis">The axis.</param>
+        /// <param name="anchor">The anchor.</param>
+        /// <param name="circle">The circle.</param>
+        /// <param name="minDistanceAlongAxis">The minimum distance along axis.</param>
+        /// <param name="maxDistanceAlongAxis">The maximum distance along axis.</param>
+        public Cylinder(Vector3 axis, Vector3 anchor, double radius, double minDistanceAlongAxis,
+            double maxDistanceAlongAxis)
+        {
+            Axis = axis;
+            Anchor = anchor;
+            Radius = radius;
+            MinDistanceAlongAxis = minDistanceAlongAxis;
+            MaxDistanceAlongAxis = maxDistanceAlongAxis;
+            Height = MaxDistanceAlongAxis - MinDistanceAlongAxis;
+        }
+
 
         /// <summary>
         /// Returns where the given point is inside the cylinder.
