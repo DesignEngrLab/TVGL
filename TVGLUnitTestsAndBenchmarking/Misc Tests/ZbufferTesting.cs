@@ -13,20 +13,20 @@ namespace TVGLUnitTestsAndBenchmarking.Misc_Tests
     {
         internal static void Test()
         {
-            DirectoryInfo dir = Program.BackOutToFolder();
+            DirectoryInfo dir = Program.BackoutToFolder("TestFiles");
 
-            foreach (var fileName in dir.GetFiles("*").Skip(0))
+            foreach (var fileName in dir.GetFiles("*").Skip(1))
             {
                 Console.WriteLine("\n\n\nAttempting to open: " + fileName.Name);
                 IO.Open(fileName.FullName, out TessellatedSolid solid);
                 //Presenter.ShowAndHang(solid);
                 var direction = -Vector3.UnitY;
-                //var direction = new Vector3(1,1,1).Normalize();
+                //var direction = new Vector3(-1, -1, -1).Normalize();
                 var (minD,maxD) = solid.Vertices.GetDistanceToExtremeVertex(direction, out _, out _);
                 var displacement = (minD-maxD) * direction;
                 Console.Write("zbuffer start...");
                 var sw = Stopwatch.StartNew();
-                var zbuffer = new ZBuffer(solid, direction, 4000);
+                var zbuffer = new ZBuffer(solid, direction, 1000);
                 zbuffer.Run();
                 sw.Stop();
                 Console.WriteLine("end:  "+sw.Elapsed);
