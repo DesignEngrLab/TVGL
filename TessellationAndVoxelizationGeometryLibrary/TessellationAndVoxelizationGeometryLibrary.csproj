@@ -42,6 +42,6 @@
 
   <ItemGroup>
     <PackageReference Include="MIConvexHull" Version="1.1.19.1019" />
-    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.2" />
   </ItemGroup>
 </Project>
