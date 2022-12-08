@@ -15,7 +15,7 @@ namespace TVGLUnitTestsAndBenchmarking.Misc_Tests
         {
             DirectoryInfo dir = Program.BackoutToFolder("TestFiles");
 
-            foreach (var fileName in dir.GetFiles("*").Skip(0))
+            foreach (var fileName in dir.GetFiles("*").Skip(14))
             {
                 //Console.WriteLine("\n\n\nAttempting to open: " + fileName.Name);
                 IO.Open(fileName.FullName, out TessellatedSolid solid);

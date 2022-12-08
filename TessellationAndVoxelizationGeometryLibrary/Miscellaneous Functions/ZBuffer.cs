@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Reflection;
+using System.Reflection.Metadata.Ecma335;
 using System.Threading;
 
 namespace TVGL
@@ -178,7 +180,7 @@ namespace TVGL
             ProjectedFaceAreas = new Dictionary<PolygonalFace, double>();
 
             foreach (PolygonalFace face in faces)
-                ProjectedFaceAreas.Add(face, UpdateZBufferWithFace2(face));
+                ProjectedFaceAreas.Add(face, UpdateZBufferWithFace(face));
         }
 
         public IEnumerable<(int, int, double)> GetLinePixels(Edge edge)
@@ -279,9 +281,17 @@ namespace TVGL
                 slopeStepTop = slopeStepBtm;
                 slopeStepBtm = temp;
             }
-            //next, we have to handle the special case where the x-values of vMin and vMed 
-            //(actually all 3 vertices could be in same column) are in the same column
-            if (xStartIndex == xSwitchIndex)
+            //next, we have to handle the special cases where the x-values  are in the same column
+            // first, the extremem case where all vertices in the same column or xStartIndex == xEndIndex
+            if (xStartIndex >= xEndIndex)
+            {
+                slopeStepBtm = slopeStepTop = 0;
+                yBtm = Math.Min(vA.Y, Math.Min(vB.Y, vC.Y));
+                yTop = Math.Max(vA.Y, Math.Max(vB.Y, vC.Y));
+                xSwitchIndex = -1;
+            }
+            // check if first 2 are in the same column
+            else if (xStartIndex >= xSwitchIndex)
             {
                 xSwitchIndex = -1; // this is to avoid problems in the loop below where we check when the index should switch
                 if (switchOnBottom)
@@ -296,10 +306,6 @@ namespace TVGL
                     yTop = vMed.Y;
                 }
             }
-            // infinite slope will be bad for us, but setting to an arbitrary value (like 1)
-            // causes no problem since we'll never increment the slope-step
-            if (double.IsInfinity(slopeStepTop)) slopeStepTop = 1;
-            if (double.IsInfinity(slopeStepBtm)) slopeStepBtm = 1;
             // very subtle issue! remember above where we set yBtm and yTop to vMin.Y. 
             // well, since x will be on the grid we need to move these slightly to be on the closest
             // grid.
@@ -456,17 +462,17 @@ namespace TVGL
                 slopeStepTop = slopeStepBtm;
                 slopeStepBtm = temp;
             }
-            //next, we have to handle the special case where the x-values of vMin and vMed 
-            // are in the same column. Actually all 3 vertices could be in same column. Let's first
-            // check this extreme
-            if (xStartIndex == xEndIndex)
+            //next, we have to handle the special cases where the x-values  are in the same column
+            // first, the extremem case where all vertices in the same column or xStartIndex == xEndIndex
+            if (xStartIndex >= xEndIndex)
             {
                 slopeStepBtm = slopeStepTop = 0;
                 yBtm = Math.Min(vA.Y, Math.Min(vB.Y, vC.Y));
                 yTop = Math.Max(vA.Y, Math.Max(vB.Y, vC.Y));
                 xSwitchIndex = -1;
             }
-            else if (xStartIndex == xSwitchIndex)
+            // check if first 2 are in the same column
+            else if (xStartIndex >= xSwitchIndex)
             {
                 xSwitchIndex = -1; // this is to avoid problems in the loop below where we check when the index should switch
                 if (switchOnBottom)
@@ -481,10 +487,6 @@ namespace TVGL
                     yTop = vMed.Y;
                 }
             }
-            // infinite slope will be bad for us, but setting to an arbitrary value (like 1)
-            // causes no problem since we'll never increment the slope-step
-            if (double.IsInfinity(slopeStepTop)) slopeStepTop = 0;
-            if (double.IsInfinity(slopeStepBtm)) slopeStepBtm = 0;
             // very subtle issue! remember above where we set yBtm and yTop to vMin.Y. 
             // well, since x will be on the grid we need to move these slightly to be on the closest
             // grid.
@@ -494,9 +496,7 @@ namespace TVGL
             if (!switchOnBottom && xSwitchIndex < 0)
                 yTop += (x - vMed.X) * slopeStepTop * inversePixelSideLength;
             else yTop += (x - vMin.X) * slopeStepTop * inversePixelSideLength;
-            if (yBtm < MinY) yBtm = MinY; // this happens if the preceding conditions are working in the
-                                          // corner and the extrapolate bottom is below the extremes of the part
-                                          // this will lead to a negative index below.
+
             // it doesn't hurt to move yTop up a little more to avoid rounding errors in the loop's 
             // exit condition. One-hundredth of the pixel side length doesn't require anymore iteration
             // but ensures that y<= yTop won't mess up
@@ -510,32 +510,41 @@ namespace TVGL
             var vCAy = vC.Y - vA.Y;
             for (var xIndex = xStartIndex; xIndex <= xEndIndex; xIndex++)
             {
-                var yIndex = 1 + (int)((yBtm - MinY) * inversePixelSideLength);
+                var yIndex = (int)((yBtm - MinY) * inversePixelSideLength);
                 var yBtmSnapped = yIndex * PixelSideLength + MinY;
-                var vBAy_multiply_qVaX = vBAy * qVaX;
-                var vCAy_multiply_qVaX = vCAy * qVaX;
-                var index = YCount * xIndex + yIndex;
-                for (var y = yBtmSnapped; y <= yTop; y += PixelSideLength)
+                if (yIndex >= 0)
                 {
-                    var qVaY = y - vA.Y;
-                    // check the values of x and y  with the barycentric approach
-                    //borrowing notation from:https://www.scratchapixel.com/lessons/3d-basic-rendering/ray-tracing-rendering-a-triangle/barycentric-coordinates
-                    //Area = (vB - vA).Cross(q - vA)
-                    var area2 = vBAx * qVaY - vBAy_multiply_qVaX;
-                    //Area = (q - vA).Cross(vC - vA)
-                    var area3 = vCAy_multiply_qVaX - qVaY * vCAx;
-                    var v = area2 / area;
-                    var u = area3 / area;
-                    var w = 1 - v - u;
-                    //if (w >= 0 && w <= 1)
+                    var vBAy_multiply_qVaX = vBAy * qVaX;
+                    var vCAy_multiply_qVaX = vCAy * qVaX;
+                    var index = YCount * xIndex + yIndex;
+                    for (var y = yBtmSnapped; y <= yTop; y += PixelSideLength)
                     {
-                        var zIntercept = w * zA + u * zB + v * zC;
-                        // since the grid is not initialized, we update it if the grid cell is empty or if we found a better face
-                        var tuple = ZHeightsWithFaces[index];
-                        if (tuple == default || zIntercept > tuple.Item2)
-                            ZHeightsWithFaces[index] = (face, zIntercept);
+                        var qVaY = y - vA.Y;
+                        // check the values of x and y  with the barycentric approach
+                        //borrowing notation from:https://www.scratchapixel.com/lessons/3d-basic-rendering/ray-tracing-rendering-a-triangle/barycentric-coordinates
+                        //Area = (vB - vA).Cross(q - vA)
+                        var area2 = vBAx * qVaY - vBAy_multiply_qVaX;
+                        if (area2 >= 0 && area2 <= area)
+                        {
+                            //Area = (q - vA).Cross(vC - vA)
+                            var area3 = vCAy_multiply_qVaX - qVaY * vCAx;
+                            if (area3 >= 0 && area3 <= area)
+                            {
+                                var v = area2 / area;
+                                var u = area3 / area;
+                                var w = 1 - v - u;
+                                if (w >= 0 && w <= 1)
+                                {
+                                    var zIntercept = w * zA + u * zB + v * zC;
+                                    // since the grid is not initialized, we update it if the grid cell is empty or if we found a better face
+                                    var tuple = ZHeightsWithFaces[index];
+                                    if (tuple == default || zIntercept > tuple.Item2)
+                                        ZHeightsWithFaces[index] = (face, zIntercept);
+                                }
+                            }
+                        }
+                        index++;
                     }
-                    index++;
                 }
                 // step change in the y values.
                 qVaX += PixelSideLength;
