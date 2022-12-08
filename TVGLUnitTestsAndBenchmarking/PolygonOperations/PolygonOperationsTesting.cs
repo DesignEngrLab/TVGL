@@ -67,7 +67,6 @@ namespace TVGLUnitTestsAndBenchmarking
 
             polygon3 = polygon1.ExclusiveOr(polygon2, a);
             Presenter.ShowAndHang(polygon3);
-
             */
         }
         internal static void DebugBoolean()

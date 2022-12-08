@@ -1,5 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.Reflection;
+using System.Reflection.Metadata.Ecma335;
+using System.Runtime.CompilerServices;
 using System.Threading;
 
 namespace TVGL
@@ -17,12 +20,12 @@ namespace TVGL
             {
                 if (zHeightsOnly == null)
                 {
-                    zHeightsOnly = new double[XCount,YCount];
+                    zHeightsOnly = new double[XCount, YCount];
                     for (int i = 0; i < XCount; i++)
                     {
                         var index = YCount * i;
                         for (int j = 0; j < YCount; j++)
-                            zHeightsOnly[i,j] = ZHeightsWithFaces[index++].Item2;
+                            zHeightsOnly[i, j] = ZHeightsWithFaces[index++].Item2;
                     }
 
                 }
@@ -116,7 +119,7 @@ namespace TVGL
         /// <param name="direction">The direction.</param>
         /// <param name="pixelsPerRow">The pixels per row.</param>
         /// <param name="pixelBorder">The pixel border.</param>
-        public ZBuffer(TessellatedSolid solid, Vector3 direction, int pixelsPerRow, int pixelBorder = 1)
+        public ZBuffer(TessellatedSolid solid, Vector3 direction, int pixelsPerRow, int pixelBorder = 2)
         {
             Vertices = new Vector2[solid.NumberOfVertices];
             VertexZHeights = new double[solid.NumberOfVertices];
@@ -178,19 +181,7 @@ namespace TVGL
             ProjectedFaceAreas = new Dictionary<PolygonalFace, double>();
 
             foreach (PolygonalFace face in faces)
-                ProjectedFaceAreas.Add(face, UpdateZBufferWithFace(face, out _, out _));
-        }
-
-        public void DebugSetup()
-        {
-            ZHeightsWithFaces = new (PolygonalFace, double)[XCount * YCount];
-            ProjectedFaceAreas = new Dictionary<PolygonalFace, double>();
-        }
-
-        public (Polygon, IEnumerable<Vector2>) DebugUpdateZBufferWithFace(PolygonalFace face)
-        {
-            ProjectedFaceAreas.Add(face, UpdateZBufferWithFace(face, out var polygon, out var pixels));
-            return(polygon, pixels);
+                ProjectedFaceAreas.Add(face, UpdateZBufferWithFace(face));
         }
 
         public IEnumerable<(int, int, double)> GetLinePixels(Edge edge)
@@ -206,12 +197,9 @@ namespace TVGL
         /// </summary>
         /// <param name="face">The face.</param>
         /// <returns>System.Double.</returns>
-        private double UpdateZBufferWithFace(PolygonalFace face, out Polygon projection, out IList<Vector2> pixelsConsidered)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private double UpdateZBufferWithFace(PolygonalFace face)
         {
-            var view = false;
-            var debug = true;
-            projection = null;
-            pixelsConsidered = new List<Vector2>();
             #region Initialization
             // get the 3 vertices and their zheights
             var vA = Vertices[face.A.IndexInList];
@@ -271,7 +259,7 @@ namespace TVGL
                 }
             }
             // the following 3 indices are the pixels where the 3 vertices reside in x
-            var xStartIndex = (int)Math.Ceiling((vMin.X - MinX) * inversePixelSideLength);
+            var xStartIndex = (int)((vMin.X - MinX) * inversePixelSideLength);
             var xSwitchIndex = (int)((vMed.X - MinX) * inversePixelSideLength);
             var xEndIndex = (int)((vMax.X - MinX) * inversePixelSideLength);
             // x is snapped to the grid. This value should be a little less than vMin.X
@@ -295,9 +283,17 @@ namespace TVGL
                 slopeStepTop = slopeStepBtm;
                 slopeStepBtm = temp;
             }
-            //next, we have to handle the special case where the x-values of vMin and vMed 
-            //(actually all 3 vertices could be in same column) are in the same column
-            if (xStartIndex == xSwitchIndex)
+            //next, we have to handle the special cases where the x-values  are in the same column
+            // first, the extremem case where all vertices in the same column or xStartIndex == xEndIndex
+            if (xStartIndex >= xEndIndex)
+            {
+                slopeStepBtm = slopeStepTop = 0;
+                yBtm = Math.Min(vA.Y, Math.Min(vB.Y, vC.Y));
+                yTop = Math.Max(vA.Y, Math.Max(vB.Y, vC.Y));
+                xSwitchIndex = -1;
+            }
+            // check if first 2 are in the same column
+            else if (xStartIndex >= xSwitchIndex)
             {
                 xSwitchIndex = -1; // this is to avoid problems in the loop below where we check when the index should switch
                 if (switchOnBottom)
@@ -312,10 +308,6 @@ namespace TVGL
                     yTop = vMed.Y;
                 }
             }
-            // infinite slope will be bad for us, but setting to an arbitrary value (like 1)
-            // causes no problem since we'll never increment the slope-step
-            if (double.IsInfinity(slopeStepTop)) slopeStepTop = 1;
-            if (double.IsInfinity(slopeStepBtm)) slopeStepBtm = 1;
             // very subtle issue! remember above where we set yBtm and yTop to vMin.Y. 
             // well, since x will be on the grid we need to move these slightly to be on the closest
             // grid.
@@ -323,12 +315,12 @@ namespace TVGL
                 yBtm += (x - vMed.X) * slopeStepBtm * inversePixelSideLength;
             else yBtm += (x - vMin.X) * slopeStepBtm * inversePixelSideLength;
             if (!switchOnBottom && xSwitchIndex < 0)
-                yTop -= (x - vMed.X) * slopeStepTop * inversePixelSideLength;
-            else yTop -= (x - vMin.X) * slopeStepTop * inversePixelSideLength;
+                yTop += (x - vMed.X) * slopeStepTop * inversePixelSideLength;
+            else yTop += (x - vMin.X) * slopeStepTop * inversePixelSideLength;
             // it doesn't hurt to move yTop up a little more to avoid rounding errors in the loop's 
             // exit condition. One-hundredth of the pixel side length doesn't require anymore iteration
             // but ensures that y<= yTop won't mess up
-            //yTop;// += 0.01 * PixelSideLength;
+            yTop += 0.01 * PixelSideLength;
             #endregion
             // *** main loop ***
             var vBAx = vB.X - vA.X;
@@ -336,18 +328,16 @@ namespace TVGL
             var qVaX = x - vA.X;
             var vCAx = vC.X - vA.X;
             var vCAy = vC.Y - vA.Y;
-            var pixels = new HashSet<(double, double)>();
             for (var xIndex = xStartIndex; xIndex <= xEndIndex; xIndex++)
             {
                 var yIndex = (int)((yBtm - MinY) * inversePixelSideLength);
                 var yBtmSnapped = yIndex * PixelSideLength + MinY;
                 var vBAy_multiply_qVaX = vBAy * qVaX;
                 var vCAy_multiply_qVaX = vCAy * qVaX;
-                var index = YCount * xIndex+yIndex;
-                for (var y = yBtmSnapped + 1; y <= yTop; y += PixelSideLength)
+                var index = YCount * xIndex + yIndex;
+                for (var y = yBtmSnapped; y <= yTop; y += PixelSideLength)
                 {
                     var qVaY = y - vA.Y;
-                    if(debug) pixels.Add((qVaX + vA.X, y));
                     // check the values of x and y  with the barycentric approach
                     //borrowing notation from:https://www.scratchapixel.com/lessons/3d-basic-rendering/ray-tracing-rendering-a-triangle/barycentric-coordinates
                     //Area = (vB - vA).Cross(q - vA)
@@ -369,11 +359,8 @@ namespace TVGL
                                 if (tuple == default || zIntercept > tuple.Item2)
                                     ZHeightsWithFaces[index] = (face, zIntercept);
                             }
-                            else { view = true; }
                         }
-                        else { view = true; }
                     }
-                    else { view = true; }
                     index++;
                 }
                 // step change in the y values.
@@ -389,12 +376,6 @@ namespace TVGL
                     else
                         slopeStepTop = PixelSideLength * (vMax.Y - vMed.Y) / (vMax.X - vMed.X);
                 }
-            }
-            if (debug && view)
-            {
-                projection = new Polygon(new List<Vector2> { vA, vB, vC });
-                foreach (var pixel in pixels)
-                    pixelsConsidered.Add(new Vector2(pixel.Item1, pixel.Item2));
             }
             return area / 2; // the areas in this function were actually parallelogram areas. need to divide by 2 for triangle area
         }
