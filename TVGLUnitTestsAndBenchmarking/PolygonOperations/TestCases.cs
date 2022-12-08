@@ -385,6 +385,7 @@ namespace TVGLUnitTestsAndBenchmarking
                         if (polys2.Count > 0) poly2 = polys2.LargestPolygon();
                         //var polys2 = solid.GetCrossSection(new Plane(bCenter + r1 *0.5* minDimension, n1)).OffsetRound(offset1);
                         //if (polys2.Count > 0) poly2 = polys2.LargestPolygonWithHoles();
+                        //if (polys2.Count > 0) poly2 = polys2.LargestPolygon();
                     }
                     yield return new KeyValuePair<string, (Polygon, Polygon)>(name + k, (poly1, poly2));
                 }

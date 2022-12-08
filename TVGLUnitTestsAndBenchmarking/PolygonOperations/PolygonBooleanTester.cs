@@ -117,6 +117,7 @@ namespace TVGLUnitTestsAndBenchmarking
             numClipperErrors += errors.Item2;
             /********** Intersection *********/
             p1 = tvglResult.LargestPolygon();
+            //p1 = tvglResult.LargestPolygonWithHoles();
             //v1 = clipperResult;
             operationString = "Intersect";
             Console.WriteLine("testing " + operationString + ": " + numVerts + " vertices");
