@@ -4,6 +4,7 @@
 // It is licensed under MIT License (see LICENSE.txt for details)
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 
 namespace TVGL
@@ -197,6 +198,23 @@ namespace TVGL
             return polygonArea.IsPracticallySame(minCircle.Area, polygonArea * tolerancePercentage);
         }
 
+        public static Polygon ReflectOnX(this Polygon shape)
+        {
+            var relfection = new List<Polygon>();
+            foreach (var polygon in shape.AllPolygons)
+            {
+                var newPath = new List<Vector2>();
+                for (var i = polygon.Path.Count - 1; i >= 0; i--)//increment backwards to avoid need to reverse points.
+                    newPath.Add(new Vector2(polygon.Path[i].X, -polygon.Path[i].Y));
+                var newPolygon = new Polygon(newPath);
+                relfection.Add(newPolygon);
+                if (!newPolygon.Area.IsPracticallySame(polygon.Area, Constants.BaseTolerance))
+                {
+                    throw new Exception("Areas do not match after mirroring the polygons");
+                }
+            }
+            return relfection.CreatePolygonTree(true).First();
+        }
 
         /// <summary>
         /// Mirrors the specified polgyon along the direction, and at same midpoint of the provide polygon.
