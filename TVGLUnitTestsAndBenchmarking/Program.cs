@@ -18,11 +18,9 @@ namespace TVGLUnitTestsAndBenchmarking
         static double r1 => 2.0 * r.NextDouble() - 1.0;
 
 
-
         [STAThread]
         private static void Main(string[] args)
         {
-
             ZbufferTesting.Test();
             return;
             var sphere1 = new Sphere(new Vector3(2, 3, 4), 10, true);
