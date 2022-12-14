@@ -332,36 +332,39 @@ namespace TVGL
             {
                 var yIndex = (int)((yBtm - MinY) * inversePixelSideLength);
                 var yBtmSnapped = yIndex * PixelSideLength + MinY;
-                var vBAy_multiply_qVaX = vBAy * qVaX;
-                var vCAy_multiply_qVaX = vCAy * qVaX;
-                var index = YCount * xIndex + yIndex;
-                for (var y = yBtmSnapped; y <= yTop; y += PixelSideLength)
+                if (yIndex >= 0)
                 {
-                    var qVaY = y - vA.Y;
-                    // check the values of x and y  with the barycentric approach
-                    //borrowing notation from:https://www.scratchapixel.com/lessons/3d-basic-rendering/ray-tracing-rendering-a-triangle/barycentric-coordinates
-                    //Area = (vB - vA).Cross(q - vA)
-                    var area2 = vBAx * qVaY - vBAy_multiply_qVaX;
-                    if (area2 >= 0 && area2 <= area)
+                    var vBAy_multiply_qVaX = vBAy * qVaX;
+                    var vCAy_multiply_qVaX = vCAy * qVaX;
+                    var index = YCount * xIndex + yIndex;
+                    for (var y = yBtmSnapped; y <= yTop; y += PixelSideLength)
                     {
-                        //Area = (q - vA).Cross(vC - vA)
-                        var area3 = vCAy_multiply_qVaX - qVaY * vCAx;
-                        if (area3 >= 0 && area3 <= area)
+                        var qVaY = y - vA.Y;
+                        // check the values of x and y  with the barycentric approach
+                        //borrowing notation from:https://www.scratchapixel.com/lessons/3d-basic-rendering/ray-tracing-rendering-a-triangle/barycentric-coordinates
+                        //Area = (vB - vA).Cross(q - vA)
+                        var area2 = vBAx * qVaY - vBAy_multiply_qVaX;
+                        if (area2 >= 0 && area2 <= area)
                         {
-                            var v = area2 / area;
-                            var u = area3 / area;
-                            var w = 1 - v - u;
-                            if (w >= 0 && w <= 1)
+                            //Area = (q - vA).Cross(vC - vA)
+                            var area3 = vCAy_multiply_qVaX - qVaY * vCAx;
+                            if (area3 >= 0 && area3 <= area)
                             {
-                                var zIntercept = w * zA + u * zB + v * zC;
-                                // since the grid is not initialized, we update it if the grid cell is empty or if we found a better face
-                                var tuple = ZHeightsWithFaces[index];
-                                if (tuple == default || zIntercept > tuple.Item2)
-                                    ZHeightsWithFaces[index] = (face, zIntercept);
+                                var v = area2 / area;
+                                var u = area3 / area;
+                                var w = 1 - v - u;
+                                if (w >= 0 && w <= 1)
+                                {
+                                    var zIntercept = w * zA + u * zB + v * zC;
+                                    // since the grid is not initialized, we update it if the grid cell is empty or if we found a better face
+                                    var tuple = ZHeightsWithFaces[index];
+                                    if (tuple == default || zIntercept > tuple.Item2)
+                                        ZHeightsWithFaces[index] = (face, zIntercept);
+                                }
                             }
                         }
+                        index++;
                     }
-                    index++;
                 }
                 // step change in the y values.
                 qVaX += PixelSideLength;
