@@ -37,13 +37,13 @@ namespace TVGL
         /// Gets the z-heights and the associated face that created it.
         /// </summary>
         /// <value>The z heights with faces.</value>
-        public (PolygonalFace, double)[] ZHeightsWithFaces { get; private set; }
+        public (PolygonalFace, double)[] ZHeightsWithFaces { get; set; }
         /// <summary>
         /// Gets the projected face areas in the z-buffer direction. This is found through
         /// the course of the "Run" computation and might be useful elsewhere.
         /// </summary>
         /// <value>The projected face areas.</value>
-        public Dictionary<PolygonalFace, double> ProjectedFaceAreas { get; private set; }
+        public Dictionary<PolygonalFace, double> ProjectedFaceAreas { get; set; }
         /// <summary>
         /// Gets the projected 2D vertices of all the 3D vertices of the tessellated solid.
         /// This is found through the course of the "Run" computation and might be useful elsewhere.
@@ -268,6 +268,9 @@ namespace TVGL
             // set the y heights at the start to the same as the y-value of vMin
             var yBtm = vMin.Y;
             var yTop = vMin.Y;
+            var yMin = Math.Min(vA.Y, Math.Min(vB.Y, vC.Y));
+            var yBtmIndex = (int)((yMin - MinY) * inversePixelSideLength);
+            var yMax = Math.Max(vA.Y, Math.Max(vB.Y, vC.Y));
 
             // define the lines emanating from vMin. Assume the intermediate vertex
             // is on the bottom path. Switch if that's wrong.
@@ -332,12 +335,13 @@ namespace TVGL
             {
                 var yIndex = (int)((yBtm - MinY) * inversePixelSideLength);
                 var yBtmSnapped = yIndex * PixelSideLength + MinY;
-                if (yIndex >= 0)
+                if (yIndex >= 0)//yBtmIndex)
                 {
                     var vBAy_multiply_qVaX = vBAy * qVaX;
                     var vCAy_multiply_qVaX = vCAy * qVaX;
                     var index = YCount * xIndex + yIndex;
-                    for (var y = yBtmSnapped; y <= yTop; y += PixelSideLength)
+                    var stop = Math.Min(yTop, yMax);
+                    for (var y = yBtmSnapped; y <= stop; y += PixelSideLength)
                     {
                         var qVaY = y - vA.Y;
                         // check the values of x and y  with the barycentric approach
@@ -361,8 +365,11 @@ namespace TVGL
                                     if (tuple == default || zIntercept > tuple.Item2)
                                         ZHeightsWithFaces[index] = (face, zIntercept);
                                 }
+                                else { }
                             }
+                            else { }
                         }
+                        else { }
                         index++;
                     }
                 }
