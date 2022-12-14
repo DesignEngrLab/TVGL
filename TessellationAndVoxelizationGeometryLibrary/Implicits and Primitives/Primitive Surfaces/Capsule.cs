@@ -76,34 +76,104 @@ namespace TVGL
         public bool IsPositive { get; set; }
 
 
-        public Vector3 Anchor1 { get; set; }
-        public Vector3 Anchor2 { get; set; }
+        public Vector3 Anchor1
+        {
+            get => anchor1;
+            set
+            {
+                if (anchor1 != value)
+                {
+                    anchor1 = value;
+                    CalculatePrivateGeometryFields();
+                }
+            }
+        }
+        public Vector3 Anchor2
+        {
+            get => anchor2;
+            set
+            {
+                if (anchor2 != value)
+                {
+                    anchor2 = value;
+                    CalculatePrivateGeometryFields();
+                }
+            }
+        }
 
-        public double Radius1 { get; set; }
-        public double Radius2 { get; set; }
+        public double Radius1
+        {
+            get => radius1;
+            set
+            {
+                if (radius1 != value)
+                {
+                    radius1 = value;
+                    CalculatePrivateGeometryFields();
+                }
+            }
+        }
+        public double Radius2
+        {
+            get => radius2;
+            set
+            {
+                if (radius2 != value)
+                {
+                    radius2 = value;
+                    CalculatePrivateGeometryFields();
+                }
+            }
+        }
 
+        Vector3 anchor1;
+        Vector3 anchor2;
+        double radius1;
+        double radius2;
         Vector3 directionVector;
         double directionVectorLength;
         double plane1Dx;
         double plane2Dx;
+        Vector3 coneAnchor1;
+        Vector3 coneAnchor2;
+        double coneLength;
+        double coneRadius1;
+        double coneRadius2;
         #endregion
 
         #region Constructors
 
         public Capsule(Vector3 anchor1, double radius1, Vector3 anchor2, double radius2, bool isPositive)
         {
-            Anchor1 = anchor1;
-            Radius1 = radius1;
-            Anchor2 = anchor2;
-            Radius2 = radius2;
+            this.anchor1 = anchor1;
+            this.radius1 = radius1;
+            this.anchor2 = anchor2;
+            this.radius2 = radius2;
             IsPositive = isPositive;
+            CalculatePrivateGeometryFields();
+
+        }
+
+        private void CalculatePrivateGeometryFields()
+        {
             directionVector = Anchor2 - Anchor1;
             directionVectorLength = directionVector.Length();
             directionVector /= directionVectorLength;
-            plane1Dx = directionVector.Dot(Anchor1);
-            plane2Dx = directionVector.Dot(Anchor2);
+            var sinPhi = (Radius1 - Radius2) / directionVectorLength;
+            //sinPhi = 0;
+            var deltaR1 = Radius1 * sinPhi;
+            coneAnchor1 = Anchor1 + deltaR1 * directionVector;
+            var deltaR2 = Radius2 * sinPhi;
+            coneAnchor2 = Anchor2 + deltaR2 * directionVector;
+            plane1Dx = directionVector.Dot(coneAnchor1);
+            plane2Dx = directionVector.Dot(coneAnchor2);
+            coneLength = directionVectorLength + (deltaR2 - deltaR1);
+            var cosPhi = Math.Sqrt(1 - sinPhi * sinPhi);
+            coneRadius1 = radius1 * cosPhi;
+            coneRadius2 = radius2 * cosPhi;
         }
 
+        #endregion
         /// <summary>
         /// Returns where the given point is inside the Capsule.
         /// </summary>
@@ -119,12 +189,11 @@ namespace TVGL
             var dxAlong = point.Dot(directionVector);
             if (dxAlong < plane1Dx) return (point - Anchor1).Length() - Radius1;
             if (dxAlong > plane2Dx) return (point - Anchor2).Length() - Radius2;
-            var t = (dxAlong - plane1Dx) / directionVectorLength;
-            var thisRadius = (1 - t) * Radius1 + t * Radius2;
-            return (point - Anchor1).Cross(directionVector).Length() - thisRadius;
+            var t = (dxAlong - plane1Dx) / coneLength;
+            var thisRadius = (1 - t) * coneRadius1 + t * coneRadius2;
+            return (point - coneAnchor1).Cross(directionVector).Length() - thisRadius;
         }
 
 
-        #endregion
     }
 }

@@ -134,15 +134,7 @@ namespace TVGL
             }
             internal override double Run(Vector3 point)
             {
-                var pmc = surface1.Run(point);
-                if (pmc < 0) return pmc;
-                return Math.Min(pmc, surface2.Run(point));
-                //var pmc1 = surface1.Run(point);
-                //var pmc2 = surface2.Run(point);
-                //if (pmc1 > 0 && pmc2 > 0) return Math.Min(pmc1, pmc2);
-                //if (pmc1 < 0 && pmc2 < 0) return Math.Max(pmc1, pmc2);
-
-                //return Math.Min(pmc1, pmc2);
+                return Math.Min(surface1.Run(point), surface2.Run(point));
             }
         }
         class Intersect : BooleanOperation
@@ -157,9 +149,7 @@ namespace TVGL
             }
             internal override double Run(Vector3 point)
             {
-                var pmc = surface1.Run(point);
-                if (pmc > 0) return pmc;
-                return Math.Max(pmc, surface2.Run(point));
+                return Math.Max(surface1.Run(point), surface2.Run(point));
             }
         }
         class SubtractAB : BooleanOperation
@@ -174,16 +164,7 @@ namespace TVGL
             }
             internal override double Run(Vector3 point)
             {
-                var pmcA = surfaceA.Run(point);
-                var pmcB = surfaceB.Run(point);
-                if (pmcA > 0 && pmcB > 0)
-                    return Math.Min(pmcA, pmcB);
-                if (pmcA < 0 && pmcB < 0)
-                    return Math.Min(-pmcA, -pmcB);
-                //if (pmcA < 0) // && pmcB > 0)
-                //    return Math.Min(pmcA, -pmcB);
-                //if //(pmcA > 0 && pmcB < 0)
-                return Math.Max(pmcA, -pmcB);
+                return Math.Max(surfaceA.Run(point), -surfaceB.Run(point));
             }
         }
         class XOR : BooleanOperation
