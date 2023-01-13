@@ -136,6 +136,8 @@ namespace TVGL
 
         public override double CalculateError(IEnumerable<Vector3> vertices = null)
         {
+            if (MinorRadius is double.NaN)
+                return double.MaxValue;
             if (vertices == null)
             {
                 vertices = new List<Vector3>();

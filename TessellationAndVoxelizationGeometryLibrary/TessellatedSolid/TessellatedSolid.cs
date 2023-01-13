@@ -7,6 +7,7 @@ using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Runtime.Serialization;
 
 namespace TVGL
@@ -1149,6 +1150,12 @@ namespace TVGL
         {
             var defaultColor = new Color(KnownColors.LightGray);
             foreach (var face in Faces) face.Color = defaultColor;
+        }
+
+        public void ResetDefaultColor(IEnumerable<PrimitiveSurface> primitives)
+        {
+            var defaultColor = new Color(KnownColors.LightGray);
+            foreach (var prim in primitives) prim.SetColor(defaultColor);
         }
         #endregion
 
