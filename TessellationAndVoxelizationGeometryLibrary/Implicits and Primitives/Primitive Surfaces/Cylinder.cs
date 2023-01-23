@@ -44,6 +44,7 @@ namespace TVGL
         /// <returns>System.Double.</returns>
         public override double CalculateError(IEnumerable<Vector3> vertices = null)
         {
+            if (Axis.IsNull()) return double.MaxValue;
             if (vertices == null)
             {
                 vertices = new List<Vector3>();
