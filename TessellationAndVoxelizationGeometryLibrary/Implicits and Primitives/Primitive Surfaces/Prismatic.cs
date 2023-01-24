@@ -43,18 +43,11 @@ namespace TVGL
         /// <returns>System.Double.</returns>
         public override double CalculateError(IEnumerable<Vector3> vertices = null)
         {
-            if (vertices == null)
-            {
-                vertices = new List<Vector3>();
-                vertices = Vertices.Select(v => v.Coordinates).ToList();
-                ((List<Vector3>)vertices).AddRange(InnerEdges.Select(edge => (edge.To.Coordinates + edge.From.Coordinates) / 2));
-                ((List<Vector3>)vertices).AddRange(OuterEdges.Select(edge => (edge.To.Coordinates + edge.From.Coordinates) / 2));
-            }
             var maxError = 0.0;
-            foreach (var c in vertices)
+            foreach (var c in Faces)
             {
-                var d = PointMembership(c);
-                if (d > maxError)
+                var d = Axis.Dot((c.B.Coordinates - c.A.Coordinates).Cross(c.C.Coordinates - c.A.Coordinates));
+                if (Math.Sqrt(Math.Abs(d)) > maxError)
                     maxError = d;
             }
             return maxError;
@@ -145,12 +138,11 @@ namespace TVGL
         /// <param name="radius">The radius.</param>
         /// <param name="dxOfBottomPlane">The dx of bottom plane.</param>
         /// <param name="dxOfTopPlane">The dx of top plane.</param>
-        public Prismatic(Vector3 axis, Vector3 anchor, double radius, double minDistanceAlongAxis,
-            double maxDistanceAlongAxis, bool isPositive = true, IEnumerable<PolygonalFace> faces = null)
+        public Prismatic(Vector3 axis, double minDistanceAlongAxis,
+            double maxDistanceAlongAxis, IEnumerable<PolygonalFace> faces = null, bool isPositive = true)
             : base(faces)
         {
             Axis = axis;
-            BoundingRadius = radius;
             IsPositive = isPositive;
             MinDistanceAlongAxis = minDistanceAlongAxis;
             MaxDistanceAlongAxis = maxDistanceAlongAxis;
@@ -164,10 +156,9 @@ namespace TVGL
         /// <param name="radius">The radius.</param>
         /// <param name="isPositive">if set to <c>true</c> [is positive].</param>
         /// <param name="faces">The faces.</param>
-        public Prismatic(Vector3 axis, Vector3 anchor, double radius, bool isPositive, IEnumerable<PolygonalFace> faces) : base(faces)
+        public Prismatic(Vector3 axis, IEnumerable<PolygonalFace> faces = null, bool isPositive = true) : base(faces)
         {
             Axis = axis;
-            BoundingRadius = radius;
             IsPositive = isPositive;
             var (min, max) = MinimumEnclosure.GetDistanceToExtremeVertex(Vertices, axis, out _, out _);//vertices are set in base constructor
             MinDistanceAlongAxis = min;
@@ -175,19 +166,6 @@ namespace TVGL
             Height = MaxDistanceAlongAxis - MinDistanceAlongAxis;
         }
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="Prismatic"/> class.
-        /// </summary>
-        /// <param name="axis">The axis.</param>
-        /// <param name="anchor">The anchor.</param>
-        /// <param name="radius">The radius.</param>
-        /// <param name="isPositive">if set to <c>true</c> [is positive].</param>
-        public Prismatic(Vector3 axis, Vector3 anchor, double radius, bool isPositive)
-        {
-            Axis = axis;
-            BoundingRadius = radius;
-            IsPositive = isPositive;
-        }
         /// <summary>
         /// Initializes a new instance of the <see cref="Prismatic"/> class.
         /// </summary>
@@ -218,41 +196,6 @@ namespace TVGL
             Height = originalToBeCopied.Height;
         }
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="Prismatic"/> class.
-        /// </summary>
-        /// <param name="axis">The axis.</param>
-        /// <param name="anchor">The anchor.</param>
-        /// <param name="circle">The circle.</param>
-        /// <param name="minDistanceAlongAxis">The minimum distance along axis.</param>
-        /// <param name="maxDistanceAlongAxis">The maximum distance along axis.</param>
-        public Prismatic(Vector3 axis, Vector3 anchor, Circle circle, double minDistanceAlongAxis,
-            double maxDistanceAlongAxis)
-        {
-            Axis = axis;
-            BoundingRadius = circle.Radius;
-            MinDistanceAlongAxis = minDistanceAlongAxis;
-            MaxDistanceAlongAxis = maxDistanceAlongAxis;
-            Height = MaxDistanceAlongAxis - MinDistanceAlongAxis;
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="Prismatic"/> class.
-        /// </summary>
-        /// <param name="axis">The axis.</param>
-        /// <param name="anchor">The anchor.</param>
-        /// <param name="circle">The circle.</param>
-        /// <param name="minDistanceAlongAxis">The minimum distance along axis.</param>
-        /// <param name="maxDistanceAlongAxis">The maximum distance along axis.</param>
-        public Prismatic(Vector3 axis, Vector3 anchor, double radius, double minDistanceAlongAxis,
-            double maxDistanceAlongAxis)
-        {
-            Axis = axis;
-            BoundingRadius = radius;
-            MinDistanceAlongAxis = minDistanceAlongAxis;
-            MaxDistanceAlongAxis = maxDistanceAlongAxis;
-            Height = MaxDistanceAlongAxis - MinDistanceAlongAxis;
-        }
 
 
         /// <summary>
