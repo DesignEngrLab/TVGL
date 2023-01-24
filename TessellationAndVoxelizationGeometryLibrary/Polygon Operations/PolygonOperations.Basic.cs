@@ -208,7 +208,7 @@ namespace TVGL
                     newPath.Add(new Vector2(polygon.Path[i].X, -polygon.Path[i].Y));
                 var newPolygon = new Polygon(newPath);
                 relfection.Add(newPolygon);
-                if (!newPolygon.Area.IsPracticallySame(polygon.Area, Constants.BaseTolerance))
+                if (!newPolygon.Area.IsPracticallySame(polygon.Area, Math.Abs(polygon.Area * (1 - Constants.HighConfidence))))
                 {
                     throw new Exception("Areas do not match after mirroring the polygons");
                 }
