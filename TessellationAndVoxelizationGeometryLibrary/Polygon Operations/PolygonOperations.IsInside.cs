@@ -1269,7 +1269,7 @@ namespace TVGL
             return result;
         }
 
-        private static List<SegmentIntersection> GetSelfIntersections(this Polygon polygonA)
+        public static List<SegmentIntersection> GetSelfIntersections(this Polygon polygonA)
         {
             var intersections = new List<SegmentIntersection>();
             var possibleDuplicates = new List<(int index, PolygonEdge lineA, PolygonEdge lineB)>();
