@@ -254,7 +254,7 @@ namespace TVGL
                 var vCAy_multiply_qVaX = vCAy * qVaX;
                 var index = GetIndex(xIndex, yIndex);
                 var stop = Math.Min(yTop, yMax);
-                for (var y = yBtmSnapped; y <= stop; y+= PixelSideLength)
+                for (var y = yBtmSnapped; y <= stop; y+= PixelSideLength, index++)
                 {
                     var qVaY = y - vA.Y;
 
@@ -281,7 +281,6 @@ namespace TVGL
                             }
                         }
                     }
-                    index++;
                 }
                 // step change in the y values.
                 qVaX += PixelSideLength;
