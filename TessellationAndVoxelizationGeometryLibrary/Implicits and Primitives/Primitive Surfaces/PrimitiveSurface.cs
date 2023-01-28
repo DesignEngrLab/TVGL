@@ -71,6 +71,19 @@ namespace TVGL
             Vertices = new HashSet<Vertex>(Faces.SelectMany(f => f.Vertices).Distinct());
         }
 
+        public void SetFacesAndVertices(IEnumerable<PolygonalFace> faces1, IEnumerable<PolygonalFace> faces2, bool connectFacesToPrimitive = true)
+        {
+            //Add all the faces to a hashset, without mutating either of the input enumerables.
+            Faces = new HashSet<PolygonalFace>(faces1);
+            foreach(var face in faces2)
+                Faces.Add(face);
+
+            if (connectFacesToPrimitive)
+                foreach (var face in Faces)
+                    face.BelongsToPrimitive = this;
+            Vertices = new HashSet<Vertex>(Faces.SelectMany(f => f.Vertices).Distinct());
+        }
+
         public abstract double CalculateError(IEnumerable<Vector3> vertices = null);
         public abstract IEnumerable<Vector2> TransformFrom3DTo2D(IEnumerable<Vector3> points, bool pathIsClosed);
         public abstract Vector2 TransformFrom3DTo2D(Vector3 point);
