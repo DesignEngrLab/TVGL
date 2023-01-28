@@ -64,7 +64,7 @@ namespace TVGL
         /// <value>The y count.</value>
         public int YCount { get; private set; }
 
-        private int maxIndex;
+        public int MaxIndex;
 
         public void Initialize(double minX, double maxX, double minY, double maxY, int pixelsPerRow, int pixelBorder = 2)
         {
@@ -91,7 +91,7 @@ namespace TVGL
             XCount += pixelBorder * 2;
             YCount += pixelBorder * 2;
 
-            maxIndex = XCount * YCount - 1;
+            MaxIndex = XCount * YCount - 1;
             Values = new T[XCount * YCount];
         }
 
@@ -103,9 +103,10 @@ namespace TVGL
         }
 
         public bool TryGet(double x, double y, out T value) => TryGet(GetIndex(x, y), out value);
+        public bool TryGet(int xIndex, int yIndex, out T value) => TryGet(GetIndex(xIndex, yIndex), out value);
         public bool TryGet(int index, out T value)
         {
-            if (index < 0 || index > maxIndex)
+            if (index < 0 || index > MaxIndex)
             {
                 value = default;
                 return false;
@@ -189,6 +190,15 @@ namespace TVGL
                     D += 2 * dy;
                 }
             }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public (int, int) GetXYIndicesFromPixelIndices(int index)
+        {
+            var (x, y) = (index / YCount, index % YCount);
+            var test = GetIndex(x, y);
+            if(index != test) { }
+            return(x, y);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
