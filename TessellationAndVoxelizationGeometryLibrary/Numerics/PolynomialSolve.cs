@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection.Metadata;
 using System.Runtime.CompilerServices;
 
 namespace TVGL
@@ -27,6 +28,13 @@ namespace TVGL
         private static IEnumerable<ComplexNumber> QuadraticAsEnumeration(IList<double> coeffList)
         {
             var roots = QuadraticAsTuple(coeffList);
+            yield return roots.Item1;
+            yield return roots.Item2;
+        }
+
+        private static IEnumerable<ComplexNumber> QuadraticAsEnumeration(double squaredCoeff, double linearCoeff, double constant)
+        {
+            var roots = Quadratic(squaredCoeff, linearCoeff, constant);
             yield return roots.Item1;
             yield return roots.Item2;
         }
@@ -88,6 +96,13 @@ namespace TVGL
             var a = squaredCoeff / cubedCoeff;
             var b = linearCoeff / cubedCoeff;
             var c = offset / cubedCoeff;
+            if (c.IsNegligible())
+            {
+                foreach (var root in QuadraticAsEnumeration(1, a, b))
+                    if (!onlyReturnRealRoots||root.IsRealNumber)
+                        yield return root;
+                yield break;
+            }
             var Q = (a * a - 3.0 * b) / 9.0;
             var R = (2.0 * a * a * a - 9.0 * a * b + 27.0 * c) / 54.0;
             var Q3 = Q * Q * Q;

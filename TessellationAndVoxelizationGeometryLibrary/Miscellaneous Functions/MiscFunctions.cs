@@ -15,7 +15,7 @@ namespace TVGL
     /// <summary>
     ///     Miscellaneous Functions for TVGL
     /// </summary>
-    public static class MiscFunctions
+    public static partial class MiscFunctions
     {
         #region Sort Along Direction
 
@@ -986,6 +986,7 @@ namespace TVGL
 
         #endregion change 2D coordinates (e.g. Vector2's) into 3D locations (e.g. Vector3's)
 
+        #region Transform 3D-to-2D and vice versa
         /// <summary>
         ///  Create a transforms from normal direction for 2D xy plane.
         /// </summary>
@@ -1038,63 +1039,8 @@ namespace TVGL
             }
             throw new InvalidOperationException();
         }
+        #endregion
 
-        /// <summary>
-        /// Snap Direction to Closest Cartesian Direction. 
-        /// </summary>
-        /// <param name="direction">The direction to convert.</param>
-        /// <param name="withinTolerance">To check if direction is within the optionally provided tolerance.</param>
-        /// <param name="tolerance">The optionally provided tolerance for the previous boolean (does not effect the determined direction).</param>
-        /// <returns></returns>
-        public static CartesianDirections SnapDirectionToCartesian(this Vector3 direction, out bool withinTolerance, double tolerance = double.NaN)
-        {
-            var xDot = direction[0];
-            var absXDot = Math.Abs(xDot);
-            var yDot = direction[1];
-            var absYDot = Math.Abs(yDot);
-            var zDot = direction[2];
-            var absZDot = Math.Abs(zDot);
-
-            // X-direction
-            if (absXDot > absYDot && absXDot > absZDot)
-            {
-                withinTolerance = !double.IsNaN(tolerance) && absXDot.IsPracticallySame(1.0, tolerance);
-                return xDot > 0 ? CartesianDirections.XPositive : CartesianDirections.XNegative;
-            }
-            // Y-direction
-            if (absYDot > absXDot && absYDot > absZDot)
-            {
-                withinTolerance = !double.IsNaN(tolerance) && absYDot.IsPracticallySame(1.0, tolerance);
-                return yDot > 0 ? CartesianDirections.YPositive : CartesianDirections.YNegative;
-            }
-            // Z-direction
-            withinTolerance = !double.IsNaN(tolerance) && absZDot.IsPracticallySame(1.0, tolerance);
-            return zDot > 0 ? CartesianDirections.ZPositive : CartesianDirections.ZNegative;
-        }
-
-        /// <summary>
-        /// Gets the perpendicular direction.
-        /// </summary>
-        /// <param name="direction">The direction.</param>
-        /// <param name="additionalRotation">An additional counterclockwise rotation (in radians) about the direction.</param>
-        /// <returns>TVGL.Vector3.</returns>
-        public static Vector3 GetPerpendicularDirection(this Vector3 direction, double additionalRotation = 0)
-        {
-            Vector3 dir;
-            //If the vector is only in the y-direction, then return the x direction
-            if (direction.X.IsNegligible() && direction.Z.IsNegligible())
-                return Vector3.UnitX;
-            // otherwise we will return something in the x-z plane, which is created by
-            // taking the cross product of the Y-direction with this vector.
-            // The thinking is that - since this is used in the function above (to translate
-            // to the x-y plane) - the provided direction, is the new z-direction, so
-            // we find something in the x-z plane through this cross-product, so that the
-            // third direction has strong component in positive y-direction - like
-            // camera up position.
-            dir = Vector3.UnitY.Cross(direction).Normalize();
-            if (additionalRotation == 0) return dir;
-            return dir.Transform(Quaternion.CreateFromAxisAngle(direction, additionalRotation));
-        }
 
         #region Angle between Edges/Lines
 
@@ -2193,152 +2139,5 @@ namespace TVGL
                 yield return type;
         }
 
-        public static ICurve FindBestPlanarCurve(this IEnumerable<Vector3> points, out Plane plane, out double planeResidual,
-            out double curveResidual)
-        {
-            var pointList = points as IList<Vector3> ?? points.ToList();
-            if (Plane.DefineNormalAndDistanceFromVertices(pointList, out var distanceToPlane, out var normal))
-            {
-                var thisPlane = new Plane(distanceToPlane, normal);
-                var minResidual = double.PositiveInfinity;
-                ICurve bestCurve = null;
-                var point2D = pointList.Select(p => p.ConvertTo2DCoordinates(thisPlane.AsTransformToXYPlane));
-                foreach (var curveType in MiscFunctions.TypesImplementingICurve())
-                {
-                    var arguments = new object[] { point2D, null, null };
-                    if ((bool)curveType.GetMethod("CreateFromPoints").Invoke(null, arguments))
-                    {
-                        curveResidual = (double)arguments[2];
-                        if (minResidual > curveResidual)
-                        {
-                            minResidual = curveResidual;
-                            bestCurve = (ICurve)arguments[1];
-                        }
-                    }
-                }
-                curveResidual = minResidual;
-                plane = thisPlane;
-                planeResidual = thisPlane.CalculateError(pointList);
-                return bestCurve;
-            }
-            else
-            {
-                var lineDir = Vector3.Zero;
-                for (int i = 1; i < pointList.Count; i++)
-                    lineDir += (pointList[i] - pointList[0]);
-                normal = lineDir.Normalize().GetPerpendicularDirection();
-                var thisPlane = new Plane(pointList[0], normal);
-                if (StraightLine2D.CreateFromPoints(pointList.Select(p => (IVertex2D)p.ConvertTo2DCoordinates(thisPlane.AsTransformToXYPlane)),
-                    out var straightLine, out var error))
-                {
-                    plane = thisPlane;
-                    planeResidual = thisPlane.CalculateError(pointList);
-                    curveResidual = error;
-                    return straightLine;
-                }
-                plane = default;
-                planeResidual = double.PositiveInfinity;
-                curveResidual = double.PositiveInfinity;
-                return new StraightLine2D();
-            }
-        }
-
-
-        internal static Vertex2D ChooseTightestLeftTurn(List<Vertex2D> nextVertices, Vertex2D current, Vertex2D previous)
-        {
-            var lastVector = previous.Coordinates - current.Coordinates;
-            var minAngle = double.PositiveInfinity;
-            Vertex2D bestVertex = null;
-            foreach (var vertex in nextVertices)
-            {
-                if (vertex == current || vertex == previous) continue;
-                var currentVector = vertex.Coordinates - current.Coordinates;
-                var angle = currentVector.AngleCWBetweenVectorAAndDatum(lastVector);
-                if (minAngle > angle && !angle.IsNegligible())
-                {
-                    minAngle = angle;
-                    bestVertex = vertex;
-                }
-            }
-            return bestVertex;
-        }
-
-        internal static Vertex2D ChooseTightestLeftTurn(this IEnumerable<Vertex2D> nextVertices, Vertex2D current, Vertex2D previous)
-        {
-            var lastVector = previous.Coordinates - current.Coordinates;
-            var minAngle = double.PositiveInfinity;
-            Vertex2D bestVertex = null;
-            foreach (var vertex in nextVertices)
-            {
-                if (vertex == current || vertex == previous) continue;
-                var currentVector = vertex.Coordinates - current.Coordinates;
-                var angle = currentVector.AngleCWBetweenVectorAAndDatum(lastVector);
-                if (minAngle > angle)
-                {
-                    minAngle = angle;
-                    bestVertex = vertex;
-                }
-            }
-            return bestVertex;
-        }
-
-        internal static Edge ChooseHighestCosineSimilarity(this IEnumerable<Edge> possibleNextEdges, Edge refEdge, bool refEdgeDir,
-            IEnumerable<bool> edgeDirections = null, double minAcceptable = -1.0)
-        {
-            var maxCos = minAcceptable;
-            Edge bestEdge = null;
-            var refVector = refEdge.UnitVector;
-            if (!refEdgeDir) refVector *= -1;
-            var directionEnumerator = edgeDirections == null ? null : edgeDirections.GetEnumerator();
-            foreach (var edge in possibleNextEdges)
-            {
-                var currentVector = edge.UnitVector;
-                if (directionEnumerator != null && directionEnumerator.MoveNext() && !directionEnumerator.Current)
-                    currentVector *= -1;
-                var cos = refVector.Dot(currentVector);
-                if (maxCos < cos)
-                {
-                    maxCos = cos;
-                    bestEdge = edge;
-                }
-            }
-            return bestEdge;
-        }
-
-        /// <summary>
-        /// ns the equidistant sphere points kogan.
-        /// https://scholar.rose-hulman.edu/cgi/viewcontent.cgi?article=1387&context=rhumj
-        /// </summary>
-        /// <param name="n">The n.</param>
-        /// <returns>System.Collections.Generic.IEnumerable&lt;TVGL.Vector2&gt;.</returns>
-        public static IEnumerable<Vector2> NEquidistantSpherePointsKogan(int n)
-        {
-            var x = 0.1 + 1.2 * n;
-            var nMinus1 = n - 1.0;
-            var start = -1 + 1.0 / nMinus1;
-            var increment = (2.0 - 2.0 / nMinus1) / nMinus1;
-            for (int j = 0; j < n; j++)
-            {
-                var s = start + j * increment;
-                yield return
-                    new Vector2(s * x, Constants.HalfPi * Math.Sign(s) * (1 - Math.Sqrt(1 - Math.Abs(s))));
-            }
-        }
-        /// <summary>
-        /// ns the equidistant sphere points kogan.
-        /// https://scholar.rose-hulman.edu/cgi/viewcontent.cgi?article=1387&context=rhumj
-        /// </summary>
-        /// <param name="n">The n.</param>
-        /// <param name="radius">The radius.</param>
-        /// <returns>System.Collections.Generic.IEnumerable&lt;TVGL.Vector3&gt;.</returns>
-        public static IEnumerable<Vector3> NEquidistantSpherePointsKogan(int n, double radius)
-        {
-            foreach (var anglePair in NEquidistantSpherePointsKogan(n))
-            {
-                var x = anglePair.X;
-                var y = anglePair.Y;
-                yield return new Vector3(Math.Cos(x) * Math.Cos(y), Math.Sin(x) * Math.Cos(y), Math.Sin(y));
-            }
-        }
     }
 }

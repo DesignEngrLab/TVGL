@@ -16,6 +16,7 @@ namespace TVGL
         internal const int MaxNumberFacesDefaultFullTS = 50000;
         public const double TwoPi = 2 * Math.PI;
         public const double HalfPi = Math.PI / 2;
+        public readonly static double Cos15 = Math.Cos(15.0 * Math.PI / 180);
         internal const long SquareRootOfLongMaxValue = 3037000499; // 3 billion
         internal const long CubeRootOfLongMaxValue = 2097151; //2 million
         /// <summary>
