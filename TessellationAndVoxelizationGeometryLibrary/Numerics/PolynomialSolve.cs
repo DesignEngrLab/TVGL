@@ -68,13 +68,13 @@ namespace TVGL
         public static IEnumerable<ComplexNumber> Cubic(this IEnumerable<double> coeffList)
         {
             var enumerator = coeffList.GetEnumerator();
-            if (enumerator.MoveNext()) throw new ArgumentException("Missing coefficients to solve quadratic.");
+            if (enumerator.MoveNext()) throw new ArgumentException("Missing coefficients to solve cubic.");
             var cubedCoeff = enumerator.Current;
-            if (enumerator.MoveNext()) throw new ArgumentException("Missing coefficients to solve quadratic.");
+            if (enumerator.MoveNext()) throw new ArgumentException("Missing coefficients to solve cubic.");
             var squaredCoeff = enumerator.Current;
-            if (enumerator.MoveNext()) throw new ArgumentException("Missing coefficients to solve quadratic.");
+            if (enumerator.MoveNext()) throw new ArgumentException("Missing coefficients to solve cubic.");
             var linearCoeff = enumerator.Current;
-            if (enumerator.MoveNext()) throw new ArgumentException("Missing coefficients to solve quadratic.");
+            if (enumerator.MoveNext()) throw new ArgumentException("Missing coefficients to solve cubic.");
             var constant = enumerator.Current;
             return Cubic(cubedCoeff, squaredCoeff, linearCoeff, constant);
         }
@@ -154,15 +154,15 @@ namespace TVGL
         public static IEnumerable<ComplexNumber> Quartic(this IEnumerable<double> coeffList)
         {
             var enumerator = coeffList.GetEnumerator();
-            if (enumerator.MoveNext()) throw new ArgumentException("Missing coefficients to solve quadratic.");
+            if (enumerator.MoveNext()) throw new ArgumentException("Missing coefficients to solve quartic.");
             var fourthOrderCoeff = enumerator.Current;
-            if (enumerator.MoveNext()) throw new ArgumentException("Missing coefficients to solve quadratic.");
+            if (enumerator.MoveNext()) throw new ArgumentException("Missing coefficients to solve quartic.");
             var cubedCoeff = enumerator.Current;
-            if (enumerator.MoveNext()) throw new ArgumentException("Missing coefficients to solve quadratic.");
+            if (enumerator.MoveNext()) throw new ArgumentException("Missing coefficients to solve quartic.");
             var squaredCoeff = enumerator.Current;
-            if (enumerator.MoveNext()) throw new ArgumentException("Missing coefficients to solve quadratic.");
+            if (enumerator.MoveNext()) throw new ArgumentException("Missing coefficients to solve quartic.");
             var linearCoeff = enumerator.Current;
-            if (enumerator.MoveNext()) throw new ArgumentException("Missing coefficients to solve quadratic.");
+            if (enumerator.MoveNext()) throw new ArgumentException("Missing coefficients to solve quartic.");
             var constant = enumerator.Current;
             return Quartic(fourthOrderCoeff, cubedCoeff, squaredCoeff, linearCoeff, constant);
         }

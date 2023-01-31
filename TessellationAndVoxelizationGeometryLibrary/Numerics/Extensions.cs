@@ -2,6 +2,12 @@
 // This file is a part of TVGL, Tessellation and Voxelization Geometry Library
 // https://github.com/DesignEngrLab/TVGL
 // It is licensed under MIT License (see LICENSE.txt for details)
+using StarMathLib;
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
+
 namespace TVGL
 {
     public static class VectorExtensions
@@ -695,6 +701,110 @@ namespace TVGL
         public static double DotNormal(this Plane plane, Vector3 value)
         { return Plane.DotNormal(plane, value); }
 
+        public static void Eigen(this Matrix3x3 matrix, out ComplexNumber[] eigenValues, out ComplexNumber[][] eigenVectors)
+        {
+            eigenValues = EigenValues(matrix).ToArray();
+            eigenVectors = matrix.EigenVectors(eigenValues);
+        }
+        public static IEnumerable<ComplexNumber> EigenValues(this Matrix3x3 m)
+        {
+            var a = m.M11;
+            var b = m.M12;
+            var c = m.M13;
+            var d = m.M21;
+            var e = m.M22;
+            var f = m.M23;
+            var g = m.M31;
+            var h = m.M32;
+            var i = m.M33;
+            var cubicCoeff = -1.0;
+            var squaredCoeff = a + e + i;
+            var linearCoeff = f * h + b * d + c * g - a * i - e * i - a * e;
+            var offset = a * e * i + b * f * g + c * d * h - a * f * h - b * d * i - c * e * g;
+            return PolynomialSolve.Cubic(cubicCoeff, squaredCoeff, linearCoeff, offset, false);
+        }
+        public static void EigenRealsOnly(this Matrix3x3 matrix, out double[] eigenValues, out Vector3[] eigenVectors)
+        {
+            eigenValues = EigenValuesRealsOnly(matrix).ToArray();
+            eigenVectors = matrix.EigenVectors(eigenValues);
+        }
+
+
+        public static ComplexNumber[][] EigenVectors(this Matrix3x3 m, IList<ComplexNumber> eigenValues)
+        {
+            var n = eigenValues.Count;
+            var eigenVectors = new ComplexNumber[n][];
+            for (int j = 0; j < n; j++)
+            {
+                var lambda = eigenValues[j];
+                if (lambda.IsRealNumber)
+                {
+                    var eVector = GetRealEigenVector(m, lambda.Real);
+                    eigenVectors[j] = new[] { new ComplexNumber(eVector.X), new ComplexNumber(eVector.Y), new ComplexNumber(eVector.Z) };
+                }
+                else
+                {
+                    // arbitrarily set the z-component of the eigenvector to 1 + 0i, then solve for x and y 
+                    var cM = new ComplexNumber[,]
+                    {
+                        {m.M11 - lambda, new ComplexNumber(m.M12)},
+                        {new ComplexNumber(m.M21),m.M22 - lambda},
+                    };
+                    var b = new[] { -m.M13, -m.M23 };
+                    StarMath.Solve2x2ComplexMatrix(cM, b, out var eigenVectorXY);
+                    var eigenVector = new ComplexNumber[] { eigenVectorXY[0], eigenVectorXY[1], new ComplexNumber(1) };
+                    var eVectorLength = Math.Sqrt(eigenVector[0].LengthSquared() + eigenVector[1].LengthSquared() +1);
+                    eigenVectors[j] = new ComplexNumber[] { eigenVector[0] / eVectorLength, eigenVector[1] / eVectorLength,
+                        eigenVector[2] / eVectorLength };
+                }
+            }
+            return eigenVectors;
+        }
+
+        public static IEnumerable<double> EigenValuesRealsOnly(Matrix3x3 matrix)
+        {
+            var a = matrix.M11;
+            var b = matrix.M12;
+            var c = matrix.M13;
+            var d = matrix.M21;
+            var e = matrix.M22;
+            var f = matrix.M23;
+            var g = matrix.M31;
+            var h = matrix.M32;
+            var i = matrix.M33;
+            var cubicCoeff = -1.0;
+            var squaredCoeff = a + e + i;
+            var linearCoeff = f * h + b * d + c * g - a * i - e * i - a * e;
+            var offset = a * e * i + b * f * g + c * d * h - a * f * h - b * d * i - c * e * g;
+            return PolynomialSolve.Cubic(cubicCoeff, squaredCoeff, linearCoeff, offset, true).Select(ev => ev.Real);
+        }
+
+        public static Vector3[] EigenVectors(this Matrix3x3 m, IList<double> eigenValues)
+        {
+            var n = eigenValues.Count;
+            var eigenVectors = new Vector3[n];
+            for (int j = 0; j < n; j++)
+                eigenVectors[j] = GetRealEigenVector(m, eigenValues[j]);
+            return eigenVectors;
+        }
+
+        private static Vector3 GetRealEigenVector(Matrix3x3 m, double lambda)
+        {
+            var row1 = new Vector3(m.M11 - lambda, m.M12, m.M13);
+            var row2 = new Vector3(m.M21, m.M22 - lambda, m.M23);
+            var eVector = row1.Cross(row2);
+            var eVectorLength = eVector.Length();
+            if (!eVectorLength.IsNegligible())
+                return eVector / eVectorLength;
+            var row3 = new Vector3(m.M31, m.M32, m.M33 - lambda);
+            eVector = row1.Cross(row3);
+            eVectorLength = eVector.Length();
+            if (!eVectorLength.IsNegligible())
+                return eVector / eVectorLength;
+            eVector = row2.Cross(row3);
+            eVectorLength = eVector.Length();
+            return eVector / eVectorLength;
+        }
         #endregion
 
     }

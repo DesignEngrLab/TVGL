@@ -1,5 +1,6 @@
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Running;
+using Microsoft.Diagnostics.Tracing.Parsers.FrameworkEventSource;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -21,6 +22,9 @@ namespace TVGLUnitTestsAndBenchmarking
         [STAThread]
         private static void Main(string[] args)
         {
+            var A = new Matrix3x3(1, -11, 111, -2, 222, 22, -333, 33, 3);
+            A.Eigen(out var eValues, out var eVectors);
+
             //ZbufferTesting.Test();
             //return;
             var sphere1 = new Sphere(new Vector3(2, 3, 4), 10, true);

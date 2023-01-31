@@ -553,6 +553,26 @@ namespace StarMathLib
                        - (A[0, 2] * A[1, 1] * A[2, 0]);
             return determinantBig(A, length);
         }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static ComplexNumber determinant(this ComplexNumber[,] A)
+        {
+            if (A == null) throw new ArithmeticException("The matrix, A, is null.");
+            var length = A.GetLength(0);
+            if (length != A.GetLength(1))
+                throw new ArithmeticException("The determinant is only possible for square matrices.");
+            if (length == 0) return new ComplexNumber();
+            if (length == 1) return A[0, 0];
+            if (length == 2) return (A[0, 0] * A[1, 1]) - (A[0, 1] * A[1, 0]);
+            if (length == 3)
+                return (A[0, 0] * A[1, 1] * A[2, 2])
+                       + (A[0, 1] * A[1, 2] * A[2, 0])
+                       + (A[0, 2] * A[1, 0] * A[2, 1])
+                       - (A[0, 0] * A[1, 2] * A[2, 1])
+                       - (A[0, 1] * A[1, 0] * A[2, 2])
+                       - (A[0, 2] * A[1, 1] * A[2, 0]);
+            throw new NotImplementedException();
+            //return determinantBig(A, length);
+        }
 
         /// <summary>
         /// Determinants the big.
