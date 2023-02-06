@@ -13,7 +13,7 @@ namespace TVGLUnitTestsAndBenchmarking
 {
     internal class Program
     {
-       public static string inputFolder = "TestFiles";
+        public static string inputFolder = "C:\\Users\\matth\\OneDrive - medemalabs.com\\Documents - Executive Team\\PART STL FILES\\Errors";
         //const string inputFolder = "TestFiles\\bad";
         static Random r = new Random();
         static double r1 => 2.0 * r.NextDouble() - 1.0;
@@ -22,48 +22,20 @@ namespace TVGLUnitTestsAndBenchmarking
         [STAThread]
         private static void Main(string[] args)
         {
-            var A = new Matrix3x3(1, -11, 111, -2, 222, 22, -333, 33, 3);
-            A.Eigen(out var eValues, out var eVectors);
+            DirectoryInfo dir = Program.BackoutToFolder(inputFolder);
 
-            //ZbufferTesting.Test();
-            //return;
-            var sphere1 = new Sphere(new Vector3(2, 3, 4), 10, true);
-            var sphere2 = new Sphere(new Vector3(8, 7, 6), 10, true);
-            var implicitSolid = new ImplicitSolid(sphere1, sphere2, BooleanOperationType.SubtractAB);
-            var cyl1 = new Cylinder(Vector3.UnitX, new Vector3(5, 5, 5), new Circle(Vector2.Zero, 16), -18, 18);
-            var capsule = new Capsule(Vector3.Zero, 8, new Vector3(10, 14, 18), 2, true);
-
-            implicitSolid.AddNewTopOfTree(capsule, BooleanOperationType.Union);
-            implicitSolid.AddNewTopOfTree(BooleanOperationType.SubtractAB, cyl1);
-            implicitSolid.Bounds = new[] { new Vector3(-20, -20, -20), new Vector3(20, 20, 20) };
-            var tessellatedSolid = implicitSolid.ConvertToTessellatedSolid(0.25);
-            Presenter.ShowAndHang(new[] { tessellatedSolid });
-
-            return;
-
-            var plane1 = new Plane(17.0, Vector3.UnitZ);
-            var matrix = Matrix4x4.CreateRotationY(Math.PI / 2);
-            matrix *= Matrix4x4.CreateTranslation(0, 4, 5);
-            plane1.Transform(matrix);
-            //ProximityTests.TestClosestPointToLines();
-            DirectoryInfo dir = Program.    BackoutToFolder();
-            Polygon_Testing_Functions.TestSimplify(dir);
-            //TestConicIntersection();
+            var myWriter = new ConsoleTraceListener();
+            Trace.Listeners.Add(myWriter);
             TVGL.Message.Verbosity = VerbosityLevels.Everything;
-            //Voxels.TestVoxelization(dir);
-            //TS_Testing_Functions.TestModify();
-            //TVGL3Dto2DTests.TestSilhouette();
-            //TS_Testing_Functions.TestClassify();
-            TVGL3Dto2DTests.TestXSectionAndMonotoneTriangulate(dir);
 #if PRESENT
             foreach (var fileName in dir.GetFiles("*").Skip(1))
             {
                 Debug.WriteLine("\n\n\nAttempting to open: " + fileName.Name);
                 IO.Open(fileName.FullName, out TessellatedSolid[] solids);
-                solids[0].Faces[0].Color = Color.ColorDictionary[ColorFamily.Red]["Red"];
-                Presenter.ShowAndHang(solids);
-                var css = CrossSectionSolid.CreateFromTessellatedSolid(solids[0], CartesianDirections.XPositive, 20);
-                Presenter.ShowAndHang(css);
+                //solids[0].Faces[0].Color = Color.ColorDictionary[ColorFamily.Red]["Red"];
+                //Presenter.ShowAndHang(solids);
+                //var css = CrossSectionSolid.CreateFromTessellatedSolid(solids[0], CartesianDirections.XPositive, 20);
+                //Presenter.ShowAndHang(css);
                 //IO.Save(css, "test.CSSolid");
             }
 #endif
