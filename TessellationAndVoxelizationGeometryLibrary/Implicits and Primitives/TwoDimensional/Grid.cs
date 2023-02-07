@@ -21,28 +21,28 @@ namespace TVGL
         /// Gets the maximum x of the projected grid of 2D points.
         /// </summary>
         /// <value>The maximum x.</value>
-        public double MaxX { get; private set; }
+        //public double MaxX { get; private set; }
         /// <summary>
         /// Gets the maximum y of the projected grid of 2D points.
         /// </summary>
         /// <value>The maximum y.</value>
-        public double MaxY { get; private set; }
+        //public double MaxY { get; private set; }
         /// <summary>
         /// Gets the x-length of the projected grid of 2D points.
         /// </summary>
         /// <value>The length of the x.</value>
-        public double XLength { get; private set; }
+        //public double XLength { get; private set; }
         /// <summary>
         /// Gets the y-length of the projected grid of 2D points.
         /// </summary>
         /// <value>The length of the y.</value>
-        public double YLength { get; private set; }
+        //public double YLength { get; private set; }
         /// <summary>      
         /// Gets which ever length is longer (XLength or YLength)
         /// This is found through the course of the "Run" computation and might be useful elsewhere.
         /// </summary>
         /// <value>The maximum length.</value>
-        public double MaxLength { get; private set; }
+        //public double MaxLength { get; private set; }
         /// <summary>
         /// Gets the length of the pixel side.
         /// </summary>
@@ -68,13 +68,13 @@ namespace TVGL
 
         public void Initialize(double minX, double maxX, double minY, double maxY, int pixelsPerRow, int pixelBorder = 2)
         {
-            MaxX = maxX;
+            //MaxX = maxX;
             MinX = minX;
-            MaxY = maxY;
+            //MaxY = maxY;
             MinY = minY;
-            XLength = MaxX - MinX;
-            YLength = MaxY - MinY;
-            MaxLength = XLength > YLength ? XLength : YLength;
+            var XLength = maxX - MinX;
+            var YLength = maxY - MinY;
+            var MaxLength = XLength > YLength ? XLength : YLength;
 
             //Calculate the size of each pixel based on the max of the two dimensions in question. 
             //Subtract pixelsPerRow by 1, since we will be adding a half a pixel to each side.
@@ -95,6 +95,32 @@ namespace TVGL
             Values = new T[XCount * YCount];
         }
 
+        public void Initialize(double minX, double maxX, double minY, double maxY, double pixelSideLength, int pixelBorder = 2)
+        {
+            MinX = minX;
+            MinY = minY;
+            var xLength = maxX - MinX;
+            var yLength = maxY - MinY;
+
+            //Calculate the size of each pixel based on the max of the two dimensions in question. 
+            //Subtract pixelsPerRow by 1, since we will be adding a half a pixel to each side.
+            PixelSideLength = pixelSideLength; // MaxLength / (pixelsPerRow - pixelBorder * 2);
+            inversePixelSideLength = 1 / PixelSideLength;
+            XCount = (int)Math.Ceiling(xLength * inversePixelSideLength);
+            YCount = (int)Math.Ceiling(yLength * inversePixelSideLength);
+            // shift the grid slightly so that the part grid points are better aligned within the bounds
+            var xStickout = xLength - XCount * PixelSideLength;
+            MinX += xStickout / 2;
+            var yStickout = yLength - YCount * PixelSideLength;
+            MinY += yStickout / 2;
+            // add the pixel border...2 since includes both sides (left and right, or top and bottom)
+            XCount += pixelBorder * 2;
+            YCount += pixelBorder * 2;
+
+            maxIndex = XCount * YCount - 1;
+            Values = new T[XCount * YCount];
+        }
+
         public IEnumerable<(int index, int x, int y)> Indices()
         {
             for (var yIndex = 0; yIndex < YCount; yIndex++)
@@ -102,16 +128,23 @@ namespace TVGL
                     yield return (YCount * xIndex + yIndex, xIndex, yIndex);
         }
 
+        public bool TryGet(int xIndex, int yIndex, out T value) => TryGet(GetIndex(xIndex, yIndex), out value);
         public bool TryGet(double x, double y, out T value) => TryGet(GetIndex(x, y), out value);
         public bool TryGet(int index, out T value)
         {
-            if (index < 0 || index > maxIndex)
+            if (index < 0 || index > maxIndex)                
             {
                 value = default;
                 return false;
             }
             value = Values[index];
-            return true;
+            return !EqualityComparer<T>.Default.Equals(value, default(T));
+        }
+
+        public void Set(int xIndex, int yIndex, T newValue) => Set(GetIndex(xIndex, yIndex), newValue);
+        public void Set(int index, T newValue)
+        {
+            Values[index] = newValue;
         }
 
         public IEnumerable<(int, int)> PlotLine(double x0, double y0, double x1, double y1)
@@ -132,7 +165,7 @@ namespace TVGL
             }
         }
 
-        public IEnumerable<(int, int)> PlotSteepLine(double x0, double y0, double x1, double y1)
+        private IEnumerable<(int, int)> PlotSteepLine(double x0, double y0, double x1, double y1)
         {
             var dx = x1 - x0;
             var dy = y1 - y0;
@@ -161,7 +194,7 @@ namespace TVGL
             }
         }
 
-        public IEnumerable<(int, int)> PlotShallowLine(double x0, double y0, double x1, double y1)
+        private IEnumerable<(int, int)> PlotShallowLine(double x0, double y0, double x1, double y1)
         {
             var dx = x1 - x0;
             var dy = y1 - y0;
@@ -195,7 +228,7 @@ namespace TVGL
         public int GetIndex(double x, double y) => YCount * GetXIndex(x) + GetYIndex(y);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public int GetIndex(int x, int y) => YCount * x + y;
+        public int GetIndex(int xIndex, int yIndex) => YCount * xIndex + yIndex;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int GetXIndex(double x) => (int)((x - MinX) * inversePixelSideLength);

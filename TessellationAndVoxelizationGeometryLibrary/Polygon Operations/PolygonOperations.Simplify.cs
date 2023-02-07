@@ -363,7 +363,7 @@ namespace TVGL
             {
                 Polygon polygon = allPolygons[i];
                 RecreateVertices(polygon);
-                if (polygon.Edges.Length < 2)
+                if (polygon.Edges.Count < 2)
                 {
                     for (int j = polygons.Count - 1; j >= 0; j--)
                     {
@@ -1011,7 +1011,7 @@ namespace TVGL
         public static void Complexify(this Polygon polygon, double maxAllowableLength)
         {
             var loopID = polygon.Index;
-            for (int i = 0; i < polygon.Edges.Length; i++)
+            for (int i = 0; i < polygon.Edges.Count; i++)
             {
                 var thisLine = polygon.Edges[i];
                 if (thisLine.Length > maxAllowableLength)
