@@ -1053,7 +1053,10 @@ namespace TVGL
         /// <returns>System.Double.</returns>
         public static double LargerAngleBetweenVectors(this Vector2 vector1, Vector2 vector2)
         {
-            return Math.PI + Math.Acos(vector1.Dot(vector2) / (vector1.Length() * vector2.Length()));
+            var angleCos = vector1.Dot(vector2) / (vector1.Length() * vector2.Length());
+            if (angleCos >= 1) return Math.PI;
+            if (angleCos <= -1) return Constants.TwoPi;
+            return Math.PI + Math.Acos(angleCos);
         }
 
         /// <summary>
@@ -1065,9 +1068,13 @@ namespace TVGL
         /// <returns>System.Double.</returns>
         public static double SmallerAngleBetweenVectors(this Vector2 vector1, Vector2 vector2)
         {
-            var angle = Math.Atan2(vector1.Cross(vector2), vector1.Dot(vector2));
-            if (angle >= 0) return angle;
-            return Math.PI + angle;
+            var angleCos = vector1.Dot(vector2) / (vector1.Length() * vector2.Length());
+            if (angleCos >= 1) return Math.PI;
+            if (angleCos <= -1) return 0;
+            return Math.PI - Math.Acos(angleCos);
+            //var angle = Math.Atan2(vector1.Cross(vector2), vector1.Dot(vector2));
+            //if (angle >= 0) return angle;
+            //return Math.PI + angle;
         }
 
         /// <summary>
@@ -1152,8 +1159,8 @@ namespace TVGL
         /// <param name="t_b">The t b.</param>
         /// <param name="considerCollinearOverlapAsIntersect">The consider collinear overlap as intersect.</param>
         /// <returns>System.Boolean.</returns>
-        /*
-        private static bool SegmentSegment2DIntersectionConventional(Vector2 aFrom, Vector2 aTo, Vector2 bFrom, Vector2 bTo,
+        
+        public static bool SegmentSegment2DIntersectionConventional(Vector2 aFrom, Vector2 aTo, Vector2 bFrom, Vector2 bTo,
             out Vector2 intersectionPoint, out double t_a, out double t_b, bool considerCollinearOverlapAsIntersect = false)
         {
             t_a = double.NaN;
@@ -1195,7 +1202,7 @@ namespace TVGL
                 0.5 * (aFrom.Y + t_a * aVector.Y + bFrom.Y + t_b * bVector.Y));
             return true;
         }
-        */
+        
 
         /// <summary>
         /// Determines if Two Lines intersect. Outputs intersection point if they do.
