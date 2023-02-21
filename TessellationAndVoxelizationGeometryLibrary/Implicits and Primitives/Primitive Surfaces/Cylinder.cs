@@ -193,6 +193,8 @@ namespace TVGL
 
         public double Volume => Height * Math.PI * Radius * Radius;
 
+        public double TotalInternalAngle { get; set; }
+
         #endregion
 
         #region Constructors
@@ -346,7 +348,15 @@ namespace TVGL
             return (point - Anchor).Cross(Axis).Length() - Radius;
         }
 
-
+        public void SetIsPositive()
+        {
+            MiscFunctions.DefineInnerOuterEdges(Faces, out var innerEdges, out _);
+            var internalAngle = Math.PI; //flat line
+            foreach (var edge in innerEdges)
+                internalAngle += edge.InternalAngle - Math.PI;
+            TotalInternalAngle = internalAngle;
+            IsPositive = internalAngle < Math.PI;
+        }
 
         //public TessellatedSolid AsTessellatedSolid()
         //{
