@@ -115,7 +115,16 @@ namespace TVGL
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private double UpdateZBufferWithFace(PolygonalFace face)
         {
+            return CheckZBufferWithFace(face, true, out _, out _);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private double CheckZBufferWithFace(PolygonalFace face, bool updateGrid, out int count, out int accessibleCount, double tessellationError = Constants.BaseTolerance)
+        {
             #region Initialization
+            count = 0;
+            accessibleCount = 0;
+
             // get the 3 vertices and their zheights
             var vA = Vertices[face.A.IndexInList];
             var zA = VertexZHeights[face.A.IndexInList];
@@ -272,12 +281,18 @@ namespace TVGL
                             var u = area3 / area;
                             var w = 1 - v - u;
                             if (w >= 0.0 && w <= 1.0)
-                            {  
+                            {
+                                count++;
                                 var zIntercept = w * zA + u * zB + v * zC;
                                 // since the grid is not initialized, we update it if the grid cell is empty or if we found a better face
                                 var tuple = Values[index];
-                                if (tuple == default || zIntercept > tuple.Item2)
-                                    Values[index] = (face, zIntercept);
+                                if (updateGrid)
+                                {
+                                    if (tuple == default || zIntercept > tuple.Item2)
+                                        Values[index] = (face, zIntercept);
+                                }
+                                else if (tuple == default || zIntercept.IsPracticallySame(tuple.Item2, tessellationError))
+                                    accessibleCount++;
                             }
                         }
                     }
@@ -328,6 +343,19 @@ namespace TVGL
         public Vector3 Get3DPoint(int i, int j)
         {
             return Get3DPointTransformed(i, j).Transform(backTransform);
+        }
+
+        public double CheckSurfaceAccess(PrimitiveSurface surface, double tessellationError)
+        {
+            var count = 0;
+            var accessibleCount = 0;
+            foreach (var face in surface.Faces)
+            {
+                CheckZBufferWithFace(face, false, out var countOnFace, out var faceAccessible, tessellationError);
+                count += countOnFace;
+                accessibleCount += faceAccessible;
+            }
+            return accessibleCount / (double)count;
         }
     }
 }
