@@ -14,6 +14,7 @@
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using TVGL;
 
 namespace StarMathLib
 {
@@ -80,6 +81,49 @@ namespace StarMathLib
             return true;
         }
 
+
+        private static bool Solve3x3ComplexMatrix(ComplexNumber[,] a, IList<double> b, out ComplexNumber[] answer)
+        {
+            var n = b.Count;
+            var bComplex = new ComplexNumber[n];
+            for (int i = 0; i < n; i++)
+                bComplex[i] = new ComplexNumber(b[i]);
+            return Solve3x3ComplexMatrix(a, bComplex, out answer);
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool Solve3x3ComplexMatrix(this ComplexNumber[,] a, IList<ComplexNumber> b, out ComplexNumber[] answer)
+        {
+            var denominator = determinant(a);
+            if (denominator.Length() < TVGL.Constants.BaseTolerance)
+            {
+                answer = Array.Empty<ComplexNumber>();
+                return false;
+            }
+            denominator = 1 / denominator;
+            answer = new[]
+            {
+              denominator*  ((b[0] * a[1, 1] * a[2, 2])
+                 + (a[0, 1] * a[1, 2] * b[2])
+                 + (a[0, 2] * b[1] * a[2, 1])
+                 - (b[0] * a[1, 2] * a[2, 1])
+                 - (a[0, 1] * b[1] * a[2, 2])
+                 - (a[0, 2] * a[1, 1] * b[2])),
+               denominator*   ( (a[0, 0] * b[1] * a[2, 2])
+                  + (b[0] * a[1, 2] * a[2, 0])
+                  + (a[0, 2] * a[1, 0] * b[2])
+                  - (a[0, 0] * a[1, 2] * b[2])
+                  - (b[0] * a[1, 0] * a[2, 2])
+                  - (a[0, 2] * b[1] * a[2, 0])),
+               denominator*   ( (a[0, 0] * a[1, 1] * b[2])
+                  + (a[0, 1] * b[1] * a[2, 0])
+                  + (b[0] * a[1, 0] * a[2, 1])
+                  - (a[0, 0] * b[1] * a[2, 1])
+                  - (a[0, 1] * a[1, 0] * b[2])
+                  - (b[0] * a[1, 1] * a[2, 0]))
+            };
+            return true;
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static bool solveViaCramersRule2(double[,] a, IList<double> b, out double[] answer)
         {
@@ -87,6 +131,31 @@ namespace StarMathLib
             if (denominator == 0)
             {
                 answer = Array.Empty<double>();
+                return false;
+            }
+            denominator = 1 / denominator;
+            answer = new[]
+            {
+              denominator * (b[0]*a[1,1]-b[1]*a[0,1]),
+              denominator * (b[1]*a[0,0]-b[0]*a[1,0])
+            };
+            return true;
+        }
+        public static bool Solve2x2ComplexMatrix(ComplexNumber[,] a, IList<double> b, out ComplexNumber[] answer)
+        {
+            var n = b.Count;
+            var bComplex = new ComplexNumber[n];
+            for (int i = 0; i < n; i++)
+                bComplex[i] = new ComplexNumber(b[i]);
+            return Solve2x2ComplexMatrix(a, bComplex, out answer);
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool Solve2x2ComplexMatrix(ComplexNumber[,] a, IList<ComplexNumber> b, out ComplexNumber[] answer)
+        {
+            var denominator = a[0, 0] * a[1, 1] - a[0, 1] * a[1, 0];
+            if (denominator.Length() < TVGL.Constants.BaseTolerance)
+            {
+                answer = Array.Empty<ComplexNumber>();
                 return false;
             }
             denominator = 1 / denominator;

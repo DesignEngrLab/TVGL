@@ -258,7 +258,7 @@ namespace TVGL
             var tolerance = Math.Pow(10, -polygon.NumSigDigits);
             maxNumberOfPolygons = 1;
             // set up the return list (predict size to prevent re-allocation) and rotation matrix for OffsetRound
-            var numPoints = polygon.Edges.Length;
+            var numPoints = polygon.Edges.Count;
             int numFalsesToAdd;
             var startingListSize = numPoints;
             var roundCorners = !double.IsNaN(deltaAngle);

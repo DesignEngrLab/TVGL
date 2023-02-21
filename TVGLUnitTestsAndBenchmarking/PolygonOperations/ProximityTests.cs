@@ -32,7 +32,7 @@ namespace TVGLUnitTestsAndBenchmarking
                     lineSegments.Add(new[] { startPoint, endPoint });
                     lines.Add((startPoint, (endPoint - startPoint).Normalize()));
                 }
-                var center = Proximity.ClosestPointToLines(lines);
+                var center = MiscFunctions.ClosestPointToLines(lines);
                 lineSegments.Add(new[] { center, center });
                 Presenter.ShowAndHang(lineSegments);
             }

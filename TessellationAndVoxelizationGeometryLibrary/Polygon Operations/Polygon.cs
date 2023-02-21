@@ -100,7 +100,7 @@ namespace TVGL
         /// </summary>
         /// <value>The lines.</value>
         [JsonIgnore]
-        public PolygonEdge[] Edges
+        public List<PolygonEdge> Edges
         {
             get
             {
@@ -112,7 +112,7 @@ namespace TVGL
 
         public void MakePolygonEdgesIfNonExistent()
         {
-            if (_edges != null && _edges.Length == Vertices.Count) return;
+            if (_edges != null && _edges.Count == Vertices.Count) return;
             foreach (var poly in AllPolygons)
                 poly.MakeThisPolygonsEdges();
         }
@@ -120,7 +120,7 @@ namespace TVGL
         private void MakeThisPolygonsEdges()
         {
             var numPoints = Vertices.Count;
-            _edges = new PolygonEdge[numPoints];
+            _edges = new List<PolygonEdge>(numPoints);
             for (int i = 0, j = numPoints - 1; i < numPoints; j = i++)
             // note this compact approach to setting i and j. 
             {
@@ -129,14 +129,14 @@ namespace TVGL
                 var polySegment = new PolygonEdge(fromNode, toNode);
                 fromNode.StartLine = polySegment;
                 toNode.EndLine = polySegment;
-                _edges[i] = polySegment;
+                _edges.Add(polySegment);
             }
         }
 
         /// <summary>
         /// The lines
         /// </summary>
-        private PolygonEdge[] _edges;
+        private List<PolygonEdge> _edges;
 
 
         /// <summary>
@@ -174,6 +174,62 @@ namespace TVGL
             area = double.NaN;
 
             return true;
+        }
+
+        public void InsertVertex(int index, double x, double y)
+        { InsertVertex(index, new Vector2(x, y)); }
+        public void InsertVertex(int index, Vector2 coordinates)
+        {
+            if (index == Vertices.Count)
+            {
+                AddVertexToEnd(coordinates);
+                return;
+            }
+            var thisVertex = new Vertex2D(coordinates, index, this.Index);
+            var prevVertex = index == 0 ? Vertices[^1] : Vertices[index - 1];
+            var nextVertex = Vertices[index];
+            Vertices.Insert(index, thisVertex);
+            // the i-th edge ends at i-th vertex (starts at i-1)
+            var prevEdge = new PolygonEdge(prevVertex, thisVertex);
+            Edges[index] = prevEdge;
+            var nextEdge = new PolygonEdge(thisVertex, nextVertex);
+            Edges.Insert(index + 1, nextEdge);
+            prevVertex.StartLine = prevEdge;
+            thisVertex.EndLine = prevEdge;
+            nextVertex.EndLine = nextEdge;
+            thisVertex.StartLine = nextEdge;
+            for (int i = index; i < Vertices.Count; i++)
+                Vertices[i].IndexInList = i;
+            Reset();
+        }
+
+        public void AddVertexToEnd(double x, double y)
+        { AddVertexToEnd(new Vector2(x, y)); }
+        public void AddVertexToEnd(Vector2 coordinates)
+        {
+            if (_vertices == null)
+            {
+                _vertices = new List<Vertex2D>
+                {
+                    new Vertex2D(coordinates, 0, this.Index)
+                };
+                return;
+            }
+            var index = Vertices.Count;
+            var thisVertex = new Vertex2D(coordinates, index, this.Index);
+            Vertices.Add(thisVertex);
+            var prevVertex = Vertices[^2];
+            var nextVertex = Vertices[0];
+            // the i-th edge ends at i-th vertex (starts at i-1)
+            var prevEdge = new PolygonEdge(prevVertex, thisVertex);
+            Edges.Add(prevEdge);
+            var nextEdge = new PolygonEdge(thisVertex, nextVertex);
+            Edges[0] = nextEdge;
+            prevVertex.StartLine = prevEdge;
+            thisVertex.EndLine = prevEdge;
+            nextVertex.EndLine = nextEdge;
+            thisVertex.StartLine = nextEdge;
+            Reset();
         }
 
         /// <summary>

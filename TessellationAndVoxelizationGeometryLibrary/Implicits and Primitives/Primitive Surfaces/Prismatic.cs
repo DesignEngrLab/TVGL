@@ -47,7 +47,8 @@ namespace TVGL
             foreach (var c in Faces)
             {
                 var d = Axis.Dot((c.B.Coordinates - c.A.Coordinates).Cross(c.C.Coordinates - c.A.Coordinates));
-                if (Math.Sqrt(Math.Abs(d)) > maxError)
+                d = Math.Abs(d);
+                if (d > maxError)
                     maxError = d;
             }
             return maxError;
@@ -161,6 +162,24 @@ namespace TVGL
             Axis = axis;
             IsPositive = isPositive;
             var (min, max) = MinimumEnclosure.GetDistanceToExtremeVertex(Vertices, axis, out _, out _);//vertices are set in base constructor
+            MinDistanceAlongAxis = min;
+            MaxDistanceAlongAxis = max;
+            Height = MaxDistanceAlongAxis - MinDistanceAlongAxis;
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Prismatic"/> class.
+        /// </summary>
+        /// <param name="axis">The axis.</param>
+        /// <param name="anchor">The anchor.</param>
+        /// <param name="radius">The radius.</param>
+        /// <param name="isPositive">if set to <c>true</c> [is positive].</param>
+        /// <param name="faces">The faces.</param>
+        public Prismatic(IEnumerable<PolygonalFace> faces = null, bool isPositive = true) : base(faces)
+        {
+            Axis = MiscFunctions.FindAxisToMinimizeProjectedArea(Faces, Faces.Count);
+            IsPositive = isPositive;
+            var (min, max) = MinimumEnclosure.GetDistanceToExtremeVertex(Vertices, Axis, out _, out _);//vertices are set in base constructor
             MinDistanceAlongAxis = min;
             MaxDistanceAlongAxis = max;
             Height = MaxDistanceAlongAxis - MinDistanceAlongAxis;

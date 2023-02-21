@@ -1269,11 +1269,11 @@ namespace TVGL
             return result;
         }
 
-        private static List<SegmentIntersection> GetSelfIntersections(this Polygon polygonA)
+        public static List<SegmentIntersection> GetSelfIntersections(this Polygon polygonA)
         {
             var intersections = new List<SegmentIntersection>();
             var possibleDuplicates = new List<(int index, PolygonEdge lineA, PolygonEdge lineB)>();
-            var numLines = polygonA.Edges.Length;
+            var numLines = polygonA.Edges.Count;
             var orderedLines = GetOrderedLines(polygonA.OrderedXVertices);
             for (int i = 0; i < numLines - 1; i++)
             {
