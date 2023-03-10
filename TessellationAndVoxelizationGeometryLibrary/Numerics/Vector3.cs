@@ -338,8 +338,7 @@ namespace TVGL  // COMMENTEDCHANGE namespace System.Numerics
         /// Returns the vector (0,0,0).
         /// </summary>
 
-        public static Vector3 Zero =>
-        default;
+        public static Vector3 Zero => default;
 
         /// <summary>
         /// Returns the vector (1,1,1).

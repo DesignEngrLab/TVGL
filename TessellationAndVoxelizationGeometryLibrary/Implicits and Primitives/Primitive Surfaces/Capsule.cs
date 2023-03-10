@@ -25,17 +25,6 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Calculates the error.
-        /// </summary>
-        /// <param name="vertices">The vertices.</param>
-        /// <returns>System.Double.</returns>
-        public override double CalculateError(IEnumerable<Vector3> vertices = null)
-        {
-            throw new NotImplementedException();
-        }
-
-
-        /// <summary>
         /// Transforms the from 3d to 2d.
         /// </summary>
         /// <param name="point">The point.</param>
@@ -181,8 +170,32 @@ namespace TVGL
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         public bool PointIsInside(Vector3 x)
         {
-            return PointMembership(x) < 0;
+            return PointMembership(x) < 0 == IsPositive;
         }
+        /// <summary>
+        /// Calculates the error.
+        /// </summary>
+        /// <param name="vertices">The vertices.</param>
+        /// <returns>System.Double.</returns>
+        public override double CalculateError(IEnumerable<Vector3> vertices = null)
+        {
+            if (vertices == null)
+            {
+                vertices = Vertices.Select(v => v.Coordinates)
+                    .Concat(InnerEdges.Select(edge => 0.5 * (edge.To.Coordinates + edge.From.Coordinates)))
+                    .Concat(OuterEdges.Select(edge => 0.5 * (edge.To.Coordinates + edge.From.Coordinates)));
+            }
+            var mse = 0.0;
+            var n = 0;
+            foreach (var c in vertices)
+            {
+                var d = PointMembership(c);
+                mse += d * d;
+                n++;
+            }
+            return mse / n;
+        }
+
 
         public override double PointMembership(Vector3 point)
         {

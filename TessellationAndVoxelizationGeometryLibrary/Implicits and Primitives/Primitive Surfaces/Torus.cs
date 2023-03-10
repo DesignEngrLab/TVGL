@@ -6,7 +6,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-
 namespace TVGL
 {
     /// <summary>
@@ -55,7 +54,7 @@ namespace TVGL
         /// Initializes a new instance of the <see cref="Torus"/> class.
         /// </summary>
         /// <param name="originalToBeCopied">The original to be copied.</param>
-        public Torus(Torus originalToBeCopied, TessellatedSolid copiedTessellatedSolid = null) 
+        public Torus(Torus originalToBeCopied, TessellatedSolid copiedTessellatedSolid = null)
             : base(originalToBeCopied, copiedTessellatedSolid)
         {
             IsPositive = originalToBeCopied.IsPositive;
@@ -89,14 +88,34 @@ namespace TVGL
         ///     Gets the center.
         /// </summary>
         /// <value>The center.</value>
-        public Vector3 Center { get; set; }
-
+        public Vector3 Center
+        {
+            get => center;
+            set
+            {
+                center = value;
+                if (!axis.IsNull())
+                    distanceToBisectingPlane = center.Dot(axis);
+            }
+        }
         /// <summary>
         ///     Gets the axis.
         /// </summary>
         /// <value>The axis.</value>
-        public Vector3 Axis { get; set; }
+        public Vector3 Axis
+        {
+            get => axis;
+            set
+            {
+                axis = value;
+                if (!center.IsNull())
+                    distanceToBisectingPlane = center.Dot(axis);
+            }
+        }
 
+        private Vector3 center = Vector3.Null;
+        private Vector3 axis = Vector3.Null;
+        private double distanceToBisectingPlane;
         /// <summary>
         ///     Gets the major radius, which is the distance from the center of the tube to the center of the torus
         /// </summary>
@@ -134,41 +153,11 @@ namespace TVGL
             MinorRadius = Math.Sqrt((rVector1.LengthSquared() + rVector2.LengthSquared()) / 2);
         }
 
-        public override double CalculateError(IEnumerable<Vector3> vertices = null)
-        {
-            if (MinorRadius is double.NaN)
-                return double.MaxValue;
-            if (vertices == null)
-            {
-                vertices = new List<Vector3>();
-                vertices = Vertices.Select(v => v.Coordinates).ToList();
-                ((List<Vector3>)vertices).AddRange(InnerEdges.Select(edge => (edge.To.Coordinates + edge.From.Coordinates) / 2));
-                ((List<Vector3>)vertices).AddRange(OuterEdges.Select(edge => (edge.To.Coordinates + edge.From.Coordinates) / 2));
-            }
-            var planeDist = Center.Dot(Axis);
-            var maxError = 0.0;
-            foreach (var c in vertices)
-            {
-                Vector3 ptOnCircle = ClosestPointOnCenterRingToPoint(Axis, Center, MajorRadius, c, planeDist);
-                var d = Math.Abs((c - ptOnCircle).Length() - MinorRadius);
-                if (d > maxError)
-                    maxError = d;
-            }
-            return maxError;
-        }
-
-        public static Vector3 ClosestPointOnCenterRingToPoint(Vector3 axis, Vector3 center, double majorRadius, Vector3 vertexCoord, double planeDist = double.NaN)
-        {
-            if (double.IsNaN(planeDist)) planeDist = center.Dot(axis);
-            var d = planeDist - vertexCoord.Dot(axis);
-            var ptInPlane = vertexCoord + d * axis;
-            var dirToCircle = (ptInPlane - center).Normalize();
-            return center + majorRadius * dirToCircle;
-        }
 
         private Vector3 faceXDir = Vector3.Null;
         private Vector3 faceYDir = Vector3.Null;
         private Vector3 faceZDir = Vector3.Null;
+
         public override Vector2 TransformFrom3DTo2D(Vector3 point)
         {
             if (faceXDir.IsNull())
@@ -182,7 +171,7 @@ namespace TVGL
             var ptInPlane = point + d * Axis;  // project the point back to the plane cutting through the torus
             var vectorToPiP = ptInPlane - Center;
             var deltaRing = vectorToPiP.Length() - MajorRadius;
-            var hoopAngle = Math.Atan2(-d,deltaRing);
+            var hoopAngle = Math.Atan2(-d, deltaRing);
             var polarAngle = Math.Atan2(vectorToPiP.Dot(faceYDir), vectorToPiP.Dot(faceXDir));
 
             return new Vector2(polarAngle * MajorRadius, hoopAngle * MinorRadius);
@@ -233,9 +222,40 @@ namespace TVGL
             }
         }
 
+        public override double CalculateError(IEnumerable<Vector3> vertices = null)
+        {
+            if (double.IsNaN(MinorRadius) || Axis.IsNull())
+                return double.MaxValue;
+            if (vertices == null)
+            {
+                vertices = Vertices.Select(v => v.Coordinates)
+                    .Concat(InnerEdges.Select(edge => 0.5 * (edge.To.Coordinates + edge.From.Coordinates)))
+                    .Concat(OuterEdges.Select(edge => 0.5 * (edge.To.Coordinates + edge.From.Coordinates)));
+            }
+            var mse = 0.0;
+            var n = 0;
+            foreach (var c in vertices)
+            {
+                var d = PointMembership(c);
+                mse += d * d;
+                n++;
+            }
+            return mse / n;
+        }
+
         public override double PointMembership(Vector3 point)
         {
-            throw new NotImplementedException();
+            Vector3 ptOnCircle = ClosestPointOnCenterRingToPoint(Axis, Center, MajorRadius, point, distanceToBisectingPlane);
+            return (point - ptOnCircle).Length() - MinorRadius;
+        }
+        public static Vector3 ClosestPointOnCenterRingToPoint(Vector3 axis, Vector3 center, double majorRadius, Vector3 vertexCoord, 
+            double planeDist = double.NaN)
+        {
+            if (double.IsNaN(planeDist)) planeDist = center.Dot(axis);
+            var d = planeDist - vertexCoord.Dot(axis);
+            var ptInPlane = vertexCoord + d * axis;
+            var dirToCircle = (ptInPlane - center).Normalize();
+            return center + majorRadius * dirToCircle;
         }
     }
 }

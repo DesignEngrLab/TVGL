@@ -15,19 +15,6 @@ namespace TVGL
     [JsonObject(MemberSerialization.OptOut)]
     public abstract class PrimitiveSurface
     {
-        private double _residual = -1.0;
-        [JsonIgnore]
-        public double Residual 
-        {
-            get 
-            {
-                if (_residual == -1.0)
-                    _residual = CalculateError();
-                return _residual;
-            }
-            set { _residual = value; }
-        }
-
         #region Constructors
 
         /// <summary>
@@ -65,7 +52,7 @@ namespace TVGL
         public void SetFacesAndVertices(IEnumerable<PolygonalFace> faces, bool connectFacesToPrimitive = true)
         {
             Faces = new HashSet<PolygonalFace>(faces);
-            if(connectFacesToPrimitive)
+            if (connectFacesToPrimitive)
                 foreach (var face in Faces)
                     face.BelongsToPrimitive = this;
             Vertices = new HashSet<Vertex>(Faces.SelectMany(f => f.Vertices).Distinct());
@@ -75,7 +62,7 @@ namespace TVGL
         {
             //Add all the faces to a hashset, without mutating either of the input enumerables.
             Faces = new HashSet<PolygonalFace>(faces1);
-            foreach(var face in faces2)
+            foreach (var face in faces2)
                 Faces.Add(face);
 
             if (connectFacesToPrimitive)
@@ -309,8 +296,8 @@ namespace TVGL
 
         public IEnumerable<PrimitiveSurface> AdjacentPrimitives()
         {
-            foreach(var border in Borders)
-                foreach(var prim in border.AdjacentPrimitives())
+            foreach (var border in Borders)
+                foreach (var prim in border.AdjacentPrimitives())
                     yield return prim;
         }
 
@@ -453,7 +440,7 @@ namespace TVGL
         public List<Edge> GetSharedEdges(PrimitiveSurface other)
         {
             var shared = new List<Edge>();
-            foreach(var edge in OuterEdges)
+            foreach (var edge in OuterEdges)
             {
                 if (other.OuterEdges.Contains(edge))
                     shared.Add(edge);

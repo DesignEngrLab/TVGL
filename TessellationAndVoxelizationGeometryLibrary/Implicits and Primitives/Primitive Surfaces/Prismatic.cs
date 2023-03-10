@@ -37,24 +37,6 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Calculates the error.
-        /// </summary>
-        /// <param name="vertices">The vertices.</param>
-        /// <returns>System.Double.</returns>
-        public override double CalculateError(IEnumerable<Vector3> vertices = null)
-        {
-            var maxError = 0.0;
-            foreach (var c in Faces)
-            {
-                var d = Axis.Dot((c.B.Coordinates - c.A.Coordinates).Cross(c.C.Coordinates - c.A.Coordinates));
-                d = Math.Abs(d);
-                if (d > maxError)
-                    maxError = d;
-            }
-            return maxError;
-        }
-
-        /// <summary>
         /// Transforms the from 3d to 2d.
         /// </summary>
         /// <param name="point">The point.</param>
@@ -82,7 +64,8 @@ namespace TVGL
         /// <returns>IEnumerable&lt;Vector2&gt;.</returns>
         public override IEnumerable<Vector2> TransformFrom3DTo2D(IEnumerable<Vector3> points, bool pathIsClosed)
         {
-            throw new NotImplementedException();
+            yield break;
+            //throw new NotImplementedException();
         }
 
         #region Properties
@@ -218,6 +201,31 @@ namespace TVGL
 
 
         /// <summary>
+        /// Calculates the mean square error.
+        /// </summary>
+        /// <param name="vertices">The vertices.</param>
+        /// <returns>System.Double.</returns>
+        public override double CalculateError(IEnumerable<Vector3> vertices = null)
+        {
+            var mse = 0.0;
+            foreach (var c in Faces)
+            {
+                var inPlane1 = c.Normal.Cross(Axis);
+                var inPlane2 = inPlane1.Cross(Axis).Normalize();
+                var distA = c.A.Dot(inPlane2);
+                var distB = c.B.Dot(inPlane2);
+                var distC = c.C.Dot(inPlane2);
+                var d = distA- distB;
+                mse += d * d;
+                d = distA - distC;
+                mse += d * d;
+                d = distB - distC;
+                mse += d * d;
+            }
+            return mse / (3 * Faces.Count);
+        }
+
+        /// <summary>
         /// Returns where the given point is inside the Prismatic.
         /// </summary>
         /// <param name="x">The x.</param>
@@ -229,13 +237,7 @@ namespace TVGL
 
         public override double PointMembership(Vector3 point)
         {
-            var axisError = 0.0;
-            var dxAlong = point.Dot(Axis);
-            if (dxAlong < MinDistanceAlongAxis) axisError = MinDistanceAlongAxis - dxAlong;
-            if (dxAlong > MaxDistanceAlongAxis) axisError = dxAlong - MaxDistanceAlongAxis;
-            var point2D = point.ConvertTo2DCoordinates(Axis, out _);
-            var inPlaneError = Curve2D.SquaredErrorOfNewPoint(point2D);
-            return Math.Sqrt(axisError * axisError + inPlaneError * inPlaneError);
+            return double.NaN;
         }
         #endregion
     }

@@ -321,6 +321,14 @@ namespace TVGL
                 xy, ySq, yz,
                 xz, yz, zSq);
             Amatrix.EigenRealsOnly(out var eigenValues, out var eigenVectors);
+            if (eigenVectors.Length == 0)
+            {
+                if (zSq.IsNegligible()) return Vector3.UnitZ;
+                if (ySq.IsNegligible()) return Vector3.UnitY;   
+                if (xSq.IsNegligible()) return Vector3.UnitX;
+                var v = new Vector3(xSq, ySq, zSq);
+                return v.GetPerpendicularDirection();
+            }
             if (eigenVectors.Length == 1)
             {
                 var direction = eigenVectors[0];
@@ -465,7 +473,7 @@ namespace TVGL
         }
 
 
-        public static IEnumerable<Vector3> ReduceDirections(List<Vector3> readOnlyDirs, 
+        public static IEnumerable<Vector3> ReduceDirections(List<Vector3> readOnlyDirs,
             IEnumerable<Vector3> guessDirs, int targetNumberOfDirections)
         {
             if (guessDirs == null) return readOnlyDirs;
