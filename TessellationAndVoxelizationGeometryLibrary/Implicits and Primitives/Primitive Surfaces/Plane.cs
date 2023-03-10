@@ -466,39 +466,6 @@ namespace TVGL
             Normal = originalToBeCopied.Normal;
         }
 
-        public static double CalculateError(IEnumerable<Vector3> vertices, out Vector3 normal, out double dto)
-        {
-            DefineNormalAndDistanceFromVertices(vertices, out dto, out normal);
-            var maxError = 0.0;
-            foreach (var c in vertices)
-            {
-                var d = Math.Abs(c.Dot(normal) - dto);
-                if (d > maxError)
-                    maxError = d;
-            }
-            return maxError;
-        }
-
-        public override double CalculateError(IEnumerable<Vector3> vertices = null)
-        {
-            if (vertices == null)
-            {
-                vertices = new List<Vector3>();
-                vertices = Vertices.Select(v => v.Coordinates).ToList();
-                ((List<Vector3>)vertices).AddRange(InnerEdges.Select(edge => (edge.To.Coordinates + edge.From.Coordinates) / 2));
-                ((List<Vector3>)vertices).AddRange(OuterEdges.Select(edge => (edge.To.Coordinates + edge.From.Coordinates) / 2));
-            }
-
-            var maxError = 0.0;
-            foreach (var c in vertices)
-            {
-                var d = Math.Abs(c.Dot(Normal) - DistanceToOrigin);
-                if (d > maxError)
-                    maxError = d;
-            }
-            return maxError;
-        }
-
         public override Vector2 TransformFrom3DTo2D(Vector3 point)
         {
             var v = new Vector3(point.X, point.Y, point.Z);
@@ -519,10 +486,39 @@ namespace TVGL
             }
         }
 
-        public override double PointMembership(Vector3 point)
+        public static double CalculateError(IEnumerable<Vector3> vertices, out Vector3 normal, out double dto)
         {
-            var d = point.Dot(Normal);
-            return d - DistanceToOrigin;
+            DefineNormalAndDistanceFromVertices(vertices, out dto, out normal);
+            var mse = 0.0;
+            var n = 0;
+            foreach (var c in vertices)
+            {
+                var d = c.Dot(normal) - dto;
+                mse += d * d;
+                n++;
+            }
+            return mse / n;
         }
+
+        public override double CalculateError(IEnumerable<Vector3> vertices = null)
+        {
+            if (vertices == null)
+            {
+                vertices = Vertices.Select(v => v.Coordinates)
+                    .Concat(InnerEdges.Select(edge => 0.5 * (edge.To.Coordinates + edge.From.Coordinates)))
+                    .Concat(OuterEdges.Select(edge => 0.5 * (edge.To.Coordinates + edge.From.Coordinates)));
+            }
+            var mse = 0.0;
+            var n = 0;
+            foreach (var c in vertices)
+            {
+                var d = PointMembership(c);
+                mse += d * d;
+                n++;
+            }
+            return mse / n;
+        }
+
+        public override double PointMembership(Vector3 point) => point.Dot(Normal) - DistanceToOrigin;
     }
 }

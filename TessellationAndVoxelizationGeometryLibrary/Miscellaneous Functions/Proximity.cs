@@ -297,16 +297,34 @@ namespace TVGL
         }
         public static Vector3 FindAxisToMinimizeProjectedArea(IEnumerable<PolygonalFace> faces, int count)
         {
-            var sums = Vector3.Zero;
+            double xSum = 0.0, ySum = 0.0, zSum = 0.0;
+            double xSq = 0.0;
+            double xy = 0.0, ySq = 0.0;
+            double xz = 0.0, yz = 0.0, zSq = 0.0;
             foreach (var face in faces)
-                sums += (face.B.Coordinates - face.A.Coordinates).Cross(face.C.Coordinates - face.A.Coordinates);
-            var Amatrix = new Matrix3x3(sums.X * sums.X, sums.X * sums.Y, sums.X * sums.Z,
-                sums.X * sums.Y, sums.Y * sums.Y, sums.Y * sums.Z,
-                sums.X * sums.Z, sums.Y * sums.Z, sums.Z * sums.Z);
+            {
+                var n = (face.B.Coordinates - face.A.Coordinates).Cross(face.C.Coordinates - face.A.Coordinates);
+                var x = n.X;
+                var y = n.Y;
+                var z = n.Z;
+                xSum += x;
+                ySum += y;
+                zSum += z;
+                xSq += x * x;
+                ySq += y * y;
+                zSq += z * z;
+                xy += x * y;
+                xz += x * z;
+                yz += y * z;
+            }
+            var Amatrix = new Matrix3x3(xSq, xy, xz,
+                xy, ySq, yz,
+                xz, yz, zSq);
             Amatrix.EigenRealsOnly(out var eigenValues, out var eigenVectors);
             if (eigenVectors.Length == 1)
             {
                 var direction = eigenVectors[0];
+                var sums = new Vector3(xSum, ySum, zSum);
                 var inline = Math.Abs(direction.Dot(sums) / sums.Length());
                 if (inline.IsPracticallySame(1, 0.1))
                 // then this is a maximum, not a minimum. basically, the eigen analysis was overwhelmed

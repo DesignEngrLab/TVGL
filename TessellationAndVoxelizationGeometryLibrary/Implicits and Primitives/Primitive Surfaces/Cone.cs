@@ -79,10 +79,22 @@ namespace TVGL
 
         /// <summary>
         ///     Gets the aperture. This is a slope, like m, not an angle. It is dimensionless and NOT radians.
-        ///     like y = mx + b. aperture = tan(cone_angle)
+        ///     like y = mx + b. aperture = tan(cone_angle) where cone_angle is measure from the axis to the cone
         /// </summary>
         /// <value>The aperture.</value>
-        public double Aperture { get; set; }
+        public double Aperture
+        {
+            get { return aperture; }
+            set
+            {
+                aperture = value;
+                cosAperture = Math.Sqrt(1 / (1 + value * value));
+                sinAperture = value * cosAperture;
+            }
+        }
+        private double aperture;
+        private double cosAperture;
+        private double sinAperture;
 
         /// <summary>
         ///     Gets the apex.
@@ -116,34 +128,6 @@ namespace TVGL
             // is the radius at that cross-section
         }
 
-        /// <summary>
-        /// Calculates the error.
-        /// </summary>
-        /// <param name="vertices">The vertices.</param>
-        /// <returns>System.Double.</returns>
-        public override double CalculateError(IEnumerable<Vector3> vertices = null)
-        {
-            if (vertices == null)
-            {
-                vertices = new List<Vector3>();
-                vertices = Vertices.Select(v => v.Coordinates).ToList();
-                ((List<Vector3>)vertices).AddRange(InnerEdges.Select(edge => (edge.To.Coordinates + edge.From.Coordinates) / 2));
-                ((List<Vector3>)vertices).AddRange(OuterEdges.Select(edge => (edge.To.Coordinates + edge.From.Coordinates) / 2));
-            }
-            var maxError = 0.0;
-            var cosAperture = Math.Sqrt(1 / (1 + Aperture));
-            foreach (var c in vertices)
-            {
-                var d = Math.Abs((c - Apex).Cross(Axis).Length()
-                    - Math.Abs(Aperture * (c - Apex).Dot(Axis)));
-                var error =  d * cosAperture;
-                if (error > maxError)
-                    maxError = error;
-            }
-            return maxError;
-        }
-
-
         private Vector3 faceXDir = Vector3.Null;
         private Vector3 faceYDir = Vector3.Null;
 
@@ -169,9 +153,25 @@ namespace TVGL
             return new Vector2(distanceDownCone * Math.Cos(angle), distanceDownCone * Math.Sin(angle));
         */
             var hypotenuse = Math.Sqrt(x * x + y * y);
-            var cosAngle = betaFactor * x / hypotenuse;
-            var sinAngle = betaFactor * y / hypotenuse;
+            var cosAngle = sinAperture * x / hypotenuse;
+            var sinAngle = sinAperture * y / hypotenuse;
             return new Vector2(distanceDownCone * cosAngle, distanceDownCone * sinAngle);
+            // you know how you can make a cone by cutting an arc from flat stock
+            // (paper, sheet metal, etc) and rolling it up? well what angle is that
+            // flattened sheet of the full 360-degrees?
+            // I call this angle, beta.
+            // Visualize or draw out both the 3d cone and the flattened arc. 
+            // The bottom of the cone (some perpendicular cut through the cone),
+            // the base circle is the same as the outside of the arc and has a
+            // length, c. This is equal to both:
+            // c = beta * distAtCommonDepth (where distAtCommonDepth is the distance down the outside of the cone; 
+            // note that distAtCommonDepth is Sqrt(h^2 + r^2) ),
+            // c = 2*pi*r e.g. circumference of the circle at the bottom of the cone
+            // here r is also aperture*height.
+            // Equate the c equations and solve for beta. 
+            // which reduces to h*sqrt(1+a^2).
+
+            //it turns out that betaFactor is the same as the sin(aperture angle)
         }
 
         /// <summary>
@@ -181,9 +181,9 @@ namespace TVGL
         /// <returns>Vector3.</returns>
         public override Vector3 TransformFrom2DTo3D(Vector2 point)
         {
-            var angle = Math.Atan2(point.Y, point.X) / betaFactor;
+            var angle = Math.Atan2(point.Y, point.X) / sinAperture;
             var distanceDownCone = point.Length();
-            var radius = betaFactor * distanceDownCone;
+            var radius = sinAperture * distanceDownCone;
             var height = radius / Aperture;
             if (faceXDir.IsNull())
             {
@@ -196,34 +196,7 @@ namespace TVGL
             return result;
         }
 
-        private double betaFactor
-        {
-            get
-            {
-                if (double.IsNaN(_betaFactor))
-                    _betaFactor = FlattenConeSpanningAngleFraction(Aperture);
-                return _betaFactor;
-            }
-        }
-        private double _betaFactor = double.NaN;
-        private static double FlattenConeSpanningAngleFraction(double aperture)
-        {
-            // you know how you can make a cone by cutting an arc from flat stock
-            // (paper, sheet metal, etc) and rolling it up? well what angle is that
-            // flattened sheet of the full 360-degrees?
-            // I call this angle, beta.
-            // Visualize or draw out both the 3d cone and the flattened arc. 
-            // The bottom of the cone (some perpendicular cut through the cone),
-            // the base circle is the same as the outside of the arc and has a
-            // length, c. This is equal to both:
-            // c = beta * d (where d is the distance down the outside of the cone; 
-            // note that d is Sqrt(h^2 + r^2) ),
-            // c = 2*pi*r e.g. circumference of the circle at the bottom of the cone
-            // here r is also aperture*height.
-            // Equate the c equations and solve for beta. 
-            // which reduces to h*sqrt(1+a^2).
-            return aperture / Math.Sqrt(1 + aperture * aperture);
-        }
+
 
         /// <summary>
         /// Transforms the from 3d points on the cone to a 2d.
@@ -250,7 +223,7 @@ namespace TVGL
             // like a cylinder, we don't want to break the 2D shape just because it doesn't fit on our initial
             // 2D sheet. Therefore we need to continue the around the polar coordinates when you wrap
             // around the cone. This is done by keeping tack of the direction of movement from the previous point
-            var halfRepeatAngle = betaFactor * Constants.TwoPi;
+            var halfRepeatAngle = sinAperture * Constants.TwoPi;
             // the first point is called the prevPoint, just to set up the following loop - so that the previous
             // visited point is always known when processing each subsequent point.
             var prevAngle = double.NaN;
@@ -260,7 +233,7 @@ namespace TVGL
                 var distanceDownCone = v.Length();
                 var x = faceXDir.Dot(v);
                 var y = faceYDir.Dot(v);
-                var angle = Math.Atan2(y, x) * betaFactor;
+                var angle = Math.Atan2(y, x) * sinAperture;
                 if (!double.IsNaN(prevAngle))
                 {
                     if (angle - prevAngle > halfRepeatAngle)
@@ -273,9 +246,47 @@ namespace TVGL
             }
         }
 
+
+
+        /// <summary>
+        /// Returns where the given point is inside the cylinder.
+        /// </summary>
+        /// <param name="x">The x.</param>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
+        public bool PointIsInside(Vector3 x)
+        {
+            return PointMembership(x) < 0 == IsPositive;
+        }
+        /// <summary>
+        /// Calculates the mean squared error.
+        /// </summary>
+        /// <param name="vertices">The vertices.</param>
+        /// <returns>System.Double.</returns>
+        public override double CalculateError(IEnumerable<Vector3> vertices = null)
+        {
+
+            if (Axis.IsNull()) return double.MaxValue;
+            if (vertices == null)
+            {
+                vertices = Vertices.Select(v => v.Coordinates)
+                    .Concat(InnerEdges.Select(edge => 0.5 * (edge.To.Coordinates + edge.From.Coordinates)))
+                    .Concat(OuterEdges.Select(edge => 0.5 * (edge.To.Coordinates + edge.From.Coordinates)));
+            }
+            var mse = 0.0;
+            var n = 0;
+            foreach (var c in vertices)
+            {
+                var d = PointMembership(c);
+                mse += d * d;
+                n++;
+            }
+            return mse / n;
+        }
         public override double PointMembership(Vector3 point)
         {
-            throw new NotImplementedException();
+            var v = point - Apex;
+            var distAtCommonDepth = v.Cross(Axis).Length() - Aperture * v.Dot(Axis);
+            return distAtCommonDepth * cosAperture;
         }
     }
 }

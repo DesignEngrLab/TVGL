@@ -33,31 +33,6 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Calculates the error.
-        /// </summary>
-        /// <param name="vertices">The vertices.</param>
-        /// <returns>System.Double.</returns>
-        public override double CalculateError(IEnumerable<Vector3> vertices = null)
-        {
-            if (vertices == null)
-            {
-                vertices = new List<Vector3>();
-                vertices = Vertices.Select(v => v.Coordinates).ToList();
-                ((List<Vector3>)vertices).AddRange(InnerEdges.Select(edge => (edge.To.Coordinates + edge.From.Coordinates) / 2));
-                ((List<Vector3>)vertices).AddRange(OuterEdges.Select(edge => (edge.To.Coordinates + edge.From.Coordinates) / 2));
-            }
-
-            var maxError = 0.0;
-            foreach (var c in vertices)
-            {
-                var d = Math.Abs((c - Center).Length() - Radius);
-                if (d > maxError)
-                    maxError = d;
-            }
-            return maxError;
-        }
-
-        /// <summary>
         /// Defines the sphere from points.
         /// Sumith YD, "Fast Geometric Fit Algorithm for Sphere Using Exact Solution", arXiv: 1506.02776
         /// </summary>
@@ -252,6 +227,43 @@ namespace TVGL
             return new Vector3(radius * cosAzimuth * sinPolar, radius * sinAzimuth * sinPolar, radius * cosPolar);
         }
 
+
+
+
+        /// <summary>
+        /// Returns where the given point is inside the cylinder.
+        /// </summary>
+        /// <param name="x">The x.</param>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
+        public bool PointIsInside(Vector3 x)
+        {
+            return PointMembership(x) < 0 == IsPositive;
+        }
+
+        /// <summary>
+        /// Calculates the error.
+        /// </summary>
+        /// <param name="vertices">The vertices.</param>
+        /// <returns>System.Double.</returns>
+        public override double CalculateError(IEnumerable<Vector3> vertices = null)
+        {
+            if (vertices == null)
+            {
+                vertices = Vertices.Select(v => v.Coordinates)
+                    .Concat(InnerEdges.Select(edge => 0.5 * (edge.To.Coordinates + edge.From.Coordinates)))
+                    .Concat(OuterEdges.Select(edge => 0.5 * (edge.To.Coordinates + edge.From.Coordinates)));
+            }
+            var mse = 0.0;
+            var n = 0;
+            foreach (var c in vertices)
+            {
+                var d = PointMembership(c);
+                mse += d * d;
+                n++;
+            }
+            return mse / n;
+        }
+
         public override double PointMembership(Vector3 point)
         {
             return (point - Center).Length() - Radius;
@@ -260,8 +272,9 @@ namespace TVGL
         {
             var v = point - Center;
             var vLength = v.Length();
-            gradient = v / vLength;
-            return vLength - Radius;
+            var distance = vLength - Radius;
+            gradient = distance * v / vLength;
+            return distance;
         }
         public double PointMembership(Vector3 point, out Vector3 gradient, out Vector3 curvatureDiagonalTerms,
             out Vector3 curvatureCrossTerms)
