@@ -104,6 +104,7 @@ namespace TVGL
         {
             return DefineNormalAndDistanceFromVertices(vertices.Select(v => v.Coordinates), out distanceToPlane, out normal);
         }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool DefineNormalAndDistanceFromVertices(IEnumerable<Vector3> vertices, out double distanceToPlane,
             out Vector3 normal)

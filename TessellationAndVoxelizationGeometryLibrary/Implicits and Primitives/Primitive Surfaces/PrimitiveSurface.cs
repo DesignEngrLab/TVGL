@@ -68,7 +68,16 @@ namespace TVGL
             if(connectFacesToPrimitive)
                 foreach (var face in Faces)
                     face.BelongsToPrimitive = this;
-            Vertices = new HashSet<Vertex>(Faces.SelectMany(f => f.Vertices).Distinct());
+            SetVerticesFromFaces();
+        }
+
+        public void SetVerticesFromFaces()
+        {
+            Vertices = new HashSet<Vertex>();
+            //Don't use linq here, so we can avoid unnecessary intermediate lists.
+            foreach (var face in Faces)
+                foreach (var v in face.Vertices)
+                    Vertices.Add(v);
         }
 
         public abstract double CalculateError(IEnumerable<Vector3> vertices = null);
@@ -79,7 +88,7 @@ namespace TVGL
 
         [JsonIgnore]
         //A tempory class used when importing primitives 
-        public List<List<int>> TriangleVertexIndices { get; set; }
+        public (int, int, int)[] TriangleVertexIndices { get; set; }
 
         public int[] FaceIndices
         {
@@ -118,14 +127,14 @@ namespace TVGL
         /// </summary>
         /// <value>The polygonal faces.</value>
         [JsonIgnore]
-        public HashSet<PolygonalFace> Faces { get; protected set; }
+        public HashSet<PolygonalFace> Faces { get; set; }
 
         /// <summary>
         ///     Gets the vertices.
         /// </summary>
         /// <value>The vertices.</value>
         [JsonIgnore]
-        public HashSet<Vertex> Vertices { get; protected set; }
+        public HashSet<Vertex> Vertices { get; set; }
 
         /// <summary>
         ///     Gets the inner edges.

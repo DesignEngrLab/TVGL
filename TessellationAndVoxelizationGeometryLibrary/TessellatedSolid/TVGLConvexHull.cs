@@ -25,13 +25,16 @@ namespace TVGL
 
         /// <summary>
         ///     Initializes a new instance of the <see cref="TVGLConvexHull" /> class.
+        ///     Optionally can choose to create faces and edges. Cannot make edges without faces.
         /// </summary>
         /// <param name="ts">The tessellated solid that the convex hull is made from.</param>
-        public TVGLConvexHull(IList<Vertex> vertices, double tolerance)
+        public TVGLConvexHull(IList<Vertex> vertices, double tolerance, bool createFaces = true, bool createEdges = true)
         {
             var convexHull = ConvexHull.Create(vertices, tolerance);
             if (convexHull.Result == null) return;
             Vertices = convexHull.Result.Points.ToArray();
+            if (!createFaces && !createEdges) return;
+            
             var convexHullFaceList = new List<PolygonalFace>();
             var checkSumMultipliers = new long[3];
             for (var i = 0; i < 3; i++)
@@ -48,8 +51,10 @@ namespace TVGL
                 convexHullFaceList.Add(new PolygonalFace(faceVertices, new Vector3(cvxFace.Normal), false));
             }
             Faces = convexHullFaceList.ToArray();
-            Edges = MakeEdges(Faces, Vertices);
-            TessellatedSolid.CalculateVolumeAndCenter(Faces, tolerance, out Volume, out Center);
+            if (createEdges)
+                Edges = MakeEdges(Faces, Vertices);
+            if (createFaces)
+                TessellatedSolid.CalculateVolumeAndCenter(Faces, tolerance, out Volume, out Center);
         }
 
         internal TVGLConvexHull(IList<Vertex> allVertices, IList<Vertex> convexHullPoints,

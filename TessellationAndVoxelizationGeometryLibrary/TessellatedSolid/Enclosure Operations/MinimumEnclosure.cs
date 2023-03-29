@@ -97,7 +97,7 @@ namespace TVGL
         /// </summary>
         /// <param name="convexHullVertices">The convex hull vertices.</param>
         /// <returns>BoundingBox.</returns>
-        public static BoundingBox OrientedBoundingBox<T>(this IList<T> convexHullVertices) where T : IVertex3D
+        public static BoundingBox OrientedBoundingBox<T>(this IEnumerable<T> convexHullVertices) where T : IVertex3D
         {
             // here we create 13 directions. Why 13? basically it is all ternary combinations of x,y,and z.
             // skipping symmetric and 0,0,0. Another way to think of it is to make a Direction from a cube with

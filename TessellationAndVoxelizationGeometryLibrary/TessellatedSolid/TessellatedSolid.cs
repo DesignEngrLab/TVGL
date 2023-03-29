@@ -2,12 +2,15 @@
 // This file is a part of TVGL, Tessellation and Voxelization Geometry Library
 // https://github.com/DesignEngrLab/TVGL
 // It is licensed under MIT License (see LICENSE.txt for details)
+using MIConvexHull;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Runtime.Serialization;
+using TVGL.threemfclasses;
 
 namespace TVGL
 {
@@ -32,7 +35,7 @@ namespace TVGL
         /// </summary>
         /// <value>The faces.</value>
         [JsonIgnore]
-        public PolygonalFace[] Faces { get; private set; }
+        public PolygonalFace[] Faces { get; set; }
 
         /// <summary>
         ///     Gets the edges.
@@ -54,21 +57,21 @@ namespace TVGL
         /// </summary>
         /// <value>The vertices.</value>
         [JsonIgnore]
-        public Vertex[] Vertices { get; private set; }
+        public Vertex[] Vertices { get; set; }
 
         /// <summary>
         ///     Gets the number of faces.
         /// </summary>
         /// <value>The number of faces.</value>
         [JsonIgnore]
-        public int NumberOfFaces { get; private set; }
+        public int NumberOfFaces { get; set; }
 
         /// <summary>
         ///     Gets the number of vertices.
         /// </summary>
         /// <value>The number of vertices.</value>
         [JsonIgnore]
-        public int NumberOfVertices { get; private set; }
+        public int NumberOfVertices { get; set; }
 
         /// <summary>
         ///     Gets the number of edges.
@@ -179,18 +182,27 @@ namespace TVGL
             else CalculateVolume();
         }
 
+        public TessellatedSolid(Vertex[] vertices, List<PrimitiveSurface> primitives, UnitType units = UnitType.unspecified, string name = "", string filename = "",
+            List<string> comments = null, string language = "") : base(units, name, filename, comments, language)
+        {
+            //Set the list of vertices and primitives directly to reduce garbage
+            Vertices = vertices;
+            Primitives = primitives;
+
+            //Make the faces from the primitives.
+            MakeFacesFromPrimitives();
+
+            //Set the volume and convex hull vertices
+            CalculateVolume();
+            ConvexHull = new TVGLConvexHull(Vertices, SameTolerance, false, false);
+        }
+
         [OnSerializing]
         protected void OnSerializingMethod(StreamingContext context)
         {
             //if (serializationData == null)
             serializationData = new Dictionary<string, JToken>();
-            if(ConvexHull != null)
-            {
-                serializationData.Add("ConvexHullVertices",
-                JToken.FromObject(ConvexHull.Vertices.Select(v => v.IndexInList)));
-                serializationData.Add("ConvexHullFaces",
-                    JToken.FromObject(ConvexHull.Faces.SelectMany(face => face.Vertices.Select(v => v.IndexInList))));
-            }
+            //Don't bother storing the convex hull, so we can keep the size down as much as possible. CVXHull is fast to recalculate.
             serializationData.Add("FaceIndices",
                 JToken.FromObject(Faces.SelectMany(face => face.Vertices.Select(v => v.IndexInList)).ToArray()));
             serializationData.Add("VertexCoords",
@@ -209,6 +221,64 @@ namespace TVGL
                 serializationData.Add("Colors", JToken.FromObject(colorList));
             }
         }
+
+        private const string comma = ",";
+        public void StreamWrite(JsonTextWriter writer, int index)
+        {
+            writer.WritePropertyName("Name");
+            writer.WriteValue(Name);
+
+            writer.WritePropertyName("Index");
+            writer.WriteValue(index);
+
+            writer.WritePropertyName("Volume");
+            writer.WriteValue(Volume);
+
+            writer.WritePropertyName("SurfaceArea");
+            writer.WriteValue(SurfaceArea);
+
+            writer.WritePropertyName("NumberOfVertices");
+            writer.WriteValue(NumberOfVertices);
+
+            writer.WritePropertyName("NumberOfFaces");
+            writer.WriteValue(NumberOfFaces);
+
+            writer.WritePropertyName("Primitives");
+            writer.WriteStartArray();//[
+            {
+                foreach(var primitive in Primitives)
+                {
+                    var jsonString = JsonConvert.SerializeObject(primitive, Formatting.None);
+                    writer.WriteRaw(jsonString);
+                    writer.WriteRaw(comma);
+                }
+            }
+            writer.WriteEndArray();//]
+
+            writer.WritePropertyName("FaceIndices");
+            writer.WriteStartArray();//[
+            {
+                foreach (var face in Faces)
+                {
+                    foreach (var vertex in face.Vertices)
+                        writer.WriteValue(vertex.IndexInList);
+                }
+            }
+            writer.WriteEndArray();//]
+
+            writer.WritePropertyName("VertexCoords");
+            writer.WriteStartArray();
+            {
+                foreach (var vertex in Vertices)
+                {
+                    writer.WriteValue(vertex.X);
+                    writer.WriteValue(vertex.Y);
+                    writer.WriteValue(vertex.Z);
+                }
+            }
+            writer.WriteEndArray();
+        }
+
 
         [OnDeserialized]
         protected void OnDeserializedMethod(StreamingContext context)
@@ -241,22 +311,7 @@ namespace TVGL
             MakeFaces(faceIndices, colors);
             MakeEdges();
 
-
-            if (serializationData.ContainsKey("ConvexHullVertices"))
-            {
-                jArray = (JArray)serializationData["ConvexHullVertices"];
-                var cvxIndices = jArray.ToObject<int[]>();
-                var cvxVertices = new Vertex[cvxIndices.Length];
-                for (int i = 0; i < cvxIndices.Length; i++)
-                    cvxVertices[i] = Vertices[cvxIndices[i]];
-                jArray = (JArray)serializationData["ConvexHullFaces"];
-                var cvxFaceIndices = jArray.ToObject<int[]>();
-                ConvexHull = new TVGLConvexHull(Vertices, cvxVertices, cvxFaceIndices, SameTolerance);
-            }
-            else
-            {
-                ConvexHull = new TVGLConvexHull(this);
-            }
+            ConvexHull = new TVGLConvexHull(this); 
             foreach (var cvxHullPt in ConvexHull.Vertices)
                 cvxHullPt.PartOfConvexHull = true;
             foreach (var face in Faces.Where(face => face.Vertices.All(v => v.PartOfConvexHull)))
@@ -620,6 +675,31 @@ namespace TVGL
                 Faces[i].IndexInList = i;
         }
 
+        public struct faceInfo
+        {
+            public int A;
+            public int B;
+            public int C;
+            public int Index;
+        }
+
+        /// <summary>
+        /// Makes the faces
+        /// </summary>
+        /// <param name="faceToVertexIndices">The face to vertex indices.</param>
+        /// <param name="colors">The colors.</param>
+        /// <param name="doublyLinkToVertices">if set to <c>true</c> [doubly link to vertices].</param>
+        /// 
+        public void MakeFacesFromPrimitives()
+        {
+            HasUniformColor = true;
+            Faces = new PolygonalFace[NumberOfFaces];        
+            var faceIndex = 0;
+            foreach (var primitive in Primitives)
+                foreach(var face in primitive.Faces)
+                    Faces[faceIndex++] = face;
+        }
+
         /// <summary>
         /// Makes the faces, avoiding duplicates.
         /// </summary>
@@ -644,6 +724,10 @@ namespace TVGL
                                + Constants.CubeRootOfLongMaxValue);
                 duplicateFaceCheck = false;
             }
+
+            var m1 = 1;
+            var m2 = NumberOfVertices;
+            var m3 = NumberOfVertices * NumberOfVertices;
             var checksumMultiplier = duplicateFaceCheck
                 ? new List<long> { 1, NumberOfVertices, NumberOfVertices * NumberOfVertices }
                 : null;
@@ -708,12 +792,12 @@ namespace TVGL
                     var faceIndices = new List<int>();
                     foreach (var face in primitive.TriangleVertexIndices)
                     {
-                        var checksum = FaceChecksum(checksumMultiplier, face, out var orderedIndices);
+                        var checksum = FaceChecksum(m1, m2, m3, face.Item1, face.Item2, face.Item3);
                         if (!faceChecksums.TryGetValue(checksum, out var faceIndex)) continue;//This may be an invalid face - such as duplicated vertices.
                         faceIndices.AddRange(tempFaceIndices[faceIndex].Select(p => p.IndexInList));
                     }
                     primitive.FaceIndices = faceIndices.ToArray();
-                    primitive.TriangleVertexIndices.Clear();//Don't need these anymore
+                    primitive.TriangleVertexIndices = null;//Don't need these anymore
                     Primitives.Add(primitive);
                 }
             }
@@ -727,6 +811,34 @@ namespace TVGL
             while (orderedIndices.Count > checksumMultiplier.Count)
                 checksumMultiplier.Add((long)Math.Pow(NumberOfVertices, checksumMultiplier.Count));
             return orderedIndices.Select((index, p) => index * checksumMultiplier[p]).Sum();
+        }
+
+        //Get the face checksum from three vertex indices on a face without creating needless lists in memory or using the Sort function.
+        private long FaceChecksum(long m1, long m2, long m3, int A, int B, int C)
+        {
+            if (A < B)
+            {
+                if (B < C)
+                    return CalculateChecksum(m1, m2, m3, A, B, C);
+                else if (A > C)
+                    return CalculateChecksum(m1, m2, m3, C, A, B);
+                else
+                    return CalculateChecksum(m1, m2, m3, A, C, B);
+            }
+            else
+            {
+                if (B > C)
+                    return CalculateChecksum(m1, m2, m3, C, B, A);
+                else if (C > A)
+                    return CalculateChecksum(m1, m2, m3, B, A, C);
+                else
+                    return CalculateChecksum(m1, m2, m3, B, C, A);
+            }
+        }
+
+        private long CalculateChecksum(long m1, long m2, long m3, int smallest, int middle, int largest)
+        {
+            return m1 * smallest + m2 * middle + m3 * largest;
         }
 
         /// <summary>
@@ -1267,7 +1379,37 @@ namespace TVGL
             CalculateVolumeAndCenter(Faces, SameTolerance, out _volume, out _center);
         }
 
+        const double oneThird= 1.0 / 3.0;
+        const double oneTwelth = 1.0 / 12.0;
         public static void CalculateVolumeAndCenter(IEnumerable<PolygonalFace> faces, double tolerance, out double volume, out Vector3 center)
+        {
+            center = new Vector3();
+            volume = 0.0;
+            double currentVolumeTerm;
+            double xCenter = 0, yCenter = 0, zCenter = 0;
+            if (faces == null) return;
+            foreach (var face in faces)
+            {
+                if (face.Area.IsNegligible(tolerance)) continue; //Ignore faces with zero area, since their Normals are not set.
+                // this is the volume of a tetrahedron from defined by the face and the origin {0,0,0}. The origin would be part of the second term
+                // in the dotproduct, "face.Normal.Dot(face.Vertices[0].Position - ORIGIN))", but clearly there is no need to subtract
+                // {0,0,0}. Note that the volume of the tetrahedron could be negative. This is fine as it ensures that the origin has no influence
+                // on the volume.
+                var a = face.A; var b = face.B; var c = face.C;// get once, so we don't have as many gets from an array.
+                //The actual tetrehedron volume should be divided by three, but we can just process that at the end.
+                volume += currentVolumeTerm = face.Area * face.Normal.Dot(a.Coordinates);
+                xCenter += (a.X + b.X + c.X) * currentVolumeTerm;
+                yCenter += (a.Y + b.Y + c.Y) * currentVolumeTerm;
+                zCenter += (a.Z + b.Z + c.Z) * currentVolumeTerm;
+                // center is found by a weighted sum of the centers of each tetrahedron. The weighted sum coordinate are collected here.
+            }
+            //Divide the volume by 3 and the center by 4. Since center is also mutliplied by the currentVolume, it is actually divided by 3 * 4 = 12;                
+            center = new Vector3(xCenter * oneTwelth, yCenter * oneTwelth, zCenter * oneTwelth);
+            volume *= oneThird;
+        }
+
+        //ToDo: Remove this function if there is no need for it. Why does this function repeat the volume & center calculation? Does this improve accuracy somehow? 
+        public static void CalculateVolumeAndCenter_Old(IEnumerable<PolygonalFace> faces, double tolerance, out double volume, out Vector3 center)
         {
             center = new Vector3();
             volume = 0.0;

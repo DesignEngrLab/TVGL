@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.Serialization;
+using System.Xml;
 
 namespace TVGL
 {
@@ -65,10 +66,37 @@ namespace TVGL
             return !Solids.Any();
         }
 
+        public void StreamWrite(JsonTextWriter writer)
+        {
+            useOnSerialization = false;//Don't serialize the TessellatedSolids directly. We are doing to do this with a stream.
+            var jsonString = JsonConvert.SerializeObject(this, Newtonsoft.Json.Formatting.None)[..^1];//ignore last character so that the object is not closed
+            writer.WriteRaw(jsonString + ",");//Add a comma to continue this object
+
+            var i = 0;
+            writer.WritePropertyName("DistinctSolids");
+            writer.WriteStartArray();//[
+            {
+                foreach (var solid in Solids.Where(p => p is TessellatedSolid))
+                {
+                    var ts = (TessellatedSolid)solid;
+                    writer.WriteStartObject();
+                    {
+                        ts.StreamWrite(writer, i++);
+                    }
+                    writer.WriteEndObject();
+                }
+            }
+            writer.WriteEndArray();
+            writer.WriteRaw("}");//end the SolidAssembly object
+        }
+
+        private bool useOnSerialization = true;
+
         [OnSerializing]
         protected void OnSerializingMethod(StreamingContext context)
         {
-            serializationData = new Dictionary<string, JToken>();            
+            if (!useOnSerialization) return;
+            serializationData = new Dictionary<string, JToken>();
             serializationData.Add("TessellatedSolids", JToken.FromObject(Solids.Where(p => p is TessellatedSolid)));
             serializationData.Add("CrossSectionSolids", JToken.FromObject(Solids.Where(p => p is CrossSectionSolid)));
             serializationData.Add("VolizedSolids", JToken.FromObject(Solids.Where(p => p is VoxelizedSolid)));

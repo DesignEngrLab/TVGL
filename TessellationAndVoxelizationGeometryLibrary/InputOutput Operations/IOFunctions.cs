@@ -1269,22 +1269,33 @@ namespace TVGL
         {
             using var fileStream = File.OpenWrite(Path.ChangeExtension(filename, GetExtensionFromFileType(FileType.TVGLz)));
             return SaveToTVGLz(fileStream, solidAssembly);
-        }          
+        }
 
         public static bool SaveToTVGLz(Stream s, SolidAssembly solidAssembly)
         {
             try
             {
-                var jsonString = JsonConvert.SerializeObject(solidAssembly, Formatting.None);
-                using var archive = new ZipArchive(s, ZipArchiveMode.Create, true);
-                using StreamWriter writer = new StreamWriter(archive.CreateEntry(solidAssembly.Name).Open());
-                writer.WriteLine(jsonString);
+                using (var streamWriter = new StreamWriter(s))
+                using (var writer = new JsonTextWriter(streamWriter))
+                {
+                    writer.Formatting = Formatting.None;
+                    solidAssembly.StreamWrite(writer);
+                    writer.Close();
+                }
                 return true;
             }
             catch
             {
                 return false;
             }
+        }
+
+        private static void AddEntry(string fileName, byte[] fileContent, ZipArchive archive)
+        {
+            var entry = archive.CreateEntry(fileName);
+            using (var stream = entry.Open())
+                stream.Write(fileContent, 0, fileContent.Length);
+
         }
 
         public static void OpenTVGL(Stream s, out SolidAssembly solidAssembly)
