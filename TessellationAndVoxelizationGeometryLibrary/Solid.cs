@@ -56,6 +56,7 @@ namespace TVGL
                 if (double.IsNaN(_volume)) CalculateVolume();
                 return _volume;
             }
+            set { }
         }
 
         protected abstract void CalculateVolume();
@@ -73,6 +74,7 @@ namespace TVGL
                 if (double.IsNaN(_surfaceArea)) CalculateSurfaceArea();
                 return _surfaceArea;
             }
+            set { }
         }
 
         protected abstract void CalculateSurfaceArea();

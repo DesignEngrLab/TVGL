@@ -4,7 +4,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.Serialization;
-using System.Xml;
 
 namespace TVGL
 {
@@ -68,16 +67,21 @@ namespace TVGL
 
         public void StreamWrite(JsonTextWriter writer)
         {
-            useOnSerialization = false;//Don't serialize the TessellatedSolids directly. We are doing to do this with a stream.
-            var jsonString = JsonConvert.SerializeObject(this, Newtonsoft.Json.Formatting.None)[..^1];//ignore last character so that the object is not closed
-            writer.WriteRaw(jsonString + ",");//Add a comma to continue this object
-
-            var i = 0;
-            writer.WritePropertyName("DistinctSolids");
-            writer.WriteStartArray();//[
+            writer.WriteStartObject();
             {
+                writer.WritePropertyName("SolidAssembly");
+                useOnSerialization = false;//Don't serialize the TessellatedSolids directly. We are doing to do this with a stream.
+                var jsonString = ((string)JsonConvert.SerializeObject(this, Newtonsoft.Json.Formatting.None));//ignore last character so that the object is not closed
+                //JSON uses a key value structure. We already wrote the key, now we write the value to end this object. This adds its own comma.
+                writer.WriteRawValue(jsonString);
+
+                //Write each solid as it's own object on this level rather than in an array. This will allow us more control about the solid, and
+                //will make it easier to read in, since there is one fewer global levels in the JSON structure. Pointers from the assembly refer 
+                //to the solid index and/or the order of the solids.
+                var i = 0;
                 foreach (var solid in Solids.Where(p => p is TessellatedSolid))
                 {
+                    writer.WritePropertyName("TessellatedSolid" + i);
                     var ts = (TessellatedSolid)solid;
                     writer.WriteStartObject();
                     {
@@ -85,12 +89,35 @@ namespace TVGL
                     }
                     writer.WriteEndObject();
                 }
-            }
-            writer.WriteEndArray();
-            writer.WriteRaw("}");//end the SolidAssembly object
+            }     
+            writer.WriteEndObject();
         }
 
-        private bool useOnSerialization = true;
+        public static void StreamRead(JsonTextReader reader, out SolidAssembly assembly)
+        {
+            var solids = new Dictionary<int, TessellatedSolid>();
+            assembly = new SolidAssembly();
+            //useOnSerialization = false;//Don't serialize the TessellatedSolids directly. We are doing to do this with a stream.
+            var jsonSerializer = new JsonSerializer();
+            while (reader.Read())
+            {
+                if (reader.TokenType == JsonToken.PropertyName && reader.Value.ToString() == "SolidAssembly")
+                {
+                    reader.Read();//Skip to object
+                    assembly = jsonSerializer.Deserialize<SolidAssembly>(reader);
+                }
+                else if (reader.TokenType == JsonToken.PropertyName && reader.Value.ToString().Contains("TessellatedSolid"))
+                {
+                    var solid = new TessellatedSolid();
+                    solid.StreamRead(reader, out var index);
+                    solids.Add(index, solid);                    
+                }         
+            }
+            assembly.Solids = solids.Values.ToArray();
+            assembly.RootAssembly.SetGlobalAssembly(assembly);
+        }
+
+        private bool useOnSerialization = false;
 
         [OnSerializing]
         protected void OnSerializingMethod(StreamingContext context)
@@ -105,6 +132,7 @@ namespace TVGL
         [OnDeserialized]
         protected void OnDeserializedMethod(StreamingContext context)
         {
+            if (!useOnSerialization) return;
             JArray jArray = (JArray)serializationData["TessellatedSolids"];
             Solids = jArray.ToObject<TessellatedSolid[]>();
             RootAssembly.SetGlobalAssembly(this);

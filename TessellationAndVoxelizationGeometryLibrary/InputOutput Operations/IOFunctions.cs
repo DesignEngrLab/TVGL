@@ -16,8 +16,6 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Xml.Serialization;
 
-
-
 namespace TVGL
 {
     /// <summary>
@@ -104,6 +102,20 @@ namespace TVGL
         /// <param name="solids">The solids.</param>
         /// <exception cref="FileNotFoundException">The file was not found at: " + filename</exception>
         public static void Open(string filename, out TessellatedSolid[] solids)
+        {
+            if (File.Exists(filename))
+                using (var fileStream = File.OpenRead(filename))
+                    Open(fileStream, filename, out solids);
+            else throw new FileNotFoundException("The file was not found at: " + filename);
+        }
+
+        /// <summary>
+        /// Opens the specified filename.
+        /// </summary>
+        /// <param name="filename">The filename.</param>
+        /// <param name="solids">The solids.</param>
+        /// <exception cref="FileNotFoundException">The file was not found at: " + filename</exception>
+        public static void OpenZip(string filename, out TessellatedSolid[] solids)
         {
             if (File.Exists(filename))
                 using (var fileStream = File.OpenRead(filename))
@@ -452,7 +464,7 @@ namespace TVGL
             }
         }
 
-        private static string GetExtensionFromFileType(FileType fileType)
+        public static string GetExtensionFromFileType(FileType fileType)
         {
             switch (fileType)
             {
@@ -1062,7 +1074,7 @@ namespace TVGL
                     return SaveToTVGL(stream, new SolidAssembly(solids));
 
                 case FileType.TVGLz:
-                    return SaveToTVGLz(stream, new SolidAssembly(solids));
+                    throw new NotImplementedException("Need to provide filepath instread of stream.");
     
                 default:
                     throw new NotSupportedException(
@@ -1244,13 +1256,13 @@ namespace TVGL
             }
         }
 
-        public static bool SaveToTVGL(SolidAssembly solidAssembly, string filename)
+        public static bool SaveToTVGL_Old(SolidAssembly solidAssembly, string filename)
         {
             using var fileStream = File.OpenWrite(Path.ChangeExtension(filename, GetExtensionFromFileType(FileType.TVGL)));
             return SaveToTVGL(fileStream, solidAssembly);
         }
 
-        public static bool SaveToTVGL(Stream s, SolidAssembly solidAssembly)
+        public static bool SaveToTVGL_Old(Stream s, SolidAssembly solidAssembly)
         {
             try
             {
@@ -1267,20 +1279,76 @@ namespace TVGL
 
         public static bool SaveToTVGLz(SolidAssembly solidAssembly, string filename)
         {
-            using var fileStream = File.OpenWrite(Path.ChangeExtension(filename, GetExtensionFromFileType(FileType.TVGLz)));
-            return SaveToTVGLz(fileStream, solidAssembly);
+            //Delete the existing file if it exists, so that our stream doesn't get corrupted
+            //(i.e. if the existing location is longer than what we write, some of the original fil will remain
+            var tvgl = Path.ChangeExtension(filename, GetExtensionFromFileType(FileType.TVGL));
+            var tvglz = Path.ChangeExtension(filename, GetExtensionFromFileType(FileType.TVGLz));
+            if (File.Exists(tvgl)) File.Delete(tvgl);
+            if (File.Exists(tvglz)) File.Delete(tvglz);
+
+            using var fileStream = File.OpenWrite(tvgl);
+            if (!SaveToTVGL(fileStream, solidAssembly))
+                return false;
+            try
+            {
+                using (ZipArchive zip = ZipFile.Open(tvglz, ZipArchiveMode.Create))
+                {
+                    zip.CreateEntryFromFile(tvgl, tvgl, CompressionLevel.Optimal);
+                }
+                //Delete temp file
+                if (File.Exists(tvgl)) File.Delete(tvgl);
+            }
+            catch
+            {
+                return false;
+            }
+            return true;
         }
 
-        public static bool SaveToTVGLz(Stream s, SolidAssembly solidAssembly)
+        private static bool SaveToTVGL(Stream fileStream, SolidAssembly solidAssembly)
         {
             try
             {
-                using (var streamWriter = new StreamWriter(s))
+                using (var streamWriter = new StreamWriter(fileStream))
                 using (var writer = new JsonTextWriter(streamWriter))
                 {
                     writer.Formatting = Formatting.None;
                     solidAssembly.StreamWrite(writer);
                     writer.Close();
+                }
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        public static bool ReadStream(string filename, out SolidAssembly solidAssembly)
+        {
+            solidAssembly = null;
+            if (!File.Exists(filename))
+                return false;
+
+            var extension = Path.GetExtension(filename);
+            if (GetFileTypeFromExtension(extension) == FileType.TVGLz)
+            {
+                var file = new FileInfo(filename);
+                var directory = file.Directory.FullName;
+                //Unzip the file
+                ZipFile.ExtractToDirectory(filename, directory, true);
+                filename = Path.ChangeExtension(filename, GetExtensionFromFileType(FileType.TVGL));
+            }
+            else if (GetFileTypeFromExtension(extension) != FileType.TVGL) return false;
+
+            try
+            {
+                using var s = File.Open(filename, FileMode.Open);
+                using (var streamReader = new StreamReader(s))
+                using (var reader = new JsonTextReader(streamReader))
+                {     
+                    SolidAssembly.StreamRead(reader, out solidAssembly);
+                    reader.Close();
                 }
                 return true;
             }

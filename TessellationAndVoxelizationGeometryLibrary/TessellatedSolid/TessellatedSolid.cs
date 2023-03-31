@@ -2,7 +2,6 @@
 // This file is a part of TVGL, Tessellation and Voxelization Geometry Library
 // https://github.com/DesignEngrLab/TVGL
 // It is licensed under MIT License (see LICENSE.txt for details)
-using MIConvexHull;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
@@ -10,7 +9,6 @@ using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using System.Runtime.Serialization;
-using TVGL.threemfclasses;
 
 namespace TVGL
 {
@@ -79,6 +77,13 @@ namespace TVGL
         /// <value>The number of edges.</value>
         [JsonIgnore]
         public int NumberOfEdges { get; private set; }
+
+        /// <summary>
+        ///     Gets the number of primitives. Must be set after completing primitive definition/combination.
+        /// </summary>
+        /// <value>The number of faces.</value>
+        [JsonIgnore]
+        public int NumberOfPrimitives{ get; set; }
 
         /// <summary>
         ///     Errors in the tesselated solid
@@ -223,8 +228,13 @@ namespace TVGL
         }
 
         private const string comma = ",";
+        /// <summary>
+        /// Stream writes the JSON structure in reverse order of how it will be read in.
+        /// </summary>
+        /// <param name="writer"></param>
+        /// <param name="index"></param>
         public void StreamWrite(JsonTextWriter writer, int index)
-        {
+        {          
             writer.WritePropertyName("Name");
             writer.WriteValue(Name);
 
@@ -243,28 +253,8 @@ namespace TVGL
             writer.WritePropertyName("NumberOfFaces");
             writer.WriteValue(NumberOfFaces);
 
-            writer.WritePropertyName("Primitives");
-            writer.WriteStartArray();//[
-            {
-                foreach(var primitive in Primitives)
-                {
-                    var jsonString = JsonConvert.SerializeObject(primitive, Formatting.None);
-                    writer.WriteRaw(jsonString);
-                    writer.WriteRaw(comma);
-                }
-            }
-            writer.WriteEndArray();//]
-
-            writer.WritePropertyName("FaceIndices");
-            writer.WriteStartArray();//[
-            {
-                foreach (var face in Faces)
-                {
-                    foreach (var vertex in face.Vertices)
-                        writer.WriteValue(vertex.IndexInList);
-                }
-            }
-            writer.WriteEndArray();//]
+            writer.WritePropertyName("NumberOfPrimitives");
+            writer.WriteValue(NumberOfPrimitives);
 
             writer.WritePropertyName("VertexCoords");
             writer.WriteStartArray();
@@ -277,6 +267,146 @@ namespace TVGL
                 }
             }
             writer.WriteEndArray();
+
+            writer.WritePropertyName("FaceIndices");
+            writer.WriteStartArray();//[
+            {
+                foreach (var face in Faces)
+                    foreach (var vertex in face.Vertices)
+                        writer.WriteValue(vertex.IndexInList);
+            }
+            writer.WriteEndArray();//]
+
+            var i = 0;
+            writer.WritePropertyName("Primitives");
+            //Write the primitives as one large object with sub-objects.
+            //This will be easier to read in than an array, because the primitives
+            //don't serialize a type automatically and so we know how to cast it when reading
+            //before actually reading it.
+            writer.WriteStartObject();//{
+            {
+                foreach(var primitive in Primitives)
+                {
+                    //Name the primitive as its type plus an index. This will make it unique, which is 
+                    //required for JSON.
+                    var type = primitive.GetType().ToString().Substring(5);//plane
+                    writer.WritePropertyName(type + "_" + i++);
+                    writer.WriteRawValue(JsonConvert.SerializeObject(primitive, Formatting.None));
+                }
+            }
+            writer.WriteEndObject();//}
+        }
+
+        public void StreamRead(JsonTextReader reader, out int index)
+        {
+            index = -1;
+            var jsonSerializer = new Newtonsoft.Json.JsonSerializer();
+            reader.Read();
+            while (reader.TokenType != JsonToken.EndObject)
+            {
+                if (reader.TokenType != JsonToken.PropertyName)
+                {
+                    reader.Read();
+                    continue;
+                }                   
+                
+                var propertyName = reader.Value.ToString();
+                switch (propertyName)
+                {
+                    case "Name":
+                        Name = reader.ReadAsString();
+                        break;
+                    case "Index":
+                        index = (int)reader.ReadAsInt32();
+                        break;
+                    case "SurfaceArea":
+                        SurfaceArea = (double)reader.ReadAsDouble();
+                        break;
+                    case "Volume":
+                        Volume = (double)reader.ReadAsDouble();
+                        break;
+                    case "NumberOfVertices":
+                        NumberOfVertices = (int)reader.ReadAsInt32();
+                        Vertices = new Vertex[NumberOfVertices];
+                        break;
+                    case "NumberOfFaces":
+                        NumberOfFaces = (int)reader.ReadAsInt32();
+                        Faces = new PolygonalFace[NumberOfFaces];
+                        break;
+                    case "NumberOfPrimitives":
+                        NumberOfPrimitives = (int)reader.ReadAsInt32();
+                        Primitives = new List<PrimitiveSurface>(NumberOfPrimitives);
+                        break;
+                    case "Primitives":
+                        //Start reading primitives                          
+                        reader.Read();//skip object container "{"
+                        for(var primitiveIndex = 0; primitiveIndex < NumberOfPrimitives; primitiveIndex++)
+                        {
+                            //Get the property name, which in this case, is the name of the primitive plus an index.
+                            reader.Read();
+                            var primitiveType = reader.Value.ToString().Split('_')[0];
+
+                            //Get the next object, which is a primitive. Cast it to the appropriate primitive type.
+                            reader.Read();
+                            switch (primitiveType)
+                            {
+                                case "Plane":
+                                    Primitives.Add(jsonSerializer.Deserialize<Plane>(reader));
+                                    break;
+                                case "Cylinder":
+                                    Primitives.Add(jsonSerializer.Deserialize<Cylinder>(reader));
+                                    break;
+                                case "Cone":
+                                    Primitives.Add(jsonSerializer.Deserialize<Cone>(reader));
+                                    break;
+                                case "Sphere":
+                                    Primitives.Add(jsonSerializer.Deserialize<Sphere>(reader));
+                                    break;
+                                case "Torus":
+                                    Primitives.Add(jsonSerializer.Deserialize<Torus>(reader));
+                                    break;
+                                case "Capsule":
+                                    Primitives.Add(jsonSerializer.Deserialize<Capsule>(reader));
+                                    break;
+                                case "UnknownRegion":
+                                    Primitives.Add(jsonSerializer.Deserialize<UnknownRegion>(reader));
+                                    break;
+                                default:
+                                    throw new Exception("Need to add deserialize casting for primitive type: " + primitiveType);
+                            }
+                        }
+                        break;
+                    case "FaceIndices":
+                        reader.Read();//start array [
+                        for (var faceIndex = 0; faceIndex < NumberOfFaces; faceIndex++)
+                        {
+                            var a = (int)reader.ReadAsInt32();
+                            var b = (int)reader.ReadAsInt32();
+                            var c = (int)reader.ReadAsInt32();
+                            Faces[faceIndex] = new PolygonalFace(Vertices[a], Vertices[b], Vertices[c], true) { IndexInList = faceIndex };
+                        }
+                        break;
+                    case "VertexCoords":
+                        reader.Read();//start array [
+                        for (var vertexIndex = 0; vertexIndex < NumberOfVertices; vertexIndex++)
+                        {
+                            var x = (double)reader.ReadAsDouble();
+                            var y = (double)reader.ReadAsDouble();
+                            var z = (double)reader.ReadAsDouble();
+                            Vertices[vertexIndex] = new Vertex(new Vector3(x, y, z), vertexIndex); 
+                        }
+                        break;
+                }
+
+                reader.Read();//go to next
+            }
+
+            //Build edges, convex hull, and anything else we need.
+            CompleteInitiation();
+
+            //Lastly, assign faces and vertices to the primitives
+            foreach (var prim in Primitives)
+                prim.CompletePostSerialization(this);
         }
 
 
