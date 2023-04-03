@@ -64,8 +64,10 @@ namespace TVGL
         /// <returns>IEnumerable&lt;Vector2&gt;.</returns>
         public override IEnumerable<Vector2> TransformFrom3DTo2D(IEnumerable<Vector3> points, bool pathIsClosed)
         {
+            var transform = Axis.TransformToXYPlane(out _);
+            foreach (var point in points)
+                yield return point.ConvertTo2DCoordinates(transform);
             yield break;
-            //throw new NotImplementedException();
         }
 
         #region Properties
@@ -197,8 +199,6 @@ namespace TVGL
             MaxDistanceAlongAxis = originalToBeCopied.MaxDistanceAlongAxis;
             Height = originalToBeCopied.Height;
         }
-
-
 
         /// <summary>
         /// Calculates the mean square error.
