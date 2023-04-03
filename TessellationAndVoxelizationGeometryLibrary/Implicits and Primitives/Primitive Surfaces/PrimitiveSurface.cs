@@ -71,6 +71,11 @@ namespace TVGL
             Vertices = new HashSet<Vertex>(Faces.SelectMany(f => f.Vertices).Distinct());
         }
 
+        public void UpdateVertices()
+        {
+            Vertices = new HashSet<Vertex>(Faces.SelectMany(f => f.Vertices).Distinct());
+        }
+
         public void SetFacesAndVertices(IEnumerable<PolygonalFace> faces1, IEnumerable<PolygonalFace> faces2, bool connectFacesToPrimitive = true)
         {
             //Add all the faces to a hashset, without mutating either of the input enumerables.

@@ -333,7 +333,7 @@ namespace TVGL
         /// <value>The color.</value>
         public Color Color { get; set; }
 
-        public PrimitiveSurface BelongsToPrimitive { get; internal set; }
+        public PrimitiveSurface BelongsToPrimitive { get; set; }
 
         /// <summary>
         ///     Gets the adjacent faces.

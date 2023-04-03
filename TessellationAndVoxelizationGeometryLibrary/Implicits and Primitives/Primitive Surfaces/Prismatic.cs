@@ -43,6 +43,7 @@ namespace TVGL
         /// <returns>System.Double.</returns>
         public override double CalculateError(IEnumerable<Vector3> vertices = null)
         {
+            if (Axis.X is double.NaN) return double.MaxValue;
             var maxError = 0.0;
             foreach (var c in Faces)
             {
@@ -82,7 +83,10 @@ namespace TVGL
         /// <returns>IEnumerable&lt;Vector2&gt;.</returns>
         public override IEnumerable<Vector2> TransformFrom3DTo2D(IEnumerable<Vector3> points, bool pathIsClosed)
         {
-            throw new NotImplementedException();
+            var transform = Axis.TransformToXYPlane(out _);
+            foreach (var point in points)
+                yield return point.ConvertTo2DCoordinates(transform);
+            yield break;
         }
 
         #region Properties
