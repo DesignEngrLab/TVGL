@@ -37,6 +37,7 @@ namespace TVGL
         }
 
         /// <summary>
+
         /// Transforms the from 3d to 2d.
         /// </summary>
         /// <param name="point">The point.</param>
@@ -207,6 +208,7 @@ namespace TVGL
         /// <returns>System.Double.</returns>
         public override double CalculateError(IEnumerable<Vector3> vertices = null)
         {
+            if (Axis.X is double.NaN) return double.MaxValue;
             var mse = 0.0;
             foreach (var c in Faces)
             {
