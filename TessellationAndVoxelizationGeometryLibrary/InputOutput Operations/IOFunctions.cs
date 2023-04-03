@@ -1293,7 +1293,7 @@ namespace TVGL
             {
                 using (ZipArchive zip = ZipFile.Open(tvglz, ZipArchiveMode.Create))
                 {
-                    zip.CreateEntryFromFile(tvgl, tvgl, CompressionLevel.Optimal);
+                    zip.CreateEntryFromFile(tvgl, "TVGL", CompressionLevel.Optimal);
                 }
                 //Delete temp file
                 if (File.Exists(tvgl)) File.Delete(tvgl);
@@ -1330,14 +1330,28 @@ namespace TVGL
             if (!File.Exists(filename))
                 return false;
 
+            //using (ZipArchive archive = new ZipArchive(postedZipStream))
+            //{
+            //    foreach (ZipArchiveEntry entry in archive.Entries)
+            //    {
+            //        var stream = entry.Open();
+            //        //Do awesome stream stuff!!
+            //    }
+            //}
+
             var extension = Path.GetExtension(filename);
             if (GetFileTypeFromExtension(extension) == FileType.TVGLz)
             {
-                var file = new FileInfo(filename);
-                var directory = file.Directory.FullName;
+                var unzipped = Path.ChangeExtension(filename, GetExtensionFromFileType(FileType.TVGL));
                 //Unzip the file
-                ZipFile.ExtractToDirectory(filename, directory, true);
-                filename = Path.ChangeExtension(filename, GetExtensionFromFileType(FileType.TVGL));
+                using (ZipArchive archive = ZipFile.OpenRead(filename))
+                {
+                    foreach (ZipArchiveEntry entry in archive.Entries)
+                    {
+                        entry.ExtractToFile(unzipped);
+                    }
+                }
+                filename = unzipped;
             }
             else if (GetFileTypeFromExtension(extension) != FileType.TVGL) return false;
 
