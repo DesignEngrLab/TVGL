@@ -186,7 +186,7 @@ namespace TVGL
                         Open(s, filename, out TessellatedSolid[] solids);
                         solid = solids[0];
                         break;
-                        
+
                     case FileType.PLY_ASCII:
                     case FileType.PLY_Binary:
                         solid = PLYFileData.OpenSolid(s, filename);
@@ -203,13 +203,13 @@ namespace TVGL
                             solid = serializer.Deserialize<TessellatedSolid>(reader);
                         break;
                 }
-        }
+            }
             catch (Exception exc)
             {
                 Console.WriteLine("Cannot open file. Message: " + exc.Message);
                 solid = null;
             }
-}
+        }
 
         /// <summary>
         /// Opens the specified s.
@@ -223,51 +223,51 @@ namespace TVGL
         {
             //try
             //{
-                var extension = GetFileTypeFromExtension(Path.GetExtension(filename));
-                switch (extension)
-                {
-                    case FileType.STL_ASCII:
-                    case FileType.STL_Binary:
-                        tessellatedSolids = STLFileData.OpenSolids(s, filename); // Standard Tessellation or StereoLithography
-                        break;
+            var extension = GetFileTypeFromExtension(Path.GetExtension(filename));
+            switch (extension)
+            {
+                case FileType.STL_ASCII:
+                case FileType.STL_Binary:
+                    tessellatedSolids = STLFileData.OpenSolids(s, filename); // Standard Tessellation or StereoLithography
+                    break;
 
-                    case FileType.ThreeMF:
-                        tessellatedSolids = ThreeMFFileData.OpenSolids(s, filename);
-                        break;
+                case FileType.ThreeMF:
+                    tessellatedSolids = ThreeMFFileData.OpenSolids(s, filename);
+                    break;
 
-                    case FileType.Model3MF:
-                        tessellatedSolids = ThreeMFFileData.OpenModelFile(s, filename);
-                        break;
+                case FileType.Model3MF:
+                    tessellatedSolids = ThreeMFFileData.OpenModelFile(s, filename);
+                    break;
 
-                    case FileType.AMF:
-                        tessellatedSolids = AMFFileData.OpenSolids(s, filename);
-                        break;
+                case FileType.AMF:
+                    tessellatedSolids = AMFFileData.OpenSolids(s, filename);
+                    break;
 
-                    case FileType.SHELL:
-                        tessellatedSolids = ShellFileData.OpenSolids(s, filename);
-                        break;
+                case FileType.SHELL:
+                    tessellatedSolids = ShellFileData.OpenSolids(s, filename);
+                    break;
 
-                    case FileType.OBJ:
-                        tessellatedSolids = OBJFileData.OpenSolids(s, filename);
-                        break;
+                case FileType.OBJ:
+                    tessellatedSolids = OBJFileData.OpenSolids(s, filename);
+                    break;
 
-                    case FileType.OFF:
-                    case FileType.PLY_ASCII:
-                    case FileType.PLY_Binary:
-                        throw new Exception("Attempting to open multiple solids with a " + extension.ToString() + " file.");
-                    case FileType.TVGL:
-                        OpenTVGL(s, out var solidAssembly);
-                        tessellatedSolids = solidAssembly.RootAssembly.AllTessellatedSolidsInGlobalCoordinateSystem();
-                        break;
-                    case FileType.TVGLz:
-                        OpenTVGLz(s, out solidAssembly);
+                case FileType.OFF:
+                case FileType.PLY_ASCII:
+                case FileType.PLY_Binary:
+                    throw new Exception("Attempting to open multiple solids with a " + extension.ToString() + " file.");
+                case FileType.TVGL:
+                    OpenTVGL(s, out var solidAssembly);
                     tessellatedSolids = solidAssembly.RootAssembly.AllTessellatedSolidsInGlobalCoordinateSystem();
-                        break;
+                    break;
+                case FileType.TVGLz:
+                    OpenTVGLz(s, out solidAssembly);
+                    tessellatedSolids = solidAssembly.RootAssembly.AllTessellatedSolidsInGlobalCoordinateSystem();
+                    break;
                 default:
-                        Message.output(filename + " is not a recognized 3D format.");
-                        tessellatedSolids = new TessellatedSolid[0];
-                        break;
-                }
+                    Message.output(filename + " is not a recognized 3D format.");
+                    tessellatedSolids = new TessellatedSolid[0];
+                    break;
+            }
             //}
             //catch (Exception exc)
             //{
@@ -995,9 +995,9 @@ namespace TVGL
             return Double.NaN;
         }
 
-#endregion Open/Load/Read
+        #endregion Open/Load/Read
 
-#region Save/Write
+        #region Save/Write
 
         /// <summary>
         /// Saves the specified solids to a file.
@@ -1027,7 +1027,7 @@ namespace TVGL
             if (fileType == FileType.unspecified)
                 fileType = GetFileTypeFromExtension(Path.GetExtension(filename));
             var dir = Path.GetDirectoryName(filename);
-            filename = Path.ChangeExtension(filename, GetExtensionFromFileType(fileType));
+            filename = Path.GetFileName(Path.ChangeExtension(filename, GetExtensionFromFileType(fileType)));
             if (!string.IsNullOrWhiteSpace(dir)) filename = dir + Path.DirectorySeparatorChar + filename;
             using var fileStream = File.OpenWrite(filename);
             return Save(fileStream, solid, fileType);
@@ -1068,7 +1068,7 @@ namespace TVGL
                 case FileType.PLY_ASCII:
                 case FileType.PLY_Binary:
                     throw new NotSupportedException(
-                        "The " + fileType.ToString() + "format does not support saving multiple solids to a single file."); 
+                        "The " + fileType.ToString() + "format does not support saving multiple solids to a single file.");
 
                 case FileType.TVGL:
                     return SaveToTVGL(stream, new SolidAssembly(solids));
@@ -1127,7 +1127,7 @@ namespace TVGL
                     return PLYFileData.SaveSolidBinary(stream, (TessellatedSolid)solid);
 
                 case FileType.SHELL:
-                    return ShellFileData.Save(stream, (TessellatedSolid)solid);               
+                    return ShellFileData.Save(stream, (TessellatedSolid)solid);
 
                 default:
                     throw new NotSupportedException(
@@ -1200,7 +1200,7 @@ namespace TVGL
                     // can be recovered.
                     Thread.Sleep(DelayOnRetry);
                 }
-            }           
+            }
         }
 
         /// <summary>

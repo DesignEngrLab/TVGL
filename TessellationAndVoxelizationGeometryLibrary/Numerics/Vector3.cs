@@ -338,8 +338,7 @@ namespace TVGL  // COMMENTEDCHANGE namespace System.Numerics
         /// Returns the vector (0,0,0).
         /// </summary>
 
-        public static Vector3 Zero =>
-        default;
+        public static Vector3 Zero => default;
 
         /// <summary>
         /// Returns the vector (1,1,1).
@@ -500,6 +499,18 @@ namespace TVGL  // COMMENTEDCHANGE namespace System.Numerics
             return crossMagnitudeSquared.IsNegligible(dotTolerance * dotTolerance);
         }
 
+        /// <summary>
+        /// Determines whether the specified d2 is perpendicular.
+        /// </summary>
+        /// <param name="d1">The d1.</param>
+        /// <param name="d2">The d2.</param>
+        /// <param name="reverseIsDuplicate">if set to <c>true</c> [reverse is duplicate].</param>
+        /// <param name="dotTolerance">The dot tolerance.</param>
+        /// <returns><c>true</c> if the specified d2 is aligned; otherwise, <c>false</c>.</returns>
+        public bool IsPerpendicular(Vector3 other, double dotTolerance = Constants.SameFaceNormalDotTolerance)
+        {
+            return (this.Dot(other).IsNegligible(dotTolerance));
+        }
 
         /// <summary>
         /// Returns a String representing this Vector3 instance.

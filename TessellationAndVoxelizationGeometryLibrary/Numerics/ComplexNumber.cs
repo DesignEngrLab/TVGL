@@ -139,6 +139,42 @@ namespace TVGL
         /// <returns>The result of the subtraction.</returns>
         public static ComplexNumber operator -(ComplexNumber value1, ComplexNumber value2) => Subtract(value1, value2);
 
+        /// <summary>
+        /// Subtracts one ComplexNumber from another.
+        /// </summary>
+        /// <param name="real">The first source ComplexNumber.</param>
+        /// <param name="complex">The second ComplexNumber, to be subtracted from the first.</param>
+        /// <returns>The result of the subtraction.</returns>
+        public static ComplexNumber Subtract(double real, ComplexNumber complex)
+        {
+            return new ComplexNumber(real - complex.Real, -complex.Imaginary);
+        }
+        /// <summary>
+        /// Subtracts one ComplexNumber from another.
+        /// </summary>
+        /// <param name="real">The first source ComplexNumber.</param>
+        /// <param name="complex">The second ComplexNumber, to be subtracted from the first.</param>
+        /// <returns>The result of the subtraction.</returns>
+        public static ComplexNumber operator -(double real, ComplexNumber complex) => Subtract(real, complex);
+
+        /// <summary>
+        /// Subtracts one ComplexNumber from another.
+        /// </summary>
+        /// <param name="complex">The first source ComplexNumber.</param>
+        /// <param name="real">The second ComplexNumber, to be subtracted from the first.</param>
+        /// <returns>The result of the subtraction.</returns>
+        public static ComplexNumber Subtract(ComplexNumber complex, double real)
+        {
+            return new ComplexNumber(complex.Real - real, complex.Imaginary);
+        }
+        /// <summary>
+        /// Subtracts one ComplexNumber from another.
+        /// </summary>
+        /// <param name="complex">The first source ComplexNumber.</param>
+        /// <param name="real">The second ComplexNumber, to be subtracted from the first.</param>
+        /// <returns>The result of the subtraction.</returns>
+        public static ComplexNumber operator -(ComplexNumber complex, double real) => Subtract(complex, real);
+
 
         /// <summary>
         /// Multiplies two ComplexNumbers together.
@@ -164,50 +200,50 @@ namespace TVGL
         /// <summary>
         /// Multiplies a ComplexNumber by a scalar value.
         /// </summary>
-        /// <param name="value1">The source ComplexNumber.</param>
-        /// <param name="value2">The scalar value.</param>
+        /// <param name="complex">The source ComplexNumber.</param>
+        /// <param name="real">The scalar value.</param>
         /// <returns>The result of the multiplication.</returns>
-        public static ComplexNumber Multiply(ComplexNumber value1, double value2)
+        public static ComplexNumber Multiply(ComplexNumber complex, double real)
         {
-            return new ComplexNumber(value2 * value1.Real, value2 * value1.Imaginary);
+            return new ComplexNumber(real * complex.Real, real * complex.Imaginary);
         }
 
         /// <summary>
         /// Multiplies a ComplexNumber by a scalar value.
         /// </summary>
-        /// <param name="value1">The source ComplexNumber.</param>
-        /// <param name="value2">The scalar value.</param>
+        /// <param name="complex">The source ComplexNumber.</param>
+        /// <param name="real">The scalar value.</param>
         /// <returns>The result of the multiplication.</returns>
-        public static ComplexNumber operator *(ComplexNumber value1, double value2) => Multiply(value1, value2);
+        public static ComplexNumber operator *(ComplexNumber complex, double real) => Multiply(complex, real);
 
         /// <summary>
         /// Multiplies a ComplexNumber by a scalar value.
         /// </summary>
-        /// <param name="value1">The scalar value.</param>
-        /// <param name="value2">The source ComplexNumber.</param>
+        /// <param name="real">The scalar value.</param>
+        /// <param name="complex">The source ComplexNumber.</param>
         /// <returns>The result of the multiplication.</returns>
-        public static ComplexNumber operator *(double value1, ComplexNumber value2) => Multiply(value2, value1);
+        public static ComplexNumber operator *(double real, ComplexNumber complex) => Multiply(complex, real);
 
         /// <summary>
         /// Divides a ComplexNumber by another ComplexNumber.
         /// </summary>
-        /// <param name="value1">The source ComplexNumber.</param>
-        /// <param name="value2">The divisor.</param>
+        /// <param name="complex">The source ComplexNumber.</param>
+        /// <param name="real">The divisor.</param>
         /// <returns>The result of the division.</returns>
-        public static ComplexNumber Divide(ComplexNumber value1, double value2)
+        public static ComplexNumber Divide(ComplexNumber complex, double real)
         {
-            var oneOverDenom = 1 / value2;
-            return new ComplexNumber(oneOverDenom * value1.Real, oneOverDenom * value1.Imaginary);
+            var oneOverDenom = 1 / real;
+            return new ComplexNumber(oneOverDenom * complex.Real, oneOverDenom * complex.Imaginary);
         }
 
 
         /// <summary>
         /// Divides a ComplexNumber by another ComplexNumber.
         /// </summary>
-        /// <param name="value1">The source ComplexNumber.</param>
-        /// <param name="value2">The divisor.</param>
+        /// <param name="complex">The source ComplexNumber.</param>
+        /// <param name="real">The divisor.</param>
         /// <returns>The result of the division.</returns>
-        public static ComplexNumber operator /(ComplexNumber value1, double value2) => Divide(value1, value2);
+        public static ComplexNumber operator /(ComplexNumber complex, double real) => Divide(complex, real);
 
         /// <summary>
         /// Divides a ComplexNumber by another ComplexNumber.
@@ -235,14 +271,14 @@ namespace TVGL
         /// <summary>
         /// Divides a ComplexNumber by another ComplexNumber.
         /// </summary>
-        /// <param name="value1">The source ComplexNumber.</param>
-        /// <param name="value2">The divisor.</param>
+        /// <param name="real">The source ComplexNumber.</param>
+        /// <param name="complex">The divisor.</param>
         /// <returns>The result of the division.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static ComplexNumber Divide(double value1, ComplexNumber value2)
+        public static ComplexNumber Divide(double real, ComplexNumber complex)
         {
-            var oneOverDenom = 1 / (value2.Real * value2.Real + value2.Imaginary * value2.Imaginary);
-            return new ComplexNumber(oneOverDenom * value1 * value2.Real, -oneOverDenom * value1 * value2.Imaginary);
+            var oneOverDenom = 1 / (complex.Real * complex.Real + complex.Imaginary * complex.Imaginary);
+            return new ComplexNumber(oneOverDenom * real * complex.Real, -oneOverDenom * real * complex.Imaginary);
         }
 
         /// <summary>

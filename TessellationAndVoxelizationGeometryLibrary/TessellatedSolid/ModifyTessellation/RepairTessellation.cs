@@ -434,7 +434,6 @@ namespace TVGL
                         if (!face.AdoptNeighborsNormal())
                             success = false;
             }
-            var faceToCheck = ts.Faces.Where(p => p.IndexInList == 97530).FirstOrDefault();
             return success;
         }
 

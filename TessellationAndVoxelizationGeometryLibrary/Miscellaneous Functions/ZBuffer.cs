@@ -1,13 +1,10 @@
 using System;
 using System.Collections.Generic;
-using System.Reflection;
-using System.Reflection.Metadata.Ecma335;
 using System.Runtime.CompilerServices;
-using System.Threading;
 
 namespace TVGL
 {
-    public sealed class ZBuffer
+    public sealed class ZBuffer : Grid<(PolygonalFace, double)>
     {
         /// <summary>
         /// Gets the z-heights as a matrix of doubles. There is no time saved in getting this by itself as the main 
@@ -21,23 +18,13 @@ namespace TVGL
                 if (zHeightsOnly == null)
                 {
                     zHeightsOnly = new double[XCount, YCount];
-                    for (int i = 0; i < XCount; i++)
-                    {
-                        var index = YCount * i;
-                        for (int j = 0; j < YCount; j++)
-                            zHeightsOnly[i, j] = ZHeightsWithFaces[index++].Item2;
-                    }
-
+                    foreach(var (index, i, j) in Indices())
+                        zHeightsOnly[i, j] = Values[index].Item2;
                 }
                 return zHeightsOnly;
             }
         }
         double[,] zHeightsOnly;
-        /// <summary>
-        /// Gets the z-heights and the associated face that created it.
-        /// </summary>
-        /// <value>The z heights with faces.</value>
-        public (PolygonalFace, double)[] ZHeightsWithFaces { get; set; }
         /// <summary>
         /// Gets the projected face areas in the z-buffer direction. This is found through
         /// the course of the "Run" computation and might be useful elsewhere.
@@ -56,83 +43,26 @@ namespace TVGL
         /// </summary>
         /// <value>The vertex z heights.</value>
         public double[] VertexZHeights { get; private set; }
-        /// <summary>
-        /// Gets the minimum x of the projected grid of 2D points.
-        /// </summary>
-        /// <value>The minimum x.</value>
-        public double MinX { get; private set; }
-        /// <summary>
-        /// Gets the minimum y of the projected grid of 2D points.
-        /// </summary>
-        /// <value>The minimum y.</value>
-        public double MinY { get; private set; }
-        /// <summary>
-        /// Gets the maximum x of the projected grid of 2D points.
-        /// </summary>
-        /// <value>The maximum x.</value>
-        public double MaxX { get; private set; }
-        /// <summary>
-        /// Gets the maximum y of the projected grid of 2D points.
-        /// </summary>
-        /// <value>The maximum y.</value>
-        public double MaxY { get; private set; }
-        /// <summary>
-        /// Gets the x-length of the projected grid of 2D points.
-        /// </summary>
-        /// <value>The length of the x.</value>
-        public double XLength { get; private set; }
-        /// <summary>
-        /// Gets the y-length of the projected grid of 2D points.
-        /// </summary>
-        /// <value>The length of the y.</value>
-        public double YLength { get; private set; }
-        /// <summary>      
-        /// Gets which ever length is longer (XLength or YLength)
-        /// This is found through the course of the "Run" computation and might be useful elsewhere.
-        /// </summary>
-        /// <value>The maximum length.</value>
-        public double MaxLength { get; private set; }
-        /// <summary>
-        /// Gets the length of the pixel side.
-        /// </summary>
-        /// <value>The length of the pixel side.</value>
-        public double PixelSideLength { get; private set; }
-        /// <summary>
-        /// Gets the count of pixels in the x-direction.
-        /// </summary>
-        /// <value>The x count.</value>
-        public int XCount { get; private set; }
-        /// <summary>
-        /// Gets the count of pixels in the y-direction.
-        /// </summary>
-        /// <value>The y count.</value>
-        public int YCount { get; private set; }
+
         private Matrix4x4 transform;
         private Matrix4x4 backTransform;
         private PolygonalFace[] solidFaces;
-        private double inversePixelSideLength;
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="ZBuffer"/> class.
-        /// </summary>
-        /// <param name="solid">The solid.</param>
-        /// <param name="direction">The direction.</param>
-        /// <param name="pixelsPerRow">The pixels per row.</param>
-        /// <param name="pixelBorder">The pixel border.</param>
         public ZBuffer(TessellatedSolid solid, Vector3 direction, int pixelsPerRow, int pixelBorder = 2)
         {
             Vertices = new Vector2[solid.NumberOfVertices];
             VertexZHeights = new double[solid.NumberOfVertices];
-            MinX = double.PositiveInfinity;
-            MinY = double.PositiveInfinity;
-            MaxX = double.NegativeInfinity;
-            MaxY = double.NegativeInfinity;
             // get the transform matrix to apply to every point
             transform = (-direction).TransformToXYPlane(out backTransform);
             solidFaces = solid.Faces;
+
             // transform points so that z-axis is aligned for the z-buffer. 
             // store x-y pairs as Vector2's (points) and z values in zHeights
             // also get the bounding box so determine pixel size
+            var MinX = double.PositiveInfinity;
+            var MinY = double.PositiveInfinity;
+            var MaxX = double.NegativeInfinity;
+            var MaxY = double.NegativeInfinity;
             for (int i = 0; i < solid.NumberOfVertices; i++)
             {
                 var p = solid.Vertices[i].Coordinates.Transform(transform);
@@ -143,24 +73,9 @@ namespace TVGL
                 if (p.X > MaxX) MaxX = p.X;
                 if (p.Y > MaxY) MaxY = p.Y;
             }
-            XLength = MaxX - MinX;
-            YLength = MaxY - MinY;
-            MaxLength = XLength > YLength ? XLength : YLength;
 
-            //Calculate the size of each pixel based on the max of the two dimensions in question. 
-            //Subtract pixelsPerRow by 1, since we will be adding a half a pixel to each side.
-            PixelSideLength = MaxLength / (pixelsPerRow - pixelBorder * 2);
-            inversePixelSideLength = 1 / PixelSideLength;
-            XCount = (int)Math.Ceiling(XLength * inversePixelSideLength);
-            YCount = (int)Math.Ceiling(YLength * inversePixelSideLength);
-            // shift the grid slightly so that the part grid points are better aligned with the solid
-            var xStickout = XLength - XCount * PixelSideLength;
-            MinX += xStickout / 2;
-            var yStickout = YLength - YCount * PixelSideLength;
-            MinY += yStickout / 2;
-            // add the pixel border...2 since includes both sides (left and right, or top and bottom)
-            XCount += pixelBorder * 2;
-            YCount += pixelBorder * 2;
+            //Finish initializing the grid now that we have the bounds.
+            Initialize(MinX, MaxX, MinY, MaxY, pixelsPerRow, pixelBorder);
         }
 
         /// <summary>
@@ -176,7 +91,6 @@ namespace TVGL
         /// <returns>System.ValueTuple&lt;PolygonalFace, System.Double&gt;[].</returns>
         public void Run(IList<PolygonalFace> subsetFaces = null)
         {
-            ZHeightsWithFaces = new (PolygonalFace, double)[XCount * YCount];
             var faces = subsetFaces != null ? subsetFaces : solidFaces;
             ProjectedFaceAreas = new Dictionary<PolygonalFace, double>();
 
@@ -186,6 +100,7 @@ namespace TVGL
 
         public IEnumerable<(int, int, double)> GetLinePixels(Edge edge)
         {
+            //Get projected vertices and then use the this.PlotLine() function.
             throw new NotImplementedException();
         }
 
@@ -200,7 +115,16 @@ namespace TVGL
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private double UpdateZBufferWithFace(PolygonalFace face)
         {
+            return CheckZBufferWithFace(face, true, out _, out _);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private double CheckZBufferWithFace(PolygonalFace face, bool updateGrid, out int count, out int accessibleCount, double tessellationError = Constants.BaseTolerance)
+        {
             #region Initialization
+            count = 0;
+            accessibleCount = 0;
+
             // get the 3 vertices and their zheights
             var vA = Vertices[face.A.IndexInList];
             var zA = VertexZHeights[face.A.IndexInList];
@@ -259,17 +183,17 @@ namespace TVGL
                 }
             }
             // the following 3 indices are the pixels where the 3 vertices reside in x
-            var xStartIndex = (int)((vMin.X - MinX) * inversePixelSideLength);
-            var xSwitchIndex = (int)((vMed.X - MinX) * inversePixelSideLength);
-            var xEndIndex = (int)((vMax.X - MinX) * inversePixelSideLength);
+            var xStartIndex = GetXIndex(vMin.X);
+            var xSwitchIndex = GetXIndex(vMed.X);
+            var xEndIndex = GetXIndex(vMax.X);
             // x is snapped to the grid. This value should be a little less than vMin.X
-            var x = xStartIndex * PixelSideLength + MinX;  //snapped vMin.X value;
+            var x = GetSnappedX(xStartIndex);  //snapped vMin.X value;
 
             // set the y heights at the start to the same as the y-value of vMin
             var yBtm = vMin.Y;
             var yTop = vMin.Y;
             var yMin = Math.Min(vA.Y, Math.Min(vB.Y, vC.Y));
-            var yBtmIndex = (int)((yMin - MinY) * inversePixelSideLength);
+            var yBtmIndex = GetYIndex(yMin);
             var yMax = Math.Max(vA.Y, Math.Max(vB.Y, vC.Y));
 
             // define the lines emanating from vMin. Assume the intermediate vertex
@@ -331,16 +255,15 @@ namespace TVGL
             var qVaX = x - vA.X;
             var vCAx = vC.X - vA.X;
             var vCAy = vC.Y - vA.Y;
-            var pixels1 = new HashSet<(int, int)>();
             for (var xIndex = xStartIndex; xIndex <= xEndIndex; xIndex++)
             {
-                var yIndex =  Math.Max((int)((yBtm - MinY) * inversePixelSideLength), yBtmIndex);
-                var yBtmSnapped = yIndex * PixelSideLength + MinY;
+                var yIndex =  Math.Max(GetYIndex(yBtm), yBtmIndex);
+                var yBtmSnapped = GetSnappedY(yIndex);
                 var vBAy_multiply_qVaX = vBAy * qVaX;
                 var vCAy_multiply_qVaX = vCAy * qVaX;
-                var index = YCount * xIndex + yIndex;
+                var index = GetIndex(xIndex, yIndex);
                 var stop = Math.Min(yTop, yMax);
-                for (var y = yBtmSnapped; y <= stop; y+= PixelSideLength)
+                for (var y = yBtmSnapped; y <= stop; y+= PixelSideLength, index++)
                 {
                     var qVaY = y - vA.Y;
 
@@ -358,16 +281,21 @@ namespace TVGL
                             var u = area3 / area;
                             var w = 1 - v - u;
                             if (w >= 0.0 && w <= 1.0)
-                            {  
+                            {
+                                count++;
                                 var zIntercept = w * zA + u * zB + v * zC;
                                 // since the grid is not initialized, we update it if the grid cell is empty or if we found a better face
-                                var tuple = ZHeightsWithFaces[index];
-                                if (tuple == default || zIntercept > tuple.Item2)
-                                    ZHeightsWithFaces[index] = (face, zIntercept);
+                                var tuple = Values[index];
+                                if (updateGrid)
+                                {
+                                    if (tuple == default || zIntercept > tuple.Item2)
+                                        Values[index] = (face, zIntercept);
+                                }
+                                else if (tuple == default || zIntercept.IsPracticallySame(tuple.Item2, tessellationError))
+                                    accessibleCount++;
                             }
                         }
                     }
-                    index++;
                 }
                 // step change in the y values.
                 qVaX += PixelSideLength;
@@ -404,7 +332,7 @@ namespace TVGL
         /// <returns>Vector3.</returns>
         public Vector3 Get3DPointTransformed(int i, int j)
         {
-            return new Vector3(MinX + i * PixelSideLength, MinY + j * PixelSideLength, ZHeightsWithFaces[YCount * i + j].Item2);
+            return new Vector3(MinX + i * PixelSideLength, MinY + j * PixelSideLength, Values[YCount * i + j].Item2);
         }
         /// <summary>
         /// Gets the 3D point on the solid corresponding to pixel i, j.
@@ -417,14 +345,17 @@ namespace TVGL
             return Get3DPointTransformed(i, j).Transform(backTransform);
         }
 
-        public int GetXIndex(double x)
+        public double CheckSurfaceAccess(PrimitiveSurface surface, double tessellationError)
         {
-            return (int)((x - MinX) * inversePixelSideLength);
-        }
-
-        public int GetYIndex(double y)
-        {
-            return (int)((y - MinY) * inversePixelSideLength);
+            var count = 0;
+            var accessibleCount = 0;
+            foreach (var face in surface.Faces)
+            {
+                CheckZBufferWithFace(face, false, out var countOnFace, out var faceAccessible, tessellationError);
+                count += countOnFace;
+                accessibleCount += faceAccessible;
+            }
+            return accessibleCount / (double)count;
         }
     }
 }
