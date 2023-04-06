@@ -626,8 +626,22 @@ namespace TVGL
             CompleteInitiation();
         }
 
+        public void DoublyConnectVerticesToFaces()
+        {
+            foreach(var face in Faces)
+            {
+                foreach(var vertex in face.Vertices)
+                {
+                    vertex.Faces.Add(face);
+                }
+            }
+        }
+
         internal void CompleteInitiation(bool fromSTL = false)
         {
+            if (Vertices[0].Faces == null || !Vertices[0].Faces.Any())
+                DoublyConnectVerticesToFaces();
+
             try
             {
                 MakeEdges(fromSTL);
@@ -1540,9 +1554,10 @@ namespace TVGL
                 zCenter += (a.Z + b.Z + c.Z) * currentVolumeTerm;
                 // center is found by a weighted sum of the centers of each tetrahedron. The weighted sum coordinate are collected here.
             }
+
             //Divide the volume by 3 and the center by 4. Since center is also mutliplied by the currentVolume, it is actually divided by 3 * 4 = 12;                
-            center = new Vector3(xCenter * oneTwelth, yCenter * oneTwelth, zCenter * oneTwelth);
             volume *= oneThird;
+            center = new Vector3(xCenter * oneTwelth, yCenter * oneTwelth, zCenter * oneTwelth) / volume;
         }
 
         //ToDo: Remove this function if there is no need for it. Why does this function repeat the volume & center calculation? Does this improve accuracy somehow? 
