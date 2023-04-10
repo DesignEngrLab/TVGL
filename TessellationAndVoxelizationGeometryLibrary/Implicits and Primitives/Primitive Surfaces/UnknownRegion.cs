@@ -36,10 +36,9 @@ namespace TVGL
         /// <param name="transformMatrix">The transform matrix.</param>
         public override void Transform(Matrix4x4 transformMatrix)
         {
-            //base.Transform(transformMatrix);
+            base.Transform(transformMatrix);
         }
-
-        public override double CalculateError(IEnumerable<Vector3> vertices = null)
+        public override double CalculateMeanSquareError(IEnumerable<Vector3> vertices = null)
         {
             return 0.0;
         }

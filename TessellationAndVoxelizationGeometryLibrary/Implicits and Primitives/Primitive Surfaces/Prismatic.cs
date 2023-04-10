@@ -21,6 +21,7 @@ namespace TVGL
         /// <param name="transformMatrix">The transform matrix.</param>
         public override void Transform(Matrix4x4 transformMatrix)
         {
+            base.Transform(transformMatrix);
             Axis = Axis.TransformNoTranslate(transformMatrix);
             Axis = Axis.Normalize();
             var rVector1 = Axis.GetPerpendicularDirection();
@@ -206,17 +207,17 @@ namespace TVGL
         /// </summary>
         /// <param name="vertices">The vertices.</param>
         /// <returns>System.Double.</returns>
-        public override double CalculateError(IEnumerable<Vector3> vertices = null)
+        public override double CalculateMeanSquareError(IEnumerable<Vector3> vertices = null)
         {
             if (Axis.X is double.NaN) return double.MaxValue;
             var mse = 0.0;
             foreach (var c in Faces)
             {
                 var inPlane1 = c.Normal.Cross(Axis);
-                var inPlane2 = inPlane1.Cross(Axis).Normalize();
-                var distA = c.A.Dot(inPlane2);
-                var distB = c.B.Dot(inPlane2);
-                var distC = c.C.Dot(inPlane2);
+                var curveNormal = inPlane1.Cross(Axis).Normalize();
+                var distA = c.A.Dot(curveNormal);
+                var distB = c.B.Dot(curveNormal);
+                var distC = c.C.Dot(curveNormal);
                 var d = distA- distB;
                 mse += d * d;
                 d = distA - distC;

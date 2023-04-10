@@ -312,6 +312,7 @@ namespace TVGL
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public override void Transform(Matrix4x4 matrix)
         {
+            base.Transform(matrix);
             var pointOnPlane = DistanceToOrigin * Normal;
             pointOnPlane = pointOnPlane.Transform(matrix);
             Normal = Normal.TransformNoTranslate(matrix);
@@ -343,6 +344,7 @@ namespace TVGL
         public void Transform(Quaternion rotation)
         {
             // Compute rotation matrix.
+            base.Transform(Matrix4x4.Identity);
             double x2 = rotation.X + rotation.X;
             double y2 = rotation.Y + rotation.Y;
             double z2 = rotation.Z + rotation.Z;
@@ -501,25 +503,7 @@ namespace TVGL
             return mse / n;
         }
 
-        public override double CalculateError(IEnumerable<Vector3> vertices = null)
-        {
-            if (vertices == null)
-            {
-                vertices = Vertices.Select(v => v.Coordinates)
-                    .Concat(InnerEdges.Select(edge => 0.5 * (edge.To.Coordinates + edge.From.Coordinates)))
-                    .Concat(OuterEdges.Select(edge => 0.5 * (edge.To.Coordinates + edge.From.Coordinates)));
-            }
-            var mse = 0.0;
-            var n = 0;
-            foreach (var c in vertices)
-            {
-                var d = PointMembership(c);
-                mse += d * d;
-                n++;
-            }
-            return mse / n;
-        }
-
         public override double PointMembership(Vector3 point) => point.Dot(Normal) - DistanceToOrigin;
+
     }
 }

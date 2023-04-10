@@ -21,6 +21,7 @@ namespace TVGL
         /// <param name="transformMatrix">The transform matrix.</param>
         public override void Transform(Matrix4x4 transformMatrix)
         {
+            base.Transform(transformMatrix);
             Anchor = Anchor.Transform(transformMatrix);
             Axis = Axis.TransformNoTranslate(transformMatrix);
             Axis = Axis.Normalize();
@@ -309,31 +310,6 @@ namespace TVGL
         public bool PointIsInside(Vector3 x)
         {
             return PointMembership(x) < 0 == IsPositive;
-        }
-
-        /// <summary>
-        /// Calculates the error.
-        /// </summary>
-        /// <param name="vertices">The vertices.</param>
-        /// <returns>System.Double.</returns>
-        public override double CalculateError(IEnumerable<Vector3> vertices = null)
-        {
-            if (Axis.IsNull()) return double.MaxValue;
-            if (vertices == null)
-            {
-                vertices = Vertices.Select(v => v.Coordinates)
-                    .Concat(InnerEdges.Select(edge => 0.5 * (edge.To.Coordinates + edge.From.Coordinates)))
-                    .Concat(OuterEdges.Select(edge => 0.5 * (edge.To.Coordinates + edge.From.Coordinates)));
-            }
-            var mse = 0.0;
-            var n = 0;
-            foreach (var c in vertices)
-            {
-                var d = PointMembership(c);
-                mse += d * d;
-                n++;
-            }
-            return mse / n;
         }
 
         public override double PointMembership(Vector3 point)
