@@ -140,7 +140,7 @@ namespace TVGL
             var maxError = 0.0;
             foreach (var c in vertices)
             {
-                var d =Math.Abs(PointMembership(c));
+                var d = Math.Abs(PointMembership(c));
                 if (maxError < d)
                     maxError = d;
             }

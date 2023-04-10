@@ -489,19 +489,7 @@ namespace TVGL
             }
         }
 
-        public static double CalculateError(IEnumerable<Vector3> vertices, out Vector3 normal, out double dto)
-        {
-            DefineNormalAndDistanceFromVertices(vertices, out dto, out normal);
-            var mse = 0.0;
-            var n = 0;
-            foreach (var c in vertices)
-            {
-                var d = c.Dot(normal) - dto;
-                mse += d * d;
-                n++;
-            }
-            return mse / n;
-        }
+
 
         public override double PointMembership(Vector3 point) => point.Dot(Normal) - DistanceToOrigin;
 
