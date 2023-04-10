@@ -200,7 +200,7 @@ namespace TVGL
 
             //Set the volume and convex hull vertices
             CalculateVolume();
-            ConvexHull = new TVGLConvexHull(Vertices, SameTolerance, false, false);
+            ConvexHull = new TVGLConvexHull(Vertices, SameTolerance);
         }
 
         [OnSerializing]
@@ -321,7 +321,7 @@ namespace TVGL
                         index = (int)reader.ReadAsInt32();
                         break;
                     case "SurfaceArea":
-                        SurfaceArea = (double)reader.ReadAsDouble();
+                        _surfaceArea = (double)reader.ReadAsDouble();
                         break;
                     case "Volume":
                         Volume = (double)reader.ReadAsDouble();

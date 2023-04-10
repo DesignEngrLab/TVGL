@@ -87,16 +87,24 @@ namespace TVGL
 
 
 
-        private double CalculateError()
+        private void CalculateBothErrors()
         {
-            _residual = CalculateMeanSquareError();
             _maxError = 0.0;
+            _meanSquaredError = 0.0;
             foreach (var c in Vertices.Select(v => v.Coordinates))
             {
-                var d =Math.Abs(PointMembership(c));
-                if (_maxError < d) 
+                var d = Math.Abs(PointMembership(c));
+                _meanSquaredError += d * d;
+                if (_maxError < d)
                     _maxError = d;
             }
+            foreach (var c in InnerEdges.Select(edge => 0.5 * (edge.To.Coordinates + edge.From.Coordinates))
+                    .Concat(OuterEdges.Select(edge => 0.5 * (edge.To.Coordinates + edge.From.Coordinates))))
+            {
+                var d = PointMembership(c);
+                _meanSquaredError += d * d;
+            }
+            _meanSquaredError /= Vertices.Count + InnerEdges.Count + OuterEdges.Count;
         }
 
         /// <summary>
@@ -104,14 +112,14 @@ namespace TVGL
         /// </summary>
         /// <param name="vertices">The vertices.</param>
         /// <returns>System.Double.</returns>
-        public virtual double CalculateMeanSquareError(IEnumerable<Vector3> vertices = null)
+        public virtual double CalculateMeanSquareError(IEnumerable<Vector3> vertices)// = null)
         {
-            if (vertices == null)
-            {
-                vertices = Vertices.Select(v => v.Coordinates)
-                    .Concat(InnerEdges.Select(edge => 0.5 * (edge.To.Coordinates + edge.From.Coordinates)))
-                    .Concat(OuterEdges.Select(edge => 0.5 * (edge.To.Coordinates + edge.From.Coordinates)));
-            }
+            //if (vertices == null)
+            //{
+            //    vertices = Vertices.Select(v => v.Coordinates)
+            //        .Concat(InnerEdges.Select(edge => 0.5 * (edge.To.Coordinates + edge.From.Coordinates)))
+            //        .Concat(OuterEdges.Select(edge => 0.5 * (edge.To.Coordinates + edge.From.Coordinates)));
+            //}
             var mse = 0.0;
             var n = 0;
             foreach (var c in vertices)
@@ -121,6 +129,22 @@ namespace TVGL
                 n++;
             }
             return mse / n;
+        }
+        /// <summary>
+        /// Calculates the mean square error.
+        /// </summary>
+        /// <param name="vertices">The vertices.</param>
+        /// <returns>System.Double.</returns>
+        public virtual double CalculateMaxError(IEnumerable<Vector3> vertices)
+        {
+            var maxError = 0.0;
+            foreach (var c in vertices)
+            {
+                var d =Math.Abs(PointMembership(c));
+                if (maxError < d)
+                    maxError = d;
+            }
+            return maxError;
         }
         public abstract IEnumerable<Vector2> TransformFrom3DTo2D(IEnumerable<Vector3> points, bool pathIsClosed);
         public abstract Vector2 TransformFrom3DTo2D(Vector3 point);
@@ -169,22 +193,22 @@ namespace TVGL
         /// Gets the residual.
         /// </summary>
         /// <value>The residual.</value>
-        public double Residual
+        public double MeanSquaredError
         {
             get
             {
-                if (double.IsNaN(_residual))
-                    _residual = CalculateError();
-                return _residual;
+                if (double.IsNaN(_meanSquaredError))
+                    CalculateBothErrors();
+                return _meanSquaredError;
             }
         }
-        double _residual = double.NaN;
+        double _meanSquaredError = double.NaN;
         public double MaxError
         {
             get
             {
                 if (double.IsNaN(_maxError) && Faces != null)
-                    _maxError = CalculateError();
+                    CalculateBothErrors();
                 return _maxError;
             }
         }
@@ -262,9 +286,9 @@ namespace TVGL
         /// Transforms the shape by the provided transformation matrix.
         /// </summary>
         /// <param name="transformMatrix">The transform matrix.</param>
-        public virtual void Transform(Matrix4x4 transformMatrix) 
+        public virtual void Transform(Matrix4x4 transformMatrix)
         {
-            _residual = double.NaN;
+            _meanSquaredError = double.NaN;
             _maxError = double.NaN;
         }
 
@@ -274,7 +298,7 @@ namespace TVGL
         /// <param name="face">The face.</param>
         public void AddFace(PolygonalFace face)
         {
-            _residual = double.NaN;
+            _meanSquaredError = double.NaN;
             _maxError = double.NaN;
             if (Faces.Contains(face)) return;
             _area = Area + face.Area;

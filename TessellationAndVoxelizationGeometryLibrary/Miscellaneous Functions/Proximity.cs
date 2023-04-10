@@ -610,7 +610,7 @@ namespace TVGL
                 }
                 curveResidual = minResidual;
                 plane = thisPlane;
-                planeResidual = thisPlane.CalculateError(pointList);
+                planeResidual = thisPlane.CalculateMeanSquareError(pointList);
                 return bestCurve;
             }
             else
@@ -624,7 +624,7 @@ namespace TVGL
                     out var straightLine, out var error))
                 {
                     plane = thisPlane;
-                    planeResidual = thisPlane.CalculateError(pointList);
+                    planeResidual = thisPlane.CalculateMeanSquareError(pointList);
                     curveResidual = error;
                     return straightLine;
                 }

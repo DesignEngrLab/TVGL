@@ -201,6 +201,7 @@ namespace TVGL
             MaxDistanceAlongAxis = originalToBeCopied.MaxDistanceAlongAxis;
             Height = originalToBeCopied.Height;
         }
+        #endregion
 
         /// <summary>
         /// Calculates the mean square error.
@@ -242,6 +243,5 @@ namespace TVGL
         {
             return double.NaN;
         }
-        #endregion
     }
 }

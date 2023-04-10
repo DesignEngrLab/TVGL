@@ -680,7 +680,7 @@ namespace TVGL
                     var plane = new Plane(distance, planeNormal);
                     var success = false;
                     List<Vertex[]> triangleFaceList = null;
-                    if (plane.CalculateError(vertices.Select(v => v.Coordinates)) < Constants.ErrorForFaceInSurface)
+                    if (plane.CalculateMaxError(vertices.Select(v => v.Coordinates)) < Constants.ErrorForFaceInSurface)
                     {
                         try
                         {
