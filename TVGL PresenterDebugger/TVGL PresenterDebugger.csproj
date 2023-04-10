@@ -29,10 +29,12 @@
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Implicits and Primitives\3D Curves\StraightLine3D.cs" Link="TVGL\Implicits and Primitives\Primitive Surfaces\3D Curves\StraightLine3D.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Implicits and Primitives\3D Curves\BorderSegment.cs" Link="TVGL\Implicits and Primitives\Primitive Surfaces\3D Curves\BorderSegment.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Implicits and Primitives\3D Curves\PrimitiveBorder.cs" Link="TVGL\Implicits and Primitives\Primitive Surfaces\3D Curves\PrimitiveBorder.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Implicits and Primitives\Primitive Surfaces\Capsule.cs" Link="TVGL\Implicits and Primitives\Primitive Surfaces\Capsule.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Implicits and Primitives\Primitive Surfaces\Cone.cs" Link="TVGL\Implicits and Primitives\Primitive Surfaces\Cone.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Implicits and Primitives\Primitive Surfaces\Cylinder.cs" Link="TVGL\Implicits and Primitives\Primitive Surfaces\Cylinder.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Implicits and Primitives\Primitive Surfaces\Plane.cs" Link="TVGL\Implicits and Primitives\Primitive Surfaces\Plane.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Implicits and Primitives\Primitive Surfaces\PrimitiveSurface.cs" Link="TVGL\Implicits and Primitives\Primitive Surfaces\PrimitiveSurface.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Implicits and Primitives\Primitive Surfaces\Prismatic.cs" Link="TVGL\Implicits and Primitives\Primitive Surfaces\Prismatic.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Implicits and Primitives\Primitive Surfaces\Sphere.cs" Link="TVGL\Implicits and Primitives\Primitive Surfaces\Sphere.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Implicits and Primitives\Primitive Surfaces\Torus.cs" Link="TVGL\Implicits and Primitives\Primitive Surfaces\Torus.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Implicits and Primitives\Primitive Surfaces\UnknownRegion.cs" Link="TVGL\Implicits and Primitives\Primitive Surfaces\UnknownRegion.cs" />

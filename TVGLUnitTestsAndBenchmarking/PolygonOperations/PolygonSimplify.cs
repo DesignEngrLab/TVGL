@@ -30,10 +30,10 @@ namespace TVGLUnitTestsAndBenchmarking
                 polygons.Add(polygon);
             }
             Presenter.ShowAndHang(polygons);
-            var t = polygons.Sum(p => p.AllPolygons.Sum(pp => pp.Edges.Length));
+            var t = polygons.Sum(p => p.AllPolygons.Sum(pp => pp.Edges.Count));
             polygons.SimplifyMinLength(300);
             Presenter.ShowAndHang(polygons);
-            t = polygons.Sum(p => p.AllPolygons.Sum(pp => pp.Edges.Length));
+            t = polygons.Sum(p => p.AllPolygons.Sum(pp => pp.Edges.Count));
 
         }
 
