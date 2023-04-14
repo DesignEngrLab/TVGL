@@ -139,7 +139,7 @@ namespace TVGL
             return distances;
         }
 
-        public static void DefineInnerOuterEdges(IEnumerable<PolygonalFace> faces, out HashSet<Edge> innerEdgeHash, out HashSet<Edge> outerEdgeHash)
+        public static void DefineInnerOuterEdges(IEnumerable<TriangleFace> faces, out HashSet<Edge> innerEdgeHash, out HashSet<Edge> outerEdgeHash)
         {
             innerEdgeHash = new HashSet<Edge>();
             outerEdgeHash = new HashSet<Edge>();
@@ -264,8 +264,8 @@ namespace TVGL
         /// <param name="faces">The faces.</param>
         /// <param name="tolerance">The toleranceForCombiningPoints.</param>
         /// <param name="removeOpposites">if set to <c>true</c> [remove opposites].</param>
-        /// <returns>List&lt;PolygonalFace&gt;.</returns>
-        public static List<PolygonalFace> FacesWithDistinctNormals(this IEnumerable<PolygonalFace> faces,
+        /// <returns>List&lt;TriangleFace&gt;.</returns>
+        public static List<TriangleFace> FacesWithDistinctNormals(this IEnumerable<TriangleFace> faces,
             double tolerance = Constants.SameFaceNormalDotTolerance, bool removeOpposites = true)
         {
             // This is done by sorting the normals first by the x-component, then by the y and then the z.
@@ -313,15 +313,15 @@ namespace TVGL
                     continue;
                 }
                 //Else
-                var usedFaces = new HashSet<PolygonalFace>();
+                var usedFaces = new HashSet<TriangleFace>();
                 foreach (var face in prim.Faces)
                 {
                     if (usedFaces.Contains(face))
                         continue;
                     //Start a new flat patch
                     usedFaces.Add(face);
-                    var flatPatch = new HashSet<PolygonalFace> { face };
-                    var stack = new Stack<PolygonalFace>(new[] { face });
+                    var flatPatch = new HashSet<TriangleFace> { face };
+                    var stack = new Stack<TriangleFace>(new[] { face });
                     var flatVertices = new List<Vertex>(face.Vertices);
                     var area = 0.0;
                     var numFaces = 0;
@@ -365,18 +365,18 @@ namespace TVGL
         /// <param name="tolerance">The toleranceForCombiningPoints.</param>
         /// <param name="minSurfaceArea">The minimum surface area.</param>
         /// <returns>List&lt;Flat&gt;.</returns>
-        public static IEnumerable<Plane> FindFlats(this IEnumerable<PolygonalFace> faces,
+        public static IEnumerable<Plane> FindFlats(this IEnumerable<TriangleFace> faces,
                int minNumberOfFacesPerFlat = 2, double minFlatArea = 0.0, HashSet<Edge> nonCrossingEdges = null)
         {
             // to avoid re-enumerating the faces - make a list. If it's already a list, then you're fine to use directly.
-            var availableFaces = new HashSet<PolygonalFace>(faces);
+            var availableFaces = new HashSet<TriangleFace>(faces);
             if (nonCrossingEdges == null) nonCrossingEdges = new HashSet<Edge>();
             while (availableFaces.Count > 0)
             {
                 var startFace = availableFaces.First();
                 availableFaces.Remove(startFace);
-                var flatHashSet = new HashSet<PolygonalFace> { startFace };
-                var stack = new Stack<PolygonalFace>(new[] { startFace });
+                var flatHashSet = new HashSet<TriangleFace> { startFace };
+                var stack = new Stack<TriangleFace>(new[] { startFace });
                 var flatVertices = new List<Vertex>(startFace.Vertices);
                 var area = 0.0;
                 var numFaces = 0;
@@ -593,7 +593,7 @@ namespace TVGL
         /// This function gets the vertices from a list of faces. 
         /// </summary>
         /// <param name="edges"></param>
-        public static HashSet<Vertex> GetVertices(this List<PolygonalFace> faces)
+        public static HashSet<Vertex> GetVertices(this List<TriangleFace> faces)
         {
             //Add the face vertices from each vertex to the hashset.
             //Duplicates will automatically be avoided by useing a hash.
@@ -640,14 +640,14 @@ namespace TVGL
         public static List<TessellatedSolid> GetMultipleSolids(this TessellatedSolid ts, List<int[]> faceGroupsThatAreBodies = null)
         {
             var solids = new List<TessellatedSolid>();
-            var separateSolids = new List<List<PolygonalFace>>();
+            var separateSolids = new List<List<TriangleFace>>();
             var unusedFaces = ts.Faces.ToDictionary(face => face.IndexInList);
             // first the easy part - simply separate out known groups that have already been determined to be bodies
             if (faceGroupsThatAreBodies != null)
             {
                 foreach (var bodyGroupIndices in faceGroupsThatAreBodies)
                 {
-                    var faceList = new List<PolygonalFace>();
+                    var faceList = new List<TriangleFace>();
                     foreach (var index in bodyGroupIndices)
                     {
                         faceList.Add(ts.Faces[index]);
@@ -659,8 +659,8 @@ namespace TVGL
             // now, the hard part - need to progressively find subsets of faces.
             while (unusedFaces.Any())
             {
-                var faces = new HashSet<PolygonalFace>();
-                var stack = new Stack<PolygonalFace>(new[] { unusedFaces.ElementAt(0).Value });
+                var faces = new HashSet<TriangleFace>();
+                var stack = new Stack<TriangleFace>(new[] { unusedFaces.ElementAt(0).Value });
                 while (stack.Any())
                 {
                     var face = stack.Pop();
@@ -1608,7 +1608,7 @@ namespace TVGL
         /// <param name="point2">The point2.</param>
         /// <returns>Vertex.</returns>
         /// <exception cref="Exception">This should never occur. Prevent this from happening</exception>
-        public static Vector3 PointOnTriangleFromLine(this PolygonalFace face, Vector3 point1,
+        public static Vector3 PointOnTriangleFromLine(this TriangleFace face, Vector3 point1,
             Vector3 point2, out double relativeDistance, bool onBoundaryIsInside = true)
         {
             var positions = face.Vertices.Select(vertex => vertex.Coordinates).ToList();
@@ -1645,13 +1645,13 @@ namespace TVGL
         /// <param name="direction">The direction.</param>
         /// <param name="signedDistance">The signed distance.</param>
         /// <param name="onBoundaryIsInside">if set to <c>true</c> [on boundary is inside].</param>
-        public static Vector3 PointOnTriangleFromRay(PolygonalFace face, Vector3 point3D, Vector3 direction,
+        public static Vector3 PointOnTriangleFromRay(TriangleFace face, Vector3 point3D, Vector3 direction,
             out double signedDistance, bool onBoundaryIsInside = true)
         {
-            var distanceToOrigin = face.Normal.Dot(face.Vertices[0].Coordinates);
+            var distanceToOrigin = face.Normal.Dot(face.A.Coordinates);
             var newPoint = PointOnPlaneFromRay(face.Normal, distanceToOrigin, point3D, direction, out signedDistance);
             if (newPoint.IsNull()) return Vector3.Null;
-            return IsVertexInsideTriangle(face.Vertices, newPoint, onBoundaryIsInside) ? newPoint : Vector3.Null;
+            return IsVertexInsideTriangle(face, newPoint, onBoundaryIsInside) ? newPoint : Vector3.Null;
         }
 
         /// <summary>
@@ -1665,12 +1665,12 @@ namespace TVGL
         /// <param name="direction">The direction.</param>
         /// <param name="signedDistance">The signed distance.</param>
         /// <param name="onBoundaryIsInside">if set to <c>true</c> [on boundary is inside].</param>
-        public static Vector3 PointOnTriangleFromLine(this PolygonalFace face, Vector3 point3D, CartesianDirections direction,
+        public static Vector3 PointOnTriangleFromLine(this TriangleFace face, Vector3 point3D, CartesianDirections direction,
             out double signedDistance, bool onBoundaryIsInside = true)
         {
             Vector3 newPoint;
             signedDistance = double.NaN;
-            var d = face.Normal.Dot(face.Vertices[0].Coordinates);
+            var d = face.Normal.Dot(face.A.Coordinates);
             var n = face.Normal;
             switch (direction)
             {
@@ -1694,7 +1694,7 @@ namespace TVGL
                     signedDistance = (Math.Sign((int)direction)) * (newPoint.Z - point3D.Z);
                     break;
             }
-            return IsVertexInsideTriangle(face.Vertices, newPoint, onBoundaryIsInside) ? newPoint : Vector3.Null;
+            return IsVertexInsideTriangle(face, newPoint, onBoundaryIsInside) ? newPoint : Vector3.Null;
         }
 
         #endregion Point on Face
@@ -1861,7 +1861,19 @@ namespace TVGL
         #endregion Create 2D Circle Paths
 
         #region isInside Methods (is 2D point inside polygon, vertex inside solid, ect.)
-
+        /// <summary>
+        /// Determines whether [is vertex inside triangle] [the specified face].
+        /// </summary>
+        /// <param name="face">The face.</param>
+        /// <param name="vertexInQuestion">The vertex in question.</param>
+        /// <param name="onBoundaryIsInside">The on boundary is inside.</param>
+        /// <returns>bool.</returns>
+        public static bool IsVertexInsideTriangle(TriangleFace face, Vector3 vertexInQuestion,
+    bool onBoundaryIsInside = true)
+        {
+            return IsVertexInsideTriangle(new[] { face.A.Coordinates, face.B.Coordinates, face.C.Coordinates },
+                vertexInQuestion, onBoundaryIsInside);
+        }
         /// <summary>
         ///     Returns whether a vertex lies on a triangle. User can specify whether the edges of the
         ///     triangle are considered "inside." Assumes vertex in question is in the same plane
@@ -1909,8 +1921,8 @@ namespace TVGL
             bool onBoundaryIsInside = true)
         {
             //ToDo: Rewrite function to use plane list as in SolidIntersectionFunction
-            var facesAbove = new List<PolygonalFace>();
-            var facesBelow = new List<PolygonalFace>();
+            var facesAbove = new List<TriangleFace>();
+            var facesBelow = new List<TriangleFace>();
             var inconclusive = true;
             var rnd = new Random(0);
             //Added while inconclusive and random direction because there are some special cases that look the
@@ -1932,7 +1944,7 @@ namespace TVGL
                         return onBoundaryIsInside;
                     }
 
-                    var distanceToOrigin = face.Normal.Dot(face.Vertices[0].Coordinates);
+                    var distanceToOrigin = face.Normal.Dot(face.A.Coordinates);
                     var t = -(vertexInQuestion.Coordinates.Dot(face.Normal) - distanceToOrigin) /
                             direction.Dot(face.Normal);
                     //Note that if t == 0, then it is on the face
@@ -1940,7 +1952,7 @@ namespace TVGL
                     var newVertex = t.IsNegligible()
                         ? vertexInQuestion
                         : new Vertex(vertexInQuestion.Coordinates + (direction * t));
-                    if (!IsVertexInsideTriangle(face.Vertices, newVertex.Coordinates)) continue;
+                    if (!IsVertexInsideTriangle(face, newVertex.Coordinates)) continue;
                     //If the distance between the vertex and a plane is neglible and the vertex is inside that face
                     if (t.IsNegligible())
                     {
@@ -2055,7 +2067,7 @@ namespace TVGL
             normal = normal.Normalize();
             var inPlaneStartVector = edgePointsToVertex ? -1 * startingEdge.Vector : startingEdge.Vector;
             var edge = startingEdge;
-            PolygonalFace lastFace = null;
+            TriangleFace lastFace = null;
             do
             {
                 var inPlaneVector = edgePointsToVertex ? -1 * edge.Vector : edge.Vector;
@@ -2081,7 +2093,7 @@ namespace TVGL
                 }
             } while (edge != startingEdge);
         }
-        public static IEnumerable<PolygonalFace> OrderedFacesCCWAtVertex(this Vertex vertex, PolygonalFace startingFace = null)
+        public static IEnumerable<TriangleFace> OrderedFacesCCWAtVertex(this Vertex vertex, TriangleFace startingFace = null)
         {
             if (startingFace == null) startingFace = vertex.Faces[0];
             var face = startingFace;
@@ -2124,7 +2136,7 @@ namespace TVGL
                 face = edgePointsToVertex ? edge.OtherFace : edge.OwnedFace;
             } while (face != startingFace);
         }
-        private static IEnumerable<PolygonalFace> OrderedFacesCCWAtVertexNoEdges(this Vertex vertex, PolygonalFace startingFace)
+        private static IEnumerable<TriangleFace> OrderedFacesCCWAtVertexNoEdges(this Vertex vertex, TriangleFace startingFace)
         {
             throw new NotImplementedException();
         }

@@ -21,7 +21,7 @@ namespace TVGL
         ///     Initializes a new instance of the <see cref="PrimitiveSurface" /> class.
         /// </summary>
         /// <param name="faces">The faces.</param>
-        protected PrimitiveSurface(IEnumerable<PolygonalFace> faces, bool connectFacesToPrimitive = true)
+        protected PrimitiveSurface(IEnumerable<TriangleFace> faces, bool connectFacesToPrimitive = true)
         {
             if (faces == null) return;
             SetFacesAndVertices(faces, connectFacesToPrimitive);
@@ -49,9 +49,9 @@ namespace TVGL
 
         #endregion Constructors
 
-        public void SetFacesAndVertices(IEnumerable<PolygonalFace> faces, bool connectFacesToPrimitive = true)
+        public void SetFacesAndVertices(IEnumerable<TriangleFace> faces, bool connectFacesToPrimitive = true)
         {
-            Faces = new HashSet<PolygonalFace>(faces);
+            Faces = new HashSet<TriangleFace>(faces);
             if (connectFacesToPrimitive)
                 foreach (var face in Faces)
                     face.BelongsToPrimitive = this;
@@ -63,10 +63,10 @@ namespace TVGL
             Vertices = new HashSet<Vertex>(Faces.SelectMany(f => f.Vertices).Distinct());
         }
 
-        public void SetFacesAndVertices(IEnumerable<PolygonalFace> faces1, IEnumerable<PolygonalFace> faces2, bool connectFacesToPrimitive = true)
+        public void SetFacesAndVertices(IEnumerable<TriangleFace> faces1, IEnumerable<TriangleFace> faces2, bool connectFacesToPrimitive = true)
         {
             //Add all the faces to a hashset, without mutating either of the input enumerables.
-            Faces = new HashSet<PolygonalFace>(faces1);
+            Faces = new HashSet<TriangleFace>(faces1);
             foreach (var face in faces2)
                 Faces.Add(face);
 
@@ -215,11 +215,11 @@ namespace TVGL
         double _maxError = double.NaN;
 
         /// <summary>
-        ///     Gets or sets the polygonal faces.
+        ///     Gets or sets the triangle faces.
         /// </summary>
-        /// <value>The polygonal faces.</value>
+        /// <value>The triangle faces.</value>
         [JsonIgnore]
-        public HashSet<PolygonalFace> Faces { get; set; }
+        public HashSet<TriangleFace> Faces { get; set; }
 
         /// <summary>
         ///     Gets the vertices.
@@ -296,7 +296,7 @@ namespace TVGL
         ///     Updates surface by adding face
         /// </summary>
         /// <param name="face">The face.</param>
-        public void AddFace(PolygonalFace face)
+        public void AddFace(TriangleFace face)
         {
             _meanSquaredError = double.NaN;
             _maxError = double.NaN;
@@ -304,7 +304,7 @@ namespace TVGL
             _area = Area + face.Area;
             foreach (var v in face.Vertices.Where(v => !Vertices.Contains(v)))
                 Vertices.Add(v);
-            if (face.Edges.Count == face.Vertices.Count)
+            if (face.AB != null && face.BC != null && face.CA != null)
                 foreach (var e in face.Edges.Where(e => !InnerEdges.Contains(e)))
                 {
                     if (OuterEdges.Contains(e))
@@ -316,7 +316,8 @@ namespace TVGL
                 }
             else  //basically, this is for cases where edges are not yet defined.
             {
-                var faceVertexIndices = face.Vertices.SelectMany(v => new[] { v.IndexInList, v.IndexInList }).ToList();
+                var faceVertexIndices =  new List<int>{ face.A.IndexInList, face.B.IndexInList, face.B.IndexInList, face.C.IndexInList, face.C.IndexInList, face.A.IndexInList };
+                //this is kind of hacky, but the faceVertexIndices don't need to be in order, so we can just add the same vertex twice. The if statement below will catch it.
                 var outerEdgesToRemove = new List<Edge>();
                 foreach (var outerEdge in OuterEdges)
                 {
@@ -343,10 +344,10 @@ namespace TVGL
                     var v1 = face.Vertices.FindIndex(v => v.IndexInList == vIndex1);
                     var v2 = face.Vertices.FindIndex(v => v.IndexInList == vIndex2);
                     var step = v2 - v1;
-                    if (step < 0) step += face.Vertices.Count;
+                    if (step < 0) step += 3;
                     if (step == 1)
-                        OuterEdges.Add(new Edge(face.Vertices[v1], face.Vertices[v2], face, null, false));
-                    else OuterEdges.Add(new Edge(face.Vertices[v2], face.Vertices[v1], face, null, false));
+                        OuterEdges.Add(new Edge(face.A, face.B, face, null, false));
+                    else OuterEdges.Add(new Edge(face.B, face.A, face, null, false));
                 }
             }
             Faces.Add(face);
@@ -361,7 +362,7 @@ namespace TVGL
 
         public void CompletePostSerialization(TessellatedSolid ts)
         {
-            Faces = new HashSet<PolygonalFace>();
+            Faces = new HashSet<TriangleFace>();
             foreach (var i in FaceIndices)
             {
                 var face = ts.Faces[i];
@@ -390,9 +391,9 @@ namespace TVGL
                     border.CompletePostSerialization(ts);
         }
 
-        public HashSet<PolygonalFace> GetAdjacentFaces()
+        public HashSet<TriangleFace> GetAdjacentFaces()
         {
-            var adjacentFaces = new HashSet<PolygonalFace>(); //use a hash to avoid duplicates
+            var adjacentFaces = new HashSet<TriangleFace>(); //use a hash to avoid duplicates
             foreach (var edge in OuterEdges)
             {
                 if (Faces.Contains(edge.OwnedFace)) adjacentFaces.Add(edge.OtherFace);

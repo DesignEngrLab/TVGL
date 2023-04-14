@@ -56,12 +56,12 @@ namespace TVGL
     /// </summary>
     public class SolidContactData
     {
-        internal SolidContactData(IEnumerable<GroupOfLoops> groupsOfLoops, IEnumerable<PolygonalFace> onSideFaces, IEnumerable<PolygonalFace> onPlaneFaces)
+        internal SolidContactData(IEnumerable<GroupOfLoops> groupsOfLoops, IEnumerable<TriangleFace> onSideFaces, IEnumerable<TriangleFace> onPlaneFaces)
         {
-            OnSideFaces = new List<PolygonalFace>(onSideFaces);
-            var polygonalFaces = onPlaneFaces as PolygonalFace[] ?? onPlaneFaces.ToArray();
-            OnPlaneFaces = new List<PolygonalFace>(polygonalFaces);
-            var onSideContactFaces = new List<PolygonalFace>();
+            OnSideFaces = new List<TriangleFace>(onSideFaces);
+            var triangleFaces = onPlaneFaces as TriangleFace[] ?? onPlaneFaces.ToArray();
+            OnPlaneFaces = new List<TriangleFace>(triangleFaces);
+            var onSideContactFaces = new List<TriangleFace>();
             GroupsOfLoops = new List<GroupOfLoops>(groupsOfLoops);
             var positiveLoops = new List<Loop>();
             var negativeLoops = new List<Loop>();
@@ -80,7 +80,7 @@ namespace TVGL
                 }
             }
 
-            var area2 = polygonalFaces.Sum(face => face.Area);
+            var area2 = triangleFaces.Sum(face => face.Area);
             if (!Area.IsPracticallySame(area2, 0.01 * Area)) Debug.WriteLine("SolidContactData loop area and face area do not match.");
             //Set Immutable Lists
             OnSideContactFaces = onSideContactFaces;
@@ -144,27 +144,27 @@ namespace TVGL
         /// <summary>
         /// List of pre-existing faces on this side of the cutting plane
         /// </summary>
-        public readonly IEnumerable<PolygonalFace> OnSideFaces;
+        public readonly IEnumerable<TriangleFace> OnSideFaces;
 
         /// <summary>
         /// The faces that were formed on-side for all the loops in this solid. 
         /// </summary>
-        public readonly IEnumerable<PolygonalFace> OnSideContactFaces;
+        public readonly IEnumerable<TriangleFace> OnSideContactFaces;
 
         /// <summary>
         /// A list of the on plane faces formed by the triangulation of the loops
         /// </summary>
-        public readonly IEnumerable<PolygonalFace> OnPlaneFaces;
+        public readonly IEnumerable<TriangleFace> OnPlaneFaces;
 
         /// <summary>
         /// Gets all faces belonging to this solid's contact data (All faces except those that will be triangulated in plane)
         /// </summary>
         /// <value>All loops.</value>
-        public List<PolygonalFace> AllFaces
+        public List<TriangleFace> AllFaces
         {
             get
             {
-                var allFaces = new List<PolygonalFace>(OnSideFaces);
+                var allFaces = new List<TriangleFace>(OnSideFaces);
                 allFaces.AddRange(OnSideContactFaces);
                 allFaces.AddRange(OnPlaneFaces);
                 return allFaces;
@@ -241,7 +241,7 @@ namespace TVGL
         /// <summary>
         /// The faces that were formed on-side for all the loops in this group. 
         /// </summary>
-        public readonly IEnumerable<PolygonalFace> OnSideContactFaces;
+        public readonly IEnumerable<TriangleFace> OnSideContactFaces;
 
         /// <summary>
         /// A list of the idices of the faces that were adjacent and onside to the straddle faces
@@ -256,7 +256,7 @@ namespace TVGL
         /// <summary>
         /// A list of the on plane faces formed by the triangulation of the loops
         /// </summary>
-        public readonly IEnumerable<PolygonalFace> OnPlaneFaces;
+        public readonly IEnumerable<TriangleFace> OnPlaneFaces;
 
         public readonly HashSet<Vertex> StraddleEdgeOnSideVertices;
 
@@ -276,12 +276,12 @@ namespace TVGL
             }
         }
 
-        internal GroupOfLoops(Loop positiveLoop, IEnumerable<Loop> negativeLoops, IEnumerable<PolygonalFace> onPlaneFaces)
+        internal GroupOfLoops(Loop positiveLoop, IEnumerable<Loop> negativeLoops, IEnumerable<TriangleFace> onPlaneFaces)
         {
-            var onSideContactFaces = new List<PolygonalFace>(positiveLoop.OnSideContactFaces);
+            var onSideContactFaces = new List<TriangleFace>(positiveLoop.OnSideContactFaces);
             var straddleFaceIndices = new HashSet<int>(positiveLoop.StraddleFaceIndices);
             var adjOnsideFaceIndices = new HashSet<int>(positiveLoop.AdjOnsideFaceIndices);
-            OnPlaneFaces = new List<PolygonalFace>(onPlaneFaces);
+            OnPlaneFaces = new List<TriangleFace>(onPlaneFaces);
             PositiveLoop = positiveLoop;
             StraddleEdgeOnSideVertices = new HashSet<Vertex>(positiveLoop.StraddleEdgeOnSideVertices);
             NegativeLoops = new List<Loop>(negativeLoops);
@@ -323,7 +323,7 @@ namespace TVGL
         /// The faces that were formed on-side for this loop. About 2/3 s
         /// of these faces should have one negligible adjacent face. 
         /// </summary>
-        public readonly IEnumerable<PolygonalFace> OnSideContactFaces;
+        public readonly IEnumerable<TriangleFace> OnSideContactFaces;
 
         public readonly HashSet<Vertex> StraddleEdgeOnSideVertices;
 
@@ -389,7 +389,7 @@ namespace TVGL
         /// <param name="fromPositiveSide"></param>
         /// <param name="straddleEdgeOnSideVertices"></param>
         /// <param name="isClosed">is closed.</param>
-        internal Loop(IList<Vertex> vertexLoop, IEnumerable<PolygonalFace> onSideContactFaces, Vector3 normal,
+        internal Loop(IList<Vertex> vertexLoop, IEnumerable<TriangleFace> onSideContactFaces, Vector3 normal,
             IEnumerable<int> straddleFaceIndices, IEnumerable<int> adjOnsideFaceIndices, int index, bool fromPositiveSide,
             IEnumerable<Vertex> straddleEdgeOnSideVertices, bool isClosed = true)
         {

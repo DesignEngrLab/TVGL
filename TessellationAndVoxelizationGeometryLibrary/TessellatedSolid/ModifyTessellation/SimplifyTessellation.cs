@@ -23,15 +23,15 @@ namespace TVGL
             //   throw new NotImplementedException();
             var edgesToRemove = new List<Edge>();
             var edgesToAdd = new List<Edge>();
-            var facesToRemove = new List<PolygonalFace>();
-            var facesToAdd = new List<PolygonalFace>();
+            var facesToRemove = new List<TriangleFace>();
+            var facesToAdd = new List<TriangleFace>();
             var verticesToRemove = new List<Vertex>();
             var flats = TVGL.MiscFunctions.FindFlats(ts.Faces, minNumberOfFacesPerFlat: 3);
             ts.Primitives ??= new List<PrimitiveSurface>();
             foreach (var flat in flats)
             {
                 if (flat.InnerEdges.Count < flat.Faces.Count) continue;
-                var newFaces = new List<PolygonalFace>();
+                var newFaces = new List<TriangleFace>();
                 var outerEdgeHashSet = new HashSet<Edge>(flat.OuterEdges);
                 facesToRemove.AddRange(flat.Faces);
                 edgesToRemove.AddRange(flat.InnerEdges);
@@ -45,12 +45,11 @@ namespace TVGL
                 Dictionary<long, Edge> newEdgeDictionary = new Dictionary<long, Edge>();
                 foreach (var triangle in triangulatedList)
                 {
-                    var newFace = new PolygonalFace(triangle, flat.Normal);
+                    var newFace = new TriangleFace(triangle, flat.Normal);
                     if (newFace.Area.IsNegligible() && newFace.Normal.IsNull()) continue;
                     newFaces.Add(newFace);
-                    for (var j = 0; j < 3; j++)
+                    foreach (var fromVertex in newFace.Vertices)
                     {
-                        var fromVertex = newFace.Vertices[j];
                         var toVertex = newFace.NextVertexCCW(fromVertex);
                         var checksum = TessellatedSolid.GetEdgeChecksum(fromVertex, toVertex);
                         if (oldEdgeDictionary.TryGetValue(checksum, out var edge))
@@ -183,7 +182,7 @@ namespace TVGL
             var sortedEdges = ts.Edges.OrderBy(e => e.Length).ToList();
             var removedEdges = new SortedSet<Edge>(new SortByIndexInList());
             var removedVertices = new SortedSet<Vertex>(new SortByIndexInList());
-            var removedFaces = new SortedSet<PolygonalFace>(new SortByIndexInList());
+            var removedFaces = new SortedSet<TriangleFace>(new SortByIndexInList());
 
             var edge = sortedEdges[0];
             var iterations = numberOfFaces > 0 ? (int)Math.Ceiling(numberOfFaces / 2.0) : numberOfFaces;
@@ -235,10 +234,7 @@ namespace TVGL
                     foreach (var face in removedVertex.Faces)
                     {
                         if (face == leftFace || face == rightFace) continue;
-                        var index = face.Vertices.IndexOf(removedVertex);
-                        face.Vertices[index] = keepVertex;
-                        face.Update();
-                        keepVertex.Faces.Add(face);
+                        face.ReplaceVertex(removedVertex, keepVertex);
                     }
 
                     keepVertex.Edges.Remove(edge);
@@ -297,7 +293,7 @@ namespace TVGL
         /// <param name="removedFace2">The removed face2.</param>
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         private static bool CombineVerticesOfEdge(Edge edge, out Vertex removedVertexOut, out Edge removedEdge1Out,
-            out Edge removedEdge2Out, out PolygonalFace removedFace1, out PolygonalFace removedFace2)
+            out Edge removedEdge2Out, out TriangleFace removedFace1, out TriangleFace removedFace2)
         {
             var keepVertex = edge.To; // arbitrarily choose the To as the keep vertex, but this may be swapped below
             var removedVertex = edge.From; // if the To has some missing faces
@@ -354,7 +350,7 @@ namespace TVGL
             {
                 if (face == removedFace1 || face == removedFace2) continue;
                 keepVertex.Faces.Add(face);
-                face.Vertices[face.Vertices.IndexOf(removedVertex)] = keepVertex;
+                face.ReplaceVertex(removedVertex, keepVertex);  
             }
             // conversely keepVertex should forget about the edge and the remove faces
             keepVertex.Edges.Remove(edge);
@@ -379,11 +375,7 @@ namespace TVGL
                 ? null
                 : removedEdge1.OwnedFace == removedFace1 ? removedEdge1.OtherFace : removedEdge1.OwnedFace;
             if (fromFace != null)
-            {
-                var index = fromFace.Edges.IndexOf(removedEdge1);
-                if (index >= 0 && index < fromFace.Edges.Count)
-                    fromFace.Edges[index] = keepEdge1;
-            }
+                fromFace.ReplaceEdge(removedEdge1,keepEdge1);
             if (keepEdge1 != null && keepEdge1.OwnedFace == removedFace1) keepEdge1.OwnedFace = fromFace;
             else if (keepEdge1 != null) keepEdge1.OtherFace = fromFace;
             // second on the "other side of edge"
@@ -391,11 +383,7 @@ namespace TVGL
                 ? null
                 : removedEdge2.OwnedFace == removedFace2 ? removedEdge2.OtherFace : removedEdge2.OwnedFace;
             if (fromFace != null)
-            {
-                var index = fromFace.Edges.IndexOf(removedEdge2);
-                if (index >= 0 && index < fromFace.Edges.Count)
-                    fromFace.Edges[index] = keepEdge2;
-            }
+            fromFace.ReplaceEdge(removedEdge2,keepEdge2);
             if (keepEdge2 != null && keepEdge2.OwnedFace == removedFace2) keepEdge2.OwnedFace = fromFace;
             else if (keepEdge2 != null) keepEdge2.OtherFace = fromFace;
             keepVertex.Coordinates = DetermineIntermediateVertexPosition(keepVertex, removedVertex);

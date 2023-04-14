@@ -48,7 +48,7 @@ namespace TVGL
                 new Dictionary<long, Vertex>()
             };
             valueDictionary = new Dictionary<long, StoredValue<ValueT>>();
-            faces = new List<PolygonalFace>();
+            faces = new List<TriangleFace>();
             GridOffsetTable = new Vector3[8];
             for (int i = 0; i < 8; i++)
                 GridOffsetTable[i] = _unitOffsetTable[i] * this.gridToCoordinateFactor;
@@ -64,7 +64,7 @@ namespace TVGL
         protected readonly double coordToGridFactor;
         protected readonly Vector3[] GridOffsetTable;
         private readonly Dictionary<long, StoredValue<ValueT>> valueDictionary;
-        protected readonly List<PolygonalFace> faces;
+        protected readonly List<TriangleFace> faces;
         protected const double fractionOfGridToExpand = 0.05;
 
         #region to be assigned in inherited constructor
@@ -204,7 +204,7 @@ namespace TVGL
                     var vertexIndex = FaceVertexIndicesTable[cubeType][3 * i + j];
                     faceVertices[j] = EdgeVertex[vertexIndex];
                 }
-                faces.Add(new PolygonalFace(faceVertices));
+                faces.Add(new TriangleFace(faceVertices));
             }
         }
 

@@ -265,9 +265,9 @@ namespace TVGL
                     }
                     triangles.Add(new Triangle
                     {
-                        v1 = face.Vertices[0].IndexInList,
-                        v2 = face.Vertices[1].IndexInList,
-                        v3 = face.Vertices[2].IndexInList,
+                        v1 = face.A.IndexInList,
+                        v2 = face.B.IndexInList,
+                        v3 = face.C.IndexInList,
                         pid = 1,
                         p1 = colorIndex
                     });

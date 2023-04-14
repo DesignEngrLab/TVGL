@@ -26,8 +26,7 @@ namespace TVGL
         {
             foreach (var face in vertex.Faces)
             {
-                var index = face.Vertices.IndexOf(vertex);
-                if (index >= 0) face.Vertices.RemoveAt(index);
+                face.ReplaceVertex(vertex, null);
             }
             foreach (var edge in vertex.Edges)
             {

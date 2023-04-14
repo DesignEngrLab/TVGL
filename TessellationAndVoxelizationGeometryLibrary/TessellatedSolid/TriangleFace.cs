@@ -9,28 +9,26 @@ using System.Linq;
 namespace TVGL
 {
     /// <summary>
-    ///     This class defines a flat polygonal face. The implementation began with triangular faces in mind.
+    ///     This class defines a flat triangle face. The implementation began with triangular faces in mind.
     ///     It should be double-checked for higher polygons.   It inherits from the ConvexFace class in
     ///     MIConvexHull
     /// </summary>
-    public class PolygonalFace : TessellationBaseClass
+    public class TriangleFace : TessellationBaseClass
     {
         /// <summary>
         ///     Copies this instance. Does not include reference lists.
         /// </summary>
-        /// <returns>PolygonalFace.</returns>
-        public PolygonalFace Copy()
+        /// <returns>TriangleFace.</returns>
+        public TriangleFace Copy()
         {
-            return new PolygonalFace
+            return new TriangleFace
             {
                 _area = _area,
                 _center = _center,
                 _curvature = _curvature,
                 Color = Color,
                 PartOfConvexHull = PartOfConvexHull,
-                Edges = new List<Edge>(),
                 _normal = _normal,
-                Vertices = new List<Vertex>()
             };
         }
 
@@ -73,17 +71,10 @@ namespace TVGL
         /// <param name="edge">The edge.</param>
         internal void AddEdge(Edge edge)
         {
-            var vertFromIndex = Vertices.IndexOf(edge.From);
-            var vertToIndex = Vertices.IndexOf(edge.To);
-            int index;
-            var lastIndex = Vertices.Count - 1;
-            if ((vertFromIndex == 0 && vertToIndex == lastIndex)
-                || (vertFromIndex == lastIndex && vertToIndex == 0))
-                index = lastIndex;
-            else index = Math.Min(vertFromIndex, vertToIndex);
-            while (Edges.Count <= index) Edges.Add(null);
-            if (index < 0) return;
-            Edges[index] = edge;
+            if (A == edge.From && B == edge.To) AB = edge;
+            else if (B == edge.From && C == edge.To) BC = edge;
+            else if (C == edge.From && A == edge.To) CA = edge;
+            else throw new Exception("Edge does not belong to this face.");
         }
 
         /// <summary>
@@ -134,12 +125,13 @@ namespace TVGL
         /// <returns>Vertex.</returns>
         public Vertex NextVertexCCW(Vertex v1)
         {
-            var index = Vertices.IndexOf(v1);
-            if (index < 0) return null; //Vertex is not part of this face
-            return index == Vertices.Count - 1 ? Vertices[0] : Vertices[index + 1];
+            if (v1 == A) return B;
+            if (v1 == B) return C;
+            if (v1 == C) return A;
+            throw new ArgumentException("The given vertex is not part of this face.");
         }
 
-        internal void AdoptNeighborsNormal(PolygonalFace ownedFace)
+        internal void AdoptNeighborsNormal(TriangleFace ownedFace)
         {
             _normal = ownedFace.Normal;
         }
@@ -166,57 +158,66 @@ namespace TVGL
         #region Constructors
 
         /// <summary>
-        ///     Initializes a new instance of the <see cref="PolygonalFace" /> class.
+        ///     Initializes a new instance of the <see cref="TriangleFace" /> class.
         /// </summary>
-        private PolygonalFace()
-        {
-            Vertices = new List<Vertex>();
-            Edges = new List<Edge>();
-        }
+        private TriangleFace() { }
 
         /// <summary>
-        ///     Initializes a new instance of the <see cref="PolygonalFace" /> class.
+        ///     Initializes a new instance of the <see cref="TriangleFace" /> class.
         /// </summary>
         /// <param name="vertices">The vertices.</param>
         /// <param name="connectVerticesBackToFace">if set to <c>true</c> [connect vertices back to face].</param>
-        public PolygonalFace(IEnumerable<Vertex> vertices, bool connectVerticesBackToFace = true) : this()
+        public TriangleFace(IEnumerable<Vertex> vertices, bool connectVerticesBackToFace = true) : this()
         {
-            foreach (var v in vertices)
+            var enumerator = vertices.GetEnumerator();
+            if (enumerator.MoveNext())
             {
-                Vertices.Add(v);
+                A = enumerator.Current;
                 if (connectVerticesBackToFace)
-                    v.Faces.Add(this);
+                    A.Faces.Add(this);
+                if (enumerator.MoveNext())
+                {
+                    B = enumerator.Current;
+                    if (connectVerticesBackToFace)
+                        B.Faces.Add(this);
+                    if (enumerator.MoveNext())
+                    {
+                        C = enumerator.Current;
+                        if (connectVerticesBackToFace)
+                            C.Faces.Add(this);
+                    }
+                }
             }
         }
 
         /// <summary>
-        ///     Initializes a new instance of the <see cref="PolygonalFace" /> class.
+        ///     Initializes a new instance of the <see cref="TriangleFace" /> class.
         /// </summary>
         /// <param name="vertices">The vertices.</param>
         /// <param name="connectVerticesBackToFace">if set to <c>true</c> [connect vertices back to face].</param>
-        public PolygonalFace(Vertex A, Vertex B, Vertex C, bool connectVerticesBackToFace = true) : this()
+        public TriangleFace(Vertex A, Vertex B, Vertex C, bool connectVerticesBackToFace = true) : this()
         {
-            Vertices.Add(A);
-            Vertices.Add(B);
-            Vertices.Add(C);
+            this.A = A;
+            this.B = B;
+            this.C = C;
             if (connectVerticesBackToFace)
             {
                 A.Faces.Add(this);
                 B.Faces.Add(this);
                 C.Faces.Add(this);
-            }          
+            }
         }
 
         /// <summary>
-        ///     Initializes a new instance of the <see cref="PolygonalFace" /> class.
+        ///     Initializes a new instance of the <see cref="TriangleFace" /> class.
         /// </summary>
         /// <param name="vertices">The vertices.</param>
         /// <param name="suggestedNormal">A guess for the normal vector.</param>
         /// <param name="connectVerticesBackToFace">if set to <c>true</c> [connect vertices back to face].</param>
-        public PolygonalFace(IEnumerable<Vertex> vertices, Vector3 suggestedNormal, bool connectVerticesBackToFace = true)
+        public TriangleFace(IEnumerable<Vertex> vertices, Vector3 suggestedNormal, bool connectVerticesBackToFace = true)
             : this(vertices, connectVerticesBackToFace)
         {
-            _normal = MiscFunctions.DetermineNormalForA3DPolygon(Vertices, Vertices.Count, out var reverseVertexOrder, suggestedNormal, out _);
+            _normal = MiscFunctions.DetermineNormalForA3DPolygon(Vertices, 3, out var reverseVertexOrder, suggestedNormal, out _);
             if (reverseVertexOrder) Vertices.Reverse();
         }
 
@@ -229,8 +230,8 @@ namespace TVGL
             get
             {
                 if (_normal.IsNull())
-                    _normal = ((Vertices[1].Coordinates - Vertices[0].Coordinates)
-                        .Cross(Vertices[2].Coordinates - Vertices[0].Coordinates))
+                    _normal = ((B.Coordinates - A.Coordinates)
+                        .Cross(C.Coordinates - A.Coordinates))
                         .Normalize();
                 return _normal;
             }
@@ -246,31 +247,49 @@ namespace TVGL
         ///     Gets the vertices.
         /// </summary>
         /// <value>The vertices.</value>
-        public List<Vertex> Vertices { get; internal set; }
-
+        public IEnumerable<Vertex> Vertices
+        {
+            get
+            {
+                yield return A;
+                yield return B;
+                yield return C;
+            }
+        }
         /// <summary>
         ///     Gets the first vertex
         /// </summary>
         /// <value>The vertices.</value>
-        public Vertex A => Vertices[0];
+        public Vertex A;
 
         /// <summary>
         ///     Gets the second vertex
         /// </summary>
         /// <value>The vertices.</value>
-        public Vertex B => Vertices[1];
+        public Vertex B;
 
         /// <summary>
         ///     Gets the third vertex
         /// </summary>
         /// <value>The vertices.</value>
-        public Vertex C => Vertices[2];
+        public Vertex C;
 
+        public Edge AB;
+        public Edge BC;
+        public Edge CA;
         /// <summary>
         ///     Gets the edges.
         /// </summary>
         /// <value>The edges.</value>
-        public List<Edge> Edges { get; internal set; }
+        public IEnumerable<Edge> Edges
+        {
+            get
+            {
+                yield return AB;
+                yield return BC;
+                yield return CA;
+            }
+        }
 
         /// <summary>
         ///     Gets the center.
@@ -315,14 +334,8 @@ namespace TVGL
         /// <returns>System.Double.</returns>
         internal double DetermineArea()
         {
-            var area = 0.0;
-            for (var i = 2; i < Vertices.Count; i++)
-            {
-                var edge1 = Vertices[1].Coordinates.Subtract(Vertices[0].Coordinates);
-                var edge2 = Vertices[2].Coordinates.Subtract(Vertices[0].Coordinates);
-                // the area of each triangle in the face is the area is half the magnitude of the cross product of two of the edges
-                area += 0.5 * Math.Abs(edge1.Cross(edge2).Dot(Normal));
-            }
+            var area = 0.5 * ((B.Coordinates - A.Coordinates)
+                        .Cross(C.Coordinates - A.Coordinates)).Length();
             //If not a number, the triangle is actually a straight line. Set the area = 0, and let repair function fix this.
             return double.IsNaN(area) ? 0.0 : area;
         }
@@ -339,11 +352,11 @@ namespace TVGL
         ///     Gets the adjacent faces.
         /// </summary>
         /// <value>The adjacent faces.</value>
-        public List<PolygonalFace> AdjacentFaces
+        public List<TriangleFace> AdjacentFaces
         {
             get
             {
-                var adjacentFaces = new List<PolygonalFace>();
+                var adjacentFaces = new List<TriangleFace>();
                 foreach (var e in Edges)
                 {
                     if (e == null) adjacentFaces.Add(null);
@@ -380,6 +393,34 @@ namespace TVGL
             else if (Edges.All(e => e.Curvature != CurvatureType.Convex))
                 _curvature = CurvatureType.Concave;
             else _curvature = CurvatureType.SaddleOrFlat;
+        }
+
+        /// <summary>
+        /// Replaces the vertex.
+        /// </summary>
+        /// <param name="oldVertex">The old vertex.</param>
+        /// <param name="newVertex">The new vector.</param>
+        /// <exception cref="System.Exception">Vertex not found in face</exception>
+        internal void ReplaceVertex(Vertex oldVertex, Vertex newVertex)
+        {
+            if (oldVertex == A) A=newVertex;
+            else if (oldVertex == B) B = newVertex;
+            else if (oldVertex == C) C = newVertex;
+            else throw new Exception("Vertex not found in face");
+            oldVertex.Faces.Remove(this);
+            newVertex.Faces.Add(this);
+            Update();
+        }
+
+        internal void ReplaceEdge(Edge oldEdge, Edge newEdge)
+        {
+            if (oldEdge == AB) AB = newEdge;
+            else if (oldEdge == BC) BC = newEdge;
+            else if (oldEdge == CA) CA = newEdge;
+            else throw new Exception("Vertex not found in face");
+            if (oldEdge.OwnedFace==this) oldEdge.OwnedFace = null;
+            if (oldEdge.OtherFace==this) oldEdge.OtherFace= null;
+            Update();
         }
 
         #endregion Properties

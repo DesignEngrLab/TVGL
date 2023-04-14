@@ -58,7 +58,7 @@ namespace TVGL
                 edgeQueue.Enqueue(e, e.Length);
             var addedEdges = new List<Edge>();
             var addedVertices = new List<Vertex>();
-            var addedFaces = new List<PolygonalFace>();
+            var addedFaces = new List<TriangleFace>();
             var edge = edgeQueue.Dequeue();
             var iterations = numberOfFaces > 0 ? (int)Math.Ceiling(numberOfFaces / 2.0) : numberOfFaces;
             while (iterations-- != 0 && edge.Length >= maxLength)
@@ -71,17 +71,11 @@ namespace TVGL
                 var toVertex = edge.To;
                 var addedVertex = new Vertex(DetermineIntermediateVertexPosition(fromVertex, toVertex));
                 // modify original faces with new intermediate vertex
-                var index = origLeftFace.Vertices.IndexOf(toVertex);
-                origLeftFace.Vertices[index] = addedVertex;
-                origLeftFace.Update();
-                addedVertex.Faces.Add(origLeftFace);
-                index = origRightFace.Vertices.IndexOf(toVertex);
-                origRightFace.Vertices[index] = addedVertex;
-                origRightFace.Update();
-                addedVertex.Faces.Add(origRightFace);
+                origLeftFace.ReplaceVertex(toVertex, addedVertex);
+                origRightFace.ReplaceVertex(toVertex, addedVertex);
 
-                var newLeftFace = new PolygonalFace(new[] { toVertex, addedVertex, leftFarVertex });
-                var newRightFace = new PolygonalFace(new[] { addedVertex, toVertex, rightFarVertex });
+                var newLeftFace = new TriangleFace(new[] { toVertex, addedVertex, leftFarVertex });
+                var newRightFace = new TriangleFace(new[] { addedVertex, toVertex, rightFarVertex });
                 toVertex.Faces.Remove(origLeftFace);
                 toVertex.Faces.Remove(origRightFace);
 

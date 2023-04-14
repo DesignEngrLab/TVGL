@@ -4,7 +4,7 @@ using System.Runtime.CompilerServices;
 
 namespace TVGL
 {
-    public sealed class ZBuffer : Grid<(PolygonalFace, double)>
+    public sealed class ZBuffer : Grid<(TriangleFace, double)>
     {
         /// <summary>
         /// Gets the z-heights as a matrix of doubles. There is no time saved in getting this by itself as the main 
@@ -30,7 +30,7 @@ namespace TVGL
         /// the course of the "Run" computation and might be useful elsewhere.
         /// </summary>
         /// <value>The projected face areas.</value>
-        public Dictionary<PolygonalFace, double> ProjectedFaceAreas { get; set; }
+        public Dictionary<TriangleFace, double> ProjectedFaceAreas { get; set; }
         /// <summary>
         /// Gets the projected 2D vertices of all the 3D vertices of the tessellated solid.
         /// This is found through the course of the "Run" computation and might be useful elsewhere.
@@ -46,7 +46,7 @@ namespace TVGL
 
         private Matrix4x4 transform;
         private Matrix4x4 backTransform;
-        private PolygonalFace[] solidFaces;
+        private TriangleFace[] solidFaces;
 
         public ZBuffer(TessellatedSolid solid, Vector3 direction, int pixelsPerRow, int pixelBorder = 2)
         {
@@ -88,13 +88,13 @@ namespace TVGL
         /// project direction. If less than zero, then the face is away from the direction and not included in the z-buffer anyway.</param>
         /// <param name="pixelBorder">The pixel border is the number of pixels to add around the model.</param>
         /// <param name="subsetFaces">The subset of the solid's faces to find the z-buffer for.</param>
-        /// <returns>System.ValueTuple&lt;PolygonalFace, System.Double&gt;[].</returns>
-        public void Run(IList<PolygonalFace> subsetFaces = null)
+        /// <returns>System.ValueTuple&lt;TriangleFace, System.Double&gt;[].</returns>
+        public void Run(IList<TriangleFace> subsetFaces = null)
         {
             var faces = subsetFaces != null ? subsetFaces : solidFaces;
-            ProjectedFaceAreas = new Dictionary<PolygonalFace, double>();
+            ProjectedFaceAreas = new Dictionary<TriangleFace, double>();
 
-            foreach (PolygonalFace face in faces)
+            foreach (TriangleFace face in faces)
                 ProjectedFaceAreas.Add(face, UpdateZBufferWithFace(face));
         }
 
@@ -113,13 +113,13 @@ namespace TVGL
         /// <param name="face">The face.</param>
         /// <returns>System.Double.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private double UpdateZBufferWithFace(PolygonalFace face)
+        private double UpdateZBufferWithFace(TriangleFace face)
         {
             return CheckZBufferWithFace(face, true, out _, out _);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private double CheckZBufferWithFace(PolygonalFace face, bool updateGrid, out int count, out int accessibleCount, double tessellationError = Constants.BaseTolerance)
+        private double CheckZBufferWithFace(TriangleFace face, bool updateGrid, out int count, out int accessibleCount, double tessellationError = Constants.BaseTolerance)
         {
             #region Initialization
             count = 0;

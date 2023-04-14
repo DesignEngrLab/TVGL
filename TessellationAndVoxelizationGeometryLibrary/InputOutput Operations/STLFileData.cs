@@ -358,12 +358,9 @@ namespace TVGL
                 {
                     writer.WriteLine("\tfacet normal " + face.Normal[0] + " " + face.Normal[1] + " " + face.Normal[2]);
                     writer.WriteLine("\t\touter loop");
-                    writer.WriteLine("\t\t\tvertex " + face.Vertices[0].X + " " + face.Vertices[0].Y + " " +
-                                     face.Vertices[0].Z);
-                    writer.WriteLine("\t\t\tvertex " + face.Vertices[1].X + " " + face.Vertices[1].Y + " " +
-                                     face.Vertices[1].Z);
-                    writer.WriteLine("\t\t\tvertex " + face.Vertices[2].X + " " + face.Vertices[2].Y + " " +
-                                     face.Vertices[2].Z);
+                    writer.WriteLine("\t\t\tvertex " + face.A.X + " " + face.A.Y + " " + face.A.Z);
+                    writer.WriteLine("\t\t\tvertex " + face.B.X + " " + face.B.Y + " " + face.B.Z);
+                    writer.WriteLine("\t\t\tvertex " + face.C.X + " " + face.C.Y + " " + face.C.Z);
                     writer.WriteLine("\t\tendloop");
                     writer.WriteLine("\tendfacet");
                 }
@@ -413,20 +410,20 @@ namespace TVGL
         }
 
 
-        private static void WriteFacet(BinaryWriter writer, PolygonalFace face, bool defineColors, Color defaultColor)
+        private static void WriteFacet(BinaryWriter writer, TriangleFace face, bool defineColors, Color defaultColor)
         {
             writer.Write(BitConverter.GetBytes((float)face.Normal[0]));
             writer.Write(BitConverter.GetBytes((float)face.Normal[1]));
             writer.Write(BitConverter.GetBytes((float)face.Normal[2]));
-            writer.Write(BitConverter.GetBytes((float)face.Vertices[0].X));
-            writer.Write(BitConverter.GetBytes((float)face.Vertices[0].Y));
-            writer.Write(BitConverter.GetBytes((float)face.Vertices[0].Z));
-            writer.Write(BitConverter.GetBytes((float)face.Vertices[1].X));
-            writer.Write(BitConverter.GetBytes((float)face.Vertices[1].Y));
-            writer.Write(BitConverter.GetBytes((float)face.Vertices[1].Z));
-            writer.Write(BitConverter.GetBytes((float)face.Vertices[2].X));
-            writer.Write(BitConverter.GetBytes((float)face.Vertices[2].Y));
-            writer.Write(BitConverter.GetBytes((float)face.Vertices[2].Z));
+            writer.Write(BitConverter.GetBytes((float)face.A.X));
+            writer.Write(BitConverter.GetBytes((float)face.A.Y));
+            writer.Write(BitConverter.GetBytes((float)face.A.Z));
+            writer.Write(BitConverter.GetBytes((float)face.B.X));
+            writer.Write(BitConverter.GetBytes((float)face.B.Y));
+            writer.Write(BitConverter.GetBytes((float)face.B.Z));
+            writer.Write(BitConverter.GetBytes((float)face.C.X));
+            writer.Write(BitConverter.GetBytes((float)face.C.Y));
+            writer.Write(BitConverter.GetBytes((float)face.C.Z));
             var colorBytes = (ushort)0;
             if (defineColors)
             {

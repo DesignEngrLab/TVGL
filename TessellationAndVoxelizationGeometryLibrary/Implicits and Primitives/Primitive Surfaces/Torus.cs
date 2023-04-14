@@ -25,7 +25,7 @@ namespace TVGL
         /// <param name="isPositive">if set to <c>true</c> [is positive].</param>
         /// <param name="faces">The faces.</param>
         public Torus(Vector3 center, Vector3 axis, double majorRadius, double minorRadius, bool isPositive,
-            IEnumerable<PolygonalFace> faces) : base(faces)
+            IEnumerable<TriangleFace> faces) : base(faces)
         {
             Center = center;
             Axis = axis;

@@ -34,8 +34,8 @@ namespace TVGL
             if (convexHull.Result == null) return;
             Vertices = convexHull.Result.Points.ToArray();
             if (!createFaces && !createEdges) return;
-            
-            var convexHullFaceList = new List<PolygonalFace>();
+
+            var convexHullFaceList = new List<TriangleFace>();
             var checkSumMultipliers = new long[3];
             for (var i = 0; i < 3; i++)
                 checkSumMultipliers[i] = (long)Math.Pow(Constants.CubeRootOfLongMaxValue, i);
@@ -48,7 +48,7 @@ namespace TVGL
                 var checksum = orderedIndices.Select((t, j) => t * checkSumMultipliers[j]).Sum();
                 if (alreadyCreatedFaces.Contains(checksum)) continue;
                 alreadyCreatedFaces.Add(checksum);
-                convexHullFaceList.Add(new PolygonalFace(faceVertices, new Vector3(cvxFace.Normal), false));
+                convexHullFaceList.Add(new TriangleFace(faceVertices, new Vector3(cvxFace.Normal), false));
             }
             Faces = convexHullFaceList.ToArray();
             if (createEdges)
@@ -62,7 +62,7 @@ namespace TVGL
         {
             Vertices = convexHullPoints.ToArray();
             var numCvxHullFaces = convexHullFaceIndices.Count / 3;
-            Faces = new PolygonalFace[numCvxHullFaces];
+            Faces = new TriangleFace[numCvxHullFaces];
             var checkSumMultipliers = new long[3];
             for (var i = 0; i < 3; i++)
                 checkSumMultipliers[i] = (long)Math.Pow(Constants.CubeRootOfLongMaxValue, i);
@@ -81,14 +81,14 @@ namespace TVGL
                     allVertices[convexHullFaceIndices[3*i + 1]],
                     allVertices[convexHullFaceIndices[3*i + 2]],
                 };
-                Faces[i] = new PolygonalFace(faceVertices, false);
+                Faces[i] = new TriangleFace(faceVertices, false);
             }
             Edges = MakeEdges(Faces, Vertices);
             SurfaceArea = Faces.Sum(face => face.Area);
             TessellatedSolid.CalculateVolumeAndCenter(Faces, tolerance, out Volume, out Center);
         }
 
-        private static Edge[] MakeEdges(IEnumerable<PolygonalFace> faces, IList<Vertex> vertices)
+        private static Edge[] MakeEdges(IEnumerable<TriangleFace> faces, IList<Vertex> vertices)
         {
             var numVertices = vertices.Count;
             var vertexIndices = new Dictionary<Vertex, int>();
@@ -97,12 +97,10 @@ namespace TVGL
             var edgeDictionary = new Dictionary<long, Edge>();
             foreach (var face in faces)
             {
-                var lastIndex = face.Vertices.Count - 1;
-                for (var j = 0; j <= lastIndex; j++)
+                var fromVertex = face.C;
+                foreach (var toVertex in face.Vertices)
                 {
-                    var fromVertex = face.Vertices[j];
                     var fromVertexIndex = vertexIndices[fromVertex];
-                    var toVertex = face.Vertices[j == lastIndex ? 0 : j + 1];
                     var toVertexIndex = vertexIndices[toVertex];
                     long checksum = fromVertexIndex < toVertexIndex
                         ? fromVertexIndex + numVertices * toVertexIndex
@@ -114,6 +112,7 @@ namespace TVGL
                         face.AddEdge(edge);
                     }
                     else edgeDictionary.Add(checksum, new Edge(fromVertex, toVertex, face, null, false, checksum));
+                    fromVertex = toVertex;
                 }
             }
             return edgeDictionary.Values.ToArray();
@@ -145,7 +144,7 @@ namespace TVGL
         ///     Gets the convex hull faces.
         /// </summary>
         /// <value>The convex hull faces.</value>
-        public readonly PolygonalFace[] Faces;
+        public readonly TriangleFace[] Faces;
 
         /// <summary>
         ///     Gets whether the convex hull creation was successful.

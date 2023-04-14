@@ -295,7 +295,7 @@ namespace TVGL
             if (additionalRotation == 0) return dir;
             return dir.Transform(Quaternion.CreateFromAxisAngle(direction, additionalRotation));
         }
-        public static Vector3 FindAxisToMinimizeProjectedArea(IEnumerable<PolygonalFace> faces, int count)
+        public static Vector3 FindAxisToMinimizeProjectedArea(IEnumerable<TriangleFace> faces, int count)
         {
             double xSum = 0.0, ySum = 0.0, zSum = 0.0;
             double xSq = 0.0;
@@ -369,7 +369,7 @@ namespace TVGL
             return eigenVectors[2];
         }
 
-        public static Vector3 FindAxisToMaximizeProjectedArea(IEnumerable<PolygonalFace> faces, int count)
+        public static Vector3 FindAxisToMaximizeProjectedArea(IEnumerable<TriangleFace> faces, int count)
         {
             var sums = Vector3.Zero;
             foreach (var face in faces)
@@ -421,7 +421,7 @@ namespace TVGL
         //Gets the average inner edge direction. Add all together and then normalize
         //This won't be accurate, but it can find a good starting direction that the other methods miss.
         //Could be used on a cylinder and cone (though cone won't be good unless it is closed).
-        private static Vector3 FindAverageInnerEdgeVector(IEnumerable<PolygonalFace> faces, out HashSet<Edge> borderEdges)
+        private static Vector3 FindAverageInnerEdgeVector(IEnumerable<TriangleFace> faces, out HashSet<Edge> borderEdges)
         {
             borderEdges = new HashSet<Edge>();
             Vector3 innerEdgeVector = default;

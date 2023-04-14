@@ -34,7 +34,7 @@ namespace TVGL
         /// </summary>
         /// <value>The faces.</value>
         [JsonIgnore]
-        public PolygonalFace[] Faces { get; set; }
+        public TriangleFace[] Faces { get; set; }
 
         /// <summary>
         ///     Gets the edges.
@@ -84,7 +84,7 @@ namespace TVGL
         /// </summary>
         /// <value>The number of faces.</value>
         [JsonIgnore]
-        public int NumberOfPrimitives{ get; set; }
+        public int NumberOfPrimitives { get; set; }
 
         /// <summary>
         ///     Errors in the tesselated solid
@@ -235,7 +235,7 @@ namespace TVGL
         /// <param name="writer"></param>
         /// <param name="index"></param>
         public void StreamWrite(JsonTextWriter writer, int index)
-        {          
+        {
             writer.WritePropertyName("Name");
             writer.WriteValue(Name);
 
@@ -286,7 +286,7 @@ namespace TVGL
             //before actually reading it.
             writer.WriteStartObject();//{
             {
-                foreach(var primitive in Primitives)
+                foreach (var primitive in Primitives)
                 {
                     //Name the primitive as its type plus an index. This will make it unique, which is 
                     //required for JSON.
@@ -309,8 +309,8 @@ namespace TVGL
                 {
                     reader.Read();
                     continue;
-                }                   
-                
+                }
+
                 var propertyName = reader.Value.ToString();
                 switch (propertyName)
                 {
@@ -332,7 +332,7 @@ namespace TVGL
                         break;
                     case "NumberOfFaces":
                         NumberOfFaces = (int)reader.ReadAsInt32();
-                        Faces = new PolygonalFace[NumberOfFaces];
+                        Faces = new TriangleFace[NumberOfFaces];
                         break;
                     case "NumberOfPrimitives":
                         NumberOfPrimitives = (int)reader.ReadAsInt32();
@@ -341,7 +341,7 @@ namespace TVGL
                     case "Primitives":
                         //Start reading primitives                          
                         reader.Read();//skip object container "{"
-                        for(var primitiveIndex = 0; primitiveIndex < NumberOfPrimitives; primitiveIndex++)
+                        for (var primitiveIndex = 0; primitiveIndex < NumberOfPrimitives; primitiveIndex++)
                         {
                             //Get the property name, which in this case, is the name of the primitive plus an index.
                             reader.Read();
@@ -384,7 +384,7 @@ namespace TVGL
                             var a = (int)reader.ReadAsInt32();
                             var b = (int)reader.ReadAsInt32();
                             var c = (int)reader.ReadAsInt32();
-                            Faces[faceIndex] = new PolygonalFace(Vertices[a], Vertices[b], Vertices[c], true) { IndexInList = faceIndex };
+                            Faces[faceIndex] = new TriangleFace(Vertices[a], Vertices[b], Vertices[c], true) { IndexInList = faceIndex };
                         }
                         break;
                     case "VertexCoords":
@@ -394,7 +394,7 @@ namespace TVGL
                             var x = (double)reader.ReadAsDouble();
                             var y = (double)reader.ReadAsDouble();
                             var z = (double)reader.ReadAsDouble();
-                            Vertices[vertexIndex] = new Vertex(new Vector3(x, y, z), vertexIndex); 
+                            Vertices[vertexIndex] = new Vertex(new Vector3(x, y, z), vertexIndex);
                         }
                         break;
                 }
@@ -442,7 +442,7 @@ namespace TVGL
             MakeFaces(faceIndices, colors);
             MakeEdges();
 
-            ConvexHull = new TVGLConvexHull(this); 
+            ConvexHull = new TVGLConvexHull(this);
             foreach (var cvxHullPt in ConvexHull.Vertices)
                 cvxHullPt.PartOfConvexHull = true;
             foreach (var face in Faces.Where(face => face.Vertices.All(v => v.PartOfConvexHull)))
@@ -472,7 +472,7 @@ namespace TVGL
         /// <param name="filename">The filename.</param>
         /// <param name="comments">The comments.</param>
         /// <param name="language">The language.</param>
-        public TessellatedSolid(IEnumerable<PolygonalFace> faces, bool createFullVersion, bool copyElements,
+        public TessellatedSolid(IEnumerable<TriangleFace> faces, bool createFullVersion, bool copyElements,
             IEnumerable<Vertex> vertices = null, IList<Color> colors = null, UnitType units = UnitType.unspecified, string name = "", string filename = "",
             List<string> comments = null, string language = "") : base(units, name, filename, comments, language)
         {
@@ -530,14 +530,15 @@ namespace TVGL
                         var face = origFace.Copy();
                         face.PartOfConvexHull = false;
                         face.IndexInList = i;
-                        var faceVertices = new List<Vertex>();
-                        foreach (var vertex in origFace.Vertices)
-                        {
-                            var newVertex = simpleCompareDict[vertex];
-                            faceVertices.Add(newVertex);
-                            newVertex.Faces.Add(face);
-                        }
-                        face.Vertices = faceVertices;
+                        var newVertex = simpleCompareDict[origFace.A];
+                        face.A = newVertex;
+                        newVertex.Faces.Add(face);
+                        newVertex = simpleCompareDict[origFace.B];
+                        face.B = newVertex;
+                        newVertex.Faces.Add(face);
+                        newVertex = simpleCompareDict[origFace.C];
+                        face.C = newVertex;
+                        newVertex.Faces.Add(face);
                         if (HasUniformColor)
                             face.Color = SolidColor;
                         else if (manyInputColors)
@@ -581,14 +582,15 @@ namespace TVGL
                         var face = origFace.Copy();
                         face.PartOfConvexHull = false;
                         face.IndexInList = i;
-                        var faceVertices = new List<Vertex>();
-                        foreach (var vertex in origFace.Vertices)
-                        {
-                            var newVertex = simpleCompareDict[vertex];
-                            faceVertices.Add(newVertex);
-                            newVertex.Faces.Add(face);
-                        }
-                        face.Vertices = faceVertices;
+                        var newVertex = simpleCompareDict[origFace.A];
+                        face.A = newVertex;
+                        newVertex.Faces.Add(face);
+                        newVertex = simpleCompareDict[origFace.B];
+                        face.B = newVertex;
+                        newVertex.Faces.Add(face);
+                        newVertex = simpleCompareDict[origFace.C];
+                        face.C = newVertex;
+                        newVertex.Faces.Add(face);
                         if (HasUniformColor)
                             face.Color = SolidColor;
                         else if (manyInputColors)
@@ -628,9 +630,9 @@ namespace TVGL
 
         public void DoublyConnectVerticesToFaces()
         {
-            foreach(var face in Faces)
+            foreach (var face in Faces)
             {
-                foreach(var vertex in face.Vertices)
+                foreach (var vertex in face.Vertices)
                 {
                     vertex.Faces.Add(face);
                 }
@@ -722,7 +724,7 @@ namespace TVGL
                 SolidColor = new Color(Constants.DefaultColor);
             else SolidColor = colors[0];
             NumberOfFaces = vertexLocations.Count;
-            Faces = new PolygonalFace[NumberOfFaces];
+            Faces = new TriangleFace[NumberOfFaces];
             for (var i = 0; i < NumberOfFaces; i++)
             {
                 var color = SolidColor;
@@ -732,7 +734,7 @@ namespace TVGL
                     if (colors[j] != null) color = colors[j];
                     if (!SolidColor.Equals(color)) HasUniformColor = false;
                 }
-                Faces[i] = new PolygonalFace(vertexLocations[i].Select(v => new Vertex(v)));
+                Faces[i] = new TriangleFace(vertexLocations[i].Select(v => new Vertex(v)));
                 Faces[i].IndexInList = i;
             }
         }
@@ -754,7 +756,7 @@ namespace TVGL
                 SolidColor = new Color(Constants.DefaultColor);
             else SolidColor = colors[0];
             NumberOfFaces = faceToVertexIndices.Count;
-            var listOfFaces = new List<PolygonalFace>(NumberOfFaces);
+            var listOfFaces = new List<TriangleFace>(NumberOfFaces);
             var faceChecksums = new HashSet<long>();
             if (NumberOfVertices > Constants.CubeRootOfLongMaxValue)
             {
@@ -794,7 +796,7 @@ namespace TVGL
                 }
                 if (faceVertices.Length == 3)
                 {
-                    var face = new PolygonalFace(faceVertices, doublyLinkToVertices);
+                    var face = new TriangleFace(faceVertices, doublyLinkToVertices);
                     if (!HasUniformColor) face.Color = color;
                     listOfFaces.Add(face);
                 }
@@ -802,10 +804,10 @@ namespace TVGL
                 {
                     var normal = MiscFunctions.DetermineNormalForA3DPolygon(faceVertices, faceVertices.Length, out _, Vector3.Null, out _);
                     var triangulatedList = faceVertices.Triangulate(normal);
-                    var listOfFlatFaces = new List<PolygonalFace>();
+                    var listOfFlatFaces = new List<TriangleFace>();
                     foreach (var vertexSet in triangulatedList)
                     {
-                        var face = new PolygonalFace(vertexSet, normal, doublyLinkToVertices);
+                        var face = new TriangleFace(vertexSet, normal, doublyLinkToVertices);
                         if (!HasUniformColor) face.Color = color;
                         listOfFaces.Add(face);
                         listOfFlatFaces.Add(face);
@@ -838,10 +840,10 @@ namespace TVGL
         public void MakeFacesFromPrimitives()
         {
             HasUniformColor = true;
-            Faces = new PolygonalFace[NumberOfFaces];        
+            Faces = new TriangleFace[NumberOfFaces];
             var faceIndex = 0;
             foreach (var primitive in Primitives)
-                foreach(var face in primitive.Faces)
+                foreach (var face in primitive.Faces)
                     Faces[faceIndex++] = face;
         }
 
@@ -861,7 +863,7 @@ namespace TVGL
                 SolidColor = new Color(Constants.DefaultColor);
             else SolidColor = colors[0];
             NumberOfFaces = faceToVertexIndices.Count;
-            var tempFaceIndices = new Dictionary<int, List<PolygonalFace>>(NumberOfFaces);
+            var tempFaceIndices = new Dictionary<int, List<TriangleFace>>(NumberOfFaces);
             var faceChecksums = new Dictionary<long, int>();
             if (NumberOfVertices > Constants.CubeRootOfLongMaxValue)
             {
@@ -900,18 +902,18 @@ namespace TVGL
                 }
                 if (faceVertices.Length == 3)
                 {
-                    var face = new PolygonalFace(faceVertices, doublyLinkToVertices);
+                    var face = new TriangleFace(faceVertices, doublyLinkToVertices);
                     if (!HasUniformColor) face.Color = color;
-                    tempFaceIndices.Add(i, new List<PolygonalFace> { face });
+                    tempFaceIndices.Add(i, new List<TriangleFace> { face });
                 }
                 else
                 {
                     var normal = MiscFunctions.DetermineNormalForA3DPolygon(faceVertices, faceVertices.Length, out _, Vector3.Null, out _);
                     var triangulatedList = faceVertices.Triangulate(normal);
-                    tempFaceIndices[i] = new List<PolygonalFace>();
+                    tempFaceIndices[i] = new List<TriangleFace>();
                     foreach (var vertexSet in triangulatedList)
                     {
-                        var face = new PolygonalFace(vertexSet, normal, doublyLinkToVertices);
+                        var face = new TriangleFace(vertexSet, normal, doublyLinkToVertices);
                         if (!HasUniformColor) face.Color = color;
                         tempFaceIndices[i].Add(face);
                     }
@@ -1152,9 +1154,9 @@ namespace TVGL
 
         #region Faces
 
-        internal void AddFace(PolygonalFace newFace)
+        internal void AddFace(TriangleFace newFace)
         {
-            var newFaces = new PolygonalFace[NumberOfFaces + 1];
+            var newFaces = new TriangleFace[NumberOfFaces + 1];
             for (var i = 0; i < NumberOfFaces; i++)
                 newFaces[i] = Faces[i];
             newFaces[NumberOfFaces] = newFace;
@@ -1163,10 +1165,10 @@ namespace TVGL
             NumberOfFaces++;
         }
 
-        internal void AddFaces(IList<PolygonalFace> facesToAdd)
+        internal void AddFaces(IList<TriangleFace> facesToAdd)
         {
             var numToAdd = facesToAdd.Count;
-            var newFaces = new PolygonalFace[NumberOfFaces + numToAdd];
+            var newFaces = new TriangleFace[NumberOfFaces + numToAdd];
             for (var i = 0; i < NumberOfFaces; i++)
                 newFaces[i] = Faces[i];
             for (var i = 0; i < numToAdd; i++)
@@ -1178,7 +1180,7 @@ namespace TVGL
             NumberOfFaces += numToAdd;
         }
 
-        internal void RemoveFace(PolygonalFace removeFace)
+        internal void RemoveFace(TriangleFace removeFace)
         {
             RemoveFace(Faces.FindIndex(removeFace));
         }
@@ -1188,7 +1190,7 @@ namespace TVGL
             //First. Remove all the references to each edge and vertex.
             RemoveReferencesToFace(removeFaceIndex);
             NumberOfFaces--;
-            var newFaces = new PolygonalFace[NumberOfFaces];
+            var newFaces = new TriangleFace[NumberOfFaces];
             for (var i = 0; i < removeFaceIndex; i++)
                 newFaces[i] = Faces[i];
             for (var i = removeFaceIndex; i < NumberOfFaces; i++)
@@ -1199,7 +1201,7 @@ namespace TVGL
             Faces = newFaces;
         }
 
-        internal void RemoveFaces(IEnumerable<PolygonalFace> removeFaces)
+        internal void RemoveFaces(IEnumerable<TriangleFace> removeFaces)
         {
             RemoveFaces(removeFaces.Select(Faces.FindIndex).ToList());
         }
@@ -1215,7 +1217,7 @@ namespace TVGL
             var numToRemove = removeIndices.Count;
             removeIndices.Sort();
             NumberOfFaces -= numToRemove;
-            var newFaces = new PolygonalFace[NumberOfFaces];
+            var newFaces = new TriangleFace[NumberOfFaces];
             for (var i = 0; i < NumberOfFaces; i++)
             {
                 while (offset < numToRemove && i + offset == removeIndices[offset])
@@ -1334,15 +1336,9 @@ namespace TVGL
                 if (index >= 0) edge.From.Edges.RemoveAt(index);
             }
             if (edge.OwnedFace != null)
-            {
-                index = edge.OwnedFace.Edges.IndexOf(edge);
-                if (index >= 0) edge.OwnedFace.Edges.RemoveAt(index);
-            }
+                edge.OwnedFace.ReplaceEdge(edge, null);
             if (edge.OtherFace != null)
-            {
-                index = edge.OtherFace.Edges.IndexOf(edge);
-                if (index >= 0) edge.OtherFace.Edges.RemoveAt(index);
-            }
+                edge.OtherFace.ReplaceEdge(edge, null);
         }
 
         #endregion
@@ -1469,7 +1465,7 @@ namespace TVGL
                 face.Update();// Transform(transformMatrix);
             }
             //Update the edges
-            if(NumberOfEdges > 1)
+            if (NumberOfEdges > 1)
             {
                 foreach (var edge in Edges)
                 {
@@ -1482,7 +1478,7 @@ namespace TVGL
                     transformMatrix.M21, transformMatrix.M22, transformMatrix.M23,
                     transformMatrix.M31, transformMatrix.M32, transformMatrix.M33);
             _inertiaTensor *= rotMatrix;
-            if(Primitives != null)
+            if (Primitives != null)
                 foreach (var primitive in Primitives)
                     primitive.Transform(transformMatrix);
             this.SetNegligibleAreaFaceNormals(true);
@@ -1530,9 +1526,9 @@ namespace TVGL
             CalculateVolumeAndCenter(Faces, SameTolerance, out _volume, out _center);
         }
 
-        const double oneThird= 1.0 / 3.0;
+        const double oneThird = 1.0 / 3.0;
         const double oneTwelth = 1.0 / 12.0;
-        public static void CalculateVolumeAndCenter(IEnumerable<PolygonalFace> faces, double tolerance, out double volume, out Vector3 center)
+        public static void CalculateVolumeAndCenter(IEnumerable<TriangleFace> faces, double tolerance, out double volume, out Vector3 center)
         {
             center = new Vector3();
             volume = 0.0;
@@ -1543,7 +1539,7 @@ namespace TVGL
             {
                 if (face.Area.IsNegligible(tolerance)) continue; //Ignore faces with zero area, since their Normals are not set.
                 // this is the volume of a tetrahedron from defined by the face and the origin {0,0,0}. The origin would be part of the second term
-                // in the dotproduct, "face.Normal.Dot(face.Vertices[0].Position - ORIGIN))", but clearly there is no need to subtract
+                // in the dotproduct, "face.Normal.Dot(face.A.Position - ORIGIN))", but clearly there is no need to subtract
                 // {0,0,0}. Note that the volume of the tetrahedron could be negative. This is fine as it ensures that the origin has no influence
                 // on the volume.
                 var a = face.A; var b = face.B; var c = face.C;// get once, so we don't have as many gets from an array.
@@ -1561,7 +1557,7 @@ namespace TVGL
         }
 
         //ToDo: Remove this function if there is no need for it. Why does this function repeat the volume & center calculation? Does this improve accuracy somehow? 
-        public static void CalculateVolumeAndCenter_Old(IEnumerable<PolygonalFace> faces, double tolerance, out double volume, out Vector3 center)
+        public static void CalculateVolumeAndCenter_Old(IEnumerable<TriangleFace> faces, double tolerance, out double volume, out Vector3 center)
         {
             center = new Vector3();
             volume = 0.0;
@@ -1569,7 +1565,7 @@ namespace TVGL
             var iterations = 0;
             Vector3 oldCenter1 = center;
             if (faces == null) return;
-            var facesList = faces as IList<PolygonalFace> ?? faces.ToList();
+            var facesList = faces as IList<TriangleFace> ?? faces.ToList();
             do
             {
                 oldVolume = volume;
@@ -1580,16 +1576,16 @@ namespace TVGL
                 foreach (var face in facesList)
                 {
                     if (face.Area.IsNegligible(tolerance)) continue; //Ignore faces with zero area, since their Normals are not set.
-                    var tetrahedronVolume = face.Area * face.Normal.Dot(face.Vertices[0].Coordinates - oldCenter1) / 3;
+                    var tetrahedronVolume = face.Area * face.Normal.Dot(face.A.Coordinates - oldCenter1) / 3;
                     // this is the volume of a tetrahedron from defined by the face and the origin {0,0,0}. The origin would be part of the second term
-                    // in the dotproduct, "face.Normal.Dot(face.Vertices[0].Position - ORIGIN))", but clearly there is no need to subtract
+                    // in the dotproduct, "face.Normal.Dot(face.A.Position - ORIGIN))", but clearly there is no need to subtract
                     // {0,0,0}. Note that the volume of the tetrahedron could be negative. This is fine as it ensures that the origin has no influence
                     // on the volume.
                     volume += tetrahedronVolume;
                     center += new Vector3(
-                        (oldCenter1[0] + face.Vertices[0].X + face.Vertices[1].X + face.Vertices[2].X) * tetrahedronVolume / 4,
-                        (oldCenter1[1] + face.Vertices[0].Y + face.Vertices[1].Y + face.Vertices[2].Y) * tetrahedronVolume / 4,
-                        (oldCenter1[2] + face.Vertices[0].Z + face.Vertices[1].Z + face.Vertices[2].Z) * tetrahedronVolume / 4);
+                        (oldCenter1[0] + face.A.X + face.B.X + face.C.X) * tetrahedronVolume / 4,
+                        (oldCenter1[1] + face.A.Y + face.B.Y + face.C.Y) * tetrahedronVolume / 4,
+                        (oldCenter1[2] + face.A.Z + face.B.Z + face.C.Z) * tetrahedronVolume / 4);
                     // center is found by a weighted sum of the centers of each tetrahedron. The weighted sum coordinate are collected here.
                 }
                 if (iterations > 10 || volume < 0) center = 0.5 * (oldCenter1 + oldCenter2);
@@ -1615,17 +1611,17 @@ namespace TVGL
             foreach (var face in Faces)
             {
                 var matrixA = new Matrix3x3(
-                   face.Vertices[0].Coordinates[0] - Center[0],
-                   face.Vertices[0].Coordinates[1] - Center[1],
-                   face.Vertices[0].Coordinates[2] - Center[2],
+                   face.A.Coordinates[0] - Center[0],
+                   face.A.Coordinates[1] - Center[1],
+                   face.A.Coordinates[2] - Center[2],
 
-                   face.Vertices[1].Coordinates[0] - Center[0],
-                   face.Vertices[1].Coordinates[1] - Center[1],
-                   face.Vertices[1].Coordinates[2] - Center[2],
+                   face.B.Coordinates[0] - Center[0],
+                   face.B.Coordinates[1] - Center[1],
+                   face.B.Coordinates[2] - Center[2],
 
-                   face.Vertices[2].Coordinates[0] - Center[0],
-                   face.Vertices[2].Coordinates[1] - Center[1],
-                   face.Vertices[2].Coordinates[2] - Center[2]);
+                   face.C.Coordinates[0] - Center[0],
+                   face.C.Coordinates[1] - Center[1],
+                   face.C.Coordinates[2] - Center[2]);
 
                 var matrixC = matrixA.Transpose() * canonicalMatrix;
                 matrixC = matrixC * matrixA * matrixA.GetDeterminant();

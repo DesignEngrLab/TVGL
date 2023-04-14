@@ -279,7 +279,7 @@ namespace TVGL
         /// <param name="radius">The radius.</param>
         /// <param name="isPositive">if set to <c>true</c> [is positive].</param>
         /// <param name="faces">The faces.</param>
-        public Sphere(Vector3 center, double radius, bool isPositive, IEnumerable<PolygonalFace> faces)
+        public Sphere(Vector3 center, double radius, bool isPositive, IEnumerable<TriangleFace> faces)
             : base(faces)
         {
             Center = center;

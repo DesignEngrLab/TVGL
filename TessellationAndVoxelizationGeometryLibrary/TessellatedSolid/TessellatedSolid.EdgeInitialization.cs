@@ -69,7 +69,7 @@ namespace TVGL
             // in the beginning. We check that here, and we spit out the final unrepairable edges as the border
             // edges and removed vertices. we need to make sure we remove vertices that were paired up here.
             List<Edge> borderEdges;
-            List<PolygonalFace> newFaces;
+            List<TriangleFace> newFaces;
             List<Vertex> removedVertices;
             if (singleSidedEdges.Any())
             {
@@ -89,7 +89,7 @@ namespace TVGL
             else
             {
                 borderEdges = new List<Edge>();
-                newFaces = new List<PolygonalFace>();
+                newFaces = new List<TriangleFace>();
                 removedVertices = new List<Vertex>();
             }
             // well, the edgelist is definitely going to work out so, we are going to need to make
@@ -118,7 +118,7 @@ namespace TVGL
                 edge.IndexInList = i;
                 SetAndGetEdgeChecksum(edge);
                 edge.OtherFace = otherFace;
-                if(otherFace != null)
+                if (otherFace != null)
                     otherFace.AddEdge(edge);
                 Edges[i] = edge;
             }
@@ -226,21 +226,19 @@ namespace TVGL
         /// <param name="doublyLinkToVertices">if set to <c>true</c> [doubly link to vertices].</param>
         /// <param name="overDefinedEdges">The over defined edges.</param>
         /// <param name="partlyDefinedEdges">The partly defined edges.</param>
-        /// <returns>List&lt;Tuple&lt;Edge, List&lt;PolygonalFace&gt;&gt;&gt;.</returns>
-        internal static List<(Edge, PolygonalFace, PolygonalFace)> DefineEdgesFromFaces(IList<PolygonalFace> faces,
+        /// <returns>List&lt;Tuple&lt;Edge, List&lt;TriangleFace&gt;&gt;&gt;.</returns>
+        internal static List<(Edge, TriangleFace, TriangleFace)> DefineEdgesFromFaces(IList<TriangleFace> faces,
             bool doublyLinkToVertices,
-            out List<(Edge, List<PolygonalFace>)> overDefinedEdges, out List<Edge> partlyDefinedEdges)
+            out List<(Edge, List<TriangleFace>)> overDefinedEdges, out List<Edge> partlyDefinedEdges)
         {
             var partlyDefinedEdgeDictionary = new Dictionary<long, Edge>();
-            var alreadyDefinedEdges = new Dictionary<long, (Edge, PolygonalFace, PolygonalFace)>();
-            var overDefinedEdgesDictionary = new Dictionary<long, (Edge, List<PolygonalFace>)>();
+            var alreadyDefinedEdges = new Dictionary<long, (Edge, TriangleFace, TriangleFace)>();
+            var overDefinedEdgesDictionary = new Dictionary<long, (Edge, List<TriangleFace>)>();
             foreach (var face in faces)
             {
-                var lastIndex = face.Vertices.Count - 1;
-                for (var j = 0; j <= lastIndex; j++)
+                var fromVertex = face.C;
+                foreach (var toVertex in face.Vertices)
                 {
-                    var fromVertex = face.Vertices[j];
-                    var toVertex = face.Vertices[j == lastIndex ? 0 : j + 1];
                     var checksum = GetEdgeChecksum(fromVertex, toVertex);
                     // the following four-part condition is best read from the bottom up.
                     // the checksum is used to quickly identify if the edge exists (and to access it)
@@ -254,7 +252,7 @@ namespace TVGL
                         // if an alreadyDefinedEdge has another face defining it, then it should be
                         // moved to overDefinedEdges
                         overDefinedEdgesDictionary.Add(checksum, (edgeEntry.Item1,
-                            new List<PolygonalFace> { edgeEntry.Item2, edgeEntry.Item3, face }));
+                            new List<TriangleFace> { edgeEntry.Item2, edgeEntry.Item3, face }));
                         alreadyDefinedEdges.Remove(checksum);
                     }
                     else if (partlyDefinedEdgeDictionary.TryGetValue(checksum, out var edge))
@@ -269,6 +267,7 @@ namespace TVGL
                         var edgeNew = new Edge(fromVertex, toVertex, face, null, false, checksum);
                         partlyDefinedEdgeDictionary.Add(checksum, edgeNew);
                     }
+                    fromVertex = toVertex;
                 }
             }
             overDefinedEdges = overDefinedEdgesDictionary.Values.ToList();
@@ -283,12 +282,12 @@ namespace TVGL
         /// <param name="overUsedEdgesDictionary">The over used edges dictionary.</param>
         /// <param name="moreSingleSidedEdges">The more single sided edges.</param>
         /// <returns>System.Collections.Generic.IEnumerable&lt;System.Tuple&lt;TVGL.Edge, System.Collections.Generic.List&lt;
-        /// TVGL.PolygonalFace&gt;&gt;&gt;.</returns>
-        private static IEnumerable<(Edge, PolygonalFace, PolygonalFace)> TeaseApartOverUsedEdges(
-            List<(Edge, List<PolygonalFace>)> overUsedEdgesDictionary,
+        /// TVGL.TriangleFace&gt;&gt;&gt;.</returns>
+        private static IEnumerable<(Edge, TriangleFace, TriangleFace)> TeaseApartOverUsedEdges(
+            List<(Edge, List<TriangleFace>)> overUsedEdgesDictionary,
             out List<Edge> moreSingleSidedEdges)
         {
-            var newListOfGoodEdges = new List<(Edge, PolygonalFace, PolygonalFace)>();
+            var newListOfGoodEdges = new List<(Edge, TriangleFace, TriangleFace)>();
             foreach (var entry in overUsedEdgesDictionary)
             {
                 var edge = entry.Item1;
@@ -300,7 +299,7 @@ namespace TVGL
                 while (candidateFaces.Count > 1 && numFailedTries < candidateFaces.Count)
                 {
                     var highestDot = -2.0;
-                    PolygonalFace bestMatch = null;
+                    TriangleFace bestMatch = null;
                     var refFace = candidateFaces[0];
                     candidateFaces.RemoveAt(0);
                     var refOwnsEdge = FaceShouldBeOwnedFace(edge, refFace);
@@ -354,14 +353,14 @@ namespace TVGL
             return newListOfGoodEdges;
         }
 
-        private static bool FaceShouldBeOwnedFace(Edge edge, PolygonalFace face)
+        private static bool FaceShouldBeOwnedFace(Edge edge, TriangleFace face)
         {
             var otherEdgeVector = face.OtherVertex(edge.From, edge.To).Coordinates.Subtract(edge.To.Coordinates);
             var isThisNormal = edge.Vector.Cross(otherEdgeVector);
             return face.Normal.Dot(isThisNormal) > 0;
         }
 
-        private static IEnumerable<(Edge, PolygonalFace, PolygonalFace)> MatchUpRemainingSingleSidedEdge(
+        private static IEnumerable<(Edge, TriangleFace, TriangleFace)> MatchUpRemainingSingleSidedEdge(
             List<Edge> singleSidedEdges, double tolerance, out HashSet<Edge> borderEdges, out List<Vertex> removedVertices)
         {
             borderEdges = new HashSet<Edge>(singleSidedEdges);
@@ -372,7 +371,7 @@ namespace TVGL
 
             var removedToKept = new Dictionary<Vertex, Vertex>();
             var keptToRemoved = new Dictionary<Vertex, List<Vertex>>();
-            var completedEdges = new List<(Edge, PolygonalFace, PolygonalFace)>();
+            var completedEdges = new List<(Edge, TriangleFace, TriangleFace)>();
             for (var i = 0; i < numRemaining; i++)
                 for (var j = i + 1; j < numRemaining; j++)
                 {
@@ -431,9 +430,7 @@ namespace TVGL
             if (removeVertex == keepVertex) return;
             foreach (var face in removeVertex.Faces)
             {
-                keepVertex.Faces.Add(face);
-                var index = face.Vertices.IndexOf(removeVertex);
-                face.Vertices[index] = keepVertex;
+                face.ReplaceVertex(removeVertex, keepVertex);
                 foreach (var edge in face.Edges)
                 {
                     if (edge == null) continue;
@@ -482,7 +479,7 @@ namespace TVGL
                 }
                 else startingEdge = remainingEdgesInner.First();
                 loop.AddBegin(startingEdge, true);  //all the directions really should be false since the edges were defined
-                                               //with the ownedFace but this is confusing and we'll switch later
+                                                    //with the ownedFace but this is confusing and we'll switch later
                 removedEdges.Add(startingEdge);
                 remainingEdgesInner.Remove(startingEdge);
                 do
@@ -546,9 +543,9 @@ namespace TVGL
                 && successful);
                 if (successful && loop.Count > 2)
                 {
-//#if PRESENT
+                    //#if PRESENT
                     //Presenter.ShowVertexPathsWithSolid(new[] { loop.GetVertices().Select(v => v.Coordinates) }.Skip(7), new TessellatedSolid[] { });
-//#endif
+                    //#endif
                     foreach (var subLoop in SeparateIntoMultipleLoops(loop))
                         listOfLoops.Add(subLoop);
                     attempts = 0;
@@ -639,12 +636,12 @@ namespace TVGL
             yield return new TriangulationLoop(loop, true);
         }
 
-        private static IEnumerable<(Edge, PolygonalFace, PolygonalFace)> CreateMissingEdgesAndFaces(
+        private static IEnumerable<(Edge, TriangleFace, TriangleFace)> CreateMissingEdgesAndFaces(
                     List<TriangulationLoop> loops,
-                    out List<PolygonalFace> newFaces, out List<Edge> remainingEdges)
+                    out List<TriangleFace> newFaces, out List<Edge> remainingEdges)
         {
-            var completedEdges = new List<(Edge, PolygonalFace, PolygonalFace)>();
-            newFaces = new List<PolygonalFace>();
+            var completedEdges = new List<(Edge, TriangleFace, TriangleFace)>();
+            newFaces = new List<TriangleFace>();
             remainingEdges = new List<Edge>();
             var k = 0;
             foreach (var loop in loops)
@@ -658,7 +655,7 @@ namespace TVGL
                 //if a simple triangle, create a new face from vertices
                 if (loop.Count == 3)
                 {
-                    var newFace = new PolygonalFace(loop.GetVertices());
+                    var newFace = new TriangleFace(loop.GetVertices());
                     foreach (var eAD in loop)
                         if (eAD.dir)
                             completedEdges.Add((eAD.edge, newFace, eAD.edge.OtherFace));
@@ -699,11 +696,10 @@ namespace TVGL
                         Message.output("loop successfully repaired with " + triangleFaceList.Count, 2);
                         foreach (var triangle in triangleFaceList)
                         {
-                            var newFace = new PolygonalFace(triangle, planeNormal);
+                            var newFace = new TriangleFace(triangle, planeNormal);
                             newFaces.Add(newFace);
-                            for (var j = 0; j < 3; j++)
+                            foreach (var fromVertex in newFace.Vertices)
                             {
-                                var fromVertex = newFace.Vertices[j];
                                 var toVertex = newFace.NextVertexCCW(fromVertex);
                                 var checksum = GetEdgeChecksum(fromVertex, toVertex);
                                 if (edgeDic.TryGetValue(checksum, out var edge))
@@ -725,11 +721,11 @@ namespace TVGL
                         //if (!Single3DPolygonTriangulation.Triangulate(loop, out var triangles)) continue;
                         foreach (var triangle in triangles)
                         {
-                            var newFace = new PolygonalFace(triangle.GetVertices(), triangle.Normal);
+                            var newFace = new TriangleFace(triangle.GetVertices(), triangle.Normal);
                             newFaces.Add(newFace);
                             foreach (var edgeAnddir in triangle)
                             {
-                                newFace.Edges.Add(edgeAnddir.edge);
+                                newFace.AddEdge(edgeAnddir.edge);
                                 if (edgeAnddir.dir)
                                     edgeAnddir.edge.OwnedFace = newFace;
                                 else edgeAnddir.edge.OtherFace = newFace;
