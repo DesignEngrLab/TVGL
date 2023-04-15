@@ -16,7 +16,7 @@ namespace TVGL
         ///     Initializes a new instance of the <see cref="UnknownRegion" /> class.
         /// </summary>
         /// <param name="faces">The faces.</param>
-        public UnknownRegion(IEnumerable<PolygonalFace> faces) : base(faces) { }
+        public UnknownRegion(IEnumerable<TriangleFace> faces) : base(faces) { }
         public UnknownRegion() { }
 
         public UnknownRegion(UnknownRegion originalToBeCopied, TessellatedSolid copiedTessellatedSolid = null)

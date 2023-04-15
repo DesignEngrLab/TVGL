@@ -731,7 +731,7 @@ namespace TVGL
                     var defineColors = !(solid.HasUniformColor || solid.SolidColor.Equals(new Color(Constants.DefaultColor)));
                     foreach (var face in solid.Faces)
                     {
-                        var faceString = face.Vertices.Count.ToString();
+                        var faceString = "3";
                         foreach (var v in face.Vertices)
                             faceString += " " + v.IndexInList;
                         if (defineColors)
@@ -787,7 +787,7 @@ namespace TVGL
                         !(solid.HasUniformColor || solid.SolidColor.Equals(new Color(Constants.DefaultColor)));
                     foreach (var face in solid.Faces)
                     {
-                        binaryWriter.Write((byte)face.Vertices.Count);
+                        binaryWriter.Write((byte)3);
                         foreach (var v in face.Vertices)
                             binaryWriter.Write(BitConverter.GetBytes(v.IndexInList));
                         if (defineColors)

@@ -35,7 +35,7 @@ namespace TVGL
         /// <param name="removeFace1">The remove face1.</param>
         /// <param name="removeFace2">The remove face2.</param>
         internal static void AdjustPositionOfKeptVertexExperimental(Vertex keepVertex, Vertex removedVertex,
-            PolygonalFace removeFace1, PolygonalFace removeFace2)
+            TriangleFace removeFace1, TriangleFace removeFace2)
         {
             //average positions
             var newPosition = keepVertex.Coordinates + removedVertex.Coordinates;

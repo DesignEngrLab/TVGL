@@ -265,18 +265,18 @@ namespace TVGL
                     };
                     volume.Triangles = solid.Faces.Select(f => new AMF_Triangle
                     {
-                        v1 = f.Vertices[0].IndexInList,
-                        v2 = f.Vertices[1].IndexInList,
-                        v3 = f.Vertices[2].IndexInList
+                        v1 = f.A.IndexInList,
+                        v2 = f.B.IndexInList,
+                        v3 = f.C.IndexInList
                     }).ToList();
                 }
                 else
                 {
                     volume.Triangles = solid.Faces.Select(f => new AMF_Triangle
                     {
-                        v1 = f.Vertices[0].IndexInList,
-                        v2 = f.Vertices[1].IndexInList,
-                        v3 = f.Vertices[2].IndexInList,
+                        v1 = f.A.IndexInList,
+                        v2 = f.B.IndexInList,
+                        v3 = f.C.IndexInList,
                         color = new AMF_Color
                         {
                             a = f.Color.Af,

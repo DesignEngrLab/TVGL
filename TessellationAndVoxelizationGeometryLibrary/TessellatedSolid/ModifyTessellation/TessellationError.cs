@@ -15,7 +15,7 @@ namespace TVGL
         ///     Edges that are used by more than two faces
         /// </summary>
         /// <value>The overused edges.</value>
-        public List<(Edge, List<PolygonalFace>)> OverusedEdges { get; internal set; }
+        public List<(Edge, List<TriangleFace>)> OverusedEdges { get; internal set; }
 
         /// <summary>
         ///     Edges that only have one face
@@ -39,37 +39,37 @@ namespace TVGL
         ///     Faces with only one vertex
         /// </summary>
         /// <value>The faces with one vertex.</value>
-        public List<PolygonalFace> FacesWithOneVertex { get; internal set; }
+        public List<TriangleFace> FacesWithOneVertex { get; internal set; }
 
         /// <summary>
         ///     Faces with only one edge
         /// </summary>
         /// <value>The faces with one edge.</value>
-        public List<PolygonalFace> FacesWithOneEdge { get; internal set; }
+        public List<TriangleFace> FacesWithOneEdge { get; internal set; }
 
         /// <summary>
         ///     Faces with only two vertices
         /// </summary>
         /// <value>The faces with two vertices.</value>
-        public List<PolygonalFace> FacesWithTwoVertices { get; internal set; }
+        public List<TriangleFace> FacesWithTwoVertices { get; internal set; }
 
         /// <summary>
         ///     Faces with only two edges
         /// </summary>
         /// <value>The faces with two edges.</value>
-        public List<PolygonalFace> FacesWithTwoEdges { get; internal set; }
+        public List<TriangleFace> FacesWithTwoEdges { get; internal set; }
 
         /// <summary>
         ///     Faces with negligible area (which is not necessarily an error)
         /// </summary>
         /// <value>The faces with negligible area.</value>
-        public List<PolygonalFace> FacesWithNegligibleArea { get; internal set; }
+        public List<TriangleFace> FacesWithNegligibleArea { get; internal set; }
 
         /// <summary>
         ///     Edges that do not link back to faces that link to them
         /// </summary>
         /// <value>The edges that do not link back to face.</value>
-        public List<(PolygonalFace, Edge)> EdgesThatDoNotLinkBackToFace { get; internal set; }
+        public List<(TriangleFace, Edge)> EdgesThatDoNotLinkBackToFace { get; internal set; }
 
         /// <summary>
         ///     Edges that do not link back to vertices that link to them
@@ -81,7 +81,7 @@ namespace TVGL
         ///     Vertices that do not link back to faces that link to them
         /// </summary>
         /// <value>The verts that do not link back to face.</value>
-        public List<(PolygonalFace, Vertex)> VertsThatDoNotLinkBackToFace { get; internal set; }
+        public List<(TriangleFace, Vertex)> VertsThatDoNotLinkBackToFace { get; internal set; }
 
         /// <summary>
         ///     Vertices that do not link back to edges that link to them
@@ -93,13 +93,13 @@ namespace TVGL
         ///     Faces that do not link back to edges that link to them
         /// </summary>
         /// <value>The faces that do not link back to edge.</value>
-        public List<(Edge, PolygonalFace)> FacesThatDoNotLinkBackToEdge { get; internal set; }
+        public List<(Edge, TriangleFace)> FacesThatDoNotLinkBackToEdge { get; internal set; }
 
         /// <summary>
         ///     Faces that do not link back to vertices that link to them
         /// </summary>
         /// <value>The faces that do not link back to vertex.</value>
-        public List<(Vertex, PolygonalFace)> FacesThatDoNotLinkBackToVertex { get; internal set; }
+        public List<(Vertex, TriangleFace)> FacesThatDoNotLinkBackToVertex { get; internal set; }
 
         /// <summary>
         ///     Edges with bad angles

@@ -154,11 +154,11 @@ namespace TVGL
         /// </summary>
         public TessellatedSolid ConvertToTessellatedExtrusions(bool extrudeBack, bool createFullVersion)
         {
-            var faces = new List<PolygonalFace>();
+            var faces = new List<TriangleFace>();
             var facesAsTuples = ConvertToFaces(extrudeBack);
             foreach (var face in facesAsTuples)
             {
-                faces.Add(new PolygonalFace(new Vertex(face.A), new Vertex(face.B), new Vertex(face.C)));
+                faces.Add(new TriangleFace(new Vertex(face.A), new Vertex(face.B), new Vertex(face.C)));
             }
             return new TessellatedSolid(faces, createFullVersion, false);
         }
@@ -229,7 +229,7 @@ namespace TVGL
         public TessellatedSolid ConvertToLoftedTessellatedSolid()
         {
             var polygons = new Polygon[Layer2D.Count][];
-            var faces = new List<PolygonalFace>();
+            var faces = new List<TriangleFace>();
             var previousLayerWasEmpty = true;
             var i = 0;
             foreach (var layer in Layer2D)

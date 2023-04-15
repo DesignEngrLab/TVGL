@@ -122,7 +122,7 @@ namespace TVGL
         {
             faceGroupsThatAreBodies = new List<int[]>();
             ts.NonsmoothEdges = new List<EdgePath>();
-            var remainingFaces = new HashSet<PolygonalFace>(ts.Faces);
+            var remainingFaces = new HashSet<TriangleFace>(ts.Faces);
 
             foreach (var borderIndices in objFileData.SurfaceEdges)
             {

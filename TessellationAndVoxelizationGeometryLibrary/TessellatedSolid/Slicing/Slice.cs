@@ -114,9 +114,9 @@ namespace TVGL
                 return;
             }
             //MakeSingleSolidOnEachSideOfInfitePlane(contactData, ts.Units, out positiveSideSolid, out negativeSideSolid);
-            List<PolygonalFace> positiveSideFaces = new List<PolygonalFace>(contactData.PositiveSideContactData.SelectMany(solidContactData => solidContactData.AllFaces));
+            List<TriangleFace> positiveSideFaces = new List<TriangleFace>(contactData.PositiveSideContactData.SelectMany(solidContactData => solidContactData.AllFaces));
             positiveSideSolid = new TessellatedSolid(positiveSideFaces, true, true, units: ts.Units);
-            var negativeSideFaces = new List<PolygonalFace>(contactData.NegativeSideContactData.SelectMany(solidContactData => solidContactData.AllFaces));
+            var negativeSideFaces = new List<TriangleFace>(contactData.NegativeSideContactData.SelectMany(solidContactData => solidContactData.AllFaces));
             negativeSideSolid = new TessellatedSolid(negativeSideFaces, true, true, units: ts.Units);
         }
 
@@ -213,8 +213,8 @@ namespace TVGL
                     var indicesOfTriangles = polygon.TriangulateToIndices();
                     var positiveLoop = loops[polygon.Index];
                     var negativeLoops = polygon.InnerPolygons.Select(p => loops[p.Index]).ToList();
-                    var planeFaces = new List<PolygonalFace>();
-                    var groupOfOnPlaneFaces = indicesOfTriangles.Select(triIndices => new PolygonalFace(
+                    var planeFaces = new List<TriangleFace>();
+                    var groupOfOnPlaneFaces = indicesOfTriangles.Select(triIndices => new TriangleFace(
                         allVertices[triIndices.A], allVertices[triIndices.B], allVertices[triIndices.C],
                         false));
                     var groupOfLoops = new GroupOfLoops(positiveLoop, negativeLoops, groupOfOnPlaneFaces);
@@ -282,15 +282,15 @@ namespace TVGL
             while (groupsOfLoops.Any())
             {
                 var groupOfLoops = groupsOfLoops.First();
-                var onPlaneFaces = new List<PolygonalFace>(groupOfLoops.OnPlaneFaces);
+                var onPlaneFaces = new List<TriangleFace>(groupOfLoops.OnPlaneFaces);
                 var allLoopsBelongingToSolid = new List<GroupOfLoops> { groupOfLoops };
                 groupsOfLoops.Remove(groupOfLoops);
                 //Push all the adjacent onside faces to a stack
                 //Note that blind pockets and holes are also included in this loop, since the onside faces for every loop in the group are included
                 var straddleFaceIndices = new HashSet<int>(groupOfLoops.StraddleFaceIndices);
-                var facesBelongingToSolid = new HashSet<PolygonalFace>();
-                var stack = new Stack<PolygonalFace>();
-                var usedFaces = new HashSet<PolygonalFace>();
+                var facesBelongingToSolid = new HashSet<TriangleFace>();
+                var stack = new Stack<TriangleFace>();
+                var usedFaces = new HashSet<TriangleFace>();
                 foreach (var adjOnsideFaceIndex in groupOfLoops.AdjOnsideFaceIndices)
                 {
                     stack.Push(ts.Faces[adjOnsideFaceIndex]);
@@ -386,13 +386,13 @@ namespace TVGL
 
             //Also, find which faces are on the current side of the plane, by using edges.
             //Every face should have either 2 or 0 straddle edges, but never just 1.
-            var straddleFaces = new Dictionary<int, PolygonalFace>();
+            var straddleFaces = new Dictionary<int, TriangleFace>();
             //Set the straddle faces and onSide faces
             foreach (var face in ts.Faces)
             {
-                var d1 = distancesToPlane[face.Vertices[0].IndexInList];
-                var d2 = distancesToPlane[face.Vertices[1].IndexInList];
-                var d3 = distancesToPlane[face.Vertices[2].IndexInList];
+                var d1 = distancesToPlane[face.A.IndexInList];
+                var d2 = distancesToPlane[face.B.IndexInList];
+                var d3 = distancesToPlane[face.C.IndexInList];
                 //If all the same signs, then this is on either the positive or negative side 
                 if (Math.Sign(d1) == Math.Sign(d2) && Math.Sign(d1) == Math.Sign(d3)) continue;
                 //else, it must be a straddle face
@@ -458,7 +458,7 @@ namespace TVGL
                 var loopOfStraddleEdges = loopsOfStraddleEdges[i];
                 var straddleEdgeOnSideVertices = loopOfStraddleEdges.Select(e => e.OnSideVertex);
                 var straddleFaceIndices = loopsOfStraddleFaceIndices[i];
-                var newFaces = new List<PolygonalFace>();
+                var newFaces = new List<TriangleFace>();
                 var newEdges = new List<Edge>();
                 var loopOfVertices = new List<Vertex>();
                 var adjOnsideFaceIndices = new HashSet<int>();
@@ -553,7 +553,7 @@ namespace TVGL
         /// <param name="newEdges">The new edges.</param>
         /// <param name="adjOnsideFaceIndices">The adj onside face indices.</param>
         /// <param name="lastNewFace">if set to <c>true</c> [last new face].</param>
-        /// <returns>List&lt;PolygonalFace&gt;.</returns>
+        /// <returns>List&lt;TriangleFace&gt;.</returns>
         /// <exception cref="System.Exception">
         /// No shared face exists between these two straddle edges
         /// or
@@ -571,10 +571,10 @@ namespace TVGL
         /// or
         /// Error, the straddle edges do not match up at a common vertex
         /// </exception>
-        private static List<PolygonalFace> NewFace(StraddleEdge st1, StraddleEdge st2, Dictionary<int, Edge> straddleEdgesDict,
-            Dictionary<int, PolygonalFace> straddleFaces, List<Edge> newEdges, HashSet<int> adjOnsideFaceIndices, bool lastNewFace = false)
+        private static List<TriangleFace> NewFace(StraddleEdge st1, StraddleEdge st2, Dictionary<int, Edge> straddleEdgesDict,
+            Dictionary<int, TriangleFace> straddleFaces, List<Edge> newEdges, HashSet<int> adjOnsideFaceIndices, bool lastNewFace = false)
         {
-            PolygonalFace sharedFace;
+            TriangleFace sharedFace;
             if (st1.OwnedFace == st2.OwnedFace || st1.OwnedFace == st2.OtherFace) sharedFace = st1.OwnedFace;
             else if (st1.OtherFace == st2.OwnedFace || st1.OtherFace == st2.OtherFace) sharedFace = st1.OtherFace;
             else throw new Exception("No shared face exists between these two straddle edges");
@@ -590,7 +590,7 @@ namespace TVGL
             {
                 //Make one new edge and one new face. Set the ownership of this edge.
                 var newFace =
-                    new PolygonalFace(new[] { st1.OnSideVertex, st1.IntersectVertex, st2.OnSideVertex },
+                    new TriangleFace(new[] { st1.OnSideVertex, st1.IntersectVertex, st2.OnSideVertex },
                         sharedFace.Normal, false);
                 newEdges.Last().OtherFace = newFace;
                 if (!lastNewFace)
@@ -629,7 +629,7 @@ namespace TVGL
                 else throw new Exception("This should never be the case. The boundary edge should be have the sharedFace as owned or other");
                 #endregion
 
-                return new List<PolygonalFace> { newFace };
+                return new List<TriangleFace> { newFace };
             }
             //If not the same intersect vertex, then the same offSideVertex denotes 
             //two Consecutive curved edges, so this creates two new faces
@@ -639,10 +639,10 @@ namespace TVGL
             {
                 //Create two new faces
                 var newFace1 =
-                    new PolygonalFace(new[] { st1.OnSideVertex, st1.IntersectVertex, st2.IntersectVertex },
+                    new TriangleFace(new[] { st1.OnSideVertex, st1.IntersectVertex, st2.IntersectVertex },
                         sharedFace.Normal, false);
                 var newFace2 =
-                    new PolygonalFace(new[] { st1.OnSideVertex, st2.IntersectVertex, st2.OnSideVertex },
+                    new TriangleFace(new[] { st1.OnSideVertex, st2.IntersectVertex, st2.OnSideVertex },
                         sharedFace.Normal, false);
                 //Update ownership of most recently created edge
                 newEdges.Last().OtherFace = newFace1;
@@ -686,13 +686,13 @@ namespace TVGL
                 else throw new Exception("This should never be the case. The boundary edge should be have the sharedFace as owned or other");
                 #endregion
 
-                return new List<PolygonalFace> { newFace1, newFace2 };
+                return new List<TriangleFace> { newFace1, newFace2 };
             }
             if (st1.OnSideVertex == st2.OnSideVertex)
             {
                 //Make two new edges and one new face. Set the ownership of the edges.
                 var newFace =
-                    new PolygonalFace(new[] { st1.OnSideVertex, st1.IntersectVertex, st2.IntersectVertex },
+                    new TriangleFace(new[] { st1.OnSideVertex, st1.IntersectVertex, st2.IntersectVertex },
                         sharedFace.Normal, false);
                 //Update ownership of most recently created edge
                 newEdges.Last().OtherFace = newFace;
@@ -700,7 +700,7 @@ namespace TVGL
                 newEdges.Add(new Edge(st1.IntersectVertex, st2.IntersectVertex, false) { OwnedFace = newFace });
                 if (!lastNewFace) newEdges.Add(new Edge(st2.IntersectVertex, st2.OnSideVertex, false) { OwnedFace = newFace });
                 else newEdges.First().OwnedFace = newFace;
-                return new List<PolygonalFace> { newFace };
+                return new List<TriangleFace> { newFace };
             }
             throw new Exception("Error, the straddle edges do not match up at a common vertex");
         }
@@ -738,12 +738,12 @@ namespace TVGL
             /// <summary>
             /// OwnedFace (may change if collapsed into another straddle edge)
             /// </summary>
-            public PolygonalFace OwnedFace;
+            public TriangleFace OwnedFace;
 
             /// <summary>
             /// OtherFace (may change if collapsed into another straddle edge)
             /// </summary>
-            public PolygonalFace OtherFace;
+            public TriangleFace OtherFace;
 
             internal StraddleEdge(Edge edge, Plane plane, Vertex offSideVertex, double planeOffset = 0D)
             {
@@ -763,7 +763,7 @@ namespace TVGL
             /// </summary>
             /// <param name="face"></param>
             /// <returns></returns>
-            public PolygonalFace NextFace(PolygonalFace face)
+            public TriangleFace NextFace(TriangleFace face)
             {
                 return Edge.OwnedFace == face ? Edge.OtherFace : Edge.OwnedFace;
             }
@@ -843,7 +843,7 @@ namespace TVGL
                 var firstEdgeInLoop = edgeDictionary.First().Key;
                 var currentEdge = firstEdgeInLoop;
                 var finishedLoop = false;
-                PolygonalFace nextFace = null;
+                TriangleFace nextFace = null;
                 do
                 {
                     var intersectVertex2D = edgeDictionary[currentEdge];

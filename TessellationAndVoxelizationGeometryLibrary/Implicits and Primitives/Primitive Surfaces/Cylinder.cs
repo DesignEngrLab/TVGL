@@ -186,7 +186,7 @@ namespace TVGL
         /// <param name="dxOfBottomPlane">The dx of bottom plane.</param>
         /// <param name="dxOfTopPlane">The dx of top plane.</param>
         public Cylinder(Vector3 axis, Vector3 anchor, double radius, double minDistanceAlongAxis,
-            double maxDistanceAlongAxis, bool isPositive = true, IEnumerable<PolygonalFace> faces = null)
+            double maxDistanceAlongAxis, bool isPositive = true, IEnumerable<TriangleFace> faces = null)
             : base(faces)
         {
             Axis = axis;
@@ -205,7 +205,7 @@ namespace TVGL
         /// <param name="radius">The radius.</param>
         /// <param name="isPositive">if set to <c>true</c> [is positive].</param>
         /// <param name="faces">The faces.</param>
-        public Cylinder(Vector3 axis, Vector3 anchor, double radius, bool isPositive, IEnumerable<PolygonalFace> faces) : base(faces)
+        public Cylinder(Vector3 axis, Vector3 anchor, double radius, bool isPositive, IEnumerable<TriangleFace> faces) : base(faces)
         {
             Axis = axis;
             Anchor = anchor;
@@ -332,11 +332,11 @@ namespace TVGL
 
         //public TessellatedSolid AsTessellatedSolid()
         //{
-        //    var faces = new List<PolygonalFace>();
+        //    var faces = new List<TriangleFace>();
         //    foreach(var face in Faces)
         //    {
         //        var vertices = new Vertex[] { face.C, face.B, face.A }; //reverse the vertices
-        //        faces.Add(new PolygonalFace(vertices, face.Normal * -1)));
+        //        faces.Add(new TriangleFace(vertices, face.Normal * -1)));
         //    }
         //    //Add the top and bottom faces
         //    //Build the cylinder along the axis

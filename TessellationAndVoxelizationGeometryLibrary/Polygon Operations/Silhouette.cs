@@ -31,7 +31,7 @@ namespace TVGL
 
             while (true)
             {
-                PolygonalFace startingFace = null;
+                TriangleFace startingFace = null;
                 var dot = 0.0;
                 foreach (var face in unvisitedFaces)
                 {
@@ -65,13 +65,13 @@ namespace TVGL
         /// <param name="sign">The sign.</param>
         /// <param name="startingFace">The starting face.</param>
         /// <returns>Dictionary&lt;Edge, System.Boolean&gt;.</returns>
-        private static Dictionary<Edge, bool> GetOuterEdgesOfContiguousPatch(HashSet<PolygonalFace> visitedFaces, Vector3 direction, double sign, PolygonalFace startingFace)
+        private static Dictionary<Edge, bool> GetOuterEdgesOfContiguousPatch(HashSet<TriangleFace> visitedFaces, Vector3 direction, double sign, TriangleFace startingFace)
         {
             // the returned dictionary includes the Edges and a boolean telling us if the included face of the patch is the owner of the edge (true)
             // or the "other face". this is used in providing the proper direction for the edge in the next function
             var outerEdges = new Dictionary<Edge, bool>();
             // this function essentially performs a depth-first search from the provided starting faces
-            var stack = new Stack<PolygonalFace>();
+            var stack = new Stack<TriangleFace>();
             stack.Push(startingFace);
             while (stack.Any())
             {

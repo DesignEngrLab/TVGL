@@ -133,7 +133,7 @@ namespace TVGL
 
             #region Initial priority queue creation
             var prevEAD = edgeLoop[^1];  // EAD = Edge And Dir
-            PolygonalFace prevFace;
+            TriangleFace prevFace;
             Vertex prevVertex, thisVertex;
             if (prevEAD.dir)
             {
@@ -150,7 +150,7 @@ namespace TVGL
             for (int i = 0; i < origNum; i++)
             {
                 var thisEAD = edgeLoop[i];
-                PolygonalFace thisFace = thisEAD.dir ? thisEAD.edge.OtherFace : thisEAD.edge.OwnedFace;
+                TriangleFace thisFace = thisEAD.dir ? thisEAD.edge.OtherFace : thisEAD.edge.OwnedFace;
                 neighborNormals.Add(thisEAD.edge, thisFace.Normal);
                 Vertex nextVertex;
                 if (thisEAD.dir)

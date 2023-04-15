@@ -295,7 +295,7 @@ namespace TVGL
                 writer.WriteLine();
                 foreach (var face in solid.Faces)
                 {
-                    var faceString = face.Vertices.Count.ToString();
+                    var faceString = "3";
                     foreach (var v in face.Vertices)
                         faceString += " " + v.IndexInList;
                     if (colorsDefined)

@@ -23,14 +23,14 @@ namespace TVGL
         /// <summary>
         ///     To face
         /// </summary>
-        internal readonly PolygonalFace ToFace;
+        internal readonly TriangleFace ToFace;
 
         /// <summary>
         ///     Initializes a new instance of the <see cref="GaussSphereArc" /> class.
         /// </summary>
         /// <param name="edge">The edge.</param>
         /// <param name="toFace">To face.</param>
-        internal GaussSphereArc(Edge edge, PolygonalFace toFace)
+        internal GaussSphereArc(Edge edge, TriangleFace toFace)
         {
             Edge = edge;
             ToFace = toFace;
@@ -144,7 +144,7 @@ namespace TVGL
         /// <summary>
         ///     The reference faces
         /// </summary>
-        internal List<PolygonalFace> ReferenceFaces;
+        internal List<TriangleFace> ReferenceFaces;
 
         /// <summary>
         ///     The reference vertices
@@ -180,9 +180,9 @@ namespace TVGL
         ///     Initializes a new instance of the <see cref="Node" /> class.
         /// </summary>
         /// <param name="triangle">The triangle.</param>
-        internal Node(PolygonalFace triangle)
+        internal Node(TriangleFace triangle)
         {
-            ReferenceFaces = new List<PolygonalFace> { triangle };
+            ReferenceFaces = new List<TriangleFace> { triangle };
             ReferenceEdges = triangle.Edges.ToList();
             ReferenceVertices = new List<Vertex>(); //Create a null list, to build up later.
             Vector = triangle.Normal; //Set unit normal as location on sphere

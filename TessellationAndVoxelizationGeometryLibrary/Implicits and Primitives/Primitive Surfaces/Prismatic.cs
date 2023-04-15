@@ -127,7 +127,7 @@ namespace TVGL
         /// <param name="dxOfBottomPlane">The dx of bottom plane.</param>
         /// <param name="dxOfTopPlane">The dx of top plane.</param>
         public Prismatic(Vector3 axis, double minDistanceAlongAxis,
-            double maxDistanceAlongAxis, IEnumerable<PolygonalFace> faces = null, bool isPositive = true)
+            double maxDistanceAlongAxis, IEnumerable<TriangleFace> faces = null, bool isPositive = true)
             : base(faces)
         {
             Axis = axis;
@@ -144,7 +144,7 @@ namespace TVGL
         /// <param name="radius">The radius.</param>
         /// <param name="isPositive">if set to <c>true</c> [is positive].</param>
         /// <param name="faces">The faces.</param>
-        public Prismatic(Vector3 axis, IEnumerable<PolygonalFace> faces = null, bool isPositive = true) : base(faces)
+        public Prismatic(Vector3 axis, IEnumerable<TriangleFace> faces = null, bool isPositive = true) : base(faces)
         {
             Axis = axis;
             IsPositive = isPositive;
@@ -162,7 +162,7 @@ namespace TVGL
         /// <param name="radius">The radius.</param>
         /// <param name="isPositive">if set to <c>true</c> [is positive].</param>
         /// <param name="faces">The faces.</param>
-        public Prismatic(IEnumerable<PolygonalFace> faces = null, bool isPositive = true) : base(faces)
+        public Prismatic(IEnumerable<TriangleFace> faces = null, bool isPositive = true) : base(faces)
         {
             Axis = MiscFunctions.FindAxisToMinimizeProjectedArea(Faces, Faces.Count);
             IsPositive = isPositive;

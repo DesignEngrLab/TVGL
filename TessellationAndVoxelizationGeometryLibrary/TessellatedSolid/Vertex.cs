@@ -35,7 +35,7 @@ namespace TVGL
                 _curvature = Curvature,
                 PartOfConvexHull = PartOfConvexHull,
                 Edges = new List<Edge>(),
-                Faces = new List<PolygonalFace>(),
+                Faces = new List<TriangleFace>(),
                 Coordinates = new Vector3(Coordinates.X, Coordinates.Y, Coordinates.Z),
                 IndexInList = IndexInList
             };
@@ -62,7 +62,7 @@ namespace TVGL
         {
             Coordinates = position;
             Edges = new List<Edge>();
-            Faces = new List<PolygonalFace>();
+            Faces = new List<TriangleFace>();
             IndexInList = -1;
         }
 
@@ -109,7 +109,7 @@ namespace TVGL
         /// </summary>
         /// <value>The faces.</value>
         [JsonIgnore]
-        public List<PolygonalFace> Faces { get; private set; }
+        public List<TriangleFace> Faces { get; private set; }
 
         double[] IVertex.Position => Coordinates.Position;
 

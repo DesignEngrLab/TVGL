@@ -47,7 +47,7 @@ namespace TVGL
         /// <param name="doublyLinkedVertices">if set to <c>true</c> [doubly linked vertices].</param>
         /// <param name="edgeReference">The edge reference.</param>
         /// <exception cref="Exception"></exception>
-        public Edge(Vertex fromVertex, Vertex toVertex, PolygonalFace ownedFace, PolygonalFace otherFace,
+        public Edge(Vertex fromVertex, Vertex toVertex, TriangleFace ownedFace, TriangleFace otherFace,
                     bool doublyLinkedVertices, long edgeReference = 0) : this(fromVertex, toVertex, doublyLinkedVertices)
         {
             if (edgeReference > 0)
@@ -128,12 +128,12 @@ namespace TVGL
         /// <summary>
         ///     The _other face
         /// </summary>
-        private PolygonalFace _otherFace;
+        private TriangleFace _otherFace;
 
         /// <summary>
         ///     The _owned face
         /// </summary>
-        private PolygonalFace _ownedFace;
+        private TriangleFace _ownedFace;
 
         /// <summary>
         ///     Gets edge reference (checksum) value, which equals
@@ -148,7 +148,7 @@ namespace TVGL
         /// </summary>
         /// <value>The owned face.</value>
         [JsonIgnore] //this two-way link creates an infinite loop for serialization and must be ignored.
-        public PolygonalFace OwnedFace
+        public TriangleFace OwnedFace
         {
             get => _ownedFace;
             internal set
@@ -164,7 +164,7 @@ namespace TVGL
         /// </summary>
         /// <value>The other face.</value>
         [JsonIgnore] //this two-way link creates an infinite loop for serialization and must be ignored.
-        public PolygonalFace OtherFace
+        public TriangleFace OtherFace
         {
             get => _otherFace;
             internal set
@@ -220,12 +220,12 @@ namespace TVGL
             throw new NotImplementedException();
         }
 
-        internal void UpdateWithNewFace(PolygonalFace face)
+        internal void UpdateWithNewFace(TriangleFace face)
         {
             var v1 = face.Vertices.FindIndex(v => v == From);
             var v2 = face.Vertices.FindIndex(v => v == To);
             var step = v2 - v1;
-            if (step < 0) step += face.Vertices.Count;
+            if (step < 0) step += 3;
             if (step == 1) OwnedFace = face;
             else OtherFace = face;
             face.AddEdge(this);
@@ -350,7 +350,7 @@ namespace TVGL
         /// TODO: this function seems convoluted. Why not just return the ownedFace and otherFace directly?
         /// </summary>
         /// <returns></returns>
-        public static (PolygonalFace, PolygonalFace) GetOwnedAndOtherFace(long edgeChecksum, PolygonalFace face1, PolygonalFace face2)
+        public static (TriangleFace, TriangleFace) GetOwnedAndOtherFace(long edgeChecksum, TriangleFace face1, TriangleFace face2)
         {
             var (from, to) = GetVertexIndices(edgeChecksum);
             //We are going to enforce that the edge is defined along the vertices, such that it goes from the smaller

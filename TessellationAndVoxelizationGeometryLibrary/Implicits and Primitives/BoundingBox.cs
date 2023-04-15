@@ -253,30 +253,30 @@ namespace TVGL
                 var faces = new[]
                 {
                 // negative-X faces
-                new PolygonalFace(new []{vertices[0],vertices[4],vertices[7] }),
-                new PolygonalFace(new []{vertices[0],vertices[7],vertices[3] }),
+                new TriangleFace(new []{vertices[0],vertices[4],vertices[7] }),
+                new TriangleFace(new []{vertices[0],vertices[7],vertices[3] }),
                 // positive-X faces
-                new PolygonalFace(new []{vertices[6],vertices[5],vertices[1] }),
-                new PolygonalFace(new []{vertices[6],vertices[1],vertices[2] }),
+                new TriangleFace(new []{vertices[6],vertices[5],vertices[1] }),
+                new TriangleFace(new []{vertices[6],vertices[1],vertices[2] }),
                 // negative-Y faces
-                new PolygonalFace(new []{vertices[0],vertices[1],vertices[5] }),
-                new PolygonalFace(new []{vertices[0],vertices[5],vertices[4] }),
+                new TriangleFace(new []{vertices[0],vertices[1],vertices[5] }),
+                new TriangleFace(new []{vertices[0],vertices[5],vertices[4] }),
                 // positive-Y faces
-                new PolygonalFace(new []{vertices[6],vertices[2],vertices[3] }),
-                new PolygonalFace(new []{vertices[6],vertices[3],vertices[7] }),
+                new TriangleFace(new []{vertices[6],vertices[2],vertices[3] }),
+                new TriangleFace(new []{vertices[6],vertices[3],vertices[7] }),
                 // negative-Z faces
-                new PolygonalFace(new []{vertices[0],vertices[3],vertices[2] }),
-                new PolygonalFace(new []{vertices[0],vertices[2],vertices[1] }),
+                new TriangleFace(new []{vertices[0],vertices[3],vertices[2] }),
+                new TriangleFace(new []{vertices[0],vertices[2],vertices[1] }),
                 // positive-Z faces
-                new PolygonalFace(new []{vertices[6],vertices[7],vertices[4] }),
-                new PolygonalFace(new []{vertices[6],vertices[4],vertices[5] })
+                new TriangleFace(new []{vertices[6],vertices[7],vertices[4] }),
+                new TriangleFace(new []{vertices[6],vertices[4],vertices[5] })
             };
                 var random = new Random(0);
                 _tessellatedSolid = new TessellatedSolid(faces, true, false, vertices, new[] {
                     new Color(0.6f,(float)random.NextDouble(), (float)random.NextDouble(), (float)random.NextDouble()) });
                 _tessellatedSolid.Primitives = new List<PrimitiveSurface>();
                 for (var i = 0; i < 12; i+=2)
-                    _tessellatedSolid.Primitives.Add(new Plane(new List<PolygonalFace> { faces[i], faces[i + 1] }));
+                    _tessellatedSolid.Primitives.Add(new Plane(new List<TriangleFace> { faces[i], faces[i + 1] }));
             }
             return _tessellatedSolid;
         }

@@ -73,7 +73,7 @@ namespace TVGL
         /// Initializes a new instance of the <see cref="Plane" /> class.
         /// </summary>
         /// <param name="faces">The faces.</param>
-        public Plane(IEnumerable<PolygonalFace> faces, bool connectFacesToPrimitive = true)
+        public Plane(IEnumerable<TriangleFace> faces, bool connectFacesToPrimitive = true)
             : base(faces, connectFacesToPrimitive)
         {
             Vertices = new HashSet<Vertex>(faces.SelectMany(f => f.Vertices).Distinct());

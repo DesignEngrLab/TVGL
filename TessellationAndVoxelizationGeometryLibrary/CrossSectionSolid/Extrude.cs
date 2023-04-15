@@ -29,14 +29,14 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Create the Polygonal Faces for a new Tessellated Solid by extruding the given loop along the given normal.
+        /// Create the Triangle Faces for a new Tessellated Solid by extruding the given loop along the given normal.
         /// </summary>
         /// <param name="loops"></param>
         /// <param name="extrudeDirection"></param>
         /// <param name="extrusionHeight"></param>
         /// <param name="midPlane"></param>
         /// <returns></returns>
-        public static List<PolygonalFace> ExtrusionFacesFrom3DLoops(this IEnumerable<IEnumerable<Vector3>> loops, Vector3 extrudeDirection,
+        public static List<TriangleFace> ExtrusionFacesFrom3DLoops(this IEnumerable<IEnumerable<Vector3>> loops, Vector3 extrudeDirection,
             double extrusionHeight, bool midPlane = false)
         {
             // for consistency with adding the extrusionHeight to the base plane, negate if it comes in negative
@@ -65,8 +65,8 @@ namespace TVGL
         /// <param name="basePlaneNormal">The base plane normal.</param>
         /// <param name="basePlaneDistance">The base plane distance.</param>
         /// <param name="extrusionHeight">Height of the extrusion.</param>
-        /// <returns>List&lt;PolygonalFace&gt;.</returns>
-        public static List<PolygonalFace> ExtrusionFacesFrom2DPolygons(this IEnumerable<IEnumerable<Vector2>> paths, Vector3 basePlaneNormal,
+        /// <returns>List&lt;TriangleFace&gt;.</returns>
+        public static List<TriangleFace> ExtrusionFacesFrom2DPolygons(this IEnumerable<IEnumerable<Vector2>> paths, Vector3 basePlaneNormal,
             double basePlaneDistance, double extrusionHeight)
         {
             var polygons = paths.CreateShallowPolygonTrees(false);
@@ -74,15 +74,15 @@ namespace TVGL
              basePlaneNormal, basePlaneDistance, extrusionHeight)).ToList();
         }
 
-        //public static List<PolygonalFace> ExtrusionFacesFrom2DPolygons(this Polygon polygon, Vector3 basePlaneNormal,
+        //public static List<TriangleFace> ExtrusionFacesFrom2DPolygons(this Polygon polygon, Vector3 basePlaneNormal,
         //        double basePlaneDistance, double extrusionHeight)
         //{
         //    var vectors = ExtrusionFaceVectorsFrom2DPolygons(polygon, basePlaneNormal, basePlaneDistance, extrusionHeight);
-        //    var polyFaces = new List<PolygonalFace>(vectors.Count);
+        //    var polyFaces = new List<TriangleFace>(vectors.Count);
         //    var i = 0;
         //    foreach(var (A, B, C) in vectors)
         //    {
-        //        polyFaces.Add(new PolygonalFace(new Vertex(A), new Vertex(B), new Vertex(C)));
+        //        polyFaces.Add(new TriangleFace(new Vertex(A), new Vertex(B), new Vertex(C)));
         //        i++;
         //    }
         //    return polyFaces;
@@ -95,16 +95,16 @@ namespace TVGL
         /// <param name="basePlaneNormal">The base plane normal.</param>
         /// <param name="basePlaneDistance">The base plane distance.</param>
         /// <param name="extrusionHeight">Height of the extrusion.</param>
-        /// <returns>List&lt;PolygonalFace&gt;.</returns>
+        /// <returns>List&lt;TriangleFace&gt;.</returns>
         /// 
 
-        public static IEnumerable<PolygonalFace> ExtrusionFacesFrom2DPolygons(this Polygon polygon, Vector3 basePlaneNormal,
+        public static IEnumerable<TriangleFace> ExtrusionFacesFrom2DPolygons(this Polygon polygon, Vector3 basePlaneNormal,
                 double basePlaneDistance, double extrusionHeight)
         {
             foreach (var triple in ExtrusionFaceVectorsFrom2DPolygons(polygon, basePlaneNormal,
                basePlaneDistance, extrusionHeight))
             {
-                yield return new PolygonalFace(new Vertex(triple.A), new Vertex(triple.B),
+                yield return new TriangleFace(new Vertex(triple.A), new Vertex(triple.B),
                     new Vertex(triple.C));
             }
         }
@@ -117,7 +117,7 @@ namespace TVGL
         /// <param name="basePlaneNormal">The base plane normal.</param>
         /// <param name="basePlaneDistance">The base plane distance.</param>
         /// <param name="extrusionHeight">Height of the extrusion.</param>
-        /// <returns>List&lt;PolygonalFace&gt;.</returns>
+        /// <returns>List&lt;TriangleFace&gt;.</returns>
         public static List<(Vector3 A, Vector3 B, Vector3 C)> ExtrusionFaceVectorsFrom2DPolygons(this Polygon polygon, Vector3 basePlaneNormal,
                double basePlaneDistance, double extrusionHeight)
         {
