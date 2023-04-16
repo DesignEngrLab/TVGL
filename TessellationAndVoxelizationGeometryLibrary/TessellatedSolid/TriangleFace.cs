@@ -71,9 +71,9 @@ namespace TVGL
         /// <param name="edge">The edge.</param>
         internal void AddEdge(Edge edge)
         {
-            if (A == edge.From && B == edge.To) AB = edge;
-            else if (B == edge.From && C == edge.To) BC = edge;
-            else if (C == edge.From && A == edge.To) CA = edge;
+            if ((A == edge.From && B == edge.To) || (A == edge.To && B == edge.From)) AB = edge;
+            else if ((B == edge.From && C == edge.To)|| (B == edge.To && C == edge.From)) BC = edge;
+            else if ((C == edge.From && A == edge.To)|| (C == edge.To && A == edge.From)) CA = edge;
             else throw new Exception("Edge does not belong to this face.");
         }
 
@@ -403,7 +403,7 @@ namespace TVGL
         /// <exception cref="System.Exception">Vertex not found in face</exception>
         internal void ReplaceVertex(Vertex oldVertex, Vertex newVertex)
         {
-            if (oldVertex == A) A=newVertex;
+            if (oldVertex == A) A = newVertex;
             else if (oldVertex == B) B = newVertex;
             else if (oldVertex == C) C = newVertex;
             else throw new Exception("Vertex not found in face");
@@ -418,8 +418,8 @@ namespace TVGL
             else if (oldEdge == BC) BC = newEdge;
             else if (oldEdge == CA) CA = newEdge;
             else throw new Exception("Vertex not found in face");
-            if (oldEdge.OwnedFace==this) oldEdge.OwnedFace = null;
-            if (oldEdge.OtherFace==this) oldEdge.OtherFace= null;
+            if (oldEdge.OwnedFace == this) oldEdge.OwnedFace = null;
+            if (oldEdge.OtherFace == this) oldEdge.OtherFace = null;
             Update();
         }
 

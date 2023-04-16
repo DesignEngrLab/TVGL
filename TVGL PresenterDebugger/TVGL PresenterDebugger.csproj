@@ -110,7 +110,7 @@
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\TessellatedSolid\ModifyTessellation\RepairTessellation.cs" Link="TVGL\TessellatedSolid\ModifyTessellation\RepairTessellation.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\TessellatedSolid\ModifyTessellation\SimplifyTessellation.cs" Link="TVGL\TessellatedSolid\ModifyTessellation\SimplifyTessellation.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\TessellatedSolid\ModifyTessellation\TessellationError.cs" Link="TVGL\TessellatedSolid\ModifyTessellation\TessellationError.cs" />
-		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\TessellatedSolid\PolygonalFace.cs" Link="TVGL\TessellatedSolid\PolygonalFace.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\TessellatedSolid\TriangleFace.cs" Link="TVGL\TessellatedSolid\TriangleFace.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\TessellatedSolid\Slicing\ContactData.cs" Link="TVGL\TessellatedSolid\Slicing\ContactData.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\TessellatedSolid\Slicing\Slice.cs" Link="TVGL\TessellatedSolid\Slicing\Slice.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\TessellatedSolid\TessellatedSolid.cs" Link="TVGL\TessellatedSolid\TessellatedSolid.cs" />
