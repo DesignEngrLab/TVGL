@@ -1,4 +1,17 @@
-﻿using System;
+﻿// ***********************************************************************
+// Assembly         : TessellationAndVoxelizationGeometryLibrary
+// Author           : matth
+// Created          : 04-03-2023
+//
+// Last Modified By : matth
+// Last Modified On : 04-03-2023
+// ***********************************************************************
+// <copyright file="StraightLine3D.cs" company="Design Engineering Lab">
+//     2014
+// </copyright>
+// <summary></summary>
+// ***********************************************************************
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using MIConvexHull;
@@ -7,19 +20,44 @@ using StarMathLib;
 
 namespace TVGL
 {
+    /// <summary>
+    /// Struct StraightLine3D
+    /// Implements the <see cref="TVGL.ICurve" />
+    /// </summary>
+    /// <seealso cref="TVGL.ICurve" />
     public readonly struct StraightLine3D : ICurve
     {
 
+        /// <summary>
+        /// The anchor
+        /// </summary>
         public readonly Vector3 Anchor;
 
+        /// <summary>
+        /// The direction
+        /// </summary>
         public readonly Vector3 Direction;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="StraightLine3D"/> struct.
+        /// </summary>
+        /// <param name="anchor">The anchor.</param>
+        /// <param name="direction">The direction.</param>
         public StraightLine3D(Vector3 anchor, Vector3 direction)
         {
             Anchor = anchor;
             Direction = direction;
         }
 
+        /// <summary>
+        /// Returns the squared error of new point. This should be the square of the
+        /// actual distance to the curve. Squared is canonical since 1) usually fits
+        /// would be minimum least squares, 2) saves from doing square root operation
+        /// which is an undue computational expense
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="point">The point.</param>
+        /// <returns>System.Double.</returns>
         public double SquaredErrorOfNewPoint<T>(T point) where T : IVertex2D
         {
             if (point is IVertex3D vector3D)
@@ -33,7 +71,10 @@ namespace TVGL
         /// <summary>
         /// Defines the best fit of the curve for the given points.
         /// </summary>
+        /// <typeparam name="T"></typeparam>
         /// <param name="points">The points.</param>
+        /// <param name="curve">The curve.</param>
+        /// <param name="error">The error.</param>
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         // this is based on this: https://stackoverflow.com/questions/24747643/3d-linear-regression/67303867#67303867
 

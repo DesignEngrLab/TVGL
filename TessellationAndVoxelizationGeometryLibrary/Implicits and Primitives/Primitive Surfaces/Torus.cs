@@ -1,7 +1,16 @@
-﻿// Copyright 2015-2020 Design Engineering Lab
-// This file is a part of TVGL, Tessellation and Voxelization Geometry Library
-// https://github.com/DesignEngrLab/TVGL
-// It is licensed under MIT License (see LICENSE.txt for details)
+﻿// ***********************************************************************
+// Assembly         : TessellationAndVoxelizationGeometryLibrary
+// Author           : matth
+// Created          : 04-03-2023
+//
+// Last Modified By : matth
+// Last Modified On : 04-14-2023
+// ***********************************************************************
+// <copyright file="Torus.cs" company="Design Engineering Lab">
+//     2014
+// </copyright>
+// <summary></summary>
+// ***********************************************************************
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,14 +18,17 @@ using System.Linq;
 namespace TVGL
 {
     /// <summary>
-    ///     Class Torus.
+    /// Class Torus.
     /// </summary>
     public class Torus : PrimitiveSurface
     {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Torus"/> class.
+        /// </summary>
         public Torus() { }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="Torus"/> class.
+        /// Initializes a new instance of the <see cref="Torus" /> class.
         /// </summary>
         /// <param name="center">The center.</param>
         /// <param name="axis">The axis.</param>
@@ -34,7 +46,7 @@ namespace TVGL
             MinorRadius = minorRadius;
         }
         /// <summary>
-        /// Initializes a new instance of the <see cref="Torus"/> class.
+        /// Initializes a new instance of the <see cref="Torus" /> class.
         /// </summary>
         /// <param name="center">The center.</param>
         /// <param name="axis">The axis.</param>
@@ -51,9 +63,10 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="Torus"/> class.
+        /// Initializes a new instance of the <see cref="Torus" /> class.
         /// </summary>
         /// <param name="originalToBeCopied">The original to be copied.</param>
+        /// <param name="copiedTessellatedSolid">The copied tessellated solid.</param>
         public Torus(Torus originalToBeCopied, TessellatedSolid copiedTessellatedSolid = null)
             : base(originalToBeCopied, copiedTessellatedSolid)
         {
@@ -65,9 +78,11 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="Torus"/> class.
+        /// Initializes a new instance of the <see cref="Torus" /> class.
         /// </summary>
         /// <param name="originalToBeCopied">The original to be copied.</param>
+        /// <param name="newFaceIndices">The new face indices.</param>
+        /// <param name="copiedTessellatedSolid">The copied tessellated solid.</param>
         public Torus(Torus originalToBeCopied, int[] newFaceIndices, TessellatedSolid copiedTessellatedSolid)
             : base(newFaceIndices, copiedTessellatedSolid)
         {
@@ -79,13 +94,13 @@ namespace TVGL
         }
 
         /// <summary>
-        ///     Is the torus positive? (false is negative)
+        /// Is the torus positive? (false is negative)
         /// </summary>
         public bool IsPositive;
 
 
         /// <summary>
-        ///     Gets the center.
+        /// Gets the center.
         /// </summary>
         /// <value>The center.</value>
         public Vector3 Center
@@ -99,7 +114,7 @@ namespace TVGL
             }
         }
         /// <summary>
-        ///     Gets the axis.
+        /// Gets the axis.
         /// </summary>
         /// <value>The axis.</value>
         public Vector3 Axis
@@ -113,17 +128,26 @@ namespace TVGL
             }
         }
 
+        /// <summary>
+        /// The center
+        /// </summary>
         private Vector3 center = Vector3.Null;
+        /// <summary>
+        /// The axis
+        /// </summary>
         private Vector3 axis = Vector3.Null;
+        /// <summary>
+        /// The distance to bisecting plane
+        /// </summary>
         private double distanceToBisectingPlane;
         /// <summary>
-        ///     Gets the major radius, which is the distance from the center of the tube to the center of the torus
+        /// Gets the major radius, which is the distance from the center of the tube to the center of the torus
         /// </summary>
         /// <value>The major radius.</value>
         public double MajorRadius { get; set; }
 
         /// <summary>
-        ///     Gets the minor radius, which the radius of the tube. 
+        /// Gets the minor radius, which the radius of the tube.
         /// </summary>
         /// <value>The minor radius.</value>
         public double MinorRadius { get; set; }
@@ -155,10 +179,24 @@ namespace TVGL
         }
 
 
+        /// <summary>
+        /// The face x dir
+        /// </summary>
         private Vector3 faceXDir = Vector3.Null;
+        /// <summary>
+        /// The face y dir
+        /// </summary>
         private Vector3 faceYDir = Vector3.Null;
+        /// <summary>
+        /// The face z dir
+        /// </summary>
         private Vector3 faceZDir = Vector3.Null;
 
+        /// <summary>
+        /// Transforms the from3 d to2 d.
+        /// </summary>
+        /// <param name="point">The point.</param>
+        /// <returns>Vector2.</returns>
         public override Vector2 TransformFrom3DTo2D(Vector3 point)
         {
             if (faceXDir.IsNull())
@@ -178,6 +216,11 @@ namespace TVGL
             return new Vector2(polarAngle * MajorRadius, hoopAngle * MinorRadius);
         }
 
+        /// <summary>
+        /// Transforms the from2 d to3 d.
+        /// </summary>
+        /// <param name="point">The point.</param>
+        /// <returns>Vector3.</returns>
         public override Vector3 TransformFrom2DTo3D(Vector2 point)
         {
             if (faceXDir.IsNull())
@@ -208,6 +251,12 @@ namespace TVGL
             return result;
         }
 
+        /// <summary>
+        /// Transforms the from3 d to2 d.
+        /// </summary>
+        /// <param name="points">The points.</param>
+        /// <param name="pathIsClosed">if set to <c>true</c> [path is closed].</param>
+        /// <returns>IEnumerable&lt;Vector2&gt;.</returns>
         public override IEnumerable<Vector2> TransformFrom3DTo2D(IEnumerable<Vector3> points, bool pathIsClosed)
         {
             if (pathIsClosed && BorderEncirclesAxis(points, Axis, Center))
@@ -223,11 +272,25 @@ namespace TVGL
             }
         }
 
+        /// <summary>
+        /// Points the membership.
+        /// </summary>
+        /// <param name="point">The point.</param>
+        /// <returns>System.Double.</returns>
         public override double PointMembership(Vector3 point)
         {
             Vector3 ptOnCircle = ClosestPointOnCenterRingToPoint(Axis, Center, MajorRadius, point, distanceToBisectingPlane);
             return (point - ptOnCircle).Length() - MinorRadius;
         }
+        /// <summary>
+        /// Closests the point on center ring to point.
+        /// </summary>
+        /// <param name="axis">The axis.</param>
+        /// <param name="center">The center.</param>
+        /// <param name="majorRadius">The major radius.</param>
+        /// <param name="vertexCoord">The vertex coord.</param>
+        /// <param name="planeDist">The plane dist.</param>
+        /// <returns>Vector3.</returns>
         public static Vector3 ClosestPointOnCenterRingToPoint(Vector3 axis, Vector3 center, double majorRadius, Vector3 vertexCoord, 
             double planeDist = double.NaN)
         {

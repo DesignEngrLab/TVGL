@@ -1,7 +1,16 @@
-﻿// Copyright 2015-2020 Design Engineering Lab
-// This file is a part of TVGL, Tessellation and Voxelization Geometry Library
-// https://github.com/DesignEngrLab/TVGL
-// It is licensed under MIT License (see LICENSE.txt for details)
+﻿// ***********************************************************************
+// Assembly         : TessellationAndVoxelizationGeometryLibrary
+// Author           : matth
+// Created          : 04-03-2023
+//
+// Last Modified By : matth
+// Last Modified On : 04-14-2023
+// ***********************************************************************
+// <copyright file="CrossSectionSolid.cs" company="Design Engineering Lab">
+//     2014
+// </copyright>
+// <summary></summary>
+// ***********************************************************************
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -15,17 +24,21 @@ using Newtonsoft.Json.Linq;
 
 namespace TVGL
 {
+    /// <summary>
+    /// Class CrossSectionSolid.
+    /// Implements the <see cref="TVGL.Solid" />
+    /// </summary>
+    /// <seealso cref="TVGL.Solid" />
     public partial class CrossSectionSolid : Solid
     {
         /// <summary>
         /// Layers are the 2D polygons for every cross section in this feature.
         /// The solid volume representation assumes that the cross sections are defined,
-        /// such that the first valid loop and subsequent loops in  will be extruded 
+        /// such that the first valid loop and subsequent loops in  will be extruded
         /// forward along the given direction, but not extruding the last cross section, which
-        /// forms the end of the solid. 
-        /// 
+        /// forms the end of the solid.
         /// A few features:
-        /// 1) Layer2D can be empty layers at the start and end of the step indices. This 
+        /// 1) Layer2D can be empty layers at the start and end of the step indices. This
         /// can be useful when joining solids of different sizes along the same direction.
         /// 2) Layer2D can be indexed in the reverse order from the step distances.
         /// This can be useful when working in a bi-directional scope. If reversed, it will
@@ -38,6 +51,7 @@ namespace TVGL
         /// <summary>
         /// Optional Layer2DArea can be used when the Layer2D polygons are unnessary and only the area is needed.
         /// </summary>
+        /// <value>The layer2 d area.</value>
         [JsonIgnore]
         public IDictionary<int, double> Layer2DArea { get; set; }
 
@@ -45,16 +59,17 @@ namespace TVGL
         //public List<Polygon>[] Layer2D { get; }
 
         /// <summary>
-        /// Step distances stores the distance along direction for each index.
-        /// It can be bigger than either of the above dictionaries if, for example,
-        /// you wanted to define multiple ParallelCrossSectionSolids along the same direction.
-        /// <summary>
+        /// Gets the step distances.
+        /// </summary>
+        /// <value>The step distances.</value>
+        /// <font color="red">Badly formed XML comment.</font>
         public Dictionary<int, double> StepDistances { get; private set; }
         // an alternate approach without using dictionaries should be pursued
         //public Vector2 StepDistances { get; }
         /// <summary>
         /// This is the direction that the cross sections will be extruded along
         /// </summary>
+        /// <value>The direction.</value>
         public Vector3 Direction => BackTransform.ZBasisVector;
 
         /// <summary>
@@ -71,10 +86,18 @@ namespace TVGL
         public Matrix4x4 BackTransform { get; set; }
 
 
+        /// <summary>
+        /// Gets or sets the number layers.
+        /// </summary>
+        /// <value>The number layers.</value>
         public int NumLayers { get; set; }
 
 
         #region Constructors
+        /// <summary>
+        /// Initializes a new instance of the <see cref="CrossSectionSolid"/> class.
+        /// </summary>
+        /// <param name="stepDistances">The step distances.</param>
         [JsonConstructor]
         public CrossSectionSolid(Dictionary<int, double> stepDistances)
         {
@@ -82,6 +105,14 @@ namespace TVGL
             StepDistances = stepDistances;
         }
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="CrossSectionSolid"/> class.
+        /// </summary>
+        /// <param name="direction">The direction.</param>
+        /// <param name="stepDistances">The step distances.</param>
+        /// <param name="sameTolerance">The same tolerance.</param>
+        /// <param name="bounds">The bounds.</param>
+        /// <param name="units">The units.</param>
         public CrossSectionSolid(Vector3 direction, Dictionary<int, double> stepDistances, double sameTolerance, Vector3[] bounds = null, UnitType units = UnitType.unspecified)
             : this(stepDistances)
         {
@@ -94,6 +125,15 @@ namespace TVGL
             SameTolerance = sameTolerance;
         }
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="CrossSectionSolid"/> class.
+        /// </summary>
+        /// <param name="direction">The direction.</param>
+        /// <param name="stepDistances">The step distances.</param>
+        /// <param name="sameTolerance">The same tolerance.</param>
+        /// <param name="Layer2D">The layer2 d.</param>
+        /// <param name="bounds">The bounds.</param>
+        /// <param name="units">The units.</param>
         public CrossSectionSolid(Vector3 direction, Dictionary<int, double> stepDistances, double sameTolerance,
             IDictionary<int, IList<Polygon>> Layer2D, Vector3[] bounds = null, UnitType units = UnitType.unspecified)
         {
@@ -147,11 +187,14 @@ namespace TVGL
 
         /// <summary>
         /// Layer2D and 3D can be indexed in the forward or reverse order from the step distances.
-        /// This can be useful when working in a bi-directional scope. In both cases, it will start 
-        /// by extruding the first valid loop in Layer3D and stop before extruding the last one (the 
-        /// n-1 extrusion will have ended on at the distance of the final cross section). 
+        /// This can be useful when working in a bi-directional scope. In both cases, it will start
+        /// by extruding the first valid loop in Layer3D and stop before extruding the last one (the
+        /// n-1 extrusion will have ended on at the distance of the final cross section).
         /// If reversed, it will simply extrude backward instead of forward.
         /// </summary>
+        /// <param name="extrudeBack">if set to <c>true</c> [extrude back].</param>
+        /// <param name="createFullVersion">if set to <c>true</c> [create full version].</param>
+        /// <returns>TessellatedSolid.</returns>
         public TessellatedSolid ConvertToTessellatedExtrusions(bool extrudeBack, bool createFullVersion)
         {
             var faces = new List<TriangleFace>();
@@ -163,6 +206,11 @@ namespace TVGL
             return new TessellatedSolid(faces, createFullVersion, false);
         }
 
+        /// <summary>
+        /// Converts to faces.
+        /// </summary>
+        /// <param name="extrudeBack">if set to <c>true</c> [extrude back].</param>
+        /// <returns>List&lt;System.ValueTuple&lt;Vector3, Vector3, Vector3&gt;&gt;.</returns>
         public List<(Vector3 A, Vector3 B, Vector3 C)> ConvertToFaces(bool extrudeBack)
         {
             //if (!Layer3D.Any()) SetAllVertices();
@@ -198,11 +246,10 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Returns a list of resulting polygon triangulations. Each (int A, int B, int C) represents a triangle. There is a list of 
+        /// Returns a list of resulting polygon triangulations. Each (int A, int B, int C) represents a triangle. There is a list of
         /// these triangles for each polgyon in the solid.
         /// </summary>
-        /// <param name="extrudeBack"></param>
-        /// <returns></returns>
+        /// <returns>IDictionary&lt;Polygon, List&lt;System.ValueTuple&lt;System.Int32, System.Int32, System.Int32&gt;&gt;&gt;.</returns>
         public IDictionary<Polygon, List<(int A, int B, int C)>> GetTriangulationByLayer()
         {
             //if (!Layer3D.Any()) SetAllVertices();
@@ -226,6 +273,10 @@ namespace TVGL
             return faces;
         }
 
+        /// <summary>
+        /// Converts to lofted tessellated solid.
+        /// </summary>
+        /// <returns>TessellatedSolid.</returns>
         public TessellatedSolid ConvertToLoftedTessellatedSolid()
         {
             var polygons = new Polygon[Layer2D.Count][];
@@ -260,11 +311,21 @@ namespace TVGL
             return new TessellatedSolid(faces, false, false);
         }
 
+        /// <summary>
+        /// Converts to tessellated solid marching cubes.
+        /// </summary>
+        /// <param name="gridSize">Size of the grid.</param>
+        /// <returns>TessellatedSolid.</returns>
         public TessellatedSolid ConvertToTessellatedSolidMarchingCubes(double gridSize)
         {
             var marchingCubesAlgorithm = new MarchingCubesCrossSectionSolid(this, gridSize);
             return marchingCubesAlgorithm.Generate();
         }
+        /// <summary>
+        /// Converts to tessellated solid marching cubes.
+        /// </summary>
+        /// <param name="approximateNumberOfTriangles">The approximate number of triangles.</param>
+        /// <returns>TessellatedSolid.</returns>
         public TessellatedSolid ConvertToTessellatedSolidMarchingCubes(int approximateNumberOfTriangles = -1)
         {
             MarchingCubesCrossSectionSolid marchingCubesAlgorithm;
@@ -282,6 +343,10 @@ namespace TVGL
             return marchingCubesAlgorithm.Generate();
         }
 
+        /// <summary>
+        /// Copies this instance.
+        /// </summary>
+        /// <returns>CrossSectionSolid.</returns>
         public CrossSectionSolid Copy()
         {
             var solid = new CrossSectionSolid(Direction, StepDistances, SameTolerance, Bounds, Units);
@@ -298,23 +363,46 @@ namespace TVGL
         }
 
 
+        /// <summary>
+        /// Transforms the specified transform matrix.
+        /// </summary>
+        /// <param name="transformMatrix">The transform matrix.</param>
+        /// <exception cref="System.NotImplementedException"></exception>
         public override void Transform(Matrix4x4 transformMatrix)
         {
             //It is really easy to rotate Layer2D, just change the direction. But, it is more complicated to get the transform distances correct.
             throw new NotImplementedException();
         }
 
+        /// <summary>
+        /// Gets a new solid by transforming its vertices.
+        /// </summary>
+        /// <param name="transformationMatrix">The transformation matrix.</param>
+        /// <returns>Solid.</returns>
+        /// <exception cref="System.NotImplementedException"></exception>
         public override Solid TransformToNewSolid(Matrix4x4 transformationMatrix)
         {
             throw new NotImplementedException();
         }
 
+        /// <summary>
+        /// Gets or sets the first index.
+        /// </summary>
+        /// <value>The first index.</value>
         [JsonProperty]
         private int FirstIndex { get; set; }
+        /// <summary>
+        /// Gets or sets the last index.
+        /// </summary>
+        /// <value>The last index.</value>
         [JsonProperty]
         private int LastIndex { get; set; }
 
 
+        /// <summary>
+        /// Called when [serializing method].
+        /// </summary>
+        /// <param name="context">The context.</param>
         [OnSerializing]
         protected void OnSerializingMethod(StreamingContext context)
         {
@@ -325,6 +413,10 @@ namespace TVGL
             LastIndex = Layer2D.Keys.Last();
         }
 
+        /// <summary>
+        /// Called when [deserialized method].
+        /// </summary>
+        /// <param name="context">The context.</param>
         [OnDeserialized]
         protected void OnDeserializedMethod(StreamingContext context)
         {
@@ -342,6 +434,9 @@ namespace TVGL
             }
         }
 
+        /// <summary>
+        /// Calculates the center.
+        /// </summary>
         protected override void CalculateCenter()
         {
             var xCenter = 0.0;
@@ -367,6 +462,9 @@ namespace TVGL
             _center = (new Vector3(xCenter, yCenter, zCenter) / totalArea).Multiply(BackTransform);
         }
 
+        /// <summary>
+        /// Calculates the volume.
+        /// </summary>
         protected override void CalculateVolume()
         {
             _volume = 0.0;
@@ -390,6 +488,9 @@ namespace TVGL
             if (_volume < 0) _volume = -_volume;
         }
 
+        /// <summary>
+        /// Calculates the surface area.
+        /// </summary>
         protected override void CalculateSurfaceArea()
         {
             // this is probably not correct. I simply took the code for CalculateVolume and changed
@@ -414,11 +515,19 @@ namespace TVGL
             if (area < 0) area = -area;
         }
 
+        /// <summary>
+        /// Calculates the inertia tensor.
+        /// </summary>
+        /// <exception cref="System.NotImplementedException"></exception>
         protected override void CalculateInertiaTensor()
         {
             throw new NotImplementedException();
         }
 
+        /// <summary>
+        /// Gets the total polygon vertices.
+        /// </summary>
+        /// <returns>System.Int32.</returns>
         public int GetTotalPolygonVertices()
         {
             return Layer2D
@@ -427,6 +536,9 @@ namespace TVGL
                 .Sum(p => p.Vertices.Count)));
         }
 
+        /// <summary>
+        /// Checks for missing layers.
+        /// </summary>
         public void CheckForMissingLayers()
         {
             for (var i = Layer2D.Keys.Min(); i <= Layer2D.Keys.Max(); i++) //Including the last index

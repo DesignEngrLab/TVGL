@@ -1,7 +1,16 @@
-﻿// Copyright 2015-2020 Design Engineering Lab
-// This file is a part of TVGL, Tessellation and Voxelization Geometry Library
-// https://github.com/DesignEngrLab/TVGL
-// It is licensed under MIT License (see LICENSE.txt for details)
+﻿// ***********************************************************************
+// Assembly         : TessellationAndVoxelizationGeometryLibrary
+// Author           : matth
+// Created          : 04-03-2023
+//
+// Last Modified By : matth
+// Last Modified On : 04-03-2023
+// ***********************************************************************
+// <copyright file="PolygonOperations.Basic.cs" company="Design Engineering Lab">
+//     2014
+// </copyright>
+// <summary></summary>
+// ***********************************************************************
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -17,8 +26,8 @@ namespace TVGL
         /// <summary>
         /// Get the largest polygon by net area from the collections of polygons
         /// </summary>
-        /// <param name="polygons"></param>
-        /// <returns></returns>
+        /// <param name="polygons">The polygons.</param>
+        /// <returns>Polygon.</returns>
         public static Polygon LargestPolygon(this IEnumerable<Polygon> polygons)
         {
             return polygons
@@ -32,7 +41,7 @@ namespace TVGL
         /// <summary>
         /// Gets the perimeter for a 2D set of points. Consider using Polygon class when possible.
         /// </summary>
-        /// <param name="polygon">The polygon.</param>
+        /// <param name="paths">The paths.</param>
         /// <returns>System.Double.</returns>
         public static double Perimeter(this IEnumerable<IEnumerable<Vector2>> paths)
         {
@@ -69,8 +78,10 @@ namespace TVGL
         }
 
         /// <summary>
-        ///     Calculate the area for a 2D set of points. Consider using Polygon class when possible.
+        /// Calculate the area for a 2D set of points. Consider using Polygon class when possible.
         /// </summary>
+        /// <param name="paths">The paths.</param>
+        /// <returns>System.Double.</returns>
         public static double Area(this IEnumerable<IEnumerable<Vector2>> paths)
         {
             return paths.Sum(path => path.Area());
@@ -116,7 +127,7 @@ namespace TVGL
         /// </summary>
         /// <param name="coordinates">The coordinates.</param>
         /// <returns>IEnumerable&lt;Vector2&gt;.</returns>
-        /// <exception cref="ArgumentException">An odd number of coordinates have been provided to " +
+        /// <exception cref="System.ArgumentException">An odd number of coordinates have been provided to " +
         ///                    "convert the 1D array of double to an array of vectors.</exception>
         public static IEnumerable<Vector2> ConvertToVector2s(this IEnumerable<double> coordinates)
         {
@@ -137,10 +148,11 @@ namespace TVGL
         /// The rectangle my be in any orientation and contain any number of points greater than three.
         /// Confidence Percentage can be decreased to identify polygons that are close to rectangular.
         /// </summary>
-        /// <param name="polygon"></param>
-        /// <param name="dimensions"></param>
-        /// <param name="confidencePercentage"></param>
-        /// <returns></returns>
+        /// <param name="polygon">The polygon.</param>
+        /// <param name="dimensions">The dimensions.</param>
+        /// <param name="confidencePercentage">The confidence percentage.</param>
+        /// <returns><c>true</c> if the specified dimensions is rectangular; otherwise, <c>false</c>.</returns>
+        /// <exception cref="System.Exception">Confidence percentage must be between 0 and 1</exception>
         public static bool IsRectangular(this IEnumerable<Vector2> polygon, out Vector2 dimensions, double confidencePercentage = Constants.HighConfidence)
         {
             if (confidencePercentage > 1.0 || Math.Sign(confidencePercentage) < 0)
@@ -170,23 +182,25 @@ namespace TVGL
             return area.IsPracticallySame(minBoundingRectangle.Area, area * tolerancePercentage);
         }
 
-        /// <summary>Determines whether the specified polygon is circular.</summary>
+        /// <summary>
+        /// Determines whether the specified polygon is circular.
+        /// </summary>
         /// <param name="polygon">The polygon.</param>
         /// <param name="minCircle">The minimum circle.</param>
         /// <param name="confidencePercentage">The confidence percentage.</param>
-        /// <returns>
-        ///   <c>true</c> if the specified polygon is circular; otherwise, <c>false</c>.</returns>
+        /// <returns><c>true</c> if the specified polygon is circular; otherwise, <c>false</c>.</returns>
         public static bool IsCircular(this Polygon polygon, out Circle minCircle, double confidencePercentage = Constants.HighConfidence)
         {
             return IsCircular(polygon.Path, out minCircle, confidencePercentage);
         }
 
-        /// <summary>Determines whether the specified polygon is circular.</summary>
+        /// <summary>
+        /// Determines whether the specified polygon is circular.
+        /// </summary>
         /// <param name="polygon">The polygon.</param>
         /// <param name="minCircle">The minimum circle.</param>
         /// <param name="confidencePercentage">The confidence percentage.</param>
-        /// <returns>
-        ///   <c>true</c> if the specified polygon is circular; otherwise, <c>false</c>.</returns>
+        /// <returns><c>true</c> if the specified polygon is circular; otherwise, <c>false</c>.</returns>
         public static bool IsCircular(this IEnumerable<Vector2> polygon, out Circle minCircle, double confidencePercentage = Constants.HighConfidence)
         {
             var tolerancePercentage = 1.0 - confidencePercentage;
@@ -198,6 +212,12 @@ namespace TVGL
             return polygonArea.IsPracticallySame(minCircle.Area, polygonArea * tolerancePercentage);
         }
 
+        /// <summary>
+        /// Reflects the on x.
+        /// </summary>
+        /// <param name="shape">The shape.</param>
+        /// <returns>Polygon.</returns>
+        /// <exception cref="System.Exception">Areas do not match after mirroring the polygons</exception>
         public static Polygon ReflectOnX(this Polygon shape)
         {
             var relfection = new List<Polygon>();
@@ -222,7 +242,7 @@ namespace TVGL
         /// <param name="shape">The shape.</param>
         /// <param name="direction2D">The direction2 d.</param>
         /// <returns>Polygon.</returns>
-        /// <exception cref="Exception">Areas do not match after mirroring the polygons</exception>
+        /// <exception cref="System.Exception">Areas do not match after mirroring the polygons</exception>
         public static Polygon Mirror(this Polygon shape, Vector2 direction2D)
         {
             var mirror = new List<Polygon>();

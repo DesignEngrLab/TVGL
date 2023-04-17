@@ -1,16 +1,45 @@
-﻿using System;
+﻿// ***********************************************************************
+// Assembly         : TessellationAndVoxelizationGeometryLibrary
+// Author           : matth
+// Created          : 04-03-2023
+//
+// Last Modified By : matth
+// Last Modified On : 04-03-2023
+// ***********************************************************************
+// <copyright file="PolygonOperations.DistanceToPoint.cs" company="Design Engineering Lab">
+//     2014
+// </copyright>
+// <summary></summary>
+// ***********************************************************************
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
 namespace TVGL.Polygon_Operations
 {
+    /// <summary>
+    /// Class PolygonOperations.
+    /// </summary>
     public static partial class PolygonOperations
     {
+        /// <summary>
+        /// Minimums the distance to polygons.
+        /// </summary>
+        /// <param name="polygons">The polygons.</param>
+        /// <param name="qPoint">The q point.</param>
+        /// <returns>System.Double.</returns>
         public static double MinDistanceToPolygons(this IEnumerable<Polygon> polygons, Vector2 qPoint)
         {
             return MinDistanceToPolygons(polygons, qPoint.X, qPoint.Y);
         }
 
+        /// <summary>
+        /// Minimums the distance to polygons.
+        /// </summary>
+        /// <param name="polygons">The polygons.</param>
+        /// <param name="x">The x.</param>
+        /// <param name="y">The y.</param>
+        /// <returns>System.Double.</returns>
         public static double MinDistanceToPolygons(this IEnumerable<Polygon> polygons, double x, double y)
         {
             var edges = new List<PolygonEdge>();
@@ -22,11 +51,24 @@ namespace TVGL.Polygon_Operations
             return MinDistanceToPolygon(x, y, edges);
         }
 
+        /// <summary>
+        /// Minimums the distance to polygon.
+        /// </summary>
+        /// <param name="polygon">The polygon.</param>
+        /// <param name="qPoint">The q point.</param>
+        /// <returns>System.Double.</returns>
         public static double MinDistanceToPolygon(this Polygon polygon, Vector2 qPoint)
         {
             return MinDistanceToPolygon(polygon, qPoint.X, qPoint.Y);
         }
 
+        /// <summary>
+        /// Minimums the distance to polygon.
+        /// </summary>
+        /// <param name="polygon">The polygon.</param>
+        /// <param name="x">The x.</param>
+        /// <param name="y">The y.</param>
+        /// <returns>System.Double.</returns>
         public static double MinDistanceToPolygon(this Polygon polygon, double x, double y)
         {
             polygon.MakePolygonEdgesIfNonExistent();
@@ -34,6 +76,13 @@ namespace TVGL.Polygon_Operations
             return MinDistanceToPolygon(x, y, edges);
         }
 
+        /// <summary>
+        /// Minimums the distance to polygon.
+        /// </summary>
+        /// <param name="x">The x.</param>
+        /// <param name="y">The y.</param>
+        /// <param name="edges">The edges.</param>
+        /// <returns>System.Double.</returns>
         private static double MinDistanceToPolygon(double x, double y, IEnumerable<PolygonEdge> edges)
         {
             var minDistance = double.MaxValue;
@@ -49,6 +98,13 @@ namespace TVGL.Polygon_Operations
 
         //Refer to Joshua's answer: https://stackoverflow.com/questions/849211/shortest-distance-between-a-point-and-a-line-segment
         //x, y is your target point and x1, y1 to x2, y2 is your line segment.
+        /// <summary>
+        /// Sqs the distance point to line segment.
+        /// </summary>
+        /// <param name="x">The x.</param>
+        /// <param name="y">The y.</param>
+        /// <param name="edge">The edge.</param>
+        /// <returns>System.Double.</returns>
         private static double SqDistancePointToLineSegment(double x, double y, PolygonEdge edge)
         {
             var A = x - edge.FromPoint.X;

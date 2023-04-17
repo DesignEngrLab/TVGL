@@ -1,7 +1,16 @@
-﻿// Copyright 2015-2020 Design Engineering Lab
-// This file is a part of TVGL, Tessellation and Voxelization Geometry Library
-// https://github.com/DesignEngrLab/TVGL
-// It is licensed under MIT License (see LICENSE.txt for details)
+﻿// ***********************************************************************
+// Assembly         : TessellationAndVoxelizationGeometryLibrary
+// Author           : matth
+// Created          : 04-03-2023
+//
+// Last Modified By : matth
+// Last Modified On : 04-03-2023
+// ***********************************************************************
+// <copyright file="PolygonOperations.Triangulate.cs" company="Design Engineering Lab">
+//     2014
+// </copyright>
+// <summary></summary>
+// ***********************************************************************
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,11 +21,11 @@ namespace TVGL
     /// <summary>
     /// Triangulates a Polygon into faces in O(n log n) time.
     /// </summary>
-    ///  <References>
-    ///     The new approach is based on how it is presented in 
-    ///     the book
-    ///     "Computational geometry: algorithms and applications". 2000
-    ///     Authors: de Berg, Mark and van Kreveld, Marc and Overmars, Mark and Schwarzkopf, Otfried and Overmars, M
+    /// <References>
+    /// The new approach is based on how it is presented in
+    /// the book
+    /// "Computational geometry: algorithms and applications". 2000
+    /// Authors: de Berg, Mark and van Kreveld, Marc and Overmars, Mark and Schwarzkopf, Otfried and Overmars, M
     /// </References>
     /// A good summary of how the monotone polygons are created can be seen in the video: https://youtu.be/IkA-2Y9lBvM
     /// and the algorithm for triangulating the monotone polygons can be found here: https://youtu.be/pfXXgV9u6cw
@@ -27,8 +36,9 @@ namespace TVGL
         /// </summary>
         /// <param name="vertexLoop">The vertex loop.</param>
         /// <param name="normal">The normal direction.</param>
+        /// <param name="forceToPositive">if set to <c>true</c> [force to positive].</param>
         /// <returns>IEnumerable&lt;Vertex[]&gt; where each represents a triangular polygonal face.</returns>
-        /// <exception cref="ArgumentException">The vertices must all have a unique IndexInList value - vertexLoop</exception>
+        /// <exception cref="System.ArgumentException">The vertices must all have a unique IndexInList value - vertexLoop</exception>
         public static IEnumerable<Vertex[]> Triangulate(this IEnumerable<Vertex> vertexLoop, Vector3 normal, bool forceToPositive = false)
         {
             var transform = normal.TransformToXYPlane(out _);
@@ -59,7 +69,7 @@ namespace TVGL
         /// <param name="vertexLoops">The vertex loops.</param>
         /// <param name="normal">The normal direction.</param>
         /// <returns>IEnumerable&lt;Vertex[]&gt; where each represents a triangular polygonal face.</returns>
-        /// <exception cref="ArgumentException">The vertices must all have a unique IndexInList value - vertexLoop</exception>
+        /// <exception cref="System.ArgumentException">The vertices must all have a unique IndexInList value - vertexLoops</exception>
         public static IEnumerable<Vertex[]> Triangulate(this IEnumerable<IList<Vertex>> vertexLoops, Vector3 normal)
         {
             var transform = normal.TransformToXYPlane(out _);
@@ -92,7 +102,6 @@ namespace TVGL
         /// Triangulates the specified polygons which may include holes. However, the .
         /// </summary>
         /// <param name="polygon">The polygon.</param>
-        /// <param name="reIndexPolygons">if set to <c>true</c> [re index polygons].</param>
         /// <returns>List&lt;System.Int32[]&gt;.</returns>
         public static IEnumerable<Vector2[]> TriangulateToCoordinates(this Polygon polygon)
         {
@@ -104,7 +113,7 @@ namespace TVGL
         /// Triangulates the specified polygons which may include holes. However, the .
         /// </summary>
         /// <param name="polygon">The polygon.</param>
-        /// <param name="reIndexPolygons">if set to <c>true</c> [re index polygons].</param>
+        /// <param name="handleSelfIntersects">if set to <c>true</c> [handle self intersects].</param>
         /// <returns>List&lt;System.Int32[]&gt;.</returns>
         public static IEnumerable<(int A, int B, int C)> TriangulateToIndices(this Polygon polygon, bool handleSelfIntersects = true)
         {
@@ -130,11 +139,13 @@ namespace TVGL
                 yield return (triangle[0].IndexInList, triangle[1].IndexInList, triangle[2].IndexInList);
         }
         /// <summary>
-        /// Triangulates the specified polygons which may include holes. 
+        /// Triangulates the specified polygons which may include holes.
         /// </summary>
         /// <param name="polygon">The polygon.</param>
-        /// <param name="reIndexPolygons">if set to <c>true</c> [re index polygons].</param>
+        /// <param name="handleSelfIntersects">if set to <c>true</c> [handle self intersects].</param>
         /// <returns>List&lt;System.Int32[]&gt;.</returns>
+        /// <exception cref="System.ArgumentException">Triangulate Polygon requires a positive polygon. A negative one was provided. - polygon</exception>
+        /// <exception cref="System.Exception">Unable to triangulate polygon.</exception>
         private static List<Vertex2D[]> Triangulate(this Polygon polygon, bool handleSelfIntersects = true)
         {
             if (polygon.Area.IsNegligible() || polygon.IsConvex())
@@ -253,6 +264,11 @@ namespace TVGL
         }
 
 
+        /// <summary>
+        /// Creates the x monotone polygons.
+        /// </summary>
+        /// <param name="polygon">The polygon.</param>
+        /// <returns>IEnumerable&lt;Polygon&gt;.</returns>
         public static IEnumerable<Polygon> CreateXMonotonePolygons(this Polygon polygon)
         {
             if (polygon.PartitionIntoMonotoneBoxes(MonotonicityChange.X).Count()==1)
@@ -287,6 +303,11 @@ namespace TVGL
             }
         }
 
+        /// <summary>
+        /// Finds the connections to convert to monotone polygons.
+        /// </summary>
+        /// <param name="polygon">The polygon.</param>
+        /// <returns>Dictionary&lt;Vertex2D, List&lt;Vertex2D&gt;&gt;.</returns>
         private static Dictionary<Vertex2D, List<Vertex2D>> FindConnectionsToConvertToMonotonePolygons(Polygon polygon)
         {
             var sortedVertices = new List<Vertex2D>();
@@ -358,6 +379,13 @@ namespace TVGL
             return connections;
         }
 
+        /// <summary>
+        /// Makes the new diagonal edge if merge.
+        /// </summary>
+        /// <param name="connections">The connections.</param>
+        /// <param name="edgeDatums">The edge datums.</param>
+        /// <param name="datum">The datum.</param>
+        /// <param name="vertex">The vertex.</param>
         private static void MakeNewDiagonalEdgeIfMerge(Dictionary<Vertex2D, List<Vertex2D>> connections,
             Dictionary<PolygonEdge, (Vertex2D, bool)> edgeDatums, PolygonEdge datum, Vertex2D vertex)
         {
@@ -371,6 +399,12 @@ namespace TVGL
             }
         }
 
+        /// <summary>
+        /// Adds the new connection.
+        /// </summary>
+        /// <param name="connections">The connections.</param>
+        /// <param name="fromVertex">From vertex.</param>
+        /// <param name="toVertex">To vertex.</param>
         private static void AddNewConnection(Dictionary<Vertex2D, List<Vertex2D>> connections, Vertex2D fromVertex, Vertex2D toVertex)
         {
             if (connections.TryGetValue(fromVertex, out var verts))
@@ -381,6 +415,13 @@ namespace TVGL
                 connections.Add(fromVertex, newToVertices);
             }
         }
+        /// <summary>
+        /// Removes the connection.
+        /// </summary>
+        /// <param name="connections">The connections.</param>
+        /// <param name="fromVertex">From vertex.</param>
+        /// <param name="toVertex">To vertex.</param>
+        /// <exception cref="System.Exception"></exception>
         private static void RemoveConnection(Dictionary<Vertex2D, List<Vertex2D>> connections, Vertex2D fromVertex, Vertex2D toVertex)
         {
             var toVertices = connections[fromVertex];
@@ -394,6 +435,13 @@ namespace TVGL
         }
 
 
+        /// <summary>
+        /// Finds the closest lower datum.
+        /// </summary>
+        /// <param name="edges">The edges.</param>
+        /// <param name="point">The point.</param>
+        /// <param name="minfeasible">The minfeasible.</param>
+        /// <returns>PolygonEdge.</returns>
         private static PolygonEdge FindClosestLowerDatum(IEnumerable<PolygonEdge> edges, Vector2 point, double minfeasible = 0.0)
         {
             var numEdges = 0;
@@ -418,6 +466,11 @@ namespace TVGL
 
 
 
+        /// <summary>
+        /// Triangulates the monotone polygon.
+        /// </summary>
+        /// <param name="monoPoly">The mono poly.</param>
+        /// <returns>IEnumerable&lt;Vertex2D[]&gt;.</returns>
         private static IEnumerable<Vertex2D[]> TriangulateMonotonePolygon(Polygon monoPoly)
         {
             monoPoly.MakePolygonEdgesIfNonExistent();
@@ -481,6 +534,13 @@ namespace TVGL
             } while (bottomVertex != null);
         }
 
+        /// <summary>
+        /// Nexts the x vertex.
+        /// </summary>
+        /// <param name="bottomVertex">The bottom vertex.</param>
+        /// <param name="topVertex">The top vertex.</param>
+        /// <param name="belongsToBottom">if set to <c>true</c> [belongs to bottom].</param>
+        /// <returns>Vertex2D.</returns>
         private static Vertex2D NextXVertex(ref Vertex2D bottomVertex, ref Vertex2D topVertex, out bool belongsToBottom)
         {
             var nextTopVertex = topVertex.EndLine.FromPoint;
@@ -502,6 +562,13 @@ namespace TVGL
             return topVertex;
         }
 
+        /// <summary>
+        /// Combines the sorted vertex lists.
+        /// </summary>
+        /// <param name="leftCollection">The left collection.</param>
+        /// <param name="rightCollection">The right collection.</param>
+        /// <param name="comparer">The comparer.</param>
+        /// <returns>IEnumerable&lt;Vertex2D&gt;.</returns>
         private static IEnumerable<Vertex2D> CombineSortedVertexLists(IEnumerable<Vertex2D> leftCollection, IEnumerable<Vertex2D> rightCollection,
             IComparer<Vertex2D> comparer)
         {

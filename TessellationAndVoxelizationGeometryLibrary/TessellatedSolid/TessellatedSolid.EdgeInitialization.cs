@@ -1,7 +1,16 @@
-﻿// Copyright 2015-2020 Design Engineering Lab
-// This file is a part of TVGL, Tessellation and Voxelization Geometry Library
-// https://github.com/DesignEngrLab/TVGL
-// It is licensed under MIT License (see LICENSE.txt for details)
+﻿// ***********************************************************************
+// Assembly         : TessellationAndVoxelizationGeometryLibrary
+// Author           : matth
+// Created          : 04-03-2023
+//
+// Last Modified By : matth
+// Last Modified On : 04-14-2023
+// ***********************************************************************
+// <copyright file="TessellatedSolid.EdgeInitialization.cs" company="Design Engineering Lab">
+//     2014
+// </copyright>
+// <summary></summary>
+// ***********************************************************************
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,21 +18,33 @@ using System.Linq;
 namespace TVGL
 {
     /// <summary>
-    ///     Class TessellatedSolid - functions related to edge initialization.
+    /// Class TessellatedSolid - functions related to edge initialization.
     /// </summary>
     /// <tags>help</tags>
-    /// <remarks>
-    ///     This partial class file includes all the weird and complicated ways that edges are created when a tessellated solid
-    ///     is made.
-    ///     Since edges are rarely explicitly defined in a file, we create these after vertices and faces. In so doing, one may
-    ///     find some
-    ///     error with the file. Here we attempt to patch those up..
-    /// </remarks>
+    /// <remarks>This partial class file includes all the weird and complicated ways that edges are created when a tessellated solid
+    /// is made.
+    /// Since edges are rarely explicitly defined in a file, we create these after vertices and faces. In so doing, one may
+    /// find some
+    /// error with the file. Here we attempt to patch those up..</remarks>
     public partial class TessellatedSolid : Solid
     {
+        /// <summary>
+        /// The fraction of single edges for trying expand
+        /// </summary>
         const double fractionOfSingleEdgesForTryingExpand = 0.1;
+        /// <summary>
+        /// The number of attempts default
+        /// </summary>
         const int numberOfAttemptsDefault = 6;
+        /// <summary>
+        /// The expansion factor
+        /// </summary>
         const double expansionFactor = 1.78; // it takes four to get to 10
+        /// <summary>
+        /// Makes the edges.
+        /// </summary>
+        /// <param name="fromSTL">if set to <c>true</c> [from STL].</param>
+        /// <exception cref="System.Exception"></exception>
         internal void MakeEdges(bool fromSTL = false)
         {
             // #1 define edges from faces - this leads to the good, the bad (single-sided), and the ugly
@@ -168,10 +189,8 @@ namespace TVGL
         }
 
         /// <summary>
-        ///     Makes the vertices.
+        /// Makes the vertices.
         /// </summary>
-        /// <param name="vertices"></param>
-        /// <param name="faceToVertexIndices">The face to vertex indices.</param>
         internal void RestartVerticesToAvoidSingleSidedEdges()
         {
             var faceIndices = Faces.Select(f => f.Vertices.Select(v => v.IndexInList).ToArray()).ToArray();
@@ -215,12 +234,12 @@ namespace TVGL
         }
 
         /// <summary>
-        ///     The first pass to making edges. It returns the good ones, and two lists of bad ones. The first, overDefinedEdges,
-        ///     are those which appear to have more than two faces interfacing with the edge. This happens when CAD tools
-        ///     tessellate
-        ///     and save B-rep surfaces that are created through boolean operations (such as union). The second list,
-        ///     partlyDefinedEdges,
-        ///     only have one face connected to them (aka singleSidedEdges).
+        /// The first pass to making edges. It returns the good ones, and two lists of bad ones. The first, overDefinedEdges,
+        /// are those which appear to have more than two faces interfacing with the edge. This happens when CAD tools
+        /// tessellate
+        /// and save B-rep surfaces that are created through boolean operations (such as union). The second list,
+        /// partlyDefinedEdges,
+        /// only have one face connected to them (aka singleSidedEdges).
         /// </summary>
         /// <param name="faces">The faces.</param>
         /// <param name="doublyLinkToVertices">if set to <c>true</c> [doubly link to vertices].</param>
@@ -353,6 +372,12 @@ namespace TVGL
             return newListOfGoodEdges;
         }
 
+        /// <summary>
+        /// Faces the should be owned face.
+        /// </summary>
+        /// <param name="edge">The edge.</param>
+        /// <param name="face">The face.</param>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         private static bool FaceShouldBeOwnedFace(Edge edge, TriangleFace face)
         {
             var otherEdgeVector = face.OtherVertex(edge.From, edge.To).Coordinates.Subtract(edge.To.Coordinates);
@@ -360,6 +385,14 @@ namespace TVGL
             return face.Normal.Dot(isThisNormal) > 0;
         }
 
+        /// <summary>
+        /// Matches up remaining single sided edge.
+        /// </summary>
+        /// <param name="singleSidedEdges">The single sided edges.</param>
+        /// <param name="tolerance">The tolerance.</param>
+        /// <param name="borderEdges">The border edges.</param>
+        /// <param name="removedVertices">The removed vertices.</param>
+        /// <returns>IEnumerable&lt;System.ValueTuple&lt;Edge, TriangleFace, TriangleFace&gt;&gt;.</returns>
         private static IEnumerable<(Edge, TriangleFace, TriangleFace)> MatchUpRemainingSingleSidedEdge(
             List<Edge> singleSidedEdges, double tolerance, out HashSet<Edge> borderEdges, out List<Vertex> removedVertices)
         {
@@ -420,6 +453,13 @@ namespace TVGL
             return completedEdges;
         }
 
+        /// <summary>
+        /// Merges the edge vertices.
+        /// </summary>
+        /// <param name="removedToKept">The removed to kept.</param>
+        /// <param name="keptToRemoved">The kept to removed.</param>
+        /// <param name="keepVertex">The keep vertex.</param>
+        /// <param name="removeVertex">The remove vertex.</param>
         private static void MergeEdgeVertices(Dictionary<Vertex, Vertex> removedToKept, Dictionary<Vertex, List<Vertex>> keptToRemoved,
             Vertex keepVertex, Vertex removeVertex)
         {
@@ -448,6 +488,13 @@ namespace TVGL
         }
 
 
+        /// <summary>
+        /// Organizes the into loops.
+        /// </summary>
+        /// <param name="singleSidedEdges">The single sided edges.</param>
+        /// <param name="hubVertices">The hub vertices.</param>
+        /// <param name="remainingEdges">The remaining edges.</param>
+        /// <returns>List&lt;TriangulationLoop&gt;.</returns>
         internal static List<TriangulationLoop> OrganizeIntoLoops(IEnumerable<Edge> singleSidedEdges,
             Dictionary<Vertex, int> hubVertices, out List<Edge> remainingEdges)
         {
@@ -561,6 +608,11 @@ namespace TVGL
             return listOfLoops;
         }
 
+        /// <summary>
+        /// Separates the into multiple loops.
+        /// </summary>
+        /// <param name="loop">The loop.</param>
+        /// <returns>IEnumerable&lt;TriangulationLoop&gt;.</returns>
         private static IEnumerable<TriangulationLoop> SeparateIntoMultipleLoops(TriangulationLoop loop)
         {
             var visitedToVertices = new HashSet<Vertex>(); //used initially to find when a vertex repeats
@@ -636,6 +688,13 @@ namespace TVGL
             yield return new TriangulationLoop(loop, true);
         }
 
+        /// <summary>
+        /// Creates the missing edges and faces.
+        /// </summary>
+        /// <param name="loops">The loops.</param>
+        /// <param name="newFaces">The new faces.</param>
+        /// <param name="remainingEdges">The remaining edges.</param>
+        /// <returns>IEnumerable&lt;System.ValueTuple&lt;Edge, TriangleFace, TriangleFace&gt;&gt;.</returns>
         private static IEnumerable<(Edge, TriangleFace, TriangleFace)> CreateMissingEdgesAndFaces(
                     List<TriangulationLoop> loops,
                     out List<TriangleFace> newFaces, out List<Edge> remainingEdges)
@@ -754,6 +813,11 @@ namespace TVGL
         }
 
 
+        /// <summary>
+        /// Sets the and get edge checksum.
+        /// </summary>
+        /// <param name="edge">The edge.</param>
+        /// <returns>System.Int64.</returns>
         internal static long SetAndGetEdgeChecksum(Edge edge)
         {
             var checksum = GetEdgeChecksum(edge.From, edge.To);
@@ -761,11 +825,24 @@ namespace TVGL
             return checksum;
         }
 
+        /// <summary>
+        /// Gets the edge checksum.
+        /// </summary>
+        /// <param name="vertex1">The vertex1.</param>
+        /// <param name="vertex2">The vertex2.</param>
+        /// <returns>System.Int64.</returns>
         internal static long GetEdgeChecksum(Vertex vertex1, Vertex vertex2)
         {
             return GetEdgeChecksum(vertex1.IndexInList, vertex2.IndexInList);
         }
 
+        /// <summary>
+        /// Gets the edge checksum.
+        /// </summary>
+        /// <param name="v1">The v1.</param>
+        /// <param name="v2">The v2.</param>
+        /// <returns>System.Int64.</returns>
+        /// <exception cref="System.Exception">edge to same vertices.</exception>
         internal static long GetEdgeChecksum(int v1, int v2)
         {
             if (v1 == -1 || v2 == -1) return -1;

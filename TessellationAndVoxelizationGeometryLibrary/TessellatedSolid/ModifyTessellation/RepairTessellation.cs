@@ -1,7 +1,16 @@
-﻿// Copyright 2015-2020 Design Engineering Lab
-// This file is a part of TVGL, Tessellation and Voxelization Geometry Library
-// https://github.com/DesignEngrLab/TVGL
-// It is licensed under MIT License (see LICENSE.txt for details)
+﻿// ***********************************************************************
+// Assembly         : TessellationAndVoxelizationGeometryLibrary
+// Author           : matth
+// Created          : 04-03-2023
+//
+// Last Modified By : matth
+// Last Modified On : 04-14-2023
+// ***********************************************************************
+// <copyright file="RepairTessellation.cs" company="Design Engineering Lab">
+//     2014
+// </copyright>
+// <summary></summary>
+// ***********************************************************************
 using System.Collections.Generic;
 using System.Linq;
 
@@ -9,9 +18,9 @@ using System.Linq;
 namespace TVGL
 {
     /// <summary>
-    ///  This portion of ModifyTessellation includes the functions to repair a solid. It is
-    ///  invoked during the opening of a tessellated solid from "disk", but the repair function
-    ///  may be called on its own.
+    /// This portion of ModifyTessellation includes the functions to repair a solid. It is
+    /// invoked during the opening of a tessellated solid from "disk", but the repair function
+    /// may be called on its own.
     /// </summary>
     public static partial class ModifyTessellation
     {
@@ -22,6 +31,7 @@ namespace TVGL
         /// </summary>
         /// <param name="ts">The ts.</param>
         /// <param name="repairAutomatically">The repair automatically.</param>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         public static bool CheckModelIntegrity(this TessellatedSolid ts, bool repairAutomatically = true)
         {
             Message.output("Model Integrity Check...", 3);
@@ -160,7 +170,7 @@ namespace TVGL
         }
 
         /// <summary>
-        ///     Stores the edge face ratio.
+        /// Stores the edge face ratio.
         /// </summary>
         /// <param name="ts">The ts.</param>
         /// <param name="edgeFaceRatio">The edge face ratio.</param>
@@ -171,7 +181,7 @@ namespace TVGL
         }
 
         /// <summary>
-        ///     Stores the face does not link back to vertex.
+        /// Stores the face does not link back to vertex.
         /// </summary>
         /// <param name="ts">The ts.</param>
         /// <param name="vertex">The vertex.</param>
@@ -186,7 +196,7 @@ namespace TVGL
         }
 
         /// <summary>
-        ///     Stores the edge does not link back to vertex.
+        /// Stores the edge does not link back to vertex.
         /// </summary>
         /// <param name="ts">The ts.</param>
         /// <param name="vertex">The vertex.</param>
@@ -201,7 +211,7 @@ namespace TVGL
         }
 
         /// <summary>
-        ///     Stores the edge has bad angle.
+        /// Stores the edge has bad angle.
         /// </summary>
         /// <param name="ts">The ts.</param>
         /// <param name="edge">The edge.</param>
@@ -213,7 +223,7 @@ namespace TVGL
         }
 
         /// <summary>
-        ///     Stores the vert does not link back to edge.
+        /// Stores the vert does not link back to edge.
         /// </summary>
         /// <param name="ts">The ts.</param>
         /// <param name="edge">The edge.</param>
@@ -228,7 +238,7 @@ namespace TVGL
         }
 
         /// <summary>
-        ///     Stores the face does not link back to edge.
+        /// Stores the face does not link back to edge.
         /// </summary>
         /// <param name="ts">The ts.</param>
         /// <param name="edge">The edge.</param>
@@ -243,7 +253,7 @@ namespace TVGL
         }
 
         /// <summary>
-        ///     Stores the face with negligible area.
+        /// Stores the face with negligible area.
         /// </summary>
         /// <param name="ts">The ts.</param>
         /// <param name="face">The face.</param>
@@ -256,7 +266,7 @@ namespace TVGL
         }
 
         /// <summary>
-        ///     Stores the vertex does not link back to face.
+        /// Stores the vertex does not link back to face.
         /// </summary>
         /// <param name="ts">The ts.</param>
         /// <param name="face">The face.</param>
@@ -271,7 +281,7 @@ namespace TVGL
         }
 
         /// <summary>
-        ///     Stores the edge does not link back to face.
+        /// Stores the edge does not link back to face.
         /// </summary>
         /// <param name="ts">The ts.</param>
         /// <param name="face">The face.</param>
@@ -286,7 +296,7 @@ namespace TVGL
         }
 
         /// <summary>
-        ///     Stores the face with o two edges.
+        /// Stores the face with o two edges.
         /// </summary>
         /// <param name="ts">The ts.</param>
         /// <param name="face">The face.</param>
@@ -298,7 +308,7 @@ namespace TVGL
         }
 
         /// <summary>
-        ///     Stores the face with two vertices.
+        /// Stores the face with two vertices.
         /// </summary>
         /// <param name="ts">The ts.</param>
         /// <param name="face">The face.</param>
@@ -310,7 +320,7 @@ namespace TVGL
         }
 
         /// <summary>
-        ///     Stores the face with one edge.
+        /// Stores the face with one edge.
         /// </summary>
         /// <param name="ts">The ts.</param>
         /// <param name="face">The face.</param>
@@ -322,7 +332,7 @@ namespace TVGL
         }
 
         /// <summary>
-        ///     Stores the face with one vertex.
+        /// Stores the face with one vertex.
         /// </summary>
         /// <param name="ts">The ts.</param>
         /// <param name="face">The face.</param>
@@ -334,7 +344,7 @@ namespace TVGL
         }
 
         /// <summary>
-        ///     Stores the overused edges.
+        /// Stores the overused edges.
         /// </summary>
         /// <param name="ts">The ts.</param>
         /// <param name="edgeFaceTuples">The edge face tuples.</param>
@@ -346,7 +356,7 @@ namespace TVGL
         }
 
         /// <summary>
-        ///     Stores the single sided edge.
+        /// Stores the single sided edge.
         /// </summary>
         /// <param name="ts">The ts.</param>
         /// <param name="singledSidedEdge">The singled sided edge.</param>
@@ -358,7 +368,7 @@ namespace TVGL
         }
 
         /// <summary>
-        ///     Stores the degenerate face.
+        /// Stores the degenerate face.
         /// </summary>
         /// <param name="ts">The ts.</param>
         /// <param name="faceVertexIndices">The face vertex indices.</param>
@@ -370,7 +380,7 @@ namespace TVGL
         }
 
         /// <summary>
-        ///     Stores the duplicate face.
+        /// Stores the duplicate face.
         /// </summary>
         /// <param name="ts">The ts.</param>
         /// <param name="faceVertexIndices">The face vertex indices.</param>
@@ -386,7 +396,7 @@ namespace TVGL
         #region Repair Functions
 
         /// <summary>
-        ///     Repairs the specified ts.
+        /// Repairs the specified ts.
         /// </summary>
         /// <param name="ts">The ts.</param>
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
@@ -417,10 +427,11 @@ namespace TVGL
         /// Sets the face normal for any negligible area faces that have not already been set.
         /// The neighbor's normal (in the next 2 lines) if the original face has no area (collapsed to a line).
         /// This happens with T-Edges. We want to give the face the normal of the two smaller edges' other faces,
-        /// to preserve a sharp line. Also, if multiple T-Edges are adjacent, recursion may be necessary. 
+        /// to preserve a sharp line. Also, if multiple T-Edges are adjacent, recursion may be necessary.
         /// </summary>
-        /// <param name="ts"></param>
-        /// <returns></returns>
+        /// <param name="ts">The ts.</param>
+        /// <param name="checkAllFaces">if set to <c>true</c> [check all faces].</param>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         public static bool SetNegligibleAreaFaceNormals(this TessellatedSolid ts, bool checkAllFaces = false)
         {
             if (!checkAllFaces && (ts.Errors == null || ts.Errors.FacesWithNegligibleArea == null)) return true;
@@ -440,7 +451,7 @@ namespace TVGL
         }
 
         /// <summary>
-        ///     Flips the faces based on bad angles.
+        /// Flips the faces based on bad angles.
         /// </summary>
         /// <param name="ts">The ts.</param>
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>

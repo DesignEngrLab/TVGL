@@ -1,26 +1,35 @@
-﻿// Copyright 2015-2020 Design Engineering Lab
-// This file is a part of TVGL, Tessellation and Voxelization Geometry Library
-// https://github.com/DesignEngrLab/TVGL
-// It is licensed under MIT License (see LICENSE.txt for details)
+﻿// ***********************************************************************
+// Assembly         : TessellationAndVoxelizationGeometryLibrary
+// Author           : matth
+// Created          : 04-03-2023
+//
+// Last Modified By : matth
+// Last Modified On : 04-03-2023
+// ***********************************************************************
+// <copyright file="Verbosity.cs" company="Design Engineering Lab">
+//     2014
+// </copyright>
+// <summary></summary>
+// ***********************************************************************
 using System.Diagnostics;
 
 namespace TVGL
 {
     /// <summary>
-    ///     Class Message.
+    /// Class Message.
     /// </summary>
     public static class Message
     {
         /// <summary>
-        ///     The verbosity sets how much is reported from the TVGL routines.
+        /// The verbosity sets how much is reported from the TVGL routines.
         /// </summary>
         public static VerbosityLevels Verbosity = VerbosityLevels.OnlyCritical;
 
         /// <summary>
-        ///     Calling Message.output will output the string, message, to the
-        ///     Console (a Debug message) but ONLY if the verbosity (see
-        ///     below) is greater than or equal to your specified limit for this message.
-        ///     the verbosity limit must be 0, 1, 2, 3, or 4.
+        /// Calling Message.output will output the string, message, to the
+        /// Console (a Debug message) but ONLY if the verbosity (see
+        /// below) is greater than or equal to your specified limit for this message.
+        /// the verbosity limit must be 0, 1, 2, 3, or 4.
         /// </summary>
         /// <param name="message">The message.</param>
         /// <param name="verbosityLimit">The verbosity limit.</param>
@@ -35,7 +44,7 @@ namespace TVGL
         }
 
         /// <summary>
-        ///     Outputs the one item of the specified list corresponding to the particular verbosity.
+        /// Outputs the one item of the specified list corresponding to the particular verbosity.
         /// </summary>
         /// <param name="list">The list.</param>
         /// <returns>Boolean.</returns>
@@ -50,38 +59,38 @@ namespace TVGL
     }
 
     /// <summary>
-    ///     Setting the Verbosity to one of these values changes the amount of output
-    ///     send to the Debug Listener. Lower values may speed up search
+    /// Setting the Verbosity to one of these values changes the amount of output
+    /// send to the Debug Listener. Lower values may speed up search
     /// </summary>
     public enum VerbosityLevels
     {
         /// <summary>
-        ///     The only critical
+        /// The only critical
         /// </summary>
         OnlyCritical = 0,
 
         /// <summary>
-        ///     The low
+        /// The low
         /// </summary>
         Low = 1,
 
         /// <summary>
-        ///     The below normal
+        /// The below normal
         /// </summary>
         BelowNormal = 2,
 
         /// <summary>
-        ///     The normal
+        /// The normal
         /// </summary>
         Normal = 3,
 
         /// <summary>
-        ///     The above normal
+        /// The above normal
         /// </summary>
         AboveNormal = 4,
 
         /// <summary>
-        ///     The everything
+        /// The everything
         /// </summary>
         Everything = int.MaxValue
     }

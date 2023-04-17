@@ -1,7 +1,16 @@
-﻿// Copyright 2015-2020 Design Engineering Lab
-// This file is a part of TVGL, Tessellation and Voxelization Geometry Library
-// https://github.com/DesignEngrLab/TVGL
-// It is licensed under MIT License (see LICENSE.txt for details)
+﻿// ***********************************************************************
+// Assembly         : TessellationAndVoxelizationGeometryLibrary
+// Author           : matth
+// Created          : 04-03-2023
+//
+// Last Modified By : matth
+// Last Modified On : 04-03-2023
+// ***********************************************************************
+// <copyright file="Polygon.cs" company="Design Engineering Lab">
+//     2014
+// </copyright>
+// <summary></summary>
+// ***********************************************************************
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -72,6 +81,10 @@ namespace TVGL
         /// </summary>
         List<Vertex2D> _vertices;
 
+        /// <summary>
+        /// Gets the number sig digits.
+        /// </summary>
+        /// <value>The number sig digits.</value>
         internal int NumSigDigits { get; private set; }
 
 
@@ -110,6 +123,9 @@ namespace TVGL
             internal set { _edges = value; }
         }
 
+        /// <summary>
+        /// Makes the polygon edges if non existent.
+        /// </summary>
         public void MakePolygonEdgesIfNonExistent()
         {
             if (_edges != null && _edges.Count == Vertices.Count) return;
@@ -117,6 +133,9 @@ namespace TVGL
                 poly.MakeThisPolygonsEdges();
         }
 
+        /// <summary>
+        /// Makes the this polygons edges.
+        /// </summary>
         private void MakeThisPolygonsEdges()
         {
             var numPoints = Vertices.Count;
@@ -176,8 +195,19 @@ namespace TVGL
             return true;
         }
 
+        /// <summary>
+        /// Inserts the vertex.
+        /// </summary>
+        /// <param name="index">The index.</param>
+        /// <param name="x">The x.</param>
+        /// <param name="y">The y.</param>
         public void InsertVertex(int index, double x, double y)
         { InsertVertex(index, new Vector2(x, y)); }
+        /// <summary>
+        /// Inserts the vertex.
+        /// </summary>
+        /// <param name="index">The index.</param>
+        /// <param name="coordinates">The coordinates.</param>
         public void InsertVertex(int index, Vector2 coordinates)
         {
             if (index == Vertices.Count)
@@ -203,8 +233,17 @@ namespace TVGL
             Reset();
         }
 
+        /// <summary>
+        /// Adds the vertex to end.
+        /// </summary>
+        /// <param name="x">The x.</param>
+        /// <param name="y">The y.</param>
         public void AddVertexToEnd(double x, double y)
         { AddVertexToEnd(new Vector2(x, y)); }
+        /// <summary>
+        /// Adds the vertex to end.
+        /// </summary>
+        /// <param name="coordinates">The coordinates.</param>
         public void AddVertexToEnd(Vector2 coordinates)
         {
             if (_vertices == null)
@@ -236,6 +275,7 @@ namespace TVGL
         /// Removes the hole from the polygon.
         /// </summary>
         /// <param name="polygon">The polygon.</param>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         public bool RemoveHole(Polygon polygon)
         {
             if (_innerPolygons is null)
@@ -486,6 +526,10 @@ namespace TVGL
             }
         }
 
+        /// <summary>
+        /// Gets the centroid.
+        /// </summary>
+        /// <value>The centroid.</value>
         public Vector2 Centroid
         {
             get
@@ -495,8 +539,14 @@ namespace TVGL
                 return _centroid;
             }
         }
+        /// <summary>
+        /// The centroid
+        /// </summary>
         private Vector2 _centroid = Vector2.Null;
 
+        /// <summary>
+        /// Calculates the centroid.
+        /// </summary>
         private void CalculateCentroid()
         {
             var xCenter = 0.0;
@@ -521,6 +571,7 @@ namespace TVGL
         /// </summary>
         /// <param name="coordinates">The coordinates.</param>
         /// <param name="index">The index.</param>
+        /// <param name="RemovePointsLessThanTolerance">if set to <c>true</c> [remove points less than tolerance].</param>
 
 
         public Polygon(IEnumerable<Vector2> coordinates, int index = -1, bool RemovePointsLessThanTolerance = true)
@@ -538,6 +589,10 @@ namespace TVGL
             MakeVerticesFromPath(RemovePointsLessThanTolerance);
         }
 
+        /// <summary>
+        /// Makes the vertices from path.
+        /// </summary>
+        /// <param name="RemovePointsLessThanTolerance">if set to <c>true</c> [remove points less than tolerance].</param>
         private void MakeVerticesFromPath(bool RemovePointsLessThanTolerance = true)
         {
             var tolerance = (MaxX - MinX + MaxY - MinY) * Constants.PolygonSameTolerance / 2;
@@ -568,6 +623,10 @@ namespace TVGL
             _vertices.Reverse();
         }
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Polygon"/> class.
+        /// </summary>
+        /// <param name="loops">The loops.</param>
         public Polygon(IEnumerable<IList<Vector2>> loops) : this(loops.First())
         {
             foreach (var innerLoop in loops.Skip(1))
@@ -651,7 +710,7 @@ namespace TVGL
         // the following argument-less constructor is only used in the copy function
         // and in deserialization
         /// <summary>
-        /// Prevents a default instance of the <see cref="Polygon"/> class from being created.
+        /// Prevents a default instance of the <see cref="Polygon" /> class from being created.
         /// </summary>
         public Polygon()
         {
@@ -728,6 +787,9 @@ namespace TVGL
             }
         }
 
+        /// <summary>
+        /// Resets this instance.
+        /// </summary>
         public void Reset()
         {
             _path = null;
@@ -739,9 +801,16 @@ namespace TVGL
             _centroid = Vector2.Null;
         }
 
+        /// <summary>
+        /// The serialization data
+        /// </summary>
         [JsonExtensionData]
         protected IDictionary<string, JToken> serializationData;
 
+        /// <summary>
+        /// Called when [serializing method].
+        /// </summary>
+        /// <param name="context">The context.</param>
         [OnSerializing]
         protected void OnSerializingMethod(StreamingContext context)
         {
@@ -749,6 +818,10 @@ namespace TVGL
             serializationData.Add("Coordinates", JToken.FromObject(Path.ConvertTo1DDoublesCollection()));
         }
 
+        /// <summary>
+        /// Called when [deserialized method].
+        /// </summary>
+        /// <param name="context">The context.</param>
         [OnDeserialized]
         protected void OnDeserializedMethod(StreamingContext context)
         {
@@ -759,9 +832,20 @@ namespace TVGL
         }
     }
 
+    /// <summary>
+    /// Class VertexSortedByXFirst.
+    /// Implements the <see cref="System.Collections.Generic.IComparer{TVGL.Vertex2D}" />
+    /// </summary>
+    /// <seealso cref="System.Collections.Generic.IComparer{TVGL.Vertex2D}" />
     internal class VertexSortedByXFirst : IComparer<Vertex2D>
     {
 
+        /// <summary>
+        /// Compares the specified v1.
+        /// </summary>
+        /// <param name="v1">The v1.</param>
+        /// <param name="v2">The v2.</param>
+        /// <returns>System.Int32.</returns>
         public int Compare(Vertex2D v1, Vertex2D v2)
         {
             if (v1.X.IsPracticallySame(v2.X))
@@ -770,9 +854,20 @@ namespace TVGL
         }
     }
 
+    /// <summary>
+    /// Class VertexSortedByYFirst.
+    /// Implements the <see cref="System.Collections.Generic.IComparer{TVGL.Vertex2D}" />
+    /// </summary>
+    /// <seealso cref="System.Collections.Generic.IComparer{TVGL.Vertex2D}" />
     internal class VertexSortedByYFirst : IComparer<Vertex2D>
     {
 
+        /// <summary>
+        /// Compares the specified v1.
+        /// </summary>
+        /// <param name="v1">The v1.</param>
+        /// <param name="v2">The v2.</param>
+        /// <returns>System.Int32.</returns>
         public int Compare(Vertex2D v1, Vertex2D v2)
         {
             if (v1.Y.IsPracticallySame(v2.Y))
@@ -781,17 +876,38 @@ namespace TVGL
         }
     }
 
+    /// <summary>
+    /// Class VertexSortedByDirection.
+    /// Implements the <see cref="System.Collections.Generic.IComparer{TVGL.Vertex2D}" />
+    /// </summary>
+    /// <seealso cref="System.Collections.Generic.IComparer{TVGL.Vertex2D}" />
     internal class VertexSortedByDirection : IComparer<Vertex2D>
     {
+        /// <summary>
+        /// The sweep direction
+        /// </summary>
         private readonly Vector2 sweepDirection;
+        /// <summary>
+        /// The along direction
+        /// </summary>
         private readonly Vector2 alongDirection;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="VertexSortedByDirection"/> class.
+        /// </summary>
+        /// <param name="sweepDirection">The sweep direction.</param>
         internal VertexSortedByDirection(Vector2 sweepDirection)
         {
             this.sweepDirection = sweepDirection;
             alongDirection = new Vector2(-sweepDirection.Y, sweepDirection.X);
 
         }
+        /// <summary>
+        /// Compares the specified v1.
+        /// </summary>
+        /// <param name="v1">The v1.</param>
+        /// <param name="v2">The v2.</param>
+        /// <returns>System.Int32.</returns>
         public int Compare(Vertex2D v1, Vertex2D v2)
         {
             var d1 = v1.Coordinates.Dot(sweepDirection);

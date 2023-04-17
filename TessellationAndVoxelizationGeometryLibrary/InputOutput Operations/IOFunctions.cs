@@ -1,7 +1,16 @@
-﻿// Copyright 2015-2020 Design Engineering Lab
-// This file is a part of TVGL, Tessellation and Voxelization Geometry Library
-// https://github.com/DesignEngrLab/TVGL
-// It is licensed under MIT License (see LICENSE.txt for details)
+﻿// ***********************************************************************
+// Assembly         : TessellationAndVoxelizationGeometryLibrary
+// Author           : matth
+// Created          : 04-03-2023
+//
+// Last Modified By : matth
+// Last Modified On : 04-07-2023
+// ***********************************************************************
+// <copyright file="IOFunctions.cs" company="Design Engineering Lab">
+//     2014
+// </copyright>
+// <summary></summary>
+// ***********************************************************************
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
@@ -19,9 +28,9 @@ using System.Xml.Serialization;
 namespace TVGL
 {
     /// <summary>
-    ///     The IO or input/output class contains static functions for saving and loading files in common formats.
-    ///     Note that as a Portable class library, these IO functions cannot interact with your file system. In order
-    ///     to load or save, the filename is not enough. One needs to provide the stream.
+    /// The IO or input/output class contains static functions for saving and loading files in common formats.
+    /// Note that as a Portable class library, these IO functions cannot interact with your file system. In order
+    /// to load or save, the filename is not enough. One needs to provide the stream.
     /// </summary>
     public abstract class IO
     {
@@ -34,9 +43,7 @@ namespace TVGL
         /// <summary>
         /// Gets or sets the name of the file.
         /// </summary>
-        /// <value>
-        /// The name of the file.
-        /// </value>
+        /// <value>The name of the file.</value>
         internal string FileName { get; set; }
 
         /// <summary>
@@ -67,9 +74,7 @@ namespace TVGL
         /// <summary>
         /// Gets or sets the comments.
         /// </summary>
-        /// <value>
-        /// The comments.
-        /// </value>
+        /// <value>The comments.</value>
         internal List<string> Comments => _comments;
 
         /// <summary>
@@ -83,10 +88,9 @@ namespace TVGL
         /// Opens the 3D solid or solids from a provided file name.
         /// </summary>
         /// <param name="filename">The filename.</param>
-        /// <returns>
-        /// A list of TessellatedSolids.
-        /// </returns>
-        /// <exception cref="FileNotFoundException">The file was not found at: " + filename</exception>
+        /// <param name="solid">The solid.</param>
+        /// <returns>A list of TessellatedSolids.</returns>
+        /// <exception cref="System.IO.FileNotFoundException">The file was not found at: " + filename</exception>
         public static void Open(string filename, out TessellatedSolid solid)
         {
             if (File.Exists(filename))
@@ -100,7 +104,7 @@ namespace TVGL
         /// </summary>
         /// <param name="filename">The filename.</param>
         /// <param name="solids">The solids.</param>
-        /// <exception cref="FileNotFoundException">The file was not found at: " + filename</exception>
+        /// <exception cref="System.IO.FileNotFoundException">The file was not found at: " + filename</exception>
         public static void Open(string filename, out TessellatedSolid[] solids)
         {
             if (File.Exists(filename))
@@ -114,7 +118,7 @@ namespace TVGL
         /// </summary>
         /// <param name="filename">The filename.</param>
         /// <param name="solids">The solids.</param>
-        /// <exception cref="FileNotFoundException">The file was not found at: " + filename</exception>
+        /// <exception cref="System.IO.FileNotFoundException">The file was not found at: " + filename</exception>
         public static void OpenZip(string filename, out TessellatedSolid[] solids)
         {
             if (File.Exists(filename))
@@ -128,7 +132,7 @@ namespace TVGL
         /// </summary>
         /// <param name="filename">The filename.</param>
         /// <param name="solid">The solid.</param>
-        /// <exception cref="FileNotFoundException">The file was not found at: " + filename</exception>
+        /// <exception cref="System.IO.FileNotFoundException">The file was not found at: " + filename</exception>
         public static void Open(string filename, out VoxelizedSolid solid)
         {
             if (File.Exists(filename))
@@ -142,7 +146,7 @@ namespace TVGL
         /// </summary>
         /// <param name="filename">The filename.</param>
         /// <param name="solid">The solid.</param>
-        /// <exception cref="FileNotFoundException">The file was not found at: " + filename</exception>
+        /// <exception cref="System.IO.FileNotFoundException">The file was not found at: " + filename</exception>
         public static void Open(string filename, out CrossSectionSolid solid)
         {
             if (File.Exists(filename))
@@ -217,8 +221,7 @@ namespace TVGL
         /// <param name="s">The s.</param>
         /// <param name="filename">The filename.</param>
         /// <param name="tessellatedSolids">The tessellated solids.</param>
-        /// <exception cref="Exception">Attempting to open multiple solids with a " + extension.ToString() + " file.</exception>
-        /// <exception cref="Exception">Cannot open file. Message: " + exc.Message</exception>
+        /// <exception cref="System.Exception">Attempting to open multiple solids with a " + extension.ToString() + " file.</exception>
         public static void Open(Stream s, string filename, out TessellatedSolid[] tessellatedSolids)
         {
             //try
@@ -288,6 +291,11 @@ namespace TVGL
             solid = serializer.Deserialize<VoxelizedSolid>(reader);
         }
 
+        /// <summary>
+        /// Opens the specified s.
+        /// </summary>
+        /// <param name="s">The s.</param>
+        /// <param name="solid">The solid.</param>
         public static void Open(Stream s, out CrossSectionSolid solid)
         {
             var serializer = new JsonSerializer();
@@ -301,7 +309,7 @@ namespace TVGL
         /// </summary>
         /// <param name="filename">The filename.</param>
         /// <returns>Solid.</returns>
-        /// <exception cref="FileNotFoundException">The file was not found at: " + filename</exception>
+        /// <exception cref="System.IO.FileNotFoundException">The file was not found at: " + filename</exception>
         public static Solid Open(string filename)
         {
             if (File.Exists(filename))
@@ -444,6 +452,11 @@ namespace TVGL
             Open(stream, out solid);
         }
 
+        /// <summary>
+        /// Gets the file type from extension.
+        /// </summary>
+        /// <param name="extension">The extension.</param>
+        /// <returns>FileType.</returns>
         public static FileType GetFileTypeFromExtension(string extension)
         {
             extension = extension.ToLower(CultureInfo.InvariantCulture).Trim(' ', '.');
@@ -464,6 +477,12 @@ namespace TVGL
             }
         }
 
+        /// <summary>
+        /// Gets the type of the extension from file.
+        /// </summary>
+        /// <param name="fileType">Type of the file.</param>
+        /// <returns>System.String.</returns>
+        /// <exception cref="System.NotImplementedException">Filetype " + fileType + " has not been setup for import/export within TVGL.</exception>
         public static string GetExtensionFromFileType(FileType fileType)
         {
             switch (fileType)
@@ -486,7 +505,7 @@ namespace TVGL
         }
 
         /// <summary>
-        ///     Parses the ID and values from the specified line.
+        /// Parses the ID and values from the specified line.
         /// </summary>
         /// <param name="line">The line.</param>
         /// <param name="id">The id.</param>
@@ -508,7 +527,7 @@ namespace TVGL
         }
 
         /// <summary>
-        ///     Tries to parse a vertex from a string.
+        /// Tries to parse a vertex from a string.
         /// </summary>
         /// <param name="line">The input string.</param>
         /// <param name="doubles">The vertex point.</param>
@@ -527,7 +546,7 @@ namespace TVGL
         }
 
         /// <summary>
-        ///     Tries to parse a vertex from a string.
+        /// Tries to parse a vertex from a string.
         /// </summary>
         /// <param name="parser">The parser.</param>
         /// <param name="line">The input string.</param>
@@ -551,10 +570,10 @@ namespace TVGL
         }
 
         /// <summary>
-        ///     Reads the next line with the expectation that is starts with the
-        ///     "expected" string. If the line does not have the expected value,
-        ///     then the StreamReader stays at the same position and
-        ///     false is returned.
+        /// Reads the next line with the expectation that is starts with the
+        /// "expected" string. If the line does not have the expected value,
+        /// then the StreamReader stays at the same position and
+        /// false is returned.
         /// </summary>
         /// <param name="reader">The reader.</param>
         /// <param name="expected">The expected.</param>
@@ -570,7 +589,7 @@ namespace TVGL
         }
 
         /// <summary>
-        ///     Reads the line.
+        /// Reads the line.
         /// </summary>
         /// <param name="reader">The reader.</param>
         /// <returns>System.String.</returns>
@@ -590,7 +609,7 @@ namespace TVGL
         /// Infers the units from comments.
         /// </summary>
         /// <param name="comments">The comments.</param>
-        /// <returns></returns>
+        /// <returns>UnitType.</returns>
         protected static UnitType InferUnitsFromComments(List<string> comments)
         {
             foreach (var comment in comments)
@@ -607,7 +626,7 @@ namespace TVGL
         /// </summary>
         /// <param name="input">The input.</param>
         /// <param name="units">The units.</param>
-        /// <returns></returns>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         protected static bool TryParseUnits(string input, out UnitType units)
         {
             if (Enum.TryParse(input, out units)) return true;
@@ -647,6 +666,13 @@ namespace TVGL
             return UnitType.unspecified;
         }
 
+        /// <summary>
+        /// Reads the number as int.
+        /// </summary>
+        /// <param name="reader">The reader.</param>
+        /// <param name="type">The type.</param>
+        /// <param name="formatType">Type of the format.</param>
+        /// <returns>System.Int32.</returns>
         internal static int ReadNumberAsInt(BinaryReader reader, Type type, FormatEndiannessType formatType)
         {
             var bigEndian = (formatType == FormatEndiannessType.binary_big_endian);
@@ -707,6 +733,13 @@ namespace TVGL
             return int.MinValue;
         }
 
+        /// <summary>
+        /// Reads the number as float.
+        /// </summary>
+        /// <param name="reader">The reader.</param>
+        /// <param name="type">The type.</param>
+        /// <param name="formatType">Type of the format.</param>
+        /// <returns>System.Single.</returns>
         internal static float ReadNumberAsFloat(BinaryReader reader, Type type, FormatEndiannessType formatType)
         {
             var bigEndian = (formatType == FormatEndiannessType.binary_big_endian);
@@ -767,6 +800,13 @@ namespace TVGL
             return float.NaN;
         }
 
+        /// <summary>
+        /// Reads the number as double.
+        /// </summary>
+        /// <param name="reader">The reader.</param>
+        /// <param name="type">The type.</param>
+        /// <param name="formatType">Type of the format.</param>
+        /// <returns>System.Double.</returns>
         internal static double ReadNumberAsDouble(BinaryReader reader, Type type, FormatEndiannessType formatType)
         {
             var bigEndian = (formatType == FormatEndiannessType.binary_big_endian);
@@ -872,6 +912,12 @@ namespace TVGL
             return true;
         }
 
+        /// <summary>
+        /// Reads the number as int.
+        /// </summary>
+        /// <param name="text">The text.</param>
+        /// <param name="type">The type.</param>
+        /// <returns>System.Int32.</returns>
         internal static int ReadNumberAsInt(string text, Type type)
         {
             if (type == typeof(double))
@@ -913,6 +959,12 @@ namespace TVGL
             return int.MinValue;
         }
 
+        /// <summary>
+        /// Reads the number as float.
+        /// </summary>
+        /// <param name="text">The text.</param>
+        /// <param name="type">The type.</param>
+        /// <returns>System.Single.</returns>
         internal static float ReadNumberAsFloat(string text, Type type)
         {
             if (type == typeof(double))
@@ -954,6 +1006,12 @@ namespace TVGL
             return float.NaN;
         }
 
+        /// <summary>
+        /// Reads the number as double.
+        /// </summary>
+        /// <param name="text">The text.</param>
+        /// <param name="type">The type.</param>
+        /// <returns>System.Double.</returns>
         internal static double ReadNumberAsDouble(string text, Type type)
         {
             if (type == typeof(double))
@@ -1005,7 +1063,7 @@ namespace TVGL
         /// <param name="solids">The solids.</param>
         /// <param name="filename">The filename.</param>
         /// <param name="fileType">Type of the file.</param>
-        /// <returns></returns>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         public static bool Save(IList<Solid> solids, string filename, FileType fileType = FileType.unspecified)
         {
             if (fileType == FileType.unspecified)
@@ -1021,7 +1079,7 @@ namespace TVGL
         /// <param name="solid">The solid.</param>
         /// <param name="filename">The filename.</param>
         /// <param name="fileType">Type of the file.</param>
-        /// <returns></returns>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         public static bool Save(Solid solid, string filename, FileType fileType = FileType.unspecified)
         {
             if (fileType == FileType.unspecified)
@@ -1034,12 +1092,15 @@ namespace TVGL
         }
 
         /// <summary>
-        ///     Saves the specified stream.
+        /// Saves the specified stream.
         /// </summary>
         /// <param name="stream">The stream.</param>
         /// <param name="solids">The solids.</param>
         /// <param name="fileType">Type of the file.</param>
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
+        /// <exception cref="System.NotSupportedException">The " + fileType.ToString() + "format does not support saving multiple solids to a single file.</exception>
+        /// <exception cref="System.NotSupportedException">Saving to the " + fileType.ToString() + "format is not yet supported in TVGL.</exception>
+        /// <exception cref="System.NotImplementedException">Need to provide filepath instread of stream.</exception>
         public static bool Save(Stream stream, IList<Solid> solids, FileType fileType = FileType.TVGL)
         {
             if (solids.Count == 0) return false;
@@ -1089,6 +1150,7 @@ namespace TVGL
         /// <param name="solid">The solid.</param>
         /// <param name="fileType">Type of the file.</param>
         /// <returns>System.Boolean.</returns>
+        /// <exception cref="System.NotSupportedException">Saving to the " + fileType.ToString() + "format is not yet supported in TVGL.</exception>
         public static bool Save(Stream stream, Solid solid, FileType fileType = FileType.TVGL)
         {
             switch (fileType)
@@ -1208,7 +1270,7 @@ namespace TVGL
         /// </summary>
         /// <param name="filename">The filename.</param>
         /// <param name="polygon">The polygon.</param>
-        /// <exception cref="FileNotFoundException">The file was not found at: " + filename</exception>
+        /// <exception cref="System.IO.FileNotFoundException">The file was not found at: " + filename</exception>
         public static void Open(string filename, out Polygon polygon)
         {
             if (!File.Exists(filename)) throw new FileNotFoundException("The file was not found at: " + filename);
@@ -1226,12 +1288,22 @@ namespace TVGL
         // however, experiment in early Jan2020, did not tend to show this. but even the
         // doubles changed value which makes me think I didn't do a good job with it.
         // Come back to this in the future?
+        /// <summary>
+        /// Converts the double array to string.
+        /// </summary>
+        /// <param name="doubles">The doubles.</param>
+        /// <returns>System.String.</returns>
         internal static string ConvertDoubleArrayToString(IEnumerable<double> doubles)
         {
             var byteArray = doubles.SelectMany(BitConverter.GetBytes).ToArray();
             return System.Text.Encoding.Unicode.GetString(byteArray);
         }
 
+        /// <summary>
+        /// Converts the string to double array.
+        /// </summary>
+        /// <param name="doublesAsString">The doubles as string.</param>
+        /// <returns>System.Double[].</returns>
         internal static double[] ConvertStringToDoubleArray(string doublesAsString)
         {
             var bytes = System.Text.Encoding.Unicode.GetBytes(doublesAsString);
@@ -1256,12 +1328,24 @@ namespace TVGL
             }
         }
 
+        /// <summary>
+        /// Saves to TVGL old.
+        /// </summary>
+        /// <param name="solidAssembly">The solid assembly.</param>
+        /// <param name="filename">The filename.</param>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         public static bool SaveToTVGL_Old(SolidAssembly solidAssembly, string filename)
         {
             using var fileStream = File.OpenWrite(Path.ChangeExtension(filename, GetExtensionFromFileType(FileType.TVGL)));
             return SaveToTVGL(fileStream, solidAssembly);
         }
 
+        /// <summary>
+        /// Saves to TVGL old.
+        /// </summary>
+        /// <param name="s">The s.</param>
+        /// <param name="solidAssembly">The solid assembly.</param>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         public static bool SaveToTVGL_Old(Stream s, SolidAssembly solidAssembly)
         {
             try
@@ -1277,6 +1361,12 @@ namespace TVGL
             }
         }
 
+        /// <summary>
+        /// Saves to TVG lz.
+        /// </summary>
+        /// <param name="solidAssembly">The solid assembly.</param>
+        /// <param name="filename">The filename.</param>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         public static bool SaveToTVGLz(SolidAssembly solidAssembly, string filename)
         {
             //Delete the existing file if it exists, so that our stream doesn't get corrupted
@@ -1305,6 +1395,12 @@ namespace TVGL
             return true;
         }
 
+        /// <summary>
+        /// Saves to TVGL.
+        /// </summary>
+        /// <param name="fileStream">The file stream.</param>
+        /// <param name="solidAssembly">The solid assembly.</param>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         private static bool SaveToTVGL(Stream fileStream, SolidAssembly solidAssembly)
         {
             try
@@ -1324,6 +1420,12 @@ namespace TVGL
             }
         }
 
+        /// <summary>
+        /// Reads the stream.
+        /// </summary>
+        /// <param name="filename">The filename.</param>
+        /// <param name="solidAssembly">The solid assembly.</param>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         public static bool ReadStream(string filename, out SolidAssembly solidAssembly)
         {
             solidAssembly = null;
@@ -1372,6 +1474,12 @@ namespace TVGL
             }
         }
 
+        /// <summary>
+        /// Adds the entry.
+        /// </summary>
+        /// <param name="fileName">Name of the file.</param>
+        /// <param name="fileContent">Content of the file.</param>
+        /// <param name="archive">The archive.</param>
         private static void AddEntry(string fileName, byte[] fileContent, ZipArchive archive)
         {
             var entry = archive.CreateEntry(fileName);
@@ -1380,6 +1488,11 @@ namespace TVGL
 
         }
 
+        /// <summary>
+        /// Opens the TVGL.
+        /// </summary>
+        /// <param name="s">The s.</param>
+        /// <param name="solidAssembly">The solid assembly.</param>
         public static void OpenTVGL(Stream s, out SolidAssembly solidAssembly)
         {
             var serializer = new JsonSerializer();
@@ -1387,6 +1500,11 @@ namespace TVGL
             solidAssembly = serializer.Deserialize<SolidAssembly>(reader);
         }
 
+        /// <summary>
+        /// Opens the TVG lz.
+        /// </summary>
+        /// <param name="s">The s.</param>
+        /// <param name="solidAssembly">The solid assembly.</param>
         public static void OpenTVGLz(Stream s, out SolidAssembly solidAssembly)
         {
             var serializer = new JsonSerializer();

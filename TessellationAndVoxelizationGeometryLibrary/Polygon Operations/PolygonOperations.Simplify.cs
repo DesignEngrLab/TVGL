@@ -1,7 +1,16 @@
-﻿// Copyright 2015-2020 Design Engineering Lab
-// This file is a part of TVGL, Tessellation and Voxelization Geometry Library
-// https://github.com/DesignEngrLab/TVGL
-// It is licensed under MIT License (see LICENSE.txt for details)
+﻿// ***********************************************************************
+// Assembly         : TessellationAndVoxelizationGeometryLibrary
+// Author           : matth
+// Created          : 04-03-2023
+//
+// Last Modified By : matth
+// Last Modified On : 04-03-2023
+// ***********************************************************************
+// <copyright file="PolygonOperations.Simplify.cs" company="Design Engineering Lab">
+//     2014
+// </copyright>
+// <summary></summary>
+// ***********************************************************************
 using Priority_Queue;
 using System;
 using System.Collections.Generic;
@@ -20,8 +29,7 @@ namespace TVGL
         /// <summary>
         /// Simplifies the specified polygons by removing vertices that have collinear edges.
         /// </summary>
-        /// <param name="polygons">The polygons.</param>
-        /// <param name="allowableChangeInAreaFraction">The allowable change in area fraction.</param>
+        /// <param name="polygon">The polygon.</param>
         /// <returns>IEnumerable&lt;Polygon&gt;.</returns>
         public static Polygon RemoveCollinearEdgesToNewPolygon(this Polygon polygon)
         {
@@ -33,7 +41,6 @@ namespace TVGL
         /// Simplifies the specified polygons by removing vertices that have collinear edges.
         /// </summary>
         /// <param name="polygons">The polygons.</param>
-        /// <param name="allowableChangeInAreaFraction">The allowable change in area fraction.</param>
         /// <returns>IEnumerable&lt;Polygon&gt;.</returns>
         public static IEnumerable<Polygon> RemoveCollinearEdgesToNewPolygons(this IEnumerable<Polygon> polygons)
         {
@@ -46,7 +53,6 @@ namespace TVGL
         /// Simplifies the specified polygons by removing vertices that have collinear edges.
         /// </summary>
         /// <param name="polygons">The polygons.</param>
-        /// <param name="allowableChangeInAreaFraction">The allowable change in area fraction.</param>
         /// <returns>IEnumerable&lt;Polygon&gt;.</returns>
         public static void RemoveCollinearEdges(this IEnumerable<Polygon> polygons)
         {
@@ -57,7 +63,6 @@ namespace TVGL
         /// Simplifies the specified polygons by removing vertices that have collinear edges.
         /// </summary>
         /// <param name="polygon">The polygon.</param>
-        /// <param name="allowableChangeInAreaFraction">The allowable change in area fraction.</param>
         /// <returns>Polygon.</returns>
         public static void RemoveCollinearEdges(this Polygon polygon)
         {
@@ -72,7 +77,7 @@ namespace TVGL
                 polygonHole.RemoveCollinearEdges();
         }
 
-        /// <summary>        
+        /// <summary>
         /// Simplifies the specified polygons by removing vertices that have collinear edges.
         /// </summary>
         /// <param name="paths">The paths.</param>
@@ -85,8 +90,8 @@ namespace TVGL
         /// <summary>
         /// Simplifies the specified polygons by removing vertices that have collinear edges.
         /// </summary>
-        /// <param name="path"></param>
-        /// <returns></returns>
+        /// <param name="path">The path.</param>
+        /// <returns>IList&lt;Vector2&gt;.</returns>
         public static IList<Vector2> RemoveCollinearEdgesToNewList(this IEnumerable<Vector2> path)
         {
             var polygon = path as IList<Vector2> ?? path.ToList();
@@ -106,8 +111,8 @@ namespace TVGL
         /// <summary>
         /// Simplifies the specified polygons by removing vertices that have collinear edges.
         /// </summary>
-        /// <param name="path"></param>
-        /// <returns></returns>
+        /// <param name="path">The path.</param>
+        /// <returns>IList&lt;Vector2&gt;.</returns>
         public static IList<Vector2> RemoveCollinearEdgesDestructiveList(this IList<Vector2> path)
         {
             var forwardPoint = path[0];
@@ -132,7 +137,7 @@ namespace TVGL
         /// In this method vertices are not simply deleted but a new one is created at midPoint of deleted edge.
         /// </summary>
         /// <param name="polygons">The polygons.</param>
-        /// <param name="allowableChangeInAreaFraction">The allowable change in area fraction.</param>
+        /// <param name="minAllowableLength">Minimum length of the allowable.</param>
         /// <returns>IEnumerable&lt;Polygon&gt;.</returns>
         public static IEnumerable<Polygon> SimplifyMinLengthToNewPolygons(this IEnumerable<Polygon> polygons, double minAllowableLength)
         {
@@ -159,7 +164,7 @@ namespace TVGL
         /// In this method vertices are not simply deleted but a new one is created at midPoint of deleted edge.
         /// </summary>
         /// <param name="polygons">The polygons.</param>
-        /// <param name="allowableChangeInAreaFraction">The allowable change in area fraction.</param>
+        /// <param name="minAllowableLength">Minimum length of the allowable.</param>
         /// <returns>IEnumerable&lt;Polygon&gt;.</returns>
         public static void SimplifyMinLength(this IEnumerable<Polygon> polygons, double minAllowableLength)
         {
@@ -224,8 +229,9 @@ namespace TVGL
         /// Simplifies the specified polygons so that no edge is less than the minimum allowable length.
         /// In this method vertices are not simply deleted but a new one is created at midPoint of deleted edge.
         /// </summary>
-        /// <param name="path"></param>
-        /// <returns></returns>
+        /// <param name="path">The path.</param>
+        /// <param name="minAllowableLength">Minimum length of the allowable.</param>
+        /// <returns>IEnumerable&lt;Vector2&gt;.</returns>
         public static IEnumerable<Vector2> SimplifyMinLengthToNewList(this IEnumerable<Vector2> path, double minAllowableLength)
         {
             // first remove collinear points
@@ -397,11 +403,11 @@ namespace TVGL
         /// Simplifies the specified polygons so that no edge is less than the minimum allowable length.
         /// In this method vertices are not simply deleted but a new one is created at midPoint of deleted edge.
         /// </summary>
-        /// <param name="path">The path.</param>
+        /// <param name="paths">The paths.</param>
         /// <param name="targetNumberOfPoints">The target number of points.</param>
         /// <returns>List&lt;List&lt;Vector2&gt;&gt;.</returns>
         /// <exception cref="ArgumentOutOfRangeException">targetNumberOfPoints - The number of points to remove in PolygonOperations.Simplify"
-        ///                   + " is more than the total number of points in the polygon(s).</exception>
+        /// + " is more than the total number of points in the polygon(s).</exception>
         public static IEnumerable<IList<Vector2>> SimplifyMinLength(this IEnumerable<IEnumerable<Vector2>> paths, int targetNumberOfPoints)
         {
             // first remove collinear points and set up lists
@@ -471,7 +477,7 @@ namespace TVGL
         /// Simplifies the specified polygon no more than the allowable change in area fraction.
         /// </summary>
         /// <param name="polygon">The polygon.</param>
-        /// <param name="targetNumberOfPoints">The target number of points.</param>
+        /// <param name="allowableChangeInAreaFraction">The allowable change in area fraction.</param>
         /// <returns>Polygon.</returns>
         public static Polygon SimplifyByAreaChangeToNewPolygon(this Polygon polygon, double allowableChangeInAreaFraction)
         {
@@ -484,7 +490,7 @@ namespace TVGL
         /// Simplifies the specified polygon no more than the allowable change in area fraction.
         /// </summary>
         /// <param name="polygons">The polygons.</param>
-        /// <param name="targetNumberOfPoints">The target number of points.</param>
+        /// <param name="allowableChangeInAreaFraction">The allowable change in area fraction.</param>
         /// <returns>IEnumerable&lt;Polygon&gt;.</returns>
         public static IEnumerable<Polygon> SimplifyByAreaChangeToNewPolygons(this IEnumerable<Polygon> polygons, double allowableChangeInAreaFraction)
         {
@@ -574,8 +580,9 @@ namespace TVGL
         /// <summary>
         /// Simplifies the specified polygons no more than the allowable change in area fraction.
         /// </summary>
-        /// <param name="path"></param>
-        /// <returns></returns>
+        /// <param name="path">The path.</param>
+        /// <param name="allowableChangeInAreaFraction">The allowable change in area fraction.</param>
+        /// <returns>IEnumerable&lt;Vector2&gt;.</returns>
         public static IEnumerable<Vector2> SimplifyByAreaChangeToNewList(this IEnumerable<Vector2> path, double allowableChangeInAreaFraction)
         {
             var polygon = path.RemoveCollinearEdgesToNewList();
@@ -746,11 +753,11 @@ namespace TVGL
         /// <summary>
         /// Simplifies the specified polygon to the target number of points using the minimal area change approach.
         /// </summary>
-        /// <param name="path">The path.</param>
+        /// <param name="paths">The paths.</param>
         /// <param name="targetNumberOfPoints">The target number of points.</param>
         /// <returns>List&lt;List&lt;Vector2&gt;&gt;.</returns>
         /// <exception cref="ArgumentOutOfRangeException">targetNumberOfPoints - The number of points to remove in PolygonOperations.Simplify"
-        ///                   + " is more than the total number of points in the polygon(s).</exception>
+        /// + " is more than the total number of points in the polygon(s).</exception>
         public static IEnumerable<IList<Vector2>> SimplifyByAreaChangeToNewLists(this IEnumerable<IEnumerable<Vector2>> paths, int targetNumberOfPoints)
         {
             // first remove collinear points and set up lists
@@ -821,6 +828,13 @@ namespace TVGL
         #endregion Simplify by area change
 
         #region SimplifyFast (By MinLength and RemoveCollinearEdges) - Does not use PriorityQueue
+        /// <summary>
+        /// Simplifies the fast.
+        /// </summary>
+        /// <param name="polygons">The polygons.</param>
+        /// <param name="lengthTolerance">The length tolerance.</param>
+        /// <param name="slopeTolerance">The slope tolerance.</param>
+        /// <returns>List&lt;Polygon&gt;.</returns>
         public static List<Polygon> SimplifyFast(this List<Polygon> polygons, double lengthTolerance = Constants.LineLengthMinimum,
             double slopeTolerance = Constants.LineSlopeTolerance)
         {
@@ -832,6 +846,13 @@ namespace TVGL
             return output;
         }
 
+        /// <summary>
+        /// Simplifies the fast.
+        /// </summary>
+        /// <param name="polygon">The polygon.</param>
+        /// <param name="lengthTolerance">The length tolerance.</param>
+        /// <param name="slopeTolerance">The slope tolerance.</param>
+        /// <returns>Polygon.</returns>
         public static Polygon SimplifyFast(this Polygon polygon, double lengthTolerance = Constants.LineLengthMinimum,
            double slopeTolerance = Constants.LineSlopeTolerance)
         {
@@ -844,8 +865,10 @@ namespace TVGL
         /// <summary>
         /// Simplifies the specified polygons by reducing the number of points in the polygon
         /// </summary>
-        /// <param name="path"></param>
-        /// <returns></returns>
+        /// <param name="path">The path.</param>
+        /// <param name="lengthTolerance">The length tolerance.</param>
+        /// <param name="slopeTolerance">The slope tolerance.</param>
+        /// <returns>List&lt;Vector2&gt;.</returns>
         public static List<Vector2> SimplifyFast(this IEnumerable<Vector2> path, double lengthTolerance = Constants.LineLengthMinimum,
             double slopeTolerance = Constants.LineSlopeTolerance)
         {
@@ -944,6 +967,15 @@ namespace TVGL
             return simplePath;
         }
 
+        /// <summary>
+        /// Negligibles the line.
+        /// </summary>
+        /// <param name="p1X">The p1 x.</param>
+        /// <param name="p1Y">The p1 y.</param>
+        /// <param name="p2X">The p2 x.</param>
+        /// <param name="p2Y">The p2 y.</param>
+        /// <param name="squaredTolerance">The squared tolerance.</param>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static bool NegligibleLine(double p1X, double p1Y, double p2X, double p2Y, double squaredTolerance)
         {
@@ -952,6 +984,17 @@ namespace TVGL
             return (dX * dX + dY * dY).IsNegligible(squaredTolerance);
         }
 
+        /// <summary>
+        /// Lines the slopes equal.
+        /// </summary>
+        /// <param name="p1X">The p1 x.</param>
+        /// <param name="p1Y">The p1 y.</param>
+        /// <param name="p2X">The p2 x.</param>
+        /// <param name="p2Y">The p2 y.</param>
+        /// <param name="p3X">The p3 x.</param>
+        /// <param name="p3Y">The p3 y.</param>
+        /// <param name="tolerance">The tolerance.</param>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static bool LineSlopesEqual(double p1X, double p1Y, double p2X, double p2Y, double p3X, double p3Y,
             double tolerance = Constants.LineSlopeTolerance)
@@ -1110,6 +1153,14 @@ namespace TVGL
         #endregion
 
         #region helper functions
+        /// <summary>
+        /// Finds the index of the valid neighbor.
+        /// </summary>
+        /// <param name="index">The index.</param>
+        /// <param name="forward">if set to <c>true</c> [forward].</param>
+        /// <param name="polygon">The polygon.</param>
+        /// <param name="numPoints">The number points.</param>
+        /// <returns>System.Int32.</returns>
         private static int FindValidNeighborIndex(int index, bool forward, IList<Vector2> polygon, int numPoints)
         {
             int increment = forward ? 1 : -1;
@@ -1142,6 +1193,16 @@ namespace TVGL
             return index;
         }
 
+        /// <summary>
+        /// Adds the cross product to one of the lists.
+        /// </summary>
+        /// <param name="fromPoint">From point.</param>
+        /// <param name="currentPoint">The current point.</param>
+        /// <param name="nextPoint">The next point.</param>
+        /// <param name="convexCornerQueue">The convex corner queue.</param>
+        /// <param name="concaveCornerQueue">The concave corner queue.</param>
+        /// <param name="crossProducts">The cross products.</param>
+        /// <param name="index">The index.</param>
         private static void AddCrossProductToOneOfTheLists(Vector2 fromPoint, Vector2 currentPoint, Vector2 nextPoint,
             SimplePriorityQueue<int, double> convexCornerQueue, SimplePriorityQueue<int, double> concaveCornerQueue,
             double[] crossProducts, int index)
@@ -1152,6 +1213,12 @@ namespace TVGL
             else convexCornerQueue.Enqueue(index, cross);
         }
 
+        /// <summary>
+        /// Updates the cross product in queues.
+        /// </summary>
+        /// <param name="vertex">The vertex.</param>
+        /// <param name="convexCornerQueue">The convex corner queue.</param>
+        /// <param name="concaveCornerQueue">The concave corner queue.</param>
         private static void UpdateCrossProductInQueues(Vertex2D vertex, SimplePriorityQueue<Vertex2D, double> convexCornerQueue,
             SimplePriorityQueue<Vertex2D, double> concaveCornerQueue)
         {
@@ -1177,6 +1244,16 @@ namespace TVGL
             }
         }
 
+        /// <summary>
+        /// Updates the cross product in queues.
+        /// </summary>
+        /// <param name="fromPoint">From point.</param>
+        /// <param name="currentPoint">The current point.</param>
+        /// <param name="nextPoint">The next point.</param>
+        /// <param name="convexCornerQueue">The convex corner queue.</param>
+        /// <param name="concaveCornerQueue">The concave corner queue.</param>
+        /// <param name="crossProducts">The cross products.</param>
+        /// <param name="index">The index.</param>
         private static void UpdateCrossProductInQueues(Vector2 fromPoint, Vector2 currentPoint, Vector2 nextPoint,
             SimplePriorityQueue<int, double> convexCornerQueue, SimplePriorityQueue<int, double> concaveCornerQueue,
             double[] crossProducts, int index)
@@ -1204,6 +1281,15 @@ namespace TVGL
             }
         }
 
+        /// <summary>
+        /// Adds the cross product to queue.
+        /// </summary>
+        /// <param name="fromPoint">From point.</param>
+        /// <param name="currentPoint">The current point.</param>
+        /// <param name="nextPoint">The next point.</param>
+        /// <param name="cornerQueue">The corner queue.</param>
+        /// <param name="crossProducts">The cross products.</param>
+        /// <param name="index">The index.</param>
         private static void AddCrossProductToQueue(Vector2 fromPoint, Vector2 currentPoint,
             Vector2 nextPoint, SimplePriorityQueue<int, double> cornerQueue,
             double[] crossProducts, int index)
@@ -1213,6 +1299,15 @@ namespace TVGL
             cornerQueue.Enqueue(index, cross);
         }
 
+        /// <summary>
+        /// Updates the cross product in queue.
+        /// </summary>
+        /// <param name="fromPoint">From point.</param>
+        /// <param name="currentPoint">The current point.</param>
+        /// <param name="nextPoint">The next point.</param>
+        /// <param name="cornerQueue">The corner queue.</param>
+        /// <param name="crossProducts">The cross products.</param>
+        /// <param name="index">The index.</param>
         private static void UpdateCrossProductInQueue(Vector2 fromPoint, Vector2 currentPoint, Vector2 nextPoint,
             SimplePriorityQueue<int, double> cornerQueue, double[] crossProducts, int index)
         {
@@ -1221,6 +1316,11 @@ namespace TVGL
             cornerQueue.UpdatePriority(index, newCross);
         }
 
+        /// <summary>
+        /// Deletes the vertex.
+        /// </summary>
+        /// <param name="vertexToDelete">The vertex to delete.</param>
+        /// <returns>PolygonEdge.</returns>
         private static PolygonEdge DeleteVertex(this Vertex2D vertexToDelete)
         {
             var edgeTo = vertexToDelete.StartLine.ToPoint;
@@ -1232,6 +1332,11 @@ namespace TVGL
             vertexToDelete.EndLine = null;
             return newEdge;
         }
+        /// <summary>
+        /// Recreates the vertices.
+        /// </summary>
+        /// <param name="polygon">The polygon.</param>
+        /// <param name="topOnly">if set to <c>true</c> [top only].</param>
         private static void RecreateVertices(this Polygon polygon, bool topOnly = true)
         {
             var index = 0;

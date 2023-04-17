@@ -1,7 +1,16 @@
-﻿// Copyright 2015-2020 Design Engineering Lab
-// This file is a part of TVGL, Tessellation and Voxelization Geometry Library
-// https://github.com/DesignEngrLab/TVGL
-// It is licensed under MIT License (see LICENSE.txt for details)
+﻿// ***********************************************************************
+// Assembly         : TessellationAndVoxelizationGeometryLibrary
+// Author           : matth
+// Created          : 04-03-2023
+//
+// Last Modified By : matth
+// Last Modified On : 04-14-2023
+// ***********************************************************************
+// <copyright file="TVGLConvexHull.cs" company="Design Engineering Lab">
+//     2014
+// </copyright>
+// <summary></summary>
+// ***********************************************************************
 using MIConvexHull;
 using System;
 using System.Collections.Generic;
@@ -11,12 +20,12 @@ using System.Linq;
 namespace TVGL
 {
     /// <summary>
-    ///     The Convex Hull of a Tesselated Solid
+    /// The Convex Hull of a Tesselated Solid
     /// </summary>
     public class TVGLConvexHull
     {
         /// <summary>
-        ///     Initializes a new instance of the <see cref="TVGLConvexHull" /> class.
+        /// Initializes a new instance of the <see cref="TVGLConvexHull" /> class.
         /// </summary>
         /// <param name="ts">The tessellated solid that the convex hull is made from.</param>
         public TVGLConvexHull(TessellatedSolid ts) : this(ts.Vertices, ts.SameTolerance)
@@ -24,10 +33,13 @@ namespace TVGL
         }
 
         /// <summary>
-        ///     Initializes a new instance of the <see cref="TVGLConvexHull" /> class.
-        ///     Optionally can choose to create faces and edges. Cannot make edges without faces.
+        /// Initializes a new instance of the <see cref="TVGLConvexHull" /> class.
+        /// Optionally can choose to create faces and edges. Cannot make edges without faces.
         /// </summary>
-        /// <param name="ts">The tessellated solid that the convex hull is made from.</param>
+        /// <param name="vertices">The vertices.</param>
+        /// <param name="tolerance">The tolerance.</param>
+        /// <param name="createFaces">if set to <c>true</c> [create faces].</param>
+        /// <param name="createEdges">if set to <c>true</c> [create edges].</param>
         public TVGLConvexHull(IList<Vertex> vertices, double tolerance, bool createFaces = true, bool createEdges = true)
         {
             var convexHull = ConvexHull.Create(vertices, tolerance);
@@ -57,6 +69,13 @@ namespace TVGL
                 TessellatedSolid.CalculateVolumeAndCenter(Faces, tolerance, out Volume, out Center);
         }
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="TVGLConvexHull"/> class.
+        /// </summary>
+        /// <param name="allVertices">All vertices.</param>
+        /// <param name="convexHullPoints">The convex hull points.</param>
+        /// <param name="convexHullFaceIndices">The convex hull face indices.</param>
+        /// <param name="tolerance">The tolerance.</param>
         internal TVGLConvexHull(IList<Vertex> allVertices, IList<Vertex> convexHullPoints,
             IList<int> convexHullFaceIndices, double tolerance)
         {
@@ -88,6 +107,12 @@ namespace TVGL
             TessellatedSolid.CalculateVolumeAndCenter(Faces, tolerance, out Volume, out Center);
         }
 
+        /// <summary>
+        /// Makes the edges.
+        /// </summary>
+        /// <param name="faces">The faces.</param>
+        /// <param name="vertices">The vertices.</param>
+        /// <returns>Edge[].</returns>
         private static Edge[] MakeEdges(IEnumerable<TriangleFace> faces, IList<Vertex> vertices)
         {
             var numVertices = vertices.Count;
@@ -121,39 +146,39 @@ namespace TVGL
         #region Public Properties
 
         /// <summary>
-        ///     The surface area
+        /// The surface area
         /// </summary>
         public readonly double SurfaceArea;
 
         /// <summary>
-        ///     The center
+        /// The center
         /// </summary>
         public readonly Vector3 Center;
 
         /// <summary>
-        ///     The volume of the Convex Hull.
+        /// The volume of the Convex Hull.
         /// </summary>
         public readonly double Volume;
 
         /// <summary>
-        ///     The vertices of the ConvexHull
+        /// The vertices of the ConvexHull
         /// </summary>
         public readonly Vertex[] Vertices;
 
         /// <summary>
-        ///     Gets the convex hull faces.
+        /// Gets the convex hull faces.
         /// </summary>
         /// <value>The convex hull faces.</value>
         public readonly TriangleFace[] Faces;
 
         /// <summary>
-        ///     Gets whether the convex hull creation was successful.
+        /// Gets whether the convex hull creation was successful.
         /// </summary>
         /// <value>The convex hull faces.</value>
         public readonly bool Succeeded;
 
         /// <summary>
-        ///     Gets the convex hull edges.
+        /// Gets the convex hull edges.
         /// </summary>
         /// <value>The convex hull edges.</value>
         public readonly Edge[] Edges;

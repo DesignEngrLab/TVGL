@@ -1,7 +1,16 @@
-// Copyright 2015-2020 Design Engineering Lab
-// This file is a part of TVGL, Tessellation and Voxelization Geometry Library
-// https://github.com/DesignEngrLab/TVGL
-// It is licensed under MIT License (see LICENSE.txt for details)
+// ***********************************************************************
+// Assembly         : TessellationAndVoxelizationGeometryLibrary
+// Author           : matth
+// Created          : 04-03-2023
+//
+// Last Modified By : matth
+// Last Modified On : 04-14-2023
+// ***********************************************************************
+// <copyright file="Plane.cs" company="Design Engineering Lab">
+//     2014
+// </copyright>
+// <summary></summary>
+// ***********************************************************************
 
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
@@ -26,12 +35,18 @@ namespace TVGL
         /// <summary>
         /// The normal vector of the Plane.
         /// </summary>
+        /// <value>The normal.</value>
         public Vector3 Normal { get; set; }
         /// <summary>
         /// The distance of the Plane along its normal from the origin.
         /// </summary>
+        /// <value>The distance to origin.</value>
         public double DistanceToOrigin { get; set; }
 
+        /// <summary>
+        /// Gets as transform from xy plane.
+        /// </summary>
+        /// <value>As transform from xy plane.</value>
         [JsonIgnore]
         public Matrix4x4 AsTransformFromXYPlane
         {
@@ -45,7 +60,14 @@ namespace TVGL
                 return _asTransformFromXYPlane;
             }
         }
+        /// <summary>
+        /// As transform from xy plane
+        /// </summary>
         Matrix4x4 _asTransformFromXYPlane = Matrix4x4.Null;
+        /// <summary>
+        /// Gets as transform to xy plane.
+        /// </summary>
+        /// <value>As transform to xy plane.</value>
         [JsonIgnore]
         public Matrix4x4 AsTransformToXYPlane
         {
@@ -59,6 +81,9 @@ namespace TVGL
                 return _asTransformToXYPlane;
             }
         }
+        /// <summary>
+        /// As transform to xy plane
+        /// </summary>
         Matrix4x4 _asTransformToXYPlane = Matrix4x4.Null;
         /// <summary>
         /// Gets the closest point on the plane to the origin.
@@ -73,6 +98,7 @@ namespace TVGL
         /// Initializes a new instance of the <see cref="Plane" /> class.
         /// </summary>
         /// <param name="faces">The faces.</param>
+        /// <param name="connectFacesToPrimitive">if set to <c>true</c> [connect faces to primitive].</param>
         public Plane(IEnumerable<TriangleFace> faces, bool connectFacesToPrimitive = true)
             : base(faces, connectFacesToPrimitive)
         {
@@ -87,6 +113,11 @@ namespace TVGL
             Normal = normal;
         }
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Plane"/> class.
+        /// </summary>
+        /// <param name="vertices">The vertices.</param>
+        /// <param name="normalGuess">The normal guess.</param>
         public Plane(IEnumerable<Vector3> vertices, Vector3 normalGuess)
         {
             DefineNormalAndDistanceFromVertices(vertices, out var dto, out var normal);
@@ -100,11 +131,25 @@ namespace TVGL
         }
 
 
+        /// <summary>
+        /// Defines the normal and distance from vertices.
+        /// </summary>
+        /// <param name="vertices">The vertices.</param>
+        /// <param name="distanceToPlane">The distance to plane.</param>
+        /// <param name="normal">The normal.</param>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         public static bool DefineNormalAndDistanceFromVertices(IEnumerable<Vertex> vertices, out double distanceToPlane, out Vector3 normal)
         {
             return DefineNormalAndDistanceFromVertices(vertices.Select(v => v.Coordinates), out distanceToPlane, out normal);
         }
 
+        /// <summary>
+        /// Defines the normal and distance from vertices.
+        /// </summary>
+        /// <param name="vertices">The vertices.</param>
+        /// <param name="distanceToPlane">The distance to plane.</param>
+        /// <param name="normal">The normal.</param>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool DefineNormalAndDistanceFromVertices(IEnumerable<Vector3> vertices, out double distanceToPlane,
             out Vector3 normal)
@@ -219,6 +264,11 @@ namespace TVGL
             }
         }
 
+        /// <summary>
+        /// Gets the adjacent flats.
+        /// </summary>
+        /// <param name="allFlats">All flats.</param>
+        /// <returns>HashSet&lt;Plane&gt;.</returns>
         public HashSet<Plane> GetAdjacentFlats(ICollection<Plane> allFlats)
         {
             var adjacentFlats = new HashSet<Plane>(); //use a hash to avoid duplicates
@@ -278,7 +328,6 @@ namespace TVGL
         /// <summary>
         /// Creates a new Plane whose normal vector is the source Plane's normal vector normalized.
         /// </summary>
-        /// <param name="value">The source Plane.</param>
         /// <returns>The normalized Plane.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Normalize()
@@ -305,8 +354,6 @@ namespace TVGL
         /// <summary>
         /// Transforms a normalized Plane by a Matrix.
         /// </summary>
-        /// <param name="plane"> The normalized Plane to transform.
-        /// This Plane must already be normalized, so that its Normal vector is of unit length, before this method is called.</param>
         /// <param name="matrix">The transformation matrix to apply to the Plane.</param>
         /// <returns>The transformed Plane.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -334,10 +381,8 @@ namespace TVGL
         }
 
         /// <summary>
-        ///  Transforms a normalized Plane by a Quaternion rotation.
+        /// Transforms a normalized Plane by a Quaternion rotation.
         /// </summary>
-        /// <param name="plane"> The normalized Plane to transform.
-        /// This Plane must already be normalized, so that its Normal vector is of unit length, before this method is called.</param>
         /// <param name="rotation">The Quaternion rotation to apply to the Plane.</param>
         /// <returns>A new Plane that results from applying the rotation.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -384,21 +429,6 @@ namespace TVGL
         /// <param name="plane">The Plane.</param>
         /// <param name="value">The Vector4.</param>
         /// <returns>The dot product.</returns>
-        //[MethodImpl(MethodImplOptions.AggressiveInlining)]
-        //public static double Dot(Plane plane, Vector4 value)
-        //{
-        //    return plane.Normal.X * value.X +
-        //           plane.Normal.Y * value.Y +
-        //           plane.Normal.Z * value.Z +
-        //           plane.D * value.W;
-        //}
-
-        /// <summary>
-        /// Returns the dot product of a specified Vector3 and the normal vector of this Plane plus the distance (D) value of the Plane.
-        /// </summary>
-        /// <param name="plane">The plane.</param>
-        /// <param name="value">The Vector3.</param>
-        /// <returns>The resulting value.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static double DotCoordinate(Plane plane, Vector3 value)
         {
@@ -448,9 +478,10 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="Plane"/> class.
+        /// Initializes a new instance of the <see cref="Plane" /> class.
         /// </summary>
         /// <param name="originalToBeCopied">The original to be copied.</param>
+        /// <param name="copiedTessellatedSolid">The copied tessellated solid.</param>
         public Plane(Plane originalToBeCopied, TessellatedSolid copiedTessellatedSolid = null)
             : base(originalToBeCopied, copiedTessellatedSolid)
         {
@@ -459,9 +490,11 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="Plane"/> class.
+        /// Initializes a new instance of the <see cref="Plane" /> class.
         /// </summary>
         /// <param name="originalToBeCopied">The original to be copied.</param>
+        /// <param name="newFaceIndices">The new face indices.</param>
+        /// <param name="copiedTessellatedSolid">The copied tessellated solid.</param>
         public Plane(Plane originalToBeCopied, int[] newFaceIndices, TessellatedSolid copiedTessellatedSolid)
             : base(newFaceIndices, copiedTessellatedSolid)
         {
@@ -469,6 +502,11 @@ namespace TVGL
             Normal = originalToBeCopied.Normal;
         }
 
+        /// <summary>
+        /// Transforms the from3 d to2 d.
+        /// </summary>
+        /// <param name="point">The point.</param>
+        /// <returns>Vector2.</returns>
         public override Vector2 TransformFrom3DTo2D(Vector3 point)
         {
             var v = new Vector3(point.X, point.Y, point.Z);
@@ -476,11 +514,22 @@ namespace TVGL
             return new Vector2(result.X, result.Y);
         }
 
+        /// <summary>
+        /// Transforms the from2 d to3 d.
+        /// </summary>
+        /// <param name="point">The point.</param>
+        /// <returns>Vector3.</returns>
         public override Vector3 TransformFrom2DTo3D(Vector2 point)
         {
             var v = new Vector3(point.X, point.Y, 0);
             return v.Transform(AsTransformFromXYPlane);
         }
+        /// <summary>
+        /// Transforms the from3 d to2 d.
+        /// </summary>
+        /// <param name="points">The points.</param>
+        /// <param name="pathIsClosed">if set to <c>true</c> [path is closed].</param>
+        /// <returns>IEnumerable&lt;Vector2&gt;.</returns>
         public override IEnumerable<Vector2> TransformFrom3DTo2D(IEnumerable<Vector3> points, bool pathIsClosed)
         {
             foreach (var point in points)
@@ -491,6 +540,11 @@ namespace TVGL
 
 
 
+        /// <summary>
+        /// Points the membership.
+        /// </summary>
+        /// <param name="point">The point.</param>
+        /// <returns>System.Double.</returns>
         public override double PointMembership(Vector3 point) => point.Dot(Normal) - DistanceToOrigin;
 
     }

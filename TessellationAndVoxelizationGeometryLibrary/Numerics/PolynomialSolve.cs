@@ -1,4 +1,17 @@
-﻿using System;
+﻿// ***********************************************************************
+// Assembly         : TessellationAndVoxelizationGeometryLibrary
+// Author           : matth
+// Created          : 04-03-2023
+//
+// Last Modified By : matth
+// Last Modified On : 04-03-2023
+// ***********************************************************************
+// <copyright file="PolynomialSolve.cs" company="Design Engineering Lab">
+//     2014
+// </copyright>
+// <summary></summary>
+// ***********************************************************************
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection.Metadata;
@@ -6,13 +19,39 @@ using System.Runtime.CompilerServices;
 
 namespace TVGL
 {
+    /// <summary>
+    /// Class PolynomialSolve.
+    /// </summary>
     public static class PolynomialSolve
     {
+        /// <summary>
+        /// The two pi
+        /// </summary>
         static double twoPi = 2 * Math.PI;
+        /// <summary>
+        /// The sqrt3by2
+        /// </summary>
         static double sqrt3by2 = Math.Sqrt(3.0) / 2.0;
+        /// <summary>
+        /// The two thirds pi
+        /// </summary>
         static double twoThirdsPi = twoPi / 3.0;
+        /// <summary>
+        /// The scalfact
+        /// </summary>
         static double scalfact = Math.Sqrt(Math.Sqrt(double.MaxValue)) / 1.618034;
+        /// <summary>
+        /// The meps
+        /// </summary>
         const double meps = 10e-15;
+        /// <summary>
+        /// Gets the roots.
+        /// </summary>
+        /// <param name="coefficients">The coefficients.</param>
+        /// <returns>IEnumerable&lt;ComplexNumber&gt;.</returns>
+        /// <exception cref="System.NotImplementedException">These are analytical solve methods which only go" +
+        ///                 "up to quartic numbers</exception>
+        /// <exception cref="System.ArgumentException">Not enough coefficients provided. Please provide for all terms even if zero or one</exception>
         public static IEnumerable<ComplexNumber> GetRoots(this IEnumerable<double> coefficients)
         {
             var coeffList = coefficients as IList<double> ?? coefficients.ToList();
@@ -25,6 +64,11 @@ namespace TVGL
             else throw new ArgumentException("Not enough coefficients provided. Please provide for all terms even if zero or one");
         }
 
+        /// <summary>
+        /// Quadratics as enumeration.
+        /// </summary>
+        /// <param name="coeffList">The coeff list.</param>
+        /// <returns>IEnumerable&lt;ComplexNumber&gt;.</returns>
         private static IEnumerable<ComplexNumber> QuadraticAsEnumeration(IList<double> coeffList)
         {
             var roots = QuadraticAsTuple(coeffList);
@@ -32,6 +76,13 @@ namespace TVGL
             yield return roots.Item2;
         }
 
+        /// <summary>
+        /// Quadratics as enumeration.
+        /// </summary>
+        /// <param name="squaredCoeff">The squared coeff.</param>
+        /// <param name="linearCoeff">The linear coeff.</param>
+        /// <param name="constant">The constant.</param>
+        /// <returns>IEnumerable&lt;ComplexNumber&gt;.</returns>
         private static IEnumerable<ComplexNumber> QuadraticAsEnumeration(double squaredCoeff, double linearCoeff, double constant)
         {
             var roots = Quadratic(squaredCoeff, linearCoeff, constant);
@@ -39,6 +90,12 @@ namespace TVGL
             yield return roots.Item2;
         }
 
+        /// <summary>
+        /// Quadratics as tuple.
+        /// </summary>
+        /// <param name="coeffList">The coeff list.</param>
+        /// <returns>System.ValueTuple&lt;ComplexNumber, ComplexNumber&gt;.</returns>
+        /// <exception cref="System.ArgumentException">Missing coefficients to solve quadratic.</exception>
         public static (ComplexNumber, ComplexNumber) QuadraticAsTuple(this IEnumerable<double> coeffList)
         {
             var enumerator = coeffList.GetEnumerator();
@@ -51,6 +108,13 @@ namespace TVGL
             return Quadratic(squaredCoeff, linearCoeff, constant);
         }
 
+        /// <summary>
+        /// Quadratics the specified squared coeff.
+        /// </summary>
+        /// <param name="squaredCoeff">The squared coeff.</param>
+        /// <param name="linearCoeff">The linear coeff.</param>
+        /// <param name="constant">The constant.</param>
+        /// <returns>System.ValueTuple&lt;ComplexNumber, ComplexNumber&gt;.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static (ComplexNumber, ComplexNumber) Quadratic(double squaredCoeff, double linearCoeff, double constant)
         {
@@ -72,6 +136,12 @@ namespace TVGL
             }
         }
 
+        /// <summary>
+        /// Cubics the specified coeff list.
+        /// </summary>
+        /// <param name="coeffList">The coeff list.</param>
+        /// <returns>IEnumerable&lt;ComplexNumber&gt;.</returns>
+        /// <exception cref="System.ArgumentException">Missing coefficients to solve cubic.</exception>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static IEnumerable<ComplexNumber> Cubic(this IEnumerable<double> coeffList)
         {
@@ -87,6 +157,15 @@ namespace TVGL
             return Cubic(cubedCoeff, squaredCoeff, linearCoeff, constant);
         }
 
+        /// <summary>
+        /// Cubics the specified cubed coeff.
+        /// </summary>
+        /// <param name="cubedCoeff">The cubed coeff.</param>
+        /// <param name="squaredCoeff">The squared coeff.</param>
+        /// <param name="linearCoeff">The linear coeff.</param>
+        /// <param name="offset">The offset.</param>
+        /// <param name="onlyReturnRealRoots">if set to <c>true</c> [only return real roots].</param>
+        /// <returns>IEnumerable&lt;ComplexNumber&gt;.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static IEnumerable<ComplexNumber> Cubic(double cubedCoeff, double squaredCoeff, double linearCoeff, double offset, bool onlyReturnRealRoots = false)
         {
@@ -128,6 +207,14 @@ namespace TVGL
             }
         }
 
+        /// <summary>
+        /// Cubics the specified cubed coeff.
+        /// </summary>
+        /// <param name="cubedCoeff">The cubed coeff.</param>
+        /// <param name="squaredCoeff">The squared coeff.</param>
+        /// <param name="linearCoeff">The linear coeff.</param>
+        /// <param name="offset">The offset.</param>
+        /// <returns>IEnumerable&lt;ComplexNumber&gt;.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static IEnumerable<ComplexNumber> Cubic(ComplexNumber cubedCoeff, ComplexNumber squaredCoeff,
             ComplexNumber linearCoeff, ComplexNumber offset)
@@ -165,6 +252,12 @@ namespace TVGL
         }
 
 
+        /// <summary>
+        /// Quartics the specified coeff list.
+        /// </summary>
+        /// <param name="coeffList">The coeff list.</param>
+        /// <returns>IEnumerable&lt;ComplexNumber&gt;.</returns>
+        /// <exception cref="System.ArgumentException">Missing coefficients to solve quartic.</exception>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static IEnumerable<ComplexNumber> Quartic(this IEnumerable<double> coeffList)
         {
@@ -182,6 +275,15 @@ namespace TVGL
             return Quartic(fourthOrderCoeff, cubedCoeff, squaredCoeff, linearCoeff, constant);
         }
 
+        /// <summary>
+        /// Quartics the specified fourth order coeff.
+        /// </summary>
+        /// <param name="fourthOrderCoeff">The fourth order coeff.</param>
+        /// <param name="cubedCoeff">The cubed coeff.</param>
+        /// <param name="squaredCoeff">The squared coeff.</param>
+        /// <param name="linearCoeff">The linear coeff.</param>
+        /// <param name="offset">The offset.</param>
+        /// <returns>IEnumerable&lt;ComplexNumber&gt;.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static IEnumerable<ComplexNumber> Quartic(ComplexNumber fourthOrderCoeff,
             ComplexNumber cubedCoeff, ComplexNumber squaredCoeff, ComplexNumber linearCoeff, ComplexNumber offset)
@@ -213,6 +315,15 @@ namespace TVGL
             yield return (minusBAddQ7 - addedSqrtTerm) / 4;
             yield return (minusBAddQ7 + addedSqrtTerm) / 4;
         }
+        /// <summary>
+        /// Quartics the specified fourth order coeff.
+        /// </summary>
+        /// <param name="fourthOrderCoeff">The fourth order coeff.</param>
+        /// <param name="cubedCoeff">The cubed coeff.</param>
+        /// <param name="squaredCoeff">The squared coeff.</param>
+        /// <param name="linearCoeff">The linear coeff.</param>
+        /// <param name="offset">The offset.</param>
+        /// <returns>IEnumerable&lt;ComplexNumber&gt;.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static IEnumerable<ComplexNumber> Quartic(double fourthOrderCoeff,
             double cubedCoeff, double squaredCoeff, double linearCoeff, double offset)

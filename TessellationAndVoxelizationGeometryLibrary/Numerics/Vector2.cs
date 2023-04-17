@@ -1,6 +1,16 @@
-// Licensed to the .NET Foundation under one or more agreements.
-// The .NET Foundation licenses this file to you under the MIT license.
-// See the LICENSE file in the project root for more information.
+// ***********************************************************************
+// Assembly         : TessellationAndVoxelizationGeometryLibrary
+// Author           : matth
+// Created          : 04-03-2023
+//
+// Last Modified By : matth
+// Last Modified On : 04-03-2023
+// ***********************************************************************
+// <copyright file="Vector2.cs" company="Design Engineering Lab">
+//     2014
+// </copyright>
+// <summary></summary>
+// ***********************************************************************
 
 using MIConvexHull;
 using Newtonsoft.Json;
@@ -20,6 +30,7 @@ namespace TVGL  // COMMENTEDCHANGE namespace System.Numerics
         /// <summary>
         /// Returns the vector (NaN,NaN). This is often used in place of null.
         /// </summary>
+        /// <value>The null.</value>
         public static Vector2 Null =>
         new Vector2(double.NaN, double.NaN);
 
@@ -27,35 +38,56 @@ namespace TVGL  // COMMENTEDCHANGE namespace System.Numerics
         /// <summary>
         /// Returns the vector (0,0).
         /// </summary>
+        /// <value>The zero.</value>
         public static Vector2 Zero =>
         default;
 
         /// <summary>
         /// Returns the vector (1,1).
         /// </summary>
+        /// <value>The one.</value>
         public static Vector2 One =>
         new Vector2(1.0, 1.0);
 
         /// <summary>
         /// Returns the vector (1,0).
         /// </summary>
+        /// <value>The unit x.</value>
         public static Vector2 UnitX => new Vector2(1.0, 0.0);
 
         /// <summary>
         /// Returns the vector (0,1).
         /// </summary>
+        /// <value>The unit y.</value>
         public static Vector2 UnitY => new Vector2(0.0, 1.0);
         #endregion
 
         #region Public Instance Properties
+        /// <summary>
+        /// Gets the x.
+        /// </summary>
+        /// <value>The x.</value>
         double IVertex2D.X => X;
 
+        /// <summary>
+        /// Gets the y.
+        /// </summary>
+        /// <value>The y.</value>
         double IVertex2D.Y => Y;
 
+        /// <summary>
+        /// Gets the position.
+        /// </summary>
+        /// <value>The position.</value>
         [JsonIgnore]
 
         public double[] Position => new[] { X, Y };
 
+        /// <summary>
+        /// Gets the <see cref="System.Double"/> with the specified i.
+        /// </summary>
+        /// <param name="i">The i.</param>
+        /// <returns>System.Double.</returns>
         public double this[int i]
         {
             get
@@ -69,10 +101,12 @@ namespace TVGL  // COMMENTEDCHANGE namespace System.Numerics
         /// <summary>
         /// The X component of the vector.
         /// </summary>
+        /// <value>The x.</value>
         public double X { get; }
         /// <summary>
         /// The Y component of the vector.
         /// </summary>
+        /// <value>The y.</value>
         public double Y { get; }
 
         #endregion
@@ -95,9 +129,10 @@ namespace TVGL  // COMMENTEDCHANGE namespace System.Numerics
             Y = y;
         }
 
-        /// <summary>Determines whether this instance is null.</summary>
-        /// <returns>
-        ///   <c>true</c> if this instance is null; otherwise, <c>false</c>.</returns>
+        /// <summary>
+        /// Determines whether this instance is null.
+        /// </summary>
+        /// <returns><c>true</c> if this instance is null; otherwise, <c>false</c>.</returns>
         public bool IsNull()
         {
             return double.IsNaN(X) || double.IsNaN(Y);
@@ -118,11 +153,13 @@ namespace TVGL  // COMMENTEDCHANGE namespace System.Numerics
         /// <summary>
         /// Copies the contents of the vector into the given array, starting from the given index.
         /// </summary>
+        /// <param name="array">The array.</param>
+        /// <param name="index">The index.</param>
+        /// <exception cref="System.NullReferenceException"></exception>
+        /// <exception cref="System.ArgumentOutOfRangeException"></exception>
+        /// <exception cref="System.ArgumentException"></exception>
         /// <exception cref="ArgumentNullException">If array is null.</exception>
         /// <exception cref="RankException">If array is multidimensional.</exception>
-        /// <exception cref="ArgumentOutOfRangeException">If index is greater than end of the array or index is less than zero.</exception>
-        /// <exception cref="ArgumentException">If number of elements in source vector is greater than those available in destination array
-        /// or if there are not enough elements to copy.</exception>
         public void CopyTo(double[] array, int index)
         {
             if (array == null)
@@ -145,6 +182,7 @@ namespace TVGL  // COMMENTEDCHANGE namespace System.Numerics
         /// <summary>
         /// Makes a copy of the current Vector.
         /// </summary>
+        /// <returns>Vector2.</returns>
         public Vector2 Copy()
         {
             return new Vector2(X, Y);
@@ -519,6 +557,7 @@ namespace TVGL  // COMMENTEDCHANGE namespace System.Numerics
         /// <param name="value1">The source vector.</param>
         /// <param name="min">The minimum value.</param>
         /// <param name="max">The maximum value.</param>
+        /// <returns>Vector2.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector2 Clamp(Vector2 value1, Vector2 min, Vector2 max)
         {

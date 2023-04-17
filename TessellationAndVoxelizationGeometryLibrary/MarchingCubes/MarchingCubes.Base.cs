@@ -1,29 +1,70 @@
-// Copyright 2015-2020 Design Engineering Lab
-// This file is a part of TVGL, Tessellation and Voxelization Geometry Library
-// https://github.com/DesignEngrLab/TVGL
-// It is licensed under MIT License (see LICENSE.txt for details)
+// ***********************************************************************
+// Assembly         : TessellationAndVoxelizationGeometryLibrary
+// Author           : matth
+// Created          : 04-03-2023
+//
+// Last Modified By : matth
+// Last Modified On : 04-14-2023
+// ***********************************************************************
+// <copyright file="MarchingCubes.Base.cs" company="Design Engineering Lab">
+//     2014
+// </copyright>
+// <summary></summary>
+// ***********************************************************************
 using System;
 using System.Collections.Generic;
 
 
 namespace TVGL
 {
+    /// <summary>
+    /// Class StoredValue.
+    /// </summary>
+    /// <typeparam name="ValueT">The type of the value t.</typeparam>
     internal class StoredValue<ValueT>
     {
+        /// <summary>
+        /// The value
+        /// </summary>
         internal ValueT Value;
+        /// <summary>
+        /// The x
+        /// </summary>
         internal int X;
+        /// <summary>
+        /// The y
+        /// </summary>
         internal int Y;
+        /// <summary>
+        /// The z
+        /// </summary>
         internal int Z;
+        /// <summary>
+        /// The number times called
+        /// </summary>
         internal int NumTimesCalled;
+        /// <summary>
+        /// The identifier
+        /// </summary>
         internal long ID;
     }
 
+    /// <summary>
+    /// Class MarchingCubes.
+    /// </summary>
+    /// <typeparam name="SolidT">The type of the solid t.</typeparam>
+    /// <typeparam name="ValueT">The type of the value t.</typeparam>
     internal abstract class MarchingCubes<SolidT, ValueT>
         where SolidT : Solid
         // where double and ValueT are numbers or bool
     {
         #region Constructor
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="MarchingCubes{SolidT, ValueT}"/> class.
+        /// </summary>
+        /// <param name="solid">The solid.</param>
+        /// <param name="discretization">The discretization.</param>
         protected MarchingCubes(SolidT solid, double discretization)
         {
             this.solid = solid;
@@ -58,20 +99,56 @@ namespace TVGL
 
         #region Fields
 
+        /// <summary>
+        /// The vertex dictionaries
+        /// </summary>
         private readonly Dictionary<long, Vertex>[] vertexDictionaries;
+        /// <summary>
+        /// The solid
+        /// </summary>
         protected readonly SolidT solid;
+        /// <summary>
+        /// The grid to coordinate factor
+        /// </summary>
         protected readonly double gridToCoordinateFactor;
+        /// <summary>
+        /// The coord to grid factor
+        /// </summary>
         protected readonly double coordToGridFactor;
+        /// <summary>
+        /// The grid offset table
+        /// </summary>
         protected readonly Vector3[] GridOffsetTable;
+        /// <summary>
+        /// The value dictionary
+        /// </summary>
         private readonly Dictionary<long, StoredValue<ValueT>> valueDictionary;
+        /// <summary>
+        /// The faces
+        /// </summary>
         protected readonly List<TriangleFace> faces;
+        /// <summary>
+        /// The fraction of grid to expand
+        /// </summary>
         protected const double fractionOfGridToExpand = 0.05;
 
         #region to be assigned in inherited constructor
 
+        /// <summary>
+        /// The number grid x
+        /// </summary>
         protected int numGridX, numGridY, numGridZ;
+        /// <summary>
+        /// The x minimum
+        /// </summary>
         protected double _xMin, _yMin, _zMin;
+        /// <summary>
+        /// The y multiplier
+        /// </summary>
         protected int yMultiplier;
+        /// <summary>
+        /// The z multiplier
+        /// </summary>
         protected int zMultiplier;
 
         #endregion to be assigned in inherited constructor
@@ -80,10 +157,30 @@ namespace TVGL
 
         #region Abstract Methods
 
+        /// <summary>
+        /// Determines whether the specified v is inside.
+        /// </summary>
+        /// <param name="v">The v.</param>
+        /// <returns><c>true</c> if the specified v is inside; otherwise, <c>false</c>.</returns>
         protected abstract bool IsInside(ValueT v);
 
+        /// <summary>
+        /// Gets the value from solid.
+        /// </summary>
+        /// <param name="x">The x.</param>
+        /// <param name="y">The y.</param>
+        /// <param name="z">The z.</param>
+        /// <returns>ValueT.</returns>
         protected abstract ValueT GetValueFromSolid(int x, int y, int z);
 
+        /// <summary>
+        /// Gets the offset.
+        /// </summary>
+        /// <param name="from">From.</param>
+        /// <param name="to">To.</param>
+        /// <param name="direction">The direction.</param>
+        /// <param name="sign">The sign.</param>
+        /// <returns>System.Double.</returns>
         protected abstract double GetOffset(StoredValue<ValueT> from, StoredValue<ValueT> to,
             int direction, int sign);
 
@@ -91,6 +188,10 @@ namespace TVGL
 
         #region Main Methods
 
+        /// <summary>
+        /// Generates this instance.
+        /// </summary>
+        /// <returns>TessellatedSolid.</returns>
         internal virtual TessellatedSolid Generate()
         {
             for (var i = 0; i < numGridX - 1; i++)
@@ -106,11 +207,26 @@ namespace TVGL
             //new[] { solid.SolidColor }, solid.Units, solid.Name + "TS", solid.FileName, comments, solid.Language);
         }
 
+        /// <summary>
+        /// Gets the identifier.
+        /// </summary>
+        /// <param name="x">The x.</param>
+        /// <param name="y">The y.</param>
+        /// <param name="z">The z.</param>
+        /// <returns>System.Int64.</returns>
         protected long getIdentifier(int x, int y, int z)
         {
             return x + (long)(yMultiplier * y) + zMultiplier * z;
         }
 
+        /// <summary>
+        /// Gets the value.
+        /// </summary>
+        /// <param name="x">The x.</param>
+        /// <param name="y">The y.</param>
+        /// <param name="z">The z.</param>
+        /// <param name="identifier">The identifier.</param>
+        /// <returns>StoredValue&lt;ValueT&gt;.</returns>
         protected StoredValue<ValueT> GetValue(int x, int y, int z, long identifier)
         {
             if (valueDictionary.TryGetValue(identifier, out var prevValue))
@@ -134,8 +250,11 @@ namespace TVGL
         }
 
         /// <summary>
-        /// MakeFacesInCube is the main/difficult function in the Marching Cubes algorithm 
+        /// MakeFacesInCube is the main/difficult function in the Marching Cubes algorithm
         /// </summary>
+        /// <param name="xIndex">Index of the x.</param>
+        /// <param name="yIndex">Index of the y.</param>
+        /// <param name="zIndex">Index of the z.</param>
         protected void MakeFacesInCube(int xIndex, int yIndex, int zIndex)
         {
             // first solve for the eight values at the vertices of the cubes. The "GetValue" function

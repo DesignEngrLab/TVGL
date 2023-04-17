@@ -1,7 +1,16 @@
-﻿// Copyright 2015-2020 Design Engineering Lab
-// This file is a part of TVGL, Tessellation and Voxelization Geometry Library
-// https://github.com/DesignEngrLab/TVGL
-// It is licensed under MIT License (see LICENSE.txt for details)
+﻿// ***********************************************************************
+// Assembly         : TessellationAndVoxelizationGeometryLibrary
+// Author           : matth
+// Created          : 04-03-2023
+//
+// Last Modified By : matth
+// Last Modified On : 04-14-2023
+// ***********************************************************************
+// <copyright file="Sphere.cs" company="Design Engineering Lab">
+//     2014
+// </copyright>
+// <summary></summary>
+// ***********************************************************************
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,7 +20,7 @@ using System.Runtime.CompilerServices;
 namespace TVGL
 {
     /// <summary>
-    ///     Class Sphere.
+    /// Class Sphere.
     /// </summary>
     public class Sphere : PrimitiveSurface
     {
@@ -105,8 +114,17 @@ namespace TVGL
             return true;
         }
 
+        /// <summary>
+        /// The face x dir
+        /// </summary>
         private Vector3 faceXDir = Vector3.Null;
+        /// <summary>
+        /// The face y dir
+        /// </summary>
         private Vector3 faceYDir = Vector3.Null;
+        /// <summary>
+        /// The face z dir
+        /// </summary>
         private Vector3 faceZDir = Vector3.Null;
 
         /// <summary>
@@ -185,7 +203,7 @@ namespace TVGL
         /// <summary>
         /// Converts a cartesian coordinate to spherical angles based at the origin.
         /// </summary>
-        /// <param name="point">The point.</param>
+        /// <param name="p">The p.</param>
         /// <returns>System.ValueTuple&lt;System.Double, System.Double&gt;.</returns>
         public static (double, double) ConvertToSphericalAngles(Vector3 p)
         {
@@ -241,10 +259,21 @@ namespace TVGL
             return PointMembership(x) < 0 == IsPositive;
         }
 
+        /// <summary>
+        /// Points the membership.
+        /// </summary>
+        /// <param name="point">The point.</param>
+        /// <returns>System.Double.</returns>
         public override double PointMembership(Vector3 point)
         {
             return (point - Center).Length() - Radius;
         }
+        /// <summary>
+        /// Points the membership.
+        /// </summary>
+        /// <param name="point">The point.</param>
+        /// <param name="gradient">The gradient.</param>
+        /// <returns>System.Double.</returns>
         public double PointMembership(Vector3 point, out Vector3 gradient)
         {
             var v = point - Center;
@@ -253,6 +282,14 @@ namespace TVGL
             gradient = distance * v / vLength;
             return distance;
         }
+        /// <summary>
+        /// Points the membership.
+        /// </summary>
+        /// <param name="point">The point.</param>
+        /// <param name="gradient">The gradient.</param>
+        /// <param name="curvatureDiagonalTerms">The curvature diagonal terms.</param>
+        /// <param name="curvatureCrossTerms">The curvature cross terms.</param>
+        /// <returns>System.Double.</returns>
         public double PointMembership(Vector3 point, out Vector3 gradient, out Vector3 curvatureDiagonalTerms,
             out Vector3 curvatureCrossTerms)
         {
@@ -273,7 +310,7 @@ namespace TVGL
         #region Constructor
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="Sphere"/> class.
+        /// Initializes a new instance of the <see cref="Sphere" /> class.
         /// </summary>
         /// <param name="center">The center.</param>
         /// <param name="radius">The radius.</param>
@@ -288,7 +325,7 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="Sphere"/> class.
+        /// Initializes a new instance of the <see cref="Sphere" /> class.
         /// </summary>
         /// <param name="center">The center.</param>
         /// <param name="radius">The radius.</param>
@@ -300,12 +337,16 @@ namespace TVGL
             Radius = radius;
         }
 
-        public Sphere() { }
-
         /// <summary>
         /// Initializes a new instance of the <see cref="Sphere"/> class.
         /// </summary>
+        public Sphere() { }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Sphere" /> class.
+        /// </summary>
         /// <param name="originalToBeCopied">The original to be copied.</param>
+        /// <param name="copiedTessellatedSolid">The copied tessellated solid.</param>
         public Sphere(Sphere originalToBeCopied, TessellatedSolid copiedTessellatedSolid = null)
             : base(originalToBeCopied, copiedTessellatedSolid)
         {
@@ -315,9 +356,11 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="Sphere"/> class.
+        /// Initializes a new instance of the <see cref="Sphere" /> class.
         /// </summary>
         /// <param name="originalToBeCopied">The original to be copied.</param>
+        /// <param name="newFaceIndices">The new face indices.</param>
+        /// <param name="copiedTessellatedSolid">The copied tessellated solid.</param>
         public Sphere(Sphere originalToBeCopied, int[] newFaceIndices, TessellatedSolid copiedTessellatedSolid)
             : base(newFaceIndices, copiedTessellatedSolid)
         {
@@ -331,18 +374,18 @@ namespace TVGL
         #region Public Properties
 
         /// <summary>
-        ///     Is the sphere positive? (false is negative)
+        /// Is the sphere positive? (false is negative)
         /// </summary>
         public bool IsPositive;
 
         /// <summary>
-        ///     Gets the center.
+        /// Gets the center.
         /// </summary>
         /// <value>The center.</value>
         public Vector3 Center { get; set; }
 
         /// <summary>
-        ///     Gets the radius.
+        /// Gets the radius.
         /// </summary>
         /// <value>The radius.</value>
         public double Radius { get; set; }

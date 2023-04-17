@@ -1,7 +1,16 @@
-﻿// Copyright 2015-2020 Design Engineering Lab
-// This file is a part of TVGL, Tessellation and Voxelization Geometry Library
-// https://github.com/DesignEngrLab/TVGL
-// It is licensed under MIT License (see LICENSE.txt for details)
+﻿// ***********************************************************************
+// Assembly         : TessellationAndVoxelizationGeometryLibrary
+// Author           : matth
+// Created          : 04-03-2023
+//
+// Last Modified By : matth
+// Last Modified On : 04-03-2023
+// ***********************************************************************
+// <copyright file="VoxelRowDense.cs" company="Design Engineering Lab">
+//     2014
+// </copyright>
+// <summary></summary>
+// ***********************************************************************
 using System;
 using System.Linq;
 
@@ -22,12 +31,16 @@ namespace TVGL
         /// The length of the row. This is the same as the number of voxels in x (numVoxelsX)
         /// for the participating solid.
         /// </summary>
+        /// <value>The maximum number of voxels.</value>
         public ushort maxNumberOfVoxels { get; }
+        /// <summary>
+        /// The number bytes
+        /// </summary>
         readonly int numBytes;
         /// <summary>
-        /// Initializes a new instance of the <see cref="VoxelRowDense"/> struct.
+        /// Initializes a new instance of the <see cref="VoxelRowDense" /> struct.
         /// </summary>
-        /// <param name="numBytes">The number bytes.</param>
+        /// <param name="length">The length.</param>
         internal VoxelRowDense(int length)
         {
             maxNumberOfVoxels = (ushort)length;
@@ -36,12 +49,12 @@ namespace TVGL
             values = new byte[numBytes];
         }
         /// <summary>
-        /// Initializes a new instance of the <see cref="VoxelRowDense"/> struct.
-        /// This is typically used to copy an existing dense row, or convert from 
+        /// Initializes a new instance of the <see cref="VoxelRowDense" /> struct.
+        /// This is typically used to copy an existing dense row, or convert from
         /// a sparse row.
         /// </summary>
         /// <param name="row">The row.</param>
-        /// <param name="numBytes">The number bytes.</param>
+        /// <param name="length">The length.</param>
         internal VoxelRowDense(IVoxelRow row, int length) : this(length)
         {
             if (row is VoxelRowSparse sparse)
@@ -57,13 +70,10 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Gets or sets the <see cref="System.Boolean"/> at the specified xCoord.
+        /// Gets or sets the <see cref="System.Boolean" /> at the specified xCoord.
         /// </summary>
-        /// <value>
-        /// The <see cref="System.Boolean"/>.
-        /// </value>
-        /// <param name="index">The xCoord.</param>
-        /// <returns></returns>
+        /// <param name="xCoord">The x coord.</param>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         public bool this[int xCoord]
         {
             get => GetValue(xCoord >> 3, xCoord & 7);
@@ -79,7 +89,7 @@ namespace TVGL
         /// </summary>
         /// <param name="byteCoord">The byte coord.</param>
         /// <param name="bitPosition">The bit position.</param>
-        /// <returns></returns>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         bool GetValue(int byteCoord, int bitPosition)
         {
             var shift = 7 - bitPosition;
@@ -88,8 +98,8 @@ namespace TVGL
         /// <summary>
         /// Gets the lower-x neighbor and the upper-x neighbor for the one at xCoord.
         /// </summary>
-        /// <param name="xCoord"></param>
-        /// <returns></returns>
+        /// <param name="xCoord">The x coord.</param>
+        /// <returns>System.ValueTuple&lt;System.Boolean, System.Boolean&gt;.</returns>
         public (bool, bool) GetNeighbors(int xCoord)
         {
             var bytePos = xCoord >> 3;
@@ -137,9 +147,7 @@ namespace TVGL
         /// <summary>
         /// Gets the number of voxels in this row.
         /// </summary>
-        /// <value>
-        /// The count.
-        /// </value>
+        /// <value>The count.</value>
         public int Count
         {
             get
@@ -218,7 +226,7 @@ namespace TVGL
         /// </summary>
         /// <param name="others">The others.</param>
         /// <param name="offset">The offset.</param>
-        /// <exception cref="ArgumentException">Intersect of Dense Voxels currently" +
+        /// <exception cref="System.ArgumentException">Intersect of Dense Voxels currently" +
         ///                   " does not support an offset.</exception>
         public void Intersect(IVoxelRow[] others, int offset)
         {
@@ -226,6 +234,10 @@ namespace TVGL
                   " does not support an offset.");
             else Intersect(others);
         }
+        /// <summary>
+        /// Intersects the specified others.
+        /// </summary>
+        /// <param name="others">The others.</param>
         internal void Intersect(IVoxelRow[] others)
         {
             foreach (var item in others)
@@ -251,7 +263,7 @@ namespace TVGL
         /// </summary>
         /// <param name="subtrahends">The subtrahends.</param>
         /// <param name="offset">The offset.</param>
-        /// <exception cref="ArgumentException">Subtract of Dense Voxels currently" +
+        /// <exception cref="System.ArgumentException">Subtract of Dense Voxels currently" +
         ///                   " does not support an offset.</exception>
         public void Subtract(IVoxelRow[] subtrahends, int offset)
         {
@@ -259,6 +271,10 @@ namespace TVGL
                   " does not support an offset.");
             else Union(subtrahends);
         }
+        /// <summary>
+        /// Subtracts the specified subtrahends.
+        /// </summary>
+        /// <param name="subtrahends">The subtrahends.</param>
         internal void Subtract(IVoxelRow[] subtrahends)
         {
             foreach (var item in subtrahends)
@@ -284,7 +300,7 @@ namespace TVGL
         /// </summary>
         /// <param name="others">The others.</param>
         /// <param name="offset">The offset.</param>
-        /// <exception cref="ArgumentException">Union of Dense Voxels currently" +
+        /// <exception cref="System.ArgumentException">Union of Dense Voxels currently" +
         ///                   " does not support an offset.</exception>
         public void Union(IVoxelRow[] others, int offset)
         {
@@ -292,6 +308,10 @@ namespace TVGL
                   " does not support an offset.");
             else Union(others);
         }
+        /// <summary>
+        /// Unions the specified others.
+        /// </summary>
+        /// <param name="others">The others.</param>
         internal void Union(IVoxelRow[] others)
         {
             foreach (var item in others)
@@ -312,18 +332,28 @@ namespace TVGL
             }
         }
 
+        /// <summary>
+        /// Inverts this row - making all on voxels off and vice-versa.
+        /// </summary>
         public void Invert()
         {
             for (int i = 0; i < numBytes; i++)
                 values[i] = (byte)~values[i];
         }
 
+        /// <summary>
+        /// Clears this row of all on voxels.
+        /// </summary>
         public void Clear()
         {
             for (int i = 0; i < numBytes; i++)
                 values[i] = 0b0;
         }
 
+        /// <summary>
+        /// Averages the positions of the on voxels. This is used in finding center of mass.
+        /// </summary>
+        /// <returns>System.Int32.</returns>
         public int TotalXPosition()
         {
             var xTotal = 0;

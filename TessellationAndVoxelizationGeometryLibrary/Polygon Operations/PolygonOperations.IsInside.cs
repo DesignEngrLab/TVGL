@@ -1,7 +1,16 @@
-﻿// Copyright 2015-2020 Design Engineering Lab
-// This file is a part of TVGL, Tessellation and Voxelization Geometry Library
-// https://github.com/DesignEngrLab/TVGL
-// It is licensed under MIT License (see LICENSE.txt for details)
+﻿// ***********************************************************************
+// Assembly         : TessellationAndVoxelizationGeometryLibrary
+// Author           : matth
+// Created          : 04-03-2023
+//
+// Last Modified By : matth
+// Last Modified On : 04-03-2023
+// ***********************************************************************
+// <copyright file="PolygonOperations.IsInside.cs" company="Design Engineering Lab">
+//     2014
+// </copyright>
+// <summary></summary>
+// ***********************************************************************
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -15,28 +24,16 @@ namespace TVGL
     public static partial class PolygonOperations
     {
         /// <summary>
-        /// Returns the single polygon that is encompasses the point or is closest to it. This will be a 
+        /// Returns the single polygon that is encompasses the point or is closest to it. This will be a
         /// simple polygon as the method transverses each input as a polygon tree and simply find the loop
         /// (positive or negative/hole) the polygon.
-        /// </summary>
-        /// <param name="polygons">The polygons.</param>
-        /// <param name="point">The point.</param>
-        /// <returns>Polygon.</returns>
-        //public Polygon ClosestPolygon(this IEnumerable<Polygon> polygons, Vector2 point)
-        //{
-
-        //}
-        #region IsPointInSidePolygon methods 
-        /// <summary>
-        /// Determines whether the inner polygon is inside the specified outer polygon. This is a simpler and faster check
-        /// when it is already known that the two polygons are non-intersecting polygon.
         /// </summary>
         /// <param name="outer">The outer polygon.</param>
         /// <param name="onlyTopOuterPolygon">if set to <c>true</c> only top outer polygon is checked and none of the innner polygons.</param>
         /// <param name="inner">The inner.</param>
         /// <param name="onlyTopInnerPolygon">if set to <c>true</c> [only top inner polygon].</param>
         /// <param name="onBoundary">if set to <c>true</c> [on boundary].</param>
-        /// <returns><c>true</c> if [is non intersecting polygon inside] [the specified only top outer polygon]; otherwise, <c>false</c>.</returns>
+        /// <returns>Polygon.</returns>
         internal static bool? IsNonIntersectingPolygonInside(this Polygon outer, bool onlyTopOuterPolygon, Polygon inner,
             bool onlyTopInnerPolygon, out bool onBoundary)
         {
@@ -64,7 +61,6 @@ namespace TVGL
         /// </summary>
         /// <param name="sortedEdges">The sorted edges.</param>
         /// <param name="sortedVertices">The sorted vertices.</param>
-        /// <param name="tolerance">The tolerance.</param>
         /// <returns><c>true</c> if [is non intersecting polygon inside] [the specified sorted vertices]; otherwise, <c>false</c>.</returns>
         internal static bool? IsNonIntersectingPolygonInside(this IList<PolygonEdge> sortedEdges, Vertex2D[] sortedVertices)
         {
@@ -116,21 +112,18 @@ namespace TVGL
         }
 
         /// <summary>
-        ///     Determines if a point is inside a polygon, where a polygon is an ordered list of 2D points.
-        ///     And the polygon is not self-intersecting
-        ///     This is a newer basically the same as our other method, but is less verbose.
-        ///     Making use of W. Randolph Franklin's compact algorithm
-        ///     https://wrf.ecse.rpi.edu//Research/Short_Notes/pnpoly.html
-        ///     Major Assumptions: 
-        ///     1) The polygon can be convex
-        ///     2) The direction of the polygon does not matter  
+        /// Determines if a point is inside a polygon, where a polygon is an ordered list of 2D points.
+        /// And the polygon is not self-intersecting
+        /// This is a newer basically the same as our other method, but is less verbose.
+        /// Making use of W. Randolph Franklin's compact algorithm
+        /// https://wrf.ecse.rpi.edu//Research/Short_Notes/pnpoly.html
+        /// Major Assumptions:
+        /// 1) The polygon can be convex
+        /// 2) The direction of the polygon does not matter
         /// </summary>
         /// <param name="polygon">The polygon.</param>
+        /// <param name="onlyTopPolygon">if set to <c>true</c> [only top polygon].</param>
         /// <param name="pointInQuestion">The point in question.</param>
-        /// <param name="closestLineAbove">The closest line above.</param>
-        /// <param name="closestLineBelow">The closest line below.</param>
-        /// <param name="onBoundary">if set to <c>true</c> [on boundary].</param>
-        /// <param name="onBoundaryIsInside">if set to <c>true</c> [on boundary is inside].</param>
         /// <returns><c>true</c> if [is point inside polygon] [the specified point in question]; otherwise, <c>false</c>.</returns>
         public static bool IsPointInsidePolygon(this Polygon polygon, bool onlyTopPolygon, Vector2 pointInQuestion)
         {
@@ -157,6 +150,12 @@ namespace TVGL
             return smallestEnclosingPolygon.IsPositive;
         }
 
+        /// <summary>
+        /// Determines whether [is point inside polygon] [the specified point in question].
+        /// </summary>
+        /// <param name="polygon">The polygon.</param>
+        /// <param name="pointInQuestion">The point in question.</param>
+        /// <returns><c>true</c> if [is point inside polygon] [the specified point in question]; otherwise, <c>false</c>.</returns>
         private static bool IsPointInsidePolygon(this Polygon polygon, Vector2 pointInQuestion)
         {
             //1) Get the axis aligned bounding box of the path. This is super fast.
@@ -198,12 +197,13 @@ namespace TVGL
         /// locate the closest line above or below the point.
         /// </summary>
         /// <param name="polygon">The polygon.</param>
+        /// <param name="onlyTopPolygon">if set to <c>true</c> [only top polygon].</param>
         /// <param name="pointInQuestion">The point in question.</param>
-        /// <param name="closestLineAbove">The closest line above.</param>
-        /// <param name="closestLineBelow">The closest line below.</param>
         /// <param name="onBoundary">if set to <c>true</c> [on boundary].</param>
         /// <param name="onBoundaryIsInside">if set to <c>true</c> [on boundary is inside].</param>
         /// <returns><c>true</c> if [is point inside polygon] [the specified point in question]; otherwise, <c>false</c>.</returns>
+        /// <exception cref="System.ArgumentException">In IsPointInsidePolygon, the point in question is surrounded by" +
+        ///                     " an undetermined number of lines which makes it impossible to determined if inside.</exception>
         public static bool IsPointInsidePolygon(this Polygon polygon, bool onlyTopPolygon, Vector2 pointInQuestion,
             out bool onBoundary, bool onBoundaryIsInside = true)
         {
@@ -256,6 +256,12 @@ namespace TVGL
         }
 
 
+        /// <summary>
+        /// Determines the type of the line to point vertical reference.
+        /// </summary>
+        /// <param name="point">The point.</param>
+        /// <param name="line">The line.</param>
+        /// <returns>VerticalLineReferenceType.</returns>
         private static VerticalLineReferenceType DetermineLineToPointVerticalReferenceType(Vector2 point, PolygonEdge line)
         {
             // this is basically the function PolygonEdge.YGivenX, but it is a little different here since check if line is horizontal cusp
@@ -287,9 +293,7 @@ namespace TVGL
         /// locate the closest line above or below the point.
         /// </summary>
         /// <param name="polygon">The polygon.</param>
-        /// <param name="pointInQuestion">The point in question.</param>
-        /// <param name="closestLineAbove">The closest line above.</param>
-        /// <param name="closestLineBelow">The closest line below.</param>
+        /// <param name="pointsInQuestion">The points in question.</param>
         /// <param name="onBoundary">if set to <c>true</c> [on boundary].</param>
         /// <param name="onBoundaryIsInside">if set to <c>true</c> [on boundary is inside].</param>
         /// <returns><c>true</c> if [is point inside polygon] [the specified point in question]; otherwise, <c>false</c>.</returns>
@@ -300,6 +304,15 @@ namespace TVGL
             var sortedPoints = pointsInQuestion.OrderBy(pt => pt.X).ToList();
             return ArePointsInsidePolygonLines(sortedLines, sortedLines.Length, sortedPoints, out onBoundary, onBoundaryIsInside);
         }
+        /// <summary>
+        /// Ares the points inside polygon lines.
+        /// </summary>
+        /// <param name="sortedLines">The sorted lines.</param>
+        /// <param name="numSortedLines">The number sorted lines.</param>
+        /// <param name="sortedPoints">The sorted points.</param>
+        /// <param name="onBoundary">if set to <c>true</c> [on boundary].</param>
+        /// <param name="onBoundaryIsInside">if set to <c>true</c> [on boundary is inside].</param>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         internal static bool ArePointsInsidePolygonLines(IList<PolygonEdge> sortedLines, int numSortedLines, List<Vertex2D> sortedPoints,
             out bool onBoundary, bool onBoundaryIsInside = true)
         {
@@ -409,12 +422,12 @@ namespace TVGL
 
         /// <summary>
         /// All the polygon intersection points along line. The line is swept in it's normal direction. This normal or swept direction
-        /// is provided instead of the usual line direction so as to be clear about the direction of the sweep. Additionally, the 
+        /// is provided instead of the usual line direction so as to be clear about the direction of the sweep. Additionally, the
         /// perpendicular distance from the origin to the line (meeting at a right angle is provided to indicate where the increments start from.
         /// </summary>
         /// <param name="polygons">The polygons.</param>
-        /// <param name="perpendicularDistanceToLine">The line reference.</param>
         /// <param name="lineNormalDirection">The line direction.</param>
+        /// <param name="perpendicularDistanceToLine">The line reference.</param>
         /// <param name="numSteps">The number steps.</param>
         /// <param name="stepSize">Size of the step.</param>
         /// <param name="firstIntersectingIndex">First index of the intersecting.</param>
@@ -538,7 +551,7 @@ namespace TVGL
 
         /// <summary>
         /// Find all the polygon intersection points along horizontal lines.
-        /// Returns a list of double arrays. the double array values correspond to only the x-coordinates. the y-coordinates are 
+        /// Returns a list of double arrays. the double array values correspond to only the x-coordinates. the y-coordinates are
         /// determined by the input. y = startingYValue + (i+firstIntersectingIndex)*stepSize
         /// </summary>
         /// <param name="polygons">The polygons.</param>
@@ -630,9 +643,8 @@ namespace TVGL
         /// <summary>
         /// Gets the polygon relationship of PolygonA to PolygonB and the intersections between them.
         /// </summary>
-        /// <param name="subPolygonA">The polygon a.</param>
-        /// <param name="subPolygonB">The polygon b.</param>
-        /// <param name="intersections">The intersections.</param>
+        /// <param name="polygonA">The polygon a.</param>
+        /// <param name="polygonB">The polygon b.</param>
         /// <returns>PolygonRelationship.</returns>
         public static PolygonInteractionRecord GetPolygonInteraction(this Polygon polygonA, Polygon polygonB)
         {
@@ -697,10 +709,9 @@ namespace TVGL
         /// <param name="subPolygonB">The polygon b.</param>
         /// <param name="intersections">The intersections.</param>
         /// <returns>PolygonRelationship: but not all possibilities can be returned from here. It returns: Intersection,
-        /// BIsCompletelyInsideA, BIsInsideAButEdgesTouch, BIsInsideAButVerticesTouch,  
+        /// BIsCompletelyInsideA, BIsInsideAButEdgesTouch, BIsInsideAButVerticesTouch,
         /// AIsCompletelyInsideB,  AIsInsideBButEdgesTouch, AIsInsideBButVerticesTouch,
-        /// Separated, SeparatedButEdgesTouch, SeparatedButVerticesTouch
-        ///  </returns>
+        /// Separated, SeparatedButEdgesTouch, SeparatedButVerticesTouch</returns>
         private static PolyRelInternal GetSinglePolygonRelationshipAndIntersections(this Polygon subPolygonA, Polygon subPolygonB,
             out List<SegmentIntersection> intersections)
         {
@@ -855,6 +866,11 @@ namespace TVGL
         }
 
 
+        /// <summary>
+        /// Removes the duplicate intersections.
+        /// </summary>
+        /// <param name="possibleDuplicates">The possible duplicates.</param>
+        /// <param name="intersections">The intersections.</param>
         private static void RemoveDuplicateIntersections(List<(int index, PolygonEdge lineA, PolygonEdge lineB)> possibleDuplicates,
             List<SegmentIntersection> intersections)
         {
@@ -877,6 +893,9 @@ namespace TVGL
             }
         }
 
+        /// <summary>
+        /// The unit cross is parallel
+        /// </summary>
         const double unitCrossIsParallel = 1e-10;
 
         /// <summary>
@@ -889,6 +908,10 @@ namespace TVGL
         /// <param name="lineA">The line a.</param>
         /// <param name="lineB">The line b.</param>
         /// <param name="intersections">The intersections.</param>
+        /// <param name="possibleDuplicates">The possible duplicates.</param>
+        /// <param name="numSigDigs">The number sig digs.</param>
+        /// <param name="needToRoundA">if set to <c>true</c> [need to round a].</param>
+        /// <param name="needToRoundB">if set to <c>true</c> [need to round b].</param>
         /// <returns>PolygonSegmentRelationship.</returns>
         internal static bool AddIntersectionBetweenLines(PolygonEdge lineA, PolygonEdge lineB,
             List<SegmentIntersection> intersections, List<(int, PolygonEdge, PolygonEdge)> possibleDuplicates, int numSigDigs,
@@ -1045,6 +1068,19 @@ namespace TVGL
         }
 
 
+        /// <summary>
+        /// Determines the polygon segment relationship.
+        /// </summary>
+        /// <param name="edgeA">The edge a.</param>
+        /// <param name="edgeB">The edge b.</param>
+        /// <param name="aVector">a vector.</param>
+        /// <param name="bVector">The b vector.</param>
+        /// <param name="numSigDigs">The number sig digs.</param>
+        /// <param name="needToRoundA">if set to <c>true</c> [need to round a].</param>
+        /// <param name="needToRoundB">if set to <c>true</c> [need to round b].</param>
+        /// <param name="where">The where.</param>
+        /// <param name="lineACrossLineB">The line a cross line b.</param>
+        /// <returns>System.ValueTuple&lt;SegmentRelationship, CollinearityTypes&gt;.</returns>
         internal static (SegmentRelationship, CollinearityTypes) DeterminePolygonSegmentRelationship(PolygonEdge edgeA, PolygonEdge edgeB,
             in Vector2 aVector, in Vector2 bVector, int numSigDigs, bool needToRoundA, bool needToRoundB, in WhereIsIntersection where, double lineACrossLineB)
         {
@@ -1243,6 +1279,12 @@ namespace TVGL
             else return (SegmentRelationship.NoOverlap, CollinearityTypes.None);
         }
 
+        /// <summary>
+        /// Determines whether [has a bounding box that encompasses] [the specified polygon b].
+        /// </summary>
+        /// <param name="polygonA">The polygon a.</param>
+        /// <param name="polygonB">The polygon b.</param>
+        /// <returns><c>true</c> if [has a bounding box that encompasses] [the specified polygon b]; otherwise, <c>false</c>.</returns>
         internal static bool HasABoundingBoxThatEncompasses(this Polygon polygonA, Polygon polygonB)
         {
             return (polygonA.MaxX >= polygonB.MaxX
@@ -1252,6 +1294,11 @@ namespace TVGL
         }
 
 
+        /// <summary>
+        /// Gets the ordered lines.
+        /// </summary>
+        /// <param name="orderedPoints">The ordered points.</param>
+        /// <returns>PolygonEdge[].</returns>
         private static PolygonEdge[] GetOrderedLines(Vertex2D[] orderedPoints)
         {
             var length = orderedPoints.Length;
@@ -1269,6 +1316,11 @@ namespace TVGL
             return result;
         }
 
+        /// <summary>
+        /// Gets the self intersections.
+        /// </summary>
+        /// <param name="polygonA">The polygon a.</param>
+        /// <returns>List&lt;SegmentIntersection&gt;.</returns>
         public static List<SegmentIntersection> GetSelfIntersections(this Polygon polygonA)
         {
             var intersections = new List<SegmentIntersection>();

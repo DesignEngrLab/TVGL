@@ -1,6 +1,16 @@
-// Licensed to the .NET Foundation under one or more agreements.
-// The .NET Foundation licenses this file to you under the MIT license.
-// See the LICENSE file in the project root for more information.
+// ***********************************************************************
+// Assembly         : TessellationAndVoxelizationGeometryLibrary
+// Author           : matth
+// Created          : 04-03-2023
+//
+// Last Modified By : matth
+// Last Modified On : 04-03-2023
+// ***********************************************************************
+// <copyright file="Matrix4x4.cs" company="Design Engineering Lab">
+//     2014
+// </copyright>
+// <summary></summary>
+// ***********************************************************************
 
 using Newtonsoft.Json;
 using System;
@@ -17,8 +27,17 @@ namespace TVGL
     [StructLayout(LayoutKind.Sequential)]
     public readonly struct Matrix4x4 : IEquatable<Matrix4x4>
     {
+        /// <summary>
+        /// The billboard epsilon
+        /// </summary>
         private const double BillboardEpsilon = 1e-4;
+        /// <summary>
+        /// The billboard minimum angle
+        /// </summary>
         private const double BillboardMinAngle = 1.0 - (0.1 * (Math.PI / 180.0)); // 0.1 degrees
+        /// <summary>
+        /// The decompose epsilon
+        /// </summary>
         private const double DecomposeEpsilon = 0.0001;
 
 
@@ -26,69 +45,85 @@ namespace TVGL
         /// <summary>
         /// Value at row 1, column 1 of the matrix. This is the x scaling term.
         /// </summary>
+        /// <value>The M11.</value>
         public double M11 { get; }
         /// <summary>
         /// Value at row 1, column 2 of the matrix.
         /// </summary>
+        /// <value>The M12.</value>
         public double M12 { get; }
         /// <summary>
         /// Value at row 1, column 3 of the matrix.
         /// </summary>
+        /// <value>The M13.</value>
         public double M13 { get; }
         /// <summary>
         /// Value at row 1, column 4 of the matrix. This is the x projective term.
         /// </summary>
+        /// <value>The M14.</value>
         public double M14 { get; }
 
         /// <summary>
         /// Value at row 2, column 1 of the matrix.
         /// </summary>
+        /// <value>The M21.</value>
         public double M21 { get; }
         /// <summary>
         /// Value at row 2, column 2 of the matrix. This is the y scaling term.
         /// </summary>
+        /// <value>The M22.</value>
         public double M22 { get; }
         /// <summary>
         /// Value at row 2, column 3 of the matrix.
         /// </summary>
+        /// <value>The M23.</value>
         public double M23 { get; }
         /// <summary>
         /// Value at row 2, column 4 of the matrix. This is the y projective term.
         /// </summary>
+        /// <value>The M24.</value>
         public double M24 { get; }
 
         /// <summary>
         /// Value at row 3, column 1 of the matrix.
         /// </summary>
+        /// <value>The M31.</value>
         public double M31 { get; }
         /// <summary>
         /// Value at row 3, column 2 of the matrix.
         /// </summary>
+        /// <value>The M32.</value>
         public double M32 { get; }
         /// <summary>
         /// Value at row 3, column 3 of the matrix. This is the z scaling term.
         /// </summary>
+        /// <value>The M33.</value>
         public double M33 { get; }
         /// <summary>
         /// Value at row 3, column 4 of the matrix. This is the z projective term.
         /// </summary>
+        /// <value>The M34.</value>
         public double M34 { get; }
 
         /// <summary>
         /// Value at row 4, column 1 of the matrix. This is the x translation term.
         /// </summary>
+        /// <value>The M41.</value>
         public double M41 { get; }
         /// <summary>
         /// Value at row 4, column 2 of the matrix. This is the y translation term.
         /// </summary>
+        /// <value>The M42.</value>
         public double M42 { get; }
         /// <summary>
         /// Value at row 4, column 3 of the matrix. This is the z translation term.
         /// </summary>
+        /// <value>The M43.</value>
         public double M43 { get; }
         /// <summary>
         /// Value at row 4, column 4 of the matrix. This is the global scaling term.
         /// </summary>
+        /// <value>The M44.</value>
         public double M44 { get; }
 
         // Now the Projective Transform terms
@@ -103,6 +138,7 @@ namespace TVGL
         /// <summary>
         /// Returns the multiplicative identity matrix.
         /// </summary>
+        /// <value>The identity.</value>
         public static Matrix4x4 Identity => new Matrix4x4(
             1, 0, 0,
             0, 1, 0,
@@ -112,6 +148,7 @@ namespace TVGL
         /// <summary>
         /// Returns a null matrix, which means all values are set to Not-A-Number.
         /// </summary>
+        /// <value>The null.</value>
         public static Matrix4x4 Null =>
             new Matrix4x4(
                 double.NaN, double.NaN, double.NaN,
@@ -122,6 +159,8 @@ namespace TVGL
         /// <summary>
         /// Returns whether the matrix is the identity matrix.
         /// </summary>
+        /// <param name="tolerance">The tolerance.</param>
+        /// <returns><c>true</c> if the specified tolerance is identity; otherwise, <c>false</c>.</returns>
         public bool IsIdentity(double tolerance = double.NaN)
         {
             if (double.IsNaN(tolerance))
@@ -144,6 +183,7 @@ namespace TVGL
         /// <summary>
         /// Returns whether the matrix has any Not-A-Numbers or if all terms are zero.
         /// </summary>
+        /// <returns><c>true</c> if this instance is null; otherwise, <c>false</c>.</returns>
         public bool IsNull()
         {
             return
@@ -160,9 +200,10 @@ namespace TVGL
         /// <summary>
         /// Gets  the translation component of this matrix.
         /// </summary>
+        /// <value>The translation as vector.</value>
         public Vector3 TranslationAsVector => new Vector3(M41, M42, M43);
         /// <summary>
-        /// Gets the x basis vector. This is the first column not including the 
+        /// Gets the x basis vector. This is the first column not including the
         /// translation component. This represent i-vector what the x-direction is
         /// in the new coordinate frame.
         /// </summary>
@@ -170,7 +211,7 @@ namespace TVGL
         [JsonIgnore]
         public Vector3 XBasisVector => new Vector3(M11, M12, M13);
         /// <summary>
-        /// Gets the y basis vector. This is the second column not including the 
+        /// Gets the y basis vector. This is the second column not including the
         /// translation component. This represent i-vector what the x-direction is
         /// in the new coordinate frame.
         /// </summary>
@@ -178,7 +219,7 @@ namespace TVGL
         [JsonIgnore]
         public Vector3 YBasisVector => new Vector3(M21, M22, M23);
         /// <summary>
-        /// Gets the z basis vector. This is the third column not including the 
+        /// Gets the z basis vector. This is the third column not including the
         /// translation component. This represent i-vector what the x-direction is
         /// in the new coordinate frame.
         /// </summary>
@@ -189,6 +230,22 @@ namespace TVGL
         /// <summary>
         /// Constructs a Matrix4x4 from the given components.
         /// </summary>
+        /// <param name="m11">The M11.</param>
+        /// <param name="m12">The M12.</param>
+        /// <param name="m13">The M13.</param>
+        /// <param name="m14">The M14.</param>
+        /// <param name="m21">The M21.</param>
+        /// <param name="m22">The M22.</param>
+        /// <param name="m23">The M23.</param>
+        /// <param name="m24">The M24.</param>
+        /// <param name="m31">The M31.</param>
+        /// <param name="m32">The M32.</param>
+        /// <param name="m33">The M33.</param>
+        /// <param name="m34">The M34.</param>
+        /// <param name="m41">The M41.</param>
+        /// <param name="m42">The M42.</param>
+        /// <param name="m43">The M43.</param>
+        /// <param name="m44">The M44.</param>
         [JsonConstructor]
         public Matrix4x4(double m11, double m12, double m13, double m14,
                          double m21, double m22, double m23, double m24,
@@ -232,6 +289,18 @@ namespace TVGL
         /// <summary>
         /// Constructs a Matrix4x4 from the given components.
         /// </summary>
+        /// <param name="m11">The M11.</param>
+        /// <param name="m12">The M12.</param>
+        /// <param name="m13">The M13.</param>
+        /// <param name="m21">The M21.</param>
+        /// <param name="m22">The M22.</param>
+        /// <param name="m23">The M23.</param>
+        /// <param name="m31">The M31.</param>
+        /// <param name="m32">The M32.</param>
+        /// <param name="m33">The M33.</param>
+        /// <param name="m41">The M41.</param>
+        /// <param name="m42">The M42.</param>
+        /// <param name="m43">The M43.</param>
         public Matrix4x4(double m11, double m12, double m13,
                          double m21, double m22, double m23,
                          double m31, double m32, double m33,
@@ -262,7 +331,7 @@ namespace TVGL
         /// <summary>
         /// Constructs a Matrix4x4 from the given Matrix3x3.
         /// </summary>
-        /// <param name="value">The source Matrix3x3.</param>
+        /// <param name="matrix">The matrix.</param>
         public Matrix4x4(Matrix3x3 matrix) : this(
             matrix.M11, matrix.M12, 0, matrix.M13,
             matrix.M21, matrix.M22, 0, matrix.M23,
@@ -270,6 +339,13 @@ namespace TVGL
             matrix.M31, matrix.M32, 0, 1)
         { }
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Matrix4x4"/> struct.
+        /// </summary>
+        /// <param name="xComponent">The x component.</param>
+        /// <param name="yComponent">The y component.</param>
+        /// <param name="zComponent">The z component.</param>
+        /// <param name="translation">The translation.</param>
         public Matrix4x4(Vector3 xComponent, Vector3 yComponent, Vector3 zComponent, Vector3 translation)
             : this(xComponent.X, xComponent.Y, xComponent.Z,
                   yComponent.X, yComponent.Y, yComponent.Z,
@@ -696,6 +772,9 @@ namespace TVGL
         /// <param name="nearPlaneDistance">Distance to the near view plane.</param>
         /// <param name="farPlaneDistance">Distance to the far view plane.</param>
         /// <returns>The perspective projection matrix.</returns>
+        /// <exception cref="System.ArgumentOutOfRangeException">fieldOfView</exception>
+        /// <exception cref="System.ArgumentOutOfRangeException">nearPlaneDistance</exception>
+        /// <exception cref="System.ArgumentOutOfRangeException">farPlaneDistance</exception>
         public static Matrix4x4 CreatePerspectiveFieldOfView(double fieldOfView, double aspectRatio, double nearPlaneDistance, double farPlaneDistance)
         {
             if (fieldOfView <= 0.0 || fieldOfView >= Math.PI)
@@ -732,6 +811,8 @@ namespace TVGL
         /// <param name="nearPlaneDistance">Distance to the near view plane.</param>
         /// <param name="farPlaneDistance">Distance to the far view plane.</param>
         /// <returns>The perspective projection matrix.</returns>
+        /// <exception cref="System.ArgumentOutOfRangeException">nearPlaneDistance</exception>
+        /// <exception cref="System.ArgumentOutOfRangeException">farPlaneDistance</exception>
         public static Matrix4x4 CreatePerspective(double width, double height, double nearPlaneDistance, double farPlaneDistance)
         {
             if (nearPlaneDistance <= 0.0)
@@ -764,6 +845,8 @@ namespace TVGL
         /// <param name="nearPlaneDistance">Distance to the near view plane.</param>
         /// <param name="farPlaneDistance">Distance to of the far view plane.</param>
         /// <returns>The perspective projection matrix.</returns>
+        /// <exception cref="System.ArgumentOutOfRangeException">nearPlaneDistance</exception>
+        /// <exception cref="System.ArgumentOutOfRangeException">farPlaneDistance</exception>
         public static Matrix4x4 CreatePerspectiveOffCenter(double left, double right, double bottom, double top, double nearPlaneDistance, double farPlaneDistance)
         {
             if (nearPlaneDistance <= 0.0)
@@ -1477,7 +1560,7 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Transposes the specified matrix. Recall that this flips the matrix 
+        /// Transposes the specified matrix. Recall that this flips the matrix
         /// about its diagonal (rows become columns and columns become rows).
         /// </summary>
         /// <param name="matrix">The source matrix.</param>
@@ -1832,6 +1915,12 @@ namespace TVGL
         /// <returns>The scaled matrix.</returns>
         public static Matrix4x4 operator *(double value1, Matrix4x4 value2)
         { return value2 * value1; }
+        /// <summary>
+        /// Implements the * operator.
+        /// </summary>
+        /// <param name="value1">The value1.</param>
+        /// <param name="value2">The value2.</param>
+        /// <returns>The result of the operator.</returns>
         public static Matrix4x4 operator *(Matrix4x4 value1, double value2)
         {
             if (false) // COMMENTEDCHANGE (Sse.IsSupported)

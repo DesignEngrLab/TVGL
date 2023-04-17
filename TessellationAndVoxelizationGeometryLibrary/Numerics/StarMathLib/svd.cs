@@ -4,7 +4,7 @@
 // Created          : 05-14-2015
 //
 // Last Modified By : MICampbell
-// Last Modified On : 07-07-2015
+// Last Modified On : 04-03-2023
 // ***********************************************************************
 // <copyright file="svd.cs" company="Design Engineering Lab -- MICampbell">
 //     2014
@@ -17,11 +17,15 @@ using TVGL;
 
 namespace StarMathLib
 {
+    /// <summary>
+    /// Class StarMath.
+    /// </summary>
     public static partial class StarMath
     {
         /// <summary>
-        ///     The maximum svd iter
+        /// The maximum svd iter
         /// </summary>
+        /// <value>The maximum sv diter.</value>
         internal static int MaxSvDiter { get; set; } = 1000;
         /// <summary>
         /// Computes the singular value decomposition of A.

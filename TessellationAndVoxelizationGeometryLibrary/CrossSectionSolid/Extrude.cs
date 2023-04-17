@@ -1,7 +1,16 @@
-﻿// Copyright 2015-2020 Design Engineering Lab
-// This file is a part of TVGL, Tessellation and Voxelization Geometry Library
-// https://github.com/DesignEngrLab/TVGL
-// It is licensed under MIT License (see LICENSE.txt for details)
+﻿// ***********************************************************************
+// Assembly         : TessellationAndVoxelizationGeometryLibrary
+// Author           : matth
+// Created          : 04-03-2023
+//
+// Last Modified By : matth
+// Last Modified On : 04-14-2023
+// ***********************************************************************
+// <copyright file="Extrude.cs" company="Design Engineering Lab">
+//     2014
+// </copyright>
+// <summary></summary>
+// ***********************************************************************
 using System.Collections.Generic;
 using System.Linq;
 
@@ -17,11 +26,11 @@ namespace TVGL
         /// <summary>
         /// Creates a Tesselated Solid by extruding the given loop along the given normal.
         /// </summary>
-        /// <param name="loops"></param>
-        /// <param name="extrudeDirection"></param>
-        /// <param name="extrusionHeight"></param>
-        /// <param name="midPlane"></param>
-        /// <returns></returns>
+        /// <param name="loops">The loops.</param>
+        /// <param name="extrudeDirection">The extrude direction.</param>
+        /// <param name="extrusionHeight">Height of the extrusion.</param>
+        /// <param name="midPlane">if set to <c>true</c> [mid plane].</param>
+        /// <returns>TessellatedSolid.</returns>
         public static TessellatedSolid ExtrusionSolidFrom3DLoops(this IEnumerable<IEnumerable<Vector3>> loops, Vector3 extrudeDirection,
             double extrusionHeight, bool midPlane = false)
         {
@@ -31,11 +40,11 @@ namespace TVGL
         /// <summary>
         /// Create the Triangle Faces for a new Tessellated Solid by extruding the given loop along the given normal.
         /// </summary>
-        /// <param name="loops"></param>
-        /// <param name="extrudeDirection"></param>
-        /// <param name="extrusionHeight"></param>
-        /// <param name="midPlane"></param>
-        /// <returns></returns>
+        /// <param name="loops">The loops.</param>
+        /// <param name="extrudeDirection">The extrude direction.</param>
+        /// <param name="extrusionHeight">Height of the extrusion.</param>
+        /// <param name="midPlane">if set to <c>true</c> [mid plane].</param>
+        /// <returns>List&lt;TriangleFace&gt;.</returns>
         public static List<TriangleFace> ExtrusionFacesFrom3DLoops(this IEnumerable<IEnumerable<Vector3>> loops, Vector3 extrudeDirection,
             double extrusionHeight, bool midPlane = false)
         {
@@ -91,12 +100,11 @@ namespace TVGL
         /// <summary>
         /// Create the triangular faces of an extruded solid from polygons.
         /// </summary>
-        /// <param name="paths">The paths.</param>
+        /// <param name="polygon">The polygon.</param>
         /// <param name="basePlaneNormal">The base plane normal.</param>
         /// <param name="basePlaneDistance">The base plane distance.</param>
         /// <param name="extrusionHeight">Height of the extrusion.</param>
         /// <returns>List&lt;TriangleFace&gt;.</returns>
-        /// 
 
         public static IEnumerable<TriangleFace> ExtrusionFacesFrom2DPolygons(this Polygon polygon, Vector3 basePlaneNormal,
                 double basePlaneDistance, double extrusionHeight)
@@ -113,7 +121,7 @@ namespace TVGL
         /// <summary>
         /// Create the triangular faces of an extruded solid from polygons.
         /// </summary>
-        /// <param name="paths">The paths.</param>
+        /// <param name="polygon">The polygon.</param>
         /// <param name="basePlaneNormal">The base plane normal.</param>
         /// <param name="basePlaneDistance">The base plane distance.</param>
         /// <param name="extrusionHeight">Height of the extrusion.</param>
@@ -125,6 +133,15 @@ namespace TVGL
             return ExtrusionFaceVectorsFrom2DPolygons(polygon, triangleIndices, basePlaneNormal, basePlaneDistance, extrusionHeight);
         }
 
+        /// <summary>
+        /// Extrusions the face vectors from2 d polygons.
+        /// </summary>
+        /// <param name="polygon">The polygon.</param>
+        /// <param name="triangleIndices">The triangle indices.</param>
+        /// <param name="basePlaneNormal">The base plane normal.</param>
+        /// <param name="basePlaneDistance">The base plane distance.</param>
+        /// <param name="extrusionHeight">Height of the extrusion.</param>
+        /// <returns>List&lt;System.ValueTuple&lt;Vector3, Vector3, Vector3&gt;&gt;.</returns>
         public static List<(Vector3 A, Vector3 B, Vector3 C)> ExtrusionFaceVectorsFrom2DPolygons(this Polygon polygon,
             List<(int A, int B, int C)> triangleIndices,
             Vector3 basePlaneNormal, double basePlaneDistance, double extrusionHeight)

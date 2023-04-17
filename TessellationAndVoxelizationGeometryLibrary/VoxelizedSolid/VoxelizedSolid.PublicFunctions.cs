@@ -1,7 +1,16 @@
-﻿// Copyright 2015-2020 Design Engineering Lab
-// This file is a part of TVGL, Tessellation and Voxelization Geometry Library
-// https://github.com/DesignEngrLab/TVGL
-// It is licensed under MIT License (see LICENSE.txt for details)
+﻿// ***********************************************************************
+// Assembly         : TessellationAndVoxelizationGeometryLibrary
+// Author           : matth
+// Created          : 04-03-2023
+//
+// Last Modified By : matth
+// Last Modified On : 04-03-2023
+// ***********************************************************************
+// <copyright file="VoxelizedSolid.PublicFunctions.cs" company="Design Engineering Lab">
+//     2014
+// </copyright>
+// <summary></summary>
+// ***********************************************************************
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -17,16 +26,13 @@ namespace TVGL
     {
         #region Public Methods that Branch
         /// <summary>
-        /// Gets or sets the <see cref="System.Boolean"/> at the specified coordinate.
+        /// Gets or sets the <see cref="System.Boolean" /> at the specified coordinate.
         /// true corresponds to "on" and false to "off".
         /// </summary>
-        /// <value>
-        /// The <see cref="System.Boolean"/>.
-        /// </value>
         /// <param name="xCoord">The x coord.</param>
         /// <param name="yCoord">The y coord.</param>
         /// <param name="zCoord">The z coord.</param>
-        /// <returns></returns>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         public bool this[int xCoord, int yCoord, int zCoord]
         {
             get => voxels[yCoord + zMultiplier * zCoord][xCoord];
@@ -34,16 +40,11 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Gets or sets the <see cref="System.Boolean"/> at the specified coordinate.
+        /// Gets or sets the <see cref="System.Boolean" /> at the specified coordinate.
         /// true corresponds to "on" and false to "off".
         /// </summary>
-        /// <value>
-        /// The <see cref="System.Boolean"/>.
-        /// </value>
-        /// <param name="xCoord">The x coord.</param>
-        /// <param name="yCoord">The y coord.</param>
-        /// <param name="zCoord">The z coord.</param>
-        /// <returns></returns>
+        /// <param name="coordinates">The coordinates.</param>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         public bool this[int[] coordinates]
         {
             get => voxels[coordinates[1] + zMultiplier * coordinates[2]][coordinates[0]];
@@ -59,7 +60,7 @@ namespace TVGL
         /// <param name="yCoord">The y coord.</param>
         /// <param name="zCoord">The z coord.</param>
         /// <param name="neighbors">The neighbors.</param>
-        /// <returns></returns>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         public bool GetNeighbors(int xCoord, int yCoord, int zCoord, out int[][] neighbors)
         {
             neighbors = GetNeighbors(xCoord, yCoord, zCoord);
@@ -73,7 +74,7 @@ namespace TVGL
         /// <param name="xCoord">The x coord.</param>
         /// <param name="yCoord">The y coord.</param>
         /// <param name="zCoord">The z coord.</param>
-        /// <returns></returns>
+        /// <returns>System.Int32[][].</returns>
         public int[][] GetNeighbors(int xCoord, int yCoord, int zCoord)
         {
             var neighbors = new int[][] { null, null, null, null, null, null };
@@ -124,9 +125,9 @@ namespace TVGL
 
         #region Set/update properties
         /// <summary>
-        /// Updates the properties of the solid (center, & volume) and is already invoked from 
-        /// boolean functions
+        /// Updates the properties.
         /// </summary>
+        /// <font color="red">Badly formed XML comment.</font>
         private void UpdateProperties()
         {
             CalculateCenter();
@@ -163,7 +164,7 @@ namespace TVGL
         #region Boolean functions
         // NOT A
         /// <summary>
-        /// Inverts to new solid. This is a boolean function when all empty voxels in the bounds 
+        /// Inverts to new solid. This is a boolean function when all empty voxels in the bounds
         /// of the solid are made full, and all full are made empty. It is essentially a negation operation.
         /// </summary>
         /// <returns>VoxelizedSolid.</returns>
@@ -175,7 +176,7 @@ namespace TVGL
         }
         // NOT A
         /// <summary>
-        /// Inverts this instance. This is a boolean function when all empty voxels in the bounds 
+        /// Inverts this instance. This is a boolean function when all empty voxels in the bounds
         /// of the solid are made full, and all full are made empty. It is essentially a negation operation.
         /// </summary>
         public void Invert()
@@ -263,7 +264,7 @@ namespace TVGL
 
         // A AND (NOT B)
         /// <summary>
-        /// Subtracts the specified subtrahends. This is a boolean function that removes voxels from "this" solid 
+        /// Subtracts the specified subtrahends. This is a boolean function that removes voxels from "this" solid
         /// (which is treated as the minuend) that are present in any of the arguments (or subtrahends).
         /// </summary>
         /// <param name="subtrahends">The subtrahends.</param>
@@ -288,12 +289,12 @@ namespace TVGL
         // 0 < distance < VoxelsPerSide[cut direction]
         /// <summary>
         /// Slices this solid into two voxelized solids given the plane defined as aligning with
-        ///  the cartesian axis of the voxelized solid.
+        /// the cartesian axis of the voxelized solid.
         /// </summary>
         /// <param name="vd">The vd.</param>
         /// <param name="distance">The distance.</param>
         /// <returns>System.ValueTuple&lt;VoxelizedSolid, VoxelizedSolid&gt;.</returns>
-        /// <exception cref="ArgumentOutOfRangeException"></exception>
+        /// <exception cref="System.ArgumentOutOfRangeException"></exception>
         public (VoxelizedSolid, VoxelizedSolid) SliceOnPlane(CartesianDirections vd, int distance)
         {
             if (distance >= VoxelsPerSide[Math.Abs((int)vd) - 1] || distance < 1)
@@ -415,7 +416,7 @@ namespace TVGL
         /// will be flat - as if extrude (playdoh style) in the specified direction.
         /// </summary>
         /// <param name="direction">The direction.</param>
-        /// <returns></returns>
+        /// <returns>VoxelizedSolid.</returns>
         public VoxelizedSolid DraftToNewSolid(CartesianDirections direction)
         {
             var vs = (VoxelizedSolid)Copy();
@@ -513,7 +514,7 @@ namespace TVGL
         /// <param name="tLimit">The t limit.</param>
         /// <param name="maskSize">Size of the mask.</param>
         /// <param name="maskOptions">The mask options.</param>
-        /// <returns></returns>
+        /// <returns>VoxelizedSolid.</returns>
         public VoxelizedSolid DirectionalErodeToConstraintToNewSolid(in VoxelizedSolid constraintSolid, Vector3 dir,
             double tLimit = 0, double maskSize = 0, params string[] maskOptions)
         {
@@ -531,7 +532,7 @@ namespace TVGL
         /// <param name="tLimit">The t limit.</param>
         /// <param name="maskSize">Size of the mask.</param>
         /// <param name="maskOptions">The mask options.</param>
-        /// <returns></returns>
+        /// <returns>VoxelizedSolid.</returns>
         public VoxelizedSolid DirectionalErodeToConstraintToNewSolid(in VoxelizedSolid constraintSolid, CartesianDirections dir,
             double tLimit = 0, double maskSize = 0, params string[] maskOptions)
         {
@@ -548,7 +549,7 @@ namespace TVGL
         /// <param name="dir">The dir.</param>
         /// <param name="tLimit">The t limit.</param>
         /// <param name="maskSize">The tool dia.</param>
-        /// <param name="toolOptions">The tool options.</param>
+        /// <param name="maskOptions">The mask options.</param>
         private void DirectionalErodeToConstraint(VoxelizedSolid constraintSolid, Vector3 dir,
             double tLimit, double maskSize, params string[] maskOptions)
         {
@@ -575,6 +576,13 @@ namespace TVGL
             UpdateProperties();
         }
 
+        /// <summary>
+        /// Gets the voxel directions.
+        /// </summary>
+        /// <param name="dirX">The dir x.</param>
+        /// <param name="dirY">The dir y.</param>
+        /// <param name="dirZ">The dir z.</param>
+        /// <returns>IEnumerable&lt;CartesianDirections&gt;.</returns>
         private static IEnumerable<CartesianDirections> GetVoxelDirections(double dirX, double dirY, double dirZ)
         {
             var dirs = new List<CartesianDirections>();
@@ -587,6 +595,14 @@ namespace TVGL
             return dirs.ToArray();
         }
 
+        /// <summary>
+        /// Gets all voxels on bounding surfaces.
+        /// </summary>
+        /// <param name="dirX">The dir x.</param>
+        /// <param name="dirY">The dir y.</param>
+        /// <param name="dirZ">The dir z.</param>
+        /// <param name="toolDia">The tool dia.</param>
+        /// <returns>IEnumerable&lt;System.Int32[]&gt;.</returns>
         private IEnumerable<int[]> GetAllVoxelsOnBoundingSurfaces(double dirX, double dirY, double dirZ,
             double toolDia)
         {
@@ -599,6 +615,12 @@ namespace TVGL
             return surfaceVoxels;
         }
 
+        /// <summary>
+        /// Gets all voxels on bounding surface.
+        /// </summary>
+        /// <param name="dir">The dir.</param>
+        /// <param name="toolDia">The tool dia.</param>
+        /// <returns>IEnumerable&lt;System.Int32[]&gt;.</returns>
         private IEnumerable<int[]> GetAllVoxelsOnBoundingSurface(CartesianDirections dir, double toolDia)
         {
             var limit = new int[3][];
@@ -629,6 +651,19 @@ namespace TVGL
             return surfaceVoxels;
         }
 
+        /// <summary>
+        /// Erodes the mask.
+        /// </summary>
+        /// <param name="constraintSolid">The constraint solid.</param>
+        /// <param name="mask">The mask.</param>
+        /// <param name="signX">The sign x.</param>
+        /// <param name="signY">The sign y.</param>
+        /// <param name="signZ">The sign z.</param>
+        /// <param name="xLim">The x lim.</param>
+        /// <param name="yLim">The y lim.</param>
+        /// <param name="zLim">The z lim.</param>
+        /// <param name="sliceMask">The slice mask.</param>
+        /// <param name="start">The start.</param>
         private void ErodeMask(VoxelizedSolid constraintSolid, int[][] mask, byte signX, byte signY,
             byte signZ, int xLim, int yLim, int zLim, int[][] sliceMask, int[] start)
         {
@@ -714,6 +749,14 @@ namespace TVGL
 
 
         #region Functions for Dilation (3D Offsetting)
+        /// <summary>
+        /// Gets the voxels within circle.
+        /// </summary>
+        /// <param name="center">The center.</param>
+        /// <param name="dir">The dir.</param>
+        /// <param name="radius">The radius.</param>
+        /// <param name="edge">if set to <c>true</c> [edge].</param>
+        /// <returns>System.Int32[][].</returns>
         private static int[][] GetVoxelsWithinCircle(Vector3 center, Vector3 dir, double radius, bool edge = false)
         {
             var voxels = new HashSet<int[]>(new SameCoordinates());
@@ -743,6 +786,14 @@ namespace TVGL
             return voxels.ToArray();
         }
 
+        /// <summary>
+        /// Gets the voxels on cone.
+        /// </summary>
+        /// <param name="center">The center.</param>
+        /// <param name="dir">The dir.</param>
+        /// <param name="radius">The radius.</param>
+        /// <param name="angle">The angle.</param>
+        /// <returns>System.Int32[][].</returns>
         private static int[][] GetVoxelsOnCone(int[] center, Vector3 dir, double radius, double angle)
         {
             var voxels = new HashSet<int[]>(new[] { center.ToArray() }, new SameCoordinates());
@@ -769,6 +820,13 @@ namespace TVGL
             return voxels.ToArray();
         }
 
+        /// <summary>
+        /// Gets the voxels on hemisphere.
+        /// </summary>
+        /// <param name="center">The center.</param>
+        /// <param name="dir">The dir.</param>
+        /// <param name="radius">The radius.</param>
+        /// <returns>System.Int32[][].</returns>
         private static int[][] GetVoxelsOnHemisphere(int[] center, Vector3 dir, double radius)
         {
             var voxels = new HashSet<int[]>(new[] { center.ToArray() }, new SameCoordinates());
@@ -792,6 +850,14 @@ namespace TVGL
             return voxels.ToArray();
         }
 
+        /// <summary>
+        /// Thickens the mask.
+        /// </summary>
+        /// <param name="vox">The vox.</param>
+        /// <param name="dir">The dir.</param>
+        /// <param name="toolDia">The tool dia.</param>
+        /// <param name="maskOptions">The mask options.</param>
+        /// <returns>System.Int32[][].</returns>
         private int[][] ThickenMask(int[] vox, Vector3 dir, double toolDia, params string[] maskOptions)
         {
             if (toolDia <= 0) return new[] { vox };
@@ -815,6 +881,12 @@ namespace TVGL
             }
         }
 
+        /// <summary>
+        /// Creates the projection mask.
+        /// </summary>
+        /// <param name="dir">The dir.</param>
+        /// <param name="tLimit">The t limit.</param>
+        /// <returns>System.Int32[][].</returns>
         private int[][] CreateProjectionMask(Vector3 dir, double tLimit)
         {
             var initCoord = new[] { 0, 0, 0 };
@@ -834,6 +906,12 @@ namespace TVGL
         }
 
         //Exclusive by default (i.e. if line passes through vertex/edge it ony includes two voxels that are actually passed through)
+        /// <summary>
+        /// Gets the next voxel coord.
+        /// </summary>
+        /// <param name="cInt">The c int.</param>
+        /// <param name="direction">The direction.</param>
+        /// <returns>System.Int32[].</returns>
         private static int[] GetNextVoxelCoord(Vector3 cInt, Vector3 direction)
         {
             var searchDirs = new List<int>();
@@ -854,6 +932,13 @@ namespace TVGL
         }
 
         //firstVoxel needs to be in voxel coordinates and represent the center of the voxel (i.e. {0.5, 0.5, 0.5})
+        /// <summary>
+        /// Finds the intersection distances.
+        /// </summary>
+        /// <param name="firstVoxel">The first voxel.</param>
+        /// <param name="direction">The direction.</param>
+        /// <param name="tLimit">The t limit.</param>
+        /// <returns>System.Double[].</returns>
         private double[] FindIntersectionDistances(Vector3 firstVoxel, Vector3 direction, double tLimit)
         {
             var intersections = new ConcurrentBag<double>();

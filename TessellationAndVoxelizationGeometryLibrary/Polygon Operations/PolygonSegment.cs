@@ -1,12 +1,21 @@
-﻿// Copyright 2015-2020 Design Engineering Lab
-// This file is a part of TVGL, Tessellation and Voxelization Geometry Library
-// https://github.com/DesignEngrLab/TVGL
-// It is licensed under MIT License (see LICENSE.txt for details)
+﻿// ***********************************************************************
+// Assembly         : TessellationAndVoxelizationGeometryLibrary
+// Author           : matth
+// Created          : 04-03-2023
+//
+// Last Modified By : matth
+// Last Modified On : 04-03-2023
+// ***********************************************************************
+// <copyright file="PolygonSegment.cs" company="Design Engineering Lab">
+//     2014
+// </copyright>
+// <summary></summary>
+// ***********************************************************************
 
 namespace TVGL
 {
     /// <summary>
-    ///     NodeLine
+    /// NodeLine
     /// </summary>
     public class PolygonEdge
 
@@ -27,6 +36,9 @@ namespace TVGL
             }
         }
 
+        /// <summary>
+        /// The length
+        /// </summary>
         private double _length = double.NaN;
 
         /// <summary>
@@ -43,8 +55,15 @@ namespace TVGL
             }
         }
 
+        /// <summary>
+        /// The vector
+        /// </summary>
         private Vector2 _vector = Vector2.Null;
 
+        /// <summary>
+        /// Gets the center.
+        /// </summary>
+        /// <value>The center.</value>
         public Vector2 Center
         {
             get
@@ -55,8 +74,15 @@ namespace TVGL
             }
         }
 
+        /// <summary>
+        /// The center
+        /// </summary>
         private Vector2 _center = Vector2.Null;
 
+        /// <summary>
+        /// Gets the y intercept.
+        /// </summary>
+        /// <value>The y intercept.</value>
         public double YIntercept
         {
             get
@@ -67,8 +93,15 @@ namespace TVGL
             }
         }
 
+        /// <summary>
+        /// The y intercept
+        /// </summary>
         private double _yIntercept = double.NaN;
 
+        /// <summary>
+        /// Gets the x intercept.
+        /// </summary>
+        /// <value>The x intercept.</value>
         public double XIntercept
         {
             get
@@ -79,6 +112,9 @@ namespace TVGL
             }
         }
 
+        /// <summary>
+        /// The x intercept
+        /// </summary>
         private double _xIntercept = double.NaN;
 
         /// <summary>
@@ -95,6 +131,9 @@ namespace TVGL
             }
         }
 
+        /// <summary>
+        /// The vertical slope
+        /// </summary>
         private double _verticalSlope = double.NaN;
 
         /// <summary>
@@ -111,11 +150,30 @@ namespace TVGL
             }
         }
 
+        /// <summary>
+        /// The horizontal slope
+        /// </summary>
         private double _horizontalSlope = double.NaN;
 
+        /// <summary>
+        /// Gets the x maximum.
+        /// </summary>
+        /// <value>The x maximum.</value>
         public double XMax { get; private set; }
+        /// <summary>
+        /// Gets the x minimum.
+        /// </summary>
+        /// <value>The x minimum.</value>
         public double XMin { get; private set; }
+        /// <summary>
+        /// Gets the y maximum.
+        /// </summary>
+        /// <value>The y maximum.</value>
         public double YMax { get; private set; }
+        /// <summary>
+        /// Gets the y minimum.
+        /// </summary>
+        /// <value>The y minimum.</value>
         public double YMin { get; private set; }
 
         /// <summary>
@@ -129,7 +187,7 @@ namespace TVGL
         #region Constructor
 
         /// <summary>
-        ///     Sets to and from nodes as well as slope and intercept of line.
+        /// Sets to and from nodes as well as slope and intercept of line.
         /// </summary>
         /// <param name="fromNode">From node.</param>
         /// <param name="toNode">To node.</param>
@@ -146,13 +204,13 @@ namespace TVGL
         #endregion Constructor
 
         /// <summary>
-        ///     Gets the Vertex2D which the line is pointing to. Set is through the constructor.
+        /// Gets the Vertex2D which the line is pointing to. Set is through the constructor.
         /// </summary>
         /// <value>To node.</value>
         public Vertex2D ToPoint { get; }
 
         /// <summary>
-        ///     Gets the Vertex2D which the line is pointing away from. Set is through the constructor.
+        /// Gets the Vertex2D which the line is pointing away from. Set is through the constructor.
         /// </summary>
         /// <value>From node.</value>
         public Vertex2D FromPoint { get; }
@@ -173,8 +231,8 @@ namespace TVGL
         /// <summary>
         /// Gets the other point that makes up this line.
         /// </summary>
-        /// <param name="point"></param>
-        /// <returns></returns>
+        /// <param name="point">The point.</param>
+        /// <returns>Vertex2D.</returns>
         public Vertex2D OtherPoint(Vertex2D point)
         {
             if (point == FromPoint) return ToPoint;
@@ -182,8 +240,9 @@ namespace TVGL
         }
 
         /// <summary>
-        ///     Reverses this instance.
+        /// Reverses this instance.
         /// </summary>
+        /// <returns>PolygonEdge.</returns>
         internal PolygonEdge Reverse()
         {
             return new PolygonEdge(ToPoint, FromPoint);
@@ -192,8 +251,9 @@ namespace TVGL
         /// <summary>
         /// Returns Y value given an X value
         /// </summary>
-        /// <param name="xval"></param>
-        /// <returns></returns>
+        /// <param name="xval">The xval.</param>
+        /// <param name="isBetweenEndPoints">if set to <c>true</c> [is between end points].</param>
+        /// <returns>System.Double.</returns>
         public double FindYGivenX(double xval, out bool isBetweenEndPoints)
         {
             if (xval.IsPracticallySame(FromPoint.X))
@@ -228,6 +288,7 @@ namespace TVGL
         /// Returns X value given a Y value
         /// </summary>
         /// <param name="yval">The y.</param>
+        /// <param name="isBetweenEndPoints">if set to <c>true</c> [is between end points].</param>
         /// <returns>System.Double.</returns>
         public double FindXGivenY(double yval, out bool isBetweenEndPoints)
         {
@@ -260,11 +321,18 @@ namespace TVGL
             return HorizontalSlope * (yval - FromPoint.Y) + FromPoint.X;
         }
 
+        /// <summary>
+        /// Returns a <see cref="System.String" /> that represents this instance.
+        /// </summary>
+        /// <returns>A <see cref="System.String" /> that represents this instance.</returns>
         public override string ToString()
         {
             return "from: " + FromPoint + " to: " + ToPoint;
         }
 
+        /// <summary>
+        /// Resets this instance.
+        /// </summary>
         internal void Reset()
         {
             _center = Vector2.Null;

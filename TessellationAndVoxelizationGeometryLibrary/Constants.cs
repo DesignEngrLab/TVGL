@@ -1,7 +1,16 @@
-﻿// Copyright 2015-2020 Design Engineering Lab
-// This file is a part of TVGL, Tessellation and Voxelization Geometry Library
-// https://github.com/DesignEngrLab/TVGL
-// It is licensed under MIT License (see LICENSE.txt for details)
+﻿// ***********************************************************************
+// Assembly         : TessellationAndVoxelizationGeometryLibrary
+// Author           : matth
+// Created          : 04-03-2023
+//
+// Last Modified By : matth
+// Last Modified On : 04-03-2023
+// ***********************************************************************
+// <copyright file="Constants.cs" company="Design Engineering Lab">
+//     2014
+// </copyright>
+// <summary></summary>
+// ***********************************************************************
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,15 +18,33 @@ using System.Linq;
 namespace TVGL
 {
     /// <summary>
-    ///     Class Constants.
+    /// Class Constants.
     /// </summary>
     public static class Constants
     {
+        /// <summary>
+        /// The maximum number faces default full ts
+        /// </summary>
         internal const int MaxNumberFacesDefaultFullTS = 50000;
+        /// <summary>
+        /// The two pi
+        /// </summary>
         public const double TwoPi = 2 * Math.PI;
+        /// <summary>
+        /// The half pi
+        /// </summary>
         public const double HalfPi = Math.PI / 2;
+        /// <summary>
+        /// The cos15
+        /// </summary>
         public readonly static double Cos15 = Math.Cos(15.0 * Math.PI / 180);
+        /// <summary>
+        /// The square root of long maximum value
+        /// </summary>
         internal const long SquareRootOfLongMaxValue = 3037000499; // 3 billion
+        /// <summary>
+        /// The cube root of long maximum value
+        /// </summary>
         internal const long CubeRootOfLongMaxValue = 2097151; //2 million
         /// <summary>
         /// VertexCheckSumMultiplier is the checksum multiplier to be used for face and edge references.
@@ -41,50 +68,50 @@ namespace TVGL
         /// conservative value for smooth. However, it is not uncommon to have slants in a model well below this. A 2-to-1 slope makes an
         /// angle of 26.6-degrees. So, we consider a little lower as the cutoff.
         /// </summary>
-        public const double MinSmoothAngle = 25 * Math.PI / 180;  
+        public const double MinSmoothAngle = 25 * Math.PI / 180;
 
         /// <summary>
-        ///     The tolerance used for simplifying polygons by joining to similary sloped lines.
+        /// The tolerance used for simplifying polygons by joining to similary sloped lines.
         /// </summary>
         public const double LineSlopeTolerance = 0.0003;
 
         /// <summary>
-        ///     The tolerance used for simplifying polygons by removing tiny lines.
+        /// The tolerance used for simplifying polygons by removing tiny lines.
         /// </summary>
         public const double LineLengthMinimum = 1E-9;
 
         /// <summary>
-        ///     The default color
+        /// The default color
         /// </summary>
         public const KnownColors DefaultColor = KnownColors.LightGray;
 
         /// <summary>
-        ///     The error ratio used as a base for determining a good tolerance within a given tessellated solid.
+        /// The error ratio used as a base for determining a good tolerance within a given tessellated solid.
         /// </summary>
         public const double BaseTolerance = 1E-11;
 
 
         /// <summary>
-        /// The tolerance multiplier (multiplied into the minimum X or Y dimension of the polygon) for 
+        /// The tolerance multiplier (multiplied into the minimum X or Y dimension of the polygon) for
         /// detecting identical/repeat vertices and for intersection checks in various polygon functions.
         /// </summary>
         public const double PolygonSameTolerance = 1e-7;
 
         /// <summary>
-        ///     The angle tolerance used in the Oriented Bounding Box calculations
+        /// The angle tolerance used in the Oriented Bounding Box calculations
         /// </summary>
         public const double OBBTolerance = 1e-5;
 
         /// <summary>
-        ///     The error for face in surface
+        /// The error for face in surface
         /// </summary>
         public const double ErrorForFaceInSurface = 0.002;
 
 
         /// <summary>
-        ///     The tolerance for the same normal of a face when two are dot-producted.
-        ///     the angle would be acos(1 - SameFaceNormalDotTolerance). 
-        ///     so, 0.01 would be 8-deg
+        /// The tolerance for the same normal of a face when two are dot-producted.
+        /// the angle would be acos(1 - SameFaceNormalDotTolerance).
+        /// so, 0.01 would be 8-deg
         /// </summary>
         public const double SameFaceNormalDotTolerance = 1e-2;
 
@@ -124,11 +151,20 @@ namespace TVGL
         /// </summary>
         internal const int MarchingCubesBufferFactor = 5;
 
+        /// <summary>
+        /// The marching cubes missed factor
+        /// </summary>
         internal const int MarchingCubesMissedFactor = 4;
 
+        /// <summary>
+        /// The default tessellation error
+        /// </summary>
         internal const double DefaultTessellationError = 0.08;
 
-        internal const double DefaultTessellationMaxAngleError = 15; 
+        /// <summary>
+        /// The default tessellation maximum angle error
+        /// </summary>
+        internal const double DefaultTessellationMaxAngleError = 15;
         /// <summary>
         /// The tessellation to voxelization intersection combinations. This is used in the unction that
         /// produces voxels on the edges and faces of a tessellated shape.
@@ -146,7 +182,7 @@ namespace TVGL
         };
 
         /// <summary>
-        ///     Finds the index.
+        /// Finds the index.
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="items">The items.</param>
@@ -167,7 +203,7 @@ namespace TVGL
         }
 
         /// <summary>
-        ///     Finds the index.
+        /// Finds the index.
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="items">The items.</param>
@@ -184,6 +220,11 @@ namespace TVGL
             return -1;
         }
 
+        /// <summary>
+        /// Switches a and b polygon relationship.
+        /// </summary>
+        /// <param name="relationship">The relationship.</param>
+        /// <returns>PolyRelInternal.</returns>
         internal static PolyRelInternal SwitchAAndBPolygonRelationship(this PolyRelInternal relationship)
         {
             if ((relationship & PolyRelInternal.Intersection) == PolyRelInternal.AInsideB)
@@ -199,7 +240,13 @@ namespace TVGL
             return relationship;
         }
 
+        /// <summary>
+        /// The degrees to radians factor
+        /// </summary>
         internal const double DegreesToRadiansFactor = Math.PI / 180.0;
+        /// <summary>
+        /// The default round offset delta angle
+        /// </summary>
         internal const double DefaultRoundOffsetDeltaAngle = Math.PI / 180.0; // which is also one degree or 360 in a circle
 
     }
@@ -215,58 +262,58 @@ namespace TVGL
         unspecified = 0,
 
         /// <summary>
-        ///     The millimeter
+        /// The millimeter
         /// </summary>
         millimeter = 11,
 
         /// <summary>
-        ///     The micron
+        /// The micron
         /// </summary>
         micron = 8,
 
         /// <summary>
-        ///     The centimeter
+        /// The centimeter
         /// </summary>
         centimeter = 1,
 
         /// <summary>
-        ///     The inch
+        /// The inch
         /// </summary>
         inch = 4,
 
         /// <summary>
-        ///     The foot
+        /// The foot
         /// </summary>
         foot = 3,
 
         /// <summary>
-        ///     The meter
+        /// The meter
         /// </summary>
         meter = 6
     }
 
     /// <summary>
-    ///     Enum CurvatureType
+    /// Enum CurvatureType
     /// </summary>
     public enum CurvatureType
     {
         /// <summary>
-        ///     The concave
+        /// The concave
         /// </summary>
         Concave = -1,
 
         /// <summary>
-        ///     The saddle or flat
+        /// The saddle or flat
         /// </summary>
         SaddleOrFlat = 0,
 
         /// <summary>
-        ///     The convex
+        /// The convex
         /// </summary>
         Convex = 1,
 
         /// <summary>
-        ///     The undefined
+        /// The undefined
         /// </summary>
         Undefined
     }
@@ -318,7 +365,7 @@ namespace TVGL
     }
 
     /// <summary>
-    ///     Enum FileType
+    /// Enum FileType
     /// </summary>
     public enum FileType
     {
@@ -328,98 +375,131 @@ namespace TVGL
         unspecified,
 
         /// <summary>
-        ///     Stereolithography (STL) American Standard Code for Information Interchange (ASCII)
+        /// Stereolithography (STL) American Standard Code for Information Interchange (ASCII)
         /// </summary>
         // ReSharper disable once InconsistentNaming
         STL_ASCII,
 
         /// <summary>
-        ///     Stereolithography (STL) Binary
+        /// Stereolithography (STL) Binary
         /// </summary>
         // ReSharper disable once InconsistentNaming
         STL_Binary,
 
         /// <summary>
-        ///     Mobile MultiModal Framework
+        /// Mobile MultiModal Framework
         /// </summary>
         ThreeMF,
 
         /// <summary>
-        ///     Mobile MultiModal Framework
+        /// Mobile MultiModal Framework
         /// </summary>
         Model3MF,
 
         /// <summary>
-        ///     Wavefront 3D File Format
+        /// Wavefront 3D File Format
         /// </summary>
         OBJ,
 
         /// <summary>
-        ///     Additive Manufacturing File Format
+        /// Additive Manufacturing File Format
         /// </summary>
         AMF,
 
         /// <summary>
-        ///     Object File Format
+        /// Object File Format
         /// </summary>
         OFF,
 
         /// <summary>
-        ///     Polygon File Format as ASCII
+        /// Polygon File Format as ASCII
         /// </summary>
         PLY_ASCII,
 
         /// <summary>
-        ///     Polygon File Format as Binary
+        /// Polygon File Format as Binary
         /// </summary>
         PLY_Binary,
 
         /// <summary>
-        ///     Shell file...I think this was created as part of collaboration with an Oregon-based EDA company
+        /// Shell file...I think this was created as part of collaboration with an Oregon-based EDA company
         /// </summary>
         SHELL,
 
         /// <summary>
-        ///     A human-readable, serialized version of TVGL Solid objects
+        /// A human-readable, serialized version of TVGL Solid objects
         /// </summary>
         TVGL,
 
         /// <summary>
-        ///     A compressed version of TVGL Solid objects. About 4X smaller than TVGL.
+        /// A compressed version of TVGL Solid objects. About 4X smaller than TVGL.
         /// </summary>
         TVGLz
     }
 
+    /// <summary>
+    /// Enum FormatEndiannessType
+    /// </summary>
     internal enum FormatEndiannessType
     {
+        /// <summary>
+        /// The ASCII
+        /// </summary>
         ascii,
+        /// <summary>
+        /// The binary little endian
+        /// </summary>
         binary_little_endian,
+        /// <summary>
+        /// The binary big endian
+        /// </summary>
         binary_big_endian
     }
 
     /// <summary>
-    ///     Enum ShapeElement
+    /// Enum ShapeElement
     /// </summary>
     internal enum ShapeElement
     {
         /// <summary>
-        ///     The vertex
+        /// The vertex
         /// </summary>
         Vertex,
 
+        /// <summary>
+        /// The edge
+        /// </summary>
         Edge,
+        /// <summary>
+        /// The face
+        /// </summary>
         Face,
+        /// <summary>
+        /// The uniform color
+        /// </summary>
         Uniform_Color
     }
 
     /// <summary>
-    ///     Enum ColorElements
+    /// Enum ColorElements
     /// </summary>
     internal enum ColorElements
     {
+        /// <summary>
+        /// The red
+        /// </summary>
         Red,
+        /// <summary>
+        /// The green
+        /// </summary>
         Green,
+        /// <summary>
+        /// The blue
+        /// </summary>
         Blue,
+        /// <summary>
+        /// The opacity
+        /// </summary>
         Opacity
     }
 
@@ -434,9 +514,6 @@ namespace TVGL
         /// </summary>
         /// Negative X Direction
         /// </summary>
-        /// <summary>
-        /// The x negative
-        /// </summary>
         XNegative = -1,
 
         /// <summary>
@@ -444,9 +521,6 @@ namespace TVGL
         /// <summary>
         /// The x negative
         /// </summary>
-        /// </summary>
-        /// <summary>
-        /// The y negative
         /// </summary>
         YNegative = -2,
 
@@ -456,9 +530,6 @@ namespace TVGL
         /// The y negative
         /// </summary>
         /// </summary>
-        /// <summary>
-        /// The z negative
-        /// </summary>
         ZNegative = -3,
 
         /// <summary>
@@ -466,9 +537,6 @@ namespace TVGL
         /// <summary>
         /// The z negative
         /// </summary>
-        /// </summary>
-        /// <summary>
-        /// The x positive
         /// </summary>
         XPositive = 1,
 
@@ -478,9 +546,6 @@ namespace TVGL
         /// The x positive
         /// </summary>
         /// </summary>
-        /// <summary>
-        /// The y positive
-        /// </summary>
         YPositive = 2,
 
         /// <summary>
@@ -489,17 +554,29 @@ namespace TVGL
         /// The y positive
         /// </summary>
         /// </summary>
-        /// <summary>
-        /// The z positive
-        /// </summary>
         ZPositive = 3
     }
 
+    /// <summary>
+    /// Enum VerticalLineReferenceType
+    /// </summary>
     internal enum VerticalLineReferenceType
     {
+        /// <summary>
+        /// The above
+        /// </summary>
         Above,
+        /// <summary>
+        /// The on
+        /// </summary>
         On,
+        /// <summary>
+        /// The below
+        /// </summary>
         Below,
+        /// <summary>
+        /// The not intersecting
+        /// </summary>
         NotIntersecting
     }
 
@@ -509,15 +586,45 @@ namespace TVGL
     [Flags]
     internal enum PolyRelInternal
     {
+        /// <summary>
+        /// The separated
+        /// </summary>
         Separated = 0,
+        /// <summary>
+        /// The edges cross
+        /// </summary>
         EdgesCross = 1,
+        /// <summary>
+        /// The coincident edges
+        /// </summary>
         CoincidentEdges = 2,
+        /// <summary>
+        /// The coincident vertices
+        /// </summary>
         CoincidentVertices = 4,
+        /// <summary>
+        /// The inside hole
+        /// </summary>
         InsideHole = 8,
+        /// <summary>
+        /// a inside b
+        /// </summary>
         AInsideB = 16,
+        /// <summary>
+        /// The b inside a
+        /// </summary>
         BInsideA = 32,
+        /// <summary>
+        /// The intersection
+        /// </summary>
         Intersection = AInsideB | BInsideA,
+        /// <summary>
+        /// The equal
+        /// </summary>
         Equal = 64,
+        /// <summary>
+        /// The equal but opposite
+        /// </summary>
         EqualButOpposite = 128
     }
 
@@ -568,54 +675,138 @@ namespace TVGL
         EqualButOpposite = 128
     }
 
+    /// <summary>
+    /// Enum SegmentRelationship
+    /// </summary>
     public enum SegmentRelationship
     {
+        /// <summary>
+        /// The no overlap
+        /// </summary>
         NoOverlap,
+        /// <summary>
+        /// The abutting
+        /// </summary>
         Abutting,
+        /// <summary>
+        /// The double overlap
+        /// </summary>
         DoubleOverlap,
+        /// <summary>
+        /// The b encloses a
+        /// </summary>
         BEnclosesA,
+        /// <summary>
+        /// a encloses b
+        /// </summary>
         AEnclosesB,
+        /// <summary>
+        /// The cross over b outside after
+        /// </summary>
         CrossOver_BOutsideAfter,
+        /// <summary>
+        /// The cross over a outside after
+        /// </summary>
         CrossOver_AOutsideAfter,
     }
 
+    /// <summary>
+    /// Enum CollinearityTypes
+    /// </summary>
     public enum CollinearityTypes
     {
+        /// <summary>
+        /// The none
+        /// </summary>
         None,
+        /// <summary>
+        /// The both same direction
+        /// </summary>
         BothSameDirection,
+        /// <summary>
+        /// The both opposite direction
+        /// </summary>
         BothOppositeDirection,
+        /// <summary>
+        /// The after
+        /// </summary>
         After,
+        /// <summary>
+        /// The before
+        /// </summary>
         Before,
+        /// <summary>
+        /// a after b before
+        /// </summary>
         AAfterBBefore, // case 14
+        /// <summary>
+        /// a before b after
+        /// </summary>
         ABeforeBAfter
     }
 
+    /// <summary>
+    /// Enum WhereIsIntersection
+    /// </summary>
     public enum WhereIsIntersection
     {
+        /// <summary>
+        /// The intermediate
+        /// </summary>
         Intermediate,
+        /// <summary>
+        /// At start of a
+        /// </summary>
         AtStartOfA,
+        /// <summary>
+        /// At start of b
+        /// </summary>
         AtStartOfB,
+        /// <summary>
+        /// The both starts
+        /// </summary>
         BothStarts
     }
+    /// <summary>
+    /// Enum BooleanOperationType
+    /// </summary>
     public enum BooleanOperationType
     {
+        /// <summary>
+        /// The union
+        /// </summary>
         Union,
+        /// <summary>
+        /// The intersect
+        /// </summary>
         Intersect,
+        /// <summary>
+        /// The subtract ab
+        /// </summary>
         SubtractAB,
+        /// <summary>
+        /// The subtract ba
+        /// </summary>
         SubtractBA,
+        /// <summary>
+        /// The xor
+        /// </summary>
         XOR
     }
 
     /// <summary>
-    ///     A comparer for optimization that can be used for either
-    ///     ascending or descending.
+    /// A comparer for optimization that can be used for either
+    /// ascending or descending.
     /// </summary>
     public class NoEqualSort : IComparer<double>
     {
+        /// <summary>
+        /// The direction
+        /// </summary>
         private readonly int direction;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="NoEqualSort"/> class.
+        /// Initializes a new instance of the <see cref="NoEqualSort" /> class.
         /// </summary>
         /// <param name="ascendingOrder">if set to <c>true</c> [ascending order].</param>
         public NoEqualSort(bool ascendingOrder = true)
@@ -624,16 +815,14 @@ namespace TVGL
         }
 
         /// <summary>
-        ///     Compares two objects and returns a value indicating whether one is less than, equal to, or greater than the other.
+        /// Compares two objects and returns a value indicating whether one is less than, equal to, or greater than the other.
         /// </summary>
         /// <param name="x">The first object to compare.</param>
         /// <param name="y">The second object to compare.</param>
-        /// <returns>
-        ///     A signed integer that indicates the relative values of <paramref name="x" /> and <paramref name="y" />, as
-        ///     shown in the following table.Value Meaning Less than zero<paramref name="x" /> is less than <paramref name="y" />
-        ///     .Zero<paramref name="x" /> equals <paramref name="y" />.Greater than zero<paramref name="x" /> is greater than
-        ///     <paramref name="y" />.
-        /// </returns>
+        /// <returns>A signed integer that indicates the relative values of <paramref name="x" /> and <paramref name="y" />, as
+        /// shown in the following table.Value Meaning Less than zero<paramref name="x" /> is less than <paramref name="y" />
+        /// .Zero<paramref name="x" /> equals <paramref name="y" />.Greater than zero<paramref name="x" /> is greater than
+        /// <paramref name="y" />.</returns>
         public int Compare(double x, double y)
         {
             if (x < y) return direction;

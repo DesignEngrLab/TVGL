@@ -1,7 +1,16 @@
-﻿// Copyright 2015-2020 Design Engineering Lab
-// This file is a part of TVGL, Tessellation and Voxelization Geometry Library
-// https://github.com/DesignEngrLab/TVGL
-// It is licensed under MIT License (see LICENSE.txt for details)
+﻿// ***********************************************************************
+// Assembly         : TessellationAndVoxelizationGeometryLibrary
+// Author           : matth
+// Created          : 04-03-2023
+//
+// Last Modified By : matth
+// Last Modified On : 04-03-2023
+// ***********************************************************************
+// <copyright file="MinimumCircleCylinder.cs" company="Design Engineering Lab">
+//     2014
+// </copyright>
+// <summary></summary>
+// ***********************************************************************
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -10,24 +19,24 @@ using System.Linq;
 namespace TVGL
 {
     /// <summary>
-    ///     The MinimumEnclosure class includes static functions for defining smallest enclosures for a
-    ///     tessellated solid. For example: convex hull, minimum bounding box, or minimum bounding sphere.
+    /// The MinimumEnclosure class includes static functions for defining smallest enclosures for a
+    /// tessellated solid. For example: convex hull, minimum bounding box, or minimum bounding sphere.
     /// </summary>
     public static partial class MinimumEnclosure
     {
         /// <summary>
-        ///     Finds the minimum bounding circle
+        /// Finds the minimum bounding circle
         /// </summary>
         /// <param name="points">The points.</param>
         /// <returns>System.Double.</returns>
         /// <exception cref="Exception">Bounding circle failed to converge</exception>
         /// <references>
-        ///     Based on Emo Welzl's "move-to-front heuristic" and this paper (algorithm 1).
-        ///     http://www.inf.ethz.ch/personal/gaertner/texts/own_work/esa99_final.pdf
-        ///     This algorithm runs in near linear time. Visiting most points just a few times.
-        ///     Though a linear algorithm was found by Meggi do, this algorithm is more robust
-        ///     (doesn't care about multiple points on a line and fewer rounding functions)
-        ///     and directly applicable to multiple dimensions (in our case, just 2 and 3 D).
+        /// Based on Emo Welzl's "move-to-front heuristic" and this paper (algorithm 1).
+        /// http://www.inf.ethz.ch/personal/gaertner/texts/own_work/esa99_final.pdf
+        /// This algorithm runs in near linear time. Visiting most points just a few times.
+        /// Though a linear algorithm was found by Meggi do, this algorithm is more robust
+        /// (doesn't care about multiple points on a line and fewer rounding functions)
+        /// and directly applicable to multiple dimensions (in our case, just 2 and 3 D).
         /// </references>
         public static Circle MinimumCircle(this IEnumerable<Vector2> points)
         {
@@ -194,6 +203,12 @@ namespace TVGL
             return circle;
         }
 
+        /// <summary>
+        /// Finds the furthest point.
+        /// </summary>
+        /// <param name="reference">The reference.</param>
+        /// <param name="pointsOnCircle">The points on circle.</param>
+        /// <returns>Vector2.</returns>
         private static Vector2 FindFurthestPoint(Vector2 reference, IEnumerable<Vector2> pointsOnCircle)
         {
             var furthestPoint = Vector2.Null;
@@ -213,9 +228,11 @@ namespace TVGL
 
 
         /// <summary>
-        ///     Gets the maximum inner circle given a group of polygons and a center point.
-        ///     If there are no negative polygons, the function will return a negligible Bounding Circle
+        /// Gets the maximum inner circle given a group of polygons and a center point.
+        /// If there are no negative polygons, the function will return a negligible Bounding Circle
         /// </summary>
+        /// <param name="paths">The paths.</param>
+        /// <param name="centerPoint">The center point.</param>
         /// <returns>BoundingBox.</returns>
         public static Circle MaximumInnerCircle(this IEnumerable<IEnumerable<Vector2>> paths, Vector2 centerPoint)
         {
@@ -225,10 +242,12 @@ namespace TVGL
 
 
         /// <summary>
-        ///     Gets the maximum inner circle given a group of polygons and a center point.
-        ///     The circle will either be inside a negative polygon or outside a positive polygon (e.g. C channel). 
-        ///     Else it returns a negligible Bounding Circle
+        /// Gets the maximum inner circle given a group of polygons and a center point.
+        /// The circle will either be inside a negative polygon or outside a positive polygon (e.g. C channel).
+        /// Else it returns a negligible Bounding Circle
         /// </summary>
+        /// <param name="polygons">The polygons.</param>
+        /// <param name="centerPoint">The center point.</param>
         /// <returns>BoundingBox.</returns>
         public static Circle MaximumInnerCircle(this List<Polygon> polygons, Vector2 centerPoint)
         {
@@ -299,6 +318,12 @@ namespace TVGL
             return smallestBoundingCircle;
         }
 
+        /// <summary>
+        /// Maximums the inner circle in hole.
+        /// </summary>
+        /// <param name="polygon">The polygon.</param>
+        /// <param name="centerPoint">The center point.</param>
+        /// <returns>Circle.</returns>
         private static Circle MaximumInnerCircleInHole(Polygon polygon, Vector2 centerPoint)
         {
             var shortestDistance = double.MaxValue;
@@ -336,14 +361,21 @@ namespace TVGL
             return new Circle(centerPoint, shortestDistance);
         }
 
+        /// <summary>
+        /// Minimums the bounding cylinder.
+        /// </summary>
+        /// <param name="ts">The ts.</param>
+        /// <param name="box">The box.</param>
+        /// <returns>Cylinder.</returns>
         public static Cylinder MinimumBoundingCylinder(TessellatedSolid ts, BoundingBox box)
         {
             return MinimumBoundingCylinder(ts.ConvexHull.Vertices, box.Directions);
         }
 
         /// <summary>
-        ///     Gets the minimum bounding cylinder using 13 guesses for the depth direction
+        /// Gets the minimum bounding cylinder using 13 guesses for the depth direction
         /// </summary>
+        /// <typeparam name="T"></typeparam>
         /// <param name="convexHullVertices">The convex hull vertices.</param>
         /// <returns>BoundingBox.</returns>
         public static Cylinder MinimumBoundingCylinder<T>(this IEnumerable<T> convexHullVertices) where T : IVertex3D
@@ -360,6 +392,13 @@ namespace TVGL
             return MinimumBoundingCylinder(convexHullVertices, directions);
         }
 
+        /// <summary>
+        /// Minimums the bounding cylinder.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="convexHullVertices">The convex hull vertices.</param>
+        /// <param name="directions">The directions.</param>
+        /// <returns>Cylinder.</returns>
         public static Cylinder MinimumBoundingCylinder<T>(IEnumerable<T> convexHullVertices, IEnumerable<Vector3> directions) where T : IVertex3D
         {
             Cylinder minCylinder = null;
@@ -374,6 +413,13 @@ namespace TVGL
             return minCylinder;
         }
 
+        /// <summary>
+        /// Minimums the bounding cylinder.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="convexHullVertices">The convex hull vertices.</param>
+        /// <param name="direction">The direction.</param>
+        /// <returns>Cylinder.</returns>
         public static Cylinder MinimumBoundingCylinder<T>(IList<T> convexHullVertices, Vector3 direction) where T : IVertex3D
         {
             var pointsOnFace = convexHullVertices.ProjectTo2DCoordinates(direction, out var backTransform);
@@ -383,12 +429,17 @@ namespace TVGL
             return new Cylinder(direction, anchor, circle, min, max);
         }
 
+        /// <summary>
+        /// The maximum minimum bound cyl iterations
+        /// </summary>
         const int MaxMinBoundCylIterations = 120;
 
         /// <summary>
-        ///     Gets the minimum bounding cylinder using 13 guesses for the depth direction
+        /// Gets the minimum bounding cylinder using 13 guesses for the depth direction
         /// </summary>
-        /// <param name="convexHullVertices">The convex hull vertices.</param>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="vertices">The vertices.</param>
+        /// <param name="likelyAxis">The likely axis.</param>
         /// <returns>BoundingBox.</returns>
         public static Vector3 MinimumBoundingCylinderAxis<T>(this IEnumerable<T> vertices, Vector3 likelyAxis) where T : IVertex3D
         {
@@ -442,11 +493,24 @@ namespace TVGL
         }
 
 
+        /// <summary>
+        /// Gets the circle from2 diametrical points.
+        /// </summary>
+        /// <param name="p0">The p0.</param>
+        /// <param name="p1">The p1.</param>
+        /// <returns>Circle.</returns>
         public static Circle GetCircleFrom2DiametricalPoints(Vector2 p0, Vector2 p1)
         {
             var center = (p0 + p1) / 2;
             return new Circle(center, (p0 - center).LengthSquared());
         }
+        /// <summary>
+        /// Gets the circle from3 points.
+        /// </summary>
+        /// <param name="p0">The p0.</param>
+        /// <param name="p1">The p1.</param>
+        /// <param name="p2">The p2.</param>
+        /// <returns>Circle.</returns>
         public static Circle GetCircleFrom3Points(Vector2 p0, Vector2 p1, Vector2 p2)
         {
             var segment1 = (p1 - p0) / 2;
@@ -459,11 +523,26 @@ namespace TVGL
             return new Circle(center, (p0 - center).LengthSquared());
         }
 
+        /// <summary>
+        /// Gets the circle from2 diametrical points.
+        /// </summary>
+        /// <param name="p0">The p0.</param>
+        /// <param name="p1">The p1.</param>
+        /// <param name="plane">The plane.</param>
+        /// <returns>Circle.</returns>
         public static Circle GetCircleFrom2DiametricalPoints(Vector3 p0, Vector3 p1, Plane plane)
         {
             return GetCircleFrom2DiametricalPoints(p0.ConvertTo2DCoordinates(plane.AsTransformToXYPlane),
                             p1.ConvertTo2DCoordinates(plane.AsTransformToXYPlane));
         }
+        /// <summary>
+        /// Gets the circle from3 points.
+        /// </summary>
+        /// <param name="p0">The p0.</param>
+        /// <param name="p1">The p1.</param>
+        /// <param name="p2">The p2.</param>
+        /// <param name="plane">The plane.</param>
+        /// <returns>Circle.</returns>
         public static Circle GetCircleFrom3Points(Vector3 p0, Vector3 p1, Vector3 p2, Plane plane)
         {
             return GetCircleFrom3Points(p0.ConvertTo2DCoordinates(plane.AsTransformToXYPlane),

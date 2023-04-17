@@ -1,7 +1,16 @@
-﻿// Copyright 2015-2020 Design Engineering Lab
-// This file is a part of TVGL, Tessellation and Voxelization Geometry Library
-// https://github.com/DesignEngrLab/TVGL
-// It is licensed under MIT License (see LICENSE.txt for details)
+﻿// ***********************************************************************
+// Assembly         : TessellationAndVoxelizationGeometryLibrary
+// Author           : matth
+// Created          : 04-03-2023
+//
+// Last Modified By : matth
+// Last Modified On : 04-14-2023
+// ***********************************************************************
+// <copyright file="Cone.cs" company="Design Engineering Lab">
+//     2014
+// </copyright>
+// <summary></summary>
+// ***********************************************************************
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,10 +19,13 @@ using System.Linq;
 namespace TVGL
 {
     /// <summary>
-    ///     The class for Cone primitives.
+    /// The class for Cone primitives.
     /// </summary>
     public class Cone : PrimitiveSurface
     {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Cone"/> class.
+        /// </summary>
         public Cone() { }
         /// <summary>
         /// Cone
@@ -22,7 +34,6 @@ namespace TVGL
         /// <param name="axis">The axis.</param>
         /// <param name="aperture">The aperture.</param>
         /// <param name="isPositive">if set to <c>true</c> [is positive].</param>
-        /// <param name="faces">The faces all.</param>
         public Cone(Vector3 apex, Vector3 axis, double aperture, bool isPositive)
         {
             Apex = apex;
@@ -47,9 +58,10 @@ namespace TVGL
             IsPositive = isPositive;
         }
         /// <summary>
-        /// Initializes a new instance of the <see cref="Cone"/> class.
+        /// Initializes a new instance of the <see cref="Cone" /> class.
         /// </summary>
         /// <param name="originalToBeCopied">The original to be copied.</param>
+        /// <param name="copiedTessellatedSolid">The copied tessellated solid.</param>
         public Cone(Cone originalToBeCopied, TessellatedSolid copiedTessellatedSolid = null)
             : base(originalToBeCopied, copiedTessellatedSolid)
         {
@@ -60,9 +72,11 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="Cone"/> class.
+        /// Initializes a new instance of the <see cref="Cone" /> class.
         /// </summary>
         /// <param name="originalToBeCopied">The original to be copied.</param>
+        /// <param name="newFaceIndices">The new face indices.</param>
+        /// <param name="copiedTessellatedSolid">The copied tessellated solid.</param>
         public Cone(Cone originalToBeCopied, int[] newFaceIndices, TessellatedSolid copiedTessellatedSolid)
             : base(newFaceIndices, copiedTessellatedSolid)
         {
@@ -73,13 +87,13 @@ namespace TVGL
         }
 
         /// <summary>
-        ///     Is the cone positive? (false is negative)
+        /// Is the cone positive? (false is negative)
         /// </summary>
         public bool IsPositive;
 
         /// <summary>
-        ///     Gets the aperture. This is a slope, like m, not an angle. It is dimensionless and NOT radians.
-        ///     like y = mx + b. aperture = tan(cone_angle) where cone_angle is measure from the axis to the cone
+        /// Gets the aperture. This is a slope, like m, not an angle. It is dimensionless and NOT radians.
+        /// like y = mx + b. aperture = tan(cone_angle) where cone_angle is measure from the axis to the cone
         /// </summary>
         /// <value>The aperture.</value>
         public double Aperture
@@ -92,18 +106,27 @@ namespace TVGL
                 sinAperture = value * cosAperture;
             }
         }
+        /// <summary>
+        /// The aperture
+        /// </summary>
         private double aperture;
+        /// <summary>
+        /// The cos aperture
+        /// </summary>
         private double cosAperture;
+        /// <summary>
+        /// The sin aperture
+        /// </summary>
         private double sinAperture;
 
         /// <summary>
-        ///     Gets the apex.
+        /// Gets the apex.
         /// </summary>
         /// <value>The apex.</value>
         public Vector3 Apex { get; set; }
 
         /// <summary>
-        ///     Gets the axis.
+        /// Gets the axis.
         /// </summary>
         /// <value>The axis.</value>
         public Vector3 Axis { get; set; }
@@ -129,7 +152,13 @@ namespace TVGL
             // is the radius at that cross-section
         }
 
+        /// <summary>
+        /// The face x dir
+        /// </summary>
         private Vector3 faceXDir = Vector3.Null;
+        /// <summary>
+        /// The face y dir
+        /// </summary>
         private Vector3 faceYDir = Vector3.Null;
 
         /// <summary>
@@ -259,6 +288,11 @@ namespace TVGL
             return PointMembership(x) < 0 == IsPositive;
         }
 
+        /// <summary>
+        /// Points the membership.
+        /// </summary>
+        /// <param name="point">The point.</param>
+        /// <returns>System.Double.</returns>
         public override double PointMembership(Vector3 point)
         {
             var v = point - Apex;

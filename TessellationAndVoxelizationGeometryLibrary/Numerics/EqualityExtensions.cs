@@ -1,7 +1,16 @@
-﻿// Copyright 2015-2020 Design Engineering Lab
-// This file is a part of TVGL, Tessellation and Voxelization Geometry Library
-// https://github.com/DesignEngrLab/TVGL
-// It is licensed under MIT License (see LICENSE.txt for details)
+﻿// ***********************************************************************
+// Assembly         : TessellationAndVoxelizationGeometryLibrary
+// Author           : matth
+// Created          : 04-03-2023
+//
+// Last Modified By : matth
+// Last Modified On : 04-03-2023
+// ***********************************************************************
+// <copyright file="EqualityExtensions.cs" company="Design Engineering Lab">
+//     2014
+// </copyright>
+// <summary></summary>
+// ***********************************************************************
 using System;
 namespace TVGL
 {
@@ -12,11 +21,14 @@ namespace TVGL
     public static class EqualityExtensions
     {
         /// <summary>
-        ///     Gets or sets the  tolerance for the equality functions: IsPracticallySame, IsNegligible, IsGreaterThanNonNegligible
-        ///     IsLessThanNonNegligible.
+        /// Gets or sets the  tolerance for the equality functions: IsPracticallySame, IsNegligible, IsGreaterThanNonNegligible
+        /// IsLessThanNonNegligible.
         /// </summary>
         /// <value>The equality tolerance.</value>
         public static double EqualityTolerance { get; set; } = DefaultEqualityTolerance;
+        /// <summary>
+        /// The default equality tolerance
+        /// </summary>
         private const double DefaultEqualityTolerance = 1e-12;
         /// <summary>
         /// Determines whether [is practically same] [the specified x].
@@ -108,7 +120,7 @@ namespace TVGL
         /// <summary>
         /// Determines whether the specified v1 is negligible (|x| lte 1e-15).
         /// </summary>
-        /// <param name="v1">The vector.</param>
+        /// <param name="a">a.</param>
         /// <param name="optionalTolerance">An optional tolerance.</param>
         /// <returns><c>true</c> if the specified x is negligible; otherwise, <c>false</c>.</returns>
         public static bool IsNegligible(this ComplexNumber a, double optionalTolerance = DefaultEqualityTolerance)

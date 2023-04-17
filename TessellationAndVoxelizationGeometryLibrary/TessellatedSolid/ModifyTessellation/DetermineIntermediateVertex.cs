@@ -1,7 +1,16 @@
-﻿// Copyright 2015-2020 Design Engineering Lab
-// This file is a part of TVGL, Tessellation and Voxelization Geometry Library
-// https://github.com/DesignEngrLab/TVGL
-// It is licensed under MIT License (see LICENSE.txt for details)
+﻿// ***********************************************************************
+// Assembly         : TessellationAndVoxelizationGeometryLibrary
+// Author           : matth
+// Created          : 04-03-2023
+//
+// Last Modified By : matth
+// Last Modified On : 04-14-2023
+// ***********************************************************************
+// <copyright file="DetermineIntermediateVertex.cs" company="Design Engineering Lab">
+//     2014
+// </copyright>
+// <summary></summary>
+// ***********************************************************************
 using System;
 using System.Linq;
 
@@ -9,17 +18,18 @@ using System.Linq;
 namespace TVGL
 {
     /// <summary>
-    ///  This portion of ModifyTessellation includes the functions to refine a solid, which means
-    ///  adding more elements to it. invoked during the opening of a tessellated solid from "disk", but the repair function
-    ///  may be called on its own.
+    /// This portion of ModifyTessellation includes the functions to refine a solid, which means
+    /// adding more elements to it. invoked during the opening of a tessellated solid from "disk", but the repair function
+    /// may be called on its own.
     /// </summary>
     public static partial class ModifyTessellation
     {
         /// <summary>
-        ///     Adjusts the position of kept vertex.
+        /// Adjusts the position of kept vertex.
         /// </summary>
         /// <param name="vertexA">The keep vertex.</param>
         /// <param name="vertexB">The other vertex.</param>
+        /// <returns>Vector3.</returns>
         internal static Vector3 DetermineIntermediateVertexPosition(Vertex vertexA, Vertex vertexB)
         {
             //average positions
@@ -28,7 +38,7 @@ namespace TVGL
         }
 
         /// <summary>
-        ///     Adjusts the position of kept vertex experimental.
+        /// Adjusts the position of kept vertex experimental.
         /// </summary>
         /// <param name="keepVertex">The keep vertex.</param>
         /// <param name="removedVertex">The removed vertex.</param>

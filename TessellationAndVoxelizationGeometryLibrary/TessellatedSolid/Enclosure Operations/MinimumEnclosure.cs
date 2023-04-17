@@ -1,7 +1,16 @@
-﻿// Copyright 2015-2020 Design Engineering Lab
-// This file is a part of TVGL, Tessellation and Voxelization Geometry Library
-// https://github.com/DesignEngrLab/TVGL
-// It is licensed under MIT License (see LICENSE.txt for details)
+﻿// ***********************************************************************
+// Assembly         : TessellationAndVoxelizationGeometryLibrary
+// Author           : matth
+// Created          : 04-03-2023
+//
+// Last Modified By : matth
+// Last Modified On : 04-14-2023
+// ***********************************************************************
+// <copyright file="MinimumEnclosure.cs" company="Design Engineering Lab">
+//     2014
+// </copyright>
+// <summary></summary>
+// ***********************************************************************
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,13 +18,13 @@ using System.Linq;
 namespace TVGL
 {
     /// <summary>
-    ///     The MinimumEnclosure class includes static functions for defining smallest enclosures for a
-    ///     tesselated solid. For example: convex hull, minimum bounding box, or minimum bounding sphere.
+    /// The MinimumEnclosure class includes static functions for defining smallest enclosures for a
+    /// tesselated solid. For example: convex hull, minimum bounding box, or minimum bounding sphere.
     /// </summary>
     public static partial class MinimumEnclosure
     {
         /// <summary>
-        ///     The maximum rotations for obb
+        /// The maximum rotations for obb
         /// </summary>
         private const int MaxRotationsForOBB = 24;
 
@@ -37,18 +46,17 @@ namespace TVGL
             return BoundingRectangle(polygon.Path, pointsAreConvexHull, setCornerPoints, setPointsOnSide);
         }
         /// <summary>
-        ///     Finds the minimum bounding rectangle given a set of points. Either send any set of points
-        ///     OR the convex hull 2D.
-        ///     Optional booleans for what information should be set in the Bounding Rectangle.
-        ///     Example: If you really just need the area, you don't need the corner points or
-        ///     points on side. 
+        /// Finds the minimum bounding rectangle given a set of points. Either send any set of points
+        /// OR the convex hull 2D.
+        /// Optional booleans for what information should be set in the Bounding Rectangle.
+        /// Example: If you really just need the area, you don't need the corner points or
+        /// points on side.
         /// </summary>
         /// <param name="points">The points.</param>
         /// <param name="pointsAreConvexHull">if set to <c>true</c> [points are convex hull].</param>
-        /// <param name="setCornerPoints"></param>
-        /// <param name="setPointsOnSide"></param>
+        /// <param name="setCornerPoints">if set to <c>true</c> [set corner points].</param>
+        /// <param name="setPointsOnSide">if set to <c>true</c> [set points on side].</param>
         /// <returns>BoundingRectangle.</returns>
-        /// 
         public static BoundingRectangle BoundingRectangle(this IEnumerable<Vector2> points, bool pointsAreConvexHull = false,
             bool setCornerPoints = true, bool setPointsOnSide = true)
         {
@@ -56,9 +64,9 @@ namespace TVGL
         }
 
         /// <summary>
-        ///     Finds the minimum bounding box.
+        /// Finds the minimum bounding box.
         /// </summary>
-        /// <param name="ts">The ts.</param>
+        /// <param name="solids">The solids.</param>
         /// <returns>BoundingBox.</returns>
         public static BoundingBox OrientedBoundingBox(this List<TessellatedSolid> solids)
         {
@@ -72,7 +80,7 @@ namespace TVGL
         }
 
         /// <summary>
-        ///     Finds the minimum bounding box.
+        /// Finds the minimum bounding box.
         /// </summary>
         /// <param name="ts">The ts.</param>
         /// <returns>BoundingBox.</returns>
@@ -83,9 +91,9 @@ namespace TVGL
         }
 
         /// <summary>
-        ///     Finds the minimum bounding box.
+        /// Finds the minimum bounding box.
         /// </summary>
-        /// <param name="ts">The ts.</param>
+        /// <param name="convexHull">The convex hull.</param>
         /// <returns>BoundingBox.</returns>
         public static BoundingBox OrientedBoundingBox(this TVGLConvexHull convexHull)
         {
@@ -93,8 +101,9 @@ namespace TVGL
         }
 
         /// <summary>
-        ///     Finds the minimum bounding box.
+        /// Finds the minimum bounding box.
         /// </summary>
+        /// <typeparam name="T"></typeparam>
         /// <param name="convexHullVertices">The convex hull vertices.</param>
         /// <returns>BoundingBox.</returns>
         public static BoundingBox OrientedBoundingBox<T>(this IEnumerable<T> convexHullVertices) where T : IVertex3D
@@ -164,8 +173,9 @@ namespace TVGL
         #region ChanTan AABB Approach
 
         /// <summary>
-        ///     Find_via_s the chan tan_ aab b_ approach.
+        /// Find_via_s the chan tan_ aab b_ approach.
         /// </summary>
+        /// <typeparam name="T"></typeparam>
         /// <param name="convexHullVertices">The convex hull vertices.</param>
         /// <param name="minOBB">The minimum obb.</param>
         /// <returns>BoundingBox.</returns>
@@ -195,13 +205,14 @@ namespace TVGL
 
         #region Get Length And Extreme Vertices
         /// <summary>
-        ///     Given a Direction, dir, this function returns the maximum length along this Direction
-        ///     for the provided vertices as well as the all vertices that represent the extremes.
-        ///     If you only want one the length or only need one vertex at the extreme, it is more efficient
-        ///     and easier to use GetLengthAndExtremeVertex
+        /// Given a Direction, dir, this function returns the maximum length along this Direction
+        /// for the provided vertices as well as the all vertices that represent the extremes.
+        /// If you only want one the length or only need one vertex at the extreme, it is more efficient
+        /// and easier to use GetLengthAndExtremeVertex
         /// </summary>
-        /// <param name="direction">The direction.</param>
+        /// <typeparam name="T"></typeparam>
         /// <param name="vertices">The vertices.</param>
+        /// <param name="direction">The direction.</param>
         /// <param name="bottomVertices">The bottom vertices.</param>
         /// <param name="topVertices">The top vertices.</param>
         /// <returns>System.Double.</returns>
@@ -239,13 +250,14 @@ namespace TVGL
 
 
         /// <summary>
-        ///     Given a Direction, dir, this function returns the maximum length along this Direction and one vertex 
-        ///     that represents each extreme. Use this if you do not need all the vertices at the extremes.
+        /// Given a Direction, dir, this function returns the maximum length along this Direction and one vertex
+        /// that represents each extreme. Use this if you do not need all the vertices at the extremes.
         /// </summary>
-        /// <param name="direction">The direction.</param>
+        /// <typeparam name="T"></typeparam>
         /// <param name="vertices">The vertices.</param>
-        /// <param name="bottomVertex"></param>
-        /// <param name="topVertex"></param>
+        /// <param name="direction">The direction.</param>
+        /// <param name="bottomVertex">The bottom vertex.</param>
+        /// <param name="topVertex">The top vertex.</param>
         /// <returns>System.Double.</returns>
         public static double GetLengthAndExtremeVertex<T>(this IEnumerable<T> vertices, Vector3 direction,
             out T bottomVertex,
@@ -256,13 +268,14 @@ namespace TVGL
         }
 
         /// <summary>
-        ///     Given a Direction, dir, this function returns the min/max distance to the furthest vertex along this 
-        ///     Direction that represents each extreme.  Use this if you do not need all the vertices at the extremes.
+        /// Given a Direction, dir, this function returns the min/max distance to the furthest vertex along this
+        /// Direction that represents each extreme.  Use this if you do not need all the vertices at the extremes.
         /// </summary>
-        /// <param name="direction">The direction.</param>
+        /// <typeparam name="T"></typeparam>
         /// <param name="vertices">The vertices.</param>
-        /// <param name="bottomVertex"></param>
-        /// <param name="topVertex"></param>
+        /// <param name="direction">The direction.</param>
+        /// <param name="bottomVertex">The bottom vertex.</param>
+        /// <param name="topVertex">The top vertex.</param>
         /// <returns>System.Double.</returns>
         public static (double, double) GetDistanceToExtremeVertex<T>(this IEnumerable<T> vertices, Vector3 direction,
             out T bottomVertex, out T topVertex) where T : IVertex3D
@@ -291,13 +304,13 @@ namespace TVGL
         }
 
         /// <summary>
-        ///     Given a Direction, dir, this function returns the maximum length along this Direction and one vertex 
-        ///     that represents each extreme. Use this if you do not need all the vertices at the extremes.
+        /// Given a Direction, dir, this function returns the maximum length along this Direction and one vertex
+        /// that represents each extreme. Use this if you do not need all the vertices at the extremes.
         /// </summary>
-        /// <param name="direction">The direction.</param>
         /// <param name="vertices">The vertices.</param>
-        /// <param name="bottomVertex"></param>
-        /// <param name="topVertex"></param>
+        /// <param name="direction">The direction.</param>
+        /// <param name="bottomVertex">The bottom vertex.</param>
+        /// <param name="topVertex">The top vertex.</param>
         /// <returns>System.Double.</returns>
         public static double GetLengthAndExtremeVertex(this IEnumerable<Vector3> vertices, Vector3 direction,
             out Vector3 bottomVertex,
@@ -308,13 +321,14 @@ namespace TVGL
         }
 
         /// <summary>
-        ///     Given a Direction, dir, this function returns the min/max distance to the furthest vertex along this 
-        ///     Direction that represents each extreme.  Use this if you do not need all the vertices at the extremes.
+        /// Given a Direction, dir, this function returns the min/max distance to the furthest vertex along this
+        /// Direction that represents each extreme.  Use this if you do not need all the vertices at the extremes.
         /// </summary>
-        /// <param name="direction">The direction.</param>
+        /// <typeparam name="T"></typeparam>
         /// <param name="vertices">The vertices.</param>
-        /// <param name="bottomVertex"></param>
-        /// <param name="topVertex"></param>
+        /// <param name="direction">The direction.</param>
+        /// <param name="bottomVertex">The bottom vertex.</param>
+        /// <param name="topVertex">The top vertex.</param>
         /// <returns>System.Double.</returns>
         public static (double, double) GetDistanceToExtremeVertex<T>(this IEnumerable<Vector3> vertices, Vector3 direction,
             out Vector3 bottomVertex, out Vector3 topVertex)
@@ -342,11 +356,11 @@ namespace TVGL
         }
 
         /// <summary>
-        ///     Given a Direction, dir, this function returns the maximum length along this Direction
-        ///     for the provided points as well as the points that represent the extremes.
+        /// Given a Direction, dir, this function returns the maximum length along this Direction
+        /// for the provided points as well as the points that represent the extremes.
         /// </summary>
-        /// <param name="direction2D">The direction.</param>
         /// <param name="points">The vertices.</param>
+        /// <param name="direction2D">The direction.</param>
         /// <param name="bottomPoints">The bottom vertices.</param>
         /// <param name="topPoints">The top vertices.</param>
         /// <returns>System.Double.</returns>
@@ -394,19 +408,17 @@ namespace TVGL
         // (y-min) counter-clockwise. So the first is y-min (or 2 since this is dir2-minima), then 1 for dir1-max,
         // then 3 for dir2-max, then 0 since this would be xmin or dir1-minima
         /// <summary>
-        ///     Rotating the calipers 2D method. Convex hull must be a counter clockwise loop.
-        ///     Optional booleans for what information should be set in the Bounding Rectangle.
-        ///     Example: If you really just need the area, you don't need the corner points or
-        ///     points on side. 
+        /// Rotating the calipers 2D method. Convex hull must be a counter clockwise loop.
+        /// Optional booleans for what information should be set in the Bounding Rectangle.
+        /// Example: If you really just need the area, you don't need the corner points or
+        /// points on side.
         /// </summary>
         /// <param name="initialPoints">The points.</param>
         /// <param name="pointsAreConvexHull">if set to <c>true</c> [points are convex hull].</param>
-        /// <param name="setCornerPoints"></param>
-        /// <param name="setPointsOnSide"></param>
+        /// <param name="setCornerPoints">if set to <c>true</c> [set corner points].</param>
+        /// <param name="setPointsOnSide">if set to <c>true</c> [set points on side].</param>
         /// <returns>System.Double.</returns>
-        /// <exception cref="Exception">
-        ///     Area should never be negligible unless data is messed up.
-        /// </exception>
+        /// <exception cref="Exception">Area should never be negligible unless data is messed up.</exception>
         private static BoundingRectangle RotatingCalipers2DMethod(IEnumerable<Vector2> initialPoints,
             bool pointsAreConvexHull, bool setCornerPoints, bool setPointsOnSide)
         {
@@ -586,6 +598,14 @@ namespace TVGL
             return bestRectangle;
         }
 
+        /// <summary>
+        /// Gets the angle with next.
+        /// </summary>
+        /// <param name="index">The index.</param>
+        /// <param name="points">The points.</param>
+        /// <param name="sideIndex">Index of the side.</param>
+        /// <param name="lastIndex">The last index.</param>
+        /// <returns>System.Double.</returns>
         private static double GetAngleWithNext(int index, IList<Vector2> points, int sideIndex, int lastIndex)
         {
             var current = points[index];
@@ -598,13 +618,14 @@ namespace TVGL
         /// <summary>
         /// Finds the side points. We don't need to check all the points in the polygon. but we do need to check either side
         /// of the extreme points. At first I thought only backwards, but for the 3 extremes that weren't the starting reference,
-        /// it is difficult to know if the rotation of the reference also brought new points to the side. The same logic can 
+        /// it is difficult to know if the rotation of the reference also brought new points to the side. The same logic can
         /// be applied to forward points as well - especially for the reference point.
         /// </summary>
         /// <param name="startingIndex">Index of the starting.</param>
         /// <param name="offset">The offset.</param>
         /// <param name="points">The points.</param>
         /// <param name="direction">The direction.</param>
+        /// <param name="lastIndex">The last index.</param>
         /// <returns>List&lt;Vector2&gt;.</returns>
         private static List<Vector2> FindSidePoints(int startingIndex, double offset, IList<Vector2> points, Vector2 direction, int lastIndex)
         {
@@ -628,6 +649,12 @@ namespace TVGL
 
         #region FindABB
 
+        /// <summary>
+        /// Finds the axis aligned bounding box.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="vertices">The vertices.</param>
+        /// <returns>BoundingBox&lt;T&gt;.</returns>
         public static BoundingBox<T> FindAxisAlignedBoundingBox<T>(this IEnumerable<T> vertices) where T : IVertex3D
         {
             var pointsOnBox = new List<T>[6];
@@ -654,6 +681,11 @@ namespace TVGL
         }
 
 
+        /// <summary>
+        /// Finds the axis aligned bounding box.
+        /// </summary>
+        /// <param name="solids">The solids.</param>
+        /// <returns>BoundingBox.</returns>
         public static BoundingBox FindAxisAlignedBoundingBox(this IEnumerable<TessellatedSolid> solids) 
         {
             var pointsOnBox = new List<Vertex>[6];
@@ -683,6 +715,15 @@ namespace TVGL
         }
 
 
+        /// <summary>
+        /// Updates the limits and box.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="vertex">The vertex.</param>
+        /// <param name="value">The value.</param>
+        /// <param name="limit">The limit.</param>
+        /// <param name="pointsOnBox">The points on box.</param>
+        /// <param name="isMinimum">if set to <c>true</c> [is minimum].</param>
         private static void UpdateLimitsAndBox<T>(T vertex, double value, ref double limit, List<T> pointsOnBox, bool isMinimum)
         {
             if ((isMinimum && value.IsLessThanNonNegligible(limit)) ||
@@ -701,16 +742,16 @@ namespace TVGL
         #region Find OBB Along Direction
 
         /// <summary>
-        ///     Finds the minimum oriented bounding rectangle (2D). The 3D points of a tessellated solid
-        ///     are projected to the plane defined by "Direction". This returns a BoundingBox structure
-        ///     where the first Direction is the same as the prescribed Direction and the other two are
-        ///     in-plane unit vectors.
+        /// Finds the minimum oriented bounding rectangle (2D). The 3D points of a tessellated solid
+        /// are projected to the plane defined by "Direction". This returns a BoundingBox structure
+        /// where the first Direction is the same as the prescribed Direction and the other two are
+        /// in-plane unit vectors.
         /// </summary>
+        /// <typeparam name="T"></typeparam>
         /// <param name="vertices">The vertices.</param>
         /// <param name="direction">The Direction.</param>
         /// <returns>BoundingBox.</returns>
-        /// <exception cref="Exception">Volume should never be negligible, unless the input data is bad</exception>
-        /// <exception cref="System.Exception"></exception>
+        /// <exception cref="System.Exception">Volume should never be negligible, unless the input data is bad</exception>
         public static BoundingBox<T> FindOBBAlongDirection<T>(this IEnumerable<T> vertices, Vector3 direction) where T : IVertex3D
         {
             var direction1 = direction.Normalize();

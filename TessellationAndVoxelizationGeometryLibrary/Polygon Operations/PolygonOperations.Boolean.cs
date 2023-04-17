@@ -1,7 +1,16 @@
-﻿// Copyright 2015-2020 Design Engineering Lab
-// This file is a part of TVGL, Tessellation and Voxelization Geometry Library
-// https://github.com/DesignEngrLab/TVGL
-// It is licensed under MIT License (see LICENSE.txt for details)
+﻿// ***********************************************************************
+// Assembly         : TessellationAndVoxelizationGeometryLibrary
+// Author           : matth
+// Created          : 04-03-2023
+//
+// Last Modified By : matth
+// Last Modified On : 04-03-2023
+// ***********************************************************************
+// <copyright file="PolygonOperations.Boolean.cs" company="Design Engineering Lab">
+//     2014
+// </copyright>
+// <summary></summary>
+// ***********************************************************************
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -17,10 +26,28 @@ namespace TVGL
     /// </summary>
     public static partial class PolygonOperations
     {
+        /// <summary>
+        /// The area simplification fraction
+        /// </summary>
         const double areaSimplificationFraction = 1e-5;
 
+        /// <summary>
+        /// The sw
+        /// </summary>
         static Stopwatch sw = new Stopwatch();
+        /// <summary>
+        /// The time files
+        /// </summary>
         const string timeFiles = "times.csv";
+        /// <summary>
+        /// Compares the specified TVGL result.
+        /// </summary>
+        /// <param name="tvglResult">The TVGL result.</param>
+        /// <param name="clipperResult">The clipper result.</param>
+        /// <param name="operationString">The operation string.</param>
+        /// <param name="clipTime">The clip time.</param>
+        /// <param name="tvglTime">The TVGL time.</param>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         private static bool Compare(List<Polygon> tvglResult, List<Polygon> clipperResult, string operationString, TimeSpan clipTime, TimeSpan tvglTime)
         {
             lock (sw)
@@ -104,8 +131,17 @@ namespace TVGL
         // is provided in the following four non-Static classes. These are non-static because they all inherit from the BooleanBase class. Each of these only needs
         // to be instantiated once as no data is stored in the class objects. So, this is a sort of singleton model but it's too bad we can have static classes inherit from
         // other static classes.
+        /// <summary>
+        /// The polygon union
+        /// </summary>
         private static PolygonUnion polygonUnion;
+        /// <summary>
+        /// The polygon intersection
+        /// </summary>
         private static PolygonIntersection polygonIntersection;
+        /// <summary>
+        /// The polygon remove intersections
+        /// </summary>
         private static PolygonRemoveIntersections polygonRemoveIntersections;
 
         #region Union Public Methods
@@ -116,7 +152,6 @@ namespace TVGL
         /// <param name="polygonA">The polygon a.</param>
         /// <param name="polygonB">The polygon b.</param>
         /// <param name="outputAsCollectionType">Type of the output as collection.</param>
-        /// <param name="tolerance">The tolerance.</param>
         /// <returns>System.Collections.Generic.List&lt;TVGL.TwoDimensional.Polygon&gt;.</returns>
         public static List<Polygon> Union(this Polygon polygonA, Polygon polygonB,
             PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles)
@@ -176,8 +211,8 @@ namespace TVGL
         /// <param name="outputAsCollectionType">Type of the output as collection.</param>
         /// <param name="tolerance">The minimum allowable area.</param>
         /// <returns>System.Collections.Generic.List&lt;TVGL.TwoDimensional.Polygon&gt;.</returns>
-        /// <exception cref="ArgumentException">A negative polygon (i.e. hole) is provided to Union which results in infinite shape. - polygonA</exception>
-        /// <exception cref="ArgumentException">A negative polygon (i.e. hole) is provided to Union which results in infinite shape. - polygonB</exception>
+        /// <exception cref="System.ArgumentException">A negative polygon (i.e. hole) is provided to Union which results in infinite shape. - polygonA</exception>
+        /// <exception cref="System.ArgumentException">A negative polygon (i.e. hole) is provided to Union which results in infinite shape. - polygonB</exception>
         public static List<Polygon> Union(this Polygon polygonA, Polygon polygonB, PolygonInteractionRecord polygonInteraction,
             PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles, double tolerance = double.NaN)
         {
@@ -202,7 +237,6 @@ namespace TVGL
         /// </summary>
         /// <param name="polygons">The polygons.</param>
         /// <param name="outputAsCollectionType">Type of the output as collection.</param>
-        /// <param name="tolerance">The tolerance.</param>
         /// <returns>System.Collections.Generic.List&lt;TVGL.TwoDimensional.Polygon&gt;.</returns>
         public static List<Polygon> UnionPolygons(this IEnumerable<Polygon> polygons, PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles)
         {
@@ -306,7 +340,7 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Returns the list of polygons that are the subshapes of the two collections of polygons. Notice this is called UnionPolygons 
+        /// Returns the list of polygons that are the subshapes of the two collections of polygons. Notice this is called UnionPolygons
         /// here to distinguish it from the LINQ function Union, which is also a valid extension for any IEnumerable collection.
         /// </summary>
         /// <param name="polygonsA">The polygons a.</param>
@@ -511,15 +545,13 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Returns the list of polygons that are the sub-shapes of the two collections of polygons. Notice this is called IntersectPolygons here 
+        /// Returns the list of polygons that are the sub-shapes of the two collections of polygons. Notice this is called IntersectPolygons here
         /// to distinguish it from the LINQ function Intersect, which is also a valid extension for any IEnumerable collection.
         /// Notice also that any overlap between the polygons in A or the polygons in B are ignored. Finally, all inputs must be positive.
-        /// 
         /// </summary>
         /// <param name="polygonsA">The polygons a.</param>
         /// <param name="polygonsB">The polygons b.</param>
         /// <param name="outputAsCollectionType">Type of the output as collection.</param>
-        /// <param name="tolerance">The tolerance.</param>
         /// <returns>System.Collections.Generic.List&lt;TVGL.TwoDimensional.Polygon&gt;.</returns>
         public static List<Polygon> IntersectPolygons(this IEnumerable<Polygon> polygonsA, IEnumerable<Polygon> polygonsB, PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles)
         {
@@ -592,12 +624,11 @@ namespace TVGL
 
 
         /// <summary>
-        /// Returns the list of polygons that are the sub-shapes of ALL of the provided polygons. Notice this is called IntersectPolygons here 
+        /// Returns the list of polygons that are the sub-shapes of ALL of the provided polygons. Notice this is called IntersectPolygons here
         /// to distinguish it from the LINQ function Intersect, which is also a valid extension for any IEnumerable collection.
         /// </summary>
         /// <param name="polygons">The polygons.</param>
         /// <param name="outputAsCollectionType">Type of the output as collection.</param>
-        /// <param name="tolerance">The tolerance.</param>
         /// <returns>System.Collections.Generic.List&lt;TVGL.TwoDimensional.Polygon&gt;.</returns>
         public static List<Polygon> IntersectPolygons(this IEnumerable<Polygon> polygons, PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles)
         {
@@ -654,12 +685,28 @@ namespace TVGL
         #endregion Intersect Public Methods
 
         #region Direct Access to Clipper API
+        /// <summary>
+        /// Booleans the via clipper.
+        /// </summary>
+        /// <param name="polygonsA">The polygons a.</param>
+        /// <param name="polygonsB">The polygons b.</param>
+        /// <param name="fillType">Type of the fill.</param>
+        /// <param name="clipType">Type of the clip.</param>
+        /// <returns>List&lt;Polygon&gt;.</returns>
         public static List<Polygon> BooleanViaClipper(IEnumerable<Polygon> polygonsA, IEnumerable<Polygon> polygonsB, ClipperLib.PolyFillType fillType,
             ClipperLib.ClipType clipType)
         {
             return BooleanViaClipper(fillType, clipType, polygonsA, polygonsB);
         }
 
+        /// <summary>
+        /// Booleans the via clipper.
+        /// </summary>
+        /// <param name="polygonA">The polygon a.</param>
+        /// <param name="polygonB">The polygon b.</param>
+        /// <param name="fillType">Type of the fill.</param>
+        /// <param name="clipType">Type of the clip.</param>
+        /// <returns>List&lt;Polygon&gt;.</returns>
         public static List<Polygon> BooleanViaClipper(Polygon polygonA, Polygon polygonB, ClipperLib.PolyFillType fillType, ClipperLib.ClipType clipType)
         {
             return BooleanViaClipper(fillType, clipType, new[] { polygonA }, new[] { polygonB});
@@ -724,19 +771,19 @@ namespace TVGL
         #endif
                 }
 
-                /// <summary>
-                /// Returns the list of polygons that result from A-B (subtracting polygon B from polygon A). By providing the intersections
-                /// between the two polygons, the operation will be performed with less time and memory.
-                /// </summary>
-                /// <param name="minuend">The polygon a.</param>
-                /// <param name="subtrahend">The polygon b.</param>
-                /// <param name="interaction">The polygon relationship.</param>
-                /// <param name="outputAsCollectionType">Type of the output as collection.</param>
-                /// <param name="tolerance">The tolerance.</param>
-                /// <returns>System.Collections.Generic.List&lt;TVGL.TwoDimensional.Polygon&gt;.</returns>
-                /// <exception cref="ArgumentException">The minuend is already a negative polygon (i.e. hole). Consider another operation"
-                /// +" to accomplish this function, like Intersect. - polygonA</exception>
-                public static List<Polygon> Subtract(this Polygon minuend, Polygon subtrahend, PolygonInteractionRecord interaction,
+        /// <summary>
+        /// Returns the list of polygons that result from A-B (subtracting polygon B from polygon A). By providing the intersections
+        /// between the two polygons, the operation will be performed with less time and memory.
+        /// </summary>
+        /// <param name="minuend">The polygon a.</param>
+        /// <param name="subtrahend">The polygon b.</param>
+        /// <param name="interaction">The polygon relationship.</param>
+        /// <param name="outputAsCollectionType">Type of the output as collection.</param>
+        /// <param name="tolerance">The tolerance.</param>
+        /// <returns>System.Collections.Generic.List&lt;TVGL.TwoDimensional.Polygon&gt;.</returns>
+        /// <exception cref="ArgumentException">The minuend is already a negative polygon (i.e. hole). Consider another operation"
+        /// +" to accomplish this function, like Intersect. - polygonA</exception>
+        public static List<Polygon> Subtract(this Polygon minuend, Polygon subtrahend, PolygonInteractionRecord interaction,
                     PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles, double tolerance = double.NaN)
                 {
                     interaction = interaction.InvertPolygonInRecord(subtrahend, out var invertedPolygonB);
@@ -744,17 +791,16 @@ namespace TVGL
                 }
 
 
-                /// <summary>
-                /// Returns the list of polygons that are the sub-shapes of the minuends and that are not part of the subtrahends. 
-                /// Notice also that any overlap between the polygons in A or the polygons in B are ignored. Finally, all inputs must be positive.
-                /// 
-                /// </summary>
-                /// <param name="minuends">The polygons a.</param>
-                /// <param name="subtrahends">The polygons b.</param>
-                /// <param name="outputAsCollectionType">Type of the output as collection.</param>
-                /// <param name="tolerance">The tolerance.</param>
-                /// <returns>System.Collections.Generic.List&lt;TVGL.TwoDimensional.Polygon&gt;.</returns>
-                public static List<Polygon> Subtract(this IEnumerable<Polygon> minuends, IEnumerable<Polygon> subtrahends,
+        /// <summary>
+        /// Returns the list of polygons that are the sub-shapes of the minuends and that are not part of the subtrahends.
+        /// Notice also that any overlap between the polygons in A or the polygons in B are ignored. Finally, all inputs must be positive.
+        /// </summary>
+        /// <param name="minuends">The polygons a.</param>
+        /// <param name="subtrahends">The polygons b.</param>
+        /// <param name="outputAsCollectionType">Type of the output as collection.</param>
+        /// <param name="tolerance">The tolerance.</param>
+        /// <returns>System.Collections.Generic.List&lt;TVGL.TwoDimensional.Polygon&gt;.</returns>
+        public static List<Polygon> Subtract(this IEnumerable<Polygon> minuends, IEnumerable<Polygon> subtrahends,
                     PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles, double tolerance = double.NaN)
                 {
                     if (areaSimplificationFraction > 0)
@@ -823,7 +869,7 @@ namespace TVGL
                 }
 
 
-                #endregion Subtract Public Methods
+        #endregion Subtract Public Methods
 
         #region Exclusive-OR Public Methods
 
@@ -834,7 +880,6 @@ namespace TVGL
         /// <param name="polygonA">The polygon a.</param>
         /// <param name="polygonB">The polygon b.</param>
         /// <param name="outputAsCollectionType">Type of the output as collection.</param>
-        /// <param name="tolerance">The tolerance.</param>
         /// <returns>System.Collections.Generic.List&lt;TVGL.TwoDimensional.Polygon&gt;.</returns>
         public static List<Polygon> ExclusiveOr(this Polygon polygonA, Polygon polygonB,
             PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles)
@@ -926,7 +971,6 @@ namespace TVGL
         /// </summary>
         /// <param name="polygon">The polygon.</param>
         /// <param name="resultType">Type of the result.</param>
-        /// <param name="tolerance">The tolerance.</param>
         /// <param name="knownWrongPoints">The known wrong points.</param>
         /// <param name="maxNumberOfPolygons">The maximum number of polygons.</param>
         /// <returns>List&lt;Polygon&gt;.</returns>

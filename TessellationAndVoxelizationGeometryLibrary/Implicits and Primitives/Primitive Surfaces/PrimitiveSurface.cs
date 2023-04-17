@@ -1,7 +1,16 @@
-﻿// Copyright 2015-2020 Design Engineering Lab
-// This file is a part of TVGL, Tessellation and Voxelization Geometry Library
-// https://github.com/DesignEngrLab/TVGL
-// It is licensed under MIT License (see LICENSE.txt for details)
+﻿// ***********************************************************************
+// Assembly         : TessellationAndVoxelizationGeometryLibrary
+// Author           : matth
+// Created          : 04-03-2023
+//
+// Last Modified By : matth
+// Last Modified On : 04-14-2023
+// ***********************************************************************
+// <copyright file="PrimitiveSurface.cs" company="Design Engineering Lab">
+//     2014
+// </copyright>
+// <summary></summary>
+// ***********************************************************************
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -10,7 +19,7 @@ using System.Linq;
 namespace TVGL
 {
     /// <summary>
-    ///     Class PrimitiveSurface.
+    /// Class PrimitiveSurface.
     /// </summary>
     [JsonObject(MemberSerialization.OptOut)]
     public abstract class PrimitiveSurface
@@ -18,15 +27,21 @@ namespace TVGL
         #region Constructors
 
         /// <summary>
-        ///     Initializes a new instance of the <see cref="PrimitiveSurface" /> class.
+        /// Initializes a new instance of the <see cref="PrimitiveSurface" /> class.
         /// </summary>
         /// <param name="faces">The faces.</param>
+        /// <param name="connectFacesToPrimitive">if set to <c>true</c> [connect faces to primitive].</param>
         protected PrimitiveSurface(IEnumerable<TriangleFace> faces, bool connectFacesToPrimitive = true)
         {
             if (faces == null) return;
             SetFacesAndVertices(faces, connectFacesToPrimitive);
         }
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="PrimitiveSurface"/> class.
+        /// </summary>
+        /// <param name="originalToBeCopied">The original to be copied.</param>
+        /// <param name="copiedTessellatedSolid">The copied tessellated solid.</param>
         protected PrimitiveSurface(PrimitiveSurface originalToBeCopied, TessellatedSolid copiedTessellatedSolid)
         {
             _area = originalToBeCopied._area;
@@ -34,6 +49,11 @@ namespace TVGL
             CompletePostSerialization(copiedTessellatedSolid);
         }
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="PrimitiveSurface"/> class.
+        /// </summary>
+        /// <param name="newFaceIndices">The new face indices.</param>
+        /// <param name="copiedTessellatedSolid">The copied tessellated solid.</param>
         protected PrimitiveSurface(int[] newFaceIndices, TessellatedSolid copiedTessellatedSolid)
         {
             FaceIndices = newFaceIndices;
@@ -41,7 +61,7 @@ namespace TVGL
             _area = Faces.Sum(f => f.Area);
         }
         /// <summary>
-        ///     Initializes a new instance of the <see cref="PrimitiveSurface" /> class.
+        /// Initializes a new instance of the <see cref="PrimitiveSurface" /> class.
         /// </summary>
         protected PrimitiveSurface()
         {
@@ -49,6 +69,11 @@ namespace TVGL
 
         #endregion Constructors
 
+        /// <summary>
+        /// Sets the faces and vertices.
+        /// </summary>
+        /// <param name="faces">The faces.</param>
+        /// <param name="connectFacesToPrimitive">if set to <c>true</c> [connect faces to primitive].</param>
         public void SetFacesAndVertices(IEnumerable<TriangleFace> faces, bool connectFacesToPrimitive = true)
         {
             Faces = new HashSet<TriangleFace>(faces);
@@ -58,11 +83,20 @@ namespace TVGL
             Vertices = new HashSet<Vertex>(Faces.SelectMany(f => f.Vertices).Distinct());
         }
 
+        /// <summary>
+        /// Updates the vertices.
+        /// </summary>
         public void UpdateVertices()
         {
             Vertices = new HashSet<Vertex>(Faces.SelectMany(f => f.Vertices).Distinct());
         }
 
+        /// <summary>
+        /// Sets the faces and vertices.
+        /// </summary>
+        /// <param name="faces1">The faces1.</param>
+        /// <param name="faces2">The faces2.</param>
+        /// <param name="connectFacesToPrimitive">if set to <c>true</c> [connect faces to primitive].</param>
         public void SetFacesAndVertices(IEnumerable<TriangleFace> faces1, IEnumerable<TriangleFace> faces2, bool connectFacesToPrimitive = true)
         {
             //Add all the faces to a hashset, without mutating either of the input enumerables.
@@ -76,6 +110,9 @@ namespace TVGL
             SetVerticesFromFaces();
         }
 
+        /// <summary>
+        /// Sets the vertices from faces.
+        /// </summary>
         public void SetVerticesFromFaces()
         {
             Vertices = new HashSet<Vertex>();
@@ -87,6 +124,9 @@ namespace TVGL
 
 
 
+        /// <summary>
+        /// Calculates the both errors.
+        /// </summary>
         private void CalculateBothErrors()
         {
             _maxError = 0.0;
@@ -146,15 +186,44 @@ namespace TVGL
             }
             return maxError;
         }
+        /// <summary>
+        /// Transforms the from3 d to2 d.
+        /// </summary>
+        /// <param name="points">The points.</param>
+        /// <param name="pathIsClosed">if set to <c>true</c> [path is closed].</param>
+        /// <returns>IEnumerable&lt;Vector2&gt;.</returns>
         public abstract IEnumerable<Vector2> TransformFrom3DTo2D(IEnumerable<Vector3> points, bool pathIsClosed);
+        /// <summary>
+        /// Transforms the from3 d to2 d.
+        /// </summary>
+        /// <param name="point">The point.</param>
+        /// <returns>Vector2.</returns>
         public abstract Vector2 TransformFrom3DTo2D(Vector3 point);
+        /// <summary>
+        /// Transforms the from2 d to3 d.
+        /// </summary>
+        /// <param name="point">The point.</param>
+        /// <returns>Vector3.</returns>
         public abstract Vector3 TransformFrom2DTo3D(Vector2 point);
+        /// <summary>
+        /// Points the membership.
+        /// </summary>
+        /// <param name="point">The point.</param>
+        /// <returns>System.Double.</returns>
         public abstract double PointMembership(Vector3 point);
 
+        /// <summary>
+        /// Gets or sets the triangle vertex indices.
+        /// </summary>
+        /// <value>The triangle vertex indices.</value>
         [JsonIgnore]
         //A tempory class used when importing primitives 
         public (int, int, int)[] TriangleVertexIndices { get; set; }
 
+        /// <summary>
+        /// Gets or sets the face indices.
+        /// </summary>
+        /// <value>The face indices.</value>
         public int[] FaceIndices
         {
             get
@@ -167,13 +236,20 @@ namespace TVGL
             }
             set => _faceIndices = value;
         }
+        /// <summary>
+        /// The face indices
+        /// </summary>
         int[] _faceIndices;
 
+        /// <summary>
+        /// Gets or sets the index.
+        /// </summary>
+        /// <value>The index.</value>
         [JsonIgnore]
         public int Index { get; set; }
 
         /// <summary>
-        ///     Gets the area.
+        /// Gets the area.
         /// </summary>
         /// <value>The area.</value>
         [JsonIgnore]
@@ -186,6 +262,9 @@ namespace TVGL
                 return _area;
             }
         }
+        /// <summary>
+        /// The area
+        /// </summary>
         double _area = double.NaN;
 
 
@@ -202,7 +281,14 @@ namespace TVGL
                 return _meanSquaredError;
             }
         }
+        /// <summary>
+        /// The mean squared error
+        /// </summary>
         double _meanSquaredError = double.NaN;
+        /// <summary>
+        /// Gets the maximum error.
+        /// </summary>
+        /// <value>The maximum error.</value>
         public double MaxError
         {
             get
@@ -212,24 +298,27 @@ namespace TVGL
                 return _maxError;
             }
         }
+        /// <summary>
+        /// The maximum error
+        /// </summary>
         double _maxError = double.NaN;
 
         /// <summary>
-        ///     Gets or sets the triangle faces.
+        /// Gets or sets the triangle faces.
         /// </summary>
         /// <value>The triangle faces.</value>
         [JsonIgnore]
         public HashSet<TriangleFace> Faces { get; set; }
 
         /// <summary>
-        ///     Gets the vertices.
+        /// Gets the vertices.
         /// </summary>
         /// <value>The vertices.</value>
         [JsonIgnore]
         public HashSet<Vertex> Vertices { get; set; }
 
         /// <summary>
-        ///     Gets the inner edges.
+        /// Gets the inner edges.
         /// </summary>
         /// <value>The inner edges.</value>
         [JsonIgnore]
@@ -244,8 +333,9 @@ namespace TVGL
         }
 
         /// <summary>
-        ///     Gets IsPositive by using the inner edges
+        /// Gets IsPositive by using the inner edges
         /// </summary>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         /// <value>The inner edges.</value>
         public bool PositiveByEdges()
         {
@@ -260,7 +350,7 @@ namespace TVGL
         }
 
         /// <summary>
-        ///     Gets the outer edges.
+        /// Gets the outer edges.
         /// </summary>
         /// <value>The outer edges.</value>
         [JsonIgnore]
@@ -274,9 +364,18 @@ namespace TVGL
             protected set => _outerEdges = value;
         }
 
+        /// <summary>
+        /// The inner edges
+        /// </summary>
         private HashSet<Edge> _innerEdges;
+        /// <summary>
+        /// The outer edges
+        /// </summary>
         private HashSet<Edge> _outerEdges;
 
+        /// <summary>
+        /// Defines the inner outer edges.
+        /// </summary>
         private void DefineInnerOuterEdges()
         {
             MiscFunctions.DefineInnerOuterEdges(Faces, out _innerEdges, out _outerEdges);
@@ -293,7 +392,7 @@ namespace TVGL
         }
 
         /// <summary>
-        ///     Updates surface by adding face
+        /// Updates surface by adding face
         /// </summary>
         /// <param name="face">The face.</param>
         public void AddFace(TriangleFace face)
@@ -354,12 +453,19 @@ namespace TVGL
             face.BelongsToPrimitive = this;
         }
 
+        /// <summary>
+        /// Updates the belongs to primitive.
+        /// </summary>
         public void UpdateBelongsToPrimitive()
         {
             foreach (var face in Faces)
                 face.BelongsToPrimitive = this;
         }
 
+        /// <summary>
+        /// Completes the post serialization.
+        /// </summary>
+        /// <param name="ts">The ts.</param>
         public void CompletePostSerialization(TessellatedSolid ts)
         {
             Faces = new HashSet<TriangleFace>();
@@ -391,6 +497,10 @@ namespace TVGL
                     border.CompletePostSerialization(ts);
         }
 
+        /// <summary>
+        /// Gets the adjacent faces.
+        /// </summary>
+        /// <returns>HashSet&lt;TriangleFace&gt;.</returns>
         public HashSet<TriangleFace> GetAdjacentFaces()
         {
             var adjacentFaces = new HashSet<TriangleFace>(); //use a hash to avoid duplicates
@@ -402,6 +512,10 @@ namespace TVGL
             return adjacentFaces;
         }
 
+        /// <summary>
+        /// Adjacents the primitives.
+        /// </summary>
+        /// <returns>IEnumerable&lt;PrimitiveSurface&gt;.</returns>
         public IEnumerable<PrimitiveSurface> AdjacentPrimitives()
         {
             foreach (var border in Borders)
@@ -409,10 +523,24 @@ namespace TVGL
                     yield return prim;
         }
 
+        /// <summary>
+        /// Gets or sets the borders.
+        /// </summary>
+        /// <value>The borders.</value>
         public List<PrimitiveBorder> Borders { get; set; }
 
+        /// <summary>
+        /// Gets or sets the border segments.
+        /// </summary>
+        /// <value>The border segments.</value>
         public List<BorderSegment> BorderSegments { get; set; } = new List<BorderSegment>();//initialize to an empty list
 
+        /// <summary>
+        /// Borderses the encircling axis.
+        /// </summary>
+        /// <param name="axis">The axis.</param>
+        /// <param name="anchor">The anchor.</param>
+        /// <returns>IEnumerable&lt;PrimitiveBorder&gt;.</returns>
         public IEnumerable<PrimitiveBorder> BordersEncirclingAxis(Vector3 axis, Vector3 anchor)
         {
             var transform = axis.TransformToXYPlane(out _);
@@ -424,6 +552,13 @@ namespace TVGL
             }
         }
 
+        /// <summary>
+        /// Borders the encircles axis.
+        /// </summary>
+        /// <param name="edgepath">The edgepath.</param>
+        /// <param name="axis">The axis.</param>
+        /// <param name="anchor">The anchor.</param>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         public static bool BorderEncirclesAxis(EdgePath edgepath, Vector3 axis, Vector3 anchor)
         {
             if (axis.IsNull() || anchor.IsNull() || edgepath.NumPoints <= 2) return false;
@@ -433,6 +568,13 @@ namespace TVGL
             var center3d = anchor.ConvertTo2DCoordinates(transform);
             return borderPolygon.IsPointInsidePolygon(true, center3d);
         }
+        /// <summary>
+        /// Borders the encircles axis.
+        /// </summary>
+        /// <param name="path">The path.</param>
+        /// <param name="axis">The axis.</param>
+        /// <param name="anchor">The anchor.</param>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         public static bool BorderEncirclesAxis(IEnumerable<Vector3> path, Vector3 axis, Vector3 anchor)
         {
             if (axis.IsNull() || anchor.IsNull()) return false;
@@ -443,19 +585,47 @@ namespace TVGL
             return borderPolygon.IsPointInsidePolygon(true, center3d);
         }
 
+        /// <summary>
+        /// Gets or sets the maximum x.
+        /// </summary>
+        /// <value>The maximum x.</value>
         [JsonIgnore]
         public double MaxX { get; protected set; } = double.NaN;
+        /// <summary>
+        /// Gets or sets the minimum x.
+        /// </summary>
+        /// <value>The minimum x.</value>
         [JsonIgnore]
         public double MinX { get; protected set; } = double.NaN;
+        /// <summary>
+        /// Gets or sets the maximum y.
+        /// </summary>
+        /// <value>The maximum y.</value>
         [JsonIgnore]
         public double MaxY { get; protected set; } = double.NaN;
+        /// <summary>
+        /// Gets or sets the minimum y.
+        /// </summary>
+        /// <value>The minimum y.</value>
         [JsonIgnore]
         public double MinY { get; protected set; } = double.NaN;
+        /// <summary>
+        /// Gets or sets the maximum z.
+        /// </summary>
+        /// <value>The maximum z.</value>
         [JsonIgnore]
         public double MaxZ { get; protected set; } = double.NaN;
+        /// <summary>
+        /// Gets or sets the minimum z.
+        /// </summary>
+        /// <value>The minimum z.</value>
         [JsonIgnore]
         public double MinZ { get; protected set; } = double.NaN;
 
+        /// <summary>
+        /// Sets the bounds.
+        /// </summary>
+        /// <param name="ignoreIfAlreadySet">if set to <c>true</c> [ignore if already set].</param>
         public void SetBounds(bool ignoreIfAlreadySet = true)
         {
             if (ignoreIfAlreadySet && !double.IsNaN(MaxX) && !double.IsNaN(MinX) &&
@@ -485,8 +655,8 @@ namespace TVGL
         /// Returns whether a point is within the X,Y,Z bounds of the primitive.
         /// This is a fast, crude first step to determining interference.
         /// </summary>
-        /// <param name="v"></param>
-        /// <returns></returns>
+        /// <param name="v">The v.</param>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         public bool WithinBounds(Vector3 v)
         {
             SetBounds();//ignores if already set.
@@ -517,12 +687,25 @@ namespace TVGL
             }
         }
 
+        /// <summary>
+        /// Sets the color.
+        /// </summary>
+        /// <param name="color">The color.</param>
         public void SetColor(Color color)
         {
             foreach (var face in Faces) face.Color = color;
         }
 
+        /// <summary>
+        /// The adjacent surfaces
+        /// </summary>
         private HashSet<PrimitiveSurface> _adjacentSurfaces;
+        /// <summary>
+        /// Gets the adjacent primitives.
+        /// </summary>
+        /// <param name="edgePrimitiveMap">The edge primitive map.</param>
+        /// <param name="surfacesToConsider">The surfaces to consider.</param>
+        /// <returns>HashSet&lt;PrimitiveSurface&gt;.</returns>
         public HashSet<PrimitiveSurface> GetAdjacentPrimitives(
              Dictionary<Edge, (PrimitiveSurface, PrimitiveSurface)> edgePrimitiveMap,
              HashSet<PrimitiveSurface> surfacesToConsider = null)
@@ -540,11 +723,21 @@ namespace TVGL
             return _adjacentSurfaces;
         }
 
+        /// <summary>
+        /// Others the specified edge primitives.
+        /// </summary>
+        /// <param name="edgePrimitives">The edge primitives.</param>
+        /// <returns>PrimitiveSurface.</returns>
         private PrimitiveSurface Other((PrimitiveSurface, PrimitiveSurface) edgePrimitives)
         {
             return this == edgePrimitives.Item1 ? edgePrimitives.Item2 : edgePrimitives.Item1;
         }
 
+        /// <summary>
+        /// Gets the shared edges.
+        /// </summary>
+        /// <param name="other">The other.</param>
+        /// <returns>List&lt;Edge&gt;.</returns>
         public List<Edge> GetSharedEdges(PrimitiveSurface other)
         {
             var shared = new List<Edge>();
@@ -557,6 +750,11 @@ namespace TVGL
         }
 
 
+        /// <summary>
+        /// Gets the shared border segment.
+        /// </summary>
+        /// <param name="other">The other.</param>
+        /// <returns>BorderSegment.</returns>
         public BorderSegment GetSharedBorderSegment(PrimitiveSurface other)
         {
             foreach (var border in Borders)
@@ -566,6 +764,10 @@ namespace TVGL
             return null;
         }
 
+        /// <summary>
+        /// Gets the vectors.
+        /// </summary>
+        /// <returns>IEnumerable&lt;Vector3[]&gt;.</returns>
         public IEnumerable<Vector3[]> GetVectors()
         {
             return OuterEdges.Select(e => new[] { e.From.Coordinates, e.To.Coordinates });

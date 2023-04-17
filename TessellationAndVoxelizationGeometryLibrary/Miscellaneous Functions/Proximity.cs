@@ -1,7 +1,16 @@
-﻿// Copyright 2015-2020 Design Engineering Lab
-// This file is a part of TVGL, Tessellation and Voxelization Geometry Library
-// https://github.com/DesignEngrLab/TVGL
-// It is licensed under MIT License (see LICENSE.txt for details)
+﻿// ***********************************************************************
+// Assembly         : TessellationAndVoxelizationGeometryLibrary
+// Author           : matth
+// Created          : 04-03-2023
+//
+// Last Modified By : matth
+// Last Modified On : 04-14-2023
+// ***********************************************************************
+// <copyright file="Proximity.cs" company="Design Engineering Lab">
+//     2014
+// </copyright>
+// <summary></summary>
+// ***********************************************************************
 
 
 
@@ -15,22 +24,25 @@ namespace TVGL
 {
     // Here are the set of misellaneous functions that optimize! find the closest point, the most
     // orthogonal direction, etc.
+    /// <summary>
+    /// Class MiscFunctions.
+    /// </summary>
     public static partial class MiscFunctions
     {
         #region Closest Point/Vertex
         /// <summary>
         /// Finds the closest vertex (3D Point) on a triangle (a,b,c) to the given vertex (p).
-        /// It may be one of the three given points (a,b,c), a point on the edge, 
+        /// It may be one of the three given points (a,b,c), a point on the edge,
         /// or a point on the face.
         /// </summary>
-        /// <source> OpenVDB 4.0.2 Proximity::closestPointOnTriangleToPoint 
+        /// <param name="a">a.</param>
+        /// <param name="b">The b.</param>
+        /// <param name="c">The c.</param>
+        /// <param name="p">The p.</param>
+        /// <param name="uvw">The uvw.</param>
+        /// <returns>Vector3.</returns>
+        /// <source> OpenVDB 4.0.2 Proximity::closestPointOnTriangleToPoint
         /// Converted on 8.31.2017 by Brandon Massoni </source>
-        /// <param name="a"></param>
-        /// <param name="b"></param>
-        /// <param name="c"></param>
-        /// <param name="p"></param>
-        /// <param name="uvw"></param>
-        /// <returns></returns>
         public static Vector3 ClosestVertexOnTriangleToVertex(Vector3 a, Vector3 b, Vector3 c, Vector3 p,
             out Vector3 uvw)
         {
@@ -125,16 +137,16 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Gets the closest vertex (3D Point) on line segment (ab) from the given point (p). 
+        /// Gets the closest vertex (3D Point) on line segment (ab) from the given point (p).
         /// It also returns the distance to the line segment.
         /// </summary>
+        /// <param name="a">a.</param>
+        /// <param name="b">The b.</param>
+        /// <param name="p">The p.</param>
+        /// <param name="distanceToSegment">The distance to segment.</param>
+        /// <returns>Vector3.</returns>
         /// <source> OpenVDB 4.0.2 Proximity::closestPointOnSegmentToPoint
         /// Converted on 8.31.2017 by Brandon Massoni </source>
-        /// <param name="a"></param>
-        /// <param name="b"></param>
-        /// <param name="p"></param>
-        /// <param name="distanceToSegment"></param>
-        /// <returns></returns>
         public static Vector3 ClosestVertexOnSegmentToVertex(Vector3 a, Vector3 b, Vector3 p, out double distanceToSegment)
         {
             var ab = b.Subtract(a);
@@ -168,11 +180,11 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Gets the closest point on the line segment from the given point (p). 
+        /// Gets the closest point on the line segment from the given point (p).
         /// </summary>
-        /// <param name="line"></param>
-        /// <param name="p"></param>
-        /// <returns></returns>
+        /// <param name="line">The line.</param>
+        /// <param name="p">The p.</param>
+        /// <returns>Vector2.</returns>
         public static Vector2 ClosestPointOnLineSegmentToPoint(this PolygonEdge line, Vector2 p)
         {
             //First, project the point in question onto the infinite line, getting its distance on the line from 
@@ -198,6 +210,11 @@ namespace TVGL
                 fromPoint.Y + lineVector.Y * distanceToSegment);
         }
 
+        /// <summary>
+        /// Closests the point to lines.
+        /// </summary>
+        /// <param name="lines">The lines.</param>
+        /// <returns>Vector2.</returns>
         public static Vector2 ClosestPointToLines(IEnumerable<(Vector2 anchor, Vector2 dir)> lines)
         {
             var n = 0;
@@ -240,12 +257,12 @@ namespace TVGL
         #region Optimal Direction
 
         /// <summary>
-        /// Snap Direction to Closest Cartesian Direction. 
+        /// Snap Direction to Closest Cartesian Direction.
         /// </summary>
         /// <param name="direction">The direction to convert.</param>
         /// <param name="withinTolerance">To check if direction is within the optionally provided tolerance.</param>
         /// <param name="tolerance">The optionally provided tolerance for the previous boolean (does not effect the determined direction).</param>
-        /// <returns></returns>
+        /// <returns>CartesianDirections.</returns>
         public static CartesianDirections SnapDirectionToCartesian(this Vector3 direction, out bool withinTolerance, double tolerance = double.NaN)
         {
             var xDot = direction[0];
@@ -295,6 +312,12 @@ namespace TVGL
             if (additionalRotation == 0) return dir;
             return dir.Transform(Quaternion.CreateFromAxisAngle(direction, additionalRotation));
         }
+        /// <summary>
+        /// Finds the axis to minimize projected area.
+        /// </summary>
+        /// <param name="faces">The faces.</param>
+        /// <param name="count">The count.</param>
+        /// <returns>Vector3.</returns>
         public static Vector3 FindAxisToMinimizeProjectedArea(IEnumerable<TriangleFace> faces, int count)
         {
             double xSum = 0.0, ySum = 0.0, zSum = 0.0;
@@ -369,6 +392,12 @@ namespace TVGL
             return eigenVectors[2];
         }
 
+        /// <summary>
+        /// Finds the axis to maximize projected area.
+        /// </summary>
+        /// <param name="faces">The faces.</param>
+        /// <param name="count">The count.</param>
+        /// <returns>Vector3.</returns>
         public static Vector3 FindAxisToMaximizeProjectedArea(IEnumerable<TriangleFace> faces, int count)
         {
             var sums = Vector3.Zero;
@@ -388,6 +417,12 @@ namespace TVGL
             return eigenVectors[2];
         }
 
+        /// <summary>
+        /// Finds the axis from normals.
+        /// </summary>
+        /// <param name="normals">The normals.</param>
+        /// <param name="count">The count.</param>
+        /// <returns>Vector3.</returns>
         public static Vector3 FindAxisFromNormals(IEnumerable<Vector3> normals, int count)
         {
             var r = new Random(0);
@@ -421,6 +456,12 @@ namespace TVGL
         //Gets the average inner edge direction. Add all together and then normalize
         //This won't be accurate, but it can find a good starting direction that the other methods miss.
         //Could be used on a cylinder and cone (though cone won't be good unless it is closed).
+        /// <summary>
+        /// Finds the average inner edge vector.
+        /// </summary>
+        /// <param name="faces">The faces.</param>
+        /// <param name="borderEdges">The border edges.</param>
+        /// <returns>Vector3.</returns>
         private static Vector3 FindAverageInnerEdgeVector(IEnumerable<TriangleFace> faces, out HashSet<Edge> borderEdges)
         {
             borderEdges = new HashSet<Edge>();
@@ -445,6 +486,12 @@ namespace TVGL
             return innerEdgeVector.Normalize();
         }
 
+        /// <summary>
+        /// Removes the duplicates.
+        /// </summary>
+        /// <param name="directions">The directions.</param>
+        /// <param name="reverseIsDuplicate">if set to <c>true</c> [reverse is duplicate].</param>
+        /// <param name="dotTolerance">The dot tolerance.</param>
         public static void RemoveDuplicates(this List<Vector3> directions, bool reverseIsDuplicate = false, double dotTolerance = Constants.SameFaceNormalDotTolerance)
         {
             if (!directions.Any()) return;
@@ -473,6 +520,13 @@ namespace TVGL
         }
 
 
+        /// <summary>
+        /// Reduces the directions.
+        /// </summary>
+        /// <param name="readOnlyDirs">The read only dirs.</param>
+        /// <param name="guessDirs">The guess dirs.</param>
+        /// <param name="targetNumberOfDirections">The target number of directions.</param>
+        /// <returns>IEnumerable&lt;Vector3&gt;.</returns>
         public static IEnumerable<Vector3> ReduceDirections(List<Vector3> readOnlyDirs,
             IEnumerable<Vector3> guessDirs, int targetNumberOfDirections)
         {
@@ -562,6 +616,11 @@ namespace TVGL
             //foreach (var dir in guessDirList) yield return dir;
         }
 
+        /// <summary>
+        /// Gets the dodecahedron dirs.
+        /// </summary>
+        /// <param name="relativeZ">The relative z.</param>
+        /// <returns>IEnumerable&lt;Vector3&gt;.</returns>
         public static IEnumerable<Vector3> GetDodecahedronDirs(Vector3 relativeZ)
         {
             var rotateMatrix = relativeZ.TransformToXYPlane(out _);
@@ -569,22 +628,63 @@ namespace TVGL
                 yield return d.Transform(rotateMatrix);
         }
 
+        /// <summary>
+        /// The phi cos sin
+        /// </summary>
         readonly static double phi_CosSin = (1 + Math.Sqrt(5)) / (5 + Math.Sqrt(5)); //0.44721359549996...
+        /// <summary>
+        /// The phi sin SQD
+        /// </summary>
         readonly static double phi_SinSqd = (3 + Math.Sqrt(5)) / (5 + Math.Sqrt(5)); //0.72360679774997...
+        /// <summary>
+        /// The phi sin
+        /// </summary>
         readonly static double phi_Sin = (1 + Math.Sqrt(5)) / (Math.Sqrt(10 + 2 * Math.Sqrt(5))); //0.85065080835204...
+        /// <summary>
+        /// The phi cos SQD
+        /// </summary>
         readonly static double phi_CosSqd = 2 / (5 + Math.Sqrt(5)); //0.27639320225...
+        /// <summary>
+        /// The phi cos
+        /// </summary>
         readonly static double phi_Cos = 2 / Math.Sqrt(10 + 2 * Math.Sqrt(5)); //0.5257311121191336...
 
+        /// <summary>
+        /// The d1
+        /// </summary>
         readonly static Vector3 d1 = new Vector3(0, 2 * phi_CosSin, phi_CosSin);
+        /// <summary>
+        /// The d2
+        /// </summary>
         readonly static Vector3 d2 = new Vector3(phi_Cos, -phi_SinSqd, phi_CosSin);
+        /// <summary>
+        /// The d3
+        /// </summary>
         readonly static Vector3 d3 = new Vector3(-phi_Cos, -phi_SinSqd, phi_CosSin);
+        /// <summary>
+        /// The d4
+        /// </summary>
         readonly static Vector3 d4 = new Vector3(phi_Sin, phi_CosSqd, phi_CosSin);
+        /// <summary>
+        /// The d5
+        /// </summary>
         readonly static Vector3 d5 = new Vector3(-phi_Sin, phi_CosSqd, phi_CosSin);
+        /// <summary>
+        /// The dodec dirs
+        /// </summary>
         readonly static Vector3[] dodecDirs = new[] { d1, d2, d3, d4, d5 };
         #endregion
 
 
 
+        /// <summary>
+        /// Finds the best planar curve.
+        /// </summary>
+        /// <param name="points">The points.</param>
+        /// <param name="plane">The plane.</param>
+        /// <param name="planeResidual">The plane residual.</param>
+        /// <param name="curveResidual">The curve residual.</param>
+        /// <returns>ICurve.</returns>
         public static ICurve FindBestPlanarCurve(this IEnumerable<Vector3> points, out Plane plane, out double planeResidual,
             out double curveResidual)
         {
@@ -636,6 +736,13 @@ namespace TVGL
         }
 
 
+        /// <summary>
+        /// Chooses the tightest left turn.
+        /// </summary>
+        /// <param name="nextVertices">The next vertices.</param>
+        /// <param name="current">The current.</param>
+        /// <param name="previous">The previous.</param>
+        /// <returns>Vertex2D.</returns>
         internal static Vertex2D ChooseTightestLeftTurn(List<Vertex2D> nextVertices, Vertex2D current, Vertex2D previous)
         {
             var lastVector = previous.Coordinates - current.Coordinates;
@@ -655,6 +762,13 @@ namespace TVGL
             return bestVertex;
         }
 
+        /// <summary>
+        /// Chooses the tightest left turn.
+        /// </summary>
+        /// <param name="nextVertices">The next vertices.</param>
+        /// <param name="current">The current.</param>
+        /// <param name="previous">The previous.</param>
+        /// <returns>Vertex2D.</returns>
         internal static Vertex2D ChooseTightestLeftTurn(this IEnumerable<Vertex2D> nextVertices, Vertex2D current, Vertex2D previous)
         {
             var lastVector = previous.Coordinates - current.Coordinates;
@@ -674,6 +788,15 @@ namespace TVGL
             return bestVertex;
         }
 
+        /// <summary>
+        /// Chooses the highest cosine similarity.
+        /// </summary>
+        /// <param name="possibleNextEdges">The possible next edges.</param>
+        /// <param name="refEdge">The reference edge.</param>
+        /// <param name="refEdgeDir">if set to <c>true</c> [reference edge dir].</param>
+        /// <param name="edgeDirections">The edge directions.</param>
+        /// <param name="minAcceptable">The minimum acceptable.</param>
+        /// <returns>Edge.</returns>
         internal static Edge ChooseHighestCosineSimilarity(this IEnumerable<Edge> possibleNextEdges, Edge refEdge, bool refEdgeDir,
             IEnumerable<bool> edgeDirections = null, double minAcceptable = -1.0)
         {
@@ -699,10 +822,10 @@ namespace TVGL
 
         /// <summary>
         /// ns the equidistant sphere points kogan.
-        /// https://scholar.rose-hulman.edu/cgi/viewcontent.cgi?article=1387&context=rhumj
         /// </summary>
         /// <param name="n">The n.</param>
-        /// <returns>System.Collections.Generic.IEnumerable&lt;TVGL.Vector2&gt;.</returns>
+        /// <returns>IEnumerable&lt;Vector2&gt;.</returns>
+        /// <font color="red">Badly formed XML comment.</font>
         public static IEnumerable<Vector2> NEquidistantSpherePointsKogan(int n)
         {
             var x = 0.1 + 1.2 * n;
@@ -718,11 +841,11 @@ namespace TVGL
         }
         /// <summary>
         /// ns the equidistant sphere points kogan.
-        /// https://scholar.rose-hulman.edu/cgi/viewcontent.cgi?article=1387&context=rhumj
         /// </summary>
         /// <param name="n">The n.</param>
         /// <param name="radius">The radius.</param>
-        /// <returns>System.Collections.Generic.IEnumerable&lt;TVGL.Vector3&gt;.</returns>
+        /// <returns>IEnumerable&lt;Vector3&gt;.</returns>
+        /// <font color="red">Badly formed XML comment.</font>
         public static IEnumerable<Vector3> NEquidistantSpherePointsKogan(int n, double radius)
         {
             foreach (var anglePair in NEquidistantSpherePointsKogan(n))

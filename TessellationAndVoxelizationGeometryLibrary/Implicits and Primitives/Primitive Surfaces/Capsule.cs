@@ -1,7 +1,16 @@
-﻿// Copyright 2015-2020 Design Engineering Lab
-// This file is a part of TVGL, Tessellation and Voxelization Geometry Library
-// https://github.com/DesignEngrLab/TVGL
-// It is licensed under MIT License (see LICENSE.txt for details)
+﻿// ***********************************************************************
+// Assembly         : TessellationAndVoxelizationGeometryLibrary
+// Author           : matth
+// Created          : 04-03-2023
+//
+// Last Modified By : matth
+// Last Modified On : 04-10-2023
+// ***********************************************************************
+// <copyright file="Capsule.cs" company="Design Engineering Lab">
+//     2014
+// </copyright>
+// <summary></summary>
+// ***********************************************************************
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,7 +20,7 @@ using System.Linq;
 namespace TVGL
 {
     /// <summary>
-    ///     The class for Capsule primitives.
+    /// The class for Capsule primitives.
     /// </summary>
     public class Capsule : PrimitiveSurface
     {
@@ -19,6 +28,7 @@ namespace TVGL
         /// Transforms the shape by the provided transformation matrix.
         /// </summary>
         /// <param name="transformMatrix">The transform matrix.</param>
+        /// <exception cref="System.NotImplementedException"></exception>
         public override void Transform(Matrix4x4 transformMatrix)
         {
             base.Transform(transformMatrix);
@@ -30,6 +40,7 @@ namespace TVGL
         /// </summary>
         /// <param name="point">The point.</param>
         /// <returns>Vector2.</returns>
+        /// <exception cref="System.NotImplementedException"></exception>
         public override Vector2 TransformFrom3DTo2D(Vector3 point)
         {
             throw new NotImplementedException();
@@ -40,6 +51,7 @@ namespace TVGL
         /// </summary>
         /// <param name="point">The point.</param>
         /// <returns>Vector3.</returns>
+        /// <exception cref="System.NotImplementedException"></exception>
         public override Vector3 TransformFrom2DTo3D(Vector2 point)
         {
             throw new NotImplementedException();
@@ -52,6 +64,7 @@ namespace TVGL
         /// <param name="points">The points.</param>
         /// <param name="pathIsClosed">if set to <c>true</c> [path is closed].</param>
         /// <returns>IEnumerable&lt;Vector2&gt;.</returns>
+        /// <exception cref="System.NotImplementedException"></exception>
         public override IEnumerable<Vector2> TransformFrom3DTo2D(IEnumerable<Vector3> points, bool pathIsClosed)
         {
             throw new NotImplementedException();
@@ -61,11 +74,16 @@ namespace TVGL
         #region Properties
 
         /// <summary>
-        ///     Is the Capsule positive? (false is negative)
+        /// Is the Capsule positive? (false is negative)
         /// </summary>
+        /// <value><c>true</c> if this instance is positive; otherwise, <c>false</c>.</value>
         public bool IsPositive { get; set; }
 
 
+        /// <summary>
+        /// Gets or sets the anchor1.
+        /// </summary>
+        /// <value>The anchor1.</value>
         public Vector3 Anchor1
         {
             get => anchor1;
@@ -78,6 +96,10 @@ namespace TVGL
                 }
             }
         }
+        /// <summary>
+        /// Gets or sets the anchor2.
+        /// </summary>
+        /// <value>The anchor2.</value>
         public Vector3 Anchor2
         {
             get => anchor2;
@@ -91,6 +113,10 @@ namespace TVGL
             }
         }
 
+        /// <summary>
+        /// Gets or sets the radius1.
+        /// </summary>
+        /// <value>The radius1.</value>
         public double Radius1
         {
             get => radius1;
@@ -103,6 +129,10 @@ namespace TVGL
                 }
             }
         }
+        /// <summary>
+        /// Gets or sets the radius2.
+        /// </summary>
+        /// <value>The radius2.</value>
         public double Radius2
         {
             get => radius2;
@@ -116,23 +146,70 @@ namespace TVGL
             }
         }
 
+        /// <summary>
+        /// The anchor1
+        /// </summary>
         Vector3 anchor1;
+        /// <summary>
+        /// The anchor2
+        /// </summary>
         Vector3 anchor2;
+        /// <summary>
+        /// The radius1
+        /// </summary>
         double radius1;
+        /// <summary>
+        /// The radius2
+        /// </summary>
         double radius2;
+        /// <summary>
+        /// The direction vector
+        /// </summary>
         Vector3 directionVector;
+        /// <summary>
+        /// The direction vector length
+        /// </summary>
         double directionVectorLength;
+        /// <summary>
+        /// The plane1 dx
+        /// </summary>
         double plane1Dx;
+        /// <summary>
+        /// The plane2 dx
+        /// </summary>
         double plane2Dx;
+        /// <summary>
+        /// The cone anchor1
+        /// </summary>
         Vector3 coneAnchor1;
+        /// <summary>
+        /// The cone anchor2
+        /// </summary>
         Vector3 coneAnchor2;
+        /// <summary>
+        /// The cone length
+        /// </summary>
         double coneLength;
+        /// <summary>
+        /// The cone radius1
+        /// </summary>
         double coneRadius1;
+        /// <summary>
+        /// The cone radius2
+        /// </summary>
         double coneRadius2;
         #endregion
 
         #region Constructors
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Capsule"/> class.
+        /// </summary>
+        /// <param name="anchor1">The anchor1.</param>
+        /// <param name="radius1">The radius1.</param>
+        /// <param name="anchor2">The anchor2.</param>
+        /// <param name="radius2">The radius2.</param>
+        /// <param name="isPositive">if set to <c>true</c> [is positive].</param>
         public Capsule(Vector3 anchor1, double radius1, Vector3 anchor2, double radius2, bool isPositive)
         {
             this.anchor1 = anchor1;
@@ -144,6 +221,9 @@ namespace TVGL
 
         }
 
+        /// <summary>
+        /// Calculates the private geometry fields.
+        /// </summary>
         private void CalculatePrivateGeometryFields()
         {
             directionVector = Anchor2 - Anchor1;
@@ -174,6 +254,11 @@ namespace TVGL
             return PointMembership(x) < 0 == IsPositive;
         }
 
+        /// <summary>
+        /// Points the membership.
+        /// </summary>
+        /// <param name="point">The point.</param>
+        /// <returns>System.Double.</returns>
         public override double PointMembership(Vector3 point)
         {
             var dxAlong = point.Dot(directionVector);

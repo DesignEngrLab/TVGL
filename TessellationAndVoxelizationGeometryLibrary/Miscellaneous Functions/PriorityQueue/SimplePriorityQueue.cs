@@ -1,13 +1,16 @@
-﻿// The files in this folder are an abbreviated version of BlueRaja's Optimized Priority Queue.
-// https://github.com/BlueRaja/High-Speed-Priority-Queue-for-C-Sharp
-// It was found to not only outperform the PriorityQueue introduced in
-// .NET 6, but it also has capabilities to Update the priority of an 
-// existing state, and Remove a state from the queue.
-// The FastPriorityQueue, the FastPriorityQueueNode, the StablePriorityQueue, the
-// StablePriorityQueueNode have been removed. The Simple one is used only because
-// the reliance on the 'Node classes cannot be produced without having to create
-// a dictionary. This is actually what the SimplePriorityQueue does (although
-// the name implies that it is simpler. 
+﻿// ***********************************************************************
+// Assembly         : TessellationAndVoxelizationGeometryLibrary
+// Author           : matth
+// Created          : 04-03-2023
+//
+// Last Modified By : matth
+// Last Modified On : 04-03-2023
+// ***********************************************************************
+// <copyright file="SimplePriorityQueue.cs" company="Design Engineering Lab">
+//     2014
+// </copyright>
+// <summary></summary>
+// ***********************************************************************
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -23,19 +26,44 @@ namespace Priority_Queue
     /// <typeparam name="TPriority">The priority-type to use for nodes.  Must extend IComparable&lt;TPriority&gt;</typeparam>
     public class SimplePriorityQueue<TItem, TPriority> : IPriorityQueue<TItem, TPriority>
     {
+        /// <summary>
+        /// Class SimpleNode.
+        /// Implements the <see cref="Priority_Queue.GenericPriorityQueueNode{TPriority}" />
+        /// </summary>
+        /// <seealso cref="Priority_Queue.GenericPriorityQueueNode{TPriority}" />
         private class SimpleNode : GenericPriorityQueueNode<TPriority>
         {
+            /// <summary>
+            /// Gets or sets the data.
+            /// </summary>
+            /// <value>The data.</value>
             public TItem Data { get; private set; }
 
+            /// <summary>
+            /// Initializes a new instance of the <see cref="SimpleNode"/> class.
+            /// </summary>
+            /// <param name="data">The data.</param>
             public SimpleNode(TItem data)
             {
                 Data = data;
             }
         }
 
+        /// <summary>
+        /// The initial queue size
+        /// </summary>
         private const int INITIAL_QUEUE_SIZE = 10;
+        /// <summary>
+        /// The queue
+        /// </summary>
         private readonly GenericPriorityQueue<SimpleNode, TPriority> _queue;
+        /// <summary>
+        /// The item to nodes cache
+        /// </summary>
         private readonly Dictionary<TItem, IList<SimpleNode>> _itemToNodesCache;
+        /// <summary>
+        /// The null nodes cache
+        /// </summary>
         private readonly IList<SimpleNode> _nullNodesCache;
 
         #region Constructors
@@ -57,7 +85,7 @@ namespace Priority_Queue
         public SimplePriorityQueue(Comparison<TPriority> priorityComparer) : this(priorityComparer, EqualityComparer<TItem>.Default) { }
 
         /// <summary>
-        /// Instantiate a new Priority Queue       
+        /// Instantiate a new Priority Queue
         /// </summary>
         /// <param name="itemEquality">The equality comparison function to use to compare TItem values</param>
         public SimplePriorityQueue(IEqualityComparer<TItem> itemEquality) : this(Comparer<TPriority>.Default, itemEquality) { }
@@ -85,6 +113,8 @@ namespace Priority_Queue
         /// <summary>
         /// Given an item of type T, returns the existing SimpleNode in the queue
         /// </summary>
+        /// <param name="item">The item.</param>
+        /// <returns>SimpleNode.</returns>
         private SimpleNode GetExistingNode(TItem item)
         {
             if (item == null)
@@ -103,6 +133,7 @@ namespace Priority_Queue
         /// <summary>
         /// Adds an item to the Node-cache to allow for many methods to be O(1) or O(log n)
         /// </summary>
+        /// <param name="node">The node.</param>
         private void AddToNodeCache(SimpleNode node)
         {
             if (node.Data == null)
@@ -123,6 +154,7 @@ namespace Priority_Queue
         /// <summary>
         /// Removes an item to the Node-cache to allow for many methods to be O(1) or O(log n) (assuming no duplicates)
         /// </summary>
+        /// <param name="node">The node.</param>
         private void RemoveFromNodeCache(SimpleNode node)
         {
             if (node.Data == null)
@@ -147,6 +179,7 @@ namespace Priority_Queue
         /// Returns the number of nodes in the queue.
         /// O(1)
         /// </summary>
+        /// <value>The count.</value>
         public int Count
         {
             get
@@ -163,6 +196,8 @@ namespace Priority_Queue
         /// Throws an exception when the queue is empty.
         /// O(1)
         /// </summary>
+        /// <value>The first.</value>
+        /// <exception cref="System.InvalidOperationException">Cannot call .First on an empty queue</exception>
         public TItem First
         {
             get
@@ -197,6 +232,8 @@ namespace Priority_Queue
         /// Returns whether the given item is in the queue.
         /// O(1)
         /// </summary>
+        /// <param name="item">The item.</param>
+        /// <returns><c>true</c> if [contains] [the specified node]; otherwise, <c>false</c>.</returns>
         public bool Contains(TItem item)
         {
             lock(_queue)
@@ -210,6 +247,8 @@ namespace Priority_Queue
         /// If queue is empty, throws an exception
         /// O(log n)
         /// </summary>
+        /// <returns>TItem.</returns>
+        /// <exception cref="System.InvalidOperationException">Cannot call Dequeue() on an empty queue</exception>
         public TItem Dequeue()
         {
             lock(_queue)
@@ -228,9 +267,9 @@ namespace Priority_Queue
         /// <summary>
         /// Enqueue the item with the given priority, without calling lock(_queue) or AddToNodeCache(node)
         /// </summary>
-        /// <param name="item"></param>
-        /// <param name="priority"></param>
-        /// <returns></returns>
+        /// <param name="item">The item.</param>
+        /// <param name="priority">The priority.</param>
+        /// <returns>SimpleNode.</returns>
         private SimpleNode EnqueueNoLockOrCache(TItem item, TPriority priority)
         {
             SimpleNode node = new SimpleNode(item);
@@ -248,6 +287,8 @@ namespace Priority_Queue
         /// Duplicates and null-values are allowed.
         /// O(log n)
         /// </summary>
+        /// <param name="item">The item.</param>
+        /// <param name="priority">The priority.</param>
         public void Enqueue(TItem item, TPriority priority)
         {
             lock(_queue)
@@ -273,6 +314,9 @@ namespace Priority_Queue
         /// Returns true if the node was successfully enqueued; false if it already exists.
         /// O(log n)
         /// </summary>
+        /// <param name="item">The item.</param>
+        /// <param name="priority">The priority.</param>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         public bool EnqueueWithoutDuplicates(TItem item, TPriority priority)
         {
             lock(_queue)
@@ -302,11 +346,13 @@ namespace Priority_Queue
         }
 
         /// <summary>
-        /// Removes an item from the queue.  The item does not need to be the head of the queue.  
+        /// Removes an item from the queue.  The item does not need to be the head of the queue.
         /// If the item is not in the queue, an exception is thrown.  If unsure, check Contains() first.
-        /// If multiple copies of the item are enqueued, only the first one is removed. 
+        /// If multiple copies of the item are enqueued, only the first one is removed.
         /// O(log n)
         /// </summary>
+        /// <param name="item">The item.</param>
+        /// <exception cref="System.InvalidOperationException">Cannot call Remove() on a node which is not enqueued: " + item</exception>
         public void Remove(TItem item)
         {
             lock(_queue)
@@ -347,6 +393,9 @@ namespace Priority_Queue
         /// to update all of them, please wrap your items in a wrapper class so they can be distinguished).
         /// O(log n)
         /// </summary>
+        /// <param name="item">The item.</param>
+        /// <param name="priority">The priority.</param>
+        /// <exception cref="System.InvalidOperationException">Cannot call UpdatePriority() on a node which is not enqueued: " + item</exception>
         public void UpdatePriority(TItem item, TPriority priority)
         {
             lock (_queue)
@@ -368,6 +417,9 @@ namespace Priority_Queue
         /// to query all their priorities, please wrap your items in a wrapper class so they can be distinguished).
         /// O(1)
         /// </summary>
+        /// <param name="item">The item.</param>
+        /// <returns>TPriority.</returns>
+        /// <exception cref="System.InvalidOperationException">Cannot call GetPriority() on a node which is not enqueued: " + item</exception>
         public TPriority GetPriority(TItem item)
         {
             lock (_queue)
@@ -382,6 +434,11 @@ namespace Priority_Queue
         }
 
         #region Try* methods for multithreading
+        /// <summary>
+        /// Tries the first.
+        /// </summary>
+        /// <param name="first">The first.</param>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         /// Get the head of the queue, without removing it (use TryDequeue() for that).
         /// Useful for multi-threading, where the queue may become empty between calls to Contains() and First
         /// Returns true if successful, false otherwise
@@ -410,6 +467,8 @@ namespace Priority_Queue
         /// Returns true if successful; false if queue was empty
         /// O(log n)
         /// </summary>
+        /// <param name="first">The first.</param>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         public bool TryDequeue(out TItem first)
         {
             if (_queue.Count > 0)
@@ -431,12 +490,14 @@ namespace Priority_Queue
         }
 
         /// <summary>
-        /// Attempts to remove an item from the queue.  The item does not need to be the head of the queue.  
+        /// Attempts to remove an item from the queue.  The item does not need to be the head of the queue.
         /// Useful for multi-threading, where the queue may become empty between calls to Contains() and Remove()
         /// Returns true if the item was successfully removed, false if it wasn't in the queue.
-        /// If multiple copies of the item are enqueued, only the first one is removed. 
+        /// If multiple copies of the item are enqueued, only the first one is removed.
         /// O(log n)
         /// </summary>
+        /// <param name="item">The item.</param>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         public bool TryRemove(TItem item)
         {
             lock(_queue)
@@ -479,6 +540,9 @@ namespace Priority_Queue
         /// Returns true if the item priority was updated, false otherwise.
         /// O(log n)
         /// </summary>
+        /// <param name="item">The item.</param>
+        /// <param name="priority">The priority.</param>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         public bool TryUpdatePriority(TItem item, TPriority priority)
         {
             lock(_queue)
@@ -502,6 +566,9 @@ namespace Priority_Queue
         /// Returns true if the item was found in the queue, false otherwise
         /// O(1)
         /// </summary>
+        /// <param name="item">The item.</param>
+        /// <param name="priority">The priority.</param>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         public bool TryGetPriority(TItem item, out TPriority priority)
         {
             lock(_queue)
@@ -518,6 +585,10 @@ namespace Priority_Queue
         }
         #endregion
 
+        /// <summary>
+        /// Returns an enumerator that iterates through the collection.
+        /// </summary>
+        /// <returns>An enumerator that can be used to iterate through the collection.</returns>
         public IEnumerator<TItem> GetEnumerator()
         {
             List<TItem> queueData = new List<TItem>();
@@ -533,11 +604,19 @@ namespace Priority_Queue
             return queueData.GetEnumerator();
         }
 
+        /// <summary>
+        /// Returns an enumerator that iterates through a collection.
+        /// </summary>
+        /// <returns>An <see cref="T:System.Collections.IEnumerator" /> object that can be used to iterate through the collection.</returns>
         IEnumerator IEnumerable.GetEnumerator()
         {
             return GetEnumerator();
         }
 
+        /// <summary>
+        /// Determines whether [is valid queue].
+        /// </summary>
+        /// <returns><c>true</c> if [is valid queue]; otherwise, <c>false</c>.</returns>
         public bool IsValidQueue()
         {
             lock(_queue)

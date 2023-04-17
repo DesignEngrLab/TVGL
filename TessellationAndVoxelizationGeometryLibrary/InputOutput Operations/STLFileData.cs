@@ -1,7 +1,16 @@
-﻿// Copyright 2015-2020 Design Engineering Lab
-// This file is a part of TVGL, Tessellation and Voxelization Geometry Library
-// https://github.com/DesignEngrLab/TVGL
-// It is licensed under MIT License (see LICENSE.txt for details)
+﻿// ***********************************************************************
+// Assembly         : TessellationAndVoxelizationGeometryLibrary
+// Author           : matth
+// Created          : 04-03-2023
+//
+// Last Modified By : matth
+// Last Modified On : 04-14-2023
+// ***********************************************************************
+// <copyright file="STLFileData.cs" company="Design Engineering Lab">
+//     2014
+// </copyright>
+// <summary></summary>
+// ***********************************************************************
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -13,7 +22,7 @@ using System.Text.RegularExpressions;
 namespace TVGL
 {
     /// <summary>
-    ///     Provides an importer for StereoLithography .StL files.
+    /// Provides an importer for StereoLithography .StL files.
     /// </summary>
     /// <remarks>The format is documented on <a href="http://en.wikipedia.org/wiki/STL_(file_format)">Wikipedia</a>.</remarks>
     internal class STLFileData : IO
@@ -21,7 +30,7 @@ namespace TVGL
         #region Constructor
 
         /// <summary>
-        ///     Initializes a new instance of the <see cref="STLFileData" /> class.
+        /// Initializes a new instance of the <see cref="STLFileData" /> class.
         /// </summary>
         internal STLFileData()
         {
@@ -35,40 +44,40 @@ namespace TVGL
         #region Fields and Properties
 
         /// <summary>
-        ///     The regular expression used to parse normal vectors.
+        /// The regular expression used to parse normal vectors.
         /// </summary>
         private static readonly Regex NormalRegex = new Regex(@"normal\s*(\S*)\s*(\S*)\s*(\S*)");
 
         /// <summary>
-        ///     The regular expression used to parse vertices.
+        /// The regular expression used to parse vertices.
         /// </summary>
         private static readonly Regex VertexRegex = new Regex(@"vertex\s*(\S*)\s*(\S*)\s*(\S*)");
 
         /// <summary>
-        ///     The last color
+        /// The last color
         /// </summary>
         private Color _lastColor;
 
         /// <summary>
-        ///     Gets the has color specified.
+        /// Gets the has color specified.
         /// </summary>
         /// <value>The has color specified.</value>
         private bool HasColorSpecified { get; set; }
 
         /// <summary>
-        ///     Gets or sets the colors.
+        /// Gets or sets the colors.
         /// </summary>
         /// <value>The colors.</value>
         private List<Color> Colors { get; }
 
         /// <summary>
-        ///     Gets or sets the Vertices.
+        /// Gets or sets the Vertices.
         /// </summary>
         /// <value>The vertices.</value>
         private List<List<Vector3>> Vertices { get; }
 
         /// <summary>
-        ///     Gets or sets the normals.
+        /// Gets or sets the normals.
         /// </summary>
         /// <value>The normals.</value>
         private List<Vector3> Normals { get; }
@@ -163,17 +172,11 @@ namespace TVGL
         }
 
         /// <summary>
-        ///     Reads a facet.
+        /// Reads a facet.
         /// </summary>
         /// <param name="reader">The stream reader.</param>
         /// <param name="normal">The normal.</param>
-        /// <exception cref="IOException">
-        ///     Unexpected line.
-        ///     or
-        ///     Unexpected line.
-        ///     or
-        ///     Unexpected line.
-        /// </exception>
+        /// <exception cref="System.IO.IOException">Unexpected line.</exception>
         private void ReadFacet(StreamReader reader, string normal)
         {
             if (!TryParseDoubleArray(NormalRegex, normal, out var n))
@@ -215,7 +218,6 @@ namespace TVGL
         /// <param name="stlData">The STL data.</param>
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         /// <exception cref="System.IO.EndOfStreamException">Incomplete file</exception>
-        /// <exception cref="EndOfStreamException">Incomplete file</exception>
         internal static bool TryReadBinary(Stream stream, string filename, out List<STLFileData> stlData)
         {
             var length = stream.Length;
@@ -256,7 +258,7 @@ namespace TVGL
         }
 
         /// <summary>
-        ///     Reads a triangle from a binary STL file.
+        /// Reads a triangle from a binary STL file.
         /// </summary>
         /// <param name="reader">The reader.</param>
         private void ReadFacet(BinaryReader reader)
@@ -325,7 +327,7 @@ namespace TVGL
         #region Save
 
         /// <summary>
-        ///     Saves the ASCII.
+        /// Saves the ASCII.
         /// </summary>
         /// <param name="stream">The stream.</param>
         /// <param name="solids">The solids.</param>
@@ -349,6 +351,12 @@ namespace TVGL
             return true;
         }
 
+        /// <summary>
+        /// Saves the ASCII.
+        /// </summary>
+        /// <param name="writer">The writer.</param>
+        /// <param name="solid">The solid.</param>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         private static bool SaveASCII(StreamWriter writer, TessellatedSolid solid)
         {
             try
@@ -378,7 +386,7 @@ namespace TVGL
         }
 
         /// <summary>
-        ///     Saves the binary.
+        /// Saves the binary.
         /// </summary>
         /// <param name="stream">The stream.</param>
         /// <param name="solids">The solids.</param>
@@ -410,6 +418,13 @@ namespace TVGL
         }
 
 
+        /// <summary>
+        /// Writes the facet.
+        /// </summary>
+        /// <param name="writer">The writer.</param>
+        /// <param name="face">The face.</param>
+        /// <param name="defineColors">if set to <c>true</c> [define colors].</param>
+        /// <param name="defaultColor">The default color.</param>
         private static void WriteFacet(BinaryWriter writer, TriangleFace face, bool defineColors, Color defaultColor)
         {
             writer.Write(BitConverter.GetBytes((float)face.Normal[0]));

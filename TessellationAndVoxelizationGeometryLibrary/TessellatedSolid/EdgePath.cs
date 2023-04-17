@@ -1,4 +1,17 @@
-﻿using Newtonsoft.Json;
+﻿// ***********************************************************************
+// Assembly         : TessellationAndVoxelizationGeometryLibrary
+// Author           : matth
+// Created          : 04-03-2023
+//
+// Last Modified By : matth
+// Last Modified On : 04-03-2023
+// ***********************************************************************
+// <copyright file="EdgePath.cs" company="Design Engineering Lab">
+//     2014
+// </copyright>
+// <summary></summary>
+// ***********************************************************************
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections;
@@ -8,9 +21,17 @@ using System.Runtime.Serialization;
 
 namespace TVGL
 {
+    /// <summary>
+    /// Class EdgePath.
+    /// Implements the <see cref="System.Collections.Generic.IList{(TVGL.Edge edge, System.Boolean dir)}" />
+    /// </summary>
+    /// <seealso cref="System.Collections.Generic.IList{(TVGL.Edge edge, System.Boolean dir)}" />
     [JsonObject]
     public class EdgePath : IList<(Edge edge, bool dir)>
     {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="EdgePath"/> class.
+        /// </summary>
         public EdgePath()
         {
             EdgeList = new List<Edge>();
@@ -31,7 +52,14 @@ namespace TVGL
         [JsonIgnore]
         public List<bool> DirectionList { get; protected set; }
 
+        /// <summary>
+        /// The length
+        /// </summary>
         private double _length = -1.0;
+        /// <summary>
+        /// Gets the length.
+        /// </summary>
+        /// <value>The length.</value>
         [JsonIgnore]
         public double Length
         {
@@ -50,6 +78,10 @@ namespace TVGL
 
         public bool IsClosed { get; set; }
 
+        /// <summary>
+        /// Updates the is closed.
+        /// </summary>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         public bool UpdateIsClosed()
         {
             if (EdgeList == null || EdgeList.Count < 3)
@@ -111,12 +143,25 @@ namespace TVGL
 
         }
 
+        /// <summary>
+        /// Gets the number of elements contained in the <see cref="T:System.Collections.Generic.ICollection`1" />.
+        /// </summary>
+        /// <value>The count.</value>
         [JsonIgnore]
         public int Count => EdgeList.Count;
 
+        /// <summary>
+        /// Gets a value indicating whether the <see cref="T:System.Collections.Generic.ICollection`1" /> is read-only.
+        /// </summary>
+        /// <value><c>true</c> if this instance is read only; otherwise, <c>false</c>.</value>
         [JsonIgnore]
         public bool IsReadOnly => true;
 
+        /// <summary>
+        /// Gets or sets the <see cref="System.ValueTuple{Edge, System.Boolean}"/> at the specified index.
+        /// </summary>
+        /// <param name="index">The index.</param>
+        /// <returns>System.ValueTuple&lt;Edge, System.Boolean&gt;.</returns>
         [JsonIgnore]
         public (Edge edge, bool dir) this[int index]
         {
@@ -131,6 +176,7 @@ namespace TVGL
         /// <summary>
         /// Gets the vertices.
         /// </summary>
+        /// <param name="keepLastVertex">if set to <c>true</c> [keep last vertex].</param>
         /// <returns>IEnumerable&lt;Vertex&gt;.</returns>
         public IEnumerable<Vertex> GetVertices(bool keepLastVertex = false)
         {
@@ -148,22 +194,40 @@ namespace TVGL
             }
         }
 
+        /// <summary>
+        /// Gets the vectors.
+        /// </summary>
+        /// <param name="keepLastVertex">if set to <c>true</c> [keep last vertex].</param>
+        /// <returns>IEnumerable&lt;Vector3&gt;.</returns>
         public IEnumerable<Vector3> GetVectors(bool keepLastVertex = false)
         {
             return GetVertices(keepLastVertex).Select(v => v.Coordinates);
         }
 
+        /// <summary>
+        /// Gets the centers.
+        /// </summary>
+        /// <returns>IEnumerable&lt;Vector3&gt;.</returns>
         public IEnumerable<Vector3> GetCenters()
         {
             foreach(var edge in EdgeList)
                 yield return edge.Center();
         }
 
+        /// <summary>
+        /// Adds the end.
+        /// </summary>
+        /// <param name="edge">The edge.</param>
+        /// <param name="dir">if set to <c>true</c> [dir].</param>
         public void AddEnd(Edge edge, bool dir)
         {
             EdgeList.Add(edge);
             DirectionList.Add(dir);
         }
+        /// <summary>
+        /// Adds the end.
+        /// </summary>
+        /// <param name="edge">The edge.</param>
         public void AddEnd(Edge edge)
         {
             // lastVertex is a local variable that breaks the rule of the LastVertex property. It should not
@@ -174,12 +238,21 @@ namespace TVGL
             else DirectionList.Add(edge.From == lastVertex);
             EdgeList.Add(edge);
         }
+        /// <summary>
+        /// Adds the begin.
+        /// </summary>
+        /// <param name="edge">The edge.</param>
+        /// <param name="dir">if set to <c>true</c> [dir].</param>
         public void AddBegin(Edge edge, bool dir)
         {
             EdgeList.Insert(0, edge);
             DirectionList.Insert(0, dir);
         }
 
+        /// <summary>
+        /// Adds the begin.
+        /// </summary>
+        /// <param name="edge">The edge.</param>
         public void AddBegin(Edge edge)
         {
             if (LastVertex == null) DirectionList.Add(true);
@@ -188,12 +261,22 @@ namespace TVGL
         }
 
 
+        /// <summary>
+        /// Determines the index of a specific item in the <see cref="T:System.Collections.Generic.IList`1" />.
+        /// </summary>
+        /// <param name="item">The object to locate in the <see cref="T:System.Collections.Generic.IList`1" />.</param>
+        /// <returns>The index of <paramref name="item" /> if found in the list; otherwise, -1.</returns>
         public int IndexOf((Edge edge, bool dir) item)
         {
             var i = EdgeList.IndexOf(item.edge);
             if (DirectionList[i] != item.dir) return -1;
             return i;
         }
+        /// <summary>
+        /// Indexes the of.
+        /// </summary>
+        /// <param name="edge">The edge.</param>
+        /// <returns>System.Int32.</returns>
         public int IndexOf(Edge edge)
         {
             return EdgeList.IndexOf(edge);
@@ -212,6 +295,10 @@ namespace TVGL
             //DirectionList.Insert(index, item.dir);
         }
 
+        /// <summary>
+        /// Removes the <see cref="T:System.Collections.Generic.IList`1" /> item at the specified index.
+        /// </summary>
+        /// <param name="index">The zero-based index of the item to remove.</param>
         public void RemoveAt(int index)
         {
             EdgeList.RemoveAt(index);
@@ -230,22 +317,40 @@ namespace TVGL
             //DirectionList.Add(item.dir);
         }
 
+        /// <summary>
+        /// Removes all items from the <see cref="T:System.Collections.Generic.ICollection`1" />.
+        /// </summary>
         public void Clear()
         {
             EdgeList.Clear();
             DirectionList.Clear();
         }
 
+        /// <summary>
+        /// Determines whether the <see cref="T:System.Collections.Generic.ICollection`1" /> contains a specific value.
+        /// </summary>
+        /// <param name="item">The object to locate in the <see cref="T:System.Collections.Generic.ICollection`1" />.</param>
+        /// <returns><see langword="true" /> if <paramref name="item" /> is found in the <see cref="T:System.Collections.Generic.ICollection`1" />; otherwise, <see langword="false" />.</returns>
         public bool Contains((Edge edge, bool dir) item)
         {
             return IndexOf(item) != -1;
         }
 
+        /// <summary>
+        /// Determines whether this instance contains the object.
+        /// </summary>
+        /// <param name="edge">The edge.</param>
+        /// <returns><c>true</c> if [contains] [the specified edge]; otherwise, <c>false</c>.</returns>
         internal bool Contains(Edge edge)
         {
             return EdgeList.Contains(edge);
         }
 
+        /// <summary>
+        /// Copies the elements of the <see cref="T:System.Collections.Generic.ICollection`1" /> to an <see cref="T:System.Array" />, starting at a particular <see cref="T:System.Array" /> index.
+        /// </summary>
+        /// <param name="array">The one-dimensional <see cref="T:System.Array" /> that is the destination of the elements copied from <see cref="T:System.Collections.Generic.ICollection`1" />. The <see cref="T:System.Array" /> must have zero-based indexing.</param>
+        /// <param name="arrayIndex">The zero-based index in <paramref name="array" /> at which copying begins.</param>
         public void CopyTo((Edge edge, bool dir)[] array, int arrayIndex)
         {
             for (int i = arrayIndex; i < array.Length; i++)
@@ -265,6 +370,14 @@ namespace TVGL
             return true;
         }
 
+        /// <summary>
+        /// Copies the specified reverse.
+        /// </summary>
+        /// <param name="reverse">if set to <c>true</c> [reverse].</param>
+        /// <param name="copiedTessellatedSolid">The copied tessellated solid.</param>
+        /// <param name="startIndex">The start index.</param>
+        /// <param name="endIndex">The end index.</param>
+        /// <returns>EdgePath.</returns>
         public EdgePath Copy(bool reverse = false, TessellatedSolid copiedTessellatedSolid = null,
             int startIndex = 0, int endIndex = -1)
         {
@@ -307,9 +420,16 @@ namespace TVGL
             }
         }
 
+        /// <summary>
+        /// The serialization data
+        /// </summary>
         [JsonExtensionData]
         protected IDictionary<string, JToken> serializationData;
 
+        /// <summary>
+        /// Called when [serializing method].
+        /// </summary>
+        /// <param name="context">The context.</param>
         [OnSerializing]
         protected void OnSerializingMethod(StreamingContext context)
         {
@@ -318,6 +438,10 @@ namespace TVGL
             serializationData.Add("Dirs", string.Join(null, DirectionList.Select(dir => dir ? "1" : "0")));
         }
 
+        /// <summary>
+        /// Completes the post serialization.
+        /// </summary>
+        /// <param name="ts">The ts.</param>
         internal void CompletePostSerialization(TessellatedSolid ts)
         {
             foreach (var edgeIndex in serializationData["EdgeIndices"].ToObject<IEnumerable<int>>())
@@ -326,7 +450,9 @@ namespace TVGL
                 DirectionList.Add(s == '1');
         }
 
-        /// <summary>Gets the range.</summary>
+        /// <summary>
+        /// Gets the range.
+        /// </summary>
         /// <param name="lb">The lb.</param>
         /// <param name="ub">The ub.</param>
         /// <returns>IEnumerable&lt;System.ValueTuple&lt;Edge, System.Boolean&gt;&gt;.</returns>
@@ -346,6 +472,10 @@ namespace TVGL
             EdgeList.RemoveRange(lb, numberToRemove);
             DirectionList.RemoveRange(lb, numberToRemove);
         }
+        /// <summary>
+        /// Returns an enumerator that iterates through the collection.
+        /// </summary>
+        /// <returns>An enumerator that can be used to iterate through the collection.</returns>
         public IEnumerator<(Edge edge, bool dir)> GetEnumerator()
         {
             for (int i = 0; i < EdgeList.Count; i++)
@@ -354,6 +484,10 @@ namespace TVGL
             }
         }
 
+        /// <summary>
+        /// Gets the enumerator.
+        /// </summary>
+        /// <returns>IEnumerator.</returns>
         IEnumerator IEnumerable.GetEnumerator()
         {
             return GetEnumerator();

@@ -1,4 +1,17 @@
-﻿/*************************************************************************
+﻿// ***********************************************************************
+// Assembly         : TessellationAndVoxelizationGeometryLibrary
+// Author           : matth
+// Created          : 04-03-2023
+//
+// Last Modified By : matth
+// Last Modified On : 04-03-2023
+// ***********************************************************************
+// <copyright file="eigen.cs" company="Design Engineering Lab">
+//     2014
+// </copyright>
+// <summary></summary>
+// ***********************************************************************
+/*************************************************************************
 *     This file & class is part of the StarMath Project
 *     Copyright 2014 Matthew Ira Campbell, PhD.
 *
@@ -25,26 +38,30 @@ using TVGL;
 
 namespace StarMathLib
 {
+    /// <summary>
+    /// Class StarMath.
+    /// </summary>
     public static partial class StarMath
     {
         /// <summary>
-        ///     Gets the eigenvalues for matrix, A.
+        /// Gets the eigenvalues for matrix, A.
         /// </summary>
         /// <param name="A">the matrix in question, A.</param>
-        /// <returns>
-        ///     The eigenvalues as complex numbers.
-        /// </returns>
+        /// <returns>The eigenvalues as complex numbers.</returns>
         public static ComplexNumber[] GetEigenValues(this double[,] A)
         {
             return GetEigenValuesAndVectors(A, out _);
         }
 
         /// <summary>
-        ///     Gets the eigenvalues and eigenvectors for matrix, A.
+        /// Gets the eigenvalues and eigenvectors for matrix, A.
         /// </summary>
         /// <param name="A">the matrix in question, A.</param>
         /// <param name="eigenVectors">The eigenvectors as an array of arrays/vectors.</param>
-        /// <returns></returns>
+        /// <returns>ComplexNumber[].</returns>
+        /// <exception cref="System.ArithmeticException">Matrix, A, must be square.</exception>
+        /// <exception cref="System.ArithmeticException">Eigen decomposition does not converge.</exception>
+        /// <exception cref="System.ArithmeticException">Eigen decomposition failed due to norm = 0.</exception>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static ComplexNumber[] GetEigenValuesAndVectors(this double[,] A, out double[][] eigenVectors)
         {
@@ -596,6 +613,14 @@ namespace StarMathLib
             return result;
         }
 
+        /// <summary>
+        /// Complexes the number divide.
+        /// </summary>
+        /// <param name="xreal">The xreal.</param>
+        /// <param name="ximag">The ximag.</param>
+        /// <param name="yreal">The yreal.</param>
+        /// <param name="yimag">The yimag.</param>
+        /// <returns>System.Double[].</returns>
         private static double[] ComplexNumberDivide(double xreal, double ximag, double yreal, double yimag)
         {
             if (Math.Abs(yimag) < Math.Abs(yreal))

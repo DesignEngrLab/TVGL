@@ -1,6 +1,16 @@
-// Licensed to the .NET Foundation under one or more agreements.
-// The .NET Foundation licenses this file to you under the MIT license.
-// See the LICENSE file in the project root for more information.
+// ***********************************************************************
+// Assembly         : TessellationAndVoxelizationGeometryLibrary
+// Author           : matth
+// Created          : 04-03-2023
+//
+// Last Modified By : matth
+// Last Modified On : 04-03-2023
+// ***********************************************************************
+// <copyright file="Quaternion.cs" company="Design Engineering Lab">
+//     2014
+// </copyright>
+// <summary></summary>
+// ***********************************************************************
 
 using System;
 using System.Globalization;
@@ -13,6 +23,9 @@ namespace TVGL
     /// </summary>
     public struct Quaternion : IEquatable<Quaternion>
     {
+        /// <summary>
+        /// The slerp epsilon
+        /// </summary>
         private const double SlerpEpsilon = 1e-6;
 
         /// <summary>
@@ -35,16 +48,19 @@ namespace TVGL
         /// <summary>
         /// Returns a Quaternion representing no rotation.
         /// </summary>
+        /// <value>The identity.</value>
         public static Quaternion Identity => new Quaternion(0, 0, 0, 1);
 
         /// <summary>
         /// Returns a Quaternion representing no rotation.
         /// </summary>
+        /// <value>The null.</value>
         public static Quaternion Null => new Quaternion(double.NaN, double.NaN, double.NaN, double.NaN);
 
         /// <summary>
         /// Returns whether the Quaternion is the identity Quaternion.
         /// </summary>
+        /// <returns><c>true</c> if this instance is identity; otherwise, <c>false</c>.</returns>
         public bool IsIdentity()
         {
             return X == 0.0 && Y == 0.0 && Z == 0.0 && W == 1.0;
@@ -52,6 +68,7 @@ namespace TVGL
         /// <summary>
         /// Returns whether the Quaternion is the identity Quaternion.
         /// </summary>
+        /// <returns><c>true</c> if this instance is null; otherwise, <c>false</c>.</returns>
         public bool IsNull()
         {
             return double.IsNaN(X) || double.IsNaN(Y) || double.IsNaN(Z) || double.IsNaN(W);
@@ -191,7 +208,7 @@ namespace TVGL
         /// <param name="yaw">The yaw angle, in radians, around the Y-axis.</param>
         /// <param name="pitch">The pitch angle, in radians, around the X-axis.</param>
         /// <param name="roll">The roll angle, in radians, around the Z-axis.</param>
-        /// <returns></returns>
+        /// <returns>Quaternion.</returns>
         public static Quaternion CreateFromYawPitchRoll(double yaw, double pitch, double roll)
         {
             //  Roll first, about axis the object is facing, then
@@ -338,7 +355,7 @@ namespace TVGL
         }
 
         /// <summary>
-        ///  Linearly interpolates between two quaternions.
+        /// Linearly interpolates between two quaternions.
         /// </summary>
         /// <param name="quaternion1">The first source Quaternion.</param>
         /// <param name="quaternion2">The second source Quaternion.</param>

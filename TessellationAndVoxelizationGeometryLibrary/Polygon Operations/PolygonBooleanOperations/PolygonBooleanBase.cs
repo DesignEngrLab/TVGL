@@ -1,7 +1,16 @@
-﻿// Copyright 2015-2020 Design Engineering Lab
-// This file is a part of TVGL, Tessellation and Voxelization Geometry Library
-// https://github.com/DesignEngrLab/TVGL
-// It is licensed under MIT License (see LICENSE.txt for details)
+﻿// ***********************************************************************
+// Assembly         : TessellationAndVoxelizationGeometryLibrary
+// Author           : matth
+// Created          : 04-03-2023
+//
+// Last Modified By : matth
+// Last Modified On : 04-03-2023
+// ***********************************************************************
+// <copyright file="PolygonBooleanBase.cs" company="Design Engineering Lab">
+//     2014
+// </copyright>
+// <summary></summary>
+// ***********************************************************************
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -22,10 +31,9 @@ namespace TVGL
         /// </summary>
         /// <param name="polygonA">The polygon a.</param>
         /// <param name="polygonB">The polygon b.</param>
-        /// <param name="intersections">The intersections.</param>
-        /// <param name="isSubtract">The switch direction.</param>
-        /// <param name="crossProductSign">The cross product sign.</param>
-        /// <param name="tolerance">The minimum allowable area.</param>
+        /// <param name="interaction">The interaction.</param>
+        /// <param name="polygonCollection">The polygon collection.</param>
+        /// <param name="minimumArea">The minimum area.</param>
         /// <returns>System.Collections.Generic.List&lt;TVGL.TwoDimensional.Polygon&gt;.</returns>
         internal List<Polygon> Run(Polygon polygonA, Polygon polygonB, PolygonInteractionRecord interaction, PolygonCollection polygonCollection,
             double minimumArea = double.NaN)
@@ -98,11 +106,11 @@ namespace TVGL
         /// <summary>
         /// Gets the next intersection by looking through the intersectionLookupList. It'll return false, when there are none left.
         /// </summary>
-        /// <param name="intersectionLookup">The intersection lookup.</param>
         /// <param name="intersections">The intersections.</param>
-        /// <param name="crossProductSign">The cross product sign.</param>
         /// <param name="nextStartingIntersection">The next starting intersection.</param>
         /// <param name="currentEdge">The current edge.</param>
+        /// <param name="switchPolygon">if set to <c>true</c> [switch polygon].</param>
+        /// <param name="indexIntersectionStart">The index intersection start.</param>
         /// <returns><c>true</c> if a new starting intersection was found, <c>false</c> otherwise.</returns>
         /// <exception cref="NotImplementedException"></exception>
         protected bool GetNextStartingIntersection(List<SegmentIntersection> intersections,
@@ -130,6 +138,12 @@ namespace TVGL
             return false;
         }
 
+        /// <summary>
+        /// Numbers the vertices and get polygon vertex delimiter.
+        /// </summary>
+        /// <param name="polygon">The polygon.</param>
+        /// <param name="startIndex">The start index.</param>
+        /// <returns>List&lt;System.Int32&gt;.</returns>
         internal static List<int> NumberVerticesAndGetPolygonVertexDelimiter(Polygon polygon, int startIndex = 0)
         {
             var polygonStartIndices = new List<int>();
@@ -146,6 +160,13 @@ namespace TVGL
             return polygonStartIndices;
         }
 
+        /// <summary>
+        /// Valids the starting intersection.
+        /// </summary>
+        /// <param name="intersectionData">The intersection data.</param>
+        /// <param name="currentEdge">The current edge.</param>
+        /// <param name="startAgain">if set to <c>true</c> [start again].</param>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         protected abstract bool ValidStartingIntersection(SegmentIntersection intersectionData, out PolygonEdge currentEdge,
             out bool startAgain);
 
@@ -156,9 +177,11 @@ namespace TVGL
         /// </summary>
         /// <param name="intersectionLookup">The readonly intersection lookup.</param>
         /// <param name="intersections">The intersections.</param>
-        /// <param name="intersectionData">The intersection data.</param>
-        /// <param name="currentEdge">The current edge.</param>
-        /// <param name="isSubtract">if set to <c>true</c> [switch directions].</param>
+        /// <param name="startingIntersection">The starting intersection.</param>
+        /// <param name="startingEdge">The starting edge.</param>
+        /// <param name="switchPolygon">if set to <c>true</c> [switch polygon].</param>
+        /// <param name="includesWrongPoints">if set to <c>true</c> [includes wrong points].</param>
+        /// <param name="knownWrongPoints">The known wrong points.</param>
         /// <returns>Polygon.</returns>
         /// <exception cref="NotImplementedException"></exception>
         protected List<Vector2> MakePolygonThroughIntersections(List<int>[] intersectionLookup, List<SegmentIntersection> intersections,
@@ -219,8 +242,8 @@ namespace TVGL
         /// <param name="currentEdge">The current edge.</param>
         /// <param name="allIntersections">All intersections.</param>
         /// <param name="formerIntersectCoords">The former intersect coords.</param>
-        /// <param name="forward">if set to <c>true</c> [forward].</param>
         /// <param name="bestIntersection">The index of intersection.</param>
+        /// <param name="switchPolygon">if set to <c>true</c> [switch polygon].</param>
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         /// <exception cref="NotImplementedException"></exception>
         private bool ClosestNextIntersectionOnThisEdge(List<int>[] intersectionLookup, PolygonEdge currentEdge, List<SegmentIntersection> allIntersections,
@@ -281,21 +304,42 @@ namespace TVGL
             }
         }
 
+        /// <summary>
+        /// Switches at this intersection.
+        /// </summary>
+        /// <param name="newIntersection">The new intersection.</param>
+        /// <param name="currentEdgeIsFromPolygonA">if set to <c>true</c> [current edge is from polygon a].</param>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         protected abstract bool SwitchAtThisIntersection(SegmentIntersection newIntersection, bool currentEdgeIsFromPolygonA);
 
+        /// <summary>
+        /// Polygons the completed.
+        /// </summary>
+        /// <param name="currentIntersection">The current intersection.</param>
+        /// <param name="startingIntersection">The starting intersection.</param>
+        /// <param name="currentEdge">The current edge.</param>
+        /// <param name="startingEdge">The starting edge.</param>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         protected abstract bool PolygonCompleted(SegmentIntersection currentIntersection, SegmentIntersection startingIntersection,
            PolygonEdge currentEdge, PolygonEdge startingEdge);
 
+        /// <summary>
+        /// Handles the non intersecting sub polygon.
+        /// </summary>
+        /// <param name="subPolygon">The sub polygon.</param>
+        /// <param name="newPolygons">The new polygons.</param>
+        /// <param name="relationships">The relationships.</param>
+        /// <param name="partOfPolygonB">if set to <c>true</c> [part of polygon b].</param>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         protected abstract bool HandleNonIntersectingSubPolygon(Polygon subPolygon, List<Polygon> newPolygons,
             IEnumerable<(PolyRelInternal, bool)> relationships, bool partOfPolygonB);
 
         /// <summary>
         /// Handles identical polygons. In this case subPolygon is always on polygonA and the duplicated is in polygonB
         /// </summary>
-        /// <param name="subPolygon">The sub polygon.</param>
-        /// <param name="positivePolygons">The positive polygons.</param>
-        /// <param name="negativePolygons">The negative polygons.</param>
-        /// <param name="identicalPolygonIsInverted">The identical polygon is inverted.</param>
+        /// <param name="subPolygonA">The sub polygon a.</param>
+        /// <param name="newPolygons">The new polygons.</param>
+        /// <param name="equalAndOpposite">if set to <c>true</c> [equal and opposite].</param>
         protected abstract void HandleIdenticalPolygons(Polygon subPolygonA, List<Polygon> newPolygons, bool equalAndOpposite);
 
         #endregion Private Functions used by the above public methods

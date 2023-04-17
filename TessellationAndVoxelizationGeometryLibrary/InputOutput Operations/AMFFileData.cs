@@ -1,7 +1,16 @@
-﻿// Copyright 2015-2020 Design Engineering Lab
-// This file is a part of TVGL, Tessellation and Voxelization Geometry Library
-// https://github.com/DesignEngrLab/TVGL
-// It is licensed under MIT License (see LICENSE.txt for details)
+﻿// ***********************************************************************
+// Assembly         : TessellationAndVoxelizationGeometryLibrary
+// Author           : matth
+// Created          : 04-03-2023
+//
+// Last Modified By : matth
+// Last Modified On : 04-14-2023
+// ***********************************************************************
+// <copyright file="AMFFileData.cs" company="Design Engineering Lab">
+//     2014
+// </copyright>
+// <summary></summary>
+// ***********************************************************************
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -14,7 +23,7 @@ using TVGL.amfclasses;
 namespace TVGL
 {
     /// <summary>
-    ///     Class AMFFileData.
+    /// Class AMFFileData.
     /// </summary>
     [XmlRoot("amf")]
 #if help
@@ -26,7 +35,7 @@ namespace TVGL
         #region Constructor
 
         /// <summary>
-        ///     Initializes a new instance of the <see cref="AMFFileData" /> class.
+        /// Initializes a new instance of the <see cref="AMFFileData" /> class.
         /// </summary>
 #if help
     internal AMFFileData()
@@ -51,28 +60,28 @@ namespace TVGL
 #else
 
         /// <summary>
-        ///     Gets or sets the constellations.
+        /// Gets or sets the constellations.
         /// </summary>
         /// <value>The constellations.</value>
         [XmlElement("constellation")]
         public List<AMF_Constellation> Constellations { get; set; }
 
         /// <summary>
-        ///     Gets or sets the objects.
+        /// Gets or sets the objects.
         /// </summary>
         /// <value>The objects.</value>
         [XmlElement("object")]
         public List<AMF_Object> Objects { get; set; }
 
         /// <summary>
-        ///     Gets or sets the textures.
+        /// Gets or sets the textures.
         /// </summary>
         /// <value>The textures.</value>
         [XmlElement("texture")]
         public List<AMF_Texture> Textures { get; set; }
 
         /// <summary>
-        ///     Gets or sets the version.
+        /// Gets or sets the version.
         /// </summary>
         /// <value>The version.</value>
         public double version { get; set; }
@@ -128,6 +137,12 @@ namespace TVGL
             return results.ToArray();
         }
 
+        /// <summary>
+        /// Creates the solid.
+        /// </summary>
+        /// <param name="amfObject">The amf object.</param>
+        /// <param name="amfInstance">The amf instance.</param>
+        /// <returns>TessellatedSolid.</returns>
         private TessellatedSolid CreateSolid(AMF_Object amfObject, AMF_Instance amfInstance = null)
         {
             List<Color> colors = null;
@@ -188,9 +203,7 @@ namespace TVGL
         /// </summary>
         /// <param name="stream">The stream.</param>
         /// <param name="solids">The solids.</param>
-        /// <returns>
-        ///   <c>true</c> if XXXX, <c>false</c> otherwise.
-        /// </returns>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         /// <exception cref="NotImplementedException"></exception>
         internal static bool SaveSolids(Stream stream, IList<TessellatedSolid> solids)
         {
@@ -217,6 +230,10 @@ namespace TVGL
         }
 
         // this is used by the save method above
+        /// <summary>
+        /// Initializes a new instance of the <see cref="AMFFileData"/> class.
+        /// </summary>
+        /// <param name="solids">The solids.</param>
         private AMFFileData(IList<TessellatedSolid> solids) : this()
         {
             this.Name = solids[0].Name.TrimEnd('_', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0');

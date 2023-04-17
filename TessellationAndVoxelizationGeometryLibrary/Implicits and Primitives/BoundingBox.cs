@@ -1,7 +1,16 @@
-﻿// Copyright 2015-2020 Design Engineering Lab
-// This file is a part of TVGL, Tessellation and Voxelization Geometry Library
-// https://github.com/DesignEngrLab/TVGL
-// It is licensed under MIT License (see LICENSE.txt for details)
+﻿// ***********************************************************************
+// Assembly         : TessellationAndVoxelizationGeometryLibrary
+// Author           : matth
+// Created          : 04-03-2023
+//
+// Last Modified By : matth
+// Last Modified On : 04-14-2023
+// ***********************************************************************
+// <copyright file="BoundingBox.cs" company="Design Engineering Lab">
+//     2014
+// </copyright>
+// <summary></summary>
+// ***********************************************************************
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -20,12 +29,17 @@ namespace TVGL
     /// <seealso cref="TVGL.BoundingBox" />
     public class BoundingBox<T> : BoundingBox where T : IVertex3D
     {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="BoundingBox{T}"/> class.
+        /// </summary>
+        /// <param name="dimensions">The dimensions.</param>
+        /// <param name="transform">The transform.</param>
         public BoundingBox(double[] dimensions, Matrix4x4 transform) : base(dimensions, transform)
         {
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="BoundingBox{T}"/> class.
+        /// Initializes a new instance of the <see cref="BoundingBox{T}" /> class.
         /// </summary>
         /// <param name="dimensions">The dimensions.</param>
         /// <param name="directions">The directions.</param>
@@ -36,6 +50,14 @@ namespace TVGL
         {
             PointsOnFaces = pointsOnFaces.Select(pof => pof.ToArray()).ToArray();
         }
+        /// <summary>
+        /// Initializes a new instance of the <see cref="BoundingBox{T}"/> class.
+        /// </summary>
+        /// <param name="dimensions">The dimensions.</param>
+        /// <param name="directions">The directions.</param>
+        /// <param name="minPointOnDirection0">The minimum point on direction0.</param>
+        /// <param name="minPointOnDirection1">The minimum point on direction1.</param>
+        /// <param name="minPointOnDirection2">The minimum point on direction2.</param>
         public BoundingBox(double[] dimensions, Vector3[] directions, T minPointOnDirection0,
         T minPointOnDirection1, T minPointOnDirection2)
         : base(dimensions, directions,
@@ -47,10 +69,11 @@ namespace TVGL
 
 
         /// <summary>
-        ///     The PointsOnFaces is an array of 6 lists which are vertices of the tessellated solid
-        ///     that are on the faces of the bounding box. They are in the order of direction1-low,
-        ///     direction1-high, direction2-low, direction2-high, direction3-low, direction3-high.
+        /// The PointsOnFaces is an array of 6 lists which are vertices of the tessellated solid
+        /// that are on the faces of the bounding box. They are in the order of direction1-low,
+        /// direction1-high, direction2-low, direction2-high, direction3-low, direction3-high.
         /// </summary>
+        /// <value>The points on faces.</value>
         [JsonIgnore]
         public T[][] PointsOnFaces { get; private set; }
 
@@ -77,17 +100,17 @@ namespace TVGL
     }
 
     /// <summary>
-    ///     The BoundingBox is a simple class for representing an arbitrarily oriented box
-    ///     or 3D prismatic rectangle. It is defined by 1) the Matrix4x4 transform which includes the
-    ///     rotation and translation from the gloval frame, 2) the dimension of the box at this coordinate
-    ///     frame (the box is only in the positive octant of this local frame), 3) (optional) any points
-    ///     of the enclosing solid that touch the box.
+    /// The BoundingBox is a simple class for representing an arbitrarily oriented box
+    /// or 3D prismatic rectangle. It is defined by 1) the Matrix4x4 transform which includes the
+    /// rotation and translation from the gloval frame, 2) the dimension of the box at this coordinate
+    /// frame (the box is only in the positive octant of this local frame), 3) (optional) any points
+    /// of the enclosing solid that touch the box.
     /// </summary>
     public class BoundingBox
     {
         #region Constructors
         /// <summary>
-        /// Initializes a new instance of the <see cref="BoundingBox"/> class.
+        /// Initializes a new instance of the <see cref="BoundingBox" /> class.
         /// </summary>
         /// <param name="dimensions">The dimensions.</param>
         /// <param name="directions">The directions.</param>
@@ -98,7 +121,7 @@ namespace TVGL
         { }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="BoundingBox"/> class.
+        /// Initializes a new instance of the <see cref="BoundingBox" /> class.
         /// </summary>
         /// <param name="dimensions">The dimensions.</param>
         /// <param name="transform">The transform.</param>
@@ -113,9 +136,10 @@ namespace TVGL
         #region Constructor Defined Fields
 
         /// <summary>
-        ///     The dimensions of the bounding box. The 3 values correspond to length of box in each of the
-        ///     three directions.
+        /// The dimensions of the bounding box. The 3 values correspond to length of box in each of the
+        /// three directions.
         /// </summary>
+        /// <value>The dimensions.</value>
         public double[] Dimensions { get; }
 
         /// <summary>
@@ -131,11 +155,12 @@ namespace TVGL
 
         //the following properties are set with a lazy private fields
         /// <summary>
-        ///     The Directions normal are the three unit vectors that describe the orientation of the box.
-        ///     These directions also correspond to the first three rows of the transform matrix (not including
-        ///     the perspective terms of course).
-        ///     correspond with that direction.
+        /// The Directions normal are the three unit vectors that describe the orientation of the box.
+        /// These directions also correspond to the first three rows of the transform matrix (not including
+        /// the perspective terms of course).
+        /// correspond with that direction.
         /// </summary>
+        /// <value>The directions.</value>
         [JsonIgnore]
         public Vector3[] Directions
         {
@@ -146,6 +171,9 @@ namespace TVGL
             }
         }
 
+        /// <summary>
+        /// The directions
+        /// </summary>
         private Vector3[] _directions;
 
         /// <summary>
@@ -153,6 +181,7 @@ namespace TVGL
         /// These three values along with the direction vectors indicate the three planes of the lower
         /// corner of the box. If you add dimensions to this, you would get the maximum plane distances
         /// </summary>
+        /// <value>The translation from origin.</value>
         [JsonIgnore]
         public Vector3 TranslationFromOrigin
         {
@@ -164,12 +193,16 @@ namespace TVGL
             }
         }
 
+        /// <summary>
+        /// The translation from origin
+        /// </summary>
         private Vector3 _translationFromOrigin = Vector3.Null;
 
         /// <summary>
-        ///     Corner vertices are ordered as follows, where - = low and + = high along directions 0, 1, and 2 respectively.
-        ///     [0] = ---, [1] = +-- , [2] = ++- , [3] = -+-, [4] = --+ , [5] = +-+, [6] = +++, [7] = -++
+        /// Corner vertices are ordered as follows, where - = low and + = high along directions 0, 1, and 2 respectively.
+        /// [0] = ---, [1] = +-- , [2] = ++- , [3] = -+-, [4] = --+ , [5] = +-+, [6] = +++, [7] = -++
         /// </summary>
+        /// <value>The corners.</value>
         [JsonIgnore]
         public Vector3[] Corners
         {
@@ -180,11 +213,14 @@ namespace TVGL
             }
         }
 
+        /// <summary>
+        /// The corners
+        /// </summary>
         private Vector3[] _corners;
 
         /// <summary>
-        ///     Adds the corner vertices to the bounding box.
-        ///     The dimensions are also updated, in the event that the points of faces were altered (replaced or shifted).
+        /// Adds the corner vertices to the bounding box.
+        /// The dimensions are also updated, in the event that the points of faces were altered (replaced or shifted).
         /// </summary>
         /// <returns>BoundingBox.</returns>
         private void MakeCornerPoints()
@@ -211,8 +247,9 @@ namespace TVGL
         }
 
         /// <summary>
-        ///     The center point
+        /// The center point
         /// </summary>
+        /// <value>The center.</value>
         [JsonIgnore]
         public Vector3 Center
         {
@@ -230,21 +267,22 @@ namespace TVGL
             set => _center = value;
         }
 
+        /// <summary>
+        /// The center
+        /// </summary>
         private Vector3 _center = Vector3.Null;
 
         /// <summary>
-        ///     The volume of the bounding box.
+        /// The volume of the bounding box.
         /// </summary>
+        /// <value>The volume.</value>
         [JsonIgnore]
         public double Volume => Dimensions[0] * Dimensions[1] * Dimensions[2];
 
         /// <summary>
-        ///     The Solid Representation of the bounding box. This is not set by defualt.
+        /// The Solid Representation of the bounding box. This is not set by defualt.
         /// </summary>
-
-        /// <summary>
-        ///     Sets the Solid Representation of the bounding box
-        /// </summary>
+        /// <returns>TessellatedSolid.</returns>
         public TessellatedSolid AsTessellatedSolid()
         {
             if (_tessellatedSolid == null)
@@ -281,11 +319,15 @@ namespace TVGL
             return _tessellatedSolid;
         }
 
+        /// <summary>
+        /// The tessellated solid
+        /// </summary>
         private TessellatedSolid _tessellatedSolid;
 
         /// <summary>
-        ///     The direction indices sorted by the dimensions from smallest to greatest.
+        /// The direction indices sorted by the dimensions from smallest to greatest.
         /// </summary>
+        /// <value>The length of the sorted direction indices by.</value>
         [JsonIgnore]
         public IList<int> SortedDirectionIndicesByLength
         {
@@ -297,11 +339,15 @@ namespace TVGL
             }
         }
 
+        /// <summary>
+        /// The sorted direction indices by length
+        /// </summary>
         private IList<int> _sortedDirectionIndicesByLength;
 
         /// <summary>
-        ///     The direction indices sorted by the dimensions from smallest to greatest.
+        /// The direction indices sorted by the dimensions from smallest to greatest.
         /// </summary>
+        /// <value>The length of the sorted directions by.</value>
         [JsonIgnore]
         public IList<Vector3> SortedDirectionsByLength
         {
@@ -313,11 +359,15 @@ namespace TVGL
             }
         }
 
+        /// <summary>
+        /// The sorted directions by length
+        /// </summary>
         private IList<Vector3> _sortedDirectionsByLength;
 
         /// <summary>
-        ///     The sorted dimensions from smallest to greatest.
+        /// The sorted dimensions from smallest to greatest.
         /// </summary>
+        /// <value>The sorted dimensions.</value>
         [JsonIgnore]
         public double[] SortedDimensions
         {
@@ -329,6 +379,9 @@ namespace TVGL
             }
         }
 
+        /// <summary>
+        /// The sorted dimensions
+        /// </summary>
         private double[] _sortedDimensions;
 
         /// <summary>
@@ -363,6 +416,9 @@ namespace TVGL
                 Directions[_sortedDirectionIndicesByLength[2]] };
         }
 
+        /// <summary>
+        /// Resets the lazy fields.
+        /// </summary>
         private void ResetLazyFields()
         {
             _center = Vector3.Null;
@@ -386,6 +442,9 @@ namespace TVGL
             return new BoundingBox(this.Dimensions.ToArray(), this.Transform);
         }
 
+        /// <summary>
+        /// The small angle
+        /// </summary>
         private const double smallAngle = 0.0038;  // current value is one minus cosine of 5 Degrees
 
         /// <summary>
@@ -430,7 +489,8 @@ namespace TVGL
         /// Moves a face outward by the provided distance (or inward if distance is negative).
         /// This does not alter the bounding box, but returns a new one.
         /// </summary>
-        /// <param name="face">The face as defined by the CartesianDirections enumerator. This is the local x,y,z - not the global.</param>
+        /// <param name="directionIndex">Index of the direction.</param>
+        /// <param name="forward">if set to <c>true</c> [forward].</param>
         /// <param name="distance">The distance to move the face by (negative will move the face inward).</param>
         /// <returns>BoundingBox.</returns>
         public BoundingBox MoveFaceOutwardToNewSolid(int directionIndex, bool forward, double distance)
@@ -443,7 +503,8 @@ namespace TVGL
         /// <summary>
         /// Moves the face outward by the provided distance (or inward if distance is negative).
         /// </summary>
-        /// <param name="direction">The direction vector corresponding to the face normal (this must be within 5 degrees or it won't apply).</param>
+        /// <param name="directionIndex">Index of the direction.</param>
+        /// <param name="forward">if set to <c>true</c> [forward].</param>
         /// <param name="distance">The distance to move the face by (negative will move the face inward).</param>
         public void MoveFaceOutward(int directionIndex, bool forward, double distance)
         {

@@ -1,4 +1,17 @@
-﻿using MIConvexHull;
+﻿// ***********************************************************************
+// Assembly         : TessellationAndVoxelizationGeometryLibrary
+// Author           : matth
+// Created          : 04-03-2023
+//
+// Last Modified By : matth
+// Last Modified On : 04-03-2023
+// ***********************************************************************
+// <copyright file="AxisAlignedRectangle.cs" company="Design Engineering Lab">
+//     2014
+// </copyright>
+// <summary></summary>
+// ***********************************************************************
+using MIConvexHull;
 using System;
 
 
@@ -6,15 +19,31 @@ using System;
 namespace TVGL
 {
     /// <summary>
-    ///     Axis-aligned rectangle
+    /// Axis-aligned rectangle
     /// </summary>
     public readonly struct AxisAlignedRectangle
     {
+        /// <summary>
+        /// The x minimum
+        /// </summary>
         public readonly double XMin;
+        /// <summary>
+        /// The x maximum
+        /// </summary>
         public readonly double XMax;
+        /// <summary>
+        /// The y minimum
+        /// </summary>
         public readonly double YMin;
+        /// <summary>
+        /// The y maximum
+        /// </summary>
         public readonly double YMax;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="AxisAlignedRectangle"/> struct.
+        /// </summary>
+        /// <param name="box">The box.</param>
         public AxisAlignedRectangle(MonotoneBox box) : this()
         {
             XMin = Math.Min(box.Vertex1.X, box.Vertex2.X);
@@ -23,6 +52,11 @@ namespace TVGL
             YMax = Math.Max(box.Vertex1.Y, box.Vertex2.Y);
         }
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="AxisAlignedRectangle"/> struct.
+        /// </summary>
+        /// <param name="vertex1">The vertex1.</param>
+        /// <param name="vertex2">The vertex2.</param>
         public AxisAlignedRectangle(IVertex2D vertex1, IVertex2D vertex2) : this()
         {
             XMin = Math.Min(vertex1.X, vertex2.X);
@@ -31,6 +65,13 @@ namespace TVGL
             YMax = Math.Max(vertex1.Y, vertex2.Y);
         }
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="AxisAlignedRectangle"/> struct.
+        /// </summary>
+        /// <param name="xMin">The x minimum.</param>
+        /// <param name="yMin">The y minimum.</param>
+        /// <param name="xMax">The x maximum.</param>
+        /// <param name="yMax">The y maximum.</param>
         public AxisAlignedRectangle(double xMin, double yMin, double xMax, double yMax) : this()
         {
             this.XMin = xMin;
