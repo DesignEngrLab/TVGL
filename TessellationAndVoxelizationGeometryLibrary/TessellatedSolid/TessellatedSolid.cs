@@ -756,7 +756,7 @@ namespace TVGL
         /// because the tolerance is used in making the vertices.
         /// </summary>
         /// <param name="vertices">The vertices.</param>
-        private void DefineAxisAlignedBoundingBoxAndTolerance(IEnumerable<Vector3> vertices)
+        public void DefineAxisAlignedBoundingBoxAndTolerance(IEnumerable<Vector3> vertices = null)
         {
             var xMin = double.PositiveInfinity;
             var yMin = double.PositiveInfinity;
@@ -764,6 +764,7 @@ namespace TVGL
             var xMax = double.NegativeInfinity;
             var yMax = double.NegativeInfinity;
             var zMax = double.NegativeInfinity;
+            if (vertices == null) vertices = Vertices.Select(v => v.Coordinates);
             foreach (var v in vertices)
             {
                 if (xMin > v.X) xMin = v.X;
