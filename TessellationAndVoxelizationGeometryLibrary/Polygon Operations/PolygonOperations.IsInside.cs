@@ -417,7 +417,6 @@ namespace TVGL
             return inside;
         }
 
-        #endregion
         #region Line Intersections with Polygon
 
         /// <summary>
