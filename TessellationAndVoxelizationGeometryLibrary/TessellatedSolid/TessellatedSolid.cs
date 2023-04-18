@@ -753,29 +753,6 @@ namespace TVGL
         #endregion
 
         #region Make many elements (called from constructors)
-        public void DefineAxisAlignedBoundingBoxAndTolerance(IEnumerable<Vertex> vertices = null)
-        {
-            vertices ??= Vertices;
-            var xMin = double.PositiveInfinity;
-            var yMin = double.PositiveInfinity;
-            var zMin = double.PositiveInfinity;
-            var xMax = double.NegativeInfinity;
-            var yMax = double.NegativeInfinity;
-            var zMax = double.NegativeInfinity;
-            foreach (var v in vertices)
-            {
-                if (xMin > v.X) xMin = v.X;
-                if (yMin > v.Y) yMin = v.Y;
-                if (zMin > v.Z) zMin = v.Z;
-                if (xMax < v.X) xMax = v.X;
-                if (yMax < v.Y) yMax = v.Y;
-                if (zMax < v.Z) zMax = v.Z;
-            }
-            Bounds = new[] { new Vector3(xMin, yMin, zMin), new Vector3(xMax, yMax, zMax) };
-            var averageDimension = 0.333 * ((XMax - XMin) + (YMax - YMin) + (ZMax - ZMin));
-            SameTolerance = averageDimension * Constants.BaseTolerance;
-        }
-
         /// <summary>
         /// Defines the axis aligned bounding box and tolerance. This is called first in the constructors
         /// because the tolerance is used in making the vertices.
