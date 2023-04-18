@@ -1,7 +1,16 @@
-﻿// Copyright 2015-2020 Design Engineering Lab
-// This file is a part of TVGL, Tessellation and Voxelization Geometry Library
-// https://github.com/DesignEngrLab/TVGL
-// It is licensed under MIT License (see LICENSE.txt for details)
+﻿// ***********************************************************************
+// Assembly         : TessellationAndVoxelizationGeometryLibrary
+// Author           : matth
+// Created          : 04-10-2023
+//
+// Last Modified By : matth
+// Last Modified On : 04-16-2023
+// ***********************************************************************
+// <copyright file="TriangleFace.cs" company="Design Engineering Lab">
+//     2014
+// </copyright>
+// <summary></summary>
+// ***********************************************************************
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,14 +18,14 @@ using System.Linq;
 namespace TVGL
 {
     /// <summary>
-    ///     This class defines a flat triangle face. The implementation began with triangular faces in mind.
-    ///     It should be double-checked for higher polygons.   It inherits from the ConvexFace class in
-    ///     MIConvexHull
+    /// This class defines a flat triangle face. The implementation began with triangular faces in mind.
+    /// It should be double-checked for higher polygons.   It inherits from the ConvexFace class in
+    /// MIConvexHull
     /// </summary>
     public class TriangleFace : TessellationBaseClass
     {
         /// <summary>
-        ///     Copies this instance. Does not include reference lists.
+        /// Copies this instance. Does not include reference lists.
         /// </summary>
         /// <returns>TriangleFace.</returns>
         public TriangleFace Copy()
@@ -32,6 +41,9 @@ namespace TVGL
             };
         }
 
+        /// <summary>
+        /// Inverts this instance.
+        /// </summary>
         internal void Invert()
         {
             _normal *= -1;
@@ -46,7 +58,7 @@ namespace TVGL
         //Set new normal and area.
         //References are assumed to be the same.
         /// <summary>
-        ///     Updates normal, vertex order, and area
+        /// Updates normal, vertex order, and area
         /// </summary>
         public void Update()
         {
@@ -56,8 +68,9 @@ namespace TVGL
         }
 
         /// <summary>
-        ///     Transforms this face's normal and center. Vertices and edges are transformed seperately
+        /// Transforms this face's normal and center. Vertices and edges are transformed seperately
         /// </summary>
+        /// <param name="transformMatrix">The transform matrix.</param>
         internal void Transform(Matrix4x4 transformMatrix)
         {
             _center = Center.Transform(transformMatrix);
@@ -69,16 +82,17 @@ namespace TVGL
         /// Adds the edge.
         /// </summary>
         /// <param name="edge">The edge.</param>
+        /// <exception cref="System.Exception">Edge does not belong to this face.</exception>
         internal void AddEdge(Edge edge)
         {
-            if (A == edge.From && B == edge.To) AB = edge;
-            else if (B == edge.From && C == edge.To) BC = edge;
-            else if (C == edge.From && A == edge.To) CA = edge;
+            if ((A == edge.From && B == edge.To) || (A == edge.To && B == edge.From)) AB = edge;
+            else if ((B == edge.From && C == edge.To)|| (B == edge.To && C == edge.From)) BC = edge;
+            else if ((C == edge.From && A == edge.To)|| (C == edge.To && A == edge.From)) CA = edge;
             else throw new Exception("Edge does not belong to this face.");
         }
 
         /// <summary>
-        ///     Others the edge.
+        /// Others the edge.
         /// </summary>
         /// <param name="thisVertex">The this vertex.</param>
         /// <param name="willAcceptNullAnswer">if set to <c>true</c> [will accept null answer].</param>
@@ -91,7 +105,7 @@ namespace TVGL
         }
 
         /// <summary>
-        ///     Others the vertex.
+        /// Others the vertex.
         /// </summary>
         /// <param name="thisEdge">The this edge.</param>
         /// <param name="willAcceptNullAnswer">if set to <c>true</c> [will accept null answer].</param>
@@ -105,7 +119,7 @@ namespace TVGL
         }
 
         /// <summary>
-        ///     Others the vertex.
+        /// Others the vertex.
         /// </summary>
         /// <param name="v1">The v1.</param>
         /// <param name="v2">The v2.</param>
@@ -119,10 +133,11 @@ namespace TVGL
         }
 
         /// <summary>
-        ///     Nexts the vertex CCW.
+        /// Nexts the vertex CCW.
         /// </summary>
         /// <param name="v1">The v1.</param>
         /// <returns>Vertex.</returns>
+        /// <exception cref="System.ArgumentException">The given vertex is not part of this face.</exception>
         public Vertex NextVertexCCW(Vertex v1)
         {
             if (v1 == A) return B;
@@ -131,6 +146,10 @@ namespace TVGL
             throw new ArgumentException("The given vertex is not part of this face.");
         }
 
+        /// <summary>
+        /// Adopts the neighbors normal.
+        /// </summary>
+        /// <param name="ownedFace">The owned face.</param>
         internal void AdoptNeighborsNormal(TriangleFace ownedFace)
         {
             _normal = ownedFace.Normal;
@@ -139,6 +158,7 @@ namespace TVGL
         /// <summary>
         /// This is a T-Edge. Set the face normal to be that of the two smaller edges other face.
         /// </summary>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         internal bool AdoptNeighborsNormal()
         {
             var edges = Edges.OrderBy(p => p.Length).ToList();
@@ -158,12 +178,12 @@ namespace TVGL
         #region Constructors
 
         /// <summary>
-        ///     Initializes a new instance of the <see cref="TriangleFace" /> class.
+        /// Initializes a new instance of the <see cref="TriangleFace" /> class.
         /// </summary>
         private TriangleFace() { }
 
         /// <summary>
-        ///     Initializes a new instance of the <see cref="TriangleFace" /> class.
+        /// Initializes a new instance of the <see cref="TriangleFace" /> class.
         /// </summary>
         /// <param name="vertices">The vertices.</param>
         /// <param name="connectVerticesBackToFace">if set to <c>true</c> [connect vertices back to face].</param>
@@ -191,9 +211,11 @@ namespace TVGL
         }
 
         /// <summary>
-        ///     Initializes a new instance of the <see cref="TriangleFace" /> class.
+        /// Initializes a new instance of the <see cref="TriangleFace" /> class.
         /// </summary>
-        /// <param name="vertices">The vertices.</param>
+        /// <param name="A">a.</param>
+        /// <param name="B">The b.</param>
+        /// <param name="C">The c.</param>
         /// <param name="connectVerticesBackToFace">if set to <c>true</c> [connect vertices back to face].</param>
         public TriangleFace(Vertex A, Vertex B, Vertex C, bool connectVerticesBackToFace = true) : this()
         {
@@ -209,7 +231,7 @@ namespace TVGL
         }
 
         /// <summary>
-        ///     Initializes a new instance of the <see cref="TriangleFace" /> class.
+        /// Initializes a new instance of the <see cref="TriangleFace" /> class.
         /// </summary>
         /// <param name="vertices">The vertices.</param>
         /// <param name="suggestedNormal">A guess for the normal vector.</param>
@@ -237,6 +259,9 @@ namespace TVGL
             }
         }
 
+        /// <summary>
+        /// The normal
+        /// </summary>
         private Vector3 _normal = Vector3.Null;
 
         #endregion Constructors
@@ -244,7 +269,7 @@ namespace TVGL
         #region Properties
 
         /// <summary>
-        ///     Gets the vertices.
+        /// Gets the vertices.
         /// </summary>
         /// <value>The vertices.</value>
         public IEnumerable<Vertex> Vertices
@@ -257,28 +282,37 @@ namespace TVGL
             }
         }
         /// <summary>
-        ///     Gets the first vertex
+        /// Gets the first vertex
         /// </summary>
         /// <value>The vertices.</value>
         public Vertex A;
 
         /// <summary>
-        ///     Gets the second vertex
+        /// Gets the second vertex
         /// </summary>
         /// <value>The vertices.</value>
         public Vertex B;
 
         /// <summary>
-        ///     Gets the third vertex
+        /// Gets the third vertex
         /// </summary>
         /// <value>The vertices.</value>
         public Vertex C;
 
+        /// <summary>
+        /// The ab
+        /// </summary>
         public Edge AB;
+        /// <summary>
+        /// The bc
+        /// </summary>
         public Edge BC;
+        /// <summary>
+        /// The ca
+        /// </summary>
         public Edge CA;
         /// <summary>
-        ///     Gets the edges.
+        /// Gets the edges.
         /// </summary>
         /// <value>The edges.</value>
         public IEnumerable<Edge> Edges
@@ -292,7 +326,7 @@ namespace TVGL
         }
 
         /// <summary>
-        ///     Gets the center.
+        /// Gets the center.
         /// </summary>
         /// <value>The center.</value>
         public Vector3 Center
@@ -310,10 +344,13 @@ namespace TVGL
             }
         }
 
+        /// <summary>
+        /// The center
+        /// </summary>
         private Vector3 _center = Vector3.Null;
 
         /// <summary>
-        ///     Gets the area.
+        /// Gets the area.
         /// </summary>
         /// <value>The area.</value>
         public double Area
@@ -326,10 +363,13 @@ namespace TVGL
             }
         }
 
+        /// <summary>
+        /// The area
+        /// </summary>
         private double _area = double.NaN;
 
         /// <summary>
-        ///     Determines the area.
+        /// Determines the area.
         /// </summary>
         /// <returns>System.Double.</returns>
         internal double DetermineArea()
@@ -341,15 +381,19 @@ namespace TVGL
         }
 
         /// <summary>
-        ///     Gets or sets the color.
+        /// Gets or sets the color.
         /// </summary>
         /// <value>The color.</value>
         public Color Color { get; set; }
 
+        /// <summary>
+        /// Gets or sets the belongs to primitive.
+        /// </summary>
+        /// <value>The belongs to primitive.</value>
         public PrimitiveSurface BelongsToPrimitive { get; set; }
 
         /// <summary>
-        ///     Gets the adjacent faces.
+        /// Gets the adjacent faces.
         /// </summary>
         /// <value>The adjacent faces.</value>
         public List<TriangleFace> AdjacentFaces
@@ -379,10 +423,13 @@ namespace TVGL
             }
         }
 
+        /// <summary>
+        /// The curvature
+        /// </summary>
         private CurvatureType _curvature = CurvatureType.Undefined;
 
         /// <summary>
-        ///     Defines the face curvature. Depends on DefineEdgeAngle
+        /// Defines the face curvature. Depends on DefineEdgeAngle
         /// </summary>
         private void DefineFaceCurvature()
         {
@@ -403,7 +450,7 @@ namespace TVGL
         /// <exception cref="System.Exception">Vertex not found in face</exception>
         internal void ReplaceVertex(Vertex oldVertex, Vertex newVertex)
         {
-            if (oldVertex == A) A=newVertex;
+            if (oldVertex == A) A = newVertex;
             else if (oldVertex == B) B = newVertex;
             else if (oldVertex == C) C = newVertex;
             else throw new Exception("Vertex not found in face");
@@ -412,14 +459,20 @@ namespace TVGL
             Update();
         }
 
+        /// <summary>
+        /// Replaces the edge.
+        /// </summary>
+        /// <param name="oldEdge">The old edge.</param>
+        /// <param name="newEdge">The new edge.</param>
+        /// <exception cref="System.Exception">Vertex not found in face</exception>
         internal void ReplaceEdge(Edge oldEdge, Edge newEdge)
         {
             if (oldEdge == AB) AB = newEdge;
             else if (oldEdge == BC) BC = newEdge;
             else if (oldEdge == CA) CA = newEdge;
             else throw new Exception("Vertex not found in face");
-            if (oldEdge.OwnedFace==this) oldEdge.OwnedFace = null;
-            if (oldEdge.OtherFace==this) oldEdge.OtherFace= null;
+            if (oldEdge.OwnedFace == this) oldEdge.OwnedFace = null;
+            if (oldEdge.OtherFace == this) oldEdge.OtherFace = null;
             Update();
         }
 

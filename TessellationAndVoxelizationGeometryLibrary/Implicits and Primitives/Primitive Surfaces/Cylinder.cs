@@ -1,7 +1,16 @@
-﻿// Copyright 2015-2020 Design Engineering Lab
-// This file is a part of TVGL, Tessellation and Voxelization Geometry Library
-// https://github.com/DesignEngrLab/TVGL
-// It is licensed under MIT License (see LICENSE.txt for details)
+﻿// ***********************************************************************
+// Assembly         : TessellationAndVoxelizationGeometryLibrary
+// Author           : matth
+// Created          : 04-03-2023
+//
+// Last Modified By : matth
+// Last Modified On : 04-14-2023
+// ***********************************************************************
+// <copyright file="Cylinder.cs" company="Design Engineering Lab">
+//     2014
+// </copyright>
+// <summary></summary>
+// ***********************************************************************
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,7 +20,7 @@ using System.Linq;
 namespace TVGL
 {
     /// <summary>
-    ///     The class for Cylinder primitives.
+    /// The class for Cylinder primitives.
     /// </summary>
     public class Cylinder : PrimitiveSurface
     {
@@ -38,7 +47,13 @@ namespace TVGL
             // but this is not correct since M11 is often non-unity during rotation
         }
 
+        /// <summary>
+        /// The face x dir
+        /// </summary>
         private Vector3 faceXDir = Vector3.Null;
+        /// <summary>
+        /// The face y dir
+        /// </summary>
         private Vector3 faceYDir = Vector3.Null;
 
         /// <summary>
@@ -124,26 +139,31 @@ namespace TVGL
         #region Properties
 
         /// <summary>
-        ///     Is the cylinder positive? (false is negative)
+        /// Is the cylinder positive? (false is negative)
         /// </summary>
+        /// <value><c>true</c> if this instance is positive; otherwise, <c>false</c>.</value>
         public bool IsPositive { get; set; }
 
 
         /// <summary>
-        ///     Gets the anchor.
+        /// Gets the anchor.
         /// </summary>
         /// <value>The anchor.</value>
         public Vector3 Anchor { get; set; }
         /// <summary>
-        ///     Gets the direction.
+        /// Gets the direction.
         /// </summary>
         /// <value>The direction.</value>
         public Vector3 Axis { get; set; }
 
+        /// <summary>
+        /// Gets the circle.
+        /// </summary>
+        /// <value>The circle.</value>
         public Circle Circle => new Circle(TransformFrom3DTo2D(Axis), Radius * Radius);
 
         /// <summary>
-        ///     Gets the radius.
+        /// Gets the radius.
         /// </summary>
         /// <value>The radius.</value>
         public double Radius { get; set; }
@@ -167,24 +187,37 @@ namespace TVGL
         /// <value>The height.</value>
         public double Height { get; set; } = double.PositiveInfinity;
 
+        /// <summary>
+        /// Gets the volume.
+        /// </summary>
+        /// <value>The volume.</value>
         public double Volume => Height * Math.PI * Radius * Radius;
 
+        /// <summary>
+        /// Gets or sets the total internal angle.
+        /// </summary>
+        /// <value>The total internal angle.</value>
         public double TotalInternalAngle { get; set; }
 
         #endregion
 
         #region Constructors
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Cylinder"/> class.
+        /// </summary>
         public Cylinder() { }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="Cylinder"/> class.
+        /// Initializes a new instance of the <see cref="Cylinder" /> class.
         /// </summary>
         /// <param name="axis">The axis.</param>
         /// <param name="anchor">The anchor.</param>
         /// <param name="radius">The radius.</param>
-        /// <param name="dxOfBottomPlane">The dx of bottom plane.</param>
-        /// <param name="dxOfTopPlane">The dx of top plane.</param>
+        /// <param name="minDistanceAlongAxis">The minimum distance along axis.</param>
+        /// <param name="maxDistanceAlongAxis">The maximum distance along axis.</param>
+        /// <param name="isPositive">if set to <c>true</c> [is positive].</param>
+        /// <param name="faces">The faces.</param>
         public Cylinder(Vector3 axis, Vector3 anchor, double radius, double minDistanceAlongAxis,
             double maxDistanceAlongAxis, bool isPositive = true, IEnumerable<TriangleFace> faces = null)
             : base(faces)
@@ -198,7 +231,7 @@ namespace TVGL
             Height = MaxDistanceAlongAxis - MinDistanceAlongAxis;
         }
         /// <summary>
-        /// Initializes a new instance of the <see cref="Cylinder"/> class.
+        /// Initializes a new instance of the <see cref="Cylinder" /> class.
         /// </summary>
         /// <param name="axis">The axis.</param>
         /// <param name="anchor">The anchor.</param>
@@ -218,7 +251,7 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="Cylinder"/> class.
+        /// Initializes a new instance of the <see cref="Cylinder" /> class.
         /// </summary>
         /// <param name="axis">The axis.</param>
         /// <param name="anchor">The anchor.</param>
@@ -232,9 +265,10 @@ namespace TVGL
             IsPositive = isPositive;
         }
         /// <summary>
-        /// Initializes a new instance of the <see cref="Cylinder"/> class.
+        /// Initializes a new instance of the <see cref="Cylinder" /> class.
         /// </summary>
         /// <param name="originalToBeCopied">The original to be copied.</param>
+        /// <param name="copiedTessellatedSolid">The copied tessellated solid.</param>
         public Cylinder(Cylinder originalToBeCopied, TessellatedSolid copiedTessellatedSolid = null)
             : base(originalToBeCopied, copiedTessellatedSolid)
         {
@@ -248,9 +282,11 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="Cylinder"/> class.
+        /// Initializes a new instance of the <see cref="Cylinder" /> class.
         /// </summary>
         /// <param name="originalToBeCopied">The original to be copied.</param>
+        /// <param name="newFaceIndices">The new face indices.</param>
+        /// <param name="copiedTessellatedSolid">The copied tessellated solid.</param>
         public Cylinder(Cylinder originalToBeCopied, int[] newFaceIndices, TessellatedSolid copiedTessellatedSolid)
             : base(newFaceIndices, copiedTessellatedSolid)
         {
@@ -264,7 +300,7 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="Cylinder"/> class.
+        /// Initializes a new instance of the <see cref="Cylinder" /> class.
         /// </summary>
         /// <param name="axis">The axis.</param>
         /// <param name="anchor">The anchor.</param>
@@ -283,11 +319,11 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="Cylinder"/> class.
+        /// Initializes a new instance of the <see cref="Cylinder" /> class.
         /// </summary>
         /// <param name="axis">The axis.</param>
         /// <param name="anchor">The anchor.</param>
-        /// <param name="circle">The circle.</param>
+        /// <param name="radius">The radius.</param>
         /// <param name="minDistanceAlongAxis">The minimum distance along axis.</param>
         /// <param name="maxDistanceAlongAxis">The maximum distance along axis.</param>
         public Cylinder(Vector3 axis, Vector3 anchor, double radius, double minDistanceAlongAxis,
@@ -312,6 +348,11 @@ namespace TVGL
             return PointMembership(x) < 0 == IsPositive;
         }
 
+        /// <summary>
+        /// Points the membership.
+        /// </summary>
+        /// <param name="point">The point.</param>
+        /// <returns>System.Double.</returns>
         public override double PointMembership(Vector3 point)
         {
             var dxAlong = point.Dot(Axis);
@@ -320,6 +361,9 @@ namespace TVGL
             return (point - Anchor).Cross(Axis).Length() - Radius;
         }
 
+        /// <summary>
+        /// Sets the is positive.
+        /// </summary>
         public void SetIsPositive()
         {
             MiscFunctions.DefineInnerOuterEdges(Faces, out var innerEdges, out _);

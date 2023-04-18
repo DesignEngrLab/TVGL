@@ -1,11 +1,32 @@
-﻿using System;
+﻿// ***********************************************************************
+// Assembly         : TessellationAndVoxelizationGeometryLibrary
+// Author           : matth
+// Created          : 04-03-2023
+//
+// Last Modified By : matth
+// Last Modified On : 04-03-2023
+// ***********************************************************************
+// <copyright file="Grid.cs" company="Design Engineering Lab">
+//     2014
+// </copyright>
+// <summary></summary>
+// ***********************************************************************
+using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 
 namespace TVGL
 {
+    /// <summary>
+    /// Class Grid.
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
     public abstract class Grid<T>
     {
+        /// <summary>
+        /// Gets the values.
+        /// </summary>
+        /// <value>The values.</value>
         public T[] Values { get; private set; }
         /// <summary>
         /// Gets the minimum x of the projected grid of 2D points.
@@ -38,8 +59,20 @@ namespace TVGL
         /// <value>The y count.</value>
         public int YCount { get; private set; }
 
+        /// <summary>
+        /// The maximum index
+        /// </summary>
         public int MaxIndex;
 
+        /// <summary>
+        /// Initializes the specified minimum x.
+        /// </summary>
+        /// <param name="minX">The minimum x.</param>
+        /// <param name="maxX">The maximum x.</param>
+        /// <param name="minY">The minimum y.</param>
+        /// <param name="maxY">The maximum y.</param>
+        /// <param name="pixelsPerRow">The pixels per row.</param>
+        /// <param name="pixelBorder">The pixel border.</param>
         public void Initialize(double minX, double maxX, double minY, double maxY, int pixelsPerRow, int pixelBorder = 2)
         {
             //MaxX = maxX;
@@ -69,6 +102,15 @@ namespace TVGL
             Values = new T[XCount * YCount];
         }
 
+        /// <summary>
+        /// Initializes the specified minimum x.
+        /// </summary>
+        /// <param name="minX">The minimum x.</param>
+        /// <param name="maxX">The maximum x.</param>
+        /// <param name="minY">The minimum y.</param>
+        /// <param name="maxY">The maximum y.</param>
+        /// <param name="pixelSideLength">Length of the pixel side.</param>
+        /// <param name="pixelBorder">The pixel border.</param>
         public void Initialize(double minX, double maxX, double minY, double maxY, double pixelSideLength, int pixelBorder = 2)
         {
             MinX = minX;
@@ -95,6 +137,10 @@ namespace TVGL
             Values = new T[XCount * YCount];
         }
 
+        /// <summary>
+        /// Indiceses this instance.
+        /// </summary>
+        /// <returns>IEnumerable&lt;System.ValueTuple&lt;System.Int32, System.Int32, System.Int32&gt;&gt;.</returns>
         public IEnumerable<(int index, int x, int y)> Indices()
         {
             for (var yIndex = 0; yIndex < YCount; yIndex++)
@@ -102,8 +148,28 @@ namespace TVGL
                     yield return (YCount * xIndex + yIndex, xIndex, yIndex);
         }
 
+        /// <summary>
+        /// Tries the get.
+        /// </summary>
+        /// <param name="xIndex">Index of the x.</param>
+        /// <param name="yIndex">Index of the y.</param>
+        /// <param name="value">The value.</param>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         public bool TryGet(int xIndex, int yIndex, out T value) => TryGet(GetIndex(xIndex, yIndex), out value);
+        /// <summary>
+        /// Tries the get.
+        /// </summary>
+        /// <param name="x">The x.</param>
+        /// <param name="y">The y.</param>
+        /// <param name="value">The value.</param>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         public bool TryGet(double x, double y, out T value) => TryGet(GetIndex(x, y), out value);
+        /// <summary>
+        /// Tries the get.
+        /// </summary>
+        /// <param name="index">The index.</param>
+        /// <param name="value">The value.</param>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         public bool TryGet(int index, out T value)
         {
             if (index < 0 || index > MaxIndex)
@@ -115,12 +181,31 @@ namespace TVGL
             return !EqualityComparer<T>.Default.Equals(value, default(T));
         }
 
+        /// <summary>
+        /// Sets the specified x index.
+        /// </summary>
+        /// <param name="xIndex">Index of the x.</param>
+        /// <param name="yIndex">Index of the y.</param>
+        /// <param name="newValue">The new value.</param>
         public void Set(int xIndex, int yIndex, T newValue) => Set(GetIndex(xIndex, yIndex), newValue);
+        /// <summary>
+        /// Sets the specified index.
+        /// </summary>
+        /// <param name="index">The index.</param>
+        /// <param name="newValue">The new value.</param>
         public void Set(int index, T newValue)
         {
             Values[index] = newValue;
         }
 
+        /// <summary>
+        /// Plots the line.
+        /// </summary>
+        /// <param name="x0">The x0.</param>
+        /// <param name="y0">The y0.</param>
+        /// <param name="x1">The x1.</param>
+        /// <param name="y1">The y1.</param>
+        /// <returns>IEnumerable&lt;System.ValueTuple&lt;System.Int32, System.Int32&gt;&gt;.</returns>
         public IEnumerable<(int, int)> PlotLine(double x0, double y0, double x1, double y1)
         {
             if (Math.Abs(y1 - y0) < Math.Abs(x1 - x0))
@@ -139,6 +224,14 @@ namespace TVGL
             }
         }
 
+        /// <summary>
+        /// Plots the steep line.
+        /// </summary>
+        /// <param name="x0">The x0.</param>
+        /// <param name="y0">The y0.</param>
+        /// <param name="x1">The x1.</param>
+        /// <param name="y1">The y1.</param>
+        /// <returns>IEnumerable&lt;System.ValueTuple&lt;System.Int32, System.Int32&gt;&gt;.</returns>
         private IEnumerable<(int, int)> PlotSteepLine(double x0, double y0, double x1, double y1)
         {
             var dx = x1 - x0;
@@ -168,6 +261,14 @@ namespace TVGL
             }
         }
 
+        /// <summary>
+        /// Plots the shallow line.
+        /// </summary>
+        /// <param name="x0">The x0.</param>
+        /// <param name="y0">The y0.</param>
+        /// <param name="x1">The x1.</param>
+        /// <param name="y1">The y1.</param>
+        /// <returns>IEnumerable&lt;System.ValueTuple&lt;System.Int32, System.Int32&gt;&gt;.</returns>
         private IEnumerable<(int, int)> PlotShallowLine(double x0, double y0, double x1, double y1)
         {
             var dx = x1 - x0;
@@ -198,6 +299,11 @@ namespace TVGL
             }
         }
 
+        /// <summary>
+        /// Gets the xy indices from pixel indices.
+        /// </summary>
+        /// <param name="index">The index.</param>
+        /// <returns>System.ValueTuple&lt;System.Int32, System.Int32&gt;.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public (int, int) GetXYIndicesFromPixelIndices(int index)
         {
@@ -207,21 +313,53 @@ namespace TVGL
             return(x, y);
         }
 
+        /// <summary>
+        /// Gets the index.
+        /// </summary>
+        /// <param name="x">The x.</param>
+        /// <param name="y">The y.</param>
+        /// <returns>System.Int32.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int GetIndex(double x, double y) => YCount * GetXIndex(x) + GetYIndex(y);
 
+        /// <summary>
+        /// Gets the index.
+        /// </summary>
+        /// <param name="xIndex">Index of the x.</param>
+        /// <param name="yIndex">Index of the y.</param>
+        /// <returns>System.Int32.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int GetIndex(int xIndex, int yIndex) => YCount * xIndex + yIndex;
 
+        /// <summary>
+        /// Gets the index of the x.
+        /// </summary>
+        /// <param name="x">The x.</param>
+        /// <returns>System.Int32.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int GetXIndex(double x) => (int)((x - MinX) * inversePixelSideLength);
 
+        /// <summary>
+        /// Gets the index of the y.
+        /// </summary>
+        /// <param name="y">The y.</param>
+        /// <returns>System.Int32.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int GetYIndex(double y) => (int)((y - MinY) * inversePixelSideLength);
 
+        /// <summary>
+        /// Gets the snapped x.
+        /// </summary>
+        /// <param name="x">The x.</param>
+        /// <returns>System.Double.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public double GetSnappedX(int x) => x * PixelSideLength + MinX;
 
+        /// <summary>
+        /// Gets the snapped y.
+        /// </summary>
+        /// <param name="y">The y.</param>
+        /// <returns>System.Double.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public double GetSnappedY(int y) => y * PixelSideLength + MinY;
     }

@@ -1,7 +1,16 @@
-﻿// Copyright 2015-2020 Design Engineering Lab
-// This file is a part of TVGL, Tessellation and Voxelization Geometry Library
-// https://github.com/DesignEngrLab/TVGL
-// It is licensed under MIT License (see LICENSE.txt for details)
+﻿// ***********************************************************************
+// Assembly         : TessellationAndVoxelizationGeometryLibrary
+// Author           : matth
+// Created          : 04-03-2023
+//
+// Last Modified By : matth
+// Last Modified On : 04-03-2023
+// ***********************************************************************
+// <copyright file="SHELLFileData.cs" company="Design Engineering Lab">
+//     2014
+// </copyright>
+// <summary></summary>
+// ***********************************************************************
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -10,10 +19,18 @@ using System.Linq;
 
 namespace TVGL
 {
+    /// <summary>
+    /// Class ShellFileData.
+    /// Implements the <see cref="TVGL.IO" />
+    /// </summary>
+    /// <seealso cref="TVGL.IO" />
     internal class ShellFileData : IO
     {
         #region Constructor
 
+        /// <summary>
+        /// Prevents a default instance of the <see cref="ShellFileData"/> class from being created.
+        /// </summary>
         private ShellFileData()
         {
             Vertices = new List<Vector3>();
@@ -23,21 +40,66 @@ namespace TVGL
         #endregion
 
         #region Properties and Fields
+        /// <summary>
+        /// The in object
+        /// </summary>
         private static bool inObject;
+        /// <summary>
+        /// The startof vertices
+        /// </summary>
         private static bool startofVertices;
+        /// <summary>
+        /// The endof vertices
+        /// </summary>
         private static bool endofVertices;
+        /// <summary>
+        /// The startof facets
+        /// </summary>
         private static bool startofFacets;
+        /// <summary>
+        /// The endof facets
+        /// </summary>
         private static bool endofFacets;
+        /// <summary>
+        /// Gets or sets the colors.
+        /// </summary>
+        /// <value>The colors.</value>
         private List<Color> Colors { get; set; }
+        /// <summary>
+        /// Gets the vertices.
+        /// </summary>
+        /// <value>The vertices.</value>
         private List<Vector3> Vertices { get; }
+        /// <summary>
+        /// Gets the face to vertex indices.
+        /// </summary>
+        /// <value>The face to vertex indices.</value>
         private List<int[]> FaceToVertexIndices { get; }
+        /// <summary>
+        /// Gets or sets the material.
+        /// </summary>
+        /// <value>The material.</value>
         private ShellMaterial Material { get; set; }
 
+        /// <summary>
+        /// Struct ShellMaterial
+        /// </summary>
         private struct ShellMaterial
         {
+            /// <summary>
+            /// The material name
+            /// </summary>
             internal readonly string materialName;
+            /// <summary>
+            /// The material color
+            /// </summary>
             internal Color materialColor;
 
+            /// <summary>
+            /// Initializes a new instance of the <see cref="ShellMaterial"/> struct.
+            /// </summary>
+            /// <param name="name">The name.</param>
+            /// <param name="color">The color.</param>
             internal ShellMaterial(string name, Color color)
             {
                 materialName = name;
@@ -49,6 +111,12 @@ namespace TVGL
 
         #region Open Solids
 
+        /// <summary>
+        /// Opens the solids.
+        /// </summary>
+        /// <param name="s">The s.</param>
+        /// <param name="filename">The filename.</param>
+        /// <returns>TessellatedSolid[].</returns>
         internal static TessellatedSolid[] OpenSolids(Stream s, string filename)
         {
             var now = DateTime.Now;
@@ -124,6 +192,11 @@ namespace TVGL
             }
         }
 
+        /// <summary>
+        /// Reads the faces.
+        /// </summary>
+        /// <param name="line">The line.</param>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         private bool ReadFaces(string line)
         {
             if (!TryParseDoubleArray(line, out var numbers)) return false;
@@ -134,6 +207,10 @@ namespace TVGL
             return true;
         }
 
+        /// <summary>
+        /// Reads the material.
+        /// </summary>
+        /// <param name="line">The line.</param>
         private void ReadMaterial(string line)
         {
             ParseLine(line, out _, out var values);
@@ -146,6 +223,11 @@ namespace TVGL
             Material = new ShellMaterial(shellName, currentColor);
         }
 
+        /// <summary>
+        /// Reads the vertices.
+        /// </summary>
+        /// <param name="line">The line.</param>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         private bool ReadVertices(string line)
         {
             if (TryParseDoubleArray(line, out var point))
@@ -158,6 +240,13 @@ namespace TVGL
 
         #region Save Solids
 
+        /// <summary>
+        /// Saves the solids.
+        /// </summary>
+        /// <param name="stream">The stream.</param>
+        /// <param name="solids">The solids.</param>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
+        /// <exception cref="System.NotImplementedException"></exception>
         private static bool SaveSolids(Stream stream, IList<TessellatedSolid> solids)
         {
             throw new NotImplementedException();

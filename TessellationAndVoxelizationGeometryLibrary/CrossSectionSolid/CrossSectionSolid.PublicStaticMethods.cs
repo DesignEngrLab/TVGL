@@ -1,13 +1,27 @@
-﻿// Copyright 2015-2020 Design Engineering Lab
-// This file is a part of TVGL, Tessellation and Voxelization Geometry Library
-// https://github.com/DesignEngrLab/TVGL
-// It is licensed under MIT License (see LICENSE.txt for details)
+﻿// ***********************************************************************
+// Assembly         : TessellationAndVoxelizationGeometryLibrary
+// Author           : matth
+// Created          : 04-03-2023
+//
+// Last Modified By : matth
+// Last Modified On : 04-03-2023
+// ***********************************************************************
+// <copyright file="CrossSectionSolid.PublicStaticMethods.cs" company="Design Engineering Lab">
+//     2014
+// </copyright>
+// <summary></summary>
+// ***********************************************************************
 using System;
 using System.Collections.Generic;
 using System.Linq;
 
 namespace TVGL
 {
+    /// <summary>
+    /// Class CrossSectionSolid.
+    /// Implements the <see cref="TVGL.Solid" />
+    /// </summary>
+    /// <seealso cref="TVGL.Solid" />
     public partial class CrossSectionSolid : Solid
     {
 
@@ -111,6 +125,10 @@ namespace TVGL
         }
 
 
+        /// <summary>
+        /// Gets the cross sections as3 d loops.
+        /// </summary>
+        /// <returns>Vector3[][][].</returns>
         public Vector3[][][] GetCrossSectionsAs3DLoops()
         {
             var result = new Vector3[Layer2D.Count][][];
@@ -164,6 +182,11 @@ namespace TVGL
             return result;
         }
 
+        /// <summary>
+        /// Determines whether [contains duplicate points] [the specified layer].
+        /// </summary>
+        /// <param name="layer">The layer.</param>
+        /// <returns><c>true</c> if [contains duplicate points] [the specified layer]; otherwise, <c>false</c>.</returns>
         private static bool ContainsDuplicatePoints(IList<Polygon> layer)
         {
             var allPoints = new HashSet<Vector2>();
@@ -183,6 +206,9 @@ namespace TVGL
             return false;
         }
 
+        /// <summary>
+        /// Sets the layer2 d area.
+        /// </summary>
         public void SetLayer2DArea()
         {
             Layer2DArea = new Dictionary<int, double>();
@@ -192,6 +218,10 @@ namespace TVGL
             }
         }
 
+        /// <summary>
+        /// Reverses the specified new step distances.
+        /// </summary>
+        /// <param name="newStepDistances">The new step distances.</param>
         public void Reverse(Dictionary<int, double> newStepDistances)
         {
             var direction = Direction * -1;

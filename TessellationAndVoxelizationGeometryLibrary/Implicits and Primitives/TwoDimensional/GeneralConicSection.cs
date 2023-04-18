@@ -1,4 +1,17 @@
-﻿using System;
+﻿// ***********************************************************************
+// Assembly         : TessellationAndVoxelizationGeometryLibrary
+// Author           : matth
+// Created          : 04-03-2023
+//
+// Last Modified By : matth
+// Last Modified On : 04-03-2023
+// ***********************************************************************
+// <copyright file="GeneralConicSection.cs" company="Design Engineering Lab">
+//     2014
+// </copyright>
+// <summary></summary>
+// ***********************************************************************
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using MIConvexHull;
@@ -7,29 +20,81 @@ using StarMathLib;
 
 namespace TVGL
 {
+    /// <summary>
+    /// Enum PrimitiveCurveType
+    /// </summary>
     public enum PrimitiveCurveType
     {
+        /// <summary>
+        /// The straight line
+        /// </summary>
         StraightLine,
+        /// <summary>
+        /// The circle
+        /// </summary>
         Circle,
+        /// <summary>
+        /// The parabola
+        /// </summary>
         Parabola,
+        /// <summary>
+        /// The ellipse
+        /// </summary>
         Ellipse,
+        /// <summary>
+        /// The hyperbola
+        /// </summary>
         Hyperbola
     }
     /// <summary>
-    ///     Public circle structure, given a center point and radius
+    /// Public circle structure, given a center point and radius
     /// </summary>
     public struct GeneralConicSection : ICurve
     {
+        /// <summary>
+        /// a
+        /// </summary>
         public double A;
+        /// <summary>
+        /// The b
+        /// </summary>
         public double B;
+        /// <summary>
+        /// The c
+        /// </summary>
         public double C;
+        /// <summary>
+        /// The d
+        /// </summary>
         public double D;
+        /// <summary>
+        /// The e
+        /// </summary>
         public double E;
+        /// <summary>
+        /// The constant is zero
+        /// </summary>
         public bool ConstantIsZero;
+        /// <summary>
+        /// The conic tolerance
+        /// </summary>
         private const double conicTolerance = 1e-4;
 
+        /// <summary>
+        /// Gets the type of the curve.
+        /// </summary>
+        /// <value>The type of the curve.</value>
         public PrimitiveCurveType CurveType { get; private set; }
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="GeneralConicSection"/> struct.
+        /// </summary>
+        /// <param name="a">a.</param>
+        /// <param name="b">The b.</param>
+        /// <param name="c">The c.</param>
+        /// <param name="d">The d.</param>
+        /// <param name="e">The e.</param>
+        /// <param name="constantIsZero">if set to <c>true</c> [constant is zero].</param>
         public GeneralConicSection(double a, double b, double c, double d, double e, bool constantIsZero)
         {
             var max = (new[] { Math.Abs(a), Math.Abs(b), Math.Abs(c), Math.Abs(d), Math.Abs(e) }).Max();
@@ -67,6 +132,11 @@ namespace TVGL
             #endregion
         }
 
+        /// <summary>
+        /// Calculates at point.
+        /// </summary>
+        /// <param name="point">The point.</param>
+        /// <returns>System.Double.</returns>
         public double CalculateAtPoint(Vector2 point)
         {
             double x = point.X;
@@ -75,11 +145,28 @@ namespace TVGL
         }
 
 
+        /// <summary>
+        /// Returns the squared error of new point. This should be the square of the
+        /// actual distance to the curve. Squared is canonical since 1) usually fits
+        /// would be minimum least squares, 2) saves from doing square root operation
+        /// which is an undue computational expense
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="point">The point.</param>
+        /// <returns>System.Double.</returns>
         public double SquaredErrorOfNewPoint<T>(T point) where T : IVertex2D
         {
             return DistancePointToConic(this, point, out _);
         }
 
+        /// <summary>
+        /// Defines the best fit of the curve for the given points.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="points">The points.</param>
+        /// <param name="curve">The curve.</param>
+        /// <param name="error">The error.</param>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         public static bool CreateFromPoints<T>(IEnumerable<T> points, out ICurve curve, out double error) where T : IVertex2D
         {
             // this is maybe not sufficient. It assumes the error is the amount the function is off as opposed to the
@@ -144,6 +231,11 @@ namespace TVGL
             return false;
         }
 
+        /// <summary>
+        /// Defines the circle from terms.
+        /// </summary>
+        /// <param name="circle1">The circle1.</param>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         internal bool DefineCircleFromTerms(out Circle circle1)
         {
             if (A.IsNegligible())
@@ -168,6 +260,7 @@ namespace TVGL
         /// <summary>
         /// Find the shortest distance from a point to a conic.
         /// </summary>
+        /// <typeparam name="T"></typeparam>
         /// <param name="conic">The conic.</param>
         /// <param name="point">The point.</param>
         /// <param name="pointOnCurve">The point on curve closed to the given point.</param>

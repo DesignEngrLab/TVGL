@@ -4,9 +4,9 @@
 // Created          : 01-04-2021
 //
 // Last Modified By : campmatt
-// Last Modified On : 01-04-2021
+// Last Modified On : 04-03-2023
 // ***********************************************************************
-// <copyright file="PrimitiveSurfaceBorder.cs" company="Design Engineering Lab">
+// <copyright file="PrimitiveBorder.cs" company="Design Engineering Lab">
 //     2014
 // </copyright>
 // <summary></summary>
@@ -25,7 +25,7 @@ namespace TVGL
     public class PrimitiveBorder : EdgePath
     {
         /// <summary>
-        /// Default instance of the <see cref="PrimitiveBorder"/>.
+        /// Default instance of the <see cref="PrimitiveBorder" />.
         /// </summary>
         public PrimitiveBorder() : base()
         {
@@ -56,7 +56,7 @@ namespace TVGL
         /// <summary>
         /// Returns all primitives that share an edge segment with this border
         /// </summary>
-        /// <returns></returns>
+        /// <returns>IEnumerable&lt;PrimitiveSurface&gt;.</returns>
         public IEnumerable<PrimitiveSurface> AdjacentPrimitives()
         {
             foreach (var segment in Segments)
@@ -68,7 +68,7 @@ namespace TVGL
         /// <summary>
         /// Returns all primitives that share a vertex with this border
         /// </summary>
-        /// <returns></returns>
+        /// <returns>IEnumerable&lt;PrimitiveSurface&gt;.</returns>
         public IEnumerable<PrimitiveSurface> AdjacentPrimitivesByVertex()
         {
             var adjacents = new HashSet<PrimitiveSurface>();
@@ -125,6 +125,7 @@ namespace TVGL
         /// <summary>
         /// Gets whether the [edge path is circular].
         /// </summary>
+        /// <value><c>true</c> if this instance is circular; otherwise, <c>false</c>.</value>
         [JsonIgnore]
         public bool IsCircular
         {
@@ -150,6 +151,14 @@ namespace TVGL
             }
         }
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="PrimitiveBorder"/> class.
+        /// </summary>
+        /// <param name="curve">The curve.</param>
+        /// <param name="surface">The surface.</param>
+        /// <param name="path">The path.</param>
+        /// <param name="curveError">The curve error.</param>
+        /// <param name="surfError">The surf error.</param>
         public PrimitiveBorder(ICurve curve, PrimitiveSurface surface, EdgePath path, double curveError,
             double surfError) : this(curve, surface, path.EdgeList, path.DirectionList, curveError, surfError)
         {
@@ -161,6 +170,15 @@ namespace TVGL
             PlaneError = surfError;
         }
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="PrimitiveBorder"/> class.
+        /// </summary>
+        /// <param name="curve">The curve.</param>
+        /// <param name="surface">The surface.</param>
+        /// <param name="edges">The edges.</param>
+        /// <param name="directions">The directions.</param>
+        /// <param name="curveError">The curve error.</param>
+        /// <param name="surfError">The surf error.</param>
         public PrimitiveBorder(ICurve curve, PrimitiveSurface surface, List<Edge> edges, List<bool> directions,
             double curveError, double surfError)
         {
@@ -172,6 +190,10 @@ namespace TVGL
             PlaneError = surfError;
         }
 
+        /// <summary>
+        /// Gets as polygon.
+        /// </summary>
+        /// <value>As polygon.</value>
         [JsonIgnore]
         public Polygon AsPolygon
         {
@@ -182,8 +204,20 @@ namespace TVGL
                 return _polygon;
             }
         }
+        /// <summary>
+        /// The polygon
+        /// </summary>
         private Polygon _polygon;
 
+        /// <summary>
+        /// Copies the specified copied surface.
+        /// </summary>
+        /// <param name="copiedSurface">The copied surface.</param>
+        /// <param name="reverse">if set to <c>true</c> [reverse].</param>
+        /// <param name="copiedTessellatedSolid">The copied tessellated solid.</param>
+        /// <param name="startIndex">The start index.</param>
+        /// <param name="endIndex">The end index.</param>
+        /// <returns>PrimitiveBorder.</returns>
         public PrimitiveBorder Copy(PrimitiveSurface copiedSurface, bool reverse = false, TessellatedSolid copiedTessellatedSolid = null,
             int startIndex = 0, int endIndex = -1)
         {
@@ -198,6 +232,12 @@ namespace TVGL
             return copy;
         }
 
+        /// <summary>
+        /// Adds the specified segment.
+        /// </summary>
+        /// <param name="segment">The segment.</param>
+        /// <param name="addToEnd">if set to <c>true</c> [add to end].</param>
+        /// <param name="dir">if set to <c>true</c> [dir].</param>
         public void Add(BorderSegment segment, bool addToEnd, bool dir)
         {
             if (addToEnd)
@@ -206,6 +246,11 @@ namespace TVGL
                 AddBegin(segment, dir);
         }
 
+        /// <summary>
+        /// Adds the end.
+        /// </summary>
+        /// <param name="segment">The segment.</param>
+        /// <param name="dir">if set to <c>true</c> [dir].</param>
         private void AddEnd(BorderSegment segment, bool dir)
         {
             Segments.Add(segment);
@@ -231,6 +276,11 @@ namespace TVGL
 
         }
 
+        /// <summary>
+        /// Adds the begin.
+        /// </summary>
+        /// <param name="segment">The segment.</param>
+        /// <param name="dir">if set to <c>true</c> [dir].</param>
         private void AddBegin(BorderSegment segment, bool dir)
         {
             Segments.Insert(0, segment);
@@ -255,6 +305,10 @@ namespace TVGL
             }
         }
 
+        /// <summary>
+        /// Updates the is closed.
+        /// </summary>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         public new bool UpdateIsClosed()
         {
             if (Segments == null)
@@ -269,6 +323,9 @@ namespace TVGL
             return IsClosed;
         }
 
+        /// <summary>
+        /// Clears this instance.
+        /// </summary>
         public new void Clear()
         {
             Segments.Clear();
@@ -277,6 +334,11 @@ namespace TVGL
             DirectionList.Clear();
         }
 
+        /// <summary>
+        /// Determines whether this instance contains the object.
+        /// </summary>
+        /// <param name="path">The path.</param>
+        /// <returns><c>true</c> if [contains] [the specified path]; otherwise, <c>false</c>.</returns>
         internal bool Contains(EdgePath path)
         {
             return Segments.Contains(path);

@@ -1,7 +1,16 @@
-// Copyright 2015-2020 Design Engineering Lab
-// This file is a part of TVGL, Tessellation and Voxelization Geometry Library
-// https://github.com/DesignEngrLab/TVGL
-// It is licensed under MIT License (see LICENSE.txt for details)
+// ***********************************************************************
+// Assembly         : TessellationAndVoxelizationGeometryLibrary
+// Author           : matth
+// Created          : 04-03-2023
+//
+// Last Modified By : matth
+// Last Modified On : 04-03-2023
+// ***********************************************************************
+// <copyright file="MarchingCubesCrossSectionSolid.cs" company="Design Engineering Lab">
+//     2014
+// </copyright>
+// <summary></summary>
+// ***********************************************************************
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,24 +20,71 @@ using System.Threading.Tasks;
 
 namespace TVGL
 {
+    /// <summary>
+    /// Class MarchingCubesCrossSectionSolid.
+    /// Implements the <see cref="TVGL.MarchingCubes{TVGL.CrossSectionSolid, System.Double}" />
+    /// </summary>
+    /// <seealso cref="TVGL.MarchingCubes{TVGL.CrossSectionSolid, System.Double}" />
     internal class MarchingCubesCrossSectionSolid : MarchingCubes<CrossSectionSolid, double>
     {
+        /// <summary>
+        /// The number triangles on side factor
+        /// </summary>
         internal const double NumTrianglesOnSideFactor = 0.5;
+        /// <summary>
+        /// The tolerance for snapping to layers
+        /// </summary>
         internal const double ToleranceForSnappingToLayers = 0.517;
+        /// <summary>
+        /// The grid layers
+        /// </summary>
         private readonly double[][,] gridLayers;
+        /// <summary>
+        /// The on layers
+        /// </summary>
         private readonly bool onLayers;
+        /// <summary>
+        /// The delta layer
+        /// </summary>
         private readonly int deltaLayer;
+        /// <summary>
+        /// The discretization
+        /// </summary>
         private readonly double discretization;
+        /// <summary>
+        /// The start
+        /// </summary>
         private readonly int start;
+        /// <summary>
+        /// The number grid layers to store
+        /// </summary>
         private readonly int numGridLayersToStore;
+        /// <summary>
+        /// The start distance
+        /// </summary>
         private readonly double startDistance;
+        /// <summary>
+        /// The last
+        /// </summary>
         private readonly int last;
+        /// <summary>
+        /// The number layers
+        /// </summary>
         private readonly int numLayers;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="MarchingCubesCrossSectionSolid"/> class.
+        /// </summary>
+        /// <param name="solid">The solid.</param>
         internal MarchingCubesCrossSectionSolid(CrossSectionSolid solid)
             : this(solid, (solid.StepDistances[solid.NumLayers - 1] - solid.StepDistances[0]) / (solid.NumLayers - 1))
         { }
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="MarchingCubesCrossSectionSolid"/> class.
+        /// </summary>
+        /// <param name="solid">The solid.</param>
+        /// <param name="discretization">The discretization.</param>
         internal MarchingCubesCrossSectionSolid(CrossSectionSolid solid, double discretization)
             : base(solid, discretization)
         {
@@ -75,6 +131,10 @@ namespace TVGL
             else return GenerateBetweenLayers();
         }
 
+        /// <summary>
+        /// Generates the on layers.
+        /// </summary>
+        /// <returns>TessellatedSolid.</returns>
         private TessellatedSolid GenerateOnLayers()
         {
             //for (int k = 1; k < numGridLayersToStore; k++)
@@ -97,6 +157,11 @@ namespace TVGL
             return new TessellatedSolid(faces, false, false);
         }
 
+        /// <summary>
+        /// Generates the between layers.
+        /// </summary>
+        /// <returns>TessellatedSolid.</returns>
+        /// <exception cref="System.NotImplementedException"></exception>
         private TessellatedSolid GenerateBetweenLayers()
         {
             throw new NotImplementedException();
@@ -122,6 +187,11 @@ namespace TVGL
             return new TessellatedSolid(faces,false,false);
         }
 
+        /// <summary>
+        /// Creates the distance grid brute force.
+        /// </summary>
+        /// <param name="layer">The layer.</param>
+        /// <returns>System.Double[].</returns>
         private double[,] CreateDistanceGridBruteForce(List<Polygon> layer)
         {
             var grid = new double[numGridX, numGridY];
@@ -179,6 +249,11 @@ namespace TVGL
             //Console.WriteLine("");
             return grid;
         }
+        /// <summary>
+        /// Creates the distance grid.
+        /// </summary>
+        /// <param name="layer">The layer.</param>
+        /// <returns>System.Double[].</returns>
         private double[,] CreateDistanceGrid(IList<Polygon> layer)
         {
             var allIntersections = PolygonOperations.AllPolygonIntersectionPointsAlongHorizontalLines(layer, _yMin, numGridY, discretization, out var firstIntersectingIndex);
@@ -235,6 +310,17 @@ namespace TVGL
             return grid;
         }
 
+        /// <summary>
+        /// Expands the horizontally.
+        /// </summary>
+        /// <param name="lastPoint">The last point.</param>
+        /// <param name="fromPoint">From point.</param>
+        /// <param name="toPoint">To point.</param>
+        /// <param name="grid">The grid.</param>
+        /// <param name="iMin">The i minimum.</param>
+        /// <param name="iMax">The i maximum.</param>
+        /// <param name="jMin">The j minimum.</param>
+        /// <param name="jMax">The j maximum.</param>
         private void ExpandHorizontally(Vector2 lastPoint, Vector2 fromPoint, Vector2 toPoint, double[,] grid, int iMin, int iMax, int jMin, int jMax)
         {
             var segment = toPoint - fromPoint;
@@ -304,6 +390,17 @@ namespace TVGL
             }
         }
 
+        /// <summary>
+        /// Expands the vertically.
+        /// </summary>
+        /// <param name="lastPoint">The last point.</param>
+        /// <param name="fromPoint">From point.</param>
+        /// <param name="toPoint">To point.</param>
+        /// <param name="grid">The grid.</param>
+        /// <param name="iMin">The i minimum.</param>
+        /// <param name="iMax">The i maximum.</param>
+        /// <param name="jMin">The j minimum.</param>
+        /// <param name="jMax">The j maximum.</param>
         private void ExpandVertically(Vector2 lastPoint, Vector2 fromPoint, Vector2 toPoint, double[,] grid, int iMin, int iMax, int jMin, int jMax)
         {
             var segment = toPoint - fromPoint;
@@ -367,6 +464,17 @@ namespace TVGL
         }
 
 
+        /// <summary>
+        /// Expands the last corner horizontally.
+        /// </summary>
+        /// <param name="fromPoint">From point.</param>
+        /// <param name="lastSegment">The last segment.</param>
+        /// <param name="grid">The grid.</param>
+        /// <param name="iMin">The i minimum.</param>
+        /// <param name="iMax">The i maximum.</param>
+        /// <param name="jMin">The j minimum.</param>
+        /// <param name="jMax">The j maximum.</param>
+        /// <param name="convexSign">The convex sign.</param>
         private void ExpandLastCornerHorizontally(Vector2 fromPoint, Vector2 lastSegment, double[,] grid, int iMin, int iMax, int jMin, int jMax, int convexSign)
         {
             var magnitude = lastSegment.Length();
@@ -408,6 +516,17 @@ namespace TVGL
 
 
 
+        /// <summary>
+        /// Expands the last corner vertically.
+        /// </summary>
+        /// <param name="fromPoint">From point.</param>
+        /// <param name="lastSegment">The last segment.</param>
+        /// <param name="grid">The grid.</param>
+        /// <param name="iMin">The i minimum.</param>
+        /// <param name="iMax">The i maximum.</param>
+        /// <param name="jMin">The j minimum.</param>
+        /// <param name="jMax">The j maximum.</param>
+        /// <param name="convexSign">The convex sign.</param>
         private void ExpandLastCornerVertically(Vector2 fromPoint, Vector2 lastSegment, double[,] grid, int iMin, int iMax, int jMin, int jMax, int convexSign)
         {
             var magnitude = lastSegment.Length();
@@ -447,6 +566,13 @@ namespace TVGL
             } while (atLeastOneSuccessfulChange || numSteps <= Constants.MarchingCubesMissedFactor);
         }
 
+        /// <summary>
+        /// Gets the value from solid.
+        /// </summary>
+        /// <param name="x">The x.</param>
+        /// <param name="y">The y.</param>
+        /// <param name="z">The z.</param>
+        /// <returns>ValueT.</returns>
         protected override double GetValueFromSolid(int x, int y, int z)
         {
             if (onLayers)
@@ -454,11 +580,24 @@ namespace TVGL
             else return 0;
         }
 
+        /// <summary>
+        /// Determines whether the specified v is inside.
+        /// </summary>
+        /// <param name="v">The v.</param>
+        /// <returns><c>true</c> if the specified v is inside; otherwise, <c>false</c>.</returns>
         protected override bool IsInside(double v)
         {
             return v <= 0.0;
         }
 
+        /// <summary>
+        /// Gets the offset.
+        /// </summary>
+        /// <param name="from">From.</param>
+        /// <param name="to">To.</param>
+        /// <param name="direction">The direction.</param>
+        /// <param name="sign">The sign.</param>
+        /// <returns>System.Double.</returns>
         protected override double GetOffset(StoredValue<double> from, StoredValue<double> to,
             int direction, int sign)
         {

@@ -1,7 +1,16 @@
-﻿// Copyright 2015-2020 Design Engineering Lab
-// This file is a part of TVGL, Tessellation and Voxelization Geometry Library
-// https://github.com/DesignEngrLab/TVGL
-// It is licensed under MIT License (see LICENSE.txt for details)
+﻿// ***********************************************************************
+// Assembly         : TessellationAndVoxelizationGeometryLibrary
+// Author           : matth
+// Created          : 04-03-2023
+//
+// Last Modified By : matth
+// Last Modified On : 04-14-2023
+// ***********************************************************************
+// <copyright file="Silhouette.cs" company="Design Engineering Lab">
+//     2014
+// </copyright>
+// <summary></summary>
+// ***********************************************************************
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -16,7 +25,7 @@ namespace TVGL
     public static class Silhouette
     {
         /// <summary>
-        /// Creates the silhouette of the solid in the direction provided. 
+        /// Creates the silhouette of the solid in the direction provided.
         /// </summary>
         /// <param name="tessellatedSolid">The tessellated solid.</param>
         /// <param name="direction">The direction.</param>
@@ -254,7 +263,6 @@ namespace TVGL
         /// </summary>
         /// <param name="positivePolygons">The positive polygons.</param>
         /// <param name="hole">The hole.</param>
-        /// <param name="tolerance">The tolerance.</param>
         private static void AddHoleToLargerPostivePolygon(List<Polygon> positivePolygons, Polygon hole)
         {
             Polygon enclosingPolygon = null;

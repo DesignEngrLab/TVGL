@@ -1,4 +1,17 @@
-﻿/*******************************************************************************
+﻿// ***********************************************************************
+// Assembly         : TessellationAndVoxelizationGeometryLibrary
+// Author           : matth
+// Created          : 04-03-2023
+//
+// Last Modified By : matth
+// Last Modified On : 04-03-2023
+// ***********************************************************************
+// <copyright file="clipper.cs" company="Design Engineering Lab">
+//     2014
+// </copyright>
+// <summary></summary>
+// ***********************************************************************
+/*******************************************************************************
 *                                                                              *
 * Author    :  Angus Johnson                                                   *
 * Version   :  6.4.2                                                           *
@@ -67,46 +80,83 @@ namespace ClipperLib
   using Path = List<IntPoint>;
   using Paths = List<List<IntPoint>>;
 
-  internal struct DoublePoint
+    /// <summary>
+    /// Struct DoublePoint
+    /// </summary>
+    internal struct DoublePoint
   {
-    public double X;
-    public double Y;
+        /// <summary>
+        /// The x
+        /// </summary>
+        public double X;
+        /// <summary>
+        /// The y
+        /// </summary>
+        public double Y;
 
-    public DoublePoint(double x = 0, double y = 0)
+        /// <summary>
+        /// Initializes a new instance of the <see cref="DoublePoint"/> struct.
+        /// </summary>
+        /// <param name="x">The x.</param>
+        /// <param name="y">The y.</param>
+        public DoublePoint(double x = 0, double y = 0)
     {
       this.X = x; this.Y = y;
     }
-    public DoublePoint(DoublePoint dp)
+        /// <summary>
+        /// Initializes a new instance of the <see cref="DoublePoint"/> struct.
+        /// </summary>
+        /// <param name="dp">The dp.</param>
+        public DoublePoint(DoublePoint dp)
     {
       this.X = dp.X; this.Y = dp.Y;
     }
-    public DoublePoint(IntPoint ip)
+        /// <summary>
+        /// Initializes a new instance of the <see cref="DoublePoint"/> struct.
+        /// </summary>
+        /// <param name="ip">The ip.</param>
+        public DoublePoint(IntPoint ip)
     {
       this.X = ip.X; this.Y = ip.Y;
     }
   };
 
 
-  //------------------------------------------------------------------------------
-  // PolyTree & PolyNode classes
-  //------------------------------------------------------------------------------
+    //------------------------------------------------------------------------------
+    // PolyTree & PolyNode classes
+    //------------------------------------------------------------------------------
 
-  internal class PolyTree : PolyNode
+    /// <summary>
+    /// Class PolyTree.
+    /// Implements the <see cref="ClipperLib.PolyNode" />
+    /// </summary>
+    /// <seealso cref="ClipperLib.PolyNode" />
+    internal class PolyTree : PolyNode
   {
-      internal List<PolyNode> m_AllPolys = new List<PolyNode>();
+        /// <summary>
+        /// The m all polys
+        /// </summary>
+        internal List<PolyNode> m_AllPolys = new List<PolyNode>();
 
-      //The GC probably handles this cleanup more efficiently ...
-      //~PolyTree(){Clear();}
-        
-      public void Clear() 
+        //The GC probably handles this cleanup more efficiently ...
+        //~PolyTree(){Clear();}
+
+        /// <summary>
+        /// Clears this instance.
+        /// </summary>
+        public void Clear() 
       {
           for (int i = 0; i < m_AllPolys.Count; i++)
               m_AllPolys[i] = null;
           m_AllPolys.Clear(); 
           m_Childs.Clear(); 
       }
-        
-      public PolyNode GetFirst()
+
+        /// <summary>
+        /// Gets the first.
+        /// </summary>
+        /// <returns>PolyNode.</returns>
+        public PolyNode GetFirst()
       {
           if (m_Childs.Count > 0)
               return m_Childs[0];
@@ -114,7 +164,11 @@ namespace ClipperLib
               return null;
       }
 
-      public int Total
+        /// <summary>
+        /// Gets the total.
+        /// </summary>
+        /// <value>The total.</value>
+        public int Total
       {
           get 
           { 
@@ -126,17 +180,42 @@ namespace ClipperLib
       }
 
   }
-        
-  internal class PolyNode 
-  {
-      internal PolyNode m_Parent;
-      internal Path m_polygon = new Path();
-      internal int m_Index;
-      internal JoinType m_jointype;
-      internal EndType m_endtype;
-      internal List<PolyNode> m_Childs = new List<PolyNode>();
 
-      private bool IsHoleNode()
+    /// <summary>
+    /// Class PolyNode.
+    /// </summary>
+    internal class PolyNode 
+  {
+        /// <summary>
+        /// The m parent
+        /// </summary>
+        internal PolyNode m_Parent;
+        /// <summary>
+        /// The m polygon
+        /// </summary>
+        internal Path m_polygon = new Path();
+        /// <summary>
+        /// The m index
+        /// </summary>
+        internal int m_Index;
+        /// <summary>
+        /// The m jointype
+        /// </summary>
+        internal JoinType m_jointype;
+        /// <summary>
+        /// The m endtype
+        /// </summary>
+        internal EndType m_endtype;
+        /// <summary>
+        /// The m childs
+        /// </summary>
+        internal List<PolyNode> m_Childs = new List<PolyNode>();
+
+        /// <summary>
+        /// Determines whether [is hole node].
+        /// </summary>
+        /// <returns><c>true</c> if [is hole node]; otherwise, <c>false</c>.</returns>
+        private bool IsHoleNode()
       {
           bool result = true;
           PolyNode node = m_Parent;
@@ -148,17 +227,29 @@ namespace ClipperLib
           return result;
       }
 
-      public int ChildCount
+        /// <summary>
+        /// Gets the child count.
+        /// </summary>
+        /// <value>The child count.</value>
+        public int ChildCount
       {
           get { return m_Childs.Count; }
       }
 
-      public Path Contour
+        /// <summary>
+        /// Gets the contour.
+        /// </summary>
+        /// <value>The contour.</value>
+        public Path Contour
       {
           get { return m_polygon; }
       }
 
-      internal void AddChild(PolyNode Child)
+        /// <summary>
+        /// Adds the child.
+        /// </summary>
+        /// <param name="Child">The child.</param>
+        internal void AddChild(PolyNode Child)
       {
           int cnt = m_Childs.Count;
           m_Childs.Add(Child);
@@ -166,15 +257,23 @@ namespace ClipperLib
           Child.m_Index = cnt;
       }
 
-      public PolyNode GetNext()
+        /// <summary>
+        /// Gets the next.
+        /// </summary>
+        /// <returns>PolyNode.</returns>
+        public PolyNode GetNext()
       {
           if (m_Childs.Count > 0) 
               return m_Childs[0]; 
           else
               return GetNextSiblingUp();        
       }
-  
-      internal PolyNode GetNextSiblingUp()
+
+        /// <summary>
+        /// Gets the next sibling up.
+        /// </summary>
+        /// <returns>PolyNode.</returns>
+        internal PolyNode GetNextSiblingUp()
       {
           if (m_Parent == null)
               return null;
@@ -184,75 +283,134 @@ namespace ClipperLib
               return m_Parent.m_Childs[m_Index + 1];
       }
 
-      public List<PolyNode> Childs
+        /// <summary>
+        /// Gets the childs.
+        /// </summary>
+        /// <value>The childs.</value>
+        public List<PolyNode> Childs
       {
           get { return m_Childs; }
       }
 
-      public PolyNode Parent
+        /// <summary>
+        /// Gets the parent.
+        /// </summary>
+        /// <value>The parent.</value>
+        public PolyNode Parent
       {
           get { return m_Parent; }
       }
 
-      public bool IsHole
+        /// <summary>
+        /// Gets a value indicating whether this instance is hole.
+        /// </summary>
+        /// <value><c>true</c> if this instance is hole; otherwise, <c>false</c>.</value>
+        public bool IsHole
       {
           get { return IsHoleNode(); }
       }
 
-      public bool IsOpen { get; set; }
+        /// <summary>
+        /// Gets or sets a value indicating whether this instance is open.
+        /// </summary>
+        /// <value><c>true</c> if this instance is open; otherwise, <c>false</c>.</value>
+        public bool IsOpen { get; set; }
   }
 
 
-  //------------------------------------------------------------------------------
-  // Int128 struct (enables safe math on signed 64bit integers)
-  // eg Int128 val1((Int64)9223372036854775807); //ie 2^63 -1
-  //    Int128 val2((Int64)9223372036854775807);
-  //    Int128 val3 = val1 * val2;
-  //    val3.ToString => "85070591730234615847396907784232501249" (8.5e+37)
-  //------------------------------------------------------------------------------
+    //------------------------------------------------------------------------------
+    // Int128 struct (enables safe math on signed 64bit integers)
+    // eg Int128 val1((Int64)9223372036854775807); //ie 2^63 -1
+    //    Int128 val2((Int64)9223372036854775807);
+    //    Int128 val3 = val1 * val2;
+    //    val3.ToString => "85070591730234615847396907784232501249" (8.5e+37)
+    //------------------------------------------------------------------------------
 
-  internal struct Int128
+    /// <summary>
+    /// Struct Int128
+    /// </summary>
+    internal struct Int128
   {
-    private Int64 hi;
-    private UInt64 lo;
+        /// <summary>
+        /// The hi
+        /// </summary>
+        private Int64 hi;
+        /// <summary>
+        /// The lo
+        /// </summary>
+        private UInt64 lo;
 
-    public Int128(Int64 _lo)
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Int128"/> struct.
+        /// </summary>
+        /// <param name="_lo">The lo.</param>
+        public Int128(Int64 _lo)
     {
       lo = (UInt64)_lo;
       if (_lo < 0) hi = -1;
       else hi = 0;
     }
 
-    public Int128(Int64 _hi, UInt64 _lo)
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Int128"/> struct.
+        /// </summary>
+        /// <param name="_hi">The hi.</param>
+        /// <param name="_lo">The lo.</param>
+        public Int128(Int64 _hi, UInt64 _lo)
     {
       lo = _lo;
       hi = _hi;
     }
 
-    public Int128(Int128 val)
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Int128"/> struct.
+        /// </summary>
+        /// <param name="val">The value.</param>
+        public Int128(Int128 val)
     {
       hi = val.hi;
       lo = val.lo;
     }
 
-    public bool IsNegative()
+        /// <summary>
+        /// Determines whether this instance is negative.
+        /// </summary>
+        /// <returns><c>true</c> if this instance is negative; otherwise, <c>false</c>.</returns>
+        public bool IsNegative()
     {
       return hi < 0;
     }
 
-    public static bool operator ==(Int128 val1, Int128 val2)
+        /// <summary>
+        /// Implements the == operator.
+        /// </summary>
+        /// <param name="val1">The val1.</param>
+        /// <param name="val2">The val2.</param>
+        /// <returns>The result of the operator.</returns>
+        public static bool operator ==(Int128 val1, Int128 val2)
     {
       if ((object)val1 == (object)val2) return true;
       else if ((object)val1 == null || (object)val2 == null) return false;
       return (val1.hi == val2.hi && val1.lo == val2.lo);
     }
 
-    public static bool operator !=(Int128 val1, Int128 val2)
+        /// <summary>
+        /// Implements the != operator.
+        /// </summary>
+        /// <param name="val1">The val1.</param>
+        /// <param name="val2">The val2.</param>
+        /// <returns>The result of the operator.</returns>
+        public static bool operator !=(Int128 val1, Int128 val2)
     {
       return !(val1 == val2);
     }
 
-    public override bool Equals(System.Object obj)
+        /// <summary>
+        /// Determines whether the specified <see cref="System.Object" /> is equal to this instance.
+        /// </summary>
+        /// <param name="obj">The object to compare with the current instance.</param>
+        /// <returns><c>true</c> if the specified <see cref="System.Object" /> is equal to this instance; otherwise, <c>false</c>.</returns>
+        public override bool Equals(System.Object obj)
     {
       if (obj == null || !(obj is Int128))
         return false;
@@ -260,12 +418,22 @@ namespace ClipperLib
       return (i128.hi == hi && i128.lo == lo);
     }
 
-    public override int GetHashCode()
+        /// <summary>
+        /// Returns a hash code for this instance.
+        /// </summary>
+        /// <returns>A hash code for this instance, suitable for use in hashing algorithms and data structures like a hash table.</returns>
+        public override int GetHashCode()
     {
       return hi.GetHashCode() ^ lo.GetHashCode();
     }
 
-    public static bool operator >(Int128 val1, Int128 val2)
+        /// <summary>
+        /// Implements the &gt; operator.
+        /// </summary>
+        /// <param name="val1">The val1.</param>
+        /// <param name="val2">The val2.</param>
+        /// <returns>The result of the operator.</returns>
+        public static bool operator >(Int128 val1, Int128 val2)
     {
       if (val1.hi != val2.hi)
         return val1.hi > val2.hi;
@@ -273,7 +441,13 @@ namespace ClipperLib
         return val1.lo > val2.lo;
     }
 
-    public static bool operator <(Int128 val1, Int128 val2)
+        /// <summary>
+        /// Implements the &lt; operator.
+        /// </summary>
+        /// <param name="val1">The val1.</param>
+        /// <param name="val2">The val2.</param>
+        /// <returns>The result of the operator.</returns>
+        public static bool operator <(Int128 val1, Int128 val2)
     {
       if (val1.hi != val2.hi)
         return val1.hi < val2.hi;
@@ -281,7 +455,13 @@ namespace ClipperLib
         return val1.lo < val2.lo;
     }
 
-    public static Int128 operator +(Int128 lhs, Int128 rhs)
+        /// <summary>
+        /// Implements the + operator.
+        /// </summary>
+        /// <param name="lhs">The LHS.</param>
+        /// <param name="rhs">The RHS.</param>
+        /// <returns>The result of the operator.</returns>
+        public static Int128 operator +(Int128 lhs, Int128 rhs)
     {
       lhs.hi += rhs.hi;
       lhs.lo += rhs.lo;
@@ -289,12 +469,23 @@ namespace ClipperLib
       return lhs;
     }
 
-    public static Int128 operator -(Int128 lhs, Int128 rhs)
+        /// <summary>
+        /// Implements the - operator.
+        /// </summary>
+        /// <param name="lhs">The LHS.</param>
+        /// <param name="rhs">The RHS.</param>
+        /// <returns>The result of the operator.</returns>
+        public static Int128 operator -(Int128 lhs, Int128 rhs)
     {
       return lhs + -rhs;
     }
 
-    public static Int128 operator -(Int128 val)
+        /// <summary>
+        /// Implements the - operator.
+        /// </summary>
+        /// <param name="val">The value.</param>
+        /// <returns>The result of the operator.</returns>
+        public static Int128 operator -(Int128 val)
     {
       if (val.lo == 0)
         return new Int128(-val.hi, 0);
@@ -302,7 +493,12 @@ namespace ClipperLib
         return new Int128(~val.hi, ~val.lo + 1);
     }
 
-    public static explicit operator double(Int128 val)
+        /// <summary>
+        /// Performs an explicit conversion from <see cref="Int128"/> to <see cref="System.Double"/>.
+        /// </summary>
+        /// <param name="val">The value.</param>
+        /// <returns>The result of the conversion.</returns>
+        public static explicit operator double(Int128 val)
     {
       const double shift64 = 18446744073709551616.0; //2^64
       if (val.hi < 0)
@@ -315,12 +511,18 @@ namespace ClipperLib
       else
         return (double)(val.lo + val.hi * shift64);
     }
-    
-    //nb: Constructing two new Int128 objects every time we want to multiply longs  
-    //is slow. So, although calling the Int128Mul method doesn't look as clean, the 
-    //code runs significantly faster than if we'd used the * operator.
 
-    public static Int128 Int128Mul(Int64 lhs, Int64 rhs)
+        //nb: Constructing two new Int128 objects every time we want to multiply longs  
+        //is slow. So, although calling the Int128Mul method doesn't look as clean, the 
+        //code runs significantly faster than if we'd used the * operator.
+
+        /// <summary>
+        /// Int128s the mul.
+        /// </summary>
+        /// <param name="lhs">The LHS.</param>
+        /// <param name="rhs">The RHS.</param>
+        /// <returns>Int128.</returns>
+        public static Int128 Int128Mul(Int64 lhs, Int64 rhs)
     {
       bool negate = (lhs < 0) != (rhs < 0);
       if (lhs < 0) lhs = -lhs;
@@ -347,13 +549,22 @@ namespace ClipperLib
 
   };
 
-  //------------------------------------------------------------------------------
-  //------------------------------------------------------------------------------
+    //------------------------------------------------------------------------------
+    //------------------------------------------------------------------------------
 
-  internal struct IntPoint
+    /// <summary>
+    /// Struct IntPoint
+    /// </summary>
+    internal struct IntPoint
   {
-    public cInt X;
-    public cInt Y;
+        /// <summary>
+        /// The x
+        /// </summary>
+        public cInt X;
+        /// <summary>
+        /// The y
+        /// </summary>
+        public cInt Y;
 #if use_xyz
     public cInt Z;
     
@@ -377,32 +588,63 @@ namespace ClipperLib
       this.X = pt.X; this.Y = pt.Y; this.Z = pt.Z;
     }
 #else
-    public IntPoint(cInt X, cInt Y)
+        /// <summary>
+        /// Initializes a new instance of the <see cref="IntPoint"/> struct.
+        /// </summary>
+        /// <param name="X">The x.</param>
+        /// <param name="Y">The y.</param>
+        public IntPoint(cInt X, cInt Y)
     {
         this.X = X; this.Y = Y;
     }
-    public IntPoint(double x, double y)
+        /// <summary>
+        /// Initializes a new instance of the <see cref="IntPoint"/> struct.
+        /// </summary>
+        /// <param name="x">The x.</param>
+        /// <param name="y">The y.</param>
+        public IntPoint(double x, double y)
     {
       this.X = (cInt)x; this.Y = (cInt)y;
     }
 
-    public IntPoint(IntPoint pt)
+        /// <summary>
+        /// Initializes a new instance of the <see cref="IntPoint"/> struct.
+        /// </summary>
+        /// <param name="pt">The pt.</param>
+        public IntPoint(IntPoint pt)
     {
         this.X = pt.X; this.Y = pt.Y;
     }
 #endif
 
-    public static bool operator ==(IntPoint a, IntPoint b)
+        /// <summary>
+        /// Implements the == operator.
+        /// </summary>
+        /// <param name="a">a.</param>
+        /// <param name="b">The b.</param>
+        /// <returns>The result of the operator.</returns>
+        public static bool operator ==(IntPoint a, IntPoint b)
     {
       return a.X == b.X && a.Y == b.Y;
     }
 
-    public static bool operator !=(IntPoint a, IntPoint b)
+        /// <summary>
+        /// Implements the != operator.
+        /// </summary>
+        /// <param name="a">a.</param>
+        /// <param name="b">The b.</param>
+        /// <returns>The result of the operator.</returns>
+        public static bool operator !=(IntPoint a, IntPoint b)
     {
       return a.X != b.X  || a.Y != b.Y; 
     }
 
-    public override bool Equals(object obj)
+        /// <summary>
+        /// Determines whether the specified <see cref="System.Object" /> is equal to this instance.
+        /// </summary>
+        /// <param name="obj">The object to compare with the current instance.</param>
+        /// <returns><c>true</c> if the specified <see cref="System.Object" /> is equal to this instance; otherwise, <c>false</c>.</returns>
+        public override bool Equals(object obj)
     {
       if (obj == null) return false;
       if (obj is IntPoint)
@@ -413,7 +655,11 @@ namespace ClipperLib
       else return false;
     }
 
-    public override int GetHashCode()
+        /// <summary>
+        /// Returns a hash code for this instance.
+        /// </summary>
+        /// <returns>A hash code for this instance, suitable for use in hashing algorithms and data structures like a hash table.</returns>
+        public override int GetHashCode()
     {
       //simply prevents a compiler warning
       return base.GetHashCode();
@@ -421,71 +667,198 @@ namespace ClipperLib
 
   }// end struct IntPoint
 
-  internal struct IntRect
+    /// <summary>
+    /// Struct IntRect
+    /// </summary>
+    internal struct IntRect
   {
-    public cInt left;
-    public cInt top;
-    public cInt right;
-    public cInt bottom;
+        /// <summary>
+        /// The left
+        /// </summary>
+        public cInt left;
+        /// <summary>
+        /// The top
+        /// </summary>
+        public cInt top;
+        /// <summary>
+        /// The right
+        /// </summary>
+        public cInt right;
+        /// <summary>
+        /// The bottom
+        /// </summary>
+        public cInt bottom;
 
-    public IntRect(cInt l, cInt t, cInt r, cInt b)
+        /// <summary>
+        /// Initializes a new instance of the <see cref="IntRect"/> struct.
+        /// </summary>
+        /// <param name="l">The l.</param>
+        /// <param name="t">The t.</param>
+        /// <param name="r">The r.</param>
+        /// <param name="b">The b.</param>
+        public IntRect(cInt l, cInt t, cInt r, cInt b)
     {
       this.left = l; this.top = t;
       this.right = r; this.bottom = b;
     }
-    public IntRect(IntRect ir)
+        /// <summary>
+        /// Initializes a new instance of the <see cref="IntRect"/> struct.
+        /// </summary>
+        /// <param name="ir">The ir.</param>
+        public IntRect(IntRect ir)
     {
       this.left = ir.left; this.top = ir.top;
       this.right = ir.right; this.bottom = ir.bottom;
     }
   }
 
-  public enum ClipType { Intersection, Union, Difference, Xor };
-  internal enum PolyType { ptSubject, ptClip };
+    /// <summary>
+    /// Enum ClipType
+    /// </summary>
+    public enum ClipType { Intersection, Union, Difference, Xor };
+    /// <summary>
+    /// Enum PolyType
+    /// </summary>
+    internal enum PolyType { ptSubject, ptClip };
 
     //By far the most widely used winding rules for polygon filling are
     //EvenOdd & NonZero (GDI, GDI+, XLib, OpenGL, Cairo, AGG, Quartz, SVG, Gr32)
     //Others rules include Positive, Negative and ABS_GTR_EQ_TWO (only in OpenGL)
     //see http://glprogramming.com/red/chapter11.html
+    /// <summary>
+    /// Enum PolyFillType
+    /// </summary>
     public enum PolyFillType { EvenOdd, NonZero, Positive, Negative };
 
+    /// <summary>
+    /// Enum JoinType
+    /// </summary>
     internal enum JoinType { jtSquare, jtRound, jtMiter };
+    /// <summary>
+    /// Enum EndType
+    /// </summary>
     internal enum EndType { etClosedPolygon, etClosedLine, etOpenButt, etOpenSquare, etOpenRound };
 
+    /// <summary>
+    /// Enum EdgeSide
+    /// </summary>
     internal enum EdgeSide {esLeft, esRight};
+    /// <summary>
+    /// Enum Direction
+    /// </summary>
     internal enum Direction {dRightToLeft, dLeftToRight};
-    
-  internal class TEdge {
-    internal IntPoint Bot;
-    internal IntPoint Curr; //current (updated for every new scanbeam)
-    internal IntPoint Top;
-    internal IntPoint Delta;
-    internal double Dx;
-    internal PolyType PolyTyp;
-    internal EdgeSide Side; //side only refers to current side of solution poly
-    internal int WindDelta; //1 or -1 depending on winding direction
-    internal int WindCnt;
-    internal int WindCnt2; //winding count of the opposite polytype
-    internal int OutIdx;
-    internal TEdge Next;
-    internal TEdge Prev;
-    internal TEdge NextInLML;
-    internal TEdge NextInAEL;
-    internal TEdge PrevInAEL;
-    internal TEdge NextInSEL;
-    internal TEdge PrevInSEL;
+
+    /// <summary>
+    /// Class TEdge.
+    /// </summary>
+    internal class TEdge {
+        /// <summary>
+        /// The bot
+        /// </summary>
+        internal IntPoint Bot;
+        /// <summary>
+        /// The curr
+        /// </summary>
+        internal IntPoint Curr; //current (updated for every new scanbeam)
+        /// <summary>
+        /// The top
+        /// </summary>
+        internal IntPoint Top;
+        /// <summary>
+        /// The delta
+        /// </summary>
+        internal IntPoint Delta;
+        /// <summary>
+        /// The dx
+        /// </summary>
+        internal double Dx;
+        /// <summary>
+        /// The poly typ
+        /// </summary>
+        internal PolyType PolyTyp;
+        /// <summary>
+        /// The side
+        /// </summary>
+        internal EdgeSide Side; //side only refers to current side of solution poly
+        /// <summary>
+        /// The wind delta
+        /// </summary>
+        internal int WindDelta; //1 or -1 depending on winding direction
+        /// <summary>
+        /// The wind count
+        /// </summary>
+        internal int WindCnt;
+        /// <summary>
+        /// The wind CNT2
+        /// </summary>
+        internal int WindCnt2; //winding count of the opposite polytype
+        /// <summary>
+        /// The out index
+        /// </summary>
+        internal int OutIdx;
+        /// <summary>
+        /// The next
+        /// </summary>
+        internal TEdge Next;
+        /// <summary>
+        /// The previous
+        /// </summary>
+        internal TEdge Prev;
+        /// <summary>
+        /// The next in LML
+        /// </summary>
+        internal TEdge NextInLML;
+        /// <summary>
+        /// The next in ael
+        /// </summary>
+        internal TEdge NextInAEL;
+        /// <summary>
+        /// The previous in ael
+        /// </summary>
+        internal TEdge PrevInAEL;
+        /// <summary>
+        /// The next in sel
+        /// </summary>
+        internal TEdge NextInSEL;
+        /// <summary>
+        /// The previous in sel
+        /// </summary>
+        internal TEdge PrevInSEL;
   };
 
+    /// <summary>
+    /// Class IntersectNode.
+    /// </summary>
     internal class IntersectNode
   {
-      internal TEdge Edge1;
-      internal TEdge Edge2;
-      internal IntPoint Pt;
+        /// <summary>
+        /// The edge1
+        /// </summary>
+        internal TEdge Edge1;
+        /// <summary>
+        /// The edge2
+        /// </summary>
+        internal TEdge Edge2;
+        /// <summary>
+        /// The pt
+        /// </summary>
+        internal IntPoint Pt;
   };
 
+    /// <summary>
+    /// Class MyIntersectNodeSort.
+    /// Implements the <see cref="System.Collections.Generic.IComparer{ClipperLib.IntersectNode}" />
+    /// </summary>
+    /// <seealso cref="System.Collections.Generic.IComparer{ClipperLib.IntersectNode}" />
     internal class MyIntersectNodeSort : IComparer<IntersectNode>
   {
-    public int Compare(IntersectNode node1, IntersectNode node2)
+        /// <summary>
+        /// Compares the specified node1.
+        /// </summary>
+        /// <param name="node1">The node1.</param>
+        /// <param name="node2">The node2.</param>
+        /// <returns>System.Int32.</returns>
+        public int Compare(IntersectNode node1, IntersectNode node2)
     {
       cInt i = node2.Pt.Y - node1.Pt.Y;
       if (i > 0) return 1;
@@ -494,104 +867,261 @@ namespace ClipperLib
     }
   }
 
-  internal class LocalMinima
+    /// <summary>
+    /// Class LocalMinima.
+    /// </summary>
+    internal class LocalMinima
   {
-    internal cInt Y;
-    internal TEdge LeftBound;
-    internal TEdge RightBound;
-    internal LocalMinima Next;
+        /// <summary>
+        /// The y
+        /// </summary>
+        internal cInt Y;
+        /// <summary>
+        /// The left bound
+        /// </summary>
+        internal TEdge LeftBound;
+        /// <summary>
+        /// The right bound
+        /// </summary>
+        internal TEdge RightBound;
+        /// <summary>
+        /// The next
+        /// </summary>
+        internal LocalMinima Next;
   };
 
-  internal class Scanbeam
+    /// <summary>
+    /// Class Scanbeam.
+    /// </summary>
+    internal class Scanbeam
   {
-      internal cInt Y;
-      internal Scanbeam Next;
+        /// <summary>
+        /// The y
+        /// </summary>
+        internal cInt Y;
+        /// <summary>
+        /// The next
+        /// </summary>
+        internal Scanbeam Next;
   };
 
-  internal class Maxima
+    /// <summary>
+    /// Class Maxima.
+    /// </summary>
+    internal class Maxima
   {
-      internal cInt X;
-      internal Maxima Next;
-      internal Maxima Prev;
+        /// <summary>
+        /// The x
+        /// </summary>
+        internal cInt X;
+        /// <summary>
+        /// The next
+        /// </summary>
+        internal Maxima Next;
+        /// <summary>
+        /// The previous
+        /// </summary>
+        internal Maxima Prev;
   };
 
-  //OutRec: contains a path in the clipping solution. Edges in the AEL will
-  //carry a pointer to an OutRec when they are part of the clipping solution.
-  internal class OutRec
+    //OutRec: contains a path in the clipping solution. Edges in the AEL will
+    //carry a pointer to an OutRec when they are part of the clipping solution.
+    /// <summary>
+    /// Class OutRec.
+    /// </summary>
+    internal class OutRec
   {
-    internal int Idx;
-    internal bool IsHole;
-    internal bool IsOpen;
-    internal OutRec FirstLeft; //see comments in clipper.pas
-    internal OutPt Pts;
-    internal OutPt BottomPt;
-    internal PolyNode PolyNode;
+        /// <summary>
+        /// The index
+        /// </summary>
+        internal int Idx;
+        /// <summary>
+        /// The is hole
+        /// </summary>
+        internal bool IsHole;
+        /// <summary>
+        /// The is open
+        /// </summary>
+        internal bool IsOpen;
+        /// <summary>
+        /// The first left
+        /// </summary>
+        internal OutRec FirstLeft; //see comments in clipper.pas
+        /// <summary>
+        /// The PTS
+        /// </summary>
+        internal OutPt Pts;
+        /// <summary>
+        /// The bottom pt
+        /// </summary>
+        internal OutPt BottomPt;
+        /// <summary>
+        /// The poly node
+        /// </summary>
+        internal PolyNode PolyNode;
   };
 
-  internal class OutPt
+    /// <summary>
+    /// Class OutPt.
+    /// </summary>
+    internal class OutPt
   {
-    internal int Idx;
-    internal IntPoint Pt;
-    internal OutPt Next;
-    internal OutPt Prev;
+        /// <summary>
+        /// The index
+        /// </summary>
+        internal int Idx;
+        /// <summary>
+        /// The pt
+        /// </summary>
+        internal IntPoint Pt;
+        /// <summary>
+        /// The next
+        /// </summary>
+        internal OutPt Next;
+        /// <summary>
+        /// The previous
+        /// </summary>
+        internal OutPt Prev;
   };
 
-  internal class Join
+    /// <summary>
+    /// Class Join.
+    /// </summary>
+    internal class Join
   {
-    internal OutPt OutPt1;
-    internal OutPt OutPt2;
-    internal IntPoint OffPt;
+        /// <summary>
+        /// The out PT1
+        /// </summary>
+        internal OutPt OutPt1;
+        /// <summary>
+        /// The out PT2
+        /// </summary>
+        internal OutPt OutPt2;
+        /// <summary>
+        /// The off pt
+        /// </summary>
+        internal IntPoint OffPt;
   };
 
+    /// <summary>
+    /// Class ClipperBase.
+    /// </summary>
     internal class ClipperBase
-  {    
-    internal const double horizontal = -3.4E+38;
-    internal const int Skip = -2;
-    internal const int Unassigned = -1;
-    internal const double tolerance = 1.0E-20;
-    internal static bool near_zero(double val){return (val > -tolerance) && (val < tolerance);}
+  {
+        /// <summary>
+        /// The horizontal
+        /// </summary>
+        internal const double horizontal = -3.4E+38;
+        /// <summary>
+        /// The skip
+        /// </summary>
+        internal const int Skip = -2;
+        /// <summary>
+        /// The unassigned
+        /// </summary>
+        internal const int Unassigned = -1;
+        /// <summary>
+        /// The tolerance
+        /// </summary>
+        internal const double tolerance = 1.0E-20;
+        /// <summary>
+        /// Nears the zero.
+        /// </summary>
+        /// <param name="val">The value.</param>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
+        internal static bool near_zero(double val){return (val > -tolerance) && (val < tolerance);}
 
 #if use_int32
     public const cInt loRange = 0x7FFF;
     public const cInt hiRange = 0x7FFF;
 #else
-    public const cInt loRange = 0x3FFFFFFF;
-    public const cInt hiRange = 0x3FFFFFFFFFFFFFFFL; 
+        /// <summary>
+        /// The lo range
+        /// </summary>
+        public const cInt loRange = 0x3FFFFFFF;
+        /// <summary>
+        /// The hi range
+        /// </summary>
+        public const cInt hiRange = 0x3FFFFFFFFFFFFFFFL;
 #endif
 
-    internal LocalMinima m_MinimaList;
-    internal LocalMinima m_CurrentLM;
-    internal List<List<TEdge>> m_edges = new List<List<TEdge>>();
-    internal Scanbeam m_Scanbeam;
-    internal List<OutRec> m_PolyOuts;
-    internal TEdge m_ActiveEdges;
-    internal bool m_UseFullRange;
-    internal bool m_HasOpenPaths;
+        /// <summary>
+        /// The m minima list
+        /// </summary>
+        internal LocalMinima m_MinimaList;
+        /// <summary>
+        /// The m current lm
+        /// </summary>
+        internal LocalMinima m_CurrentLM;
+        /// <summary>
+        /// The m edges
+        /// </summary>
+        internal List<List<TEdge>> m_edges = new List<List<TEdge>>();
+        /// <summary>
+        /// The m scanbeam
+        /// </summary>
+        internal Scanbeam m_Scanbeam;
+        /// <summary>
+        /// The m poly outs
+        /// </summary>
+        internal List<OutRec> m_PolyOuts;
+        /// <summary>
+        /// The m active edges
+        /// </summary>
+        internal TEdge m_ActiveEdges;
+        /// <summary>
+        /// The m use full range
+        /// </summary>
+        internal bool m_UseFullRange;
+        /// <summary>
+        /// The m has open paths
+        /// </summary>
+        internal bool m_HasOpenPaths;
 
-    //------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
 
-    public bool PreserveCollinear
+        /// <summary>
+        /// Gets or sets a value indicating whether [preserve collinear].
+        /// </summary>
+        /// <value><c>true</c> if [preserve collinear]; otherwise, <c>false</c>.</value>
+        public bool PreserveCollinear
     {
       get;
       set;
     }
-    //------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
 
-    public void Swap(ref cInt val1, ref cInt val2)
+        /// <summary>
+        /// Swaps the specified val1.
+        /// </summary>
+        /// <param name="val1">The val1.</param>
+        /// <param name="val2">The val2.</param>
+        public void Swap(ref cInt val1, ref cInt val2)
     {
       cInt tmp = val1;
       val1 = val2;
       val2 = tmp;
     }
-    //------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
 
-    internal static bool IsHorizontal(TEdge e)
+        /// <summary>
+        /// Determines whether the specified e is horizontal.
+        /// </summary>
+        /// <param name="e">The e.</param>
+        /// <returns><c>true</c> if the specified e is horizontal; otherwise, <c>false</c>.</returns>
+        internal static bool IsHorizontal(TEdge e)
     {
       return e.Delta.Y == 0;
     }
-    //------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
 
-    internal bool PointIsVertex(IntPoint pt, OutPt pp)
+        /// <summary>
+        /// Points the is vertex.
+        /// </summary>
+        /// <param name="pt">The pt.</param>
+        /// <param name="pp">The pp.</param>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
+        internal bool PointIsVertex(IntPoint pt, OutPt pp)
     {
       OutPt pp2 = pp;
       do
@@ -602,9 +1132,17 @@ namespace ClipperLib
       while (pp2 != pp);
       return false;
     }
-    //------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
 
-    internal bool PointOnLineSegment(IntPoint pt, 
+        /// <summary>
+        /// Points the on line segment.
+        /// </summary>
+        /// <param name="pt">The pt.</param>
+        /// <param name="linePt1">The line PT1.</param>
+        /// <param name="linePt2">The line PT2.</param>
+        /// <param name="UseFullRange">if set to <c>true</c> [use full range].</param>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
+        internal bool PointOnLineSegment(IntPoint pt, 
         IntPoint linePt1, IntPoint linePt2, bool UseFullRange)
     {
       if (UseFullRange)
@@ -622,9 +1160,16 @@ namespace ClipperLib
           ((pt.X - linePt1.X) * (linePt2.Y - linePt1.Y) ==
             (linePt2.X - linePt1.X) * (pt.Y - linePt1.Y)));
     }
-    //------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
 
-    internal bool PointOnPolygon(IntPoint pt, OutPt pp, bool UseFullRange)
+        /// <summary>
+        /// Points the on polygon.
+        /// </summary>
+        /// <param name="pt">The pt.</param>
+        /// <param name="pp">The pp.</param>
+        /// <param name="UseFullRange">if set to <c>true</c> [use full range].</param>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
+        internal bool PointOnPolygon(IntPoint pt, OutPt pp, bool UseFullRange)
     {
       OutPt pp2 = pp;
       while (true)
@@ -636,9 +1181,16 @@ namespace ClipperLib
       }
       return false;
     }
-    //------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
 
-    internal static bool SlopesEqual(TEdge e1, TEdge e2, bool UseFullRange)
+        /// <summary>
+        /// Slopeses the equal.
+        /// </summary>
+        /// <param name="e1">The e1.</param>
+        /// <param name="e2">The e2.</param>
+        /// <param name="UseFullRange">if set to <c>true</c> [use full range].</param>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
+        internal static bool SlopesEqual(TEdge e1, TEdge e2, bool UseFullRange)
     {
         if (UseFullRange)
           return Int128.Int128Mul(e1.Delta.Y, e2.Delta.X) ==
@@ -646,9 +1198,17 @@ namespace ClipperLib
         else return (cInt)(e1.Delta.Y) * (e2.Delta.X) ==
           (cInt)(e1.Delta.X) * (e2.Delta.Y);
     }
-    //------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
 
-    internal static bool SlopesEqual(IntPoint pt1, IntPoint pt2,
+        /// <summary>
+        /// Slopeses the equal.
+        /// </summary>
+        /// <param name="pt1">The PT1.</param>
+        /// <param name="pt2">The PT2.</param>
+        /// <param name="pt3">The PT3.</param>
+        /// <param name="UseFullRange">if set to <c>true</c> [use full range].</param>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
+        internal static bool SlopesEqual(IntPoint pt1, IntPoint pt2,
         IntPoint pt3, bool UseFullRange)
     {
         if (UseFullRange)
@@ -657,9 +1217,18 @@ namespace ClipperLib
         else return
           (cInt)(pt1.Y - pt2.Y) * (pt2.X - pt3.X) - (cInt)(pt1.X - pt2.X) * (pt2.Y - pt3.Y) == 0;
     }
-    //------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
 
-    internal static bool SlopesEqual(IntPoint pt1, IntPoint pt2,
+        /// <summary>
+        /// Slopeses the equal.
+        /// </summary>
+        /// <param name="pt1">The PT1.</param>
+        /// <param name="pt2">The PT2.</param>
+        /// <param name="pt3">The PT3.</param>
+        /// <param name="pt4">The PT4.</param>
+        /// <param name="UseFullRange">if set to <c>true</c> [use full range].</param>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
+        internal static bool SlopesEqual(IntPoint pt1, IntPoint pt2,
         IntPoint pt3, IntPoint pt4, bool UseFullRange)
     {
         if (UseFullRange)
@@ -668,18 +1237,24 @@ namespace ClipperLib
         else return
           (cInt)(pt1.Y - pt2.Y) * (pt3.X - pt4.X) - (cInt)(pt1.X - pt2.X) * (pt3.Y - pt4.Y) == 0;
     }
-    //------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
 
-    internal ClipperBase() //constructor (nb: no external instantiation)
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ClipperBase"/> class.
+        /// </summary>
+        internal ClipperBase() //constructor (nb: no external instantiation)
     {
         m_MinimaList = null;
         m_CurrentLM = null;
         m_UseFullRange = false;
         m_HasOpenPaths = false;
     }
-    //------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
 
-    public virtual void Clear()
+        /// <summary>
+        /// Clears this instance.
+        /// </summary>
+        public virtual void Clear()
     {
         DisposeLocalMinimaList();
         for (int i = 0; i < m_edges.Count; ++i)
@@ -691,9 +1266,12 @@ namespace ClipperLib
         m_UseFullRange = false;
         m_HasOpenPaths = false;
     }
-    //------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
 
-    private void DisposeLocalMinimaList()
+        /// <summary>
+        /// Disposes the local minima list.
+        /// </summary>
+        private void DisposeLocalMinimaList()
     {
         while( m_MinimaList != null )
         {
@@ -703,9 +1281,15 @@ namespace ClipperLib
         }
         m_CurrentLM = null;
     }
-    //------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
 
-    void RangeTest(IntPoint Pt, ref bool useFullRange)
+        /// <summary>
+        /// Ranges the test.
+        /// </summary>
+        /// <param name="Pt">The pt.</param>
+        /// <param name="useFullRange">if set to <c>true</c> [use full range].</param>
+        /// <exception cref="ClipperLib.ClipperException">Coordinate outside allowed range</exception>
+        void RangeTest(IntPoint Pt, ref bool useFullRange)
     {
       if (useFullRange)
       {
@@ -718,9 +1302,16 @@ namespace ClipperLib
         RangeTest(Pt, ref useFullRange);
       }
     }
-    //------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
 
-    private void InitEdge(TEdge e, TEdge eNext,
+        /// <summary>
+        /// Initializes the edge.
+        /// </summary>
+        /// <param name="e">The e.</param>
+        /// <param name="eNext">The e next.</param>
+        /// <param name="ePrev">The e previous.</param>
+        /// <param name="pt">The pt.</param>
+        private void InitEdge(TEdge e, TEdge eNext,
       TEdge ePrev, IntPoint pt)
     {
       e.Next = eNext;
@@ -728,9 +1319,14 @@ namespace ClipperLib
       e.Curr = pt;
       e.OutIdx = Unassigned;
     }
-    //------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
 
-    private void InitEdge2(TEdge e, PolyType polyType)
+        /// <summary>
+        /// Initializes the edge2.
+        /// </summary>
+        /// <param name="e">The e.</param>
+        /// <param name="polyType">Type of the poly.</param>
+        private void InitEdge2(TEdge e, PolyType polyType)
     {
       if (e.Curr.Y >= e.Next.Curr.Y)
       {
@@ -745,9 +1341,14 @@ namespace ClipperLib
       SetDx(e);
       e.PolyTyp = polyType;
     }
-    //------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
 
-    private TEdge FindNextLocMin(TEdge E)
+        /// <summary>
+        /// Finds the next loc minimum.
+        /// </summary>
+        /// <param name="E">The e.</param>
+        /// <returns>TEdge.</returns>
+        private TEdge FindNextLocMin(TEdge E)
     {
       TEdge E2;
       for (;;)
@@ -763,9 +1364,15 @@ namespace ClipperLib
       }
       return E;
     }
-    //------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
 
-    private TEdge ProcessBound(TEdge E, bool LeftBoundIsForward)
+        /// <summary>
+        /// Processes the bound.
+        /// </summary>
+        /// <param name="E">The e.</param>
+        /// <param name="LeftBoundIsForward">if set to <c>true</c> [left bound is forward].</param>
+        /// <returns>TEdge.</returns>
+        private TEdge ProcessBound(TEdge E, bool LeftBoundIsForward)
     {
       TEdge EStart, Result = E;
       TEdge Horz;
@@ -875,10 +1482,18 @@ namespace ClipperLib
       }
       return Result;
     }
-    //------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
 
 
-    public bool AddPath(Path pg, PolyType polyType, bool Closed)
+        /// <summary>
+        /// Adds the path.
+        /// </summary>
+        /// <param name="pg">The pg.</param>
+        /// <param name="polyType">Type of the poly.</param>
+        /// <param name="Closed">if set to <c>true</c> [closed].</param>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
+        /// <exception cref="ClipperLib.ClipperException">AddPath: Open paths must be subject.</exception>
+        public bool AddPath(Path pg, PolyType polyType, bool Closed)
     {
 #if use_lines
       if (!Closed && polyType == PolyType.ptClip)
@@ -1047,26 +1662,45 @@ namespace ClipperLib
       return true;
 
     }
-    //------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
 
-    public bool AddPaths(Paths ppg, PolyType polyType, bool closed)
+        /// <summary>
+        /// Adds the paths.
+        /// </summary>
+        /// <param name="ppg">The PPG.</param>
+        /// <param name="polyType">Type of the poly.</param>
+        /// <param name="closed">if set to <c>true</c> [closed].</param>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
+        public bool AddPaths(Paths ppg, PolyType polyType, bool closed)
     {
       bool result = false;
       for (int i = 0; i < ppg.Count; ++i)
         if (AddPath(ppg[i], polyType, closed)) result = true;
       return result;
     }
-    //------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
 
-    internal bool Pt2IsBetweenPt1AndPt3(IntPoint pt1, IntPoint pt2, IntPoint pt3)
+        /// <summary>
+        /// PT2s the is between PT1 and PT3.
+        /// </summary>
+        /// <param name="pt1">The PT1.</param>
+        /// <param name="pt2">The PT2.</param>
+        /// <param name="pt3">The PT3.</param>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
+        internal bool Pt2IsBetweenPt1AndPt3(IntPoint pt1, IntPoint pt2, IntPoint pt3)
     {
       if ((pt1 == pt3) || (pt1 == pt2) || (pt3 == pt2)) return false;
       else if (pt1.X != pt3.X) return (pt2.X > pt1.X) == (pt2.X < pt3.X);
       else return (pt2.Y > pt1.Y) == (pt2.Y < pt3.Y);
     }
-    //------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
 
-    TEdge RemoveEdge(TEdge e)
+        /// <summary>
+        /// Removes the edge.
+        /// </summary>
+        /// <param name="e">The e.</param>
+        /// <returns>TEdge.</returns>
+        TEdge RemoveEdge(TEdge e)
     {
       //removes e from double_linked_list (but without removing from memory)
       e.Prev.Next = e.Next;
@@ -1075,18 +1709,26 @@ namespace ClipperLib
       e.Prev = null; //flag as removed (see ClipperBase.Clear)
       return result;
     }
-    //------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
 
-    private void SetDx(TEdge e)
+        /// <summary>
+        /// Sets the dx.
+        /// </summary>
+        /// <param name="e">The e.</param>
+        private void SetDx(TEdge e)
     {
       e.Delta.X = (e.Top.X - e.Bot.X);
       e.Delta.Y = (e.Top.Y - e.Bot.Y);
       if (e.Delta.Y == 0) e.Dx = horizontal;
       else e.Dx = (double)(e.Delta.X) / (e.Delta.Y);
     }
-    //---------------------------------------------------------------------------
+        //---------------------------------------------------------------------------
 
-    private void InsertLocalMinima(LocalMinima newLm)
+        /// <summary>
+        /// Inserts the local minima.
+        /// </summary>
+        /// <param name="newLm">The new lm.</param>
+        private void InsertLocalMinima(LocalMinima newLm)
     {
       if( m_MinimaList == null )
       {
@@ -1105,9 +1747,15 @@ namespace ClipperLib
         tmpLm.Next = newLm;
       }
     }
-    //------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
 
-    internal Boolean PopLocalMinima(cInt Y, out LocalMinima current)
+        /// <summary>
+        /// Pops the local minima.
+        /// </summary>
+        /// <param name="Y">The y.</param>
+        /// <param name="current">The current.</param>
+        /// <returns>Boolean.</returns>
+        internal Boolean PopLocalMinima(cInt Y, out LocalMinima current)
     {
         current = m_CurrentLM;
         if (m_CurrentLM != null && m_CurrentLM.Y == Y)
@@ -1117,9 +1765,13 @@ namespace ClipperLib
         }
         return false;
     }
-    //------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
 
-    private void ReverseHorizontal(TEdge e)
+        /// <summary>
+        /// Reverses the horizontal.
+        /// </summary>
+        /// <param name="e">The e.</param>
+        private void ReverseHorizontal(TEdge e)
     {
       //swap horizontal edges' top and bottom x's so they follow the natural
       //progression of the bounds - ie so their xbots will align with the
@@ -1129,9 +1781,12 @@ namespace ClipperLib
       Swap(ref e.Top.Z, ref e.Bot.Z);
 #endif
     }
-    //------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
 
-    internal virtual void Reset()
+        /// <summary>
+        /// Resets this instance.
+        /// </summary>
+        internal virtual void Reset()
     {
       m_CurrentLM = m_MinimaList;
       if (m_CurrentLM == null) return; //ie nothing to process
@@ -1158,9 +1813,14 @@ namespace ClipperLib
       }
       m_ActiveEdges = null;
     }
-    //------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
 
-    public static IntRect GetBounds(Paths paths)
+        /// <summary>
+        /// Gets the bounds.
+        /// </summary>
+        /// <param name="paths">The paths.</param>
+        /// <returns>IntRect.</returns>
+        public static IntRect GetBounds(Paths paths)
     {
       int i = 0, cnt = paths.Count;
       while (i < cnt && paths[i].Count == 0) i++;
@@ -1180,9 +1840,13 @@ namespace ClipperLib
         }
       return result;
     }
-    //------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
 
-    internal void InsertScanbeam(cInt Y)
+        /// <summary>
+        /// Inserts the scanbeam.
+        /// </summary>
+        /// <param name="Y">The y.</param>
+        internal void InsertScanbeam(cInt Y)
     {
         //single-linked list: sorted descending, ignoring dups.
         if (m_Scanbeam == null)
@@ -1209,9 +1873,14 @@ namespace ClipperLib
             sb2.Next = newSb;
         }
     }
-    //------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
 
-    internal Boolean PopScanbeam(out cInt Y)
+        /// <summary>
+        /// Pops the scanbeam.
+        /// </summary>
+        /// <param name="Y">The y.</param>
+        /// <returns>Boolean.</returns>
+        internal Boolean PopScanbeam(out cInt Y)
     {
         if (m_Scanbeam == null)
         {
@@ -1222,15 +1891,23 @@ namespace ClipperLib
         m_Scanbeam = m_Scanbeam.Next;
         return true;
     }
-    //------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
 
-    internal Boolean LocalMinimaPending()
+        /// <summary>
+        /// Locals the minima pending.
+        /// </summary>
+        /// <returns>Boolean.</returns>
+        internal Boolean LocalMinimaPending()
     {
         return (m_CurrentLM != null);
     }
-    //------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
 
-    internal OutRec CreateOutRec()
+        /// <summary>
+        /// Creates the out record.
+        /// </summary>
+        /// <returns>OutRec.</returns>
+        internal OutRec CreateOutRec()
     {
         OutRec result = new OutRec();
         result.Idx = Unassigned;
@@ -1244,18 +1921,27 @@ namespace ClipperLib
         result.Idx = m_PolyOuts.Count - 1;
         return result;
     }
-    //------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
 
-    internal void DisposeOutRec(int index)
+        /// <summary>
+        /// Disposes the out record.
+        /// </summary>
+        /// <param name="index">The index.</param>
+        internal void DisposeOutRec(int index)
     {
         OutRec outRec = m_PolyOuts[index];
         outRec.Pts = null;
         outRec = null;
         m_PolyOuts[index] = null;
     }
-    //------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
 
-    internal void UpdateEdgeIntoAEL(ref TEdge e)
+        /// <summary>
+        /// Updates the edge into ael.
+        /// </summary>
+        /// <param name="e">The e.</param>
+        /// <exception cref="ClipperLib.ClipperException">UpdateEdgeIntoAEL: invalid call</exception>
+        internal void UpdateEdgeIntoAEL(ref TEdge e)
     {
         if (e.NextInLML == null)
             throw new ClipperException("UpdateEdgeIntoAEL: invalid call");
@@ -1277,9 +1963,14 @@ namespace ClipperLib
         e.NextInAEL = AelNext;
         if (!IsHorizontal(e)) InsertScanbeam(e.Top.Y);
     }
-    //------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
 
-    internal void SwapPositionsInAEL(TEdge edge1, TEdge edge2)
+        /// <summary>
+        /// Swaps the positions in ael.
+        /// </summary>
+        /// <param name="edge1">The edge1.</param>
+        /// <param name="edge2">The edge2.</param>
+        internal void SwapPositionsInAEL(TEdge edge1, TEdge edge2)
     {
         //check that one or other edge hasn't already been removed from AEL ...
         if (edge1.NextInAEL == edge1.PrevInAEL ||
@@ -1334,9 +2025,13 @@ namespace ClipperLib
         else if (edge2.PrevInAEL == null)
             m_ActiveEdges = edge2;
     }
-    //------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
 
-    internal void DeleteFromAEL(TEdge e)
+        /// <summary>
+        /// Deletes from ael.
+        /// </summary>
+        /// <param name="e">The e.</param>
+        internal void DeleteFromAEL(TEdge e)
     {
         TEdge AelPrev = e.PrevInAEL;
         TEdge AelNext = e.NextInAEL;
@@ -1354,30 +2049,81 @@ namespace ClipperLib
 
   } //end ClipperBase
 
+    /// <summary>
+    /// Class Clipper.
+    /// Implements the <see cref="ClipperLib.ClipperBase" />
+    /// </summary>
+    /// <seealso cref="ClipperLib.ClipperBase" />
     internal class Clipper : ClipperBase
   {
-      //InitOptions that can be passed to the constructor ...
-      public const int ioReverseSolution = 1;
-      public const int ioStrictlySimple = 2;
-      public const int ioPreserveCollinear = 4;
+        //InitOptions that can be passed to the constructor ...
+        /// <summary>
+        /// The io reverse solution
+        /// </summary>
+        public const int ioReverseSolution = 1;
+        /// <summary>
+        /// The io strictly simple
+        /// </summary>
+        public const int ioStrictlySimple = 2;
+        /// <summary>
+        /// The io preserve collinear
+        /// </summary>
+        public const int ioPreserveCollinear = 4;
 
-      private ClipType m_ClipType;
-      private Maxima m_Maxima;
-      private TEdge m_SortedEdges;
-      private List<IntersectNode> m_IntersectList;
-      IComparer<IntersectNode> m_IntersectNodeComparer;
-      private bool m_ExecuteLocked;
-      private PolyFillType m_ClipFillType;
-      private PolyFillType m_SubjFillType;
-      private List<Join> m_Joins;
-      private List<Join> m_GhostJoins;
-      private bool m_UsingPolyTree;
+        /// <summary>
+        /// The m clip type
+        /// </summary>
+        private ClipType m_ClipType;
+        /// <summary>
+        /// The m maxima
+        /// </summary>
+        private Maxima m_Maxima;
+        /// <summary>
+        /// The m sorted edges
+        /// </summary>
+        private TEdge m_SortedEdges;
+        /// <summary>
+        /// The m intersect list
+        /// </summary>
+        private List<IntersectNode> m_IntersectList;
+        /// <summary>
+        /// The m intersect node comparer
+        /// </summary>
+        IComparer<IntersectNode> m_IntersectNodeComparer;
+        /// <summary>
+        /// The m execute locked
+        /// </summary>
+        private bool m_ExecuteLocked;
+        /// <summary>
+        /// The m clip fill type
+        /// </summary>
+        private PolyFillType m_ClipFillType;
+        /// <summary>
+        /// The m subj fill type
+        /// </summary>
+        private PolyFillType m_SubjFillType;
+        /// <summary>
+        /// The m joins
+        /// </summary>
+        private List<Join> m_Joins;
+        /// <summary>
+        /// The m ghost joins
+        /// </summary>
+        private List<Join> m_GhostJoins;
+        /// <summary>
+        /// The m using poly tree
+        /// </summary>
+        private bool m_UsingPolyTree;
 #if use_xyz
       public delegate void ZFillCallback(IntPoint bot1, IntPoint top1, 
         IntPoint bot2, IntPoint top2, ref IntPoint pt);
       public ZFillCallback ZFillFunction { get; set; }
 #endif
-      public Clipper(int InitOptions = 0): base() //constructor
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Clipper"/> class.
+        /// </summary>
+        /// <param name="InitOptions">The initialize options.</param>
+        public Clipper(int InitOptions = 0): base() //constructor
       {
           m_Scanbeam = null;
           m_Maxima = null;
@@ -1397,9 +2143,13 @@ namespace ClipperLib
           ZFillFunction = null;
 #endif
       }
-      //------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
 
-      private void InsertMaxima(cInt X)
+        /// <summary>
+        /// Inserts the maxima.
+        /// </summary>
+        /// <param name="X">The x.</param>
+        private void InsertMaxima(cInt X)
       {
           //double-linked list: sorted ascending, ignoring dups.
           Maxima newMax = new Maxima();
@@ -1428,37 +2178,68 @@ namespace ClipperLib
               m.Next = newMax;
           }
       }
-      //------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
 
-      public bool ReverseSolution
+        /// <summary>
+        /// Gets or sets a value indicating whether [reverse solution].
+        /// </summary>
+        /// <value><c>true</c> if [reverse solution]; otherwise, <c>false</c>.</value>
+        public bool ReverseSolution
       {
         get;
         set;
       }
-      //------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
 
-      public bool StrictlySimple
+        /// <summary>
+        /// Gets or sets a value indicating whether [strictly simple].
+        /// </summary>
+        /// <value><c>true</c> if [strictly simple]; otherwise, <c>false</c>.</value>
+        public bool StrictlySimple
       {
         get; 
         set;
       }
-      //------------------------------------------------------------------------------
-       
-      public bool Execute(ClipType clipType, Paths solution, 
+        //------------------------------------------------------------------------------
+
+        /// <summary>
+        /// Executes the specified clip type.
+        /// </summary>
+        /// <param name="clipType">Type of the clip.</param>
+        /// <param name="solution">The solution.</param>
+        /// <param name="FillType">Type of the fill.</param>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
+        public bool Execute(ClipType clipType, Paths solution, 
           PolyFillType FillType = PolyFillType.EvenOdd)
       {
           return Execute(clipType, solution, FillType, FillType);
       }
-      //------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
 
-      public bool Execute(ClipType clipType, PolyTree polytree,
+        /// <summary>
+        /// Executes the specified clip type.
+        /// </summary>
+        /// <param name="clipType">Type of the clip.</param>
+        /// <param name="polytree">The polytree.</param>
+        /// <param name="FillType">Type of the fill.</param>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
+        public bool Execute(ClipType clipType, PolyTree polytree,
           PolyFillType FillType = PolyFillType.EvenOdd)
       {
           return Execute(clipType, polytree, FillType, FillType);
       }
-      //------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
 
-      public bool Execute(ClipType clipType, Paths solution,
+        /// <summary>
+        /// Executes the specified clip type.
+        /// </summary>
+        /// <param name="clipType">Type of the clip.</param>
+        /// <param name="solution">The solution.</param>
+        /// <param name="subjFillType">Type of the subj fill.</param>
+        /// <param name="clipFillType">Type of the clip fill.</param>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
+        /// <exception cref="ClipperLib.ClipperException">Error: PolyTree struct is needed for open path clipping.</exception>
+        public bool Execute(ClipType clipType, Paths solution,
           PolyFillType subjFillType, PolyFillType clipFillType)
       {
           if (m_ExecuteLocked) return false;
@@ -1485,9 +2266,17 @@ namespace ClipperLib
           }
           return succeeded;
       }
-      //------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
 
-      public bool Execute(ClipType clipType, PolyTree polytree,
+        /// <summary>
+        /// Executes the specified clip type.
+        /// </summary>
+        /// <param name="clipType">Type of the clip.</param>
+        /// <param name="polytree">The polytree.</param>
+        /// <param name="subjFillType">Type of the subj fill.</param>
+        /// <param name="clipFillType">Type of the clip fill.</param>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
+        public bool Execute(ClipType clipType, PolyTree polytree,
           PolyFillType subjFillType, PolyFillType clipFillType)
       {
           if (m_ExecuteLocked) return false;
@@ -1510,9 +2299,13 @@ namespace ClipperLib
           }
           return succeeded;
       }
-      //------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
 
-      internal void FixHoleLinkage(OutRec outRec)
+        /// <summary>
+        /// Fixes the hole linkage.
+        /// </summary>
+        /// <param name="outRec">The out record.</param>
+        internal void FixHoleLinkage(OutRec outRec)
       {
         //skip if an outermost polygon or
         //already already points to the correct FirstLeft ...
@@ -1525,9 +2318,13 @@ namespace ClipperLib
           orfl = orfl.FirstLeft;
         outRec.FirstLeft = orfl;
       }
-      //------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
 
-      private bool ExecuteInternal()
+        /// <summary>
+        /// Executes the internal.
+        /// </summary>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
+        private bool ExecuteInternal()
       {
         try
         {
@@ -1578,15 +2375,24 @@ namespace ClipperLib
           m_GhostJoins.Clear();          
         }
       }
-      //------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
 
-      private void DisposeAllPolyPts(){
+        /// <summary>
+        /// Disposes all poly PTS.
+        /// </summary>
+        private void DisposeAllPolyPts(){
         for (int i = 0; i < m_PolyOuts.Count; ++i) DisposeOutRec(i);
         m_PolyOuts.Clear();
       }
-      //------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
 
-      private void AddJoin(OutPt Op1, OutPt Op2, IntPoint OffPt)
+        /// <summary>
+        /// Adds the join.
+        /// </summary>
+        /// <param name="Op1">The op1.</param>
+        /// <param name="Op2">The op2.</param>
+        /// <param name="OffPt">The off pt.</param>
+        private void AddJoin(OutPt Op1, OutPt Op2, IntPoint OffPt)
       {
         Join j = new Join();
         j.OutPt1 = Op1;
@@ -1594,16 +2400,21 @@ namespace ClipperLib
         j.OffPt = OffPt;
         m_Joins.Add(j);
       }
-      //------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
 
-      private void AddGhostJoin(OutPt Op, IntPoint OffPt)
+        /// <summary>
+        /// Adds the ghost join.
+        /// </summary>
+        /// <param name="Op">The op.</param>
+        /// <param name="OffPt">The off pt.</param>
+        private void AddGhostJoin(OutPt Op, IntPoint OffPt)
       {
         Join j = new Join();
         j.OutPt1 = Op;
         j.OffPt = OffPt;
         m_GhostJoins.Add(j);
       }
-      //------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
 
 #if use_xyz
       internal void SetZ(ref IntPoint pt, TEdge e1, TEdge e2)
@@ -1618,7 +2429,11 @@ namespace ClipperLib
       //------------------------------------------------------------------------------
 #endif
 
-      private void InsertLocalMinimaIntoAEL(cInt botY)
+        /// <summary>
+        /// Inserts the local minima into ael.
+        /// </summary>
+        /// <param name="botY">The bot y.</param>
+        private void InsertLocalMinimaIntoAEL(cInt botY)
       {
         LocalMinima lm;
         while (PopLocalMinima(botY, out lm))
@@ -1715,9 +2530,14 @@ namespace ClipperLib
           }
         }
       }
-      //------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
 
-      private void InsertEdgeIntoAEL(TEdge edge, TEdge startEdge)
+        /// <summary>
+        /// Inserts the edge into ael.
+        /// </summary>
+        /// <param name="edge">The edge.</param>
+        /// <param name="startEdge">The start edge.</param>
+        private void InsertEdgeIntoAEL(TEdge edge, TEdge startEdge)
       {
         if (m_ActiveEdges == null)
         {
@@ -1744,9 +2564,15 @@ namespace ClipperLib
           startEdge.NextInAEL = edge;
         }
       }
-      //----------------------------------------------------------------------
+        //----------------------------------------------------------------------
 
-      private bool E2InsertsBeforeE1(TEdge e1, TEdge e2)
+        /// <summary>
+        /// E2s the inserts before e1.
+        /// </summary>
+        /// <param name="e1">The e1.</param>
+        /// <param name="e2">The e2.</param>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
+        private bool E2InsertsBeforeE1(TEdge e1, TEdge e2)
       {
           if (e2.Curr.X == e1.Curr.X)
           {
@@ -1756,27 +2582,42 @@ namespace ClipperLib
           }
           else return e2.Curr.X < e1.Curr.X;
       }
-      //------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
 
-      private bool IsEvenOddFillType(TEdge edge) 
+        /// <summary>
+        /// Determines whether [is even odd fill type] [the specified edge].
+        /// </summary>
+        /// <param name="edge">The edge.</param>
+        /// <returns><c>true</c> if [is even odd fill type] [the specified edge]; otherwise, <c>false</c>.</returns>
+        private bool IsEvenOddFillType(TEdge edge) 
       {
         if (edge.PolyTyp == PolyType.ptSubject)
             return m_SubjFillType == PolyFillType.EvenOdd; 
         else
             return m_ClipFillType == PolyFillType.EvenOdd;
       }
-      //------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
 
-      private bool IsEvenOddAltFillType(TEdge edge) 
+        /// <summary>
+        /// Determines whether [is even odd alt fill type] [the specified edge].
+        /// </summary>
+        /// <param name="edge">The edge.</param>
+        /// <returns><c>true</c> if [is even odd alt fill type] [the specified edge]; otherwise, <c>false</c>.</returns>
+        private bool IsEvenOddAltFillType(TEdge edge) 
       {
         if (edge.PolyTyp == PolyType.ptSubject)
             return m_ClipFillType == PolyFillType.EvenOdd; 
         else
             return m_SubjFillType == PolyFillType.EvenOdd;
       }
-      //------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
 
-      private bool IsContributing(TEdge edge)
+        /// <summary>
+        /// Determines whether the specified edge is contributing.
+        /// </summary>
+        /// <param name="edge">The edge.</param>
+        /// <returns><c>true</c> if the specified edge is contributing; otherwise, <c>false</c>.</returns>
+        private bool IsContributing(TEdge edge)
       {
           PolyFillType pft, pft2;
           if (edge.PolyTyp == PolyType.ptSubject)
@@ -1871,9 +2712,13 @@ namespace ClipperLib
           }
           return true;
       }
-      //------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
 
-      private void SetWindingCount(TEdge edge)
+        /// <summary>
+        /// Sets the winding count.
+        /// </summary>
+        /// <param name="edge">The edge.</param>
+        private void SetWindingCount(TEdge edge)
       {
         TEdge e = edge.PrevInAEL;
         //find the edge of the same polytype that immediately preceeds 'edge' in AEL
@@ -1972,9 +2817,13 @@ namespace ClipperLib
           }
         }
       }
-      //------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
 
-      private void AddEdgeToSEL(TEdge edge)
+        /// <summary>
+        /// Adds the edge to sel.
+        /// </summary>
+        /// <param name="edge">The edge.</param>
+        private void AddEdgeToSEL(TEdge edge)
       {
         //SEL pointers in PEdge are use to build transient lists of horizontal edges.
         //However, since we don't need to worry about processing order, all additions
@@ -1993,9 +2842,14 @@ namespace ClipperLib
             m_SortedEdges = edge;
         }
       }
-      //------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
 
-      internal Boolean PopEdgeFromSEL(out TEdge e)
+        /// <summary>
+        /// Pops the edge from sel.
+        /// </summary>
+        /// <param name="e">The e.</param>
+        /// <returns>Boolean.</returns>
+        internal Boolean PopEdgeFromSEL(out TEdge e)
       {
         //Pop edge from front of SEL (ie SEL is a FILO list)
         e = m_SortedEdges;
@@ -2007,9 +2861,12 @@ namespace ClipperLib
         oldE.PrevInSEL = null;
         return true;
       }
-      //------------------------------------------------------------------------------
-     
-      private void CopyAELToSEL()
+        //------------------------------------------------------------------------------
+
+        /// <summary>
+        /// Copies the ael to sel.
+        /// </summary>
+        private void CopyAELToSEL()
       {
           TEdge e = m_ActiveEdges;
           m_SortedEdges = e;
@@ -2020,9 +2877,14 @@ namespace ClipperLib
               e = e.NextInAEL;
           }
       }
-      //------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
 
-      private void SwapPositionsInSEL(TEdge edge1, TEdge edge2)
+        /// <summary>
+        /// Swaps the positions in sel.
+        /// </summary>
+        /// <param name="edge1">The edge1.</param>
+        /// <param name="edge2">The edge2.</param>
+        private void SwapPositionsInSEL(TEdge edge1, TEdge edge2)
       {
           if (edge1.NextInSEL == null && edge1.PrevInSEL == null)
               return;
@@ -2078,10 +2940,16 @@ namespace ClipperLib
           else if (edge2.PrevInSEL == null)
               m_SortedEdges = edge2;
       }
-      //------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
 
 
-      private void AddLocalMaxPoly(TEdge e1, TEdge e2, IntPoint pt)
+        /// <summary>
+        /// Adds the local maximum poly.
+        /// </summary>
+        /// <param name="e1">The e1.</param>
+        /// <param name="e2">The e2.</param>
+        /// <param name="pt">The pt.</param>
+        private void AddLocalMaxPoly(TEdge e1, TEdge e2, IntPoint pt)
       {
           AddOutPt(e1, pt);
           if (e2.WindDelta == 0) AddOutPt(e2, pt);
@@ -2095,9 +2963,16 @@ namespace ClipperLib
           else 
               AppendPolygon(e2, e1);
       }
-      //------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
 
-      private OutPt AddLocalMinPoly(TEdge e1, TEdge e2, IntPoint pt)
+        /// <summary>
+        /// Adds the local minimum poly.
+        /// </summary>
+        /// <param name="e1">The e1.</param>
+        /// <param name="e2">The e2.</param>
+        /// <param name="pt">The pt.</param>
+        /// <returns>OutPt.</returns>
+        private OutPt AddLocalMinPoly(TEdge e1, TEdge e2, IntPoint pt)
       {
         OutPt result;
         TEdge e, prevE;
@@ -2139,9 +3014,15 @@ namespace ClipperLib
         }
         return result;
       }
-      //------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
 
-      private OutPt AddOutPt(TEdge e, IntPoint pt)
+        /// <summary>
+        /// Adds the out pt.
+        /// </summary>
+        /// <param name="e">The e.</param>
+        /// <param name="pt">The pt.</param>
+        /// <returns>OutPt.</returns>
+        private OutPt AddOutPt(TEdge e, IntPoint pt)
       {
           if (e.OutIdx < 0)
           {
@@ -2178,9 +3059,14 @@ namespace ClipperLib
               return newOp;
           }
       }
-      //------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
 
-      private OutPt GetLastOutPt(TEdge e)
+        /// <summary>
+        /// Gets the last out pt.
+        /// </summary>
+        /// <param name="e">The e.</param>
+        /// <returns>OutPt.</returns>
+        private OutPt GetLastOutPt(TEdge e)
       {
         OutRec outRec = m_PolyOuts[e.OutIdx];
         if (e.Side == EdgeSide.esLeft) 
@@ -2188,25 +3074,43 @@ namespace ClipperLib
         else
             return outRec.Pts.Prev;
       }
-      //------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
 
-      internal void SwapPoints(ref IntPoint pt1, ref IntPoint pt2)
+        /// <summary>
+        /// Swaps the points.
+        /// </summary>
+        /// <param name="pt1">The PT1.</param>
+        /// <param name="pt2">The PT2.</param>
+        internal void SwapPoints(ref IntPoint pt1, ref IntPoint pt2)
       {
           IntPoint tmp = new IntPoint(pt1);
           pt1 = pt2;
           pt2 = tmp;
       }
-      //------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
 
-      private bool HorzSegmentsOverlap(cInt seg1a, cInt seg1b, cInt seg2a, cInt seg2b)
+        /// <summary>
+        /// Horzs the segments overlap.
+        /// </summary>
+        /// <param name="seg1a">The seg1a.</param>
+        /// <param name="seg1b">The seg1b.</param>
+        /// <param name="seg2a">The seg2a.</param>
+        /// <param name="seg2b">The seg2b.</param>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
+        private bool HorzSegmentsOverlap(cInt seg1a, cInt seg1b, cInt seg2a, cInt seg2b)
       {
         if (seg1a > seg1b) Swap(ref seg1a, ref seg1b);
         if (seg2a > seg2b) Swap(ref seg2a, ref seg2b);
         return (seg1a < seg2b) && (seg2a < seg1b);
       }
-      //------------------------------------------------------------------------------
-  
-      private void SetHoleState(TEdge e, OutRec outRec)
+        //------------------------------------------------------------------------------
+
+        /// <summary>
+        /// Sets the state of the hole.
+        /// </summary>
+        /// <param name="e">The e.</param>
+        /// <param name="outRec">The out record.</param>
+        private void SetHoleState(TEdge e, OutRec outRec)
       {
         TEdge e2 = e.PrevInAEL;
         TEdge eTmp = null;  
@@ -2233,16 +3137,28 @@ namespace ClipperLib
           outRec.IsHole = !outRec.FirstLeft.IsHole;
         }
       }
-      //------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
 
-      private double GetDx(IntPoint pt1, IntPoint pt2)
+        /// <summary>
+        /// Gets the dx.
+        /// </summary>
+        /// <param name="pt1">The PT1.</param>
+        /// <param name="pt2">The PT2.</param>
+        /// <returns>System.Double.</returns>
+        private double GetDx(IntPoint pt1, IntPoint pt2)
       {
           if (pt1.Y == pt2.Y) return horizontal;
           else return (double)(pt2.X - pt1.X) / (pt2.Y - pt1.Y);
       }
-      //---------------------------------------------------------------------------
+        //---------------------------------------------------------------------------
 
-      private bool FirstIsBottomPt(OutPt btmPt1, OutPt btmPt2)
+        /// <summary>
+        /// Firsts the is bottom pt.
+        /// </summary>
+        /// <param name="btmPt1">The BTM PT1.</param>
+        /// <param name="btmPt2">The BTM PT2.</param>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
+        private bool FirstIsBottomPt(OutPt btmPt1, OutPt btmPt2)
       {
         OutPt p = btmPt1.Prev;
         while ((p.Pt == btmPt1.Pt) && (p != btmPt1)) p = p.Prev;
@@ -2264,9 +3180,14 @@ namespace ClipperLib
         else
           return (dx1p >= dx2p && dx1p >= dx2n) || (dx1n >= dx2p && dx1n >= dx2n);
       }
-      //------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
 
-      private OutPt GetBottomPt(OutPt pp)
+        /// <summary>
+        /// Gets the bottom pt.
+        /// </summary>
+        /// <param name="pp">The pp.</param>
+        /// <returns>OutPt.</returns>
+        private OutPt GetBottomPt(OutPt pp)
       {
         OutPt dups = null;
         OutPt p = pp.Next;
@@ -2302,9 +3223,15 @@ namespace ClipperLib
         }
         return pp;
       }
-      //------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
 
-      private OutRec GetLowermostRec(OutRec outRec1, OutRec outRec2)
+        /// <summary>
+        /// Gets the lowermost record.
+        /// </summary>
+        /// <param name="outRec1">The out rec1.</param>
+        /// <param name="outRec2">The out rec2.</param>
+        /// <returns>OutRec.</returns>
+        private OutRec GetLowermostRec(OutRec outRec1, OutRec outRec2)
       {
           //work out which polygon fragment has the correct hole state ...
           if (outRec1.BottomPt == null) 
@@ -2322,9 +3249,15 @@ namespace ClipperLib
           else if (FirstIsBottomPt(bPt1, bPt2)) return outRec1;
           else return outRec2;
       }
-      //------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
 
-      bool OutRec1RightOfOutRec2(OutRec outRec1, OutRec outRec2)
+        /// <summary>
+        /// Outs the rec1 right of out rec2.
+        /// </summary>
+        /// <param name="outRec1">The out rec1.</param>
+        /// <param name="outRec2">The out rec2.</param>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
+        bool OutRec1RightOfOutRec2(OutRec outRec1, OutRec outRec2)
       {
           do
           {
@@ -2333,18 +3266,28 @@ namespace ClipperLib
           } while (outRec1 != null);
           return false;
       }
-      //------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
 
-      private OutRec GetOutRec(int idx)
+        /// <summary>
+        /// Gets the out record.
+        /// </summary>
+        /// <param name="idx">The index.</param>
+        /// <returns>OutRec.</returns>
+        private OutRec GetOutRec(int idx)
       {
         OutRec outrec = m_PolyOuts[idx];
         while (outrec != m_PolyOuts[outrec.Idx])
           outrec = m_PolyOuts[outrec.Idx];
         return outrec;
       }
-      //------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
 
-      private void AppendPolygon(TEdge e1, TEdge e2)
+        /// <summary>
+        /// Appends the polygon.
+        /// </summary>
+        /// <param name="e1">The e1.</param>
+        /// <param name="e2">The e2.</param>
+        private void AppendPolygon(TEdge e1, TEdge e2)
       {
         OutRec outRec1 = m_PolyOuts[e1.OutIdx];
         OutRec outRec2 = m_PolyOuts[e2.OutIdx];
@@ -2436,9 +3379,13 @@ namespace ClipperLib
         }
         outRec2.Idx = outRec1.Idx;
       }
-      //------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
 
-      private void ReversePolyPtLinks(OutPt pp)
+        /// <summary>
+        /// Reverses the poly pt links.
+        /// </summary>
+        /// <param name="pp">The pp.</param>
+        private void ReversePolyPtLinks(OutPt pp)
       {
           if (pp == null) return;
           OutPt pp1;
@@ -2452,25 +3399,41 @@ namespace ClipperLib
               pp1 = pp2;
           } while (pp1 != pp);
       }
-      //------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
 
-      private static void SwapSides(TEdge edge1, TEdge edge2)
+        /// <summary>
+        /// Swaps the sides.
+        /// </summary>
+        /// <param name="edge1">The edge1.</param>
+        /// <param name="edge2">The edge2.</param>
+        private static void SwapSides(TEdge edge1, TEdge edge2)
       {
           EdgeSide side = edge1.Side;
           edge1.Side = edge2.Side;
           edge2.Side = side;
       }
-      //------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
 
-      private static void SwapPolyIndexes(TEdge edge1, TEdge edge2)
+        /// <summary>
+        /// Swaps the poly indexes.
+        /// </summary>
+        /// <param name="edge1">The edge1.</param>
+        /// <param name="edge2">The edge2.</param>
+        private static void SwapPolyIndexes(TEdge edge1, TEdge edge2)
       {
           int outIdx = edge1.OutIdx;
           edge1.OutIdx = edge2.OutIdx;
           edge2.OutIdx = outIdx;
       }
-      //------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
 
-      private void IntersectEdges(TEdge e1, TEdge e2, IntPoint pt)
+        /// <summary>
+        /// Intersects the edges.
+        /// </summary>
+        /// <param name="e1">The e1.</param>
+        /// <param name="e2">The e2.</param>
+        /// <param name="pt">The pt.</param>
+        private void IntersectEdges(TEdge e1, TEdge e2, IntPoint pt)
       {
           //e1 will be to the left of e2 BELOW the intersection. Therefore e1 is before
           //e2 in AEL except when e1 is being inserted at the intersection point ...
@@ -2670,9 +3633,13 @@ namespace ClipperLib
                 SwapSides(e1, e2);
           }
       }
-      //------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
 
-      private void DeleteFromSEL(TEdge e)
+        /// <summary>
+        /// Deletes from sel.
+        /// </summary>
+        /// <param name="e">The e.</param>
+        private void DeleteFromSEL(TEdge e)
       {
           TEdge SelPrev = e.PrevInSEL;
           TEdge SelNext = e.NextInSEL;
@@ -2686,17 +3653,27 @@ namespace ClipperLib
           e.NextInSEL = null;
           e.PrevInSEL = null;
       }
-      //------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
 
-      private void ProcessHorizontals()
+        /// <summary>
+        /// Processes the horizontals.
+        /// </summary>
+        private void ProcessHorizontals()
       {
           TEdge horzEdge; //m_SortedEdges;
           while (PopEdgeFromSEL(out horzEdge))
             ProcessHorizontal(horzEdge);
       }
-      //------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
 
-      void GetHorzDirection(TEdge HorzEdge, out Direction Dir, out cInt Left, out cInt Right)
+        /// <summary>
+        /// Gets the horz direction.
+        /// </summary>
+        /// <param name="HorzEdge">The horz edge.</param>
+        /// <param name="Dir">The dir.</param>
+        /// <param name="Left">The left.</param>
+        /// <param name="Right">The right.</param>
+        void GetHorzDirection(TEdge HorzEdge, out Direction Dir, out cInt Left, out cInt Right)
       {
         if (HorzEdge.Bot.X < HorzEdge.Top.X)
         {
@@ -2710,9 +3687,13 @@ namespace ClipperLib
           Dir = Direction.dRightToLeft;
         }
       }
-      //------------------------------------------------------------------------
+        //------------------------------------------------------------------------
 
-      private void ProcessHorizontal(TEdge horzEdge)
+        /// <summary>
+        /// Processes the horizontal.
+        /// </summary>
+        /// <param name="horzEdge">The horz edge.</param>
+        private void ProcessHorizontal(TEdge horzEdge)
       {
         Direction dir;
         cInt horzLeft, horzRight;
@@ -2899,33 +3880,61 @@ namespace ClipperLib
           DeleteFromAEL(horzEdge);
         }
       }
-      //------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
 
-      private TEdge GetNextInAEL(TEdge e, Direction Direction)
+        /// <summary>
+        /// Gets the next in ael.
+        /// </summary>
+        /// <param name="e">The e.</param>
+        /// <param name="Direction">The direction.</param>
+        /// <returns>TEdge.</returns>
+        private TEdge GetNextInAEL(TEdge e, Direction Direction)
       {
           return Direction == Direction.dLeftToRight ? e.NextInAEL: e.PrevInAEL;
       }
-      //------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
 
-      private bool IsMinima(TEdge e)
+        /// <summary>
+        /// Determines whether the specified e is minima.
+        /// </summary>
+        /// <param name="e">The e.</param>
+        /// <returns><c>true</c> if the specified e is minima; otherwise, <c>false</c>.</returns>
+        private bool IsMinima(TEdge e)
       {
           return e != null && (e.Prev.NextInLML != e) && (e.Next.NextInLML != e);
       }
-      //------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
 
-      private bool IsMaxima(TEdge e, double Y)
+        /// <summary>
+        /// Determines whether the specified e is maxima.
+        /// </summary>
+        /// <param name="e">The e.</param>
+        /// <param name="Y">The y.</param>
+        /// <returns><c>true</c> if the specified e is maxima; otherwise, <c>false</c>.</returns>
+        private bool IsMaxima(TEdge e, double Y)
       {
           return (e != null && e.Top.Y == Y && e.NextInLML == null);
       }
-      //------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
 
-      private bool IsIntermediate(TEdge e, double Y)
+        /// <summary>
+        /// Determines whether the specified e is intermediate.
+        /// </summary>
+        /// <param name="e">The e.</param>
+        /// <param name="Y">The y.</param>
+        /// <returns><c>true</c> if the specified e is intermediate; otherwise, <c>false</c>.</returns>
+        private bool IsIntermediate(TEdge e, double Y)
       {
           return (e.Top.Y == Y && e.NextInLML != null);
       }
-      //------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
 
-      internal TEdge GetMaximaPair(TEdge e)
+        /// <summary>
+        /// Gets the maxima pair.
+        /// </summary>
+        /// <param name="e">The e.</param>
+        /// <returns>TEdge.</returns>
+        internal TEdge GetMaximaPair(TEdge e)
       {
         if ((e.Next.Top == e.Top) && e.Next.NextInLML == null)
           return e.Next;
@@ -2934,9 +3943,14 @@ namespace ClipperLib
         else 
 					return null;
       }
-      //------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
 
-      internal TEdge GetMaximaPairEx(TEdge e)
+        /// <summary>
+        /// Gets the maxima pair ex.
+        /// </summary>
+        /// <param name="e">The e.</param>
+        /// <returns>TEdge.</returns>
+        internal TEdge GetMaximaPairEx(TEdge e)
       {
         //as above but returns null if MaxPair isn't in AEL (unless it's horizontal)
         TEdge result = GetMaximaPair(e);
@@ -2944,9 +3958,15 @@ namespace ClipperLib
           ((result.NextInAEL == result.PrevInAEL) && !IsHorizontal(result))) return null;
         return result;
       }
-      //------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
 
-      private bool ProcessIntersections(cInt topY)
+        /// <summary>
+        /// Processes the intersections.
+        /// </summary>
+        /// <param name="topY">The top y.</param>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
+        /// <exception cref="ClipperLib.ClipperException">ProcessIntersections error</exception>
+        private bool ProcessIntersections(cInt topY)
       {
         if( m_ActiveEdges == null ) return true;
         try {
@@ -2965,9 +3985,13 @@ namespace ClipperLib
         m_SortedEdges = null;
         return true;
       }
-      //------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
 
-      private void BuildIntersectList(cInt topY)
+        /// <summary>
+        /// Builds the intersect list.
+        /// </summary>
+        /// <param name="topY">The top y.</param>
+        private void BuildIntersectList(cInt topY)
       {
         if ( m_ActiveEdges == null ) return;
 
@@ -3014,24 +4038,39 @@ namespace ClipperLib
         }
         m_SortedEdges = null;
       }
-      //------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
 
-      private bool EdgesAdjacent(IntersectNode inode)
+        /// <summary>
+        /// Edgeses the adjacent.
+        /// </summary>
+        /// <param name="inode">The inode.</param>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
+        private bool EdgesAdjacent(IntersectNode inode)
       {
         return (inode.Edge1.NextInSEL == inode.Edge2) ||
           (inode.Edge1.PrevInSEL == inode.Edge2);
       }
-      //------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
 
-      private static int IntersectNodeSort(IntersectNode node1, IntersectNode node2)
+        /// <summary>
+        /// Intersects the node sort.
+        /// </summary>
+        /// <param name="node1">The node1.</param>
+        /// <param name="node2">The node2.</param>
+        /// <returns>System.Int32.</returns>
+        private static int IntersectNodeSort(IntersectNode node1, IntersectNode node2)
       {
         //the following typecast is safe because the differences in Pt.Y will
         //be limited to the height of the scanbeam.
         return (int)(node2.Pt.Y - node1.Pt.Y); 
       }
-      //------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
 
-      private bool FixupIntersectionOrder()
+        /// <summary>
+        /// Fixups the intersection order.
+        /// </summary>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
+        private bool FixupIntersectionOrder()
       {
         //pre-condition: intersections are sorted bottom-most first.
         //Now it's crucial that intersections are made only between adjacent edges,
@@ -3057,9 +4096,12 @@ namespace ClipperLib
         }
           return true;
       }
-      //------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
 
-      private void ProcessIntersectList()
+        /// <summary>
+        /// Processes the intersect list.
+        /// </summary>
+        private void ProcessIntersectList()
       {
         for (int i = 0; i < m_IntersectList.Count; i++)
         {
@@ -3071,23 +4113,40 @@ namespace ClipperLib
         }
         m_IntersectList.Clear();
       }
-      //------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
 
-      internal static cInt Round(double value)
+        /// <summary>
+        /// Rounds the specified value.
+        /// </summary>
+        /// <param name="value">The value.</param>
+        /// <returns>cInt.</returns>
+        internal static cInt Round(double value)
       {
           return value < 0 ? (cInt)(value - 0.5) : (cInt)(value + 0.5);
       }
-      //------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
 
-      private static cInt TopX(TEdge edge, cInt currentY)
+        /// <summary>
+        /// Tops the x.
+        /// </summary>
+        /// <param name="edge">The edge.</param>
+        /// <param name="currentY">The current y.</param>
+        /// <returns>cInt.</returns>
+        private static cInt TopX(TEdge edge, cInt currentY)
       {
           if (currentY == edge.Top.Y)
               return edge.Top.X;
           return edge.Bot.X + Round(edge.Dx *(currentY - edge.Bot.Y));
       }
-      //------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
 
-      private void IntersectPoint(TEdge edge1, TEdge edge2, out IntPoint ip)
+        /// <summary>
+        /// Intersects the point.
+        /// </summary>
+        /// <param name="edge1">The edge1.</param>
+        /// <param name="edge2">The edge2.</param>
+        /// <param name="ip">The ip.</param>
+        private void IntersectPoint(TEdge edge1, TEdge edge2, out IntPoint ip)
       {
         ip = new IntPoint();
         double b1, b2;
@@ -3160,9 +4219,13 @@ namespace ClipperLib
             ip.X = TopX(edge1, ip.Y);
         }
       }
-      //------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
 
-      private void ProcessEdgesAtTopOfScanbeam(cInt topY)
+        /// <summary>
+        /// Processes the edges at top of scanbeam.
+        /// </summary>
+        /// <param name="topY">The top y.</param>
+        private void ProcessEdgesAtTopOfScanbeam(cInt topY)
       {
         TEdge e = m_ActiveEdges;
         while(e != null)
@@ -3268,9 +4331,14 @@ namespace ClipperLib
           e = e.NextInAEL;
         }
       }
-      //------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
 
-      private void DoMaxima(TEdge e)
+        /// <summary>
+        /// Does the maxima.
+        /// </summary>
+        /// <param name="e">The e.</param>
+        /// <exception cref="ClipperLib.ClipperException">DoMaxima error</exception>
+        private void DoMaxima(TEdge e)
       {
         TEdge eMaxPair = GetMaximaPairEx(e);
         if (eMaxPair == null)
@@ -3320,21 +4388,35 @@ namespace ClipperLib
 #endif
         else throw new ClipperException("DoMaxima error");
       }
-      //------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
 
-      public static void ReversePaths(Paths polys)
+        /// <summary>
+        /// Reverses the paths.
+        /// </summary>
+        /// <param name="polys">The polys.</param>
+        public static void ReversePaths(Paths polys)
       {
         foreach (var poly in polys) { poly.Reverse(); }
       }
-      //------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
 
-      public static bool Orientation(Path poly)
+        /// <summary>
+        /// Orientations the specified poly.
+        /// </summary>
+        /// <param name="poly">The poly.</param>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
+        public static bool Orientation(Path poly)
       {
           return Area(poly) >= 0;
       }
-      //------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
 
-      private int PointCount(OutPt pts)
+        /// <summary>
+        /// Points the count.
+        /// </summary>
+        /// <param name="pts">The PTS.</param>
+        /// <returns>System.Int32.</returns>
+        private int PointCount(OutPt pts)
       {
           if (pts == null) return 0;
           int result = 0;
@@ -3347,9 +4429,13 @@ namespace ClipperLib
           while (p != pts);
           return result;
       }
-      //------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
 
-      private void BuildResult(Paths polyg)
+        /// <summary>
+        /// Builds the result.
+        /// </summary>
+        /// <param name="polyg">The polyg.</param>
+        private void BuildResult(Paths polyg)
       {
           polyg.Clear();
           polyg.Capacity = m_PolyOuts.Count;
@@ -3369,9 +4455,13 @@ namespace ClipperLib
               polyg.Add(pg);
           }
       }
-      //------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
 
-      private void BuildResult2(PolyTree polytree)
+        /// <summary>
+        /// Builds the result2.
+        /// </summary>
+        /// <param name="polytree">The polytree.</param>
+        private void BuildResult2(PolyTree polytree)
       {
           polytree.Clear();
 
@@ -3414,9 +4504,13 @@ namespace ClipperLib
                 polytree.AddChild(outRec.PolyNode);
           }
       }
-      //------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
 
-      private void FixupOutPolyline(OutRec outrec)
+        /// <summary>
+        /// Fixups the out polyline.
+        /// </summary>
+        /// <param name="outrec">The outrec.</param>
+        private void FixupOutPolyline(OutRec outrec)
       {
         OutPt pp = outrec.Pts;
         OutPt lastPP = pp.Prev;
@@ -3434,9 +4528,13 @@ namespace ClipperLib
         }
         if (pp == pp.Prev) outrec.Pts = null;
       }
-      //------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
 
-      private void FixupOutPolygon(OutRec outRec)
+        /// <summary>
+        /// Fixups the out polygon.
+        /// </summary>
+        /// <param name="outRec">The out record.</param>
+        private void FixupOutPolygon(OutRec outRec)
       {
           //FixupOutPolygon() - removes duplicate points and simplifies consecutive
           //parallel edges by removing the middle vertex.
@@ -3470,9 +4568,15 @@ namespace ClipperLib
           }
           outRec.Pts = pp;
       }
-      //------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
 
-      OutPt DupOutPt(OutPt outPt, bool InsertAfter)
+        /// <summary>
+        /// Dups the out pt.
+        /// </summary>
+        /// <param name="outPt">The out pt.</param>
+        /// <param name="InsertAfter">if set to <c>true</c> [insert after].</param>
+        /// <returns>OutPt.</returns>
+        OutPt DupOutPt(OutPt outPt, bool InsertAfter)
       {
         OutPt result = new OutPt();
         result.Pt = outPt.Pt;
@@ -3493,9 +4597,19 @@ namespace ClipperLib
         }
         return result;
       }
-      //------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
 
-      bool GetOverlap(cInt a1, cInt a2, cInt b1, cInt b2, out cInt Left, out cInt Right)
+        /// <summary>
+        /// Gets the overlap.
+        /// </summary>
+        /// <param name="a1">The a1.</param>
+        /// <param name="a2">The a2.</param>
+        /// <param name="b1">The b1.</param>
+        /// <param name="b2">The b2.</param>
+        /// <param name="Left">The left.</param>
+        /// <param name="Right">The right.</param>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
+        bool GetOverlap(cInt a1, cInt a2, cInt b1, cInt b2, out cInt Left, out cInt Right)
       {
         if (a1 < a2)
         {
@@ -3509,9 +4623,19 @@ namespace ClipperLib
         }
         return Left < Right;
       }
-      //------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
 
-      bool JoinHorz(OutPt op1, OutPt op1b, OutPt op2, OutPt op2b, 
+        /// <summary>
+        /// Joins the horz.
+        /// </summary>
+        /// <param name="op1">The op1.</param>
+        /// <param name="op1b">The op1b.</param>
+        /// <param name="op2">The op2.</param>
+        /// <param name="op2b">The op2b.</param>
+        /// <param name="Pt">The pt.</param>
+        /// <param name="DiscardLeft">if set to <c>true</c> [discard left].</param>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
+        bool JoinHorz(OutPt op1, OutPt op1b, OutPt op2, OutPt op2b, 
         IntPoint Pt, bool DiscardLeft)
       {
         Direction Dir1 = (op1.Pt.X > op1b.Pt.X ? 
@@ -3598,9 +4722,16 @@ namespace ClipperLib
         }
         return true;
       }
-      //------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
 
-      private bool JoinPoints(Join j, OutRec outRec1, OutRec outRec2)
+        /// <summary>
+        /// Joins the points.
+        /// </summary>
+        /// <param name="j">The j.</param>
+        /// <param name="outRec1">The out rec1.</param>
+        /// <param name="outRec2">The out rec2.</param>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
+        private bool JoinPoints(Join j, OutRec outRec1, OutRec outRec2)
       {
         OutPt op1 = j.OutPt1, op1b;
         OutPt op2 = j.OutPt2, op2b;
@@ -3757,9 +4888,15 @@ namespace ClipperLib
           }
         }
       }
-      //----------------------------------------------------------------------
+        //----------------------------------------------------------------------
 
-      public static int PointInPolygon(IntPoint pt, Path path)
+        /// <summary>
+        /// Points the in polygon.
+        /// </summary>
+        /// <param name="pt">The pt.</param>
+        /// <param name="path">The path.</param>
+        /// <returns>System.Int32.</returns>
+        public static int PointInPolygon(IntPoint pt, Path path)
       {
         //returns 0 if false, +1 if true, -1 if pt ON polygon boundary
         //See "The Point in Polygon Problem for Arbitrary Polygons" by Hormann & Agathos
@@ -3803,11 +4940,17 @@ namespace ClipperLib
         }
         return result;
       }
-      //------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
 
-      //See "The Point in Polygon Problem for Arbitrary Polygons" by Hormann & Agathos
-      //http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.88.5498&rep=rep1&type=pdf
-      private static int PointInPolygon(IntPoint pt, OutPt op)
+        //See "The Point in Polygon Problem for Arbitrary Polygons" by Hormann & Agathos
+        //http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.88.5498&rep=rep1&type=pdf
+        /// <summary>
+        /// Points the in polygon.
+        /// </summary>
+        /// <param name="pt">The pt.</param>
+        /// <param name="op">The op.</param>
+        /// <returns>System.Int32.</returns>
+        private static int PointInPolygon(IntPoint pt, OutPt op)
       {
         //returns 0 if false, +1 if true, -1 if pt ON polygon boundary
         int result = 0;
@@ -3852,9 +4995,15 @@ namespace ClipperLib
         } while (startOp != op);
         return result;
       }
-      //------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
 
-      private static bool Poly2ContainsPoly1(OutPt outPt1, OutPt outPt2)
+        /// <summary>
+        /// Poly2s the contains poly1.
+        /// </summary>
+        /// <param name="outPt1">The out PT1.</param>
+        /// <param name="outPt2">The out PT2.</param>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
+        private static bool Poly2ContainsPoly1(OutPt outPt1, OutPt outPt2)
       {
         OutPt op = outPt1;
         do
@@ -3867,9 +5016,14 @@ namespace ClipperLib
         while (op != outPt1);
         return true;
       }
-      //----------------------------------------------------------------------
+        //----------------------------------------------------------------------
 
-      private void FixupFirstLefts1(OutRec OldOutRec, OutRec NewOutRec)
+        /// <summary>
+        /// Fixups the first lefts1.
+        /// </summary>
+        /// <param name="OldOutRec">The old out record.</param>
+        /// <param name="NewOutRec">Creates new outrec.</param>
+        private void FixupFirstLefts1(OutRec OldOutRec, OutRec NewOutRec)
       { 
         foreach (OutRec outRec in m_PolyOuts)
         {
@@ -3881,9 +5035,14 @@ namespace ClipperLib
           }
         }
       }
-      //----------------------------------------------------------------------
+        //----------------------------------------------------------------------
 
-      private void FixupFirstLefts2(OutRec innerOutRec, OutRec outerOutRec)
+        /// <summary>
+        /// Fixups the first lefts2.
+        /// </summary>
+        /// <param name="innerOutRec">The inner out record.</param>
+        /// <param name="outerOutRec">The outer out record.</param>
+        private void FixupFirstLefts2(OutRec innerOutRec, OutRec outerOutRec)
       {
         //A polygon has split into two such that one is now the inner of the other.
         //It's possible that these polygons now wrap around other polygons, so check
@@ -3905,9 +5064,14 @@ namespace ClipperLib
             outRec.FirstLeft = orfl;
         }
       }
-      //----------------------------------------------------------------------
+        //----------------------------------------------------------------------
 
-      private void FixupFirstLefts3(OutRec OldOutRec, OutRec NewOutRec)
+        /// <summary>
+        /// Fixups the first lefts3.
+        /// </summary>
+        /// <param name="OldOutRec">The old out record.</param>
+        /// <param name="NewOutRec">Creates new outrec.</param>
+        private void FixupFirstLefts3(OutRec OldOutRec, OutRec NewOutRec)
       {
         //same as FixupFirstLefts1 but doesn't call Poly2ContainsPoly1()
         foreach (OutRec outRec in m_PolyOuts)
@@ -3917,17 +5081,25 @@ namespace ClipperLib
             outRec.FirstLeft = NewOutRec;
         }
       }
-      //----------------------------------------------------------------------
+        //----------------------------------------------------------------------
 
-      private static OutRec ParseFirstLeft(OutRec FirstLeft)
+        /// <summary>
+        /// Parses the first left.
+        /// </summary>
+        /// <param name="FirstLeft">The first left.</param>
+        /// <returns>OutRec.</returns>
+        private static OutRec ParseFirstLeft(OutRec FirstLeft)
       {
         while (FirstLeft != null && FirstLeft.Pts == null) 
           FirstLeft = FirstLeft.FirstLeft;
         return FirstLeft;
       }
-      //------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
 
-    private void JoinCommonEdges()
+        /// <summary>
+        /// Joins the common edges.
+        /// </summary>
+        private void JoinCommonEdges()
       {
         for (int i = 0; i < m_Joins.Count; i++)
         {
@@ -4014,9 +5186,13 @@ namespace ClipperLib
           }
         }
       }
-      //------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
 
-      private void UpdateOutPtIdxs(OutRec outrec)
+        /// <summary>
+        /// Updates the out pt idxs.
+        /// </summary>
+        /// <param name="outrec">The outrec.</param>
+        private void UpdateOutPtIdxs(OutRec outrec)
       {  
         OutPt op = outrec.Pts;
         do
@@ -4026,9 +5202,12 @@ namespace ClipperLib
         }
         while(op != outrec.Pts);
       }
-      //------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
 
-      private void DoSimplePolygons()
+        /// <summary>
+        /// Does the simple polygons.
+        /// </summary>
+        private void DoSimplePolygons()
       {
         int i = 0;
         while (i < m_PolyOuts.Count) 
@@ -4088,9 +5267,14 @@ namespace ClipperLib
           while (op != outrec.Pts);
         }
       }
-      //------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
 
-      public static double Area(Path poly)
+        /// <summary>
+        /// Areas the specified poly.
+        /// </summary>
+        /// <param name="poly">The poly.</param>
+        /// <returns>System.Double.</returns>
+        public static double Area(Path poly)
       {
         int cnt = (int)poly.Count;
         if (cnt < 3) return 0;
@@ -4102,15 +5286,25 @@ namespace ClipperLib
         }
         return -a * 0.5;
       }
-      //------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
 
-      internal double Area(OutRec outRec)
+        /// <summary>
+        /// Areas the specified out record.
+        /// </summary>
+        /// <param name="outRec">The out record.</param>
+        /// <returns>System.Double.</returns>
+        internal double Area(OutRec outRec)
       {
         return Area(outRec.Pts);
       }
-      //------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
 
-      internal double Area(OutPt op)
+        /// <summary>
+        /// Areas the specified op.
+        /// </summary>
+        /// <param name="op">The op.</param>
+        /// <returns>System.Double.</returns>
+        internal double Area(OutPt op)
       {
         OutPt opFirst = op;
         if (op == null) return 0;
@@ -4122,12 +5316,18 @@ namespace ClipperLib
         return a * 0.5;
       }
 
-      //------------------------------------------------------------------------------
-      // SimplifyPolygon functions ...
-      // Convert self-intersecting polygons into simple polygons
-      //------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
+        // SimplifyPolygon functions ...
+        // Convert self-intersecting polygons into simple polygons
+        //------------------------------------------------------------------------------
 
-      public static Paths SimplifyPolygon(Path poly, 
+        /// <summary>
+        /// Simplifies the polygon.
+        /// </summary>
+        /// <param name="poly">The poly.</param>
+        /// <param name="fillType">Type of the fill.</param>
+        /// <returns>Paths.</returns>
+        public static Paths SimplifyPolygon(Path poly, 
             PolyFillType fillType = PolyFillType.EvenOdd)
       {
           Paths result = new Paths();
@@ -4137,9 +5337,15 @@ namespace ClipperLib
           c.Execute(ClipType.Union, result, fillType, fillType);
           return result;
       }
-      //------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
 
-      public static Paths SimplifyPolygons(Paths polys,
+        /// <summary>
+        /// Simplifies the polygons.
+        /// </summary>
+        /// <param name="polys">The polys.</param>
+        /// <param name="fillType">Type of the fill.</param>
+        /// <returns>Paths.</returns>
+        public static Paths SimplifyPolygons(Paths polys,
           PolyFillType fillType = PolyFillType.EvenOdd)
       {
           Paths result = new Paths();
@@ -4149,17 +5355,30 @@ namespace ClipperLib
           c.Execute(ClipType.Union, result, fillType, fillType);
           return result;
       }
-      //------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
 
-      private static double DistanceSqrd(IntPoint pt1, IntPoint pt2)
+        /// <summary>
+        /// Distances the SQRD.
+        /// </summary>
+        /// <param name="pt1">The PT1.</param>
+        /// <param name="pt2">The PT2.</param>
+        /// <returns>System.Double.</returns>
+        private static double DistanceSqrd(IntPoint pt1, IntPoint pt2)
       {
         double dx = ((double)pt1.X - pt2.X);
         double dy = ((double)pt1.Y - pt2.Y);
         return (dx*dx + dy*dy);
       }
-      //------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
 
-      private static double DistanceFromLineSqrd(IntPoint pt, IntPoint ln1, IntPoint ln2)
+        /// <summary>
+        /// Distances from line SQRD.
+        /// </summary>
+        /// <param name="pt">The pt.</param>
+        /// <param name="ln1">The LN1.</param>
+        /// <param name="ln2">The LN2.</param>
+        /// <returns>System.Double.</returns>
+        private static double DistanceFromLineSqrd(IntPoint pt, IntPoint ln1, IntPoint ln2)
       {
         //The equation of a line in general form (Ax + By + C = 0)
         //given 2 points (x¹,y¹) & (x²,y²) is ...
@@ -4173,9 +5392,17 @@ namespace ClipperLib
         C = A * pt.X + B * pt.Y - C;
         return (C * C) / (A * A + B * B);
       }
-      //---------------------------------------------------------------------------
+        //---------------------------------------------------------------------------
 
-      private static bool SlopesNearCollinear(IntPoint pt1, 
+        /// <summary>
+        /// Slopeses the near collinear.
+        /// </summary>
+        /// <param name="pt1">The PT1.</param>
+        /// <param name="pt2">The PT2.</param>
+        /// <param name="pt3">The PT3.</param>
+        /// <param name="distSqrd">The dist SQRD.</param>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
+        private static bool SlopesNearCollinear(IntPoint pt1, 
           IntPoint pt2, IntPoint pt3, double distSqrd)
       {
         //this function is more accurate when the point that's GEOMETRICALLY 
@@ -4200,17 +5427,29 @@ namespace ClipperLib
             return DistanceFromLineSqrd(pt3, pt1, pt2) < distSqrd;
 	      }
       }
-      //------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
 
-      private static bool PointsAreClose(IntPoint pt1, IntPoint pt2, double distSqrd)
+        /// <summary>
+        /// Pointses the are close.
+        /// </summary>
+        /// <param name="pt1">The PT1.</param>
+        /// <param name="pt2">The PT2.</param>
+        /// <param name="distSqrd">The dist SQRD.</param>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
+        private static bool PointsAreClose(IntPoint pt1, IntPoint pt2, double distSqrd)
       {
           double dx = (double)pt1.X - pt2.X;
           double dy = (double)pt1.Y - pt2.Y;
           return ((dx * dx) + (dy * dy) <= distSqrd);
       }
-      //------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
 
-      private static OutPt ExcludeOp(OutPt op)
+        /// <summary>
+        /// Excludes the op.
+        /// </summary>
+        /// <param name="op">The op.</param>
+        /// <returns>OutPt.</returns>
+        private static OutPt ExcludeOp(OutPt op)
       {
         OutPt result = op.Prev;
         result.Next = op.Next;
@@ -4218,9 +5457,15 @@ namespace ClipperLib
         result.Idx = 0;
         return result;
       }
-      //------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
 
-      public static Path CleanPolygon(Path path, double distance = 1.415)
+        /// <summary>
+        /// Cleans the polygon.
+        /// </summary>
+        /// <param name="path">The path.</param>
+        /// <param name="distance">The distance.</param>
+        /// <returns>Path.</returns>
+        public static Path CleanPolygon(Path path, double distance = 1.415)
       {
         //distance = proximity in units/pixels below which vertices will be stripped. 
         //Default ~= sqrt(2) so when adjacent vertices or semi-adjacent vertices have 
@@ -4278,9 +5523,15 @@ namespace ClipperLib
         outPts = null;
         return result;
       }
-      //------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
 
-      public static Paths CleanPolygons(Paths polys,
+        /// <summary>
+        /// Cleans the polygons.
+        /// </summary>
+        /// <param name="polys">The polys.</param>
+        /// <param name="distance">The distance.</param>
+        /// <returns>Paths.</returns>
+        public static Paths CleanPolygons(Paths polys,
           double distance = 1.415)
       {
         Paths result = new Paths(polys.Count);
@@ -4288,9 +5539,17 @@ namespace ClipperLib
           result.Add(CleanPolygon(polys[i], distance));
         return result;
       }
-      //------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
 
-      internal static Paths Minkowski(Path pattern, Path path, bool IsSum, bool IsClosed)
+        /// <summary>
+        /// Minkowskis the specified pattern.
+        /// </summary>
+        /// <param name="pattern">The pattern.</param>
+        /// <param name="path">The path.</param>
+        /// <param name="IsSum">if set to <c>true</c> [is sum].</param>
+        /// <param name="IsClosed">if set to <c>true</c> [is closed].</param>
+        /// <returns>Paths.</returns>
+        internal static Paths Minkowski(Path pattern, Path path, bool IsSum, bool IsClosed)
       {
         int delta = (IsClosed ? 1 : 0);
         int polyCnt = pattern.Count;
@@ -4327,9 +5586,16 @@ namespace ClipperLib
           }
         return quads;
       }
-      //------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
 
-      public static Paths MinkowskiSum(Path pattern, Path path, bool pathIsClosed)
+        /// <summary>
+        /// Minkowskis the sum.
+        /// </summary>
+        /// <param name="pattern">The pattern.</param>
+        /// <param name="path">The path.</param>
+        /// <param name="pathIsClosed">if set to <c>true</c> [path is closed].</param>
+        /// <returns>Paths.</returns>
+        public static Paths MinkowskiSum(Path pattern, Path path, bool pathIsClosed)
       {
         Paths paths = Minkowski(pattern, path, true, pathIsClosed);
         Clipper c = new Clipper();
@@ -4337,18 +5603,31 @@ namespace ClipperLib
         c.Execute(ClipType.Union, paths, PolyFillType.NonZero, PolyFillType.NonZero);
         return paths;
       }
-      //------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
 
-      private static Path TranslatePath(Path path, IntPoint delta) 
+        /// <summary>
+        /// Translates the path.
+        /// </summary>
+        /// <param name="path">The path.</param>
+        /// <param name="delta">The delta.</param>
+        /// <returns>Path.</returns>
+        private static Path TranslatePath(Path path, IntPoint delta) 
       {
         Path outPath = new Path(path.Count);
         for (int i = 0; i < path.Count; i++)
           outPath.Add(new IntPoint(path[i].X + delta.X, path[i].Y + delta.Y));
         return outPath;
       }
-      //------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
 
-      public static Paths MinkowskiSum(Path pattern, Paths paths, bool pathIsClosed)
+        /// <summary>
+        /// Minkowskis the sum.
+        /// </summary>
+        /// <param name="pattern">The pattern.</param>
+        /// <param name="paths">The paths.</param>
+        /// <param name="pathIsClosed">if set to <c>true</c> [path is closed].</param>
+        /// <returns>Paths.</returns>
+        public static Paths MinkowskiSum(Path pattern, Paths paths, bool pathIsClosed)
       {
         Paths solution = new Paths();
         Clipper c = new Clipper();
@@ -4366,9 +5645,15 @@ namespace ClipperLib
           PolyFillType.NonZero, PolyFillType.NonZero);
         return solution;
       }
-      //------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
 
-      public static Paths MinkowskiDiff(Path poly1, Path poly2)
+        /// <summary>
+        /// Minkowskis the difference.
+        /// </summary>
+        /// <param name="poly1">The poly1.</param>
+        /// <param name="poly2">The poly2.</param>
+        /// <returns>Paths.</returns>
+        public static Paths MinkowskiDiff(Path poly1, Path poly2)
       {
         Paths paths = Minkowski(poly1, poly2, false, true);
         Clipper c = new Clipper();
@@ -4376,11 +5661,19 @@ namespace ClipperLib
         c.Execute(ClipType.Union, paths, PolyFillType.NonZero, PolyFillType.NonZero);
         return paths;
       }
-      //------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
 
-      internal enum NodeType { ntAny, ntOpen, ntClosed };
+        /// <summary>
+        /// Enum NodeType
+        /// </summary>
+        internal enum NodeType { ntAny, ntOpen, ntClosed };
 
-      public static Paths PolyTreeToPaths(PolyTree polytree)
+        /// <summary>
+        /// Polies the tree to paths.
+        /// </summary>
+        /// <param name="polytree">The polytree.</param>
+        /// <returns>Paths.</returns>
+        public static Paths PolyTreeToPaths(PolyTree polytree)
       {
 
         Paths result = new Paths();
@@ -4388,9 +5681,15 @@ namespace ClipperLib
         AddPolyNodeToPaths(polytree, NodeType.ntAny, result);
         return result;
       }
-      //------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
 
-      internal static void AddPolyNodeToPaths(PolyNode polynode, NodeType nt, Paths paths)
+        /// <summary>
+        /// Adds the poly node to paths.
+        /// </summary>
+        /// <param name="polynode">The polynode.</param>
+        /// <param name="nt">The nt.</param>
+        /// <param name="paths">The paths.</param>
+        internal static void AddPolyNodeToPaths(PolyNode polynode, NodeType nt, Paths paths)
       {
         bool match = true;
         switch (nt)
@@ -4405,9 +5704,14 @@ namespace ClipperLib
         foreach (PolyNode pn in polynode.Childs)
           AddPolyNodeToPaths(pn, nt, paths);
       }
-      //------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
 
-      public static Paths OpenPathsFromPolyTree(PolyTree polytree)
+        /// <summary>
+        /// Opens the paths from poly tree.
+        /// </summary>
+        /// <param name="polytree">The polytree.</param>
+        /// <returns>Paths.</returns>
+        public static Paths OpenPathsFromPolyTree(PolyTree polytree)
       {
         Paths result = new Paths();
         result.Capacity = polytree.ChildCount;
@@ -4416,9 +5720,14 @@ namespace ClipperLib
             result.Add(polytree.Childs[i].m_polygon);
         return result;
       }
-      //------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
 
-      public static Paths ClosedPathsFromPolyTree(PolyTree polytree)
+        /// <summary>
+        /// Closeds the paths from poly tree.
+        /// </summary>
+        /// <param name="polytree">The polytree.</param>
+        /// <returns>Paths.</returns>
+        public static Paths ClosedPathsFromPolyTree(PolyTree polytree)
       {
         Paths result = new Paths();
         result.Capacity = polytree.Total;
@@ -4429,47 +5738,107 @@ namespace ClipperLib
 
   } //end Clipper
 
+    /// <summary>
+    /// Class ClipperOffset.
+    /// </summary>
     internal class ClipperOffset
   {
-    private Paths m_destPolys;
-    private Path m_srcPoly;
-    private Path m_destPoly;
-    private List<DoublePoint> m_normals = new List<DoublePoint>();
-    private double m_delta, m_sinA, m_sin, m_cos;
-    private double m_miterLim, m_StepsPerRad;
+        /// <summary>
+        /// The m dest polys
+        /// </summary>
+        private Paths m_destPolys;
+        /// <summary>
+        /// The m source poly
+        /// </summary>
+        private Path m_srcPoly;
+        /// <summary>
+        /// The m dest poly
+        /// </summary>
+        private Path m_destPoly;
+        /// <summary>
+        /// The m normals
+        /// </summary>
+        private List<DoublePoint> m_normals = new List<DoublePoint>();
+        /// <summary>
+        /// The m delta
+        /// </summary>
+        private double m_delta, m_sinA, m_sin, m_cos;
+        /// <summary>
+        /// The m miter lim
+        /// </summary>
+        private double m_miterLim, m_StepsPerRad;
 
-    private IntPoint m_lowest;
-    private PolyNode m_polyNodes = new PolyNode();
+        /// <summary>
+        /// The m lowest
+        /// </summary>
+        private IntPoint m_lowest;
+        /// <summary>
+        /// The m poly nodes
+        /// </summary>
+        private PolyNode m_polyNodes = new PolyNode();
 
-    public double ArcTolerance { get; set; }
-    public double MiterLimit { get; set; }
+        /// <summary>
+        /// Gets or sets the arc tolerance.
+        /// </summary>
+        /// <value>The arc tolerance.</value>
+        public double ArcTolerance { get; set; }
+        /// <summary>
+        /// Gets or sets the miter limit.
+        /// </summary>
+        /// <value>The miter limit.</value>
+        public double MiterLimit { get; set; }
 
-    private const double two_pi = Math.PI * 2;
-    private const double def_arc_tolerance = 0.25;
+        /// <summary>
+        /// The two pi
+        /// </summary>
+        private const double two_pi = Math.PI * 2;
+        /// <summary>
+        /// The definition arc tolerance
+        /// </summary>
+        private const double def_arc_tolerance = 0.25;
 
-    public ClipperOffset(
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ClipperOffset"/> class.
+        /// </summary>
+        /// <param name="miterLimit">The miter limit.</param>
+        /// <param name="arcTolerance">The arc tolerance.</param>
+        public ClipperOffset(
       double miterLimit = 2.0, double arcTolerance = def_arc_tolerance)
     {
       MiterLimit = miterLimit;
       ArcTolerance = arcTolerance;
       m_lowest.X = -1;
     }
-    //------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
 
-    public void Clear()
+        /// <summary>
+        /// Clears this instance.
+        /// </summary>
+        public void Clear()
     {
       m_polyNodes.Childs.Clear();
       m_lowest.X = -1;
     }
-    //------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
 
-    internal static cInt Round(double value)
+        /// <summary>
+        /// Rounds the specified value.
+        /// </summary>
+        /// <param name="value">The value.</param>
+        /// <returns>cInt.</returns>
+        internal static cInt Round(double value)
     {
       return value < 0 ? (cInt)(value - 0.5) : (cInt)(value + 0.5);
     }
-    //------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
 
-    public void AddPath(Path path, JoinType joinType, EndType endType)
+        /// <summary>
+        /// Adds the path.
+        /// </summary>
+        /// <param name="path">The path.</param>
+        /// <param name="joinType">Type of the join.</param>
+        /// <param name="endType">The end type.</param>
+        public void AddPath(Path path, JoinType joinType, EndType endType)
     {
       int highI = path.Count - 1;
       if (highI < 0) return;
@@ -4509,16 +5878,25 @@ namespace ClipperLib
           m_lowest = new IntPoint(m_polyNodes.ChildCount - 1, k);
       }
     }
-    //------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
 
-    public void AddPaths(Paths paths, JoinType joinType, EndType endType)
+        /// <summary>
+        /// Adds the paths.
+        /// </summary>
+        /// <param name="paths">The paths.</param>
+        /// <param name="joinType">Type of the join.</param>
+        /// <param name="endType">The end type.</param>
+        public void AddPaths(Paths paths, JoinType joinType, EndType endType)
     {
       foreach (Path p in paths)
         AddPath(p, joinType, endType);
     }
-    //------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
 
-    private void FixOrientations()
+        /// <summary>
+        /// Fixes the orientations.
+        /// </summary>
+        private void FixOrientations()
     {
       //fixup orientations of all closed paths if the orientation of the
       //closed path with the lowermost vertex is wrong ...
@@ -4545,9 +5923,15 @@ namespace ClipperLib
         }
       }
     }
-    //------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
 
-    internal static DoublePoint GetUnitNormal(IntPoint pt1, IntPoint pt2)
+        /// <summary>
+        /// Gets the unit normal.
+        /// </summary>
+        /// <param name="pt1">The PT1.</param>
+        /// <param name="pt2">The PT2.</param>
+        /// <returns>DoublePoint.</returns>
+        internal static DoublePoint GetUnitNormal(IntPoint pt1, IntPoint pt2)
     {
       double dx = (pt2.X - pt1.X);
       double dy = (pt2.Y - pt1.Y);
@@ -4559,9 +5943,13 @@ namespace ClipperLib
 
       return new DoublePoint(dy, -dx);
     }
-    //------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
 
-    private void DoOffset(double delta)
+        /// <summary>
+        /// Does the offset.
+        /// </summary>
+        /// <param name="delta">The delta.</param>
+        private void DoOffset(double delta)
     {
       m_destPolys = new Paths();
       m_delta = delta;
@@ -4739,9 +6127,14 @@ namespace ClipperLib
         }
       }
     }
-    //------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
 
-    public void Execute(Paths solution, double delta)
+        /// <summary>
+        /// Executes the specified solution.
+        /// </summary>
+        /// <param name="solution">The solution.</param>
+        /// <param name="delta">The delta.</param>
+        public void Execute(Paths solution, double delta)
     {
       solution.Clear();
       FixOrientations();
@@ -4770,9 +6163,14 @@ namespace ClipperLib
         if (solution.Count > 0) solution.RemoveAt(0);
       }
     }
-    //------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
 
-    public void Execute(PolyTree solution, double delta)
+        /// <summary>
+        /// Executes the specified solution.
+        /// </summary>
+        /// <param name="solution">The solution.</param>
+        /// <param name="delta">The delta.</param>
+        public void Execute(PolyTree solution, double delta)
     {
       solution.Clear();
       FixOrientations();
@@ -4813,9 +6211,15 @@ namespace ClipperLib
           solution.Clear();
       }
     }
-    //------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
 
-    void OffsetPoint(int j, ref int k, JoinType jointype)
+        /// <summary>
+        /// Offsets the point.
+        /// </summary>
+        /// <param name="j">The j.</param>
+        /// <param name="k">The k.</param>
+        /// <param name="jointype">The jointype.</param>
+        void OffsetPoint(int j, ref int k, JoinType jointype)
     {
       //cross product ...
       m_sinA = (m_normals[k].X * m_normals[j].Y - m_normals[j].X * m_normals[k].Y);
@@ -4858,9 +6262,14 @@ namespace ClipperLib
         }
       k = j;
     }
-    //------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
 
-    internal void DoSquare(int j, int k)
+        /// <summary>
+        /// Does the square.
+        /// </summary>
+        /// <param name="j">The j.</param>
+        /// <param name="k">The k.</param>
+        internal void DoSquare(int j, int k)
     {
       double dx = Math.Tan(Math.Atan2(m_sinA,
           m_normals[k].X * m_normals[j].X + m_normals[k].Y * m_normals[j].Y) / 4);
@@ -4871,17 +6280,28 @@ namespace ClipperLib
           Round(m_srcPoly[j].X + m_delta * (m_normals[j].X + m_normals[j].Y * dx)),
           Round(m_srcPoly[j].Y + m_delta * (m_normals[j].Y - m_normals[j].X * dx))));
     }
-    //------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
 
-    internal void DoMiter(int j, int k, double r)
+        /// <summary>
+        /// Does the miter.
+        /// </summary>
+        /// <param name="j">The j.</param>
+        /// <param name="k">The k.</param>
+        /// <param name="r">The r.</param>
+        internal void DoMiter(int j, int k, double r)
     {
       double q = m_delta / r;
       m_destPoly.Add(new IntPoint(Round(m_srcPoly[j].X + (m_normals[k].X + m_normals[j].X) * q),
           Round(m_srcPoly[j].Y + (m_normals[k].Y + m_normals[j].Y) * q)));
     }
-    //------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
 
-    internal void DoRound(int j, int k)
+        /// <summary>
+        /// Does the round.
+        /// </summary>
+        /// <param name="j">The j.</param>
+        /// <param name="k">The k.</param>
+        internal void DoRound(int j, int k)
     {
       double a = Math.Atan2(m_sinA,
       m_normals[k].X * m_normals[j].X + m_normals[k].Y * m_normals[j].Y);
@@ -4904,9 +6324,18 @@ namespace ClipperLib
     //------------------------------------------------------------------------------
   }
 
-  class ClipperException : Exception
+    /// <summary>
+    /// Class ClipperException.
+    /// Implements the <see cref="Exception" />
+    /// </summary>
+    /// <seealso cref="Exception" />
+    class ClipperException : Exception
   {
-      public ClipperException(string description) : base(description){}
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ClipperException"/> class.
+        /// </summary>
+        /// <param name="description">The description.</param>
+        public ClipperException(string description) : base(description){}
   }
   //------------------------------------------------------------------------------
 

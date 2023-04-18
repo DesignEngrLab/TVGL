@@ -1,7 +1,16 @@
-﻿// Copyright 2015-2020 Design Engineering Lab
-// This file is a part of TVGL, Tessellation and Voxelization Geometry Library
-// https://github.com/DesignEngrLab/TVGL
-// It is licensed under MIT License (see LICENSE.txt for details)
+﻿// ***********************************************************************
+// Assembly         : TessellationAndVoxelizationGeometryLibrary
+// Author           : matth
+// Created          : 04-03-2023
+//
+// Last Modified By : matth
+// Last Modified On : 04-03-2023
+// ***********************************************************************
+// <copyright file="VoxelRowSparse.cs" company="Design Engineering Lab">
+//     2014
+// </copyright>
+// <summary></summary>
+// ***********************************************************************
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -26,14 +35,13 @@ namespace TVGL
         /// The length of the row. This is the same as the number of voxels in x (numVoxelsX)
         /// for the participating solid.
         /// </summary>
+        /// <value>The maximum number of voxels.</value>
         public ushort maxNumberOfVoxels { get; }
 
         /// <summary>
         /// Gets the number of voxels in this row.
         /// </summary>
-        /// <value>
-        /// The count.
-        /// </value>
+        /// <value>The count.</value>
         public int Count
         {
             get
@@ -48,11 +56,11 @@ namespace TVGL
         //because "structs cannot contain explicit parameterless constructors", I'm forced
         //to add the dummy input
         /// <summary>
-        /// Initializes a new instance of the <see cref="VoxelRowSparse"/> struct.
+        /// Initializes a new instance of the <see cref="VoxelRowSparse" /> struct.
         /// because "structs cannot contain explicit parameterless constructors",
         /// We are forced to add the dummy input.
         /// </summary>
-        /// <param name="dummy">if set to <c>true</c> [dummy].</param>
+        /// <param name="length">The length.</param>
         internal VoxelRowSparse(int length)
         {
             maxNumberOfVoxels = (ushort)length;
@@ -60,9 +68,10 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="VoxelRowSparse"/> struct.
+        /// Initializes a new instance of the <see cref="VoxelRowSparse" /> struct.
         /// </summary>
         /// <param name="row">The row.</param>
+        /// <param name="length">The length.</param>
         internal VoxelRowSparse(IVoxelRow row, int length)
         {
             maxNumberOfVoxels = (ushort)length;
@@ -94,13 +103,10 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Gets or sets the <see cref="System.Boolean"/> at the specified index.
+        /// Gets or sets the <see cref="System.Boolean" /> at the specified index.
         /// </summary>
-        /// <value>
-        /// The <see cref="System.Boolean"/>.
-        /// </value>
         /// <param name="index">The index.</param>
-        /// <returns></returns>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         public bool this[int index]
         {
             get
@@ -119,6 +125,11 @@ namespace TVGL
             }
         }
 
+        /// <summary>
+        /// Gets the value.
+        /// </summary>
+        /// <param name="index">The index.</param>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         private bool GetValue(int index)
         {
             var count = indices.Count;
@@ -130,8 +141,8 @@ namespace TVGL
         /// <summary>
         /// Gets the lower-x neighbor and the upper-x neighbor for the one at xCoord.
         /// </summary>
-        /// <param name="xCoord"></param>
-        /// <returns></returns>
+        /// <param name="xCoord">The x coord.</param>
+        /// <returns>System.ValueTuple&lt;System.Boolean, System.Boolean&gt;.</returns>
         public (bool, bool) GetNeighbors(int xCoord)
         {
             var count = indices.Count;
@@ -163,6 +174,16 @@ namespace TVGL
         // This binary search is modified/simplified from Array.BinarySearch
         // (https://referencesource.microsoft.com/mscorlib/a.html#b92d187c91d4c9a9),
         // but because our lists are pairs of ranges a bunch of extra conditions have been added
+        /// <summary>
+        /// Binaries the search.
+        /// </summary>
+        /// <param name="array">The array.</param>
+        /// <param name="length">The length.</param>
+        /// <param name="value">The value.</param>
+        /// <param name="valueExists">if set to <c>true</c> [value exists].</param>
+        /// <param name="voxelIsOn">if set to <c>true</c> [voxel is on].</param>
+        /// <param name="lowerBound">The lower bound.</param>
+        /// <returns>System.Int32.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static int BinarySearch(IList<ushort> array, int length, double value, out bool valueExists, out bool voxelIsOn, int lowerBound = 0)
         {
@@ -188,6 +209,10 @@ namespace TVGL
             return lo;
         }
 
+        /// <summary>
+        /// Turns the on.
+        /// </summary>
+        /// <param name="value">The value.</param>
         private void TurnOn(ushort value)
         {
             int index;
@@ -224,6 +249,10 @@ namespace TVGL
             }
         }
 
+        /// <summary>
+        /// Turns the off.
+        /// </summary>
+        /// <param name="value">The value.</param>
         private void TurnOff(ushort value)
         {
             var count = indices.Count;
@@ -332,6 +361,12 @@ namespace TVGL
             TurnOnRange(lo, hi, ref dummy);
         }
 
+        /// <summary>
+        /// Turns the on range.
+        /// </summary>
+        /// <param name="lo">The lo.</param>
+        /// <param name="hi">The hi.</param>
+        /// <param name="indexLowerBound">The index lower bound.</param>
         private void TurnOnRange(ushort lo, ushort hi, ref int indexLowerBound)
         {
             var count = indices.Count;
@@ -349,6 +384,18 @@ namespace TVGL
             TurnOnRange(lo, loIndex, loValueExists, loVoxelIsOn, hi, hiIndex, hiValueExists, hiVoxelIsOn, ref indexLowerBound);
         }
 
+        /// <summary>
+        /// Turns the on range.
+        /// </summary>
+        /// <param name="lo">The lo.</param>
+        /// <param name="loIndex">Index of the lo.</param>
+        /// <param name="loValueExists">if set to <c>true</c> [lo value exists].</param>
+        /// <param name="loVoxelIsOn">if set to <c>true</c> [lo voxel is on].</param>
+        /// <param name="hi">The hi.</param>
+        /// <param name="hiIndex">Index of the hi.</param>
+        /// <param name="hiValueExists">if set to <c>true</c> [hi value exists].</param>
+        /// <param name="hiVoxelIsOn">if set to <c>true</c> [hi voxel is on].</param>
+        /// <param name="indexLowerBound">The index lower bound.</param>
         private void TurnOnRange(ushort lo, int loIndex, bool loValueExists, bool loVoxelIsOn, ushort hi, int hiIndex,
             bool hiValueExists, bool hiVoxelIsOn, ref int indexLowerBound)
         {
@@ -388,6 +435,12 @@ namespace TVGL
             TurnOffRange(lo, hi, ref dummy);
         }
 
+        /// <summary>
+        /// Turns the off range.
+        /// </summary>
+        /// <param name="lo">The lo.</param>
+        /// <param name="hi">The hi.</param>
+        /// <param name="indexLowerBound">The index lower bound.</param>
         private void TurnOffRange(ushort lo, ushort hi, ref int indexLowerBound)
         {
             var count = indices.Count;
@@ -399,6 +452,18 @@ namespace TVGL
             TurnOffRange(lo, loIndex, loValueExists, loVoxelIsOn, hi, hiIndex, hiValueExists, hiVoxelIsOn, ref indexLowerBound);
         }
 
+        /// <summary>
+        /// Turns the off range.
+        /// </summary>
+        /// <param name="lo">The lo.</param>
+        /// <param name="loIndex">Index of the lo.</param>
+        /// <param name="loValueExists">if set to <c>true</c> [lo value exists].</param>
+        /// <param name="loVoxelIsOn">if set to <c>true</c> [lo voxel is on].</param>
+        /// <param name="hi">The hi.</param>
+        /// <param name="hiIndex">Index of the hi.</param>
+        /// <param name="hiValueExists">if set to <c>true</c> [hi value exists].</param>
+        /// <param name="hiVoxelIsOn">if set to <c>true</c> [hi voxel is on].</param>
+        /// <param name="indexLowerBound">The index lower bound.</param>
         private void TurnOffRange(ushort lo, int loIndex, bool loValueExists, bool loVoxelIsOn, ushort hi, int hiIndex,
             bool hiValueExists, bool hiVoxelIsOn, ref int indexLowerBound)
         {
@@ -456,6 +521,10 @@ namespace TVGL
             indices.Clear();
         }
 
+        /// <summary>
+        /// Averages the positions of the on voxels. This is used in finding center of mass.
+        /// </summary>
+        /// <returns>System.Int32.</returns>
         public int TotalXPosition()
         {
             var rowTotal = 0;

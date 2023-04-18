@@ -1,7 +1,16 @@
-﻿// Copyright 2015-2020 Design Engineering Lab
-// This file is a part of TVGL, Tessellation and Voxelization Geometry Library
-// https://github.com/DesignEngrLab/TVGL
-// It is licensed under MIT License (see LICENSE.txt for details)
+﻿// ***********************************************************************
+// Assembly         : TessellationAndVoxelizationGeometryLibrary
+// Author           : matth
+// Created          : 04-03-2023
+//
+// Last Modified By : matth
+// Last Modified On : 04-14-2023
+// ***********************************************************************
+// <copyright file="OFFFileData.cs" company="Design Engineering Lab">
+//     2014
+// </copyright>
+// <summary></summary>
+// ***********************************************************************
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -12,14 +21,14 @@ namespace TVGL
 {
     // http://en.wikipedia.org/wiki/OFF_(file_format)
     /// <summary>
-    ///     Class OFFFileData.
+    /// Class OFFFileData.
     /// </summary>
     internal class OFFFileData : IO
     {
         #region Constructor
 
         /// <summary>
-        ///     Initializes a new instance of the <see cref="OFFFileData" /> class.
+        /// Initializes a new instance of the <see cref="OFFFileData" /> class.
         /// </summary>
         private OFFFileData()
         {
@@ -33,72 +42,72 @@ namespace TVGL
         #region Fields and Properties
 
         /// <summary>
-        ///     The last color
+        /// The last color
         /// </summary>
         private Color _lastColor;
 
         /// <summary>
-        ///     Gets the has color specified.
+        /// Gets the has color specified.
         /// </summary>
         /// <value>The has color specified.</value>
         private bool HasColorSpecified { get; set; }
 
         /// <summary>
-        ///     Gets or sets the colors.
+        /// Gets or sets the colors.
         /// </summary>
         /// <value>The colors.</value>
         private List<Color> Colors { get; }
 
         /// <summary>
-        ///     Gets or sets the Vertices.
+        /// Gets or sets the Vertices.
         /// </summary>
         /// <value>The vertices.</value>
         private List<Vector3> Vertices { get; }
 
         /// <summary>
-        ///     Gets the face to vertex indices.
+        /// Gets the face to vertex indices.
         /// </summary>
         /// <value>The face to vertex indices.</value>
         private List<int[]> FaceToVertexIndices { get; }
 
         /// <summary>
-        ///     Gets the number vertices.
+        /// Gets the number vertices.
         /// </summary>
         /// <value>The number vertices.</value>
         private int NumVertices { get; set; }
 
         /// <summary>
-        ///     Gets the number faces.
+        /// Gets the number faces.
         /// </summary>
         /// <value>The number faces.</value>
         private int NumFaces { get; set; }
 
         /// <summary>
-        ///     Gets the number edges.
+        /// Gets the number edges.
         /// </summary>
         /// <value>The number edges.</value>
         private int NumEdges { get; set; }
 
         /// <summary>
-        ///     Gets the contains homogeneous coordinates.
+        /// Gets the contains homogeneous coordinates.
         /// </summary>
         /// <value>The contains homogeneous coordinates.</value>
         private bool ContainsHomogeneousCoordinates { get; set; }
 
         /// <summary>
-        ///     Gets the contains texture coordinates.
+        /// Gets the contains texture coordinates.
         /// </summary>
         /// <value>The contains texture coordinates.</value>
         private bool ContainsTextureCoordinates { get; set; }
 
         /// <summary>
-        ///     Gets the contains colors.
+        /// Gets the contains colors.
         /// </summary>
         /// <value>The contains colors.</value>
         private bool ContainsColors { get; set; }
 
         /// <summary>
-        ///     Gets the contains normals.
+        /// Gets the contains normals.
         /// </summary>
         /// <value>The contains normals.</value>
         private bool ContainsNormals { get; set; }
@@ -112,9 +121,7 @@ namespace TVGL
         /// </summary>
         /// <param name="s">The s.</param>
         /// <param name="filename">The filename.</param>
-        /// <returns>
-        /// List&lt;TessellatedSolid&gt;.
-        /// </returns>
+        /// <returns>List&lt;TessellatedSolid&gt;.</returns>
         internal static TessellatedSolid OpenSolid(Stream s, string filename)
         {
             var now = DateTime.Now;
@@ -141,7 +148,7 @@ namespace TVGL
         }
 
         /// <summary>
-        ///     Tries the read ASCII.
+        /// Tries the read ASCII.
         /// </summary>
         /// <param name="stream">The stream.</param>
         /// <param name="offData">The off data.</param>
@@ -238,14 +245,13 @@ namespace TVGL
         }
 
         /// <summary>
-        ///     Tries the read binary.
+        /// Tries the read binary.
         /// </summary>
         /// <param name="stream">The stream.</param>
         /// <param name="offData">The off data.</param>
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
-        /// <exception cref="NotImplementedException"></exception>
         /// <exception cref="System.NotImplementedException"></exception>
-        /// <exception cref="System.IO.EndOfStreamException">Incomplete file</exception>
+        /// <exception cref="System.IO.EndOfStreamException"></exception>
         private static bool TryReadBinary(Stream stream, out OFFFileData offData)
         {
             offData = null;

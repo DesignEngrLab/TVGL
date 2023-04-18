@@ -1,7 +1,16 @@
-﻿// Copyright 2015-2020 Design Engineering Lab
-// This file is a part of TVGL, Tessellation and Voxelization Geometry Library
-// https://github.com/DesignEngrLab/TVGL
-// It is licensed under MIT License (see LICENSE.txt for details)
+﻿// ***********************************************************************
+// Assembly         : TessellationAndVoxelizationGeometryLibrary
+// Author           : matth
+// Created          : 04-03-2023
+//
+// Last Modified By : matth
+// Last Modified On : 04-14-2023
+// ***********************************************************************
+// <copyright file="PLYFileData.cs" company="Design Engineering Lab">
+//     2014
+// </copyright>
+// <summary></summary>
+// ***********************************************************************
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -12,7 +21,7 @@ namespace TVGL
 {
     // http://en.wikipedia.org/wiki/PLY_(file_format)
     /// <summary>
-    ///     Class PLYFileData.
+    /// Class PLYFileData.
     /// </summary>
     internal class PLYFileData : IO
     {
@@ -20,62 +29,107 @@ namespace TVGL
 
         #region Color Related
 
+        /// <summary>
+        /// The has color specified
+        /// </summary>
         private bool hasColorSpecified;
 
+        /// <summary>
+        /// The uniform color descriptor
+        /// </summary>
         private List<ColorElements> uniformColorDescriptor;
+        /// <summary>
+        /// The uniform color element type
+        /// </summary>
         private List<Type> uniformColorElementType;
+        /// <summary>
+        /// The uniform color
+        /// </summary>
         private Color uniformColor;
 
+        /// <summary>
+        /// The face color descriptor
+        /// </summary>
         private List<ColorElements> faceColorDescriptor;
+        /// <summary>
+        /// The face color element type
+        /// </summary>
         private List<Type> faceColorElementType;
+        /// <summary>
+        /// The face colors
+        /// </summary>
         private List<Color> faceColors;
 
+        /// <summary>
+        /// The vertex color descriptor
+        /// </summary>
         private List<ColorElements> vertexColorDescriptor;
+        /// <summary>
+        /// The vertex color element type
+        /// </summary>
         private List<Type> vertexColorElementType;
+        /// <summary>
+        /// The vertex colors
+        /// </summary>
         private List<Color> vertexColors;
 
         #endregion Color Related
 
         /// <summary>
-        ///     The read in order
+        /// The read in order
         /// </summary>
         private List<ShapeElement> readInOrder;
 
         /// <summary>
-        ///     Gets or sets the Vertices.
+        /// Gets or sets the Vertices.
         /// </summary>
         /// <value>The vertices.</value>
         private List<Vector3> vertices;
 
         /// <summary>
-        ///     Gets the face to vertex indices.
+        /// Gets the face to vertex indices.
         /// </summary>
         /// <value>The face to vertex indices.</value>
         private List<int[]> faceToVertexIndices;
 
+        /// <summary>
+        /// The vertex coordinate order
+        /// </summary>
         private List<int> vertexCoordinateOrder;
+        /// <summary>
+        /// The vertex types
+        /// </summary>
         private List<Type> vertexTypes;
+        /// <summary>
+        /// The vertex amount type
+        /// </summary>
         private Type vertexAmountType;
+        /// <summary>
+        /// The vertex index type
+        /// </summary>
         private Type vertexIndexType;
 
         /// <summary>
-        ///     Gets the number vertices.
+        /// Gets the number vertices.
         /// </summary>
         /// <value>The number vertices.</value>
         private int numVertices;
 
         /// <summary>
-        ///     Gets the number faces.
+        /// Gets the number faces.
         /// </summary>
         /// <value>The number faces.</value>
         private int numFaces;
 
         /// <summary>
-        ///     Gets the number edges.
+        /// Gets the number edges.
         /// </summary>
         /// <value>The number edges.</value>
         private int numEdges;
 
+        /// <summary>
+        /// The endianness type
+        /// </summary>
         private FormatEndiannessType endiannessType;
 
         #endregion Properties and Fields
@@ -115,6 +169,9 @@ namespace TVGL
                 InferUnitsFromComments(plyData.Comments), plyData.Name, filename, plyData.Comments, plyData.Language);
         }
 
+        /// <summary>
+        /// Fixes the colors.
+        /// </summary>
         private void FixColors()
         {
             faceColors ??= new List<Color>();
@@ -146,9 +203,19 @@ namespace TVGL
         }
 
         /// <summary>
-        ///     Reads the header.
+        /// Reads the header.
         /// </summary>
         /// <param name="reader">The reader.</param>
+        /// <returns>System.Int32.</returns>
+        /// <exception cref="System.ArgumentException">Zero or unknown number of vertices in PLY file.</exception>
+        /// <exception cref="System.ArgumentException">Zero or unknown number of faces in PLY file.</exception>
+        /// <exception cref="System.ArgumentException">Unable to parse " + typeString + " as a type of number</exception>
+        /// <exception cref="System.ArgumentException">The faces in PLY are specified in unknown manner: " +
+        ///                                                                     restString</exception>
+        /// <exception cref="System.ArgumentException">The number of vertex in the PLY face definition are of unknown type: "
+        ///                                                                     + words[0]</exception>
+        /// <exception cref="System.ArgumentException">The vertex indices in the PLY face definition are of unknown type: "
+        ///                                                                     + words[1]</exception>
         private int ReadHeader(StreamReader reader)
         {
             readInOrder = new List<ShapeElement>();
@@ -372,6 +439,12 @@ namespace TVGL
             return position;
         }
 
+        /// <summary>
+        /// Reads the mesh.
+        /// </summary>
+        /// <param name="reader">The reader.</param>
+        /// <exception cref="System.ArgumentOutOfRangeException"></exception>
+        /// <exception cref="System.ArgumentOutOfRangeException">Unable to read PLY mesh. Error in " + shapeElement</exception>
         private void ReadMesh(StreamReader reader)
         {
             foreach (var shapeElement in readInOrder)
@@ -402,6 +475,11 @@ namespace TVGL
             }
         }
 
+        /// <summary>
+        /// Reads the mesh.
+        /// </summary>
+        /// <param name="reader">The reader.</param>
+        /// <exception cref="System.ArgumentOutOfRangeException"></exception>
         private void ReadMesh(BinaryReader reader)
         {
             foreach (var shapeElement in readInOrder)
@@ -432,6 +510,11 @@ namespace TVGL
             }
         }
 
+        /// <summary>
+        /// Reads the color of the uniform.
+        /// </summary>
+        /// <param name="reader">The reader.</param>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         private bool ReadUniformColor(StreamReader reader)
         {
             var line = ReadLine(reader);
@@ -456,7 +539,7 @@ namespace TVGL
         }
 
         /// <summary>
-        ///     Reads the edges.
+        /// Reads the edges.
         /// </summary>
         /// <param name="reader">The reader.</param>
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
@@ -471,7 +554,7 @@ namespace TVGL
         }
 
         /// <summary>
-        ///     Reads the faces.
+        /// Reads the faces.
         /// </summary>
         /// <param name="reader">The reader.</param>
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
@@ -526,7 +609,7 @@ namespace TVGL
         }
 
         /// <summary>
-        ///     Reads the vertices.
+        /// Reads the vertices.
         /// </summary>
         /// <param name="reader">The reader.</param>
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
@@ -580,10 +663,11 @@ namespace TVGL
         }
 
         /// <summary>
-        ///     Reads the edges.
+        /// Reads the edges.
         /// </summary>
         /// <param name="reader">The reader.</param>
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
+        /// <exception cref="System.NotImplementedException"></exception>
         private bool ReadEdges(BinaryReader reader)
         {
             throw new NotImplementedException();
@@ -596,6 +680,11 @@ namespace TVGL
                        */
         }
 
+        /// <summary>
+        /// Reads the color of the uniform.
+        /// </summary>
+        /// <param name="reader">The reader.</param>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         private bool ReadUniformColor(BinaryReader reader)
         {
             float a = 0, r = 0, g = 0, b = 0;
@@ -618,7 +707,7 @@ namespace TVGL
         }
 
         /// <summary>
-        ///     Reads the faces.
+        /// Reads the faces.
         /// </summary>
         /// <param name="reader">The reader.</param>
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
@@ -656,7 +745,7 @@ namespace TVGL
         }
 
         /// <summary>
-        ///     Reads the vertices.
+        /// Reads the vertices.
         /// </summary>
         /// <param name="reader">The reader.</param>
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>

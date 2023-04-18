@@ -4,7 +4,7 @@
 // Created          : 05-14-2015
 //
 // Last Modified By : MICampbell
-// Last Modified On : 07-07-2015
+// Last Modified On : 04-03-2023
 // ***********************************************************************
 // <copyright file="solve.cs" company="Design Engineering Lab -- MICampbell">
 //     2014
@@ -18,6 +18,9 @@ using TVGL;
 
 namespace StarMathLib
 {
+    /// <summary>
+    /// Class StarMath.
+    /// </summary>
     public static partial class StarMath
     {
         /// <summary>
@@ -25,12 +28,11 @@ namespace StarMathLib
         /// </summary>
         /// <param name="A">The A.</param>
         /// <param name="b">The b.</param>
-        /// <param name="initialGuess">The initial guess.</param>
+        /// <param name="answer">The answer.</param>
         /// <param name="IsASymmetric">Is matrix A symmetric.</param>
         /// <returns>System.Double[].</returns>
-        /// <exception cref="System.ArithmeticException">Matrix, A, must be square.
-        /// or
-        /// Matrix, A, must be have the same number of rows as the vector, b.</exception>
+        /// <exception cref="System.ArithmeticException">Matrix, A, must be square.</exception>
+        /// <exception cref="System.ArithmeticException">Matrix, A, must be have the same number of rows as the vector, b.</exception>
         public static bool solve(this double[,] A, IList<double> b, out double[] answer,
             Boolean IsASymmetric = false)
         {
@@ -47,6 +49,13 @@ namespace StarMathLib
             return solveBig(A, b, out answer, IsASymmetric);
         }
 
+        /// <summary>
+        /// Solves the via cramers rule3.
+        /// </summary>
+        /// <param name="a">a.</param>
+        /// <param name="b">The b.</param>
+        /// <param name="answer">The answer.</param>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static bool solveViaCramersRule3(this double[,] a, IList<double> b, out double[] answer)
         {
@@ -82,6 +91,13 @@ namespace StarMathLib
         }
 
 
+        /// <summary>
+        /// Solve3x3s the complex matrix.
+        /// </summary>
+        /// <param name="a">a.</param>
+        /// <param name="b">The b.</param>
+        /// <param name="answer">The answer.</param>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         private static bool Solve3x3ComplexMatrix(ComplexNumber[,] a, IList<double> b, out ComplexNumber[] answer)
         {
             var n = b.Count;
@@ -90,6 +106,13 @@ namespace StarMathLib
                 bComplex[i] = new ComplexNumber(b[i]);
             return Solve3x3ComplexMatrix(a, bComplex, out answer);
         }
+        /// <summary>
+        /// Solve3x3s the complex matrix.
+        /// </summary>
+        /// <param name="a">a.</param>
+        /// <param name="b">The b.</param>
+        /// <param name="answer">The answer.</param>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool Solve3x3ComplexMatrix(this ComplexNumber[,] a, IList<ComplexNumber> b, out ComplexNumber[] answer)
         {
@@ -124,6 +147,13 @@ namespace StarMathLib
             return true;
         }
 
+        /// <summary>
+        /// Solves the via cramers rule2.
+        /// </summary>
+        /// <param name="a">a.</param>
+        /// <param name="b">The b.</param>
+        /// <param name="answer">The answer.</param>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static bool solveViaCramersRule2(double[,] a, IList<double> b, out double[] answer)
         {
@@ -141,6 +171,13 @@ namespace StarMathLib
             };
             return true;
         }
+        /// <summary>
+        /// Solve2x2s the complex matrix.
+        /// </summary>
+        /// <param name="a">a.</param>
+        /// <param name="b">The b.</param>
+        /// <param name="answer">The answer.</param>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         public static bool Solve2x2ComplexMatrix(ComplexNumber[,] a, IList<double> b, out ComplexNumber[] answer)
         {
             var n = b.Count;
@@ -149,6 +186,13 @@ namespace StarMathLib
                 bComplex[i] = new ComplexNumber(b[i]);
             return Solve2x2ComplexMatrix(a, bComplex, out answer);
         }
+        /// <summary>
+        /// Solve2x2s the complex matrix.
+        /// </summary>
+        /// <param name="a">a.</param>
+        /// <param name="b">The b.</param>
+        /// <param name="answer">The answer.</param>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool Solve2x2ComplexMatrix(ComplexNumber[,] a, IList<ComplexNumber> b, out ComplexNumber[] answer)
         {
@@ -173,8 +217,8 @@ namespace StarMathLib
         /// </summary>
         /// <param name="A">a.</param>
         /// <param name="b">The b.</param>
+        /// <param name="answer">The answer.</param>
         /// <param name="IsASymmetric">Is A known to be Symmetric?</param>
-        /// <param name="potentialDiagonals">The potential diagonals.</param>
         /// <returns>System.Double[].</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static bool solveBig(double[,] A, IList<double> b, out double[] answer, bool IsASymmetric = false)

@@ -1,4 +1,17 @@
-﻿using Priority_Queue;
+﻿// ***********************************************************************
+// Assembly         : TessellationAndVoxelizationGeometryLibrary
+// Author           : matth
+// Created          : 04-03-2023
+//
+// Last Modified By : matth
+// Last Modified On : 04-14-2023
+// ***********************************************************************
+// <copyright file="Single3DPolygonTriangulation.cs" company="Design Engineering Lab">
+//     2014
+// </copyright>
+// <summary></summary>
+// ***********************************************************************
+using Priority_Queue;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,8 +20,18 @@ using System.Linq;
 namespace TVGL
 {
 
+    /// <summary>
+    /// Class TriangulationLoop.
+    /// Implements the <see cref="TVGL.EdgePath" />
+    /// </summary>
+    /// <seealso cref="TVGL.EdgePath" />
     internal class TriangulationLoop : EdgePath
     {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="TriangulationLoop"/> class.
+        /// </summary>
+        /// <param name="inputs">The inputs.</param>
+        /// <param name="reverse">if set to <c>true</c> [reverse].</param>
         public TriangulationLoop(IEnumerable<(Edge edge, bool dir)> inputs, bool reverse = false) : this()
         {
             if (reverse)
@@ -31,18 +54,44 @@ namespace TVGL
             }
         }
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="TriangulationLoop"/> class.
+        /// </summary>
         internal TriangulationLoop() : base() 
         {
             IsClosed = true;
         }
 
+        /// <summary>
+        /// Gets or sets the score.
+        /// </summary>
+        /// <value>The score.</value>
         internal double Score { get; set; }
+        /// <summary>
+        /// Gets or sets the normal.
+        /// </summary>
+        /// <value>The normal.</value>
         internal Vector3 Normal { get; set; }
+        /// <summary>
+        /// Gets the vertex identifier list.
+        /// </summary>
+        /// <value>The vertex identifier list.</value>
         internal int[] VertexIDList => GetVertices().Select(v => v.IndexInList).ToArray();
     }
 
+    /// <summary>
+    /// Class LoopOfIntsComparer.
+    /// Implements the <see cref="System.Collections.Generic.IEqualityComparer{System.Int32[]}" />
+    /// </summary>
+    /// <seealso cref="System.Collections.Generic.IEqualityComparer{System.Int32[]}" />
     public class LoopOfIntsComparer : IEqualityComparer<int[]>
     {
+        /// <summary>
+        /// Determines whether the specified objects are equal.
+        /// </summary>
+        /// <param name="x">The first object of type <paramref name="T" /> to compare.</param>
+        /// <param name="y">The second object of type <paramref name="T" /> to compare.</param>
+        /// <returns><see langword="true" /> if the specified objects are equal; otherwise, <see langword="false" />.</returns>
         public bool Equals(int[] x, int[] y)
         {
             var length = x.Length;
@@ -69,6 +118,11 @@ namespace TVGL
             return true;
         }
 
+        /// <summary>
+        /// Returns a hash code for this instance.
+        /// </summary>
+        /// <param name="obj">The <see cref="T:System.Object" /> for which a hash code is to be returned.</param>
+        /// <returns>A hash code for this instance, suitable for use in hashing algorithms and data structures like a hash table.</returns>
         public int GetHashCode(int[] obj)
         {
             var lowestIndex = int.MaxValue;
@@ -103,14 +157,21 @@ namespace TVGL
     }
 
 
+    /// <summary>
+    /// Class Single3DPolygonTriangulation.
+    /// </summary>
     public static class Single3DPolygonTriangulation
     {
+        /// <summary>
+        /// The maximum states to search
+        /// </summary>
         const int MaxStatesToSearch = 1000000000; // 1 billion
 
         /// <summary>
         /// Triangulates the specified loop of 3D vertices using the projection from the provided normal.
         /// </summary>
         /// <param name="edgePath">The edge path.</param>
+        /// <param name="weightForSmoothness">The weight for smoothness.</param>
         /// <returns>IEnumerable&lt;System.ValueTuple&lt;Vertex[], Vector3&gt;&gt;.</returns>
         public static IEnumerable<(List<Vertex> vertices, Vector3 normal)> QuickTriangulate(IList<(Edge edge, bool dir)> edgePath, double weightForSmoothness)
         {
@@ -119,6 +180,12 @@ namespace TVGL
                 yield return (triangle.GetVertices().ToList(), triangle.Normal);
         }
 
+        /// <summary>
+        /// Quicks the triangulate.
+        /// </summary>
+        /// <param name="edgeLoop">The edge loop.</param>
+        /// <param name="weightForSmoothness">The weight for smoothness.</param>
+        /// <returns>IEnumerable&lt;TriangulationLoop&gt;.</returns>
         internal static IEnumerable<TriangulationLoop> QuickTriangulate(TriangulationLoop edgeLoop, double weightForSmoothness)
         {
             var origNum = edgeLoop.Count;
@@ -219,6 +286,12 @@ namespace TVGL
             }
         }
 
+        /// <summary>
+        /// Gets the index of the forward.
+        /// </summary>
+        /// <param name="candidateTriangles">The candidate triangles.</param>
+        /// <param name="triangleIndex">Index of the triangle.</param>
+        /// <returns>System.Int32.</returns>
         private static int GetForwardIndex(TriangulationLoop[] candidateTriangles, int triangleIndex)
         {
             var i = triangleIndex;
@@ -230,6 +303,12 @@ namespace TVGL
             return -1;
         }
 
+        /// <summary>
+        /// Gets the index of the backwards.
+        /// </summary>
+        /// <param name="candidateTriangles">The candidate triangles.</param>
+        /// <param name="triangleIndex">Index of the triangle.</param>
+        /// <returns>System.Int32.</returns>
         private static int GetBackwardsIndex(TriangulationLoop[] candidateTriangles, int triangleIndex)
         {
             var i = triangleIndex;
@@ -260,8 +339,8 @@ namespace TVGL
         /// <summary>
         /// Triangulates the specified loop of 3D vertices using the projection from the provided normal.
         /// </summary>
-        /// <param name="vertexLoop">The vertex loop.</param>
-        /// <param name="normal">The normal direction.</param>
+        /// <param name="startDomain">The start domain.</param>
+        /// <param name="triangles">The triangles.</param>
         /// <returns>IEnumerable&lt;Vertex[]&gt; where each represents a triangular polygonal face.</returns>
         /// <exception cref="ArgumentException">The vertices must all have a unique IndexInList value - vertexLoop</exception>
         internal static bool Triangulate(TriangulationLoop startDomain, out List<TriangulationLoop> triangles)
@@ -297,6 +376,11 @@ namespace TVGL
             return true;
         }
 
+        /// <summary>
+        /// Finds the sharpest turn.
+        /// </summary>
+        /// <param name="domain">The domain.</param>
+        /// <returns>System.ValueTuple&lt;Edge, System.Boolean&gt;.</returns>
         private static (Edge edge, bool dir) FindSharpestTurn(TriangulationLoop domain)
         {
             (Edge edge, bool dir) sharpestTurn = (null, false);
@@ -319,6 +403,19 @@ namespace TVGL
             return sharpestTurn;
         }
 
+        /// <summary>
+        /// Triangulates the recurse.
+        /// </summary>
+        /// <param name="accessFaceNormal">The access face normal.</param>
+        /// <param name="accessEdge">The access edge.</param>
+        /// <param name="domain">The domain.</param>
+        /// <param name="visitedDomains">The visited domains.</param>
+        /// <param name="upperLimit">The upper limit.</param>
+        /// <param name="branchingFactorLimit">The branching factor limit.</param>
+        /// <param name="dotWeight">The dot weight.</param>
+        /// <param name="currentValue">The current value.</param>
+        /// <param name="triangles">The triangles.</param>
+        /// <returns>System.Double.</returns>
         private static double TriangulateRecurse(Vector3 accessFaceNormal, Edge accessEdge, TriangulationLoop domain,
                 Dictionary<int[], TriangulationLoop> visitedDomains, double upperLimit, int branchingFactorLimit, double dotWeight, in double currentValue, out List<TriangulationLoop> triangles)
         {
@@ -452,6 +549,15 @@ namespace TVGL
             return double.PositiveInfinity;
         }
 
+        /// <summary>
+        /// Calculates the object function.
+        /// </summary>
+        /// <param name="dotWeight">The dot weight.</param>
+        /// <param name="triangle">The triangle.</param>
+        /// <param name="neighborNormal1">The neighbor normal1.</param>
+        /// <param name="neighborNormal2">The neighbor normal2.</param>
+        /// <param name="neighborNormal3">The neighbor normal3.</param>
+        /// <returns>System.Double.</returns>
         private static double CalcObjFunction(double dotWeight, TriangulationLoop triangle,
             Vector3 neighborNormal1, Vector3 neighborNormal2, Vector3 neighborNormal3)
         {

@@ -1,7 +1,16 @@
-﻿// Copyright 2015-2020 Design Engineering Lab
-// This file is a part of TVGL, Tessellation and Voxelization Geometry Library
-// https://github.com/DesignEngrLab/TVGL
-// It is licensed under MIT License (see LICENSE.txt for details)
+﻿// ***********************************************************************
+// Assembly         : TessellationAndVoxelizationGeometryLibrary
+// Author           : matth
+// Created          : 04-03-2023
+//
+// Last Modified By : matth
+// Last Modified On : 04-14-2023
+// ***********************************************************************
+// <copyright file="TessellatedSolid.cs" company="Design Engineering Lab">
+//     2014
+// </copyright>
+// <summary></summary>
+// ***********************************************************************
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
@@ -14,30 +23,36 @@ using System.Runtime.Serialization;
 namespace TVGL
 {
     /// <summary>
-    ///     Class TessellatedSolid.
+    /// Class TessellatedSolid.
     /// </summary>
     /// <tags>help</tags>
-    /// <remarks>
-    ///     This is the currently the <strong>main</strong> class within TVGL all filetypes are read in as a TessellatedSolid,
-    ///     and
-    ///     all interesting operations work on the TessellatedSolid.
-    /// </remarks>
+    /// <remarks>This is the currently the <strong>main</strong> class within TVGL all filetypes are read in as a TessellatedSolid,
+    /// and
+    /// all interesting operations work on the TessellatedSolid.</remarks>
     public partial class TessellatedSolid : Solid
     {
         #region Fields and Properties
+        /// <summary>
+        /// Gets or sets the tessellation error.
+        /// </summary>
+        /// <value>The tessellation error.</value>
         public double TessellationError { get; set; } = Constants.DefaultTessellationError;
 
+        /// <summary>
+        /// Gets or sets the tessellation maximum angle error.
+        /// </summary>
+        /// <value>The tessellation maximum angle error.</value>
         public double TessellationMaxAngleError { get; set; } = Constants.DefaultTessellationMaxAngleError;
 
         /// <summary>
-        ///     Gets the faces.
+        /// Gets the faces.
         /// </summary>
         /// <value>The faces.</value>
         [JsonIgnore]
         public TriangleFace[] Faces { get; set; }
 
         /// <summary>
-        ///     Gets the edges.
+        /// Gets the edges.
         /// </summary>
         /// <value>The edges.</value>
         [JsonIgnore]
@@ -49,46 +64,50 @@ namespace TVGL
                 return _edges;
             }
         }
+        /// <summary>
+        /// The edges
+        /// </summary>
         private Edge[] _edges;
 
         /// <summary>
-        ///     Gets the vertices.
+        /// Gets the vertices.
         /// </summary>
         /// <value>The vertices.</value>
         [JsonIgnore]
         public Vertex[] Vertices { get; set; }
 
         /// <summary>
-        ///     Gets the number of faces.
+        /// Gets the number of faces.
         /// </summary>
         /// <value>The number of faces.</value>
         [JsonIgnore]
         public int NumberOfFaces { get; set; }
 
         /// <summary>
-        ///     Gets the number of vertices.
+        /// Gets the number of vertices.
         /// </summary>
         /// <value>The number of vertices.</value>
         [JsonIgnore]
         public int NumberOfVertices { get; set; }
 
         /// <summary>
-        ///     Gets the number of edges.
+        /// Gets the number of edges.
         /// </summary>
         /// <value>The number of edges.</value>
         [JsonIgnore]
         public int NumberOfEdges { get; private set; }
 
         /// <summary>
-        ///     Gets the number of primitives. Must be set after completing primitive definition/combination.
+        /// Gets the number of primitives. Must be set after completing primitive definition/combination.
         /// </summary>
         /// <value>The number of faces.</value>
         [JsonIgnore]
         public int NumberOfPrimitives { get; set; }
 
         /// <summary>
-        ///     Errors in the tesselated solid
+        /// Errors in the tesselated solid
         /// </summary>
+        /// <value>The errors.</value>
         [JsonIgnore]
         public TessellationError Errors { get; internal set; }
 
@@ -102,7 +121,7 @@ namespace TVGL
 
         #region Constructors
         /// <summary>
-        /// Initializes a new instance of the <see cref="TessellatedSolid"/> class.
+        /// Initializes a new instance of the <see cref="TessellatedSolid" /> class.
         /// </summary>
         public TessellatedSolid() { }
 
@@ -170,6 +189,19 @@ namespace TVGL
             if (createFullVersion) CompleteInitiation();
         }
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="TessellatedSolid"/> class.
+        /// </summary>
+        /// <param name="vertices">The vertices.</param>
+        /// <param name="faceToVertexIndices">The face to vertex indices.</param>
+        /// <param name="createFullVersion">if set to <c>true</c> [create full version].</param>
+        /// <param name="primitives">The primitives.</param>
+        /// <param name="colors">The colors.</param>
+        /// <param name="units">The units.</param>
+        /// <param name="name">The name.</param>
+        /// <param name="filename">The filename.</param>
+        /// <param name="comments">The comments.</param>
+        /// <param name="language">The language.</param>
         public TessellatedSolid(IList<Vector3> vertices, IList<int[]> faceToVertexIndices, bool createFullVersion,
           IList<PrimitiveSurface> primitives, IList<Color> colors, UnitType units = UnitType.unspecified, string name = "", string filename = "",
           List<string> comments = null, string language = "") : base(units, name, filename, comments, language)
@@ -188,6 +220,16 @@ namespace TVGL
             else CalculateVolume();
         }
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="TessellatedSolid"/> class.
+        /// </summary>
+        /// <param name="vertices">The vertices.</param>
+        /// <param name="primitives">The primitives.</param>
+        /// <param name="units">The units.</param>
+        /// <param name="name">The name.</param>
+        /// <param name="filename">The filename.</param>
+        /// <param name="comments">The comments.</param>
+        /// <param name="language">The language.</param>
         public TessellatedSolid(Vertex[] vertices, List<PrimitiveSurface> primitives, UnitType units = UnitType.unspecified, string name = "", string filename = "",
             List<string> comments = null, string language = "") : base(units, name, filename, comments, language)
         {
@@ -203,6 +245,10 @@ namespace TVGL
             ConvexHull = new TVGLConvexHull(Vertices, SameTolerance);
         }
 
+        /// <summary>
+        /// Called when [serializing method].
+        /// </summary>
+        /// <param name="context">The context.</param>
         [OnSerializing]
         protected void OnSerializingMethod(StreamingContext context)
         {
@@ -228,12 +274,15 @@ namespace TVGL
             }
         }
 
+        /// <summary>
+        /// The comma
+        /// </summary>
         private const string comma = ",";
         /// <summary>
         /// Stream writes the JSON structure in reverse order of how it will be read in.
         /// </summary>
-        /// <param name="writer"></param>
-        /// <param name="index"></param>
+        /// <param name="writer">The writer.</param>
+        /// <param name="index">The index.</param>
         public void StreamWrite(JsonTextWriter writer, int index)
         {
             writer.WritePropertyName("Name");
@@ -298,6 +347,12 @@ namespace TVGL
             writer.WriteEndObject();//}
         }
 
+        /// <summary>
+        /// Streams the read.
+        /// </summary>
+        /// <param name="reader">The reader.</param>
+        /// <param name="index">The index.</param>
+        /// <exception cref="System.Exception">Need to add deserialize casting for primitive type: " + primitiveType</exception>
         public void StreamRead(JsonTextReader reader, out int index)
         {
             index = -1;
@@ -414,6 +469,10 @@ namespace TVGL
         }
 
 
+        /// <summary>
+        /// Called when [deserialized method].
+        /// </summary>
+        /// <param name="context">The context.</param>
         [OnDeserialized]
         protected void OnDeserializedMethod(StreamingContext context)
         {
@@ -625,12 +684,18 @@ namespace TVGL
             }
         }
 
+        /// <summary>
+        /// Makes the edges if non existent.
+        /// </summary>
         public void MakeEdgesIfNonExistent()
         {
             if (_edges != null && _edges.Length > 0) return;
             CompleteInitiation();
         }
 
+        /// <summary>
+        /// Doublies the connect vertices to faces.
+        /// </summary>
         public void DoublyConnectVerticesToFaces()
         {
             foreach (var face in Faces)
@@ -642,6 +707,10 @@ namespace TVGL
             }
         }
 
+        /// <summary>
+        /// Completes the initiation.
+        /// </summary>
+        /// <param name="fromSTL">if set to <c>true</c> [from STL].</param>
         internal void CompleteInitiation(bool fromSTL = false)
         {
             if (Vertices[0].Faces == null || !Vertices[0].Faces.Any())
@@ -708,11 +777,11 @@ namespace TVGL
         }
 
         /// <summary>
-        ///     Defines the axis aligned bounding box and tolerance. This is called first in the constructors
-        ///     because the tolerance is used in making the vertices.
+        /// Defines the axis aligned bounding box and tolerance. This is called first in the constructors
+        /// because the tolerance is used in making the vertices.
         /// </summary>
         /// <param name="vertices">The vertices.</param>
-        private void DefineAxisAlignedBoundingBoxAndTolerance(IEnumerable<Vector3> vertices)
+        public void DefineAxisAlignedBoundingBoxAndTolerance(IEnumerable<Vector3> vertices = null)
         {
             var xMin = double.PositiveInfinity;
             var yMin = double.PositiveInfinity;
@@ -720,6 +789,7 @@ namespace TVGL
             var xMax = double.NegativeInfinity;
             var yMax = double.NegativeInfinity;
             var zMax = double.NegativeInfinity;
+            if (vertices == null) vertices = Vertices.Select(v => v.Coordinates);
             foreach (var v in vertices)
             {
                 if (xMin > v.X) xMin = v.X;
@@ -737,10 +807,8 @@ namespace TVGL
         /// <summary>
         /// Makes the faces, avoiding duplicates.
         /// </summary>
-        /// <param name="faceToVertexIndices">The face to vertex indices.</param>
+        /// <param name="vertsPerFace">The verts per face.</param>
         /// <param name="colors">The colors.</param>
-        /// <param name="doublyLinkToVertices">if set to <c>true</c> [doubly link to vertices].</param>
-        /// 
         internal void MakeFaces(IEnumerable<List<Vector3>> vertsPerFace, IList<Color> colors)
         {
             IList<List<Vector3>> vertexLocations = vertsPerFace as IList<List<Vector3>> ?? vertsPerFace.ToArray();
@@ -771,7 +839,6 @@ namespace TVGL
         /// <param name="faceToVertexIndices">The face to vertex indices.</param>
         /// <param name="colors">The colors.</param>
         /// <param name="doublyLinkToVertices">if set to <c>true</c> [doubly link to vertices].</param>
-        /// 
         internal void MakeFaces(IList<int[]> faceToVertexIndices, IList<Color> colors,
             bool doublyLinkToVertices = true)
         {
@@ -847,21 +914,32 @@ namespace TVGL
                 Faces[i].IndexInList = i;
         }
 
+        /// <summary>
+        /// Struct faceInfo
+        /// </summary>
         public struct faceInfo
         {
+            /// <summary>
+            /// a
+            /// </summary>
             public int A;
+            /// <summary>
+            /// The b
+            /// </summary>
             public int B;
+            /// <summary>
+            /// The c
+            /// </summary>
             public int C;
+            /// <summary>
+            /// The index
+            /// </summary>
             public int Index;
         }
 
         /// <summary>
         /// Makes the faces
         /// </summary>
-        /// <param name="faceToVertexIndices">The face to vertex indices.</param>
-        /// <param name="colors">The colors.</param>
-        /// <param name="doublyLinkToVertices">if set to <c>true</c> [doubly link to vertices].</param>
-        /// 
         public void MakeFacesFromPrimitives()
         {
             HasUniformColor = true;
@@ -876,9 +954,9 @@ namespace TVGL
         /// Makes the faces, avoiding duplicates.
         /// </summary>
         /// <param name="faceToVertexIndices">The face to vertex indices.</param>
+        /// <param name="primitives">The primitives.</param>
         /// <param name="colors">The colors.</param>
         /// <param name="doublyLinkToVertices">if set to <c>true</c> [doubly link to vertices].</param>
-        /// 
         internal void MakeFaces(IList<int[]> faceToVertexIndices, IList<PrimitiveSurface> primitives, IList<Color> colors,
             bool doublyLinkToVertices = true)
         {
@@ -975,6 +1053,13 @@ namespace TVGL
             }
         }
 
+        /// <summary>
+        /// Faces the checksum.
+        /// </summary>
+        /// <param name="checksumMultiplier">The checksum multiplier.</param>
+        /// <param name="vertexIndices">The vertex indices.</param>
+        /// <param name="orderedIndices">The ordered indices.</param>
+        /// <returns>System.Int64.</returns>
         private long FaceChecksum(List<long> checksumMultiplier, IEnumerable<int> vertexIndices, out List<int> orderedIndices)
         {
             orderedIndices =
@@ -986,6 +1071,16 @@ namespace TVGL
         }
 
         //Get the face checksum from three vertex indices on a face without creating needless lists in memory or using the Sort function.
+        /// <summary>
+        /// Faces the checksum.
+        /// </summary>
+        /// <param name="m1">The m1.</param>
+        /// <param name="m2">The m2.</param>
+        /// <param name="m3">The m3.</param>
+        /// <param name="A">a.</param>
+        /// <param name="B">The b.</param>
+        /// <param name="C">The c.</param>
+        /// <returns>System.Int64.</returns>
         private long FaceChecksum(long m1, long m2, long m3, int A, int B, int C)
         {
             if (A < B)
@@ -1008,15 +1103,26 @@ namespace TVGL
             }
         }
 
+        /// <summary>
+        /// Calculates the checksum.
+        /// </summary>
+        /// <param name="m1">The m1.</param>
+        /// <param name="m2">The m2.</param>
+        /// <param name="m3">The m3.</param>
+        /// <param name="smallest">The smallest.</param>
+        /// <param name="middle">The middle.</param>
+        /// <param name="largest">The largest.</param>
+        /// <returns>System.Int64.</returns>
         private long CalculateChecksum(long m1, long m2, long m3, int smallest, int middle, int largest)
         {
             return m1 * smallest + m2 * middle + m3 * largest;
         }
 
         /// <summary>
-        ///     Makes the vertices.
+        /// Makes the vertices.
         /// </summary>
         /// <param name="vertsPerFace">The verts per face.</param>
+        /// <param name="scaleFactor">The scale factor.</param>
         /// <param name="faceToVertexIndices">The face to vertex indices.</param>
         private void MakeVertices(IEnumerable<List<Vector3>> vertsPerFace, double scaleFactor, out List<int[]> faceToVertexIndices)
         {
@@ -1061,7 +1167,7 @@ namespace TVGL
         }
 
         /// <summary>
-        ///     Makes the vertices, and set CheckSum multiplier
+        /// Makes the vertices, and set CheckSum multiplier
         /// </summary>
         /// <param name="listOfVertices">The list of vertices.</param>
         private void MakeVertices(IList<Vector3> listOfVertices)
@@ -1079,6 +1185,10 @@ namespace TVGL
 
         #region Vertices - the important thing about these is updating the IndexInList property of the vertices
 
+        /// <summary>
+        /// Adds the vertex.
+        /// </summary>
+        /// <param name="newVertex">The new vertex.</param>
         internal void AddVertex(Vertex newVertex)
         {
             var newVertices = new Vertex[NumberOfVertices + 1];
@@ -1090,6 +1200,10 @@ namespace TVGL
             NumberOfVertices++;
         }
 
+        /// <summary>
+        /// Adds the vertices.
+        /// </summary>
+        /// <param name="verticesToAdd">The vertices to add.</param>
         internal void AddVertices(IList<Vertex> verticesToAdd)
         {
             var numToAdd = verticesToAdd.Count;
@@ -1106,11 +1220,23 @@ namespace TVGL
             NumberOfVertices += numToAdd;
         }
 
+        /// <summary>
+        /// Replaces the vertex.
+        /// </summary>
+        /// <param name="removeVertex">The remove vertex.</param>
+        /// <param name="newVertex">The new vertex.</param>
+        /// <param name="removeReferecesToVertex">if set to <c>true</c> [remove refereces to vertex].</param>
         internal void ReplaceVertex(Vertex removeVertex, Vertex newVertex, bool removeReferecesToVertex = true)
         {
             ReplaceVertex(Vertices.FindIndex(removeVertex), newVertex, removeReferecesToVertex);
         }
 
+        /// <summary>
+        /// Replaces the vertex.
+        /// </summary>
+        /// <param name="removeVIndex">Index of the remove v.</param>
+        /// <param name="newVertex">The new vertex.</param>
+        /// <param name="removeReferecesToVertex">if set to <c>true</c> [remove refereces to vertex].</param>
         internal void ReplaceVertex(int removeVIndex, Vertex newVertex, bool removeReferecesToVertex = true)
         {
             if (removeReferecesToVertex) RemoveReferencesToVertex(Vertices[removeVIndex]);
@@ -1118,11 +1244,21 @@ namespace TVGL
             Vertices[removeVIndex] = newVertex;
         }
 
+        /// <summary>
+        /// Removes the vertex.
+        /// </summary>
+        /// <param name="removeVertex">The remove vertex.</param>
+        /// <param name="removeReferecesToVertex">if set to <c>true</c> [remove refereces to vertex].</param>
         internal void RemoveVertex(Vertex removeVertex, bool removeReferecesToVertex = true)
         {
             RemoveVertex(Vertices.FindIndex(removeVertex), removeReferecesToVertex);
         }
 
+        /// <summary>
+        /// Removes the vertex.
+        /// </summary>
+        /// <param name="removeVIndex">Index of the remove v.</param>
+        /// <param name="removeReferecesToVertex">if set to <c>true</c> [remove refereces to vertex].</param>
         internal void RemoveVertex(int removeVIndex, bool removeReferecesToVertex = true)
         {
             if (removeReferecesToVertex) RemoveReferencesToVertex(Vertices[removeVIndex]);
@@ -1140,11 +1276,19 @@ namespace TVGL
             UpdateAllEdgeCheckSums();
         }
 
+        /// <summary>
+        /// Removes the vertices.
+        /// </summary>
+        /// <param name="removeVertices">The remove vertices.</param>
         internal void RemoveVertices(IEnumerable<Vertex> removeVertices)
         {
             RemoveVertices(removeVertices.Select(Vertices.FindIndex).ToList());
         }
 
+        /// <summary>
+        /// Removes the vertices.
+        /// </summary>
+        /// <param name="removeIndices">The remove indices.</param>
         internal void RemoveVertices(List<int> removeIndices)
         {
             var numToRemove = removeIndices.Count;
@@ -1169,6 +1313,9 @@ namespace TVGL
             UpdateAllEdgeCheckSums();
         }
 
+        /// <summary>
+        /// Updates all edge check sums.
+        /// </summary>
         internal void UpdateAllEdgeCheckSums()
         {
             foreach (var edge in Edges)
@@ -1179,6 +1326,10 @@ namespace TVGL
 
         #region Faces
 
+        /// <summary>
+        /// Adds the face.
+        /// </summary>
+        /// <param name="newFace">The new face.</param>
         internal void AddFace(TriangleFace newFace)
         {
             var newFaces = new TriangleFace[NumberOfFaces + 1];
@@ -1190,6 +1341,10 @@ namespace TVGL
             NumberOfFaces++;
         }
 
+        /// <summary>
+        /// Adds the faces.
+        /// </summary>
+        /// <param name="facesToAdd">The faces to add.</param>
         internal void AddFaces(IList<TriangleFace> facesToAdd)
         {
             var numToAdd = facesToAdd.Count;
@@ -1205,11 +1360,19 @@ namespace TVGL
             NumberOfFaces += numToAdd;
         }
 
+        /// <summary>
+        /// Removes the face.
+        /// </summary>
+        /// <param name="removeFace">The remove face.</param>
         internal void RemoveFace(TriangleFace removeFace)
         {
             RemoveFace(Faces.FindIndex(removeFace));
         }
 
+        /// <summary>
+        /// Removes the face.
+        /// </summary>
+        /// <param name="removeFaceIndex">Index of the remove face.</param>
         internal void RemoveFace(int removeFaceIndex)
         {
             //First. Remove all the references to each edge and vertex.
@@ -1226,11 +1389,19 @@ namespace TVGL
             Faces = newFaces;
         }
 
+        /// <summary>
+        /// Removes the faces.
+        /// </summary>
+        /// <param name="removeFaces">The remove faces.</param>
         internal void RemoveFaces(IEnumerable<TriangleFace> removeFaces)
         {
             RemoveFaces(removeFaces.Select(Faces.FindIndex).ToList());
         }
 
+        /// <summary>
+        /// Removes the faces.
+        /// </summary>
+        /// <param name="removeIndices">The remove indices.</param>
         internal void RemoveFaces(List<int> removeIndices)
         {
             //First. Remove all the references to each edge and vertex.
@@ -1253,6 +1424,10 @@ namespace TVGL
             Faces = newFaces;
         }
 
+        /// <summary>
+        /// Removes the references to face.
+        /// </summary>
+        /// <param name="removeFaceIndex">Index of the remove face.</param>
         private void RemoveReferencesToFace(int removeFaceIndex)
         {
             var face = Faces[removeFaceIndex];
@@ -1271,6 +1446,10 @@ namespace TVGL
 
         #region Edges
 
+        /// <summary>
+        /// Adds the edge.
+        /// </summary>
+        /// <param name="newEdge">The new edge.</param>
         internal void AddEdge(Edge newEdge)
         {
             var newEdges = new Edge[NumberOfEdges + 1];
@@ -1283,6 +1462,10 @@ namespace TVGL
             NumberOfEdges++;
         }
 
+        /// <summary>
+        /// Adds the edges.
+        /// </summary>
+        /// <param name="edgesToAdd">The edges to add.</param>
         internal void AddEdges(IList<Edge> edgesToAdd)
         {
             var numToAdd = edgesToAdd.Count;
@@ -1299,11 +1482,19 @@ namespace TVGL
             NumberOfEdges += numToAdd;
         }
 
+        /// <summary>
+        /// Removes the edge.
+        /// </summary>
+        /// <param name="removeEdge">The remove edge.</param>
         internal void RemoveEdge(Edge removeEdge)
         {
             RemoveEdge(Edges.FindIndex(removeEdge));
         }
 
+        /// <summary>
+        /// Removes the edge.
+        /// </summary>
+        /// <param name="removeEdgeIndex">Index of the remove edge.</param>
         internal void RemoveEdge(int removeEdgeIndex)
         {
             RemoveReferencesToEdge(removeEdgeIndex);
@@ -1319,11 +1510,19 @@ namespace TVGL
             _edges = newEdges;
         }
 
+        /// <summary>
+        /// Removes the edges.
+        /// </summary>
+        /// <param name="removeEdges">The remove edges.</param>
         internal void RemoveEdges(IEnumerable<Edge> removeEdges)
         {
             RemoveEdges(removeEdges.Select(Edges.FindIndex).ToList());
         }
 
+        /// <summary>
+        /// Removes the edges.
+        /// </summary>
+        /// <param name="removeIndices">The remove indices.</param>
         internal void RemoveEdges(List<int> removeIndices)
         {
             //First. Remove all the references to each edge and vertex.
@@ -1346,6 +1545,10 @@ namespace TVGL
             _edges = newEdges;
         }
 
+        /// <summary>
+        /// Removes the references to edge.
+        /// </summary>
+        /// <param name="removeEdgeIndex">Index of the remove edge.</param>
         private void RemoveReferencesToEdge(int removeEdgeIndex)
         {
             var edge = Edges[removeEdgeIndex];
@@ -1369,7 +1572,7 @@ namespace TVGL
         #endregion
 
         /// <summary>
-        ///     Adds the primitive.
+        /// Adds the primitive.
         /// </summary>
         /// <param name="p">The p.</param>
         public void AddPrimitive(PrimitiveSurface p)
@@ -1387,7 +1590,7 @@ namespace TVGL
         #region Copy Function
 
         /// <summary>
-        ///     Copies this instance.
+        /// Copies this instance.
         /// </summary>
         /// <returns>TessellatedSolid.</returns>
         public TessellatedSolid Copy()
@@ -1423,12 +1626,19 @@ namespace TVGL
         #endregion
 
         #region Reset Color Function
+        /// <summary>
+        /// Resets the default color.
+        /// </summary>
         public void ResetDefaultColor()
         {
             var defaultColor = new Color(KnownColors.LightGray);
             foreach (var face in Faces) face.Color = defaultColor;
         }
 
+        /// <summary>
+        /// Resets the default color.
+        /// </summary>
+        /// <param name="primitives">The primitives.</param>
         public void ResetDefaultColor(IEnumerable<PrimitiveSurface> primitives)
         {
             var defaultColor = new Color(KnownColors.LightGray);
@@ -1438,10 +1648,11 @@ namespace TVGL
 
         #region Transform
         /// <summary>
-        /// Translates and Squares Tesselated Solid based on its oriented bounding box. 
+        /// Translates and Squares Tesselated Solid based on its oriented bounding box.
         /// The resulting Solid should be located at the origin, and only in the positive X, Y, Z octant.
         /// </summary>
-        /// <returns></returns>
+        /// <param name="originalBoundingBox">The original bounding box.</param>
+        /// <returns>TessellatedSolid.</returns>
         public TessellatedSolid SetToOriginAndSquareToNewSolid(out BoundingBox originalBoundingBox)
         {
             originalBoundingBox = this.OrientedBoundingBox();
@@ -1449,10 +1660,10 @@ namespace TVGL
             return (TessellatedSolid)TransformToNewSolid(transform);
         }
         /// <summary>
-        /// Translates and Squares Tesselated Solid based on its oriented bounding box. 
+        /// Translates and Squares Tesselated Solid based on its oriented bounding box.
         /// The resulting Solid should be located at the origin, and only in the positive X, Y, Z octant.
         /// </summary>
-        /// <returns></returns>
+        /// <param name="originalBoundingBox">The original bounding box.</param>
         public void SetToOriginAndSquare(out BoundingBox originalBoundingBox)
         {
             originalBoundingBox = this.OrientedBoundingBox();
@@ -1512,8 +1723,8 @@ namespace TVGL
         /// <summary>
         /// Gets a new solid by transforming its vertices.
         /// </summary>
-        /// <param name="transformationMatrix"></param>
-        /// <returns></returns>
+        /// <param name="transformationMatrix">The transformation matrix.</param>
+        /// <returns>Solid.</returns>
         public override Solid TransformToNewSolid(Matrix4x4 transformationMatrix)
         {
             var copy = this.Copy();
@@ -1530,6 +1741,10 @@ namespace TVGL
         }
 
 
+        /// <summary>
+        /// Turns the model inside out.
+        /// </summary>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         internal bool TurnModelInsideOut()
         {
             _volume = -1 * _volume;
@@ -1541,18 +1756,37 @@ namespace TVGL
             return true;
         }
 
+        /// <summary>
+        /// Calculates the center.
+        /// </summary>
         protected override void CalculateCenter()
         {
             CalculateVolumeAndCenter(Faces, SameTolerance, out _volume, out _center);
         }
 
+        /// <summary>
+        /// Calculates the volume.
+        /// </summary>
         protected override void CalculateVolume()
         {
             CalculateVolumeAndCenter(Faces, SameTolerance, out _volume, out _center);
         }
 
+        /// <summary>
+        /// The one third
+        /// </summary>
         const double oneThird = 1.0 / 3.0;
+        /// <summary>
+        /// The one twelth
+        /// </summary>
         const double oneTwelth = 1.0 / 12.0;
+        /// <summary>
+        /// Calculates the volume and center.
+        /// </summary>
+        /// <param name="faces">The faces.</param>
+        /// <param name="tolerance">The tolerance.</param>
+        /// <param name="volume">The volume.</param>
+        /// <param name="center">The center.</param>
         public static void CalculateVolumeAndCenter(IEnumerable<TriangleFace> faces, double tolerance, out double volume, out Vector3 center)
         {
             center = new Vector3();
@@ -1582,6 +1816,13 @@ namespace TVGL
         }
 
         //ToDo: Remove this function if there is no need for it. Why does this function repeat the volume & center calculation? Does this improve accuracy somehow? 
+        /// <summary>
+        /// Calculates the volume and center old.
+        /// </summary>
+        /// <param name="faces">The faces.</param>
+        /// <param name="tolerance">The tolerance.</param>
+        /// <param name="volume">The volume.</param>
+        /// <param name="center">The center.</param>
         public static void CalculateVolumeAndCenter_Old(IEnumerable<TriangleFace> faces, double tolerance, out double volume, out Vector3 center)
         {
             center = new Vector3();
@@ -1619,13 +1860,23 @@ namespace TVGL
             } while (Math.Abs(oldVolume - volume) > tolerance && iterations <= 20);
         }
 
+        /// <summary>
+        /// Calculates the surface area.
+        /// </summary>
         protected override void CalculateSurfaceArea()
         {
             _surfaceArea = Faces.Sum(face => face.Area);
         }
 
+        /// <summary>
+        /// The one sixtieth
+        /// </summary>
         const double oneSixtieth = 1.0 / 60.0;
 
+        /// <summary>
+        /// Calculates the inertia tensor.
+        /// </summary>
+        /// <exception cref="System.NotImplementedException"></exception>
         protected override void CalculateInertiaTensor()
         {
             //var matrixA = new double[3, 3];

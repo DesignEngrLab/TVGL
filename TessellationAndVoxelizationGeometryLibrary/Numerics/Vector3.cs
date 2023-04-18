@@ -1,6 +1,16 @@
-// Licensed to the .NET Foundation under one or more agreements.
-// The .NET Foundation licenses this file to you under the MIT license.
-// See the LICENSE file in the project root for more information.
+// ***********************************************************************
+// Assembly         : TessellationAndVoxelizationGeometryLibrary
+// Author           : matth
+// Created          : 04-03-2023
+//
+// Last Modified By : matth
+// Last Modified On : 04-03-2023
+// ***********************************************************************
+// <copyright file="Vector3.cs" company="Design Engineering Lab">
+//     2014
+// </copyright>
+// <summary></summary>
+// ***********************************************************************
 
 using System;
 using System.Globalization;
@@ -20,14 +30,17 @@ namespace TVGL  // COMMENTEDCHANGE namespace System.Numerics
         /// <summary>
         /// The X component of the vector.
         /// </summary>
+        /// <value>The x.</value>
         public double X { get; }
         /// <summary>
         /// The Y component of the vector.
         /// </summary>
+        /// <value>The y.</value>
         public double Y { get; }
         /// <summary>
         /// The Z component of the vector.
         /// </summary>
+        /// <value>The z.</value>
         public double Z { get; }
 
         #region Constructors
@@ -44,6 +57,10 @@ namespace TVGL  // COMMENTEDCHANGE namespace System.Numerics
         /// <param name="value">The Vector to extract X and Y components from.</param>
         /// <param name="z">The Z component.</param>
         public Vector3(Vector2 value, double z) : this(value.X, value.Y, z) { }
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Vector3"/> struct.
+        /// </summary>
+        /// <param name="value">The value.</param>
         public Vector3(Vector3 value) : this(value.X, value.Y, value.Z) { }
 
         /// <summary>
@@ -60,6 +77,10 @@ namespace TVGL  // COMMENTEDCHANGE namespace System.Numerics
             Z = z;
         }
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Vector3"/> struct.
+        /// </summary>
+        /// <param name="d">The d.</param>
         public Vector3(double[] d) : this()
         {
             X = d[0];
@@ -79,6 +100,7 @@ namespace TVGL  // COMMENTEDCHANGE namespace System.Numerics
         /// <summary>
         /// Copies the contents of the vector into the given array.
         /// </summary>
+        /// <param name="array">The array.</param>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void CopyTo(double[] array)
         {
@@ -90,10 +112,13 @@ namespace TVGL  // COMMENTEDCHANGE namespace System.Numerics
         /// <summary>
         /// Copies the contents of the vector into the given array, starting from index.
         /// </summary>
+        /// <param name="array">The array.</param>
+        /// <param name="index">The index.</param>
+        /// <exception cref="System.NullReferenceException"></exception>
+        /// <exception cref="System.ArgumentOutOfRangeException"></exception>
+        /// <exception cref="System.ArgumentException"></exception>
         /// <exception cref="ArgumentNullException">If array is null.</exception>
         /// <exception cref="RankException">If array is multidimensional.</exception>
-        /// <exception cref="ArgumentOutOfRangeException">If index is greater than end of the array or index is less than zero.</exception>
-        /// <exception cref="ArgumentException">If number of elements in source vector is greater than those available in destination array.</exception>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void CopyTo(double[] array, int index)
         {
@@ -337,12 +362,14 @@ namespace TVGL  // COMMENTEDCHANGE namespace System.Numerics
         /// <summary>
         /// Returns the vector (0,0,0).
         /// </summary>
+        /// <value>The zero.</value>
 
         public static Vector3 Zero => default;
 
         /// <summary>
         /// Returns the vector (1,1,1).
         /// </summary>
+        /// <value>The one.</value>
 
         public static Vector3 One =>
         new Vector3(1.0, 1.0, 1.0);
@@ -350,10 +377,15 @@ namespace TVGL  // COMMENTEDCHANGE namespace System.Numerics
         /// <summary>
         /// Returns the vector (NaN, NaN, NaN).
         /// </summary>
+        /// <value>The null.</value>
 
         public static Vector3 Null =>
         new Vector3(double.NaN, double.NaN, double.NaN);
 
+        /// <summary>
+        /// Determines whether this instance is null.
+        /// </summary>
+        /// <returns><c>true</c> if this instance is null; otherwise, <c>false</c>.</returns>
         public bool IsNull()
         {
             return double.IsNaN(X) || double.IsNaN(Y) || double.IsNaN(Z);
@@ -361,6 +393,7 @@ namespace TVGL  // COMMENTEDCHANGE namespace System.Numerics
         /// <summary>
         /// Makes a copy of the current Vector.
         /// </summary>
+        /// <returns>Vector3.</returns>
         public Vector3 Copy()
         {
             return new Vector3(X, Y, Z);
@@ -369,18 +402,26 @@ namespace TVGL  // COMMENTEDCHANGE namespace System.Numerics
         /// <summary>
         /// Returns the vector (1,0,0).
         /// </summary>
+        /// <value>The unit x.</value>
         public static Vector3 UnitX => new Vector3(1.0, 0.0, 0.0);
 
         /// <summary>
         /// Returns the vector (0,1,0).
         /// </summary>
+        /// <value>The unit y.</value>
         public static Vector3 UnitY => new Vector3(0.0, 1.0, 0.0);
 
         /// <summary>
         /// Returns the vector (0,0,1).
         /// </summary>
+        /// <value>The unit z.</value>
         public static Vector3 UnitZ => new Vector3(0.0, 0.0, 1.0);
 
+        /// <summary>
+        /// Units the vector.
+        /// </summary>
+        /// <param name="direction">The direction.</param>
+        /// <returns>Vector3.</returns>
         public static Vector3 UnitVector(CartesianDirections direction)
         {
             switch (direction)
@@ -393,6 +434,11 @@ namespace TVGL  // COMMENTEDCHANGE namespace System.Numerics
                 default: return new Vector3(0, 0, 1);
             }
         }
+        /// <summary>
+        /// Units the vector.
+        /// </summary>
+        /// <param name="direction">The direction.</param>
+        /// <returns>Vector3.</returns>
         public static Vector3 UnitVector(int direction)
         {
             if (direction == 0) return new Vector3(1, 0, 0);
@@ -400,6 +446,11 @@ namespace TVGL  // COMMENTEDCHANGE namespace System.Numerics
             return new Vector3(0, 0, 1);
         }
 
+        /// <summary>
+        /// Gets the <see cref="System.Double"/> with the specified i.
+        /// </summary>
+        /// <param name="i">The i.</param>
+        /// <returns>System.Double.</returns>
         public double this[int i]
         {
             get
@@ -410,6 +461,10 @@ namespace TVGL  // COMMENTEDCHANGE namespace System.Numerics
             }
         }
 
+        /// <summary>
+        /// Gets the position.
+        /// </summary>
+        /// <value>The position.</value>
         [JsonIgnore]
         public double[] Position => new[] { X, Y, Z };
 
@@ -442,7 +497,8 @@ namespace TVGL  // COMMENTEDCHANGE namespace System.Numerics
         /// <summary>
         /// Returns a boolean indicating whether the given vector is aligned or exactly in the opposite direction.
         /// </summary>
-        /// <param name="obj">The Object to compare against.</param>
+        /// <param name="other">The other.</param>
+        /// <param name="dotTolerance">The dot tolerance.</param>
         /// <returns>True if the Object is equal or opposite to this Vector3; False otherwise.</returns>
         public bool IsAlignedOrReverse(Vector3 other, double dotTolerance = Constants.SameFaceNormalDotTolerance)
         {
@@ -461,7 +517,9 @@ namespace TVGL  // COMMENTEDCHANGE namespace System.Numerics
         /// <summary>
         /// Returns a boolean indicating whether the given vector is aligned or exactly in the opposite direction.
         /// </summary>
-        /// <param name="obj">The Object to compare against.</param>
+        /// <param name="other">The other.</param>
+        /// <param name="isReverse">if set to <c>true</c> [is reverse].</param>
+        /// <param name="dotTolerance">The dot tolerance.</param>
         /// <returns>True if the Object is equal or opposite to this Vector3; False otherwise.</returns>
         public bool IsAlignedOrReverse(Vector3 other, out bool isReverse, double dotTolerance = Constants.SameFaceNormalDotTolerance)
         {
@@ -479,9 +537,7 @@ namespace TVGL  // COMMENTEDCHANGE namespace System.Numerics
         /// <summary>
         /// Determines whether the specified d2 is aligned.
         /// </summary>
-        /// <param name="d1">The d1.</param>
-        /// <param name="d2">The d2.</param>
-        /// <param name="reverseIsDuplicate">if set to <c>true</c> [reverse is duplicate].</param>
+        /// <param name="other">The other.</param>
         /// <param name="dotTolerance">The dot tolerance.</param>
         /// <returns><c>true</c> if the specified d2 is aligned; otherwise, <c>false</c>.</returns>
         public bool IsAligned(Vector3 other, double dotTolerance = Constants.SameFaceNormalDotTolerance)
@@ -502,9 +558,7 @@ namespace TVGL  // COMMENTEDCHANGE namespace System.Numerics
         /// <summary>
         /// Determines whether the specified d2 is perpendicular.
         /// </summary>
-        /// <param name="d1">The d1.</param>
-        /// <param name="d2">The d2.</param>
-        /// <param name="reverseIsDuplicate">if set to <c>true</c> [reverse is duplicate].</param>
+        /// <param name="other">The other.</param>
         /// <param name="dotTolerance">The dot tolerance.</param>
         /// <returns><c>true</c> if the specified d2 is aligned; otherwise, <c>false</c>.</returns>
         public bool IsPerpendicular(Vector3 other, double dotTolerance = Constants.SameFaceNormalDotTolerance)
@@ -891,10 +945,25 @@ namespace TVGL  // COMMENTEDCHANGE namespace System.Numerics
         #endregion
     }
 
+    /// <summary>
+    /// Interface IVertex3D
+    /// </summary>
     public interface IVertex3D
     {
+        /// <summary>
+        /// Gets the x.
+        /// </summary>
+        /// <value>The x.</value>
         double X { get; }
+        /// <summary>
+        /// Gets the y.
+        /// </summary>
+        /// <value>The y.</value>
         double Y { get; }
+        /// <summary>
+        /// Gets the z.
+        /// </summary>
+        /// <value>The z.</value>
         double Z { get; }
     }
 

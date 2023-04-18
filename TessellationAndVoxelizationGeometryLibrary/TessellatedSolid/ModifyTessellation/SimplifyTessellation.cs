@@ -1,7 +1,16 @@
-﻿// Copyright 2015-2020 Design Engineering Lab
-// This file is a part of TVGL, Tessellation and Voxelization Geometry Library
-// https://github.com/DesignEngrLab/TVGL
-// It is licensed under MIT License (see LICENSE.txt for details)
+﻿// ***********************************************************************
+// Assembly         : TessellationAndVoxelizationGeometryLibrary
+// Author           : matth
+// Created          : 04-03-2023
+//
+// Last Modified By : matth
+// Last Modified On : 04-14-2023
+// ***********************************************************************
+// <copyright file="SimplifyTessellation.cs" company="Design Engineering Lab">
+//     2014
+// </copyright>
+// <summary></summary>
+// ***********************************************************************
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,7 +18,7 @@ using System.Linq;
 namespace TVGL
 {
     /// <summary>
-    ///  This portion of ModifyTessellation includes the functions to simplify a tessellated solid. 
+    /// This portion of ModifyTessellation includes the functions to simplify a tessellated solid.
     /// </summary>
     public static partial class ModifyTessellation
     {
@@ -82,6 +91,13 @@ namespace TVGL
         }
 
 
+        /// <summary>
+        /// Organizes the into loop.
+        /// </summary>
+        /// <param name="singleSidedEdges">The single sided edges.</param>
+        /// <param name="normal">The normal.</param>
+        /// <returns>List&lt;Vertex&gt;.</returns>
+        /// <exception cref="System.Exception"></exception>
         internal static List<Vertex> OrganizeIntoLoop(IEnumerable<Edge> singleSidedEdges, Vector3 normal)
         {
             var edgesHashSet = new HashSet<Edge>(singleSidedEdges);
@@ -117,6 +133,13 @@ namespace TVGL
         }
 
 
+        /// <summary>
+        /// Picks the best edge.
+        /// </summary>
+        /// <param name="possibleNextEdges">The possible next edges.</param>
+        /// <param name="refEdge">The reference edge.</param>
+        /// <param name="normal">The normal.</param>
+        /// <returns>Edge.</returns>
         private static Edge pickBestEdge(IEnumerable<Edge> possibleNextEdges, Vector3 refEdge, Vector3 normal)
         {
             var unitRefEdge = refEdge.Normalize();
@@ -166,7 +189,7 @@ namespace TVGL
             Simplify(ts, -1, minLength);
         }
 
-        /// <summary>        
+        /// <summary>
         /// Simplifies the tessellation so that no edge are shorter than provided the minimum edge length
         /// or until the provided number of faces are removed - whichever comes first.
         /// </summary>
@@ -283,7 +306,7 @@ namespace TVGL
 
 
         /// <summary>
-        ///     Combines the vertices of edge.
+        /// Combines the vertices of edge.
         /// </summary>
         /// <param name="edge">The edge.</param>
         /// <param name="removedVertexOut">The removed vertex out.</param>

@@ -1,3 +1,16 @@
+// ***********************************************************************
+// Assembly         : TessellationAndVoxelizationGeometryLibrary
+// Author           : matth
+// Created          : 04-03-2023
+//
+// Last Modified By : matth
+// Last Modified On : 04-03-2023
+// ***********************************************************************
+// <copyright file="ComplexNumber.cs" company="Design Engineering Lab">
+//     2014
+// </copyright>
+// <summary></summary>
+// ***********************************************************************
 using System;
 using System.Globalization;
 using System.Runtime.CompilerServices;
@@ -9,6 +22,9 @@ namespace TVGL
     /// </summary>
     public readonly struct ComplexNumber
     {
+        /// <summary>
+        /// The real imag tolerance
+        /// </summary>
         private const double RealImagTolerance = 1e-6;
         /// <summary>
         /// Specifies the real-value of the vector component of the ComplexNumber.
@@ -21,6 +37,8 @@ namespace TVGL
         /// <summary>
         /// Constructs a ComplexNumber from the given components.
         /// </summary>
+        /// <param name="real">The real.</param>
+        /// <param name="imaginary">The imaginary.</param>
         public ComplexNumber(double real, double imaginary)
         {
             Real = real;
@@ -30,6 +48,7 @@ namespace TVGL
         /// <summary>
         /// Constructs a ComplexNumber from the given components.
         /// </summary>
+        /// <param name="real">The real.</param>
         public ComplexNumber(double real)
         {
             Real = real;
@@ -37,6 +56,10 @@ namespace TVGL
         }
 
 
+        /// <summary>
+        /// Gets the na n.
+        /// </summary>
+        /// <value>The na n.</value>
         public static ComplexNumber NaN => new ComplexNumber(double.NaN, double.NaN);
 
         /// <summary>
@@ -290,6 +313,11 @@ namespace TVGL
         public static ComplexNumber operator /(double value1, ComplexNumber value2) => Divide(value1, value2);
 
 
+        /// <summary>
+        /// SQRTs the specified value1.
+        /// </summary>
+        /// <param name="value1">The value1.</param>
+        /// <returns>ComplexNumber.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static ComplexNumber Sqrt(ComplexNumber value1)
         {
@@ -305,6 +333,11 @@ namespace TVGL
             return new ComplexNumber(radius * Math.Cos(angle), radius * Math.Sin(angle));
         }
 
+        /// <summary>
+        /// CBRTs the specified value1.
+        /// </summary>
+        /// <param name="value1">The value1.</param>
+        /// <returns>ComplexNumber.</returns>
         public static ComplexNumber Cbrt(ComplexNumber value1)
         {
             if (value1.IsRealNumber) return new ComplexNumber(Math.Cbrt(value1.Real));
@@ -358,7 +391,7 @@ namespace TVGL
 
 
         /// <summary>
-        /// Performs an explicit conversion from <see cref="ComplexNumber"/> to <see cref="System.Double"/>.
+        /// Performs an explicit conversion from <see cref="ComplexNumber" /> to <see cref="System.Double" />.
         /// </summary>
         /// <param name="value1">The value1.</param>
         /// <returns>The result of the conversion.</returns>
@@ -368,7 +401,7 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Performs an explicit conversion from <see cref="ComplexNumber"/> to <see cref="System.Double"/>.
+        /// Performs an explicit conversion from <see cref="ComplexNumber" /> to <see cref="System.Double" />.
         /// </summary>
         /// <param name="value1">The value1.</param>
         /// <returns>The result of the conversion.</returns>

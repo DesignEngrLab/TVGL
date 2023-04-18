@@ -1,4 +1,17 @@
-﻿using ClipperLib;
+﻿// ***********************************************************************
+// Assembly         : TessellationAndVoxelizationGeometryLibrary
+// Author           : matth
+// Created          : 04-03-2023
+//
+// Last Modified By : matth
+// Last Modified On : 04-03-2023
+// ***********************************************************************
+// <copyright file="ClipperPolygonOperations.cs" company="Design Engineering Lab">
+//     2014
+// </copyright>
+// <summary></summary>
+// ***********************************************************************
+using ClipperLib;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -6,11 +19,26 @@ using System.Linq;
 
 namespace TVGL
 {
+    /// <summary>
+    /// Enum PolygonFillType
+    /// </summary>
     public enum PolygonFillType //http://www.angusj.com/delphi/clipper/documentation/Docs/Units/ClipperLib/Types/PolyFillType.htm
     {
+        /// <summary>
+        /// The positive
+        /// </summary>
         Positive, // (Most common if polygons are ordered correctly and not self-intersecting) All sub-regions with winding counts > 0 are filled.
+        /// <summary>
+        /// The even odd
+        /// </summary>
         EvenOdd,  // (Most common when polygon directions are unknown) Odd numbered sub-regions are filled, while even numbered sub-regions are not.
+        /// <summary>
+        /// The negative
+        /// </summary>
         Negative, // (Rarely used) All sub-regions with winding counts < 0 are filled.
+        /// <summary>
+        /// The non zero
+        /// </summary>
         NonZero //(Common if polygon directions are unknown) All non-zero sub-regions are filled (used in silhouette because we prefer filled regions).
     };
 
@@ -19,13 +47,34 @@ namespace TVGL
     /// </summary>
     public static partial class PolygonOperations
     {
+        /// <summary>
+        /// The scale
+        /// </summary>
         const double scale = 1000000;
         #region Offset
+        /// <summary>
+        /// Offsets the via clipper.
+        /// </summary>
+        /// <param name="polygon">The polygon.</param>
+        /// <param name="offset">The offset.</param>
+        /// <param name="notMiter">if set to <c>true</c> [not miter].</param>
+        /// <param name="tolerance">The tolerance.</param>
+        /// <param name="deltaAngle">The delta angle.</param>
+        /// <returns>List&lt;Polygon&gt;.</returns>
         private static List<Polygon> OffsetViaClipper(Polygon polygon, double offset, bool notMiter, double tolerance, double deltaAngle)
         {
             return OffsetViaClipper(new[] { polygon }, offset, notMiter, tolerance, deltaAngle);
         }
 
+        /// <summary>
+        /// Offsets the via clipper.
+        /// </summary>
+        /// <param name="polygons">The polygons.</param>
+        /// <param name="offset">The offset.</param>
+        /// <param name="notMiter">if set to <c>true</c> [not miter].</param>
+        /// <param name="tolerance">The tolerance.</param>
+        /// <param name="deltaAngle">The delta angle.</param>
+        /// <returns>List&lt;Polygon&gt;.</returns>
         private static List<Polygon> OffsetViaClipper(IEnumerable<Polygon> polygons, double offset, bool notMiter, double tolerance, double deltaAngle)
         {
             var allPolygons = polygons.SelectMany(polygon => polygon.AllPolygons).ToList();
@@ -52,11 +101,25 @@ namespace TVGL
             return solution.CreateShallowPolygonTrees(true);
         }
 
+        /// <summary>
+        /// Offsets the line via clipper.
+        /// </summary>
+        /// <param name="polyline">The polyline.</param>
+        /// <param name="offset">The offset.</param>
+        /// <param name="tolerance">The tolerance.</param>
+        /// <returns>List&lt;Polygon&gt;.</returns>
         public static List<Polygon> OffsetLineViaClipper(this IEnumerable<Vector2> polyline, double offset, double tolerance)
         {
             return OffsetLinesViaClipper(new[] { polyline }, offset, tolerance);
         }
 
+        /// <summary>
+        /// Offsets the lines via clipper.
+        /// </summary>
+        /// <param name="polylines">The polylines.</param>
+        /// <param name="offset">The offset.</param>
+        /// <param name="tolerance">The tolerance.</param>
+        /// <returns>List&lt;Polygon&gt;.</returns>
         public static List<Polygon> OffsetLinesViaClipper(this IEnumerable<IEnumerable<Vector2>> polylines, double offset, double tolerance)
         {
             if (double.IsNaN(tolerance) || tolerance.IsNegligible()) tolerance = Constants.BaseTolerance;
@@ -84,14 +147,14 @@ namespace TVGL
         /// <summary>
         /// Performs the Boolean Operations from the Clipper Library
         /// </summary>
-        /// <param name="clipType"></param>
-        /// <param name="subject"></param>
-        /// <param name="clip"></param>
-        /// <param name="simplifyPriorToBooleanOperation"></param>
-        /// <param name="scale"></param>
-        /// <param name="fillMethod"></param>
-        /// <returns></returns>
-        /// <exception cref="Exception"></exception>
+        /// <param name="fillMethod">The fill method.</param>
+        /// <param name="clipType">Type of the clip.</param>
+        /// <param name="subject">The subject.</param>
+        /// <param name="clip">The clip.</param>
+        /// <param name="subjectIsClosed">if set to <c>true</c> [subject is closed].</param>
+        /// <param name="clipIsClosed">if set to <c>true</c> [clip is closed].</param>
+        /// <returns>List&lt;Polygon&gt;.</returns>
+        /// <exception cref="System.Exception">Clipper Union Failed</exception>
         private static List<Polygon> BooleanViaClipper(PolyFillType fillMethod, ClipType clipType, IEnumerable<Polygon> subject,
             IEnumerable<Polygon> clip = null, bool subjectIsClosed = true, bool clipIsClosed = true)
         {

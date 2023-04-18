@@ -1,7 +1,16 @@
-﻿// Copyright 2015-2020 Design Engineering Lab
-// This file is a part of TVGL, Tessellation and Voxelization Geometry Library
-// https://github.com/DesignEngrLab/TVGL
-// It is licensed under MIT License (see LICENSE.txt for details)
+﻿// ***********************************************************************
+// Assembly         : TessellationAndVoxelizationGeometryLibrary
+// Author           : matth
+// Created          : 04-03-2023
+//
+// Last Modified By : matth
+// Last Modified On : 04-14-2023
+// ***********************************************************************
+// <copyright file="ContactData.cs" company="Design Engineering Lab">
+//     2014
+// </copyright>
+// <summary></summary>
+// ***********************************************************************
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -14,6 +23,12 @@ namespace TVGL
     /// </summary>
     public class ContactData
     {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ContactData"/> class.
+        /// </summary>
+        /// <param name="solidContactData">The solid contact data.</param>
+        /// <param name="intersectionGroups">The intersection groups.</param>
+        /// <param name="plane">The plane.</param>
         internal ContactData(IEnumerable<SolidContactData> solidContactData, IEnumerable<IntersectionGroup> intersectionGroups, Plane plane)
         {
             SolidContactData = new List<SolidContactData>(solidContactData);
@@ -45,17 +60,23 @@ namespace TVGL
         public IEnumerable<SolidContactData> NegativeSideContactData => SolidContactData.Where(s => s.OnNegativeSide);
 
         /// <summary>
-        /// Gets the plane for this contact data 
+        /// Gets the plane for this contact data
         /// </summary>
         /// <value>The positive loops.</value>
         public readonly Plane Plane;
     }
 
     /// <summary>
-    /// Stores the information 
+    /// Stores the information
     /// </summary>
     public class SolidContactData
     {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="SolidContactData"/> class.
+        /// </summary>
+        /// <param name="groupsOfLoops">The groups of loops.</param>
+        /// <param name="onSideFaces">The on side faces.</param>
+        /// <param name="onPlaneFaces">The on plane faces.</param>
         internal SolidContactData(IEnumerable<GroupOfLoops> groupsOfLoops, IEnumerable<TriangleFace> onSideFaces, IEnumerable<TriangleFace> onPlaneFaces)
         {
             OnSideFaces = new List<TriangleFace>(onSideFaces);
@@ -89,17 +110,29 @@ namespace TVGL
             _volume = 0;
         }
 
+        /// <summary>
+        /// The groups of loops
+        /// </summary>
         public List<GroupOfLoops> GroupsOfLoops;
 
         //Contact data can be made up of information from the positive side or the negative side with infinite cutting planes
         //Finite cutting planes may have solids with contact data on both sides. 
+        /// <summary>
+        /// Gets a value indicating whether [on positive side].
+        /// </summary>
+        /// <value><c>true</c> if [on positive side]; otherwise, <c>false</c>.</value>
         public bool OnPositiveSide { get; }
+        /// <summary>
+        /// Gets a value indicating whether [on negative side].
+        /// </summary>
+        /// <value><c>true</c> if [on negative side]; otherwise, <c>false</c>.</value>
         public bool OnNegativeSide { get; }
 
         /// <summary>
         /// Gets the vertices belonging to this solid
         /// </summary>
-        /// <returns></returns>
+        /// <param name="tolerance">The tolerance.</param>
+        /// <returns>System.Double.</returns>
         public double Volume(double tolerance)
         {
             if (_volume > 0) return _volume;
@@ -107,6 +140,9 @@ namespace TVGL
             return _volume;
         }
 
+        /// <summary>
+        /// The volume
+        /// </summary>
         private double _volume;
 
         /// <summary>
@@ -118,7 +154,7 @@ namespace TVGL
         /// <summary>
         /// Gets the loops of negative area (i.e. holes).
         /// </summary>
-        /// <value>The negative loops.</value>                    
+        /// <value>The negative loops.</value>
         public readonly IEnumerable<Loop> NegativeLoops;
 
         /// <summary>
@@ -147,7 +183,7 @@ namespace TVGL
         public readonly IEnumerable<TriangleFace> OnSideFaces;
 
         /// <summary>
-        /// The faces that were formed on-side for all the loops in this solid. 
+        /// The faces that were formed on-side for all the loops in this solid.
         /// </summary>
         public readonly IEnumerable<TriangleFace> OnSideContactFaces;
 
@@ -175,12 +211,22 @@ namespace TVGL
     /// <summary>
     /// The IntersectionLoop class stores information about how the positive and negative side
     /// loops connect together. This includes a 2D intersection and pointers back to the GroupOfLoops
-    /// that contributes to it from each side. 
+    /// that contributes to it from each side.
     /// </summary>
     public class IntersectionGroup
     {
+        /// <summary>
+        /// The intersection2 d
+        /// </summary>
         public readonly List<Polygon> Intersection2D;
+        /// <summary>
+        /// The group of loops
+        /// </summary>
         public readonly HashSet<GroupOfLoops> GroupOfLoops;
+        /// <summary>
+        /// Gets the loop indices.
+        /// </summary>
+        /// <returns>List&lt;System.Int32&gt;.</returns>
         public List<int> GetLoopIndices()
         {
             var loopIndices = new List<int>();
@@ -194,6 +240,13 @@ namespace TVGL
             return loopIndices;
         }
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="IntersectionGroup"/> class.
+        /// </summary>
+        /// <param name="posSideGroupOfLoops">The position side group of loops.</param>
+        /// <param name="negSideGroupOfLoops">The neg side group of loops.</param>
+        /// <param name="intersection2D">The intersection2 d.</param>
+        /// <param name="index">The index.</param>
         public IntersectionGroup(GroupOfLoops posSideGroupOfLoops, GroupOfLoops negSideGroupOfLoops,
             List<Polygon> intersection2D, int index)
         {
@@ -202,6 +255,10 @@ namespace TVGL
             Index = index;
         }
 
+        /// <summary>
+        /// Gets the index.
+        /// </summary>
+        /// <value>The index.</value>
         public int Index { get; }
     }
 
@@ -220,7 +277,7 @@ namespace TVGL
         /// <summary>
         /// Gets the loops of negative area (i.e. holes).
         /// </summary>
-        /// <value>The negative loops.</value>                    
+        /// <value>The negative loops.</value>
         public readonly IEnumerable<Loop> NegativeLoops;
 
         /// <summary>
@@ -239,7 +296,7 @@ namespace TVGL
         }
 
         /// <summary>
-        /// The faces that were formed on-side for all the loops in this group. 
+        /// The faces that were formed on-side for all the loops in this group.
         /// </summary>
         public readonly IEnumerable<TriangleFace> OnSideContactFaces;
 
@@ -249,7 +306,7 @@ namespace TVGL
         public readonly IEnumerable<int> AdjOnsideFaceIndices;
 
         /// <summary>
-        /// A list of the idices of the straddle faces 
+        /// A list of the idices of the straddle faces
         /// </summary>
         public readonly IEnumerable<int> StraddleFaceIndices;
 
@@ -258,10 +315,20 @@ namespace TVGL
         /// </summary>
         public readonly IEnumerable<TriangleFace> OnPlaneFaces;
 
+        /// <summary>
+        /// The straddle edge on side vertices
+        /// </summary>
         public readonly HashSet<Vertex> StraddleEdgeOnSideVertices;
 
+        /// <summary>
+        /// The cross section2 d
+        /// </summary>
         public Polygon CrossSection2D;
 
+        /// <summary>
+        /// Sets the cross section2 d.
+        /// </summary>
+        /// <param name="plane">The plane.</param>
         public void SetCrossSection2D(Plane plane)
         {
             var flattenTransform = MiscFunctions.TransformToXYPlane(plane.Normal, out _);
@@ -276,6 +343,12 @@ namespace TVGL
             }
         }
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="GroupOfLoops"/> class.
+        /// </summary>
+        /// <param name="positiveLoop">The positive loop.</param>
+        /// <param name="negativeLoops">The negative loops.</param>
+        /// <param name="onPlaneFaces">The on plane faces.</param>
         internal GroupOfLoops(Loop positiveLoop, IEnumerable<Loop> negativeLoops, IEnumerable<TriangleFace> onPlaneFaces)
         {
             var onSideContactFaces = new List<TriangleFace>(positiveLoop.OnSideContactFaces);
@@ -321,15 +394,19 @@ namespace TVGL
         public Vertex[] VertexLoop;
         /// <summary>
         /// The faces that were formed on-side for this loop. About 2/3 s
-        /// of these faces should have one negligible adjacent face. 
+        /// of these faces should have one negligible adjacent face.
         /// </summary>
         public readonly IEnumerable<TriangleFace> OnSideContactFaces;
 
+        /// <summary>
+        /// The straddle edge on side vertices
+        /// </summary>
         public readonly HashSet<Vertex> StraddleEdgeOnSideVertices;
 
         /// <summary>
         /// Is the loop positive - meaning does it enclose material versus representing a hole
         /// </summary>
+        /// <value><c>true</c> if this instance is positive; otherwise, <c>false</c>.</value>
         public bool IsPositive
         {
             get => _isPositive;
@@ -346,6 +423,9 @@ namespace TVGL
             }
         }
 
+        /// <summary>
+        /// The is positive
+        /// </summary>
         private bool _isPositive;
 
         /// <summary>
@@ -369,25 +449,31 @@ namespace TVGL
         public readonly IEnumerable<int> AdjOnsideFaceIndices;
 
         /// <summary>
-        /// A list of the idices of the straddle faces 
+        /// A list of the idices of the straddle faces
         /// </summary>
         public readonly IEnumerable<int> StraddleFaceIndices;
 
+        /// <summary>
+        /// The index
+        /// </summary>
         public readonly int Index;
 
+        /// <summary>
+        /// The positive side
+        /// </summary>
         public readonly bool PositiveSide;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="Loop" /> class.
         /// </summary>
-        /// <param name="vertexLoop"></param>
-        /// <param name="onSideContactFaces"></param>
+        /// <param name="vertexLoop">The vertex loop.</param>
+        /// <param name="onSideContactFaces">The on side contact faces.</param>
         /// <param name="normal">The normal.</param>
-        /// <param name="straddleFaceIndices"></param>
-        /// <param name="adjOnsideFaceIndices"></param>
-        /// <param name="index"></param>
-        /// <param name="fromPositiveSide"></param>
-        /// <param name="straddleEdgeOnSideVertices"></param>
+        /// <param name="straddleFaceIndices">The straddle face indices.</param>
+        /// <param name="adjOnsideFaceIndices">The adj onside face indices.</param>
+        /// <param name="index">The index.</param>
+        /// <param name="fromPositiveSide">if set to <c>true</c> [from positive side].</param>
+        /// <param name="straddleEdgeOnSideVertices">The straddle edge on side vertices.</param>
         /// <param name="isClosed">is closed.</param>
         internal Loop(IList<Vertex> vertexLoop, IEnumerable<TriangleFace> onSideContactFaces, Vector3 normal,
             IEnumerable<int> straddleFaceIndices, IEnumerable<int> adjOnsideFaceIndices, int index, bool fromPositiveSide,

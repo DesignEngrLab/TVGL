@@ -1,4 +1,17 @@
-﻿using MIConvexHull;
+﻿// ***********************************************************************
+// Assembly         : TessellationAndVoxelizationGeometryLibrary
+// Author           : matth
+// Created          : 04-03-2023
+//
+// Last Modified By : matth
+// Last Modified On : 04-03-2023
+// ***********************************************************************
+// <copyright file="Circle.cs" company="Design Engineering Lab">
+//     2014
+// </copyright>
+// <summary></summary>
+// ***********************************************************************
+using MIConvexHull;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -6,39 +19,41 @@ using System.Collections.Generic;
 namespace TVGL
 {
     /// <summary>
-    ///     Public circle structure, given a center point and radius
+    /// Public circle structure, given a center point and radius
     /// </summary>
     public readonly struct Circle : ICurve
     {
         /// <summary>
-        ///     Center Point of circle
+        /// Center Point of circle
         /// </summary>
         public readonly Vector2 Center;
 
         /// <summary>
-        ///     Radius of circle
+        /// Radius of circle
         /// </summary>
         [JsonIgnore]
         public readonly double Radius;
 
         /// <summary>
-        ///     Radius of circle squared
+        /// Radius of circle squared
         /// </summary>
         public readonly double RadiusSquared;
 
         /// <summary>
-        ///     Area of circle
+        /// Area of circle
         /// </summary>
         [JsonIgnore]
         public readonly double Area;
 
         /// <summary>
-        ///     Circumference of circle
+        /// Circumference of circle
         /// </summary>
         [JsonIgnore]
         public readonly double Circumference;
 
-        /// <summary>Creates a circle, given the center point and the radius Squared</summary>
+        /// <summary>
+        /// Creates a circle, given the center point and the radius Squared
+        /// </summary>
         /// <param name="center">The center.</param>
         /// <param name="radiusSquared">The radius squared.</param>
         [JsonConstructor]
@@ -52,6 +67,15 @@ namespace TVGL
         }
 
 
+        /// <summary>
+        /// Returns the squared error of new point. This should be the square of the
+        /// actual distance to the curve. Squared is canonical since 1) usually fits
+        /// would be minimum least squares, 2) saves from doing square root operation
+        /// which is an undue computational expense
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="point">The point.</param>
+        /// <returns>System.Double.</returns>
         public double SquaredErrorOfNewPoint<T>(T point) where T : IVertex2D
         {
             var diff =new Vector2(point.X - Center.X, point.Y - Center.Y);
@@ -62,7 +86,10 @@ namespace TVGL
         /// <summary>
         /// Defines the best fit of the curve for the given points.
         /// </summary>
+        /// <typeparam name="T"></typeparam>
         /// <param name="points">The points.</param>
+        /// <param name="curve">The curve.</param>
+        /// <param name="error">The error.</param>
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         public static bool CreateFromPoints<T>(IEnumerable<T> points, out Circle curve, out double error) where T : IVertex2D
         {
@@ -143,6 +170,11 @@ namespace TVGL
         }
 
 
+        /// <summary>
+        /// Creates the path.
+        /// </summary>
+        /// <param name="numPoints">The number points.</param>
+        /// <returns>List&lt;Vector2&gt;.</returns>
         public List<Vector2> CreatePath(int numPoints)
         {
             if (numPoints <= 1)

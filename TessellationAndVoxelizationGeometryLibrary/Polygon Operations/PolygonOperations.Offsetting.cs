@@ -1,7 +1,16 @@
-﻿// Copyright 2015-2020 Design Engineering Lab
-// This file is a part of TVGL, Tessellation and Voxelization Geometry Library
-// https://github.com/DesignEngrLab/TVGL
-// It is licensed under MIT License (see LICENSE.txt for details)
+﻿// ***********************************************************************
+// Assembly         : TessellationAndVoxelizationGeometryLibrary
+// Author           : matth
+// Created          : 04-03-2023
+//
+// Last Modified By : matth
+// Last Modified On : 04-03-2023
+// ***********************************************************************
+// <copyright file="PolygonOperations.Offsetting.cs" company="Design Engineering Lab">
+//     2014
+// </copyright>
+// <summary></summary>
+// ***********************************************************************
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -21,6 +30,7 @@ namespace TVGL
         /// </summary>
         /// <param name="polygon">The polygon.</param>
         /// <param name="offset">The offset.</param>
+        /// <param name="tolerance">The tolerance.</param>
         /// <returns>List&lt;Polygon&gt;.</returns>
         public static List<Polygon> OffsetSquare(this Polygon polygon, double offset,
             double tolerance = double.NaN)
@@ -33,6 +43,7 @@ namespace TVGL
         /// </summary>
         /// <param name="polygons">The polygons.</param>
         /// <param name="offset">The offset.</param>
+        /// <param name="tolerance">The tolerance.</param>
         /// <returns>List&lt;Polygon&gt;.</returns>
         public static List<Polygon> OffsetSquare(this IEnumerable<Polygon> polygons, double offset,
             double tolerance = double.NaN)
@@ -41,11 +52,12 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Offset the polygon with miter (sharp) corners. This is the fastest of the three since the resulting polygon will have the 
-        /// same number of points as the 
+        /// Offset the polygon with miter (sharp) corners. This is the fastest of the three since the resulting polygon will have the
+        /// same number of points as the
         /// </summary>
         /// <param name="polygon">The polygon.</param>
         /// <param name="offset">The offset.</param>
+        /// <param name="tolerance">The tolerance.</param>
         /// <returns>List&lt;Polygon&gt;.</returns>
         public static List<Polygon> OffsetMiter(this Polygon polygon, double offset,
             double tolerance = double.NaN)
@@ -57,6 +69,7 @@ namespace TVGL
         /// </summary>
         /// <param name="polygons">The polygons.</param>
         /// <param name="offset">The offset.</param>
+        /// <param name="tolerance">The tolerance.</param>
         /// <returns>List&lt;Polygon&gt;.</returns>
         public static List<Polygon> OffsetMiter(this IEnumerable<Polygon> polygons, double offset,
             double tolerance = double.NaN)
@@ -70,9 +83,9 @@ namespace TVGL
         /// </summary>
         /// <param name="polygon">The polygon.</param>
         /// <param name="offset">The offset.</param>
+        /// <param name="tolerance">The tolerance.</param>
         /// <param name="maxCircleDeviation">The maximum circle deviation. If none is provided, then vertices are
-        ///     placed at every 1 degree (pi/180 radians).</param>
-        /// <param name="tolerance"></param>
+        /// placed at every 1 degree (pi/180 radians).</param>
         /// <returns>List&lt;Polygon&gt;.</returns>
         public static List<Polygon> OffsetRound(this Polygon polygon, double offset,
             double tolerance = double.NaN, double maxCircleDeviation = double.NaN)
@@ -87,8 +100,8 @@ namespace TVGL
         /// </summary>
         /// <param name="polygons">The polygons.</param>
         /// <param name="offset">The offset.</param>
+        /// <param name="tolerance">The tolerance.</param>
         /// <param name="maxCircleDeviation">The maximum circle deviation.</param>
-        /// <param name="tolerance"></param>
         /// <returns>List&lt;Polygon&gt;.</returns>
         public static List<Polygon> OffsetRound(this IEnumerable<Polygon> polygons, double offset,
             double tolerance = double.NaN, double maxCircleDeviation = double.NaN)
@@ -97,6 +110,13 @@ namespace TVGL
             return Offset(polygons, offset, true, tolerance, deltaAngle);
         }
 
+        /// <summary>
+        /// Defines the delta angle.
+        /// </summary>
+        /// <param name="offset">The offset.</param>
+        /// <param name="tolerance">The tolerance.</param>
+        /// <param name="maxCircleDeviation">The maximum circle deviation.</param>
+        /// <returns>System.Double.</returns>
         private static double DefineDeltaAngle(double offset, double tolerance, double maxCircleDeviation)
         {
             if (double.IsNaN(tolerance) && double.IsNaN(maxCircleDeviation))
@@ -107,6 +127,15 @@ namespace TVGL
         }
 
 
+        /// <summary>
+        /// Offsets the specified offset.
+        /// </summary>
+        /// <param name="polygons">The polygons.</param>
+        /// <param name="offset">The offset.</param>
+        /// <param name="notMiter">if set to <c>true</c> [not miter].</param>
+        /// <param name="tolerance">The tolerance.</param>
+        /// <param name="deltaAngle">The delta angle.</param>
+        /// <returns>List&lt;Polygon&gt;.</returns>
         private static List<Polygon> Offset(this IEnumerable<Polygon> polygons, double offset, bool notMiter,
             double tolerance, double deltaAngle = double.NaN)
         {
@@ -150,6 +179,14 @@ namespace TVGL
 #endif
         }
 
+        /// <summary>
+        /// Offsets the just.
+        /// </summary>
+        /// <param name="polygon">The polygon.</param>
+        /// <param name="offset">The offset.</param>
+        /// <param name="notMiter">if set to <c>true</c> [not miter].</param>
+        /// <param name="deltaAngle">The delta angle.</param>
+        /// <returns>List&lt;Polygon&gt;.</returns>
         private static List<Polygon> OffsetJust(this Polygon polygon, double offset, bool notMiter, double deltaAngle = double.NaN)
         {
             var bb = polygon.BoundingRectangle();
@@ -178,6 +215,15 @@ namespace TVGL
         }
 
 
+        /// <summary>
+        /// Offsets the specified offset.
+        /// </summary>
+        /// <param name="polygon">The polygon.</param>
+        /// <param name="offset">The offset.</param>
+        /// <param name="notMiter">if set to <c>true</c> [not miter].</param>
+        /// <param name="tolerance">The tolerance.</param>
+        /// <param name="deltaAngle">The delta angle.</param>
+        /// <returns>List&lt;Polygon&gt;.</returns>
         private static List<Polygon> Offset(this Polygon polygon, double offset, bool notMiter, double tolerance, double deltaAngle = double.NaN)
         {
 #if CLIPPER
@@ -252,6 +298,16 @@ namespace TVGL
 #endif
         }
 
+        /// <summary>
+        /// Mains the offset routine.
+        /// </summary>
+        /// <param name="polygon">The polygon.</param>
+        /// <param name="offset">The offset.</param>
+        /// <param name="notMiter">if set to <c>true</c> [not miter].</param>
+        /// <param name="maxLengthSquared">The maximum length squared.</param>
+        /// <param name="maxNumberOfPolygons">The maximum number of polygons.</param>
+        /// <param name="deltaAngle">The delta angle.</param>
+        /// <returns>System.ValueTuple&lt;List&lt;Vector2&gt;, List&lt;System.Boolean&gt;&gt;.</returns>
         private static (List<Vector2> points, List<bool> knownWrongPoints) MainOffsetRoutine(Polygon polygon, double offset, bool notMiter,
             double maxLengthSquared, out int maxNumberOfPolygons, double deltaAngle = double.NaN)
         {

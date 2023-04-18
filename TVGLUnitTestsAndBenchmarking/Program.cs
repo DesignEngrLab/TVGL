@@ -33,7 +33,7 @@ namespace TVGLUnitTestsAndBenchmarking
                 Debug.WriteLine("\n\n\nAttempting to open: " + fileName.Name);
                 IO.Open(fileName.FullName, out TessellatedSolid[] solids);
                 //solids[0].Faces[0].Color = Color.ColorDictionary[ColorFamily.Red]["Red"];
-                //Presenter.ShowAndHang(solids);
+                Presenter.ShowAndHang(solids);
                 //var css = CrossSectionSolid.CreateFromTessellatedSolid(solids[0], CartesianDirections.XPositive, 20);
                 //Presenter.ShowAndHang(css);
                 //IO.Save(css, "test.CSSolid");

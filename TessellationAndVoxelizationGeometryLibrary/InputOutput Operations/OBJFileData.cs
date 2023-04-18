@@ -1,7 +1,16 @@
-﻿// Copyright 2015-2020 Design Engineering Lab
-// This file is a part of TVGL, Tessellation and Voxelization Geometry Library
-// https://github.com/DesignEngrLab/TVGL
-// It is licensed under MIT License (see LICENSE.txt for details)
+﻿// ***********************************************************************
+// Assembly         : TessellationAndVoxelizationGeometryLibrary
+// Author           : matth
+// Created          : 04-03-2023
+//
+// Last Modified By : matth
+// Last Modified On : 04-14-2023
+// ***********************************************************************
+// <copyright file="OBJFileData.cs" company="Design Engineering Lab">
+//     2014
+// </copyright>
+// <summary></summary>
+// ***********************************************************************
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -11,12 +20,17 @@ using System.Linq;
 
 namespace TVGL
 {
+    /// <summary>
+    /// Class OBJFileData.
+    /// Implements the <see cref="TVGL.IO" />
+    /// </summary>
+    /// <seealso cref="TVGL.IO" />
     internal class OBJFileData : IO
     {
         #region Constructor
 
         /// <summary>
-        ///     Initializes a new instance of the <see cref="OBJFileData" /> class.
+        /// Initializes a new instance of the <see cref="OBJFileData" /> class.
         /// </summary>
         internal OBJFileData()
         {
@@ -34,49 +48,54 @@ namespace TVGL
 
         #region Fields and Properties
 
+        /// <summary>
+        /// Sets the face groups.
+        /// </summary>
+        /// <value>The face groups.</value>
         List<int[]> FaceGroups { get; }
 
 
         /// <summary>
-        ///     Gets the face to vertex indices.
+        /// Gets the face to vertex indices.
         /// </summary>
         /// <value>The face to vertex indices.</value>
         private List<int[]> FaceToVertexIndices { get; }
 
         /// <summary>
-        ///     Gets or sets the surface edges.
+        /// Gets or sets the surface edges.
         /// </summary>
+        /// <value>The surface edges.</value>
         private List<int[]> SurfaceEdges { get; }
 
         /// <summary>
-        ///     Gets the vertices as ordered by lines in the code. The same Vector3 may be referenced by multiple keys
-        ///     if it appears in multiple lines of code.
+        /// Gets the vertices as ordered by lines in the code. The same Vector3 may be referenced by multiple keys
+        /// if it appears in multiple lines of code.
         /// </summary>
         /// <value>The face to vertex indices.</value>
         private List<Vector3> VerticesByLine { get; }
 
 
         /// <summary>
-        ///     Gets the integer location of the Vector within the list of vertices of the solid.
+        /// Gets the integer location of the Vector within the list of vertices of the solid.
         /// </summary>
         /// <value>The face to vertex indices.</value>
         private Dictionary<Vector3, int> Vertices { get; }
 
         /// <summary>
-        ///     Just like vertices, the vertex normals are stored. However, in TVGL - this is primarily used to find edges
-        ///     that represent C1 discontinuities which are important in delineating the primtive surfaces.
+        /// Just like vertices, the vertex normals are stored. However, in TVGL - this is primarily used to find edges
+        /// that represent C1 discontinuities which are important in delineating the primtive surfaces.
         /// </summary>
         /// <value>The face to vertex indices.</value>
         private List<Vector3> VertexNormalsByLine { get; }
 
 
         /// <summary>
-        ///     Gets the integer location of the vertex normal within the list of normals of the solid.
+        /// Gets the integer location of the vertex normal within the list of normals of the solid.
         /// </summary>
         /// <value>The face to vertex indices.</value>
         private Dictionary<Vector3, int> VertexNormals { get; }
         /// <summary>
-        ///     Gets the face to normal indices.
+        /// Gets the face to normal indices.
         /// </summary>
         /// <value>The face to vertex indices.</value>
         private List<int[]> FaceToNormalIndices { get; }
@@ -118,6 +137,12 @@ namespace TVGL
             return results.ToArray();
         }
 
+        /// <summary>
+        /// Creates the regions from polyline and face groups.
+        /// </summary>
+        /// <param name="objFileData">The object file data.</param>
+        /// <param name="ts">The ts.</param>
+        /// <param name="faceGroupsThatAreBodies">The face groups that are bodies.</param>
         private static void CreateRegionsFromPolylineAndFaceGroups(OBJFileData objFileData, TessellatedSolid ts, out List<int[]> faceGroupsThatAreBodies)
         {
             faceGroupsThatAreBodies = new List<int[]>();
@@ -208,8 +233,8 @@ namespace TVGL
         /// </summary>
         /// <param name="stream">The stream.</param>
         /// <param name="filename">The filename.</param>
-        /// <param name="stlData">The STL data.</param>
-        /// <returns>True if the model was loaded successfully.</returns>  
+        /// <param name="objData">The object data.</param>
+        /// <returns>True if the model was loaded successfully.</returns>
         private static bool TryRead(Stream stream, string filename, out List<OBJFileData> objData)
         {
             objData = new List<OBJFileData>();
@@ -311,6 +336,11 @@ namespace TVGL
         }
 
 
+        /// <summary>
+        /// Reads the vector3.
+        /// </summary>
+        /// <param name="values">The values.</param>
+        /// <returns>TVGL.Vector3.</returns>
         private static Vector3 ReadVector3(string[] values)
         {
             var x = double.Parse(values[0], CultureInfo.InvariantCulture);
@@ -322,6 +352,11 @@ namespace TVGL
             return new Vector3(x / w, y / w, z / w);
         }
 
+        /// <summary>
+        /// Reads the face vertices.
+        /// </summary>
+        /// <param name="values">The values.</param>
+        /// <returns>int[].</returns>
         private int[] ReadFaceVertices(IEnumerable<string> values)
         {
             var face = new int[3];
@@ -334,6 +369,11 @@ namespace TVGL
             }
             return face;
         }
+        /// <summary>
+        /// Reads the face normals.
+        /// </summary>
+        /// <param name="values">The values.</param>
+        /// <returns>int[].</returns>
         private int[] ReadFaceNormals(IEnumerable<string> values)
         {
             var face = new int[3];
@@ -356,6 +396,11 @@ namespace TVGL
             return null;
         }
 
+        /// <summary>
+        /// Reads the surface line.
+        /// </summary>
+        /// <param name="values">The values.</param>
+        /// <returns>int[].</returns>
         private int[] ReadSurfaceLine(string[] values)
         {
             var line = new int[values.Length];
@@ -367,11 +412,11 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Gets the correct vertex reference. If a negative is before the integer, 
+        /// Gets the correct vertex reference. If a negative is before the integer,
         /// then count backward in the list of vertices by line.
         /// </summary>
-        /// <param name="vertexIndex"></param>
-        /// <returns></returns>
+        /// <param name="vertexIndex">Index of the vertex.</param>
+        /// <returns>int.</returns>
         private int GetFirstVertexIndex(string vertexIndex)
         {
             var a = int.Parse(vertexIndex, CultureInfo.InvariantCulture);
@@ -384,6 +429,13 @@ namespace TVGL
         #endregion
 
         #region Save Solids
+        /// <summary>
+        /// Saves the solids.
+        /// </summary>
+        /// <param name="stream">The stream.</param>
+        /// <param name="tessellatedSolids">The tessellated solids.</param>
+        /// <returns>bool.</returns>
+        /// <exception cref="NotImplementedException"></exception>
         internal static bool SaveSolids(Stream stream, TessellatedSolid[] tessellatedSolids)
         {
             throw new NotImplementedException();

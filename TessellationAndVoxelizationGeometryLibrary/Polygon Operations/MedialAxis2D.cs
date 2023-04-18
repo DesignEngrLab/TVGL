@@ -1,20 +1,33 @@
-﻿// Copyright 2015-2020 Design Engineering Lab
-// This file is a part of TVGL, Tessellation and Voxelization Geometry Library
-// https://github.com/DesignEngrLab/TVGL
-// It is licensed under MIT License (see LICENSE.txt for details)
+﻿// ***********************************************************************
+// Assembly         : TessellationAndVoxelizationGeometryLibrary
+// Author           : matth
+// Created          : 04-03-2023
+//
+// Last Modified By : matth
+// Last Modified On : 04-03-2023
+// ***********************************************************************
+// <copyright file="MedialAxis2D.cs" company="Design Engineering Lab">
+//     2014
+// </copyright>
+// <summary></summary>
+// ***********************************************************************
 using System.Collections.Generic;
 using System.Linq;
 
 
 namespace TVGL
 {
+    /// <summary>
+    /// Class PolygonOperations.
+    /// </summary>
     public static partial class PolygonOperations
     {
         /// <summary>
         /// Creates the 2D Medial Axis from a part's Silhouette. Currently ignores holes.
         /// Best way to show is using "Presenter.ShowAndHang(silhouette, medialAxis, "", Plot2DType.Line, false);"
         /// </summary>
-        /// <param name="silhouette"></param>
+        /// <param name="silhouette">The silhouette.</param>
+        /// <returns>List&lt;List&lt;Vector2&gt;&gt;.</returns>
         public static List<List<Vector2>> Create2DMedialAxis(this IEnumerable<IEnumerable<Vector2>> silhouette)
         {
             //To Get the 2D Medial Axis:

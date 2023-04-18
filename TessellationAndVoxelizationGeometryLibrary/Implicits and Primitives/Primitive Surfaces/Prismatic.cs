@@ -1,7 +1,16 @@
-﻿// Copyright 2015-2020 Design Engineering Lab
-// This file is a part of TVGL, Tessellation and Voxelization Geometry Library
-// https://github.com/DesignEngrLab/TVGL
-// It is licensed under MIT License (see LICENSE.txt for details)
+﻿// ***********************************************************************
+// Assembly         : TessellationAndVoxelizationGeometryLibrary
+// Author           : matth
+// Created          : 04-03-2023
+//
+// Last Modified By : matth
+// Last Modified On : 04-14-2023
+// ***********************************************************************
+// <copyright file="Prismatic.cs" company="Design Engineering Lab">
+//     2014
+// </copyright>
+// <summary></summary>
+// ***********************************************************************
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,7 +20,7 @@ using System.Linq;
 namespace TVGL
 {
     /// <summary>
-    ///     The class for Prismatic primitives.
+    /// The class for Prismatic primitives.
     /// </summary>
     public class Prismatic : PrimitiveSurface
     {
@@ -38,11 +47,11 @@ namespace TVGL
         }
 
         /// <summary>
-
         /// Transforms the from 3d to 2d.
         /// </summary>
         /// <param name="point">The point.</param>
         /// <returns>Vector2.</returns>
+        /// <exception cref="System.NotImplementedException"></exception>
         public override Vector2 TransformFrom3DTo2D(Vector3 point)
         {
             throw new NotImplementedException();
@@ -53,6 +62,7 @@ namespace TVGL
         /// </summary>
         /// <param name="point">The point.</param>
         /// <returns>Vector3.</returns>
+        /// <exception cref="System.NotImplementedException"></exception>
         public override Vector3 TransformFrom2DTo3D(Vector2 point)
         {
             throw new NotImplementedException();
@@ -75,20 +85,25 @@ namespace TVGL
         #region Properties
 
         /// <summary>
-        ///     Is the Prismatic positive? (false is negative)
+        /// Is the Prismatic positive? (false is negative)
         /// </summary>
+        /// <value><c>true</c> if this instance is positive; otherwise, <c>false</c>.</value>
         public bool IsPositive { get; set; }
 
         /// <summary>
-        ///     Gets the direction.
+        /// Gets the direction.
         /// </summary>
         /// <value>The direction.</value>
         public Vector3 Axis { get; set; }
 
+        /// <summary>
+        /// Gets or sets the curve2 d.
+        /// </summary>
+        /// <value>The curve2 d.</value>
         public ICurve Curve2D { get; set; }
 
         /// <summary>
-        ///     Gets the radius.
+        /// Gets the radius.
         /// </summary>
         /// <value>The radius.</value>
         public double BoundingRadius { get; set; }
@@ -116,16 +131,19 @@ namespace TVGL
 
         #region Constructors
 
-        public Prismatic() { }
-
         /// <summary>
         /// Initializes a new instance of the <see cref="Prismatic"/> class.
         /// </summary>
+        public Prismatic() { }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Prismatic" /> class.
+        /// </summary>
         /// <param name="axis">The axis.</param>
-        /// <param name="anchor">The anchor.</param>
-        /// <param name="radius">The radius.</param>
-        /// <param name="dxOfBottomPlane">The dx of bottom plane.</param>
-        /// <param name="dxOfTopPlane">The dx of top plane.</param>
+        /// <param name="minDistanceAlongAxis">The minimum distance along axis.</param>
+        /// <param name="maxDistanceAlongAxis">The maximum distance along axis.</param>
+        /// <param name="faces">The faces.</param>
+        /// <param name="isPositive">if set to <c>true</c> [is positive].</param>
         public Prismatic(Vector3 axis, double minDistanceAlongAxis,
             double maxDistanceAlongAxis, IEnumerable<TriangleFace> faces = null, bool isPositive = true)
             : base(faces)
@@ -137,13 +155,11 @@ namespace TVGL
             Height = MaxDistanceAlongAxis - MinDistanceAlongAxis;
         }
         /// <summary>
-        /// Initializes a new instance of the <see cref="Prismatic"/> class.
+        /// Initializes a new instance of the <see cref="Prismatic" /> class.
         /// </summary>
         /// <param name="axis">The axis.</param>
-        /// <param name="anchor">The anchor.</param>
-        /// <param name="radius">The radius.</param>
-        /// <param name="isPositive">if set to <c>true</c> [is positive].</param>
         /// <param name="faces">The faces.</param>
+        /// <param name="isPositive">if set to <c>true</c> [is positive].</param>
         public Prismatic(Vector3 axis, IEnumerable<TriangleFace> faces = null, bool isPositive = true) : base(faces)
         {
             Axis = axis;
@@ -155,13 +171,10 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="Prismatic"/> class.
+        /// Initializes a new instance of the <see cref="Prismatic" /> class.
         /// </summary>
-        /// <param name="axis">The axis.</param>
-        /// <param name="anchor">The anchor.</param>
-        /// <param name="radius">The radius.</param>
-        /// <param name="isPositive">if set to <c>true</c> [is positive].</param>
         /// <param name="faces">The faces.</param>
+        /// <param name="isPositive">if set to <c>true</c> [is positive].</param>
         public Prismatic(IEnumerable<TriangleFace> faces = null, bool isPositive = true) : base(faces)
         {
             Axis = MiscFunctions.FindAxisToMinimizeProjectedArea(Faces, Faces.Count);
@@ -173,9 +186,10 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="Prismatic"/> class.
+        /// Initializes a new instance of the <see cref="Prismatic" /> class.
         /// </summary>
         /// <param name="originalToBeCopied">The original to be copied.</param>
+        /// <param name="copiedTessellatedSolid">The copied tessellated solid.</param>
         public Prismatic(Prismatic originalToBeCopied, TessellatedSolid copiedTessellatedSolid = null)
             : base(originalToBeCopied, copiedTessellatedSolid)
         {
@@ -188,9 +202,11 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="Prismatic"/> class.
+        /// Initializes a new instance of the <see cref="Prismatic" /> class.
         /// </summary>
         /// <param name="originalToBeCopied">The original to be copied.</param>
+        /// <param name="newFaceIndices">The new face indices.</param>
+        /// <param name="copiedTessellatedSolid">The copied tessellated solid.</param>
         public Prismatic(Prismatic originalToBeCopied, int[] newFaceIndices, TessellatedSolid copiedTessellatedSolid)
             : base(newFaceIndices, copiedTessellatedSolid)
         {
@@ -239,6 +255,11 @@ namespace TVGL
             return PointMembership(x) < Constants.BaseTolerance;
         }
 
+        /// <summary>
+        /// Points the membership.
+        /// </summary>
+        /// <param name="point">The point.</param>
+        /// <returns>System.Double.</returns>
         public override double PointMembership(Vector3 point)
         {
             return double.NaN;

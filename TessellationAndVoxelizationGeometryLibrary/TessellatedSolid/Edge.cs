@@ -1,7 +1,16 @@
-﻿// Copyright 2015-2020 Design Engineering Lab
-// This file is a part of TVGL, Tessellation and Voxelization Geometry Library
-// https://github.com/DesignEngrLab/TVGL
-// It is licensed under MIT License (see LICENSE.txt for details)
+﻿// ***********************************************************************
+// Assembly         : TessellationAndVoxelizationGeometryLibrary
+// Author           : matth
+// Created          : 04-03-2023
+//
+// Last Modified By : matth
+// Last Modified On : 04-14-2023
+// ***********************************************************************
+// <copyright file="Edge.cs" company="Design Engineering Lab">
+//     2014
+// </copyright>
+// <summary></summary>
+// ***********************************************************************
 using Newtonsoft.Json;
 using System;
 using System.Linq;
@@ -10,23 +19,22 @@ using System.Linq;
 namespace TVGL
 {
     /// <summary>
-    ///     The straight-line edge class. It connects to two nodes and lies between two faces.
+    /// The straight-line edge class. It connects to two nodes and lies between two faces.
     /// </summary>
     public class Edge : TessellationBaseClass
     {
         /// <summary>
-        ///     Prevents a default instance of the <see cref="Edge" /> class from being created.
+        /// Prevents a default instance of the <see cref="Edge" /> class from being created.
         /// </summary>
         private Edge()
         {
         }
 
         /// <summary>
-        ///     Others the vertex.
+        /// Others the vertex.
         /// </summary>
         /// <param name="v">The v.</param>
         /// <returns>Vertex.</returns>
-        /// <exception cref="Exception">OtherVertex: Vertex thought to connect to edge, but it doesn't.</exception>
         /// <exception cref="System.Exception">OtherVertex: Vertex thought to connect to edge, but it doesn't.</exception>
         public Vertex OtherVertex(Vertex v)
         {
@@ -38,7 +46,7 @@ namespace TVGL
         #region Constructor
 
         /// <summary>
-        ///     Initializes a new instance of the <see cref="Edge" /> class.
+        /// Initializes a new instance of the <see cref="Edge" /> class.
         /// </summary>
         /// <param name="fromVertex">From vertex.</param>
         /// <param name="toVertex">To vertex.</param>
@@ -60,7 +68,7 @@ namespace TVGL
         }
 
         /// <summary>
-        ///     Initializes a new instance of the <see cref="Edge" /> class.
+        /// Initializes a new instance of the <see cref="Edge" /> class.
         /// </summary>
         /// <param name="fromVertex">From vertex.</param>
         /// <param name="toVertex">To vertex.</param>
@@ -77,13 +85,13 @@ namespace TVGL
         #region Properties
 
         /// <summary>
-        ///     Gets the From Vertex.
+        /// Gets the From Vertex.
         /// </summary>
         /// <value>From.</value>
         public Vertex From { get; internal set; }
 
         /// <summary>
-        ///     Gets the To Vertex.
+        /// Gets the To Vertex.
         /// </summary>
         /// <value>To.</value>
         public Vertex To { get; internal set; }
@@ -101,6 +109,9 @@ namespace TVGL
                 return _length;
             }
         }
+        /// <summary>
+        /// The length
+        /// </summary>
         double _length = double.NaN;
 
         /// <summary>
@@ -116,35 +127,38 @@ namespace TVGL
                 return _vector;
             }
         }
+        /// <summary>
+        /// The vector
+        /// </summary>
         Vector3 _vector = Vector3.Null;
 
 
         /// <summary>
-        ///     Gets the vector.
+        /// Gets the vector.
         /// </summary>
         /// <value>The vector.</value>
         public Vector3 UnitVector => Vector.Normalize();
 
         /// <summary>
-        ///     The _other face
+        /// The _other face
         /// </summary>
         private TriangleFace _otherFace;
 
         /// <summary>
-        ///     The _owned face
+        /// The _owned face
         /// </summary>
         private TriangleFace _ownedFace;
 
         /// <summary>
-        ///     Gets edge reference (checksum) value, which equals
-        ///     "From.IndexInList" + "To.IndexInList" (think strings)
+        /// Gets edge reference (checksum) value, which equals
+        /// "From.IndexInList" + "To.IndexInList" (think strings)
         /// </summary>
         /// <value>To.</value>
         internal long EdgeReference { get; set; }
 
         /// <summary>
-        ///     Gets the owned face (the face in which the from-to direction makes sense
-        ///     - that is, produces the proper cross-product normal).
+        /// Gets the owned face (the face in which the from-to direction makes sense
+        /// - that is, produces the proper cross-product normal).
         /// </summary>
         /// <value>The owned face.</value>
         [JsonIgnore] //this two-way link creates an infinite loop for serialization and must be ignored.
@@ -159,8 +173,8 @@ namespace TVGL
         }
 
         /// <summary>
-        ///     Gets the other face (the face in which the from-to direction doesn not
-        ///     make sense- that is, produces the negative cross-product normal).
+        /// Gets the other face (the face in which the from-to direction doesn not
+        /// make sense- that is, produces the negative cross-product normal).
         /// </summary>
         /// <value>The other face.</value>
         [JsonIgnore] //this two-way link creates an infinite loop for serialization and must be ignored.
@@ -175,7 +189,7 @@ namespace TVGL
         }
 
         /// <summary>
-        ///     Gets the internal angle in radians.
+        /// Gets the internal angle in radians.
         /// </summary>
         /// <value>The internal angle.</value>
         public double InternalAngle
@@ -186,8 +200,15 @@ namespace TVGL
                 return _internalAngle;
             }
         }
+        /// <summary>
+        /// The internal angle
+        /// </summary>
         double _internalAngle = double.NaN;
 
+        /// <summary>
+        /// Gets the curvature.
+        /// </summary>
+        /// <value>The curvature.</value>
         public override CurvatureType Curvature
         {
             get
@@ -196,6 +217,9 @@ namespace TVGL
                 return _curvature;
             }
         }
+        /// <summary>
+        /// The curvature
+        /// </summary>
         CurvatureType _curvature = CurvatureType.Undefined;
 
 
@@ -214,12 +238,23 @@ namespace TVGL
         }
 
 
+        /// <summary>
+        /// The normal
+        /// </summary>
         Vector3 _normal = Vector3.Null;
+        /// <summary>
+        /// Determines the normal.
+        /// </summary>
+        /// <exception cref="System.NotImplementedException"></exception>
         private void DetermineNormal()
         {
             throw new NotImplementedException();
         }
 
+        /// <summary>
+        /// Updates the with new face.
+        /// </summary>
+        /// <param name="face">The face.</param>
         internal void UpdateWithNewFace(TriangleFace face)
         {
             var v1 = face.Vertices.FindIndex(v => v == From);
@@ -234,8 +269,9 @@ namespace TVGL
 
 
         /// <summary>
-        ///     Updates the edge vector and length, if a vertex has been moved.
+        /// Updates the edge vector and length, if a vertex has been moved.
         /// </summary>
+        /// <param name="lengthAndAngleUnchanged">if set to <c>true</c> [length and angle unchanged].</param>
         /// <exception cref="Exception"></exception>
         public void Update(bool lengthAndAngleUnchanged = false)
         {
@@ -252,9 +288,9 @@ namespace TVGL
         }
 
         /// <summary>
-        ///     Defines the edge angle.
+        /// Defines the edge angle.
         /// </summary>
-        /// <exception cref="Exception">not possible</exception>
+        /// <exception cref="System.Exception">not possible</exception>
         private void DefineInternalEdgeAngle()
         {
             /* this is a tricky function. What we need to do is take the dot-product of the normals.
@@ -337,6 +373,9 @@ namespace TVGL
             if (InternalAngle > Constants.TwoPi) throw new Exception("not possible");
         }
 
+        /// <summary>
+        /// Doublies the link vertices.
+        /// </summary>
         internal void DoublyLinkVertices()
         {
             if (!From.Edges.Contains(this))
@@ -349,7 +388,10 @@ namespace TVGL
         /// Returns owned and other face in that order
         /// TODO: this function seems convoluted. Why not just return the ownedFace and otherFace directly?
         /// </summary>
-        /// <returns></returns>
+        /// <param name="edgeChecksum">The edge checksum.</param>
+        /// <param name="face1">The face1.</param>
+        /// <param name="face2">The face2.</param>
+        /// <returns>System.ValueTuple&lt;TriangleFace, TriangleFace&gt;.</returns>
         public static (TriangleFace, TriangleFace) GetOwnedAndOtherFace(long edgeChecksum, TriangleFace face1, TriangleFace face2)
         {
             var (from, to) = GetVertexIndices(edgeChecksum);
@@ -366,6 +408,11 @@ namespace TVGL
             return Math.Sign(dot) > 0 ? (face1, face2) : (face2, face1);
         }
 
+        /// <summary>
+        /// Gets the vertex indices.
+        /// </summary>
+        /// <param name="checkSum">The check sum.</param>
+        /// <returns>System.ValueTuple&lt;System.Int32, System.Int32&gt;.</returns>
         public static (int, int) GetVertexIndices(long checkSum)
         {
             //The checksum is ordered from larger to smaller
@@ -374,16 +421,31 @@ namespace TVGL
             return (smallIndex, largeIndex);
         }
 
+        /// <summary>
+        /// Gets the edge checksum.
+        /// </summary>
+        /// <param name="vertex1">The vertex1.</param>
+        /// <param name="vertex2">The vertex2.</param>
+        /// <returns>System.Int64.</returns>
         public static long GetEdgeChecksum(Vertex vertex1, Vertex vertex2)
         {
             return TessellatedSolid.GetEdgeChecksum(vertex1, vertex2);
         }
 
+        /// <summary>
+        /// Gets the edge checksum.
+        /// </summary>
+        /// <param name="vertex1Index">Index of the vertex1.</param>
+        /// <param name="vertex2Index">Index of the vertex2.</param>
+        /// <returns>System.Int64.</returns>
         public static long GetEdgeChecksum(int vertex1Index, int vertex2Index)
         {
             return TessellatedSolid.GetEdgeChecksum(vertex1Index, vertex2Index);
         }
 
+        /// <summary>
+        /// Inverts this instance.
+        /// </summary>
         internal void Invert()
         {
             _curvature = (CurvatureType)(-1 * (int)_curvature);
@@ -394,7 +456,11 @@ namespace TVGL
         }
 
         //Leave this as a method, to limit excess memory.
-        
+
+        /// <summary>
+        /// Centers this instance.
+        /// </summary>
+        /// <returns>Vector3.</returns>
         public Vector3 Center()
         {
             return (To.Coordinates + From.Coordinates) / 2;

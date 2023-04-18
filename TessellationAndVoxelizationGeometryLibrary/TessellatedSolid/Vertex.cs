@@ -1,7 +1,16 @@
-﻿// Copyright 2015-2020 Design Engineering Lab
-// This file is a part of TVGL, Tessellation and Voxelization Geometry Library
-// https://github.com/DesignEngrLab/TVGL
-// It is licensed under MIT License (see LICENSE.txt for details)
+﻿// ***********************************************************************
+// Assembly         : TessellationAndVoxelizationGeometryLibrary
+// Author           : matth
+// Created          : 04-03-2023
+//
+// Last Modified By : matth
+// Last Modified On : 04-14-2023
+// ***********************************************************************
+// <copyright file="Vertex.cs" company="Design Engineering Lab">
+//     2014
+// </copyright>
+// <summary></summary>
+// ***********************************************************************
 using MIConvexHull;
 using Newtonsoft.Json;
 using System;
@@ -12,20 +21,20 @@ using System.Linq;
 namespace TVGL
 {
     /// <summary>
-    ///     The 3D vertex can connect to any number of faces and edges. It inherits from the
-    ///     MIConvexhull IVertex interface.
+    /// The 3D vertex can connect to any number of faces and edges. It inherits from the
+    /// MIConvexhull IVertex interface.
     /// </summary>
     public sealed class Vertex : TessellationBaseClass, IVertex3D, IVertex
     {
         /// <summary>
-        ///     Prevents a default instance of the <see cref="Vertex" /> class from being created.
+        /// Prevents a default instance of the <see cref="Vertex" /> class from being created.
         /// </summary>
         private Vertex()
         {
         }
 
         /// <summary>
-        ///     Copies this instance. Does not include reference lists.
+        /// Copies this instance. Does not include reference lists.
         /// </summary>
         /// <returns>Vertex.</returns>
         public Vertex Copy()
@@ -44,7 +53,7 @@ namespace TVGL
         #region Constructor
 
         /// <summary>
-        ///     Initializes a new instance of the <see cref="Vertex" /> class.
+        /// Initializes a new instance of the <see cref="Vertex" /> class.
         /// </summary>
         /// <param name="position">The position.</param>
         /// <param name="indexInListOfVertices">The index in list of vertices.</param>
@@ -55,7 +64,7 @@ namespace TVGL
         }
 
         /// <summary>
-        ///     Initializes a new instance of the <see cref="Vertex" /> class.
+        /// Initializes a new instance of the <see cref="Vertex" /> class.
         /// </summary>
         /// <param name="position">The position.</param>
         public Vertex(Vector3 position)
@@ -71,46 +80,50 @@ namespace TVGL
         #region Properties
 
         /// <summary>
-        ///     Gets the position.
+        /// Gets the position.
         /// </summary>
         /// <value>The position.</value>
         public Vector3 Coordinates { get; set; }
 
         /// <summary>
-        ///     Gets the x.
+        /// Gets the x.
         /// </summary>
         /// <value>The x.</value>
         [JsonIgnore]
         public double X => Coordinates.X;
 
         /// <summary>
-        ///     Gets the y.
+        /// Gets the y.
         /// </summary>
         /// <value>The y.</value>
         [JsonIgnore]
         public double Y => Coordinates.Y;
 
         /// <summary>
-        ///     Gets the z.
+        /// Gets the z.
         /// </summary>
         /// <value>The z.</value>
         [JsonIgnore]
         public double Z => Coordinates.Z;
 
         /// <summary>
-        ///     Gets the edges.
+        /// Gets the edges.
         /// </summary>
         /// <value>The edges.</value>
         [JsonIgnore]
         public List<Edge> Edges { get; private set; }
 
         /// <summary>
-        ///     Gets the faces.
+        /// Gets the faces.
         /// </summary>
         /// <value>The faces.</value>
         [JsonIgnore]
         public List<TriangleFace> Faces { get; private set; }
 
+        /// <summary>
+        /// Gets the position.
+        /// </summary>
+        /// <value>The position.</value>
         double[] IVertex.Position => Coordinates.Position;
 
         /// <summary>
@@ -127,9 +140,16 @@ namespace TVGL
             }
         }
 
+        /// <summary>
+        /// The normal
+        /// </summary>
         [JsonIgnore] //cannot serialize null values.
         private Vector3 _normal = Vector3.Null;
 
+        /// <summary>
+        /// Determines the normal.
+        /// </summary>
+        /// <exception cref="System.NotImplementedException"></exception>
         private void DetermineNormal()
         {
             throw new NotImplementedException();
@@ -148,10 +168,13 @@ namespace TVGL
             }
         }
 
+        /// <summary>
+        /// The curvature
+        /// </summary>
         private CurvatureType _curvature = CurvatureType.Undefined;
 
         /// <summary>
-        ///     Defines vertex curvature
+        /// Defines vertex curvature
         /// </summary>
         private void DefineCurvature()
         {

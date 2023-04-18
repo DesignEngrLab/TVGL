@@ -1,7 +1,16 @@
-﻿// Copyright 2015-2020 Design Engineering Lab
-// This file is a part of TVGL, Tessellation and Voxelization Geometry Library
-// https://github.com/DesignEngrLab/TVGL
-// It is licensed under MIT License (see LICENSE.txt for details)
+﻿// ***********************************************************************
+// Assembly         : TessellationAndVoxelizationGeometryLibrary
+// Author           : matth
+// Created          : 04-03-2023
+//
+// Last Modified By : matth
+// Last Modified On : 04-03-2023
+// ***********************************************************************
+// <copyright file="PolygonOperations.CreateTrees.cs" company="Design Engineering Lab">
+//     2014
+// </copyright>
+// <summary></summary>
+// ***********************************************************************
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -32,8 +41,6 @@ namespace TVGL
         /// </summary>
         /// <param name="paths">The paths.</param>
         /// <param name="vertexNegPosOrderIsGuaranteedCorrect">if set to <c>true</c> [vertex neg position order is guaranteed correct].</param>
-        /// <param name="connectingIndices">The connecting indices.</param>
-        /// <param name="strayHoles">The stray holes.</param>
         /// <returns>List&lt;Polygon&gt;.</returns>
         public static List<Polygon> CreateShallowPolygonTrees(this IEnumerable<IEnumerable<Vector2>> paths,
             bool vertexNegPosOrderIsGuaranteedCorrect)
@@ -46,8 +53,7 @@ namespace TVGL
         /// </summary>
         /// <param name="polygons">The polygons.</param>
         /// <param name="vertexNegPosOrderIsGuaranteedCorrect">if set to <c>true</c> [vertex neg position order is guaranteed correct].</param>
-        /// <param name="connectingIndices">The connecting indices.</param>
-        /// <param name="strayHoles">The stray holes.</param>
+        /// <param name="alreadyOrderedInIncreasingArea">if set to <c>true</c> [already ordered in increasing area].</param>
         /// <returns>List&lt;Polygon&gt;.</returns>
         public static List<Polygon> CreateShallowPolygonTrees(this IEnumerable<Polygon> polygons, bool vertexNegPosOrderIsGuaranteedCorrect,
             bool alreadyOrderedInIncreasingArea = false)
@@ -71,7 +77,7 @@ namespace TVGL
         /// </summary>
         /// <param name="polygons">The polygons.</param>
         /// <param name="polygonSignIsCorrect">if set to <c>true</c> [polygon sign is correct].</param>
-        /// <param name="strayHoles">The stray holes.</param>
+        /// <param name="alreadyOrderedInIncreasingArea">if set to <c>true</c> [already ordered in increasing area].</param>
         /// <returns>List&lt;Polygon&gt;.</returns>
         public static List<Polygon> CreatePolygonTree(this IEnumerable<Polygon> polygons, bool polygonSignIsCorrect,
             bool alreadyOrderedInIncreasingArea = false)
@@ -104,6 +110,10 @@ namespace TVGL
             return branches;
         }
 
+        /// <summary>
+        /// Recurses down polygon tree clean up.
+        /// </summary>
+        /// <param name="parent">The parent.</param>
         private static void RecurseDownPolygonTreeCleanUp(Polygon parent)
         {
             var validChildren = new List<Polygon>();
@@ -120,6 +130,10 @@ namespace TVGL
                 parent.AddInnerPolygon(c);
         }
 
+        /// <summary>
+        /// Recurses down polygon tree and flip signs.
+        /// </summary>
+        /// <param name="parent">The parent.</param>
         private static void RecurseDownPolygonTreeAndFlipSigns(Polygon parent)
         {
             var childIsPositive = !parent.IsPositive;

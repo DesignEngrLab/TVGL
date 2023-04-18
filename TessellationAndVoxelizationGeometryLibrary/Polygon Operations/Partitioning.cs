@@ -1,24 +1,69 @@
-﻿// Copyright 2015-2020 Design Engineering Lab
-// This file is a part of TVGL, Tessellation and Voxelization Geometry Library
-// https://github.com/DesignEngrLab/TVGL
-// It is licensed under MIT License (see LICENSE.txt for details)
+﻿// ***********************************************************************
+// Assembly         : TessellationAndVoxelizationGeometryLibrary
+// Author           : matth
+// Created          : 04-03-2023
+//
+// Last Modified By : matth
+// Last Modified On : 04-03-2023
+// ***********************************************************************
+// <copyright file="Partitioning.cs" company="Design Engineering Lab">
+//     2014
+// </copyright>
+// <summary></summary>
+// ***********************************************************************
 using System;
 using System.Collections.Generic;
 
 namespace TVGL
 {
+    /// <summary>
+    /// Enum MonotonicityChange
+    /// </summary>
     public enum MonotonicityChange { X, Y, Both, Neither, SameAsPrevious }
 
+    /// <summary>
+    /// Struct MonotoneBox
+    /// </summary>
     public readonly struct MonotoneBox
     {
+        /// <summary>
+        /// The rectangle
+        /// </summary>
         public readonly AxisAlignedRectangle Rectangle;
+        /// <summary>
+        /// The hi change
+        /// </summary>
         public readonly MonotonicityChange HiChange;
+        /// <summary>
+        /// The low change
+        /// </summary>
         public readonly MonotonicityChange LowChange;
+        /// <summary>
+        /// The vertex1
+        /// </summary>
         public readonly Vertex2D Vertex1;
+        /// <summary>
+        /// The vertex2
+        /// </summary>
         public readonly Vertex2D Vertex2;
+        /// <summary>
+        /// The x in positive monotonicity
+        /// </summary>
         public readonly bool XInPositiveMonotonicity;
+        /// <summary>
+        /// The y in positive monotonicity
+        /// </summary>
         public readonly bool YInPositiveMonotonicity;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="MonotoneBox"/> struct.
+        /// </summary>
+        /// <param name="vertex1">The vertex1.</param>
+        /// <param name="vertex2">The vertex2.</param>
+        /// <param name="lowMonoChange">The low mono change.</param>
+        /// <param name="hiMonoChange">The hi mono change.</param>
+        /// <param name="xInPositiveMonotonicity">if set to <c>true</c> [x in positive monotonicity].</param>
+        /// <param name="yInPositiveMonotonicity">if set to <c>true</c> [y in positive monotonicity].</param>
         public MonotoneBox(Vertex2D vertex1, Vertex2D vertex2, MonotonicityChange lowMonoChange,
             MonotonicityChange hiMonoChange, bool xInPositiveMonotonicity, bool yInPositiveMonotonicity) : this()
         {
@@ -30,6 +75,16 @@ namespace TVGL
             YInPositiveMonotonicity = yInPositiveMonotonicity;
             Rectangle = new AxisAlignedRectangle(vertex1, vertex2);
         }
+        /// <summary>
+        /// Initializes a new instance of the <see cref="MonotoneBox"/> struct.
+        /// </summary>
+        /// <param name="vertex1">The vertex1.</param>
+        /// <param name="vertex2">The vertex2.</param>
+        /// <param name="lowMonoChange">The low mono change.</param>
+        /// <param name="hiMonoChange">The hi mono change.</param>
+        /// <param name="xInPositiveMonotonicity">if set to <c>true</c> [x in positive monotonicity].</param>
+        /// <param name="yInPositiveMonotonicity">if set to <c>true</c> [y in positive monotonicity].</param>
+        /// <param name="rect">The rect.</param>
         public MonotoneBox(Vertex2D vertex1, Vertex2D vertex2, MonotonicityChange lowMonoChange,
             MonotonicityChange hiMonoChange, bool xInPositiveMonotonicity, bool yInPositiveMonotonicity, AxisAlignedRectangle rect)
             : this(vertex1, vertex2, lowMonoChange, hiMonoChange, xInPositiveMonotonicity, yInPositiveMonotonicity)
@@ -38,16 +93,18 @@ namespace TVGL
         }
     }
 
+    /// <summary>
+    /// Class PolygonOperations.
+    /// </summary>
     public static partial class PolygonOperations
     {
-        /// <summary>Gets the monotonicity change.</summary>
+        /// <summary>
+        /// Gets the monotonicity change.
+        /// </summary>
         /// <param name="vertex">The vertex.</param>
-        /// <param name="tolerance">The tolerance.</param>
         /// <returns>MonotonicityChange.</returns>
-        /// <exception cref="ArgumentException">
-        /// vertex does not conenct to polygon edges. Be sure to invoke" +
-        ///           " MakePolygonEdgesIfNonExistent on parent polygon before this calling this method. - vertex
-        /// </exception>
+        /// <exception cref="System.ArgumentException">vertex does not connect to polygon edges. Be sure to invoke" +
+        ///              " MakePolygonEdgesIfNonExistent on parent polygon before this calling this method. - vertex</exception>
         public static MonotonicityChange GetMonotonicityChange(this Vertex2D vertex)
         {
             if (vertex.EndLine == null) throw new ArgumentException("vertex does not connect to polygon edges. Be sure to invoke" +

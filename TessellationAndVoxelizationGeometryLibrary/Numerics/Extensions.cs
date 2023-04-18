@@ -1,7 +1,16 @@
-﻿// Copyright 2015-2020 Design Engineering Lab
-// This file is a part of TVGL, Tessellation and Voxelization Geometry Library
-// https://github.com/DesignEngrLab/TVGL
-// It is licensed under MIT License (see LICENSE.txt for details)
+﻿// ***********************************************************************
+// Assembly         : TessellationAndVoxelizationGeometryLibrary
+// Author           : matth
+// Created          : 04-03-2023
+//
+// Last Modified By : matth
+// Last Modified On : 04-03-2023
+// ***********************************************************************
+// <copyright file="Extensions.cs" company="Design Engineering Lab">
+//     2014
+// </copyright>
+// <summary></summary>
+// ***********************************************************************
 using StarMathLib;
 using System;
 using System.Collections;
@@ -10,6 +19,9 @@ using System.Linq;
 
 namespace TVGL
 {
+    /// <summary>
+    /// Class VectorExtensions.
+    /// </summary>
     public static class VectorExtensions
     {
         #region for Vector2
@@ -57,6 +69,7 @@ namespace TVGL
         /// <param name="value1">The source vector.</param>
         /// <param name="min">The minimum value.</param>
         /// <param name="max">The maximum value.</param>
+        /// <returns>Vector2.</returns>
         public static Vector2 Clamp(this Vector2 value1, Vector2 min, Vector2 max)
         { return Vector2.Clamp(value1, min, max); }
 
@@ -83,7 +96,7 @@ namespace TVGL
         /// <summary>
         /// Transforms a vector normal by the given matrix.
         /// </summary>
-        /// <param name="position">The source vector.</param>
+        /// <param name="normal">The normal.</param>
         /// <param name="matrix">The transformation matrix.</param>
         /// <returns>The transformed vector.</returns>
         public static Vector2 TransformNoTranslate(this Vector2 normal, Matrix3x3 matrix)
@@ -103,7 +116,7 @@ namespace TVGL
         /// This is often used for transforming normals, however note that proper transformations
         /// of normal vectors requires that the input matrix be the transpose of the inverse of that matrix.
         /// </summary>
-        /// <param name="position">The source vector.</param>
+        /// <param name="normal">The normal.</param>
         /// <param name="matrix">The transformation matrix.</param>
         /// <returns>The transformed vector.</returns>
         public static Vector2 TransformNoTranslate(this Vector2 normal, Matrix4x4 matrix)
@@ -303,7 +316,7 @@ namespace TVGL
 
         /// <summary>
         /// Pre-multiplies the vector to the matrix. Here, the vector is treated
-        /// as a single row, so the result is also a single-row vector. Each cell 
+        /// as a single row, so the result is also a single-row vector. Each cell
         /// is a dot-product between the vector and the column of the matrix.
         /// This is the same as transforming by the matrix.
         /// </summary>
@@ -315,7 +328,7 @@ namespace TVGL
 
         /// <summary>
         /// Pre-multiplies the vector to the matrix. Here, the vector is treated
-        /// as a single row, so the result is also a single-row vector. Each cell 
+        /// as a single row, so the result is also a single-row vector. Each cell
         /// is a dot-product between the vector and the column of the matrix.
         /// This is the same as transforming by the matrix.
         /// </summary>
@@ -365,7 +378,7 @@ namespace TVGL
         { return Vector3.Subtract(left, right); }
 
         /// <summary>
-        /// Multiplies two vectors together. It produces the components of a dot product 
+        /// Multiplies two vectors together. It produces the components of a dot product
         /// </summary>
         /// <param name="left">The first source vector.</param>
         /// <param name="right">The second source vector.</param>
@@ -440,6 +453,12 @@ namespace TVGL
                    vector1.Z * vector2.Z;
         }
 
+        /// <summary>
+        /// Merges the bi directional axes.
+        /// </summary>
+        /// <param name="vector1">The vector1.</param>
+        /// <param name="vector2">The vector2.</param>
+        /// <returns>Vector3.</returns>
         public static Vector3 MergeBiDirectionalAxes(this Vector3 vector1, Vector3 vector2)
         {
             if (vector1.IsNull() || vector1.IsNegligible()) return vector2;
@@ -459,8 +478,10 @@ namespace TVGL
 
         #region Vector4
 
-        /// <summary>Returns a vector whose elements are the absolute values of each of the specified vector's elements.</summary>
-        /// <param name="value">A vector.</param>
+        /// <summary>
+        /// Returns a vector whose elements are the absolute values of each of the specified vector's elements.
+        /// </summary>
+        /// <param name="vector1">The vector1.</param>
         /// <returns>The absolute value vector.</returns>
         public static Vector4 Abs(this Vector4 vector1)
         {
@@ -470,8 +491,8 @@ namespace TVGL
         /// Returns the Euclidean distance between the two given points. Note that for fast applications where the
         /// actual distance (but rather the relative distance) is not needed, consider using DistanceSquared.
         /// </summary>
-        /// <param name="value1">The first point.</param>
-        /// <param name="value2">The second point.</param>
+        /// <param name="vector1">The vector1.</param>
+        /// <param name="vector2">The vector2.</param>
         /// <returns>The distance.</returns>
         public static double Distance(this Vector4 vector1, Vector4 vector2)
         {
@@ -542,7 +563,7 @@ namespace TVGL
 
         /// <summary>
         /// Pre-multiplies the vector to the matrix. Here, the vector is treated
-        /// as a single row, so the result is also a single-row vector. Each cell 
+        /// as a single row, so the result is also a single-row vector. Each cell
         /// is a dot-product between the vector and the column of the matrix.
         /// This is the same as transforming by the matrix.
         /// </summary>
@@ -605,13 +626,13 @@ namespace TVGL
         /// Transposes the specified matrix. Recall that this flips the matrix about its diagonal (rows
         /// become columns and columns become rows)
         /// </summary>
-        /// <param name="m">The matrix to be transponsed.</param>
+        /// <param name="matrix">The matrix.</param>
         /// <returns>Matrix3x3.</returns>
         public static Matrix3x3 Transpose(this Matrix3x3 matrix)
         { return Matrix3x3.Transpose(matrix); }
 
         /// <summary>
-        /// Transposes the specified matrix. Recall that this flips the matrix 
+        /// Transposes the specified matrix. Recall that this flips the matrix
         /// about its diagonal (rows become columns and columns become rows).
         /// </summary>
         /// <param name="matrix">The source matrix.</param>
@@ -701,11 +722,22 @@ namespace TVGL
         public static double DotNormal(this Plane plane, Vector3 value)
         { return Plane.DotNormal(plane, value); }
 
+        /// <summary>
+        /// Eigens the specified eigen values.
+        /// </summary>
+        /// <param name="matrix">The matrix.</param>
+        /// <param name="eigenValues">The eigen values.</param>
+        /// <param name="eigenVectors">The eigen vectors.</param>
         public static void Eigen(this Matrix3x3 matrix, out ComplexNumber[] eigenValues, out ComplexNumber[][] eigenVectors)
         {
             eigenValues = EigenValues(matrix).ToArray();
             eigenVectors = matrix.EigenVectors(eigenValues);
         }
+        /// <summary>
+        /// Eigens the values.
+        /// </summary>
+        /// <param name="m">The m.</param>
+        /// <returns>IEnumerable&lt;ComplexNumber&gt;.</returns>
         public static IEnumerable<ComplexNumber> EigenValues(this Matrix3x3 m)
         {
             var a = m.M11;
@@ -723,6 +755,12 @@ namespace TVGL
             var offset = a * e * i + b * f * g + c * d * h - a * f * h - b * d * i - c * e * g;
             return PolynomialSolve.Cubic(cubicCoeff, squaredCoeff, linearCoeff, offset, false);
         }
+        /// <summary>
+        /// Eigens the reals only.
+        /// </summary>
+        /// <param name="matrix">The matrix.</param>
+        /// <param name="eigenValues">The eigen values.</param>
+        /// <param name="eigenVectors">The eigen vectors.</param>
         public static void EigenRealsOnly(this Matrix3x3 matrix, out double[] eigenValues, out Vector3[] eigenVectors)
         {
             eigenValues = EigenValuesRealsOnly(matrix).ToArray();
@@ -730,6 +768,12 @@ namespace TVGL
         }
 
 
+        /// <summary>
+        /// Eigens the vectors.
+        /// </summary>
+        /// <param name="m">The m.</param>
+        /// <param name="eigenValues">The eigen values.</param>
+        /// <returns>ComplexNumber[][].</returns>
         public static ComplexNumber[][] EigenVectors(this Matrix3x3 m, IList<ComplexNumber> eigenValues)
         {
             var n = eigenValues.Count;
@@ -761,6 +805,11 @@ namespace TVGL
             return eigenVectors;
         }
 
+        /// <summary>
+        /// Eigens the values reals only.
+        /// </summary>
+        /// <param name="matrix">The matrix.</param>
+        /// <returns>IEnumerable&lt;System.Double&gt;.</returns>
         public static IEnumerable<double> EigenValuesRealsOnly(Matrix3x3 matrix)
         {
             var a = matrix.M11;
@@ -779,6 +828,12 @@ namespace TVGL
             return PolynomialSolve.Cubic(cubicCoeff, squaredCoeff, linearCoeff, offset, true).Select(ev => ev.Real);
         }
 
+        /// <summary>
+        /// Eigens the vectors.
+        /// </summary>
+        /// <param name="m">The m.</param>
+        /// <param name="eigenValues">The eigen values.</param>
+        /// <returns>Vector3[].</returns>
         public static Vector3[] EigenVectors(this Matrix3x3 m, IList<double> eigenValues)
         {
             var n = eigenValues.Count;
@@ -788,6 +843,12 @@ namespace TVGL
             return eigenVectors;
         }
 
+        /// <summary>
+        /// Gets the real eigen vector.
+        /// </summary>
+        /// <param name="m">The m.</param>
+        /// <param name="lambda">The lambda.</param>
+        /// <returns>Vector3.</returns>
         private static Vector3 GetRealEigenVector(Matrix3x3 m, double lambda)
         {
             var row1 = new Vector3(m.M11 - lambda, m.M12, m.M13);

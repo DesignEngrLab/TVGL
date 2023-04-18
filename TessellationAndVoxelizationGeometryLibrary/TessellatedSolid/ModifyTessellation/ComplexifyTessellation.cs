@@ -1,7 +1,16 @@
-﻿// Copyright 2015-2020 Design Engineering Lab
-// This file is a part of TVGL, Tessellation and Voxelization Geometry Library
-// https://github.com/DesignEngrLab/TVGL
-// It is licensed under MIT License (see LICENSE.txt for details)
+﻿// ***********************************************************************
+// Assembly         : TessellationAndVoxelizationGeometryLibrary
+// Author           : matth
+// Created          : 04-03-2023
+//
+// Last Modified By : matth
+// Last Modified On : 04-14-2023
+// ***********************************************************************
+// <copyright file="ComplexifyTessellation.cs" company="Design Engineering Lab">
+//     2014
+// </copyright>
+// <summary></summary>
+// ***********************************************************************
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,13 +19,13 @@ using Priority_Queue;
 namespace TVGL
 {
     /// <summary>
-    ///  This portion of ModifyTessellation includes the functions to complexify a solid, which means 
-    ///  adding more elements to it. 
+    /// This portion of ModifyTessellation includes the functions to complexify a solid, which means
+    /// adding more elements to it.
     /// </summary>
     public static partial class ModifyTessellation
     {
         /// <summary>
-        /// Complexifies the model by splitting the any edges that are half or more than the longest edge. 
+        /// Complexifies the model by splitting the any edges that are half or more than the longest edge.
         /// </summary>
         /// <param name="ts">The ts.</param>
         public static void Complexify(this TessellatedSolid ts)

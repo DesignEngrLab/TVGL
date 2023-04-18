@@ -1,4 +1,17 @@
-﻿using Newtonsoft.Json;
+﻿// ***********************************************************************
+// Assembly         : TessellationAndVoxelizationGeometryLibrary
+// Author           : matth
+// Created          : 04-03-2023
+//
+// Last Modified By : matth
+// Last Modified On : 04-07-2023
+// ***********************************************************************
+// <copyright file="SolidAssembly.cs" company="Design Engineering Lab">
+//     2014
+// </copyright>
+// <summary></summary>
+// ***********************************************************************
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
@@ -7,24 +20,50 @@ using System.Runtime.Serialization;
 
 namespace TVGL
 {
+    /// <summary>
+    /// Class SolidAssembly.
+    /// </summary>
     [JsonObject(MemberSerialization.OptOut)]
     public class SolidAssembly
     {
+        /// <summary>
+        /// Gets or sets the name.
+        /// </summary>
+        /// <value>The name.</value>
         public string Name { get; set; }
 
+        /// <summary>
+        /// Gets or sets the root assembly.
+        /// </summary>
+        /// <value>The root assembly.</value>
         public SubAssembly RootAssembly { get; set; }
 
         //A tempory dictionary of all the distinct solids used when reading in the assembly information
+        /// <summary>
+        /// Gets or sets the distinct solids.
+        /// </summary>
+        /// <value>The distinct solids.</value>
         [JsonIgnore]
         internal Dictionary<Solid, int> _distinctSolids { get; set; }
 
+        /// <summary>
+        /// Gets or sets the solids.
+        /// </summary>
+        /// <value>The solids.</value>
         [JsonIgnore]
         public Solid[] Solids { get; set; }
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="SolidAssembly"/> class.
+        /// </summary>
         public SolidAssembly() 
         { //Empty Constructor for JSON
         }
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="SolidAssembly"/> class.
+        /// </summary>
+        /// <param name="name">The name.</param>
         public SolidAssembly(string name)
         {
             Name = name;
@@ -32,6 +71,11 @@ namespace TVGL
             _distinctSolids = new Dictionary<Solid, int>();
         }
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="SolidAssembly"/> class.
+        /// </summary>
+        /// <param name="solids">The solids.</param>
+        /// <param name="fileName">Name of the file.</param>
         public SolidAssembly(IEnumerable<Solid> solids, string fileName = "")
         {
             if(fileName.Length > 0)
@@ -51,6 +95,9 @@ namespace TVGL
             Solids = solids.ToArray();
         }
 
+        /// <summary>
+        /// Completes the initialization.
+        /// </summary>
         public void CompleteInitialization()
         {
             Solids = _distinctSolids.Keys.ToArray();
@@ -60,11 +107,19 @@ namespace TVGL
             _distinctSolids.Clear();
         }
 
+        /// <summary>
+        /// Determines whether this instance is empty.
+        /// </summary>
+        /// <returns><c>true</c> if this instance is empty; otherwise, <c>false</c>.</returns>
         public bool IsEmpty()
         {
             return !Solids.Any();
         }
 
+        /// <summary>
+        /// Streams the write.
+        /// </summary>
+        /// <param name="writer">The writer.</param>
         public void StreamWrite(JsonTextWriter writer)
         {
             writer.WriteStartObject();
@@ -93,6 +148,11 @@ namespace TVGL
             writer.WriteEndObject();
         }
 
+        /// <summary>
+        /// Streams the read.
+        /// </summary>
+        /// <param name="reader">The reader.</param>
+        /// <param name="assembly">The assembly.</param>
         public static void StreamRead(JsonTextReader reader, out SolidAssembly assembly)
         {
             var solids = new Dictionary<int, TessellatedSolid>();
@@ -117,8 +177,15 @@ namespace TVGL
             assembly.RootAssembly.SetGlobalAssembly(assembly);
         }
 
+        /// <summary>
+        /// The use on serialization
+        /// </summary>
         private bool useOnSerialization = false;
 
+        /// <summary>
+        /// Called when [serializing method].
+        /// </summary>
+        /// <param name="context">The context.</param>
         [OnSerializing]
         protected void OnSerializingMethod(StreamingContext context)
         {
@@ -129,6 +196,10 @@ namespace TVGL
             serializationData.Add("VolizedSolids", JToken.FromObject(Solids.Where(p => p is VoxelizedSolid)));
         }
 
+        /// <summary>
+        /// Called when [deserialized method].
+        /// </summary>
+        /// <param name="context">The context.</param>
         [OnDeserialized]
         protected void OnDeserializedMethod(StreamingContext context)
         {
@@ -139,19 +210,33 @@ namespace TVGL
         }
 
         // everything else gets stored here
+        /// <summary>
+        /// The serialization data
+        /// </summary>
         [JsonExtensionData]
         protected IDictionary<string, JToken> serializationData;
     }
 
     //A wrapper class for solids that recursively contains subassemblies and solid parts. 
+    /// <summary>
+    /// Class SubAssembly.
+    /// </summary>
     [JsonObject(MemberSerialization.OptOut)]
     public class SubAssembly
     {
+        /// <summary>
+        /// Gets or sets the solid assembly global information.
+        /// </summary>
+        /// <value>The solid assembly global information.</value>
         [JsonIgnore]
         //Pointer to the global parent, where the Tessellated solids and file information are stored.
         private SolidAssembly SolidAssemblyGlobalInfo { get; set; }
 
         //Recursively set GlobalAssembly. Used on deserialization.
+        /// <summary>
+        /// Sets the global assembly.
+        /// </summary>
+        /// <param name="global">The global.</param>
         public void SetGlobalAssembly(SolidAssembly global)
         {
             SolidAssemblyGlobalInfo = global;
@@ -161,13 +246,25 @@ namespace TVGL
 
         //List of assemblies with their backtransform to the global assembly space.
         //Not a dictionary, so that items can be referenced in multiple transform locations (i.e., duplicate keys)
+        /// <summary>
+        /// Gets or sets the sub assemblies.
+        /// </summary>
+        /// <value>The sub assemblies.</value>
         public List<(SubAssembly assembly, Matrix4x4 backtransform)> SubAssemblies { get; set; }
 
         //List of parts with their backtransform to the global assembly space.
         //Not a dictionary, so that parts can be referenced in multiple transform locations (i.e., duplicate keys)
         //Uses integers for easier serialize/deserialize. Get solids from GlobalAssembly.DistinctParts
+        /// <summary>
+        /// Gets or sets the solids.
+        /// </summary>
+        /// <value>The solids.</value>
         public List<(int solid, Matrix4x4 backtransform)> Solids { get; set; }
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="SubAssembly"/> class.
+        /// </summary>
+        /// <param name="globalAssembly">The global assembly.</param>
         public SubAssembly(SolidAssembly globalAssembly)
         {
             SolidAssemblyGlobalInfo = globalAssembly;
@@ -175,6 +272,11 @@ namespace TVGL
             Solids = new List<(int solid, Matrix4x4 backtransform)>();
         }
 
+        /// <summary>
+        /// Adds the specified solid.
+        /// </summary>
+        /// <param name="solid">The solid.</param>
+        /// <param name="backtransform">The backtransform.</param>
         public void Add(Solid solid, Matrix4x4 backtransform)
         {
             if (!SolidAssemblyGlobalInfo._distinctSolids.ContainsKey(solid))
@@ -182,21 +284,38 @@ namespace TVGL
             Solids.Add((SolidAssemblyGlobalInfo._distinctSolids[solid], backtransform));
         }
 
+        /// <summary>
+        /// Adds the specified subassembly.
+        /// </summary>
+        /// <param name="subassembly">The subassembly.</param>
+        /// <param name="backtransform">The backtransform.</param>
         public void Add(SubAssembly subassembly, Matrix4x4 backtransform)
         {
             SubAssemblies.Add((subassembly, backtransform));
         }
 
+        /// <summary>
+        /// Determines whether this instance is empty.
+        /// </summary>
+        /// <returns><c>true</c> if this instance is empty; otherwise, <c>false</c>.</returns>
         public bool IsEmpty()
         {
             return !AllParts().Any();
         }
 
+        /// <summary>
+        /// Alls the tessellated solids in global coordinate system.
+        /// </summary>
+        /// <returns>TessellatedSolid[].</returns>
         public TessellatedSolid[] AllTessellatedSolidsInGlobalCoordinateSystem()
         {
             return AllPartsInGlobalCoordinateSystem.Where(s => s.Item1 is TessellatedSolid).Select(s => s.Item1).Cast<TessellatedSolid>().ToArray();
         }
 
+        /// <summary>
+        /// Alls the tessellated solids with global coordinate system transform.
+        /// </summary>
+        /// <returns>IEnumerable&lt;System.ValueTuple&lt;TessellatedSolid, Matrix4x4&gt;&gt;.</returns>
         public IEnumerable<(TessellatedSolid, Matrix4x4)> AllTessellatedSolidsWithGlobalCoordinateSystemTransform()
         {
             var returnList = new List<(TessellatedSolid, Matrix4x4)>();
@@ -209,7 +328,14 @@ namespace TVGL
         //Recursive call to get all the parts in the assembly. Transforms each instance of each part 
         //into the global coordinate system (GCS) by using TransformToNewSolid(). 
         //Parts that are referenced more than once are duplicated into mutliple positions within the GCS.
+        /// <summary>
+        /// All parts in global coordinate system
+        /// </summary>
         private IEnumerable<(Solid, Matrix4x4)> _allPartsInGlobalCoordinateSystem;
+        /// <summary>
+        /// Gets all parts in global coordinate system.
+        /// </summary>
+        /// <value>All parts in global coordinate system.</value>
         [JsonIgnore]
         public IEnumerable<(Solid, Matrix4x4)> AllPartsInGlobalCoordinateSystem
         {
@@ -221,6 +347,10 @@ namespace TVGL
             }
         }
 
+        /// <summary>
+        /// Gets all parts in global coordinate system.
+        /// </summary>
+        /// <returns>IEnumerable&lt;System.ValueTuple&lt;Solid, Matrix4x4&gt;&gt;.</returns>
         private IEnumerable<(Solid, Matrix4x4)> GetAllPartsInGlobalCoordinateSystem()
         {
             foreach (var (part, backTransform) in AllParts())
@@ -233,6 +363,10 @@ namespace TVGL
         //Recursive call to get all the parts in the assembly. Returns the Transform to get each instance
         //of the part back into assembly space, by using TransformToNewSolid.
         //Parts that are referenced more than once are added more than once to the list.
+        /// <summary>
+        /// Alls the parts.
+        /// </summary>
+        /// <returns>List&lt;System.ValueTuple&lt;Solid, Matrix4x4&gt;&gt;.</returns>
         public List<(Solid, Matrix4x4)> AllParts()
         {
             var allParts = new List<(Solid, Matrix4x4)>();
@@ -244,21 +378,40 @@ namespace TVGL
             return allParts;
         }
 
+        /// <summary>
+        /// Transforms the specified transform matrix.
+        /// </summary>
+        /// <param name="transformMatrix">The transform matrix.</param>
+        /// <exception cref="System.NotImplementedException"></exception>
         public void Transform(Matrix4x4 transformMatrix)
         {
             throw new NotImplementedException();
         }
 
+        /// <summary>
+        /// Transforms to new assembly.
+        /// </summary>
+        /// <param name="transformationMatrix">The transformation matrix.</param>
+        /// <returns>SubAssembly.</returns>
+        /// <exception cref="System.NotImplementedException"></exception>
         public SubAssembly TransformToNewAssembly(Matrix4x4 transformationMatrix)
         {
             throw new NotImplementedException();
         }
 
+        /// <summary>
+        /// Calculates the center.
+        /// </summary>
+        /// <exception cref="System.NotImplementedException"></exception>
         protected void CalculateCenter()
         {
             throw new NotImplementedException();
         }
 
+        /// <summary>
+        /// Calculates the inertia tensor.
+        /// </summary>
+        /// <exception cref="System.NotImplementedException"></exception>
         protected void CalculateInertiaTensor()
         {
             throw new NotImplementedException();

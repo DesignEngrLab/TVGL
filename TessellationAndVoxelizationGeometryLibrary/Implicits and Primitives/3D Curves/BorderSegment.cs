@@ -1,22 +1,56 @@
-﻿using Newtonsoft.Json;
+﻿// ***********************************************************************
+// Assembly         : TessellationAndVoxelizationGeometryLibrary
+// Author           : matth
+// Created          : 04-03-2023
+//
+// Last Modified By : matth
+// Last Modified On : 04-03-2023
+// ***********************************************************************
+// <copyright file="BorderSegment.cs" company="Design Engineering Lab">
+//     2014
+// </copyright>
+// <summary></summary>
+// ***********************************************************************
+using Newtonsoft.Json;
 using System;
 using System.Linq;
 
 namespace TVGL
 {
+    /// <summary>
+    /// Class BorderSegment.
+    /// Implements the <see cref="TVGL.EdgePath" />
+    /// </summary>
+    /// <seealso cref="TVGL.EdgePath" />
     [JsonObject]
     public class BorderSegment : EdgePath
     {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="BorderSegment"/> class.
+        /// </summary>
         public BorderSegment() : base()
         {
         }
 
         //First primitive connected to this border segment. There is no logic to determine owned/other; it is arbitrary (currently).
+        /// <summary>
+        /// Gets or sets the owned primitive.
+        /// </summary>
+        /// <value>The owned primitive.</value>
         public PrimitiveSurface OwnedPrimitive { get; set; }
 
         //Second primitive connected to this border segment. There is no logic to determine owned/other; it is arbitrary (currently).
+        /// <summary>
+        /// Gets or sets the other primitive.
+        /// </summary>
+        /// <value>The other primitive.</value>
         public PrimitiveSurface OtherPrimitive { get; set; }
 
+        /// <summary>
+        /// Gets the second primitive.
+        /// </summary>
+        /// <param name="prim">The prim.</param>
+        /// <returns>PrimitiveSurface.</returns>
         public PrimitiveSurface GetSecondPrimitive(PrimitiveSurface prim)
         {
             if (prim == OwnedPrimitive) return OtherPrimitive;
@@ -39,6 +73,7 @@ namespace TVGL
         /// <summary>
         /// Gets whether the [edge path is circular].
         /// </summary>
+        /// <value><c>true</c> if this instance is circular; otherwise, <c>false</c>.</value>
         [JsonIgnore]
         public bool IsCircular
         {
@@ -64,7 +99,14 @@ namespace TVGL
             }
         }
 
+        /// <summary>
+        /// The internal angle
+        /// </summary>
         private double _internalAngle = -10.0;
+        /// <summary>
+        /// Gets the internal angle.
+        /// </summary>
+        /// <value>The internal angle.</value>
         [JsonIgnore]
         public double InternalAngle
         {
@@ -76,7 +118,14 @@ namespace TVGL
             }
         }
 
+        /// <summary>
+        /// The curvature
+        /// </summary>
         private CurvatureType _curvature = CurvatureType.Undefined;
+        /// <summary>
+        /// Gets the curvature.
+        /// </summary>
+        /// <value>The curvature.</value>
         [JsonIgnore]
         public CurvatureType Curvature
         {
@@ -88,6 +137,9 @@ namespace TVGL
             }
         }
 
+        /// <summary>
+        /// Sets the curvature.
+        /// </summary>
         private void SetCurvature()
         {
             var concave = 0;
@@ -112,6 +164,15 @@ namespace TVGL
                 _curvature = CurvatureType.SaddleOrFlat;
         }
 
+        /// <summary>
+        /// Copies the specified reverse.
+        /// </summary>
+        /// <param name="reverse">if set to <c>true</c> [reverse].</param>
+        /// <param name="copiedTessellatedSolid">The copied tessellated solid.</param>
+        /// <param name="startIndex">The start index.</param>
+        /// <param name="endIndex">The end index.</param>
+        /// <returns>EdgePath.</returns>
+        /// <exception cref="System.NotImplementedException"></exception>
         public new EdgePath Copy(bool reverse = false, TessellatedSolid copiedTessellatedSolid = null,
             int startIndex = 0, int endIndex = -1)
         {

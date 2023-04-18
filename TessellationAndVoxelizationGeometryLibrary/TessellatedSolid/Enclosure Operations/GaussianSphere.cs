@@ -1,7 +1,16 @@
-﻿// Copyright 2015-2020 Design Engineering Lab
-// This file is a part of TVGL, Tessellation and Voxelization Geometry Library
-// https://github.com/DesignEngrLab/TVGL
-// It is licensed under MIT License (see LICENSE.txt for details)
+﻿// ***********************************************************************
+// Assembly         : TessellationAndVoxelizationGeometryLibrary
+// Author           : matth
+// Created          : 04-03-2023
+//
+// Last Modified By : matth
+// Last Modified On : 04-14-2023
+// ***********************************************************************
+// <copyright file="GaussianSphere.cs" company="Design Engineering Lab">
+//     2014
+// </copyright>
+// <summary></summary>
+// ***********************************************************************
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,22 +20,22 @@ using System.Linq;
 namespace TVGL
 {
     /// <summary>
-    ///     Class GaussSphereArc.
+    /// Class GaussSphereArc.
     /// </summary>
     internal class GaussSphereArc
     {
         /// <summary>
-        ///     The edge
+        /// The edge
         /// </summary>
         internal readonly Edge Edge;
 
         /// <summary>
-        ///     To face
+        /// To face
         /// </summary>
         internal readonly TriangleFace ToFace;
 
         /// <summary>
-        ///     Initializes a new instance of the <see cref="GaussSphereArc" /> class.
+        /// Initializes a new instance of the <see cref="GaussSphereArc" /> class.
         /// </summary>
         /// <param name="edge">The edge.</param>
         /// <param name="toFace">To face.</param>
@@ -38,24 +47,30 @@ namespace TVGL
     }
 
     /// <summary>
-    ///     Gaussian Sphere for a polyhedron
+    /// Gaussian Sphere for a polyhedron
     /// </summary>
     /// NOTE: Using spherical coordinates from mathematics (r, θ, φ), since it follows the right hand rule.
     /// Where r is the radial distance (r = 1 for the unit circle), θ is the azimuthal angle (XY and θ equal to or between 0 and 360),
     /// and φ is the polar angle (From Z axis and φ is equal to or between 0 and 180).
     public struct GaussianSphere
     {
+        /// <summary>
+        /// The nodes
+        /// </summary>
         internal List<Node> Nodes;
 
+        /// <summary>
+        /// The arcs
+        /// </summary>
         internal List<Arc> Arcs;
 
         /// <summary>
-        ///     The reference edges
+        /// The reference edges
         /// </summary>
         internal List<Edge> ReferenceEdges;
 
         /// <summary>
-        ///     Initializes a new instance of the <see cref="GaussianSphere" /> class.
+        /// Initializes a new instance of the <see cref="GaussianSphere" /> class.
         /// </summary>
         /// <param name="ts">The ts.</param>
         internal GaussianSphere(TessellatedSolid ts)
@@ -124,60 +139,63 @@ namespace TVGL
         }
     }
 
+    /// <summary>
+    /// Class Node.
+    /// </summary>
     internal class Node
     {
         /// <summary>
-        ///     The arcs
+        /// The arcs
         /// </summary>
         internal List<Arc> Arcs;
 
         /// <summary>
-        ///     The phi
+        /// The phi
         /// </summary>
         internal double Phi;
 
         /// <summary>
-        ///     The reference edges
+        /// The reference edges
         /// </summary>
         internal List<Edge> ReferenceEdges;
 
         /// <summary>
-        ///     The reference faces
+        /// The reference faces
         /// </summary>
         internal List<TriangleFace> ReferenceFaces;
 
         /// <summary>
-        ///     The reference vertices
+        /// The reference vertices
         /// </summary>
         internal List<Vertex> ReferenceVertices;
 
         /// <summary>
-        ///     The theta
+        /// The theta
         /// </summary>
         internal double Theta;
 
         /// <summary>
-        ///     The vector
+        /// The vector
         /// </summary>
         internal Vector3 Vector;
 
         /// <summary>
-        ///     The x
+        /// The x
         /// </summary>
         internal double X;
 
         /// <summary>
-        ///     The y
+        /// The y
         /// </summary>
         internal double Y;
 
         /// <summary>
-        ///     The z
+        /// The z
         /// </summary>
         internal double Z;
 
         /// <summary>
-        ///     Initializes a new instance of the <see cref="Node" /> class.
+        /// Initializes a new instance of the <see cref="Node" /> class.
         /// </summary>
         /// <param name="triangle">The triangle.</param>
         internal Node(TriangleFace triangle)
@@ -212,7 +230,7 @@ namespace TVGL
         }
 
         /// <summary>
-        ///     Adds the arc reference.
+        /// Adds the arc reference.
         /// </summary>
         /// <param name="arc">The arc.</param>
         internal void AddArcReference(Arc arc)
@@ -222,37 +240,37 @@ namespace TVGL
     }
 
     /// <summary>
-    ///     Class Arc.
+    /// Class Arc.
     /// </summary>
     internal class Arc
     {
         /// <summary>
-        ///     The arc length
+        /// The arc length
         /// </summary>
         internal double ArcLength;
 
         /// <summary>
-        ///     The direction
+        /// The direction
         /// </summary>
         internal Vector2 Direction;
 
         /// <summary>
-        ///     The nodes
+        /// The nodes
         /// </summary>
         internal List<Node> Nodes;
 
         /// <summary>
-        ///     The reference edge
+        /// The reference edge
         /// </summary>
         internal Edge ReferenceEdge;
 
         /// <summary>
-        ///     The reference vertices
+        /// The reference vertices
         /// </summary>
         internal List<Vertex> ReferenceVertices;
 
         /// <summary>
-        ///     Initializes a new instance of the <see cref="Arc" /> class.
+        /// Initializes a new instance of the <see cref="Arc" /> class.
         /// </summary>
         /// <param name="node1">The node1.</param>
         /// <param name="node2">The node2.</param>
@@ -278,7 +296,7 @@ namespace TVGL
         }
 
         /// <summary>
-        ///     Intersects the specified arc1.
+        /// Intersects the specified arc1.
         /// </summary>
         /// <param name="arc1">The arc1.</param>
         /// <param name="arc2">The arc2.</param>
@@ -329,7 +347,7 @@ namespace TVGL
         //θ is the azimuthal angle (in XY plane, measured CCW from positive X axis && 0 <= θ <= 360), 
         //and φ is the polar angle (From positive Z axis && 0 <= φ <= 180).
         /// <summary>
-        ///     Nexts the node along rotation.
+        /// Nexts the node along rotation.
         /// </summary>
         /// <param name="rotation">The rotation.</param>
         /// <returns>Vertex2D.</returns>
@@ -342,7 +360,7 @@ namespace TVGL
 
         //Given the used node and an arc, get the other node
         /// <summary>
-        ///     Nexts the node.
+        /// Nexts the node.
         /// </summary>
         /// <param name="node">The node.</param>
         /// <returns>Vertex2D.</returns>
@@ -354,29 +372,29 @@ namespace TVGL
     }
 
     /// <summary>
-    ///     Great Circle based on a gaussian sphere.
+    /// Great Circle based on a gaussian sphere.
     /// </summary>
     public class GreatCircleAlongArc
     {
         /// <summary>
-        ///     The arc list
+        /// The arc list
         /// </summary>
         internal List<Arc> ArcList;
 
         /// <summary>
-        ///     The intersections
+        /// The intersections
         /// </summary>
         internal List<Intersection> Intersections;
 
         /// <summary>
-        ///     The reference vertices
+        /// The reference vertices
         /// </summary>
         internal List<Vertex> ReferenceVertices;
 
         /// <summary>
-        ///     The volume of the bounding box.
-        ///     Note that antipodal points would result in an infinite number of great circles, but can
-        ///     be ignored since we are assuming the thickness of this solid is greater than 0.
+        /// The volume of the bounding box.
+        /// Note that antipodal points would result in an infinite number of great circles, but can
+        /// be ignored since we are assuming the thickness of this solid is greater than 0.
         /// </summary>
         /// <param name="gaussianSphere">The gaussian sphere.</param>
         /// <param name="vector1">The vector1.</param>
@@ -490,13 +508,13 @@ namespace TVGL
         }
 
         /// <summary>
-        ///     Gets or sets the normal.
+        /// Gets or sets the normal.
         /// </summary>
         /// <value>The normal.</value>
         internal Vector3 Normal { get; set; }
 
         /// <summary>
-        ///     Arcs the length.
+        /// Arcs the length.
         /// </summary>
         /// <param name="double1">The double1.</param>
         /// <param name="double2">The double2.</param>
@@ -511,29 +529,29 @@ namespace TVGL
 
 
     /// <summary>
-    ///     Great Circle based on a gaussian sphere.
+    /// Great Circle based on a gaussian sphere.
     /// </summary>
     public class GreatCircleOrthogonalToArc
     {
         /// <summary>
-        ///     The arc list
+        /// The arc list
         /// </summary>
         internal List<Arc> ArcList;
 
         /// <summary>
-        ///     The intersections
+        /// The intersections
         /// </summary>
         internal List<Intersection> Intersections;
 
         /// <summary>
-        ///     The reference vertices
+        /// The reference vertices
         /// </summary>
         internal List<Vertex> ReferenceVertices;
 
         /// <summary>
-        ///     The volume of the bounding box.
-        ///     Note that antipodal points would result in an infinite number of great circles, but can
-        ///     be ignored since we are assuming the thickness of this solid is greater than 0.
+        /// The volume of the bounding box.
+        /// Note that antipodal points would result in an infinite number of great circles, but can
+        /// be ignored since we are assuming the thickness of this solid is greater than 0.
         /// </summary>
         /// <param name="gaussianSphere">The gaussian sphere.</param>
         /// <param name="vector1">The vector1.</param>
@@ -641,13 +659,13 @@ namespace TVGL
         }
 
         /// <summary>
-        ///     Gets or sets the normal.
+        /// Gets or sets the normal.
         /// </summary>
         /// <value>The normal.</value>
         internal Vector3 Normal { get; set; }
 
         /// <summary>
-        ///     Arcs the length.
+        /// Arcs the length.
         /// </summary>
         /// <param name="a">a.</param>
         /// <param name="b">The b.</param>
@@ -661,32 +679,32 @@ namespace TVGL
     }
 
     /// <summary>
-    ///     Intersection Class retains information about the type of arc intersection
+    /// Intersection Class retains information about the type of arc intersection
     /// </summary>
     internal class Intersection
     {
         /// <summary>
-        ///     The node
+        /// The node
         /// </summary>
         internal Node Node;
 
         /// <summary>
-        ///     The reference arc
+        /// The reference arc
         /// </summary>
         internal Arc ReferenceArc;
 
         /// <summary>
-        ///     The spherical distance
+        /// The spherical distance
         /// </summary>
         internal double SphericalDistance;
 
         /// <summary>
-        ///     The vertex
+        /// The vertex
         /// </summary>
         internal Vertex Vertex;
 
         /// <summary>
-        ///     Initializes a new instance of the <see cref="Intersection" /> class.
+        /// Initializes a new instance of the <see cref="Intersection" /> class.
         /// </summary>
         /// <param name="node">The node.</param>
         /// <param name="sphericalDistance">The spherical distance.</param>
@@ -700,7 +718,7 @@ namespace TVGL
         }
 
         /// <summary>
-        ///     Initializes a new instance of the <see cref="Intersection" /> class.
+        /// Initializes a new instance of the <see cref="Intersection" /> class.
         /// </summary>
         /// <param name="vertex">The vertex.</param>
         /// <param name="sphericalDistance">The spherical distance.</param>

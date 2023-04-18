@@ -1,120 +1,129 @@
-﻿// Copyright 2015-2020 Design Engineering Lab
-// This file is a part of TVGL, Tessellation and Voxelization Geometry Library
-// https://github.com/DesignEngrLab/TVGL
-// It is licensed under MIT License (see LICENSE.txt for details)
+﻿// ***********************************************************************
+// Assembly         : TessellationAndVoxelizationGeometryLibrary
+// Author           : matth
+// Created          : 04-03-2023
+//
+// Last Modified By : matth
+// Last Modified On : 04-14-2023
+// ***********************************************************************
+// <copyright file="TessellationError.cs" company="Design Engineering Lab">
+//     2014
+// </copyright>
+// <summary></summary>
+// ***********************************************************************
 using System.Collections.Generic;
 
 namespace TVGL
 {
     /// <summary>
-    ///     Stores errors in the tessellated solid
+    /// Stores errors in the tessellated solid
     /// </summary>
     public class TessellationError
     {
         /// <summary>
-        ///     Edges that are used by more than two faces
+        /// Edges that are used by more than two faces
         /// </summary>
         /// <value>The overused edges.</value>
         public List<(Edge, List<TriangleFace>)> OverusedEdges { get; internal set; }
 
         /// <summary>
-        ///     Edges that only have one face
+        /// Edges that only have one face
         /// </summary>
         /// <value>The singled sided edges.</value>
         public List<Edge> SingledSidedEdges { get; internal set; }
 
         /// <summary>
-        ///     Faces with errors
+        /// Faces with errors
         /// </summary>
         /// <value>The degenerate faces.</value>
         public List<int[]> DegenerateFaces { get; internal set; }
 
         /// <summary>
-        ///     Duplicate Faces
+        /// Duplicate Faces
         /// </summary>
         /// <value>The duplicate faces.</value>
         public List<int[]> DuplicateFaces { get; internal set; }
 
         /// <summary>
-        ///     Faces with only one vertex
+        /// Faces with only one vertex
         /// </summary>
         /// <value>The faces with one vertex.</value>
         public List<TriangleFace> FacesWithOneVertex { get; internal set; }
 
         /// <summary>
-        ///     Faces with only one edge
+        /// Faces with only one edge
         /// </summary>
         /// <value>The faces with one edge.</value>
         public List<TriangleFace> FacesWithOneEdge { get; internal set; }
 
         /// <summary>
-        ///     Faces with only two vertices
+        /// Faces with only two vertices
         /// </summary>
         /// <value>The faces with two vertices.</value>
         public List<TriangleFace> FacesWithTwoVertices { get; internal set; }
 
         /// <summary>
-        ///     Faces with only two edges
+        /// Faces with only two edges
         /// </summary>
         /// <value>The faces with two edges.</value>
         public List<TriangleFace> FacesWithTwoEdges { get; internal set; }
 
         /// <summary>
-        ///     Faces with negligible area (which is not necessarily an error)
+        /// Faces with negligible area (which is not necessarily an error)
         /// </summary>
         /// <value>The faces with negligible area.</value>
         public List<TriangleFace> FacesWithNegligibleArea { get; internal set; }
 
         /// <summary>
-        ///     Edges that do not link back to faces that link to them
+        /// Edges that do not link back to faces that link to them
         /// </summary>
         /// <value>The edges that do not link back to face.</value>
         public List<(TriangleFace, Edge)> EdgesThatDoNotLinkBackToFace { get; internal set; }
 
         /// <summary>
-        ///     Edges that do not link back to vertices that link to them
+        /// Edges that do not link back to vertices that link to them
         /// </summary>
         /// <value>The edges that do not link back to vertex.</value>
         public List<(Vertex, Edge)> EdgesThatDoNotLinkBackToVertex { get; internal set; }
 
         /// <summary>
-        ///     Vertices that do not link back to faces that link to them
+        /// Vertices that do not link back to faces that link to them
         /// </summary>
         /// <value>The verts that do not link back to face.</value>
         public List<(TriangleFace, Vertex)> VertsThatDoNotLinkBackToFace { get; internal set; }
 
         /// <summary>
-        ///     Vertices that do not link back to edges that link to them
+        /// Vertices that do not link back to edges that link to them
         /// </summary>
         /// <value>The verts that do not link back to edge.</value>
         public List<(Edge, Vertex)> VertsThatDoNotLinkBackToEdge { get; internal set; }
 
         /// <summary>
-        ///     Faces that do not link back to edges that link to them
+        /// Faces that do not link back to edges that link to them
         /// </summary>
         /// <value>The faces that do not link back to edge.</value>
         public List<(Edge, TriangleFace)> FacesThatDoNotLinkBackToEdge { get; internal set; }
 
         /// <summary>
-        ///     Faces that do not link back to vertices that link to them
+        /// Faces that do not link back to vertices that link to them
         /// </summary>
         /// <value>The faces that do not link back to vertex.</value>
         public List<(Vertex, TriangleFace)> FacesThatDoNotLinkBackToVertex { get; internal set; }
 
         /// <summary>
-        ///     Edges with bad angles
+        /// Edges with bad angles
         /// </summary>
         /// <value>The edges with bad angle.</value>
         public List<Edge> EdgesWithBadAngle { get; internal set; }
 
         /// <summary>
-        ///     Edges to face ratio
+        /// Edges to face ratio
         /// </summary>
         /// <value>The edge face ratio.</value>
         public double EdgeFaceRatio { get; internal set; } = double.NaN;
 
         /// <summary>
-        ///     Whether ts.Errors contains any errors that need to be resolved
+        /// Whether ts.Errors contains any errors that need to be resolved
         /// </summary>
         /// <value><c>true</c> if [no errors]; otherwise, <c>false</c>.</value>
         internal bool NoErrors { get; set; }
@@ -122,11 +131,13 @@ namespace TVGL
         /// <summary>
         /// Gets a value indicating whether [model is inside out].
         /// </summary>
-        /// <value>
-        ///   <c>true</c> if [model is inside out]; otherwise, <c>false</c>.
-        /// </value>
+        /// <value><c>true</c> if [model is inside out]; otherwise, <c>false</c>.</value>
         public bool ModelIsInsideOut { get; internal set; }
 
+        /// <summary>
+        /// Counts this instance.
+        /// </summary>
+        /// <returns>System.Int32.</returns>
         public int Count()
         {
             int count = 0;
@@ -149,6 +160,10 @@ namespace TVGL
             return count;
         }
 
+        /// <summary>
+        /// Reports this instance.
+        /// </summary>
+        /// <returns>System.String.</returns>
         public string Report()
         {
             //if (NoErrors) return "No Errors";

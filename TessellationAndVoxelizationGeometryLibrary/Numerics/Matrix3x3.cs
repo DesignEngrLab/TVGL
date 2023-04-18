@@ -1,6 +1,16 @@
-// Licensed to the .NET Foundation under one or more agreements.
-// The .NET Foundation licenses this file to you under the MIT license.
-// See the LICENSE file in the project root for more information.
+// ***********************************************************************
+// Assembly         : TessellationAndVoxelizationGeometryLibrary
+// Author           : matth
+// Created          : 04-03-2023
+//
+// Last Modified By : matth
+// Last Modified On : 04-03-2023
+// ***********************************************************************
+// <copyright file="Matrix3x3.cs" company="Design Engineering Lab">
+//     2014
+// </copyright>
+// <summary></summary>
+// ***********************************************************************
 
 using System;
 using System.Globalization;
@@ -12,32 +22,41 @@ namespace TVGL
     /// </summary>
     public readonly struct Matrix3x3 : IEquatable<Matrix3x3>
     {
+        /// <summary>
+        /// The rotation epsilon
+        /// </summary>
         private const double RotationEpsilon = 0.001 * Math.PI / 180.0;     // 0.1% of a degree
 
         #region Public Fields
         /// <summary>
         /// The first element of the first row. This is the x-scaling term.
         /// </summary>
+        /// <value>The M11.</value>
         public double M11 { get; }
         /// <summary>
         /// The second element of the first row. This is the y-skewing term.
         /// </summary>
+        /// <value>The M12.</value>
         public double M12 { get; }
         /// <summary>
         /// The first element of the second row. This is the x-skewing term.
         /// </summary>
+        /// <value>The M21.</value>
         public double M21 { get; }
         /// <summary>
         /// The second element of the second row. This is the y-scaling term.
         /// </summary>
+        /// <value>The M22.</value>
         public double M22 { get; }
         /// <summary>
         /// The first element of the third row. This is the x-translation term.
         /// </summary>
+        /// <value>The M31.</value>
         public double M31 { get; }
         /// <summary>
         /// The second element of the third row. This is the y-translation term.
         /// </summary>
+        /// <value>The M32.</value>
         public double M32 { get; }
 
         // Now the Projective Transform terms
@@ -50,14 +69,17 @@ namespace TVGL
         /// <summary>
         /// The third element of the first row. This is the x-projective term.
         /// </summary>
+        /// <value>The M13.</value>
         public double M13 { get; }
         /// <summary>
         /// The third element of the second row. This is the y-projective term.
         /// </summary>
+        /// <value>The M23.</value>
         public double M23 { get; }
         /// <summary>
         /// The third element of the third row. This is the global scaling term.
         /// </summary>
+        /// <value>The M33.</value>
         public double M33 { get; }
         #endregion Public Fields
 
@@ -66,6 +88,7 @@ namespace TVGL
         /// <summary>
         /// Returns the multiplicative identity matrix.
         /// </summary>
+        /// <value>The identity.</value>
         public static Matrix3x3 Identity =>
             new Matrix3x3(
                 1, 0,
@@ -75,6 +98,7 @@ namespace TVGL
         /// <summary>
         /// Returns a null matrix, which means all values are set to Not-A-Number.
         /// </summary>
+        /// <value>The null.</value>
         public static Matrix3x3 Null =>
             new Matrix3x3(
                 double.NaN, double.NaN,
@@ -84,7 +108,7 @@ namespace TVGL
         /// <summary>
         /// Returns whether the matrix is the identity matrix.
         /// </summary>
-        /// // CHANGED from property to method
+        /// <returns><c>true</c> if this instance is identity; otherwise, <c>false</c>.</returns>
         public bool IsIdentity()
         {
             return M11 == 1.0 && M22 == 1.0 && // Check diagonal element first for early out.
@@ -96,7 +120,7 @@ namespace TVGL
         /// <summary>
         /// Returns whether the matrix has any Not-A-Numbers or if all terms are zero.
         /// </summary>
-        /// // CHANGED from property to method
+        /// <returns><c>true</c> if this instance is null; otherwise, <c>false</c>.</returns>
         public bool IsNull()
         {
             return
@@ -111,11 +135,18 @@ namespace TVGL
         /// <summary>
         /// Gets or sets the translation component of this matrix.
         /// </summary>
+        /// <value>The translation.</value>
         public Vector2 Translation => new Vector2(M31, M32);
 
         /// <summary>
         /// Constructs a Matrix3x3 from the given components.
         /// </summary>
+        /// <param name="m11">The M11.</param>
+        /// <param name="m12">The M12.</param>
+        /// <param name="m21">The M21.</param>
+        /// <param name="m22">The M22.</param>
+        /// <param name="m31">The M31.</param>
+        /// <param name="m32">The M32.</param>
         public Matrix3x3(double m11, double m12,
                          double m21, double m22,
                          double m31, double m32)
@@ -137,6 +168,15 @@ namespace TVGL
         /// <summary>
         /// Constructs a Matrix3x3 from the given components.
         /// </summary>
+        /// <param name="m11">The M11.</param>
+        /// <param name="m12">The M12.</param>
+        /// <param name="m13">The M13.</param>
+        /// <param name="m21">The M21.</param>
+        /// <param name="m22">The M22.</param>
+        /// <param name="m23">The M23.</param>
+        /// <param name="m31">The M31.</param>
+        /// <param name="m32">The M32.</param>
+        /// <param name="m33">The M33.</param>
         public Matrix3x3(double m11, double m12, double m13,
                          double m21, double m22, double m23,
                          double m31, double m32, double m33)
@@ -329,6 +369,12 @@ namespace TVGL
             x, y);
         }
 
+        /// <summary>
+        /// Gets the sine cosine of angle.
+        /// </summary>
+        /// <param name="radians">The radians.</param>
+        /// <param name="s">The s.</param>
+        /// <param name="c">The c.</param>
         private static void GetSineCosineOfAngle(double radians, out double s, out double c)
         {
             radians = Math.IEEERemainder(radians, Math.PI * 2);

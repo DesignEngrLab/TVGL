@@ -1,7 +1,16 @@
-﻿// Copyright 2015-2020 Design Engineering Lab
-// This file is a part of TVGL, Tessellation and Voxelization Geometry Library
-// https://github.com/DesignEngrLab/TVGL
-// It is licensed under MIT License (see LICENSE.txt for details)
+﻿// ***********************************************************************
+// Assembly         : TessellationAndVoxelizationGeometryLibrary
+// Author           : matth
+// Created          : 04-03-2023
+//
+// Last Modified By : matth
+// Last Modified On : 04-14-2023
+// ***********************************************************************
+// <copyright file="Slice.cs" company="Design Engineering Lab">
+//     2014
+// </copyright>
+// <summary></summary>
+// ***********************************************************************
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -22,13 +31,14 @@ namespace TVGL
 
         /// <summary>
         /// This slice function makes a seperate cut for the positive and negative side,
-        /// at a specified offset in both directions. It rebuilds straddle triangles, 
+        /// at a specified offset in both directions. It rebuilds straddle triangles,
         /// but only uses one of the two straddle edge intersection vertices to prevent
         /// tiny triangles from being created.
         /// </summary>
         /// <param name="ts">The ts.</param>
         /// <param name="plane">The plane.</param>
-        /// <param name="solids">The resulting solids </param>
+        /// <param name="solids">The resulting solids</param>
+        /// <param name="contactData">The contact data.</param>
         /// <param name="setIntersectionGroups">Determines whether to output the intersections (2D cross sections and other info)</param>
         /// <param name="undoPlaneOffset">Determines whether to construct new faces exactly on the cutting plane</param>
         public static void SliceOnInfiniteFlat(this TessellatedSolid ts, Plane plane,
@@ -53,20 +63,24 @@ namespace TVGL
 
         /// <summary>
         /// This slice function makes a seperate cut for the positive and negative side,
-        /// at a specified offset in both directions. It rebuilds straddle triangles, 
+        /// at a specified offset in both directions. It rebuilds straddle triangles,
         /// but only uses one of the two straddle edge intersection vertices to prevent
         /// tiny triangles from being created.
         /// This version allows the user to input IntersectionGroups ignore by index.
         /// These are set by useing OnInfiniteFlat with setIntersectionGroups = true.
-        /// 
         /// Limitation: The finite plane is limited in that it can only ignore entire groups of loops,
         /// so if two positive side groups connect with one negative side loop, they cannot be seperated
         /// individually (e.g., if two pegs are connected to a large face, you cannot remove only one peg
         /// with a flat exactly on the large face. However, you could cut it off by moving the plane
         /// slightly toward the peg. That would make two IntersectionGroups rather than one).
         /// This is because Slice was written to re-triangulate exposed surfaces from the intersection loops.
-        /// This cannot currently be done for partial intersection loops. 
+        /// This cannot currently be done for partial intersection loops.
         /// </summary>
+        /// <param name="ts">The ts.</param>
+        /// <param name="plane">The plane.</param>
+        /// <param name="solids">The solids.</param>
+        /// <param name="intersectionsToIgnore">The intersections to ignore.</param>
+        /// <param name="newContactData">The new contact data.</param>
         public static void SliceOnFiniteFlatByIngoringIntersections(this TessellatedSolid ts, Plane plane,
             out List<TessellatedSolid> solids, ICollection<IntersectionGroup> intersectionsToIgnore, out ContactData newContactData)
         {
@@ -94,7 +108,7 @@ namespace TVGL
 
         /// <summary>
         /// This slice function makes a seperate cut for the positive and negative side,
-        /// at a specified offset in both directions. It rebuilds straddle triangles, 
+        /// at a specified offset in both directions. It rebuilds straddle triangles,
         /// but only uses one of the two straddle edge intersection vertices to prevent
         /// tiny triangles from being created.
         /// </summary>
@@ -123,12 +137,13 @@ namespace TVGL
         /// <summary>
         /// Gets the contact data for a slice, without making the individual solids.
         /// </summary>
-        /// <param name="ts"></param>
-        /// <param name="plane"></param>
-        /// <param name="contactData"></param>
-        /// <param name="setIntersectionGroups"></param>
-        /// <param name="loopsToIgnore"></param>
-        /// <param name="undoPlaneOffset"></param>
+        /// <param name="ts">The ts.</param>
+        /// <param name="plane">The plane.</param>
+        /// <param name="contactData">The contact data.</param>
+        /// <param name="setIntersectionGroups">if set to <c>true</c> [set intersection groups].</param>
+        /// <param name="loopsToIgnore">The loops to ignore.</param>
+        /// <param name="undoPlaneOffset">if set to <c>true</c> [undo plane offset].</param>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         public static bool GetSliceContactData(this TessellatedSolid ts, Plane plane, out ContactData contactData,
             bool setIntersectionGroups, ICollection<int> loopsToIgnore = null, bool undoPlaneOffset = false)
         {
@@ -154,9 +169,9 @@ namespace TVGL
         /// <summary>
         /// Returns lists of solids, given contact data for this slice
         /// </summary>
-        /// <param name="contactData"></param>
-        /// <param name="unitType"></param>
-        /// <param name="solids"></param>
+        /// <param name="contactData">The contact data.</param>
+        /// <param name="unitType">Type of the unit.</param>
+        /// <param name="solids">The solids.</param>
         public static void MakeSolids(this ContactData contactData, UnitType unitType, out List<TessellatedSolid> solids)
         {
             solids = contactData.SolidContactData.Select(solidContactData => new TessellatedSolid(solidContactData.AllFaces, true,
@@ -169,18 +184,17 @@ namespace TVGL
         /// The direction of each loop is not necessary as it can be inferred.
         /// </summary>
         /// <param name="posSideLoops">The on side loops.</param>
-        /// <param name="negSideLoops"></param>
-        /// <param name="plane"></param>
-        /// <param name="setIntersectionGroups"></param>
-        /// <param name="intersectionGroups"></param>
+        /// <param name="negSideLoops">The neg side loops.</param>
+        /// <param name="plane">The plane.</param>
+        /// <param name="setIntersectionGroups">if set to <c>true</c> [set intersection groups].</param>
+        /// <param name="tolerance">The tolerance.</param>
+        /// <param name="intersectionGroups">The intersection groups.</param>
         /// <returns>IEnumerable&lt;SolidContactData&gt;.</returns>
-        /// <exception cref="System.Exception">
-        /// This loop should always be positive. Check to may sure the group was created correctly in 'OrderLoops' 
+        /// <exception cref="System.Exception">This loop should always be positive. Check to may sure the group was created correctly in 'OrderLoops'
         /// or
-        /// This loop should always be negative. Check to may sure the group was created correctly in 'OrderLoops' 
+        /// This loop should always be negative. Check to may sure the group was created correctly in 'OrderLoops'
         /// or
-        /// The face should be in this list. Otherwise, it should not have been selected with face wrapping
-        /// </exception>
+        /// The face should be in this list. Otherwise, it should not have been selected with face wrapping</exception>
         private static ISet<GroupOfLoops> GroupLoops(IList<Loop> posSideLoops, IList<Loop> negSideLoops,
             Plane plane, bool setIntersectionGroups, double tolerance, out List<IntersectionGroup> intersectionGroups)
         {
@@ -267,9 +281,9 @@ namespace TVGL
         /// <summary>
         /// Uses face wrapping on the groups of loops to identigy multiple solids.
         /// </summary>
-        /// <param name="ts"></param>
-        /// <param name="groupsOfLoops"></param>
-        /// <returns></returns>
+        /// <param name="ts">The ts.</param>
+        /// <param name="groupsOfLoops">The groups of loops.</param>
+        /// <returns>IEnumerable&lt;SolidContactData&gt;.</returns>
         private static IEnumerable<SolidContactData> MakeContactDataForEachSolid(TessellatedSolid ts, ISet<GroupOfLoops> groupsOfLoops)
         {
 
@@ -359,6 +373,21 @@ namespace TVGL
         /// Returns a list of onSideFaces from the ts (not including straddle faces), and a list of all the new faces that make up the
         /// halves of the straddle faces that are on this side.
         /// </summary>
+        /// <param name="ts">The ts.</param>
+        /// <param name="plane">The plane.</param>
+        /// <param name="loops">The loops.</param>
+        /// <param name="isPositiveSide">The is positive side.</param>
+        /// <param name="distancesToPlane">The distances to plane.</param>
+        /// <param name="planeOffset">The plane offset.</param>
+        /// <param name="loopsToIgnore">The loops to ignore.</param>
+        /// <param name="undoPlaneOffset">if set to <c>true</c> [undo plane offset].</param>
+        /// <exception cref="System.Exception">These should be equal for closed geometry</exception>
+        /// <exception cref="System.Exception">This should never happen and will cause errors down the line. Prevent it.</exception>
+        /// <exception cref="System.Exception">While loop was unable to complete.</exception>
+        /// <exception cref="System.Exception">No good starting edge found. Rewrite the function to find a better edge</exception>
+        /// <exception cref="System.Exception">pick a different starting edge</exception>
+        /// <exception cref="System.Exception">No shared face exists between these two straddle edges</exception>
+        /// <exception cref="System.Exception">This could be a knife edge. But this error will likely cause errors down the line</exception>
         private static void DivideUpFaces(TessellatedSolid ts, Plane plane, out List<Loop> loops, int isPositiveSide,
             IList<double> distancesToPlane, double planeOffset, ICollection<int> loopsToIgnore = null,
             bool undoPlaneOffset = false)
@@ -554,23 +583,11 @@ namespace TVGL
         /// <param name="adjOnsideFaceIndices">The adj onside face indices.</param>
         /// <param name="lastNewFace">if set to <c>true</c> [last new face].</param>
         /// <returns>List&lt;TriangleFace&gt;.</returns>
-        /// <exception cref="System.Exception">
-        /// No shared face exists between these two straddle edges
-        /// or
-        /// There should only be one boundary edge. There must be 2 straddle edges for this shared face.
-        /// or
-        /// All edges of the shared face are straddle edges. This cannot be.
-        /// or
-        /// This should never be the case. The boundary edge should be have the sharedFace as owned or other
-        /// or
-        /// There should only be one boundary edge. There must be 2 straddle edges for this shared face.
-        /// or
-        /// All edges of the shared face are straddle edges. This cannot be.
-        /// or
-        /// This should never be the case. The boundary edge should be have the sharedFace as owned or other
-        /// or
-        /// Error, the straddle edges do not match up at a common vertex
-        /// </exception>
+        /// <exception cref="System.Exception">No shared face exists between these two straddle edges</exception>
+        /// <exception cref="System.Exception">There should only be one boundary edge. There must be 2 straddle edges for this shared face.</exception>
+        /// <exception cref="System.Exception">All edges of the shared face are straddle edges. This cannot be.</exception>
+        /// <exception cref="System.Exception">This should never be the case. The boundary edge should be have the sharedFace as owned or other</exception>
+        /// <exception cref="System.Exception">Error, the straddle edges do not match up at a common vertex</exception>
         private static List<TriangleFace> NewFace(StraddleEdge st1, StraddleEdge st2, Dictionary<int, Edge> straddleEdgesDict,
             Dictionary<int, TriangleFace> straddleFaces, List<Edge> newEdges, HashSet<int> adjOnsideFaceIndices, bool lastNewFace = false)
         {
@@ -745,6 +762,14 @@ namespace TVGL
             /// </summary>
             public TriangleFace OtherFace;
 
+            /// <summary>
+            /// Initializes a new instance of the <see cref="StraddleEdge"/> class.
+            /// </summary>
+            /// <param name="edge">The edge.</param>
+            /// <param name="plane">The plane.</param>
+            /// <param name="offSideVertex">The off side vertex.</param>
+            /// <param name="planeOffset">The plane offset.</param>
+            /// <exception cref="System.Exception">Cannot Be Null</exception>
             internal StraddleEdge(Edge edge, Plane plane, Vertex offSideVertex, double planeOffset = 0D)
             {
                 OwnedFace = edge.OwnedFace;
@@ -761,8 +786,8 @@ namespace TVGL
             /// <summary>
             /// Gets the next face in the loop from this edge, given the current face
             /// </summary>
-            /// <param name="face"></param>
-            /// <returns></returns>
+            /// <param name="face">The face.</param>
+            /// <returns>TriangleFace.</returns>
             public TriangleFace NextFace(TriangleFace face)
             {
                 return Edge.OwnedFace == face ? Edge.OtherFace : Edge.OwnedFace;
@@ -779,7 +804,7 @@ namespace TVGL
         /// <param name="numSlices">The number slices.</param>
         /// <param name="stepSize">Size of the step.</param>
         /// <returns>List&lt;Polygon&gt;[].</returns>
-        /// <exception cref="ArgumentException">Either a valid stepSize or a number of slices greater than zero must be specified.</exception>
+        /// <exception cref="System.ArgumentException">Either a valid stepSize or a number of slices greater than zero must be specified.</exception>
         public static List<Polygon>[] GetUniformlySpacedCrossSections(this TessellatedSolid ts, Vector3 direction, double startDistanceAlongDirection = double.NaN,
         int numSlices = -1, double stepSize = double.NaN)
         {
@@ -831,6 +856,14 @@ namespace TVGL
             return result;
         }
 
+        /// <summary>
+        /// Gets the loops.
+        /// </summary>
+        /// <param name="edgeDictionary">The edge dictionary.</param>
+        /// <param name="normal">The normal.</param>
+        /// <param name="distanceToOrigin">The distance to origin.</param>
+        /// <param name="e2VDictionary">The e2 v dictionary.</param>
+        /// <returns>List&lt;Polygon&gt;.</returns>
         private static List<Polygon> GetLoops(Dictionary<Edge, Vector2> edgeDictionary, Vector3 normal, double distanceToOrigin,
             out Dictionary<Vertex2D, Edge> e2VDictionary)
         {
@@ -884,6 +917,13 @@ namespace TVGL
             return polygons.CreateShallowPolygonTrees(false);
         }
 
+        /// <summary>
+        /// Adds to polygons.
+        /// </summary>
+        /// <param name="path">The path.</param>
+        /// <param name="edgesInLoop">The edges in loop.</param>
+        /// <param name="polygons">The polygons.</param>
+        /// <param name="e2VDictionary">The e2 v dictionary.</param>
         private static void AddToPolygons(List<Vector2> path, List<Edge> edgesInLoop, List<Polygon> polygons, Dictionary<Vertex2D, Edge> e2VDictionary)
         {
             var polygon = new Polygon(path);
@@ -897,7 +937,9 @@ namespace TVGL
         /// Gets the cross section.
         /// </summary>
         /// <param name="tessellatedSolid">The tessellated solid.</param>
-        /// <param name="plane">The plane.</param>
+        /// <param name="direction">The direction.</param>
+        /// <param name="distanceToOrigin">The distance to origin.</param>
+        /// <param name="v2EDictionary">The v2 e dictionary.</param>
         /// <returns>List&lt;Polygon&gt;.</returns>
         public static List<Polygon> GetCrossSection(this TessellatedSolid tessellatedSolid, CartesianDirections direction,
             double distanceToOrigin, out Dictionary<Vertex2D, Edge> v2EDictionary)
@@ -935,6 +977,7 @@ namespace TVGL
         /// </summary>
         /// <param name="tessellatedSolid">The tessellated solid.</param>
         /// <param name="plane">The plane.</param>
+        /// <param name="v2EDictionary">The v2 e dictionary.</param>
         /// <returns>List&lt;Polygon&gt;.</returns>
         public static List<Polygon> GetCrossSection(this TessellatedSolid tessellatedSolid, Plane plane, out Dictionary<Vertex2D, Edge> v2EDictionary)
         {
@@ -975,7 +1018,7 @@ namespace TVGL
         /// <param name="numSlices">The number slices.</param>
         /// <param name="stepSize">Size of the step.</param>
         /// <returns>List&lt;Polygon&gt;[].</returns>
-        /// <exception cref="ArgumentException">Either a valid stepSize or a number of slices greater than zero must be specified.</exception>
+        /// <exception cref="System.ArgumentException">Either a valid stepSize or a number of slices greater than zero must be specified.</exception>
         public static List<Polygon>[] GetUniformlySpacedCrossSections(this TessellatedSolid ts, CartesianDirections direction, double startDistanceAlongDirection = double.NaN, int numSlices = -1,
             double stepSize = double.NaN)
         {
@@ -1008,6 +1051,14 @@ namespace TVGL
             }
         }
 
+        /// <summary>
+        /// Alls the slices along x.
+        /// </summary>
+        /// <param name="ts">The ts.</param>
+        /// <param name="startDistanceAlongDirection">The start distance along direction.</param>
+        /// <param name="numSlices">The number slices.</param>
+        /// <param name="stepSize">Size of the step.</param>
+        /// <returns>List&lt;Polygon&gt;[].</returns>
         private static List<Polygon>[] AllSlicesAlongX(TessellatedSolid ts, double startDistanceAlongDirection, int numSlices, double stepSize)
         {
             var loopsAlongX = new List<Polygon>[numSlices];
@@ -1043,6 +1094,14 @@ namespace TVGL
             return loopsAlongX;
         }
 
+        /// <summary>
+        /// Alls the slices along y.
+        /// </summary>
+        /// <param name="ts">The ts.</param>
+        /// <param name="startDistanceAlongDirection">The start distance along direction.</param>
+        /// <param name="numSlices">The number slices.</param>
+        /// <param name="stepSize">Size of the step.</param>
+        /// <returns>List&lt;Polygon&gt;[].</returns>
         private static List<Polygon>[] AllSlicesAlongY(TessellatedSolid ts, double startDistanceAlongDirection, int numSlices, double stepSize)
         {
             var loopsAlongY = new List<Polygon>[numSlices];
@@ -1078,6 +1137,14 @@ namespace TVGL
             return loopsAlongY;
         }
 
+        /// <summary>
+        /// Alls the slices along z.
+        /// </summary>
+        /// <param name="ts">The ts.</param>
+        /// <param name="startDistanceAlongDirection">The start distance along direction.</param>
+        /// <param name="numSlices">The number slices.</param>
+        /// <param name="stepSize">Size of the step.</param>
+        /// <returns>List&lt;Polygon&gt;[].</returns>
         private static List<Polygon>[] AllSlicesAlongZ(TessellatedSolid ts, double startDistanceAlongDirection, int numSlices, double stepSize)
         {
             var loopsAlongZ = new List<Polygon>[numSlices];

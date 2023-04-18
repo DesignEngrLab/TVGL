@@ -1,7 +1,16 @@
-﻿// Copyright 2015-2020 Design Engineering Lab
-// This file is a part of TVGL, Tessellation and Voxelization Geometry Library
-// https://github.com/DesignEngrLab/TVGL
-// It is licensed under MIT License (see LICENSE.txt for details)
+﻿// ***********************************************************************
+// Assembly         : TessellationAndVoxelizationGeometryLibrary
+// Author           : matth
+// Created          : 04-03-2023
+//
+// Last Modified By : matth
+// Last Modified On : 04-03-2023
+// ***********************************************************************
+// <copyright file="PolygonUnion.cs" company="Design Engineering Lab">
+//     2014
+// </copyright>
+// <summary></summary>
+// ***********************************************************************
 using System.Collections.Generic;
 
 namespace TVGL
@@ -11,6 +20,13 @@ namespace TVGL
     /// </summary>
     internal class PolygonUnion : PolygonBooleanBase
     {
+        /// <summary>
+        /// Valids the starting intersection.
+        /// </summary>
+        /// <param name="intersectionData">The intersection data.</param>
+        /// <param name="currentEdge">The current edge.</param>
+        /// <param name="startAgain">if set to <c>true</c> [start again].</param>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         protected override bool ValidStartingIntersection(SegmentIntersection intersectionData, out PolygonEdge currentEdge,
             out bool startAgain)
         {
@@ -72,6 +88,12 @@ namespace TVGL
             return false;
         }
 
+        /// <summary>
+        /// Switches at this intersection.
+        /// </summary>
+        /// <param name="intersectionData">The intersection data.</param>
+        /// <param name="currentEdgeIsFromPolygonA">if set to <c>true</c> [current edge is from polygon a].</param>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         protected override bool SwitchAtThisIntersection(SegmentIntersection intersectionData, bool currentEdgeIsFromPolygonA)
         {
             if ((currentEdgeIsFromPolygonA && intersectionData.Relationship == SegmentRelationship.AEnclosesB) ||
@@ -80,6 +102,14 @@ namespace TVGL
             return true;
         }
 
+        /// <summary>
+        /// Polygons the completed.
+        /// </summary>
+        /// <param name="currentIntersection">The current intersection.</param>
+        /// <param name="startingIntersection">The starting intersection.</param>
+        /// <param name="currentEdge">The current edge.</param>
+        /// <param name="startingEdge">The starting edge.</param>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         protected override bool PolygonCompleted(SegmentIntersection currentIntersection, SegmentIntersection startingIntersection, PolygonEdge currentEdge, PolygonEdge startingEdge)
         {
             if ((currentEdge == currentIntersection.EdgeA && currentIntersection.VisitedA) ||
@@ -95,9 +125,8 @@ namespace TVGL
         /// <summary>
         /// Handles identical polygons. In this case subPolygon is always on polygonA and the duplicated is in polygonB
         /// </summary>
-        /// <param name="subPolygon">The sub polygon.</param>
-        /// <param name="positivePolygons">The positive polygons.</param>
-        /// <param name="negativePolygons">The negative polygons.</param>
+        /// <param name="subPolygonA">The sub polygon a.</param>
+        /// <param name="newPolygons">The new polygons.</param>
         /// <param name="identicalPolygonIsInverted">The identical polygon is inverted.</param>
         protected override void HandleIdenticalPolygons(Polygon subPolygonA, List<Polygon> newPolygons, bool identicalPolygonIsInverted)
         {
@@ -107,6 +136,14 @@ namespace TVGL
             // a hole is effectively removed
         }
 
+        /// <summary>
+        /// Handles the non intersecting sub polygon.
+        /// </summary>
+        /// <param name="subPolygon">The sub polygon.</param>
+        /// <param name="newPolygons">The new polygons.</param>
+        /// <param name="relationships">The relationships.</param>
+        /// <param name="partOfPolygonB">if set to <c>true</c> [part of polygon b].</param>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         protected override bool HandleNonIntersectingSubPolygon(Polygon subPolygon, List<Polygon> newPolygons,
             IEnumerable<(PolyRelInternal, bool)> relationships, bool partOfPolygonB)
         {

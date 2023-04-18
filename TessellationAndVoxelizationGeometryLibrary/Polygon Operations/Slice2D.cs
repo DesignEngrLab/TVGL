@@ -1,7 +1,16 @@
-﻿// Copyright 2015-2020 Design Engineering Lab
-// This file is a part of TVGL, Tessellation and Voxelization Geometry Library
-// https://github.com/DesignEngrLab/TVGL
-// It is licensed under MIT License (see LICENSE.txt for details)
+﻿// ***********************************************************************
+// Assembly         : TessellationAndVoxelizationGeometryLibrary
+// Author           : matth
+// Created          : 04-03-2023
+//
+// Last Modified By : matth
+// Last Modified On : 04-03-2023
+// ***********************************************************************
+// <copyright file="Slice2D.cs" company="Design Engineering Lab">
+//     2014
+// </copyright>
+// <summary></summary>
+// ***********************************************************************
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,11 +18,14 @@ using System.Linq;
 
 namespace TVGL
 {
+    /// <summary>
+    /// Class PolygonOperations.
+    /// </summary>
     public static partial class PolygonOperations
     {
         [Obsolete("Use Polygons as this functions constructs them anyway.")]
         /// <summary>
-        /// Slices the polygons at the provided line. Note that the line is represented as 4 numbers. Think of it as a 
+        /// Slices the polygons at the provided line. Note that the line is represented as 4 numbers. Think of it as a
         /// plane cutting through this 2D plane. Instead of the line direction, we receive the normal to the line, the lineNormalDirection.
         /// Instead of an anchor point on the line, all we need is the perpendicular distance to the line.
         /// </summary>
@@ -35,7 +47,7 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Slices the polygons at the provided line. Note that the line is represented as 4 numbers. Think of it as a 
+        /// Slices the polygons at the provided line. Note that the line is represented as 4 numbers. Think of it as a
         /// plane cutting through this 2D plane. Instead of the line direction, we receive the normal to the line, the lineNormalDirection.
         /// Instead of an anchor point on the line, all we need is the perpendicular distance to the line.
         /// </summary>
@@ -67,7 +79,7 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Slices the polygon at the provided line. Note that the line is represented as 4 numbers. Think of it as a 
+        /// Slices the polygon at the provided line. Note that the line is represented as 4 numbers. Think of it as a
         /// plane cutting through this 2D plane. Instead of the line direction, we receive the normal to the line, the lineNormalDirection.
         /// Instead of an anchor point on the line, all we need is the perpendicular distance to the line.
         /// </summary>
@@ -210,6 +222,13 @@ namespace TVGL
             return pointsOnLineTuples.Select(p => p.Item1).ToArray();
         }
 
+        /// <summary>
+        /// Shifts the line to avoid collinear points.
+        /// </summary>
+        /// <param name="shallowPolygonTree">The shallow polygon tree.</param>
+        /// <param name="lineNormalDirection">The line normal direction.</param>
+        /// <param name="distanceAlongDirection">The distance along direction.</param>
+        /// <returns>System.ValueTuple&lt;System.Double, System.Double&gt;.</returns>
         private static (double, double) ShiftLineToAvoidCollinearPoints(Polygon shallowPolygonTree,
             Vector2 lineNormalDirection, double distanceAlongDirection)
         {

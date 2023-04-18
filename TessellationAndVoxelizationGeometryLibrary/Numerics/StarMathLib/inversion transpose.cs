@@ -4,7 +4,7 @@
 // Created          : 05-14-2015
 //
 // Last Modified By : MICampbell
-// Last Modified On : 07-07-2015
+// Last Modified On : 04-03-2023
 // ***********************************************************************
 // <copyright file="inversion transpose.cs" company="Design Engineering Lab -- MICampbell">
 //     2014
@@ -19,6 +19,9 @@ using TVGL;
 
 namespace StarMathLib
 {
+    /// <summary>
+    /// Class StarMath.
+    /// </summary>
     public static partial class StarMath
     {
         #region Matrix Inversion
@@ -46,7 +49,7 @@ namespace StarMathLib
         /// </summary>
         /// <param name="A">The matrix to invert. This matrix is unchanged by this function.</param>
         /// <returns>The inverted matrix, A^-1.</returns>
-        /// <exception cref="ArithmeticException">Matrix cannnot be inverted. Can only invert sqare matrices.</exception>
+        /// <exception cref="System.ArithmeticException">Matrix cannnot be inverted. Can only invert sqare matrices.</exception>
         public static double[,] inverse(this int[,] A)
         {
             var length = A.GetLength(0);
@@ -147,8 +150,7 @@ namespace StarMathLib
         /// <param name="L">The L matrix is output where the diagonal elements are included and not (necessarily) equal to one.</param>
         /// <param name="U">The U matrix is output where the diagonal elements are all equal to one.</param>
         /// <param name="permute">The permute.</param>
-        /// <exception cref="System.ArithmeticException">Matrix cannot be inverted. Can only invert sqyare matrices.</exception>
-        /// <exception cref="ArithmeticException">LU Decomposition can only be determined for square matrices.</exception>
+        /// <exception cref="System.ArithmeticException">LU Decomposition can only be determined for square matrices.</exception>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void LUDecomposition(double[,] A, out double[,] L, out double[,] U, out int[] permute)
         {
@@ -182,7 +184,7 @@ namespace StarMathLib
         /// known, then...by all means.</param>
         /// <returns>A matrix of equal size to A that combines the L and U. Here the diagonals belongs to L and the U's diagonal
         /// elements are all 1.</returns>
-        /// <exception cref="ArithmeticException">LU Decomposition can only be determined for square matrices.</exception>
+        /// <exception cref="System.ArithmeticException">LU Decomposition can only be determined for square matrices.</exception>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static double[,] LUDecomposition(double[,] A, out int[] permutationVector, int length = -1,
             bool robustReorder = false, List<int>[] lastZeroIndices = null)
@@ -240,6 +242,17 @@ namespace StarMathLib
             return B;
         }
 
+        /// <summary>
+        /// Finds the and pivot rows.
+        /// </summary>
+        /// <param name="B">The b.</param>
+        /// <param name="permutationVector">The permutation vector.</param>
+        /// <param name="lastZeroIndices">The last zero indices.</param>
+        /// <param name="i">The i.</param>
+        /// <param name="length">The length.</param>
+        /// <param name="robustReorder">if set to <c>true</c> [robust reorder].</param>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
+        /// <exception cref="System.ArithmeticException">A appears to be a singular matrix. The LU Decomposition is not possible to complete.</exception>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static bool findAndPivotRows(double[,] B, int[] permutationVector, List<int>[] lastZeroIndices, int i,
             int length, bool robustReorder = false)
@@ -297,7 +310,6 @@ namespace StarMathLib
         /// <param name="U">The U matrix is output where the diagonal elements are all equal to one.</param>
         /// <param name="permute">The permute.</param>
         /// <exception cref="System.ArithmeticException">LU Decomposition can only be determined for square matrices.</exception>
-        /// <exception cref="ArithmeticException">LU Decomposition can only be determined for square matrices.</exception>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void LUDecomposition(int[,] A, out double[,] L, out double[,] U, out int[] permute)
         {
@@ -330,7 +342,7 @@ namespace StarMathLib
         /// known, then...by all means.</param>
         /// <returns>A matrix of equal size to A that combines the L and U. Here the diagonals belongs to L and the U's diagonal
         /// elements are all 1.</returns>
-        /// <exception cref="ArithmeticException">LU Decomposition can only be determined for square matrices.</exception>
+        /// <exception cref="System.ArithmeticException">LU Decomposition can only be determined for square matrices.</exception>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static double[,] LUDecomposition(int[,] A, out int[] permutationVector, int length = -1,
             bool robustReorder = false, List<int>[] zeroIndices = null)
@@ -390,6 +402,7 @@ namespace StarMathLib
         /// the diagonals are the D matrix in the L-D-LT formulation. To get the L-LT format.
         /// </summary>
         /// <param name="A">The matrix to invert. This matrix is unchanged by this function.</param>
+        /// <param name="LUMatrix">The lu matrix.</param>
         /// <param name="NoSeparateDiagonal">if set to <c>true</c> [no separate diagonal].</param>
         /// <returns>System.Double[].</returns>
         /// <exception cref="System.ArithmeticException">Matrix cannot be inverted. Can only invert square matrices.</exception>
@@ -440,7 +453,6 @@ namespace StarMathLib
         /// </summary>
         /// <param name="A">The matrix to transpose. This matrix is unchanged by this function.</param>
         /// <returns>The transpose of A.</returns>
-        /// <exception cref="ArithmeticException">The matrix, A, is null.</exception>
         /// <exception cref="System.ArithmeticException">The matrix, A, is null.</exception>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static double[,] transpose(this double[,] A)
@@ -461,7 +473,6 @@ namespace StarMathLib
         /// </summary>
         /// <param name="A">The matrix to transpose. This matrix is unchanged by this function.</param>
         /// <returns>The transpose of A.</returns>
-        /// <exception cref="ArithmeticException">The matrix, A, is null.</exception>
         /// <exception cref="System.ArithmeticException">The matrix, A, is null.</exception>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int[,] transpose(this int[,] A)
@@ -481,6 +492,11 @@ namespace StarMathLib
         #endregion
 
         #region IsSingular
+        /// <summary>
+        /// Determines whether the specified a is singular.
+        /// </summary>
+        /// <param name="A">a.</param>
+        /// <returns><c>true</c> if the specified a is singular; otherwise, <c>false</c>.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool IsSingular(this double[,] A)
         {
@@ -528,12 +544,8 @@ namespace StarMathLib
         /// </summary>
         /// <param name="A">The input argument matrix. This matrix is unchanged by this function.</param>
         /// <returns>a single value representing the matrix's determinant.</returns>
-        /// <exception cref="System.ArithmeticException">The matrix, A, is null.
-        /// or
-        /// The determinant is only possible for square matrices.</exception>
-        /// <exception cref="ArithmeticException">The matrix, A, is null.
-        /// or
-        /// The determinant is only possible for square matrices.</exception>
+        /// <exception cref="System.ArithmeticException">The matrix, A, is null.</exception>
+        /// <exception cref="System.ArithmeticException">The determinant is only possible for square matrices.</exception>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static double determinant(this double[,] A)
         {
@@ -553,6 +565,14 @@ namespace StarMathLib
                        - (A[0, 2] * A[1, 1] * A[2, 0]);
             return determinantBig(A, length);
         }
+        /// <summary>
+        /// Determinants the specified a.
+        /// </summary>
+        /// <param name="A">a.</param>
+        /// <returns>ComplexNumber.</returns>
+        /// <exception cref="System.ArithmeticException">The matrix, A, is null.</exception>
+        /// <exception cref="System.ArithmeticException">The determinant is only possible for square matrices.</exception>
+        /// <exception cref="System.NotImplementedException"></exception>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static ComplexNumber determinant(this ComplexNumber[,] A)
         {
@@ -600,12 +620,8 @@ namespace StarMathLib
         /// </summary>
         /// <param name="A">The input argument matrix. This matrix is unchanged by this function.</param>
         /// <returns>a single value representing the matrix's determinant.</returns>
-        /// <exception cref="System.ArithmeticException">The matrix, A, is null.
-        /// or
-        /// The determinant is only possible for square matrices.</exception>
-        /// <exception cref="ArithmeticException">The matrix, A, is null.
-        /// or
-        /// The determinant is only possible for square matrices.</exception>
+        /// <exception cref="System.ArithmeticException">The matrix, A, is null.</exception>
+        /// <exception cref="System.ArithmeticException">The determinant is only possible for square matrices.</exception>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int determinant(this int[,] A)
         {

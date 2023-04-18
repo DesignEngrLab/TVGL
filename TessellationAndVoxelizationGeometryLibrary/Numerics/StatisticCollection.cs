@@ -1,9 +1,25 @@
-﻿using System;
+﻿// ***********************************************************************
+// Assembly         : TessellationAndVoxelizationGeometryLibrary
+// Author           : matth
+// Created          : 04-03-2023
+//
+// Last Modified By : matth
+// Last Modified On : 04-03-2023
+// ***********************************************************************
+// <copyright file="StatisticCollection.cs" company="Design Engineering Lab">
+//     2014
+// </copyright>
+// <summary></summary>
+// ***********************************************************************
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
 namespace TVGL
 {
+    /// <summary>
+    /// Class StatisticsExtensions.
+    /// </summary>
     public static class StatisticsExtensions
     {
         #region Calc Median
@@ -31,7 +47,7 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Returns Nth smallest element from the list. Here n starts from 0 so that n=0 returns minimum, 
+        /// Returns Nth smallest element from the list. Here n starts from 0 so that n=0 returns minimum,
         /// n=1 returns 2nd smallest element etc.
         /// Note: specified list would be mutated in the process.
         /// Reference: Introduction to Algorithms 3rd Edition, Corman et al, pp 216
@@ -44,6 +60,14 @@ namespace TVGL
             var numberList = new List<double>(numbers); //we need a list and this list will be mutated, so a copy is made.
             return nthOrderStatistic(numberList, nthPosition, 0, numberList.Count - 1);
         }
+        /// <summary>
+        /// NTHs the order statistic.
+        /// </summary>
+        /// <param name="list">The list.</param>
+        /// <param name="n">The n.</param>
+        /// <param name="start">The start.</param>
+        /// <param name="end">The end.</param>
+        /// <returns>System.Double.</returns>
         private static double nthOrderStatistic(IList<double> list, int n, int start, int end)
         {
             while (true)
@@ -60,11 +84,13 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Partitions the given list around a pivot element such that all elements on left of pivot are <= pivot
-        /// and the ones at thr right are > pivot. This method can be used for sorting, N-order statistics such as
-        /// as median finding algorithms.
-        /// Reference: Introduction to Algorithms 3rd Edition, Corman et al, pp 171
+        /// Partitions the specified list.
         /// </summary>
+        /// <param name="list">The list.</param>
+        /// <param name="start">The start.</param>
+        /// <param name="end">The end.</param>
+        /// <returns>System.Int32.</returns>
+        /// <font color="red">Badly formed XML comment.</font>
         private static int partition(IList<double> list, int start, int end)
         {
             var pivot = list[end];
@@ -77,6 +103,12 @@ namespace TVGL
             swap(list, end, ++lastLow);
             return lastLow;
         }
+        /// <summary>
+        /// Swaps the specified list.
+        /// </summary>
+        /// <param name="list">The list.</param>
+        /// <param name="i">The i.</param>
+        /// <param name="j">The j.</param>
         private static void swap(IList<double> list, int i, int j)
         {
             if (i == j)   //This check is not required but Partition function may make many calls so its for perf reason
@@ -91,6 +123,8 @@ namespace TVGL
         /// <summary>
         /// Gets the mean of the collection.
         /// </summary>
+        /// <param name="numbers">The numbers.</param>
+        /// <returns>System.Double.</returns>
         /// <value>The mean.</value>
         public static double Mean(this IEnumerable<double> numbers)
         {
@@ -106,6 +140,9 @@ namespace TVGL
         /// <summary>
         /// Gets the variance from the expected value, the mean.
         /// </summary>
+        /// <param name="numbers">The numbers.</param>
+        /// <param name="mean">The mean.</param>
+        /// <returns>System.Double.</returns>
         /// <value>The variance from mean.</value>
         public static double VarianceFromMean(this IEnumerable<double> numbers, double mean = double.NaN)
         {

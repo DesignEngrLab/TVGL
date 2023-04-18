@@ -1,7 +1,16 @@
-﻿// Copyright 2015-2020 Design Engineering Lab
-// This file is a part of TVGL, Tessellation and Voxelization Geometry Library
-// https://github.com/DesignEngrLab/TVGL
-// It is licensed under MIT License (see LICENSE.txt for details)
+﻿// ***********************************************************************
+// Assembly         : TessellationAndVoxelizationGeometryLibrary
+// Author           : matth
+// Created          : 04-03-2023
+//
+// Last Modified By : matth
+// Last Modified On : 04-03-2023
+// ***********************************************************************
+// <copyright file="VoxelizedSolid.cs" company="Design Engineering Lab">
+//     2014
+// </copyright>
+// <summary></summary>
+// ***********************************************************************
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -18,6 +27,10 @@ namespace TVGL
     {
         #region Properties
 
+        /// <summary>
+        /// Gets the voxels.
+        /// </summary>
+        /// <value>The voxels.</value>
         internal IVoxelRow[] voxels { get; private set; }
 
         /// <summary>
@@ -26,27 +39,70 @@ namespace TVGL
         /// <value>The count.</value>
         public long Count { get; private set; }
 
+        /// <summary>
+        /// Gets the voxels per side.
+        /// </summary>
+        /// <value>The voxels per side.</value>
         public int[] VoxelsPerSide => new[] { numVoxelsX, numVoxelsY, numVoxelsZ };
+        /// <summary>
+        /// Gets the voxel bounds.
+        /// </summary>
+        /// <value>The voxel bounds.</value>
         public int[][] VoxelBounds { get; }
+        /// <summary>
+        /// Gets the length of the voxel side.
+        /// </summary>
+        /// <value>The length of the voxel side.</value>
         public double VoxelSideLength { get; private set; }
+        /// <summary>
+        /// Gets the dimensions.
+        /// </summary>
+        /// <value>The dimensions.</value>
         public Vector3 Dimensions { get; private set; }
+        /// <summary>
+        /// Gets the offset.
+        /// </summary>
+        /// <value>The offset.</value>
         public Vector3 Offset => Bounds[0];
+        /// <summary>
+        /// Gets the number voxels x.
+        /// </summary>
+        /// <value>The number voxels x.</value>
         public int numVoxelsX { get; private set; }
+        /// <summary>
+        /// Gets the number voxels y.
+        /// </summary>
+        /// <value>The number voxels y.</value>
         public int numVoxelsY { get; private set; }
+        /// <summary>
+        /// Gets the number voxels z.
+        /// </summary>
+        /// <value>The number voxels z.</value>
         public int numVoxelsZ { get; private set; }
+        /// <summary>
+        /// Gets the z multiplier.
+        /// </summary>
+        /// <value>The z multiplier.</value>
         private int zMultiplier => numVoxelsY;
+        /// <summary>
+        /// Gets the fraction dense.
+        /// </summary>
+        /// <value>The fraction dense.</value>
         public double FractionDense { get; private set; }
 
         #endregion Properties
 
         #region Constructors
 
+        /// <summary>
+        /// Prevents a default instance of the <see cref="VoxelizedSolid"/> class from being created.
+        /// </summary>
         private VoxelizedSolid()
         {
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="VoxelizedSolid"/> class.
+        /// Initializes a new instance of the <see cref="VoxelizedSolid" /> class.
         /// </summary>
         /// <param name="vs">The vs.</param>
         internal VoxelizedSolid(VoxelizedSolid vs) : this()
@@ -66,7 +122,7 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="VoxelizedSolid"/> class.
+        /// Initializes a new instance of the <see cref="VoxelizedSolid" /> class.
         /// </summary>
         /// <param name="ts">The ts.</param>
         /// <param name="voxelsOnLongSide">The voxels on long side.</param>
@@ -92,7 +148,7 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="VoxelizedSolid"/> class.
+        /// Initializes a new instance of the <see cref="VoxelizedSolid" /> class.
         /// </summary>
         /// <param name="ts">The ts.</param>
         /// <param name="voxelSideLength">Length of the voxel side.</param>
@@ -118,9 +174,9 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="VoxelizedSolid"/> class.
+        /// Initializes a new instance of the <see cref="VoxelizedSolid" /> class.
         /// </summary>
-        /// <param name="ts">The ts.</param>
+        /// <param name="loops">The loops.</param>
         /// <param name="voxelsOnLongSide">The voxels on long side.</param>
         /// <param name="bounds">The bounds.</param>
         public VoxelizedSolid(IEnumerable<Polygon> loops, int voxelsOnLongSide, IReadOnlyList<Vector2> bounds) : this()
@@ -162,6 +218,10 @@ namespace TVGL
 
         #region Fill In From Tessellation Functions
 
+        /// <summary>
+        /// Fills the in from tessellation.
+        /// </summary>
+        /// <param name="ts">The ts.</param>
         private void FillInFromTessellation(TessellatedSolid ts)
         {
             var yBegin = Bounds[0][1] + VoxelSideLength / 2;
@@ -240,6 +300,9 @@ namespace TVGL
 
         #region Conversion Methods
 
+        /// <summary>
+        /// Updates to all dense.
+        /// </summary>
         public void UpdateToAllDense()
         {
             if (FractionDense == 1) return;
@@ -251,6 +314,9 @@ namespace TVGL
             FractionDense = 1;
         }
 
+        /// <summary>
+        /// Updates to all sparse.
+        /// </summary>
         public void UpdateToAllSparse()
         {
             if (FractionDense == 0) return;
@@ -262,6 +328,10 @@ namespace TVGL
             FractionDense = 0;
         }
 
+        /// <summary>
+        /// Gets the voxels as string arrays.
+        /// </summary>
+        /// <returns>System.String[].</returns>
         internal string[] GetVoxelsAsStringArrays()
         {
             UpdateToAllSparse();
@@ -283,11 +353,21 @@ namespace TVGL
             return allRows.ToArray();
         }
 
+        /// <summary>
+        /// Converts to tessellated solid rectilinear.
+        /// </summary>
+        /// <returns>TessellatedSolid.</returns>
+        /// <exception cref="System.NotImplementedException"></exception>
         public TessellatedSolid ConvertToTessellatedSolidRectilinear()
         {
             throw new NotImplementedException();
         }
 
+        /// <summary>
+        /// Converts to tessellated solid marching cubes.
+        /// </summary>
+        /// <param name="voxelsPerTriangleSpacing">The voxels per triangle spacing.</param>
+        /// <returns>TessellatedSolid.</returns>
         public TessellatedSolid ConvertToTessellatedSolidMarchingCubes(int voxelsPerTriangleSpacing)
         {
             var marchingCubes = new MarchingCubesDenseVoxels(this, voxelsPerTriangleSpacing);
@@ -300,7 +380,7 @@ namespace TVGL
         #region Overrides of Solid abstract members
 
         /// <summary>
-        /// Copies this instance. Note, that this overrides the base class, Solid. You may need to 
+        /// Copies this instance. Note, that this overrides the base class, Solid. You may need to
         /// cast it to VoxelizedSolid in your code. E.g., var copyOfVS = (VoxelizedSolid)vs.copy;
         /// </summary>
         /// <returns>Solid.</returns>
@@ -314,7 +394,7 @@ namespace TVGL
         /// Transforms the solid with the specified transform matrix.
         /// </summary>
         /// <param name="transformMatrix">The transform matrix.</param>
-        /// <exception cref="NotImplementedException"></exception>
+        /// <exception cref="System.NotImplementedException"></exception>
         public override void Transform(Matrix4x4 transformMatrix)
         {
             throw new NotImplementedException();
@@ -325,12 +405,16 @@ namespace TVGL
         /// </summary>
         /// <param name="transformationMatrix">The transformation matrix.</param>
         /// <returns>Solid.</returns>
-        /// <exception cref="NotImplementedException"></exception>
+        /// <exception cref="System.NotImplementedException"></exception>
         public override Solid TransformToNewSolid(Matrix4x4 transformationMatrix)
         {
             throw new NotImplementedException();
         }
 
+        /// <summary>
+        /// Returns an enumerator that iterates through a collection.
+        /// </summary>
+        /// <returns>An <see cref="T:System.Collections.IEnumerator" /> object that can be used to iterate through the collection.</returns>
         IEnumerator IEnumerable.GetEnumerator()
         {
             return new VoxelEnumerator(this);
@@ -346,6 +430,9 @@ namespace TVGL
             return new VoxelEnumerator(this);
         }
 
+        /// <summary>
+        /// Calculates the center.
+        /// </summary>
         protected override void CalculateCenter()
         {
             Count = 0;
@@ -370,16 +457,27 @@ namespace TVGL
             );
         }
 
+        /// <summary>
+        /// Calculates the volume.
+        /// </summary>
         protected override void CalculateVolume()
         {
             _volume = Count * Math.Pow(VoxelSideLength, 3);
         }
 
+        /// <summary>
+        /// Calculates the surface area.
+        /// </summary>
+        /// <exception cref="System.NotImplementedException"></exception>
         protected override void CalculateSurfaceArea()
         {
             throw new NotImplementedException();
         }
 
+        /// <summary>
+        /// Calculates the inertia tensor.
+        /// </summary>
+        /// <exception cref="System.NotImplementedException"></exception>
         protected override void CalculateInertiaTensor()
         {
             throw new NotImplementedException();

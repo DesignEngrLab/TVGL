@@ -1,13 +1,31 @@
+// ***********************************************************************
+// Assembly         : TessellationAndVoxelizationGeometryLibrary
+// Author           : matth
+// Created          : 04-03-2023
+//
+// Last Modified By : matth
+// Last Modified On : 04-14-2023
+// ***********************************************************************
+// <copyright file="ZBuffer.cs" company="Design Engineering Lab">
+//     2014
+// </copyright>
+// <summary></summary>
+// ***********************************************************************
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 
 namespace TVGL
 {
+    /// <summary>
+    /// Class ZBuffer. This class cannot be inherited.
+    /// Implements the <see cref="TVGL.Grid{(TVGL.TriangleFace, System.Double)}" />
+    /// </summary>
+    /// <seealso cref="TVGL.Grid{(TVGL.TriangleFace, System.Double)}" />
     public sealed class ZBuffer : Grid<(TriangleFace, double)>
     {
         /// <summary>
-        /// Gets the z-heights as a matrix of doubles. There is no time saved in getting this by itself as the main 
+        /// Gets the z-heights as a matrix of doubles. There is no time saved in getting this by itself as the main
         /// method keeps track of faces. In other words, ZHeightsWithFaces is what is found by the Run routine.
         /// </summary>
         /// <value>The z heights only.</value>
@@ -24,6 +42,9 @@ namespace TVGL
                 return zHeightsOnly;
             }
         }
+        /// <summary>
+        /// The z heights only
+        /// </summary>
         double[,] zHeightsOnly;
         /// <summary>
         /// Gets the projected face areas in the z-buffer direction. This is found through
@@ -44,10 +65,26 @@ namespace TVGL
         /// <value>The vertex z heights.</value>
         public double[] VertexZHeights { get; private set; }
 
+        /// <summary>
+        /// The transform
+        /// </summary>
         private Matrix4x4 transform;
+        /// <summary>
+        /// The back transform
+        /// </summary>
         private Matrix4x4 backTransform;
+        /// <summary>
+        /// The solid faces
+        /// </summary>
         private TriangleFace[] solidFaces;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ZBuffer"/> class.
+        /// </summary>
+        /// <param name="solid">The solid.</param>
+        /// <param name="direction">The direction.</param>
+        /// <param name="pixelsPerRow">The pixels per row.</param>
+        /// <param name="pixelBorder">The pixel border.</param>
         public ZBuffer(TessellatedSolid solid, Vector3 direction, int pixelsPerRow, int pixelBorder = 2)
         {
             Vertices = new Vector2[solid.NumberOfVertices];
@@ -81,12 +118,6 @@ namespace TVGL
         /// <summary>
         /// Gets the z-buffer of the TessellatedSolid along the given direction.
         /// </summary>
-        /// <param name="solid">The solid.</param>
-        /// <param name="direction">The direction.</param>
-        /// <param name="pixelsPerRow">The pixels per row to discretize the model to.</param>
-        /// <param name="ProjectedFaceAreas">The projected face areas are a by-product of the method. Merely the areas of the faces in the 
-        /// project direction. If less than zero, then the face is away from the direction and not included in the z-buffer anyway.</param>
-        /// <param name="pixelBorder">The pixel border is the number of pixels to add around the model.</param>
         /// <param name="subsetFaces">The subset of the solid's faces to find the z-buffer for.</param>
         /// <returns>System.ValueTuple&lt;TriangleFace, System.Double&gt;[].</returns>
         public void Run(IList<TriangleFace> subsetFaces = null)
@@ -98,6 +129,12 @@ namespace TVGL
                 ProjectedFaceAreas.Add(face, UpdateZBufferWithFace(face));
         }
 
+        /// <summary>
+        /// Gets the line pixels.
+        /// </summary>
+        /// <param name="edge">The edge.</param>
+        /// <returns>IEnumerable&lt;System.ValueTuple&lt;System.Int32, System.Int32, System.Double&gt;&gt;.</returns>
+        /// <exception cref="System.NotImplementedException"></exception>
         public IEnumerable<(int, int, double)> GetLinePixels(Edge edge)
         {
             //Get projected vertices and then use the this.PlotLine() function.
@@ -107,7 +144,7 @@ namespace TVGL
         /// <summary>
         /// Updates the z-buffer with information from each face.
         /// This is the big tricky function. In the end, implemented a custom function
-        /// that scans the triangle from left to right. This is similar to the approach 
+        /// that scans the triangle from left to right. This is similar to the approach
         /// described here: http://www.sunshine2k.de/coding/java/TriangleRasterization/TriangleRasterization.html
         /// </summary>
         /// <param name="face">The face.</param>
@@ -118,6 +155,15 @@ namespace TVGL
             return CheckZBufferWithFace(face, true, out _, out _);
         }
 
+        /// <summary>
+        /// Checks the z buffer with face.
+        /// </summary>
+        /// <param name="face">The face.</param>
+        /// <param name="updateGrid">if set to <c>true</c> [update grid].</param>
+        /// <param name="count">The count.</param>
+        /// <param name="accessibleCount">The accessible count.</param>
+        /// <param name="tessellationError">The tessellation error.</param>
+        /// <returns>System.Double.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private double CheckZBufferWithFace(TriangleFace face, bool updateGrid, out int count, out int accessibleCount, double tessellationError = Constants.BaseTolerance)
         {
@@ -345,6 +391,12 @@ namespace TVGL
             return Get3DPointTransformed(i, j).Transform(backTransform);
         }
 
+        /// <summary>
+        /// Checks the surface access.
+        /// </summary>
+        /// <param name="surface">The surface.</param>
+        /// <param name="tessellationError">The tessellation error.</param>
+        /// <returns>System.Double.</returns>
         public double CheckSurfaceAccess(PrimitiveSurface surface, double tessellationError)
         {
             var count = 0;

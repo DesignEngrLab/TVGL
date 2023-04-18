@@ -1,7 +1,16 @@
-﻿// Copyright 2015-2020 Design Engineering Lab
-// This file is a part of TVGL, Tessellation and Voxelization Geometry Library
-// https://github.com/DesignEngrLab/TVGL
-// It is licensed under MIT License (see LICENSE.txt for details)
+﻿// ***********************************************************************
+// Assembly         : TessellationAndVoxelizationGeometryLibrary
+// Author           : matth
+// Created          : 04-03-2023
+//
+// Last Modified By : matth
+// Last Modified On : 04-13-2023
+// ***********************************************************************
+// <copyright file="3MFFileData.cs" company="Design Engineering Lab">
+//     2014
+// </copyright>
+// <summary></summary>
+// ***********************************************************************
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -16,7 +25,7 @@ using Object = TVGL.threemfclasses.Object;
 namespace TVGL
 {
     /// <summary>
-    ///     Class ThreeMFFileData.
+    /// Class ThreeMFFileData.
     /// </summary>
     [XmlRoot("model")]
 #if help
@@ -25,17 +34,26 @@ namespace TVGL
     public class ThreeMFFileData : IO
 #endif
     {
+        /// <summary>
+        /// The definition XML name space model
+        /// </summary>
         private const string defXMLNameSpaceModel = "http://schemas.microsoft.com/3dmanufacturing/core/2015/02";
 
+        /// <summary>
+        /// The definition XML name space content types
+        /// </summary>
         private const string defXMLNameSpaceContentTypes =
             "http://schemas.openxmlformats.org/package/2006/content-types";
 
+        /// <summary>
+        /// The definition XML name space relationships
+        /// </summary>
         private const string defXMLNameSpaceRelationships =
             "http://schemas.openxmlformats.org/package/2006/relationships";
 
 
         /// <summary>
-        ///     Initializes a new instance of the <see cref="ThreeMFFileData" /> class.
+        /// Initializes a new instance of the <see cref="ThreeMFFileData" /> class.
         /// </summary>
         public ThreeMFFileData()
         {
@@ -43,26 +61,30 @@ namespace TVGL
         }
 
         /// <summary>
-        ///     Gets or sets the metadata.
+        /// Gets or sets the metadata.
         /// </summary>
         /// <value>The metadata.</value>
         [XmlElement]
         public List<Metadata> metadata { get; set; }
 
         /// <summary>
-        ///     Gets or sets the resources.
+        /// Gets or sets the resources.
         /// </summary>
         /// <value>The resources.</value>
         [XmlElement]
         public Resources resources { get; set; }
 
         /// <summary>
-        ///     Gets or sets the build.
+        /// Gets or sets the build.
         /// </summary>
         /// <value>The build.</value>
         [XmlElement]
         public Build build { get; set; }
 
+        /// <summary>
+        /// Gets the comments.
+        /// </summary>
+        /// <value>The comments.</value>
         internal new List<string> Comments
         {
             get
@@ -74,12 +96,18 @@ namespace TVGL
         }
 
         /// <summary>
-        ///     Gets or sets the requiredextensions.
+        /// Gets or sets the requiredextensions.
         /// </summary>
         /// <value>The requiredextensions.</value>
         public string requiredextensions { get; set; }
 
 
+        /// <summary>
+        /// Opens the solids.
+        /// </summary>
+        /// <param name="s">The s.</param>
+        /// <param name="filename">The filename.</param>
+        /// <returns>TessellatedSolid[].</returns>
         internal static TessellatedSolid[] OpenSolids(Stream s, string filename)
         {
             var result = new List<TessellatedSolid>();
@@ -92,6 +120,12 @@ namespace TVGL
             return result.ToArray();
         }
 
+        /// <summary>
+        /// Opens the model file.
+        /// </summary>
+        /// <param name="s">The s.</param>
+        /// <param name="filename">The filename.</param>
+        /// <returns>TessellatedSolid[].</returns>
         internal static TessellatedSolid[] OpenModelFile(Stream s, string filename)
         {
             var now = DateTime.Now;
@@ -141,6 +175,13 @@ namespace TVGL
             //}
         }
 
+        /// <summary>
+        /// Tessellateds the solids from identifier and transform.
+        /// </summary>
+        /// <param name="objectid">The objectid.</param>
+        /// <param name="transformMatrix">The transform matrix.</param>
+        /// <param name="name">The name.</param>
+        /// <returns>IEnumerable&lt;TessellatedSolid&gt;.</returns>
         private IEnumerable<TessellatedSolid> TessellatedSolidsFromIDAndTransform(int objectid,
             Matrix4x4 transformMatrix, string name)
         {
@@ -152,6 +193,12 @@ namespace TVGL
             return result;
         }
 
+        /// <summary>
+        /// Tessellateds the solids from object.
+        /// </summary>
+        /// <param name="obj">The object.</param>
+        /// <param name="name">The name.</param>
+        /// <returns>List&lt;TessellatedSolid&gt;.</returns>
         private List<TessellatedSolid> TessellatedSolidsFromObject(Object obj, string name)
         {
             name += obj.name + "_" + obj.id;
@@ -164,11 +211,24 @@ namespace TVGL
             return result;
         }
 
+        /// <summary>
+        /// Tessellateds the solids from component.
+        /// </summary>
+        /// <param name="comp">The comp.</param>
+        /// <param name="name">The name.</param>
+        /// <returns>IEnumerable&lt;TessellatedSolid&gt;.</returns>
         private IEnumerable<TessellatedSolid> TessellatedSolidsFromComponent(Component comp, string name)
         {
             return TessellatedSolidsFromIDAndTransform(comp.objectid, comp.transformMatrix, name);
         }
 
+        /// <summary>
+        /// Tessellateds the solid from mesh.
+        /// </summary>
+        /// <param name="mesh">The mesh.</param>
+        /// <param name="materialID">The material identifier.</param>
+        /// <param name="name">The name.</param>
+        /// <returns>TessellatedSolid.</returns>
         private TessellatedSolid TessellatedSolidFromMesh(Mesh mesh, int materialID, string name)
         {
             var defaultColor = new Color(Constants.DefaultColor);
@@ -215,7 +275,7 @@ namespace TVGL
         }
 
         /// <summary>
-        ///     Saves the specified stream.
+        /// Saves the specified stream.
         /// </summary>
         /// <param name="stream">The stream.</param>
         /// <param name="solids">The solids.</param>
@@ -238,7 +298,7 @@ namespace TVGL
         }
 
         /// <summary>
-        ///     Saves the specified stream.
+        /// Saves the specified stream.
         /// </summary>
         /// <param name="stream">The stream.</param>
         /// <param name="solids">The solids.</param>
@@ -335,6 +395,10 @@ namespace TVGL
             }
         }
 
+        /// <summary>
+        /// Saves the relationships.
+        /// </summary>
+        /// <param name="stream">The stream.</param>
         private static void SaveRelationships(Stream stream)
         {
             //[XmlArrayItem("vertex", IsNullable = false)]
@@ -359,6 +423,10 @@ namespace TVGL
             serializer.Serialize(writer, rels[0]);
         }
 
+        /// <summary>
+        /// Saves the content types.
+        /// </summary>
+        /// <param name="stream">The stream.</param>
         private static void SaveContentTypes(Stream stream)
         {
             var defaults = new List<Default>

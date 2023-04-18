@@ -1,7 +1,16 @@
-﻿// Copyright 2015-2020 Design Engineering Lab
-// This file is a part of TVGL, Tessellation and Voxelization Geometry Library
-// https://github.com/DesignEngrLab/TVGL
-// It is licensed under MIT License (see LICENSE.txt for details)
+﻿// ***********************************************************************
+// Assembly         : TessellationAndVoxelizationGeometryLibrary
+// Author           : matth
+// Created          : 04-03-2023
+//
+// Last Modified By : matth
+// Last Modified On : 04-03-2023
+// ***********************************************************************
+// <copyright file="IntersectionData.cs" company="Design Engineering Lab">
+//     2014
+// </copyright>
+// <summary></summary>
+// ***********************************************************************
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,6 +22,17 @@ namespace TVGL
     /// </summary>
     public class PolygonInteractionRecord
     {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="PolygonInteractionRecord"/> class.
+        /// </summary>
+        /// <param name="topLevelRelationship">The top level relationship.</param>
+        /// <param name="intersections">The intersections.</param>
+        /// <param name="polygonRelations">The polygon relations.</param>
+        /// <param name="subPolygonToInt">The sub polygon to int.</param>
+        /// <param name="numPolygonsInA">The number polygons in a.</param>
+        /// <param name="numPolygonsInB">The number polygons in b.</param>
+        /// <param name="isAPositive">if set to <c>true</c> [is a positive].</param>
+        /// <param name="isBPositive">if set to <c>true</c> [is b positive].</param>
         private PolygonInteractionRecord(PolygonRelationship topLevelRelationship, List<SegmentIntersection> intersections,
              PolyRelInternal[] polygonRelations, Dictionary<Polygon, int> subPolygonToInt, int numPolygonsInA, int numPolygonsInB,
             bool isAPositive, bool isBPositive)
@@ -26,6 +46,11 @@ namespace TVGL
             this.AIsPositive = isAPositive;
             this.BIsPositive = isBPositive;
         }
+        /// <summary>
+        /// Initializes a new instance of the <see cref="PolygonInteractionRecord"/> class.
+        /// </summary>
+        /// <param name="polygonA">The polygon a.</param>
+        /// <param name="polygonB">The polygon b.</param>
         internal PolygonInteractionRecord(Polygon polygonA, Polygon polygonB)
         {
             var index = 0;
@@ -56,12 +81,34 @@ namespace TVGL
         /// </summary>
         /// <value>The relationship.</value>
         public PolygonRelationship Relationship { get; internal set; }
+        /// <summary>
+        /// Gets the intersection data.
+        /// </summary>
+        /// <value>The intersection data.</value>
         public List<SegmentIntersection> IntersectionData { get; }
+        /// <summary>
+        /// The polygon relations
+        /// </summary>
         private readonly PolyRelInternal[] polygonRelations;
+        /// <summary>
+        /// The sub polygon to int
+        /// </summary>
         private readonly Dictionary<Polygon, int> subPolygonToInt;
+        /// <summary>
+        /// The number polygons in a
+        /// </summary>
         internal readonly int numPolygonsInA;
+        /// <summary>
+        /// The number polygons in b
+        /// </summary>
         internal readonly int numPolygonsInB;
+        /// <summary>
+        /// a is positive
+        /// </summary>
         internal readonly bool AIsPositive;
+        /// <summary>
+        /// The b is positive
+        /// </summary>
         internal readonly bool BIsPositive;
         /// <summary>
         /// Gets a value indicating whether [coincident edges].
@@ -79,6 +126,10 @@ namespace TVGL
         /// <value><c>true</c> if [coincident vertices]; otherwise, <c>false</c>.</value>
         public bool CoincidentVertices { get; internal set; }
 
+        /// <summary>
+        /// Intersections the will be empty.
+        /// </summary>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         public bool IntersectionWillBeEmpty()
         {
             if (Relationship == PolygonRelationship.Intersection ||
@@ -94,6 +145,10 @@ namespace TVGL
         }
 
 
+        /// <summary>
+        /// Gets all polygons.
+        /// </summary>
+        /// <value>All polygons.</value>
         public IEnumerable<Polygon> AllPolygons
         {
             get
@@ -102,12 +157,23 @@ namespace TVGL
                     yield return polygon;
             }
         }
+        /// <summary>
+        /// Gets the relationship between.
+        /// </summary>
+        /// <param name="polygonA">The polygon a.</param>
+        /// <param name="polygonB">The polygon b.</param>
+        /// <returns>PolyRelInternal.</returns>
         internal PolyRelInternal GetRelationshipBetween(Polygon polygonA, Polygon polygonB)
         {
             if (polygonRelations == null) return PolyRelInternal.Equal;
             var index = findLookupIndex(polygonA, polygonB);
             return polygonRelations[index];
         }
+        /// <summary>
+        /// Sets the relationship between.
+        /// </summary>
+        /// <param name="index">The index.</param>
+        /// <param name="newRel">The new relative.</param>
         internal void SetRelationshipBetween(int index, PolyRelInternal newRel)
         {
             polygonRelations[index] = newRel;
@@ -174,6 +240,10 @@ namespace TVGL
             //R = EqualButOpposite , Nrel = BIsInsideHoleOfA
             return;
         }
+        /// <summary>
+        /// Defines the overall interaction from final list of sub interactions.
+        /// </summary>
+        /// <exception cref="System.NotImplementedException"></exception>
         internal void DefineOverallInteractionFromFinalListOfSubInteractions()
         {
             CoincidentEdges = polygonRelations.Any(pr => (pr & PolyRelInternal.CoincidentEdges) != 0b0);
@@ -211,6 +281,12 @@ namespace TVGL
             }
         }
 
+        /// <summary>
+        /// Finds the index of the lookup.
+        /// </summary>
+        /// <param name="polygon1">The polygon1.</param>
+        /// <param name="polygon2">The polygon2.</param>
+        /// <returns>System.Int32.</returns>
         internal int findLookupIndex(Polygon polygon1, Polygon polygon2)
         {
             var index1 = subPolygonToInt[polygon1];
@@ -219,6 +295,11 @@ namespace TVGL
                 ? numPolygonsInA * (index2 - numPolygonsInA) + index1
                 : numPolygonsInA * (index1 - numPolygonsInA) + index2;
         }
+        /// <summary>
+        /// Gets the relationships.
+        /// </summary>
+        /// <param name="polygon">The polygon.</param>
+        /// <returns>IEnumerable&lt;System.ValueTuple&lt;PolyRelInternal, System.Boolean&gt;&gt;.</returns>
         internal IEnumerable<(PolyRelInternal, bool)> GetRelationships(Polygon polygon)
         {
             var index = subPolygonToInt[polygon];
@@ -239,8 +320,7 @@ namespace TVGL
         /// <summary>
         /// Makes the intersection lookup table that allows us to quickly find the intersections for a given edge.
         /// </summary>
-        /// <param name="numLines">The number lines.</param>
-        /// <param name="intersections">The intersections.</param>
+        /// <param name="numVertices">The number vertices.</param>
         /// <returns>System.Collections.Generic.List&lt;System.Int32&gt;[].</returns>
         internal List<int>[] MakeIntersectionLookupList(int numVertices)
         {
@@ -263,6 +343,12 @@ namespace TVGL
             return lookupList;
         }
 
+        /// <summary>
+        /// Inverts the polygon in record.
+        /// </summary>
+        /// <param name="polygon">The polygon.</param>
+        /// <param name="invertedPolygon">The inverted polygon.</param>
+        /// <returns>PolygonInteractionRecord.</returns>
         internal PolygonInteractionRecord InvertPolygonInRecord(Polygon polygon, out Polygon invertedPolygon)
         {
             bool polygonAIsInverted = subPolygonToInt[polygon] < numPolygonsInA;
