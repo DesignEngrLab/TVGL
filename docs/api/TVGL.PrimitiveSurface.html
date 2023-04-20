@@ -1,0 +1,1946 @@
+﻿<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+      <title>Class PrimitiveSurface
+ </title>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <meta name="title" content="Class PrimitiveSurface
+ ">
+      
+      <link rel="icon" href="../favicon.ico">
+      <link rel="stylesheet" href="../styles/docfx.min.css">
+      <link rel="stylesheet" href="../styles/main.css">
+      <meta name="docfx:navrel" content="../toc.html">
+      <meta name="docfx:tocrel" content="toc.html">
+      
+      
+      
+
+      <script>
+        MathJax = {
+          options: {
+            processHtmlClass: ['tex2jax_process', 'math']
+          }
+        };
+      </script>
+
+      <script type="text/javascript" src="../styles/docfx.min.js"></script>
+      <script type="text/javascript" src="../styles/main.js"></script>
+  </head>
+
+  <body class="tex2jax_ignore" data-layout="" data-yaml-mime="ManagedReference">
+    <header class="bg-body border-bottom">
+      <nav id="autocollapse" class="navbar navbar-expand-md" role="navigation">
+        <div class="container-xxl flex-nowrap">
+          <a class="navbar-brand" href="../index.html">
+            <img id="logo" class="svg" src="../logo.svg" alt="">
+            
+          </a>
+          <button class="btn btn-lg d-md-none border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navpanel" aria-controls="navpanel" aria-expanded="false" aria-label="Toggle navigation">
+            <i class="bi bi-three-dots"></i>
+          </button>
+          <div class="collapse navbar-collapse" id="navpanel">
+            <div id="navbar">
+            </div>
+          </div>
+        </div>
+      </nav>
+    </header>
+
+    <main class="container-xxl">
+      <div class="toc-offcanvas">
+        <div class="offcanvas-md offcanvas-start" tabindex="-1" id="tocOffcanvas" aria-labelledby="tocOffcanvasLabel">
+          <div class="offcanvas-header">
+            <h5 class="offcanvas-title" id="tocOffcanvasLabel">Table of Contents</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#tocOffcanvas" aria-label="Close"></button>
+          </div>
+          <div class="offcanvas-body">
+            <nav class="toc" id="toc"></nav>
+          </div>
+        </div>
+      </div>
+
+      <div class="content">
+        <div class="actionbar">
+          <button class="btn btn-lg border-0 d-md-none" style="margin-top: -.65em; margin-left: -.8em" type="button" data-bs-toggle="offcanvas" data-bs-target="#tocOffcanvas" aria-controls="tocOffcanvas" aria-expanded="false" aria-label="Show table of contents">
+            <i class="bi bi-list"></i>
+          </button>
+
+          <nav id="breadcrumb"></nav>
+        </div>
+
+        <article data-uid="TVGL.PrimitiveSurface">
+
+
+
+  <h1 id="TVGL_PrimitiveSurface" data-uid="TVGL.PrimitiveSurface" class="text-break">
+    Class PrimitiveSurface
+  
+  </h1>
+
+  <div class="facts text-secondary">
+    <dl><dt>Namespace</dt><dd><a class="xref" href="TVGL.html">TVGL</a></dd></dl>
+  <dl><dt>Assembly</dt><dd>TessellationAndVoxelizationGeometryLibrary.dll</dd></dl>
+  </div>
+
+  <div class="markdown summary"><p>Class PrimitiveSurface.</p>
+</div>
+  <div class="markdown conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">[JsonObject(MemberSerialization.OptOut)]
+public abstract class PrimitiveSurface</code></pre>
+  </div>
+
+
+
+
+  <dl class="typelist inheritance">
+    <dt>Inheritance</dt>
+    <dd>
+      <div><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object">object</a></div>
+      <div><span class="xref">PrimitiveSurface</span></div>
+    </dd>
+  </dl>
+
+
+  <dl class="typelist derived">
+    <dt>Derived</dt>
+    <dd>
+      <div><a class="xref" href="TVGL.Capsule.html">Capsule</a></div>
+      <div><a class="xref" href="TVGL.Cone.html">Cone</a></div>
+      <div><a class="xref" href="TVGL.Cylinder.html">Cylinder</a></div>
+      <div><a class="xref" href="TVGL.Plane.html">Plane</a></div>
+      <div><a class="xref" href="TVGL.Prismatic.html">Prismatic</a></div>
+      <div><a class="xref" href="TVGL.Sphere.html">Sphere</a></div>
+      <div><a class="xref" href="TVGL.Torus.html">Torus</a></div>
+      <div><a class="xref" href="TVGL.UnknownRegion.html">UnknownRegion</a></div>
+    </dd>
+  </dl>
+
+  <dl class="typelist derived">
+    <dt>Inherited Members</dt>
+    <dd>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.equals#system-object-equals(system-object)">object.Equals(object)</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.equals#system-object-equals(system-object-system-object)">object.Equals(object, object)</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.gethashcode">object.GetHashCode()</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.gettype">object.GetType()</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.memberwiseclone">object.MemberwiseClone()</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.referenceequals">object.ReferenceEquals(object, object)</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.tostring">object.ToString()</a>
+    </div>
+  </dd></dl>
+
+
+
+
+
+
+  <h2 class="section" id="constructors">Constructors
+</h2>
+
+
+  <a id="TVGL_PrimitiveSurface__ctor_" data-uid="TVGL.PrimitiveSurface.#ctor*"></a>
+
+  <h3 id="TVGL_PrimitiveSurface__ctor" data-uid="TVGL.PrimitiveSurface.#ctor">
+  PrimitiveSurface()
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Initializes a new instance of the <a class="xref" href="TVGL.PrimitiveSurface.html">PrimitiveSurface</a> class.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">protected PrimitiveSurface()</code></pre>
+  </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_PrimitiveSurface__ctor_" data-uid="TVGL.PrimitiveSurface.#ctor*"></a>
+
+  <h3 id="TVGL_PrimitiveSurface__ctor_System_Collections_Generic_IEnumerable_TVGL_TriangleFace__System_Boolean_" data-uid="TVGL.PrimitiveSurface.#ctor(System.Collections.Generic.IEnumerable{TVGL.TriangleFace},System.Boolean)">
+  PrimitiveSurface(IEnumerable&lt;TriangleFace&gt;, bool)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Initializes a new instance of the <a class="xref" href="TVGL.PrimitiveSurface.html">PrimitiveSurface</a> class.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">protected PrimitiveSurface(IEnumerable&lt;TriangleFace&gt; faces, bool connectFacesToPrimitive = true)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>faces</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.TriangleFace.html">TriangleFace</a>&gt;</dt>
+    <dd><p>The faces.</p>
+</dd>
+    <dt><code>connectFacesToPrimitive</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd><p>if set to <code>true</code> [connect faces to primitive].</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_PrimitiveSurface__ctor_" data-uid="TVGL.PrimitiveSurface.#ctor*"></a>
+
+  <h3 id="TVGL_PrimitiveSurface__ctor_System_Int32___TVGL_TessellatedSolid_" data-uid="TVGL.PrimitiveSurface.#ctor(System.Int32[],TVGL.TessellatedSolid)">
+  PrimitiveSurface(int[], TessellatedSolid)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Initializes a new instance of the <a class="xref" href="TVGL.PrimitiveSurface.html">PrimitiveSurface</a> class.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">protected PrimitiveSurface(int[] newFaceIndices, TessellatedSolid copiedTessellatedSolid)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>newFaceIndices</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a>[]</dt>
+    <dd><p>The new face indices.</p>
+</dd>
+    <dt><code>copiedTessellatedSolid</code> <a class="xref" href="TVGL.TessellatedSolid.html">TessellatedSolid</a></dt>
+    <dd><p>The copied tessellated solid.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_PrimitiveSurface__ctor_" data-uid="TVGL.PrimitiveSurface.#ctor*"></a>
+
+  <h3 id="TVGL_PrimitiveSurface__ctor_TVGL_PrimitiveSurface_TVGL_TessellatedSolid_" data-uid="TVGL.PrimitiveSurface.#ctor(TVGL.PrimitiveSurface,TVGL.TessellatedSolid)">
+  PrimitiveSurface(PrimitiveSurface, TessellatedSolid)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Initializes a new instance of the <a class="xref" href="TVGL.PrimitiveSurface.html">PrimitiveSurface</a> class.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">protected PrimitiveSurface(PrimitiveSurface originalToBeCopied, TessellatedSolid copiedTessellatedSolid)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>originalToBeCopied</code> <a class="xref" href="TVGL.PrimitiveSurface.html">PrimitiveSurface</a></dt>
+    <dd><p>The original to be copied.</p>
+</dd>
+    <dt><code>copiedTessellatedSolid</code> <a class="xref" href="TVGL.TessellatedSolid.html">TessellatedSolid</a></dt>
+    <dd><p>The copied tessellated solid.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+  <h2 class="section" id="properties">Properties
+</h2>
+
+
+  <a id="TVGL_PrimitiveSurface_Area_" data-uid="TVGL.PrimitiveSurface.Area*"></a>
+
+  <h3 id="TVGL_PrimitiveSurface_Area" data-uid="TVGL.PrimitiveSurface.Area">
+  Area
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the area.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">[JsonIgnore]
+public double Area { get; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The area.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="TVGL_PrimitiveSurface_Borders_" data-uid="TVGL.PrimitiveSurface.Borders*"></a>
+
+  <h3 id="TVGL_PrimitiveSurface_Borders" data-uid="TVGL.PrimitiveSurface.Borders">
+  Borders
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets or sets the borders.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public List&lt;PrimitiveBorder&gt; Borders { get; set; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.list-1">List</a>&lt;<a class="xref" href="TVGL.PrimitiveBorder.html">PrimitiveBorder</a>&gt;</dt>
+    <dd><p>The borders.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="TVGL_PrimitiveSurface_BorderSegments_" data-uid="TVGL.PrimitiveSurface.BorderSegments*"></a>
+
+  <h3 id="TVGL_PrimitiveSurface_BorderSegments" data-uid="TVGL.PrimitiveSurface.BorderSegments">
+  BorderSegments
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets or sets the border segments.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public List&lt;BorderSegment&gt; BorderSegments { get; set; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.list-1">List</a>&lt;<a class="xref" href="TVGL.BorderSegment.html">BorderSegment</a>&gt;</dt>
+    <dd><p>The border segments.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="TVGL_PrimitiveSurface_CenterOfBoundingBox_" data-uid="TVGL.PrimitiveSurface.CenterOfBoundingBox*"></a>
+
+  <h3 id="TVGL_PrimitiveSurface_CenterOfBoundingBox" data-uid="TVGL.PrimitiveSurface.CenterOfBoundingBox">
+  CenterOfBoundingBox
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the center of the bounding box.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">[JsonIgnore]
+public Vector3 CenterOfBoundingBox { get; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>The center of the bounding box.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="TVGL_PrimitiveSurface_FaceIndices_" data-uid="TVGL.PrimitiveSurface.FaceIndices*"></a>
+
+  <h3 id="TVGL_PrimitiveSurface_FaceIndices" data-uid="TVGL.PrimitiveSurface.FaceIndices">
+  FaceIndices
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets or sets the face indices.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public int[] FaceIndices { get; set; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a>[]</dt>
+    <dd><p>The face indices.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="TVGL_PrimitiveSurface_Faces_" data-uid="TVGL.PrimitiveSurface.Faces*"></a>
+
+  <h3 id="TVGL_PrimitiveSurface_Faces" data-uid="TVGL.PrimitiveSurface.Faces">
+  Faces
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets or sets the triangle faces.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">[JsonIgnore]
+public HashSet&lt;TriangleFace&gt; Faces { get; set; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.hashset-1">HashSet</a>&lt;<a class="xref" href="TVGL.TriangleFace.html">TriangleFace</a>&gt;</dt>
+    <dd><p>The triangle faces.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="TVGL_PrimitiveSurface_Index_" data-uid="TVGL.PrimitiveSurface.Index*"></a>
+
+  <h3 id="TVGL_PrimitiveSurface_Index" data-uid="TVGL.PrimitiveSurface.Index">
+  Index
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets or sets the index.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">[JsonIgnore]
+public int Index { get; set; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a></dt>
+    <dd><p>The index.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="TVGL_PrimitiveSurface_InnerEdges_" data-uid="TVGL.PrimitiveSurface.InnerEdges*"></a>
+
+  <h3 id="TVGL_PrimitiveSurface_InnerEdges" data-uid="TVGL.PrimitiveSurface.InnerEdges">
+  InnerEdges
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the inner edges.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">[JsonIgnore]
+public HashSet&lt;Edge&gt; InnerEdges { get; protected set; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.hashset-1">HashSet</a>&lt;<a class="xref" href="TVGL.Edge.html">Edge</a>&gt;</dt>
+    <dd><p>The inner edges.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="TVGL_PrimitiveSurface_MaxError_" data-uid="TVGL.PrimitiveSurface.MaxError*"></a>
+
+  <h3 id="TVGL_PrimitiveSurface_MaxError" data-uid="TVGL.PrimitiveSurface.MaxError">
+  MaxError
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the maximum error.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public double MaxError { get; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The maximum error.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="TVGL_PrimitiveSurface_MaxX_" data-uid="TVGL.PrimitiveSurface.MaxX*"></a>
+
+  <h3 id="TVGL_PrimitiveSurface_MaxX" data-uid="TVGL.PrimitiveSurface.MaxX">
+  MaxX
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets or sets the maximum x.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">[JsonIgnore]
+public double MaxX { get; protected set; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The maximum x.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="TVGL_PrimitiveSurface_MaxY_" data-uid="TVGL.PrimitiveSurface.MaxY*"></a>
+
+  <h3 id="TVGL_PrimitiveSurface_MaxY" data-uid="TVGL.PrimitiveSurface.MaxY">
+  MaxY
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets or sets the maximum y.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">[JsonIgnore]
+public double MaxY { get; protected set; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The maximum y.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="TVGL_PrimitiveSurface_MaxZ_" data-uid="TVGL.PrimitiveSurface.MaxZ*"></a>
+
+  <h3 id="TVGL_PrimitiveSurface_MaxZ" data-uid="TVGL.PrimitiveSurface.MaxZ">
+  MaxZ
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets or sets the maximum z.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">[JsonIgnore]
+public double MaxZ { get; protected set; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The maximum z.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="TVGL_PrimitiveSurface_MeanSquaredError_" data-uid="TVGL.PrimitiveSurface.MeanSquaredError*"></a>
+
+  <h3 id="TVGL_PrimitiveSurface_MeanSquaredError" data-uid="TVGL.PrimitiveSurface.MeanSquaredError">
+  MeanSquaredError
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the residual.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public double MeanSquaredError { get; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The residual.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="TVGL_PrimitiveSurface_MinX_" data-uid="TVGL.PrimitiveSurface.MinX*"></a>
+
+  <h3 id="TVGL_PrimitiveSurface_MinX" data-uid="TVGL.PrimitiveSurface.MinX">
+  MinX
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets or sets the minimum x.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">[JsonIgnore]
+public double MinX { get; protected set; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The minimum x.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="TVGL_PrimitiveSurface_MinY_" data-uid="TVGL.PrimitiveSurface.MinY*"></a>
+
+  <h3 id="TVGL_PrimitiveSurface_MinY" data-uid="TVGL.PrimitiveSurface.MinY">
+  MinY
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets or sets the minimum y.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">[JsonIgnore]
+public double MinY { get; protected set; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The minimum y.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="TVGL_PrimitiveSurface_MinZ_" data-uid="TVGL.PrimitiveSurface.MinZ*"></a>
+
+  <h3 id="TVGL_PrimitiveSurface_MinZ" data-uid="TVGL.PrimitiveSurface.MinZ">
+  MinZ
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets or sets the minimum z.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">[JsonIgnore]
+public double MinZ { get; protected set; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The minimum z.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="TVGL_PrimitiveSurface_OuterEdges_" data-uid="TVGL.PrimitiveSurface.OuterEdges*"></a>
+
+  <h3 id="TVGL_PrimitiveSurface_OuterEdges" data-uid="TVGL.PrimitiveSurface.OuterEdges">
+  OuterEdges
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the outer edges.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">[JsonIgnore]
+public HashSet&lt;Edge&gt; OuterEdges { get; protected set; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.hashset-1">HashSet</a>&lt;<a class="xref" href="TVGL.Edge.html">Edge</a>&gt;</dt>
+    <dd><p>The outer edges.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="TVGL_PrimitiveSurface_TriangleVertexIndices_" data-uid="TVGL.PrimitiveSurface.TriangleVertexIndices*"></a>
+
+  <h3 id="TVGL_PrimitiveSurface_TriangleVertexIndices" data-uid="TVGL.PrimitiveSurface.TriangleVertexIndices">
+  TriangleVertexIndices
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets or sets the triangle vertex indices.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">[JsonIgnore]
+public (int, int, int)[] TriangleVertexIndices { get; set; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt>(<a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a>, <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a>, <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a>)[]</dt>
+    <dd><p>The triangle vertex indices.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="TVGL_PrimitiveSurface_Vertices_" data-uid="TVGL.PrimitiveSurface.Vertices*"></a>
+
+  <h3 id="TVGL_PrimitiveSurface_Vertices" data-uid="TVGL.PrimitiveSurface.Vertices">
+  Vertices
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the vertices.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">[JsonIgnore]
+public HashSet&lt;Vertex&gt; Vertices { get; set; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.hashset-1">HashSet</a>&lt;<a class="xref" href="TVGL.Vertex.html">Vertex</a>&gt;</dt>
+    <dd><p>The vertices.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <h2 class="section" id="methods">Methods
+</h2>
+
+
+  <a id="TVGL_PrimitiveSurface_AddFace_" data-uid="TVGL.PrimitiveSurface.AddFace*"></a>
+
+  <h3 id="TVGL_PrimitiveSurface_AddFace_TVGL_TriangleFace_" data-uid="TVGL.PrimitiveSurface.AddFace(TVGL.TriangleFace)">
+  AddFace(TriangleFace)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Updates surface by adding face</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public void AddFace(TriangleFace face)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>face</code> <a class="xref" href="TVGL.TriangleFace.html">TriangleFace</a></dt>
+    <dd><p>The face.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_PrimitiveSurface_AdjacentPrimitives_" data-uid="TVGL.PrimitiveSurface.AdjacentPrimitives*"></a>
+
+  <h3 id="TVGL_PrimitiveSurface_AdjacentPrimitives" data-uid="TVGL.PrimitiveSurface.AdjacentPrimitives">
+  AdjacentPrimitives()
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Adjacents the primitives.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public IEnumerable&lt;PrimitiveSurface&gt; AdjacentPrimitives()</code></pre>
+  </div>
+
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.PrimitiveSurface.html">PrimitiveSurface</a>&gt;</dt>
+    <dd><p>IEnumerable&lt;PrimitiveSurface&gt;.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_PrimitiveSurface_BorderEncirclesAxis_" data-uid="TVGL.PrimitiveSurface.BorderEncirclesAxis*"></a>
+
+  <h3 id="TVGL_PrimitiveSurface_BorderEncirclesAxis_System_Collections_Generic_IEnumerable_TVGL_Vector3__TVGL_Vector3_TVGL_Vector3_" data-uid="TVGL.PrimitiveSurface.BorderEncirclesAxis(System.Collections.Generic.IEnumerable{TVGL.Vector3},TVGL.Vector3,TVGL.Vector3)">
+  BorderEncirclesAxis(IEnumerable&lt;Vector3&gt;, Vector3, Vector3)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Borders the encircles axis.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static bool BorderEncirclesAxis(IEnumerable&lt;Vector3&gt; path, Vector3 axis, Vector3 anchor)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>path</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.Vector3.html">Vector3</a>&gt;</dt>
+    <dd><p>The path.</p>
+</dd>
+    <dt><code>axis</code> <a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>The axis.</p>
+</dd>
+    <dt><code>anchor</code> <a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>The anchor.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd><p><code>true</code> if XXXX, <code>false</code> otherwise.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_PrimitiveSurface_BorderEncirclesAxis_" data-uid="TVGL.PrimitiveSurface.BorderEncirclesAxis*"></a>
+
+  <h3 id="TVGL_PrimitiveSurface_BorderEncirclesAxis_TVGL_EdgePath_TVGL_Vector3_TVGL_Vector3_" data-uid="TVGL.PrimitiveSurface.BorderEncirclesAxis(TVGL.EdgePath,TVGL.Vector3,TVGL.Vector3)">
+  BorderEncirclesAxis(EdgePath, Vector3, Vector3)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Borders the encircles axis.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static bool BorderEncirclesAxis(EdgePath edgepath, Vector3 axis, Vector3 anchor)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>edgepath</code> <a class="xref" href="TVGL.EdgePath.html">EdgePath</a></dt>
+    <dd><p>The edgepath.</p>
+</dd>
+    <dt><code>axis</code> <a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>The axis.</p>
+</dd>
+    <dt><code>anchor</code> <a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>The anchor.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd><p><code>true</code> if XXXX, <code>false</code> otherwise.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_PrimitiveSurface_BordersEncirclingAxis_" data-uid="TVGL.PrimitiveSurface.BordersEncirclingAxis*"></a>
+
+  <h3 id="TVGL_PrimitiveSurface_BordersEncirclingAxis_TVGL_Vector3_TVGL_Vector3_" data-uid="TVGL.PrimitiveSurface.BordersEncirclingAxis(TVGL.Vector3,TVGL.Vector3)">
+  BordersEncirclingAxis(Vector3, Vector3)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Borderses the encircling axis.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public IEnumerable&lt;PrimitiveBorder&gt; BordersEncirclingAxis(Vector3 axis, Vector3 anchor)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>axis</code> <a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>The axis.</p>
+</dd>
+    <dt><code>anchor</code> <a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>The anchor.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.PrimitiveBorder.html">PrimitiveBorder</a>&gt;</dt>
+    <dd><p>IEnumerable&lt;PrimitiveBorder&gt;.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_PrimitiveSurface_CalculateMaxError_" data-uid="TVGL.PrimitiveSurface.CalculateMaxError*"></a>
+
+  <h3 id="TVGL_PrimitiveSurface_CalculateMaxError_System_Collections_Generic_IEnumerable_TVGL_Vector3__" data-uid="TVGL.PrimitiveSurface.CalculateMaxError(System.Collections.Generic.IEnumerable{TVGL.Vector3})">
+  CalculateMaxError(IEnumerable&lt;Vector3&gt;)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Calculates the mean square error.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public virtual double CalculateMaxError(IEnumerable&lt;Vector3&gt; vertices)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>vertices</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.Vector3.html">Vector3</a>&gt;</dt>
+    <dd><p>The vertices.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>System.Double.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_PrimitiveSurface_CalculateMeanSquareError_" data-uid="TVGL.PrimitiveSurface.CalculateMeanSquareError*"></a>
+
+  <h3 id="TVGL_PrimitiveSurface_CalculateMeanSquareError_System_Collections_Generic_IEnumerable_TVGL_Vector3__" data-uid="TVGL.PrimitiveSurface.CalculateMeanSquareError(System.Collections.Generic.IEnumerable{TVGL.Vector3})">
+  CalculateMeanSquareError(IEnumerable&lt;Vector3&gt;)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Calculates the mean square error.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public virtual double CalculateMeanSquareError(IEnumerable&lt;Vector3&gt; vertices)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>vertices</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.Vector3.html">Vector3</a>&gt;</dt>
+    <dd><p>The vertices.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>System.Double.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_PrimitiveSurface_CompletePostSerialization_" data-uid="TVGL.PrimitiveSurface.CompletePostSerialization*"></a>
+
+  <h3 id="TVGL_PrimitiveSurface_CompletePostSerialization_TVGL_TessellatedSolid_" data-uid="TVGL.PrimitiveSurface.CompletePostSerialization(TVGL.TessellatedSolid)">
+  CompletePostSerialization(TessellatedSolid)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Completes the post serialization.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public void CompletePostSerialization(TessellatedSolid ts)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>ts</code> <a class="xref" href="TVGL.TessellatedSolid.html">TessellatedSolid</a></dt>
+    <dd><p>The ts.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_PrimitiveSurface_GetAdjacentFaces_" data-uid="TVGL.PrimitiveSurface.GetAdjacentFaces*"></a>
+
+  <h3 id="TVGL_PrimitiveSurface_GetAdjacentFaces" data-uid="TVGL.PrimitiveSurface.GetAdjacentFaces">
+  GetAdjacentFaces()
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the adjacent faces.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public HashSet&lt;TriangleFace&gt; GetAdjacentFaces()</code></pre>
+  </div>
+
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.hashset-1">HashSet</a>&lt;<a class="xref" href="TVGL.TriangleFace.html">TriangleFace</a>&gt;</dt>
+    <dd><p>HashSet&lt;TriangleFace&gt;.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_PrimitiveSurface_GetAdjacentPrimitives_" data-uid="TVGL.PrimitiveSurface.GetAdjacentPrimitives*"></a>
+
+  <h3 id="TVGL_PrimitiveSurface_GetAdjacentPrimitives_System_Collections_Generic_Dictionary_TVGL_Edge_System_ValueTuple_TVGL_PrimitiveSurface_TVGL_PrimitiveSurface___System_Collections_Generic_HashSet_TVGL_PrimitiveSurface__" data-uid="TVGL.PrimitiveSurface.GetAdjacentPrimitives(System.Collections.Generic.Dictionary{TVGL.Edge,System.ValueTuple{TVGL.PrimitiveSurface,TVGL.PrimitiveSurface}},System.Collections.Generic.HashSet{TVGL.PrimitiveSurface})">
+  GetAdjacentPrimitives(Dictionary&lt;Edge, (PrimitiveSurface, PrimitiveSurface)&gt;, HashSet&lt;PrimitiveSurface&gt;)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the adjacent primitives.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public HashSet&lt;PrimitiveSurface&gt; GetAdjacentPrimitives(Dictionary&lt;Edge, (PrimitiveSurface, PrimitiveSurface)&gt; edgePrimitiveMap, HashSet&lt;PrimitiveSurface&gt; surfacesToConsider = null)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>edgePrimitiveMap</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.dictionary-2">Dictionary</a>&lt;<a class="xref" href="TVGL.Edge.html">Edge</a>, (<a class="xref" href="TVGL.PrimitiveSurface.html">PrimitiveSurface</a>, <a class="xref" href="TVGL.PrimitiveSurface.html">PrimitiveSurface</a>)&gt;</dt>
+    <dd><p>The edge primitive map.</p>
+</dd>
+    <dt><code>surfacesToConsider</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.hashset-1">HashSet</a>&lt;<a class="xref" href="TVGL.PrimitiveSurface.html">PrimitiveSurface</a>&gt;</dt>
+    <dd><p>The surfaces to consider.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.hashset-1">HashSet</a>&lt;<a class="xref" href="TVGL.PrimitiveSurface.html">PrimitiveSurface</a>&gt;</dt>
+    <dd><p>HashSet&lt;PrimitiveSurface&gt;.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_PrimitiveSurface_GetSharedBorderSegment_" data-uid="TVGL.PrimitiveSurface.GetSharedBorderSegment*"></a>
+
+  <h3 id="TVGL_PrimitiveSurface_GetSharedBorderSegment_TVGL_PrimitiveSurface_" data-uid="TVGL.PrimitiveSurface.GetSharedBorderSegment(TVGL.PrimitiveSurface)">
+  GetSharedBorderSegment(PrimitiveSurface)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the shared border segment.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public BorderSegment GetSharedBorderSegment(PrimitiveSurface other)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>other</code> <a class="xref" href="TVGL.PrimitiveSurface.html">PrimitiveSurface</a></dt>
+    <dd><p>The other.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.BorderSegment.html">BorderSegment</a></dt>
+    <dd><p>BorderSegment.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_PrimitiveSurface_GetSharedEdges_" data-uid="TVGL.PrimitiveSurface.GetSharedEdges*"></a>
+
+  <h3 id="TVGL_PrimitiveSurface_GetSharedEdges_TVGL_PrimitiveSurface_" data-uid="TVGL.PrimitiveSurface.GetSharedEdges(TVGL.PrimitiveSurface)">
+  GetSharedEdges(PrimitiveSurface)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the shared edges.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public List&lt;Edge&gt; GetSharedEdges(PrimitiveSurface other)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>other</code> <a class="xref" href="TVGL.PrimitiveSurface.html">PrimitiveSurface</a></dt>
+    <dd><p>The other.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.list-1">List</a>&lt;<a class="xref" href="TVGL.Edge.html">Edge</a>&gt;</dt>
+    <dd><p>List&lt;Edge&gt;.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_PrimitiveSurface_GetVectors_" data-uid="TVGL.PrimitiveSurface.GetVectors*"></a>
+
+  <h3 id="TVGL_PrimitiveSurface_GetVectors" data-uid="TVGL.PrimitiveSurface.GetVectors">
+  GetVectors()
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the vectors.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public IEnumerable&lt;Vector3[]&gt; GetVectors()</code></pre>
+  </div>
+
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.Vector3.html">Vector3</a>[]&gt;</dt>
+    <dd><p>IEnumerable&lt;Vector3[]&gt;.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_PrimitiveSurface_PointMembership_" data-uid="TVGL.PrimitiveSurface.PointMembership*"></a>
+
+  <h3 id="TVGL_PrimitiveSurface_PointMembership_TVGL_Vector3_" data-uid="TVGL.PrimitiveSurface.PointMembership(TVGL.Vector3)">
+  PointMembership(Vector3)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Points the membership.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public abstract double PointMembership(Vector3 point)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>point</code> <a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>The point.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>System.Double.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_PrimitiveSurface_PositiveByEdges_" data-uid="TVGL.PrimitiveSurface.PositiveByEdges*"></a>
+
+  <h3 id="TVGL_PrimitiveSurface_PositiveByEdges" data-uid="TVGL.PrimitiveSurface.PositiveByEdges">
+  PositiveByEdges()
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets IsPositive by using the inner edges</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public bool PositiveByEdges()</code></pre>
+  </div>
+
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd><p><code>true</code> if XXXX, <code>false</code> otherwise.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_PrimitiveSurface_SetBounds_" data-uid="TVGL.PrimitiveSurface.SetBounds*"></a>
+
+  <h3 id="TVGL_PrimitiveSurface_SetBounds_System_Boolean_" data-uid="TVGL.PrimitiveSurface.SetBounds(System.Boolean)">
+  SetBounds(bool)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Sets the bounds.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public void SetBounds(bool ignoreIfAlreadySet = true)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>ignoreIfAlreadySet</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd><p>if set to <code>true</code> [ignore if already set].</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_PrimitiveSurface_SetColor_" data-uid="TVGL.PrimitiveSurface.SetColor*"></a>
+
+  <h3 id="TVGL_PrimitiveSurface_SetColor_TVGL_Color_" data-uid="TVGL.PrimitiveSurface.SetColor(TVGL.Color)">
+  SetColor(Color)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Sets the color.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public void SetColor(Color color)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>color</code> <a class="xref" href="TVGL.Color.html">Color</a></dt>
+    <dd><p>The color.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_PrimitiveSurface_SetFacesAndVertices_" data-uid="TVGL.PrimitiveSurface.SetFacesAndVertices*"></a>
+
+  <h3 id="TVGL_PrimitiveSurface_SetFacesAndVertices_System_Collections_Generic_IEnumerable_TVGL_TriangleFace__System_Boolean_" data-uid="TVGL.PrimitiveSurface.SetFacesAndVertices(System.Collections.Generic.IEnumerable{TVGL.TriangleFace},System.Boolean)">
+  SetFacesAndVertices(IEnumerable&lt;TriangleFace&gt;, bool)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Sets the faces and vertices.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public void SetFacesAndVertices(IEnumerable&lt;TriangleFace&gt; faces, bool connectFacesToPrimitive = true)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>faces</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.TriangleFace.html">TriangleFace</a>&gt;</dt>
+    <dd><p>The faces.</p>
+</dd>
+    <dt><code>connectFacesToPrimitive</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd><p>if set to <code>true</code> [connect faces to primitive].</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_PrimitiveSurface_SetFacesAndVertices_" data-uid="TVGL.PrimitiveSurface.SetFacesAndVertices*"></a>
+
+  <h3 id="TVGL_PrimitiveSurface_SetFacesAndVertices_System_Collections_Generic_IEnumerable_TVGL_TriangleFace__System_Collections_Generic_IEnumerable_TVGL_TriangleFace__System_Boolean_" data-uid="TVGL.PrimitiveSurface.SetFacesAndVertices(System.Collections.Generic.IEnumerable{TVGL.TriangleFace},System.Collections.Generic.IEnumerable{TVGL.TriangleFace},System.Boolean)">
+  SetFacesAndVertices(IEnumerable&lt;TriangleFace&gt;, IEnumerable&lt;TriangleFace&gt;, bool)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Sets the faces and vertices.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public void SetFacesAndVertices(IEnumerable&lt;TriangleFace&gt; faces1, IEnumerable&lt;TriangleFace&gt; faces2, bool connectFacesToPrimitive = true)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>faces1</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.TriangleFace.html">TriangleFace</a>&gt;</dt>
+    <dd><p>The faces1.</p>
+</dd>
+    <dt><code>faces2</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.TriangleFace.html">TriangleFace</a>&gt;</dt>
+    <dd><p>The faces2.</p>
+</dd>
+    <dt><code>connectFacesToPrimitive</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd><p>if set to <code>true</code> [connect faces to primitive].</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_PrimitiveSurface_SetVerticesFromFaces_" data-uid="TVGL.PrimitiveSurface.SetVerticesFromFaces*"></a>
+
+  <h3 id="TVGL_PrimitiveSurface_SetVerticesFromFaces" data-uid="TVGL.PrimitiveSurface.SetVerticesFromFaces">
+  SetVerticesFromFaces()
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Sets the vertices from faces.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public void SetVerticesFromFaces()</code></pre>
+  </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_PrimitiveSurface_Transform_" data-uid="TVGL.PrimitiveSurface.Transform*"></a>
+
+  <h3 id="TVGL_PrimitiveSurface_Transform_TVGL_Matrix4x4_" data-uid="TVGL.PrimitiveSurface.Transform(TVGL.Matrix4x4)">
+  Transform(Matrix4x4)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Transforms the shape by the provided transformation matrix.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public virtual void Transform(Matrix4x4 transformMatrix)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>transformMatrix</code> <a class="xref" href="TVGL.Matrix4x4.html">Matrix4x4</a></dt>
+    <dd><p>The transform matrix.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_PrimitiveSurface_TransformFrom2DTo3D_" data-uid="TVGL.PrimitiveSurface.TransformFrom2DTo3D*"></a>
+
+  <h3 id="TVGL_PrimitiveSurface_TransformFrom2DTo3D_TVGL_Vector2_" data-uid="TVGL.PrimitiveSurface.TransformFrom2DTo3D(TVGL.Vector2)">
+  TransformFrom2DTo3D(Vector2)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Transforms the from2 d to3 d.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public abstract Vector3 TransformFrom2DTo3D(Vector2 point)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>point</code> <a class="xref" href="TVGL.Vector2.html">Vector2</a></dt>
+    <dd><p>The point.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>Vector3.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_PrimitiveSurface_TransformFrom3DTo2D_" data-uid="TVGL.PrimitiveSurface.TransformFrom3DTo2D*"></a>
+
+  <h3 id="TVGL_PrimitiveSurface_TransformFrom3DTo2D_System_Collections_Generic_IEnumerable_TVGL_Vector3__System_Boolean_" data-uid="TVGL.PrimitiveSurface.TransformFrom3DTo2D(System.Collections.Generic.IEnumerable{TVGL.Vector3},System.Boolean)">
+  TransformFrom3DTo2D(IEnumerable&lt;Vector3&gt;, bool)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Transforms the from3 d to2 d.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public abstract IEnumerable&lt;Vector2&gt; TransformFrom3DTo2D(IEnumerable&lt;Vector3&gt; points, bool pathIsClosed)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>points</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.Vector3.html">Vector3</a>&gt;</dt>
+    <dd><p>The points.</p>
+</dd>
+    <dt><code>pathIsClosed</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd><p>if set to <code>true</code> [path is closed].</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.Vector2.html">Vector2</a>&gt;</dt>
+    <dd><p>IEnumerable&lt;Vector2&gt;.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_PrimitiveSurface_TransformFrom3DTo2D_" data-uid="TVGL.PrimitiveSurface.TransformFrom3DTo2D*"></a>
+
+  <h3 id="TVGL_PrimitiveSurface_TransformFrom3DTo2D_TVGL_Vector3_" data-uid="TVGL.PrimitiveSurface.TransformFrom3DTo2D(TVGL.Vector3)">
+  TransformFrom3DTo2D(Vector3)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Transforms the from3 d to2 d.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public abstract Vector2 TransformFrom3DTo2D(Vector3 point)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>point</code> <a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>The point.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.Vector2.html">Vector2</a></dt>
+    <dd><p>Vector2.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_PrimitiveSurface_UpdateBelongsToPrimitive_" data-uid="TVGL.PrimitiveSurface.UpdateBelongsToPrimitive*"></a>
+
+  <h3 id="TVGL_PrimitiveSurface_UpdateBelongsToPrimitive" data-uid="TVGL.PrimitiveSurface.UpdateBelongsToPrimitive">
+  UpdateBelongsToPrimitive()
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Updates the belongs to primitive.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public void UpdateBelongsToPrimitive()</code></pre>
+  </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_PrimitiveSurface_UpdateVertices_" data-uid="TVGL.PrimitiveSurface.UpdateVertices*"></a>
+
+  <h3 id="TVGL_PrimitiveSurface_UpdateVertices" data-uid="TVGL.PrimitiveSurface.UpdateVertices">
+  UpdateVertices()
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Updates the vertices.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public void UpdateVertices()</code></pre>
+  </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_PrimitiveSurface_WithinBounds_" data-uid="TVGL.PrimitiveSurface.WithinBounds*"></a>
+
+  <h3 id="TVGL_PrimitiveSurface_WithinBounds_TVGL_Vector3_" data-uid="TVGL.PrimitiveSurface.WithinBounds(TVGL.Vector3)">
+  WithinBounds(Vector3)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Returns whether a point is within the X,Y,Z bounds of the primitive.
+This is a fast, crude first step to determining interference.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public bool WithinBounds(Vector3 v)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>v</code> <a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>The v.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd><p><code>true</code> if XXXX, <code>false</code> otherwise.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+</article>
+
+        <div class="contribution d-print-none">
+        </div>
+
+        
+      </div>
+
+      <div class="affix">
+        <nav id="affix"></nav>
+      </div>
+    </main>
+
+
+    <footer class="border-top">
+      <div class="container-xxl">
+        <div class="flex-fill">
+          <span>Made with <a href="https://dotnet.github.io/docfx">docfx</a></span>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>

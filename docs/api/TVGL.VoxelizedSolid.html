@@ -1,0 +1,1968 @@
+﻿<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+      <title>Class VoxelizedSolid
+ </title>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <meta name="title" content="Class VoxelizedSolid
+ ">
+      
+      <link rel="icon" href="../favicon.ico">
+      <link rel="stylesheet" href="../styles/docfx.min.css">
+      <link rel="stylesheet" href="../styles/main.css">
+      <meta name="docfx:navrel" content="../toc.html">
+      <meta name="docfx:tocrel" content="toc.html">
+      
+      
+      
+
+      <script>
+        MathJax = {
+          options: {
+            processHtmlClass: ['tex2jax_process', 'math']
+          }
+        };
+      </script>
+
+      <script type="text/javascript" src="../styles/docfx.min.js"></script>
+      <script type="text/javascript" src="../styles/main.js"></script>
+  </head>
+
+  <body class="tex2jax_ignore" data-layout="" data-yaml-mime="ManagedReference">
+    <header class="bg-body border-bottom">
+      <nav id="autocollapse" class="navbar navbar-expand-md" role="navigation">
+        <div class="container-xxl flex-nowrap">
+          <a class="navbar-brand" href="../index.html">
+            <img id="logo" class="svg" src="../logo.svg" alt="">
+            
+          </a>
+          <button class="btn btn-lg d-md-none border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navpanel" aria-controls="navpanel" aria-expanded="false" aria-label="Toggle navigation">
+            <i class="bi bi-three-dots"></i>
+          </button>
+          <div class="collapse navbar-collapse" id="navpanel">
+            <div id="navbar">
+            </div>
+          </div>
+        </div>
+      </nav>
+    </header>
+
+    <main class="container-xxl">
+      <div class="toc-offcanvas">
+        <div class="offcanvas-md offcanvas-start" tabindex="-1" id="tocOffcanvas" aria-labelledby="tocOffcanvasLabel">
+          <div class="offcanvas-header">
+            <h5 class="offcanvas-title" id="tocOffcanvasLabel">Table of Contents</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#tocOffcanvas" aria-label="Close"></button>
+          </div>
+          <div class="offcanvas-body">
+            <nav class="toc" id="toc"></nav>
+          </div>
+        </div>
+      </div>
+
+      <div class="content">
+        <div class="actionbar">
+          <button class="btn btn-lg border-0 d-md-none" style="margin-top: -.65em; margin-left: -.8em" type="button" data-bs-toggle="offcanvas" data-bs-target="#tocOffcanvas" aria-controls="tocOffcanvas" aria-expanded="false" aria-label="Show table of contents">
+            <i class="bi bi-list"></i>
+          </button>
+
+          <nav id="breadcrumb"></nav>
+        </div>
+
+        <article data-uid="TVGL.VoxelizedSolid">
+
+
+
+  <h1 id="TVGL_VoxelizedSolid" data-uid="TVGL.VoxelizedSolid" class="text-break">
+    Class VoxelizedSolid
+  
+  </h1>
+
+  <div class="facts text-secondary">
+    <dl><dt>Namespace</dt><dd><a class="xref" href="TVGL.html">TVGL</a></dd></dl>
+  <dl><dt>Assembly</dt><dd>TessellationAndVoxelizationGeometryLibrary.dll</dd></dl>
+  </div>
+
+  <div class="markdown summary"><p>Class VoxelizedSparseDense.</p>
+</div>
+  <div class="markdown conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public class VoxelizedSolid : Solid, IEnumerable&lt;int[]&gt;, IEnumerable</code></pre>
+  </div>
+
+
+
+
+  <dl class="typelist inheritance">
+    <dt>Inheritance</dt>
+    <dd>
+      <div><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object">object</a></div>
+      <div><a class="xref" href="TVGL.Solid.html">Solid</a></div>
+      <div><span class="xref">VoxelizedSolid</span></div>
+    </dd>
+  </dl>
+
+  <dl class="typelist implements">
+    <dt>Implements</dt>
+    <dd>
+      <div><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a>[]&gt;</div>
+      <div><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.ienumerable">IEnumerable</a></div>
+    </dd>
+  </dl>
+
+
+  <dl class="typelist derived">
+    <dt>Inherited Members</dt>
+    <dd>
+    <div>
+      <a class="xref" href="TVGL.Solid.html#TVGL_Solid_ReferenceIndex">Solid.ReferenceIndex</a>
+    </div>
+    <div>
+      <a class="xref" href="TVGL.Solid.html#TVGL_Solid_Center">Solid.Center</a>
+    </div>
+    <div>
+      <a class="xref" href="TVGL.Solid.html#TVGL_Solid__center">Solid._center</a>
+    </div>
+    <div>
+      <a class="xref" href="TVGL.Solid.html#TVGL_Solid_Volume">Solid.Volume</a>
+    </div>
+    <div>
+      <a class="xref" href="TVGL.Solid.html#TVGL_Solid__volume">Solid._volume</a>
+    </div>
+    <div>
+      <a class="xref" href="TVGL.Solid.html#TVGL_Solid_SurfaceArea">Solid.SurfaceArea</a>
+    </div>
+    <div>
+      <a class="xref" href="TVGL.Solid.html#TVGL_Solid__surfaceArea">Solid._surfaceArea</a>
+    </div>
+    <div>
+      <a class="xref" href="TVGL.Solid.html#TVGL_Solid_InertiaTensor">Solid.InertiaTensor</a>
+    </div>
+    <div>
+      <a class="xref" href="TVGL.Solid.html#TVGL_Solid__inertiaTensor">Solid._inertiaTensor</a>
+    </div>
+    <div>
+      <a class="xref" href="TVGL.Solid.html#TVGL_Solid_Bounds">Solid.Bounds</a>
+    </div>
+    <div>
+      <a class="xref" href="TVGL.Solid.html#TVGL_Solid_XMin">Solid.XMin</a>
+    </div>
+    <div>
+      <a class="xref" href="TVGL.Solid.html#TVGL_Solid_XMax">Solid.XMax</a>
+    </div>
+    <div>
+      <a class="xref" href="TVGL.Solid.html#TVGL_Solid_YMin">Solid.YMin</a>
+    </div>
+    <div>
+      <a class="xref" href="TVGL.Solid.html#TVGL_Solid_YMax">Solid.YMax</a>
+    </div>
+    <div>
+      <a class="xref" href="TVGL.Solid.html#TVGL_Solid_ZMin">Solid.ZMin</a>
+    </div>
+    <div>
+      <a class="xref" href="TVGL.Solid.html#TVGL_Solid_ZMax">Solid.ZMax</a>
+    </div>
+    <div>
+      <a class="xref" href="TVGL.Solid.html#TVGL_Solid_Name">Solid.Name</a>
+    </div>
+    <div>
+      <a class="xref" href="TVGL.Solid.html#TVGL_Solid_Comments">Solid.Comments</a>
+    </div>
+    <div>
+      <a class="xref" href="TVGL.Solid.html#TVGL_Solid_FileName">Solid.FileName</a>
+    </div>
+    <div>
+      <a class="xref" href="TVGL.Solid.html#TVGL_Solid_Units">Solid.Units</a>
+    </div>
+    <div>
+      <a class="xref" href="TVGL.Solid.html#TVGL_Solid_Language">Solid.Language</a>
+    </div>
+    <div>
+      <a class="xref" href="TVGL.Solid.html#TVGL_Solid_ConvexHull">Solid.ConvexHull</a>
+    </div>
+    <div>
+      <a class="xref" href="TVGL.Solid.html#TVGL_Solid_HasUniformColor">Solid.HasUniformColor</a>
+    </div>
+    <div>
+      <a class="xref" href="TVGL.Solid.html#TVGL_Solid_SolidColor">Solid.SolidColor</a>
+    </div>
+    <div>
+      <a class="xref" href="TVGL.Solid.html#TVGL_Solid_Primitives">Solid.Primitives</a>
+    </div>
+    <div>
+      <a class="xref" href="TVGL.Solid.html#TVGL_Solid_SameTolerance">Solid.SameTolerance</a>
+    </div>
+    <div>
+      <a class="xref" href="TVGL.Solid.html#TVGL_Solid_serializationData">Solid.serializationData</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.equals#system-object-equals(system-object)">object.Equals(object)</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.equals#system-object-equals(system-object-system-object)">object.Equals(object, object)</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.gethashcode">object.GetHashCode()</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.gettype">object.GetType()</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.memberwiseclone">object.MemberwiseClone()</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.referenceequals">object.ReferenceEquals(object, object)</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.tostring">object.ToString()</a>
+    </div>
+  </dd></dl>
+
+
+
+
+
+
+  <h2 class="section" id="constructors">Constructors
+</h2>
+
+
+  <a id="TVGL_VoxelizedSolid__ctor_" data-uid="TVGL.VoxelizedSolid.#ctor*"></a>
+
+  <h3 id="TVGL_VoxelizedSolid__ctor_System_Collections_Generic_IEnumerable_TVGL_Polygon__System_Int32_System_Collections_Generic_IReadOnlyList_TVGL_Vector2__" data-uid="TVGL.VoxelizedSolid.#ctor(System.Collections.Generic.IEnumerable{TVGL.Polygon},System.Int32,System.Collections.Generic.IReadOnlyList{TVGL.Vector2})">
+  VoxelizedSolid(IEnumerable&lt;Polygon&gt;, int, IReadOnlyList&lt;Vector2&gt;)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Initializes a new instance of the <a class="xref" href="TVGL.VoxelizedSolid.html">VoxelizedSolid</a> class.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public VoxelizedSolid(IEnumerable&lt;Polygon&gt; loops, int voxelsOnLongSide, IReadOnlyList&lt;Vector2&gt; bounds)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>loops</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.Polygon.html">Polygon</a>&gt;</dt>
+    <dd><p>The loops.</p>
+</dd>
+    <dt><code>voxelsOnLongSide</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a></dt>
+    <dd><p>The voxels on long side.</p>
+</dd>
+    <dt><code>bounds</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ireadonlylist-1">IReadOnlyList</a>&lt;<a class="xref" href="TVGL.Vector2.html">Vector2</a>&gt;</dt>
+    <dd><p>The bounds.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_VoxelizedSolid__ctor_" data-uid="TVGL.VoxelizedSolid.#ctor*"></a>
+
+  <h3 id="TVGL_VoxelizedSolid__ctor_TVGL_TessellatedSolid_System_Double_System_Collections_Generic_IReadOnlyList_TVGL_Vector3__" data-uid="TVGL.VoxelizedSolid.#ctor(TVGL.TessellatedSolid,System.Double,System.Collections.Generic.IReadOnlyList{TVGL.Vector3})">
+  VoxelizedSolid(TessellatedSolid, double, IReadOnlyList&lt;Vector3&gt;)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Initializes a new instance of the <a class="xref" href="TVGL.VoxelizedSolid.html">VoxelizedSolid</a> class.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public VoxelizedSolid(TessellatedSolid ts, double voxelSideLength, IReadOnlyList&lt;Vector3&gt; bounds = null)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>ts</code> <a class="xref" href="TVGL.TessellatedSolid.html">TessellatedSolid</a></dt>
+    <dd><p>The ts.</p>
+</dd>
+    <dt><code>voxelSideLength</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>Length of the voxel side.</p>
+</dd>
+    <dt><code>bounds</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ireadonlylist-1">IReadOnlyList</a>&lt;<a class="xref" href="TVGL.Vector3.html">Vector3</a>&gt;</dt>
+    <dd><p>The bounds.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_VoxelizedSolid__ctor_" data-uid="TVGL.VoxelizedSolid.#ctor*"></a>
+
+  <h3 id="TVGL_VoxelizedSolid__ctor_TVGL_TessellatedSolid_System_Int32_System_Collections_Generic_IReadOnlyList_TVGL_Vector3__" data-uid="TVGL.VoxelizedSolid.#ctor(TVGL.TessellatedSolid,System.Int32,System.Collections.Generic.IReadOnlyList{TVGL.Vector3})">
+  VoxelizedSolid(TessellatedSolid, int, IReadOnlyList&lt;Vector3&gt;)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Initializes a new instance of the <a class="xref" href="TVGL.VoxelizedSolid.html">VoxelizedSolid</a> class.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public VoxelizedSolid(TessellatedSolid ts, int voxelsOnLongSide, IReadOnlyList&lt;Vector3&gt; bounds = null)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>ts</code> <a class="xref" href="TVGL.TessellatedSolid.html">TessellatedSolid</a></dt>
+    <dd><p>The ts.</p>
+</dd>
+    <dt><code>voxelsOnLongSide</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a></dt>
+    <dd><p>The voxels on long side.</p>
+</dd>
+    <dt><code>bounds</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ireadonlylist-1">IReadOnlyList</a>&lt;<a class="xref" href="TVGL.Vector3.html">Vector3</a>&gt;</dt>
+    <dd><p>The bounds.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+  <h2 class="section" id="properties">Properties
+</h2>
+
+
+  <a id="TVGL_VoxelizedSolid_Count_" data-uid="TVGL.VoxelizedSolid.Count*"></a>
+
+  <h3 id="TVGL_VoxelizedSolid_Count" data-uid="TVGL.VoxelizedSolid.Count">
+  Count
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the count.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public long Count { get; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int64">long</a></dt>
+    <dd><p>The count.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="TVGL_VoxelizedSolid_Dimensions_" data-uid="TVGL.VoxelizedSolid.Dimensions*"></a>
+
+  <h3 id="TVGL_VoxelizedSolid_Dimensions" data-uid="TVGL.VoxelizedSolid.Dimensions">
+  Dimensions
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the dimensions.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public Vector3 Dimensions { get; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>The dimensions.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="TVGL_VoxelizedSolid_FractionDense_" data-uid="TVGL.VoxelizedSolid.FractionDense*"></a>
+
+  <h3 id="TVGL_VoxelizedSolid_FractionDense" data-uid="TVGL.VoxelizedSolid.FractionDense">
+  FractionDense
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the fraction dense.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public double FractionDense { get; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The fraction dense.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="TVGL_VoxelizedSolid_Item_" data-uid="TVGL.VoxelizedSolid.Item*"></a>
+
+  <h3 id="TVGL_VoxelizedSolid_Item_System_Int32_System_Int32_System_Int32_" data-uid="TVGL.VoxelizedSolid.Item(System.Int32,System.Int32,System.Int32)">
+  this[int, int, int]
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets or sets the <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a> at the specified coordinate.
+true corresponds to &quot;on&quot; and false to &quot;off&quot;.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public bool this[int xCoord, int yCoord, int zCoord] { get; set; }</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>xCoord</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a></dt>
+    <dd><p>The x coord.</p>
+</dd>
+    <dt><code>yCoord</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a></dt>
+    <dd><p>The y coord.</p>
+</dd>
+    <dt><code>zCoord</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a></dt>
+    <dd><p>The z coord.</p>
+</dd>
+  </dl>
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd><p><code>true</code> if XXXX, <code>false</code> otherwise.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="TVGL_VoxelizedSolid_Item_" data-uid="TVGL.VoxelizedSolid.Item*"></a>
+
+  <h3 id="TVGL_VoxelizedSolid_Item_System_Int32___" data-uid="TVGL.VoxelizedSolid.Item(System.Int32[])">
+  this[int[]]
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets or sets the <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a> at the specified coordinate.
+true corresponds to &quot;on&quot; and false to &quot;off&quot;.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public bool this[int[] coordinates] { get; set; }</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>coordinates</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a>[]</dt>
+    <dd><p>The coordinates.</p>
+</dd>
+  </dl>
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd><p><code>true</code> if XXXX, <code>false</code> otherwise.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="TVGL_VoxelizedSolid_numVoxelsX_" data-uid="TVGL.VoxelizedSolid.numVoxelsX*"></a>
+
+  <h3 id="TVGL_VoxelizedSolid_numVoxelsX" data-uid="TVGL.VoxelizedSolid.numVoxelsX">
+  numVoxelsX
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the number voxels x.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public int numVoxelsX { get; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a></dt>
+    <dd><p>The number voxels x.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="TVGL_VoxelizedSolid_numVoxelsY_" data-uid="TVGL.VoxelizedSolid.numVoxelsY*"></a>
+
+  <h3 id="TVGL_VoxelizedSolid_numVoxelsY" data-uid="TVGL.VoxelizedSolid.numVoxelsY">
+  numVoxelsY
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the number voxels y.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public int numVoxelsY { get; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a></dt>
+    <dd><p>The number voxels y.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="TVGL_VoxelizedSolid_numVoxelsZ_" data-uid="TVGL.VoxelizedSolid.numVoxelsZ*"></a>
+
+  <h3 id="TVGL_VoxelizedSolid_numVoxelsZ" data-uid="TVGL.VoxelizedSolid.numVoxelsZ">
+  numVoxelsZ
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the number voxels z.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public int numVoxelsZ { get; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a></dt>
+    <dd><p>The number voxels z.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="TVGL_VoxelizedSolid_Offset_" data-uid="TVGL.VoxelizedSolid.Offset*"></a>
+
+  <h3 id="TVGL_VoxelizedSolid_Offset" data-uid="TVGL.VoxelizedSolid.Offset">
+  Offset
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the offset.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public Vector3 Offset { get; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>The offset.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="TVGL_VoxelizedSolid_VoxelBounds_" data-uid="TVGL.VoxelizedSolid.VoxelBounds*"></a>
+
+  <h3 id="TVGL_VoxelizedSolid_VoxelBounds" data-uid="TVGL.VoxelizedSolid.VoxelBounds">
+  VoxelBounds
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the voxel bounds.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public int[][] VoxelBounds { get; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a>[][]</dt>
+    <dd><p>The voxel bounds.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="TVGL_VoxelizedSolid_VoxelSideLength_" data-uid="TVGL.VoxelizedSolid.VoxelSideLength*"></a>
+
+  <h3 id="TVGL_VoxelizedSolid_VoxelSideLength" data-uid="TVGL.VoxelizedSolid.VoxelSideLength">
+  VoxelSideLength
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the length of the voxel side.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public double VoxelSideLength { get; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The length of the voxel side.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="TVGL_VoxelizedSolid_VoxelsPerSide_" data-uid="TVGL.VoxelizedSolid.VoxelsPerSide*"></a>
+
+  <h3 id="TVGL_VoxelizedSolid_VoxelsPerSide" data-uid="TVGL.VoxelizedSolid.VoxelsPerSide">
+  VoxelsPerSide
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the voxels per side.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public int[] VoxelsPerSide { get; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a>[]</dt>
+    <dd><p>The voxels per side.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <h2 class="section" id="methods">Methods
+</h2>
+
+
+  <a id="TVGL_VoxelizedSolid_CalculateCenter_" data-uid="TVGL.VoxelizedSolid.CalculateCenter*"></a>
+
+  <h3 id="TVGL_VoxelizedSolid_CalculateCenter" data-uid="TVGL.VoxelizedSolid.CalculateCenter">
+  CalculateCenter()
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Calculates the center.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">protected override void CalculateCenter()</code></pre>
+  </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_VoxelizedSolid_CalculateInertiaTensor_" data-uid="TVGL.VoxelizedSolid.CalculateInertiaTensor*"></a>
+
+  <h3 id="TVGL_VoxelizedSolid_CalculateInertiaTensor" data-uid="TVGL.VoxelizedSolid.CalculateInertiaTensor">
+  CalculateInertiaTensor()
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Calculates the inertia tensor.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">protected override void CalculateInertiaTensor()</code></pre>
+  </div>
+
+
+
+
+
+
+
+
+
+
+  <h4 class="section">Exceptions</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.notimplementedexception">NotImplementedException</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+  <a id="TVGL_VoxelizedSolid_CalculateSurfaceArea_" data-uid="TVGL.VoxelizedSolid.CalculateSurfaceArea*"></a>
+
+  <h3 id="TVGL_VoxelizedSolid_CalculateSurfaceArea" data-uid="TVGL.VoxelizedSolid.CalculateSurfaceArea">
+  CalculateSurfaceArea()
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Calculates the surface area.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">protected override void CalculateSurfaceArea()</code></pre>
+  </div>
+
+
+
+
+
+
+
+
+
+
+  <h4 class="section">Exceptions</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.notimplementedexception">NotImplementedException</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+  <a id="TVGL_VoxelizedSolid_CalculateVolume_" data-uid="TVGL.VoxelizedSolid.CalculateVolume*"></a>
+
+  <h3 id="TVGL_VoxelizedSolid_CalculateVolume" data-uid="TVGL.VoxelizedSolid.CalculateVolume">
+  CalculateVolume()
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Calculates the volume.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">protected override void CalculateVolume()</code></pre>
+  </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_VoxelizedSolid_ConvertToTessellatedSolidMarchingCubes_" data-uid="TVGL.VoxelizedSolid.ConvertToTessellatedSolidMarchingCubes*"></a>
+
+  <h3 id="TVGL_VoxelizedSolid_ConvertToTessellatedSolidMarchingCubes_System_Int32_" data-uid="TVGL.VoxelizedSolid.ConvertToTessellatedSolidMarchingCubes(System.Int32)">
+  ConvertToTessellatedSolidMarchingCubes(int)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Converts to tessellated solid marching cubes.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public TessellatedSolid ConvertToTessellatedSolidMarchingCubes(int voxelsPerTriangleSpacing)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>voxelsPerTriangleSpacing</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a></dt>
+    <dd><p>The voxels per triangle spacing.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.TessellatedSolid.html">TessellatedSolid</a></dt>
+    <dd><p>TessellatedSolid.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_VoxelizedSolid_ConvertToTessellatedSolidRectilinear_" data-uid="TVGL.VoxelizedSolid.ConvertToTessellatedSolidRectilinear*"></a>
+
+  <h3 id="TVGL_VoxelizedSolid_ConvertToTessellatedSolidRectilinear" data-uid="TVGL.VoxelizedSolid.ConvertToTessellatedSolidRectilinear">
+  ConvertToTessellatedSolidRectilinear()
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Converts to tessellated solid rectilinear.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public TessellatedSolid ConvertToTessellatedSolidRectilinear()</code></pre>
+  </div>
+
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.TessellatedSolid.html">TessellatedSolid</a></dt>
+    <dd><p>TessellatedSolid.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <h4 class="section">Exceptions</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.notimplementedexception">NotImplementedException</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+  <a id="TVGL_VoxelizedSolid_Copy_" data-uid="TVGL.VoxelizedSolid.Copy*"></a>
+
+  <h3 id="TVGL_VoxelizedSolid_Copy" data-uid="TVGL.VoxelizedSolid.Copy">
+  Copy()
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Copies this instance. Note, that this overrides the base class, Solid. You may need to
+cast it to VoxelizedSolid in your code. E.g., var copyOfVS = (VoxelizedSolid)vs.copy;</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public VoxelizedSolid Copy()</code></pre>
+  </div>
+
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.VoxelizedSolid.html">VoxelizedSolid</a></dt>
+    <dd><p>Solid.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_VoxelizedSolid_CreateFullBlock_" data-uid="TVGL.VoxelizedSolid.CreateFullBlock*"></a>
+
+  <h3 id="TVGL_VoxelizedSolid_CreateFullBlock_System_Double_System_Collections_Generic_IReadOnlyList_TVGL_Vector3__" data-uid="TVGL.VoxelizedSolid.CreateFullBlock(System.Double,System.Collections.Generic.IReadOnlyList{TVGL.Vector3})">
+  CreateFullBlock(double, IReadOnlyList&lt;Vector3&gt;)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Creates the full block given the dimensions and the size.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static VoxelizedSolid CreateFullBlock(double voxelSideLength, IReadOnlyList&lt;Vector3&gt; bounds)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>voxelSideLength</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>Length of the voxel side.</p>
+</dd>
+    <dt><code>bounds</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ireadonlylist-1">IReadOnlyList</a>&lt;<a class="xref" href="TVGL.Vector3.html">Vector3</a>&gt;</dt>
+    <dd><p>The bounds.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.VoxelizedSolid.html">VoxelizedSolid</a></dt>
+    <dd><p>VoxelizedSolid.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_VoxelizedSolid_CreateFullBlock_" data-uid="TVGL.VoxelizedSolid.CreateFullBlock*"></a>
+
+  <h3 id="TVGL_VoxelizedSolid_CreateFullBlock_TVGL_VoxelizedSolid_" data-uid="TVGL.VoxelizedSolid.CreateFullBlock(TVGL.VoxelizedSolid)">
+  CreateFullBlock(VoxelizedSolid)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Creates the full block of voxels using the bounds and dimensions of an existing voxelized solid.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static VoxelizedSolid CreateFullBlock(VoxelizedSolid vs)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>vs</code> <a class="xref" href="TVGL.VoxelizedSolid.html">VoxelizedSolid</a></dt>
+    <dd><p>The vs.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.VoxelizedSolid.html">VoxelizedSolid</a></dt>
+    <dd><p>VoxelizedSolid.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_VoxelizedSolid_DirectionalErodeToConstraintToNewSolid_" data-uid="TVGL.VoxelizedSolid.DirectionalErodeToConstraintToNewSolid*"></a>
+
+  <h3 id="TVGL_VoxelizedSolid_DirectionalErodeToConstraintToNewSolid_TVGL_VoxelizedSolid__TVGL_CartesianDirections_System_Double_System_Double_System_String___" data-uid="TVGL.VoxelizedSolid.DirectionalErodeToConstraintToNewSolid(TVGL.VoxelizedSolid@,TVGL.CartesianDirections,System.Double,System.Double,System.String[])">
+  DirectionalErodeToConstraintToNewSolid(in VoxelizedSolid, CartesianDirections, double, double, params string[])
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Erodes the solid in the supplied direction until the mask contacts the constraint solid.
+This creates a new solid. The orinal is unaltered.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public VoxelizedSolid DirectionalErodeToConstraintToNewSolid(in VoxelizedSolid constraintSolid, CartesianDirections dir, double tLimit = 0, double maskSize = 0, params string[] maskOptions)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>constraintSolid</code> <a class="xref" href="TVGL.VoxelizedSolid.html">VoxelizedSolid</a></dt>
+    <dd><p>The constraint solid.</p>
+</dd>
+    <dt><code>dir</code> <a class="xref" href="TVGL.CartesianDirections.html">CartesianDirections</a></dt>
+    <dd><p>The dir.</p>
+</dd>
+    <dt><code>tLimit</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The t limit.</p>
+</dd>
+    <dt><code>maskSize</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>Size of the mask.</p>
+</dd>
+    <dt><code>maskOptions</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a>[]</dt>
+    <dd><p>The mask options.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.VoxelizedSolid.html">VoxelizedSolid</a></dt>
+    <dd><p>VoxelizedSolid.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_VoxelizedSolid_DirectionalErodeToConstraintToNewSolid_" data-uid="TVGL.VoxelizedSolid.DirectionalErodeToConstraintToNewSolid*"></a>
+
+  <h3 id="TVGL_VoxelizedSolid_DirectionalErodeToConstraintToNewSolid_TVGL_VoxelizedSolid__TVGL_Vector3_System_Double_System_Double_System_String___" data-uid="TVGL.VoxelizedSolid.DirectionalErodeToConstraintToNewSolid(TVGL.VoxelizedSolid@,TVGL.Vector3,System.Double,System.Double,System.String[])">
+  DirectionalErodeToConstraintToNewSolid(in VoxelizedSolid, Vector3, double, double, params string[])
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Erodes the solid in the supplied direction until the mask contacts the constraint solid.
+This creates a new solid. The orinal is unaltered.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public VoxelizedSolid DirectionalErodeToConstraintToNewSolid(in VoxelizedSolid constraintSolid, Vector3 dir, double tLimit = 0, double maskSize = 0, params string[] maskOptions)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>constraintSolid</code> <a class="xref" href="TVGL.VoxelizedSolid.html">VoxelizedSolid</a></dt>
+    <dd><p>The constraint solid.</p>
+</dd>
+    <dt><code>dir</code> <a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>The dir.</p>
+</dd>
+    <dt><code>tLimit</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The t limit.</p>
+</dd>
+    <dt><code>maskSize</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>Size of the mask.</p>
+</dd>
+    <dt><code>maskOptions</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a>[]</dt>
+    <dd><p>The mask options.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.VoxelizedSolid.html">VoxelizedSolid</a></dt>
+    <dd><p>VoxelizedSolid.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_VoxelizedSolid_Draft_" data-uid="TVGL.VoxelizedSolid.Draft*"></a>
+
+  <h3 id="TVGL_VoxelizedSolid_Draft_TVGL_CartesianDirections_" data-uid="TVGL.VoxelizedSolid.Draft(TVGL.CartesianDirections)">
+  Draft(CartesianDirections)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Drafts or extrudes the solid in specified direction. This means that the side of the
+part opposite the direction will be like the origial and the side facing the direction
+will be flat - as if extrude (playdoh style) in the specified direction.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public void Draft(CartesianDirections direction)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>direction</code> <a class="xref" href="TVGL.CartesianDirections.html">CartesianDirections</a></dt>
+    <dd><p>The direction.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_VoxelizedSolid_DraftToNewSolid_" data-uid="TVGL.VoxelizedSolid.DraftToNewSolid*"></a>
+
+  <h3 id="TVGL_VoxelizedSolid_DraftToNewSolid_TVGL_CartesianDirections_" data-uid="TVGL.VoxelizedSolid.DraftToNewSolid(TVGL.CartesianDirections)">
+  DraftToNewSolid(CartesianDirections)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Drafts or extrudes the solid in specified direction. This means that the side of the
+part opposite the direction will be like the origial and the side facing the direction
+will be flat - as if extrude (playdoh style) in the specified direction.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public VoxelizedSolid DraftToNewSolid(CartesianDirections direction)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>direction</code> <a class="xref" href="TVGL.CartesianDirections.html">CartesianDirections</a></dt>
+    <dd><p>The direction.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.VoxelizedSolid.html">VoxelizedSolid</a></dt>
+    <dd><p>VoxelizedSolid.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_VoxelizedSolid_GetEnumerator_" data-uid="TVGL.VoxelizedSolid.GetEnumerator*"></a>
+
+  <h3 id="TVGL_VoxelizedSolid_GetEnumerator" data-uid="TVGL.VoxelizedSolid.GetEnumerator">
+  GetEnumerator()
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Returns an enumerator that iterates through the collection of voxels, which is simply
+a boolean.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public IEnumerator&lt;int[]&gt; GetEnumerator()</code></pre>
+  </div>
+
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerator-1">IEnumerator</a>&lt;<a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a>[]&gt;</dt>
+    <dd><p>An enumerator that can be used to iterate through the collection.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_VoxelizedSolid_GetNeighbors_" data-uid="TVGL.VoxelizedSolid.GetNeighbors*"></a>
+
+  <h3 id="TVGL_VoxelizedSolid_GetNeighbors_System_Int32_System_Int32_System_Int32_System_Int32______" data-uid="TVGL.VoxelizedSolid.GetNeighbors(System.Int32,System.Int32,System.Int32,System.Int32[][]@)">
+  GetNeighbors(int, int, int, out int[][])
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the neighbors of the specified voxel position (even if specified is an off-voxel).
+The result is true if there are neighbors and false if there are none.
+the neighbors array is the coordinates or nulls. Where the null represents off-voxels.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public bool GetNeighbors(int xCoord, int yCoord, int zCoord, out int[][] neighbors)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>xCoord</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a></dt>
+    <dd><p>The x coord.</p>
+</dd>
+    <dt><code>yCoord</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a></dt>
+    <dd><p>The y coord.</p>
+</dd>
+    <dt><code>zCoord</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a></dt>
+    <dd><p>The z coord.</p>
+</dd>
+    <dt><code>neighbors</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a>[][]</dt>
+    <dd><p>The neighbors.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd><p><code>true</code> if XXXX, <code>false</code> otherwise.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_VoxelizedSolid_GetNeighbors_" data-uid="TVGL.VoxelizedSolid.GetNeighbors*"></a>
+
+  <h3 id="TVGL_VoxelizedSolid_GetNeighbors_System_Int32_System_Int32_System_Int32_" data-uid="TVGL.VoxelizedSolid.GetNeighbors(System.Int32,System.Int32,System.Int32)">
+  GetNeighbors(int, int, int)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the neighbors of the specified voxel position (even if specified is an off-voxel).
+The result is an array of coordinates or nulls. Where the null represents off-voxels.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public int[][] GetNeighbors(int xCoord, int yCoord, int zCoord)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>xCoord</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a></dt>
+    <dd><p>The x coord.</p>
+</dd>
+    <dt><code>yCoord</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a></dt>
+    <dd><p>The y coord.</p>
+</dd>
+    <dt><code>zCoord</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a></dt>
+    <dd><p>The z coord.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a>[][]</dt>
+    <dd><p>System.Int32[][].</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_VoxelizedSolid_Intersect_" data-uid="TVGL.VoxelizedSolid.Intersect*"></a>
+
+  <h3 id="TVGL_VoxelizedSolid_Intersect_TVGL_VoxelizedSolid___" data-uid="TVGL.VoxelizedSolid.Intersect(TVGL.VoxelizedSolid[])">
+  Intersect(params VoxelizedSolid[])
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Intersects the specified solids. This is a boolean function that returns an intersection or AND operation on all
+the voxels of the presented solids. Note, that solids should have same bounds for correctness.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public void Intersect(params VoxelizedSolid[] solids)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>solids</code> <a class="xref" href="TVGL.VoxelizedSolid.html">VoxelizedSolid</a>[]</dt>
+    <dd><p>The solids.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_VoxelizedSolid_IntersectToNewSolid_" data-uid="TVGL.VoxelizedSolid.IntersectToNewSolid*"></a>
+
+  <h3 id="TVGL_VoxelizedSolid_IntersectToNewSolid_TVGL_VoxelizedSolid___" data-uid="TVGL.VoxelizedSolid.IntersectToNewSolid(TVGL.VoxelizedSolid[])">
+  IntersectToNewSolid(params VoxelizedSolid[])
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Intersects to new solid. This is a boolean function that returns an intersection or AND operation on all
+the voxels of the presented solids. Note, that solids should have same bounds for correctness.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public VoxelizedSolid IntersectToNewSolid(params VoxelizedSolid[] solids)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>solids</code> <a class="xref" href="TVGL.VoxelizedSolid.html">VoxelizedSolid</a>[]</dt>
+    <dd><p>The solids.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.VoxelizedSolid.html">VoxelizedSolid</a></dt>
+    <dd><p>VoxelizedSolid.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_VoxelizedSolid_Invert_" data-uid="TVGL.VoxelizedSolid.Invert*"></a>
+
+  <h3 id="TVGL_VoxelizedSolid_Invert" data-uid="TVGL.VoxelizedSolid.Invert">
+  Invert()
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Inverts this instance. This is a boolean function when all empty voxels in the bounds
+of the solid are made full, and all full are made empty. It is essentially a negation operation.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public void Invert()</code></pre>
+  </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_VoxelizedSolid_InvertToNewSolid_" data-uid="TVGL.VoxelizedSolid.InvertToNewSolid*"></a>
+
+  <h3 id="TVGL_VoxelizedSolid_InvertToNewSolid" data-uid="TVGL.VoxelizedSolid.InvertToNewSolid">
+  InvertToNewSolid()
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Inverts to new solid. This is a boolean function when all empty voxels in the bounds
+of the solid are made full, and all full are made empty. It is essentially a negation operation.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public VoxelizedSolid InvertToNewSolid()</code></pre>
+  </div>
+
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.VoxelizedSolid.html">VoxelizedSolid</a></dt>
+    <dd><p>VoxelizedSolid.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_VoxelizedSolid_NumNeighbors_" data-uid="TVGL.VoxelizedSolid.NumNeighbors*"></a>
+
+  <h3 id="TVGL_VoxelizedSolid_NumNeighbors_System_Int32_System_Int32_System_Int32_" data-uid="TVGL.VoxelizedSolid.NumNeighbors(System.Int32,System.Int32,System.Int32)">
+  NumNeighbors(int, int, int)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Returns the number of adjacent voxels (0 to 6)</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public int NumNeighbors(int xCoord, int yCoord, int zCoord)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>xCoord</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a></dt>
+    <dd><p>The x coord.</p>
+</dd>
+    <dt><code>yCoord</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a></dt>
+    <dd><p>The y coord.</p>
+</dd>
+    <dt><code>zCoord</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a></dt>
+    <dd><p>The z coord.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a></dt>
+    <dd><p>System.Int32.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_VoxelizedSolid_SliceOnPlane_" data-uid="TVGL.VoxelizedSolid.SliceOnPlane*"></a>
+
+  <h3 id="TVGL_VoxelizedSolid_SliceOnPlane_TVGL_CartesianDirections_System_Int32_" data-uid="TVGL.VoxelizedSolid.SliceOnPlane(TVGL.CartesianDirections,System.Int32)">
+  SliceOnPlane(CartesianDirections, int)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Slices this solid into two voxelized solids given the plane defined as aligning with
+the cartesian axis of the voxelized solid.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public (VoxelizedSolid, VoxelizedSolid) SliceOnPlane(CartesianDirections vd, int distance)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>vd</code> <a class="xref" href="TVGL.CartesianDirections.html">CartesianDirections</a></dt>
+    <dd><p>The vd.</p>
+</dd>
+    <dt><code>distance</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a></dt>
+    <dd><p>The distance.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt>(<a class="xref" href="TVGL.VoxelizedSolid.html">VoxelizedSolid</a>, <a class="xref" href="TVGL.VoxelizedSolid.html">VoxelizedSolid</a>)</dt>
+    <dd><p>System.ValueTuple&lt;VoxelizedSolid, VoxelizedSolid&gt;.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <h4 class="section">Exceptions</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.argumentoutofrangeexception">ArgumentOutOfRangeException</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+  <a id="TVGL_VoxelizedSolid_SliceOnPlane_" data-uid="TVGL.VoxelizedSolid.SliceOnPlane*"></a>
+
+  <h3 id="TVGL_VoxelizedSolid_SliceOnPlane_TVGL_Plane_" data-uid="TVGL.VoxelizedSolid.SliceOnPlane(TVGL.Plane)">
+  SliceOnPlane(Plane)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Slices this solid into two voxelized solids given any provided plane.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public (VoxelizedSolid, VoxelizedSolid) SliceOnPlane(Plane plane)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>plane</code> <a class="xref" href="TVGL.Plane.html">Plane</a></dt>
+    <dd><p>The plane.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt>(<a class="xref" href="TVGL.VoxelizedSolid.html">VoxelizedSolid</a>, <a class="xref" href="TVGL.VoxelizedSolid.html">VoxelizedSolid</a>)</dt>
+    <dd><p>System.ValueTuple&lt;VoxelizedSolid, VoxelizedSolid&gt;.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_VoxelizedSolid_Subtract_" data-uid="TVGL.VoxelizedSolid.Subtract*"></a>
+
+  <h3 id="TVGL_VoxelizedSolid_Subtract_TVGL_VoxelizedSolid___" data-uid="TVGL.VoxelizedSolid.Subtract(TVGL.VoxelizedSolid[])">
+  Subtract(params VoxelizedSolid[])
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Subtracts the specified subtrahends. This is a boolean function that removes voxels from &quot;this&quot; solid
+(which is treated as the minuend) that are present in any of the arguments (or subtrahends).</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public void Subtract(params VoxelizedSolid[] subtrahends)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>subtrahends</code> <a class="xref" href="TVGL.VoxelizedSolid.html">VoxelizedSolid</a>[]</dt>
+    <dd><p>The subtrahends.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_VoxelizedSolid_SubtractToNewSolid_" data-uid="TVGL.VoxelizedSolid.SubtractToNewSolid*"></a>
+
+  <h3 id="TVGL_VoxelizedSolid_SubtractToNewSolid_TVGL_VoxelizedSolid___" data-uid="TVGL.VoxelizedSolid.SubtractToNewSolid(TVGL.VoxelizedSolid[])">
+  SubtractToNewSolid(params VoxelizedSolid[])
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Subtracts to new solid. This is a boolean function that returns a new solid treating &quot;this&quot; solid as the
+minuend and all arguments as subtracted from it (or subtrahends).</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public VoxelizedSolid SubtractToNewSolid(params VoxelizedSolid[] subtrahends)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>subtrahends</code> <a class="xref" href="TVGL.VoxelizedSolid.html">VoxelizedSolid</a>[]</dt>
+    <dd><p>The subtrahends.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.VoxelizedSolid.html">VoxelizedSolid</a></dt>
+    <dd><p>VoxelizedSolid.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_VoxelizedSolid_Transform_" data-uid="TVGL.VoxelizedSolid.Transform*"></a>
+
+  <h3 id="TVGL_VoxelizedSolid_Transform_TVGL_Matrix4x4_" data-uid="TVGL.VoxelizedSolid.Transform(TVGL.Matrix4x4)">
+  Transform(Matrix4x4)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Transforms the solid with the specified transform matrix.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public override void Transform(Matrix4x4 transformMatrix)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>transformMatrix</code> <a class="xref" href="TVGL.Matrix4x4.html">Matrix4x4</a></dt>
+    <dd><p>The transform matrix.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+  <h4 class="section">Exceptions</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.notimplementedexception">NotImplementedException</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+  <a id="TVGL_VoxelizedSolid_TransformToNewSolid_" data-uid="TVGL.VoxelizedSolid.TransformToNewSolid*"></a>
+
+  <h3 id="TVGL_VoxelizedSolid_TransformToNewSolid_TVGL_Matrix4x4_" data-uid="TVGL.VoxelizedSolid.TransformToNewSolid(TVGL.Matrix4x4)">
+  TransformToNewSolid(Matrix4x4)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Create a new version of the solid transformed by the specified transform matrix.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public override Solid TransformToNewSolid(Matrix4x4 transformationMatrix)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>transformationMatrix</code> <a class="xref" href="TVGL.Matrix4x4.html">Matrix4x4</a></dt>
+    <dd><p>The transformation matrix.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.Solid.html">Solid</a></dt>
+    <dd><p>Solid.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <h4 class="section">Exceptions</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.notimplementedexception">NotImplementedException</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+  <a id="TVGL_VoxelizedSolid_Union_" data-uid="TVGL.VoxelizedSolid.Union*"></a>
+
+  <h3 id="TVGL_VoxelizedSolid_Union_TVGL_VoxelizedSolid___" data-uid="TVGL.VoxelizedSolid.Union(TVGL.VoxelizedSolid[])">
+  Union(params VoxelizedSolid[])
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Unions the specified solids. This is a boolean function that returns a union or OR operation on all
+the voxels of the presented solids. Note, that solids should have same bounds for correctness.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public void Union(params VoxelizedSolid[] solids)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>solids</code> <a class="xref" href="TVGL.VoxelizedSolid.html">VoxelizedSolid</a>[]</dt>
+    <dd><p>The solids.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_VoxelizedSolid_UnionToNewSolid_" data-uid="TVGL.VoxelizedSolid.UnionToNewSolid*"></a>
+
+  <h3 id="TVGL_VoxelizedSolid_UnionToNewSolid_TVGL_VoxelizedSolid___" data-uid="TVGL.VoxelizedSolid.UnionToNewSolid(TVGL.VoxelizedSolid[])">
+  UnionToNewSolid(params VoxelizedSolid[])
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Unions to new solid. This is a boolean function that returns a union or OR operation on all
+the voxels of the presented solids. Note, that solids should have same bounds for correctness.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public VoxelizedSolid UnionToNewSolid(params VoxelizedSolid[] solids)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>solids</code> <a class="xref" href="TVGL.VoxelizedSolid.html">VoxelizedSolid</a>[]</dt>
+    <dd><p>The solids.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.VoxelizedSolid.html">VoxelizedSolid</a></dt>
+    <dd><p>VoxelizedSolid.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_VoxelizedSolid_UpdateToAllDense_" data-uid="TVGL.VoxelizedSolid.UpdateToAllDense*"></a>
+
+  <h3 id="TVGL_VoxelizedSolid_UpdateToAllDense" data-uid="TVGL.VoxelizedSolid.UpdateToAllDense">
+  UpdateToAllDense()
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Updates to all dense.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public void UpdateToAllDense()</code></pre>
+  </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_VoxelizedSolid_UpdateToAllSparse_" data-uid="TVGL.VoxelizedSolid.UpdateToAllSparse*"></a>
+
+  <h3 id="TVGL_VoxelizedSolid_UpdateToAllSparse" data-uid="TVGL.VoxelizedSolid.UpdateToAllSparse">
+  UpdateToAllSparse()
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Updates to all sparse.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public void UpdateToAllSparse()</code></pre>
+  </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</article>
+
+        <div class="contribution d-print-none">
+        </div>
+
+        
+      </div>
+
+      <div class="affix">
+        <nav id="affix"></nav>
+      </div>
+    </main>
+
+
+    <footer class="border-top">
+      <div class="container-xxl">
+        <div class="flex-fill">
+          <span>Made with <a href="https://dotnet.github.io/docfx">docfx</a></span>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>

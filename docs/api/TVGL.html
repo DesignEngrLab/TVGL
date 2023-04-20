@@ -1,0 +1,633 @@
+﻿<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+      <title>Namespace TVGL
+ </title>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <meta name="title" content="Namespace TVGL
+ ">
+      
+      <link rel="icon" href="../favicon.ico">
+      <link rel="stylesheet" href="../styles/docfx.min.css">
+      <link rel="stylesheet" href="../styles/main.css">
+      <meta name="docfx:navrel" content="../toc.html">
+      <meta name="docfx:tocrel" content="toc.html">
+      
+      
+      
+
+      <script>
+        MathJax = {
+          options: {
+            processHtmlClass: ['tex2jax_process', 'math']
+          }
+        };
+      </script>
+
+      <script type="text/javascript" src="../styles/docfx.min.js"></script>
+      <script type="text/javascript" src="../styles/main.js"></script>
+  </head>
+
+  <body class="tex2jax_ignore" data-layout="" data-yaml-mime="ManagedReference">
+    <header class="bg-body border-bottom">
+      <nav id="autocollapse" class="navbar navbar-expand-md" role="navigation">
+        <div class="container-xxl flex-nowrap">
+          <a class="navbar-brand" href="../index.html">
+            <img id="logo" class="svg" src="../logo.svg" alt="">
+            
+          </a>
+          <button class="btn btn-lg d-md-none border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navpanel" aria-controls="navpanel" aria-expanded="false" aria-label="Toggle navigation">
+            <i class="bi bi-three-dots"></i>
+          </button>
+          <div class="collapse navbar-collapse" id="navpanel">
+            <div id="navbar">
+            </div>
+          </div>
+        </div>
+      </nav>
+    </header>
+
+    <main class="container-xxl">
+      <div class="toc-offcanvas">
+        <div class="offcanvas-md offcanvas-start" tabindex="-1" id="tocOffcanvas" aria-labelledby="tocOffcanvasLabel">
+          <div class="offcanvas-header">
+            <h5 class="offcanvas-title" id="tocOffcanvasLabel">Table of Contents</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#tocOffcanvas" aria-label="Close"></button>
+          </div>
+          <div class="offcanvas-body">
+            <nav class="toc" id="toc"></nav>
+          </div>
+        </div>
+      </div>
+
+      <div class="content">
+        <div class="actionbar">
+          <button class="btn btn-lg border-0 d-md-none" style="margin-top: -.65em; margin-left: -.8em" type="button" data-bs-toggle="offcanvas" data-bs-target="#tocOffcanvas" aria-controls="tocOffcanvas" aria-expanded="false" aria-label="Show table of contents">
+            <i class="bi bi-list"></i>
+          </button>
+
+          <nav id="breadcrumb"></nav>
+        </div>
+
+        <article data-uid="TVGL">
+
+  <h1 id="TVGL" data-uid="TVGL" class="text-break">Namespace TVGL
+</h1>
+  <div class="markdown level0 summary"></div>
+  <div class="markdown level0 conceptual"></div>
+  <div class="markdown level0 remarks"></div>
+
+    <h3 id="classes">Classes
+</h3>
+    <dl class="jumplist">
+      <dt><a class="xref" href="TVGL.AMFFileData.html">AMFFileData</a></dt>
+      <dd><p>Class AMFFileData.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="TVGL.BorderSegment.html">BorderSegment</a></dt>
+      <dd><p>Class BorderSegment.
+Implements the <a class="xref" href="TVGL.EdgePath.html">EdgePath</a></p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="TVGL.BoundingBox.html">BoundingBox</a></dt>
+      <dd><p>The BoundingBox is a simple class for representing an arbitrarily oriented box
+or 3D prismatic rectangle. It is defined by 1) the Matrix4x4 transform which includes the
+rotation and translation from the gloval frame, 2) the dimension of the box at this coordinate
+frame (the box is only in the positive octant of this local frame), 3) (optional) any points
+of the enclosing solid that touch the box.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="TVGL.BoundingBox-1.html">BoundingBox&lt;T&gt;</a></dt>
+      <dd><p>Class BoundingBox with Generic (T) is for times when you have points you want to save
+on the boundary of the bounding box. these points are of type T, which is constrained
+to be an IVertex3D - currently instantiated by Vertex and Vector3
+Implements the <a class="xref" href="TVGL.BoundingBox.html">BoundingBox</a></p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="TVGL.Capsule.html">Capsule</a></dt>
+      <dd><p>The class for Capsule primitives.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="TVGL.Color.html">Color</a></dt>
+      <dd><p>Struct Color</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="TVGL.Cone.html">Cone</a></dt>
+      <dd><p>The class for Cone primitives.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="TVGL.Constants.html">Constants</a></dt>
+      <dd><p>Class Constants.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="TVGL.ContactData.html">ContactData</a></dt>
+      <dd><p>A ContactData that stores all the necessary face information from a slice
+to be able to produce solids.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="TVGL.CrossSectionSolid.html">CrossSectionSolid</a></dt>
+      <dd><p>Class CrossSectionSolid.
+Implements the <a class="xref" href="TVGL.Solid.html">Solid</a></p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="TVGL.Cylinder.html">Cylinder</a></dt>
+      <dd><p>The class for Cylinder primitives.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="TVGL.Edge.html">Edge</a></dt>
+      <dd><p>The straight-line edge class. It connects to two nodes and lies between two faces.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="TVGL.EdgePath.html">EdgePath</a></dt>
+      <dd><p>Class EdgePath.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="TVGL.EqualityExtensions.html">EqualityExtensions</a></dt>
+      <dd><p>The main class in the StarMathLib. All functions are static
+functions located here.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="TVGL.Extrude.html">Extrude</a></dt>
+      <dd><p>Extrude functions</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="TVGL.GreatCircleAlongArc.html">GreatCircleAlongArc</a></dt>
+      <dd><p>Great Circle based on a gaussian sphere.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="TVGL.GreatCircleOrthogonalToArc.html">GreatCircleOrthogonalToArc</a></dt>
+      <dd><p>Great Circle based on a gaussian sphere.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="TVGL.Grid-1.html">Grid&lt;T&gt;</a></dt>
+      <dd><p>Class Grid.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="TVGL.GroupOfLoops.html">GroupOfLoops</a></dt>
+      <dd><p>The GroupOfLoops class is a list of dependent loops and their associated information.
+This difference from ContactData, since it only every has one positive loop.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="TVGL.ImplicitSolid.html">ImplicitSolid</a></dt>
+      <dd><p>Class ImplicitSolid.
+Implements the <a class="xref" href="TVGL.Solid.html">Solid</a></p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="TVGL.IntersectionGroup.html">IntersectionGroup</a></dt>
+      <dd><p>The IntersectionLoop class stores information about how the positive and negative side
+loops connect together. This includes a 2D intersection and pointers back to the GroupOfLoops
+that contributes to it from each side.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="TVGL.IO.html">IO</a></dt>
+      <dd><p>The IO or input/output class contains static functions for saving and loading files in common formats.
+Note that as a Portable class library, these IO functions cannot interact with your file system. In order
+to load or save, the filename is not enough. One needs to provide the stream.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="TVGL.Loop.html">Loop</a></dt>
+      <dd><p>The Loop class is basically a list of ContactElements that form a path. Usually, this path
+is closed, hence the name &quot;loop&quot;, but it may be used and useful for open paths as well.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="TVGL.LoopOfIntsComparer.html">LoopOfIntsComparer</a></dt>
+      <dd><p>Class LoopOfIntsComparer.
+Implements the <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.iequalitycomparer-1">IEqualityComparer&lt;T&gt;</a></p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="TVGL.Message.html">Message</a></dt>
+      <dd><p>Class Message.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="TVGL.MinimumEnclosure.html">MinimumEnclosure</a></dt>
+      <dd><p>Class MinimumEnclosure.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="TVGL.MiscFunctions.html">MiscFunctions</a></dt>
+      <dd><p>Miscellaneous Functions for TVGL</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="TVGL.ModifyTessellation.html">ModifyTessellation</a></dt>
+      <dd><p>This portion of ModifyTessellation includes the functions to complexify a solid, which means
+adding more elements to it.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="TVGL.NoEqualSort.html">NoEqualSort</a></dt>
+      <dd><p>A comparer for optimization that can be used for either
+ascending or descending.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="TVGL.Plane.html">Plane</a></dt>
+      <dd><p>A structure encapsulating a 3D Plane</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="TVGL.Polygon.html">Polygon</a></dt>
+      <dd><p>Class Polygon.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="TVGL.PolygonEdge.html">PolygonEdge</a></dt>
+      <dd><p>NodeLine</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="TVGL.PolygonInteractionRecord.html">PolygonInteractionRecord</a></dt>
+      <dd><p>Class IntersectionData.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="TVGL.PolygonOperations.html">PolygonOperations</a></dt>
+      <dd><p>A set of general operation for points and paths</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="TVGL.PolynomialSolve.html">PolynomialSolve</a></dt>
+      <dd><p>Class PolynomialSolve.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="TVGL.PrimitiveBorder.html">PrimitiveBorder</a></dt>
+      <dd><p>Class PrimitiveSurfaceBorder.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="TVGL.PrimitiveSurface.html">PrimitiveSurface</a></dt>
+      <dd><p>Class PrimitiveSurface.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="TVGL.Prismatic.html">Prismatic</a></dt>
+      <dd><p>The class for Prismatic primitives.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="TVGL.SegmentIntersection.html">SegmentIntersection</a></dt>
+      <dd><p>Class SegmentIntersection. Is return as part of the Polygon-to-Polygon Interaction Record.
+A collection of these define all the ways that polygon line segment intersect.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="TVGL.Silhouette.html">Silhouette</a></dt>
+      <dd><p>The outline of a solid from a particular direction.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="TVGL.Single3DPolygonTriangulation.html">Single3DPolygonTriangulation</a></dt>
+      <dd><p>Class Single3DPolygonTriangulation.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="TVGL.Slice.html">Slice</a></dt>
+      <dd><p>The Slice class includes static functions for cutting a tessellated solid.
+Slice4 Performs the slicing operation on the prescribed flat plane. This is a NON-Destructive
+operation, and returns two of more new tessellated solids  in the &quot;out&quot; parameter
+lists.
+However, it does reference the solid's faces. So this may conflict with parallel processing.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="TVGL.Solid.html">Solid</a></dt>
+      <dd><p>Class TessellatedSolid.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="TVGL.SolidAssembly.html">SolidAssembly</a></dt>
+      <dd><p>Class SolidAssembly.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="TVGL.SolidContactData.html">SolidContactData</a></dt>
+      <dd><p>Stores the information</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="TVGL.Sphere.html">Sphere</a></dt>
+      <dd><p>Class Sphere.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="TVGL.StatisticsExtensions.html">StatisticsExtensions</a></dt>
+      <dd><p>Class StatisticsExtensions.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="TVGL.SubAssembly.html">SubAssembly</a></dt>
+      <dd><p>Class SubAssembly.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="TVGL.TessellatedSolid.html">TessellatedSolid</a></dt>
+      <dd><p>Class TessellatedSolid.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="TVGL.TessellationBaseClass.html">TessellationBaseClass</a></dt>
+      <dd><p>Class TessellationBaseClass.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="TVGL.TessellationError.html">TessellationError</a></dt>
+      <dd><p>Stores errors in the tessellated solid</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="TVGL.ThreeMFFileData.html">ThreeMFFileData</a></dt>
+      <dd><p>Class ThreeMFFileData.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="TVGL.Torus.html">Torus</a></dt>
+      <dd><p>Class Torus.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="TVGL.TriangleFace.html">TriangleFace</a></dt>
+      <dd><p>This class defines a flat triangle face. The implementation began with triangular faces in mind.
+It should be double-checked for higher polygons.   It inherits from the ConvexFace class in
+MIConvexHull</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="TVGL.TVGLConvexHull.html">TVGLConvexHull</a></dt>
+      <dd><p>The Convex Hull of a Tesselated Solid</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="TVGL.UnknownRegion.html">UnknownRegion</a></dt>
+      <dd><p>Class DenseRegion.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="TVGL.VectorExtensions.html">VectorExtensions</a></dt>
+      <dd><p>Class VectorExtensions.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="TVGL.Vertex.html">Vertex</a></dt>
+      <dd><p>The 3D vertex can connect to any number of faces and edges. It inherits from the
+MIConvexhull IVertex interface.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="TVGL.Vertex2D.html">Vertex2D</a></dt>
+      <dd><p>Vertex2D class used in Triangulate Polygon
+Inherits position from point class</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="TVGL.VoxelizedSolid.html">VoxelizedSolid</a></dt>
+      <dd><p>Class VoxelizedSparseDense.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="TVGL.ZBuffer.html">ZBuffer</a></dt>
+      <dd><p>Class ZBuffer. This class cannot be inherited.</p>
+</dd>
+    </dl>
+    <h3 id="structs">Structs
+</h3>
+    <dl class="jumplist">
+      <dt><a class="xref" href="TVGL.AxisAlignedRectangle.html">AxisAlignedRectangle</a></dt>
+      <dd><p>Axis-aligned rectangle</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="TVGL.BoundingRectangle.html">BoundingRectangle</a></dt>
+      <dd><p>Bounding rectangle information based on area and point pairs.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="TVGL.Circle.html">Circle</a></dt>
+      <dd><p>Public circle structure, given a center point and radius</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="TVGL.ComplexNumber.html">ComplexNumber</a></dt>
+      <dd><p>Struct ComplexNumber</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="TVGL.GaussianSphere.html">GaussianSphere</a></dt>
+      <dd><p>Gaussian Sphere for a polyhedron</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="TVGL.GeneralConicSection.html">GeneralConicSection</a></dt>
+      <dd><p>Public circle structure, given a center point and radius</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="TVGL.Helix.html">Helix</a></dt>
+      <dd><p>Struct Helix
+Implements the <a class="xref" href="TVGL.ICurve.html">ICurve</a></p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="TVGL.Matrix3x3.html">Matrix3x3</a></dt>
+      <dd><p>A structure encapsulating a 3x3 matrix.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="TVGL.Matrix4x4.html">Matrix4x4</a></dt>
+      <dd><p>A structure encapsulating a 4x4 matrix.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="TVGL.MonotoneBox.html">MonotoneBox</a></dt>
+      <dd><p>Struct MonotoneBox</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="TVGL.Quaternion.html">Quaternion</a></dt>
+      <dd><p>A structure encapsulating a four-dimensional vector (x,y,z,w),
+which is used to efficiently rotate an object about the (x,y,z) vector by the angle theta, where w = cos(theta/2).</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="TVGL.StraightLine2D.html">StraightLine2D</a></dt>
+      <dd><p>Struct StraightLine2D
+Implements the <a class="xref" href="TVGL.ICurve.html">ICurve</a></p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="TVGL.StraightLine3D.html">StraightLine3D</a></dt>
+      <dd><p>Struct StraightLine3D
+Implements the <a class="xref" href="TVGL.ICurve.html">ICurve</a></p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="TVGL.TessellatedSolid.faceInfo.html">TessellatedSolid.faceInfo</a></dt>
+      <dd><p>Struct faceInfo</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="TVGL.Vector2.html">Vector2</a></dt>
+      <dd><p>A structure encapsulating two single precision floating point values and provides hardware accelerated methods.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+      <dd><p>A structure encapsulating three single precision floating point values and provides hardware accelerated methods.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="TVGL.Vector4.html">Vector4</a></dt>
+      <dd><p>A structure encapsulating three single precision doubleing point values and provides hardware accelerated methods.</p>
+</dd>
+    </dl>
+    <h3 id="interfaces">Interfaces
+</h3>
+    <dl class="jumplist">
+      <dt><a class="xref" href="TVGL.ICurve.html">ICurve</a></dt>
+      <dd><p>Interface ICurve</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="TVGL.IVertex3D.html">IVertex3D</a></dt>
+      <dd><p>Interface IVertex3D</p>
+</dd>
+    </dl>
+    <h3 id="enums">Enums
+</h3>
+    <dl class="jumplist">
+      <dt><a class="xref" href="TVGL.BooleanOperationType.html">BooleanOperationType</a></dt>
+      <dd><p>Enum BooleanOperationType</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="TVGL.CartesianDirections.html">CartesianDirections</a></dt>
+      <dd><p>CartesianDirections: just the six cardinal directions for the voxelized box around the solid</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="TVGL.CollinearityTypes.html">CollinearityTypes</a></dt>
+      <dd><p>Enum CollinearityTypes</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="TVGL.ColorFamily.html">ColorFamily</a></dt>
+      <dd><p>Enum ColorFamily</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="TVGL.CurvatureType.html">CurvatureType</a></dt>
+      <dd><p>Enum CurvatureType</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="TVGL.FileType.html">FileType</a></dt>
+      <dd><p>Enum FileType</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="TVGL.KnownColors.html">KnownColors</a></dt>
+      <dd><p>Enum KnownColors</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="TVGL.MonotonicityChange.html">MonotonicityChange</a></dt>
+      <dd><p>Enum MonotonicityChange</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="TVGL.PolygonCollection.html">PolygonCollection</a></dt>
+      <dd><p>Enum PolygonCollection</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="TVGL.PolygonFillType.html">PolygonFillType</a></dt>
+      <dd><p>Enum PolygonFillType</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="TVGL.PolygonRelationship.html">PolygonRelationship</a></dt>
+      <dd><p>Enum PolygonRelationship</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="TVGL.PrimitiveCurveType.html">PrimitiveCurveType</a></dt>
+      <dd><p>Enum PrimitiveCurveType</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="TVGL.ResultType.html">ResultType</a></dt>
+      <dd><p>Enum ResultTypes</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="TVGL.SegmentRelationship.html">SegmentRelationship</a></dt>
+      <dd><p>Enum SegmentRelationship</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="TVGL.UnitType.html">UnitType</a></dt>
+      <dd><p>Units of a specified coordinates within the shape or set of shapes.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="TVGL.VerbosityLevels.html">VerbosityLevels</a></dt>
+      <dd><p>Setting the Verbosity to one of these values changes the amount of output
+send to the Debug Listener. Lower values may speed up search</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="TVGL.WhereIsIntersection.html">WhereIsIntersection</a></dt>
+      <dd><p>Enum WhereIsIntersection</p>
+</dd>
+    </dl>
+
+
+</article>
+
+        <div class="contribution d-print-none">
+        </div>
+
+        
+      </div>
+
+      <div class="affix">
+        <nav id="affix"></nav>
+      </div>
+    </main>
+
+
+    <footer class="border-top">
+      <div class="container-xxl">
+        <div class="flex-fill">
+          <span>Made with <a href="https://dotnet.github.io/docfx">docfx</a></span>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>

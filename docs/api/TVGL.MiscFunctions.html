@@ -1,0 +1,4315 @@
+﻿<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+      <title>Class MiscFunctions
+ </title>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <meta name="title" content="Class MiscFunctions
+ ">
+      
+      <link rel="icon" href="../favicon.ico">
+      <link rel="stylesheet" href="../styles/docfx.min.css">
+      <link rel="stylesheet" href="../styles/main.css">
+      <meta name="docfx:navrel" content="../toc.html">
+      <meta name="docfx:tocrel" content="toc.html">
+      
+      
+      
+
+      <script>
+        MathJax = {
+          options: {
+            processHtmlClass: ['tex2jax_process', 'math']
+          }
+        };
+      </script>
+
+      <script type="text/javascript" src="../styles/docfx.min.js"></script>
+      <script type="text/javascript" src="../styles/main.js"></script>
+  </head>
+
+  <body class="tex2jax_ignore" data-layout="" data-yaml-mime="ManagedReference">
+    <header class="bg-body border-bottom">
+      <nav id="autocollapse" class="navbar navbar-expand-md" role="navigation">
+        <div class="container-xxl flex-nowrap">
+          <a class="navbar-brand" href="../index.html">
+            <img id="logo" class="svg" src="../logo.svg" alt="">
+            
+          </a>
+          <button class="btn btn-lg d-md-none border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navpanel" aria-controls="navpanel" aria-expanded="false" aria-label="Toggle navigation">
+            <i class="bi bi-three-dots"></i>
+          </button>
+          <div class="collapse navbar-collapse" id="navpanel">
+            <div id="navbar">
+            </div>
+          </div>
+        </div>
+      </nav>
+    </header>
+
+    <main class="container-xxl">
+      <div class="toc-offcanvas">
+        <div class="offcanvas-md offcanvas-start" tabindex="-1" id="tocOffcanvas" aria-labelledby="tocOffcanvasLabel">
+          <div class="offcanvas-header">
+            <h5 class="offcanvas-title" id="tocOffcanvasLabel">Table of Contents</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#tocOffcanvas" aria-label="Close"></button>
+          </div>
+          <div class="offcanvas-body">
+            <nav class="toc" id="toc"></nav>
+          </div>
+        </div>
+      </div>
+
+      <div class="content">
+        <div class="actionbar">
+          <button class="btn btn-lg border-0 d-md-none" style="margin-top: -.65em; margin-left: -.8em" type="button" data-bs-toggle="offcanvas" data-bs-target="#tocOffcanvas" aria-controls="tocOffcanvas" aria-expanded="false" aria-label="Show table of contents">
+            <i class="bi bi-list"></i>
+          </button>
+
+          <nav id="breadcrumb"></nav>
+        </div>
+
+        <article data-uid="TVGL.MiscFunctions">
+
+
+
+  <h1 id="TVGL_MiscFunctions" data-uid="TVGL.MiscFunctions" class="text-break">
+    Class MiscFunctions
+  
+  </h1>
+
+  <div class="facts text-secondary">
+    <dl><dt>Namespace</dt><dd><a class="xref" href="TVGL.html">TVGL</a></dd></dl>
+  <dl><dt>Assembly</dt><dd>TessellationAndVoxelizationGeometryLibrary.dll</dd></dl>
+  </div>
+
+  <div class="markdown summary"><p>Miscellaneous Functions for TVGL</p>
+</div>
+  <div class="markdown conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static class MiscFunctions</code></pre>
+  </div>
+
+
+
+
+  <dl class="typelist inheritance">
+    <dt>Inheritance</dt>
+    <dd>
+      <div><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object">object</a></div>
+      <div><span class="xref">MiscFunctions</span></div>
+    </dd>
+  </dl>
+
+
+
+  <dl class="typelist derived">
+    <dt>Inherited Members</dt>
+    <dd>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.equals#system-object-equals(system-object)">object.Equals(object)</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.equals#system-object-equals(system-object-system-object)">object.Equals(object, object)</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.gethashcode">object.GetHashCode()</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.gettype">object.GetType()</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.memberwiseclone">object.MemberwiseClone()</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.referenceequals">object.ReferenceEquals(object, object)</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.tostring">object.ToString()</a>
+    </div>
+  </dd></dl>
+
+
+
+
+
+
+  <h2 class="section" id="methods">Methods
+</h2>
+
+
+  <a id="TVGL_MiscFunctions_AngleBetweenVectorAAndDatum_" data-uid="TVGL.MiscFunctions.AngleBetweenVectorAAndDatum*"></a>
+
+  <h3 id="TVGL_MiscFunctions_AngleBetweenVectorAAndDatum_TVGL_Vector3_TVGL_Vector3_TVGL_Vector3_" data-uid="TVGL.MiscFunctions.AngleBetweenVectorAAndDatum(TVGL.Vector3,TVGL.Vector3,TVGL.Vector3)">
+  AngleBetweenVectorAAndDatum(Vector3, Vector3, Vector3)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Returns the angle from 0 to 2 pi of vector-A from the datum.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static double AngleBetweenVectorAAndDatum(this Vector3 vectorA, Vector3 datum, Vector3 unitPlaneNormal)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>vectorA</code> <a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>The vector a.</p>
+</dd>
+    <dt><code>datum</code> <a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>The datum.</p>
+</dd>
+    <dt><code>unitPlaneNormal</code> <a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>The unit plane normal.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>double.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_MiscFunctions_AngleCCWBetweenVectorAAndDatum_" data-uid="TVGL.MiscFunctions.AngleCCWBetweenVectorAAndDatum*"></a>
+
+  <h3 id="TVGL_MiscFunctions_AngleCCWBetweenVectorAAndDatum_TVGL_Vector2_TVGL_Vector2_" data-uid="TVGL.MiscFunctions.AngleCCWBetweenVectorAAndDatum(TVGL.Vector2,TVGL.Vector2)">
+  AngleCCWBetweenVectorAAndDatum(Vector2, Vector2)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the counter-clockwise rotated angle of vector-A from the datum vector</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static double AngleCCWBetweenVectorAAndDatum(this Vector2 vectorA, Vector2 datum)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>vectorA</code> <a class="xref" href="TVGL.Vector2.html">Vector2</a></dt>
+    <dd><p>The vector a.</p>
+</dd>
+    <dt><code>datum</code> <a class="xref" href="TVGL.Vector2.html">Vector2</a></dt>
+    <dd><p>The datum.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>double.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_MiscFunctions_AngleCWBetweenVectorAAndDatum_" data-uid="TVGL.MiscFunctions.AngleCWBetweenVectorAAndDatum*"></a>
+
+  <h3 id="TVGL_MiscFunctions_AngleCWBetweenVectorAAndDatum_TVGL_Vector2_TVGL_Vector2_" data-uid="TVGL.MiscFunctions.AngleCWBetweenVectorAAndDatum(TVGL.Vector2,TVGL.Vector2)">
+  AngleCWBetweenVectorAAndDatum(Vector2, Vector2)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the counter-clockwise rotated angle of vector-A from the datum vector</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static double AngleCWBetweenVectorAAndDatum(this Vector2 vectorA, Vector2 datum)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>vectorA</code> <a class="xref" href="TVGL.Vector2.html">Vector2</a></dt>
+    <dd><p>The vector a.</p>
+</dd>
+    <dt><code>datum</code> <a class="xref" href="TVGL.Vector2.html">Vector2</a></dt>
+    <dd><p>The datum.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>double.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_MiscFunctions_AreaOf3DPolygon_" data-uid="TVGL.MiscFunctions.AreaOf3DPolygon*"></a>
+
+  <h3 id="TVGL_MiscFunctions_AreaOf3DPolygon_System_Collections_Generic_IEnumerable_TVGL_Vector3__TVGL_Vector3_" data-uid="TVGL.MiscFunctions.AreaOf3DPolygon(System.Collections.Generic.IEnumerable{TVGL.Vector3},TVGL.Vector3)">
+  AreaOf3DPolygon(IEnumerable&lt;Vector3&gt;, Vector3)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Calculate the area of any non-intersecting polygon in 3D space (loops)
+This is faster than projecting to a 2D surface first in a seperate function.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static double AreaOf3DPolygon(this IEnumerable&lt;Vector3&gt; loop, Vector3 normal)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>loop</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.Vector3.html">Vector3</a>&gt;</dt>
+    <dd><p>The loop.</p>
+</dd>
+    <dt><code>normal</code> <a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>The normal.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>System.Double.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_MiscFunctions_AreaOf3DPolygon_" data-uid="TVGL.MiscFunctions.AreaOf3DPolygon*"></a>
+
+  <h3 id="TVGL_MiscFunctions_AreaOf3DPolygon_System_Collections_Generic_IEnumerable_TVGL_Vertex__TVGL_Vector3_" data-uid="TVGL.MiscFunctions.AreaOf3DPolygon(System.Collections.Generic.IEnumerable{TVGL.Vertex},TVGL.Vector3)">
+  AreaOf3DPolygon(IEnumerable&lt;Vertex&gt;, Vector3)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Calculate the area of any non-intersecting polygon in 3D space (loops)
+This is faster than projecting to a 2D surface first in a seperate function.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static double AreaOf3DPolygon(this IEnumerable&lt;Vertex&gt; loop, Vector3 normal)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>loop</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.Vertex.html">Vertex</a>&gt;</dt>
+    <dd><p>The loop.</p>
+</dd>
+    <dt><code>normal</code> <a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>The normal.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>System.Double.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_MiscFunctions_ClosestPointOnLineSegmentToPoint_" data-uid="TVGL.MiscFunctions.ClosestPointOnLineSegmentToPoint*"></a>
+
+  <h3 id="TVGL_MiscFunctions_ClosestPointOnLineSegmentToPoint_TVGL_PolygonEdge_TVGL_Vector2_" data-uid="TVGL.MiscFunctions.ClosestPointOnLineSegmentToPoint(TVGL.PolygonEdge,TVGL.Vector2)">
+  ClosestPointOnLineSegmentToPoint(PolygonEdge, Vector2)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the closest point on the line segment from the given point (p).</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static Vector2 ClosestPointOnLineSegmentToPoint(this PolygonEdge line, Vector2 p)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>line</code> <a class="xref" href="TVGL.PolygonEdge.html">PolygonEdge</a></dt>
+    <dd><p>The line.</p>
+</dd>
+    <dt><code>p</code> <a class="xref" href="TVGL.Vector2.html">Vector2</a></dt>
+    <dd><p>The p.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.Vector2.html">Vector2</a></dt>
+    <dd><p>Vector2.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_MiscFunctions_ClosestPointToLines_" data-uid="TVGL.MiscFunctions.ClosestPointToLines*"></a>
+
+  <h3 id="TVGL_MiscFunctions_ClosestPointToLines_System_Collections_Generic_IEnumerable_System_ValueTuple_TVGL_Vector2_TVGL_Vector2___" data-uid="TVGL.MiscFunctions.ClosestPointToLines(System.Collections.Generic.IEnumerable{System.ValueTuple{TVGL.Vector2,TVGL.Vector2}})">
+  ClosestPointToLines(IEnumerable&lt;(Vector2 anchor, Vector2 dir)&gt;)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Closests the point to lines.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static Vector2 ClosestPointToLines(IEnumerable&lt;(Vector2 anchor, Vector2 dir)&gt; lines)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>lines</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;(<a class="xref" href="TVGL.Vector2.html">Vector2</a> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.valuetuple-tvgl.vector2,tvgl.vector2-.anchor">anchor</a>, <a class="xref" href="TVGL.Vector2.html">Vector2</a> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.valuetuple-tvgl.vector2,tvgl.vector2-.dir">dir</a>)&gt;</dt>
+    <dd><p>The lines.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.Vector2.html">Vector2</a></dt>
+    <dd><p>Vector2.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_MiscFunctions_ClosestVertexOnSegmentToVertex_" data-uid="TVGL.MiscFunctions.ClosestVertexOnSegmentToVertex*"></a>
+
+  <h3 id="TVGL_MiscFunctions_ClosestVertexOnSegmentToVertex_TVGL_Vector3_TVGL_Vector3_TVGL_Vector3_System_Double__" data-uid="TVGL.MiscFunctions.ClosestVertexOnSegmentToVertex(TVGL.Vector3,TVGL.Vector3,TVGL.Vector3,System.Double@)">
+  ClosestVertexOnSegmentToVertex(Vector3, Vector3, Vector3, out double)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the closest vertex (3D Point) on line segment (ab) from the given point (p).
+It also returns the distance to the line segment.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static Vector3 ClosestVertexOnSegmentToVertex(Vector3 a, Vector3 b, Vector3 p, out double distanceToSegment)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>a</code> <a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>a.</p>
+</dd>
+    <dt><code>b</code> <a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>The b.</p>
+</dd>
+    <dt><code>p</code> <a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>The p.</p>
+</dd>
+    <dt><code>distanceToSegment</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The distance to segment.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>Vector3.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_MiscFunctions_ClosestVertexOnTriangleToVertex_" data-uid="TVGL.MiscFunctions.ClosestVertexOnTriangleToVertex*"></a>
+
+  <h3 id="TVGL_MiscFunctions_ClosestVertexOnTriangleToVertex_TVGL_Vector3_TVGL_Vector3_TVGL_Vector3_TVGL_Vector3_TVGL_Vector3__" data-uid="TVGL.MiscFunctions.ClosestVertexOnTriangleToVertex(TVGL.Vector3,TVGL.Vector3,TVGL.Vector3,TVGL.Vector3,TVGL.Vector3@)">
+  ClosestVertexOnTriangleToVertex(Vector3, Vector3, Vector3, Vector3, out Vector3)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Finds the closest vertex (3D Point) on a triangle (a,b,c) to the given vertex (p).
+It may be one of the three given points (a,b,c), a point on the edge,
+or a point on the face.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static Vector3 ClosestVertexOnTriangleToVertex(Vector3 a, Vector3 b, Vector3 c, Vector3 p, out Vector3 uvw)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>a</code> <a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>a.</p>
+</dd>
+    <dt><code>b</code> <a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>The b.</p>
+</dd>
+    <dt><code>c</code> <a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>The c.</p>
+</dd>
+    <dt><code>p</code> <a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>The p.</p>
+</dd>
+    <dt><code>uvw</code> <a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>The uvw.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>Vector3.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_MiscFunctions_ConvertTo1DDoublesCollection_" data-uid="TVGL.MiscFunctions.ConvertTo1DDoublesCollection*"></a>
+
+  <h3 id="TVGL_MiscFunctions_ConvertTo1DDoublesCollection_System_Collections_Generic_IEnumerable_TVGL_Vector3__" data-uid="TVGL.MiscFunctions.ConvertTo1DDoublesCollection(System.Collections.Generic.IEnumerable{TVGL.Vector3})">
+  ConvertTo1DDoublesCollection(IEnumerable&lt;Vector3&gt;)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Converts the to a 1D collection of doubles.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static IEnumerable&lt;double&gt; ConvertTo1DDoublesCollection(this IEnumerable&lt;Vector3&gt; coordinates)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>coordinates</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.Vector3.html">Vector3</a>&gt;</dt>
+    <dd><p>The coordinates.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a>&gt;</dt>
+    <dd><p>IEnumerable&lt;System.Double&gt;.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_MiscFunctions_ConvertTo1DDoublesCollection_" data-uid="TVGL.MiscFunctions.ConvertTo1DDoublesCollection*"></a>
+
+  <h3 id="TVGL_MiscFunctions_ConvertTo1DDoublesCollection_System_Collections_Generic_IEnumerable_TVGL_Vertex__" data-uid="TVGL.MiscFunctions.ConvertTo1DDoublesCollection(System.Collections.Generic.IEnumerable{TVGL.Vertex})">
+  ConvertTo1DDoublesCollection(IEnumerable&lt;Vertex&gt;)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Converts the to a 1D collection of doubles.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static IEnumerable&lt;double&gt; ConvertTo1DDoublesCollection(this IEnumerable&lt;Vertex&gt; coordinates)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>coordinates</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.Vertex.html">Vertex</a>&gt;</dt>
+    <dd><p>The coordinates.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a>&gt;</dt>
+    <dd><p>IEnumerable&lt;System.Double&gt;.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_MiscFunctions_ConvertTo2DCoordinates_" data-uid="TVGL.MiscFunctions.ConvertTo2DCoordinates*"></a>
+
+  <h3 id="TVGL_MiscFunctions_ConvertTo2DCoordinates_TVGL_IVertex3D_TVGL_Matrix4x4__" data-uid="TVGL.MiscFunctions.ConvertTo2DCoordinates(TVGL.IVertex3D,TVGL.Matrix4x4@)">
+  ConvertTo2DCoordinates(IVertex3D, in Matrix4x4)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Converts the 3D location (e.g. Vector3) to 2D coordinate (e.g. Vector2).</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static Vector2 ConvertTo2DCoordinates(this IVertex3D location3D, in Matrix4x4 matrix)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>location3D</code> <a class="xref" href="TVGL.IVertex3D.html">IVertex3D</a></dt>
+    <dd><p>The location as a Vector3.</p>
+</dd>
+    <dt><code>matrix</code> <a class="xref" href="TVGL.Matrix4x4.html">Matrix4x4</a></dt>
+    <dd><p>The matrix.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.Vector2.html">Vector2</a></dt>
+    <dd><p>TVGL.Vector2.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_MiscFunctions_ConvertTo2DCoordinates_" data-uid="TVGL.MiscFunctions.ConvertTo2DCoordinates*"></a>
+
+  <h3 id="TVGL_MiscFunctions_ConvertTo2DCoordinates_TVGL_IVertex3D_TVGL_Vector3__TVGL_Matrix4x4__" data-uid="TVGL.MiscFunctions.ConvertTo2DCoordinates(TVGL.IVertex3D,TVGL.Vector3@,TVGL.Matrix4x4@)">
+  ConvertTo2DCoordinates(IVertex3D, in Vector3, out Matrix4x4)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Converts the 3D location (e.g. Vector3) to 2D coordinate (e.g. Vector2).</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static Vector2 ConvertTo2DCoordinates(this IVertex3D location3D, in Vector3 direction, out Matrix4x4 backTransform)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>location3D</code> <a class="xref" href="TVGL.IVertex3D.html">IVertex3D</a></dt>
+    <dd><p>The location3 d.</p>
+</dd>
+    <dt><code>direction</code> <a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>The direction.</p>
+</dd>
+    <dt><code>backTransform</code> <a class="xref" href="TVGL.Matrix4x4.html">Matrix4x4</a></dt>
+    <dd><p>The back transform.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.Vector2.html">Vector2</a></dt>
+    <dd><p>Vector2.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_MiscFunctions_ConvertTo3DLocation_" data-uid="TVGL.MiscFunctions.ConvertTo3DLocation*"></a>
+
+  <h3 id="TVGL_MiscFunctions_ConvertTo3DLocation_TVGL_Vector2__TVGL_Matrix4x4__" data-uid="TVGL.MiscFunctions.ConvertTo3DLocation(TVGL.Vector2@,TVGL.Matrix4x4@)">
+  ConvertTo3DLocation(in Vector2, in Matrix4x4)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Converts the 3D location (e.g. Vector3) to 2D coordinate (e.g. Vector2).</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static Vector3 ConvertTo3DLocation(this in Vector2 coordinates2D, in Matrix4x4 transform)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>coordinates2D</code> <a class="xref" href="TVGL.Vector2.html">Vector2</a></dt>
+    <dd><p>The coordinates2 d.</p>
+</dd>
+    <dt><code>transform</code> <a class="xref" href="TVGL.Matrix4x4.html">Matrix4x4</a></dt>
+    <dd><p>The transform matrix.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>TVGL.Vector2.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_MiscFunctions_ConvertTo3DLocations_" data-uid="TVGL.MiscFunctions.ConvertTo3DLocations*"></a>
+
+  <h3 id="TVGL_MiscFunctions_ConvertTo3DLocations_System_Collections_Generic_IEnumerable_TVGL_Vector2__TVGL_Matrix4x4_" data-uid="TVGL.MiscFunctions.ConvertTo3DLocations(System.Collections.Generic.IEnumerable{TVGL.Vector2},TVGL.Matrix4x4)">
+  ConvertTo3DLocations(IEnumerable&lt;Vector2&gt;, Matrix4x4)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Converts the 2D coordinates into 3D locations in a plane defined by normal direction and distance.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static IEnumerable&lt;Vector3&gt; ConvertTo3DLocations(this IEnumerable&lt;Vector2&gt; coordinates, Matrix4x4 transform)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>coordinates</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.Vector2.html">Vector2</a>&gt;</dt>
+    <dd><p>The coordinates.</p>
+</dd>
+    <dt><code>transform</code> <a class="xref" href="TVGL.Matrix4x4.html">Matrix4x4</a></dt>
+    <dd><p>The transform matrix.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.Vector3.html">Vector3</a>&gt;</dt>
+    <dd><p>System.Collections.Generic.IEnumerable&lt;TVGL.Vector3&gt;.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_MiscFunctions_ConvertTo3DLocations_" data-uid="TVGL.MiscFunctions.ConvertTo3DLocations*"></a>
+
+  <h3 id="TVGL_MiscFunctions_ConvertTo3DLocations_System_Collections_Generic_IEnumerable_TVGL_Vector2__TVGL_Vector3_System_Double_" data-uid="TVGL.MiscFunctions.ConvertTo3DLocations(System.Collections.Generic.IEnumerable{TVGL.Vector2},TVGL.Vector3,System.Double)">
+  ConvertTo3DLocations(IEnumerable&lt;Vector2&gt;, Vector3, double)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Converts the 2D coordinates into 3D locations in a plane defined by normal direction and distance.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static IEnumerable&lt;Vector3&gt; ConvertTo3DLocations(this IEnumerable&lt;Vector2&gt; coordinates, Vector3 normalDirection, double distanceAlongDirection)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>coordinates</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.Vector2.html">Vector2</a>&gt;</dt>
+    <dd><p>The coordinates.</p>
+</dd>
+    <dt><code>normalDirection</code> <a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>The normal direction of the new plane.</p>
+</dd>
+    <dt><code>distanceAlongDirection</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The distance of the plane from the origin.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.Vector3.html">Vector3</a>&gt;</dt>
+    <dd><p>System.Collections.Generic.IEnumerable&lt;TVGL.Vector3&gt;.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_MiscFunctions_ConvertTo3DLocations_" data-uid="TVGL.MiscFunctions.ConvertTo3DLocations*"></a>
+
+  <h3 id="TVGL_MiscFunctions_ConvertTo3DLocations_TVGL_Polygon_TVGL_Matrix4x4_" data-uid="TVGL.MiscFunctions.ConvertTo3DLocations(TVGL.Polygon,TVGL.Matrix4x4)">
+  ConvertTo3DLocations(Polygon, Matrix4x4)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Converts the 2D coordinates into 3D locations in a plane defined by normal direction and distance.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static IEnumerable&lt;Vector3&gt; ConvertTo3DLocations(this Polygon polygon, Matrix4x4 transform)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>polygon</code> <a class="xref" href="TVGL.Polygon.html">Polygon</a></dt>
+    <dd><p>The polygon.</p>
+</dd>
+    <dt><code>transform</code> <a class="xref" href="TVGL.Matrix4x4.html">Matrix4x4</a></dt>
+    <dd><p>The transform matrix.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.Vector3.html">Vector3</a>&gt;</dt>
+    <dd><p>System.Collections.Generic.IEnumerable&lt;TVGL.Vector3&gt;.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_MiscFunctions_ConvertTo3DLocations_" data-uid="TVGL.MiscFunctions.ConvertTo3DLocations*"></a>
+
+  <h3 id="TVGL_MiscFunctions_ConvertTo3DLocations_TVGL_Polygon_TVGL_Vector3_System_Double_" data-uid="TVGL.MiscFunctions.ConvertTo3DLocations(TVGL.Polygon,TVGL.Vector3,System.Double)">
+  ConvertTo3DLocations(Polygon, Vector3, double)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Converts the 2D coordinates into 3D locations in a plane defined by normal direction and distance.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static IEnumerable&lt;Vector3&gt; ConvertTo3DLocations(this Polygon coordinates, Vector3 normalDirection, double distanceAlongDirection)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>coordinates</code> <a class="xref" href="TVGL.Polygon.html">Polygon</a></dt>
+    <dd><p>The coordinates.</p>
+</dd>
+    <dt><code>normalDirection</code> <a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>The normal direction of the new plane.</p>
+</dd>
+    <dt><code>distanceAlongDirection</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The distance of the plane from the origin.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.Vector3.html">Vector3</a>&gt;</dt>
+    <dd><p>System.Collections.Generic.IEnumerable&lt;TVGL.Vector3&gt;.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_MiscFunctions_CreateCirclePath_" data-uid="TVGL.MiscFunctions.CreateCirclePath*"></a>
+
+  <h3 id="TVGL_MiscFunctions_CreateCirclePath_TVGL_Vector2_System_Double_System_Double_" data-uid="TVGL.MiscFunctions.CreateCirclePath(TVGL.Vector2,System.Double,System.Double)">
+  CreateCirclePath(Vector2, double, double)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Returns a the path of a circle made up of points. Increment as needed.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static List&lt;Vector2&gt; CreateCirclePath(Vector2 center, double radius, double radianIncrement = 0.06283185307179587)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>center</code> <a class="xref" href="TVGL.Vector2.html">Vector2</a></dt>
+    <dd><p>The center.</p>
+</dd>
+    <dt><code>radius</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The radius.</p>
+</dd>
+    <dt><code>radianIncrement</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The radian increment.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.list-1">List</a>&lt;<a class="xref" href="TVGL.Vector2.html">Vector2</a>&gt;</dt>
+    <dd><p>System.Collections.Generic.List&lt;TVGL.Vector2&gt;.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_MiscFunctions_DefineInnerOuterEdges_" data-uid="TVGL.MiscFunctions.DefineInnerOuterEdges*"></a>
+
+  <h3 id="TVGL_MiscFunctions_DefineInnerOuterEdges_System_Collections_Generic_IEnumerable_TVGL_TriangleFace__System_Collections_Generic_HashSet_TVGL_Edge___System_Collections_Generic_HashSet_TVGL_Edge___" data-uid="TVGL.MiscFunctions.DefineInnerOuterEdges(System.Collections.Generic.IEnumerable{TVGL.TriangleFace},System.Collections.Generic.HashSet{TVGL.Edge}@,System.Collections.Generic.HashSet{TVGL.Edge}@)">
+  DefineInnerOuterEdges(IEnumerable&lt;TriangleFace&gt;, out HashSet&lt;Edge&gt;, out HashSet&lt;Edge&gt;)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Defines the inner outer edges.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static void DefineInnerOuterEdges(IEnumerable&lt;TriangleFace&gt; faces, out HashSet&lt;Edge&gt; innerEdgeHash, out HashSet&lt;Edge&gt; outerEdgeHash)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>faces</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.TriangleFace.html">TriangleFace</a>&gt;</dt>
+    <dd><p>The faces.</p>
+</dd>
+    <dt><code>innerEdgeHash</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.hashset-1">HashSet</a>&lt;<a class="xref" href="TVGL.Edge.html">Edge</a>&gt;</dt>
+    <dd><p>The inner edge hash.</p>
+</dd>
+    <dt><code>outerEdgeHash</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.hashset-1">HashSet</a>&lt;<a class="xref" href="TVGL.Edge.html">Edge</a>&gt;</dt>
+    <dd><p>The outer edge hash.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_MiscFunctions_DetermineNormalForA3DPolygon_" data-uid="TVGL.MiscFunctions.DetermineNormalForA3DPolygon*"></a>
+
+  <h3 id="TVGL_MiscFunctions_DetermineNormalForA3DPolygon_System_Collections_Generic_IEnumerable_TVGL_Vector3__System_Int32_System_Boolean__TVGL_Vector3_System_Double__" data-uid="TVGL.MiscFunctions.DetermineNormalForA3DPolygon(System.Collections.Generic.IEnumerable{TVGL.Vector3},System.Int32,System.Boolean@,TVGL.Vector3,System.Double@)">
+  DetermineNormalForA3DPolygon(IEnumerable&lt;Vector3&gt;, int, out bool, Vector3, out double)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Determines the normal for a 3D vertex polygon.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static Vector3 DetermineNormalForA3DPolygon(this IEnumerable&lt;Vector3&gt; vertices, int numSides, out bool reverseVertexOrder, Vector3 suggestedNormal, out double distanceToPlane)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>vertices</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.Vector3.html">Vector3</a>&gt;</dt>
+    <dd><p>The vertices.</p>
+</dd>
+    <dt><code>numSides</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a></dt>
+    <dd><p>The number sides.</p>
+</dd>
+    <dt><code>reverseVertexOrder</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd><p>if set to <code>true</code> [reverse vertex order].</p>
+</dd>
+    <dt><code>suggestedNormal</code> <a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>The suggested normal.</p>
+</dd>
+    <dt><code>distanceToPlane</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The distance to plane.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>Vector3.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_MiscFunctions_DetermineNormalForA3DPolygon_" data-uid="TVGL.MiscFunctions.DetermineNormalForA3DPolygon*"></a>
+
+  <h3 id="TVGL_MiscFunctions_DetermineNormalForA3DPolygon_System_Collections_Generic_IEnumerable_TVGL_Vertex__System_Int32_System_Boolean__TVGL_Vector3_System_Double__" data-uid="TVGL.MiscFunctions.DetermineNormalForA3DPolygon(System.Collections.Generic.IEnumerable{TVGL.Vertex},System.Int32,System.Boolean@,TVGL.Vector3,System.Double@)">
+  DetermineNormalForA3DPolygon(IEnumerable&lt;Vertex&gt;, int, out bool, Vector3, out double)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Determines the normal for a 3D vertex polygon.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static Vector3 DetermineNormalForA3DPolygon(this IEnumerable&lt;Vertex&gt; vertices, int numSides, out bool reverseVertexOrder, Vector3 suggestedNormal, out double distanceToPlane)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>vertices</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.Vertex.html">Vertex</a>&gt;</dt>
+    <dd><p>The vertices.</p>
+</dd>
+    <dt><code>numSides</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a></dt>
+    <dd><p>The number sides.</p>
+</dd>
+    <dt><code>reverseVertexOrder</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd><p>if set to <code>true</code> [reverse vertex order].</p>
+</dd>
+    <dt><code>suggestedNormal</code> <a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>The suggested normal.</p>
+</dd>
+    <dt><code>distanceToPlane</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The distance to plane.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>Vector3.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_MiscFunctions_DistancePointToLine_" data-uid="TVGL.MiscFunctions.DistancePointToLine*"></a>
+
+  <h3 id="TVGL_MiscFunctions_DistancePointToLine_TVGL_Vector2_TVGL_Vector2_TVGL_Vector2_TVGL_Vector2__" data-uid="TVGL.MiscFunctions.DistancePointToLine(TVGL.Vector2,TVGL.Vector2,TVGL.Vector2,TVGL.Vector2@)">
+  DistancePointToLine(Vector2, Vector2, Vector2, out Vector2)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Distances the point to line.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static double DistancePointToLine(Vector2 qPoint, Vector2 lineRefPt, Vector2 lineVector, out Vector2 pointOnLine)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>qPoint</code> <a class="xref" href="TVGL.Vector2.html">Vector2</a></dt>
+    <dd><p>The q point.</p>
+</dd>
+    <dt><code>lineRefPt</code> <a class="xref" href="TVGL.Vector2.html">Vector2</a></dt>
+    <dd><p>The line reference pt.</p>
+</dd>
+    <dt><code>lineVector</code> <a class="xref" href="TVGL.Vector2.html">Vector2</a></dt>
+    <dd><p>The line vector.</p>
+</dd>
+    <dt><code>pointOnLine</code> <a class="xref" href="TVGL.Vector2.html">Vector2</a></dt>
+    <dd><p>The point on line.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>double.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_MiscFunctions_DistancePointToLine_" data-uid="TVGL.MiscFunctions.DistancePointToLine*"></a>
+
+  <h3 id="TVGL_MiscFunctions_DistancePointToLine_TVGL_Vector3_TVGL_Vector3_TVGL_Vector3_TVGL_Vector3__" data-uid="TVGL.MiscFunctions.DistancePointToLine(TVGL.Vector3,TVGL.Vector3,TVGL.Vector3,TVGL.Vector3@)">
+  DistancePointToLine(Vector3, Vector3, Vector3, out Vector3)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Returns the distance the point on an infinite line.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static double DistancePointToLine(Vector3 qPoint, Vector3 lineRefPt, Vector3 lineVector, out Vector3 pointOnLine)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>qPoint</code> <a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>q is the point that is off of the line.</p>
+</dd>
+    <dt><code>lineRefPt</code> <a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>p is a reference point on the line.</p>
+</dd>
+    <dt><code>lineVector</code> <a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>n is the vector of the line direction.</p>
+</dd>
+    <dt><code>pointOnLine</code> <a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>The point on line closest to point, q.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>System.Double.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_MiscFunctions_DistancePointToLine_" data-uid="TVGL.MiscFunctions.DistancePointToLine*"></a>
+
+  <h3 id="TVGL_MiscFunctions_DistancePointToLine_TVGL_Vector3_TVGL_Vector3_TVGL_Vector3_" data-uid="TVGL.MiscFunctions.DistancePointToLine(TVGL.Vector3,TVGL.Vector3,TVGL.Vector3)">
+  DistancePointToLine(Vector3, Vector3, Vector3)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Returns the distance the point on an infinite line.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static double DistancePointToLine(Vector3 qPoint, Vector3 lineRefPt, Vector3 lineVector)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>qPoint</code> <a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>The q point that is off of the line.</p>
+</dd>
+    <dt><code>lineRefPt</code> <a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>The line reference point on the line.</p>
+</dd>
+    <dt><code>lineVector</code> <a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>The line direction vector.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>System.Double.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_MiscFunctions_DistancePointToPlane_" data-uid="TVGL.MiscFunctions.DistancePointToPlane*"></a>
+
+  <h3 id="TVGL_MiscFunctions_DistancePointToPlane_TVGL_Vector3_TVGL_Vector3_System_Double_" data-uid="TVGL.MiscFunctions.DistancePointToPlane(TVGL.Vector3,TVGL.Vector3,System.Double)">
+  DistancePointToPlane(Vector3, Vector3, double)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Returns the signed distance of the point to the plane. If the point is &quot;above&quot; the plane, then a positive
+distance is return - if &quot;below&quot; then negative. This &quot;above&quot; means that the point is on the side of the
+plane that the normal points towards.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static double DistancePointToPlane(Vector3 point, Vector3 normalOfPlane, double signedDistanceToPlane)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>point</code> <a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>The point.</p>
+</dd>
+    <dt><code>normalOfPlane</code> <a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>The normal of plane.</p>
+</dd>
+    <dt><code>signedDistanceToPlane</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The signed distance to plane.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>the distance between the two 3D points.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_MiscFunctions_DistancePointToPlane_" data-uid="TVGL.MiscFunctions.DistancePointToPlane*"></a>
+
+  <h3 id="TVGL_MiscFunctions_DistancePointToPlane_TVGL_Vector3_TVGL_Vector3_TVGL_Vector3_" data-uid="TVGL.MiscFunctions.DistancePointToPlane(TVGL.Vector3,TVGL.Vector3,TVGL.Vector3)">
+  DistancePointToPlane(Vector3, Vector3, Vector3)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Returns the signed distance of the point to the plane.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static double DistancePointToPlane(Vector3 point, Vector3 normalOfPlane, Vector3 positionOnPlane)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>point</code> <a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>The point.</p>
+</dd>
+    <dt><code>normalOfPlane</code> <a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>The normal of plane.</p>
+</dd>
+    <dt><code>positionOnPlane</code> <a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>The position on plane.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>the distance between the two 3D points.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_MiscFunctions_FacesWithDistinctNormals_" data-uid="TVGL.MiscFunctions.FacesWithDistinctNormals*"></a>
+
+  <h3 id="TVGL_MiscFunctions_FacesWithDistinctNormals_System_Collections_Generic_IEnumerable_TVGL_TriangleFace__System_Double_System_Boolean_" data-uid="TVGL.MiscFunctions.FacesWithDistinctNormals(System.Collections.Generic.IEnumerable{TVGL.TriangleFace},System.Double,System.Boolean)">
+  FacesWithDistinctNormals(IEnumerable&lt;TriangleFace&gt;, double, bool)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets a collection of faces with distinct normals. These are the largest faces within the set with common normal.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static List&lt;TriangleFace&gt; FacesWithDistinctNormals(this IEnumerable&lt;TriangleFace&gt; faces, double tolerance = 0.01, bool removeOpposites = true)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>faces</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.TriangleFace.html">TriangleFace</a>&gt;</dt>
+    <dd><p>The faces.</p>
+</dd>
+    <dt><code>tolerance</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The toleranceForCombiningPoints.</p>
+</dd>
+    <dt><code>removeOpposites</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd><p>if set to <code>true</code> [remove opposites].</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.list-1">List</a>&lt;<a class="xref" href="TVGL.TriangleFace.html">TriangleFace</a>&gt;</dt>
+    <dd><p>List&lt;TriangleFace&gt;.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_MiscFunctions_FindAxisFromNormals_" data-uid="TVGL.MiscFunctions.FindAxisFromNormals*"></a>
+
+  <h3 id="TVGL_MiscFunctions_FindAxisFromNormals_System_Collections_Generic_IEnumerable_TVGL_Vector3__System_Int32_" data-uid="TVGL.MiscFunctions.FindAxisFromNormals(System.Collections.Generic.IEnumerable{TVGL.Vector3},System.Int32)">
+  FindAxisFromNormals(IEnumerable&lt;Vector3&gt;, int)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Finds the axis from normals.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static Vector3 FindAxisFromNormals(IEnumerable&lt;Vector3&gt; normals, int count)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>normals</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.Vector3.html">Vector3</a>&gt;</dt>
+    <dd><p>The normals.</p>
+</dd>
+    <dt><code>count</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a></dt>
+    <dd><p>The count.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>Vector3.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_MiscFunctions_FindAxisToMaximizeProjectedArea_" data-uid="TVGL.MiscFunctions.FindAxisToMaximizeProjectedArea*"></a>
+
+  <h3 id="TVGL_MiscFunctions_FindAxisToMaximizeProjectedArea_System_Collections_Generic_IEnumerable_TVGL_TriangleFace__System_Int32_" data-uid="TVGL.MiscFunctions.FindAxisToMaximizeProjectedArea(System.Collections.Generic.IEnumerable{TVGL.TriangleFace},System.Int32)">
+  FindAxisToMaximizeProjectedArea(IEnumerable&lt;TriangleFace&gt;, int)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Finds the axis to maximize projected area.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static Vector3 FindAxisToMaximizeProjectedArea(IEnumerable&lt;TriangleFace&gt; faces, int count)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>faces</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.TriangleFace.html">TriangleFace</a>&gt;</dt>
+    <dd><p>The faces.</p>
+</dd>
+    <dt><code>count</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a></dt>
+    <dd><p>The count.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>Vector3.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_MiscFunctions_FindAxisToMinimizeProjectedArea_" data-uid="TVGL.MiscFunctions.FindAxisToMinimizeProjectedArea*"></a>
+
+  <h3 id="TVGL_MiscFunctions_FindAxisToMinimizeProjectedArea_System_Collections_Generic_IEnumerable_TVGL_TriangleFace__System_Int32_" data-uid="TVGL.MiscFunctions.FindAxisToMinimizeProjectedArea(System.Collections.Generic.IEnumerable{TVGL.TriangleFace},System.Int32)">
+  FindAxisToMinimizeProjectedArea(IEnumerable&lt;TriangleFace&gt;, int)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Finds the axis to minimize projected area.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static Vector3 FindAxisToMinimizeProjectedArea(IEnumerable&lt;TriangleFace&gt; faces, int count)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>faces</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.TriangleFace.html">TriangleFace</a>&gt;</dt>
+    <dd><p>The faces.</p>
+</dd>
+    <dt><code>count</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a></dt>
+    <dd><p>The count.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>Vector3.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_MiscFunctions_FindBestPlanarCurve_" data-uid="TVGL.MiscFunctions.FindBestPlanarCurve*"></a>
+
+  <h3 id="TVGL_MiscFunctions_FindBestPlanarCurve_System_Collections_Generic_IEnumerable_TVGL_Vector3__TVGL_Plane__System_Double__System_Double__" data-uid="TVGL.MiscFunctions.FindBestPlanarCurve(System.Collections.Generic.IEnumerable{TVGL.Vector3},TVGL.Plane@,System.Double@,System.Double@)">
+  FindBestPlanarCurve(IEnumerable&lt;Vector3&gt;, out Plane, out double, out double)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Finds the best planar curve.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static ICurve FindBestPlanarCurve(this IEnumerable&lt;Vector3&gt; points, out Plane plane, out double planeResidual, out double curveResidual)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>points</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.Vector3.html">Vector3</a>&gt;</dt>
+    <dd><p>The points.</p>
+</dd>
+    <dt><code>plane</code> <a class="xref" href="TVGL.Plane.html">Plane</a></dt>
+    <dd><p>The plane.</p>
+</dd>
+    <dt><code>planeResidual</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The plane residual.</p>
+</dd>
+    <dt><code>curveResidual</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The curve residual.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.ICurve.html">ICurve</a></dt>
+    <dd><p>ICurve.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_MiscFunctions_FindFlatPatches_" data-uid="TVGL.MiscFunctions.FindFlatPatches*"></a>
+
+  <h3 id="TVGL_MiscFunctions_FindFlatPatches_System_Collections_Generic_IEnumerable_TVGL_PrimitiveSurface__" data-uid="TVGL.MiscFunctions.FindFlatPatches(System.Collections.Generic.IEnumerable{TVGL.PrimitiveSurface})">
+  FindFlatPatches(IEnumerable&lt;PrimitiveSurface&gt;)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets all the flat patches, given a list of primitives.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static IEnumerable&lt;Plane&gt; FindFlatPatches(this IEnumerable&lt;PrimitiveSurface&gt; primitives)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>primitives</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.PrimitiveSurface.html">PrimitiveSurface</a>&gt;</dt>
+    <dd><p>The primitives.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.Plane.html">Plane</a>&gt;</dt>
+    <dd><p>List&lt;Flat&gt;.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_MiscFunctions_FindFlats_" data-uid="TVGL.MiscFunctions.FindFlats*"></a>
+
+  <h3 id="TVGL_MiscFunctions_FindFlats_System_Collections_Generic_IEnumerable_TVGL_TriangleFace__System_Int32_System_Double_System_Collections_Generic_HashSet_TVGL_Edge__" data-uid="TVGL.MiscFunctions.FindFlats(System.Collections.Generic.IEnumerable{TVGL.TriangleFace},System.Int32,System.Double,System.Collections.Generic.HashSet{TVGL.Edge})">
+  FindFlats(IEnumerable&lt;TriangleFace&gt;, int, double, HashSet&lt;Edge&gt;)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets a list of flats for a given list of faces.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static IEnumerable&lt;Plane&gt; FindFlats(this IEnumerable&lt;TriangleFace&gt; faces, int minNumberOfFacesPerFlat = 2, double minFlatArea = 0, HashSet&lt;Edge&gt; nonCrossingEdges = null)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>faces</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.TriangleFace.html">TriangleFace</a>&gt;</dt>
+    <dd><p>The faces.</p>
+</dd>
+    <dt><code>minNumberOfFacesPerFlat</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a></dt>
+    <dd><p>The minimum number of faces per flat.</p>
+</dd>
+    <dt><code>minFlatArea</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The minimum flat area.</p>
+</dd>
+    <dt><code>nonCrossingEdges</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.hashset-1">HashSet</a>&lt;<a class="xref" href="TVGL.Edge.html">Edge</a>&gt;</dt>
+    <dd><p>The non crossing edges.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.Plane.html">Plane</a>&gt;</dt>
+    <dd><p>List&lt;Flat&gt;.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_MiscFunctions_GetDodecahedronDirs_" data-uid="TVGL.MiscFunctions.GetDodecahedronDirs*"></a>
+
+  <h3 id="TVGL_MiscFunctions_GetDodecahedronDirs_TVGL_Vector3_" data-uid="TVGL.MiscFunctions.GetDodecahedronDirs(TVGL.Vector3)">
+  GetDodecahedronDirs(Vector3)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the dodecahedron dirs.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static IEnumerable&lt;Vector3&gt; GetDodecahedronDirs(Vector3 relativeZ)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>relativeZ</code> <a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>The relative z.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.Vector3.html">Vector3</a>&gt;</dt>
+    <dd><p>IEnumerable&lt;Vector3&gt;.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_MiscFunctions_GetMultipleSolids_" data-uid="TVGL.MiscFunctions.GetMultipleSolids*"></a>
+
+  <h3 id="TVGL_MiscFunctions_GetMultipleSolids_TVGL_TessellatedSolid_System_Collections_Generic_List_System_Int32____" data-uid="TVGL.MiscFunctions.GetMultipleSolids(TVGL.TessellatedSolid,System.Collections.Generic.List{System.Int32[]})">
+  GetMultipleSolids(TessellatedSolid, List&lt;int[]&gt;)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets all the individual solids from a tesselated solid.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static List&lt;TessellatedSolid&gt; GetMultipleSolids(this TessellatedSolid ts, List&lt;int[]&gt; faceGroupsThatAreBodies = null)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>ts</code> <a class="xref" href="TVGL.TessellatedSolid.html">TessellatedSolid</a></dt>
+    <dd><p>The ts.</p>
+</dd>
+    <dt><code>faceGroupsThatAreBodies</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.list-1">List</a>&lt;<a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a>[]&gt;</dt>
+    <dd><p>The face groups that are bodies.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.list-1">List</a>&lt;<a class="xref" href="TVGL.TessellatedSolid.html">TessellatedSolid</a>&gt;</dt>
+    <dd><p>List&lt;TessellatedSolid&gt;.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <h4 class="section">Exceptions</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.exception">Exception</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+  <a id="TVGL_MiscFunctions_GetPerpendicularDirection_" data-uid="TVGL.MiscFunctions.GetPerpendicularDirection*"></a>
+
+  <h3 id="TVGL_MiscFunctions_GetPerpendicularDirection_TVGL_Vector3_System_Double_" data-uid="TVGL.MiscFunctions.GetPerpendicularDirection(TVGL.Vector3,System.Double)">
+  GetPerpendicularDirection(Vector3, double)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the perpendicular direction.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static Vector3 GetPerpendicularDirection(this Vector3 direction, double additionalRotation = 0)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>direction</code> <a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>The direction.</p>
+</dd>
+    <dt><code>additionalRotation</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>An additional counterclockwise rotation (in radians) about the direction.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>TVGL.Vector3.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_MiscFunctions_GetPlaneFromThreePoints_" data-uid="TVGL.MiscFunctions.GetPlaneFromThreePoints*"></a>
+
+  <h3 id="TVGL_MiscFunctions_GetPlaneFromThreePoints_TVGL_Vector3_TVGL_Vector3_TVGL_Vector3_" data-uid="TVGL.MiscFunctions.GetPlaneFromThreePoints(TVGL.Vector3,TVGL.Vector3,TVGL.Vector3)">
+  GetPlaneFromThreePoints(Vector3, Vector3, Vector3)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the plane from three points.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static Plane GetPlaneFromThreePoints(Vector3 p1, Vector3 p2, Vector3 p3)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>p1</code> <a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>The p1.</p>
+</dd>
+    <dt><code>p2</code> <a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>The p2.</p>
+</dd>
+    <dt><code>p3</code> <a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>The p3.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.Plane.html">Plane</a></dt>
+    <dd><p>TVGL.Plane.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_MiscFunctions_GetVertices_" data-uid="TVGL.MiscFunctions.GetVertices*"></a>
+
+  <h3 id="TVGL_MiscFunctions_GetVertices_System_Collections_Generic_List_TVGL_Edge__" data-uid="TVGL.MiscFunctions.GetVertices(System.Collections.Generic.List{TVGL.Edge})">
+  GetVertices(List&lt;Edge&gt;)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>This function gets the vertices from a list of edges.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static HashSet&lt;Vertex&gt; GetVertices(this List&lt;Edge&gt; edges)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>edges</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.list-1">List</a>&lt;<a class="xref" href="TVGL.Edge.html">Edge</a>&gt;</dt>
+    <dd><p>The edges.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.hashset-1">HashSet</a>&lt;<a class="xref" href="TVGL.Vertex.html">Vertex</a>&gt;</dt>
+    <dd><p>System.Collections.Generic.HashSet&lt;TVGL.Vertex&gt;.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_MiscFunctions_GetVertices_" data-uid="TVGL.MiscFunctions.GetVertices*"></a>
+
+  <h3 id="TVGL_MiscFunctions_GetVertices_System_Collections_Generic_List_TVGL_TriangleFace__" data-uid="TVGL.MiscFunctions.GetVertices(System.Collections.Generic.List{TVGL.TriangleFace})">
+  GetVertices(List&lt;TriangleFace&gt;)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>This function gets the vertices from a list of faces.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static HashSet&lt;Vertex&gt; GetVertices(this List&lt;TriangleFace&gt; faces)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>faces</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.list-1">List</a>&lt;<a class="xref" href="TVGL.TriangleFace.html">TriangleFace</a>&gt;</dt>
+    <dd><p>The faces.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.hashset-1">HashSet</a>&lt;<a class="xref" href="TVGL.Vertex.html">Vertex</a>&gt;</dt>
+    <dd><p>System.Collections.Generic.HashSet&lt;TVGL.Vertex&gt;.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_MiscFunctions_IsVertexInsideSolid_" data-uid="TVGL.MiscFunctions.IsVertexInsideSolid*"></a>
+
+  <h3 id="TVGL_MiscFunctions_IsVertexInsideSolid_TVGL_TessellatedSolid_TVGL_Vertex_System_Boolean_" data-uid="TVGL.MiscFunctions.IsVertexInsideSolid(TVGL.TessellatedSolid,TVGL.Vertex,System.Boolean)">
+  IsVertexInsideSolid(TessellatedSolid, Vertex, bool)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Determines if a point is inside a tesselated solid (polyhedron).
+And the polygon is not self-intersecting
+<a href="http://www.cescg.org/CESCG-2012/papers/Horvat-Ray-casting_point-in-polyhedron_test.pdf">http://www.cescg.org/CESCG-2012/papers/Horvat-Ray-casting_point-in-polyhedron_test.pdf</a></p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static bool IsVertexInsideSolid(TessellatedSolid ts, Vertex vertexInQuestion, bool onBoundaryIsInside = true)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>ts</code> <a class="xref" href="TVGL.TessellatedSolid.html">TessellatedSolid</a></dt>
+    <dd><p>The ts.</p>
+</dd>
+    <dt><code>vertexInQuestion</code> <a class="xref" href="TVGL.Vertex.html">Vertex</a></dt>
+    <dd><p>The vertex in question.</p>
+</dd>
+    <dt><code>onBoundaryIsInside</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd><p>if set to <code>true</code> [on boundary is inside].</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd><p><code>true</code> if [is vertex inside solid] [the specified ts]; otherwise, <code>false</code>.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_MiscFunctions_IsVertexInsideTriangle_" data-uid="TVGL.MiscFunctions.IsVertexInsideTriangle*"></a>
+
+  <h3 id="TVGL_MiscFunctions_IsVertexInsideTriangle_System_Collections_Generic_IList_TVGL_Vector3__TVGL_Vector3_System_Boolean_" data-uid="TVGL.MiscFunctions.IsVertexInsideTriangle(System.Collections.Generic.IList{TVGL.Vector3},TVGL.Vector3,System.Boolean)">
+  IsVertexInsideTriangle(IList&lt;Vector3&gt;, Vector3, bool)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Returns whether a vertex lies on a triangle. User can specify whether the edges of the
+triangle are considered &quot;inside.&quot; Assumes vertex in question is in the same plane
+as the triangle.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static bool IsVertexInsideTriangle(IList&lt;Vector3&gt; triangle, Vector3 pointInQuestion, bool onBoundaryIsInside = true)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>triangle</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ilist-1">IList</a>&lt;<a class="xref" href="TVGL.Vector3.html">Vector3</a>&gt;</dt>
+    <dd><p>The triangle.</p>
+</dd>
+    <dt><code>pointInQuestion</code> <a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>The point in question.</p>
+</dd>
+    <dt><code>onBoundaryIsInside</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd><p>The on boundary is inside.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd><p>bool.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <h4 class="section">Exceptions</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.exception">Exception</a></dt>
+    <dd><p>Incorrect number of points in triangle</p>
+</dd>
+  </dl>
+
+
+
+  <a id="TVGL_MiscFunctions_IsVertexInsideTriangle_" data-uid="TVGL.MiscFunctions.IsVertexInsideTriangle*"></a>
+
+  <h3 id="TVGL_MiscFunctions_IsVertexInsideTriangle_System_Collections_Generic_IList_TVGL_Vertex__TVGL_Vector3_System_Boolean_" data-uid="TVGL.MiscFunctions.IsVertexInsideTriangle(System.Collections.Generic.IList{TVGL.Vertex},TVGL.Vector3,System.Boolean)">
+  IsVertexInsideTriangle(IList&lt;Vertex&gt;, Vector3, bool)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Returns whether a vertex lies on a triangle. User can specify whether the edges of the
+triangle are considered &quot;inside.&quot; Assumes vertex in question is in the same plane
+as the triangle.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static bool IsVertexInsideTriangle(IList&lt;Vertex&gt; triangle, Vector3 vertexInQuestion, bool onBoundaryIsInside = true)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>triangle</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ilist-1">IList</a>&lt;<a class="xref" href="TVGL.Vertex.html">Vertex</a>&gt;</dt>
+    <dd><p>The triangle.</p>
+</dd>
+    <dt><code>vertexInQuestion</code> <a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>The vertex in question.</p>
+</dd>
+    <dt><code>onBoundaryIsInside</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd><p>The on boundary is inside.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd><p>bool.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_MiscFunctions_IsVertexInsideTriangle_" data-uid="TVGL.MiscFunctions.IsVertexInsideTriangle*"></a>
+
+  <h3 id="TVGL_MiscFunctions_IsVertexInsideTriangle_TVGL_TriangleFace_TVGL_Vector3_System_Boolean_" data-uid="TVGL.MiscFunctions.IsVertexInsideTriangle(TVGL.TriangleFace,TVGL.Vector3,System.Boolean)">
+  IsVertexInsideTriangle(TriangleFace, Vector3, bool)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Determines whether [is vertex inside triangle] [the specified face].</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static bool IsVertexInsideTriangle(TriangleFace face, Vector3 vertexInQuestion, bool onBoundaryIsInside = true)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>face</code> <a class="xref" href="TVGL.TriangleFace.html">TriangleFace</a></dt>
+    <dd><p>The face.</p>
+</dd>
+    <dt><code>vertexInQuestion</code> <a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>The vertex in question.</p>
+</dd>
+    <dt><code>onBoundaryIsInside</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd><p>The on boundary is inside.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd><p>bool.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_MiscFunctions_LargerAngleBetweenVectors_" data-uid="TVGL.MiscFunctions.LargerAngleBetweenVectors*"></a>
+
+  <h3 id="TVGL_MiscFunctions_LargerAngleBetweenVectors_TVGL_Vector2_TVGL_Vector2_" data-uid="TVGL.MiscFunctions.LargerAngleBetweenVectors(TVGL.Vector2,TVGL.Vector2)">
+  LargerAngleBetweenVectors(Vector2, Vector2)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the larger angle between two vectors, assuming vector2 starts that the head of
+vector1. The vectors do not need to be normalized.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static double LargerAngleBetweenVectors(this Vector2 vector1, Vector2 vector2)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>vector1</code> <a class="xref" href="TVGL.Vector2.html">Vector2</a></dt>
+    <dd><p>The v0.</p>
+</dd>
+    <dt><code>vector2</code> <a class="xref" href="TVGL.Vector2.html">Vector2</a></dt>
+    <dd><p>The v1.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>System.Double.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_MiscFunctions_LargerAngleBetweenVectors_" data-uid="TVGL.MiscFunctions.LargerAngleBetweenVectors*"></a>
+
+  <h3 id="TVGL_MiscFunctions_LargerAngleBetweenVectors_TVGL_Vector3_TVGL_Vector3_" data-uid="TVGL.MiscFunctions.LargerAngleBetweenVectors(TVGL.Vector3,TVGL.Vector3)">
+  LargerAngleBetweenVectors(Vector3, Vector3)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the larger angle between two vectors, assuming vector2 starts that the head of
+vector1. The vectors do not need to be normalized.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static double LargerAngleBetweenVectors(this Vector3 vector1, Vector3 vector2)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>vector1</code> <a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>The v0.</p>
+</dd>
+    <dt><code>vector2</code> <a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>The v1.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>System.Double.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_MiscFunctions_Length_" data-uid="TVGL.MiscFunctions.Length*"></a>
+
+  <h3 id="TVGL_MiscFunctions_Length_System_Collections_Generic_IList_TVGL_Vector3__System_Boolean_" data-uid="TVGL.MiscFunctions.Length(System.Collections.Generic.IList{TVGL.Vector3},System.Boolean)">
+  Length(IList&lt;Vector3&gt;, bool)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the summed length of a locations of a 3D set of Vertices.
+If (IsClosed), then the perimeter will include the length between
+the last vertex and the first vertex.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static double Length(this IList&lt;Vector3&gt; polyline, bool isClosed = true)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>polyline</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ilist-1">IList</a>&lt;<a class="xref" href="TVGL.Vector3.html">Vector3</a>&gt;</dt>
+    <dd><p>The polyline.</p>
+</dd>
+    <dt><code>isClosed</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd><p>The is closed.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>double.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_MiscFunctions_Length_" data-uid="TVGL.MiscFunctions.Length*"></a>
+
+  <h3 id="TVGL_MiscFunctions_Length_System_Collections_Generic_IList_TVGL_Vertex__System_Boolean_" data-uid="TVGL.MiscFunctions.Length(System.Collections.Generic.IList{TVGL.Vertex},System.Boolean)">
+  Length(IList&lt;Vertex&gt;, bool)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the Perimeter (length of a locations) of a 3D set of Vertices.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static double Length(this IList&lt;Vertex&gt; polyline, bool isClosed = true)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>polyline</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ilist-1">IList</a>&lt;<a class="xref" href="TVGL.Vertex.html">Vertex</a>&gt;</dt>
+    <dd><p>The polyline.</p>
+</dd>
+    <dt><code>isClosed</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd><p>The is closed.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>double.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_MiscFunctions_LineIntersectingTwoPlanes_" data-uid="TVGL.MiscFunctions.LineIntersectingTwoPlanes*"></a>
+
+  <h3 id="TVGL_MiscFunctions_LineIntersectingTwoPlanes_TVGL_Vector3_System_Double_TVGL_Vector3_System_Double_TVGL_Vector3__TVGL_Vector3__" data-uid="TVGL.MiscFunctions.LineIntersectingTwoPlanes(TVGL.Vector3,System.Double,TVGL.Vector3,System.Double,TVGL.Vector3@,TVGL.Vector3@)">
+  LineIntersectingTwoPlanes(Vector3, double, Vector3, double, out Vector3, out Vector3)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Lines the intersecting two planes.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static void LineIntersectingTwoPlanes(Vector3 n1, double d1, Vector3 n2, double d2, out Vector3 directionOfLine, out Vector3 pointOnLine)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>n1</code> <a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>The n1.</p>
+</dd>
+    <dt><code>d1</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The d1.</p>
+</dd>
+    <dt><code>n2</code> <a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>The n2.</p>
+</dd>
+    <dt><code>d2</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The d2.</p>
+</dd>
+    <dt><code>directionOfLine</code> <a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>The direction of line.</p>
+</dd>
+    <dt><code>pointOnLine</code> <a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>The point on line.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_MiscFunctions_LineLine2DIntersection_" data-uid="TVGL.MiscFunctions.LineLine2DIntersection*"></a>
+
+  <h3 id="TVGL_MiscFunctions_LineLine2DIntersection_TVGL_Vector2_TVGL_Vector2_TVGL_Vector2_TVGL_Vector2_" data-uid="TVGL.MiscFunctions.LineLine2DIntersection(TVGL.Vector2,TVGL.Vector2,TVGL.Vector2,TVGL.Vector2)">
+  LineLine2DIntersection(Vector2, Vector2, Vector2, Vector2)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Lines the line2 d intersection.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static Vector2 LineLine2DIntersection(Vector2 aAnchor, Vector2 aDirection, Vector2 bAnchor, Vector2 bDirection)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>aAnchor</code> <a class="xref" href="TVGL.Vector2.html">Vector2</a></dt>
+    <dd><p>Some known point on a-line.</p>
+</dd>
+    <dt><code>aDirection</code> <a class="xref" href="TVGL.Vector2.html">Vector2</a></dt>
+    <dd><p>The direction of the a-line.</p>
+</dd>
+    <dt><code>bAnchor</code> <a class="xref" href="TVGL.Vector2.html">Vector2</a></dt>
+    <dd><p>Some known point on b-line.</p>
+</dd>
+    <dt><code>bDirection</code> <a class="xref" href="TVGL.Vector2.html">Vector2</a></dt>
+    <dd><p>The direction of the b-line.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.Vector2.html">Vector2</a></dt>
+    <dd><p>TVGL.Vector2.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_MiscFunctions_NEquidistantSpherePointsKogan_" data-uid="TVGL.MiscFunctions.NEquidistantSpherePointsKogan*"></a>
+
+  <h3 id="TVGL_MiscFunctions_NEquidistantSpherePointsKogan_System_Int32_System_Double_" data-uid="TVGL.MiscFunctions.NEquidistantSpherePointsKogan(System.Int32,System.Double)">
+  NEquidistantSpherePointsKogan(int, double)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>ns the equidistant sphere points kogan.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static IEnumerable&lt;Vector3&gt; NEquidistantSpherePointsKogan(int n, double radius)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>n</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a></dt>
+    <dd><p>The n.</p>
+</dd>
+    <dt><code>radius</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The radius.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.Vector3.html">Vector3</a>&gt;</dt>
+    <dd><p>IEnumerable&lt;Vector3&gt;.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_MiscFunctions_NEquidistantSpherePointsKogan_" data-uid="TVGL.MiscFunctions.NEquidistantSpherePointsKogan*"></a>
+
+  <h3 id="TVGL_MiscFunctions_NEquidistantSpherePointsKogan_System_Int32_" data-uid="TVGL.MiscFunctions.NEquidistantSpherePointsKogan(System.Int32)">
+  NEquidistantSpherePointsKogan(int)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>ns the equidistant sphere points kogan.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static IEnumerable&lt;Vector2&gt; NEquidistantSpherePointsKogan(int n)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>n</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a></dt>
+    <dd><p>The n.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.Vector2.html">Vector2</a>&gt;</dt>
+    <dd><p>IEnumerable&lt;Vector2&gt;.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_MiscFunctions_OrderedEdgesAndAnglesCCWAtVertex_" data-uid="TVGL.MiscFunctions.OrderedEdgesAndAnglesCCWAtVertex*"></a>
+
+  <h3 id="TVGL_MiscFunctions_OrderedEdgesAndAnglesCCWAtVertex_TVGL_Vertex_TVGL_Edge_" data-uid="TVGL.MiscFunctions.OrderedEdgesAndAnglesCCWAtVertex(TVGL.Vertex,TVGL.Edge)">
+  OrderedEdgesAndAnglesCCWAtVertex(Vertex, Edge)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Ordereds the edges and angles CCW at vertex.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static IEnumerable&lt;(Edge edge, double angle)&gt; OrderedEdgesAndAnglesCCWAtVertex(this Vertex vertex, Edge startingEdge = null)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>vertex</code> <a class="xref" href="TVGL.Vertex.html">Vertex</a></dt>
+    <dd><p>The vertex.</p>
+</dd>
+    <dt><code>startingEdge</code> <a class="xref" href="TVGL.Edge.html">Edge</a></dt>
+    <dd><p>The starting edge.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;(<a class="xref" href="TVGL.Edge.html">Edge</a> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.valuetuple-tvgl.edge,system.double-.edge">edge</a>, <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.valuetuple-tvgl.edge,system.double-.angle">angle</a>)&gt;</dt>
+    <dd><p>System.Collections.Generic.IEnumerable&lt;(TVGL.Edge edge, double angle)&gt;.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_MiscFunctions_OrderedFacesCCWAtVertex_" data-uid="TVGL.MiscFunctions.OrderedFacesCCWAtVertex*"></a>
+
+  <h3 id="TVGL_MiscFunctions_OrderedFacesCCWAtVertex_TVGL_Vertex_TVGL_TriangleFace_" data-uid="TVGL.MiscFunctions.OrderedFacesCCWAtVertex(TVGL.Vertex,TVGL.TriangleFace)">
+  OrderedFacesCCWAtVertex(Vertex, TriangleFace)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Ordereds the faces CCW at vertex.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static IEnumerable&lt;TriangleFace&gt; OrderedFacesCCWAtVertex(this Vertex vertex, TriangleFace startingFace = null)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>vertex</code> <a class="xref" href="TVGL.Vertex.html">Vertex</a></dt>
+    <dd><p>The vertex.</p>
+</dd>
+    <dt><code>startingFace</code> <a class="xref" href="TVGL.TriangleFace.html">TriangleFace</a></dt>
+    <dd><p>The starting face.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.TriangleFace.html">TriangleFace</a>&gt;</dt>
+    <dd><p>System.Collections.Generic.IEnumerable&lt;TVGL.TriangleFace&gt;.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_MiscFunctions_Perimeter_" data-uid="TVGL.MiscFunctions.Perimeter*"></a>
+
+  <h3 id="TVGL_MiscFunctions_Perimeter_System_Collections_Generic_IList_TVGL_Vertex__" data-uid="TVGL.MiscFunctions.Perimeter(System.Collections.Generic.IList{TVGL.Vertex})">
+  Perimeter(IList&lt;Vertex&gt;)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the Perimeter (length of a locations) of a 3D set of Vertices.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static double Perimeter(this IList&lt;Vertex&gt; polygon3D)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>polygon3D</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ilist-1">IList</a>&lt;<a class="xref" href="TVGL.Vertex.html">Vertex</a>&gt;</dt>
+    <dd><p>The polygon3 d.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>double.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_MiscFunctions_PointCommonToThreePlanes_" data-uid="TVGL.MiscFunctions.PointCommonToThreePlanes*"></a>
+
+  <h3 id="TVGL_MiscFunctions_PointCommonToThreePlanes_TVGL_Plane_TVGL_Plane_TVGL_Plane_" data-uid="TVGL.MiscFunctions.PointCommonToThreePlanes(TVGL.Plane,TVGL.Plane,TVGL.Plane)">
+  PointCommonToThreePlanes(Plane, Plane, Plane)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Find the point common to three planes.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static Vector3 PointCommonToThreePlanes(this Plane plane1, Plane plane2, Plane plane3)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>plane1</code> <a class="xref" href="TVGL.Plane.html">Plane</a></dt>
+    <dd><p>The plane1.</p>
+</dd>
+    <dt><code>plane2</code> <a class="xref" href="TVGL.Plane.html">Plane</a></dt>
+    <dd><p>The plane2.</p>
+</dd>
+    <dt><code>plane3</code> <a class="xref" href="TVGL.Plane.html">Plane</a></dt>
+    <dd><p>The plane3.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>System.Vector2.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_MiscFunctions_PointCommonToThreePlanes_" data-uid="TVGL.MiscFunctions.PointCommonToThreePlanes*"></a>
+
+  <h3 id="TVGL_MiscFunctions_PointCommonToThreePlanes_TVGL_Vector3_System_Double_TVGL_Vector3_System_Double_TVGL_Vector3_System_Double_" data-uid="TVGL.MiscFunctions.PointCommonToThreePlanes(TVGL.Vector3,System.Double,TVGL.Vector3,System.Double,TVGL.Vector3,System.Double)">
+  PointCommonToThreePlanes(Vector3, double, Vector3, double, Vector3, double)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Find the point common to three planes.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static Vector3 PointCommonToThreePlanes(Vector3 n1, double d1, Vector3 n2, double d2, Vector3 n3, double d3)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>n1</code> <a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>The n1.</p>
+</dd>
+    <dt><code>d1</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The d1.</p>
+</dd>
+    <dt><code>n2</code> <a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>The n2.</p>
+</dd>
+    <dt><code>d2</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The d2.</p>
+</dd>
+    <dt><code>n3</code> <a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>The n3.</p>
+</dd>
+    <dt><code>d3</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The d3.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>System.Vector2.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_MiscFunctions_PointOnPlaneFromIntersectingLine_" data-uid="TVGL.MiscFunctions.PointOnPlaneFromIntersectingLine*"></a>
+
+  <h3 id="TVGL_MiscFunctions_PointOnPlaneFromIntersectingLine_TVGL_Plane_TVGL_Vector3_TVGL_Vector3_System_Double__" data-uid="TVGL.MiscFunctions.PointOnPlaneFromIntersectingLine(TVGL.Plane,TVGL.Vector3,TVGL.Vector3,System.Double@)">
+  PointOnPlaneFromIntersectingLine(Plane, Vector3, Vector3, out double)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Finds the point on the plane made by a line (which is described by connecting point1 and point2) intersecting
+with that plane.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static Vector3 PointOnPlaneFromIntersectingLine(Plane plane, Vector3 point1, Vector3 point2, out double relativeDistance)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>plane</code> <a class="xref" href="TVGL.Plane.html">Plane</a></dt>
+    <dd><p>The plane.</p>
+</dd>
+    <dt><code>point1</code> <a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>The point1.</p>
+</dd>
+    <dt><code>point2</code> <a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>The point2.</p>
+</dd>
+    <dt><code>relativeDistance</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The relative distance of the plane. If zero, then at point1. If one, then at point2.
+If less than zero, then intersection occurs on the other side of point1 (not between points). If greater than one,
+then intersection is on the other side of point2.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>IntersectionPoint.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_MiscFunctions_PointOnPlaneFromIntersectingLine_" data-uid="TVGL.MiscFunctions.PointOnPlaneFromIntersectingLine*"></a>
+
+  <h3 id="TVGL_MiscFunctions_PointOnPlaneFromIntersectingLine_TVGL_Vector3_System_Double_TVGL_Vector3_TVGL_Vector3_System_Double__" data-uid="TVGL.MiscFunctions.PointOnPlaneFromIntersectingLine(TVGL.Vector3,System.Double,TVGL.Vector3,TVGL.Vector3,System.Double@)">
+  PointOnPlaneFromIntersectingLine(Vector3, double, Vector3, Vector3, out double)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Finds the point on the plane made by a line (which is described by connecting point1 and point2) intersecting
+with that plane.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static Vector3 PointOnPlaneFromIntersectingLine(Vector3 normalOfPlane, double distOfPlane, Vector3 point1, Vector3 point2, out double relativeDistance)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>normalOfPlane</code> <a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>The normal of plane.</p>
+</dd>
+    <dt><code>distOfPlane</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The dist of plane.</p>
+</dd>
+    <dt><code>point1</code> <a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>The point1.</p>
+</dd>
+    <dt><code>point2</code> <a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>The point2.</p>
+</dd>
+    <dt><code>relativeDistance</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The relative distance of the plane. If zero, then at point1. If one, then at point2.
+If less than zero, then intersection occurs on the other side of point1 (not between points). If greater than one,
+then intersection is on the other side of point2.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>Vertex.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <h4 class="section">Exceptions</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.exception">Exception</a></dt>
+    <dd><p>This should never occur. Prevent this from happening</p>
+</dd>
+  </dl>
+
+
+
+  <a id="TVGL_MiscFunctions_PointOnPlaneFromRay_" data-uid="TVGL.MiscFunctions.PointOnPlaneFromRay*"></a>
+
+  <h3 id="TVGL_MiscFunctions_PointOnPlaneFromRay_TVGL_Plane_TVGL_Vector3_TVGL_Vector3_System_Double__" data-uid="TVGL.MiscFunctions.PointOnPlaneFromRay(TVGL.Plane,TVGL.Vector3,TVGL.Vector3,System.Double@)">
+  PointOnPlaneFromRay(Plane, Vector3, Vector3, out double)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Finds the point on the plane made by a ray. If that ray is not going to pass through the
+that plane, then null is returned.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static Vector3 PointOnPlaneFromRay(Plane plane, Vector3 rayPosition, Vector3 rayDirection, out double signedDistance)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>plane</code> <a class="xref" href="TVGL.Plane.html">Plane</a></dt>
+    <dd><p>The plane.</p>
+</dd>
+    <dt><code>rayPosition</code> <a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>The ray position.</p>
+</dd>
+    <dt><code>rayDirection</code> <a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>The ray direction.</p>
+</dd>
+    <dt><code>signedDistance</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The signed distance.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>Vertex.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_MiscFunctions_PointOnPlaneFromRay_" data-uid="TVGL.MiscFunctions.PointOnPlaneFromRay*"></a>
+
+  <h3 id="TVGL_MiscFunctions_PointOnPlaneFromRay_TVGL_Vector3_System_Double_TVGL_Vector3_TVGL_Vector3_System_Double__" data-uid="TVGL.MiscFunctions.PointOnPlaneFromRay(TVGL.Vector3,System.Double,TVGL.Vector3,TVGL.Vector3,System.Double@)">
+  PointOnPlaneFromRay(Vector3, double, Vector3, Vector3, out double)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Finds the point on the plane made by a ray. If that ray is not going to pass through the
+that plane, then null is returned.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static Vector3 PointOnPlaneFromRay(Vector3 normalOfPlane, double distOfPlane, Vector3 rayPosition, Vector3 rayDirection, out double signedDistance)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>normalOfPlane</code> <a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>The normal of plane.</p>
+</dd>
+    <dt><code>distOfPlane</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The dist of plane.</p>
+</dd>
+    <dt><code>rayPosition</code> <a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>The ray position.</p>
+</dd>
+    <dt><code>rayDirection</code> <a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>The ray direction.</p>
+</dd>
+    <dt><code>signedDistance</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The signed distance.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>Vertex.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_MiscFunctions_PointOnTriangleFromLine_" data-uid="TVGL.MiscFunctions.PointOnTriangleFromLine*"></a>
+
+  <h3 id="TVGL_MiscFunctions_PointOnTriangleFromLine_System_Collections_Generic_List_TVGL_Vector3__TVGL_Vector3_TVGL_Vector3_TVGL_Vector3_System_Double__System_Boolean_" data-uid="TVGL.MiscFunctions.PointOnTriangleFromLine(System.Collections.Generic.List{TVGL.Vector3},TVGL.Vector3,TVGL.Vector3,TVGL.Vector3,System.Double@,System.Boolean)">
+  PointOnTriangleFromLine(List&lt;Vector3&gt;, Vector3, Vector3, Vector3, out double, bool)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Finds the point on the face made by a line (which is described by connecting point1 and point2) intersecting
+with that face. If not intersection exists, then function returns a Vector3 with NaN's. Points must
+be on either side of triangle to return a valid intersection.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static Vector3 PointOnTriangleFromLine(this List&lt;Vector3&gt; vertices, Vector3 normal, Vector3 point1, Vector3 point2, out double relativeDistance, bool onBoundaryIsInside = true)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>vertices</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.list-1">List</a>&lt;<a class="xref" href="TVGL.Vector3.html">Vector3</a>&gt;</dt>
+    <dd><p>The vertices.</p>
+</dd>
+    <dt><code>normal</code> <a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>The normal.</p>
+</dd>
+    <dt><code>point1</code> <a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>The point1.</p>
+</dd>
+    <dt><code>point2</code> <a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>The point2.</p>
+</dd>
+    <dt><code>relativeDistance</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The relative distance.</p>
+</dd>
+    <dt><code>onBoundaryIsInside</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd><p>The on boundary is inside.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>Vertex.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_MiscFunctions_PointOnTriangleFromLine_" data-uid="TVGL.MiscFunctions.PointOnTriangleFromLine*"></a>
+
+  <h3 id="TVGL_MiscFunctions_PointOnTriangleFromLine_TVGL_TriangleFace_TVGL_Vector3_TVGL_CartesianDirections_System_Double__System_Boolean_" data-uid="TVGL.MiscFunctions.PointOnTriangleFromLine(TVGL.TriangleFace,TVGL.Vector3,TVGL.CartesianDirections,System.Double@,System.Boolean)">
+  PointOnTriangleFromLine(TriangleFace, Vector3, CartesianDirections, out double, bool)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Finds the point on the triangle made by a line. If that line is not going to pass through the
+that triangle, then the result is comprise of NaN's. The signed distance is positive if the vertex points to
+the triangle along the direction (ray). User can also specify whether the edges of the triangle
+are considered &quot;inside.&quot;</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static Vector3 PointOnTriangleFromLine(this TriangleFace face, Vector3 point3D, CartesianDirections direction, out double signedDistance, bool onBoundaryIsInside = true)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>face</code> <a class="xref" href="TVGL.TriangleFace.html">TriangleFace</a></dt>
+    <dd><p>The face.</p>
+</dd>
+    <dt><code>point3D</code> <a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>The point3 d.</p>
+</dd>
+    <dt><code>direction</code> <a class="xref" href="TVGL.CartesianDirections.html">CartesianDirections</a></dt>
+    <dd><p>The direction.</p>
+</dd>
+    <dt><code>signedDistance</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The signed distance.</p>
+</dd>
+    <dt><code>onBoundaryIsInside</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd><p>if set to <code>true</code> [on boundary is inside].</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>TVGL.Vector3.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_MiscFunctions_PointOnTriangleFromLine_" data-uid="TVGL.MiscFunctions.PointOnTriangleFromLine*"></a>
+
+  <h3 id="TVGL_MiscFunctions_PointOnTriangleFromLine_TVGL_TriangleFace_TVGL_Vector3_TVGL_Vector3_System_Double__System_Boolean_" data-uid="TVGL.MiscFunctions.PointOnTriangleFromLine(TVGL.TriangleFace,TVGL.Vector3,TVGL.Vector3,System.Double@,System.Boolean)">
+  PointOnTriangleFromLine(TriangleFace, Vector3, Vector3, out double, bool)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Finds the point on the face made by a line (which is described by connecting point1 and point2) intersecting
+with that face. If not intersection exists, then function returns null. Points must be on either side
+of triangle to return a valid intersection.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static Vector3 PointOnTriangleFromLine(this TriangleFace face, Vector3 point1, Vector3 point2, out double relativeDistance, bool onBoundaryIsInside = true)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>face</code> <a class="xref" href="TVGL.TriangleFace.html">TriangleFace</a></dt>
+    <dd><p>The face.</p>
+</dd>
+    <dt><code>point1</code> <a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>The point1.</p>
+</dd>
+    <dt><code>point2</code> <a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>The point2.</p>
+</dd>
+    <dt><code>relativeDistance</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The relative distance.</p>
+</dd>
+    <dt><code>onBoundaryIsInside</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd><p>The on boundary is inside.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>Vertex.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <h4 class="section">Exceptions</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.exception">Exception</a></dt>
+    <dd><p>This should never occur. Prevent this from happening</p>
+</dd>
+  </dl>
+
+
+
+  <a id="TVGL_MiscFunctions_PointOnTriangleFromRay_" data-uid="TVGL.MiscFunctions.PointOnTriangleFromRay*"></a>
+
+  <h3 id="TVGL_MiscFunctions_PointOnTriangleFromRay_TVGL_TriangleFace_TVGL_Vector3_TVGL_Vector3_System_Double__System_Boolean_" data-uid="TVGL.MiscFunctions.PointOnTriangleFromRay(TVGL.TriangleFace,TVGL.Vector3,TVGL.Vector3,System.Double@,System.Boolean)">
+  PointOnTriangleFromRay(TriangleFace, Vector3, Vector3, out double, bool)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Finds the point on the triangle made by a line. If that line is not going to pass through the
+that triangle, then null is returned. The signed distance is positive if the vertex points to
+the triangle along the direction (ray). User can also specify whether the edges of the triangle
+are considered &quot;inside.&quot;</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static Vector3 PointOnTriangleFromRay(TriangleFace face, Vector3 point3D, Vector3 direction, out double signedDistance, bool onBoundaryIsInside = true)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>face</code> <a class="xref" href="TVGL.TriangleFace.html">TriangleFace</a></dt>
+    <dd><p>The face.</p>
+</dd>
+    <dt><code>point3D</code> <a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>The point3 d.</p>
+</dd>
+    <dt><code>direction</code> <a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>The direction.</p>
+</dd>
+    <dt><code>signedDistance</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The signed distance.</p>
+</dd>
+    <dt><code>onBoundaryIsInside</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd><p>if set to <code>true</code> [on boundary is inside].</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>TVGL.Vector3.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_MiscFunctions_PointOnXPlaneFromIntersectingLine_" data-uid="TVGL.MiscFunctions.PointOnXPlaneFromIntersectingLine*"></a>
+
+  <h3 id="TVGL_MiscFunctions_PointOnXPlaneFromIntersectingLine_System_Double_TVGL_Vector3_TVGL_Vector3_" data-uid="TVGL.MiscFunctions.PointOnXPlaneFromIntersectingLine(System.Double,TVGL.Vector3,TVGL.Vector3)">
+  PointOnXPlaneFromIntersectingLine(double, Vector3, Vector3)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Finds the point on the x-plane made by a line (which is described by connecting point1 and point2) intersecting
+with that plane.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static Vector2 PointOnXPlaneFromIntersectingLine(double distOfPlane, Vector3 point1, Vector3 point2)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>distOfPlane</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The dist of plane.</p>
+</dd>
+    <dt><code>point1</code> <a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>The point1.</p>
+</dd>
+    <dt><code>point2</code> <a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>The point2.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.Vector2.html">Vector2</a></dt>
+    <dd><p>Vertex.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_MiscFunctions_PointOnYPlaneFromIntersectingLine_" data-uid="TVGL.MiscFunctions.PointOnYPlaneFromIntersectingLine*"></a>
+
+  <h3 id="TVGL_MiscFunctions_PointOnYPlaneFromIntersectingLine_System_Double_TVGL_Vector3_TVGL_Vector3_" data-uid="TVGL.MiscFunctions.PointOnYPlaneFromIntersectingLine(System.Double,TVGL.Vector3,TVGL.Vector3)">
+  PointOnYPlaneFromIntersectingLine(double, Vector3, Vector3)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Finds the point on the y-plane made by a line (which is described by connecting point1 and point2) intersecting
+with that plane.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static Vector2 PointOnYPlaneFromIntersectingLine(double distOfPlane, Vector3 point1, Vector3 point2)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>distOfPlane</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The dist of plane.</p>
+</dd>
+    <dt><code>point1</code> <a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>The point1.</p>
+</dd>
+    <dt><code>point2</code> <a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>The point2.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.Vector2.html">Vector2</a></dt>
+    <dd><p>Vertex.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <h4 class="section">Exceptions</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.exception">Exception</a></dt>
+    <dd><p>This should never occur. Prevent this from happening</p>
+</dd>
+  </dl>
+
+
+
+  <a id="TVGL_MiscFunctions_PointOnZPlaneFromIntersectingLine_" data-uid="TVGL.MiscFunctions.PointOnZPlaneFromIntersectingLine*"></a>
+
+  <h3 id="TVGL_MiscFunctions_PointOnZPlaneFromIntersectingLine_System_Double_TVGL_Vector3_TVGL_Vector3_" data-uid="TVGL.MiscFunctions.PointOnZPlaneFromIntersectingLine(System.Double,TVGL.Vector3,TVGL.Vector3)">
+  PointOnZPlaneFromIntersectingLine(double, Vector3, Vector3)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Finds the point on the z- plane made by a line (which is described by connecting point1 and point2) intersecting
+with that plane. Note, the result is a Vector2 - just the x and y value. The z-value would be the input, distOfPlane</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static Vector2 PointOnZPlaneFromIntersectingLine(double distOfPlane, Vector3 point1, Vector3 point2)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>distOfPlane</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The dist of plane.</p>
+</dd>
+    <dt><code>point1</code> <a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>The point1.</p>
+</dd>
+    <dt><code>point2</code> <a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>The point2.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.Vector2.html">Vector2</a></dt>
+    <dd><p>Vertex.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_MiscFunctions_ProjectTo2DCoordinates_" data-uid="TVGL.MiscFunctions.ProjectTo2DCoordinates*"></a>
+
+  <h3 id="TVGL_MiscFunctions_ProjectTo2DCoordinates__1_System_Collections_Generic_IEnumerable___0__TVGL_Matrix4x4_System_Double_System_Boolean_" data-uid="TVGL.MiscFunctions.ProjectTo2DCoordinates``1(System.Collections.Generic.IEnumerable{``0},TVGL.Matrix4x4,System.Double,System.Boolean)">
+  ProjectTo2DCoordinates&lt;T&gt;(IEnumerable&lt;T&gt;, Matrix4x4, double, bool)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Returns newly created 2D coordinates (of type Vector2) projected using the given transform.
+These coordinates do not contain references back to the original locations but are lighter and
+quicker. This does not destructively alter the locations.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static IEnumerable&lt;Vector2&gt; ProjectTo2DCoordinates&lt;T&gt;(this IEnumerable&lt;T&gt; locations, Matrix4x4 transform, double toleranceForCombiningPoints = NaN, bool duplicateEntriesToMaintainPolygonalOrdering = false) where T : IVertex3D</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>locations</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;T&gt;</dt>
+    <dd><p>The locations.</p>
+</dd>
+    <dt><code>transform</code> <a class="xref" href="TVGL.Matrix4x4.html">Matrix4x4</a></dt>
+    <dd><p>The transform matrix.</p>
+</dd>
+    <dt><code>toleranceForCombiningPoints</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The tolerance for combining multiple locations under a single point.
+If not provided or less than zero, then one point will be made for each vertex. If zero to 1e-15, then the coordinates
+will match at the 15 decimal place. Use a small positive number like 1e-9 to set a wider toleranceForCombiningPoints.</p>
+</dd>
+    <dt><code>duplicateEntriesToMaintainPolygonalOrdering</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd><p>Output is in the same order as input except when
+they are combined from the aforementioned tolerance. If this boolean is true then the output point may appear
+multiple times in the output collection to maintain the same order. This is useful if the original data is
+to define some polygon with order dictating the definition of edges.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.Vector2.html">Vector2</a>&gt;</dt>
+    <dd><p>System.Collections.Generic.IEnumerable&lt;TVGL.Vector2&gt;.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Type Parameters</h4>
+  <dl class="parameters">
+    <dt><code>T</code></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_MiscFunctions_ProjectTo2DCoordinates_" data-uid="TVGL.MiscFunctions.ProjectTo2DCoordinates*"></a>
+
+  <h3 id="TVGL_MiscFunctions_ProjectTo2DCoordinates__1_System_Collections_Generic_IEnumerable___0__TVGL_Vector3_TVGL_Matrix4x4__System_Double_System_Boolean_" data-uid="TVGL.MiscFunctions.ProjectTo2DCoordinates``1(System.Collections.Generic.IEnumerable{``0},TVGL.Vector3,TVGL.Matrix4x4@,System.Double,System.Boolean)">
+  ProjectTo2DCoordinates&lt;T&gt;(IEnumerable&lt;T&gt;, Vector3, out Matrix4x4, double, bool)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Returns newly created 2D coordinates (of type Vector2) projected using the given transform.
+These coordinates do not contain references back to the original locations but are lighter and
+quicker.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static IEnumerable&lt;Vector2&gt; ProjectTo2DCoordinates&lt;T&gt;(this IEnumerable&lt;T&gt; locations, Vector3 direction, out Matrix4x4 backTransform, double toleranceForCombiningPoints = NaN, bool duplicateEntriesToMaintainPolygonalOrdering = false) where T : IVertex3D</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>locations</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;T&gt;</dt>
+    <dd><p>The locations.</p>
+</dd>
+    <dt><code>direction</code> <a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>The direction.</p>
+</dd>
+    <dt><code>backTransform</code> <a class="xref" href="TVGL.Matrix4x4.html">Matrix4x4</a></dt>
+    <dd><p>The back transform.</p>
+</dd>
+    <dt><code>toleranceForCombiningPoints</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The tolerance for combining multiple locations under a single point.
+If not, provided, then one point will be made for each vertex. If zero, then the coordinates will match at
+the 15 decimal place. Use a small positive number like 1e-9 to set a wider toleranceForCombiningPoints.</p>
+</dd>
+    <dt><code>duplicateEntriesToMaintainPolygonalOrdering</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd><p>Output is in the same order as input except when
+they are combined from the aforementioned tolerance. If this boolean is true then the output point may appear
+multiple times in the output collection to maintain the same order. This is useful if the original data is
+to define some polygon with order dictating the definition of edges.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.Vector2.html">Vector2</a>&gt;</dt>
+    <dd><p>System.Collections.Generic.IEnumerable&lt;TVGL.Vector2&gt;.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Type Parameters</h4>
+  <dl class="parameters">
+    <dt><code>T</code></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_MiscFunctions_ProjectTo2DCoordinatesReturnDictionary_" data-uid="TVGL.MiscFunctions.ProjectTo2DCoordinatesReturnDictionary*"></a>
+
+  <h3 id="TVGL_MiscFunctions_ProjectTo2DCoordinatesReturnDictionary__1_System_Collections_Generic_IEnumerable___0__TVGL_Matrix4x4_System_Double_" data-uid="TVGL.MiscFunctions.ProjectTo2DCoordinatesReturnDictionary``1(System.Collections.Generic.IEnumerable{``0},TVGL.Matrix4x4,System.Double)">
+  ProjectTo2DCoordinatesReturnDictionary&lt;T&gt;(IEnumerable&lt;T&gt;, Matrix4x4, double)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Returns newly created 2D coordinates (of type Vector2) projected using the given transform.
+These coordinates do not contain references back to the original vertices but are lighter and
+quicker. This does not destructively alter the vertices.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static Dictionary&lt;Vector2, List&lt;T&gt;&gt; ProjectTo2DCoordinatesReturnDictionary&lt;T&gt;(this IEnumerable&lt;T&gt; vertices, Matrix4x4 transform, double toleranceForCombiningPoints = 1E-11) where T : IVertex3D</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>vertices</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;T&gt;</dt>
+    <dd><p>The vertices.</p>
+</dd>
+    <dt><code>transform</code> <a class="xref" href="TVGL.Matrix4x4.html">Matrix4x4</a></dt>
+    <dd><p>The transform matrix.</p>
+</dd>
+    <dt><code>toleranceForCombiningPoints</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The tolerance for combining multiple vertices under a single point.
+If not, provided, then one point will be made for each vertex. If zero, then the coordinates will match at
+the 15 decimal place. Use a small positive number like 1e-9 to set a wider toleranceForCombiningPoints.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.dictionary-2">Dictionary</a>&lt;<a class="xref" href="TVGL.Vector2.html">Vector2</a>, <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.list-1">List</a>&lt;T&gt;&gt;</dt>
+    <dd><p>System.Collections.Generic.IEnumerable&lt;TVGL.Vector2&gt;.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Type Parameters</h4>
+  <dl class="parameters">
+    <dt><code>T</code></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_MiscFunctions_ProjectTo2DCoordinatesReturnDictionary_" data-uid="TVGL.MiscFunctions.ProjectTo2DCoordinatesReturnDictionary*"></a>
+
+  <h3 id="TVGL_MiscFunctions_ProjectTo2DCoordinatesReturnDictionary__1_System_Collections_Generic_IEnumerable___0__TVGL_Vector3_TVGL_Matrix4x4__System_Double_" data-uid="TVGL.MiscFunctions.ProjectTo2DCoordinatesReturnDictionary``1(System.Collections.Generic.IEnumerable{``0},TVGL.Vector3,TVGL.Matrix4x4@,System.Double)">
+  ProjectTo2DCoordinatesReturnDictionary&lt;T&gt;(IEnumerable&lt;T&gt;, Vector3, out Matrix4x4, double)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Returns newly created 2D coordinates (of type Vector2) projected using the given transform.
+These coordinates do not contain references back to the original vertices but are lighter and
+quicker. This does not destructively alter the vertices.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static Dictionary&lt;Vector2, List&lt;T&gt;&gt; ProjectTo2DCoordinatesReturnDictionary&lt;T&gt;(this IEnumerable&lt;T&gt; vertices, Vector3 direction, out Matrix4x4 backTransform, double toleranceForCombiningPoints = 1E-11) where T : IVertex3D</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>vertices</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;T&gt;</dt>
+    <dd><p>The vertices.</p>
+</dd>
+    <dt><code>direction</code> <a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>The direction.</p>
+</dd>
+    <dt><code>backTransform</code> <a class="xref" href="TVGL.Matrix4x4.html">Matrix4x4</a></dt>
+    <dd><p>The back transform.</p>
+</dd>
+    <dt><code>toleranceForCombiningPoints</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The tolerance for combining multiple vertices under a single point.
+If not, provided, then one point will be made for each vertex. If zero, then the coordinates will match at
+the 15 decimal place. Use a small positive number like 1e-9 to set a wider toleranceForCombiningPoints.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.dictionary-2">Dictionary</a>&lt;<a class="xref" href="TVGL.Vector2.html">Vector2</a>, <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.list-1">List</a>&lt;T&gt;&gt;</dt>
+    <dd><p>System.Collections.Generic.IEnumerable&lt;TVGL.Vector2&gt;.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Type Parameters</h4>
+  <dl class="parameters">
+    <dt><code>T</code></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_MiscFunctions_ReduceDirections_" data-uid="TVGL.MiscFunctions.ReduceDirections*"></a>
+
+  <h3 id="TVGL_MiscFunctions_ReduceDirections_System_Collections_Generic_List_TVGL_Vector3__System_Collections_Generic_IEnumerable_TVGL_Vector3__System_Int32_" data-uid="TVGL.MiscFunctions.ReduceDirections(System.Collections.Generic.List{TVGL.Vector3},System.Collections.Generic.IEnumerable{TVGL.Vector3},System.Int32)">
+  ReduceDirections(List&lt;Vector3&gt;, IEnumerable&lt;Vector3&gt;, int)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Reduces the directions.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static IEnumerable&lt;Vector3&gt; ReduceDirections(List&lt;Vector3&gt; readOnlyDirs, IEnumerable&lt;Vector3&gt; guessDirs, int targetNumberOfDirections)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>readOnlyDirs</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.list-1">List</a>&lt;<a class="xref" href="TVGL.Vector3.html">Vector3</a>&gt;</dt>
+    <dd><p>The read only dirs.</p>
+</dd>
+    <dt><code>guessDirs</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.Vector3.html">Vector3</a>&gt;</dt>
+    <dd><p>The guess dirs.</p>
+</dd>
+    <dt><code>targetNumberOfDirections</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a></dt>
+    <dd><p>The target number of directions.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.Vector3.html">Vector3</a>&gt;</dt>
+    <dd><p>IEnumerable&lt;Vector3&gt;.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_MiscFunctions_RemoveDuplicates_" data-uid="TVGL.MiscFunctions.RemoveDuplicates*"></a>
+
+  <h3 id="TVGL_MiscFunctions_RemoveDuplicates_System_Collections_Generic_List_TVGL_Vector3__System_Boolean_System_Double_" data-uid="TVGL.MiscFunctions.RemoveDuplicates(System.Collections.Generic.List{TVGL.Vector3},System.Boolean,System.Double)">
+  RemoveDuplicates(List&lt;Vector3&gt;, bool, double)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Removes the duplicates.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static void RemoveDuplicates(this List&lt;Vector3&gt; directions, bool reverseIsDuplicate = false, double dotTolerance = 0.01)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>directions</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.list-1">List</a>&lt;<a class="xref" href="TVGL.Vector3.html">Vector3</a>&gt;</dt>
+    <dd><p>The directions.</p>
+</dd>
+    <dt><code>reverseIsDuplicate</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd><p>if set to <code>true</code> [reverse is duplicate].</p>
+</dd>
+    <dt><code>dotTolerance</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The dot tolerance.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_MiscFunctions_SegmentLine2DIntersection_" data-uid="TVGL.MiscFunctions.SegmentLine2DIntersection*"></a>
+
+  <h3 id="TVGL_MiscFunctions_SegmentLine2DIntersection_TVGL_Vector2_TVGL_Vector2_TVGL_Vector2_TVGL_Vector2_TVGL_Vector2__System_Boolean_" data-uid="TVGL.MiscFunctions.SegmentLine2DIntersection(TVGL.Vector2,TVGL.Vector2,TVGL.Vector2,TVGL.Vector2,TVGL.Vector2@,System.Boolean)">
+  SegmentLine2DIntersection(Vector2, Vector2, Vector2, Vector2, out Vector2, bool)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Determines if Two Lines intersect. Outputs intersection point if they do.
+If two lines are collinear, they are not considered intersecting.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static bool SegmentLine2DIntersection(Vector2 aFrom, Vector2 aTo, Vector2 bAnchor, Vector2 bDirection, out Vector2 intersectionPoint, bool considerCollinearOverlapAsIntersect = false)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>aFrom</code> <a class="xref" href="TVGL.Vector2.html">Vector2</a></dt>
+    <dd><p>The starting point on the a-Line.</p>
+</dd>
+    <dt><code>aTo</code> <a class="xref" href="TVGL.Vector2.html">Vector2</a></dt>
+    <dd><p>The end point on the a-Line.</p>
+</dd>
+    <dt><code>bAnchor</code> <a class="xref" href="TVGL.Vector2.html">Vector2</a></dt>
+    <dd><p>Some known point on b-line.</p>
+</dd>
+    <dt><code>bDirection</code> <a class="xref" href="TVGL.Vector2.html">Vector2</a></dt>
+    <dd><p>The direction of the b-line.</p>
+</dd>
+    <dt><code>intersectionPoint</code> <a class="xref" href="TVGL.Vector2.html">Vector2</a></dt>
+    <dd><p>The intersection point.</p>
+</dd>
+    <dt><code>considerCollinearOverlapAsIntersect</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd><p>The consider collinear overlap as intersect.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd><p>System.Boolean.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_MiscFunctions_SegmentSegment2DIntersection_" data-uid="TVGL.MiscFunctions.SegmentSegment2DIntersection*"></a>
+
+  <h3 id="TVGL_MiscFunctions_SegmentSegment2DIntersection_TVGL_Vector2_TVGL_Vector2_TVGL_Vector2_TVGL_Vector2_TVGL_Vector2__System_Double__System_Double__" data-uid="TVGL.MiscFunctions.SegmentSegment2DIntersection(TVGL.Vector2,TVGL.Vector2,TVGL.Vector2,TVGL.Vector2,TVGL.Vector2@,System.Double@,System.Double@)">
+  SegmentSegment2DIntersection(Vector2, Vector2, Vector2, Vector2, out Vector2, out double, out double)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Determines if Two Lines intersect. Outputs intersection point if they do.
+If two lines are collinear, they are not considered intersecting.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static bool SegmentSegment2DIntersection(Vector2 aFrom, Vector2 aTo, Vector2 bFrom, Vector2 bTo, out Vector2 intersectionPoint, out double t_a, out double t_b)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>aFrom</code> <a class="xref" href="TVGL.Vector2.html">Vector2</a></dt>
+    <dd><p>The starting point on the a-Line.</p>
+</dd>
+    <dt><code>aTo</code> <a class="xref" href="TVGL.Vector2.html">Vector2</a></dt>
+    <dd><p>The end point on the a-Line.</p>
+</dd>
+    <dt><code>bFrom</code> <a class="xref" href="TVGL.Vector2.html">Vector2</a></dt>
+    <dd><p>The starting point on the b-Line.</p>
+</dd>
+    <dt><code>bTo</code> <a class="xref" href="TVGL.Vector2.html">Vector2</a></dt>
+    <dd><p>The end point on the b-Line.</p>
+</dd>
+    <dt><code>intersectionPoint</code> <a class="xref" href="TVGL.Vector2.html">Vector2</a></dt>
+    <dd><p>The intersection point.</p>
+</dd>
+    <dt><code>t_a</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The fractional amount along line-a.</p>
+</dd>
+    <dt><code>t_b</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The fractional amount along line-b.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd><p>System.Boolean.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_MiscFunctions_SegmentSegment2DIntersectionConventional_" data-uid="TVGL.MiscFunctions.SegmentSegment2DIntersectionConventional*"></a>
+
+  <h3 id="TVGL_MiscFunctions_SegmentSegment2DIntersectionConventional_TVGL_Vector2_TVGL_Vector2_TVGL_Vector2_TVGL_Vector2_TVGL_Vector2__System_Double__System_Double__System_Boolean_" data-uid="TVGL.MiscFunctions.SegmentSegment2DIntersectionConventional(TVGL.Vector2,TVGL.Vector2,TVGL.Vector2,TVGL.Vector2,TVGL.Vector2@,System.Double@,System.Double@,System.Boolean)">
+  SegmentSegment2DIntersectionConventional(Vector2, Vector2, Vector2, Vector2, out Vector2, out double, out double, bool)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Determines if Two Lines intersect. Outputs intersection point if they do.
+If two lines are collinear, they are not considered intersecting.
+This method has been renamed ...Conventional because the Projective Geometric Algebra version (see below)
+proves to be faster. Using BenchmarkDotNet, this version is 23.75 ns while the one below is 15 ns.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static bool SegmentSegment2DIntersectionConventional(Vector2 aFrom, Vector2 aTo, Vector2 bFrom, Vector2 bTo, out Vector2 intersectionPoint, out double t_a, out double t_b, bool considerCollinearOverlapAsIntersect = false)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>aFrom</code> <a class="xref" href="TVGL.Vector2.html">Vector2</a></dt>
+    <dd><p>The starting point on the a-Line.</p>
+</dd>
+    <dt><code>aTo</code> <a class="xref" href="TVGL.Vector2.html">Vector2</a></dt>
+    <dd><p>The end point on the a-Line.</p>
+</dd>
+    <dt><code>bFrom</code> <a class="xref" href="TVGL.Vector2.html">Vector2</a></dt>
+    <dd><p>The starting point on the b-Line.</p>
+</dd>
+    <dt><code>bTo</code> <a class="xref" href="TVGL.Vector2.html">Vector2</a></dt>
+    <dd><p>The end point on the b-Line.</p>
+</dd>
+    <dt><code>intersectionPoint</code> <a class="xref" href="TVGL.Vector2.html">Vector2</a></dt>
+    <dd><p>The intersection point.</p>
+</dd>
+    <dt><code>t_a</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The t a.</p>
+</dd>
+    <dt><code>t_b</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The t b.</p>
+</dd>
+    <dt><code>considerCollinearOverlapAsIntersect</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd><p>The consider collinear overlap as intersect.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd><p>System.Boolean.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_MiscFunctions_SkewedLineIntersection_" data-uid="TVGL.MiscFunctions.SkewedLineIntersection*"></a>
+
+  <h3 id="TVGL_MiscFunctions_SkewedLineIntersection_TVGL_Vector3_TVGL_Vector3_TVGL_Vector3_TVGL_Vector3_TVGL_Vector3__TVGL_Vector3__" data-uid="TVGL.MiscFunctions.SkewedLineIntersection(TVGL.Vector3,TVGL.Vector3,TVGL.Vector3,TVGL.Vector3,TVGL.Vector3@,TVGL.Vector3@)">
+  SkewedLineIntersection(Vector3, Vector3, Vector3, Vector3, out Vector3, out Vector3)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Finds the &quot;intersection&quot; of two skewed lines in 3D space. Generally such lines do not intersect, so the function
+finds the middling point equidistant and closest to both lines.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static double SkewedLineIntersection(Vector3 anchor1, Vector3 direction1, Vector3 anchor2, Vector3 direction2, out Vector3 intersect1, out Vector3 intersect2)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>anchor1</code> <a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>Any point on line 1.</p>
+</dd>
+    <dt><code>direction1</code> <a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>The direction of line 1.</p>
+</dd>
+    <dt><code>anchor2</code> <a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>Any point on line 2.</p>
+</dd>
+    <dt><code>direction2</code> <a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>The direction of line 2.</p>
+</dd>
+    <dt><code>intersect1</code> <a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>The point on line1 closest to line2.</p>
+</dd>
+    <dt><code>intersect2</code> <a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>The point on line2 closest to line1.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The closest distance between the two lines.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_MiscFunctions_SkewedLineIntersection_" data-uid="TVGL.MiscFunctions.SkewedLineIntersection*"></a>
+
+  <h3 id="TVGL_MiscFunctions_SkewedLineIntersection_TVGL_Vector3_TVGL_Vector3_TVGL_Vector3_TVGL_Vector3_TVGL_Vector3__" data-uid="TVGL.MiscFunctions.SkewedLineIntersection(TVGL.Vector3,TVGL.Vector3,TVGL.Vector3,TVGL.Vector3,TVGL.Vector3@)">
+  SkewedLineIntersection(Vector3, Vector3, Vector3, Vector3, out Vector3)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Finds the &quot;intersection&quot; of two skewed lines in 3D space. Generally such lines do not intersect, so the function
+finds the middling point equidistant and closest to both lines.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static double SkewedLineIntersection(Vector3 anchor1, Vector3 direction1, Vector3 anchor2, Vector3 direction2, out Vector3 center)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>anchor1</code> <a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>Any point on line 1.</p>
+</dd>
+    <dt><code>direction1</code> <a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>The direction of line 1.</p>
+</dd>
+    <dt><code>anchor2</code> <a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>Any point on line 2.</p>
+</dd>
+    <dt><code>direction2</code> <a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>The direction of line 2.</p>
+</dd>
+    <dt><code>center</code> <a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>The resulting &quot;intersection&quot; or middling point.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The closest distance between the two lines.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_MiscFunctions_SmallerAngleBetweenVectors_" data-uid="TVGL.MiscFunctions.SmallerAngleBetweenVectors*"></a>
+
+  <h3 id="TVGL_MiscFunctions_SmallerAngleBetweenVectors_TVGL_Vector2_TVGL_Vector2_" data-uid="TVGL.MiscFunctions.SmallerAngleBetweenVectors(TVGL.Vector2,TVGL.Vector2)">
+  SmallerAngleBetweenVectors(Vector2, Vector2)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the smaller angle between two vectors, assuming vector2 starts that the head of
+vector1. The vectors do not need to be normalized.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static double SmallerAngleBetweenVectors(this Vector2 vector1, Vector2 vector2)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>vector1</code> <a class="xref" href="TVGL.Vector2.html">Vector2</a></dt>
+    <dd><p>The v0.</p>
+</dd>
+    <dt><code>vector2</code> <a class="xref" href="TVGL.Vector2.html">Vector2</a></dt>
+    <dd><p>The v1.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>System.Double.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_MiscFunctions_SmallerAngleBetweenVectors_" data-uid="TVGL.MiscFunctions.SmallerAngleBetweenVectors*"></a>
+
+  <h3 id="TVGL_MiscFunctions_SmallerAngleBetweenVectors_TVGL_Vector3_TVGL_Vector3_" data-uid="TVGL.MiscFunctions.SmallerAngleBetweenVectors(TVGL.Vector3,TVGL.Vector3)">
+  SmallerAngleBetweenVectors(Vector3, Vector3)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the smaller angle between two vectors, assuming vector2 starts that the head of
+vector1. The vectors do not need to be normalized.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static double SmallerAngleBetweenVectors(this Vector3 vector1, Vector3 vector2)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>vector1</code> <a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>The v0.</p>
+</dd>
+    <dt><code>vector2</code> <a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>The v1.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>System.Double.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_MiscFunctions_SnapDirectionToCartesian_" data-uid="TVGL.MiscFunctions.SnapDirectionToCartesian*"></a>
+
+  <h3 id="TVGL_MiscFunctions_SnapDirectionToCartesian_TVGL_Vector3_System_Boolean__System_Double_" data-uid="TVGL.MiscFunctions.SnapDirectionToCartesian(TVGL.Vector3,System.Boolean@,System.Double)">
+  SnapDirectionToCartesian(Vector3, out bool, double)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Snap Direction to Closest Cartesian Direction.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static CartesianDirections SnapDirectionToCartesian(this Vector3 direction, out bool withinTolerance, double tolerance = NaN)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>direction</code> <a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>The direction to convert.</p>
+</dd>
+    <dt><code>withinTolerance</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd><p>To check if direction is within the optionally provided tolerance.</p>
+</dd>
+    <dt><code>tolerance</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The optionally provided tolerance for the previous boolean (does not effect the determined direction).</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.CartesianDirections.html">CartesianDirections</a></dt>
+    <dd><p>CartesianDirections.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_MiscFunctions_SortAlongDirection_" data-uid="TVGL.MiscFunctions.SortAlongDirection*"></a>
+
+  <h3 id="TVGL_MiscFunctions_SortAlongDirection_System_Collections_Generic_IEnumerable_TVGL_Vector3__TVGL_Vector3_System_Collections_Generic_List_System_ValueTuple_TVGL_Vector3_System_Double____" data-uid="TVGL.MiscFunctions.SortAlongDirection(System.Collections.Generic.IEnumerable{TVGL.Vector3},TVGL.Vector3,System.Collections.Generic.List{System.ValueTuple{TVGL.Vector3,System.Double}}@)">
+  SortAlongDirection(IEnumerable&lt;Vector3&gt;, Vector3, out List&lt;(Vector3, double)&gt;)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Returns a list of sorted locations along a set direction.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static void SortAlongDirection(this IEnumerable&lt;Vector3&gt; vertices, Vector3 direction, out List&lt;(Vector3, double)&gt; sortedVertices)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>vertices</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.Vector3.html">Vector3</a>&gt;</dt>
+    <dd><p>The locations.</p>
+</dd>
+    <dt><code>direction</code> <a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>The directions.</p>
+</dd>
+    <dt><code>sortedVertices</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.list-1">List</a>&lt;(<a class="xref" href="TVGL.Vector3.html">Vector3</a>, <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a>)&gt;</dt>
+    <dd><p>The sorted locations.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_MiscFunctions_SortAlongDirection_" data-uid="TVGL.MiscFunctions.SortAlongDirection*"></a>
+
+  <h3 id="TVGL_MiscFunctions_SortAlongDirection_System_Collections_Generic_IEnumerable_TVGL_Vertex__TVGL_Vector3_System_Collections_Generic_List_System_ValueTuple_TVGL_Vertex_System_Double____" data-uid="TVGL.MiscFunctions.SortAlongDirection(System.Collections.Generic.IEnumerable{TVGL.Vertex},TVGL.Vector3,System.Collections.Generic.List{System.ValueTuple{TVGL.Vertex,System.Double}}@)">
+  SortAlongDirection(IEnumerable&lt;Vertex&gt;, Vector3, out List&lt;(Vertex, double)&gt;)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Returns a list of sorted locations along a set direction.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static void SortAlongDirection(this IEnumerable&lt;Vertex&gt; vertices, Vector3 direction, out List&lt;(Vertex, double)&gt; sortedVertices)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>vertices</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.Vertex.html">Vertex</a>&gt;</dt>
+    <dd><p>The locations.</p>
+</dd>
+    <dt><code>direction</code> <a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>The directions.</p>
+</dd>
+    <dt><code>sortedVertices</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.list-1">List</a>&lt;(<a class="xref" href="TVGL.Vertex.html">Vertex</a>, <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a>)&gt;</dt>
+    <dd><p>The sorted locations.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_MiscFunctions_SortAlongDirection_" data-uid="TVGL.MiscFunctions.SortAlongDirection*"></a>
+
+  <h3 id="TVGL_MiscFunctions_SortAlongDirection_System_Collections_Generic_IList_TVGL_Vector2__TVGL_Vector2_System_Collections_Generic_List_System_ValueTuple_TVGL_Vector2_System_Double____System_Int32_" data-uid="TVGL.MiscFunctions.SortAlongDirection(System.Collections.Generic.IList{TVGL.Vector2},TVGL.Vector2,System.Collections.Generic.List{System.ValueTuple{TVGL.Vector2,System.Double}}@,System.Int32)">
+  SortAlongDirection(IList&lt;Vector2&gt;, Vector2, out List&lt;(Vector2, double)&gt;, int)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Returns a list of sorted Vector2s along a set direction.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static void SortAlongDirection(this IList&lt;Vector2&gt; points, Vector2 direction, out List&lt;(Vector2, double)&gt; sortedPoints, int numDecimals = -1)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>points</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ilist-1">IList</a>&lt;<a class="xref" href="TVGL.Vector2.html">Vector2</a>&gt;</dt>
+    <dd><p>The points.</p>
+</dd>
+    <dt><code>direction</code> <a class="xref" href="TVGL.Vector2.html">Vector2</a></dt>
+    <dd><p>The directions.</p>
+</dd>
+    <dt><code>sortedPoints</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.list-1">List</a>&lt;(<a class="xref" href="TVGL.Vector2.html">Vector2</a>, <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a>)&gt;</dt>
+    <dd><p>The sorted points.</p>
+</dd>
+    <dt><code>numDecimals</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a></dt>
+    <dd><p>The number decimals.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_MiscFunctions_SortAlongDirection_" data-uid="TVGL.MiscFunctions.SortAlongDirection*"></a>
+
+  <h3 id="TVGL_MiscFunctions_SortAlongDirection_System_Collections_Generic_IList_TVGL_Vector2__TVGL_Vector2_System_Collections_Generic_List_TVGL_Vector2___System_Int32_" data-uid="TVGL.MiscFunctions.SortAlongDirection(System.Collections.Generic.IList{TVGL.Vector2},TVGL.Vector2,System.Collections.Generic.List{TVGL.Vector2}@,System.Int32)">
+  SortAlongDirection(IList&lt;Vector2&gt;, Vector2, out List&lt;Vector2&gt;, int)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Returns a list of sorted Vector2s along a set direction.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static void SortAlongDirection(this IList&lt;Vector2&gt; points, Vector2 direction, out List&lt;Vector2&gt; sortedPoints, int numDecimals = -1)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>points</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ilist-1">IList</a>&lt;<a class="xref" href="TVGL.Vector2.html">Vector2</a>&gt;</dt>
+    <dd><p>The points.</p>
+</dd>
+    <dt><code>direction</code> <a class="xref" href="TVGL.Vector2.html">Vector2</a></dt>
+    <dd><p>The directions.</p>
+</dd>
+    <dt><code>sortedPoints</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.list-1">List</a>&lt;<a class="xref" href="TVGL.Vector2.html">Vector2</a>&gt;</dt>
+    <dd><p>The sorted points.</p>
+</dd>
+    <dt><code>numDecimals</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a></dt>
+    <dd><p>The number decimals.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_MiscFunctions_TransformToXYPlane_" data-uid="TVGL.MiscFunctions.TransformToXYPlane*"></a>
+
+  <h3 id="TVGL_MiscFunctions_TransformToXYPlane_TVGL_CartesianDirections_TVGL_Matrix4x4__" data-uid="TVGL.MiscFunctions.TransformToXYPlane(TVGL.CartesianDirections,TVGL.Matrix4x4@)">
+  TransformToXYPlane(CartesianDirections, out Matrix4x4)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Create a transforms from normal direction for 2D xy plane.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static Matrix4x4 TransformToXYPlane(this CartesianDirections direction, out Matrix4x4 backTransform)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>direction</code> <a class="xref" href="TVGL.CartesianDirections.html">CartesianDirections</a></dt>
+    <dd><p>The direction.</p>
+</dd>
+    <dt><code>backTransform</code> <a class="xref" href="TVGL.Matrix4x4.html">Matrix4x4</a></dt>
+    <dd><p>The back transform.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.Matrix4x4.html">Matrix4x4</a></dt>
+    <dd><p>System.Vector2.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <h4 class="section">Exceptions</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.invalidoperationexception">InvalidOperationException</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+  <a id="TVGL_MiscFunctions_TransformToXYPlane_" data-uid="TVGL.MiscFunctions.TransformToXYPlane*"></a>
+
+  <h3 id="TVGL_MiscFunctions_TransformToXYPlane_TVGL_Vector3_TVGL_Matrix4x4__System_Double_" data-uid="TVGL.MiscFunctions.TransformToXYPlane(TVGL.Vector3,TVGL.Matrix4x4@,System.Double)">
+  TransformToXYPlane(Vector3, out Matrix4x4, double)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Create a transforms from normal direction for 2D xy plane.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static Matrix4x4 TransformToXYPlane(this Vector3 direction, out Matrix4x4 backTransform, double tolerance = 1E-11)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>direction</code> <a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>The direction.</p>
+</dd>
+    <dt><code>backTransform</code> <a class="xref" href="TVGL.Matrix4x4.html">Matrix4x4</a></dt>
+    <dd><p>The back transform.</p>
+</dd>
+    <dt><code>tolerance</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>This tolerance is used to snap to the cartesian direction if the dot product is within this value.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.Matrix4x4.html">Matrix4x4</a></dt>
+    <dd><p>System.Vector2.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_MiscFunctions_TypesImplementingICurve_" data-uid="TVGL.MiscFunctions.TypesImplementingICurve*"></a>
+
+  <h3 id="TVGL_MiscFunctions_TypesImplementingICurve" data-uid="TVGL.MiscFunctions.TypesImplementingICurve">
+  TypesImplementingICurve()
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Typeses the implementing i curve.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static IEnumerable&lt;Type&gt; TypesImplementingICurve()</code></pre>
+  </div>
+
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="https://learn.microsoft.com/dotnet/api/system.type">Type</a>&gt;</dt>
+    <dd><p>System.Collections.Generic.IEnumerable&lt;System.Type&gt;.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_MiscFunctions_TypesInheritedFromPrimitiveSurface_" data-uid="TVGL.MiscFunctions.TypesInheritedFromPrimitiveSurface*"></a>
+
+  <h3 id="TVGL_MiscFunctions_TypesInheritedFromPrimitiveSurface" data-uid="TVGL.MiscFunctions.TypesInheritedFromPrimitiveSurface">
+  TypesInheritedFromPrimitiveSurface()
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Typeses the inherited from primitive surface.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static IEnumerable&lt;Type&gt; TypesInheritedFromPrimitiveSurface()</code></pre>
+  </div>
+
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="https://learn.microsoft.com/dotnet/api/system.type">Type</a>&gt;</dt>
+    <dd><p>System.Collections.Generic.IEnumerable&lt;System.Type&gt;.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+</article>
+
+        <div class="contribution d-print-none">
+        </div>
+
+        
+      </div>
+
+      <div class="affix">
+        <nav id="affix"></nav>
+      </div>
+    </main>
+
+
+    <footer class="border-top">
+      <div class="container-xxl">
+        <div class="flex-fill">
+          <span>Made with <a href="https://dotnet.github.io/docfx">docfx</a></span>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>

@@ -1,0 +1,1545 @@
+﻿<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+      <title>Class MinimumEnclosure
+ </title>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <meta name="title" content="Class MinimumEnclosure
+ ">
+      
+      <link rel="icon" href="../favicon.ico">
+      <link rel="stylesheet" href="../styles/docfx.min.css">
+      <link rel="stylesheet" href="../styles/main.css">
+      <meta name="docfx:navrel" content="../toc.html">
+      <meta name="docfx:tocrel" content="toc.html">
+      
+      
+      
+
+      <script>
+        MathJax = {
+          options: {
+            processHtmlClass: ['tex2jax_process', 'math']
+          }
+        };
+      </script>
+
+      <script type="text/javascript" src="../styles/docfx.min.js"></script>
+      <script type="text/javascript" src="../styles/main.js"></script>
+  </head>
+
+  <body class="tex2jax_ignore" data-layout="" data-yaml-mime="ManagedReference">
+    <header class="bg-body border-bottom">
+      <nav id="autocollapse" class="navbar navbar-expand-md" role="navigation">
+        <div class="container-xxl flex-nowrap">
+          <a class="navbar-brand" href="../index.html">
+            <img id="logo" class="svg" src="../logo.svg" alt="">
+            
+          </a>
+          <button class="btn btn-lg d-md-none border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navpanel" aria-controls="navpanel" aria-expanded="false" aria-label="Toggle navigation">
+            <i class="bi bi-three-dots"></i>
+          </button>
+          <div class="collapse navbar-collapse" id="navpanel">
+            <div id="navbar">
+            </div>
+          </div>
+        </div>
+      </nav>
+    </header>
+
+    <main class="container-xxl">
+      <div class="toc-offcanvas">
+        <div class="offcanvas-md offcanvas-start" tabindex="-1" id="tocOffcanvas" aria-labelledby="tocOffcanvasLabel">
+          <div class="offcanvas-header">
+            <h5 class="offcanvas-title" id="tocOffcanvasLabel">Table of Contents</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#tocOffcanvas" aria-label="Close"></button>
+          </div>
+          <div class="offcanvas-body">
+            <nav class="toc" id="toc"></nav>
+          </div>
+        </div>
+      </div>
+
+      <div class="content">
+        <div class="actionbar">
+          <button class="btn btn-lg border-0 d-md-none" style="margin-top: -.65em; margin-left: -.8em" type="button" data-bs-toggle="offcanvas" data-bs-target="#tocOffcanvas" aria-controls="tocOffcanvas" aria-expanded="false" aria-label="Show table of contents">
+            <i class="bi bi-list"></i>
+          </button>
+
+          <nav id="breadcrumb"></nav>
+        </div>
+
+        <article data-uid="TVGL.MinimumEnclosure">
+
+
+
+  <h1 id="TVGL_MinimumEnclosure" data-uid="TVGL.MinimumEnclosure" class="text-break">
+    Class MinimumEnclosure
+  
+  </h1>
+
+  <div class="facts text-secondary">
+    <dl><dt>Namespace</dt><dd><a class="xref" href="TVGL.html">TVGL</a></dd></dl>
+  <dl><dt>Assembly</dt><dd>TessellationAndVoxelizationGeometryLibrary.dll</dd></dl>
+  </div>
+
+  <div class="markdown summary"><p>Class MinimumEnclosure.</p>
+</div>
+  <div class="markdown conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static class MinimumEnclosure</code></pre>
+  </div>
+
+
+
+
+  <dl class="typelist inheritance">
+    <dt>Inheritance</dt>
+    <dd>
+      <div><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object">object</a></div>
+      <div><span class="xref">MinimumEnclosure</span></div>
+    </dd>
+  </dl>
+
+
+
+  <dl class="typelist derived">
+    <dt>Inherited Members</dt>
+    <dd>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.equals#system-object-equals(system-object)">object.Equals(object)</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.equals#system-object-equals(system-object-system-object)">object.Equals(object, object)</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.gethashcode">object.GetHashCode()</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.gettype">object.GetType()</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.memberwiseclone">object.MemberwiseClone()</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.referenceequals">object.ReferenceEquals(object, object)</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.tostring">object.ToString()</a>
+    </div>
+  </dd></dl>
+
+
+
+
+
+
+  <h2 class="section" id="methods">Methods
+</h2>
+
+
+  <a id="TVGL_MinimumEnclosure_BoundingRectangle_" data-uid="TVGL.MinimumEnclosure.BoundingRectangle*"></a>
+
+  <h3 id="TVGL_MinimumEnclosure_BoundingRectangle_System_Collections_Generic_IEnumerable_TVGL_Vector2__System_Boolean_System_Boolean_System_Boolean_" data-uid="TVGL.MinimumEnclosure.BoundingRectangle(System.Collections.Generic.IEnumerable{TVGL.Vector2},System.Boolean,System.Boolean,System.Boolean)">
+  BoundingRectangle(IEnumerable&lt;Vector2&gt;, bool, bool, bool)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Finds the minimum bounding rectangle given a set of points. Either send any set of points
+OR the convex hull 2D.
+Optional booleans for what information should be set in the Bounding Rectangle.
+Example: If you really just need the area, you don't need the corner points or
+points on side.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static BoundingRectangle BoundingRectangle(this IEnumerable&lt;Vector2&gt; points, bool pointsAreConvexHull = false, bool setCornerPoints = true, bool setPointsOnSide = true)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>points</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.Vector2.html">Vector2</a>&gt;</dt>
+    <dd><p>The points.</p>
+</dd>
+    <dt><code>pointsAreConvexHull</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd><p>if set to <code>true</code> [points are convex hull].</p>
+</dd>
+    <dt><code>setCornerPoints</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd><p>if set to <code>true</code> [set corner points].</p>
+</dd>
+    <dt><code>setPointsOnSide</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd><p>if set to <code>true</code> [set points on side].</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.BoundingRectangle.html">BoundingRectangle</a></dt>
+    <dd><p>BoundingRectangle.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_MinimumEnclosure_BoundingRectangle_" data-uid="TVGL.MinimumEnclosure.BoundingRectangle*"></a>
+
+  <h3 id="TVGL_MinimumEnclosure_BoundingRectangle_TVGL_Polygon_System_Boolean_System_Boolean_System_Boolean_" data-uid="TVGL.MinimumEnclosure.BoundingRectangle(TVGL.Polygon,System.Boolean,System.Boolean,System.Boolean)">
+  BoundingRectangle(Polygon, bool, bool, bool)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Finds the minimum bounding rectangle given a set of points. Either send any set of points
+OR the convex hull 2D.
+Optional booleans for what information should be set in the Bounding Rectangle.
+Example: If you really just need the area, you don't need the corner points or
+points on side.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static BoundingRectangle BoundingRectangle(this Polygon polygon, bool pointsAreConvexHull = false, bool setCornerPoints = true, bool setPointsOnSide = true)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>polygon</code> <a class="xref" href="TVGL.Polygon.html">Polygon</a></dt>
+    <dd><p>The polygon.</p>
+</dd>
+    <dt><code>pointsAreConvexHull</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd><p>if set to <code>true</code> [points are convex hull].</p>
+</dd>
+    <dt><code>setCornerPoints</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd><p>if set to <code>true</code> [set corner points].</p>
+</dd>
+    <dt><code>setPointsOnSide</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd><p>if set to <code>true</code> [set points on side].</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.BoundingRectangle.html">BoundingRectangle</a></dt>
+    <dd><p>BoundingRectangle.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_MinimumEnclosure_ConvexHull2D_" data-uid="TVGL.MinimumEnclosure.ConvexHull2D*"></a>
+
+  <h3 id="TVGL_MinimumEnclosure_ConvexHull2D_System_Collections_Generic_IEnumerable_TVGL_Vector2__" data-uid="TVGL.MinimumEnclosure.ConvexHull2D(System.Collections.Generic.IEnumerable{TVGL.Vector2})">
+  ConvexHull2D(IEnumerable&lt;Vector2&gt;)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Creates the coordinates of the corresponding convex hull polygon.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static List&lt;Vector2&gt; ConvexHull2D(this IEnumerable&lt;Vector2&gt; points)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>points</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.Vector2.html">Vector2</a>&gt;</dt>
+    <dd><p>The points.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.list-1">List</a>&lt;<a class="xref" href="TVGL.Vector2.html">Vector2</a>&gt;</dt>
+    <dd><p>List&lt;Vector2&gt;.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_MinimumEnclosure_ConvexHull2D_" data-uid="TVGL.MinimumEnclosure.ConvexHull2D*"></a>
+
+  <h3 id="TVGL_MinimumEnclosure_ConvexHull2D_TVGL_Polygon_" data-uid="TVGL.MinimumEnclosure.ConvexHull2D(TVGL.Polygon)">
+  ConvexHull2D(Polygon)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Creates the convex hull polygon.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static Polygon ConvexHull2D(this Polygon polygon)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>polygon</code> <a class="xref" href="TVGL.Polygon.html">Polygon</a></dt>
+    <dd><p>The polygon.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.Polygon.html">Polygon</a></dt>
+    <dd><p>Polygon.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_MinimumEnclosure_FindAxisAlignedBoundingBox_" data-uid="TVGL.MinimumEnclosure.FindAxisAlignedBoundingBox*"></a>
+
+  <h3 id="TVGL_MinimumEnclosure_FindAxisAlignedBoundingBox_System_Collections_Generic_IEnumerable_TVGL_TessellatedSolid__" data-uid="TVGL.MinimumEnclosure.FindAxisAlignedBoundingBox(System.Collections.Generic.IEnumerable{TVGL.TessellatedSolid})">
+  FindAxisAlignedBoundingBox(IEnumerable&lt;TessellatedSolid&gt;)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Finds the axis aligned bounding box.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static BoundingBox FindAxisAlignedBoundingBox(this IEnumerable&lt;TessellatedSolid&gt; solids)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>solids</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.TessellatedSolid.html">TessellatedSolid</a>&gt;</dt>
+    <dd><p>The solids.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.BoundingBox.html">BoundingBox</a></dt>
+    <dd><p>BoundingBox.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_MinimumEnclosure_FindAxisAlignedBoundingBox_" data-uid="TVGL.MinimumEnclosure.FindAxisAlignedBoundingBox*"></a>
+
+  <h3 id="TVGL_MinimumEnclosure_FindAxisAlignedBoundingBox__1_System_Collections_Generic_IEnumerable___0__" data-uid="TVGL.MinimumEnclosure.FindAxisAlignedBoundingBox``1(System.Collections.Generic.IEnumerable{``0})">
+  FindAxisAlignedBoundingBox&lt;T&gt;(IEnumerable&lt;T&gt;)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Finds the axis aligned bounding box.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static BoundingBox&lt;T&gt; FindAxisAlignedBoundingBox&lt;T&gt;(this IEnumerable&lt;T&gt; vertices) where T : IVertex3D</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>vertices</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;T&gt;</dt>
+    <dd><p>The vertices.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.BoundingBox-1.html">BoundingBox</a>&lt;T&gt;</dt>
+    <dd><p>BoundingBox&lt;T&gt;.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Type Parameters</h4>
+  <dl class="parameters">
+    <dt><code>T</code></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_MinimumEnclosure_FindOBBAlongDirection_" data-uid="TVGL.MinimumEnclosure.FindOBBAlongDirection*"></a>
+
+  <h3 id="TVGL_MinimumEnclosure_FindOBBAlongDirection__1_System_Collections_Generic_IEnumerable___0__TVGL_Vector3_" data-uid="TVGL.MinimumEnclosure.FindOBBAlongDirection``1(System.Collections.Generic.IEnumerable{``0},TVGL.Vector3)">
+  FindOBBAlongDirection&lt;T&gt;(IEnumerable&lt;T&gt;, Vector3)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Finds the minimum oriented bounding rectangle (2D). The 3D points of a tessellated solid
+are projected to the plane defined by &quot;Direction&quot;. This returns a BoundingBox structure
+where the first Direction is the same as the prescribed Direction and the other two are
+in-plane unit vectors.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static BoundingBox&lt;T&gt; FindOBBAlongDirection&lt;T&gt;(this IEnumerable&lt;T&gt; vertices, Vector3 direction) where T : IVertex3D</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>vertices</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;T&gt;</dt>
+    <dd><p>The vertices.</p>
+</dd>
+    <dt><code>direction</code> <a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>The Direction.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.BoundingBox-1.html">BoundingBox</a>&lt;T&gt;</dt>
+    <dd><p>BoundingBox.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Type Parameters</h4>
+  <dl class="parameters">
+    <dt><code>T</code></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+  <h4 class="section">Exceptions</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.exception">Exception</a></dt>
+    <dd><p>Volume should never be negligible, unless the input data is bad</p>
+</dd>
+  </dl>
+
+
+
+  <a id="TVGL_MinimumEnclosure_GetCircleFrom2DiametricalPoints_" data-uid="TVGL.MinimumEnclosure.GetCircleFrom2DiametricalPoints*"></a>
+
+  <h3 id="TVGL_MinimumEnclosure_GetCircleFrom2DiametricalPoints_TVGL_Vector2_TVGL_Vector2_" data-uid="TVGL.MinimumEnclosure.GetCircleFrom2DiametricalPoints(TVGL.Vector2,TVGL.Vector2)">
+  GetCircleFrom2DiametricalPoints(Vector2, Vector2)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the circle from2 diametrical points.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static Circle GetCircleFrom2DiametricalPoints(Vector2 p0, Vector2 p1)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>p0</code> <a class="xref" href="TVGL.Vector2.html">Vector2</a></dt>
+    <dd><p>The p0.</p>
+</dd>
+    <dt><code>p1</code> <a class="xref" href="TVGL.Vector2.html">Vector2</a></dt>
+    <dd><p>The p1.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.Circle.html">Circle</a></dt>
+    <dd><p>Circle.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_MinimumEnclosure_GetCircleFrom2DiametricalPoints_" data-uid="TVGL.MinimumEnclosure.GetCircleFrom2DiametricalPoints*"></a>
+
+  <h3 id="TVGL_MinimumEnclosure_GetCircleFrom2DiametricalPoints_TVGL_Vector3_TVGL_Vector3_TVGL_Plane_" data-uid="TVGL.MinimumEnclosure.GetCircleFrom2DiametricalPoints(TVGL.Vector3,TVGL.Vector3,TVGL.Plane)">
+  GetCircleFrom2DiametricalPoints(Vector3, Vector3, Plane)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the circle from2 diametrical points.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static Circle GetCircleFrom2DiametricalPoints(Vector3 p0, Vector3 p1, Plane plane)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>p0</code> <a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>The p0.</p>
+</dd>
+    <dt><code>p1</code> <a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>The p1.</p>
+</dd>
+    <dt><code>plane</code> <a class="xref" href="TVGL.Plane.html">Plane</a></dt>
+    <dd><p>The plane.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.Circle.html">Circle</a></dt>
+    <dd><p>Circle.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_MinimumEnclosure_GetCircleFrom3Points_" data-uid="TVGL.MinimumEnclosure.GetCircleFrom3Points*"></a>
+
+  <h3 id="TVGL_MinimumEnclosure_GetCircleFrom3Points_TVGL_Vector2_TVGL_Vector2_TVGL_Vector2_" data-uid="TVGL.MinimumEnclosure.GetCircleFrom3Points(TVGL.Vector2,TVGL.Vector2,TVGL.Vector2)">
+  GetCircleFrom3Points(Vector2, Vector2, Vector2)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the circle from3 points.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static Circle GetCircleFrom3Points(Vector2 p0, Vector2 p1, Vector2 p2)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>p0</code> <a class="xref" href="TVGL.Vector2.html">Vector2</a></dt>
+    <dd><p>The p0.</p>
+</dd>
+    <dt><code>p1</code> <a class="xref" href="TVGL.Vector2.html">Vector2</a></dt>
+    <dd><p>The p1.</p>
+</dd>
+    <dt><code>p2</code> <a class="xref" href="TVGL.Vector2.html">Vector2</a></dt>
+    <dd><p>The p2.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.Circle.html">Circle</a></dt>
+    <dd><p>Circle.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_MinimumEnclosure_GetCircleFrom3Points_" data-uid="TVGL.MinimumEnclosure.GetCircleFrom3Points*"></a>
+
+  <h3 id="TVGL_MinimumEnclosure_GetCircleFrom3Points_TVGL_Vector3_TVGL_Vector3_TVGL_Vector3_TVGL_Plane_" data-uid="TVGL.MinimumEnclosure.GetCircleFrom3Points(TVGL.Vector3,TVGL.Vector3,TVGL.Vector3,TVGL.Plane)">
+  GetCircleFrom3Points(Vector3, Vector3, Vector3, Plane)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the circle from3 points.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static Circle GetCircleFrom3Points(Vector3 p0, Vector3 p1, Vector3 p2, Plane plane)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>p0</code> <a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>The p0.</p>
+</dd>
+    <dt><code>p1</code> <a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>The p1.</p>
+</dd>
+    <dt><code>p2</code> <a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>The p2.</p>
+</dd>
+    <dt><code>plane</code> <a class="xref" href="TVGL.Plane.html">Plane</a></dt>
+    <dd><p>The plane.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.Circle.html">Circle</a></dt>
+    <dd><p>Circle.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_MinimumEnclosure_GetDistanceToExtremeVertex_" data-uid="TVGL.MinimumEnclosure.GetDistanceToExtremeVertex*"></a>
+
+  <h3 id="TVGL_MinimumEnclosure_GetDistanceToExtremeVertex__1_System_Collections_Generic_IEnumerable___0__TVGL_Vector3___0____0__" data-uid="TVGL.MinimumEnclosure.GetDistanceToExtremeVertex``1(System.Collections.Generic.IEnumerable{``0},TVGL.Vector3,``0@,``0@)">
+  GetDistanceToExtremeVertex&lt;T&gt;(IEnumerable&lt;T&gt;, Vector3, out T, out T)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Given a Direction, dir, this function returns the min/max distance to the furthest vertex along this
+Direction that represents each extreme.  Use this if you do not need all the vertices at the extremes.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static (double, double) GetDistanceToExtremeVertex&lt;T&gt;(this IEnumerable&lt;T&gt; vertices, Vector3 direction, out T bottomVertex, out T topVertex) where T : IVertex3D</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>vertices</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;T&gt;</dt>
+    <dd><p>The vertices.</p>
+</dd>
+    <dt><code>direction</code> <a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>The direction.</p>
+</dd>
+    <dt><code>bottomVertex</code> <span class="xref">T</span></dt>
+    <dd><p>The bottom vertex.</p>
+</dd>
+    <dt><code>topVertex</code> <span class="xref">T</span></dt>
+    <dd><p>The top vertex.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt>(<a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a>, <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a>)</dt>
+    <dd><p>System.Double.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Type Parameters</h4>
+  <dl class="parameters">
+    <dt><code>T</code></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_MinimumEnclosure_GetDistanceToExtremeVertex_" data-uid="TVGL.MinimumEnclosure.GetDistanceToExtremeVertex*"></a>
+
+  <h3 id="TVGL_MinimumEnclosure_GetDistanceToExtremeVertex__1_System_Collections_Generic_IEnumerable_TVGL_Vector3__TVGL_Vector3_TVGL_Vector3__TVGL_Vector3__" data-uid="TVGL.MinimumEnclosure.GetDistanceToExtremeVertex``1(System.Collections.Generic.IEnumerable{TVGL.Vector3},TVGL.Vector3,TVGL.Vector3@,TVGL.Vector3@)">
+  GetDistanceToExtremeVertex&lt;T&gt;(IEnumerable&lt;Vector3&gt;, Vector3, out Vector3, out Vector3)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Given a Direction, dir, this function returns the min/max distance to the furthest vertex along this
+Direction that represents each extreme.  Use this if you do not need all the vertices at the extremes.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static (double, double) GetDistanceToExtremeVertex&lt;T&gt;(this IEnumerable&lt;Vector3&gt; vertices, Vector3 direction, out Vector3 bottomVertex, out Vector3 topVertex)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>vertices</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.Vector3.html">Vector3</a>&gt;</dt>
+    <dd><p>The vertices.</p>
+</dd>
+    <dt><code>direction</code> <a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>The direction.</p>
+</dd>
+    <dt><code>bottomVertex</code> <a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>The bottom vertex.</p>
+</dd>
+    <dt><code>topVertex</code> <a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>The top vertex.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt>(<a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a>, <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a>)</dt>
+    <dd><p>System.Double.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Type Parameters</h4>
+  <dl class="parameters">
+    <dt><code>T</code></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_MinimumEnclosure_GetLengthAndExtremePoints_" data-uid="TVGL.MinimumEnclosure.GetLengthAndExtremePoints*"></a>
+
+  <h3 id="TVGL_MinimumEnclosure_GetLengthAndExtremePoints_System_Collections_Generic_IEnumerable_TVGL_Vector2__TVGL_Vector2_System_Collections_Generic_List_TVGL_Vector2___System_Collections_Generic_List_TVGL_Vector2___" data-uid="TVGL.MinimumEnclosure.GetLengthAndExtremePoints(System.Collections.Generic.IEnumerable{TVGL.Vector2},TVGL.Vector2,System.Collections.Generic.List{TVGL.Vector2}@,System.Collections.Generic.List{TVGL.Vector2}@)">
+  GetLengthAndExtremePoints(IEnumerable&lt;Vector2&gt;, Vector2, out List&lt;Vector2&gt;, out List&lt;Vector2&gt;)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Given a Direction, dir, this function returns the maximum length along this Direction
+for the provided points as well as the points that represent the extremes.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static double GetLengthAndExtremePoints(this IEnumerable&lt;Vector2&gt; points, Vector2 direction2D, out List&lt;Vector2&gt; bottomPoints, out List&lt;Vector2&gt; topPoints)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>points</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.Vector2.html">Vector2</a>&gt;</dt>
+    <dd><p>The vertices.</p>
+</dd>
+    <dt><code>direction2D</code> <a class="xref" href="TVGL.Vector2.html">Vector2</a></dt>
+    <dd><p>The direction.</p>
+</dd>
+    <dt><code>bottomPoints</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.list-1">List</a>&lt;<a class="xref" href="TVGL.Vector2.html">Vector2</a>&gt;</dt>
+    <dd><p>The bottom vertices.</p>
+</dd>
+    <dt><code>topPoints</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.list-1">List</a>&lt;<a class="xref" href="TVGL.Vector2.html">Vector2</a>&gt;</dt>
+    <dd><p>The top vertices.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>System.Double.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_MinimumEnclosure_GetLengthAndExtremeVertex_" data-uid="TVGL.MinimumEnclosure.GetLengthAndExtremeVertex*"></a>
+
+  <h3 id="TVGL_MinimumEnclosure_GetLengthAndExtremeVertex_System_Collections_Generic_IEnumerable_TVGL_Vector3__TVGL_Vector3_TVGL_Vector3__TVGL_Vector3__" data-uid="TVGL.MinimumEnclosure.GetLengthAndExtremeVertex(System.Collections.Generic.IEnumerable{TVGL.Vector3},TVGL.Vector3,TVGL.Vector3@,TVGL.Vector3@)">
+  GetLengthAndExtremeVertex(IEnumerable&lt;Vector3&gt;, Vector3, out Vector3, out Vector3)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Given a Direction, dir, this function returns the maximum length along this Direction and one vertex
+that represents each extreme. Use this if you do not need all the vertices at the extremes.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static double GetLengthAndExtremeVertex(this IEnumerable&lt;Vector3&gt; vertices, Vector3 direction, out Vector3 bottomVertex, out Vector3 topVertex)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>vertices</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.Vector3.html">Vector3</a>&gt;</dt>
+    <dd><p>The vertices.</p>
+</dd>
+    <dt><code>direction</code> <a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>The direction.</p>
+</dd>
+    <dt><code>bottomVertex</code> <a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>The bottom vertex.</p>
+</dd>
+    <dt><code>topVertex</code> <a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>The top vertex.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>System.Double.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_MinimumEnclosure_GetLengthAndExtremeVertex_" data-uid="TVGL.MinimumEnclosure.GetLengthAndExtremeVertex*"></a>
+
+  <h3 id="TVGL_MinimumEnclosure_GetLengthAndExtremeVertex__1_System_Collections_Generic_IEnumerable___0__TVGL_Vector3___0____0__" data-uid="TVGL.MinimumEnclosure.GetLengthAndExtremeVertex``1(System.Collections.Generic.IEnumerable{``0},TVGL.Vector3,``0@,``0@)">
+  GetLengthAndExtremeVertex&lt;T&gt;(IEnumerable&lt;T&gt;, Vector3, out T, out T)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Given a Direction, dir, this function returns the maximum length along this Direction and one vertex
+that represents each extreme. Use this if you do not need all the vertices at the extremes.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static double GetLengthAndExtremeVertex&lt;T&gt;(this IEnumerable&lt;T&gt; vertices, Vector3 direction, out T bottomVertex, out T topVertex) where T : IVertex3D</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>vertices</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;T&gt;</dt>
+    <dd><p>The vertices.</p>
+</dd>
+    <dt><code>direction</code> <a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>The direction.</p>
+</dd>
+    <dt><code>bottomVertex</code> <span class="xref">T</span></dt>
+    <dd><p>The bottom vertex.</p>
+</dd>
+    <dt><code>topVertex</code> <span class="xref">T</span></dt>
+    <dd><p>The top vertex.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>System.Double.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Type Parameters</h4>
+  <dl class="parameters">
+    <dt><code>T</code></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_MinimumEnclosure_GetLengthAndExtremeVertices_" data-uid="TVGL.MinimumEnclosure.GetLengthAndExtremeVertices*"></a>
+
+  <h3 id="TVGL_MinimumEnclosure_GetLengthAndExtremeVertices__1_System_Collections_Generic_IEnumerable___0__TVGL_Vector3_System_Collections_Generic_List___0___System_Collections_Generic_List___0___" data-uid="TVGL.MinimumEnclosure.GetLengthAndExtremeVertices``1(System.Collections.Generic.IEnumerable{``0},TVGL.Vector3,System.Collections.Generic.List{``0}@,System.Collections.Generic.List{``0}@)">
+  GetLengthAndExtremeVertices&lt;T&gt;(IEnumerable&lt;T&gt;, Vector3, out List&lt;T&gt;, out List&lt;T&gt;)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Given a Direction, dir, this function returns the maximum length along this Direction
+for the provided vertices as well as the all vertices that represent the extremes.
+If you only want one the length or only need one vertex at the extreme, it is more efficient
+and easier to use GetLengthAndExtremeVertex</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static double GetLengthAndExtremeVertices&lt;T&gt;(this IEnumerable&lt;T&gt; vertices, Vector3 direction, out List&lt;T&gt; bottomVertices, out List&lt;T&gt; topVertices) where T : IVertex3D</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>vertices</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;T&gt;</dt>
+    <dd><p>The vertices.</p>
+</dd>
+    <dt><code>direction</code> <a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>The direction.</p>
+</dd>
+    <dt><code>bottomVertices</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.list-1">List</a>&lt;T&gt;</dt>
+    <dd><p>The bottom vertices.</p>
+</dd>
+    <dt><code>topVertices</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.list-1">List</a>&lt;T&gt;</dt>
+    <dd><p>The top vertices.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>System.Double.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Type Parameters</h4>
+  <dl class="parameters">
+    <dt><code>T</code></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_MinimumEnclosure_GetLoops_" data-uid="TVGL.MinimumEnclosure.GetLoops*"></a>
+
+  <h3 id="TVGL_MinimumEnclosure_GetLoops_System_Collections_Generic_HashSet_TVGL_Edge__System_Collections_Generic_HashSet_TVGL_TriangleFace__" data-uid="TVGL.MinimumEnclosure.GetLoops(System.Collections.Generic.HashSet{TVGL.Edge},System.Collections.Generic.HashSet{TVGL.TriangleFace})">
+  GetLoops(HashSet&lt;Edge&gt;, HashSet&lt;TriangleFace&gt;)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Arranges the edges into loops, which are now stored in a BorderSegment object.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static IEnumerable&lt;PrimitiveBorder&gt; GetLoops(this HashSet&lt;Edge&gt; edges, HashSet&lt;TriangleFace&gt; FacesToContain)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>edges</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.hashset-1">HashSet</a>&lt;<a class="xref" href="TVGL.Edge.html">Edge</a>&gt;</dt>
+    <dd><p>The edges.</p>
+</dd>
+    <dt><code>FacesToContain</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.hashset-1">HashSet</a>&lt;<a class="xref" href="TVGL.TriangleFace.html">TriangleFace</a>&gt;</dt>
+    <dd><p>The faces to contain.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.PrimitiveBorder.html">PrimitiveBorder</a>&gt;</dt>
+    <dd><p>IEnumerable&lt;BorderSegment&gt;.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_MinimumEnclosure_MaximumInnerCircle_" data-uid="TVGL.MinimumEnclosure.MaximumInnerCircle*"></a>
+
+  <h3 id="TVGL_MinimumEnclosure_MaximumInnerCircle_System_Collections_Generic_IEnumerable_System_Collections_Generic_IEnumerable_TVGL_Vector2___TVGL_Vector2_" data-uid="TVGL.MinimumEnclosure.MaximumInnerCircle(System.Collections.Generic.IEnumerable{System.Collections.Generic.IEnumerable{TVGL.Vector2}},TVGL.Vector2)">
+  MaximumInnerCircle(IEnumerable&lt;IEnumerable&lt;Vector2&gt;&gt;, Vector2)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the maximum inner circle given a group of polygons and a center point.
+If there are no negative polygons, the function will return a negligible Bounding Circle</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static Circle MaximumInnerCircle(this IEnumerable&lt;IEnumerable&lt;Vector2&gt;&gt; paths, Vector2 centerPoint)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>paths</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.Vector2.html">Vector2</a>&gt;&gt;</dt>
+    <dd><p>The paths.</p>
+</dd>
+    <dt><code>centerPoint</code> <a class="xref" href="TVGL.Vector2.html">Vector2</a></dt>
+    <dd><p>The center point.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.Circle.html">Circle</a></dt>
+    <dd><p>BoundingBox.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_MinimumEnclosure_MaximumInnerCircle_" data-uid="TVGL.MinimumEnclosure.MaximumInnerCircle*"></a>
+
+  <h3 id="TVGL_MinimumEnclosure_MaximumInnerCircle_System_Collections_Generic_List_TVGL_Polygon__TVGL_Vector2_" data-uid="TVGL.MinimumEnclosure.MaximumInnerCircle(System.Collections.Generic.List{TVGL.Polygon},TVGL.Vector2)">
+  MaximumInnerCircle(List&lt;Polygon&gt;, Vector2)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the maximum inner circle given a group of polygons and a center point.
+The circle will either be inside a negative polygon or outside a positive polygon (e.g. C channel).
+Else it returns a negligible Bounding Circle</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static Circle MaximumInnerCircle(this List&lt;Polygon&gt; polygons, Vector2 centerPoint)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>polygons</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.list-1">List</a>&lt;<a class="xref" href="TVGL.Polygon.html">Polygon</a>&gt;</dt>
+    <dd><p>The polygons.</p>
+</dd>
+    <dt><code>centerPoint</code> <a class="xref" href="TVGL.Vector2.html">Vector2</a></dt>
+    <dd><p>The center point.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.Circle.html">Circle</a></dt>
+    <dd><p>BoundingBox.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_MinimumEnclosure_MinimumBoundingCylinder_" data-uid="TVGL.MinimumEnclosure.MinimumBoundingCylinder*"></a>
+
+  <h3 id="TVGL_MinimumEnclosure_MinimumBoundingCylinder_TVGL_TessellatedSolid_TVGL_BoundingBox_" data-uid="TVGL.MinimumEnclosure.MinimumBoundingCylinder(TVGL.TessellatedSolid,TVGL.BoundingBox)">
+  MinimumBoundingCylinder(TessellatedSolid, BoundingBox)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Minimums the bounding cylinder.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static Cylinder MinimumBoundingCylinder(TessellatedSolid ts, BoundingBox box)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>ts</code> <a class="xref" href="TVGL.TessellatedSolid.html">TessellatedSolid</a></dt>
+    <dd><p>The ts.</p>
+</dd>
+    <dt><code>box</code> <a class="xref" href="TVGL.BoundingBox.html">BoundingBox</a></dt>
+    <dd><p>The box.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.Cylinder.html">Cylinder</a></dt>
+    <dd><p>Cylinder.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_MinimumEnclosure_MinimumBoundingCylinder_" data-uid="TVGL.MinimumEnclosure.MinimumBoundingCylinder*"></a>
+
+  <h3 id="TVGL_MinimumEnclosure_MinimumBoundingCylinder__1_System_Collections_Generic_IEnumerable___0__System_Collections_Generic_IEnumerable_TVGL_Vector3__" data-uid="TVGL.MinimumEnclosure.MinimumBoundingCylinder``1(System.Collections.Generic.IEnumerable{``0},System.Collections.Generic.IEnumerable{TVGL.Vector3})">
+  MinimumBoundingCylinder&lt;T&gt;(IEnumerable&lt;T&gt;, IEnumerable&lt;Vector3&gt;)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Minimums the bounding cylinder.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static Cylinder MinimumBoundingCylinder&lt;T&gt;(IEnumerable&lt;T&gt; convexHullVertices, IEnumerable&lt;Vector3&gt; directions) where T : IVertex3D</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>convexHullVertices</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;T&gt;</dt>
+    <dd><p>The convex hull vertices.</p>
+</dd>
+    <dt><code>directions</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.Vector3.html">Vector3</a>&gt;</dt>
+    <dd><p>The directions.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.Cylinder.html">Cylinder</a></dt>
+    <dd><p>Cylinder.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Type Parameters</h4>
+  <dl class="parameters">
+    <dt><code>T</code></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_MinimumEnclosure_MinimumBoundingCylinder_" data-uid="TVGL.MinimumEnclosure.MinimumBoundingCylinder*"></a>
+
+  <h3 id="TVGL_MinimumEnclosure_MinimumBoundingCylinder__1_System_Collections_Generic_IEnumerable___0__" data-uid="TVGL.MinimumEnclosure.MinimumBoundingCylinder``1(System.Collections.Generic.IEnumerable{``0})">
+  MinimumBoundingCylinder&lt;T&gt;(IEnumerable&lt;T&gt;)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the minimum bounding cylinder using 13 guesses for the depth direction</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static Cylinder MinimumBoundingCylinder&lt;T&gt;(this IEnumerable&lt;T&gt; convexHullVertices) where T : IVertex3D</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>convexHullVertices</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;T&gt;</dt>
+    <dd><p>The convex hull vertices.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.Cylinder.html">Cylinder</a></dt>
+    <dd><p>BoundingBox.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Type Parameters</h4>
+  <dl class="parameters">
+    <dt><code>T</code></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_MinimumEnclosure_MinimumBoundingCylinder_" data-uid="TVGL.MinimumEnclosure.MinimumBoundingCylinder*"></a>
+
+  <h3 id="TVGL_MinimumEnclosure_MinimumBoundingCylinder__1_System_Collections_Generic_IList___0__TVGL_Vector3_" data-uid="TVGL.MinimumEnclosure.MinimumBoundingCylinder``1(System.Collections.Generic.IList{``0},TVGL.Vector3)">
+  MinimumBoundingCylinder&lt;T&gt;(IList&lt;T&gt;, Vector3)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Minimums the bounding cylinder.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static Cylinder MinimumBoundingCylinder&lt;T&gt;(IList&lt;T&gt; convexHullVertices, Vector3 direction) where T : IVertex3D</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>convexHullVertices</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ilist-1">IList</a>&lt;T&gt;</dt>
+    <dd><p>The convex hull vertices.</p>
+</dd>
+    <dt><code>direction</code> <a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>The direction.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.Cylinder.html">Cylinder</a></dt>
+    <dd><p>Cylinder.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Type Parameters</h4>
+  <dl class="parameters">
+    <dt><code>T</code></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_MinimumEnclosure_MinimumBoundingCylinderAxis_" data-uid="TVGL.MinimumEnclosure.MinimumBoundingCylinderAxis*"></a>
+
+  <h3 id="TVGL_MinimumEnclosure_MinimumBoundingCylinderAxis__1_System_Collections_Generic_IEnumerable___0__TVGL_Vector3_" data-uid="TVGL.MinimumEnclosure.MinimumBoundingCylinderAxis``1(System.Collections.Generic.IEnumerable{``0},TVGL.Vector3)">
+  MinimumBoundingCylinderAxis&lt;T&gt;(IEnumerable&lt;T&gt;, Vector3)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the minimum bounding cylinder using 13 guesses for the depth direction</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static Vector3 MinimumBoundingCylinderAxis&lt;T&gt;(this IEnumerable&lt;T&gt; vertices, Vector3 likelyAxis) where T : IVertex3D</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>vertices</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;T&gt;</dt>
+    <dd><p>The vertices.</p>
+</dd>
+    <dt><code>likelyAxis</code> <a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>The likely axis.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>BoundingBox.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Type Parameters</h4>
+  <dl class="parameters">
+    <dt><code>T</code></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_MinimumEnclosure_MinimumCircle_" data-uid="TVGL.MinimumEnclosure.MinimumCircle*"></a>
+
+  <h3 id="TVGL_MinimumEnclosure_MinimumCircle_System_Collections_Generic_IEnumerable_TVGL_Vector2__" data-uid="TVGL.MinimumEnclosure.MinimumCircle(System.Collections.Generic.IEnumerable{TVGL.Vector2})">
+  MinimumCircle(IEnumerable&lt;Vector2&gt;)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Finds the minimum bounding circle</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static Circle MinimumCircle(this IEnumerable&lt;Vector2&gt; points)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>points</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.Vector2.html">Vector2</a>&gt;</dt>
+    <dd><p>The points.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.Circle.html">Circle</a></dt>
+    <dd><p>System.Double.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <h4 class="section">Exceptions</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.exception">Exception</a></dt>
+    <dd><p>Bounding circle failed to converge</p>
+</dd>
+  </dl>
+
+
+
+  <a id="TVGL_MinimumEnclosure_OrientedBoundingBox_" data-uid="TVGL.MinimumEnclosure.OrientedBoundingBox*"></a>
+
+  <h3 id="TVGL_MinimumEnclosure_OrientedBoundingBox_System_Collections_Generic_List_TVGL_TessellatedSolid__" data-uid="TVGL.MinimumEnclosure.OrientedBoundingBox(System.Collections.Generic.List{TVGL.TessellatedSolid})">
+  OrientedBoundingBox(List&lt;TessellatedSolid&gt;)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Finds the minimum bounding box.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static BoundingBox OrientedBoundingBox(this List&lt;TessellatedSolid&gt; solids)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>solids</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.list-1">List</a>&lt;<a class="xref" href="TVGL.TessellatedSolid.html">TessellatedSolid</a>&gt;</dt>
+    <dd><p>The solids.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.BoundingBox.html">BoundingBox</a></dt>
+    <dd><p>BoundingBox.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_MinimumEnclosure_OrientedBoundingBox_" data-uid="TVGL.MinimumEnclosure.OrientedBoundingBox*"></a>
+
+  <h3 id="TVGL_MinimumEnclosure_OrientedBoundingBox_TVGL_TessellatedSolid_" data-uid="TVGL.MinimumEnclosure.OrientedBoundingBox(TVGL.TessellatedSolid)">
+  OrientedBoundingBox(TessellatedSolid)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Finds the minimum bounding box.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static BoundingBox OrientedBoundingBox(this TessellatedSolid ts)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>ts</code> <a class="xref" href="TVGL.TessellatedSolid.html">TessellatedSolid</a></dt>
+    <dd><p>The ts.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.BoundingBox.html">BoundingBox</a></dt>
+    <dd><p>BoundingBox.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_MinimumEnclosure_OrientedBoundingBox_" data-uid="TVGL.MinimumEnclosure.OrientedBoundingBox*"></a>
+
+  <h3 id="TVGL_MinimumEnclosure_OrientedBoundingBox_TVGL_TVGLConvexHull_" data-uid="TVGL.MinimumEnclosure.OrientedBoundingBox(TVGL.TVGLConvexHull)">
+  OrientedBoundingBox(TVGLConvexHull)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Finds the minimum bounding box.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static BoundingBox OrientedBoundingBox(this TVGLConvexHull convexHull)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>convexHull</code> <a class="xref" href="TVGL.TVGLConvexHull.html">TVGLConvexHull</a></dt>
+    <dd><p>The convex hull.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.BoundingBox.html">BoundingBox</a></dt>
+    <dd><p>BoundingBox.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_MinimumEnclosure_OrientedBoundingBox_" data-uid="TVGL.MinimumEnclosure.OrientedBoundingBox*"></a>
+
+  <h3 id="TVGL_MinimumEnclosure_OrientedBoundingBox__1_System_Collections_Generic_IEnumerable___0__" data-uid="TVGL.MinimumEnclosure.OrientedBoundingBox``1(System.Collections.Generic.IEnumerable{``0})">
+  OrientedBoundingBox&lt;T&gt;(IEnumerable&lt;T&gt;)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Finds the minimum bounding box.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static BoundingBox OrientedBoundingBox&lt;T&gt;(this IEnumerable&lt;T&gt; convexHullVertices) where T : IVertex3D</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>convexHullVertices</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;T&gt;</dt>
+    <dd><p>The convex hull vertices.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.BoundingBox.html">BoundingBox</a></dt>
+    <dd><p>BoundingBox.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Type Parameters</h4>
+  <dl class="parameters">
+    <dt><code>T</code></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+</article>
+
+        <div class="contribution d-print-none">
+        </div>
+
+        
+      </div>
+
+      <div class="affix">
+        <nav id="affix"></nav>
+      </div>
+    </main>
+
+
+    <footer class="border-top">
+      <div class="container-xxl">
+        <div class="flex-fill">
+          <span>Made with <a href="https://dotnet.github.io/docfx">docfx</a></span>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>

@@ -19,9 +19,7 @@ namespace TVGL
 {
     /// <summary>
     /// Class ZBuffer. This class cannot be inherited.
-    /// Implements the <see cref="TVGL.Grid{(TVGL.TriangleFace, System.Double)}" />
     /// </summary>
-    /// <seealso cref="TVGL.Grid{(TVGL.TriangleFace, System.Double)}" />
     public sealed class ZBuffer : Grid<(TriangleFace, double)>
     {
         /// <summary>

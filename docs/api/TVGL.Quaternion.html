@@ -1,0 +1,1775 @@
+﻿<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+      <title>Struct Quaternion
+ </title>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <meta name="title" content="Struct Quaternion
+ ">
+      
+      <link rel="icon" href="../favicon.ico">
+      <link rel="stylesheet" href="../styles/docfx.min.css">
+      <link rel="stylesheet" href="../styles/main.css">
+      <meta name="docfx:navrel" content="../toc.html">
+      <meta name="docfx:tocrel" content="toc.html">
+      
+      
+      
+
+      <script>
+        MathJax = {
+          options: {
+            processHtmlClass: ['tex2jax_process', 'math']
+          }
+        };
+      </script>
+
+      <script type="text/javascript" src="../styles/docfx.min.js"></script>
+      <script type="text/javascript" src="../styles/main.js"></script>
+  </head>
+
+  <body class="tex2jax_ignore" data-layout="" data-yaml-mime="ManagedReference">
+    <header class="bg-body border-bottom">
+      <nav id="autocollapse" class="navbar navbar-expand-md" role="navigation">
+        <div class="container-xxl flex-nowrap">
+          <a class="navbar-brand" href="../index.html">
+            <img id="logo" class="svg" src="../logo.svg" alt="">
+            
+          </a>
+          <button class="btn btn-lg d-md-none border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navpanel" aria-controls="navpanel" aria-expanded="false" aria-label="Toggle navigation">
+            <i class="bi bi-three-dots"></i>
+          </button>
+          <div class="collapse navbar-collapse" id="navpanel">
+            <div id="navbar">
+            </div>
+          </div>
+        </div>
+      </nav>
+    </header>
+
+    <main class="container-xxl">
+      <div class="toc-offcanvas">
+        <div class="offcanvas-md offcanvas-start" tabindex="-1" id="tocOffcanvas" aria-labelledby="tocOffcanvasLabel">
+          <div class="offcanvas-header">
+            <h5 class="offcanvas-title" id="tocOffcanvasLabel">Table of Contents</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#tocOffcanvas" aria-label="Close"></button>
+          </div>
+          <div class="offcanvas-body">
+            <nav class="toc" id="toc"></nav>
+          </div>
+        </div>
+      </div>
+
+      <div class="content">
+        <div class="actionbar">
+          <button class="btn btn-lg border-0 d-md-none" style="margin-top: -.65em; margin-left: -.8em" type="button" data-bs-toggle="offcanvas" data-bs-target="#tocOffcanvas" aria-controls="tocOffcanvas" aria-expanded="false" aria-label="Show table of contents">
+            <i class="bi bi-list"></i>
+          </button>
+
+          <nav id="breadcrumb"></nav>
+        </div>
+
+        <article data-uid="TVGL.Quaternion">
+
+
+
+  <h1 id="TVGL_Quaternion" data-uid="TVGL.Quaternion" class="text-break">
+    Struct Quaternion
+  
+  </h1>
+
+  <div class="facts text-secondary">
+    <dl><dt>Namespace</dt><dd><a class="xref" href="TVGL.html">TVGL</a></dd></dl>
+  <dl><dt>Assembly</dt><dd>TessellationAndVoxelizationGeometryLibrary.dll</dd></dl>
+  </div>
+
+  <div class="markdown summary"><p>A structure encapsulating a four-dimensional vector (x,y,z,w),
+which is used to efficiently rotate an object about the (x,y,z) vector by the angle theta, where w = cos(theta/2).</p>
+</div>
+  <div class="markdown conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public struct Quaternion : IEquatable&lt;Quaternion&gt;</code></pre>
+  </div>
+
+
+
+
+
+  <dl class="typelist implements">
+    <dt>Implements</dt>
+    <dd>
+      <div><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.iequatable-1">IEquatable</a>&lt;<a class="xref" href="TVGL.Quaternion.html">Quaternion</a>&gt;</div>
+    </dd>
+  </dl>
+
+
+  <dl class="typelist derived">
+    <dt>Inherited Members</dt>
+    <dd>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.equals#system-object-equals(system-object-system-object)">object.Equals(object, object)</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.gettype">object.GetType()</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.referenceequals">object.ReferenceEquals(object, object)</a>
+    </div>
+  </dd></dl>
+
+  <dl class="typelist extensionMethods">
+    <dt>Extension Methods</dt>
+    <dd>
+  <div>
+      <a class="xref" href="TVGL.VectorExtensions.html#TVGL_VectorExtensions_Concatenate_TVGL_Quaternion_TVGL_Quaternion_">VectorExtensions.Concatenate(Quaternion, Quaternion)</a>
+  </div>
+  <div>
+      <a class="xref" href="TVGL.VectorExtensions.html#TVGL_VectorExtensions_Conjugate_TVGL_Quaternion_">VectorExtensions.Conjugate(Quaternion)</a>
+  </div>
+  <div>
+      <a class="xref" href="TVGL.VectorExtensions.html#TVGL_VectorExtensions_Dot_TVGL_Quaternion_TVGL_Quaternion_">VectorExtensions.Dot(Quaternion, Quaternion)</a>
+  </div>
+  <div>
+      <a class="xref" href="TVGL.VectorExtensions.html#TVGL_VectorExtensions_Inverse_TVGL_Quaternion_">VectorExtensions.Inverse(Quaternion)</a>
+  </div>
+  <div>
+      <a class="xref" href="TVGL.VectorExtensions.html#TVGL_VectorExtensions_Normalize_TVGL_Quaternion_">VectorExtensions.Normalize(Quaternion)</a>
+  </div>
+  </dd></dl>
+
+
+
+
+
+  <h2 class="section" id="constructors">Constructors
+</h2>
+
+
+  <a id="TVGL_Quaternion__ctor_" data-uid="TVGL.Quaternion.#ctor*"></a>
+
+  <h3 id="TVGL_Quaternion__ctor_System_Double_System_Double_System_Double_System_Double_" data-uid="TVGL.Quaternion.#ctor(System.Double,System.Double,System.Double,System.Double)">
+  Quaternion(double, double, double, double)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Constructs a Quaternion from the given components.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public Quaternion(double x, double y, double z, double w)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>x</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The X component of the Quaternion.</p>
+</dd>
+    <dt><code>y</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The Y component of the Quaternion.</p>
+</dd>
+    <dt><code>z</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The Z component of the Quaternion.</p>
+</dd>
+    <dt><code>w</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The W component of the Quaternion.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_Quaternion__ctor_" data-uid="TVGL.Quaternion.#ctor*"></a>
+
+  <h3 id="TVGL_Quaternion__ctor_TVGL_Vector3_System_Double_" data-uid="TVGL.Quaternion.#ctor(TVGL.Vector3,System.Double)">
+  Quaternion(Vector3, double)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Constructs a Quaternion from the given vector and rotation parts.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public Quaternion(Vector3 vectorPart, double scalarPart)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>vectorPart</code> <a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>The vector part of the Quaternion.</p>
+</dd>
+    <dt><code>scalarPart</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The rotation part of the Quaternion.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+  <h2 class="section" id="fields">Fields
+</h2>
+
+
+
+  <h3 id="TVGL_Quaternion_W" data-uid="TVGL.Quaternion.W">
+  W
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Specifies the rotation component of the Quaternion.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public double W</code></pre>
+  </div>
+
+
+
+
+  <h4 class="section">Field Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+  <h3 id="TVGL_Quaternion_X" data-uid="TVGL.Quaternion.X">
+  X
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Specifies the X-value of the vector component of the Quaternion.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public double X</code></pre>
+  </div>
+
+
+
+
+  <h4 class="section">Field Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+  <h3 id="TVGL_Quaternion_Y" data-uid="TVGL.Quaternion.Y">
+  Y
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Specifies the Y-value of the vector component of the Quaternion.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public double Y</code></pre>
+  </div>
+
+
+
+
+  <h4 class="section">Field Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+  <h3 id="TVGL_Quaternion_Z" data-uid="TVGL.Quaternion.Z">
+  Z
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Specifies the Z-value of the vector component of the Quaternion.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public double Z</code></pre>
+  </div>
+
+
+
+
+  <h4 class="section">Field Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+  <h2 class="section" id="properties">Properties
+</h2>
+
+
+  <a id="TVGL_Quaternion_Identity_" data-uid="TVGL.Quaternion.Identity*"></a>
+
+  <h3 id="TVGL_Quaternion_Identity" data-uid="TVGL.Quaternion.Identity">
+  Identity
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Returns a Quaternion representing no rotation.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static Quaternion Identity { get; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.Quaternion.html">Quaternion</a></dt>
+    <dd><p>The identity.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="TVGL_Quaternion_Null_" data-uid="TVGL.Quaternion.Null*"></a>
+
+  <h3 id="TVGL_Quaternion_Null" data-uid="TVGL.Quaternion.Null">
+  Null
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Returns a Quaternion representing no rotation.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static Quaternion Null { get; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.Quaternion.html">Quaternion</a></dt>
+    <dd><p>The null.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <h2 class="section" id="methods">Methods
+</h2>
+
+
+  <a id="TVGL_Quaternion_Add_" data-uid="TVGL.Quaternion.Add*"></a>
+
+  <h3 id="TVGL_Quaternion_Add_TVGL_Quaternion_TVGL_Quaternion_" data-uid="TVGL.Quaternion.Add(TVGL.Quaternion,TVGL.Quaternion)">
+  Add(Quaternion, Quaternion)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Adds two Quaternions element-by-element.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static Quaternion Add(Quaternion value1, Quaternion value2)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>value1</code> <a class="xref" href="TVGL.Quaternion.html">Quaternion</a></dt>
+    <dd><p>The first source Quaternion.</p>
+</dd>
+    <dt><code>value2</code> <a class="xref" href="TVGL.Quaternion.html">Quaternion</a></dt>
+    <dd><p>The second source Quaternion.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.Quaternion.html">Quaternion</a></dt>
+    <dd><p>The result of adding the Quaternions.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_Quaternion_Concatenate_" data-uid="TVGL.Quaternion.Concatenate*"></a>
+
+  <h3 id="TVGL_Quaternion_Concatenate_TVGL_Quaternion_TVGL_Quaternion_" data-uid="TVGL.Quaternion.Concatenate(TVGL.Quaternion,TVGL.Quaternion)">
+  Concatenate(Quaternion, Quaternion)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Concatenates two Quaternions; the result represents the value1 rotation followed by the value2 rotation.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static Quaternion Concatenate(Quaternion quaternion1, Quaternion quaternion2)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>quaternion1</code> <a class="xref" href="TVGL.Quaternion.html">Quaternion</a></dt>
+    <dd><p>The first Quaternion rotation in the series.</p>
+</dd>
+    <dt><code>quaternion2</code> <a class="xref" href="TVGL.Quaternion.html">Quaternion</a></dt>
+    <dd><p>The second Quaternion rotation in the series.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.Quaternion.html">Quaternion</a></dt>
+    <dd><p>A new Quaternion representing the concatenation of the value1 rotation followed by the value2 rotation.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_Quaternion_Conjugate_" data-uid="TVGL.Quaternion.Conjugate*"></a>
+
+  <h3 id="TVGL_Quaternion_Conjugate_TVGL_Quaternion_" data-uid="TVGL.Quaternion.Conjugate(TVGL.Quaternion)">
+  Conjugate(Quaternion)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Creates the conjugate of a specified Quaternion.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static Quaternion Conjugate(Quaternion value)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>value</code> <a class="xref" href="TVGL.Quaternion.html">Quaternion</a></dt>
+    <dd><p>The Quaternion of which to return the conjugate.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.Quaternion.html">Quaternion</a></dt>
+    <dd><p>A new Quaternion that is the conjugate of the specified one.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_Quaternion_CreateFromAxisAngle_" data-uid="TVGL.Quaternion.CreateFromAxisAngle*"></a>
+
+  <h3 id="TVGL_Quaternion_CreateFromAxisAngle_TVGL_Vector3_System_Double_" data-uid="TVGL.Quaternion.CreateFromAxisAngle(TVGL.Vector3,System.Double)">
+  CreateFromAxisAngle(Vector3, double)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Creates a Quaternion from a normalized vector axis and an angle to rotate about the vector.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static Quaternion CreateFromAxisAngle(Vector3 axis, double angle)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>axis</code> <a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>The unit vector to rotate around.
+This vector must be normalized before calling this function or the resulting Quaternion will be incorrect.</p>
+</dd>
+    <dt><code>angle</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The angle, in radians, to rotate around the vector.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.Quaternion.html">Quaternion</a></dt>
+    <dd><p>The created Quaternion.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_Quaternion_CreateFromRotationMatrix_" data-uid="TVGL.Quaternion.CreateFromRotationMatrix*"></a>
+
+  <h3 id="TVGL_Quaternion_CreateFromRotationMatrix_TVGL_Matrix4x4_" data-uid="TVGL.Quaternion.CreateFromRotationMatrix(TVGL.Matrix4x4)">
+  CreateFromRotationMatrix(Matrix4x4)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Creates a Quaternion from the given rotation matrix.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static Quaternion CreateFromRotationMatrix(Matrix4x4 matrix)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>matrix</code> <a class="xref" href="TVGL.Matrix4x4.html">Matrix4x4</a></dt>
+    <dd><p>The rotation matrix.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.Quaternion.html">Quaternion</a></dt>
+    <dd><p>The created Quaternion.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_Quaternion_CreateFromYawPitchRoll_" data-uid="TVGL.Quaternion.CreateFromYawPitchRoll*"></a>
+
+  <h3 id="TVGL_Quaternion_CreateFromYawPitchRoll_System_Double_System_Double_System_Double_" data-uid="TVGL.Quaternion.CreateFromYawPitchRoll(System.Double,System.Double,System.Double)">
+  CreateFromYawPitchRoll(double, double, double)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Creates a new Quaternion from the given yaw, pitch, and roll, in radians.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static Quaternion CreateFromYawPitchRoll(double yaw, double pitch, double roll)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>yaw</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The yaw angle, in radians, around the Y-axis.</p>
+</dd>
+    <dt><code>pitch</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The pitch angle, in radians, around the X-axis.</p>
+</dd>
+    <dt><code>roll</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The roll angle, in radians, around the Z-axis.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.Quaternion.html">Quaternion</a></dt>
+    <dd><p>Quaternion.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_Quaternion_Divide_" data-uid="TVGL.Quaternion.Divide*"></a>
+
+  <h3 id="TVGL_Quaternion_Divide_TVGL_Quaternion_TVGL_Quaternion_" data-uid="TVGL.Quaternion.Divide(TVGL.Quaternion,TVGL.Quaternion)">
+  Divide(Quaternion, Quaternion)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Divides a Quaternion by another Quaternion.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static Quaternion Divide(Quaternion value1, Quaternion value2)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>value1</code> <a class="xref" href="TVGL.Quaternion.html">Quaternion</a></dt>
+    <dd><p>The source Quaternion.</p>
+</dd>
+    <dt><code>value2</code> <a class="xref" href="TVGL.Quaternion.html">Quaternion</a></dt>
+    <dd><p>The divisor.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.Quaternion.html">Quaternion</a></dt>
+    <dd><p>The result of the division.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_Quaternion_Dot_" data-uid="TVGL.Quaternion.Dot*"></a>
+
+  <h3 id="TVGL_Quaternion_Dot_TVGL_Quaternion_TVGL_Quaternion_" data-uid="TVGL.Quaternion.Dot(TVGL.Quaternion,TVGL.Quaternion)">
+  Dot(Quaternion, Quaternion)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Calculates the dot product of two Quaternions.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static double Dot(Quaternion quaternion1, Quaternion quaternion2)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>quaternion1</code> <a class="xref" href="TVGL.Quaternion.html">Quaternion</a></dt>
+    <dd><p>The first source Quaternion.</p>
+</dd>
+    <dt><code>quaternion2</code> <a class="xref" href="TVGL.Quaternion.html">Quaternion</a></dt>
+    <dd><p>The second source Quaternion.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The dot product of the Quaternions.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_Quaternion_Equals_" data-uid="TVGL.Quaternion.Equals*"></a>
+
+  <h3 id="TVGL_Quaternion_Equals_System_Object_" data-uid="TVGL.Quaternion.Equals(System.Object)">
+  Equals(object)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Returns a boolean indicating whether the given Object is equal to this Quaternion instance.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public override bool Equals(object obj)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>obj</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object">object</a></dt>
+    <dd><p>The Object to compare against.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd><p>True if the Object is equal to this Quaternion; False otherwise.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_Quaternion_Equals_" data-uid="TVGL.Quaternion.Equals*"></a>
+
+  <h3 id="TVGL_Quaternion_Equals_TVGL_Quaternion_" data-uid="TVGL.Quaternion.Equals(TVGL.Quaternion)">
+  Equals(Quaternion)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Returns a boolean indicating whether the given Quaternion is equal to this Quaternion instance.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public bool Equals(Quaternion other)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>other</code> <a class="xref" href="TVGL.Quaternion.html">Quaternion</a></dt>
+    <dd><p>The Quaternion to compare this instance to.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd><p>True if the other Quaternion is equal to this instance; False otherwise.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_Quaternion_GetHashCode_" data-uid="TVGL.Quaternion.GetHashCode*"></a>
+
+  <h3 id="TVGL_Quaternion_GetHashCode" data-uid="TVGL.Quaternion.GetHashCode">
+  GetHashCode()
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Returns the hash code for this instance.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public override int GetHashCode()</code></pre>
+  </div>
+
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a></dt>
+    <dd><p>The hash code.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_Quaternion_Inverse_" data-uid="TVGL.Quaternion.Inverse*"></a>
+
+  <h3 id="TVGL_Quaternion_Inverse_TVGL_Quaternion_" data-uid="TVGL.Quaternion.Inverse(TVGL.Quaternion)">
+  Inverse(Quaternion)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Returns the inverse of a Quaternion.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static Quaternion Inverse(Quaternion value)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>value</code> <a class="xref" href="TVGL.Quaternion.html">Quaternion</a></dt>
+    <dd><p>The source Quaternion.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.Quaternion.html">Quaternion</a></dt>
+    <dd><p>The inverted Quaternion.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_Quaternion_IsIdentity_" data-uid="TVGL.Quaternion.IsIdentity*"></a>
+
+  <h3 id="TVGL_Quaternion_IsIdentity" data-uid="TVGL.Quaternion.IsIdentity">
+  IsIdentity()
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Returns whether the Quaternion is the identity Quaternion.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public bool IsIdentity()</code></pre>
+  </div>
+
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd><p><code>true</code> if this instance is identity; otherwise, <code>false</code>.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_Quaternion_IsNull_" data-uid="TVGL.Quaternion.IsNull*"></a>
+
+  <h3 id="TVGL_Quaternion_IsNull" data-uid="TVGL.Quaternion.IsNull">
+  IsNull()
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Returns whether the Quaternion is the identity Quaternion.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public bool IsNull()</code></pre>
+  </div>
+
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd><p><code>true</code> if this instance is null; otherwise, <code>false</code>.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_Quaternion_Length_" data-uid="TVGL.Quaternion.Length*"></a>
+
+  <h3 id="TVGL_Quaternion_Length" data-uid="TVGL.Quaternion.Length">
+  Length()
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Calculates the length of the Quaternion.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public double Length()</code></pre>
+  </div>
+
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The computed length of the Quaternion.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_Quaternion_LengthSquared_" data-uid="TVGL.Quaternion.LengthSquared*"></a>
+
+  <h3 id="TVGL_Quaternion_LengthSquared" data-uid="TVGL.Quaternion.LengthSquared">
+  LengthSquared()
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Calculates the length squared of the Quaternion. This operation is cheaper than Length().</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public double LengthSquared()</code></pre>
+  </div>
+
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The length squared of the Quaternion.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_Quaternion_Lerp_" data-uid="TVGL.Quaternion.Lerp*"></a>
+
+  <h3 id="TVGL_Quaternion_Lerp_TVGL_Quaternion_TVGL_Quaternion_System_Double_" data-uid="TVGL.Quaternion.Lerp(TVGL.Quaternion,TVGL.Quaternion,System.Double)">
+  Lerp(Quaternion, Quaternion, double)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Linearly interpolates between two quaternions.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static Quaternion Lerp(Quaternion quaternion1, Quaternion quaternion2, double amount)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>quaternion1</code> <a class="xref" href="TVGL.Quaternion.html">Quaternion</a></dt>
+    <dd><p>The first source Quaternion.</p>
+</dd>
+    <dt><code>quaternion2</code> <a class="xref" href="TVGL.Quaternion.html">Quaternion</a></dt>
+    <dd><p>The second source Quaternion.</p>
+</dd>
+    <dt><code>amount</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The relative weight of the second source Quaternion in the interpolation.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.Quaternion.html">Quaternion</a></dt>
+    <dd><p>The interpolated Quaternion.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_Quaternion_Multiply_" data-uid="TVGL.Quaternion.Multiply*"></a>
+
+  <h3 id="TVGL_Quaternion_Multiply_TVGL_Quaternion_System_Double_" data-uid="TVGL.Quaternion.Multiply(TVGL.Quaternion,System.Double)">
+  Multiply(Quaternion, double)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Multiplies a Quaternion by a scalar value.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static Quaternion Multiply(Quaternion value1, double value2)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>value1</code> <a class="xref" href="TVGL.Quaternion.html">Quaternion</a></dt>
+    <dd><p>The source Quaternion.</p>
+</dd>
+    <dt><code>value2</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The scalar value.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.Quaternion.html">Quaternion</a></dt>
+    <dd><p>The result of the multiplication.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_Quaternion_Multiply_" data-uid="TVGL.Quaternion.Multiply*"></a>
+
+  <h3 id="TVGL_Quaternion_Multiply_TVGL_Quaternion_TVGL_Quaternion_" data-uid="TVGL.Quaternion.Multiply(TVGL.Quaternion,TVGL.Quaternion)">
+  Multiply(Quaternion, Quaternion)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Multiplies two Quaternions together.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static Quaternion Multiply(Quaternion value1, Quaternion value2)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>value1</code> <a class="xref" href="TVGL.Quaternion.html">Quaternion</a></dt>
+    <dd><p>The Quaternion on the left side of the multiplication.</p>
+</dd>
+    <dt><code>value2</code> <a class="xref" href="TVGL.Quaternion.html">Quaternion</a></dt>
+    <dd><p>The Quaternion on the right side of the multiplication.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.Quaternion.html">Quaternion</a></dt>
+    <dd><p>The result of the multiplication.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_Quaternion_Negate_" data-uid="TVGL.Quaternion.Negate*"></a>
+
+  <h3 id="TVGL_Quaternion_Negate_TVGL_Quaternion_" data-uid="TVGL.Quaternion.Negate(TVGL.Quaternion)">
+  Negate(Quaternion)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Flips the sign of each component of the quaternion.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static Quaternion Negate(Quaternion value)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>value</code> <a class="xref" href="TVGL.Quaternion.html">Quaternion</a></dt>
+    <dd><p>The source Quaternion.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.Quaternion.html">Quaternion</a></dt>
+    <dd><p>The negated Quaternion.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_Quaternion_Normalize_" data-uid="TVGL.Quaternion.Normalize*"></a>
+
+  <h3 id="TVGL_Quaternion_Normalize_TVGL_Quaternion_" data-uid="TVGL.Quaternion.Normalize(TVGL.Quaternion)">
+  Normalize(Quaternion)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Divides each component of the Quaternion by the length of the Quaternion.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static Quaternion Normalize(Quaternion value)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>value</code> <a class="xref" href="TVGL.Quaternion.html">Quaternion</a></dt>
+    <dd><p>The source Quaternion.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.Quaternion.html">Quaternion</a></dt>
+    <dd><p>The normalized Quaternion.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_Quaternion_Slerp_" data-uid="TVGL.Quaternion.Slerp*"></a>
+
+  <h3 id="TVGL_Quaternion_Slerp_TVGL_Quaternion_TVGL_Quaternion_System_Double_" data-uid="TVGL.Quaternion.Slerp(TVGL.Quaternion,TVGL.Quaternion,System.Double)">
+  Slerp(Quaternion, Quaternion, double)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Interpolates between two quaternions, using spherical linear interpolation.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static Quaternion Slerp(Quaternion quaternion1, Quaternion quaternion2, double amount)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>quaternion1</code> <a class="xref" href="TVGL.Quaternion.html">Quaternion</a></dt>
+    <dd><p>The first source Quaternion.</p>
+</dd>
+    <dt><code>quaternion2</code> <a class="xref" href="TVGL.Quaternion.html">Quaternion</a></dt>
+    <dd><p>The second source Quaternion.</p>
+</dd>
+    <dt><code>amount</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The relative weight of the second source Quaternion in the interpolation.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.Quaternion.html">Quaternion</a></dt>
+    <dd><p>The interpolated Quaternion.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_Quaternion_Subtract_" data-uid="TVGL.Quaternion.Subtract*"></a>
+
+  <h3 id="TVGL_Quaternion_Subtract_TVGL_Quaternion_TVGL_Quaternion_" data-uid="TVGL.Quaternion.Subtract(TVGL.Quaternion,TVGL.Quaternion)">
+  Subtract(Quaternion, Quaternion)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Subtracts one Quaternion from another.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static Quaternion Subtract(Quaternion value1, Quaternion value2)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>value1</code> <a class="xref" href="TVGL.Quaternion.html">Quaternion</a></dt>
+    <dd><p>The first source Quaternion.</p>
+</dd>
+    <dt><code>value2</code> <a class="xref" href="TVGL.Quaternion.html">Quaternion</a></dt>
+    <dd><p>The second Quaternion, to be subtracted from the first.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.Quaternion.html">Quaternion</a></dt>
+    <dd><p>The result of the subtraction.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_Quaternion_ToString_" data-uid="TVGL.Quaternion.ToString*"></a>
+
+  <h3 id="TVGL_Quaternion_ToString" data-uid="TVGL.Quaternion.ToString">
+  ToString()
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Returns a String representing this Quaternion instance.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public override string ToString()</code></pre>
+  </div>
+
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dd><p>The string representation.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <h2 class="section" id="operators">Operators
+</h2>
+
+
+  <a id="TVGL_Quaternion_op_Addition_" data-uid="TVGL.Quaternion.op_Addition*"></a>
+
+  <h3 id="TVGL_Quaternion_op_Addition_TVGL_Quaternion_TVGL_Quaternion_" data-uid="TVGL.Quaternion.op_Addition(TVGL.Quaternion,TVGL.Quaternion)">
+  operator +(Quaternion, Quaternion)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Adds two Quaternions element-by-element.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static Quaternion operator +(Quaternion value1, Quaternion value2)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>value1</code> <a class="xref" href="TVGL.Quaternion.html">Quaternion</a></dt>
+    <dd><p>The first source Quaternion.</p>
+</dd>
+    <dt><code>value2</code> <a class="xref" href="TVGL.Quaternion.html">Quaternion</a></dt>
+    <dd><p>The second source Quaternion.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.Quaternion.html">Quaternion</a></dt>
+    <dd><p>The result of adding the Quaternions.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_Quaternion_op_Division_" data-uid="TVGL.Quaternion.op_Division*"></a>
+
+  <h3 id="TVGL_Quaternion_op_Division_TVGL_Quaternion_TVGL_Quaternion_" data-uid="TVGL.Quaternion.op_Division(TVGL.Quaternion,TVGL.Quaternion)">
+  operator /(Quaternion, Quaternion)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Divides a Quaternion by another Quaternion.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static Quaternion operator /(Quaternion value1, Quaternion value2)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>value1</code> <a class="xref" href="TVGL.Quaternion.html">Quaternion</a></dt>
+    <dd><p>The source Quaternion.</p>
+</dd>
+    <dt><code>value2</code> <a class="xref" href="TVGL.Quaternion.html">Quaternion</a></dt>
+    <dd><p>The divisor.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.Quaternion.html">Quaternion</a></dt>
+    <dd><p>The result of the division.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_Quaternion_op_Equality_" data-uid="TVGL.Quaternion.op_Equality*"></a>
+
+  <h3 id="TVGL_Quaternion_op_Equality_TVGL_Quaternion_TVGL_Quaternion_" data-uid="TVGL.Quaternion.op_Equality(TVGL.Quaternion,TVGL.Quaternion)">
+  operator ==(Quaternion, Quaternion)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Returns a boolean indicating whether the two given Quaternions are equal.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static bool operator ==(Quaternion value1, Quaternion value2)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>value1</code> <a class="xref" href="TVGL.Quaternion.html">Quaternion</a></dt>
+    <dd><p>The first Quaternion to compare.</p>
+</dd>
+    <dt><code>value2</code> <a class="xref" href="TVGL.Quaternion.html">Quaternion</a></dt>
+    <dd><p>The second Quaternion to compare.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd><p>True if the Quaternions are equal; False otherwise.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_Quaternion_op_Inequality_" data-uid="TVGL.Quaternion.op_Inequality*"></a>
+
+  <h3 id="TVGL_Quaternion_op_Inequality_TVGL_Quaternion_TVGL_Quaternion_" data-uid="TVGL.Quaternion.op_Inequality(TVGL.Quaternion,TVGL.Quaternion)">
+  operator !=(Quaternion, Quaternion)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Returns a boolean indicating whether the two given Quaternions are not equal.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static bool operator !=(Quaternion value1, Quaternion value2)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>value1</code> <a class="xref" href="TVGL.Quaternion.html">Quaternion</a></dt>
+    <dd><p>The first Quaternion to compare.</p>
+</dd>
+    <dt><code>value2</code> <a class="xref" href="TVGL.Quaternion.html">Quaternion</a></dt>
+    <dd><p>The second Quaternion to compare.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd><p>True if the Quaternions are not equal; False if they are equal.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_Quaternion_op_Multiply_" data-uid="TVGL.Quaternion.op_Multiply*"></a>
+
+  <h3 id="TVGL_Quaternion_op_Multiply_System_Double_TVGL_Quaternion_" data-uid="TVGL.Quaternion.op_Multiply(System.Double,TVGL.Quaternion)">
+  operator *(double, Quaternion)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Multiplies a Quaternion by a scalar value.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static Quaternion operator *(double value1, Quaternion value2)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>value1</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The source Quaternion.</p>
+</dd>
+    <dt><code>value2</code> <a class="xref" href="TVGL.Quaternion.html">Quaternion</a></dt>
+    <dd><p>The scalar value.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.Quaternion.html">Quaternion</a></dt>
+    <dd><p>The result of the multiplication.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_Quaternion_op_Multiply_" data-uid="TVGL.Quaternion.op_Multiply*"></a>
+
+  <h3 id="TVGL_Quaternion_op_Multiply_TVGL_Quaternion_System_Double_" data-uid="TVGL.Quaternion.op_Multiply(TVGL.Quaternion,System.Double)">
+  operator *(Quaternion, double)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Multiplies a Quaternion by a scalar value.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static Quaternion operator *(Quaternion value1, double value2)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>value1</code> <a class="xref" href="TVGL.Quaternion.html">Quaternion</a></dt>
+    <dd><p>The source Quaternion.</p>
+</dd>
+    <dt><code>value2</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The scalar value.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.Quaternion.html">Quaternion</a></dt>
+    <dd><p>The result of the multiplication.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_Quaternion_op_Multiply_" data-uid="TVGL.Quaternion.op_Multiply*"></a>
+
+  <h3 id="TVGL_Quaternion_op_Multiply_TVGL_Quaternion_TVGL_Quaternion_" data-uid="TVGL.Quaternion.op_Multiply(TVGL.Quaternion,TVGL.Quaternion)">
+  operator *(Quaternion, Quaternion)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Multiplies two Quaternions together.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static Quaternion operator *(Quaternion value1, Quaternion value2)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>value1</code> <a class="xref" href="TVGL.Quaternion.html">Quaternion</a></dt>
+    <dd><p>The Quaternion on the left side of the multiplication.</p>
+</dd>
+    <dt><code>value2</code> <a class="xref" href="TVGL.Quaternion.html">Quaternion</a></dt>
+    <dd><p>The Quaternion on the right side of the multiplication.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.Quaternion.html">Quaternion</a></dt>
+    <dd><p>The result of the multiplication.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_Quaternion_op_Subtraction_" data-uid="TVGL.Quaternion.op_Subtraction*"></a>
+
+  <h3 id="TVGL_Quaternion_op_Subtraction_TVGL_Quaternion_TVGL_Quaternion_" data-uid="TVGL.Quaternion.op_Subtraction(TVGL.Quaternion,TVGL.Quaternion)">
+  operator -(Quaternion, Quaternion)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Subtracts one Quaternion from another.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static Quaternion operator -(Quaternion value1, Quaternion value2)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>value1</code> <a class="xref" href="TVGL.Quaternion.html">Quaternion</a></dt>
+    <dd><p>The first source Quaternion.</p>
+</dd>
+    <dt><code>value2</code> <a class="xref" href="TVGL.Quaternion.html">Quaternion</a></dt>
+    <dd><p>The second Quaternion, to be subtracted from the first.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.Quaternion.html">Quaternion</a></dt>
+    <dd><p>The result of the subtraction.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_Quaternion_op_UnaryNegation_" data-uid="TVGL.Quaternion.op_UnaryNegation*"></a>
+
+  <h3 id="TVGL_Quaternion_op_UnaryNegation_TVGL_Quaternion_" data-uid="TVGL.Quaternion.op_UnaryNegation(TVGL.Quaternion)">
+  operator -(Quaternion)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Flips the sign of each component of the quaternion.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static Quaternion operator -(Quaternion value)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>value</code> <a class="xref" href="TVGL.Quaternion.html">Quaternion</a></dt>
+    <dd><p>The source Quaternion.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.Quaternion.html">Quaternion</a></dt>
+    <dd><p>The negated Quaternion.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+</article>
+
+        <div class="contribution d-print-none">
+        </div>
+
+        
+      </div>
+
+      <div class="affix">
+        <nav id="affix"></nav>
+      </div>
+    </main>
+
+
+    <footer class="border-top">
+      <div class="container-xxl">
+        <div class="flex-fill">
+          <span>Made with <a href="https://dotnet.github.io/docfx">docfx</a></span>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>

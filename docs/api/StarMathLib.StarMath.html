@@ -1,0 +1,1137 @@
+﻿<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+      <title>Class StarMath
+ </title>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <meta name="title" content="Class StarMath
+ ">
+      
+      <link rel="icon" href="../favicon.ico">
+      <link rel="stylesheet" href="../styles/docfx.min.css">
+      <link rel="stylesheet" href="../styles/main.css">
+      <meta name="docfx:navrel" content="../toc.html">
+      <meta name="docfx:tocrel" content="toc.html">
+      
+      
+      
+
+      <script>
+        MathJax = {
+          options: {
+            processHtmlClass: ['tex2jax_process', 'math']
+          }
+        };
+      </script>
+
+      <script type="text/javascript" src="../styles/docfx.min.js"></script>
+      <script type="text/javascript" src="../styles/main.js"></script>
+  </head>
+
+  <body class="tex2jax_ignore" data-layout="" data-yaml-mime="ManagedReference">
+    <header class="bg-body border-bottom">
+      <nav id="autocollapse" class="navbar navbar-expand-md" role="navigation">
+        <div class="container-xxl flex-nowrap">
+          <a class="navbar-brand" href="../index.html">
+            <img id="logo" class="svg" src="../logo.svg" alt="">
+            
+          </a>
+          <button class="btn btn-lg d-md-none border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navpanel" aria-controls="navpanel" aria-expanded="false" aria-label="Toggle navigation">
+            <i class="bi bi-three-dots"></i>
+          </button>
+          <div class="collapse navbar-collapse" id="navpanel">
+            <div id="navbar">
+            </div>
+          </div>
+        </div>
+      </nav>
+    </header>
+
+    <main class="container-xxl">
+      <div class="toc-offcanvas">
+        <div class="offcanvas-md offcanvas-start" tabindex="-1" id="tocOffcanvas" aria-labelledby="tocOffcanvasLabel">
+          <div class="offcanvas-header">
+            <h5 class="offcanvas-title" id="tocOffcanvasLabel">Table of Contents</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#tocOffcanvas" aria-label="Close"></button>
+          </div>
+          <div class="offcanvas-body">
+            <nav class="toc" id="toc"></nav>
+          </div>
+        </div>
+      </div>
+
+      <div class="content">
+        <div class="actionbar">
+          <button class="btn btn-lg border-0 d-md-none" style="margin-top: -.65em; margin-left: -.8em" type="button" data-bs-toggle="offcanvas" data-bs-target="#tocOffcanvas" aria-controls="tocOffcanvas" aria-expanded="false" aria-label="Show table of contents">
+            <i class="bi bi-list"></i>
+          </button>
+
+          <nav id="breadcrumb"></nav>
+        </div>
+
+        <article data-uid="StarMathLib.StarMath">
+
+
+
+  <h1 id="StarMathLib_StarMath" data-uid="StarMathLib.StarMath" class="text-break">
+    Class StarMath
+  
+  </h1>
+
+  <div class="facts text-secondary">
+    <dl><dt>Namespace</dt><dd><a class="xref" href="StarMathLib.html">StarMathLib</a></dd></dl>
+  <dl><dt>Assembly</dt><dd>TessellationAndVoxelizationGeometryLibrary.dll</dd></dl>
+  </div>
+
+  <div class="markdown summary"><p>Class StarMath.</p>
+</div>
+  <div class="markdown conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static class StarMath</code></pre>
+  </div>
+
+
+
+
+  <dl class="typelist inheritance">
+    <dt>Inheritance</dt>
+    <dd>
+      <div><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object">object</a></div>
+      <div><span class="xref">StarMath</span></div>
+    </dd>
+  </dl>
+
+
+
+  <dl class="typelist derived">
+    <dt>Inherited Members</dt>
+    <dd>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.equals#system-object-equals(system-object)">object.Equals(object)</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.equals#system-object-equals(system-object-system-object)">object.Equals(object, object)</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.gethashcode">object.GetHashCode()</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.gettype">object.GetType()</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.memberwiseclone">object.MemberwiseClone()</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.referenceequals">object.ReferenceEquals(object, object)</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.tostring">object.ToString()</a>
+    </div>
+  </dd></dl>
+
+
+
+
+
+
+  <h2 class="section" id="methods">Methods
+</h2>
+
+
+  <a id="StarMathLib_StarMath_CholeskyDecomposition_" data-uid="StarMathLib.StarMath.CholeskyDecomposition*"></a>
+
+  <h3 id="StarMathLib_StarMath_CholeskyDecomposition_System_Double_0__0___System_Double_0__0____System_Boolean_" data-uid="StarMathLib.StarMath.CholeskyDecomposition(System.Double[0:,0:],System.Double[0:,0:]@,System.Boolean)">
+  CholeskyDecomposition(double[,], out double[,], bool)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Returns the Cholesky decomposition of A in a new matrix. The new matrix is a lower triangular matrix, and
+the diagonals are the D matrix in the L-D-LT formulation. To get the L-LT format.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static bool CholeskyDecomposition(double[,] A, out double[,] LUMatrix, bool NoSeparateDiagonal = false)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>A</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a>[,]</dt>
+    <dd><p>The matrix to invert. This matrix is unchanged by this function.</p>
+</dd>
+    <dt><code>LUMatrix</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a>[,]</dt>
+    <dd><p>The lu matrix.</p>
+</dd>
+    <dt><code>NoSeparateDiagonal</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd><p>if set to <code>true</code> [no separate diagonal].</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd><p>System.Double[].</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <h4 class="section">Exceptions</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.arithmeticexception">ArithmeticException</a></dt>
+    <dd><p>Matrix cannot be inverted. Can only invert square matrices.</p>
+</dd>
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.arithmeticexception">ArithmeticException</a></dt>
+    <dd><p>Matrix cannot be inverted. Can only invert square matrices.</p>
+</dd>
+  </dl>
+
+
+
+  <a id="StarMathLib_StarMath_determinant_" data-uid="StarMathLib.StarMath.determinant*"></a>
+
+  <h3 id="StarMathLib_StarMath_determinant_System_Double_0__0___" data-uid="StarMathLib.StarMath.determinant(System.Double[0:,0:])">
+  determinant(double[,])
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Returns the determinant of matrix, A.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static double determinant(this double[,] A)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>A</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a>[,]</dt>
+    <dd><p>The input argument matrix. This matrix is unchanged by this function.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>a single value representing the matrix's determinant.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <h4 class="section">Exceptions</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.arithmeticexception">ArithmeticException</a></dt>
+    <dd><p>The matrix, A, is null.</p>
+</dd>
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.arithmeticexception">ArithmeticException</a></dt>
+    <dd><p>The determinant is only possible for square matrices.</p>
+</dd>
+  </dl>
+
+
+
+  <a id="StarMathLib_StarMath_determinant_" data-uid="StarMathLib.StarMath.determinant*"></a>
+
+  <h3 id="StarMathLib_StarMath_determinant_System_Int32_0__0___" data-uid="StarMathLib.StarMath.determinant(System.Int32[0:,0:])">
+  determinant(int[,])
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Returns the determinant of matrix, A.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static int determinant(this int[,] A)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>A</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a>[,]</dt>
+    <dd><p>The input argument matrix. This matrix is unchanged by this function.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a></dt>
+    <dd><p>a single value representing the matrix's determinant.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <h4 class="section">Exceptions</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.arithmeticexception">ArithmeticException</a></dt>
+    <dd><p>The matrix, A, is null.</p>
+</dd>
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.arithmeticexception">ArithmeticException</a></dt>
+    <dd><p>The determinant is only possible for square matrices.</p>
+</dd>
+  </dl>
+
+
+
+  <a id="StarMathLib_StarMath_determinant_" data-uid="StarMathLib.StarMath.determinant*"></a>
+
+  <h3 id="StarMathLib_StarMath_determinant_TVGL_ComplexNumber_0__0___" data-uid="StarMathLib.StarMath.determinant(TVGL.ComplexNumber[0:,0:])">
+  determinant(ComplexNumber[,])
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Determinants the specified a.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static ComplexNumber determinant(this ComplexNumber[,] A)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>A</code> <a class="xref" href="TVGL.ComplexNumber.html">ComplexNumber</a>[,]</dt>
+    <dd><p>a.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.ComplexNumber.html">ComplexNumber</a></dt>
+    <dd><p>ComplexNumber.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <h4 class="section">Exceptions</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.arithmeticexception">ArithmeticException</a></dt>
+    <dd><p>The matrix, A, is null.</p>
+</dd>
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.arithmeticexception">ArithmeticException</a></dt>
+    <dd><p>The determinant is only possible for square matrices.</p>
+</dd>
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.notimplementedexception">NotImplementedException</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+  <a id="StarMathLib_StarMath_GetEigenValues_" data-uid="StarMathLib.StarMath.GetEigenValues*"></a>
+
+  <h3 id="StarMathLib_StarMath_GetEigenValues_System_Double_0__0___" data-uid="StarMathLib.StarMath.GetEigenValues(System.Double[0:,0:])">
+  GetEigenValues(double[,])
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the eigenvalues for matrix, A.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static ComplexNumber[] GetEigenValues(this double[,] A)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>A</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a>[,]</dt>
+    <dd><p>the matrix in question, A.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.ComplexNumber.html">ComplexNumber</a>[]</dt>
+    <dd><p>The eigenvalues as complex numbers.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="StarMathLib_StarMath_GetEigenValuesAndVectors_" data-uid="StarMathLib.StarMath.GetEigenValuesAndVectors*"></a>
+
+  <h3 id="StarMathLib_StarMath_GetEigenValuesAndVectors_System_Double_0__0___System_Double______" data-uid="StarMathLib.StarMath.GetEigenValuesAndVectors(System.Double[0:,0:],System.Double[][]@)">
+  GetEigenValuesAndVectors(double[,], out double[][])
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the eigenvalues and eigenvectors for matrix, A.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static ComplexNumber[] GetEigenValuesAndVectors(this double[,] A, out double[][] eigenVectors)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>A</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a>[,]</dt>
+    <dd><p>the matrix in question, A.</p>
+</dd>
+    <dt><code>eigenVectors</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a>[][]</dt>
+    <dd><p>The eigenvectors as an array of arrays/vectors.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.ComplexNumber.html">ComplexNumber</a>[]</dt>
+    <dd><p>ComplexNumber[].</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <h4 class="section">Exceptions</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.arithmeticexception">ArithmeticException</a></dt>
+    <dd><p>Matrix, A, must be square.</p>
+</dd>
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.arithmeticexception">ArithmeticException</a></dt>
+    <dd><p>Eigen decomposition does not converge.</p>
+</dd>
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.arithmeticexception">ArithmeticException</a></dt>
+    <dd><p>Eigen decomposition failed due to norm = 0.</p>
+</dd>
+  </dl>
+
+
+
+  <a id="StarMathLib_StarMath_inverse_" data-uid="StarMathLib.StarMath.inverse*"></a>
+
+  <h3 id="StarMathLib_StarMath_inverse_System_Double_0__0___" data-uid="StarMathLib.StarMath.inverse(System.Double[0:,0:])">
+  inverse(double[,])
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Inverses the matrix A only if the diagonal is all non-zero.
+A[i,i] != 0.0</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static double[,] inverse(this double[,] A)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>A</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a>[,]</dt>
+    <dd><p>The matrix to invert. This matrix is unchanged by this function.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a>[,]</dt>
+    <dd><p>The inverted matrix, A^-1.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <h4 class="section">Exceptions</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.arithmeticexception">ArithmeticException</a></dt>
+    <dd><p>Matrix cannnot be inverted. Can only invert sqare matrices.</p>
+</dd>
+  </dl>
+
+
+
+  <a id="StarMathLib_StarMath_inverse_" data-uid="StarMathLib.StarMath.inverse*"></a>
+
+  <h3 id="StarMathLib_StarMath_inverse_System_Int32_0__0___" data-uid="StarMathLib.StarMath.inverse(System.Int32[0:,0:])">
+  inverse(int[,])
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Inverses the matrix A only if the diagonal is all non-zero.
+A[i,i] != 0.0</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static double[,] inverse(this int[,] A)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>A</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a>[,]</dt>
+    <dd><p>The matrix to invert. This matrix is unchanged by this function.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a>[,]</dt>
+    <dd><p>The inverted matrix, A^-1.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <h4 class="section">Exceptions</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.arithmeticexception">ArithmeticException</a></dt>
+    <dd><p>Matrix cannnot be inverted. Can only invert sqare matrices.</p>
+</dd>
+  </dl>
+
+
+
+  <a id="StarMathLib_StarMath_IsSingular_" data-uid="StarMathLib.StarMath.IsSingular*"></a>
+
+  <h3 id="StarMathLib_StarMath_IsSingular_System_Double_0__0___" data-uid="StarMathLib.StarMath.IsSingular(System.Double[0:,0:])">
+  IsSingular(double[,])
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Determines whether the specified a is singular.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static bool IsSingular(this double[,] A)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>A</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a>[,]</dt>
+    <dd><p>a.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd><p><code>true</code> if the specified a is singular; otherwise, <code>false</code>.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="StarMathLib_StarMath_LUDecomposition_" data-uid="StarMathLib.StarMath.LUDecomposition*"></a>
+
+  <h3 id="StarMathLib_StarMath_LUDecomposition_System_Double_0__0___System_Double_0__0____System_Double_0__0____System_Int32____" data-uid="StarMathLib.StarMath.LUDecomposition(System.Double[0:,0:],System.Double[0:,0:]@,System.Double[0:,0:]@,System.Int32[]@)">
+  LUDecomposition(double[,], out double[,], out double[,], out int[])
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Returns the LU decomposition of A in a new matrix.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static void LUDecomposition(double[,] A, out double[,] L, out double[,] U, out int[] permute)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>A</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a>[,]</dt>
+    <dd><p>The matrix to invert. This matrix is unchanged by this function.</p>
+</dd>
+    <dt><code>L</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a>[,]</dt>
+    <dd><p>The L matrix is output where the diagonal elements are included and not (necessarily) equal to one.</p>
+</dd>
+    <dt><code>U</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a>[,]</dt>
+    <dd><p>The U matrix is output where the diagonal elements are all equal to one.</p>
+</dd>
+    <dt><code>permute</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a>[]</dt>
+    <dd><p>The permute.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+  <h4 class="section">Exceptions</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.arithmeticexception">ArithmeticException</a></dt>
+    <dd><p>LU Decomposition can only be determined for square matrices.</p>
+</dd>
+  </dl>
+
+
+
+  <a id="StarMathLib_StarMath_LUDecomposition_" data-uid="StarMathLib.StarMath.LUDecomposition*"></a>
+
+  <h3 id="StarMathLib_StarMath_LUDecomposition_System_Int32_0__0___System_Double_0__0____System_Double_0__0____System_Int32____" data-uid="StarMathLib.StarMath.LUDecomposition(System.Int32[0:,0:],System.Double[0:,0:]@,System.Double[0:,0:]@,System.Int32[]@)">
+  LUDecomposition(int[,], out double[,], out double[,], out int[])
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Returns the LU decomposition of A in a new matrix.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static void LUDecomposition(int[,] A, out double[,] L, out double[,] U, out int[] permute)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>A</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a>[,]</dt>
+    <dd><p>The matrix to invert. This matrix is unchanged by this function.</p>
+</dd>
+    <dt><code>L</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a>[,]</dt>
+    <dd><p>The L matrix is output where the diagonal elements are included and not (necessarily) equal to one.</p>
+</dd>
+    <dt><code>U</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a>[,]</dt>
+    <dd><p>The U matrix is output where the diagonal elements are all equal to one.</p>
+</dd>
+    <dt><code>permute</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a>[]</dt>
+    <dd><p>The permute.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+  <h4 class="section">Exceptions</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.arithmeticexception">ArithmeticException</a></dt>
+    <dd><p>LU Decomposition can only be determined for square matrices.</p>
+</dd>
+  </dl>
+
+
+
+  <a id="StarMathLib_StarMath_SingularValueDecomposition_" data-uid="StarMathLib.StarMath.SingularValueDecomposition*"></a>
+
+  <h3 id="StarMathLib_StarMath_SingularValueDecomposition_System_Double_0__0___System_Double_0__0____System_Double_0__0____" data-uid="StarMathLib.StarMath.SingularValueDecomposition(System.Double[0:,0:],System.Double[0:,0:]@,System.Double[0:,0:]@)">
+  SingularValueDecomposition(double[,], out double[,], out double[,])
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Computes the singular value decomposition of A.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static double[] SingularValueDecomposition(this double[,] A, out double[,] U, out double[,] V)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>A</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a>[,]</dt>
+    <dd><p>The matrix in question, A can be rectangular [m, n]</p>
+</dd>
+    <dt><code>U</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a>[,]</dt>
+    <dd><p>The m-by-m uitary matrix that pre-multiplies the singular values.</p>
+</dd>
+    <dt><code>V</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a>[,]</dt>
+    <dd><p>The n-by-n conjugate transpose matrix of V that post-multiplies the singular values.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a>[]</dt>
+    <dd><p>The singular values of A in ascending value, often indicated as sigma (provided as a vector).</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="StarMathLib_StarMath_SingularValueDecomposition_" data-uid="StarMathLib.StarMath.SingularValueDecomposition*"></a>
+
+  <h3 id="StarMathLib_StarMath_SingularValueDecomposition_System_Double_0__0___" data-uid="StarMathLib.StarMath.SingularValueDecomposition(System.Double[0:,0:])">
+  SingularValueDecomposition(double[,])
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Computes the singular value decomposition of A.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static double[] SingularValueDecomposition(this double[,] A)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>A</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a>[,]</dt>
+    <dd><p>The matrix in question, A can be rectangular m-by-n.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a>[]</dt>
+    <dd><p>The singular values of A in ascending value, often indicated as sigma (provided as a vector).</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="StarMathLib_StarMath_SingularValueDecomposition_" data-uid="StarMathLib.StarMath.SingularValueDecomposition*"></a>
+
+  <h3 id="StarMathLib_StarMath_SingularValueDecomposition_System_Int32_0__0___System_Double_0__0____System_Double_0__0____" data-uid="StarMathLib.StarMath.SingularValueDecomposition(System.Int32[0:,0:],System.Double[0:,0:]@,System.Double[0:,0:]@)">
+  SingularValueDecomposition(int[,], out double[,], out double[,])
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Computes the singular value decomposition of A.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static double[] SingularValueDecomposition(this int[,] A, out double[,] U, out double[,] V)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>A</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a>[,]</dt>
+    <dd><p>The matrix in question, A can be rectangular [m, n]</p>
+</dd>
+    <dt><code>U</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a>[,]</dt>
+    <dd><p>The m-by-m uitary matrix that pre-multiplies the singular values.</p>
+</dd>
+    <dt><code>V</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a>[,]</dt>
+    <dd><p>The n-by-n conjugate transpose matrix of V that post-multiplies the singular values.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a>[]</dt>
+    <dd><p>The singular values of A in ascending value, often indicated as sigma (provided as a vector).</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="StarMathLib_StarMath_SingularValueDecomposition_" data-uid="StarMathLib.StarMath.SingularValueDecomposition*"></a>
+
+  <h3 id="StarMathLib_StarMath_SingularValueDecomposition_System_Int32_0__0___" data-uid="StarMathLib.StarMath.SingularValueDecomposition(System.Int32[0:,0:])">
+  SingularValueDecomposition(int[,])
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Computes the singular value decomposition of A.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static double[] SingularValueDecomposition(this int[,] A)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>A</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a>[,]</dt>
+    <dd><p>The matrix in question, A can be rectangular m-by-n.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a>[]</dt>
+    <dd><p>The singular values of A in ascending value, often indicated as sigma (provided as a vector).</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="StarMathLib_StarMath_solve_" data-uid="StarMathLib.StarMath.solve*"></a>
+
+  <h3 id="StarMathLib_StarMath_solve_System_Double_0__0___System_Collections_Generic_IList_System_Double__System_Double____System_Boolean_" data-uid="StarMathLib.StarMath.solve(System.Double[0:,0:],System.Collections.Generic.IList{System.Double},System.Double[]@,System.Boolean)">
+  solve(double[,], IList&lt;double&gt;, out double[], bool)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Solves the specified A matrix.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static bool solve(this double[,] A, IList&lt;double&gt; b, out double[] answer, bool IsASymmetric = false)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>A</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a>[,]</dt>
+    <dd><p>The A.</p>
+</dd>
+    <dt><code>b</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ilist-1">IList</a>&lt;<a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a>&gt;</dt>
+    <dd><p>The b.</p>
+</dd>
+    <dt><code>answer</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a>[]</dt>
+    <dd><p>The answer.</p>
+</dd>
+    <dt><code>IsASymmetric</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd><p>Is matrix A symmetric.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd><p>System.Double[].</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <h4 class="section">Exceptions</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.arithmeticexception">ArithmeticException</a></dt>
+    <dd><p>Matrix, A, must be square.</p>
+</dd>
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.arithmeticexception">ArithmeticException</a></dt>
+    <dd><p>Matrix, A, must be have the same number of rows as the vector, b.</p>
+</dd>
+  </dl>
+
+
+
+  <a id="StarMathLib_StarMath_Solve2x2ComplexMatrix_" data-uid="StarMathLib.StarMath.Solve2x2ComplexMatrix*"></a>
+
+  <h3 id="StarMathLib_StarMath_Solve2x2ComplexMatrix_TVGL_ComplexNumber_0__0___System_Collections_Generic_IList_System_Double__TVGL_ComplexNumber____" data-uid="StarMathLib.StarMath.Solve2x2ComplexMatrix(TVGL.ComplexNumber[0:,0:],System.Collections.Generic.IList{System.Double},TVGL.ComplexNumber[]@)">
+  Solve2x2ComplexMatrix(ComplexNumber[,], IList&lt;double&gt;, out ComplexNumber[])
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Solve2x2s the complex matrix.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static bool Solve2x2ComplexMatrix(ComplexNumber[,] a, IList&lt;double&gt; b, out ComplexNumber[] answer)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>a</code> <a class="xref" href="TVGL.ComplexNumber.html">ComplexNumber</a>[,]</dt>
+    <dd><p>a.</p>
+</dd>
+    <dt><code>b</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ilist-1">IList</a>&lt;<a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a>&gt;</dt>
+    <dd><p>The b.</p>
+</dd>
+    <dt><code>answer</code> <a class="xref" href="TVGL.ComplexNumber.html">ComplexNumber</a>[]</dt>
+    <dd><p>The answer.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd><p><code>true</code> if XXXX, <code>false</code> otherwise.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="StarMathLib_StarMath_Solve2x2ComplexMatrix_" data-uid="StarMathLib.StarMath.Solve2x2ComplexMatrix*"></a>
+
+  <h3 id="StarMathLib_StarMath_Solve2x2ComplexMatrix_TVGL_ComplexNumber_0__0___System_Collections_Generic_IList_TVGL_ComplexNumber__TVGL_ComplexNumber____" data-uid="StarMathLib.StarMath.Solve2x2ComplexMatrix(TVGL.ComplexNumber[0:,0:],System.Collections.Generic.IList{TVGL.ComplexNumber},TVGL.ComplexNumber[]@)">
+  Solve2x2ComplexMatrix(ComplexNumber[,], IList&lt;ComplexNumber&gt;, out ComplexNumber[])
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Solve2x2s the complex matrix.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static bool Solve2x2ComplexMatrix(ComplexNumber[,] a, IList&lt;ComplexNumber&gt; b, out ComplexNumber[] answer)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>a</code> <a class="xref" href="TVGL.ComplexNumber.html">ComplexNumber</a>[,]</dt>
+    <dd><p>a.</p>
+</dd>
+    <dt><code>b</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ilist-1">IList</a>&lt;<a class="xref" href="TVGL.ComplexNumber.html">ComplexNumber</a>&gt;</dt>
+    <dd><p>The b.</p>
+</dd>
+    <dt><code>answer</code> <a class="xref" href="TVGL.ComplexNumber.html">ComplexNumber</a>[]</dt>
+    <dd><p>The answer.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd><p><code>true</code> if XXXX, <code>false</code> otherwise.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="StarMathLib_StarMath_Solve3x3ComplexMatrix_" data-uid="StarMathLib.StarMath.Solve3x3ComplexMatrix*"></a>
+
+  <h3 id="StarMathLib_StarMath_Solve3x3ComplexMatrix_TVGL_ComplexNumber_0__0___System_Collections_Generic_IList_TVGL_ComplexNumber__TVGL_ComplexNumber____" data-uid="StarMathLib.StarMath.Solve3x3ComplexMatrix(TVGL.ComplexNumber[0:,0:],System.Collections.Generic.IList{TVGL.ComplexNumber},TVGL.ComplexNumber[]@)">
+  Solve3x3ComplexMatrix(ComplexNumber[,], IList&lt;ComplexNumber&gt;, out ComplexNumber[])
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Solve3x3s the complex matrix.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static bool Solve3x3ComplexMatrix(this ComplexNumber[,] a, IList&lt;ComplexNumber&gt; b, out ComplexNumber[] answer)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>a</code> <a class="xref" href="TVGL.ComplexNumber.html">ComplexNumber</a>[,]</dt>
+    <dd><p>a.</p>
+</dd>
+    <dt><code>b</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ilist-1">IList</a>&lt;<a class="xref" href="TVGL.ComplexNumber.html">ComplexNumber</a>&gt;</dt>
+    <dd><p>The b.</p>
+</dd>
+    <dt><code>answer</code> <a class="xref" href="TVGL.ComplexNumber.html">ComplexNumber</a>[]</dt>
+    <dd><p>The answer.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd><p><code>true</code> if XXXX, <code>false</code> otherwise.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="StarMathLib_StarMath_transpose_" data-uid="StarMathLib.StarMath.transpose*"></a>
+
+  <h3 id="StarMathLib_StarMath_transpose_System_Double_0__0___" data-uid="StarMathLib.StarMath.transpose(System.Double[0:,0:])">
+  transpose(double[,])
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Transposes the matrix, A.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static double[,] transpose(this double[,] A)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>A</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a>[,]</dt>
+    <dd><p>The matrix to transpose. This matrix is unchanged by this function.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a>[,]</dt>
+    <dd><p>The transpose of A.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <h4 class="section">Exceptions</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.arithmeticexception">ArithmeticException</a></dt>
+    <dd><p>The matrix, A, is null.</p>
+</dd>
+  </dl>
+
+
+
+  <a id="StarMathLib_StarMath_transpose_" data-uid="StarMathLib.StarMath.transpose*"></a>
+
+  <h3 id="StarMathLib_StarMath_transpose_System_Int32_0__0___" data-uid="StarMathLib.StarMath.transpose(System.Int32[0:,0:])">
+  transpose(int[,])
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Transposes the matrix, A.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static int[,] transpose(this int[,] A)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>A</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a>[,]</dt>
+    <dd><p>The matrix to transpose. This matrix is unchanged by this function.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a>[,]</dt>
+    <dd><p>The transpose of A.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <h4 class="section">Exceptions</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.arithmeticexception">ArithmeticException</a></dt>
+    <dd><p>The matrix, A, is null.</p>
+</dd>
+  </dl>
+
+
+
+
+</article>
+
+        <div class="contribution d-print-none">
+        </div>
+
+        
+      </div>
+
+      <div class="affix">
+        <nav id="affix"></nav>
+      </div>
+    </main>
+
+
+    <footer class="border-top">
+      <div class="container-xxl">
+        <div class="flex-fill">
+          <span>Made with <a href="https://dotnet.github.io/docfx">docfx</a></span>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>

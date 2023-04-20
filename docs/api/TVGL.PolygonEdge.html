@@ -1,0 +1,831 @@
+﻿<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+      <title>Class PolygonEdge
+ </title>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <meta name="title" content="Class PolygonEdge
+ ">
+      
+      <link rel="icon" href="../favicon.ico">
+      <link rel="stylesheet" href="../styles/docfx.min.css">
+      <link rel="stylesheet" href="../styles/main.css">
+      <meta name="docfx:navrel" content="../toc.html">
+      <meta name="docfx:tocrel" content="toc.html">
+      
+      
+      
+
+      <script>
+        MathJax = {
+          options: {
+            processHtmlClass: ['tex2jax_process', 'math']
+          }
+        };
+      </script>
+
+      <script type="text/javascript" src="../styles/docfx.min.js"></script>
+      <script type="text/javascript" src="../styles/main.js"></script>
+  </head>
+
+  <body class="tex2jax_ignore" data-layout="" data-yaml-mime="ManagedReference">
+    <header class="bg-body border-bottom">
+      <nav id="autocollapse" class="navbar navbar-expand-md" role="navigation">
+        <div class="container-xxl flex-nowrap">
+          <a class="navbar-brand" href="../index.html">
+            <img id="logo" class="svg" src="../logo.svg" alt="">
+            
+          </a>
+          <button class="btn btn-lg d-md-none border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navpanel" aria-controls="navpanel" aria-expanded="false" aria-label="Toggle navigation">
+            <i class="bi bi-three-dots"></i>
+          </button>
+          <div class="collapse navbar-collapse" id="navpanel">
+            <div id="navbar">
+            </div>
+          </div>
+        </div>
+      </nav>
+    </header>
+
+    <main class="container-xxl">
+      <div class="toc-offcanvas">
+        <div class="offcanvas-md offcanvas-start" tabindex="-1" id="tocOffcanvas" aria-labelledby="tocOffcanvasLabel">
+          <div class="offcanvas-header">
+            <h5 class="offcanvas-title" id="tocOffcanvasLabel">Table of Contents</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#tocOffcanvas" aria-label="Close"></button>
+          </div>
+          <div class="offcanvas-body">
+            <nav class="toc" id="toc"></nav>
+          </div>
+        </div>
+      </div>
+
+      <div class="content">
+        <div class="actionbar">
+          <button class="btn btn-lg border-0 d-md-none" style="margin-top: -.65em; margin-left: -.8em" type="button" data-bs-toggle="offcanvas" data-bs-target="#tocOffcanvas" aria-controls="tocOffcanvas" aria-expanded="false" aria-label="Show table of contents">
+            <i class="bi bi-list"></i>
+          </button>
+
+          <nav id="breadcrumb"></nav>
+        </div>
+
+        <article data-uid="TVGL.PolygonEdge">
+
+
+
+  <h1 id="TVGL_PolygonEdge" data-uid="TVGL.PolygonEdge" class="text-break">
+    Class PolygonEdge
+  
+  </h1>
+
+  <div class="facts text-secondary">
+    <dl><dt>Namespace</dt><dd><a class="xref" href="TVGL.html">TVGL</a></dd></dl>
+  <dl><dt>Assembly</dt><dd>TessellationAndVoxelizationGeometryLibrary.dll</dd></dl>
+  </div>
+
+  <div class="markdown summary"><p>NodeLine</p>
+</div>
+  <div class="markdown conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public class PolygonEdge</code></pre>
+  </div>
+
+
+
+
+  <dl class="typelist inheritance">
+    <dt>Inheritance</dt>
+    <dd>
+      <div><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object">object</a></div>
+      <div><span class="xref">PolygonEdge</span></div>
+    </dd>
+  </dl>
+
+
+
+  <dl class="typelist derived">
+    <dt>Inherited Members</dt>
+    <dd>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.equals#system-object-equals(system-object)">object.Equals(object)</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.equals#system-object-equals(system-object-system-object)">object.Equals(object, object)</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.gethashcode">object.GetHashCode()</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.gettype">object.GetType()</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.memberwiseclone">object.MemberwiseClone()</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.referenceequals">object.ReferenceEquals(object, object)</a>
+    </div>
+  </dd></dl>
+
+  <dl class="typelist extensionMethods">
+    <dt>Extension Methods</dt>
+    <dd>
+  <div>
+      <a class="xref" href="TVGL.MiscFunctions.html#TVGL_MiscFunctions_ClosestPointOnLineSegmentToPoint_TVGL_PolygonEdge_TVGL_Vector2_">MiscFunctions.ClosestPointOnLineSegmentToPoint(PolygonEdge, Vector2)</a>
+  </div>
+  </dd></dl>
+
+
+
+
+
+  <h2 class="section" id="properties">Properties
+</h2>
+
+
+  <a id="TVGL_PolygonEdge_Center_" data-uid="TVGL.PolygonEdge.Center*"></a>
+
+  <h3 id="TVGL_PolygonEdge_Center" data-uid="TVGL.PolygonEdge.Center">
+  Center
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the center.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public Vector2 Center { get; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.Vector2.html">Vector2</a></dt>
+    <dd><p>The center.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="TVGL_PolygonEdge_FromPoint_" data-uid="TVGL.PolygonEdge.FromPoint*"></a>
+
+  <h3 id="TVGL_PolygonEdge_FromPoint" data-uid="TVGL.PolygonEdge.FromPoint">
+  FromPoint
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the Vertex2D which the line is pointing away from. Set is through the constructor.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public Vertex2D FromPoint { get; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.Vertex2D.html">Vertex2D</a></dt>
+    <dd><p>From node.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="TVGL_PolygonEdge_HorizontalSlope_" data-uid="TVGL.PolygonEdge.HorizontalSlope*"></a>
+
+  <h3 id="TVGL_PolygonEdge_HorizontalSlope" data-uid="TVGL.PolygonEdge.HorizontalSlope">
+  HorizontalSlope
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the horizontal slope (delta X/delta Y). A horizontal line would have infinite slope.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public double HorizontalSlope { get; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The horizontal slope.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="TVGL_PolygonEdge_IndexInList_" data-uid="TVGL.PolygonEdge.IndexInList*"></a>
+
+  <h3 id="TVGL_PolygonEdge_IndexInList" data-uid="TVGL.PolygonEdge.IndexInList">
+  IndexInList
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the index in list.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public int IndexInList { get; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a></dt>
+    <dd><p>The index in list.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="TVGL_PolygonEdge_Length_" data-uid="TVGL.PolygonEdge.Length*"></a>
+
+  <h3 id="TVGL_PolygonEdge_Length" data-uid="TVGL.PolygonEdge.Length">
+  Length
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the length of the line.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public double Length { get; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The length.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="TVGL_PolygonEdge_ToPoint_" data-uid="TVGL.PolygonEdge.ToPoint*"></a>
+
+  <h3 id="TVGL_PolygonEdge_ToPoint" data-uid="TVGL.PolygonEdge.ToPoint">
+  ToPoint
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the Vertex2D which the line is pointing to. Set is through the constructor.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public Vertex2D ToPoint { get; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.Vertex2D.html">Vertex2D</a></dt>
+    <dd><p>To node.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="TVGL_PolygonEdge_Vector_" data-uid="TVGL.PolygonEdge.Vector*"></a>
+
+  <h3 id="TVGL_PolygonEdge_Vector" data-uid="TVGL.PolygonEdge.Vector">
+  Vector
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the length of the line.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public Vector2 Vector { get; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.Vector2.html">Vector2</a></dt>
+    <dd><p>The length.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="TVGL_PolygonEdge_VerticalSlope_" data-uid="TVGL.PolygonEdge.VerticalSlope*"></a>
+
+  <h3 id="TVGL_PolygonEdge_VerticalSlope" data-uid="TVGL.PolygonEdge.VerticalSlope">
+  VerticalSlope
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the vertical slope (delta-Y / delta-X). A vertical line would have infinite slope.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public double VerticalSlope { get; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The vertical slope.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="TVGL_PolygonEdge_XIntercept_" data-uid="TVGL.PolygonEdge.XIntercept*"></a>
+
+  <h3 id="TVGL_PolygonEdge_XIntercept" data-uid="TVGL.PolygonEdge.XIntercept">
+  XIntercept
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the x intercept.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public double XIntercept { get; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The x intercept.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="TVGL_PolygonEdge_XMax_" data-uid="TVGL.PolygonEdge.XMax*"></a>
+
+  <h3 id="TVGL_PolygonEdge_XMax" data-uid="TVGL.PolygonEdge.XMax">
+  XMax
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the x maximum.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public double XMax { get; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The x maximum.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="TVGL_PolygonEdge_XMin_" data-uid="TVGL.PolygonEdge.XMin*"></a>
+
+  <h3 id="TVGL_PolygonEdge_XMin" data-uid="TVGL.PolygonEdge.XMin">
+  XMin
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the x minimum.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public double XMin { get; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The x minimum.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="TVGL_PolygonEdge_YIntercept_" data-uid="TVGL.PolygonEdge.YIntercept*"></a>
+
+  <h3 id="TVGL_PolygonEdge_YIntercept" data-uid="TVGL.PolygonEdge.YIntercept">
+  YIntercept
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the y intercept.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public double YIntercept { get; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The y intercept.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="TVGL_PolygonEdge_YMax_" data-uid="TVGL.PolygonEdge.YMax*"></a>
+
+  <h3 id="TVGL_PolygonEdge_YMax" data-uid="TVGL.PolygonEdge.YMax">
+  YMax
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the y maximum.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public double YMax { get; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The y maximum.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="TVGL_PolygonEdge_YMin_" data-uid="TVGL.PolygonEdge.YMin*"></a>
+
+  <h3 id="TVGL_PolygonEdge_YMin" data-uid="TVGL.PolygonEdge.YMin">
+  YMin
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the y minimum.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public double YMin { get; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The y minimum.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <h2 class="section" id="methods">Methods
+</h2>
+
+
+  <a id="TVGL_PolygonEdge_FindXGivenY_" data-uid="TVGL.PolygonEdge.FindXGivenY*"></a>
+
+  <h3 id="TVGL_PolygonEdge_FindXGivenY_System_Double_System_Boolean__" data-uid="TVGL.PolygonEdge.FindXGivenY(System.Double,System.Boolean@)">
+  FindXGivenY(double, out bool)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Returns X value given a Y value</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public double FindXGivenY(double yval, out bool isBetweenEndPoints)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>yval</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The y.</p>
+</dd>
+    <dt><code>isBetweenEndPoints</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd><p>if set to <code>true</code> [is between end points].</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>System.Double.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_PolygonEdge_FindYGivenX_" data-uid="TVGL.PolygonEdge.FindYGivenX*"></a>
+
+  <h3 id="TVGL_PolygonEdge_FindYGivenX_System_Double_System_Boolean__" data-uid="TVGL.PolygonEdge.FindYGivenX(System.Double,System.Boolean@)">
+  FindYGivenX(double, out bool)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Returns Y value given an X value</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public double FindYGivenX(double xval, out bool isBetweenEndPoints)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>xval</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The xval.</p>
+</dd>
+    <dt><code>isBetweenEndPoints</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd><p>if set to <code>true</code> [is between end points].</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>System.Double.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_PolygonEdge_IsAdjacentTo_" data-uid="TVGL.PolygonEdge.IsAdjacentTo*"></a>
+
+  <h3 id="TVGL_PolygonEdge_IsAdjacentTo_TVGL_PolygonEdge_" data-uid="TVGL.PolygonEdge.IsAdjacentTo(TVGL.PolygonEdge)">
+  IsAdjacentTo(PolygonEdge)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Determines whether [is adjacent to] [the specified other]. That is, do they share an endpoint or not.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public bool IsAdjacentTo(PolygonEdge other)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>other</code> <a class="xref" href="TVGL.PolygonEdge.html">PolygonEdge</a></dt>
+    <dd><p>The other.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd><p><code>true</code> if [is adjacent to] [the specified other]; otherwise, <code>false</code>.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_PolygonEdge_OtherPoint_" data-uid="TVGL.PolygonEdge.OtherPoint*"></a>
+
+  <h3 id="TVGL_PolygonEdge_OtherPoint_TVGL_Vertex2D_" data-uid="TVGL.PolygonEdge.OtherPoint(TVGL.Vertex2D)">
+  OtherPoint(Vertex2D)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the other point that makes up this line.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public Vertex2D OtherPoint(Vertex2D point)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>point</code> <a class="xref" href="TVGL.Vertex2D.html">Vertex2D</a></dt>
+    <dd><p>The point.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.Vertex2D.html">Vertex2D</a></dt>
+    <dd><p>Vertex2D.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_PolygonEdge_ToString_" data-uid="TVGL.PolygonEdge.ToString*"></a>
+
+  <h3 id="TVGL_PolygonEdge_ToString" data-uid="TVGL.PolygonEdge.ToString">
+  ToString()
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Returns a <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a> that represents this instance.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public override string ToString()</code></pre>
+  </div>
+
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dd><p>A <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a> that represents this instance.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+</article>
+
+        <div class="contribution d-print-none">
+        </div>
+
+        
+      </div>
+
+      <div class="affix">
+        <nav id="affix"></nav>
+      </div>
+    </main>
+
+
+    <footer class="border-top">
+      <div class="container-xxl">
+        <div class="flex-fill">
+          <span>Made with <a href="https://dotnet.github.io/docfx">docfx</a></span>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>

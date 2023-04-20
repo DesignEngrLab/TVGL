@@ -1,0 +1,758 @@
+﻿<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+      <title>Class BorderSegment
+ </title>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <meta name="title" content="Class BorderSegment
+ ">
+      
+      <link rel="icon" href="../favicon.ico">
+      <link rel="stylesheet" href="../styles/docfx.min.css">
+      <link rel="stylesheet" href="../styles/main.css">
+      <meta name="docfx:navrel" content="../toc.html">
+      <meta name="docfx:tocrel" content="toc.html">
+      
+      
+      
+
+      <script>
+        MathJax = {
+          options: {
+            processHtmlClass: ['tex2jax_process', 'math']
+          }
+        };
+      </script>
+
+      <script type="text/javascript" src="../styles/docfx.min.js"></script>
+      <script type="text/javascript" src="../styles/main.js"></script>
+  </head>
+
+  <body class="tex2jax_ignore" data-layout="" data-yaml-mime="ManagedReference">
+    <header class="bg-body border-bottom">
+      <nav id="autocollapse" class="navbar navbar-expand-md" role="navigation">
+        <div class="container-xxl flex-nowrap">
+          <a class="navbar-brand" href="../index.html">
+            <img id="logo" class="svg" src="../logo.svg" alt="">
+            
+          </a>
+          <button class="btn btn-lg d-md-none border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navpanel" aria-controls="navpanel" aria-expanded="false" aria-label="Toggle navigation">
+            <i class="bi bi-three-dots"></i>
+          </button>
+          <div class="collapse navbar-collapse" id="navpanel">
+            <div id="navbar">
+            </div>
+          </div>
+        </div>
+      </nav>
+    </header>
+
+    <main class="container-xxl">
+      <div class="toc-offcanvas">
+        <div class="offcanvas-md offcanvas-start" tabindex="-1" id="tocOffcanvas" aria-labelledby="tocOffcanvasLabel">
+          <div class="offcanvas-header">
+            <h5 class="offcanvas-title" id="tocOffcanvasLabel">Table of Contents</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#tocOffcanvas" aria-label="Close"></button>
+          </div>
+          <div class="offcanvas-body">
+            <nav class="toc" id="toc"></nav>
+          </div>
+        </div>
+      </div>
+
+      <div class="content">
+        <div class="actionbar">
+          <button class="btn btn-lg border-0 d-md-none" style="margin-top: -.65em; margin-left: -.8em" type="button" data-bs-toggle="offcanvas" data-bs-target="#tocOffcanvas" aria-controls="tocOffcanvas" aria-expanded="false" aria-label="Show table of contents">
+            <i class="bi bi-list"></i>
+          </button>
+
+          <nav id="breadcrumb"></nav>
+        </div>
+
+        <article data-uid="TVGL.BorderSegment">
+
+
+
+  <h1 id="TVGL_BorderSegment" data-uid="TVGL.BorderSegment" class="text-break">
+    Class BorderSegment
+  
+  </h1>
+
+  <div class="facts text-secondary">
+    <dl><dt>Namespace</dt><dd><a class="xref" href="TVGL.html">TVGL</a></dd></dl>
+  <dl><dt>Assembly</dt><dd>TessellationAndVoxelizationGeometryLibrary.dll</dd></dl>
+  </div>
+
+  <div class="markdown summary"><p>Class BorderSegment.
+Implements the <a class="xref" href="TVGL.EdgePath.html">EdgePath</a></p>
+</div>
+  <div class="markdown conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">[JsonObject]
+public class BorderSegment : EdgePath, IList&lt;(Edge edge, bool dir)&gt;, ICollection&lt;(Edge edge, bool dir)&gt;, IEnumerable&lt;(Edge edge, bool dir)&gt;, IEnumerable</code></pre>
+  </div>
+
+
+
+
+  <dl class="typelist inheritance">
+    <dt>Inheritance</dt>
+    <dd>
+      <div><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object">object</a></div>
+      <div><a class="xref" href="TVGL.EdgePath.html">EdgePath</a></div>
+      <div><span class="xref">BorderSegment</span></div>
+    </dd>
+  </dl>
+
+  <dl class="typelist implements">
+    <dt>Implements</dt>
+    <dd>
+      <div><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ilist-1">IList</a>&lt;(<a class="xref" href="TVGL.Edge.html">Edge</a> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.valuetuple-tvgl.edge,system.boolean-.edge">edge</a>, <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.valuetuple-tvgl.edge,system.boolean-.dir">dir</a>)&gt;</div>
+      <div><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.icollection-1">ICollection</a>&lt;(<a class="xref" href="TVGL.Edge.html">Edge</a> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.valuetuple-tvgl.edge,system.boolean-.edge">edge</a>, <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.valuetuple-tvgl.edge,system.boolean-.dir">dir</a>)&gt;</div>
+      <div><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;(<a class="xref" href="TVGL.Edge.html">Edge</a> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.valuetuple-tvgl.edge,system.boolean-.edge">edge</a>, <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.valuetuple-tvgl.edge,system.boolean-.dir">dir</a>)&gt;</div>
+      <div><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.ienumerable">IEnumerable</a></div>
+    </dd>
+  </dl>
+
+
+  <dl class="typelist derived">
+    <dt>Inherited Members</dt>
+    <dd>
+    <div>
+      <a class="xref" href="TVGL.EdgePath.html#TVGL_EdgePath_EdgeList">EdgePath.EdgeList</a>
+    </div>
+    <div>
+      <a class="xref" href="TVGL.EdgePath.html#TVGL_EdgePath_DirectionList">EdgePath.DirectionList</a>
+    </div>
+    <div>
+      <a class="xref" href="TVGL.EdgePath.html#TVGL_EdgePath_Length">EdgePath.Length</a>
+    </div>
+    <div>
+      <a class="xref" href="TVGL.EdgePath.html#TVGL_EdgePath_IsClosed">EdgePath.IsClosed</a>
+    </div>
+    <div>
+      <a class="xref" href="TVGL.EdgePath.html#TVGL_EdgePath_UpdateIsClosed">EdgePath.UpdateIsClosed()</a>
+    </div>
+    <div>
+      <a class="xref" href="TVGL.EdgePath.html#TVGL_EdgePath_NumPoints">EdgePath.NumPoints</a>
+    </div>
+    <div>
+      <a class="xref" href="TVGL.EdgePath.html#TVGL_EdgePath_FirstVertex">EdgePath.FirstVertex</a>
+    </div>
+    <div>
+      <a class="xref" href="TVGL.EdgePath.html#TVGL_EdgePath_LastVertex">EdgePath.LastVertex</a>
+    </div>
+    <div>
+      <a class="xref" href="TVGL.EdgePath.html#TVGL_EdgePath_Count">EdgePath.Count</a>
+    </div>
+    <div>
+      <a class="xref" href="TVGL.EdgePath.html#TVGL_EdgePath_IsReadOnly">EdgePath.IsReadOnly</a>
+    </div>
+    <div>
+      <a class="xref" href="TVGL.EdgePath.html#TVGL_EdgePath_Item_System_Int32_">EdgePath.this[int]</a>
+    </div>
+    <div>
+      <a class="xref" href="TVGL.EdgePath.html#TVGL_EdgePath_GetVertices_System_Boolean_">EdgePath.GetVertices(bool)</a>
+    </div>
+    <div>
+      <a class="xref" href="TVGL.EdgePath.html#TVGL_EdgePath_GetVectors_System_Boolean_">EdgePath.GetVectors(bool)</a>
+    </div>
+    <div>
+      <a class="xref" href="TVGL.EdgePath.html#TVGL_EdgePath_GetCenters">EdgePath.GetCenters()</a>
+    </div>
+    <div>
+      <a class="xref" href="TVGL.EdgePath.html#TVGL_EdgePath_AddEnd_TVGL_Edge_System_Boolean_">EdgePath.AddEnd(Edge, bool)</a>
+    </div>
+    <div>
+      <a class="xref" href="TVGL.EdgePath.html#TVGL_EdgePath_AddEnd_TVGL_Edge_">EdgePath.AddEnd(Edge)</a>
+    </div>
+    <div>
+      <a class="xref" href="TVGL.EdgePath.html#TVGL_EdgePath_AddBegin_TVGL_Edge_System_Boolean_">EdgePath.AddBegin(Edge, bool)</a>
+    </div>
+    <div>
+      <a class="xref" href="TVGL.EdgePath.html#TVGL_EdgePath_AddBegin_TVGL_Edge_">EdgePath.AddBegin(Edge)</a>
+    </div>
+    <div>
+      <a class="xref" href="TVGL.EdgePath.html#TVGL_EdgePath_IndexOf_System_ValueTuple_TVGL_Edge_System_Boolean__">EdgePath.IndexOf((Edge edge, bool dir))</a>
+    </div>
+    <div>
+      <a class="xref" href="TVGL.EdgePath.html#TVGL_EdgePath_IndexOf_TVGL_Edge_">EdgePath.IndexOf(Edge)</a>
+    </div>
+    <div>
+      <a class="xref" href="TVGL.EdgePath.html#TVGL_EdgePath_Insert_System_Int32_System_ValueTuple_TVGL_Edge_System_Boolean__">EdgePath.Insert(int, (Edge edge, bool dir))</a>
+    </div>
+    <div>
+      <a class="xref" href="TVGL.EdgePath.html#TVGL_EdgePath_RemoveAt_System_Int32_">EdgePath.RemoveAt(int)</a>
+    </div>
+    <div>
+      <a class="xref" href="TVGL.EdgePath.html#TVGL_EdgePath_Add_System_ValueTuple_TVGL_Edge_System_Boolean__">EdgePath.Add((Edge edge, bool dir))</a>
+    </div>
+    <div>
+      <a class="xref" href="TVGL.EdgePath.html#TVGL_EdgePath_Clear">EdgePath.Clear()</a>
+    </div>
+    <div>
+      <a class="xref" href="TVGL.EdgePath.html#TVGL_EdgePath_Contains_System_ValueTuple_TVGL_Edge_System_Boolean__">EdgePath.Contains((Edge edge, bool dir))</a>
+    </div>
+    <div>
+      <a class="xref" href="TVGL.EdgePath.html#TVGL_EdgePath_CopyTo_System_ValueTuple_TVGL_Edge_System_Boolean____System_Int32_">EdgePath.CopyTo((Edge edge, bool dir)[], int)</a>
+    </div>
+    <div>
+      <a class="xref" href="TVGL.EdgePath.html#TVGL_EdgePath_Remove_System_ValueTuple_TVGL_Edge_System_Boolean__">EdgePath.Remove((Edge edge, bool dir))</a>
+    </div>
+    <div>
+      <a class="xref" href="TVGL.EdgePath.html#TVGL_EdgePath_CopyEdgesPathData_TVGL_EdgePath_System_Boolean_TVGL_TessellatedSolid_System_Int32_System_Int32_">EdgePath.CopyEdgesPathData(EdgePath, bool, TessellatedSolid, int, int)</a>
+    </div>
+    <div>
+      <a class="xref" href="TVGL.EdgePath.html#TVGL_EdgePath_serializationData">EdgePath.serializationData</a>
+    </div>
+    <div>
+      <a class="xref" href="TVGL.EdgePath.html#TVGL_EdgePath_OnSerializingMethod_System_Runtime_Serialization_StreamingContext_">EdgePath.OnSerializingMethod(StreamingContext)</a>
+    </div>
+    <div>
+      <a class="xref" href="TVGL.EdgePath.html#TVGL_EdgePath_GetEnumerator">EdgePath.GetEnumerator()</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.equals#system-object-equals(system-object)">object.Equals(object)</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.equals#system-object-equals(system-object-system-object)">object.Equals(object, object)</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.gethashcode">object.GetHashCode()</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.gettype">object.GetType()</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.memberwiseclone">object.MemberwiseClone()</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.referenceequals">object.ReferenceEquals(object, object)</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.tostring">object.ToString()</a>
+    </div>
+  </dd></dl>
+
+
+
+
+
+
+  <h2 class="section" id="constructors">Constructors
+</h2>
+
+
+  <a id="TVGL_BorderSegment__ctor_" data-uid="TVGL.BorderSegment.#ctor*"></a>
+
+  <h3 id="TVGL_BorderSegment__ctor" data-uid="TVGL.BorderSegment.#ctor">
+  BorderSegment()
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Initializes a new instance of the <a class="xref" href="TVGL.BorderSegment.html">BorderSegment</a> class.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public BorderSegment()</code></pre>
+  </div>
+
+
+
+
+
+
+
+
+
+
+
+  <dl class="typelist seealso">
+    <dt>See Also</dt>
+    <dd>
+    <div>
+      <div><a class="xref" href="TVGL.EdgePath.html">EdgePath</a></div>
+    </div>
+    </dd>
+  </dl>
+
+
+  <h2 class="section" id="properties">Properties
+</h2>
+
+
+  <a id="TVGL_BorderSegment_CircleCenter_" data-uid="TVGL.BorderSegment.CircleCenter*"></a>
+
+  <h3 id="TVGL_BorderSegment_CircleCenter" data-uid="TVGL.BorderSegment.CircleCenter">
+  CircleCenter
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the center of the circle if the border is a circle.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">[JsonIgnore]
+public Vector3 CircleCenter { get; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>The plane.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+  <dl class="typelist seealso">
+    <dt>See Also</dt>
+    <dd>
+    <div>
+      <div><a class="xref" href="TVGL.EdgePath.html">EdgePath</a></div>
+    </div>
+    </dd>
+  </dl>
+
+
+  <a id="TVGL_BorderSegment_Curvature_" data-uid="TVGL.BorderSegment.Curvature*"></a>
+
+  <h3 id="TVGL_BorderSegment_Curvature" data-uid="TVGL.BorderSegment.Curvature">
+  Curvature
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the curvature.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">[JsonIgnore]
+public CurvatureType Curvature { get; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.CurvatureType.html">CurvatureType</a></dt>
+    <dd><p>The curvature.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+  <dl class="typelist seealso">
+    <dt>See Also</dt>
+    <dd>
+    <div>
+      <div><a class="xref" href="TVGL.EdgePath.html">EdgePath</a></div>
+    </div>
+    </dd>
+  </dl>
+
+
+  <a id="TVGL_BorderSegment_Curve_" data-uid="TVGL.BorderSegment.Curve*"></a>
+
+  <h3 id="TVGL_BorderSegment_Curve" data-uid="TVGL.BorderSegment.Curve">
+  Curve
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets or sets the curve.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public ICurve Curve { get; set; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.ICurve.html">ICurve</a></dt>
+    <dd><p>The curve.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+  <dl class="typelist seealso">
+    <dt>See Also</dt>
+    <dd>
+    <div>
+      <div><a class="xref" href="TVGL.EdgePath.html">EdgePath</a></div>
+    </div>
+    </dd>
+  </dl>
+
+
+  <a id="TVGL_BorderSegment_CurveError_" data-uid="TVGL.BorderSegment.CurveError*"></a>
+
+  <h3 id="TVGL_BorderSegment_CurveError" data-uid="TVGL.BorderSegment.CurveError">
+  CurveError
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets or sets the curve error.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public double CurveError { get; set; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The curve error.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+  <dl class="typelist seealso">
+    <dt>See Also</dt>
+    <dd>
+    <div>
+      <div><a class="xref" href="TVGL.EdgePath.html">EdgePath</a></div>
+    </div>
+    </dd>
+  </dl>
+
+
+  <a id="TVGL_BorderSegment_InternalAngle_" data-uid="TVGL.BorderSegment.InternalAngle*"></a>
+
+  <h3 id="TVGL_BorderSegment_InternalAngle" data-uid="TVGL.BorderSegment.InternalAngle">
+  InternalAngle
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the internal angle.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">[JsonIgnore]
+public double InternalAngle { get; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The internal angle.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+  <dl class="typelist seealso">
+    <dt>See Also</dt>
+    <dd>
+    <div>
+      <div><a class="xref" href="TVGL.EdgePath.html">EdgePath</a></div>
+    </div>
+    </dd>
+  </dl>
+
+
+  <a id="TVGL_BorderSegment_IsCircular_" data-uid="TVGL.BorderSegment.IsCircular*"></a>
+
+  <h3 id="TVGL_BorderSegment_IsCircular" data-uid="TVGL.BorderSegment.IsCircular">
+  IsCircular
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets whether the [edge path is circular].</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">[JsonIgnore]
+public bool IsCircular { get; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd><p><code>true</code> if this instance is circular; otherwise, <code>false</code>.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+  <dl class="typelist seealso">
+    <dt>See Also</dt>
+    <dd>
+    <div>
+      <div><a class="xref" href="TVGL.EdgePath.html">EdgePath</a></div>
+    </div>
+    </dd>
+  </dl>
+
+
+  <a id="TVGL_BorderSegment_OtherPrimitive_" data-uid="TVGL.BorderSegment.OtherPrimitive*"></a>
+
+  <h3 id="TVGL_BorderSegment_OtherPrimitive" data-uid="TVGL.BorderSegment.OtherPrimitive">
+  OtherPrimitive
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets or sets the other primitive.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public PrimitiveSurface OtherPrimitive { get; set; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.PrimitiveSurface.html">PrimitiveSurface</a></dt>
+    <dd><p>The other primitive.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+  <dl class="typelist seealso">
+    <dt>See Also</dt>
+    <dd>
+    <div>
+      <div><a class="xref" href="TVGL.EdgePath.html">EdgePath</a></div>
+    </div>
+    </dd>
+  </dl>
+
+
+  <a id="TVGL_BorderSegment_OwnedPrimitive_" data-uid="TVGL.BorderSegment.OwnedPrimitive*"></a>
+
+  <h3 id="TVGL_BorderSegment_OwnedPrimitive" data-uid="TVGL.BorderSegment.OwnedPrimitive">
+  OwnedPrimitive
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets or sets the owned primitive.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public PrimitiveSurface OwnedPrimitive { get; set; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.PrimitiveSurface.html">PrimitiveSurface</a></dt>
+    <dd><p>The owned primitive.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+  <dl class="typelist seealso">
+    <dt>See Also</dt>
+    <dd>
+    <div>
+      <div><a class="xref" href="TVGL.EdgePath.html">EdgePath</a></div>
+    </div>
+    </dd>
+  </dl>
+
+
+  <h2 class="section" id="methods">Methods
+</h2>
+
+
+  <a id="TVGL_BorderSegment_Copy_" data-uid="TVGL.BorderSegment.Copy*"></a>
+
+  <h3 id="TVGL_BorderSegment_Copy_System_Boolean_TVGL_TessellatedSolid_System_Int32_System_Int32_" data-uid="TVGL.BorderSegment.Copy(System.Boolean,TVGL.TessellatedSolid,System.Int32,System.Int32)">
+  Copy(bool, TessellatedSolid, int, int)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Copies the specified reverse.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public EdgePath Copy(bool reverse = false, TessellatedSolid copiedTessellatedSolid = null, int startIndex = 0, int endIndex = -1)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>reverse</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd><p>if set to <code>true</code> [reverse].</p>
+</dd>
+    <dt><code>copiedTessellatedSolid</code> <a class="xref" href="TVGL.TessellatedSolid.html">TessellatedSolid</a></dt>
+    <dd><p>The copied tessellated solid.</p>
+</dd>
+    <dt><code>startIndex</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a></dt>
+    <dd><p>The start index.</p>
+</dd>
+    <dt><code>endIndex</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a></dt>
+    <dd><p>The end index.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.EdgePath.html">EdgePath</a></dt>
+    <dd><p>EdgePath.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <h4 class="section">Exceptions</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.notimplementedexception">NotImplementedException</a></dt>
+    <dd></dd>
+  </dl>
+
+  <dl class="typelist seealso">
+    <dt>See Also</dt>
+    <dd>
+    <div>
+      <div><a class="xref" href="TVGL.EdgePath.html">EdgePath</a></div>
+    </div>
+    </dd>
+  </dl>
+
+
+  <a id="TVGL_BorderSegment_GetSecondPrimitive_" data-uid="TVGL.BorderSegment.GetSecondPrimitive*"></a>
+
+  <h3 id="TVGL_BorderSegment_GetSecondPrimitive_TVGL_PrimitiveSurface_" data-uid="TVGL.BorderSegment.GetSecondPrimitive(TVGL.PrimitiveSurface)">
+  GetSecondPrimitive(PrimitiveSurface)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the second primitive.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public PrimitiveSurface GetSecondPrimitive(PrimitiveSurface prim)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>prim</code> <a class="xref" href="TVGL.PrimitiveSurface.html">PrimitiveSurface</a></dt>
+    <dd><p>The prim.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.PrimitiveSurface.html">PrimitiveSurface</a></dt>
+    <dd><p>PrimitiveSurface.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+  <dl class="typelist seealso">
+    <dt>See Also</dt>
+    <dd>
+    <div>
+      <div><a class="xref" href="TVGL.EdgePath.html">EdgePath</a></div>
+    </div>
+    </dd>
+  </dl>
+
+
+  <h2 id="seealso">See Also</h2>
+  <div class="seealso">
+      <div><a class="xref" href="TVGL.EdgePath.html">EdgePath</a></div>
+  </div>
+
+</article>
+
+        <div class="contribution d-print-none">
+        </div>
+
+        
+      </div>
+
+      <div class="affix">
+        <nav id="affix"></nav>
+      </div>
+    </main>
+
+
+    <footer class="border-top">
+      <div class="container-xxl">
+        <div class="flex-fill">
+          <span>Made with <a href="https://dotnet.github.io/docfx">docfx</a></span>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>
