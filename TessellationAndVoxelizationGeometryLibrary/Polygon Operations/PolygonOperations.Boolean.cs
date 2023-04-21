@@ -693,7 +693,7 @@ namespace TVGL
         /// <param name="fillType">Type of the fill.</param>
         /// <param name="clipType">Type of the clip.</param>
         /// <returns>List&lt;Polygon&gt;.</returns>
-        public static List<Polygon> BooleanViaClipper(IEnumerable<Polygon> polygonsA, IEnumerable<Polygon> polygonsB, ClipperLib.PolyFillType fillType,
+        internal static List<Polygon> BooleanViaClipper(IEnumerable<Polygon> polygonsA, IEnumerable<Polygon> polygonsB, ClipperLib.PolyFillType fillType,
             ClipperLib.ClipType clipType)
         {
             return BooleanViaClipper(fillType, clipType, polygonsA, polygonsB);
@@ -707,7 +707,7 @@ namespace TVGL
         /// <param name="fillType">Type of the fill.</param>
         /// <param name="clipType">Type of the clip.</param>
         /// <returns>List&lt;Polygon&gt;.</returns>
-        public static List<Polygon> BooleanViaClipper(Polygon polygonA, Polygon polygonB, ClipperLib.PolyFillType fillType, ClipperLib.ClipType clipType)
+        internal static List<Polygon> BooleanViaClipper(Polygon polygonA, Polygon polygonB, ClipperLib.PolyFillType fillType, ClipperLib.ClipType clipType)
         {
             return BooleanViaClipper(fillType, clipType, new[] { polygonA }, new[] { polygonB});
         }

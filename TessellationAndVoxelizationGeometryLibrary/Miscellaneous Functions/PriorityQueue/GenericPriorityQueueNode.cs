@@ -18,26 +18,26 @@ namespace Priority_Queue
     /// Class GenericPriorityQueueNode.
     /// </summary>
     /// <typeparam name="TPriority">The type of the t priority.</typeparam>
-    public class GenericPriorityQueueNode<TPriority>
+    internal class GenericPriorityQueueNode<TPriority>
     {
         /// <summary>
         /// The Priority to insert this node at.
         /// Cannot be manually edited - see queue.Enqueue() and queue.UpdatePriority() instead
         /// </summary>
         /// <value>The priority.</value>
-        public TPriority Priority { get; protected internal set; }
+        internal TPriority Priority { get; set; }
 
         /// <summary>
         /// Represents the current position in the queue
         /// </summary>
         /// <value>The index of the queue.</value>
-        public int QueueIndex { get; internal set; }
+        internal int QueueIndex { get; set; }
 
         /// <summary>
         /// Represents the order the node was inserted in
         /// </summary>
         /// <value>The index of the insertion.</value>
-        public long InsertionIndex { get; internal set; }
+        internal long InsertionIndex { get; set; }
 
 
 #if DEBUG
@@ -45,7 +45,7 @@ namespace Priority_Queue
         /// The queue this node is tied to. Used only for debug builds.
         /// </summary>
         /// <value>The queue.</value>
-        public object Queue { get; internal set; }
+        internal object Queue { get; internal set; }
 #endif
     }
 }

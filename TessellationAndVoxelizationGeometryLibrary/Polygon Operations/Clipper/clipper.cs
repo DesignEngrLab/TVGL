@@ -715,7 +715,7 @@ namespace ClipperLib
     /// <summary>
     /// Enum ClipType
     /// </summary>
-    public enum ClipType { Intersection, Union, Difference, Xor };
+    internal enum ClipType { Intersection, Union, Difference, Xor };
     /// <summary>
     /// Enum PolyType
     /// </summary>
@@ -728,7 +728,7 @@ namespace ClipperLib
     /// <summary>
     /// Enum PolyFillType
     /// </summary>
-    public enum PolyFillType { EvenOdd, NonZero, Positive, Negative };
+    internal enum PolyFillType { EvenOdd, NonZero, Positive, Negative };
 
     /// <summary>
     /// Enum JoinType

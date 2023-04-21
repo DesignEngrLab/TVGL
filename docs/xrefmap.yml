@@ -13899,28 +13899,6 @@ references:
   isSpec: "True"
   fullName: TVGL.PolygonOperations.Area
   nameWithType: PolygonOperations.Area
-- uid: TVGL.PolygonOperations.BooleanViaClipper(System.Collections.Generic.IEnumerable{TVGL.Polygon},System.Collections.Generic.IEnumerable{TVGL.Polygon},ClipperLib.PolyFillType,ClipperLib.ClipType)
-  name: BooleanViaClipper(IEnumerable<Polygon>, IEnumerable<Polygon>, PolyFillType, ClipType)
-  href: api/TVGL.PolygonOperations.html#TVGL_PolygonOperations_BooleanViaClipper_System_Collections_Generic_IEnumerable_TVGL_Polygon__System_Collections_Generic_IEnumerable_TVGL_Polygon__ClipperLib_PolyFillType_ClipperLib_ClipType_
-  commentId: M:TVGL.PolygonOperations.BooleanViaClipper(System.Collections.Generic.IEnumerable{TVGL.Polygon},System.Collections.Generic.IEnumerable{TVGL.Polygon},ClipperLib.PolyFillType,ClipperLib.ClipType)
-  name.vb: BooleanViaClipper(IEnumerable(Of Polygon), IEnumerable(Of Polygon), PolyFillType, ClipType)
-  fullName: TVGL.PolygonOperations.BooleanViaClipper(System.Collections.Generic.IEnumerable<TVGL.Polygon>, System.Collections.Generic.IEnumerable<TVGL.Polygon>, ClipperLib.PolyFillType, ClipperLib.ClipType)
-  fullName.vb: TVGL.PolygonOperations.BooleanViaClipper(System.Collections.Generic.IEnumerable(Of TVGL.Polygon), System.Collections.Generic.IEnumerable(Of TVGL.Polygon), ClipperLib.PolyFillType, ClipperLib.ClipType)
-  nameWithType: PolygonOperations.BooleanViaClipper(IEnumerable<Polygon>, IEnumerable<Polygon>, PolyFillType, ClipType)
-  nameWithType.vb: PolygonOperations.BooleanViaClipper(IEnumerable(Of Polygon), IEnumerable(Of Polygon), PolyFillType, ClipType)
-- uid: TVGL.PolygonOperations.BooleanViaClipper(TVGL.Polygon,TVGL.Polygon,ClipperLib.PolyFillType,ClipperLib.ClipType)
-  name: BooleanViaClipper(Polygon, Polygon, PolyFillType, ClipType)
-  href: api/TVGL.PolygonOperations.html#TVGL_PolygonOperations_BooleanViaClipper_TVGL_Polygon_TVGL_Polygon_ClipperLib_PolyFillType_ClipperLib_ClipType_
-  commentId: M:TVGL.PolygonOperations.BooleanViaClipper(TVGL.Polygon,TVGL.Polygon,ClipperLib.PolyFillType,ClipperLib.ClipType)
-  fullName: TVGL.PolygonOperations.BooleanViaClipper(TVGL.Polygon, TVGL.Polygon, ClipperLib.PolyFillType, ClipperLib.ClipType)
-  nameWithType: PolygonOperations.BooleanViaClipper(Polygon, Polygon, PolyFillType, ClipType)
-- uid: TVGL.PolygonOperations.BooleanViaClipper*
-  name: BooleanViaClipper
-  href: api/TVGL.PolygonOperations.html#TVGL_PolygonOperations_BooleanViaClipper_
-  commentId: Overload:TVGL.PolygonOperations.BooleanViaClipper
-  isSpec: "True"
-  fullName: TVGL.PolygonOperations.BooleanViaClipper
-  nameWithType: PolygonOperations.BooleanViaClipper
 - uid: TVGL.PolygonOperations.Complexify(System.Collections.Generic.IEnumerable{TVGL.Polygon},System.Double)
   name: Complexify(IEnumerable<Polygon>, double)
   href: api/TVGL.PolygonOperations.html#TVGL_PolygonOperations_Complexify_System_Collections_Generic_IEnumerable_TVGL_Polygon__System_Double_
