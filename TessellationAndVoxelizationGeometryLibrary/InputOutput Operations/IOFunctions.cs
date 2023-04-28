@@ -1445,6 +1445,7 @@ namespace TVGL
             if (GetFileTypeFromExtension(extension) == FileType.TVGLz)
             {
                 var unzipped = Path.ChangeExtension(filename, GetExtensionFromFileType(FileType.TVGL));
+                if(File.Exists(unzipped)) { File.Delete(unzipped); }    
                 //Unzip the file
                 using (ZipArchive archive = ZipFile.OpenRead(filename))
                 {
