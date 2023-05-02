@@ -45,7 +45,7 @@ namespace Priority_Queue
         /// The queue this node is tied to. Used only for debug builds.
         /// </summary>
         /// <value>The queue.</value>
-        internal object Queue { get;  set; }
+        internal object Queue { get; set; }
 #endif
     }
 }

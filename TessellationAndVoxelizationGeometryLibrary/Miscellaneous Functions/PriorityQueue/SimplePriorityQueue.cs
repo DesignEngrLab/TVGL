@@ -649,7 +649,7 @@ namespace Priority_Queue
 
         IEnumerator<TItem> IEnumerable<TItem>.GetEnumerator()
         {
-            throw new NotImplementedException();
+            return this.GetEnumerator();
         }
     }
 
