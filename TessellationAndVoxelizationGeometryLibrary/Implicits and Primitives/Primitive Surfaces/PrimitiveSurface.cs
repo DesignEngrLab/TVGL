@@ -272,6 +272,7 @@ namespace TVGL
         /// Gets the residual.
         /// </summary>
         /// <value>The residual.</value>
+        [JsonIgnore]
         public double MeanSquaredError
         {
             get
@@ -289,6 +290,7 @@ namespace TVGL
         /// Gets the maximum error.
         /// </summary>
         /// <value>The maximum error.</value>
+        [JsonIgnore]
         public double MaxError
         {
             get

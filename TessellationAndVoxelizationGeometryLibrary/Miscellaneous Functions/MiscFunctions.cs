@@ -210,6 +210,14 @@ namespace TVGL
             return perimeter;
         }
 
+        public static double PerimeterSquared(this IList<Vector3> polygon3D)
+        {
+            double perimeter = Vector3.DistanceSquared(polygon3D.Last(), polygon3D[0]);
+            for (var i = 1; i < polygon3D.Count; i++)
+                perimeter += Vector3.DistanceSquared(polygon3D[i - 1], polygon3D[i]);
+            return perimeter;
+        }
+
         #region Length of Polyline
 
         /// <summary>
