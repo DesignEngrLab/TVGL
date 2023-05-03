@@ -120,53 +120,37 @@ namespace TVGL  // COMMENTEDCHANGE namespace System.Numerics
         /// Gets a vector whose 4 elements are equal to zero.
         /// </summary>
         /// <value>A vector whose four elements are equal to zero (that is, it returns the vector <c>(0,0,0,0)</c>.</value>
-        public static Vector4 Zero
-        {
-            get => default;
-        }
+        public static Vector4 Zero = default;
 
         /// <summary>
         /// Gets the vector (1,0,0,0).
         /// </summary>
         /// <value>The vector <c>(1,0,0,0)</c>.</value>
-        public static Vector4 UnitX
-        {
-            get => new Vector4(1.0, 0.0, 0.0, 0.0);
-        }
+        public static Vector4 UnitX = new Vector4(1.0, 0.0, 0.0, 0.0);
 
         /// <summary>
         /// Gets the vector (0,1,0,0).
         /// </summary>
         /// <value>The vector <c>(0,1,0,0)</c>.</value>
-        public static Vector4 UnitY
-        {
-            get => new Vector4(0.0, 1.0, 0.0, 0.0);
-        }
+        public static Vector4 UnitY = new Vector4(0.0, 1.0, 0.0, 0.0);
 
         /// <summary>
         /// Gets the vector (0,0,1,0).
         /// </summary>
         /// <value>The vector <c>(0,0,1,0)</c>.</value>
-        public static Vector4 UnitZ
-        {
-            get => new Vector4(0.0, 0.0, 1.0, 0.0);
-        }
+        public static Vector4 UnitZ = new Vector4(0.0, 0.0, 1.0, 0.0);
 
         /// <summary>
         /// Gets the vector (0,0,0,1).
         /// </summary>
         /// <value>The vector <c>(0,0,0,1)</c>.</value>
-        public static Vector4 UnitW
-        {
-            get => new Vector4(0.0, 0.0, 0.0, 1.0);
-        }
+        public static Vector4 UnitW= new Vector4(0.0, 0.0, 0.0, 1.0);
 
         /// <summary>
         /// Returns the vector (NaN, NaN, NaN, NaN).
         /// </summary>
         /// <value>The null.</value>
-        public static Vector4 Null =>
-        new Vector4(double.NaN, double.NaN, double.NaN, double.NaN);
+        public static Vector4 Null = new Vector4(double.NaN, double.NaN, double.NaN, double.NaN);
 
         /// <summary>
         /// Determines whether this instance is null.
