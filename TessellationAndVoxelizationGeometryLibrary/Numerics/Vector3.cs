@@ -363,24 +363,21 @@ namespace TVGL  // COMMENTEDCHANGE namespace System.Numerics
         /// Returns the vector (0,0,0).
         /// </summary>
         /// <value>The zero.</value>
-
-        public static Vector3 Zero => default;
+        public static Vector3 Zero = new Vector3(0.0, 0.0, 0.0);        
 
         /// <summary>
         /// Returns the vector (1,1,1).
         /// </summary>
         /// <value>The one.</value>
 
-        public static Vector3 One =>
-        new Vector3(1.0, 1.0, 1.0);
+        public static Vector3 One = new Vector3(1.0, 1.0, 1.0);
 
         /// <summary>
         /// Returns the vector (NaN, NaN, NaN).
         /// </summary>
         /// <value>The null.</value>
-
-        public static Vector3 Null =>
-        new Vector3(double.NaN, double.NaN, double.NaN);
+        
+        public static Vector3 Null = new Vector3(double.NaN, double.NaN, double.NaN);
 
         /// <summary>
         /// Determines whether this instance is null.
@@ -403,19 +400,19 @@ namespace TVGL  // COMMENTEDCHANGE namespace System.Numerics
         /// Returns the vector (1,0,0).
         /// </summary>
         /// <value>The unit x.</value>
-        public static Vector3 UnitX => new Vector3(1.0, 0.0, 0.0);
+        public static Vector3 UnitX = new Vector3(1.0, 0.0, 0.0);
 
         /// <summary>
         /// Returns the vector (0,1,0).
         /// </summary>
         /// <value>The unit y.</value>
-        public static Vector3 UnitY => new Vector3(0.0, 1.0, 0.0);
+        public static Vector3 UnitY = new Vector3(0.0, 1.0, 0.0);
 
         /// <summary>
         /// Returns the vector (0,0,1).
         /// </summary>
         /// <value>The unit z.</value>
-        public static Vector3 UnitZ => new Vector3(0.0, 0.0, 1.0);
+        public static Vector3 UnitZ = new Vector3(0.0, 0.0, 1.0);
 
         /// <summary>
         /// Units the vector.

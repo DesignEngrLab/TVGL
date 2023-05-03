@@ -31,35 +31,31 @@ namespace TVGL  // COMMENTEDCHANGE namespace System.Numerics
         /// Returns the vector (NaN,NaN). This is often used in place of null.
         /// </summary>
         /// <value>The null.</value>
-        public static Vector2 Null =>
-        new Vector2(double.NaN, double.NaN);
-
+        public static Vector2 Null = new Vector2(double.NaN, double.NaN);
 
         /// <summary>
         /// Returns the vector (0,0).
         /// </summary>
         /// <value>The zero.</value>
-        public static Vector2 Zero =>
-        default;
+        public static Vector2 Zero = default;
 
         /// <summary>
         /// Returns the vector (1,1).
         /// </summary>
         /// <value>The one.</value>
-        public static Vector2 One =>
-        new Vector2(1.0, 1.0);
+        public static Vector2 One = new Vector2(1.0, 1.0);
 
         /// <summary>
         /// Returns the vector (1,0).
         /// </summary>
         /// <value>The unit x.</value>
-        public static Vector2 UnitX => new Vector2(1.0, 0.0);
+        public static Vector2 UnitX = new Vector2(1.0, 0.0);
 
         /// <summary>
         /// Returns the vector (0,1).
         /// </summary>
         /// <value>The unit y.</value>
-        public static Vector2 UnitY => new Vector2(0.0, 1.0);
+        public static Vector2 UnitY = new Vector2(0.0, 1.0);
         #endregion
 
         #region Public Instance Properties
