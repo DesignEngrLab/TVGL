@@ -118,6 +118,10 @@ namespace TVGL
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static (ComplexNumber, ComplexNumber) Quadratic(double squaredCoeff, double linearCoeff, double constant)
         {
+            if ((constant / squaredCoeff).IsNegligible())
+            {
+                return (new ComplexNumber(0), new ComplexNumber(-linearCoeff / squaredCoeff));
+            }
             var oneOverDenom = 1 / (2 * squaredCoeff);
             var radicalTerm = linearCoeff * linearCoeff - 4 * squaredCoeff * constant;  // more commonly known as b^2 - 4ac
             if (radicalTerm < 0)  // then imaginary roots
@@ -134,6 +138,28 @@ namespace TVGL
                 var negBTerm = oneOverDenom * linearCoeff;
                 return (new ComplexNumber(radicalTerm - negBTerm), new ComplexNumber(-radicalTerm - negBTerm));
             }
+        }
+
+        /// <summary>
+        /// Quadratics the specified squared coeff.
+        /// </summary>
+        /// <param name="squaredCoeff">The squared coeff.</param>
+        /// <param name="linearCoeff">The linear coeff.</param>
+        /// <param name="constant">The constant.</param>
+        /// <returns>System.ValueTuple&lt;ComplexNumber, ComplexNumber&gt;.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static (ComplexNumber, ComplexNumber) Quadratic(ComplexNumber linearCoeff, ComplexNumber constant)
+        {
+            if (constant.IsNegligible())
+            {
+                return (new ComplexNumber(0), -linearCoeff);
+            }
+            var oneOverDenom = 0.5;
+            var radicalTerm = linearCoeff * linearCoeff - 4 * constant;  // more commonly known as b^2 - 4ac
+            radicalTerm = ComplexNumber.Sqrt(-radicalTerm);
+            radicalTerm *= oneOverDenom;
+            var negBTerm = -oneOverDenom * linearCoeff;
+            return (negBTerm - radicalTerm, negBTerm + radicalTerm);
         }
 
         /// <summary>
@@ -177,8 +203,9 @@ namespace TVGL
             var c = offset / cubedCoeff;
             if (c.IsNegligible())
             {
+                yield return new ComplexNumber(0.0);
                 foreach (var root in QuadraticAsEnumeration(1, a, b))
-                    if (!onlyReturnRealRoots||root.IsRealNumber)
+                    if (!onlyReturnRealRoots || root.IsRealNumber)
                         yield return root;
                 yield break;
             }
@@ -225,6 +252,14 @@ namespace TVGL
             var a = squaredCoeff / cubedCoeff;
             var b = linearCoeff / cubedCoeff;
             var c = offset / cubedCoeff;
+            if (c.IsNegligible())
+            {
+                yield return new ComplexNumber(0.0);
+                var rootsAsTuples = Quadratic(a, b);
+                yield return rootsAsTuples.Item1;
+                yield return rootsAsTuples.Item2;
+                yield break;
+            }
             var Q = (a * a - 3.0 * b) / 9.0;
             var R = (2.0 * a * a * a - 9.0 * a * b + 27.0 * c) / 54.0;
             var Q3 = Q * Q * Q;
@@ -246,7 +281,7 @@ namespace TVGL
                 yield return A + B - a;
                 var firstTerm = -((A + B) / 2) - a;
                 var secondTerm = (new ComplexNumber(0, 1)) * (sqrt3by2 * (A - B));
-                    yield return firstTerm + secondTerm;
+                yield return firstTerm + secondTerm;
                 yield return firstTerm - secondTerm;
             }
         }
@@ -293,6 +328,13 @@ namespace TVGL
             var d = linearCoeff / fourthOrderCoeff;
             var e = offset / fourthOrderCoeff;
 
+            if (e.IsNegligible())
+            {
+                yield return new ComplexNumber(0.0);
+                foreach (var root in Cubic(new ComplexNumber(1), b, c, d))
+                    yield return root;
+                yield break;
+            }
 
             var Q1 = (c * c - 3 * b * d) + (12 * e);
             var Q2 = (2 * c * c * c) - (9 * b * c * d) + (27 * ((d * d) + (b * b * e))) - (72 * c * e);
@@ -333,6 +375,13 @@ namespace TVGL
             var d = linearCoeff / fourthOrderCoeff;
             var e = offset / fourthOrderCoeff;
 
+            if (e.IsNegligible())
+            {
+                yield return new ComplexNumber(0.0);
+                foreach (var root in Cubic(1, b, c, d))
+                    yield return root;
+                yield break;
+            }
             var Q1 = (c * c - 3 * b * d) + (12 * e);
             var Q2 = (2 * c * c * c) - (9 * b * c * d) + (27 * ((d * d) + (b * b * e))) - (72 * c * e);
             var Q3 = (8 * b * c) - (16 * d) - (2 * b * b * b);
@@ -349,8 +398,8 @@ namespace TVGL
             var complexB = new ComplexNumber(b);
             var minusBAddQ7 = -complexB + Q7;
             var minusBMinusQ7 = -complexB - Q7;
-            var sqrtTerm1 = new ComplexNumber((2 * Q4) / 3 - (4 * Q6.Real), -4 * Q6.Imaginary);
-            var sqrtTerm2 = (Q3 / Q7);
+            var sqrtTerm1 = new ComplexNumber(2 * Q4 / 3 - (4 * Q6.Real), -4 * Q6.Imaginary);
+            var sqrtTerm2 = Q3 / Q7;
             var addedSqrtTerm = ComplexNumber.Sqrt(sqrtTerm1 + sqrtTerm2);
             var subtractedSqrtTerm = ComplexNumber.Sqrt(sqrtTerm1 - sqrtTerm2);
 
