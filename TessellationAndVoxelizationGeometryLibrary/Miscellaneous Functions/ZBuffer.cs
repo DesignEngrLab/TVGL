@@ -170,6 +170,7 @@ namespace TVGL
             #region Initialization
             count = 0;
             accessibleCount = 0;
+            var negligible = Math.Sqrt(Constants.BaseTolerance);
 
             // get the 3 vertices and their zheights
             var vA = Vertices[face.A.IndexInList];
@@ -312,36 +313,26 @@ namespace TVGL
                 for (var y = yBtmSnapped; y <= stop; y+= PixelSideLength, index++)
                 {
                     var qVaY = y - vA.Y;
-
                     // check the values of x and y  with the barycentric approach
                     //borrowing notation from:https://www.scratchapixel.com/lessons/3d-basic-rendering/ray-tracing-rendering-a-triangle/barycentric-coordinates
                     //Area = (vB - vA).Cross(q - vA)
-                    var area2 = vBAx * qVaY - vBAy_multiply_qVaX;
-                    if (area2 >= 0 && area2 <= area)
+                    if (!WithinBounds(vBAx * qVaY - vBAy_multiply_qVaX, negligible, area, out var area2)) continue;
+                    //Area = (q - vA).Cross(vC - vA)
+                    if (!WithinBounds(vCAy_multiply_qVaX - qVaY * vCAx, negligible, area, out var area3)) continue;
+                    var v = area2 / area;
+                    var u = area3 / area;
+                    if (!WithinBounds(1 - v - u, negligible, 1.0, out var w)) continue;
+                    count++;
+                    var zIntercept = w * zA + u * zB + v * zC;
+                    // since the grid is not initialized, we update it if the grid cell is empty or if we found a better face
+                    var tuple = Values[index];
+                    if (updateGrid)
                     {
-                        //Area = (q - vA).Cross(vC - vA)
-                        var area3 = vCAy_multiply_qVaX - qVaY * vCAx;
-                        if (area3 >= 0 && area3 <= area)
-                        {
-                            var v = area2 / area;
-                            var u = area3 / area;
-                            var w = 1 - v - u;
-                            if (w >= 0.0 && w <= 1.0)
-                            {
-                                count++;
-                                var zIntercept = w * zA + u * zB + v * zC;
-                                // since the grid is not initialized, we update it if the grid cell is empty or if we found a better face
-                                var tuple = Values[index];
-                                if (updateGrid)
-                                {
-                                    if (tuple == default || zIntercept > tuple.Item2)
-                                        Values[index] = (face, zIntercept);
-                                }
-                                else if (tuple == default || zIntercept.IsPracticallySame(tuple.Item2, tessellationError))
-                                    accessibleCount++;
-                            }
-                        }
+                        if (tuple == default || zIntercept > tuple.Item2)
+                            Values[index] = (face, zIntercept);
                     }
+                    else if (tuple == default || zIntercept.IsPracticallySame(tuple.Item2, tessellationError))
+                        accessibleCount++;
                 }
                 // step change in the y values.
                 qVaX += PixelSideLength;
@@ -358,6 +349,29 @@ namespace TVGL
                 }
             }
             return area / 2; // the areas in this function were actually parallelogram areas. need to divide by 2 for triangle area
+        }
+
+        //Returns if the value if it is within the bounds of zero and notGreaterThan
+        //If the value is slightly less than zero, it will return zero (non-negative)
+        //If the value is slightly above notGreaterThan, it will return notGreaterThan
+        private bool WithinBounds(double val, double negligible, double notGreaterThan, out double returnVal)
+        {
+            returnVal = val;
+            if (val > 0 && val < notGreaterThan)
+            {
+                return true;  
+            }
+            if (val.IsNegligible(negligible))
+            {
+                returnVal = 0;
+                return true;
+            }
+            if(val.IsPracticallySame(notGreaterThan, negligible))
+            {
+                returnVal = notGreaterThan;
+                return true;
+            }
+            return false;
         }
 
         /// <summary>
