@@ -24,7 +24,7 @@ namespace Priority_Queue
     /// </summary>
     /// <typeparam name="TItem">The type to enqueue</typeparam>
     /// <typeparam name="TPriority">The priority-type to use for nodes.  Must extend IComparable&lt;TPriority&gt;</typeparam>
-    public class SimplePriorityQueue<TItem, TPriority> : IPriorityQueue<TItem, TPriority>
+    internal class SimplePriorityQueue<TItem, TPriority> : IEnumerable<TItem>
     {
         /// <summary>
         /// Class SimpleNode.
@@ -37,13 +37,13 @@ namespace Priority_Queue
             /// Gets or sets the data.
             /// </summary>
             /// <value>The data.</value>
-            public TItem Data { get; private set; }
+            internal TItem Data { get; private set; }
 
             /// <summary>
             /// Initializes a new instance of the <see cref="SimpleNode"/> class.
             /// </summary>
             /// <param name="data">The data.</param>
-            public SimpleNode(TItem data)
+            internal SimpleNode(TItem data)
             {
                 Data = data;
             }
@@ -70,39 +70,39 @@ namespace Priority_Queue
         /// <summary>
         /// Instantiate a new Priority Queue
         /// </summary>
-        public SimplePriorityQueue() : this(Comparer<TPriority>.Default, EqualityComparer<TItem>.Default) { }
+        internal SimplePriorityQueue() : this(Comparer<TPriority>.Default, EqualityComparer<TItem>.Default) { }
 
         /// <summary>
         /// Instantiate a new Priority Queue
         /// </summary>
         /// <param name="priorityComparer">The comparer used to compare TPriority values.  Defaults to Comparer&lt;TPriority&gt;.default</param>
-        public SimplePriorityQueue(IComparer<TPriority> priorityComparer) : this(priorityComparer.Compare, EqualityComparer<TItem>.Default) { }
+        internal SimplePriorityQueue(IComparer<TPriority> priorityComparer) : this(priorityComparer.Compare, EqualityComparer<TItem>.Default) { }
 
         /// <summary>
         /// Instantiate a new Priority Queue
         /// </summary>
         /// <param name="priorityComparer">The comparison function to use to compare TPriority values</param>
-        public SimplePriorityQueue(Comparison<TPriority> priorityComparer) : this(priorityComparer, EqualityComparer<TItem>.Default) { }
+        internal SimplePriorityQueue(Comparison<TPriority> priorityComparer) : this(priorityComparer, EqualityComparer<TItem>.Default) { }
 
         /// <summary>
         /// Instantiate a new Priority Queue
         /// </summary>
         /// <param name="itemEquality">The equality comparison function to use to compare TItem values</param>
-        public SimplePriorityQueue(IEqualityComparer<TItem> itemEquality) : this(Comparer<TPriority>.Default, itemEquality) { }
+        internal SimplePriorityQueue(IEqualityComparer<TItem> itemEquality) : this(Comparer<TPriority>.Default, itemEquality) { }
 
         /// <summary>
         /// Instantiate a new Priority Queue
         /// </summary>
         /// <param name="priorityComparer">The comparer used to compare TPriority values.  Defaults to Comparer&lt;TPriority&gt;.default</param>
         /// <param name="itemEquality">The equality comparison function to use to compare TItem values</param>
-        public SimplePriorityQueue(IComparer<TPriority> priorityComparer, IEqualityComparer<TItem> itemEquality) : this(priorityComparer.Compare, itemEquality) { }
+        internal SimplePriorityQueue(IComparer<TPriority> priorityComparer, IEqualityComparer<TItem> itemEquality) : this(priorityComparer.Compare, itemEquality) { }
 
         /// <summary>
         /// Instantiate a new Priority Queue
         /// </summary>
         /// <param name="priorityComparer">The comparison function to use to compare TPriority values</param>
         /// <param name="itemEquality">The equality comparison function to use to compare TItem values</param>
-        public SimplePriorityQueue(Comparison<TPriority> priorityComparer, IEqualityComparer<TItem> itemEquality)
+        internal SimplePriorityQueue(Comparison<TPriority> priorityComparer, IEqualityComparer<TItem> itemEquality)
         {
             _queue = new GenericPriorityQueue<SimpleNode, TPriority>(INITIAL_QUEUE_SIZE, priorityComparer);
             _itemToNodesCache = new Dictionary<TItem, IList<SimpleNode>>(itemEquality);
@@ -180,7 +180,7 @@ namespace Priority_Queue
         /// O(1)
         /// </summary>
         /// <value>The count.</value>
-        public int Count
+        internal int Count
         {
             get
             {
@@ -198,7 +198,7 @@ namespace Priority_Queue
         /// </summary>
         /// <value>The first.</value>
         /// <exception cref="System.InvalidOperationException">Cannot call .First on an empty queue</exception>
-        public TItem First
+        internal TItem First
         {
             get
             {
@@ -218,7 +218,7 @@ namespace Priority_Queue
         /// Removes every node from the queue.
         /// O(n)
         /// </summary>
-        public void Clear()
+        internal void Clear()
         {
             lock(_queue)
             {
@@ -234,7 +234,7 @@ namespace Priority_Queue
         /// </summary>
         /// <param name="item">The item.</param>
         /// <returns><c>true</c> if [contains] [the specified node]; otherwise, <c>false</c>.</returns>
-        public bool Contains(TItem item)
+        internal bool Contains(TItem item)
         {
             lock(_queue)
             {
@@ -249,7 +249,7 @@ namespace Priority_Queue
         /// </summary>
         /// <returns>TItem.</returns>
         /// <exception cref="System.InvalidOperationException">Cannot call Dequeue() on an empty queue</exception>
-        public TItem Dequeue()
+        internal TItem Dequeue()
         {
             lock(_queue)
             {
@@ -289,7 +289,7 @@ namespace Priority_Queue
         /// </summary>
         /// <param name="item">The item.</param>
         /// <param name="priority">The priority.</param>
-        public void Enqueue(TItem item, TPriority priority)
+        internal void Enqueue(TItem item, TPriority priority)
         {
             lock(_queue)
             {
@@ -317,7 +317,7 @@ namespace Priority_Queue
         /// <param name="item">The item.</param>
         /// <param name="priority">The priority.</param>
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
-        public bool EnqueueWithoutDuplicates(TItem item, TPriority priority)
+        internal bool EnqueueWithoutDuplicates(TItem item, TPriority priority)
         {
             lock(_queue)
             {
@@ -353,7 +353,7 @@ namespace Priority_Queue
         /// </summary>
         /// <param name="item">The item.</param>
         /// <exception cref="System.InvalidOperationException">Cannot call Remove() on a node which is not enqueued: " + item</exception>
-        public void Remove(TItem item)
+        internal void Remove(TItem item)
         {
             lock(_queue)
             {
@@ -396,7 +396,7 @@ namespace Priority_Queue
         /// <param name="item">The item.</param>
         /// <param name="priority">The priority.</param>
         /// <exception cref="System.InvalidOperationException">Cannot call UpdatePriority() on a node which is not enqueued: " + item</exception>
-        public void UpdatePriority(TItem item, TPriority priority)
+        internal void UpdatePriority(TItem item, TPriority priority)
         {
             lock (_queue)
             {
@@ -420,7 +420,7 @@ namespace Priority_Queue
         /// <param name="item">The item.</param>
         /// <returns>TPriority.</returns>
         /// <exception cref="System.InvalidOperationException">Cannot call GetPriority() on a node which is not enqueued: " + item</exception>
-        public TPriority GetPriority(TItem item)
+        internal TPriority GetPriority(TItem item)
         {
             lock (_queue)
             {
@@ -443,7 +443,7 @@ namespace Priority_Queue
         /// Useful for multi-threading, where the queue may become empty between calls to Contains() and First
         /// Returns true if successful, false otherwise
         /// O(1)
-        public bool TryFirst(out TItem first)
+        internal bool TryFirst(out TItem first)
         {
             if (_queue.Count > 0)
             {
@@ -469,7 +469,7 @@ namespace Priority_Queue
         /// </summary>
         /// <param name="first">The first.</param>
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
-        public bool TryDequeue(out TItem first)
+        internal bool TryDequeue(out TItem first)
         {
             if (_queue.Count > 0)
             {
@@ -498,7 +498,7 @@ namespace Priority_Queue
         /// </summary>
         /// <param name="item">The item.</param>
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
-        public bool TryRemove(TItem item)
+        internal bool TryRemove(TItem item)
         {
             lock(_queue)
             {
@@ -543,7 +543,7 @@ namespace Priority_Queue
         /// <param name="item">The item.</param>
         /// <param name="priority">The priority.</param>
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
-        public bool TryUpdatePriority(TItem item, TPriority priority)
+        internal bool TryUpdatePriority(TItem item, TPriority priority)
         {
             lock(_queue)
             {
@@ -569,7 +569,7 @@ namespace Priority_Queue
         /// <param name="item">The item.</param>
         /// <param name="priority">The priority.</param>
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
-        public bool TryGetPriority(TItem item, out TPriority priority)
+        internal bool TryGetPriority(TItem item, out TPriority priority)
         {
             lock(_queue)
             {
@@ -589,7 +589,7 @@ namespace Priority_Queue
         /// Returns an enumerator that iterates through the collection.
         /// </summary>
         /// <returns>An enumerator that can be used to iterate through the collection.</returns>
-        public IEnumerator<TItem> GetEnumerator()
+        internal IEnumerator<TItem> GetEnumerator()
         {
             List<TItem> queueData = new List<TItem>();
             lock (_queue)
@@ -617,7 +617,7 @@ namespace Priority_Queue
         /// Determines whether [is valid queue].
         /// </summary>
         /// <returns><c>true</c> if [is valid queue]; otherwise, <c>false</c>.</returns>
-        public bool IsValidQueue()
+        internal bool IsValidQueue()
         {
             lock(_queue)
             {
@@ -646,6 +646,11 @@ namespace Priority_Queue
                 return _queue.IsValidQueue();
             }
         }
+
+        IEnumerator<TItem> IEnumerable<TItem>.GetEnumerator()
+        {
+            return this.GetEnumerator();
+        }
     }
 
     /// <summary>
@@ -654,23 +659,23 @@ namespace Priority_Queue
     /// This class is kept here for backwards compatibility.  It's recommended you use SimplePriorityQueue&lt;TItem, TPriority&gt;
     /// </summary>
     /// <typeparam name="TItem">The type to enqueue</typeparam>
-    public class SimplePriorityQueue<TItem> : SimplePriorityQueue<TItem, float>
+    internal class SimplePriorityQueue<TItem> : SimplePriorityQueue<TItem, float>
     {
         /// <summary>
         /// Instantiate a new Priority Queue
         /// </summary>
-        public SimplePriorityQueue() { }
+        internal SimplePriorityQueue() { }
 
         /// <summary>
         /// Instantiate a new Priority Queue
         /// </summary>
         /// <param name="comparer">The comparer used to compare priority values.  Defaults to Comparer&lt;float&gt;.default</param>
-        public SimplePriorityQueue(IComparer<float> comparer) : base(comparer) { }
+        internal SimplePriorityQueue(IComparer<float> comparer) : base(comparer) { }
 
         /// <summary>
         /// Instantiate a new Priority Queue
         /// </summary>
         /// <param name="comparer">The comparison function to use to compare priority values</param>
-        public SimplePriorityQueue(Comparison<float> comparer) : base(comparer) { }
+        internal SimplePriorityQueue(Comparison<float> comparer) : base(comparer) { }
     }
 }

@@ -1,0 +1,482 @@
+﻿<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+      <title>Struct BoundingRectangle
+ </title>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <meta name="title" content="Struct BoundingRectangle
+ ">
+      
+      <link rel="icon" href="../favicon.ico">
+      <link rel="stylesheet" href="../styles/docfx.min.css">
+      <link rel="stylesheet" href="../styles/main.css">
+      <meta name="docfx:navrel" content="../toc.html">
+      <meta name="docfx:tocrel" content="toc.html">
+      
+      
+      
+
+      <script>
+        MathJax = {
+          options: {
+            processHtmlClass: ['tex2jax_process', 'math']
+          }
+        };
+      </script>
+
+      <script type="text/javascript" src="../styles/docfx.min.js"></script>
+      <script type="text/javascript" src="../styles/main.js"></script>
+  </head>
+
+  <body class="tex2jax_ignore" data-layout="" data-yaml-mime="ManagedReference">
+    <header class="bg-body border-bottom">
+      <nav id="autocollapse" class="navbar navbar-expand-md" role="navigation">
+        <div class="container-xxl flex-nowrap">
+          <a class="navbar-brand" href="../index.html">
+            <img id="logo" class="svg" src="../logo.svg" alt="">
+            
+          </a>
+          <button class="btn btn-lg d-md-none border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navpanel" aria-controls="navpanel" aria-expanded="false" aria-label="Toggle navigation">
+            <i class="bi bi-three-dots"></i>
+          </button>
+          <div class="collapse navbar-collapse" id="navpanel">
+            <div id="navbar">
+            </div>
+          </div>
+        </div>
+      </nav>
+    </header>
+
+    <main class="container-xxl">
+      <div class="toc-offcanvas">
+        <div class="offcanvas-md offcanvas-start" tabindex="-1" id="tocOffcanvas" aria-labelledby="tocOffcanvasLabel">
+          <div class="offcanvas-header">
+            <h5 class="offcanvas-title" id="tocOffcanvasLabel">Table of Contents</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#tocOffcanvas" aria-label="Close"></button>
+          </div>
+          <div class="offcanvas-body">
+            <nav class="toc" id="toc"></nav>
+          </div>
+        </div>
+      </div>
+
+      <div class="content">
+        <div class="actionbar">
+          <button class="btn btn-lg border-0 d-md-none" style="margin-top: -.65em; margin-left: -.8em" type="button" data-bs-toggle="offcanvas" data-bs-target="#tocOffcanvas" aria-controls="tocOffcanvas" aria-expanded="false" aria-label="Show table of contents">
+            <i class="bi bi-list"></i>
+          </button>
+
+          <nav id="breadcrumb"></nav>
+        </div>
+
+        <article data-uid="TVGL.BoundingRectangle">
+
+
+
+  <h1 id="TVGL_BoundingRectangle" data-uid="TVGL.BoundingRectangle" class="text-break">
+    Struct BoundingRectangle
+  
+  </h1>
+
+  <div class="facts text-secondary">
+    <dl><dt>Namespace</dt><dd><a class="xref" href="TVGL.html">TVGL</a></dd></dl>
+  <dl><dt>Assembly</dt><dd>TessellationAndVoxelizationGeometryLibrary.dll</dd></dl>
+  </div>
+
+  <div class="markdown summary"><p>Bounding rectangle information based on area and point pairs.</p>
+</div>
+  <div class="markdown conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public readonly struct BoundingRectangle</code></pre>
+  </div>
+
+
+
+
+
+
+
+  <dl class="typelist derived">
+    <dt>Inherited Members</dt>
+    <dd>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.valuetype.equals">ValueType.Equals(object)</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.valuetype.gethashcode">ValueType.GetHashCode()</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.valuetype.tostring">ValueType.ToString()</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.equals#system-object-equals(system-object-system-object)">object.Equals(object, object)</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.gettype">object.GetType()</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.referenceequals">object.ReferenceEquals(object, object)</a>
+    </div>
+  </dd></dl>
+
+
+
+
+
+
+  <h2 class="section" id="constructors">Constructors
+</h2>
+
+
+  <a id="TVGL_BoundingRectangle__ctor_" data-uid="TVGL.BoundingRectangle.#ctor*"></a>
+
+  <h3 id="TVGL_BoundingRectangle__ctor_TVGL_Vector2_TVGL_Vector2_System_Double_System_Double_System_Double_System_Double_System_Double_System_Double_System_Double_System_Collections_Generic_List_TVGL_Vector2____" data-uid="TVGL.BoundingRectangle.#ctor(TVGL.Vector2,TVGL.Vector2,System.Double,System.Double,System.Double,System.Double,System.Double,System.Double,System.Double,System.Collections.Generic.List{TVGL.Vector2}[])">
+  BoundingRectangle(Vector2, Vector2, double, double, double, double, double, double, double, List&lt;Vector2&gt;[])
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Initializes a new instance of the <a class="xref" href="TVGL.BoundingRectangle.html">BoundingRectangle</a> struct.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public BoundingRectangle(Vector2 unitVectorAlongSide, Vector2 unitVectorPointInto, double d1Min, double d1Max, double d2Min, double d2Max, double length1 = NaN, double length2 = NaN, double area = NaN, List&lt;Vector2&gt;[] sidePoints = null)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>unitVectorAlongSide</code> <a class="xref" href="TVGL.Vector2.html">Vector2</a></dt>
+    <dd><p>The unit vector along side.</p>
+</dd>
+    <dt><code>unitVectorPointInto</code> <a class="xref" href="TVGL.Vector2.html">Vector2</a></dt>
+    <dd><p>The unit vector point into.</p>
+</dd>
+    <dt><code>d1Min</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The d1 minimum.</p>
+</dd>
+    <dt><code>d1Max</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The d1 maximum.</p>
+</dd>
+    <dt><code>d2Min</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The d2 minimum.</p>
+</dd>
+    <dt><code>d2Max</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The d2 maximum.</p>
+</dd>
+    <dt><code>length1</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The length1.</p>
+</dd>
+    <dt><code>length2</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The length2.</p>
+</dd>
+    <dt><code>area</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The area.</p>
+</dd>
+    <dt><code>sidePoints</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.list-1">List</a>&lt;<a class="xref" href="TVGL.Vector2.html">Vector2</a>&gt;[]</dt>
+    <dd><p>The side points.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+  <h2 class="section" id="fields">Fields
+</h2>
+
+
+
+  <h3 id="TVGL_BoundingRectangle_Area" data-uid="TVGL.BoundingRectangle.Area">
+  Area
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>The Area of the bounding box.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public readonly double Area</code></pre>
+  </div>
+
+
+
+
+  <h4 class="section">Field Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+  <h3 id="TVGL_BoundingRectangle_CenterPosition" data-uid="TVGL.BoundingRectangle.CenterPosition">
+  CenterPosition
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>2D Center Position of the Bounding Rectangle</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public readonly Vector2 CenterPosition</code></pre>
+  </div>
+
+
+
+
+  <h4 class="section">Field Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.Vector2.html">Vector2</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+  <h3 id="TVGL_BoundingRectangle_Direction1" data-uid="TVGL.BoundingRectangle.Direction1">
+  Direction1
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Vector direction of length</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public readonly Vector2 Direction1</code></pre>
+  </div>
+
+
+
+
+  <h4 class="section">Field Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.Vector2.html">Vector2</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+  <h3 id="TVGL_BoundingRectangle_Direction2" data-uid="TVGL.BoundingRectangle.Direction2">
+  Direction2
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Vector direction of  width</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public readonly Vector2 Direction2</code></pre>
+  </div>
+
+
+
+
+  <h4 class="section">Field Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.Vector2.html">Vector2</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+  <h3 id="TVGL_BoundingRectangle_Length1" data-uid="TVGL.BoundingRectangle.Length1">
+  Length1
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Length of Bounding Rectangle</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public readonly double Length1</code></pre>
+  </div>
+
+
+
+
+  <h4 class="section">Field Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+  <h3 id="TVGL_BoundingRectangle_Length2" data-uid="TVGL.BoundingRectangle.Length2">
+  Length2
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Width of Bounding Rectangle</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public readonly double Length2</code></pre>
+  </div>
+
+
+
+
+  <h4 class="section">Field Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+  <h3 id="TVGL_BoundingRectangle_PointsOnSides" data-uid="TVGL.BoundingRectangle.PointsOnSides">
+  PointsOnSides
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>The point pairs that define the bounding rectangle limits. Unlike bounding box
+these go: dir1-min, dir2-max, dir1-max, dir2-min this is because you are going
+around ccw</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public readonly List&lt;Vector2&gt;[] PointsOnSides</code></pre>
+  </div>
+
+
+
+
+  <h4 class="section">Field Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.list-1">List</a>&lt;<a class="xref" href="TVGL.Vector2.html">Vector2</a>&gt;[]</dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+  <h2 class="section" id="methods">Methods
+</h2>
+
+
+  <a id="TVGL_BoundingRectangle_CornerPoints_" data-uid="TVGL.BoundingRectangle.CornerPoints*"></a>
+
+  <h3 id="TVGL_BoundingRectangle_CornerPoints" data-uid="TVGL.BoundingRectangle.CornerPoints">
+  CornerPoints()
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the four points of the bounding rectangle, ordered CCW positive</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public Vector2[] CornerPoints()</code></pre>
+  </div>
+
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.Vector2.html">Vector2</a>[]</dt>
+    <dd><p>Vector2[].</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <h4 class="section">Exceptions</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.exception">Exception</a></dt>
+    <dd><p>Points are ordered incorrectly</p>
+</dd>
+  </dl>
+
+
+
+
+</article>
+
+        <div class="contribution d-print-none">
+        </div>
+
+        
+      </div>
+
+      <div class="affix">
+        <nav id="affix"></nav>
+      </div>
+    </main>
+
+
+    <footer class="border-top">
+      <div class="container-xxl">
+        <div class="flex-fill">
+          <span>Made with <a href="https://dotnet.github.io/docfx">docfx</a></span>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>

@@ -1,0 +1,667 @@
+﻿<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+      <title>Class ZBuffer
+ </title>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <meta name="title" content="Class ZBuffer
+ ">
+      
+      <link rel="icon" href="../favicon.ico">
+      <link rel="stylesheet" href="../styles/docfx.min.css">
+      <link rel="stylesheet" href="../styles/main.css">
+      <meta name="docfx:navrel" content="../toc.html">
+      <meta name="docfx:tocrel" content="toc.html">
+      
+      
+      
+
+      <script>
+        MathJax = {
+          options: {
+            processHtmlClass: ['tex2jax_process', 'math']
+          }
+        };
+      </script>
+
+      <script type="text/javascript" src="../styles/docfx.min.js"></script>
+      <script type="text/javascript" src="../styles/main.js"></script>
+  </head>
+
+  <body class="tex2jax_ignore" data-layout="" data-yaml-mime="ManagedReference">
+    <header class="bg-body border-bottom">
+      <nav id="autocollapse" class="navbar navbar-expand-md" role="navigation">
+        <div class="container-xxl flex-nowrap">
+          <a class="navbar-brand" href="../index.html">
+            <img id="logo" class="svg" src="../logo.svg" alt="">
+            
+          </a>
+          <button class="btn btn-lg d-md-none border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navpanel" aria-controls="navpanel" aria-expanded="false" aria-label="Toggle navigation">
+            <i class="bi bi-three-dots"></i>
+          </button>
+          <div class="collapse navbar-collapse" id="navpanel">
+            <div id="navbar">
+            </div>
+          </div>
+        </div>
+      </nav>
+    </header>
+
+    <main class="container-xxl">
+      <div class="toc-offcanvas">
+        <div class="offcanvas-md offcanvas-start" tabindex="-1" id="tocOffcanvas" aria-labelledby="tocOffcanvasLabel">
+          <div class="offcanvas-header">
+            <h5 class="offcanvas-title" id="tocOffcanvasLabel">Table of Contents</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#tocOffcanvas" aria-label="Close"></button>
+          </div>
+          <div class="offcanvas-body">
+            <nav class="toc" id="toc"></nav>
+          </div>
+        </div>
+      </div>
+
+      <div class="content">
+        <div class="actionbar">
+          <button class="btn btn-lg border-0 d-md-none" style="margin-top: -.65em; margin-left: -.8em" type="button" data-bs-toggle="offcanvas" data-bs-target="#tocOffcanvas" aria-controls="tocOffcanvas" aria-expanded="false" aria-label="Show table of contents">
+            <i class="bi bi-list"></i>
+          </button>
+
+          <nav id="breadcrumb"></nav>
+        </div>
+
+        <article data-uid="TVGL.ZBuffer">
+
+
+
+  <h1 id="TVGL_ZBuffer" data-uid="TVGL.ZBuffer" class="text-break">
+    Class ZBuffer
+  
+  </h1>
+
+  <div class="facts text-secondary">
+    <dl><dt>Namespace</dt><dd><a class="xref" href="TVGL.html">TVGL</a></dd></dl>
+  <dl><dt>Assembly</dt><dd>TessellationAndVoxelizationGeometryLibrary.dll</dd></dl>
+  </div>
+
+  <div class="markdown summary"><p>Class ZBuffer. This class cannot be inherited.</p>
+</div>
+  <div class="markdown conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public sealed class ZBuffer : Grid&lt;(TriangleFace, double)&gt;</code></pre>
+  </div>
+
+
+
+
+  <dl class="typelist inheritance">
+    <dt>Inheritance</dt>
+    <dd>
+      <div><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object">object</a></div>
+      <div><a class="xref" href="TVGL.Grid-1.html">Grid</a>&lt;(<a class="xref" href="TVGL.TriangleFace.html">TriangleFace</a>, <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a>)&gt;</div>
+      <div><span class="xref">ZBuffer</span></div>
+    </dd>
+  </dl>
+
+
+
+  <dl class="typelist derived">
+    <dt>Inherited Members</dt>
+    <dd>
+    <div>
+      <a class="xref" href="TVGL.Grid-1.html#TVGL_Grid_1_Values">Grid&lt;(TriangleFace, double)&gt;.Values</a>
+    </div>
+    <div>
+      <a class="xref" href="TVGL.Grid-1.html#TVGL_Grid_1_MinX">Grid&lt;(TriangleFace, double)&gt;.MinX</a>
+    </div>
+    <div>
+      <a class="xref" href="TVGL.Grid-1.html#TVGL_Grid_1_MinY">Grid&lt;(TriangleFace, double)&gt;.MinY</a>
+    </div>
+    <div>
+      <a class="xref" href="TVGL.Grid-1.html#TVGL_Grid_1_PixelSideLength">Grid&lt;(TriangleFace, double)&gt;.PixelSideLength</a>
+    </div>
+    <div>
+      <a class="xref" href="TVGL.Grid-1.html#TVGL_Grid_1_inversePixelSideLength">Grid&lt;(TriangleFace, double)&gt;.inversePixelSideLength</a>
+    </div>
+    <div>
+      <a class="xref" href="TVGL.Grid-1.html#TVGL_Grid_1_XCount">Grid&lt;(TriangleFace, double)&gt;.XCount</a>
+    </div>
+    <div>
+      <a class="xref" href="TVGL.Grid-1.html#TVGL_Grid_1_YCount">Grid&lt;(TriangleFace, double)&gt;.YCount</a>
+    </div>
+    <div>
+      <a class="xref" href="TVGL.Grid-1.html#TVGL_Grid_1_MaxIndex">Grid&lt;(TriangleFace, double)&gt;.MaxIndex</a>
+    </div>
+    <div>
+      <a class="xref" href="TVGL.Grid-1.html#TVGL_Grid_1_Initialize_System_Double_System_Double_System_Double_System_Double_System_Int32_System_Int32_">Grid&lt;(TriangleFace, double)&gt;.Initialize(double, double, double, double, int, int)</a>
+    </div>
+    <div>
+      <a class="xref" href="TVGL.Grid-1.html#TVGL_Grid_1_Initialize_System_Double_System_Double_System_Double_System_Double_System_Double_System_Int32_">Grid&lt;(TriangleFace, double)&gt;.Initialize(double, double, double, double, double, int)</a>
+    </div>
+    <div>
+      <a class="xref" href="TVGL.Grid-1.html#TVGL_Grid_1_Indices">Grid&lt;(TriangleFace, double)&gt;.Indices()</a>
+    </div>
+    <div>
+      <a class="xref" href="TVGL.Grid-1.html#TVGL_Grid_1_TryGet_System_Int32_System_Int32__0__">Grid&lt;(TriangleFace, double)&gt;.TryGet(int, int, out (TriangleFace, double))</a>
+    </div>
+    <div>
+      <a class="xref" href="TVGL.Grid-1.html#TVGL_Grid_1_TryGet_System_Double_System_Double__0__">Grid&lt;(TriangleFace, double)&gt;.TryGet(double, double, out (TriangleFace, double))</a>
+    </div>
+    <div>
+      <a class="xref" href="TVGL.Grid-1.html#TVGL_Grid_1_TryGet_System_Int32__0__">Grid&lt;(TriangleFace, double)&gt;.TryGet(int, out (TriangleFace, double))</a>
+    </div>
+    <div>
+      <a class="xref" href="TVGL.Grid-1.html#TVGL_Grid_1_Set_System_Int32_System_Int32__0_">Grid&lt;(TriangleFace, double)&gt;.Set(int, int, (TriangleFace, double))</a>
+    </div>
+    <div>
+      <a class="xref" href="TVGL.Grid-1.html#TVGL_Grid_1_Set_System_Int32__0_">Grid&lt;(TriangleFace, double)&gt;.Set(int, (TriangleFace, double))</a>
+    </div>
+    <div>
+      <a class="xref" href="TVGL.Grid-1.html#TVGL_Grid_1_PlotLine_System_Double_System_Double_System_Double_System_Double_">Grid&lt;(TriangleFace, double)&gt;.PlotLine(double, double, double, double)</a>
+    </div>
+    <div>
+      <a class="xref" href="TVGL.Grid-1.html#TVGL_Grid_1_GetXYIndicesFromPixelIndices_System_Int32_">Grid&lt;(TriangleFace, double)&gt;.GetXYIndicesFromPixelIndices(int)</a>
+    </div>
+    <div>
+      <a class="xref" href="TVGL.Grid-1.html#TVGL_Grid_1_GetIndex_System_Double_System_Double_">Grid&lt;(TriangleFace, double)&gt;.GetIndex(double, double)</a>
+    </div>
+    <div>
+      <a class="xref" href="TVGL.Grid-1.html#TVGL_Grid_1_GetIndex_System_Int32_System_Int32_">Grid&lt;(TriangleFace, double)&gt;.GetIndex(int, int)</a>
+    </div>
+    <div>
+      <a class="xref" href="TVGL.Grid-1.html#TVGL_Grid_1_GetXIndex_System_Double_">Grid&lt;(TriangleFace, double)&gt;.GetXIndex(double)</a>
+    </div>
+    <div>
+      <a class="xref" href="TVGL.Grid-1.html#TVGL_Grid_1_GetYIndex_System_Double_">Grid&lt;(TriangleFace, double)&gt;.GetYIndex(double)</a>
+    </div>
+    <div>
+      <a class="xref" href="TVGL.Grid-1.html#TVGL_Grid_1_GetSnappedX_System_Int32_">Grid&lt;(TriangleFace, double)&gt;.GetSnappedX(int)</a>
+    </div>
+    <div>
+      <a class="xref" href="TVGL.Grid-1.html#TVGL_Grid_1_GetSnappedY_System_Int32_">Grid&lt;(TriangleFace, double)&gt;.GetSnappedY(int)</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.equals#system-object-equals(system-object)">object.Equals(object)</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.equals#system-object-equals(system-object-system-object)">object.Equals(object, object)</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.gethashcode">object.GetHashCode()</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.gettype">object.GetType()</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.referenceequals">object.ReferenceEquals(object, object)</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.tostring">object.ToString()</a>
+    </div>
+  </dd></dl>
+
+
+
+
+
+
+  <h2 class="section" id="constructors">Constructors
+</h2>
+
+
+  <a id="TVGL_ZBuffer__ctor_" data-uid="TVGL.ZBuffer.#ctor*"></a>
+
+  <h3 id="TVGL_ZBuffer__ctor_TVGL_TessellatedSolid_TVGL_Vector3_System_Int32_System_Int32_" data-uid="TVGL.ZBuffer.#ctor(TVGL.TessellatedSolid,TVGL.Vector3,System.Int32,System.Int32)">
+  ZBuffer(TessellatedSolid, Vector3, int, int)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Initializes a new instance of the <a class="xref" href="TVGL.ZBuffer.html">ZBuffer</a> class.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public ZBuffer(TessellatedSolid solid, Vector3 direction, int pixelsPerRow, int pixelBorder = 2)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>solid</code> <a class="xref" href="TVGL.TessellatedSolid.html">TessellatedSolid</a></dt>
+    <dd><p>The solid.</p>
+</dd>
+    <dt><code>direction</code> <a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>The direction.</p>
+</dd>
+    <dt><code>pixelsPerRow</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a></dt>
+    <dd><p>The pixels per row.</p>
+</dd>
+    <dt><code>pixelBorder</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a></dt>
+    <dd><p>The pixel border.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+  <h2 class="section" id="properties">Properties
+</h2>
+
+
+  <a id="TVGL_ZBuffer_ProjectedFaceAreas_" data-uid="TVGL.ZBuffer.ProjectedFaceAreas*"></a>
+
+  <h3 id="TVGL_ZBuffer_ProjectedFaceAreas" data-uid="TVGL.ZBuffer.ProjectedFaceAreas">
+  ProjectedFaceAreas
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the projected face areas in the z-buffer direction. This is found through
+the course of the &quot;Run&quot; computation and might be useful elsewhere.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public Dictionary&lt;TriangleFace, double&gt; ProjectedFaceAreas { get; set; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.dictionary-2">Dictionary</a>&lt;<a class="xref" href="TVGL.TriangleFace.html">TriangleFace</a>, <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a>&gt;</dt>
+    <dd><p>The projected face areas.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="TVGL_ZBuffer_VertexZHeights_" data-uid="TVGL.ZBuffer.VertexZHeights*"></a>
+
+  <h3 id="TVGL_ZBuffer_VertexZHeights" data-uid="TVGL.ZBuffer.VertexZHeights">
+  VertexZHeights
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the z-heightsof all the 3D vertices of the tessellated solid on the project plane.
+This is found through the course of the &quot;Run&quot; computation and might be useful elsewhere.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public double[] VertexZHeights { get; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a>[]</dt>
+    <dd><p>The vertex z heights.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="TVGL_ZBuffer_Vertices_" data-uid="TVGL.ZBuffer.Vertices*"></a>
+
+  <h3 id="TVGL_ZBuffer_Vertices" data-uid="TVGL.ZBuffer.Vertices">
+  Vertices
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the projected 2D vertices of all the 3D vertices of the tessellated solid.
+This is found through the course of the &quot;Run&quot; computation and might be useful elsewhere.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public Vector2[] Vertices { get; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.Vector2.html">Vector2</a>[]</dt>
+    <dd><p>The vertices.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="TVGL_ZBuffer_ZHeightsOnly_" data-uid="TVGL.ZBuffer.ZHeightsOnly*"></a>
+
+  <h3 id="TVGL_ZBuffer_ZHeightsOnly" data-uid="TVGL.ZBuffer.ZHeightsOnly">
+  ZHeightsOnly
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the z-heights as a matrix of doubles. There is no time saved in getting this by itself as the main
+method keeps track of faces. In other words, ZHeightsWithFaces is what is found by the Run routine.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public double[,] ZHeightsOnly { get; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a>[,]</dt>
+    <dd><p>The z heights only.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <h2 class="section" id="methods">Methods
+</h2>
+
+
+  <a id="TVGL_ZBuffer_CheckSurfaceAccess_" data-uid="TVGL.ZBuffer.CheckSurfaceAccess*"></a>
+
+  <h3 id="TVGL_ZBuffer_CheckSurfaceAccess_TVGL_PrimitiveSurface_System_Double_" data-uid="TVGL.ZBuffer.CheckSurfaceAccess(TVGL.PrimitiveSurface,System.Double)">
+  CheckSurfaceAccess(PrimitiveSurface, double)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Checks the surface access.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public double CheckSurfaceAccess(PrimitiveSurface surface, double tessellationError)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>surface</code> <a class="xref" href="TVGL.PrimitiveSurface.html">PrimitiveSurface</a></dt>
+    <dd><p>The surface.</p>
+</dd>
+    <dt><code>tessellationError</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The tessellation error.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>System.Double.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_ZBuffer_Get2DPoint_" data-uid="TVGL.ZBuffer.Get2DPoint*"></a>
+
+  <h3 id="TVGL_ZBuffer_Get2DPoint_System_Int32_System_Int32_" data-uid="TVGL.ZBuffer.Get2DPoint(System.Int32,System.Int32)">
+  Get2DPoint(int, int)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the 2D point of pixel i,j.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public Vector2 Get2DPoint(int i, int j)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>i</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a></dt>
+    <dd><p>The i.</p>
+</dd>
+    <dt><code>j</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a></dt>
+    <dd><p>The j.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.Vector2.html">Vector2</a></dt>
+    <dd><p>Vector2.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_ZBuffer_Get3DPoint_" data-uid="TVGL.ZBuffer.Get3DPoint*"></a>
+
+  <h3 id="TVGL_ZBuffer_Get3DPoint_System_Int32_System_Int32_" data-uid="TVGL.ZBuffer.Get3DPoint(System.Int32,System.Int32)">
+  Get3DPoint(int, int)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the 3D point on the solid corresponding to pixel i, j.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public Vector3 Get3DPoint(int i, int j)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>i</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a></dt>
+    <dd><p>The i.</p>
+</dd>
+    <dt><code>j</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a></dt>
+    <dd><p>The j.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>Vector3.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_ZBuffer_Get3DPointTransformed_" data-uid="TVGL.ZBuffer.Get3DPointTransformed*"></a>
+
+  <h3 id="TVGL_ZBuffer_Get3DPointTransformed_System_Int32_System_Int32_" data-uid="TVGL.ZBuffer.Get3DPointTransformed(System.Int32,System.Int32)">
+  Get3DPointTransformed(int, int)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the 3D transformed point of pixel i,j to the x-y plane, with z being the z-buffer height.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public Vector3 Get3DPointTransformed(int i, int j)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>i</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a></dt>
+    <dd><p>The i.</p>
+</dd>
+    <dt><code>j</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a></dt>
+    <dd><p>The j.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>Vector3.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_ZBuffer_GetLinePixels_" data-uid="TVGL.ZBuffer.GetLinePixels*"></a>
+
+  <h3 id="TVGL_ZBuffer_GetLinePixels_TVGL_Edge_" data-uid="TVGL.ZBuffer.GetLinePixels(TVGL.Edge)">
+  GetLinePixels(Edge)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the line pixels.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public IEnumerable&lt;(int, int, double)&gt; GetLinePixels(Edge edge)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>edge</code> <a class="xref" href="TVGL.Edge.html">Edge</a></dt>
+    <dd><p>The edge.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;(<a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a>, <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a>, <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a>)&gt;</dt>
+    <dd><p>IEnumerable&lt;System.ValueTuple&lt;System.Int32, System.Int32, System.Double&gt;&gt;.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <h4 class="section">Exceptions</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.notimplementedexception">NotImplementedException</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+  <a id="TVGL_ZBuffer_Run_" data-uid="TVGL.ZBuffer.Run*"></a>
+
+  <h3 id="TVGL_ZBuffer_Run_System_Collections_Generic_IList_TVGL_TriangleFace__" data-uid="TVGL.ZBuffer.Run(System.Collections.Generic.IList{TVGL.TriangleFace})">
+  Run(IList&lt;TriangleFace&gt;)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the z-buffer of the TessellatedSolid along the given direction.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public void Run(IList&lt;TriangleFace&gt; subsetFaces = null)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>subsetFaces</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ilist-1">IList</a>&lt;<a class="xref" href="TVGL.TriangleFace.html">TriangleFace</a>&gt;</dt>
+    <dd><p>The subset of the solid's faces to find the z-buffer for.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+</article>
+
+        <div class="contribution d-print-none">
+        </div>
+
+        
+      </div>
+
+      <div class="affix">
+        <nav id="affix"></nav>
+      </div>
+    </main>
+
+
+    <footer class="border-top">
+      <div class="container-xxl">
+        <div class="flex-fill">
+          <span>Made with <a href="https://dotnet.github.io/docfx">docfx</a></span>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>

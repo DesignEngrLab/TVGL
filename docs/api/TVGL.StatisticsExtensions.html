@@ -1,0 +1,460 @@
+﻿<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+      <title>Class StatisticsExtensions
+ </title>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <meta name="title" content="Class StatisticsExtensions
+ ">
+      
+      <link rel="icon" href="../favicon.ico">
+      <link rel="stylesheet" href="../styles/docfx.min.css">
+      <link rel="stylesheet" href="../styles/main.css">
+      <meta name="docfx:navrel" content="../toc.html">
+      <meta name="docfx:tocrel" content="toc.html">
+      
+      
+      
+
+      <script>
+        MathJax = {
+          options: {
+            processHtmlClass: ['tex2jax_process', 'math']
+          }
+        };
+      </script>
+
+      <script type="text/javascript" src="../styles/docfx.min.js"></script>
+      <script type="text/javascript" src="../styles/main.js"></script>
+  </head>
+
+  <body class="tex2jax_ignore" data-layout="" data-yaml-mime="ManagedReference">
+    <header class="bg-body border-bottom">
+      <nav id="autocollapse" class="navbar navbar-expand-md" role="navigation">
+        <div class="container-xxl flex-nowrap">
+          <a class="navbar-brand" href="../index.html">
+            <img id="logo" class="svg" src="../logo.svg" alt="">
+            
+          </a>
+          <button class="btn btn-lg d-md-none border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navpanel" aria-controls="navpanel" aria-expanded="false" aria-label="Toggle navigation">
+            <i class="bi bi-three-dots"></i>
+          </button>
+          <div class="collapse navbar-collapse" id="navpanel">
+            <div id="navbar">
+            </div>
+          </div>
+        </div>
+      </nav>
+    </header>
+
+    <main class="container-xxl">
+      <div class="toc-offcanvas">
+        <div class="offcanvas-md offcanvas-start" tabindex="-1" id="tocOffcanvas" aria-labelledby="tocOffcanvasLabel">
+          <div class="offcanvas-header">
+            <h5 class="offcanvas-title" id="tocOffcanvasLabel">Table of Contents</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#tocOffcanvas" aria-label="Close"></button>
+          </div>
+          <div class="offcanvas-body">
+            <nav class="toc" id="toc"></nav>
+          </div>
+        </div>
+      </div>
+
+      <div class="content">
+        <div class="actionbar">
+          <button class="btn btn-lg border-0 d-md-none" style="margin-top: -.65em; margin-left: -.8em" type="button" data-bs-toggle="offcanvas" data-bs-target="#tocOffcanvas" aria-controls="tocOffcanvas" aria-expanded="false" aria-label="Show table of contents">
+            <i class="bi bi-list"></i>
+          </button>
+
+          <nav id="breadcrumb"></nav>
+        </div>
+
+        <article data-uid="TVGL.StatisticsExtensions">
+
+
+
+  <h1 id="TVGL_StatisticsExtensions" data-uid="TVGL.StatisticsExtensions" class="text-break">
+    Class StatisticsExtensions
+  
+  </h1>
+
+  <div class="facts text-secondary">
+    <dl><dt>Namespace</dt><dd><a class="xref" href="TVGL.html">TVGL</a></dd></dl>
+  <dl><dt>Assembly</dt><dd>TessellationAndVoxelizationGeometryLibrary.dll</dd></dl>
+  </div>
+
+  <div class="markdown summary"><p>Class StatisticsExtensions.</p>
+</div>
+  <div class="markdown conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static class StatisticsExtensions</code></pre>
+  </div>
+
+
+
+
+  <dl class="typelist inheritance">
+    <dt>Inheritance</dt>
+    <dd>
+      <div><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object">object</a></div>
+      <div><span class="xref">StatisticsExtensions</span></div>
+    </dd>
+  </dl>
+
+
+
+  <dl class="typelist derived">
+    <dt>Inherited Members</dt>
+    <dd>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.equals#system-object-equals(system-object)">object.Equals(object)</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.equals#system-object-equals(system-object-system-object)">object.Equals(object, object)</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.gethashcode">object.GetHashCode()</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.gettype">object.GetType()</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.memberwiseclone">object.MemberwiseClone()</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.referenceequals">object.ReferenceEquals(object, object)</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.tostring">object.ToString()</a>
+    </div>
+  </dd></dl>
+
+
+
+
+
+
+  <h2 class="section" id="methods">Methods
+</h2>
+
+
+  <a id="TVGL_StatisticsExtensions_Mean_" data-uid="TVGL.StatisticsExtensions.Mean*"></a>
+
+  <h3 id="TVGL_StatisticsExtensions_Mean_System_Collections_Generic_IEnumerable_System_Double__" data-uid="TVGL.StatisticsExtensions.Mean(System.Collections.Generic.IEnumerable{System.Double})">
+  Mean(IEnumerable&lt;double&gt;)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the mean of the collection.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static double Mean(this IEnumerable&lt;double&gt; numbers)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>numbers</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a>&gt;</dt>
+    <dd><p>The numbers.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>System.Double.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_StatisticsExtensions_Median_" data-uid="TVGL.StatisticsExtensions.Median*"></a>
+
+  <h3 id="TVGL_StatisticsExtensions_Median_System_Collections_Generic_IEnumerable_System_Double__" data-uid="TVGL.StatisticsExtensions.Median(System.Collections.Generic.IEnumerable{System.Double})">
+  Median(IEnumerable&lt;double&gt;)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the median of the collection using a clever linear algorithm. The list is not actually sorted
+which would require an O(nlog(n)) operation.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static double Median(this IEnumerable&lt;double&gt; numbers)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>numbers</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a>&gt;</dt>
+    <dd><p>The numbers.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>System.Double.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_StatisticsExtensions_NormalizedRootMeanSquareError_" data-uid="TVGL.StatisticsExtensions.NormalizedRootMeanSquareError*"></a>
+
+  <h3 id="TVGL_StatisticsExtensions_NormalizedRootMeanSquareError_System_Collections_Generic_IEnumerable_System_Double__System_Double_" data-uid="TVGL.StatisticsExtensions.NormalizedRootMeanSquareError(System.Collections.Generic.IEnumerable{System.Double},System.Double)">
+  NormalizedRootMeanSquareError(IEnumerable&lt;double&gt;, double)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the normalized root mean square error.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static double NormalizedRootMeanSquareError(this IEnumerable&lt;double&gt; numbers, double targetValue = NaN)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>numbers</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a>&gt;</dt>
+    <dd><p>The numbers.</p>
+</dd>
+    <dt><code>targetValue</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The target value from which to take the difference for the error.
+If not provided, then mean of the numbers is used for the targetValue.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>System.Double.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_StatisticsExtensions_NthOrderStatistic_" data-uid="TVGL.StatisticsExtensions.NthOrderStatistic*"></a>
+
+  <h3 id="TVGL_StatisticsExtensions_NthOrderStatistic_System_Collections_Generic_IEnumerable_System_Double__System_Int32_" data-uid="TVGL.StatisticsExtensions.NthOrderStatistic(System.Collections.Generic.IEnumerable{System.Double},System.Int32)">
+  NthOrderStatistic(IEnumerable&lt;double&gt;, int)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Returns Nth smallest element from the list. Here n starts from 0 so that n=0 returns minimum,
+n=1 returns 2nd smallest element etc.
+Note: specified list would be mutated in the process.
+Reference: Introduction to Algorithms 3rd Edition, Corman et al, pp 216</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static double NthOrderStatistic(this IEnumerable&lt;double&gt; numbers, int nthPosition)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>numbers</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a>&gt;</dt>
+    <dd><p>The numbers.</p>
+</dd>
+    <dt><code>nthPosition</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a></dt>
+    <dd><p>The nTH position to find in the list of numbers.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>System.Double.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_StatisticsExtensions_RootMeanSquareError_" data-uid="TVGL.StatisticsExtensions.RootMeanSquareError*"></a>
+
+  <h3 id="TVGL_StatisticsExtensions_RootMeanSquareError_System_Collections_Generic_IEnumerable_System_Double__System_Double_" data-uid="TVGL.StatisticsExtensions.RootMeanSquareError(System.Collections.Generic.IEnumerable{System.Double},System.Double)">
+  RootMeanSquareError(IEnumerable&lt;double&gt;, double)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the  root mean square error.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static double RootMeanSquareError(this IEnumerable&lt;double&gt; numbers, double targetValue = NaN)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>numbers</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a>&gt;</dt>
+    <dd><p>The numbers.</p>
+</dd>
+    <dt><code>targetValue</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The target value from which to take the difference for the error.
+If not provided, then mean of the numbers is used for the targetValue.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>System.Double.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_StatisticsExtensions_VarianceFromMean_" data-uid="TVGL.StatisticsExtensions.VarianceFromMean*"></a>
+
+  <h3 id="TVGL_StatisticsExtensions_VarianceFromMean_System_Collections_Generic_IEnumerable_System_Double__System_Double_" data-uid="TVGL.StatisticsExtensions.VarianceFromMean(System.Collections.Generic.IEnumerable{System.Double},System.Double)">
+  VarianceFromMean(IEnumerable&lt;double&gt;, double)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the variance from the expected value, the mean.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static double VarianceFromMean(this IEnumerable&lt;double&gt; numbers, double mean = NaN)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>numbers</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a>&gt;</dt>
+    <dd><p>The numbers.</p>
+</dd>
+    <dt><code>mean</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The mean.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>System.Double.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_StatisticsExtensions_VarianceFromMedian_" data-uid="TVGL.StatisticsExtensions.VarianceFromMedian*"></a>
+
+  <h3 id="TVGL_StatisticsExtensions_VarianceFromMedian_System_Collections_Generic_IEnumerable_System_Double__System_Double_" data-uid="TVGL.StatisticsExtensions.VarianceFromMedian(System.Collections.Generic.IEnumerable{System.Double},System.Double)">
+  VarianceFromMedian(IEnumerable&lt;double&gt;, double)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the variance from the expected value, the median.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static double VarianceFromMedian(this IEnumerable&lt;double&gt; numbers, double median = NaN)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>numbers</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a>&gt;</dt>
+    <dd><p>The numbers.</p>
+</dd>
+    <dt><code>median</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The median.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>System.Double.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+</article>
+
+        <div class="contribution d-print-none">
+        </div>
+
+        
+      </div>
+
+      <div class="affix">
+        <nav id="affix"></nav>
+      </div>
+    </main>
+
+
+    <footer class="border-top">
+      <div class="container-xxl">
+        <div class="flex-fill">
+          <span>Made with <a href="https://dotnet.github.io/docfx">docfx</a></span>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>

@@ -23,9 +23,7 @@ namespace TVGL
 {
     /// <summary>
     /// Class EdgePath.
-    /// Implements the <see cref="System.Collections.Generic.IList{(TVGL.Edge edge, System.Boolean dir)}" />
     /// </summary>
-    /// <seealso cref="System.Collections.Generic.IList{(TVGL.Edge edge, System.Boolean dir)}" />
     [JsonObject]
     public class EdgePath : IList<(Edge edge, bool dir)>
     {

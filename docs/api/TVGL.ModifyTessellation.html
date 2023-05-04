@@ -1,0 +1,618 @@
+﻿<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+      <title>Class ModifyTessellation
+ </title>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <meta name="title" content="Class ModifyTessellation
+ ">
+      
+      <link rel="icon" href="../favicon.ico">
+      <link rel="stylesheet" href="../styles/docfx.min.css">
+      <link rel="stylesheet" href="../styles/main.css">
+      <meta name="docfx:navrel" content="../toc.html">
+      <meta name="docfx:tocrel" content="toc.html">
+      
+      
+      
+
+      <script>
+        MathJax = {
+          options: {
+            processHtmlClass: ['tex2jax_process', 'math']
+          }
+        };
+      </script>
+
+      <script type="text/javascript" src="../styles/docfx.min.js"></script>
+      <script type="text/javascript" src="../styles/main.js"></script>
+  </head>
+
+  <body class="tex2jax_ignore" data-layout="" data-yaml-mime="ManagedReference">
+    <header class="bg-body border-bottom">
+      <nav id="autocollapse" class="navbar navbar-expand-md" role="navigation">
+        <div class="container-xxl flex-nowrap">
+          <a class="navbar-brand" href="../index.html">
+            <img id="logo" class="svg" src="../logo.svg" alt="">
+            
+          </a>
+          <button class="btn btn-lg d-md-none border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navpanel" aria-controls="navpanel" aria-expanded="false" aria-label="Toggle navigation">
+            <i class="bi bi-three-dots"></i>
+          </button>
+          <div class="collapse navbar-collapse" id="navpanel">
+            <div id="navbar">
+            </div>
+          </div>
+        </div>
+      </nav>
+    </header>
+
+    <main class="container-xxl">
+      <div class="toc-offcanvas">
+        <div class="offcanvas-md offcanvas-start" tabindex="-1" id="tocOffcanvas" aria-labelledby="tocOffcanvasLabel">
+          <div class="offcanvas-header">
+            <h5 class="offcanvas-title" id="tocOffcanvasLabel">Table of Contents</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#tocOffcanvas" aria-label="Close"></button>
+          </div>
+          <div class="offcanvas-body">
+            <nav class="toc" id="toc"></nav>
+          </div>
+        </div>
+      </div>
+
+      <div class="content">
+        <div class="actionbar">
+          <button class="btn btn-lg border-0 d-md-none" style="margin-top: -.65em; margin-left: -.8em" type="button" data-bs-toggle="offcanvas" data-bs-target="#tocOffcanvas" aria-controls="tocOffcanvas" aria-expanded="false" aria-label="Show table of contents">
+            <i class="bi bi-list"></i>
+          </button>
+
+          <nav id="breadcrumb"></nav>
+        </div>
+
+        <article data-uid="TVGL.ModifyTessellation">
+
+
+
+  <h1 id="TVGL_ModifyTessellation" data-uid="TVGL.ModifyTessellation" class="text-break">
+    Class ModifyTessellation
+  
+  </h1>
+
+  <div class="facts text-secondary">
+    <dl><dt>Namespace</dt><dd><a class="xref" href="TVGL.html">TVGL</a></dd></dl>
+  <dl><dt>Assembly</dt><dd>TessellationAndVoxelizationGeometryLibrary.dll</dd></dl>
+  </div>
+
+  <div class="markdown summary"><p>This portion of ModifyTessellation includes the functions to complexify a solid, which means
+adding more elements to it.</p>
+</div>
+  <div class="markdown conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static class ModifyTessellation</code></pre>
+  </div>
+
+
+
+
+  <dl class="typelist inheritance">
+    <dt>Inheritance</dt>
+    <dd>
+      <div><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object">object</a></div>
+      <div><span class="xref">ModifyTessellation</span></div>
+    </dd>
+  </dl>
+
+
+
+  <dl class="typelist derived">
+    <dt>Inherited Members</dt>
+    <dd>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.equals#system-object-equals(system-object)">object.Equals(object)</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.equals#system-object-equals(system-object-system-object)">object.Equals(object, object)</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.gethashcode">object.GetHashCode()</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.gettype">object.GetType()</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.memberwiseclone">object.MemberwiseClone()</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.referenceequals">object.ReferenceEquals(object, object)</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.tostring">object.ToString()</a>
+    </div>
+  </dd></dl>
+
+
+
+
+
+
+  <h2 class="section" id="methods">Methods
+</h2>
+
+
+  <a id="TVGL_ModifyTessellation_CheckModelIntegrity_" data-uid="TVGL.ModifyTessellation.CheckModelIntegrity*"></a>
+
+  <h3 id="TVGL_ModifyTessellation_CheckModelIntegrity_TVGL_TessellatedSolid_System_Boolean_" data-uid="TVGL.ModifyTessellation.CheckModelIntegrity(TVGL.TessellatedSolid,System.Boolean)">
+  CheckModelIntegrity(TessellatedSolid, bool)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Checks the model integrity.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static bool CheckModelIntegrity(this TessellatedSolid ts, bool repairAutomatically = true)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>ts</code> <a class="xref" href="TVGL.TessellatedSolid.html">TessellatedSolid</a></dt>
+    <dd><p>The ts.</p>
+</dd>
+    <dt><code>repairAutomatically</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd><p>The repair automatically.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd><p><code>true</code> if XXXX, <code>false</code> otherwise.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_ModifyTessellation_Complexify_" data-uid="TVGL.ModifyTessellation.Complexify*"></a>
+
+  <h3 id="TVGL_ModifyTessellation_Complexify_TVGL_TessellatedSolid_System_Double_" data-uid="TVGL.ModifyTessellation.Complexify(TVGL.TessellatedSolid,System.Double)">
+  Complexify(TessellatedSolid, double)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Complexifies the tessellation so that no edge is longer than provided the maximum edge length.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static void Complexify(this TessellatedSolid ts, double maxLength)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>ts</code> <a class="xref" href="TVGL.TessellatedSolid.html">TessellatedSolid</a></dt>
+    <dd><p>The ts.</p>
+</dd>
+    <dt><code>maxLength</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The tolerance.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_ModifyTessellation_Complexify_" data-uid="TVGL.ModifyTessellation.Complexify*"></a>
+
+  <h3 id="TVGL_ModifyTessellation_Complexify_TVGL_TessellatedSolid_System_Int32_System_Double_" data-uid="TVGL.ModifyTessellation.Complexify(TVGL.TessellatedSolid,System.Int32,System.Double)">
+  Complexify(TessellatedSolid, int, double)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Complexifies the tessellation so that no edge is longer than provided the maximum edge length
+or for adding the provided number of faces - whichever comes first</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static void Complexify(TessellatedSolid ts, int numberOfFaces, double maxLength)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>ts</code> <a class="xref" href="TVGL.TessellatedSolid.html">TessellatedSolid</a></dt>
+    <dd><p>The ts.</p>
+</dd>
+    <dt><code>numberOfFaces</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a></dt>
+    <dd><p>The number of new faces to add.</p>
+</dd>
+    <dt><code>maxLength</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The maximum length.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_ModifyTessellation_Complexify_" data-uid="TVGL.ModifyTessellation.Complexify*"></a>
+
+  <h3 id="TVGL_ModifyTessellation_Complexify_TVGL_TessellatedSolid_System_Int32_" data-uid="TVGL.ModifyTessellation.Complexify(TVGL.TessellatedSolid,System.Int32)">
+  Complexify(TessellatedSolid, int)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Complexifies the tessellation by adding more faces of the provided number.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static void Complexify(this TessellatedSolid ts, int numberOfNewFaces)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>ts</code> <a class="xref" href="TVGL.TessellatedSolid.html">TessellatedSolid</a></dt>
+    <dd><p>The ts.</p>
+</dd>
+    <dt><code>numberOfNewFaces</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a></dt>
+    <dd><p>The number of faces.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_ModifyTessellation_Complexify_" data-uid="TVGL.ModifyTessellation.Complexify*"></a>
+
+  <h3 id="TVGL_ModifyTessellation_Complexify_TVGL_TessellatedSolid_" data-uid="TVGL.ModifyTessellation.Complexify(TVGL.TessellatedSolid)">
+  Complexify(TessellatedSolid)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Complexifies the model by splitting the any edges that are half or more than the longest edge.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static void Complexify(this TessellatedSolid ts)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>ts</code> <a class="xref" href="TVGL.TessellatedSolid.html">TessellatedSolid</a></dt>
+    <dd><p>The ts.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_ModifyTessellation_Repair_" data-uid="TVGL.ModifyTessellation.Repair*"></a>
+
+  <h3 id="TVGL_ModifyTessellation_Repair_TVGL_TessellatedSolid_" data-uid="TVGL.ModifyTessellation.Repair(TVGL.TessellatedSolid)">
+  Repair(TessellatedSolid)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Repairs the specified ts.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static bool Repair(this TessellatedSolid ts)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>ts</code> <a class="xref" href="TVGL.TessellatedSolid.html">TessellatedSolid</a></dt>
+    <dd><p>The ts.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd><p><code>true</code> if XXXX, <code>false</code> otherwise.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_ModifyTessellation_SetNegligibleAreaFaceNormals_" data-uid="TVGL.ModifyTessellation.SetNegligibleAreaFaceNormals*"></a>
+
+  <h3 id="TVGL_ModifyTessellation_SetNegligibleAreaFaceNormals_TVGL_TessellatedSolid_System_Boolean_" data-uid="TVGL.ModifyTessellation.SetNegligibleAreaFaceNormals(TVGL.TessellatedSolid,System.Boolean)">
+  SetNegligibleAreaFaceNormals(TessellatedSolid, bool)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Sets the face normal for any negligible area faces that have not already been set.
+The neighbor's normal (in the next 2 lines) if the original face has no area (collapsed to a line).
+This happens with T-Edges. We want to give the face the normal of the two smaller edges' other faces,
+to preserve a sharp line. Also, if multiple T-Edges are adjacent, recursion may be necessary.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static bool SetNegligibleAreaFaceNormals(this TessellatedSolid ts, bool checkAllFaces = false)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>ts</code> <a class="xref" href="TVGL.TessellatedSolid.html">TessellatedSolid</a></dt>
+    <dd><p>The ts.</p>
+</dd>
+    <dt><code>checkAllFaces</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd><p>if set to <code>true</code> [check all faces].</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd><p><code>true</code> if XXXX, <code>false</code> otherwise.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_ModifyTessellation_Simplify_" data-uid="TVGL.ModifyTessellation.Simplify*"></a>
+
+  <h3 id="TVGL_ModifyTessellation_Simplify_TVGL_TessellatedSolid_System_Double_" data-uid="TVGL.ModifyTessellation.Simplify(TVGL.TessellatedSolid,System.Double)">
+  Simplify(TessellatedSolid, double)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Simplifies the tessellation so that no edge are shorter than provided the minimum edge length.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static void Simplify(this TessellatedSolid ts, double minLength)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>ts</code> <a class="xref" href="TVGL.TessellatedSolid.html">TessellatedSolid</a></dt>
+    <dd><p>The ts.</p>
+</dd>
+    <dt><code>minLength</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The minimum length.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_ModifyTessellation_Simplify_" data-uid="TVGL.ModifyTessellation.Simplify*"></a>
+
+  <h3 id="TVGL_ModifyTessellation_Simplify_TVGL_TessellatedSolid_System_Int32_System_Double_" data-uid="TVGL.ModifyTessellation.Simplify(TVGL.TessellatedSolid,System.Int32,System.Double)">
+  Simplify(TessellatedSolid, int, double)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Simplifies the tessellation so that no edge are shorter than provided the minimum edge length
+or until the provided number of faces are removed - whichever comes first.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static void Simplify(TessellatedSolid ts, int numberOfFaces, double minLength)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>ts</code> <a class="xref" href="TVGL.TessellatedSolid.html">TessellatedSolid</a></dt>
+    <dd><p>The ts.</p>
+</dd>
+    <dt><code>numberOfFaces</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a></dt>
+    <dd><p>The number of faces to remove.</p>
+</dd>
+    <dt><code>minLength</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The minimum length.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_ModifyTessellation_Simplify_" data-uid="TVGL.ModifyTessellation.Simplify*"></a>
+
+  <h3 id="TVGL_ModifyTessellation_Simplify_TVGL_TessellatedSolid_System_Int32_" data-uid="TVGL.ModifyTessellation.Simplify(TVGL.TessellatedSolid,System.Int32)">
+  Simplify(TessellatedSolid, int)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Simplifies the tessellation by removing the provided number of faces.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static void Simplify(this TessellatedSolid ts, int numberOfFacesToRemove)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>ts</code> <a class="xref" href="TVGL.TessellatedSolid.html">TessellatedSolid</a></dt>
+    <dd><p>The ts.</p>
+</dd>
+    <dt><code>numberOfFacesToRemove</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a></dt>
+    <dd><p>The number of faces.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_ModifyTessellation_Simplify_" data-uid="TVGL.ModifyTessellation.Simplify*"></a>
+
+  <h3 id="TVGL_ModifyTessellation_Simplify_TVGL_TessellatedSolid_" data-uid="TVGL.ModifyTessellation.Simplify(TVGL.TessellatedSolid)">
+  Simplify(TessellatedSolid)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Simplifies the model by merging the eliminating edges that are closer together
+than double the shortest edge length</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static void Simplify(this TessellatedSolid ts)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>ts</code> <a class="xref" href="TVGL.TessellatedSolid.html">TessellatedSolid</a></dt>
+    <dd><p>The ts.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_ModifyTessellation_SimplifyFlatPatches_" data-uid="TVGL.ModifyTessellation.SimplifyFlatPatches*"></a>
+
+  <h3 id="TVGL_ModifyTessellation_SimplifyFlatPatches_TVGL_TessellatedSolid_" data-uid="TVGL.ModifyTessellation.SimplifyFlatPatches(TVGL.TessellatedSolid)">
+  SimplifyFlatPatches(TessellatedSolid)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Simplifies the model by merging the eliminating edges that are closer together
+than double the shortest edge length</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static void SimplifyFlatPatches(this TessellatedSolid ts)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>ts</code> <a class="xref" href="TVGL.TessellatedSolid.html">TessellatedSolid</a></dt>
+    <dd><p>The ts.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+</article>
+
+        <div class="contribution d-print-none">
+        </div>
+
+        
+      </div>
+
+      <div class="affix">
+        <nav id="affix"></nav>
+      </div>
+    </main>
+
+
+    <footer class="border-top">
+      <div class="container-xxl">
+        <div class="flex-fill">
+          <span>Made with <a href="https://dotnet.github.io/docfx">docfx</a></span>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>

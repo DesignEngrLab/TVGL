@@ -21,7 +21,7 @@ namespace StarMathLib
     /// <summary>
     /// Class StarMath.
     /// </summary>
-    public static partial class StarMath
+    internal static partial class StarMath
     {
         /// <summary>
         /// Solves the specified A matrix.
@@ -33,7 +33,7 @@ namespace StarMathLib
         /// <returns>System.Double[].</returns>
         /// <exception cref="System.ArithmeticException">Matrix, A, must be square.</exception>
         /// <exception cref="System.ArithmeticException">Matrix, A, must be have the same number of rows as the vector, b.</exception>
-        public static bool solve(this double[,] A, IList<double> b, out double[] answer,
+        internal static bool solve(this double[,] A, IList<double> b, out double[] answer,
             Boolean IsASymmetric = false)
         {
             var length = A.GetLength(0);
@@ -114,7 +114,7 @@ namespace StarMathLib
         /// <param name="answer">The answer.</param>
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool Solve3x3ComplexMatrix(this ComplexNumber[,] a, IList<ComplexNumber> b, out ComplexNumber[] answer)
+        internal static bool Solve3x3ComplexMatrix(this ComplexNumber[,] a, IList<ComplexNumber> b, out ComplexNumber[] answer)
         {
             var denominator = determinant(a);
             if (denominator.Length() < TVGL.Constants.BaseTolerance)
@@ -178,7 +178,7 @@ namespace StarMathLib
         /// <param name="b">The b.</param>
         /// <param name="answer">The answer.</param>
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
-        public static bool Solve2x2ComplexMatrix(ComplexNumber[,] a, IList<double> b, out ComplexNumber[] answer)
+        internal static bool Solve2x2ComplexMatrix(ComplexNumber[,] a, IList<double> b, out ComplexNumber[] answer)
         {
             var n = b.Count;
             var bComplex = new ComplexNumber[n];
@@ -194,7 +194,7 @@ namespace StarMathLib
         /// <param name="answer">The answer.</param>
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool Solve2x2ComplexMatrix(ComplexNumber[,] a, IList<ComplexNumber> b, out ComplexNumber[] answer)
+        internal static bool Solve2x2ComplexMatrix(ComplexNumber[,] a, IList<ComplexNumber> b, out ComplexNumber[] answer)
         {
             var denominator = a[0, 0] * a[1, 1] - a[0, 1] * a[1, 0];
             if (denominator.Length() < TVGL.Constants.BaseTolerance)

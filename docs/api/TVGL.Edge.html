@@ -1,0 +1,895 @@
+﻿<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+      <title>Class Edge
+ </title>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <meta name="title" content="Class Edge
+ ">
+      
+      <link rel="icon" href="../favicon.ico">
+      <link rel="stylesheet" href="../styles/docfx.min.css">
+      <link rel="stylesheet" href="../styles/main.css">
+      <meta name="docfx:navrel" content="../toc.html">
+      <meta name="docfx:tocrel" content="toc.html">
+      
+      
+      
+
+      <script>
+        MathJax = {
+          options: {
+            processHtmlClass: ['tex2jax_process', 'math']
+          }
+        };
+      </script>
+
+      <script type="text/javascript" src="../styles/docfx.min.js"></script>
+      <script type="text/javascript" src="../styles/main.js"></script>
+  </head>
+
+  <body class="tex2jax_ignore" data-layout="" data-yaml-mime="ManagedReference">
+    <header class="bg-body border-bottom">
+      <nav id="autocollapse" class="navbar navbar-expand-md" role="navigation">
+        <div class="container-xxl flex-nowrap">
+          <a class="navbar-brand" href="../index.html">
+            <img id="logo" class="svg" src="../logo.svg" alt="">
+            
+          </a>
+          <button class="btn btn-lg d-md-none border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navpanel" aria-controls="navpanel" aria-expanded="false" aria-label="Toggle navigation">
+            <i class="bi bi-three-dots"></i>
+          </button>
+          <div class="collapse navbar-collapse" id="navpanel">
+            <div id="navbar">
+            </div>
+          </div>
+        </div>
+      </nav>
+    </header>
+
+    <main class="container-xxl">
+      <div class="toc-offcanvas">
+        <div class="offcanvas-md offcanvas-start" tabindex="-1" id="tocOffcanvas" aria-labelledby="tocOffcanvasLabel">
+          <div class="offcanvas-header">
+            <h5 class="offcanvas-title" id="tocOffcanvasLabel">Table of Contents</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#tocOffcanvas" aria-label="Close"></button>
+          </div>
+          <div class="offcanvas-body">
+            <nav class="toc" id="toc"></nav>
+          </div>
+        </div>
+      </div>
+
+      <div class="content">
+        <div class="actionbar">
+          <button class="btn btn-lg border-0 d-md-none" style="margin-top: -.65em; margin-left: -.8em" type="button" data-bs-toggle="offcanvas" data-bs-target="#tocOffcanvas" aria-controls="tocOffcanvas" aria-expanded="false" aria-label="Show table of contents">
+            <i class="bi bi-list"></i>
+          </button>
+
+          <nav id="breadcrumb"></nav>
+        </div>
+
+        <article data-uid="TVGL.Edge">
+
+
+
+  <h1 id="TVGL_Edge" data-uid="TVGL.Edge" class="text-break">
+    Class Edge
+  
+  </h1>
+
+  <div class="facts text-secondary">
+    <dl><dt>Namespace</dt><dd><a class="xref" href="TVGL.html">TVGL</a></dd></dl>
+  <dl><dt>Assembly</dt><dd>TessellationAndVoxelizationGeometryLibrary.dll</dd></dl>
+  </div>
+
+  <div class="markdown summary"><p>The straight-line edge class. It connects to two nodes and lies between two faces.</p>
+</div>
+  <div class="markdown conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public class Edge : TessellationBaseClass</code></pre>
+  </div>
+
+
+
+
+  <dl class="typelist inheritance">
+    <dt>Inheritance</dt>
+    <dd>
+      <div><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object">object</a></div>
+      <div><a class="xref" href="TVGL.TessellationBaseClass.html">TessellationBaseClass</a></div>
+      <div><span class="xref">Edge</span></div>
+    </dd>
+  </dl>
+
+
+
+  <dl class="typelist derived">
+    <dt>Inherited Members</dt>
+    <dd>
+    <div>
+      <a class="xref" href="TVGL.TessellationBaseClass.html#TVGL_TessellationBaseClass_IndexInList">TessellationBaseClass.IndexInList</a>
+    </div>
+    <div>
+      <a class="xref" href="TVGL.TessellationBaseClass.html#TVGL_TessellationBaseClass_PartOfConvexHull">TessellationBaseClass.PartOfConvexHull</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.equals#system-object-equals(system-object)">object.Equals(object)</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.equals#system-object-equals(system-object-system-object)">object.Equals(object, object)</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.gethashcode">object.GetHashCode()</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.gettype">object.GetType()</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.memberwiseclone">object.MemberwiseClone()</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.referenceequals">object.ReferenceEquals(object, object)</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.tostring">object.ToString()</a>
+    </div>
+  </dd></dl>
+
+
+
+
+
+
+  <h2 class="section" id="constructors">Constructors
+</h2>
+
+
+  <a id="TVGL_Edge__ctor_" data-uid="TVGL.Edge.#ctor*"></a>
+
+  <h3 id="TVGL_Edge__ctor_TVGL_Vertex_TVGL_Vertex_System_Boolean_" data-uid="TVGL.Edge.#ctor(TVGL.Vertex,TVGL.Vertex,System.Boolean)">
+  Edge(Vertex, Vertex, bool)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Initializes a new instance of the <a class="xref" href="TVGL.Edge.html">Edge</a> class.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public Edge(Vertex fromVertex, Vertex toVertex, bool doublyLinkedVertices)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>fromVertex</code> <a class="xref" href="TVGL.Vertex.html">Vertex</a></dt>
+    <dd><p>From vertex.</p>
+</dd>
+    <dt><code>toVertex</code> <a class="xref" href="TVGL.Vertex.html">Vertex</a></dt>
+    <dd><p>To vertex.</p>
+</dd>
+    <dt><code>doublyLinkedVertices</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd><p>if set to <code>true</code> [doubly linked vertices].</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_Edge__ctor_" data-uid="TVGL.Edge.#ctor*"></a>
+
+  <h3 id="TVGL_Edge__ctor_TVGL_Vertex_TVGL_Vertex_TVGL_TriangleFace_TVGL_TriangleFace_System_Boolean_System_Int64_" data-uid="TVGL.Edge.#ctor(TVGL.Vertex,TVGL.Vertex,TVGL.TriangleFace,TVGL.TriangleFace,System.Boolean,System.Int64)">
+  Edge(Vertex, Vertex, TriangleFace, TriangleFace, bool, long)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Initializes a new instance of the <a class="xref" href="TVGL.Edge.html">Edge</a> class.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public Edge(Vertex fromVertex, Vertex toVertex, TriangleFace ownedFace, TriangleFace otherFace, bool doublyLinkedVertices, long edgeReference = 0)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>fromVertex</code> <a class="xref" href="TVGL.Vertex.html">Vertex</a></dt>
+    <dd><p>From vertex.</p>
+</dd>
+    <dt><code>toVertex</code> <a class="xref" href="TVGL.Vertex.html">Vertex</a></dt>
+    <dd><p>To vertex.</p>
+</dd>
+    <dt><code>ownedFace</code> <a class="xref" href="TVGL.TriangleFace.html">TriangleFace</a></dt>
+    <dd><p>The face.</p>
+</dd>
+    <dt><code>otherFace</code> <a class="xref" href="TVGL.TriangleFace.html">TriangleFace</a></dt>
+    <dd><p>The other face.</p>
+</dd>
+    <dt><code>doublyLinkedVertices</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd><p>if set to <code>true</code> [doubly linked vertices].</p>
+</dd>
+    <dt><code>edgeReference</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int64">long</a></dt>
+    <dd><p>The edge reference.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+  <h4 class="section">Exceptions</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.exception">Exception</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+  <h2 class="section" id="properties">Properties
+</h2>
+
+
+  <a id="TVGL_Edge_Curvature_" data-uid="TVGL.Edge.Curvature*"></a>
+
+  <h3 id="TVGL_Edge_Curvature" data-uid="TVGL.Edge.Curvature">
+  Curvature
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the curvature.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public override CurvatureType Curvature { get; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.CurvatureType.html">CurvatureType</a></dt>
+    <dd><p>The curvature.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="TVGL_Edge_From_" data-uid="TVGL.Edge.From*"></a>
+
+  <h3 id="TVGL_Edge_From" data-uid="TVGL.Edge.From">
+  From
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the From Vertex.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public Vertex From { get; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.Vertex.html">Vertex</a></dt>
+    <dd><p>From.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="TVGL_Edge_InternalAngle_" data-uid="TVGL.Edge.InternalAngle*"></a>
+
+  <h3 id="TVGL_Edge_InternalAngle" data-uid="TVGL.Edge.InternalAngle">
+  InternalAngle
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the internal angle in radians.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public double InternalAngle { get; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The internal angle.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="TVGL_Edge_Length_" data-uid="TVGL.Edge.Length*"></a>
+
+  <h3 id="TVGL_Edge_Length" data-uid="TVGL.Edge.Length">
+  Length
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the length of the line.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public double Length { get; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The length.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="TVGL_Edge_Normal_" data-uid="TVGL.Edge.Normal*"></a>
+
+  <h3 id="TVGL_Edge_Normal" data-uid="TVGL.Edge.Normal">
+  Normal
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the normal.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">[JsonIgnore]
+public override Vector3 Normal { get; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>The normal.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="TVGL_Edge_OtherFace_" data-uid="TVGL.Edge.OtherFace*"></a>
+
+  <h3 id="TVGL_Edge_OtherFace" data-uid="TVGL.Edge.OtherFace">
+  OtherFace
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the other face (the face in which the from-to direction doesn not
+make sense- that is, produces the negative cross-product normal).</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">[JsonIgnore]
+public TriangleFace OtherFace { get; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.TriangleFace.html">TriangleFace</a></dt>
+    <dd><p>The other face.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="TVGL_Edge_OwnedFace_" data-uid="TVGL.Edge.OwnedFace*"></a>
+
+  <h3 id="TVGL_Edge_OwnedFace" data-uid="TVGL.Edge.OwnedFace">
+  OwnedFace
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the owned face (the face in which the from-to direction makes sense</p>
+<ul>
+<li>that is, produces the proper cross-product normal).</li>
+</ul>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">[JsonIgnore]
+public TriangleFace OwnedFace { get; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.TriangleFace.html">TriangleFace</a></dt>
+    <dd><p>The owned face.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="TVGL_Edge_To_" data-uid="TVGL.Edge.To*"></a>
+
+  <h3 id="TVGL_Edge_To" data-uid="TVGL.Edge.To">
+  To
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the To Vertex.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public Vertex To { get; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.Vertex.html">Vertex</a></dt>
+    <dd><p>To.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="TVGL_Edge_UnitVector_" data-uid="TVGL.Edge.UnitVector*"></a>
+
+  <h3 id="TVGL_Edge_UnitVector" data-uid="TVGL.Edge.UnitVector">
+  UnitVector
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the vector.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public Vector3 UnitVector { get; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>The vector.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="TVGL_Edge_Vector_" data-uid="TVGL.Edge.Vector*"></a>
+
+  <h3 id="TVGL_Edge_Vector" data-uid="TVGL.Edge.Vector">
+  Vector
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the length of the line.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public Vector3 Vector { get; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>The length.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <h2 class="section" id="methods">Methods
+</h2>
+
+
+  <a id="TVGL_Edge_Center_" data-uid="TVGL.Edge.Center*"></a>
+
+  <h3 id="TVGL_Edge_Center" data-uid="TVGL.Edge.Center">
+  Center()
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Centers this instance.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public Vector3 Center()</code></pre>
+  </div>
+
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>Vector3.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_Edge_GetEdgeChecksum_" data-uid="TVGL.Edge.GetEdgeChecksum*"></a>
+
+  <h3 id="TVGL_Edge_GetEdgeChecksum_System_Int32_System_Int32_" data-uid="TVGL.Edge.GetEdgeChecksum(System.Int32,System.Int32)">
+  GetEdgeChecksum(int, int)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the edge checksum.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static long GetEdgeChecksum(int vertex1Index, int vertex2Index)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>vertex1Index</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a></dt>
+    <dd><p>Index of the vertex1.</p>
+</dd>
+    <dt><code>vertex2Index</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a></dt>
+    <dd><p>Index of the vertex2.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int64">long</a></dt>
+    <dd><p>System.Int64.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_Edge_GetEdgeChecksum_" data-uid="TVGL.Edge.GetEdgeChecksum*"></a>
+
+  <h3 id="TVGL_Edge_GetEdgeChecksum_TVGL_Vertex_TVGL_Vertex_" data-uid="TVGL.Edge.GetEdgeChecksum(TVGL.Vertex,TVGL.Vertex)">
+  GetEdgeChecksum(Vertex, Vertex)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the edge checksum.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static long GetEdgeChecksum(Vertex vertex1, Vertex vertex2)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>vertex1</code> <a class="xref" href="TVGL.Vertex.html">Vertex</a></dt>
+    <dd><p>The vertex1.</p>
+</dd>
+    <dt><code>vertex2</code> <a class="xref" href="TVGL.Vertex.html">Vertex</a></dt>
+    <dd><p>The vertex2.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int64">long</a></dt>
+    <dd><p>System.Int64.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_Edge_GetOwnedAndOtherFace_" data-uid="TVGL.Edge.GetOwnedAndOtherFace*"></a>
+
+  <h3 id="TVGL_Edge_GetOwnedAndOtherFace_System_Int64_TVGL_TriangleFace_TVGL_TriangleFace_" data-uid="TVGL.Edge.GetOwnedAndOtherFace(System.Int64,TVGL.TriangleFace,TVGL.TriangleFace)">
+  GetOwnedAndOtherFace(long, TriangleFace, TriangleFace)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Returns owned and other face in that order
+TODO: this function seems convoluted. Why not just return the ownedFace and otherFace directly?</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static (TriangleFace, TriangleFace) GetOwnedAndOtherFace(long edgeChecksum, TriangleFace face1, TriangleFace face2)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>edgeChecksum</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int64">long</a></dt>
+    <dd><p>The edge checksum.</p>
+</dd>
+    <dt><code>face1</code> <a class="xref" href="TVGL.TriangleFace.html">TriangleFace</a></dt>
+    <dd><p>The face1.</p>
+</dd>
+    <dt><code>face2</code> <a class="xref" href="TVGL.TriangleFace.html">TriangleFace</a></dt>
+    <dd><p>The face2.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt>(<a class="xref" href="TVGL.TriangleFace.html">TriangleFace</a>, <a class="xref" href="TVGL.TriangleFace.html">TriangleFace</a>)</dt>
+    <dd><p>System.ValueTuple&lt;TriangleFace, TriangleFace&gt;.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_Edge_GetVertexIndices_" data-uid="TVGL.Edge.GetVertexIndices*"></a>
+
+  <h3 id="TVGL_Edge_GetVertexIndices_System_Int64_" data-uid="TVGL.Edge.GetVertexIndices(System.Int64)">
+  GetVertexIndices(long)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the vertex indices.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static (int, int) GetVertexIndices(long checkSum)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>checkSum</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int64">long</a></dt>
+    <dd><p>The check sum.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt>(<a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a>, <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a>)</dt>
+    <dd><p>System.ValueTuple&lt;System.Int32, System.Int32&gt;.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_Edge_OtherVertex_" data-uid="TVGL.Edge.OtherVertex*"></a>
+
+  <h3 id="TVGL_Edge_OtherVertex_TVGL_Vertex_" data-uid="TVGL.Edge.OtherVertex(TVGL.Vertex)">
+  OtherVertex(Vertex)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Others the vertex.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public Vertex OtherVertex(Vertex v)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>v</code> <a class="xref" href="TVGL.Vertex.html">Vertex</a></dt>
+    <dd><p>The v.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.Vertex.html">Vertex</a></dt>
+    <dd><p>Vertex.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <h4 class="section">Exceptions</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.exception">Exception</a></dt>
+    <dd><p>OtherVertex: Vertex thought to connect to edge, but it doesn't.</p>
+</dd>
+  </dl>
+
+
+
+  <a id="TVGL_Edge_Update_" data-uid="TVGL.Edge.Update*"></a>
+
+  <h3 id="TVGL_Edge_Update_System_Boolean_" data-uid="TVGL.Edge.Update(System.Boolean)">
+  Update(bool)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Updates the edge vector and length, if a vertex has been moved.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public void Update(bool lengthAndAngleUnchanged = false)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>lengthAndAngleUnchanged</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd><p>if set to <code>true</code> [length and angle unchanged].</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+  <h4 class="section">Exceptions</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.exception">Exception</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+</article>
+
+        <div class="contribution d-print-none">
+        </div>
+
+        
+      </div>
+
+      <div class="affix">
+        <nav id="affix"></nav>
+      </div>
+    </main>
+
+
+    <footer class="border-top">
+      <div class="container-xxl">
+        <div class="flex-fill">
+          <span>Made with <a href="https://dotnet.github.io/docfx">docfx</a></span>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>

@@ -1,0 +1,1559 @@
+﻿<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+      <title>Class Polygon
+ </title>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <meta name="title" content="Class Polygon
+ ">
+      
+      <link rel="icon" href="../favicon.ico">
+      <link rel="stylesheet" href="../styles/docfx.min.css">
+      <link rel="stylesheet" href="../styles/main.css">
+      <meta name="docfx:navrel" content="../toc.html">
+      <meta name="docfx:tocrel" content="toc.html">
+      
+      
+      
+
+      <script>
+        MathJax = {
+          options: {
+            processHtmlClass: ['tex2jax_process', 'math']
+          }
+        };
+      </script>
+
+      <script type="text/javascript" src="../styles/docfx.min.js"></script>
+      <script type="text/javascript" src="../styles/main.js"></script>
+  </head>
+
+  <body class="tex2jax_ignore" data-layout="" data-yaml-mime="ManagedReference">
+    <header class="bg-body border-bottom">
+      <nav id="autocollapse" class="navbar navbar-expand-md" role="navigation">
+        <div class="container-xxl flex-nowrap">
+          <a class="navbar-brand" href="../index.html">
+            <img id="logo" class="svg" src="../logo.svg" alt="">
+            
+          </a>
+          <button class="btn btn-lg d-md-none border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navpanel" aria-controls="navpanel" aria-expanded="false" aria-label="Toggle navigation">
+            <i class="bi bi-three-dots"></i>
+          </button>
+          <div class="collapse navbar-collapse" id="navpanel">
+            <div id="navbar">
+            </div>
+          </div>
+        </div>
+      </nav>
+    </header>
+
+    <main class="container-xxl">
+      <div class="toc-offcanvas">
+        <div class="offcanvas-md offcanvas-start" tabindex="-1" id="tocOffcanvas" aria-labelledby="tocOffcanvasLabel">
+          <div class="offcanvas-header">
+            <h5 class="offcanvas-title" id="tocOffcanvasLabel">Table of Contents</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#tocOffcanvas" aria-label="Close"></button>
+          </div>
+          <div class="offcanvas-body">
+            <nav class="toc" id="toc"></nav>
+          </div>
+        </div>
+      </div>
+
+      <div class="content">
+        <div class="actionbar">
+          <button class="btn btn-lg border-0 d-md-none" style="margin-top: -.65em; margin-left: -.8em" type="button" data-bs-toggle="offcanvas" data-bs-target="#tocOffcanvas" aria-controls="tocOffcanvas" aria-expanded="false" aria-label="Show table of contents">
+            <i class="bi bi-list"></i>
+          </button>
+
+          <nav id="breadcrumb"></nav>
+        </div>
+
+        <article data-uid="TVGL.Polygon">
+
+
+
+  <h1 id="TVGL_Polygon" data-uid="TVGL.Polygon" class="text-break">
+    Class Polygon
+  
+  </h1>
+
+  <div class="facts text-secondary">
+    <dl><dt>Namespace</dt><dd><a class="xref" href="TVGL.html">TVGL</a></dd></dl>
+  <dl><dt>Assembly</dt><dd>TessellationAndVoxelizationGeometryLibrary.dll</dd></dl>
+  </div>
+
+  <div class="markdown summary"><p>Class Polygon.</p>
+</div>
+  <div class="markdown conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public class Polygon</code></pre>
+  </div>
+
+
+
+
+  <dl class="typelist inheritance">
+    <dt>Inheritance</dt>
+    <dd>
+      <div><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object">object</a></div>
+      <div><span class="xref">Polygon</span></div>
+    </dd>
+  </dl>
+
+
+
+  <dl class="typelist derived">
+    <dt>Inherited Members</dt>
+    <dd>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.equals#system-object-equals(system-object)">object.Equals(object)</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.equals#system-object-equals(system-object-system-object)">object.Equals(object, object)</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.gethashcode">object.GetHashCode()</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.gettype">object.GetType()</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.memberwiseclone">object.MemberwiseClone()</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.referenceequals">object.ReferenceEquals(object, object)</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.tostring">object.ToString()</a>
+    </div>
+  </dd></dl>
+
+  <dl class="typelist extensionMethods">
+    <dt>Extension Methods</dt>
+    <dd>
+  <div>
+      <a class="xref" href="TVGL.Extrude.html#TVGL_Extrude_ExtrusionFacesFrom2DPolygons_TVGL_Polygon_TVGL_Vector3_System_Double_System_Double_">Extrude.ExtrusionFacesFrom2DPolygons(Polygon, Vector3, double, double)</a>
+  </div>
+  <div>
+      <a class="xref" href="TVGL.Extrude.html#TVGL_Extrude_ExtrusionFaceVectorsFrom2DPolygons_TVGL_Polygon_System_Collections_Generic_List_System_ValueTuple_System_Int32_System_Int32_System_Int32___TVGL_Vector3_System_Double_System_Double_">Extrude.ExtrusionFaceVectorsFrom2DPolygons(Polygon, List&lt;(int A, int B, int C)&gt;, Vector3, double, double)</a>
+  </div>
+  <div>
+      <a class="xref" href="TVGL.Extrude.html#TVGL_Extrude_ExtrusionFaceVectorsFrom2DPolygons_TVGL_Polygon_TVGL_Vector3_System_Double_System_Double_">Extrude.ExtrusionFaceVectorsFrom2DPolygons(Polygon, Vector3, double, double)</a>
+  </div>
+  <div>
+      <a class="xref" href="TVGL.MinimumEnclosure.html#TVGL_MinimumEnclosure_BoundingRectangle_TVGL_Polygon_System_Boolean_System_Boolean_System_Boolean_">MinimumEnclosure.BoundingRectangle(Polygon, bool, bool, bool)</a>
+  </div>
+  <div>
+      <a class="xref" href="TVGL.MinimumEnclosure.html#TVGL_MinimumEnclosure_ConvexHull2D_TVGL_Polygon_">MinimumEnclosure.ConvexHull2D(Polygon)</a>
+  </div>
+  <div>
+      <a class="xref" href="TVGL.MiscFunctions.html#TVGL_MiscFunctions_ConvertTo3DLocations_TVGL_Polygon_TVGL_Matrix4x4_">MiscFunctions.ConvertTo3DLocations(Polygon, Matrix4x4)</a>
+  </div>
+  <div>
+      <a class="xref" href="TVGL.MiscFunctions.html#TVGL_MiscFunctions_ConvertTo3DLocations_TVGL_Polygon_TVGL_Vector3_System_Double_">MiscFunctions.ConvertTo3DLocations(Polygon, Vector3, double)</a>
+  </div>
+  <div>
+      <a class="xref" href="TVGL.PolygonOperations.html#TVGL_PolygonOperations_AllPolygonIntersectionPointsAlongHorizontalLine_TVGL_Polygon_System_Double_">PolygonOperations.AllPolygonIntersectionPointsAlongHorizontalLine(Polygon, double)</a>
+  </div>
+  <div>
+      <a class="xref" href="TVGL.PolygonOperations.html#TVGL_PolygonOperations_Complexify_TVGL_Polygon_System_Double_">PolygonOperations.Complexify(Polygon, double)</a>
+  </div>
+  <div>
+      <a class="xref" href="TVGL.PolygonOperations.html#TVGL_PolygonOperations_Complexify_TVGL_Polygon_System_Int32_">PolygonOperations.Complexify(Polygon, int)</a>
+  </div>
+  <div>
+      <a class="xref" href="TVGL.PolygonOperations.html#TVGL_PolygonOperations_ComplexifyToNewPolygon_TVGL_Polygon_System_Double_">PolygonOperations.ComplexifyToNewPolygon(Polygon, double)</a>
+  </div>
+  <div>
+      <a class="xref" href="TVGL.PolygonOperations.html#TVGL_PolygonOperations_ComplexifyToNewPolygon_TVGL_Polygon_System_Int32_">PolygonOperations.ComplexifyToNewPolygon(Polygon, int)</a>
+  </div>
+  <div>
+      <a class="xref" href="TVGL.PolygonOperations.html#TVGL_PolygonOperations_CreateXMonotonePolygons_TVGL_Polygon_">PolygonOperations.CreateXMonotonePolygons(Polygon)</a>
+  </div>
+  <div>
+      <a class="xref" href="TVGL.PolygonOperations.html#TVGL_PolygonOperations_ExclusiveOr_TVGL_Polygon_TVGL_Polygon_TVGL_PolygonCollection_">PolygonOperations.ExclusiveOr(Polygon, Polygon, PolygonCollection)</a>
+  </div>
+  <div>
+      <a class="xref" href="TVGL.PolygonOperations.html#TVGL_PolygonOperations_ExclusiveOr_TVGL_Polygon_TVGL_Polygon_TVGL_PolygonInteractionRecord_TVGL_PolygonCollection_System_Double_">PolygonOperations.ExclusiveOr(Polygon, Polygon, PolygonInteractionRecord, PolygonCollection, double)</a>
+  </div>
+  <div>
+      <a class="xref" href="TVGL.PolygonOperations.html#TVGL_PolygonOperations_GetPolygonInteraction_TVGL_Polygon_TVGL_Polygon_">PolygonOperations.GetPolygonInteraction(Polygon, Polygon)</a>
+  </div>
+  <div>
+      <a class="xref" href="TVGL.PolygonOperations.html#TVGL_PolygonOperations_GetSelfIntersections_TVGL_Polygon_">PolygonOperations.GetSelfIntersections(Polygon)</a>
+  </div>
+  <div>
+      <a class="xref" href="TVGL.PolygonOperations.html#TVGL_PolygonOperations_Intersect_TVGL_Polygon_TVGL_Polygon_TVGL_PolygonCollection_System_Double_">PolygonOperations.Intersect(Polygon, Polygon, PolygonCollection, double)</a>
+  </div>
+  <div>
+      <a class="xref" href="TVGL.PolygonOperations.html#TVGL_PolygonOperations_Intersect_TVGL_Polygon_TVGL_Polygon_TVGL_PolygonInteractionRecord_TVGL_PolygonCollection_System_Double_">PolygonOperations.Intersect(Polygon, Polygon, PolygonInteractionRecord, PolygonCollection, double)</a>
+  </div>
+  <div>
+      <a class="xref" href="TVGL.PolygonOperations.html#TVGL_PolygonOperations_IsCircular_TVGL_Polygon_TVGL_Circle__System_Double_">PolygonOperations.IsCircular(Polygon, out Circle, double)</a>
+  </div>
+  <div>
+      <a class="xref" href="TVGL.PolygonOperations.html#TVGL_PolygonOperations_IsPointInsidePolygon_TVGL_Polygon_System_Boolean_TVGL_Vector2_System_Boolean__System_Boolean_">PolygonOperations.IsPointInsidePolygon(Polygon, bool, Vector2, out bool, bool)</a>
+  </div>
+  <div>
+      <a class="xref" href="TVGL.PolygonOperations.html#TVGL_PolygonOperations_IsPointInsidePolygon_TVGL_Polygon_System_Boolean_TVGL_Vector2_">PolygonOperations.IsPointInsidePolygon(Polygon, bool, Vector2)</a>
+  </div>
+  <div>
+      <a class="xref" href="TVGL.PolygonOperations.html#TVGL_PolygonOperations_MinDistanceToPolygon_TVGL_Polygon_System_Double_System_Double_">PolygonOperations.MinDistanceToPolygon(Polygon, double, double)</a>
+  </div>
+  <div>
+      <a class="xref" href="TVGL.PolygonOperations.html#TVGL_PolygonOperations_MinDistanceToPolygon_TVGL_Polygon_TVGL_Vector2_">PolygonOperations.MinDistanceToPolygon(Polygon, Vector2)</a>
+  </div>
+  <div>
+      <a class="xref" href="TVGL.PolygonOperations.html#TVGL_PolygonOperations_Mirror_TVGL_Polygon_TVGL_Vector2_">PolygonOperations.Mirror(Polygon, Vector2)</a>
+  </div>
+  <div>
+      <a class="xref" href="TVGL.PolygonOperations.html#TVGL_PolygonOperations_OffsetMiter_TVGL_Polygon_System_Double_System_Double_">PolygonOperations.OffsetMiter(Polygon, double, double)</a>
+  </div>
+  <div>
+      <a class="xref" href="TVGL.PolygonOperations.html#TVGL_PolygonOperations_OffsetRound_TVGL_Polygon_System_Double_System_Double_System_Double_">PolygonOperations.OffsetRound(Polygon, double, double, double)</a>
+  </div>
+  <div>
+      <a class="xref" href="TVGL.PolygonOperations.html#TVGL_PolygonOperations_OffsetSquare_TVGL_Polygon_System_Double_System_Double_">PolygonOperations.OffsetSquare(Polygon, double, double)</a>
+  </div>
+  <div>
+      <a class="xref" href="TVGL.PolygonOperations.html#TVGL_PolygonOperations_PartitionIntoMonotoneBoxes_TVGL_Polygon_TVGL_MonotonicityChange_">PolygonOperations.PartitionIntoMonotoneBoxes(Polygon, MonotonicityChange)</a>
+  </div>
+  <div>
+      <a class="xref" href="TVGL.PolygonOperations.html#TVGL_PolygonOperations_ReflectOnX_TVGL_Polygon_">PolygonOperations.ReflectOnX(Polygon)</a>
+  </div>
+  <div>
+      <a class="xref" href="TVGL.PolygonOperations.html#TVGL_PolygonOperations_RemoveCollinearEdges_TVGL_Polygon_">PolygonOperations.RemoveCollinearEdges(Polygon)</a>
+  </div>
+  <div>
+      <a class="xref" href="TVGL.PolygonOperations.html#TVGL_PolygonOperations_RemoveCollinearEdgesToNewPolygon_TVGL_Polygon_">PolygonOperations.RemoveCollinearEdgesToNewPolygon(Polygon)</a>
+  </div>
+  <div>
+      <a class="xref" href="TVGL.PolygonOperations.html#TVGL_PolygonOperations_RemoveSelfIntersections_TVGL_Polygon_TVGL_ResultType_System_Collections_Generic_List_System_Boolean__System_Int32_">PolygonOperations.RemoveSelfIntersections(Polygon, ResultType, List&lt;bool&gt;, int)</a>
+  </div>
+  <div>
+      <a class="xref" href="TVGL.PolygonOperations.html#TVGL_PolygonOperations_SimplifyByAreaChange_TVGL_Polygon_System_Double_">PolygonOperations.SimplifyByAreaChange(Polygon, double)</a>
+  </div>
+  <div>
+      <a class="xref" href="TVGL.PolygonOperations.html#TVGL_PolygonOperations_SimplifyByAreaChange_TVGL_Polygon_System_Int32_">PolygonOperations.SimplifyByAreaChange(Polygon, int)</a>
+  </div>
+  <div>
+      <a class="xref" href="TVGL.PolygonOperations.html#TVGL_PolygonOperations_SimplifyByAreaChangeToNewPolygon_TVGL_Polygon_System_Double_">PolygonOperations.SimplifyByAreaChangeToNewPolygon(Polygon, double)</a>
+  </div>
+  <div>
+      <a class="xref" href="TVGL.PolygonOperations.html#TVGL_PolygonOperations_SimplifyByAreaChangeToNewPolygon_TVGL_Polygon_System_Int32_">PolygonOperations.SimplifyByAreaChangeToNewPolygon(Polygon, int)</a>
+  </div>
+  <div>
+      <a class="xref" href="TVGL.PolygonOperations.html#TVGL_PolygonOperations_SimplifyFast_TVGL_Polygon_System_Double_System_Double_">PolygonOperations.SimplifyFast(Polygon, double, double)</a>
+  </div>
+  <div>
+      <a class="xref" href="TVGL.PolygonOperations.html#TVGL_PolygonOperations_SimplifyMinLength_TVGL_Polygon_System_Double_">PolygonOperations.SimplifyMinLength(Polygon, double)</a>
+  </div>
+  <div>
+      <a class="xref" href="TVGL.PolygonOperations.html#TVGL_PolygonOperations_SimplifyMinLength_TVGL_Polygon_System_Int32_">PolygonOperations.SimplifyMinLength(Polygon, int)</a>
+  </div>
+  <div>
+      <a class="xref" href="TVGL.PolygonOperations.html#TVGL_PolygonOperations_SimplifyMinLengthToNewPolygon_TVGL_Polygon_System_Double_">PolygonOperations.SimplifyMinLengthToNewPolygon(Polygon, double)</a>
+  </div>
+  <div>
+      <a class="xref" href="TVGL.PolygonOperations.html#TVGL_PolygonOperations_SimplifyMinLengthToNewPolygon_TVGL_Polygon_System_Int32_">PolygonOperations.SimplifyMinLengthToNewPolygon(Polygon, int)</a>
+  </div>
+  <div>
+      <a class="xref" href="TVGL.PolygonOperations.html#TVGL_PolygonOperations_SliceAtLine_TVGL_Polygon_TVGL_Vector2_System_Double_System_Collections_Generic_List_TVGL_Polygon___System_Collections_Generic_List_TVGL_Polygon___System_Double_System_Double_">PolygonOperations.SliceAtLine(Polygon, Vector2, double, out List&lt;Polygon&gt;, out List&lt;Polygon&gt;, double, double)</a>
+  </div>
+  <div>
+      <a class="xref" href="TVGL.PolygonOperations.html#TVGL_PolygonOperations_Subtract_TVGL_Polygon_TVGL_Polygon_TVGL_PolygonCollection_System_Double_">PolygonOperations.Subtract(Polygon, Polygon, PolygonCollection, double)</a>
+  </div>
+  <div>
+      <a class="xref" href="TVGL.PolygonOperations.html#TVGL_PolygonOperations_Subtract_TVGL_Polygon_TVGL_Polygon_TVGL_PolygonInteractionRecord_TVGL_PolygonCollection_System_Double_">PolygonOperations.Subtract(Polygon, Polygon, PolygonInteractionRecord, PolygonCollection, double)</a>
+  </div>
+  <div>
+      <a class="xref" href="TVGL.PolygonOperations.html#TVGL_PolygonOperations_TriangulateToCoordinates_TVGL_Polygon_">PolygonOperations.TriangulateToCoordinates(Polygon)</a>
+  </div>
+  <div>
+      <a class="xref" href="TVGL.PolygonOperations.html#TVGL_PolygonOperations_TriangulateToIndices_TVGL_Polygon_System_Boolean_">PolygonOperations.TriangulateToIndices(Polygon, bool)</a>
+  </div>
+  <div>
+      <a class="xref" href="TVGL.PolygonOperations.html#TVGL_PolygonOperations_Union_TVGL_Polygon_TVGL_Polygon_TVGL_PolygonCollection_">PolygonOperations.Union(Polygon, Polygon, PolygonCollection)</a>
+  </div>
+  <div>
+      <a class="xref" href="TVGL.PolygonOperations.html#TVGL_PolygonOperations_Union_TVGL_Polygon_TVGL_Polygon_TVGL_PolygonInteractionRecord_TVGL_PolygonCollection_System_Double_">PolygonOperations.Union(Polygon, Polygon, PolygonInteractionRecord, PolygonCollection, double)</a>
+  </div>
+  </dd></dl>
+
+
+
+
+
+  <h2 class="section" id="constructors">Constructors
+</h2>
+
+
+  <a id="TVGL_Polygon__ctor_" data-uid="TVGL.Polygon.#ctor*"></a>
+
+  <h3 id="TVGL_Polygon__ctor" data-uid="TVGL.Polygon.#ctor">
+  Polygon()
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Prevents a default instance of the <a class="xref" href="TVGL.Polygon.html">Polygon</a> class from being created.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public Polygon()</code></pre>
+  </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_Polygon__ctor_" data-uid="TVGL.Polygon.#ctor*"></a>
+
+  <h3 id="TVGL_Polygon__ctor_System_Collections_Generic_IEnumerable_System_Collections_Generic_IList_TVGL_Vector2___" data-uid="TVGL.Polygon.#ctor(System.Collections.Generic.IEnumerable{System.Collections.Generic.IList{TVGL.Vector2}})">
+  Polygon(IEnumerable&lt;IList&lt;Vector2&gt;&gt;)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Initializes a new instance of the <a class="xref" href="TVGL.Polygon.html">Polygon</a> class.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public Polygon(IEnumerable&lt;IList&lt;Vector2&gt;&gt; loops)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>loops</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ilist-1">IList</a>&lt;<a class="xref" href="TVGL.Vector2.html">Vector2</a>&gt;&gt;</dt>
+    <dd><p>The loops.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_Polygon__ctor_" data-uid="TVGL.Polygon.#ctor*"></a>
+
+  <h3 id="TVGL_Polygon__ctor_System_Collections_Generic_IEnumerable_TVGL_Vector2__System_Int32_System_Boolean_" data-uid="TVGL.Polygon.#ctor(System.Collections.Generic.IEnumerable{TVGL.Vector2},System.Int32,System.Boolean)">
+  Polygon(IEnumerable&lt;Vector2&gt;, int, bool)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Initializes a new instance of the <a class="xref" href="TVGL.Polygon.html">Polygon</a> class.
+Assumes path is closed and not self-intersecting.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public Polygon(IEnumerable&lt;Vector2&gt; coordinates, int index = -1, bool RemovePointsLessThanTolerance = true)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>coordinates</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.Vector2.html">Vector2</a>&gt;</dt>
+    <dd><p>The coordinates.</p>
+</dd>
+    <dt><code>index</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a></dt>
+    <dd><p>The index.</p>
+</dd>
+    <dt><code>RemovePointsLessThanTolerance</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd><p>if set to <code>true</code> [remove points less than tolerance].</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_Polygon__ctor_" data-uid="TVGL.Polygon.#ctor*"></a>
+
+  <h3 id="TVGL_Polygon__ctor_System_Collections_Generic_IEnumerable_TVGL_Vertex2D__System_Int32_" data-uid="TVGL.Polygon.#ctor(System.Collections.Generic.IEnumerable{TVGL.Vertex2D},System.Int32)">
+  Polygon(IEnumerable&lt;Vertex2D&gt;, int)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Initializes a new instance of the <a class="xref" href="TVGL.Polygon.html">Polygon</a> class.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public Polygon(IEnumerable&lt;Vertex2D&gt; vertices, int index = -1)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>vertices</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.Vertex2D.html">Vertex2D</a>&gt;</dt>
+    <dd><p>The vertices.</p>
+</dd>
+    <dt><code>index</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a></dt>
+    <dd><p>The index.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+  <h2 class="section" id="fields">Fields
+</h2>
+
+
+
+  <h3 id="TVGL_Polygon_serializationData" data-uid="TVGL.Polygon.serializationData">
+  serializationData
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>The serialization data</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">[JsonExtensionData]
+protected IDictionary&lt;string, JToken&gt; serializationData</code></pre>
+  </div>
+
+
+
+
+  <h4 class="section">Field Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.idictionary-2">IDictionary</a>&lt;<a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a>, <span class="xref">JToken</span>&gt;</dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+  <h2 class="section" id="properties">Properties
+</h2>
+
+
+  <a id="TVGL_Polygon_AllPaths_" data-uid="TVGL.Polygon.AllPaths*"></a>
+
+  <h3 id="TVGL_Polygon_AllPaths" data-uid="TVGL.Polygon.AllPaths">
+  AllPaths
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>The list of 2D points that make up a polygon and its inner polygons</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">[JsonIgnore]
+public IEnumerable&lt;List&lt;Vector2&gt;&gt; AllPaths { get; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.list-1">List</a>&lt;<a class="xref" href="TVGL.Vector2.html">Vector2</a>&gt;&gt;</dt>
+    <dd><p>The path.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="TVGL_Polygon_AllPolygons_" data-uid="TVGL.Polygon.AllPolygons*"></a>
+
+  <h3 id="TVGL_Polygon_AllPolygons" data-uid="TVGL.Polygon.AllPolygons">
+  AllPolygons
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets all polygons.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">[JsonIgnore]
+public IEnumerable&lt;Polygon&gt; AllPolygons { get; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.Polygon.html">Polygon</a>&gt;</dt>
+    <dd><p>All polygons.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="TVGL_Polygon_Area_" data-uid="TVGL.Polygon.Area*"></a>
+
+  <h3 id="TVGL_Polygon_Area" data-uid="TVGL.Polygon.Area">
+  Area
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the net area of the polygon - meaning any holes will be subtracted from the total area.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">[JsonIgnore]
+public double Area { get; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The area.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="TVGL_Polygon_Centroid_" data-uid="TVGL.Polygon.Centroid*"></a>
+
+  <h3 id="TVGL_Polygon_Centroid" data-uid="TVGL.Polygon.Centroid">
+  Centroid
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the centroid.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public Vector2 Centroid { get; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.Vector2.html">Vector2</a></dt>
+    <dd><p>The centroid.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="TVGL_Polygon_Edges_" data-uid="TVGL.Polygon.Edges*"></a>
+
+  <h3 id="TVGL_Polygon_Edges" data-uid="TVGL.Polygon.Edges">
+  Edges
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the list of lines that make up a polygon. This is not set by default.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">[JsonIgnore]
+public List&lt;PolygonEdge&gt; Edges { get; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.list-1">List</a>&lt;<a class="xref" href="TVGL.PolygonEdge.html">PolygonEdge</a>&gt;</dt>
+    <dd><p>The lines.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="TVGL_Polygon_Index_" data-uid="TVGL.Polygon.Index*"></a>
+
+  <h3 id="TVGL_Polygon_Index" data-uid="TVGL.Polygon.Index">
+  Index
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>The index of this child in its parent's child list.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">[JsonProperty]
+public int Index { get; set; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a></dt>
+    <dd><p>The index.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="TVGL_Polygon_InnerPolygons_" data-uid="TVGL.Polygon.InnerPolygons*"></a>
+
+  <h3 id="TVGL_Polygon_InnerPolygons" data-uid="TVGL.Polygon.InnerPolygons">
+  InnerPolygons
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the inner polygons.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">[JsonIgnore]
+public IEnumerable&lt;Polygon&gt; InnerPolygons { get; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.Polygon.html">Polygon</a>&gt;</dt>
+    <dd><p>The inner polygons.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="TVGL_Polygon_IsPositive_" data-uid="TVGL.Polygon.IsPositive*"></a>
+
+  <h3 id="TVGL_Polygon_IsPositive" data-uid="TVGL.Polygon.IsPositive">
+  IsPositive
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets or sets whether the path is CCW positive. This will reverse the path if it was ordered CW.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">[JsonIgnore]
+public bool IsPositive { get; set; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd><p><code>true</code> if this instance is positive; otherwise, <code>false</code>.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="TVGL_Polygon_MaxX_" data-uid="TVGL.Polygon.MaxX*"></a>
+
+  <h3 id="TVGL_Polygon_MaxX" data-uid="TVGL.Polygon.MaxX">
+  MaxX
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Maxiumum X value</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">[JsonIgnore]
+public double MaxX { get; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The maximum x.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="TVGL_Polygon_MaxY_" data-uid="TVGL.Polygon.MaxY*"></a>
+
+  <h3 id="TVGL_Polygon_MaxY" data-uid="TVGL.Polygon.MaxY">
+  MaxY
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Maxiumum Y value</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">[JsonIgnore]
+public double MaxY { get; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The maximum y.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="TVGL_Polygon_MinX_" data-uid="TVGL.Polygon.MinX*"></a>
+
+  <h3 id="TVGL_Polygon_MinX" data-uid="TVGL.Polygon.MinX">
+  MinX
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Miniumum X value</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">[JsonIgnore]
+public double MinX { get; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The minimum x.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="TVGL_Polygon_MinY_" data-uid="TVGL.Polygon.MinY*"></a>
+
+  <h3 id="TVGL_Polygon_MinY" data-uid="TVGL.Polygon.MinY">
+  MinY
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the minimum y.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">[JsonIgnore]
+public double MinY { get; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The minimum y.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="TVGL_Polygon_NumberOfInnerPolygons_" data-uid="TVGL.Polygon.NumberOfInnerPolygons*"></a>
+
+  <h3 id="TVGL_Polygon_NumberOfInnerPolygons" data-uid="TVGL.Polygon.NumberOfInnerPolygons">
+  NumberOfInnerPolygons
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the number of inner polygons.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">[JsonIgnore]
+public int NumberOfInnerPolygons { get; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a></dt>
+    <dd><p>The number of inner polygons.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="TVGL_Polygon_Path_" data-uid="TVGL.Polygon.Path*"></a>
+
+  <h3 id="TVGL_Polygon_Path" data-uid="TVGL.Polygon.Path">
+  Path
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>The list of 2D points that make up a polygon.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">[JsonIgnore]
+public List&lt;Vector2&gt; Path { get; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.list-1">List</a>&lt;<a class="xref" href="TVGL.Vector2.html">Vector2</a>&gt;</dt>
+    <dd><p>The path.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="TVGL_Polygon_PathArea_" data-uid="TVGL.Polygon.PathArea*"></a>
+
+  <h3 id="TVGL_Polygon_PathArea" data-uid="TVGL.Polygon.PathArea">
+  PathArea
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the area of the top polygon. This area does not include the effect of inner polygons.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">[JsonIgnore]
+public double PathArea { get; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The path area.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="TVGL_Polygon_Perimeter_" data-uid="TVGL.Polygon.Perimeter*"></a>
+
+  <h3 id="TVGL_Polygon_Perimeter" data-uid="TVGL.Polygon.Perimeter">
+  Perimeter
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the area of the polygon. Negative Area for holes.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">[JsonIgnore]
+public double Perimeter { get; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The perimeter.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="TVGL_Polygon_Vertices_" data-uid="TVGL.Polygon.Vertices*"></a>
+
+  <h3 id="TVGL_Polygon_Vertices" data-uid="TVGL.Polygon.Vertices">
+  Vertices
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the vertices.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">[JsonIgnore]
+public List&lt;Vertex2D&gt; Vertices { get; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.list-1">List</a>&lt;<a class="xref" href="TVGL.Vertex2D.html">Vertex2D</a>&gt;</dt>
+    <dd><p>The vertices.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <h2 class="section" id="methods">Methods
+</h2>
+
+
+  <a id="TVGL_Polygon_AddInnerPolygon_" data-uid="TVGL.Polygon.AddInnerPolygon*"></a>
+
+  <h3 id="TVGL_Polygon_AddInnerPolygon_TVGL_Polygon_" data-uid="TVGL.Polygon.AddInnerPolygon(TVGL.Polygon)">
+  AddInnerPolygon(Polygon)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Adds the hole to the polygon.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public bool AddInnerPolygon(Polygon polygon)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>polygon</code> <a class="xref" href="TVGL.Polygon.html">Polygon</a></dt>
+    <dd><p>The polygon.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd><p><code>true</code> if XXXX, <code>false</code> otherwise.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_Polygon_AddVertexToEnd_" data-uid="TVGL.Polygon.AddVertexToEnd*"></a>
+
+  <h3 id="TVGL_Polygon_AddVertexToEnd_System_Double_System_Double_" data-uid="TVGL.Polygon.AddVertexToEnd(System.Double,System.Double)">
+  AddVertexToEnd(double, double)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Adds the vertex to end.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public void AddVertexToEnd(double x, double y)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>x</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The x.</p>
+</dd>
+    <dt><code>y</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The y.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_Polygon_AddVertexToEnd_" data-uid="TVGL.Polygon.AddVertexToEnd*"></a>
+
+  <h3 id="TVGL_Polygon_AddVertexToEnd_TVGL_Vector2_" data-uid="TVGL.Polygon.AddVertexToEnd(TVGL.Vector2)">
+  AddVertexToEnd(Vector2)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Adds the vertex to end.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public void AddVertexToEnd(Vector2 coordinates)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>coordinates</code> <a class="xref" href="TVGL.Vector2.html">Vector2</a></dt>
+    <dd><p>The coordinates.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_Polygon_Copy_" data-uid="TVGL.Polygon.Copy*"></a>
+
+  <h3 id="TVGL_Polygon_Copy_System_Boolean_System_Boolean_" data-uid="TVGL.Polygon.Copy(System.Boolean,System.Boolean)">
+  Copy(bool, bool)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Copies the specified copy inner polygons.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public Polygon Copy(bool copyInnerPolygons, bool invert)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>copyInnerPolygons</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd><p>The copy inner polygons.</p>
+</dd>
+    <dt><code>invert</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd><p>The invert.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.Polygon.html">Polygon</a></dt>
+    <dd><p>TVGL.TwoDimensional.Polygon.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_Polygon_InsertVertex_" data-uid="TVGL.Polygon.InsertVertex*"></a>
+
+  <h3 id="TVGL_Polygon_InsertVertex_System_Int32_System_Double_System_Double_" data-uid="TVGL.Polygon.InsertVertex(System.Int32,System.Double,System.Double)">
+  InsertVertex(int, double, double)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Inserts the vertex.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public void InsertVertex(int index, double x, double y)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>index</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a></dt>
+    <dd><p>The index.</p>
+</dd>
+    <dt><code>x</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The x.</p>
+</dd>
+    <dt><code>y</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The y.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_Polygon_InsertVertex_" data-uid="TVGL.Polygon.InsertVertex*"></a>
+
+  <h3 id="TVGL_Polygon_InsertVertex_System_Int32_TVGL_Vector2_" data-uid="TVGL.Polygon.InsertVertex(System.Int32,TVGL.Vector2)">
+  InsertVertex(int, Vector2)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Inserts the vertex.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public void InsertVertex(int index, Vector2 coordinates)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>index</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a></dt>
+    <dd><p>The index.</p>
+</dd>
+    <dt><code>coordinates</code> <a class="xref" href="TVGL.Vector2.html">Vector2</a></dt>
+    <dd><p>The coordinates.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_Polygon_IsConvex_" data-uid="TVGL.Polygon.IsConvex*"></a>
+
+  <h3 id="TVGL_Polygon_IsConvex" data-uid="TVGL.Polygon.IsConvex">
+  IsConvex()
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Determines whether this instance is convex.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public bool IsConvex()</code></pre>
+  </div>
+
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd><p><code>true</code> if this instance is convex; otherwise, <code>false</code>.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_Polygon_MakePolygonEdgesIfNonExistent_" data-uid="TVGL.Polygon.MakePolygonEdgesIfNonExistent*"></a>
+
+  <h3 id="TVGL_Polygon_MakePolygonEdgesIfNonExistent" data-uid="TVGL.Polygon.MakePolygonEdgesIfNonExistent">
+  MakePolygonEdgesIfNonExistent()
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Makes the polygon edges if non existent.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public void MakePolygonEdgesIfNonExistent()</code></pre>
+  </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_Polygon_OnDeserializedMethod_" data-uid="TVGL.Polygon.OnDeserializedMethod*"></a>
+
+  <h3 id="TVGL_Polygon_OnDeserializedMethod_System_Runtime_Serialization_StreamingContext_" data-uid="TVGL.Polygon.OnDeserializedMethod(System.Runtime.Serialization.StreamingContext)">
+  OnDeserializedMethod(StreamingContext)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Called when [deserialized method].</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">[OnDeserialized]
+protected void OnDeserializedMethod(StreamingContext context)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>context</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.runtime.serialization.streamingcontext">StreamingContext</a></dt>
+    <dd><p>The context.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_Polygon_OnSerializingMethod_" data-uid="TVGL.Polygon.OnSerializingMethod*"></a>
+
+  <h3 id="TVGL_Polygon_OnSerializingMethod_System_Runtime_Serialization_StreamingContext_" data-uid="TVGL.Polygon.OnSerializingMethod(System.Runtime.Serialization.StreamingContext)">
+  OnSerializingMethod(StreamingContext)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Called when [serializing method].</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">[OnSerializing]
+protected void OnSerializingMethod(StreamingContext context)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>context</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.runtime.serialization.streamingcontext">StreamingContext</a></dt>
+    <dd><p>The context.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_Polygon_RemoveHole_" data-uid="TVGL.Polygon.RemoveHole*"></a>
+
+  <h3 id="TVGL_Polygon_RemoveHole_TVGL_Polygon_" data-uid="TVGL.Polygon.RemoveHole(TVGL.Polygon)">
+  RemoveHole(Polygon)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Removes the hole from the polygon.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public bool RemoveHole(Polygon polygon)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>polygon</code> <a class="xref" href="TVGL.Polygon.html">Polygon</a></dt>
+    <dd><p>The polygon.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd><p><code>true</code> if XXXX, <code>false</code> otherwise.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_Polygon_Reset_" data-uid="TVGL.Polygon.Reset*"></a>
+
+  <h3 id="TVGL_Polygon_Reset" data-uid="TVGL.Polygon.Reset">
+  Reset()
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Resets this instance.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public void Reset()</code></pre>
+  </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_Polygon_Reverse_" data-uid="TVGL.Polygon.Reverse*"></a>
+
+  <h3 id="TVGL_Polygon_Reverse_System_Boolean_" data-uid="TVGL.Polygon.Reverse(System.Boolean)">
+  Reverse(bool)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>This reverses the polygon, including updates to area and the point path.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public void Reverse(bool reverseInnerPolygons = false)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>reverseInnerPolygons</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd><p>if set to <code>true</code> [reverse inner polygons].</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_Polygon_Transform_" data-uid="TVGL.Polygon.Transform*"></a>
+
+  <h3 id="TVGL_Polygon_Transform_TVGL_Matrix3x3_" data-uid="TVGL.Polygon.Transform(TVGL.Matrix3x3)">
+  Transform(Matrix3x3)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Transforms the specified transform matrix.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public void Transform(Matrix3x3 transformMatrix)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>transformMatrix</code> <a class="xref" href="TVGL.Matrix3x3.html">Matrix3x3</a></dt>
+    <dd><p>The transform matrix.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+</article>
+
+        <div class="contribution d-print-none">
+        </div>
+
+        
+      </div>
+
+      <div class="affix">
+        <nav id="affix"></nav>
+      </div>
+    </main>
+
+
+    <footer class="border-top">
+      <div class="container-xxl">
+        <div class="flex-fill">
+          <span>Made with <a href="https://dotnet.github.io/docfx">docfx</a></span>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>

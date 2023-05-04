@@ -35,15 +35,13 @@ namespace TVGL
         public double SquaredErrorOfNewPoint<T>(T point) where T : IVertex2D;
 
         /// <summary>
-        /// Defines the best fit of the curve for the given points.
+        /// Creates from points.
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="points">The points.</param>
         /// <param name="curve">The curve.</param>
         /// <param name="error">The error.</param>
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
-        /// <exception cref="System.NotImplementedException">please implement static method in curve: static ICurve " +
-        ///                 "CreateFromPoints(IEnumerable<Vector2> points)</exception>
         public static bool CreateFromPoints<T>(IEnumerable<T> points, out ICurve curve, out double error)
         {
             throw new NotImplementedException("please implement static method in curve: static ICurve " +

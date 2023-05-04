@@ -1,0 +1,1110 @@
+﻿<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+      <title>Class Grid&lt;T&gt;
+ </title>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <meta name="title" content="Class Grid&lt;T&gt;
+ ">
+      
+      <link rel="icon" href="../favicon.ico">
+      <link rel="stylesheet" href="../styles/docfx.min.css">
+      <link rel="stylesheet" href="../styles/main.css">
+      <meta name="docfx:navrel" content="../toc.html">
+      <meta name="docfx:tocrel" content="toc.html">
+      
+      
+      
+
+      <script>
+        MathJax = {
+          options: {
+            processHtmlClass: ['tex2jax_process', 'math']
+          }
+        };
+      </script>
+
+      <script type="text/javascript" src="../styles/docfx.min.js"></script>
+      <script type="text/javascript" src="../styles/main.js"></script>
+  </head>
+
+  <body class="tex2jax_ignore" data-layout="" data-yaml-mime="ManagedReference">
+    <header class="bg-body border-bottom">
+      <nav id="autocollapse" class="navbar navbar-expand-md" role="navigation">
+        <div class="container-xxl flex-nowrap">
+          <a class="navbar-brand" href="../index.html">
+            <img id="logo" class="svg" src="../logo.svg" alt="">
+            
+          </a>
+          <button class="btn btn-lg d-md-none border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navpanel" aria-controls="navpanel" aria-expanded="false" aria-label="Toggle navigation">
+            <i class="bi bi-three-dots"></i>
+          </button>
+          <div class="collapse navbar-collapse" id="navpanel">
+            <div id="navbar">
+            </div>
+          </div>
+        </div>
+      </nav>
+    </header>
+
+    <main class="container-xxl">
+      <div class="toc-offcanvas">
+        <div class="offcanvas-md offcanvas-start" tabindex="-1" id="tocOffcanvas" aria-labelledby="tocOffcanvasLabel">
+          <div class="offcanvas-header">
+            <h5 class="offcanvas-title" id="tocOffcanvasLabel">Table of Contents</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#tocOffcanvas" aria-label="Close"></button>
+          </div>
+          <div class="offcanvas-body">
+            <nav class="toc" id="toc"></nav>
+          </div>
+        </div>
+      </div>
+
+      <div class="content">
+        <div class="actionbar">
+          <button class="btn btn-lg border-0 d-md-none" style="margin-top: -.65em; margin-left: -.8em" type="button" data-bs-toggle="offcanvas" data-bs-target="#tocOffcanvas" aria-controls="tocOffcanvas" aria-expanded="false" aria-label="Show table of contents">
+            <i class="bi bi-list"></i>
+          </button>
+
+          <nav id="breadcrumb"></nav>
+        </div>
+
+        <article data-uid="TVGL.Grid`1">
+
+
+
+  <h1 id="TVGL_Grid_1" data-uid="TVGL.Grid`1" class="text-break">
+    Class Grid&lt;T&gt;
+  
+  </h1>
+
+  <div class="facts text-secondary">
+    <dl><dt>Namespace</dt><dd><a class="xref" href="TVGL.html">TVGL</a></dd></dl>
+  <dl><dt>Assembly</dt><dd>TessellationAndVoxelizationGeometryLibrary.dll</dd></dl>
+  </div>
+
+  <div class="markdown summary"><p>Class Grid.</p>
+</div>
+  <div class="markdown conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public abstract class Grid&lt;T&gt;</code></pre>
+  </div>
+
+
+
+  <h4 class="section">Type Parameters</h4>
+  <dl class="parameters">
+    <dt><code>T</code></dt>
+    <dd></dd>
+  </dl>
+
+  <dl class="typelist inheritance">
+    <dt>Inheritance</dt>
+    <dd>
+      <div><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object">object</a></div>
+      <div><span class="xref">Grid&lt;T&gt;</span></div>
+    </dd>
+  </dl>
+
+
+  <dl class="typelist derived">
+    <dt>Derived</dt>
+    <dd>
+      <div><a class="xref" href="TVGL.ZBuffer.html">ZBuffer</a></div>
+    </dd>
+  </dl>
+
+  <dl class="typelist derived">
+    <dt>Inherited Members</dt>
+    <dd>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.equals#system-object-equals(system-object)">object.Equals(object)</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.equals#system-object-equals(system-object-system-object)">object.Equals(object, object)</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.gethashcode">object.GetHashCode()</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.gettype">object.GetType()</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.memberwiseclone">object.MemberwiseClone()</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.referenceequals">object.ReferenceEquals(object, object)</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.tostring">object.ToString()</a>
+    </div>
+  </dd></dl>
+
+
+
+
+
+
+  <h2 class="section" id="fields">Fields
+</h2>
+
+
+
+  <h3 id="TVGL_Grid_1_MaxIndex" data-uid="TVGL.Grid`1.MaxIndex">
+  MaxIndex
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>The maximum index</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public int MaxIndex</code></pre>
+  </div>
+
+
+
+
+  <h4 class="section">Field Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+  <h2 class="section" id="properties">Properties
+</h2>
+
+
+  <a id="TVGL_Grid_1_inversePixelSideLength_" data-uid="TVGL.Grid`1.inversePixelSideLength*"></a>
+
+  <h3 id="TVGL_Grid_1_inversePixelSideLength" data-uid="TVGL.Grid`1.inversePixelSideLength">
+  inversePixelSideLength
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the inverse length of the pixel side.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public double inversePixelSideLength { get; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The length of the pixel side.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="TVGL_Grid_1_MinX_" data-uid="TVGL.Grid`1.MinX*"></a>
+
+  <h3 id="TVGL_Grid_1_MinX" data-uid="TVGL.Grid`1.MinX">
+  MinX
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the minimum x of the projected grid of 2D points.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public double MinX { get; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The minimum x.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="TVGL_Grid_1_MinY_" data-uid="TVGL.Grid`1.MinY*"></a>
+
+  <h3 id="TVGL_Grid_1_MinY" data-uid="TVGL.Grid`1.MinY">
+  MinY
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the minimum y of the projected grid of 2D points.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public double MinY { get; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The minimum y.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="TVGL_Grid_1_PixelSideLength_" data-uid="TVGL.Grid`1.PixelSideLength*"></a>
+
+  <h3 id="TVGL_Grid_1_PixelSideLength" data-uid="TVGL.Grid`1.PixelSideLength">
+  PixelSideLength
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the length of the pixel side.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public double PixelSideLength { get; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The length of the pixel side.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="TVGL_Grid_1_Values_" data-uid="TVGL.Grid`1.Values*"></a>
+
+  <h3 id="TVGL_Grid_1_Values" data-uid="TVGL.Grid`1.Values">
+  Values
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the values.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public T[] Values { get; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt>T[]</dt>
+    <dd><p>The values.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="TVGL_Grid_1_XCount_" data-uid="TVGL.Grid`1.XCount*"></a>
+
+  <h3 id="TVGL_Grid_1_XCount" data-uid="TVGL.Grid`1.XCount">
+  XCount
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the count of pixels in the x-direction.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public int XCount { get; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a></dt>
+    <dd><p>The x count.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="TVGL_Grid_1_YCount_" data-uid="TVGL.Grid`1.YCount*"></a>
+
+  <h3 id="TVGL_Grid_1_YCount" data-uid="TVGL.Grid`1.YCount">
+  YCount
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the count of pixels in the y-direction.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public int YCount { get; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a></dt>
+    <dd><p>The y count.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <h2 class="section" id="methods">Methods
+</h2>
+
+
+  <a id="TVGL_Grid_1_GetIndex_" data-uid="TVGL.Grid`1.GetIndex*"></a>
+
+  <h3 id="TVGL_Grid_1_GetIndex_System_Double_System_Double_" data-uid="TVGL.Grid`1.GetIndex(System.Double,System.Double)">
+  GetIndex(double, double)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the index.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public int GetIndex(double x, double y)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>x</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The x.</p>
+</dd>
+    <dt><code>y</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The y.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a></dt>
+    <dd><p>System.Int32.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_Grid_1_GetIndex_" data-uid="TVGL.Grid`1.GetIndex*"></a>
+
+  <h3 id="TVGL_Grid_1_GetIndex_System_Int32_System_Int32_" data-uid="TVGL.Grid`1.GetIndex(System.Int32,System.Int32)">
+  GetIndex(int, int)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the index.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public int GetIndex(int xIndex, int yIndex)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>xIndex</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a></dt>
+    <dd><p>Index of the x.</p>
+</dd>
+    <dt><code>yIndex</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a></dt>
+    <dd><p>Index of the y.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a></dt>
+    <dd><p>System.Int32.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_Grid_1_GetSnappedX_" data-uid="TVGL.Grid`1.GetSnappedX*"></a>
+
+  <h3 id="TVGL_Grid_1_GetSnappedX_System_Int32_" data-uid="TVGL.Grid`1.GetSnappedX(System.Int32)">
+  GetSnappedX(int)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the snapped x.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public double GetSnappedX(int x)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>x</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a></dt>
+    <dd><p>The x.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>System.Double.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_Grid_1_GetSnappedY_" data-uid="TVGL.Grid`1.GetSnappedY*"></a>
+
+  <h3 id="TVGL_Grid_1_GetSnappedY_System_Int32_" data-uid="TVGL.Grid`1.GetSnappedY(System.Int32)">
+  GetSnappedY(int)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the snapped y.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public double GetSnappedY(int y)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>y</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a></dt>
+    <dd><p>The y.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>System.Double.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_Grid_1_GetXIndex_" data-uid="TVGL.Grid`1.GetXIndex*"></a>
+
+  <h3 id="TVGL_Grid_1_GetXIndex_System_Double_" data-uid="TVGL.Grid`1.GetXIndex(System.Double)">
+  GetXIndex(double)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the index of the x.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public int GetXIndex(double x)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>x</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The x.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a></dt>
+    <dd><p>System.Int32.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_Grid_1_GetXYIndicesFromPixelIndices_" data-uid="TVGL.Grid`1.GetXYIndicesFromPixelIndices*"></a>
+
+  <h3 id="TVGL_Grid_1_GetXYIndicesFromPixelIndices_System_Int32_" data-uid="TVGL.Grid`1.GetXYIndicesFromPixelIndices(System.Int32)">
+  GetXYIndicesFromPixelIndices(int)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the xy indices from pixel indices.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public (int, int) GetXYIndicesFromPixelIndices(int index)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>index</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a></dt>
+    <dd><p>The index.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt>(<a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a>, <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a>)</dt>
+    <dd><p>System.ValueTuple&lt;System.Int32, System.Int32&gt;.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_Grid_1_GetYIndex_" data-uid="TVGL.Grid`1.GetYIndex*"></a>
+
+  <h3 id="TVGL_Grid_1_GetYIndex_System_Double_" data-uid="TVGL.Grid`1.GetYIndex(System.Double)">
+  GetYIndex(double)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the index of the y.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public int GetYIndex(double y)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>y</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The y.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a></dt>
+    <dd><p>System.Int32.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_Grid_1_Indices_" data-uid="TVGL.Grid`1.Indices*"></a>
+
+  <h3 id="TVGL_Grid_1_Indices" data-uid="TVGL.Grid`1.Indices">
+  Indices()
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Indiceses this instance.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public IEnumerable&lt;(int index, int x, int y)&gt; Indices()</code></pre>
+  </div>
+
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;(<a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.valuetuple-system.int32,system.int32,system.int32-.index">index</a>, <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.valuetuple-system.int32,system.int32,system.int32-.x">x</a>, <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.valuetuple-system.int32,system.int32,system.int32-.y">y</a>)&gt;</dt>
+    <dd><p>IEnumerable&lt;System.ValueTuple&lt;System.Int32, System.Int32, System.Int32&gt;&gt;.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_Grid_1_Initialize_" data-uid="TVGL.Grid`1.Initialize*"></a>
+
+  <h3 id="TVGL_Grid_1_Initialize_System_Double_System_Double_System_Double_System_Double_System_Double_System_Int32_" data-uid="TVGL.Grid`1.Initialize(System.Double,System.Double,System.Double,System.Double,System.Double,System.Int32)">
+  Initialize(double, double, double, double, double, int)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Initializes the specified minimum x.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public void Initialize(double minX, double maxX, double minY, double maxY, double pixelSideLength, int pixelBorder = 2)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>minX</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The minimum x.</p>
+</dd>
+    <dt><code>maxX</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The maximum x.</p>
+</dd>
+    <dt><code>minY</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The minimum y.</p>
+</dd>
+    <dt><code>maxY</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The maximum y.</p>
+</dd>
+    <dt><code>pixelSideLength</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>Length of the pixel side.</p>
+</dd>
+    <dt><code>pixelBorder</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a></dt>
+    <dd><p>The pixel border.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_Grid_1_Initialize_" data-uid="TVGL.Grid`1.Initialize*"></a>
+
+  <h3 id="TVGL_Grid_1_Initialize_System_Double_System_Double_System_Double_System_Double_System_Int32_System_Int32_" data-uid="TVGL.Grid`1.Initialize(System.Double,System.Double,System.Double,System.Double,System.Int32,System.Int32)">
+  Initialize(double, double, double, double, int, int)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Initializes the specified minimum x.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public void Initialize(double minX, double maxX, double minY, double maxY, int pixelsPerRow, int pixelBorder = 2)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>minX</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The minimum x.</p>
+</dd>
+    <dt><code>maxX</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The maximum x.</p>
+</dd>
+    <dt><code>minY</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The minimum y.</p>
+</dd>
+    <dt><code>maxY</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The maximum y.</p>
+</dd>
+    <dt><code>pixelsPerRow</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a></dt>
+    <dd><p>The pixels per row.</p>
+</dd>
+    <dt><code>pixelBorder</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a></dt>
+    <dd><p>The pixel border.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_Grid_1_PlotLine_" data-uid="TVGL.Grid`1.PlotLine*"></a>
+
+  <h3 id="TVGL_Grid_1_PlotLine_System_Double_System_Double_System_Double_System_Double_" data-uid="TVGL.Grid`1.PlotLine(System.Double,System.Double,System.Double,System.Double)">
+  PlotLine(double, double, double, double)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Plots the line.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public IEnumerable&lt;(int, int)&gt; PlotLine(double x0, double y0, double x1, double y1)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>x0</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The x0.</p>
+</dd>
+    <dt><code>y0</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The y0.</p>
+</dd>
+    <dt><code>x1</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The x1.</p>
+</dd>
+    <dt><code>y1</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The y1.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;(<a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a>, <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a>)&gt;</dt>
+    <dd><p>IEnumerable&lt;System.ValueTuple&lt;System.Int32, System.Int32&gt;&gt;.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_Grid_1_Set_" data-uid="TVGL.Grid`1.Set*"></a>
+
+  <h3 id="TVGL_Grid_1_Set_System_Int32__0_" data-uid="TVGL.Grid`1.Set(System.Int32,`0)">
+  Set(int, T)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Sets the specified index.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public void Set(int index, T newValue)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>index</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a></dt>
+    <dd><p>The index.</p>
+</dd>
+    <dt><code>newValue</code> <span class="xref">T</span></dt>
+    <dd><p>The new value.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_Grid_1_Set_" data-uid="TVGL.Grid`1.Set*"></a>
+
+  <h3 id="TVGL_Grid_1_Set_System_Int32_System_Int32__0_" data-uid="TVGL.Grid`1.Set(System.Int32,System.Int32,`0)">
+  Set(int, int, T)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Sets the specified x index.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public void Set(int xIndex, int yIndex, T newValue)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>xIndex</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a></dt>
+    <dd><p>Index of the x.</p>
+</dd>
+    <dt><code>yIndex</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a></dt>
+    <dd><p>Index of the y.</p>
+</dd>
+    <dt><code>newValue</code> <span class="xref">T</span></dt>
+    <dd><p>The new value.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_Grid_1_TryGet_" data-uid="TVGL.Grid`1.TryGet*"></a>
+
+  <h3 id="TVGL_Grid_1_TryGet_System_Double_System_Double__0__" data-uid="TVGL.Grid`1.TryGet(System.Double,System.Double,`0@)">
+  TryGet(double, double, out T)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Tries the get.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public bool TryGet(double x, double y, out T value)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>x</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The x.</p>
+</dd>
+    <dt><code>y</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The y.</p>
+</dd>
+    <dt><code>value</code> <span class="xref">T</span></dt>
+    <dd><p>The value.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd><p><code>true</code> if XXXX, <code>false</code> otherwise.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_Grid_1_TryGet_" data-uid="TVGL.Grid`1.TryGet*"></a>
+
+  <h3 id="TVGL_Grid_1_TryGet_System_Int32__0__" data-uid="TVGL.Grid`1.TryGet(System.Int32,`0@)">
+  TryGet(int, out T)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Tries the get.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public bool TryGet(int index, out T value)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>index</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a></dt>
+    <dd><p>The index.</p>
+</dd>
+    <dt><code>value</code> <span class="xref">T</span></dt>
+    <dd><p>The value.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd><p><code>true</code> if XXXX, <code>false</code> otherwise.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_Grid_1_TryGet_" data-uid="TVGL.Grid`1.TryGet*"></a>
+
+  <h3 id="TVGL_Grid_1_TryGet_System_Int32_System_Int32__0__" data-uid="TVGL.Grid`1.TryGet(System.Int32,System.Int32,`0@)">
+  TryGet(int, int, out T)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Tries the get.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public bool TryGet(int xIndex, int yIndex, out T value)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>xIndex</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a></dt>
+    <dd><p>Index of the x.</p>
+</dd>
+    <dt><code>yIndex</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a></dt>
+    <dd><p>Index of the y.</p>
+</dd>
+    <dt><code>value</code> <span class="xref">T</span></dt>
+    <dd><p>The value.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd><p><code>true</code> if XXXX, <code>false</code> otherwise.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+</article>
+
+        <div class="contribution d-print-none">
+        </div>
+
+        
+      </div>
+
+      <div class="affix">
+        <nav id="affix"></nav>
+      </div>
+    </main>
+
+
+    <footer class="border-top">
+      <div class="container-xxl">
+        <div class="flex-fill">
+          <span>Made with <a href="https://dotnet.github.io/docfx">docfx</a></span>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>

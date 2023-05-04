@@ -22,7 +22,7 @@ namespace Priority_Queue
     /// </summary>
     /// <typeparam name="TItem">The type of the t item.</typeparam>
     /// <typeparam name="TPriority">The type of the t priority.</typeparam>
-    public interface IPriorityQueue<TItem, in TPriority> : IEnumerable<TItem>
+    internal interface IPriorityQueue<TItem, in TPriority> : IEnumerable<TItem>
     {
         /// <summary>
         /// Enqueue a node to the priority queue.  Lower values are placed in front. Ties are broken by first-in-first-out.

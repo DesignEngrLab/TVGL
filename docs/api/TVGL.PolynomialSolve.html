@@ -1,0 +1,596 @@
+﻿<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+      <title>Class PolynomialSolve
+ </title>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <meta name="title" content="Class PolynomialSolve
+ ">
+      
+      <link rel="icon" href="../favicon.ico">
+      <link rel="stylesheet" href="../styles/docfx.min.css">
+      <link rel="stylesheet" href="../styles/main.css">
+      <meta name="docfx:navrel" content="../toc.html">
+      <meta name="docfx:tocrel" content="toc.html">
+      
+      
+      
+
+      <script>
+        MathJax = {
+          options: {
+            processHtmlClass: ['tex2jax_process', 'math']
+          }
+        };
+      </script>
+
+      <script type="text/javascript" src="../styles/docfx.min.js"></script>
+      <script type="text/javascript" src="../styles/main.js"></script>
+  </head>
+
+  <body class="tex2jax_ignore" data-layout="" data-yaml-mime="ManagedReference">
+    <header class="bg-body border-bottom">
+      <nav id="autocollapse" class="navbar navbar-expand-md" role="navigation">
+        <div class="container-xxl flex-nowrap">
+          <a class="navbar-brand" href="../index.html">
+            <img id="logo" class="svg" src="../logo.svg" alt="">
+            
+          </a>
+          <button class="btn btn-lg d-md-none border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navpanel" aria-controls="navpanel" aria-expanded="false" aria-label="Toggle navigation">
+            <i class="bi bi-three-dots"></i>
+          </button>
+          <div class="collapse navbar-collapse" id="navpanel">
+            <div id="navbar">
+            </div>
+          </div>
+        </div>
+      </nav>
+    </header>
+
+    <main class="container-xxl">
+      <div class="toc-offcanvas">
+        <div class="offcanvas-md offcanvas-start" tabindex="-1" id="tocOffcanvas" aria-labelledby="tocOffcanvasLabel">
+          <div class="offcanvas-header">
+            <h5 class="offcanvas-title" id="tocOffcanvasLabel">Table of Contents</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#tocOffcanvas" aria-label="Close"></button>
+          </div>
+          <div class="offcanvas-body">
+            <nav class="toc" id="toc"></nav>
+          </div>
+        </div>
+      </div>
+
+      <div class="content">
+        <div class="actionbar">
+          <button class="btn btn-lg border-0 d-md-none" style="margin-top: -.65em; margin-left: -.8em" type="button" data-bs-toggle="offcanvas" data-bs-target="#tocOffcanvas" aria-controls="tocOffcanvas" aria-expanded="false" aria-label="Show table of contents">
+            <i class="bi bi-list"></i>
+          </button>
+
+          <nav id="breadcrumb"></nav>
+        </div>
+
+        <article data-uid="TVGL.PolynomialSolve">
+
+
+
+  <h1 id="TVGL_PolynomialSolve" data-uid="TVGL.PolynomialSolve" class="text-break">
+    Class PolynomialSolve
+  
+  </h1>
+
+  <div class="facts text-secondary">
+    <dl><dt>Namespace</dt><dd><a class="xref" href="TVGL.html">TVGL</a></dd></dl>
+  <dl><dt>Assembly</dt><dd>TessellationAndVoxelizationGeometryLibrary.dll</dd></dl>
+  </div>
+
+  <div class="markdown summary"><p>Class PolynomialSolve.</p>
+</div>
+  <div class="markdown conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static class PolynomialSolve</code></pre>
+  </div>
+
+
+
+
+  <dl class="typelist inheritance">
+    <dt>Inheritance</dt>
+    <dd>
+      <div><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object">object</a></div>
+      <div><span class="xref">PolynomialSolve</span></div>
+    </dd>
+  </dl>
+
+
+
+  <dl class="typelist derived">
+    <dt>Inherited Members</dt>
+    <dd>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.equals#system-object-equals(system-object)">object.Equals(object)</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.equals#system-object-equals(system-object-system-object)">object.Equals(object, object)</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.gethashcode">object.GetHashCode()</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.gettype">object.GetType()</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.memberwiseclone">object.MemberwiseClone()</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.referenceequals">object.ReferenceEquals(object, object)</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.tostring">object.ToString()</a>
+    </div>
+  </dd></dl>
+
+
+
+
+
+
+  <h2 class="section" id="methods">Methods
+</h2>
+
+
+  <a id="TVGL_PolynomialSolve_Cubic_" data-uid="TVGL.PolynomialSolve.Cubic*"></a>
+
+  <h3 id="TVGL_PolynomialSolve_Cubic_System_Collections_Generic_IEnumerable_System_Double__" data-uid="TVGL.PolynomialSolve.Cubic(System.Collections.Generic.IEnumerable{System.Double})">
+  Cubic(IEnumerable&lt;double&gt;)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Cubics the specified coeff list.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static IEnumerable&lt;ComplexNumber&gt; Cubic(this IEnumerable&lt;double&gt; coeffList)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>coeffList</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a>&gt;</dt>
+    <dd><p>The coeff list.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.ComplexNumber.html">ComplexNumber</a>&gt;</dt>
+    <dd><p>IEnumerable&lt;ComplexNumber&gt;.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <h4 class="section">Exceptions</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.argumentexception">ArgumentException</a></dt>
+    <dd><p>Missing coefficients to solve cubic.</p>
+</dd>
+  </dl>
+
+
+
+  <a id="TVGL_PolynomialSolve_Cubic_" data-uid="TVGL.PolynomialSolve.Cubic*"></a>
+
+  <h3 id="TVGL_PolynomialSolve_Cubic_System_Double_System_Double_System_Double_System_Double_System_Boolean_" data-uid="TVGL.PolynomialSolve.Cubic(System.Double,System.Double,System.Double,System.Double,System.Boolean)">
+  Cubic(double, double, double, double, bool)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Cubics the specified cubed coeff.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static IEnumerable&lt;ComplexNumber&gt; Cubic(double cubedCoeff, double squaredCoeff, double linearCoeff, double offset, bool onlyReturnRealRoots = false)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>cubedCoeff</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The cubed coeff.</p>
+</dd>
+    <dt><code>squaredCoeff</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The squared coeff.</p>
+</dd>
+    <dt><code>linearCoeff</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The linear coeff.</p>
+</dd>
+    <dt><code>offset</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The offset.</p>
+</dd>
+    <dt><code>onlyReturnRealRoots</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd><p>if set to <code>true</code> [only return real roots].</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.ComplexNumber.html">ComplexNumber</a>&gt;</dt>
+    <dd><p>IEnumerable&lt;ComplexNumber&gt;.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_PolynomialSolve_Cubic_" data-uid="TVGL.PolynomialSolve.Cubic*"></a>
+
+  <h3 id="TVGL_PolynomialSolve_Cubic_TVGL_ComplexNumber_TVGL_ComplexNumber_TVGL_ComplexNumber_TVGL_ComplexNumber_" data-uid="TVGL.PolynomialSolve.Cubic(TVGL.ComplexNumber,TVGL.ComplexNumber,TVGL.ComplexNumber,TVGL.ComplexNumber)">
+  Cubic(ComplexNumber, ComplexNumber, ComplexNumber, ComplexNumber)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Cubics the specified cubed coeff.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static IEnumerable&lt;ComplexNumber&gt; Cubic(ComplexNumber cubedCoeff, ComplexNumber squaredCoeff, ComplexNumber linearCoeff, ComplexNumber offset)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>cubedCoeff</code> <a class="xref" href="TVGL.ComplexNumber.html">ComplexNumber</a></dt>
+    <dd><p>The cubed coeff.</p>
+</dd>
+    <dt><code>squaredCoeff</code> <a class="xref" href="TVGL.ComplexNumber.html">ComplexNumber</a></dt>
+    <dd><p>The squared coeff.</p>
+</dd>
+    <dt><code>linearCoeff</code> <a class="xref" href="TVGL.ComplexNumber.html">ComplexNumber</a></dt>
+    <dd><p>The linear coeff.</p>
+</dd>
+    <dt><code>offset</code> <a class="xref" href="TVGL.ComplexNumber.html">ComplexNumber</a></dt>
+    <dd><p>The offset.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.ComplexNumber.html">ComplexNumber</a>&gt;</dt>
+    <dd><p>IEnumerable&lt;ComplexNumber&gt;.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_PolynomialSolve_GetRoots_" data-uid="TVGL.PolynomialSolve.GetRoots*"></a>
+
+  <h3 id="TVGL_PolynomialSolve_GetRoots_System_Collections_Generic_IEnumerable_System_Double__" data-uid="TVGL.PolynomialSolve.GetRoots(System.Collections.Generic.IEnumerable{System.Double})">
+  GetRoots(IEnumerable&lt;double&gt;)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the roots.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static IEnumerable&lt;ComplexNumber&gt; GetRoots(this IEnumerable&lt;double&gt; coefficients)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>coefficients</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a>&gt;</dt>
+    <dd><p>The coefficients.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.ComplexNumber.html">ComplexNumber</a>&gt;</dt>
+    <dd><p>IEnumerable&lt;ComplexNumber&gt;.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <h4 class="section">Exceptions</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.notimplementedexception">NotImplementedException</a></dt>
+    <dd><p>These are analytical solve methods which only go&quot; +
+&quot;up to quartic numbers</p>
+</dd>
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.argumentexception">ArgumentException</a></dt>
+    <dd><p>Not enough coefficients provided. Please provide for all terms even if zero or one</p>
+</dd>
+  </dl>
+
+
+
+  <a id="TVGL_PolynomialSolve_Quadratic_" data-uid="TVGL.PolynomialSolve.Quadratic*"></a>
+
+  <h3 id="TVGL_PolynomialSolve_Quadratic_System_Double_System_Double_System_Double_" data-uid="TVGL.PolynomialSolve.Quadratic(System.Double,System.Double,System.Double)">
+  Quadratic(double, double, double)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Quadratics the specified squared coeff.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static (ComplexNumber, ComplexNumber) Quadratic(double squaredCoeff, double linearCoeff, double constant)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>squaredCoeff</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The squared coeff.</p>
+</dd>
+    <dt><code>linearCoeff</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The linear coeff.</p>
+</dd>
+    <dt><code>constant</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The constant.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt>(<a class="xref" href="TVGL.ComplexNumber.html">ComplexNumber</a>, <a class="xref" href="TVGL.ComplexNumber.html">ComplexNumber</a>)</dt>
+    <dd><p>System.ValueTuple&lt;ComplexNumber, ComplexNumber&gt;.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_PolynomialSolve_QuadraticAsTuple_" data-uid="TVGL.PolynomialSolve.QuadraticAsTuple*"></a>
+
+  <h3 id="TVGL_PolynomialSolve_QuadraticAsTuple_System_Collections_Generic_IEnumerable_System_Double__" data-uid="TVGL.PolynomialSolve.QuadraticAsTuple(System.Collections.Generic.IEnumerable{System.Double})">
+  QuadraticAsTuple(IEnumerable&lt;double&gt;)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Quadratics as tuple.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static (ComplexNumber, ComplexNumber) QuadraticAsTuple(this IEnumerable&lt;double&gt; coeffList)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>coeffList</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a>&gt;</dt>
+    <dd><p>The coeff list.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt>(<a class="xref" href="TVGL.ComplexNumber.html">ComplexNumber</a>, <a class="xref" href="TVGL.ComplexNumber.html">ComplexNumber</a>)</dt>
+    <dd><p>System.ValueTuple&lt;ComplexNumber, ComplexNumber&gt;.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <h4 class="section">Exceptions</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.argumentexception">ArgumentException</a></dt>
+    <dd><p>Missing coefficients to solve quadratic.</p>
+</dd>
+  </dl>
+
+
+
+  <a id="TVGL_PolynomialSolve_Quartic_" data-uid="TVGL.PolynomialSolve.Quartic*"></a>
+
+  <h3 id="TVGL_PolynomialSolve_Quartic_System_Collections_Generic_IEnumerable_System_Double__" data-uid="TVGL.PolynomialSolve.Quartic(System.Collections.Generic.IEnumerable{System.Double})">
+  Quartic(IEnumerable&lt;double&gt;)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Quartics the specified coeff list.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static IEnumerable&lt;ComplexNumber&gt; Quartic(this IEnumerable&lt;double&gt; coeffList)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>coeffList</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a>&gt;</dt>
+    <dd><p>The coeff list.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.ComplexNumber.html">ComplexNumber</a>&gt;</dt>
+    <dd><p>IEnumerable&lt;ComplexNumber&gt;.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <h4 class="section">Exceptions</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.argumentexception">ArgumentException</a></dt>
+    <dd><p>Missing coefficients to solve quartic.</p>
+</dd>
+  </dl>
+
+
+
+  <a id="TVGL_PolynomialSolve_Quartic_" data-uid="TVGL.PolynomialSolve.Quartic*"></a>
+
+  <h3 id="TVGL_PolynomialSolve_Quartic_System_Double_System_Double_System_Double_System_Double_System_Double_" data-uid="TVGL.PolynomialSolve.Quartic(System.Double,System.Double,System.Double,System.Double,System.Double)">
+  Quartic(double, double, double, double, double)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Quartics the specified fourth order coeff.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static IEnumerable&lt;ComplexNumber&gt; Quartic(double fourthOrderCoeff, double cubedCoeff, double squaredCoeff, double linearCoeff, double offset)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>fourthOrderCoeff</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The fourth order coeff.</p>
+</dd>
+    <dt><code>cubedCoeff</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The cubed coeff.</p>
+</dd>
+    <dt><code>squaredCoeff</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The squared coeff.</p>
+</dd>
+    <dt><code>linearCoeff</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The linear coeff.</p>
+</dd>
+    <dt><code>offset</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The offset.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.ComplexNumber.html">ComplexNumber</a>&gt;</dt>
+    <dd><p>IEnumerable&lt;ComplexNumber&gt;.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_PolynomialSolve_Quartic_" data-uid="TVGL.PolynomialSolve.Quartic*"></a>
+
+  <h3 id="TVGL_PolynomialSolve_Quartic_TVGL_ComplexNumber_TVGL_ComplexNumber_TVGL_ComplexNumber_TVGL_ComplexNumber_TVGL_ComplexNumber_" data-uid="TVGL.PolynomialSolve.Quartic(TVGL.ComplexNumber,TVGL.ComplexNumber,TVGL.ComplexNumber,TVGL.ComplexNumber,TVGL.ComplexNumber)">
+  Quartic(ComplexNumber, ComplexNumber, ComplexNumber, ComplexNumber, ComplexNumber)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Quartics the specified fourth order coeff.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static IEnumerable&lt;ComplexNumber&gt; Quartic(ComplexNumber fourthOrderCoeff, ComplexNumber cubedCoeff, ComplexNumber squaredCoeff, ComplexNumber linearCoeff, ComplexNumber offset)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>fourthOrderCoeff</code> <a class="xref" href="TVGL.ComplexNumber.html">ComplexNumber</a></dt>
+    <dd><p>The fourth order coeff.</p>
+</dd>
+    <dt><code>cubedCoeff</code> <a class="xref" href="TVGL.ComplexNumber.html">ComplexNumber</a></dt>
+    <dd><p>The cubed coeff.</p>
+</dd>
+    <dt><code>squaredCoeff</code> <a class="xref" href="TVGL.ComplexNumber.html">ComplexNumber</a></dt>
+    <dd><p>The squared coeff.</p>
+</dd>
+    <dt><code>linearCoeff</code> <a class="xref" href="TVGL.ComplexNumber.html">ComplexNumber</a></dt>
+    <dd><p>The linear coeff.</p>
+</dd>
+    <dt><code>offset</code> <a class="xref" href="TVGL.ComplexNumber.html">ComplexNumber</a></dt>
+    <dd><p>The offset.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.ComplexNumber.html">ComplexNumber</a>&gt;</dt>
+    <dd><p>IEnumerable&lt;ComplexNumber&gt;.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+</article>
+
+        <div class="contribution d-print-none">
+        </div>
+
+        
+      </div>
+
+      <div class="affix">
+        <nav id="affix"></nav>
+      </div>
+    </main>
+
+
+    <footer class="border-top">
+      <div class="container-xxl">
+        <div class="flex-fill">
+          <span>Made with <a href="https://dotnet.github.io/docfx">docfx</a></span>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>

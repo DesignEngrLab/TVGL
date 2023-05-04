@@ -1,0 +1,427 @@
+﻿<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+      <title>Interface IPriorityQueue&lt;TItem, TPriority&gt;
+ </title>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <meta name="title" content="Interface IPriorityQueue&lt;TItem, TPriority&gt;
+ ">
+      
+      <link rel="icon" href="../favicon.ico">
+      <link rel="stylesheet" href="../styles/docfx.min.css">
+      <link rel="stylesheet" href="../styles/main.css">
+      <meta name="docfx:navrel" content="../toc.html">
+      <meta name="docfx:tocrel" content="toc.html">
+      
+      
+      
+
+      <script>
+        MathJax = {
+          options: {
+            processHtmlClass: ['tex2jax_process', 'math']
+          }
+        };
+      </script>
+
+      <script type="text/javascript" src="../styles/docfx.min.js"></script>
+      <script type="text/javascript" src="../styles/main.js"></script>
+  </head>
+
+  <body class="tex2jax_ignore" data-layout="" data-yaml-mime="ManagedReference">
+    <header class="bg-body border-bottom">
+      <nav id="autocollapse" class="navbar navbar-expand-md" role="navigation">
+        <div class="container-xxl flex-nowrap">
+          <a class="navbar-brand" href="../index.html">
+            <img id="logo" class="svg" src="../logo.svg" alt="">
+            
+          </a>
+          <button class="btn btn-lg d-md-none border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navpanel" aria-controls="navpanel" aria-expanded="false" aria-label="Toggle navigation">
+            <i class="bi bi-three-dots"></i>
+          </button>
+          <div class="collapse navbar-collapse" id="navpanel">
+            <div id="navbar">
+            </div>
+          </div>
+        </div>
+      </nav>
+    </header>
+
+    <main class="container-xxl">
+      <div class="toc-offcanvas">
+        <div class="offcanvas-md offcanvas-start" tabindex="-1" id="tocOffcanvas" aria-labelledby="tocOffcanvasLabel">
+          <div class="offcanvas-header">
+            <h5 class="offcanvas-title" id="tocOffcanvasLabel">Table of Contents</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#tocOffcanvas" aria-label="Close"></button>
+          </div>
+          <div class="offcanvas-body">
+            <nav class="toc" id="toc"></nav>
+          </div>
+        </div>
+      </div>
+
+      <div class="content">
+        <div class="actionbar">
+          <button class="btn btn-lg border-0 d-md-none" style="margin-top: -.65em; margin-left: -.8em" type="button" data-bs-toggle="offcanvas" data-bs-target="#tocOffcanvas" aria-controls="tocOffcanvas" aria-expanded="false" aria-label="Show table of contents">
+            <i class="bi bi-list"></i>
+          </button>
+
+          <nav id="breadcrumb"></nav>
+        </div>
+
+        <article data-uid="Priority_Queue.IPriorityQueue`2">
+
+
+
+  <h1 id="Priority_Queue_IPriorityQueue_2" data-uid="Priority_Queue.IPriorityQueue`2" class="text-break">
+    Interface IPriorityQueue&lt;TItem, TPriority&gt;
+  
+  </h1>
+
+  <div class="facts text-secondary">
+    <dl><dt>Namespace</dt><dd><a class="xref" href="Priority_Queue.html">Priority_Queue</a></dd></dl>
+  <dl><dt>Assembly</dt><dd>TessellationAndVoxelizationGeometryLibrary.dll</dd></dl>
+  </div>
+
+  <div class="markdown summary"><p>The IPriorityQueue interface.  This is mainly here for purists, and in case I decide to add more implementations later.
+For speed purposes, it is actually recommended that you <em>don't</em> access the priority queue through this interface, since the JIT can
+(theoretically?) optimize method calls from concrete-types slightly better.</p>
+</div>
+  <div class="markdown conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public interface IPriorityQueue&lt;TItem, in TPriority&gt; : IEnumerable&lt;TItem&gt;, IEnumerable</code></pre>
+  </div>
+
+
+
+  <h4 class="section">Type Parameters</h4>
+  <dl class="parameters">
+    <dt><code>TItem</code></dt>
+    <dd><p>The type of the t item.</p>
+</dd>
+    <dt><code>TPriority</code></dt>
+    <dd><p>The type of the t priority.</p>
+</dd>
+  </dl>
+
+
+
+
+  <dl class="typelist derived">
+    <dt>Inherited Members</dt>
+    <dd>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1.getenumerator">IEnumerable&lt;TItem&gt;.GetEnumerator()</a>
+    </div>
+  </dd></dl>
+
+
+
+
+
+
+  <h2 class="section" id="properties">Properties
+</h2>
+
+
+  <a id="Priority_Queue_IPriorityQueue_2_Count_" data-uid="Priority_Queue.IPriorityQueue`2.Count*"></a>
+
+  <h3 id="Priority_Queue_IPriorityQueue_2_Count" data-uid="Priority_Queue.IPriorityQueue`2.Count">
+  Count
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Returns the number of nodes in the queue.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">int Count { get; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a></dt>
+    <dd><p>The count.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="Priority_Queue_IPriorityQueue_2_First_" data-uid="Priority_Queue.IPriorityQueue`2.First*"></a>
+
+  <h3 id="Priority_Queue_IPriorityQueue_2_First" data-uid="Priority_Queue.IPriorityQueue`2.First">
+  First
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Returns the head of the queue, without removing it (use Dequeue() for that).</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">TItem First { get; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><span class="xref">TItem</span></dt>
+    <dd><p>The first.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <h2 class="section" id="methods">Methods
+</h2>
+
+
+  <a id="Priority_Queue_IPriorityQueue_2_Clear_" data-uid="Priority_Queue.IPriorityQueue`2.Clear*"></a>
+
+  <h3 id="Priority_Queue_IPriorityQueue_2_Clear" data-uid="Priority_Queue.IPriorityQueue`2.Clear">
+  Clear()
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Removes every node from the queue.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">void Clear()</code></pre>
+  </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  <a id="Priority_Queue_IPriorityQueue_2_Contains_" data-uid="Priority_Queue.IPriorityQueue`2.Contains*"></a>
+
+  <h3 id="Priority_Queue_IPriorityQueue_2_Contains__0_" data-uid="Priority_Queue.IPriorityQueue`2.Contains(`0)">
+  Contains(TItem)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Returns whether the given node is in the queue.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">bool Contains(TItem node)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>node</code> <span class="xref">TItem</span></dt>
+    <dd><p>The node.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd><p><code>true</code> if [contains] [the specified node]; otherwise, <code>false</code>.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="Priority_Queue_IPriorityQueue_2_Dequeue_" data-uid="Priority_Queue.IPriorityQueue`2.Dequeue*"></a>
+
+  <h3 id="Priority_Queue_IPriorityQueue_2_Dequeue" data-uid="Priority_Queue.IPriorityQueue`2.Dequeue">
+  Dequeue()
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Removes the head of the queue (node with minimum priority; ties are broken by order of insertion), and returns it.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">TItem Dequeue()</code></pre>
+  </div>
+
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><span class="xref">TItem</span></dt>
+    <dd><p>TItem.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="Priority_Queue_IPriorityQueue_2_Enqueue_" data-uid="Priority_Queue.IPriorityQueue`2.Enqueue*"></a>
+
+  <h3 id="Priority_Queue_IPriorityQueue_2_Enqueue__0__1_" data-uid="Priority_Queue.IPriorityQueue`2.Enqueue(`0,`1)">
+  Enqueue(TItem, TPriority)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Enqueue a node to the priority queue.  Lower values are placed in front. Ties are broken by first-in-first-out.
+See implementation for how duplicates are handled.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">void Enqueue(TItem node, TPriority priority)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>node</code> <span class="xref">TItem</span></dt>
+    <dd><p>The node.</p>
+</dd>
+    <dt><code>priority</code> <span class="xref">TPriority</span></dt>
+    <dd><p>The priority.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+  <a id="Priority_Queue_IPriorityQueue_2_Remove_" data-uid="Priority_Queue.IPriorityQueue`2.Remove*"></a>
+
+  <h3 id="Priority_Queue_IPriorityQueue_2_Remove__0_" data-uid="Priority_Queue.IPriorityQueue`2.Remove(`0)">
+  Remove(TItem)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Removes a node from the queue.  The node does not need to be the head of the queue.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">void Remove(TItem node)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>node</code> <span class="xref">TItem</span></dt>
+    <dd><p>The node.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+  <a id="Priority_Queue_IPriorityQueue_2_UpdatePriority_" data-uid="Priority_Queue.IPriorityQueue`2.UpdatePriority*"></a>
+
+  <h3 id="Priority_Queue_IPriorityQueue_2_UpdatePriority__0__1_" data-uid="Priority_Queue.IPriorityQueue`2.UpdatePriority(`0,`1)">
+  UpdatePriority(TItem, TPriority)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Call this method to change the priority of a node.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">void UpdatePriority(TItem node, TPriority priority)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>node</code> <span class="xref">TItem</span></dt>
+    <dd><p>The node.</p>
+</dd>
+    <dt><code>priority</code> <span class="xref">TPriority</span></dt>
+    <dd><p>The priority.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+</article>
+
+        <div class="contribution d-print-none">
+        </div>
+
+        
+      </div>
+
+      <div class="affix">
+        <nav id="affix"></nav>
+      </div>
+    </main>
+
+
+    <footer class="border-top">
+      <div class="container-xxl">
+        <div class="flex-fill">
+          <span>Made with <a href="https://dotnet.github.io/docfx">docfx</a></span>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>

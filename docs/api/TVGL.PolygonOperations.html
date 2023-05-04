@@ -1,0 +1,4730 @@
+﻿<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+      <title>Class PolygonOperations
+ </title>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <meta name="title" content="Class PolygonOperations
+ ">
+      
+      <link rel="icon" href="../favicon.ico">
+      <link rel="stylesheet" href="../styles/docfx.min.css">
+      <link rel="stylesheet" href="../styles/main.css">
+      <meta name="docfx:navrel" content="../toc.html">
+      <meta name="docfx:tocrel" content="toc.html">
+      
+      
+      
+
+      <script>
+        MathJax = {
+          options: {
+            processHtmlClass: ['tex2jax_process', 'math']
+          }
+        };
+      </script>
+
+      <script type="text/javascript" src="../styles/docfx.min.js"></script>
+      <script type="text/javascript" src="../styles/main.js"></script>
+  </head>
+
+  <body class="tex2jax_ignore" data-layout="" data-yaml-mime="ManagedReference">
+    <header class="bg-body border-bottom">
+      <nav id="autocollapse" class="navbar navbar-expand-md" role="navigation">
+        <div class="container-xxl flex-nowrap">
+          <a class="navbar-brand" href="../index.html">
+            <img id="logo" class="svg" src="../logo.svg" alt="">
+            
+          </a>
+          <button class="btn btn-lg d-md-none border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navpanel" aria-controls="navpanel" aria-expanded="false" aria-label="Toggle navigation">
+            <i class="bi bi-three-dots"></i>
+          </button>
+          <div class="collapse navbar-collapse" id="navpanel">
+            <div id="navbar">
+            </div>
+          </div>
+        </div>
+      </nav>
+    </header>
+
+    <main class="container-xxl">
+      <div class="toc-offcanvas">
+        <div class="offcanvas-md offcanvas-start" tabindex="-1" id="tocOffcanvas" aria-labelledby="tocOffcanvasLabel">
+          <div class="offcanvas-header">
+            <h5 class="offcanvas-title" id="tocOffcanvasLabel">Table of Contents</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#tocOffcanvas" aria-label="Close"></button>
+          </div>
+          <div class="offcanvas-body">
+            <nav class="toc" id="toc"></nav>
+          </div>
+        </div>
+      </div>
+
+      <div class="content">
+        <div class="actionbar">
+          <button class="btn btn-lg border-0 d-md-none" style="margin-top: -.65em; margin-left: -.8em" type="button" data-bs-toggle="offcanvas" data-bs-target="#tocOffcanvas" aria-controls="tocOffcanvas" aria-expanded="false" aria-label="Show table of contents">
+            <i class="bi bi-list"></i>
+          </button>
+
+          <nav id="breadcrumb"></nav>
+        </div>
+
+        <article data-uid="TVGL.PolygonOperations">
+
+
+
+  <h1 id="TVGL_PolygonOperations" data-uid="TVGL.PolygonOperations" class="text-break">
+    Class PolygonOperations
+  
+  </h1>
+
+  <div class="facts text-secondary">
+    <dl><dt>Namespace</dt><dd><a class="xref" href="TVGL.html">TVGL</a></dd></dl>
+  <dl><dt>Assembly</dt><dd>TessellationAndVoxelizationGeometryLibrary.dll</dd></dl>
+  </div>
+
+  <div class="markdown summary"><p>A set of general operation for points and paths</p>
+</div>
+  <div class="markdown conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static class PolygonOperations</code></pre>
+  </div>
+
+
+
+
+  <dl class="typelist inheritance">
+    <dt>Inheritance</dt>
+    <dd>
+      <div><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object">object</a></div>
+      <div><span class="xref">PolygonOperations</span></div>
+    </dd>
+  </dl>
+
+
+
+  <dl class="typelist derived">
+    <dt>Inherited Members</dt>
+    <dd>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.equals#system-object-equals(system-object)">object.Equals(object)</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.equals#system-object-equals(system-object-system-object)">object.Equals(object, object)</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.gethashcode">object.GetHashCode()</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.gettype">object.GetType()</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.memberwiseclone">object.MemberwiseClone()</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.referenceequals">object.ReferenceEquals(object, object)</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.tostring">object.ToString()</a>
+    </div>
+  </dd></dl>
+
+
+
+
+
+
+  <h2 class="section" id="methods">Methods
+</h2>
+
+
+  <a id="TVGL_PolygonOperations_AllPolygonIntersectionPointsAlongHorizontalLine_" data-uid="TVGL.PolygonOperations.AllPolygonIntersectionPointsAlongHorizontalLine*"></a>
+
+  <h3 id="TVGL_PolygonOperations_AllPolygonIntersectionPointsAlongHorizontalLine_TVGL_Polygon_System_Double_" data-uid="TVGL.PolygonOperations.AllPolygonIntersectionPointsAlongHorizontalLine(TVGL.Polygon,System.Double)">
+  AllPolygonIntersectionPointsAlongHorizontalLine(Polygon, double)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Find all the polygon intersection points along a single horizontal line.
+Returns a list of intersections from lowest to highest along with the vertex that the line starts from.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static SortedList&lt;double, Vertex2D&gt; AllPolygonIntersectionPointsAlongHorizontalLine(this Polygon polygon, double YValue)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>polygon</code> <a class="xref" href="TVGL.Polygon.html">Polygon</a></dt>
+    <dd><p>The polygon.</p>
+</dd>
+    <dt><code>YValue</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The y value.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.sortedlist-2">SortedList</a>&lt;<a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a>, <a class="xref" href="TVGL.Vertex2D.html">Vertex2D</a>&gt;</dt>
+    <dd><p>SortedList&lt;System.Double, Vertex2D&gt;.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_PolygonOperations_AllPolygonIntersectionPointsAlongHorizontalLines_" data-uid="TVGL.PolygonOperations.AllPolygonIntersectionPointsAlongHorizontalLines*"></a>
+
+  <h3 id="TVGL_PolygonOperations_AllPolygonIntersectionPointsAlongHorizontalLines_System_Collections_Generic_IEnumerable_TVGL_Polygon__System_Double_System_Int32_System_Double_System_Int32__" data-uid="TVGL.PolygonOperations.AllPolygonIntersectionPointsAlongHorizontalLines(System.Collections.Generic.IEnumerable{TVGL.Polygon},System.Double,System.Int32,System.Double,System.Int32@)">
+  AllPolygonIntersectionPointsAlongHorizontalLines(IEnumerable&lt;Polygon&gt;, double, int, double, out int)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Find all the polygon intersection points along horizontal lines.
+Returns a list of double arrays. the double array values correspond to only the x-coordinates. the y-coordinates are
+determined by the input. y = startingYValue + (i+firstIntersectingIndex)*stepSize</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static List&lt;double[]&gt; AllPolygonIntersectionPointsAlongHorizontalLines(this IEnumerable&lt;Polygon&gt; polygons, double startingYValue, int numSteps, double stepSize, out int firstIntersectingIndex)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>polygons</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.Polygon.html">Polygon</a>&gt;</dt>
+    <dd><p>The polygons.</p>
+</dd>
+    <dt><code>startingYValue</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The starting y value.</p>
+</dd>
+    <dt><code>numSteps</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a></dt>
+    <dd><p>The number steps.</p>
+</dd>
+    <dt><code>stepSize</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>Size of the step.</p>
+</dd>
+    <dt><code>firstIntersectingIndex</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a></dt>
+    <dd><p>First index of the intersecting.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.list-1">List</a>&lt;<a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a>[]&gt;</dt>
+    <dd><p>List&lt;System.Double[]&gt;.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_PolygonOperations_AllPolygonIntersectionPointsAlongLine_" data-uid="TVGL.PolygonOperations.AllPolygonIntersectionPointsAlongLine*"></a>
+
+  <h3 id="TVGL_PolygonOperations_AllPolygonIntersectionPointsAlongLine_System_Collections_Generic_IEnumerable_TVGL_Polygon__TVGL_Vector2_System_Double_System_Int32_System_Double_System_Int32__" data-uid="TVGL.PolygonOperations.AllPolygonIntersectionPointsAlongLine(System.Collections.Generic.IEnumerable{TVGL.Polygon},TVGL.Vector2,System.Double,System.Int32,System.Double,System.Int32@)">
+  AllPolygonIntersectionPointsAlongLine(IEnumerable&lt;Polygon&gt;, Vector2, double, int, double, out int)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>All the polygon intersection points along line. The line is swept in it's normal direction. This normal or swept direction
+is provided instead of the usual line direction so as to be clear about the direction of the sweep. Additionally, the
+perpendicular distance from the origin to the line (meeting at a right angle is provided to indicate where the increments start from.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static List&lt;Vector2[]&gt; AllPolygonIntersectionPointsAlongLine(this IEnumerable&lt;Polygon&gt; polygons, Vector2 lineNormalDirection, double perpendicularDistanceToLine, int numSteps, double stepSize, out int firstIntersectingIndex)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>polygons</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.Polygon.html">Polygon</a>&gt;</dt>
+    <dd><p>The polygons.</p>
+</dd>
+    <dt><code>lineNormalDirection</code> <a class="xref" href="TVGL.Vector2.html">Vector2</a></dt>
+    <dd><p>The line direction.</p>
+</dd>
+    <dt><code>perpendicularDistanceToLine</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The line reference.</p>
+</dd>
+    <dt><code>numSteps</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a></dt>
+    <dd><p>The number steps.</p>
+</dd>
+    <dt><code>stepSize</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>Size of the step.</p>
+</dd>
+    <dt><code>firstIntersectingIndex</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a></dt>
+    <dd><p>First index of the intersecting.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.list-1">List</a>&lt;<a class="xref" href="TVGL.Vector2.html">Vector2</a>[]&gt;</dt>
+    <dd><p>List&lt;Vector2&gt;.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <h4 class="section">Exceptions</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.notimplementedexception">NotImplementedException</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+  <a id="TVGL_PolygonOperations_AllPolygonIntersectionPointsAlongVerticalLines_" data-uid="TVGL.PolygonOperations.AllPolygonIntersectionPointsAlongVerticalLines*"></a>
+
+  <h3 id="TVGL_PolygonOperations_AllPolygonIntersectionPointsAlongVerticalLines_System_Collections_Generic_IEnumerable_TVGL_Polygon__System_Double_System_Int32_System_Double_System_Int32__" data-uid="TVGL.PolygonOperations.AllPolygonIntersectionPointsAlongVerticalLines(System.Collections.Generic.IEnumerable{TVGL.Polygon},System.Double,System.Int32,System.Double,System.Int32@)">
+  AllPolygonIntersectionPointsAlongVerticalLines(IEnumerable&lt;Polygon&gt;, double, int, double, out int)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Find all the polygon intersection points along vertical lines.
+Returns a list of double arrays. the double array values correspond to only the y-coordinates. the x-coordinates are determined
+by the input. x = startingXValue + (i+firstIntersectingIndex)*stepSize</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static List&lt;double[]&gt; AllPolygonIntersectionPointsAlongVerticalLines(this IEnumerable&lt;Polygon&gt; polygons, double startingXValue, int numSteps, double stepSize, out int firstIntersectingIndex)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>polygons</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.Polygon.html">Polygon</a>&gt;</dt>
+    <dd><p>The polygons.</p>
+</dd>
+    <dt><code>startingXValue</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The starting x value.</p>
+</dd>
+    <dt><code>numSteps</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a></dt>
+    <dd><p>The number steps.</p>
+</dd>
+    <dt><code>stepSize</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>Size of the step.</p>
+</dd>
+    <dt><code>firstIntersectingIndex</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a></dt>
+    <dd><p>First index of the intersecting.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.list-1">List</a>&lt;<a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a>[]&gt;</dt>
+    <dd><p>List&lt;System.Double[]&gt;.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_PolygonOperations_Area_" data-uid="TVGL.PolygonOperations.Area*"></a>
+
+  <h3 id="TVGL_PolygonOperations_Area_System_Collections_Generic_IEnumerable_System_Collections_Generic_IEnumerable_TVGL_Vector2___" data-uid="TVGL.PolygonOperations.Area(System.Collections.Generic.IEnumerable{System.Collections.Generic.IEnumerable{TVGL.Vector2}})">
+  Area(IEnumerable&lt;IEnumerable&lt;Vector2&gt;&gt;)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Calculate the area for a 2D set of points. Consider using Polygon class when possible.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static double Area(this IEnumerable&lt;IEnumerable&lt;Vector2&gt;&gt; paths)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>paths</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.Vector2.html">Vector2</a>&gt;&gt;</dt>
+    <dd><p>The paths.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>System.Double.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_PolygonOperations_Area_" data-uid="TVGL.PolygonOperations.Area*"></a>
+
+  <h3 id="TVGL_PolygonOperations_Area_System_Collections_Generic_IEnumerable_TVGL_Vector2__" data-uid="TVGL.PolygonOperations.Area(System.Collections.Generic.IEnumerable{TVGL.Vector2})">
+  Area(IEnumerable&lt;Vector2&gt;)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the area for a 2D set of points defining a polygon. Consider using Polygon class when possible.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static double Area(this IEnumerable&lt;Vector2&gt; polygon)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>polygon</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.Vector2.html">Vector2</a>&gt;</dt>
+    <dd><p>The polygon.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>System.Double.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_PolygonOperations_Complexify_" data-uid="TVGL.PolygonOperations.Complexify*"></a>
+
+  <h3 id="TVGL_PolygonOperations_Complexify_System_Collections_Generic_IEnumerable_TVGL_Polygon__System_Double_" data-uid="TVGL.PolygonOperations.Complexify(System.Collections.Generic.IEnumerable{TVGL.Polygon},System.Double)">
+  Complexify(IEnumerable&lt;Polygon&gt;, double)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Complexifies the specified polygons so that no edge is longer than the maxAllowableLength.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static void Complexify(this IEnumerable&lt;Polygon&gt; polygons, double maxAllowableLength)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>polygons</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.Polygon.html">Polygon</a>&gt;</dt>
+    <dd><p>The polygons.</p>
+</dd>
+    <dt><code>maxAllowableLength</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>Maximum length of the allowable.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_PolygonOperations_Complexify_" data-uid="TVGL.PolygonOperations.Complexify*"></a>
+
+  <h3 id="TVGL_PolygonOperations_Complexify_System_Collections_Generic_IEnumerable_TVGL_Polygon__System_Int32_" data-uid="TVGL.PolygonOperations.Complexify(System.Collections.Generic.IEnumerable{TVGL.Polygon},System.Int32)">
+  Complexify(IEnumerable&lt;Polygon&gt;, int)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Complexifies the specified polygons so that the sum of edges equal the target number.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static void Complexify(this IEnumerable&lt;Polygon&gt; polygons, int targetNumberOfPoints)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>polygons</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.Polygon.html">Polygon</a>&gt;</dt>
+    <dd><p>The polygons.</p>
+</dd>
+    <dt><code>targetNumberOfPoints</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a></dt>
+    <dd><p>The target number of points.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_PolygonOperations_Complexify_" data-uid="TVGL.PolygonOperations.Complexify*"></a>
+
+  <h3 id="TVGL_PolygonOperations_Complexify_TVGL_Polygon_System_Double_" data-uid="TVGL.PolygonOperations.Complexify(TVGL.Polygon,System.Double)">
+  Complexify(Polygon, double)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Complexifies the specified polygon so that no edge is longer than the maxAllowableLength.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static void Complexify(this Polygon polygon, double maxAllowableLength)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>polygon</code> <a class="xref" href="TVGL.Polygon.html">Polygon</a></dt>
+    <dd><p>The polygon.</p>
+</dd>
+    <dt><code>maxAllowableLength</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>Maximum length of the allowable.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_PolygonOperations_Complexify_" data-uid="TVGL.PolygonOperations.Complexify*"></a>
+
+  <h3 id="TVGL_PolygonOperations_Complexify_TVGL_Polygon_System_Int32_" data-uid="TVGL.PolygonOperations.Complexify(TVGL.Polygon,System.Int32)">
+  Complexify(Polygon, int)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Complexifies the specified polygon so that the sum of edges equal the target number.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static void Complexify(this Polygon polygon, int targetNumberOfPoints)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>polygon</code> <a class="xref" href="TVGL.Polygon.html">Polygon</a></dt>
+    <dd><p>The polygon.</p>
+</dd>
+    <dt><code>targetNumberOfPoints</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a></dt>
+    <dd><p>The target number of points.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_PolygonOperations_ComplexifyToNewPolygon_" data-uid="TVGL.PolygonOperations.ComplexifyToNewPolygon*"></a>
+
+  <h3 id="TVGL_PolygonOperations_ComplexifyToNewPolygon_TVGL_Polygon_System_Double_" data-uid="TVGL.PolygonOperations.ComplexifyToNewPolygon(TVGL.Polygon,System.Double)">
+  ComplexifyToNewPolygon(Polygon, double)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Complexifies the specified polygon so that no edge is longer than the maxAllowableLength.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static Polygon ComplexifyToNewPolygon(this Polygon polygon, double maxAllowableLength)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>polygon</code> <a class="xref" href="TVGL.Polygon.html">Polygon</a></dt>
+    <dd><p>The polygon.</p>
+</dd>
+    <dt><code>maxAllowableLength</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>Maximum length of the allowable.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.Polygon.html">Polygon</a></dt>
+    <dd><p>Polygon.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_PolygonOperations_ComplexifyToNewPolygon_" data-uid="TVGL.PolygonOperations.ComplexifyToNewPolygon*"></a>
+
+  <h3 id="TVGL_PolygonOperations_ComplexifyToNewPolygon_TVGL_Polygon_System_Int32_" data-uid="TVGL.PolygonOperations.ComplexifyToNewPolygon(TVGL.Polygon,System.Int32)">
+  ComplexifyToNewPolygon(Polygon, int)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Complexifies the specified polygon so that the sum of edges equal the target number.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static Polygon ComplexifyToNewPolygon(this Polygon polygon, int targetNumberOfPoints)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>polygon</code> <a class="xref" href="TVGL.Polygon.html">Polygon</a></dt>
+    <dd><p>The polygon.</p>
+</dd>
+    <dt><code>targetNumberOfPoints</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a></dt>
+    <dd><p>The target number of points.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.Polygon.html">Polygon</a></dt>
+    <dd><p>Polygon.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_PolygonOperations_ComplexifyToNewPolygons_" data-uid="TVGL.PolygonOperations.ComplexifyToNewPolygons*"></a>
+
+  <h3 id="TVGL_PolygonOperations_ComplexifyToNewPolygons_System_Collections_Generic_IEnumerable_TVGL_Polygon__System_Double_" data-uid="TVGL.PolygonOperations.ComplexifyToNewPolygons(System.Collections.Generic.IEnumerable{TVGL.Polygon},System.Double)">
+  ComplexifyToNewPolygons(IEnumerable&lt;Polygon&gt;, double)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Complexifies the specified polygons so that no edge is longer than the maxAllowableLength.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static IEnumerable&lt;Polygon&gt; ComplexifyToNewPolygons(this IEnumerable&lt;Polygon&gt; polygons, double maxAllowableLength)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>polygons</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.Polygon.html">Polygon</a>&gt;</dt>
+    <dd><p>The polygons.</p>
+</dd>
+    <dt><code>maxAllowableLength</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>Maximum length of the allowable.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.Polygon.html">Polygon</a>&gt;</dt>
+    <dd><p>IEnumerable&lt;Polygon&gt;.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <h4 class="section">Exceptions</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.notimplementedexception">NotImplementedException</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+  <a id="TVGL_PolygonOperations_ComplexifyToNewPolygons_" data-uid="TVGL.PolygonOperations.ComplexifyToNewPolygons*"></a>
+
+  <h3 id="TVGL_PolygonOperations_ComplexifyToNewPolygons_System_Collections_Generic_IEnumerable_TVGL_Polygon__System_Int32_" data-uid="TVGL.PolygonOperations.ComplexifyToNewPolygons(System.Collections.Generic.IEnumerable{TVGL.Polygon},System.Int32)">
+  ComplexifyToNewPolygons(IEnumerable&lt;Polygon&gt;, int)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Complexifies the specified polygons so that the sum of edges equal the target number.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static IEnumerable&lt;Polygon&gt; ComplexifyToNewPolygons(this IEnumerable&lt;Polygon&gt; polygons, int targetNumberOfPoints)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>polygons</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.Polygon.html">Polygon</a>&gt;</dt>
+    <dd><p>The polygons.</p>
+</dd>
+    <dt><code>targetNumberOfPoints</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a></dt>
+    <dd><p>The target number of points.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.Polygon.html">Polygon</a>&gt;</dt>
+    <dd><p>IEnumerable&lt;Polygon&gt;.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <h4 class="section">Exceptions</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.notimplementedexception">NotImplementedException</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+  <a id="TVGL_PolygonOperations_ConvertTo1DDoublesCollection_" data-uid="TVGL.PolygonOperations.ConvertTo1DDoublesCollection*"></a>
+
+  <h3 id="TVGL_PolygonOperations_ConvertTo1DDoublesCollection_System_Collections_Generic_IEnumerable_TVGL_Vector2__" data-uid="TVGL.PolygonOperations.ConvertTo1DDoublesCollection(System.Collections.Generic.IEnumerable{TVGL.Vector2})">
+  ConvertTo1DDoublesCollection(IEnumerable&lt;Vector2&gt;)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Converts the 2D coordinates into a 1D collection of doubles. e.g. { X1, Y1, X2, Y2, ... }</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static IEnumerable&lt;double&gt; ConvertTo1DDoublesCollection(this IEnumerable&lt;Vector2&gt; coordinates)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>coordinates</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.Vector2.html">Vector2</a>&gt;</dt>
+    <dd><p>The coordinates.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a>&gt;</dt>
+    <dd><p>IEnumerable&lt;System.Double&gt;.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_PolygonOperations_ConvertToVector2s_" data-uid="TVGL.PolygonOperations.ConvertToVector2s*"></a>
+
+  <h3 id="TVGL_PolygonOperations_ConvertToVector2s_System_Collections_Generic_IEnumerable_System_Double__" data-uid="TVGL.PolygonOperations.ConvertToVector2s(System.Collections.Generic.IEnumerable{System.Double})">
+  ConvertToVector2s(IEnumerable&lt;double&gt;)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Converts a 1D collection of doubles. e.g. { X1, Y1, X2, Y2, ... } into a collection of 2D coordiantes.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static IEnumerable&lt;Vector2&gt; ConvertToVector2s(this IEnumerable&lt;double&gt; coordinates)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>coordinates</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a>&gt;</dt>
+    <dd><p>The coordinates.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.Vector2.html">Vector2</a>&gt;</dt>
+    <dd><p>IEnumerable&lt;Vector2&gt;.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <h4 class="section">Exceptions</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.argumentexception">ArgumentException</a></dt>
+    <dd><p>An odd number of coordinates have been provided to &quot; +
+&quot;convert the 1D array of double to an array of vectors.</p>
+</dd>
+  </dl>
+
+
+
+  <a id="TVGL_PolygonOperations_Create2DMedialAxis_" data-uid="TVGL.PolygonOperations.Create2DMedialAxis*"></a>
+
+  <h3 id="TVGL_PolygonOperations_Create2DMedialAxis_System_Collections_Generic_IEnumerable_System_Collections_Generic_IEnumerable_TVGL_Vector2___" data-uid="TVGL.PolygonOperations.Create2DMedialAxis(System.Collections.Generic.IEnumerable{System.Collections.Generic.IEnumerable{TVGL.Vector2}})">
+  Create2DMedialAxis(IEnumerable&lt;IEnumerable&lt;Vector2&gt;&gt;)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Creates the 2D Medial Axis from a part's Silhouette. Currently ignores holes.
+Best way to show is using &quot;Presenter.ShowAndHang(silhouette, medialAxis, &quot;&quot;, Plot2DType.Line, false);&quot;</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static List&lt;List&lt;Vector2&gt;&gt; Create2DMedialAxis(this IEnumerable&lt;IEnumerable&lt;Vector2&gt;&gt; silhouette)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>silhouette</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.Vector2.html">Vector2</a>&gt;&gt;</dt>
+    <dd><p>The silhouette.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.list-1">List</a>&lt;<a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.list-1">List</a>&lt;<a class="xref" href="TVGL.Vector2.html">Vector2</a>&gt;&gt;</dt>
+    <dd><p>List&lt;List&lt;Vector2&gt;&gt;.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_PolygonOperations_CreatePolygonTree_" data-uid="TVGL.PolygonOperations.CreatePolygonTree*"></a>
+
+  <h3 id="TVGL_PolygonOperations_CreatePolygonTree_System_Collections_Generic_IEnumerable_TVGL_Polygon__System_Boolean_System_Boolean_" data-uid="TVGL.PolygonOperations.CreatePolygonTree(System.Collections.Generic.IEnumerable{TVGL.Polygon},System.Boolean,System.Boolean)">
+  CreatePolygonTree(IEnumerable&lt;Polygon&gt;, bool, bool)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Creates the polygon tree from a collection of flat (i.e. no inner polygons) polygons.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static List&lt;Polygon&gt; CreatePolygonTree(this IEnumerable&lt;Polygon&gt; polygons, bool polygonSignIsCorrect, bool alreadyOrderedInIncreasingArea = false)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>polygons</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.Polygon.html">Polygon</a>&gt;</dt>
+    <dd><p>The polygons.</p>
+</dd>
+    <dt><code>polygonSignIsCorrect</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd><p>if set to <code>true</code> [polygon sign is correct].</p>
+</dd>
+    <dt><code>alreadyOrderedInIncreasingArea</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd><p>if set to <code>true</code> [already ordered in increasing area].</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.list-1">List</a>&lt;<a class="xref" href="TVGL.Polygon.html">Polygon</a>&gt;</dt>
+    <dd><p>List&lt;Polygon&gt;.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_PolygonOperations_CreateShallowPolygonTrees_" data-uid="TVGL.PolygonOperations.CreateShallowPolygonTrees*"></a>
+
+  <h3 id="TVGL_PolygonOperations_CreateShallowPolygonTrees_System_Collections_Generic_IEnumerable_System_Collections_Generic_IEnumerable_TVGL_Vector2___System_Boolean_" data-uid="TVGL.PolygonOperations.CreateShallowPolygonTrees(System.Collections.Generic.IEnumerable{System.Collections.Generic.IEnumerable{TVGL.Vector2}},System.Boolean)">
+  CreateShallowPolygonTrees(IEnumerable&lt;IEnumerable&lt;Vector2&gt;&gt;, bool)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Creates the shallow polygon trees from a collection of a collection of coordinates.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static List&lt;Polygon&gt; CreateShallowPolygonTrees(this IEnumerable&lt;IEnumerable&lt;Vector2&gt;&gt; paths, bool vertexNegPosOrderIsGuaranteedCorrect)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>paths</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.Vector2.html">Vector2</a>&gt;&gt;</dt>
+    <dd><p>The paths.</p>
+</dd>
+    <dt><code>vertexNegPosOrderIsGuaranteedCorrect</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd><p>if set to <code>true</code> [vertex neg position order is guaranteed correct].</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.list-1">List</a>&lt;<a class="xref" href="TVGL.Polygon.html">Polygon</a>&gt;</dt>
+    <dd><p>List&lt;Polygon&gt;.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_PolygonOperations_CreateShallowPolygonTrees_" data-uid="TVGL.PolygonOperations.CreateShallowPolygonTrees*"></a>
+
+  <h3 id="TVGL_PolygonOperations_CreateShallowPolygonTrees_System_Collections_Generic_IEnumerable_TVGL_Polygon__System_Boolean_System_Boolean_" data-uid="TVGL.PolygonOperations.CreateShallowPolygonTrees(System.Collections.Generic.IEnumerable{TVGL.Polygon},System.Boolean,System.Boolean)">
+  CreateShallowPolygonTrees(IEnumerable&lt;Polygon&gt;, bool, bool)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Creates the shallow polygon trees from a collection of flat (i.e. no inner polygons) polygons.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static List&lt;Polygon&gt; CreateShallowPolygonTrees(this IEnumerable&lt;Polygon&gt; polygons, bool vertexNegPosOrderIsGuaranteedCorrect, bool alreadyOrderedInIncreasingArea = false)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>polygons</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.Polygon.html">Polygon</a>&gt;</dt>
+    <dd><p>The polygons.</p>
+</dd>
+    <dt><code>vertexNegPosOrderIsGuaranteedCorrect</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd><p>if set to <code>true</code> [vertex neg position order is guaranteed correct].</p>
+</dd>
+    <dt><code>alreadyOrderedInIncreasingArea</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd><p>if set to <code>true</code> [already ordered in increasing area].</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.list-1">List</a>&lt;<a class="xref" href="TVGL.Polygon.html">Polygon</a>&gt;</dt>
+    <dd><p>List&lt;Polygon&gt;.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_PolygonOperations_CreateXMonotonePolygons_" data-uid="TVGL.PolygonOperations.CreateXMonotonePolygons*"></a>
+
+  <h3 id="TVGL_PolygonOperations_CreateXMonotonePolygons_TVGL_Polygon_" data-uid="TVGL.PolygonOperations.CreateXMonotonePolygons(TVGL.Polygon)">
+  CreateXMonotonePolygons(Polygon)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Creates the x monotone polygons.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static IEnumerable&lt;Polygon&gt; CreateXMonotonePolygons(this Polygon polygon)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>polygon</code> <a class="xref" href="TVGL.Polygon.html">Polygon</a></dt>
+    <dd><p>The polygon.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.Polygon.html">Polygon</a>&gt;</dt>
+    <dd><p>IEnumerable&lt;Polygon&gt;.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_PolygonOperations_ExclusiveOr_" data-uid="TVGL.PolygonOperations.ExclusiveOr*"></a>
+
+  <h3 id="TVGL_PolygonOperations_ExclusiveOr_TVGL_Polygon_TVGL_Polygon_TVGL_PolygonCollection_" data-uid="TVGL.PolygonOperations.ExclusiveOr(TVGL.Polygon,TVGL.Polygon,TVGL.PolygonCollection)">
+  ExclusiveOr(Polygon, Polygon, PolygonCollection)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Returns the list of polygons that are the Exclusive-OR of the two input polygons. Exclusive-OR are the regions where one polgyon
+resides but not both.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static List&lt;Polygon&gt; ExclusiveOr(this Polygon polygonA, Polygon polygonB, PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>polygonA</code> <a class="xref" href="TVGL.Polygon.html">Polygon</a></dt>
+    <dd><p>The polygon a.</p>
+</dd>
+    <dt><code>polygonB</code> <a class="xref" href="TVGL.Polygon.html">Polygon</a></dt>
+    <dd><p>The polygon b.</p>
+</dd>
+    <dt><code>outputAsCollectionType</code> <a class="xref" href="TVGL.PolygonCollection.html">PolygonCollection</a></dt>
+    <dd><p>Type of the output as collection.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.list-1">List</a>&lt;<a class="xref" href="TVGL.Polygon.html">Polygon</a>&gt;</dt>
+    <dd><p>System.Collections.Generic.List&lt;TVGL.TwoDimensional.Polygon&gt;.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_PolygonOperations_ExclusiveOr_" data-uid="TVGL.PolygonOperations.ExclusiveOr*"></a>
+
+  <h3 id="TVGL_PolygonOperations_ExclusiveOr_TVGL_Polygon_TVGL_Polygon_TVGL_PolygonInteractionRecord_TVGL_PolygonCollection_System_Double_" data-uid="TVGL.PolygonOperations.ExclusiveOr(TVGL.Polygon,TVGL.Polygon,TVGL.PolygonInteractionRecord,TVGL.PolygonCollection,System.Double)">
+  ExclusiveOr(Polygon, Polygon, PolygonInteractionRecord, PolygonCollection, double)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Returns the list of polygons that are the Exclusive-OR of the two input polygons. Exclusive-OR are the regions where one polgyon
+resides but not both. By providing the intersections between the two polygons, the operation will be performed with less time and memory.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static List&lt;Polygon&gt; ExclusiveOr(this Polygon polygonA, Polygon polygonB, PolygonInteractionRecord interactionRecord, PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles, double tolerance = NaN)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>polygonA</code> <a class="xref" href="TVGL.Polygon.html">Polygon</a></dt>
+    <dd><p>The polygon a.</p>
+</dd>
+    <dt><code>polygonB</code> <a class="xref" href="TVGL.Polygon.html">Polygon</a></dt>
+    <dd><p>The polygon b.</p>
+</dd>
+    <dt><code>interactionRecord</code> <a class="xref" href="TVGL.PolygonInteractionRecord.html">PolygonInteractionRecord</a></dt>
+    <dd><p>The interaction record.</p>
+</dd>
+    <dt><code>outputAsCollectionType</code> <a class="xref" href="TVGL.PolygonCollection.html">PolygonCollection</a></dt>
+    <dd><p>Type of the output as collection.</p>
+</dd>
+    <dt><code>tolerance</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The tolerance.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.list-1">List</a>&lt;<a class="xref" href="TVGL.Polygon.html">Polygon</a>&gt;</dt>
+    <dd><p>System.Collections.Generic.List&lt;TVGL.TwoDimensional.Polygon&gt;.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_PolygonOperations_GetMonotonicityChange_" data-uid="TVGL.PolygonOperations.GetMonotonicityChange*"></a>
+
+  <h3 id="TVGL_PolygonOperations_GetMonotonicityChange_TVGL_Vertex2D_" data-uid="TVGL.PolygonOperations.GetMonotonicityChange(TVGL.Vertex2D)">
+  GetMonotonicityChange(Vertex2D)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the monotonicity change.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static MonotonicityChange GetMonotonicityChange(this Vertex2D vertex)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>vertex</code> <a class="xref" href="TVGL.Vertex2D.html">Vertex2D</a></dt>
+    <dd><p>The vertex.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.MonotonicityChange.html">MonotonicityChange</a></dt>
+    <dd><p>MonotonicityChange.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <h4 class="section">Exceptions</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.argumentexception">ArgumentException</a></dt>
+    <dd><p>vertex does not connect to polygon edges. Be sure to invoke&quot; +
+&quot; MakePolygonEdgesIfNonExistent on parent polygon before this calling this method. - vertex</p>
+</dd>
+  </dl>
+
+
+
+  <a id="TVGL_PolygonOperations_GetPolygonInteraction_" data-uid="TVGL.PolygonOperations.GetPolygonInteraction*"></a>
+
+  <h3 id="TVGL_PolygonOperations_GetPolygonInteraction_TVGL_Polygon_TVGL_Polygon_" data-uid="TVGL.PolygonOperations.GetPolygonInteraction(TVGL.Polygon,TVGL.Polygon)">
+  GetPolygonInteraction(Polygon, Polygon)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the polygon relationship of PolygonA to PolygonB and the intersections between them.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static PolygonInteractionRecord GetPolygonInteraction(this Polygon polygonA, Polygon polygonB)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>polygonA</code> <a class="xref" href="TVGL.Polygon.html">Polygon</a></dt>
+    <dd><p>The polygon a.</p>
+</dd>
+    <dt><code>polygonB</code> <a class="xref" href="TVGL.Polygon.html">Polygon</a></dt>
+    <dd><p>The polygon b.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.PolygonInteractionRecord.html">PolygonInteractionRecord</a></dt>
+    <dd><p>PolygonRelationship.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_PolygonOperations_GetSelfIntersections_" data-uid="TVGL.PolygonOperations.GetSelfIntersections*"></a>
+
+  <h3 id="TVGL_PolygonOperations_GetSelfIntersections_TVGL_Polygon_" data-uid="TVGL.PolygonOperations.GetSelfIntersections(TVGL.Polygon)">
+  GetSelfIntersections(Polygon)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the self intersections.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static List&lt;SegmentIntersection&gt; GetSelfIntersections(this Polygon polygonA)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>polygonA</code> <a class="xref" href="TVGL.Polygon.html">Polygon</a></dt>
+    <dd><p>The polygon a.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.list-1">List</a>&lt;<a class="xref" href="TVGL.SegmentIntersection.html">SegmentIntersection</a>&gt;</dt>
+    <dd><p>List&lt;SegmentIntersection&gt;.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_PolygonOperations_Intersect_" data-uid="TVGL.PolygonOperations.Intersect*"></a>
+
+  <h3 id="TVGL_PolygonOperations_Intersect_TVGL_Polygon_TVGL_Polygon_TVGL_PolygonCollection_System_Double_" data-uid="TVGL.PolygonOperations.Intersect(TVGL.Polygon,TVGL.Polygon,TVGL.PolygonCollection,System.Double)">
+  Intersect(Polygon, Polygon, PolygonCollection, double)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Returns the list of polygons that result from the subshapes common to both A and B.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static List&lt;Polygon&gt; Intersect(this Polygon polygonA, Polygon polygonB, PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles, double tolerance = NaN)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>polygonA</code> <a class="xref" href="TVGL.Polygon.html">Polygon</a></dt>
+    <dd><p>The polygon a.</p>
+</dd>
+    <dt><code>polygonB</code> <a class="xref" href="TVGL.Polygon.html">Polygon</a></dt>
+    <dd><p>The polygon b.</p>
+</dd>
+    <dt><code>outputAsCollectionType</code> <a class="xref" href="TVGL.PolygonCollection.html">PolygonCollection</a></dt>
+    <dd><p>Type of the output as collection.</p>
+</dd>
+    <dt><code>tolerance</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The tolerance.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.list-1">List</a>&lt;<a class="xref" href="TVGL.Polygon.html">Polygon</a>&gt;</dt>
+    <dd><p>System.Collections.Generic.List&lt;TVGL.TwoDimensional.Polygon&gt;.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_PolygonOperations_Intersect_" data-uid="TVGL.PolygonOperations.Intersect*"></a>
+
+  <h3 id="TVGL_PolygonOperations_Intersect_TVGL_Polygon_TVGL_Polygon_TVGL_PolygonInteractionRecord_TVGL_PolygonCollection_System_Double_" data-uid="TVGL.PolygonOperations.Intersect(TVGL.Polygon,TVGL.Polygon,TVGL.PolygonInteractionRecord,TVGL.PolygonCollection,System.Double)">
+  Intersect(Polygon, Polygon, PolygonInteractionRecord, PolygonCollection, double)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Returns the list of polygons that result from the subshapes common to both A and B. By providing the intersections
+between the two polygons, the operation will be performed with less time and memory.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static List&lt;Polygon&gt; Intersect(this Polygon polygonA, Polygon polygonB, PolygonInteractionRecord interaction, PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles, double tolerance = NaN)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>polygonA</code> <a class="xref" href="TVGL.Polygon.html">Polygon</a></dt>
+    <dd><p>The polygon a.</p>
+</dd>
+    <dt><code>polygonB</code> <a class="xref" href="TVGL.Polygon.html">Polygon</a></dt>
+    <dd><p>The polygon b.</p>
+</dd>
+    <dt><code>interaction</code> <a class="xref" href="TVGL.PolygonInteractionRecord.html">PolygonInteractionRecord</a></dt>
+    <dd><p>The interaction.</p>
+</dd>
+    <dt><code>outputAsCollectionType</code> <a class="xref" href="TVGL.PolygonCollection.html">PolygonCollection</a></dt>
+    <dd><p>Type of the output as collection.</p>
+</dd>
+    <dt><code>tolerance</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The minimum allowable area.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.list-1">List</a>&lt;<a class="xref" href="TVGL.Polygon.html">Polygon</a>&gt;</dt>
+    <dd><p>System.Collections.Generic.List&lt;TVGL.TwoDimensional.Polygon&gt;.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_PolygonOperations_IntersectPolygons_" data-uid="TVGL.PolygonOperations.IntersectPolygons*"></a>
+
+  <h3 id="TVGL_PolygonOperations_IntersectPolygons_System_Collections_Generic_IEnumerable_TVGL_Polygon__System_Collections_Generic_IEnumerable_TVGL_Polygon__TVGL_PolygonCollection_" data-uid="TVGL.PolygonOperations.IntersectPolygons(System.Collections.Generic.IEnumerable{TVGL.Polygon},System.Collections.Generic.IEnumerable{TVGL.Polygon},TVGL.PolygonCollection)">
+  IntersectPolygons(IEnumerable&lt;Polygon&gt;, IEnumerable&lt;Polygon&gt;, PolygonCollection)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Returns the list of polygons that are the sub-shapes of the two collections of polygons. Notice this is called IntersectPolygons here
+to distinguish it from the LINQ function Intersect, which is also a valid extension for any IEnumerable collection.
+Notice also that any overlap between the polygons in A or the polygons in B are ignored. Finally, all inputs must be positive.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static List&lt;Polygon&gt; IntersectPolygons(this IEnumerable&lt;Polygon&gt; polygonsA, IEnumerable&lt;Polygon&gt; polygonsB, PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>polygonsA</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.Polygon.html">Polygon</a>&gt;</dt>
+    <dd><p>The polygons a.</p>
+</dd>
+    <dt><code>polygonsB</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.Polygon.html">Polygon</a>&gt;</dt>
+    <dd><p>The polygons b.</p>
+</dd>
+    <dt><code>outputAsCollectionType</code> <a class="xref" href="TVGL.PolygonCollection.html">PolygonCollection</a></dt>
+    <dd><p>Type of the output as collection.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.list-1">List</a>&lt;<a class="xref" href="TVGL.Polygon.html">Polygon</a>&gt;</dt>
+    <dd><p>System.Collections.Generic.List&lt;TVGL.TwoDimensional.Polygon&gt;.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_PolygonOperations_IntersectPolygons_" data-uid="TVGL.PolygonOperations.IntersectPolygons*"></a>
+
+  <h3 id="TVGL_PolygonOperations_IntersectPolygons_System_Collections_Generic_IEnumerable_TVGL_Polygon__TVGL_PolygonCollection_" data-uid="TVGL.PolygonOperations.IntersectPolygons(System.Collections.Generic.IEnumerable{TVGL.Polygon},TVGL.PolygonCollection)">
+  IntersectPolygons(IEnumerable&lt;Polygon&gt;, PolygonCollection)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Returns the list of polygons that are the sub-shapes of ALL of the provided polygons. Notice this is called IntersectPolygons here
+to distinguish it from the LINQ function Intersect, which is also a valid extension for any IEnumerable collection.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static List&lt;Polygon&gt; IntersectPolygons(this IEnumerable&lt;Polygon&gt; polygons, PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>polygons</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.Polygon.html">Polygon</a>&gt;</dt>
+    <dd><p>The polygons.</p>
+</dd>
+    <dt><code>outputAsCollectionType</code> <a class="xref" href="TVGL.PolygonCollection.html">PolygonCollection</a></dt>
+    <dd><p>Type of the output as collection.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.list-1">List</a>&lt;<a class="xref" href="TVGL.Polygon.html">Polygon</a>&gt;</dt>
+    <dd><p>System.Collections.Generic.List&lt;TVGL.TwoDimensional.Polygon&gt;.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_PolygonOperations_IsCircular_" data-uid="TVGL.PolygonOperations.IsCircular*"></a>
+
+  <h3 id="TVGL_PolygonOperations_IsCircular_System_Collections_Generic_IEnumerable_TVGL_Vector2__TVGL_Circle__System_Double_" data-uid="TVGL.PolygonOperations.IsCircular(System.Collections.Generic.IEnumerable{TVGL.Vector2},TVGL.Circle@,System.Double)">
+  IsCircular(IEnumerable&lt;Vector2&gt;, out Circle, double)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Determines whether the specified polygon is circular.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static bool IsCircular(this IEnumerable&lt;Vector2&gt; polygon, out Circle minCircle, double confidencePercentage = 0.997)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>polygon</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.Vector2.html">Vector2</a>&gt;</dt>
+    <dd><p>The polygon.</p>
+</dd>
+    <dt><code>minCircle</code> <a class="xref" href="TVGL.Circle.html">Circle</a></dt>
+    <dd><p>The minimum circle.</p>
+</dd>
+    <dt><code>confidencePercentage</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The confidence percentage.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd><p><code>true</code> if the specified polygon is circular; otherwise, <code>false</code>.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_PolygonOperations_IsCircular_" data-uid="TVGL.PolygonOperations.IsCircular*"></a>
+
+  <h3 id="TVGL_PolygonOperations_IsCircular_TVGL_Polygon_TVGL_Circle__System_Double_" data-uid="TVGL.PolygonOperations.IsCircular(TVGL.Polygon,TVGL.Circle@,System.Double)">
+  IsCircular(Polygon, out Circle, double)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Determines whether the specified polygon is circular.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static bool IsCircular(this Polygon polygon, out Circle minCircle, double confidencePercentage = 0.997)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>polygon</code> <a class="xref" href="TVGL.Polygon.html">Polygon</a></dt>
+    <dd><p>The polygon.</p>
+</dd>
+    <dt><code>minCircle</code> <a class="xref" href="TVGL.Circle.html">Circle</a></dt>
+    <dd><p>The minimum circle.</p>
+</dd>
+    <dt><code>confidencePercentage</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The confidence percentage.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd><p><code>true</code> if the specified polygon is circular; otherwise, <code>false</code>.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_PolygonOperations_IsPointInsidePolygon_" data-uid="TVGL.PolygonOperations.IsPointInsidePolygon*"></a>
+
+  <h3 id="TVGL_PolygonOperations_IsPointInsidePolygon_System_Collections_Generic_List_TVGL_Vector2__TVGL_Vector2_System_Boolean_" data-uid="TVGL.PolygonOperations.IsPointInsidePolygon(System.Collections.Generic.List{TVGL.Vector2},TVGL.Vector2,System.Boolean)">
+  IsPointInsidePolygon(List&lt;Vector2&gt;, Vector2, bool)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Determines if a point is inside a polygon, where a polygon is an ordered list of 2D points.
+The polygon must not be self-intersecting but the direction of the polygon does not matter.
+Updated by Brandon Massoni: 8.11.2017</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">[Obsolete(&quot;Polygon methods should use the Polygon class for improved robustness and speed.&quot;)]
+public static bool IsPointInsidePolygon(this List&lt;Vector2&gt; path, Vector2 pointInQuestion, bool onBoundaryIsInside = false)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>path</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.list-1">List</a>&lt;<a class="xref" href="TVGL.Vector2.html">Vector2</a>&gt;</dt>
+    <dd><p>The path.</p>
+</dd>
+    <dt><code>pointInQuestion</code> <a class="xref" href="TVGL.Vector2.html">Vector2</a></dt>
+    <dd><p>The point in question.</p>
+</dd>
+    <dt><code>onBoundaryIsInside</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd><p>if set to <code>true</code> [on boundary is inside].</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd><p><code>true</code> if [is point inside polygon] [the specified point in question]; otherwise, <code>false</code>.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_PolygonOperations_IsPointInsidePolygon_" data-uid="TVGL.PolygonOperations.IsPointInsidePolygon*"></a>
+
+  <h3 id="TVGL_PolygonOperations_IsPointInsidePolygon_TVGL_Polygon_System_Boolean_TVGL_Vector2_System_Boolean__System_Boolean_" data-uid="TVGL.PolygonOperations.IsPointInsidePolygon(TVGL.Polygon,System.Boolean,TVGL.Vector2,System.Boolean@,System.Boolean)">
+  IsPointInsidePolygon(Polygon, bool, Vector2, out bool, bool)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Determines if a point is inside a polygon. The polygon can be positive or negative. In either case,
+the result is true is the polygon encloses the point. Additionally output parameters can be used to
+locate the closest line above or below the point.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static bool IsPointInsidePolygon(this Polygon polygon, bool onlyTopPolygon, Vector2 pointInQuestion, out bool onBoundary, bool onBoundaryIsInside = true)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>polygon</code> <a class="xref" href="TVGL.Polygon.html">Polygon</a></dt>
+    <dd><p>The polygon.</p>
+</dd>
+    <dt><code>onlyTopPolygon</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd><p>if set to <code>true</code> [only top polygon].</p>
+</dd>
+    <dt><code>pointInQuestion</code> <a class="xref" href="TVGL.Vector2.html">Vector2</a></dt>
+    <dd><p>The point in question.</p>
+</dd>
+    <dt><code>onBoundary</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd><p>if set to <code>true</code> [on boundary].</p>
+</dd>
+    <dt><code>onBoundaryIsInside</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd><p>if set to <code>true</code> [on boundary is inside].</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd><p><code>true</code> if [is point inside polygon] [the specified point in question]; otherwise, <code>false</code>.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <h4 class="section">Exceptions</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.argumentexception">ArgumentException</a></dt>
+    <dd><p>In IsPointInsidePolygon, the point in question is surrounded by&quot; +
+&quot; an undetermined number of lines which makes it impossible to determined if inside.</p>
+</dd>
+  </dl>
+
+
+
+  <a id="TVGL_PolygonOperations_IsPointInsidePolygon_" data-uid="TVGL.PolygonOperations.IsPointInsidePolygon*"></a>
+
+  <h3 id="TVGL_PolygonOperations_IsPointInsidePolygon_TVGL_Polygon_System_Boolean_TVGL_Vector2_" data-uid="TVGL.PolygonOperations.IsPointInsidePolygon(TVGL.Polygon,System.Boolean,TVGL.Vector2)">
+  IsPointInsidePolygon(Polygon, bool, Vector2)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Determines if a point is inside a polygon, where a polygon is an ordered list of 2D points.
+And the polygon is not self-intersecting
+This is a newer basically the same as our other method, but is less verbose.
+Making use of W. Randolph Franklin's compact algorithm
+<a href="https://wrf.ecse.rpi.edu//Research/Short_Notes/pnpoly.html">https://wrf.ecse.rpi.edu//Research/Short_Notes/pnpoly.html</a>
+Major Assumptions:</p>
+<ol>
+<li>The polygon can be convex</li>
+<li>The direction of the polygon does not matter</li>
+</ol>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static bool IsPointInsidePolygon(this Polygon polygon, bool onlyTopPolygon, Vector2 pointInQuestion)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>polygon</code> <a class="xref" href="TVGL.Polygon.html">Polygon</a></dt>
+    <dd><p>The polygon.</p>
+</dd>
+    <dt><code>onlyTopPolygon</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd><p>if set to <code>true</code> [only top polygon].</p>
+</dd>
+    <dt><code>pointInQuestion</code> <a class="xref" href="TVGL.Vector2.html">Vector2</a></dt>
+    <dd><p>The point in question.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd><p><code>true</code> if [is point inside polygon] [the specified point in question]; otherwise, <code>false</code>.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_PolygonOperations_IsRectangular_" data-uid="TVGL.PolygonOperations.IsRectangular*"></a>
+
+  <h3 id="TVGL_PolygonOperations_IsRectangular_System_Collections_Generic_IEnumerable_TVGL_Vector2__TVGL_Vector2__System_Double_" data-uid="TVGL.PolygonOperations.IsRectangular(System.Collections.Generic.IEnumerable{TVGL.Vector2},TVGL.Vector2@,System.Double)">
+  IsRectangular(IEnumerable&lt;Vector2&gt;, out Vector2, double)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets whether a polygon is rectangular by using the minimum bounding rectangle.
+The rectangle my be in any orientation and contain any number of points greater than three.
+Confidence Percentage can be decreased to identify polygons that are close to rectangular.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static bool IsRectangular(this IEnumerable&lt;Vector2&gt; polygon, out Vector2 dimensions, double confidencePercentage = 0.997)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>polygon</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.Vector2.html">Vector2</a>&gt;</dt>
+    <dd><p>The polygon.</p>
+</dd>
+    <dt><code>dimensions</code> <a class="xref" href="TVGL.Vector2.html">Vector2</a></dt>
+    <dd><p>The dimensions.</p>
+</dd>
+    <dt><code>confidencePercentage</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The confidence percentage.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd><p><code>true</code> if the specified dimensions is rectangular; otherwise, <code>false</code>.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <h4 class="section">Exceptions</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.exception">Exception</a></dt>
+    <dd><p>Confidence percentage must be between 0 and 1</p>
+</dd>
+  </dl>
+
+
+
+  <a id="TVGL_PolygonOperations_LargestPolygon_" data-uid="TVGL.PolygonOperations.LargestPolygon*"></a>
+
+  <h3 id="TVGL_PolygonOperations_LargestPolygon_System_Collections_Generic_IEnumerable_TVGL_Polygon__" data-uid="TVGL.PolygonOperations.LargestPolygon(System.Collections.Generic.IEnumerable{TVGL.Polygon})">
+  LargestPolygon(IEnumerable&lt;Polygon&gt;)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Get the largest polygon by net area from the collections of polygons</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static Polygon LargestPolygon(this IEnumerable&lt;Polygon&gt; polygons)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>polygons</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.Polygon.html">Polygon</a>&gt;</dt>
+    <dd><p>The polygons.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.Polygon.html">Polygon</a></dt>
+    <dd><p>Polygon.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_PolygonOperations_MinDistanceToPolygon_" data-uid="TVGL.PolygonOperations.MinDistanceToPolygon*"></a>
+
+  <h3 id="TVGL_PolygonOperations_MinDistanceToPolygon_TVGL_Polygon_System_Double_System_Double_" data-uid="TVGL.PolygonOperations.MinDistanceToPolygon(TVGL.Polygon,System.Double,System.Double)">
+  MinDistanceToPolygon(Polygon, double, double)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Minimums the distance to polygon.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static double MinDistanceToPolygon(this Polygon polygon, double x, double y)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>polygon</code> <a class="xref" href="TVGL.Polygon.html">Polygon</a></dt>
+    <dd><p>The polygon.</p>
+</dd>
+    <dt><code>x</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The x.</p>
+</dd>
+    <dt><code>y</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The y.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>System.Double.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_PolygonOperations_MinDistanceToPolygon_" data-uid="TVGL.PolygonOperations.MinDistanceToPolygon*"></a>
+
+  <h3 id="TVGL_PolygonOperations_MinDistanceToPolygon_TVGL_Polygon_TVGL_Vector2_" data-uid="TVGL.PolygonOperations.MinDistanceToPolygon(TVGL.Polygon,TVGL.Vector2)">
+  MinDistanceToPolygon(Polygon, Vector2)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Minimums the distance to polygon.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static double MinDistanceToPolygon(this Polygon polygon, Vector2 qPoint)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>polygon</code> <a class="xref" href="TVGL.Polygon.html">Polygon</a></dt>
+    <dd><p>The polygon.</p>
+</dd>
+    <dt><code>qPoint</code> <a class="xref" href="TVGL.Vector2.html">Vector2</a></dt>
+    <dd><p>The q point.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>System.Double.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_PolygonOperations_MinDistanceToPolygons_" data-uid="TVGL.PolygonOperations.MinDistanceToPolygons*"></a>
+
+  <h3 id="TVGL_PolygonOperations_MinDistanceToPolygons_System_Collections_Generic_IEnumerable_TVGL_Polygon__System_Double_System_Double_" data-uid="TVGL.PolygonOperations.MinDistanceToPolygons(System.Collections.Generic.IEnumerable{TVGL.Polygon},System.Double,System.Double)">
+  MinDistanceToPolygons(IEnumerable&lt;Polygon&gt;, double, double)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Minimums the distance to polygons.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static double MinDistanceToPolygons(this IEnumerable&lt;Polygon&gt; polygons, double x, double y)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>polygons</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.Polygon.html">Polygon</a>&gt;</dt>
+    <dd><p>The polygons.</p>
+</dd>
+    <dt><code>x</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The x.</p>
+</dd>
+    <dt><code>y</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The y.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>System.Double.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_PolygonOperations_MinDistanceToPolygons_" data-uid="TVGL.PolygonOperations.MinDistanceToPolygons*"></a>
+
+  <h3 id="TVGL_PolygonOperations_MinDistanceToPolygons_System_Collections_Generic_IEnumerable_TVGL_Polygon__TVGL_Vector2_" data-uid="TVGL.PolygonOperations.MinDistanceToPolygons(System.Collections.Generic.IEnumerable{TVGL.Polygon},TVGL.Vector2)">
+  MinDistanceToPolygons(IEnumerable&lt;Polygon&gt;, Vector2)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Minimums the distance to polygons.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static double MinDistanceToPolygons(this IEnumerable&lt;Polygon&gt; polygons, Vector2 qPoint)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>polygons</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.Polygon.html">Polygon</a>&gt;</dt>
+    <dd><p>The polygons.</p>
+</dd>
+    <dt><code>qPoint</code> <a class="xref" href="TVGL.Vector2.html">Vector2</a></dt>
+    <dd><p>The q point.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>System.Double.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_PolygonOperations_Mirror_" data-uid="TVGL.PolygonOperations.Mirror*"></a>
+
+  <h3 id="TVGL_PolygonOperations_Mirror_TVGL_Polygon_TVGL_Vector2_" data-uid="TVGL.PolygonOperations.Mirror(TVGL.Polygon,TVGL.Vector2)">
+  Mirror(Polygon, Vector2)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Mirrors the specified polgyon along the direction, and at same midpoint of the provide polygon.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static Polygon Mirror(this Polygon shape, Vector2 direction2D)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>shape</code> <a class="xref" href="TVGL.Polygon.html">Polygon</a></dt>
+    <dd><p>The shape.</p>
+</dd>
+    <dt><code>direction2D</code> <a class="xref" href="TVGL.Vector2.html">Vector2</a></dt>
+    <dd><p>The direction2 d.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.Polygon.html">Polygon</a></dt>
+    <dd><p>Polygon.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <h4 class="section">Exceptions</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.exception">Exception</a></dt>
+    <dd><p>Areas do not match after mirroring the polygons</p>
+</dd>
+  </dl>
+
+
+
+  <a id="TVGL_PolygonOperations_OffsetLinesViaClipper_" data-uid="TVGL.PolygonOperations.OffsetLinesViaClipper*"></a>
+
+  <h3 id="TVGL_PolygonOperations_OffsetLinesViaClipper_System_Collections_Generic_IEnumerable_System_Collections_Generic_IEnumerable_TVGL_Vector2___System_Double_System_Double_" data-uid="TVGL.PolygonOperations.OffsetLinesViaClipper(System.Collections.Generic.IEnumerable{System.Collections.Generic.IEnumerable{TVGL.Vector2}},System.Double,System.Double)">
+  OffsetLinesViaClipper(IEnumerable&lt;IEnumerable&lt;Vector2&gt;&gt;, double, double)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Offsets the lines via clipper.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static List&lt;Polygon&gt; OffsetLinesViaClipper(this IEnumerable&lt;IEnumerable&lt;Vector2&gt;&gt; polylines, double offset, double tolerance)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>polylines</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.Vector2.html">Vector2</a>&gt;&gt;</dt>
+    <dd><p>The polylines.</p>
+</dd>
+    <dt><code>offset</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The offset.</p>
+</dd>
+    <dt><code>tolerance</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The tolerance.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.list-1">List</a>&lt;<a class="xref" href="TVGL.Polygon.html">Polygon</a>&gt;</dt>
+    <dd><p>List&lt;Polygon&gt;.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_PolygonOperations_OffsetLineViaClipper_" data-uid="TVGL.PolygonOperations.OffsetLineViaClipper*"></a>
+
+  <h3 id="TVGL_PolygonOperations_OffsetLineViaClipper_System_Collections_Generic_IEnumerable_TVGL_Vector2__System_Double_System_Double_" data-uid="TVGL.PolygonOperations.OffsetLineViaClipper(System.Collections.Generic.IEnumerable{TVGL.Vector2},System.Double,System.Double)">
+  OffsetLineViaClipper(IEnumerable&lt;Vector2&gt;, double, double)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Offsets the line via clipper.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static List&lt;Polygon&gt; OffsetLineViaClipper(this IEnumerable&lt;Vector2&gt; polyline, double offset, double tolerance)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>polyline</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.Vector2.html">Vector2</a>&gt;</dt>
+    <dd><p>The polyline.</p>
+</dd>
+    <dt><code>offset</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The offset.</p>
+</dd>
+    <dt><code>tolerance</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The tolerance.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.list-1">List</a>&lt;<a class="xref" href="TVGL.Polygon.html">Polygon</a>&gt;</dt>
+    <dd><p>List&lt;Polygon&gt;.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_PolygonOperations_OffsetMiter_" data-uid="TVGL.PolygonOperations.OffsetMiter*"></a>
+
+  <h3 id="TVGL_PolygonOperations_OffsetMiter_System_Collections_Generic_IEnumerable_TVGL_Polygon__System_Double_System_Double_" data-uid="TVGL.PolygonOperations.OffsetMiter(System.Collections.Generic.IEnumerable{TVGL.Polygon},System.Double,System.Double)">
+  OffsetMiter(IEnumerable&lt;Polygon&gt;, double, double)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Offset the polygon with miter (sharp) corners. The resulting polygons are joined (unioned) if overlapping.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static List&lt;Polygon&gt; OffsetMiter(this IEnumerable&lt;Polygon&gt; polygons, double offset, double tolerance = NaN)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>polygons</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.Polygon.html">Polygon</a>&gt;</dt>
+    <dd><p>The polygons.</p>
+</dd>
+    <dt><code>offset</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The offset.</p>
+</dd>
+    <dt><code>tolerance</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The tolerance.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.list-1">List</a>&lt;<a class="xref" href="TVGL.Polygon.html">Polygon</a>&gt;</dt>
+    <dd><p>List&lt;Polygon&gt;.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_PolygonOperations_OffsetMiter_" data-uid="TVGL.PolygonOperations.OffsetMiter*"></a>
+
+  <h3 id="TVGL_PolygonOperations_OffsetMiter_TVGL_Polygon_System_Double_System_Double_" data-uid="TVGL.PolygonOperations.OffsetMiter(TVGL.Polygon,System.Double,System.Double)">
+  OffsetMiter(Polygon, double, double)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Offset the polygon with miter (sharp) corners. This is the fastest of the three since the resulting polygon will have the
+same number of points as the</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static List&lt;Polygon&gt; OffsetMiter(this Polygon polygon, double offset, double tolerance = NaN)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>polygon</code> <a class="xref" href="TVGL.Polygon.html">Polygon</a></dt>
+    <dd><p>The polygon.</p>
+</dd>
+    <dt><code>offset</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The offset.</p>
+</dd>
+    <dt><code>tolerance</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The tolerance.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.list-1">List</a>&lt;<a class="xref" href="TVGL.Polygon.html">Polygon</a>&gt;</dt>
+    <dd><p>List&lt;Polygon&gt;.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_PolygonOperations_OffsetRound_" data-uid="TVGL.PolygonOperations.OffsetRound*"></a>
+
+  <h3 id="TVGL_PolygonOperations_OffsetRound_System_Collections_Generic_IEnumerable_TVGL_Polygon__System_Double_System_Double_System_Double_" data-uid="TVGL.PolygonOperations.OffsetRound(System.Collections.Generic.IEnumerable{TVGL.Polygon},System.Double,System.Double,System.Double)">
+  OffsetRound(IEnumerable&lt;Polygon&gt;, double, double, double)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Offset the polygon with &quot;round&quot; corners (in quotes since really lots of small polygon sides).
+The resulting polygons are joined(unioned) if overlapping.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static List&lt;Polygon&gt; OffsetRound(this IEnumerable&lt;Polygon&gt; polygons, double offset, double tolerance = NaN, double maxCircleDeviation = NaN)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>polygons</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.Polygon.html">Polygon</a>&gt;</dt>
+    <dd><p>The polygons.</p>
+</dd>
+    <dt><code>offset</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The offset.</p>
+</dd>
+    <dt><code>tolerance</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The tolerance.</p>
+</dd>
+    <dt><code>maxCircleDeviation</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The maximum circle deviation.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.list-1">List</a>&lt;<a class="xref" href="TVGL.Polygon.html">Polygon</a>&gt;</dt>
+    <dd><p>List&lt;Polygon&gt;.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_PolygonOperations_OffsetRound_" data-uid="TVGL.PolygonOperations.OffsetRound*"></a>
+
+  <h3 id="TVGL_PolygonOperations_OffsetRound_TVGL_Polygon_System_Double_System_Double_System_Double_" data-uid="TVGL.PolygonOperations.OffsetRound(TVGL.Polygon,System.Double,System.Double,System.Double)">
+  OffsetRound(Polygon, double, double, double)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Offset the polygon with &quot;round&quot; corners (in quotes since really lots of small polygon sides).</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static List&lt;Polygon&gt; OffsetRound(this Polygon polygon, double offset, double tolerance = NaN, double maxCircleDeviation = NaN)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>polygon</code> <a class="xref" href="TVGL.Polygon.html">Polygon</a></dt>
+    <dd><p>The polygon.</p>
+</dd>
+    <dt><code>offset</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The offset.</p>
+</dd>
+    <dt><code>tolerance</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The tolerance.</p>
+</dd>
+    <dt><code>maxCircleDeviation</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The maximum circle deviation. If none is provided, then vertices are
+placed at every 1 degree (pi/180 radians).</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.list-1">List</a>&lt;<a class="xref" href="TVGL.Polygon.html">Polygon</a>&gt;</dt>
+    <dd><p>List&lt;Polygon&gt;.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_PolygonOperations_OffsetSquare_" data-uid="TVGL.PolygonOperations.OffsetSquare*"></a>
+
+  <h3 id="TVGL_PolygonOperations_OffsetSquare_System_Collections_Generic_IEnumerable_TVGL_Polygon__System_Double_System_Double_" data-uid="TVGL.PolygonOperations.OffsetSquare(System.Collections.Generic.IEnumerable{TVGL.Polygon},System.Double,System.Double)">
+  OffsetSquare(IEnumerable&lt;Polygon&gt;, double, double)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Offset the polygons with square corners. The resulting polygons are joined (unioned) if overlapping.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static List&lt;Polygon&gt; OffsetSquare(this IEnumerable&lt;Polygon&gt; polygons, double offset, double tolerance = NaN)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>polygons</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.Polygon.html">Polygon</a>&gt;</dt>
+    <dd><p>The polygons.</p>
+</dd>
+    <dt><code>offset</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The offset.</p>
+</dd>
+    <dt><code>tolerance</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The tolerance.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.list-1">List</a>&lt;<a class="xref" href="TVGL.Polygon.html">Polygon</a>&gt;</dt>
+    <dd><p>List&lt;Polygon&gt;.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_PolygonOperations_OffsetSquare_" data-uid="TVGL.PolygonOperations.OffsetSquare*"></a>
+
+  <h3 id="TVGL_PolygonOperations_OffsetSquare_TVGL_Polygon_System_Double_System_Double_" data-uid="TVGL.PolygonOperations.OffsetSquare(TVGL.Polygon,System.Double,System.Double)">
+  OffsetSquare(Polygon, double, double)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Offset the polygon with square corners.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static List&lt;Polygon&gt; OffsetSquare(this Polygon polygon, double offset, double tolerance = NaN)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>polygon</code> <a class="xref" href="TVGL.Polygon.html">Polygon</a></dt>
+    <dd><p>The polygon.</p>
+</dd>
+    <dt><code>offset</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The offset.</p>
+</dd>
+    <dt><code>tolerance</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The tolerance.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.list-1">List</a>&lt;<a class="xref" href="TVGL.Polygon.html">Polygon</a>&gt;</dt>
+    <dd><p>List&lt;Polygon&gt;.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_PolygonOperations_PartitionIntoMonotoneBoxes_" data-uid="TVGL.PolygonOperations.PartitionIntoMonotoneBoxes*"></a>
+
+  <h3 id="TVGL_PolygonOperations_PartitionIntoMonotoneBoxes_TVGL_Polygon_TVGL_MonotonicityChange_" data-uid="TVGL.PolygonOperations.PartitionIntoMonotoneBoxes(TVGL.Polygon,TVGL.MonotonicityChange)">
+  PartitionIntoMonotoneBoxes(Polygon, MonotonicityChange)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Partitions the into monotone boxes.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static IEnumerable&lt;MonotoneBox&gt; PartitionIntoMonotoneBoxes(this Polygon polygon, MonotonicityChange divideAt = MonotonicityChange.Both)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>polygon</code> <a class="xref" href="TVGL.Polygon.html">Polygon</a></dt>
+    <dd><p>The polygon.</p>
+</dd>
+    <dt><code>divideAt</code> <a class="xref" href="TVGL.MonotonicityChange.html">MonotonicityChange</a></dt>
+    <dd><p>The divide at.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.MonotoneBox.html">MonotoneBox</a>&gt;</dt>
+    <dd><p>System.Collections.Generic.IEnumerable&lt;TVGL.TwoDimensional.MonotoneBox&gt;.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <h4 class="section">Exceptions</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.MonotoneBox.html">MonotoneBox</a></dt>
+    <dd><p>polygon.Vertices[0], polygon.Vertices[1], MonotonicityChange.Both, MonotonicityChange.Both, true, true</p>
+</dd>
+  </dl>
+
+
+
+  <a id="TVGL_PolygonOperations_Perimeter_" data-uid="TVGL.PolygonOperations.Perimeter*"></a>
+
+  <h3 id="TVGL_PolygonOperations_Perimeter_System_Collections_Generic_IEnumerable_System_Collections_Generic_IEnumerable_TVGL_Vector2___" data-uid="TVGL.PolygonOperations.Perimeter(System.Collections.Generic.IEnumerable{System.Collections.Generic.IEnumerable{TVGL.Vector2}})">
+  Perimeter(IEnumerable&lt;IEnumerable&lt;Vector2&gt;&gt;)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the perimeter for a 2D set of points. Consider using Polygon class when possible.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static double Perimeter(this IEnumerable&lt;IEnumerable&lt;Vector2&gt;&gt; paths)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>paths</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.Vector2.html">Vector2</a>&gt;&gt;</dt>
+    <dd><p>The paths.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>System.Double.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_PolygonOperations_Perimeter_" data-uid="TVGL.PolygonOperations.Perimeter*"></a>
+
+  <h3 id="TVGL_PolygonOperations_Perimeter_System_Collections_Generic_IEnumerable_TVGL_Vector2__" data-uid="TVGL.PolygonOperations.Perimeter(System.Collections.Generic.IEnumerable{TVGL.Vector2})">
+  Perimeter(IEnumerable&lt;Vector2&gt;)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the perimeter for a 2D set of points. Consider using Polygon class when possible.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static double Perimeter(this IEnumerable&lt;Vector2&gt; polygon)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>polygon</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.Vector2.html">Vector2</a>&gt;</dt>
+    <dd><p>The polygon.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>System.Double.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_PolygonOperations_ReflectOnX_" data-uid="TVGL.PolygonOperations.ReflectOnX*"></a>
+
+  <h3 id="TVGL_PolygonOperations_ReflectOnX_TVGL_Polygon_" data-uid="TVGL.PolygonOperations.ReflectOnX(TVGL.Polygon)">
+  ReflectOnX(Polygon)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Reflects the on x.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static Polygon ReflectOnX(this Polygon shape)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>shape</code> <a class="xref" href="TVGL.Polygon.html">Polygon</a></dt>
+    <dd><p>The shape.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.Polygon.html">Polygon</a></dt>
+    <dd><p>Polygon.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <h4 class="section">Exceptions</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.exception">Exception</a></dt>
+    <dd><p>Areas do not match after mirroring the polygons</p>
+</dd>
+  </dl>
+
+
+
+  <a id="TVGL_PolygonOperations_RemoveCollinearEdges_" data-uid="TVGL.PolygonOperations.RemoveCollinearEdges*"></a>
+
+  <h3 id="TVGL_PolygonOperations_RemoveCollinearEdges_System_Collections_Generic_IEnumerable_TVGL_Polygon__" data-uid="TVGL.PolygonOperations.RemoveCollinearEdges(System.Collections.Generic.IEnumerable{TVGL.Polygon})">
+  RemoveCollinearEdges(IEnumerable&lt;Polygon&gt;)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Simplifies the specified polygons by removing vertices that have collinear edges.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static void RemoveCollinearEdges(this IEnumerable&lt;Polygon&gt; polygons)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>polygons</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.Polygon.html">Polygon</a>&gt;</dt>
+    <dd><p>The polygons.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_PolygonOperations_RemoveCollinearEdges_" data-uid="TVGL.PolygonOperations.RemoveCollinearEdges*"></a>
+
+  <h3 id="TVGL_PolygonOperations_RemoveCollinearEdges_TVGL_Polygon_" data-uid="TVGL.PolygonOperations.RemoveCollinearEdges(TVGL.Polygon)">
+  RemoveCollinearEdges(Polygon)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Simplifies the specified polygons by removing vertices that have collinear edges.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static void RemoveCollinearEdges(this Polygon polygon)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>polygon</code> <a class="xref" href="TVGL.Polygon.html">Polygon</a></dt>
+    <dd><p>The polygon.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_PolygonOperations_RemoveCollinearEdgesDestructiveList_" data-uid="TVGL.PolygonOperations.RemoveCollinearEdgesDestructiveList*"></a>
+
+  <h3 id="TVGL_PolygonOperations_RemoveCollinearEdgesDestructiveList_System_Collections_Generic_IList_TVGL_Vector2__" data-uid="TVGL.PolygonOperations.RemoveCollinearEdgesDestructiveList(System.Collections.Generic.IList{TVGL.Vector2})">
+  RemoveCollinearEdgesDestructiveList(IList&lt;Vector2&gt;)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Simplifies the specified polygons by removing vertices that have collinear edges.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static IList&lt;Vector2&gt; RemoveCollinearEdgesDestructiveList(this IList&lt;Vector2&gt; path)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>path</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ilist-1">IList</a>&lt;<a class="xref" href="TVGL.Vector2.html">Vector2</a>&gt;</dt>
+    <dd><p>The path.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ilist-1">IList</a>&lt;<a class="xref" href="TVGL.Vector2.html">Vector2</a>&gt;</dt>
+    <dd><p>IList&lt;Vector2&gt;.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_PolygonOperations_RemoveCollinearEdgesToNewList_" data-uid="TVGL.PolygonOperations.RemoveCollinearEdgesToNewList*"></a>
+
+  <h3 id="TVGL_PolygonOperations_RemoveCollinearEdgesToNewList_System_Collections_Generic_IEnumerable_TVGL_Vector2__" data-uid="TVGL.PolygonOperations.RemoveCollinearEdgesToNewList(System.Collections.Generic.IEnumerable{TVGL.Vector2})">
+  RemoveCollinearEdgesToNewList(IEnumerable&lt;Vector2&gt;)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Simplifies the specified polygons by removing vertices that have collinear edges.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static IList&lt;Vector2&gt; RemoveCollinearEdgesToNewList(this IEnumerable&lt;Vector2&gt; path)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>path</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.Vector2.html">Vector2</a>&gt;</dt>
+    <dd><p>The path.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ilist-1">IList</a>&lt;<a class="xref" href="TVGL.Vector2.html">Vector2</a>&gt;</dt>
+    <dd><p>IList&lt;Vector2&gt;.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_PolygonOperations_RemoveCollinearEdgesToNewLists_" data-uid="TVGL.PolygonOperations.RemoveCollinearEdgesToNewLists*"></a>
+
+  <h3 id="TVGL_PolygonOperations_RemoveCollinearEdgesToNewLists_System_Collections_Generic_IEnumerable_System_Collections_Generic_IEnumerable_TVGL_Vector2___" data-uid="TVGL.PolygonOperations.RemoveCollinearEdgesToNewLists(System.Collections.Generic.IEnumerable{System.Collections.Generic.IEnumerable{TVGL.Vector2}})">
+  RemoveCollinearEdgesToNewLists(IEnumerable&lt;IEnumerable&lt;Vector2&gt;&gt;)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Simplifies the specified polygons by removing vertices that have collinear edges.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static IEnumerable&lt;IList&lt;Vector2&gt;&gt; RemoveCollinearEdgesToNewLists(this IEnumerable&lt;IEnumerable&lt;Vector2&gt;&gt; paths)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>paths</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.Vector2.html">Vector2</a>&gt;&gt;</dt>
+    <dd><p>The paths.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ilist-1">IList</a>&lt;<a class="xref" href="TVGL.Vector2.html">Vector2</a>&gt;&gt;</dt>
+    <dd><p>List&lt;List&lt;Vector2&gt;&gt;.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_PolygonOperations_RemoveCollinearEdgesToNewPolygon_" data-uid="TVGL.PolygonOperations.RemoveCollinearEdgesToNewPolygon*"></a>
+
+  <h3 id="TVGL_PolygonOperations_RemoveCollinearEdgesToNewPolygon_TVGL_Polygon_" data-uid="TVGL.PolygonOperations.RemoveCollinearEdgesToNewPolygon(TVGL.Polygon)">
+  RemoveCollinearEdgesToNewPolygon(Polygon)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Simplifies the specified polygons by removing vertices that have collinear edges.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static Polygon RemoveCollinearEdgesToNewPolygon(this Polygon polygon)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>polygon</code> <a class="xref" href="TVGL.Polygon.html">Polygon</a></dt>
+    <dd><p>The polygon.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.Polygon.html">Polygon</a></dt>
+    <dd><p>IEnumerable&lt;Polygon&gt;.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_PolygonOperations_RemoveCollinearEdgesToNewPolygons_" data-uid="TVGL.PolygonOperations.RemoveCollinearEdgesToNewPolygons*"></a>
+
+  <h3 id="TVGL_PolygonOperations_RemoveCollinearEdgesToNewPolygons_System_Collections_Generic_IEnumerable_TVGL_Polygon__" data-uid="TVGL.PolygonOperations.RemoveCollinearEdgesToNewPolygons(System.Collections.Generic.IEnumerable{TVGL.Polygon})">
+  RemoveCollinearEdgesToNewPolygons(IEnumerable&lt;Polygon&gt;)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Simplifies the specified polygons by removing vertices that have collinear edges.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static IEnumerable&lt;Polygon&gt; RemoveCollinearEdgesToNewPolygons(this IEnumerable&lt;Polygon&gt; polygons)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>polygons</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.Polygon.html">Polygon</a>&gt;</dt>
+    <dd><p>The polygons.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.Polygon.html">Polygon</a>&gt;</dt>
+    <dd><p>IEnumerable&lt;Polygon&gt;.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_PolygonOperations_RemoveSelfIntersections_" data-uid="TVGL.PolygonOperations.RemoveSelfIntersections*"></a>
+
+  <h3 id="TVGL_PolygonOperations_RemoveSelfIntersections_TVGL_Polygon_TVGL_ResultType_System_Collections_Generic_List_System_Boolean__System_Int32_" data-uid="TVGL.PolygonOperations.RemoveSelfIntersections(TVGL.Polygon,TVGL.ResultType,System.Collections.Generic.List{System.Boolean},System.Int32)">
+  RemoveSelfIntersections(Polygon, ResultType, List&lt;bool&gt;, int)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Removes the self intersections.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static List&lt;Polygon&gt; RemoveSelfIntersections(this Polygon polygon, ResultType resultType, List&lt;bool&gt; knownWrongPoints = null, int maxNumberOfPolygons = 2147483647)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>polygon</code> <a class="xref" href="TVGL.Polygon.html">Polygon</a></dt>
+    <dd><p>The polygon.</p>
+</dd>
+    <dt><code>resultType</code> <a class="xref" href="TVGL.ResultType.html">ResultType</a></dt>
+    <dd><p>Type of the result.</p>
+</dd>
+    <dt><code>knownWrongPoints</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.list-1">List</a>&lt;<a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a>&gt;</dt>
+    <dd><p>The known wrong points.</p>
+</dd>
+    <dt><code>maxNumberOfPolygons</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a></dt>
+    <dd><p>The maximum number of polygons.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.list-1">List</a>&lt;<a class="xref" href="TVGL.Polygon.html">Polygon</a>&gt;</dt>
+    <dd><p>List&lt;Polygon&gt;.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_PolygonOperations_SimplifyByAreaChange_" data-uid="TVGL.PolygonOperations.SimplifyByAreaChange*"></a>
+
+  <h3 id="TVGL_PolygonOperations_SimplifyByAreaChange_System_Collections_Generic_IEnumerable_TVGL_Polygon__System_Double_" data-uid="TVGL.PolygonOperations.SimplifyByAreaChange(System.Collections.Generic.IEnumerable{TVGL.Polygon},System.Double)">
+  SimplifyByAreaChange(IEnumerable&lt;Polygon&gt;, double)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Simplifies the specified polygons no more than the allowable change in area fraction.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static void SimplifyByAreaChange(this IEnumerable&lt;Polygon&gt; polygons, double allowableChangeInAreaFraction)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>polygons</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.Polygon.html">Polygon</a>&gt;</dt>
+    <dd><p>The polygons.</p>
+</dd>
+    <dt><code>allowableChangeInAreaFraction</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The allowable change in area fraction.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_PolygonOperations_SimplifyByAreaChange_" data-uid="TVGL.PolygonOperations.SimplifyByAreaChange*"></a>
+
+  <h3 id="TVGL_PolygonOperations_SimplifyByAreaChange_System_Collections_Generic_IEnumerable_TVGL_Polygon__System_Int32_" data-uid="TVGL.PolygonOperations.SimplifyByAreaChange(System.Collections.Generic.IEnumerable{TVGL.Polygon},System.Int32)">
+  SimplifyByAreaChange(IEnumerable&lt;Polygon&gt;, int)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Simplifies the specified polygon to the target number of points using the minimal area change approach.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static void SimplifyByAreaChange(this IEnumerable&lt;Polygon&gt; polygons, int targetNumberOfPoints)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>polygons</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.Polygon.html">Polygon</a>&gt;</dt>
+    <dd><p>The polygons.</p>
+</dd>
+    <dt><code>targetNumberOfPoints</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a></dt>
+    <dd><p>The target number of points.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_PolygonOperations_SimplifyByAreaChange_" data-uid="TVGL.PolygonOperations.SimplifyByAreaChange*"></a>
+
+  <h3 id="TVGL_PolygonOperations_SimplifyByAreaChange_TVGL_Polygon_System_Double_" data-uid="TVGL.PolygonOperations.SimplifyByAreaChange(TVGL.Polygon,System.Double)">
+  SimplifyByAreaChange(Polygon, double)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Simplifies the specified polygon no more than the allowable change in area fraction.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static void SimplifyByAreaChange(this Polygon polygon, double allowableChangeInAreaFraction)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>polygon</code> <a class="xref" href="TVGL.Polygon.html">Polygon</a></dt>
+    <dd><p>The polygon.</p>
+</dd>
+    <dt><code>allowableChangeInAreaFraction</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The allowable change in area fraction.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_PolygonOperations_SimplifyByAreaChange_" data-uid="TVGL.PolygonOperations.SimplifyByAreaChange*"></a>
+
+  <h3 id="TVGL_PolygonOperations_SimplifyByAreaChange_TVGL_Polygon_System_Int32_" data-uid="TVGL.PolygonOperations.SimplifyByAreaChange(TVGL.Polygon,System.Int32)">
+  SimplifyByAreaChange(Polygon, int)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Simplifies the specified polygon to the target number of points using the minimal area change approach.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static void SimplifyByAreaChange(this Polygon polygon, int targetNumberOfPoints)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>polygon</code> <a class="xref" href="TVGL.Polygon.html">Polygon</a></dt>
+    <dd><p>The polygon.</p>
+</dd>
+    <dt><code>targetNumberOfPoints</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a></dt>
+    <dd><p>The target number of points.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_PolygonOperations_SimplifyByAreaChangeToNewList_" data-uid="TVGL.PolygonOperations.SimplifyByAreaChangeToNewList*"></a>
+
+  <h3 id="TVGL_PolygonOperations_SimplifyByAreaChangeToNewList_System_Collections_Generic_IEnumerable_TVGL_Vector2__System_Double_" data-uid="TVGL.PolygonOperations.SimplifyByAreaChangeToNewList(System.Collections.Generic.IEnumerable{TVGL.Vector2},System.Double)">
+  SimplifyByAreaChangeToNewList(IEnumerable&lt;Vector2&gt;, double)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Simplifies the specified polygons no more than the allowable change in area fraction.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static IEnumerable&lt;Vector2&gt; SimplifyByAreaChangeToNewList(this IEnumerable&lt;Vector2&gt; path, double allowableChangeInAreaFraction)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>path</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.Vector2.html">Vector2</a>&gt;</dt>
+    <dd><p>The path.</p>
+</dd>
+    <dt><code>allowableChangeInAreaFraction</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The allowable change in area fraction.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.Vector2.html">Vector2</a>&gt;</dt>
+    <dd><p>IEnumerable&lt;Vector2&gt;.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_PolygonOperations_SimplifyByAreaChangeToNewList_" data-uid="TVGL.PolygonOperations.SimplifyByAreaChangeToNewList*"></a>
+
+  <h3 id="TVGL_PolygonOperations_SimplifyByAreaChangeToNewList_System_Collections_Generic_IEnumerable_TVGL_Vector2__System_Int32_" data-uid="TVGL.PolygonOperations.SimplifyByAreaChangeToNewList(System.Collections.Generic.IEnumerable{TVGL.Vector2},System.Int32)">
+  SimplifyByAreaChangeToNewList(IEnumerable&lt;Vector2&gt;, int)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Simplifies the specified polygon to the target number of points using the minimal area change approach.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static IEnumerable&lt;Vector2&gt; SimplifyByAreaChangeToNewList(this IEnumerable&lt;Vector2&gt; path, int targetNumberOfPoints)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>path</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.Vector2.html">Vector2</a>&gt;</dt>
+    <dd><p>The path.</p>
+</dd>
+    <dt><code>targetNumberOfPoints</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a></dt>
+    <dd><p>The target number of points.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.Vector2.html">Vector2</a>&gt;</dt>
+    <dd><p>List&lt;List&lt;Vector2&gt;&gt;.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_PolygonOperations_SimplifyByAreaChangeToNewLists_" data-uid="TVGL.PolygonOperations.SimplifyByAreaChangeToNewLists*"></a>
+
+  <h3 id="TVGL_PolygonOperations_SimplifyByAreaChangeToNewLists_System_Collections_Generic_IEnumerable_System_Collections_Generic_IEnumerable_TVGL_Vector2___System_Double_" data-uid="TVGL.PolygonOperations.SimplifyByAreaChangeToNewLists(System.Collections.Generic.IEnumerable{System.Collections.Generic.IEnumerable{TVGL.Vector2}},System.Double)">
+  SimplifyByAreaChangeToNewLists(IEnumerable&lt;IEnumerable&lt;Vector2&gt;&gt;, double)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Simplifies the specified polygons no more than the allowable change in area fraction.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static IEnumerable&lt;IEnumerable&lt;Vector2&gt;&gt; SimplifyByAreaChangeToNewLists(this IEnumerable&lt;IEnumerable&lt;Vector2&gt;&gt; paths, double allowableChangeInAreaFraction)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>paths</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.Vector2.html">Vector2</a>&gt;&gt;</dt>
+    <dd><p>The paths.</p>
+</dd>
+    <dt><code>allowableChangeInAreaFraction</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The allowable change in area fraction.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.Vector2.html">Vector2</a>&gt;&gt;</dt>
+    <dd><p>List&lt;List&lt;Vector2&gt;&gt;.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_PolygonOperations_SimplifyByAreaChangeToNewLists_" data-uid="TVGL.PolygonOperations.SimplifyByAreaChangeToNewLists*"></a>
+
+  <h3 id="TVGL_PolygonOperations_SimplifyByAreaChangeToNewLists_System_Collections_Generic_IEnumerable_System_Collections_Generic_IEnumerable_TVGL_Vector2___System_Int32_" data-uid="TVGL.PolygonOperations.SimplifyByAreaChangeToNewLists(System.Collections.Generic.IEnumerable{System.Collections.Generic.IEnumerable{TVGL.Vector2}},System.Int32)">
+  SimplifyByAreaChangeToNewLists(IEnumerable&lt;IEnumerable&lt;Vector2&gt;&gt;, int)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Simplifies the specified polygon to the target number of points using the minimal area change approach.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static IEnumerable&lt;IList&lt;Vector2&gt;&gt; SimplifyByAreaChangeToNewLists(this IEnumerable&lt;IEnumerable&lt;Vector2&gt;&gt; paths, int targetNumberOfPoints)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>paths</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.Vector2.html">Vector2</a>&gt;&gt;</dt>
+    <dd><p>The paths.</p>
+</dd>
+    <dt><code>targetNumberOfPoints</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a></dt>
+    <dd><p>The target number of points.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ilist-1">IList</a>&lt;<a class="xref" href="TVGL.Vector2.html">Vector2</a>&gt;&gt;</dt>
+    <dd><p>List&lt;List&lt;Vector2&gt;&gt;.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <h4 class="section">Exceptions</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.argumentoutofrangeexception">ArgumentOutOfRangeException</a></dt>
+    <dd><p>targetNumberOfPoints - The number of points to remove in PolygonOperations.Simplify&quot;
++ &quot; is more than the total number of points in the polygon(s).</p>
+</dd>
+  </dl>
+
+
+
+  <a id="TVGL_PolygonOperations_SimplifyByAreaChangeToNewPolygon_" data-uid="TVGL.PolygonOperations.SimplifyByAreaChangeToNewPolygon*"></a>
+
+  <h3 id="TVGL_PolygonOperations_SimplifyByAreaChangeToNewPolygon_TVGL_Polygon_System_Double_" data-uid="TVGL.PolygonOperations.SimplifyByAreaChangeToNewPolygon(TVGL.Polygon,System.Double)">
+  SimplifyByAreaChangeToNewPolygon(Polygon, double)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Simplifies the specified polygon no more than the allowable change in area fraction.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static Polygon SimplifyByAreaChangeToNewPolygon(this Polygon polygon, double allowableChangeInAreaFraction)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>polygon</code> <a class="xref" href="TVGL.Polygon.html">Polygon</a></dt>
+    <dd><p>The polygon.</p>
+</dd>
+    <dt><code>allowableChangeInAreaFraction</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The allowable change in area fraction.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.Polygon.html">Polygon</a></dt>
+    <dd><p>Polygon.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_PolygonOperations_SimplifyByAreaChangeToNewPolygon_" data-uid="TVGL.PolygonOperations.SimplifyByAreaChangeToNewPolygon*"></a>
+
+  <h3 id="TVGL_PolygonOperations_SimplifyByAreaChangeToNewPolygon_TVGL_Polygon_System_Int32_" data-uid="TVGL.PolygonOperations.SimplifyByAreaChangeToNewPolygon(TVGL.Polygon,System.Int32)">
+  SimplifyByAreaChangeToNewPolygon(Polygon, int)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Simplifies the specified polygon to the target number of points using the minimal area change approach.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static Polygon SimplifyByAreaChangeToNewPolygon(this Polygon polygon, int targetNumberOfPoints)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>polygon</code> <a class="xref" href="TVGL.Polygon.html">Polygon</a></dt>
+    <dd><p>The polygon.</p>
+</dd>
+    <dt><code>targetNumberOfPoints</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a></dt>
+    <dd><p>The target number of points.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.Polygon.html">Polygon</a></dt>
+    <dd><p>Polygon.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_PolygonOperations_SimplifyByAreaChangeToNewPolygons_" data-uid="TVGL.PolygonOperations.SimplifyByAreaChangeToNewPolygons*"></a>
+
+  <h3 id="TVGL_PolygonOperations_SimplifyByAreaChangeToNewPolygons_System_Collections_Generic_IEnumerable_TVGL_Polygon__System_Double_" data-uid="TVGL.PolygonOperations.SimplifyByAreaChangeToNewPolygons(System.Collections.Generic.IEnumerable{TVGL.Polygon},System.Double)">
+  SimplifyByAreaChangeToNewPolygons(IEnumerable&lt;Polygon&gt;, double)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Simplifies the specified polygon no more than the allowable change in area fraction.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static IEnumerable&lt;Polygon&gt; SimplifyByAreaChangeToNewPolygons(this IEnumerable&lt;Polygon&gt; polygons, double allowableChangeInAreaFraction)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>polygons</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.Polygon.html">Polygon</a>&gt;</dt>
+    <dd><p>The polygons.</p>
+</dd>
+    <dt><code>allowableChangeInAreaFraction</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The allowable change in area fraction.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.Polygon.html">Polygon</a>&gt;</dt>
+    <dd><p>IEnumerable&lt;Polygon&gt;.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_PolygonOperations_SimplifyByAreaChangeToNewPolygons_" data-uid="TVGL.PolygonOperations.SimplifyByAreaChangeToNewPolygons*"></a>
+
+  <h3 id="TVGL_PolygonOperations_SimplifyByAreaChangeToNewPolygons_System_Collections_Generic_IEnumerable_TVGL_Polygon__System_Int32_" data-uid="TVGL.PolygonOperations.SimplifyByAreaChangeToNewPolygons(System.Collections.Generic.IEnumerable{TVGL.Polygon},System.Int32)">
+  SimplifyByAreaChangeToNewPolygons(IEnumerable&lt;Polygon&gt;, int)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Simplifies the specified polygon to the target number of points using the minimal area change approach.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static IEnumerable&lt;Polygon&gt; SimplifyByAreaChangeToNewPolygons(this IEnumerable&lt;Polygon&gt; polygons, int targetNumberOfPoints)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>polygons</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.Polygon.html">Polygon</a>&gt;</dt>
+    <dd><p>The polygons.</p>
+</dd>
+    <dt><code>targetNumberOfPoints</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a></dt>
+    <dd><p>The target number of points.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.Polygon.html">Polygon</a>&gt;</dt>
+    <dd><p>IEnumerable&lt;Polygon&gt;.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_PolygonOperations_SimplifyFast_" data-uid="TVGL.PolygonOperations.SimplifyFast*"></a>
+
+  <h3 id="TVGL_PolygonOperations_SimplifyFast_System_Collections_Generic_IEnumerable_TVGL_Vector2__System_Double_System_Double_" data-uid="TVGL.PolygonOperations.SimplifyFast(System.Collections.Generic.IEnumerable{TVGL.Vector2},System.Double,System.Double)">
+  SimplifyFast(IEnumerable&lt;Vector2&gt;, double, double)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Simplifies the specified polygons by reducing the number of points in the polygon</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static List&lt;Vector2&gt; SimplifyFast(this IEnumerable&lt;Vector2&gt; path, double lengthTolerance = 1E-09, double slopeTolerance = 0.0003)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>path</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.Vector2.html">Vector2</a>&gt;</dt>
+    <dd><p>The path.</p>
+</dd>
+    <dt><code>lengthTolerance</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The length tolerance.</p>
+</dd>
+    <dt><code>slopeTolerance</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The slope tolerance.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.list-1">List</a>&lt;<a class="xref" href="TVGL.Vector2.html">Vector2</a>&gt;</dt>
+    <dd><p>List&lt;Vector2&gt;.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_PolygonOperations_SimplifyFast_" data-uid="TVGL.PolygonOperations.SimplifyFast*"></a>
+
+  <h3 id="TVGL_PolygonOperations_SimplifyFast_System_Collections_Generic_List_TVGL_Polygon__System_Double_System_Double_" data-uid="TVGL.PolygonOperations.SimplifyFast(System.Collections.Generic.List{TVGL.Polygon},System.Double,System.Double)">
+  SimplifyFast(List&lt;Polygon&gt;, double, double)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Simplifies the fast.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static List&lt;Polygon&gt; SimplifyFast(this List&lt;Polygon&gt; polygons, double lengthTolerance = 1E-09, double slopeTolerance = 0.0003)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>polygons</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.list-1">List</a>&lt;<a class="xref" href="TVGL.Polygon.html">Polygon</a>&gt;</dt>
+    <dd><p>The polygons.</p>
+</dd>
+    <dt><code>lengthTolerance</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The length tolerance.</p>
+</dd>
+    <dt><code>slopeTolerance</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The slope tolerance.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.list-1">List</a>&lt;<a class="xref" href="TVGL.Polygon.html">Polygon</a>&gt;</dt>
+    <dd><p>List&lt;Polygon&gt;.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_PolygonOperations_SimplifyFast_" data-uid="TVGL.PolygonOperations.SimplifyFast*"></a>
+
+  <h3 id="TVGL_PolygonOperations_SimplifyFast_TVGL_Polygon_System_Double_System_Double_" data-uid="TVGL.PolygonOperations.SimplifyFast(TVGL.Polygon,System.Double,System.Double)">
+  SimplifyFast(Polygon, double, double)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Simplifies the fast.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static Polygon SimplifyFast(this Polygon polygon, double lengthTolerance = 1E-09, double slopeTolerance = 0.0003)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>polygon</code> <a class="xref" href="TVGL.Polygon.html">Polygon</a></dt>
+    <dd><p>The polygon.</p>
+</dd>
+    <dt><code>lengthTolerance</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The length tolerance.</p>
+</dd>
+    <dt><code>slopeTolerance</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The slope tolerance.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.Polygon.html">Polygon</a></dt>
+    <dd><p>Polygon.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_PolygonOperations_SimplifyMinLength_" data-uid="TVGL.PolygonOperations.SimplifyMinLength*"></a>
+
+  <h3 id="TVGL_PolygonOperations_SimplifyMinLength_System_Collections_Generic_IEnumerable_System_Collections_Generic_IEnumerable_TVGL_Vector2___System_Int32_" data-uid="TVGL.PolygonOperations.SimplifyMinLength(System.Collections.Generic.IEnumerable{System.Collections.Generic.IEnumerable{TVGL.Vector2}},System.Int32)">
+  SimplifyMinLength(IEnumerable&lt;IEnumerable&lt;Vector2&gt;&gt;, int)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Simplifies the specified polygons so that no edge is less than the minimum allowable length.
+In this method vertices are not simply deleted but a new one is created at midPoint of deleted edge.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static IEnumerable&lt;IList&lt;Vector2&gt;&gt; SimplifyMinLength(this IEnumerable&lt;IEnumerable&lt;Vector2&gt;&gt; paths, int targetNumberOfPoints)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>paths</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.Vector2.html">Vector2</a>&gt;&gt;</dt>
+    <dd><p>The paths.</p>
+</dd>
+    <dt><code>targetNumberOfPoints</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a></dt>
+    <dd><p>The target number of points.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ilist-1">IList</a>&lt;<a class="xref" href="TVGL.Vector2.html">Vector2</a>&gt;&gt;</dt>
+    <dd><p>List&lt;List&lt;Vector2&gt;&gt;.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <h4 class="section">Exceptions</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.argumentoutofrangeexception">ArgumentOutOfRangeException</a></dt>
+    <dd><p>targetNumberOfPoints - The number of points to remove in PolygonOperations.Simplify&quot;
++ &quot; is more than the total number of points in the polygon(s).</p>
+</dd>
+  </dl>
+
+
+
+  <a id="TVGL_PolygonOperations_SimplifyMinLength_" data-uid="TVGL.PolygonOperations.SimplifyMinLength*"></a>
+
+  <h3 id="TVGL_PolygonOperations_SimplifyMinLength_System_Collections_Generic_IEnumerable_TVGL_Polygon__System_Double_" data-uid="TVGL.PolygonOperations.SimplifyMinLength(System.Collections.Generic.IEnumerable{TVGL.Polygon},System.Double)">
+  SimplifyMinLength(IEnumerable&lt;Polygon&gt;, double)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Simplifies the specified polygons so that no edge is less than the minimum allowable length.
+In this method vertices are not simply deleted but a new one is created at midPoint of deleted edge.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static void SimplifyMinLength(this IEnumerable&lt;Polygon&gt; polygons, double minAllowableLength)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>polygons</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.Polygon.html">Polygon</a>&gt;</dt>
+    <dd><p>The polygons.</p>
+</dd>
+    <dt><code>minAllowableLength</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>Minimum length of the allowable.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_PolygonOperations_SimplifyMinLength_" data-uid="TVGL.PolygonOperations.SimplifyMinLength*"></a>
+
+  <h3 id="TVGL_PolygonOperations_SimplifyMinLength_System_Collections_Generic_IEnumerable_TVGL_Vector2__System_Int32_" data-uid="TVGL.PolygonOperations.SimplifyMinLength(System.Collections.Generic.IEnumerable{TVGL.Vector2},System.Int32)">
+  SimplifyMinLength(IEnumerable&lt;Vector2&gt;, int)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Simplifies the specified polygons so that no edge is less than the minimum allowable length.
+In this method vertices are not simply deleted but a new one is created at midPoint of deleted edge.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static IEnumerable&lt;Vector2&gt; SimplifyMinLength(this IEnumerable&lt;Vector2&gt; path, int targetNumberOfPoints)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>path</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.Vector2.html">Vector2</a>&gt;</dt>
+    <dd><p>The path.</p>
+</dd>
+    <dt><code>targetNumberOfPoints</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a></dt>
+    <dd><p>The target number of points.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.Vector2.html">Vector2</a>&gt;</dt>
+    <dd><p>List&lt;List&lt;Vector2&gt;&gt;.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_PolygonOperations_SimplifyMinLength_" data-uid="TVGL.PolygonOperations.SimplifyMinLength*"></a>
+
+  <h3 id="TVGL_PolygonOperations_SimplifyMinLength_System_Collections_Generic_IList_TVGL_Polygon__System_Int32_" data-uid="TVGL.PolygonOperations.SimplifyMinLength(System.Collections.Generic.IList{TVGL.Polygon},System.Int32)">
+  SimplifyMinLength(IList&lt;Polygon&gt;, int)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Simplifies the specified polygons so that no edge is less than the minimum allowable length.
+In this method vertices are not simply deleted but a new one is created at midPoint of deleted edge.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static void SimplifyMinLength(this IList&lt;Polygon&gt; polygons, int targetNumberOfPoints)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>polygons</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ilist-1">IList</a>&lt;<a class="xref" href="TVGL.Polygon.html">Polygon</a>&gt;</dt>
+    <dd><p>The polygons.</p>
+</dd>
+    <dt><code>targetNumberOfPoints</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a></dt>
+    <dd><p>The target number of points.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_PolygonOperations_SimplifyMinLength_" data-uid="TVGL.PolygonOperations.SimplifyMinLength*"></a>
+
+  <h3 id="TVGL_PolygonOperations_SimplifyMinLength_TVGL_Polygon_System_Double_" data-uid="TVGL.PolygonOperations.SimplifyMinLength(TVGL.Polygon,System.Double)">
+  SimplifyMinLength(Polygon, double)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Simplifies the specified polygons so that no edge is less than the minimum allowable length.
+In this method vertices are not simply deleted but a new one is created at midPoint of deleted edge.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static void SimplifyMinLength(this Polygon polygon, double minAllowableLength)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>polygon</code> <a class="xref" href="TVGL.Polygon.html">Polygon</a></dt>
+    <dd><p>The polygon.</p>
+</dd>
+    <dt><code>minAllowableLength</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The allowable change in area fraction.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_PolygonOperations_SimplifyMinLength_" data-uid="TVGL.PolygonOperations.SimplifyMinLength*"></a>
+
+  <h3 id="TVGL_PolygonOperations_SimplifyMinLength_TVGL_Polygon_System_Int32_" data-uid="TVGL.PolygonOperations.SimplifyMinLength(TVGL.Polygon,System.Int32)">
+  SimplifyMinLength(Polygon, int)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Simplifies the specified polygons so that no edge is less than the minimum allowable length.
+In this method vertices are not simply deleted but a new one is created at midPoint of deleted edge.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static void SimplifyMinLength(this Polygon polygon, int targetNumberOfPoints)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>polygon</code> <a class="xref" href="TVGL.Polygon.html">Polygon</a></dt>
+    <dd><p>The polygon.</p>
+</dd>
+    <dt><code>targetNumberOfPoints</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a></dt>
+    <dd><p>The target number of points.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_PolygonOperations_SimplifyMinLengthToNewList_" data-uid="TVGL.PolygonOperations.SimplifyMinLengthToNewList*"></a>
+
+  <h3 id="TVGL_PolygonOperations_SimplifyMinLengthToNewList_System_Collections_Generic_IEnumerable_TVGL_Vector2__System_Double_" data-uid="TVGL.PolygonOperations.SimplifyMinLengthToNewList(System.Collections.Generic.IEnumerable{TVGL.Vector2},System.Double)">
+  SimplifyMinLengthToNewList(IEnumerable&lt;Vector2&gt;, double)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Simplifies the specified polygons so that no edge is less than the minimum allowable length.
+In this method vertices are not simply deleted but a new one is created at midPoint of deleted edge.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static IEnumerable&lt;Vector2&gt; SimplifyMinLengthToNewList(this IEnumerable&lt;Vector2&gt; path, double minAllowableLength)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>path</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.Vector2.html">Vector2</a>&gt;</dt>
+    <dd><p>The path.</p>
+</dd>
+    <dt><code>minAllowableLength</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>Minimum length of the allowable.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.Vector2.html">Vector2</a>&gt;</dt>
+    <dd><p>IEnumerable&lt;Vector2&gt;.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_PolygonOperations_SimplifyMinLengthToNewLists_" data-uid="TVGL.PolygonOperations.SimplifyMinLengthToNewLists*"></a>
+
+  <h3 id="TVGL_PolygonOperations_SimplifyMinLengthToNewLists_System_Collections_Generic_IEnumerable_System_Collections_Generic_IEnumerable_TVGL_Vector2___System_Double_" data-uid="TVGL.PolygonOperations.SimplifyMinLengthToNewLists(System.Collections.Generic.IEnumerable{System.Collections.Generic.IEnumerable{TVGL.Vector2}},System.Double)">
+  SimplifyMinLengthToNewLists(IEnumerable&lt;IEnumerable&lt;Vector2&gt;&gt;, double)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Simplifies the specified polygons so that no edge is less than the minimum allowable length.
+In this method vertices are not simply deleted but a new one is created at midPoint of deleted edge.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static IEnumerable&lt;IEnumerable&lt;Vector2&gt;&gt; SimplifyMinLengthToNewLists(this IEnumerable&lt;IEnumerable&lt;Vector2&gt;&gt; paths, double minAllowableLength)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>paths</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.Vector2.html">Vector2</a>&gt;&gt;</dt>
+    <dd><p>The paths.</p>
+</dd>
+    <dt><code>minAllowableLength</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The allowable change in area fraction.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.Vector2.html">Vector2</a>&gt;&gt;</dt>
+    <dd><p>List&lt;List&lt;Vector2&gt;&gt;.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_PolygonOperations_SimplifyMinLengthToNewPolygon_" data-uid="TVGL.PolygonOperations.SimplifyMinLengthToNewPolygon*"></a>
+
+  <h3 id="TVGL_PolygonOperations_SimplifyMinLengthToNewPolygon_TVGL_Polygon_System_Double_" data-uid="TVGL.PolygonOperations.SimplifyMinLengthToNewPolygon(TVGL.Polygon,System.Double)">
+  SimplifyMinLengthToNewPolygon(Polygon, double)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Simplifies the specified polygons so that no edge is less than the minimum allowable length.
+In this method vertices are not simply deleted but a new one is created at midPoint of deleted edge.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static Polygon SimplifyMinLengthToNewPolygon(this Polygon polygon, double minAllowableLength)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>polygon</code> <a class="xref" href="TVGL.Polygon.html">Polygon</a></dt>
+    <dd><p>The polygon.</p>
+</dd>
+    <dt><code>minAllowableLength</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The allowable change in area fraction.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.Polygon.html">Polygon</a></dt>
+    <dd><p>Polygon.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_PolygonOperations_SimplifyMinLengthToNewPolygon_" data-uid="TVGL.PolygonOperations.SimplifyMinLengthToNewPolygon*"></a>
+
+  <h3 id="TVGL_PolygonOperations_SimplifyMinLengthToNewPolygon_TVGL_Polygon_System_Int32_" data-uid="TVGL.PolygonOperations.SimplifyMinLengthToNewPolygon(TVGL.Polygon,System.Int32)">
+  SimplifyMinLengthToNewPolygon(Polygon, int)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Simplifies the specified polygons to the target number of points using the minimal length change approach.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static Polygon SimplifyMinLengthToNewPolygon(this Polygon polygon, int targetNumberOfPoints)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>polygon</code> <a class="xref" href="TVGL.Polygon.html">Polygon</a></dt>
+    <dd><p>The polygon.</p>
+</dd>
+    <dt><code>targetNumberOfPoints</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a></dt>
+    <dd><p>The target number of points.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.Polygon.html">Polygon</a></dt>
+    <dd><p>Polygon.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_PolygonOperations_SimplifyMinLengthToNewPolygons_" data-uid="TVGL.PolygonOperations.SimplifyMinLengthToNewPolygons*"></a>
+
+  <h3 id="TVGL_PolygonOperations_SimplifyMinLengthToNewPolygons_System_Collections_Generic_IEnumerable_TVGL_Polygon__System_Double_" data-uid="TVGL.PolygonOperations.SimplifyMinLengthToNewPolygons(System.Collections.Generic.IEnumerable{TVGL.Polygon},System.Double)">
+  SimplifyMinLengthToNewPolygons(IEnumerable&lt;Polygon&gt;, double)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Simplifies the specified polygons so that no edge is less than the minimum allowable length.
+In this method vertices are not simply deleted but a new one is created at midPoint of deleted edge.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static IEnumerable&lt;Polygon&gt; SimplifyMinLengthToNewPolygons(this IEnumerable&lt;Polygon&gt; polygons, double minAllowableLength)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>polygons</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.Polygon.html">Polygon</a>&gt;</dt>
+    <dd><p>The polygons.</p>
+</dd>
+    <dt><code>minAllowableLength</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>Minimum length of the allowable.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.Polygon.html">Polygon</a>&gt;</dt>
+    <dd><p>IEnumerable&lt;Polygon&gt;.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_PolygonOperations_SimplifyMinLengthToNewPolygons_" data-uid="TVGL.PolygonOperations.SimplifyMinLengthToNewPolygons*"></a>
+
+  <h3 id="TVGL_PolygonOperations_SimplifyMinLengthToNewPolygons_System_Collections_Generic_IEnumerable_TVGL_Polygon__System_Int32_" data-uid="TVGL.PolygonOperations.SimplifyMinLengthToNewPolygons(System.Collections.Generic.IEnumerable{TVGL.Polygon},System.Int32)">
+  SimplifyMinLengthToNewPolygons(IEnumerable&lt;Polygon&gt;, int)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Simplifies the specified polygon to the target number of points using the minimal length change approach.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static IEnumerable&lt;Polygon&gt; SimplifyMinLengthToNewPolygons(this IEnumerable&lt;Polygon&gt; polygons, int targetNumberOfPoints)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>polygons</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.Polygon.html">Polygon</a>&gt;</dt>
+    <dd><p>The polygons.</p>
+</dd>
+    <dt><code>targetNumberOfPoints</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a></dt>
+    <dd><p>The target number of points.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.Polygon.html">Polygon</a>&gt;</dt>
+    <dd><p>IEnumerable&lt;Polygon&gt;.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_PolygonOperations_SliceAtLine_" data-uid="TVGL.PolygonOperations.SliceAtLine*"></a>
+
+  <h3 id="TVGL_PolygonOperations_SliceAtLine_System_Collections_Generic_IEnumerable_System_Collections_Generic_IEnumerable_TVGL_Vector2___TVGL_Vector2_System_Double_System_Collections_Generic_List_TVGL_Polygon___System_Collections_Generic_List_TVGL_Polygon___System_Double_System_Double_" data-uid="TVGL.PolygonOperations.SliceAtLine(System.Collections.Generic.IEnumerable{System.Collections.Generic.IEnumerable{TVGL.Vector2}},TVGL.Vector2,System.Double,System.Collections.Generic.List{TVGL.Polygon}@,System.Collections.Generic.List{TVGL.Polygon}@,System.Double,System.Double)">
+  SliceAtLine(IEnumerable&lt;IEnumerable&lt;Vector2&gt;&gt;, Vector2, double, out List&lt;Polygon&gt;, out List&lt;Polygon&gt;, double, double)
+  
+  </h3>
+
+  <div class="markdown level1 summary"></div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">[Obsolete(&quot;Use Polygons as this functions constructs them anyway.&quot;)]
+public static Vector2[] SliceAtLine(this IEnumerable&lt;IEnumerable&lt;Vector2&gt;&gt; shape, Vector2 lineNormalDirection, double perpendicularDistanceToLine, out List&lt;Polygon&gt; negativeSidePolygons, out List&lt;Polygon&gt; positiveSidePolygons, double offsetAtLineForNegativeSide = 0, double offsetAtLineForPositiveSide = 0)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>shape</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.Vector2.html">Vector2</a>&gt;&gt;</dt>
+    <dd></dd>
+    <dt><code>lineNormalDirection</code> <a class="xref" href="TVGL.Vector2.html">Vector2</a></dt>
+    <dd></dd>
+    <dt><code>perpendicularDistanceToLine</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd></dd>
+    <dt><code>negativeSidePolygons</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.list-1">List</a>&lt;<a class="xref" href="TVGL.Polygon.html">Polygon</a>&gt;</dt>
+    <dd></dd>
+    <dt><code>positiveSidePolygons</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.list-1">List</a>&lt;<a class="xref" href="TVGL.Polygon.html">Polygon</a>&gt;</dt>
+    <dd></dd>
+    <dt><code>offsetAtLineForNegativeSide</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd></dd>
+    <dt><code>offsetAtLineForPositiveSide</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd></dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.Vector2.html">Vector2</a>[]</dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_PolygonOperations_SliceAtLine_" data-uid="TVGL.PolygonOperations.SliceAtLine*"></a>
+
+  <h3 id="TVGL_PolygonOperations_SliceAtLine_System_Collections_Generic_IEnumerable_TVGL_Polygon__TVGL_Vector2_System_Double_System_Collections_Generic_List_TVGL_Polygon___System_Collections_Generic_List_TVGL_Polygon___System_Double_System_Double_" data-uid="TVGL.PolygonOperations.SliceAtLine(System.Collections.Generic.IEnumerable{TVGL.Polygon},TVGL.Vector2,System.Double,System.Collections.Generic.List{TVGL.Polygon}@,System.Collections.Generic.List{TVGL.Polygon}@,System.Double,System.Double)">
+  SliceAtLine(IEnumerable&lt;Polygon&gt;, Vector2, double, out List&lt;Polygon&gt;, out List&lt;Polygon&gt;, double, double)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Slices the polygons at the provided line. Note that the line is represented as 4 numbers. Think of it as a
+plane cutting through this 2D plane. Instead of the line direction, we receive the normal to the line, the lineNormalDirection.
+Instead of an anchor point on the line, all we need is the perpendicular distance to the line.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static Vector2[] SliceAtLine(this IEnumerable&lt;Polygon&gt; polyTrees, Vector2 lineNormalDirection, double perpendicularDistanceToLine, out List&lt;Polygon&gt; negativeSidePolygons, out List&lt;Polygon&gt; positiveSidePolygons, double offsetAtLineForNegativeSide = 0, double offsetAtLineForPositiveSide = 0)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>polyTrees</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.Polygon.html">Polygon</a>&gt;</dt>
+    <dd><p>The poly trees.</p>
+</dd>
+    <dt><code>lineNormalDirection</code> <a class="xref" href="TVGL.Vector2.html">Vector2</a></dt>
+    <dd><p>The line normal direction.</p>
+</dd>
+    <dt><code>perpendicularDistanceToLine</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The distance along direction.</p>
+</dd>
+    <dt><code>negativeSidePolygons</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.list-1">List</a>&lt;<a class="xref" href="TVGL.Polygon.html">Polygon</a>&gt;</dt>
+    <dd><p>The negative side polygons.</p>
+</dd>
+    <dt><code>positiveSidePolygons</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.list-1">List</a>&lt;<a class="xref" href="TVGL.Polygon.html">Polygon</a>&gt;</dt>
+    <dd><p>The positive side polygons.</p>
+</dd>
+    <dt><code>offsetAtLineForNegativeSide</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The offset at line for negative side.</p>
+</dd>
+    <dt><code>offsetAtLineForPositiveSide</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The offset at line for positive side.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.Vector2.html">Vector2</a>[]</dt>
+    <dd><p>Vector2[].</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_PolygonOperations_SliceAtLine_" data-uid="TVGL.PolygonOperations.SliceAtLine*"></a>
+
+  <h3 id="TVGL_PolygonOperations_SliceAtLine_TVGL_Polygon_TVGL_Vector2_System_Double_System_Collections_Generic_List_TVGL_Polygon___System_Collections_Generic_List_TVGL_Polygon___System_Double_System_Double_" data-uid="TVGL.PolygonOperations.SliceAtLine(TVGL.Polygon,TVGL.Vector2,System.Double,System.Collections.Generic.List{TVGL.Polygon}@,System.Collections.Generic.List{TVGL.Polygon}@,System.Double,System.Double)">
+  SliceAtLine(Polygon, Vector2, double, out List&lt;Polygon&gt;, out List&lt;Polygon&gt;, double, double)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Slices the polygon at the provided line. Note that the line is represented as 4 numbers. Think of it as a
+plane cutting through this 2D plane. Instead of the line direction, we receive the normal to the line, the lineNormalDirection.
+Instead of an anchor point on the line, all we need is the perpendicular distance to the line.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static Vector2[] SliceAtLine(this Polygon shallowPolygonTree, Vector2 lineNormalDirection, double perpendicularDistanceToLine, out List&lt;Polygon&gt; negativeSidePolygons, out List&lt;Polygon&gt; positiveSidePolygons, double offsetAtLineForNegativeSide = 0, double offsetAtLineForPositiveSide = 0)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>shallowPolygonTree</code> <a class="xref" href="TVGL.Polygon.html">Polygon</a></dt>
+    <dd><p>The shallow polygon tree.</p>
+</dd>
+    <dt><code>lineNormalDirection</code> <a class="xref" href="TVGL.Vector2.html">Vector2</a></dt>
+    <dd><p>The line normal direction.</p>
+</dd>
+    <dt><code>perpendicularDistanceToLine</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The distance along direction.</p>
+</dd>
+    <dt><code>negativeSidePolygons</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.list-1">List</a>&lt;<a class="xref" href="TVGL.Polygon.html">Polygon</a>&gt;</dt>
+    <dd><p>The negative side polygons.</p>
+</dd>
+    <dt><code>positiveSidePolygons</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.list-1">List</a>&lt;<a class="xref" href="TVGL.Polygon.html">Polygon</a>&gt;</dt>
+    <dd><p>The positive side polygons.</p>
+</dd>
+    <dt><code>offsetAtLineForNegativeSide</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The offset at line for negative side.</p>
+</dd>
+    <dt><code>offsetAtLineForPositiveSide</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The offset at line for positive side.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.Vector2.html">Vector2</a>[]</dt>
+    <dd><p>Vector2[].</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+  <h4 class="section" id="TVGL_PolygonOperations_SliceAtLine_TVGL_Polygon_TVGL_Vector2_System_Double_System_Collections_Generic_List_TVGL_Polygon___System_Collections_Generic_List_TVGL_Polygon___System_Double_System_Double__remarks">Remarks</h4>
+  <div class="markdown level1 remarks"><p>This function slices the [List(Polygon)] with a give direction and distance. If returnFurtherThanSlice = false,
+it will return the partial shape before the cutting line, otherwise those beyond the cutting line.
+The returned partial shape is properly closed and ordered CCW+, CW-.
+OffsetAtLine allows the use to offset the intersection line a given distance in a direction opposite to the
+returned partial shape (i.e., if returnFurtherThanSlice == true, a positive offsetAtLine value moves the
+intersection points before the line).</p>
+</div>
+
+
+
+
+  <a id="TVGL_PolygonOperations_Subtract_" data-uid="TVGL.PolygonOperations.Subtract*"></a>
+
+  <h3 id="TVGL_PolygonOperations_Subtract_System_Collections_Generic_IEnumerable_TVGL_Polygon__System_Collections_Generic_IEnumerable_TVGL_Polygon__TVGL_PolygonCollection_System_Double_" data-uid="TVGL.PolygonOperations.Subtract(System.Collections.Generic.IEnumerable{TVGL.Polygon},System.Collections.Generic.IEnumerable{TVGL.Polygon},TVGL.PolygonCollection,System.Double)">
+  Subtract(IEnumerable&lt;Polygon&gt;, IEnumerable&lt;Polygon&gt;, PolygonCollection, double)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Returns the list of polygons that are the sub-shapes of the minuends and that are not part of the subtrahends.
+Notice also that any overlap between the polygons in A or the polygons in B are ignored. Finally, all inputs must be positive.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static List&lt;Polygon&gt; Subtract(this IEnumerable&lt;Polygon&gt; minuends, IEnumerable&lt;Polygon&gt; subtrahends, PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles, double tolerance = NaN)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>minuends</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.Polygon.html">Polygon</a>&gt;</dt>
+    <dd><p>The polygons a.</p>
+</dd>
+    <dt><code>subtrahends</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.Polygon.html">Polygon</a>&gt;</dt>
+    <dd><p>The polygons b.</p>
+</dd>
+    <dt><code>outputAsCollectionType</code> <a class="xref" href="TVGL.PolygonCollection.html">PolygonCollection</a></dt>
+    <dd><p>Type of the output as collection.</p>
+</dd>
+    <dt><code>tolerance</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The tolerance.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.list-1">List</a>&lt;<a class="xref" href="TVGL.Polygon.html">Polygon</a>&gt;</dt>
+    <dd><p>System.Collections.Generic.List&lt;TVGL.TwoDimensional.Polygon&gt;.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_PolygonOperations_Subtract_" data-uid="TVGL.PolygonOperations.Subtract*"></a>
+
+  <h3 id="TVGL_PolygonOperations_Subtract_TVGL_Polygon_TVGL_Polygon_TVGL_PolygonCollection_System_Double_" data-uid="TVGL.PolygonOperations.Subtract(TVGL.Polygon,TVGL.Polygon,TVGL.PolygonCollection,System.Double)">
+  Subtract(Polygon, Polygon, PolygonCollection, double)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Returns the list of polygons that result from A-B (subtracting polygon B from polygon A).</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static List&lt;Polygon&gt; Subtract(this Polygon minuend, Polygon subtrahend, PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles, double tolerance = NaN)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>minuend</code> <a class="xref" href="TVGL.Polygon.html">Polygon</a></dt>
+    <dd><p>The polygon a.</p>
+</dd>
+    <dt><code>subtrahend</code> <a class="xref" href="TVGL.Polygon.html">Polygon</a></dt>
+    <dd><p>The polygon b.</p>
+</dd>
+    <dt><code>outputAsCollectionType</code> <a class="xref" href="TVGL.PolygonCollection.html">PolygonCollection</a></dt>
+    <dd><p>Type of the output as collection.</p>
+</dd>
+    <dt><code>tolerance</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The tolerance.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.list-1">List</a>&lt;<a class="xref" href="TVGL.Polygon.html">Polygon</a>&gt;</dt>
+    <dd><p>System.Collections.Generic.List&lt;TVGL.TwoDimensional.Polygon&gt;.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_PolygonOperations_Subtract_" data-uid="TVGL.PolygonOperations.Subtract*"></a>
+
+  <h3 id="TVGL_PolygonOperations_Subtract_TVGL_Polygon_TVGL_Polygon_TVGL_PolygonInteractionRecord_TVGL_PolygonCollection_System_Double_" data-uid="TVGL.PolygonOperations.Subtract(TVGL.Polygon,TVGL.Polygon,TVGL.PolygonInteractionRecord,TVGL.PolygonCollection,System.Double)">
+  Subtract(Polygon, Polygon, PolygonInteractionRecord, PolygonCollection, double)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Returns the list of polygons that result from A-B (subtracting polygon B from polygon A). By providing the intersections
+between the two polygons, the operation will be performed with less time and memory.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static List&lt;Polygon&gt; Subtract(this Polygon minuend, Polygon subtrahend, PolygonInteractionRecord interaction, PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles, double tolerance = NaN)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>minuend</code> <a class="xref" href="TVGL.Polygon.html">Polygon</a></dt>
+    <dd><p>The polygon a.</p>
+</dd>
+    <dt><code>subtrahend</code> <a class="xref" href="TVGL.Polygon.html">Polygon</a></dt>
+    <dd><p>The polygon b.</p>
+</dd>
+    <dt><code>interaction</code> <a class="xref" href="TVGL.PolygonInteractionRecord.html">PolygonInteractionRecord</a></dt>
+    <dd><p>The polygon relationship.</p>
+</dd>
+    <dt><code>outputAsCollectionType</code> <a class="xref" href="TVGL.PolygonCollection.html">PolygonCollection</a></dt>
+    <dd><p>Type of the output as collection.</p>
+</dd>
+    <dt><code>tolerance</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The tolerance.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.list-1">List</a>&lt;<a class="xref" href="TVGL.Polygon.html">Polygon</a>&gt;</dt>
+    <dd><p>System.Collections.Generic.List&lt;TVGL.TwoDimensional.Polygon&gt;.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <h4 class="section">Exceptions</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.argumentexception">ArgumentException</a></dt>
+    <dd><p>The minuend is already a negative polygon (i.e. hole). Consider another operation&quot;
++&quot; to accomplish this function, like Intersect. - polygonA</p>
+</dd>
+  </dl>
+
+
+
+  <a id="TVGL_PolygonOperations_Triangulate_" data-uid="TVGL.PolygonOperations.Triangulate*"></a>
+
+  <h3 id="TVGL_PolygonOperations_Triangulate_System_Collections_Generic_IEnumerable_System_Collections_Generic_IList_TVGL_Vertex___TVGL_Vector3_" data-uid="TVGL.PolygonOperations.Triangulate(System.Collections.Generic.IEnumerable{System.Collections.Generic.IList{TVGL.Vertex}},TVGL.Vector3)">
+  Triangulate(IEnumerable&lt;IList&lt;Vertex&gt;&gt;, Vector3)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Triangulates the specified loop of 3D vertices using the projection from the provided normal.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static IEnumerable&lt;Vertex[]&gt; Triangulate(this IEnumerable&lt;IList&lt;Vertex&gt;&gt; vertexLoops, Vector3 normal)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>vertexLoops</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ilist-1">IList</a>&lt;<a class="xref" href="TVGL.Vertex.html">Vertex</a>&gt;&gt;</dt>
+    <dd><p>The vertex loops.</p>
+</dd>
+    <dt><code>normal</code> <a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>The normal direction.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.Vertex.html">Vertex</a>[]&gt;</dt>
+    <dd><p>IEnumerable&lt;Vertex[]&gt; where each represents a triangular polygonal face.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <h4 class="section">Exceptions</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.argumentexception">ArgumentException</a></dt>
+    <dd><p>The vertices must all have a unique IndexInList value - vertexLoops</p>
+</dd>
+  </dl>
+
+
+
+  <a id="TVGL_PolygonOperations_Triangulate_" data-uid="TVGL.PolygonOperations.Triangulate*"></a>
+
+  <h3 id="TVGL_PolygonOperations_Triangulate_System_Collections_Generic_IEnumerable_TVGL_Vertex__TVGL_Vector3_System_Boolean_" data-uid="TVGL.PolygonOperations.Triangulate(System.Collections.Generic.IEnumerable{TVGL.Vertex},TVGL.Vector3,System.Boolean)">
+  Triangulate(IEnumerable&lt;Vertex&gt;, Vector3, bool)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Triangulates the specified loop of 3D vertices using the projection from the provided normal.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static IEnumerable&lt;Vertex[]&gt; Triangulate(this IEnumerable&lt;Vertex&gt; vertexLoop, Vector3 normal, bool forceToPositive = false)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>vertexLoop</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.Vertex.html">Vertex</a>&gt;</dt>
+    <dd><p>The vertex loop.</p>
+</dd>
+    <dt><code>normal</code> <a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>The normal direction.</p>
+</dd>
+    <dt><code>forceToPositive</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd><p>if set to <code>true</code> [force to positive].</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.Vertex.html">Vertex</a>[]&gt;</dt>
+    <dd><p>IEnumerable&lt;Vertex[]&gt; where each represents a triangular polygonal face.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <h4 class="section">Exceptions</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.argumentexception">ArgumentException</a></dt>
+    <dd><p>The vertices must all have a unique IndexInList value - vertexLoop</p>
+</dd>
+  </dl>
+
+
+
+  <a id="TVGL_PolygonOperations_TriangulateToCoordinates_" data-uid="TVGL.PolygonOperations.TriangulateToCoordinates*"></a>
+
+  <h3 id="TVGL_PolygonOperations_TriangulateToCoordinates_TVGL_Polygon_" data-uid="TVGL.PolygonOperations.TriangulateToCoordinates(TVGL.Polygon)">
+  TriangulateToCoordinates(Polygon)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Triangulates the specified polygons which may include holes. However, the .</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static IEnumerable&lt;Vector2[]&gt; TriangulateToCoordinates(this Polygon polygon)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>polygon</code> <a class="xref" href="TVGL.Polygon.html">Polygon</a></dt>
+    <dd><p>The polygon.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.Vector2.html">Vector2</a>[]&gt;</dt>
+    <dd><p>List&lt;System.Int32[]&gt;.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_PolygonOperations_TriangulateToIndices_" data-uid="TVGL.PolygonOperations.TriangulateToIndices*"></a>
+
+  <h3 id="TVGL_PolygonOperations_TriangulateToIndices_TVGL_Polygon_System_Boolean_" data-uid="TVGL.PolygonOperations.TriangulateToIndices(TVGL.Polygon,System.Boolean)">
+  TriangulateToIndices(Polygon, bool)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Triangulates the specified polygons which may include holes. However, the .</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static IEnumerable&lt;(int A, int B, int C)&gt; TriangulateToIndices(this Polygon polygon, bool handleSelfIntersects = true)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>polygon</code> <a class="xref" href="TVGL.Polygon.html">Polygon</a></dt>
+    <dd><p>The polygon.</p>
+</dd>
+    <dt><code>handleSelfIntersects</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd><p>if set to <code>true</code> [handle self intersects].</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;(<a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.valuetuple-system.int32,system.int32,system.int32-.index">index</a>, <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.valuetuple-system.int32,system.int32,system.int32-.x">x</a>, <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.valuetuple-system.int32,system.int32,system.int32-.y">y</a>)&gt;</dt>
+    <dd><p>List&lt;System.Int32[]&gt;.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_PolygonOperations_Union_" data-uid="TVGL.PolygonOperations.Union*"></a>
+
+  <h3 id="TVGL_PolygonOperations_Union_TVGL_Polygon_TVGL_Polygon_TVGL_PolygonCollection_" data-uid="TVGL.PolygonOperations.Union(TVGL.Polygon,TVGL.Polygon,TVGL.PolygonCollection)">
+  Union(Polygon, Polygon, PolygonCollection)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Returns the list of polygons that exist in either A OR B.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static List&lt;Polygon&gt; Union(this Polygon polygonA, Polygon polygonB, PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>polygonA</code> <a class="xref" href="TVGL.Polygon.html">Polygon</a></dt>
+    <dd><p>The polygon a.</p>
+</dd>
+    <dt><code>polygonB</code> <a class="xref" href="TVGL.Polygon.html">Polygon</a></dt>
+    <dd><p>The polygon b.</p>
+</dd>
+    <dt><code>outputAsCollectionType</code> <a class="xref" href="TVGL.PolygonCollection.html">PolygonCollection</a></dt>
+    <dd><p>Type of the output as collection.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.list-1">List</a>&lt;<a class="xref" href="TVGL.Polygon.html">Polygon</a>&gt;</dt>
+    <dd><p>System.Collections.Generic.List&lt;TVGL.TwoDimensional.Polygon&gt;.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_PolygonOperations_Union_" data-uid="TVGL.PolygonOperations.Union*"></a>
+
+  <h3 id="TVGL_PolygonOperations_Union_TVGL_Polygon_TVGL_Polygon_TVGL_PolygonInteractionRecord_TVGL_PolygonCollection_System_Double_" data-uid="TVGL.PolygonOperations.Union(TVGL.Polygon,TVGL.Polygon,TVGL.PolygonInteractionRecord,TVGL.PolygonCollection,System.Double)">
+  Union(Polygon, Polygon, PolygonInteractionRecord, PolygonCollection, double)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Returns the list of polygons that exist in either A OR B.By providing the intersections
+between the two polygons, the operation will be performed with less time and memory.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static List&lt;Polygon&gt; Union(this Polygon polygonA, Polygon polygonB, PolygonInteractionRecord polygonInteraction, PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles, double tolerance = NaN)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>polygonA</code> <a class="xref" href="TVGL.Polygon.html">Polygon</a></dt>
+    <dd><p>The polygon a.</p>
+</dd>
+    <dt><code>polygonB</code> <a class="xref" href="TVGL.Polygon.html">Polygon</a></dt>
+    <dd><p>The polygon b.</p>
+</dd>
+    <dt><code>polygonInteraction</code> <a class="xref" href="TVGL.PolygonInteractionRecord.html">PolygonInteractionRecord</a></dt>
+    <dd><p>The polygon relationship.</p>
+</dd>
+    <dt><code>outputAsCollectionType</code> <a class="xref" href="TVGL.PolygonCollection.html">PolygonCollection</a></dt>
+    <dd><p>Type of the output as collection.</p>
+</dd>
+    <dt><code>tolerance</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The minimum allowable area.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.list-1">List</a>&lt;<a class="xref" href="TVGL.Polygon.html">Polygon</a>&gt;</dt>
+    <dd><p>System.Collections.Generic.List&lt;TVGL.TwoDimensional.Polygon&gt;.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <h4 class="section">Exceptions</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.argumentexception">ArgumentException</a></dt>
+    <dd><p>A negative polygon (i.e. hole) is provided to Union which results in infinite shape. - polygonA</p>
+</dd>
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.argumentexception">ArgumentException</a></dt>
+    <dd><p>A negative polygon (i.e. hole) is provided to Union which results in infinite shape. - polygonB</p>
+</dd>
+  </dl>
+
+
+
+  <a id="TVGL_PolygonOperations_UnionPolygons_" data-uid="TVGL.PolygonOperations.UnionPolygons*"></a>
+
+  <h3 id="TVGL_PolygonOperations_UnionPolygons_System_Collections_Generic_IEnumerable_TVGL_Polygon__System_Collections_Generic_IEnumerable_TVGL_Polygon__TVGL_PolygonCollection_System_Double_" data-uid="TVGL.PolygonOperations.UnionPolygons(System.Collections.Generic.IEnumerable{TVGL.Polygon},System.Collections.Generic.IEnumerable{TVGL.Polygon},TVGL.PolygonCollection,System.Double)">
+  UnionPolygons(IEnumerable&lt;Polygon&gt;, IEnumerable&lt;Polygon&gt;, PolygonCollection, double)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Returns the list of polygons that are the subshapes of the two collections of polygons. Notice this is called UnionPolygons
+here to distinguish it from the LINQ function Union, which is also a valid extension for any IEnumerable collection.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static List&lt;Polygon&gt; UnionPolygons(this IEnumerable&lt;Polygon&gt; polygonsA, IEnumerable&lt;Polygon&gt; polygonsB, PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles, double tolerance = NaN)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>polygonsA</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.Polygon.html">Polygon</a>&gt;</dt>
+    <dd><p>The polygons a.</p>
+</dd>
+    <dt><code>polygonsB</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.Polygon.html">Polygon</a>&gt;</dt>
+    <dd><p>The polygons b.</p>
+</dd>
+    <dt><code>outputAsCollectionType</code> <a class="xref" href="TVGL.PolygonCollection.html">PolygonCollection</a></dt>
+    <dd><p>Type of the output as collection.</p>
+</dd>
+    <dt><code>tolerance</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The tolerance.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.list-1">List</a>&lt;<a class="xref" href="TVGL.Polygon.html">Polygon</a>&gt;</dt>
+    <dd><p>System.Collections.Generic.List&lt;TVGL.TwoDimensional.Polygon&gt;.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_PolygonOperations_UnionPolygons_" data-uid="TVGL.PolygonOperations.UnionPolygons*"></a>
+
+  <h3 id="TVGL_PolygonOperations_UnionPolygons_System_Collections_Generic_IEnumerable_TVGL_Polygon__TVGL_PolygonCollection_" data-uid="TVGL.PolygonOperations.UnionPolygons(System.Collections.Generic.IEnumerable{TVGL.Polygon},TVGL.PolygonCollection)">
+  UnionPolygons(IEnumerable&lt;Polygon&gt;, PolygonCollection)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Returns the list of polygons that are the subshapes of ANY of the provided polygons. Notice this is called UnionPolygons here to distinguish
+it from the LINQ function Union, which is also a valid extension for any IEnumerable collection.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static List&lt;Polygon&gt; UnionPolygons(this IEnumerable&lt;Polygon&gt; polygons, PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>polygons</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.Polygon.html">Polygon</a>&gt;</dt>
+    <dd><p>The polygons.</p>
+</dd>
+    <dt><code>outputAsCollectionType</code> <a class="xref" href="TVGL.PolygonCollection.html">PolygonCollection</a></dt>
+    <dd><p>Type of the output as collection.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.list-1">List</a>&lt;<a class="xref" href="TVGL.Polygon.html">Polygon</a>&gt;</dt>
+    <dd><p>System.Collections.Generic.List&lt;TVGL.TwoDimensional.Polygon&gt;.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+</article>
+
+        <div class="contribution d-print-none">
+        </div>
+
+        
+      </div>
+
+      <div class="affix">
+        <nav id="affix"></nav>
+      </div>
+    </main>
+
+
+    <footer class="border-top">
+      <div class="container-xxl">
+        <div class="flex-fill">
+          <span>Made with <a href="https://dotnet.github.io/docfx">docfx</a></span>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>

@@ -1,0 +1,521 @@
+﻿<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+      <title>Class Vertex2D
+ </title>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <meta name="title" content="Class Vertex2D
+ ">
+      
+      <link rel="icon" href="../favicon.ico">
+      <link rel="stylesheet" href="../styles/docfx.min.css">
+      <link rel="stylesheet" href="../styles/main.css">
+      <meta name="docfx:navrel" content="../toc.html">
+      <meta name="docfx:tocrel" content="toc.html">
+      
+      
+      
+
+      <script>
+        MathJax = {
+          options: {
+            processHtmlClass: ['tex2jax_process', 'math']
+          }
+        };
+      </script>
+
+      <script type="text/javascript" src="../styles/docfx.min.js"></script>
+      <script type="text/javascript" src="../styles/main.js"></script>
+  </head>
+
+  <body class="tex2jax_ignore" data-layout="" data-yaml-mime="ManagedReference">
+    <header class="bg-body border-bottom">
+      <nav id="autocollapse" class="navbar navbar-expand-md" role="navigation">
+        <div class="container-xxl flex-nowrap">
+          <a class="navbar-brand" href="../index.html">
+            <img id="logo" class="svg" src="../logo.svg" alt="">
+            
+          </a>
+          <button class="btn btn-lg d-md-none border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navpanel" aria-controls="navpanel" aria-expanded="false" aria-label="Toggle navigation">
+            <i class="bi bi-three-dots"></i>
+          </button>
+          <div class="collapse navbar-collapse" id="navpanel">
+            <div id="navbar">
+            </div>
+          </div>
+        </div>
+      </nav>
+    </header>
+
+    <main class="container-xxl">
+      <div class="toc-offcanvas">
+        <div class="offcanvas-md offcanvas-start" tabindex="-1" id="tocOffcanvas" aria-labelledby="tocOffcanvasLabel">
+          <div class="offcanvas-header">
+            <h5 class="offcanvas-title" id="tocOffcanvasLabel">Table of Contents</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#tocOffcanvas" aria-label="Close"></button>
+          </div>
+          <div class="offcanvas-body">
+            <nav class="toc" id="toc"></nav>
+          </div>
+        </div>
+      </div>
+
+      <div class="content">
+        <div class="actionbar">
+          <button class="btn btn-lg border-0 d-md-none" style="margin-top: -.65em; margin-left: -.8em" type="button" data-bs-toggle="offcanvas" data-bs-target="#tocOffcanvas" aria-controls="tocOffcanvas" aria-expanded="false" aria-label="Show table of contents">
+            <i class="bi bi-list"></i>
+          </button>
+
+          <nav id="breadcrumb"></nav>
+        </div>
+
+        <article data-uid="TVGL.Vertex2D">
+
+
+
+  <h1 id="TVGL_Vertex2D" data-uid="TVGL.Vertex2D" class="text-break">
+    Class Vertex2D
+  
+  </h1>
+
+  <div class="facts text-secondary">
+    <dl><dt>Namespace</dt><dd><a class="xref" href="TVGL.html">TVGL</a></dd></dl>
+  <dl><dt>Assembly</dt><dd>TessellationAndVoxelizationGeometryLibrary.dll</dd></dl>
+  </div>
+
+  <div class="markdown summary"><p>Vertex2D class used in Triangulate Polygon
+Inherits position from point class</p>
+</div>
+  <div class="markdown conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public class Vertex2D : IVertex2D</code></pre>
+  </div>
+
+
+
+
+  <dl class="typelist inheritance">
+    <dt>Inheritance</dt>
+    <dd>
+      <div><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object">object</a></div>
+      <div><span class="xref">Vertex2D</span></div>
+    </dd>
+  </dl>
+
+  <dl class="typelist implements">
+    <dt>Implements</dt>
+    <dd>
+      <div><span class="xref">IVertex2D</span></div>
+    </dd>
+  </dl>
+
+
+  <dl class="typelist derived">
+    <dt>Inherited Members</dt>
+    <dd>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.equals#system-object-equals(system-object)">object.Equals(object)</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.equals#system-object-equals(system-object-system-object)">object.Equals(object, object)</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.gethashcode">object.GetHashCode()</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.gettype">object.GetType()</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.memberwiseclone">object.MemberwiseClone()</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.referenceequals">object.ReferenceEquals(object, object)</a>
+    </div>
+  </dd></dl>
+
+  <dl class="typelist extensionMethods">
+    <dt>Extension Methods</dt>
+    <dd>
+  <div>
+      <a class="xref" href="TVGL.PolygonOperations.html#TVGL_PolygonOperations_GetMonotonicityChange_TVGL_Vertex2D_">PolygonOperations.GetMonotonicityChange(Vertex2D)</a>
+  </div>
+  </dd></dl>
+
+
+
+
+
+  <h2 class="section" id="constructors">Constructors
+</h2>
+
+
+  <a id="TVGL_Vertex2D__ctor_" data-uid="TVGL.Vertex2D.#ctor*"></a>
+
+  <h3 id="TVGL_Vertex2D__ctor_TVGL_Vector2_System_Int32_System_Int32_" data-uid="TVGL.Vertex2D.#ctor(TVGL.Vector2,System.Int32,System.Int32)">
+  Vertex2D(Vector2, int, int)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Initializes a new instance of the <a class="xref" href="TVGL.Node.html">Node</a> class.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public Vertex2D(Vector2 currentPoint, int referenceID, int loopID)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>currentPoint</code> <a class="xref" href="TVGL.Vector2.html">Vector2</a></dt>
+    <dd><p>The current point.</p>
+</dd>
+    <dt><code>referenceID</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a></dt>
+    <dd><p>The reference identifier.</p>
+</dd>
+    <dt><code>loopID</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a></dt>
+    <dd><p>The loop identifier.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+  <h2 class="section" id="properties">Properties
+</h2>
+
+
+  <a id="TVGL_Vertex2D_Coordinates_" data-uid="TVGL.Vertex2D.Coordinates*"></a>
+
+  <h3 id="TVGL_Vertex2D_Coordinates" data-uid="TVGL.Vertex2D.Coordinates">
+  Coordinates
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the base class, Point of this node.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public Vector2 Coordinates { get; set; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.Vector2.html">Vector2</a></dt>
+    <dd><p>The point.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="TVGL_Vertex2D_EndLine_" data-uid="TVGL.Vertex2D.EndLine*"></a>
+
+  <h3 id="TVGL_Vertex2D_EndLine" data-uid="TVGL.Vertex2D.EndLine">
+  EndLine
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the line that ends at this node.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public PolygonEdge EndLine { get; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.PolygonEdge.html">PolygonEdge</a></dt>
+    <dd><p>The end line.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="TVGL_Vertex2D_IndexInList_" data-uid="TVGL.Vertex2D.IndexInList*"></a>
+
+  <h3 id="TVGL_Vertex2D_IndexInList" data-uid="TVGL.Vertex2D.IndexInList">
+  IndexInList
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the index in list.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public int IndexInList { get; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a></dt>
+    <dd><p>The index in list.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="TVGL_Vertex2D_LoopID_" data-uid="TVGL.Vertex2D.LoopID*"></a>
+
+  <h3 id="TVGL_Vertex2D_LoopID" data-uid="TVGL.Vertex2D.LoopID">
+  LoopID
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the loop ID that this node belongs to.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public int LoopID { get; set; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a></dt>
+    <dd><p>The loop identifier.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="TVGL_Vertex2D_StartLine_" data-uid="TVGL.Vertex2D.StartLine*"></a>
+
+  <h3 id="TVGL_Vertex2D_StartLine" data-uid="TVGL.Vertex2D.StartLine">
+  StartLine
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the line that starts at this node.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public PolygonEdge StartLine { get; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.PolygonEdge.html">PolygonEdge</a></dt>
+    <dd><p>The start line.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="TVGL_Vertex2D_X_" data-uid="TVGL.Vertex2D.X*"></a>
+
+  <h3 id="TVGL_Vertex2D_X" data-uid="TVGL.Vertex2D.X">
+  X
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets or sets the x.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public double X { get; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The x.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="TVGL_Vertex2D_Y_" data-uid="TVGL.Vertex2D.Y*"></a>
+
+  <h3 id="TVGL_Vertex2D_Y" data-uid="TVGL.Vertex2D.Y">
+  Y
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets or sets the y.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public double Y { get; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The y.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <h2 class="section" id="methods">Methods
+</h2>
+
+
+  <a id="TVGL_Vertex2D_Copy_" data-uid="TVGL.Vertex2D.Copy*"></a>
+
+  <h3 id="TVGL_Vertex2D_Copy" data-uid="TVGL.Vertex2D.Copy">
+  Copy()
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Copies this instance.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public Vertex2D Copy()</code></pre>
+  </div>
+
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.Vertex2D.html">Vertex2D</a></dt>
+    <dd><p>Vertex2D.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_Vertex2D_ToString_" data-uid="TVGL.Vertex2D.ToString*"></a>
+
+  <h3 id="TVGL_Vertex2D_ToString" data-uid="TVGL.Vertex2D.ToString">
+  ToString()
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Returns a <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a> that represents this instance.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public override string ToString()</code></pre>
+  </div>
+
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dd><p>A <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a> that represents this instance.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+</article>
+
+        <div class="contribution d-print-none">
+        </div>
+
+        
+      </div>
+
+      <div class="affix">
+        <nav id="affix"></nav>
+      </div>
+    </main>
+
+
+    <footer class="border-top">
+      <div class="container-xxl">
+        <div class="flex-fill">
+          <span>Made with <a href="https://dotnet.github.io/docfx">docfx</a></span>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>

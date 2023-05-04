@@ -23,7 +23,7 @@ namespace Priority_Queue
     /// </summary>
     /// <typeparam name="TItem">The values in the queue.  Must extend the GenericPriorityQueueNode class</typeparam>
     /// <typeparam name="TPriority">The priority-type.  Must extend IComparable&lt;TPriority&gt;</typeparam>
-    public sealed class GenericPriorityQueue<TItem, TPriority> : IFixedSizePriorityQueue<TItem, TPriority>
+    internal sealed class GenericPriorityQueue<TItem, TPriority> : IEnumerable<TItem>
         where TItem : GenericPriorityQueueNode<TPriority>
     {
         /// <summary>
@@ -47,14 +47,14 @@ namespace Priority_Queue
         /// Instantiate a new Priority Queue
         /// </summary>
         /// <param name="maxNodes">The max nodes ever allowed to be enqueued (going over this will cause undefined behavior)</param>
-        public GenericPriorityQueue(int maxNodes) : this(maxNodes, Comparer<TPriority>.Default) { }
+        internal GenericPriorityQueue(int maxNodes) : this(maxNodes, Comparer<TPriority>.Default) { }
 
         /// <summary>
         /// Instantiate a new Priority Queue
         /// </summary>
         /// <param name="maxNodes">The max nodes ever allowed to be enqueued (going over this will cause undefined behavior)</param>
         /// <param name="comparer">The comparer used to compare TPriority values.</param>
-        public GenericPriorityQueue(int maxNodes, IComparer<TPriority> comparer) : this(maxNodes, comparer.Compare) { }
+        internal GenericPriorityQueue(int maxNodes, IComparer<TPriority> comparer) : this(maxNodes, comparer.Compare) { }
 
         /// <summary>
         /// Instantiate a new Priority Queue
@@ -62,7 +62,7 @@ namespace Priority_Queue
         /// <param name="maxNodes">The max nodes ever allowed to be enqueued (going over this will cause undefined behavior)</param>
         /// <param name="comparer">The comparison function to use to compare TPriority values</param>
         /// <exception cref="System.InvalidOperationException">New queue size cannot be smaller than 1</exception>
-        public GenericPriorityQueue(int maxNodes, Comparison<TPriority> comparer)
+        internal GenericPriorityQueue(int maxNodes, Comparison<TPriority> comparer)
         {
 #if DEBUG
             if (maxNodes <= 0)
@@ -82,7 +82,7 @@ namespace Priority_Queue
         /// O(1)
         /// </summary>
         /// <value>The count.</value>
-        public int Count
+        internal int Count
         {
             get
             {
@@ -95,7 +95,7 @@ namespace Priority_Queue
         /// attempting to enqueue another item will cause undefined behavior.  O(1)
         /// </summary>
         /// <value>The maximum size.</value>
-        public int MaxSize
+        internal int MaxSize
         {
             get
             {
@@ -108,7 +108,7 @@ namespace Priority_Queue
         /// O(n) (So, don't do this often!)
         /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Clear()
+        internal void Clear()
         {
             Array.Clear(_nodes, 1, _numNodes);
             _numNodes = 0;
@@ -125,7 +125,7 @@ namespace Priority_Queue
         /// <exception cref="System.InvalidOperationException">node.Contains was called on a node from another queue.  Please call originalQueue.ResetNode() first</exception>
         /// <exception cref="System.InvalidOperationException">node.QueueIndex has been corrupted. Did you change it manually?</exception>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool Contains(TItem node)
+        internal bool Contains(TItem node)
         {
 #if DEBUG
             if(node == null)
@@ -159,7 +159,7 @@ namespace Priority_Queue
         /// <exception cref="System.InvalidOperationException">node.Enqueue was called on a node from another queue.  Please call originalQueue.ResetNode() first</exception>
         /// <exception cref="System.InvalidOperationException">Node is already enqueued: " + node</exception>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Enqueue(TItem node, TPriority priority)
+        internal void Enqueue(TItem node, TPriority priority)
         {
 #if DEBUG
             if(node == null)
@@ -396,7 +396,7 @@ namespace Priority_Queue
         /// <exception cref="System.InvalidOperationException">Queue has been corrupted (Did you update a node priority manually instead of calling UpdatePriority()?" +
         ///                                                     "Or add the same node to two different queues?)</exception>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public TItem Dequeue()
+        internal TItem Dequeue()
         {
 #if DEBUG
             if(_numNodes <= 0)
@@ -440,7 +440,7 @@ namespace Priority_Queue
         /// <param name="maxNodes">The maximum nodes.</param>
         /// <exception cref="System.InvalidOperationException">Queue size cannot be smaller than 1</exception>
         /// <exception cref="System.InvalidOperationException">Called Resize(" + maxNodes + "), but current queue contains " + _numNodes + " nodes</exception>
-        public void Resize(int maxNodes)
+        internal void Resize(int maxNodes)
         {
 #if DEBUG
             if (maxNodes <= 0)
@@ -467,7 +467,7 @@ namespace Priority_Queue
         /// </summary>
         /// <value>The first.</value>
         /// <exception cref="System.InvalidOperationException">Cannot call .First on an empty queue</exception>
-        public TItem First
+        internal TItem First
         {
             get
             {
@@ -494,7 +494,7 @@ namespace Priority_Queue
         /// <exception cref="System.InvalidOperationException">node.UpdatePriority was called on a node from another queue</exception>
         /// <exception cref="System.InvalidOperationException">Cannot call UpdatePriority() on a node which is not enqueued: " + node</exception>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void UpdatePriority(TItem node, TPriority priority)
+        internal void UpdatePriority(TItem node, TPriority priority)
         {
 #if DEBUG
             if(node == null)
@@ -546,7 +546,7 @@ namespace Priority_Queue
         /// <exception cref="System.InvalidOperationException">node.Remove was called on a node from another queue</exception>
         /// <exception cref="System.InvalidOperationException">Cannot call Remove() on a node which is not enqueued: " + node</exception>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Remove(TItem node)
+        internal void Remove(TItem node)
         {
 #if DEBUG
             if(node == null)
@@ -591,7 +591,7 @@ namespace Priority_Queue
         /// <exception cref="System.InvalidOperationException">node.ResetNode was called on a node from another queue</exception>
         /// <exception cref="System.InvalidOperationException">node.ResetNode was called on a node that is still in the queue</exception>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void ResetNode(TItem node)
+        internal void ResetNode(TItem node)
         {
 #if DEBUG
             if (node == null)
@@ -618,12 +618,16 @@ namespace Priority_Queue
         /// Returns an enumerator that iterates through the collection.
         /// </summary>
         /// <returns>An enumerator that can be used to iterate through the collection.</returns>
-        public IEnumerator<TItem> GetEnumerator()
+        internal IEnumerator<TItem> GetEnumerator()
         {
             IEnumerable<TItem> e = new ArraySegment<TItem>(_nodes, 1, _numNodes);
             return e.GetEnumerator();
         }
 
+        IEnumerator<TItem> IEnumerable<TItem>.GetEnumerator()
+        {
+            return GetEnumerator();
+        }
         /// <summary>
         /// Returns an enumerator that iterates through a collection.
         /// </summary>
@@ -638,7 +642,7 @@ namespace Priority_Queue
         /// Checks to make sure the queue is still in a valid state.  Used for testing/debugging the queue.
         /// </summary>
         /// <returns><c>true</c> if [is valid queue]; otherwise, <c>false</c>.</returns>
-        public bool IsValidQueue()
+        internal bool IsValidQueue()
         {
             for(int i = 1; i < _nodes.Length; i++)
             {
@@ -655,5 +659,6 @@ namespace Priority_Queue
             }
             return true;
         }
+
     }
 }

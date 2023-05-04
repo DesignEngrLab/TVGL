@@ -26,20 +26,20 @@ namespace Priority_Queue
         /// Attempting to decrease the queue size to a size too small to hold the existing nodes results in undefined behavior
         /// </summary>
         /// <param name="maxNodes">The maximum nodes.</param>
-        void Resize(int maxNodes);
+        internal void Resize(int maxNodes);
 
         /// <summary>
         /// Returns the maximum number of items that can be enqueued at once in this queue.  Once you hit this number (ie. once Count == MaxSize),
         /// attempting to enqueue another item will cause undefined behavior.
         /// </summary>
         /// <value>The maximum size.</value>
-        int MaxSize { get; }
+        internal int MaxSize { get; }
 
         /// <summary>
         /// By default, nodes that have been previously added to one queue cannot be added to another queue.
         /// If you need to do this, please call originalQueue.ResetNode(node) before attempting to add it in the new queue
         /// </summary>
         /// <param name="node">The node.</param>
-        void ResetNode(TItem node);
+        internal void ResetNode(TItem node);
     }
 }

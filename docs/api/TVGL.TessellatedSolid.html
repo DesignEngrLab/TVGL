@@ -1,0 +1,1742 @@
+﻿<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+      <title>Class TessellatedSolid
+ </title>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <meta name="title" content="Class TessellatedSolid
+ ">
+      
+      <link rel="icon" href="../favicon.ico">
+      <link rel="stylesheet" href="../styles/docfx.min.css">
+      <link rel="stylesheet" href="../styles/main.css">
+      <meta name="docfx:navrel" content="../toc.html">
+      <meta name="docfx:tocrel" content="toc.html">
+      
+      
+      
+
+      <script>
+        MathJax = {
+          options: {
+            processHtmlClass: ['tex2jax_process', 'math']
+          }
+        };
+      </script>
+
+      <script type="text/javascript" src="../styles/docfx.min.js"></script>
+      <script type="text/javascript" src="../styles/main.js"></script>
+  </head>
+
+  <body class="tex2jax_ignore" data-layout="" data-yaml-mime="ManagedReference">
+    <header class="bg-body border-bottom">
+      <nav id="autocollapse" class="navbar navbar-expand-md" role="navigation">
+        <div class="container-xxl flex-nowrap">
+          <a class="navbar-brand" href="../index.html">
+            <img id="logo" class="svg" src="../logo.svg" alt="">
+            
+          </a>
+          <button class="btn btn-lg d-md-none border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navpanel" aria-controls="navpanel" aria-expanded="false" aria-label="Toggle navigation">
+            <i class="bi bi-three-dots"></i>
+          </button>
+          <div class="collapse navbar-collapse" id="navpanel">
+            <div id="navbar">
+            </div>
+          </div>
+        </div>
+      </nav>
+    </header>
+
+    <main class="container-xxl">
+      <div class="toc-offcanvas">
+        <div class="offcanvas-md offcanvas-start" tabindex="-1" id="tocOffcanvas" aria-labelledby="tocOffcanvasLabel">
+          <div class="offcanvas-header">
+            <h5 class="offcanvas-title" id="tocOffcanvasLabel">Table of Contents</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#tocOffcanvas" aria-label="Close"></button>
+          </div>
+          <div class="offcanvas-body">
+            <nav class="toc" id="toc"></nav>
+          </div>
+        </div>
+      </div>
+
+      <div class="content">
+        <div class="actionbar">
+          <button class="btn btn-lg border-0 d-md-none" style="margin-top: -.65em; margin-left: -.8em" type="button" data-bs-toggle="offcanvas" data-bs-target="#tocOffcanvas" aria-controls="tocOffcanvas" aria-expanded="false" aria-label="Show table of contents">
+            <i class="bi bi-list"></i>
+          </button>
+
+          <nav id="breadcrumb"></nav>
+        </div>
+
+        <article data-uid="TVGL.TessellatedSolid">
+
+
+
+  <h1 id="TVGL_TessellatedSolid" data-uid="TVGL.TessellatedSolid" class="text-break">
+    Class TessellatedSolid
+  
+  </h1>
+
+  <div class="facts text-secondary">
+    <dl><dt>Namespace</dt><dd><a class="xref" href="TVGL.html">TVGL</a></dd></dl>
+  <dl><dt>Assembly</dt><dd>TessellationAndVoxelizationGeometryLibrary.dll</dd></dl>
+  </div>
+
+  <div class="markdown summary"><p>Class TessellatedSolid.</p>
+</div>
+  <div class="markdown conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public class TessellatedSolid : Solid</code></pre>
+  </div>
+
+
+
+
+  <dl class="typelist inheritance">
+    <dt>Inheritance</dt>
+    <dd>
+      <div><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object">object</a></div>
+      <div><a class="xref" href="TVGL.Solid.html">Solid</a></div>
+      <div><span class="xref">TessellatedSolid</span></div>
+    </dd>
+  </dl>
+
+
+
+  <dl class="typelist derived">
+    <dt>Inherited Members</dt>
+    <dd>
+    <div>
+      <a class="xref" href="TVGL.Solid.html#TVGL_Solid_ReferenceIndex">Solid.ReferenceIndex</a>
+    </div>
+    <div>
+      <a class="xref" href="TVGL.Solid.html#TVGL_Solid_Center">Solid.Center</a>
+    </div>
+    <div>
+      <a class="xref" href="TVGL.Solid.html#TVGL_Solid__center">Solid._center</a>
+    </div>
+    <div>
+      <a class="xref" href="TVGL.Solid.html#TVGL_Solid_Volume">Solid.Volume</a>
+    </div>
+    <div>
+      <a class="xref" href="TVGL.Solid.html#TVGL_Solid__volume">Solid._volume</a>
+    </div>
+    <div>
+      <a class="xref" href="TVGL.Solid.html#TVGL_Solid_SurfaceArea">Solid.SurfaceArea</a>
+    </div>
+    <div>
+      <a class="xref" href="TVGL.Solid.html#TVGL_Solid__surfaceArea">Solid._surfaceArea</a>
+    </div>
+    <div>
+      <a class="xref" href="TVGL.Solid.html#TVGL_Solid_InertiaTensor">Solid.InertiaTensor</a>
+    </div>
+    <div>
+      <a class="xref" href="TVGL.Solid.html#TVGL_Solid__inertiaTensor">Solid._inertiaTensor</a>
+    </div>
+    <div>
+      <a class="xref" href="TVGL.Solid.html#TVGL_Solid_Bounds">Solid.Bounds</a>
+    </div>
+    <div>
+      <a class="xref" href="TVGL.Solid.html#TVGL_Solid_XMin">Solid.XMin</a>
+    </div>
+    <div>
+      <a class="xref" href="TVGL.Solid.html#TVGL_Solid_XMax">Solid.XMax</a>
+    </div>
+    <div>
+      <a class="xref" href="TVGL.Solid.html#TVGL_Solid_YMin">Solid.YMin</a>
+    </div>
+    <div>
+      <a class="xref" href="TVGL.Solid.html#TVGL_Solid_YMax">Solid.YMax</a>
+    </div>
+    <div>
+      <a class="xref" href="TVGL.Solid.html#TVGL_Solid_ZMin">Solid.ZMin</a>
+    </div>
+    <div>
+      <a class="xref" href="TVGL.Solid.html#TVGL_Solid_ZMax">Solid.ZMax</a>
+    </div>
+    <div>
+      <a class="xref" href="TVGL.Solid.html#TVGL_Solid_Name">Solid.Name</a>
+    </div>
+    <div>
+      <a class="xref" href="TVGL.Solid.html#TVGL_Solid_Comments">Solid.Comments</a>
+    </div>
+    <div>
+      <a class="xref" href="TVGL.Solid.html#TVGL_Solid_FileName">Solid.FileName</a>
+    </div>
+    <div>
+      <a class="xref" href="TVGL.Solid.html#TVGL_Solid_Units">Solid.Units</a>
+    </div>
+    <div>
+      <a class="xref" href="TVGL.Solid.html#TVGL_Solid_Language">Solid.Language</a>
+    </div>
+    <div>
+      <a class="xref" href="TVGL.Solid.html#TVGL_Solid_ConvexHull">Solid.ConvexHull</a>
+    </div>
+    <div>
+      <a class="xref" href="TVGL.Solid.html#TVGL_Solid_HasUniformColor">Solid.HasUniformColor</a>
+    </div>
+    <div>
+      <a class="xref" href="TVGL.Solid.html#TVGL_Solid_SolidColor">Solid.SolidColor</a>
+    </div>
+    <div>
+      <a class="xref" href="TVGL.Solid.html#TVGL_Solid_Primitives">Solid.Primitives</a>
+    </div>
+    <div>
+      <a class="xref" href="TVGL.Solid.html#TVGL_Solid_SameTolerance">Solid.SameTolerance</a>
+    </div>
+    <div>
+      <a class="xref" href="TVGL.Solid.html#TVGL_Solid_serializationData">Solid.serializationData</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.equals#system-object-equals(system-object)">object.Equals(object)</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.equals#system-object-equals(system-object-system-object)">object.Equals(object, object)</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.gethashcode">object.GetHashCode()</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.gettype">object.GetType()</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.memberwiseclone">object.MemberwiseClone()</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.referenceequals">object.ReferenceEquals(object, object)</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.tostring">object.ToString()</a>
+    </div>
+  </dd></dl>
+
+  <dl class="typelist extensionMethods">
+    <dt>Extension Methods</dt>
+    <dd>
+  <div>
+      <a class="xref" href="TVGL.MinimumEnclosure.html#TVGL_MinimumEnclosure_OrientedBoundingBox_TVGL_TessellatedSolid_">MinimumEnclosure.OrientedBoundingBox(TessellatedSolid)</a>
+  </div>
+  <div>
+      <a class="xref" href="TVGL.MiscFunctions.html#TVGL_MiscFunctions_GetMultipleSolids_TVGL_TessellatedSolid_System_Collections_Generic_List_System_Int32____">MiscFunctions.GetMultipleSolids(TessellatedSolid, List&lt;int[]&gt;)</a>
+  </div>
+  <div>
+      <a class="xref" href="TVGL.ModifyTessellation.html#TVGL_ModifyTessellation_CheckModelIntegrity_TVGL_TessellatedSolid_System_Boolean_">ModifyTessellation.CheckModelIntegrity(TessellatedSolid, bool)</a>
+  </div>
+  <div>
+      <a class="xref" href="TVGL.ModifyTessellation.html#TVGL_ModifyTessellation_Complexify_TVGL_TessellatedSolid_">ModifyTessellation.Complexify(TessellatedSolid)</a>
+  </div>
+  <div>
+      <a class="xref" href="TVGL.ModifyTessellation.html#TVGL_ModifyTessellation_Complexify_TVGL_TessellatedSolid_System_Double_">ModifyTessellation.Complexify(TessellatedSolid, double)</a>
+  </div>
+  <div>
+      <a class="xref" href="TVGL.ModifyTessellation.html#TVGL_ModifyTessellation_Complexify_TVGL_TessellatedSolid_System_Int32_">ModifyTessellation.Complexify(TessellatedSolid, int)</a>
+  </div>
+  <div>
+      <a class="xref" href="TVGL.ModifyTessellation.html#TVGL_ModifyTessellation_Repair_TVGL_TessellatedSolid_">ModifyTessellation.Repair(TessellatedSolid)</a>
+  </div>
+  <div>
+      <a class="xref" href="TVGL.ModifyTessellation.html#TVGL_ModifyTessellation_SetNegligibleAreaFaceNormals_TVGL_TessellatedSolid_System_Boolean_">ModifyTessellation.SetNegligibleAreaFaceNormals(TessellatedSolid, bool)</a>
+  </div>
+  <div>
+      <a class="xref" href="TVGL.ModifyTessellation.html#TVGL_ModifyTessellation_Simplify_TVGL_TessellatedSolid_">ModifyTessellation.Simplify(TessellatedSolid)</a>
+  </div>
+  <div>
+      <a class="xref" href="TVGL.ModifyTessellation.html#TVGL_ModifyTessellation_Simplify_TVGL_TessellatedSolid_System_Double_">ModifyTessellation.Simplify(TessellatedSolid, double)</a>
+  </div>
+  <div>
+      <a class="xref" href="TVGL.ModifyTessellation.html#TVGL_ModifyTessellation_Simplify_TVGL_TessellatedSolid_System_Int32_">ModifyTessellation.Simplify(TessellatedSolid, int)</a>
+  </div>
+  <div>
+      <a class="xref" href="TVGL.ModifyTessellation.html#TVGL_ModifyTessellation_SimplifyFlatPatches_TVGL_TessellatedSolid_">ModifyTessellation.SimplifyFlatPatches(TessellatedSolid)</a>
+  </div>
+  <div>
+      <a class="xref" href="TVGL.Silhouette.html#TVGL_Silhouette_CreateSilhouette_TVGL_TessellatedSolid_TVGL_Vector3_">Silhouette.CreateSilhouette(TessellatedSolid, Vector3)</a>
+  </div>
+  <div>
+      <a class="xref" href="TVGL.Slice.html#TVGL_Slice_GetCrossSection_TVGL_TessellatedSolid_TVGL_CartesianDirections_System_Double_System_Collections_Generic_Dictionary_TVGL_Vertex2D_TVGL_Edge___">Slice.GetCrossSection(TessellatedSolid, CartesianDirections, double, out Dictionary&lt;Vertex2D, Edge&gt;)</a>
+  </div>
+  <div>
+      <a class="xref" href="TVGL.Slice.html#TVGL_Slice_GetCrossSection_TVGL_TessellatedSolid_TVGL_Plane_System_Collections_Generic_Dictionary_TVGL_Vertex2D_TVGL_Edge___">Slice.GetCrossSection(TessellatedSolid, Plane, out Dictionary&lt;Vertex2D, Edge&gt;)</a>
+  </div>
+  <div>
+      <a class="xref" href="TVGL.Slice.html#TVGL_Slice_GetSliceContactData_TVGL_TessellatedSolid_TVGL_Plane_TVGL_ContactData__System_Boolean_System_Collections_Generic_ICollection_System_Int32__System_Boolean_">Slice.GetSliceContactData(TessellatedSolid, Plane, out ContactData, bool, ICollection&lt;int&gt;, bool)</a>
+  </div>
+  <div>
+      <a class="xref" href="TVGL.Slice.html#TVGL_Slice_GetUniformlySpacedCrossSections_TVGL_TessellatedSolid_TVGL_CartesianDirections_System_Double_System_Int32_System_Double_">Slice.GetUniformlySpacedCrossSections(TessellatedSolid, CartesianDirections, double, int, double)</a>
+  </div>
+  <div>
+      <a class="xref" href="TVGL.Slice.html#TVGL_Slice_GetUniformlySpacedCrossSections_TVGL_TessellatedSolid_TVGL_Vector3_System_Double_System_Int32_System_Double_">Slice.GetUniformlySpacedCrossSections(TessellatedSolid, Vector3, double, int, double)</a>
+  </div>
+  <div>
+      <a class="xref" href="TVGL.Slice.html#TVGL_Slice_SliceOnFiniteFlatByIngoringIntersections_TVGL_TessellatedSolid_TVGL_Plane_System_Collections_Generic_List_TVGL_TessellatedSolid___System_Collections_Generic_ICollection_TVGL_IntersectionGroup__TVGL_ContactData__">Slice.SliceOnFiniteFlatByIngoringIntersections(TessellatedSolid, Plane, out List&lt;TessellatedSolid&gt;, ICollection&lt;IntersectionGroup&gt;, out ContactData)</a>
+  </div>
+  <div>
+      <a class="xref" href="TVGL.Slice.html#TVGL_Slice_SliceOnFlatAsSingleSolids_TVGL_TessellatedSolid_TVGL_Plane_TVGL_TessellatedSolid__TVGL_TessellatedSolid__">Slice.SliceOnFlatAsSingleSolids(TessellatedSolid, Plane, out TessellatedSolid, out TessellatedSolid)</a>
+  </div>
+  <div>
+      <a class="xref" href="TVGL.Slice.html#TVGL_Slice_SliceOnInfiniteFlat_TVGL_TessellatedSolid_TVGL_Plane_System_Collections_Generic_List_TVGL_TessellatedSolid___TVGL_ContactData__System_Boolean_System_Boolean_">Slice.SliceOnInfiniteFlat(TessellatedSolid, Plane, out List&lt;TessellatedSolid&gt;, out ContactData, bool, bool)</a>
+  </div>
+  </dd></dl>
+
+
+
+  <h2 id="TVGL_TessellatedSolid_remarks">Remarks</h2>
+  <div class="markdown level0 remarks"><p>This is the currently the <strong>main</strong> class within TVGL all filetypes are read in as a TessellatedSolid,
+and
+all interesting operations work on the TessellatedSolid.</p>
+</div>
+
+
+  <h2 class="section" id="constructors">Constructors
+</h2>
+
+
+  <a id="TVGL_TessellatedSolid__ctor_" data-uid="TVGL.TessellatedSolid.#ctor*"></a>
+
+  <h3 id="TVGL_TessellatedSolid__ctor" data-uid="TVGL.TessellatedSolid.#ctor">
+  TessellatedSolid()
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Initializes a new instance of the <a class="xref" href="TVGL.TessellatedSolid.html">TessellatedSolid</a> class.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public TessellatedSolid()</code></pre>
+  </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_TessellatedSolid__ctor_" data-uid="TVGL.TessellatedSolid.#ctor*"></a>
+
+  <h3 id="TVGL_TessellatedSolid__ctor_System_Collections_Generic_IEnumerable_System_Collections_Generic_List_TVGL_Vector3___System_Boolean_System_Collections_Generic_IList_TVGL_Color__TVGL_UnitType_System_String_System_String_System_Collections_Generic_List_System_String__System_String_" data-uid="TVGL.TessellatedSolid.#ctor(System.Collections.Generic.IEnumerable{System.Collections.Generic.List{TVGL.Vector3}},System.Boolean,System.Collections.Generic.IList{TVGL.Color},TVGL.UnitType,System.String,System.String,System.Collections.Generic.List{System.String},System.String)">
+  TessellatedSolid(IEnumerable&lt;List&lt;Vector3&gt;&gt;, bool, IList&lt;Color&gt;, UnitType, string, string, List&lt;string&gt;, string)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Initializes a new instance of the <a class="xref" href="TVGL.TessellatedSolid.html">TessellatedSolid</a> class. This is the one that
+matches with the STL format.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public TessellatedSolid(IEnumerable&lt;List&lt;Vector3&gt;&gt; vertsPerFace, bool createFullVersion, IList&lt;Color&gt; colors, UnitType units = UnitType.unspecified, string name = &quot;&quot;, string filename = &quot;&quot;, List&lt;string&gt; comments = null, string language = &quot;&quot;)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>vertsPerFace</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.list-1">List</a>&lt;<a class="xref" href="TVGL.Vector3.html">Vector3</a>&gt;&gt;</dt>
+    <dd><p>The verts per face.</p>
+</dd>
+    <dt><code>createFullVersion</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd><p>if set to <code>true</code> [make edges].</p>
+</dd>
+    <dt><code>colors</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ilist-1">IList</a>&lt;<a class="xref" href="TVGL.Color.html">Color</a>&gt;</dt>
+    <dd><p>The colors.</p>
+</dd>
+    <dt><code>units</code> <a class="xref" href="TVGL.UnitType.html">UnitType</a></dt>
+    <dd><p>The units.</p>
+</dd>
+    <dt><code>name</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dd><p>The name.</p>
+</dd>
+    <dt><code>filename</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dd><p>The filename.</p>
+</dd>
+    <dt><code>comments</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.list-1">List</a>&lt;<a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a>&gt;</dt>
+    <dd><p>The comments.</p>
+</dd>
+    <dt><code>language</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dd><p>The language.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_TessellatedSolid__ctor_" data-uid="TVGL.TessellatedSolid.#ctor*"></a>
+
+  <h3 id="TVGL_TessellatedSolid__ctor_System_Collections_Generic_IEnumerable_TVGL_TriangleFace__System_Boolean_System_Boolean_System_Collections_Generic_IEnumerable_TVGL_Vertex__System_Collections_Generic_IList_TVGL_Color__TVGL_UnitType_System_String_System_String_System_Collections_Generic_List_System_String__System_String_" data-uid="TVGL.TessellatedSolid.#ctor(System.Collections.Generic.IEnumerable{TVGL.TriangleFace},System.Boolean,System.Boolean,System.Collections.Generic.IEnumerable{TVGL.Vertex},System.Collections.Generic.IList{TVGL.Color},TVGL.UnitType,System.String,System.String,System.Collections.Generic.List{System.String},System.String)">
+  TessellatedSolid(IEnumerable&lt;TriangleFace&gt;, bool, bool, IEnumerable&lt;Vertex&gt;, IList&lt;Color&gt;, UnitType, string, string, List&lt;string&gt;, string)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Initializes a new instance of the <a class="xref" href="TVGL.TessellatedSolid.html">TessellatedSolid</a> class. This constructor is
+for cases in which the faces and vertices are already defined.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public TessellatedSolid(IEnumerable&lt;TriangleFace&gt; faces, bool createFullVersion, bool copyElements, IEnumerable&lt;Vertex&gt; vertices = null, IList&lt;Color&gt; colors = null, UnitType units = UnitType.unspecified, string name = &quot;&quot;, string filename = &quot;&quot;, List&lt;string&gt; comments = null, string language = &quot;&quot;)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>faces</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.TriangleFace.html">TriangleFace</a>&gt;</dt>
+    <dd><p>The faces.</p>
+</dd>
+    <dt><code>createFullVersion</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd><p>if set to <code>true</code> [make edges].</p>
+</dd>
+    <dt><code>copyElements</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd><p>if set to <code>true</code> [copy elements].</p>
+</dd>
+    <dt><code>vertices</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.Vertex.html">Vertex</a>&gt;</dt>
+    <dd><p>The vertices.</p>
+</dd>
+    <dt><code>colors</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ilist-1">IList</a>&lt;<a class="xref" href="TVGL.Color.html">Color</a>&gt;</dt>
+    <dd><p>The colors.</p>
+</dd>
+    <dt><code>units</code> <a class="xref" href="TVGL.UnitType.html">UnitType</a></dt>
+    <dd><p>The units.</p>
+</dd>
+    <dt><code>name</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dd><p>The name.</p>
+</dd>
+    <dt><code>filename</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dd><p>The filename.</p>
+</dd>
+    <dt><code>comments</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.list-1">List</a>&lt;<a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a>&gt;</dt>
+    <dd><p>The comments.</p>
+</dd>
+    <dt><code>language</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dd><p>The language.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_TessellatedSolid__ctor_" data-uid="TVGL.TessellatedSolid.#ctor*"></a>
+
+  <h3 id="TVGL_TessellatedSolid__ctor_System_Collections_Generic_IList_TVGL_Vector3__System_Collections_Generic_IList_System_Int32____System_Boolean_System_Collections_Generic_IList_TVGL_Color__TVGL_UnitType_System_String_System_String_System_Collections_Generic_List_System_String__System_String_" data-uid="TVGL.TessellatedSolid.#ctor(System.Collections.Generic.IList{TVGL.Vector3},System.Collections.Generic.IList{System.Int32[]},System.Boolean,System.Collections.Generic.IList{TVGL.Color},TVGL.UnitType,System.String,System.String,System.Collections.Generic.List{System.String},System.String)">
+  TessellatedSolid(IList&lt;Vector3&gt;, IList&lt;int[]&gt;, bool, IList&lt;Color&gt;, UnitType, string, string, List&lt;string&gt;, string)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Initializes a new instance of the <a class="xref" href="TVGL.TessellatedSolid.html">TessellatedSolid</a> class. This matches with formats
+that use indices to the vertices (almost everything except STL).</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public TessellatedSolid(IList&lt;Vector3&gt; vertices, IList&lt;int[]&gt; faceToVertexIndices, bool createFullVersion, IList&lt;Color&gt; colors, UnitType units = UnitType.unspecified, string name = &quot;&quot;, string filename = &quot;&quot;, List&lt;string&gt; comments = null, string language = &quot;&quot;)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>vertices</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ilist-1">IList</a>&lt;<a class="xref" href="TVGL.Vector3.html">Vector3</a>&gt;</dt>
+    <dd><p>The vertices.</p>
+</dd>
+    <dt><code>faceToVertexIndices</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ilist-1">IList</a>&lt;<a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a>[]&gt;</dt>
+    <dd><p>The face to vertex indices.</p>
+</dd>
+    <dt><code>createFullVersion</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd><p>if set to <code>true</code> [make edges].</p>
+</dd>
+    <dt><code>colors</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ilist-1">IList</a>&lt;<a class="xref" href="TVGL.Color.html">Color</a>&gt;</dt>
+    <dd><p>The colors.</p>
+</dd>
+    <dt><code>units</code> <a class="xref" href="TVGL.UnitType.html">UnitType</a></dt>
+    <dd><p>The units.</p>
+</dd>
+    <dt><code>name</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dd><p>The name.</p>
+</dd>
+    <dt><code>filename</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dd><p>The filename.</p>
+</dd>
+    <dt><code>comments</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.list-1">List</a>&lt;<a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a>&gt;</dt>
+    <dd><p>The comments.</p>
+</dd>
+    <dt><code>language</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dd><p>The language.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_TessellatedSolid__ctor_" data-uid="TVGL.TessellatedSolid.#ctor*"></a>
+
+  <h3 id="TVGL_TessellatedSolid__ctor_System_Collections_Generic_IList_TVGL_Vector3__System_Collections_Generic_IList_System_Int32____System_Boolean_System_Collections_Generic_IList_TVGL_PrimitiveSurface__System_Collections_Generic_IList_TVGL_Color__TVGL_UnitType_System_String_System_String_System_Collections_Generic_List_System_String__System_String_" data-uid="TVGL.TessellatedSolid.#ctor(System.Collections.Generic.IList{TVGL.Vector3},System.Collections.Generic.IList{System.Int32[]},System.Boolean,System.Collections.Generic.IList{TVGL.PrimitiveSurface},System.Collections.Generic.IList{TVGL.Color},TVGL.UnitType,System.String,System.String,System.Collections.Generic.List{System.String},System.String)">
+  TessellatedSolid(IList&lt;Vector3&gt;, IList&lt;int[]&gt;, bool, IList&lt;PrimitiveSurface&gt;, IList&lt;Color&gt;, UnitType, string, string, List&lt;string&gt;, string)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Initializes a new instance of the <a class="xref" href="TVGL.TessellatedSolid.html">TessellatedSolid</a> class.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public TessellatedSolid(IList&lt;Vector3&gt; vertices, IList&lt;int[]&gt; faceToVertexIndices, bool createFullVersion, IList&lt;PrimitiveSurface&gt; primitives, IList&lt;Color&gt; colors, UnitType units = UnitType.unspecified, string name = &quot;&quot;, string filename = &quot;&quot;, List&lt;string&gt; comments = null, string language = &quot;&quot;)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>vertices</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ilist-1">IList</a>&lt;<a class="xref" href="TVGL.Vector3.html">Vector3</a>&gt;</dt>
+    <dd><p>The vertices.</p>
+</dd>
+    <dt><code>faceToVertexIndices</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ilist-1">IList</a>&lt;<a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a>[]&gt;</dt>
+    <dd><p>The face to vertex indices.</p>
+</dd>
+    <dt><code>createFullVersion</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd><p>if set to <code>true</code> [create full version].</p>
+</dd>
+    <dt><code>primitives</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ilist-1">IList</a>&lt;<a class="xref" href="TVGL.PrimitiveSurface.html">PrimitiveSurface</a>&gt;</dt>
+    <dd><p>The primitives.</p>
+</dd>
+    <dt><code>colors</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ilist-1">IList</a>&lt;<a class="xref" href="TVGL.Color.html">Color</a>&gt;</dt>
+    <dd><p>The colors.</p>
+</dd>
+    <dt><code>units</code> <a class="xref" href="TVGL.UnitType.html">UnitType</a></dt>
+    <dd><p>The units.</p>
+</dd>
+    <dt><code>name</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dd><p>The name.</p>
+</dd>
+    <dt><code>filename</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dd><p>The filename.</p>
+</dd>
+    <dt><code>comments</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.list-1">List</a>&lt;<a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a>&gt;</dt>
+    <dd><p>The comments.</p>
+</dd>
+    <dt><code>language</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dd><p>The language.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_TessellatedSolid__ctor_" data-uid="TVGL.TessellatedSolid.#ctor*"></a>
+
+  <h3 id="TVGL_TessellatedSolid__ctor_TVGL_Vertex___System_Collections_Generic_List_TVGL_PrimitiveSurface__TVGL_UnitType_System_String_System_String_System_Collections_Generic_List_System_String__System_String_" data-uid="TVGL.TessellatedSolid.#ctor(TVGL.Vertex[],System.Collections.Generic.List{TVGL.PrimitiveSurface},TVGL.UnitType,System.String,System.String,System.Collections.Generic.List{System.String},System.String)">
+  TessellatedSolid(Vertex[], List&lt;PrimitiveSurface&gt;, UnitType, string, string, List&lt;string&gt;, string)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Initializes a new instance of the <a class="xref" href="TVGL.TessellatedSolid.html">TessellatedSolid</a> class.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public TessellatedSolid(Vertex[] vertices, List&lt;PrimitiveSurface&gt; primitives, UnitType units = UnitType.unspecified, string name = &quot;&quot;, string filename = &quot;&quot;, List&lt;string&gt; comments = null, string language = &quot;&quot;)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>vertices</code> <a class="xref" href="TVGL.Vertex.html">Vertex</a>[]</dt>
+    <dd><p>The vertices.</p>
+</dd>
+    <dt><code>primitives</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.list-1">List</a>&lt;<a class="xref" href="TVGL.PrimitiveSurface.html">PrimitiveSurface</a>&gt;</dt>
+    <dd><p>The primitives.</p>
+</dd>
+    <dt><code>units</code> <a class="xref" href="TVGL.UnitType.html">UnitType</a></dt>
+    <dd><p>The units.</p>
+</dd>
+    <dt><code>name</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dd><p>The name.</p>
+</dd>
+    <dt><code>filename</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dd><p>The filename.</p>
+</dd>
+    <dt><code>comments</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.list-1">List</a>&lt;<a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a>&gt;</dt>
+    <dd><p>The comments.</p>
+</dd>
+    <dt><code>language</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dd><p>The language.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+  <h2 class="section" id="properties">Properties
+</h2>
+
+
+  <a id="TVGL_TessellatedSolid_Edges_" data-uid="TVGL.TessellatedSolid.Edges*"></a>
+
+  <h3 id="TVGL_TessellatedSolid_Edges" data-uid="TVGL.TessellatedSolid.Edges">
+  Edges
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the edges.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">[JsonIgnore]
+public Edge[] Edges { get; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.Edge.html">Edge</a>[]</dt>
+    <dd><p>The edges.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="TVGL_TessellatedSolid_Errors_" data-uid="TVGL.TessellatedSolid.Errors*"></a>
+
+  <h3 id="TVGL_TessellatedSolid_Errors" data-uid="TVGL.TessellatedSolid.Errors">
+  Errors
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Errors in the tesselated solid</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">[JsonIgnore]
+public TessellationError Errors { get; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.TessellationError.html">TessellationError</a></dt>
+    <dd><p>The errors.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="TVGL_TessellatedSolid_Faces_" data-uid="TVGL.TessellatedSolid.Faces*"></a>
+
+  <h3 id="TVGL_TessellatedSolid_Faces" data-uid="TVGL.TessellatedSolid.Faces">
+  Faces
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the faces.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">[JsonIgnore]
+public TriangleFace[] Faces { get; set; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.TriangleFace.html">TriangleFace</a>[]</dt>
+    <dd><p>The faces.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="TVGL_TessellatedSolid_NonsmoothEdges_" data-uid="TVGL.TessellatedSolid.NonsmoothEdges*"></a>
+
+  <h3 id="TVGL_TessellatedSolid_NonsmoothEdges" data-uid="TVGL.TessellatedSolid.NonsmoothEdges">
+  NonsmoothEdges
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets or sets the nonsmooth edges, which are the edges that do not exhibit C1 or C2 continuity.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">[JsonIgnore]
+public List&lt;EdgePath&gt; NonsmoothEdges { get; set; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.list-1">List</a>&lt;<a class="xref" href="TVGL.EdgePath.html">EdgePath</a>&gt;</dt>
+    <dd><p>The nonsmooth edges.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="TVGL_TessellatedSolid_NumberOfEdges_" data-uid="TVGL.TessellatedSolid.NumberOfEdges*"></a>
+
+  <h3 id="TVGL_TessellatedSolid_NumberOfEdges" data-uid="TVGL.TessellatedSolid.NumberOfEdges">
+  NumberOfEdges
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the number of edges.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">[JsonIgnore]
+public int NumberOfEdges { get; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a></dt>
+    <dd><p>The number of edges.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="TVGL_TessellatedSolid_NumberOfFaces_" data-uid="TVGL.TessellatedSolid.NumberOfFaces*"></a>
+
+  <h3 id="TVGL_TessellatedSolid_NumberOfFaces" data-uid="TVGL.TessellatedSolid.NumberOfFaces">
+  NumberOfFaces
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the number of faces.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">[JsonIgnore]
+public int NumberOfFaces { get; set; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a></dt>
+    <dd><p>The number of faces.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="TVGL_TessellatedSolid_NumberOfPrimitives_" data-uid="TVGL.TessellatedSolid.NumberOfPrimitives*"></a>
+
+  <h3 id="TVGL_TessellatedSolid_NumberOfPrimitives" data-uid="TVGL.TessellatedSolid.NumberOfPrimitives">
+  NumberOfPrimitives
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the number of primitives. Must be set after completing primitive definition/combination.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">[JsonIgnore]
+public int NumberOfPrimitives { get; set; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a></dt>
+    <dd><p>The number of faces.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="TVGL_TessellatedSolid_NumberOfVertices_" data-uid="TVGL.TessellatedSolid.NumberOfVertices*"></a>
+
+  <h3 id="TVGL_TessellatedSolid_NumberOfVertices" data-uid="TVGL.TessellatedSolid.NumberOfVertices">
+  NumberOfVertices
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the number of vertices.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">[JsonIgnore]
+public int NumberOfVertices { get; set; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a></dt>
+    <dd><p>The number of vertices.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="TVGL_TessellatedSolid_TessellationError_" data-uid="TVGL.TessellatedSolid.TessellationError*"></a>
+
+  <h3 id="TVGL_TessellatedSolid_TessellationError" data-uid="TVGL.TessellatedSolid.TessellationError">
+  TessellationError
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets or sets the tessellation error.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public double TessellationError { get; set; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The tessellation error.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="TVGL_TessellatedSolid_TessellationMaxAngleError_" data-uid="TVGL.TessellatedSolid.TessellationMaxAngleError*"></a>
+
+  <h3 id="TVGL_TessellatedSolid_TessellationMaxAngleError" data-uid="TVGL.TessellatedSolid.TessellationMaxAngleError">
+  TessellationMaxAngleError
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets or sets the tessellation maximum angle error.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public double TessellationMaxAngleError { get; set; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The tessellation maximum angle error.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="TVGL_TessellatedSolid_Vertices_" data-uid="TVGL.TessellatedSolid.Vertices*"></a>
+
+  <h3 id="TVGL_TessellatedSolid_Vertices" data-uid="TVGL.TessellatedSolid.Vertices">
+  Vertices
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the vertices.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">[JsonIgnore]
+public Vertex[] Vertices { get; set; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.Vertex.html">Vertex</a>[]</dt>
+    <dd><p>The vertices.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <h2 class="section" id="methods">Methods
+</h2>
+
+
+  <a id="TVGL_TessellatedSolid_AddPrimitive_" data-uid="TVGL.TessellatedSolid.AddPrimitive*"></a>
+
+  <h3 id="TVGL_TessellatedSolid_AddPrimitive_TVGL_PrimitiveSurface_" data-uid="TVGL.TessellatedSolid.AddPrimitive(TVGL.PrimitiveSurface)">
+  AddPrimitive(PrimitiveSurface)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Adds the primitive.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public void AddPrimitive(PrimitiveSurface p)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>p</code> <a class="xref" href="TVGL.PrimitiveSurface.html">PrimitiveSurface</a></dt>
+    <dd><p>The p.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_TessellatedSolid_CalculateCenter_" data-uid="TVGL.TessellatedSolid.CalculateCenter*"></a>
+
+  <h3 id="TVGL_TessellatedSolid_CalculateCenter" data-uid="TVGL.TessellatedSolid.CalculateCenter">
+  CalculateCenter()
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Calculates the center.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">protected override void CalculateCenter()</code></pre>
+  </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_TessellatedSolid_CalculateInertiaTensor_" data-uid="TVGL.TessellatedSolid.CalculateInertiaTensor*"></a>
+
+  <h3 id="TVGL_TessellatedSolid_CalculateInertiaTensor" data-uid="TVGL.TessellatedSolid.CalculateInertiaTensor">
+  CalculateInertiaTensor()
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Calculates the inertia tensor.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">protected override void CalculateInertiaTensor()</code></pre>
+  </div>
+
+
+
+
+
+
+
+
+
+
+  <h4 class="section">Exceptions</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.notimplementedexception">NotImplementedException</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+  <a id="TVGL_TessellatedSolid_CalculateSurfaceArea_" data-uid="TVGL.TessellatedSolid.CalculateSurfaceArea*"></a>
+
+  <h3 id="TVGL_TessellatedSolid_CalculateSurfaceArea" data-uid="TVGL.TessellatedSolid.CalculateSurfaceArea">
+  CalculateSurfaceArea()
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Calculates the surface area.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">protected override void CalculateSurfaceArea()</code></pre>
+  </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_TessellatedSolid_CalculateVolume_" data-uid="TVGL.TessellatedSolid.CalculateVolume*"></a>
+
+  <h3 id="TVGL_TessellatedSolid_CalculateVolume" data-uid="TVGL.TessellatedSolid.CalculateVolume">
+  CalculateVolume()
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Calculates the volume.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">protected override void CalculateVolume()</code></pre>
+  </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_TessellatedSolid_CalculateVolumeAndCenter_Old_" data-uid="TVGL.TessellatedSolid.CalculateVolumeAndCenter_Old*"></a>
+
+  <h3 id="TVGL_TessellatedSolid_CalculateVolumeAndCenter_Old_System_Collections_Generic_IEnumerable_TVGL_TriangleFace__System_Double_System_Double__TVGL_Vector3__" data-uid="TVGL.TessellatedSolid.CalculateVolumeAndCenter_Old(System.Collections.Generic.IEnumerable{TVGL.TriangleFace},System.Double,System.Double@,TVGL.Vector3@)">
+  CalculateVolumeAndCenter_Old(IEnumerable&lt;TriangleFace&gt;, double, out double, out Vector3)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Calculates the volume and center old.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static void CalculateVolumeAndCenter_Old(IEnumerable&lt;TriangleFace&gt; faces, double tolerance, out double volume, out Vector3 center)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>faces</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.TriangleFace.html">TriangleFace</a>&gt;</dt>
+    <dd><p>The faces.</p>
+</dd>
+    <dt><code>tolerance</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The tolerance.</p>
+</dd>
+    <dt><code>volume</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The volume.</p>
+</dd>
+    <dt><code>center</code> <a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>The center.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_TessellatedSolid_CalculateVolumeAndCenter_" data-uid="TVGL.TessellatedSolid.CalculateVolumeAndCenter*"></a>
+
+  <h3 id="TVGL_TessellatedSolid_CalculateVolumeAndCenter_System_Collections_Generic_IEnumerable_TVGL_TriangleFace__System_Double_System_Double__TVGL_Vector3__" data-uid="TVGL.TessellatedSolid.CalculateVolumeAndCenter(System.Collections.Generic.IEnumerable{TVGL.TriangleFace},System.Double,System.Double@,TVGL.Vector3@)">
+  CalculateVolumeAndCenter(IEnumerable&lt;TriangleFace&gt;, double, out double, out Vector3)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Calculates the volume and center.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static void CalculateVolumeAndCenter(IEnumerable&lt;TriangleFace&gt; faces, double tolerance, out double volume, out Vector3 center)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>faces</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.TriangleFace.html">TriangleFace</a>&gt;</dt>
+    <dd><p>The faces.</p>
+</dd>
+    <dt><code>tolerance</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The tolerance.</p>
+</dd>
+    <dt><code>volume</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The volume.</p>
+</dd>
+    <dt><code>center</code> <a class="xref" href="TVGL.Vector3.html">Vector3</a></dt>
+    <dd><p>The center.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_TessellatedSolid_Copy_" data-uid="TVGL.TessellatedSolid.Copy*"></a>
+
+  <h3 id="TVGL_TessellatedSolid_Copy" data-uid="TVGL.TessellatedSolid.Copy">
+  Copy()
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Copies this instance.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public TessellatedSolid Copy()</code></pre>
+  </div>
+
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.TessellatedSolid.html">TessellatedSolid</a></dt>
+    <dd><p>TessellatedSolid.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_TessellatedSolid_DefineAxisAlignedBoundingBoxAndTolerance_" data-uid="TVGL.TessellatedSolid.DefineAxisAlignedBoundingBoxAndTolerance*"></a>
+
+  <h3 id="TVGL_TessellatedSolid_DefineAxisAlignedBoundingBoxAndTolerance_System_Collections_Generic_IEnumerable_TVGL_Vector3__" data-uid="TVGL.TessellatedSolid.DefineAxisAlignedBoundingBoxAndTolerance(System.Collections.Generic.IEnumerable{TVGL.Vector3})">
+  DefineAxisAlignedBoundingBoxAndTolerance(IEnumerable&lt;Vector3&gt;)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Defines the axis aligned bounding box and tolerance. This is called first in the constructors
+because the tolerance is used in making the vertices.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public void DefineAxisAlignedBoundingBoxAndTolerance(IEnumerable&lt;Vector3&gt; vertices = null)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>vertices</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.Vector3.html">Vector3</a>&gt;</dt>
+    <dd><p>The vertices.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_TessellatedSolid_DoublyConnectVerticesToFaces_" data-uid="TVGL.TessellatedSolid.DoublyConnectVerticesToFaces*"></a>
+
+  <h3 id="TVGL_TessellatedSolid_DoublyConnectVerticesToFaces" data-uid="TVGL.TessellatedSolid.DoublyConnectVerticesToFaces">
+  DoublyConnectVerticesToFaces()
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Doublies the connect vertices to faces.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public void DoublyConnectVerticesToFaces()</code></pre>
+  </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_TessellatedSolid_MakeEdgesIfNonExistent_" data-uid="TVGL.TessellatedSolid.MakeEdgesIfNonExistent*"></a>
+
+  <h3 id="TVGL_TessellatedSolid_MakeEdgesIfNonExistent" data-uid="TVGL.TessellatedSolid.MakeEdgesIfNonExistent">
+  MakeEdgesIfNonExistent()
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Makes the edges if non existent.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public void MakeEdgesIfNonExistent()</code></pre>
+  </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_TessellatedSolid_MakeFacesFromPrimitives_" data-uid="TVGL.TessellatedSolid.MakeFacesFromPrimitives*"></a>
+
+  <h3 id="TVGL_TessellatedSolid_MakeFacesFromPrimitives" data-uid="TVGL.TessellatedSolid.MakeFacesFromPrimitives">
+  MakeFacesFromPrimitives()
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Makes the faces</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public void MakeFacesFromPrimitives()</code></pre>
+  </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_TessellatedSolid_OnDeserializedMethod_" data-uid="TVGL.TessellatedSolid.OnDeserializedMethod*"></a>
+
+  <h3 id="TVGL_TessellatedSolid_OnDeserializedMethod_System_Runtime_Serialization_StreamingContext_" data-uid="TVGL.TessellatedSolid.OnDeserializedMethod(System.Runtime.Serialization.StreamingContext)">
+  OnDeserializedMethod(StreamingContext)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Called when [deserialized method].</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">[OnDeserialized]
+protected void OnDeserializedMethod(StreamingContext context)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>context</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.runtime.serialization.streamingcontext">StreamingContext</a></dt>
+    <dd><p>The context.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_TessellatedSolid_OnSerializingMethod_" data-uid="TVGL.TessellatedSolid.OnSerializingMethod*"></a>
+
+  <h3 id="TVGL_TessellatedSolid_OnSerializingMethod_System_Runtime_Serialization_StreamingContext_" data-uid="TVGL.TessellatedSolid.OnSerializingMethod(System.Runtime.Serialization.StreamingContext)">
+  OnSerializingMethod(StreamingContext)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Called when [serializing method].</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">[OnSerializing]
+protected void OnSerializingMethod(StreamingContext context)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>context</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.runtime.serialization.streamingcontext">StreamingContext</a></dt>
+    <dd><p>The context.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_TessellatedSolid_ResetDefaultColor_" data-uid="TVGL.TessellatedSolid.ResetDefaultColor*"></a>
+
+  <h3 id="TVGL_TessellatedSolid_ResetDefaultColor" data-uid="TVGL.TessellatedSolid.ResetDefaultColor">
+  ResetDefaultColor()
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Resets the default color.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public void ResetDefaultColor()</code></pre>
+  </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_TessellatedSolid_ResetDefaultColor_" data-uid="TVGL.TessellatedSolid.ResetDefaultColor*"></a>
+
+  <h3 id="TVGL_TessellatedSolid_ResetDefaultColor_System_Collections_Generic_IEnumerable_TVGL_PrimitiveSurface__" data-uid="TVGL.TessellatedSolid.ResetDefaultColor(System.Collections.Generic.IEnumerable{TVGL.PrimitiveSurface})">
+  ResetDefaultColor(IEnumerable&lt;PrimitiveSurface&gt;)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Resets the default color.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public void ResetDefaultColor(IEnumerable&lt;PrimitiveSurface&gt; primitives)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>primitives</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="TVGL.PrimitiveSurface.html">PrimitiveSurface</a>&gt;</dt>
+    <dd><p>The primitives.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_TessellatedSolid_SetToOriginAndSquare_" data-uid="TVGL.TessellatedSolid.SetToOriginAndSquare*"></a>
+
+  <h3 id="TVGL_TessellatedSolid_SetToOriginAndSquare_TVGL_BoundingBox__" data-uid="TVGL.TessellatedSolid.SetToOriginAndSquare(TVGL.BoundingBox@)">
+  SetToOriginAndSquare(out BoundingBox)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Translates and Squares Tesselated Solid based on its oriented bounding box.
+The resulting Solid should be located at the origin, and only in the positive X, Y, Z octant.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public void SetToOriginAndSquare(out BoundingBox originalBoundingBox)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>originalBoundingBox</code> <a class="xref" href="TVGL.BoundingBox.html">BoundingBox</a></dt>
+    <dd><p>The original bounding box.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_TessellatedSolid_SetToOriginAndSquareToNewSolid_" data-uid="TVGL.TessellatedSolid.SetToOriginAndSquareToNewSolid*"></a>
+
+  <h3 id="TVGL_TessellatedSolid_SetToOriginAndSquareToNewSolid_TVGL_BoundingBox__" data-uid="TVGL.TessellatedSolid.SetToOriginAndSquareToNewSolid(TVGL.BoundingBox@)">
+  SetToOriginAndSquareToNewSolid(out BoundingBox)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Translates and Squares Tesselated Solid based on its oriented bounding box.
+The resulting Solid should be located at the origin, and only in the positive X, Y, Z octant.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public TessellatedSolid SetToOriginAndSquareToNewSolid(out BoundingBox originalBoundingBox)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>originalBoundingBox</code> <a class="xref" href="TVGL.BoundingBox.html">BoundingBox</a></dt>
+    <dd><p>The original bounding box.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.TessellatedSolid.html">TessellatedSolid</a></dt>
+    <dd><p>TessellatedSolid.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_TessellatedSolid_StreamRead_" data-uid="TVGL.TessellatedSolid.StreamRead*"></a>
+
+  <h3 id="TVGL_TessellatedSolid_StreamRead_Newtonsoft_Json_JsonTextReader_System_Int32__" data-uid="TVGL.TessellatedSolid.StreamRead(Newtonsoft.Json.JsonTextReader,System.Int32@)">
+  StreamRead(JsonTextReader, out int)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Streams the read.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public void StreamRead(JsonTextReader reader, out int index)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>reader</code> <span class="xref">JsonTextReader</span></dt>
+    <dd><p>The reader.</p>
+</dd>
+    <dt><code>index</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a></dt>
+    <dd><p>The index.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+  <h4 class="section">Exceptions</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.exception">Exception</a></dt>
+    <dd><p>Need to add deserialize casting for primitive type: &quot; + primitiveType</p>
+</dd>
+  </dl>
+
+
+
+  <a id="TVGL_TessellatedSolid_StreamWrite_" data-uid="TVGL.TessellatedSolid.StreamWrite*"></a>
+
+  <h3 id="TVGL_TessellatedSolid_StreamWrite_Newtonsoft_Json_JsonTextWriter_System_Int32_" data-uid="TVGL.TessellatedSolid.StreamWrite(Newtonsoft.Json.JsonTextWriter,System.Int32)">
+  StreamWrite(JsonTextWriter, int)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Stream writes the JSON structure in reverse order of how it will be read in.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public void StreamWrite(JsonTextWriter writer, int index)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>writer</code> <span class="xref">JsonTextWriter</span></dt>
+    <dd><p>The writer.</p>
+</dd>
+    <dt><code>index</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a></dt>
+    <dd><p>The index.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_TessellatedSolid_Transform_" data-uid="TVGL.TessellatedSolid.Transform*"></a>
+
+  <h3 id="TVGL_TessellatedSolid_Transform_TVGL_Matrix4x4_" data-uid="TVGL.TessellatedSolid.Transform(TVGL.Matrix4x4)">
+  Transform(Matrix4x4)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Transforms the specified transform matrix.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public override void Transform(Matrix4x4 transformMatrix)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>transformMatrix</code> <a class="xref" href="TVGL.Matrix4x4.html">Matrix4x4</a></dt>
+    <dd><p>The transform matrix.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+  <a id="TVGL_TessellatedSolid_TransformToNewSolid_" data-uid="TVGL.TessellatedSolid.TransformToNewSolid*"></a>
+
+  <h3 id="TVGL_TessellatedSolid_TransformToNewSolid_TVGL_Matrix4x4_" data-uid="TVGL.TessellatedSolid.TransformToNewSolid(TVGL.Matrix4x4)">
+  TransformToNewSolid(Matrix4x4)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets a new solid by transforming its vertices.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public override Solid TransformToNewSolid(Matrix4x4 transformationMatrix)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>transformationMatrix</code> <a class="xref" href="TVGL.Matrix4x4.html">Matrix4x4</a></dt>
+    <dd><p>The transformation matrix.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.Solid.html">Solid</a></dt>
+    <dd><p>Solid.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+</article>
+
+        <div class="contribution d-print-none">
+        </div>
+
+        
+      </div>
+
+      <div class="affix">
+        <nav id="affix"></nav>
+      </div>
+    </main>
+
+
+    <footer class="border-top">
+      <div class="container-xxl">
+        <div class="flex-fill">
+          <span>Made with <a href="https://dotnet.github.io/docfx">docfx</a></span>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>

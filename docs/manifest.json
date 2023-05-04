@@ -1,0 +1,1592 @@
+{
+  "homepages": [],
+  "source_base_path": "C:/Users/matth/source/repos/TVGL/Documentation",
+  "xrefmap": "xrefmap.yml",
+  "files": [
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/ClipperLib.ClipType.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/ClipperLib.ClipType.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/ClipperLib.PolyFillType.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/ClipperLib.PolyFillType.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/ClipperLib.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/ClipperLib.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Priority_Queue.GenericPriorityQueue-2.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Priority_Queue.GenericPriorityQueue-2.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Priority_Queue.GenericPriorityQueueNode-1.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Priority_Queue.GenericPriorityQueueNode-1.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Priority_Queue.IPriorityQueue-2.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Priority_Queue.IPriorityQueue-2.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Priority_Queue.SimplePriorityQueue-1.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Priority_Queue.SimplePriorityQueue-1.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Priority_Queue.SimplePriorityQueue-2.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Priority_Queue.SimplePriorityQueue-2.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Priority_Queue.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Priority_Queue.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/StarMathLib.StarMath.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/StarMathLib.StarMath.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/StarMathLib.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/StarMathLib.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/TVGL.AMFFileData.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/TVGL.AMFFileData.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/TVGL.AxisAlignedRectangle.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/TVGL.AxisAlignedRectangle.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/TVGL.BooleanOperationType.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/TVGL.BooleanOperationType.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/TVGL.BorderSegment.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/TVGL.BorderSegment.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/TVGL.BoundingBox-1.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/TVGL.BoundingBox-1.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/TVGL.BoundingBox.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/TVGL.BoundingBox.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/TVGL.BoundingRectangle.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/TVGL.BoundingRectangle.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/TVGL.Capsule.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/TVGL.Capsule.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/TVGL.CartesianDirections.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/TVGL.CartesianDirections.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/TVGL.Circle.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/TVGL.Circle.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/TVGL.CollinearityTypes.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/TVGL.CollinearityTypes.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/TVGL.Color.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/TVGL.Color.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/TVGL.ColorFamily.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/TVGL.ColorFamily.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/TVGL.ComplexNumber.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/TVGL.ComplexNumber.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/TVGL.Cone.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/TVGL.Cone.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/TVGL.Constants.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/TVGL.Constants.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/TVGL.ContactData.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/TVGL.ContactData.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/TVGL.CrossSectionSolid.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/TVGL.CrossSectionSolid.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/TVGL.CurvatureType.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/TVGL.CurvatureType.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/TVGL.Cylinder.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/TVGL.Cylinder.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/TVGL.Edge.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/TVGL.Edge.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/TVGL.EdgePath.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/TVGL.EdgePath.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/TVGL.EqualityExtensions.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/TVGL.EqualityExtensions.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/TVGL.Extrude.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/TVGL.Extrude.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/TVGL.FileType.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/TVGL.FileType.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/TVGL.GaussianSphere.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/TVGL.GaussianSphere.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/TVGL.GeneralConicSection.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/TVGL.GeneralConicSection.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/TVGL.GreatCircleAlongArc.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/TVGL.GreatCircleAlongArc.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/TVGL.GreatCircleOrthogonalToArc.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/TVGL.GreatCircleOrthogonalToArc.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/TVGL.Grid-1.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/TVGL.Grid-1.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/TVGL.GroupOfLoops.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/TVGL.GroupOfLoops.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/TVGL.Helix.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/TVGL.Helix.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/TVGL.ICurve.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/TVGL.ICurve.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/TVGL.IO.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/TVGL.IO.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/TVGL.IVertex3D.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/TVGL.IVertex3D.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/TVGL.ImplicitSolid.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/TVGL.ImplicitSolid.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/TVGL.IntersectionGroup.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/TVGL.IntersectionGroup.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/TVGL.KnownColors.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/TVGL.KnownColors.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/TVGL.Loop.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/TVGL.Loop.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/TVGL.LoopOfIntsComparer.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/TVGL.LoopOfIntsComparer.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/TVGL.Matrix3x3.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/TVGL.Matrix3x3.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/TVGL.Matrix4x4.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/TVGL.Matrix4x4.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/TVGL.Message.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/TVGL.Message.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/TVGL.MinimumEnclosure.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/TVGL.MinimumEnclosure.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/TVGL.MiscFunctions.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/TVGL.MiscFunctions.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/TVGL.ModifyTessellation.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/TVGL.ModifyTessellation.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/TVGL.MonotoneBox.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/TVGL.MonotoneBox.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/TVGL.MonotonicityChange.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/TVGL.MonotonicityChange.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/TVGL.NoEqualSort.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/TVGL.NoEqualSort.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/TVGL.Plane.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/TVGL.Plane.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/TVGL.Polygon.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/TVGL.Polygon.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/TVGL.PolygonCollection.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/TVGL.PolygonCollection.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/TVGL.PolygonEdge.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/TVGL.PolygonEdge.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/TVGL.PolygonFillType.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/TVGL.PolygonFillType.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/TVGL.PolygonInteractionRecord.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/TVGL.PolygonInteractionRecord.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/TVGL.PolygonOperations.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/TVGL.PolygonOperations.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/TVGL.PolygonRelationship.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/TVGL.PolygonRelationship.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/TVGL.Polygon_Operations.PolygonOperations.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/TVGL.Polygon_Operations.PolygonOperations.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/TVGL.Polygon_Operations.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/TVGL.Polygon_Operations.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/TVGL.PolynomialSolve.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/TVGL.PolynomialSolve.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/TVGL.PrimitiveBorder.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/TVGL.PrimitiveBorder.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/TVGL.PrimitiveCurveType.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/TVGL.PrimitiveCurveType.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/TVGL.PrimitiveSurface.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/TVGL.PrimitiveSurface.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/TVGL.Prismatic.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/TVGL.Prismatic.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/TVGL.Quaternion.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/TVGL.Quaternion.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/TVGL.ResultType.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/TVGL.ResultType.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/TVGL.SegmentIntersection.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/TVGL.SegmentIntersection.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/TVGL.SegmentRelationship.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/TVGL.SegmentRelationship.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/TVGL.Silhouette.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/TVGL.Silhouette.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/TVGL.Single3DPolygonTriangulation.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/TVGL.Single3DPolygonTriangulation.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/TVGL.Slice.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/TVGL.Slice.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/TVGL.Solid.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/TVGL.Solid.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/TVGL.SolidAssembly.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/TVGL.SolidAssembly.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/TVGL.SolidContactData.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/TVGL.SolidContactData.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/TVGL.Sphere.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/TVGL.Sphere.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/TVGL.StatisticsExtensions.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/TVGL.StatisticsExtensions.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/TVGL.StraightLine2D.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/TVGL.StraightLine2D.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/TVGL.StraightLine3D.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/TVGL.StraightLine3D.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/TVGL.SubAssembly.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/TVGL.SubAssembly.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/TVGL.TVGLConvexHull.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/TVGL.TVGLConvexHull.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/TVGL.TessellatedSolid.faceInfo.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/TVGL.TessellatedSolid.faceInfo.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/TVGL.TessellatedSolid.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/TVGL.TessellatedSolid.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/TVGL.TessellationBaseClass.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/TVGL.TessellationBaseClass.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/TVGL.TessellationError.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/TVGL.TessellationError.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/TVGL.ThreeMFFileData.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/TVGL.ThreeMFFileData.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/TVGL.Torus.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/TVGL.Torus.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/TVGL.TriangleFace.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/TVGL.TriangleFace.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/TVGL.UnitType.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/TVGL.UnitType.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/TVGL.UnknownRegion.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/TVGL.UnknownRegion.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/TVGL.Vector2.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/TVGL.Vector2.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/TVGL.Vector3.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/TVGL.Vector3.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/TVGL.Vector4.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/TVGL.Vector4.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/TVGL.VectorExtensions.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/TVGL.VectorExtensions.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/TVGL.VerbosityLevels.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/TVGL.VerbosityLevels.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/TVGL.Vertex.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/TVGL.Vertex.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/TVGL.Vertex2D.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/TVGL.Vertex2D.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/TVGL.VoxelizedSolid.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/TVGL.VoxelizedSolid.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/TVGL.WhereIsIntersection.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/TVGL.WhereIsIntersection.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/TVGL.ZBuffer.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/TVGL.ZBuffer.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/TVGL.amfclasses.AMF_Color.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/TVGL.amfclasses.AMF_Color.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/TVGL.amfclasses.AMF_Composite.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/TVGL.amfclasses.AMF_Composite.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/TVGL.amfclasses.AMF_Constellation.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/TVGL.amfclasses.AMF_Constellation.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/TVGL.amfclasses.AMF_Coordinates.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/TVGL.amfclasses.AMF_Coordinates.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/TVGL.amfclasses.AMF_Edge.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/TVGL.amfclasses.AMF_Edge.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/TVGL.amfclasses.AMF_Instance.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/TVGL.amfclasses.AMF_Instance.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/TVGL.amfclasses.AMF_Material.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/TVGL.amfclasses.AMF_Material.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/TVGL.amfclasses.AMF_Mesh.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/TVGL.amfclasses.AMF_Mesh.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/TVGL.amfclasses.AMF_Metadata.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/TVGL.amfclasses.AMF_Metadata.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/TVGL.amfclasses.AMF_Normal.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/TVGL.amfclasses.AMF_Normal.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/TVGL.amfclasses.AMF_Object.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/TVGL.amfclasses.AMF_Object.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/TVGL.amfclasses.AMF_TexMap.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/TVGL.amfclasses.AMF_TexMap.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/TVGL.amfclasses.AMF_Texture.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/TVGL.amfclasses.AMF_Texture.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/TVGL.amfclasses.AMF_TextureType.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/TVGL.amfclasses.AMF_TextureType.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/TVGL.amfclasses.AMF_Triangle.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/TVGL.amfclasses.AMF_Triangle.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/TVGL.amfclasses.AMF_Vertex.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/TVGL.amfclasses.AMF_Vertex.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/TVGL.amfclasses.AMF_Vertices.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/TVGL.amfclasses.AMF_Vertices.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/TVGL.amfclasses.AMF_Volume.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/TVGL.amfclasses.AMF_Volume.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/TVGL.amfclasses.AMF_VolumeType.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/TVGL.amfclasses.AMF_VolumeType.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/TVGL.amfclasses.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/TVGL.amfclasses.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/TVGL.threemfclasses.Base.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/TVGL.threemfclasses.Base.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/TVGL.threemfclasses.BaseMaterials.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/TVGL.threemfclasses.BaseMaterials.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/TVGL.threemfclasses.Build.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/TVGL.threemfclasses.Build.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/TVGL.threemfclasses.Color3MF.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/TVGL.threemfclasses.Color3MF.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/TVGL.threemfclasses.Component.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/TVGL.threemfclasses.Component.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/TVGL.threemfclasses.Default.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/TVGL.threemfclasses.Default.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/TVGL.threemfclasses.Item.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/TVGL.threemfclasses.Item.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/TVGL.threemfclasses.Material.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/TVGL.threemfclasses.Material.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/TVGL.threemfclasses.Mesh.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/TVGL.threemfclasses.Mesh.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/TVGL.threemfclasses.Metadata.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/TVGL.threemfclasses.Metadata.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/TVGL.threemfclasses.Object.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/TVGL.threemfclasses.Object.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/TVGL.threemfclasses.ObjectType.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/TVGL.threemfclasses.ObjectType.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/TVGL.threemfclasses.Relationship.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/TVGL.threemfclasses.Relationship.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/TVGL.threemfclasses.Resources.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/TVGL.threemfclasses.Resources.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/TVGL.threemfclasses.Triangle.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/TVGL.threemfclasses.Triangle.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/TVGL.threemfclasses.Types.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/TVGL.threemfclasses.Types.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/TVGL.threemfclasses.Vertex.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/TVGL.threemfclasses.Vertex.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/TVGL.threemfclasses.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/TVGL.threemfclasses.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/TVGL.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/TVGL.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Conceptual",
+      "source_relative_path": "api/index.md",
+      "output": {
+        ".html": {
+          "relative_path": "api/index.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Toc",
+      "source_relative_path": "api/toc.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/toc.html"
+        },
+        ".json": {
+          "relative_path": "api/toc.json"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Conceptual",
+      "source_relative_path": "articles/intro.md",
+      "output": {
+        ".html": {
+          "relative_path": "articles/intro.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Toc",
+      "source_relative_path": "articles/toc.yml",
+      "output": {
+        ".html": {
+          "relative_path": "articles/toc.html"
+        },
+        ".json": {
+          "relative_path": "articles/toc.json"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Resource",
+      "source_relative_path": "images/Table-Handling-Non-Contacting-Polygons-in-Intersection.png",
+      "output": {
+        "resource": {
+          "relative_path": "images/Table-Handling-Non-Contacting-Polygons-in-Intersection.png"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Resource",
+      "source_relative_path": "images/Table-Handling-Non-Contacting-Polygons-in-Union.png",
+      "output": {
+        "resource": {
+          "relative_path": "images/Table-Handling-Non-Contacting-Polygons-in-Union.png"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Conceptual",
+      "source_relative_path": "index.md",
+      "output": {
+        ".html": {
+          "relative_path": "index.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Toc",
+      "source_relative_path": "toc.yml",
+      "output": {
+        ".html": {
+          "relative_path": "toc.html"
+        },
+        ".json": {
+          "relative_path": "toc.json"
+        }
+      },
+      "version": ""
+    }
+  ],
+  "version_info": {},
+  "groups": [
+    {
+      "xrefmap": "xrefmap.yml"
+    }
+  ]
+}

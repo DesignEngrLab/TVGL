@@ -1,0 +1,1000 @@
+﻿<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+      <title>Class ImplicitSolid
+ </title>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <meta name="title" content="Class ImplicitSolid
+ ">
+      
+      <link rel="icon" href="../favicon.ico">
+      <link rel="stylesheet" href="../styles/docfx.min.css">
+      <link rel="stylesheet" href="../styles/main.css">
+      <meta name="docfx:navrel" content="../toc.html">
+      <meta name="docfx:tocrel" content="toc.html">
+      
+      
+      
+
+      <script>
+        MathJax = {
+          options: {
+            processHtmlClass: ['tex2jax_process', 'math']
+          }
+        };
+      </script>
+
+      <script type="text/javascript" src="../styles/docfx.min.js"></script>
+      <script type="text/javascript" src="../styles/main.js"></script>
+  </head>
+
+  <body class="tex2jax_ignore" data-layout="" data-yaml-mime="ManagedReference">
+    <header class="bg-body border-bottom">
+      <nav id="autocollapse" class="navbar navbar-expand-md" role="navigation">
+        <div class="container-xxl flex-nowrap">
+          <a class="navbar-brand" href="../index.html">
+            <img id="logo" class="svg" src="../logo.svg" alt="">
+            
+          </a>
+          <button class="btn btn-lg d-md-none border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navpanel" aria-controls="navpanel" aria-expanded="false" aria-label="Toggle navigation">
+            <i class="bi bi-three-dots"></i>
+          </button>
+          <div class="collapse navbar-collapse" id="navpanel">
+            <div id="navbar">
+            </div>
+          </div>
+        </div>
+      </nav>
+    </header>
+
+    <main class="container-xxl">
+      <div class="toc-offcanvas">
+        <div class="offcanvas-md offcanvas-start" tabindex="-1" id="tocOffcanvas" aria-labelledby="tocOffcanvasLabel">
+          <div class="offcanvas-header">
+            <h5 class="offcanvas-title" id="tocOffcanvasLabel">Table of Contents</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#tocOffcanvas" aria-label="Close"></button>
+          </div>
+          <div class="offcanvas-body">
+            <nav class="toc" id="toc"></nav>
+          </div>
+        </div>
+      </div>
+
+      <div class="content">
+        <div class="actionbar">
+          <button class="btn btn-lg border-0 d-md-none" style="margin-top: -.65em; margin-left: -.8em" type="button" data-bs-toggle="offcanvas" data-bs-target="#tocOffcanvas" aria-controls="tocOffcanvas" aria-expanded="false" aria-label="Show table of contents">
+            <i class="bi bi-list"></i>
+          </button>
+
+          <nav id="breadcrumb"></nav>
+        </div>
+
+        <article data-uid="TVGL.ImplicitSolid">
+
+
+
+  <h1 id="TVGL_ImplicitSolid" data-uid="TVGL.ImplicitSolid" class="text-break">
+    Class ImplicitSolid
+  
+  </h1>
+
+  <div class="facts text-secondary">
+    <dl><dt>Namespace</dt><dd><a class="xref" href="TVGL.html">TVGL</a></dd></dl>
+  <dl><dt>Assembly</dt><dd>TessellationAndVoxelizationGeometryLibrary.dll</dd></dl>
+  </div>
+
+  <div class="markdown summary"><p>Class ImplicitSolid.
+Implements the <a class="xref" href="TVGL.Solid.html">Solid</a></p>
+</div>
+  <div class="markdown conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public class ImplicitSolid : Solid</code></pre>
+  </div>
+
+
+
+
+  <dl class="typelist inheritance">
+    <dt>Inheritance</dt>
+    <dd>
+      <div><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object">object</a></div>
+      <div><a class="xref" href="TVGL.Solid.html">Solid</a></div>
+      <div><span class="xref">ImplicitSolid</span></div>
+    </dd>
+  </dl>
+
+
+
+  <dl class="typelist derived">
+    <dt>Inherited Members</dt>
+    <dd>
+    <div>
+      <a class="xref" href="TVGL.Solid.html#TVGL_Solid_ReferenceIndex">Solid.ReferenceIndex</a>
+    </div>
+    <div>
+      <a class="xref" href="TVGL.Solid.html#TVGL_Solid_Center">Solid.Center</a>
+    </div>
+    <div>
+      <a class="xref" href="TVGL.Solid.html#TVGL_Solid__center">Solid._center</a>
+    </div>
+    <div>
+      <a class="xref" href="TVGL.Solid.html#TVGL_Solid_Volume">Solid.Volume</a>
+    </div>
+    <div>
+      <a class="xref" href="TVGL.Solid.html#TVGL_Solid__volume">Solid._volume</a>
+    </div>
+    <div>
+      <a class="xref" href="TVGL.Solid.html#TVGL_Solid_SurfaceArea">Solid.SurfaceArea</a>
+    </div>
+    <div>
+      <a class="xref" href="TVGL.Solid.html#TVGL_Solid__surfaceArea">Solid._surfaceArea</a>
+    </div>
+    <div>
+      <a class="xref" href="TVGL.Solid.html#TVGL_Solid_InertiaTensor">Solid.InertiaTensor</a>
+    </div>
+    <div>
+      <a class="xref" href="TVGL.Solid.html#TVGL_Solid__inertiaTensor">Solid._inertiaTensor</a>
+    </div>
+    <div>
+      <a class="xref" href="TVGL.Solid.html#TVGL_Solid_Bounds">Solid.Bounds</a>
+    </div>
+    <div>
+      <a class="xref" href="TVGL.Solid.html#TVGL_Solid_XMin">Solid.XMin</a>
+    </div>
+    <div>
+      <a class="xref" href="TVGL.Solid.html#TVGL_Solid_XMax">Solid.XMax</a>
+    </div>
+    <div>
+      <a class="xref" href="TVGL.Solid.html#TVGL_Solid_YMin">Solid.YMin</a>
+    </div>
+    <div>
+      <a class="xref" href="TVGL.Solid.html#TVGL_Solid_YMax">Solid.YMax</a>
+    </div>
+    <div>
+      <a class="xref" href="TVGL.Solid.html#TVGL_Solid_ZMin">Solid.ZMin</a>
+    </div>
+    <div>
+      <a class="xref" href="TVGL.Solid.html#TVGL_Solid_ZMax">Solid.ZMax</a>
+    </div>
+    <div>
+      <a class="xref" href="TVGL.Solid.html#TVGL_Solid_Name">Solid.Name</a>
+    </div>
+    <div>
+      <a class="xref" href="TVGL.Solid.html#TVGL_Solid_Comments">Solid.Comments</a>
+    </div>
+    <div>
+      <a class="xref" href="TVGL.Solid.html#TVGL_Solid_FileName">Solid.FileName</a>
+    </div>
+    <div>
+      <a class="xref" href="TVGL.Solid.html#TVGL_Solid_Units">Solid.Units</a>
+    </div>
+    <div>
+      <a class="xref" href="TVGL.Solid.html#TVGL_Solid_Language">Solid.Language</a>
+    </div>
+    <div>
+      <a class="xref" href="TVGL.Solid.html#TVGL_Solid_ConvexHull">Solid.ConvexHull</a>
+    </div>
+    <div>
+      <a class="xref" href="TVGL.Solid.html#TVGL_Solid_HasUniformColor">Solid.HasUniformColor</a>
+    </div>
+    <div>
+      <a class="xref" href="TVGL.Solid.html#TVGL_Solid_SolidColor">Solid.SolidColor</a>
+    </div>
+    <div>
+      <a class="xref" href="TVGL.Solid.html#TVGL_Solid_Primitives">Solid.Primitives</a>
+    </div>
+    <div>
+      <a class="xref" href="TVGL.Solid.html#TVGL_Solid_SameTolerance">Solid.SameTolerance</a>
+    </div>
+    <div>
+      <a class="xref" href="TVGL.Solid.html#TVGL_Solid_serializationData">Solid.serializationData</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.equals#system-object-equals(system-object)">object.Equals(object)</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.equals#system-object-equals(system-object-system-object)">object.Equals(object, object)</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.gethashcode">object.GetHashCode()</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.gettype">object.GetType()</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.memberwiseclone">object.MemberwiseClone()</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.referenceequals">object.ReferenceEquals(object, object)</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.tostring">object.ToString()</a>
+    </div>
+  </dd></dl>
+
+
+
+
+
+
+  <h2 class="section" id="constructors">Constructors
+</h2>
+
+
+  <a id="TVGL_ImplicitSolid__ctor_" data-uid="TVGL.ImplicitSolid.#ctor*"></a>
+
+  <h3 id="TVGL_ImplicitSolid__ctor" data-uid="TVGL.ImplicitSolid.#ctor">
+  ImplicitSolid()
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Initializes a new instance of the <a class="xref" href="TVGL.ImplicitSolid.html">ImplicitSolid</a> class.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public ImplicitSolid()</code></pre>
+  </div>
+
+
+
+
+
+
+
+
+
+
+
+  <dl class="typelist seealso">
+    <dt>See Also</dt>
+    <dd>
+    <div>
+      <div><a class="xref" href="TVGL.Solid.html">Solid</a></div>
+    </div>
+    </dd>
+  </dl>
+
+
+  <a id="TVGL_ImplicitSolid__ctor_" data-uid="TVGL.ImplicitSolid.#ctor*"></a>
+
+  <h3 id="TVGL_ImplicitSolid__ctor_TVGL_PrimitiveSurface_TVGL_PrimitiveSurface_TVGL_BooleanOperationType_" data-uid="TVGL.ImplicitSolid.#ctor(TVGL.PrimitiveSurface,TVGL.PrimitiveSurface,TVGL.BooleanOperationType)">
+  ImplicitSolid(PrimitiveSurface, PrimitiveSurface, BooleanOperationType)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Initializes a new instance of the <a class="xref" href="TVGL.ImplicitSolid.html">ImplicitSolid</a> class.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public ImplicitSolid(PrimitiveSurface surfaceA, PrimitiveSurface surfaceB, BooleanOperationType booleanOperation)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>surfaceA</code> <a class="xref" href="TVGL.PrimitiveSurface.html">PrimitiveSurface</a></dt>
+    <dd><p>The surface a.</p>
+</dd>
+    <dt><code>surfaceB</code> <a class="xref" href="TVGL.PrimitiveSurface.html">PrimitiveSurface</a></dt>
+    <dd><p>The surface b.</p>
+</dd>
+    <dt><code>booleanOperation</code> <a class="xref" href="TVGL.BooleanOperationType.html">BooleanOperationType</a></dt>
+    <dd><p>The boolean operation.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+  <dl class="typelist seealso">
+    <dt>See Also</dt>
+    <dd>
+    <div>
+      <div><a class="xref" href="TVGL.Solid.html">Solid</a></div>
+    </div>
+    </dd>
+  </dl>
+
+
+  <a id="TVGL_ImplicitSolid__ctor_" data-uid="TVGL.ImplicitSolid.#ctor*"></a>
+
+  <h3 id="TVGL_ImplicitSolid__ctor_TVGL_PrimitiveSurface_" data-uid="TVGL.ImplicitSolid.#ctor(TVGL.PrimitiveSurface)">
+  ImplicitSolid(PrimitiveSurface)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Initializes a new instance of the <a class="xref" href="TVGL.ImplicitSolid.html">ImplicitSolid</a> class.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public ImplicitSolid(PrimitiveSurface surface1)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>surface1</code> <a class="xref" href="TVGL.PrimitiveSurface.html">PrimitiveSurface</a></dt>
+    <dd><p>The surface1.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+  <dl class="typelist seealso">
+    <dt>See Also</dt>
+    <dd>
+    <div>
+      <div><a class="xref" href="TVGL.Solid.html">Solid</a></div>
+    </div>
+    </dd>
+  </dl>
+
+
+  <h2 class="section" id="properties">Properties
+</h2>
+
+
+  <a id="TVGL_ImplicitSolid_Discretization_" data-uid="TVGL.ImplicitSolid.Discretization*"></a>
+
+  <h3 id="TVGL_ImplicitSolid_Discretization" data-uid="TVGL.ImplicitSolid.Discretization">
+  Discretization
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets or sets the discretization.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public double Discretization { get; set; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The discretization.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+  <dl class="typelist seealso">
+    <dt>See Also</dt>
+    <dd>
+    <div>
+      <div><a class="xref" href="TVGL.Solid.html">Solid</a></div>
+    </div>
+    </dd>
+  </dl>
+
+
+  <a id="TVGL_ImplicitSolid_Item_" data-uid="TVGL.ImplicitSolid.Item*"></a>
+
+  <h3 id="TVGL_ImplicitSolid_Item_System_Double_System_Double_System_Double_" data-uid="TVGL.ImplicitSolid.Item(System.Double,System.Double,System.Double)">
+  this[double, double, double]
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a> with the specified x.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public double this[double x, double y, double z] { get; }</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>x</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The x.</p>
+</dd>
+    <dt><code>y</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The y.</p>
+</dd>
+    <dt><code>z</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The z.</p>
+</dd>
+  </dl>
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>System.Double.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+  <dl class="typelist seealso">
+    <dt>See Also</dt>
+    <dd>
+    <div>
+      <div><a class="xref" href="TVGL.Solid.html">Solid</a></div>
+    </div>
+    </dd>
+  </dl>
+
+
+  <a id="TVGL_ImplicitSolid_SurfaceLevel_" data-uid="TVGL.ImplicitSolid.SurfaceLevel*"></a>
+
+  <h3 id="TVGL_ImplicitSolid_SurfaceLevel" data-uid="TVGL.ImplicitSolid.SurfaceLevel">
+  SurfaceLevel
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets or sets the surface level.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public double SurfaceLevel { get; set; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>The surface level.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+  <dl class="typelist seealso">
+    <dt>See Also</dt>
+    <dd>
+    <div>
+      <div><a class="xref" href="TVGL.Solid.html">Solid</a></div>
+    </div>
+    </dd>
+  </dl>
+
+
+  <h2 class="section" id="methods">Methods
+</h2>
+
+
+  <a id="TVGL_ImplicitSolid_AddNewTopOfTree_" data-uid="TVGL.ImplicitSolid.AddNewTopOfTree*"></a>
+
+  <h3 id="TVGL_ImplicitSolid_AddNewTopOfTree_TVGL_BooleanOperationType_TVGL_ImplicitSolid_" data-uid="TVGL.ImplicitSolid.AddNewTopOfTree(TVGL.BooleanOperationType,TVGL.ImplicitSolid)">
+  AddNewTopOfTree(BooleanOperationType, ImplicitSolid)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Adds the new top of tree.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public void AddNewTopOfTree(BooleanOperationType booleanOperation, ImplicitSolid csgSolidB)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>booleanOperation</code> <a class="xref" href="TVGL.BooleanOperationType.html">BooleanOperationType</a></dt>
+    <dd><p>The boolean operation.</p>
+</dd>
+    <dt><code>csgSolidB</code> <a class="xref" href="TVGL.ImplicitSolid.html">ImplicitSolid</a></dt>
+    <dd><p>The CSG solid b.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+  <dl class="typelist seealso">
+    <dt>See Also</dt>
+    <dd>
+    <div>
+      <div><a class="xref" href="TVGL.Solid.html">Solid</a></div>
+    </div>
+    </dd>
+  </dl>
+
+
+  <a id="TVGL_ImplicitSolid_AddNewTopOfTree_" data-uid="TVGL.ImplicitSolid.AddNewTopOfTree*"></a>
+
+  <h3 id="TVGL_ImplicitSolid_AddNewTopOfTree_TVGL_BooleanOperationType_TVGL_PrimitiveSurface_" data-uid="TVGL.ImplicitSolid.AddNewTopOfTree(TVGL.BooleanOperationType,TVGL.PrimitiveSurface)">
+  AddNewTopOfTree(BooleanOperationType, PrimitiveSurface)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Adds the new top of tree.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public void AddNewTopOfTree(BooleanOperationType booleanOperation, PrimitiveSurface primitiveSurfaceB)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>booleanOperation</code> <a class="xref" href="TVGL.BooleanOperationType.html">BooleanOperationType</a></dt>
+    <dd><p>The boolean operation.</p>
+</dd>
+    <dt><code>primitiveSurfaceB</code> <a class="xref" href="TVGL.PrimitiveSurface.html">PrimitiveSurface</a></dt>
+    <dd><p>The primitive surface b.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+  <dl class="typelist seealso">
+    <dt>See Also</dt>
+    <dd>
+    <div>
+      <div><a class="xref" href="TVGL.Solid.html">Solid</a></div>
+    </div>
+    </dd>
+  </dl>
+
+
+  <a id="TVGL_ImplicitSolid_AddNewTopOfTree_" data-uid="TVGL.ImplicitSolid.AddNewTopOfTree*"></a>
+
+  <h3 id="TVGL_ImplicitSolid_AddNewTopOfTree_TVGL_ImplicitSolid_TVGL_BooleanOperationType_" data-uid="TVGL.ImplicitSolid.AddNewTopOfTree(TVGL.ImplicitSolid,TVGL.BooleanOperationType)">
+  AddNewTopOfTree(ImplicitSolid, BooleanOperationType)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Adds the new top of tree.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public void AddNewTopOfTree(ImplicitSolid csgSolidA, BooleanOperationType booleanOperation)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>csgSolidA</code> <a class="xref" href="TVGL.ImplicitSolid.html">ImplicitSolid</a></dt>
+    <dd><p>The CSG solid a.</p>
+</dd>
+    <dt><code>booleanOperation</code> <a class="xref" href="TVGL.BooleanOperationType.html">BooleanOperationType</a></dt>
+    <dd><p>The boolean operation.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+  <dl class="typelist seealso">
+    <dt>See Also</dt>
+    <dd>
+    <div>
+      <div><a class="xref" href="TVGL.Solid.html">Solid</a></div>
+    </div>
+    </dd>
+  </dl>
+
+
+  <a id="TVGL_ImplicitSolid_AddNewTopOfTree_" data-uid="TVGL.ImplicitSolid.AddNewTopOfTree*"></a>
+
+  <h3 id="TVGL_ImplicitSolid_AddNewTopOfTree_TVGL_PrimitiveSurface_TVGL_BooleanOperationType_" data-uid="TVGL.ImplicitSolid.AddNewTopOfTree(TVGL.PrimitiveSurface,TVGL.BooleanOperationType)">
+  AddNewTopOfTree(PrimitiveSurface, BooleanOperationType)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Adds the new top of tree.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public void AddNewTopOfTree(PrimitiveSurface primitiveSurfaceA, BooleanOperationType booleanOperation)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>primitiveSurfaceA</code> <a class="xref" href="TVGL.PrimitiveSurface.html">PrimitiveSurface</a></dt>
+    <dd><p>The primitive surface a.</p>
+</dd>
+    <dt><code>booleanOperation</code> <a class="xref" href="TVGL.BooleanOperationType.html">BooleanOperationType</a></dt>
+    <dd><p>The boolean operation.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+  <dl class="typelist seealso">
+    <dt>See Also</dt>
+    <dd>
+    <div>
+      <div><a class="xref" href="TVGL.Solid.html">Solid</a></div>
+    </div>
+    </dd>
+  </dl>
+
+
+  <a id="TVGL_ImplicitSolid_CalculateCenter_" data-uid="TVGL.ImplicitSolid.CalculateCenter*"></a>
+
+  <h3 id="TVGL_ImplicitSolid_CalculateCenter" data-uid="TVGL.ImplicitSolid.CalculateCenter">
+  CalculateCenter()
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Calculates the center.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">protected override void CalculateCenter()</code></pre>
+  </div>
+
+
+
+
+
+
+
+
+
+
+  <h4 class="section">Exceptions</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.notimplementedexception">NotImplementedException</a></dt>
+    <dd></dd>
+  </dl>
+
+  <dl class="typelist seealso">
+    <dt>See Also</dt>
+    <dd>
+    <div>
+      <div><a class="xref" href="TVGL.Solid.html">Solid</a></div>
+    </div>
+    </dd>
+  </dl>
+
+
+  <a id="TVGL_ImplicitSolid_CalculateInertiaTensor_" data-uid="TVGL.ImplicitSolid.CalculateInertiaTensor*"></a>
+
+  <h3 id="TVGL_ImplicitSolid_CalculateInertiaTensor" data-uid="TVGL.ImplicitSolid.CalculateInertiaTensor">
+  CalculateInertiaTensor()
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Calculates the inertia tensor.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">protected override void CalculateInertiaTensor()</code></pre>
+  </div>
+
+
+
+
+
+
+
+
+
+
+  <h4 class="section">Exceptions</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.notimplementedexception">NotImplementedException</a></dt>
+    <dd></dd>
+  </dl>
+
+  <dl class="typelist seealso">
+    <dt>See Also</dt>
+    <dd>
+    <div>
+      <div><a class="xref" href="TVGL.Solid.html">Solid</a></div>
+    </div>
+    </dd>
+  </dl>
+
+
+  <a id="TVGL_ImplicitSolid_CalculateSurfaceArea_" data-uid="TVGL.ImplicitSolid.CalculateSurfaceArea*"></a>
+
+  <h3 id="TVGL_ImplicitSolid_CalculateSurfaceArea" data-uid="TVGL.ImplicitSolid.CalculateSurfaceArea">
+  CalculateSurfaceArea()
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Calculates the surface area.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">protected override void CalculateSurfaceArea()</code></pre>
+  </div>
+
+
+
+
+
+
+
+
+
+
+  <h4 class="section">Exceptions</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.notimplementedexception">NotImplementedException</a></dt>
+    <dd></dd>
+  </dl>
+
+  <dl class="typelist seealso">
+    <dt>See Also</dt>
+    <dd>
+    <div>
+      <div><a class="xref" href="TVGL.Solid.html">Solid</a></div>
+    </div>
+    </dd>
+  </dl>
+
+
+  <a id="TVGL_ImplicitSolid_CalculateVolume_" data-uid="TVGL.ImplicitSolid.CalculateVolume*"></a>
+
+  <h3 id="TVGL_ImplicitSolid_CalculateVolume" data-uid="TVGL.ImplicitSolid.CalculateVolume">
+  CalculateVolume()
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Calculates the volume.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">protected override void CalculateVolume()</code></pre>
+  </div>
+
+
+
+
+
+
+
+
+
+
+  <h4 class="section">Exceptions</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.notimplementedexception">NotImplementedException</a></dt>
+    <dd></dd>
+  </dl>
+
+  <dl class="typelist seealso">
+    <dt>See Also</dt>
+    <dd>
+    <div>
+      <div><a class="xref" href="TVGL.Solid.html">Solid</a></div>
+    </div>
+    </dd>
+  </dl>
+
+
+  <a id="TVGL_ImplicitSolid_ConvertToTessellatedSolid_" data-uid="TVGL.ImplicitSolid.ConvertToTessellatedSolid*"></a>
+
+  <h3 id="TVGL_ImplicitSolid_ConvertToTessellatedSolid_System_Double_" data-uid="TVGL.ImplicitSolid.ConvertToTessellatedSolid(System.Double)">
+  ConvertToTessellatedSolid(double)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Converts to tessellated solid.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public TessellatedSolid ConvertToTessellatedSolid(double meshSize)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>meshSize</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd><p>Size of the mesh.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.TessellatedSolid.html">TessellatedSolid</a></dt>
+    <dd><p>TessellatedSolid.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+  <dl class="typelist seealso">
+    <dt>See Also</dt>
+    <dd>
+    <div>
+      <div><a class="xref" href="TVGL.Solid.html">Solid</a></div>
+    </div>
+    </dd>
+  </dl>
+
+
+  <a id="TVGL_ImplicitSolid_Transform_" data-uid="TVGL.ImplicitSolid.Transform*"></a>
+
+  <h3 id="TVGL_ImplicitSolid_Transform_TVGL_Matrix4x4_" data-uid="TVGL.ImplicitSolid.Transform(TVGL.Matrix4x4)">
+  Transform(Matrix4x4)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Transforms the specified transform matrix.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public override void Transform(Matrix4x4 transformMatrix)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>transformMatrix</code> <a class="xref" href="TVGL.Matrix4x4.html">Matrix4x4</a></dt>
+    <dd><p>The transform matrix.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+  <h4 class="section">Exceptions</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.notimplementedexception">NotImplementedException</a></dt>
+    <dd></dd>
+  </dl>
+
+  <dl class="typelist seealso">
+    <dt>See Also</dt>
+    <dd>
+    <div>
+      <div><a class="xref" href="TVGL.Solid.html">Solid</a></div>
+    </div>
+    </dd>
+  </dl>
+
+
+  <a id="TVGL_ImplicitSolid_TransformToNewSolid_" data-uid="TVGL.ImplicitSolid.TransformToNewSolid*"></a>
+
+  <h3 id="TVGL_ImplicitSolid_TransformToNewSolid_TVGL_Matrix4x4_" data-uid="TVGL.ImplicitSolid.TransformToNewSolid(TVGL.Matrix4x4)">
+  TransformToNewSolid(Matrix4x4)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets a new solid by transforming its vertices.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public override Solid TransformToNewSolid(Matrix4x4 transformationMatrix)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>transformationMatrix</code> <a class="xref" href="TVGL.Matrix4x4.html">Matrix4x4</a></dt>
+    <dd><p>The transformation matrix.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="TVGL.Solid.html">Solid</a></dt>
+    <dd><p>Solid.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <h4 class="section">Exceptions</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.notimplementedexception">NotImplementedException</a></dt>
+    <dd></dd>
+  </dl>
+
+  <dl class="typelist seealso">
+    <dt>See Also</dt>
+    <dd>
+    <div>
+      <div><a class="xref" href="TVGL.Solid.html">Solid</a></div>
+    </div>
+    </dd>
+  </dl>
+
+
+  <h2 id="seealso">See Also</h2>
+  <div class="seealso">
+      <div><a class="xref" href="TVGL.Solid.html">Solid</a></div>
+  </div>
+
+</article>
+
+        <div class="contribution d-print-none">
+        </div>
+
+        
+      </div>
+
+      <div class="affix">
+        <nav id="affix"></nav>
+      </div>
+    </main>
+
+
+    <footer class="border-top">
+      <div class="container-xxl">
+        <div class="flex-fill">
+          <span>Made with <a href="https://dotnet.github.io/docfx">docfx</a></span>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>
