@@ -177,7 +177,8 @@ namespace TVGL
         /// <param name="isPositive">if set to <c>true</c> [is positive].</param>
         public Prismatic(IEnumerable<TriangleFace> faces = null, bool isPositive = true) : base(faces)
         {
-            Axis = MiscFunctions.FindAxisToMinimizeProjectedArea(Faces, Faces.Count);
+            Axis =  MiscFunctions.FindMostOrthogonalVector(Faces.Select(face =>
+                 (face.B.Coordinates - face.A.Coordinates).Cross(face.C.Coordinates - face.A.Coordinates)));
             IsPositive = isPositive;
             var (min, max) = MinimumEnclosure.GetDistanceToExtremeVertex(Vertices, Axis, out _, out _);//vertices are set in base constructor
             MinDistanceAlongAxis = min;

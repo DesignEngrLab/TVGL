@@ -191,10 +191,70 @@ namespace TVGL
         #endregion
 
 
+        /// <summary>
+        /// Shows the gauss sphere with intensity.
+        /// </summary>
+        /// <param name="vertices">The vertices.</param>
+        /// <param name="colors">The colors.</param>
+        /// <param name="ts">The ts.</param>
+        public static void ShowGaussSphereWithIntensity(List<Vertex> vertices, List<Color> colors, TessellatedSolid ts)
+        {
+            /*
+            var vm = new Window3DPlotViewModel();
+            var window = new Window3DPlot(vm);
+            var pt0 = new System.Windows.Media.Media3D.Point3D(ts.Center[0], ts.Center[1], ts.Center[2]);
+            var x = ts.XMax - ts.XMin;
+            var y = ts.YMax - ts.YMin;
+            var z = ts.ZMax - ts.ZMin;
+            var radius = System.Math.Max(System.Math.Max(x, y), z) / 2;
+
+            //Add the solid to the visual
+            var model = ConvertSolidsToModel3D(new[] { ts });
+            vm.Add(model);
+
+            //Add a transparent unit sphere to the visual
+            var sphere = new SharpDX. // SphereVisual3D();
+            sphere.Radius = radius;
+            sphere.Center = pt0;
+            sphere.Material = MaterialHelper.CreateMaterial(new System.Windows.Media.Color { A = 15, R = 200, G = 200, B = 200 });
+            //window.view1.Children.Add(sphere);
+
+            var i = 0;
+            foreach (var point in vertices)
+            {
+                var color = colors[i];
+                var pt1 = new System.Windows.Media.Media3D.Point3D(pt0.X + point.X * radius, pt0.Y + point.Y * radius, pt0.Z + point.Z * radius);
+
+
+                //No create a line collection by doubling up the points
+                var lineCollection = new List<System.Windows.Media.Media3D.Point3D>();
+                lineCollection.Add(pt0);
+                lineCollection.Add(pt1);
+
+                var systemColor = new System.Windows.Media.Color();
+                systemColor.A = 255;
+                systemColor.R = color.R;
+                systemColor.G = color.G;
+                systemColor.B = color.B;
+
+
+                var lines = new LinesVisual3D { Points = new Point3DCollection(lineCollection), Color = systemColor, Thickness = 5 };
+
+
+                var pointsVisual = new PointsVisual3D { Color = systemColor, Size = 5 };
+                pointsVisual.Points = new Point3DCollection() { pt1 };
+                vm.Add(pointsVisual);
+                vm.Add(lines);
+                i++;
+            }
+            window.ShowDialog();
+            */
+        }
+
 
         #region ShowPaths with or without Solid(s)
         public static void ShowVertexPaths(IEnumerable<Vector3> vertices, Solid solid = null, double lineThickness = 0,
-            Color color = null, bool closePaths = false)
+                Color color = null, bool closePaths = false)
         {
             ShowVertexPathsWithSolids(vertices, new List<Solid> { solid }, lineThickness,
                 color == null ? null : new List<Color> { color }, closePaths); ;
@@ -242,7 +302,7 @@ namespace TVGL
         {
             ShowVertexPathsWithSolids(new[] { vertices }, solids, thickness, colors, closePaths);
         }
-        public static void ShowVertexPathsWithSolids(IEnumerable<Vector3> vertices, IEnumerable<Solid> solids, 
+        public static void ShowVertexPathsWithSolids(IEnumerable<Vector3> vertices, IEnumerable<Solid> solids,
             IEnumerable<bool> closePaths, double thickness = 0, IEnumerable<Color> colors = null)
         {
             ShowVertexPathsWithSolids(new[] { vertices }, solids, closePaths, thickness, colors);
@@ -283,7 +343,7 @@ namespace TVGL
         }
 
 
-        public static IEnumerable<GeometryModel3D> GetVertexPaths(IEnumerable<IEnumerable<Vector3>> paths, double thickness = 0,
+        public static IEnumerable<HelixToolkit.Wpf.SharpDX.GeometryModel3D> GetVertexPaths(IEnumerable<IEnumerable<Vector3>> paths, double thickness = 0,
             IEnumerable<Color> colors = null, bool closePaths = false)
         {
             return GetVertexPaths(paths, thickness, colors, paths.Select(x => closePaths));
@@ -359,7 +419,7 @@ namespace TVGL
                 foreach (var m3d in ConvertVoxelsToPointModel3D((VoxelizedSolid)vs))
                     yield return m3d;
             foreach (var css in solids.Where(cs => cs is CrossSectionSolid))
-                foreach (var m3d in GetVertexPaths(((CrossSectionSolid)css).GetCrossSectionsAs3DLoops().SelectMany(v => v),1,null,true))
+                foreach (var m3d in GetVertexPaths(((CrossSectionSolid)css).GetCrossSectionsAs3DLoops().SelectMany(v => v), 1, null, true))
                     yield return m3d;
         }
 

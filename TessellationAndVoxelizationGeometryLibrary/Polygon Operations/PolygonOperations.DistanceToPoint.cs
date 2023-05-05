@@ -15,7 +15,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace TVGL.Polygon_Operations
+namespace TVGL
 {
     /// <summary>
     /// Class PolygonOperations.

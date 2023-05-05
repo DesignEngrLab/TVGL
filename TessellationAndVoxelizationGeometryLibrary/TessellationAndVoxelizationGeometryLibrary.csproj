@@ -31,6 +31,8 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Miscellaneous Functions\PriorityQueue\IFixedSizePriorityQueue.cs" />
+    <Compile Remove="Miscellaneous Functions\PriorityQueue\IPriorityQueue.cs" />
     <Compile Remove="TessellatedSolid\Enclosure Operations\MinimumEnclosure - OBBTest.cs" />
   </ItemGroup>
 

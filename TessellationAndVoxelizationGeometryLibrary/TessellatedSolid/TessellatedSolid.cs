@@ -457,6 +457,9 @@ namespace TVGL
                 reader.Read();//go to next
             }
 
+            //Get the max min bounds and set tolerance
+            DefineAxisAlignedBoundingBoxAndTolerance();
+
             //Build edges, convex hull, and anything else we need.
             CompleteInitiation();
 
@@ -750,7 +753,6 @@ namespace TVGL
         #endregion
 
         #region Make many elements (called from constructors)
-
         /// <summary>
         /// Defines the axis aligned bounding box and tolerance. This is called first in the constructors
         /// because the tolerance is used in making the vertices.

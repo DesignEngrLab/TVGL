@@ -313,20 +313,19 @@ namespace TVGL
             return dir.Transform(Quaternion.CreateFromAxisAngle(direction, additionalRotation));
         }
         /// <summary>
-        /// Finds the axis to minimize projected area.
+        /// Finds the axis that is most orthogonal to the given set.
         /// </summary>
-        /// <param name="faces">The faces.</param>
+        /// <param name="vectors">The vectors.</param>
         /// <param name="count">The count.</param>
         /// <returns>Vector3.</returns>
-        public static Vector3 FindAxisToMinimizeProjectedArea(IEnumerable<TriangleFace> faces, int count)
+        public static Vector3 FindMostOrthogonalVector(IEnumerable<Vector3> vectors)
         {
             double xSum = 0.0, ySum = 0.0, zSum = 0.0;
             double xSq = 0.0;
             double xy = 0.0, ySq = 0.0;
             double xz = 0.0, yz = 0.0, zSq = 0.0;
-            foreach (var face in faces)
+            foreach (var n in vectors)
             {
-                var n = (face.B.Coordinates - face.A.Coordinates).Cross(face.C.Coordinates - face.A.Coordinates);
                 var x = n.X;
                 var y = n.Y;
                 var z = n.Z;
@@ -363,9 +362,9 @@ namespace TVGL
                 {
                     var maxLength = 0.0;
                     var maxCross = Vector3.Null;
-                    foreach (var f in faces)
+                    foreach (var n in vectors)
                     {
-                        var crossDir = f.Normal.Cross(direction);
+                        var crossDir = n.Cross(direction);
                         var lengthSqd = crossDir.LengthSquared();
                         if (lengthSqd > maxLength)
                         {
@@ -392,30 +391,6 @@ namespace TVGL
             return eigenVectors[2];
         }
 
-        /// <summary>
-        /// Finds the axis to maximize projected area.
-        /// </summary>
-        /// <param name="faces">The faces.</param>
-        /// <param name="count">The count.</param>
-        /// <returns>Vector3.</returns>
-        public static Vector3 FindAxisToMaximizeProjectedArea(IEnumerable<TriangleFace> faces, int count)
-        {
-            var sums = Vector3.Zero;
-            foreach (var face in faces)
-                sums += (face.B.Coordinates - face.A.Coordinates).Cross(face.C.Coordinates - face.A.Coordinates);
-            var Amatrix = new Matrix3x3(sums.X * sums.X, sums.X * sums.Y, sums.X * sums.Z,
-                sums.X * sums.Y, sums.Y * sums.Y, sums.Y * sums.Z,
-                sums.X * sums.Z, sums.Y * sums.Z, sums.Z * sums.Z);
-            Amatrix.EigenRealsOnly(out _, out var eigenVectors);
-            var projectedArea0 = Math.Abs(eigenVectors[0].Dot(sums));
-            var projectedArea1 = eigenVectors.Length > 1 ? Math.Abs(eigenVectors[1].Dot(sums)) : double.NegativeInfinity;
-            var projectedArea2 = eigenVectors.Length > 2 ? Math.Abs(eigenVectors[2].Dot(sums)) : double.NegativeInfinity;
-            if (projectedArea0 > projectedArea1 && projectedArea0 > projectedArea2)
-                return eigenVectors[0];
-            if (projectedArea0 < projectedArea1 && projectedArea1 > projectedArea2)
-                return eigenVectors[1];
-            return eigenVectors[2];
-        }
 
         /// <summary>
         /// Finds the axis from normals.
@@ -459,7 +434,7 @@ namespace TVGL
         /// <summary>
         /// Finds the average inner edge vector.
         /// </summary>
-        /// <param name="faces">The faces.</param>
+        /// <param name="faces">The vectors.</param>
         /// <param name="borderEdges">The border edges.</param>
         /// <returns>Vector3.</returns>
         private static Vector3 FindAverageInnerEdgeVector(IEnumerable<TriangleFace> faces, out HashSet<Edge> borderEdges)
