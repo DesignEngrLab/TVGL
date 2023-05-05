@@ -323,7 +323,7 @@ namespace TVGL
             {
                 Position = new Point3D(7, 10, 12),
                 LookDirection = new Vector3D(-7, -10, -12),
-                UpDirection = new Vector3D(0, 1, 0),
+                UpDirection = new Vector3D(0, 0, 1),
                 NearPlaneDistance = 0.1f,
                 FarPlaneDistance = 5000
             };
@@ -331,7 +331,7 @@ namespace TVGL
             {
                 Position = new Point3D(7, 10, 12),
                 LookDirection = new Vector3D(-7, -10, -12),
-                UpDirection = new Vector3D(0, 1, 0),
+                UpDirection = new Vector3D(0, 0, 1),
                 NearPlaneDistance = 0.1f,
                 FarPlaneDistance = 5000
             };

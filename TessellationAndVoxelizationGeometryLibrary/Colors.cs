@@ -905,7 +905,7 @@ namespace TVGL
         /// <param name="value">The value.</param>
         /// <param name="alpha">The alpha.</param>
         /// <returns>Color.</returns>
-        public static Color HSVtoRGB(double hue, double saturation, double value, double alpha = 1)
+        public static Color HSVtoRGB(double hue, double saturation = 1, double value = 1, double alpha = 1)
         {
             hue += HueOffset;
             if (hue < 0) hue = Math.Abs(1 + hue);

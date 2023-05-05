@@ -25,7 +25,8 @@
             Title="{Binding Title}"
             Grid.Row="1"
             Camera="{Binding Camera}"
-            CoordinateSystemLabelForeground="White"
+            ModelUpDirection="0,0,1"
+            CoordinateSystemLabelForeground="Black"
             EffectsManager="{Binding EffectsManager}"
             IsShadowMappingEnabled="True"
             ShowCoordinateSystem="True"
@@ -46,7 +47,7 @@
             <hx:DirectionalLight3D Direction="{Binding DirectionalLightDirection5}" Color="{Binding DirectionalLightColor}" />
             <hx:DirectionalLight3D Direction="{Binding DirectionalLightDirection6}" Color="{Binding DirectionalLightColor}" />
             <hx:GroupModel3D x:Name="group1" ItemsSource="{Binding Solids}" />
-            <hx:AxisPlaneGridModel3D x:Name="CheckerFloor" GridColor="AliceBlue" PlaneColor="#66aacaff" 
+            <hx:AxisPlaneGridModel3D x:Name="CheckerFloor" GridColor="AliceBlue" PlaneColor="#66aacaff" UpAxis="Z"
                                      Visibility="{Binding GroundPlaneVisible,Converter={StaticResource BooleanToVisibilityConverter}}" />
         </hx:Viewport3DX>
 
