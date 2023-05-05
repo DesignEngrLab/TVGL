@@ -20,7 +20,7 @@ namespace StarMathLib
     /// <summary>
     /// Class StarMath.
     /// </summary>
-    internal static partial class StarMath
+    public static partial class StarMath
     {
         /// <summary>
         /// The maximum svd iter

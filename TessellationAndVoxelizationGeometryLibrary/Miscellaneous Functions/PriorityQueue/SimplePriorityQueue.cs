@@ -24,7 +24,7 @@ namespace Priority_Queue
     /// </summary>
     /// <typeparam name="TItem">The type to enqueue</typeparam>
     /// <typeparam name="TPriority">The priority-type to use for nodes.  Must extend IComparable&lt;TPriority&gt;</typeparam>
-    internal class SimplePriorityQueue<TItem, TPriority> : IEnumerable<TItem>
+    public class SimplePriorityQueue<TItem, TPriority> : IEnumerable<TItem>
     {
         /// <summary>
         /// Class SimpleNode.

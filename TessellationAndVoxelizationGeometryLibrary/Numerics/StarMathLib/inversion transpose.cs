@@ -22,7 +22,7 @@ namespace StarMathLib
     /// <summary>
     /// Class StarMath.
     /// </summary>
-    internal static partial class StarMath
+    public static partial class StarMath
     {
         #region Matrix Inversion
         /// <summary>
