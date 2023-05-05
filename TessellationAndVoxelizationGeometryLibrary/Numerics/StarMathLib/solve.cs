@@ -21,7 +21,7 @@ namespace StarMathLib
     /// <summary>
     /// Class StarMath.
     /// </summary>
-    internal static partial class StarMath
+    public static partial class StarMath
     {
         /// <summary>
         /// Solves the specified A matrix.
@@ -33,7 +33,7 @@ namespace StarMathLib
         /// <returns>System.Double[].</returns>
         /// <exception cref="System.ArithmeticException">Matrix, A, must be square.</exception>
         /// <exception cref="System.ArithmeticException">Matrix, A, must be have the same number of rows as the vector, b.</exception>
-        internal static bool solve(this double[,] A, IList<double> b, out double[] answer,
+        public static bool solve(this double[,] A, IList<double> b, out double[] answer,
             Boolean IsASymmetric = false)
         {
             var length = A.GetLength(0);

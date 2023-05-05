@@ -41,14 +41,14 @@ namespace StarMathLib
     /// <summary>
     /// Class StarMath.
     /// </summary>
-    internal static partial class StarMath
+    public static partial class StarMath
     {
         /// <summary>
         /// Gets the eigenvalues for matrix, A.
         /// </summary>
         /// <param name="A">the matrix in question, A.</param>
         /// <returns>The eigenvalues as complex numbers.</returns>
-        internal static ComplexNumber[] GetEigenValues(this double[,] A)
+        public static ComplexNumber[] GetEigenValues(this double[,] A)
         {
             return GetEigenValuesAndVectors(A, out _);
         }
@@ -63,7 +63,7 @@ namespace StarMathLib
         /// <exception cref="System.ArithmeticException">Eigen decomposition does not converge.</exception>
         /// <exception cref="System.ArithmeticException">Eigen decomposition failed due to norm = 0.</exception>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static ComplexNumber[] GetEigenValuesAndVectors(this double[,] A, out double[][] eigenVectors)
+        public static ComplexNumber[] GetEigenValuesAndVectors(this double[,] A, out double[][] eigenVectors)
         {
             var length = A.GetLength(0);
             if (length != A.GetLength(1))
