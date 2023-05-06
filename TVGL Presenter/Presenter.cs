@@ -199,7 +199,7 @@ namespace TVGL
         /// <param name="ts">The ts.</param>
         public static void ShowGaussSphereWithIntensity(List<Vertex> vertices, List<Color> colors, TessellatedSolid ts)
         {
-            /*
+
             var vm = new Window3DPlotViewModel();
             var window = new Window3DPlot(vm);
             var pt0 = new System.Windows.Media.Media3D.Point3D(ts.Center[0], ts.Center[1], ts.Center[2]);
@@ -212,43 +212,38 @@ namespace TVGL
             var model = ConvertSolidsToModel3D(new[] { ts });
             vm.Add(model);
 
-            //Add a transparent unit sphere to the visual
-            var sphere = new SharpDX. // SphereVisual3D();
-            sphere.Radius = radius;
-            sphere.Center = pt0;
-            sphere.Material = MaterialHelper.CreateMaterial(new System.Windows.Media.Color { A = 15, R = 200, G = 200, B = 200 });
+            //Add a transparent unit sphere to the visual...doesn't seem to be one in SharpDX
+            //var sphere = new HelixToolkit.Wpf.SharpDX.
+            //sphere.Radius = radius;
+            //sphere.Center = pt0;
+            //sphere.Material = MaterialHelper.CreateMaterial(new System.Windows.Media.Color { A = 15, R = 200, G = 200, B = 200 });
             //window.view1.Children.Add(sphere);
 
             var i = 0;
             foreach (var point in vertices)
             {
+                var positions = new Vector3Collection(new[] {
+                    new SharpDX.Vector3((float)ts.Center.X, (float)ts.Center.Y, (float)ts.Center.Z),
+                    new SharpDX.Vector3((float)(pt0.X + point.X * radius),
+                                        (float)(pt0.Y + point.Y * radius), (float)(pt0.Z + point.Z * radius))
+                });
+                var lineIndices = new IntCollection(new[] { 0, 1 });
+
                 var color = colors[i];
-                var pt1 = new System.Windows.Media.Media3D.Point3D(pt0.X + point.X * radius, pt0.Y + point.Y * radius, pt0.Z + point.Z * radius);
-
-
-                //No create a line collection by doubling up the points
-                var lineCollection = new List<System.Windows.Media.Media3D.Point3D>();
-                lineCollection.Add(pt0);
-                lineCollection.Add(pt1);
-
-                var systemColor = new System.Windows.Media.Color();
-                systemColor.A = 255;
-                systemColor.R = color.R;
-                systemColor.G = color.G;
-                systemColor.B = color.B;
-
-
-                var lines = new LinesVisual3D { Points = new Point3DCollection(lineCollection), Color = systemColor, Thickness = 5 };
-
-
-                var pointsVisual = new PointsVisual3D { Color = systemColor, Size = 5 };
-                pointsVisual.Points = new Point3DCollection() { pt1 };
-                vm.Add(pointsVisual);
-                vm.Add(lines);
-                i++;
+                var lines = new LineGeometryModel3D
+                {
+                    Geometry = new LineGeometry3D
+                    {
+                        Positions = positions,
+                        Indices = lineIndices
+                    },
+                    IsRendering = true,
+                    Smoothness = 2,
+                    Thickness = 5,
+                    Color = new System.Windows.Media.Color { A = 255, R = color.R, G = color.G, B = color.B }
+                };
             }
             window.ShowDialog();
-            */
         }
 
 
@@ -260,7 +255,7 @@ namespace TVGL
                 color == null ? null : new List<Color> { color }, closePaths); ;
         }
         public static void ShowVertexPaths(IEnumerable<IEnumerable<Vector3>> vertices, IEnumerable<bool> closePaths, Solid solid = null, double lineThickness = 0,
-   Color color = null)
+    Color color = null)
         {
             ShowVertexPathsWithSolids(vertices, new List<Solid> { solid }, closePaths, lineThickness,
                 color == null ? null : new List<Color> { color }); ;
