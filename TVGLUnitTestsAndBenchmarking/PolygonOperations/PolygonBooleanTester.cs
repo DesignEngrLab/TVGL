@@ -351,12 +351,14 @@ namespace TVGLUnitTestsAndBenchmarking
                 {
                     Console.WriteLine("showing tvgl error...");
                     var shallowTree = tvglResult.CreateShallowPolygonTrees(true);
-                    Presenter.ShowAndHang(correctVoxels, shallowTree);
+                    Presenter.ShowAndHang(correctVoxels);
+                    Presenter.ShowAndHang(shallowTree);
                 }
                 if (clipperError && showResult)
                 {
                     Console.WriteLine("showing clipper error...");
-                    Presenter.ShowAndHang(correctVoxels, clipperShallowPolyTree);
+                    Presenter.ShowAndHang(correctVoxels);
+                    Presenter.ShowAndHang(clipperShallowPolyTree);
                 }
                 Console.WriteLine();
                 return (tvglError ? 1 : 0, clipperError ? 1 : 0);

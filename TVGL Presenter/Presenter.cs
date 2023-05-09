@@ -158,29 +158,16 @@ namespace TVGL
 
 
         #region Show and Hang Solids
-        public static void ShowAndHang(TessellatedSolid ts, string heading = "", string title = "",
+        public static void ShowAndHang(Solid solid, string heading = "", string title = "",
             string subtitle = "")
         {
-            ShowAndHang(new[] { ts });
-        }
-        public static void ShowAndHang(VoxelizedSolid vs, string heading = "", string title = "",
-            string subtitle = "")
-        {
-            ShowAndHang(new[] { vs });
+            if (solid is CrossSectionSolid css)
+                ShowVertexPaths(css.GetCrossSectionsAs3DLoops());
+            else
+                ShowAndHang(new[] { solid }, heading, title, subtitle);
         }
 
-        public static void ShowAndHang(VoxelizedSolid correctVoxels, IEnumerable<Polygon> shallowTree)
-        {
-            throw new NotImplementedException();
-        }
-
-        public static void ShowAndHang(CrossSectionSolid css)
-        {
-            ShowVertexPaths(css.GetCrossSectionsAs3DLoops());
-        }
-
-        public static void ShowAndHang(IEnumerable<Solid> solids, string heading = "", string title = "",
-            string subtitle = "")
+        public static void ShowAndHang(IEnumerable<Solid> solids, string heading = "", string title = "", string subtitle = "")
         {
             var vm = new Window3DPlotViewModel(heading, title, subtitle);
             vm.Add(ConvertSolidsToModel3D(solids));
@@ -196,20 +183,20 @@ namespace TVGL
         /// </summary>
         /// <param name="vertices">The vertices.</param>
         /// <param name="colors">The colors.</param>
-        /// <param name="ts">The ts.</param>
-        public static void ShowGaussSphereWithIntensity(List<Vertex> vertices, List<Color> colors, TessellatedSolid ts)
+        /// <param name="solid">The ts.</param>
+        public static void ShowGaussSphereWithIntensity(IEnumerable<Vertex> vertices, IList<Color> colors, Solid solid)
         {
 
             var vm = new Window3DPlotViewModel();
             var window = new Window3DPlot(vm);
-            var pt0 = new System.Windows.Media.Media3D.Point3D(ts.Center[0], ts.Center[1], ts.Center[2]);
-            var x = ts.XMax - ts.XMin;
-            var y = ts.YMax - ts.YMin;
-            var z = ts.ZMax - ts.ZMin;
+            var pt0 = new System.Windows.Media.Media3D.Point3D(solid.Center[0], solid.Center[1], solid.Center[2]);
+            var x = solid.XMax - solid.XMin;
+            var y = solid.YMax - solid.YMin;
+            var z = solid.ZMax - solid.ZMin;
             var radius = System.Math.Max(System.Math.Max(x, y), z) / 2;
 
             //Add the solid to the visual
-            var model = ConvertSolidsToModel3D(new[] { ts });
+            var model = ConvertSolidsToModel3D(new[] { solid });
             vm.Add(model);
 
             //Add a transparent unit sphere to the visual...doesn't seem to be one in SharpDX
@@ -223,7 +210,7 @@ namespace TVGL
             foreach (var point in vertices)
             {
                 var positions = new Vector3Collection(new[] {
-                    new SharpDX.Vector3((float)ts.Center.X, (float)ts.Center.Y, (float)ts.Center.Z),
+                    new SharpDX.Vector3((float)solid.Center.X, (float)solid.Center.Y, (float)solid.Center.Z),
                     new SharpDX.Vector3((float)(pt0.X + point.X * radius),
                                         (float)(pt0.Y + point.Y * radius), (float)(pt0.Z + point.Z * radius))
                 });
@@ -497,6 +484,22 @@ namespace TVGL
                 FixedSize = true,
                 Color = color
             };
+        }
+
+
+
+        public static void ShowAndHangTransparentsAndSolids(IEnumerable<Solid> transparents, IEnumerable<Solid> solids)
+        {
+            foreach (var transparent in transparents)
+                transparent.SolidColor = new Color(120, transparent.SolidColor.R, transparent.SolidColor.G, transparent.SolidColor.B);
+            ShowAndHang(transparents.Concat(solids));
+        }
+        public static void ShowSolidAndFlipThroughTransparents(Solid solid, IEnumerable<Solid> obbSolids)
+        {
+            foreach (var obbSolid in obbSolids)
+            {
+                ShowAndHangTransparentsAndSolids(new[] { obbSolid }, new[] { solid });
+            }
         }
 
     }
