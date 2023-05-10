@@ -265,28 +265,28 @@ namespace TVGL
         /// <returns>CartesianDirections.</returns>
         public static CartesianDirections SnapDirectionToCartesian(this Vector3 direction, out bool withinTolerance, double tolerance = double.NaN)
         {
-            var xDot = direction[0];
-            var absXDot = Math.Abs(xDot);
-            var yDot = direction[1];
-            var absYDot = Math.Abs(yDot);
-            var zDot = direction[2];
-            var absZDot = Math.Abs(zDot);
+            var xValue = direction[0];
+            var absXValue = Math.Abs(xValue);
+            var yValue = direction[1];
+            var absYValue = Math.Abs(yValue);
+            var zValue = direction[2];
+            var absZValue = Math.Abs(zValue);
 
             // X-direction
-            if (absXDot > absYDot && absXDot > absZDot)
+            if (absXValue > absYValue && absXValue > absZValue)
             {
-                withinTolerance = !double.IsNaN(tolerance) && absXDot.IsPracticallySame(1.0, tolerance);
-                return xDot > 0 ? CartesianDirections.XPositive : CartesianDirections.XNegative;
+                withinTolerance = !double.IsNaN(tolerance) && absXValue.IsPracticallySame(1.0, tolerance);
+                return xValue > 0 ? CartesianDirections.XPositive : CartesianDirections.XNegative;
             }
             // Y-direction
-            if (absYDot > absXDot && absYDot > absZDot)
+            if (absYValue > absXValue && absYValue > absZValue)
             {
-                withinTolerance = !double.IsNaN(tolerance) && absYDot.IsPracticallySame(1.0, tolerance);
-                return yDot > 0 ? CartesianDirections.YPositive : CartesianDirections.YNegative;
+                withinTolerance = !double.IsNaN(tolerance) && absYValue.IsPracticallySame(1.0, tolerance);
+                return yValue > 0 ? CartesianDirections.YPositive : CartesianDirections.YNegative;
             }
             // Z-direction
-            withinTolerance = !double.IsNaN(tolerance) && absZDot.IsPracticallySame(1.0, tolerance);
-            return zDot > 0 ? CartesianDirections.ZPositive : CartesianDirections.ZNegative;
+            withinTolerance = !double.IsNaN(tolerance) && absZValue.IsPracticallySame(1.0, tolerance);
+            return zValue > 0 ? CartesianDirections.ZPositive : CartesianDirections.ZNegative;
         }
 
         /// <summary>

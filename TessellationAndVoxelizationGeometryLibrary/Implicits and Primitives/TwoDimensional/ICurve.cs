@@ -48,7 +48,7 @@ namespace TVGL
                 "CreateFromPoints(IEnumerable<Vector2> points)");
         }
 
-        // Switch to this when C#10 comes out
+        // Switch to this when C#11 comes out (which it has but waiting for .NET8 in Nov.2023
         //public static abstract bool CreateFromPoints<T>(IEnumerable<T> points, out ICurve curve, out double error)
         //    where T : IVertex2D;
     }
