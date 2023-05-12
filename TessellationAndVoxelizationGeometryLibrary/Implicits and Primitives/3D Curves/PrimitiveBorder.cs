@@ -377,5 +377,104 @@ namespace TVGL
                 else return Segments[^1].FirstVertex;
             }
         }
+
+        /// <summary>
+        /// Creates a List of PrimitiveBorders from a collection of border segments
+        /// </summary>
+        /// <param name="borderSegments"></param>
+        /// <param name="borders"></param>
+        public static List<PrimitiveBorder> GetBorders(IEnumerable<BorderSegment> borderSegments)
+        {
+            var borders = new List<PrimitiveBorder>();
+            foreach (var segment in borderSegments)
+            {
+                //check if any border contains the vertices 
+                var addToBorder = new List<(PrimitiveBorder border, bool addToEnd, bool aligned)>();
+                foreach (var border in borders.Where(p => !p.IsClosed))
+                {
+                    var addToEnd = false;
+                    var aligned = false;
+                    var match = false;
+                    if (border.FirstVertex == segment.FirstVertex)
+                    {
+                        addToEnd = false;
+                        aligned = false;
+                        match = true;
+                    }
+                    else if (border.FirstVertex == segment.LastVertex)
+                    {
+                        addToEnd = false;
+                        aligned = true;
+                        match = true;
+                    }
+                    else if (border.LastVertex == segment.FirstVertex)
+                    {
+                        addToEnd = true;
+                        aligned = true;
+                        match = true;
+                    }
+                    else if (border.LastVertex == segment.LastVertex)
+                    {
+                        addToEnd = true;
+                        aligned = false;
+                        match = true;
+                    }
+                    if (match)
+                        addToBorder.Add((border, addToEnd, aligned));
+                }
+                if (addToBorder.Count == 0)
+                {
+                    var border = new PrimitiveBorder();
+                    border.Add(segment, true, true);
+                    border.UpdateIsClosed();
+                    borders.Add(border);
+                }
+                else
+                {
+                    var (border, addToEnd, aligned) = addToBorder[0];
+                    border.Add(segment, addToEnd, aligned);
+                    border.UpdateIsClosed();
+                }
+                //if connected to more than one, combine them
+                if (addToBorder.Count == 2)
+                {
+                    CombineTwoBorders(addToBorder[0].border, addToBorder[1].border);
+                    var border = addToBorder[0].border;
+                    border.UpdateIsClosed();
+                    borders.Remove(addToBorder[1].Item1);
+                }
+            }
+            return borders;
+        }
+
+        /// <summary>
+        /// Combines border2 into border1
+        /// </summary>
+        /// <param name="border1"></param>
+        /// <param name="border2"></param>
+        public static void CombineTwoBorders(PrimitiveBorder border1, PrimitiveBorder border2)
+        {
+            //The edgePath has already been added to border1. So, we need to figure out how to attach border2.
+            //Get the vertex that is between border1 and border2
+            //If this vertex is the first vertex in border2, then add border2 to the end of border1.
+            var aligned = border1.LastVertex == border2.FirstVertex || border1.FirstVertex == border2.LastVertex;
+            var addToEnd = border1.LastVertex == border2.FirstVertex || border1.LastVertex == border2.LastVertex;
+            //If aligned and adding to the end, we want to add the edge paths in their current order.
+            //If not aligned and inserting into the beginning, we want to insert the edge paths from the first to the last - thus reversing them.
+            if (aligned == addToEnd)
+                for (int i = 0; i < border2.Segments.Count; i++)
+                {
+                    var path = border2.Segments[i];
+                    border1.Add(path, addToEnd, border2.SegmentDirections[i] == aligned);
+                }
+            //Else if not aligned and adding to the end, we want to add the edge paths in their reverse order.
+            //Else if aligned and inserting into the beginning, we want to insert the edge paths from the last to the first - thus maintaining their order.
+            else
+            {
+                for (var i = border2.Segments.Count - 1; i >= 0; i--)
+                    border1.Add(border2.Segments[i], addToEnd, border2.SegmentDirections[i] == aligned);
+            }
+        }
+
     }
 }
