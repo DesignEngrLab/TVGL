@@ -12,6 +12,7 @@
 // <summary></summary>
 // ***********************************************************************
 using Newtonsoft.Json;
+using Newtonsoft.Json.Schema;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -417,7 +418,7 @@ namespace TVGL
                 }
             else  //basically, this is for cases where edges are not yet defined.
             {
-                var faceVertexIndices =  new List<int>{ face.A.IndexInList, face.B.IndexInList, face.B.IndexInList, face.C.IndexInList, face.C.IndexInList, face.A.IndexInList };
+                var faceVertexIndices = new List<int> { face.A.IndexInList, face.B.IndexInList, face.B.IndexInList, face.C.IndexInList, face.C.IndexInList, face.A.IndexInList };
                 //this is kind of hacky, but the faceVertexIndices don't need to be in order, so we can just add the same vertex twice. The if statement below will catch it.
                 var outerEdgesToRemove = new List<Edge>();
                 foreach (var outerEdge in OuterEdges)
@@ -579,13 +580,57 @@ namespace TVGL
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         public static bool BorderEncirclesAxis(IEnumerable<Vector3> path, Vector3 axis, Vector3 anchor)
         {
-            if (axis.IsNull() || anchor.IsNull()) return false;
-            var transform = axis.TransformToXYPlane(out _);
-            var coords = path.Select(v => v.ConvertTo2DCoordinates(transform));
-            var borderPolygon = new Polygon(coords.Select(c => new Vector2(c.X, c.Y)));
-            var center3d = anchor.ConvertTo2DCoordinates(transform);
-            return borderPolygon.IsPointInsidePolygon(true, center3d);
+            var angle = Math.Abs(FindWindingAroundAxis(path, axis, anchor, out _, out _));
+            return angle > 1.67 * Math.PI; 
+            // 1.67 is 5/3, which is 5/6 the way around. so the border would be at least a hexagon.
         }
+
+        /// <summary>
+        /// Finds the total winding angle around the axis and provides the starting angle.
+        /// </summary>
+        /// <param name="path">The path.</param>
+        /// <param name="axis">The axis.</param>
+        /// <param name="anchor">The anchor.</param>
+        /// <param name="startingAngle">The starting angle.</param>
+        /// <returns>A double.</returns>
+        public static double FindWindingAroundAxis(IEnumerable<Vector3> path, Matrix4x4 transform, Vector3 anchor,
+            out double minAngle, out double maxAngle)
+        {
+            var coords = path.Select(v => v.ConvertTo2DCoordinates(transform));
+            var center = anchor.ConvertTo2DCoordinates(transform);
+            var startPoint = coords.First();
+            var prevVector = startPoint - center;
+            var startingAngle = Math.Atan2(prevVector.Y, prevVector.X);
+            var angleSum = 0.0;
+            minAngle = double.PositiveInfinity;
+            maxAngle = double.NegativeInfinity;
+            foreach (var coord in coords.Skip(1))
+            {
+                var nextVector = coord - center;
+                angleSum += Math.Atan2(prevVector.Cross(nextVector), prevVector.Dot(nextVector));
+                if (minAngle > angleSum) minAngle = angleSum;
+                if (maxAngle < angleSum) maxAngle = angleSum;
+                prevVector = nextVector;
+            }
+            minAngle += startingAngle;
+            maxAngle += startingAngle;
+            return angleSum;
+        }
+        /// <summary>
+        /// Finds the total winding angle around the axis and provides the starting angle.
+        /// </summary>
+        /// <param name="path">The path.</param>
+        /// <param name="axis">The axis.</param>
+        /// <param name="anchor">The anchor.</param>
+        /// <param name="startingAngle">The starting angle.</param>
+        /// <returns>A double.</returns>
+        public static double FindWindingAroundAxis(IEnumerable<Vector3> path, Vector3 axis, Vector3 anchor,
+            out double minAngle, out double maxAngle)
+        {
+            var transform = axis.TransformToXYPlane(out _);
+            return FindWindingAroundAxis(path, transform, anchor, out minAngle, out maxAngle);  
+        }
+
 
         /// <summary>
         /// Gets or sets the maximum x.

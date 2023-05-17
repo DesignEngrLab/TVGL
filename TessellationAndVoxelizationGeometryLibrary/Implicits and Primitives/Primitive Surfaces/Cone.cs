@@ -126,7 +126,8 @@ namespace TVGL
         public Vector3 Apex { get; set; }
 
         /// <summary>
-        /// Gets the axis.
+        /// Gets the axis, which ideally is a unit vector and points from the apex towards the 
+        /// meaningful (triangles of the) surface - not away from.
         /// </summary>
         /// <value>The axis.</value>
         public Vector3 Axis { get; set; }
