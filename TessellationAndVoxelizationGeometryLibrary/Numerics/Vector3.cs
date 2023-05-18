@@ -94,6 +94,15 @@ namespace TVGL  // COMMENTEDCHANGE namespace System.Numerics
         //    Y = vector4.Y * multiplier;
         //    Z = vector4.Z * multiplier;
         //}
+
+        /// <summary>
+        /// Create a Vector2 from the X and Y components of the Vector3.
+        /// </summary>
+        /// <returns>A Vector2.</returns>
+        public Vector2 ToVector2()
+        { 
+            return new Vector2(X, Y); 
+        }
         #endregion Constructors
 
         #region Public Instance Methods
@@ -363,7 +372,7 @@ namespace TVGL  // COMMENTEDCHANGE namespace System.Numerics
         /// Returns the vector (0,0,0).
         /// </summary>
         /// <value>The zero.</value>
-        public static Vector3 Zero = new Vector3(0.0, 0.0, 0.0);        
+        public static Vector3 Zero = new Vector3(0.0, 0.0, 0.0);
 
         /// <summary>
         /// Returns the vector (1,1,1).
@@ -376,7 +385,7 @@ namespace TVGL  // COMMENTEDCHANGE namespace System.Numerics
         /// Returns the vector (NaN, NaN, NaN).
         /// </summary>
         /// <value>The null.</value>
-        
+
         public static Vector3 Null = new Vector3(double.NaN, double.NaN, double.NaN);
 
         /// <summary>

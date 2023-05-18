@@ -509,9 +509,7 @@ namespace TVGL
         /// <returns>Vector2.</returns>
         public override Vector2 TransformFrom3DTo2D(Vector3 point)
         {
-            var v = new Vector3(point.X, point.Y, point.Z);
-            var result = v.Transform(AsTransformToXYPlane);
-            return new Vector2(result.X, result.Y);
+            return point.Transform(AsTransformToXYPlane).ToVector2();
         }
 
         /// <summary>

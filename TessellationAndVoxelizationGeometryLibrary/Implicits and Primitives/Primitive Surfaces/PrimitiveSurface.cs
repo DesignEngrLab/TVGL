@@ -567,7 +567,7 @@ namespace TVGL
             if (axis.IsNull() || anchor.IsNull() || edgepath.NumPoints <= 2) return false;
             var transform = axis.TransformToXYPlane(out _);
             var coords = edgepath.GetVertices().Select(v => v.ConvertTo2DCoordinates(transform));
-            var borderPolygon = new Polygon(coords.Select(c => new Vector2(c.X, c.Y)));
+            var borderPolygon = new Polygon(coords);
             var center3d = anchor.ConvertTo2DCoordinates(transform);
             return borderPolygon.IsPointInsidePolygon(true, center3d);
         }
