@@ -72,14 +72,6 @@ namespace TVGL
         }
 
         #region Properties
-
-        /// <summary>
-        /// Is the Capsule positive? (false is negative)
-        /// </summary>
-        /// <value><c>true</c> if this instance is positive; otherwise, <c>false</c>.</value>
-        public bool IsPositive { get; set; }
-
-
         /// <summary>
         /// Gets or sets the anchor1.
         /// </summary>
@@ -216,7 +208,7 @@ namespace TVGL
             this.radius1 = radius1;
             this.anchor2 = anchor2;
             this.radius2 = radius2;
-            IsPositive = isPositive;
+            this.isPositive = isPositive;
             CalculatePrivateGeometryFields();
 
         }
@@ -267,6 +259,13 @@ namespace TVGL
             var t = (dxAlong - plane1Dx) / coneLength;
             var thisRadius = (1 - t) * coneRadius1 + t * coneRadius2;
             return (point - coneAnchor1).Cross(directionVector).Length() - thisRadius;
+        }
+
+        protected override void CalculateIsPositive()
+        {
+            if (Faces == null || !Faces.Any()) return;
+            var firstFace = Faces.First();
+            isPositive = (firstFace.Center - Anchor1).Dot(firstFace.Normal) > 0;
         }
     }
 }

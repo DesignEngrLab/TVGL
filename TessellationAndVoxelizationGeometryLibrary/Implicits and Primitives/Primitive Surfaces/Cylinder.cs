@@ -138,12 +138,6 @@ namespace TVGL
 
         #region Properties
 
-        /// <summary>
-        /// Is the cylinder positive? (false is negative)
-        /// </summary>
-        /// <value><c>true</c> if this instance is positive; otherwise, <c>false</c>.</value>
-        public bool IsPositive { get; set; }
-
 
         /// <summary>
         /// Gets the anchor.
@@ -185,8 +179,21 @@ namespace TVGL
         /// Gets the height.
         /// </summary>
         /// <value>The height.</value>
-        public double Height { get; set; } = double.PositiveInfinity;
-
+        public double Height
+        {
+            get
+            {
+                if (double.IsNaN(height) && !double.IsInfinity(MinDistanceAlongAxis)
+                    && !double.IsInfinity(MaxDistanceAlongAxis))
+                    height = MaxDistanceAlongAxis - MinDistanceAlongAxis;
+                return height;
+            }
+            set
+            {
+                height = value;
+            }
+        }
+        double height = double.NaN;
         /// <summary>
         /// Gets the volume.
         /// </summary>
@@ -214,56 +221,18 @@ namespace TVGL
         /// <param name="axis">The axis.</param>
         /// <param name="anchor">The anchor.</param>
         /// <param name="radius">The radius.</param>
-        /// <param name="minDistanceAlongAxis">The minimum distance along axis.</param>
-        /// <param name="maxDistanceAlongAxis">The maximum distance along axis.</param>
         /// <param name="isPositive">if set to <c>true</c> [is positive].</param>
         /// <param name="faces">The faces.</param>
-        public Cylinder(Vector3 axis, Vector3 anchor, double radius, double minDistanceAlongAxis,
-            double maxDistanceAlongAxis, bool isPositive = true, IEnumerable<TriangleFace> faces = null)
-            : base(faces)
+        public Cylinder(Vector3 axis, Vector3 anchor, double radius, IEnumerable<TriangleFace> faces) : base(faces)
         {
             Axis = axis;
             Anchor = anchor;
             Radius = radius;
-            IsPositive = isPositive;
-            MinDistanceAlongAxis = minDistanceAlongAxis;
-            MaxDistanceAlongAxis = maxDistanceAlongAxis;
-            Height = MaxDistanceAlongAxis - MinDistanceAlongAxis;
-        }
-        /// <summary>
-        /// Initializes a new instance of the <see cref="Cylinder" /> class.
-        /// </summary>
-        /// <param name="axis">The axis.</param>
-        /// <param name="anchor">The anchor.</param>
-        /// <param name="radius">The radius.</param>
-        /// <param name="isPositive">if set to <c>true</c> [is positive].</param>
-        /// <param name="faces">The faces.</param>
-        public Cylinder(Vector3 axis, Vector3 anchor, double radius, bool isPositive, IEnumerable<TriangleFace> faces) : base(faces)
-        {
-            Axis = axis;
-            Anchor = anchor;
-            Radius = radius;
-            IsPositive = isPositive;
             var (min, max) = MinimumEnclosure.GetDistanceToExtremeVertex(Vertices, axis, out _, out _);//vertices are set in base constructor
             MinDistanceAlongAxis = min;
             MaxDistanceAlongAxis = max;
-            Height = MaxDistanceAlongAxis - MinDistanceAlongAxis;
         }
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="Cylinder" /> class.
-        /// </summary>
-        /// <param name="axis">The axis.</param>
-        /// <param name="anchor">The anchor.</param>
-        /// <param name="radius">The radius.</param>
-        /// <param name="isPositive">if set to <c>true</c> [is positive].</param>
-        public Cylinder(Vector3 axis, Vector3 anchor, double radius, bool isPositive)
-        {
-            Axis = axis;
-            Anchor = anchor;
-            Radius = radius;
-            IsPositive = isPositive;
-        }
         /// <summary>
         /// Initializes a new instance of the <see cref="Cylinder" /> class.
         /// </summary>
@@ -275,10 +244,9 @@ namespace TVGL
             Axis = originalToBeCopied.Axis;
             Anchor = originalToBeCopied.Anchor;
             Radius = originalToBeCopied.Radius;
-            IsPositive = originalToBeCopied.IsPositive;
+            isPositive = originalToBeCopied.IsPositive;
             MinDistanceAlongAxis = originalToBeCopied.MinDistanceAlongAxis;
             MaxDistanceAlongAxis = originalToBeCopied.MaxDistanceAlongAxis;
-            Height = originalToBeCopied.Height;
         }
 
         /// <summary>
@@ -293,50 +261,11 @@ namespace TVGL
             Axis = originalToBeCopied.Axis;
             Anchor = originalToBeCopied.Anchor;
             Radius = originalToBeCopied.Radius;
-            IsPositive = originalToBeCopied.IsPositive;
+            isPositive = originalToBeCopied.IsPositive;
             MinDistanceAlongAxis = originalToBeCopied.MinDistanceAlongAxis;
             MaxDistanceAlongAxis = originalToBeCopied.MaxDistanceAlongAxis;
             Height = originalToBeCopied.Height;
         }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="Cylinder" /> class.
-        /// </summary>
-        /// <param name="axis">The axis.</param>
-        /// <param name="anchor">The anchor.</param>
-        /// <param name="circle">The circle.</param>
-        /// <param name="minDistanceAlongAxis">The minimum distance along axis.</param>
-        /// <param name="maxDistanceAlongAxis">The maximum distance along axis.</param>
-        public Cylinder(Vector3 axis, Vector3 anchor, Circle circle, double minDistanceAlongAxis,
-            double maxDistanceAlongAxis)
-        {
-            Axis = axis;
-            Anchor = anchor;
-            Radius = circle.Radius;
-            MinDistanceAlongAxis = minDistanceAlongAxis;
-            MaxDistanceAlongAxis = maxDistanceAlongAxis;
-            Height = MaxDistanceAlongAxis - MinDistanceAlongAxis;
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="Cylinder" /> class.
-        /// </summary>
-        /// <param name="axis">The axis.</param>
-        /// <param name="anchor">The anchor.</param>
-        /// <param name="radius">The radius.</param>
-        /// <param name="minDistanceAlongAxis">The minimum distance along axis.</param>
-        /// <param name="maxDistanceAlongAxis">The maximum distance along axis.</param>
-        public Cylinder(Vector3 axis, Vector3 anchor, double radius, double minDistanceAlongAxis,
-            double maxDistanceAlongAxis)
-        {
-            Axis = axis;
-            Anchor = anchor;
-            Radius = radius;
-            MinDistanceAlongAxis = minDistanceAlongAxis;
-            MaxDistanceAlongAxis = maxDistanceAlongAxis;
-            Height = MaxDistanceAlongAxis - MinDistanceAlongAxis;
-        }
-
 
         /// <summary>
         /// Returns where the given point is inside the cylinder.
@@ -359,6 +288,14 @@ namespace TVGL
             if (dxAlong < MinDistanceAlongAxis) return MinDistanceAlongAxis - dxAlong;
             if (dxAlong > MaxDistanceAlongAxis) return dxAlong - MaxDistanceAlongAxis;
             return (point - Anchor).Cross(Axis).Length() - Radius;
+        }
+
+        protected override void CalculateIsPositive()
+        {
+            if (Faces == null || !Faces.Any()) return;
+            var firstFace = Faces.First();
+            var axisPointUnderFace = Anchor + (firstFace.Center - Anchor).Dot(Axis) * Axis;
+            isPositive = (firstFace.Center - axisPointUnderFace).Dot(firstFace.Normal) > 0;
         }
 
 

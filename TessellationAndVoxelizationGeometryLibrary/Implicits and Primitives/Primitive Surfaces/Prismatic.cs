@@ -83,13 +83,6 @@ namespace TVGL
         }
 
         #region Properties
-
-        /// <summary>
-        /// Is the Prismatic positive? (false is negative)
-        /// </summary>
-        /// <value><c>true</c> if this instance is positive; otherwise, <c>false</c>.</value>
-        public bool IsPositive { get; set; }
-
         /// <summary>
         /// Gets the direction.
         /// </summary>
@@ -149,7 +142,7 @@ namespace TVGL
             : base(faces)
         {
             Axis = axis;
-            IsPositive = isPositive;
+            this.isPositive = isPositive;
             MinDistanceAlongAxis = minDistanceAlongAxis;
             MaxDistanceAlongAxis = maxDistanceAlongAxis;
             Height = MaxDistanceAlongAxis - MinDistanceAlongAxis;
@@ -163,7 +156,7 @@ namespace TVGL
         public Prismatic(Vector3 axis, IEnumerable<TriangleFace> faces = null, bool isPositive = true) : base(faces)
         {
             Axis = axis;
-            IsPositive = isPositive;
+            this.isPositive = isPositive;
             var (min, max) = MinimumEnclosure.GetDistanceToExtremeVertex(Vertices, axis, out _, out _);//vertices are set in base constructor
             MinDistanceAlongAxis = min;
             MaxDistanceAlongAxis = max;
@@ -179,7 +172,7 @@ namespace TVGL
         {
             Axis =  MiscFunctions.FindMostOrthogonalVector(Faces.Select(face =>
                  (face.B.Coordinates - face.A.Coordinates).Cross(face.C.Coordinates - face.A.Coordinates)));
-            IsPositive = isPositive;
+            this.isPositive = isPositive;
             var (min, max) = MinimumEnclosure.GetDistanceToExtremeVertex(Vertices, Axis, out _, out _);//vertices are set in base constructor
             MinDistanceAlongAxis = min;
             MaxDistanceAlongAxis = max;
@@ -196,7 +189,7 @@ namespace TVGL
         {
             Axis = originalToBeCopied.Axis;
             BoundingRadius = originalToBeCopied.BoundingRadius;
-            IsPositive = originalToBeCopied.IsPositive;
+            this.isPositive = originalToBeCopied.IsPositive;
             MinDistanceAlongAxis = originalToBeCopied.MinDistanceAlongAxis;
             MaxDistanceAlongAxis = originalToBeCopied.MaxDistanceAlongAxis;
             Height = originalToBeCopied.Height;
@@ -213,7 +206,7 @@ namespace TVGL
         {
             Axis = originalToBeCopied.Axis;
             BoundingRadius = originalToBeCopied.BoundingRadius;
-            IsPositive = originalToBeCopied.IsPositive;
+            this.isPositive = originalToBeCopied.IsPositive;
             MinDistanceAlongAxis = originalToBeCopied.MinDistanceAlongAxis;
             MaxDistanceAlongAxis = originalToBeCopied.MaxDistanceAlongAxis;
             Height = originalToBeCopied.Height;
@@ -264,6 +257,13 @@ namespace TVGL
         public override double PointMembership(Vector3 point)
         {
             return double.NaN;
+        }
+
+        protected override void CalculateIsPositive()
+        {
+            // todo: do we want this to be true=convex and false=concave?
+            // it's not exactly the same
+            //throw new NotImplementedException();
         }
     }
 }

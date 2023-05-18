@@ -39,7 +39,7 @@ namespace TVGL
             Apex = apex;
             Axis = axis;
             Aperture = aperture;
-            IsPositive = isPositive;
+            this.isPositive = isPositive;
         }
         /// <summary>
         /// Cone
@@ -49,13 +49,12 @@ namespace TVGL
         /// <param name="aperture">The aperture.</param>
         /// <param name="isPositive">if set to <c>true</c> [is positive].</param>
         /// <param name="faces">The faces all.</param>
-        public Cone(Vector3 apex, Vector3 axis, double aperture, bool isPositive, IEnumerable<TriangleFace> faces)
+        public Cone(Vector3 apex, Vector3 axis, double aperture, IEnumerable<TriangleFace> faces)
             : base(faces)
         {
             Apex = apex;
             Axis = axis;
             Aperture = aperture;
-            IsPositive = isPositive;
         }
         /// <summary>
         /// Initializes a new instance of the <see cref="Cone" /> class.
@@ -65,7 +64,7 @@ namespace TVGL
         public Cone(Cone originalToBeCopied, TessellatedSolid copiedTessellatedSolid = null)
             : base(originalToBeCopied, copiedTessellatedSolid)
         {
-            IsPositive = originalToBeCopied.IsPositive;
+            isPositive = originalToBeCopied.IsPositive;
             Aperture = originalToBeCopied.Aperture;
             Apex = originalToBeCopied.Apex;
             Axis = originalToBeCopied.Axis;
@@ -80,16 +79,11 @@ namespace TVGL
         public Cone(Cone originalToBeCopied, int[] newFaceIndices, TessellatedSolid copiedTessellatedSolid)
             : base(newFaceIndices, copiedTessellatedSolid)
         {
-            IsPositive = originalToBeCopied.IsPositive;
+            isPositive = originalToBeCopied.IsPositive;
             Aperture = originalToBeCopied.Aperture;
             Apex = originalToBeCopied.Apex;
             Axis = originalToBeCopied.Axis;
         }
-
-        /// <summary>
-        /// Is the cone positive? (false is negative)
-        /// </summary>
-        public bool IsPositive;
 
         /// <summary>
         /// Gets the aperture. This is a slope, like m, not an angle. It is dimensionless and NOT radians.
@@ -299,6 +293,16 @@ namespace TVGL
             var v = point - Apex;
             var distAtCommonDepth = v.Cross(Axis).Length() - Aperture * v.Dot(Axis);
             return distAtCommonDepth * cosAperture;
+        }
+
+        protected override void CalculateIsPositive()
+        {
+            if (Faces == null || !Faces.Any()) return;
+            var firstFace = Faces.First();
+            if ((firstFace.Center - Apex).Dot(Axis) < 0)
+                Axis *= -1;
+            var innerRefPoint = Apex + (firstFace.Center - Apex).Dot(Axis) * Axis;
+            isPositive = (firstFace.Center - innerRefPoint).Dot(firstFace.Normal) > 0;
         }
     }
 }

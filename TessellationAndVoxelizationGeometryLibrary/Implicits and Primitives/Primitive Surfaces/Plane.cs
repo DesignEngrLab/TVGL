@@ -545,5 +545,13 @@ namespace TVGL
         /// <returns>System.Double.</returns>
         public override double PointMembership(Vector3 point) => point.Dot(Normal) - DistanceToOrigin;
 
+        protected override void CalculateIsPositive()
+        {
+            if (Faces != null && Faces.Any())
+            {
+                var firstFace = Faces.First();
+                isPositive = firstFace.Normal.Dot(Normal) > 0;
+            }
+        }
     }
 }
