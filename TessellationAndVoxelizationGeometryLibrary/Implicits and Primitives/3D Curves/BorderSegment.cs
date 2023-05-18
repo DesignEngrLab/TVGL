@@ -102,7 +102,7 @@ namespace TVGL
         /// <summary>
         /// The internal angle
         /// </summary>
-        private double _internalAngle = -10.0;
+        private double _internalAngle = double.NaN;
         /// <summary>
         /// Gets the internal angle.
         /// </summary>
@@ -112,7 +112,7 @@ namespace TVGL
         {
             get
             {
-                if (_internalAngle.Equals(-10.0))
+                if (double.IsNaN(_internalAngle))
                     _internalAngle = EdgeList.Average(e => e.InternalAngle);
                 return _internalAngle;
             }
@@ -147,7 +147,7 @@ namespace TVGL
             var flat = 0;
             foreach (var (edge, _) in this)
             {
-                if (edge.InternalAngle.IsPracticallySame(Math.PI / 2, Constants.SameFaceNormalDotTolerance)) flat++;
+                if (edge.InternalAngle.IsPracticallySame(Math.PI, Constants.SameFaceNormalDotTolerance)) flat++;
                 else if (edge.Curvature == CurvatureType.Concave) concave++;
                 else if (edge.Curvature == CurvatureType.Convex) convex++;
             }
