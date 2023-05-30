@@ -117,5 +117,12 @@ namespace TVGL
         {
             return double.NaN;
         }
+
+        protected override void CalculateIsPositive()
+        {
+            // todo: do we want this to be true=convex and false=concave?
+            // it's not exactly the same. 
+            //throw new NotImplementedException();
+        }
     }
 }

@@ -12,6 +12,7 @@
 // <summary></summary>
 // ***********************************************************************
 using Newtonsoft.Json;
+using Newtonsoft.Json.Schema;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -269,6 +270,29 @@ namespace TVGL
 
 
         /// <summary>
+        /// Is the primitive surface positive? (false is negative). Positive generally means
+        /// that - if isolated - it would represent a finite solid. Whereas, negative is like a 
+        /// hole or void in space. e.g. a positive cylinder is like a peg or shaft, and a
+        /// negative cylinder is like a drilled hole.
+        /// </summary>
+        /// <value><c>true</c> if this instance is positive; otherwise, <c>false</c>.</value>
+        public bool? IsPositive
+        {
+            get
+            {
+                if (!isPositive.HasValue) CalculateIsPositive();
+                return isPositive;
+            }
+            set
+            {
+                isPositive = value;
+            }
+        }
+        protected bool? isPositive;
+        protected abstract void CalculateIsPositive();
+
+
+        /// <summary>
         /// Gets the residual.
         /// </summary>
         /// <value>The residual.</value>
@@ -332,23 +356,6 @@ namespace TVGL
                 return _innerEdges;
             }
             protected set => _innerEdges = value;
-        }
-
-        /// <summary>
-        /// Gets IsPositive by using the inner edges
-        /// </summary>
-        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
-        /// <value>The inner edges.</value>
-        public bool PositiveByEdges()
-        {
-            var concave = 0;
-            var convex = 0;
-            foreach (var edge in InnerEdges)
-            {
-                if (edge.Curvature == CurvatureType.Concave) concave++;
-                else if (edge.Curvature == CurvatureType.Convex) convex++;
-            }
-            return convex > concave;
         }
 
         /// <summary>
@@ -417,7 +424,7 @@ namespace TVGL
                 }
             else  //basically, this is for cases where edges are not yet defined.
             {
-                var faceVertexIndices =  new List<int>{ face.A.IndexInList, face.B.IndexInList, face.B.IndexInList, face.C.IndexInList, face.C.IndexInList, face.A.IndexInList };
+                var faceVertexIndices = new List<int> { face.A.IndexInList, face.B.IndexInList, face.B.IndexInList, face.C.IndexInList, face.C.IndexInList, face.A.IndexInList };
                 //this is kind of hacky, but the faceVertexIndices don't need to be in order, so we can just add the same vertex twice. The if statement below will catch it.
                 var outerEdgesToRemove = new List<Edge>();
                 foreach (var outerEdge in OuterEdges)
@@ -566,7 +573,7 @@ namespace TVGL
             if (axis.IsNull() || anchor.IsNull() || edgepath.NumPoints <= 2) return false;
             var transform = axis.TransformToXYPlane(out _);
             var coords = edgepath.GetVertices().Select(v => v.ConvertTo2DCoordinates(transform));
-            var borderPolygon = new Polygon(coords.Select(c => new Vector2(c.X, c.Y)));
+            var borderPolygon = new Polygon(coords);
             var center3d = anchor.ConvertTo2DCoordinates(transform);
             return borderPolygon.IsPointInsidePolygon(true, center3d);
         }
@@ -579,13 +586,57 @@ namespace TVGL
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         public static bool BorderEncirclesAxis(IEnumerable<Vector3> path, Vector3 axis, Vector3 anchor)
         {
-            if (axis.IsNull() || anchor.IsNull()) return false;
-            var transform = axis.TransformToXYPlane(out _);
-            var coords = path.Select(v => v.ConvertTo2DCoordinates(transform));
-            var borderPolygon = new Polygon(coords.Select(c => new Vector2(c.X, c.Y)));
-            var center3d = anchor.ConvertTo2DCoordinates(transform);
-            return borderPolygon.IsPointInsidePolygon(true, center3d);
+            var angle = Math.Abs(FindWindingAroundAxis(path, axis, anchor, out _, out _));
+            return angle > 1.67 * Math.PI;
+            // 1.67 is 5/3, which is 5/6 the way around. so the border would be at least a hexagon.
         }
+
+        /// <summary>
+        /// Finds the total winding angle around the axis and provides the starting angle.
+        /// </summary>
+        /// <param name="path">The path.</param>
+        /// <param name="axis">The axis.</param>
+        /// <param name="anchor">The anchor.</param>
+        /// <param name="startingAngle">The starting angle.</param>
+        /// <returns>A double.</returns>
+        public static double FindWindingAroundAxis(IEnumerable<Vector3> path, Matrix4x4 transform, Vector3 anchor,
+            out double minAngle, out double maxAngle)
+        {
+            var coords = path.Select(v => v.ConvertTo2DCoordinates(transform));
+            var center = anchor.ConvertTo2DCoordinates(transform);
+            var startPoint = coords.First();
+            var prevVector = startPoint - center;
+            var startingAngle = Math.Atan2(prevVector.Y, prevVector.X);
+            var angleSum = 0.0;
+            minAngle = double.PositiveInfinity;
+            maxAngle = double.NegativeInfinity;
+            foreach (var coord in coords.Skip(1))
+            {
+                var nextVector = coord - center;
+                angleSum += Math.Atan2(prevVector.Cross(nextVector), prevVector.Dot(nextVector));
+                if (minAngle > angleSum) minAngle = angleSum;
+                if (maxAngle < angleSum) maxAngle = angleSum;
+                prevVector = nextVector;
+            }
+            minAngle += startingAngle;
+            maxAngle += startingAngle;
+            return angleSum;
+        }
+        /// <summary>
+        /// Finds the total winding angle around the axis and provides the starting angle.
+        /// </summary>
+        /// <param name="path">The path.</param>
+        /// <param name="axis">The axis.</param>
+        /// <param name="anchor">The anchor.</param>
+        /// <param name="startingAngle">The starting angle.</param>
+        /// <returns>A double.</returns>
+        public static double FindWindingAroundAxis(IEnumerable<Vector3> path, Vector3 axis, Vector3 anchor,
+            out double minAngle, out double maxAngle)
+        {
+            var transform = axis.TransformToXYPlane(out _);
+            return FindWindingAroundAxis(path, transform, anchor, out minAngle, out maxAngle);
+        }
+
 
         /// <summary>
         /// Gets or sets the maximum x.
@@ -770,9 +821,46 @@ namespace TVGL
         /// Gets the vectors.
         /// </summary>
         /// <returns>IEnumerable&lt;Vector3[]&gt;.</returns>
-        public IEnumerable<Vector3[]> GetVectors()
+        public IEnumerable<Vector3[]> GetOuterEdgesAsVectors()
         {
             return OuterEdges.Select(e => new[] { e.From.Coordinates, e.To.Coordinates });
+        }
+
+
+        public Vector3 GetAxis()
+        {
+            if (this is Plane plane) return plane.Normal;
+            else if (this is Cylinder cylinder) return cylinder.Axis;
+            else if (this is Cone cone) return cone.Axis;
+            else if (this is Torus torus) return torus.Axis;
+            else if (this is Prismatic prismatic) return prismatic.Axis;
+            else return Vector3.Null;
+        }
+
+        public Vector3 GetAnchor()
+        {
+            if (this is Cylinder cylinder) return cylinder.Anchor;
+            else if (this is Cone cone) return cone.Apex;
+            else if (this is Torus torus) return torus.Center;
+            else if (this is Sphere sphere) return sphere.Center;
+            else return Vector3.Null;
+        }
+
+        public double GetRadius(bool max = false)
+        {
+            if (this is Cylinder cylinder) return cylinder.Radius;
+            if (this is Sphere sphere) return sphere.Radius;
+            if (this is Torus torus)
+            {
+                if (max) return Math.Max(torus.MajorRadius, torus.MinorRadius);
+                return torus.MajorRadius;
+            }
+            if (this.Borders == null) return double.NaN;
+
+            var circleBorders = this.Borders.Where(b => b.Curve is Circle);
+            if (!circleBorders.Any()) return 0.0;
+            else if (max) return circleBorders.Max(b => ((Circle)b.Curve).Radius);
+            else return circleBorders.Average(b => ((Circle)b.Curve).Radius);
         }
     }
 }

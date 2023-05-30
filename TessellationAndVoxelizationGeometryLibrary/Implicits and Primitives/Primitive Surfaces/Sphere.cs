@@ -306,6 +306,13 @@ namespace TVGL
             return vLength - Radius;
         }
 
+        protected override void CalculateIsPositive()
+        {
+            if (Faces == null || !Faces.Any()) return;
+            var firstFace = Faces.First();
+            isPositive = (firstFace.Center - Center).Dot(firstFace.Normal) > 0;
+        }
+
 
         #region Constructor
 
@@ -320,7 +327,7 @@ namespace TVGL
             : base(faces)
         {
             Center = center;
-            IsPositive = isPositive;
+            this.isPositive = isPositive;
             Radius = radius;
         }
 
@@ -333,7 +340,7 @@ namespace TVGL
         public Sphere(Vector3 center, double radius, bool isPositive)
         {
             Center = center;
-            IsPositive = isPositive;
+            this.isPositive = isPositive;
             Radius = radius;
         }
 
@@ -350,7 +357,7 @@ namespace TVGL
         public Sphere(Sphere originalToBeCopied, TessellatedSolid copiedTessellatedSolid = null)
             : base(originalToBeCopied, copiedTessellatedSolid)
         {
-            IsPositive = originalToBeCopied.IsPositive;
+            this.isPositive = originalToBeCopied.IsPositive;
             Center = originalToBeCopied.Center;
             Radius = originalToBeCopied.Radius;
         }
@@ -364,7 +371,7 @@ namespace TVGL
         public Sphere(Sphere originalToBeCopied, int[] newFaceIndices, TessellatedSolid copiedTessellatedSolid)
             : base(newFaceIndices, copiedTessellatedSolid)
         {
-            IsPositive = originalToBeCopied.IsPositive;
+            this.isPositive = originalToBeCopied.IsPositive;
             Center = originalToBeCopied.Center;
             Radius = originalToBeCopied.Radius;
         }
@@ -372,12 +379,6 @@ namespace TVGL
         #endregion
 
         #region Public Properties
-
-        /// <summary>
-        /// Is the sphere positive? (false is negative)
-        /// </summary>
-        public bool IsPositive;
-
         /// <summary>
         /// Gets the center.
         /// </summary>

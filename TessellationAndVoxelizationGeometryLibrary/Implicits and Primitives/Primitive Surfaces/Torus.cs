@@ -41,7 +41,7 @@ namespace TVGL
         {
             Center = center;
             Axis = axis;
-            IsPositive = isPositive;
+            this.isPositive = isPositive;
             MajorRadius = majorRadius;
             MinorRadius = minorRadius;
         }
@@ -57,7 +57,7 @@ namespace TVGL
         {
             Center = center;
             Axis = axis;
-            IsPositive = isPositive;
+            this.isPositive = isPositive;
             MajorRadius = majorRadius;
             MinorRadius = minorRadius;
         }
@@ -70,7 +70,7 @@ namespace TVGL
         public Torus(Torus originalToBeCopied, TessellatedSolid copiedTessellatedSolid = null)
             : base(originalToBeCopied, copiedTessellatedSolid)
         {
-            IsPositive = originalToBeCopied.IsPositive;
+            this.isPositive = originalToBeCopied.IsPositive;
             Center = originalToBeCopied.Center;
             Axis = originalToBeCopied.Axis;
             MajorRadius = originalToBeCopied.MajorRadius;
@@ -86,18 +86,12 @@ namespace TVGL
         public Torus(Torus originalToBeCopied, int[] newFaceIndices, TessellatedSolid copiedTessellatedSolid)
             : base(newFaceIndices, copiedTessellatedSolid)
         {
-            IsPositive = originalToBeCopied.IsPositive;
+            this.isPositive = originalToBeCopied.IsPositive;
             Center = originalToBeCopied.Center;
             Axis = originalToBeCopied.Axis;
             MajorRadius = originalToBeCopied.MajorRadius;
             MinorRadius = originalToBeCopied.MinorRadius;
         }
-
-        /// <summary>
-        /// Is the torus positive? (false is negative)
-        /// </summary>
-        public bool IsPositive;
-
 
         /// <summary>
         /// Gets the center.
@@ -110,7 +104,7 @@ namespace TVGL
             {
                 center = value;
                 if (!axis.IsNull())
-                    distanceToBisectingPlane = center.Dot(axis);
+                    distanceFromOriginToBisectingPlane = center.Dot(axis);
             }
         }
         /// <summary>
@@ -124,7 +118,7 @@ namespace TVGL
             {
                 axis = value;
                 if (!center.IsNull())
-                    distanceToBisectingPlane = center.Dot(axis);
+                    distanceFromOriginToBisectingPlane = center.Dot(axis);
             }
         }
 
@@ -139,7 +133,7 @@ namespace TVGL
         /// <summary>
         /// The distance to bisecting plane
         /// </summary>
-        private double distanceToBisectingPlane;
+        private double distanceFromOriginToBisectingPlane;
         /// <summary>
         /// Gets the major radius, which is the distance from the center of the tube to the center of the torus
         /// </summary>
@@ -279,7 +273,7 @@ namespace TVGL
         /// <returns>System.Double.</returns>
         public override double PointMembership(Vector3 point)
         {
-            Vector3 ptOnCircle = ClosestPointOnCenterRingToPoint(Axis, Center, MajorRadius, point, distanceToBisectingPlane);
+            Vector3 ptOnCircle = ClosestPointOnCenterRingToPoint(Axis, Center, MajorRadius, point, distanceFromOriginToBisectingPlane);
             return (point - ptOnCircle).Length() - MinorRadius;
         }
         /// <summary>
@@ -299,6 +293,14 @@ namespace TVGL
             var ptInPlane = vertexCoord + d * axis;
             var dirToCircle = (ptInPlane - center).Normalize();
             return center + majorRadius * dirToCircle;
+        }
+
+        protected override void CalculateIsPositive()
+        {
+            if (Faces == null || !Faces.Any()) return;
+            var firstFace = Faces.First();
+            var anchor = ClosestPointOnCenterRingToPoint(Axis, Center, MajorRadius, firstFace.Center);
+            isPositive = (firstFace.Center - anchor).Dot(firstFace.Normal) > 0;
         }
     }
 }

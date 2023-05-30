@@ -509,9 +509,7 @@ namespace TVGL
         /// <returns>Vector2.</returns>
         public override Vector2 TransformFrom3DTo2D(Vector3 point)
         {
-            var v = new Vector3(point.X, point.Y, point.Z);
-            var result = v.Transform(AsTransformToXYPlane);
-            return new Vector2(result.X, result.Y);
+            return point.Transform(AsTransformToXYPlane).ToVector2();
         }
 
         /// <summary>
@@ -547,5 +545,13 @@ namespace TVGL
         /// <returns>System.Double.</returns>
         public override double PointMembership(Vector3 point) => point.Dot(Normal) - DistanceToOrigin;
 
+        protected override void CalculateIsPositive()
+        {
+            if (Faces != null && Faces.Any())
+            {
+                var firstFace = Faces.First();
+                isPositive = firstFace.Normal.Dot(Normal) > 0;
+            }
+        }
     }
 }

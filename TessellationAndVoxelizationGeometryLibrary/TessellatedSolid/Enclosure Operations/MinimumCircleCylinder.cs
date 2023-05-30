@@ -426,7 +426,14 @@ namespace TVGL
             var circle = MinimumCircle(pointsOnFace);
             var (min, max) = GetDistanceToExtremeVertex(convexHullVertices, direction, out _, out _);
             var anchor = circle.Center.ConvertTo3DLocation(backTransform);
-            return new Cylinder(direction, anchor, circle, min, max);
+            return new Cylinder
+            {
+                Axis = direction,
+                Anchor = anchor,
+                Radius = circle.Radius,
+                MinDistanceAlongAxis = min,
+                MaxDistanceAlongAxis = max
+            };
         }
 
         /// <summary>
