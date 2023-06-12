@@ -1171,18 +1171,20 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Returns the angle from 0 to 2 pi of vector-A from the datum.
+        /// Returns the angle from 0 to 2 pi of vector-A from the datum, where the unit plane normal is as if the 
+        /// surface was facing you.
         /// </summary>
         /// <param name="vectorA">The vector a.</param>
         /// <param name="datum">The datum.</param>
         /// <param name="unitPlaneNormal">The unit plane normal.</param>
         /// <returns>double.</returns>
-        public static double AngleBetweenVectorAAndDatum(this Vector3 vectorA, Vector3 datum, Vector3 unitPlaneNormal)
+        public static double AngleCCWBetweenVectorAndDatum(this Vector3 vectorA, Vector3 datum, Vector3 unitPlaneNormal)
         {
             var angle = Math.Atan2(datum.Cross(vectorA).Dot(unitPlaneNormal), datum.Dot(vectorA));
-            if (angle < 0) angle += Constants.TwoPi;
-            return angle;
+            if (angle >= 0) return angle;
+            return Constants.TwoPi + angle;
         }
+
 
         #endregion Angle between Edges/Lines
 
@@ -2148,7 +2150,7 @@ namespace TVGL
             do
             {
                 var inPlaneVector = edgePointsToVertex ? -1 * edge.Vector : edge.Vector;
-                yield return (edge, inPlaneVector.AngleBetweenVectorAAndDatum(inPlaneStartVector, normal));
+                yield return (edge, inPlaneVector.AngleCCWBetweenVectorAndDatum(inPlaneStartVector, normal));
                 var face = edgePointsToVertex ? edge.OtherFace : edge.OwnedFace;
                 if (face == lastFace) face = edge.OwnedFace == lastFace ? edge.OtherFace : edge.OwnedFace;
                 lastFace = face;

@@ -41,7 +41,7 @@ namespace TVGL
         /// <summary>
         /// The square root of long maximum value
         /// </summary>
-        internal const long SquareRootOfLongMaxValue = 3037000499; // 3 billion
+        public const long SquareRootOfLongMaxValue = 3037000499; // 3 billion
         /// <summary>
         /// The cube root of long maximum value
         /// </summary>
