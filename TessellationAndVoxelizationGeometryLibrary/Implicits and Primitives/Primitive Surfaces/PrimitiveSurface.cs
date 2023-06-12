@@ -23,7 +23,7 @@ namespace TVGL
     /// Class PrimitiveSurface.
     /// </summary>
     [JsonObject(MemberSerialization.OptOut)]
-    public abstract class PrimitiveSurface
+    public abstract class PrimitiveSurface : ICloneable
     {
         #region Constructors
 
@@ -38,29 +38,6 @@ namespace TVGL
             SetFacesAndVertices(faces, connectFacesToPrimitive);
         }
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="PrimitiveSurface"/> class.
-        /// </summary>
-        /// <param name="originalToBeCopied">The original to be copied.</param>
-        /// <param name="copiedTessellatedSolid">The copied tessellated solid.</param>
-        protected PrimitiveSurface(PrimitiveSurface originalToBeCopied, TessellatedSolid copiedTessellatedSolid)
-        {
-            _area = originalToBeCopied._area;
-            FaceIndices = originalToBeCopied.Faces.Select(f => f.IndexInList).ToArray();
-            CompletePostSerialization(copiedTessellatedSolid);
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="PrimitiveSurface"/> class.
-        /// </summary>
-        /// <param name="newFaceIndices">The new face indices.</param>
-        /// <param name="copiedTessellatedSolid">The copied tessellated solid.</param>
-        protected PrimitiveSurface(int[] newFaceIndices, TessellatedSolid copiedTessellatedSolid)
-        {
-            FaceIndices = newFaceIndices;
-            CompletePostSerialization(copiedTessellatedSolid);
-            _area = Faces.Sum(f => f.Area);
-        }
         /// <summary>
         /// Initializes a new instance of the <see cref="PrimitiveSurface" /> class.
         /// </summary>
@@ -77,39 +54,15 @@ namespace TVGL
         /// <param name="connectFacesToPrimitive">if set to <c>true</c> [connect faces to primitive].</param>
         public void SetFacesAndVertices(IEnumerable<TriangleFace> faces, bool connectFacesToPrimitive = true)
         {
+            _area = double.NaN;
             Faces = new HashSet<TriangleFace>(faces);
-            if (connectFacesToPrimitive)
-                foreach (var face in Faces)
-                    face.BelongsToPrimitive = this;
-            Vertices = new HashSet<Vertex>(Faces.SelectMany(f => f.Vertices).Distinct());
-        }
-
-        /// <summary>
-        /// Updates the vertices.
-        /// </summary>
-        public void UpdateVertices()
-        {
-            Vertices = new HashSet<Vertex>(Faces.SelectMany(f => f.Vertices).Distinct());
-        }
-
-        /// <summary>
-        /// Sets the faces and vertices.
-        /// </summary>
-        /// <param name="faces1">The faces1.</param>
-        /// <param name="faces2">The faces2.</param>
-        /// <param name="connectFacesToPrimitive">if set to <c>true</c> [connect faces to primitive].</param>
-        public void SetFacesAndVertices(IEnumerable<TriangleFace> faces1, IEnumerable<TriangleFace> faces2, bool connectFacesToPrimitive = true)
-        {
-            //Add all the faces to a hashset, without mutating either of the input enumerables.
-            Faces = new HashSet<TriangleFace>(faces1);
-            foreach (var face in faces2)
-                Faces.Add(face);
-
+            FaceIndices = Faces.Select(f => f.IndexInList).ToArray();
             if (connectFacesToPrimitive)
                 foreach (var face in Faces)
                     face.BelongsToPrimitive = this;
             SetVerticesFromFaces();
         }
+
 
         /// <summary>
         /// Sets the vertices from faces.
@@ -122,7 +75,6 @@ namespace TVGL
                 foreach (var v in face.Vertices)
                     Vertices.Add(v);
         }
-
 
 
         /// <summary>
@@ -478,29 +430,17 @@ namespace TVGL
         public void CompletePostSerialization(TessellatedSolid ts)
         {
             Faces = new HashSet<TriangleFace>();
+            Vertices = new HashSet<Vertex>();
             foreach (var i in FaceIndices)
             {
                 var face = ts.Faces[i];
                 Faces.Add(face);
                 face.BelongsToPrimitive = this;
-            }
-            Vertices = new HashSet<Vertex>();
-            OuterEdges = new HashSet<Edge>();
-            InnerEdges = new HashSet<Edge>();
-            foreach (var face in Faces)
-            {
                 foreach (var v in face.Vertices)
                     if (!Vertices.Contains(v)) Vertices.Add(v);
-                foreach (var e in face.Edges)
-                {
-                    if (OuterEdges.Contains(e))
-                    {
-                        OuterEdges.Remove(e);
-                        InnerEdges.Add(e);
-                    }
-                    else OuterEdges.Add(e);
-                }
             }
+            _outerEdges = null;
+            _innerEdges = null;
             if (Borders != null)
                 foreach (var border in Borders)
                     border.CompletePostSerialization(ts);
@@ -861,6 +801,23 @@ namespace TVGL
             if (!circleBorders.Any()) return 0.0;
             else if (max) return circleBorders.Max(b => ((Circle)b.Curve).Radius);
             else return circleBorders.Average(b => ((Circle)b.Curve).Radius);
+        }
+
+        /// <summary>
+        /// Clones the Primitive Solid and will work on inherited members, but note that this only copies
+        /// the value types (i.e. ShallowCopy), which is all that inherited types should add.
+        /// </summary>
+        /// <returns>An object.</returns>
+        public object Clone()
+        {
+            return this.MemberwiseClone();
+        }
+
+        public PrimitiveSurface Copy(IEnumerable<TriangleFace> faces)
+        {
+            var copy = (PrimitiveSurface)this.Clone();
+            copy.SetFacesAndVertices(faces, true);
+            return copy;
         }
     }
 }

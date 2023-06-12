@@ -800,7 +800,6 @@ namespace TVGL
         /// </summary>
         /// <param name="n">The n.</param>
         /// <returns>IEnumerable&lt;Vector2&gt;.</returns>
-        /// <font color="red">Badly formed XML comment.</font>
         public static IEnumerable<Vector2> NEquidistantSpherePointsKogan(int n)
         {
             var x = 0.1 + 1.2 * n;

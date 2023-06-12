@@ -349,33 +349,6 @@ namespace TVGL
         /// </summary>
         public Sphere() { }
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="Sphere" /> class.
-        /// </summary>
-        /// <param name="originalToBeCopied">The original to be copied.</param>
-        /// <param name="copiedTessellatedSolid">The copied tessellated solid.</param>
-        public Sphere(Sphere originalToBeCopied, TessellatedSolid copiedTessellatedSolid = null)
-            : base(originalToBeCopied, copiedTessellatedSolid)
-        {
-            this.isPositive = originalToBeCopied.IsPositive;
-            Center = originalToBeCopied.Center;
-            Radius = originalToBeCopied.Radius;
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="Sphere" /> class.
-        /// </summary>
-        /// <param name="originalToBeCopied">The original to be copied.</param>
-        /// <param name="newFaceIndices">The new face indices.</param>
-        /// <param name="copiedTessellatedSolid">The copied tessellated solid.</param>
-        public Sphere(Sphere originalToBeCopied, int[] newFaceIndices, TessellatedSolid copiedTessellatedSolid)
-            : base(newFaceIndices, copiedTessellatedSolid)
-        {
-            this.isPositive = originalToBeCopied.IsPositive;
-            Center = originalToBeCopied.Center;
-            Radius = originalToBeCopied.Radius;
-        }
-
         #endregion
 
         #region Public Properties

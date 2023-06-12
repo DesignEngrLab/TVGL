@@ -179,38 +179,6 @@ namespace TVGL
             Height = MaxDistanceAlongAxis - MinDistanceAlongAxis;
         }
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="Prismatic" /> class.
-        /// </summary>
-        /// <param name="originalToBeCopied">The original to be copied.</param>
-        /// <param name="copiedTessellatedSolid">The copied tessellated solid.</param>
-        public Prismatic(Prismatic originalToBeCopied, TessellatedSolid copiedTessellatedSolid = null)
-            : base(originalToBeCopied, copiedTessellatedSolid)
-        {
-            Axis = originalToBeCopied.Axis;
-            BoundingRadius = originalToBeCopied.BoundingRadius;
-            this.isPositive = originalToBeCopied.IsPositive;
-            MinDistanceAlongAxis = originalToBeCopied.MinDistanceAlongAxis;
-            MaxDistanceAlongAxis = originalToBeCopied.MaxDistanceAlongAxis;
-            Height = originalToBeCopied.Height;
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="Prismatic" /> class.
-        /// </summary>
-        /// <param name="originalToBeCopied">The original to be copied.</param>
-        /// <param name="newFaceIndices">The new face indices.</param>
-        /// <param name="copiedTessellatedSolid">The copied tessellated solid.</param>
-        public Prismatic(Prismatic originalToBeCopied, int[] newFaceIndices, TessellatedSolid copiedTessellatedSolid)
-            : base(newFaceIndices, copiedTessellatedSolid)
-        {
-            Axis = originalToBeCopied.Axis;
-            BoundingRadius = originalToBeCopied.BoundingRadius;
-            this.isPositive = originalToBeCopied.IsPositive;
-            MinDistanceAlongAxis = originalToBeCopied.MinDistanceAlongAxis;
-            MaxDistanceAlongAxis = originalToBeCopied.MaxDistanceAlongAxis;
-            Height = originalToBeCopied.Height;
-        }
         #endregion
 
         /// <summary>

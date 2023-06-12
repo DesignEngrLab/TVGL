@@ -233,39 +233,6 @@ namespace TVGL
             MaxDistanceAlongAxis = max;
         }
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="Cylinder" /> class.
-        /// </summary>
-        /// <param name="originalToBeCopied">The original to be copied.</param>
-        /// <param name="copiedTessellatedSolid">The copied tessellated solid.</param>
-        public Cylinder(Cylinder originalToBeCopied, TessellatedSolid copiedTessellatedSolid = null)
-            : base(originalToBeCopied, copiedTessellatedSolid)
-        {
-            Axis = originalToBeCopied.Axis;
-            Anchor = originalToBeCopied.Anchor;
-            Radius = originalToBeCopied.Radius;
-            isPositive = originalToBeCopied.IsPositive;
-            MinDistanceAlongAxis = originalToBeCopied.MinDistanceAlongAxis;
-            MaxDistanceAlongAxis = originalToBeCopied.MaxDistanceAlongAxis;
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="Cylinder" /> class.
-        /// </summary>
-        /// <param name="originalToBeCopied">The original to be copied.</param>
-        /// <param name="newFaceIndices">The new face indices.</param>
-        /// <param name="copiedTessellatedSolid">The copied tessellated solid.</param>
-        public Cylinder(Cylinder originalToBeCopied, int[] newFaceIndices, TessellatedSolid copiedTessellatedSolid)
-            : base(newFaceIndices, copiedTessellatedSolid)
-        {
-            Axis = originalToBeCopied.Axis;
-            Anchor = originalToBeCopied.Anchor;
-            Radius = originalToBeCopied.Radius;
-            isPositive = originalToBeCopied.IsPositive;
-            MinDistanceAlongAxis = originalToBeCopied.MinDistanceAlongAxis;
-            MaxDistanceAlongAxis = originalToBeCopied.MaxDistanceAlongAxis;
-            Height = originalToBeCopied.Height;
-        }
 
         /// <summary>
         /// Returns where the given point is inside the cylinder.
