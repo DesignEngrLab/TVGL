@@ -347,7 +347,7 @@ namespace TVGL
         /// <returns>Plane.</returns>
         public Plane TransformToNewPlane(Matrix4x4 matrix)
         {
-            var copy = new Plane(this);
+            var copy = (Plane)this.Clone();
             copy.Transform(matrix);
             return copy;
         }
@@ -375,7 +375,7 @@ namespace TVGL
         /// <returns>Plane.</returns>
         public Plane TransformToNewPlane(Quaternion rotation)
         {
-            var copy = new Plane(this);
+            var copy = (Plane)this.Clone();
             copy.Transform(rotation);
             return copy;
         }
@@ -475,31 +475,6 @@ namespace TVGL
             CultureInfo ci = CultureInfo.CurrentCulture;
 
             return string.Format(ci, "{{Normal:{0} D:{1}}}", Normal.ToString(), DistanceToOrigin.ToString(ci));
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="Plane" /> class.
-        /// </summary>
-        /// <param name="originalToBeCopied">The original to be copied.</param>
-        /// <param name="copiedTessellatedSolid">The copied tessellated solid.</param>
-        public Plane(Plane originalToBeCopied, TessellatedSolid copiedTessellatedSolid = null)
-            : base(originalToBeCopied, copiedTessellatedSolid)
-        {
-            DistanceToOrigin = originalToBeCopied.DistanceToOrigin;
-            Normal = originalToBeCopied.Normal;
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="Plane" /> class.
-        /// </summary>
-        /// <param name="originalToBeCopied">The original to be copied.</param>
-        /// <param name="newFaceIndices">The new face indices.</param>
-        /// <param name="copiedTessellatedSolid">The copied tessellated solid.</param>
-        public Plane(Plane originalToBeCopied, int[] newFaceIndices, TessellatedSolid copiedTessellatedSolid)
-            : base(newFaceIndices, copiedTessellatedSolid)
-        {
-            DistanceToOrigin = originalToBeCopied.DistanceToOrigin;
-            Normal = originalToBeCopied.Normal;
         }
 
         /// <summary>

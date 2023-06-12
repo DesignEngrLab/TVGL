@@ -63,37 +63,6 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="Torus" /> class.
-        /// </summary>
-        /// <param name="originalToBeCopied">The original to be copied.</param>
-        /// <param name="copiedTessellatedSolid">The copied tessellated solid.</param>
-        public Torus(Torus originalToBeCopied, TessellatedSolid copiedTessellatedSolid = null)
-            : base(originalToBeCopied, copiedTessellatedSolid)
-        {
-            this.isPositive = originalToBeCopied.IsPositive;
-            Center = originalToBeCopied.Center;
-            Axis = originalToBeCopied.Axis;
-            MajorRadius = originalToBeCopied.MajorRadius;
-            MinorRadius = originalToBeCopied.MinorRadius;
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="Torus" /> class.
-        /// </summary>
-        /// <param name="originalToBeCopied">The original to be copied.</param>
-        /// <param name="newFaceIndices">The new face indices.</param>
-        /// <param name="copiedTessellatedSolid">The copied tessellated solid.</param>
-        public Torus(Torus originalToBeCopied, int[] newFaceIndices, TessellatedSolid copiedTessellatedSolid)
-            : base(newFaceIndices, copiedTessellatedSolid)
-        {
-            this.isPositive = originalToBeCopied.IsPositive;
-            Center = originalToBeCopied.Center;
-            Axis = originalToBeCopied.Axis;
-            MajorRadius = originalToBeCopied.MajorRadius;
-            MinorRadius = originalToBeCopied.MinorRadius;
-        }
-
-        /// <summary>
         /// Gets the center.
         /// </summary>
         /// <value>The center.</value>

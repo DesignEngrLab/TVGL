@@ -56,34 +56,6 @@ namespace TVGL
             Axis = axis;
             Aperture = aperture;
         }
-        /// <summary>
-        /// Initializes a new instance of the <see cref="Cone" /> class.
-        /// </summary>
-        /// <param name="originalToBeCopied">The original to be copied.</param>
-        /// <param name="copiedTessellatedSolid">The copied tessellated solid.</param>
-        public Cone(Cone originalToBeCopied, TessellatedSolid copiedTessellatedSolid = null)
-            : base(originalToBeCopied, copiedTessellatedSolid)
-        {
-            isPositive = originalToBeCopied.IsPositive;
-            Aperture = originalToBeCopied.Aperture;
-            Apex = originalToBeCopied.Apex;
-            Axis = originalToBeCopied.Axis;
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="Cone" /> class.
-        /// </summary>
-        /// <param name="originalToBeCopied">The original to be copied.</param>
-        /// <param name="newFaceIndices">The new face indices.</param>
-        /// <param name="copiedTessellatedSolid">The copied tessellated solid.</param>
-        public Cone(Cone originalToBeCopied, int[] newFaceIndices, TessellatedSolid copiedTessellatedSolid)
-            : base(newFaceIndices, copiedTessellatedSolid)
-        {
-            isPositive = originalToBeCopied.IsPositive;
-            Aperture = originalToBeCopied.Aperture;
-            Apex = originalToBeCopied.Apex;
-            Axis = originalToBeCopied.Axis;
-        }
 
         /// <summary>
         /// Gets the aperture. This is a slope, like m, not an angle. It is dimensionless and NOT radians.

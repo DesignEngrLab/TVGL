@@ -946,7 +946,7 @@ namespace TVGL
         {
             var intDir = Math.Abs((int)direction) - 1;
             var signDir = Math.Sign((int)direction);
-            var distances = tessellatedSolid.Vertices.Select(v => signDir * v.Coordinates[intDir]).ToList();
+            var distances = tessellatedSolid.Vertices.Select(v =>  v.Coordinates[intDir]).ToList();
             var positiveShift = 0.0;
             var negativeShift = 0.0;
             distances.SetPositiveAndNegativeShifts(distanceToOrigin, tessellatedSolid.SameTolerance, ref positiveShift, ref negativeShift);

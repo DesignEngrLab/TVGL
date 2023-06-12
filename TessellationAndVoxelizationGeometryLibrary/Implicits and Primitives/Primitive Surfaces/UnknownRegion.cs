@@ -32,28 +32,6 @@ namespace TVGL
         public UnknownRegion() { }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="UnknownRegion"/> class.
-        /// </summary>
-        /// <param name="originalToBeCopied">The original to be copied.</param>
-        /// <param name="copiedTessellatedSolid">The copied tessellated solid.</param>
-        public UnknownRegion(UnknownRegion originalToBeCopied, TessellatedSolid copiedTessellatedSolid = null)
-    : base(originalToBeCopied, copiedTessellatedSolid)
-        {
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="UnknownRegion"/> class.
-        /// </summary>
-        /// <param name="originalToBeCopied">The original to be copied.</param>
-        /// <param name="newFaceIndices">The new face indices.</param>
-        /// <param name="copiedTessellatedSolid">The copied tessellated solid.</param>
-        public UnknownRegion(UnknownRegion originalToBeCopied, int[] newFaceIndices, TessellatedSolid copiedTessellatedSolid)
-            : base(newFaceIndices, copiedTessellatedSolid)
-        {
-        }
-
-
-        /// <summary>
         /// Transforms the shape by the provided transformation matrix.
         /// </summary>
         /// <param name="transformMatrix">The transform matrix.</param>

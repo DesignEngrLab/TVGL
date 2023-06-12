@@ -690,52 +690,28 @@ namespace TVGL
         public static List<TessellatedSolid> GetMultipleSolids(this TessellatedSolid ts, List<int[]> faceGroupsThatAreBodies = null)
         {
             var solids = new List<TessellatedSolid>();
-            var separateSolids = new List<List<TriangleFace>>();
-            var unusedFaces = ts.Faces.ToDictionary(face => face.IndexInList);
-            // first the easy part - simply separate out known groups that have already been determined to be bodies
+            List<List<TriangleFace>> faceGroups;
+            List<TriangleFace> unusedFaces;
             if (faceGroupsThatAreBodies != null)
             {
-                foreach (var bodyGroupIndices in faceGroupsThatAreBodies)
-                {
-                    var faceList = new List<TriangleFace>();
-                    foreach (var index in bodyGroupIndices)
-                    {
-                        faceList.Add(ts.Faces[index]);
-                        unusedFaces.Remove(index);
-                    }
-                    separateSolids.Add(faceList);
-                }
+                faceGroups = GetContiguousFaceGroups(ts, faceGroupsThatAreBodies, out unusedFaces);
             }
-            // now, the hard part - need to progressively find subsets of faces.
-            while (unusedFaces.Any())
+            else
             {
-                var faces = new HashSet<TriangleFace>();
-                var stack = new Stack<TriangleFace>(new[] { unusedFaces.ElementAt(0).Value });
-                while (stack.Any())
-                {
-                    var face = stack.Pop();
-                    if (faces.Contains(face)) continue;
-                    faces.Add(face);
-                    unusedFaces.Remove(face.IndexInList);
-                    foreach (var adjacentFace in face.AdjacentFaces)
-                    {
-                        if (adjacentFace == null) continue; //This is an error. Handle it in the error function.
-                        if (!unusedFaces.ContainsKey(adjacentFace.IndexInList)) continue; //Cannot assign the same face twice
-                        stack.Push(adjacentFace);
-                    }
-                }
-                //Check for invalid bodies. Remove from model by ignoring these.
-                if (separateSolids.Count == 1 && faces.Count < 4) continue;
-                separateSolids.Add(faces.ToList());
+                faceGroups = new List<List<TriangleFace>>();
+                unusedFaces = new List<TriangleFace>(ts.Faces);
             }
-            if (separateSolids.Count == 1 && separateSolids[0].Count == ts.NumberOfFaces)
+            // now, the bigger job of walking through the faces to find groups
+            faceGroups.AddRange(GetContiguousFaceGroups(unusedFaces));
+
+            if (faceGroups.Count == 1 && faceGroups[0].Count == ts.NumberOfFaces)
             {
                 solids.Add(ts);
                 return solids;
             }
-            foreach (var seperateSolid in separateSolids)
+            foreach (var seperateSolid in faceGroups)
             {
-                //Copy the non - smooth edges over to the seperate solid
+                //Copy the non-smooth edges over to the seperate solid
                 Dictionary<(Vector3, Vector3), int> nonSmoothEdgesForSolid = null;
                 if (ts.NonsmoothEdges != null && ts.NonsmoothEdges.Any())
                 {
@@ -789,6 +765,54 @@ namespace TVGL
             }
 
             return solids;
+        }
+
+        public static List<List<TriangleFace>> GetContiguousFaceGroups(this IEnumerable<TriangleFace> facesInput)
+        {
+            var unusedFaces = facesInput.ToHashSet();
+            var faceGroups = new List<List<TriangleFace>>();
+            while (unusedFaces.Any())
+            {
+                var groupHash = new HashSet<TriangleFace>();
+                var stack = new Stack<TriangleFace>(new[] { unusedFaces.First() });
+                while (stack.Any())
+                {
+                    var face = stack.Pop();
+                    if (groupHash.Contains(face)) continue;
+                    groupHash.Add(face);
+                    unusedFaces.Remove(face);
+                    foreach (var adjacentFace in face.AdjacentFaces)
+                    {
+                        if (adjacentFace == null) continue; //This is an error. Handle it in the error function.
+                        if (!unusedFaces.Contains(adjacentFace)) continue; //Cannot assign the same face twice
+                        stack.Push(adjacentFace);
+                    }
+                }
+                faceGroups.Add(groupHash.ToList());
+            }
+            return faceGroups;
+        }
+
+        public static List<List<TriangleFace>> GetContiguousFaceGroups(TessellatedSolid ts, List<int[]> faceGroupsThatAreBodies, out List<TriangleFace> unusedFaces)
+        {
+            var faceGroups = new List<List<TriangleFace>>();
+            var unusedFacesDictionary = ts.Faces.ToDictionary(face => face.IndexInList);
+            // first the easy part - simply separate out known groups that have already been determined to be bodies
+            if (faceGroupsThatAreBodies != null)
+            {
+                foreach (var bodyGroupIndices in faceGroupsThatAreBodies)
+                {
+                    var faceList = new List<TriangleFace>();
+                    foreach (var index in bodyGroupIndices)
+                    {
+                        faceList.Add(ts.Faces[index]);
+                        unusedFacesDictionary.Remove(index);
+                    }
+                    faceGroups.Add(faceList);
+                }
+            }
+            unusedFaces = unusedFacesDictionary.Values.ToList();
+            return faceGroups;
         }
 
         #endregion Split Tesselated Solid into multiple solids if faces are disconnected
