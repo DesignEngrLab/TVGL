@@ -19,7 +19,12 @@ using System.Linq;
 namespace TVGL
 {
     /// <summary>
-    /// Class PrimitiveSurfaceBorder.
+    /// Class PrimitiveBorder represents a loop, owned by the surface that distinguishes it
+    /// from adjacent primitives. At first, you may think that there would be only one 
+    /// PrimitiveBorder in PrimitiveSurface.Borders. But consider a shaft. Both ends are
+    /// primitive borders. There are uniquie PrimitiveBorders for the surface, which means the
+    /// end cap surfaces (likely planes) would have their own PrimitiveBorders. The primitive
+    /// border then reference the BorderSegments, which are shared between the two PrimitiveBorders.
     /// </summary>
     [JsonObject]
     public class PrimitiveBorder : EdgePath
@@ -392,38 +397,21 @@ namespace TVGL
                 var addToBorder = new List<(PrimitiveBorder border, bool addToEnd, bool aligned)>();
                 foreach (var border in borders.Where(p => !p.IsClosed))
                 {
-                    var addToEnd = false;
-                    var aligned = false;
-                    var match = false;
                     if (border.FirstVertex == segment.FirstVertex)
-                    {
-                        addToEnd = false;
-                        aligned = false;
-                        match = true;
-                    }
+                        //add to beginning (false) and it is not aligned (false)
+                        addToBorder.Add((border, false, false));
                     else if (border.FirstVertex == segment.LastVertex)
-                    {
-                        addToEnd = false;
-                        aligned = true;
-                        match = true;
-                    }
+                        //add to beginning (false) and it is aligned (true)
+                        addToBorder.Add((border, false, true));
                     else if (border.LastVertex == segment.FirstVertex)
-                    {
-                        addToEnd = true;
-                        aligned = true;
-                        match = true;
-                    }
+                        //add to end (true) and it is aligned (true)
+                        addToBorder.Add((border, true, true));
                     else if (border.LastVertex == segment.LastVertex)
-                    {
-                        addToEnd = true;
-                        aligned = false;
-                        match = true;
-                    }
-                    if (match)
-                        addToBorder.Add((border, addToEnd, aligned));
+                        //add to end (true) and it is NOT aligned (false)
+                        addToBorder.Add((border, true, false));
                 }
                 if (addToBorder.Count == 0)
-                {
+                {   // if not connected to any, create a new border
                     var border = new PrimitiveBorder();
                     border.Add(segment, true, true);
                     border.UpdateIsClosed();

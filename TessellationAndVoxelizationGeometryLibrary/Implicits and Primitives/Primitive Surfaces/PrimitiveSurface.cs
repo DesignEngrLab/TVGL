@@ -702,9 +702,9 @@ namespace TVGL
         /// <param name="ignoreIfAlreadySet">if set to <c>true</c> [ignore if already set].</param>
         public void SetBounds()
         {
-            if (!double.IsNaN(MaxX) && !double.IsNaN(MinX) &&
-                !double.IsNaN(MaxY) && !double.IsNaN(MinY) &&
-                !double.IsNaN(MaxZ) && !double.IsNaN(MinZ)) return;
+            if (!double.IsNaN(maxX) && !double.IsNaN(minX) &&
+                !double.IsNaN(maxY) && !double.IsNaN(minY) &&
+                !double.IsNaN(maxZ) && !double.IsNaN(minZ)) return;
             MaxX = double.MinValue;
             MinX = double.MaxValue;
             MaxY = double.MinValue;
