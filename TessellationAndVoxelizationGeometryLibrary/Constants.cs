@@ -166,7 +166,7 @@ namespace TVGL
         /// </summary>
         internal const double DefaultTessellationMaxAngleError = 15;
         /// <summary>
-        /// The tessellation to voxelization intersection combinations. This is used in the unction that
+        /// The tessellation to voxelization intersection combinations. This is used in the function that
         /// produces voxels on the edges and faces of a tessellated shape.
         /// </summary>
         internal static readonly List<int[]> TessellationToVoxelizationIntersectionCombinations = new List<int[]>()

@@ -137,9 +137,9 @@ namespace TVGL
         /// <param name="filename">The filename.</param>
         /// <param name="comments">The comments.</param>
         /// <param name="language">The language.</param>
-        public TessellatedSolid(IEnumerable<List<Vector3>> vertsPerFace, bool createFullVersion, IList<Color> colors,
-            UnitType units = UnitType.unspecified, string name = "", string filename = "", List<string> comments = null,
-            string language = "")
+        public TessellatedSolid(IEnumerable<List<Vector3>> vertsPerFace, IList<Color> colors,
+            TessellatedSolidBuildOptions buildOptions = null, UnitType units = UnitType.unspecified,
+            string name = "", string filename = "", List<string> comments = null, string language = "")
             : base(units, name, filename, comments, language)
         {
             var vertsPerFaceList = vertsPerFace as IList<List<Vector3>> ?? vertsPerFace.ToList();
@@ -162,7 +162,7 @@ namespace TVGL
             MakeVertices(vertsPerFaceList, scaleFactor, out List<int[]> faceToVertexIndices);
             //Complete Construction with Common Functions
             MakeFaces(faceToVertexIndices, colors);
-            if (createFullVersion) CompleteInitiation(true);
+            CompleteInitiation(true, buildOptions);
         }
 
         /// <summary>
@@ -178,15 +178,16 @@ namespace TVGL
         /// <param name="filename">The filename.</param>
         /// <param name="comments">The comments.</param>
         /// <param name="language">The language.</param>
-        public TessellatedSolid(IList<Vector3> vertices, IList<int[]> faceToVertexIndices, bool createFullVersion,
-            IList<Color> colors, UnitType units = UnitType.unspecified, string name = "", string filename = "",
-            List<string> comments = null, string language = "") : base(units, name, filename, comments, language)
+        public TessellatedSolid(IList<Vector3> vertices, IList<int[]> faceToVertexIndices,
+            IList<Color> colors, TessellatedSolidBuildOptions buildOptions = null, UnitType units = UnitType.unspecified,
+            string name = "", string filename = "", List<string> comments = null, string language = "")
+            : base(units, name, filename, comments, language)
         {
             DefineAxisAlignedBoundingBoxAndTolerance(vertices);
             MakeVertices(vertices);
             //Complete Construction with Common Functions
             MakeFaces(faceToVertexIndices, colors);
-            if (createFullVersion) CompleteInitiation();
+            CompleteInitiation(false, buildOptions);
         }
 
         /// <summary>
@@ -202,22 +203,19 @@ namespace TVGL
         /// <param name="filename">The filename.</param>
         /// <param name="comments">The comments.</param>
         /// <param name="language">The language.</param>
-        public TessellatedSolid(IList<Vector3> vertices, IList<int[]> faceToVertexIndices, bool createFullVersion,
-          IList<PrimitiveSurface> primitives, IList<Color> colors, UnitType units = UnitType.unspecified, string name = "", string filename = "",
+        public TessellatedSolid(IList<Vector3> vertices, IList<int[]> faceToVertexIndices,
+          IList<PrimitiveSurface> primitives, IList<Color> colors, TessellatedSolidBuildOptions buildOptions = null,
+          UnitType units = UnitType.unspecified, string name = "", string filename = "",
           List<string> comments = null, string language = "") : base(units, name, filename, comments, language)
         {
             DefineAxisAlignedBoundingBoxAndTolerance(vertices);
             MakeVertices(vertices);
             //Complete Construction with Common Functions
             MakeFaces(faceToVertexIndices, primitives, colors);
-            if (createFullVersion)
-            {
-                CompleteInitiation();
-                //Create edges and then update primitives with links to Faces, Vertices, and Edges
-                foreach (var prim in Primitives)
-                    prim.CompletePostSerialization(this);
-            }
-            else CalculateVolume();
+            CompleteInitiation(false, buildOptions);
+            //Create edges and then update primitives with links to Faces, Vertices, and Edges
+            foreach (var prim in Primitives)
+                prim.CompletePostSerialization(this);
         }
 
         /// <summary>
@@ -230,18 +228,24 @@ namespace TVGL
         /// <param name="filename">The filename.</param>
         /// <param name="comments">The comments.</param>
         /// <param name="language">The language.</param>
-        public TessellatedSolid(Vertex[] vertices, List<PrimitiveSurface> primitives, UnitType units = UnitType.unspecified, string name = "", string filename = "",
-            List<string> comments = null, string language = "") : base(units, name, filename, comments, language)
+        public TessellatedSolid(Vertex[] vertices, List<PrimitiveSurface> primitives, 
+            TessellatedSolidBuildOptions buildOptions = null, UnitType units = UnitType.unspecified, 
+            string name = "", string filename = "", List<string> comments = null, string language = "") 
+            : base(units, name, filename, comments, language)
         {
             //Set the list of vertices and primitives directly to reduce garbage
             Vertices = vertices;
             Primitives = primitives;
 
             //Make the faces from the primitives.
-            MakeFacesFromPrimitives();
+            HasUniformColor = true;
+            Faces = new TriangleFace[NumberOfFaces];
+            var faceIndex = 0;
+            foreach (var primitive in Primitives)
+                foreach (var face in primitive.Faces)
+                    Faces[faceIndex++] = face;
 
             //Set the volume and convex hull vertices
-            CalculateVolume();
             ConvexHull = new TVGLConvexHull(Vertices, SameTolerance);
         }
 
@@ -534,7 +538,7 @@ namespace TVGL
         /// <param name="filename">The filename.</param>
         /// <param name="comments">The comments.</param>
         /// <param name="language">The language.</param>
-        public TessellatedSolid(IEnumerable<TriangleFace> faces, bool createFullVersion, bool copyElements,
+        public TessellatedSolid(IEnumerable<TriangleFace> faces, TessellatedSolidBuildOptions buildOptions = null,
             IEnumerable<Vertex> vertices = null, IList<Color> colors = null, UnitType units = UnitType.unspecified, string name = "", string filename = "",
             List<string> comments = null, string language = "") : base(units, name, filename, comments, language)
         {
@@ -690,7 +694,7 @@ namespace TVGL
         public void MakeEdgesIfNonExistent()
         {
             if (_edges != null && _edges.Length > 0) return;
-            CompleteInitiation();
+            CompleteInitiation(false,);
         }
 
         /// <summary>
@@ -711,7 +715,7 @@ namespace TVGL
         /// Completes the initiation.
         /// </summary>
         /// <param name="fromSTL">if set to <c>true</c> [from STL].</param>
-        internal void CompleteInitiation(bool fromSTL = false)
+        private void CompleteInitiation(bool fromSTL, TessellatedSolidBuildOptions buildOptions)
         {
             if (Vertices[0].Faces == null || !Vertices[0].Faces.Any())
                 DoublyConnectVerticesToFaces();
@@ -724,7 +728,6 @@ namespace TVGL
             {
                 //Continue
             }
-            CalculateVolume();
             try
             {
                 this.CheckModelIntegrity();
@@ -912,19 +915,6 @@ namespace TVGL
             /// The index
             /// </summary>
             public int Index;
-        }
-
-        /// <summary>
-        /// Makes the faces
-        /// </summary>
-        public void MakeFacesFromPrimitives()
-        {
-            HasUniformColor = true;
-            Faces = new TriangleFace[NumberOfFaces];
-            var faceIndex = 0;
-            foreach (var primitive in Primitives)
-                foreach (var face in primitive.Faces)
-                    Faces[faceIndex++] = face;
         }
 
         /// <summary>

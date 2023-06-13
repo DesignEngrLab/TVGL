@@ -373,6 +373,29 @@ namespace TVGL
             if (InternalAngle > Constants.TwoPi) throw new Exception("not possible");
         }
 
+
+        /// <summary>
+        /// Determines whether the edge two vectors is discontinuous or not. This
+        /// checks both C1 and C2 discontinuity.
+        /// </summary>
+        /// <param name="edge">The edge.</param>
+        /// <param name="tolerance">The tolerance.</param>
+        /// <param name="chordError">The chord error.</param>
+        /// <returns>A bool.</returns>
+        public bool IsDiscontinous(double tolerance, double chordError)
+        {
+            var otherV = OtherFace.Normal.Cross(Vector).Normalize();
+            var otherVLength = otherV.Dot(From.Coordinates - OtherFace.OtherVertex(this).Coordinates);
+            otherV = otherVLength * otherV;
+            var ownedV = OwnedFace.Normal.Cross(Vector).Normalize();
+            var ownedVLength = ownedV.Dot(OwnedFace.OtherVertex(this).Coordinates - From.Coordinates);
+            ownedV = ownedVLength * ownedV;
+
+            //Debug.WriteLine(edge.InternalAngle + ", " + MaxChordError(ownedV.Dot(otherV), ownedV.Cross(otherV).Length(), ownedVLength, otherVLength));
+            return MiscFunctions.LineSegmentsAreDiscontinuous(ownedV.Dot(otherV), ownedV.Cross(otherV).Length(), ownedVLength, otherVLength, chordError);
+        }
+
+
         /// <summary>
         /// Doublies the link vertices.
         /// </summary>
