@@ -712,6 +712,65 @@ namespace TVGL
 
 
         /// <summary>
+        /// </summary>
+        /// <param name="v1">The v1.</param>
+        /// <param name="v2">The v2.</param>
+        /// <param name="tolerance">The tolerance.</param>
+        /// <param name="chordError">The chord error.</param>
+        /// <param name="v1Length">Length of the v1 (save a small amount of time if already known).</param>
+        /// <param name="v2Length">Length of the v2 (save a small amount of time if already known).</param>
+        /// <returns><c>true</c> if the specified v1 is discontinuous; otherwise, <c>false</c>.</returns>
+        public static bool LineSegmentsAreDiscontinuous(double dot, double crossLength, double v1Length, double v2Length, double chordError)
+        {
+            if (dot < 0)
+                // if the dot is negative then angle is greater than 90-degrees also breaks C1 continuity
+                return true;
+            // ***now the rest of this function is some condensed math.***
+            // what we want to check is that - if the three points were to define a curved feature
+            // (circle, parabola, bezier etc) - the straight line segments would maximally be
+            // separated from the curve near the center. like the chord of a circle. Draw two
+            // vectors and the circle that connects all three. We can find the max distance of 
+            // the chord to the true circle as r*(1-cos(2*phi)). where r is the circle radius and
+            // phi is the half-angle of the arc that the chord creates. For the two vectors, v1 and v2
+            // we need their corresponding phi's and we define the error from whichever is larger.
+            // So, we have 3 unknowns: r, phi1, and phi2. Also, (shown next) theta happens to be the
+            // deviation of v2 from v1's path and is easily found from the cross product (or dot product
+            // equation) - this is the next 3 lines.
+            var sinTheta = crossLength / (v1Length * v2Length);
+            if (sinTheta > 1 || sinTheta < -1) return true;
+            var theta = Math.Asin(sinTheta);
+
+            if (theta > Constants.MinSmoothAngle)
+                // if theta is bigger than MinSmoothAngle, then it breaks C1 continuity
+                return true;
+            // with the equation of the chord-length and the fact that the phi's (chord arc angle) add
+            // up to the theta (corner angle from vectors), we can do a little manipulation to find phi
+            // without finding r and the center. This is presumably more accurate and faster than finding
+            // the center of the circle made by the three points. To derive this arctan equation, you'll
+            // need to review your trignometric identities (specifically the sin(a-b)).
+            var phi2 = Math.Atan(crossLength / (v1Length * v1Length + dot));
+            var phi1 = theta - phi2;
+            double error, radius;
+            if (phi1 < phi2)
+            {
+                radius = Math.Abs(v2Length / (2 * Math.Sin(phi2)));
+                // radius does not need to be in the condition, but for improved accuracy we solve it
+                // based on the larger phi. 
+                error = radius * (1 - Math.Cos(2 * phi2));
+            }
+            else
+            {
+                radius = Math.Abs(v1Length / (2 * Math.Sin(phi1)));
+                error = radius * (1 - Math.Cos(2 * phi1));
+            }
+            return error > chordError;
+        }
+
+
+
+
+
+        /// <summary>
         /// Chooses the tightest left turn.
         /// </summary>
         /// <param name="nextVertices">The next vertices.</param>
