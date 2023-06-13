@@ -54,13 +54,32 @@ namespace TVGL
         /// <param name="connectFacesToPrimitive">if set to <c>true</c> [connect faces to primitive].</param>
         public void SetFacesAndVertices(IEnumerable<TriangleFace> faces, bool connectFacesToPrimitive = true)
         {
-            _area = double.NaN;
+            ResetFaceDependentData();
             Faces = new HashSet<TriangleFace>(faces);
             FaceIndices = Faces.Select(f => f.IndexInList).ToArray();
             if (connectFacesToPrimitive)
                 foreach (var face in Faces)
                     face.BelongsToPrimitive = this;
             SetVerticesFromFaces();
+        }
+
+        private void ResetFaceDependentData()
+        {
+            _area = double.NaN;
+            _adjacentSurfaces = null;
+            _innerEdges = null;
+            _outerEdges = null;
+            _maxError = double.NaN;
+            _meanSquaredError = double.NaN;
+            isPositive = null;
+            Borders = null;
+            BorderSegments = null;
+            MinX = double.NaN;
+            MinY = double.NaN;
+            MinZ = double.NaN;
+            MaxX = double.NaN;
+            MaxY = double.NaN;
+            MaxZ = double.NaN;
         }
 
 
@@ -579,49 +598,111 @@ namespace TVGL
 
 
         /// <summary>
-        /// Gets or sets the maximum x.
+        /// Gets the maximum X value.
         /// </summary>
-        /// <value>The maximum x.</value>
         [JsonIgnore]
-        public double MaxX { get; protected set; } = double.NaN;
+        public double MaxX
+        {
+            get
+            {
+                if (double.IsNaN(maxX))
+                    SetBounds();
+                return maxX;
+            }
+            private set => maxX = value;
+        }
+        private double maxX = double.NaN;
+
         /// <summary>
-        /// Gets or sets the minimum x.
+        /// Gets the minimum X value.
         /// </summary>
-        /// <value>The minimum x.</value>
         [JsonIgnore]
-        public double MinX { get; protected set; } = double.NaN;
+        public double MinX
+        {
+            get
+            {
+                if (double.IsNaN(minX))
+                    SetBounds();
+                return minX;
+            }
+            private set => minX = value;
+
+        }
+        private double minX = double.NaN;
+
+
         /// <summary>
-        /// Gets or sets the maximum y.
+        /// Gets the maximum Y value.
         /// </summary>
-        /// <value>The maximum y.</value>
         [JsonIgnore]
-        public double MaxY { get; protected set; } = double.NaN;
+        public double MaxY
+        {
+            get
+            {
+                if (double.IsNaN(maxY))
+                    SetBounds();
+                return maxY;
+            }
+            private set => maxY = value;
+        }
+        private double maxY = double.NaN;
+
         /// <summary>
-        /// Gets or sets the minimum y.
+        /// Gets the minimum Y value.
         /// </summary>
-        /// <value>The minimum y.</value>
         [JsonIgnore]
-        public double MinY { get; protected set; } = double.NaN;
+        public double MinY
+        {
+            get
+            {
+                if (double.IsNaN(minY))
+                    SetBounds();
+                return minY;
+            }
+            private set => minY = value;
+
+        }
+        private double minY = double.NaN;
         /// <summary>
-        /// Gets or sets the maximum z.
+        /// Gets the maximum Z value.
         /// </summary>
-        /// <value>The maximum z.</value>
         [JsonIgnore]
-        public double MaxZ { get; protected set; } = double.NaN;
+        public double MaxZ
+        {
+            get
+            {
+                if (double.IsNaN(maxZ))
+                    SetBounds();
+                return maxZ;
+            }
+            private set => maxZ = value;
+        }
+        private double maxZ = double.NaN;
+
         /// <summary>
-        /// Gets or sets the minimum z.
+        /// Gets the minimum z value.
         /// </summary>
-        /// <value>The minimum z.</value>
         [JsonIgnore]
-        public double MinZ { get; protected set; } = double.NaN;
+        public double MinZ
+        {
+            get
+            {
+                if (double.IsNaN(minZ))
+                    SetBounds();
+                return minZ;
+            }
+            private set => minZ = value;
+
+        }
+        private double minZ = double.NaN;
 
         /// <summary>
         /// Sets the bounds.
         /// </summary>
         /// <param name="ignoreIfAlreadySet">if set to <c>true</c> [ignore if already set].</param>
-        public void SetBounds(bool ignoreIfAlreadySet = true)
+        public void SetBounds()
         {
-            if (ignoreIfAlreadySet && !double.IsNaN(MaxX) && !double.IsNaN(MinX) &&
+            if (!double.IsNaN(MaxX) && !double.IsNaN(MinX) &&
                 !double.IsNaN(MaxY) && !double.IsNaN(MinY) &&
                 !double.IsNaN(MaxZ) && !double.IsNaN(MinZ)) return;
             MaxX = double.MinValue;
@@ -652,7 +733,6 @@ namespace TVGL
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         public bool WithinBounds(Vector3 v)
         {
-            SetBounds();//ignores if already set.
             var x = v.X;
             if (x > MaxX) return false;
             if (x < MinX) return false;
@@ -675,7 +755,7 @@ namespace TVGL
             get
             {
                 if (Vertices == null || Vertices.Count == 0) return Vector3.Null;
-                SetBounds(true);
+                SetBounds();
                 return new Vector3(MaxX + MinX, MaxY + MinY, MaxZ + MinZ) / 2;
             }
         }
@@ -693,6 +773,7 @@ namespace TVGL
         /// The adjacent surfaces
         /// </summary>
         private HashSet<PrimitiveSurface> _adjacentSurfaces;
+
         /// <summary>
         /// Gets the adjacent primitives.
         /// </summary>
