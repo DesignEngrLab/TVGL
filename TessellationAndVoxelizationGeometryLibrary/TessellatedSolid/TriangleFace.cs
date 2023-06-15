@@ -217,14 +217,17 @@ namespace TVGL
         /// <param name="B">The b.</param>
         /// <param name="C">The c.</param>
         /// <param name="connectVerticesBackToFace">if set to <c>true</c> [connect vertices back to face].</param>
-        public TriangleFace(Vertex A, Vertex B, Vertex C) : this()
+        public TriangleFace(Vertex A, Vertex B, Vertex C, bool connectVerticesBackToFace = true) : this()
         {
             this.A = A;
             this.B = B;
             this.C = C;
-            A.Faces.Add(this);
-            B.Faces.Add(this);
-            C.Faces.Add(this);
+            if (connectVerticesBackToFace)
+            {
+                A.Faces.Add(this);
+                B.Faces.Add(this);
+                C.Faces.Add(this);
+            }
         }
 
         /// <summary>

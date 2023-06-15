@@ -137,13 +137,13 @@ namespace TVGL
         /// <param name="filename">The filename.</param>
         /// <param name="comments">The comments.</param>
         /// <param name="language">The language.</param>
-        public TessellatedSolid(IEnumerable<List<Vector3>> vertsPerFace, IList<Color> colors,
+        public TessellatedSolid(IEnumerable<(Vector3, Vector3, Vector3)> vertsPerFace, IList<Color> colors,
             TessellatedSolidBuildOptions buildOptions = null, UnitType units = UnitType.unspecified,
             string name = "", string filename = "", List<string> comments = null, string language = "")
             : base(units, name, filename, comments, language)
         {
-            var vertsPerFaceList = vertsPerFace as IList<List<Vector3>> ?? vertsPerFace.ToList();
-            DefineAxisAlignedBoundingBoxAndTolerance(vertsPerFaceList.SelectMany(v => v));
+            var vertsPerFaceList = vertsPerFace as IList<(Vector3, Vector3, Vector3)> ?? vertsPerFace.ToList();
+            DefineAxisAlignedBoundingBoxAndTolerance(vertsPerFaceList.SelectMany(v => v.EnumerateThruple()));
             var scaleFactor = 1.0;
             if ((Bounds[1] - Bounds[0]).Length() < 0.1)
             {
@@ -157,9 +157,10 @@ namespace TVGL
                     units = UnitType.inch;
                     scaleFactor = 12;
                 }
-                DefineAxisAlignedBoundingBoxAndTolerance(vertsPerFaceList.SelectMany(vList => vList.Select(v => scaleFactor * v)));
+                DefineAxisAlignedBoundingBoxAndTolerance(vertsPerFaceList.SelectMany(vList => vList.EnumerateThruple()
+                .Select(v => scaleFactor * v)));
             }
-            MakeVertices(vertsPerFaceList, scaleFactor, out List<int[]> faceToVertexIndices);
+            MakeVertices(vertsPerFaceList, scaleFactor, out var faceToVertexIndices);
             //Complete Construction with Common Functions
             MakeFaces(faceToVertexIndices, colors);
             CompleteInitiation(true, buildOptions);
@@ -178,7 +179,7 @@ namespace TVGL
         /// <param name="filename">The filename.</param>
         /// <param name="comments">The comments.</param>
         /// <param name="language">The language.</param>
-        public TessellatedSolid(IList<Vector3> vertices, IList<int[]> faceToVertexIndices,
+        public TessellatedSolid(IList<Vector3> vertices, IList<(int, int, int)> faceToVertexIndices,
             IList<Color> colors, TessellatedSolidBuildOptions buildOptions = null, UnitType units = UnitType.unspecified,
             string name = "", string filename = "", List<string> comments = null, string language = "")
             : base(units, name, filename, comments, language)
@@ -188,34 +189,6 @@ namespace TVGL
             //Complete Construction with Common Functions
             MakeFaces(faceToVertexIndices, colors);
             CompleteInitiation(false, buildOptions);
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="TessellatedSolid"/> class.
-        /// </summary>
-        /// <param name="vertices">The vertices.</param>
-        /// <param name="faceToVertexIndices">The face to vertex indices.</param>
-        /// <param name="createFullVersion">if set to <c>true</c> [create full version].</param>
-        /// <param name="primitives">The primitives.</param>
-        /// <param name="colors">The colors.</param>
-        /// <param name="units">The units.</param>
-        /// <param name="name">The name.</param>
-        /// <param name="filename">The filename.</param>
-        /// <param name="comments">The comments.</param>
-        /// <param name="language">The language.</param>
-        public TessellatedSolid(IList<Vector3> vertices, IList<int[]> faceToVertexIndices,
-          IList<PrimitiveSurface> primitives, IList<Color> colors, TessellatedSolidBuildOptions buildOptions = null,
-          UnitType units = UnitType.unspecified, string name = "", string filename = "",
-          List<string> comments = null, string language = "") : base(units, name, filename, comments, language)
-        {
-            DefineAxisAlignedBoundingBoxAndTolerance(vertices);
-            MakeVertices(vertices);
-            //Complete Construction with Common Functions
-            MakeFaces(faceToVertexIndices, primitives, colors);
-            CompleteInitiation(false, buildOptions);
-            //Create edges and then update primitives with links to Faces, Vertices, and Edges
-            foreach (var prim in Primitives)
-                prim.CompletePostSerialization(this);
         }
 
         /// <summary>
@@ -491,9 +464,9 @@ namespace TVGL
 
             jArray = (JArray)serializationData["FaceIndices"];
             var faceIndicesArray = jArray.ToObject<int[]>();
-            var faceIndices = new int[faceIndicesArray.Length / 3][];
+            var faceIndices = new (int, int, int)[faceIndicesArray.Length / 3];
             for (int i = 0; i < faceIndicesArray.Length / 3; i++)
-                faceIndices[i] = new[] { faceIndicesArray[3 * i], faceIndicesArray[3 * i + 1], faceIndicesArray[3 * i + 2] };
+                faceIndices[i] = (faceIndicesArray[3 * i], faceIndicesArray[3 * i + 1], faceIndicesArray[3 * i + 2]);
 
             jArray = serializationData["Colors"] as JArray;
             Color[] colors;
@@ -624,7 +597,7 @@ namespace TVGL
         {
             if (Vertices[0].Faces == null || !Vertices[0].Faces.Any())
                 DoublyConnectVerticesToFaces();
-            if (buildOptions.PredefineAllEdges== DefineEdgesOptions.True ||
+            if (buildOptions.PredefineAllEdges == DefineEdgesOptions.True ||
                 (buildOptions.PredefineAllEdges == DefineEdgesOptions.IfNotLargeModel && NumberOfFaces < Constants.MaxNumberFacesDefaultMakeEdges))
                 try
                 {
@@ -648,6 +621,10 @@ namespace TVGL
             if (buildOptions.DefineConvexHull && !this.Volume.IsNegligible())
             {
                 BuildConvexHull();
+            }
+            if (buildOptions.FindNonsmoothEdges && _edges != null)
+            {
+
             }
         }
 
@@ -732,7 +709,7 @@ namespace TVGL
         /// <param name="faceToVertexIndices">The face to vertex indices.</param>
         /// <param name="colors">The colors.</param>
         /// <param name="doublyLinkToVertices">if set to <c>true</c> [doubly link to vertices].</param>
-        internal void MakeFaces(IList<int[]> faceToVertexIndices, IList<Color> colors,
+        internal void MakeFaces(IList<(int, int, int)> faceToVertexIndices, IList<Color> colors,
             bool doublyLinkToVertices = true)
         {
             var duplicateFaceCheck = true;
@@ -759,7 +736,7 @@ namespace TVGL
                 {
                     // first check to be sure that this is a new face and not a duplicate or a degenerate
                     var orderedIndices =
-                        new List<int>(faceToVertexIndexList.Select(index => Vertices[index].IndexInList));
+                        new List<int>(faceToVertexIndexList.EnumerateThruple().Select(index => Vertices[index].IndexInList));
                     orderedIndices.Sort();
                     while (orderedIndices.Count > checksumMultiplier.Count)
                         checksumMultiplier.Add((long)Math.Pow(NumberOfVertices, checksumMultiplier.Count));
@@ -770,7 +747,7 @@ namespace TVGL
                     faceChecksums.Add(checksum);
                 }
                 var faceVertices =
-                    faceToVertexIndexList.Select(vertexMatchingIndex => Vertices[vertexMatchingIndex]).ToArray();
+                faceToVertexIndexList.EnumerateThruple().Select(vertexMatchingIndex => Vertices[vertexMatchingIndex]).ToArray();
 
                 var color = SolidColor;
                 if (colors != null)
@@ -828,109 +805,6 @@ namespace TVGL
             /// The index
             /// </summary>
             public int Index;
-        }
-
-        /// <summary>
-        /// Makes the faces, avoiding duplicates.
-        /// </summary>
-        /// <param name="faceToVertexIndices">The face to vertex indices.</param>
-        /// <param name="primitives">The primitives.</param>
-        /// <param name="colors">The colors.</param>
-        /// <param name="doublyLinkToVertices">if set to <c>true</c> [doubly link to vertices].</param>
-        internal void MakeFaces(IList<int[]> faceToVertexIndices, IList<PrimitiveSurface> primitives, IList<Color> colors,
-            bool doublyLinkToVertices = true)
-        {
-            var duplicateFaceCheck = true;
-            HasUniformColor = true;
-            if (colors == null || !colors.Any() || colors.All(c => c == null))
-                SolidColor = new Color(Constants.DefaultColor);
-            else SolidColor = colors[0];
-            NumberOfFaces = faceToVertexIndices.Count;
-            var tempFaceIndices = new Dictionary<int, List<TriangleFace>>(NumberOfFaces);
-            var faceChecksums = new Dictionary<long, int>();
-            if (NumberOfVertices > Constants.CubeRootOfLongMaxValue)
-            {
-                Message.output("Repeat Face check is disabled since the number of vertices exceeds "
-                               + Constants.CubeRootOfLongMaxValue);
-                duplicateFaceCheck = false;
-            }
-
-            var m1 = 1;
-            var m2 = NumberOfVertices;
-            var m3 = NumberOfVertices * NumberOfVertices;
-            var checksumMultiplier = duplicateFaceCheck
-                ? new List<long> { 1, NumberOfVertices, NumberOfVertices * NumberOfVertices }
-                : null;
-            for (var i = 0; i < NumberOfFaces; i++)
-            {
-                var faceToVertexIndexList = faceToVertexIndices[i];
-                if (duplicateFaceCheck)
-                {
-                    // first check to be sure that this is a new face and not a duplicate or a degenerate
-                    var checksum = FaceChecksum(checksumMultiplier, faceToVertexIndexList, out var orderedIndices);
-                    if (faceChecksums.ContainsKey(checksum)) continue; //Duplicate face. Do not create
-                    if (orderedIndices.Count < 3 || ContainsDuplicateIndices(orderedIndices)) continue;
-                    // if you made it passed these to "continue" conditions, then this is a valid new face
-                    faceChecksums.Add(checksum, i);
-                }
-                var faceVertices =
-                    faceToVertexIndexList.Select(vertexMatchingIndex => Vertices[vertexMatchingIndex]).ToArray();
-
-                var color = SolidColor;
-                if (colors != null)
-                {
-                    var j = i < colors.Count - 1 ? i : colors.Count - 1;
-                    if (colors[j] != null) color = colors[j];
-                    if (SolidColor == null || !SolidColor.Equals(color)) HasUniformColor = false;
-                }
-                if (faceVertices.Length == 3)
-                {
-                    var face = new TriangleFace(faceVertices, doublyLinkToVertices);
-                    if (!HasUniformColor) face.Color = color;
-                    tempFaceIndices.Add(i, new List<TriangleFace> { face });
-                }
-                else
-                {
-                    var normal = MiscFunctions.DetermineNormalForA3DPolygon(faceVertices, faceVertices.Length, out _, Vector3.Null, out _);
-                    var triangulatedList = faceVertices.Triangulate(normal);
-                    tempFaceIndices[i] = new List<TriangleFace>();
-                    foreach (var vertexSet in triangulatedList)
-                    {
-                        var face = new TriangleFace(vertexSet, normal, doublyLinkToVertices);
-                        if (!HasUniformColor) face.Color = color;
-                        tempFaceIndices[i].Add(face);
-                    }
-                }
-            }
-            //Set the faces and their indices
-            Faces = tempFaceIndices.Values.SelectMany(p => p).ToArray();
-            NumberOfFaces = Faces.GetLength(0);
-            for (var i = 0; i < NumberOfFaces; i++)
-                Faces[i].IndexInList = i;
-
-            //Connect the primitives to their faces through the vertex triangle[] and checksums
-            Primitives ??= new List<PrimitiveSurface>();
-            var addNonSmoothEdges = NonsmoothEdges == null;
-            if (addNonSmoothEdges)
-                NonsmoothEdges = new List<EdgePath>();
-            if (primitives != null)
-            {
-                foreach (var primitive in primitives)
-                {
-                    //Get all the faces 
-                    //var faceIndi
-                    var faceIndices = new List<int>();
-                    foreach (var face in primitive.TriangleVertexIndices)
-                    {
-                        var checksum = FaceChecksum(m1, m2, m3, face.Item1, face.Item2, face.Item3);
-                        if (!faceChecksums.TryGetValue(checksum, out var faceIndex)) continue;//This may be an invalid face - such as duplicated vertices.
-                        faceIndices.AddRange(tempFaceIndices[faceIndex].Select(p => p.IndexInList));
-                    }
-                    primitive.FaceIndices = faceIndices.ToArray();
-                    primitive.TriangleVertexIndices = null;//Don't need these anymore
-                    Primitives.Add(primitive);
-                }
-            }
         }
 
         /// <summary>
@@ -1004,7 +878,8 @@ namespace TVGL
         /// <param name="vertsPerFace">The verts per face.</param>
         /// <param name="scaleFactor">The scale factor.</param>
         /// <param name="faceToVertexIndices">The face to vertex indices.</param>
-        private void MakeVertices(IEnumerable<List<Vector3>> vertsPerFace, double scaleFactor, out List<int[]> faceToVertexIndices)
+        private void MakeVertices(IEnumerable<(Vector3, Vector3, Vector3)> vertsPerFace, double scaleFactor,
+            out List<(int, int, int)> faceToVertexIndices)
         {
             var numDecimalPoints = 0;
             //Gets the number of decimal places
@@ -1013,19 +888,19 @@ namespace TVGL
              * it  preserves the order of vertsPerFace (as read in from the file), and indicates where
              * you can find each vertex in the new array of vertices. This is essentially what is built in 
              * the remainder of this method. */
-            faceToVertexIndices = new List<int[]>();
+            faceToVertexIndices = new List<(int, int, int)>();
             var listOfVertices = new List<Vector3>();
             var simpleCompareDict = new Dictionary<Vector3, int>();
             foreach (var t in vertsPerFace)
             {
                 var locationIndices = new List<int>(); // this will become a row in faceToVertexIndices
-                for (int i = 0; i < t.Count; i++)
+                foreach (var coord in t.EnumerateThruple())
                 {
                     /* given the low precision in files like STL, this should be a sufficient way to detect identical points. 
                      * I believe comparing these lookupStrings will be quicker than comparing two 3d points.*/
                     //First, round the vertices, then convert to a string. This will catch bidirectional tolerancing (+/-)
-                    var coordinates = t[i] = new Vector3(scaleFactor * Math.Round(t[i].X, numDecimalPoints),
-                        Math.Round(scaleFactor * t[i].Y, numDecimalPoints), Math.Round(scaleFactor * t[i].Z, numDecimalPoints));
+                    var coordinates = new Vector3(scaleFactor * Math.Round(coord.X, numDecimalPoints),
+                        Math.Round(scaleFactor * coord.Y, numDecimalPoints), Math.Round(scaleFactor * coord.Z, numDecimalPoints));
                     if (simpleCompareDict.TryGetValue(coordinates, out int index))
                         /* if it's in the dictionary, simply put the location in the locationIndices */
                         locationIndices.Add(index);
@@ -1034,12 +909,12 @@ namespace TVGL
                         /* else, add a new vertex to the list, and a new entry to simpleCompareDict. Also, be sure to indicate
                         * the position in the locationIndices. */
                         var newIndex = listOfVertices.Count;
-                        listOfVertices.Add(t[i]);
+                        listOfVertices.Add(coordinates);
                         simpleCompareDict.Add(coordinates, newIndex);
                         locationIndices.Add(newIndex);
                     }
                 }
-                faceToVertexIndices.Add(locationIndices.ToArray());
+                faceToVertexIndices.Add((locationIndices[0], locationIndices[1], locationIndices[2]));
             }
             //Make vertices from the double arrays
             MakeVertices(listOfVertices);

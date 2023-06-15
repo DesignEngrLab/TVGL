@@ -241,6 +241,18 @@ namespace TVGL
         }
 
         /// <summary>
+        /// Enumerates the thruple.
+        /// </summary>
+        /// <param name="thruple">The thruple.</param>
+        /// <returns>A list of TS.</returns>
+        internal static IEnumerable<T> EnumerateThruple<T>(this (T, T, T) thruple)
+        {
+            yield return thruple.Item1;
+            yield return thruple.Item2;
+            yield return thruple.Item3;
+        }
+
+        /// <summary>
         /// The degrees to radians factor
         /// </summary>
         internal const double DegreesToRadiansFactor = Math.PI / 180.0;

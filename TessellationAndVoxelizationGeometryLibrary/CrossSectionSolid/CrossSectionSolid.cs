@@ -198,9 +198,7 @@ namespace TVGL
         /// <returns>TessellatedSolid.</returns>
         public TessellatedSolid ConvertToTessellatedExtrusions(bool extrudeBack, bool createFullVersion)
         {
-            // todo: this next line could be removed if the TS constructor took a tuple 
-            var faceCoordinates = ConvertToFaces(extrudeBack).Select(tuple => new List<Vector3> { tuple.A, tuple.B, tuple.C });
-            return new TessellatedSolid(faceCoordinates, null, TessellatedSolidBuildOptions.Minimal);
+            return new TessellatedSolid(ConvertToFaces(extrudeBack), null, TessellatedSolidBuildOptions.Minimal);
         }
 
         /// <summary>

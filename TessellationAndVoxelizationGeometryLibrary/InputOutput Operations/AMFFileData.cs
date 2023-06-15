@@ -190,7 +190,7 @@ namespace TVGL
                     vertices[i] = vertices[i].Multiply(tMatrix);
             }
             if (tsBuildOptions == null) tsBuildOptions = TessellatedSolidBuildOptions.Default;
-            return new TessellatedSolid(vertices, amfObject.mesh.volume.Triangles.Select(t => t.VertexIndices).ToList(),
+            return new TessellatedSolid(vertices, amfObject.mesh.volume.Triangles.Select(t => (t.v1, t.v2, t.v3)).ToList(),
                 colors, tsBuildOptions, this.Units, name + "_" + amfObject.id, this.FileName,
                 amfObject.metadata.Select(md => md.ToString()).ToList(), this.Language);
         }

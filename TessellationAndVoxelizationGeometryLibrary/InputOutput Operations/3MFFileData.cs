@@ -270,7 +270,7 @@ namespace TVGL
             else
                 for (var j = 0; j < numTriangles; j++)
                     colors[j] ??= defaultColor;
-            return new TessellatedSolid(verts, mesh.triangles.Select(t => new[] { t.v1, t.v2, t.v3 }).ToList(),
+            return new TessellatedSolid(verts, mesh.triangles.Select(t => (t.v1, t.v2, t.v3 )).ToList(),
                  colors, TessellatedSolidBuildOptions.Default, Units, name, FileName, Comments, Language);
         }
 

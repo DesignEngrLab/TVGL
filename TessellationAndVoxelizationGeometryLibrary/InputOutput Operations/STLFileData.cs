@@ -35,7 +35,7 @@ namespace TVGL
         internal STLFileData()
         {
             Normals = new List<Vector3>();
-            Vertices = new List<List<Vector3>>();
+            Vertices = new List<(Vector3, Vector3, Vector3)>();
             Colors = new List<Color>();
         }
 
@@ -74,7 +74,7 @@ namespace TVGL
         /// Gets or sets the Vertices.
         /// </summary>
         /// <value>The vertices.</value>
-        private List<List<Vector3>> Vertices { get; }
+        private List<(Vector3, Vector3, Vector3)> Vertices { get; }
 
         /// <summary>
         /// Gets or sets the normals.
@@ -203,7 +203,7 @@ namespace TVGL
             if (!ReadExpectedLine(reader, "endfacet"))
                 throw new IOException("Unexpected line.");
             Normals.Add(new Vector3(n));
-            Vertices.Add(points);
+            Vertices.Add((points[0], points[1], points[2]));
         }
 
         #endregion
@@ -318,7 +318,7 @@ namespace TVGL
             }
             Colors.Add(_lastColor);
             Normals.Add(new Vector3(n));
-            Vertices.Add(new List<Vector3> { v1, v2, v3 });
+            Vertices.Add((v1, v2, v3));
         }
         #endregion
 

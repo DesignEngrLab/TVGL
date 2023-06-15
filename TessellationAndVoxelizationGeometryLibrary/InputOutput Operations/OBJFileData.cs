@@ -35,7 +35,7 @@ namespace TVGL
         internal OBJFileData()
         {
             FaceGroups = new List<int[]>();
-            FaceToVertexIndices = new List<int[]>();
+            FaceToVertexIndices = new List<(int, int, int)>();
             SurfaceEdges = new List<int[]>();
             Vertices = new Dictionary<Vector3, int>();
             VerticesByLine = new List<Vector3>();
@@ -59,7 +59,7 @@ namespace TVGL
         /// Gets the face to vertex indices.
         /// </summary>
         /// <value>The face to vertex indices.</value>
-        private List<int[]> FaceToVertexIndices { get; }
+        private List<(int, int, int)> FaceToVertexIndices { get; }
 
         /// <summary>
         /// Gets or sets the surface edges.
@@ -126,7 +126,9 @@ namespace TVGL
                 var ts = new TessellatedSolid(vertices, objFileData.FaceToVertexIndices, null, tsBuildOptions,
                                InferUnitsFromComments(objFileData.Comments), objFileData.Name, filename, objFileData.Comments,
                                objFileData.Language);
-                CreateRegionsFromPolylineAndFaceGroups(objFileData, ts, out var faceGroupsThatAreBodies);
+                List<int[]> faceGroupsThatAreBodies = null;
+                if (tsBuildOptions.FindNonsmoothEdges)
+                    CreateRegionsFromPolylineAndFaceGroups(objFileData, ts, out faceGroupsThatAreBodies);
                 var multipleSolids = ts.GetMultipleSolids(faceGroupsThatAreBodies);
                 foreach (var solid in multipleSolids)
                     results.Add(solid);
@@ -357,17 +359,23 @@ namespace TVGL
         /// </summary>
         /// <param name="values">The values.</param>
         /// <returns>int[].</returns>
-        private int[] ReadFaceVertices(IEnumerable<string> values)
+        private (int, int, int) ReadFaceVertices(IEnumerable<string> values)
         {
-            var face = new int[3];
+            var A=-1;
+            var B=-1;
+            var C=-1;
             var i = 0;
             foreach (var value in values)
             {
                 string[] parts = value.Split(new char[] { '/' }, StringSplitOptions.None);
-                face[i] = GetFirstVertexIndex(parts[0]);
+                if (i == 0)
+                    A = GetFirstVertexIndex(parts[0]);
+                else if (i == 1)
+                    B = GetFirstVertexIndex(parts[0]);
+                else C = GetFirstVertexIndex(parts[0]);
                 i++;
             }
-            return face;
+            return (A, B, C);
         }
         /// <summary>
         /// Reads the face normals.

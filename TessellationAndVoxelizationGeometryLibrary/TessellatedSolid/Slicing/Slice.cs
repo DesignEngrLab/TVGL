@@ -229,9 +229,7 @@ namespace TVGL
                     var negativeLoops = polygon.InnerPolygons.Select(p => loops[p.Index]).ToList();
                     var planeFaces = new List<TriangleFace>();
                     var groupOfOnPlaneFaces = indicesOfTriangles.Select(triIndices => new TriangleFace(
-                        allVertices[triIndices.A], allVertices[triIndices.B], allVertices[triIndices.C]));
-                    // potential bug here! the contructor for TriangleFace used to allow the vertices of the face NOT to connect back
-                    // to the face. this was removed (6/15/23). did that cause a problem here?
+                        allVertices[triIndices.A], allVertices[triIndices.B], allVertices[triIndices.C],false));
                     var groupOfLoops = new GroupOfLoops(positiveLoop, negativeLoops, groupOfOnPlaneFaces);
                     groupsOfLoops.Add(groupOfLoops);
                     if (k == -1) posSideGroups.Add(groupOfLoops);

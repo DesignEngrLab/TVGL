@@ -193,7 +193,7 @@ namespace TVGL
         /// </summary>
         internal void RestartVerticesToAvoidSingleSidedEdges()
         {
-            var faceIndices = Faces.Select(f => f.Vertices.Select(v => v.IndexInList).ToArray()).ToArray();
+            var faceIndices = Faces.Select(f => (f.A.IndexInList, f.B.IndexInList, f.C.IndexInList)).ToList();
             var colors = Faces.Select(f => f.Color).ToArray();
             var numDecimalPoints = 0;
             //Gets the number of decimal places. this is the crucial part where we consolidate vertices...
@@ -201,33 +201,35 @@ namespace TVGL
             var coords = new List<Vector3>();
             var simpleCompareDict = new Dictionary<Vector3, int>();
             //in order to reduce compare times we use a string comparer and dictionary
-            foreach (var faceToVertexIndex in faceIndices)
+            for (int i = 0; i < faceIndices.Count; i++)
             {
-                for (var i = 0; i < faceToVertexIndex.Length; i++)
+                var newIndices = new List<int>();
+                foreach (var oldIndex in faceIndices[i].EnumerateThruple())
                 {
-                    //Get vertex from list of vertices
-                    var vertex = Vertices[faceToVertexIndex[i]];
+                    //Get coord from list of vertices
+                    var coord = Vertices[oldIndex];
                     /* given the low precision in files like STL, this should be a sufficient way to detect identical points.
                      * I believe comparing these lookupStrings will be quicker than comparing two 3d points.*/
                     //First, round the vertices. This will catch bidirectional tolerancing (+/-)
-                    var position = new Vector3(Math.Round(vertex.X, numDecimalPoints),
-                          Math.Round(vertex.Y, numDecimalPoints), Math.Round(vertex.Z, numDecimalPoints));
+                    var position = new Vector3(Math.Round(coord.X, numDecimalPoints),
+                          Math.Round(coord.Y, numDecimalPoints), Math.Round(coord.Z, numDecimalPoints));
 
                     if (simpleCompareDict.TryGetValue(position, out var index))
                     {
-                        // if it's in the dictionary, update the faceToVertexIndex
-                        faceToVertexIndex[i] = index;
+                        // if it's in the dictionary, update the newIndices
+                        newIndices.Add(index);
                     }
                     else
                     {
-                        /* else, add a new vertex to the list, and a new entry to simpleCompareDict. Also, be sure to indicate
+                        /* else, add a new coord to the list, and a new entry to simpleCompareDict. Also, be sure to indicate
                         * the position in the locationIndices. */
                         var newIndex = coords.Count;
                         coords.Add(position);
                         simpleCompareDict.Add(position, newIndex);
-                        faceToVertexIndex[i] = newIndex;
+                        newIndices.Add(newIndex);
                     }
                 }
+                faceIndices[i] = (newIndices[0], newIndices[1], newIndices[2]);
             }
             MakeVertices(coords);
             MakeFaces(faceIndices, colors);
@@ -363,7 +365,7 @@ namespace TVGL
             {
                 var oldEdge = entry.Item1;
                 oldEdge.From.Edges.Remove(entry.Item1); //the original over-used edge will not be used in the model.
-                oldEdge.To.Edges.Remove(entry.Item1); //so, here we remove it from the vertex references
+                oldEdge.To.Edges.Remove(entry.Item1); //so, here we remove it from the coord references
                 foreach (var face in entry.Item2)
                     moreSingleSidedEdges.Add(FaceShouldBeOwnedFace(oldEdge, face)
                         ? new Edge(oldEdge.From, oldEdge.To, face, null, false, oldEdge.EdgeReference)
@@ -458,8 +460,8 @@ namespace TVGL
         /// </summary>
         /// <param name="removedToKept">The removed to kept.</param>
         /// <param name="keptToRemoved">The kept to removed.</param>
-        /// <param name="keepVertex">The keep vertex.</param>
-        /// <param name="removeVertex">The remove vertex.</param>
+        /// <param name="keepVertex">The keep coord.</param>
+        /// <param name="removeVertex">The remove coord.</param>
         private static void MergeEdgeVertices(Dictionary<Vertex, Vertex> removedToKept, Dictionary<Vertex, List<Vertex>> keptToRemoved,
             Vertex keepVertex, Vertex removeVertex)
         {
@@ -615,14 +617,14 @@ namespace TVGL
         /// <returns>IEnumerable&lt;TriangulationLoop&gt;.</returns>
         private static IEnumerable<TriangulationLoop> SeparateIntoMultipleLoops(TriangulationLoop loop)
         {
-            var visitedToVertices = new HashSet<Vertex>(); //used initially to find when a vertex repeats
+            var visitedToVertices = new HashSet<Vertex>(); //used initially to find when a coord repeats
             var vertexLocations = new Dictionary<Vertex, List<int>>(); //duplicate vertices and the indices where they occur
             var lastDuplicateAt = -1; // a small saving to prevent looping a full second time
             var i = -1;
             foreach (var vertex in loop.GetVertices())
             {
                 i++;
-                //var vertex = loop[i].edge.To;
+                //var coord = loop[i].edge.To;
                 if (vertexLocations.TryGetValue(vertex, out var locationInts))
                 {
                     lastDuplicateAt = i; // this is just to 

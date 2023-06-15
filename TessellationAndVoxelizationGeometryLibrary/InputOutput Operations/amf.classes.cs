@@ -146,15 +146,6 @@ namespace TVGL.amfclasses
         /// The v3
         /// </summary>
         public int v3;
-
-        /// <summary>
-        /// Gets the vertex indices.
-        /// </summary>
-        /// <value>The vertex indices.</value>
-        public int[] VertexIndices
-        {
-            get { return new [] {v1, v2, v3}; }
-        }
     }
 
     /// <summary>

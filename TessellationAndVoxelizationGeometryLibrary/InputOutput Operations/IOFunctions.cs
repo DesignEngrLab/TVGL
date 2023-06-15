@@ -247,10 +247,6 @@ namespace TVGL
                     tessellatedSolids = AMFFileData.OpenSolids(s, filename, tsBuildOptions);
                     break;
 
-                case FileType.SHELL:
-                    tessellatedSolids = ShellFileData.OpenSolids(s, filename, tsBuildOptions);
-                    break;
-
                 case FileType.OBJ:
                     tessellatedSolids = OBJFileData.OpenSolids(s, filename, tsBuildOptions);
                     break;
@@ -354,8 +350,6 @@ namespace TVGL
                     case FileType.PLY_Binary:
                         return PLYFileData.OpenSolid(s, filename, tsBuildOptions);
 
-                    case FileType.SHELL:
-                        return ShellFileData.OpenSolids(s, filename, tsBuildOptions)[0];
                     default:
                         var serializer = new JsonSerializer();
                         var sr = new StreamReader(s);
@@ -1188,9 +1182,6 @@ namespace TVGL
 
                 case FileType.PLY_Binary:
                     return PLYFileData.SaveSolidBinary(stream, (TessellatedSolid)solid);
-
-                case FileType.SHELL:
-                    return ShellFileData.Save(stream, (TessellatedSolid)solid);
 
                 default:
                     throw new NotSupportedException(

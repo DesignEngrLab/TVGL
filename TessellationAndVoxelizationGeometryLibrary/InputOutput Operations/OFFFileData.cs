@@ -33,7 +33,7 @@ namespace TVGL
         private OFFFileData()
         {
             Vertices = new List<Vector3>();
-            FaceToVertexIndices = new List<int[]>();
+            FaceToVertexIndices = new List<(int, int, int)>();
             Colors = new List<Color>();
         }
 
@@ -68,7 +68,7 @@ namespace TVGL
         /// Gets the face to vertex indices.
         /// </summary>
         /// <value>The face to vertex indices.</value>
-        private List<int[]> FaceToVertexIndices { get; }
+        private List<(int,int,int)> FaceToVertexIndices { get; }
 
         /// <summary>
         /// Gets the number vertices.
@@ -224,9 +224,12 @@ namespace TVGL
                 }
 
                 var numVerts = (int)Math.Round(numbers[0], 0);
-                var vertIndices = new int[numVerts];
-                for (var j = 0; j < numVerts; j++)
-                    vertIndices[j] = (int)Math.Round(numbers[1 + j], 0);
+                if (numVerts != 3)
+                    throw new NotImplementedException("TVGL is no longer able to read solids with input" +
+                        "polygons of any size except 3.");
+                var vertIndices = ((int)Math.Round(numbers[1], 0),
+                    (int)Math.Round(numbers[2], 0),
+                    (int)Math.Round(numbers[3], 0));
                 offData.FaceToVertexIndices.Add(vertIndices);
 
                 if (numbers.GetLength(0) == 1 + numVerts + 3)
