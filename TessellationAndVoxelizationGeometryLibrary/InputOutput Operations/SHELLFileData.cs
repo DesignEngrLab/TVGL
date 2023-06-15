@@ -117,7 +117,7 @@ namespace TVGL
         /// <param name="s">The s.</param>
         /// <param name="filename">The filename.</param>
         /// <returns>TessellatedSolid[].</returns>
-        internal static TessellatedSolid[] OpenSolids(Stream s, string filename)
+        internal static TessellatedSolid[] OpenSolids(Stream s, string filename, TessellatedSolidBuildOptions tsBuildOptions)
         {
             var now = DateTime.Now;
             try
@@ -175,8 +175,8 @@ namespace TVGL
                 {
                     var shell = shellData[i];
                     if (shell.Vertices.Any() && shell.FaceToVertexIndices.Any())
-                        results[i] = new TessellatedSolid(shell.Vertices, shell.FaceToVertexIndices, true,
-                           shell.Colors, unit, shell.Name + "_" + shell.Material.materialName,
+                        results[i] = new TessellatedSolid(shell.Vertices, shell.FaceToVertexIndices,
+                           shell.Colors, tsBuildOptions, unit, shell.Name + "_" + shell.Material.materialName,
                             filename, shell.Comments, shell.Language);
                 }
 

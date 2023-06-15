@@ -11,43 +11,42 @@ namespace TVGL
     public class TessellatedSolidBuildOptions
     {
         /// <summary>
-        /// Singleton for default options.
-        /// </summary>
-        internal static TessellatedSolidBuildOptions Default { get; } = new TessellatedSolidBuildOptions();
-
-
-        /// <summary>
         /// Singleton for options that does the most: slowest, largest size. But models have everything.
         /// Actually, the defaults are nearly the same as Default with the exception of PredefineAllEdges.
         /// </summary>
-        internal static TessellatedSolidBuildOptions Full { get; } =
-            new TessellatedSolidBuildOptions
-            {
-                AutomaticallyRepairHoles = true,
-                CopyElementsPassedToConstructor = true,
-                DefineConvexHull = true,
-                FindNonsmoothEdges = true,
-                PredefineAllEdges = true
-            };
-
+        public static TessellatedSolidBuildOptions Default { get; } = new TessellatedSolidBuildOptions();
 
         /// <summary>
-        /// Singleton for options that does the least: fastest, smallest size. 
+        /// Singleton for options that does the least: fastest, smallest size. All options are false.
         /// </summary>
-        private static TessellatedSolidBuildOptions Minimal { get; } =
+        public static TessellatedSolidBuildOptions Minimal { get; } =
             new TessellatedSolidBuildOptions
             {
                 AutomaticallyRepairHoles = false,
+                AutomaticallyInvertNegativeSolids = false,
+                AutomaticallyRepairBadFaces = false,
                 CopyElementsPassedToConstructor = false,
                 DefineConvexHull = false,
                 FindNonsmoothEdges = false,
-                PredefineAllEdges = false
+                PredefineAllEdges = DefineEdgesOptions.False,
             };
 
 
         /// <summary>Gets or sets whether holes in the tessellated solid will be automatically patched when reading in. 
         /// Note that this should be false if tessellated is not a solid, but rather a surface.</summary>
         public bool AutomaticallyRepairHoles { get; set; } = true;
+
+        /// <summary>Gets or sets whether continuity issues in the tessellated solid will be automatically repaired. 
+        /// This includes flipping faces that have opposite normals, and resolving negligible faces. This does not
+        /// patch major holes (like "") but it can fix cracks - where vertices/edges are duplicated for separate
+        /// faces.</summary>
+        public bool AutomaticallyRepairBadFaces { get; set; } = true;
+
+        /// <summary>Gets or sets whether the model will be inverted if the volume is negative. Generally, this is
+        /// advised, but if the model is known to be a partial surface (in which case the volume may naturally be
+        /// negative), or if a void-shape is intended, then do not call this fix.</summary>
+        public bool AutomaticallyInvertNegativeSolids { get; set; } = true;
+
         /// <summary>
         /// Gets or sets a value indicating whether the tessellation elements (faces, vertices, primitives) provided in the 
         /// constructor are to be used in the model. Only two constructors use vertex or face elements from another model.
@@ -68,9 +67,13 @@ namespace TVGL
         /// <summary>Gets or sets whether all edges should be pre-defined for the solid no matter how large it is. 
         /// When false, edges will only be defined when the model has less 10000 edges.
         /// </summary>
-        public bool PredefineAllEdges { get; set; } = false;
+        public DefineEdgesOptions PredefineAllEdges { get; set; } = DefineEdgesOptions.IfNotLargeModel;
     }
-}
 
-}
+    public enum DefineEdgesOptions
+    {
+        False,
+        True,
+        IfNotLargeModel
+    }
 }

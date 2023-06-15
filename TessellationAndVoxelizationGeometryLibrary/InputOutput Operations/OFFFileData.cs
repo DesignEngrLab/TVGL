@@ -122,7 +122,7 @@ namespace TVGL
         /// <param name="s">The s.</param>
         /// <param name="filename">The filename.</param>
         /// <returns>List&lt;TessellatedSolid&gt;.</returns>
-        internal static TessellatedSolid OpenSolid(Stream s, string filename)
+        internal static TessellatedSolid OpenSolid(Stream s, string filename, TessellatedSolidBuildOptions tsBuildOptions)
         {
             var now = DateTime.Now;
             // Try to read in BINARY format
@@ -141,8 +141,8 @@ namespace TVGL
                     return null;
                 }
             }
-            return new TessellatedSolid(offData.Vertices, offData.FaceToVertexIndices, true,
-                offData.HasColorSpecified ? offData.Colors : null, InferUnitsFromComments(offData.Comments),
+            return new TessellatedSolid(offData.Vertices, offData.FaceToVertexIndices,
+                offData.HasColorSpecified ? offData.Colors : null, tsBuildOptions, InferUnitsFromComments(offData.Comments),
                 Path.GetFileNameWithoutExtension(filename), filename, offData.Comments,
                 offData.Language);
         }

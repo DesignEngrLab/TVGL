@@ -110,7 +110,7 @@ namespace TVGL
         /// <param name="s">The s.</param>
         /// <param name="filename">The filename.</param>
         /// <returns>List&lt;TessellatedSolid&gt;.</returns>
-        internal static TessellatedSolid[] OpenSolids(Stream s, string filename)
+        internal static TessellatedSolid[] OpenSolids(Stream s, string filename, TessellatedSolidBuildOptions tsBuildOptions)
         {
             var typeString = "OBJ";
             var now = DateTime.Now;
@@ -123,7 +123,7 @@ namespace TVGL
             {
                 var objFileData = objData[i];
                 var vertices = objFileData.Vertices.Keys.ToList();
-                var ts = new TessellatedSolid(vertices, objFileData.FaceToVertexIndices, true, null,
+                var ts = new TessellatedSolid(vertices, objFileData.FaceToVertexIndices, null, tsBuildOptions,
                                InferUnitsFromComments(objFileData.Comments), objFileData.Name, filename, objFileData.Comments,
                                objFileData.Language);
                 CreateRegionsFromPolylineAndFaceGroups(objFileData, ts, out var faceGroupsThatAreBodies);

@@ -92,7 +92,7 @@ namespace TVGL
         /// <param name="s">The s.</param>
         /// <param name="filename">The filename.</param>
         /// <returns>List&lt;TessellatedSolid&gt;.</returns>
-        internal static TessellatedSolid[] OpenSolids(Stream s, string filename)
+        internal static TessellatedSolid[] OpenSolids(Stream s, string filename, TessellatedSolidBuildOptions tsBuildOptions)
         {
             string typeString;
             var now = DateTime.Now;
@@ -116,9 +116,9 @@ namespace TVGL
             for (int i = 0; i < stlData.Count; i++)
             {
                 var stlFileData = stlData[i];
-                results[i] = new TessellatedSolid(stlFileData.Vertices, stlFileData.Vertices.Count <= Constants.MaxNumberFacesDefaultFullTS,
+                results[i] = new TessellatedSolid(stlFileData.Vertices,
                     stlFileData.HasColorSpecified ? stlFileData.Colors : null,
-                                   stlFileData.Units, stlFileData.Name, filename, stlFileData.Comments, stlFileData.Language);
+                    tsBuildOptions, stlFileData.Units, stlFileData.Name, filename, stlFileData.Comments, stlFileData.Language);
             }
             Message.output(
                 "Successfully read in " + typeString + " file called " + filename + " in " +

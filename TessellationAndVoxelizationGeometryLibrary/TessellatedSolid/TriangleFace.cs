@@ -86,8 +86,8 @@ namespace TVGL
         internal void AddEdge(Edge edge)
         {
             if ((A == edge.From && B == edge.To) || (A == edge.To && B == edge.From)) AB = edge;
-            else if ((B == edge.From && C == edge.To)|| (B == edge.To && C == edge.From)) BC = edge;
-            else if ((C == edge.From && A == edge.To)|| (C == edge.To && A == edge.From)) CA = edge;
+            else if ((B == edge.From && C == edge.To) || (B == edge.To && C == edge.From)) BC = edge;
+            else if ((C == edge.From && A == edge.To) || (C == edge.To && A == edge.From)) CA = edge;
             else throw new Exception("Edge does not belong to this face.");
         }
 
@@ -217,17 +217,14 @@ namespace TVGL
         /// <param name="B">The b.</param>
         /// <param name="C">The c.</param>
         /// <param name="connectVerticesBackToFace">if set to <c>true</c> [connect vertices back to face].</param>
-        public TriangleFace(Vertex A, Vertex B, Vertex C, bool connectVerticesBackToFace = true) : this()
+        public TriangleFace(Vertex A, Vertex B, Vertex C) : this()
         {
             this.A = A;
             this.B = B;
             this.C = C;
-            if (connectVerticesBackToFace)
-            {
-                A.Faces.Add(this);
-                B.Faces.Add(this);
-                C.Faces.Add(this);
-            }
+            A.Faces.Add(this);
+            B.Faces.Add(this);
+            C.Faces.Add(this);
         }
 
         /// <summary>

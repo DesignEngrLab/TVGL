@@ -202,7 +202,7 @@ namespace TVGL
             {
                 "tessellation (via marching cubes) of the voxelized solid, " + solid.Name
             };
-            return new TessellatedSolid(faces, false, false);
+            return new TessellatedSolid(faces);
             // vertexDictionaries.SelectMany(d => d.Values), false,
             //new[] { solid.SolidColor }, solid.Units, solid.Name + "TS", solid.FileName, comments, solid.Language);
         }

@@ -71,7 +71,7 @@ namespace TVGL
         public static BoundingBox OrientedBoundingBox(this List<TessellatedSolid> solids)
         {
             foreach(var solid in solids)
-                if (solid.ConvexHull == null) solid.CompleteInitiation();
+                if (solid.ConvexHull == null) solid.BuildConvexHull();
             var vertices = new List<Vertex>();
             foreach (var solid in solids)
                 vertices.AddRange(solid.ConvexHull.Vertices.Any() ? solid.ConvexHull.Vertices : solid.Vertices);
@@ -86,7 +86,7 @@ namespace TVGL
         /// <returns>BoundingBox.</returns>
         public static BoundingBox OrientedBoundingBox(this TessellatedSolid ts)
         {
-            if (ts.ConvexHull == null) ts.CompleteInitiation(ts.FileName.EndsWith(".stl", StringComparison.OrdinalIgnoreCase));
+            if (ts.ConvexHull == null) ts.BuildConvexHull();
             return OrientedBoundingBox(ts.ConvexHull.Vertices.Any() ? ts.ConvexHull.Vertices : ts.Vertices);
         }
 

@@ -25,7 +25,7 @@ namespace TVGL
         /// <summary>
         /// The maximum number faces default full ts
         /// </summary>
-        internal const int MaxNumberFacesDefaultFullTS = 50000;
+        internal const int MaxNumberFacesDefaultMakeEdges = 33333; // note that since triangles and each edge is shared between two triangles, this is 3/2 the number of edges (50,000)
         /// <summary>
         /// The two pi
         /// </summary>

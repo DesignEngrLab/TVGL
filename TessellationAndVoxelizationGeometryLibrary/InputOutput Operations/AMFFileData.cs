@@ -98,7 +98,7 @@ namespace TVGL
         /// <param name="s">The s.</param>
         /// <param name="filename">The filename.</param>
         /// <returns>List&lt;TessellatedSolid&gt;.</returns>
-        internal static TessellatedSolid[] OpenSolids(Stream s, string filename)
+        internal static TessellatedSolid[] OpenSolids(Stream s, string filename, TessellatedSolidBuildOptions tsBuildOptions = null)
         {
             var now = DateTime.Now;
             AMFFileData amfData;
@@ -127,7 +127,7 @@ namespace TVGL
                 foreach (var amfInstance in amfConstellation.Instances)
                 {
                     if (!objectDict.TryGetValue(amfInstance.objectid, out var aMF_Object)) continue;
-                    results.Add(amfData.CreateSolid(aMF_Object, amfInstance));
+                    results.Add(amfData.CreateSolid(aMF_Object, tsBuildOptions, amfInstance));
                     objectsUsed.Add(amfInstance.objectid);
                 }
             }
@@ -143,7 +143,7 @@ namespace TVGL
         /// <param name="amfObject">The amf object.</param>
         /// <param name="amfInstance">The amf instance.</param>
         /// <returns>TessellatedSolid.</returns>
-        private TessellatedSolid CreateSolid(AMF_Object amfObject, AMF_Instance amfInstance = null)
+        private TessellatedSolid CreateSolid(AMF_Object amfObject, TessellatedSolidBuildOptions tsBuildOptions = null, AMF_Instance amfInstance = null)
         {
             List<Color> colors = null;
             if (amfObject.color != null)
@@ -189,8 +189,9 @@ namespace TVGL
                 for (int i = 0; i < vertices.Count; i++)
                     vertices[i] = vertices[i].Multiply(tMatrix);
             }
+            if (tsBuildOptions == null) tsBuildOptions = TessellatedSolidBuildOptions.Default;
             return new TessellatedSolid(vertices, amfObject.mesh.volume.Triangles.Select(t => t.VertexIndices).ToList(),
-                true, colors, this.Units, name + "_" + amfObject.id, this.FileName,
+                colors, tsBuildOptions, this.Units, name + "_" + amfObject.id, this.FileName,
                 amfObject.metadata.Select(md => md.ToString()).ToList(), this.Language);
         }
 

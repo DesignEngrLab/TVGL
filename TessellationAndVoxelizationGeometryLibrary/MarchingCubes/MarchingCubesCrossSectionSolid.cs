@@ -154,7 +154,7 @@ namespace TVGL
             {
                 "tessellation (via marching cubes) of the cross-section solid, " + solid.Name
             };
-            return new TessellatedSolid(faces, false, false);
+            return new TessellatedSolid(faces);
         }
 
         /// <summary>
@@ -184,7 +184,7 @@ namespace TVGL
             {
                 "tessellation (via marching cubes) of the cross-section solid, " + solid.Name
             };
-            return new TessellatedSolid(faces,false,false);
+            return new TessellatedSolid(faces);
         }
 
         /// <summary>

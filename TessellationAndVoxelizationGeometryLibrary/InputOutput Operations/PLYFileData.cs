@@ -143,7 +143,7 @@ namespace TVGL
         /// <param name="filename">The filename.</param>
         /// <returns>List&lt;TessellatedSolid&gt;.</returns>
         /// <exception cref="System.ArgumentOutOfRangeException"></exception>
-        internal static TessellatedSolid OpenSolid(Stream s, string filename)
+        internal static TessellatedSolid OpenSolid(Stream s, string filename, TessellatedSolidBuildOptions tsBuildOptions)
         {
             var now = DateTime.Now;
             var reader = new StreamReader(s);
@@ -165,7 +165,7 @@ namespace TVGL
             }
             plyData.FixColors();
             Message.output("Successfully read in " + fileTypeString + " PLY file (" + (DateTime.Now - now) + ").", 3);
-            return new TessellatedSolid(plyData.vertices, plyData.faceToVertexIndices, true, plyData.faceColors,
+            return new TessellatedSolid(plyData.vertices, plyData.faceToVertexIndices, plyData.faceColors,tsBuildOptions,
                 InferUnitsFromComments(plyData.Comments), plyData.Name, filename, plyData.Comments, plyData.Language);
         }
 

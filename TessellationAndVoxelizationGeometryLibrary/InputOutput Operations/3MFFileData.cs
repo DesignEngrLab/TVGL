@@ -108,14 +108,14 @@ namespace TVGL
         /// <param name="s">The s.</param>
         /// <param name="filename">The filename.</param>
         /// <returns>TessellatedSolid[].</returns>
-        internal static TessellatedSolid[] OpenSolids(Stream s, string filename)
+        internal static TessellatedSolid[] OpenSolids(Stream s, string filename, TessellatedSolidBuildOptions tsBuildOptions)
         {
             var result = new List<TessellatedSolid>();
             var archive = new ZipArchive(s);
             foreach (var modelFile in archive.Entries.Where(f => f.FullName.EndsWith(".model")))
             {
                 var modelStream = modelFile.Open();
-                result.AddRange(OpenModelFile(modelStream, filename));
+                result.AddRange(OpenModelFile(modelStream, filename,tsBuildOptions));
             }
             return result.ToArray();
         }
@@ -126,46 +126,46 @@ namespace TVGL
         /// <param name="s">The s.</param>
         /// <param name="filename">The filename.</param>
         /// <returns>TessellatedSolid[].</returns>
-        internal static TessellatedSolid[] OpenModelFile(Stream s, string filename)
+        internal static TessellatedSolid[] OpenModelFile(Stream s, string filename, TessellatedSolidBuildOptions tsBuildOptions)
         {
             var now = DateTime.Now;
             ThreeMFFileData threeMFData = null;
             //try
             //{
-                var settings = new XmlReaderSettings
-                {
-                    IgnoreComments = true,
-                    IgnoreProcessingInstructions = true,
-                    IgnoreWhitespace = true
-                };
-                using var reader = XmlReader.Create(s, settings);
-                if (reader.IsStartElement("model"))
-                {
-                    var defaultNamespace = reader["xmlns"];
-                    var serializer = new XmlSerializer(typeof(ThreeMFFileData), defaultNamespace);
-                    threeMFData = (ThreeMFFileData)serializer.Deserialize(reader);
-                }
-                threeMFData.FileName = filename;
-                var results = new List<TessellatedSolid>();
-                threeMFData.Name = Path.GetFileNameWithoutExtension(filename);
-                var nameIndex =
-                    threeMFData.metadata.FindIndex(
-                        md => md != null && (md.type.Equals("name", StringComparison.CurrentCultureIgnoreCase) ||
-                                             md.type.Equals("title", StringComparison.CurrentCultureIgnoreCase)));
-                if (nameIndex != -1)
-                {
-                    threeMFData.Name = threeMFData.metadata[nameIndex].Value;
-                    threeMFData.metadata.RemoveAt(nameIndex);
-                }
-                foreach (var item in threeMFData.build.Items)
-                {
-                    results.AddRange(threeMFData.TessellatedSolidsFromIDAndTransform(item.objectid,
-                        item.transformMatrix,
-                        threeMFData.Name + "_"));
-                }
+            var settings = new XmlReaderSettings
+            {
+                IgnoreComments = true,
+                IgnoreProcessingInstructions = true,
+                IgnoreWhitespace = true
+            };
+            using var reader = XmlReader.Create(s, settings);
+            if (reader.IsStartElement("model"))
+            {
+                var defaultNamespace = reader["xmlns"];
+                var serializer = new XmlSerializer(typeof(ThreeMFFileData), defaultNamespace);
+                threeMFData = (ThreeMFFileData)serializer.Deserialize(reader);
+            }
+            threeMFData.FileName = filename;
+            var results = new List<TessellatedSolid>();
+            threeMFData.Name = Path.GetFileNameWithoutExtension(filename);
+            var nameIndex =
+                threeMFData.metadata.FindIndex(
+                    md => md != null && (md.type.Equals("name", StringComparison.CurrentCultureIgnoreCase) ||
+                                         md.type.Equals("title", StringComparison.CurrentCultureIgnoreCase)));
+            if (nameIndex != -1)
+            {
+                threeMFData.Name = threeMFData.metadata[nameIndex].Value;
+                threeMFData.metadata.RemoveAt(nameIndex);
+            }
+            foreach (var item in threeMFData.build.Items)
+            {
+                results.AddRange(threeMFData.TessellatedSolidsFromIDAndTransform(item.objectid,
+                    item.transformMatrix,
+                    threeMFData.Name + "_"));
+            }
 
-                Message.output("Successfully read in 3Dmodel file (" + (DateTime.Now - now) + ").", 3);
-                return results.ToArray();
+            Message.output("Successfully read in 3Dmodel file (" + (DateTime.Now - now) + ").", 3);
+            return results.ToArray();
             //}
             //catch (Exception exception)
             //{
@@ -271,7 +271,7 @@ namespace TVGL
                 for (var j = 0; j < numTriangles; j++)
                     colors[j] ??= defaultColor;
             return new TessellatedSolid(verts, mesh.triangles.Select(t => new[] { t.v1, t.v2, t.v3 }).ToList(),
-                mesh.triangles.Count <= Constants.MaxNumberFacesDefaultFullTS, colors, Units, name, FileName, Comments, Language);
+                 colors, TessellatedSolidBuildOptions.Default, Units, name, FileName, Comments, Language);
         }
 
         /// <summary>

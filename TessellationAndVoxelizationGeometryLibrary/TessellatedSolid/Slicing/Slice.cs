@@ -129,9 +129,9 @@ namespace TVGL
             }
             //MakeSingleSolidOnEachSideOfInfitePlane(contactData, ts.Units, out positiveSideSolid, out negativeSideSolid);
             List<TriangleFace> positiveSideFaces = new List<TriangleFace>(contactData.PositiveSideContactData.SelectMany(solidContactData => solidContactData.AllFaces));
-            positiveSideSolid = new TessellatedSolid(positiveSideFaces, true, true, units: ts.Units);
+            positiveSideSolid = new TessellatedSolid(positiveSideFaces, TessellatedSolidBuildOptions.Default, units: ts.Units);
             var negativeSideFaces = new List<TriangleFace>(contactData.NegativeSideContactData.SelectMany(solidContactData => solidContactData.AllFaces));
-            negativeSideSolid = new TessellatedSolid(negativeSideFaces, true, true, units: ts.Units);
+            negativeSideSolid = new TessellatedSolid(negativeSideFaces, TessellatedSolidBuildOptions.Default, units: ts.Units);
         }
 
         /// <summary>
@@ -174,8 +174,8 @@ namespace TVGL
         /// <param name="solids">The solids.</param>
         public static void MakeSolids(this ContactData contactData, UnitType unitType, out List<TessellatedSolid> solids)
         {
-            solids = contactData.SolidContactData.Select(solidContactData => new TessellatedSolid(solidContactData.AllFaces, true,
-                true, units: unitType)).ToList();
+            solids = contactData.SolidContactData.Select(solidContactData => new TessellatedSolid(solidContactData.AllFaces, 
+                TessellatedSolidBuildOptions.Default, units: unitType)).ToList();
         }
 
 
@@ -229,8 +229,9 @@ namespace TVGL
                     var negativeLoops = polygon.InnerPolygons.Select(p => loops[p.Index]).ToList();
                     var planeFaces = new List<TriangleFace>();
                     var groupOfOnPlaneFaces = indicesOfTriangles.Select(triIndices => new TriangleFace(
-                        allVertices[triIndices.A], allVertices[triIndices.B], allVertices[triIndices.C],
-                        false));
+                        allVertices[triIndices.A], allVertices[triIndices.B], allVertices[triIndices.C]));
+                    // potential bug here! the contructor for TriangleFace used to allow the vertices of the face NOT to connect back
+                    // to the face. this was removed (6/15/23). did that cause a problem here?
                     var groupOfLoops = new GroupOfLoops(positiveLoop, negativeLoops, groupOfOnPlaneFaces);
                     groupsOfLoops.Add(groupOfLoops);
                     if (k == -1) posSideGroups.Add(groupOfLoops);
