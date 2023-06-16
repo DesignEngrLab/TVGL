@@ -52,7 +52,7 @@
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\InputOutput Operations\OBJFileData.cs" Link="TVGL\InputOutput Operations\OBJFileData.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\InputOutput Operations\OFFFileData.cs" Link="TVGL\InputOutput Operations\OFFFileData.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\InputOutput Operations\PLYFileData.cs" Link="TVGL\InputOutput Operations\PLYFileData.cs" />
-		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\InputOutput Operations\SHELLFileData.cs" Link="TVGL\InputOutput Operations\SHELLFileData.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\InputOutput Operations\TessellatedSolidBuildOptions.cs" Link="TVGL\InputOutput Operations\TessellatedSolidBuildOptions.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\InputOutput Operations\STLFileData.cs" Link="TVGL\InputOutput Operations\STLFileData.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\MarchingCubes\MarchingCubes.Base.cs" Link="TVGL\MarchingCubes\MarchingCubes.Base.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\MarchingCubes\MarchingCubes.Implicit.cs" Link="TVGL\MarchingCubes\MarchingCubes.Implicit.cs" />

@@ -10,8 +10,7 @@ namespace TVGLUnitTestsAndBenchmarking
         {
             #region TessellatedSolid
             var ts = new TessellatedSolid();
-            ts = new TessellatedSolid(new[] { new List<Vector3>() }, true, new TVGL.Color[0]);
-            ts = new TessellatedSolid(new Vector3[0], new[] { new[] { 1, 2, 3 } }, true, new TVGL.Color[0]);
+            ts = new TessellatedSolid(new Vector3[0], new[] { (1, 2, 3) }, new TVGL.Color[0], TessellatedSolidBuildOptions.Default);
             ts.AddPrimitive(new Plane());
             ts.CheckModelIntegrity();
             ts.Complexify();
