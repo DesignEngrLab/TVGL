@@ -137,7 +137,7 @@ namespace TVGL
         /// <param name="filename">The filename.</param>
         /// <param name="comments">The comments.</param>
         /// <param name="language">The language.</param>
-        public TessellatedSolid(IEnumerable<(Vector3, Vector3, Vector3)> vertsPerFace, IList<Color> colors,
+        public TessellatedSolid(IEnumerable<(Vector3, Vector3, Vector3)> vertsPerFace, int numOfFaces, IList<Color> colors,
             TessellatedSolidBuildOptions buildOptions = null, UnitType units = UnitType.unspecified,
             string name = "", string filename = "", List<string> comments = null, string language = "")
             : base(units, name, filename, comments, language)
@@ -162,7 +162,7 @@ namespace TVGL
             }
             MakeVertices(vertsPerFaceList, scaleFactor, out var faceToVertexIndices);
             //Complete Construction with Common Functions
-            MakeFaces(faceToVertexIndices, colors);
+            MakeFaces(faceToVertexIndices, numOfFaces, colors);
             CompleteInitiation(true, buildOptions);
         }
 
@@ -182,12 +182,20 @@ namespace TVGL
         public TessellatedSolid(IList<Vector3> vertices, IList<(int, int, int)> faceToVertexIndices,
             IList<Color> colors, TessellatedSolidBuildOptions buildOptions = null, UnitType units = UnitType.unspecified,
             string name = "", string filename = "", List<string> comments = null, string language = "")
+            : this(vertices, vertices.Count, faceToVertexIndices, faceToVertexIndices.Count, colors, buildOptions,
+                  units, name, filename, comments, language)
+        { }
+
+        public TessellatedSolid(IEnumerable<Vector3> vertices, int numOfVertices,
+            IEnumerable<(int, int, int)> faceToVertexIndices, int numOfFaces,
+            IList<Color> colors, TessellatedSolidBuildOptions buildOptions = null, UnitType units = UnitType.unspecified,
+            string name = "", string filename = "", List<string> comments = null, string language = "")
             : base(units, name, filename, comments, language)
         {
-            DefineAxisAlignedBoundingBoxAndTolerance(vertices);
-            MakeVertices(vertices);
+            MakeVertices(vertices, numOfVertices);
+            DefineAxisAlignedBoundingBoxAndTolerance(Vertices.Select(v => v.Coordinates));
             //Complete Construction with Common Functions
-            MakeFaces(faceToVertexIndices, colors);
+            MakeFaces(faceToVertexIndices, numOfFaces, colors);
             CompleteInitiation(false, buildOptions);
         }
 
@@ -480,8 +488,8 @@ namespace TVGL
                     colors[i] = new Color(colorStringsArray[i]);
             }
             DefineAxisAlignedBoundingBoxAndTolerance(coords);
-            MakeVertices(coords);
-            MakeFaces(faceIndices, colors);
+            MakeVertices(coords, coords.Length);
+            MakeFaces(faceIndices, faceIndices.Length, colors);
             MakeEdges();
 
             ConvexHull = new TVGLConvexHull(this);
@@ -514,8 +522,9 @@ namespace TVGL
         /// <param name="filename">The filename.</param>
         /// <param name="comments">The comments.</param>
         /// <param name="language">The language.</param>
-        public TessellatedSolid(ICollection<TriangleFace> faces, TessellatedSolidBuildOptions buildOptions = null,
-            ICollection<Vertex> vertices = null, IList<Color> colors = null, UnitType units = UnitType.unspecified, string name = "", string filename = "",
+        public TessellatedSolid(ICollection<TriangleFace> faces, ICollection<Vertex> vertices = null,
+            TessellatedSolidBuildOptions buildOptions = null, IList<Color> colors = null,
+            UnitType units = UnitType.unspecified, string name = "", string filename = "",
             List<string> comments = null, string language = "") : base(units, name, filename, comments, language)
         {
             if (colors != null && colors.Count == 1)
@@ -534,15 +543,26 @@ namespace TVGL
             }
             NumberOfVertices = vertices.Count;
             Vertices = new Vertex[vertices.Count];
+            var oldNewVertexIndexDict = new Dictionary<int, int>();
             if (buildOptions.CopyElementsPassedToConstructor)
             {
+                var i = 0;
                 foreach (var vertex in vertices)
-                    Vertices[vertex.IndexInList] = new Vertex(vertex.Coordinates, vertex.IndexInList);
+                {
+                    oldNewVertexIndexDict.Add(vertex.IndexInList, i);
+                    Vertices[i] = new Vertex(vertex.Coordinates, i);
+                    i++;
+                }
             }
             else
             {
+                var i = 0;
                 foreach (var vertex in vertices)
-                    Vertices[vertex.IndexInList] = vertex;
+                {
+                    vertex.IndexInList = i;
+                    Vertices[i] = vertex;
+                    i++;
+                }
             }
             NumberOfFaces = faces.Count;
             Faces = new TriangleFace[faces.Count];
@@ -551,7 +571,8 @@ namespace TVGL
                 var i = 0;
                 foreach (var oldFace in faces)
                 {
-                    var newFace = Faces[i++] = new TriangleFace(Vertices[oldFace.A.IndexInList], Vertices[oldFace.B.IndexInList], Vertices[oldFace.C.IndexInList]);
+                    var newFace = Faces[i++] = new TriangleFace(Vertices[oldNewVertexIndexDict[oldFace.A.IndexInList]],
+                        Vertices[oldNewVertexIndexDict[oldFace.B.IndexInList]], Vertices[oldNewVertexIndexDict[oldFace.C.IndexInList]]);
                     if (HasUniformColor)
                         newFace.Color = SolidColor;
                     else if (manyInputColors)
@@ -679,7 +700,7 @@ namespace TVGL
         /// </summary>
         /// <param name="vertsPerFace">The verts per face.</param>
         /// <param name="colors">The colors.</param>
-        internal void MakeFaces(IEnumerable<List<Vector3>> vertsPerFace, IList<Color> colors)
+        internal void MakeFacesOLDSTL(IEnumerable<List<Vector3>> vertsPerFace, IList<Color> colors)
         {
             IList<List<Vector3>> vertexLocations = vertsPerFace as IList<List<Vector3>> ?? vertsPerFace.ToArray();
             HasUniformColor = true;
@@ -709,15 +730,15 @@ namespace TVGL
         /// <param name="faceToVertexIndices">The face to vertex indices.</param>
         /// <param name="colors">The colors.</param>
         /// <param name="doublyLinkToVertices">if set to <c>true</c> [doubly link to vertices].</param>
-        internal void MakeFaces(IList<(int, int, int)> faceToVertexIndices, IList<Color> colors,
+        internal void MakeFaces(IEnumerable<(int, int, int)> faceToVertexIndices, int numberOfFaces, IList<Color> colors,
             bool doublyLinkToVertices = true)
         {
+            NumberOfFaces = numberOfFaces;
             var duplicateFaceCheck = true;
             HasUniformColor = true;
             if (colors == null || !colors.Any() || colors.All(c => c == null))
                 SolidColor = new Color(Constants.DefaultColor);
             else SolidColor = colors[0];
-            NumberOfFaces = faceToVertexIndices.Count;
             var listOfFaces = new List<TriangleFace>(NumberOfFaces);
             var faceChecksums = new HashSet<long>();
             if (NumberOfVertices > Constants.CubeRootOfLongMaxValue)
@@ -729,9 +750,9 @@ namespace TVGL
             var checksumMultiplier = duplicateFaceCheck
                 ? new List<long> { 1, NumberOfVertices, NumberOfVertices * NumberOfVertices }
                 : null;
-            for (var i = 0; i < NumberOfFaces; i++)
+            var i = 0;
+            foreach (var faceToVertexIndexList in faceToVertexIndices)
             {
-                var faceToVertexIndexList = faceToVertexIndices[i];
                 if (duplicateFaceCheck)
                 {
                     // first check to be sure that this is a new face and not a duplicate or a degenerate
@@ -746,16 +767,17 @@ namespace TVGL
                     // if you made it passed these to "continue" conditions, then this is a valid new face
                     faceChecksums.Add(checksum);
                 }
+                var color = SolidColor;
+                if (colors != null && colors.Count > 0)
+                {
+                    if (i >= colors.Count) i = 0;
+                    if (colors[i] != null) color = colors[i];
+                    i++;
+                    if (SolidColor == null || !SolidColor.Equals(color)) HasUniformColor = false;
+                }
                 var faceVertices =
                 faceToVertexIndexList.EnumerateThruple().Select(vertexMatchingIndex => Vertices[vertexMatchingIndex]).ToArray();
 
-                var color = SolidColor;
-                if (colors != null)
-                {
-                    var j = i < colors.Count - 1 ? i : colors.Count - 1;
-                    if (colors[j] != null) color = colors[j];
-                    if (SolidColor == null || !SolidColor.Equals(color)) HasUniformColor = false;
-                }
                 if (faceVertices.Length == 3)
                 {
                     var face = new TriangleFace(faceVertices, doublyLinkToVertices);
@@ -780,7 +802,7 @@ namespace TVGL
             }
             Faces = listOfFaces.ToArray();
             NumberOfFaces = Faces.GetLength(0);
-            for (var i = 0; i < NumberOfFaces; i++)
+            for (i = 0; i < NumberOfFaces; i++)
                 Faces[i].IndexInList = i;
         }
 
@@ -917,20 +939,23 @@ namespace TVGL
                 faceToVertexIndices.Add((locationIndices[0], locationIndices[1], locationIndices[2]));
             }
             //Make vertices from the double arrays
-            MakeVertices(listOfVertices);
+            MakeVertices(listOfVertices, listOfVertices.Count);
         }
 
         /// <summary>
         /// Makes the vertices, and set CheckSum multiplier
         /// </summary>
-        /// <param name="listOfVertices">The list of vertices.</param>
-        private void MakeVertices(IList<Vector3> listOfVertices)
+        /// <param name="coordinates">The list of vertices.</param>
+        private void MakeVertices(IEnumerable<Vector3> coordinates, int numberOfVertices)
         {
-            NumberOfVertices = listOfVertices.Count;
+            NumberOfVertices = numberOfVertices;
             Vertices = new Vertex[NumberOfVertices];
-            for (var i = 0; i < NumberOfVertices; i++)
-                Vertices[i] = new Vertex(listOfVertices[i], i);
-            //Set the checksum
+            var i = 0;
+            foreach (var coord in coordinates)
+            {
+                Vertices[i] = new Vertex(coord, i);
+                i++;
+            }
         }
 
         #endregion
@@ -1350,7 +1375,7 @@ namespace TVGL
         public TessellatedSolid Copy()
         {
             //Copy the solid. Do not check Edges[], rather use _edges, so that MakeEdges() does not get triggered.
-            var copy = new TessellatedSolid(Faces, new TessellatedSolidBuildOptions
+            var copy = new TessellatedSolid(Faces, Vertices, new TessellatedSolidBuildOptions
             {
                 AutomaticallyInvertNegativeSolids = false,
                 AutomaticallyRepairBadFaces = false,
@@ -1359,7 +1384,7 @@ namespace TVGL
                 DefineConvexHull = ConvexHull != null,
                 PredefineAllEdges = DefineEdgesOptions.False,
                 FindNonsmoothEdges = false
-            }, Vertices, Faces.Select(p => p.Color).ToList(), Units, Name + "_Copy",
+            }, Faces.Select(p => p.Color).ToList(), Units, Name + "_Copy",
                 FileName, Comments, Language);
             if (Primitives != null && Primitives.Any())
             {
@@ -1504,18 +1529,7 @@ namespace TVGL
         public override Solid TransformToNewSolid(Matrix4x4 transformationMatrix)
         {
             var copy = this.Copy();
-            try
-            {
-                copy.Transform(transformationMatrix);
-            }
-            catch
-            {
-                copy = new TessellatedSolid(copy.Faces, new TessellatedSolidBuildOptions
-                {
-                    AutomaticallyRepairHoles = false, //should already be repaired
-                });
-                copy.Transform(transformationMatrix);
-            }
+            copy.Transform(transformationMatrix);
             return copy;
         }
 

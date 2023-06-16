@@ -129,9 +129,9 @@ namespace TVGL
             }
             //MakeSingleSolidOnEachSideOfInfitePlane(contactData, ts.Units, out positiveSideSolid, out negativeSideSolid);
             List<TriangleFace> positiveSideFaces = new List<TriangleFace>(contactData.PositiveSideContactData.SelectMany(solidContactData => solidContactData.AllFaces));
-            positiveSideSolid = new TessellatedSolid(positiveSideFaces, TessellatedSolidBuildOptions.Default, units: ts.Units);
+            positiveSideSolid = new TessellatedSolid(positiveSideFaces, null, TessellatedSolidBuildOptions.Default, units: ts.Units);
             var negativeSideFaces = new List<TriangleFace>(contactData.NegativeSideContactData.SelectMany(solidContactData => solidContactData.AllFaces));
-            negativeSideSolid = new TessellatedSolid(negativeSideFaces, TessellatedSolidBuildOptions.Default, units: ts.Units);
+            negativeSideSolid = new TessellatedSolid(negativeSideFaces, null, TessellatedSolidBuildOptions.Default, units: ts.Units);
         }
 
         /// <summary>
@@ -174,7 +174,7 @@ namespace TVGL
         /// <param name="solids">The solids.</param>
         public static void MakeSolids(this ContactData contactData, UnitType unitType, out List<TessellatedSolid> solids)
         {
-            solids = contactData.SolidContactData.Select(solidContactData => new TessellatedSolid(solidContactData.AllFaces, 
+            solids = contactData.SolidContactData.Select(solidContactData => new TessellatedSolid(solidContactData.AllFaces,null,
                 TessellatedSolidBuildOptions.Default, units: unitType)).ToList();
         }
 
@@ -229,7 +229,7 @@ namespace TVGL
                     var negativeLoops = polygon.InnerPolygons.Select(p => loops[p.Index]).ToList();
                     var planeFaces = new List<TriangleFace>();
                     var groupOfOnPlaneFaces = indicesOfTriangles.Select(triIndices => new TriangleFace(
-                        allVertices[triIndices.A], allVertices[triIndices.B], allVertices[triIndices.C],false));
+                        allVertices[triIndices.A], allVertices[triIndices.B], allVertices[triIndices.C], false));
                     var groupOfLoops = new GroupOfLoops(positiveLoop, negativeLoops, groupOfOnPlaneFaces);
                     groupsOfLoops.Add(groupOfLoops);
                     if (k == -1) posSideGroups.Add(groupOfLoops);
@@ -945,7 +945,7 @@ namespace TVGL
         {
             var intDir = Math.Abs((int)direction) - 1;
             var signDir = Math.Sign((int)direction);
-            var distances = tessellatedSolid.Vertices.Select(v =>  v.Coordinates[intDir]).ToList();
+            var distances = tessellatedSolid.Vertices.Select(v => v.Coordinates[intDir]).ToList();
             var positiveShift = 0.0;
             var negativeShift = 0.0;
             distances.SetPositiveAndNegativeShifts(distanceToOrigin, tessellatedSolid.SameTolerance, ref positiveShift, ref negativeShift);

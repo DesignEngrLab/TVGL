@@ -116,7 +116,7 @@ namespace TVGL
             for (int i = 0; i < stlData.Count; i++)
             {
                 var stlFileData = stlData[i];
-                results[i] = new TessellatedSolid(stlFileData.Vertices,
+                results[i] = new TessellatedSolid(stlFileData.Vertices,stlFileData.Vertices.Count,
                     stlFileData.HasColorSpecified ? stlFileData.Colors : null,
                     tsBuildOptions, stlFileData.Units, stlFileData.Name, filename, stlFileData.Comments, stlFileData.Language);
             }

@@ -93,7 +93,7 @@ namespace TVGL
                     this.PointsOnFaces[2].ToArray(),
                     this.PointsOnFaces[3].ToArray(),
                     this.PointsOnFaces[4].ToArray(),
-                    this.PointsOnFaces[5].ToArray() 
+                    this.PointsOnFaces[5].ToArray()
                 };
             return copiedBB;
         }
@@ -310,10 +310,10 @@ namespace TVGL
                 new TriangleFace(vertices[6],vertices[4],vertices[5])
             };
                 var random = new Random(0);
-                _tessellatedSolid = new TessellatedSolid(faces,TessellatedSolidBuildOptions.Minimal, vertices, new[] {
+                _tessellatedSolid = new TessellatedSolid(faces, vertices, TessellatedSolidBuildOptions.Minimal, new[] {
                     new Color(0.6f,(float)random.NextDouble(), (float)random.NextDouble(), (float)random.NextDouble()) });
                 _tessellatedSolid.Primitives = new List<PrimitiveSurface>();
-                for (var i = 0; i < 12; i+=2)
+                for (var i = 0; i < 12; i += 2)
                     _tessellatedSolid.Primitives.Add(new Plane(new List<TriangleFace> { faces[i], faces[i + 1] }));
             }
             return _tessellatedSolid;
@@ -473,7 +473,7 @@ namespace TVGL
             var unitDir = direction.Normalize();
             int directionIndex = -1;
             bool reverse = false;
-            for(var i = 0; i < 3; i++)
+            for (var i = 0; i < 3; i++)
             {
                 if (Directions[i].IsAlignedOrReverse(direction, out reverse, smallAngle))
                 {

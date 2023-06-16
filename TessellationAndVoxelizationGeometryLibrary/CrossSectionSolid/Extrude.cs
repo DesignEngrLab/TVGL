@@ -34,7 +34,7 @@ namespace TVGL
         public static TessellatedSolid ExtrusionSolidFrom3DLoops(this IEnumerable<IEnumerable<Vector3>> loops, Vector3 extrudeDirection,
             double extrusionHeight, bool midPlane = false)
         {
-            return new TessellatedSolid(ExtrusionFacesFrom3DLoops(loops, extrudeDirection, extrusionHeight, midPlane),
+            return new TessellatedSolid(ExtrusionFacesFrom3DLoops(loops, extrudeDirection, extrusionHeight, midPlane), null,
                 TessellatedSolidBuildOptions.Minimal);
         }
 

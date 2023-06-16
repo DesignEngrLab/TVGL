@@ -744,7 +744,7 @@ namespace TVGL
                     }
                 }
 
-                var newSolid = new TessellatedSolid(seperateSolid, new TessellatedSolidBuildOptions
+                var newSolid = new TessellatedSolid(seperateSolid,null, new TessellatedSolidBuildOptions
                 {
                     FindNonsmoothEdges = false,
                     CopyElementsPassedToConstructor = false

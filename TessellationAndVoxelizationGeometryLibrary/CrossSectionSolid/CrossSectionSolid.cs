@@ -198,7 +198,7 @@ namespace TVGL
         /// <returns>TessellatedSolid.</returns>
         public TessellatedSolid ConvertToTessellatedExtrusions(bool extrudeBack, bool createFullVersion)
         {
-            return new TessellatedSolid(ConvertToFaces(extrudeBack), null, TessellatedSolidBuildOptions.Minimal);
+            return new TessellatedSolid(ConvertToFaces(extrudeBack), -1, null, TessellatedSolidBuildOptions.Minimal);
         }
 
         /// <summary>
@@ -206,7 +206,7 @@ namespace TVGL
         /// </summary>
         /// <param name="extrudeBack">if set to <c>true</c> [extrude back].</param>
         /// <returns>List&lt;System.ValueTuple&lt;Vector3, Vector3, Vector3&gt;&gt;.</returns>
-        public IEnumerable<(Vector3 A, Vector3 B, Vector3 C)> ConvertToFaces(bool extrudeBack)
+        private IEnumerable<(Vector3 A, Vector3 B, Vector3 C)> ConvertToFaces(bool extrudeBack)
         {
             //if (!Layer3D.Any()) SetAllVertices();
             var start = Layer2D.FirstOrDefault(p => p.Value.Count > 0).Key;
@@ -303,7 +303,7 @@ namespace TVGL
                 i++;
             }
 
-            return new TessellatedSolid(faces, TessellatedSolidBuildOptions.Minimal);
+            return new TessellatedSolid(faces, null, TessellatedSolidBuildOptions.Minimal);
         }
 
         /// <summary>

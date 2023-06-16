@@ -231,8 +231,8 @@ namespace TVGL
                 }
                 faceIndices[i] = (newIndices[0], newIndices[1], newIndices[2]);
             }
-            MakeVertices(coords);
-            MakeFaces(faceIndices, colors);
+            MakeVertices(coords, coords.Count);
+            MakeFaces(faceIndices, faceIndices.Count, colors);
         }
 
         /// <summary>
