@@ -179,13 +179,27 @@ namespace TVGL
         /// <param name="filename">The filename.</param>
         /// <param name="comments">The comments.</param>
         /// <param name="language">The language.</param>
-        public TessellatedSolid(IList<Vector3> vertices, IList<(int, int, int)> faceToVertexIndices,
+        public TessellatedSolid(ICollection<Vector3> vertices, ICollection<(int, int, int)> faceToVertexIndices,
             IList<Color> colors, TessellatedSolidBuildOptions buildOptions = null, UnitType units = UnitType.unspecified,
             string name = "", string filename = "", List<string> comments = null, string language = "")
             : this(vertices, vertices.Count, faceToVertexIndices, faceToVertexIndices.Count, colors, buildOptions,
                   units, name, filename, comments, language)
         { }
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="TessellatedSolid"/> class.
+        /// </summary>
+        /// <param name="vertices">The vertices.</param>
+        /// <param name="numOfVertices">The number of vertices.</param>
+        /// <param name="faceToVertexIndices">The face to vertex indices.</param>
+        /// <param name="numOfFaces">The number of faces.</param>
+        /// <param name="colors">The colors.</param>
+        /// <param name="buildOptions">The build options.</param>
+        /// <param name="units">The units.</param>
+        /// <param name="name">The name.</param>
+        /// <param name="filename">The filename.</param>
+        /// <param name="comments">The comments.</param>
+        /// <param name="language">The language.</param>
         public TessellatedSolid(IEnumerable<Vector3> vertices, int numOfVertices,
             IEnumerable<(int, int, int)> faceToVertexIndices, int numOfFaces,
             IList<Color> colors, TessellatedSolidBuildOptions buildOptions = null, UnitType units = UnitType.unspecified,
@@ -194,40 +208,8 @@ namespace TVGL
         {
             MakeVertices(vertices, numOfVertices);
             DefineAxisAlignedBoundingBoxAndTolerance(Vertices.Select(v => v.Coordinates));
-            //Complete Construction with Common Functions
             MakeFaces(faceToVertexIndices, numOfFaces, colors);
             CompleteInitiation(false, buildOptions);
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="TessellatedSolid"/> class.
-        /// </summary>
-        /// <param name="vertices">The vertices.</param>
-        /// <param name="primitives">The primitives.</param>
-        /// <param name="units">The units.</param>
-        /// <param name="name">The name.</param>
-        /// <param name="filename">The filename.</param>
-        /// <param name="comments">The comments.</param>
-        /// <param name="language">The language.</param>
-        public TessellatedSolid(Vertex[] vertices, List<PrimitiveSurface> primitives,
-            TessellatedSolidBuildOptions buildOptions = null, UnitType units = UnitType.unspecified,
-            string name = "", string filename = "", List<string> comments = null, string language = "")
-            : base(units, name, filename, comments, language)
-        {
-            //Set the list of vertices and primitives directly to reduce garbage
-            Vertices = vertices;
-            Primitives = primitives;
-
-            //Make the faces from the primitives.
-            HasUniformColor = true;
-            Faces = new TriangleFace[NumberOfFaces];
-            var faceIndex = 0;
-            foreach (var primitive in Primitives)
-                foreach (var face in primitive.Faces)
-                    Faces[faceIndex++] = face;
-
-            //Set the volume and convex hull vertices
-            ConvexHull = new TVGLConvexHull(Vertices, SameTolerance);
         }
 
         /// <summary>
@@ -338,7 +320,7 @@ namespace TVGL
         /// <param name="reader">The reader.</param>
         /// <param name="index">The index.</param>
         /// <exception cref="System.Exception">Need to add deserialize casting for primitive type: " + primitiveType</exception>
-        public void StreamRead(JsonTextReader reader, out int index)
+        internal void StreamRead(JsonTextReader reader, out int index, TessellatedSolidBuildOptions tsBuildOptions)
         {
             index = -1;
             var jsonSerializer = new Newtonsoft.Json.JsonSerializer();
@@ -444,12 +426,9 @@ namespace TVGL
 
             //Get the max min bounds and set tolerance
             DefineAxisAlignedBoundingBoxAndTolerance();
-
+            DoublyConnectVerticesToFaces();
             //Build edges, convex hull, and anything else we need.
-            CompleteInitiation(false, new TessellatedSolidBuildOptions
-            {
-
-            });
+            CompleteInitiation(false, tsBuildOptions);
 
             //Lastly, assign faces and vertices to the primitives
             foreach (var prim in Primitives)
@@ -466,15 +445,13 @@ namespace TVGL
         {
             JArray jArray = (JArray)serializationData["VertexCoords"];
             var vertexArray = jArray.ToObject<double[]>();
-            var coords = new Vector3[vertexArray.Length / 3];
-            for (int i = 0; i < vertexArray.Length / 3; i++)
-                coords[i] = new Vector3(vertexArray[3 * i], vertexArray[3 * i + 1], vertexArray[3 * i + 2]);
+            var numVertices = vertexArray.Length / 3;
+            var coords = GetCoordsFromJson(vertexArray, numVertices);
 
             jArray = (JArray)serializationData["FaceIndices"];
             var faceIndicesArray = jArray.ToObject<int[]>();
-            var faceIndices = new (int, int, int)[faceIndicesArray.Length / 3];
-            for (int i = 0; i < faceIndicesArray.Length / 3; i++)
-                faceIndices[i] = (faceIndicesArray[3 * i], faceIndicesArray[3 * i + 1], faceIndicesArray[3 * i + 2]);
+            var numFaces = faceIndicesArray.Length / 3;
+            var faceIndices = GetFaceIndicesFromJson(faceIndicesArray, numFaces);
 
             jArray = serializationData["Colors"] as JArray;
             Color[] colors;
@@ -487,25 +464,29 @@ namespace TVGL
                 for (int i = 0; i < colorStringsArray.Length; i++)
                     colors[i] = new Color(colorStringsArray[i]);
             }
-            DefineAxisAlignedBoundingBoxAndTolerance(coords);
-            MakeVertices(coords, coords.Length);
-            MakeFaces(faceIndices, faceIndices.Length, colors);
-            MakeEdges();
 
-            ConvexHull = new TVGLConvexHull(this);
-            foreach (var cvxHullPt in ConvexHull.Vertices)
-                cvxHullPt.PartOfConvexHull = true;
-            foreach (var face in Faces.Where(face => face.Vertices.All(v => v.PartOfConvexHull)))
-            {
-                face.PartOfConvexHull = true;
-                foreach (var e in face.Edges)
-                    if (e != null) e.PartOfConvexHull = true;
-            }
+            MakeVertices(coords, numVertices);
+            DefineAxisAlignedBoundingBoxAndTolerance(Vertices.Select(v => v.Coordinates));
+            MakeFaces(faceIndices, numFaces, colors);
+            CompleteInitiation(false, (TessellatedSolidBuildOptions)context.Context);
+
             if (Primitives != null && Primitives.Any())
             {
                 foreach (var surface in Primitives)
                     surface.CompletePostSerialization(this);
             }
+        }
+
+        private static IEnumerable<(int, int, int)> GetFaceIndicesFromJson(int[] faceIndicesArray, int numFaces)
+        {
+            for (int i = 0; i < faceIndicesArray.Length / 3; i++)
+                yield return (faceIndicesArray[3 * i], faceIndicesArray[3 * i + 1], faceIndicesArray[3 * i + 2]);
+        }
+
+        private static IEnumerable<Vector3> GetCoordsFromJson(double[] vertexArray, int numVertices)
+        {
+            for (int i = 0; i < numVertices; i++)
+                yield return new Vector3(vertexArray[3 * i], vertexArray[3 * i + 1], vertexArray[3 * i + 2]);
         }
 
         /// <summary>
@@ -583,7 +564,11 @@ namespace TVGL
                     }
                 }
             }
-            else Faces = faces as TriangleFace[] ?? faces.ToArray();
+            else
+            {
+                Faces = faces as TriangleFace[] ?? faces.ToArray();
+                DoublyConnectVerticesToFaces();
+            }
             CompleteInitiation(false, buildOptions);
         }
 
@@ -597,7 +582,7 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Doublies the connect vertices to faces.
+        /// Connect vertices baco to ths faces.
         /// </summary>
         public void DoublyConnectVerticesToFaces()
         {
@@ -611,15 +596,19 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Completes the initiation.
+        /// Completes the initiation. This address all the optional methods mentioned in TessellatedSolidBuildOptions
+        /// with the exception of CopyElementsPassedToConstructor. These are actually handled in the main constructor
+        /// body - but only two of them use it: the one accepting faces and vertices (line 525) or the one accepting
+        /// vertices and primitives (which actually include the faces as wel) which is in line 212.
         /// </summary>
         /// <param name="fromSTL">if set to <c>true</c> [from STL].</param>
         private void CompleteInitiation(bool fromSTL, TessellatedSolidBuildOptions buildOptions)
         {
-            if (Vertices[0].Faces == null || !Vertices[0].Faces.Any())
-                DoublyConnectVerticesToFaces();
+            if (buildOptions == null) buildOptions = TessellatedSolidBuildOptions.Default;
+            this.CheckModelIntegrity();
             if (buildOptions.PredefineAllEdges == DefineEdgesOptions.True ||
-                (buildOptions.PredefineAllEdges == DefineEdgesOptions.IfNotLargeModel && NumberOfFaces < Constants.MaxNumberFacesDefaultMakeEdges))
+                (buildOptions.PredefineAllEdges == DefineEdgesOptions.IfNotLargeModel
+                && NumberOfFaces < Constants.MaxNumberFacesDefaultMakeEdges))
                 try
                 {
                     MakeEdges(fromSTL);
@@ -628,10 +617,28 @@ namespace TVGL
                 {
                     throw new Exception("There was an error in making the edges in the tessellated solid.");
                 }
-            if (buildOptions.AutomaticallyRepairBadFaces)
+            if (buildOptions.AutomaticallyRepairBadFaces && Errors.EdgesWithBadAngle != null)
                 try
                 {
-                    this.CheckModelIntegrity();
+                    this.FlipFacesBasedOnBadAngles();
+                }
+                catch
+                {
+                    //Continue
+                }
+            if (buildOptions.AutomaticallyRepairHoles)
+                try
+                {
+                    this.RepairHoles();
+                }
+                catch
+                {
+                    //Continue
+                }
+            if (buildOptions.AutomaticallyInvertNegativeSolids && Errors.ModelIsInsideOut)
+                try
+                {
+                    this.TurnModelInsideOut();
                 }
                 catch
                 {
@@ -644,9 +651,19 @@ namespace TVGL
                 BuildConvexHull();
             }
             if (buildOptions.FindNonsmoothEdges && _edges != null)
-            {
+                try
+                {
+                    this.FindNonSmoothEdges();
+                }
+                catch
+                {
+                    //Continue
+                }
+        }
 
-            }
+        private void RepairHoles()
+        {
+            throw new NotImplementedException();
         }
 
         internal void BuildConvexHull()
@@ -693,34 +710,6 @@ namespace TVGL
             Bounds = new[] { new Vector3(xMin, yMin, zMin), new Vector3(xMax, yMax, zMax) };
             var averageDimension = 0.333 * ((XMax - XMin) + (YMax - YMin) + (ZMax - ZMin));
             SameTolerance = averageDimension * Constants.BaseTolerance;
-        }
-
-        /// <summary>
-        /// Makes the faces, avoiding duplicates.
-        /// </summary>
-        /// <param name="vertsPerFace">The verts per face.</param>
-        /// <param name="colors">The colors.</param>
-        internal void MakeFacesOLDSTL(IEnumerable<List<Vector3>> vertsPerFace, IList<Color> colors)
-        {
-            IList<List<Vector3>> vertexLocations = vertsPerFace as IList<List<Vector3>> ?? vertsPerFace.ToArray();
-            HasUniformColor = true;
-            if (colors == null || !colors.Any() || colors.All(c => c == null))
-                SolidColor = new Color(Constants.DefaultColor);
-            else SolidColor = colors[0];
-            NumberOfFaces = vertexLocations.Count;
-            Faces = new TriangleFace[NumberOfFaces];
-            for (var i = 0; i < NumberOfFaces; i++)
-            {
-                var color = SolidColor;
-                if (colors != null)
-                {
-                    var j = i < colors.Count - 1 ? i : colors.Count - 1;
-                    if (colors[j] != null) color = colors[j];
-                    if (!SolidColor.Equals(color)) HasUniformColor = false;
-                }
-                Faces[i] = new TriangleFace(vertexLocations[i].Select(v => new Vertex(v)));
-                Faces[i].IndexInList = i;
-            }
         }
 
 
@@ -806,28 +795,6 @@ namespace TVGL
                 Faces[i].IndexInList = i;
         }
 
-        /// <summary>
-        /// Struct faceInfo
-        /// </summary>
-        public struct faceInfo
-        {
-            /// <summary>
-            /// a
-            /// </summary>
-            public int A;
-            /// <summary>
-            /// The b
-            /// </summary>
-            public int B;
-            /// <summary>
-            /// The c
-            /// </summary>
-            public int C;
-            /// <summary>
-            /// The index
-            /// </summary>
-            public int Index;
-        }
 
         /// <summary>
         /// Faces the checksum.
@@ -1607,52 +1574,6 @@ namespace TVGL
             volume *= oneThird;
             center = new Vector3(xCenter * oneTwelth, yCenter * oneTwelth, zCenter * oneTwelth) / volume;
         }
-
-        //ToDo: Remove this function if there is no need for it. Why does this function repeat the volume & center calculation? Does this improve accuracy somehow? 
-        /// <summary>
-        /// Calculates the volume and center old.
-        /// </summary>
-        /// <param name="faces">The faces.</param>
-        /// <param name="tolerance">The tolerance.</param>
-        /// <param name="volume">The volume.</param>
-        /// <param name="center">The center.</param>
-        public static void CalculateVolumeAndCenter_Old(IEnumerable<TriangleFace> faces, double tolerance, out double volume, out Vector3 center)
-        {
-            center = new Vector3();
-            volume = 0.0;
-            double oldVolume;
-            var iterations = 0;
-            Vector3 oldCenter1 = center;
-            if (faces == null) return;
-            var facesList = faces as IList<TriangleFace> ?? faces.ToList();
-            do
-            {
-                oldVolume = volume;
-                var oldCenter2 = oldCenter1;
-                oldCenter1 = center;
-                volume = 0;
-                center = Vector3.Zero;
-                foreach (var face in facesList)
-                {
-                    if (face.Area.IsNegligible(tolerance)) continue; //Ignore faces with zero area, since their Normals are not set.
-                    var tetrahedronVolume = face.Area * face.Normal.Dot(face.A.Coordinates - oldCenter1) / 3;
-                    // this is the volume of a tetrahedron from defined by the face and the origin {0,0,0}. The origin would be part of the second term
-                    // in the dotproduct, "face.Normal.Dot(face.A.Position - ORIGIN))", but clearly there is no need to subtract
-                    // {0,0,0}. Note that the volume of the tetrahedron could be negative. This is fine as it ensures that the origin has no influence
-                    // on the volume.
-                    volume += tetrahedronVolume;
-                    center += new Vector3(
-                        (oldCenter1[0] + face.A.X + face.B.X + face.C.X) * tetrahedronVolume / 4,
-                        (oldCenter1[1] + face.A.Y + face.B.Y + face.C.Y) * tetrahedronVolume / 4,
-                        (oldCenter1[2] + face.A.Z + face.B.Z + face.C.Z) * tetrahedronVolume / 4);
-                    // center is found by a weighted sum of the centers of each tetrahedron. The weighted sum coordinate are collected here.
-                }
-                if (iterations > 10 || volume < 0) center = 0.5 * (oldCenter1 + oldCenter2);
-                else center = center / volume;
-                iterations++;
-            } while (Math.Abs(oldVolume - volume) > tolerance && iterations <= 20);
-        }
-
         /// <summary>
         /// Calculates the surface area.
         /// </summary>

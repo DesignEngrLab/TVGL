@@ -11,6 +11,7 @@
 // </copyright>
 // <summary></summary>
 // ***********************************************************************
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -32,7 +33,7 @@ namespace TVGL
         /// <param name="ts">The ts.</param>
         /// <param name="repairAutomatically">The repair automatically.</param>
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
-        public static bool CheckModelIntegrity(this TessellatedSolid ts, bool repairAutomatically = true)
+        public static bool CheckModelIntegrity(this TessellatedSolid ts)
         {
             Message.output("Model Integrity Check...", 3);
             ts.Errors = new TessellationError { NoErrors = true };
@@ -77,30 +78,6 @@ namespace TVGL
                     StoreEdgeDoesNotLinkBackToVertex(ts, vertex, edge);
                 foreach (var face in vertex.Faces.Where(face => !face.Vertices.Contains(vertex)))
                     StoreFaceDoesNotLinkBackToVertex(ts, vertex, face);
-            }
-
-            //Always perform any "repair" functions for issues that are not considered errors
-            var repairSuccess = SetNegligibleAreaFaceNormals(ts);
-            if (repairSuccess)
-            {
-                if (ts.Errors.NoErrors)
-                {
-                    Message.output("** Model contains no errors.", 3);
-                    ts.Errors = null;
-                    return true;
-                }
-                if (repairAutomatically)
-                {
-                    Message.output("Some errors found. Attempting to Repair...", 2);
-                    var success = Repair(ts);
-                    if (success)
-                    {
-                        ts.Errors = null;
-                        Message.output("Repairs functions completed successfully.", 2);
-                    }
-                    else Message.output("Repair did not successfully fix all the problems.", 1);
-                    return CheckModelIntegrity(ts, false);
-                }
             }
 
             #region Report details
@@ -394,35 +371,6 @@ namespace TVGL
         #endregion Error Storing
 
         #region Repair Functions
-
-        /// <summary>
-        /// Repairs the specified ts.
-        /// </summary>
-        /// <param name="ts">The ts.</param>
-        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
-        public static bool Repair(this TessellatedSolid ts)
-        {
-            if (ts.Errors == null)
-            {
-                Message.output("No errors to fix!", 4);
-                return true;
-            }
-            Message.output("Some errors found. Attempting to Repair...", 2);
-            var completelyRepaired = true;
-            if (ts.Errors.ModelIsInsideOut)
-                completelyRepaired = ts.TurnModelInsideOut();
-            if (ts.Errors.EdgesWithBadAngle != null)
-                completelyRepaired = completelyRepaired && FlipFacesBasedOnBadAngles(ts);
-            //Note that negligible faces are not truly errors, so they are not repaired
-            if (completelyRepaired)
-            {
-                ts.Errors = null;
-                Message.output("Repairs functions completed successfully (errors may still occur).", 2);
-            }
-            else Message.output("Repair did not successfully fix all the problems.", 1);
-            return completelyRepaired;
-        }
-
         /// <summary>
         /// Sets the face normal for any negligible area faces that have not already been set.
         /// The neighbor's normal (in the next 2 lines) if the original face has no area (collapsed to a line).
@@ -455,7 +403,7 @@ namespace TVGL
         /// </summary>
         /// <param name="ts">The ts.</param>
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
-        private static bool FlipFacesBasedOnBadAngles(TessellatedSolid ts)
+        internal static bool FlipFacesBasedOnBadAngles(this TessellatedSolid ts)
         {
             var edgesWithBadAngles = new HashSet<Edge>(ts.Errors.EdgesWithBadAngle);
             var facesToConsider = new HashSet<TriangleFace>(
@@ -488,6 +436,42 @@ namespace TVGL
             return true;
         }
 
+
         #endregion Repair Functions
+        /// <summary>
+        /// Finds all non smooth edges in the tessellated solid.
+        /// </summary>
+        /// <param name="ts">The ts.</param>
+        /// <param name="primitives">The primitives.</param>
+        internal static void FindNonSmoothEdges(this TessellatedSolid ts)
+        {
+            var characteristicLength = Math.Sqrt((ts.Bounds[1] - ts.Bounds[0]).ToArray().Sum(p => p * p));
+            var maxRadius = 33 * characteristicLength; //so a 1x1x1 part would have a max primitive radius of 100
+            var error = characteristicLength / 2000;
+            if (ts.NonsmoothEdges == null) ts.NonsmoothEdges = new List<EdgePath>();
+            var nonSmoothHash = new HashSet<Edge>(ts.NonsmoothEdges.SelectMany(ep => ep.EdgeList));
+            // first, define any edges for any existing primitive surfaces as non-smooth
+            foreach (var primitive in ts.Primitives)
+                foreach (var outerEdge in primitive.OuterEdges)
+                    if (!nonSmoothHash.Contains(outerEdge))
+                    {
+                        nonSmoothHash.Add(outerEdge);
+                        var edgePath = new EdgePath();
+                        edgePath.AddEnd(outerEdge);
+                        ts.NonsmoothEdges.Add(edgePath);
+                    }
+            // then, add any conventional edges that have an abrupt change in angle
+            foreach (var e in ts.Edges)
+            {
+                if (nonSmoothHash.Contains(e)) continue;
+                if (e.IsDiscontinous(ts.SameTolerance, error))
+                {
+                    nonSmoothHash.Add(e);
+                    var edgePath = new EdgePath();
+                    edgePath.AddEnd(e);
+                    ts.NonsmoothEdges.Add(edgePath);
+                }
+            }
+        }
     }
 }
