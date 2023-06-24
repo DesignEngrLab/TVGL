@@ -47,9 +47,8 @@ namespace TVGL
         internal void Invert()
         {
             _normal *= -1;
-            //var firstVertex = face.Vertices[0];
-            //face.Vertices.RemoveAt(0);
-            //face.Vertices.Insert(1, firstVertex);
+            var tempVertex = C;
+            C = A; A=tempVertex;
             Vertices.Reverse();
             Edges.Reverse();
             _curvature = (CurvatureType)(-1 * (int)_curvature);

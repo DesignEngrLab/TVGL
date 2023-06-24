@@ -40,12 +40,14 @@ namespace TVGL
         /// The expansion factor
         /// </summary>
         const double expansionFactor = 1.78; // it takes four to get to 10
+
+
         /// <summary>
         /// Makes the edges.
         /// </summary>
         /// <param name="fromSTL">if set to <c>true</c> [from STL].</param>
         /// <exception cref="System.Exception"></exception>
-        internal void MakeEdges(bool fromSTL = false)
+        internal void MakeEdges()
         {
             // #1 define edges from faces - this leads to the good, the bad (single-sided), and the ugly
             // (more than 2 faces per edge)
@@ -122,7 +124,7 @@ namespace TVGL
             if (borderEdges.Count > 0)
             {
                 //Presenter.ShowVertexPathsWithSolid(borderEdges.Select(eg => new[] { eg.From.Coordinates, eg.To.Coordinates }), new[] { this });
-                Errors ??= new TessellationError();
+                Errors ??= new TessellationBuildAndRepair();
                 if (Errors.SingledSidedEdges == null)
                     Errors.SingledSidedEdges = new List<Edge>(borderEdges);
                 else Errors.SingledSidedEdges.AddRange(borderEdges);

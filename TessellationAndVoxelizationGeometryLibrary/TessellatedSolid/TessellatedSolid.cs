@@ -17,7 +17,6 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Runtime.Serialization;
 
 namespace TVGL
@@ -56,18 +55,7 @@ namespace TVGL
         /// </summary>
         /// <value>The edges.</value>
         [JsonIgnore]
-        public Edge[] Edges
-        {
-            get
-            {
-                if (_edges == null) MakeEdges();
-                return _edges;
-            }
-        }
-        /// <summary>
-        /// The edges
-        /// </summary>
-        private Edge[] _edges;
+        public Edge[] Edges { get; internal set; }
 
         /// <summary>
         /// Gets the vertices.
@@ -109,7 +97,7 @@ namespace TVGL
         /// </summary>
         /// <value>The errors.</value>
         [JsonIgnore]
-        public TessellationError Errors { get; internal set; }
+        public TessellationBuildAndRepair Errors { get; internal set; }
 
         /// <summary>
         /// Gets or sets the nonsmooth edges, which are the edges that do not exhibit C1 or C2 continuity.
@@ -163,7 +151,7 @@ namespace TVGL
             MakeVertices(vertsPerFaceList, scaleFactor, out var faceToVertexIndices);
             //Complete Construction with Common Functions
             MakeFaces(faceToVertexIndices, numOfFaces, colors);
-            CompleteInitiation(true, buildOptions);
+            TessellationBuildAndRepair.CompleteBuildOptions(this, buildOptions);
         }
 
         /// <summary>
@@ -209,7 +197,7 @@ namespace TVGL
             MakeVertices(vertices, numOfVertices);
             DefineAxisAlignedBoundingBoxAndTolerance(Vertices.Select(v => v.Coordinates));
             MakeFaces(faceToVertexIndices, numOfFaces, colors);
-            CompleteInitiation(false, buildOptions);
+            TessellationBuildAndRepair.CompleteBuildOptions(this, buildOptions);
         }
 
         /// <summary>
@@ -428,7 +416,7 @@ namespace TVGL
             DefineAxisAlignedBoundingBoxAndTolerance();
             DoublyConnectVerticesToFaces();
             //Build edges, convex hull, and anything else we need.
-            CompleteInitiation(false, tsBuildOptions);
+            TessellationBuildAndRepair.CompleteBuildOptions(this, tsBuildOptions);
 
             //Lastly, assign faces and vertices to the primitives
             foreach (var prim in Primitives)
@@ -468,7 +456,7 @@ namespace TVGL
             MakeVertices(coords, numVertices);
             DefineAxisAlignedBoundingBoxAndTolerance(Vertices.Select(v => v.Coordinates));
             MakeFaces(faceIndices, numFaces, colors);
-            CompleteInitiation(false, (TessellatedSolidBuildOptions)context.Context);
+            TessellationBuildAndRepair.CompleteBuildOptions(this, (TessellatedSolidBuildOptions)context.Context);
 
             if (Primitives != null && Primitives.Any())
             {
@@ -569,7 +557,7 @@ namespace TVGL
                 Faces = faces as TriangleFace[] ?? faces.ToArray();
                 DoublyConnectVerticesToFaces();
             }
-            CompleteInitiation(false, buildOptions);
+            TessellationBuildAndRepair.CompleteBuildOptions(this, buildOptions);
         }
 
         /// <summary>
@@ -577,8 +565,9 @@ namespace TVGL
         /// </summary>
         public void MakeEdgesIfNonExistent()
         {
-            if (_edges != null && _edges.Length > 0) return;
-            MakeEdges(false);
+            if (Edges != null && Edges.Length > 0) return;
+            if (Errors!=null)
+                Errors.MakeEdges();
         }
 
         /// <summary>
@@ -595,91 +584,6 @@ namespace TVGL
             }
         }
 
-        /// <summary>
-        /// Completes the initiation. This address all the optional methods mentioned in TessellatedSolidBuildOptions
-        /// with the exception of CopyElementsPassedToConstructor. These are actually handled in the main constructor
-        /// body - but only two of them use it: the one accepting faces and vertices (line 525) or the one accepting
-        /// vertices and primitives (which actually include the faces as wel) which is in line 212.
-        /// </summary>
-        /// <param name="fromSTL">if set to <c>true</c> [from STL].</param>
-        private void CompleteInitiation(bool fromSTL, TessellatedSolidBuildOptions buildOptions)
-        {
-            if (buildOptions == null) buildOptions = TessellatedSolidBuildOptions.Default;
-            this.CheckModelIntegrity();
-            if (buildOptions.PredefineAllEdges == DefineEdgesOptions.True ||
-                (buildOptions.PredefineAllEdges == DefineEdgesOptions.IfNotLargeModel
-                && NumberOfFaces < Constants.MaxNumberFacesDefaultMakeEdges))
-                try
-                {
-                    MakeEdges(fromSTL);
-                }
-                catch
-                {
-                    throw new Exception("There was an error in making the edges in the tessellated solid.");
-                }
-            if (buildOptions.AutomaticallyRepairBadFaces && Errors.EdgesWithBadAngle != null)
-                try
-                {
-                    this.FlipFacesBasedOnBadAngles();
-                }
-                catch
-                {
-                    //Continue
-                }
-            if (buildOptions.AutomaticallyRepairHoles)
-                try
-                {
-                    this.RepairHoles();
-                }
-                catch
-                {
-                    //Continue
-                }
-            if (buildOptions.AutomaticallyInvertNegativeSolids && Errors.ModelIsInsideOut)
-                try
-                {
-                    this.TurnModelInsideOut();
-                }
-                catch
-                {
-                    //Continue
-                }
-
-            //If the volume is zero, creating the convex hull may cause a null exception
-            if (buildOptions.DefineConvexHull && !this.Volume.IsNegligible())
-            {
-                BuildConvexHull();
-            }
-            if (buildOptions.FindNonsmoothEdges && _edges != null)
-                try
-                {
-                    this.FindNonSmoothEdges();
-                }
-                catch
-                {
-                    //Continue
-                }
-        }
-
-        private void RepairHoles()
-        {
-            throw new NotImplementedException();
-        }
-
-        internal void BuildConvexHull()
-        {
-            //Otherwise, create the convex hull and connect the vertices and faces that belong to the hull.
-            ConvexHull = new TVGLConvexHull(this);
-            if (ConvexHull.Vertices != null)
-                foreach (var cvxHullPt in ConvexHull.Vertices)
-                    cvxHullPt.PartOfConvexHull = true;
-            foreach (var face in Faces.Where(face => face.Vertices.All(v => v.PartOfConvexHull)))
-            {
-                face.PartOfConvexHull = true;
-                foreach (var e in face.Edges)
-                    if (e != null) e.PartOfConvexHull = true;
-            }
-        }
 
         #endregion
 
@@ -745,9 +649,7 @@ namespace TVGL
                 if (duplicateFaceCheck)
                 {
                     // first check to be sure that this is a new face and not a duplicate or a degenerate
-                    var orderedIndices =
-                        new List<int>(faceToVertexIndexList.EnumerateThruple().Select(index => Vertices[index].IndexInList));
-                    orderedIndices.Sort();
+                    var orderedIndices = faceToVertexIndexList.EnumerateThruple().OrderBy(index => index).ToList();
                     while (orderedIndices.Count > checksumMultiplier.Count)
                         checksumMultiplier.Add((long)Math.Pow(NumberOfVertices, checksumMultiplier.Count));
                     var checksum = orderedIndices.Select((index, p) => index * checksumMultiplier[p]).Sum();
@@ -772,7 +674,9 @@ namespace TVGL
                     var face = new TriangleFace(faceVertices, doublyLinkToVertices);
                     if (!HasUniformColor) face.Color = color;
                     listOfFaces.Add(face);
+                    face.IndexInList = listOfFaces.Count;
                 }
+                // todo: can stl have polygons greater than triangle?! if not, then simplify this code. it's unnecessaril complicated
                 else
                 {
                     var normal = MiscFunctions.DetermineNormalForA3DPolygon(faceVertices, faceVertices.Length, out _, Vector3.Null, out _);
@@ -784,15 +688,14 @@ namespace TVGL
                         if (!HasUniformColor) face.Color = color;
                         listOfFaces.Add(face);
                         listOfFlatFaces.Add(face);
+                        face.IndexInList = listOfFaces.Count;
                     }
                     Primitives ??= new List<PrimitiveSurface>();
                     Primitives.Add(new Plane(listOfFlatFaces));
                 }
             }
             Faces = listOfFaces.ToArray();
-            NumberOfFaces = Faces.GetLength(0);
-            for (i = 0; i < NumberOfFaces; i++)
-                Faces[i].IndexInList = i;
+            NumberOfFaces = Faces.Length;
         }
 
 
@@ -1200,11 +1103,11 @@ namespace TVGL
         {
             var newEdges = new Edge[NumberOfEdges + 1];
             for (var i = 0; i < NumberOfEdges; i++)
-                newEdges[i] = _edges[i];
+                newEdges[i] = Edges[i];
             newEdges[NumberOfEdges] = newEdge;
             if (newEdge.EdgeReference <= 0) SetAndGetEdgeChecksum(newEdge);
             newEdge.IndexInList = NumberOfEdges;
-            _edges = newEdges;
+            Edges = newEdges;
             NumberOfEdges++;
         }
 
@@ -1224,7 +1127,7 @@ namespace TVGL
                 if (newEdges[NumberOfEdges + i].EdgeReference <= 0) SetAndGetEdgeChecksum(newEdges[NumberOfEdges + i]);
                 newEdges[NumberOfEdges + i].IndexInList = NumberOfEdges;
             }
-            _edges = newEdges;
+            Edges = newEdges;
             NumberOfEdges += numToAdd;
         }
 
@@ -1253,7 +1156,7 @@ namespace TVGL
                 newEdges[i] = Edges[i + 1];
                 newEdges[i].IndexInList = i;
             }
-            _edges = newEdges;
+            Edges = newEdges;
         }
 
         /// <summary>
@@ -1288,7 +1191,7 @@ namespace TVGL
                 newEdges[i] = Edges[i + offset];
                 newEdges[i].IndexInList = i;
             }
-            _edges = newEdges;
+            Edges = newEdges;
         }
 
         /// <summary>
@@ -1349,7 +1252,7 @@ namespace TVGL
                 AutomaticallyRepairHoles = false,
                 CopyElementsPassedToConstructor = true,
                 DefineConvexHull = ConvexHull != null,
-                PredefineAllEdges = DefineEdgesOptions.False,
+                PredefineAllEdges = false,
                 FindNonsmoothEdges = false
             }, Faces.Select(p => p.Color).ToList(), Units, Name + "_Copy",
                 FileName, Comments, Language);
@@ -1361,9 +1264,9 @@ namespace TVGL
                     copy.AddPrimitive(surfCopy);
                 }
             }
-            if (_edges != null && _edges.Any())
+            if (Edges != null && Edges.Any())
             {
-                copy._edges = new Edge[Edges.Length];
+                copy.Edges = new Edge[Edges.Length];
                 for (int i = 0; i < Edges.Length; i++)
                 {
                     Edge edge = Edges[i];
@@ -1485,7 +1388,6 @@ namespace TVGL
             if (Primitives != null)
                 foreach (var primitive in Primitives)
                     primitive.Transform(transformMatrix);
-            this.SetNegligibleAreaFaceNormals(true);
         }
 
         /// <summary>
@@ -1509,12 +1411,29 @@ namespace TVGL
         {
             _volume = -1 * _volume;
             _inertiaTensor = Matrix3x3.Null;
+            //todo
             foreach (var face in Faces) face.Invert();
 
-            if (_edges != null)
+            if (Edges != null)
                 foreach (var edge in Edges) edge.Invert();
             return true;
         }
+
+        internal void BuildConvexHull()
+        {
+            //Otherwise, create the convex hull and connect the vertices and faces that belong to the hull.
+            ConvexHull = new TVGLConvexHull(this);
+            if (ConvexHull.Vertices != null)
+                foreach (var cvxHullPt in ConvexHull.Vertices)
+                    cvxHullPt.PartOfConvexHull = true;
+            foreach (var face in Faces.Where(face => face.Vertices.All(v => v.PartOfConvexHull)))
+            {
+                face.PartOfConvexHull = true;
+                foreach (var e in face.Edges)
+                    if (e != null) e.PartOfConvexHull = true;
+            }
+        }
+
 
         /// <summary>
         /// Calculates the center.

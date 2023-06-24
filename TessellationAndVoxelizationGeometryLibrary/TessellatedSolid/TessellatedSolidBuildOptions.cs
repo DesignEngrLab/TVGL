@@ -22,15 +22,23 @@ namespace TVGL
         public static TessellatedSolidBuildOptions Minimal { get; } =
             new TessellatedSolidBuildOptions
             {
+                CheckModelIntegrity = false,
                 AutomaticallyRepairHoles = false,
                 AutomaticallyInvertNegativeSolids = false,
                 AutomaticallyRepairBadFaces = false,
                 CopyElementsPassedToConstructor = false,
                 DefineConvexHull = false,
                 FindNonsmoothEdges = false,
-                PredefineAllEdges = DefineEdgesOptions.False,
+                PredefineAllEdges = false,
             };
 
+
+        /// <summary>Gets or sets whether the model is check for connectivity and water-tightness.
+        /// Note this check is n log n, so it may be slow for large models, but it is necessary to
+        /// make edges and solve most geometry functions (e.g. splitting or slicing). If you are only 
+        /// showing the model and not calling any operations then this can be false.
+        /// </summary>
+        public bool CheckModelIntegrity { get; set; } = true;
 
         /// <summary>Gets or sets whether holes in the tessellated solid will be automatically patched when reading in. 
         /// Note that this should be false if tessellated is not a solid, but rather a surface.</summary>
@@ -67,13 +75,7 @@ namespace TVGL
         /// <summary>Gets or sets whether all edges should be pre-defined for the solid no matter how large it is. 
         /// When false, edges will only be defined when the model has less 10000 edges.
         /// </summary>
-        public DefineEdgesOptions PredefineAllEdges { get; set; } = DefineEdgesOptions.IfNotLargeModel;
+        public bool PredefineAllEdges { get; set; } = true;
     }
 
-    public enum DefineEdgesOptions
-    {
-        False,
-        True,
-        IfNotLargeModel
-    }
 }
