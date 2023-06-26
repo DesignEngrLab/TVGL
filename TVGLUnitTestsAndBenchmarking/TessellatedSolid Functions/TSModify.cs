@@ -48,7 +48,7 @@ namespace TVGLUnitTestsAndBenchmarking
                     Console.WriteLine("    ===>" + filename + " has errors: " + solid.Errors.ToString());
                    // continue;
                 }
-                solid.Repair();
+                solid.Errors.AutoRepair();
                 solid.SetToOriginAndSquare(out _);
                     Presenter.ShowAndHang(solid);  
                 IO.Save(solid,dir+ "_elephant.stl");

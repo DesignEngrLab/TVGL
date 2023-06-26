@@ -121,17 +121,10 @@ namespace TVGL
             foreach (var tuple in edgeList)
                 tuple.Item1.DoublyLinkVertices();
             // finally, 
-            if (borderEdges.Count > 0)
-            {
-                //Presenter.ShowVertexPathsWithSolid(borderEdges.Select(eg => new[] { eg.From.Coordinates, eg.To.Coordinates }), new[] { this });
-                Errors ??= new TessellationBuildAndRepair();
-                if (Errors.SingledSidedEdges == null)
-                    Errors.SingledSidedEdges = new List<Edge>(borderEdges);
-                else Errors.SingledSidedEdges.AddRange(borderEdges);
-            }
+
             // now, we have list, we can do some finally cleanup and stitching
             NumberOfEdges = edgeList.Count;
-            _edges = new Edge[NumberOfEdges];
+          var  _edges = new Edge[NumberOfEdges];
             for (var i = 0; i < NumberOfEdges; i++)
             {
                 //stitch together edges and faces. Note, the first face is already attached to the edge, due to the edge constructor

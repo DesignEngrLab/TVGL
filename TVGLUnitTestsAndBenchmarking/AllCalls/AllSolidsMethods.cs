@@ -12,12 +12,12 @@ namespace TVGLUnitTestsAndBenchmarking
             var ts = new TessellatedSolid();
             ts = new TessellatedSolid(new Vector3[0], new[] { (1, 2, 3) }, new TVGL.Color[0], TessellatedSolidBuildOptions.Default);
             ts.AddPrimitive(new Plane());
-            ts.CheckModelIntegrity();
+            
             ts.Complexify();
             ts.Copy();
             ts.OrientedBoundingBox();
             ts.CreateSilhouette(Vector3.UnitX);
-            ts.Repair();
+            ts.Errors.AutoRepair();
             ts.SetToOriginAndSquare(out var backTransform);
             ts.SetToOriginAndSquareToNewSolid(out backTransform);
             ts.Simplify();

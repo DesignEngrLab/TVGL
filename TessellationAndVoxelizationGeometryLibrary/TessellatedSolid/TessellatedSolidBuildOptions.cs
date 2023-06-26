@@ -46,7 +46,7 @@ namespace TVGL
 
         /// <summary>Gets or sets whether continuity issues in the tessellated solid will be automatically repaired. 
         /// This includes flipping faces that have opposite normals, and resolving negligible faces. This does not
-        /// patch major holes (like "") but it can fix cracks - where vertices/edges are duplicated for separate
+        /// patch major holes (like "AutomaticallyRepairHoles") but it can fix cracks - where vertices/edges are duplicated for separate
         /// faces.</summary>
         public bool AutomaticallyRepairBadFaces { get; set; } = true;
 

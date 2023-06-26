@@ -34,7 +34,7 @@ namespace TVGL
             SingledSidedEdges = new List<TriangleFace>();
             FacesWithNegligibleArea = new List<TriangleFace>();
             FacePairsForEdges = new List<(TriangleFace, TriangleFace)>();
-            MatingInconsistentFacePairs = new List<(TriangleFace, TriangleFace)>();
+            InconsistentMatingFacePairs = new List<(TriangleFace, TriangleFace)>();
             ModelHasNegativeVolume = false;
             ChangeTolerance = 0;
         }
@@ -74,7 +74,7 @@ namespace TVGL
         /// Edges with bad angles
         /// </summary>
         /// <value>The edges with bad angle.</value>
-        public List<(TriangleFace, TriangleFace)> MatingInconsistentFacePairs { get; internal set; }
+        public List<(TriangleFace, TriangleFace)> InconsistentMatingFacePairs { get; internal set; }
 
 
         /// <summary>
@@ -116,17 +116,25 @@ namespace TVGL
         {
             CheckModelIntegrity();
             if (buildOptions.PredefineAllEdges)
-                    MakeEdges();
-            if (buildOptions.AutomaticallyRepairBadFaces && MatingInconsistentFacePairs.Any())
+                MakeEdges();
+            if (buildOptions.AutomaticallyRepairBadFaces && InconsistentMatingFacePairs.Any())
                 try
                 {
-                    FlipFacesBasedOnBadAngles();
+                    if (!SetNegligibleAreaFaceNormals())
+                        throw new Exception("Unable to set face normals.");
+                    if (!FlipFacesBasedOnBadAngles())
+                        throw new Exception("Unable to set face normals.");
+                    if (!PropagteFixToNegligibleFaces())
+                        throw new Exception("Unable to set face normals.");
                 }
                 catch
                 {
                     //Continue
                 }
             if (buildOptions.AutomaticallyRepairHoles)
+            {
+                if (!buildOptions.PredefineAllEdges)
+                    throw new ArgumentException("AutomaticallyRepairHoles requires PredefineAllEdges to be true.");
                 try
                 {
                     this.RepairHoles();
@@ -135,13 +143,17 @@ namespace TVGL
                 {
                     //Continue
                 }
+            }
             if (buildOptions.AutomaticallyInvertNegativeSolids && ModelHasNegativeVolume)
-                ts. TurnModelInsideOut();
+                ts.TurnModelInsideOut();
 
             //If the volume is zero, creating the convex hull may cause a null exception
             if (buildOptions.DefineConvexHull && !ts.Volume.IsNegligible())
                 ts.BuildConvexHull();
-            if (buildOptions.FindNonsmoothEdges && ts.Edges != null)
+            if (buildOptions.FindNonsmoothEdges)
+            {
+                if (!buildOptions.PredefineAllEdges)
+                    throw new ArgumentException("AutomaticallyRepairHoles requires PredefineAllEdges to be true.");
                 try
                 {
                     FindNonSmoothEdges();
@@ -150,6 +162,12 @@ namespace TVGL
                 {
                     //Continue
                 }
+            }
+        }
+
+        private bool PropagteFixToNegligibleFaces()
+        {
+            throw new NotImplementedException();
         }
 
         private void RepairHoles()
@@ -243,13 +261,13 @@ namespace TVGL
             foreach (var connection in alreadyDefinedEdges.Values)
             {
                 if (connection.Item3 == 0)
-                    MatingInconsistentFacePairs.Add((connection.Item1, connection.Item2));
+                    InconsistentMatingFacePairs.Add((connection.Item1, connection.Item2));
                 else if (connection.Item3 == 1)
                     FacePairsForEdges.Add((connection.Item1, connection.Item2));
                 else
                     FacePairsForEdges.Add((connection.Item2, connection.Item1));
             }
-            if (MatingInconsistentFacePairs.Count > 0)
+            if (InconsistentMatingFacePairs.Count > 0)
                 ContainsErrors = true;
 
             if (ContainsErrors)
@@ -273,7 +291,7 @@ namespace TVGL
                                tsErrors.OverusedEdges.Select(p => p.Count)), 3);
             }
             if (tsErrors.SingledSidedEdges != null) Message.output("==> " + tsErrors.SingledSidedEdges.Count + " single-sided edges.", 3);
-            if (tsErrors.MatingInconsistentFacePairs != null) Message.output("==> " + tsErrors.MatingInconsistentFacePairs.Count
+            if (tsErrors.InconsistentMatingFacePairs != null) Message.output("==> " + tsErrors.InconsistentMatingFacePairs.Count
                 + " edges with opposite-facing faces.", 3);
 
             var numOverUsedFaceEdges = tsErrors.OverusedEdges?.Sum(p => p.Count) ?? 0;
@@ -312,20 +330,26 @@ namespace TVGL
         /// <exception cref="System.Exception"></exception>
         internal void MakeEdges()
         {
-
-            ts.Edges = new Edge[FacePairsForEdges.Count];
-
-            for (int i = 0; i < FacePairsForEdges.Count; i++)
+            var edges = new List<Edge>(FacePairsForEdges.Count + SingledSidedEdges.Count);
+            foreach (var facePair in FacePairsForEdges)
             {
-                (TriangleFace, TriangleFace) pair = FacePairsForEdges[i];
-                var ownedFace = pair.Item1;
-                var otherFace = pair.Item2;
+                var ownedFace = facePair.Item1;
+                var otherFace = facePair.Item2;
                 if (ownedFace.A != otherFace.A && ownedFace.A != otherFace.B && ownedFace.A != otherFace.C)
-                    ts.Edges[i] = new Edge(ownedFace.B, ownedFace.C, ownedFace, otherFace, true);
+                    edges.Add(new Edge(ownedFace.B, ownedFace.C, ownedFace, otherFace, true));
                 else if (ownedFace.B != otherFace.A && ownedFace.B != otherFace.B && ownedFace.B != otherFace.C)
-                    ts.Edges[i] = new Edge(ownedFace.C, ownedFace.A, ownedFace, otherFace, true);
+                    edges.Add(new Edge(ownedFace.C, ownedFace.A, ownedFace, otherFace, true));
                 else //if (ownedFace.C != otherFace.A && ownedFace.C != otherFace.B && ownedFace.C != otherFace.C)
-                    ts.Edges[i] = new Edge(ownedFace.A, ownedFace.B, ownedFace, otherFace, true);
+                    edges.Add(new Edge(ownedFace.A, ownedFace.B, ownedFace, otherFace, true));
+            }
+            foreach (var faceWithSingle in SingledSidedEdges)
+            {
+                if (faceWithSingle.AB == null)
+                    edges.Add(new Edge(faceWithSingle.A, faceWithSingle.B, faceWithSingle, null, true));
+                if (faceWithSingle.BC == null)
+                    edges.Add(new Edge(faceWithSingle.B, faceWithSingle.C, faceWithSingle, null, true));
+                if (faceWithSingle.CA == null)
+                    edges.Add(new Edge(faceWithSingle.C, faceWithSingle.A, faceWithSingle, null, true));
             }
         }
         #endregion
@@ -340,22 +364,28 @@ namespace TVGL
         /// <param name="ts">The ts.</param>
         /// <param name="checkAllFaces">if set to <c>true</c> [check all faces].</param>
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
-        bool SetNegligibleAreaFaceNormals(TessellatedSolid ts, bool checkAllFaces = false)
+        bool SetNegligibleAreaFaceNormals()
         {
-            if (!checkAllFaces && (ts.Errors == null || FacesWithNegligibleArea == null)) return true;
-            var success = false;
-            var j = 0;
-            var facesToCheck = checkAllFaces ? ts.Faces : FacesWithNegligibleArea.ToArray();
-            while (!success && j < 10)
+            var facesToCheck = FacesWithNegligibleArea.ToList();
+            var success = facesToCheck.Count == 0;
+            while (success || facesToCheck.Count > 0)
             {
-                j++;
-                success = true;
-                foreach (var face in facesToCheck)
-                    if (face.Normal.IsNull())
-                        if (!face.AdoptNeighborsNormal())
-                            success = false;
+                success = false;
+                for (int i = facesToCheck.Count - 1; i >= 0; i--)
+                {
+                    foreach (var adjFace in facesToCheck[i].AdjacentFaces)
+                    {
+                        if (!adjFace._normal.IsNull())
+                        {
+                            facesToCheck[i]._normal = adjFace._normal;
+                            facesToCheck.RemoveAt(i);
+                            success = true;
+                            break;
+                        }
+                    }
+                }
             }
-            return success;
+            return facesToCheck.Count == 0;
         }
 
         /// <summary>
@@ -365,12 +395,17 @@ namespace TVGL
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         bool FlipFacesBasedOnBadAngles()
         {
+            var inconsistentMatingFacePairHash = InconsistentMatingFacePairs.ToHashSet();
             var facesToConsider = new HashSet<TriangleFace>();
-            foreach (var facePair in MatingInconsistentFacePairs)
+            var singleFaces = new HashSet<TriangleFace>();
+            foreach (var facePair in InconsistentMatingFacePairs)
             {
-                facesToConsider.Add(facePair.Item1);
-                facesToConsider.Add(facePair.Item2);
+                if (!singleFaces.Add(facePair.Item1))
+                    facesToConsider.Add(facePair.Item1);
+                if (!facesToConsider.Add(facePair.Item2))
+                    facesToConsider.Add(facePair.Item2);
             };
+            // facesToConsider are faces that have 2 or 3 edges that are inconsistent with their neighbors
             var allEdgesToUpdate = new HashSet<Edge>();
             foreach (var face in facesToConsider)
             {
@@ -379,7 +414,7 @@ namespace TVGL
                 foreach (var edge in face.Edges)
                 {
                     if (edge == null) continue; //that's enough to know something is not right!
-                    if (MatingInconsistentFacePairs.Contains(edge)) edgesToUpdate.Add(edge);
+                    if (InconsistentMatingFacePairs.Contains(edge)) edgesToUpdate.Add(edge);
                     else if (facesToConsider.Contains(edge.OwnedFace == face ? edge.OtherFace : edge.OwnedFace))
                         edgesToUpdate.Add(edge);
                     else break;
@@ -392,10 +427,10 @@ namespace TVGL
             foreach (var edge in allEdgesToUpdate)
             {
                 edge.Update();
-                MatingInconsistentFacePairs.Remove(edge);
+                InconsistentMatingFacePairs.Remove(edge);
             }
-            if (MatingInconsistentFacePairs.Any()) return false;
-            MatingInconsistentFacePairs = null;
+            if (InconsistentMatingFacePairs.Any()) return false;
+            InconsistentMatingFacePairs = null;
             return true;
         }
 
@@ -457,5 +492,9 @@ namespace TVGL
             return newFaces;
         }
 
+        public void AutoRepair()
+        {
+            throw new NotImplementedException();
+        }
     }
 }

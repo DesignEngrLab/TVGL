@@ -48,7 +48,7 @@ namespace TVGL
         {
             _normal *= -1;
             var tempVertex = C;
-            C = A; A=tempVertex;
+            C = A; A = tempVertex;
             Vertices.Reverse();
             Edges.Reverse();
             _curvature = (CurvatureType)(-1 * (int)_curvature);
@@ -261,7 +261,7 @@ namespace TVGL
         /// <summary>
         /// The normal
         /// </summary>
-        private Vector3 _normal = Vector3.Null;
+        internal Vector3 _normal = Vector3.Null;
 
         #endregion Constructors
 
@@ -395,17 +395,15 @@ namespace TVGL
         /// Gets the adjacent faces.
         /// </summary>
         /// <value>The adjacent faces.</value>
-        public List<TriangleFace> AdjacentFaces
+        public IEnumerable<TriangleFace> AdjacentFaces
         {
             get
             {
-                var adjacentFaces = new List<TriangleFace>();
                 foreach (var e in Edges)
                 {
-                    if (e == null) adjacentFaces.Add(null);
-                    else adjacentFaces.Add(this == e.OwnedFace ? e.OtherFace : e.OwnedFace);
+                    if (e != null)
+                        yield return (this == e.OwnedFace) ? e.OtherFace : e.OwnedFace;
                 }
-                return adjacentFaces;
             }
         }
 
