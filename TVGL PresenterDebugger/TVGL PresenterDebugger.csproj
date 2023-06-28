@@ -106,6 +106,7 @@
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\TessellatedSolid\ModifyTessellation\ComplexifyTessellation.cs" Link="TVGL\TessellatedSolid\ModifyTessellation\ComplexifyTessellation.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\TessellatedSolid\ModifyTessellation\DetermineIntermediateVertex.cs" Link="TVGL\TessellatedSolid\ModifyTessellation\DetermineIntermediateVertex.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\TessellatedSolid\ModifyTessellation\Single3DPolygonTriangulation.cs" Link="TVGL\TessellatedSolid\ModifyTessellation\Single3DPolygonTriangulation.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\TessellatedSolid\ModifyTessellation\FlipEdge.cs" Link="TVGL\TessellatedSolid\ModifyTessellation\FlipEdge.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\TessellatedSolid\ModifyTessellation\SimplifyTessellation.cs" Link="TVGL\TessellatedSolid\ModifyTessellation\SimplifyTessellation.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\TessellatedSolid\ModifyTessellation\TessellationBuildAndRepair.cs" Link="TVGL\TessellatedSolid\ModifyTessellation\TessellationBuildAndRepair.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\TessellatedSolid\TriangleFace.cs" Link="TVGL\TessellatedSolid\TriangleFace.cs" />

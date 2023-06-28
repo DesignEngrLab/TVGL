@@ -384,6 +384,7 @@ namespace TVGL
         /// <returns>A bool.</returns>
         public bool IsDiscontinous(double tolerance, double chordError)
         {
+            if (OtherFace== null || OwnedFace == null) return true;    
             var otherV = OtherFace.Normal.Cross(Vector).Normalize();
             var otherVLength = otherV.Dot(From.Coordinates - OtherFace.OtherVertex(this).Coordinates);
             otherV = otherVLength * otherV;

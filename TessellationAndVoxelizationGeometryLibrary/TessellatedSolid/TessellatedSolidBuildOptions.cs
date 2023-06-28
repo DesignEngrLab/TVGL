@@ -76,6 +76,7 @@ namespace TVGL
         /// When false, edges will only be defined when the model has less 10000 edges.
         /// </summary>
         public bool PredefineAllEdges { get; set; } = true;
+        public bool FixEdgeDisassociations { get; internal set; }
     }
 
 }
