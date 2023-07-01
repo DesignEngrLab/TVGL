@@ -675,7 +675,7 @@ namespace TVGL
                     orderedEdges.RemoveAt(bestJIndex);
                 }
             }
-            SingleSidedEdgeData=orderedEdges.Select(edge => (edge.Item1, edge.Item3, edge.Item3)).ToList();
+            SingleSidedEdgeData=orderedEdges.Select(edge => (edge.Item1, edge.Item2, edge.Item3)).ToList();
         }
 
         private static void MergeMakeEntries(Dictionary<Vertex, List<Vertex>> keptToRemovedDictionary, Vertex a, Vertex b)
