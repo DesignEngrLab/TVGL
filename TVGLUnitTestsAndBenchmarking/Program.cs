@@ -27,7 +27,7 @@ namespace TVGLUnitTestsAndBenchmarking
             Trace.Listeners.Add(myWriter);
             TVGL.Message.Verbosity = VerbosityLevels.Everything;
 #if PRESENT
-            foreach (var fileName in dir.GetFiles("*").Skip(1))
+            foreach (var fileName in dir.GetFiles("*").Skip(5))
             {
                 Debug.WriteLine("\n\n\nAttempting to open: " + fileName.Name);
                 IO.Open(fileName.FullName, out TessellatedSolid[] solids);
