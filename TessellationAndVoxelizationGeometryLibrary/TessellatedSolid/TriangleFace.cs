@@ -394,7 +394,7 @@ namespace TVGL
                 foreach (var e in Edges)
                 {
                     if (e != null)
-                        yield return (this == e.OwnedFace) ? e.OtherFace : e.OwnedFace;
+                        yield return e.GetMatingFace(this);
                 }
             }
         }

@@ -13,6 +13,7 @@
 // ***********************************************************************
 using Newtonsoft.Json;
 using System;
+using System.Diagnostics.Eventing.Reader;
 using System.Linq;
 
 
@@ -60,7 +61,7 @@ namespace TVGL
         {
             if (edgeReference > 0)
                 EdgeReference = edgeReference;
-            else TessellatedSolid.SetAndGetEdgeChecksum(this);
+            else Edge.SetAndGetEdgeChecksum(this);
             _ownedFace = ownedFace;
             _otherFace = otherFace;
             ownedFace?.AddEdge(this);
@@ -187,6 +188,19 @@ namespace TVGL
                 _otherFace = value;
             }
         }
+
+
+        /// <summary>
+        /// Gets the adjacent face. You provide one face of the edge
+        /// and this return the other face.
+        /// </summary>
+        /// <param name="face">The face.</param>
+        /// <returns>A TriangleFace.</returns>
+        public TriangleFace GetMatingFace(TriangleFace face)
+        {
+            return face == _ownedFace ? _otherFace : _ownedFace;
+        }
+
 
         /// <summary>
         /// Gets the internal angle in radians.
@@ -384,7 +398,7 @@ namespace TVGL
         /// <returns>A bool.</returns>
         public bool IsDiscontinous(double tolerance, double chordError)
         {
-            if (OtherFace== null || OwnedFace == null) return true;    
+            if (OtherFace == null || OwnedFace == null) return true;
             var otherV = OtherFace.Normal.Cross(Vector).Normalize();
             var otherVLength = otherV.Dot(From.Coordinates - OtherFace.OtherVertex(this).Coordinates);
             otherV = otherVLength * otherV;
@@ -445,6 +459,19 @@ namespace TVGL
             return (smallIndex, largeIndex);
         }
 
+
+        /// <summary>
+        /// Sets the and get edge checksum.
+        /// </summary>
+        /// <param name="edge">The edge.</param>
+        /// <returns>System.Int64.</returns>
+        internal static long SetAndGetEdgeChecksum(Edge edge)
+        {
+            var checksum = GetEdgeChecksum(edge.From, edge.To);
+            edge.EdgeReference = checksum;
+            return checksum;
+        }
+
         /// <summary>
         /// Gets the edge checksum.
         /// </summary>
@@ -453,7 +480,7 @@ namespace TVGL
         /// <returns>System.Int64.</returns>
         public static long GetEdgeChecksum(Vertex vertex1, Vertex vertex2)
         {
-            return TessellatedSolid.GetEdgeChecksum(vertex1, vertex2);
+            return GetEdgeChecksum(vertex1.IndexInList, vertex2.IndexInList);
         }
 
         /// <summary>
@@ -462,9 +489,13 @@ namespace TVGL
         /// <param name="vertex1Index">Index of the vertex1.</param>
         /// <param name="vertex2Index">Index of the vertex2.</param>
         /// <returns>System.Int64.</returns>
-        public static long GetEdgeChecksum(int vertex1Index, int vertex2Index)
+        public static long GetEdgeChecksum(int vIndex1, int vIndex2)
         {
-            return TessellatedSolid.GetEdgeChecksum(vertex1Index, vertex2Index);
+            if (vIndex1 == -1 || vIndex2 == -1)
+                return -1;
+            if (vIndex1 == vIndex2) throw new Exception("edge to same vertices.");
+            return (vIndex1 < vIndex2) ? vIndex1 + Constants.VertexCheckSumMultiplier * vIndex2 :
+                vIndex2 + Constants.VertexCheckSumMultiplier * vIndex1;
         }
 
         /// <summary>

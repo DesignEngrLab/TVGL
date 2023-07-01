@@ -76,7 +76,12 @@ namespace TVGL
         /// When false, edges will only be defined when the model has less 10000 edges.
         /// </summary>
         public bool PredefineAllEdges { get; set; } = true;
-        public bool FixEdgeDisassociations { get; internal set; }
+        /// <summary>
+        /// Gets a value indicating whether or not to fix edge disassociations. These are when an edge in a tessellated model
+        /// appears to have the wrong number of neighbors (anything other than 1). To fix this, a repair function attempts to 
+        /// match up faces in pairs, this is important to restore water-tightness. Note, this will not fix big holes in the model. 
+        /// Use "AutomaticallyRepairHoles" for that.
+        /// </summary>
+        public bool FixEdgeDisassociations { get; internal set; } = true;
     }
-
 }

@@ -174,7 +174,7 @@ namespace TVGL
         /// <param name="solids">The solids.</param>
         public static void MakeSolids(this ContactData contactData, UnitType unitType, out List<TessellatedSolid> solids)
         {
-            solids = contactData.SolidContactData.Select(solidContactData => new TessellatedSolid(solidContactData.AllFaces,null,
+            solids = contactData.SolidContactData.Select(solidContactData => new TessellatedSolid(solidContactData.AllFaces, null,
                 TessellatedSolidBuildOptions.Default, units: unitType)).ToList();
         }
 
@@ -789,7 +789,7 @@ namespace TVGL
             /// <returns>TriangleFace.</returns>
             public TriangleFace NextFace(TriangleFace face)
             {
-                return Edge.OwnedFace == face ? Edge.OtherFace : Edge.OwnedFace;
+                return Edge.GetMatingFace(face);
             }
         }
 
@@ -885,7 +885,7 @@ namespace TVGL
                     var prevFace = nextFace;
                     if (prevFace == null)
                         nextFace = (currentEdge.From.Dot(normal) < distanceToOrigin) ? currentEdge.OtherFace : currentEdge.OwnedFace;
-                    else nextFace = (nextFace == currentEdge.OwnedFace) ? currentEdge.OtherFace : currentEdge.OwnedFace;
+                    else nextFace = currentEdge.GetMatingFace(nextFace);
                     Edge nextEdge = null;
                     foreach (var whichEdge in nextFace.Edges)
                     {

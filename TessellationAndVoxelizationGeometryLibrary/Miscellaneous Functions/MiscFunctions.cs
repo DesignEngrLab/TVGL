@@ -379,7 +379,7 @@ namespace TVGL
                         //"if" statement in the while locations will ignore them.
                         foreach (var edge in newFace.Edges)
                         {
-                            var adjacentFace = edge.OwnedFace == newFace ? edge.OtherFace : edge.OwnedFace;
+                            var adjacentFace = edge.GetMatingFace(newFace);
                             if (adjacentFace == null || adjacentFace.BelongsToPrimitive != prim || usedFaces.Contains(adjacentFace)) continue;
                             if (newFace.Normal.IsAligned(adjacentFace.Normal, Constants.SameFaceNormalDotTolerance)) continue;
                             var otherVertex = adjacentFace.A != edge.From && adjacentFace.A != edge.To ? adjacentFace.A :
@@ -436,7 +436,7 @@ namespace TVGL
                     foreach (var edge in newFace.Edges)
                     {
                         if (nonCrossingEdges.Contains(edge)) continue;
-                        var adjacentFace = edge.OwnedFace == newFace ? edge.OtherFace : edge.OwnedFace;
+                        var adjacentFace = edge.GetMatingFace(newFace);
                         if (adjacentFace == null || !availableFaces.Contains(adjacentFace)) continue;
                         if (Math.Abs(1 - newFace.Normal.Dot(adjacentFace.Normal)) > Constants.SameFaceNormalDotTolerance) continue;
                         var otherVertex = adjacentFace.A != edge.From && adjacentFace.A != edge.To ? adjacentFace.A :
@@ -2180,7 +2180,7 @@ namespace TVGL
                 var inPlaneVector = edgePointsToVertex ? -1 * edge.Vector : edge.Vector;
                 yield return (edge, inPlaneVector.AngleCCWBetweenVectorAndDatum(inPlaneStartVector, normal));
                 var face = edgePointsToVertex ? edge.OtherFace : edge.OwnedFace;
-                if (face == lastFace) face = edge.OwnedFace == lastFace ? edge.OtherFace : edge.OwnedFace;
+                if (face == lastFace) face = edge.GetMatingFace(lastFace);
                 lastFace = face;
                 foreach (var e in face.Edges)
                 {

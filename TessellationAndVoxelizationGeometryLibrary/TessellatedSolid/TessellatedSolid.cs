@@ -69,21 +69,21 @@ namespace TVGL
         /// </summary>
         /// <value>The number of faces.</value>
         [JsonIgnore]
-        public int NumberOfFaces { get; set; }
+        public int NumberOfFaces { get; private set; }
 
         /// <summary>
         /// Gets the number of vertices.
         /// </summary>
         /// <value>The number of vertices.</value>
         [JsonIgnore]
-        public int NumberOfVertices { get; set; }
+        public int NumberOfVertices { get; private set; }
 
         /// <summary>
         /// Gets the number of edges.
         /// </summary>
         /// <value>The number of edges.</value>
         [JsonIgnore]
-        public int NumberOfEdges { get; private set; }
+        public int NumberOfEdges { get; internal set; }
 
         /// <summary>
         /// Gets the number of primitives. Must be set after completing primitive definition/combination.
@@ -566,7 +566,7 @@ namespace TVGL
         public void MakeEdgesIfNonExistent()
         {
             if (Edges != null && Edges.Length > 0) return;
-            if (Errors!=null)
+            if (Errors != null)
                 Errors.MakeEdges();
         }
 
@@ -877,7 +877,7 @@ namespace TVGL
         /// <param name="removeReferecesToVertex">if set to <c>true</c> [remove refereces to vertex].</param>
         internal void ReplaceVertex(Vertex removeVertex, Vertex newVertex, bool removeReferecesToVertex = true)
         {
-            ReplaceVertex(Vertices.FindIndex(removeVertex), newVertex, removeReferecesToVertex);
+            ReplaceVertex(removeVertex.IndexInList, newVertex, removeReferecesToVertex);
         }
 
         /// <summary>
@@ -900,7 +900,7 @@ namespace TVGL
         /// <param name="removeReferecesToVertex">if set to <c>true</c> [remove refereces to vertex].</param>
         internal void RemoveVertex(Vertex removeVertex, bool removeReferecesToVertex = true)
         {
-            RemoveVertex(Vertices.FindIndex(removeVertex), removeReferecesToVertex);
+            RemoveVertex(removeVertex.IndexInList, removeReferecesToVertex);
         }
 
         /// <summary>
@@ -931,7 +931,7 @@ namespace TVGL
         /// <param name="removeVertices">The remove vertices.</param>
         internal void RemoveVertices(IEnumerable<Vertex> removeVertices)
         {
-            RemoveVertices(removeVertices.Select(Vertices.FindIndex).ToList());
+            RemoveVertices(removeVertices.Select(v => v.IndexInList).ToList());
         }
 
         /// <summary>
@@ -968,7 +968,7 @@ namespace TVGL
         internal void UpdateAllEdgeCheckSums()
         {
             foreach (var edge in Edges)
-                SetAndGetEdgeChecksum(edge);
+                Edge.SetAndGetEdgeChecksum(edge);
         }
 
         #endregion
@@ -1015,7 +1015,7 @@ namespace TVGL
         /// <param name="removeFace">The remove face.</param>
         internal void RemoveFace(TriangleFace removeFace)
         {
-            RemoveFace(Faces.FindIndex(removeFace));
+            RemoveFace(removeFace.IndexInList);
         }
 
         /// <summary>
@@ -1044,7 +1044,7 @@ namespace TVGL
         /// <param name="removeFaces">The remove faces.</param>
         internal void RemoveFaces(IEnumerable<TriangleFace> removeFaces)
         {
-            RemoveFaces(removeFaces.Select(Faces.FindIndex).ToList());
+            RemoveFaces(removeFaces.Select(f => f.IndexInList).ToList());
         }
 
         /// <summary>
@@ -1105,7 +1105,7 @@ namespace TVGL
             for (var i = 0; i < NumberOfEdges; i++)
                 newEdges[i] = Edges[i];
             newEdges[NumberOfEdges] = newEdge;
-            if (newEdge.EdgeReference <= 0) SetAndGetEdgeChecksum(newEdge);
+            if (newEdge.EdgeReference <= 0) Edge.SetAndGetEdgeChecksum(newEdge);
             newEdge.IndexInList = NumberOfEdges;
             Edges = newEdges;
             NumberOfEdges++;
@@ -1124,7 +1124,7 @@ namespace TVGL
             for (var i = 0; i < numToAdd; i++)
             {
                 newEdges[NumberOfEdges + i] = edgesToAdd[i];
-                if (newEdges[NumberOfEdges + i].EdgeReference <= 0) SetAndGetEdgeChecksum(newEdges[NumberOfEdges + i]);
+                if (newEdges[NumberOfEdges + i].EdgeReference <= 0) Edge.SetAndGetEdgeChecksum(newEdges[NumberOfEdges + i]);
                 newEdges[NumberOfEdges + i].IndexInList = NumberOfEdges;
             }
             Edges = newEdges;
@@ -1137,7 +1137,7 @@ namespace TVGL
         /// <param name="removeEdge">The remove edge.</param>
         internal void RemoveEdge(Edge removeEdge)
         {
-            RemoveEdge(Edges.FindIndex(removeEdge));
+            RemoveEdge(removeEdge.IndexInList);
         }
 
         /// <summary>
@@ -1165,7 +1165,7 @@ namespace TVGL
         /// <param name="removeEdges">The remove edges.</param>
         internal void RemoveEdges(IEnumerable<Edge> removeEdges)
         {
-            RemoveEdges(removeEdges.Select(Edges.FindIndex).ToList());
+            RemoveEdges(removeEdges.Select(e => e.IndexInList).ToList());
         }
 
         /// <summary>

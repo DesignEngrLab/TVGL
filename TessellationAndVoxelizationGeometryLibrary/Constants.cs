@@ -202,23 +202,6 @@ namespace TVGL
             return -1;
         }
 
-        /// <summary>
-        /// Finds the index.
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="items">The items.</param>
-        /// <param name="predicate">The predicate.</param>
-        /// <returns>System.Int32.</returns>
-        internal static int FindIndex<T>(this IEnumerable<T> items, T predicate)
-        {
-            var index = 0;
-            foreach (var item in items)
-            {
-                if (predicate.Equals(item)) return index;
-                index++;
-            }
-            return -1;
-        }
 
         /// <summary>
         /// Switches a and b polygon relationship.
