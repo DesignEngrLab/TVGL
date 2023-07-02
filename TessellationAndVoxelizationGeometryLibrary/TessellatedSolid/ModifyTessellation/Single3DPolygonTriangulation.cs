@@ -57,7 +57,7 @@ namespace TVGL
         /// <summary>
         /// Initializes a new instance of the <see cref="TriangulationLoop"/> class.
         /// </summary>
-        internal TriangulationLoop() : base() 
+        internal TriangulationLoop() : base()
         {
             IsClosed = true;
         }
@@ -230,7 +230,7 @@ namespace TVGL
                     thisFace = thisEAD.edge.OwnedFace;
                     nextVertex = thisEAD.edge.From;
                 }
-                Edge newEdge = new Edge(nextVertex, prevVertex, false);
+                Edge newEdge = new Edge(nextVertex, prevVertex, true);
                 var triangle = new TriangulationLoop(new[] { prevEAD, thisEAD, (newEdge, true) });
                 candidateTriangles[i] = triangle;
                 sortedOrigCornerIndices.Enqueue(i, CalcObjFunction(weightForSmoothness, triangle, prevFace.Normal, thisFace.Normal, Vector3.Null));
@@ -265,10 +265,10 @@ namespace TVGL
                     // this is tricky, and you kind of have to draw it out
                     posDirTriangle = new TriangulationLoop(new[] { (triangle[2].edge, !triangle[2].dir),posDirTriangle[1],
                 (new Edge(posDirTriangle[1].dir?posDirTriangle[1].edge.To:posDirTriangle[1].edge.From,
-                triangle.FirstVertex,false), true)});
+                triangle.FirstVertex,true), true)});
                     candidateTriangles[posDirIndex] = posDirTriangle;
                     negDirTriangle = new TriangulationLoop(new[] { negDirTriangle[0], (triangle[2].edge, !triangle[2].dir),
-                (new Edge(triangle[2].dir?triangle[2].edge.From:triangle[2].edge.To,negDirTriangle.FirstVertex,false),true)});
+                (new Edge(triangle[2].dir?triangle[2].edge.From:triangle[2].edge.To,negDirTriangle.FirstVertex,true),true)});
                     candidateTriangles[negDirIndex] = negDirTriangle;
 
                     sortedOrigCornerIndices.UpdatePriority(posDirIndex, CalcObjFunction(weightForSmoothness, posDirTriangle,
@@ -368,9 +368,9 @@ namespace TVGL
             }
             if (double.IsInfinity(fLimit))
             {
-//#if PRESENT
-//                Presenter.ShowVertexPathsWithSolid(startDomain.EdgeList.Select(eg => new[] { eg.From.Coordinates, eg.To.Coordinates }), new TessellatedSolid[] { });
-//#endif
+                //#if PRESENT
+                //                Presenter.ShowVertexPathsWithSolid(startDomain.EdgeList.Select(eg => new[] { eg.From.Coordinates, eg.To.Coordinates }), new TessellatedSolid[] { });
+                //#endif
                 return false;
             }
             return true;
@@ -451,7 +451,7 @@ namespace TVGL
                     var neighborFace = edgeAt3rdVertex.dir ? edgeAt3rdVertex.edge.OtherFace : edgeAt3rdVertex.edge.OwnedFace;
                     if (neighborFace != null) neighborNormal1 = neighborFace.Normal;
                 }
-                else thisTriangle.AddBegin(new Edge(secondVertex, thirdVertex, false), true);
+                else thisTriangle.AddBegin(new Edge(secondVertex, thirdVertex, true), true);
                 if (secondVertex == thirdVertex) secondVertex = thirdVertex;
                 var neighborNormal2 = Vector3.Null;
                 if (i == domain.Count - 2)
@@ -461,7 +461,7 @@ namespace TVGL
                     var neighborFace = lastEdgeAndDir.dir ? lastEdgeAndDir.edge.OtherFace : lastEdgeAndDir.edge.OwnedFace;
                     if (neighborFace != null) neighborNormal2 = neighborFace.Normal;
                 }
-                else thisTriangle.AddBegin(new Edge(thirdVertex, firstVertex, false), true);
+                else thisTriangle.AddBegin(new Edge(thirdVertex, firstVertex, true), true);
                 if (firstVertex == thirdVertex) firstVertex = thirdVertex;
 
                 thisTriangle.Score = CalcObjFunction(dotWeight, thisTriangle, accessFaceNormal, neighborNormal1, neighborNormal2);

@@ -15,6 +15,7 @@ using ClipperLib;
 using MIConvexHull;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Net;
 
@@ -37,7 +38,6 @@ namespace TVGL
             FacePairsForEdges = new List<(TriangleFace, TriangleFace)>();
             InconsistentMatingFacePairs = new List<(TriangleFace, TriangleFace)>();
             ModelHasNegativeVolume = false;
-            ChangeTolerance = 0;
         }
         #region Properties
 
@@ -88,12 +88,6 @@ namespace TVGL
         public bool ModelHasNegativeVolume { get; internal set; }
 
         /// <summary>
-        /// Gets or sets the recommended change in tolerance for solids that didn't load correctly.
-        /// If negative (-1), then the tolerance should be decreased. If positive (+1), then the 
-        /// tolerance should be increased.
-        /// </summary>
-        public int ChangeTolerance { get; internal set; }
-        /// <summary>
         /// Gets a value indicating whether there is an incorrect face-to-edge ratio.
         /// For watertight solids, there should be 1.5 edges per face.
         /// </summary>
@@ -114,7 +108,60 @@ namespace TVGL
                 return;
             var buildAndErrorInfo = new TessellationBuildAndRepair(ts);
             buildAndErrorInfo.CompleteBuildOptions(buildOptions);
+
+#if DEBUG
+            CheckModelInterconnectivity(ts);
+#endif
         }
+
+
+
+
+        public static void CheckModelInterconnectivity(TessellatedSolid ts)
+        {
+            if (3 * ts.NumberOfFaces != 2 * ts.NumberOfEdges)
+                Debug.WriteLine("3numFaces = " + 3 * ts.NumberOfFaces + ", 2numEdges = " + 2 * ts.NumberOfEdges);
+            //Check if each face has cyclic references with each edge, vertex, and adjacent faces.
+            var numSingleSidedEdges = 0;
+
+            foreach (var face in ts.Faces)
+            {
+                foreach (var edge in face.Edges)
+                {
+                    if (edge.OwnedFace != face && edge.OtherFace != face)
+                        Debug.WriteLine("face's edge doesn't reconnect to face");
+                }
+                foreach (var vertex in face.Vertices.Where(vertex => !vertex.Faces.Contains(face)))
+                    Debug.WriteLine("face's vertex doesn't reconnect to face");
+            }
+            //Check if each edge has cyclic references with each vertex and each face.
+            foreach (var edge in ts.Edges)
+            {
+                if (!edge.OwnedFace.Edges.Contains(edge))
+                    Debug.WriteLine("edge's face doesn't reconnect to edge");
+                if (edge.OtherFace == null)
+                    numSingleSidedEdges++;
+                else if (!edge.OtherFace.Edges.Contains(edge))
+                    Debug.WriteLine("edge's face doesn't reconnect to edge");
+                if (!edge.From.Edges.Contains(edge))
+                    Debug.WriteLine("edge's vertex doesn't reconnect to edge");
+                if (!edge.To.Edges.Contains(edge))
+                    Debug.WriteLine("edge's vertex doesn't reconnect to edge");
+            }
+            if (numSingleSidedEdges != 0 ||
+                (ts.Errors != null && ts.Errors.SingleSidedEdges != null && numSingleSidedEdges != ts.Errors.SingleSidedEdges.Count)
+                || (ts.Errors != null && ts.Errors.SingleSidedEdges != null && ts.Errors.SingleSidedEdges?.Count != 0))
+                Debug.WriteLine("there are " + numSingleSidedEdges + " single sided edges");
+            //Check if each vertex has cyclic references with each edge and each face.
+            foreach (var vertex in ts.Vertices)
+            {
+                foreach (var edge in vertex.Edges.Where(edge => edge.To != vertex && edge.From != vertex))
+                    Debug.WriteLine("vertex's edge doesn't reconnect to vertex");
+                foreach (var face in vertex.Faces.Where(face => !face.Vertices.Contains(vertex)))
+                    Debug.WriteLine("vertex's face doesn't reconnect to vertex");
+            }
+        }
+
         /// <summary>
         /// Completes the constructor by addressing any other build options in TessellatedSolidBuildOptions
         /// with the exception of CopyElementsPassedToConstructor. These are actually handled in the main constructor
@@ -149,15 +196,15 @@ namespace TVGL
                     //Continue
                 }
             if (buildOptions.AutomaticallyRepairBadFaces && InconsistentMatingFacePairs.Any())
-                try
-                {
-                    if (!FlipFacesBasedOnInconsistentEdges())
-                        throw new Exception("Unable to resolve face directions.");
-                }
-                catch
-                {
-                    //Continue
-                }
+                //try
+                //{
+                if (!FlipFacesBasedOnInconsistentEdges())
+                    throw new Exception("Unable to resolve face directions.");
+            //}
+            //catch
+            //{
+            //    //Continue
+            //}
             if (buildOptions.AutomaticallyInvertNegativeSolids && ModelHasNegativeVolume)
                 ts.TurnModelInsideOut();
             // the remaining items will need edges so we need to build these here
@@ -361,12 +408,6 @@ namespace TVGL
             if (InconsistentMatingFacePairs.Count > 0)
                 ContainsErrors = true;
 
-            if (numOverUsedFaceEdges == 0 && numSingleSidedEdges == 0)
-                ChangeTolerance = 0;
-            else if (numOverUsedFaceEdges > numSingleSidedEdges)
-                ChangeTolerance = -1;
-            else ChangeTolerance = 1;
-
             IncorrectFaceEdgeRatio = 3 * ts.NumberOfFaces == 2 * (alreadyDefinedEdges.Count + (numOverUsedFaceEdges + numSingleSidedEdges) / 2);
 
             if (ContainsErrors)
@@ -439,10 +480,6 @@ namespace TVGL
                 Message.output("==> While re-connecting faces and edges has lead to errors, there is a likelihood that water-tightness can be acheived."
                     , 3);
             else Message.output("==> The model is not water-tight. It merely represents a surface, but fixing holes may restore it.", 3);
-            if (tsErrors.ChangeTolerance == -1)
-                Message.output("      Tolerance should be made smaller.");
-            else if (tsErrors.ChangeTolerance == 1)
-                Message.output("      Tolerance should be made larger.");
         }
 
         #endregion Check Model Integrity
@@ -471,7 +508,7 @@ namespace TVGL
                 SingleSidedEdges = new List<Edge>(SingleSidedEdgeData.Count);
             for (; i < ts.NumberOfEdges; i++)
             {
-                var faceWithVertices = SingleSidedEdgeData[i- FacePairsForEdges.Count];
+                var faceWithVertices = SingleSidedEdgeData[i - FacePairsForEdges.Count];
                 ts.Edges[i] = new Edge(faceWithVertices.Item2, faceWithVertices.Item3, faceWithVertices.Item1, null, true);
                 SingleSidedEdges.Add(ts.Edges[i]);
             }
@@ -519,38 +556,43 @@ namespace TVGL
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         bool FlipFacesBasedOnInconsistentEdges()
         {
-            var facesToConsiderHashSet = new HashSet<TriangleFace>();
-            var singleFaces = new HashSet<TriangleFace>();
-            foreach (var facePair in InconsistentMatingFacePairs)
+            var faceCounter = new Dictionary<TriangleFace, List<int>>();
+            for (int i = 0; i < InconsistentMatingFacePairs.Count; i++)
             {
-                if (!singleFaces.Add(facePair.Item1))
-                    facesToConsiderHashSet.Add(facePair.Item1);
-                if (!singleFaces.Add(facePair.Item2))
-                    facesToConsiderHashSet.Add(facePair.Item2);
+                var facePair = InconsistentMatingFacePairs[i];
+                if (faceCounter.TryGetValue(facePair.Item1, out var numTimes))
+                    numTimes.Add(i);
+                else faceCounter.Add(facePair.Item1, new List<int> { i });
+                if (faceCounter.TryGetValue(facePair.Item2, out numTimes))
+                    numTimes.Add(i);
+                else faceCounter.Add(facePair.Item2, new List<int> { i });
             }
-            var facesToConsider = new Stack<TriangleFace>(facesToConsiderHashSet);
-            // facesToConsider are faces that have 2 or 3 edges that are inconsistent with their neighbors
-            var passes = ts.NumberOfFaces;
-            while (facesToConsider.Count > 0 && passes-- > 0)
+            var successfullyConvertedInconsistentFacePairIndices = new HashSet<int>();
+            foreach (var face in faceCounter)
             {
-                var face = facesToConsider.Pop();
-                face.Invert();
-                foreach (var oldEdge in face.Edges)
+                if (face.Value.Count<2) continue;
+                face.Key.Invert();
+                foreach (var item in face.Value)
                 {
-                    var otherFace = oldEdge.GetMatingFace(face);
-                    var index = oldEdge.IndexInList;
-                    ts.Edges[index] = new Edge(face.A, face.B, face, otherFace, true);
-                    if (0 == WhichFaceOwnsEdge(face, otherFace, face.A, face.B))
-                        if (!singleFaces.Add(otherFace))
-                            facesToConsider.Push(otherFace);
+                    //var matingFace = InconsistentMatingFacePairs[item].Item1 == face ?
+                    //       InconsistentMatingFacePairs[item].Item2 :
+                    //       InconsistentMatingFacePairs[item].Item1;
+                    successfullyConvertedInconsistentFacePairIndices.Add(item);
                 }
             }
-            if (facesToConsider.Count == 0 && singleFaces.Count == 0)
+            var successfullyConvertedInconsistentFacePairIndicesSorted 
+                = successfullyConvertedInconsistentFacePairIndices.OrderByDescending(x=>x);
+            foreach (var index in successfullyConvertedInconsistentFacePairIndicesSorted)
             {
-                InconsistentMatingFacePairs = null;
-                return true;
+                FacePairsForEdges.Add(InconsistentMatingFacePairs[index]);
+                InconsistentMatingFacePairs.RemoveAt(index);
             }
-            return false;
+            //if (facesToConsider.Count == 0 && singleFaces.Count == 0)
+            //{
+            //    InconsistentMatingFacePairs = null;
+            //    return true;
+            //}
+            return InconsistentMatingFacePairs.Count==0;
         }
 
 
@@ -576,7 +618,7 @@ namespace TVGL
                     {
                         for (int j = i + 1; j < entry.Count; j++)
                         {
-                            if (entry[i] != entry[j])
+                            if (entry[i].Item2 != entry[j].Item2)
                             {
                                 var dot = entry[i].Item1.Normal.Dot(entry[j].Item1.Normal);
                                 if (highestDot < dot)
@@ -675,7 +717,7 @@ namespace TVGL
                     orderedEdges.RemoveAt(bestJIndex);
                 }
             }
-            SingleSidedEdgeData=orderedEdges.Select(edge => (edge.Item1, edge.Item2, edge.Item3)).ToList();
+            SingleSidedEdgeData = orderedEdges.Select(edge => (edge.Item1, edge.Item2, edge.Item3)).ToList();
         }
 
         private static void MergeMakeEntries(Dictionary<Vertex, List<Vertex>> keptToRemovedDictionary, Vertex a, Vertex b)
@@ -764,8 +806,9 @@ namespace TVGL
         /// </summary>
         private void RepairHoles()
         {
-            var loops = OrganizeIntoLoops(SingleSidedEdges, out _);
-            CreateMissingEdgesAndFaces(loops,out var newEdges, out var newFaces);
+            var loops = OrganizeIntoLoops(SingleSidedEdges, out var remainingEdges);
+            SingleSidedEdges = remainingEdges;
+            CreateMissingEdgesAndFaces(loops, out var newEdges, out var newFaces);
             ts.AddFaces(newFaces);
             ts.AddEdges(newEdges);
         }
@@ -788,22 +831,18 @@ namespace TVGL
                 if (loop.Count == 3)
                 {
                     var newFace = new TriangleFace(loop.GetVertices());
-                    foreach (var eAD in loop)
-                        if (eAD.dir)
-                            newEdges.Add(eAD.edge);
-                        else newEdges.Add(eAD.edge);
+                    for (int i = 0; i < 3; i++)
+                    {
+                        var edge = loop.EdgeList[i];
+                        edge.OtherFace = newFace;
+                        newFace.AddEdge(edge);
+                    }
                     newFaces.Add(newFace);
                 }
                 //Else, use the triangulate function
                 else
                 {
-                    Dictionary<long, Edge> edgeDic = new Dictionary<long, Edge>();
-                    foreach (var eAD in loop)
-                    {
-                        var checksum = Edge.SetAndGetEdgeChecksum(eAD.edge);
-                        //if (!edgeDic.ContainsKey(checksum))  ...Why would this need to be checked?
-                        edgeDic.Add(checksum, eAD.edge);
-                    }
+                    var edgeDic = loop.EdgeList.ToDictionary(e => Edge.SetAndGetEdgeChecksum(e), e => e);
                     var vertices = loop.GetVertices().ToList();
                     Plane.DefineNormalAndDistanceFromVertices(vertices, out var distance, out var planeNormal);
                     var plane = new Plane(distance, planeNormal);
@@ -836,12 +875,18 @@ namespace TVGL
                                 var checksum = Edge.GetEdgeChecksum(fromVertex, toVertex);
                                 if (edgeDic.TryGetValue(checksum, out var edge))
                                 {
-                                    //Finish creating edge.
-                                    newEdges.Add(edge);
                                     edgeDic.Remove(checksum);
+                                    //Finish creating edge.
+                                    edge.OtherFace = newFace;
+                                    newFace.AddEdge(edge);
                                 }
                                 else
-                                    edgeDic.Add(checksum, new Edge(fromVertex, toVertex, newFace, null, false, checksum));
+                                {
+                                    var newEdge = new Edge(fromVertex, toVertex, newFace, null, true, checksum);
+                                    newFace.AddEdge(newEdge);
+                                    edgeDic.Add(checksum, newEdge);
+                                    newEdges.Add(newEdge);
+                                }
                                 fromVertex = toVertex;
                             }
                         }
@@ -858,21 +903,22 @@ namespace TVGL
                             newFaces.Add(newFace);
                             foreach (var edgeAnddir in triangle)
                             {
-                                newFace.AddEdge(edgeAnddir.edge);
-                                if (edgeAnddir.dir)
-                                    edgeAnddir.edge.OwnedFace = newFace;
-                                else edgeAnddir.edge.OtherFace = newFace;
-                                var checksum = Edge.GetEdgeChecksum(edgeAnddir.edge.From, edgeAnddir.edge.To);
-                                if (edgeDic.TryGetValue(checksum, out var formerEdge))
+                                var edge = edgeAnddir.edge;
+                                var checksum = Edge.GetEdgeChecksum(edge.From, edge.To);
+                                if (edgeDic.TryGetValue(checksum, out edge))
                                 {
                                     edgeDic.Remove(checksum);
-                                    newEdges.Add(formerEdge);
+                                    edge.OtherFace = newFace;
                                 }
                                 else
                                 {
-                                    edgeAnddir.edge.EdgeReference = checksum;
-                                    edgeDic.Add(checksum, edgeAnddir.edge);
+                                    edge = edgeAnddir.edge;
+                                    edge.OwnedFace = newFace;
+                                    edge.EdgeReference = checksum;
+                                    edgeDic.Add(checksum, edge);
+                                    newEdges.Add(edge);
                                 }
+                                newFace.AddEdge(edge);
                             }
                         }
                     }

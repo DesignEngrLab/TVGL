@@ -13,7 +13,7 @@ namespace TVGLUnitTestsAndBenchmarking
 {
     internal class Program
     {
-        public static string inputFolder = "TestFiles";
+        public static string inputFolder = "Github";
         static Random r = new Random();
         static double r1 => 2.0 * r.NextDouble() - 1.0;
 
@@ -22,17 +22,21 @@ namespace TVGLUnitTestsAndBenchmarking
         private static void Main(string[] args)
         {
             DirectoryInfo dir = Program.BackoutToFolder(inputFolder);
-
             var myWriter = new ConsoleTraceListener();
             Trace.Listeners.Add(myWriter);
-            TVGL.Message.Verbosity = VerbosityLevels.Everything;
+            //TVGL.Message.Verbosity = VerbosityLevels.Everything;
 #if PRESENT
-            foreach (var fileName in dir.GetFiles("*").Skip(5))
+
+            var valid3DFileExtensions = new HashSet<string> { ".tvglz" , ".stl",".ply", ".obj"  }; 
+            foreach (var fileName in dir.GetFiles("*",SearchOption.AllDirectories).Where(f => valid3DFileExtensions.Contains(f.Extension.ToLower()))
+                .Skip(28))
             {
-                Debug.WriteLine("\n\n\nAttempting to open: " + fileName.Name);
-                IO.Open(fileName.FullName, out TessellatedSolid[] solids);
+                Debug.WriteLine("Attempting to open: " + fileName.Name);
+                IO.Open(fileName.FullName, out TessellatedSolid[] solids, TessellatedSolidBuildOptions.Minimal);
+                //Presenter.ShowAndHang(solids);
+                IO.Open(fileName.FullName, out  solids);
+                //Presenter.ShowAndHang(solids);
                 //solids[0].Faces[0].Color = Color.ColorDictionary[ColorFamily.Red]["Red"];
-                Presenter.ShowAndHang(solids);
                 //var css = CrossSectionSolid.CreateFromTessellatedSolid(solids[0], CartesianDirections.XPositive, 20);
                 //Presenter.ShowAndHang(css);
                 //IO.Save(css, "test.CSSolid");
