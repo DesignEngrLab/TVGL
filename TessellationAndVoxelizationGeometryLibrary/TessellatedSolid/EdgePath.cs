@@ -25,7 +25,7 @@ namespace TVGL
     /// Class EdgePath.
     /// </summary>
     [JsonObject]
-    public class EdgePath : IList<(Edge edge, bool dir)>
+    public partial class EdgePath : IList<(Edge edge, bool dir)>
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="EdgePath"/> class.
@@ -185,7 +185,7 @@ namespace TVGL
                 else yield return EdgeList[i].To;
             }
             if (keepLastVertex && !IsClosed) //only add the last one if not a closed loop since it would otherwise
-                                              // repeat the first point
+                                             // repeat the first point
             {
                 if (DirectionList[^1]) yield return EdgeList[^1].To;
                 else yield return EdgeList[^1].From;
@@ -208,7 +208,7 @@ namespace TVGL
         /// <returns>IEnumerable&lt;Vector3&gt;.</returns>
         public IEnumerable<Vector3> GetCenters()
         {
-            foreach(var edge in EdgeList)
+            foreach (var edge in EdgeList)
                 yield return edge.Center();
         }
 
@@ -258,6 +258,23 @@ namespace TVGL
             EdgeList.Insert(0, edge);
         }
 
+
+        private void AddRange(EdgePath ep2)
+        {
+            if (FirstVertex == ep2.FirstVertex)
+                foreach (var (edge, dir) in ep2)
+                    AddBegin(edge, !dir);
+            else if (FirstVertex == ep2.LastVertex)
+                foreach (var (edge, dir) in ep2.Reverse())
+                    AddBegin(edge, dir);
+            else if (LastVertex == ep2.FirstVertex)
+                foreach (var (edge, dir) in ep2)
+                    AddEnd(edge, dir);
+            else if (LastVertex == ep2.LastVertex)
+                foreach (var (edge, dir) in ep2.Reverse())
+                    AddBegin(edge, !dir);
+            else throw new ArgumentException("The two edge paths do not share a common vertex");
+        }
 
         /// <summary>
         /// Determines the index of a specific item in the <see cref="T:System.Collections.Generic.IList`1" />.

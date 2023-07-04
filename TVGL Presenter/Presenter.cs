@@ -17,6 +17,7 @@ using HelixToolkit.Wpf.SharpDX;
 using HelixToolkit.SharpDX.Core;
 using OxyPlot;
 using System;
+using System.Runtime.CompilerServices;
 
 namespace TVGL
 {
@@ -391,6 +392,16 @@ namespace TVGL
         #endregion
 
 
+
+        internal static void ShowAndHang(IList<TriangleFace> faces, string heading = "", string title = "", string subtitle = "")
+        {
+            var geomModels = ConvertTessellatedSolidToMGM3D(faces, new Color(KnownColors.LightGray), false);
+            var vm = new Window3DPlotViewModel(heading, title, subtitle);
+            vm.Add(geomModels);
+            var window = new Window3DPlot(vm);
+            window.ShowDialog();
+        }
+
         public static IEnumerable<GeometryModel3D> ConvertSolidsToModel3D(IEnumerable<Solid> solids)
         {
             foreach (var ts in solids.Where(ts => ts is TessellatedSolid))
@@ -406,18 +417,21 @@ namespace TVGL
         }
 
         private static IEnumerable<GeometryModel3D> ConvertTessellatedSolidToMGM3D(TessellatedSolid ts)
+        { return ConvertTessellatedSolidToMGM3D(ts.Faces, ts.SolidColor, ts.HasUniformColor); }
+        private static IEnumerable<GeometryModel3D> ConvertTessellatedSolidToMGM3D(IList<TriangleFace> faces, Color defaultColor, bool hasUniformColor)
         {
-            var defaultColor = new SharpDX.Color4(ts.SolidColor.Rf, ts.SolidColor.Gf, ts.SolidColor.Bf, ts.SolidColor.Af);
+            var numFaces = faces.Count;
+            var defaultSharpDXColor = new SharpDX.Color4(defaultColor.Rf, defaultColor.Gf, defaultColor.Bf, defaultColor.Af);
             var positions =
-                ts.Faces.SelectMany(
+                faces.SelectMany(
                     f => f.Vertices.Select(v =>
                         new SharpDX.Vector3((float)v.Coordinates[0], (float)v.Coordinates[1], (float)v.Coordinates[2])));
             var normals =
-                           ts.Faces.SelectMany(f =>
+                           faces.SelectMany(f =>
                                f.Vertices.Select(v =>
                                    new SharpDX.Vector3((float)f.Normal[0], (float)f.Normal[1], (float)f.Normal[2])));
-            var indices = Enumerable.Range(0, ts.NumberOfFaces * 3);
-            if (ts.HasUniformColor)
+            var indices = Enumerable.Range(0, numFaces * 3);
+            if (hasUniformColor)
             {
                 yield return new MeshGeometryModel3D
                 {
@@ -427,7 +441,7 @@ namespace TVGL
                         TriangleIndices = new IntCollection(indices),
                         Normals = new Vector3Collection(normals),
                     },
-                    Material = new PhongMaterial() { DiffuseColor = defaultColor }
+                    Material = new PhongMaterial() { DiffuseColor = defaultSharpDXColor }
                 };
             }
             else
@@ -435,10 +449,10 @@ namespace TVGL
                 var vertexList = positions.ToList();  //to avoid re-enumeration
                 var normalList = normals.ToList();    //these lists are defined
                 var colorToFaceDict = new Dictionary<SharpDX.Color4, List<int>>();
-                for (int i = 0; i < ts.NumberOfFaces; i++)
+                for (int i = 0; i < numFaces; i++)
                 {
-                    var f = ts.Faces[i];
-                    var faceColor = (f.Color == null) ? defaultColor
+                    var f = faces[i];
+                    var faceColor = (f.Color == null) ? defaultSharpDXColor
                         : new SharpDX.Color4(f.Color.Rf, f.Color.Gf, f.Color.Bf, f.Color.Af);
                     if (colorToFaceDict.TryGetValue(faceColor, out var ints))
                         ints.Add(i);
@@ -501,6 +515,5 @@ namespace TVGL
                 ShowAndHangTransparentsAndSolids(new[] { obbSolid }, new[] { solid });
             }
         }
-
     }
 }

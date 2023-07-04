@@ -16,9 +16,8 @@
     <PackageReference Include="xunit.assert" Version="2.4.2" />
   </ItemGroup>
 
-	<ItemGroup>
-		<ProjectReference Include="..\TVGL Presenter\TVGL Presenter.csproj" />
-		<ProjectReference Include="..\TessellationAndVoxelizationGeometryLibrary\TessellationAndVoxelizationGeometryLibrary.csproj" />
-	</ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\TVGL PresenterDebugger\TVGL PresenterDebugger.csproj" />
+  </ItemGroup>
 
 </Project>

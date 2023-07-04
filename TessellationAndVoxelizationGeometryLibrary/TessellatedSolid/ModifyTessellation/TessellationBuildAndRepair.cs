@@ -121,6 +121,8 @@ namespace TVGL
         {
             if (3 * ts.NumberOfFaces != 2 * ts.NumberOfEdges)
                 Debug.WriteLine("3numFaces = " + 3 * ts.NumberOfFaces + ", 2numEdges = " + 2 * ts.NumberOfEdges);
+            if (ts.Errors.SingleSidedEdgeData.Count > 0)
+                Debug.WriteLine("SingleSidedEdges = " + ts.Errors.SingleSidedEdgeData.Count);   
             //Check if each face has cyclic references with each edge, vertex, and adjacent faces.
             var numSingleSidedEdges = 0;
 
@@ -196,15 +198,15 @@ namespace TVGL
                     //Continue
                 }
             if (buildOptions.AutomaticallyRepairBadFaces && InconsistentMatingFacePairs.Any())
-                //try
-                //{
-                if (!FlipFacesBasedOnInconsistentEdges())
-                    throw new Exception("Unable to resolve face directions.");
-            //}
-            //catch
-            //{
-            //    //Continue
-            //}
+                try
+                {
+                    if (!FlipFacesBasedOnInconsistentEdges())
+                        throw new Exception("Unable to resolve face directions.");
+                }
+                catch
+                {
+                    //Continue
+                }
             if (buildOptions.AutomaticallyInvertNegativeSolids && ModelHasNegativeVolume)
                 ts.TurnModelInsideOut();
             // the remaining items will need edges so we need to build these here
@@ -227,14 +229,14 @@ namespace TVGL
                 if (!buildOptions.PredefineAllEdges)
                     throw new ArgumentException("AutomaticallyRepairHoles requires PredefineAllEdges to be true.");
                 if (SingleSidedEdges != null && SingleSidedEdges.Count > 0)
-                    try
-                    {
+                    //try
+                    //{
                         this.RepairHoles();
-                    }
-                    catch
-                    {
-                        //Continue
-                    }
+                    //}
+                    //catch
+                    //{
+                    //    //Continue
+                    //}
             }
 
             //If the volume is zero, creating the convex hull may cause a null exception
@@ -438,19 +440,6 @@ namespace TVGL
             return (face1.C, face1.A);
         }
 
-        private static short WhichFaceOwnsEdge(TriangleFace face1, TriangleFace face2, Vertex fromVertex, Vertex toVertex)
-        {
-            var face1OwnsEdge = DoesFaceOwnEdge(face1, fromVertex, toVertex);
-            var face2OwnsEdge = DoesFaceOwnEdge(face2, fromVertex, toVertex);
-            var indexFlag = face1OwnsEdge == face2OwnsEdge ? (short)0 :
-                face1OwnsEdge ? (short)1 : (short)2;
-            return indexFlag;
-        }
-        private static bool DoesFaceOwnEdge(TriangleFace face, Edge edge)
-        {
-            return DoesFaceOwnEdge(face, edge.From, edge.To);
-        }
-
         private static bool DoesFaceOwnEdge(TriangleFace face, Vertex from, Vertex to)
         {
             return (face.A == from && face.B == to) ||
@@ -609,6 +598,15 @@ namespace TVGL
         {
             foreach (var entry in overusedEdges)
             {
+#if PRESENT
+                //foreach (var face in ts.Faces)
+                //    face.Color = new Color(0.5f, 0.75f, 0.75f, 0.75f);
+                //foreach (var facePair in entry)
+                //    facePair.Item1.Color = new Color(1f, 1f, 0.0f, 0.5f);
+                //ts.HasUniformColor = false;
+                //Presenter.ShowAndHang(ts);
+                //Presenter.ShowAndHang(entry.Select(p => p.Item1).ToList());
+#endif
                 while (entry.Count > 1)
                 {
                     var highestDot = -2.0;
@@ -659,6 +657,10 @@ namespace TVGL
         /// <returns>A list of (TriangleFace, TriangleFace).</returns>
         private void MatchUpRemainingSingleSidedEdge(out Dictionary<Vertex, List<Vertex>> keptToRemovedDictionary)
         {
+//#if PRESENT
+//            var relatedFaces = SingleSidedEdgeData.Select(s => s.Item1).ToList();
+//            Presenter.ShowAndHang(relatedFaces);
+//#endif
             keptToRemovedDictionary = new Dictionary<Vertex, List<Vertex>>();
             var maxtTolerance = 100 * ts.SameTolerance * ts.SameTolerance;
             var orderedEdges = SingleSidedEdgeData.Select(s => (s.Item1, s.Item2, s.Item3,
@@ -806,7 +808,7 @@ namespace TVGL
         /// </summary>
         private void RepairHoles()
         {
-            var loops = OrganizeIntoLoops(SingleSidedEdges, out var remainingEdges);
+            var loops = EdgePath.OrganizeIntoLoops(SingleSidedEdges, out var remainingEdges);
             SingleSidedEdges = remainingEdges;
             CreateMissingEdgesAndFaces(loops, out var newEdges, out var newFaces);
             ts.AddFaces(newFaces);
@@ -1044,236 +1046,6 @@ namespace TVGL
             return completedEdges;
         }
 
-
-        /// <summary>
-        /// Organizes the into loops.
-        /// </summary>
-        /// <param name="singleSidedEdges">The single sided edges.</param>
-        /// <param name="hubVertices">The hub vertices.</param>
-        /// <param name="remainingEdges">The remaining edges.</param>
-        /// <returns>List&lt;TriangulationLoop&gt;.</returns>
-        internal static List<TriangulationLoop> OrganizeIntoLoops(IEnumerable<Edge> singleSidedEdges,
-             out List<Edge> remainingEdges)
-        {
-            var hubVertices = FindHubVertices(singleSidedEdges);
-            List<TriangulationLoop> listOfLoops = new List<TriangulationLoop>();
-            var remainingEdgesInner = new HashSet<Edge>(singleSidedEdges);
-            if (!singleSidedEdges.Any())
-            {
-                remainingEdges = new List<Edge>();
-                return listOfLoops;
-            }
-            var attempts = 0;
-            while (remainingEdgesInner.Count > 0 && attempts < remainingEdgesInner.Count)
-            {
-                var loop = new TriangulationLoop();
-                var successful = false;
-                var removedEdges = new List<Edge>();
-                Edge startingEdge;
-                if (hubVertices.Any())
-                {
-                    var firstHubVertexTuple = hubVertices.First();
-                    var firstHubVertex = firstHubVertexTuple.Key;
-                    var hubEdgeCount = firstHubVertexTuple.Value;
-                    startingEdge = remainingEdgesInner.First(e => e.From == firstHubVertex);
-                    hubEdgeCount -= 2;
-                    if (hubEdgeCount <= 2) hubVertices.Remove(firstHubVertex);
-                    else hubVertices[firstHubVertex] = hubEdgeCount;
-                    // because using this here will drop it down to 2 - in which case - it's just like all
-                    // the other vertices in singledSidedEdges
-                }
-                else startingEdge = remainingEdgesInner.First();
-                loop.AddBegin(startingEdge, true);  //all the directions really should be false since the edges were defined
-                                                    //with the ownedFace but this is confusing and we'll switch later
-                removedEdges.Add(startingEdge);
-                remainingEdgesInner.Remove(startingEdge);
-                do
-                {
-                    var lastLoop = loop.Last();
-                    var lastVertex = lastLoop.dir ? lastLoop.edge.To : lastLoop.edge.From;
-                    Edge bestNext = null;
-                    if (hubVertices.ContainsKey(lastVertex))
-                    {
-                        var possibleNextEdges = lastVertex.Edges.Where(e => e != lastLoop.edge &&
-                        e.From == lastVertex && remainingEdgesInner.Contains(e));
-                        bestNext = possibleNextEdges.ChooseHighestCosineSimilarity(lastLoop.edge, !lastLoop.dir,
-                            possibleNextEdges.Select(e => e.From == lastVertex), 0.0);
-                        if (bestNext != null)
-                        {
-                            var hubEdgeCount = hubVertices[lastVertex];
-                            hubEdgeCount -= 2;
-                            hubVertices[lastVertex] = hubEdgeCount;
-                            if (hubEdgeCount <= 2) hubVertices.Remove(lastVertex);
-                        }
-                    }
-                    else bestNext = lastVertex.Edges.FirstOrDefault(e => e != lastLoop.edge &&
-                        e.From == lastVertex && remainingEdgesInner.Contains(e));
-                    if (bestNext != null)
-                    {
-                        loop.AddEnd(bestNext);
-                        removedEdges.Add(bestNext);
-                        remainingEdgesInner.Remove(bestNext);
-                        successful = true;
-                    }
-                    else
-                    {
-                        lastLoop = loop[0];
-                        lastVertex = lastLoop.dir ? lastLoop.edge.From : lastLoop.edge.To;
-
-                        if (hubVertices.ContainsKey(lastVertex))
-                        {
-                            var possibleNextEdges = lastVertex.Edges.Where(e => e != lastLoop.edge &&
-                            e.To == lastVertex && remainingEdgesInner.Contains(e));
-                            bestNext = possibleNextEdges.ChooseHighestCosineSimilarity(lastLoop.edge, !lastLoop.dir,
-                                possibleNextEdges.Select(e => e.From == lastVertex), 0.0);
-                            if (bestNext != null)
-                            {
-                                var hubEdgeCount = hubVertices[lastVertex];
-                                hubEdgeCount -= 2;
-                                hubVertices[lastVertex] = hubEdgeCount;
-                                if (hubEdgeCount <= 2) hubVertices.Remove(lastVertex);
-                            }
-                        }
-                        else bestNext = lastVertex.Edges.FirstOrDefault(e => e != lastLoop.edge &&
-                        e.To == lastVertex && remainingEdgesInner.Contains(e));
-                        if (bestNext == null) break;
-
-                        var dir = bestNext.To == lastVertex;
-                        loop.AddBegin(bestNext, dir);
-                        removedEdges.Add(bestNext);
-                        remainingEdgesInner.Remove(bestNext);
-                        successful = true;
-                    }
-                } while (loop.FirstVertex != (loop.DirectionList[^1] ? loop.EdgeList[^1].To : loop.EdgeList[^1].From)
-                && successful);
-                if (successful && loop.Count > 2)
-                {
-                    //#if PRESENT
-                    //Presenter.ShowVertexPathsWithSolid(new[] { loop.GetVertices().Select(v => v.Coordinates) }.Skip(7), new TessellatedSolid[] { });
-                    //#endif
-                    foreach (var subLoop in SeparateIntoMultipleLoops(loop))
-                        listOfLoops.Add(subLoop);
-                    attempts = 0;
-                }
-                else
-                {
-                    foreach (var edge in removedEdges)
-                        remainingEdgesInner.Add(edge);
-                    attempts++;
-                }
-            }
-            remainingEdges = remainingEdgesInner.ToList();
-            return listOfLoops;
-        }
-
-
-
-        /// <summary>
-        /// Separates the into multiple loops.
-        /// </summary>
-        /// <param name="loop">The loop.</param>
-        /// <returns>IEnumerable&lt;TriangulationLoop&gt;.</returns>
-        private static IEnumerable<TriangulationLoop> SeparateIntoMultipleLoops(TriangulationLoop loop)
-        {
-            var visitedToVertices = new HashSet<Vertex>(); //used initially to find when a coord repeats
-            var vertexLocations = new Dictionary<Vertex, List<int>>(); //duplicate vertices and the indices where they occur
-            var lastDuplicateAt = -1; // a small saving to prevent looping a full second time
-            var i = -1;
-            foreach (var vertex in loop.GetVertices())
-            {
-                i++;
-                //var coord = loop[i].edge.To;
-                if (vertexLocations.TryGetValue(vertex, out var locationInts))
-                {
-                    lastDuplicateAt = i; // this is just to 
-                    locationInts.Add(i);
-                }
-                else if (visitedToVertices.Contains(vertex))
-                {
-                    lastDuplicateAt = i; // this is just to 
-                    vertexLocations.Add(vertex, new List<int> { i });
-                }
-                else visitedToVertices.Add(vertex);
-            }
-            i = -1;
-            foreach (var vertex in loop.GetVertices().Take(lastDuplicateAt))
-            {
-                i++;
-                if (vertexLocations.TryGetValue(vertex, out var otherIndices))
-                {
-                    if (!otherIndices.Contains(i))  // it's already been discovered
-                        otherIndices.Insert(0, i);
-                }
-            }
-            var loopStartEnd = new List<int>();
-            foreach (var indices in vertexLocations.Values)
-            {
-                for (i = 0; i < indices.Count - 1; i++)
-                {
-                    loopStartEnd.Add(indices[i]);
-                    loopStartEnd.Add(indices[i + 1]);
-                }
-            }
-            while (loopStartEnd.Any())
-            {
-                var successfulUnknot = false;
-                for (i = 0; i < loopStartEnd.Count; i += 2)
-                {
-                    var lb = loopStartEnd[i];
-                    var ub = loopStartEnd[i + 1];
-                    var loopEncompasssOther = false;
-                    for (int j = 0; j < loopStartEnd.Count; j++)
-                    {
-                        if (j == i || j == i + 1) continue;
-                        var index = loopStartEnd[j];
-                        if (index > lb && index < ub)
-                        {
-                            loopEncompasssOther = true;
-                            break;
-                        }
-                    }
-                    if (loopEncompasssOther) continue;
-                    yield return new TriangulationLoop(loop.GetRange(lb, ub), true);
-                    successfulUnknot = true;
-                    loop.RemoveRange(lb, ub);
-                    loopStartEnd.RemoveAt(i); //remove the lb
-                    loopStartEnd.RemoveAt(i); //remove the ub
-                    var numInLoop = ub - lb;
-                    for (int j = 0; j < loopStartEnd.Count; j++)
-                        if (loopStartEnd[j] > lb) loopStartEnd[j] -= numInLoop;
-                    break;
-                }
-                if (!successfulUnknot) break;
-            }
-            yield return new TriangulationLoop(loop, true);
-        }
-
-
-
-        /// <summary>
-        /// Finds the hub vertices. These are vertices that connect to 3 or more single-sided edges. These are a good place to start
-        /// looking for holes (in non-watertight solids) because they are difficult to handle when encountered DURING loop creation.
-        /// So, the solution is to start with them.
-        /// </summary>
-        /// <param name="remainingEdges">The remaining edges.</param>
-        /// <returns>Dictionary&lt;Vertex, System.Int32&gt;.</returns>
-        private static Dictionary<Vertex, int> FindHubVertices(IEnumerable<Edge> remainingEdges)
-        {
-            var dict = new Dictionary<Vertex, int>();
-            foreach (var edge in remainingEdges)
-            {
-                if (dict.ContainsKey(edge.To)) dict[edge.To]++;
-                else dict.Add(edge.To, 1);
-                edge.To.Edges.Add(edge);
-                if (dict.ContainsKey(edge.From)) dict[edge.From]++;
-                else dict.Add(edge.From, 1);
-                edge.From.Edges.Add(edge);
-            }
-            foreach (var key in dict.Keys.ToList())
-                if (dict[key] <= 2)
-                    dict.Remove(key);
-            return dict;
-        }
 
         public void AutoRepair()
         {

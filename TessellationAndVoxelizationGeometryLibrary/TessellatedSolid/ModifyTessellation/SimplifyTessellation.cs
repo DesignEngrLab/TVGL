@@ -48,7 +48,7 @@ namespace TVGL
                 innerVertices.UnionWith(flat.InnerEdges.Select(e => e.From));
                 innerVertices.RemoveWhere(v => outerEdgeHashSet.Overlaps(v.Edges));
                 verticesToRemove.AddRange(innerVertices);
-                var vertexLoops = OrganizeIntoLoop(flat.OuterEdges, flat.Normal).ToArray();
+                var vertexLoops = EdgePath.OrganizeIntoLoop(flat.OuterEdges, flat.Normal).ToArray();
                 var triangulatedList = vertexLoops.Triangulate(flat.Normal);
                 var oldEdgeDictionary = flat.OuterEdges.ToDictionary(Edge.SetAndGetEdgeChecksum);
                 Dictionary<long, Edge> newEdgeDictionary = new Dictionary<long, Edge>();
@@ -90,74 +90,6 @@ namespace TVGL
             ts.AddEdges(edgesToAdd);
         }
 
-
-        /// <summary>
-        /// Organizes the into loop.
-        /// </summary>
-        /// <param name="singleSidedEdges">The single sided edges.</param>
-        /// <param name="normal">The normal.</param>
-        /// <returns>List&lt;Vertex&gt;.</returns>
-        /// <exception cref="System.Exception"></exception>
-        internal static List<Vertex> OrganizeIntoLoop(IEnumerable<Edge> singleSidedEdges, Vector3 normal)
-        {
-            var edgesHashSet = new HashSet<Edge>(singleSidedEdges);
-            var loop = new List<Vertex>();
-            var currentEdge = edgesHashSet.First();
-            Vertex startVertex, currentVertex;
-            if (normal.Dot(currentEdge.OwnedFace.Normal).IsPracticallySame(1))
-            {
-                startVertex = currentEdge.From;
-                currentVertex = currentEdge.To;
-            }
-            else
-            {
-                startVertex = currentEdge.To;
-                currentVertex = currentEdge.From;
-            }
-            edgesHashSet.Remove(currentEdge);
-            loop.Add(startVertex);
-            loop.Add(currentVertex);
-            while (edgesHashSet.Any())
-            {
-                if (startVertex == currentVertex) return loop;
-                var possibleNextEdges = currentVertex.Edges.Where(e => e != currentEdge && edgesHashSet.Contains(e)).ToList();
-                if (!possibleNextEdges.Any()) throw new Exception();
-                var lastEdge = currentEdge;
-                currentEdge = (possibleNextEdges.Count == 1) ? possibleNextEdges.First()
-                    : pickBestEdge(possibleNextEdges, currentEdge.Vector, normal);
-                currentVertex = currentEdge.OtherVertex(currentVertex);
-                loop.Add(currentVertex);
-                edgesHashSet.Remove(currentEdge);
-            }
-            throw new Exception();
-        }
-
-
-        /// <summary>
-        /// Picks the best edge.
-        /// </summary>
-        /// <param name="possibleNextEdges">The possible next edges.</param>
-        /// <param name="refEdge">The reference edge.</param>
-        /// <param name="normal">The normal.</param>
-        /// <returns>Edge.</returns>
-        private static Edge pickBestEdge(IEnumerable<Edge> possibleNextEdges, Vector3 refEdge, Vector3 normal)
-        {
-            var unitRefEdge = refEdge.Normalize();
-            var min = 2.0;
-            Edge bestEdge = null;
-            foreach (var candEdge in possibleNextEdges)
-            {
-                var unitCandEdge = candEdge.Vector.Normalize();
-                var cross = unitRefEdge.Cross(unitCandEdge);
-                var temp = cross.Dot(normal);
-                if (min > temp)
-                {
-                    min = temp;
-                    bestEdge = candEdge;
-                }
-            }
-            return bestEdge;
-        }
 
         /// <summary>
         /// Simplifies the model by merging the eliminating edges that are closer together
