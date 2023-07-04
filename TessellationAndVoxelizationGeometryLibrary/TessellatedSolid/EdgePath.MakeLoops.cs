@@ -97,7 +97,7 @@ namespace TVGL
         {
             var pathSegments = GetEdgePathSegments(edges);
             var vertexDictionary = new Dictionary<Vertex, List<EdgePath>>();
-            var faceHash = new HashSet<TriangleFace>(innerFaces);
+            HashSet<TriangleFace> faceHash = innerFaces == null ? null : new HashSet<TriangleFace>(innerFaces);
             foreach (var pathSegment in pathSegments)
             {
                 if (pathSegment.IsClosed) yield return pathSegment;
@@ -120,9 +120,7 @@ namespace TVGL
                     throw new Exception("This should not happen");
                 else
                 {
-                    (var ep1, var ep2) = (faceHash.Count > 0)
-                        ? FindBestFaceEnclosingPair(firstKVP.Key, firstKVP.Value, faceHash)
-                        : FindBestNullEnclosingPair(firstKVP.Key, firstKVP.Value);
+                    (var ep1, var ep2) = FindBestFaceEnclosingPair(firstKVP.Key, firstKVP.Value, faceHash);
                     ep1.AddRange(ep2);
                     if (ep1.IsClosed)
                     {
@@ -156,14 +154,51 @@ namespace TVGL
             }
         }
 
-        private static (EdgePath ep1, EdgePath ep2) FindBestFaceEnclosingPair(Vertex vertex, List<EdgePath> edgePaths, HashSet<TriangleFace> innerFaces)
+        private static (EdgePath ep1, EdgePath ep2) FindBestFaceEnclosingPair(Vertex vertex, List<EdgePath> edgePaths, HashSet<TriangleFace> innerFaces = null)
         {
-            throw new NotImplementedException();
+            var charVectors = MakeCharacteristicVectors(vertex, edgePaths, innerFaces).ToList();
+            var bestI = -1;
+            var bestJ = -1;
+            var bestAngle = double.MaxValue;
+            for (var i = 0; i < charVectors.Count - 1; i++)
+            {
+                for (int j = i + 1; j < charVectors.Count; j++)
+                {
+                    var angle = MiscFunctions.SmallerAngleBetweenVectorsEndToEnd(charVectors[i], charVectors[j]);
+                    if (bestAngle > angle)
+                    {
+                        bestAngle = angle;
+                        bestI = i;
+                        bestJ = j;
+                    }
+                }
+            }
+            return (edgePaths[bestI], edgePaths[bestJ]);
         }
 
-        private static (EdgePath ep1, EdgePath ep2) FindBestNullEnclosingPair(Vertex vertex, List<EdgePath> edgePaths)
+        private static IEnumerable<Vector3> MakeCharacteristicVectors(Vertex vertex, List<EdgePath> edgePaths, HashSet<TriangleFace> innerFaces)
         {
-            throw new NotImplementedException();
+            foreach (var edgePath in edgePaths)
+            {
+                var edge = (edgePath.FirstVertex == vertex) ? edgePath.EdgeList[0] : edgePath.EdgeList[^1];
+                var edgeUnitVector = edge.Vector.Normalize();
+                if (innerFaces != null && innerFaces.Count > 0)
+                {
+                    if (edge.OwnedFace != null && innerFaces.Contains(edge.OwnedFace))
+                        yield return edge.OwnedFace.Normal.Cross(edgeUnitVector);
+                    else if (edge.OtherFace != null && innerFaces.Contains(edge.OtherFace))
+                        yield return edgeUnitVector.Cross(edge.OtherFace.Normal);
+                    else yield return Vector3.Null;
+                }
+                else
+                {
+                    if (edge.OwnedFace == null && edge.OtherFace != null)
+                        yield return edge.OtherFace.Normal.Cross(edgeUnitVector);
+                    else if (edge.OtherFace == null && edge.OwnedFace != null)
+                        yield return edgeUnitVector.Cross(edge.OwnedFace.Normal);
+                    else yield return Vector3.Null;
+                }
+            }
         }
 
         #region from initial hole patching

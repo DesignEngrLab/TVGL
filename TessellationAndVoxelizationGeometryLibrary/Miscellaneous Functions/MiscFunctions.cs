@@ -1122,7 +1122,7 @@ namespace TVGL
         /// <param name="vector1">The v0.</param>
         /// <param name="vector2">The v1.</param>
         /// <returns>System.Double.</returns>
-        public static double LargerAngleBetweenVectors(this Vector2 vector1, Vector2 vector2)
+        public static double LargerAngleBetweenVectorsEndToEnd(this Vector2 vector1, Vector2 vector2)
         {
             var angleCos = vector1.Dot(vector2) / (vector1.Length() * vector2.Length());
             if (angleCos >= 1) return Math.PI;
@@ -1137,7 +1137,7 @@ namespace TVGL
         /// <param name="vector1">The v0.</param>
         /// <param name="vector2">The v1.</param>
         /// <returns>System.Double.</returns>
-        public static double SmallerAngleBetweenVectors(this Vector2 vector1, Vector2 vector2)
+        public static double SmallerAngleBetweenVectorsEndToEnd(this Vector2 vector1, Vector2 vector2)
         {
             var angleCos = vector1.Dot(vector2) / (vector1.Length() * vector2.Length());
             if (angleCos >= 1) return Math.PI;
@@ -1181,7 +1181,7 @@ namespace TVGL
         /// <param name="vector1">The v0.</param>
         /// <param name="vector2">The v1.</param>
         /// <returns>System.Double.</returns>
-        public static double LargerAngleBetweenVectors(this Vector3 vector1, Vector3 vector2)
+        public static double LargerAngleBetweenVectorsEndToEnd(this Vector3 vector1, Vector3 vector2)
         {
             return Math.PI + Math.Acos(vector1.Dot(vector2) / (vector1.Length() * vector2.Length()));
         }
@@ -1193,7 +1193,7 @@ namespace TVGL
         /// <param name="vector1">The v0.</param>
         /// <param name="vector2">The v1.</param>
         /// <returns>System.Double.</returns>
-        public static double SmallerAngleBetweenVectors(this Vector3 vector1, Vector3 vector2)
+        public static double SmallerAngleBetweenVectorsEndToEnd(this Vector3 vector1, Vector3 vector2)
         {
             return Math.PI - Math.Acos(vector1.Dot(vector2) / (vector1.Length() * vector2.Length()));
         }
