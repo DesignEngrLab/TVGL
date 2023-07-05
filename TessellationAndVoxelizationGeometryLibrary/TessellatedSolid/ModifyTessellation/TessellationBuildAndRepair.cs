@@ -808,11 +808,13 @@ namespace TVGL
         /// </summary>
         private void RepairHoles()
         {
-            var loops = EdgePath.OrganizeIntoLoops(SingleSidedEdges, out var remainingEdges);
-            SingleSidedEdges = remainingEdges;
+            var edgePaths = EdgePath.GetEdgePathLoopsAroundNullBorder(SingleSidedEdges).ToList();
+            var loops = edgePaths.Where(e=>e.IsClosed).Select(e => new TriangulationLoop(e)).ToList();
+//            var loops = EdgePath.OrganizeIntoLoops(SingleSidedEdges, out var remainingEdges);
             CreateMissingEdgesAndFaces(loops, out var newEdges, out var newFaces);
             ts.AddFaces(newFaces);
             ts.AddEdges(newEdges);
+            SingleSidedEdges =edgePaths.Where(e=>!e.IsClosed).SelectMany(e=>e.EdgeList).ToList();
         }
 
         private static void CreateMissingEdgesAndFaces(IEnumerable<TriangulationLoop> loops,

@@ -744,7 +744,7 @@ namespace TVGL
                     }
                 }
 
-                var newSolid = new TessellatedSolid(seperateSolid,null, new TessellatedSolidBuildOptions
+                var newSolid = new TessellatedSolid(seperateSolid, null, new TessellatedSolidBuildOptions
                 {
                     FindNonsmoothEdges = false,
                     CopyElementsPassedToConstructor = false
@@ -1183,7 +1183,7 @@ namespace TVGL
         /// <returns>System.Double.</returns>
         public static double LargerAngleBetweenVectorsEndToEnd(this Vector3 vector1, Vector3 vector2)
         {
-            return Math.PI + Math.Acos(vector1.Dot(vector2) / (vector1.Length() * vector2.Length()));
+            return Math.PI + SmallerAngleBetweenVectorsSameStart(vector1, vector2);
         }
 
         /// <summary>
@@ -1195,7 +1195,31 @@ namespace TVGL
         /// <returns>System.Double.</returns>
         public static double SmallerAngleBetweenVectorsEndToEnd(this Vector3 vector1, Vector3 vector2)
         {
-            return Math.PI - Math.Acos(vector1.Dot(vector2) / (vector1.Length() * vector2.Length()));
+            return Math.PI - SmallerAngleBetweenVectorsSameStart(vector1, vector2);
+        }
+
+        /// <summary>
+        /// Gets the larger angle between two vectors, assuming vector2 starts that the head of
+        /// vector1. The vectors do not need to be normalized.
+        /// </summary>
+        /// <param name="vector1">The v0.</param>
+        /// <param name="vector2">The v1.</param>
+        /// <returns>System.Double.</returns>
+        public static double LargerAngleBetweenVectorsSameStart(this Vector3 vector1, Vector3 vector2)
+        {
+            return Math.Tau - SmallerAngleBetweenVectorsSameStart(vector1, vector2);
+        }
+
+        /// <summary>
+        /// Gets the smaller angle between two vectors, assuming vector2 starts that the head of
+        /// vector1. The vectors do not need to be normalized.
+        /// </summary>
+        /// <param name="vector1">The v0.</param>
+        /// <param name="vector2">The v1.</param>
+        /// <returns>System.Double.</returns>
+        public static double SmallerAngleBetweenVectorsSameStart(this Vector3 vector1, Vector3 vector2)
+        {
+            return Math.Acos(vector1.Dot(vector2) / (vector1.Length() * vector2.Length()));
         }
 
         /// <summary>

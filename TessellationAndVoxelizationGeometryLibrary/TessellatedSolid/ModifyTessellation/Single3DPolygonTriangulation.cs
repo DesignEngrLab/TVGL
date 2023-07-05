@@ -217,17 +217,17 @@ namespace TVGL
             for (int i = 0; i < origNum; i++)
             {
                 var thisEAD = edgeLoop[i];
-                TriangleFace thisFace = thisEAD.dir ? thisEAD.edge.OtherFace : thisEAD.edge.OwnedFace;
+                TriangleFace thisFace =  thisEAD.edge.OtherFace ?? thisEAD.edge.OwnedFace;
                 neighborNormals.Add(thisEAD.edge, thisFace.Normal);
                 Vertex nextVertex;
                 if (thisEAD.dir)
                 {
-                    thisFace = thisEAD.edge.OtherFace;
+                    //thisFace = thisEAD.edge.OtherFace;
                     nextVertex = thisEAD.edge.To;
                 }
                 else
                 {
-                    thisFace = thisEAD.edge.OwnedFace;
+                    //thisFace = thisEAD.edge.OwnedFace;
                     nextVertex = thisEAD.edge.From;
                 }
                 Edge newEdge = new Edge(nextVertex, prevVertex, true);

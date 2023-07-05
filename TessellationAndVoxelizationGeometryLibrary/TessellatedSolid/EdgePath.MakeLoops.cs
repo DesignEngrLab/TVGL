@@ -48,45 +48,76 @@ namespace TVGL
         /// <returns>A list of EdgePaths.</returns>
         public static IEnumerable<EdgePath> GetEdgePathSegments(IEnumerable<Edge> edges)
         {
-            var vertexDictionary = new Dictionary<Vertex, List<Edge>>();
+            var vertexToEdgeDictionary = new Dictionary<Vertex, List<Edge>>();
             foreach (var edge in edges)
             {
-                if (vertexDictionary.TryGetValue(edge.From, out var entry))
+                if (vertexToEdgeDictionary.TryGetValue(edge.From, out var entry))
                     entry.Add(edge);
-                else vertexDictionary.Add(edge.From, new List<Edge> { edge });
-                if (vertexDictionary.TryGetValue(edge.To, out entry))
+                else vertexToEdgeDictionary.Add(edge.From, new List<Edge> { edge });
+                if (vertexToEdgeDictionary.TryGetValue(edge.To, out entry))
                     entry.Add(edge);
-                else vertexDictionary.Add(edge.To, new List<Edge> { edge });
+                else vertexToEdgeDictionary.Add(edge.To, new List<Edge> { edge });
             }
-            while (vertexDictionary.Count > 0)
+            while (vertexToEdgeDictionary.Count > 0)
             {
-                var firstKVP = vertexDictionary.First();
+                var entry = vertexToEdgeDictionary.First();
+                var startVertex = entry.Key;
+                var startEdge = entry.Value.First(ep => ep != null);
+                var edge = startEdge;
+                var vertex = edge.OtherVertex(startVertex);
+                //var connections = entry.Value;
+                //var edgeIndex = connections.FindIndex(ep => ep != null);
+                //var dir = edge.From == vertex;
+                //if (connections.Count(ep => ep != null) == 1)
+                //    vertexToEdgeDictionary.Remove(vertex);
+                //else connections[edgeIndex] = null;
                 var edgePath = new EdgePath();
-                var vertex = firstKVP.Key;
-                var connections = firstKVP.Value;
-                var edge = connections[0];
-                var dir = edge.From == vertex;
-                if (connections.Count == 1)
-                    vertexDictionary.Remove(vertex);
-                else connections.RemoveAt(0);
+                var buildDirection = true;
+                //if (buildDirection)
+                //    edgePath.AddEnd(edge, dir);
+                //else edgePath.AddBegin(edge, dir);
+                //vertex = dir ? edge.To : edge.From;
                 while (true)
                 {
-                    edgePath.AddBegin(edge, dir);
-                    vertex = dir ? edge.To : edge.From;
-                    connections = vertexDictionary[vertex];
-                    if (connections.Count == 2)
+                    var newAdditionPossible = false;
+                    if (vertexToEdgeDictionary.TryGetValue(vertex, out var connections))
                     {
-                        vertexDictionary.Remove(vertex);
-                        edge = (edge == connections[0]) ? connections[1] : connections[0];
-                        dir = edge.From == vertex;
+                        int edgeIndex = connections.FindIndex(ep => ep == edge);
+                        connections[edgeIndex] = null;
+                        var dir = (edge.To == vertex) == buildDirection;
+                        if (buildDirection)
+                            edgePath.AddEnd(edge, dir);
+                        else if (edge != edgePath.EdgeList[0])
+                            edgePath.AddBegin(edge, dir);
+                        if (connections.Count == 2) // && connections.Count(ep=>ep!=null)==1)
+                        {
+                            if (connections[0] == null)
+                            {
+                                edge = connections[1];
+                                connections[1] = null;
+                            }
+                            else
+                            {
+                                edge = connections[0];
+                                connections[0] = null;
+                            }
+                            newAdditionPossible = true;
+                            if (connections.All(ep => ep == null))
+                                vertexToEdgeDictionary.Remove(vertex);
+                            vertex = edge.OtherVertex(vertex);
+                        }
+                        else if (connections.All(ep => ep == null))
+                            vertexToEdgeDictionary.Remove(vertex);
+                        //else // for 3, 4, 5, ... just remove the connection from the  
+                        //connections[edgeIndex] = null;
                     }
-                    else
+                    if (!newAdditionPossible && buildDirection)
                     {
-                        if (connections.Count == 1)
-                            vertexDictionary.Remove(vertex);
-                        else connections.Remove(edge);
-                        break;
+                        buildDirection = false;
+                        vertex = startVertex;
+                        edge = startEdge;
                     }
+                    else if (!newAdditionPossible) break;
                 }
                 edgePath.UpdateIsClosed();
                 yield return edgePath;
@@ -116,13 +147,11 @@ namespace TVGL
                 var firstKVP = vertexDictionary.First();
                 if (firstKVP.Value.Count <= 1)
                     vertexDictionary.Remove(firstKVP.Key);
-                else if (firstKVP.Value.Count == 2)
-                    throw new Exception("This should not happen");
                 else
                 {
                     (var ep1, var ep2) = FindBestFaceEnclosingPair(firstKVP.Key, firstKVP.Value, faceHash);
                     ep1.AddRange(ep2);
-                    if (ep1.IsClosed)
+                    if (ep1.UpdateIsClosed())
                     {
                         yield return ep1;
                         foreach (var entry in vertexDictionary)
@@ -147,36 +176,59 @@ namespace TVGL
                     }
                 }
             }
-            //var verticesWithValenceOne = vertexDictionary.Where(kvp => kvp.Value.Count == 1).Select(kvp => kvp.Key).ToList();
+            //var verticesWithValenceOne = vertexToEdgeDictionary.Where(kvp => kvp.Value.Count == 1).Select(kvp => kvp.Key).ToList();
             foreach (var singleStrand in vertexDictionary)
             {
                 yield return singleStrand.Value[0];
             }
         }
 
-        private static (EdgePath ep1, EdgePath ep2) FindBestFaceEnclosingPair(Vertex vertex, List<EdgePath> edgePaths, HashSet<TriangleFace> innerFaces = null)
+        private static (EdgePath ep1, EdgePath ep2) FindBestFaceEnclosingPair(Vertex vertex, List<EdgePath> edgePaths, 
+            HashSet<TriangleFace> innerFaces = null)
         {
-            var charVectors = MakeCharacteristicVectors(vertex, edgePaths, innerFaces).ToList();
+            var numEdges = edgePaths.Count;
+            var enclosingVectors = MakeEnclosingVectors(vertex, edgePaths, innerFaces).ToList();
+            var emanatingVectors = MakeEmanatingUnitVectors(vertex, edgePaths).ToList();
             var bestI = -1;
             var bestJ = -1;
-            var bestAngle = double.MaxValue;
-            for (var i = 0; i < charVectors.Count - 1; i++)
+            var bestAngle1 = double.MaxValue;
+            var bestAngle2 = double.MaxValue;
+            for (var i = 0; i < numEdges - 1; i++)
             {
-                for (int j = i + 1; j < charVectors.Count; j++)
+                for (int j = i + 1; j < numEdges; j++)
                 {
-                    var angle = MiscFunctions.SmallerAngleBetweenVectorsEndToEnd(charVectors[i], charVectors[j]);
-                    if (bestAngle > angle)
+                    if (EdgePathsMakeClosedPath(edgePaths[i], edgePaths[j]))
                     {
-                        bestAngle = angle;
+                        bestAngle1 = double.MinValue;
+                        bestAngle2 = double.MinValue;
                         bestI = i;
                         bestJ = j;
+                    }
+                    else
+                    {
+                        var angle1 = MiscFunctions.SmallerAngleBetweenVectorsEndToEnd(enclosingVectors[i], enclosingVectors[j]);
+                        var angle2 = MiscFunctions.SmallerAngleBetweenVectorsSameStart(emanatingVectors[i], emanatingVectors[j]);
+                        if (bestAngle1.IsGreaterThanNonNegligible(angle1) ||
+                            (bestAngle1.IsPracticallySame(angle1) && bestAngle2 > angle2))
+                        {
+                            bestAngle1 = angle1;
+                            bestAngle2 = angle2;
+                            bestI = i;
+                            bestJ = j;
+                        }
                     }
                 }
             }
             return (edgePaths[bestI], edgePaths[bestJ]);
         }
 
-        private static IEnumerable<Vector3> MakeCharacteristicVectors(Vertex vertex, List<EdgePath> edgePaths, HashSet<TriangleFace> innerFaces)
+        private static bool EdgePathsMakeClosedPath(EdgePath edgePath1, EdgePath edgePath2)
+        {
+            return (edgePath1.FirstVertex == edgePath2.FirstVertex && edgePath1.LastVertex == edgePath2.LastVertex) ||
+                (edgePath1.FirstVertex == edgePath2.LastVertex && edgePath1.LastVertex == edgePath2.FirstVertex);
+        }
+
+        private static IEnumerable<Vector3> MakeEnclosingVectors(Vertex vertex, List<EdgePath> edgePaths, HashSet<TriangleFace> innerFaces)
         {
             foreach (var edgePath in edgePaths)
             {
@@ -198,6 +250,17 @@ namespace TVGL
                         yield return edgeUnitVector.Cross(edge.OwnedFace.Normal);
                     else yield return Vector3.Null;
                 }
+            }
+        }
+        private static IEnumerable<Vector3> MakeEmanatingUnitVectors(Vertex vertex, List<EdgePath> edgePaths)
+        {
+            foreach (var edgePath in edgePaths)
+            {
+                var edge = (edgePath.FirstVertex == vertex) ? edgePath.EdgeList[0] : edgePath.EdgeList[^1];
+                var edgeUnitVector = edge.Vector.Normalize();
+                if (edge.From == vertex)
+                    yield return edgeUnitVector;
+                else yield return -edgeUnitVector;
             }
         }
 
