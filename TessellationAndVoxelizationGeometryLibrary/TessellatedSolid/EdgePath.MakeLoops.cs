@@ -12,10 +12,12 @@
 // <summary></summary>
 // ***********************************************************************
 using ClipperLib;
+using HelixToolkit.SharpDX.Core;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.Design;
 using System.Linq;
+using System.Net;
 
 namespace TVGL
 {
@@ -129,20 +131,29 @@ namespace TVGL
             var pathSegments = GetEdgePathSegments(edges);
             var vertexDictionary = new Dictionary<Vertex, List<EdgePath>>();
             HashSet<TriangleFace> faceHash = innerFaces == null ? null : new HashSet<TriangleFace>(innerFaces);
+            //var maxValance = 0;
             foreach (var pathSegment in pathSegments)
             {
                 if (pathSegment.IsClosed) yield return pathSegment;
                 else
                 {
                     if (vertexDictionary.TryGetValue(pathSegment.FirstVertex, out var entry))
+                    {
                         entry.Add(pathSegment);
+                        //if (entry.Count > maxValance) maxValance = entry.Count;
+                    }
                     else vertexDictionary.Add(pathSegment.FirstVertex, new List<EdgePath> { pathSegment });
                     if (vertexDictionary.TryGetValue(pathSegment.LastVertex, out entry))
+                    {
                         entry.Add(pathSegment);
+                        //if (entry.Count > maxValance) maxValance = entry.Count;
+                    }
                     else vertexDictionary.Add(pathSegment.LastVertex, new List<EdgePath> { pathSegment });
                 }
             }
-            while (vertexDictionary.Any(kvp => kvp.Value.Count > 1)) // match up according to the input rule
+            //while (maxValance-- > 0)
+            //{
+            while (vertexDictionary.Any(kvp => kvp.Value.Count > 0)) //maxValance)) // match up according to the input rule
             {
                 var firstKVP = vertexDictionary.First();
                 if (firstKVP.Value.Count <= 1)
@@ -153,12 +164,13 @@ namespace TVGL
                     ep1.AddRange(ep2);
                     if (ep1.UpdateIsClosed())
                     {
-                        yield return ep1;
                         foreach (var entry in vertexDictionary)
                         {
                             entry.Value.Remove(ep1);
                             entry.Value.Remove(ep2);
                         }
+                        foreach (var ep in SplitSelfCrossingEdgePaths(ep1))
+                            yield return ep;
                     }
                     else
                     {
@@ -175,15 +187,46 @@ namespace TVGL
                         }
                     }
                 }
+                //}
             }
             //var verticesWithValenceOne = vertexToEdgeDictionary.Where(kvp => kvp.Value.Count == 1).Select(kvp => kvp.Key).ToList();
-            foreach (var singleStrand in vertexDictionary)
+            foreach (var singleStrand in vertexDictionary.Where(kvp => kvp.Value.Count > 0))
             {
                 yield return singleStrand.Value[0];
             }
         }
 
-        private static (EdgePath ep1, EdgePath ep2) FindBestFaceEnclosingPair(Vertex vertex, List<EdgePath> edgePaths, 
+        private static IEnumerable<EdgePath> SplitSelfCrossingEdgePaths(EdgePath origEdgePath)
+        {
+            var verticesSoFar = new Dictionary<Vertex, int>();
+            var index = 0;
+            //var usedIndexPairs = new List<int>();
+            foreach (var v in origEdgePath.GetVertices())
+            {
+                if (!verticesSoFar.TryAdd(v, index))
+                {
+                    var ep2 = new EdgePath();
+                    var i = verticesSoFar[v];
+                    var j = index;
+                    //usedIndexPairs.Add(i);
+                    //usedIndexPairs.Add(j);
+                    for (var k = i; k < j; k++)
+                        ep2.AddEnd(origEdgePath.EdgeList[k], origEdgePath.DirectionList[k]);
+                    ep2.UpdateIsClosed();
+                    yield return ep2;
+                    origEdgePath.RemoveRange(i, j);
+                    index = j-1;
+                }
+                index++;
+            }
+           
+            
+            //for (int i = usedIndexPairs.Count - 2; i >= 0; i -= 2)
+            //    origEdgePath.RemoveRange(usedIndexPairs[i], usedIndexPairs[i + 1]);
+            yield return origEdgePath;
+        }
+
+        private static (EdgePath ep1, EdgePath ep2) FindBestFaceEnclosingPair(Vertex vertex, List<EdgePath> edgePaths,
             HashSet<TriangleFace> innerFaces = null)
         {
             var numEdges = edgePaths.Count;
@@ -197,6 +240,8 @@ namespace TVGL
             {
                 for (int j = i + 1; j < numEdges; j++)
                 {
+                    //if (EdgePathsCross(edgePaths[i], edgePaths[j]))
+                    //    continue;
                     if (EdgePathsMakeClosedPath(edgePaths[i], edgePaths[j]))
                     {
                         bestAngle1 = double.MinValue;
@@ -222,6 +267,15 @@ namespace TVGL
             return (edgePaths[bestI], edgePaths[bestJ]);
         }
 
+        //private static bool EdgePathsCross(EdgePath edgePath1, EdgePath edgePath2)
+        //{
+        //    var commonVertices = edgePath1.GetVertices().Intersect(edgePath2.GetVertices()).ToList();
+        //    if (edgePath1.FirstVertex == edgePath2.FirstVertex) commonVertices.Remove(edgePath1.FirstVertex);
+        //    if (edgePath1.FirstVertex == edgePath2.LastVertex) commonVertices.Remove(edgePath1.FirstVertex);
+        //    if (edgePath1.LastVertex == edgePath2.FirstVertex) commonVertices.Remove(edgePath1.LastVertex);
+        //    if (edgePath1.LastVertex == edgePath2.LastVertex) commonVertices.Remove(edgePath1.LastVertex);
+        //    return commonVertices.Count > 0;
+        //}
         private static bool EdgePathsMakeClosedPath(EdgePath edgePath1, EdgePath edgePath2)
         {
             return (edgePath1.FirstVertex == edgePath2.FirstVertex && edgePath1.LastVertex == edgePath2.LastVertex) ||

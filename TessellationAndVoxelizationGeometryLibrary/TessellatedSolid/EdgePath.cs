@@ -272,7 +272,7 @@ namespace TVGL
                     AddEnd(edge, dir);
             else if (LastVertex == ep2.LastVertex)
                 foreach (var (edge, dir) in ep2.Reverse())
-                    AddBegin(edge, !dir);
+                    AddEnd(edge, !dir);
             else throw new ArgumentException("The two edge paths do not share a common vertex");
         }
 

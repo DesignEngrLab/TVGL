@@ -15,6 +15,7 @@ using Priority_Queue;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 
 
 namespace TVGL
@@ -200,20 +201,19 @@ namespace TVGL
 
             #region Initial priority queue creation
             var prevEAD = edgeLoop[^1];  // EAD = Edge And Dir
-            TriangleFace prevFace;
             Vertex prevVertex, thisVertex;
             if (prevEAD.dir)
             {
-                prevFace = prevEAD.edge.OtherFace;
                 prevVertex = prevEAD.edge.From;
                 thisVertex = prevEAD.edge.To;
             }
             else
             {
-                prevFace = prevEAD.edge.OwnedFace;
                 prevVertex = prevEAD.edge.To;
                 thisVertex = prevEAD.edge.From;
             }
+            var prevFace = prevEAD.edge.OtherFace ?? prevEAD.edge.OwnedFace;
+
             for (int i = 0; i < origNum; i++)
             {
                 var thisEAD = edgeLoop[i];

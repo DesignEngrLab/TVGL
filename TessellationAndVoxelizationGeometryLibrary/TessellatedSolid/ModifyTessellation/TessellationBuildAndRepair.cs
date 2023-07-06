@@ -121,9 +121,13 @@ namespace TVGL
         {
             if (3 * ts.NumberOfFaces != 2 * ts.NumberOfEdges)
                 Debug.WriteLine("3numFaces = " + 3 * ts.NumberOfFaces + ", 2numEdges = " + 2 * ts.NumberOfEdges);
-            if (ts.Errors.SingleSidedEdgeData.Count > 0)
-                Debug.WriteLine("SingleSidedEdges = " + ts.Errors.SingleSidedEdgeData.Count);   
-            //Check if each face has cyclic references with each edge, vertex, and adjacent faces.
+            if (ts.Errors == null) ; // Debug.WriteLine("No errors were found.");
+            else
+            {
+                    Debug.WriteLine("     **** Errors found");
+                if (ts.Errors.SingleSidedEdgeData.Count > 0)
+                    Debug.WriteLine("     **** SingleSidedEdges = " + ts.Errors.SingleSidedEdgeData.Count);
+            }//Check if each face has cyclic references with each edge, vertex, and adjacent faces.
             var numSingleSidedEdges = 0;
 
             foreach (var face in ts.Faces)
@@ -231,12 +235,12 @@ namespace TVGL
                 if (SingleSidedEdges != null && SingleSidedEdges.Count > 0)
                     //try
                     //{
-                        this.RepairHoles();
-                    //}
-                    //catch
-                    //{
-                    //    //Continue
-                    //}
+                    this.RepairHoles();
+                //}
+                //catch
+                //{
+                //    //Continue
+                //}
             }
 
             //If the volume is zero, creating the convex hull may cause a null exception
@@ -559,7 +563,7 @@ namespace TVGL
             var successfullyConvertedInconsistentFacePairIndices = new HashSet<int>();
             foreach (var face in faceCounter)
             {
-                if (face.Value.Count<2) continue;
+                if (face.Value.Count < 2) continue;
                 face.Key.Invert();
                 foreach (var item in face.Value)
                 {
@@ -569,8 +573,8 @@ namespace TVGL
                     successfullyConvertedInconsistentFacePairIndices.Add(item);
                 }
             }
-            var successfullyConvertedInconsistentFacePairIndicesSorted 
-                = successfullyConvertedInconsistentFacePairIndices.OrderByDescending(x=>x);
+            var successfullyConvertedInconsistentFacePairIndicesSorted
+                = successfullyConvertedInconsistentFacePairIndices.OrderByDescending(x => x);
             foreach (var index in successfullyConvertedInconsistentFacePairIndicesSorted)
             {
                 FacePairsForEdges.Add(InconsistentMatingFacePairs[index]);
@@ -581,7 +585,7 @@ namespace TVGL
             //    InconsistentMatingFacePairs = null;
             //    return true;
             //}
-            return InconsistentMatingFacePairs.Count==0;
+            return InconsistentMatingFacePairs.Count == 0;
         }
 
 
@@ -657,10 +661,10 @@ namespace TVGL
         /// <returns>A list of (TriangleFace, TriangleFace).</returns>
         private void MatchUpRemainingSingleSidedEdge(out Dictionary<Vertex, List<Vertex>> keptToRemovedDictionary)
         {
-//#if PRESENT
-//            var relatedFaces = SingleSidedEdgeData.Select(s => s.Item1).ToList();
-//            Presenter.ShowAndHang(relatedFaces);
-//#endif
+            //#if PRESENT
+            //            var relatedFaces = SingleSidedEdgeData.Select(s => s.Item1).ToList();
+            //            Presenter.ShowAndHang(relatedFaces);
+            //#endif
             keptToRemovedDictionary = new Dictionary<Vertex, List<Vertex>>();
             var maxtTolerance = 100 * ts.SameTolerance * ts.SameTolerance;
             var orderedEdges = SingleSidedEdgeData.Select(s => (s.Item1, s.Item2, s.Item3,
@@ -809,12 +813,11 @@ namespace TVGL
         private void RepairHoles()
         {
             var edgePaths = EdgePath.GetEdgePathLoopsAroundNullBorder(SingleSidedEdges).ToList();
-            var loops = edgePaths.Where(e=>e.IsClosed).Select(e => new TriangulationLoop(e)).ToList();
-//            var loops = EdgePath.OrganizeIntoLoops(SingleSidedEdges, out var remainingEdges);
+            var loops = edgePaths.Where(e => e.IsClosed).Select(e => new TriangulationLoop(e));
             CreateMissingEdgesAndFaces(loops, out var newEdges, out var newFaces);
             ts.AddFaces(newFaces);
             ts.AddEdges(newEdges);
-            SingleSidedEdges =edgePaths.Where(e=>!e.IsClosed).SelectMany(e=>e.EdgeList).ToList();
+            SingleSidedEdges = edgePaths.Where(e => !e.IsClosed).SelectMany(e => e.EdgeList).ToList();
         }
 
         private static void CreateMissingEdgesAndFaces(IEnumerable<TriangulationLoop> loops,

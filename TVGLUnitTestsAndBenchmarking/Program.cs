@@ -29,7 +29,7 @@ namespace TVGLUnitTestsAndBenchmarking
 
             var valid3DFileExtensions = new HashSet<string> { ".tvglz" , ".stl",".ply", ".obj"  }; 
             foreach (var fileName in dir.GetFiles("*",SearchOption.AllDirectories).Where(f => valid3DFileExtensions.Contains(f.Extension.ToLower()))
-                .Skip(28))
+                .Skip(57))
             {
                 Debug.WriteLine("Attempting to open: " + fileName.Name);
                 IO.Open(fileName.FullName, out TessellatedSolid[] solids, TessellatedSolidBuildOptions.Minimal);
