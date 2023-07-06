@@ -17,7 +17,6 @@ namespace TVGLUnitTestsAndBenchmarking
             ts.Copy();
             ts.OrientedBoundingBox();
             ts.CreateSilhouette(Vector3.UnitX);
-            ts.Errors.AutoRepair();
             ts.SetToOriginAndSquare(out var backTransform);
             ts.SetToOriginAndSquareToNewSolid(out backTransform);
             ts.Simplify();

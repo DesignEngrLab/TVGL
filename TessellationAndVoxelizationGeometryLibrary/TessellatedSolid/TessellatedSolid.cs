@@ -673,8 +673,8 @@ namespace TVGL
                 {
                     var face = new TriangleFace(faceVertices, doublyLinkToVertices);
                     if (!HasUniformColor) face.Color = color;
-                    listOfFaces.Add(face);
                     face.IndexInList = listOfFaces.Count;
+                    listOfFaces.Add(face);
                 }
                 // todo: can stl have polygons greater than triangle?! if not, then simplify this code. it's unnecessaril complicated
                 else
@@ -998,8 +998,9 @@ namespace TVGL
         {
             var numToAdd = facesToAdd.Count;
             var newFaces = new TriangleFace[NumberOfFaces + numToAdd];
-            for (var i = 0; i < NumberOfFaces; i++)
-                newFaces[i] = Faces[i];
+            Faces.CopyTo(newFaces, 0);
+            //for (var i = 0; i < NumberOfFaces; i++)
+            //    newFaces[i] = Faces[i];
             for (var i = 0; i < numToAdd; i++)
             {
                 newFaces[NumberOfFaces + i] = facesToAdd[i];

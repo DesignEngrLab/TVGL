@@ -25,7 +25,7 @@ namespace TVGL
     /// Class EdgePath.
     /// </summary>
     [JsonObject]
-    public partial class EdgePath : IList<(Edge edge, bool dir)>
+    public class EdgePath : IList<(Edge edge, bool dir)>
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="EdgePath"/> class.
@@ -259,7 +259,7 @@ namespace TVGL
         }
 
 
-        private void AddRange(EdgePath ep2)
+        internal void AddRange(EdgePath ep2)
         {
             if (FirstVertex == ep2.FirstVertex)
                 foreach (var (edge, dir) in ep2)

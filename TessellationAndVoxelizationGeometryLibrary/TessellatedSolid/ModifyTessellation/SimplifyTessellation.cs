@@ -48,7 +48,7 @@ namespace TVGL
                 innerVertices.UnionWith(flat.InnerEdges.Select(e => e.From));
                 innerVertices.RemoveWhere(v => outerEdgeHashSet.Overlaps(v.Edges));
                 verticesToRemove.AddRange(innerVertices);
-                var vertexLoops = EdgePath.OrganizeIntoLoop(flat.OuterEdges, flat.Normal).ToArray();
+                var vertexLoops = flat.OuterEdges.MakeEdgePaths(true,new EdgePathLoopsAroundInputFaces(flat.Faces)).Select(ep=>ep.GetVertices().ToList());
                 var triangulatedList = vertexLoops.Triangulate(flat.Normal);
                 var oldEdgeDictionary = flat.OuterEdges.ToDictionary(Edge.SetAndGetEdgeChecksum);
                 Dictionary<long, Edge> newEdgeDictionary = new Dictionary<long, Edge>();

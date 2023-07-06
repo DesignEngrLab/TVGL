@@ -29,12 +29,12 @@ namespace TVGLUnitTestsAndBenchmarking
 
             var valid3DFileExtensions = new HashSet<string> { ".tvglz" , ".stl",".ply", ".obj"  }; 
             foreach (var fileName in dir.GetFiles("*",SearchOption.AllDirectories).Where(f => valid3DFileExtensions.Contains(f.Extension.ToLower()))
-                .Skip(57))
+                .Skip(0))
             {
                 Debug.WriteLine("Attempting to open: " + fileName.Name);
                 IO.Open(fileName.FullName, out TessellatedSolid[] solids, TessellatedSolidBuildOptions.Minimal);
                 //Presenter.ShowAndHang(solids);
-                IO.Open(fileName.FullName, out  solids);
+                IO.Open(fileName.FullName, out solids);
                 //Presenter.ShowAndHang(solids);
                 //solids[0].Faces[0].Color = Color.ColorDictionary[ColorFamily.Red]["Red"];
                 //var css = CrossSectionSolid.CreateFromTessellatedSolid(solids[0], CartesianDirections.XPositive, 20);

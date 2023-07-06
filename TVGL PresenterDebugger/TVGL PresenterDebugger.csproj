@@ -98,12 +98,13 @@
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Polygon Operations\Slice2D.cs" Link="TVGL\Polygon Operations\Slice2D.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Polygon Operations\Vertex2D.cs" Link="TVGL\Polygon Operations\Vertex2D.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\TessellatedSolid\Edge.cs" Link="TVGL\TessellatedSolid\Edge.cs" />
-		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\TessellatedSolid\EdgePath.cs" Link="TVGL\TessellatedSolid\EdgePath.cs" />
-		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\TessellatedSolid\EdgePath.MakeLoops.cs" Link="TVGL\TessellatedSolid\EdgePath.MakeLoops.cs" />		
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\TessellatedSolid\EdgePath.cs" Link="TVGL\TessellatedSolid\EdgePath.cs" />		
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\TessellatedSolid\Enclosure Operations\ConvexHull2D.cs" Link="TVGL\TessellatedSolid\Enclosure Operations\ConvexHull2D.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\TessellatedSolid\Enclosure Operations\GaussianSphere.cs" Link="TVGL\TessellatedSolid\Enclosure Operations\GaussianSphere.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\TessellatedSolid\Enclosure Operations\MinimumCircleCylinder.cs" Link="TVGL\TessellatedSolid\Enclosure Operations\MinimumCircleCylinder.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\TessellatedSolid\Enclosure Operations\MinimumEnclosure.cs" Link="TVGL\TessellatedSolid\Enclosure Operations\MinimumEnclosure.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\TessellatedSolid\MakeEdgePaths\EdgePath.MakeLoops.cs" Link="TVGL\TessellatedSolid\MakeEdgePaths\EdgePath.MakeLoops.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\TessellatedSolid\MakeEdgePaths\EdgePathObjectiveFunctions.cs" Link="TVGL\TessellatedSolid\MakeEdgePaths\EdgePathObjectiveFunctions.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\TessellatedSolid\ModifyTessellation\ComplexifyTessellation.cs" Link="TVGL\TessellatedSolid\ModifyTessellation\ComplexifyTessellation.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\TessellatedSolid\ModifyTessellation\DetermineIntermediateVertex.cs" Link="TVGL\TessellatedSolid\ModifyTessellation\DetermineIntermediateVertex.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\TessellatedSolid\ModifyTessellation\Single3DPolygonTriangulation.cs" Link="TVGL\TessellatedSolid\ModifyTessellation\Single3DPolygonTriangulation.cs" />

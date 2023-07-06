@@ -18,6 +18,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Net;
+using System.Numerics;
 
 namespace TVGL
 {
@@ -124,9 +125,7 @@ namespace TVGL
             if (ts.Errors == null) ; // Debug.WriteLine("No errors were found.");
             else
             {
-                    Debug.WriteLine("     **** Errors found");
-                if (ts.Errors.SingleSidedEdgeData.Count > 0)
-                    Debug.WriteLine("     **** SingleSidedEdges = " + ts.Errors.SingleSidedEdgeData.Count);
+                Debug.WriteLine("     **** Errors found and fixed?");
             }//Check if each face has cyclic references with each edge, vertex, and adjacent faces.
             var numSingleSidedEdges = 0;
 
@@ -179,17 +178,17 @@ namespace TVGL
             CheckModelIntegrity();
             if (buildOptions.FixEdgeDisassociations && OverusedEdges.Count + SingleSidedEdgeData.Count > 0)
             {
-                try
-                {
-                    TeaseApartOverUsedEdges(OverusedEdges);
+                //try
+                //{
+                    TeaseApartOverUsedEdges();
                     MatchUpRemainingSingleSidedEdge(out var keptToRemovedDictionary);
                     MergeVertices(keptToRemovedDictionary);
                     ts.RemoveVertices(keptToRemovedDictionary.Values.SelectMany(v => v));
-                }
-                catch
-                {
-                    //Continue
-                }
+                //}
+                //catch
+                //{
+                //    //Continue
+                //}
             }
             if (buildOptions.AutomaticallyRepairBadFaces && FacesWithNegligibleArea.Any())
                 try
@@ -422,7 +421,10 @@ namespace TVGL
                 ReportErrors(ts.Errors);
             }
             else
+            {
+                ts.Errors = null;
                 Message.output("No errors found.", 3);
+            }
         }
 
         private static (Vertex fromVertex, Vertex toVertex) GetCommonVertices(TriangleFace face1, TriangleFace face2, bool bothThinkTheyOwnEdge)
@@ -505,6 +507,7 @@ namespace TVGL
                 ts.Edges[i] = new Edge(faceWithVertices.Item2, faceWithVertices.Item3, faceWithVertices.Item1, null, true);
                 SingleSidedEdges.Add(ts.Edges[i]);
             }
+            SingleSidedEdgeData = null;
         }
         #endregion
 
@@ -598,9 +601,9 @@ namespace TVGL
         /// <param name="moreSingleSidedEdges">The more single sided edges.</param>
         /// <returns>System.Collections.Generic.IEnumerable&lt;System.Tuple&lt;TVGL.Edge, System.Collections.Generic.List&lt;
         /// TVGL.TriangleFace&gt;&gt;&gt;.</returns>
-        private void TeaseApartOverUsedEdges(List<List<(TriangleFace, bool)>> overusedEdges)
+        private void TeaseApartOverUsedEdges()
         {
-            foreach (var entry in overusedEdges)
+            foreach (var entry in OverusedEdges)
             {
 #if PRESENT
                 //foreach (var face in ts.Faces)
@@ -611,6 +614,7 @@ namespace TVGL
                 //Presenter.ShowAndHang(ts);
                 //Presenter.ShowAndHang(entry.Select(p => p.Item1).ToList());
 #endif
+                (var fromVertex, var toVertex) = GetCommonVertices(entry[0].Item1, entry[1].Item1, entry[1].Item2);
                 while (entry.Count > 1)
                 {
                     var highestDot = -2.0;
@@ -622,7 +626,7 @@ namespace TVGL
                         {
                             if (entry[i].Item2 != entry[j].Item2)
                             {
-                                var dot = entry[i].Item1.Normal.Dot(entry[j].Item1.Normal);
+                                double dot = entry[i].Item1.Normal.Dot(entry[j].Item1.Normal);
                                 if (highestDot < dot)
                                 {
                                     bestI = i;
@@ -632,24 +636,42 @@ namespace TVGL
                             }
                         }
                     }
-                    if (highestDot == -2.0) entry.Last().Item1.Invert();
-                    else
+                    if (highestDot != -2.0) //entry.Last().Item1.Invert();
                     {
                         FacePairsForEdges.Add((entry[bestI].Item1, entry[bestJ].Item1));
+                        entry.RemoveAt(bestJ);
+                        entry.RemoveAt(bestI);
+                    }
+                    else
+                    {   // hmm, all the faces are on the same side. This is a problem, so we'll re-run
+                        // it and find the best
+                        for (int i = 0; i < entry.Count - 1; i++)
+                        {
+                            for (int j = i + 1; j < entry.Count; j++)
+                            {
+                                var dot =Math.Abs(entry[i].Item1.Normal.Dot(entry[j].Item1.Normal));
+                                if (highestDot < dot)
+                                {
+                                    bestI = i;
+                                    bestJ = j;
+                                    highestDot = dot;
+                                }
+                            }
+                        }
+                        InconsistentMatingFacePairs.Add((entry[bestI].Item1, entry[bestJ].Item1));
                         entry.RemoveAt(bestJ);
                         entry.RemoveAt(bestI);
                     }
                 }
                 if (entry.Count == 1)
                 {
-                    var lastNewPair = FacePairsForEdges.Last();
-                    (var fromVertex, var toVertex) = GetCommonVertices(lastNewPair.Item1, lastNewPair.Item2, false);
                     if (entry[0].Item2)
                         SingleSidedEdgeData.Add((entry[0].Item1, fromVertex, toVertex));
                     else
                         SingleSidedEdgeData.Add((entry[0].Item1, toVertex, fromVertex));
                 }
             }
+            OverusedEdges = null;
         }
 
 
@@ -812,12 +834,21 @@ namespace TVGL
         /// </summary>
         private void RepairHoles()
         {
-            var edgePaths = EdgePath.GetEdgePathLoopsAroundNullBorder(SingleSidedEdges).ToList();
-            var loops = edgePaths.Where(e => e.IsClosed).Select(e => new TriangulationLoop(e));
+            var edgePaths = SingleSidedEdges.MakeEdgePaths(true, new GetEdgePathLoopsAroundNullBorder()).ToList();
+            var loops = SeparateOutClosedLoops(edgePaths);
             CreateMissingEdgesAndFaces(loops, out var newEdges, out var newFaces);
             ts.AddFaces(newFaces);
             ts.AddEdges(newEdges);
-            SingleSidedEdges = edgePaths.Where(e => !e.IsClosed).SelectMany(e => e.EdgeList).ToList();
+        }
+
+        private IEnumerable<TriangulationLoop> SeparateOutClosedLoops(List<EdgePath> edgePaths)
+        {
+            SingleSidedEdges = new List<Edge>();
+            foreach (var edgePath in edgePaths)
+            {
+                if (edgePath.IsClosed) yield return new TriangulationLoop(edgePath);
+                else SingleSidedEdges.AddRange(edgePath.EdgeList);
+            }
         }
 
         private static void CreateMissingEdgesAndFaces(IEnumerable<TriangulationLoop> loops,
@@ -828,11 +859,6 @@ namespace TVGL
             var k = 0;
             foreach (var loop in loops)
             {
-                if (loop.Count <= 2)
-                {
-                    Message.output("Recieving hole with only " + loop.Count + " edges.", 2);
-                    continue;
-                }
                 Message.output("Patching hole #" + ++k + " (has " + loop.Count + " edges) in tessellation.", 2);
                 //if a simple triangle, create a new face from vertices
                 if (loop.Count == 3)
@@ -931,130 +957,6 @@ namespace TVGL
                     }
                 }
             }
-        }
-
-
-        private static List<(Edge, TriangleFace, TriangleFace)> CreateMissingEdgesAndFaces(
-                    IEnumerable<TriangulationLoop> loops,
-                    out List<TriangleFace> newFaces)
-        {
-            var completedEdges = new List<(Edge, TriangleFace, TriangleFace)>();
-            newFaces = new List<TriangleFace>();
-            var k = 0;
-            foreach (var loop in loops)
-            {
-                if (loop.Count <= 2)
-                {
-                    Message.output("Recieving hole with only " + loop.Count + " edges.", 2);
-                    continue;
-                }
-                Message.output("Patching hole #" + ++k + " (has " + loop.Count + " edges) in tessellation.", 2);
-                //if a simple triangle, create a new face from vertices
-                if (loop.Count == 3)
-                {
-                    var newFace = new TriangleFace(loop.GetVertices());
-                    foreach (var eAD in loop)
-                        if (eAD.dir)
-                            completedEdges.Add((eAD.edge, newFace, eAD.edge.OtherFace));
-                        else completedEdges.Add((eAD.edge, eAD.edge.OwnedFace, newFace));
-                    newFaces.Add(newFace);
-                }
-                //Else, use the triangulate function
-                else
-                {
-                    Dictionary<long, Edge> edgeDic = new Dictionary<long, Edge>();
-                    foreach (var eAD in loop)
-                    {
-                        var checksum = Edge.SetAndGetEdgeChecksum(eAD.edge);
-                        //if (!edgeDic.ContainsKey(checksum))  ...Why would this need to be checked?
-                        edgeDic.Add(checksum, eAD.edge);
-                    }
-                    var vertices = loop.GetVertices().ToList();
-                    Plane.DefineNormalAndDistanceFromVertices(vertices, out var distance, out var planeNormal);
-                    var plane = new Plane(distance, planeNormal);
-                    var success = false;
-                    List<Vertex[]> triangleFaceList = null;
-                    if (plane.CalculateMaxError(vertices.Select(v => v.Coordinates)) < Constants.ErrorForFaceInSurface)
-                    {
-                        try
-                        {
-                            var coords2D = vertices.Select(v => v.Coordinates).ProjectTo2DCoordinates(planeNormal, out _);
-                            if (coords2D.Area() < 0) planeNormal *= -1;
-                            triangleFaceList = vertices.Triangulate(planeNormal, true).ToList();
-                            success = true;
-                        }
-                        catch
-                        {
-                            success = false;
-                        }
-                    }
-                    if (success && triangleFaceList.Any())
-                    {
-                        Message.output("loop successfully repaired with " + triangleFaceList.Count, 2);
-                        foreach (var triangle in triangleFaceList)
-                        {
-                            var newFace = new TriangleFace(triangle, planeNormal);
-                            newFaces.Add(newFace);
-                            var fromVertex = newFace.C;
-                            foreach (var toVertex in newFace.Vertices)
-                            {
-                                var checksum = Edge.GetEdgeChecksum(fromVertex, toVertex);
-                                if (edgeDic.TryGetValue(checksum, out var edge))
-                                {
-                                    //Finish creating edge.
-                                    completedEdges.Add((edge, edge.OwnedFace, newFace));
-                                    edgeDic.Remove(checksum);
-                                }
-                                else
-                                    edgeDic.Add(checksum, new Edge(fromVertex, toVertex, newFace, null, false, checksum));
-                                fromVertex = toVertex;
-                            }
-                        }
-                    }
-                    if (!success)
-                    {
-                        //try
-                        //{
-                        var triangles = Single3DPolygonTriangulation.QuickTriangulate(loop, 5);
-                        //if (!Single3DPolygonTriangulation.Triangulate(loop, out var triangles)) continue;
-                        foreach (var triangle in triangles)
-                        {
-                            var newFace = new TriangleFace(triangle.GetVertices(), triangle.Normal);
-                            newFaces.Add(newFace);
-                            foreach (var edgeAnddir in triangle)
-                            {
-                                newFace.AddEdge(edgeAnddir.edge);
-                                if (edgeAnddir.dir)
-                                    edgeAnddir.edge.OwnedFace = newFace;
-                                else edgeAnddir.edge.OtherFace = newFace;
-                                var checksum = Edge.GetEdgeChecksum(edgeAnddir.edge.From, edgeAnddir.edge.To);
-                                if (edgeDic.TryGetValue(checksum, out var formerEdge))
-                                {
-                                    edgeDic.Remove(checksum);
-                                    completedEdges.Add((formerEdge, formerEdge.OwnedFace, edgeAnddir.edge.OwnedFace));
-                                }
-                                else
-                                {
-                                    edgeAnddir.edge.EdgeReference = checksum;
-                                    edgeDic.Add(checksum, edgeAnddir.edge);
-                                }
-                            }
-                        }
-                        //}
-                        //catch (Exception exc)
-                        //{
-                        //    remainingEdges.AddRange(loop.EdgeList);
-                        //}
-                    }
-                }
-            }
-            return completedEdges;
-        }
-
-
-        public void AutoRepair()
-        {
-            throw new NotImplementedException();
         }
     }
 }

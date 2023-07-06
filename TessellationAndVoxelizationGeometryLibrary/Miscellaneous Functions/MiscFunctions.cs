@@ -1219,7 +1219,8 @@ namespace TVGL
         /// <returns>System.Double.</returns>
         public static double SmallerAngleBetweenVectorsSameStart(this Vector3 vector1, Vector3 vector2)
         {
-            return Math.Acos(vector1.Dot(vector2) / (vector1.Length() * vector2.Length()));
+            var dot = Math.Min(vector1.Dot(vector2) / (vector1.Length() * vector2.Length()), 1);
+            return Math.Acos(dot);
         }
 
         /// <summary>
