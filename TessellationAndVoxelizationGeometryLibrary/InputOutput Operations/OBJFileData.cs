@@ -117,7 +117,7 @@ namespace TVGL
             var now = DateTime.Now;
             // Try to read in BINARY format
             if (!TryRead(s, filename, out var objData))
-                Message.output("Unable to read in OBJ file called {0}", filename, 1);
+                Message.output("Unable to read in OBJ file called "+ filename, 1);
             var results = new List<TessellatedSolid>();
             var j = 0;
             for (int i = 0; i < objData.Count; i++)

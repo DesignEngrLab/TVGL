@@ -102,7 +102,7 @@ namespace TVGL
             }
 
             var area2 = triangleFaces.Sum(face => face.Area);
-            if (!Area.IsPracticallySame(area2, 0.01 * Area)) Debug.WriteLine("SolidContactData loop area and face area do not match.");
+            if (!Area.IsPracticallySame(area2, 0.01 * Area)) Message.output("SolidContactData loop area and face area do not match.", 2);
             //Set Immutable Lists
             OnSideContactFaces = onSideContactFaces;
             PositiveLoops = positiveLoops;

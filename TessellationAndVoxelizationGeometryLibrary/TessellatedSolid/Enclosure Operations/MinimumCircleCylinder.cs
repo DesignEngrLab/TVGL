@@ -174,14 +174,13 @@ namespace TVGL
                 }
 
                 if (circle.RadiusSquared < priorRadius)
-                {
-                    Debug.WriteLine("Bounding circle got smaller during this iteration");
-                }
+                    Message.output("Bounding circle got smaller during this iteration", 2);
                 priorRadius = circle.RadiusSquared;
                 prevPointsOnCircle = pointsOnCircle;
                 stallCounter++;
             }
-            if (stallCounter >= stallLimit) Debug.WriteLine("Bounding circle failed to converge to within " + (Constants.BaseTolerance * circle.Radius * 2));
+            if (stallCounter >= stallLimit) Message.output("Bounding circle failed to converge to within "
+                + (Constants.BaseTolerance * circle.Radius * 2), 2);
 
             #endregion
 

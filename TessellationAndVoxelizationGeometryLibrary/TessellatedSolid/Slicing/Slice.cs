@@ -48,7 +48,7 @@ namespace TVGL
             if (!GetSliceContactData(ts, plane, out contactData, setIntersectionGroups, undoPlaneOffset: undoPlaneOffset))
             {
                 solids = new List<TessellatedSolid>();
-                Debug.WriteLine("CuttingPlane does not cut through the given solid.");
+                Message.output("CuttingPlane does not cut through the given solid.", 2);
                 return;
             }
             MakeSolids(contactData, ts.Units, out solids);
@@ -56,8 +56,8 @@ namespace TVGL
             var totalVolume2 = contactData.SolidContactData.Sum(solidContactData => solidContactData.Volume(ts.SameTolerance));
             if (!totalVolume2.IsPracticallySame(totalVolume1, 100))
             {
-                Debug.WriteLine("Error with Volume function calculation in TVGL. SolidContactData Volumes and Solid Volumes should match, since they use all the same faces.");
-                Debug.WriteLine("Contact Data Total Volume = " + totalVolume2 + ". Solid Total Volume = " + totalVolume1);
+                Message.output("Error with Volume function calculation in TVGL. SolidContactData Volumes and Solid Volumes should match, since they use all the same faces.", 2);
+                Message.output("Contact Data Total Volume = " + totalVolume2 + ". Solid Total Volume = " + totalVolume1, 2);
             }
         }
 
@@ -93,7 +93,7 @@ namespace TVGL
             if (!GetSliceContactData(ts, plane, out newContactData, false, loopsToIgnore))
             {
                 solids = new List<TessellatedSolid>();
-                Debug.WriteLine("CuttingPlane does not cut through the given solid.");
+                Message.output("CuttingPlane does not cut through the given solid.", 2);
                 return;
             }
             MakeSolids(newContactData, ts.Units, out solids);
@@ -101,8 +101,8 @@ namespace TVGL
             var totalVolume2 = newContactData.SolidContactData.Sum(solidContactData => solidContactData.Volume(ts.SameTolerance));
             if (!totalVolume2.IsPracticallySame(totalVolume1, 100))
             {
-                Debug.WriteLine("Error with Volume function calculation in TVGL. SolidContactData Volumes and Solid Volumes should match, since they use all the same faces.");
-                Debug.WriteLine("Contact Data Total Volume = " + totalVolume2 + ". Solid Total Volume = " + totalVolume1);
+                Message.output("Error with Volume function calculation in TVGL. SolidContactData Volumes and Solid Volumes should match, since they use all the same faces.", 2);
+                Message.output("Contact Data Total Volume = " + totalVolume2 + ". Solid Total Volume = " + totalVolume1, 2);
             }
         }
 
@@ -124,7 +124,7 @@ namespace TVGL
             {
                 positiveSideSolid = null;
                 negativeSideSolid = null;
-                Debug.WriteLine("CuttingPlane does not cut through the given solid.");
+                Message.output("CuttingPlane does not cut through the given solid.", 2);
                 return;
             }
             //MakeSingleSolidOnEachSideOfInfitePlane(contactData, ts.Units, out positiveSideSolid, out negativeSideSolid);

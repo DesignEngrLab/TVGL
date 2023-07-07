@@ -86,7 +86,7 @@ namespace TVGL
                     //((double)Math.Abs(numPolygonsTVGL - numPolygonsClipper) / (numPolygonsTVGL + numPolygonsClipper + tolerance)).IsNegligible(tolerance) &&
                     //((double)Math.Abs(vertsTVGL - vertsClipper) / (vertsTVGL + vertsClipper + tolerance)).IsNegligible(tolerance) &&
                     (Math.Abs(areaTVGL - areaClipper) / (areaTVGL + areaClipper + tolerance)).IsNegligible(tolerance)  //&&
-                    || (areaTVGL<0.15 && areaClipper<0.15)
+                    || (areaTVGL < 0.15 && areaClipper < 0.15)
                     //(Math.Abs(perimeterTVGL - perimeterClipper) / Math.Abs(perimeterTVGL + perimeterClipper + tolerance)).IsNegligible(tolerance) &&
                     //tvglMinX.IsPracticallySame(clipperMinX, extremaTolerance) &&
                     //tvglMinY.IsPracticallySame(clipperMinY, extremaTolerance) &&
@@ -94,34 +94,34 @@ namespace TVGL
                     //tvglMaxY.IsPracticallySame(clipperMaxY, extremaTolerance)
                     )
                 {
-                    //Debug.WriteLine("***** " + operationString + " matches");
-                    //Debug.WriteLine("clipper time = {0}; tvgl time = {1}", clipTime, tvglTime);
+                    Message.output("***** " + operationString + " matches", 4);
+                    Message.output("clipper time = " + clipTime + "; tvgl time = " + tvglTime, 4);
                     return false;
                 }
                 else
                 {
                     //if (numPolygonsClipper == 0) return false;
-                    Debug.WriteLine(operationString + " does not match");
-                    Debug.WriteLine("clipper time = {0}; tvgl time = {1}", clipTime, tvglTime);
+                    Message.output(operationString + " does not match", 2);
+                    Message.output("clipper time = " + clipTime + "; tvgl time = " + tvglTime, 2);
                     //if (numPolygonsTVGL == numPolygonsClipper)
-                    //    Debug.WriteLine("+++ both have {0} polygon(s)", numPolygonsTVGL, numPolygonsClipper);
+                    //    Message.output("+++ both have {0} polygon(s)", numPolygonsTVGL, numPolygonsClipper);
                     //else 
-                        Debug.WriteLine("    --- polygons: TVGL={0}  : Clipper={1} ", numPolygonsTVGL, numPolygonsClipper);
+                    Message.output("    --- polygons: TVGL=" + numPolygonsTVGL + "  : Clipper={1} " + numPolygonsClipper, 2);
                     //if (vertsTVGL == vertsClipper)
-                    //    Debug.WriteLine("+++ both have {0} vertices(s)", vertsTVGL);
+                    //   Message.output("+++ both have {0} vertices(s)", vertsTVGL);
                     //else
-                        Debug.WriteLine("    --- verts: TVGL= {0}  : Clipper={1} ", vertsTVGL, vertsClipper);
+                    Message.output("    --- verts: TVGL= "+vertsTVGL+"  : Clipper={1} "+ vertsClipper, 2);
 
                     //if (areaTVGL.IsPracticallySame(areaClipper, tolerance))
-                    //    Debug.WriteLine("+++ both have area of {0}", areaTVGL);
+                    //   Message.output("+++ both have area of {0}", areaTVGL);
                     //else
-                        Debug.WriteLine("    --- area: TVGL= {0}  : Clipper={1} ", areaTVGL, areaClipper);
+                    Message.output("    --- polygons: TVGL=" + areaTVGL + "  : Clipper={1} " + areaClipper, 2);
                     //if (perimeterTVGL.IsPracticallySame(perimeterClipper, tolerance))
-                    //    Debug.WriteLine("+++ both have perimeter of {0}", perimeterTVGL);
+                    //    Message.output("+++ both have perimeter of {0}", perimeterTVGL);
                     //else
-                        Debug.WriteLine("    --- perimeter: TVGL={0}  : Clipper={1} ", perimeterTVGL, perimeterClipper);
+                    Message.output("    --- polygons: TVGL=" + perimeterTVGL + "  : Clipper={1} " + perimeterClipper, 2);
                     if (perimeterClipper - perimeterTVGL > 0 && Math.Round(perimeterClipper - perimeterTVGL) % 2 == 0)
-                        Debug.WriteLine("<><><><><><><> clipper is connecting separate poly's :", (int)(perimeterClipper - perimeterTVGL) / 2);
+                        Message.output("<><><><><><><> clipper is connecting separate poly's :", (int)(perimeterClipper - perimeterTVGL) / 2);
                     return true;
                 }
             }
@@ -241,8 +241,8 @@ namespace TVGL
         public static List<Polygon> UnionPolygons(this IEnumerable<Polygon> polygons, PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles)
         {
             if (areaSimplificationFraction > 0)
-                polygons = polygons.Select(p=>SimplifyFast(p));
-                //polygons = polygons.SimplifyByAreaChangeToNewPolygons(areaSimplificationFraction);
+                polygons = polygons.Select(p => SimplifyFast(p));
+            //polygons = polygons.SimplifyByAreaChangeToNewPolygons(areaSimplificationFraction);
 #if CLIPPER
             return BooleanViaClipper(ClipperLib.PolyFillType.Positive, ClipperLib.ClipType.Union, polygons);
 #elif !COMPARE
@@ -268,7 +268,6 @@ namespace TVGL
                         //if (i == 1 && j == 0)
                         //Presenter.ShowAndHang(new[] { polygonList[i], polygonList[j] });
                         var newPolygons = Union(polygonList[i], polygonList[j], interaction, outputAsCollectionType);
-                        //Debug.WriteLine("i = {0}, j = {1}", i, j);
                         //if (i == 1 && j == 0)
                         //Presenter.ShowAndHang(newPolygons);
                         polygonList.RemoveAt(i);
@@ -309,7 +308,6 @@ namespace TVGL
                         //if (i == 1 && j == 0)
                         //Presenter.ShowAndHang(new[] { polygonList[i], polygonList[j] });
                         var newPolygons = Union(polygonList[i], polygonList[j], interaction, outputAsCollectionType);
-                        //Debug.WriteLine("i = {0}, j = {1}", i, j);
                         //if (i == 1 && j == 0)
                         //Presenter.ShowAndHang(newPolygons);
                         polygonList.RemoveAt(i);
@@ -357,7 +355,7 @@ namespace TVGL
                 //polygonsA = polygonsA.SimplifyByAreaChangeToNewPolygons(areaSimplificationFraction);
                 if (polygonsB != null)
                     polygonsB = polygonsB?.Select(p => SimplifyFast(p));
-                    //polygonsB = polygonsB?.SimplifyByAreaChangeToNewPolygons(areaSimplificationFraction);
+                //polygonsB = polygonsB?.SimplifyByAreaChangeToNewPolygons(areaSimplificationFraction);
             }
 #if CLIPPER
             return BooleanViaClipper(ClipperLib.PolyFillType.Positive, ClipperLib.ClipType.Union, polygonsA, polygonsB);
@@ -427,7 +425,6 @@ namespace TVGL
                         //if (i == 1 && j == 0)
                         //Presenter.ShowAndHang(new[] { polygonList[i], polygonList[j] });
                         var newPolygons = Union(unionedPolygons[i], polygonBList[j], interaction, outputAsCollectionType, tolerance);
-                        //Debug.WriteLine("i = {0}, j = {1}", i, j);
                         //if (i == 1 && j == 0)
                         //Presenter.ShowAndHang(newPolygons);
                         unionedPolygons.RemoveAt(i);
@@ -557,11 +554,11 @@ namespace TVGL
         {
             if (areaSimplificationFraction > 0)
             {
-                polygonsA = polygonsA.Select(p=>SimplifyFast(p));
+                polygonsA = polygonsA.Select(p => SimplifyFast(p));
                 //polygonsA = polygonsA.SimplifyByAreaChangeToNewPolygons(areaSimplificationFraction);
                 if (polygonsB != null)
                     polygonsB = polygonsB.Select(p => SimplifyFast(p));
-                    //polygonsB = polygonsB?.SimplifyByAreaChangeToNewPolygons(areaSimplificationFraction);
+                //polygonsB = polygonsB?.SimplifyByAreaChangeToNewPolygons(areaSimplificationFraction);
             }
 #if CLIPPER
             return BooleanViaClipper(ClipperLib.PolyFillType.Positive, ClipperLib.ClipType.Intersection, polygonsA, polygonsB);
@@ -633,8 +630,8 @@ namespace TVGL
         public static List<Polygon> IntersectPolygons(this IEnumerable<Polygon> polygons, PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles)
         {
             if (areaSimplificationFraction > 0)
-                polygons = polygons.Select(p=>SimplifyFast(p));
-                //polygons = polygons.SimplifyByAreaChangeToNewPolygons(areaSimplificationFraction);
+                polygons = polygons.Select(p => SimplifyFast(p));
+            //polygons = polygons.SimplifyByAreaChangeToNewPolygons(areaSimplificationFraction);
 #if CLIPPER
             return BooleanViaClipper(ClipperLib.PolyFillType.Positive, ClipperLib.ClipType.Intersection, polygons);
 #elif !COMPARE
@@ -709,7 +706,7 @@ namespace TVGL
         /// <returns>List&lt;Polygon&gt;.</returns>
         internal static List<Polygon> BooleanViaClipper(Polygon polygonA, Polygon polygonB, ClipperLib.PolyFillType fillType, ClipperLib.ClipType clipType)
         {
-            return BooleanViaClipper(fillType, clipType, new[] { polygonA }, new[] { polygonB});
+            return BooleanViaClipper(fillType, clipType, new[] { polygonA }, new[] { polygonB });
         }
         #endregion
 
@@ -725,23 +722,23 @@ namespace TVGL
         /// <returns>System.Collections.Generic.List&lt;TVGL.TwoDimensional.Polygon&gt;.</returns>
         public static List<Polygon> Subtract(this Polygon minuend, Polygon subtrahend,
                     PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles, double tolerance = double.NaN)
-                {
-                    if (areaSimplificationFraction > 0)
-                    {
-                        minuend = minuend.SimplifyFast();
-                        //minuend = minuend.SimplifyByAreaChangeToNewPolygon(areaSimplificationFraction);
-                        if (subtrahend != null)
-                            subtrahend = subtrahend?.SimplifyFast();
-                        //    subtrahend = subtrahend?.SimplifyByAreaChangeToNewPolygon(areaSimplificationFraction);
-                    }
-        #if CLIPPER
-                    return BooleanViaClipper(ClipperLib.PolyFillType.Positive, ClipperLib.ClipType.Difference, new[] { minuend },
-                                    new[] { subtrahend });
-        #elif !COMPARE
+        {
+            if (areaSimplificationFraction > 0)
+            {
+                minuend = minuend.SimplifyFast();
+                //minuend = minuend.SimplifyByAreaChangeToNewPolygon(areaSimplificationFraction);
+                if (subtrahend != null)
+                    subtrahend = subtrahend?.SimplifyFast();
+                //    subtrahend = subtrahend?.SimplifyByAreaChangeToNewPolygon(areaSimplificationFraction);
+            }
+#if CLIPPER
+            return BooleanViaClipper(ClipperLib.PolyFillType.Positive, ClipperLib.ClipType.Difference, new[] { minuend },
+                            new[] { subtrahend });
+#elif !COMPARE
                     var polygonBInverted = subtrahend.Copy(true, true);
                     var relationship = GetPolygonInteraction(minuend, polygonBInverted);
                     return Intersect(minuend, polygonBInverted, relationship, outputAsCollectionType, tolerance);
-        #else
+#else
                     sw.Restart();
                     var pClipper = BooleanViaClipper(ClipperLib.PolyFillType.pftPositive, ClipperLib.ClipType.ctDifference, new[] { minuend },
                         new[] { subtrahend });
@@ -756,20 +753,20 @@ namespace TVGL
                     var tvglTime = sw.Elapsed;
                     if (Compare(pTVGL, pClipper, "Subtract", clipTime, tvglTime))
                     {
-        #if PRESENT
+#if PRESENT
 
                         Presenter.ShowAndHang(new[] { minuend, subtrahend });
                         Presenter.ShowAndHang(pClipper);
                         Presenter.ShowAndHang(pTVGL);
-        #else
+#else
                         var fileNameStart = "subtractFail" + DateTime.Now.ToOADate().ToString();
                         TVGL.IO.Save(minuend, fileNameStart + "." + "min.json");
                         TVGL.IO.Save(subtrahend, fileNameStart + "." + "sub.json");
-        #endif
+#endif
                     }
                     return pClipper;
-        #endif
-                }
+#endif
+        }
 
         /// <summary>
         /// Returns the list of polygons that result from A-B (subtracting polygon B from polygon A). By providing the intersections
@@ -785,10 +782,10 @@ namespace TVGL
         /// +" to accomplish this function, like Intersect. - polygonA</exception>
         public static List<Polygon> Subtract(this Polygon minuend, Polygon subtrahend, PolygonInteractionRecord interaction,
                     PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles, double tolerance = double.NaN)
-                {
-                    interaction = interaction.InvertPolygonInRecord(subtrahend, out var invertedPolygonB);
-                    return Intersect(minuend, invertedPolygonB, interaction, outputAsCollectionType, tolerance);
-                }
+        {
+            interaction = interaction.InvertPolygonInRecord(subtrahend, out var invertedPolygonB);
+            return Intersect(minuend, invertedPolygonB, interaction, outputAsCollectionType, tolerance);
+        }
 
 
         /// <summary>
@@ -802,18 +799,18 @@ namespace TVGL
         /// <returns>System.Collections.Generic.List&lt;TVGL.TwoDimensional.Polygon&gt;.</returns>
         public static List<Polygon> Subtract(this IEnumerable<Polygon> minuends, IEnumerable<Polygon> subtrahends,
                     PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles, double tolerance = double.NaN)
-                {
-                    if (areaSimplificationFraction > 0)
-                    {
-                        minuends = minuends.Select(p => SimplifyFast(p));
-                        //minuends = minuends.SimplifyByAreaChangeToNewPolygons(areaSimplificationFraction);
-                        if (subtrahends != null)
-                            subtrahends = subtrahends.Select(p => SimplifyFast(p));
-                            //subtrahends = subtrahends.SimplifyByAreaChangeToNewPolygons(areaSimplificationFraction);
-                    }
-        #if CLIPPER
-                    return BooleanViaClipper(ClipperLib.PolyFillType.Positive, ClipperLib.ClipType.Difference, minuends, subtrahends);
-        #elif !COMPARE
+        {
+            if (areaSimplificationFraction > 0)
+            {
+                minuends = minuends.Select(p => SimplifyFast(p));
+                //minuends = minuends.SimplifyByAreaChangeToNewPolygons(areaSimplificationFraction);
+                if (subtrahends != null)
+                    subtrahends = subtrahends.Select(p => SimplifyFast(p));
+                //subtrahends = subtrahends.SimplifyByAreaChangeToNewPolygons(areaSimplificationFraction);
+            }
+#if CLIPPER
+            return BooleanViaClipper(ClipperLib.PolyFillType.Positive, ClipperLib.ClipType.Difference, minuends, subtrahends);
+#elif !COMPARE
                     var minuendsList = minuends.ToList();
         foreach (var polyB in subtrahends)
                     {
@@ -826,7 +823,7 @@ namespace TVGL
                         }
                     }
                     return minuendsList;
-        #else
+#else
                     var minuendsList = minuends.ToList();
                     sw.Restart();
                     var pClipper = BooleanViaClipper(ClipperLib.PolyFillType.pftPositive, ClipperLib.ClipType.ctDifference, minuends, subtrahends);
@@ -848,13 +845,13 @@ namespace TVGL
                     var tvglTime = sw.Elapsed;
                     if (Compare(minuendsList, pClipper, "SubtractLists", clipTime, tvglTime))
                     {
-        #if PRESENT
+#if PRESENT
                         var all = minuends.ToList();
                         all.AddRange(subtrahends);
                         Presenter.ShowAndHang(all);
                         Presenter.ShowAndHang(pClipper);
                         Presenter.ShowAndHang(minuendsList);
-        #else
+#else
                         var fileNameStart = "subtractFail" + DateTime.Now.ToOADate().ToString();
                         int i = 0;
                         foreach (var poly in minuends)
@@ -862,11 +859,11 @@ namespace TVGL
                         i = 0;
                         foreach (var poly in subtrahends)
                             TVGL.IO.Save(poly, fileNameStart + "." + (i++).ToString() + "sub.json");
-        #endif
+#endif
                     }
                     return pClipper;
-        #endif
-                }
+#endif
+        }
 
 
         #endregion Subtract Public Methods
@@ -890,7 +887,7 @@ namespace TVGL
                 //polygonA = polygonA.SimplifyByAreaChangeToNewPolygon(areaSimplificationFraction);
                 if (polygonB != null)
                     polygonB = polygonB.SimplifyFast();
-                    //polygonB = polygonB?.SimplifyByAreaChangeToNewPolygon(areaSimplificationFraction);
+                //polygonB = polygonB?.SimplifyByAreaChangeToNewPolygon(areaSimplificationFraction);
             }
 #if CLIPPER
             return BooleanViaClipper(ClipperLib.PolyFillType.Positive, ClipperLib.ClipType.Xor, new[] { polygonA }, new[] { polygonB });

@@ -24,14 +24,14 @@ namespace TVGLUnitTestsAndBenchmarking
             DirectoryInfo dir = Program.BackoutToFolder(inputFolder);
             var myWriter = new ConsoleTraceListener();
             Trace.Listeners.Add(myWriter);
-            //TVGL.Message.Verbosity = VerbosityLevels.Everything;
+            TVGL.Message.Verbosity = VerbosityLevels.Everything;
             //#if PRESENT
             var index = 45;
             var valid3DFileExtensions = new HashSet<string> { ".tvglz", ".stl", ".ply", ".obj" };
             foreach (var fileName in dir.GetFiles("*", SearchOption.AllDirectories).Where(f => valid3DFileExtensions.Contains(f.Extension.ToLower()))
-                .Skip(index+1))
+                .Skip(index + 1))
             {
-                //Debug.WriteLine("Attempting to open: " + fileName.Name);
+                Console.WriteLine("Attempting to open: " + fileName.Name);
                 var sw = Stopwatch.StartNew();
                 //IO.Open(fileName.FullName, out TessellatedSolid[] solids1, TessellatedSolidBuildOptions.Minimal);
                 //Presenter.ShowAndHang(solids1);
@@ -82,7 +82,7 @@ namespace TVGLUnitTestsAndBenchmarking
                     polygons.Add(p);
                 }
                 if (polygons.All(p => p == null)) continue;
-                Debug.WriteLine("Attempting: " + filename);
+                Console.WriteLine("Attempting: " + filename);
                 Presenter.ShowAndHang(polygons);
                 var result = polygons.OffsetRound(offset, 0.02); //, polygonSimplify: PolygonSimplify.DoNotSimplify);
                 Presenter.ShowAndHang(result);
@@ -108,7 +108,7 @@ namespace TVGLUnitTestsAndBenchmarking
                         polygonsB.Add(p);
                     else polygonsA.Add(p);
                 }
-                Debug.WriteLine("Attempting: " + filename);
+                Console.WriteLine("Attempting: " + filename);
                 Presenter.ShowAndHang(polygonsA);
                 Presenter.ShowAndHang(polygonsB);
                 Presenter.ShowAndHang(new[] { polygonsA, polygonsB }.SelectMany(p => p));
@@ -141,7 +141,7 @@ namespace TVGLUnitTestsAndBenchmarking
             var silhouetteBeforeFace = new List<Polygon>();
             foreach (var fileName in fileNames.Take(1))
             {
-                //Debug.WriteLine("Attempting: " + fileName);
+                //Console.WriteLine("Attempting: " + fileName, 1);
                 IO.Open(fileName.FullName, out Polygon p);
                 silhouetteBeforeFace.Add(p);
             }

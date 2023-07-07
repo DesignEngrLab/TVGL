@@ -233,8 +233,8 @@ namespace TVGL
                     //throw new Exception("Unable to triangulate polygon.");
                 }
                 successful = 2 * Math.Abs(polygon.Area - triangleArea) / (polygon.Area + triangleArea) < 0.01;
-                //System.Diagnostics.Debug.WriteLineIf(!successful && !double.IsNegativeInfinity(triangleArea),
-                //    polygon.Area + ",   " + triangleArea);
+                if (!successful && !double.IsNegativeInfinity(triangleArea))
+                    Message.output(polygon.Area + ",   " + triangleArea, 4);
                 if (angle != 0)
                 {
                     var rotateMatrix = new Matrix3x3(c, -s, s, c, 0, 0);

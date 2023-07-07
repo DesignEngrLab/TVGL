@@ -108,7 +108,7 @@ namespace TVGL
                     typeString = "ASCII STL";
                 else
                 {
-                    Message.output("Unable to read in STL file called {0}", filename, 1);
+                    Message.output("Unable to read in STL file called " + filename, 1);
                     return null;
                 }
             }
@@ -116,7 +116,7 @@ namespace TVGL
             for (int i = 0; i < stlData.Count; i++)
             {
                 var stlFileData = stlData[i];
-                results[i] = new TessellatedSolid(stlFileData.Vertices,stlFileData.Vertices.Count,
+                results[i] = new TessellatedSolid(stlFileData.Vertices, stlFileData.Vertices.Count,
                     stlFileData.HasColorSpecified ? stlFileData.Colors : null,
                     tsBuildOptions, stlFileData.Units, stlFileData.Name, filename, stlFileData.Comments, stlFileData.Language);
             }

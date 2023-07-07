@@ -434,8 +434,6 @@ namespace TVGL
             }
             var bestDomainScore = upperLimit;
             var sortedBranches = new SimplePriorityQueue<(TriangulationLoop, int), double>();
-            //Debug.Indent();
-            //Debug.WriteLine("main:  " + string.Join(',', domain.GetVertices().Select(v => v.IndexInList)));
             for (int i = 1; i < domain.Count - 1; i++)
             {
                 var index = i + accessEdgeIndex;
@@ -492,7 +490,6 @@ namespace TVGL
                         if (innerIndex >= domain.Count) innerIndex -= domain.Count;
                         rightDomain.Add(domain[innerIndex]);
                     }
-                    //Debug.WriteLine("right: " + string.Join(',', rightDomain.GetVertices().Select(v => v.IndexInList)));
 
                     var vertexIDs = rightDomain.VertexIDList;
                     if (!visitedDomains.TryGetValue(vertexIDs, out rightDomain))
@@ -519,7 +516,6 @@ namespace TVGL
                         if (innerIndex >= domain.Count) innerIndex -= domain.Count;
                         leftDomain.Add(domain[innerIndex]);
                     }
-                    //Debug.WriteLine("left:  " + string.Join(',', leftDomain.GetVertices().Select(v => v.IndexInList)));
 
                     var vertexIDs = leftDomain.VertexIDList;
                     if (!visitedDomains.TryGetValue(vertexIDs, out leftDomain))

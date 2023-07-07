@@ -406,7 +406,6 @@ namespace TVGL
             var ownedVLength = ownedV.Dot(OwnedFace.OtherVertex(this).Coordinates - From.Coordinates);
             ownedV = ownedVLength * ownedV;
 
-            //Debug.WriteLine(edge.InternalAngle + ", " + MaxChordError(ownedV.Dot(otherV), ownedV.Cross(otherV).Length(), ownedVLength, otherVLength));
             return MiscFunctions.LineSegmentsAreDiscontinuous(ownedV.Dot(otherV), ownedV.Cross(otherV).Length(), ownedVLength, otherVLength, chordError);
         }
 

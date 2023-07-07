@@ -31,10 +31,11 @@ namespace TVGL
         /// </summary>
         static readonly ConsoleColor[] textColors = new[]
         {
-            ConsoleColor.Blue,
-            ConsoleColor.Cyan,
+            ConsoleColor.Red,
             ConsoleColor.DarkYellow,
-            ConsoleColor.Red
+            ConsoleColor.Cyan,
+            ConsoleColor.Blue,
+            ConsoleColor.Gray,
         };
 
         /// <summary>
@@ -48,24 +49,13 @@ namespace TVGL
         /// <returns>Boolean.</returns>
         internal static bool output(object message, int verbosityLimit = 0)
         {
-            if ((verbosityLimit > (int) Verbosity)
+            if ((verbosityLimit > (int)Verbosity)
                 || string.IsNullOrEmpty(message.ToString()))
                 return false;
-            Debug.WriteLine(message);
-            return true;
-        }
-
-        /// <summary>
-        /// Outputs the one item of the specified list corresponding to the particular verbosity.
-        /// </summary>
-        /// <param name="list">The list.</param>
-        /// <returns>Boolean.</returns>
-        internal static bool output(params object[] list)
-        {
-            if (((int) Verbosity >= list.Length)
-                || string.IsNullOrEmpty(list[(int) Verbosity].ToString()))
-                return false;
-            Debug.WriteLine(list[(int) Verbosity]);
+            Console.ForegroundColor = verbosityLimit >= textColors.Length ? textColors[^1] : textColors[verbosityLimit];
+            var whiteSpace = new string(' ', verbosityLimit * 2);
+            Console.WriteLine(whiteSpace + message);
+            Console.ResetColor();
             return true;
         }
     }

@@ -34,7 +34,7 @@ namespace TVGL
             this.ts = ts;
             ContainsErrors = false;
             OverusedEdges = new List<List<(TriangleFace, bool)>>();
-            SingleSidedEdgeData = new List<(TriangleFace, Vertex, Vertex)>();
+            SingleSidedEdgeData = new Dictionary<TriangleFace, (Vertex, Vertex)>();
             FacesWithNegligibleArea = new List<TriangleFace>();
             FacePairsForEdges = new List<(TriangleFace, TriangleFace)>();
             InconsistentMatingFacePairs = new List<(TriangleFace, TriangleFace)>();
@@ -58,7 +58,7 @@ namespace TVGL
         /// Gets Edges that only have one face
         /// </summary>
         /// <value>The singled sided edges.</value>
-        internal List<(TriangleFace, Vertex, Vertex)> SingleSidedEdgeData { get; set; }
+        internal Dictionary<TriangleFace, (Vertex, Vertex)> SingleSidedEdgeData { get; set; }
 
         public List<Edge> SingleSidedEdges { get; internal set; }
 
@@ -109,62 +109,6 @@ namespace TVGL
                 return;
             var buildAndErrorInfo = new TessellationBuildAndRepair(ts);
             buildAndErrorInfo.CompleteBuildOptions(buildOptions);
-
-#if DEBUG
-            CheckModelInterconnectivity(ts);
-#endif
-        }
-
-
-
-
-        public static void CheckModelInterconnectivity(TessellatedSolid ts)
-        {
-            if (3 * ts.NumberOfFaces != 2 * ts.NumberOfEdges)
-                Debug.WriteLine("3numFaces = " + 3 * ts.NumberOfFaces + ", 2numEdges = " + 2 * ts.NumberOfEdges);
-            if (ts.Errors == null) ; // Debug.WriteLine("No errors were found.");
-            else
-            {
-                Debug.WriteLine("     **** Errors found and fixed?");
-            }//Check if each face has cyclic references with each edge, vertex, and adjacent faces.
-            var numSingleSidedEdges = 0;
-
-            foreach (var face in ts.Faces)
-            {
-                foreach (var edge in face.Edges)
-                {
-                    if (edge.OwnedFace != face && edge.OtherFace != face)
-                        Debug.WriteLine("face's edge doesn't reconnect to face");
-                }
-                foreach (var vertex in face.Vertices.Where(vertex => !vertex.Faces.Contains(face)))
-                    Debug.WriteLine("face's vertex doesn't reconnect to face");
-            }
-            //Check if each edge has cyclic references with each vertex and each face.
-            foreach (var edge in ts.Edges)
-            {
-                if (!edge.OwnedFace.Edges.Contains(edge))
-                    Debug.WriteLine("edge's face doesn't reconnect to edge");
-                if (edge.OtherFace == null)
-                    numSingleSidedEdges++;
-                else if (!edge.OtherFace.Edges.Contains(edge))
-                    Debug.WriteLine("edge's face doesn't reconnect to edge");
-                if (!edge.From.Edges.Contains(edge))
-                    Debug.WriteLine("edge's vertex doesn't reconnect to edge");
-                if (!edge.To.Edges.Contains(edge))
-                    Debug.WriteLine("edge's vertex doesn't reconnect to edge");
-            }
-            if (numSingleSidedEdges != 0 ||
-                (ts.Errors != null && ts.Errors.SingleSidedEdges != null && numSingleSidedEdges != ts.Errors.SingleSidedEdges.Count)
-                || (ts.Errors != null && ts.Errors.SingleSidedEdges != null && ts.Errors.SingleSidedEdges?.Count != 0))
-                Debug.WriteLine("there are " + numSingleSidedEdges + " single sided edges");
-            //Check if each vertex has cyclic references with each edge and each face.
-            foreach (var vertex in ts.Vertices)
-            {
-                foreach (var edge in vertex.Edges.Where(edge => edge.To != vertex && edge.From != vertex))
-                    Debug.WriteLine("vertex's edge doesn't reconnect to vertex");
-                foreach (var face in vertex.Faces.Where(face => !face.Vertices.Contains(vertex)))
-                    Debug.WriteLine("vertex's face doesn't reconnect to vertex");
-            }
         }
 
         /// <summary>
@@ -175,15 +119,15 @@ namespace TVGL
         /// <param name="fromSTL">if set to <c>true</c> [from STL].</param>
         void CompleteBuildOptions(TessellatedSolidBuildOptions buildOptions)
         {
-            CheckModelIntegrity();
+            CheckModelIntegrityPreBuild();
             if (buildOptions.FixEdgeDisassociations && OverusedEdges.Count + SingleSidedEdgeData.Count > 0)
             {
                 //try
                 //{
-                    TeaseApartOverUsedEdges();
-                    MatchUpRemainingSingleSidedEdge(out var keptToRemovedDictionary);
-                    MergeVertices(keptToRemovedDictionary);
-                    ts.RemoveVertices(keptToRemovedDictionary.Values.SelectMany(v => v));
+                TeaseApartOverUsedEdges();
+                MatchUpRemainingSingleSidedEdge(out var keptToRemovedDictionary);
+                MergeVertices(keptToRemovedDictionary);
+                ts.RemoveVertices(keptToRemovedDictionary.Values.SelectMany(v => v));
                 //}
                 //catch
                 //{
@@ -260,6 +204,9 @@ namespace TVGL
                     //Continue
                 }
             }
+#if DEBUG
+            CheckModelIntegrityPostBuild();
+#endif
         }
         #endregion
 
@@ -331,7 +278,7 @@ namespace TVGL
         /// <param name="ts">The ts.</param>
         /// <param name="repairAutomatically">The repair automatically.</param>
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
-        void CheckModelIntegrity()
+        void CheckModelIntegrityPreBuild()
         {
             Message.output("Model Integrity Check...", 3);
 
@@ -402,7 +349,7 @@ namespace TVGL
             if (partlyDefinedEdgeDictionary.Count > 0)
             {
                 ContainsErrors = true;
-                SingleSidedEdgeData = partlyDefinedEdgeDictionary.Values.ToList();
+                SingleSidedEdgeData = partlyDefinedEdgeDictionary.Values.ToDictionary(x => x.Item1, x => (x.Item2, x.Item3));
                 numSingleSidedEdges = SingleSidedEdgeData.Count;
             }
             foreach (var connection in alreadyDefinedEdges.Values)
@@ -426,6 +373,56 @@ namespace TVGL
             {
                 ts.Errors = null;
                 Message.output("No errors found.", 3);
+            }
+        }
+
+        void CheckModelIntegrityPostBuild()
+        {
+            if (3 * ts.NumberOfFaces != 2 * ts.NumberOfEdges)
+                Message.output("3 x numFaces = " + 3 * ts.NumberOfFaces + ", 2 x numEdges = " + 2 * ts.NumberOfEdges, 2);
+            if (ts.Errors == null) 
+                Message.output("No errors were found initially.", 2);
+            else
+            {
+                Message.output("Errors were found initially.", 2);
+            }//Check if each face has cyclic references with each edge, vertex, and adjacent faces.
+            var numSingleSidedEdges = 0;
+
+            foreach (var face in ts.Faces)
+            {
+                foreach (var edge in face.Edges)
+                {
+                    if (edge.OwnedFace != face && edge.OtherFace != face)
+                        Message.output("face's edge doesn't reconnect to face", 2);
+                }
+                foreach (var vertex in face.Vertices.Where(vertex => !vertex.Faces.Contains(face)))
+                    Message.output("face's vertex doesn't reconnect to face", 2);
+            }
+            //Check if each edge has cyclic references with each vertex and each face.
+            foreach (var edge in ts.Edges)
+            {
+                if (!edge.OwnedFace.Edges.Contains(edge))
+                    Message.output("edge's face doesn't reconnect to edge", 2);
+                if (edge.OtherFace == null)
+                    numSingleSidedEdges++;
+                else if (!edge.OtherFace.Edges.Contains(edge))
+                    Message.output("edge's face doesn't reconnect to edge", 2);
+                if (!edge.From.Edges.Contains(edge))
+                    Message.output("edge's vertex doesn't reconnect to edge", 2);
+                if (!edge.To.Edges.Contains(edge))
+                    Message.output("edge's vertex doesn't reconnect to edge", 2);
+            }
+            if (numSingleSidedEdges != 0 ||
+                (ts.Errors != null && ts.Errors.SingleSidedEdges != null && numSingleSidedEdges != ts.Errors.SingleSidedEdges.Count)
+                || (ts.Errors != null && ts.Errors.SingleSidedEdges != null && ts.Errors.SingleSidedEdges?.Count != 0))
+                Message.output("there are " + numSingleSidedEdges + " single sided edges", 2);
+            //Check if each vertex has cyclic references with each edge and each face.
+            foreach (var vertex in ts.Vertices)
+            {
+                foreach (var edge in vertex.Edges.Where(edge => edge.To != vertex && edge.From != vertex))
+                    Message.output("vertex's edge doesn't reconnect to vertex", 2);
+                foreach (var face in vertex.Faces.Where(face => !face.Vertices.Contains(vertex)))
+                    Message.output("vertex's face doesn't reconnect to vertex", 2);
             }
         }
 
@@ -502,12 +499,17 @@ namespace TVGL
                 ts.Edges[i] = new Edge(fromVertex, toVertex, ownedFace, otherFace, true);
             }
             if (SingleSidedEdgeData.Count > 0)
-                SingleSidedEdges = new List<Edge>(SingleSidedEdgeData.Count);
-            for (; i < ts.NumberOfEdges; i++)
             {
-                var faceWithVertices = SingleSidedEdgeData[i - FacePairsForEdges.Count];
-                ts.Edges[i] = new Edge(faceWithVertices.Item2, faceWithVertices.Item3, faceWithVertices.Item1, null, true);
-                SingleSidedEdges.Add(ts.Edges[i]);
+                SingleSidedEdges = new List<Edge>(SingleSidedEdgeData.Count);
+                foreach (var kvp in SingleSidedEdgeData)
+                {
+                    var ownedFace = kvp.Key;
+                    var fromVertex = kvp.Value.Item1;
+                    var toVertex = kvp.Value.Item2;
+                    var newEdge = new Edge(fromVertex, toVertex, ownedFace, null, true);
+                    ts.Edges[i++] = newEdge;
+                    SingleSidedEdges.Add(newEdge);
+                }
             }
             SingleSidedEdgeData = null;
         }
@@ -651,7 +653,7 @@ namespace TVGL
                         {
                             for (int j = i + 1; j < entry.Count; j++)
                             {
-                                var dot =Math.Abs(entry[i].Item1.Normal.Dot(entry[j].Item1.Normal));
+                                var dot = Math.Abs(entry[i].Item1.Normal.Dot(entry[j].Item1.Normal));
                                 if (highestDot < dot)
                                 {
                                     bestI = i;
@@ -668,9 +670,9 @@ namespace TVGL
                 if (entry.Count == 1)
                 {
                     if (entry[0].Item2)
-                        SingleSidedEdgeData.Add((entry[0].Item1, fromVertex, toVertex));
+                        SingleSidedEdgeData.Add(entry[0].Item1, (fromVertex, toVertex));
                     else
-                        SingleSidedEdgeData.Add((entry[0].Item1, toVertex, fromVertex));
+                        SingleSidedEdgeData.Add(entry[0].Item1, (toVertex, fromVertex));
                 }
             }
             OverusedEdges = null;
@@ -690,27 +692,28 @@ namespace TVGL
             //            Presenter.ShowAndHang(relatedFaces);
             //#endif
             keptToRemovedDictionary = new Dictionary<Vertex, HashSet<Vertex>>();
-            var maxtTolerance = 10000 * ts.SameTolerance * ts.SameTolerance; // making the tolerance 100 times larger
-            var orderedEdges = SingleSidedEdgeData.Select(s => (s.Item1, s.Item2, s.Item3,
-            (s.Item2.Coordinates - s.Item3.Coordinates).LengthSquared())).OrderBy(s => s.Item4).ToList();
+            var maxTolerance = 1000 * ts.SameTolerance; // making the tolerance 1000 times larger
+            var orderedEdges = SingleSidedEdgeData.Select(s => (s.Key, s.Value.Item1, s.Value.Item2,
+            (s.Value.Item1.Coordinates - s.Value.Item2.Coordinates).Length())).OrderBy(s => s.Item4).ToList();
             for (int i = orderedEdges.Count - 1; i >= 0; i--)
             {
                 var ithEdge = orderedEdges[i];
                 var fromI = ithEdge.Item2;
                 var toI = ithEdge.Item3;
-                var ithLengthSqd = ithEdge.Item4;
-                var minLength = 0.81 * ithLengthSqd;
+                var ithLength = ithEdge.Item4;
+                var minLength = ithLength - 2 * maxTolerance; // because there are 2 ends of the edge f
+                                                              // that can be of by the tolerance
                 var j = i;
-                var minJ = Math.Max(0, i - 50);
-                var minDist = maxtTolerance;
+                var minDist = maxTolerance;
                 var bestJIndex = -1;
                 var sameDirection = false;
+                var minJ = 0; // Math.Max(0, i - 50);
                 while (j > minJ)
                 {
                     j--;
                     var jthEdge = orderedEdges[j];
-                    var jthLengthSqd = jthEdge.Item4;
-                    if (jthLengthSqd < minLength) break;
+                    var jthLength = jthEdge.Item4;
+                    if (jthLength < minLength) break;
                     var distSqd =
                         Vector3.DistanceSquared(fromI.Coordinates, jthEdge.Item2.Coordinates) +
                         Vector3.DistanceSquared(toI.Coordinates, jthEdge.Item3.Coordinates);
@@ -729,15 +732,16 @@ namespace TVGL
                         sameDirection = false;
                     }
                 }
-                if (bestJIndex > 0)
+                if (bestJIndex >= 0)
                 {
                     var jMatchWithFromI = sameDirection ? orderedEdges[bestJIndex].Item2 : orderedEdges[bestJIndex].Item3;
                     var jMatchWithToI = sameDirection ? orderedEdges[bestJIndex].Item3 : orderedEdges[bestJIndex].Item2;
-                    if (fromI == jMatchWithFromI) //many times the match will actually be the same vertex.
-                        // in which case, don't delete, but do the other end. They both can't be the same - otherwise we wouldn't
+                    if (fromI != jMatchWithFromI) //many times the match will actually be the same vertex.
+                        // in which case, we don't need to add it to the merge dictionary
                         // be in this situation.
-                        MergeMakeEntries(keptToRemovedDictionary, toI, jMatchWithToI);
-                    else MergeMakeEntries(keptToRemovedDictionary, fromI, jMatchWithFromI);
+                        MergeMakeEntries(keptToRemovedDictionary, fromI, jMatchWithFromI);
+                    if (toI != jMatchWithToI) MergeMakeEntries(keptToRemovedDictionary, toI, jMatchWithToI);
+
 
                     if (sameDirection)
                         InconsistentMatingFacePairs.Add((ithEdge.Item1, orderedEdges[bestJIndex].Item1));
@@ -748,7 +752,7 @@ namespace TVGL
                     i--; // since we removed two from the list, we need to decrement the index by an additional value.
                 }
             }
-            SingleSidedEdgeData = orderedEdges.Select(edge => (edge.Item1, edge.Item2, edge.Item3)).ToList();
+            SingleSidedEdgeData = orderedEdges.ToDictionary(edge => edge.Item1, edge => (edge.Item2, edge.Item3));
         }
 
         private static void MergeMakeEntries(Dictionary<Vertex, HashSet<Vertex>> keptToRemovedDictionary, Vertex v1, Vertex v2)
@@ -784,7 +788,15 @@ namespace TVGL
                 foreach (var removeVertex in removedVertices)
                 {
                     foreach (var face in removeVertex.Faces.ToList())
+                    {
                         face.ReplaceVertex(removeVertex, keepVertex);
+                        if (SingleSidedEdgeData.ContainsKey(face))
+                        {
+                            var (from, to) = SingleSidedEdgeData[face];
+                            if (from == removeVertex) SingleSidedEdgeData[face] = (keepVertex, to);
+                            else SingleSidedEdgeData[face] = (from, keepVertex);
+                        }
+                    }
                 }
                 keepVertex.Coordinates += removedVertices.Select(v => v.Coordinates).Aggregate((c, sum) => c + sum);
                 keepVertex.Coordinates /= (removedVertices.Count + 1);
