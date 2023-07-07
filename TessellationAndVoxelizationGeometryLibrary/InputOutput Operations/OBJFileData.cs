@@ -112,6 +112,7 @@ namespace TVGL
         /// <returns>List&lt;TessellatedSolid&gt;.</returns>
         internal static TessellatedSolid[] OpenSolids(Stream s, string filename, TessellatedSolidBuildOptions tsBuildOptions)
         {
+            if (tsBuildOptions == null) tsBuildOptions = TessellatedSolidBuildOptions.Default;
             var typeString = "OBJ";
             var now = DateTime.Now;
             // Try to read in BINARY format

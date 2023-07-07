@@ -190,16 +190,6 @@ namespace TVGL
                 //    //Continue
                 //}
             }
-            if (buildOptions.AutomaticallyRepairBadFaces && FacesWithNegligibleArea.Any())
-                try
-                {
-                    if (!SetNegligibleAreaFaceNormals())
-                        throw new Exception("Unable to set face normals.");
-                }
-                catch
-                {
-                    //Continue
-                }
             if (buildOptions.AutomaticallyRepairBadFaces && InconsistentMatingFacePairs.Any())
                 try
                 {
@@ -215,6 +205,18 @@ namespace TVGL
             // the remaining items will need edges so we need to build these here
             if (buildOptions.PredefineAllEdges)
                 MakeEdges();
+            /* This requires edges and frankly it's not worth it. the next step is better
+            if (buildOptions.AutomaticallyRepairBadFaces && FacesWithNegligibleArea.Any())
+                try
+                {
+                    if (!SetNegligibleAreaFaceNormals())
+                        throw new Exception("Unable to set face normals.");
+                }
+                catch
+                {
+                    //Continue
+                }
+            */
             if (buildOptions.AutomaticallyRepairBadFaces && buildOptions.PredefineAllEdges)
             {
                 try
@@ -681,14 +683,14 @@ namespace TVGL
         /// <param name="singleSidedEdges">The single sided edges.</param>
         /// <param name="keptToRemovedDictionary">The removed replacements.</param>
         /// <returns>A list of (TriangleFace, TriangleFace).</returns>
-        private void MatchUpRemainingSingleSidedEdge(out Dictionary<Vertex, List<Vertex>> keptToRemovedDictionary)
+        private void MatchUpRemainingSingleSidedEdge(out Dictionary<Vertex, HashSet<Vertex>> keptToRemovedDictionary)
         {
             //#if PRESENT
             //            var relatedFaces = SingleSidedEdgeData.Select(s => s.Item1).ToList();
             //            Presenter.ShowAndHang(relatedFaces);
             //#endif
-            keptToRemovedDictionary = new Dictionary<Vertex, List<Vertex>>();
-            var maxtTolerance = 100 * ts.SameTolerance * ts.SameTolerance;
+            keptToRemovedDictionary = new Dictionary<Vertex, HashSet<Vertex>>();
+            var maxtTolerance = 10000 * ts.SameTolerance * ts.SameTolerance; // making the tolerance 100 times larger
             var orderedEdges = SingleSidedEdgeData.Select(s => (s.Item1, s.Item2, s.Item3,
             (s.Item2.Coordinates - s.Item3.Coordinates).LengthSquared())).OrderBy(s => s.Item4).ToList();
             for (int i = orderedEdges.Count - 1; i >= 0; i--)
@@ -699,7 +701,7 @@ namespace TVGL
                 var ithLengthSqd = ithEdge.Item4;
                 var minLength = 0.81 * ithLengthSqd;
                 var j = i;
-                var minJ = Math.Max(0, i - 10);
+                var minJ = Math.Max(0, i - 50);
                 var minDist = maxtTolerance;
                 var bestJIndex = -1;
                 var sameDirection = false;
@@ -743,25 +745,27 @@ namespace TVGL
                         FacePairsForEdges.Add((ithEdge.Item1, orderedEdges[bestJIndex].Item1));
                     orderedEdges.RemoveAt(i);
                     orderedEdges.RemoveAt(bestJIndex);
+                    i--; // since we removed two from the list, we need to decrement the index by an additional value.
                 }
             }
             SingleSidedEdgeData = orderedEdges.Select(edge => (edge.Item1, edge.Item2, edge.Item3)).ToList();
         }
 
-        private static void MergeMakeEntries(Dictionary<Vertex, List<Vertex>> keptToRemovedDictionary, Vertex a, Vertex b)
+        private static void MergeMakeEntries(Dictionary<Vertex, HashSet<Vertex>> keptToRemovedDictionary, Vertex v1, Vertex v2)
         {
-            var aIsFound = keptToRemovedDictionary.TryGetValue(a, out var aEntry);
-            var bIsFound = keptToRemovedDictionary.TryGetValue(b, out var bEntry);
-            if (aIsFound && bIsFound)
+            var v1IsFound = keptToRemovedDictionary.TryGetValue(v1, out var v1Entry);
+            var v2IsFound = keptToRemovedDictionary.TryGetValue(v2, out var v2Entry);
+            if (v2IsFound && v1IsFound)
             {
-                aEntry.AddRange(bEntry);
-                aEntry.Add(b);
+                foreach (var item in v1Entry)
+                    v2Entry.Add(item);
+                v2Entry.Add(v1);
             }
-            else if (aIsFound)
-                aEntry.Add(b);
-            else if (bIsFound)
-                bEntry.Add(a);
-            else keptToRemovedDictionary.Add(a, new List<Vertex> { b });
+            else if (v2IsFound)
+                v2Entry.Add(v1);
+            else if (v1IsFound)
+                v1Entry.Add(v2);
+            else keptToRemovedDictionary.Add(v2, new HashSet<Vertex> { v1 });
         }
 
         /// <summary>
@@ -771,7 +775,7 @@ namespace TVGL
         /// <param name="keptToRemoved">The kept to removed.</param>
         /// <param name="keepVertex">The keep coord.</param>
         /// <param name="removeVertex">The remove coord.</param>
-        private void MergeVertices(Dictionary<Vertex, List<Vertex>> keptToRemovedDictionary)
+        private void MergeVertices(Dictionary<Vertex, HashSet<Vertex>> keptToRemovedDictionary)
         {
             foreach (var keyValuePair in keptToRemovedDictionary)
             {
@@ -779,7 +783,7 @@ namespace TVGL
                 var removedVertices = keyValuePair.Value;
                 foreach (var removeVertex in removedVertices)
                 {
-                    foreach (var face in removeVertex.Faces)
+                    foreach (var face in removeVertex.Faces.ToList())
                         face.ReplaceVertex(removeVertex, keepVertex);
                 }
                 keepVertex.Coordinates += removedVertices.Select(v => v.Coordinates).Aggregate((c, sum) => c + sum);
@@ -932,7 +936,7 @@ namespace TVGL
                         //if (!Single3DPolygonTriangulation.Triangulate(loop, out var triangles)) continue;
                         foreach (var triangle in triangles)
                         {
-                            var newFace = new TriangleFace(triangle.GetVertices(), triangle.Normal);
+                            var newFace = new TriangleFace(triangle.GetVertices(), -triangle.Normal);
                             newFaces.Add(newFace);
                             foreach (var edgeAnddir in triangle)
                             {

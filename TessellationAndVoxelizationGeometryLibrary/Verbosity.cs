@@ -11,6 +11,7 @@
 // </copyright>
 // <summary></summary>
 // ***********************************************************************
+using System;
 using System.Diagnostics;
 
 namespace TVGL
@@ -24,6 +25,17 @@ namespace TVGL
         /// The verbosity sets how much is reported from the TVGL routines.
         /// </summary>
         public static VerbosityLevels Verbosity = VerbosityLevels.OnlyCritical;
+
+        /// <summary>
+        /// The text colors of the five levels of criticality
+        /// </summary>
+        static readonly ConsoleColor[] textColors = new[]
+        {
+            ConsoleColor.Blue,
+            ConsoleColor.Cyan,
+            ConsoleColor.DarkYellow,
+            ConsoleColor.Red
+        };
 
         /// <summary>
         /// Calling Message.output will output the string, message, to the

@@ -967,8 +967,9 @@ namespace TVGL
         /// </summary>
         internal void UpdateAllEdgeCheckSums()
         {
-            foreach (var edge in Edges)
-                Edge.SetAndGetEdgeChecksum(edge);
+            if (Edges != null)
+                foreach (var edge in Edges)
+                    Edge.SetAndGetEdgeChecksum(edge);
         }
 
         #endregion
