@@ -34,7 +34,7 @@ namespace TVGL
             this.ts = ts;
             ContainsErrors = false;
             OverusedEdges = new List<List<(TriangleFace, bool)>>();
-            SingleSidedEdgeData = new Dictionary<TriangleFace, (Vertex, Vertex)>();
+            SingleSidedEdgeData = new List<(TriangleFace, Vertex, Vertex)>();
             FacesWithNegligibleArea = new List<TriangleFace>();
             FacePairsForEdges = new List<(TriangleFace, TriangleFace)>();
             InconsistentMatingFacePairs = new List<(TriangleFace, TriangleFace)>();
@@ -58,7 +58,7 @@ namespace TVGL
         /// Gets Edges that only have one face
         /// </summary>
         /// <value>The singled sided edges.</value>
-        internal Dictionary<TriangleFace, (Vertex, Vertex)> SingleSidedEdgeData { get; set; }
+        internal List<(TriangleFace, Vertex, Vertex)> SingleSidedEdgeData { get; set; }
 
         public List<Edge> SingleSidedEdges { get; internal set; }
 
@@ -125,9 +125,8 @@ namespace TVGL
                 //try
                 //{
                 TeaseApartOverUsedEdges();
-                MatchUpRemainingSingleSidedEdge(out var keptToRemovedDictionary);
-                MergeVertices(keptToRemovedDictionary);
-                ts.RemoveVertices(keptToRemovedDictionary.Values.SelectMany(v => v));
+                var removedVertices = MatchUpRemainingSingleSidedEdge();
+                ts.RemoveVertices(removedVertices);
                 //}
                 //catch
                 //{
@@ -195,14 +194,14 @@ namespace TVGL
             {
                 if (!buildOptions.PredefineAllEdges)
                     throw new ArgumentException("AutomaticallyRepairHoles requires PredefineAllEdges to be true.");
-                try
-                {
-                    FindNonSmoothEdges();
-                }
-                catch
-                {
-                    //Continue
-                }
+                //try
+                //{
+                  FindNonSmoothEdges();
+                //}
+                //catch
+                //{
+                //Continue
+                //}
             }
 #if DEBUG
             CheckModelIntegrityPostBuild();
@@ -349,7 +348,7 @@ namespace TVGL
             if (partlyDefinedEdgeDictionary.Count > 0)
             {
                 ContainsErrors = true;
-                SingleSidedEdgeData = partlyDefinedEdgeDictionary.Values.ToDictionary(x => x.Item1, x => (x.Item2, x.Item3));
+                SingleSidedEdgeData = partlyDefinedEdgeDictionary.Values.ToList();
                 numSingleSidedEdges = SingleSidedEdgeData.Count;
             }
             foreach (var connection in alreadyDefinedEdges.Values)
@@ -379,50 +378,84 @@ namespace TVGL
         void CheckModelIntegrityPostBuild()
         {
             if (3 * ts.NumberOfFaces != 2 * ts.NumberOfEdges)
-                Message.output("3 x numFaces = " + 3 * ts.NumberOfFaces + ", 2 x numEdges = " + 2 * ts.NumberOfEdges, 2);
-            if (ts.Errors == null) 
-                Message.output("No errors were found initially.", 2);
+                Message.output("3 x numFaces = " + 3 * ts.NumberOfFaces + ", 2 x numEdges = " + 2 * ts.NumberOfEdges, 0);
+            if (ts.Errors == null)
+                Message.output("No errors were found initially.", 1);
             else
             {
-                Message.output("Errors were found initially.", 2);
+                Message.output("Errors were found initially.", 1);
             }//Check if each face has cyclic references with each edge, vertex, and adjacent faces.
             var numSingleSidedEdges = 0;
-
+            var errors = false;
             foreach (var face in ts.Faces)
             {
                 foreach (var edge in face.Edges)
                 {
                     if (edge.OwnedFace != face && edge.OtherFace != face)
-                        Message.output("face's edge doesn't reconnect to face", 2);
+                    {
+                        errors = true;
+                        Message.output("face's edge doesn't reconnect to face", 0);
+                    }
                 }
                 foreach (var vertex in face.Vertices.Where(vertex => !vertex.Faces.Contains(face)))
-                    Message.output("face's vertex doesn't reconnect to face", 2);
+                {
+                    errors = true;
+                    Message.output("face's vertex doesn't reconnect to face", 0);
+                }
             }
             //Check if each edge has cyclic references with each vertex and each face.
             foreach (var edge in ts.Edges)
             {
                 if (!edge.OwnedFace.Edges.Contains(edge))
-                    Message.output("edge's face doesn't reconnect to edge", 2);
+                {
+                    errors = true;
+                    Message.output("edge's face doesn't reconnect to edge", 0);
+                }
                 if (edge.OtherFace == null)
                     numSingleSidedEdges++;
                 else if (!edge.OtherFace.Edges.Contains(edge))
-                    Message.output("edge's face doesn't reconnect to edge", 2);
+                {
+                    errors = true;
+                    Message.output("edge's face doesn't reconnect to edge", 0);
+                }
                 if (!edge.From.Edges.Contains(edge))
-                    Message.output("edge's vertex doesn't reconnect to edge", 2);
+                {
+                    errors = true;
+                    Message.output("edge's vertex doesn't reconnect to edge", 0);
+                }
                 if (!edge.To.Edges.Contains(edge))
-                    Message.output("edge's vertex doesn't reconnect to edge", 2);
+                {
+                    errors = true;
+                    Message.output("edge's vertex doesn't reconnect to edge", 0);
+                }
             }
             if (numSingleSidedEdges != 0 ||
                 (ts.Errors != null && ts.Errors.SingleSidedEdges != null && numSingleSidedEdges != ts.Errors.SingleSidedEdges.Count)
                 || (ts.Errors != null && ts.Errors.SingleSidedEdges != null && ts.Errors.SingleSidedEdges?.Count != 0))
-                Message.output("there are " + numSingleSidedEdges + " single sided edges", 2);
+            {
+                errors = true;
+                Message.output("there are " + numSingleSidedEdges + " single sided edges", 0);
+            }
             //Check if each vertex has cyclic references with each edge and each face.
             foreach (var vertex in ts.Vertices)
             {
                 foreach (var edge in vertex.Edges.Where(edge => edge.To != vertex && edge.From != vertex))
-                    Message.output("vertex's edge doesn't reconnect to vertex", 2);
+                {
+                    errors = true;
+                    Message.output("vertex's edge doesn't reconnect to vertex", 0);
+                }
                 foreach (var face in vertex.Faces.Where(face => !face.Vertices.Contains(vertex)))
-                    Message.output("vertex's face doesn't reconnect to vertex", 2);
+                {
+                    errors = true;
+                    Message.output("vertex's face doesn't reconnect to vertex", 0);
+                }
+            }
+            if (errors)
+                Message.output("The model still contains errors.", 0);  
+            else if (ts.Errors!=null)
+            { 
+                Message.output("All errors in the model have been fixed.", 1);
+                ts.Errors = null;
             }
         }
 
@@ -497,16 +530,15 @@ namespace TVGL
                 var otherFace = facePair.Item2;
                 (var fromVertex, var toVertex) = GetCommonVertices(ownedFace, otherFace, false);
                 ts.Edges[i] = new Edge(fromVertex, toVertex, ownedFace, otherFace, true);
+                ts.Edges[i].IndexInList = i;
             }
             if (SingleSidedEdgeData.Count > 0)
             {
                 SingleSidedEdges = new List<Edge>(SingleSidedEdgeData.Count);
-                foreach (var kvp in SingleSidedEdgeData)
+                foreach (var ssed in SingleSidedEdgeData)
                 {
-                    var ownedFace = kvp.Key;
-                    var fromVertex = kvp.Value.Item1;
-                    var toVertex = kvp.Value.Item2;
-                    var newEdge = new Edge(fromVertex, toVertex, ownedFace, null, true);
+                    var newEdge = new Edge(ssed.Item2, ssed.Item3, ssed.Item1, null, true);
+                    newEdge.IndexInList = i;
                     ts.Edges[i++] = newEdge;
                     SingleSidedEdges.Add(newEdge);
                 }
@@ -670,9 +702,9 @@ namespace TVGL
                 if (entry.Count == 1)
                 {
                     if (entry[0].Item2)
-                        SingleSidedEdgeData.Add(entry[0].Item1, (fromVertex, toVertex));
+                        SingleSidedEdgeData.Add((entry[0].Item1, fromVertex, toVertex));
                     else
-                        SingleSidedEdgeData.Add(entry[0].Item1, (toVertex, fromVertex));
+                        SingleSidedEdgeData.Add((entry[0].Item1, toVertex, fromVertex));
                 }
             }
             OverusedEdges = null;
@@ -685,16 +717,20 @@ namespace TVGL
         /// <param name="singleSidedEdges">The single sided edges.</param>
         /// <param name="keptToRemovedDictionary">The removed replacements.</param>
         /// <returns>A list of (TriangleFace, TriangleFace).</returns>
-        private void MatchUpRemainingSingleSidedEdge(out Dictionary<Vertex, HashSet<Vertex>> keptToRemovedDictionary)
+        private IEnumerable<Vertex> MatchUpRemainingSingleSidedEdge()
         {
             //#if PRESENT
             //            var relatedFaces = SingleSidedEdgeData.Select(s => s.Item1).ToList();
             //            Presenter.ShowAndHang(relatedFaces);
             //#endif
-            keptToRemovedDictionary = new Dictionary<Vertex, HashSet<Vertex>>();
-            var maxTolerance = 1000 * ts.SameTolerance; // making the tolerance 1000 times larger
-            var orderedEdges = SingleSidedEdgeData.Select(s => (s.Key, s.Value.Item1, s.Value.Item2,
-            (s.Value.Item1.Coordinates - s.Value.Item2.Coordinates).Length())).OrderBy(s => s.Item4).ToList();
+            // we need both remove-to-kept and kept-to-remove dictionaries because as new faces are found
+            // we need to know if a previous decision has been made to keep a particular face or not. In a drastic
+            // case you can imagine many removed faces being funneled down to only a few kept faces.
+            var removedToKeptDictionary = new Dictionary<Vertex, Vertex>();
+            var keptToRemovedDictionary = new Dictionary<Vertex, HashSet<Vertex>>();
+            var maxTolerance = 100 * ts.SameTolerance; // making the tolerance 100 times larger
+            var orderedEdges = SingleSidedEdgeData.Select(s => (s.Item1, s.Item2, s.Item3,
+            (s.Item3.Coordinates - s.Item2.Coordinates).Length())).OrderBy(s => s.Item4).ToList();
             for (int i = orderedEdges.Count - 1; i >= 0; i--)
             {
                 var ithEdge = orderedEdges[i];
@@ -707,8 +743,7 @@ namespace TVGL
                 var minDist = maxTolerance;
                 var bestJIndex = -1;
                 var sameDirection = false;
-                var minJ = 0; // Math.Max(0, i - 50);
-                while (j > minJ)
+                while (j > 0)
                 {
                     j--;
                     var jthEdge = orderedEdges[j];
@@ -737,11 +772,11 @@ namespace TVGL
                     var jMatchWithFromI = sameDirection ? orderedEdges[bestJIndex].Item2 : orderedEdges[bestJIndex].Item3;
                     var jMatchWithToI = sameDirection ? orderedEdges[bestJIndex].Item3 : orderedEdges[bestJIndex].Item2;
                     if (fromI != jMatchWithFromI) //many times the match will actually be the same vertex.
-                        // in which case, we don't need to add it to the merge dictionary
-                        // be in this situation.
-                        MergeMakeEntries(keptToRemovedDictionary, fromI, jMatchWithFromI);
-                    if (toI != jMatchWithToI) MergeMakeEntries(keptToRemovedDictionary, toI, jMatchWithToI);
-
+                        // in which case, we don't need to add it to the remove/kept dictionary
+                        MergeMakeEntries(keptToRemovedDictionary, removedToKeptDictionary, fromI, jMatchWithFromI);
+                    //MergeMakeEntries(removedToKeptDictionary, fromI, jMatchWithFromI);
+                    if (toI != jMatchWithToI)
+                        MergeMakeEntries(keptToRemovedDictionary, removedToKeptDictionary, toI, jMatchWithToI);
 
                     if (sameDirection)
                         InconsistentMatingFacePairs.Add((ithEdge.Item1, orderedEdges[bestJIndex].Item1));
@@ -752,57 +787,157 @@ namespace TVGL
                     i--; // since we removed two from the list, we need to decrement the index by an additional value.
                 }
             }
-            SingleSidedEdgeData = orderedEdges.ToDictionary(edge => edge.Item1, edge => (edge.Item2, edge.Item3));
-        }
-
-        private static void MergeMakeEntries(Dictionary<Vertex, HashSet<Vertex>> keptToRemovedDictionary, Vertex v1, Vertex v2)
-        {
-            var v1IsFound = keptToRemovedDictionary.TryGetValue(v1, out var v1Entry);
-            var v2IsFound = keptToRemovedDictionary.TryGetValue(v2, out var v2Entry);
-            if (v2IsFound && v1IsFound)
+            // now, we use the keptToRemovedDictionary to fix the references in the faces and update the coordinates of the kept vertices
+            foreach (var keyValuePair in removedToKeptDictionary)
             {
-                foreach (var item in v1Entry)
-                    v2Entry.Add(item);
-                v2Entry.Add(v1);
+                var removeVertex = keyValuePair.Key;
+                var keptVertex = keyValuePair.Value;
+                foreach (var face in removeVertex.Faces.ToList())
+                    face.ReplaceVertex(removeVertex, keptVertex);
+                keptVertex.Coordinates += removeVertex.Coordinates;
+                keptVertex.Coordinates *= 0.5;
             }
-            else if (v2IsFound)
-                v2Entry.Add(v1);
-            else if (v1IsFound)
-                v1Entry.Add(v2);
-            else keptToRemovedDictionary.Add(v2, new HashSet<Vertex> { v1 });
+            // hopefully all the orderedEdges have been matched. If they haven't we still need them to make actual edges later.
+            // In a very rare case, though, we need to check whether their vertices have been reassigned. even if they are still
+            // single-sided, their vertices may have been reassigned. This in turn may have matched up more single-sided edges!
+            var newPossibleMatches = new Dictionary<long, int>();
+            var indicesToRemove = new List<int>();
+            for (int index = 0; index < orderedEdges.Count; index++)
+            {
+                (TriangleFace, Vertex, Vertex, double) edgeData = orderedEdges[index];
+                var face = edgeData.Item1;
+                var fromVertex = edgeData.Item2;
+                var toVertex = edgeData.Item3;
+                if (removedToKeptDictionary.TryGetValue(fromVertex, out var newFromVertex))
+                    fromVertex = newFromVertex;
+                if (removedToKeptDictionary.TryGetValue(toVertex, out var newToVertex))
+                    toVertex = newToVertex;
+                var checksum = Edge.GetEdgeChecksum(fromVertex, toVertex);
+                if (newPossibleMatches.TryGetValue(checksum, out var oldIndex))
+                {
+                    var oldEdgeData = orderedEdges[oldIndex];
+                    var oldFace = oldEdgeData.Item1;
+                    var oldFaceOwns = DoesFaceOwnEdge(oldFace, fromVertex, toVertex);
+                    var newFaceOwns = DoesFaceOwnEdge(face, fromVertex, toVertex);
+                    if (oldFaceOwns == newFaceOwns)
+                        InconsistentMatingFacePairs.Add((face, oldFace));
+                    else if (oldFaceOwns)
+                        FacePairsForEdges.Add((oldFace, face));
+                    else FacePairsForEdges.Add((face, oldFace));
+                    newPossibleMatches.Remove(checksum);
+                    indicesToRemove.Add(oldIndex);
+                    indicesToRemove.Add(index);
+                }
+                else newPossibleMatches[checksum] = index;
+            }
+            SingleSidedEdgeData.Clear();
+            indicesToRemove.Sort();
+            var nextIndexToAvoid = 0;
+            for (int i = 0; i < orderedEdges.Count; i++)
+            {
+                if (nextIndexToAvoid < indicesToRemove.Count && i == indicesToRemove[nextIndexToAvoid])
+                    nextIndexToAvoid++;
+                else
+                {
+                    var edgeData = orderedEdges[i];
+                    var face = edgeData.Item1;
+                    var fromVertex = edgeData.Item2;
+                    var toVertex = edgeData.Item3;
+                    if (removedToKeptDictionary.TryGetValue(fromVertex, out var newFromVertex))
+                        fromVertex = newFromVertex;
+                    if (removedToKeptDictionary.TryGetValue(toVertex, out var newToVertex))
+                        toVertex = newToVertex;
+                    SingleSidedEdgeData.Add((face, fromVertex, toVertex));
+                }
+            }
+            return removedToKeptDictionary.Keys;
         }
 
-        /// <summary>
-        /// Merges the edge vertices.
-        /// </summary>
-        /// <param name="removedToKept">The removed to kept.</param>
-        /// <param name="keptToRemoved">The kept to removed.</param>
-        /// <param name="keepVertex">The keep coord.</param>
-        /// <param name="removeVertex">The remove coord.</param>
-        private void MergeVertices(Dictionary<Vertex, HashSet<Vertex>> keptToRemovedDictionary)
+        private void MergeMakeEntries(Dictionary<Vertex, HashSet<Vertex>> keptToRemoveDictionary,
+            Dictionary<Vertex, Vertex> removedToKeptDictionary, Vertex vA, Vertex vB)
         {
-            foreach (var keyValuePair in keptToRemovedDictionary)
+            var vAIsAlreadyKept = keptToRemoveDictionary.TryGetValue(vA, out var reassignedToVa);
+            var vBIsAlreadyKept = keptToRemoveDictionary.TryGetValue(vB, out var reassignedToVb);
+            var vAIsAlreadyRemoved = removedToKeptDictionary.TryGetValue(vA, out var whatVaIsReassignedTo);
+            var vBIsAlreadyRemoved = removedToKeptDictionary.TryGetValue(vB, out var whatVbIsReassignedTo);
+            if (vBIsAlreadyKept)
             {
-                var keepVertex = keyValuePair.Key;
-                var removedVertices = keyValuePair.Value;
-                foreach (var removeVertex in removedVertices)
+                if (vAIsAlreadyKept)
                 {
-                    foreach (var face in removeVertex.Faces.ToList())
+                    foreach (var v in reassignedToVa)
                     {
-                        face.ReplaceVertex(removeVertex, keepVertex);
-                        if (SingleSidedEdgeData.ContainsKey(face))
-                        {
-                            var (from, to) = SingleSidedEdgeData[face];
-                            if (from == removeVertex) SingleSidedEdgeData[face] = (keepVertex, to);
-                            else SingleSidedEdgeData[face] = (from, keepVertex);
-                        }
+                        removedToKeptDictionary[v] = vB;
+                        reassignedToVb.Add(v);
+                    }
+                    keptToRemoveDictionary.Remove(vA);
+                }
+                else if (vAIsAlreadyRemoved)
+                {
+                    if (whatVaIsReassignedTo == vB) return;
+                    reassignedToVb.Add(whatVaIsReassignedTo); // wherever vA was targetted, that v needs to be sent to vB 
+                    var removedForOldVaTarget = keptToRemoveDictionary[whatVaIsReassignedTo];
+                    // the old target of vA now needs to be targetted to vB, so we need to add all the removed
+                    foreach (var v in removedForOldVaTarget)
+                        reassignedToVb.Add(v);
+                    keptToRemoveDictionary.Remove(whatVaIsReassignedTo);
+                }
+                removedToKeptDictionary[vA] = vB; //re-assign or add where vA is reassigned to vB
+                reassignedToVb.Add(vA);
+            }
+            else if (vAIsAlreadyKept) //implies that vBis NOT already kept, so need need to check that case as above
+            {
+                if (vBIsAlreadyRemoved)
+                {
+                    if (vA == whatVbIsReassignedTo) return;
+                    reassignedToVa.Add(whatVbIsReassignedTo); // wherever vB was targetted, that v needs to be sent to vA 
+                    var removedForOldVbTarget = keptToRemoveDictionary[whatVbIsReassignedTo];
+                    // the old target of vA now needs to be targetted to vB, so we need to add all the removed
+                    foreach (var v in removedForOldVbTarget)
+                        reassignedToVa.Add(v);
+                    keptToRemoveDictionary.Remove(whatVbIsReassignedTo);
+                }
+                removedToKeptDictionary[vB] = vA; //re-assign or add where vA is reassigned to vB
+                reassignedToVa.Add(vB);
+            }
+            else if (vAIsAlreadyRemoved) // neither have been kept at this point
+            {
+                // redefine vA as the target of vA and follow the procedure above where vA is already kept
+                vA = whatVaIsReassignedTo;
+                reassignedToVa = keptToRemoveDictionary[vA];
+                if (vBIsAlreadyRemoved)
+                {
+                    if (vA == whatVbIsReassignedTo) return;
+                    reassignedToVa.Add(whatVbIsReassignedTo); // wherever vB was targetted, that v needs to be sent to vA 
+                    var removedForOldVbTarget = keptToRemoveDictionary[whatVbIsReassignedTo];
+                    keptToRemoveDictionary.Remove(whatVbIsReassignedTo);
+                    removedToKeptDictionary[whatVbIsReassignedTo] = vA;
+                    // the old target of vA now needs to be targetted to vB, so we need to add all the removed
+                    foreach (var v in removedForOldVbTarget)
+                    {
+                        removedToKeptDictionary[v] = vA;
+                        reassignedToVa.Add(v); // this should include vB
                     }
                 }
-                keepVertex.Coordinates += removedVertices.Select(v => v.Coordinates).Aggregate((c, sum) => c + sum);
-                keepVertex.Coordinates /= (removedVertices.Count + 1);
+                else
+                {
+                    removedToKeptDictionary[vB] = vA; //re-assign or add where vA is reassigned to vB
+                    reassignedToVa.Add(vB);
+                }
             }
-        }
+            else if (vBIsAlreadyRemoved) // implies that A is neither kept or removed yet
+            {
+                removedToKeptDictionary[vA] = whatVbIsReassignedTo;
+                keptToRemoveDictionary[whatVbIsReassignedTo].Add(vA);
+            }
+            else //phew! nothing is kept or removed yet
+            {
+                keptToRemoveDictionary[vA] = new HashSet<Vertex> { vB };
+                removedToKeptDictionary[vB] = vA;
+            }
 
+            //if (removedToKeptDictionary.Keys.Intersect(keptToRemoveDictionary.Keys).Any())
+            //    throw new Exception("should not have any keys in common");
+        }
 
 
         #endregion Repair Functions
@@ -833,7 +968,7 @@ namespace TVGL
             foreach (var e in ts.Edges)
             {
                 if (nonSmoothHash.Contains(e)) continue;
-                if (e.IsDiscontinous(ts.SameTolerance, error))
+                if (e.IsDiscontinuous(ts.SameTolerance, error))
                 {
                     nonSmoothHash.Add(e);
                     var edgePath = new EdgePath();

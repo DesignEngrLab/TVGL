@@ -126,7 +126,9 @@ namespace TVGL
                     {
                         var otherEndI = edgePaths[i].FirstVertex == vertex ? edgePaths[i].LastVertex : edgePaths[i].FirstVertex;
                         var otherEndJ = edgePaths[j].FirstVertex == vertex ? edgePaths[j].LastVertex : edgePaths[j].FirstVertex;
-                        if (vertexToEdgeDictionary[otherEndI].Intersect(vertexToEdgeDictionary[otherEndJ]).Any())
+                        if (vertexToEdgeDictionary.TryGetValue(otherEndI, out var otherEndIEdgePaths) &&
+                            vertexToEdgeDictionary.TryGetValue(otherEndJ, out var otherEndJEdgePaths) &&
+                            otherEndIEdgePaths.Intersect(otherEndJEdgePaths).Any())
                             return (edgePaths[i], edgePaths[j]);
                     }
             }
@@ -186,7 +188,10 @@ namespace TVGL
             }
             while (vertexPositions.Count > 0)
             {
-                var startVertex = vertexPositions.Keys.First();
+                var startVertexKVP = vertexPositions.FirstOrDefault(kvp=>kvp.Value.Count>1);
+                if (startVertexKVP.Equals(default(KeyValuePair<Vertex, List<int>>)))
+                    startVertexKVP = vertexPositions.First();
+                var startVertex = startVertexKVP.Key;
                 var vertex = startVertex;
                 var newEdgePath = new EdgePath();
                 do
@@ -205,11 +210,12 @@ namespace TVGL
                         if (indexToAvoid == origEdgePath.Count)
                             // or it could be the first if wrapping around
                             indexToAvoid = 0;
-                        var i = 0;  // weird use of while loop, but it solves the problem succinctly
-                        while (indices[i] == indexToAvoid) { i++; }
+                        var i = 0;  // choose an index that is not the one to avoid
+                        if (indices[0] == indexToAvoid) { i = 1; }
                         index = indices[i];
                         indices.RemoveAt(i);
                     }
+                    if (index >= origEdgePath.Count) break; // this happens for acyclic edge paths
                     newEdgePath.AddEnd(origEdgePath.EdgeList[index], origEdgePath.DirectionList[index]);
                     vertex = newEdgePath.LastVertex;
                 } while (vertex != startVertex);

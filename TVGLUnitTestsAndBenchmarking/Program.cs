@@ -24,14 +24,14 @@ namespace TVGLUnitTestsAndBenchmarking
             DirectoryInfo dir = Program.BackoutToFolder(inputFolder);
             var myWriter = new ConsoleTraceListener();
             Trace.Listeners.Add(myWriter);
-            TVGL.Message.Verbosity = VerbosityLevels.Everything;
+            TVGL.Message.Verbosity = VerbosityLevels.Low;
             //#if PRESENT
-            var index = 45;
+            var index = 0;
             var valid3DFileExtensions = new HashSet<string> { ".tvglz", ".stl", ".ply", ".obj" };
             foreach (var fileName in dir.GetFiles("*", SearchOption.AllDirectories).Where(f => valid3DFileExtensions.Contains(f.Extension.ToLower()))
-                .Skip(index + 1))
+                .Skip(index ))
             {
-                Console.WriteLine("Attempting to open: " + fileName.Name);
+                Console.Write(index+": Attempting to open: " + fileName.Name);
                 var sw = Stopwatch.StartNew();
                 //IO.Open(fileName.FullName, out TessellatedSolid[] solids1, TessellatedSolidBuildOptions.Minimal);
                 //Presenter.ShowAndHang(solids1);
@@ -39,7 +39,7 @@ namespace TVGLUnitTestsAndBenchmarking
                 //Presenter.ShowAndHang(solids2);
                 sw.Stop();
                 if (solids2.Length == 0) continue;
-                Console.WriteLine(index + "," + fileName.Name + "," + solids2[0].NumberOfVertices + "," + solids2[0].NumberOfEdges + "," + solids2[0].NumberOfFaces + "," + sw.ElapsedTicks);
+                Console.WriteLine(fileName.Name + "," + solids2[0].NumberOfVertices + "," + solids2[0].NumberOfEdges + "," + solids2[0].NumberOfFaces + "," + sw.ElapsedTicks);
                 //Presenter.ShowAndHang(solids);
                 //solids[0].Faces[0].Color = Color.ColorDictionary[ColorFamily.Red]["Red"];
                 //var css = CrossSectionSolid.CreateFromTessellatedSolid(solids[0], CartesianDirections.XPositive, 20);

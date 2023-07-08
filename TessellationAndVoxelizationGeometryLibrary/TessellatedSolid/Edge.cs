@@ -396,7 +396,7 @@ namespace TVGL
         /// <param name="tolerance">The tolerance.</param>
         /// <param name="chordError">The chord error.</param>
         /// <returns>A bool.</returns>
-        public bool IsDiscontinous(double tolerance, double chordError)
+        public bool IsDiscontinuous(double tolerance, double chordError)
         {
             if (OtherFace == null || OwnedFace == null) return true;
             var otherV = OtherFace.Normal.Cross(Vector).Normalize();
