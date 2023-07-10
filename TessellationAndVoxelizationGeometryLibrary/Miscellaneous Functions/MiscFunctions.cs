@@ -687,7 +687,8 @@ namespace TVGL
         /// <param name="faceGroupsThatAreBodies">The face groups that are bodies.</param>
         /// <returns>List&lt;TessellatedSolid&gt;.</returns>
         /// <exception cref="Exception"></exception>
-        public static List<TessellatedSolid> GetMultipleSolids(this TessellatedSolid ts, List<int[]> faceGroupsThatAreBodies = null)
+        public static List<TessellatedSolid> GetMultipleSolids(this TessellatedSolid ts,
+            List<int[]> faceGroupsThatAreBodies = null)
         {
             var solids = new List<TessellatedSolid>();
             List<List<TriangleFace>> faceGroups;
@@ -747,7 +748,9 @@ namespace TVGL
                 var newSolid = new TessellatedSolid(seperateSolid, null, new TessellatedSolidBuildOptions
                 {
                     FindNonsmoothEdges = false,
-                    CopyElementsPassedToConstructor = false
+                    CopyElementsPassedToConstructor = false,
+                    AutomaticallyRepairHoles = false,
+                    FixEdgeDisassociations = false
                 });
 
                 if (nonSmoothEdgesForSolid != null)
@@ -797,7 +800,7 @@ namespace TVGL
             return faceGroups;
         }
 
-        public static List<List<TriangleFace>> GetContiguousFaceGroups(TessellatedSolid ts, List<int[]> faceGroupsThatAreBodies, 
+        public static List<List<TriangleFace>> GetContiguousFaceGroups(TessellatedSolid ts, List<int[]> faceGroupsThatAreBodies,
             out HashSet<TriangleFace> unusedFaces)
         {
             var faceGroups = new List<List<TriangleFace>>();

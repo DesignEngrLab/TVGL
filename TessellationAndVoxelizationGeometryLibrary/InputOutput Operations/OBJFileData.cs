@@ -117,7 +117,7 @@ namespace TVGL
             var now = DateTime.Now;
             // Try to read in BINARY format
             if (!TryRead(s, filename, out var objData))
-                Message.output("Unable to read in OBJ file called "+ filename, 1);
+                Message.output("Unable to read in OBJ file called " + filename, 1);
             var results = new List<TessellatedSolid>();
             var j = 0;
             for (int i = 0; i < objData.Count; i++)
@@ -127,6 +127,7 @@ namespace TVGL
                 var ts = new TessellatedSolid(vertices, objFileData.FaceToVertexIndices, null, tsBuildOptions,
                                InferUnitsFromComments(objFileData.Comments), objFileData.Name, filename, objFileData.Comments,
                                objFileData.Language);
+                if (!tsBuildOptions.PredefineAllEdges) return new[] { ts };
                 List<int[]> faceGroupsThatAreBodies = null;
                 if (tsBuildOptions.FindNonsmoothEdges)
                     CreateRegionsFromPolylineAndFaceGroups(objFileData, ts, out faceGroupsThatAreBodies);
@@ -362,9 +363,9 @@ namespace TVGL
         /// <returns>int[].</returns>
         private (int, int, int) ReadFaceVertices(IEnumerable<string> values)
         {
-            var A=-1;
-            var B=-1;
-            var C=-1;
+            var A = -1;
+            var B = -1;
+            var C = -1;
             var i = 0;
             foreach (var value in values)
             {

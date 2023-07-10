@@ -35,8 +35,8 @@ namespace TVGLUnitTestsAndBenchmarking
                 Console.Write(index+": Attempting to open: " + fileName.Name);
                 TessellatedSolid[] solids = null;
                 var sw = Stopwatch.StartNew();
-                //IO.Open(fileName.FullName, out  solids, TessellatedSolidBuildOptions.Minimal);
-                IO.Open(fileName.FullName, out solids);
+                IO.Open(fileName.FullName, out  solids, TessellatedSolidBuildOptions.Minimal);
+                //IO.Open(fileName.FullName, out solids);
                 sw.Stop();
                 if (solids.Length == 0) continue;
                 Console.WriteLine("," + solids[0].NumberOfVertices + "," + solids[0].NumberOfEdges + "," + 
