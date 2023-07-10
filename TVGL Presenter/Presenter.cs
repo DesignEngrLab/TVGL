@@ -393,7 +393,7 @@ namespace TVGL
 
 
 
-        internal static void ShowAndHang(IList<TriangleFace> faces, string heading = "", string title = "", string subtitle = "")
+        public static void ShowAndHang(IList<TriangleFace> faces, string heading = "", string title = "", string subtitle = "")
         {
             var geomModels = ConvertTessellatedSolidToMGM3D(faces, new Color(KnownColors.LightGray), false);
             var vm = new Window3DPlotViewModel(heading, title, subtitle);

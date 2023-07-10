@@ -25,9 +25,9 @@ namespace TVGLUnitTestsAndBenchmarking
             DirectoryInfo dir = Program.BackoutToFolder(inputFolder);
             var myWriter = new ConsoleTraceListener();
             Trace.Listeners.Add(myWriter);
-            TVGL.Message.Verbosity = VerbosityLevels.OnlyCritical;
+            TVGL.Message.Verbosity = VerbosityLevels.AboveNormal;
             //#if PRESENT
-            var index = 210;
+            var index = 482;
             var valid3DFileExtensions = new HashSet<string> { ".stl", ".ply", ".obj", ".3mf" };// ".tvglz", 
             var allFiles = dir.GetFiles("*", SearchOption.AllDirectories).Where(f => valid3DFileExtensions.Contains(f.Extension.ToLower()));
             foreach (var fileName in allFiles.Skip(index))
@@ -35,8 +35,9 @@ namespace TVGLUnitTestsAndBenchmarking
                 Console.Write(index+": Attempting to open: " + fileName.Name);
                 TessellatedSolid[] solids = null;
                 var sw = Stopwatch.StartNew();
-                IO.Open(fileName.FullName, out  solids, TessellatedSolidBuildOptions.Minimal);
-                //IO.Open(fileName.FullName, out solids);
+
+                //IO.Open(fileName.FullName, out  solids, TessellatedSolidBuildOptions.Minimal);
+                IO.Open(fileName.FullName, out solids);
                 sw.Stop();
                 if (solids.Length == 0) continue;
                 Console.WriteLine("," + solids[0].NumberOfVertices + "," + solids[0].NumberOfEdges + "," + 

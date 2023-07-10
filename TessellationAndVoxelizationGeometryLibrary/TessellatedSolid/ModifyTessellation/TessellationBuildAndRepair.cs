@@ -680,15 +680,15 @@ namespace TVGL
         {
             foreach (var entry in OverusedEdges)
             {
-                //#if PRESENT
-                //                foreach (var face in ts.Faces)
-                //                    face.Color = new Color(0.5f, 0.75f, 0.75f, 0.75f);
-                //                foreach (var facePair in entry)
-                //                    facePair.Item1.Color = new Color(1f, 1f, 0.0f, 0.5f);
-                //                ts.HasUniformColor = false;
-                //                Presenter.ShowAndHang(ts);
-                //                Presenter.ShowAndHang(entry.Select(p => p.Item1).ToList());
-                //#endif
+//#if PRESENT
+//                foreach (var face in ts.Faces)
+//                    face.Color = new Color(0.5f, 0.75f, 0.75f, 0.75f);
+//                foreach (var facePair in entry)
+//                    facePair.Item1.Color = new Color(1f, 1f, 0.0f, 0.5f);
+//                ts.HasUniformColor = false;
+//                Presenter.ShowAndHang(ts);
+//                Presenter.ShowAndHang(entry.Select(p => p.Item1).ToList());
+//#endif
                 (var fromVertex, var toVertex) = GetCommonVertices(entry[0].Item1, entry[1].Item1, entry[1].Item2);
                 while (entry.Count > 1)
                 {
@@ -758,14 +758,14 @@ namespace TVGL
         /// <returns>A list of (TriangleFace, TriangleFace).</returns>
         private IEnumerable<Vertex> MatchUpRemainingSingleSidedEdge()
         {
-#if PRESENT
-            //var relatedFaces = SingleSidedEdgeData.Select(s => s.Item1).ToList();
-            //if (relatedFaces.Count > 0)
-            //{
-            //    Presenter.ShowAndHang(ts);
-            //    Presenter.ShowAndHang(relatedFaces);
-            //}
-#endif
+//#if PRESENT
+//            var relatedFaces = SingleSidedEdgeData.Select(s => s.Item1).ToList();
+//            if (relatedFaces.Count > 0)
+//            {
+//                Presenter.ShowAndHang(ts);
+//                Presenter.ShowAndHang(relatedFaces);
+//            }
+//#endif
             // we need both remove-to-kept and kept-to-remove dictionaries because as new faces are found
             // we need to know if a previous decision has been made to keep a particular face or not. In a drastic
             // case you can imagine many removed faces being funneled down to only a few kept faces.

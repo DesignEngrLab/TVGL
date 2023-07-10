@@ -774,9 +774,9 @@ namespace TVGL
             return solids;
         }
 
-        public static List<List<TriangleFace>> GetContiguousFaceGroups(this HashSet<TriangleFace> facesInput)
+        public static List<List<TriangleFace>> GetContiguousFaceGroups(this IEnumerable<TriangleFace> facesInput)
         {
-            var unusedFaces = facesInput.ToHashSet();
+            var unusedFaces = facesInput as HashSet<TriangleFace> ?? facesInput.ToHashSet();
             var faceGroups = new List<List<TriangleFace>>();
             while (unusedFaces.Any())
             {

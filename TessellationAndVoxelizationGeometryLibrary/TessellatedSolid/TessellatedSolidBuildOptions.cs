@@ -82,6 +82,6 @@ namespace TVGL
         /// match up faces in pairs, this is important to restore water-tightness. Note, this will not fix big holes in the model. 
         /// Use "AutomaticallyRepairHoles" for that.
         /// </summary>
-        public bool FixEdgeDisassociations { get; internal set; } = true;
+        public bool FixEdgeDisassociations { get; set; } = true;
     }
 }
