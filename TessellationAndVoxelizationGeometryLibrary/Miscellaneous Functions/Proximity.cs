@@ -720,7 +720,7 @@ namespace TVGL
         /// <param name="v1Length">Length of the v1 (save a small amount of time if already known).</param>
         /// <param name="v2Length">Length of the v2 (save a small amount of time if already known).</param>
         /// <returns><c>true</c> if the specified v1 is discontinuous; otherwise, <c>false</c>.</returns>
-        public static bool LineSegmentsAreC2Discontinuous(double dot, double crossLength, double v1Length, double v2Length, double chordError)
+        public static bool LineSegmentsAreC1Discontinuous(double dot, double crossLength, double v1Length, double v2Length, double chordError)
         {
             if (dot < 0)
                 // if the dot is negative then angle is greater than 90-degrees also breaks C1 continuity

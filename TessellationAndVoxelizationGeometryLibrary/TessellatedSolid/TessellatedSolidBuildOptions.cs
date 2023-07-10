@@ -25,7 +25,7 @@ namespace TVGL
                 CheckModelIntegrity = false,
                 AutomaticallyRepairHoles = false,
                 AutomaticallyInvertNegativeSolids = false,
-                AutomaticallyRepairBadFaces = false,
+                AutomaticallyRepairNegligibleTFaces = false,
                 CopyElementsPassedToConstructor = false,
                 DefineConvexHull = false,
                 FindNonsmoothEdges = false,
@@ -40,6 +40,14 @@ namespace TVGL
         /// </summary>
         public bool CheckModelIntegrity { get; set; } = true;
 
+
+
+        /// <summary>
+        /// Gets or sets a value indicating whether or not to check model after build and repair.
+        /// This is mostly used in debugging and should generally be set to false.
+        /// </summary>
+        public bool CheckModelPostBuild { get; set; } = false;
+
         /// <summary>Gets or sets whether holes in the tessellated solid will be automatically patched when reading in. 
         /// Note that this should be false if tessellated is not a solid, but rather a surface.</summary>
         public bool AutomaticallyRepairHoles { get; set; } = true;
@@ -48,7 +56,7 @@ namespace TVGL
         /// This includes flipping faces that have opposite normals, and resolving negligible faces. This does not
         /// patch major holes (like "AutomaticallyRepairHoles") but it can fix cracks - where vertices/edges are duplicated for separate
         /// faces.</summary>
-        public bool AutomaticallyRepairBadFaces { get; set; } = true;
+        public bool AutomaticallyRepairNegligibleTFaces { get; set; } = true;
 
         /// <summary>Gets or sets whether the model will be inverted if the volume is negative. Generally, this is
         /// advised, but if the model is known to be a partial surface (in which case the volume may naturally be

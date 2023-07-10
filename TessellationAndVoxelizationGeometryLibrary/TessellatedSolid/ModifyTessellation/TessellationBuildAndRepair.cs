@@ -11,14 +11,9 @@
 // </copyright>
 // <summary></summary>
 // ***********************************************************************
-using ClipperLib;
-using MIConvexHull;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
-using System.Net;
-using System.Numerics;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -57,11 +52,14 @@ namespace TVGL
         public List<List<(TriangleFace, bool)>> OverusedEdges { get; internal set; }
 
         /// <summary>
-        /// Gets Edges that only have one face
+        /// The data needed to build edges used only during construction
         /// </summary>
         /// <value>The singled sided edges.</value>
-        internal List<(TriangleFace, Vertex, Vertex)> SingleSidedEdgeData { get; set; }
+        private List<(TriangleFace, Vertex, Vertex)> SingleSidedEdgeData { get; set; }
 
+        /// <summary>
+        /// Gets the single sided edges.
+        /// </summary>
         public List<Edge> SingleSidedEdges { get; internal set; }
 
 
@@ -135,7 +133,7 @@ namespace TVGL
                     Message.output("Error setting up all faces-edges-vertices associations.", 1);
                 }
             }
-            if (buildOptions.AutomaticallyRepairBadFaces && InconsistentMatingFacePairs.Any())
+            if (buildOptions.AutomaticallyRepairNegligibleTFaces && InconsistentMatingFacePairs.Any())
                 try
                 {
                     if (!FlipFacesBasedOnInconsistentEdges())
@@ -149,16 +147,16 @@ namespace TVGL
                 ts.TurnModelInsideOut();
             // the remaining items will need edges so we need to build these here
             if (buildOptions.PredefineAllEdges)
-                //try
-                //{
+                try
+                {
                     MakeEdges();
-                //}
-                //catch
-                //{
-                //    Message.output("Unable to construct edges.", 1);
-                //}
+                }
+                catch
+                {
+                    Message.output("Unable to construct edges.", 1);
+                }
             /* This requires edges and frankly it's not worth it. the next step is better
-            if (buildOptions.AutomaticallyRepairBadFaces && FacesWithNegligibleArea.Any())
+            if (buildOptions.AutomaticallyRepairNegligibleTFaces && FacesWithNegligibleArea.Any())
                 try
                 {
                     if (!SetNegligibleAreaFaceNormals())
@@ -169,7 +167,7 @@ namespace TVGL
                     //Continue
                 }
             */
-            if (buildOptions.AutomaticallyRepairBadFaces && buildOptions.PredefineAllEdges)
+            if (buildOptions.AutomaticallyRepairNegligibleTFaces && buildOptions.PredefineAllEdges)
             {
                 try
                 {
@@ -212,27 +210,43 @@ namespace TVGL
             {
                 if (!buildOptions.PredefineAllEdges)
                     throw new ArgumentException("AutomaticallyRepairHoles requires PredefineAllEdges to be true.");
-                //try
-                //{
+                try
+                {
                     FindNonSmoothEdges();
-                //}
-                //catch
-                //{
-                //    Message.output("Unable to find all non-smooth edges.", 1);
-                //}
+                }
+                catch
+                {
+                    Message.output("Unable to find all non-smooth edges.", 1);
+                }
             }
-#if DEBUG
-            CheckModelIntegrityPostBuild();
-#endif
+            if (buildOptions.CheckModelPostBuild)
+            {
+                try
+                {
+                    CheckModelIntegrityPostBuild();
+                }
+                catch
+                {
+                    Message.output("Failed final post-build check.", 1);
+                }
+            }
         }
         #endregion
 
+        /// <summary>
+        /// This function will solve the problem of faces with negligible error, by changing the tessellation
+        /// with the neighbor. Imagine a quadrilateral divided into two triangles. if one of those triangles
+        /// has negligible area, then it's 3 edges are nearly collinear. the inner edge is flipped to the 
+        /// other two vertices of the quadrilateral, so that 2 proper triangles are created.
+        /// </summary>
+        /// <returns>A bool.</returns>
         private bool PropagateFixToNegligibleFaces()
         {
             var negligibleArea = ts.SameTolerance * ts.SameTolerance;
             foreach (var face in FacesWithNegligibleArea)
             {
                 var shortestEdge = ShortestEdge(face);
+                // if the shortest edge is negligible, then we need to remove the vertex and the face
                 if (shortestEdge.Length <= ts.SameTolerance)
                 {
                     var removedEdges = new List<Edge>();
@@ -242,7 +256,7 @@ namespace TVGL
                     ts.RemoveEdges(removedEdges);
                 }
                 else
-                {
+                { // else we need to flip the longest edge as described above
                     var longestEdge = LongestEdge(face);
                     if (longestEdge.GetMatingFace(face).Area.IsNegligible(negligibleArea))
                     {   // the mating face is also negligible, so we need to remove 2 faces, 
@@ -290,7 +304,8 @@ namespace TVGL
         #region Check Model Integrity
 
         /// <summary>
-        /// Checks the model integrity.
+        /// Checks the model integrity. This sets up various dictionaries and lists that are used to
+        /// build the proper 'graph' of the model - mainly the edges. 
         /// </summary>
         /// <param name="ts">The ts.</param>
         /// <param name="repairAutomatically">The repair automatically.</param>
@@ -393,6 +408,10 @@ namespace TVGL
             }
         }
 
+        /// <summary>
+        /// Checks the model integrity after it has been built. It runs through all vertices, edges and faces to see if 
+        /// everything is properly doubly linked.
+        /// </summary>
         void CheckModelIntegrityPostBuild()
         {
             if (3 * ts.NumberOfFaces != 2 * ts.NumberOfEdges)
@@ -477,6 +496,13 @@ namespace TVGL
             }
         }
 
+        /// <summary>
+        /// Gets the common vertices between two faces.
+        /// </summary>
+        /// <param name="face1">The face1.</param>
+        /// <param name="face2">The face2.</param>
+        /// <param name="bothThinkTheyOwnEdge">If true, both think they own edge.</param>
+        /// <returns>A (Vertex fromVertex, Vertex toVertex) .</returns>
         private static (Vertex fromVertex, Vertex toVertex) GetCommonVertices(TriangleFace face1, TriangleFace face2, bool bothThinkTheyOwnEdge)
         {
             if (bothThinkTheyOwnEdge)
@@ -542,6 +568,7 @@ namespace TVGL
                 + InconsistentMatingFacePairs.Count + SingleSidedEdgeData.Count;
             ts.Edges = new Edge[ts.NumberOfEdges];
             var i = 0;
+            // first make the proper edges between two faces
             for (; i < FacePairsForEdges.Count; i++)
             {
                 (TriangleFace, TriangleFace) facePair = FacePairsForEdges[i];
@@ -551,6 +578,9 @@ namespace TVGL
                 ts.Edges[i] = new Edge(fromVertex, toVertex, ownedFace, otherFace, true);
                 ts.Edges[i].IndexInList = i;
             }
+            // next are the edges between two faces that are inconsistent - meaning the order of 
+            // vertices in the two faces are in the same direction. They either both think they own the edge
+            // or neither thinks they own the edge.
             for (i = FacePairsForEdges.Count; i < FacePairsForEdges.Count + InconsistentMatingFacePairs.Count; i++)
             {
                 (TriangleFace, TriangleFace) facePair = InconsistentMatingFacePairs[i - FacePairsForEdges.Count];
@@ -560,6 +590,7 @@ namespace TVGL
                 ts.Edges[i] = new Edge(fromVertex, toVertex, ownedFace, otherFace, true);
                 ts.Edges[i].IndexInList = i;
             }
+            // finally, the single-sided edges are defined.
             if (SingleSidedEdgeData.Count > 0)
             {
                 SingleSidedEdges = new List<Edge>(SingleSidedEdgeData.Count);
@@ -627,6 +658,7 @@ namespace TVGL
                     listOfIndices.Add(i);
                 else faceToIndexDictionary.Add(facePair.Item2, new List<int> { i });
             }
+            // build three hashsets of faces with 3, 2, and 1 inconsistent edges
             var facesWith3InconsistentEdges = new HashSet<TriangleFace>();
             var facesWith2InconsistentEdges = new HashSet<TriangleFace>();
             var facesWith1InconsistentEdges = new HashSet<TriangleFace>();
@@ -636,7 +668,11 @@ namespace TVGL
                 else if (face.Value.Count == 2) facesWith2InconsistentEdges.Add(face.Key);
                 else if (face.Value.Count == 1) facesWith1InconsistentEdges.Add(face.Key);
             }
+            // without edge connectivity information, we can't do anything much here
+            // to be thorough, such a function needs to be evaluated after edges are defined.
+            // that hasn't been written yet.
             var indicesToRemove = new List<int>();
+            // the easy case to solve are faces with 3 inconsistent edges
             while (facesWith3InconsistentEdges.Count > 0)
             {
                 var face = facesWith3InconsistentEdges.First();
@@ -680,18 +716,21 @@ namespace TVGL
         {
             foreach (var entry in OverusedEdges)
             {
-//#if PRESENT
-//                foreach (var face in ts.Faces)
-//                    face.Color = new Color(0.5f, 0.75f, 0.75f, 0.75f);
-//                foreach (var facePair in entry)
-//                    facePair.Item1.Color = new Color(1f, 1f, 0.0f, 0.5f);
-//                ts.HasUniformColor = false;
-//                Presenter.ShowAndHang(ts);
-//                Presenter.ShowAndHang(entry.Select(p => p.Item1).ToList());
-//#endif
+                //#if PRESENT
+                //                foreach (var face in ts.Faces)
+                //                    face.Color = new Color(0.5f, 0.75f, 0.75f, 0.75f);
+                //                foreach (var facePair in entry)
+                //                    facePair.Item1.Color = new Color(1f, 1f, 0.0f, 0.5f);
+                //                ts.HasUniformColor = false;
+                //                Presenter.ShowAndHang(ts);
+                //                Presenter.ShowAndHang(entry.Select(p => p.Item1).ToList());
+                //#endif
                 (var fromVertex, var toVertex) = GetCommonVertices(entry[0].Item1, entry[1].Item1, entry[1].Item2);
                 while (entry.Count > 1)
                 {
+                    // the decision of what two faces to pair is simply based on the highest dot-product of the normals
+                    // note tht this loop is nearly identical to the one below. First we run this loop to find faces that
+                    // have proper owned/other relationships. Then we run the loop below to find faces that don't
                     var highestDot = -2.0;
                     var bestI = -1;
                     var bestJ = -1;
@@ -699,7 +738,7 @@ namespace TVGL
                     {
                         for (int j = i + 1; j < entry.Count; j++)
                         {
-                            if (entry[i].Item2 != entry[j].Item2)
+                            if (entry[i].Item2 != entry[j].Item2) // this is the condition that they are owned/other
                             {
                                 double dot = entry[i].Item1.Normal.Dot(entry[j].Item1.Normal);
                                 if (highestDot < dot)
@@ -758,14 +797,14 @@ namespace TVGL
         /// <returns>A list of (TriangleFace, TriangleFace).</returns>
         private IEnumerable<Vertex> MatchUpRemainingSingleSidedEdge()
         {
-//#if PRESENT
-//            var relatedFaces = SingleSidedEdgeData.Select(s => s.Item1).ToList();
-//            if (relatedFaces.Count > 0)
-//            {
-//                Presenter.ShowAndHang(ts);
-//                Presenter.ShowAndHang(relatedFaces);
-//            }
-//#endif
+            //#if PRESENT
+            //            var relatedFaces = SingleSidedEdgeData.Select(s => s.Item1).ToList();
+            //            if (relatedFaces.Count > 0)
+            //            {
+            //                Presenter.ShowAndHang(ts);
+            //                Presenter.ShowAndHang(relatedFaces);
+            //            }
+            //#endif
             // we need both remove-to-kept and kept-to-remove dictionaries because as new faces are found
             // we need to know if a previous decision has been made to keep a particular face or not. In a drastic
             // case you can imagine many removed faces being funneled down to only a few kept faces.
@@ -879,6 +918,7 @@ namespace TVGL
                     else FacePairsForEdges.Add((leftFace, rightFace));
                     continue;
                 }
+                // the next loop checks for new matches with the edge checksum values
                 var checksum = Edge.GetEdgeChecksum(fromVertex, toVertex);
                 if (newPossibleMatches.TryGetValue(checksum, out var oldIndex))
                 {
@@ -900,6 +940,7 @@ namespace TVGL
             SingleSidedEdgeData.Clear();
             indicesToRemove.Sort();
             var nextIndexToAvoid = 0;
+            // finally, the SingleSidedEdgeData is updated to reflect the new vertex references
             for (int i = 0; i < orderedEdges.Count; i++)
             {
                 if (nextIndexToAvoid < indicesToRemove.Count && i == indicesToRemove[nextIndexToAvoid])
@@ -920,6 +961,12 @@ namespace TVGL
             return removedToKeptDictionary.Keys;
         }
 
+        /// <summary>
+        /// Gets the neighbors pre edge creation. This is a slow check used rarely in the following routine.
+        /// Note that is also alters the FacePairsForEdges and InconsistentMatingFacePairs lists.
+        /// </summary>
+        /// <param name="face">The face.</param>
+        /// <returns>A list of TriangleFaces.</returns>
         IEnumerable<TriangleFace> GetNeighborsPreEdgeCreation(TriangleFace face)
         {
             for (int i = FacePairsForEdges.Count - 1; i >= 0; i--)
@@ -944,7 +991,16 @@ namespace TVGL
             }
         }
 
-        private void MergeMakeEntries(Dictionary<Vertex, HashSet<Vertex>> keptToRemoveDictionary,
+        /// <summary>
+        /// Makes and merges entries in the two dictionaries. the two provided vertices are to be
+        /// merged, but which to keep? This depends on whether or not a previous decision to remove
+        /// or keep them has been made. This makes this function quite complex.
+        /// </summary>
+        /// <param name="keptToRemoveDictionary">The kept to remove dictionary.</param>
+        /// <param name="removedToKeptDictionary">The removed to kept dictionary.</param>
+        /// <param name="vA">The v a.</param>
+        /// <param name="vB">The v b.</param>
+        private static void MergeMakeEntries(Dictionary<Vertex, HashSet<Vertex>> keptToRemoveDictionary,
             Dictionary<Vertex, Vertex> removedToKeptDictionary, Vertex vA, Vertex vB)
         {
             var vAIsAlreadyKept = keptToRemoveDictionary.TryGetValue(vA, out var reassignedToVa);
@@ -1040,7 +1096,8 @@ namespace TVGL
         void FindNonSmoothEdges()
         {
             var nullIndex = ts.Edges.FindIndex(e => e == null);
-
+            // non-smooth edges are defined as those that are not part of the same primitive
+            // they have c0 continuity of course (locally water-tight), but may not have C1 continuity
             var characteristicLength = Math.Sqrt((ts.Bounds[1] - ts.Bounds[0]).ToArray().Sum(p => p * p));
             var maxRadius = 33 * characteristicLength; //so a 1x1x1 part would have a max primitive radius of 100
             var error = characteristicLength / 2000;

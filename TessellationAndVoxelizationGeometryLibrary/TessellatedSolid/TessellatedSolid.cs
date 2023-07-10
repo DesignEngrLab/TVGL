@@ -1250,7 +1250,7 @@ namespace TVGL
             var copy = new TessellatedSolid(Faces, Vertices, new TessellatedSolidBuildOptions
             {
                 AutomaticallyInvertNegativeSolids = false,
-                AutomaticallyRepairBadFaces = false,
+                AutomaticallyRepairNegligibleTFaces = false,
                 AutomaticallyRepairHoles = false,
                 CopyElementsPassedToConstructor = true,
                 DefineConvexHull = ConvexHull != null,
