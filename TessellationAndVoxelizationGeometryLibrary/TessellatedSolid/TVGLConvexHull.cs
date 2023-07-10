@@ -42,6 +42,17 @@ namespace TVGL
         /// <param name="createEdges">if set to <c>true</c> [create edges].</param>
         public TVGLConvexHull(IList<Vertex> vertices, double tolerance, bool createFaces = true, bool createEdges = true)
         {
+            Plane.DefineNormalAndDistanceFromVertices(vertices, out var distance, out var planeNormal);
+            var plane = new Plane(distance, planeNormal);
+            var closeToPlane = plane.CalculateMaxError(vertices.Select(v => v.Coordinates)) < Constants.ErrorForFaceInSurface;
+            if (closeToPlane)
+            {
+                var coords2D = vertices.Select(v => v.Coordinates).ProjectTo2DCoordinates(planeNormal, out _);
+                if (coords2D.Area() < 0) planeNormal *= -1;
+                coords2D.ConvexHull2D();
+                //todo: this is not complete...does it need to be?
+                return;
+            }
             var convexHull = ConvexHull.Create(vertices, tolerance);
             if (convexHull.Result == null) return;
             Vertices = convexHull.Result.Points.ToArray();

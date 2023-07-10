@@ -183,7 +183,8 @@ namespace TVGL
                 case FileType.OFF:
                 case FileType.PLY_ASCII:
                 case FileType.PLY_Binary:
-                    throw new Exception("Attempting to open multiple solids with a " + extension.ToString() + " file.");
+                    tessellatedSolids = new[] { PLYFileData.OpenSolid(s, filename, tsBuildOptions) };
+                    break;
                 case FileType.TVGL:
                     OpenTVGL(s, out var solidAssembly);
                     tessellatedSolids = solidAssembly.RootAssembly.AllTessellatedSolidsInGlobalCoordinateSystem();

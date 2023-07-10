@@ -691,7 +691,7 @@ namespace TVGL
         {
             var solids = new List<TessellatedSolid>();
             List<List<TriangleFace>> faceGroups;
-            List<TriangleFace> unusedFaces;
+            HashSet<TriangleFace> unusedFaces;
             if (faceGroupsThatAreBodies != null)
             {
                 faceGroups = GetContiguousFaceGroups(ts, faceGroupsThatAreBodies, out unusedFaces);
@@ -699,7 +699,7 @@ namespace TVGL
             else
             {
                 faceGroups = new List<List<TriangleFace>>();
-                unusedFaces = new List<TriangleFace>(ts.Faces);
+                unusedFaces = new HashSet<TriangleFace>(ts.Faces);
             }
             // now, the bigger job of walking through the faces to find groups
             faceGroups.AddRange(GetContiguousFaceGroups(unusedFaces));
@@ -771,7 +771,7 @@ namespace TVGL
             return solids;
         }
 
-        public static List<List<TriangleFace>> GetContiguousFaceGroups(this IEnumerable<TriangleFace> facesInput)
+        public static List<List<TriangleFace>> GetContiguousFaceGroups(this HashSet<TriangleFace> facesInput)
         {
             var unusedFaces = facesInput.ToHashSet();
             var faceGroups = new List<List<TriangleFace>>();
@@ -797,10 +797,11 @@ namespace TVGL
             return faceGroups;
         }
 
-        public static List<List<TriangleFace>> GetContiguousFaceGroups(TessellatedSolid ts, List<int[]> faceGroupsThatAreBodies, out List<TriangleFace> unusedFaces)
+        public static List<List<TriangleFace>> GetContiguousFaceGroups(TessellatedSolid ts, List<int[]> faceGroupsThatAreBodies, 
+            out HashSet<TriangleFace> unusedFaces)
         {
             var faceGroups = new List<List<TriangleFace>>();
-            var unusedFacesDictionary = ts.Faces.ToDictionary(face => face.IndexInList);
+            var unusedFacesDictionary = ts.Faces.ToHashSet();    //ToDictionary(face => face.IndexInList);
             // first the easy part - simply separate out known groups that have already been determined to be bodies
             if (faceGroupsThatAreBodies != null)
             {
@@ -809,13 +810,14 @@ namespace TVGL
                     var faceList = new List<TriangleFace>();
                     foreach (var index in bodyGroupIndices)
                     {
-                        faceList.Add(ts.Faces[index]);
-                        unusedFacesDictionary.Remove(index);
+                        var face = ts.Faces[index];
+                        faceList.Add(face);
+                        unusedFacesDictionary.Remove(face);
                     }
                     faceGroups.Add(faceList);
                 }
             }
-            unusedFaces = unusedFacesDictionary.Values.ToList();
+            unusedFaces = unusedFacesDictionary;
             return faceGroups;
         }
 

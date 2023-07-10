@@ -160,8 +160,7 @@ namespace TVGL
             foreach (var item in threeMFData.build.Items)
             {
                 results.AddRange(threeMFData.TessellatedSolidsFromIDAndTransform(item.objectid,
-                    item.transformMatrix,
-                    threeMFData.Name + "_"));
+                    item.transformMatrix, threeMFData.Name + "_", tsBuildOptions));
             }
 
             Message.output("Successfully read in 3Dmodel file (" + (DateTime.Now - now) + ").", 3);
@@ -183,10 +182,10 @@ namespace TVGL
         /// <param name="name">The name.</param>
         /// <returns>IEnumerable&lt;TessellatedSolid&gt;.</returns>
         private IEnumerable<TessellatedSolid> TessellatedSolidsFromIDAndTransform(int objectid,
-            Matrix4x4 transformMatrix, string name)
+            Matrix4x4 transformMatrix, string name, TessellatedSolidBuildOptions tsBuildOptions)
         {
             var solid = resources.objects.First(obj => obj.id == objectid);
-            var result = TessellatedSolidsFromObject(solid, name);
+            var result = TessellatedSolidsFromObject(solid, name, tsBuildOptions);
             if (!transformMatrix.IsNull())
                 foreach (var ts in result)
                     ts.Transform(transformMatrix);
@@ -199,14 +198,14 @@ namespace TVGL
         /// <param name="obj">The object.</param>
         /// <param name="name">The name.</param>
         /// <returns>List&lt;TessellatedSolid&gt;.</returns>
-        private List<TessellatedSolid> TessellatedSolidsFromObject(Object obj, string name)
+        private List<TessellatedSolid> TessellatedSolidsFromObject(Object obj, string name, TessellatedSolidBuildOptions tsBuildOptions)
         {
             name += obj.name + "_" + obj.id;
             var result = new List<TessellatedSolid>();
-            if (obj.mesh != null) result.Add(TessellatedSolidFromMesh(obj.mesh, obj.MaterialID, name));
+            if (obj.mesh != null) result.Add(TessellatedSolidFromMesh(obj.mesh, obj.MaterialID, name, tsBuildOptions));
             foreach (var comp in obj.components)
             {
-                result.AddRange(TessellatedSolidsFromComponent(comp, name));
+                result.AddRange(TessellatedSolidsFromComponent(comp, name, tsBuildOptions));
             }
             return result;
         }
@@ -217,9 +216,9 @@ namespace TVGL
         /// <param name="comp">The comp.</param>
         /// <param name="name">The name.</param>
         /// <returns>IEnumerable&lt;TessellatedSolid&gt;.</returns>
-        private IEnumerable<TessellatedSolid> TessellatedSolidsFromComponent(Component comp, string name)
+        private IEnumerable<TessellatedSolid> TessellatedSolidsFromComponent(Component comp, string name, TessellatedSolidBuildOptions tsBuildOptions)
         {
-            return TessellatedSolidsFromIDAndTransform(comp.objectid, comp.transformMatrix, name);
+            return TessellatedSolidsFromIDAndTransform(comp.objectid, comp.transformMatrix, name, tsBuildOptions);
         }
 
         /// <summary>
@@ -229,7 +228,7 @@ namespace TVGL
         /// <param name="materialID">The material identifier.</param>
         /// <param name="name">The name.</param>
         /// <returns>TessellatedSolid.</returns>
-        private TessellatedSolid TessellatedSolidFromMesh(Mesh mesh, int materialID, string name)
+        private TessellatedSolid TessellatedSolidFromMesh(Mesh mesh, int materialID, string name, TessellatedSolidBuildOptions tsBuildOptions)
         {
             var defaultColor = new Color(Constants.DefaultColor);
             if (materialID >= 0)
@@ -271,7 +270,7 @@ namespace TVGL
                 for (var j = 0; j < numTriangles; j++)
                     colors[j] ??= defaultColor;
             return new TessellatedSolid(verts, mesh.triangles.Select(t => (t.v1, t.v2, t.v3 )).ToList(),
-                 colors, TessellatedSolidBuildOptions.Default, Units, name, FileName, Comments, Language);
+                 colors, tsBuildOptions, Units, name, FileName, Comments, Language);
         }
 
         /// <summary>

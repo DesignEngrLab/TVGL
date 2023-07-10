@@ -400,13 +400,16 @@ namespace TVGL
         {
             if (OtherFace == null || OwnedFace == null) return true;
             var otherV = OtherFace.Normal.Cross(Vector).Normalize();
+            if ((OtherFace.AB != this && OtherFace.BC != this && OtherFace.CA != this)||
+                (OwnedFace.AB != this && OwnedFace.BC != this && OwnedFace.CA != this)) 
+                return true;
             var otherVLength = otherV.Dot(From.Coordinates - OtherFace.OtherVertex(this).Coordinates);
             otherV = otherVLength * otherV;
             var ownedV = OwnedFace.Normal.Cross(Vector).Normalize();
             var ownedVLength = ownedV.Dot(OwnedFace.OtherVertex(this).Coordinates - From.Coordinates);
             ownedV = ownedVLength * ownedV;
 
-            return MiscFunctions.LineSegmentsAreDiscontinuous(ownedV.Dot(otherV), ownedV.Cross(otherV).Length(), ownedVLength, otherVLength, chordError);
+            return MiscFunctions.LineSegmentsAreC2Discontinuous(ownedV.Dot(otherV), ownedV.Cross(otherV).Length(), ownedVLength, otherVLength, chordError);
         }
 
 
@@ -492,7 +495,7 @@ namespace TVGL
         {
             if (vIndex1 == -1 || vIndex2 == -1)
                 return -1;
-            if (vIndex1 == vIndex2) throw new Exception("edge to same vertices.");
+            //if (vIndex1 == vIndex2) throw new Exception("edge to same vertices.");
             return (vIndex1 < vIndex2) ? vIndex1 + Constants.VertexCheckSumMultiplier * vIndex2 :
                 vIndex2 + Constants.VertexCheckSumMultiplier * vIndex1;
         }

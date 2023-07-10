@@ -13,7 +13,8 @@ namespace TVGLUnitTestsAndBenchmarking
 {
     internal class Program
     {
-        public static string inputFolder = "Github";
+        //public static string inputFolder = "Github";
+        public static string inputFolder = "OneDrive - medemalabs.com";
         static Random r = new Random();
         static double r1 => 2.0 * r.NextDouble() - 1.0;
 
@@ -24,22 +25,22 @@ namespace TVGLUnitTestsAndBenchmarking
             DirectoryInfo dir = Program.BackoutToFolder(inputFolder);
             var myWriter = new ConsoleTraceListener();
             Trace.Listeners.Add(myWriter);
-            TVGL.Message.Verbosity = VerbosityLevels.Low;
+            TVGL.Message.Verbosity = VerbosityLevels.OnlyCritical;
             //#if PRESENT
-            var index = 0;
-            var valid3DFileExtensions = new HashSet<string> { ".tvglz", ".stl", ".ply", ".obj" };
-            foreach (var fileName in dir.GetFiles("*", SearchOption.AllDirectories).Where(f => valid3DFileExtensions.Contains(f.Extension.ToLower()))
-                .Skip(index ))
+            var index = 210;
+            var valid3DFileExtensions = new HashSet<string> { ".stl", ".ply", ".obj", ".3mf" };// ".tvglz", 
+            var allFiles = dir.GetFiles("*", SearchOption.AllDirectories).Where(f => valid3DFileExtensions.Contains(f.Extension.ToLower()));
+            foreach (var fileName in allFiles.Skip(index))
             {
                 Console.Write(index+": Attempting to open: " + fileName.Name);
+                TessellatedSolid[] solids = null;
                 var sw = Stopwatch.StartNew();
-                //IO.Open(fileName.FullName, out TessellatedSolid[] solids1, TessellatedSolidBuildOptions.Minimal);
-                //Presenter.ShowAndHang(solids1);
-                IO.Open(fileName.FullName, out TessellatedSolid[] solids2);
-                //Presenter.ShowAndHang(solids2);
+                //IO.Open(fileName.FullName, out  solids, TessellatedSolidBuildOptions.Minimal);
+                IO.Open(fileName.FullName, out solids);
                 sw.Stop();
-                if (solids2.Length == 0) continue;
-                Console.WriteLine(fileName.Name + "," + solids2[0].NumberOfVertices + "," + solids2[0].NumberOfEdges + "," + solids2[0].NumberOfFaces + "," + sw.ElapsedTicks);
+                if (solids.Length == 0) continue;
+                Console.WriteLine("," + solids[0].NumberOfVertices + "," + solids[0].NumberOfEdges + "," + 
+                    solids[0].NumberOfFaces + "," + sw.ElapsedTicks);
                 //Presenter.ShowAndHang(solids);
                 //solids[0].Faces[0].Color = Color.ColorDictionary[ColorFamily.Red]["Red"];
                 //var css = CrossSectionSolid.CreateFromTessellatedSolid(solids[0], CartesianDirections.XPositive, 20);
