@@ -179,19 +179,20 @@ namespace TVGL
         {
             innerEdgeHash = new HashSet<Edge>();
             outerEdgeHash = new HashSet<Edge>();
-            foreach (var face in faces)
-            {
-                foreach (var edge in face.Edges)
+            if (faces != null && faces.Any())
+                foreach (var face in faces)
                 {
-                    if (innerEdgeHash.Contains(edge)) continue;
-                    if (!outerEdgeHash.Contains(edge)) outerEdgeHash.Add(edge);
-                    else
+                    foreach (var edge in face.Edges)
                     {
-                        innerEdgeHash.Add(edge);
-                        outerEdgeHash.Remove(edge);
+                        if (innerEdgeHash.Contains(edge)) continue;
+                        if (!outerEdgeHash.Contains(edge)) outerEdgeHash.Add(edge);
+                        else
+                        {
+                            innerEdgeHash.Add(edge);
+                            outerEdgeHash.Remove(edge);
+                        }
                     }
                 }
-            }
         }
         #endregion Sort Along Direction
 
