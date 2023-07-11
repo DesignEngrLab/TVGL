@@ -356,8 +356,8 @@ namespace TVGL
         /// <summary>
         /// Creates a spherical billboard that rotates around a specified object position.
         /// </summary>
-        /// <param name="objectPosition">Position of the object the billboard will rotate around.</param>
-        /// <param name="cameraPosition">Position of the camera.</param>
+        /// <param name="objectPosition">Coordinates of the object the billboard will rotate around.</param>
+        /// <param name="cameraPosition">Coordinates of the camera.</param>
         /// <param name="cameraUpVector">The up vector of the camera.</param>
         /// <param name="cameraForwardVector">The forward vector of the camera.</param>
         /// <returns>The created billboard matrix</returns>
@@ -394,8 +394,8 @@ namespace TVGL
         /// <summary>
         /// Creates a cylindrical billboard that rotates around a specified axis.
         /// </summary>
-        /// <param name="objectPosition">Position of the object the billboard will rotate around.</param>
-        /// <param name="cameraPosition">Position of the camera.</param>
+        /// <param name="objectPosition">Coordinates of the object the billboard will rotate around.</param>
+        /// <param name="cameraPosition">Coordinates of the camera.</param>
         /// <param name="rotateAxis">Axis to rotate the billboard around.</param>
         /// <param name="cameraForwardVector">Forward vector of the camera.</param>
         /// <param name="objectForwardVector">Forward vector of the object.</param>

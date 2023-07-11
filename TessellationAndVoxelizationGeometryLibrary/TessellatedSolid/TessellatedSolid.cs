@@ -1479,7 +1479,7 @@ namespace TVGL
             {
                 if (face.Area.IsNegligible(tolerance)) continue; //Ignore faces with zero area, since their Normals are not set.
                                                                  // this is the volume of a tetrahedron from defined by the face and the origin {0,0,0}. The origin would be part of the second term
-                                                                 // in the dotproduct, "face.Normal.Dot(face.A.Position - ORIGIN))", but clearly there is no need to subtract
+                                                                 // in the dotproduct, "face.Normal.Dot(face.A.Coordinates - ORIGIN))", but clearly there is no need to subtract
                                                                  // {0,0,0}. Note that the volume of the tetrahedron could be negative. This is fine as it ensures that the origin has no influence
                                                                  // on the volume.
                 var a = face.A; var b = face.B; var c = face.C;// get once, so we don't have as many gets from an array.

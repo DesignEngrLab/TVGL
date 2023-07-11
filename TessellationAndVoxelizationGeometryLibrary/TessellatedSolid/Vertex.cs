@@ -22,9 +22,9 @@ namespace TVGL
 {
     /// <summary>
     /// The 3D vertex can connect to any number of faces and edges. It inherits from the
-    /// MIConvexhull IVertex interface.
+    /// MIConvexhull IPoint interface.
     /// </summary>
-    public sealed class Vertex : TessellationBaseClass, IVertex3D, IVertex
+    public sealed class Vertex : TessellationBaseClass, IPoint3D, IPoint
     {
         /// <summary>
         /// Prevents a default instance of the <see cref="Vertex" /> class from being created.
@@ -124,7 +124,7 @@ namespace TVGL
         /// Gets the position.
         /// </summary>
         /// <value>The position.</value>
-        double[] IVertex.Position => Coordinates.Position;
+        double[] IPoint.Coordinates => Coordinates.Coordinates;
 
         /// <summary>
         /// Gets the normal.

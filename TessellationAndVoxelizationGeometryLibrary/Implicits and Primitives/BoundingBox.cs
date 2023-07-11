@@ -15,19 +15,19 @@ using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-
+using TVGL.ConvexHull;
 
 namespace TVGL
 {
     /// <summary>
     /// Class BoundingBox with Generic (T) is for times when you have points you want to save
     /// on the boundary of the bounding box. these points are of type T, which is constrained
-    /// to be an IVertex3D - currently instantiated by Vertex and Vector3
+    /// to be an IPoint3D - currently instantiated by Vertex and Vector3
     /// Implements the <see cref="TVGL.BoundingBox" />
     /// </summary>
     /// <typeparam name="T"></typeparam>
     /// <seealso cref="TVGL.BoundingBox" />
-    public class BoundingBox<T> : BoundingBox where T : IVertex3D
+    public class BoundingBox<T> : BoundingBox where T : IPoint3D
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="BoundingBox{T}"/> class.

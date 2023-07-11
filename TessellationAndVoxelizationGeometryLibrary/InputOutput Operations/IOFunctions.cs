@@ -318,7 +318,7 @@ namespace TVGL
             //    reader.Read(data.AsSpan());
             //    reader.Flush();
             //}
-            //stream.Position = 0;
+            //stream.Coordinates = 0;
             var name = "data." + GetExtensionFromFileType(fileType);
             Open(stream, name, out solid);
         }

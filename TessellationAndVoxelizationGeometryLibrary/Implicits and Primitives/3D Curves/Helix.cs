@@ -108,7 +108,7 @@ namespace TVGL
         /// <param name="error">The error.</param>
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         /// <exception cref="System.NotImplementedException"></exception>
-        public static bool CreateFromPoints<T>(IEnumerable<T> points, out ICurve curve, out double error) where T : IVertex2D
+        public static bool CreateFromPoints<T>(IEnumerable<T> points, out ICurve curve, out double error) where T : IPoint2D
         {
             throw new NotImplementedException();
         }
@@ -123,7 +123,7 @@ namespace TVGL
         /// <param name="point">The point.</param>
         /// <returns>System.Double.</returns>
         /// <exception cref="System.NotImplementedException"></exception>
-        public double SquaredErrorOfNewPoint<T>(T point) where T : IVertex2D
+        public double SquaredErrorOfNewPoint<T>(T point) where T : IPoint2D
         {
             throw new NotImplementedException();
         }

@@ -62,7 +62,7 @@ namespace TVGL
         public readonly double Length2;
 
         /// <summary>
-        /// 2D Center Position of the Bounding Rectangle
+        /// 2D Center Coordinates of the Bounding Rectangle
         /// </summary>
         public readonly Vector2 CenterPosition;
 

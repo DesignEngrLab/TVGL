@@ -55,7 +55,7 @@ namespace TVGL
         /// <typeparam name="T"></typeparam>
         /// <param name="point">The point.</param>
         /// <returns>System.Double.</returns>
-        public double SquaredErrorOfNewPoint<T>(T point) where T : IVertex2D
+        public double SquaredErrorOfNewPoint<T>(T point) where T : IPoint2D
         {
             var fromAnchor =new Vector2(point.X - Anchor.X, point.Y - Anchor.Y);
             var cross = fromAnchor.Cross(Direction);
@@ -70,7 +70,7 @@ namespace TVGL
         /// <param name="curve">The curve.</param>
         /// <param name="error">The error.</param>
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
-        public static bool CreateFromPoints<T>(IEnumerable<T> points, out ICurve curve, out double error) where T : IVertex2D
+        public static bool CreateFromPoints<T>(IEnumerable<T> points, out ICurve curve, out double error) where T : IPoint2D
         {
             double xCoeff;
             double yCoeff;

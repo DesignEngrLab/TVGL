@@ -843,7 +843,7 @@ namespace TVGL
         /// the 15 decimal place. Use a small positive number like 1e-9 to set a wider toleranceForCombiningPoints.</param>
         /// <returns>System.Collections.Generic.IEnumerable&lt;TVGL.Vector2&gt;.</returns>
         public static Dictionary<Vector2, List<T>> ProjectTo2DCoordinatesReturnDictionary<T>(this IEnumerable<T> vertices, Vector3 direction,
-                    out Matrix4x4 backTransform, double toleranceForCombiningPoints = Constants.BaseTolerance) where T : IVertex3D
+                    out Matrix4x4 backTransform, double toleranceForCombiningPoints = Constants.BaseTolerance) where T : IPoint3D
         {
             var transform = TransformToXYPlane(direction, out backTransform);
             return ProjectTo2DCoordinatesReturnDictionary(vertices, transform, toleranceForCombiningPoints);
@@ -862,7 +862,7 @@ namespace TVGL
         /// the 15 decimal place. Use a small positive number like 1e-9 to set a wider toleranceForCombiningPoints.</param>
         /// <returns>System.Collections.Generic.IEnumerable&lt;TVGL.Vector2&gt;.</returns>
         public static Dictionary<Vector2, List<T>> ProjectTo2DCoordinatesReturnDictionary<T>(this IEnumerable<T> vertices, Matrix4x4 transform,
-            double toleranceForCombiningPoints = Constants.BaseTolerance) where T : IVertex3D
+            double toleranceForCombiningPoints = Constants.BaseTolerance) where T : IPoint3D
         {
             var resultsDict = new Dictionary<Vector2, List<T>>();
             var numDecimalPoints = 0;
@@ -900,7 +900,7 @@ namespace TVGL
         /// <returns>System.Collections.Generic.IEnumerable&lt;TVGL.Vector2&gt;.</returns>
         public static IEnumerable<Vector2> ProjectTo2DCoordinates<T>(this IEnumerable<T> locations, Vector3 direction,
                     out Matrix4x4 backTransform, double toleranceForCombiningPoints = double.NaN, bool duplicateEntriesToMaintainPolygonalOrdering = false)
-            where T : IVertex3D
+            where T : IPoint3D
         {
             var transform = TransformToXYPlane(direction, out backTransform);
             return ProjectTo2DCoordinates(locations, transform, toleranceForCombiningPoints, duplicateEntriesToMaintainPolygonalOrdering);
@@ -923,7 +923,7 @@ namespace TVGL
         /// to define some polygon with order dictating the definition of edges.</param>
         /// <returns>System.Collections.Generic.IEnumerable&lt;TVGL.Vector2&gt;.</returns>
         public static IEnumerable<Vector2> ProjectTo2DCoordinates<T>(this IEnumerable<T> locations, Matrix4x4 transform,
-            double toleranceForCombiningPoints = double.NaN, bool duplicateEntriesToMaintainPolygonalOrdering = false) where T : IVertex3D
+            double toleranceForCombiningPoints = double.NaN, bool duplicateEntriesToMaintainPolygonalOrdering = false) where T : IPoint3D
         {
             if (double.IsNaN(toleranceForCombiningPoints) || toleranceForCombiningPoints < 0.0)
             {
@@ -962,7 +962,7 @@ namespace TVGL
         /// <param name="direction">The direction.</param>
         /// <param name="backTransform">The back transform.</param>
         /// <returns>Vector2.</returns>
-        public static Vector2 ConvertTo2DCoordinates(this IVertex3D location3D, in Vector3 direction, out Matrix4x4 backTransform)
+        public static Vector2 ConvertTo2DCoordinates(this IPoint3D location3D, in Vector3 direction, out Matrix4x4 backTransform)
         {
             var transform = TransformToXYPlane(direction, out backTransform);
             return ConvertTo2DCoordinates(location3D, transform);
@@ -974,7 +974,7 @@ namespace TVGL
         /// <param name="location3D">The location as a Vector3.</param>
         /// <param name="matrix">The matrix.</param>
         /// <returns>TVGL.Vector2.</returns>
-        public static Vector2 ConvertTo2DCoordinates(this IVertex3D location3D, in Matrix4x4 matrix)
+        public static Vector2 ConvertTo2DCoordinates(this IPoint3D location3D, in Matrix4x4 matrix)
         {
             var x3D = location3D.X;
             var y3D = location3D.Y;

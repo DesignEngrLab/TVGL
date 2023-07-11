@@ -16,7 +16,7 @@ using System;
 using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Text;
-using MIConvexHull;
+using TVGL.ConvexHull;
 using Newtonsoft.Json;
 
 namespace TVGL  // COMMENTEDCHANGE namespace System.Numerics
@@ -24,7 +24,7 @@ namespace TVGL  // COMMENTEDCHANGE namespace System.Numerics
     /// <summary>
     /// A structure encapsulating three single precision floating point values and provides hardware accelerated methods.
     /// </summary>
-    public readonly partial struct Vector3 : IEquatable<Vector3>, IFormattable, IVertex3D, IVertex2D, IVertex
+    public readonly partial struct Vector3 : IEquatable<Vector3>, IFormattable, IPoint3D, IPoint2D, IPoint
     {
 
         /// <summary>
@@ -472,7 +472,7 @@ namespace TVGL  // COMMENTEDCHANGE namespace System.Numerics
         /// </summary>
         /// <value>The position.</value>
         [JsonIgnore]
-        public double[] Position => new[] { X, Y, Z };
+        public double[] Coordinates => new[] { X, Y, Z };
 
         #endregion Public Static Properties
 
@@ -950,27 +950,4 @@ namespace TVGL  // COMMENTEDCHANGE namespace System.Numerics
         }
         #endregion
     }
-
-    /// <summary>
-    /// Interface IVertex3D
-    /// </summary>
-    public interface IVertex3D
-    {
-        /// <summary>
-        /// Gets the x.
-        /// </summary>
-        /// <value>The x.</value>
-        double X { get; }
-        /// <summary>
-        /// Gets the y.
-        /// </summary>
-        /// <value>The y.</value>
-        double Y { get; }
-        /// <summary>
-        /// Gets the z.
-        /// </summary>
-        /// <value>The z.</value>
-        double Z { get; }
-    }
-
 }

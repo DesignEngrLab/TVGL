@@ -76,7 +76,7 @@ namespace TVGL
         /// <typeparam name="T"></typeparam>
         /// <param name="point">The point.</param>
         /// <returns>System.Double.</returns>
-        public double SquaredErrorOfNewPoint<T>(T point) where T : IVertex2D
+        public double SquaredErrorOfNewPoint<T>(T point) where T : IPoint2D
         {
             var diff =new Vector2(point.X - Center.X, point.Y - Center.Y);
             var error = Math.Sqrt(diff.Dot(diff)) - Radius;
@@ -91,7 +91,7 @@ namespace TVGL
         /// <param name="curve">The curve.</param>
         /// <param name="error">The error.</param>
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
-        public static bool CreateFromPoints<T>(IEnumerable<T> points, out ICurve curve, out double error) where T : IVertex2D
+        public static bool CreateFromPoints<T>(IEnumerable<T> points, out ICurve curve, out double error) where T : IPoint2D
         {
             // Updates the circle using Landau's method ( https://doi.org/10.1016/0734-189X(89)90088-1 ), which
             // seems like it would be same as the Minimum Least Squares approach, but this is a million times

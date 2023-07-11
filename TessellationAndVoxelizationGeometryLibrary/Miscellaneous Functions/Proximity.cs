@@ -695,7 +695,7 @@ namespace TVGL
                     lineDir += (pointList[i] - pointList[0]);
                 normal = lineDir.Normalize().GetPerpendicularDirection();
                 var thisPlane = new Plane(pointList[0], normal);
-                if (StraightLine2D.CreateFromPoints(pointList.Select(p => (IVertex2D)p.ConvertTo2DCoordinates(thisPlane.AsTransformToXYPlane)),
+                if (StraightLine2D.CreateFromPoints(pointList.Select(p => (IPoint2D)p.ConvertTo2DCoordinates(thisPlane.AsTransformToXYPlane)),
                     out var straightLine, out var error))
                 {
                     plane = thisPlane;

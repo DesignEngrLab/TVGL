@@ -154,7 +154,7 @@ namespace TVGL
         /// <typeparam name="T"></typeparam>
         /// <param name="point">The point.</param>
         /// <returns>System.Double.</returns>
-        public double SquaredErrorOfNewPoint<T>(T point) where T : IVertex2D
+        public double SquaredErrorOfNewPoint<T>(T point) where T : IPoint2D
         {
             return DistancePointToConic(this, point, out _);
         }
@@ -167,7 +167,7 @@ namespace TVGL
         /// <param name="curve">The curve.</param>
         /// <param name="error">The error.</param>
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
-        public static bool CreateFromPoints<T>(IEnumerable<T> points, out ICurve curve, out double error) where T : IVertex2D
+        public static bool CreateFromPoints<T>(IEnumerable<T> points, out ICurve curve, out double error) where T : IPoint2D
         {
             // this is maybe not sufficient. It assumes the error is the amount the function is off as opposed to the
             // distance. To properly do distance, see two methods at the bottom of this file.
@@ -266,7 +266,7 @@ namespace TVGL
         /// <param name="pointOnCurve">The point on curve closed to the given point.</param>
         /// <returns>System.Double.</returns>
         public static double DistancePointToConic<T>(GeneralConicSection conic, T point, out Vector2 pointOnCurve)
-            where T : IVertex2D
+            where T : IPoint2D
         {
             // this is hard to understand. Please refer to the document call SolvingConics.docx
             var aj = conic.B;

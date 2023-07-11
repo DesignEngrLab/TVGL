@@ -12,7 +12,7 @@
 // <summary></summary>
 // ***********************************************************************
 
-using MIConvexHull;
+using TVGL.ConvexHull;
 using Newtonsoft.Json;
 using System;
 using System.Globalization;
@@ -24,7 +24,7 @@ namespace TVGL  // COMMENTEDCHANGE namespace System.Numerics
     /// <summary>
     /// A structure encapsulating two single precision floating point values and provides hardware accelerated methods.
     /// </summary>
-    public readonly partial struct Vector2 : IEquatable<Vector2>, IFormattable, IVertex2D, IVertex
+    public readonly partial struct Vector2 : IEquatable<Vector2>, IFormattable, IPoint2D, IPoint
     {
         #region Public Static Properties
         /// <summary>
@@ -63,21 +63,13 @@ namespace TVGL  // COMMENTEDCHANGE namespace System.Numerics
         /// Gets the x.
         /// </summary>
         /// <value>The x.</value>
-        double IVertex2D.X => X;
+        double IPoint2D.X => X;
 
         /// <summary>
         /// Gets the y.
         /// </summary>
         /// <value>The y.</value>
-        double IVertex2D.Y => Y;
-
-        /// <summary>
-        /// Gets the position.
-        /// </summary>
-        /// <value>The position.</value>
-        [JsonIgnore]
-
-        public double[] Position => new[] { X, Y };
+        double IPoint2D.Y => Y;
 
         /// <summary>
         /// Gets the <see cref="System.Double"/> with the specified i.
@@ -89,7 +81,7 @@ namespace TVGL  // COMMENTEDCHANGE namespace System.Numerics
             get
             {
                 if (i == 0) return X;
-                else return Y;
+                else  return Y;
             }
         }
 

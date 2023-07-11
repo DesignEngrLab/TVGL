@@ -282,7 +282,7 @@ namespace TVGL
         //    //First, get the planes on the top and bottom.
         //    //Second, determine which plane is further along the axis. The faces on this plane will have a normal == axis
         //    //The bottom plane will have faces in the reverse of the axis.
-        //    var plane1 = MiscFunctions.GetPlaneFromThreePoints(Loop1[0].Position, Loop1[1].Position, Loop1[2].Position);
+        //    var plane1 = MiscFunctions.GetPlaneFromThreePoints(Loop1[0].Coordinates, Loop1[1].Coordinates, Loop1[2].Coordinates);
         //    var plane
         //}
         #endregion

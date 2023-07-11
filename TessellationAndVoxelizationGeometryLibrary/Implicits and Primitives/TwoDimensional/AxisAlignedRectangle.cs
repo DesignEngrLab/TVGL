@@ -57,7 +57,7 @@ namespace TVGL
         /// </summary>
         /// <param name="vertex1">The vertex1.</param>
         /// <param name="vertex2">The vertex2.</param>
-        public AxisAlignedRectangle(IVertex2D vertex1, IVertex2D vertex2) : this()
+        public AxisAlignedRectangle(IPoint2D vertex1, IPoint2D vertex2) : this()
         {
             XMin = Math.Min(vertex1.X, vertex2.X);
             XMax = Math.Max(vertex1.X, vertex2.X);

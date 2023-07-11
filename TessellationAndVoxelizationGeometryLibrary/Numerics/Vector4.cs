@@ -23,7 +23,7 @@ namespace TVGL  // COMMENTEDCHANGE namespace System.Numerics
     /// <summary>
     /// A structure encapsulating three single precision doubleing point values and provides hardware accelerated methods.
     /// </summary>
-    public readonly partial struct Vector4 : IEquatable<Vector4>, IFormattable, IVertex3D, IVertex
+    public readonly partial struct Vector4 : IEquatable<Vector4>, IFormattable, IPoint3D, IPoint
     {
 
         /// <summary>
@@ -51,7 +51,7 @@ namespace TVGL  // COMMENTEDCHANGE namespace System.Numerics
         /// Gets the position.
         /// </summary>
         /// <value>The position.</value>
-        public double[] Position => new[] { X / W, Y / W, Z / W };
+        public double[] Coordinates => new[] { X / W, Y / W, Z / W };
         #region Constructors
         /// <summary>
         /// Constructs a Vector4 from the given Vector2 and a third value.
