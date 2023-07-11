@@ -6,6 +6,7 @@ namespace TVGL.KDTree
 {
     using System;
     using System.Runtime.CompilerServices;
+    using TVGL.ConvexHull;
 
     /// <summary>
     /// Represents a hyper-rectangle. An N-Dimensional rectangle.
@@ -93,11 +94,11 @@ namespace TVGL.KDTree
         /// <param name="toPoint">We try to find a point in or on the rectangle closest to this point.</param>
         /// <returns>The point on or in the rectangle that is closest to the given point.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal double[] GetClosestPoint(double[] toPoint)
+        internal double[] GetClosestPoint(IPoint toPoint, int dimensions)
         {
-            var closest = new double[toPoint.Length];
+            var closest = new double[dimensions];
 
-            for (var dimension = 0; dimension < toPoint.Length; dimension++)
+            for (var dimension = 0; dimension < dimensions; dimension++)
             {
                 if (this.minPoint[dimension].CompareTo(toPoint[dimension]) > 0)
                 {

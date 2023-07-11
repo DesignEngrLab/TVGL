@@ -7,6 +7,7 @@ namespace TVGL.KDTree
     using System;
     using System.Collections.Generic;
     using System.Linq;
+    using System.Runtime.CompilerServices;
     using TVGL.ConvexHull;
 
     public class KDTree<TPoint, TNode> where TPoint : IPoint
@@ -32,45 +33,11 @@ namespace TVGL.KDTree
         public BinaryTreeNavigator<TPoint, TNode> Navigator
             => new BinaryTreeNavigator<TPoint, TNode>(this.InternalPointArray, this.InternalNodeArray);
 
-        /// <summary>
-        /// The maximum value along any dimension.
-        /// </summary>
-        private TPoint MaxValue { get; }
-
-        /// <summary>
-        /// The minimum value along any dimension.
-        /// </summary>
-        private TPoint MinValue { get; }
         public int Dimensions { get; }
 
-        public  KDTree (
-            int dimensions,
-            TPoint[] points,
-            TNode[] nodes,
-            TPoint searchWindowMinValue = default(TPoint),
-            TPoint searchWindowMaxValue = default(TPoint))
+        public KDTree(int dimensions, TPoint[] points, TNode[] nodes)
         {
             this.Dimensions = dimensions;
-            // Attempt find the Min/Max value if null.
-            if (searchWindowMinValue.Equals(default(TPoint)))
-            {
-                var type = typeof(TPoint);
-                this.MinValue = (TPoint)type.GetField("MinValue").GetValue(type);
-            }
-            else
-            {
-                this.MinValue = searchWindowMinValue;
-            }
-
-            if (searchWindowMaxValue.Equals(default(TPoint)))
-            {
-                var type = typeof(TPoint);
-                this.MaxValue = (TPoint)type.GetField("MaxValue").GetValue(type);
-            }
-            else
-            {
-                this.MaxValue = searchWindowMaxValue;
-            }
 
             // Calculate the number of nodes needed to contain the binary tree.
             // This is equivalent to finding the power of 2 greater than the number of points
@@ -87,17 +54,13 @@ namespace TVGL.KDTree
         /// <param name="point">The point whose neighbors we search for.</param>
         /// <param name="neighbors">The number of neighbors to look for.</param>
         /// <returns>The</returns>
-        public Tuple<TPoint, TNode>[] NearestNeighbors(TPoint point, int neighbors)
+        public (TPoint, TNode)[] NearestNeighbors(TPoint point, int neighbors)
         {
             var nearestNeighborList = new BoundedPriorityList<int, double>(neighbors, true);
-            var rect = new BoundingBox3
-            {
-                MinPoint = new Vector3(double.MinValue),
-                MaxPoint = new Vector3(double.MaxValue)
-            };
+            var rect = HyperRect.Infinite(this.Dimensions, double.MaxValue, double.MinValue);
             this.SearchForNearestNeighbors(0, point, rect, 0, nearestNeighborList, double.MaxValue);
 
-            return nearestNeighborList;
+            return ToResultSet(nearestNeighborList);
         }
 
         /// <summary>
@@ -107,7 +70,7 @@ namespace TVGL.KDTree
         /// <param name="radius">The radius of the hyper-sphere</param>
         /// <param name="neighbors">The number of neighbors to return.</param>
         /// <returns>The specified number of closest points in the hyper-sphere</returns>
-        public Tuple<TPoint, TNode>[] RadialSearch(TPoint center, double radius, int neighbors = -1)
+        public (TPoint, TNode)[] RadialSearch(TPoint center, double radius, int neighbors = -1)
         {
             var nearestNeighbors = new BoundedPriorityList<int, double>(this.Count);
             if (neighbors == -1)
@@ -115,7 +78,7 @@ namespace TVGL.KDTree
                 this.SearchForNearestNeighbors(
                     0,
                     center,
-                    HyperRect<TPoint>.Infinite(this.Dimensions, this.MaxValue, this.MinValue),
+                    HyperRect.Infinite(this.Dimensions, double.MaxValue, double.MinValue),
                     0,
                     nearestNeighbors,
                     radius);
@@ -125,13 +88,24 @@ namespace TVGL.KDTree
                 this.SearchForNearestNeighbors(
                     0,
                     center,
-                    HyperRect<TPoint>.Infinite(this.Dimensions, this.MaxValue, this.MinValue),
+                    HyperRect.Infinite(this.Dimensions, double.MaxValue, double.MinValue),
                     0,
                     nearestNeighbors,
                     radius);
             }
 
-            return nearestNeighbors.ToResultSet(this);
+            return ToResultSet(nearestNeighbors);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public (TPoint, TNode)[] ToResultSet(BoundedPriorityList<int, double> list)
+        {
+            var array = new (TPoint, TNode)[list.Count];
+            for (var i = 0; i < list.Count; i++)
+            {
+                array[i] = (InternalPointArray[list[i]], InternalNodeArray[list[i]]);
+            }
+            return array;
         }
 
         /// <summary>
@@ -230,7 +204,7 @@ namespace TVGL.KDTree
         private void SearchForNearestNeighbors(
             int nodeIndex,
             TPoint target,
-            BoundingBox3 rect,
+            HyperRect rect,
             int dimension,
             BoundedPriorityList<int, double> nearestNeighbors,
             double maxSearchRadiusSquared)
@@ -246,10 +220,10 @@ namespace TVGL.KDTree
 
             // Split our hyper-rectangle into 2 sub rectangles along the current
             // node's point on the current dimension
-            var leftRect = rect.CopyAndChangeMax(dim, this.InternalPointArray[nodeIndex]);
+            var leftRect = rect.Clone();
             leftRect.MaxPoint[dim] = this.InternalPointArray[nodeIndex][dim];
 
-            var rightRect = rect.Copy();
+            var rightRect = rect.Clone();
             rightRect.MinPoint[dim] = this.InternalPointArray[nodeIndex][dim];
 
             // Determine which side the target resides in
@@ -273,7 +247,7 @@ namespace TVGL.KDTree
             // Walk down into the further branch but only if our capacity hasn't been reached
             // OR if there's a region in the further rectangle that's closer to the target than our
             // current furtherest nearest neighbor
-            var closestPointInFurtherRect = furtherRect.GetClosestPoint(target);
+            var closestPointInFurtherRect = furtherRect.GetClosestPoint(target, Dimensions);
             var distanceSquaredToTarget = this.Metric(closestPointInFurtherRect, target);
 
             if (distanceSquaredToTarget.CompareTo(maxSearchRadiusSquared) <= 0)
@@ -310,16 +284,27 @@ namespace TVGL.KDTree
                 nearestNeighbors.Add(nodeIndex, distanceSquaredToTarget);
             }
         }
-        struct BoundingBox3
-        {
-              public Vector3 MinPoint { get; set; }
-            public Vector3 MaxPoint { get; set; }
 
-            internal BoundingBox3 CopyAndChangeMax(int dim, TPoint point)
+        private double Metric(double[] rectPoint, TPoint target)
+        {
+            var sum = 0.0;
+            for (int i = 0; i < Dimensions; i++)
             {
-                throw new NotImplementedException();
+                var difference = rectPoint[i] - target[i];
+                sum += difference * difference;
             }
+            return sum;
+        }
+
+        private double Metric(TPoint rectPoint, TPoint target)
+        {
+            var sum = 0.0;
+            for (int i = 0; i < Dimensions; i++)
+            {
+                var difference = rectPoint[i] - target[i];
+                sum += difference * difference;
+            }
+            return sum;
         }
     }
-
 }
