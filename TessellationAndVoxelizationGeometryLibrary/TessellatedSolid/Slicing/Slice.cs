@@ -768,7 +768,7 @@ namespace TVGL
             /// <param name="plane">The plane.</param>
             /// <param name="offSideVertex">The off side vertex.</param>
             /// <param name="planeOffset">The plane offset.</param>
-            /// <exception cref="System.Exception">Cannot Be Null</exception>
+            /// <exception cref="System.Exception">Cannot Be Empty</exception>
             internal StraddleEdge(Edge edge, Plane plane, Vertex offSideVertex, double planeOffset = 0D)
             {
                 OwnedFace = edge.OwnedFace;
@@ -779,7 +779,7 @@ namespace TVGL
                 OnSideVertex = Edge.OtherVertex(OffSideVertex);
                 IntersectVertex = new Vertex(MiscFunctions.PointOnPlaneFromIntersectingLine(plane.Normal,
                     plane.DistanceToOrigin - planeOffset, edge.To.Coordinates, edge.From.Coordinates, out _));
-                if (IntersectVertex == null) throw new Exception("Cannot Be Null");
+                if (IntersectVertex == null) throw new Exception("Cannot Be Empty");
             }
 
             /// <summary>

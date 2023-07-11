@@ -275,7 +275,7 @@ namespace TVGL
                 // note that this condition is true, but within the method, IsPointInsidePolygon, the enclosure
                 // return the value of the "IsPositive 
                 if (negativePoly.IsPointInsidePolygon(true, centerPoint, out var onBoundary)) continue;
-                if (onBoundary) return new Circle(centerPoint, 0.0); //Null solution.
+                if (onBoundary) return new Circle(centerPoint, 0.0); //Empty solution.
 
                 //var d = closestLineAbove.YGivenX(centerPoint.X, out _) - centerPoint.Y; //Not negligible because not on Boundary
                 var d = double.NaN; //how to correctly calculate this? the above line is not correct and is no longer a by-product

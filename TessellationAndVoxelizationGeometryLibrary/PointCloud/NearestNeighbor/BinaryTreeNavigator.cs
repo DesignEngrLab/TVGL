@@ -14,8 +14,11 @@ namespace TVGL.KDTree
     /// </summary>
     /// <typeparam name="TPoint">The type of the individual points.</typeparam>
     /// <typeparam name="TNode">The type of the individual nodes.</typeparam>
-    internal class BinaryTreeNavigator<TPoint, TNode> where TPoint : IPoint
+    internal readonly struct BinaryTreeNavigator<TPoint, TNode> where TPoint : IPoint
     {
+        public static BinaryTreeNavigator<TPoint, TNode> Empty 
+            = new BinaryTreeNavigator<TPoint, TNode>(Array.Empty<TPoint>(), Array.Empty<TNode>(), -1);
+
         /// <summary>
         /// A reference to the pointArray in which the binary tree is stored in.
         /// </summary>
@@ -26,7 +29,7 @@ namespace TVGL.KDTree
         /// <summary>
         /// The index in the pointArray that the current node resides in.
         /// </summary>
-        internal int Index { get; }
+        internal readonly int Index;
 
         /// <summary>
         /// The left child of the current node.
@@ -35,7 +38,7 @@ namespace TVGL.KDTree
             =>
                 LeftChildIndex(this.Index) < this.pointArray.Length - 1
                     ? new BinaryTreeNavigator<TPoint, TNode>(this.pointArray, this.nodeArray, LeftChildIndex(this.Index))
-                    : null;
+                    : Empty;
 
         /// <summary>
         /// The right child of the current node.
@@ -44,12 +47,14 @@ namespace TVGL.KDTree
                =>
                    RightChildIndex(this.Index) < this.pointArray.Length - 1
                        ? new BinaryTreeNavigator<TPoint, TNode>(this.pointArray, this.nodeArray, RightChildIndex(this.Index))
-                       : null;
+                       : Empty;
 
         /// <summary>
         /// The parent of the current node.
         /// </summary>
-        internal BinaryTreeNavigator<TPoint, TNode> Parent => this.Index == 0 ? null : new BinaryTreeNavigator<TPoint, TNode>(this.pointArray, this.nodeArray, ParentIndex(this.Index));
+        internal BinaryTreeNavigator<TPoint, TNode> Parent => this.Index == 0 
+            ? Empty 
+            : new BinaryTreeNavigator<TPoint, TNode>(this.pointArray, this.nodeArray, ParentIndex(this.Index));
 
         /// <summary>
         /// The current <typeparamref name="TPoint"/>.

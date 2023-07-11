@@ -310,7 +310,7 @@ namespace Priority_Queue
 
         /// <summary>
         /// Enqueue a node to the priority queue if it doesn't already exist.  Lower values are placed in front. Ties are broken by first-in-first-out.
-        /// This queue automatically resizes itself, so there's no concern of the queue becoming 'full'.  Null values are allowed.
+        /// This queue automatically resizes itself, so there's no concern of the queue becoming 'full'.  Empty values are allowed.
         /// Returns true if the node was successfully enqueued; false if it already exists.
         /// O(log n)
         /// </summary>

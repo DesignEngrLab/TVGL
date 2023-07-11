@@ -35,16 +35,16 @@ namespace TVGL.KDTree
 
         public int Dimensions { get; }
 
-        public KDTree(int dimensions, TPoint[] points, TNode[] nodes)
+        public KDTree(int dimensions, IList<TPoint> points, IList<TNode> nodes)
         {
             this.Dimensions = dimensions;
+            this.Count = points.Count;
 
             // Calculate the number of nodes needed to contain the binary tree.
             // This is equivalent to finding the power of 2 greater than the number of points
-            var elementCount = (int)Math.Pow(2, (int)(Math.Log(points.Length) / Math.Log(2)) + 1);
-            this.InternalPointArray = Enumerable.Repeat(default(TPoint), elementCount).ToArray();
-            this.InternalNodeArray = Enumerable.Repeat(default(TNode), elementCount).ToArray();
-            this.Count = points.Length;
+            var elementCount = (int)Math.Pow(2, (int)(Math.Log(Count) / Math.Log(2)) + 1);
+            this.InternalPointArray = new TPoint[elementCount];
+            this.InternalNodeArray = new TNode[elementCount];
             this.GenerateTree(0, 0, points, nodes);
         }
 
@@ -115,81 +115,89 @@ namespace TVGL.KDTree
         /// <param name="dim">The current splitting dimension.</param>
         /// <param name="points">The set of points remaining to be added to the kd-tree</param>
         /// <param name="nodes">The set of nodes RE</param>
-        private void GenerateTree(
-            int index,
-            int dim,
-            IReadOnlyCollection<TPoint> points,
-            IEnumerable<TNode> nodes)
+        private void GenerateTree(int index, int dim, IList<TPoint> points, IList<TNode> nodes)
         {
-            // See wikipedia for a good explanation kd-tree construction.
-            // https://en.wikipedia.org/wiki/K-d_tree
+            // note that the real median is sometimes the average if the number of points is even.
+            // but here, we just take the lower of the two middle points
+            var count = points.Count;
+            var leftSideLength = count / 2;
+            var medianPointValue = points.Select(p => p[dim]).NthOrderStatistic(leftSideLength + 1);
+            //is this a plus one or not?
 
-            // zip both lists so we can sort nodes according to points
-            var zippedList = points.Zip(nodes, (p, n) => new { Point = p, Node = n });
-
-            // sort the points along the current dimension
-            var sortedPoints = zippedList.OrderBy(z => z.Point[dim]).ToArray();
-
-            // get the point which has the median value of the current dimension.
-            var medianPointIdx = sortedPoints.Length / 2;
-            var medianPoint = sortedPoints[points.Count / 2];
-
+            var leftPoints = new TPoint[leftSideLength];
+            var leftNodes = new TNode[leftSideLength];
+            var leftIndex = 0;
+            var rightSideLength = count - leftSideLength - 1; // the minus one since the median is not included in either side
+            var rightPoints = new TPoint[rightSideLength];
+            var rightNodes = new TNode[rightSideLength];
+            var rightIndex = 0;
+            var medianPoints = new List<TPoint>();
+            var medianNodes = new List<TNode>();
+            for (int i = 0; i < points.Count; i++)
+            {
+                TPoint pt = points[i];
+                var node = nodes[i];
+                if (pt[dim] > medianPointValue)
+                {
+                    rightPoints[rightIndex] = pt;
+                    rightNodes[rightIndex] = node;
+                    rightIndex++;
+                }
+                else if (pt[dim] < medianPointValue)
+                {
+                    leftPoints[leftIndex] = pt;
+                    leftNodes[leftIndex] = node;
+                    leftIndex++;
+                }
+                else
+                {
+                    medianPoints.Add(pt);
+                    medianNodes.Add(node);
+                }
+            }
             // The point with the median value all the current dimension now becomes the value of the current tree node
             // The previous node becomes the parents of the current node.
-            this.InternalPointArray[index] = medianPoint.Point;
-            this.InternalNodeArray[index] = medianPoint.Node;
-
-            // We now split the sorted points into 2 groups
-            // 1st group: points before the median
-            var leftPoints = new TPoint[medianPointIdx];
-            var leftNodes = new TNode[medianPointIdx];
-            Array.Copy(sortedPoints.Select(z => z.Point).ToArray(), leftPoints, leftPoints.Length);
-            Array.Copy(sortedPoints.Select(z => z.Node).ToArray(), leftNodes, leftNodes.Length);
-
-            // 2nd group: Points after the median
-            var rightPoints = new TPoint[sortedPoints.Length - (medianPointIdx + 1)];
-            var rightNodes = new TNode[sortedPoints.Length - (medianPointIdx + 1)];
-            Array.Copy(
-                sortedPoints.Select(z => z.Point).ToArray(),
-                medianPointIdx + 1,
-                rightPoints,
-                0,
-                rightPoints.Length);
-            Array.Copy(sortedPoints.Select(z => z.Node).ToArray(), medianPointIdx + 1, rightNodes, 0, rightNodes.Length);
-
-            // We new recurse, passing the left and right arrays for arguments.
+            this.InternalPointArray[index] = medianPoints[0];
+            this.InternalNodeArray[index] = medianNodes[0];
+            // Split the remaining points that have the same value as the median into left and right arrays.
+            for (int i = 1; i < medianPoints.Count; i++)
+            {
+                if (leftIndex < leftSideLength)
+                {
+                    leftPoints[leftIndex] = medianPoints[i];
+                    leftNodes[leftIndex] = medianNodes[i];
+                    leftIndex++;
+                }
+                else
+                {
+                    rightPoints[rightIndex] = medianPoints[i];
+                    rightNodes[rightIndex] = medianNodes[i];
+                    rightIndex++;
+                }
+            }
+            // Recursion incoming! passing the left and right arrays for arguments.
             // The current node's left and right values become the "roots" for
             // each recursion call. We also forward cycle to the next dimension.
             var nextDim = (dim + 1) % this.Dimensions; // select next dimension
 
             // We only need to recurse if the point array contains more than one point
             // If the array has no points then the node stay a null value
-            if (leftPoints.Length <= 1)
+            if (leftSideLength == 1)
             {
-                if (leftPoints.Length == 1)
-                {
-                    this.InternalPointArray[BinaryTreeNavigator<TPoint, TNode>.LeftChildIndex(index)] = leftPoints[0];
-                    this.InternalNodeArray[BinaryTreeNavigator<TPoint, TNode>.LeftChildIndex(index)] = leftNodes[0];
-                }
+                this.InternalPointArray[BinaryTreeNavigator<TPoint, TNode>.LeftChildIndex(index)] = leftPoints[0];
+                this.InternalNodeArray[BinaryTreeNavigator<TPoint, TNode>.LeftChildIndex(index)] = leftNodes[0];
             }
-            else
-            {
+            else if (leftSideLength > 1)
                 this.GenerateTree(BinaryTreeNavigator<TPoint, TNode>.LeftChildIndex(index), nextDim, leftPoints, leftNodes);
-            }
 
             // Do the same for the right points
-            if (rightPoints.Length <= 1)
+            if (rightSideLength == 1)
             {
-                if (rightPoints.Length == 1)
-                {
-                    this.InternalPointArray[BinaryTreeNavigator<TPoint, TNode>.RightChildIndex(index)] = rightPoints[0];
-                    this.InternalNodeArray[BinaryTreeNavigator<TPoint, TNode>.RightChildIndex(index)] = rightNodes[0];
-                }
+                this.InternalPointArray[BinaryTreeNavigator<TPoint, TNode>.RightChildIndex(index)] = rightPoints[0];
+                this.InternalNodeArray[BinaryTreeNavigator<TPoint, TNode>.RightChildIndex(index)] = rightNodes[0];
             }
-            else
-            {
+            else if (rightSideLength > 1)
                 this.GenerateTree(BinaryTreeNavigator<TPoint, TNode>.RightChildIndex(index), nextDim, rightPoints, rightNodes);
-            }
         }
 
         /// <summary>
@@ -201,22 +209,15 @@ namespace TVGL.KDTree
         /// <param name="dimension">The current splitting dimension for this recursion branch.</param>
         /// <param name="nearestNeighbors">The <see cref="BoundedPriorityList{TElement,TPriority}"/> containing the nearest neighbors already discovered.</param>
         /// <param name="maxSearchRadiusSquared">The squared radius of the current largest distance to search from the <paramref name="target"/></param>
-        private void SearchForNearestNeighbors(
-            int nodeIndex,
-            TPoint target,
-            HyperRect rect,
-            int dimension,
-            BoundedPriorityList<int, double> nearestNeighbors,
-            double maxSearchRadiusSquared)
+        private void SearchForNearestNeighbors(int nodeIndex, TPoint target, HyperRect rect, int dimension,
+            BoundedPriorityList<int, double> nearestNeighbors, double maxSearchRadiusSquared)
         {
             if (this.InternalPointArray.Length <= nodeIndex || nodeIndex < 0
                 || this.InternalPointArray[nodeIndex] == null)
-            {
                 return;
-            }
 
             // Work out the current dimension
-            var dim = dimension % 3;
+            var dim = dimension % this.Dimensions;
 
             // Split our hyper-rectangle into 2 sub rectangles along the current
             // node's point on the current dimension
@@ -228,13 +229,22 @@ namespace TVGL.KDTree
 
             // Determine which side the target resides in
             var compare = target[dim].CompareTo(this.InternalPointArray[nodeIndex][dim]);
-
-            var nearerRect = compare <= 0 ? leftRect : rightRect;
-            var furtherRect = compare <= 0 ? rightRect : leftRect;
-
-            var nearerNode = compare <= 0 ? BinaryTreeNavigator<TPoint, TNode>.LeftChildIndex(nodeIndex) : BinaryTreeNavigator<TPoint, TNode>.RightChildIndex(nodeIndex);
-            var furtherNode = compare <= 0 ? BinaryTreeNavigator<TPoint, TNode>.RightChildIndex(nodeIndex) : BinaryTreeNavigator<TPoint, TNode>.LeftChildIndex(nodeIndex);
-
+            HyperRect nearerRect, furtherRect;
+            int nearerNode, furtherNode;
+            if (compare <= 0)
+            {
+                nearerRect = leftRect;
+                furtherRect = rightRect;
+                nearerNode = BinaryTreeNavigator<TPoint, TNode>.LeftChildIndex(nodeIndex);
+                furtherNode = BinaryTreeNavigator<TPoint, TNode>.RightChildIndex(nodeIndex);
+            }
+            else
+            {
+                nearerRect = rightRect;
+                furtherRect = leftRect;
+                nearerNode = BinaryTreeNavigator<TPoint, TNode>.RightChildIndex(nodeIndex);
+                furtherNode = BinaryTreeNavigator<TPoint, TNode>.LeftChildIndex(nodeIndex);
+            }
             // Move down into the nearer branch
             this.SearchForNearestNeighbors(
                 nearerNode,
@@ -255,34 +265,17 @@ namespace TVGL.KDTree
                 if (nearestNeighbors.IsFull)
                 {
                     if (distanceSquaredToTarget.CompareTo(nearestNeighbors.MaxPriority) < 0)
-                    {
-                        this.SearchForNearestNeighbors(
-                            furtherNode,
-                            target,
-                            furtherRect,
-                            dimension + 1,
-                            nearestNeighbors,
-                            maxSearchRadiusSquared);
-                    }
+                        SearchForNearestNeighbors(furtherNode, target, furtherRect, dimension + 1,
+                             nearestNeighbors, maxSearchRadiusSquared);
                 }
-                else
-                {
-                    this.SearchForNearestNeighbors(
-                        furtherNode,
-                        target,
-                        furtherRect,
-                        dimension + 1,
-                        nearestNeighbors,
-                        maxSearchRadiusSquared);
-                }
+                else SearchForNearestNeighbors(furtherNode, target, furtherRect, dimension + 1,
+                        nearestNeighbors, maxSearchRadiusSquared);
             }
 
             // Try to add the current node to our nearest neighbors list
             distanceSquaredToTarget = this.Metric(this.InternalPointArray[nodeIndex], target);
             if (distanceSquaredToTarget.CompareTo(maxSearchRadiusSquared) <= 0)
-            {
                 nearestNeighbors.Add(nodeIndex, distanceSquaredToTarget);
-            }
         }
 
         private double Metric(double[] rectPoint, TPoint target)

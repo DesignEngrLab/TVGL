@@ -139,7 +139,7 @@ namespace TVGL.KDTree
         /// Returns an enumerator that iterates through the collection.
         /// </summary>
         /// <returns>An enumerator.</returns>
-        internal IEnumerator<TElement> GetEnumerator()
+        public IEnumerator<TElement> GetEnumerator()
         {
             return this.elementList.GetEnumerator();
         }

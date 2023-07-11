@@ -52,7 +52,7 @@ namespace TVGL.ConvexHull
         public TVertex[] Vertices { get; set; }
 
         /// <summary>
-        /// The normal vector of the face. Null if used in triangulation.
+        /// The normal vector of the face. Empty if used in triangulation.
         /// </summary>
         /// <value>The normal.</value>
         public double[] Normal { get; set; }
