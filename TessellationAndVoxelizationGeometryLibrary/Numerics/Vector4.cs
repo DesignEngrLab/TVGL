@@ -16,7 +16,7 @@ using System;
 using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Text;
-using MIConvexHull;
+using TVGL.ConvexHull;
 
 namespace TVGL  // COMMENTEDCHANGE namespace System.Numerics
 {

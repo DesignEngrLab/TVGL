@@ -11,7 +11,7 @@
 // </copyright>
 // <summary></summary>
 // ***********************************************************************
-using MIConvexHull;
+using TVGL.ConvexHull;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -53,7 +53,7 @@ namespace TVGL
                 //todo: this is not complete...does it need to be?
                 return;
             }
-            var convexHull = ConvexHull.Create(vertices, tolerance);
+            var convexHull = ConvexHull.ConvexHull.Create(vertices, tolerance);
             if (convexHull.Result == null) return;
             Vertices = convexHull.Result.Points.ToArray();
             if (!createFaces && !createEdges) return;

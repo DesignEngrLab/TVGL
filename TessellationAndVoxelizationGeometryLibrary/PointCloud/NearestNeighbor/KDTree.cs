@@ -30,7 +30,7 @@ namespace TVGL.KDTree
         /// <summary>
         /// Gets a <see cref="BinaryTreeNavigator{TPoint,TNode}"/> that allows for manual tree navigation,
         /// </summary>
-        public BinaryTreeNavigator<TPoint, TNode> Navigator
+        private BinaryTreeNavigator<TPoint, TNode> Navigator
             => new BinaryTreeNavigator<TPoint, TNode>(this.InternalPointArray, this.InternalNodeArray);
 
         public int Dimensions { get; }
@@ -98,7 +98,7 @@ namespace TVGL.KDTree
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public (TPoint, TNode)[] ToResultSet(BoundedPriorityList<int, double> list)
+        private (TPoint, TNode)[] ToResultSet(BoundedPriorityList<int, double> list)
         {
             var array = new (TPoint, TNode)[list.Count];
             for (var i = 0; i < list.Count; i++)

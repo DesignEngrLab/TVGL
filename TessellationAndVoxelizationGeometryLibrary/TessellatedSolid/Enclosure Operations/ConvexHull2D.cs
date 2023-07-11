@@ -31,7 +31,7 @@ namespace TVGL
         public static List<Vector2> ConvexHull2D(this IEnumerable<Vector2> points)
         {
             var pointList = points as IList<Vector2> ?? points.ToList();
-            return (List<Vector2>)MIConvexHull.ConvexHull.Create2D(pointList).Result;
+            return (List<Vector2>)ConvexHull.ConvexHull.Create2D(pointList).Result;
         }
 
         /// <summary>
@@ -41,7 +41,7 @@ namespace TVGL
         /// <returns>Polygon.</returns>
         public static Polygon ConvexHull2D(this Polygon polygon)
         {
-            return new Polygon((List<Vector2>)MIConvexHull.ConvexHull.Create2D(polygon.Path).Result);
+            return new Polygon((List<Vector2>)ConvexHull.ConvexHull.Create2D(polygon.Path).Result);
         }
     }
 }

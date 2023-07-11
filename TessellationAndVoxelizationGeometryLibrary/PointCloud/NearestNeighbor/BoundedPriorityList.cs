@@ -15,7 +15,7 @@ namespace TVGL.KDTree
     /// </summary>
     /// <typeparam name="TElement">The type of element the list maintains.</typeparam>
     /// <typeparam name="TPriority">The type the elements are prioritized by.</typeparam>
-    public class BoundedPriorityList<TElement, TPriority> : IEnumerable<TElement>
+    internal class BoundedPriorityList<TElement, TPriority> : IEnumerable<TElement>
         where TPriority : IComparable<TPriority>
     {
         /// <summary>
@@ -33,44 +33,44 @@ namespace TVGL.KDTree
         /// <summary>
         /// Gets the element with the largest priority.
         /// </summary>
-        public TElement MaxElement => this.elementList[this.elementList.Count - 1];
+        internal TElement MaxElement => this.elementList[this.elementList.Count - 1];
 
         /// <summary>
         /// Gets the largest priority.
         /// </summary>
-        public TPriority MaxPriority => this.priorityList[this.priorityList.Count - 1];
+        internal TPriority MaxPriority => this.priorityList[this.priorityList.Count - 1];
 
         /// <summary>
         /// Gets the element with the lowest priority.
         /// </summary>
-        public TElement MinElement => this.elementList[0];
+        internal TElement MinElement => this.elementList[0];
 
         /// <summary>
         /// Gets the smallest priority.
         /// </summary>
-        public TPriority MinPriority => this.priorityList[0];
+        internal TPriority MinPriority => this.priorityList[0];
 
         /// <summary>
         /// Gets the maximum allows capacity for the <see cref="BoundedPriorityList{TElement,TPriority}"/>
         /// </summary>
-        public int Capacity { get; }
+        internal int Capacity { get; }
 
         /// <summary>
         /// Returns true if the list is at maximum capacity.
         /// </summary>
-        public bool IsFull => this.Count == this.Capacity;
+        internal bool IsFull => this.Count == this.Capacity;
 
         /// <summary>
         /// Returns the count of items currently in the list.
         /// </summary>
-        public int Count => this.priorityList.Count;
+        internal int Count => this.priorityList.Count;
 
         /// <summary>
         /// Indexer for the internal element array.
         /// </summary>
         /// <param name="index">The index in the array.</param>
         /// <returns>The element at the specified index.</returns>
-        public TElement this[int index] => this.elementList[index];
+        internal TElement this[int index] => this.elementList[index];
 
         /// <summary>
         /// Initializes a new instance of the <see cref="BoundedPriorityList{TElement, TPriority}"/> class.
@@ -81,7 +81,7 @@ namespace TVGL.KDTree
         /// </summary>
         /// <param name="capacity">The maximum capacity of the list.</param>
         /// <param name="allocate">If true, initializes the internal lists for the <see cref="BoundedPriorityList{TElement,TPriority}"/> with an initial capacity of <paramref name="capacity"/>.</param>
-        public BoundedPriorityList(int capacity, bool allocate = false)
+        internal BoundedPriorityList(int capacity, bool allocate = false)
         {
             this.Capacity = capacity;
             if (allocate)
@@ -107,7 +107,7 @@ namespace TVGL.KDTree
         /// <param name="item">The item to be inserted</param>
         /// <param name="priority">The priority of th given item.</param>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Add(TElement item, TPriority priority)
+        internal void Add(TElement item, TPriority priority)
         {
             if (this.Count >= this.Capacity)
             {
@@ -139,7 +139,7 @@ namespace TVGL.KDTree
         /// Returns an enumerator that iterates through the collection.
         /// </summary>
         /// <returns>An enumerator.</returns>
-        public IEnumerator<TElement> GetEnumerator()
+        internal IEnumerator<TElement> GetEnumerator()
         {
             return this.elementList.GetEnumerator();
         }

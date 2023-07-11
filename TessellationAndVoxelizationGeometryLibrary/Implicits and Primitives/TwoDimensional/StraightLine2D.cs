@@ -11,7 +11,7 @@
 // </copyright>
 // <summary></summary>
 // ***********************************************************************
-using MIConvexHull;
+using TVGL.ConvexHull;
 using System.Collections.Generic;
 
 

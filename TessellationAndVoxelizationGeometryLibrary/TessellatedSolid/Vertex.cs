@@ -11,7 +11,7 @@
 // </copyright>
 // <summary></summary>
 // ***********************************************************************
-using MIConvexHull;
+using TVGL.ConvexHull;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -121,12 +121,6 @@ namespace TVGL
         public List<TriangleFace> Faces { get; private set; }
 
         /// <summary>
-        /// Gets the position.
-        /// </summary>
-        /// <value>The position.</value>
-        double[] IPoint.Coordinates => Coordinates.Coordinates;
-
-        /// <summary>
         /// Gets the normal.
         /// </summary>
         /// <value>The normal.</value>
@@ -167,6 +161,8 @@ namespace TVGL
                 return _curvature;
             }
         }
+
+        public double this[int i] => Coordinates[i];
 
         /// <summary>
         /// The curvature

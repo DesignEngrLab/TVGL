@@ -14,7 +14,7 @@ namespace TVGL.KDTree
     /// </summary>
     /// <typeparam name="TPoint">The type of the individual points.</typeparam>
     /// <typeparam name="TNode">The type of the individual nodes.</typeparam>
-    public class BinaryTreeNavigator<TPoint, TNode> where TPoint : IPoint
+    internal class BinaryTreeNavigator<TPoint, TNode> where TPoint : IPoint
     {
         /// <summary>
         /// A reference to the pointArray in which the binary tree is stored in.
@@ -26,12 +26,12 @@ namespace TVGL.KDTree
         /// <summary>
         /// The index in the pointArray that the current node resides in.
         /// </summary>
-        public int Index { get; }
+        internal int Index { get; }
 
         /// <summary>
         /// The left child of the current node.
         /// </summary>
-        public BinaryTreeNavigator<TPoint, TNode> Left
+        internal BinaryTreeNavigator<TPoint, TNode> Left
             =>
                 LeftChildIndex(this.Index) < this.pointArray.Length - 1
                     ? new BinaryTreeNavigator<TPoint, TNode>(this.pointArray, this.nodeArray, LeftChildIndex(this.Index))
@@ -40,7 +40,7 @@ namespace TVGL.KDTree
         /// <summary>
         /// The right child of the current node.
         /// </summary>
-        public BinaryTreeNavigator<TPoint, TNode> Right
+        internal BinaryTreeNavigator<TPoint, TNode> Right
                =>
                    RightChildIndex(this.Index) < this.pointArray.Length - 1
                        ? new BinaryTreeNavigator<TPoint, TNode>(this.pointArray, this.nodeArray, RightChildIndex(this.Index))
@@ -49,17 +49,17 @@ namespace TVGL.KDTree
         /// <summary>
         /// The parent of the current node.
         /// </summary>
-        public BinaryTreeNavigator<TPoint, TNode> Parent => this.Index == 0 ? null : new BinaryTreeNavigator<TPoint, TNode>(this.pointArray, this.nodeArray, ParentIndex(this.Index));
+        internal BinaryTreeNavigator<TPoint, TNode> Parent => this.Index == 0 ? null : new BinaryTreeNavigator<TPoint, TNode>(this.pointArray, this.nodeArray, ParentIndex(this.Index));
 
         /// <summary>
         /// The current <typeparamref name="TPoint"/>.
         /// </summary>
-        public TPoint Point => this.pointArray[this.Index];
+        internal TPoint Point => this.pointArray[this.Index];
 
         /// <summary>
         /// The current <typeparamref name="TNode"/>
         /// </summary>
-        public TNode Node => this.nodeArray[this.Index];
+        internal TNode Node => this.nodeArray[this.Index];
 
         /// <summary>
         /// Initializes a new instance of the <see cref="BinaryTreeNavigator{TPoint, TNode}"/> class.
@@ -67,7 +67,7 @@ namespace TVGL.KDTree
         /// <param name="pointArray">The point array backing the binary tree.</param>
         /// <param name="nodeArray">The node array corresponding to the point array.</param>
         /// <param name="index">The index of the node of interest in the pointArray. If not given, the node navigator start at the 0 index (the root of the tree).</param>
-        public BinaryTreeNavigator(TPoint[] pointArray, TNode[] nodeArray, int index = 0)
+        internal BinaryTreeNavigator(TPoint[] pointArray, TNode[] nodeArray, int index = 0)
         {
             this.Index = index;
             this.pointArray = pointArray;
@@ -80,7 +80,7 @@ namespace TVGL.KDTree
         /// <param name="index">The index of the current node.</param>
         /// <returns>The index of the right child.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static int RightChildIndex(int index)
+        internal static int RightChildIndex(int index)
         {
             return (2 * index) + 2;
         }
@@ -91,7 +91,7 @@ namespace TVGL.KDTree
         /// <param name="index">The index of the current node.</param>
         /// <returns>The index of the left child.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static int LeftChildIndex(int index)
+        internal static int LeftChildIndex(int index)
         {
             return (2 * index) + 1;
         }
@@ -102,7 +102,7 @@ namespace TVGL.KDTree
         /// <param name="index">The index of the current node.</param>
         /// <returns>The index of the parent node.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static int ParentIndex(int index)
+        internal static int ParentIndex(int index)
         {
             return (index - 1) / 2;
         }
