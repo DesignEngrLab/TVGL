@@ -165,6 +165,27 @@ namespace TVGL
         /// The default tessellation maximum angle error
         /// </summary>
         internal const double DefaultTessellationMaxAngleError = 15;
+
+        #region from MIConvexHull
+        /// <summary>
+        /// The default plane distance tolerance
+        /// </summary>
+        internal const double DefaultPlaneDistanceTolerance = 1e-10;
+        /// <summary>
+        /// The starting delta dot product in simplex
+        /// </summary>
+        internal const double StartingDeltaDotProductInSimplex = 0.5;
+        /// <summary>
+        /// The connector table size
+        /// </summary>
+        internal const int ConnectorTableSize = 2017;
+
+
+        internal const double DefaultEqualityTolerance = 1e-15;
+        internal const double FractionalNegligibleVolume = 1e-12;
+#endregion
+
+
         /// <summary>
         /// The tessellation to voxelization intersection combinations. This is used in the function that
         /// produces voxels on the edges and faces of a tessellated shape.

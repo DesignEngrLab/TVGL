@@ -26,7 +26,7 @@
 
 using System.Runtime.CompilerServices;
 
-namespace TVGL.ConvexHull
+namespace TVGL
 {
     /// <summary>
     /// An interface for a structure with nD position.

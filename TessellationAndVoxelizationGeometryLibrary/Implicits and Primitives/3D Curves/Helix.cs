@@ -11,7 +11,7 @@
 // </copyright>
 // <summary></summary>
 // ***********************************************************************
-using TVGL.ConvexHull;
+using TVGL.ConvexHullDetails;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -123,7 +123,7 @@ namespace TVGL
         /// <param name="point">The point.</param>
         /// <returns>System.Double.</returns>
         /// <exception cref="System.NotImplementedException"></exception>
-        public double SquaredErrorOfNewPoint<T>(T point) where T : IPoint2D
+        public double SquaredErrorOfNewPoint<T>(T point) where T : IPoint
         {
             throw new NotImplementedException();
         }

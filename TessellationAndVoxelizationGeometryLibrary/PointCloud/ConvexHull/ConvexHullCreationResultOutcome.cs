@@ -1,4 +1,4 @@
-namespace TVGL.ConvexHull
+namespace TVGL.ConvexHullDetails
 {
     /// <summary>
     /// Enum ConvexHullCreationResultOutcome

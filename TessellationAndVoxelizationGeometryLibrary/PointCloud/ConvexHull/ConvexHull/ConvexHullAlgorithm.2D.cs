@@ -29,7 +29,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
 
-namespace TVGL.ConvexHull
+namespace TVGL.ConvexHullDetails
 {
     internal static class ConvexHull2DAlgorithm
     {

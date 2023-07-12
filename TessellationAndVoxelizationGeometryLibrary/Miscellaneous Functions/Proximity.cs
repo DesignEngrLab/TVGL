@@ -15,7 +15,7 @@
 
 
 using ClipperLib;
-using TVGL.ConvexHull;
+using TVGL.ConvexHullDetails;
 using System;
 using System.Collections.Generic;
 using System.Linq;

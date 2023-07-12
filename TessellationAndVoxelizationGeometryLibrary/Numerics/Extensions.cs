@@ -16,7 +16,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using TVGL.ConvexHull;
+using TVGL.ConvexHullDetails;
 
 namespace TVGL
 {

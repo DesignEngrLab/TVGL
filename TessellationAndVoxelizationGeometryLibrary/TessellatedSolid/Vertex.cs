@@ -11,7 +11,7 @@
 // </copyright>
 // <summary></summary>
 // ***********************************************************************
-using TVGL.ConvexHull;
+using TVGL.ConvexHullDetails;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;

@@ -28,7 +28,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace TVGL.ConvexHull
+namespace TVGL.ConvexHullDetails
 {
     /*
      * This part of the implementation handles initialization of the convex hull algorithm:

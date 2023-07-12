@@ -24,7 +24,7 @@
  *  
  *****************************************************************************/
 
-namespace TVGL.ConvexHull
+namespace TVGL.ConvexHullDetails
 {
     /// <summary>
     /// For deferred face addition.

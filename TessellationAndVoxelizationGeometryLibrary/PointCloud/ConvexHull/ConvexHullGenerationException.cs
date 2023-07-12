@@ -1,6 +1,6 @@
 using System;
 
-namespace TVGL.ConvexHull
+namespace TVGL.ConvexHullDetails
 {
     /// <summary>
     /// Class ConvexHullGenerationException.

@@ -27,9 +27,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using TVGL;
+using TVGL.ConvexHullDetails;
 
-namespace TVGL.ConvexHull
+namespace TVGL
 {
     /// <summary>
     /// Factory class for computing convex hulls.
@@ -90,13 +90,33 @@ namespace TVGL.ConvexHull
         }
 
         /// <summary>
+        /// Creates the coordinates of the corresponding convex hull polygon.
+        /// </summary>
+        /// <param name="points">The points.</param>
+        /// <returns>List&lt;Vector2&gt;.</returns>
+        public static List<Vector2> Get2DConvexHull(this IEnumerable<Vector2> points)
+        {
+            var pointList = points as IList<Vector2> ?? points.ToList();
+            return (List<Vector2>)ConvexHull.Create2D(pointList).Result;
+        }
+
+        /// <summary>
+        /// Creates the convex hull polygon.
+        /// </summary>
+        /// <param name="polygon">The polygon.</param>
+        /// <returns>Polygon.</returns>
+        public static Polygon Get2DConvexHull(this Polygon polygon)
+        {
+            return new Polygon((List<Vector2>)ConvexHull.Create2D(polygon.Path).Result);
+        }
+        /// <summary>
         /// Creates the 2D convex hull of the input data.
         /// </summary>
         /// <typeparam name="TVertex">The type of the t vertex.</typeparam>
         /// <param name="data">The data.</param>
         /// <param name="tolerance">The tolerance.</param>
         /// <returns>List&lt;TVertex&gt;.</returns>
-        public static ConvexHullCreationResult<TVertex> Create2D<TVertex>(IList<TVertex> data, double tolerance = Constants.DefaultPlaneDistanceTolerance)
+        static ConvexHullCreationResult<TVertex> Create2D<TVertex>(IList<TVertex> data, double tolerance = Constants.DefaultPlaneDistanceTolerance)
             where TVertex : IPoint2D, new()
         {
             return ConvexHull<TVertex>.Create(data, tolerance);
@@ -108,7 +128,7 @@ namespace TVGL.ConvexHull
         /// <param name="data">The data.</param>
         /// <param name="tolerance">The tolerance.</param>
         /// <returns>List&lt;TVertex&gt;.</returns>
-        public static ConvexHullCreationResult<Vector2> Create2D(IList<double[]> data, double tolerance = Constants.DefaultPlaneDistanceTolerance)
+        static ConvexHullCreationResult<Vector2> Create2D(IList<double[]> data, double tolerance = Constants.DefaultPlaneDistanceTolerance)
         {
             var points = data.Select(p => new Vector2(p[0], p[1])).ToList();
             return Create2D(points, tolerance);

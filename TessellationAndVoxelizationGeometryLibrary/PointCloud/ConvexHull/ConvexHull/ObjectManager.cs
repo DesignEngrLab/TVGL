@@ -26,7 +26,7 @@
 
 using System;
 
-namespace TVGL.ConvexHull
+namespace TVGL.ConvexHullDetails
 {
     /// <summary>
     /// A helper class for object allocation/storage.

@@ -28,7 +28,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace TVGL.ConvexHull
+namespace TVGL.ConvexHullDetails
 {
     /// <summary>
     /// A factory class for creating a Voronoi mesh.

@@ -11,7 +11,7 @@
 // </copyright>
 // <summary></summary>
 // ***********************************************************************
-using TVGL.ConvexHull;
+using TVGL.ConvexHullDetails;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -76,9 +76,9 @@ namespace TVGL
         /// <typeparam name="T"></typeparam>
         /// <param name="point">The point.</param>
         /// <returns>System.Double.</returns>
-        public double SquaredErrorOfNewPoint<T>(T point) where T : IPoint2D
+        public double SquaredErrorOfNewPoint<T>(T point) where T : IPoint
         {
-            var diff =new Vector2(point.X - Center.X, point.Y - Center.Y);
+            var diff =new Vector2(point[0] - Center[0], point[1] - Center[1]);
             var error = Math.Sqrt(diff.Dot(diff)) - Radius;
             return error * error;
         }

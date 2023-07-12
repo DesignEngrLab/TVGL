@@ -27,7 +27,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace TVGL.ConvexHull
+namespace TVGL.ConvexHullDetails
 {
     /*
      * Code here handles triangulation related stuff.

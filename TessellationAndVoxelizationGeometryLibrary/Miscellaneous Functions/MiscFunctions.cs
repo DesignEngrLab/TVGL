@@ -16,7 +16,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using StarMathLib;
-using TVGL.ConvexHull;
+using TVGL.ConvexHullDetails;
 using System.Diagnostics.CodeAnalysis;
 
 namespace TVGL

@@ -11,7 +11,7 @@
 // </copyright>
 // <summary></summary>
 // ***********************************************************************
-using TVGL.ConvexHull;
+using TVGL.ConvexHullDetails;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -49,11 +49,11 @@ namespace TVGL
             {
                 var coords2D = vertices.Select(v => v.Coordinates).ProjectTo2DCoordinates(planeNormal, out _);
                 if (coords2D.Area() < 0) planeNormal *= -1;
-                coords2D.ConvexHull2D();
+                coords2D.Get2DConvexHull();
                 //todo: this is not complete...does it need to be?
                 return;
             }
-            var convexHull = ConvexHull.ConvexHull.Create(vertices, tolerance);
+            var convexHull = ConvexHull.Create(vertices, tolerance);
             if (convexHull.Result == null) return;
             Vertices = convexHull.Result.Points.ToArray();
             if (!createFaces && !createEdges) return;

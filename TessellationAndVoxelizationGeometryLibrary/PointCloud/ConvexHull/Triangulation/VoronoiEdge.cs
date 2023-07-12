@@ -24,7 +24,7 @@
  *  
  *****************************************************************************/
 
-namespace TVGL.ConvexHull
+namespace TVGL.ConvexHullDetails
 {
     /// <summary>
     /// A class representing an (undirected) edge of the Voronoi graph.

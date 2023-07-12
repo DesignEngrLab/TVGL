@@ -27,7 +27,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace TVGL.ConvexHull
+namespace TVGL.ConvexHullDetails
 {
     /*
      * Main part of the algorithm 

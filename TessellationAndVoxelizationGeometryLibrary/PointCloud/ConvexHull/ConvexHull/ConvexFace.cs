@@ -24,7 +24,7 @@
  *  
  *****************************************************************************/
 
-namespace TVGL.ConvexHull
+namespace TVGL.ConvexHullDetails
 {
     /// <summary>
     /// A convex face representation containing adjacency information.

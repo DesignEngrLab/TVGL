@@ -26,7 +26,7 @@
 
 using System;
 
-namespace TVGL.ConvexHull
+namespace TVGL.ConvexHullDetails
 {
     /// <summary>
     /// A more lightweight alternative to List of T.

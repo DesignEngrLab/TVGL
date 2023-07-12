@@ -2,7 +2,7 @@
 // Copyright (c) Eric Regina. All rights reserved.
 // </copyright>
 
-namespace TVGL.KDTree
+namespace TVGL.PointCloud
 {
     using System;
     using System.Collections;

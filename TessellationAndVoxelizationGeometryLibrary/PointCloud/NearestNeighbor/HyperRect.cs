@@ -2,12 +2,12 @@
 // Copyright (c) Eric Regina. All rights reserved.
 // </copyright>
 
-namespace TVGL.KDTree
+namespace TVGL.PointCloud
 {
     using System;
     using System.Linq;
     using System.Runtime.CompilerServices;
-    using TVGL.ConvexHull;
+    using TVGL.ConvexHullDetails;
 
     /// <summary>
     /// Represents a hyper-rectangle. An N-Dimensional rectangle.

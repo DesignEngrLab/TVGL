@@ -35,7 +35,6 @@ namespace TVGLUnitTestsAndBenchmarking
             Vector2 unitVector2X = Vector2.UnitX;
             Vector2 unitVector2Y = Vector2.UnitY;
             Vector2 copyVector = v2_1.Copy();
-            double[] coordinates = v2_1.Position;
             x = v2_1.X;
             x = v2_1[0];
             y = v2_1.Y;
@@ -59,7 +58,6 @@ namespace TVGLUnitTestsAndBenchmarking
             v2_2 = -v2_1;
             isItTrueThat = v2_1.IsNull();
             isItTrueThat = v2_1.IsNegligible();
-            v2_1.CopyTo(coordinates);
             isItTrueThat = v2_1 == v2_2;
             isItTrueThat = v2_1 != v2_2;
             double dot = v2_1.Dot(v2_2);
@@ -133,7 +131,6 @@ namespace TVGLUnitTestsAndBenchmarking
             unitVector3X = Vector3.UnitVector(0);
 
             Vector3 copyVector3 = v3_1.Copy();
-            coordinates = v3_1.Position;
             x = v3_1.X;
             x = v3_1[0];
             y = v3_1.Y;
@@ -159,7 +156,6 @@ namespace TVGLUnitTestsAndBenchmarking
             v3_2 = -v3_1;
             isItTrueThat = v3_1.IsNull();
             isItTrueThat = v3_1.IsNegligible();
-            v3_1.CopyTo(coordinates);
             isItTrueThat = v3_1 == v3_2;
             isItTrueThat = v3_1 != v3_2;
             double dot3 = v3_1.Dot(v3_2);

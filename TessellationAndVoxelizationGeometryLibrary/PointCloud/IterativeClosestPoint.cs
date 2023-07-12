@@ -1,12 +1,9 @@
-﻿using Microsoft.VisualBasic;
-using StarMathLib;
+﻿using StarMathLib;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using TVGL.ConvexHull;
-using TVGL.KDTree;
 
-namespace TVGL
+namespace TVGL.PointCloud
 {
     public class IterativeClosestPoint3D
     {
@@ -22,7 +19,7 @@ namespace TVGL
                 .SortedDimensions[^1] / 1000;
             var numInputPoints = inputPoints.Count;
             var referenceCentroid = referencePoints.Aggregate((a, b) => a + b) / referencePoints.Count;
-            var referencePointCloud = new TVGL.KDTree.KDTree<Vector3, object>(3,
+            var referencePointCloud = new KDTree<Vector3, object>(3,
                 referencePoints.Select(p => p - referenceCentroid).ToList());
             var matchedPoints = inputPoints.Select(p => referencePointCloud.FindNearest(p, 1).First());
             var translationVectors = new Vector3[numInputPoints];

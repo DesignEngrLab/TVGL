@@ -14,7 +14,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using TVGL.ConvexHull;
+using TVGL.ConvexHullDetails;
 
 namespace TVGL
 {
@@ -439,7 +439,7 @@ namespace TVGL
             #region 1) Prune and Reorder the points
             var points = pointsAreConvexHull
                 ? initialPoints as IList<Vector2> ?? initialPoints.ToList()
-                : ConvexHull2D(initialPoints).ToList();
+                : initialPoints.Get2DConvexHull().ToList();
             if (points.Count < 3)
             {
                 var v = points[1] - points[0];

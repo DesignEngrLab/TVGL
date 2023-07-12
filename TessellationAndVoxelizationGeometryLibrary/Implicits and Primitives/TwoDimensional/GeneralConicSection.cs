@@ -14,7 +14,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using TVGL.ConvexHull;
+using TVGL.ConvexHullDetails;
 using StarMathLib;
 
 
@@ -154,7 +154,7 @@ namespace TVGL
         /// <typeparam name="T"></typeparam>
         /// <param name="point">The point.</param>
         /// <returns>System.Double.</returns>
-        public double SquaredErrorOfNewPoint<T>(T point) where T : IPoint2D
+        public double SquaredErrorOfNewPoint<T>(T point) where T : IPoint
         {
             return DistancePointToConic(this, point, out _);
         }
@@ -266,15 +266,15 @@ namespace TVGL
         /// <param name="pointOnCurve">The point on curve closed to the given point.</param>
         /// <returns>System.Double.</returns>
         public static double DistancePointToConic<T>(GeneralConicSection conic, T point, out Vector2 pointOnCurve)
-            where T : IPoint2D
+            where T : IPoint
         {
             // this is hard to understand. Please refer to the document call SolvingConics.docx
             var aj = conic.B;
             var bj = 2 * conic.C - 2 * conic.A;
             var cj = -conic.B;
-            var rj = conic.E - conic.B * point.X + 2 * conic.A * point.Y;
-            var sj = -conic.D + conic.B * point.Y - 2 * conic.C * point.X;
-            var tj = conic.D * point.Y - conic.E * point.X;
+            var rj = conic.E - conic.B * point[0] + 2 * conic.A * point[1];
+            var sj = -conic.D + conic.B * point[1] - 2 * conic.C * point[0];
+            var tj = conic.D * point[1] - conic.E * point[0];
             GeneralConicSection conicJ;
             if (tj.IsNegligible())
                 conicJ = new GeneralConicSection(aj, bj, cj, rj, sj, true);
@@ -283,7 +283,7 @@ namespace TVGL
             pointOnCurve = Vector2.Null;
             foreach (var p in IntersectingConics(conic, conicJ))
             {
-                var distance = (new Vector2(p.X - point.X, p.Y - point.Y)).LengthSquared();
+                var distance = (new Vector2(p.X - point[0], p.Y - point[1])).LengthSquared();
                 if (distance < minDistance)
                 {
                     minDistance = distance;

@@ -48,7 +48,7 @@ namespace TVGL
                 var smaller = new Polygon(sampled).OffsetRound(-0.001 * perimeter).First();
 
                 //Delaunay Medial Axis
-                var delaunay = ConvexHull.Triangulation.CreateDelaunay(sampled);
+                var delaunay = ConvexHullDetails.Triangulation.CreateDelaunay(sampled);
                 var lines = new List<List<Vector2>>();
                 foreach (var triangle in delaunay.Cells)
                 {

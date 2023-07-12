@@ -2,11 +2,11 @@
 // Copyright (c) Eric Regina. All rights reserved.
 // </copyright>
 
-namespace TVGL.KDTree
+namespace TVGL.PointCloud
 {
     using System;
     using System.Runtime.CompilerServices;
-    using TVGL.ConvexHull;
+    using TVGL.ConvexHullDetails;
 
     /// <summary>
     /// Allows one to navigate a binary tree stored in an <see cref="Array"/> using familiar
