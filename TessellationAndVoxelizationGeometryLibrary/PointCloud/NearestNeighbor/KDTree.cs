@@ -119,7 +119,7 @@ namespace TVGL.PointCloud
             // but here, we just take the lower of the two middle points
             var count = points.Count;
             var leftSideLength = count / 2;
-            var medianPointValue = points.Select(p => p[dim]).NthOrderStatistic(leftSideLength + 1);
+            var medianPointValue = points.Select(p => p[dim]).NthOrderStatistic(leftSideLength);
             //is this a plus one or not?
 
             var leftPoints = new TPoint[leftSideLength];
@@ -145,7 +145,7 @@ namespace TVGL.PointCloud
                 else if (pt[dim] < medianPointValue)
                 {
                     leftPoints[leftIndex] = pt;
-            if (HasAccompanyingObjects)
+                    if (HasAccompanyingObjects)
                         leftNodes[leftIndex] = node;
                     leftIndex++;
                 }
@@ -167,14 +167,14 @@ namespace TVGL.PointCloud
                 if (leftIndex < leftSideLength)
                 {
                     leftPoints[leftIndex] = medianPoints[i];
-            if (HasAccompanyingObjects)
+                    if (HasAccompanyingObjects)
                         leftNodes[leftIndex] = medianNodes[i];
                     leftIndex++;
                 }
                 else
                 {
                     rightPoints[rightIndex] = medianPoints[i];
-            if (HasAccompanyingObjects)
+                    if (HasAccompanyingObjects)
                         rightNodes[rightIndex] = medianNodes[i];
                     rightIndex++;
                 }
@@ -189,7 +189,7 @@ namespace TVGL.PointCloud
             if (leftSideLength == 1)
             {
                 this.Points[BinaryTreeNavigator<TPoint, TAccObject>.LeftChildIndex(index)] = leftPoints[0];
-            if (HasAccompanyingObjects)
+                if (HasAccompanyingObjects)
                     this.AccompanyingObjects[BinaryTreeNavigator<TPoint, TAccObject>.LeftChildIndex(index)] = leftNodes[0];
             }
             else if (leftSideLength > 1)
@@ -199,7 +199,7 @@ namespace TVGL.PointCloud
             if (rightSideLength == 1)
             {
                 this.Points[BinaryTreeNavigator<TPoint, TAccObject>.RightChildIndex(index)] = rightPoints[0];
-            if (HasAccompanyingObjects)
+                if (HasAccompanyingObjects)
                     this.AccompanyingObjects[BinaryTreeNavigator<TPoint, TAccObject>.RightChildIndex(index)] = rightNodes[0];
             }
             else if (rightSideLength > 1)

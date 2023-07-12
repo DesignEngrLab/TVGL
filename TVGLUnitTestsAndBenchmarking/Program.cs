@@ -1,6 +1,7 @@
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Running;
 using Microsoft.Diagnostics.Tracing.Parsers.FrameworkEventSource;
+using SharpDX.DirectWrite;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -22,6 +23,8 @@ namespace TVGLUnitTestsAndBenchmarking
         [STAThread]
         private static void Main(string[] args)
         {
+            KDTreeTesting.Test1();
+            return;
             DirectoryInfo dir = Program.BackoutToFolder(inputFolder);
             var myWriter = new ConsoleTraceListener();
             Trace.Listeners.Add(myWriter);
