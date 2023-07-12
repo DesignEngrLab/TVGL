@@ -145,7 +145,7 @@ namespace TVGL
             var x = faceXDir.Dot(v);
             var y = faceYDir.Dot(v);
             /* originally doing the following, which makes intuitive sense, but
-             * since we take the cosine (and sine) of an inverse tangent, we can reduce the computation
+             * since we take the cosine (and sine) of an Inverse tangent, we can reduce the computation
             var angle = Math.Atan2(y, x) * betaFactor;
             return new Vector2(distanceDownCone * Math.Cos(angle), distanceDownCone * Math.Sin(angle));
         */

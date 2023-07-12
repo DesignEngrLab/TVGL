@@ -115,7 +115,7 @@ namespace TVGL
         /// <summary>
         /// Transforms a vector by the given matrix without the translation component.
         /// This is often used for transforming normals, however note that proper transformations
-        /// of normal vectors requires that the input matrix be the transpose of the inverse of that matrix.
+        /// of normal vectors requires that the input matrix be the transpose of the Inverse of that matrix.
         /// </summary>
         /// <param name="normal">The normal.</param>
         /// <param name="matrix">The transformation matrix.</param>
@@ -342,7 +342,7 @@ namespace TVGL
         /// <summary>
         /// Transforms a vector by the given matrix without the translation component.
         /// This is often used for transforming normals, however note that proper transformations
-        /// of normal vectors requires that the input matrix be the transpose of the inverse of that matrix.
+        /// of normal vectors requires that the input matrix be the transpose of the Inverse of that matrix.
         /// </summary>
         /// <param name="position">The source vector.</param>
         /// <param name="matrix">The transformation matrix.</param>
@@ -577,7 +577,7 @@ namespace TVGL
         /// <summary>
         /// Transforms a vector by the given matrix without the translation component.
         /// This is often used for transforming normals, however note that proper transformations
-        /// of normal vectors requires that the input matrix be the transpose of the inverse of that matrix.
+        /// of normal vectors requires that the input matrix be the transpose of the Inverse of that matrix.
         /// </summary>
         /// <param name="position">The source vector.</param>
         /// <param name="matrix">The transformation matrix.</param>
@@ -679,7 +679,7 @@ namespace TVGL
         { return Quaternion.Conjugate(value); }
 
         /// <summary>
-        /// Returns the inverse of a Quaternion.
+        /// Returns the Inverse of a Quaternion.
         /// </summary>
         /// <param name="value">The source Quaternion.</param>
         /// <returns>The inverted Quaternion.</returns>

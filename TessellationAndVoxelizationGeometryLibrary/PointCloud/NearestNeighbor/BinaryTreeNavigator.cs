@@ -36,8 +36,8 @@ namespace TVGL.KDTree
         /// </summary>
         internal BinaryTreeNavigator<TPoint, TNode> Left
             =>
-                LeftChildIndex(this.Index) < this.pointArray.Length - 1
-                    ? new BinaryTreeNavigator<TPoint, TNode>(this.pointArray, this.nodeArray, LeftChildIndex(this.Index))
+                LeftChildIndex(Index) < pointArray.Length - 1
+                    ? new BinaryTreeNavigator<TPoint, TNode>(pointArray, nodeArray, LeftChildIndex(Index))
                     : Empty;
 
         /// <summary>
@@ -45,26 +45,26 @@ namespace TVGL.KDTree
         /// </summary>
         internal BinaryTreeNavigator<TPoint, TNode> Right
                =>
-                   RightChildIndex(this.Index) < this.pointArray.Length - 1
-                       ? new BinaryTreeNavigator<TPoint, TNode>(this.pointArray, this.nodeArray, RightChildIndex(this.Index))
+                   RightChildIndex(Index) < pointArray.Length - 1
+                       ? new BinaryTreeNavigator<TPoint, TNode>(pointArray, nodeArray, RightChildIndex(Index))
                        : Empty;
 
         /// <summary>
         /// The parent of the current node.
         /// </summary>
-        internal BinaryTreeNavigator<TPoint, TNode> Parent => this.Index == 0 
+        internal BinaryTreeNavigator<TPoint, TNode> Parent => Index == 0 
             ? Empty 
-            : new BinaryTreeNavigator<TPoint, TNode>(this.pointArray, this.nodeArray, ParentIndex(this.Index));
+            : new BinaryTreeNavigator<TPoint, TNode>(pointArray, nodeArray, ParentIndex(Index));
 
         /// <summary>
         /// The current <typeparamref name="TPoint"/>.
         /// </summary>
-        internal TPoint Point => this.pointArray[this.Index];
+        internal TPoint Point => pointArray[Index];
 
         /// <summary>
         /// The current <typeparamref name="TNode"/>
         /// </summary>
-        internal TNode Node => this.nodeArray[this.Index];
+        internal TNode Node => nodeArray==null? default(TNode): nodeArray[Index];
 
         /// <summary>
         /// Initializes a new instance of the <see cref="BinaryTreeNavigator{TPoint, TNode}"/> class.
@@ -74,7 +74,7 @@ namespace TVGL.KDTree
         /// <param name="index">The index of the node of interest in the pointArray. If not given, the node navigator start at the 0 index (the root of the tree).</param>
         internal BinaryTreeNavigator(TPoint[] pointArray, TNode[] nodeArray, int index = 0)
         {
-            this.Index = index;
+            Index = index;
             this.pointArray = pointArray;
             this.nodeArray = nodeArray;
         }

@@ -308,7 +308,7 @@ namespace TVGL
         private void DefineInternalEdgeAngle()
         {
             /* this is a tricky function. What we need to do is take the dot-product of the normals.
-             * which will give the cos(theta). Calling inverse cosine will result in a value from 0 to
+             * which will give the cos(theta). Calling Inverse cosine will result in a value from 0 to
              * pi, but is the edge convex or concave? It is convex if the crossproduct of the normals is 
              * in the same direction as the edge vector (dot product is positive). But we need to know 
              * which face-normal goes first in the cross product calculation as this will change the 

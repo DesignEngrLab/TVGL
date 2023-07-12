@@ -58,7 +58,7 @@ namespace TVGL
         /// <typeparam name="T"></typeparam>
         /// <param name="point">The point.</param>
         /// <returns>System.Double.</returns>
-        public double SquaredErrorOfNewPoint<T>(T point) where T : IPoint3D
+        public double SquaredErrorOfNewPoint<T>(T point) where T : IPoint
         {
             if (point is IPoint3D vector3D)
             {

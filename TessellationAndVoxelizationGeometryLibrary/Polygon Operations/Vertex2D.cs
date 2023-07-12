@@ -129,6 +129,11 @@ namespace TVGL
         {
             Coordinates = Coordinates.Transform(matrix);
         }
+
+        public bool IsNull()
+        {
+            return Coordinates.IsNull();
+        }
         #endregion Constructor
     }
 }

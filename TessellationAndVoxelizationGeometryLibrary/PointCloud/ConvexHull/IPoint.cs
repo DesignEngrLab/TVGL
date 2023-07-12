@@ -34,6 +34,8 @@ namespace TVGL.ConvexHull
     public interface IPoint
     {
         double this[int i] { get; }
+        bool IsNull();
+        static IPoint Null { get; }
     }
 
     public interface IPoint2D : IPoint
@@ -50,7 +52,7 @@ namespace TVGL.ConvexHull
         /// <value>The y.</value>
         double Y { get; }
     }
-    public interface IPoint3D: IPoint
+    public interface IPoint3D : IPoint
     {
         /// <summary>
         /// Gets the x.
@@ -86,5 +88,13 @@ namespace TVGL.ConvexHull
         /// </summary>
         /// <value>The position.</value>
         public double[] Coordinates { get; set; }
+
+        public bool IsNull()
+        {
+            return Coordinates == null;
+        }
+
+        static DefaultPoint Null => new DefaultPoint { Coordinates = null };
+
     }
 }

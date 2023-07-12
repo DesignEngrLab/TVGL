@@ -1057,9 +1057,9 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Calculates the determinant of the matrix.
+        /// Calculates the Determinant of the matrix.
         /// </summary>
-        /// <returns>The determinant of the matrix.</returns>
+        /// <returns>The Determinant of the matrix.</returns>
         public double GetDeterminant()
         {
             // | a b c d |     | f g h |     | e g h |     | e f h |     | e f g |
@@ -1116,7 +1116,7 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Attempts to calculate the inverse of the given matrix. If successful, result will contain the inverted matrix.
+        /// Attempts to calculate the Inverse of the given matrix. If successful, result will contain the inverted matrix.
         /// </summary>
         /// <param name="matrix">The source matrix to invert.</param>
         /// <param name="result">If successful, contains the inverted matrix.</param>
@@ -1124,7 +1124,7 @@ namespace TVGL
         public static bool Invert(Matrix4x4 matrix, out Matrix4x4 result)
         {
             //                                       -1
-            // If you have matrix M, inverse Matrix M   can compute
+            // If you have matrix M, Inverse Matrix M   can compute
             //
             //     -1       1
             //    M   = --------- A

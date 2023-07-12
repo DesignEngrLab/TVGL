@@ -563,14 +563,14 @@ namespace StarMathLib
         /// <param name="B">1D double Array, B</param>
         /// <returns>A double value that contains the dot product</returns>
         /// <exception cref="System.ArithmeticException">Cross product is only possible for vectors of length: 1, 3, or 7</exception>
-        public static double[] crossProduct(this IList<double> A, IList<double> B)
+        public static double[] CrossProduct(this IList<double> A, IList<double> B)
         {
             var Alength = A.Count;
             var Blength = B.Count;
             if ((Alength == 1) && (Blength == 1))
                 return new[] { 0.0 };
             if ((Alength == 2) && (Blength == 2))
-                return new[] { 0.0, 0.0, crossProduct2(A, B) };
+                return new[] { 0.0, 0.0, CrossProduct2(A, B) };
             if ((Alength == 3) && (Blength == 3))
                 return crossProduct3(A, B);
             if ((Alength == 7) && (Blength == 7))
@@ -585,14 +585,14 @@ namespace StarMathLib
         /// <param name="B">1D double Array, B</param>
         /// <returns>A double value that contains the dot product</returns>
         /// <exception cref="System.ArithmeticException">Cross product is only possible for vectors of length: 1, 3, or 7</exception>
-        public static double[] crossProduct(this IList<int> A, IList<double> B)
+        public static double[] CrossProduct(this IList<int> A, IList<double> B)
         {
             var Alength = A.Count;
             var Blength = B.Count;
             if ((Alength == 1) && (Blength == 1))
                 return new[] { 0.0 };
             if ((Alength == 2) && (Blength == 2))
-                return new[] { 0.0, 0.0, crossProduct2(A, B) };
+                return new[] { 0.0, 0.0, CrossProduct2(A, B) };
             if ((Alength == 3) && (Blength == 3))
                 return crossProduct3(A, B);
             if ((Alength == 7) && (Blength == 7))
@@ -607,16 +607,16 @@ namespace StarMathLib
         /// <param name="B">1D integer Array, B</param>
         /// <returns>A double value that contains the dot product</returns>
         /// <exception cref="System.ArithmeticException">Cross product is only possible for vectors of length: 1, 3, or 7</exception>
-        public static double[] crossProduct(this IList<double> A, IList<int> B)
+        public static double[] CrossProduct(this IList<double> A, IList<int> B)
         {
             var Alength = A.Count;
             var Blength = B.Count;
             if ((Alength == 1) && (Blength == 1))
                 return new[] { 0.0 };
             if ((Alength == 2) && (Blength == 2))
-                return new[] { 0.0, 0.0, crossProduct2(A, B) };
+                return new[] { 0.0, 0.0, CrossProduct2(A, B) };
             if ((Alength == 3) && (Blength == 3))
-                return crossProduct3(A, B);
+                return CrossProduct3(A, B);
             if ((Alength == 7) && (Blength == 7))
                 return crossProduct7(A, B);
             throw new ArithmeticException("Cross product is only possible for vectors of length: 1, 3, or 7");
@@ -629,14 +629,14 @@ namespace StarMathLib
         /// <param name="B">1D integer Array, B</param>
         /// <returns>A double value that contains the dot product</returns>
         /// <exception cref="System.ArithmeticException">Cross product is only possible for vectors of length: 1, 3, or 7</exception>
-        public static int[] crossProduct(this IList<int> A, IList<int> B)
+        public static int[] CrossProduct(this IList<int> A, IList<int> B)
         {
             var Alength = A.Count;
             var Blength = B.Count;
             if ((Alength == 1) && (Blength == 1))
                 return new[] { 0 };
             if ((Alength == 2) && (Blength == 2))
-                return new[] { 0, 0, crossProduct2(A, B) };
+                return new[] { 0, 0, CrossProduct2(A, B) };
             if ((Alength == 3) && (Blength == 3))
                 return crossProduct3(A, B);
             if ((Alength == 7) && (Blength == 7))
@@ -655,7 +655,7 @@ namespace StarMathLib
         /// <returns>System.Double.</returns>
         /// <exception cref="System.ArithmeticException">This cross product \shortcut\ is only used with 2D vectors to get the single value in the,
         ///                                 + would be, Z-direction.</exception>
-        public static double crossProduct2(IList<double> A, IList<double> B)
+        public static double CrossProduct2(IList<double> A, IList<double> B)
         {
             if (((A.Count == 2) && (B.Count == 2))
                 || ((A.Count == 3) && (B.Count == 3) && A[2] == 0.0 && B[2] == 0.0))
@@ -675,7 +675,7 @@ namespace StarMathLib
         /// <returns>System.Double.</returns>
         /// <exception cref="System.ArithmeticException">This cross product \shortcut\ is only used with 2D vectors to get the single value in the,
         ///                                 + would be, Z-direction.</exception>
-        public static double crossProduct2(IList<int> A, IList<double> B)
+        public static double CrossProduct2(IList<int> A, IList<double> B)
         {
             if (((A.Count == 2) && (B.Count == 2))
                 || ((A.Count == 3) && (B.Count == 3) && A[2] == 0.0 && B[2] == 0.0))
@@ -695,7 +695,7 @@ namespace StarMathLib
         /// <returns>System.Double.</returns>
         /// <exception cref="System.ArithmeticException">This cross product \shortcut\ is only used with 2D vectors to get the single value in the,
         ///                                 + would be, Z-direction.</exception>
-        public static double crossProduct2(IList<double> A, IList<int> B)
+        public static double CrossProduct2(IList<double> A, IList<int> B)
         {
             if (((A.Count == 2) && (B.Count == 2))
                 || ((A.Count == 3) && (B.Count == 3) && A[2] == 0.0 && B[2] == 0.0))
@@ -715,7 +715,7 @@ namespace StarMathLib
         /// <returns>System.Int32.</returns>
         /// <exception cref="System.ArithmeticException">This cross product \shortcut\ is only used with 2D vectors to get the single value in the,
         ///                                 + would be, Z-direction.</exception>
-        public static int crossProduct2(IList<int> A, IList<int> B)
+        public static int CrossProduct2(IList<int> A, IList<int> B)
         {
             if (((A.Count == 2) && (B.Count == 2))
                 || ((A.Count == 3) && (B.Count == 3) && A[2] == 0.0 && B[2] == 0.0))
@@ -842,7 +842,7 @@ namespace StarMathLib
         /// <param name="A">a.</param>
         /// <param name="B">The b.</param>
         /// <returns>System.Double[].</returns>
-        private static double[] crossProduct3(IList<double> A, IList<int> B)
+        private static double[] CrossProduct3(IList<double> A, IList<int> B)
         {
             return new[]
             {

@@ -156,7 +156,7 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Returns the inverse of a Quaternion.
+        /// Returns the Inverse of a Quaternion.
         /// </summary>
         /// <param name="value">The source Quaternion.</param>
         /// <returns>The inverted Quaternion.</returns>

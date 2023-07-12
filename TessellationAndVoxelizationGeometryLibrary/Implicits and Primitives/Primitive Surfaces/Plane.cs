@@ -92,6 +92,7 @@ namespace TVGL
         [JsonIgnore]
         public Vector3 ClosestPointToOrigin => Normal * DistanceToOrigin;
 
+        public Vector4 AsVector4 => new Vector4(Normal.X, Normal.Y, Normal.Z, -DistanceToOrigin);
 
         #region Constructors
         /// <summary>

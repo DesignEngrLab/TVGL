@@ -32,7 +32,7 @@ namespace TVGL
         /// <typeparam name="T"></typeparam>
         /// <param name="point">The point.</param>
         /// <returns>System.Double.</returns>
-        public double SquaredErrorOfNewPoint<T>(T point) where T : IPoint2D;
+        public double SquaredErrorOfNewPoint<T>(T point) where T : IPoint;
 
         /// <summary>
         /// Creates from points.

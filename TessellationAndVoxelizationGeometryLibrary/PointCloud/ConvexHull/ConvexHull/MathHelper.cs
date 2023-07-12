@@ -313,7 +313,7 @@ namespace TVGL.ConvexHull
                 var coord = 1.0;
                 for (var i = 0; i < Dimension; i++)
                 {
-                    if (iPiv[i] != i) coord *= -data[Dimension * i + i]; // the determinant sign changes on row swap.
+                    if (iPiv[i] != i) coord *= -data[Dimension * i + i]; // the Determinant sign changes on row swap.
                     else coord *= data[Dimension * i + i];
                 }
                 normal[x] = coord;
@@ -336,7 +336,7 @@ namespace TVGL.ConvexHull
         internal double VolumeOfSimplex(IList<int> vertexIndices)
         {
             //DebugPrintVertices(vertexIndices);
-            // this is the Cayley-Menger determinant, so a matrix is defined that is numDimensions+2
+            // this is the Cayley-Menger Determinant, so a matrix is defined that is numDimensions+2
             var numRowCol = Dimension + 2;
             var A = new double[numRowCol * numRowCol];
             for (int i = 1; i < numRowCol; i++)
@@ -356,13 +356,13 @@ namespace TVGL.ConvexHull
                 }
             var iPiv = new int[2 + Dimension];
             var helper = new double[2 + Dimension];
-            // determinant(A, 2 + Dimension);  //, iPiv, helper);
+            // Determinant(A, 2 + Dimension);  //, iPiv, helper);
             LUFactor(A, 2 + Dimension, iPiv, helper);
             var det = 1.0;
             for (var i = 0; i < iPiv.Length; i++)
             {
                 det *= A[(2 + Dimension) * i + i];
-                if (iPiv[i] != i) det *= -1; // the determinant sign changes on row swap.
+                if (iPiv[i] != i) det *= -1; // the Determinant sign changes on row swap.
             }
             var denom = Math.Pow(2, Dimension);
             var m = 1;

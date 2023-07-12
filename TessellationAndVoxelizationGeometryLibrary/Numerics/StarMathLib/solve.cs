@@ -59,7 +59,7 @@ namespace StarMathLib
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static bool solveViaCramersRule3(this double[,] a, IList<double> b, out double[] answer)
         {
-            var denominator = determinant(a);
+            var denominator = Determinant(a);
             if (Math.Abs(denominator) < TVGL.Constants.BaseTolerance)
             {
                 answer = Array.Empty<double>();
@@ -116,7 +116,7 @@ namespace StarMathLib
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static bool Solve3x3ComplexMatrix(this ComplexNumber[,] a, IList<ComplexNumber> b, out ComplexNumber[] answer)
         {
-            var denominator = determinant(a);
+            var denominator = Determinant(a);
             if (denominator.Length() < TVGL.Constants.BaseTolerance)
             {
                 answer = Array.Empty<ComplexNumber>();
@@ -213,7 +213,7 @@ namespace StarMathLib
 
 
         /// <summary>
-        /// Solves the by inverse.
+        /// Solves the by Inverse.
         /// </summary>
         /// <param name="A">a.</param>
         /// <param name="b">The b.</param>

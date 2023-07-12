@@ -44,7 +44,7 @@ namespace TVGL
         /// <value>The length of the pixel side.</value>
         public double PixelSideLength { get; private set; }
         /// <summary>
-        /// Gets the inverse length of the pixel side.
+        /// Gets the Inverse length of the pixel side.
         /// </summary>
         /// <value>The length of the pixel side.</value>
         public double inversePixelSideLength { get; private set; }
