@@ -524,7 +524,7 @@ namespace StarMathLib
 
         #endregion
     
-        public double SumOfDiagonals(this double[,] a)
+        public static double SumOfDiagonals(this double[,] a)
         {
             var sum = 0.0;
             for (int i = 0; i < a.GetLength(0); i++)

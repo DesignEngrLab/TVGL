@@ -86,7 +86,7 @@ namespace TVGL.KDTree
         /// <param name="target">The target point.</param>
         /// <param name="numberToFind">The number to find.</param>
         public IEnumerable<(TPoint, TAccObject)> FindNearestAndAccompanyingObject(TPoint target, int numberToFind = -1)
-        { return FindNearest(target, double.MaxValue, numberToFind); }
+        { return FindNearestAndAccompanyingObject(target, double.MaxValue, numberToFind); }
 
         /// <summary>       
         /// Finds the nearest set of points to the target.

@@ -585,7 +585,7 @@ public class Icpv2
             }
         }
         var q = new Quaternion(maxEigenVector[0], maxEigenVector[1], maxEigenVector[2], maxEigenVector[3]);
-        return  Matrix4x4.CreateFromQuaternion(q);
+        return Matrix4x4.CreateFromQuaternion(q);
 
         //return 
         ////initialise matrix builder
@@ -697,8 +697,7 @@ public class Icpv2
 
             // get transformation vectors passing registration matrix and center of mass
             // for both Fpoint clouds and getting rotation matrix and translation vector into our out ariables
-         var transform=   GetTransformationVectors(registrationMatrix, GetCenterOfMass(SourceCloud),
-                GetCenterOfMass(TargetCloud), out Vector3 TranslationVector, out Quaternion UnityQuat);
+            var transform = GetTransformationVectors(registrationMatrix);
 
 
             //Compute mean square error
