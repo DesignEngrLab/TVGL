@@ -39,11 +39,11 @@ namespace TVGL.PointCloud
                 throw new ArgumentException("The number of points and accompanying objects must be the same.");
             Dimensions = dimensions;
             Count = points.Count;
-
+            var nullPoint = (TPoint)points[0].GetType().GetField("Null").GetValue(null);
             // Calculate the number of nodes needed to contain the binary tree.
             // This is equivalent to finding the power of 2 greater than the number of points
             var elementCount = (int)Math.Pow(2, (int)(Math.Log(Count) / Math.Log(2)) + 1);
-            Points = new TPoint[elementCount];
+            Points = Enumerable.Repeat(nullPoint, elementCount).ToArray();
             if (HasAccompanyingObjects)
                 AccompanyingObjects = new TAccObject[elementCount];
             GenerateTree(0, 0, points, accompanyingObjects);
@@ -76,7 +76,7 @@ namespace TVGL.PointCloud
                 ? new BoundedPriorityList<int, double>(this.Count)
                 : new BoundedPriorityList<int, double>(numberToFind, true);
             SearchForNearestNeighbors(0, target, new HyperRect(this.Dimensions), 0,
-                nearestNeighbors, radius);
+                nearestNeighbors, radius * radius);
             foreach (var item in nearestNeighbors)
                 yield return Points[item];
         }
