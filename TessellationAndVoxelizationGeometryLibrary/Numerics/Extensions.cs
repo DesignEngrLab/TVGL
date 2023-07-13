@@ -618,6 +618,17 @@ namespace TVGL
         public static double[] ToArray(this Vector4 value1)
         { return new double[] { value1.X, value1.Y, value1.Z, value1.W }; }
 
+        public static ComplexNumber[] GetEigenValuesAndVectors(this Matrix4x4 A, out double[][] eigenVectors)
+        {
+            var matrix = new double[,]
+            {
+                { A.M11, A.M12, A.M13, A.M14 },
+                { A.M21, A.M22, A.M23, A.M24 },
+                { A.M31, A.M32, A.M33, A.M34 },
+                { A.M41, A.M42, A.M43, A.M44 }
+            };
+            return matrix.GetEigenValuesAndVectors(out eigenVectors);
+        }
 
         #endregion
 
@@ -798,7 +809,7 @@ namespace TVGL
                     var b = new[] { -m.M13, -m.M23 };
                     StarMath.Solve2x2ComplexMatrix(cM, b, out var eigenVectorXY);
                     var eigenVector = new ComplexNumber[] { eigenVectorXY[0], eigenVectorXY[1], new ComplexNumber(1) };
-                    var eVectorLength = Math.Sqrt(eigenVector[0].LengthSquared() + eigenVector[1].LengthSquared() +1);
+                    var eVectorLength = Math.Sqrt(eigenVector[0].LengthSquared() + eigenVector[1].LengthSquared() + 1);
                     eigenVectors[j] = new ComplexNumber[] { eigenVector[0] / eVectorLength, eigenVector[1] / eVectorLength,
                         eigenVector[2] / eVectorLength };
                 }

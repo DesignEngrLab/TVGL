@@ -1,8 +1,9 @@
-﻿using StarMathLib;
+﻿using MathNet.Numerics.LinearAlgebra;
+using MathNet.Numerics.LinearAlgebra.Factorization;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using TVGL;
+using System.Numerics;
 
 public class Icpv2
 {
@@ -156,26 +157,26 @@ public class Icpv2
     //get ideal threshold  for a model shape by finding
     //Square root of the trace of the covariance of the model shape.
     //parameters list of Vector3 points of the shape
-    //return double threshold 
-    public static double GetCovariance(List<Vector3> cloud)
+    //return float threshold 
+    public static float GetCovariance(List<Vector3> cloud)
     {
-        double[,] CovarianceMatrixnew = new double[3, 3];
+        float[,] CovarianceMatrixnew = new float[3, 3];
 
         for (int i = 0; i < cloud.Count; i++)
         {
 
             //get the two converted matrix
-            double[,] multipliedMatrix = OuterProduct(cloud[i], cloud[i]);
+            float[,] multipliedMatrix = OuterProduct(cloud[i], cloud[i]);
 
             //Sum up our converted matrix with our matrix in CovarianceMatrix
             CovarianceMatrixnew = MatrixAddition(CovarianceMatrixnew, multipliedMatrix);
         }
 
         //find trace of this matrix
-        double trace = TraceMatrix(CovarianceMatrixnew);
+        float trace = TraceMatrix(CovarianceMatrixnew);
 
         //find square root of the trace
-        double threshold = (double)Math.Sqrt((double)trace);
+        float threshold = (float)Math.Sqrt((double)trace);
 
         return threshold;
 
@@ -184,10 +185,10 @@ public class Icpv2
 
     //Mean square error computes the mean distance between the closest points and the transformed sourcecloud after every iteration 
     //Paramters : List<Vector3> Closestpoints. List<Vector3> TransformedSourcepoint
-    // returns: double meansquared error
-    public static double MeanSquaredError(List<Vector3> closestpoint, List<Vector3> TransformedSourceCloud)
+    // returns: float meansquared error
+    public static float MeanSquaredError(List<Vector3> closestpoint, List<Vector3> TransformedSourceCloud)
     {
-        double distance = 0;
+        float distance = 0;
 
         for (int i = 0; i < closestpoint.Count; i++)
         {
@@ -196,15 +197,15 @@ public class Icpv2
             distance += Vector3.Distance(closestpoint[i], TransformedSourceCloud[i]);
         }
 
-        return (double)distance / TransformedSourceCloud.Count;
+        return (float)distance / TransformedSourceCloud.Count;
     }
 
     //Summary : return identity matrix of any dimension
     //Parameters: int rows and int coloumns
     //returns matrix with identity 
-    public static double[,] getIdentityMatrix(int rows, int cols)
+    public static float[,] getIdentityMatrix(int rows, int cols)
     {
-        double[,] identitymat = new double[rows, cols];
+        float[,] identitymat = new float[rows, cols];
 
         for (int i = 0; i < cols; i++)
         {
@@ -231,7 +232,7 @@ public class Icpv2
     //<Summary> 
     // Calculates the center of mass from a list of Vector3 points
     // parameter : List<Vetcor3> points
-    // returns   : double center of mass 
+    // returns   : float center of mass 
     //</Summary>     
     public static Vector3 GetCenterOfMass(List<Vector3> PointCloud)
     {
@@ -248,13 +249,13 @@ public class Icpv2
 
     //<Summary> 
     // Calculates the transpose of a matrix 
-    // parameter : double matrix
-    // returns : double tranpose 
+    // parameter : float matrix
+    // returns : float tranpose 
     //</Summary> 
-    public static double[,] TransposeMatrix(double[,] a)
+    public static float[,] TransposeMatrix(float[,] a)
     {
 
-        double[,] transpose = new double[a.GetLength(1), a.GetLength(0)];
+        float[,] transpose = new float[a.GetLength(1), a.GetLength(0)];
 
         for (int i = 0; i < a.GetLength(1); i++)
         {
@@ -268,12 +269,12 @@ public class Icpv2
 
     //<Summary> 
     // Calculates the trace of a matrix
-    // parameter : double matrix
-    // returns : double trace
+    // parameter : float matrix
+    // returns : float trace
     //</Summary> 
-    public static double TraceMatrix(double[,] a)
+    public static float TraceMatrix(float[,] a)
     {
-        double traceValue = 0f;
+        float traceValue = 0f;
 
         for (int i = 0; i < a.GetLength(0); i++)
         {
@@ -288,9 +289,9 @@ public class Icpv2
     // parameter : matrix a and Matrix b
     // returns   : results of the value of the subtracted matrix A-B
     //</Summary> 
-    public static double[,] MatrixSubtraction(double[,] a, double[,] b)
+    public static float[,] MatrixSubtraction(float[,] a, float[,] b)
     {
-        double[,] SubtractMatrix = new double[a.GetLength(0), a.GetLength(1)];
+        float[,] SubtractMatrix = new float[a.GetLength(0), a.GetLength(1)];
 
         //throw an error if matrix dimensions are not the same
         if (a.GetLength(0) != b.GetLength(0) || b.GetLength(1) != a.GetLength(1))
@@ -312,13 +313,13 @@ public class Icpv2
 
     //<Summary> 
     // Calculates the transpose of a matrix 
-    // parameter : double matrix
-    // returns : double tranpose 
+    // parameter : float matrix
+    // returns : float tranpose 
     //</Summary> 
-    public static double[,] MatrixMultiplicationByNumber(double[,] a, double num)
+    public static float[,] MatrixMultiplicationByNumber(float[,] a, float num)
     {
         //multiply matrix with number
-        double[,] multiplyMatrixNum = new double[a.GetLength(0), a.GetLength(1)];
+        float[,] multiplyMatrixNum = new float[a.GetLength(0), a.GetLength(1)];
 
         for (int i = 0; i < a.GetLength(0); i++)
         {
@@ -335,10 +336,10 @@ public class Icpv2
     //The product of these two vectors are taken and returned as output
 
     //swapped paramter positions to test handedness
-    public static double[,] OuterProduct(Vector3 ColumnVector, Vector3 rowVector)
+    public static float[,] OuterProduct(Vector3 ColumnVector, Vector3 rowVector)
     {
 
-        double[,] outerproduct = new double[3, 3];
+        float[,] outerproduct = new float[3, 3];
 
         outerproduct[0, 0] = ColumnVector.X * rowVector.X;
         outerproduct[0, 1] = ColumnVector.X * rowVector.Y;
@@ -358,9 +359,9 @@ public class Icpv2
     //Multiply matrix
     //They must have same dimension
     //Method accepts two matrices, adds them up to create and return a new matrix
-    public static double[,] MatrixAddition(double[,] b, double[,] a)
+    public static float[,] MatrixAddition(float[,] b, float[,] a)
     {
-        double[,] addMatrix = new double[a.GetLength(0), b.GetLength(1)];
+        float[,] addMatrix = new float[a.GetLength(0), b.GetLength(1)];
 
         //matrices must have same dimension
         if (a.GetLength(0) != b.GetLength(0) || b.GetLength(1) != a.GetLength(1))
@@ -383,15 +384,15 @@ public class Icpv2
 
     //compute the cross variance
     //Mehod accepts 2 lists of vectors containing source cloud points and targetcloud points
-    public static double[,] GetCrossCovariance(List<Vector3> SourceCloud, List<Vector3> TargetCloud)
+    public static float[,] GetCrossCovariance(List<Vector3> SourceCloud, List<Vector3> TargetCloud)
     {
-        double[,] CovarianceMatrixnew = new double[3, 3];
+        float[,] CovarianceMatrixnew = new float[3, 3];
 
         for (int i = 0; i < SourceCloud.Count; i++)
         {
 
             //outerproduct of the correspoding points in source and target
-            double[,] multipliedMatrix = OuterProduct(SourceCloud[i], TargetCloud[i]);
+            float[,] multipliedMatrix = OuterProduct(SourceCloud[i], TargetCloud[i]);
 
             //Sum up our converted matrix with our matrix in CovarianceMatrix
             CovarianceMatrixnew = MatrixAddition(CovarianceMatrixnew, multipliedMatrix);
@@ -419,15 +420,15 @@ public class Icpv2
     // This method  accepts two lists of Vector3 points, sourcecloud and targetcloud
     // sourcecloud is the initial cloud and target cloud is the cloud we want to match to
 
-    public static double[,] getRegistrationMatrix(List<Vector3> SourceCloud, List<Vector3> closestpoints)
+    public static float[,] getRegistrationMatrix(List<Vector3> SourceCloud, List<Vector3> closestpoints)
     {
 
-        double[,] crosscovariance = GetCrossCovariance(SourceCloud, closestpoints);
+        float[,] crosscovariance = GetCrossCovariance(SourceCloud, closestpoints);
         //get anti-symmetric
-        double[,] antiSymmetricMatrix = MatrixSubtraction(crosscovariance, TransposeMatrix(crosscovariance));
+        float[,] antiSymmetricMatrix = MatrixSubtraction(crosscovariance, TransposeMatrix(crosscovariance));
 
         //form our column vector
-        double[,] columnVector = new double[1, 3];
+        float[,] columnVector = new float[1, 3];
 
         columnVector[0, 0] = antiSymmetricMatrix[1, 2];
         columnVector[0, 1] = antiSymmetricMatrix[2, 0];
@@ -435,13 +436,12 @@ public class Icpv2
 
 
         // get the matrix to fill remaining contents of the registration matriX
-        double[,] QComputedCells = MatrixSubtraction(MatrixAddition(crosscovariance, TransposeMatrix(crosscovariance)),
-            MatrixMultiplicationByNumber(getIdentityMatrix(3, 3), TraceMatrix(crosscovariance)));
+        float[,] QComputedCells = MatrixSubtraction(MatrixAddition(crosscovariance, TransposeMatrix(crosscovariance)), MatrixMultiplicationByNumber(getIdentityMatrix(3, 3), TraceMatrix(crosscovariance)));
 
 
 
         //populate our matrix 4x4 with the values from  
-        double[,] regMatrix = new double[4, 4];
+        float[,] regMatrix = new float[4, 4];
 
         regMatrix[0, 0] = TraceMatrix(crosscovariance);
         regMatrix[0, 1] = columnVector[0, 0];
@@ -479,12 +479,12 @@ public class Icpv2
     //    List<Vector3> closestpoints = new List<Vector3>(SourceCloud.Count);
 
 
-    //    double distance;
+    //    float distance;
     //    int TargetIndex = 0;
 
     //    for (int i = 0; i < SourceCloud.Count; i++)
     //    {
-    //        double min_distance = double.PositiveInfinity;
+    //        float min_distance = float.PositiveInfinity;
 
     //        for (int j = 0; j < TargetCloud.Count; j++)
     //        {
@@ -528,39 +528,39 @@ public class Icpv2
         List<Vector3> closestpoints = new List<Vector3>(SourceCloud.Count);
 
 
-        double distance;
+        float distance;
         int TargetIndex = 0;
 
         System.Threading.Tasks.Parallel.For(0, SourceCloud.Count, i =>
-        {
-            double min_distance = double.PositiveInfinity;
+         {
+             float min_distance = float.PositiveInfinity;
 
-            for (int j = 0; j < TargetCloud.Count; j++)
-            {
+             for (int j = 0; j < TargetCloud.Count; j++)
+             {
 
-                ///test that tags of the gameobjects corresponding to these vectors are same
-                if (sourcetags[i] == targettags[j])
-                {
-                    //get distance between points
-                    distance = Vector3.Distance(SourceCloud[i], TargetCloud[j]);
+                 ///test that tags of the gameobjects corresponding to these vectors are same
+                 if (sourcetags[i] == targettags[j])
+                 {
+                     //get distance between points
+                     distance = Vector3.Distance(SourceCloud[i], TargetCloud[j]);
 
-                    //compare distance with value in min_distance and update min_distance if distance is smaller
-                    if (distance < min_distance)
-                    {
-                        //keep the current targetcloud item as it is the current point with smallest distance to  sourcelouds ith point
-                        TargetIndex = j;
-                        min_distance = distance;
-                    }
-
-
-                }
+                     //compare distance with value in min_distance and update min_distance if distance is smaller
+                     if (distance < min_distance)
+                     {
+                         //keep the current targetcloud item as it is the current point with smallest distance to  sourcelouds ith point
+                         TargetIndex = j;
+                         min_distance = distance;
+                     }
 
 
-            }
+                 }
 
-            closestpoints.Add(TargetCloud[TargetIndex]);
 
-        });
+             }
+
+             closestpoints.Add(TargetCloud[TargetIndex]);
+
+         });
 
 
 
@@ -571,73 +571,60 @@ public class Icpv2
     // Compute the optimal rotation and translation vectors
     // Accepts the Matrix4X4 registration matrix, center of mass of source and target point sets
     //outputs the rotationMatrix and the translation vector
-    public static Matrix4x4 GetTransformationVectors(double[,] registrationMatrix)
+    public static void GetTransformationVectors
+        (float[,] registrationMatrix, Vector3 SourceCenterOfMass, Vector3 TargeCenterOfMass, out Vector3 TranslationVector, out Quaternion UnityQuat)
     {
-        var eigenValues = registrationMatrix.GetEigenValuesAndVectors(out var eigenVectors);
-        var maxEigenRealValue = double.MinValue;
-        double[] maxEigenVector = null;
-        for (int i = 0; i < eigenValues.Length; i++)
+
+        //initialise matrix builder
+        MatrixBuilder<float> regMatrix = Matrix<float>.Build;
+
+        //fill matrix builder with contents of our params registrationmatri to create a Matrix
+        Matrix<float> reg = regMatrix.DenseOfArray(registrationMatrix);
+
+        //EVD decompose to generate our eignevalues
+        Evd<float> registrationevd = reg.Evd();
+        //Cholesky<float> registrationevd = reg.Cholesky();
+        Console.WriteLine("Symmetric" + registrationevd.IsSymmetric);
+
+        //get inex of maximum eigenvalue for correspond eigenvector
+        double maxValue = double.NegativeInfinity;
+
+        //int maxEigenValue = registrationevd.EigenValues.
+        int index = 0;
+
+        for (int i = 0; i < registrationevd.EigenValues.Count; i++)
         {
-            if (maxEigenRealValue < eigenValues[i].Real)
+            if (registrationevd.EigenValues[i].Real > maxValue)
             {
-                maxEigenRealValue = eigenValues[i].Real;
-                maxEigenVector = eigenVectors[i];
+                maxValue = registrationevd.EigenValues[i].Real;
+                index = i;
             }
+
         }
-        var q = new Quaternion(maxEigenVector[0], maxEigenVector[1], maxEigenVector[2], maxEigenVector[3]);
-        return Matrix4x4.CreateFromQuaternion(q);
 
-        //return 
-        ////initialise matrix builder
-        //MatrixBuilder<double> regMatrix = Matrix<double>.Build;
+        //Get the eigenvalue index and copy the vector as our unit eigenvector.
+        //Our unit EigenVector below
+        MathNet.Numerics.LinearAlgebra.Vector<float> unitEigenVector = registrationevd.EigenVectors.Column(index);
 
-        ////fill matrix builder with contents of our params registrationmatri to create a Matrix
-        //Matrix<double> reg = regMatrix.DenseOfArray(registrationMatrix);
+        float q0 = unitEigenVector.At(0);
+        float q1 = unitEigenVector.At(1);
+        float q2 = unitEigenVector.At(2);
+        float q3 = unitEigenVector.At(3);
 
-        ////EVD decompose to generate our eignevalues
-        //Evd<double> registrationevd = reg.Evd();
-        ////Cholesky<double> registrationevd = reg.Cholesky();
-        //Console.WriteLine("Symmetric" + registrationevd.IsSymmetric);
+        UnityQuat = new Quaternion(q1, q2, q3, q0);
 
-        ////get index of maximum eigenvalue for correspond eigenvector
-        //double maxValue = double.NegativeInfinity;
-
-        ////int maxEigenValue = registrationevd.EigenValues.
-        //int index = 0;
-
-        //for (int i = 0; i < registrationevd.EigenValues.Count; i++)
-        //{
-        //    if (registrationevd.EigenValues[i].Real > maxValue)
-        //    {
-        //        maxValue = registrationevd.EigenValues[i].Real;
-        //        index = i;
-        //    }
-
-        //}
-
-        ////Get the eigenvalue index and copy the vector as our unit eigenvector.
-        ////Our unit EigenVector below
-        //MathNet.Numerics.LinearAlgebra.Vector<double> unitEigenVector = registrationevd.EigenVectors.Column(index);
-
-        //double q0 = unitEigenVector.At(0);
-        //double q1 = unitEigenVector.At(1);
-        //double q2 = unitEigenVector.At(2);
-        //double q3 = unitEigenVector.At(3);
-
-        //UnityQuat = new Quaternion(q1, q2, q3, q0);
-
-        //Matrix4x4 rotMatrix = Matrix4x4.CreateFromQuaternion(UnityQuat);
+        Matrix4x4 rotMatrix = Matrix4x4.CreateFromQuaternion(UnityQuat);
 
 
 
-        //Vector3 y = new Vector3(0, 0, 0);
+        Vector3 y = new Vector3(0, 0, 0);
 
-        ////get optimal translation vector     
-        //// Vector3 y = Matrix4x4.Rotate(UnityQuat).MultiplyPoint(SourceCenterOfMass);
+        //get optimal translation vector     
+        // Vector3 y = Matrix4x4.Rotate(UnityQuat).MultiplyPoint(SourceCenterOfMass);
 
 
-        //Vector3 optimalTranslation = TargeCenterOfMass - y;
-        //TranslationVector = optimalTranslation;
+        Vector3 optimalTranslation = TargeCenterOfMass - y;
+        TranslationVector = optimalTranslation;
     }
     /// <summary>
     /// writes a csv file containing list of matching distances that are distances between the source gameobject and target gameobject for all points
@@ -660,7 +647,7 @@ public class Icpv2
     //    {
     //        for (int i = 0; i < sourceGameObject.transform.childCount; i++)
     //        {
-    //            double distance = Vector3.Distance(sourceGameObject.transform.GetChild(i).position, targetGameObject.transform.GetChild(i).position);
+    //            float distance = Vector3.Distance(sourceGameObject.transform.GetChild(i).position, targetGameObject.transform.GetChild(i).position);
     //            sr.WriteLine(distance);
     //        }
 
@@ -676,13 +663,13 @@ public class Icpv2
     ///  <param name="SourceCloud">The first vector to compare.</param>
     /// <param name="TargetCloud">The second vector to compare.</param>
     /// <returns> void </returns>
-    public /*IEnumerator */static void ComputeICP(int iteration, double meanSquaredErrorThreshold, List<Vector3> SourceCloud, List<Vector3> TargetCloud)
+    public /*IEnumerator */static void ComputeICP(int iteration, float meanSquaredErrorThreshold, List<Vector3> SourceCloud, List<Vector3> TargetCloud)
     {
         // GameObject test = null; ;
-        double Error = 0f;
+        float Error = 0f;
         List<Vector3> closestpoints;
-        double prevError;
-        double changeError = double.PositiveInfinity;
+        float prevError;
+        float changeError = float.PositiveInfinity;
         //Matrix4x4 icpMatrix = Matrix4x4.identity;      
 
         int count = 0;
@@ -693,12 +680,19 @@ public class Icpv2
             closestpoints = ClosestPoints(SourceCloud, TargetCloud);
 
             //compute registration
-            double[,] registrationMatrix = getRegistrationMatrix(SourceCloud, closestpoints);
+            float[,] registrationMatrix = getRegistrationMatrix(SourceCloud, closestpoints);
 
-            // get transformation vectors passing registration matrix and center of mass
-            // for both Fpoint clouds and getting rotation matrix and translation vector into our out ariables
-            var transform = GetTransformationVectors(registrationMatrix);
+            // get transformation vectors passing registration matrix and center of mass for both Fpoint clouds and getting rotation matrix and translation vector into our out ariables
+            GetTransformationVectors(registrationMatrix, GetCenterOfMass(SourceCloud), GetCenterOfMass(TargetCloud), out Vector3 TranslationVector, out Quaternion UnityQuat);
 
+            //// Applytransformation
+            sourceGameObject.transform.Rotate(UnityQuat.);
+            sourceGameObject.transform.Translate(TranslationVector);
+
+            for (int i = 0; i < sourceCloud.Count; i++)
+            {
+                sourceCloud[i] = sourceCloud[i].
+            }
 
             //Compute mean square error
             //currError = MeanSquaredError(closestpoints, SourceCloud);
@@ -742,7 +736,7 @@ public class Icpv2
         //        closestpoints = ClosestPoints(SourceCloud, TargetCloud);
 
         //        //compute registration
-        //        double[,] registrationMatrix = getRegistrationMatrix(SourceCloud, closestpoints);
+        //        float[,] registrationMatrix = getRegistrationMatrix(SourceCloud, closestpoints);
 
         //        // get transformation vectors passing registration matrix and center of mass for both Fpoint clouds and getting rotation matrix and translation vector into our out ariables
         //        GetTransformationVectors(registrationMatrix, GetCenterOfMass(SourceCloud), GetCenterOfMass(TargetCloud), out Vector3 TranslationVector, out Quaternion UnityQuat);

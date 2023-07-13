@@ -47,7 +47,7 @@ namespace TVGL
         /// <param name="message">The message.</param>
         /// <param name="verbosityLimit">The verbosity limit.</param>
         /// <returns>Boolean.</returns>
-        internal static bool output(object message, int verbosityLimit = 0)
+        public static bool output(object message, int verbosityLimit = 0)
         {
             if ((verbosityLimit > (int)Verbosity)
                 || string.IsNullOrEmpty(message.ToString()))

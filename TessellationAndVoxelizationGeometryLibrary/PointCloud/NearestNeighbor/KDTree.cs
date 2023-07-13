@@ -4,7 +4,6 @@ namespace TVGL.PointCloud
     using System;
     using System.Collections.Generic;
     using System.Linq;
-    using TVGL.ConvexHullDetails;
 
     public class KDTree<TPoint, TAccObject> where TPoint : IPoint
     {
