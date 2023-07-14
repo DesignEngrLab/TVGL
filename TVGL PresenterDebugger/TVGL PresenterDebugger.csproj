@@ -97,7 +97,7 @@
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\PointCloud\ConvexHull\ConvexHullGenerationException.cs" Link="TVGL\PointCloud\ConvexHull\ConvexHullGenerationException.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\PointCloud\ConvexHull\IPoint.cs" Link="TVGL\PointCloud\ConvexHull\IPoint.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\PointCloud\ConvexHull\Triangulation.cs" Link="TVGL\PointCloud\ConvexHull\Triangulation.cs" />
-		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\PointCloud\NearestNeighbor\BinaryTreeNavigator.cs" Link="TVGL\PointCloud\NearestNeighbor\BinaryTreeNavigator.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\PointCloud\NearestNeighbor\KDTreeGenericWithAccompanying.cs" Link="TVGL\PointCloud\NearestNeighbor\KDTreeGenericWithAccompanying.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\PointCloud\NearestNeighbor\BoundedPriorityList.cs" Link="TVGL\PointCloud\NearestNeighbor\BoundedPriorityList.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\PointCloud\NearestNeighbor\HyperRect.cs" Link="TVGL\PointCloud\NearestNeighbor\HyperRect.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\PointCloud\NearestNeighbor\KDTree.cs" Link="TVGL\PointCloud\NearestNeighbor\KDTree.cs" />

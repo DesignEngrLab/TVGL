@@ -23,7 +23,9 @@ namespace TVGLUnitTestsAndBenchmarking
         [STAThread]
         private static void Main(string[] args)
         {
-            ICPTesting.Test1();
+            KDTreeTesting.Test1();
+            KDTreeTesting.Test2();
+            KDTreeTesting.Test3();
             return;
             DirectoryInfo dir = Program.BackoutToFolder(inputFolder);
             var myWriter = new ConsoleTraceListener();
