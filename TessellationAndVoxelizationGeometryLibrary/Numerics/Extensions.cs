@@ -475,6 +475,23 @@ namespace TVGL
         public static double[] ToArray(this Vector3 value1)
         { return new double[] { value1.X, value1.Y, value1.Z }; }
 
+        public static ComplexNumber[] GetEigenValuesAndVectors(this Matrix3x3 A,
+            out Vector3[] eigenVectors)
+        {
+            var matrix = new double[,]
+            {
+                { A.M11, A.M12, A.M13 },
+                { A.M21, A.M22, A.M23 },
+                { A.M31, A.M32, A.M33 }
+            };
+            var eigenValues = matrix.GetEigenValuesAndVectors(out var eigenVectorsArrays);
+            eigenVectors = new Vector3[3];
+            for (int i = 0; i < 3; i++)
+            {
+                eigenVectors[i] = new Vector3(eigenVectorsArrays[i]);
+            }
+            return eigenValues;
+        }
         #endregion
 
         #region Vector4
@@ -618,7 +635,7 @@ namespace TVGL
         public static double[] ToArray(this Vector4 value1)
         { return new double[] { value1.X, value1.Y, value1.Z, value1.W }; }
 
-        public static ComplexNumber[] GetEigenValuesAndVectors(this Matrix4x4 A, out double[][] eigenVectors)
+        public static ComplexNumber[] GetEigenValuesAndVectors(this Matrix4x4 A, out Vector4[] eigenVectors)
         {
             var matrix = new double[,]
             {
@@ -627,7 +644,13 @@ namespace TVGL
                 { A.M31, A.M32, A.M33, A.M34 },
                 { A.M41, A.M42, A.M43, A.M44 }
             };
-            return matrix.GetEigenValuesAndVectors(out eigenVectors);
+            var eigenValues = matrix.GetEigenValuesAndVectors(out var eigenVectorsArrays);
+            eigenVectors = new Vector4[4];
+            for (int i = 0; i < 4; i++)
+            {
+                eigenVectors[i] = new Vector4(eigenVectorsArrays[i]);
+            }
+            return eigenValues;
         }
 
         #endregion

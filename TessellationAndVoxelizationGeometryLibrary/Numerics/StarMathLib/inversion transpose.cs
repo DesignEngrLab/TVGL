@@ -32,7 +32,7 @@ namespace StarMathLib
         /// <param name="A">The matrix to invert. This matrix is unchanged by this function.</param>
         /// <returns>The inverted matrix, A^-1.</returns>
         /// <exception cref="System.ArithmeticException">Matrix cannnot be inverted. Can only invert sqare matrices.</exception>
-        internal static double[,] Inverse(this double[,] A) // need bool IsSymmetric to switch to Cholesky
+        public static double[,] Inverse(this double[,] A) // need bool IsSymmetric to switch to Cholesky
         {
             var length = A.GetLength(0);
             if (length != A.GetLength(1))
@@ -455,7 +455,7 @@ namespace StarMathLib
         /// <returns>The transpose of A.</returns>
         /// <exception cref="System.ArithmeticException">The matrix, A, is null.</exception>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static double[,] transpose(this double[,] A)
+        public static double[,] Transpose(this double[,] A)
         {
             if (A == null) throw new ArithmeticException("The matrix, A, is null.");
             var numRows = A.GetLength(1);

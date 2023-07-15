@@ -20,13 +20,13 @@ namespace TVGL.PointCloud
         /// <param name="dimensions">The dimensions.</param>
         /// <param name="points">The points.</param>
         /// <param name="accompanyingObjects">The accompanying objects.</param>
-        public KDTree(int dimensions, IList<TPoint> points, IList<TAccObject> accompanyingObjects) : base(points)
+        public KDTree(int dimensions, IEnumerable<TPoint> points, IList<TAccObject> accompanyingObjects) : base(points)
         {
             this.Dimensions = dimensions;
             if (Count != accompanyingObjects.Count)
                 throw new ArgumentException("The number of points and accompanying objects must be the same.");
             AccompanyingObjects = new TAccObject[TreeSize];
-            GenerateTree(0, 0, points, accompanyingObjects);
+            GenerateTree(0, 0, OriginalPoints, accompanyingObjects);
         }
 
         /// <summary>
@@ -52,7 +52,7 @@ namespace TVGL.PointCloud
             SearchForNearestNeighbors(0, target, new HyperRect(this.Dimensions), 0,
                 nearestNeighbors, radius * radius);
             foreach (var item in nearestNeighbors)
-                yield return (Points[item], AccompanyingObjects[item]);
+                yield return (TreePoints[item], AccompanyingObjects[item]);
         }
 
         /// <summary>
@@ -62,11 +62,11 @@ namespace TVGL.PointCloud
         /// <param name="dim">The current splitting dimension.</param>
         /// <param name="points">The set of points remaining to be added to the kd-tree</param>
         /// <param name="nodes">The set of nodes RE</param>
-        private void GenerateTree(int index, int dim, IList<TPoint> points, IList<TAccObject> nodes)
+        private void GenerateTree(int index, int dim, TPoint[] points, IList<TAccObject> nodes)
         {
             // note that the real median is sometimes the average if the number of points is even.
             // but here, we just take the lower of the two middle points
-            var count = points.Count;
+            var count = points.Length;
             var leftSideLength = count / 2;
             var medianPointValue = points.Select(p => p[dim]).NthOrderStatistic(leftSideLength);
             //is this a plus one or not?
@@ -80,7 +80,7 @@ namespace TVGL.PointCloud
             var rightIndex = 0;
             var medianPoints = new List<TPoint>();
             var medianNodes = new List<TAccObject>();
-            for (int i = 0; i < points.Count; i++)
+            for (int i = 0; i < points.Length; i++)
             {
                 TPoint pt = points[i];
                 TAccObject node = nodes[i];
@@ -104,7 +104,7 @@ namespace TVGL.PointCloud
             }
             // The target with the median value all the current dimension now becomes the value of the current tree node
             // The previous node becomes the parents of the current node.
-            Points[index] = medianPoints[0];
+            TreePoints[index] = medianPoints[0];
             AccompanyingObjects[index] = medianNodes[0];
             // Split the remaining points that have the same value as the median into left and right arrays.
             for (int i = 1; i < medianPoints.Count; i++)
@@ -131,7 +131,7 @@ namespace TVGL.PointCloud
             // If the array has no points then the node stay a null value
             if (leftSideLength == 1)
             {
-                Points[LeftChildIndex(index)] = leftPoints[0];
+                TreePoints[LeftChildIndex(index)] = leftPoints[0];
                 AccompanyingObjects[LeftChildIndex(index)] = leftNodes[0];
             }
             else if (leftSideLength > 1)
@@ -140,7 +140,7 @@ namespace TVGL.PointCloud
             // Do the same for the right points
             if (rightSideLength == 1)
             {
-                Points[RightChildIndex(index)] = rightPoints[0];
+                TreePoints[RightChildIndex(index)] = rightPoints[0];
                 AccompanyingObjects[RightChildIndex(index)] = rightNodes[0];
             }
             else if (rightSideLength > 1)

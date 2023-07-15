@@ -51,8 +51,9 @@ namespace TVGL.PointCloud
         /// <summary>
         /// The array in which the binary tree is stored. Enumerating this array is a level-order traversal of the tree.
         /// </summary>
-        public TPoint[] Points { get; }
+        private protected TPoint[] TreePoints { get; }
 
+        public TPoint[] OriginalPoints { get; }
 
         /// <summary>
         /// Gets the tree size which is the next power of 2 above the number of points.
@@ -68,20 +69,39 @@ namespace TVGL.PointCloud
         /// </summary>
         /// <param name="dimensions">The dimensions.</param>
         /// <param name="points">The points.</param>
-        public KDTree(int dimensions, IList<TPoint> points) : this(points)
+        public KDTree(int dimensions, IEnumerable<TPoint> points) : this(points)
         {
             Dimensions = dimensions;
-            GenerateTree(0, 0, points);
+            GenerateTree(0, 0, OriginalPoints);
         }
 
-        private protected KDTree(IList<TPoint> points)
+        private protected KDTree(IEnumerable<TPoint> points)
         {
-            Count = points.Count;
-            var nullPoint = (TPoint)points[0].GetType().GetField("Null").GetValue(null);
+            if (points is ICollection<TPoint> pointCollection)
+            {
+                Count = pointCollection.Count;
+                OriginalPoints = new TPoint[Count];
+                var i = 0;
+                foreach (var p in pointCollection)
+                    OriginalPoints[i++] = p;
+            }
+            else
+            {
+                var i = 0;
+                var listOfPoints = new List<TPoint>();
+                foreach (var p in points)
+                {
+                    listOfPoints.Add(p);
+                    i++;
+                }
+                OriginalPoints = listOfPoints.ToArray();
+                Count = i;
+            }
+            var nullPoint = (TPoint)OriginalPoints[0].GetType().GetField("Null").GetValue(null);
             // Calculate the number of nodes needed to contain the binary tree.
             // This is equivalent to finding the power of 2 greater than the number of points
             TreeSize = (int)Math.Pow(2, (int)(Math.Log(Count) / Math.Log(2)) + 1);
-            Points = Enumerable.Repeat(nullPoint, TreeSize).ToArray();
+            TreePoints = Enumerable.Repeat(nullPoint, TreeSize).ToArray();
         }
 
         /// <summary>
@@ -107,7 +127,7 @@ namespace TVGL.PointCloud
             SearchForNearestNeighbors(0, target, new HyperRect(this.Dimensions), 0,
                 nearestNeighbors, radius * radius);
             foreach (var item in nearestNeighbors)
-                yield return Points[item];
+                yield return TreePoints[item];
         }
 
 
@@ -118,11 +138,11 @@ namespace TVGL.PointCloud
         /// <param name="dim">The current splitting dimension.</param>
         /// <param name="points">The set of points remaining to be added to the kd-tree</param>
         /// <param name="nodes">The set of nodes RE</param>
-        private void GenerateTree(int index, int dim, IList<TPoint> points)
+        private void GenerateTree(int index, int dim, TPoint[] points)
         {
             // note that the real median is sometimes the average if the number of points is even.
             // but here, we just take the lower of the two middle points
-            var count = points.Count;
+            var count = points.Length;
             var leftSideLength = count / 2;
             var medianPointValue = points.Select(p => p[dim]).NthOrderStatistic(leftSideLength);
             //is this a plus one or not?
@@ -133,7 +153,7 @@ namespace TVGL.PointCloud
             var rightPoints = new TPoint[rightSideLength];
             var rightIndex = 0;
             var medianPoints = new List<TPoint>();
-            for (int i = 0; i < points.Count; i++)
+            for (int i = 0; i < points.Length; i++)
             {
                 TPoint pt = points[i];
                 if (pt[dim] > medianPointValue)
@@ -153,7 +173,7 @@ namespace TVGL.PointCloud
             }
             // The target with the median value all the current dimension now becomes the value of the current tree node
             // The previous node becomes the parents of the current node.
-            Points[index] = medianPoints[0];
+            TreePoints[index] = medianPoints[0];
             // Split the remaining points that have the same value as the median into left and right arrays.
             for (int i = 1; i < medianPoints.Count; i++)
             {
@@ -177,7 +197,7 @@ namespace TVGL.PointCloud
             // If the array has no points then the node stay a null value
             if (leftSideLength == 1)
             {
-                Points[LeftChildIndex(index)] = leftPoints[0];
+                TreePoints[LeftChildIndex(index)] = leftPoints[0];
             }
             else if (leftSideLength > 1)
                 GenerateTree(LeftChildIndex(index), nextDim, leftPoints);
@@ -185,7 +205,7 @@ namespace TVGL.PointCloud
             // Do the same for the right points
             if (rightSideLength == 1)
             {
-                Points[RightChildIndex(index)] = rightPoints[0];
+                TreePoints[RightChildIndex(index)] = rightPoints[0];
             }
             else if (rightSideLength > 1)
                 GenerateTree(RightChildIndex(index), nextDim, rightPoints);
@@ -203,8 +223,8 @@ namespace TVGL.PointCloud
         private protected void SearchForNearestNeighbors(int nodeIndex, TPoint target, HyperRect rect, int dimension,
               BoundedPriorityList<int, double> nearestNeighbors, double maxSearchRadiusSquared)
         {
-            if (Points.Length <= nodeIndex || nodeIndex < 0
-                || Points[nodeIndex].IsNull())
+            if (TreePoints.Length <= nodeIndex || nodeIndex < 0
+                || TreePoints[nodeIndex].IsNull())
                 return;
 
             // Work out the current dimension
@@ -213,15 +233,15 @@ namespace TVGL.PointCloud
             // Split our hyper-rectangle into 2 sub rectangles along the current
             // node's target on the current dimension
             var leftRect = new HyperRect(rect.MinPoint, rect.MaxPoint);
-            leftRect.MaxPoint[dim] = Points[nodeIndex][dim];
+            leftRect.MaxPoint[dim] = TreePoints[nodeIndex][dim];
 
             var rightRect = new HyperRect(rect.MinPoint, rect.MaxPoint);
-            rightRect.MinPoint[dim] = Points[nodeIndex][dim];
+            rightRect.MinPoint[dim] = TreePoints[nodeIndex][dim];
 
             // Determine which side the target resides in
             HyperRect nearerRect, furtherRect;
             int nearerNode, furtherNode;
-            if (target[dim] <= Points[nodeIndex][dim])
+            if (target[dim] <= TreePoints[nodeIndex][dim])
             {
                 nearerRect = leftRect;
                 furtherRect = rightRect;
@@ -257,7 +277,7 @@ namespace TVGL.PointCloud
             }
 
             // Try to add the current node to our nearest numberToFind list
-            distanceSquaredToTarget = DistanceSquared(Points[nodeIndex], target);
+            distanceSquaredToTarget = DistanceSquared(TreePoints[nodeIndex], target);
             if (distanceSquaredToTarget <= maxSearchRadiusSquared)
                 nearestNeighbors.Add(nodeIndex, distanceSquaredToTarget);
         }

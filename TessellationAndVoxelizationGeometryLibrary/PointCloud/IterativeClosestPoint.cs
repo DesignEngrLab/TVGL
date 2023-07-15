@@ -109,7 +109,7 @@ namespace TVGL.PointCloud
                 if (maxEigenRealValue < eigenValues[i].Real)
                 {
                     maxEigenRealValue = eigenValues[i].Real;
-                    maxEigenVector = eigenVectors[i];
+                    //maxEigenVector = eigenVectors[i];
                 }
             }
             var q = new Quaternion(maxEigenVector[0], maxEigenVector[1], maxEigenVector[2], maxEigenVector[3]);
