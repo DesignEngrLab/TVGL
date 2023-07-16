@@ -40,8 +40,72 @@ namespace TVGL.PointCloud
         /// <returns>A KDTree.</returns>
         public static KDTree<Vertex2D> Create(IEnumerable<Vertex2D> points)
         { return new KDTree<Vertex2D>(3, points as IList<Vertex2D> ?? points.ToList()); }
+
+        /// <summary>
+        /// Creates the KDTree for the list of points.
+        /// </summary>
+        /// <param name="points">The points.</param>
+        /// <returns>A KDTree.</returns>
+        public static KDTree<IPoint> Create(IEnumerable<IPoint> points)
+        { return new KDTree<IPoint>(3, points as IList<IPoint> ?? points.ToList()); }
+
+        /// <summary>
+        /// Creates the KDTree for the list of points.
+        /// </summary>
+        /// <param name="points">The points.</param>
+        /// <returns>A KDTree.</returns>
+        public static KDTree<TPoint> Create<TPoint>(IEnumerable<TPoint> points) where TPoint : IPoint
+        { return new KDTree<TPoint>(3, points as IList<TPoint> ?? points.ToList()); }
+
+        /// <summary>
+        /// Creates the KDTree for the list of points.
+        /// </summary>
+        /// <param name="points">The points.</param>
+        /// <returns>A KDTree.</returns>
+        public static KDTree<Vector3, TAccObject> Create<TAccObject>(IEnumerable<Vector3> points, IList<TAccObject> accObjects) 
+        { return new KDTree<Vector3, TAccObject>(3, points as IList<Vector3> ?? points.ToList(), accObjects); }
+
+        /// <summary>
+        /// Creates the KDTree for the list of points.
+        /// </summary>
+        /// <param name="points">The points.</param>
+        /// <returns>A KDTree.</returns>
+        public static KDTree<Vector2, TAccObject> Create<TAccObject>(IEnumerable<Vector2> points, IList<TAccObject> accObjects)
+        { return new KDTree<Vector2, TAccObject>(3, points as IList<Vector2> ?? points.ToList(), accObjects); }
+
+        /// <summary>
+        /// Creates the KDTree for the list of points.
+        /// </summary>
+        /// <param name="points">The points.</param>
+        /// <returns>A KDTree.</returns>
+        public static KDTree<Vertex, TAccObject> Create<TAccObject>(IEnumerable<Vertex> points, IList<TAccObject> accObjects)
+        { return new KDTree<Vertex, TAccObject>(3, points as IList<Vertex> ?? points.ToList(), accObjects); }
+
+        /// <summary>
+        /// Creates the KDTree for the list of points.
+        /// </summary>
+        /// <param name="points">The points.</param>
+        /// <returns>A KDTree.</returns>
+        public static KDTree<Vertex2D, TAccObject> Create<TAccObject>(IEnumerable<Vertex2D> points, IList<TAccObject> accObjects)
+        { return new KDTree<Vertex2D, TAccObject>(3, points as IList<Vertex2D> ?? points.ToList(), accObjects); }
+
+        /// <summary>
+        /// Creates the KDTree for the list of points.
+        /// </summary>
+        /// <param name="points">The points.</param>
+        /// <returns>A KDTree.</returns>
+        public static KDTree<IPoint, TAccObject> Create<TAccObject>(IEnumerable<IPoint> points, IList<TAccObject> accObjects) 
+        { return new KDTree<IPoint, TAccObject>(3, points as IList<IPoint> ?? points.ToList(), accObjects); }
+
+        /// <summary>
+        /// Creates the KDTree for the list of points.
+        /// </summary>
+        /// <param name="points">The points.</param>
+        /// <returns>A KDTree.</returns>
+        public static KDTree<TPoint, TAccObject> Create<TPoint,TAccObject>(IEnumerable<TPoint> points, IList<TAccObject> accObjects) where TPoint : IPoint
+        { return new KDTree<TPoint, TAccObject>(3, points as IList<TPoint> ?? points.ToList(), accObjects); }
     }
-    public class KDTree<TPoint> where TPoint : IPoint
+public class KDTree<TPoint> where TPoint : IPoint
     {
         /// <summary>
         /// The number of points in the KDTree
@@ -69,7 +133,7 @@ namespace TVGL.PointCloud
         /// </summary>
         /// <param name="dimensions">The dimensions.</param>
         /// <param name="points">The points.</param>
-        public KDTree(int dimensions, IEnumerable<TPoint> points) : this(points)
+        internal KDTree(int dimensions, IEnumerable<TPoint> points) : this(points)
         {
             Dimensions = dimensions;
             GenerateTree(0, 0, OriginalPoints);
