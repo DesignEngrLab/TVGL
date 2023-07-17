@@ -72,7 +72,7 @@ namespace TVGLUnitTestsAndBenchmarking
                 var points = new List<Vector3>();
                 for (int i = 0; i < dataSize; i++)
                     points.Add(new Vector3(r100, r100, r100));
-                var tree = new KDTree<Vector3, string>(3, points, points.Select(p => p.ToString()).ToList());
+                var tree = KDTree.Create(points, points.Select(p => p.ToString()).ToList());
                 var testPoint = new Vector3(r100, r100, r100);
                 var nearest = tree.FindNearest(testPoint, radius).ToList();
                 List<Vector3> nearest2 = FindNearestBruteForceWithRadius(testPoint, points, radius, numNearest);
