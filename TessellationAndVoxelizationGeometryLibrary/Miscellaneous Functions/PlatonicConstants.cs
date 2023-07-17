@@ -10,86 +10,79 @@ namespace TVGL.Miscellaneous_Functions
     {
         readonly static double phi0 = (Math.Sqrt(5) - 1) / 2;
         readonly static double phi1 = (Math.Sqrt(5) + 1) / 2;
-        readonly static double[] cubeNX = new double[] { -1, 0, 0 };
-        readonly static double[] cubePX = new double[] { 1, 0, 0 };
-        readonly static double[] cubeNY = new double[] { 0, -1, 0 };
-        readonly static double[] cubePY = new double[] { 0, 1, 0 };
-        readonly static double[] cubeNZ = new double[] { 0, 0, -1 };
-        readonly static double[] cubePZ = new double[] { 0, 0, 1 };
+        readonly static Vector3 octahe1 = new Vector3(+1, +1, +1).Normalize();  //these eight of the octahedronare also the faces of a two tetrahedra
+        readonly static Vector3 octahe2 = new Vector3(+1, -1, -1).Normalize();
+        readonly static Vector3 octahe3 = new Vector3(-1, +1, -1).Normalize();
+        readonly static Vector3 octahe4 = new Vector3(-1, -1, +1).Normalize();
+        readonly static Vector3 octahe5 = new Vector3(-1, -1, -1).Normalize();
+        readonly static Vector3 octahe6 = new Vector3(-1, +1, +1).Normalize();
+        readonly static Vector3 octahe7 = new Vector3(+1, -1, +1).Normalize();
+        readonly static Vector3 octahe8 = new Vector3(+1, +1, -1).Normalize();
 
-        readonly static double[] octahe1 = new double[] { +1, +1, +1 };  //these eight of the octahedronare also the faces of a two tetrahedra
-        readonly static double[] octahe2 = new double[] { +1, +1, -1 };
-        readonly static double[] octahe3 = new double[] { +1, -1, +1 };
-        readonly static double[] octahe4 = new double[] { +1, -1, -1 };
-        readonly static double[] octahe5 = new double[] { -1, +1, +1 };
-        readonly static double[] octahe6 = new double[] { -1, +1, -1 };
-        readonly static double[] octahe7 = new double[] { -1, -1, +1 };
-        readonly static double[] octahe8 = new double[] { -1, -1, -1 };
+        readonly static Vector3 icosa9 = new Vector3(0, +phi0, +phi1).Normalize();
+        readonly static Vector3 icosa10 = new Vector3(0, +phi0, -phi1).Normalize();
+        readonly static Vector3 icosa11 = new Vector3(0, -phi0, +phi1).Normalize();
+        readonly static Vector3 icosa12 = new Vector3(0, -phi0, -phi1).Normalize();
 
-        readonly static double[] icosa9 = new double[] { 0, +phi0, +phi1 };
-        readonly static double[] icosa10 = new double[] { 0, +phi0, -phi1 };
-        readonly static double[] icosa11 = new double[] { 0, -phi0, +phi1 };
-        readonly static double[] icosa12 = new double[] { 0, -phi0, -phi1 };
+        readonly static Vector3 icosa13 = new Vector3(+phi1, 0.0, +phi0).Normalize();
+        readonly static Vector3 icosa14 = new Vector3(+phi1, 0.0, -phi0).Normalize();
+        readonly static Vector3 icosa15 = new Vector3(-phi1, 0.0, +phi0).Normalize();
+        readonly static Vector3 icosa16 = new Vector3(-phi1, 0.0, -phi0).Normalize();
 
-        readonly static double[] icosa13 = new double[] { +phi1, 0.0, +phi0 };
-        readonly static double[] icosa14 = new double[] { +phi1, 0.0, -phi0 };
-        readonly static double[] icosa15 = new double[] { -phi1, 0.0, +phi0 };
-        readonly static double[] icosa16 = new double[] { -phi1, 0.0, -phi0 };
+        readonly static Vector3 icosa17 = new Vector3(+phi0, +phi1, 0).Normalize();
+        readonly static Vector3 icosa18 = new Vector3(+phi0, -phi1, 0).Normalize();
+        readonly static Vector3 icosa19 = new Vector3(-phi0, +phi1, 0).Normalize();
+        readonly static Vector3 icosa20 = new Vector3(-phi0, -phi1, 0).Normalize();
 
-        readonly static double[] icosa17 = new double[] { +phi0, +phi1, 0 };
-        readonly static double[] icosa18 = new double[] { +phi0, -phi1, 0 };
-        readonly static double[] icosa19 = new double[] { -phi0, +phi1, 0 };
-        readonly static double[] icosa20 = new double[] { -phi0, -phi1, 0 };
+        readonly static Vector3 dodecA = new Vector3(0, +phi1, +1).Normalize();  //0
+        readonly static Vector3 dodecB = new Vector3(0, -phi1, +1).Normalize();  //1
+        readonly static Vector3 dodecC = new Vector3(0, -phi1, -1).Normalize();  //2
+        readonly static Vector3 dodecD = new Vector3(0, +phi1, -1).Normalize();  //3
 
-        readonly static double[] dodecA = new double[] { 0, +phi1, +1 };  //0
-        readonly static double[] dodecB = new double[] { 0, -phi1, +1 };  //1
-        readonly static double[] dodecC = new double[] { 0, -phi1, -1 };  //2
-        readonly static double[] dodecD = new double[] { 0, +phi1, -1 };  //3
+        readonly static Vector3 dodecE = new Vector3(+1, 0, +phi1).Normalize();  //4
+        readonly static Vector3 dodecF = new Vector3(+1, 0, -phi1).Normalize();  //5
+        readonly static Vector3 dodecG = new Vector3(-1, 0, -phi1).Normalize();  //6
+        readonly static Vector3 dodecH = new Vector3(-1, 0, +phi1).Normalize();  //7
 
-        readonly static double[] dodecE = new double[] { +1, 0, +phi1 };  //4
-        readonly static double[] dodecF = new double[] { +1, 0, -phi1 };  //5
-        readonly static double[] dodecG = new double[] { -1, 0, -phi1 };  //6
-        readonly static double[] dodecH = new double[] { -1, 0, +phi1 };  //7
-
-        readonly static double[] dodecI = new double[] { +phi1, +1, 0 };  //8
-        readonly static double[] dodecJ = new double[] { -phi1, +1, 0 };  //9
-        readonly static double[] dodecK = new double[] { -phi1, -1, 0 };  //10
-        readonly static double[] dodecL = new double[] { +phi1, -1, 0 };  //11
+        readonly static Vector3 dodecI = new Vector3(+phi1, +1, 0).Normalize();  //8
+        readonly static Vector3 dodecJ = new Vector3(-phi1, +1, 0).Normalize();  //9
+        readonly static Vector3 dodecK = new Vector3(-phi1, -1, 0).Normalize();  //10
+        readonly static Vector3 dodecL = new Vector3(+phi1, -1, 0).Normalize();  //11
 
         // thirty edges of dodecahedron or icosahedron as faces define the triaconthedron
         // six of these are the same as the cube
-        // #0 cubeNX (J-K), #1 cubeNY (B-C), #2 cubeNZ (F-G), #3 cubePX (I-L), #4 cubePY (A-D), #5 cubePZ (E-H)
-        readonly static double[] triaco7 = new double[] { 1, +phi1, 1 + phi1 }; // A-E edge
-        readonly static double[] triaco8 = new double[] { 1 + phi1, 1, +phi1 }; // E-I edge
-        readonly static double[] triaco9 = new double[] { +phi1, 1 + phi1, 1 }; // A-I edge
+        // #0 -Vector3.UnitX (J-K), #1 -Vector3.UnitY (B-C), #2 -Vector3.UnitZ (F-G), #3 Vector3.UnitX (I-L), #4 Vector3.UnitY (A-D), #5 Vector3.UnitZ (E-H)
+        readonly static Vector3 triaco7 = new Vector3(1, +phi1, 1 + phi1).Normalize(); // A-E edge
+        readonly static Vector3 triaco8 = new Vector3(1 + phi1, 1, +phi1).Normalize(); // E-I edge
+        readonly static Vector3 triaco9 = new Vector3(+phi1, 1 + phi1, 1).Normalize(); // A-I edge
 
-        readonly static double[] triaco10 = new double[] { +phi1, -phi1 - 1, +1 }; // B-L edge
-        readonly static double[] triaco11 = new double[] { 1 + phi1, -1, +phi1 }; // L-E edge
-        readonly static double[] triaco12 = new double[] { 1, -phi1, phi1 + 1 }; // E-B edge
+        readonly static Vector3 triaco10 = new Vector3(+phi1, -phi1 - 1, +1).Normalize(); // B-L edge
+        readonly static Vector3 triaco11 = new Vector3(1 + phi1, -1, +phi1).Normalize(); // L-E edge
+        readonly static Vector3 triaco12 = new Vector3(1, -phi1, phi1 + 1).Normalize(); // E-B edge
 
-        readonly static double[] triaco13 = new double[] { 1, -phi1, -phi1 - 1 }; // C-F edge
-        readonly static double[] triaco14 = new double[] { 1 + phi1, -1, -phi1 }; // F-L edge
-        readonly static double[] triaco15 = new double[] { +phi1, -phi1 - 1, -1 }; // L-C edge
+        readonly static Vector3 triaco13 = new Vector3(1, -phi1, -phi1 - 1).Normalize(); // C-F edge
+        readonly static Vector3 triaco14 = new Vector3(1 + phi1, -1, -phi1).Normalize(); // F-L edge
+        readonly static Vector3 triaco15 = new Vector3(+phi1, -phi1 - 1, -1).Normalize(); // L-C edge
 
-        readonly static double[] triaco16 = new double[] { +phi1, 1 + phi1, -1 }; // D-I edge
-        readonly static double[] triaco17 = new double[] { 1 + phi1, 1, -phi1 }; // I-F edge
-        readonly static double[] triaco18 = new double[] { 1, phi1, -phi1 - 1 }; // F-D edge
+        readonly static Vector3 triaco16 = new Vector3(+phi1, 1 + phi1, -1).Normalize(); // D-I edge
+        readonly static Vector3 triaco17 = new Vector3(1 + phi1, 1, -phi1).Normalize(); // I-F edge
+        readonly static Vector3 triaco18 = new Vector3(1, phi1, -phi1 - 1).Normalize(); // F-D edge
 
-        readonly static double[] triaco19 = new double[] { -1, +phi1, 1 + phi1 }; //A-H
-        readonly static double[] triaco20 = new double[] { -1 - phi1, 1, +phi1 }; //J-H
-        readonly static double[] triaco21 = new double[] { -phi1, 1 + phi1, 1 }; //A-J
+        readonly static Vector3 triaco19 = new Vector3(-1, +phi1, 1 + phi1).Normalize(); //A-H
+        readonly static Vector3 triaco20 = new Vector3(-1 - phi1, 1, +phi1).Normalize(); //J-H
+        readonly static Vector3 triaco21 = new Vector3(-phi1, 1 + phi1, 1).Normalize(); //A-J
 
-        readonly static double[] triaco22 = new double[] { -phi1, -phi1 - 1, +1 }; //B-K
-        readonly static double[] triaco23 = new double[] { -1 - phi1, -1, +phi1 }; //H-K
-        readonly static double[] triaco24 = new double[] { -1, -phi1, phi1 + 1 };  //B-H
+        readonly static Vector3 triaco22 = new Vector3(-phi1, -phi1 - 1, +1).Normalize(); //B-K
+        readonly static Vector3 triaco23 = new Vector3(-1 - phi1, -1, +phi1).Normalize(); //H-K
+        readonly static Vector3 triaco24 = new Vector3(-1, -phi1, phi1 + 1).Normalize();  //B-H
 
-        readonly static double[] triaco25 = new double[] { -1, -phi1, -phi1 - 1 }; // C-G
-        readonly static double[] triaco26 = new double[] { -1 - phi1, -1, -phi1 }; // G-K
-        readonly static double[] triaco27 = new double[] { -phi1, -phi1 - 1, -1 }; // C-K
+        readonly static Vector3 triaco25 = new Vector3(-1, -phi1, -phi1 - 1).Normalize(); // C-G
+        readonly static Vector3 triaco26 = new Vector3(-1 - phi1, -1, -phi1).Normalize(); // G-K
+        readonly static Vector3 triaco27 = new Vector3(-phi1, -phi1 - 1, -1).Normalize(); // C-K
 
-        readonly static double[] triaco28 = new double[] { -phi1, 1 + phi1, -1 }; // D-J
-        readonly static double[] triaco29 = new double[] { -1 - phi1, 1, -phi1 }; // J-G
-        readonly static double[] triaco30 = new double[] { -1, phi1, -phi1 - 1 }; // D-G
+        readonly static Vector3 triaco28 = new Vector3(-phi1, 1 + phi1, -1).Normalize(); // D-J
+        readonly static Vector3 triaco29 = new Vector3(-1 - phi1, 1, -phi1).Normalize(); // J-G
+        readonly static Vector3 triaco30 = new Vector3(-1, phi1, -phi1 - 1).Normalize(); // D-G
 
         // these are indices to the dodecahedron vertices
         /// <summary>
@@ -157,11 +150,33 @@ namespace TVGL.Miscellaneous_Functions
             new[]{ 8,  10 }, new[]{ 9,  11 }, new[]{ 12,  13 },
             new[]{ 14,  15 },  new[]{ 16,  18 }, new[]{ 17,  19 }
         };
+
+        /// <summary>
+        /// Gets the tetrahedron directions.
+        /// </summary>
+        /// <value>The tetrahedron directions.</value>
+        public static Vector3[] TetrahedronDirections
+        {
+            get
+            {
+                if (_tetrahedronDirections == null)
+                {
+                    _tetrahedronDirections = new[]
+                    {
+                        octahe1,octahe2,octahe3,octahe4
+                    };
+                }
+                return _tetrahedronDirections;
+            }
+        }
+        private static Vector3[] _tetrahedronDirections;
+
+
         /// <summary>
         /// Gets the cube directions.
         /// </summary>
         /// <value>The cube directions.</value>
-        public static double[][] CubeDirections
+        public static Vector3[] CubeDirections
         {
             get
             {
@@ -169,25 +184,25 @@ namespace TVGL.Miscellaneous_Functions
                 {
                     _cubeDirections = new[]
                     {
-                        cubeNX,
-                        cubeNY,
-                        cubeNZ,
-                        cubePX,
-                        cubePY,
-                        cubePZ
+                        -Vector3.UnitX,
+                        -Vector3.UnitY,
+                        -Vector3.UnitZ,
+                        Vector3.UnitX,
+                        Vector3.UnitY,
+                        Vector3.UnitZ
                     };
                 }
                 return _cubeDirections;
             }
         }
-        private static double[][] _cubeDirections;
+        private static Vector3[] _cubeDirections;
 
 
         /// <summary>
         /// Gets the octahedron directions.
         /// </summary>
         /// <value>The octahedron directions.</value>
-        public static double[][] OctahedronDirections
+        public static Vector3[] OctahedronDirections
         {
             get
             {
@@ -195,56 +210,56 @@ namespace TVGL.Miscellaneous_Functions
                 {
                     _octahedronDirections = new[]
                     {
-                        octahe1.Normalize(),
-                        octahe2.Normalize(),
-                        octahe3.Normalize(),
-                        octahe4.Normalize(),
-                        octahe5.Normalize(),
-                        octahe6.Normalize(),
-                        octahe7.Normalize(),
-                        octahe8.Normalize()
+                        octahe1,
+                        octahe2,
+                        octahe3,
+                        octahe4,
+                        octahe5,
+                        octahe6,
+                        octahe7,
+                        octahe8
                     };
                 }
                 return _octahedronDirections;
             }
         }
-        private static double[][] _octahedronDirections;
+        private static Vector3[] _octahedronDirections;
 
         /// <summary>
         /// Gets the dodechedron directions.
         /// </summary>
         /// <value>The dodechedron directions.</value>
-        public static double[][] DodechedronDirections
+        public static Vector3[] DodechedronDirections
         {
             get
             {
                 if (_dodechedronDirections == null)
                 {
                     _dodechedronDirections = new[] {
-                        dodecA.Normalize(),
-                        dodecB.Normalize(),
-                        dodecC.Normalize(),
-                        dodecD.Normalize(),
-                        dodecE.Normalize(),
-                        dodecF.Normalize(),
-                        dodecG.Normalize(),
-                        dodecH.Normalize(),
-                        dodecI.Normalize(),
-                        dodecJ.Normalize(),
-                        dodecK.Normalize(),
-                        dodecL.Normalize()
+                        dodecA,
+                        dodecB,
+                        dodecC,
+                        dodecD,
+                        dodecE,
+                        dodecF,
+                        dodecG,
+                        dodecH,
+                        dodecI,
+                        dodecJ,
+                        dodecK,
+                        dodecL
                     };
                 }
                 return _dodechedronDirections;
             }
         }
-        private static double[][] _dodechedronDirections;
+        private static Vector3[] _dodechedronDirections;
 
         /// <summary>
         /// Gets the icasohedron directions.
         /// </summary>
         /// <value>The icasohedron directions.</value>
-        public static double[][] IcosahedronDirections
+        public static Vector3[] IcosahedronDirections
         {
             get
             {
@@ -252,89 +267,80 @@ namespace TVGL.Miscellaneous_Functions
                 {
                     _icosahedronDirections = new[]
                     {
-                        octahe1.Normalize(), octahe2.Normalize(), octahe3.Normalize(), octahe4.Normalize(),
-                        octahe5.Normalize(), octahe6.Normalize(), octahe7.Normalize(), octahe8.Normalize(),
-                        icosa9.Normalize(), icosa10.Normalize(), icosa11.Normalize(), icosa12.Normalize(),
-                        icosa13.Normalize(), icosa14.Normalize(), icosa15.Normalize(), icosa16.Normalize(),
-                        icosa17.Normalize(), icosa18.Normalize(), icosa19.Normalize(), icosa20.Normalize()
+                        octahe1, octahe2, octahe3, octahe4,
+                        octahe5, octahe6, octahe7, octahe8,
+                        icosa9, icosa10, icosa11, icosa12,
+                        icosa13, icosa14, icosa15, icosa16,
+                        icosa17, icosa18, icosa19, icosa20
                     };
                 }
                 return _icosahedronDirections;
             }
         }
-        private static double[][] _icosahedronDirections;
+        private static Vector3[] _icosahedronDirections;
 
         /// <summary>
         /// Gets the triacontahedron directions.
         /// </summary>
         /// <value>The triacontahedron directions.</value>
-        public static double[][] TriacontahedronDirections
+        public static Vector3[] TriacontahedronDirections
         {
             get
             {
                 if (_triacontahedronDirections == null)
                 {
-                    _triacontahedronDirections = new double[][]
+                    _triacontahedronDirections = new Vector3[]
                     {
-                        Normalize(cubeNX), cubeNY.Normalize(), cubeNZ.Normalize(),
-                        cubePX.Normalize(), cubePY.Normalize(), cubePZ.Normalize(),
-                        triaco7.Normalize(), triaco8.Normalize(),  triaco9.Normalize(),
-                        triaco10.Normalize(),  triaco11.Normalize(), triaco12.Normalize(),
-                        triaco13.Normalize(), triaco14.Normalize(), triaco15.Normalize(),
-                        triaco16.Normalize(), triaco17.Normalize(), triaco18.Normalize(),
-                        triaco19.Normalize(),  triaco20.Normalize(),  triaco21.Normalize(),
-                        triaco22.Normalize(), triaco23.Normalize(), triaco24.Normalize(),
-                        triaco25.Normalize(), triaco26.Normalize(), triaco27.Normalize(),
-                        triaco28.Normalize(),  triaco29.Normalize(),  triaco30.Normalize()
+                        -Vector3.UnitX, -Vector3.UnitY, -Vector3.UnitZ,
+                        Vector3.UnitX, Vector3.UnitY, Vector3.UnitZ,
+                        triaco7, triaco8,  triaco9,
+                        triaco10,  triaco11, triaco12,
+                        triaco13, triaco14, triaco15,
+                        triaco16, triaco17, triaco18,
+                        triaco19,  triaco20,  triaco21,
+                        triaco22, triaco23, triaco24,
+                        triaco25, triaco26, triaco27,
+                        triaco28,  triaco29,  triaco30
                     };
                 }
                 return _triacontahedronDirections;
             }
         }
-        private static double[][] _triacontahedronDirections;
-        public static double[][] AllDirections
+        private static Vector3[] _triacontahedronDirections;
+        public static Vector3[] AllDirections
         {
             get
             {
                 if (_allDirections == null)
                 {
-                    _allDirections = new double[][]
+                    _allDirections = new Vector3[]
                     {
-                        cubeNX.Normalize(), cubeNY.Normalize(), cubeNZ.Normalize(),
-                        cubePX.Normalize(), cubePY.Normalize(), cubePZ.Normalize(),
-                        octahe1.Normalize(), octahe2.Normalize(), octahe3.Normalize(), octahe4.Normalize(),
-                        octahe5.Normalize(), octahe6.Normalize(), octahe7.Normalize(), octahe8.Normalize(),
+                        -Vector3.UnitX, -Vector3.UnitY, -Vector3.UnitZ,
+                        Vector3.UnitX, Vector3.UnitY, Vector3.UnitZ,
+                        octahe1, octahe2, octahe3, octahe4,
+                        octahe5, octahe6, octahe7, octahe8,
 
-                        dodecA.Normalize(), dodecB.Normalize(), dodecC.Normalize(), dodecD.Normalize(),
-                        dodecE.Normalize(), dodecF.Normalize(), dodecG.Normalize(), dodecH.Normalize(),
-                        dodecI.Normalize(), dodecJ.Normalize(), dodecK.Normalize(), dodecL.Normalize(),
+                        dodecA, dodecB, dodecC, dodecD,
+                        dodecE, dodecF, dodecG, dodecH,
+                        dodecI, dodecJ, dodecK, dodecL,
 
-                        icosa9.Normalize(), icosa10.Normalize(), icosa11.Normalize(), icosa12.Normalize(),
-                        icosa13.Normalize(), icosa14.Normalize(), icosa15.Normalize(), icosa16.Normalize(),
-                        icosa17.Normalize(), icosa18.Normalize(), icosa19.Normalize(), icosa20.Normalize(),
+                        icosa9, icosa10, icosa11, icosa12,
+                        icosa13, icosa14, icosa15, icosa16,
+                        icosa17, icosa18, icosa19, icosa20,
 
-                        triaco7.Normalize(), triaco8.Normalize(),  triaco9.Normalize(),
-                        triaco10.Normalize(),  triaco11.Normalize(), triaco12.Normalize(),
-                        triaco13.Normalize(), triaco14.Normalize(), triaco15.Normalize(),
-                        triaco16.Normalize(), triaco17.Normalize(), triaco18.Normalize(),
-                        triaco19.Normalize(),  triaco20.Normalize(),  triaco21.Normalize(),
-                        triaco22.Normalize(), triaco23.Normalize(), triaco24.Normalize(),
-                        triaco25.Normalize(), triaco26.Normalize(), triaco27.Normalize(),
-                        triaco28.Normalize(),  triaco29.Normalize(),  triaco30.Normalize()
+                        triaco7, triaco8,  triaco9,
+                        triaco10,  triaco11, triaco12,
+                        triaco13, triaco14, triaco15,
+                        triaco16, triaco17, triaco18,
+                        triaco19,  triaco20,  triaco21,
+                        triaco22, triaco23, triaco24,
+                        triaco25, triaco26, triaco27,
+                        triaco28,  triaco29,  triaco30
                     };
                 }
                 return _allDirections;
             }
         }
-        private static double[][] _allDirections;
-
-        public static double[] Normalize(this double[] vector)
-        {
-            var mag = Math.Sqrt(vector[0] * vector[0] + vector[1] * vector[1] + vector[2] * vector[2]);
-            vector[0] /= mag;
-            vector[1] /= mag;
-            vector[2] /= mag;
-            return vector;
-        }
+        private static Vector3[] _allDirections;
     }
 }
