@@ -3,7 +3,7 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace TVGL
 {
-    public readonly struct SphericalAnglePair :IEquatable<SphericalAnglePair>
+    public readonly struct SphericalAnglePair : IEquatable<SphericalAnglePair>
     {
         public double PolarAngle { get; }
         public double AzimuthAngle { get; }
@@ -11,6 +11,13 @@ namespace TVGL
         {
             PolarAngle = polarAngle;
             AzimuthAngle = azimuthAngle;
+        }
+
+        public SphericalAnglePair(Vector3 v)
+        {
+            var radius = Math.Sqrt(v.X * v.X + v.Y * v.Y + v.Z * v.Z);
+            PolarAngle = Math.Acos(v.Z / radius);
+            AzimuthAngle = Math.Atan2(v.Y, v.X);
         }
 
 
@@ -46,10 +53,9 @@ namespace TVGL
         {
             // this follow the description and first figure at https://wikipedia.org/wiki/Spherical_coordinate_system
             // ISO physics convention, where polar angle is measured as deviation from z axis
-            var polarAngle = Math.Acos(z);
-            var azimuthalX = Math.Acos(x);
-            var azimuthalY = Math.Acos(y);
-            var azimuthAngle = Math.Atan2(azimuthalY, azimuthalX);
+            var radius = Math.Sqrt(x * x + y * y + z * z);
+            var polarAngle = Math.Acos(z / radius);
+            var azimuthAngle = Math.Atan2(y, x);
             return new SphericalAnglePair(polarAngle, azimuthAngle);
         }
 
@@ -74,8 +80,9 @@ namespace TVGL
         const int maxInt = 32768;
         const double maxIntDivPi = maxInt / Math.PI;
         const double sameDotTolerance = 5e-8; // this is based on the fact that the maxInt is 32768,
-                                           // which means that the max difference in the angles is 2*pi/32768
-                                           // cos(2*pi/32768) = 0.99999998161642933, then I doubled that to be safe
+
+        // which means that the max difference in the angles is 2*pi/32768
+        // cos(2*pi/32768) = 0.99999998161642933, then I doubled that to be safe
         //const double piDivMaxInt = Math.PI / maxInt;
         public override int GetHashCode()
         {
