@@ -144,9 +144,9 @@ namespace TVGL
             var x = faceXDir.Dot(v) / Radius;
             var y = faceYDir.Dot(v) / Radius;
             var z = faceZDir.Dot(v) / Radius;
-            var (polarAngle, azimuthAngle) = Sphere.ConvertToSphericalAngles(x, y, z);
+            var sphericalAngles = TVGL.SphericalAnglePair.ConvertToSphericalAngles(x, y, z);
 
-            return new Vector2(azimuthAngle * Radius, polarAngle * Radius);
+            return new Vector2(sphericalAngles.AzimuthAngle * Radius, sphericalAngles.PolarAngle * Radius);
         }
 
         /// <summary>
@@ -164,7 +164,7 @@ namespace TVGL
             }
             var azimuthAngle = point.X / Radius;
             var polarAngle = point.Y / Radius;
-            var baseCoord = ConvertSphericalToCartesian(Radius, polarAngle, azimuthAngle);
+            var baseCoord = TVGL.SphericalAnglePair.ConvertSphericalToCartesian(Radius, polarAngle, azimuthAngle);
             var rotateMatrix = new Matrix4x4(faceXDir, faceYDir, faceZDir, Vector3.Zero);
             baseCoord = baseCoord.Transform(rotateMatrix);
             return baseCoord + Center;
@@ -188,65 +188,6 @@ namespace TVGL
                 yield return TransformFrom3DTo2D(p);
             }
         }
-
-        /// <summary>
-        /// Converts a cartesian coordinate (with a provided center) to spherical angles.
-        /// </summary>
-        /// <param name="point">The point.</param>
-        /// <param name="center">The center.</param>
-        /// <returns>System.ValueTuple&lt;System.Double, System.Double&gt;.</returns>
-        public static (double, double) ConvertToSphericalAngles(Vector3 point, Vector3 center)
-        {
-            return ConvertToSphericalAngles(point - center);
-        }
-
-        /// <summary>
-        /// Converts a cartesian coordinate to spherical angles based at the origin.
-        /// </summary>
-        /// <param name="p">The p.</param>
-        /// <returns>System.ValueTuple&lt;System.Double, System.Double&gt;.</returns>
-        public static (double, double) ConvertToSphericalAngles(Vector3 p)
-        {
-            return ConvertToSphericalAngles(p.X, p.Y, p.Z);
-        }
-
-        /// <summary>
-        /// Converts a cartesian coordinate to spherical angles based at the origin.
-        /// </summary>
-        /// <param name="x">The x.</param>
-        /// <param name="y">The y.</param>
-        /// <param name="z">The z.</param>
-        /// <returns>System.ValueTuple&lt;System.Double, System.Double&gt;.</returns>
-        public static (double, double) ConvertToSphericalAngles(double x, double y, double z)
-        {
-            // this follow the description and first figure at https://wikipedia.org/wiki/Spherical_coordinate_system
-            // ISO physics convention, where polar angle is measured as deviation from z axis
-            var polarAngle = Math.Acos(z);
-            var azimuthalX = Math.Acos(x);
-            var azimuthalY = Math.Acos(y);
-            var azimuthAngle = Math.Atan2(azimuthalY, azimuthalX);
-            return (polarAngle, azimuthAngle);
-        }
-
-
-        /// <summary>
-        /// Converts the spherical coordinate to cartesian coordinates.
-        /// </summary>
-        /// <param name="radius">The radius.</param>
-        /// <param name="polarAngle">The polar angle.</param>
-        /// <param name="azimuthAngle">The azimuth angle.</param>
-        /// <returns>Vector3.</returns>
-        public static Vector3 ConvertSphericalToCartesian(double radius, double polarAngle, double azimuthAngle)
-        {
-            var sinPolar = Math.Sin(polarAngle);
-            var cosPolar = Math.Cos(polarAngle);
-            var sinAzimuth = Math.Sin(azimuthAngle);
-            var cosAzimuth = Math.Cos(azimuthAngle);
-
-            return new Vector3(radius * cosAzimuth * sinPolar, radius * sinAzimuth * sinPolar, radius * cosPolar);
-        }
-
-
 
 
         /// <summary>

@@ -59,6 +59,7 @@
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Miscellaneous Functions\MiscFunctions.cs" Link="TVGL\Miscellaneous Functions\MiscFunctions.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Miscellaneous Functions\Proximity.cs" Link="TVGL\Miscellaneous Functions\Proximity.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Miscellaneous Functions\ZBuffer.cs" Link="TVGL\Miscellaneous Functions\ZBuffer.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Miscellaneous Functions\SphericalAnglePair.cs" Link="TVGL\Miscellaneous Functions\SphericalAnglePair.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Numerics\ComplexNumber.cs" Link="TVGL\Numerics\ComplexNumber.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Numerics\EqualityExtensions.cs" Link="TVGL\Numerics\EqualityExtensions.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Numerics\Extensions.cs" Link="TVGL\Numerics\Extensions.cs" />
