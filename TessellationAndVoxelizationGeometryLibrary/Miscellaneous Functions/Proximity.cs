@@ -346,7 +346,7 @@ namespace TVGL
             if (eigenVectors.Length == 0)
             {
                 if (zSq.IsNegligible()) return Vector3.UnitZ;
-                if (ySq.IsNegligible()) return Vector3.UnitY;   
+                if (ySq.IsNegligible()) return Vector3.UnitY;
                 if (xSq.IsNegligible()) return Vector3.UnitX;
                 var v = new Vector3(xSq, ySq, zSq);
                 return v.GetPerpendicularDirection();
@@ -885,7 +885,7 @@ namespace TVGL
             {
                 var x = anglePair.X;
                 var y = anglePair.Y;
-                yield return new Vector3(Math.Cos(x) * Math.Cos(y), Math.Sin(x) * Math.Cos(y), Math.Sin(y));
+                yield return new Vector3(radius * Math.Cos(x) * Math.Cos(y), radius * Math.Sin(x) * Math.Cos(y), radius * Math.Sin(y));
             }
         }
     }

@@ -22,7 +22,7 @@ namespace TVGLUnitTestsAndBenchmarking
                 new Vector2(10,2),
                 new Vector2(13,3),
             };
-            var tree = new KDTree<Vector2, object>(2, points);
+            var tree = KDTree.Create(points);
             var nearest = tree.FindNearest(new Vector2(9, 4));
             foreach (var n in nearest)
             {
@@ -35,18 +35,16 @@ namespace TVGLUnitTestsAndBenchmarking
         internal static void Test2()
         {
             var dataSize = 1000000;
-            var numTests = 100;
+            var numTests = 10;
             var numNearest = 1000;
             for (var k = 0; k < numTests; k++)
             {
                 Console.WriteLine($"Test {k}");
-                var points = new List<Vector3>();
-                for (int i = 0; i < dataSize; i++)
-                    points.Add(new Vector3(r100, r100, r100));
-                var tree = new KDTree<Vector3, string>(3, points, points.Select(p => p.ToString()).ToList());
+                var points = Enumerable.Range(0, dataSize).Select(i => new Vector3(r100, r100, r100));
+                var tree = KDTree.Create(points);
                 var testPoint = new Vector3(r100, r100, r100);
                 var nearest = tree.FindNearest(testPoint, numNearest);
-                List<Vector3> nearest2 = FindNearestBruteForce(testPoint, points, numNearest);
+                List<Vector3> nearest2 = FindNearestBruteForce(testPoint, tree.OriginalPoints, numNearest);
                 var j = 0;
                 foreach (var np in nearest)
                 {
@@ -64,24 +62,25 @@ namespace TVGLUnitTestsAndBenchmarking
         internal static void Test3()
         {
             var dataSize = 100000;
-            var numTests = 100;
+            var numTests = 20;
             var numNearest = 100000;
-            var radius = 32.1;
+            var radius = 33.3;
             for (var k = 0; k < numTests; k++)
             {
                 Console.WriteLine($"Test {k}");
+
                 var points = new List<Vector3>();
                 for (int i = 0; i < dataSize; i++)
                     points.Add(new Vector3(r100, r100, r100));
-                var tree = new KDTree<Vector3, string>(3, points, points.Select(p => p.ToString()).ToList());
+                var tree = KDTree.Create(points, points.Select(p => p.ToString()).ToList());
                 var testPoint = new Vector3(r100, r100, r100);
-                var nearest = tree.FindNearest(testPoint,radius, numNearest).ToList();
-                List<Vector3> nearest2 = FindNearestBruteForceWithRadius(testPoint, points,radius, numNearest);
+                var nearest = tree.FindNearest(testPoint, radius).ToList();
+                List<Vector3> nearest2 = FindNearestBruteForceWithRadius(testPoint, points, radius, numNearest);
                 if (nearest.Count != nearest2.Count) throw new Exception("KDTree failed");
                 var j = 0;
                 foreach (var np in nearest)
                 {
-                    if (np != nearest2[j++])
+                    if (np.Item1 != nearest2[j++])
                         throw new Exception("KDTree failed");
                     Console.Write('.');
                 }
@@ -90,14 +89,14 @@ namespace TVGLUnitTestsAndBenchmarking
 
         private static List<Vector3> FindNearestBruteForceWithRadius(Vector3 testPoint, List<Vector3> points, double radius, int numNearest)
         {
-            if (numNearest<=0)numNearest= points.Count;
+            if (numNearest <= 0) numNearest = points.Count;
             var radiusSquared = radius * radius;
             var minDistance = double.PositiveInfinity;
             var nearest = new SortedList<double, Vector3>();
             foreach (var p in points)
             {
                 var d = (p - testPoint).LengthSquared();
-                if (d>radiusSquared) continue;
+                if (d > radiusSquared) continue;
                 if (nearest.Count < numNearest)
                 {
                     nearest.Add(d, p);
@@ -113,7 +112,7 @@ namespace TVGLUnitTestsAndBenchmarking
             return nearest.Values.ToList();
         }
 
-        private static List<Vector3> FindNearestBruteForce(Vector3 testPoint, List<Vector3> points, int numNearest)
+        private static List<Vector3> FindNearestBruteForce(Vector3 testPoint, IList<Vector3> points, int numNearest)
         {
             var minDistance = double.PositiveInfinity;
             var nearest = new SortedList<double, Vector3>();
@@ -122,12 +121,12 @@ namespace TVGLUnitTestsAndBenchmarking
                 var d = (p - testPoint).LengthSquared();
                 if (nearest.Count < numNearest)
                 {
-                    nearest.Add(d,p);
+                    nearest.Add(d, p);
                     minDistance = nearest.Last().Key;
                 }
                 else if (d < minDistance)
                 {
-                    nearest.RemoveAt(numNearest-1);
+                    nearest.RemoveAt(numNearest - 1);
                     nearest.Add(d, p);
                     minDistance = nearest.Keys[numNearest - 1];
                 }

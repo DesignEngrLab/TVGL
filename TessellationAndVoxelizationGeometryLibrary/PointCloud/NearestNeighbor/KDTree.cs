@@ -4,8 +4,108 @@ namespace TVGL.PointCloud
     using System;
     using System.Collections.Generic;
     using System.Linq;
+    using System.Runtime.CompilerServices;
 
-    public class KDTree<TPoint, TAccObject> where TPoint : IPoint
+    public class KDTree
+    {
+
+        /// <summary>
+        /// Creates the KDTree for the list of points.
+        /// </summary>
+        /// <param name="points">The points.</param>
+        /// <returns>A KDTree.</returns>
+        public static KDTree<Vector3> Create(IEnumerable<Vector3> points)
+        { return new KDTree<Vector3>(3, points as IList<Vector3> ?? points.ToList()); }
+
+        /// <summary>
+        /// Creates the KDTree for the list of points.
+        /// </summary>
+        /// <param name="points">The points.</param>
+        /// <returns>A KDTree.</returns>
+        public static KDTree<Vector2> Create(IEnumerable<Vector2> points)
+        { return new KDTree<Vector2>(3, points as IList<Vector2> ?? points.ToList()); }
+
+        /// <summary>
+        /// Creates the KDTree for the list of points.
+        /// </summary>
+        /// <param name="points">The points.</param>
+        /// <returns>A KDTree.</returns>
+        public static KDTree<Vertex> Create(IEnumerable<Vertex> points)
+        { return new KDTree<Vertex>(3, points as IList<Vertex> ?? points.ToList()); }
+
+        /// <summary>
+        /// Creates the KDTree for the list of points.
+        /// </summary>
+        /// <param name="points">The points.</param>
+        /// <returns>A KDTree.</returns>
+        public static KDTree<Vertex2D> Create(IEnumerable<Vertex2D> points)
+        { return new KDTree<Vertex2D>(3, points as IList<Vertex2D> ?? points.ToList()); }
+
+        /// <summary>
+        /// Creates the KDTree for the list of points.
+        /// </summary>
+        /// <param name="points">The points.</param>
+        /// <returns>A KDTree.</returns>
+        public static KDTree<IPoint> Create(IEnumerable<IPoint> points)
+        { return new KDTree<IPoint>(3, points as IList<IPoint> ?? points.ToList()); }
+
+        /// <summary>
+        /// Creates the KDTree for the list of points.
+        /// </summary>
+        /// <param name="points">The points.</param>
+        /// <returns>A KDTree.</returns>
+        public static KDTree<TPoint> Create<TPoint>(IEnumerable<TPoint> points) where TPoint : IPoint
+        { return new KDTree<TPoint>(3, points as IList<TPoint> ?? points.ToList()); }
+
+        /// <summary>
+        /// Creates the KDTree for the list of points.
+        /// </summary>
+        /// <param name="points">The points.</param>
+        /// <returns>A KDTree.</returns>
+        public static KDTree<Vector3, TAccObject> Create<TAccObject>(IEnumerable<Vector3> points, IList<TAccObject> accObjects) 
+        { return new KDTree<Vector3, TAccObject>(3, points as IList<Vector3> ?? points.ToList(), accObjects); }
+
+        /// <summary>
+        /// Creates the KDTree for the list of points.
+        /// </summary>
+        /// <param name="points">The points.</param>
+        /// <returns>A KDTree.</returns>
+        public static KDTree<Vector2, TAccObject> Create<TAccObject>(IEnumerable<Vector2> points, IList<TAccObject> accObjects)
+        { return new KDTree<Vector2, TAccObject>(3, points as IList<Vector2> ?? points.ToList(), accObjects); }
+
+        /// <summary>
+        /// Creates the KDTree for the list of points.
+        /// </summary>
+        /// <param name="points">The points.</param>
+        /// <returns>A KDTree.</returns>
+        public static KDTree<Vertex, TAccObject> Create<TAccObject>(IEnumerable<Vertex> points, IList<TAccObject> accObjects)
+        { return new KDTree<Vertex, TAccObject>(3, points as IList<Vertex> ?? points.ToList(), accObjects); }
+
+        /// <summary>
+        /// Creates the KDTree for the list of points.
+        /// </summary>
+        /// <param name="points">The points.</param>
+        /// <returns>A KDTree.</returns>
+        public static KDTree<Vertex2D, TAccObject> Create<TAccObject>(IEnumerable<Vertex2D> points, IList<TAccObject> accObjects)
+        { return new KDTree<Vertex2D, TAccObject>(3, points as IList<Vertex2D> ?? points.ToList(), accObjects); }
+
+        /// <summary>
+        /// Creates the KDTree for the list of points.
+        /// </summary>
+        /// <param name="points">The points.</param>
+        /// <returns>A KDTree.</returns>
+        public static KDTree<IPoint, TAccObject> Create<TAccObject>(IEnumerable<IPoint> points, IList<TAccObject> accObjects) 
+        { return new KDTree<IPoint, TAccObject>(3, points as IList<IPoint> ?? points.ToList(), accObjects); }
+
+        /// <summary>
+        /// Creates the KDTree for the list of points.
+        /// </summary>
+        /// <param name="points">The points.</param>
+        /// <returns>A KDTree.</returns>
+        public static KDTree<TPoint, TAccObject> Create<TPoint,TAccObject>(IEnumerable<TPoint> points, IList<TAccObject> accObjects) where TPoint : IPoint
+        { return new KDTree<TPoint, TAccObject>(3, points as IList<TPoint> ?? points.ToList(), accObjects); }
+    }
+public class KDTree<TPoint> where TPoint : IPoint
     {
         /// <summary>
         /// The number of points in the KDTree
@@ -15,44 +115,58 @@ namespace TVGL.PointCloud
         /// <summary>
         /// The array in which the binary tree is stored. Enumerating this array is a level-order traversal of the tree.
         /// </summary>
-        public TPoint[] Points { get; }
+        private protected TPoint[] TreePoints { get; }
+
+        public TPoint[] OriginalPoints { get; }
 
         /// <summary>
-        /// An array of accompanying objects that match one-to-one with the points.
+        /// Gets the tree size which is the next power of 2 above the number of points.
         /// </summary>
-        public TAccObject[] AccompanyingObjects { get; }
-
+        private protected int TreeSize { get; init; }
         /// <summary>
-        /// Gets a <see cref="BinaryTreeNavigator{TPoint,TNode}"/> that allows for manual tree navigation,
+        /// Gets the dimensions of the points, typically 2 or 3.
         /// </summary>
-        private BinaryTreeNavigator<TPoint, TAccObject> Navigator
-            => new BinaryTreeNavigator<TPoint, TAccObject>(Points, AccompanyingObjects);
+        private protected int Dimensions { get; init; }
 
-        readonly int Dimensions;
-        readonly bool HasAccompanyingObjects;
-
-        public KDTree(int dimensions, IList<TPoint> points, IList<TAccObject> accompanyingObjects)
-        {
-            HasAccompanyingObjects = accompanyingObjects != null;
-            if (HasAccompanyingObjects && points.Count != accompanyingObjects.Count)
-                throw new ArgumentException("The number of points and accompanying objects must be the same.");
-            Dimensions = dimensions;
-            Count = points.Count;
-            var nullPoint = (TPoint)points[0].GetType().GetField("Null").GetValue(null);
-            // Calculate the number of nodes needed to contain the binary tree.
-            // This is equivalent to finding the power of 2 greater than the number of points
-            var elementCount = (int)Math.Pow(2, (int)(Math.Log(Count) / Math.Log(2)) + 1);
-            Points = Enumerable.Repeat(nullPoint, elementCount).ToArray();
-            if (HasAccompanyingObjects)
-                AccompanyingObjects = new TAccObject[elementCount];
-            GenerateTree(0, 0, points, accompanyingObjects);
-        }
         /// <summary>
         /// Initializes a new instance of the <see cref="KDTree"/> class.
         /// </summary>
-        /// <param name="dimensions">The dimensions (usually 2 or 3 for geometry problems).</param>
+        /// <param name="dimensions">The dimensions.</param>
         /// <param name="points">The points.</param>
-        public KDTree(int dimensions, IList<TPoint> points) : this(dimensions, points, null) { }
+        internal KDTree(int dimensions, IEnumerable<TPoint> points) : this(points)
+        {
+            Dimensions = dimensions;
+            GenerateTree(0, 0, OriginalPoints);
+        }
+
+        private protected KDTree(IEnumerable<TPoint> points)
+        {
+            if (points is ICollection<TPoint> pointCollection)
+            {
+                Count = pointCollection.Count;
+                OriginalPoints = new TPoint[Count];
+                var i = 0;
+                foreach (var p in pointCollection)
+                    OriginalPoints[i++] = p;
+            }
+            else
+            {
+                var i = 0;
+                var listOfPoints = new List<TPoint>();
+                foreach (var p in points)
+                {
+                    listOfPoints.Add(p);
+                    i++;
+                }
+                OriginalPoints = listOfPoints.ToArray();
+                Count = i;
+            }
+            var nullPoint = (TPoint)OriginalPoints[0].GetType().GetField("Null").GetValue(null);
+            // Calculate the number of nodes needed to contain the binary tree.
+            // This is equivalent to finding the power of 2 greater than the number of points
+            TreeSize = (int)Math.Pow(2, (int)(Math.Log(Count) / Math.Log(2)) + 1);
+            TreePoints = Enumerable.Repeat(nullPoint, TreeSize).ToArray();
+        }
 
         /// <summary>
         /// Finds the nearest set of points to the target.
@@ -77,33 +191,9 @@ namespace TVGL.PointCloud
             SearchForNearestNeighbors(0, target, new HyperRect(this.Dimensions), 0,
                 nearestNeighbors, radius * radius);
             foreach (var item in nearestNeighbors)
-                yield return Points[item];
+                yield return TreePoints[item];
         }
-        /// <summary>
-        /// Finds the nearest set of points to the target.
-        /// </summary>
-        /// <param name="target">The target point.</param>
-        /// <param name="numberToFind">The number to find.</param>
-        public IEnumerable<(TPoint, TAccObject)> FindNearestAndAccompanyingObject(TPoint target, int numberToFind = -1)
-        { return FindNearestAndAccompanyingObject(target, double.MaxValue, numberToFind); }
 
-        /// <summary>       
-        /// Finds the nearest set of points to the target.
-        /// </summary>
-        /// <param name="target">The target point.</param>
-        /// <param name="radius">The maximum radius to search.</param>
-        /// <param name="numberToFind">The number to find.</param>
-        /// <returns>A list of (TPoint, TAccObject).</returns>
-        public IEnumerable<(TPoint, TAccObject)> FindNearestAndAccompanyingObject(TPoint target, double radius, int numberToFind = -1)
-        {
-            var nearestNeighbors = numberToFind == -1
-                ? new BoundedPriorityList<int, double>(this.Count)
-                : new BoundedPriorityList<int, double>(numberToFind, true);
-            SearchForNearestNeighbors(0, target, new HyperRect(this.Dimensions), 0,
-                nearestNeighbors, radius);
-            foreach (var item in nearestNeighbors)
-                yield return (Points[item], AccompanyingObjects[item]);
-        }
 
         /// <summary>
         /// Grows a KD tree recursively via median splitting. We find the median by doing a full sort.
@@ -112,97 +202,77 @@ namespace TVGL.PointCloud
         /// <param name="dim">The current splitting dimension.</param>
         /// <param name="points">The set of points remaining to be added to the kd-tree</param>
         /// <param name="nodes">The set of nodes RE</param>
-        private void GenerateTree(int index, int dim, IList<TPoint> points, IList<TAccObject> nodes)
+        private void GenerateTree(int index, int dim, TPoint[] points)
         {
             // note that the real median is sometimes the average if the number of points is even.
             // but here, we just take the lower of the two middle points
-            var count = points.Count;
+            var count = points.Length;
             var leftSideLength = count / 2;
             var medianPointValue = points.Select(p => p[dim]).NthOrderStatistic(leftSideLength);
             //is this a plus one or not?
 
             var leftPoints = new TPoint[leftSideLength];
-            var leftNodes = HasAccompanyingObjects ? new TAccObject[leftSideLength] : Array.Empty<TAccObject>();
             var leftIndex = 0;
             var rightSideLength = count - leftSideLength - 1; // the minus one since the median is not included in either side
             var rightPoints = new TPoint[rightSideLength];
-            var rightNodes = HasAccompanyingObjects ? new TAccObject[rightSideLength] : Array.Empty<TAccObject>();
             var rightIndex = 0;
             var medianPoints = new List<TPoint>();
-            var medianNodes = new List<TAccObject>();
-            for (int i = 0; i < points.Count; i++)
+            for (int i = 0; i < points.Length; i++)
             {
                 TPoint pt = points[i];
-                TAccObject node = HasAccompanyingObjects ? nodes[i] : default(TAccObject);
                 if (pt[dim] > medianPointValue)
                 {
                     rightPoints[rightIndex] = pt;
-                    if (HasAccompanyingObjects)
-                        rightNodes[rightIndex] = node;
                     rightIndex++;
                 }
                 else if (pt[dim] < medianPointValue)
                 {
                     leftPoints[leftIndex] = pt;
-                    if (HasAccompanyingObjects)
-                        leftNodes[leftIndex] = node;
                     leftIndex++;
                 }
                 else
                 {
                     medianPoints.Add(pt);
-                    if (HasAccompanyingObjects)
-                        medianNodes.Add(node);
                 }
             }
             // The target with the median value all the current dimension now becomes the value of the current tree node
             // The previous node becomes the parents of the current node.
-            Points[index] = medianPoints[0];
-            if (HasAccompanyingObjects)
-                AccompanyingObjects[index] = medianNodes[0];
+            TreePoints[index] = medianPoints[0];
             // Split the remaining points that have the same value as the median into left and right arrays.
             for (int i = 1; i < medianPoints.Count; i++)
             {
                 if (leftIndex < leftSideLength)
                 {
                     leftPoints[leftIndex] = medianPoints[i];
-                    if (HasAccompanyingObjects)
-                        leftNodes[leftIndex] = medianNodes[i];
                     leftIndex++;
                 }
                 else
                 {
                     rightPoints[rightIndex] = medianPoints[i];
-                    if (HasAccompanyingObjects)
-                        rightNodes[rightIndex] = medianNodes[i];
                     rightIndex++;
                 }
             }
             // Recursion incoming! passing the left and right arrays for arguments.
             // The current node's left and right values become the "roots" for
             // each recursion call. We also forward cycle to the next dimension.
-            var nextDim = (dim + 1) % this.Dimensions; // select next dimension
+            var nextDim = (dim + 1) % Dimensions; // select next dimension
 
             // We only need to recurse if the target array contains more than one target
             // If the array has no points then the node stay a null value
             if (leftSideLength == 1)
             {
-                this.Points[BinaryTreeNavigator<TPoint, TAccObject>.LeftChildIndex(index)] = leftPoints[0];
-                if (HasAccompanyingObjects)
-                    this.AccompanyingObjects[BinaryTreeNavigator<TPoint, TAccObject>.LeftChildIndex(index)] = leftNodes[0];
+                TreePoints[LeftChildIndex(index)] = leftPoints[0];
             }
             else if (leftSideLength > 1)
-                this.GenerateTree(BinaryTreeNavigator<TPoint, TAccObject>.LeftChildIndex(index), nextDim, leftPoints, leftNodes);
+                GenerateTree(LeftChildIndex(index), nextDim, leftPoints);
 
             // Do the same for the right points
             if (rightSideLength == 1)
             {
-                this.Points[BinaryTreeNavigator<TPoint, TAccObject>.RightChildIndex(index)] = rightPoints[0];
-                if (HasAccompanyingObjects)
-                    this.AccompanyingObjects[BinaryTreeNavigator<TPoint, TAccObject>.RightChildIndex(index)] = rightNodes[0];
+                TreePoints[RightChildIndex(index)] = rightPoints[0];
             }
             else if (rightSideLength > 1)
-                this.GenerateTree(BinaryTreeNavigator<TPoint, TAccObject>.RightChildIndex(index), nextDim, rightPoints, rightNodes);
+                GenerateTree(RightChildIndex(index), nextDim, rightPoints);
         }
 
         /// <summary>
@@ -214,40 +284,40 @@ namespace TVGL.PointCloud
         /// <param name="dimension">The current splitting dimension for this recursion branch.</param>
         /// <param name="nearestNeighbors">The <see cref="BoundedPriorityList{TElement,TPriority}"/> containing the nearest numberToFind already discovered.</param>
         /// <param name="maxSearchRadiusSquared">The squared radius of the current largest distance to search from the <paramref name="target"/></param>
-        private void SearchForNearestNeighbors(int nodeIndex, TPoint target, HyperRect rect, int dimension,
-            BoundedPriorityList<int, double> nearestNeighbors, double maxSearchRadiusSquared)
+        private protected void SearchForNearestNeighbors(int nodeIndex, TPoint target, HyperRect rect, int dimension,
+              BoundedPriorityList<int, double> nearestNeighbors, double maxSearchRadiusSquared)
         {
-            if (this.Points.Length <= nodeIndex || nodeIndex < 0
-                || this.Points[nodeIndex].IsNull())
+            if (TreePoints.Length <= nodeIndex || nodeIndex < 0
+                || TreePoints[nodeIndex].IsNull())
                 return;
 
             // Work out the current dimension
-            var dim = dimension % this.Dimensions;
+            var dim = dimension % Dimensions;
 
             // Split our hyper-rectangle into 2 sub rectangles along the current
             // node's target on the current dimension
             var leftRect = new HyperRect(rect.MinPoint, rect.MaxPoint);
-            leftRect.MaxPoint[dim] = this.Points[nodeIndex][dim];
+            leftRect.MaxPoint[dim] = TreePoints[nodeIndex][dim];
 
             var rightRect = new HyperRect(rect.MinPoint, rect.MaxPoint);
-            rightRect.MinPoint[dim] = this.Points[nodeIndex][dim];
+            rightRect.MinPoint[dim] = TreePoints[nodeIndex][dim];
 
             // Determine which side the target resides in
             HyperRect nearerRect, furtherRect;
             int nearerNode, furtherNode;
-            if (target[dim] <= Points[nodeIndex][dim])
+            if (target[dim] <= TreePoints[nodeIndex][dim])
             {
                 nearerRect = leftRect;
                 furtherRect = rightRect;
-                nearerNode = BinaryTreeNavigator<TPoint, TAccObject>.LeftChildIndex(nodeIndex);
-                furtherNode = BinaryTreeNavigator<TPoint, TAccObject>.RightChildIndex(nodeIndex);
+                nearerNode = LeftChildIndex(nodeIndex);
+                furtherNode = RightChildIndex(nodeIndex);
             }
             else
             {
                 nearerRect = rightRect;
                 furtherRect = leftRect;
-                nearerNode = BinaryTreeNavigator<TPoint, TAccObject>.RightChildIndex(nodeIndex);
-                furtherNode = BinaryTreeNavigator<TPoint, TAccObject>.LeftChildIndex(nodeIndex);
+                nearerNode = RightChildIndex(nodeIndex);
+                furtherNode = LeftChildIndex(nodeIndex);
             }
             // Move down into the nearer branch
             this.SearchForNearestNeighbors(nearerNode, target, nearerRect, dimension + 1,
@@ -271,12 +341,12 @@ namespace TVGL.PointCloud
             }
 
             // Try to add the current node to our nearest numberToFind list
-            distanceSquaredToTarget = this.Metric(this.Points[nodeIndex], target);
+            distanceSquaredToTarget = DistanceSquared(TreePoints[nodeIndex], target);
             if (distanceSquaredToTarget <= maxSearchRadiusSquared)
                 nearestNeighbors.Add(nodeIndex, distanceSquaredToTarget);
         }
 
-        private double Metric(TPoint rectPoint, TPoint target)
+        private protected double DistanceSquared(TPoint rectPoint, TPoint target)
         {
             var sum = 0.0;
             for (int i = 0; i < Dimensions; i++)
@@ -285,6 +355,39 @@ namespace TVGL.PointCloud
                 sum += difference * difference;
             }
             return sum;
+        }
+
+        /// <summary>
+        /// Computes the index of the right child of the current node-index.
+        /// </summary>
+        /// <param name="index">The index of the current node.</param>
+        /// <returns>The index of the right child.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private protected static int RightChildIndex(int index)
+        {
+            return (2 * index) + 2;
+        }
+
+        /// <summary>
+        /// Computes the index of the left child of the current node-index.
+        /// </summary>
+        /// <param name="index">The index of the current node.</param>
+        /// <returns>The index of the left child.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private protected static int LeftChildIndex(int index)
+        {
+            return (2 * index) + 1;
+        }
+
+        /// <summary>
+        /// Computes the index of the parent of the current node-index.
+        /// </summary>
+        /// <param name="index">The index of the current node.</param>
+        /// <returns>The index of the parent node.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private protected static int ParentIndex(int index)
+        {
+            return (index - 1) / 2;
         }
     }
 }

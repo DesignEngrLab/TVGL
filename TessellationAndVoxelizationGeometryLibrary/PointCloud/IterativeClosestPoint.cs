@@ -25,7 +25,7 @@ namespace TVGL.PointCloud
             // otherwise, make a new list to avoid re-enumeration
             var referenceCentroid = GetCentroid(referencePointList);
             // note that the reference points are centered at the origin now
-            var referencePointCloud = new KDTree<Vector3, object>(3,
+            var referencePointCloud = new KDTree<Vector3>(3,
                 referencePointList.Select(p => p - referenceCentroid).ToList());
             var error = double.MaxValue;
             var changeInError = double.MaxValue;
@@ -76,7 +76,7 @@ namespace TVGL.PointCloud
             return transform;
         }
 
-        private static Vector3[] FindClosestPoints(IList<Vector3> inputPoints, KDTree<Vector3, object> referencePointCloud)
+        private static Vector3[] FindClosestPoints(IList<Vector3> inputPoints, KDTree<Vector3> referencePointCloud)
         {
             var matchingTargets = new Vector3[inputPoints.Count];
             for (int i = 0; i < inputPoints.Count; i++)
@@ -109,7 +109,7 @@ namespace TVGL.PointCloud
                 if (maxEigenRealValue < eigenValues[i].Real)
                 {
                     maxEigenRealValue = eigenValues[i].Real;
-                    maxEigenVector = eigenVectors[i];
+                    //maxEigenVector = eigenVectors[i];
                 }
             }
             var q = new Quaternion(maxEigenVector[0], maxEigenVector[1], maxEigenVector[2], maxEigenVector[3]);
