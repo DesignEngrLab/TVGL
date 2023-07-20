@@ -834,10 +834,10 @@ namespace TVGL
 
     /// <summary>
     /// Class VertexSortedByXFirst.
-    /// Implements the <see cref="System.Collections.Generic.IComparer{TVGL.Vertex2D}" />
+    /// Implements the <see cref="System.Collections.Generic.IComparer{TVGL.IPoint2D}" />
     /// </summary>
-    /// <seealso cref="System.Collections.Generic.IComparer{TVGL.Vertex2D}" />
-    internal class VertexSortedByXFirst : IComparer<Vertex2D>
+    /// <seealso cref="System.Collections.Generic.IComparer{TVGL.IPoint2D}" />
+    internal class VertexSortedByXFirst : IComparer<IPoint2D>
     {
 
         /// <summary>
@@ -846,7 +846,7 @@ namespace TVGL
         /// <param name="v1">The v1.</param>
         /// <param name="v2">The v2.</param>
         /// <returns>System.Int32.</returns>
-        public int Compare(Vertex2D v1, Vertex2D v2)
+        public int Compare(IPoint2D v1, IPoint2D v2)
         {
             if (v1.X.IsPracticallySame(v2.X))
                 return (v1.Y < v2.Y) ? -1 : 1;
@@ -856,10 +856,10 @@ namespace TVGL
 
     /// <summary>
     /// Class VertexSortedByYFirst.
-    /// Implements the <see cref="System.Collections.Generic.IComparer{TVGL.Vertex2D}" />
+    /// Implements the <see cref="System.Collections.Generic.IComparer{TVGL.IPoint2D}" />
     /// </summary>
-    /// <seealso cref="System.Collections.Generic.IComparer{TVGL.Vertex2D}" />
-    internal class VertexSortedByYFirst : IComparer<Vertex2D>
+    /// <seealso cref="System.Collections.Generic.IComparer{TVGL.IPoint2D}" />
+    internal class VertexSortedByYFirst : IComparer<IPoint2D>
     {
 
         /// <summary>
@@ -868,7 +868,7 @@ namespace TVGL
         /// <param name="v1">The v1.</param>
         /// <param name="v2">The v2.</param>
         /// <returns>System.Int32.</returns>
-        public int Compare(Vertex2D v1, Vertex2D v2)
+        public int Compare(IPoint2D v1, IPoint2D v2)
         {
             if (v1.Y.IsPracticallySame(v2.Y))
                 return (v1.X < v2.X) ? -1 : 1;
