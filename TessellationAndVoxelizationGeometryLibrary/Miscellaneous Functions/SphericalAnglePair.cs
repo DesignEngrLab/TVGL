@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 
 namespace TVGL
@@ -86,8 +87,13 @@ namespace TVGL
         //const double piDivMaxInt = Math.PI / maxInt;
         public override int GetHashCode()
         {
+            if (PolarAngle.IsPracticallySame(0, sameDotTolerance))
+                return 0;
+            if (PolarAngle.IsPracticallySame(Math.PI, sameDotTolerance))
+                return maxInt;
             var polarInt = (int)(PolarAngle * maxIntDivPi);
-            var azimuthInt = maxInt * (int)(AzimuthAngle * maxIntDivPi);
+            var azimuthInt = (AzimuthAngle < -Math.PI + sameDotTolerance)
+                ? maxInt * maxInt : maxInt * (int)(AzimuthAngle * maxIntDivPi);
             return azimuthInt + polarInt;
         }
 
@@ -103,5 +109,40 @@ namespace TVGL
                 return Equals(otherSpherical);
             return false;
         }
+
+        public Vector3 ToVector3()
+        {
+            var sinPolar = Math.Sin(PolarAngle);
+            var cosPolar = Math.Cos(PolarAngle);
+            var sinAzimuth = Math.Sin(AzimuthAngle);
+            var cosAzimuth = Math.Cos(AzimuthAngle);
+
+            return new Vector3(cosAzimuth * sinPolar, sinAzimuth * sinPolar, cosPolar);
+        }
     }
+
+
+    public class SphericalAngleComparer : IEqualityComparer<SphericalAnglePair>
+    {
+        public SphericalAngleComparer(double tolerance)
+        {
+            Tolerance = tolerance;
+        }
+
+        public double Tolerance { get; }
+
+        public bool Equals(SphericalAnglePair x, SphericalAnglePair y)
+        {
+            var v1 = SphericalAnglePair.ConvertSphericalToCartesian(1, x.PolarAngle, x.AzimuthAngle);
+            var v2 = SphericalAnglePair.ConvertSphericalToCartesian(1, y.PolarAngle, y.AzimuthAngle);
+            return v1.Dot(v2).IsPracticallySame(1, Tolerance);
+        }
+
+        public int GetHashCode([DisallowNull] SphericalAnglePair obj)
+        {
+            return obj.GetHashCode();
+        }
+    }
+
+
 }
