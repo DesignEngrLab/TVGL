@@ -504,7 +504,7 @@ namespace TVGL
         {
             var intersections = new List<double[]>();
             var sortedPoints = new List<Vertex2D>();
-            var comparer = new VertexSortedByXFirst();
+            var comparer = new TwoDSortXFirst();
             foreach (var polygon in polygons.SelectMany(p => p.AllPolygons))
             {
                 polygon.MakePolygonEdgesIfNonExistent();
@@ -564,7 +564,7 @@ namespace TVGL
         {
             var intersections = new List<double[]>();
             var sortedPoints = new List<Vertex2D>();
-            var comparer = new VertexSortedByYFirst();
+            var comparer = new TwoDSortYFirst();
             foreach (var polygon in polygons.SelectMany(p => p.AllPolygons))
             {
                 polygon.MakePolygonEdgesIfNonExistent();

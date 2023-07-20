@@ -103,5 +103,126 @@ namespace TVGL
         }
     }
 
+    /// <summary>
+    /// A comparer for optimization that can be used for either
+    /// ascending or descending.
+    /// </summary>
+    public class NoEqualSort : IComparer<double>
+    {
+        /// <summary>
+        /// The direction
+        /// </summary>
+        private readonly int direction;
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="NoEqualSort" /> class.
+        /// </summary>
+        /// <param name="ascendingOrder">if set to <c>true</c> [ascending order].</param>
+        public NoEqualSort(bool ascendingOrder = true)
+        {
+            direction = ascendingOrder ? -1 : 1;
+        }
+
+        /// <summary>
+        /// Compares two objects and returns a value indicating whether one is less than, equal to, or greater than the other.
+        /// </summary>
+        /// <param name="x">The first object to compare.</param>
+        /// <param name="y">The second object to compare.</param>
+        /// <returns>A signed integer that indicates the relative values of <paramref name="x" /> and <paramref name="y" />, as
+        /// shown in the following table.Value Meaning Less than zero<paramref name="x" /> is less than <paramref name="y" />
+        /// .Zero<paramref name="x" /> equals <paramref name="y" />.Greater than zero<paramref name="x" /> is greater than
+        /// <paramref name="y" />.</returns>
+        public int Compare(double x, double y)
+        {
+            if (x < y) return direction;
+            return -direction;
+        }
+    }
+
+    /// <summary>
+    /// Class TwoDSortXFirst.
+    /// Implements the <see cref="System.Collections.Generic.IComparer{TVGL.IPoint2D}" />
+    /// </summary>
+    /// <seealso cref="System.Collections.Generic.IComparer{TVGL.IPoint2D}" />
+    internal class TwoDSortXFirst : IComparer<IPoint2D>
+    {
+
+        /// <summary>
+        /// Compares the specified v1.
+        /// </summary>
+        /// <param name="v1">The v1.</param>
+        /// <param name="v2">The v2.</param>
+        /// <returns>System.Int32.</returns>
+        public int Compare(IPoint2D v1, IPoint2D v2)
+        {
+            if (v1.X.IsPracticallySame(v2.X))
+                return (v1.Y < v2.Y) ? -1 : 1;
+            return (v1.X < v2.X) ? -1 : 1;
+        }
+    }
+
+    /// <summary>
+    /// Class TwoDSortYFirst.
+    /// Implements the <see cref="System.Collections.Generic.IComparer{TVGL.IPoint2D}" />
+    /// </summary>
+    /// <seealso cref="System.Collections.Generic.IComparer{TVGL.IPoint2D}" />
+    internal class TwoDSortYFirst : IComparer<IPoint2D>
+    {
+
+        /// <summary>
+        /// Compares the specified v1.
+        /// </summary>
+        /// <param name="v1">The v1.</param>
+        /// <param name="v2">The v2.</param>
+        /// <returns>System.Int32.</returns>
+        public int Compare(IPoint2D v1, IPoint2D v2)
+        {
+            if (v1.Y.IsPracticallySame(v2.Y))
+                return (v1.X < v2.X) ? -1 : 1;
+            return (v1.Y < v2.Y) ? -1 : 1;
+        }
+    }
+
+    /// <summary>
+    /// Class VertexSortedByDirection.
+    /// Implements the <see cref="System.Collections.Generic.IComparer{TVGL.Vertex2D}" />
+    /// </summary>
+    /// <seealso cref="System.Collections.Generic.IComparer{TVGL.Vertex2D}" />
+    internal class VertexSortedByDirection : IComparer<Vertex2D>
+    {
+        /// <summary>
+        /// The sweep direction
+        /// </summary>
+        private readonly Vector2 sweepDirection;
+        /// <summary>
+        /// The along direction
+        /// </summary>
+        private readonly Vector2 alongDirection;
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="VertexSortedByDirection"/> class.
+        /// </summary>
+        /// <param name="sweepDirection">The sweep direction.</param>
+        internal VertexSortedByDirection(Vector2 sweepDirection)
+        {
+            this.sweepDirection = sweepDirection;
+            alongDirection = new Vector2(-sweepDirection.Y, sweepDirection.X);
+
+        }
+        /// <summary>
+        /// Compares the specified v1.
+        /// </summary>
+        /// <param name="v1">The v1.</param>
+        /// <param name="v2">The v2.</param>
+        /// <returns>System.Int32.</returns>
+        public int Compare(Vertex2D v1, Vertex2D v2)
+        {
+            var d1 = v1.Coordinates.Dot(sweepDirection);
+            var d2 = v2.Coordinates.Dot(sweepDirection);
+            if (d1.IsPracticallySame(d2))
+                return (v1.Coordinates.Dot(alongDirection) < v2.Coordinates.Dot(alongDirection)) ? -1 : 1;
+            return (d1 < d2) ? -1 : 1;
+        }
+    }
 
 }

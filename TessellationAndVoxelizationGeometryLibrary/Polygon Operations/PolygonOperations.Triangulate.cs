@@ -318,7 +318,7 @@ namespace TVGL
         private static Dictionary<Vertex2D, List<Vertex2D>> FindConnectionsToConvertToMonotonePolygons(Polygon polygon)
         {
             var sortedVertices = new List<Vertex2D>();
-            var comparer = new VertexSortedByXFirst();
+            var comparer = new TwoDSortXFirst();
             foreach (var p in polygon.AllPolygons)
                 sortedVertices = CombineSortedVertexLists(sortedVertices, p.OrderedXVertices, comparer).ToList();
             var connections = new Dictionary<Vertex2D, List<Vertex2D>>();
