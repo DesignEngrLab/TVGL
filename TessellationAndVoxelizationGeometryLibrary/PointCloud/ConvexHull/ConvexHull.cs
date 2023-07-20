@@ -183,7 +183,7 @@ namespace TVGL
 
             try
             {
-                var ch = new ConvexHullAlgorithm(data.Cast<IPoint>().ToArray(), false, tolerance);
+                var ch = new ConvexHullAlgorithm(data.Cast<IPoint>().ToArray(), 3, false, tolerance);
                 // todo: can this cast be avoided by changing ConvexHullAlgorithm to use TVertex?
                 ch.GetConvexHull();
 

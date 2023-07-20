@@ -51,7 +51,7 @@ namespace TVGL.ConvexHullDetails
             where TCell : TriangulationCell<TVertex, TCell>, new()
             where TVertex : IPoint
         {
-            var ch = new ConvexHullAlgorithm(data.Cast<IPoint>().ToArray(), true, PlaneDistanceTolerance);
+            var ch = new ConvexHullAlgorithm(data.Cast<IPoint>().ToArray(), 3, true, PlaneDistanceTolerance);
             ch.GetConvexHull();
             ch.RemoveUpperFaces();
             return ch.GetConvexFaces<TVertex, TCell>();

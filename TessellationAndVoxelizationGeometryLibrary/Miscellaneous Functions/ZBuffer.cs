@@ -419,7 +419,34 @@ namespace TVGL
                 count += countOnFace;
                 accessibleCount += faceAccessible;
             }
-            return accessibleCount / (double)count;
+            return (double)accessibleCount / count;
+        }
+
+
+        public HashSet<int> GetCircleIndices(Vector2 center, double radius)
+        {
+            var outline = new HashSet<int>();
+            var xStartIndex = Math.Max(GetXIndex(center.X - radius), 0);
+            var xEndIndex = Math.Min(GetXIndex(center.X + radius), XCount - 1);
+            var yStartIndex = Math.Max(GetYIndex(center.Y - radius), 0);
+            var yEndIndex = Math.Min(GetYIndex(center.Y + radius), YCount - 1);
+            for (var xIndex = xStartIndex; xIndex <= xEndIndex; xIndex++)
+            {
+                var xReal = GetSnappedX(xIndex);
+                var dxSq = (xReal - center.X) * (xReal - center.X);
+                for (var yIndex = yStartIndex; yIndex <= yEndIndex; yIndex++)
+                {
+                    var yReal = GetSnappedY(yIndex);
+                    var dySq = (yReal - center.Y) * (yReal - center.Y);
+                    var distance = Math.Sqrt(dxSq + dySq);
+                    if (distance.IsPracticallySame(radius, PixelSideLength * 2))
+                    {
+                        var index = GetIndex(xIndex, yIndex);
+                        outline.Add(index);
+                    }
+                }
+            }
+            return outline;
         }
     }
 }

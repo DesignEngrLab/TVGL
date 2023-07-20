@@ -60,13 +60,13 @@ namespace TVGL.ConvexHullDetails
         /// Dimension of the input must be 2 or greater.</exception>
         /// <exception cref="ArgumentException">There are too few vertices (m) for the n-dimensional space. (m must be greater " +
         /// "than the n, but m is " + NumberOfVertices + " and n is " + Dimension</exception>
-        internal ConvexHullAlgorithm(IPoint[] vertices, bool lift, double PlaneDistanceTolerance)
+        internal ConvexHullAlgorithm(IPoint[] vertices, int numOfDimensions, bool lift, double PlaneDistanceTolerance)
         {
             IsLifted = lift;
             Vertices = vertices;
             NumberOfVertices = vertices.Length;
 
-            NumOfDimensions = DetermineDimension();
+            NumOfDimensions = numOfDimensions;
             if (IsLifted) NumOfDimensions++;
             if (NumOfDimensions < 2) throw new ConvexHullGenerationException(ConvexHullCreationResultOutcome.DimensionSmallerTwo, "Dimension of the input must be 2 or greater.");
             if (NumOfDimensions == 2) throw new ConvexHullGenerationException(ConvexHullCreationResultOutcome.DimensionTwoWrongMethod, "Dimension of the input is 2. Thus you should use the Create2D method" +
@@ -102,29 +102,6 @@ namespace TVGL.ConvexHullDetails
             minima = new double[NumOfDimensions];
             maxima = new double[NumOfDimensions];
             mathHelper = new MathHelper(NumOfDimensions, Positions);
-        }
-        /// <summary>
-        /// Check the dimensionality of the input data.
-        /// </summary>
-        /// <returns>System.Int32.</returns>
-        /// <exception cref="ArgumentException">Invalid input data (non-uniform dimension).</exception>
-        private int DetermineDimension()
-        {
-            var r = new Random();
-            var dimension = 0;
-            var dummySum = 0.0;
-            try
-            {
-                do
-                {
-                    dummySum += Vertices[r.Next(NumberOfVertices)][dimension];
-                } while (dimension++ > 0);
-            }
-            catch
-            {
-                return dimension;
-            }
-            return dimension;
         }
 
 
