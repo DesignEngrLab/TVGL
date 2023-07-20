@@ -8,7 +8,7 @@ namespace TVGL.PointCloud
 
     public class KDTree
     {
-
+        #region Straight Line Distance
         /// <summary>
         /// Creates the KDTree for the list of points.
         /// </summary>
@@ -62,7 +62,7 @@ namespace TVGL.PointCloud
         /// </summary>
         /// <param name="points">The points.</param>
         /// <returns>A KDTree.</returns>
-        public static KDTree<Vector3, TAccObject> Create<TAccObject>(IEnumerable<Vector3> points, IList<TAccObject> accObjects) 
+        public static KDTree<Vector3, TAccObject> Create<TAccObject>(IEnumerable<Vector3> points, IList<TAccObject> accObjects)
         { return new KDTree<Vector3, TAccObject>(3, points as IList<Vector3> ?? points.ToList(), accObjects); }
 
         /// <summary>
@@ -94,7 +94,7 @@ namespace TVGL.PointCloud
         /// </summary>
         /// <param name="points">The points.</param>
         /// <returns>A KDTree.</returns>
-        public static KDTree<IPoint, TAccObject> Create<TAccObject>(IEnumerable<IPoint> points, IList<TAccObject> accObjects) 
+        public static KDTree<IPoint, TAccObject> Create<TAccObject>(IEnumerable<IPoint> points, IList<TAccObject> accObjects)
         { return new KDTree<IPoint, TAccObject>(3, points as IList<IPoint> ?? points.ToList(), accObjects); }
 
         /// <summary>
@@ -102,10 +102,111 @@ namespace TVGL.PointCloud
         /// </summary>
         /// <param name="points">The points.</param>
         /// <returns>A KDTree.</returns>
-        public static KDTree<TPoint, TAccObject> Create<TPoint,TAccObject>(IEnumerable<TPoint> points, IList<TAccObject> accObjects) where TPoint : IPoint
+        public static KDTree<TPoint, TAccObject> Create<TPoint, TAccObject>(IEnumerable<TPoint> points, IList<TAccObject> accObjects) where TPoint : IPoint
         { return new KDTree<TPoint, TAccObject>(3, points as IList<TPoint> ?? points.ToList(), accObjects); }
+        #endregion
+
+        #region Over Spherical Surface
+        /// <summary>
+        /// Creates the KDTree for the list of points.
+        /// </summary>
+        /// <param name="points">The points.</param>
+        /// <returns>A KDTree.</returns>
+        public static KDTree<Vector3> CreateSpherical(IEnumerable<Vector3> points)
+        { return new KDTree<Vector3>(3, points as IList<Vector3> ?? points.ToList(), KDTree<Vector3>.SphericalDistance); }
+
+        /// <summary>
+        /// CreateSphericals the KDTree for the list of points.
+        /// </summary>
+        /// <param name="points">The points.</param>
+        /// <returns>A KDTree.</returns>
+        public static KDTree<Vector2> CreateSpherical(IEnumerable<Vector2> points)
+        { return new KDTree<Vector2>(3, points as IList<Vector2> ?? points.ToList(), KDTree<Vector2>.SphericalDistance); }
+
+        /// <summary>
+        /// CreateSphericals the KDTree for the list of points.
+        /// </summary>
+        /// <param name="points">The points.</param>
+        /// <returns>A KDTree.</returns>
+        public static KDTree<Vertex> CreateSpherical(IEnumerable<Vertex> points)
+        { return new KDTree<Vertex>(3, points as IList<Vertex> ?? points.ToList(), KDTree<Vertex>.SphericalDistance); }
+
+        /// <summary>
+        /// CreateSphericals the KDTree for the list of points.
+        /// </summary>
+        /// <param name="points">The points.</param>
+        /// <returns>A KDTree.</returns>
+        public static KDTree<Vertex2D> CreateSpherical(IEnumerable<Vertex2D> points)
+        { return new KDTree<Vertex2D>(3, points as IList<Vertex2D> ?? points.ToList(), KDTree<Vertex2D>.SphericalDistance); }
+
+        /// <summary>
+        /// CreateSphericals the KDTree for the list of points.
+        /// </summary>
+        /// <param name="points">The points.</param>
+        /// <returns>A KDTree.</returns>
+        public static KDTree<IPoint> CreateSpherical(IEnumerable<IPoint> points)
+        { return new KDTree<IPoint>(3, points as IList<IPoint> ?? points.ToList(), KDTree<IPoint>.SphericalDistance); }
+
+        /// <summary>
+        /// CreateSphericals the KDTree for the list of points.
+        /// </summary>
+        /// <param name="points">The points.</param>
+        /// <returns>A KDTree.</returns>
+        public static KDTree<TPoint> CreateSpherical<TPoint>(IEnumerable<TPoint> points) where TPoint : IPoint
+        { return new KDTree<TPoint>(3, points as IList<TPoint> ?? points.ToList(), KDTree<TPoint>.SphericalDistance); }
+
+        /// <summary>
+        /// CreateSphericals the KDTree for the list of points.
+        /// </summary>
+        /// <param name="points">The points.</param>
+        /// <returns>A KDTree.</returns>
+        public static KDTree<Vector3, TAccObject> CreateSpherical<TAccObject>(IEnumerable<Vector3> points, IList<TAccObject> accObjects)
+        { return new KDTree<Vector3, TAccObject>(3, points as IList<Vector3> ?? points.ToList(), accObjects, 
+            KDTree<Vector3,TAccObject>.SphericalDistance); }
+
+        /// <summary>
+        /// CreateSphericals the KDTree for the list of points.
+        /// </summary>
+        /// <param name="points">The points.</param>
+        /// <returns>A KDTree.</returns>
+        public static KDTree<Vector2, TAccObject> CreateSpherical<TAccObject>(IEnumerable<Vector2> points, IList<TAccObject> accObjects)
+        { return new KDTree<Vector2, TAccObject>(3, points as IList<Vector2> ?? points.ToList(), accObjects,
+            KDTree<Vector2, TAccObject>.SphericalDistance); }
+
+        /// <summary>
+        /// CreateSphericals the KDTree for the list of points.
+        /// </summary>
+        /// <param name="points">The points.</param>
+        /// <returns>A KDTree.</returns>
+        public static KDTree<Vertex, TAccObject> CreateSpherical<TAccObject>(IEnumerable<Vertex> points, IList<TAccObject> accObjects)
+        { return new KDTree<Vertex, TAccObject>(3, points as IList<Vertex> ?? points.ToList(), accObjects, KDTree<Vertex, TAccObject>.SphericalDistance); }
+
+        /// <summary>
+        /// CreateSphericals the KDTree for the list of points.
+        /// </summary>
+        /// <param name="points">The points.</param>
+        /// <returns>A KDTree.</returns>
+        public static KDTree<Vertex2D, TAccObject> CreateSpherical<TAccObject>(IEnumerable<Vertex2D> points, IList<TAccObject> accObjects)
+        { return new KDTree<Vertex2D, TAccObject>(3, points as IList<Vertex2D> ?? points.ToList(), accObjects, KDTree<Vertex2D, TAccObject>.SphericalDistance); }
+
+        /// <summary>
+        /// CreateSphericals the KDTree for the list of points.
+        /// </summary>
+        /// <param name="points">The points.</param>
+        /// <returns>A KDTree.</returns>
+        public static KDTree<IPoint, TAccObject> CreateSpherical<TAccObject>(IEnumerable<IPoint> points, IList<TAccObject> accObjects)
+        { return new KDTree<IPoint, TAccObject>(3, points as IList<IPoint> ?? points.ToList(), accObjects, KDTree<IPoint, TAccObject>.SphericalDistance); }
+
+        /// <summary>
+        /// CreateSphericals the KDTree for the list of points.
+        /// </summary>
+        /// <param name="points">The points.</param>
+        /// <returns>A KDTree.</returns>
+        public static KDTree<TPoint, TAccObject> CreateSpherical<TPoint, TAccObject>(IEnumerable<TPoint> points, IList<TAccObject> accObjects) where TPoint : IPoint
+        { return new KDTree<TPoint, TAccObject>(3, points as IList<TPoint> ?? points.ToList(), accObjects, KDTree<TPoint, TAccObject>.SphericalDistance); }
+        #endregion
     }
-public class KDTree<TPoint> where TPoint : IPoint
+    public class KDTree<TPoint> where TPoint : IPoint
     {
         /// <summary>
         /// The number of points in the KDTree
@@ -127,20 +228,24 @@ public class KDTree<TPoint> where TPoint : IPoint
         /// Gets the dimensions of the points, typically 2 or 3.
         /// </summary>
         private protected int Dimensions { get; init; }
+        private Func<TPoint, TPoint, int, double> DistanceMetric { get; }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="KDTree"/> class.
         /// </summary>
         /// <param name="dimensions">The dimensions.</param>
         /// <param name="points">The points.</param>
-        internal KDTree(int dimensions, IEnumerable<TPoint> points) : this(points)
+        internal KDTree(int dimensions, IEnumerable<TPoint> points, Func<TPoint, TPoint, int, double> distanceMetric = null) : this(points, distanceMetric)
         {
             Dimensions = dimensions;
             GenerateTree(0, 0, OriginalPoints);
         }
 
-        private protected KDTree(IEnumerable<TPoint> points)
+        private protected KDTree(IEnumerable<TPoint> points, Func<TPoint, TPoint, int, double> distanceMetric)
         {
+            if (distanceMetric == null)
+                distanceMetric = (p1, p2, dim) => StraightLineDistanceSquared(p1, p2, dim);
+            this.DistanceMetric = distanceMetric;
             if (points is ICollection<TPoint> pointCollection)
             {
                 Count = pointCollection.Count;
@@ -341,20 +446,34 @@ public class KDTree<TPoint> where TPoint : IPoint
             }
 
             // Try to add the current node to our nearest numberToFind list
-            distanceSquaredToTarget = DistanceSquared(TreePoints[nodeIndex], target);
+            distanceSquaredToTarget = DistanceMetric(TreePoints[nodeIndex], target, Dimensions);
             if (distanceSquaredToTarget <= maxSearchRadiusSquared)
                 nearestNeighbors.Add(nodeIndex, distanceSquaredToTarget);
         }
 
-        private protected double DistanceSquared(TPoint rectPoint, TPoint target)
+        public static double StraightLineDistanceSquared(TPoint p1, TPoint p2, int dim)
         {
             var sum = 0.0;
-            for (int i = 0; i < Dimensions; i++)
+            for (int i = 0; i < dim; i++)
             {
-                var difference = rectPoint[i] - target[i];
+                var difference = p1[i] - p2[i];
                 sum += difference * difference;
             }
             return sum;
+        }
+        public static double SphericalDistance(TPoint p1, TPoint p2, int dim)
+        {
+            var dot = 0.0; //dot product between the two vectors: p1 and p2
+            var r1 = 0.0; //squared magnitude of p1
+            var r2 = 0.0; //squared magnitude of p2
+            for (int i = 0; i < dim; i++)
+            {
+                r1 += p1[i] * p1[i];
+                dot += p1[i] * p2[i];
+                r2 += p2[i] * p2[i];
+            }
+            var rAvg = 0.5 * (r1 + r2); //average of the squared magnitudes
+            return rAvg * Math.Acos(dot / rAvg);
         }
 
         /// <summary>

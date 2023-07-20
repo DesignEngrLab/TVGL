@@ -20,7 +20,8 @@ namespace TVGL.PointCloud
         /// <param name="dimensions">The dimensions.</param>
         /// <param name="points">The points.</param>
         /// <param name="accompanyingObjects">The accompanying objects.</param>
-        internal KDTree(int dimensions, IEnumerable<TPoint> points, IList<TAccObject> accompanyingObjects) : base(points)
+        internal KDTree(int dimensions, IEnumerable<TPoint> points, IList<TAccObject> accompanyingObjects, Func<TPoint, TPoint, int, double> distanceMetric = null)
+            : base(points, distanceMetric)
         {
             this.Dimensions = dimensions;
             if (Count != accompanyingObjects.Count)
