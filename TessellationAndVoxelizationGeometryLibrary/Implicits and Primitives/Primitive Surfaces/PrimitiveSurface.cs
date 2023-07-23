@@ -473,7 +473,11 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Gets or sets the borders.
+        /// Gets or sets the borders. PrimitiveBorders is typically one, unless
+        /// there is a hole. A border is made up of border segments where each
+        /// border segment delineates between a pair of primitives. Since a single
+        /// primitive may border numerous other primitives, there are likely to be
+        /// many border segments in the border. 
         /// </summary>
         /// <value>The borders.</value>
         public List<PrimitiveBorder> Borders { get; set; }
@@ -577,6 +581,19 @@ namespace TVGL
             return FindWindingAroundAxis(path, transform, anchor, out minAngle, out maxAngle);
         }
 
+
+        public static Vector3 GetCenterOfMass(IEnumerable<TriangleFace> faces)
+        {
+            var totalArea = 0.0;
+            var totalCenter = Vector3.Zero;
+            foreach (var face in faces)
+            {
+                var area = face.Area;
+                totalArea += area;
+                totalCenter += face.Center * area;
+            }
+            return totalCenter / totalArea;
+        }
 
         /// <summary>
         /// Gets or sets the maximum x.

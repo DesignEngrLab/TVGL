@@ -176,7 +176,23 @@ namespace TVGL
         public new EdgePath Copy(bool reverse = false, TessellatedSolid copiedTessellatedSolid = null,
             int startIndex = 0, int endIndex = -1)
         {
-            throw new NotImplementedException();
+            var copy = new BorderSegment();
+            copy._curvature = _curvature;
+            copy._internalAngle = _internalAngle;
+            copy.Curve = Curve;
+            copy.CurveError = CurveError;
+            if (reverse)
+            {
+                copy.OwnedPrimitive = OtherPrimitive;
+                copy.OtherPrimitive= OwnedPrimitive;
+            }
+            else
+            {
+                  copy.OwnedPrimitive = OwnedPrimitive;
+                copy.OtherPrimitive = OtherPrimitive;
+            }
+            this.CopyEdgesPathData(copy, reverse, copiedTessellatedSolid, startIndex, endIndex);
+            return copy;
         }
     }
 }

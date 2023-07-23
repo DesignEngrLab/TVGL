@@ -1,6 +1,9 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using System.Linq;
+using System.Runtime.CompilerServices;
 
 namespace TVGL
 {
@@ -145,4 +148,168 @@ namespace TVGL
     }
 
 
+    public class SphericalSorterPolarThenAzimuth : IComparer<SphericalAnglePair>
+    {
+        public int Compare(SphericalAnglePair x, SphericalAnglePair y)
+        {
+            if (x.PolarAngle.IsPracticallySame(y.PolarAngle))
+                return (x.AzimuthAngle < y.AzimuthAngle) ? -1 : 1;
+            return (x.PolarAngle < y.PolarAngle) ? -1 : 1;
+        }
+    }
+
+    public class SphericalHashLikeCollection : ICollection<SphericalAnglePair>
+    {
+        private readonly double angleTolerance;
+        private readonly List<SphericalAnglePair> sl;
+        private readonly SphericalAngleComparer equalityComparer;
+        private readonly SphericalSorterPolarThenAzimuth sorter;
+
+        public SphericalHashLikeCollection(double tolerance)
+        {
+            angleTolerance = Math.Acos(tolerance);
+            sl = new List<SphericalAnglePair>();
+            equalityComparer = new SphericalAngleComparer(tolerance);
+            sorter = new SphericalSorterPolarThenAzimuth();
+        }
+
+        public int Count => sl.Count;
+
+        public bool IsReadOnly => false;
+
+        public IEnumerable<SphericalAnglePair> AsAnglePairs()
+        {
+            return sl;
+        }
+        public IEnumerable<Vector3> AsVector3s()
+        {
+            return sl.Select(x => x.ToVector3());
+        }
+        void ICollection<SphericalAnglePair>.Add(SphericalAnglePair item) => AddIfNotPresent(item, out _);
+        public bool Add(SphericalAnglePair item) => AddIfNotPresent(item, out _);
+        public bool Add(Vector3 item) => AddIfNotPresent(new SphericalAnglePair(item), out _);
+        private bool AddIfNotPresent(SphericalAnglePair item, out int i)
+        {
+            i = BinarySearch(item, out var matchFound);
+            if (matchFound)
+                return false;
+            if (i == sl.Count)
+                sl.Add(item);
+            else sl.Insert(i, item);
+            return true;
+        }
+
+        // This binary search is modified/simplified from Array.BinarySearch
+        // (https://referencesource.microsoft.com/mscorlib/a.html#b92d187c91d4c9a9)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private int BinarySearch(SphericalAnglePair value, out bool matchFound)
+        {
+            if (sl.Count == 0)
+            {
+                matchFound = false;
+                return 0;
+            }
+            var lo = 0;
+            var hi = sl.Count - 1;
+            while (lo <= hi)
+            {
+                int i = lo + ((hi - lo) >> 1);
+                if (equalityComparer.Equals(sl[i], value))
+                {
+                    matchFound = true;
+                    return i;
+                }
+                var c = sorter.Compare(sl[i], value);
+                if (c < 0) lo = i + 1;
+                else hi = i - 1;
+            }
+            int index = lo;
+            // the following is a unique feature of this binary search
+            matchFound = ScanHoop(ref index, value);
+            return index;
+        }
+
+        private bool ScanHoop(ref int index, SphericalAnglePair value)
+        {
+            var i = index;
+            // given that the list is sorted in polar angle, we can scan the hoop up to
+            // the angle tolerance in either direction
+            // this is particularly important since the azimuth angle has its values near
+            // pi and -pi at the same location
+            while (++i < sl.Count && sl[i].PolarAngle - value.PolarAngle < angleTolerance)
+                if (equalityComparer.Equals(sl[i], value))
+                {
+                    index = i;
+                    return true;
+                }
+            i = index;
+            while (--i >= 0 && value.PolarAngle - sl[i].PolarAngle < angleTolerance)
+                if (equalityComparer.Equals(sl[i], value))
+                {
+                    index = i;
+                    return true;
+                }
+            return false;
+        }
+
+        public void Clear()
+        {
+            sl.Clear();
+        }
+
+        public bool Contains(Vector3 item) => Contains(new SphericalAnglePair(item));
+        public bool Contains(SphericalAnglePair item)
+        {
+            BinarySearch(item, out var matchFound);
+            return matchFound;
+        }
+
+        public IEnumerator<SphericalAnglePair> GetEnumerator()
+        {
+            return sl.GetEnumerator();
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return sl.GetEnumerator();
+        }
+        /*** these were going to be needed if implementing IList, but they don't make sense as
+         *   we don't want users to be able to insert or remove items at arbitrary positions
+        public int IndexOf(SphericalAnglePair item)
+        {
+            var i = BinarySearch(item, out var matchFound);
+            if (matchFound)
+                return i;
+            return -1;
+        }
+
+        public SphericalAnglePair this[int index] { get => sl[index]; set => sl[index] = value; }
+        public void Insert(int index, SphericalAnglePair item)
+        {
+            throw new NotSupportedException("Because the collection uses a sorted list underneath.");
+        }
+
+        public void RemoveAt(int index)
+        {
+            throw new NotSupportedException("Because the collection uses a sorted list underneath.");
+        }
+        */
+
+        public void CopyTo(SphericalAnglePair[] array, int arrayIndex)
+        {
+            sl.CopyTo(array, arrayIndex);
+        }
+
+        public bool Remove(Vector3 item) => Remove(new SphericalAnglePair(item));
+        public bool Remove(SphericalAnglePair item)
+        {
+            var i = BinarySearch(item, out var matchFound);
+            if (matchFound)
+            {
+                sl.RemoveAt(i);
+                return true;
+            }
+            return false;
+        }
+    }
 }
