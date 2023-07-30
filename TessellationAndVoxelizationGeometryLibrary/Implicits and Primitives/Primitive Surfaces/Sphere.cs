@@ -278,7 +278,7 @@ namespace TVGL
         /// <param name="center">The center.</param>
         /// <param name="radius">The radius.</param>
         /// <param name="isPositive">if set to <c>true</c> [is positive].</param>
-        public Sphere(Vector3 center, double radius, bool isPositive)
+        public Sphere(Vector3 center, double radius, bool? isPositive)
         {
             Center = center;
             this.isPositive = isPositive;

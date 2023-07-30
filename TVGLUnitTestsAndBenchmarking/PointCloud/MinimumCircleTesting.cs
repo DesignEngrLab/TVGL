@@ -1,4 +1,5 @@
-﻿using SharpDX.Direct2D1.Effects;
+﻿using BenchmarkDotNet.Attributes;
+using SharpDX.Direct2D1.Effects;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -8,7 +9,7 @@ using TVGL.PointCloud;
 
 namespace TVGLUnitTestsAndBenchmarking
 {
-    internal class MinimumCircleTesting
+    public class MinimumCircleTesting
     {
         static Random r = new Random();
         static double r100 => 200.0 * r.NextDouble() - 100.0;
@@ -168,5 +169,33 @@ namespace TVGLUnitTestsAndBenchmarking
                 else Message.output("All three agree", 1);
             }
         }
+
+        [GlobalSetup]
+        public void BenchmarkSetup()
+        {
+            int dataSize = 10000000;
+            points = Enumerable.Range(0, dataSize).Select(i => new Vector2(r100, r100)).ToList();
+        }
+
+        [Benchmark]
+        public Circle MinCircle_Old()
+        {
+            return TVGL.MinimumEnclosure.MinimumCircle(points);
+        }
+
+        [Benchmark]
+        public Circle MinCircle_Bing()
+        {
+            return TVGL.MinimumEnclosure.MinimumCircleBing(points);
+        }
+
+        [Benchmark]
+        public Circle MinCircle_NEWd()
+        {
+            return TVGL.MinimumEnclosure.MinimumCircleMC(points);
+        }
+
+        public IList<Vector2> points;
+
     }
 }

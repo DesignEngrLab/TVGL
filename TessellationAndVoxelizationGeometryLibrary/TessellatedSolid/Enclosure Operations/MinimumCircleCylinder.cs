@@ -23,202 +23,6 @@ namespace TVGL
     /// </summary>
     public static partial class MinimumEnclosure
     {
-        public static Circle MinimumCircleMC(this IEnumerable<Vector2> pointsInput)
-        {
-            var points = pointsInput.ToList();
-            var numPoints = points.Count;
-            if (numPoints == 0)
-                throw new ArgumentException("No points provided.");
-            else if (numPoints == 1)
-                return new Circle(points[0], 0);
-            else if (numPoints == 2)
-                return Circle.CreateFrom2Points(points[0], points[1]);
-
-            int numPointsInCircle = 1;
-            Circle circle = default;
-            var newPointFoundOutsideCircle = true;
-            while (newPointFoundOutsideCircle)
-            {
-                circle = FindCircle(points, ref numPointsInCircle);
-                newPointFoundOutsideCircle = false;
-                var maxDistSqared = circle.RadiusSquared;
-                var indexOfMaxDist = -1;
-                for (int i = numPoints - numPointsInCircle - 1; i >= 0; i--)
-                {
-                    var dist = LengthSquared(points[i], circle.Center);
-
-                    if (maxDistSqared < dist)
-                    {
-                        maxDistSqared = dist;
-                        indexOfMaxDist = i;
-                        newPointFoundOutsideCircle = true;
-                    }
-                }
-                if (newPointFoundOutsideCircle)
-                {
-                    var maxPoint = points[indexOfMaxDist];
-                    points.RemoveAt(indexOfMaxDist);
-                    points.Add(maxPoint);
-                    numPointsInCircle++;
-                }
-            }
-            return circle;
-        }
-
-        private static Circle FindCircle(IList<Vector2> points, ref int numInCircle)
-        {
-            if (numInCircle == 1)
-                return new Circle(points[^1], 0);
-            if (numInCircle == 2)
-                return Circle.CreateFrom2Points(points[^1], points[^2]);
-            if (numInCircle == 3)
-            {
-                // since the last point was outside the circle, we know it is on the circle
-                // before we jump to the 3-point circle, we should check if either of the two
-                // 2-point circles (which are guaranteed to be smaller than the 3-point cirlce)
-                // includes the other point from the starting circle
-                var circle = Circle.CreateFrom2Points(points[^1], points[^2]);
-                if (LengthSquared(points[^3], circle.Center) <= circle.RadiusSquared)
-                {
-                    numInCircle = 2;
-                    return circle;
-                }
-                circle = Circle.CreateFrom2Points(points[^1], points[^3]);
-                if (LengthSquared(points[^2], circle.Center) <= circle.RadiusSquared)
-                {
-                    numInCircle = 2;
-                    // since 1 and 3 are furthest apart, we need to swap 2 and 3
-                    // so that the two points in the circle are at then end of the list
-                    var tempPoint = points[^2];
-                    points[^2] = points[^3];
-                    points[^3] = tempPoint;
-                    return circle;
-                }
-                // otherwise, it's the 3-point circle
-                Circle.CreateFrom3Points(points[^1], points[^2], points[^3], out circle);
-                return circle;
-            }
-            { // else if (span.Length == 4)
-              // (I know I could remove these curly braces, but it means that the variables
-              // circle and tempPoint are indepedently defined in this scope, as well as the
-              // Length == 3 case, which is nicer than coming up with separate names for them)
-              // now we have a lot of cases to deal with. All we know is that the last point
-              // was outside the circle, so it must be on the circle this time
-                numInCircle = 3;
-                // circle 1-2-3
-                var circle = FindCircle(points, ref numInCircle); // a little recursion never hurt anyone
-                                                                  // this allows us to check if it dropped back down to 2 points as well
-                                                                  // the easiest and most likely case is that the 3 points at the end
-                                                                  // of the list capture the fourth point
-                if (LengthSquared(points[^4], circle.Center) <= circle.RadiusSquared)
-                    return circle;
-                // since the 4th point is outside the circle, we try again with a little
-                // recursion after first swapping the 3rd and 4th points
-                var tempPoint = points[^3];
-                points[^3] = points[^4];
-                points[^4] = tempPoint;
-                // circle 1-2-4
-                numInCircle = 3; //it probably already is, but the previous call may have dropped it to 2
-                circle = FindCircle(points, ref numInCircle);
-                if (LengthSquared(points[^4], circle.Center) <= circle.RadiusSquared)
-                    return circle;
-                // try once more with the original 2nd point as the 4th point
-                if (numInCircle == 2) //very rare case here, but if you swapped above, and numInCircle has dropped to 2,
-                                      //then 4 has been moved into the "2" position (the circle would not have been between
-                                      //the orignial 1 and 2 since that would have been found already). In this case, the original
-                                      //2 would be in the 3rd spot so, you need to swap 3 & 4 NOT 2 & 4 as below
-                {
-                    tempPoint = points[^3];
-                    points[^3] = points[^4];
-                    points[^4] = tempPoint;
-                    numInCircle = 3; 
-                }
-                else
-                {
-                    tempPoint = points[^2];
-                    points[^2] = points[^4];
-                    points[^4] = tempPoint;
-                } 
-                // circle 1-3-4
-                circle = FindCircle(points, ref numInCircle);
-                if (LengthSquared(points[^4], circle.Center) > circle.RadiusSquared)
-                    throw new Exception("This should never happen.");
-                return circle;
-            }
-        }
-
-        private static double LengthSquared(IPoint2D a, IPoint2D b)
-        {
-            return (a.X - b.X) * (a.X - b.X) + (a.Y - b.Y) * (a.Y - b.Y);
-        }
-
-
-
-        public static Circle MinimumCircleBing(this IEnumerable<Vector2> pointsInput)
-        {
-            var points = pointsInput.ToList();
-            var numPoints = points.Count;
-            if (numPoints == 0)
-                throw new ArgumentException("No points provided.");
-            else if (numPoints == 1)
-                return new Circle(points[0], 0);
-            else if (numPoints == 2)
-                return Circle.CreateFrom2Points(points[0], points[1]);
-
-            // Shuffle the points.
-            points = points.OrderBy(p => Guid.NewGuid()).ToList();
-
-            // Move forward with R = 0 and C = P_1.
-            var circle = new Circle(points[0], 0);
-            //var center = points[0];
-            //double radiusSqd = 0;
-
-            for (int i = 1; i < points.Count; i++)
-            {
-                var p = points[i];
-                // If p is inside C + R, continue.
-                if ((p - circle.Center).LengthSquared() <= circle.RadiusSquared)
-                    continue;
-
-                // Otherwise, we need to update C and R.
-                circle = new Circle(p, 0);
-
-                // Find the smallest circle that contains P_i and P_1 through P_{i-1}.
-                for (int j = 0; j < i; j++)
-                {
-                    p = points[j];
-
-                    // If p is inside C + R, continue.
-                    if ((p - circle.Center).LengthSquared() <= circle.RadiusSquared)
-                        continue;
-
-                    // Otherwise, we need to update C and R again.
-                    circle = Circle.CreateFrom2Points(points[i], points[j]);
-
-                    // Find the smallest circle that contains P_i through P_{j-1} and P_i.
-                    for (int k = 0; k < j; k++)
-                    {
-                        p = points[k];
-
-                        // If p is inside C + R, continue.
-                        if ((p - circle.Center).LengthSquared() <= circle.RadiusSquared)
-                            continue;
-                        // Otherwise, we need to update C and R again.
-                        if (!Circle.CreateFrom3Points(points[i], points[j], points[k], out circle))
-                        { // the only way CreateFrom3Points fails is if the 3 points are collinear
-                            var rSqdIK = (points[i] - points[k]).LengthSquared();
-                            var rSqdJK = (points[j] - points[k]).LengthSquared();
-                            circle = (rSqdIK > rSqdJK)
-                            ? new Circle(0.5 * (points[i] + points[k]) / 2, 0.25 * rSqdIK)
-                            : new Circle(0.5 * (points[j] + points[k]) / 2, 0.25 * rSqdJK);
-                        }
-                    }
-                }
-            }
-            return circle;
-        }
-
-
         /// <summary>
         /// Finds the minimum bounding circle
         /// </summary>
@@ -235,7 +39,10 @@ namespace TVGL
         /// </references>
         public static Circle MinimumCircle(this IEnumerable<Vector2> pointsInput)
         {
-            var points = pointsInput.ToList();
+            // in July 2023, this was re-written to be more easier to follow and based
+            // clearly on the above paper. That implementation turned out to be 8-10 times
+            // slower. but that approach is now the basis for MinimumSphere and MinimumGaussSpherePlane
+            var points = pointsInput as IList<Vector2> ?? pointsInput.ToList();
             var numPoints = points.Count;
             if (numPoints == 0)
                 throw new ArgumentException("No points provided.");
@@ -244,80 +51,15 @@ namespace TVGL
             else if (numPoints == 2)
                 return Circle.CreateFrom2Points(points[0], points[1]);
 
-            #region Algorithm 1
-
-            ////Randomize the list of points
-            //var r = new Random(0);
-            //var randomPoints = new List<Vector2>(points.OrderBy(p => r.Next()));
-
-            //if (randomPoints.Count < 2) return new Circle(0.0, points[0]);
-            ////Get any two points in the list points.
-            //var point1 = randomPoints[0];
-            //var point2 = randomPoints[1];
-            //var previousPoints = new HashSet<Vector2>();
-            //var circle = new Circle(point1, point2);
-            //var stallCounter = 0;
-            //var i = 0;
-
-            //while (i < randomPoints.Count && stallCounter < points.Count * 2)
-            //{
-            //    var currentPoint = randomPoints[i];
-            //    //If the current point is part of the circle or inside the circle, go to the next iteration
-            //    if (circle.Point0.Equals(currentPoint) ||
-            //        circle.Point1.Equals(currentPoint) || 
-            //        circle.Point2.Equals(currentPoint) || 
-            //        circle.IsPointInsideCircle(currentPoint))
-            //    {
-            //        i++;
-            //        continue;
-            //    }
-
-            //    //Else if the currentPoint is a previousPoint, increase dimension
-            //    if (previousPoints.Contains(currentPoint))
-            //    {
-            //        //Make a new circle from the current two-point circle and the current point
-            //        circle = new Circle(circle.Point0, circle.Point1, currentPoint);
-            //        previousPoints.Remove(currentPoint);
-            //        i++;
-            //    }
-            //    else
-            //    {
-            //        //Find the point in the circle furthest from new point. 
-            //        circle.Furthest(currentPoint, out var furthestPoint, ref previousPoints);
-            //        //Make a new circle from the furthest point and current point
-            //        circle = new Circle(currentPoint, furthestPoint);
-            //        //Add previousPoints to the front of the list
-            //        foreach (var previousPoint in previousPoints)
-            //        {
-            //            randomPoints.Remove(previousPoint);
-            //            randomPoints.Insert(0, previousPoint);
-            //        }
-            //        //Restart the search
-            //        stallCounter++;
-            //        i = 0;
-            //    }
-            //}
-
-            #endregion
-
-            #region Algorithm 2: Furthest Point
-            //var r = new Random(0);
-            //var randomPoints = new List<Vector2>(points.OrderBy(p => r.Next()));
-
-            //Algorithm 2
-            //I tried using the extremes (X, Y, and also tried Sum, Diff) to do a first pass at the circle
-            //or to define the starting circle for max dX or dY, but all of these were slower do to the extra
-            //for loop at the onset. The current approach is faster and simpler; just start with some arbitrary points.
+      
             var pointsOnCircle = new[] { points[0], points[points.Count / 2] };
             var prevPointsOnCircle = pointsOnCircle;
-            var circle = GetCircleFrom2DiametricalPoints(pointsOnCircle[0], pointsOnCircle[1]);
+            var circle = Circle.CreateFrom2Points(pointsOnCircle[0], pointsOnCircle[1]);
             var dummyPoint = Vector2.Null;
             var stallCounter = 0;
             var successful = false;
             var stallLimit = points.Count * 1.5;
             if (stallLimit < 100) stallLimit = 100;
-            //var centerX = circle.Center.X;
-            //var centerY = circle.Center.Y;
             var sqTolerance = Math.Sqrt(Constants.BaseTolerance);
             var sqRadiusPlusTolerance = circle.RadiusSquared + sqTolerance;
             var nextPoint = dummyPoint;
@@ -355,7 +97,7 @@ namespace TVGL
                 var furthestPoint = FindFurthestPoint(nextPoint, pointsOnCircle);
                 //Make a new circle from the furthest point and current point
                 pointsOnCircle = new[] { nextPoint, furthestPoint };
-                circle = GetCircleFrom2DiametricalPoints(nextPoint, furthestPoint);
+                circle = Circle.CreateFrom2Points(nextPoint, furthestPoint);
                 sqRadiusPlusTolerance = circle.RadiusSquared + sqTolerance;
 
                 //Now check if the previous points are outside this circle.
@@ -370,7 +112,7 @@ namespace TVGL
                     if (distanceSquared > sqRadiusPlusTolerance)
                     {
                         //Make a new circle from the current two-point circle and the current point
-                        circle = GetCircleFrom3Points(nextPoint, furthestPoint, point);
+                        Circle.CreateFrom3Points(nextPoint, furthestPoint, point, out circle);
                         pointsOnCircle = new[] { nextPoint, furthestPoint, point };
                         sqRadiusPlusTolerance = circle.RadiusSquared + sqTolerance;
                     }
@@ -384,23 +126,6 @@ namespace TVGL
             }
             if (stallCounter >= stallLimit) Message.output("Bounding circle failed to converge to within "
                 + (Constants.BaseTolerance * circle.Radius * 2), 2);
-
-            #endregion
-
-            #region Algorithm 3: Meggiddo's Linear-Time Algorithm
-
-            //Pair up points into n/2 pairs. 
-            //If an odd number of points.....
-
-            //Construct a bisecting line for each pair of points. This sets their slope.
-
-            //Order the slopes.
-            //Find the median (halfway in the set) slope of the bisector lines 
-
-
-            //Test
-
-            #endregion
 
             return circle;
         }
@@ -699,63 +424,6 @@ namespace TVGL
                 movement = 1 - d;
             }
             return likelyAxis;
-        }
-
-
-        /// <summary>
-        /// Gets the circle from2 diametrical points.
-        /// </summary>
-        /// <param name="p0">The p0.</param>
-        /// <param name="p1">The p1.</param>
-        /// <returns>Circle.</returns>
-        public static Circle GetCircleFrom2DiametricalPoints(Vector2 p0, Vector2 p1)
-        {
-            var center = (p0 + p1) / 2;
-            return new Circle(center, (p0 - center).LengthSquared());
-        }
-        /// <summary>
-        /// Gets the circle from3 points.
-        /// </summary>
-        /// <param name="p0">The p0.</param>
-        /// <param name="p1">The p1.</param>
-        /// <param name="p2">The p2.</param>
-        /// <returns>Circle.</returns>
-        public static Circle GetCircleFrom3Points(Vector2 p0, Vector2 p1, Vector2 p2)
-        {
-            var segment1 = (p1 - p0) / 2;
-            var midPoint1 = (p0 + p1) / 2;
-            var bisector1Dir = new Vector2(-segment1.Y, segment1.X);
-            var segment2 = (p2 - p1) / 2;
-            var midPoint2 = (p1 + p2) / 2;
-            var bisector2Dir = new Vector2(-segment2.Y, segment2.X);
-            var center = MiscFunctions.LineLine2DIntersection(midPoint1, bisector1Dir, midPoint2, bisector2Dir);
-            return new Circle(center, (p0 - center).LengthSquared());
-        }
-
-        /// <summary>
-        /// Gets the circle from2 diametrical points.
-        /// </summary>
-        /// <param name="p0">The p0.</param>
-        /// <param name="p1">The p1.</param>
-        /// <param name="plane">The plane.</param>
-        /// <returns>Circle.</returns>
-        public static Circle GetCircleFrom2DiametricalPoints(Vector3 p0, Vector3 p1, Plane plane)
-        {
-            return GetCircleFrom2DiametricalPoints(p0.ConvertTo2DCoordinates(plane.AsTransformToXYPlane),
-                            p1.ConvertTo2DCoordinates(plane.AsTransformToXYPlane));
-        }
-        /// <summary>
-        /// Gets the circle from3 points.
-        /// </summary>
-        /// <param name="p0">The p0.</param>
-        /// <param name="p1">The p1.</param>
-        /// <param name="p2">The p2.</param>
-        /// <param name="plane">The plane.</param>
-        /// <returns>Circle.</returns>
-        public static Circle GetCircleFrom3Points(Vector3 p0, Vector3 p1, Vector3 p2, Plane plane)
-        {
-            return GetCircleFrom3Points(p0.ConvertTo2DCoordinates(plane.AsTransformToXYPlane),
-                p1.ConvertTo2DCoordinates(plane.AsTransformToXYPlane), p2.ConvertTo2DCoordinates(plane.AsTransformToXYPlane));
         }
     }
 }
