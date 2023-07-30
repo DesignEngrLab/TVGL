@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using TVGL;
 
 namespace TVGLUnitTestsAndBenchmarking
@@ -18,21 +19,26 @@ namespace TVGLUnitTestsAndBenchmarking
         [STAThread]
         private static void Main(string[] args)
         {
+            DirectoryInfo dir = Program.BackoutToFolder(inputFolder);
+            var myWriter = new ConsoleTraceListener();
+            Trace.Listeners.Add(myWriter);
+            TVGL.Message.Verbosity = VerbosityLevels.Low;
+            MinimumCircleTesting.Test1(10000, 10000);
+            MinimumCircleTesting.Test2(10000, 10000);
+            MinimumCircleTesting.Test3(10000, 1000);
+            MinimumCircleTesting.Test4(GetRandomPolygonThroughSolids(dir));
+            return;
             KDTreeTesting.Test1();
             KDTreeTesting.Test2();
             KDTreeTesting.Test3();
 
-            DirectoryInfo dir = Program.BackoutToFolder(inputFolder);
-            var myWriter = new ConsoleTraceListener();
-            Trace.Listeners.Add(myWriter);
-            TVGL.Message.Verbosity = VerbosityLevels.AboveNormal;
             //#if PRESENT
             var index = 482;
             var valid3DFileExtensions = new HashSet<string> { ".stl", ".ply", ".obj", ".3mf" };// ".tvglz", 
             var allFiles = dir.GetFiles("*", SearchOption.AllDirectories).Where(f => valid3DFileExtensions.Contains(f.Extension.ToLower()));
             foreach (var fileName in allFiles.Skip(index))
             {
-                Console.Write(index+": Attempting to open: " + fileName.Name);
+                Console.Write(index + ": Attempting to open: " + fileName.Name);
                 TessellatedSolid[] solids = null;
                 var sw = Stopwatch.StartNew();
 
@@ -40,7 +46,7 @@ namespace TVGLUnitTestsAndBenchmarking
                 IO.Open(fileName.FullName, out solids);
                 sw.Stop();
                 if (solids.Length == 0) continue;
-                Console.WriteLine("," + solids[0].NumberOfVertices + "," + solids[0].NumberOfEdges + "," + 
+                Console.WriteLine("," + solids[0].NumberOfVertices + "," + solids[0].NumberOfEdges + "," +
                     solids[0].NumberOfFaces + "," + sw.ElapsedTicks);
                 //Presenter.ShowAndHang(solids);
                 //solids[0].Faces[0].Color = Color.ColorDictionary[ColorFamily.Red]["Red"];
@@ -63,6 +69,33 @@ namespace TVGLUnitTestsAndBenchmarking
                 dir = dir.Parent;
             }
             return new DirectoryInfo(Path.Combine(dir.FullName, folderName));
+        }
+
+        public static IEnumerable<List<Polygon>> GetRandomPolygonThroughSolids(DirectoryInfo dir)
+        {
+            var index = 0;
+            var valid3DFileExtensions = new HashSet<string> { ".stl", ".ply", ".obj", ".3mf", ".tvglz" };
+            var allFiles = dir.GetFiles("*", SearchOption.AllDirectories)
+                .Where(f => valid3DFileExtensions.Contains(f.Extension.ToLower()))
+                .OrderBy(x=>Guid.NewGuid());
+            foreach (var fileName in allFiles.Skip(index))
+            {
+                Console.Write(index + ": Attempting to open: " + fileName.Name);
+                TessellatedSolid[] solids = null;
+                var sw = Stopwatch.StartNew();
+
+                //IO.Open(fileName.FullName, out  solids, TessellatedSolidBuildOptions.Minimal);
+                IO.Open(fileName.FullName, out solids);
+                if (solids.Length == 0) continue;
+                var solid = solids.MaxBy(s => s.Volume);
+                var normal = (new Vector3(r1, r1, r1)).Normalize();
+                var distanceAlong = solid.Vertices.GetLengthAndExtremeVertex(normal, out var loVertex, out _);
+                var planeDistance = distanceAlong * r.NextDouble();
+                var plane = new Plane(planeDistance, normal);
+                var polygons =  solid.GetCrossSection(plane, out _);
+                if (polygons.Count > 0) yield return polygons;
+                index++;
+            }
         }
 
         public static void DebugOffsetCases(DirectoryInfo dir)

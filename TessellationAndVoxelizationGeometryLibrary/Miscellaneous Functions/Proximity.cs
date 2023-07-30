@@ -590,64 +590,6 @@ namespace TVGL
             return guessDirList;
             //foreach (var dir in guessDirList) yield return dir;
         }
-
-        /// <summary>
-        /// Gets the dodecahedron dirs.
-        /// </summary>
-        /// <param name="relativeZ">The relative z.</param>
-        /// <returns>IEnumerable&lt;Vector3&gt;.</returns>
-        public static IEnumerable<Vector3> GetDodecahedronDirs(Vector3 relativeZ)
-        {
-            var rotateMatrix = relativeZ.TransformToXYPlane(out _);
-            foreach (var d in dodecDirs)
-                yield return d.Transform(rotateMatrix);
-        }
-
-        /// <summary>
-        /// The phi cos sin
-        /// </summary>
-        readonly static double phi_CosSin = (1 + Math.Sqrt(5)) / (5 + Math.Sqrt(5)); //0.44721359549996...
-        /// <summary>
-        /// The phi sin SQD
-        /// </summary>
-        readonly static double phi_SinSqd = (3 + Math.Sqrt(5)) / (5 + Math.Sqrt(5)); //0.72360679774997...
-        /// <summary>
-        /// The phi sin
-        /// </summary>
-        readonly static double phi_Sin = (1 + Math.Sqrt(5)) / (Math.Sqrt(10 + 2 * Math.Sqrt(5))); //0.85065080835204...
-        /// <summary>
-        /// The phi cos SQD
-        /// </summary>
-        readonly static double phi_CosSqd = 2 / (5 + Math.Sqrt(5)); //0.27639320225...
-        /// <summary>
-        /// The phi cos
-        /// </summary>
-        readonly static double phi_Cos = 2 / Math.Sqrt(10 + 2 * Math.Sqrt(5)); //0.5257311121191336...
-
-        /// <summary>
-        /// The d1
-        /// </summary>
-        readonly static Vector3 d1 = new Vector3(0, 2 * phi_CosSin, phi_CosSin);
-        /// <summary>
-        /// The d2
-        /// </summary>
-        readonly static Vector3 d2 = new Vector3(phi_Cos, -phi_SinSqd, phi_CosSin);
-        /// <summary>
-        /// The d3
-        /// </summary>
-        readonly static Vector3 d3 = new Vector3(-phi_Cos, -phi_SinSqd, phi_CosSin);
-        /// <summary>
-        /// The d4
-        /// </summary>
-        readonly static Vector3 d4 = new Vector3(phi_Sin, phi_CosSqd, phi_CosSin);
-        /// <summary>
-        /// The d5
-        /// </summary>
-        readonly static Vector3 d5 = new Vector3(-phi_Sin, phi_CosSqd, phi_CosSin);
-        /// <summary>
-        /// The dodec dirs
-        /// </summary>
-        readonly static Vector3[] dodecDirs = new[] { d1, d2, d3, d4, d5 };
         #endregion
 
 

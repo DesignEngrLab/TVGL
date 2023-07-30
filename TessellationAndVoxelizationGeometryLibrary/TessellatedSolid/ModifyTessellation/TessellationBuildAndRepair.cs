@@ -417,10 +417,10 @@ namespace TVGL
             if (3 * ts.NumberOfFaces != 2 * ts.NumberOfEdges)
                 Message.output("3 x numFaces = " + 3 * ts.NumberOfFaces + ", 2 x numEdges = " + 2 * ts.NumberOfEdges, 0);
             if (ts.Errors == null)
-                Message.output("No errors were found initially.", 1);
+                Message.output("No errors were found initially.", 2);
             else
             {
-                Message.output("Errors were found initially.", 1);
+                Message.output("Errors were found initially.", 2);
             }//Check if each face has cyclic references with each edge, vertex, and adjacent faces.
             var numSingleSidedEdges = 0;
             var errors = false;
