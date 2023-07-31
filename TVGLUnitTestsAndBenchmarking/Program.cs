@@ -20,20 +20,13 @@ namespace TVGLUnitTestsAndBenchmarking
         [STAThread]
         private static void Main(string[] args)
         {
-            var summary = BenchmarkRunner.Run<MinimumCircleTesting>();
-            return;
+            //var summary = BenchmarkRunner.Run<MinimumCircleTesting>();
+            //return;
             DirectoryInfo dir = Program.BackoutToFolder(inputFolder);
             var myWriter = new ConsoleTraceListener();
             Trace.Listeners.Add(myWriter);
             TVGL.Message.Verbosity = VerbosityLevels.Low;
-            MinimumCircleTesting.Test1(10, 10000);
-            MinimumCircleTesting.Test2(10000, 10000);
-            MinimumCircleTesting.Test3(10000, 1000);
-            MinimumCircleTesting.Test4(GetRandomPolygonThroughSolids(dir));
-            return;
-            KDTreeTesting.Test1();
-            KDTreeTesting.Test2();
-            KDTreeTesting.Test3();
+
 
             //#if PRESENT
             var index = 482;

@@ -128,6 +128,8 @@
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\TessellatedSolid\Edge.cs" Link="TVGL\TessellatedSolid\Edge.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\TessellatedSolid\EdgePath.cs" Link="TVGL\TessellatedSolid\EdgePath.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\TessellatedSolid\Enclosure Operations\GaussianSphere.cs" Link="TVGL\TessellatedSolid\Enclosure Operations\GaussianSphere.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\TessellatedSolid\Enclosure Operations\MinimumGaussSpherePlane.cs" Link="TVGL\TessellatedSolid\Enclosure Operations\MinimumGaussSpherePlane.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\TessellatedSolid\Enclosure Operations\MinimumSphere.cs" Link="TVGL\TessellatedSolid\Enclosure Operations\MinimumSphere.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\TessellatedSolid\Enclosure Operations\MinimumCircleCylinder.cs" Link="TVGL\TessellatedSolid\Enclosure Operations\MinimumCircleCylinder.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\TessellatedSolid\Enclosure Operations\MinimumEnclosure.cs" Link="TVGL\TessellatedSolid\Enclosure Operations\MinimumEnclosure.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\TessellatedSolid\MakeEdgePaths\MakeEdgePaths.cs" Link="TVGL\TessellatedSolid\MakeEdgePaths\MakeEdgePaths.cs" />

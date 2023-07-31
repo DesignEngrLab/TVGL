@@ -37,15 +37,7 @@ namespace TVGLUnitTestsAndBenchmarking
                     || !circleOld.RadiusSquared.IsPracticallySame(target.RadiusSquared))
                     throw new Exception("Old MinimumCircle failed");
 
-                var circleBing = TVGL.MinimumEnclosure.MinimumCircleBing(points);
-                if (!circleBing.Center.IsPracticallySame(target.Center)
-                    || !circleBing.RadiusSquared.IsPracticallySame(target.RadiusSquared))
-                    throw new Exception("Bing MinimumCircle failed");
-
-                var circleMC = TVGL.MinimumEnclosure.MinimumCircleMC(points);
-                if (!circleMC.Center.IsPracticallySame(target.Center)
-                    || !circleMC.RadiusSquared.IsPracticallySame(target.RadiusSquared))
-                    throw new Exception("MC MinimumCircle failed");
+ 
             }
         }
 
@@ -77,15 +69,15 @@ namespace TVGLUnitTestsAndBenchmarking
                     || !circleOld.RadiusSquared.IsPracticallySame(target.RadiusSquared))
                     throw new Exception("Old MinimumCircle failed");
 
-                var circleBing = TVGL.MinimumEnclosure.MinimumCircleBing(points);
-                if (!circleBing.Center.IsPracticallySame(target.Center)
-                    || !circleBing.RadiusSquared.IsPracticallySame(target.RadiusSquared))
-                    throw new Exception("Bing MinimumCircle failed");
+                //var circleBing = TVGL.MinimumEnclosure.MinimumCircleBing(points);
+                //if (!circleBing.Center.IsPracticallySame(target.Center)
+                //    || !circleBing.RadiusSquared.IsPracticallySame(target.RadiusSquared))
+                //    throw new Exception("Bing MinimumCircle failed");
 
-                var circleMC = TVGL.MinimumEnclosure.MinimumCircleMC(points);
-                if (!circleMC.Center.IsPracticallySame(target.Center)
-                    || !circleMC.RadiusSquared.IsPracticallySame(target.RadiusSquared))
-                    throw new Exception("MC MinimumCircle failed");
+                //var circleMC = TVGL.MinimumEnclosure.MinimumCircleMC(points);
+                //if (!circleMC.Center.IsPracticallySame(target.Center)
+                //    || !circleMC.RadiusSquared.IsPracticallySame(target.RadiusSquared))
+                //    throw new Exception("MC MinimumCircle failed");
             }
         }
 
@@ -113,6 +105,7 @@ namespace TVGLUnitTestsAndBenchmarking
 
 
                 var circleOld = TVGL.MinimumEnclosure.MinimumCircle(points);
+                /*
                 var circleBing = TVGL.MinimumEnclosure.MinimumCircleBing(points);
                 var circleMC = TVGL.MinimumEnclosure.MinimumCircleMC(points);
 
@@ -133,7 +126,7 @@ namespace TVGLUnitTestsAndBenchmarking
                 else if (!bingMCEqual && !oldMCEqual)
                     Message.output("Old and Bing agree but MC is different", 0);
                 else Message.output("All three agree", 0);
-
+                */
             }
         }
 
@@ -147,6 +140,7 @@ namespace TVGLUnitTestsAndBenchmarking
 
 
                 var circleOld = TVGL.MinimumEnclosure.MinimumCircle(points);
+                /*
                 var circleBing = TVGL.MinimumEnclosure.MinimumCircleBing(points);
                 var circleMC = TVGL.MinimumEnclosure.MinimumCircleMC(points);
 
@@ -167,9 +161,13 @@ namespace TVGLUnitTestsAndBenchmarking
                 else if (!bingMCEqual && !oldMCEqual)
                     Message.output("Old and Bing agree but MC is different", 0);
                 else Message.output("All three agree", 1);
-            }
+            */
+                }
         }
 
+        /** in july 2023, I thought I had a cleaner version of the MinimumCircle algorithm, but it was actually slower
+         * so I'm commenting it out for now. The code is translated for using MinimumSphere (although that is not yet
+         * complete) and MinimumGaussSpherePlane, which was the motivation for the rewrite.
         [GlobalSetup]
         public void BenchmarkSetup()
         {
@@ -196,6 +194,6 @@ namespace TVGLUnitTestsAndBenchmarking
         }
 
         public IList<Vector2> points;
-
+        ***/
     }
 }

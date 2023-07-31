@@ -1321,7 +1321,7 @@ namespace TVGL
 
         #region Transform
         /// <summary>
-        /// Translates and Squares Tesselated Solid based on its oriented bounding box.
+        /// Translates and Squares Tessellated Solid based on its oriented bounding box.
         /// The resulting Solid should be located at the origin, and only in the positive X, Y, Z octant.
         /// </summary>
         /// <param name="originalBoundingBox">The original bounding box.</param>
@@ -1553,5 +1553,35 @@ namespace TVGL
             throw new NotImplementedException();
         }
         #endregion
+
+        /// <summary>
+        /// Determines whether [contains duplicate indices] [the specified ordered indices].
+        /// </summary>
+        /// <param name="orderedIndices">The ordered indices.</param>
+        /// <returns><c>true</c> if [contains duplicate indices] [the specified ordered indices]; otherwise, <c>false</c>.</returns>
+        private static bool ContainsDuplicateIndices(List<int> orderedIndices)
+        {
+            for (var i = 0; i < orderedIndices.Count - 1; i++)
+                if (orderedIndices[i] == orderedIndices[i + 1]) return true;
+            return false;
+        }
+
+        /// <summary>
+        /// Removes the references to vertex.
+        /// </summary>
+        /// <param name="vertex">The vertex.</param>
+        private static void RemoveReferencesToVertex(Vertex vertex)
+        {
+            foreach (var face in vertex.Faces)
+            {
+                face.ReplaceVertex(vertex, null);
+            }
+            foreach (var edge in vertex.Edges)
+            {
+                if (vertex == edge.To) edge.To = null;
+                if (vertex == edge.From) edge.From = null;
+            }
+        }
+
     }
 }
