@@ -323,7 +323,7 @@ namespace TVGL
                 nz * invNorm);
 
             return new Plane(
-                -(normal.X * point1.X + normal.Y * point1.Y + normal.Z * point1.Z), normal);
+                normal.X * point1.X + normal.Y * point1.Y + normal.Z * point1.Z, normal);
         }
 
         /// <summary>

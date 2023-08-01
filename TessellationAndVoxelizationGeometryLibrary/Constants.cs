@@ -23,13 +23,9 @@ namespace TVGL
     public static class Constants
     {
         /// <summary>
-        /// The maximum number faces default full ts
-        /// </summary>
-        internal const int MaxNumberFacesDefaultMakeEdges = 33333; // note that since triangles and each edge is shared between two triangles, this is 3/2 the number of edges (50,000)
-        /// <summary>
         /// The two pi
         /// </summary>
-        public const double TwoPi = 2 * Math.PI;
+        public const double TwoPi = Math.Tau;
         /// <summary>
         /// The half pi
         /// </summary>
