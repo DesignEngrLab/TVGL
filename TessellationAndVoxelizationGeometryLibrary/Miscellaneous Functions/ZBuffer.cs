@@ -34,7 +34,7 @@ namespace TVGL
                 if (zHeightsOnly == null)
                 {
                     zHeightsOnly = new double[XCount, YCount];
-                    foreach(var (index, i, j) in Indices())
+                    foreach (var (index, i, j) in Indices())
                         zHeightsOnly[i, j] = Values[index].Item2;
                 }
                 return zHeightsOnly;
@@ -44,12 +44,7 @@ namespace TVGL
         /// The z heights only
         /// </summary>
         double[,] zHeightsOnly;
-        /// <summary>
-        /// Gets the projected face areas in the z-buffer direction. This is found through
-        /// the course of the "Run" computation and might be useful elsewhere.
-        /// </summary>
-        /// <value>The projected face areas.</value>
-        public Dictionary<TriangleFace, double> ProjectedFaceAreas { get; set; }
+
         /// <summary>
         /// Gets the projected 2D vertices of all the 3D vertices of the tessellated solid.
         /// This is found through the course of the "Run" computation and might be useful elsewhere.
@@ -76,6 +71,8 @@ namespace TVGL
         /// </summary>
         private TriangleFace[] solidFaces;
 
+        private static readonly double negligible = Math.Sqrt(Constants.BaseTolerance);
+
         /// <summary>
         /// Initializes a new instance of the <see cref="ZBuffer"/> class.
         /// </summary>
@@ -88,7 +85,7 @@ namespace TVGL
             Vertices = new Vector2[solid.NumberOfVertices];
             VertexZHeights = new double[solid.NumberOfVertices];
             // get the transform matrix to apply to every point
-            transform = (-direction).TransformToXYPlane(out backTransform);
+            transform = direction.TransformToXYPlane(out backTransform);
             solidFaces = solid.Faces;
 
             // transform points so that z-axis is aligned for the z-buffer. 
@@ -118,13 +115,12 @@ namespace TVGL
         /// </summary>
         /// <param name="subsetFaces">The subset of the solid's faces to find the z-buffer for.</param>
         /// <returns>System.ValueTuple&lt;TriangleFace, System.Double&gt;[].</returns>
-        public void Run(IList<TriangleFace> subsetFaces = null)
+        public void Run(IEnumerable<TriangleFace> subsetFaces = null)
         {
             var faces = subsetFaces != null ? subsetFaces : solidFaces;
-            ProjectedFaceAreas = new Dictionary<TriangleFace, double>();
 
             foreach (TriangleFace face in faces)
-                ProjectedFaceAreas.Add(face, UpdateZBufferWithFace(face));
+                UpdateZBufferWithFace(face);
         }
 
         /// <summary>
@@ -140,36 +136,53 @@ namespace TVGL
         }
 
         /// <summary>
+
+        /// </summary>
+        /// <param name="face">The face.</param>
+        /// <returns>System.Double.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void UpdateZBufferWithFace(TriangleFace face)
+        {
+            //return CheckZBufferWithFace(face, true, out _, out _);
+            foreach (var indexAndHeight in GetIndicesCoveredByFace(face))
+            {
+                var index = indexAndHeight.index;
+                var zHeight = indexAndHeight.zHeight;
+                // since the grid is not initialized, we update it if the grid cell is empty or if we found a better face
+                var tuple = Values[index];
+                if (tuple == default || zHeight >= tuple.Item2)
+                    Values[index] = (face, zHeight);
+            }
+        }
+
+        public void CheckZBufferWithFace(TriangleFace face, out int visibleGridPoints, out int totalGridPointsCovered)
+        {
+            var tolerance = 0.5 * PixelSideLength;
+            totalGridPointsCovered = 0;
+            visibleGridPoints = 0;
+            foreach (var indexAndHeight in GetIndicesCoveredByFace(face))
+            {
+                totalGridPointsCovered++;
+                var index = indexAndHeight.index;
+                var zHeight = indexAndHeight.zHeight;
+                var tuple = Values[index];
+                if (tuple == default || face == tuple.Item1 || zHeight.IsPracticallySame(tuple.Item2, tolerance))
+                    visibleGridPoints++;
+            }
+        }
+
+
+
+        /// <summary>
         /// Updates the z-buffer with information from each face.
         /// This is the big tricky function. In the end, implemented a custom function
         /// that scans the triangle from left to right. This is similar to the approach
         /// described here: http://www.sunshine2k.de/coding/java/TriangleRasterization/TriangleRasterization.html
         /// </summary>
-        /// <param name="face">The face.</param>
-        /// <returns>System.Double.</returns>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private double UpdateZBufferWithFace(TriangleFace face)
+        /// <param name="face"></param>
+        /// <returns></returns>
+        private IEnumerable<(int index, double zHeight)> GetIndicesCoveredByFace(TriangleFace face)
         {
-            return CheckZBufferWithFace(face, true, out _, out _);
-        }
-
-        /// <summary>
-        /// Checks the z buffer with face.
-        /// </summary>
-        /// <param name="face">The face.</param>
-        /// <param name="updateGrid">if set to <c>true</c> [update grid].</param>
-        /// <param name="count">The count.</param>
-        /// <param name="accessibleCount">The accessible count.</param>
-        /// <param name="tessellationError">The tessellation error.</param>
-        /// <returns>System.Double.</returns>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private double CheckZBufferWithFace(TriangleFace face, bool updateGrid, out int count, out int accessibleCount, double tessellationError = Constants.BaseTolerance)
-        {
-            #region Initialization
-            count = 0;
-            accessibleCount = 0;
-            var negligible = Math.Sqrt(Constants.BaseTolerance);
-
             // get the 3 vertices and their zheights
             var vA = Vertices[face.A.IndexInList];
             var zA = VertexZHeights[face.A.IndexInList];
@@ -180,7 +193,7 @@ namespace TVGL
 
             var area = (vB - vA).Cross(vC - vA);
             // if the area is negative the triangle is facing the wrong way.
-            if (area <= 0) return area;
+            if (area <= 0) yield break;
 
             // next re-organize the vertices as vMin, vMed, vMax - ordered by 
             // their x-values
@@ -293,7 +306,6 @@ namespace TVGL
             // exit condition. One-hundredth of the pixel side length doesn't require anymore iteration
             // but ensures that y<= yTop won't mess up
             yTop += 0.01 * PixelSideLength;
-            #endregion
             // *** main loop ***
             var vBAx = vB.X - vA.X;
             var vBAy = vB.Y - vA.Y;
@@ -302,13 +314,13 @@ namespace TVGL
             var vCAy = vC.Y - vA.Y;
             for (var xIndex = xStartIndex; xIndex <= xEndIndex; xIndex++)
             {
-                var yIndex =  Math.Max(GetYIndex(yBtm), yBtmIndex);
+                var yIndex = Math.Max(GetYIndex(yBtm), yBtmIndex);
                 var yBtmSnapped = GetSnappedY(yIndex);
                 var vBAy_multiply_qVaX = vBAy * qVaX;
                 var vCAy_multiply_qVaX = vCAy * qVaX;
                 var index = GetIndex(xIndex, yIndex);
                 var stop = Math.Min(yTop, yMax);
-                for (var y = yBtmSnapped; y <= stop; y+= PixelSideLength, index++)
+                for (var y = yBtmSnapped; y <= stop; y += PixelSideLength, index++)
                 {
                     var qVaY = y - vA.Y;
                     // check the values of x and y  with the barycentric approach
@@ -320,17 +332,8 @@ namespace TVGL
                     var v = area2 / area;
                     var u = area3 / area;
                     if (!WithinBounds(1 - v - u, negligible, 1.0, out var w)) continue;
-                    count++;
                     var zIntercept = w * zA + u * zB + v * zC;
-                    // since the grid is not initialized, we update it if the grid cell is empty or if we found a better face
-                    var tuple = Values[index];
-                    if (updateGrid)
-                    {
-                        if (tuple == default || zIntercept > tuple.Item2)
-                            Values[index] = (face, zIntercept);
-                    }
-                    else if (tuple == default || zIntercept.IsPracticallySame(tuple.Item2, tessellationError))
-                        accessibleCount++;
+                    yield return (index, zIntercept);
                 }
                 // step change in the y values.
                 qVaX += PixelSideLength;
@@ -346,7 +349,6 @@ namespace TVGL
                         slopeStepTop = PixelSideLength * (vMax.Y - vMed.Y) / (vMax.X - vMed.X);
                 }
             }
-            return area / 2; // the areas in this function were actually parallelogram areas. need to divide by 2 for triangle area
         }
 
         //Returns if the value if it is within the bounds of zero and notGreaterThan
@@ -357,14 +359,14 @@ namespace TVGL
             returnVal = val;
             if (val > 0 && val < notGreaterThan)
             {
-                return true;  
+                return true;
             }
             if (val.IsNegligible(negligible))
             {
                 returnVal = 0;
                 return true;
             }
-            if(val.IsPracticallySame(notGreaterThan, negligible))
+            if (val.IsPracticallySame(notGreaterThan, negligible))
             {
                 returnVal = notGreaterThan;
                 return true;
@@ -388,9 +390,10 @@ namespace TVGL
         /// <param name="i">The i.</param>
         /// <param name="j">The j.</param>
         /// <returns>Vector3.</returns>
-        public Vector3 Get3DPointTransformed(int i, int j)
+        public Vector3 Get3DPointTransformed(int i, int j, double defaultZHeight = 0.0)
         {
-            return new Vector3(MinX + i * PixelSideLength, MinY + j * PixelSideLength, Values[YCount * i + j].Item2);
+            var zHeight = Values[YCount * i + j].Item1 == null ? defaultZHeight : Values[YCount * i + j].Item2;
+            return new Vector3(MinX + i * PixelSideLength, MinY + j * PixelSideLength, zHeight);
         }
         /// <summary>
         /// Gets the 3D point on the solid corresponding to pixel i, j.
@@ -398,28 +401,9 @@ namespace TVGL
         /// <param name="i">The i.</param>
         /// <param name="j">The j.</param>
         /// <returns>Vector3.</returns>
-        public Vector3 Get3DPoint(int i, int j)
+        public Vector3 Get3DPoint(int i, int j, double defaultZHeight = 0.0)
         {
-            return Get3DPointTransformed(i, j).Transform(backTransform);
-        }
-
-        /// <summary>
-        /// Checks the surface access.
-        /// </summary>
-        /// <param name="surface">The surface.</param>
-        /// <param name="tessellationError">The tessellation error.</param>
-        /// <returns>System.Double.</returns>
-        public double CheckSurfaceAccess(PrimitiveSurface surface, double tessellationError)
-        {
-            var count = 0;
-            var accessibleCount = 0;
-            foreach (var face in surface.Faces)
-            {
-                CheckZBufferWithFace(face, false, out var countOnFace, out var faceAccessible, tessellationError);
-                count += countOnFace;
-                accessibleCount += faceAccessible;
-            }
-            return (double)accessibleCount / count;
+            return Get3DPointTransformed(i, j, defaultZHeight).Transform(backTransform);
         }
 
 

@@ -14,12 +14,12 @@ namespace TVGLUnitTestsAndBenchmarking.Misc_Tests
         internal static void Test()
         {
             DirectoryInfo dir = Program.BackoutToFolder(Program.inputFolder);
-            foreach (var fileName in dir.GetFiles("*").Skip(14))
+            foreach (var fileName in dir.GetFiles("*").Skip(0))
             {
                 //Console.WriteLine("\n\n\nAttempting to open: " + fileName.Name);
                 IO.Open(fileName.FullName, out TessellatedSolid solid);
                 //Presenter.ShowAndHang(solid);
-                var direction = -Vector3.UnitY;
+                var direction = -Vector3.UnitZ;
                 //var direction = new Vector3(1, 1, 1).Normalize();
                 var (minD,maxD) = solid.Vertices.GetDistanceToExtremeVertex(direction, out _, out _);
                 var displacement = (minD-maxD) * direction;

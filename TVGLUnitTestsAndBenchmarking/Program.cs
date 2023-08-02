@@ -11,8 +11,8 @@ namespace TVGLUnitTestsAndBenchmarking
 {
     internal class Program
     {
-        //public static string inputFolder = "Github";
-        public static string inputFolder = "OneDrive - medemalabs.com";
+        public static string inputFolder = "Github\\PartAnalyzer\\TestFiles";
+        //public static string inputFolder = "OneDrive - medemalabs.com";
         static Random r = new Random();
         static double r1 => 2.0 * r.NextDouble() - 1.0;
 
@@ -20,6 +20,7 @@ namespace TVGLUnitTestsAndBenchmarking
         [STAThread]
         private static void Main(string[] args)
         {
+            Misc_Tests.ZbufferTesting.Test();
             //var summary = BenchmarkRunner.Run<MinimumCircleTesting>();
             return;
             DirectoryInfo dir = Program.BackoutToFolder(inputFolder);
