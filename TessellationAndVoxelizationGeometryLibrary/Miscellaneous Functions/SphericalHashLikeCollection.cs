@@ -36,12 +36,16 @@ namespace TVGL
                 sphericals.Add(spherical);
                 cartesians.Add(cartesian);
                 items.Add(item);
+                if (!ignoreRadius)
+                    radii.Add(radius);
             }
             else
             {
                 sphericals.Insert(i, spherical);
                 cartesians.Insert(i, cartesian);
                 items.Insert(i, item);
+                if (!ignoreRadius)
+                    radii.Insert(i, radius);
             }
             return true;
         }
@@ -51,6 +55,8 @@ namespace TVGL
             sphericals.Clear();
             cartesians.Clear();
             items.Clear();
+            if (!ignoreRadius)
+                radii.Clear();
         }
 
 
@@ -97,6 +103,8 @@ namespace TVGL
                 sphericals.RemoveAt(i);
                 cartesians.RemoveAt(i);
                 items.RemoveAt(i);
+                if (!ignoreRadius)
+                    radii.RemoveAt(i);
                 return true;
             }
             return false;
@@ -283,6 +291,8 @@ namespace TVGL
         {
             sphericals.Clear();
             cartesians.Clear();
+            if (!ignoreRadius)
+                radii.Clear();
         }
 
         public bool Contains(Vector3 item) => Contains(new SphericalAnglePair(item), item);
@@ -296,7 +306,6 @@ namespace TVGL
             {
                 var radius = cartesian.Length();
                 BinarySearchWithRadius(spherical, cartesian, radius, out matchFound);
-
             }
             return matchFound;
         }
@@ -327,6 +336,8 @@ namespace TVGL
             {
                 sphericals.RemoveAt(i);
                 cartesians.RemoveAt(i);
+                if (!ignoreRadius)
+                    radii.RemoveAt(i);
                 return true;
             }
             return false;

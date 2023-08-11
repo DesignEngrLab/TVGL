@@ -41,7 +41,7 @@ namespace TVGL
         /// Gets or sets the tessellation maximum angle error.
         /// </summary>
         /// <value>The tessellation maximum angle error.</value>
-        public double TessellationMaxAngleError { get; set; } = Constants.DefaultTessellationMaxAngleError;
+        public double TessellationMaxAngleError { get; set; } = Constants.DefaultTessellationMaxAngleErrorDegrees;
 
         /// <summary>
         /// Gets the faces.

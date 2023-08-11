@@ -270,7 +270,7 @@ namespace TVGL
             {
                 if (!poly.HasABoundingBoxThatEncompasses(hole)) continue;
                 var interaction = poly.GetPolygonInteraction(hole);
-                if (interaction.Relationship == PolygonRelationship.BInsideA &&
+                if (interaction.Relationship == ABRelationships.BInsideA &&
                     interaction.GetRelationships(hole).Skip(1).All(r => r.Item1 == PolyRelInternal.Separated))
                 {
                     enclosingPolygon = poly;

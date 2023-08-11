@@ -33,7 +33,7 @@ namespace TVGL
         /// <param name="numPolygonsInB">The number polygons in b.</param>
         /// <param name="isAPositive">if set to <c>true</c> [is a positive].</param>
         /// <param name="isBPositive">if set to <c>true</c> [is b positive].</param>
-        private PolygonInteractionRecord(PolygonRelationship topLevelRelationship, List<SegmentIntersection> intersections,
+        private PolygonInteractionRecord(ABRelationships topLevelRelationship, List<SegmentIntersection> intersections,
              PolyRelInternal[] polygonRelations, Dictionary<Polygon, int> subPolygonToInt, int numPolygonsInA, int numPolygonsInB,
             bool isAPositive, bool isBPositive)
         {
@@ -60,7 +60,7 @@ namespace TVGL
             this.numPolygonsInA = index;
             if (polygonA == polygonB)
             {
-                this.Relationship = PolygonRelationship.Equal;
+                this.Relationship = ABRelationships.Equal;
                 return;
             }
             if (polygonB != null)
@@ -71,7 +71,7 @@ namespace TVGL
             }
             this.polygonRelations = new PolyRelInternal[numPolygonsInA * numPolygonsInB];
             this.IntersectionData = new List<SegmentIntersection>();
-            this.Relationship = PolygonRelationship.Separated;
+            this.Relationship = ABRelationships.Separated;
             this.AIsPositive = polygonA.IsPositive;
             if (polygonB != null) this.BIsPositive = polygonB.IsPositive;
         }
@@ -80,7 +80,7 @@ namespace TVGL
         /// Gets the relationship.
         /// </summary>
         /// <value>The relationship.</value>
-        public PolygonRelationship Relationship { get; internal set; }
+        public ABRelationships Relationship { get; internal set; }
         /// <summary>
         /// Gets the intersection data.
         /// </summary>
@@ -132,16 +132,16 @@ namespace TVGL
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         public bool IntersectionWillBeEmpty()
         {
-            if (Relationship == PolygonRelationship.Intersection ||
-                Relationship == PolygonRelationship.Equal)
+            if (Relationship == ABRelationships.Intersection ||
+                Relationship == ABRelationships.Equal)
                 return false;
-            if (Relationship == PolygonRelationship.EqualButOpposite) return true;
-            if (Relationship == PolygonRelationship.Separated) return AIsPositive && BIsPositive;
+            if (Relationship == ABRelationships.EqualButOpposite) return true;
+            if (Relationship == ABRelationships.Separated) return AIsPositive && BIsPositive;
             //if either or both are negative, then the separation actually means an intersection
-            return !((AIsPositive && Relationship == PolygonRelationship.BInsideA) ||
-                (BIsPositive && Relationship == PolygonRelationship.AInsideB) ||
-                (!AIsPositive && Relationship == PolygonRelationship.BIsInsideHoleOfA) ||
-                (!BIsPositive && Relationship == PolygonRelationship.AIsInsideHoleOfB));
+            return !((AIsPositive && Relationship == ABRelationships.BInsideA) ||
+                (BIsPositive && Relationship == ABRelationships.AInsideB) ||
+                (!AIsPositive && Relationship == ABRelationships.BIsInsideHoleOfA) ||
+                (!BIsPositive && Relationship == ABRelationships.AIsInsideHoleOfB));
         }
 
 
@@ -188,41 +188,41 @@ namespace TVGL
             // okay need to compare all possibilities of the PolygonRelationship enum to itself
             // there are 8 values so that 8 x 8 = 64 possibilities.
             // let's see how this breaks down
-            if (this.Relationship == PolygonRelationship.Intersection) return;
+            if (this.Relationship == ABRelationships.Intersection) return;
             // if already Intersection, then nothing to do (that's 8)
             if (newRel == PolyRelInternal.Separated) return;
             // if the newRel is Separated then no update as well (7 more)
-            var newRelationship = (PolygonRelationship)(((int)newRel) & 248);
+            var newRelationship = (ABRelationships)(((int)newRel) & 248);
             if (newRelationship == Relationship) return;
             // if they're the same then nothing to do (that's 6 more since previous conditions would have caught 2 of these
             // down to 43
-            if (newRelationship == PolygonRelationship.Intersection ||
-                ((newRelationship == PolygonRelationship.AInsideB || newRelationship == PolygonRelationship.AIsInsideHoleOfB) &&
-                (Relationship == PolygonRelationship.BInsideA || Relationship == PolygonRelationship.BIsInsideHoleOfA)) ||
-                ((newRelationship == PolygonRelationship.BInsideA || newRelationship == PolygonRelationship.BIsInsideHoleOfA) &&
-                (Relationship == PolygonRelationship.AInsideB || Relationship == PolygonRelationship.AIsInsideHoleOfB)))
-                this.Relationship = PolygonRelationship.Intersection;
+            if (newRelationship == ABRelationships.Intersection ||
+                ((newRelationship == ABRelationships.AInsideB || newRelationship == ABRelationships.AIsInsideHoleOfB) &&
+                (Relationship == ABRelationships.BInsideA || Relationship == ABRelationships.BIsInsideHoleOfA)) ||
+                ((newRelationship == ABRelationships.BInsideA || newRelationship == ABRelationships.BIsInsideHoleOfA) &&
+                (Relationship == ABRelationships.AInsideB || Relationship == ABRelationships.AIsInsideHoleOfB)))
+                this.Relationship = ABRelationships.Intersection;
             // how many more pairs are these: 7 + 8....down to 28
-            else if (Relationship == PolygonRelationship.Separated)
+            else if (Relationship == ABRelationships.Separated)
                 Relationship = newRelationship; //6 more here (i think...not included newRel is Separated or Intersection
-            else if (newRelationship == PolygonRelationship.Equal) return; // current Relationship would be more descriptive
+            else if (newRelationship == ABRelationships.Equal) return; // current Relationship would be more descriptive
             // so finding out that a subpolygon in Equal doesn't change anything (that 5 more cases)
-            else if (newRelationship == PolygonRelationship.EqualButOpposite)
+            else if (newRelationship == ABRelationships.EqualButOpposite)
             {
-                if (Relationship == PolygonRelationship.BInsideA)
-                    Relationship = PolygonRelationship.BIsInsideHoleOfA;
-                if (Relationship == PolygonRelationship.AInsideB)
-                    Relationship = PolygonRelationship.AIsInsideHoleOfB;
+                if (Relationship == ABRelationships.BInsideA)
+                    Relationship = ABRelationships.BIsInsideHoleOfA;
+                if (Relationship == ABRelationships.AInsideB)
+                    Relationship = ABRelationships.AIsInsideHoleOfB;
                 // really need to check the new EqualButOpposite with AInsideB, AIsInsideHoleOfB, BInsideA,
                 // BIsInsideHoleOfA, & Equal (so that's 5 additional cases) but the above two subcases are the
                 // only ways this can ever happen, right?
             }
             //R = BInsideA , Nrel = BIsInsideHoleOfA
-            else if (newRelationship == PolygonRelationship.BIsInsideHoleOfA && Relationship == PolygonRelationship.BInsideA)
-                Relationship = PolygonRelationship.BIsInsideHoleOfA;
+            else if (newRelationship == ABRelationships.BIsInsideHoleOfA && Relationship == ABRelationships.BInsideA)
+                Relationship = ABRelationships.BIsInsideHoleOfA;
             //R = AInsideB , Nrel = AIsInsideHoleOfB
-            else if (newRelationship == PolygonRelationship.AIsInsideHoleOfB && Relationship == PolygonRelationship.AInsideB)
-                Relationship = PolygonRelationship.AIsInsideHoleOfB;
+            else if (newRelationship == ABRelationships.AIsInsideHoleOfB && Relationship == ABRelationships.AInsideB)
+                Relationship = ABRelationships.AIsInsideHoleOfB;
             // there are 10 left, all of which are either impossible or have no effect (I think). These are listed below. 
             // The first 4 are possible and we need to be careful if the outer positive polygons match, then when we compare
             // the inner hole of A to the outer of B, we will get the first condition below, but we don't want to change the 
@@ -270,7 +270,7 @@ namespace TVGL
                 }
                 if (matchedPolygonBIndices.Count() == numPolygonsInB - 1) // then we found a unique match for each hole in
                     // the polygon
-                    Relationship = PolygonRelationship.Equal;
+                    Relationship = ABRelationships.Equal;
                 else
                 {
                     throw new NotImplementedException();
@@ -424,7 +424,7 @@ namespace TVGL
             for (int i = 0; i < numPolygonsInA; i++)
                 for (int j = 0; j < numPolygonsInB; j++)
                     newPolygonRelations[numPolygonsInB * i + j] = Constants.SwitchAAndBPolygonRelationship(polygonRelations[numPolygonsInA * j + i]);
-            return new PolygonInteractionRecord((PolygonRelationship)Constants.SwitchAAndBPolygonRelationship((PolyRelInternal)Relationship),
+            return new PolygonInteractionRecord((ABRelationships)Constants.SwitchAAndBPolygonRelationship((PolyRelInternal)Relationship),
                 newIntersections, newPolygonRelations, newSubPolygonToInt,
               numPolygonsInB, numPolygonsInA, isBPositive, isAPositive)
             {

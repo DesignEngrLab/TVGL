@@ -57,6 +57,15 @@ namespace TVGL
 #endif
 
 
+        /// <summary>
+        /// The default tessellation error
+        /// </summary>
+        internal const double DefaultTessellationError = 0.08;
+
+        /// <summary>
+        /// The default tessellation maximum angle error
+        /// </summary>
+        internal const double DefaultTessellationMaxAngleErrorDegrees = 15;
 
         /// <summary>
         /// The minimum angle used to approximate a circle. An octagon is the largest sided polygon that any sane person would want to define
@@ -64,7 +73,7 @@ namespace TVGL
         /// conservative value for smooth. However, it is not uncommon to have slants in a model well below this. A 2-to-1 slope makes an
         /// angle of 26.6-degrees. So, we consider a little lower as the cutoff.
         /// </summary>
-        public const double MinSmoothAngle = 25 * Math.PI / 180;
+        public const double MinSmoothAngle = DefaultTessellationMaxAngleErrorDegrees * Math.PI / 180;
 
         /// <summary>
         /// The tolerance used for simplifying polygons by joining to similary sloped lines.
@@ -98,11 +107,23 @@ namespace TVGL
         /// </summary>
         public const double OBBTolerance = 1e-5;
 
+
+        public const double DefaultMinAngleInPlaneDegrees = 3;
+
+        /// <summary>
+        /// This is based on the DefaultMinAngleInPlaneDegrees. It is a value just below 1.0 (which is the cosine of 0-degrees)
+        /// which signifies if two vectors have a dot product greater than this, then they are within the DefaultMinAngleInPlaneDegrees
+        /// (and often effectively the same).
+        public static double MinDotToleranceForSame = Math.Cos(DefaultMinAngleInPlaneDegrees * Math.PI / 180);
+        /// <summary>
+        /// This is based on the DefaultMinAngleInPlaneDegrees. It is a value close to 0 (which is the cosine of 90-degrees)
+        /// which signifies if two vectors have a dot product less than this, then they are within the 90 - DefaultMinAngleInPlaneDegrees - 
+        /// they are effectively orthogonal.
+        public static double MaxDotToleranceOrthogonal = Math.Sin(DefaultMinAngleInPlaneDegrees * Math.PI / 180);
         /// <summary>
         /// The error for face in surface
         /// </summary>
         public const double ErrorForFaceInSurface = 0.002;
-
 
         /// <summary>
         /// The tolerance for the same normal of a face when two are dot-producted.
@@ -152,15 +173,6 @@ namespace TVGL
         /// </summary>
         internal const int MarchingCubesMissedFactor = 4;
 
-        /// <summary>
-        /// The default tessellation error
-        /// </summary>
-        internal const double DefaultTessellationError = 0.08;
-
-        /// <summary>
-        /// The default tessellation maximum angle error
-        /// </summary>
-        internal const double DefaultTessellationMaxAngleError = 15;
 
         #region from MIConvexHull
         /// <summary>
@@ -644,7 +656,7 @@ namespace TVGL
     /// Enum PolygonRelationship
     /// </summary>
 
-    public enum PolygonRelationship
+    public enum ABRelationships
     {
         /// <summary>
         /// The separated
