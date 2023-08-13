@@ -1182,7 +1182,7 @@ namespace TVGL
                 var success = false;
                 List<TriangulationLoop> triangleFaceList1 = null;
                 List<Vertex[]> triangleFaceList2 = null;
-                var closeToPlane = plane.CalculateMaxError(vertices.Select(v => v.Coordinates)) < Constants.ErrorForFaceInSurface;
+                var closeToPlane = plane.CalculateMaxError(vertices.Select(v => v.Coordinates)) < Constants.BaseTolerance;
                 if (closeToPlane)
                 {
                     var coords2D = vertices.Select(v => v.Coordinates).ProjectTo2DCoordinates(planeNormal, out _);

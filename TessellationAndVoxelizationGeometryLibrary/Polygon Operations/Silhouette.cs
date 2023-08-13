@@ -47,7 +47,7 @@ namespace TVGL
                     // get a face that does not have a dot product orthogonal to the direction
                     // notice that IsNegligible is used with the dotTolerance specified above
                     dot = face.Normal.Dot(direction);
-                    if (!dot.IsNegligible(Constants.SameFaceNormalDotTolerance))  
+                    if (!dot.IsNegligible(Constants.DotToleranceOrthogonal))  
                     {
                         startingFace = face;
                         break;

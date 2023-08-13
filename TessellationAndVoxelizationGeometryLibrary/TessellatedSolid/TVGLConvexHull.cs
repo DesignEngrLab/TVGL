@@ -44,7 +44,7 @@ namespace TVGL
         {
             Plane.DefineNormalAndDistanceFromVertices(vertices, out var distance, out var planeNormal);
             var plane = new Plane(distance, planeNormal);
-            var closeToPlane = plane.CalculateMaxError(vertices.Select(v => v.Coordinates)) < Constants.ErrorForFaceInSurface;
+            var closeToPlane = plane.CalculateMaxError(vertices.Select(v => v.Coordinates)) < Constants.DefaultPlaneDistanceTolerance;
             if (closeToPlane)
             {
                 var coords2D = vertices.Select(v => v.Coordinates).ProjectTo2DCoordinates(planeNormal, out _);

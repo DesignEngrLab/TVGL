@@ -219,9 +219,9 @@ namespace TVGL
             for (int i = 0, j = numVertices - 1; i < numVertices; j = i++)
                 absoluteDiff += new Vector3(Math.Abs(pointList[i].X - pointList[j].X), Math.Abs(pointList[i].Y - pointList[j].Y),
                     Math.Abs(pointList[i].Z - pointList[j].Z));
-            if (absoluteDiff.X.IsNegligible(Constants.ErrorForFaceInSurface)) normal = Vector3.UnitX;
-            else if (absoluteDiff.Y.IsNegligible(Constants.ErrorForFaceInSurface)) normal = Vector3.UnitY;
-            else if (absoluteDiff.Z.IsNegligible(Constants.ErrorForFaceInSurface)) normal = Vector3.UnitZ;
+            if (absoluteDiff.X.IsNegligible()) normal = Vector3.UnitX;
+            else if (absoluteDiff.Y.IsNegligible()) normal = Vector3.UnitY;
+            else if (absoluteDiff.Z.IsNegligible()) normal = Vector3.UnitZ;
             else
             {
                 normal = Vector3.Null;

@@ -108,29 +108,31 @@ namespace TVGL
         public const double OBBTolerance = 1e-5;
 
 
-        public const double DefaultMinAngleInPlaneDegrees = 3;
+        /// <summary>
+        /// The default minimum angle to determine if two directions are aligned (in degrees).
+        /// </summary>
+        public const double DefaultSameAngleDegrees = 1;
+
+
+        /// <summary>
+        /// The default minimum angle to determine if two directions are aligned (in radians).
+        /// </summary>
+        public const double DefaultSameAngleRadians = 0.01745329251994329576923690768489; // DefaultSameAngleDegrees * Math.PI / 180;
 
         /// <summary>
         /// This is based on the DefaultMinAngleInPlaneDegrees. It is a value just below 1.0 (which is the cosine of 0-degrees)
         /// which signifies if two vectors have a dot product greater than this, then they are within the DefaultMinAngleInPlaneDegrees
         /// (and often effectively the same).
-        public static double MinDotToleranceForSame = Math.Cos(DefaultMinAngleInPlaneDegrees * Math.PI / 180);
+        public const double DotToleranceForSame = 0.99984769515639123915701155881391;
+        // this is cos(DefaultMinAngleInPlaneDegrees);
+
+
         /// <summary>
         /// This is based on the DefaultMinAngleInPlaneDegrees. It is a value close to 0 (which is the cosine of 90-degrees)
         /// which signifies if two vectors have a dot product less than this, then they are within the 90 - DefaultMinAngleInPlaneDegrees - 
         /// they are effectively orthogonal.
-        public static double MaxDotToleranceOrthogonal = Math.Sin(DefaultMinAngleInPlaneDegrees * Math.PI / 180);
-        /// <summary>
-        /// The error for face in surface
-        /// </summary>
-        public const double ErrorForFaceInSurface = 0.002;
-
-        /// <summary>
-        /// The tolerance for the same normal of a face when two are dot-producted.
-        /// the angle would be acos(1 - SameFaceNormalDotTolerance).
-        /// so, 0.01 would be 8-deg
-        /// </summary>
-        public const double SameFaceNormalDotTolerance = 1e-2;
+        public const double DotToleranceOrthogonal = 0.01745240643728351281941897851632;
+        // this is  cos(90-DefaultMinAngleInPlaneDegrees) or sin(DefaultMinAngleInPlaneDegrees);
 
         /// <summary>
         /// The maximum allowable edge similarity score. This is used when trying to match stray edges when loading in
@@ -189,7 +191,7 @@ namespace TVGL
         internal const int ConnectorTableSize = 2017;
 
 
-        internal const double DefaultEqualityTolerance = 1e-15;
+        internal const double DefaultEqualityTolerance = 1e-12;
         internal const double FractionalNegligibleVolume = 1e-12;
 #endregion
 

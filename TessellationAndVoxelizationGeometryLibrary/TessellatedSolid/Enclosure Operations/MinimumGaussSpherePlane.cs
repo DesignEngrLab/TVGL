@@ -10,7 +10,7 @@ namespace TVGL
     public static partial class MinimumEnclosure
     {
         public static Plane MinimumGaussSpherePlane(this IEnumerable<Vector3> pointsInput,
-            double tolerance = Constants.ErrorForFaceInSurface)
+            double tolerance = Constants.BaseTolerance)
         {
             var points = pointsInput.ToArray();
             var numPoints = points.Length;

@@ -81,7 +81,7 @@ namespace TVGL  // COMMENTEDCHANGE namespace System.Numerics
             get
             {
                 if (i == 0) return X;
-                else  return Y;
+                else return Y;
             }
         }
 
@@ -468,6 +468,72 @@ namespace TVGL  // COMMENTEDCHANGE namespace System.Numerics
         public double LengthSquared()
         {
             return X * X + Y * Y;
+        }
+
+
+        /// <summary>
+        /// Returns a boolean indicating whether the given vector is aligned or exactly in the opposite direction.
+        /// </summary>
+        /// <param name="other">The other.</param>
+        /// <param name="dotTolerance">The dot tolerance.</param>
+        /// <returns>True if the Object is equal or opposite to this Vector3; False otherwise.</returns>
+        public bool IsAlignedOrReverse(Vector2 other, double dotTolerance = Constants.DotToleranceForSame)
+        {
+            //Perform a quick check to see if they are perfectly equal or opposite
+            if (X == other.X && Y == other.Y) return true;
+            if (X == -other.X && Y == -other.Y) return true;
+            // if the magnitude of the dot product is nearly 1 than the two vectors are aligned
+            // here, we take the absolute value of the dot product since reverse is allowed
+            return Math.Abs(this.Dot(other)) >= dotTolerance;
+        }
+
+        /// <summary>
+        /// Returns a boolean indicating whether the given vector is aligned or exactly in the opposite direction.
+        /// </summary>
+        /// <param name="other">The other.</param>
+        /// <param name="isReversed">if set to <c>true</c> [is reverse].</param>
+        /// <param name="dotTolerance">The dot tolerance.</param>
+        /// <returns>True if the Object is equal or opposite to this Vector3; False otherwise.</returns>
+        public bool IsAlignedOrReverse(Vector2 other, out bool isReversed, double dotTolerance = Constants.DotToleranceForSame)
+        {
+            //Perform a quick check to see if they are perfectly equal or opposite
+            if (X == other.X && Y == other.Y)
+            {
+                isReversed = false;
+                return true;
+            }
+            if (X == -other.X && Y == -other.Y)
+            {
+                isReversed = true;
+                return true;
+            }
+            var dot = this.Dot(other);
+            isReversed = dot < 0;
+            if (isReversed) dot = -dot;
+            return dot >= dotTolerance;
+        }
+
+        /// <summary>
+        /// Determines whether the specified d2 is aligned.
+        /// </summary>
+        /// <param name="other">The other.</param>
+        /// <param name="dotTolerance">The dot tolerance.</param>
+        /// <returns><c>true</c> if the specified d2 is aligned; otherwise, <c>false</c>.</returns>
+        public bool IsAligned(Vector2 other, double dotTolerance = Constants.DotToleranceForSame)
+        {
+            if (X == other.X && Y == other.Y) return true;
+            return this.Dot(other) >= dotTolerance;
+        }
+
+        /// <summary>
+        /// Determines whether the specified d2 is perpendicular.
+        /// </summary>
+        /// <param name="other">The other.</param>
+        /// <param name="dotTolerance">The dot tolerance.</param>
+        /// <returns><c>true</c> if the specified d2 is aligned; otherwise, <c>false</c>.</returns>
+        public bool IsPerpendicular(Vector2 other, double dotTolerance = Constants.DotToleranceOrthogonal)
+        {
+            return this.Dot(other).IsNegligible(dotTolerance);
         }
         #endregion Public Instance Methods
 
