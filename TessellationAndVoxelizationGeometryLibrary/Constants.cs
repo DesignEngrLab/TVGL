@@ -124,7 +124,7 @@ namespace TVGL
         /// which signifies if two vectors have a dot product greater than this, then they are within the DefaultMinAngleInPlaneDegrees
         /// (and often effectively the same).
         public const double DotToleranceForSame = 0.99984769515639123915701155881391;
-        // this is cos(DefaultMinAngleInPlaneDegrees);
+        // this is cos(DefaultSameAngleRadians);
 
 
         /// <summary>
@@ -132,7 +132,7 @@ namespace TVGL
         /// which signifies if two vectors have a dot product less than this, then they are within the 90 - DefaultMinAngleInPlaneDegrees - 
         /// they are effectively orthogonal.
         public const double DotToleranceOrthogonal = 0.01745240643728351281941897851632;
-        // this is  cos(90-DefaultMinAngleInPlaneDegrees) or sin(DefaultMinAngleInPlaneDegrees);
+        // this is  cos(90-DefaultSameAngleRadians) or sin(DefaultMinAngleInPlaneDegrees);
 
         /// <summary>
         /// The maximum allowable edge similarity score. This is used when trying to match stray edges when loading in
