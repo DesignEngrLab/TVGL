@@ -21,7 +21,7 @@ namespace TVGL
 
         public SphericalAnglePair(Vector3 v)
         {
-            var radius = Math.Sqrt(v.X * v.X + v.Y * v.Y + v.Z * v.Z);
+            var radius = v.Length();
             PolarAngle = Math.Acos(v.Z / radius);
             AzimuthAngle = Math.Atan2(v.Y, v.X);
         }

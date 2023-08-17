@@ -20,7 +20,7 @@ namespace TVGLUnitTestsAndBenchmarking
         [STAThread]
         private static void Main(string[] args)
         {
-            Misc_Tests.ZbufferTesting.Test();
+            Misc_Tests.ZbufferTesting.Test3();
             //var summary = BenchmarkRunner.Run<MinimumCircleTesting>();
             return;
             DirectoryInfo dir = Program.BackoutToFolder(inputFolder);

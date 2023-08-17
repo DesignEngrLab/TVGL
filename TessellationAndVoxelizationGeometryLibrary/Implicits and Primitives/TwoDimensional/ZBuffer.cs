@@ -20,7 +20,7 @@ namespace TVGL
     /// <summary>
     /// Class ZBuffer. This class cannot be inherited.
     /// </summary>
-    public sealed class ZBuffer : Grid<(TriangleFace, double)>
+    public class ZBuffer : Grid<(TriangleFace, double)>
     {
         /// <summary>
         /// Gets the z-heights as a matrix of doubles. There is no time saved in getting this by itself as the main
@@ -50,28 +50,28 @@ namespace TVGL
         /// This is found through the course of the "Run" computation and might be useful elsewhere.
         /// </summary>
         /// <value>The vertices.</value>
-        public Vector2[] Vertices { get; private set; }
+        public Vector2[] Vertices { get; protected set; }
         /// <summary>
         /// Gets the z-heightsof all the 3D vertices of the tessellated solid on the project plane.
         /// This is found through the course of the "Run" computation and might be useful elsewhere.
         /// </summary>
         /// <value>The vertex z heights.</value>
-        public double[] VertexZHeights { get; private set; }
+        public double[] VertexZHeights { get; protected set; }
 
         /// <summary>
         /// The transform
         /// </summary>
-        private Matrix4x4 transform;
+        protected Matrix4x4 transform;
         /// <summary>
         /// The back transform
         /// </summary>
-        private Matrix4x4 backTransform;
+        protected Matrix4x4 backTransform;
         /// <summary>
         /// The solid faces
         /// </summary>
-        private TriangleFace[] solidFaces;
+        protected TriangleFace[] solidFaces;
 
-        private static readonly double negligible = Math.Sqrt(Constants.BaseTolerance);
+        protected static readonly double negligible = Math.Sqrt(Constants.BaseTolerance);
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ZBuffer"/> class.
@@ -80,13 +80,13 @@ namespace TVGL
         /// <param name="direction">The direction.</param>
         /// <param name="pixelsPerRow">The pixels per row.</param>
         /// <param name="pixelBorder">The pixel border.</param>
-        public ZBuffer(TessellatedSolid solid, Vector3 direction, int pixelsPerRow, int pixelBorder = 2)
+        public static ZBuffer Run(TessellatedSolid solid, Vector3 direction, int pixelsPerRow,
+            int pixelBorder = 2, IEnumerable<TriangleFace> subsetFaces = null)
+
         {
-            Vertices = new Vector2[solid.NumberOfVertices];
-            VertexZHeights = new double[solid.NumberOfVertices];
+            var zBuff = new ZBuffer(solid);
             // get the transform matrix to apply to every point
-            transform = direction.TransformToXYPlane(out backTransform);
-            solidFaces = solid.Faces;
+            zBuff.transform = direction.TransformToXYPlane(out zBuff.backTransform);
 
             // transform points so that z-axis is aligned for the z-buffer. 
             // store x-y pairs as Vector2's (points) and z values in zHeights
@@ -97,9 +97,9 @@ namespace TVGL
             var MaxY = double.NegativeInfinity;
             for (int i = 0; i < solid.NumberOfVertices; i++)
             {
-                var p = solid.Vertices[i].Coordinates.Transform(transform);
-                Vertices[i] = new Vector2(p.X, p.Y);
-                VertexZHeights[i] = p.Z;
+                var p = solid.Vertices[i].Coordinates.Transform(zBuff.transform);
+                zBuff.Vertices[i] = new Vector2(p.X, p.Y);
+                zBuff.VertexZHeights[i] = p.Z;
                 if (p.X < MinX) MinX = p.X;
                 if (p.Y < MinY) MinY = p.Y;
                 if (p.X > MaxX) MaxX = p.X;
@@ -107,21 +107,20 @@ namespace TVGL
             }
 
             //Finish initializing the grid now that we have the bounds.
-            Initialize(MinX, MaxX, MinY, MaxY, pixelsPerRow, pixelBorder);
-        }
-
-        /// <summary>
-        /// Gets the z-buffer of the TessellatedSolid along the given direction.
-        /// </summary>
-        /// <param name="subsetFaces">The subset of the solid's faces to find the z-buffer for.</param>
-        /// <returns>System.ValueTuple&lt;TriangleFace, System.Double&gt;[].</returns>
-        public void Run(IEnumerable<TriangleFace> subsetFaces = null)
-        {
-            var faces = subsetFaces != null ? subsetFaces : solidFaces;
-
+            zBuff.Initialize(MinX, MaxX, MinY, MaxY, pixelsPerRow, pixelBorder);
+            var faces = subsetFaces != null ? subsetFaces : zBuff.solidFaces;
             foreach (TriangleFace face in faces)
-                UpdateZBufferWithFace(face);
+                zBuff.UpdateZBufferWithFace(face);
+            return zBuff;
         }
+
+        private protected ZBuffer(TessellatedSolid solid)
+        {
+            Vertices = new Vector2[solid.NumberOfVertices];
+            VertexZHeights = new double[solid.NumberOfVertices];
+            solidFaces = solid.Faces;
+        }
+
 
         /// <summary>
         /// Gets the line pixels.
@@ -141,7 +140,7 @@ namespace TVGL
         /// <param name="face">The face.</param>
         /// <returns>System.Double.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void UpdateZBufferWithFace(TriangleFace face)
+        protected void UpdateZBufferWithFace(TriangleFace face)
         {
             //return CheckZBufferWithFace(face, true, out _, out _);
             foreach (var indexAndHeight in GetIndicesCoveredByFace(face))
@@ -181,7 +180,7 @@ namespace TVGL
         /// </summary>
         /// <param name="face"></param>
         /// <returns></returns>
-        private IEnumerable<(int index, double zHeight)> GetIndicesCoveredByFace(TriangleFace face)
+        protected IEnumerable<(int index, double zHeight)> GetIndicesCoveredByFace(TriangleFace face)
         {
             // get the 3 vertices and their zheights
             var vA = Vertices[face.A.IndexInList];
@@ -354,7 +353,7 @@ namespace TVGL
         //Returns if the value if it is within the bounds of zero and notGreaterThan
         //If the value is slightly less than zero, it will return zero (non-negative)
         //If the value is slightly above notGreaterThan, it will return notGreaterThan
-        private bool WithinBounds(double val, double negligible, double notGreaterThan, out double returnVal)
+        protected bool WithinBounds(double val, double negligible, double notGreaterThan, out double returnVal)
         {
             returnVal = val;
             if (val > 0 && val < notGreaterThan)
