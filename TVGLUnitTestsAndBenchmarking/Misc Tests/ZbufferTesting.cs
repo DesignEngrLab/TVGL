@@ -108,7 +108,7 @@ namespace TVGLUnitTestsAndBenchmarking.Misc_Tests
                 var displacement = (minD - maxD) * direction;
                 //Console.Write("zbuffer start...");
                 var sw = Stopwatch.StartNew();
-                var zbuffer = SphericalBuffer.Run(solid, solid.Center, 500);
+                var zbuffer = SphericalBuffer.Run(solid, solid.Center, 4000);
                 sw.Stop();
                 Console.WriteLine(sw.Elapsed.Ticks);
                 //Console.WriteLine("end:  "+sw.Elapsed);
