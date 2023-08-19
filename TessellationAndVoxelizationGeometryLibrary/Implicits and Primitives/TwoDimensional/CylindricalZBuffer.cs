@@ -35,9 +35,9 @@ namespace TVGL
             var cylBuff = new CylindricalBuffer(solid);
 
             // get the transform matrix to apply to every point
-            cylBuff.transform = direction.TransformToXYPlane(out cylBuff.backTransform);
-            var rotatedAnchor = anchor.Transform(cylBuff.transform);
-            cylBuff.transform *= Matrix4x4.CreateTranslation(-rotatedAnchor.X, -rotatedAnchor.Y, -rotatedAnchor.Z);
+            var transform = direction.TransformToXYPlane(out var backTransform);
+            var rotatedAnchor = anchor.Transform(transform);
+            transform *= Matrix4x4.CreateTranslation(-rotatedAnchor.X, -rotatedAnchor.Y, -rotatedAnchor.Z);
 
             // transform points so that z-axis is aligned for the z-buffer. 
             // store x-y pairs as Vector2's (points) and z values in zHeights
@@ -49,7 +49,7 @@ namespace TVGL
             var maxRadius = 0.0;
             for (int i = 0; i < solid.NumberOfVertices; i++)
             {
-                var p = solid.Vertices[i].Coordinates.Transform(cylBuff.transform);
+                var p = solid.Vertices[i].Coordinates.Transform(transform);
                 var theta = Math.Atan2(p.Y, p.X);
                 var radius = Math.Sqrt(p.X * p.X + p.Y * p.Y);
                 cylBuff.Vertices[i] = new Vector2(p.Z, theta);

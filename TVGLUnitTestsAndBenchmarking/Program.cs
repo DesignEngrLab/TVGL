@@ -20,6 +20,8 @@ namespace TVGLUnitTestsAndBenchmarking
         [STAThread]
         private static void Main(string[] args)
         {
+            TVGLNumericsTests.UniqueLineTesting();
+
             Misc_Tests.ZbufferTesting.Test3();
             //var summary = BenchmarkRunner.Run<MinimumCircleTesting>();
             return;

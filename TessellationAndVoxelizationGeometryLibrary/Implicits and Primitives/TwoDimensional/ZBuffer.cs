@@ -61,11 +61,11 @@ namespace TVGL
         /// <summary>
         /// The transform
         /// </summary>
-        protected Matrix4x4 transform;
+        private Matrix4x4 transform;
         /// <summary>
         /// The back transform
         /// </summary>
-        protected Matrix4x4 backTransform;
+        private Matrix4x4 backTransform;
         /// <summary>
         /// The solid faces
         /// </summary>
@@ -122,20 +122,6 @@ namespace TVGL
         }
 
 
-        /// <summary>
-        /// Gets the line pixels.
-        /// </summary>
-        /// <param name="edge">The edge.</param>
-        /// <returns>IEnumerable&lt;System.ValueTuple&lt;System.Int32, System.Int32, System.Double&gt;&gt;.</returns>
-        /// <exception cref="System.NotImplementedException"></exception>
-        public IEnumerable<(int, int, double)> GetLinePixels(Edge edge)
-        {
-            //Get projected vertices and then use the this.PlotLine() function.
-            throw new NotImplementedException();
-        }
-
-        /// <summary>
-
         /// </summary>
         /// <param name="face">The face.</param>
         /// <returns>System.Double.</returns>
@@ -173,14 +159,15 @@ namespace TVGL
 
 
         /// <summary>
-        /// Updates the z-buffer with information from each face.
+        /// Gets all the indices that are covered by a face.
         /// This is the big tricky function. In the end, implemented a custom function
         /// that scans the triangle from left to right. This is similar to the approach
         /// described here: http://www.sunshine2k.de/coding/java/TriangleRasterization/TriangleRasterization.html
+        /// This is slow and possibly could be improved 
         /// </summary>
         /// <param name="face"></param>
         /// <returns></returns>
-        protected IEnumerable<(int index, double zHeight)> GetIndicesCoveredByFace(TriangleFace face)
+        private IEnumerable<(int index, double zHeight)> GetIndicesCoveredByFace(TriangleFace face)
         {
             // get the 3 vertices and their zheights
             var vA = Vertices[face.A.IndexInList];
@@ -353,7 +340,7 @@ namespace TVGL
         //Returns if the value if it is within the bounds of zero and notGreaterThan
         //If the value is slightly less than zero, it will return zero (non-negative)
         //If the value is slightly above notGreaterThan, it will return notGreaterThan
-        protected bool WithinBounds(double val, double negligible, double notGreaterThan, out double returnVal)
+        private bool WithinBounds(double val, double negligible, double notGreaterThan, out double returnVal)
         {
             returnVal = val;
             if (val > 0 && val < notGreaterThan)
@@ -392,7 +379,7 @@ namespace TVGL
         public Vector3 Get3DPointTransformed(int i, int j, double defaultZHeight = 0.0)
         {
             var zHeight = Values[YCount * i + j].Item1 == null ? defaultZHeight : Values[YCount * i + j].Item2;
-            return new Vector3(MinX + i * PixelSideLength, MinY + j * PixelSideLength, zHeight);
+            return new Vector3(Get2DPoint(i,j), zHeight);
         }
         /// <summary>
         /// Gets the 3D point on the solid corresponding to pixel i, j.

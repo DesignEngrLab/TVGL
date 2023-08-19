@@ -127,5 +127,26 @@ namespace TVGLUnitTestsAndBenchmarking
                 Assert.True(v1.IsPracticallySame(v2.Multiply(mInv), 1e-10));
             }
         }
+
+        public static void UniqueLineTesting()
+        {
+            for (int i = 0; i < 100; i++)
+            {
+                var anchor = new Vector3(r100, r100, r100);
+                var dir = new Vector3(r100, r100, r100);
+                anchor = new Vector3(33, 44, 55);
+                dir = new Vector3(0, 0, 1);
+                var line = MiscFunctions.Unique3DLineTrig(anchor, dir);
+                Console.WriteLine(line);
+                (var anchor2, var dir2) = MiscFunctions.Get3DLineValuesFromUniqueTrig(line);
+                var dir1 = dir.Normalize();
+                var plane = new Plane(0,dir1);
+                var anchor1 = MiscFunctions.PointOnPlaneFromRay(plane, anchor, dir1, out _);
+                if (anchor1.IsPracticallySame(anchor2, 1e-10) && dir1.IsPracticallySame(dir2, 1e-10))
+                    Console.WriteLine("Success");
+                else
+                    Console.WriteLine("Failure");
+            }
+        }
     }
 }

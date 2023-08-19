@@ -11,13 +11,12 @@
 // </copyright>
 // <summary></summary>
 // ***********************************************************************
+using StarMathLib;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.WebSockets;
 using System.Runtime.CompilerServices;
-using StarMathLib;
-using TVGL.ConvexHullDetails;
-using System.Diagnostics.CodeAnalysis;
 
 namespace TVGL
 {
@@ -333,7 +332,7 @@ namespace TVGL
                 distinctList = distinctList.OrderBy(f => f.Normal[k]).ToList();
                 for (var i = distinctList.Count - 1; i > 0; i--)
                 {
-                    if (distinctList[i].Normal.IsAligned(distinctList[i - 1].Normal,tolerance) ||
+                    if (distinctList[i].Normal.IsAligned(distinctList[i - 1].Normal, tolerance) ||
                         (removeOpposites && distinctList[i].Normal.IsAlignedOrReverse(distinctList[i - 1].Normal, tolerance)))
                     {
                         if (distinctList[i].Area <= distinctList[i - 1].Area) distinctList.RemoveAt(i);
@@ -2231,6 +2230,71 @@ namespace TVGL
             throw new NotImplementedException();
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+
+        public static Vector4 Unique3DLineTrig(this Vector3 anchor, Vector3 direction)
+        {
+            if (direction.X.IsNegligible() && direction.Y.IsNegligible())
+            {
+                var PolarAngle = direction.Z > 0 ? 0 : Math.PI;
+                return new Vector4(PolarAngle, 0, anchor.X, anchor.Y);
+            }
+            else
+            {
+                var oneOverRadius = 1 / direction.Length();
+                var PolarAngle = Math.Acos(direction.Z * oneOverRadius);
+                var AzimuthAngle = Math.Atan2(direction.Y, direction.X);
+                var distanceToAnchor = direction.Dot(anchor) * oneOverRadius;
+                var pointOnPlane = anchor - distanceToAnchor * direction * oneOverRadius;
+                var tx = pointOnPlane.Dot(new Vector3(direction.Y, -direction.X, 0).Normalize());
+                var ty = pointOnPlane.Dot(new Vector3(direction.Z * direction.X,
+                    direction.Z * direction.Y, -direction.X * direction.X - direction.Y * direction.Y).Normalize());
+                return new Vector4(PolarAngle, AzimuthAngle, tx, ty);
+            }
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static (Vector3 anchor, Vector3 direction) Get3DLineValuesFromUniqueTrig(this Vector4 unique3DLine)
+        {
+            var sphericalAngles = new SphericalAnglePair(unique3DLine.X, unique3DLine.Y);
+            var direction = sphericalAngles.ToVector3();
+
+            if (direction.X.IsNegligible() && direction.Y.IsNegligible())
+                return (new Vector3(unique3DLine.Z, unique3DLine.W, 0), new Vector3(0, 0, 1));
+            var iAxis = new Vector3(direction.Y, -direction.X, 0).Normalize();
+            var jAxis = new Vector3(direction.Z * direction.X, direction.Z * direction.Y, -direction.X * direction.X - direction.Y * direction.Y).Normalize();
+            var anchor = unique3DLine.Z * iAxis + unique3DLine.W * jAxis;
+            return (anchor, direction);
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Vector4 Unique3DLineHT(this Vector3 anchor, Vector3 direction)
+        {
+            var d = direction.Normalize();
+            var t_p = Math.Sqrt((1 - d.Z) / (1 + d.Z));
+            var sinPhi = 2 * t_p / (1 + t_p * t_p);
+            var t_a = Math.Sqrt((sinPhi - anchor.Y) / (sinPhi + anchor.Y));
+            var ty = anchor.Z / (-d.X * d.X - d.Y * d.Y);
+            var tx = (anchor.X - ty * d.Z * d.X) / d.Y;
+            return new Vector4(t_p, t_a, tx, ty);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static (Vector3 anchor, Vector3 direction) Get3DLineValuesFromUniqueHT(this Vector4 unique3DLine)
+        {
+            var t_p = unique3DLine.X;
+            var t_a = unique3DLine.Y;
+            var t_x = unique3DLine.Z;
+            var t_y = unique3DLine.W;
+            var t_pSqd = t_p * t_p;
+            var t_aSqd = t_a * t_a;
+            var a = 1 / (1 + t_pSqd);
+            var b = a * (1 - t_pSqd);
+            var c = b / (1 + t_aSqd);
+            var dir = new Vector3(2 * t_a * c, (1 - t_aSqd) * c, 2 * t_p * a);
+            var iAxis = new Vector3(dir.Y, -dir.X, 0);
+            var jAxis = new Vector3(dir.Z * dir.X, dir.Z * dir.Y, -dir.X * dir.X - dir.Y * dir.Y);
+            var anchor = t_x * iAxis + t_y * jAxis;
+            return (anchor, dir);
+        }
         /// <summary>
         /// Typeses the implementing i curve.
         /// </summary>
