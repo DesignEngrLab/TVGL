@@ -2265,9 +2265,14 @@ namespace TVGL
             var anchor = unique3DLine.Z * iAxis + unique3DLine.W * jAxis;
             return (anchor, direction);
         }
+        /// <summary>
+        /// Instead of the above functions, I thought it'd be faster to use half tangent to avoid all trigonometry.
+        /// But I messed up the logic and never fixed it.
+        /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Vector4 Unique3DLineHT(this Vector3 anchor, Vector3 direction)
+        public static Vector4 Unique3DLineHalfTangent(this Vector3 anchor, Vector3 direction)
         {
+            throw new NotImplementedException();
             var d = direction.Normalize();
             var t_p = Math.Sqrt((1 - d.Z) / (1 + d.Z));
             var sinPhi = 2 * t_p / (1 + t_p * t_p);
@@ -2277,9 +2282,14 @@ namespace TVGL
             return new Vector4(t_p, t_a, tx, ty);
         }
 
+        /// <summary>
+        /// Instead of the above functions, I thought it'd be faster to use half tangent to avoid all trigonometry.
+        /// But I messed up the logic and never fixed it.
+        /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static (Vector3 anchor, Vector3 direction) Get3DLineValuesFromUniqueHT(this Vector4 unique3DLine)
+        public static (Vector3 anchor, Vector3 direction) Get3DLineValuesFromUniqueHalfTangent(this Vector4 unique3DLine)
         {
+            throw new NotImplementedException();
             var t_p = unique3DLine.X;
             var t_a = unique3DLine.Y;
             var t_x = unique3DLine.Z;
