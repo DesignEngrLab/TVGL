@@ -2232,7 +2232,7 @@ namespace TVGL
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
 
-        public static Vector4 Unique3DLineTrig(this Vector3 anchor, Vector3 direction)
+        public static Vector4 Unique3DLine(this Vector3 anchor, Vector3 direction)
         {
             if (direction.X.IsNegligible() && direction.Y.IsNegligible())
             {
@@ -2253,7 +2253,7 @@ namespace TVGL
             }
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static (Vector3 anchor, Vector3 direction) Get3DLineValuesFromUniqueTrig(this Vector4 unique3DLine)
+        public static (Vector3 anchor, Vector3 direction) Get3DLineValuesFromUnique(this Vector4 unique3DLine)
         {
             var sphericalAngles = new SphericalAnglePair(unique3DLine.X, unique3DLine.Y);
             var direction = sphericalAngles.ToVector3();
