@@ -288,6 +288,9 @@ namespace TVGL
             writer.WritePropertyName("Name");
             writer.WriteValue(Name);
 
+            writer.WritePropertyName("Units");
+            writer.WriteValue(Enum.GetName(typeof(UnitType), Units));
+
             writer.WritePropertyName("Index");
             writer.WriteValue(index);
 
@@ -371,6 +374,9 @@ namespace TVGL
                 {
                     case "Name":
                         Name = reader.ReadAsString();
+                        break;
+                    case "Units":
+                        Units = IO.ParseUnits(reader.ReadAsString());
                         break;
                     case "Index":
                         index = (int)reader.ReadAsInt32();

@@ -660,7 +660,7 @@ namespace TVGL
         /// </summary>
         /// <param name="input">The input.</param>
         /// <returns>TVGL.UnitType.</returns>
-        protected static UnitType ParseUnits(string input)
+        public static UnitType ParseUnits(string input)
         {
             if (TryParseUnits(input, out UnitType units)) return units;
             return UnitType.unspecified;
