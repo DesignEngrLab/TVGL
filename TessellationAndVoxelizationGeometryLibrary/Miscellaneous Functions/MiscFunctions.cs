@@ -2265,46 +2265,7 @@ namespace TVGL
             var anchor = unique3DLine.Z * iAxis + unique3DLine.W * jAxis;
             return (anchor, direction);
         }
-        /// <summary>
-        /// Instead of the above functions, I thought it'd be faster to use half tangent to avoid all trigonometry.
-        /// But I messed up the logic and never fixed it.
-        /// </summary>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Vector4 Unique3DLineHalfTangent(this Vector3 anchor, Vector3 direction)
-        {
-            throw new NotImplementedException();
-            var d = direction.Normalize();
-            var t_p = Math.Sqrt((1 - d.Z) / (1 + d.Z));
-            var sinPhi = 2 * t_p / (1 + t_p * t_p);
-            var t_a = Math.Sqrt((sinPhi - anchor.Y) / (sinPhi + anchor.Y));
-            var ty = anchor.Z / (-d.X * d.X - d.Y * d.Y);
-            var tx = (anchor.X - ty * d.Z * d.X) / d.Y;
-            return new Vector4(t_p, t_a, tx, ty);
-        }
-
-        /// <summary>
-        /// Instead of the above functions, I thought it'd be faster to use half tangent to avoid all trigonometry.
-        /// But I messed up the logic and never fixed it.
-        /// </summary>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static (Vector3 anchor, Vector3 direction) Get3DLineValuesFromUniqueHalfTangent(this Vector4 unique3DLine)
-        {
-            throw new NotImplementedException();
-            var t_p = unique3DLine.X;
-            var t_a = unique3DLine.Y;
-            var t_x = unique3DLine.Z;
-            var t_y = unique3DLine.W;
-            var t_pSqd = t_p * t_p;
-            var t_aSqd = t_a * t_a;
-            var a = 1 / (1 + t_pSqd);
-            var b = a * (1 - t_pSqd);
-            var c = b / (1 + t_aSqd);
-            var dir = new Vector3(2 * t_a * c, (1 - t_aSqd) * c, 2 * t_p * a);
-            var iAxis = new Vector3(dir.Y, -dir.X, 0);
-            var jAxis = new Vector3(dir.Z * dir.X, dir.Z * dir.Y, -dir.X * dir.X - dir.Y * dir.Y);
-            var anchor = t_x * iAxis + t_y * jAxis;
-            return (anchor, dir);
-        }
+       
         /// <summary>
         /// Typeses the implementing i curve.
         /// </summary>
