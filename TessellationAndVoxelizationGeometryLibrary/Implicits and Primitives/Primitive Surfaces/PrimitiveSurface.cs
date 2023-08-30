@@ -800,7 +800,7 @@ namespace TVGL
             else if (this is Cone cone) return cone.Apex;
             else if (this is Torus torus) return torus.Center;
             else if (this is Sphere sphere) return sphere.Center;
-            else return Vector3.Null;
+            else return GetCenterOfMass(Faces);
         }
 
         public double GetRadius(bool max = false)
