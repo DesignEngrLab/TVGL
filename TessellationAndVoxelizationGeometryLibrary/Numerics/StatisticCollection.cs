@@ -326,7 +326,6 @@ namespace TVGL
             //the equation isn’t at all obvious. Fortunately, you’ll never have to modify this calculation.
             //Method TTest concludes by computing the p-value and displaying all the calculated values:
             var p =  AreaUnderTDistribution(t, df); // Cumulative two-tail density
-            Console.WriteLine(p);
             return p;
         }
     }
