@@ -84,18 +84,16 @@ namespace TVGL
         {
             _maxError = 0.0;
             _meanSquaredError = 0.0;
-            foreach (var c in Vertices.Select(v => v.Coordinates))
+            if (Vertices == null||Vertices.Count==0) return;
+            foreach (var c in Vertices.Select(v => v.Coordinates)
+                // also add midpoints of edges
+                .Concat(InnerEdges.Select(edge => 0.5 * (edge.To.Coordinates + edge.From.Coordinates))
+                .Concat(OuterEdges.Select(edge => 0.5 * (edge.To.Coordinates + edge.From.Coordinates)))))
             {
                 var d = Math.Abs(PointMembership(c));
                 _meanSquaredError += d * d;
                 if (_maxError < d)
                     _maxError = d;
-            }
-            foreach (var c in InnerEdges.Select(edge => 0.5 * (edge.To.Coordinates + edge.From.Coordinates))
-                    .Concat(OuterEdges.Select(edge => 0.5 * (edge.To.Coordinates + edge.From.Coordinates))))
-            {
-                var d = PointMembership(c);
-                _meanSquaredError += d * d;
             }
             _meanSquaredError /= Vertices.Count + InnerEdges.Count + OuterEdges.Count;
         }
@@ -103,19 +101,13 @@ namespace TVGL
         /// <summary>
         /// Calculates the mean square error.
         /// </summary>
-        /// <param name="vertices">The vertices.</param>
+        /// <param name="points">The vertices.</param>
         /// <returns>System.Double.</returns>
-        public virtual double CalculateMeanSquareError(IEnumerable<Vector3> vertices)// = null)
+        public virtual double CalculateMeanSquareError(IEnumerable<Vector3> points)
         {
-            //if (vertices == null)
-            //{
-            //    vertices = Vertices.Select(v => v.Coordinates)
-            //        .Concat(InnerEdges.Select(edge => 0.5 * (edge.To.Coordinates + edge.From.Coordinates)))
-            //        .Concat(OuterEdges.Select(edge => 0.5 * (edge.To.Coordinates + edge.From.Coordinates)));
-            //}
             var mse = 0.0;
             var n = 0;
-            foreach (var c in vertices)
+            foreach (var c in points)
             {
                 var d = PointMembership(c);
                 mse += d * d;
@@ -126,12 +118,12 @@ namespace TVGL
         /// <summary>
         /// Calculates the mean square error.
         /// </summary>
-        /// <param name="vertices">The vertices.</param>
+        /// <param name="points">The vertices.</param>
         /// <returns>System.Double.</returns>
-        public virtual double CalculateMaxError(IEnumerable<Vector3> vertices)
+        public virtual double CalculateMaxError(IEnumerable<Vector3> points)
         {
             var maxError = 0.0;
-            foreach (var c in vertices)
+            foreach (var c in points)
             {
                 var d = Math.Abs(PointMembership(c));
                 if (maxError < d)
@@ -360,8 +352,10 @@ namespace TVGL
         {
             _meanSquaredError = double.NaN;
             _maxError = double.NaN;
+            if (Faces == null) Faces = new HashSet<TriangleFace>();
             if (Faces.Contains(face)) return;
             _area = Area + face.Area;
+            if (Vertices == null) Vertices = new HashSet<Vertex>();
             foreach (var v in face.Vertices.Where(v => !Vertices.Contains(v)))
                 Vertices.Add(v);
             if (face.AB != null && face.BC != null && face.CA != null)
