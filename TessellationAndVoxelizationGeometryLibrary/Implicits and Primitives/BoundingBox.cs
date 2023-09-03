@@ -310,7 +310,9 @@ namespace TVGL
                 new TriangleFace(vertices[6],vertices[4],vertices[5])
             };
                 var random = new Random(0);
-                _tessellatedSolid = new TessellatedSolid(faces, vertices, TessellatedSolidBuildOptions.Minimal, new[] {
+             var   tessellatedSolidBuildOptions = new TessellatedSolidBuildOptions();
+                tessellatedSolidBuildOptions.CopyElementsPassedToConstructor = false;
+                _tessellatedSolid = new TessellatedSolid(faces, vertices, tessellatedSolidBuildOptions, new[] {
                     new Color(0.6f,(float)random.NextDouble(), (float)random.NextDouble(), (float)random.NextDouble()) });
                 _tessellatedSolid.Primitives = new List<PrimitiveSurface>();
                 for (var i = 0; i < 12; i += 2)
