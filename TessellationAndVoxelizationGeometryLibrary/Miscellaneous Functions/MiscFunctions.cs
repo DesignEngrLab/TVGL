@@ -11,13 +11,12 @@
 // </copyright>
 // <summary></summary>
 // ***********************************************************************
+using StarMathLib;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.WebSockets;
 using System.Runtime.CompilerServices;
-using StarMathLib;
-using TVGL.ConvexHullDetails;
-using System.Diagnostics.CodeAnalysis;
 
 namespace TVGL
 {
@@ -315,7 +314,7 @@ namespace TVGL
         /// <param name="removeOpposites">if set to <c>true</c> [remove opposites].</param>
         /// <returns>List&lt;TriangleFace&gt;.</returns>
         public static List<TriangleFace> FacesWithDistinctNormals(this IEnumerable<TriangleFace> faces,
-            double tolerance = Constants.SameFaceNormalDotTolerance, bool removeOpposites = true)
+            double tolerance = Constants.DotToleranceForSame, bool removeOpposites = true)
         {
             // This is done by sorting the normals first by the x-component, then by the y and then the z.
             // This is to avoid the O(n^2) and be more like O(n). It is a necessary but not sufficient
@@ -333,8 +332,8 @@ namespace TVGL
                 distinctList = distinctList.OrderBy(f => f.Normal[k]).ToList();
                 for (var i = distinctList.Count - 1; i > 0; i--)
                 {
-                    if (distinctList[i].Normal.Dot(distinctList[i - 1].Normal).IsPracticallySame(1.0, tolerance) ||
-                        (removeOpposites && distinctList[i].Normal.Dot(distinctList[i - 1].Normal).IsPracticallySame(-1, tolerance)))
+                    if (distinctList[i].Normal.IsAligned(distinctList[i - 1].Normal, tolerance) ||
+                        (removeOpposites && distinctList[i].Normal.IsAlignedOrReverse(distinctList[i - 1].Normal, tolerance)))
                     {
                         if (distinctList[i].Area <= distinctList[i - 1].Area) distinctList.RemoveAt(i);
                         else distinctList.RemoveAt(i - 1);
@@ -342,67 +341,6 @@ namespace TVGL
                 }
             }
             return distinctList;
-        }
-
-        /// <summary>
-        /// Gets all the flat patches, given a list of primitives.
-        /// </summary>
-        /// <param name="primitives">The primitives.</param>
-        /// <returns>List&lt;Flat&gt;.</returns>
-        public static IEnumerable<Plane> FindFlatPatches(this IEnumerable<PrimitiveSurface> primitives)
-        {
-            // to avoid re-enumerating the faces - make a list. If it's already a list, then you're fine to use directly. 
-            foreach (var prim in primitives)
-            {
-                if (prim is Plane plane)
-                {
-                    yield return plane;
-                    continue;
-                }
-                //Else
-                var usedFaces = new HashSet<TriangleFace>();
-                foreach (var face in prim.Faces)
-                {
-                    if (usedFaces.Contains(face))
-                        continue;
-                    //Start a new flat patch
-                    usedFaces.Add(face);
-                    var flatPatch = new HashSet<TriangleFace> { face };
-                    var stack = new Stack<TriangleFace>(new[] { face });
-                    var flatVertices = new List<Vertex>(face.Vertices);
-                    var area = 0.0;
-                    var numFaces = 0;
-                    while (stack.Any())
-                    {
-                        var newFace = stack.Pop();
-                        //Add new adjacent faces to the stack for consideration
-                        //if the faces are already listed in the flat faces, the first
-                        //"if" statement in the while locations will ignore them.
-                        foreach (var edge in newFace.Edges)
-                        {
-                            var adjacentFace = edge.GetMatingFace(newFace);
-                            if (adjacentFace == null || adjacentFace.BelongsToPrimitive != prim || usedFaces.Contains(adjacentFace)) continue;
-                            if (newFace.Normal.IsAligned(adjacentFace.Normal, Constants.SameFaceNormalDotTolerance)) continue;
-                            var otherVertex = adjacentFace.A != edge.From && adjacentFace.A != edge.To ? adjacentFace.A :
-                                adjacentFace.B != edge.From && adjacentFace.B != edge.To ? adjacentFace.B :
-                                adjacentFace.C;
-                            flatVertices.Add(otherVertex);
-                            if (!Plane.DefineNormalAndDistanceFromVertices(flatVertices, out double distanceToPlane, out Vector3 normal)
-                               || !distanceToPlane.IsPracticallySame(otherVertex.Dot(normal), Constants.SameFaceNormalDotTolerance * 10))
-                                flatVertices.RemoveAt(flatVertices.Count - 1);
-                            else
-                            {
-                                stack.Push(adjacentFace);
-                                usedFaces.Add(adjacentFace);
-                                flatPatch.Add(adjacentFace);
-                                area += adjacentFace.Area;
-                                numFaces++;
-                            }
-                        }
-                    }
-                    yield return new Plane(flatPatch, false);
-                }
-            }
         }
 
         /// <summary>
@@ -439,7 +377,7 @@ namespace TVGL
                         if (nonCrossingEdges.Contains(edge)) continue;
                         var adjacentFace = edge.GetMatingFace(newFace);
                         if (adjacentFace == null || !availableFaces.Contains(adjacentFace)) continue;
-                        if (Math.Abs(1 - newFace.Normal.Dot(adjacentFace.Normal)) > Constants.SameFaceNormalDotTolerance) continue;
+                        if (!newFace.Normal.IsAligned(adjacentFace.Normal)) continue;
                         var otherVertex = adjacentFace.A != edge.From && adjacentFace.A != edge.To ? adjacentFace.A :
                             adjacentFace.B != edge.From && adjacentFace.B != edge.To ? adjacentFace.B :
                             adjacentFace.C;
@@ -1389,12 +1327,12 @@ namespace TVGL
             intersectionPoint = Vector2.Null;
             // okay, so bounding boxes overlap
             //first a quick check to see if points are the same
-            if (aFrom.IsPracticallySame(bAnchor))
+            if (aFrom.IsAligned(bAnchor))
             {
                 intersectionPoint = aFrom;
                 return true;
             }
-            if (aTo.IsPracticallySame(bAnchor))
+            if (aTo.IsAligned(bAnchor))
             {
                 intersectionPoint = aTo;
                 return true;
@@ -1441,7 +1379,7 @@ namespace TVGL
         /// <returns>TVGL.Vector2.</returns>
         public static Vector2 LineLine2DIntersection(Vector2 aAnchor, Vector2 aDirection, Vector2 bAnchor, Vector2 bDirection)
         {
-            if (aAnchor.IsPracticallySame(bAnchor, Constants.BaseTolerance)) return aAnchor;
+            if (aAnchor.IsAligned(bAnchor, Constants.BaseTolerance)) return aAnchor;
             var vCross = aDirection.Cross(bDirection); //2D cross product, determines if parallel
 
             if (vCross.IsNegligible(Constants.BaseTolerance))
@@ -2292,6 +2230,42 @@ namespace TVGL
             throw new NotImplementedException();
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+
+        public static Vector4 Unique3DLine(this Vector3 anchor, Vector3 direction)
+        {
+            if (direction.X.IsNegligible() && direction.Y.IsNegligible())
+            {
+                var PolarAngle = direction.Z > 0 ? 0 : Math.PI;
+                return new Vector4(PolarAngle, 0, anchor.X, anchor.Y);
+            }
+            else
+            {
+                var oneOverRadius = 1 / direction.Length();
+                var PolarAngle = Math.Acos(direction.Z * oneOverRadius);
+                var AzimuthAngle = Math.Atan2(direction.Y, direction.X);
+                var distanceToAnchor = direction.Dot(anchor) * oneOverRadius;
+                var pointOnPlane = anchor - distanceToAnchor * direction * oneOverRadius;
+                var tx = pointOnPlane.Dot(new Vector3(direction.Y, -direction.X, 0).Normalize());
+                var ty = pointOnPlane.Dot(new Vector3(direction.Z * direction.X,
+                    direction.Z * direction.Y, -direction.X * direction.X - direction.Y * direction.Y).Normalize());
+                return new Vector4(PolarAngle, AzimuthAngle, tx, ty);
+            }
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static (Vector3 anchor, Vector3 direction) Get3DLineValuesFromUnique(this Vector4 unique3DLine)
+        {
+            var sphericalAngles = new SphericalAnglePair(unique3DLine.X, unique3DLine.Y);
+            var direction = sphericalAngles.ToVector3();
+
+            if (direction.X.IsNegligible() && direction.Y.IsNegligible())
+                return (new Vector3(unique3DLine.Z, unique3DLine.W, 0), new Vector3(0, 0, 1));
+            var iAxis = new Vector3(direction.Y, -direction.X, 0).Normalize();
+            var jAxis = new Vector3(direction.Z * direction.X, direction.Z * direction.Y, -direction.X * direction.X - direction.Y * direction.Y).Normalize();
+            var anchor = unique3DLine.Z * iAxis + unique3DLine.W * jAxis;
+            return (anchor, direction);
+        }
+       
         /// <summary>
         /// Typeses the implementing i curve.
         /// </summary>

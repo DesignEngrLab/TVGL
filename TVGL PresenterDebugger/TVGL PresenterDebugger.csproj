@@ -144,7 +144,6 @@
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\TessellatedSolid\Slicing\ContactData.cs" Link="TVGL\TessellatedSolid\Slicing\ContactData.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\TessellatedSolid\Slicing\Slice.cs" Link="TVGL\TessellatedSolid\Slicing\Slice.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\TessellatedSolid\TessellatedSolid.cs" Link="TVGL\TessellatedSolid\TessellatedSolid.cs" />
-		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\TessellatedSolid\TessellatedSolid.StaticFunctions.cs" Link="TVGL\TessellatedSolid\TessellatedSolid.StaticFunctions.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\TessellatedSolid\TessellatedSolidBuildOptions.cs" Link="TVGL\TessellatedSolid\TessellatedSolidBuildOptions.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\TessellatedSolid\TessellationBaseClass.cs" Link="TVGL\TessellatedSolid\TessellationBaseClass.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\TessellatedSolid\TVGLConvexHull.cs" Link="TVGL\TessellatedSolid\TVGLConvexHull.cs" />

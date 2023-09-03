@@ -648,7 +648,7 @@ namespace TVGL
         public static PolygonInteractionRecord GetPolygonInteraction(this Polygon polygonA, Polygon polygonB)
         {
             var interactionRecord = new PolygonInteractionRecord(polygonA, polygonB);
-            if (interactionRecord.Relationship == PolygonRelationship.Equal) return interactionRecord;
+            if (interactionRecord.Relationship == ABRelationships.Equal) return interactionRecord;
             // this would happen when the function detcts that polygonA and polygonB are the same
             var visited = new bool[interactionRecord.numPolygonsInA * interactionRecord.numPolygonsInB];
             RecursePolygonInteractions(polygonA, polygonB, interactionRecord, visited);

@@ -218,14 +218,14 @@ namespace TVGL
         {
             if (!polygonA.IsPositive) throw new ArgumentException("A negative polygon (i.e. hole) is provided to Union which results in infinite shape.", nameof(polygonA));
             if (!polygonB.IsPositive) throw new ArgumentException("A negative polygon (i.e. hole) is provided to Union which results in infinite shape.", nameof(polygonB));
-            if (!polygonInteraction.CoincidentEdges && (polygonInteraction.Relationship == PolygonRelationship.Separated ||
-                polygonInteraction.Relationship == PolygonRelationship.AIsInsideHoleOfB ||
-                polygonInteraction.Relationship == PolygonRelationship.BIsInsideHoleOfA))
+            if (!polygonInteraction.CoincidentEdges && (polygonInteraction.Relationship == ABRelationships.Separated ||
+                polygonInteraction.Relationship == ABRelationships.AIsInsideHoleOfB ||
+                polygonInteraction.Relationship == ABRelationships.BIsInsideHoleOfA))
                 return new List<Polygon> { polygonA.Copy(true, false), polygonB.Copy(true, false) };
-            if (polygonInteraction.Relationship == PolygonRelationship.BInsideA ||
-               polygonInteraction.Relationship == PolygonRelationship.Equal)
+            if (polygonInteraction.Relationship == ABRelationships.BInsideA ||
+               polygonInteraction.Relationship == ABRelationships.Equal)
                 return new List<Polygon> { polygonA.Copy(true, false) };
-            if (polygonInteraction.Relationship == PolygonRelationship.AInsideB)
+            if (polygonInteraction.Relationship == ABRelationships.AInsideB)
                 return new List<Polygon> { polygonB.Copy(true, false) };
             polygonUnion ??= new PolygonUnion();
             return polygonUnion.Run(polygonA, polygonB, polygonInteraction, outputAsCollectionType, tolerance);
@@ -937,14 +937,14 @@ namespace TVGL
         {
             if (interactionRecord.IntersectionWillBeEmpty())
                 return new List<Polygon> { polygonA.Copy(true, false), polygonB.Copy(true, false) };
-            else if (interactionRecord.Relationship == PolygonRelationship.BInsideA &&
+            else if (interactionRecord.Relationship == ABRelationships.BInsideA &&
                 !interactionRecord.CoincidentEdges && !interactionRecord.CoincidentVertices)
             {
                 var polygonACopy1 = polygonA.Copy(true, false);
                 polygonACopy1.AddInnerPolygon(polygonB.Copy(true, true));
                 return new List<Polygon> { polygonACopy1 };
             }
-            else if (interactionRecord.Relationship == PolygonRelationship.AInsideB &&
+            else if (interactionRecord.Relationship == ABRelationships.AInsideB &&
                 !interactionRecord.CoincidentEdges && !interactionRecord.CoincidentVertices)
             {
                 var polygonBCopy2 = polygonB.Copy(true, false);

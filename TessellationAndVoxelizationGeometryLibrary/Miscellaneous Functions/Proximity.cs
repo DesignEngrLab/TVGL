@@ -467,7 +467,7 @@ namespace TVGL
         /// <param name="directions">The directions.</param>
         /// <param name="reverseIsDuplicate">if set to <c>true</c> [reverse is duplicate].</param>
         /// <param name="dotTolerance">The dot tolerance.</param>
-        public static void RemoveDuplicates(this List<Vector3> directions, bool reverseIsDuplicate = false, double dotTolerance = Constants.SameFaceNormalDotTolerance)
+        public static void RemoveDuplicates(this List<Vector3> directions, bool reverseIsDuplicate = false)
         {
             if (!directions.Any()) return;
 
@@ -480,8 +480,8 @@ namespace TVGL
                 var unique = true;
                 for (var j = i + 1; j < temp.Count; j++)
                 {
-                    if ((reverseIsDuplicate && temp[i].IsAlignedOrReverse(temp[j], dotTolerance)) ||
-                        (!reverseIsDuplicate && temp[i].IsAligned(temp[j], dotTolerance)))
+                    if ((reverseIsDuplicate && temp[i].IsAlignedOrReverse(temp[j])) ||
+                        (!reverseIsDuplicate && temp[i].IsAligned(temp[j])))
                     {
                         unique = false;
                         break;

@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net7.0</TargetFramework>
+    <TargetFramework>net6.0</TargetFramework>
     <AssemblyName>TessellationAndVoxelizationGeometryLibrary</AssemblyName>
     <RootNamespace>TVGL</RootNamespace>
     <Version>1.0.17.1019</Version>

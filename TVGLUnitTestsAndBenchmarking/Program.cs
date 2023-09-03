@@ -11,8 +11,8 @@ namespace TVGLUnitTestsAndBenchmarking
 {
     internal class Program
     {
-        //public static string inputFolder = "Github";
-        public static string inputFolder = "OneDrive - medemalabs.com";
+        public static string inputFolder = "Github\\PartAnalyzer\\TestFiles";
+        //public static string inputFolder = "OneDrive - medemalabs.com";
         static Random r = new Random();
         static double r1 => 2.0 * r.NextDouble() - 1.0;
 
@@ -20,8 +20,11 @@ namespace TVGLUnitTestsAndBenchmarking
         [STAThread]
         private static void Main(string[] args)
         {
+            TVGLNumericsTests.UniqueLineTesting();
+
+            Misc_Tests.ZbufferTesting.Test3();
             //var summary = BenchmarkRunner.Run<MinimumCircleTesting>();
-            //return;
+            return;
             DirectoryInfo dir = Program.BackoutToFolder(inputFolder);
             var myWriter = new ConsoleTraceListener();
             Trace.Listeners.Add(myWriter);
@@ -73,7 +76,7 @@ namespace TVGLUnitTestsAndBenchmarking
             var valid3DFileExtensions = new HashSet<string> { ".stl", ".ply", ".obj", ".3mf", ".tvglz" };
             var allFiles = dir.GetFiles("*", SearchOption.AllDirectories)
                 .Where(f => valid3DFileExtensions.Contains(f.Extension.ToLower()))
-                .OrderBy(x=>Guid.NewGuid());
+                .OrderBy(x => Guid.NewGuid());
             foreach (var fileName in allFiles.Skip(index))
             {
                 Console.Write(index + ": Attempting to open: " + fileName.Name);
@@ -88,7 +91,7 @@ namespace TVGLUnitTestsAndBenchmarking
                 var distanceAlong = solid.Vertices.GetLengthAndExtremeVertex(normal, out var loVertex, out _);
                 var planeDistance = distanceAlong * r.NextDouble();
                 var plane = new Plane(planeDistance, normal);
-                var polygons =  solid.GetCrossSection(plane, out _);
+                var polygons = solid.GetCrossSection(plane, out _);
                 if (polygons.Count > 0) yield return polygons;
                 index++;
             }

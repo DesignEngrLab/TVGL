@@ -47,7 +47,7 @@ namespace TVGL
                     // get a face that does not have a dot product orthogonal to the direction
                     // notice that IsNegligible is used with the dotTolerance specified above
                     dot = face.Normal.Dot(direction);
-                    if (!dot.IsNegligible(Constants.SameFaceNormalDotTolerance))  
+                    if (!dot.IsNegligible(Constants.DotToleranceOrthogonal))  
                     {
                         startingFace = face;
                         break;
@@ -270,7 +270,7 @@ namespace TVGL
             {
                 if (!poly.HasABoundingBoxThatEncompasses(hole)) continue;
                 var interaction = poly.GetPolygonInteraction(hole);
-                if (interaction.Relationship == PolygonRelationship.BInsideA &&
+                if (interaction.Relationship == ABRelationships.BInsideA &&
                     interaction.GetRelationships(hole).Skip(1).All(r => r.Item1 == PolyRelInternal.Separated))
                 {
                     enclosingPolygon = poly;

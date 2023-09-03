@@ -23,13 +23,9 @@ namespace TVGL
     public static class Constants
     {
         /// <summary>
-        /// The maximum number faces default full ts
-        /// </summary>
-        internal const int MaxNumberFacesDefaultMakeEdges = 33333; // note that since triangles and each edge is shared between two triangles, this is 3/2 the number of edges (50,000)
-        /// <summary>
         /// The two pi
         /// </summary>
-        public const double TwoPi = 2 * Math.PI;
+        public const double TwoPi = Math.Tau;
         /// <summary>
         /// The half pi
         /// </summary>
@@ -61,6 +57,15 @@ namespace TVGL
 #endif
 
 
+        /// <summary>
+        /// The default tessellation error
+        /// </summary>
+        internal const double DefaultTessellationError = 0.08;
+
+        /// <summary>
+        /// The default tessellation maximum angle error
+        /// </summary>
+        internal const double DefaultTessellationMaxAngleErrorDegrees = 15;
 
         /// <summary>
         /// The minimum angle used to approximate a circle. An octagon is the largest sided polygon that any sane person would want to define
@@ -68,7 +73,7 @@ namespace TVGL
         /// conservative value for smooth. However, it is not uncommon to have slants in a model well below this. A 2-to-1 slope makes an
         /// angle of 26.6-degrees. So, we consider a little lower as the cutoff.
         /// </summary>
-        public const double MinSmoothAngle = 25 * Math.PI / 180;
+        public const double MinSmoothAngle = DefaultTessellationMaxAngleErrorDegrees * Math.PI / 180;
 
         /// <summary>
         /// The tolerance used for simplifying polygons by joining to similary sloped lines.
@@ -102,18 +107,32 @@ namespace TVGL
         /// </summary>
         public const double OBBTolerance = 1e-5;
 
+
         /// <summary>
-        /// The error for face in surface
+        /// The default minimum angle to determine if two directions are aligned (in degrees).
         /// </summary>
-        public const double ErrorForFaceInSurface = 0.002;
+        public const double DefaultSameAngleDegrees = 1;
 
 
         /// <summary>
-        /// The tolerance for the same normal of a face when two are dot-producted.
-        /// the angle would be acos(1 - SameFaceNormalDotTolerance).
-        /// so, 0.01 would be 8-deg
+        /// The default minimum angle to determine if two directions are aligned (in radians).
         /// </summary>
-        public const double SameFaceNormalDotTolerance = 1e-2;
+        public const double DefaultSameAngleRadians = 0.01745329251994329576923690768489; // DefaultSameAngleDegrees * Math.PI / 180;
+
+        /// <summary>
+        /// This is based on the DefaultMinAngleInPlaneDegrees. It is a value just below 1.0 (which is the cosine of 0-degrees)
+        /// which signifies if two vectors have a dot product greater than this, then they are within the DefaultMinAngleInPlaneDegrees
+        /// (and often effectively the same).
+        public const double DotToleranceForSame = 0.99984769515639123915701155881391;
+        // this is cos(DefaultSameAngleRadians);
+
+
+        /// <summary>
+        /// This is based on the DefaultMinAngleInPlaneDegrees. It is a value close to 0 (which is the cosine of 90-degrees)
+        /// which signifies if two vectors have a dot product less than this, then they are within the 90 - DefaultMinAngleInPlaneDegrees - 
+        /// they are effectively orthogonal.
+        public const double DotToleranceOrthogonal = 0.01745240643728351281941897851632;
+        // this is  cos(90-DefaultSameAngleRadians) or sin(DefaultMinAngleInPlaneDegrees);
 
         /// <summary>
         /// The maximum allowable edge similarity score. This is used when trying to match stray edges when loading in
@@ -156,15 +175,6 @@ namespace TVGL
         /// </summary>
         internal const int MarchingCubesMissedFactor = 4;
 
-        /// <summary>
-        /// The default tessellation error
-        /// </summary>
-        internal const double DefaultTessellationError = 0.08;
-
-        /// <summary>
-        /// The default tessellation maximum angle error
-        /// </summary>
-        internal const double DefaultTessellationMaxAngleError = 15;
 
         #region from MIConvexHull
         /// <summary>
@@ -181,7 +191,7 @@ namespace TVGL
         internal const int ConnectorTableSize = 2017;
 
 
-        internal const double DefaultEqualityTolerance = 1e-15;
+        internal const double DefaultEqualityTolerance = 1e-12;
         internal const double FractionalNegligibleVolume = 1e-12;
 #endregion
 
@@ -648,7 +658,7 @@ namespace TVGL
     /// Enum PolygonRelationship
     /// </summary>
 
-    public enum PolygonRelationship
+    public enum ABRelationships
     {
         /// <summary>
         /// The separated
