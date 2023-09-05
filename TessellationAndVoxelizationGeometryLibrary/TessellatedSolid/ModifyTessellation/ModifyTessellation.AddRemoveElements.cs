@@ -68,37 +68,42 @@ namespace TVGL
         }
 
 
-        public static bool CollapseEdge(this Edge edge, List<Edge> removeEdges)
+        public static bool CollapseEdge(this Edge edge, out List<Edge> removeEdges)
         {
             return MergeVertexAndKill3EdgesAnd2Faces(edge.From, edge.To, edge.OwnedFace, edge.OtherFace,
-                removeEdges);
+                out removeEdges);
         }
 
         public static bool MergeVertexAndKill3EdgesAnd2Faces(this Vertex removedVertex, Vertex keepVertex,
-            TriangleFace removedFace1, TriangleFace removedFace2, List<Edge> removeEdges)
+            TriangleFace removedFace1, TriangleFace removedFace2, out List<Edge> removeEdges)
         {
             var vertexEnumerable = removedFace1.Vertices.Concat(removedFace2.Vertices)
                 .Where(x => x != keepVertex && x != removedVertex).Distinct();
             var vertexEnumerator = vertexEnumerable.GetEnumerator();
+            vertexEnumerator.MoveNext();
             var otherVertex1 = vertexEnumerator.Current;
             vertexEnumerator.MoveNext();
             var otherVertex2 = vertexEnumerator.Current;
             Edge keepEdge1 = null;
             Edge keepEdge2 = null;
 
-            removeEdges = new List<Edge>();
+            // the next loop assigns the five edges that are effected to the appropriate variables
+            // no effect on the solid yet. Just getting the variables ready: removeEdges[0], 
+            // removeEdges[1], removeEdges[2], keepEdge1, keepEdge2 
+            var removeEdgesLocal = new List<Edge>();
             foreach (var edge in removedFace1.Edges.Concat(removedFace2.Edges).Distinct())
             {
                 if (edge.From == removedVertex || edge.To == removedVertex ||
                     (edge.From != keepVertex && edge.To != keepVertex))
-                    removeEdges.Add(edge);
+                    removeEdgesLocal.Add(edge);
                 else if (keepEdge1 == null) keepEdge1 = edge;
                 else keepEdge2 = edge;
             }
-            var otherEdgesOnTheKeepSide = keepVertex.Edges.Where(e => e != removeEdges[^1] && e != removeEdges[^2] &&
-            e != removeEdges[^3] && e != keepEdge1 && e != keepEdge2).ToList();
-            var otherEdgesOnTheRemoveSide = removedVertex.Edges.Where(e => e != removeEdges[^1] && e != removeEdges[^2] &&
-            e != removeEdges[^3] && e != keepEdge1 && e != keepEdge2).ToList();
+            // having established the five edges, we can now check to see if the edge is topologically important
+            var otherEdgesOnTheKeepSide = keepVertex.Edges.Where(e => e != removeEdgesLocal[^1] && e != removeEdgesLocal[^2] &&
+            e != removeEdgesLocal[^3] && e != keepEdge1 && e != keepEdge2).ToList();
+            var otherEdgesOnTheRemoveSide = removedVertex.Edges.Where(e => e != removeEdgesLocal[^1] && e != removeEdgesLocal[^2] &&
+            e != removeEdgesLocal[^3] && e != keepEdge1 && e != keepEdge2).ToList();
             if ( // this is a topologically important check. It ensures that the edge is not deleted if
                  // it serves an important role in ensuring the proper topology of the solid. Essentially, 
                  // if there is a common edge between the vertices that is not accounted for then it will end up being
@@ -106,8 +111,11 @@ namespace TVGL
                 otherEdgesOnTheKeepSide.Select(e => e.OtherVertex(keepVertex))
                     .Intersect(otherEdgesOnTheRemoveSide.Select(e => e.OtherVertex(removedVertex)))
                     .Any())
+            {
+                removeEdges = null;
                 return false;
-
+            }
+            else removeEdges = removeEdgesLocal;
             // move edges connected to removeVertex to the keepVertex and let keepVertex link back to these edges
             foreach (var e in otherEdgesOnTheRemoveSide)
             {
@@ -116,10 +124,11 @@ namespace TVGL
                 else e.To = keepVertex;
             }
             // move faces connected to removeVertex to the keepVertex and let keepVertex link back to these edges.
-            foreach (var face in removedVertex.Faces)
+            foreach (var face in removedVertex.Faces.ToList()) // because the "ReplaceVertex" function will alter the
+                                                               //list in the removedVertex.Faces collection, we make a copy first (ToList is used here)
             {
                 if (face == removedFace1 || face == removedFace2) continue;
-                keepVertex.Faces.Add(face);
+                //keepVertex.Faces.Add(face);
                 face.ReplaceVertex(removedVertex, keepVertex);
             }
             // conversely keepVertex should forget about the edge and the remove faces
@@ -150,7 +159,5 @@ namespace TVGL
                 f.Update();
             return true;
         }
-
-
     }
 }

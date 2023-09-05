@@ -329,7 +329,7 @@ namespace TVGL
         /// <summary>
         /// Defines the inner outer edges.
         /// </summary>
-        private void DefineInnerOuterEdges()
+        internal void DefineInnerOuterEdges()
         {
             MiscFunctions.DefineInnerOuterEdges(Faces, out _innerEdges, out _outerEdges);
         }

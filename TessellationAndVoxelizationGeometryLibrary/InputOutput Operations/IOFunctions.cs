@@ -1329,8 +1329,8 @@ namespace TVGL
             }
             else if (GetFileTypeFromExtension(extension) != FileType.TVGL) return false;
 
-            try
-            {
+            //try
+            //{
                 using var s = File.Open(filename, FileMode.Open);
                 using (var streamReader = new StreamReader(s))
                 using (var reader = new JsonTextReader(streamReader))
@@ -1339,11 +1339,11 @@ namespace TVGL
                     reader.Close();
                 }
                 return true;
-            }
-            catch
-            {
-                return false;
-            }
+            //}
+            //catch
+            //{
+            //    return false;
+            //}
         }
 
         /// <summary>

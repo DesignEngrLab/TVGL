@@ -102,13 +102,17 @@ namespace TVGL
         /// body - but only one constructor uses it: the one accepting faces and vertices.
         /// </summary>
         /// <param name="fromSTL">if set to <c>true</c> [from STL].</param>
-        internal static void CompleteBuildOptions(TessellatedSolid ts, TessellatedSolidBuildOptions buildOptions)
+        internal static void CompleteBuildOptions(TessellatedSolid ts, TessellatedSolidBuildOptions buildOptions,
+            out List<TriangleFace> removedFaces)
         {
             if (buildOptions == null) buildOptions = TessellatedSolidBuildOptions.Default;
             if (!buildOptions.CheckModelIntegrity)
+            {
+                removedFaces = new List<TriangleFace>();
                 return;
+            }
             var buildAndErrorInfo = new TessellationBuildAndRepair(ts);
-            buildAndErrorInfo.CompleteBuildOptions(buildOptions);
+            buildAndErrorInfo.CompleteBuildOptions(buildOptions, out removedFaces);
         }
 
         /// <summary>
@@ -117,8 +121,10 @@ namespace TVGL
         /// body - but only one constructor uses it: the one accepting faces and vertices.
         /// </summary>
         /// <param name="fromSTL">if set to <c>true</c> [from STL].</param>
-        void CompleteBuildOptions(TessellatedSolidBuildOptions buildOptions)
+        void CompleteBuildOptions(TessellatedSolidBuildOptions buildOptions,
+            out List<TriangleFace> removedFaces)
         {
+            removedFaces = new List<TriangleFace>();
             CheckModelIntegrityPreBuild();
             if (buildOptions.FixEdgeDisassociations && OverusedEdges.Count + SingleSidedEdgeData.Count > 0)
             {
@@ -155,29 +161,17 @@ namespace TVGL
                 {
                     Message.output("Unable to construct edges.", 1);
                 }
-            /* This requires edges and frankly it's not worth it. the next step is better
-            if (buildOptions.AutomaticallyRepairNegligibleTFaces && FacesWithNegligibleArea.Any())
-                try
-                {
-                    if (!SetNegligibleAreaFaceNormals())
-                        throw new Exception("Unable to set face normals.");
-                }
-                catch
-                {
-                    //Continue
-                }
-            */
             if (buildOptions.AutomaticallyRepairNegligibleTFaces && buildOptions.PredefineAllEdges)
             {
-                try
-                {
-                    if (!PropagateFixToNegligibleFaces())
-                        Message.output("Unable to flip edges to avoid negligible faces.", 1);
-                }
-                catch
-                {
-                    //Continue
-                }
+                //try
+                //{
+                if (!PropagateFixToNegligibleFaces(removedFaces))
+                    Message.output("Unable to flip edges to avoid negligible faces.", 1);
+                //}
+                //catch
+                //{
+                //    //Continue
+                //}
             }
 
             if (buildOptions.AutomaticallyRepairHoles)
@@ -192,7 +186,6 @@ namespace TVGL
                     catch
                     {
                         Message.output("Unable to repair all holes in the model.", 1);
-
                     }
             }
             //If the volume is zero, creating the convex hull may cause a null exception
@@ -240,18 +233,23 @@ namespace TVGL
         /// other two vertices of the quadrilateral, so that 2 proper triangles are created.
         /// </summary>
         /// <returns>A bool.</returns>
-        private bool PropagateFixToNegligibleFaces()
+        private bool PropagateFixToNegligibleFaces(List<TriangleFace> removedFaces)
         {
+            var faceHash = FacesWithNegligibleArea.ToHashSet();
             var negligibleArea = ts.SameTolerance * ts.SameTolerance;
-            foreach (var face in FacesWithNegligibleArea)
+            while (faceHash.Count > 0)
             {
+                var face = faceHash.First();
                 var shortestEdge = ShortestEdge(face);
                 // if the shortest edge is negligible, then we need to remove the vertex and the face
                 if (shortestEdge.Length <= ts.SameTolerance)
                 {
-                    var removedEdges = new List<Edge>();
-                    shortestEdge.CollapseEdge(removedEdges);
+                    shortestEdge.CollapseEdge(out var removedEdges);
                     ts.RemoveVertex(shortestEdge.From);
+                    removedFaces.Add(shortestEdge.OwnedFace);
+                    faceHash.Remove(shortestEdge.OwnedFace);
+                    removedFaces.Add(shortestEdge.OtherFace);
+                    faceHash.Remove(shortestEdge.OtherFace);
                     ts.RemoveFaces(new[] { shortestEdge.OwnedFace, shortestEdge.OtherFace });
                     ts.RemoveEdges(removedEdges);
                 }
@@ -261,12 +259,15 @@ namespace TVGL
                     if (longestEdge.GetMatingFace(face).Area.IsNegligible(negligibleArea))
                     {   // the mating face is also negligible, so we need to remove 2 faces, 
 
-                        var removedEdges = new List<Edge>();
                         var removedVertex = longestEdge.OwnedFace.OtherVertex(longestEdge);
                         var keepVertex = longestEdge.OtherFace.OtherVertex(longestEdge);
                         ModifyTessellation.MergeVertexAndKill3EdgesAnd2Faces(removedVertex, keepVertex,
-                            longestEdge.OwnedFace, longestEdge.OtherFace, removedEdges);
+                            longestEdge.OwnedFace, longestEdge.OtherFace, out var removedEdges);
                         ts.RemoveVertex(removedVertex);
+                        removedFaces.Add(longestEdge.OwnedFace);
+                        faceHash.Remove(longestEdge.OwnedFace);
+                        removedFaces.Add(longestEdge.OtherFace);
+                        faceHash.Remove(longestEdge.OtherFace);
                         ts.RemoveFaces(new[] { longestEdge.OwnedFace, longestEdge.OtherFace });
                         ts.RemoveEdges(removedEdges);
                     }

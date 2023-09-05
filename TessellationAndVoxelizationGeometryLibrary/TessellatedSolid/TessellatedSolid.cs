@@ -151,7 +151,7 @@ namespace TVGL
             MakeVertices(vertsPerFaceList, scaleFactor, out var faceToVertexIndices);
             //Complete Construction with Common Functions
             MakeFaces(faceToVertexIndices, numOfFaces, colors);
-            TessellationBuildAndRepair.CompleteBuildOptions(this, buildOptions);
+            TessellationBuildAndRepair.CompleteBuildOptions(this, buildOptions, out _);
         }
 
         /// <summary>
@@ -197,7 +197,7 @@ namespace TVGL
             MakeVertices(vertices, numOfVertices);
             DefineAxisAlignedBoundingBoxAndTolerance(Vertices.Select(v => v.Coordinates));
             MakeFaces(faceToVertexIndices, numOfFaces, colors);
-            TessellationBuildAndRepair.CompleteBuildOptions(this, buildOptions);
+            TessellationBuildAndRepair.CompleteBuildOptions(this, buildOptions, out _);
         }
 
         /// <summary>
@@ -411,16 +411,38 @@ namespace TVGL
 
                 reader.Read();//go to next
             }
-
-            //Get the max min bounds and set tolerance
-            DefineAxisAlignedBoundingBoxAndTolerance();
-            DoublyConnectVerticesToFaces();
-            //Build edges, convex hull, and anything else we need.
-            TessellationBuildAndRepair.CompleteBuildOptions(this, tsBuildOptions);
-
             //Lastly, assign faces and vertices to the primitives
             foreach (var prim in Primitives)
                 prim.CompletePostSerialization(this);
+
+            //Get the max min bounds and set tolerance
+            DefineAxisAlignedBoundingBoxAndTolerance();
+            //DoublyConnectVerticesToFaces();
+            //Build edges, convex hull, and anything else we need.
+            TessellationBuildAndRepair.CompleteBuildOptions(this, tsBuildOptions, out var removedFaces);
+
+            if (removedFaces.Count > 0)
+            {
+                // if the build/repair altered the faces, then we may need to check if there
+                // are any faces still referenced in the primitives that need to be removed.
+                var removedHash = removedFaces.ToHashSet();
+                foreach (var prim in Primitives)
+                {
+                    prim.FaceIndices = null;
+                    var needToResetOtherElements = false;
+                    foreach (var face in prim.Faces)
+                        if (removedHash.Contains(face))
+                        {
+                            prim.Faces.Remove(face);
+                            needToResetOtherElements = true;
+                        }
+                    if (needToResetOtherElements)
+                    {
+                        prim.SetVerticesFromFaces();
+                        prim.DefineInnerOuterEdges();
+                    }
+                }
+            }
         }
 
 
@@ -456,12 +478,33 @@ namespace TVGL
             MakeVertices(coords, numVertices);
             DefineAxisAlignedBoundingBoxAndTolerance(Vertices.Select(v => v.Coordinates));
             MakeFaces(faceIndices, numFaces, colors);
-            TessellationBuildAndRepair.CompleteBuildOptions(this, (TessellatedSolidBuildOptions)context.Context);
-
             if (Primitives != null && Primitives.Any())
             {
                 foreach (var surface in Primitives)
                     surface.CompletePostSerialization(this);
+            }
+            TessellationBuildAndRepair.CompleteBuildOptions(this, (TessellatedSolidBuildOptions)context.Context, out var removedFaces);
+            if (removedFaces.Count > 0)
+            {
+                // if the build/repair altered the faces, then we may need to check if there
+                // are any faces still referenced in the primitives that need to be removed.
+                var removedHash = removedFaces.ToHashSet();
+                foreach (var prim in Primitives)
+                {
+                    prim.FaceIndices = null;
+                    var needToResetOtherElements = false;
+                    foreach (var face in prim.Faces)
+                        if (removedHash.Contains(face))
+                        {
+                            prim.Faces.Remove(face);
+                            needToResetOtherElements = true;
+                        }
+                    if (needToResetOtherElements)
+                    {
+                        prim.SetVerticesFromFaces();
+                        prim.DefineInnerOuterEdges();
+                    }
+                }
             }
         }
 
@@ -557,7 +600,7 @@ namespace TVGL
                 Faces = faces as TriangleFace[] ?? faces.ToArray();
                 DoublyConnectVerticesToFaces();
             }
-            TessellationBuildAndRepair.CompleteBuildOptions(this, buildOptions);
+            TessellationBuildAndRepair.CompleteBuildOptions(this, buildOptions, out _);
         }
 
         /// <summary>
@@ -1083,7 +1126,7 @@ namespace TVGL
         {
             var face = Faces[removeFaceIndex];
             foreach (var vertex in face.Vertices)
-                vertex.Faces.Remove(face);
+                vertex?.Faces.Remove(face);
             foreach (var edge in face.Edges)
             {
                 if (edge == null) continue;
@@ -1572,7 +1615,7 @@ namespace TVGL
         /// <param name="vertex">The vertex.</param>
         private static void RemoveReferencesToVertex(Vertex vertex)
         {
-            foreach (var face in vertex.Faces)
+            foreach (var face in vertex.Faces.ToList())
             {
                 face.ReplaceVertex(vertex, null);
             }

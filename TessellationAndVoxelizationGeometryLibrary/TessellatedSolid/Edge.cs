@@ -400,8 +400,8 @@ namespace TVGL
         {
             if (OtherFace == null || OwnedFace == null) return true;
             var otherV = OtherFace.Normal.Cross(Vector).Normalize();
-            if ((OtherFace.AB != this && OtherFace.BC != this && OtherFace.CA != this)||
-                (OwnedFace.AB != this && OwnedFace.BC != this && OwnedFace.CA != this)) 
+            if ((OtherFace.AB != this && OtherFace.BC != this && OtherFace.CA != this) ||
+                (OwnedFace.AB != this && OwnedFace.BC != this && OwnedFace.CA != this))
                 return true;
             var otherVLength = otherV.Dot(From.Coordinates - OtherFace.OtherVertex(this).Coordinates);
             otherV = otherVLength * otherV;
@@ -469,7 +469,9 @@ namespace TVGL
         /// <returns>System.Int64.</returns>
         internal static long SetAndGetEdgeChecksum(Edge edge)
         {
-            var checksum = GetEdgeChecksum(edge.From, edge.To);
+            var checksum = -1L;
+            if (edge.To is not null && edge.From is not null)
+                checksum = GetEdgeChecksum(edge.From, edge.To);
             edge.EdgeReference = checksum;
             return checksum;
         }

@@ -682,9 +682,9 @@ namespace TVGL
             if (sinTheta > 1 || sinTheta < -1) return true;
             var theta = Math.Asin(sinTheta);
 
-            if (theta > Constants.MinSmoothAngle)
+            //if (theta > Constants.MinSmoothAngle)
                 // if theta is bigger than MinSmoothAngle, then it breaks C1 continuity
-                return true;
+            //    return true;
             // with the equation of the chord-length and the fact that the phi's (chord arc angle) add
             // up to the theta (corner angle from vectors), we can do a little manipulation to find phi
             // without finding r and the center. This is presumably more accurate and faster than finding
@@ -698,12 +698,12 @@ namespace TVGL
                 radius = Math.Abs(v2Length / (2 * Math.Sin(phi2)));
                 // radius does not need to be in the condition, but for improved accuracy we solve it
                 // based on the larger phi. 
-                error = radius * (1 - Math.Cos(2 * phi2));
+                error = radius * (1 - Math.Cos(phi2));
             }
             else
             {
                 radius = Math.Abs(v1Length / (2 * Math.Sin(phi1)));
-                error = radius * (1 - Math.Cos(2 * phi1));
+                error = radius * (1 - Math.Cos(phi1));
             }
             return error > chordError;
         }

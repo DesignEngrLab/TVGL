@@ -444,7 +444,7 @@ namespace TVGL
             else if (oldVertex == C) C = newVertex;
             else throw new Exception("Vertex not found in face");
             oldVertex.Faces.Remove(this);
-            newVertex.Faces.Add(this);
+            newVertex?.Faces.Add(this);
             Update();
         }
 
@@ -456,12 +456,23 @@ namespace TVGL
         /// <exception cref="System.Exception">Vertex not found in face</exception>
         internal void ReplaceEdge(Edge oldEdge, Edge newEdge)
         {
+            var sameDir = oldEdge.To == newEdge.To || oldEdge.From == newEdge.From;
             if (oldEdge == AB) AB = newEdge;
             else if (oldEdge == BC) BC = newEdge;
             else if (oldEdge == CA) CA = newEdge;
             else throw new Exception("Vertex not found in face");
-            if (oldEdge.OwnedFace == this) oldEdge.OwnedFace = null;
-            if (oldEdge.OtherFace == this) oldEdge.OtherFace = null;
+            if (oldEdge.OwnedFace == this)
+            {
+                oldEdge.OwnedFace = null;
+                if (sameDir) newEdge.OwnedFace = this;
+                else newEdge.OtherFace = this;
+            }
+            else if (oldEdge.OtherFace == this)
+            {
+                oldEdge.OtherFace = null;
+                if (sameDir) newEdge.OtherFace = this;
+                else newEdge.OwnedFace = this;
+            }
             Update();
         }
 
