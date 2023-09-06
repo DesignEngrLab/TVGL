@@ -176,7 +176,12 @@ namespace TVGL
             var zB = VertexZHeights[face.B.IndexInList];
             var vC = Vertices[face.C.IndexInList];
             var zC = VertexZHeights[face.C.IndexInList];
+            return GetIndicesCoveredByFace(vA, zA, vB, zB, vC, zC);
+        }
 
+            private IEnumerable<(int index, double zHeight)> GetIndicesCoveredByFace(Vector2 vA, double zA, Vector2 vB,
+                double zB, Vector2 vC, double zC)
+            { 
             var area = (vB - vA).Cross(vC - vA);
             // if the area is negative the triangle is facing the wrong way.
             if (area <= 0) yield break;
@@ -184,48 +189,7 @@ namespace TVGL
             // next re-organize the vertices as vMin, vMed, vMax - ordered by 
             // their x-values
             Vector2 vMin, vMed, vMax;
-            if (vA.X <= vB.X && vA.X <= vC.X)
-            {
-                vMin = vA;
-                if (vB.X <= vC.X)
-                {
-                    vMed = vB;
-                    vMax = vC;
-                }
-                else
-                {
-                    vMed = vC;
-                    vMax = vB;
-                }
-            }
-            else if (vB.X <= vA.X && vB.X <= vC.X)
-            {
-                vMin = vB;
-                if (vA.X <= vC.X)
-                {
-                    vMed = vA;
-                    vMax = vC;
-                }
-                else
-                {
-                    vMed = vC;
-                    vMax = vA;
-                }
-            }
-            else
-            {
-                vMin = vC;
-                if (vA.X <= vB.X)
-                {
-                    vMed = vA;
-                    vMax = vB;
-                }
-                else
-                {
-                    vMed = vB;
-                    vMax = vA;
-                }
-            }
+            OrderByIncreasingXValue(vA, vB, vC, out vMin, out vMed, out vMax);
             // the following 3 indices are the pixels where the 3 vertices reside in x
             var xStartIndex = GetXIndex(vMin.X);
             var xSwitchIndex = GetXIndex(vMed.X);
@@ -333,6 +297,52 @@ namespace TVGL
                         slopeStepBtm = PixelSideLength * (vMax.Y - vMed.Y) / (vMax.X - vMed.X);
                     else
                         slopeStepTop = PixelSideLength * (vMax.Y - vMed.Y) / (vMax.X - vMed.X);
+                }
+            }
+        }
+
+        private static void OrderByIncreasingXValue(Vector2 vA, Vector2 vB, Vector2 vC, out Vector2 vMin, out Vector2 vMed, out Vector2 vMax)
+        {
+            if (vA.X <= vB.X && vA.X <= vC.X)
+            {
+                vMin = vA;
+                if (vB.X <= vC.X)
+                {
+                    vMed = vB;
+                    vMax = vC;
+                }
+                else
+                {
+                    vMed = vC;
+                    vMax = vB;
+                }
+            }
+            else if (vB.X <= vA.X && vB.X <= vC.X)
+            {
+                vMin = vB;
+                if (vA.X <= vC.X)
+                {
+                    vMed = vA;
+                    vMax = vC;
+                }
+                else
+                {
+                    vMed = vC;
+                    vMax = vA;
+                }
+            }
+            else
+            {
+                vMin = vC;
+                if (vA.X <= vB.X)
+                {
+                    vMed = vA;
+                    vMax = vB;
+                }
+                else
+                {
+                    vMed = vB;
+                    vMax = vA;
                 }
             }
         }

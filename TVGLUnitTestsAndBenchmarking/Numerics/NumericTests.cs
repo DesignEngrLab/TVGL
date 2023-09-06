@@ -136,9 +136,9 @@ namespace TVGLUnitTestsAndBenchmarking
                 var dir = new Vector3(r100, r100, r100);
                 anchor = new Vector3(33, 44, 55);
                 dir = new Vector3(0, 0, 1);
-                var line = MiscFunctions.Unique3DLineTrig(anchor, dir);
+                var line = MiscFunctions.Unique3DLine(anchor, dir);
                 Console.WriteLine(line);
-                (var anchor2, var dir2) = MiscFunctions.Get3DLineValuesFromUniqueTrig(line);
+                (var anchor2, var dir2) = MiscFunctions.Get3DLineValuesFromUnique(line);
                 var dir1 = dir.Normalize();
                 var plane = new Plane(0,dir1);
                 var anchor1 = MiscFunctions.PointOnPlaneFromRay(plane, anchor, dir1, out _);

@@ -61,13 +61,32 @@ namespace TVGLUnitTestsAndBenchmarking.Misc_Tests
                 IO.Open(fileName.FullName, out TessellatedSolid solid);
                 if (solid == null) continue;
                 //Presenter.ShowAndHang(solid);
-                var direction = -Vector3.UnitZ;
+                var axis = Vector3.UnitZ;
+                var anchor = solid.Center;
                 //var direction = new Vector3(1, 1, 1).Normalize();
-                var (minD, maxD) = solid.Vertices.GetDistanceToExtremeVertex(direction, out _, out _);
-                var displacement = (minD - maxD) * direction;
+                var (minD, maxD) = solid.Vertices.GetDistanceToExtremeVertex(axis, out _, out _);
+                var displacement = (minD - maxD) * axis;
                 //Console.Write("zbuffer start...");
+                var visibleFaces = new List<TriangleFace>();
+                var walls = new List<TriangleFace>();
+                foreach (var face in solid.Faces)
+                {
+                    if (face.Normal.IsAlignedOrReverse(axis, Constants.DotToleranceForSame) ||
+                        face.Normal.IsPerpendicular(face.Center - anchor, Constants.DotToleranceOrthogonal))
+                        walls.Add(face);
+                    else if (face.Normal.Dot(face.Center - anchor) > 0)
+                        visibleFaces.Add(face);
+                }
+                solid.HasUniformColor = false;
+                solid.ResetDefaultColor();
+                foreach (var face in walls)
+                    face.Color = new Color(KnownColors.Blue);
+                foreach (var face in visibleFaces)
+                    face.Color = new Color(KnownColors.Green);
+                visibleFaces[0].Color = new Color(KnownColors.Lime);
+                Presenter.ShowAndHang(solid);
                 var sw = Stopwatch.StartNew();
-                var zbuffer = CylindricalBuffer.Run(solid, direction, solid.Center, 500);
+                var zbuffer = CylindricalBuffer.Run(solid, axis, solid.Center, 500,0,visibleFaces);
                 sw.Stop();
                 Console.WriteLine(sw.Elapsed.Ticks);
                 //Console.WriteLine("end:  "+sw.Elapsed);
@@ -89,7 +108,6 @@ namespace TVGLUnitTestsAndBenchmarking.Misc_Tests
                 }
                 var colors = paths.Select(c => new Color(KnownColors.DodgerBlue));
                 Presenter.ShowVertexPathsWithSolids(new[] { paths }, new[] { solid }, 1, colors);
-
             }
         }
 

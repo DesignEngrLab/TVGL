@@ -6,6 +6,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using TVGL;
+using TVGLUnitTestsAndBenchmarking.Misc_Tests;
 
 namespace TVGLUnitTestsAndBenchmarking
 {
@@ -20,15 +21,16 @@ namespace TVGLUnitTestsAndBenchmarking
         [STAThread]
         private static void Main(string[] args)
         {
+            var myWriter = new ConsoleTraceListener();
+            Trace.Listeners.Add(myWriter);
+            TVGL.Message.Verbosity = VerbosityLevels.AboveNormal;
+            ZbufferTesting.Test1();
             TVGLNumericsTests.UniqueLineTesting();
 
             Misc_Tests.ZbufferTesting.Test3();
             //var summary = BenchmarkRunner.Run<MinimumCircleTesting>();
             return;
             DirectoryInfo dir = Program.BackoutToFolder(inputFolder);
-            var myWriter = new ConsoleTraceListener();
-            Trace.Listeners.Add(myWriter);
-            TVGL.Message.Verbosity = VerbosityLevels.Low;
 
 
             //#if PRESENT
