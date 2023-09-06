@@ -26,16 +26,16 @@ namespace TVGL
         /// Initializes a new instance of the <see cref="CylindricalBuffer"/> class.
         /// </summary>
         /// <param name="solid">The solid.</param>
-        /// <param name="direction">The direction.</param>
+        /// <param name="axis">The direction.</param>
         /// <param name="pixelsPerRow">The pixels per row.</param>
         /// <param name="pixelBorder">The pixel border.</param>
-        public static CylindricalBuffer Run(TessellatedSolid solid, Vector3 direction, Vector3 anchor,
+        public static CylindricalBuffer Run(TessellatedSolid solid, Vector3 axis, Vector3 anchor,
             int pixelsPerRow, int pixelBorder = 2, IEnumerable<TriangleFace> subsetFaces = null)
         {
             var cylBuff = new CylindricalBuffer(solid);
 
             // get the transform matrix to apply to every point
-            var transform = direction.TransformToXYPlane(out var backTransform);
+            var transform = axis.TransformToXYPlane(out _);
             var rotatedAnchor = anchor.Transform(transform);
             transform *= Matrix4x4.CreateTranslation(-rotatedAnchor.X, -rotatedAnchor.Y, -rotatedAnchor.Z);
 

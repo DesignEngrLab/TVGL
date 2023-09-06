@@ -29,9 +29,9 @@ namespace TVGL
         /// </summary>
         /// <param name="ignoreRadius">If true, ignore radius.</param>
         /// <param name="treatReflectionsAsSame">If true, treat reflections as same.</param>
-        /// <param name="dotTolerance">The dot tolerance.</param>
-        public SphericalHashLikeCollection(bool ignoreRadius, bool treatReflectionsAsSame, double dotTolerance)
-            : base(ignoreRadius, treatReflectionsAsSame, dotTolerance)
+        /// <param name="sameAngleTolerance">The dot tolerance.</param>
+        public SphericalHashLikeCollection(bool ignoreRadius, bool treatReflectionsAsSame, double sameAngleTolerance)
+            : base(ignoreRadius, treatReflectionsAsSame, sameAngleTolerance)
         {
             items = new List<T>();
         }
@@ -90,8 +90,19 @@ namespace TVGL
             radii.Clear();
         }
 
-
-
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="sphericalAngles"></param>
+        /// <returns></returns>
+        public T this[SphericalAnglePair sphericalAngles]
+        {
+            get { 
+                this.TryGet(sphericalAngles, out T item, out _);
+                return item;
+            }
+            set { this.Add(sphericalAngles, value); }
+        }
 
         public bool TryGet(Vector3 cartesian, out T item, out Vector3 matchingCartesian)
             => TryGet(new SphericalAnglePair(cartesian), cartesian, out item, out _, out matchingCartesian);
