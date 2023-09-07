@@ -13,6 +13,8 @@
 // ***********************************************************************
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 
 namespace TVGL
@@ -177,11 +179,18 @@ namespace TVGL
             var vC = Vertices[face.C.IndexInList];
             var zC = VertexZHeights[face.C.IndexInList];
             return GetIndicesCoveredByFace(vA, zA, vB, zB, vC, zC);
-        }
+            //return GetIndicesCoveredByFaceNew(vA, zA, vB, zB, vC, zC);
 
-            private IEnumerable<(int index, double zHeight)> GetIndicesCoveredByFace(Vector2 vA, double zA, Vector2 vB,
-                double zB, Vector2 vC, double zC)
-            { 
+            //var listOld = GetIndicesCoveredByFace(vA, zA, vB, zB, vC, zC).ToList();
+            //var listNew = GetIndicesCoveredByFaceNew(vA, zA, vB, zB, vC, zC).ToList();
+            //if (listOld.Count != listNew.Count)
+            //    throw new Exception("Not the same");
+            //return listOld;
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private IEnumerable<(int index, double zHeight)> GetIndicesCoveredByFace(Vector2 vA, double zA, Vector2 vB,
+        double zB, Vector2 vC, double zC)
+        {
             var area = (vB - vA).Cross(vC - vA);
             // if the area is negative the triangle is facing the wrong way.
             if (area <= 0) yield break;
@@ -300,6 +309,149 @@ namespace TVGL
                 }
             }
         }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private IEnumerable<(int index, double zHeight)> GetIndicesCoveredByFaceNew(Vector2 vA, double zA, Vector2 vB,
+        double zB, Vector2 vC, double zC)
+        {
+            var area = (vB - vA).Cross(vC - vA);
+            // if the area is negative the triangle is facing the wrong way.
+            if (area <= 0) yield break;
+            var oneOverArea = 1 / area;
+            var vAx = vA.X;
+            var vAy = vA.Y;
+            var vBx = vB.X;
+            var vBy = vB.Y;
+            var vCx = vC.X;
+            var vCy = vC.Y;
+            var vBAx = vBx - vAx;
+            var vBAy = vBy - vAy;
+            var vCAx = vCx - vAx;
+            var vCAy = vCy - vAy;
+            // next re-organize the vertices as vMin, vMed, vMax - ordered by 
+            // their x-values
+            OrderByIncreasingXValue(vA, vB, vC, out var vMin, out var vMed, out var vMax);
+            // the following 3 indices are the pixels where the 3 vertices reside in x
+            var xStartIndex = GetXIndex(vMin.X);
+            var xSwitchIndex = GetXIndex(vMed.X);
+            var xEndIndex = GetXIndex(vMax.X);
+            // x is snapped to the grid. This value should be a little less than vMin.X
+            var xSnap = GetSnappedX(xStartIndex);  //snapped vMin.X value;
+            var yStart = vMin.Y;
+            var slopeStepMed = PixelSideLength * (vMed.Y - vMin.Y) / (vMed.X - vMin.X);
+            var slopeStepMax = PixelSideLength * (vMax.Y - vMin.Y) / (vMax.X - vMin.X);
+            if (xStartIndex == xSwitchIndex)
+            {
+                if (vMed.X == vMin.X) yStart = 0.5 * (vMin.Y + vMed.Y);
+                else yStart += 0.5 * (slopeStepMed + slopeStepMax) * (vMed.X - vMin.X) * inversePixelSideLength;
+                slopeStepMed = PixelSideLength * (vMax.Y - vMed.Y) / (vMax.X - vMed.X);
+                yStart += 0.5 * (slopeStepMed + slopeStepMax) * (PixelSideLength - vMed.X + xSnap) * inversePixelSideLength;
+            }
+            else
+                yStart += 0.5 * (slopeStepMed + slopeStepMax) * (PixelSideLength - vMin.X + xSnap) * inversePixelSideLength;
+            if (xSnap.IsLessThanNonNegligible(vMin.X))
+            {
+                xStartIndex++;
+                xSnap += PixelSideLength;
+            }
+            // sort of the same for Y although we really just need max and min
+            var yMaxIndex = GetYIndex(Math.Max(vMin.Y, Math.Max(vMed.Y, vMax.Y)));
+            var yMinIndex = GetYIndex(Math.Min(vMin.Y, Math.Min(vMed.Y, vMax.Y)));
+
+            var qVaX = xSnap - vAx;
+            // *** main loop ***
+            //for (var xIndex = xStartIndex; xIndex <= xEndIndex; xIndex++)
+            var xIndex = xStartIndex;
+            do
+            {
+                var vBAy_multiply_qVaX = vBAy * qVaX;
+                var vCAy_multiply_qVaX = vCAy * qVaX;
+                var yIndex = GetYIndex(yStart);
+                var ySnapStart = GetSnappedY(yIndex);
+                var ySnap = ySnapStart;
+                var debugIndex = GetIndex(xIndex, yIndex);
+                if (PixelIsInside(ySnap - vAy, vBAx, vBAy_multiply_qVaX, area, oneOverArea,
+                    vCAy_multiply_qVaX, vCAx, zA, zB, zC, out double zHeight))
+                    yield return (GetIndex(xIndex, yIndex), zHeight);
+                var yNegIndex = yIndex;
+                bool foundInside;
+                do
+                {
+                    yNegIndex--;
+                    ySnap -= PixelSideLength;
+                    debugIndex = GetIndex(xIndex, yNegIndex);
+                    if (PixelIsInside(ySnap - vAy, vBAx, vBAy_multiply_qVaX, area, oneOverArea,
+                        vCAy_multiply_qVaX, vCAx, zA, zB, zC, out zHeight))
+                    {
+                        foundInside = true;
+                        yield return (GetIndex(xIndex, yNegIndex), zHeight);
+                    }
+                    else foundInside = false;
+                } while (foundInside && yNegIndex >= yMinIndex);
+                ySnap = ySnapStart;
+                var yPosIndex = yIndex;
+                do
+                {
+                    yPosIndex++;
+                    ySnap += PixelSideLength;
+                    debugIndex = GetIndex(xIndex, yPosIndex);
+                    if (PixelIsInside(ySnap - vAy, vBAx, vBAy_multiply_qVaX, area, oneOverArea,
+                        vCAy_multiply_qVaX, vCAx, zA, zB, zC, out zHeight))
+                    {
+                        foundInside = true;
+                        yield return (GetIndex(xIndex, yPosIndex), zHeight);
+                    }
+                    else foundInside = false;
+                } while (foundInside && yPosIndex <= yMaxIndex);
+                xIndex++;
+                if (xIndex > xEndIndex) break;
+                if (xIndex == xSwitchIndex)
+                {
+                    var xLastSnap = GetSnappedX(xIndex);
+                    yStart += 0.5 * (slopeStepMed + slopeStepMax) * (vMed.X - xLastSnap) * inversePixelSideLength;
+                    if (vMax.X != vMed.X)
+                    {
+                        slopeStepMed = PixelSideLength * (vMax.Y - vMed.Y) / (vMax.X - vMed.X);
+                        if (xIndex != xEndIndex)
+                            yStart += 0.5 * (slopeStepMed + slopeStepMax) * (PixelSideLength - vMed.X + xLastSnap) * inversePixelSideLength;
+                        else
+                            yStart += 0.5 * (slopeStepMed + slopeStepMax) * (vMax.X - vMed.X + xLastSnap) * inversePixelSideLength;
+
+                    }
+                }
+                else yStart += 0.5 * (slopeStepMed + slopeStepMax);
+                qVaX += PixelSideLength;
+            } while (true);
+        }
+
+        bool PixelIsInside(double qVaY, double vBAx, double vBAy_multiply_qVaX, double area,
+        double oneOverArea, double vCAy_multiply_qVaX, double vCAx, double zA, double zB, double zC, out double zHeight)
+        {
+            var area2 = vBAx * qVaY - vBAy_multiply_qVaX;
+            if (area2.IsLessThanNonNegligible(0, negligible) || area2.IsGreaterThanNonNegligible(area, negligible))
+            // if (area2 < 0 || area2 > area)
+            {
+                zHeight = double.NaN;
+                return false;
+            }
+            var area3 = vCAy_multiply_qVaX - qVaY * vCAx;
+            if (area3.IsLessThanNonNegligible(0, negligible) || area3.IsGreaterThanNonNegligible(area, negligible))
+            //if (area3 < 0 || area3 > area)
+            {
+                zHeight = double.NaN;
+                return false;
+            }
+            var v = area2 * oneOverArea;
+            var u = area3 * oneOverArea;
+            var w = 1 - v - u;
+            if (w.IsLessThanNonNegligible(0, negligible) || w.IsGreaterThanNonNegligible(1, negligible))
+            //if (w.IsLessThanNonNegligible(0))
+            {
+                zHeight = double.NaN;
+                return false;
+            }
+            zHeight = w * zA + u * zB + v * zC;
+            return true;
+        }
 
         private static void OrderByIncreasingXValue(Vector2 vA, Vector2 vB, Vector2 vC, out Vector2 vMin, out Vector2 vMed, out Vector2 vMax)
         {
@@ -389,7 +541,7 @@ namespace TVGL
         public Vector3 Get3DPointTransformed(int i, int j, double defaultZHeight = 0.0)
         {
             var zHeight = Values[YCount * i + j].Item1 == null ? defaultZHeight : Values[YCount * i + j].Item2;
-            return new Vector3(Get2DPoint(i,j), zHeight);
+            return new Vector3(Get2DPoint(i, j), zHeight);
         }
         /// <summary>
         /// Gets the 3D point on the solid corresponding to pixel i, j.
