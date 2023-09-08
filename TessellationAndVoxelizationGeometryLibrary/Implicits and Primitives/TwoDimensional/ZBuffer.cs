@@ -216,11 +216,11 @@ namespace TVGL
             // sometimes only the +up or the -down find a pixel.
             var averageSlope = 0.5 * (slopeStepMax + slopeStepMed);
             // chances are, we skip the first pixel in x. This is because the xSnap is less than vMin.X
-            if (xSnap.IsLessThanNonNegligible(vMin.X)) 
+            if (xSnap.IsLessThanNonNegligible(vMin.X))
             {   // but skipping the first pixel means we need to adjust the yStart
                 if (xStartIndex == xSwitchIndex)
                 {
-                    if (vMed.X == vMin.X) 
+                    if (vMed.X == vMin.X)
                         // slope would be infiity if x values are the same. catch it with this if statement
                         yStart = 0.5 * (vMin.Y + vMed.Y);
                     else yStart += averageSlope * (vMed.X - vMin.X) * inversePixelSideLength;
@@ -240,7 +240,7 @@ namespace TVGL
             var pixXMinusVAx = xSnap - vAx;
             // *** main loop ***
             var xIndex = xStartIndex;
-            do
+            while (true)
             {
                 // the following 2 lines are calculated to save repeat calculations in the PixelIsInside method
                 var vBAy_by_pixXVAx = vBAy * pixXMinusVAx;
@@ -253,49 +253,51 @@ namespace TVGL
                 // but in the search-up loop we start one above the central pixel. This is 
                 var ySnap = ySnapStart;
                 var yIndex = yStartIndex;
-                bool foundInside;
-                do
+                while (true)
                 {
                     if (PixelIsInside(ySnap - vAy, vBAx, vBAy_by_pixXVAx, area, oneOverArea,
                         vCAy_by_pixXVAx, vCAx, zA, zB, zC, out var zHeight))
-                    {
-                        foundInside = true;
                         yield return (GetIndex(xIndex, yIndex), zHeight);
-                    }
-                    else foundInside = false;
+                    else break;
                     yIndex--;
                     ySnap -= PixelSideLength;
-                } while (foundInside); // && yNegIndex >= yMinIndex);
-
+                }
+                // now in the positive direction
                 ySnap = ySnapStart;
                 yIndex = yStartIndex;
-                do
-                {
+                while (true)
+                {   // note that the yIndex and ySnap are incremented at the end of the loop
+                    // this is subtle but save a re-calculation of the center pixel
                     yIndex++;
                     ySnap += PixelSideLength;
                     if (PixelIsInside(ySnap - vAy, vBAx, vBAy_by_pixXVAx, area, oneOverArea,
                         vCAy_by_pixXVAx, vCAx, zA, zB, zC, out var zHeight))
-                    {
-                        foundInside = true;
                         yield return (GetIndex(xIndex, yIndex), zHeight);
-                    }
-                    else foundInside = false;
-                } while (foundInside); // && yPosIndex <= yMaxIndex);
+                    else break;
+                } 
+
+                // here is the main loop exit condition
                 if (xIndex >= xEndIndex) break;
+
+                // like the beginning, if the middle vertex is encountered, we must take
+                // special care to get the correct yStart value
                 if (xIndex == xSwitchIndex)
                 {
                     var leftXDelta = vMed.X - GetSnappedX(xIndex);
                     yStart += averageSlope * leftXDelta * inversePixelSideLength;
                     slopeStepMed = PixelSideLength * (vMax.Y - vMed.Y) / (vMax.X - vMed.X);
-                    averageSlope = 0.5 * (slopeStepMax + slopeStepMed); 
+                    averageSlope = 0.5 * (slopeStepMax + slopeStepMed);
                     var rightXDelta = PixelSideLength - leftXDelta;
                     yStart += averageSlope * rightXDelta * inversePixelSideLength;
                 }
-                else
-                    yStart += averageSlope;
+                // otherwise, we just increment the yStart by the average slope
+                else yStart += averageSlope;
+
+                // finally, we increment the xIndex and xSnap (well, xSnap is not really
+                // needed but it's difference from vA.X is used repeatedly in the PixelIsInside method)
                 xIndex++;
                 pixXMinusVAx += PixelSideLength;
-            } while (true);
+            } 
         }
 
         bool PixelIsInside(double qVaY, double vBAx, double vBAy_multiply_qVaX, double area,
@@ -373,30 +375,6 @@ namespace TVGL
                 }
             }
         }
-
-        //Returns if the value if it is within the bounds of zero and notGreaterThan
-        //If the value is slightly less than zero, it will return zero (non-negative)
-        //If the value is slightly above notGreaterThan, it will return notGreaterThan
-        private bool WithinBounds(double val, double negligible, double notGreaterThan, out double returnVal)
-        {
-            returnVal = val;
-            if (val > 0 && val < notGreaterThan)
-            {
-                return true;
-            }
-            if (val.IsNegligible(negligible))
-            {
-                returnVal = 0;
-                return true;
-            }
-            if (val.IsPracticallySame(notGreaterThan, negligible))
-            {
-                returnVal = notGreaterThan;
-                return true;
-            }
-            return false;
-        }
-
         /// <summary>
         /// Gets the 2D point of pixel i,j.
         /// </summary>
