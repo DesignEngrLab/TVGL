@@ -26,7 +26,7 @@ namespace TVGLUnitTestsAndBenchmarking.Misc_Tests
                 var displacement = (minD - maxD) * direction;
                 //Console.Write("zbuffer start...");
                 var sw = Stopwatch.StartNew();
-                var zbuffer = ZBuffer.Run(solid, direction, 500);
+                var zbuffer = ZBuffer.Run(solid, direction, 5000);
                 sw.Stop();
                 Console.WriteLine(sw.Elapsed.Ticks);
                 //Console.WriteLine("end:  "+sw.Elapsed);
@@ -47,7 +47,7 @@ namespace TVGLUnitTestsAndBenchmarking.Misc_Tests
                     paths.Add(yLine);
                 }
                 var colors = paths.Select(c => new Color(KnownColors.DodgerBlue));
-                Presenter.ShowVertexPathsWithSolids(new[] { paths }, new[] { solid }, 1, colors);
+                //Presenter.ShowVertexPathsWithSolids(new[] { paths }, new[] { solid }, 1, colors);
             }
         }
 

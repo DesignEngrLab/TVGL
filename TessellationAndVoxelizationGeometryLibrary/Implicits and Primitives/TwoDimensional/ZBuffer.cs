@@ -125,7 +125,7 @@ namespace TVGL
         /// <param name="face">The face.</param>
         /// <returns>System.Double.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        protected void UpdateZBufferWithFace(TriangleFace face)
+        public virtual void UpdateZBufferWithFace(TriangleFace face)
         {
             //return CheckZBufferWithFace(face, true, out _, out _);
             foreach (var indexAndHeight in GetIndicesCoveredByFace(face))
@@ -139,7 +139,7 @@ namespace TVGL
             }
         }
 
-        public void CheckZBufferWithFace(TriangleFace face, out int visibleGridPoints, out int totalGridPointsCovered)
+        public virtual void CheckZBufferWithFace(TriangleFace face, out int visibleGridPoints, out int totalGridPointsCovered)
         {
             var tolerance = 0.5 * PixelSideLength;
             totalGridPointsCovered = 0;
@@ -166,7 +166,7 @@ namespace TVGL
         /// </summary>
         /// <param name="face"></param>
         /// <returns></returns>
-        private IEnumerable<(int index, double zHeight)> GetIndicesCoveredByFace(TriangleFace face)
+        protected virtual IEnumerable<(int index, double zHeight)> GetIndicesCoveredByFace(TriangleFace face)
         {
             // get the 3 vertices and their zheights
             var vA = Vertices[face.A.IndexInList];
@@ -198,7 +198,7 @@ namespace TVGL
         /// <param name="zC">The z c.</param>
         /// <returns>A list of (int index, double zHeight).</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private IEnumerable<(int index, double zHeight)> GetIndicesCoveredByFace(Vector2 vA, double zA, Vector2 vB,
+        protected virtual IEnumerable<(int index, double zHeight)> GetIndicesCoveredByFace(Vector2 vA, double zA, Vector2 vB,
         double zB, Vector2 vC, double zC)
         {
             var area = (vB - vA).Cross(vC - vA);
@@ -253,7 +253,8 @@ namespace TVGL
                 else
                     yStart += averageSlope * (PixelSideLength - vMin.X + xSnap) * inversePixelSideLength;
                 // now we need to increment the xSnap and xStartIndex
-                xStartIndex++;
+                if (xEndIndex == xStartIndex) xEndIndex = ++xStartIndex;
+                else xStartIndex++;
                 xSnap += PixelSideLength;
             }
             var pixXMinusVAx = xSnap - vAx;
@@ -295,10 +296,10 @@ namespace TVGL
                         vCAy_by_pixXVAx, vCAx, zA, zB, zC, out zHeight))
                         yield return (GetIndex(xIndex, yIndex), zHeight);
                     else break;
-                } 
+                }
 
                 // here is the main loop exit condition
-                if (xIndex >= xEndIndex) break;
+                if (xIndex == xEndIndex) break;
 
                 // like the beginning, if the middle vertex is encountered, we must take
                 // special care to get the correct yStart value
@@ -317,12 +318,13 @@ namespace TVGL
                 // finally, we increment the xIndex and xSnap (well, xSnap is not really
                 // needed but it's difference from vA.X is used repeatedly in the PixelIsInside method)
                 xIndex++;
+                if (xIndex == this.XCount) xIndex = 0;
                 pixXMinusVAx += PixelSideLength;
-            } 
+            }
         }
 
-        bool PixelIsInside(double qVaY, double vBAx, double vBAy_multiply_qVaX, double area,
-        double oneOverArea, double vCAy_multiply_qVaX, double vCAx, double zA, double zB, double zC, out double zHeight)
+        protected bool PixelIsInside(double qVaY, double vBAx, double vBAy_multiply_qVaX, double area,
+          double oneOverArea, double vCAy_multiply_qVaX, double vCAx, double zA, double zB, double zC, out double zHeight)
         {
             var area2 = vBAx * qVaY - vBAy_multiply_qVaX;
             //if (area2.IsLessThanNonNegligible(0, negligible) || area2.IsGreaterThanNonNegligible(area, negligible))
@@ -351,7 +353,7 @@ namespace TVGL
             return true;
         }
 
-        private static void OrderByIncreasingXValue(Vector2 vA, Vector2 vB, Vector2 vC, out Vector2 vMin, out Vector2 vMed, out Vector2 vMax)
+        protected static void OrderByIncreasingXValue(Vector2 vA, Vector2 vB, Vector2 vC, out Vector2 vMin, out Vector2 vMed, out Vector2 vMax)
         {
             if (vA.X <= vB.X && vA.X <= vC.X)
             {
