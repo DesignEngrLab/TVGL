@@ -73,8 +73,6 @@ namespace TVGL
         /// </summary>
         protected TriangleFace[] solidFaces;
 
-        protected static readonly double negligible = Math.Sqrt(Constants.BaseTolerance);
-
         /// <summary>
         /// Initializes a new instance of the <see cref="ZBuffer"/> class.
         /// </summary>
@@ -84,7 +82,6 @@ namespace TVGL
         /// <param name="pixelBorder">The pixel border.</param>
         public static ZBuffer Run(TessellatedSolid solid, Vector3 direction, int pixelsPerRow,
             int pixelBorder = 2, IEnumerable<TriangleFace> subsetFaces = null)
-
         {
             var zBuff = new ZBuffer(solid);
             // get the transform matrix to apply to every point
@@ -179,138 +176,10 @@ namespace TVGL
             var vC = Vertices[face.C.IndexInList];
             var zC = VertexZHeights[face.C.IndexInList];
             return GetIndicesCoveredByFace(vA, zA, vB, zB, vC, zC);
-            //return GetIndicesCoveredByFaceNew(vA, zA, vB, zB, vC, zC);
-
-            //var listOld = GetIndicesCoveredByFace(vA, zA, vB, zB, vC, zC).ToList();
-            //var listNew = GetIndicesCoveredByFaceNew(vA, zA, vB, zB, vC, zC).ToList();
-            //if (listOld.Count != listNew.Count)
-            //    throw new Exception("Not the same");
-            //return listOld;
         }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private IEnumerable<(int index, double zHeight)> GetIndicesCoveredByFace(Vector2 vA, double zA, Vector2 vB,
-        double zB, Vector2 vC, double zC)
-        {
-            var area = (vB - vA).Cross(vC - vA);
-            // if the area is negative the triangle is facing the wrong way.
-            if (area <= 0) yield break;
-
-            // next re-organize the vertices as vMin, vMed, vMax - ordered by 
-            // their x-values
-            Vector2 vMin, vMed, vMax;
-            OrderByIncreasingXValue(vA, vB, vC, out vMin, out vMed, out vMax);
-            // the following 3 indices are the pixels where the 3 vertices reside in x
-            var xStartIndex = GetXIndex(vMin.X);
-            var xSwitchIndex = GetXIndex(vMed.X);
-            var xEndIndex = GetXIndex(vMax.X);
-            // x is snapped to the grid. This value should be a little less than vMin.X
-            var x = GetSnappedX(xStartIndex);  //snapped vMin.X value;
-
-            // set the y heights at the start to the same as the y-value of vMin
-            var yBtm = vMin.Y;
-            var yTop = vMin.Y;
-            var yMin = Math.Min(vA.Y, Math.Min(vB.Y, vC.Y));
-            var yBtmIndex = GetYIndex(yMin);
-            var yMax = Math.Max(vA.Y, Math.Max(vB.Y, vC.Y));
-
-            // define the lines emanating from vMin. Assume the intermediate vertex
-            // is on the bottom path. Switch if that's wrong.
-            // note the main variable below is called "slopeStep". Following the Bresanham
-            // approach we don't need to deal with slopes, but rather the amount that we step
-            // change from one pixel to the next. Hence, we multiple the slope by the pixel length.
-            var slopeStepBtm = PixelSideLength * (vMed.Y - vMin.Y) / (vMed.X - vMin.X);
-            var slopeStepTop = PixelSideLength * (vMax.Y - vMin.Y) / (vMax.X - vMin.X);
-            var switchOnBottom = slopeStepBtm < slopeStepTop;
-            if (!switchOnBottom)
-            {
-                var temp = slopeStepTop;
-                slopeStepTop = slopeStepBtm;
-                slopeStepBtm = temp;
-            }
-            //next, we have to handle the special cases where the x-values  are in the same column
-            // first, the extremem case where all vertices in the same column or xStartIndex == xEndIndex
-            if (xStartIndex >= xEndIndex)
-            {
-                slopeStepBtm = slopeStepTop = 0;
-                yBtm = Math.Min(vA.Y, Math.Min(vB.Y, vC.Y));
-                yTop = Math.Max(vA.Y, Math.Max(vB.Y, vC.Y));
-                xSwitchIndex = -1;
-            }
-            // check if first 2 are in the same column
-            else if (xStartIndex >= xSwitchIndex)
-            {
-                xSwitchIndex = -1; // this is to avoid problems in the loop below where we check when the index should switch
-                if (switchOnBottom)
-                {
-                    // like above, but not the starting line goes from vMed to vMax
-                    slopeStepBtm = PixelSideLength * (vMax.Y - vMed.Y) / (vMax.X - vMed.X);
-                    yBtm = vMed.Y;
-                }
-                else
-                {
-                    slopeStepTop = PixelSideLength * (vMax.Y - vMed.Y) / (vMax.X - vMed.X);
-                    yTop = vMed.Y;
-                }
-            }
-            // very subtle issue! remember above where we set yBtm and yTop to vMin.Y. 
-            // well, since x will be on the grid we need to move these slightly to be on the closest
-            // grid.
-            if (switchOnBottom && xSwitchIndex < 0)
-                yBtm += (x - vMed.X) * slopeStepBtm * inversePixelSideLength;
-            else yBtm += (x - vMin.X) * slopeStepBtm * inversePixelSideLength;
-            if (!switchOnBottom && xSwitchIndex < 0)
-                yTop += (x - vMed.X) * slopeStepTop * inversePixelSideLength;
-            else yTop += (x - vMin.X) * slopeStepTop * inversePixelSideLength;
-            // it doesn't hurt to move yTop up a little more to avoid rounding errors in the loop's 
-            // exit condition. One-hundredth of the pixel side length doesn't require anymore iteration
-            // but ensures that y<= yTop won't mess up
-            yTop += 0.01 * PixelSideLength;
-            // *** main loop ***
-            var vBAx = vB.X - vA.X;
-            var vBAy = vB.Y - vA.Y;
-            var qVaX = x - vA.X;
-            var vCAx = vC.X - vA.X;
-            var vCAy = vC.Y - vA.Y;
-            for (var xIndex = xStartIndex; xIndex <= xEndIndex; xIndex++)
-            {
-                var yIndex = Math.Max(GetYIndex(yBtm), yBtmIndex);
-                var yBtmSnapped = GetSnappedY(yIndex);
-                var vBAy_multiply_qVaX = vBAy * qVaX;
-                var vCAy_multiply_qVaX = vCAy * qVaX;
-                var index = GetIndex(xIndex, yIndex);
-                var stop = Math.Min(yTop, yMax);
-                for (var y = yBtmSnapped; y <= stop; y += PixelSideLength, index++)
-                {
-                    var qVaY = y - vA.Y;
-                    // check the values of x and y  with the barycentric approach
-                    //borrowing notation from:https://www.scratchapixel.com/lessons/3d-basic-rendering/ray-tracing-rendering-a-triangle/barycentric-coordinates
-                    //Area = (vB - vA).Cross(q - vA)
-                    if (!WithinBounds(vBAx * qVaY - vBAy_multiply_qVaX, negligible, area, out var area2)) continue;
-                    //Area = (q - vA).Cross(vC - vA)
-                    if (!WithinBounds(vCAy_multiply_qVaX - qVaY * vCAx, negligible, area, out var area3)) continue;
-                    var v = area2 / area;
-                    var u = area3 / area;
-                    if (!WithinBounds(1 - v - u, negligible, 1.0, out var w)) continue;
-                    var zIntercept = w * zA + u * zB + v * zC;
-                    yield return (index, zIntercept);
-                }
-                // step change in the y values.
-                qVaX += PixelSideLength;
-                yBtm += slopeStepBtm;
-                yTop += slopeStepTop;
-                // if we are at the intermediate vertex, then we switch. Should this be before the step change? No, that produces
-                // incorrect results. Why? I don't know.
-                if (xIndex == xSwitchIndex)
-                {
-                    if (switchOnBottom)
-                        slopeStepBtm = PixelSideLength * (vMax.Y - vMed.Y) / (vMax.X - vMed.X);
-                    else
-                        slopeStepTop = PixelSideLength * (vMax.Y - vMed.Y) / (vMax.X - vMed.X);
-                }
-            }
-        }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private IEnumerable<(int index, double zHeight)> GetIndicesCoveredByFaceNew(Vector2 vA, double zA, Vector2 vB,
         double zB, Vector2 vC, double zC)
         {
             var area = (vB - vA).Cross(vC - vA);
@@ -337,94 +206,95 @@ namespace TVGL
             // x is snapped to the grid. This value should be a little less than vMin.X
             var xSnap = GetSnappedX(xStartIndex);  //snapped vMin.X value;
             var yStart = vMin.Y;
+            // the triangles line slopes are really normalized by the pixel side length
+            // this is essentially the amount of movement in y for each pixel in x
             var slopeStepMed = PixelSideLength * (vMed.Y - vMin.Y) / (vMed.X - vMin.X);
             var slopeStepMax = PixelSideLength * (vMax.Y - vMin.Y) / (vMax.X - vMin.X);
-            if (xStartIndex == xSwitchIndex)
-            {
-                if (vMed.X == vMin.X) yStart = 0.5 * (vMin.Y + vMed.Y);
-                else yStart += 0.5 * (slopeStepMed + slopeStepMax) * (vMed.X - vMin.X) * inversePixelSideLength;
-                slopeStepMed = PixelSideLength * (vMax.Y - vMed.Y) / (vMax.X - vMed.X);
-                yStart += 0.5 * (slopeStepMed + slopeStepMax) * (PixelSideLength - vMed.X + xSnap) * inversePixelSideLength;
-            }
-            else
-                yStart += 0.5 * (slopeStepMed + slopeStepMax) * (PixelSideLength - vMin.X + xSnap) * inversePixelSideLength;
-            if (xSnap.IsLessThanNonNegligible(vMin.X))
-            {
+            // the average slope is used to determine the middle most y values for the triangle
+            // this is the basis of this method. With the middle most pixel, we search up and down
+            // until we leave the triangle. Sometimes the triangle is to thin that none are found.
+            // sometimes only the +up or the -down find a pixel.
+            var averageSlope = 0.5 * (slopeStepMax + slopeStepMed);
+            // chances are, we skip the first pixel in x. This is because the xSnap is less than vMin.X
+            if (xSnap.IsLessThanNonNegligible(vMin.X)) 
+            {   // but skipping the first pixel means we need to adjust the yStart
+                if (xStartIndex == xSwitchIndex)
+                {
+                    if (vMed.X == vMin.X) 
+                        // slope would be infiity if x values are the same. catch it with this if statement
+                        yStart = 0.5 * (vMin.Y + vMed.Y);
+                    else yStart += averageSlope * (vMed.X - vMin.X) * inversePixelSideLength;
+                    // it is important here (and at the end of the main loop) to switch at the middle vertex
+                    // given how extreme triangles can be - it is crucial that our calculation for the center
+                    // spine of the triangle is as accurate as possible.
+                    slopeStepMed = PixelSideLength * (vMax.Y - vMed.Y) / (vMax.X - vMed.X);
+                    averageSlope = 0.5 * (slopeStepMax + slopeStepMed);
+                    yStart += averageSlope * (PixelSideLength - vMed.X + xSnap) * inversePixelSideLength;
+                }
+                else
+                    yStart += averageSlope * (PixelSideLength - vMin.X + xSnap) * inversePixelSideLength;
+                // now we need to increment the xSnap and xStartIndex
                 xStartIndex++;
                 xSnap += PixelSideLength;
             }
-            // sort of the same for Y although we really just need max and min
-            var yMaxIndex = GetYIndex(Math.Max(vMin.Y, Math.Max(vMed.Y, vMax.Y)));
-            var yMinIndex = GetYIndex(Math.Min(vMin.Y, Math.Min(vMed.Y, vMax.Y)));
-
-            var qVaX = xSnap - vAx;
+            var pixXMinusVAx = xSnap - vAx;
             // *** main loop ***
-            //for (var xIndex = xStartIndex; xIndex <= xEndIndex; xIndex++)
             var xIndex = xStartIndex;
             do
             {
-                var vBAy_multiply_qVaX = vBAy * qVaX;
-                var vCAy_multiply_qVaX = vCAy * qVaX;
-                var yIndex = GetYIndex(yStart);
-                var ySnapStart = GetSnappedY(yIndex);
+                // the following 2 lines are calculated to save repeat calculations in the PixelIsInside method
+                var vBAy_by_pixXVAx = vBAy * pixXMinusVAx;
+                var vCAy_by_pixXVAx = vCAy * pixXMinusVAx;
+                // get the starting y index and the snapped y value
+                var yStartIndex = GetYIndex(yStart);
+                var ySnapStart = GetSnappedY(yStartIndex);
+
+                // first search down until we leave the triangle. here we start with the central pixel
+                // but in the search-up loop we start one above the central pixel. This is 
                 var ySnap = ySnapStart;
-                var debugIndex = GetIndex(xIndex, yIndex);
-                if (PixelIsInside(ySnap - vAy, vBAx, vBAy_multiply_qVaX, area, oneOverArea,
-                    vCAy_multiply_qVaX, vCAx, zA, zB, zC, out double zHeight))
-                    yield return (GetIndex(xIndex, yIndex), zHeight);
-                var yNegIndex = yIndex;
+                var yIndex = yStartIndex;
                 bool foundInside;
                 do
                 {
-                    yNegIndex--;
-                    ySnap -= PixelSideLength;
-                    debugIndex = GetIndex(xIndex, yNegIndex);
-                    if (PixelIsInside(ySnap - vAy, vBAx, vBAy_multiply_qVaX, area, oneOverArea,
-                        vCAy_multiply_qVaX, vCAx, zA, zB, zC, out zHeight))
+                    if (PixelIsInside(ySnap - vAy, vBAx, vBAy_by_pixXVAx, area, oneOverArea,
+                        vCAy_by_pixXVAx, vCAx, zA, zB, zC, out var zHeight))
                     {
                         foundInside = true;
-                        yield return (GetIndex(xIndex, yNegIndex), zHeight);
+                        yield return (GetIndex(xIndex, yIndex), zHeight);
                     }
                     else foundInside = false;
-                } while (foundInside && yNegIndex >= yMinIndex);
+                    yIndex--;
+                    ySnap -= PixelSideLength;
+                } while (foundInside); // && yNegIndex >= yMinIndex);
+
                 ySnap = ySnapStart;
-                var yPosIndex = yIndex;
+                yIndex = yStartIndex;
                 do
                 {
-                    yPosIndex++;
+                    yIndex++;
                     ySnap += PixelSideLength;
-                    debugIndex = GetIndex(xIndex, yPosIndex);
-                    if (PixelIsInside(ySnap - vAy, vBAx, vBAy_multiply_qVaX, area, oneOverArea,
-                        vCAy_multiply_qVaX, vCAx, zA, zB, zC, out zHeight))
+                    if (PixelIsInside(ySnap - vAy, vBAx, vBAy_by_pixXVAx, area, oneOverArea,
+                        vCAy_by_pixXVAx, vCAx, zA, zB, zC, out var zHeight))
                     {
                         foundInside = true;
-                        yield return (GetIndex(xIndex, yPosIndex), zHeight);
+                        yield return (GetIndex(xIndex, yIndex), zHeight);
                     }
                     else foundInside = false;
-                } while (foundInside && yPosIndex <= yMaxIndex);
-                xIndex++;
-                if (xIndex > xEndIndex) break;
+                } while (foundInside); // && yPosIndex <= yMaxIndex);
+                if (xIndex >= xEndIndex) break;
                 if (xIndex == xSwitchIndex)
                 {
-                    var xLastSnap = GetSnappedX(xIndex);
-                    yStart += 0.5 * (slopeStepMed + slopeStepMax) * (vMed.X - xLastSnap) * inversePixelSideLength;
-                    if (vMax.X != vMed.X)
-                    {
-                        slopeStepMed = PixelSideLength * (vMax.Y - vMed.Y) / (vMax.X - vMed.X);
-                        if (xIndex != xEndIndex)
-                            yStart += 0.5 * (slopeStepMed + slopeStepMax) * (PixelSideLength - vMed.X + xLastSnap) * inversePixelSideLength;
-                        else
-                            yStart += 0.5 * (slopeStepMed + slopeStepMax) * (vMax.X - vMed.X + xLastSnap) * inversePixelSideLength;
-                    }
-                }
-                else if (xIndex == xEndIndex)
-                {
-                    var xLastSnap = GetSnappedX(xIndex);
-                    yStart += 0.5 * (slopeStepMed + slopeStepMax) * (vMax.X - xLastSnap) * inversePixelSideLength;
+                    var leftXDelta = vMed.X - GetSnappedX(xIndex);
+                    yStart += averageSlope * leftXDelta * inversePixelSideLength;
+                    slopeStepMed = PixelSideLength * (vMax.Y - vMed.Y) / (vMax.X - vMed.X);
+                    averageSlope = 0.5 * (slopeStepMax + slopeStepMed); 
+                    var rightXDelta = PixelSideLength - leftXDelta;
+                    yStart += averageSlope * rightXDelta * inversePixelSideLength;
                 }
                 else
-                    yStart += 0.5 * (slopeStepMed + slopeStepMax);
-                qVaX += PixelSideLength;
+                    yStart += averageSlope;
+                xIndex++;
+                pixXMinusVAx += PixelSideLength;
             } while (true);
         }
 
@@ -432,15 +302,15 @@ namespace TVGL
         double oneOverArea, double vCAy_multiply_qVaX, double vCAx, double zA, double zB, double zC, out double zHeight)
         {
             var area2 = vBAx * qVaY - vBAy_multiply_qVaX;
-            if (area2.IsLessThanNonNegligible(0, negligible) || area2.IsGreaterThanNonNegligible(area, negligible))
-            // if (area2 < 0 || area2 > area)
+            //if (area2.IsLessThanNonNegligible(0, negligible) || area2.IsGreaterThanNonNegligible(area, negligible))
+            if (area2 < 0 || area2 > area)
             {
                 zHeight = double.NaN;
                 return false;
             }
             var area3 = vCAy_multiply_qVaX - qVaY * vCAx;
-            if (area3.IsLessThanNonNegligible(0, negligible) || area3.IsGreaterThanNonNegligible(area, negligible))
-            //if (area3 < 0 || area3 > area)
+            //if (area3.IsLessThanNonNegligible(0, negligible) || area3.IsGreaterThanNonNegligible(area, negligible))
+            if (area3 < 0 || area3 > area)
             {
                 zHeight = double.NaN;
                 return false;
@@ -448,8 +318,8 @@ namespace TVGL
             var v = area2 * oneOverArea;
             var u = area3 * oneOverArea;
             var w = 1 - v - u;
-            if (w.IsLessThanNonNegligible(0, negligible) || w.IsGreaterThanNonNegligible(1, negligible))
-            //if (w.IsLessThanNonNegligible(0))
+            //if (w.IsLessThanNonNegligible(0, negligible) || w.IsGreaterThanNonNegligible(1, negligible))
+            if (w.IsLessThanNonNegligible(0))
             {
                 zHeight = double.NaN;
                 return false;

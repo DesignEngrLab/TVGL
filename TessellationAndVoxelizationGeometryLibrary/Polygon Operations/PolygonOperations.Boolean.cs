@@ -252,18 +252,18 @@ namespace TVGL
                 for (int j = i - 1; j >= 0; j--)
                 {
                     var interaction = GetPolygonInteraction(polygonList[i], polygonList[j]);
-                    if (interaction.Relationship == PolygonRelationship.BInsideA
-                        || interaction.Relationship == PolygonRelationship.Equal)
+                    if (interaction.Relationship == ABRelationships.BInsideA
+                        || interaction.Relationship == ABRelationships.Equal)
                     {  // remove polygon B
                         polygonList.RemoveAt(j);
                         i--;
                     }
-                    else if (interaction.Relationship == PolygonRelationship.AInsideB)
+                    else if (interaction.Relationship == ABRelationships.AInsideB)
                     {                            // remove polygon A
                         polygonList.RemoveAt(i);
                         break; // to stop the inner loop
                     }
-                    else if (interaction.CoincidentEdges || interaction.Relationship == PolygonRelationship.Intersection)
+                    else if (interaction.CoincidentEdges || interaction.Relationship == ABRelationships.Intersection)
                     {
                         //if (i == 1 && j == 0)
                         //Presenter.ShowAndHang(new[] { polygonList[i], polygonList[j] });
@@ -369,18 +369,18 @@ namespace TVGL
                 for (int j = polygonBList.Count - 1; j >= 0; j--)
                 {
                     var interaction = GetPolygonInteraction(unionedPolygons[i], polygonBList[j]);
-                    if (interaction.Relationship == PolygonRelationship.BInsideA
-                        || interaction.Relationship == PolygonRelationship.Equal)
+                    if (interaction.Relationship == ABRelationships.BInsideA
+                        || interaction.Relationship == ABRelationships.Equal)
                     {  // remove polygon B
                         polygonBList.RemoveAt(j);
                     }
-                    else if (interaction.Relationship == PolygonRelationship.AInsideB)
+                    else if (interaction.Relationship == ABRelationships.AInsideB)
                     {                            // remove polygon A
                         unionedPolygons[i] = polygonBList[j];
                         polygonBList.RemoveAt(j);
                         break; // to stop the inner loop
                     }
-                    else if (interaction.CoincidentEdges || interaction.Relationship == PolygonRelationship.Intersection)
+                    else if (interaction.CoincidentEdges || interaction.Relationship == ABRelationships.Intersection)
                     {
                         var newPolygons = Union(unionedPolygons[i], polygonBList[j], interaction, outputAsCollectionType, tolerance);
                         unionedPolygons.RemoveAt(i);
