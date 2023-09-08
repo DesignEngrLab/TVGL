@@ -14,7 +14,7 @@ namespace TVGLUnitTestsAndBenchmarking.Misc_Tests
         internal static void Test1()
         {
             DirectoryInfo dir = Program.BackoutToFolder(Program.inputFolder);
-            foreach (var fileName in dir.GetFiles("*").Skip(0))
+            foreach (var fileName in dir.GetFiles("*").Skip(10))
             {
                 //Console.WriteLine("\n\n\nAttempting to open: " + fileName.Name);
                 IO.Open(fileName.FullName, out TessellatedSolid solid);

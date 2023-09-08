@@ -415,10 +415,15 @@ namespace TVGL
                             yStart += 0.5 * (slopeStepMed + slopeStepMax) * (PixelSideLength - vMed.X + xLastSnap) * inversePixelSideLength;
                         else
                             yStart += 0.5 * (slopeStepMed + slopeStepMax) * (vMax.X - vMed.X + xLastSnap) * inversePixelSideLength;
-
                     }
                 }
-                else yStart += 0.5 * (slopeStepMed + slopeStepMax);
+                else if (xIndex == xEndIndex)
+                {
+                    var xLastSnap = GetSnappedX(xIndex);
+                    yStart += 0.5 * (slopeStepMed + slopeStepMax) * (vMax.X - xLastSnap) * inversePixelSideLength;
+                }
+                else
+                    yStart += 0.5 * (slopeStepMed + slopeStepMax);
                 qVaX += PixelSideLength;
             } while (true);
         }

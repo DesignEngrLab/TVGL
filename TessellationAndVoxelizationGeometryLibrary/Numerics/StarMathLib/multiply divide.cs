@@ -2050,5 +2050,90 @@ namespace StarMathLib
         }
         #endregion
 
+        #region Matrix Exponential
+        public static double[,] ExpMatrix(double[,] A)
+
+        {
+            //based on c8mat_expm1() is essentially MATLAB's built-in matrix exponential algorithm.
+            var maxRowSum = 0.0;
+            for (int i = 0; i < A.GetLength(0); i++)
+            {
+                var sum = 0.0;
+                for (int j = 0; j < A.GetLength(1); j++)
+                    sum += Math.Abs(A[i, j]);
+                if (maxRowSum < sum)
+                    maxRowSum = sum;
+            }
+            frexp(maxRowSum, out var mantissa, out var exponent);
+            //[f, e] = log2(norm(A, 'inf'));
+            var s = Math.Max(0, exponent);
+            //s = max(0, e + 1);
+            A = A.divide(Math.Pow(2, s));
+
+            var X = A;
+            var c = 1.0 / 2;
+            var E = MakeIdentity(A.GetLength(0)).Add(A.multiply(c));
+            var D = MakeIdentity(A.GetLength(0)).Subtract(A.multiply(c));
+            var q = 6;
+            var p = true;
+
+            for (int k = 1; k < q; k++)
+            {
+                c = c * (q - k + 1) / (k * (2 * q - k + 1));
+                X = A.multiply(X);
+                var cX = X.multiply(c);
+                E = E.Add(cX);
+                if (p)
+                    D = D.Add(cX);
+                else
+                    D = D.Subtract(cX);
+                p = !p;
+            }
+
+            E = D.Inverse().multiply(E);
+            //E = D \ E;
+            for (int k = 0; k < s; k++)
+                E = E.multiply(E);
+
+            return E;
+        }
+        static void frexp(double value, out double mantissa, out int exponent)
+        {
+            long bits = BitConverter.DoubleToInt64Bits(value);
+            bool negative = (bits & (1L << 63)) != 0;
+            exponent = (int)((bits >> 52) & 0x7FFL);
+            long mantissaLong = bits & 0xFFFFFFFFFFFFFL;
+
+            if (exponent == 0)
+                exponent++;
+            else
+                mantissaLong = mantissaLong | (1L << 52);
+
+            exponent -= 1075;
+
+            if (mantissaLong == 0)
+            {
+                mantissa = 0;
+                exponent = 0;
+                return;
+            }
+
+            while ((mantissaLong & 1) == 0)
+            {
+                mantissaLong >>= 1;
+                exponent++;
+            }
+
+            mantissa = mantissaLong;
+            while (mantissa >= 1)
+            {
+                mantissa /= 2;
+                exponent++;
+            }
+
+            if (negative)
+                mantissa = -mantissa;
+        }
+        #endregion
     }
 }
