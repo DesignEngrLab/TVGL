@@ -178,6 +178,25 @@ namespace TVGL
             return GetIndicesCoveredByFace(vA, zA, vB, zB, vC, zC);
         }
 
+        /// <summary>
+        /// Gets the indices covered by face. This is the complicated part. There are various ways to do this.
+        /// Previously, we had a Bresanham scanline algorithm that was used to get the indices. This method
+        /// has a small inefficiency (and robustness issue) in that it strives to find the lowest and highest
+        /// y-value of a pixel to search for a given x. However, given the discrete nature of pixels and the
+        /// roundoff issues, the ranges were not always perfect. To solve, we still have to check whether the
+        /// queried pixel was inside or outside of the triangle (this is done by barycentric coordinates, by
+        /// the way, which is also used to quickly find the z-height). The new method is inspired by Figure 5
+        /// in Pineda's paper (https://doi.org/10.1145/54852.378457). The idea is to find a pixel at the center
+        /// line of the triangle, and then search up and down. This appears to be the most efficient and robust
+        /// approach.
+        /// </summary>
+        /// <param name="vA">The v a.</param>
+        /// <param name="zA">The z a.</param>
+        /// <param name="vB">The v b.</param>
+        /// <param name="zB">The z b.</param>
+        /// <param name="vC">The v c.</param>
+        /// <param name="zC">The z c.</param>
+        /// <returns>A list of (int index, double zHeight).</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private IEnumerable<(int index, double zHeight)> GetIndicesCoveredByFace(Vector2 vA, double zA, Vector2 vB,
         double zB, Vector2 vC, double zC)
@@ -248,19 +267,21 @@ namespace TVGL
                 // get the starting y index and the snapped y value
                 var yStartIndex = GetYIndex(yStart);
                 var ySnapStart = GetSnappedY(yStartIndex);
+                if (PixelIsInside(ySnapStart - vAy, vBAx, vBAy_by_pixXVAx, area, oneOverArea,
+                    vCAy_by_pixXVAx, vCAx, zA, zB, zC, out var zHeight))
+                    yield return (GetIndex(xIndex, yStartIndex), zHeight);
 
-                // first search down until we leave the triangle. here we start with the central pixel
-                // but in the search-up loop we start one above the central pixel. This is 
+                // first search down until we leave the triangle.  
                 var ySnap = ySnapStart;
                 var yIndex = yStartIndex;
                 while (true)
                 {
-                    if (PixelIsInside(ySnap - vAy, vBAx, vBAy_by_pixXVAx, area, oneOverArea,
-                        vCAy_by_pixXVAx, vCAx, zA, zB, zC, out var zHeight))
-                        yield return (GetIndex(xIndex, yIndex), zHeight);
-                    else break;
                     yIndex--;
                     ySnap -= PixelSideLength;
+                    if (PixelIsInside(ySnap - vAy, vBAx, vBAy_by_pixXVAx, area, oneOverArea,
+                        vCAy_by_pixXVAx, vCAx, zA, zB, zC, out zHeight))
+                        yield return (GetIndex(xIndex, yIndex), zHeight);
+                    else break;
                 }
                 // now in the positive direction
                 ySnap = ySnapStart;
@@ -271,7 +292,7 @@ namespace TVGL
                     yIndex++;
                     ySnap += PixelSideLength;
                     if (PixelIsInside(ySnap - vAy, vBAx, vBAy_by_pixXVAx, area, oneOverArea,
-                        vCAy_by_pixXVAx, vCAx, zA, zB, zC, out var zHeight))
+                        vCAy_by_pixXVAx, vCAx, zA, zB, zC, out zHeight))
                         yield return (GetIndex(xIndex, yIndex), zHeight);
                     else break;
                 } 

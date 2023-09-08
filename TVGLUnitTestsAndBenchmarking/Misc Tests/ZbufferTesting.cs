@@ -14,7 +14,7 @@ namespace TVGLUnitTestsAndBenchmarking.Misc_Tests
         internal static void Test1()
         {
             DirectoryInfo dir = Program.BackoutToFolder(Program.inputFolder);
-            foreach (var fileName in dir.GetFiles("*").Skip(0))
+            foreach (var fileName in dir.GetFiles("*").Skip(6))
             {
                 //Console.WriteLine("\n\n\nAttempting to open: " + fileName.Name);
                 IO.Open(fileName.FullName, out TessellatedSolid solid);
@@ -26,7 +26,7 @@ namespace TVGLUnitTestsAndBenchmarking.Misc_Tests
                 var displacement = (minD - maxD) * direction;
                 //Console.Write("zbuffer start...");
                 var sw = Stopwatch.StartNew();
-                var zbuffer = ZBuffer.Run(solid, direction, 4000);
+                var zbuffer = ZBuffer.Run(solid, direction, 500);
                 sw.Stop();
                 Console.WriteLine(sw.Elapsed.Ticks);
                 //Console.WriteLine("end:  "+sw.Elapsed);
@@ -47,7 +47,7 @@ namespace TVGLUnitTestsAndBenchmarking.Misc_Tests
                     paths.Add(yLine);
                 }
                 var colors = paths.Select(c => new Color(KnownColors.DodgerBlue));
-                //Presenter.ShowVertexPathsWithSolids(new[] { paths }, new[] { solid }, 1, colors);
+                Presenter.ShowVertexPathsWithSolids(new[] { paths }, new[] { solid }, 1, colors);
             }
         }
 
