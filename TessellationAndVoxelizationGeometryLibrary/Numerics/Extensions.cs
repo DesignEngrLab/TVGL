@@ -676,6 +676,19 @@ namespace TVGL
         { return Matrix4x4.Transpose(matrix); }
 
         /// <summary>
+        /// Inverts the matrix. For geometric transformations this the
+        /// inverse does the reverse movement.
+        /// </summary>
+        /// <param name="matrix">The matrix.</param>
+        /// <returns>A Matrix4x4.</returns>
+        public static Matrix4x4 Inverse(this Matrix4x4 matrix)
+        {
+            if (Matrix4x4.Invert(matrix, out var result))
+                return result;
+            else return Matrix4x4.Null;
+        }
+
+        /// <summary>
         /// Attempts to extract the scale, translation, and rotation components from the given scale/rotation/translation matrix.
         /// If successful, the out parameters will contained the extracted values.
         /// </summary>

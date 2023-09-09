@@ -14,9 +14,9 @@ namespace TVGLUnitTestsAndBenchmarking.Misc_Tests
         internal static void Test1()
         {
             DirectoryInfo dir = Program.BackoutToFolder(Program.inputFolder);
-            foreach (var fileName in dir.GetFiles("*").Skip(6))
+            foreach (var fileName in dir.GetFiles("*").Skip(0))
             {
-                //Console.WriteLine("\n\n\nAttempting to open: " + fileName.Name);
+                Console.WriteLine("\n\n\nAttempting to open: " + fileName.Name);
                 IO.Open(fileName.FullName, out TessellatedSolid solid);
                 if (solid == null) continue;
                 //Presenter.ShowAndHang(solid);
@@ -26,7 +26,7 @@ namespace TVGLUnitTestsAndBenchmarking.Misc_Tests
                 var displacement = (minD - maxD) * direction;
                 //Console.Write("zbuffer start...");
                 var sw = Stopwatch.StartNew();
-                var zbuffer = ZBuffer.Run(solid, direction, 5000);
+                var zbuffer = ZBuffer.Run(solid, direction, 1500);
                 sw.Stop();
                 Console.WriteLine(sw.Elapsed.Ticks);
                 //Console.WriteLine("end:  "+sw.Elapsed);
@@ -47,7 +47,7 @@ namespace TVGLUnitTestsAndBenchmarking.Misc_Tests
                     paths.Add(yLine);
                 }
                 var colors = paths.Select(c => new Color(KnownColors.DodgerBlue));
-                //Presenter.ShowVertexPathsWithSolids(new[] { paths }, new[] { solid }, 1, colors);
+                Presenter.ShowVertexPathsWithSolids(new[] { paths }, new[] { solid }, 1, colors);
             }
         }
 
@@ -57,14 +57,13 @@ namespace TVGLUnitTestsAndBenchmarking.Misc_Tests
             foreach (var fileName in dir.GetFiles("*").Skip(0))
             {
                 //Console.WriteLine("\n\n\nAttempting to open: " + fileName.Name);
-                IO.Open(fileName.FullName, out TessellatedSolid solid);
+                IO.Open(fileName.FullName, out TessellatedSolid solid, TessellatedSolidBuildOptions.Default);
                 if (solid == null) continue;
                 //Presenter.ShowAndHang(solid);
-                var axis = Vector3.UnitZ;
+                var axis = Vector3.UnitX;
                 var anchor = solid.Center;
                 //var direction = new Vector3(1, 1, 1).Normalize();
                 var (minD, maxD) = solid.Vertices.GetDistanceToExtremeVertex(axis, out _, out _);
-                var displacement = (minD - maxD) * axis;
                 //Console.Write("zbuffer start...");
                 var visibleFaces = new List<TriangleFace>();
                 var walls = new List<TriangleFace>();
@@ -83,9 +82,9 @@ namespace TVGLUnitTestsAndBenchmarking.Misc_Tests
                 foreach (var face in visibleFaces)
                     face.Color = new Color(KnownColors.Green);
                 visibleFaces[0].Color = new Color(KnownColors.Lime);
-                Presenter.ShowAndHang(solid);
+                //Presenter.ShowAndHang(solid);
                 var sw = Stopwatch.StartNew();
-                var zbuffer = CylindricalBuffer.Run(solid, axis, solid.Center, 500,0,visibleFaces);
+                var zbuffer = CylindricalBuffer.Run(solid, axis, anchor, 1200); //,visibleFaces);
                 sw.Stop();
                 Console.WriteLine(sw.Elapsed.Ticks);
                 //Console.WriteLine("end:  "+sw.Elapsed);
@@ -95,14 +94,15 @@ namespace TVGLUnitTestsAndBenchmarking.Misc_Tests
                 {
                     var xLine = new List<Vector3>();
                     for (int j = 0; j < zbuffer.YCount; j++)
-                        xLine.Add(displacement + zbuffer.Get3DPoint(i, j));
+                        xLine.Add(zbuffer.Get3DPoint(i, j, 0));
                     paths.Add(xLine);
                 }
                 for (int i = 0; i < zbuffer.YCount; i++)
                 {
                     var yLine = new List<Vector3>();
                     for (int j = 0; j < zbuffer.XCount; j++)
-                        yLine.Add(displacement + zbuffer.Get3DPoint(j, i));
+                        yLine.Add(zbuffer.Get3DPoint(j, i, 0));
+                    yLine.Add(yLine[0]);
                     paths.Add(yLine);
                 }
                 var colors = paths.Select(c => new Color(KnownColors.DodgerBlue));

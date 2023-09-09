@@ -45,76 +45,111 @@ namespace TVGL
         /// <param name="pixelsPerRow">The pixels per row.</param>
         /// <param name="pixelBorder">The pixel border.</param>
         public static CylindricalBuffer Run(TessellatedSolid solid, Vector3 axis, Vector3 anchor,
-            int pixelsPerRow, int pixelBorder = 2, IEnumerable<TriangleFace> subsetFaces = null)
+            int pixelsPerRow, IEnumerable<TriangleFace> subsetFaces = null)
         {
             var cylBuff = new CylindricalBuffer(solid);
 
             // get the transform matrix to apply to every point
-            var transform = axis.TransformToXYPlane(out _);
-            var rotatedAnchor = anchor.Transform(transform);
-            transform *= Matrix4x4.CreateTranslation(-rotatedAnchor.X, -rotatedAnchor.Y, -rotatedAnchor.Z);
+            cylBuff.transform = axis.TransformToXYPlane(out cylBuff.backTransform);
+            var rotatedAnchor = anchor.Transform(cylBuff.transform);
+            cylBuff.transform *= Matrix4x4.CreateTranslation(-rotatedAnchor.X, -rotatedAnchor.Y, -rotatedAnchor.Z);
+            cylBuff.backTransform = Matrix4x4.CreateTranslation(rotatedAnchor.X, rotatedAnchor.Y, rotatedAnchor.Z)
+              * cylBuff.backTransform;
 
             // transform points so that z-axis is aligned for the z-buffer. 
             // store x-y pairs as Vector2's (points) and z values in zHeights
             // also get the bounding box so determine pixel size
-            var minX = double.PositiveInfinity;
-            var maxX = double.NegativeInfinity;
+            //var minX = double.PositiveInfinity;
+            //var maxX = double.NegativeInfinity;
             var minY = double.PositiveInfinity;
             var maxY = double.NegativeInfinity;
-            var maxRadius = 0.0;
+            cylBuff.baseRadius = 0.0;
             for (int i = 0; i < solid.NumberOfVertices; i++)
             {
-                var p = solid.Vertices[i].Coordinates.Transform(transform);
-                var theta = Math.PI + Math.Atan2(p.Y, p.X);
+                var p = solid.Vertices[i].Coordinates.Transform(cylBuff.transform);
+                var theta = Math.Atan2(p.Y, p.X);
                 var radius = Math.Sqrt(p.X * p.X + p.Y * p.Y);
                 cylBuff.Vertices[i] = new Vector2(theta, p.Z);
                 cylBuff.VertexZHeights[i] = radius;
-                if (radius > maxRadius) maxRadius = radius;
+                if (radius > cylBuff.baseRadius) cylBuff.baseRadius = radius;
                 if (p.Z < minY) minY = p.Z;
                 if (p.Z > maxY) maxY = p.Z;
             }
-            cylBuff.circumference = Math.PI * 2 * maxRadius;
+            cylBuff.circumference = Math.PI * 2 * cylBuff.baseRadius;
             for (int i = 0; i < solid.NumberOfVertices; i++)
             {
-                var x = maxRadius * cylBuff.Vertices[i].X;
-                if (x < minX) minX = x;
-                if (x > maxX) maxX = x;
+                var x = cylBuff.baseRadius * cylBuff.Vertices[i].X;
+                //if (x < minX) minX = x;
+                //if (x > maxX) maxX = x;
                 cylBuff.Vertices[i] = new Vector2(x, cylBuff.Vertices[i].Y);
             }
-
             //Finish initializing the grid now that we have the bounds.
-            cylBuff.Initialize(minX, maxX, minY, maxY, pixelsPerRow, pixelBorder);
-            var faces = subsetFaces != null ? subsetFaces : cylBuff.solidFaces;
-            foreach (TriangleFace face in faces)
-            {
-                cylBuff.UpdateZBufferWithFace(face);
-            }
+            cylBuff.Initialize(-Math.PI*cylBuff.baseRadius, Math.PI * cylBuff.baseRadius,
+                minY, maxY, pixelsPerRow, 2);
             for (int i = 0; i < solid.Edges.Length; i++)
             {
                 Edge edge = solid.Edges[i];
                 var rightIsOutward = edge.Vector.Cross(axis);
-                var stepIsPositive = rightIsOutward.Dot(edge.From.Coordinates - anchor) > 0;
+                var dot = rightIsOutward.Dot(edge.From.Coordinates - anchor);
+                if (dot.IsNegligible()) continue;
+                var stepIsPositive = dot > 0;
                 var toVertexX = cylBuff.Vertices[edge.To.IndexInList].X;
                 var fromVertexX = cylBuff.Vertices[edge.From.IndexInList].X;
                 if (fromVertexX > toVertexX == stepIsPositive)
                     cylBuff.edgeWrapsAround[i] = true;
             }
+            var faces = subsetFaces != null ? subsetFaces : cylBuff.solidFaces;
+            foreach (TriangleFace face in faces)
+                cylBuff.UpdateZBufferWithFace(face);
+
             return cylBuff;
         }
         private CylindricalBuffer(TessellatedSolid solid) : base(solid)
         {
-            edgeWrapsAround = new bool[solid.NumberOfFaces];
+            edgeWrapsAround = new bool[solid.NumberOfEdges];
         }
+        /// <summary>
+        /// Initializes the specified minimum x.
+        /// </summary>
+        /// <param name="minX">The minimum x.</param>
+        /// <param name="maxX">The maximum x.</param>
+        /// <param name="minY">The minimum y.</param>
+        /// <param name="maxY">The maximum y.</param>
+        /// <param name="pixelsPerRow">The pixels per row.</param>
+        /// <param name="pixelBorder">The pixel border.</param>
+        public new void Initialize(double minX, double maxX, double minY, double maxY, int pixelsPerRow, int axialPixelBorder = 2)
+        {
+            MinX = minX;
+            MinY = minY;
+            var XLength = maxX - MinX;
+            var YLength = maxY - MinY;
+
+            //Calculate the size of a pixel based on the max of the two dimensions in question. 
+            //Subtract pixelsPerRow by 1, since we will be adding a half a pixel to each side.
+            PixelSideLength = XLength / pixelsPerRow;
+            inversePixelSideLength = 1 / PixelSideLength;
+            XCount = pixelsPerRow;
+            YCount = (int)Math.Ceiling(YLength * inversePixelSideLength);
+            // shift the grid slightly so that the part grid points are better aligned within the bounds
+            var yStickout = YCount * PixelSideLength - YLength;
+            MinY -= yStickout / 2;
+            // add the pixel border...2 since includes both sides (left and right, or top and bottom)
+            YCount += axialPixelBorder * 2;
+            MinY -= axialPixelBorder * PixelSideLength;
+
+            MaxIndex = XCount * YCount - 1;
+            Values = new (TriangleFace, double)[XCount * YCount];
+        }
+
+
+
 
         private readonly bool[] edgeWrapsAround;
         private double circumference;
+        private double baseRadius;
 
         /// <summary>
         /// Gets all the indices that are covered by a face.
-        /// This is the big tricky function. In the end, implemented a custom function
-        /// that scans the triangle from left to right. This is similar to the approach
-        /// described here: http://www.sunshine2k.de/coding/java/TriangleRasterization/TriangleRasterization.html
-        /// This is slow and possibly could be improved 
         /// </summary>
         /// <param name="face"></param>
         /// <returns></returns>
@@ -127,26 +162,52 @@ namespace TVGL
             var zB = VertexZHeights[face.B.IndexInList];
             var vC = Vertices[face.C.IndexInList];
             var zC = VertexZHeights[face.C.IndexInList];
+
             var abWraps = edgeWrapsAround[face.AB.IndexInList];
             var bcWraps = edgeWrapsAround[face.BC.IndexInList];
             var caWraps = edgeWrapsAround[face.CA.IndexInList];
             if (abWraps && bcWraps && caWraps)
-                throw new Exception("This should not happen. All 3 edges of a face cannot wrap around.");
-            if (abWraps && bcWraps) // b is on wrong side
-                return GetIndicesCoveredByFace(vA, zA, true, vB, zB, false, vC, zC, true);
-            if (abWraps && caWraps) // a is on wrong side
-                return GetIndicesCoveredByFace(vA, zA, false, vB, zB, true, vC, zC, true);
-            if (caWraps && bcWraps) // c is on wrong side
-                return GetIndicesCoveredByFace(vA, zA, true, vB, zB, true, vC, zC, false);
-            if (abWraps || bcWraps || caWraps)
-                throw new Exception("This should not happen. at least 2 edges must be wrong direction.");
-            // then normal case
-            return GetIndicesCoveredByFace(vA, zA, vB, zB, vC, zC);
+                ; // Message.output("All three edges wrap around...can't be!");
+            else if ((abWraps && !bcWraps && !caWraps) || (!abWraps && bcWraps && !caWraps) || (!abWraps && !bcWraps && caWraps))
+                ; //  Message.output("Only one edge wraps around...wha?!");
+            else foreach (var item in GetIndicesCoveredByFace(vA, zA, abWraps && caWraps, vB, zB, abWraps && bcWraps, vC, zC, bcWraps && caWraps))
+                    yield return item;
+            yield break;
         }
 
+
+
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private IEnumerable<(int index, double zHeight)> GetIndicesCoveredByFace(Vector2 vA, double zA, bool v1, Vector2 vB, double zB, bool v2, Vector2 vC, double zC, bool v3)
+        private IEnumerable<(int index, double zHeight)> GetIndicesCoveredByFace(Vector2 vA, double zA, bool aWraps, Vector2 vB, double zB, bool bWraps, Vector2 vC, double zC, bool cWraps)
         {
+            if (aWraps)
+            {
+                if (vA.X < vB.X && vA.X < vC.X) vA = new Vector2(vA.X + circumference, vA.Y);
+                else
+                {
+                    vC = new Vector2(vC.X + circumference, vC.Y);
+                    vB = new Vector2(vB.X + circumference, vB.Y);
+                }
+            }
+            else if (bWraps)
+            {
+                if (vB.X < vA.X && vB.X < vC.X) vB = new Vector2(vB.X + circumference, vB.Y);
+                else
+                {
+                    vC = new Vector2(vC.X + circumference, vC.Y);
+                    vA = new Vector2(vA.X + circumference, vA.Y);
+                }
+            }
+            else if (cWraps)
+            {
+                if (vC.X < vA.X && vC.X < vB.X) vC = new Vector2(vC.X + circumference, vC.Y);
+                else
+                {
+                    vB = new Vector2(vB.X + circumference, vB.Y);
+                    vA = new Vector2(vA.X + circumference, vA.Y);
+                }
+            }
             var area = (vB - vA).Cross(vC - vA);
             // if the area is negative the triangle is facing the wrong way.
             if (area <= 0) yield break;
@@ -199,8 +260,7 @@ namespace TVGL
                 else
                     yStart += averageSlope * (PixelSideLength - vMin.X + xSnap) * inversePixelSideLength;
                 // now we need to increment the xSnap and xStartIndex
-                if (xEndIndex == xStartIndex) xEndIndex = ++xStartIndex;
-                else xStartIndex++;
+                xStartIndex++;
                 xSnap += PixelSideLength;
             }
             var pixXMinusVAx = xSnap - vAx;
@@ -216,8 +276,7 @@ namespace TVGL
                 var ySnapStart = GetSnappedY(yStartIndex);
                 if (PixelIsInside(ySnapStart - vAy, vBAx, vBAy_by_pixXVAx, area, oneOverArea,
                     vCAy_by_pixXVAx, vCAx, zA, zB, zC, out var zHeight))
-                    yield return (GetIndex(xIndex, yStartIndex), zHeight);
-
+                    yield return (GetIndex(xIndex % XCount, yStartIndex), zHeight);
                 // first search down until we leave the triangle.  
                 var ySnap = ySnapStart;
                 var yIndex = yStartIndex;
@@ -227,7 +286,7 @@ namespace TVGL
                     ySnap -= PixelSideLength;
                     if (PixelIsInside(ySnap - vAy, vBAx, vBAy_by_pixXVAx, area, oneOverArea,
                         vCAy_by_pixXVAx, vCAx, zA, zB, zC, out zHeight))
-                        yield return (GetIndex(xIndex, yIndex), zHeight);
+                        yield return (GetIndex(xIndex % XCount, yIndex), zHeight);
                     else break;
                 }
                 // now in the positive direction
@@ -240,12 +299,12 @@ namespace TVGL
                     ySnap += PixelSideLength;
                     if (PixelIsInside(ySnap - vAy, vBAx, vBAy_by_pixXVAx, area, oneOverArea,
                         vCAy_by_pixXVAx, vCAx, zA, zB, zC, out zHeight))
-                        yield return (GetIndex(xIndex, yIndex), zHeight);
+                        yield return (GetIndex(xIndex % XCount, yIndex), zHeight);
                     else break;
                 }
 
                 // here is the main loop exit condition
-                if (xIndex == xEndIndex) break;
+                if (xIndex >= xEndIndex) break;
 
                 // like the beginning, if the middle vertex is encountered, we must take
                 // special care to get the correct yStart value
@@ -264,9 +323,39 @@ namespace TVGL
                 // finally, we increment the xIndex and xSnap (well, xSnap is not really
                 // needed but it's difference from vA.X is used repeatedly in the PixelIsInside method)
                 xIndex++;
-                if (xIndex == this.XCount) xIndex = 0;
                 pixXMinusVAx += PixelSideLength;
             }
         }
-}
+
+        /// <summary>
+        /// Gets the 3D transformed point of pixel i,j to the x-y plane, with z being the z-buffer height.
+        /// </summary>
+        /// <param name="i">The i.</param>
+        /// <param name="j">The j.</param>
+        /// <returns>Vector3.</returns>
+        public override Vector3 Get3DPointTransformed(int i, int j, double defaultZHeight)
+        {
+            var index = GetIndex(i, j);
+            var zHeight = Values[index].Item1 == null ? defaultZHeight : Values[index].Item2;
+            return new Vector3(Get2DPoint(i, j), zHeight);
+        }
+        /// <summary>
+        /// Gets the 3D point on the solid corresponding to pixel i, j.
+        /// </summary>
+        /// <param name="i">The i.</param>
+        /// <param name="j">The j.</param>
+        /// <returns>Vector3.</returns>
+        public override Vector3 Get3DPoint(int i, int j, double defaultZHeight = 0.0)
+        {
+            var flatPoint = Get3DPointTransformed(i, j, defaultZHeight);
+            var theta = flatPoint.X / baseRadius;
+            var axialLength = flatPoint.Y;
+            var radius = baseRadius + flatPoint.Z;
+            var x = radius * Math.Cos(theta);
+            var y = radius * Math.Sin(theta);
+            var point = new Vector3(x, y, axialLength);
+            return point.Transform(backTransform);
+        }
+        /// <summary>}
+    }
 }

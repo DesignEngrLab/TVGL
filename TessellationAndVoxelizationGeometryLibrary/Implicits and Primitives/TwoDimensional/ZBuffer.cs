@@ -63,11 +63,11 @@ namespace TVGL
         /// <summary>
         /// The transform
         /// </summary>
-        private Matrix4x4 transform;
+        protected Matrix4x4 transform;
         /// <summary>
         /// The back transform
         /// </summary>
-        private Matrix4x4 backTransform;
+        protected Matrix4x4 backTransform;
         /// <summary>
         /// The solid faces
         /// </summary>
@@ -159,10 +159,6 @@ namespace TVGL
 
         /// <summary>
         /// Gets all the indices that are covered by a face.
-        /// This is the big tricky function. In the end, implemented a custom function
-        /// that scans the triangle from left to right. This is similar to the approach
-        /// described here: http://www.sunshine2k.de/coding/java/TriangleRasterization/TriangleRasterization.html
-        /// This is slow and possibly could be improved 
         /// </summary>
         /// <param name="face"></param>
         /// <returns></returns>
@@ -253,8 +249,7 @@ namespace TVGL
                 else
                     yStart += averageSlope * (PixelSideLength - vMin.X + xSnap) * inversePixelSideLength;
                 // now we need to increment the xSnap and xStartIndex
-                if (xEndIndex == xStartIndex) xEndIndex = ++xStartIndex;
-                else xStartIndex++;
+                xStartIndex++;
                 xSnap += PixelSideLength;
             }
             var pixXMinusVAx = xSnap - vAx;
@@ -299,7 +294,7 @@ namespace TVGL
                 }
 
                 // here is the main loop exit condition
-                if (xIndex == xEndIndex) break;
+                if (xIndex >= xEndIndex) break;
 
                 // like the beginning, if the middle vertex is encountered, we must take
                 // special care to get the correct yStart value
@@ -318,7 +313,6 @@ namespace TVGL
                 // finally, we increment the xIndex and xSnap (well, xSnap is not really
                 // needed but it's difference from vA.X is used repeatedly in the PixelIsInside method)
                 xIndex++;
-                if (xIndex == this.XCount) xIndex = 0;
                 pixXMinusVAx += PixelSideLength;
             }
         }
@@ -414,7 +408,7 @@ namespace TVGL
         /// <param name="i">The i.</param>
         /// <param name="j">The j.</param>
         /// <returns>Vector3.</returns>
-        public Vector3 Get3DPointTransformed(int i, int j, double defaultZHeight = 0.0)
+        public virtual Vector3 Get3DPointTransformed(int i, int j, double defaultZHeight = 0.0)
         {
             var zHeight = Values[YCount * i + j].Item1 == null ? defaultZHeight : Values[YCount * i + j].Item2;
             return new Vector3(Get2DPoint(i, j), zHeight);
@@ -425,7 +419,7 @@ namespace TVGL
         /// <param name="i">The i.</param>
         /// <param name="j">The j.</param>
         /// <returns>Vector3.</returns>
-        public Vector3 Get3DPoint(int i, int j, double defaultZHeight = 0.0)
+        public virtual Vector3 Get3DPoint(int i, int j, double defaultZHeight = 0.0)
         {
             return Get3DPointTransformed(i, j, defaultZHeight).Transform(backTransform);
         }
