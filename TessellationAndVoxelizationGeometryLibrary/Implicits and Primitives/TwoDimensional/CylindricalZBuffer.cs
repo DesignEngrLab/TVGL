@@ -77,14 +77,11 @@ namespace TVGL
             }
             cylBuff.circumference = Math.PI * 2 * cylBuff.baseRadius;
             for (int i = 0; i < solid.NumberOfVertices; i++)
-            {
-                var x = cylBuff.baseRadius * cylBuff.Vertices[i].X;
-                //if (x < minX) minX = x;
-                //if (x > maxX) maxX = x;
-                cylBuff.Vertices[i] = new Vector2(x, cylBuff.Vertices[i].Y);
-            }
+                cylBuff.Vertices[i] = new Vector2(cylBuff.baseRadius * cylBuff.Vertices[i].X,
+                    cylBuff.Vertices[i].Y);
+
             //Finish initializing the grid now that we have the bounds.
-            cylBuff.Initialize(-Math.PI*cylBuff.baseRadius, Math.PI * cylBuff.baseRadius,
+            cylBuff.Initialize(-Math.PI * cylBuff.baseRadius, Math.PI * cylBuff.baseRadius,
                 minY, maxY, pixelsPerRow, 2);
             for (int i = 0; i < solid.Edges.Length; i++)
             {
@@ -104,7 +101,7 @@ namespace TVGL
 
             return cylBuff;
         }
-        private CylindricalBuffer(TessellatedSolid solid) : base(solid)
+        private protected CylindricalBuffer(TessellatedSolid solid) : base(solid)
         {
             edgeWrapsAround = new bool[solid.NumberOfEdges];
         }
@@ -144,9 +141,9 @@ namespace TVGL
 
 
 
-        private readonly bool[] edgeWrapsAround;
-        private double circumference;
-        private double baseRadius;
+        private protected readonly bool[] edgeWrapsAround;
+        private protected double circumference;
+        private protected double baseRadius;
 
         /// <summary>
         /// Gets all the indices that are covered by a face.
@@ -356,6 +353,5 @@ namespace TVGL
             var point = new Vector3(x, y, axialLength);
             return point.Transform(backTransform);
         }
-        /// <summary>}
     }
 }

@@ -54,7 +54,7 @@ namespace TVGLUnitTestsAndBenchmarking.Misc_Tests
         internal static void Test2()
         {
             DirectoryInfo dir = Program.BackoutToFolder(Program.inputFolder);
-            foreach (var fileName in dir.GetFiles("*").Skip(0))
+            foreach (var fileName in dir.GetFiles("*").Skip(20))
             {
                 //Console.WriteLine("\n\n\nAttempting to open: " + fileName.Name);
                 IO.Open(fileName.FullName, out TessellatedSolid solid, TessellatedSolidBuildOptions.Default);
@@ -84,7 +84,7 @@ namespace TVGLUnitTestsAndBenchmarking.Misc_Tests
                 visibleFaces[0].Color = new Color(KnownColors.Lime);
                 //Presenter.ShowAndHang(solid);
                 var sw = Stopwatch.StartNew();
-                var zbuffer = CylindricalBuffer.Run(solid, axis, anchor, 1200); //,visibleFaces);
+                var zbuffer = CylindricalBuffer.Run(solid, axis, anchor, 500); //,visibleFaces);
                 sw.Stop();
                 Console.WriteLine(sw.Elapsed.Ticks);
                 //Console.WriteLine("end:  "+sw.Elapsed);
@@ -113,19 +113,13 @@ namespace TVGLUnitTestsAndBenchmarking.Misc_Tests
         internal static void Test3()
         {
             DirectoryInfo dir = Program.BackoutToFolder(Program.inputFolder);
-            foreach (var fileName in dir.GetFiles("*").Skip(0))
+            foreach (var fileName in dir.GetFiles("*").Skip(7))
             {
                 //Console.WriteLine("\n\n\nAttempting to open: " + fileName.Name);
-                IO.Open(fileName.FullName, out TessellatedSolid solid);
-                if (solid == null) continue;
-                //Presenter.ShowAndHang(solid);
-                var direction = -Vector3.UnitZ;
-                //var direction = new Vector3(1, 1, 1).Normalize();
-                var (minD, maxD) = solid.Vertices.GetDistanceToExtremeVertex(direction, out _, out _);
-                var displacement = (minD - maxD) * direction;
-                //Console.Write("zbuffer start...");
+                IO.Open(fileName.FullName, out TessellatedSolid solid, TessellatedSolidBuildOptions.Default);
+                if (solid == null) continue; ;
                 var sw = Stopwatch.StartNew();
-                var zbuffer = SphericalBuffer.Run(solid, solid.Center, 4000);
+                var zbuffer = SphericalBuffer.Run(solid, solid.Center, 400);
                 sw.Stop();
                 Console.WriteLine(sw.Elapsed.Ticks);
                 //Console.WriteLine("end:  "+sw.Elapsed);
@@ -135,19 +129,19 @@ namespace TVGLUnitTestsAndBenchmarking.Misc_Tests
                 {
                     var xLine = new List<Vector3>();
                     for (int j = 0; j < zbuffer.YCount; j++)
-                        xLine.Add(displacement + zbuffer.Get3DPoint(i, j));
+                        xLine.Add(zbuffer.Get3DPoint(i, j, 0));
                     paths.Add(xLine);
                 }
                 for (int i = 0; i < zbuffer.YCount; i++)
                 {
                     var yLine = new List<Vector3>();
                     for (int j = 0; j < zbuffer.XCount; j++)
-                        yLine.Add(displacement + zbuffer.Get3DPoint(j, i));
+                        yLine.Add(zbuffer.Get3DPoint(j, i, 0));
+                    yLine.Add(yLine[0]);
                     paths.Add(yLine);
                 }
                 var colors = paths.Select(c => new Color(KnownColors.DodgerBlue));
                 Presenter.ShowVertexPathsWithSolids(new[] { paths }, new[] { solid }, 1, colors);
-
             }
         }
 
