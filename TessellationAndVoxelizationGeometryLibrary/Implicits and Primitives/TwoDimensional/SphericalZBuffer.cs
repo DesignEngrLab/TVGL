@@ -66,6 +66,7 @@ namespace TVGL
 
             //Finish initializing the grid now that we have the bounds.
             var piRadius = Math.PI * sphBuffer.baseRadius;
+            sphBuffer.circumference = 2 * piRadius;
             sphBuffer.Initialize(-piRadius, piRadius, 0, piRadius,
                 pixelsPerRow);
 
@@ -95,10 +96,10 @@ namespace TVGL
         /// <param name="maxX">The maximum x.</param>
         /// <param name="minY">The minimum y.</param>
         /// <param name="maxY">The maximum y.</param>
-        /// <param name="pixelsPerRow">The pixels per row.</param>
+        /// <param name="pixelsAtEquator">The pixels per row.</param>
         /// <param name="pixelBorder">The pixel border.</param>
         public new void Initialize(double minX, double maxX, double minY, double maxY,
-            int pixelsPerRow)
+            int pixelsAtEquator)
         {
             MinX = minX;
             MinY = minY;
@@ -106,10 +107,10 @@ namespace TVGL
 
             //Calculate the size of a pixel based on the max of the two dimensions in question. 
             //Subtract pixelsPerRow by 1, since we will be adding a half a pixel to each side.
-            PixelSideLength = XLength / pixelsPerRow;
+            PixelSideLength = XLength / pixelsAtEquator;
             inversePixelSideLength = 1 / PixelSideLength;
-            XCount = pixelsPerRow;
-            YCount = pixelsPerRow / 2; // unlike the linear ZBuffer and Cylindrical ZBuffer,
+            XCount = pixelsAtEquator;
+            YCount = pixelsAtEquator / 2; 
             MinX += PixelSideLength / 2;
             MinY += PixelSideLength / 2;
             MaxIndex = XCount * YCount - 1;
@@ -144,7 +145,7 @@ namespace TVGL
             var flatPoint = Get3DPointTransformed(i, j, defaultZHeight);
             var azimuthAngle = flatPoint.X / baseRadius;
             var polarAngle = flatPoint.Y / baseRadius;
-            var radius = baseRadius + flatPoint.Z;
+            var radius = baseRadius + baseRadius + flatPoint.Z;
             var point = SphericalAnglePair.ConvertSphericalToCartesian(radius, polarAngle, azimuthAngle);
             return point + center;
         }

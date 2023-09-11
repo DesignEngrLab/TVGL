@@ -24,7 +24,7 @@ namespace TVGLUnitTestsAndBenchmarking
             var myWriter = new ConsoleTraceListener();
             Trace.Listeners.Add(myWriter);
             TVGL.Message.Verbosity = VerbosityLevels.AboveNormal;
-            ZbufferTesting.Test2();
+            ZbufferTesting.Test3();
             TVGLNumericsTests.UniqueLineTesting();
 
             Misc_Tests.ZbufferTesting.Test3();

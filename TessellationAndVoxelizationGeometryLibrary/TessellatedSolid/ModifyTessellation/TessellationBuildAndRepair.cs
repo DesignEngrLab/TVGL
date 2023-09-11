@@ -683,6 +683,7 @@ namespace TVGL
                 foreach (var index in listOfIndices)
                 {
                     var pair = InconsistentMatingFacePairs[index];
+                    FacePairsForEdges.Add(pair);
                     indicesToRemove.Add(index);
                     var neighbor = pair.Item1 == face ? pair.Item2 : pair.Item1;
                     if (facesWith3InconsistentEdges.Contains(neighbor))
