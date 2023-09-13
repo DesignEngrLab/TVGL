@@ -66,7 +66,7 @@ namespace TVGL
 
             //Finish initializing the grid now that we have the bounds.
             var piRadius = Math.PI * sphBuffer.baseRadius;
-            sphBuffer.circumference = 2 * piRadius;
+            //sphBuffer.circumference = 2 * piRadius;
             sphBuffer.Initialize(-piRadius, piRadius, 0, piRadius,
                 pixelsPerRow);
 
@@ -145,7 +145,7 @@ namespace TVGL
             var flatPoint = Get3DPointTransformed(i, j, defaultZHeight);
             var azimuthAngle = flatPoint.X / baseRadius;
             var polarAngle = flatPoint.Y / baseRadius;
-            var radius = baseRadius + baseRadius + flatPoint.Z;
+            var radius = baseRadius + flatPoint.Z;
             var point = SphericalAnglePair.ConvertSphericalToCartesian(radius, polarAngle, azimuthAngle);
             return point + center;
         }

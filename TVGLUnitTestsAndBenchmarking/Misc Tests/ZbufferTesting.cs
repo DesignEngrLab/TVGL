@@ -113,13 +113,13 @@ namespace TVGLUnitTestsAndBenchmarking.Misc_Tests
         internal static void Test3()
         {
             DirectoryInfo dir = Program.BackoutToFolder(Program.inputFolder);
-            foreach (var fileName in dir.GetFiles("36.*").Skip(0))
+            foreach (var fileName in dir.GetFiles("").Skip(40))
             {
                 //Console.WriteLine("\n\n\nAttempting to open: " + fileName.Name);
                 IO.Open(fileName.FullName, out TessellatedSolid solid, TessellatedSolidBuildOptions.Default);
                 if (solid == null) continue; ;
                 var sw = Stopwatch.StartNew();
-                var zbuffer = SphericalBuffer.Run(solid, solid.Center, 100);
+                var zbuffer = SphericalBuffer.Run(solid, solid.Center, 1000);
                 sw.Stop();
                 Console.WriteLine(sw.Elapsed.Ticks);
                 //Console.WriteLine("end:  "+sw.Elapsed);

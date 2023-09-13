@@ -75,7 +75,7 @@ namespace TVGL
                 if (p.Z < minY) minY = p.Z;
                 if (p.Z > maxY) maxY = p.Z;
             }
-            cylBuff.circumference = Math.PI * 2 * cylBuff.baseRadius;
+            //cylBuff.circumference = Math.PI * 2 * cylBuff.baseRadius;
             for (int i = 0; i < solid.NumberOfVertices; i++)
                 cylBuff.Vertices[i] = new Vector2(cylBuff.baseRadius * cylBuff.Vertices[i].X,
                     cylBuff.Vertices[i].Y);
@@ -118,8 +118,10 @@ namespace TVGL
         {
             MinX = minX;
             MinY = minY;
-            var XLength = maxX - MinX;
-            var YLength = maxY - MinY;
+            MaxX = maxX;
+            MaxY = maxY;
+            XLength = maxX - MinX;
+            YLength = maxY - MinY;
 
             //Calculate the size of a pixel based on the max of the two dimensions in question. 
             //Subtract pixelsPerRow by 1, since we will be adding a half a pixel to each side.
@@ -141,8 +143,8 @@ namespace TVGL
 
 
 
-        private protected readonly bool[] edgeWrapsAround;
-        private protected double circumference;
+        public readonly bool[] edgeWrapsAround;
+        //private protected double circumference;
         private protected double baseRadius;
 
         /// <summary>
@@ -164,9 +166,9 @@ namespace TVGL
             var bcWraps = edgeWrapsAround[face.BC.IndexInList];
             var caWraps = edgeWrapsAround[face.CA.IndexInList];
             if (abWraps && bcWraps && caWraps)
-                ; // Message.output("All three edges wrap around...can't be!");
+                ; // All three edges wrap around...can't be! Well, maybe it can if the triangle is on the top or bottom of the part.
             else if ((abWraps && !bcWraps && !caWraps) || (!abWraps && bcWraps && !caWraps) || (!abWraps && !bcWraps && caWraps))
-                ; //  Message.output("Only one edge wraps around...wha?!");
+                ; // Only one edge wraps around...wha?! Again, maybe it can if the triangle is on the top or bottom of the part.
             else foreach (var item in GetIndicesCoveredByFace(vA, zA, abWraps && caWraps, vB, zB, abWraps && bcWraps, vC, zC, bcWraps && caWraps))
                     yield return item;
             yield break;
@@ -174,35 +176,35 @@ namespace TVGL
 
 
 
-
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private IEnumerable<(int index, double zHeight)> GetIndicesCoveredByFace(Vector2 vA, double zA, bool aWraps, Vector2 vB, double zB, bool bWraps, Vector2 vC, double zC, bool cWraps)
+        private IEnumerable<(int index, double zHeight)> GetIndicesCoveredByFace(Vector2 vA, double zA, bool aWraps, Vector2 vB, double zB,
+            bool bWraps, Vector2 vC, double zC, bool cWraps)
         {
             if (aWraps)
             {
-                if (vA.X < vB.X && vA.X < vC.X) vA = new Vector2(vA.X + circumference, vA.Y);
+                if (vA.X < vB.X && vA.X < vC.X) vA = new Vector2(vA.X + XLength, vA.Y);
                 else
                 {
-                    vC = new Vector2(vC.X + circumference, vC.Y);
-                    vB = new Vector2(vB.X + circumference, vB.Y);
+                    vC = new Vector2(vC.X + XLength, vC.Y);
+                    vB = new Vector2(vB.X + XLength, vB.Y);
                 }
             }
             else if (bWraps)
             {
-                if (vB.X < vA.X && vB.X < vC.X) vB = new Vector2(vB.X + circumference, vB.Y);
+                if (vB.X < vA.X && vB.X < vC.X) vB = new Vector2(vB.X + XLength, vB.Y);
                 else
                 {
-                    vC = new Vector2(vC.X + circumference, vC.Y);
-                    vA = new Vector2(vA.X + circumference, vA.Y);
+                    vC = new Vector2(vC.X + XLength, vC.Y);
+                    vA = new Vector2(vA.X + XLength, vA.Y);
                 }
             }
             else if (cWraps)
             {
-                if (vC.X < vA.X && vC.X < vB.X) vC = new Vector2(vC.X + circumference, vC.Y);
+                if (vC.X < vA.X && vC.X < vB.X) vC = new Vector2(vC.X + XLength, vC.Y);
                 else
                 {
-                    vB = new Vector2(vB.X + circumference, vB.Y);
-                    vA = new Vector2(vA.X + circumference, vA.Y);
+                    vB = new Vector2(vB.X + XLength, vB.Y);
+                    vA = new Vector2(vA.X + XLength, vA.Y);
                 }
             }
             var area = (vB - vA).Cross(vC - vA);
@@ -323,6 +325,52 @@ namespace TVGL
                 pixXMinusVAx += PixelSideLength;
             }
         }
+
+
+
+        public virtual IEnumerable<(int xIndex, int yIndex)> GetIndicesCoveredOutOfPlaneFace(Vector2 vA,
+            bool aWraps, Vector2 vB, bool bWraps, Vector2 vC, bool cWraps, Vector2 offset)
+        {
+            if (aWraps)
+            {
+                if (vA.X < vB.X && vA.X < vC.X) vA = new Vector2(vA.X + XLength, vA.Y);
+                else
+                {
+                    vC = new Vector2(vC.X + XLength, vC.Y);
+                    vB = new Vector2(vB.X + XLength, vB.Y);
+                }
+            }
+            else if (bWraps)
+            {
+                if (vB.X < vA.X && vB.X < vC.X) vB = new Vector2(vB.X + XLength, vB.Y);
+                else
+                {
+                    vC = new Vector2(vC.X + XLength, vC.Y);
+                    vA = new Vector2(vA.X + XLength, vA.Y);
+                }
+            }
+            else if (cWraps)
+            {
+                if (vC.X < vA.X && vC.X < vB.X) vC = new Vector2(vC.X + XLength, vC.Y);
+                else
+                {
+                    vB = new Vector2(vB.X + XLength, vB.Y);
+                    vA = new Vector2(vA.X + XLength, vA.Y);
+                }
+            }
+            if (vA.X < -offset.X || vB.X < -offset.X || vC.X < -offset.X)
+            {
+                vA = new Vector2(vA.X + XLength, vA.Y);
+                vB = new Vector2(vB.X + XLength, vB.Y);
+                vC = new Vector2(vC.X + XLength, vC.Y);
+            }
+            vA += offset;
+            vB += offset;
+            vC += offset;
+            return GetIndicesCoveredOutOfPlaneFace(vA, vB, vC);
+        }
+
+
 
         /// <summary>
         /// Gets the 3D transformed point of pixel i,j to the x-y plane, with z being the z-buffer height.

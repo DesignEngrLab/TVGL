@@ -583,8 +583,9 @@ namespace TVGL
                 var i = 0;
                 foreach (var oldFace in faces)
                 {
-                    var newFace = Faces[i++] = new TriangleFace(Vertices[oldNewVertexIndexDict[oldFace.A.IndexInList]],
+                    var newFace = Faces[i] = new TriangleFace(Vertices[oldNewVertexIndexDict[oldFace.A.IndexInList]],
                         Vertices[oldNewVertexIndexDict[oldFace.B.IndexInList]], Vertices[oldNewVertexIndexDict[oldFace.C.IndexInList]]);
+                    newFace.IndexInList = i;
                     if (HasUniformColor)
                         newFace.Color = SolidColor;
                     else if (manyInputColors)
@@ -593,6 +594,7 @@ namespace TVGL
                         newFace.Color = colors[j];
                         if (!SolidColor.Equals(newFace.Color)) HasUniformColor = false;
                     }
+                    i++;
                 }
             }
             else
@@ -1303,6 +1305,7 @@ namespace TVGL
                 FileName, Comments, Language);
             if (Primitives != null && Primitives.Any())
             {
+                copy.NumberOfPrimitives = NumberOfPrimitives;
                 foreach (var surface in Primitives)
                 {
                     var surfCopy = surface.Copy(surface.FaceIndices.Select(fi => copy.Faces[fi]));
@@ -1311,7 +1314,8 @@ namespace TVGL
             }
             if (Edges != null && Edges.Any())
             {
-                copy.Edges = new Edge[Edges.Length];
+                copy.NumberOfEdges = NumberOfEdges;
+                copy.Edges = new Edge[NumberOfEdges];
                 for (int i = 0; i < Edges.Length; i++)
                 {
                     Edge edge = Edges[i];
@@ -1320,6 +1324,7 @@ namespace TVGL
                         copy.Vertices[edge.To.IndexInList],
                         copy.Faces[edge.OwnedFace.IndexInList],
                         copy.Faces[edge.OtherFace.IndexInList], true);
+                    edgeNew.IndexInList = i;
                     copy.Edges[i] = edgeNew;
                 }
 

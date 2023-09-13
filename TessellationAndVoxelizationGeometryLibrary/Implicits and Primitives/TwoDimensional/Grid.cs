@@ -39,6 +39,26 @@ namespace TVGL
         /// <value>The minimum y.</value>
         public double MinY { get; private protected set; }
         /// <summary>
+        /// Gets the maximum x of the projected grid of 2D points.
+        /// </summary>
+        /// <value>The minimum x.</value>
+        public double MaxX { get; private protected set; }
+        /// <summary>
+        /// Gets the maximum y of the projected grid of 2D points.
+        /// </summary>
+        /// <value>The minimum y.</value>
+        public double YLength { get; private protected set; }
+        /// <summary>
+        /// Gets the minimum x of the projected grid of 2D points.
+        /// </summary>
+        /// <value>The minimum x.</value>
+        public double XLength { get; private protected set; }
+        /// <summary>
+        /// Gets the minimum y of the projected grid of 2D points.
+        /// </summary>
+        /// <value>The minimum y.</value>
+        public double MaxY { get; private protected set; }
+        /// <summary>
         /// Gets the length of the pixel side.
         /// </summary>
         /// <value>The length of the pixel side.</value>
@@ -75,12 +95,12 @@ namespace TVGL
         /// <param name="pixelBorder">The pixel border.</param>
         public void Initialize(double minX, double maxX, double minY, double maxY, int pixelsPerRow, int pixelBorder = 2)
         {
-            //MaxX = maxX;
+            MaxX = maxX;
             MinX = minX;
-            //MaxY = maxY;
+            MaxY = maxY;
             MinY = minY;
-            var XLength = maxX - MinX;
-            var YLength = maxY - MinY;
+            XLength = maxX - MinX;
+            YLength = maxY - MinY;
             var MaxLength = XLength > YLength ? XLength : YLength;
 
             //Calculate the size of a pixel based on the max of the two dimensions in question. 
@@ -115,21 +135,22 @@ namespace TVGL
         /// <param name="pixelBorder">The pixel border.</param>
         public void Initialize(double minX, double maxX, double minY, double maxY, double pixelSideLength, int pixelBorder = 2)
         {
+            MaxX = maxX;
             MinX = minX;
+            MaxY = maxY;
             MinY = minY;
-            var xLength = maxX - MinX;
-            var yLength = maxY - MinY;
-
+            XLength = maxX - MinX;
+            YLength = maxY - MinY;
             //Calculate the size of each pixel based on the max of the two dimensions in question. 
             //Subtract pixelsPerRow by 1, since we will be adding a half a pixel to each side.
             PixelSideLength = pixelSideLength; // MaxLength / (pixelsPerRow - pixelBorder * 2);
             inversePixelSideLength = 1 / PixelSideLength;
-            XCount = (int)Math.Ceiling(xLength * inversePixelSideLength);
-            YCount = (int)Math.Ceiling(yLength * inversePixelSideLength);
+            XCount = (int)Math.Ceiling(XLength * inversePixelSideLength);
+            YCount = (int)Math.Ceiling(YLength * inversePixelSideLength);
             // shift the grid slightly so that the part grid points are better aligned within the bounds
-            var xStickout = xLength - XCount * PixelSideLength;
+            var xStickout = XLength - XCount * PixelSideLength;
             MinX += xStickout / 2;
-            var yStickout = yLength - YCount * PixelSideLength;
+            var yStickout = YLength - YCount * PixelSideLength;
             MinY += yStickout / 2;
             // add the pixel border...2 since includes both sides (left and right, or top and bottom)
             XCount += pixelBorder * 2;
@@ -234,7 +255,7 @@ namespace TVGL
         /// <param name="x1">The x1.</param>
         /// <param name="y1">The y1.</param>
         /// <returns>IEnumerable&lt;System.ValueTuple&lt;System.Int32, System.Int32&gt;&gt;.</returns>
-        private IEnumerable<(int, int)> PlotSteepLine(double x0, double y0, double x1, double y1)
+        protected IEnumerable<(int, int)> PlotSteepLine(double x0, double y0, double x1, double y1)
         {
             var dx = x1 - x0;
             var dy = y1 - y0;
@@ -271,7 +292,7 @@ namespace TVGL
         /// <param name="x1">The x1.</param>
         /// <param name="y1">The y1.</param>
         /// <returns>IEnumerable&lt;System.ValueTuple&lt;System.Int32, System.Int32&gt;&gt;.</returns>
-        private IEnumerable<(int, int)> PlotShallowLine(double x0, double y0, double x1, double y1)
+        protected IEnumerable<(int, int)> PlotShallowLine(double x0, double y0, double x1, double y1)
         {
             var dx = x1 - x0;
             var dy = y1 - y0;

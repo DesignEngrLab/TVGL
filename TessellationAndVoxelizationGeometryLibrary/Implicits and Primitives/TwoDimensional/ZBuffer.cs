@@ -12,6 +12,7 @@
 // <summary></summary>
 // ***********************************************************************
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -392,6 +393,80 @@ namespace TVGL
                 }
             }
         }
+
+        public virtual IEnumerable<(int xIndex, int yIndex)> GetIndicesCoveredOutOfPlaneFace(Vector2 vA, Vector2 vB,
+            Vector2 vC)
+        {
+            var minX = Math.Min(vA.X, Math.Min(vB.X, vC.X));
+            var minY = Math.Min(vA.Y, Math.Min(vB.Y, vC.Y));
+            var maxX = Math.Max(vA.X, Math.Max(vB.X, vC.X));
+            var maxY = Math.Max(vA.Y, Math.Max(vB.Y, vC.Y));
+            if (maxX - minX > maxY - minY) //shallow line
+            {
+                if (minX == vA.X) minY = vA.Y;
+                if (minX == vB.X)
+                {
+                    if (vA.X == vB.X) minY = Math.Min(vA.Y, vB.Y);
+                    else minY = vB.Y;
+                }
+                if (minX == vC.X)
+                {
+                    if (vA.X == vC.X && vB.X == vC.X) minY = Math.Min(vA.Y, Math.Min(vB.Y, vC.Y));
+                    else if (vA.X == vC.X) minY = Math.Min(vA.Y, vC.Y);
+                    else if (vB.X == vC.X) minY = Math.Min(vB.Y, vC.Y);
+                    else minY = vC.Y;
+                }
+
+                if (maxX == vA.X) maxY = vA.Y;
+                if (maxX == vB.X)
+                {
+                    if (vA.X == vB.X) maxY = Math.Max(vA.Y, vB.Y);
+                    else maxY = vB.Y;
+                }
+                if (maxX == vC.X)
+                {
+                    if (vA.X == vC.X && vB.X == vC.X) maxY = Math.Max(vA.Y, Math.Max(vB.Y, vC.Y));
+                    else if (vA.X == vC.X) maxY = Math.Max(vA.Y, vC.Y);
+                    else if (vB.X == vC.X) maxY = Math.Max(vB.Y, vC.Y);
+                    else maxY = vC.Y;
+                }
+                foreach (var pixel in PlotShallowLine(minX, minY, maxX, maxY))
+                    yield return (pixel.Item1 % XCount, pixel.Item2);
+            }
+            else //steep line
+            {
+                if (minY == vA.Y) minX = vA.X;
+                if (minY == vB.Y)
+                {
+                    if (vA.Y == vB.Y) minX = Math.Min(vA.X, vB.X);
+                    else minX = vB.X;
+                }
+                if (minY == vC.Y)
+                {
+                    if (vA.Y == vC.Y && vB.Y == vC.Y) minX = Math.Min(vA.X, Math.Min(vB.X, vC.X));
+                    else if (vA.Y == vC.Y) minX = Math.Min(vA.X, vC.X);
+                    else if (vB.Y == vC.Y) minX = Math.Min(vB.X, vC.X);
+                    else minX = vC.X;
+                }
+                if (maxY == vA.Y) maxX = vA.X;
+                if (maxY == vB.Y)
+                {
+                    if (vA.Y == vB.Y) maxX = Math.Max(vA.X, vB.X);
+                    else maxX = vB.X;
+                }
+                if (maxY == vC.Y)
+                {
+                    if (vA.Y == vC.Y && vB.Y == vC.Y) maxX = Math.Max(vA.X, Math.Max(vB.X, vC.X));
+                    else if (vA.Y == vC.Y) maxX = Math.Max(vA.X, vC.X);
+                    else if (vB.Y == vC.Y) maxX = Math.Max(vB.X, vC.X);
+                    else maxX = vC.X;
+                }
+                foreach (var pixel in PlotSteepLine(minX, minY, maxX, maxY))
+                    yield return (pixel.Item1 % XCount,pixel.Item2);
+            }
+        }
+
+
         /// <summary>
         /// Gets the 2D point of pixel i,j.
         /// </summary>
