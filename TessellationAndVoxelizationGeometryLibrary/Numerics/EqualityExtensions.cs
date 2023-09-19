@@ -71,6 +71,21 @@ namespace TVGL
 
         /// <summary>
         /// Determines whether [is practically same] [the specified x].
+        /// This is not intended for vectors that are directions. Use IsAligned for those situations. This is menant for vectors that 
+        /// represent coordinates.
+        /// </summary>
+        /// <param name="v1">The v1.</param>
+        /// <param name="v2">The v2.</param>
+        /// <param name="optionalTolerance">An optional tolerance.</param>
+        /// <returns><c>true</c> if [is practically same] [the specified x]; otherwise, <c>false</c>.</returns>
+        public static bool IsPracticallySame(this Vector4 v1, Vector4 v2, double optionalTolerance = Constants.DefaultEqualityTolerance)
+        {
+            return IsNegligible(v1 - v2, optionalTolerance);
+        }
+
+
+        /// <summary>
+        /// Determines whether [is practically same] [the specified x].
         /// the norm is within 1e-15
         /// </summary>
         /// <param name="a">The v1.</param>
@@ -102,6 +117,18 @@ namespace TVGL
         public static bool IsNegligible(this Vector3 v1, double optionalTolerance = Constants.DefaultEqualityTolerance)
         {
             return Math.Abs(v1.X) <= optionalTolerance && Math.Abs(v1.Y) <= optionalTolerance && Math.Abs(v1.Z) <= optionalTolerance;
+        }
+
+
+        /// <summary>
+        /// Determines whether the specified v1 is negligible (|x| lte 1e-15).
+        /// </summary>
+        /// <param name="v1">The vector.</param>
+        /// <param name="optionalTolerance">An optional tolerance.</param>
+        /// <returns><c>true</c> if the specified x is negligible; otherwise, <c>false</c>.</returns>
+        public static bool IsNegligible(this Vector4 v1, double optionalTolerance = Constants.DefaultEqualityTolerance)
+        {
+            return Math.Abs(v1.X) <= optionalTolerance && Math.Abs(v1.Y) <= optionalTolerance && Math.Abs(v1.Z) <= optionalTolerance && Math.Abs(v1.W) <= optionalTolerance;
         }
 
         /// <summary>

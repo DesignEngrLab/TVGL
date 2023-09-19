@@ -9,12 +9,16 @@ namespace TVGL
 {
     public static partial class MinimumEnclosure
     {
-        public static Plane MinimumGaussSpherePlane(this IEnumerable<Vector3> pointsInput,
+        public static Plane MinimumGaussSpherePlane(this IEnumerable<Vector3> pointsInput, double tolerance = Constants.BaseTolerance)
+        {
+            var points = pointsInput as Vector3[] ?? pointsInput.ToArray();
+            return MinimumGaussSpherePlane(points, points.Aggregate((v1, v2) => v1 + v2).Normalize(), tolerance);
+        }
+        public static Plane MinimumGaussSpherePlane(this IEnumerable<Vector3> pointsInput, Vector3 orientingVector,
             double tolerance = Constants.BaseTolerance)
         {
-            var points = pointsInput.ToArray();
+            var points = pointsInput as Vector3[] ?? pointsInput.ToArray();
             var numPoints = points.Length;
-            var orientingVector = points.Aggregate((v1, v2) => v1 + v2).Normalize();
             if (numPoints == 0)
                 throw new ArgumentException("No points provided.");
             if (numPoints <= 4)
@@ -32,7 +36,7 @@ namespace TVGL
                 for (int i = numPointsInPlane; i < numPoints; i++)
                 {
                     var dist = points[i].Dot(plane.Normal);
-                    if (minDist.IsGreaterThanNonNegligible(dist,tolerance))
+                    if (minDist.IsGreaterThanNonNegligible(dist, tolerance))
                     {
                         minDist = dist;
                         indexOfMinDist = i;
