@@ -181,6 +181,11 @@ namespace TVGL
             var i = BinarySearch(spherical, cartesian, cartesian.Length(), out matchFound);
             return matchFound && (itemsComparer == null || item.Equals(default(T)) || itemsComparer.Equals(item, items[i]));
         }
+
+        public IEnumerable<T> GetItems()
+        {
+            return items;
+        }
     }
 
     public class SphericalHashLikeCollection : ICollection<SphericalAnglePair>

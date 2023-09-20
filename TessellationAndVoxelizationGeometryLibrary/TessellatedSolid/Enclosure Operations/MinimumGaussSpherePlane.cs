@@ -93,40 +93,23 @@ namespace TVGL
               // (I know I could remove these curly braces, but it means that the variables
               // circle and tempPoint are indepedently defined in this scope, as well as the
               // Length == 3 case, which is nicer than coming up with separate names for them)
-              // now we have a lot of cases to deal with. All we know is that the last point
-              // was outside the circle, so it must be on the circle this time
-                numInPlane = 3;
-                // circle 0-1-2
-                var circle = FindBoundingPlane(points, orientingVector, tolerance, ref numInPlane); // a little recursion never hurt anyone
-                                                                                                    // this allows us to check if it dropped back down to 2 points as well
-                                                                                                    // the easiest and most likely case is that the 3 points at the end
-                                                                                                    // of the list capture the fourth point
-                if (!points[3].Dot(circle.Normal).IsLessThanNonNegligible(circle.DistanceToOrigin, tolerance))
-                    return circle;
-                // since the 4th point is outside the circle, we try again with a little
-                // recursion after first swapping the 2nd & 3rd points
-                SwapPoints(2, 3, points);
-                // circle 0-1-3
-                numInPlane = 3; //it probably already is, but the previous call may have dropped it to 2
-                circle = FindBoundingPlane(points, orientingVector, tolerance, ref numInPlane);
-                if (!points[3].Dot(circle.Normal).IsLessThanNonNegligible(circle.DistanceToOrigin, tolerance))
-                    return circle;
-                // try once more with the original 2nd point as the 4th point
-                if (numInPlane == 2) //very rare case here, but if you swapped above, and numInCircle has dropped to 2,
-                                     //then 4 has been moved into the "2" position (the circle would not have been between
-                                     //the orignial 1 and 2 since that would have been found already). In this case, the original
-                                     //2 would be in the 3rd spot so, you need to swap 3 & 4 NOT 2 & 4 as below
+                for (int i = 0; i < 4; i++)
                 {
-                    SwapPoints(2, 3, points);
                     numInPlane = 3;
+                    // circle 0-1-2
+                    var circle = FindBoundingPlane(points, orientingVector, tolerance, ref numInPlane); // a little recursion never hurt anyone
+                                                                                                        // this allows us to check if it dropped back down to 2 points as well
+                                                                                                        // the easiest and most likely case is that the 3 points at the end
+                                                                                                        // of the list capture the fourth point
+                    if (!points[3].Dot(circle.Normal).IsLessThanNonNegligible(circle.DistanceToOrigin, tolerance))
+                        return circle;
+                    var tempPoint = points[3];
+                    points[3] = points[2];
+                    points[2] = points[1];
+                    points[1] = points[0];
+                    points[0] = tempPoint;
                 }
-                else
-                    SwapPoints(1, 3, points);
-                // circle 1-3-4
-                circle = FindBoundingPlane(points, orientingVector, tolerance, ref numInPlane);
-                if (points[3].Dot(circle.Normal).IsLessThanNonNegligible(circle.DistanceToOrigin, tolerance))
-                    throw new Exception("This should never happen.");
-                return circle;
+                throw new Exception("This should never happen.");
             }
         }
 
