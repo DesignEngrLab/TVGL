@@ -114,6 +114,55 @@ namespace TVGL
             return true;
         }
 
+        public static Sphere CreateFrom4Points(Vector3 p1, Vector3 p2, Vector3 p3, Vector3 p4)
+        {
+            /* see comment at :https://math.stackexchange.com/questions/2585392/equation-of-the-sphere-that-passes-through-4-points 
+             * take the general equation of a sphere: (x_i − a)^2 + (y_i − b)^2 + (z_i − c)^2 = r^2
+             * we have 4 unknowns: a, b, c, r where (a, b, c) is the center of the sphere and r is the radius.
+             * x_i, y_i, z_i are the four points p1, p2, p3, p4 
+             * we can make 3 linear equations where the unknowns are a,b & c by subtracting this equation
+             * for example the equation for p_1 (x_1, y_1, z_1) is subtracted from p2 (x_2, y_2, z_2)
+             * to create: x_1^2−x_2^2 + 2a(x2−x1) + y_1^2 − y_2^2 + 2b(y_2−y_1) + z_1^2 − z_2^2 + 2c(z2−z1)=0
+             * do two more such subtraction, say: p_2 - p_3 and p_3 - p_4.
+             * then solve for a, b, & c
+             * Solve for these, then easily obtain r.
+             * rearranging the difference equation to get coefficients for the matrix
+             * 2(x_j - x_j)a + 2(y_j -y_i)b + 2(z_j - z_i)c = x_j^2 − x_i^2 + y_j^2 - y_i^2 + zj^2 - z_i^2 */
+            var matrix = new Matrix3x3(
+                2 * (p1.X - p2.X), 2 * (p1.Y - p2.Y), 2 * (p1.Z - p2.Z),
+                2 * (p2.X - p3.X), 2 * (p2.Y - p3.Y), 2 * (p2.Z - p3.Z),
+                2 * (p3.X - p4.X), 2 * (p3.Y - p4.Y), 2 * (p3.Z - p4.Z));
+            //var matrix = new Matrix3x3(
+            //    2 * (p1.X - p2.X), 2 * (p2.X - p3.X), 2 * (p3.X - p4.X),
+            //    2 * (p1.Y - p2.Y), 2 * (p2.Y - p3.Y), 2 * (p3.Y - p4.Y),
+            //    2 * (p1.Z - p2.Z), 2 * (p2.Z - p3.Z), 2 * (p3.Z - p4.Z));
+            var b = new Vector3(
+                p2.X * p2.X - p1.X * p1.X + p2.Y * p2.Y - p1.Y * p1.Y + p2.Z * p2.Z - p1.Z * p1.Z,
+                p2.X * p2.X - p1.X * p1.X + p2.Y * p2.Y - p1.Y * p1.Y + p2.Z * p2.Z - p1.Z * p1.Z,
+                p2.X * p2.X - p1.X * p1.X + p2.Y * p2.Y - p1.Y * p1.Y + p2.Z * p2.Z - p1.Z * p1.Z);
+            var center = matrix.Solve(b);
+            var radius = (p1 - center).Length();
+            return new Sphere(center, radius, null);
+        }
+
+        public static Sphere CreateFrom3Points(Vector3 p1, Vector3 p2, Vector3 p3)
+        {
+            var plane = Plane.CreateFromVertices(p1, p2, p3);
+            var transform = plane.Normal.TransformToXYPlane(out var backTransform);
+            var p1_2D = p1.ConvertTo2DCoordinates(transform);
+            var p2_2D = p2.ConvertTo2DCoordinates(transform);
+            var p3_2D = p3.ConvertTo2DCoordinates(transform);
+            Circle.CreateFrom3Points(p1_2D, p2_2D, p3_2D, out var circle);
+            var center = circle.Center.ConvertTo3DLocation(backTransform);
+            return new Sphere(center, (p1 - center).Length(), null);
+        }
+
+        public static Sphere CreateFrom2Points(Vector3 p1, Vector3 p2)
+        {
+            var center = 0.5 * (p1 + p2);
+            return new Sphere(center, (p1 - center).Length(), null);
+        }
+
         /// <summary>
         /// The face x dir
         /// </summary>

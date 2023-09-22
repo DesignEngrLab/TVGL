@@ -39,7 +39,7 @@ namespace TVGL
         /// </references>
         public static Circle MinimumCircle(this IEnumerable<Vector2> pointsInput)
         {
-            // in July 2023, this was re-written to be more easier to follow and based
+            // in July 2023, this was re-written to be easier to follow and based
             // clearly on the above paper. That implementation turned out to be 8-10 times
             // slower. but that approach is now the basis for MinimumSphere and MinimumGaussSpherePlane
             var points = pointsInput as IList<Vector2> ?? pointsInput.ToList();

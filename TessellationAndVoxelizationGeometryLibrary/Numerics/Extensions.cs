@@ -16,6 +16,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using TVGL.ConvexHullDetails;
 
 namespace TVGL
@@ -350,6 +351,20 @@ namespace TVGL
         public static Vector3 TransformNoTranslate(this Vector3 position, Matrix4x4 matrix)
         { return Vector3.TransformNoTranslate(position, matrix); }
 
+        /// <summary>
+        /// Transforms a vector by the given matrix.
+        /// </summary>
+        /// <param name="position">The source vector.</param>
+        /// <param name="matrix">The transformation matrix.</param>
+        /// <returns>The transformed vector.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Vector3 Multiply(this Matrix3x3 matrix, Vector3 position)
+        {
+            return new Vector3(
+                position.X * matrix.M11 + position.X * matrix.M21 + position.X * matrix.M31,
+                position.Y * matrix.M12 + position.Y * matrix.M22 + position.Y * matrix.M32,
+                position.Z * matrix.M13 + position.Z * matrix.M23 + position.Z * matrix.M33);
+        }
 
         /// <summary>
         /// Transforms a vector by the given Quaternion rotation value.
@@ -687,6 +702,24 @@ namespace TVGL
                 return result;
             else return Matrix4x4.Null;
         }
+
+        #region Solve Ax=b
+        /// <summary>
+        /// Solves for the value x in Ax=b. This is also represented as the
+        /// backslash operation
+        /// </summary>
+        /// <param name="matrix">The matrix.</param>
+        /// <param name="b">The b.</param>
+        /// <returns>Vector4.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Vector3 Solve(this Matrix3x3 matrix, Vector3 b)
+        {
+            if (!Matrix3x3.Invert(matrix, out var invert))
+                return Vector3.Null;
+            return invert.Multiply(b);
+            //return b.Multiply(invert);
+        }
+        #endregion
 
         /// <summary>
         /// Attempts to extract the scale, translation, and rotation components from the given scale/rotation/translation matrix.

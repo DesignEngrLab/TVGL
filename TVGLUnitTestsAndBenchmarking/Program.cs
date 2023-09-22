@@ -24,8 +24,10 @@ namespace TVGLUnitTestsAndBenchmarking
             var myWriter = new ConsoleTraceListener();
             Trace.Listeners.Add(myWriter);
             TVGL.Message.Verbosity = VerbosityLevels.AboveNormal;
-            Misc_Tests.ZbufferTesting.Test3();
+            //Misc_Tests.ZbufferTesting.Test3();
             //var summary = BenchmarkRunner.Run<MinimumCircleTesting>();
+            MinimumSphereTesting.Test0();
+            MinimumSphereTesting.Test1(1000, 100);
             return;
             DirectoryInfo dir = Program.BackoutToFolder(inputFolder);
 
