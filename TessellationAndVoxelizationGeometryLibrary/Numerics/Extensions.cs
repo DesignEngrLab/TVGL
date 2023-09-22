@@ -352,7 +352,8 @@ namespace TVGL
         { return Vector3.TransformNoTranslate(position, matrix); }
 
         /// <summary>
-        /// Transforms a vector by the given matrix.
+        /// Multiplies a matrix by a vector. Note that the matrix is before the vector, so each term
+        /// is the dot product of a row of the matrix with the vector.
         /// </summary>
         /// <param name="position">The source vector.</param>
         /// <param name="matrix">The transformation matrix.</param>
@@ -361,10 +362,12 @@ namespace TVGL
         public static Vector3 Multiply(this Matrix3x3 matrix, Vector3 position)
         {
             return new Vector3(
-                position.X * matrix.M11 + position.X * matrix.M21 + position.X * matrix.M31,
-                position.Y * matrix.M12 + position.Y * matrix.M22 + position.Y * matrix.M32,
-                position.Z * matrix.M13 + position.Z * matrix.M23 + position.Z * matrix.M33);
+                position.X * matrix.M11 + position.Y * matrix.M12 + position.Z * matrix.M13,
+                position.X * matrix.M21 + position.Y * matrix.M22 + position.Z * matrix.M23,
+                position.X * matrix.M31 + position.Y * matrix.M32 + position.Z * matrix.M33);
         }
+
+
 
         /// <summary>
         /// Transforms a vector by the given Quaternion rotation value.
@@ -717,7 +720,6 @@ namespace TVGL
             if (!Matrix3x3.Invert(matrix, out var invert))
                 return Vector3.Null;
             return invert.Multiply(b);
-            //return b.Multiply(invert);
         }
         #endregion
 

@@ -127,19 +127,15 @@ namespace TVGL
              * then solve for a, b, & c
              * Solve for these, then easily obtain r.
              * rearranging the difference equation to get coefficients for the matrix
-             * 2(x_j - x_j)a + 2(y_j -y_i)b + 2(z_j - z_i)c = x_j^2 − x_i^2 + y_j^2 - y_i^2 + zj^2 - z_i^2 */
+             * 2(x_j - x_i)a + 2(y_j -y_i)b + 2(z_j - z_i)c = x_j^2 − x_i^2 + y_j^2 - y_i^2 + zj^2 - z_i^2 */
             var matrix = new Matrix3x3(
-                2 * (p1.X - p2.X), 2 * (p1.Y - p2.Y), 2 * (p1.Z - p2.Z),
-                2 * (p2.X - p3.X), 2 * (p2.Y - p3.Y), 2 * (p2.Z - p3.Z),
-                2 * (p3.X - p4.X), 2 * (p3.Y - p4.Y), 2 * (p3.Z - p4.Z));
-            //var matrix = new Matrix3x3(
-            //    2 * (p1.X - p2.X), 2 * (p2.X - p3.X), 2 * (p3.X - p4.X),
-            //    2 * (p1.Y - p2.Y), 2 * (p2.Y - p3.Y), 2 * (p3.Y - p4.Y),
-            //    2 * (p1.Z - p2.Z), 2 * (p2.Z - p3.Z), 2 * (p3.Z - p4.Z));
+                2 * (p2.X - p1.X), 2 * (p2.Y - p1.Y), 2 * (p2.Z - p1.Z),
+                2 * (p3.X - p2.X), 2 * (p3.Y - p2.Y), 2 * (p3.Z - p2.Z),
+                2 * (p4.X - p3.X), 2 * (p4.Y - p3.Y), 2 * (p4.Z - p3.Z));
             var b = new Vector3(
                 p2.X * p2.X - p1.X * p1.X + p2.Y * p2.Y - p1.Y * p1.Y + p2.Z * p2.Z - p1.Z * p1.Z,
-                p2.X * p2.X - p1.X * p1.X + p2.Y * p2.Y - p1.Y * p1.Y + p2.Z * p2.Z - p1.Z * p1.Z,
-                p2.X * p2.X - p1.X * p1.X + p2.Y * p2.Y - p1.Y * p1.Y + p2.Z * p2.Z - p1.Z * p1.Z);
+                p3.X * p3.X - p2.X * p2.X + p3.Y * p3.Y - p2.Y * p2.Y + p3.Z * p3.Z - p2.Z * p2.Z,
+                p4.X * p4.X - p3.X * p3.X + p4.Y * p4.Y - p3.Y * p3.Y + p4.Z * p4.Z - p3.Z * p3.Z);
             var center = matrix.Solve(b);
             var radius = (p1 - center).Length();
             return new Sphere(center, radius, null);
@@ -147,13 +143,16 @@ namespace TVGL
 
         public static Sphere CreateFrom3Points(Vector3 p1, Vector3 p2, Vector3 p3)
         {
-            var plane = Plane.CreateFromVertices(p1, p2, p3);
-            var transform = plane.Normal.TransformToXYPlane(out var backTransform);
-            var p1_2D = p1.ConvertTo2DCoordinates(transform);
-            var p2_2D = p2.ConvertTo2DCoordinates(transform);
-            var p3_2D = p3.ConvertTo2DCoordinates(transform);
-            Circle.CreateFrom3Points(p1_2D, p2_2D, p3_2D, out var circle);
-            var center = circle.Center.ConvertTo3DLocation(backTransform);
+            var planeNormal = (p2 - p1).Cross(p3 - p1).Normalize();
+            var midPoint1 = 0.5 * (p1 + p2);
+            var planeDist = planeNormal.Dot(midPoint1);
+            var normal1 = (p2 - p1).Normalize();
+            var dist1 = normal1.Dot(midPoint1);
+            var midPoint2 = 0.5 * (p1 + p3);
+            var normal2 = (p3 - p1).Normalize();
+            var dist2 = normal2.Dot(midPoint2);
+            var center = MiscFunctions.PointCommonToThreePlanes(planeNormal, planeDist, normal1, dist1, normal2,
+                dist2);
             return new Sphere(center, (p1 - center).Length(), null);
         }
 

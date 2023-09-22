@@ -781,7 +781,8 @@ namespace TVGL  // COMMENTEDCHANGE namespace System.Numerics
         }
 
         /// <summary>
-        /// Transforms a vector by the given matrix.
+        /// Multiplies a vector by a matrix. Note that the matrix is after the vector, so each term
+        /// is the dot product of the vector with a column of the matrix.
         /// </summary>
         /// <param name="position">The source vector.</param>
         /// <param name="matrix">The transformation matrix.</param>

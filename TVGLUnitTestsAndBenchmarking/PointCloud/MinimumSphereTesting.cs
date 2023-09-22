@@ -13,40 +13,60 @@ namespace TVGLUnitTestsAndBenchmarking
     {
         static Random r = new Random();
         static double r100 => 200.0 * r.NextDouble() - 100.0;
+        static double rPolar => Math.PI * r.NextDouble();
+        static double rAzimuth => 2.0 * Math.PI * r.NextDouble() - Math.PI;
 
         internal static void Test0()
         {
-            var p1 = new Vector3(10, 10, 10);
-            var p2 = new Vector3(20, 10, 10);
-            var p3 = new Vector3(20, 20, 10);
-            var p4 = new Vector3(10, 10, 20);
+            var p1 = new Vector3(0, 0, 0);
+            var p2 = new Vector3(2, 2, 2);
+            var p3 = new Vector3(0, 2, 0);
+            var p4 = new Vector3(2, 2, 0);
             var target = Sphere.CreateFrom4Points(p1, p2, p3, p4);
         }
         internal static void Test1(int dataSize, int numTests)
         {
+            var extremes = new[] { new Vector3(10, 10, 10), new Vector3(20, 20, 10), new Vector3(10, 20, 10),
+                new Vector3(10,10,20) };
             var p1 = new Vector3(100, -100, 100);
             var p2 = -p1;
-            var target = Sphere.CreateFrom2Points(p1, p2);
+            var center = new Vector3(15, 15, 15);
+            var radius = 5.0;
+            var target = new Sphere(center, radius, null);
             // so the answer should be a circle of radius 101 centered at origin
+            var numPoints = 2;
             for (var k = 0; k < numTests; k++)
             {
                 Console.WriteLine($"Test {k}");
+                var indices = new int[numPoints];
 
-                var points = Enumerable.Range(0, dataSize).Select(i => new Vector3(r100, r100, r100)).ToList();
-                var index1 = r.Next(dataSize);
-                points[index1] = p1;
-                var index2 = index1;
-                while (index1 == index2) // this is a silly but compact way to ensure that 
-                    index2 = r.Next(dataSize); // index2 is different but random from index1
-                points[index2] = p2;
-
+                for (int i = 0; i < numPoints; i++)
+                {
+                    int index;
+                    do
+                    {
+                        index = r.Next(dataSize); // index2 is different but random from index1
+                    }
+                    while (i != 0 && index == indices[i - 1]); // this is a silly but compact way to ensure that 
+                                                               //points[index] = extremes[i];
+                                                               //if (i < numPoints - 1)
+                    indices[i] = index;
+                }
+                var points = new Vector3[dataSize];
+                for (int i = 0; i < dataSize; i++)
+                {
+                    var thisRadius = indices.Contains(i) ? radius : radius - r.NextDouble();
+                    points[i] = center +
+                SphericalAnglePair.ConvertSphericalToCartesian(thisRadius, rPolar, rAzimuth);
+                }
                 var sphere = TVGL.MinimumEnclosure.MinimumSphere(points);
 
                 if (!sphere.Center.IsPracticallySame(target.Center)
                     || !sphere.Radius.IsPracticallySame(target.Radius))
                     throw new Exception("Old MinimumCircle failed");
 
-
+                numPoints++;
+                if (numPoints == 5) numPoints = 2;
             }
         }
 
