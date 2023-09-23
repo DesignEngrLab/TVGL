@@ -234,6 +234,13 @@ namespace TVGL
         }
 
 
+
+        internal static void SwapItemsInList<T>(int i, int j, T[] points)
+        {
+            var temp = points[i];
+            points[i] = points[j];
+            points[j] = temp;
+        }
         /// <summary>
         /// Switches a and b polygon relationship.
         /// </summary>

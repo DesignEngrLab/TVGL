@@ -77,7 +77,7 @@ namespace TVGL
                     numInPlane = 2;
                     // since 1 and 3 are furthest apart, we need to swap 2 and 3
                     // so that the two points in the circle are at then end of the list
-                    SwapPoints(1, 2, points);
+                    Constants.SwapItemsInList(1, 2, points);
                     return plane;
                 }
                 // otherwise, it's the 3-point circle
