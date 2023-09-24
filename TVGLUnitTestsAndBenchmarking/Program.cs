@@ -21,13 +21,13 @@ namespace TVGLUnitTestsAndBenchmarking
         [STAThread]
         private static void Main(string[] args)
         {
-            var myWriter = new ConsoleTraceListener();
-            Trace.Listeners.Add(myWriter);
-            TVGL.Message.Verbosity = VerbosityLevels.AboveNormal;
+            //var myWriter = new ConsoleTraceListener();
+            //Trace.Listeners.Add(myWriter);
+            //TVGL.Message.Verbosity = VerbosityLevels.AboveNormal;
             //Misc_Tests.ZbufferTesting.Test3();
-            //var summary = BenchmarkRunner.Run<MinimumCircleTesting>();
-            MinimumSphereTesting.Test0();
-            MinimumSphereTesting.Test1(1000, 100);
+            var summary = BenchmarkRunner.Run<MinimumCircleTesting>();
+            //MinimumSphereTesting.Test0();
+            //MinimumCircleTesting.Test3(10000, 10000);
             return;
             DirectoryInfo dir = Program.BackoutToFolder(inputFolder);
 

@@ -30,15 +30,15 @@ namespace TVGL
             var numPoints = points.Length;
             if (numPoints == 0)
                 throw new ArgumentException("No points provided.");
+            var indices = new List<int>(numPoints) { 0 };
 
-            int numPointsInSphere = 1;
             Sphere sphere = default;
-            var newPointFoundOutsideSphere = true;
-            while (newPointFoundOutsideSphere)
+            var maxDistSqared = sphere.Radius * sphere.Radius;
+            int numPointsInSphere = 1;
+            bool newPointFoundOutsideSphere;
+            do
             {
-                sphere = FindSphere(points, ref numPointsInSphere);
                 newPointFoundOutsideSphere = false;
-                var maxDistSqared = sphere.Radius * sphere.Radius;
                 var indexOfMaxDist = -1;
                 for (int i = numPointsInSphere; i < numPoints; i++)
                 {
@@ -58,14 +58,10 @@ namespace TVGL
                     points[0] = maxPoint;
                     numPointsInSphere++;
                 }
-            }
+                sphere = FindSphere(points, ref numPointsInSphere);
+                maxDistSqared = sphere.Radius * sphere.Radius;
+            }  while (newPointFoundOutsideSphere);
             return sphere;
-        }
-        static void SwapPoints(int i, int j, Vector3[] points)
-        {
-            var temp = points[i];
-            points[i] = points[j];
-            points[j] = temp;
         }
         private static Sphere FindSphere(Vector3[] points, ref int numInSphere)
         {
@@ -92,7 +88,8 @@ namespace TVGL
                     numInSphere = 2;
                     // since 0 and 2 are furthest apart, we need to swap 1 and 2
                     // so that the two points in the sphere are at the beginning of the list
-                    SwapPoints(1, 2, points);  // (why is this necessary?)
+                    Constants.SwapItemsInList(1, 2, points);  // (why is this necessary? oh! you need
+                    // the points that contribute to the sphere to be at the beginning of the list)
                     return sphere;
                 }
                 // otherwise, it's the 3-point sphere
@@ -120,7 +117,7 @@ namespace TVGL
                 if ((points[1] - sphere.Center).LengthSquared() <= sphere.Radius * sphere.Radius &&
                     (points[2] - sphere.Center).LengthSquared() <= sphere.Radius * sphere.Radius)
                 {
-                    SwapPoints()
+                    //Constants.SwapPoints()
                     return sphere;
                 }
                 // 0-1-3 check with 2

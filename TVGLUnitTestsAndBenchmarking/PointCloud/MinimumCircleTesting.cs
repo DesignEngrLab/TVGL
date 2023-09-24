@@ -37,7 +37,11 @@ namespace TVGLUnitTestsAndBenchmarking
                     || !circleOld.RadiusSquared.IsPracticallySame(target.RadiusSquared))
                     throw new Exception("Old MinimumCircle failed");
 
- 
+                var circleMC = TVGL.MinimumEnclosure.MinimumCircleMC(points);
+                if (!circleMC.Center.IsPracticallySame(target.Center)
+                    || !circleMC.RadiusSquared.IsPracticallySame(target.RadiusSquared))
+                    throw new Exception("MC MinimumCircle failed");
+
             }
         }
 
@@ -69,64 +73,70 @@ namespace TVGLUnitTestsAndBenchmarking
                     || !circleOld.RadiusSquared.IsPracticallySame(target.RadiusSquared))
                     throw new Exception("Old MinimumCircle failed");
 
-                //var circleBing = TVGL.MinimumEnclosure.MinimumCircleBing(points);
-                //if (!circleBing.Center.IsPracticallySame(target.Center)
-                //    || !circleBing.RadiusSquared.IsPracticallySame(target.RadiusSquared))
-                //    throw new Exception("Bing MinimumCircle failed");
-
                 //var circleMC = TVGL.MinimumEnclosure.MinimumCircleMC(points);
                 //if (!circleMC.Center.IsPracticallySame(target.Center)
                 //    || !circleMC.RadiusSquared.IsPracticallySame(target.RadiusSquared))
                 //    throw new Exception("MC MinimumCircle failed");
+                var circleMCEx = TVGL.MinimumEnclosure.MinimumCircleMC(points);
+                if (!circleMCEx.Center.IsPracticallySame(target.Center)
+                    || !circleMCEx.RadiusSquared.IsPracticallySame(target.RadiusSquared))
+                    throw new Exception("MCEx MinimumCircle failed");
             }
         }
 
         internal static void Test3(int dataSize, int numTests)
         {
             // so the answer should be a circle of radius 101 centered at origin
+            var numPoints = 2;
             for (var k = 0; k < numTests; k++)
             {
-                var b1 = r100;
-                var slope1 = Math.Tan(r.NextDouble() * Math.PI);
-                var b2 = r100;
-                var slope2 = Math.Tan(r.NextDouble() * Math.PI);
                 Console.WriteLine($"Test {k}");
-                var points = new Vector2[dataSize];
-                for (int i = 0; i < dataSize; i += 2)
-                {
-                    var x = r100;
-                    var y = slope1 * x + b1;
-                    points[i] = new Vector2(x, y);
-                    x = r100;
-                    y = slope2 * x + b2;
-                    points[i + 1] = new Vector2(x, y);
-                }
-                points = points.OrderBy(x => Guid.NewGuid()).ToArray();
+                var center = new Vector2(r100, r100);
+                var radius = Math.Abs(r100);
+                var target = new Circle(center, radius * radius);
+                var indices = new List<int>();
 
+                for (int i = 0; i < numPoints; i++)
+                {
+                    int index;
+                    do
+                    {
+                        index = r.Next(dataSize);
+                    } while (indices.Contains(index));
+                    indices.Add(index);
+                }
+                var points = new Vector2[dataSize];
+                for (int i = 0; i < dataSize; i++)
+                {
+                    var thisRadius = indices.Contains(i) ? radius : radius * r.NextDouble();
+                    var angle = r.NextDouble() * 2 * Math.PI;
+                    points[i] = center + new Vector2(thisRadius * Math.Cos(angle), thisRadius * Math.Sin(angle));
+                }
 
                 var circleOld = TVGL.MinimumEnclosure.MinimumCircle(points);
-                /*
-                var circleBing = TVGL.MinimumEnclosure.MinimumCircleBing(points);
                 var circleMC = TVGL.MinimumEnclosure.MinimumCircleMC(points);
+                //var circleMCEx = TVGL.MinimumEnclosure.MinimumCircleMCExtreme(points);
+                if (circleOld.Center.IsPracticallySame(circleMC.Center, 1e-6)
+                    && circleOld.RadiusSquared.IsPracticallySame(circleMC.RadiusSquared, 1e-6)
+                    //&& circleOld.Center.IsPracticallySame(circleMCEx.Center, 1e-6)
+                    //&& circleOld.RadiusSquared.IsPracticallySame(circleMCEx.RadiusSquared, 1e-6)
+                    )
+                    continue;
 
-                var oldBingEqual = circleOld.Center.IsPracticallySame(circleBing.Center, 1e-10)
-                    && circleOld.RadiusSquared.IsPracticallySame(circleBing.RadiusSquared, 1e-10);
-                var oldMCEqual = circleOld.Center.IsPracticallySame(circleMC.Center, 1e-10)
-                    && circleOld.RadiusSquared.IsPracticallySame(circleMC.RadiusSquared, 1e-10);
-                var bingMCEqual = circleBing.Center.IsPracticallySame(circleMC.Center, 1e-10)
-                    && circleBing.RadiusSquared.IsPracticallySame(circleMC.RadiusSquared, 1e-10);
 
-                if (!oldBingEqual && !bingMCEqual && !oldMCEqual)
-                    throw new Exception("all three min circle algorithms disagree!");
 
-                else if (!oldBingEqual && !bingMCEqual)
-                    Message.output("Old and MC agree but Bing is different", 0);
-                else if (!oldBingEqual && !oldMCEqual)
-                    Message.output("MC and Bing agree but old is different", 0);
-                else if (!bingMCEqual && !oldMCEqual)
-                    Message.output("Old and Bing agree but MC is different", 0);
-                else Message.output("All three agree", 0);
-                */
+                if (!circleOld.Center.IsPracticallySame(target.Center,0.1)
+                    || !circleOld.RadiusSquared.IsPracticallySame(target.RadiusSquared, 0.1))
+                    throw new Exception("Old MinimumCircle failed");
+                if (!circleMC.Center.IsPracticallySame(target.Center, 0.1)
+                    || !circleMC.RadiusSquared.IsPracticallySame(target.RadiusSquared, 0.1))
+                    throw new Exception("MC MinimumCircle failed");
+                //if (!circleMCEx.Center.IsPracticallySame(target.Center, 0.1)
+                //    || !circleMCEx.RadiusSquared.IsPracticallySame(target.RadiusSquared, 0.1))
+                //    throw new Exception("MCEx MinimumCircle failed");
+
+                numPoints++;
+                if (numPoints == 5) numPoints = 2;
             }
         }
 
@@ -162,12 +172,12 @@ namespace TVGLUnitTestsAndBenchmarking
                     Message.output("Old and Bing agree but MC is different", 0);
                 else Message.output("All three agree", 1);
             */
-                }
+            }
         }
 
         /** in july 2023, I thought I had a cleaner version of the MinimumCircle algorithm, but it was actually slower
          * so I'm commenting it out for now. The code is translated for using MinimumSphere (although that is not yet
-         * complete) and MinimumGaussSpherePlane, which was the motivation for the rewrite.
+         * complete) and MinimumGaussSpherePlane, which was the motivation for the rewrite.*/
         [GlobalSetup]
         public void BenchmarkSetup()
         {
@@ -181,19 +191,25 @@ namespace TVGLUnitTestsAndBenchmarking
             return TVGL.MinimumEnclosure.MinimumCircle(points);
         }
 
-        [Benchmark]
-        public Circle MinCircle_Bing()
-        {
-            return TVGL.MinimumEnclosure.MinimumCircleBing(points);
-        }
+        //[Benchmark]
+        //public Circle MinCircle_Bing()
+        //{
+        //    return TVGL.MinimumEnclosure.MinimumCircleBing(points);
+        //}
 
         [Benchmark]
-        public Circle MinCircle_NEWd()
+        public Circle MinCircle_MC()
         {
             return TVGL.MinimumEnclosure.MinimumCircleMC(points);
         }
 
+        //[Benchmark]
+        //public Circle MinCircle_Extreme()
+        //{
+        //    return TVGL.MinimumEnclosure.MinimumCircleMCExtreme(points);
+        //}
+
         public IList<Vector2> points;
-        ***/
+        /***/
     }
 }

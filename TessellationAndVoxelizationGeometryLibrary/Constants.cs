@@ -235,7 +235,7 @@ namespace TVGL
 
 
 
-        internal static void SwapItemsInList<T>(int i, int j, T[] points)
+        internal static void SwapItemsInList<T>(int i, int j, IList<T> points)
         {
             var temp = points[i];
             points[i] = points[j];

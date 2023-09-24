@@ -64,7 +64,7 @@ namespace TVGLUnitTestsAndBenchmarking
                 if (!sphere.Center.IsPracticallySame(target.Center)
                     || !sphere.Radius.IsPracticallySame(target.Radius))
                     throw new Exception("Old MinimumCircle failed");
-
+                else Console.Write(".");
                 numPoints++;
                 if (numPoints == 5) numPoints = 2;
             }
