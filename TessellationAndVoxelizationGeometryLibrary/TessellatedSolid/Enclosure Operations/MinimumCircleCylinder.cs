@@ -33,125 +33,154 @@ namespace TVGL
         /// Based on Emo Welzl's "move-to-front heuristic" and this paper (algorithm 1).
         /// http://www.inf.ethz.ch/personal/gaertner/texts/own_work/esa99_final.pdf
         /// This algorithm runs in near linear time. Visiting most points just a few times.
-        /// Though a linear algorithm was found by Meggi do, this algorithm is more robust
-        /// (doesn't care about multiple points on a line and fewer rounding functions)
-        /// and directly applicable to multiple dimensions (in our case, just 2 and 3 D).
         /// </references>
         public static Circle MinimumCircle(this IEnumerable<Vector2> pointsInput)
         {
-            // in July 2023, this was re-written to be easier to follow and based
-            // clearly on the above paper. That implementation turned out to be 8-10 times
-            // slower. but that approach is now the basis for MinimumSphere and MinimumGaussSpherePlane
-            var points = pointsInput as IList<Vector2> ?? pointsInput.ToList();
-            var numPoints = points.Count;
+            var points = pointsInput.ToArray();
+            var numPoints = points.Length;
             if (numPoints == 0)
                 throw new ArgumentException("No points provided.");
-            else if (numPoints == 1)
-                return new Circle(points[0], 0);
-            else if (numPoints == 2)
-                return Circle.CreateFrom2Points(points[0], points[1]);
+            else if (numPoints <= 4)
+                return FindCircle(points, out _);
 
-      
-            var pointsOnCircle = new[] { points[0], points[points.Count / 2] };
-            var prevPointsOnCircle = pointsOnCircle;
-            var circle = Circle.CreateFrom2Points(pointsOnCircle[0], pointsOnCircle[1]);
-            var dummyPoint = Vector2.Null;
-            var stallCounter = 0;
-            var successful = false;
-            var stallLimit = points.Count * 1.5;
-            if (stallLimit < 100) stallLimit = 100;
-            var sqTolerance = Math.Sqrt(Constants.BaseTolerance);
-            var sqRadiusPlusTolerance = circle.RadiusSquared + sqTolerance;
-            var nextPoint = dummyPoint;
-            var priorRadius = circle.RadiusSquared;
-            while (!successful && stallCounter < stallLimit)
+            // make a circle from the first three points
+            var circle = FirstCircle(points, out var numPointsInCircle);
+            var maxDistSqared = circle.RadiusSquared;
+            bool newPointFoundOutsideCircle;
+            var indexOfMaxDist = -1;
+            do
             {
-                //If stallCounter is getting big, add a bit extra to the circle radius to ensure convergence
-                if (stallCounter > stallLimit / 2)
-                    sqRadiusPlusTolerance += Constants.BaseTolerance * sqRadiusPlusTolerance;
-                //Add it a second time if stallCounter is even bigger
-                if (stallCounter > stallLimit * 2 / 3)
-                    sqRadiusPlusTolerance += Constants.BaseTolerance * sqRadiusPlusTolerance;
-
-                //Find the furthest point from the center point
-                var maxDistancePlusTolerance = sqRadiusPlusTolerance;
-                var nextPointIsSet = false;
-                foreach (var point in points)
+                newPointFoundOutsideCircle = false;
+                for (int i = numPointsInCircle; i < numPoints; i++)
                 {
-                    var squareDistanceToPoint = (circle.Center - point).LengthSquared();
-                    //If the square distance is less than or equal to the max square distance, continue.
-                    if (squareDistanceToPoint < maxDistancePlusTolerance) continue;
-                    //Otherwise, set this as the next point to go to.
-                    maxDistancePlusTolerance = squareDistanceToPoint + sqTolerance;
-                    nextPoint = point;
-                    nextPointIsSet = true;
-                }
-                if (!nextPointIsSet)
-                {
-                    successful = true;
-                    continue;
-                }
+                    var dist = (points[i] - circle.Center).LengthSquared();
 
-                //Create a new circle with 2 points
-                //Find the point in the circle furthest from new point.
-                var furthestPoint = FindFurthestPoint(nextPoint, pointsOnCircle);
-                //Make a new circle from the furthest point and current point
-                pointsOnCircle = new[] { nextPoint, furthestPoint };
-                circle = Circle.CreateFrom2Points(nextPoint, furthestPoint);
-                sqRadiusPlusTolerance = circle.RadiusSquared + sqTolerance;
-
-                //Now check if the previous points are outside this circle.
-                //To be outside the circle, it must be further out than the specified tolerance. 
-                //Otherwise, the loop can get caught in a loop due to rounding error 
-                //If you wanted to use a tighter tolerance, you would need to take the square roots to get the radius.   
-                //If they are, increase the dimension and use three points in a circle
-                foreach (var point in prevPointsOnCircle)
-                {
-                    if (point == furthestPoint) continue;
-                    var distanceSquared = (circle.Center - point).LengthSquared();
-                    if (distanceSquared > sqRadiusPlusTolerance)
+                    if (maxDistSqared < dist)
                     {
-                        //Make a new circle from the current two-point circle and the current point
-                        Circle.CreateFrom3Points(nextPoint, furthestPoint, point, out circle);
-                        pointsOnCircle = new[] { nextPoint, furthestPoint, point };
-                        sqRadiusPlusTolerance = circle.RadiusSquared + sqTolerance;
+                        maxDistSqared = dist;
+                        indexOfMaxDist = i;
+                        newPointFoundOutsideCircle = true;
                     }
                 }
-
-                if (circle.RadiusSquared < priorRadius)
-                    Message.output("Bounding circle got smaller during this iteration", 2);
-                priorRadius = circle.RadiusSquared;
-                prevPointsOnCircle = pointsOnCircle;
-                stallCounter++;
-            }
-            if (stallCounter >= stallLimit) Message.output("Bounding circle failed to converge to within "
-                + (Constants.BaseTolerance * circle.Radius * 2), 2);
-
+                if (newPointFoundOutsideCircle)
+                {
+                    var maxPoint = points[indexOfMaxDist];
+                    Array.Copy(points, 0, points, 1, indexOfMaxDist);
+                    points[0] = maxPoint;
+                    circle = FindCircle(points, out numPointsInCircle);
+                    maxDistSqared = circle.RadiusSquared;
+                }
+            } while (newPointFoundOutsideCircle);
             return circle;
         }
 
-        /// <summary>
-        /// Finds the furthest point.
-        /// </summary>
-        /// <param name="reference">The reference.</param>
-        /// <param name="pointsOnCircle">The points on circle.</param>
-        /// <returns>Vector2.</returns>
-        private static Vector2 FindFurthestPoint(Vector2 reference, IEnumerable<Vector2> pointsOnCircle)
+        private static Circle FirstCircle(Vector2[] points, out int numInCircle)
         {
-            var furthestPoint = Vector2.Null;
-            var furthestDistance = double.NegativeInfinity;
-            foreach (var p in pointsOnCircle)
+            // during the main loop, the most outside point will be moved to the front
+            // of the list. As can be seen in FindCircle, this greatly reduces the number
+            // of circles to check. However, we do not have that luxury at first (the luxury
+            // of knowing which point is part of the new circle). To prevent complicated
+            // FindCircle, we can make a circle from the first 3 points - and check all four
+            // permutations in this function. This will ensure that FindCircle runs faster (without
+            // extra conditions and ensures that it won't miss a case
+            var circle = Circle.CreateFrom2Points(points[0], points[1]);
+            if ((points[2] - circle.Center).LengthSquared() <= circle.RadiusSquared)
             {
-                var distanceSquared = (p - reference).LengthSquared();
-                if (furthestDistance < distanceSquared)
-                {
-                    furthestPoint = p;
-                    furthestDistance = distanceSquared;
-                }
+                numInCircle = 2;
+                return circle;
             }
-            return furthestPoint;
+            circle = Circle.CreateFrom2Points(points[0], points[2]);
+            if ((points[^2] - circle.Center).LengthSquared() <= circle.RadiusSquared)
+            {
+                numInCircle = 2;
+                // since 0 and 2 are furthest apart, we need to swap 1 and 2
+                // so that the two points in the circle are at the beinning of the list
+                Constants.SwapItemsInList(1, 2, points);
+                return circle;
+            }
+            circle = Circle.CreateFrom2Points(points[1], points[2]);
+            if ((points[^2] - circle.Center).LengthSquared() <= circle.RadiusSquared)
+            {
+                numInCircle = 2;
+                // since 1 and 2 are furthest apart, we need to swap 0 and 2
+                // so that the two points in the circle are at the beinning of the list
+                Constants.SwapItemsInList(0, 2, points);
+                return circle;
+            }
+            // otherwise, it's the 3-point circle
+            numInCircle = 3;
+            Circle.CreateFrom3Points(points[0], points[1], points[2], out circle);
+            return circle;
         }
+        private static Circle FindCircle(Vector2[] points, out int numInCircle)
+        { // else if (numInCircle == 4)
+          // we know that 1,2,3 defined (were encompassed by) the last circle
+          // the new 0 is outside of the 1-2-3 circle
+          // so we need to
+          // 1. make the 0-1 circle and check with 2 & 3
+          // 2. make the 0-2 circle and check with 1 & 3
+          // 3. make the 0-3 circle and check with 1 & 2
+          // 4. make the 0-1-2 circle and check with 3 
+          // 5. make the 0-1-3 circle and check with 2
+          // 6. make the 0-2-3 circle and check with 1
+          // for the latter 3 we want to return the smallest that includes the 4th point
 
+            // 1. make the 0-1 circle and check with 2 & 3
+            var circle = Circle.CreateFrom2Points(points[0], points[1]);
+            if ((points[2] - circle.Center).LengthSquared() <= circle.RadiusSquared
+                && (points[3] - circle.Center).LengthSquared() <= circle.RadiusSquared)
+            {
+                numInCircle = 2;
+                return circle;
+            }
+            // 2. make the 0-2 circle and check with 1 & 3
+            circle = Circle.CreateFrom2Points(points[0], points[2]);
+            if ((points[1] - circle.Center).LengthSquared() <= circle.RadiusSquared
+                && (points[3] - circle.Center).LengthSquared() <= circle.RadiusSquared)
+            {
+                numInCircle = 2;
+                Constants.SwapItemsInList(1, 2, points);
+                return circle;
+            }
+            // 3. make the 0-3 circle and check with 1 & 2
+            circle = Circle.CreateFrom2Points(points[0], points[3]);
+            if ((points[1] - circle.Center).LengthSquared() <= circle.RadiusSquared
+                && (points[2] - circle.Center).LengthSquared() <= circle.RadiusSquared)
+            {
+                numInCircle = 2;
+                Constants.SwapItemsInList(1, 3, points);
+                return circle;
+            }
+            numInCircle = 3;
+            Circle tempCircle;
+            // circle 0-1-2
+            var minRadiusSqd = double.PositiveInfinity;
+            if (Circle.CreateFrom3Points(points[0], points[1], points[2], out circle)
+                && (points[3] - circle.Center).LengthSquared() <= circle.RadiusSquared)
+                minRadiusSqd = circle.RadiusSquared;
+            // circle 0-1-3
+            var swap3And2 = false;
+            if (Circle.CreateFrom3Points(points[0], points[1], points[3], out tempCircle)
+                && (points[2] - tempCircle.Center).LengthSquared() <= tempCircle.RadiusSquared
+                && tempCircle.RadiusSquared < minRadiusSqd)
+            {
+                swap3And2 = true;
+                circle = tempCircle;
+                minRadiusSqd = circle.RadiusSquared;
+            }
+            // circle 0-1-3
+            var swap3And1 = false;
+            if (Circle.CreateFrom3Points(points[0], points[2], points[3], out tempCircle)
+                && (points[1] - tempCircle.Center).LengthSquared() <= tempCircle.RadiusSquared
+                && tempCircle.RadiusSquared < minRadiusSqd)
+            {
+                swap3And1 = true;
+                circle = tempCircle;
+            }
+            if (swap3And1) Constants.SwapItemsInList(3, 1, points);
+            else if (swap3And2) Constants.SwapItemsInList(3, 2, points);
+            return circle;
+        }
 
 
         /// <summary>

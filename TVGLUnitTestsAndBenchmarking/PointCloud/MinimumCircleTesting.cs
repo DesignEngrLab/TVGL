@@ -32,15 +32,11 @@ namespace TVGLUnitTestsAndBenchmarking
                     index2 = r.Next(dataSize); // index2 is different but random from index1
                 points[index2] = p2;
 
-                var circleOld = TVGL.MinimumEnclosure.MinimumCircle(points);
-                if (!circleOld.Center.IsPracticallySame(target.Center)
-                    || !circleOld.RadiusSquared.IsPracticallySame(target.RadiusSquared))
-                    throw new Exception("Old MinimumCircle failed");
+                var circle = TVGL.MinimumEnclosure.MinimumCircle(points);
+                if (!circle.Center.IsPracticallySame(target.Center)
+                    || !circle.RadiusSquared.IsPracticallySame(target.RadiusSquared))
+                    throw new Exception("MinimumCircle failed");
 
-                var circleMC = TVGL.MinimumEnclosure.MinimumCircleMC(points);
-                if (!circleMC.Center.IsPracticallySame(target.Center)
-                    || !circleMC.RadiusSquared.IsPracticallySame(target.RadiusSquared))
-                    throw new Exception("MC MinimumCircle failed");
 
             }
         }
@@ -68,19 +64,10 @@ namespace TVGLUnitTestsAndBenchmarking
                     index3 = r.Next(dataSize);
                 points[index3] = p3;
 
-                var circleOld = TVGL.MinimumEnclosure.MinimumCircle(points);
-                if (!circleOld.Center.IsPracticallySame(target.Center)
-                    || !circleOld.RadiusSquared.IsPracticallySame(target.RadiusSquared))
-                    throw new Exception("Old MinimumCircle failed");
-
-                //var circleMC = TVGL.MinimumEnclosure.MinimumCircleMC(points);
-                //if (!circleMC.Center.IsPracticallySame(target.Center)
-                //    || !circleMC.RadiusSquared.IsPracticallySame(target.RadiusSquared))
-                //    throw new Exception("MC MinimumCircle failed");
-                var circleMCEx = TVGL.MinimumEnclosure.MinimumCircleMC(points);
-                if (!circleMCEx.Center.IsPracticallySame(target.Center)
-                    || !circleMCEx.RadiusSquared.IsPracticallySame(target.RadiusSquared))
-                    throw new Exception("MCEx MinimumCircle failed");
+                var circle = TVGL.MinimumEnclosure.MinimumCircle(points);
+                if (!circle.Center.IsPracticallySame(target.Center)
+                    || !circle.RadiusSquared.IsPracticallySame(target.RadiusSquared))
+                    throw new Exception("MinimumCircle failed");
             }
         }
 
@@ -113,32 +100,19 @@ namespace TVGLUnitTestsAndBenchmarking
                     points[i] = center + new Vector2(thisRadius * Math.Cos(angle), thisRadius * Math.Sin(angle));
                 }
 
-                var circleOld = TVGL.MinimumEnclosure.MinimumCircle(points);
-                var circleMC = TVGL.MinimumEnclosure.MinimumCircleMC(points);
-                //var circleMCEx = TVGL.MinimumEnclosure.MinimumCircleMCExtreme(points);
-                if (circleOld.Center.IsPracticallySame(circleMC.Center, 1e-6)
-                    && circleOld.RadiusSquared.IsPracticallySame(circleMC.RadiusSquared, 1e-6)
-                    //&& circleOld.Center.IsPracticallySame(circleMCEx.Center, 1e-6)
-                    //&& circleOld.RadiusSquared.IsPracticallySame(circleMCEx.RadiusSquared, 1e-6)
-                    )
-                    continue;
-
-
-
-                if (!circleOld.Center.IsPracticallySame(target.Center,0.1)
-                    || !circleOld.RadiusSquared.IsPracticallySame(target.RadiusSquared, 0.1))
-                    throw new Exception("Old MinimumCircle failed");
-                if (!circleMC.Center.IsPracticallySame(target.Center, 0.1)
-                    || !circleMC.RadiusSquared.IsPracticallySame(target.RadiusSquared, 0.1))
-                    throw new Exception("MC MinimumCircle failed");
-                //if (!circleMCEx.Center.IsPracticallySame(target.Center, 0.1)
-                //    || !circleMCEx.RadiusSquared.IsPracticallySame(target.RadiusSquared, 0.1))
-                //    throw new Exception("MCEx MinimumCircle failed");
+                var circle = TVGL.MinimumEnclosure.MinimumCircle(points);
+                if (!circle.Center.IsPracticallySame(target.Center, 0.2)
+                    || !circle.Radius.IsPracticallySame(target.Radius, 0.2))
+                    // why the super loose tolerance here? Because the points are randomly generated about a center
+                    // but this does not mean that the points are evenly distributed. So, the circle may be a little
+                    // smaller
+                    throw new Exception("MinimumCircle failed");
 
                 numPoints++;
                 if (numPoints == 5) numPoints = 2;
             }
         }
+
 
 
         internal static void Test4(IEnumerable<List<Polygon>> polygonalLayers)
@@ -174,42 +148,6 @@ namespace TVGLUnitTestsAndBenchmarking
             */
             }
         }
-
-        /** in july 2023, I thought I had a cleaner version of the MinimumCircle algorithm, but it was actually slower
-         * so I'm commenting it out for now. The code is translated for using MinimumSphere (although that is not yet
-         * complete) and MinimumGaussSpherePlane, which was the motivation for the rewrite.*/
-        [GlobalSetup]
-        public void BenchmarkSetup()
-        {
-            int dataSize = 10000000;
-            points = Enumerable.Range(0, dataSize).Select(i => new Vector2(r100, r100)).ToList();
-        }
-
-        [Benchmark]
-        public Circle MinCircle_Old()
-        {
-            return TVGL.MinimumEnclosure.MinimumCircle(points);
-        }
-
-        //[Benchmark]
-        //public Circle MinCircle_Bing()
-        //{
-        //    return TVGL.MinimumEnclosure.MinimumCircleBing(points);
-        //}
-
-        [Benchmark]
-        public Circle MinCircle_MC()
-        {
-            return TVGL.MinimumEnclosure.MinimumCircleMC(points);
-        }
-
-        //[Benchmark]
-        //public Circle MinCircle_Extreme()
-        //{
-        //    return TVGL.MinimumEnclosure.MinimumCircleMCExtreme(points);
-        //}
-
-        public IList<Vector2> points;
-        /***/
     }
 }
+
