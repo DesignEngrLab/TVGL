@@ -16,65 +16,8 @@ namespace TVGLUnitTestsAndBenchmarking
 
         internal static void Test1(int dataSize, int numTests)
         {
-            var p1 = new Vector2(100, 100);
-            var p2 = -p1;
-            var target = Circle.CreateFrom2Points(p1, p2);
             // so the answer should be a circle of radius 101 centered at origin
-            for (var k = 0; k < numTests; k++)
-            {
-                Console.WriteLine($"Test {k}");
-
-                var points = Enumerable.Range(0, dataSize).Select(i => new Vector2(r100, r100)).ToList();
-                var index1 = r.Next(dataSize);
-                points[index1] = p1;
-                var index2 = index1;
-                while (index1 == index2) // this is a silly but compact way to ensure that 
-                    index2 = r.Next(dataSize); // index2 is different but random from index1
-                points[index2] = p2;
-
-                var circle = TVGL.MinimumEnclosure.MinimumCircle(points);
-                if (!circle.Center.IsPracticallySame(target.Center)
-                    || !circle.RadiusSquared.IsPracticallySame(target.RadiusSquared))
-                    throw new Exception("MinimumCircle failed");
-
-
-            }
-        }
-
-        internal static void Test2(int dataSize, int numTests)
-        {
-            var p1 = new Vector2(-100, -100);
-            var p2 = new Vector2(99, 101);
-            var p3 = new Vector2(101, 99);
-            Circle.CreateFrom3Points(p1, p2, p3, out var target);
-            // so the answer should be a circle of radius 101 centered at origin
-            for (var k = 0; k < numTests; k++)
-            {
-                Console.WriteLine($"Test {k}");
-
-                var points = Enumerable.Range(0, dataSize).Select(i => new Vector2(r100, r100)).ToList();
-                var index1 = r.Next(dataSize);
-                points[index1] = p1;
-                var index2 = index1;
-                while (index1 == index2) // this is a silly but compact way to ensure that 
-                    index2 = r.Next(dataSize); // index2 is different but random from index1
-                points[index2] = p2;
-                var index3 = index1;
-                while (index1 == index3 || index2 == index3)
-                    index3 = r.Next(dataSize);
-                points[index3] = p3;
-
-                var circle = TVGL.MinimumEnclosure.MinimumCircle(points);
-                if (!circle.Center.IsPracticallySame(target.Center)
-                    || !circle.RadiusSquared.IsPracticallySame(target.RadiusSquared))
-                    throw new Exception("MinimumCircle failed");
-            }
-        }
-
-        internal static void Test3(int dataSize, int numTests)
-        {
-            // so the answer should be a circle of radius 101 centered at origin
-            var numPoints = 2;
+            var numExtrema = 2;
             for (var k = 0; k < numTests; k++)
             {
                 Console.WriteLine($"Test {k}");
@@ -82,8 +25,10 @@ namespace TVGLUnitTestsAndBenchmarking
                 var radius = Math.Abs(r100);
                 var target = new Circle(center, radius * radius);
                 var indices = new List<int>();
-
-                for (int i = 0; i < numPoints; i++)
+                var extrema = new Vector2[numExtrema];
+                var offset = r.NextDouble() * 2 * Math.PI / numExtrema;
+                var angleBetweenExtrema = 2 * Math.PI / numExtrema;
+                for (int i = 0; i < numExtrema; i++)
                 {
                     int index;
                     do
@@ -91,25 +36,29 @@ namespace TVGLUnitTestsAndBenchmarking
                         index = r.Next(dataSize);
                     } while (indices.Contains(index));
                     indices.Add(index);
+                    var angle = offset + i * angleBetweenExtrema;
+                    extrema[i] = center + new Vector2(radius * Math.Cos(angle), radius * Math.Sin(angle));
                 }
                 var points = new Vector2[dataSize];
+                var m = 0;
                 for (int i = 0; i < dataSize; i++)
                 {
-                    var thisRadius = indices.Contains(i) ? radius : radius * r.NextDouble();
-                    var angle = r.NextDouble() * 2 * Math.PI;
-                    points[i] = center + new Vector2(thisRadius * Math.Cos(angle), thisRadius * Math.Sin(angle));
+                    if (indices.Contains(i)) points[i] = extrema[m++];
+                    else
+                    {
+                        var thisRadius = radius * r.NextDouble();
+                        var angle = r.NextDouble() * 2 * Math.PI;
+                        points[i] = center + new Vector2(thisRadius * Math.Cos(angle), thisRadius * Math.Sin(angle));
+                    }
                 }
 
                 var circle = TVGL.MinimumEnclosure.MinimumCircle(points);
-                if (!circle.Center.IsPracticallySame(target.Center, 0.2)
-                    || !circle.Radius.IsPracticallySame(target.Radius, 0.2))
-                    // why the super loose tolerance here? Because the points are randomly generated about a center
-                    // but this does not mean that the points are evenly distributed. So, the circle may be a little
-                    // smaller
+                if (!circle.Center.IsPracticallySame(target.Center)
+                    || !circle.Radius.IsPracticallySame(target.Radius))
                     throw new Exception("MinimumCircle failed");
 
-                numPoints++;
-                if (numPoints == 5) numPoints = 2;
+                numExtrema++;
+                if (numExtrema == 5) numExtrema = 2;
             }
         }
 

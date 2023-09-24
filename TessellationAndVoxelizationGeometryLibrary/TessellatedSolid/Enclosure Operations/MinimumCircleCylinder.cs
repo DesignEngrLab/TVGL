@@ -40,8 +40,10 @@ namespace TVGL
             var numPoints = points.Length;
             if (numPoints == 0)
                 throw new ArgumentException("No points provided.");
-            else if (numPoints <= 4)
-                return FindCircle(points, out _);
+            else if (numPoints == 1)
+                return new Circle(points[0], 0.0);
+            else if (numPoints == 2)
+                return Circle.CreateFrom2Points(points[0], points[1]);
 
             // make a circle from the first three points
             var circle = FirstCircle(points, out var numPointsInCircle);
@@ -90,7 +92,7 @@ namespace TVGL
                 return circle;
             }
             circle = Circle.CreateFrom2Points(points[0], points[2]);
-            if ((points[^2] - circle.Center).LengthSquared() <= circle.RadiusSquared)
+            if ((points[1] - circle.Center).LengthSquared() <= circle.RadiusSquared)
             {
                 numInCircle = 2;
                 // since 0 and 2 are furthest apart, we need to swap 1 and 2
@@ -99,7 +101,7 @@ namespace TVGL
                 return circle;
             }
             circle = Circle.CreateFrom2Points(points[1], points[2]);
-            if ((points[^2] - circle.Center).LengthSquared() <= circle.RadiusSquared)
+            if ((points[0] - circle.Center).LengthSquared() <= circle.RadiusSquared)
             {
                 numInCircle = 2;
                 // since 1 and 2 are furthest apart, we need to swap 0 and 2
@@ -125,20 +127,18 @@ namespace TVGL
           // 6. make the 0-2-3 circle and check with 1
           // for the latter 3 we want to return the smallest that includes the 4th point
 
+            numInCircle = 2;
             // 1. make the 0-1 circle and check with 2 & 3
             var circle = Circle.CreateFrom2Points(points[0], points[1]);
             if ((points[2] - circle.Center).LengthSquared() <= circle.RadiusSquared
                 && (points[3] - circle.Center).LengthSquared() <= circle.RadiusSquared)
-            {
-                numInCircle = 2;
                 return circle;
-            }
+
             // 2. make the 0-2 circle and check with 1 & 3
             circle = Circle.CreateFrom2Points(points[0], points[2]);
             if ((points[1] - circle.Center).LengthSquared() <= circle.RadiusSquared
                 && (points[3] - circle.Center).LengthSquared() <= circle.RadiusSquared)
             {
-                numInCircle = 2;
                 Constants.SwapItemsInList(1, 2, points);
                 return circle;
             }
@@ -147,10 +147,10 @@ namespace TVGL
             if ((points[1] - circle.Center).LengthSquared() <= circle.RadiusSquared
                 && (points[2] - circle.Center).LengthSquared() <= circle.RadiusSquared)
             {
-                numInCircle = 2;
                 Constants.SwapItemsInList(1, 3, points);
                 return circle;
             }
+
             numInCircle = 3;
             Circle tempCircle;
             // circle 0-1-2

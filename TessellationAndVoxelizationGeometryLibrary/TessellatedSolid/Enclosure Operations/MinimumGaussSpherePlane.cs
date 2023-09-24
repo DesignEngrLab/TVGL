@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
+using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -9,11 +10,33 @@ namespace TVGL
 {
     public static partial class MinimumEnclosure
     {
+        /// <summary>
+        /// Gets the minimums the gauss sphere plane. That is, the plane closest to the origin that
+        /// encompasses all the provided points. 
+        /// This is similar to the minimum bounding circle and sphere algorithms
+        /// minimizes the maximum distance to the points.
+        /// </summary>
+        /// <param name="pointsInput">The input points should all be unit vectors.</param>
+        /// <param name="tolerance">The tolerance.</param>
+        /// <returns>A Plane.</returns>
         public static Plane MinimumGaussSpherePlane(this IEnumerable<Vector3> pointsInput, double tolerance = Constants.BaseTolerance)
         {
             var points = pointsInput as Vector3[] ?? pointsInput.ToArray();
             return MinimumGaussSpherePlane(points, points.Aggregate((v1, v2) => v1 + v2).Normalize(), tolerance);
         }
+
+        /// <summary>
+        /// Gets the minimums the gauss sphere plane. That is, the plane closest to the origin that
+        /// encompasses all the provided points. 
+        /// This is similar to the minimum bounding circle and sphere algorithms
+        /// minimizes the maximum distance to the points.
+        /// </summary>
+        /// <param name="pointsInput">The input points should all be unit vectors.</param>
+        /// <param name="orientingVector">The orienting vector is used to flip the plane so that it is found 
+        /// in a particular direction. If the dot-product between the orienting vector and the plane normal is
+        /// negative then the plane will be flipped.</param>
+        /// <param name="tolerance">The tolerance.</param>
+        /// <returns>A Plane.</returns>
         public static Plane MinimumGaussSpherePlane(this IEnumerable<Vector3> pointsInput, Vector3 orientingVector,
             double tolerance = Constants.BaseTolerance)
         {
@@ -116,7 +139,13 @@ namespace TVGL
         private static Plane CreatePlaneFrom2Points(Vector3 p1, Vector3 p2, Vector3 orientingVector)
         {
             var center = (p1 + p2) / 2;
-            return new Plane(center, center);
+            var plane= new Plane(center, center);
+            if (plane.Normal.Dot(orientingVector) < 0)
+            {
+                plane.Normal *= -1;
+                plane.DistanceToOrigin *= -1;
+            }
+            return plane;
         }
 
     }

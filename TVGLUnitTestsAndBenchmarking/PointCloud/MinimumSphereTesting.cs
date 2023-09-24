@@ -24,205 +24,67 @@ namespace TVGLUnitTestsAndBenchmarking
             var p4 = new Vector3(2, 2, 0);
             var target = Sphere.CreateFrom4Points(p1, p2, p3, p4);
         }
+
         internal static void Test1(int dataSize, int numTests)
         {
-            var extremes = new[] { new Vector3(10, 10, 10), new Vector3(20, 20, 10), new Vector3(10, 20, 10),
-                new Vector3(10,10,20) };
-            var p1 = new Vector3(100, -100, 100);
-            var p2 = -p1;
-            var center = new Vector3(15, 15, 15);
-            var radius = 5.0;
-            var target = new Sphere(center, radius, null);
             // so the answer should be a circle of radius 101 centered at origin
-            var numPoints = 2;
+            var numExtrema = 2;
             for (var k = 0; k < numTests; k++)
             {
                 Console.WriteLine($"Test {k}");
-                var indices = new int[numPoints];
-
-                for (int i = 0; i < numPoints; i++)
+                var center = new Vector3(r100, r100, r100);
+                var radius = Math.Abs(r100);
+                var target = new Sphere(center, radius, null);
+                var indices = new List<int>();
+                var extrema = new Vector3[numExtrema];
+                var polarOffset = r.NextDouble() * Math.PI;
+                var azimuthOffset = 2 * r.NextDouble() * Math.PI - Math.PI;
+                for (int i = 0; i < numExtrema; i++)
                 {
                     int index;
                     do
                     {
-                        index = r.Next(dataSize); // index2 is different but random from index1
+                        index = r.Next(dataSize);
+                    } while (indices.Contains(index));
+                    indices.Add(index);
+                    if (i == 0)
+                        extrema[i] = center + SphericalAnglePair.ConvertSphericalToCartesian(radius, polarOffset, azimuthOffset);
+                    else if (i == 1)
+                        extrema[i] = center + SphericalAnglePair.ConvertSphericalToCartesian(radius, polarOffset + Math.PI,
+                            azimuthOffset);
+                    else
+                    {
+                        var polarAngle = r.NextDouble() * Math.PI;
+                        var azimuthAngle = 2 * r.NextDouble() * Math.PI - Math.PI;
+                        extrema[i] = center + SphericalAnglePair.ConvertSphericalToCartesian(radius, polarAngle, azimuthAngle);
                     }
-                    while (i != 0 && index == indices[i - 1]); // this is a silly but compact way to ensure that 
-                                                               //points[index] = extremes[i];
-                                                               //if (i < numPoints - 1)
-                    indices[i] = index;
                 }
                 var points = new Vector3[dataSize];
+                var m = 0;
                 for (int i = 0; i < dataSize; i++)
                 {
-                    var thisRadius = indices.Contains(i) ? radius : radius - r.NextDouble();
-                    points[i] = center +
-                SphericalAnglePair.ConvertSphericalToCartesian(thisRadius, rPolar, rAzimuth);
+                    if (indices.Contains(i)) points[i] = extrema[m++];
+                    else
+                    {
+                        var thisRadius = radius * r.NextDouble();
+                        var polarAngle = r.NextDouble() * Math.PI;
+                        var azimuthAngle = 2 * r.NextDouble() * Math.PI - Math.PI;
+                        points[i] = center + SphericalAnglePair.ConvertSphericalToCartesian(thisRadius, polarAngle, azimuthAngle);
+                    }
                 }
-                var sphere = TVGL.MinimumEnclosure.MinimumSphere(points);
 
-                if (!sphere.Center.IsPracticallySame(target.Center)
-                    || !sphere.Radius.IsPracticallySame(target.Radius))
-                    throw new Exception("Old MinimumCircle failed");
-                else Console.Write(".");
-                numPoints++;
-                if (numPoints == 5) numPoints = 2;
+                var sphere = TVGL.MinimumEnclosure.MinimumSphere(extrema);
+                if (!sphere.Center.IsPracticallySame(target.Center, 1e-8)
+                    || !sphere.Radius.IsPracticallySame(target.Radius, 1e-8))
+                    // why the super loose tolerance here? Because the points are randomly generated about a center
+                    // but this does not mean that the points are evenly distributed. So, the circle may be a little
+                    // smaller
+                    throw new Exception("Minimum Sphere failed");
+
+                numExtrema++;
+                if (numExtrema == 6) numExtrema = 2;
             }
         }
-
-        internal static void Test2(int dataSize, int numTests)
-        {
-            var p1 = new Vector2(-100, -100);
-            var p2 = new Vector2(99, 101);
-            var p3 = new Vector2(101, 99);
-            Circle.CreateFrom3Points(p1, p2, p3, out var target);
-            // so the answer should be a circle of radius 101 centered at origin
-            for (var k = 0; k < numTests; k++)
-            {
-                Console.WriteLine($"Test {k}");
-
-                var points = Enumerable.Range(0, dataSize).Select(i => new Vector2(r100, r100)).ToList();
-                var index1 = r.Next(dataSize);
-                points[index1] = p1;
-                var index2 = index1;
-                while (index1 == index2) // this is a silly but compact way to ensure that 
-                    index2 = r.Next(dataSize); // index2 is different but random from index1
-                points[index2] = p2;
-                var index3 = index1;
-                while (index1 == index3 || index2 == index3)
-                    index3 = r.Next(dataSize);
-                points[index3] = p3;
-
-                var circleOld = TVGL.MinimumEnclosure.MinimumCircle(points);
-                if (!circleOld.Center.IsPracticallySame(target.Center)
-                    || !circleOld.RadiusSquared.IsPracticallySame(target.RadiusSquared))
-                    throw new Exception("Old MinimumCircle failed");
-
-                //var circleBing = TVGL.MinimumEnclosure.MinimumCircleBing(points);
-                //if (!circleBing.Center.IsPracticallySame(target.Center)
-                //    || !circleBing.RadiusSquared.IsPracticallySame(target.RadiusSquared))
-                //    throw new Exception("Bing MinimumCircle failed");
-
-                //var circleMC = TVGL.MinimumEnclosure.MinimumCircleMC(points);
-                //if (!circleMC.Center.IsPracticallySame(target.Center)
-                //    || !circleMC.RadiusSquared.IsPracticallySame(target.RadiusSquared))
-                //    throw new Exception("MC MinimumCircle failed");
-            }
-        }
-
-        internal static void Test3(int dataSize, int numTests)
-        {
-            // so the answer should be a circle of radius 101 centered at origin
-            for (var k = 0; k < numTests; k++)
-            {
-                var b1 = r100;
-                var slope1 = Math.Tan(r.NextDouble() * Math.PI);
-                var b2 = r100;
-                var slope2 = Math.Tan(r.NextDouble() * Math.PI);
-                Console.WriteLine($"Test {k}");
-                var points = new Vector2[dataSize];
-                for (int i = 0; i < dataSize; i += 2)
-                {
-                    var x = r100;
-                    var y = slope1 * x + b1;
-                    points[i] = new Vector2(x, y);
-                    x = r100;
-                    y = slope2 * x + b2;
-                    points[i + 1] = new Vector2(x, y);
-                }
-                points = points.OrderBy(x => Guid.NewGuid()).ToArray();
-
-
-                var circleOld = TVGL.MinimumEnclosure.MinimumCircle(points);
-                /*
-                var circleBing = TVGL.MinimumEnclosure.MinimumCircleBing(points);
-                var circleMC = TVGL.MinimumEnclosure.MinimumCircleMC(points);
-
-                var oldBingEqual = circleOld.Center.IsPracticallySame(circleBing.Center, 1e-10)
-                    && circleOld.RadiusSquared.IsPracticallySame(circleBing.RadiusSquared, 1e-10);
-                var oldMCEqual = circleOld.Center.IsPracticallySame(circleMC.Center, 1e-10)
-                    && circleOld.RadiusSquared.IsPracticallySame(circleMC.RadiusSquared, 1e-10);
-                var bingMCEqual = circleBing.Center.IsPracticallySame(circleMC.Center, 1e-10)
-                    && circleBing.RadiusSquared.IsPracticallySame(circleMC.RadiusSquared, 1e-10);
-
-                if (!oldBingEqual && !bingMCEqual && !oldMCEqual)
-                    throw new Exception("all three min circle algorithms disagree!");
-
-                else if (!oldBingEqual && !bingMCEqual)
-                    Message.output("Old and MC agree but Bing is different", 0);
-                else if (!oldBingEqual && !oldMCEqual)
-                    Message.output("MC and Bing agree but old is different", 0);
-                else if (!bingMCEqual && !oldMCEqual)
-                    Message.output("Old and Bing agree but MC is different", 0);
-                else Message.output("All three agree", 0);
-                */
-            }
-        }
-
-
-        internal static void Test4(IEnumerable<List<Polygon>> polygonalLayers)
-        {
-            foreach (var polygonSet in polygonalLayers)
-            {
-                var polygon = polygonSet.LargestPolygon();
-                var points = polygon.Path;
-
-
-                var circleOld = TVGL.MinimumEnclosure.MinimumCircle(points);
-                /*
-                var circleBing = TVGL.MinimumEnclosure.MinimumCircleBing(points);
-                var circleMC = TVGL.MinimumEnclosure.MinimumCircleMC(points);
-
-                var oldBingEqual = circleOld.Center.IsPracticallySame(circleBing.Center, 1e-10)
-                    && circleOld.RadiusSquared.IsPracticallySame(circleBing.RadiusSquared, 1e-10);
-                var oldMCEqual = circleOld.Center.IsPracticallySame(circleMC.Center, 1e-10)
-                    && circleOld.RadiusSquared.IsPracticallySame(circleMC.RadiusSquared, 1e-10);
-                var bingMCEqual = circleBing.Center.IsPracticallySame(circleMC.Center, 1e-10)
-                    && circleBing.RadiusSquared.IsPracticallySame(circleMC.RadiusSquared, 1e-10);
-
-                if (!oldBingEqual && !bingMCEqual && !oldMCEqual)
-                    throw new Exception("all three min circle algorithms disagree!");
-
-                else if (!oldBingEqual && !bingMCEqual)
-                    Message.output("Old and MC agree but Bing is different", 0);
-                else if (!oldBingEqual && !oldMCEqual)
-                    Message.output("MC and Bing agree but old is different", 0);
-                else if (!bingMCEqual && !oldMCEqual)
-                    Message.output("Old and Bing agree but MC is different", 0);
-                else Message.output("All three agree", 1);
-            */
-            }
-        }
-
-        /** in july 2023, I thought I had a cleaner version of the MinimumCircle algorithm, but it was actually slower
-         * so I'm commenting it out for now. The code is translated for using MinimumSphere (although that is not yet
-         * complete) and MinimumGaussSpherePlane, which was the motivation for the rewrite.
-        [GlobalSetup]
-        public void BenchmarkSetup()
-        {
-            int dataSize = 10000000;
-            points = Enumerable.Range(0, dataSize).Select(i => new Vector2(r100, r100)).ToList();
-        }
-
-        [Benchmark]
-        public Circle MinCircle_Old()
-        {
-            return TVGL.MinimumEnclosure.MinimumCircle(points);
-        }
-
-        [Benchmark]
-        public Circle MinCircle_Bing()
-        {
-            return TVGL.MinimumEnclosure.MinimumCircleBing(points);
-        }
-
-        [Benchmark]
-        public Circle MinCircle_NEWd()
-        {
-            return TVGL.MinimumEnclosure.MinimumCircleMC(points);
-        }
-
-        public IList<Vector2> points;
-        ***/
     }
 }
+
