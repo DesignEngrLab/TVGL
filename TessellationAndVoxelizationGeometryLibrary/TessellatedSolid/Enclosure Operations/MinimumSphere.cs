@@ -295,6 +295,7 @@ namespace TVGL
             // 0,1,2,3 & check 4
             tempSphere = CreateFrom4Points(points[0], points[1], points[2], points[3]);
             if (!(points[4] - tempSphere.Center).LengthSquared().IsGreaterThanNonNegligible(tempSphere.RadiusSquared)
+                // this one uses IsGreaterThanNonNegligible to prevent infinite cycling when more points are on the sphere
                 && tempSphere.RadiusSquared < minRadiusSqd)
             {
                 sphere = tempSphere;

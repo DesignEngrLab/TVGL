@@ -46,14 +46,15 @@ namespace TVGL
                 return Circle.CreateFrom2Points(points[0], points[1]);
 
             // make a circle from the first three points
-            var circle = FirstCircle(points, out var numPointsInCircle);
+            var circle = FirstCircle(points);
+            var startIndex = 3;
             var maxDistSqared = circle.RadiusSquared;
             bool newPointFoundOutsideCircle;
             var indexOfMaxDist = -1;
             do
             {
                 newPointFoundOutsideCircle = false;
-                for (int i = numPointsInCircle; i < numPoints; i++)
+                for (int i = startIndex; i < numPoints; i++)
                 {
                     var dist = (points[i] - circle.Center).LengthSquared();
 
@@ -69,14 +70,15 @@ namespace TVGL
                     var maxPoint = points[indexOfMaxDist];
                     Array.Copy(points, 0, points, 1, indexOfMaxDist);
                     points[0] = maxPoint;
-                    circle = FindCircle(points, out numPointsInCircle);
+                    circle = FindCircle(points);
+                    startIndex = 4;
                     maxDistSqared = circle.RadiusSquared;
                 }
             } while (newPointFoundOutsideCircle);
             return circle;
         }
 
-        private static Circle FirstCircle(Vector2[] points, out int numInCircle)
+        private static Circle FirstCircle(Vector2[] points)
         {
             // during the main loop, the most outside point will be moved to the front
             // of the list. As can be seen in FindCircle, this greatly reduces the number
@@ -87,14 +89,10 @@ namespace TVGL
             // extra conditions and ensures that it won't miss a case
             var circle = Circle.CreateFrom2Points(points[0], points[1]);
             if ((points[2] - circle.Center).LengthSquared() <= circle.RadiusSquared)
-            {
-                numInCircle = 2;
                 return circle;
-            }
             circle = Circle.CreateFrom2Points(points[0], points[2]);
             if ((points[1] - circle.Center).LengthSquared() <= circle.RadiusSquared)
             {
-                numInCircle = 2;
                 // since 0 and 2 are furthest apart, we need to swap 1 and 2
                 // so that the two points in the circle are at the beinning of the list
                 Constants.SwapItemsInList(1, 2, points);
@@ -103,18 +101,16 @@ namespace TVGL
             circle = Circle.CreateFrom2Points(points[1], points[2]);
             if ((points[0] - circle.Center).LengthSquared() <= circle.RadiusSquared)
             {
-                numInCircle = 2;
                 // since 1 and 2 are furthest apart, we need to swap 0 and 2
                 // so that the two points in the circle are at the beinning of the list
                 Constants.SwapItemsInList(0, 2, points);
                 return circle;
             }
             // otherwise, it's the 3-point circle
-            numInCircle = 3;
             Circle.CreateFrom3Points(points[0], points[1], points[2], out circle);
             return circle;
         }
-        private static Circle FindCircle(Vector2[] points, out int numInCircle)
+        private static Circle FindCircle(Vector2[] points)
         { // else if (numInCircle == 4)
           // we know that 1,2,3 defined (were encompassed by) the last circle
           // the new 0 is outside of the 1-2-3 circle
@@ -127,7 +123,6 @@ namespace TVGL
           // 6. make the 0-2-3 circle and check with 1
           // for the latter 3 we want to return the smallest that includes the 4th point
 
-            numInCircle = 2;
             // 1. make the 0-1 circle and check with 2 & 3
             var circle = Circle.CreateFrom2Points(points[0], points[1]);
             if ((points[2] - circle.Center).LengthSquared() <= circle.RadiusSquared
@@ -151,12 +146,12 @@ namespace TVGL
                 return circle;
             }
 
-            numInCircle = 3;
             Circle tempCircle;
             // circle 0-1-2
             var minRadiusSqd = double.PositiveInfinity;
             if (Circle.CreateFrom3Points(points[0], points[1], points[2], out circle)
-                && (points[3] - circle.Center).LengthSquared() <= circle.RadiusSquared)
+                && !(points[3] - circle.Center).LengthSquared().IsGreaterThanNonNegligible(circle.RadiusSquared))
+                // this one uses IsGreaterThanNonNegligible to prevent infinite cycling when more points are on the circle
                 minRadiusSqd = circle.RadiusSquared;
             // circle 0-1-3
             var swap3And2 = false;

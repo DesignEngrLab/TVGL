@@ -27,7 +27,7 @@ namespace TVGLUnitTestsAndBenchmarking
             //Misc_Tests.ZbufferTesting.Test3();
             //var summary = BenchmarkRunner.Run<MinimumCircleTesting>();
             //MinimumSphereTesting.Test1(100, 100);
-            MinimumSphereTesting.Test1(1000000, 500);
+            MinimumCircleTesting.Test1(100000, 100);
             return;
             DirectoryInfo dir = Program.BackoutToFolder(inputFolder);
 
