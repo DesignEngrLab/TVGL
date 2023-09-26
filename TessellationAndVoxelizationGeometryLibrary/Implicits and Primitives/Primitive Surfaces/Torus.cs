@@ -222,7 +222,7 @@ namespace TVGL
         /// <returns>IEnumerable&lt;Vector2&gt;.</returns>
         public override IEnumerable<Vector2> TransformFrom3DTo2D(IEnumerable<Vector3> points, bool pathIsClosed)
         {
-            if (pathIsClosed && BorderEncirclesAxis(points, Axis, Center))
+            if (pathIsClosed && points.BorderEncirclesAxis(Axis, Center))
             {
                 var transform = Axis.TransformToXYPlane(out _);
                 foreach (var point in points)

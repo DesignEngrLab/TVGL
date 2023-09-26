@@ -101,7 +101,7 @@ namespace TVGL
             // when the points are a closed path and they encircle the axis, basically we see the simplest resulting
             // polygon as a circle. Perhaps this doesn't capture what was intended but it is the best choice given
             // alternatives
-            if (pathIsClosed && BorderEncirclesAxis(points, Axis, Anchor))
+            if (pathIsClosed && points.BorderEncirclesAxis(Axis, Anchor))
             {
                 var transform = Axis.TransformToXYPlane(out _);
                 foreach (var point in points)

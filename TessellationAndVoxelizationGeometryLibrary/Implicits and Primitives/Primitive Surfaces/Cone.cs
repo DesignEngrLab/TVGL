@@ -205,7 +205,7 @@ namespace TVGL
         {
             // when the points are a closed path and they encircle the axis, then we define the resulting polygon
             // by looking down the axis of the cone
-            if (pathIsClosed && BorderEncirclesAxis(points, Axis, Apex))
+            if (pathIsClosed && points.BorderEncirclesAxis(Axis, Apex))
             {
                 var transform = Axis.TransformToXYPlane(out _);
                 foreach (var point in points)
