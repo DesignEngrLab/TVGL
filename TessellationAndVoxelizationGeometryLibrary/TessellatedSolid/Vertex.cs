@@ -160,6 +160,7 @@ namespace TVGL
                 if (_curvature == CurvatureType.Undefined) DefineCurvature();
                 return _curvature;
             }
+            internal set => _curvature = value;
         }
 
         public double this[int i] => Coordinates[i];

@@ -223,19 +223,7 @@ namespace TVGL
         /// Gets the curvature.
         /// </summary>
         /// <value>The curvature.</value>
-        public override CurvatureType Curvature
-        {
-            get
-            {
-                if (_curvature == CurvatureType.Undefined) DefineInternalEdgeAngle();
-                return _curvature;
-            }
-        }
-        /// <summary>
-        /// The curvature
-        /// </summary>
-        CurvatureType _curvature = CurvatureType.Undefined;
-
+        public override CurvatureType Curvature { get; internal set; }
 
         /// <summary>
         /// Gets the normal.
@@ -298,7 +286,7 @@ namespace TVGL
             if (lengthAndAngleUnchanged) return; //Done. No need to update the length or the internal edge angle
             _length = double.NaN;
             _internalAngle = double.NaN;
-            _curvature = CurvatureType.Undefined;
+            //Curvature = CurvatureType.Undefined;
         }
 
         /// <summary>
@@ -323,15 +311,11 @@ namespace TVGL
             if (_ownedFace == _otherFace || _ownedFace == null || _otherFace == null)
             {
                 _internalAngle = double.NaN;
-                _curvature = CurvatureType.Undefined;
                 return;
             }
             var dot = _ownedFace.Normal.Dot(_otherFace.Normal);
             if (!dot.IsLessThanNonNegligible(1.0, Constants.BaseTolerance))
-            {
                 _internalAngle = Math.PI;
-                _curvature = CurvatureType.SaddleOrFlat;
-            }
             else if (!dot.IsGreaterThanNonNegligible(-1.0, Constants.BaseTolerance))
             {
                 // is it a crack or a sharp edge?
@@ -360,29 +344,17 @@ namespace TVGL
                 }
                 otherNeighborAvgNormals = otherNeighborAvgNormals.Divide(numNeighbors);
                 if (ownedNeighborAvgNormals.Cross(otherNeighborAvgNormals).Dot(Vector) < 0)
-                {
                     _internalAngle = Constants.TwoPi;
-                    _curvature = CurvatureType.Concave;
-                }
                 else
-                {
                     _internalAngle = 0.0;
-                    _curvature = CurvatureType.Convex;
-                }
             }
             else
             {
                 var cross = _ownedFace.Normal.Cross(_otherFace.Normal).Dot(Vector);
                 if (cross < 0)
-                {
                     _internalAngle = Math.PI + Math.Acos(dot);
-                    _curvature = CurvatureType.Concave;
-                }
                 else //(cross > 0)
-                {
                     _internalAngle = Math.PI - Math.Acos(dot);
-                    _curvature = CurvatureType.Convex;
-                }
             }
             if (InternalAngle > Constants.TwoPi) throw new Exception("not possible");
         }
@@ -396,7 +368,7 @@ namespace TVGL
         /// <param name="tolerance">The tolerance.</param>
         /// <param name="chordError">The chord error.</param>
         /// <returns>A bool.</returns>
-        public bool IsDiscontinuous(double tolerance, double chordError)
+        public bool IsDiscontinuous(double chordError)
         {
             if (OtherFace == null || OwnedFace == null) return true;
             var otherV = OtherFace.Normal.Cross(Vector).Normalize();
@@ -409,7 +381,15 @@ namespace TVGL
             var ownedVLength = ownedV.Dot(OwnedFace.OtherVertex(this).Coordinates - From.Coordinates);
             ownedV = ownedVLength * ownedV;
 
-            return MiscFunctions.LineSegmentsAreC1Discontinuous(ownedV.Dot(otherV), ownedV.Cross(otherV).Length(), ownedVLength, otherVLength, chordError);
+            if(MiscFunctions.LineSegmentsAreC1Discontinuous(ownedV.Dot(otherV), ownedV.Cross(otherV).Length(),
+                ownedVLength, otherVLength, chordError))
+            {
+                        if (InternalAngle < Math.PI) Curvature = CurvatureType.Convex;
+                        else if (InternalAngle > Math.PI) Curvature = CurvatureType.Concave;
+                return true;
+            }
+            Curvature = CurvatureType.SaddleOrFlat;
+            return false;
         }
 
 
@@ -507,7 +487,8 @@ namespace TVGL
         /// </summary>
         internal void Invert()
         {
-            _curvature = (CurvatureType)(-1 * (int)_curvature);
+            if (Curvature != CurvatureType.Undefined)
+                Curvature = (CurvatureType)(-1 * (int)Curvature);
             _internalAngle = Constants.TwoPi - _internalAngle;
             var tempFace = OwnedFace;
             OwnedFace = OtherFace;

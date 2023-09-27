@@ -169,21 +169,31 @@ namespace TVGL
             var center = anchor.ConvertTo2DCoordinates(transform);
             var startPoint = coords.First();
             var prevVector = startPoint - center;
-            var startingAngle = Math.Atan2(prevVector.Y, prevVector.X);
             var angleSum = 0.0;
-            minAngle = double.PositiveInfinity;
-            maxAngle = double.NegativeInfinity;
+            var startingAngle = Math.Atan2(prevVector.Y, prevVector.X);
+            minAngle = startingAngle;
+            maxAngle = startingAngle;
             foreach (var coord in coords.Skip(1))
             {
                 var nextVector = coord - center;
-                angleSum += Math.Atan2(prevVector.Cross(nextVector), prevVector.Dot(nextVector));
-                if (minAngle > angleSum) minAngle = angleSum;
-                if (maxAngle < angleSum) maxAngle = angleSum;
+                var angleDelta = Math.Atan2(prevVector.Cross(nextVector), prevVector.Dot(nextVector));
+                angleSum += angleDelta;
+                startingAngle += angleDelta;
+                if (minAngle > startingAngle) minAngle = startingAngle;
+                if (maxAngle < startingAngle) maxAngle = startingAngle;
                 prevVector = nextVector;
             }
-            minAngle += startingAngle;
-            maxAngle += startingAngle;
-            return angleSum;
+            while (minAngle < -Math.PI)
+            {
+                minAngle += Math.Tau;
+                maxAngle += Math.Tau;
+            }
+            while (minAngle > Math.PI)
+            {
+                minAngle -= Math.Tau;
+                maxAngle -= Math.Tau;
+            }
+            return Math.Abs(angleSum);
         }
         /// <summary>
         /// Finds the total winding angle around the axis and provides the minimum and maximum angle.

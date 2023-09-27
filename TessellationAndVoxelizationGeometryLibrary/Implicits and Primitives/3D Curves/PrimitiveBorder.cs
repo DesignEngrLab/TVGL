@@ -92,23 +92,50 @@ namespace TVGL
         /// <value><c>true</c> if [encircles axis]; otherwise, <c>false</c>.</value>
         public bool EncirclesAxis { get; set; }
 
-        /// <summary>
-        /// Gets or sets a value indicating whether [border is fully concave].
-        /// </summary>
-        /// <value><c>true</c> if [encircles axis]; otherwise, <c>false</c>.</value>
-        public bool FullyConcave { get; set; }
 
         /// <summary>
-        /// Gets or sets a value indicating whether [border is fully concave].
+        /// The curvature
         /// </summary>
-        /// <value><c>true</c> if [encircles axis]; otherwise, <c>false</c>.</value>
-        public bool FullyConvex { get; set; }
+        private CurvatureType _curvature = CurvatureType.Undefined;
+        /// <summary>
+        /// Gets the curvature.
+        /// </summary>
+        /// <value>The curvature.</value>
+        [JsonIgnore]
+        public CurvatureType Curvature
+        {
+            get
+            {
+                if (_curvature == CurvatureType.Undefined)
+                    SetCurvature();
+                return _curvature;
+            }
+            set => _curvature = value;
+        }
 
         /// <summary>
-        /// Gets or sets a value indicating whether [border is flush/flat - not concave or convex].
+        /// Sets the curvature.
         /// </summary>
-        /// <value><c>true</c> if [encircles axis]; otherwise, <c>false</c>.</value>
-        public bool FullyFlush { get; set; }
+        private void SetCurvature()
+        {
+            var concave = 0;
+            var convex = 0;
+            var flat = 0;
+            foreach (var segment in Segments)
+            {
+                if (segment.Curvature == CurvatureType.Concave) concave++;
+                else if (segment.Curvature == CurvatureType.Convex) convex++;
+                else flat++;
+            }
+            if (flat > 0 && convex == 0 && concave == 0)
+                _curvature = CurvatureType.SaddleOrFlat;
+            else if (concave > 0 && flat == 0 && convex == 0)
+                _curvature = CurvatureType.Concave;
+            else if (convex > 0 && flat == 0 && concave == 0)
+                _curvature = CurvatureType.Convex;
+            else
+                _curvature = CurvatureType.SaddleOrFlat;
+        }
 
         /// <summary>
         /// Gets or sets the curve.
@@ -225,9 +252,7 @@ namespace TVGL
             copy.OwnedPrimitive = copiedSurface;
             copy.Curve = Curve;
             copy.EncirclesAxis = EncirclesAxis;
-            copy.FullyFlush = FullyFlush;
-            copy.FullyConcave = FullyConcave;
-            copy.FullyConvex = FullyConvex;
+            copy.Curvature = Curvature;
             CopyEdgesPathData(copy, reverse, copiedTessellatedSolid, startIndex, endIndex);
             return copy;
         }

@@ -410,6 +410,7 @@ namespace TVGL
                 if (_curvature == CurvatureType.Undefined) DefineFaceCurvature();
                 return _curvature;
             }
+            internal set => _curvature = value;
         }
 
         /// <summary>

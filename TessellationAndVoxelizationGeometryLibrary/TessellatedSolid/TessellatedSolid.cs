@@ -38,12 +38,6 @@ namespace TVGL
         public double TessellationError { get; set; } = Constants.DefaultTessellationError;
 
         /// <summary>
-        /// Gets or sets the tessellation maximum angle error.
-        /// </summary>
-        /// <value>The tessellation maximum angle error.</value>
-        public double TessellationMaxAngleError { get; set; } = Constants.DefaultTessellationMaxAngleErrorDegrees;
-
-        /// <summary>
         /// Gets the faces.
         /// </summary>
         /// <value>The faces.</value>
@@ -1600,6 +1594,7 @@ namespace TVGL
             //return result.Subtract(matrixCprime);
             throw new NotImplementedException();
         }
+
         #endregion
 
         /// <summary>

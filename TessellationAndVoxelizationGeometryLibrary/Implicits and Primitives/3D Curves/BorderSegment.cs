@@ -147,18 +147,15 @@ namespace TVGL
             var flat = 0;
             foreach (var (edge, _) in this)
             {
-                if (edge.InternalAngle.IsPracticallySame(Math.PI, Constants.DefaultSameAngleRadians)) flat++;
-                else if (edge.Curvature == CurvatureType.Concave) concave++;
+                if (edge.Curvature == CurvatureType.Concave) concave++;
                 else if (edge.Curvature == CurvatureType.Convex) convex++;
+                else flat++;
             }
-            var flush = flat > 0 && convex == 0 && concave == 0;
-            var fullyConcave = concave > 0 && flat == 0 && convex == 0;
-            var fullyConvex = convex > 0 && flat == 0 && concave == 0;
-            if (flush)
+            if (flat > 0 && convex == 0 && concave == 0)
                 _curvature = CurvatureType.SaddleOrFlat;
-            else if (fullyConcave)
+            else if (concave > 0 && flat == 0 && convex == 0)
                 _curvature = CurvatureType.Concave;
-            else if (fullyConvex)
+            else if (convex > 0 && flat == 0 && concave == 0)
                 _curvature = CurvatureType.Convex;
             else
                 _curvature = CurvatureType.SaddleOrFlat;

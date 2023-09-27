@@ -1102,7 +1102,6 @@ namespace TVGL
             // they have c0 continuity of course (locally water-tight), but may not have C1 continuity
             var characteristicLength = Math.Sqrt((ts.Bounds[1] - ts.Bounds[0]).ToArray().Sum(p => p * p));
             var maxRadius = 33 * characteristicLength; //so a 1x1x1 part would have a max primitive radius of 100
-            var error = characteristicLength / 2000;
             if (ts.NonsmoothEdges == null) ts.NonsmoothEdges = new List<EdgePath>();
             var nonSmoothHash = new HashSet<Edge>(ts.NonsmoothEdges.SelectMany(ep => ep.EdgeList));
             // first, define any edges for any existing primitive surfaces as non-smooth
@@ -1120,7 +1119,7 @@ namespace TVGL
             foreach (var e in ts.Edges)
             {
                 if (nonSmoothHash.Contains(e)) continue;
-                if (e.IsDiscontinuous(ts.SameTolerance, error))
+                if (e.IsDiscontinuous(ts.TessellationError))
                 {
                     nonSmoothHash.Add(e);
                     var edgePath = new EdgePath();

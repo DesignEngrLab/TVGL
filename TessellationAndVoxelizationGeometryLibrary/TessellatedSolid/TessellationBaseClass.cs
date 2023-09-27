@@ -36,7 +36,7 @@ namespace TVGL
         /// Gets the curvature.
         /// </summary>
         /// <value>The curvature.</value>
-        public abstract CurvatureType Curvature { get; }
+        public abstract CurvatureType Curvature { get; internal set; }
 
         /// <summary>
         /// Gets the normal.
