@@ -21,10 +21,15 @@ namespace TVGLUnitTestsAndBenchmarking
         [STAThread]
         private static void Main(string[] args)
         {
-            //var myWriter = new ConsoleTraceListener();
-            //Trace.Listeners.Add(myWriter);
-            //TVGL.Message.Verbosity = VerbosityLevels.AboveNormal;
+            var myWriter = new ConsoleTraceListener();
+            Trace.Listeners.Add(myWriter);
+            TVGL.Message.Verbosity = VerbosityLevels.AboveNormal;
             //Misc_Tests.ZbufferTesting.Test3();
+            //var a = new Vector3(10, 10, 10);
+            var a = new Vector3(-8, 33, 101);
+            //var b = new Vector3(23, -15, -40);
+            var b = new Vector3(3, -15, 40);
+            Plane bisect = CreatePerpendicualBisector(a, b);
             //var summary = BenchmarkRunner.Run<MinimumCircleTesting>();
             //MinimumSphereTesting.Test1(100, 100);
             MinimumCircleTesting.Test1(100000, 100);
@@ -59,6 +64,13 @@ namespace TVGLUnitTestsAndBenchmarking
             //#endif
         }
 
+        private static Plane CreatePerpendicualBisector(Vector3 a, Vector3 b)
+        {
+            var midpoint = (a + b) / 2;
+            var normal = (a - b).Normalize();
+            var plane = new Plane(midpoint, normal);
+            return plane;
+        }
 
         public static DirectoryInfo BackoutToFolder(string folderName = "")
         {

@@ -202,7 +202,7 @@ namespace TVGL
             if (buildOptions.FindNonsmoothEdges)
             {
                 if (!buildOptions.PredefineAllEdges)
-                    throw new ArgumentException("AutomaticallyRepairHoles requires PredefineAllEdges to be true.");
+                    throw new ArgumentException("Finding Nonsmooth Edges requires PredefineAllEdges to be true.");
                 try
                 {
                     FindNonSmoothEdges();
@@ -1097,35 +1097,45 @@ namespace TVGL
         /// <param name="primitives">The primitives.</param>
         void FindNonSmoothEdges()
         {
-            var nullIndex = ts.Edges.FindIndex(e => e == null);
-            // non-smooth edges are defined as those that are not part of the same primitive
-            // they have c0 continuity of course (locally water-tight), but may not have C1 continuity
-            var characteristicLength = Math.Sqrt((ts.Bounds[1] - ts.Bounds[0]).ToArray().Sum(p => p * p));
-            var maxRadius = 33 * characteristicLength; //so a 1x1x1 part would have a max primitive radius of 100
-            if (ts.NonsmoothEdges == null) ts.NonsmoothEdges = new List<EdgePath>();
-            var nonSmoothHash = new HashSet<Edge>(ts.NonsmoothEdges.SelectMany(ep => ep.EdgeList));
-            // first, define any edges for any existing primitive surfaces as non-smooth
-            if (ts.Primitives != null)
-                foreach (var primitive in ts.Primitives)
-                    foreach (var outerEdge in primitive.OuterEdges)
-                        if (!nonSmoothHash.Contains(outerEdge))
-                        {
-                            nonSmoothHash.Add(outerEdge);
-                            var edgePath = new EdgePath();
-                            edgePath.AddEnd(outerEdge);
-                            ts.NonsmoothEdges.Add(edgePath);
-                        }
-            // then, add any conventional edges that have an abrupt change in angle
-            foreach (var e in ts.Edges)
+            // non-smooth edges are defined as those that have c0 continuity of course
+            // (locally water-tight), but do not have C1 continuity
+            ts.NonsmoothEdges = ts.Edges.Where(e => e.IsDiscontinuous(ts.TessellationError)).ToList();
+        }
+
+
+        public static IEnumerable<HashSet<TriangleFace>> GetFacePatchesBetweenBorderEdges(HashSet<Edge> borderEdges,
+            IEnumerable<TriangleFace> faces, HashSet<TriangleFace> usedFaces)
+        {
+            var remainingFaces = new HashSet<TriangleFace>(faces);
+            //Pick a start edge, then collect all adjacent faces on one side of the face, without crossing over significant edges.
+            //This collection of faces will be used to create a patch.
+            while (remainingFaces.Any())
             {
-                if (nonSmoothHash.Contains(e)) continue;
-                if (e.IsDiscontinuous(ts.TessellationError))
+                var startFace = remainingFaces.First();
+                remainingFaces.Remove(startFace);
+                if (usedFaces.Contains(startFace)) continue; // this is redundant with the below check for the same, but
+                                                             // check here saves a split second and the creation of the next two collections.
+                var patch = new HashSet<TriangleFace>();
+                var stack = new Stack<TriangleFace>();
+                stack.Push(startFace);
+                while (stack.Any())
                 {
-                    nonSmoothHash.Add(e);
-                    var edgePath = new EdgePath();
-                    edgePath.AddEnd(e);
-                    ts.NonsmoothEdges.Add(edgePath);
+                    var face = stack.Pop();
+                    if (usedFaces.Contains(face)) continue;
+                    usedFaces.Add(face);
+                    patch.Add(face);
+                    foreach (var edge in face.Edges)
+                    {
+                        if (borderEdges.Contains(edge)) continue;//Don't cross over significant edges
+                        var otherFace = face == edge.OwnedFace ? edge.OtherFace : edge.OwnedFace;
+                        if (remainingFaces.Contains(otherFace))
+                        {
+                            stack.Push(otherFace);
+                            remainingFaces.Remove(otherFace);
+                        }
+                    }
                 }
+                yield return patch;
             }
         }
 

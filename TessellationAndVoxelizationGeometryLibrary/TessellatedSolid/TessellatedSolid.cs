@@ -98,7 +98,7 @@ namespace TVGL
         /// </summary>
         /// <value>The nonsmooth edges.</value>
         [JsonIgnore]
-        public List<EdgePath> NonsmoothEdges { get; set; }
+        public List<Edge> NonsmoothEdges { get; set; }
         #endregion
 
         #region Constructors
@@ -304,6 +304,7 @@ namespace TVGL
         /// <exception cref="System.Exception">Need to add deserialize casting for primitive type: " + primitiveType</exception>
         internal void StreamRead(JsonTextReader reader, out int index, TessellatedSolidBuildOptions tsBuildOptions)
         {
+            // todo: resolive this with OnDeserializedMethod. Are both needed?
             index = -1;
             var jsonSerializer = new Newtonsoft.Json.JsonSerializer();
             reader.Read();
@@ -447,6 +448,7 @@ namespace TVGL
         [OnDeserialized]
         protected void OnDeserializedMethod(StreamingContext context)
         {
+            // todo: resolive this with StreamRead. Are both needed?
             JArray jArray = (JArray)serializationData["VertexCoords"];
             var vertexArray = jArray.ToObject<double[]>();
             var numVertices = vertexArray.Length / 3;
@@ -1325,14 +1327,9 @@ namespace TVGL
             }
             if (NonsmoothEdges != null && NonsmoothEdges.Any())
             {
-                copy.NonsmoothEdges = new List<EdgePath>();
-                foreach (var nonSmoothEdgePath in NonsmoothEdges)
-                {
-                    var copiedPath = new EdgePath();
-                    foreach (var item in nonSmoothEdgePath)
-                        copiedPath.AddEnd(copy.Edges[item.edge.IndexInList], item.dir);
-                    copy.NonsmoothEdges.Add(copiedPath);
-                }
+                copy.NonsmoothEdges = new List<Edge>();
+                foreach (var edge in NonsmoothEdges)
+                    copy.NonsmoothEdges.Add(copy.Edges[edge.IndexInList]);
             }
             copy.ReferenceIndex = ReferenceIndex;
             return copy;

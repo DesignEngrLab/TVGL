@@ -386,7 +386,7 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Copies the specified reverse.
+        /// Copies the specified EdgePath.
         /// </summary>
         /// <param name="reverse">if set to <c>true</c> [reverse].</param>
         /// <param name="copiedTessellatedSolid">The copied tessellated solid.</param>

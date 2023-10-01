@@ -368,7 +368,7 @@ namespace TVGL
         /// <param name="tolerance">The tolerance.</param>
         /// <param name="chordError">The chord error.</param>
         /// <returns>A bool.</returns>
-        public bool IsDiscontinuous(double chordError)
+        internal bool IsDiscontinuous(double chordError)
         {
             if (OtherFace == null || OwnedFace == null) return true;
             var otherV = OtherFace.Normal.Cross(Vector).Normalize();
@@ -381,11 +381,11 @@ namespace TVGL
             var ownedVLength = ownedV.Dot(OwnedFace.OtherVertex(this).Coordinates - From.Coordinates);
             ownedV = ownedVLength * ownedV;
 
-            if(MiscFunctions.LineSegmentsAreC1Discontinuous(ownedV.Dot(otherV), ownedV.Cross(otherV).Length(),
+            if (MiscFunctions.LineSegmentsAreC1Discontinuous(ownedV.Dot(otherV), ownedV.Cross(otherV).Length(),
                 ownedVLength, otherVLength, chordError))
             {
-                        if (InternalAngle < Math.PI) Curvature = CurvatureType.Convex;
-                        else if (InternalAngle > Math.PI) Curvature = CurvatureType.Concave;
+                if (InternalAngle < Math.PI) Curvature = CurvatureType.Convex;
+                else if (InternalAngle > Math.PI) Curvature = CurvatureType.Concave;
                 return true;
             }
             Curvature = CurvatureType.SaddleOrFlat;

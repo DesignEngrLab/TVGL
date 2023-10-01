@@ -626,10 +626,9 @@ namespace TVGL
         /// <param name="faceGroupsThatAreBodies">The face groups that are bodies.</param>
         /// <returns>List&lt;TessellatedSolid&gt;.</returns>
         /// <exception cref="Exception"></exception>
-        public static List<TessellatedSolid> GetMultipleSolids(this TessellatedSolid ts,
+        public static IEnumerable<TessellatedSolid> GetMultipleSolids(this TessellatedSolid ts,
             List<int[]> faceGroupsThatAreBodies = null)
         {
-            var solids = new List<TessellatedSolid>();
             List<List<TriangleFace>> faceGroups;
             HashSet<TriangleFace> unusedFaces;
             if (faceGroupsThatAreBodies != null)
@@ -646,71 +645,55 @@ namespace TVGL
 
             if (faceGroups.Count == 1 && faceGroups[0].Count == ts.NumberOfFaces)
             {
-                solids.Add(ts);
-                return solids;
+                yield return ts;
+                yield break;
             }
-            foreach (var seperateSolid in faceGroups)
+            foreach (var faceGroup in faceGroups)
             {
-                //Copy the non-smooth edges over to the seperate solid
-                Dictionary<(Vector3, Vector3), int> nonSmoothEdgesForSolid = null;
-                if (ts.NonsmoothEdges != null && ts.NonsmoothEdges.Any())
-                {
-                    //Get all the edges in order, avoiding duplicates by using a hashset.
-                    var edges = new HashSet<Edge>();
-                    foreach (var face in seperateSolid)
-                        foreach (var edge in face.Edges)
-                            edges.Add(edge);
-
-                    nonSmoothEdgesForSolid = new Dictionary<(Vector3, Vector3), int>();
-                    var i = 0;
-                    foreach (var edgePath in ts.NonsmoothEdges)
-                    {
-                        //Check if this edge path belong entirely to this solid.
-                        var belongs = true;
-                        foreach (var (edge, _) in edgePath)
-                        {
-                            if (!edges.Contains(edge))
-                            {
-                                belongs = false;
-                                break;
-                            }
-                        }
-                        if (belongs)
-                        {
-                            foreach (var (edge, _) in edgePath)
-                                nonSmoothEdgesForSolid.Add((edge.From.Coordinates, edge.To.Coordinates), i);
-                            i++;
-                        }
-                    }
-                }
-
-                var newSolid = new TessellatedSolid(seperateSolid, null, new TessellatedSolidBuildOptions
+                var newSolid = new TessellatedSolid(faceGroup, null, new TessellatedSolidBuildOptions
                 {
                     FindNonsmoothEdges = false,
                     CopyElementsPassedToConstructor = false,
                     AutomaticallyRepairHoles = false,
                     FixEdgeDisassociations = false
                 });
-
-                if (nonSmoothEdgesForSolid != null)
+                if (ts.NonsmoothEdges != null && ts.NonsmoothEdges.Count > 0)
                 {
-                    var nonSmoothEdges = new Dictionary<int, EdgePath>();
-                    foreach (var i in nonSmoothEdgesForSolid.Values.Distinct())
-                        nonSmoothEdges.Add(i, new EdgePath());
+                    //Get all the edges in order, avoiding duplicates by using a hashset.
+                    var edges = new HashSet<Edge>();
+                    foreach (var face in faceGroup)
+                        foreach (var edge in face.Edges)
+                            edges.Add(edge);
+
+                    var nonSmoothVectorPairsInOriginial = new HashSet<(Vector3, Vector3)>();
+                    var nonSmoothEdges = new List<Edge>();
+                    foreach (var edge in ts.NonsmoothEdges)
+                        if (edges.Contains(edge))
+                            nonSmoothVectorPairsInOriginial.Add((edge.From.Coordinates, edge.To.Coordinates));
+
                     foreach (var edge in newSolid.Edges)
                     {
-                        var pathIndex = -1;
-                        if (nonSmoothEdgesForSolid.TryGetValue((edge.From.Coordinates, edge.To.Coordinates), out pathIndex)
-                            || nonSmoothEdgesForSolid.TryGetValue((edge.To.Coordinates, edge.From.Coordinates), out pathIndex))
-                            nonSmoothEdges[pathIndex].AddEnd(edge);
+                        if (nonSmoothVectorPairsInOriginial.Contains((edge.From.Coordinates, edge.To.Coordinates))
+                            || nonSmoothVectorPairsInOriginial.Contains((edge.To.Coordinates, edge.From.Coordinates)))
+                            nonSmoothEdges.Add(edge);
                     }
-                    newSolid.NonsmoothEdges = nonSmoothEdges.Values.ToList();
+                    if (nonSmoothEdges.Count > 0)
+                        newSolid.NonsmoothEdges = nonSmoothEdges;
                 }
-
-                solids.Add(newSolid);
+                if (ts.Primitives != null && ts.Primitives.Count > 0)
+                {
+                    foreach (var primitive in ts.Primitives)
+                    {
+                        if (faceGroup.Contains(primitive.Faces.First()))
+                        {
+                            var faceIndices = primitive.Faces.Select(f => faceGroup.IndexOf(f)).ToList();
+                            var primCopy = primitive.Copy(faceIndices.Select(idx => newSolid.Faces[idx]));
+                            newSolid.Primitives.Add(primitive); // does it need to be copied?
+                        }
+                    }
+                }
+                    yield return newSolid;
             }
-
-            return solids;
         }
 
         public static List<List<TriangleFace>> GetContiguousFaceGroups(this IEnumerable<TriangleFace> facesInput)
@@ -744,7 +727,7 @@ namespace TVGL
         {
             var faceGroups = new List<List<TriangleFace>>();
             var unusedFacesDictionary = ts.Faces.ToHashSet();    //ToDictionary(face => face.IndexInList);
-            // first the easy part - simply separate out known groups that have already been determined to be bodies
+                                                                 // first the easy part - simply separate out known groups that have already been determined to be bodies
             if (faceGroupsThatAreBodies != null)
             {
                 foreach (var bodyGroupIndices in faceGroupsThatAreBodies)
@@ -2265,7 +2248,7 @@ namespace TVGL
             var anchor = unique3DLine.Z * iAxis + unique3DLine.W * jAxis;
             return (anchor, direction);
         }
-       
+
         /// <summary>
         /// Typeses the implementing i curve.
         /// </summary>

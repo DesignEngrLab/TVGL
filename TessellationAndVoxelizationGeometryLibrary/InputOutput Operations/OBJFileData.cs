@@ -13,6 +13,7 @@
 // ***********************************************************************
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -128,10 +129,9 @@ namespace TVGL
                                InferUnitsFromComments(objFileData.Comments), objFileData.Name, filename, objFileData.Comments,
                                objFileData.Language);
                 if (!tsBuildOptions.PredefineAllEdges) return new[] { ts };
-                List<int[]> faceGroupsThatAreBodies = null;
-                if (tsBuildOptions.FindNonsmoothEdges)
-                    CreateRegionsFromPolylineAndFaceGroups(objFileData, ts, out faceGroupsThatAreBodies);
-                var multipleSolids = ts.GetMultipleSolids(faceGroupsThatAreBodies);
+
+                CreateRegionsFromPolylineAndFaceGroups(objFileData, ts);
+                var multipleSolids = ts.GetMultipleSolids();
                 foreach (var solid in multipleSolids)
                     results.Add(solid);
             }
@@ -147,88 +147,62 @@ namespace TVGL
         /// <param name="objFileData">The object file data.</param>
         /// <param name="ts">The ts.</param>
         /// <param name="faceGroupsThatAreBodies">The face groups that are bodies.</param>
-        private static void CreateRegionsFromPolylineAndFaceGroups(OBJFileData objFileData, TessellatedSolid ts, out List<int[]> faceGroupsThatAreBodies)
+        private static void CreateRegionsFromPolylineAndFaceGroups(OBJFileData objFileData, TessellatedSolid ts)
         {
-            faceGroupsThatAreBodies = new List<int[]>();
-            ts.NonsmoothEdges = new List<EdgePath>();
-            var remainingFaces = new HashSet<TriangleFace>(ts.Faces);
-
+            var usedFaces = new HashSet<TriangleFace>();
+            var borderEdges = new HashSet<Edge>();
+            var patches = new List<HashSet<TriangleFace>>();
+            foreach (var faceIndices in objFileData.FaceGroups)
+            {
+                var faceGroupFaces = faceIndices.Select(index => ts.Faces[index]).ToHashSet();
+                patches.Add(faceGroupFaces);
+                foreach (var face in faceGroupFaces)
+                    usedFaces.Add(face);
+                MiscFunctions.DefineInnerOuterEdges(faceGroupFaces, out _, out var outerEdges);
+                foreach (var edge in outerEdges)
+                    borderEdges.Add(edge);
+            }
+            var borderSegments = new List<BorderSegment>();
             foreach (var borderIndices in objFileData.SurfaceEdges)
             {
-                var loop = new EdgePath();
+                var loop = new BorderSegment();
                 for (int k = 1, j = 0; k < borderIndices.Length; j = k++) //clever loop to have j always one step behind k
                 {
                     var vertexJ = ts.Vertices[borderIndices[j]];
                     var vertexK = ts.Vertices[borderIndices[k]];
-                    Edge discontinuousEdge = null;
+                    Edge connectingEdge = null;
                     foreach (var edge in vertexJ.Edges)
                     {
                         if (edge.OtherVertex(vertexJ) == vertexK)
                         {
-                            discontinuousEdge = edge;
+                            connectingEdge = edge;
                             break;
                         }
                     }
-                    if (discontinuousEdge == null) continue; //The edge may have been part of a duplicate face or otherwise removed
-                    loop.AddEnd(discontinuousEdge);
+                    if (connectingEdge == null) continue; //The edge may have been part of a duplicate face or otherwise removed
+                    loop.AddEnd(connectingEdge);
+                    borderEdges.Add(connectingEdge);
                 }
                 loop.UpdateIsClosed();
-                ts.NonsmoothEdges.Add(loop);
+                borderSegments.Add(loop);
             }
-            if (objFileData.FaceGroups.Count > 1) // && !objFileData.SurfaceEdges.Any())
+            patches.AddRange(TessellationBuildAndRepair.GetFacePatchesBetweenBorderEdges(borderEdges, ts.Faces, usedFaces));
+            foreach (var patch in patches)
             {
-                foreach (var faceIndices in objFileData.FaceGroups)
-                {
-                    MiscFunctions.DefineInnerOuterEdges(faceIndices.Select(index => ts.Faces[index]), out _, out var outerEdges);
-                    if (!outerEdges.Any()) faceGroupsThatAreBodies.Add(faceIndices);
-                    else
-                    {
-                        foreach (var discontinuousEdge in outerEdges)
-                        {
-                            var edgePath = new EdgePath();
-                            edgePath.AddEnd(discontinuousEdge);
-                            ts.NonsmoothEdges.Add(edgePath);
-                        }
-                    }
-                }
+                ts.Primitives.Add(new UnknownRegion(patch));
             }
-            //if (!ts.NonsmoothEdges.Any())
-            //{
-            //    //Try setting the edges. This is less accurate tha
-            //    var dotMinSmoothAngle = Math.Abs(Math.Cos(Constants.TwoPi - Constants.MinSmoothAngle));
-            //    var vertexNormals = objFileData.VertexNormals.Keys.Select(n => n.Normalize()).ToList();
-            //    foreach (var possibleEdge in ts.Edges)
-            //    {
-            //        if (ts.NonsmoothEdges.Contains(possibleEdge)) continue;
-            //        var index = possibleEdge.OwnedFace.IndexInList;
-            //        var ownedFace = ts.Faces[index];
-            //        if (index >= objFileData.FaceToNormalIndices.Count) continue;
-            //        var ownedNormalIndices = objFileData.FaceToNormalIndices[index];
-            //        index = possibleEdge.OtherFace.IndexInList;
-            //        var otherFace = ts.Faces[index];
-            //        if (index >= objFileData.FaceToNormalIndices.Count) continue;
-            //        var otherNormalIndices = objFileData.FaceToNormalIndices[index];
-            //        index = ownedFace.Vertices.IndexOf(possibleEdge.From);
-            //        var fromOwnedIndex = ownedNormalIndices[index];
-            //        var fromOwnedNormal = vertexNormals[fromOwnedIndex];
-            //        index = otherFace.Vertices.IndexOf(possibleEdge.From);
-            //        var fromOtherIndex = ownedNormalIndices[index];
-            //        var fromOtherNormal = vertexNormals[fromOtherIndex];
-            //        if (fromOwnedNormal.Dot(fromOtherNormal) < dotMinSmoothAngle)
-            //            ts.NonsmoothEdges.Add(possibleEdge);
-            //        else
-            //        {
-            //            index = ownedFace.Vertices.IndexOf(possibleEdge.To);
-            //            var toOwnedIndex = ownedNormalIndices[index];
-            //            var toOwnedNormal = vertexNormals[toOwnedIndex];
-            //            index = otherFace.Vertices.IndexOf(possibleEdge.To);
-            //            var toOtherIndex = ownedNormalIndices[index];
-            //            var toOtherNormal = vertexNormals[toOtherIndex];
-            //            if (toOwnedNormal.Dot(toOtherNormal) < dotMinSmoothAngle)
-            //                ts.NonsmoothEdges.Add(possibleEdge);
-            //        }
-            //    }
-            //}
+            //MiscFunctions.DefineBorderSegments(borderSegments);
+            foreach (var segment in borderSegments)
+            {
+                var ownedFace = segment.DirectionList[0] ? segment.EdgeList[0].OwnedFace : segment.EdgeList[0].OtherFace;
+                var otherFace = segment.DirectionList[0] ? segment.EdgeList[0].OtherFace : segment.EdgeList[0].OwnedFace;
+                var ownedPrimitive = ts.Primitives.FirstOrDefault(p => p.Faces.Contains(ownedFace));
+                var otherPrimitive = ts.Primitives.FirstOrDefault(p => p.Faces.Contains(otherFace));
+                if (ownedPrimitive.BorderSegments == null) ownedPrimitive.BorderSegments = new List<BorderSegment>();
+                ownedPrimitive.BorderSegments.Add(segment);
+                if (otherPrimitive.BorderSegments == null) otherPrimitive.BorderSegments = new List<BorderSegment>();
+                otherPrimitive.BorderSegments.Add(segment);
+            }
         }
 
 

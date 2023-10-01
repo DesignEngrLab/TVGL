@@ -32,6 +32,12 @@ namespace TVGL
         {
         }
 
+        internal BorderSegment(EdgePath edgePath)
+        {
+            EdgeList = edgePath.EdgeList;
+            DirectionList = edgePath.DirectionList;
+        }
+
         //First primitive connected to this border segment. There is no logic to determine owned/other; it is arbitrary (currently).
         /// <summary>
         /// Gets or sets the owned primitive.

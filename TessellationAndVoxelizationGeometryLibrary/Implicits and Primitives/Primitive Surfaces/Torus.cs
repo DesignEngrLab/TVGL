@@ -254,7 +254,7 @@ namespace TVGL
         /// <param name="vertexCoord">The vertex coord.</param>
         /// <param name="planeDist">The plane dist.</param>
         /// <returns>Vector3.</returns>
-        public static Vector3 ClosestPointOnCenterRingToPoint(Vector3 axis, Vector3 center, double majorRadius, Vector3 vertexCoord, 
+        public static Vector3 ClosestPointOnCenterRingToPoint(Vector3 axis, Vector3 center, double majorRadius, Vector3 vertexCoord,
             double planeDist = double.NaN)
         {
             if (double.IsNaN(planeDist)) planeDist = center.Dot(axis);
@@ -270,6 +270,37 @@ namespace TVGL
             var firstFace = Faces.First();
             var anchor = ClosestPointOnCenterRingToPoint(Axis, Center, MajorRadius, firstFace.Center);
             isPositive = (firstFace.Center - anchor).Dot(firstFace.Normal) > 0;
+        }
+
+        public double FindLargestEncompassingAnglesInTube()
+        {
+            var globalMinAngle = double.PositiveInfinity;
+            var globalMaxAngle = double.NegativeInfinity;
+            foreach (var path in Borders)
+            {
+                FindWindingAroundTube(path.GetVectors(), out var minAngle, out var maxAngle);
+                if (globalMinAngle > minAngle) globalMinAngle = minAngle;
+                if (globalMaxAngle < maxAngle) globalMaxAngle = maxAngle;
+            }
+            return globalMaxAngle - globalMinAngle;
+        }
+
+        private double FindWindingAroundTube(IEnumerable<Vector3> points, out double minAngle, out double maxAngle)
+        {
+            minAngle = double.PositiveInfinity;
+            maxAngle = double.NegativeInfinity;
+            foreach (var point in points)
+            {
+                var ringPoint = ClosestPointOnCenterRingToPoint(Axis, Center, MajorRadius, point);
+                var xAxis = (ringPoint - Center).Normalize();
+                var localCoord = point - ringPoint;
+                var xCoord = xAxis.Dot(localCoord);
+                var yCoord = Axis.Dot(localCoord);
+                var angle = Math.Atan2(yCoord, xCoord);
+                if (minAngle > angle) minAngle = angle;
+                if (maxAngle < angle) maxAngle = angle;
+            }
+            return maxAngle - minAngle;
         }
     }
 }
