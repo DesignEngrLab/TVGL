@@ -6,7 +6,7 @@
 // Last Modified By : campmatt
 // Last Modified On : 04-03-2023
 // ***********************************************************************
-// <copyright file="PrimitiveBorder.cs" company="Design Engineering Lab">
+// <copyright file="BorderLoop.cs" company="Design Engineering Lab">
 //     2014
 // </copyright>
 // <summary></summary>
@@ -19,15 +19,15 @@ using System.Linq;
 namespace TVGL
 {
     /// <summary>
-    /// Class PrimitiveSurfaceBorder.
+    /// Class BorderLoop.
     /// </summary>
     [JsonObject]
-    public class PrimitiveBorder : EdgePath
+    public class BorderLoop : EdgePath
     {
         /// <summary>
-        /// Default instance of the <see cref="PrimitiveBorder" />.
+        /// Default instance of the <see cref="BorderLoop" />.
         /// </summary>
-        public PrimitiveBorder() : base()
+        public BorderLoop() : base()
         {
             Segments = new List<BorderSegment>();
             SegmentDirections = new List<bool>();
@@ -179,45 +179,6 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="PrimitiveBorder"/> class.
-        /// </summary>
-        /// <param name="curve">The curve.</param>
-        /// <param name="surface">The surface.</param>
-        /// <param name="path">The path.</param>
-        /// <param name="curveError">The curve error.</param>
-        /// <param name="surfError">The surf error.</param>
-        public PrimitiveBorder(ICurve curve, PrimitiveSurface surface, EdgePath path, double curveError,
-            double surfError) : this(curve, surface, path.EdgeList, path.DirectionList, curveError, surfError)
-        {
-            EdgeList = path.EdgeList;
-            DirectionList = path.DirectionList;
-            Curve = curve;
-            OwnedPrimitive = surface;
-            CurveError = curveError;
-            PlaneError = surfError;
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="PrimitiveBorder"/> class.
-        /// </summary>
-        /// <param name="curve">The curve.</param>
-        /// <param name="surface">The surface.</param>
-        /// <param name="edges">The edges.</param>
-        /// <param name="directions">The directions.</param>
-        /// <param name="curveError">The curve error.</param>
-        /// <param name="surfError">The surf error.</param>
-        public PrimitiveBorder(ICurve curve, PrimitiveSurface surface, List<Edge> edges, List<bool> directions,
-            double curveError, double surfError)
-        {
-            EdgeList = edges;
-            DirectionList = directions;
-            Curve = curve;
-            OwnedPrimitive = surface;
-            CurveError = curveError;
-            PlaneError = surfError;
-        }
-
-        /// <summary>
         /// Gets as polygon.
         /// </summary>
         /// <value>As polygon.</value>
@@ -244,11 +205,11 @@ namespace TVGL
         /// <param name="copiedTessellatedSolid">The copied tessellated solid.</param>
         /// <param name="startIndex">The start index.</param>
         /// <param name="endIndex">The end index.</param>
-        /// <returns>PrimitiveBorder.</returns>
-        public PrimitiveBorder Copy(PrimitiveSurface copiedSurface, bool reverse = false, TessellatedSolid copiedTessellatedSolid = null,
+        /// <returns>BorderLoop.</returns>
+        public BorderLoop Copy(PrimitiveSurface copiedSurface, bool reverse = false, TessellatedSolid copiedTessellatedSolid = null,
             int startIndex = 0, int endIndex = -1)
         {
-            var copy = new PrimitiveBorder();
+            var copy = new BorderLoop();
             copy.OwnedPrimitive = copiedSurface;
             copy.Curve = Curve;
             copy.EncirclesAxis = EncirclesAxis;
@@ -276,7 +237,7 @@ namespace TVGL
         /// </summary>
         /// <param name="segment">The segment.</param>
         /// <param name="dir">if set to <c>true</c> [dir].</param>
-        private void AddEnd(BorderSegment segment, bool dir)
+        public void AddEnd(BorderSegment segment, bool dir)
         {
             Segments.Add(segment);
             SegmentDirections.Add(dir);
@@ -306,7 +267,7 @@ namespace TVGL
         /// </summary>
         /// <param name="segment">The segment.</param>
         /// <param name="dir">if set to <c>true</c> [dir].</param>
-        private void AddBegin(BorderSegment segment, bool dir)
+        public void AddBegin(BorderSegment segment, bool dir)
         {
             Segments.Insert(0, segment);
             SegmentDirections.Insert(0, dir);
@@ -402,104 +363,5 @@ namespace TVGL
                 else return Segments[^1].FirstVertex;
             }
         }
-
-        /// <summary>
-        /// Creates a List of PrimitiveBorders from a collection of border segments
-        /// </summary>
-        /// <param name="borderSegments"></param>
-        /// <param name="borders"></param>
-        public static List<PrimitiveBorder> GetBorders(IEnumerable<BorderSegment> borderSegments)
-        {
-            var borders = new List<PrimitiveBorder>();
-            foreach (var segment in borderSegments)
-            {
-                //check if any border contains the vertices 
-                var addToBorder = new List<(PrimitiveBorder border, bool addToEnd, bool aligned)>();
-                foreach (var border in borders.Where(p => !p.IsClosed))
-                {
-                    var addToEnd = false;
-                    var aligned = false;
-                    var match = false;
-                    if (border.FirstVertex == segment.FirstVertex)
-                    {
-                        addToEnd = false;
-                        aligned = false;
-                        match = true;
-                    }
-                    else if (border.FirstVertex == segment.LastVertex)
-                    {
-                        addToEnd = false;
-                        aligned = true;
-                        match = true;
-                    }
-                    else if (border.LastVertex == segment.FirstVertex)
-                    {
-                        addToEnd = true;
-                        aligned = true;
-                        match = true;
-                    }
-                    else if (border.LastVertex == segment.LastVertex)
-                    {
-                        addToEnd = true;
-                        aligned = false;
-                        match = true;
-                    }
-                    if (match)
-                        addToBorder.Add((border, addToEnd, aligned));
-                }
-                if (addToBorder.Count == 0)
-                {
-                    var border = new PrimitiveBorder();
-                    border.Add(segment, true, true);
-                    border.UpdateIsClosed();
-                    borders.Add(border);
-                }
-                else
-                {
-                    var (border, addToEnd, aligned) = addToBorder[0];
-                    border.Add(segment, addToEnd, aligned);
-                    border.UpdateIsClosed();
-                }
-                //if connected to more than one, combine them
-                if (addToBorder.Count == 2)
-                {
-                    CombineTwoBorders(addToBorder[0].border, addToBorder[1].border);
-                    var border = addToBorder[0].border;
-                    border.UpdateIsClosed();
-                    borders.Remove(addToBorder[1].Item1);
-                }
-            }
-            return borders;
-        }
-
-        /// <summary>
-        /// Combines border2 into border1
-        /// </summary>
-        /// <param name="border1"></param>
-        /// <param name="border2"></param>
-        public static void CombineTwoBorders(PrimitiveBorder border1, PrimitiveBorder border2)
-        {
-            //The edgePath has already been added to border1. So, we need to figure out how to attach border2.
-            //Get the vertex that is between border1 and border2
-            //If this vertex is the first vertex in border2, then add border2 to the end of border1.
-            var aligned = border1.LastVertex == border2.FirstVertex || border1.FirstVertex == border2.LastVertex;
-            var addToEnd = border1.LastVertex == border2.FirstVertex || border1.LastVertex == border2.LastVertex;
-            //If aligned and adding to the end, we want to add the edge paths in their current order.
-            //If not aligned and inserting into the beginning, we want to insert the edge paths from the first to the last - thus reversing them.
-            if (aligned == addToEnd)
-                for (int i = 0; i < border2.Segments.Count; i++)
-                {
-                    var path = border2.Segments[i];
-                    border1.Add(path, addToEnd, border2.SegmentDirections[i] == aligned);
-                }
-            //Else if not aligned and adding to the end, we want to add the edge paths in their reverse order.
-            //Else if aligned and inserting into the beginning, we want to insert the edge paths from the last to the first - thus maintaining their order.
-            else
-            {
-                for (var i = border2.Segments.Count - 1; i >= 0; i--)
-                    border1.Add(border2.Segments[i], addToEnd, border2.SegmentDirections[i] == aligned);
-            }
-        }
-
     }
 }

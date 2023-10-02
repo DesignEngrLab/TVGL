@@ -6,11 +6,12 @@
 // Last Modified By : matth
 // Last Modified On : 04-14-2023
 // ***********************************************************************
-// <copyright file="TessellationBuildAndRepair.cs" company="Design Engineering Lab">
+// <copyright file="TessellationInspectAndRepair.cs" company="Design Engineering Lab">
 //     2014
 // </copyright>
 // <summary></summary>
 // ***********************************************************************
+using ClipperLib;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -22,11 +23,11 @@ namespace TVGL
     /// <summary>
     /// Stores errors in the tessellated solid
     /// </summary>
-    public class TessellationBuildAndRepair
+    public class TessellationInspectAndRepair
     {
         private readonly TessellatedSolid ts;
 
-        private TessellationBuildAndRepair(TessellatedSolid ts)
+        private TessellationInspectAndRepair(TessellatedSolid ts)
         {
             this.ts = ts;
             ContainsErrors = false;
@@ -111,7 +112,7 @@ namespace TVGL
                 removedFaces = new List<TriangleFace>();
                 return;
             }
-            var buildAndErrorInfo = new TessellationBuildAndRepair(ts);
+            var buildAndErrorInfo = new TessellationInspectAndRepair(ts);
             buildAndErrorInfo.CompleteBuildOptions(buildOptions, out removedFaces);
         }
 
@@ -530,7 +531,7 @@ namespace TVGL
                  (face.C == from && face.A == to);
         }
 
-        private static void ReportErrors(TessellationBuildAndRepair tsErrors)
+        private static void ReportErrors(TessellationInspectAndRepair tsErrors)
         {
             Message.output("Errors found in model:", 3);
             Message.output("======================", 3);
@@ -1092,14 +1093,32 @@ namespace TVGL
         #endregion Repair Functions
         /// <summary>
         /// Finds all non smooth edges in the tessellated solid.
+        /// non-smooth edges are defined as those that have c0 continuity of course
+        /// (locally water-tight), but do not have C1 continuity
         /// </summary>
         /// <param name="ts">The ts.</param>
         /// <param name="primitives">The primitives.</param>
-        void FindNonSmoothEdges()
+        void FindNonSmoothEdges(double chordError = double.NaN)
         {
-            // non-smooth edges are defined as those that have c0 continuity of course
-            // (locally water-tight), but do not have C1 continuity
-            ts.NonsmoothEdges = ts.Edges.Where(e => e.IsDiscontinuous(ts.TessellationError)).ToList();
+            ts.NonsmoothEdges = new List<Edge>();
+            if (double.IsNaN(chordError))
+            {
+               var diagonal =  (ts.Bounds[1] - ts.Bounds[0]).Length();
+                chordError = 0.05 * diagonal;
+            }
+            // i don't like the 2.5 here either, but it is the result of some testing
+            foreach (var e in ts.Edges)
+            {
+                e.Curvature = CurvatureType.SaddleOrFlat;
+                var angleFromFlat = e.InternalAngle - Math.PI;
+                if (angleFromFlat.IsNegligible(Constants.DefaultSameAngleRadians)) continue;
+                if (Math.Abs(angleFromFlat) >= Constants.MinSmoothAngle || e.IsDiscontinuous(chordError))
+                {
+                    if (angleFromFlat < 0) e.Curvature = CurvatureType.Convex;
+                    else e.Curvature = CurvatureType.Concave;
+                    ts.NonsmoothEdges.Add(e);
+                }
+            }
         }
 
 
@@ -1289,5 +1308,281 @@ namespace TVGL
                 }
             }
         }
+
+
+        #region Border Building Functions
+        /// <summary>
+        /// Define Borders given that the primitives and border segments have already been defined.
+        /// </summary>
+        /// <param name="solid"></param>
+        /// <exception cref="Exception"></exception>
+        public static void DefineBorders(TessellatedSolid solid)
+        {
+            DefineBorderSegments(solid);
+            foreach (var prim in solid.Primitives)
+                DefineBorders(prim);
+        }
+
+
+        /// <summary>
+        /// Creates a List of PrimitiveBorders from a collection of border segments
+        /// </summary>
+        /// <param name="borderSegments"></param>
+        /// <param name="borders"></param>
+        public static List<BorderLoop> DefineBorders(PrimitiveSurface primitive)
+        {
+            var borders = DefineBorders(primitive.BorderSegments, primitive);
+            primitive.Borders = borders;
+            return borders;
+        }
+
+        public static List<BorderLoop> DefineBorders(List<BorderSegment> borderSegments, PrimitiveSurface primitive)
+        {
+            var borders = new List<BorderLoop>();
+            foreach (var segment in borderSegments)
+            {
+                //check if any border contains the vertices 
+                var addToBorder = new List<(BorderLoop border, bool addToEnd, bool aligned)>();
+                foreach (var border in borders.Where(p => !p.IsClosed))
+                {
+                    var addToEnd = false;
+                    var aligned = false;
+                    var match = false;
+                    if (border.FirstVertex == segment.FirstVertex)
+                    {
+                        addToEnd = false;
+                        aligned = false;
+                        match = true;
+                    }
+                    else if (border.FirstVertex == segment.LastVertex)
+                    {
+                        addToEnd = false;
+                        aligned = true;
+                        match = true;
+                    }
+                    else if (border.LastVertex == segment.FirstVertex)
+                    {
+                        addToEnd = true;
+                        aligned = true;
+                        match = true;
+                    }
+                    else if (border.LastVertex == segment.LastVertex)
+                    {
+                        addToEnd = true;
+                        aligned = false;
+                        match = true;
+                    }
+                    if (match)
+                        addToBorder.Add((border, addToEnd, aligned));
+                }
+                if (addToBorder.Count == 0)
+                {
+                    var border = new BorderLoop { OwnedPrimitive = primitive };
+                    border.Add(segment, true, primitive == segment.OwnedPrimitive);
+                    border.UpdateIsClosed();
+                    borders.Add(border);
+                }
+                else
+                {
+                    var (border, addToEnd, aligned) = addToBorder[0];
+                    border.Add(segment, addToEnd, aligned);
+                    border.UpdateIsClosed();
+                }
+                //if connected to more than one, combine them
+                if (addToBorder.Count == 2)
+                {
+                    CombineTwoBorders(addToBorder[0].border, addToBorder[1].border);
+                    var border = addToBorder[0].border;
+                    border.UpdateIsClosed();
+                    borders.Remove(addToBorder[1].Item1);
+                }
+            }
+            return borders;
+        }
+
+        /// <summary>
+        /// Combines border2 into border1
+        /// </summary>
+        /// <param name="border1"></param>
+        /// <param name="border2"></param>
+        public static void CombineTwoBorders(BorderLoop border1, BorderLoop border2)
+        {
+            //The edgePath has already been added to border1. So, we need to figure out how to attach border2.
+            //Get the vertex that is between border1 and border2
+            //If this vertex is the first vertex in border2, then add border2 to the end of border1.
+            var aligned = border1.LastVertex == border2.FirstVertex || border1.FirstVertex == border2.LastVertex;
+            var addToEnd = border1.LastVertex == border2.FirstVertex || border1.LastVertex == border2.LastVertex;
+            //If aligned and adding to the end, we want to add the edge paths in their current order.
+            //If not aligned and inserting into the beginning, we want to insert the edge paths from the first to the last - thus reversing them.
+            if (aligned == addToEnd)
+                for (int i = 0; i < border2.Segments.Count; i++)
+                {
+                    var path = border2.Segments[i];
+                    border1.Add(path, addToEnd, border2.SegmentDirections[i] == aligned);
+                }
+            //Else if not aligned and adding to the end, we want to add the edge paths in their reverse order.
+            //Else if aligned and inserting into the beginning, we want to insert the edge paths from the last to the first - thus maintaining their order.
+            else
+            {
+                for (var i = border2.Segments.Count - 1; i >= 0; i--)
+                    border1.Add(border2.Segments[i], addToEnd, border2.SegmentDirections[i] == aligned);
+            }
+        }
+
+
+        internal static void DefineBorderSegments(TessellatedSolid solid)
+        {
+            foreach (var prim in solid.Primitives)
+                prim.BorderSegments = new List<BorderSegment>();
+            var borderSegments = GatherEdgesIntoSegments(solid.NonsmoothEdges
+                .Concat(solid.Primitives.SelectMany(prim => prim.OuterEdges)));
+            foreach (var segment in borderSegments)
+            {
+                var ownedFace = segment.DirectionList[0] ? segment.EdgeList[0].OwnedFace : segment.EdgeList[0].OtherFace;
+                var otherFace = segment.DirectionList[0] ? segment.EdgeList[0].OtherFace : segment.EdgeList[0].OwnedFace;
+                var ownedPrimitive = solid.Primitives.FirstOrDefault(p => p.Faces.Contains(ownedFace));
+                var otherPrimitive = solid.Primitives.FirstOrDefault(p => p.Faces.Contains(otherFace));
+                if (ownedPrimitive == otherPrimitive)
+                    continue;
+                segment.OwnedPrimitive = ownedPrimitive;
+                segment.OtherPrimitive = otherPrimitive;
+                ownedPrimitive.BorderSegments.Add(segment);
+                otherPrimitive.BorderSegments.Add(segment);
+            }
+        }
+        public static void RedefineBorderSegments(TessellatedSolid solid, PrimitiveSurface primitive)
+        {
+            var outerEdgeHash = new HashSet<Edge>(primitive.OuterEdges);
+            primitive.BorderSegments = new List<BorderSegment>();
+            foreach (var segment in solid.Primitives.SelectMany(p => p.BorderSegments))
+                if (outerEdgeHash.Contains(segment.EdgeList[0]))
+                {
+                    primitive.BorderSegments.Add(segment);
+                    foreach (var edge in segment.EdgeList)
+                        outerEdgeHash.Remove(edge);
+                }
+            primitive.BorderSegments.AddRange(GatherEdgesIntoSegments(outerEdgeHash));
+        }
+
+        private static IEnumerable<BorderSegment> GatherEdgesIntoSegments(IEnumerable<Edge> edges)
+        {
+            var deadEnds = new Dictionary<Vertex, Edge>();
+            var connectingVertices = new Dictionary<Vertex, (Edge, Edge)>();
+            var intesections = new Dictionary<Vertex, List<Edge>>();
+            var distinctEdges = new HashSet<Edge>();
+            var distinctBorders = new HashSet<BorderSegment>();
+            foreach (var edge in edges)
+            {
+                if (distinctEdges.Add(edge))
+                {
+                    AddEdgeToDictionaries(deadEnds, connectingVertices, intesections, edge, edge.From);
+                    AddEdgeToDictionaries(deadEnds, connectingVertices, intesections, edge, edge.To);
+                }
+            }
+            // at this point, each edge should be in 2 dictionaries
+            var edgeToSegments = new Dictionary<Edge, BorderSegment>();
+            foreach (var entry in connectingVertices)
+            {
+                var vertex = entry.Key;
+                var edgePair = entry.Value;
+                var edge1 = edgePair.Item1;
+                var edge2 = edgePair.Item2;
+                var edge1Found = edgeToSegments.TryGetValue(edge1, out var segment1);
+                var edge2Found = edgeToSegments.TryGetValue(edge2, out var segment2);
+                if (edge1Found && edge2Found)
+                {
+                    if (segment1 == segment2)
+                    {
+                        if (distinctBorders.Add(segment1))
+                        {
+                            segment1.UpdateIsClosed();
+                            yield return segment1;
+                        }
+                    }
+                    else
+                    {
+                        CombineTwoEdgePaths(vertex, segment1, segment2);
+                        edgeToSegments[edge2] = segment1;
+                    }
+                }
+                else if (edge1Found)
+                { // edge2 is new
+                    if (segment1.LastVertex == vertex) segment1.AddEnd(edge2);
+                    else if (segment1.FirstVertex == vertex) segment1.AddBegin(edge2);
+                    else throw new Exception("This should never happen");
+                    edgeToSegments.Add(edge2, segment1);
+                }
+                else if (edge2Found)
+                { // edge1 is new
+                    if (segment2.LastVertex == vertex) segment2.AddEnd(edge1);
+                    else if (segment2.FirstVertex == vertex) segment2.AddBegin(edge1);
+                    else throw new Exception("This should never happen");
+                    edgeToSegments.Add(edge1, segment2);
+                }
+                else
+                {
+                    var newSegment = new BorderSegment();
+                    newSegment.AddEnd(edge1);
+                    if (newSegment.LastVertex == vertex) newSegment.AddEnd(edge2);
+                    else if (newSegment.FirstVertex == vertex) newSegment.AddBegin(edge2);
+                    edgeToSegments.Add(edge1, newSegment);
+                    edgeToSegments.Add(edge2, newSegment);
+                }
+            }
+            foreach (var edge in deadEnds.Values.Concat(intesections.Values.SelectMany(v => v)))
+            {
+                if (!edgeToSegments.ContainsKey(edge))
+                {
+                    var newSegment = new BorderSegment();
+                    newSegment.AddEnd(edge);
+                    edgeToSegments.Add(edge, newSegment);
+                }
+            }
+            foreach (var entry in edgeToSegments)
+            {
+                var segment = entry.Value;
+                if (distinctBorders.Add(segment))
+                {
+                    segment.UpdateIsClosed();
+                    yield return segment;
+                }
+            }
+        }
+
+        private static void AddEdgeToDictionaries(Dictionary<Vertex, Edge> deadEnds, Dictionary<Vertex, (Edge, Edge)> connectingVertices, Dictionary<Vertex, List<Edge>> intesections, Edge edge, Vertex v)
+        {
+            if (intesections.TryGetValue(v, out var edgeCollection))
+                edgeCollection.Add(edge);
+            else if (connectingVertices.TryGetValue(v, out var edgePair))
+            {
+                connectingVertices.Remove(v);
+                intesections.Add(v, new List<Edge> { edgePair.Item1, edgePair.Item2, edge });
+            }
+            else if (deadEnds.TryGetValue(v, out var matingEdge))
+            {
+                deadEnds.Remove(v);
+                connectingVertices.Add(v, (matingEdge, edge));
+            }
+            else deadEnds.Add(v, edge);
+        }
+
+        private static void CombineTwoEdgePaths(Vertex vertex, EdgePath edgepath1, EdgePath edgepath2)
+        {
+            var addToEnd = vertex == edgepath1.LastVertex;
+            var addInForward = addToEnd == (vertex == edgepath2.FirstVertex);
+            if (addInForward && addToEnd)
+                foreach (var item in edgepath2)
+                    edgepath1.AddEnd(item.edge, item.dir);
+            else if (addToEnd)
+                foreach (var item in edgepath2.Reverse())
+                    edgepath1.AddEnd(item.edge, !item.dir);
+            else if (addInForward)
+                foreach (var item in edgepath2.Reverse())
+                    edgepath1.AddBegin(item.edge, item.dir);
+            else //add to beginning
+                foreach (var item in edgepath2)
+                    edgepath1.AddBegin(item.edge, !item.dir);
+        }
+        #endregion
     }
 }

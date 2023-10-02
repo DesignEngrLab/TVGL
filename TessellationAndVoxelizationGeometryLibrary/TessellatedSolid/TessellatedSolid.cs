@@ -91,7 +91,7 @@ namespace TVGL
         /// </summary>
         /// <value>The errors.</value>
         [JsonIgnore]
-        public TessellationBuildAndRepair Errors { get; internal set; }
+        public TessellationInspectAndRepair Errors { get; internal set; }
 
         /// <summary>
         /// Gets or sets the nonsmooth edges, which are the edges that do not exhibit C1 or C2 continuity.
@@ -145,7 +145,7 @@ namespace TVGL
             MakeVertices(vertsPerFaceList, scaleFactor, out var faceToVertexIndices);
             //Complete Construction with Common Functions
             MakeFaces(faceToVertexIndices, numOfFaces, colors);
-            TessellationBuildAndRepair.CompleteBuildOptions(this, buildOptions, out _);
+            TessellationInspectAndRepair.CompleteBuildOptions(this, buildOptions, out _);
         }
 
         /// <summary>
@@ -191,7 +191,7 @@ namespace TVGL
             MakeVertices(vertices, numOfVertices);
             DefineAxisAlignedBoundingBoxAndTolerance(Vertices.Select(v => v.Coordinates));
             MakeFaces(faceToVertexIndices, numOfFaces, colors);
-            TessellationBuildAndRepair.CompleteBuildOptions(this, buildOptions, out _);
+            TessellationInspectAndRepair.CompleteBuildOptions(this, buildOptions, out _);
         }
 
         /// <summary>
@@ -414,7 +414,7 @@ namespace TVGL
             DefineAxisAlignedBoundingBoxAndTolerance();
             //DoublyConnectVerticesToFaces();
             //Build edges, convex hull, and anything else we need.
-            TessellationBuildAndRepair.CompleteBuildOptions(this, tsBuildOptions, out var removedFaces);
+            TessellationInspectAndRepair.CompleteBuildOptions(this, tsBuildOptions, out var removedFaces);
 
             if (removedFaces.Count > 0)
             {
@@ -479,7 +479,7 @@ namespace TVGL
                 foreach (var surface in Primitives)
                     surface.CompletePostSerialization(this);
             }
-            TessellationBuildAndRepair.CompleteBuildOptions(this, (TessellatedSolidBuildOptions)context.Context, out var removedFaces);
+            TessellationInspectAndRepair.CompleteBuildOptions(this, (TessellatedSolidBuildOptions)context.Context, out var removedFaces);
             if (removedFaces.Count > 0)
             {
                 // if the build/repair altered the faces, then we may need to check if there
@@ -598,7 +598,7 @@ namespace TVGL
                 Faces = faces as TriangleFace[] ?? faces.ToArray();
                 DoublyConnectVerticesToFaces();
             }
-            TessellationBuildAndRepair.CompleteBuildOptions(this, buildOptions, out _);
+            TessellationInspectAndRepair.CompleteBuildOptions(this, buildOptions, out _);
         }
 
         /// <summary>
@@ -1321,6 +1321,8 @@ namespace TVGL
                         copy.Faces[edge.OwnedFace.IndexInList],
                         copy.Faces[edge.OtherFace.IndexInList], true);
                     edgeNew.IndexInList = i;
+                    edgeNew.Curvature = edge.Curvature;
+                    edgeNew.PartOfConvexHull = edge.PartOfConvexHull;
                     copy.Edges[i] = edgeNew;
                 }
 

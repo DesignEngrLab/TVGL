@@ -380,16 +380,8 @@ namespace TVGL
             var ownedV = OwnedFace.Normal.Cross(Vector).Normalize();
             var ownedVLength = ownedV.Dot(OwnedFace.OtherVertex(this).Coordinates - From.Coordinates);
             ownedV = ownedVLength * ownedV;
-
-            if (MiscFunctions.LineSegmentsAreC1Discontinuous(ownedV.Dot(otherV), ownedV.Cross(otherV).Length(),
-                ownedVLength, otherVLength, chordError))
-            {
-                if (InternalAngle < Math.PI) Curvature = CurvatureType.Convex;
-                else if (InternalAngle > Math.PI) Curvature = CurvatureType.Concave;
-                return true;
-            }
-            Curvature = CurvatureType.SaddleOrFlat;
-            return false;
+            return MiscFunctions.LineSegmentsAreC1Discontinuous(ownedV.Dot(otherV), ownedV.Cross(otherV).Length(),
+                ownedVLength, otherVLength, chordError);
         }
 
 

@@ -31,7 +31,7 @@ namespace TVGL
         /// </summary>
         /// <param name="surface">The surface.</param>
         /// <returns>A list of PrimitiveBorders.</returns>
-        public static IEnumerable<PrimitiveBorder> BordersEncirclingAxis(this PrimitiveSurface surface)
+        public static IEnumerable<BorderLoop> BordersEncirclingAxis(this PrimitiveSurface surface)
         {
             var axis = surface.GetAxis();
             if (axis.IsNull()) yield break;
@@ -46,7 +46,7 @@ namespace TVGL
         /// </summary>
         /// <param name="surface">The surface.</param>
         /// <returns>A list of PrimitiveBorders.</returns>
-        public static IEnumerable<PrimitiveBorder> BordersEncirclingAxis(this PrimitiveSurface surface, Vector3 axis, Vector3 anchor)
+        public static IEnumerable<BorderLoop> BordersEncirclingAxis(this PrimitiveSurface surface, Vector3 axis, Vector3 anchor)
         {
             foreach (var border in surface.Borders)
                 if (border.BorderEncirclesAxis(axis, anchor))
@@ -59,7 +59,7 @@ namespace TVGL
         /// <param name="surface">The surface.</param>
         /// <param name="border">The border.</param>
         /// <returns>A bool.</returns>
-        public static bool BorderEncirclesAxis(this PrimitiveSurface surface, PrimitiveBorder border)
+        public static bool BorderEncirclesAxis(this PrimitiveSurface surface, BorderLoop border)
         {
             var axis = surface.GetAxis();
             if (axis.IsNull()) return false;
@@ -76,7 +76,7 @@ namespace TVGL
         /// <param name="axis">The axis.</param>
         /// <param name="anchor">The anchor.</param>
         /// <returns>A bool.</returns>
-        public static bool BorderEncirclesAxis(this PrimitiveBorder border, Vector3 axis, Vector3 anchor)
+        public static bool BorderEncirclesAxis(this BorderLoop border, Vector3 axis, Vector3 anchor)
         {
             return border.GetVectors().BorderEncirclesAxis(axis, anchor);
         }
@@ -89,7 +89,7 @@ namespace TVGL
         /// <param name="transform">The transform.</param>
         /// <param name="anchor">The anchor.</param>
         /// <returns>A bool.</returns>
-        public static bool BorderEncirclesAxis(this PrimitiveBorder border, Matrix4x4 transform, Vector3 anchor)
+        public static bool BorderEncirclesAxis(this BorderLoop border, Matrix4x4 transform, Vector3 anchor)
         {
             return border.GetVectors().BorderEncirclesAxis(transform, anchor);
         }

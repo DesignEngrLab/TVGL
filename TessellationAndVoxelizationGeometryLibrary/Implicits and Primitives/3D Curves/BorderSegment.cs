@@ -57,7 +57,7 @@ namespace TVGL
         /// </summary>
         /// <param name="prim">The prim.</param>
         /// <returns>PrimitiveSurface.</returns>
-        public PrimitiveSurface GetSecondPrimitive(PrimitiveSurface prim)
+        public PrimitiveSurface AdjacentPrimitive(PrimitiveSurface prim)
         {
             if (prim == OwnedPrimitive) return OtherPrimitive;
             if (prim == OtherPrimitive) return OwnedPrimitive;
@@ -157,14 +157,14 @@ namespace TVGL
                 else if (edge.Curvature == CurvatureType.Convex) convex++;
                 else flat++;
             }
-            if (flat > 0 && convex == 0 && concave == 0)
-                _curvature = CurvatureType.SaddleOrFlat;
-            else if (concave > 0 && flat == 0 && convex == 0)
+            if (concave >= flat + convex)
                 _curvature = CurvatureType.Concave;
-            else if (convex > 0 && flat == 0 && concave == 0)
+            else if (convex >= flat + concave)
                 _curvature = CurvatureType.Convex;
-            else
+            else if (flat >= convex + concave)
                 _curvature = CurvatureType.SaddleOrFlat;
+            else 
+                _curvature = CurvatureType.Undefined;
         }
 
         /// <summary>
@@ -187,11 +187,11 @@ namespace TVGL
             if (reverse)
             {
                 copy.OwnedPrimitive = OtherPrimitive;
-                copy.OtherPrimitive= OwnedPrimitive;
+                copy.OtherPrimitive = OwnedPrimitive;
             }
             else
             {
-                  copy.OwnedPrimitive = OwnedPrimitive;
+                copy.OwnedPrimitive = OwnedPrimitive;
                 copy.OtherPrimitive = OtherPrimitive;
             }
             this.CopyEdgesPathData(copy, reverse, copiedTessellatedSolid, startIndex, endIndex);

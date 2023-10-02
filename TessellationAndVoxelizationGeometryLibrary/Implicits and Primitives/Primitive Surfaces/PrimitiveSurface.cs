@@ -474,7 +474,7 @@ namespace TVGL
         /// many border segments in the border. 
         /// </summary>
         /// <value>The borders.</value>
-        public List<PrimitiveBorder> Borders { get; set; }
+        public List<BorderLoop> Borders { get; set; }
 
         /// <summary>
         /// Gets or sets the border segments.
@@ -657,7 +657,7 @@ namespace TVGL
         {
             foreach (var border in Borders)
                 foreach (var segment in border.Segments)
-                    if (segment.GetSecondPrimitive(this) == other)
+                    if (segment.AdjacentPrimitive(this) == other)
                         return segment;
             return null;
         }
