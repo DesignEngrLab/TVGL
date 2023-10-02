@@ -1104,7 +1104,7 @@ namespace TVGL
             if (double.IsNaN(chordError))
             {
                var diagonal =  (ts.Bounds[1] - ts.Bounds[0]).Length();
-                chordError = 0.05 * diagonal;
+                chordError = 0.03 * diagonal;
             }
             // i don't like the 2.5 here either, but it is the result of some testing
             foreach (var e in ts.Edges)

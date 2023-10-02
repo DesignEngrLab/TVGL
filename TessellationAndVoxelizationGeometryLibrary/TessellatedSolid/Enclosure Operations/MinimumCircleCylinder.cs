@@ -58,7 +58,7 @@ namespace TVGL
                 {
                     var dist = (points[i] - circle.Center).LengthSquared();
 
-                    if (maxDistSqared < dist)
+                    if (dist.IsGreaterThanNonNegligible(maxDistSqared))
                     {
                         maxDistSqared = dist;
                         indexOfMaxDist = i;
@@ -111,7 +111,7 @@ namespace TVGL
             return circle;
         }
         private static Circle FindCircle(Vector2[] points)
-        { // else if (numInCircle == 4)
+        { 
           // we know that 1,2,3 defined (were encompassed by) the last circle
           // the new 0 is outside of the 1-2-3 circle
           // so we need to
@@ -163,7 +163,7 @@ namespace TVGL
                 circle = tempCircle;
                 minRadiusSqd = circle.RadiusSquared;
             }
-            // circle 0-1-3
+            // circle 0-2-3
             var swap3And1 = false;
             if (Circle.CreateFrom3Points(points[0], points[2], points[3], out tempCircle)
                 && (points[1] - tempCircle.Center).LengthSquared() <= tempCircle.RadiusSquared
