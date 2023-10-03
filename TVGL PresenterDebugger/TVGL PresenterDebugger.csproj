@@ -27,12 +27,13 @@
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Implicits and Primitives\3D Curves\Helix.cs" Link="TVGL\Implicits and Primitives\3D Curves\Helix.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Implicits and Primitives\3D Curves\StraightLine3D.cs" Link="TVGL\Implicits and Primitives\3D Curves\StraightLine3D.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Implicits and Primitives\3D Curves\BorderSegment.cs" Link="TVGL\Implicits and Primitives\3D Curves\BorderSegment.cs" />
-		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Implicits and Primitives\3D Curves\PrimitiveBorder.cs" Link="TVGL\Implicits and Primitives\3D Curves\PrimitiveBorder.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Implicits and Primitives\3D Curves\BorderLoop.cs" Link="TVGL\Implicits and Primitives\3D Curves\BorderLoop.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Implicits and Primitives\Primitive Surfaces\Capsule.cs" Link="TVGL\Implicits and Primitives\Primitive Surfaces\Capsule.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Implicits and Primitives\Primitive Surfaces\Cone.cs" Link="TVGL\Implicits and Primitives\Primitive Surfaces\Cone.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Implicits and Primitives\Primitive Surfaces\Cylinder.cs" Link="TVGL\Implicits and Primitives\Primitive Surfaces\Cylinder.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Implicits and Primitives\Primitive Surfaces\Plane.cs" Link="TVGL\Implicits and Primitives\Primitive Surfaces\Plane.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Implicits and Primitives\Primitive Surfaces\PrimitiveSurface.cs" Link="TVGL\Implicits and Primitives\Primitive Surfaces\PrimitiveSurface.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Implicits and Primitives\Primitive Surfaces\PrimitiveSurfaceExtensions.cs" Link="TVGL\Implicits and Primitives\Primitive Surfaces\PrimitiveSurfaceExtensions.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Implicits and Primitives\Primitive Surfaces\Prismatic.cs" Link="TVGL\Implicits and Primitives\Primitive Surfaces\Prismatic.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Implicits and Primitives\Primitive Surfaces\Sphere.cs" Link="TVGL\Implicits and Primitives\Primitive Surfaces\Sphere.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Implicits and Primitives\Primitive Surfaces\Torus.cs" Link="TVGL\Implicits and Primitives\Primitive Surfaces\Torus.cs" />
@@ -141,7 +142,7 @@
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\TessellatedSolid\ModifyTessellation\Single3DPolygonTriangulation.cs" Link="TVGL\TessellatedSolid\ModifyTessellation\Single3DPolygonTriangulation.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\TessellatedSolid\ModifyTessellation\ModifyTessellation.AddRemoveElements.cs" Link="TVGL\TessellatedSolid\ModifyTessellation\ModifyTessellation.AddRemoveElements.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\TessellatedSolid\ModifyTessellation\SimplifyTessellation.cs" Link="TVGL\TessellatedSolid\ModifyTessellation\SimplifyTessellation.cs" />
-		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\TessellatedSolid\ModifyTessellation\TessellationBuildAndRepair.cs" Link="TVGL\TessellatedSolid\ModifyTessellation\TessellationBuildAndRepair.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\TessellatedSolid\ModifyTessellation\TessellationInspectAndRepair.cs" Link="TVGL\TessellatedSolid\ModifyTessellation\TessellationInspectAndRepair.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\TessellatedSolid\TriangleFace.cs" Link="TVGL\TessellatedSolid\TriangleFace.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\TessellatedSolid\Slicing\ContactData.cs" Link="TVGL\TessellatedSolid\Slicing\ContactData.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\TessellatedSolid\Slicing\Slice.cs" Link="TVGL\TessellatedSolid\Slicing\Slice.cs" />

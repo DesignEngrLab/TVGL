@@ -1,12 +1,9 @@
-using BenchmarkDotNet.Running;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Reflection;
 using TVGL;
-using TVGLUnitTestsAndBenchmarking.Misc_Tests;
 
 namespace TVGLUnitTestsAndBenchmarking
 {
@@ -16,6 +13,7 @@ namespace TVGLUnitTestsAndBenchmarking
         //public static string inputFolder = "OneDrive - medemalabs.com";
         static Random r = new Random();
         static double r1 => 2.0 * r.NextDouble() - 1.0;
+        static double r100 => 200.0 * r.NextDouble() - 100.0;
 
 
         [STAThread]
@@ -23,24 +21,17 @@ namespace TVGLUnitTestsAndBenchmarking
         {
             var myWriter = new ConsoleTraceListener();
             Trace.Listeners.Add(myWriter);
-            TVGL.Message.Verbosity = VerbosityLevels.AboveNormal;
-            //Misc_Tests.ZbufferTesting.Test3();
-            //var a = new Vector3(10, 10, 10);
-            var a = new Vector3(-8, 33, 101);
-            //var b = new Vector3(23, -15, -40);
-            var b = new Vector3(3, -15, 40);
-            Plane bisect = CreatePerpendicualBisector(a, b);
-            //var summary = BenchmarkRunner.Run<MinimumCircleTesting>();
-            //MinimumSphereTesting.Test1(100, 100);
-            MinimumCircleTesting.Test1(100000, 100);
-            return;
+            TVGL.Message.Verbosity = VerbosityLevels.OnlyCritical;
             DirectoryInfo dir = Program.BackoutToFolder(inputFolder);
-
+            ICPTesting.TestPoints(dir);
+            Console.ReadLine();
+            //return;
 
             //#if PRESENT
-            var index = 482;
+            var index = 2;
             var valid3DFileExtensions = new HashSet<string> { ".stl", ".ply", ".obj", ".3mf" };// ".tvglz", 
-            var allFiles = dir.GetFiles("*", SearchOption.AllDirectories).Where(f => valid3DFileExtensions.Contains(f.Extension.ToLower()));
+            var allFiles = dir.GetFiles("*", SearchOption.AllDirectories).Where(f => valid3DFileExtensions.Contains(f.Extension.ToLower()))
+                ; //.OrderBy(fi => fi.Length);
             foreach (var fileName in allFiles.Skip(index))
             {
                 Console.Write(index + ": Attempting to open: " + fileName.Name);
@@ -53,15 +44,10 @@ namespace TVGLUnitTestsAndBenchmarking
                 if (solids.Length == 0) continue;
                 Console.WriteLine("," + solids[0].NumberOfVertices + "," + solids[0].NumberOfEdges + "," +
                     solids[0].NumberOfFaces + "," + sw.ElapsedTicks);
-                //Presenter.ShowAndHang(solids);
-                //solids[0].Faces[0].Color = Color.ColorDictionary[ColorFamily.Red]["Red"];
-                //var css = CrossSectionSolid.CreateFromTessellatedSolid(solids[0], CartesianDirections.XPositive, 20);
-                //Presenter.ShowAndHang(css);
-                //IO.Save(css, "test.CSSolid");
+                Presenter.ShowAndHang(solids);
+       
                 index++;
             }
-            Console.ReadLine();
-            //#endif
         }
 
         private static Plane CreatePerpendicualBisector(Vector3 a, Vector3 b)
