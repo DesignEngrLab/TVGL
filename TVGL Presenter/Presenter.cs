@@ -259,7 +259,6 @@ namespace TVGL
             foreach (var points in pointSets)
             {
                 colorEnumerator.MoveNext();
-                colorEnumerator = colors.GetEnumerator();
                 var color = colorEnumerator.Current;
                 var pointVisuals = GetPointModels(points, radius, color);
                 vm.Add(pointVisuals);

@@ -13,7 +13,7 @@ namespace TVGL.PointCloud
             int stepsSinceImprovement = 50, int maxIterations = 500)
         {
             return Run(KDTree.Create(targetPoints, Enumerable.Range(0, targetPoints.Count).ToList()),
-                KDTree.Create(originalData, Enumerable.Range(0, targetPoints.Count).ToList()), minError, stepsSinceImprovement, maxIterations);
+                KDTree.Create(originalData, Enumerable.Range(0, originalData.Count).ToList()), minError, stepsSinceImprovement, maxIterations);
         }
         public static Matrix4x4 Run(IList<Vector3> targetPoints, IList<Vector3> originalPoints, IList<Vector3> targetNormals,
             IList<Vector3> originalNormals, double minError = 1e-7, int stepsSinceImprovement = 50, int maxIterations = 500)
