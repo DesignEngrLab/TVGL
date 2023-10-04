@@ -18,6 +18,7 @@ using HelixToolkit.SharpDX.Core;
 using OxyPlot;
 using System;
 using System.Runtime.CompilerServices;
+using System.Windows.Media;
 
 namespace TVGL
 {
@@ -234,6 +235,57 @@ namespace TVGL
             window.ShowDialog();
         }
 
+
+        #region ShowPaths with or without Solid(s)
+        public static void ShowPoints(IEnumerable<Vector3> points, double radius = 0, Color color = null)
+        {
+            if (radius == 0) radius = 1;
+            if (color == null) color = new Color(KnownColors.White);
+            var pointVisuals = GetPointModels(points, radius, color);
+            var vm = new Window3DPlotViewModel();
+            vm.Add(pointVisuals);
+            var window = new Window3DPlot(vm);
+            window.ShowDialog();
+        }
+
+        public static void ShowPoints(IEnumerable<IEnumerable<Vector3>> pointSets, double radius = 0, IEnumerable<Color> colors = null)
+        {
+            if (radius == 0) radius = 1;
+            //set the default color to be the first color in the list. If none was provided, use black.
+            colors = colors ?? Color.GetRandomColors();
+            var colorEnumerator = colors.GetEnumerator();
+
+            var vm = new Window3DPlotViewModel();
+            foreach (var points in pointSets)
+            {
+                colorEnumerator.MoveNext();
+                colorEnumerator = colors.GetEnumerator();
+                var color = colorEnumerator.Current;
+                var pointVisuals = GetPointModels(points, radius, color);
+                vm.Add(pointVisuals);
+            }
+            var window = new Window3DPlot(vm);
+            window.ShowDialog();
+        }
+
+        public static IEnumerable<GeometryModel3D> GetPointModels(IEnumerable<Vector3> points, double radius = 0, Color tvglColor = null)
+        {
+            var color = new System.Windows.Media.Color { R = tvglColor.R, G = tvglColor.G, B = tvglColor.B, A = tvglColor.A };
+            yield return new PointGeometryModel3D
+            {
+                Geometry = new PointGeometry3D
+                {
+                    Positions = new Vector3Collection(points.Select(p => new SharpDX.Vector3((float)p.X, (float)p.Y, (float)p.Z)))
+                },
+                Size = new System.Windows.Size(radius, radius),
+                FixedSize = true,
+                Color = color
+            };
+        }
+
+
+
+        #endregion
 
         #region ShowPaths with or without Solid(s)
         public static void ShowVertexPaths(IEnumerable<Vector3> vertices, Solid solid = null, double lineThickness = 0,
