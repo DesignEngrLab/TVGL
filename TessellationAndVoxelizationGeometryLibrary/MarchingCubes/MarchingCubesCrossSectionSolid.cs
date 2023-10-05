@@ -256,7 +256,7 @@ namespace TVGL
         /// <returns>System.Double[].</returns>
         private double[,] CreateDistanceGrid(IList<Polygon> layer)
         {
-            var allIntersections = PolygonOperations.AllPolygonIntersectionPointsAlongHorizontalLines(layer, _yMin, numGridY, discretization, out var firstIntersectingIndex);
+            var allIntersections = PolygonOperations.AllPolygonIntersectionPointsAlongHorizontalLines(layer, _yMin, discretization, out var firstIntersectingIndex);
             using var allIntersectionsEnumerator = allIntersections.GetEnumerator();
             var grid = new double[numGridX, numGridY];
             for (int j = 0; j < numGridY; j++)
