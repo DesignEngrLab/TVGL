@@ -425,21 +425,22 @@ namespace TVGL
         /// perpendicular distance from the origin to the line (meeting at a right angle is provided to indicate where the increments start from.
         /// </summary>
         /// <param name="polygons">The polygons.</param>
-        /// <param name="lineNormalDirection">The line direction.</param>
+        /// <param name="sweepLineDirection">The line direction.</param>
         /// <param name="perpendicularDistanceToLine">The line reference.</param>
         /// <param name="numSteps">The number steps.</param>
         /// <param name="stepSize">Size of the step.</param>
         /// <param name="firstIntersectingIndex">First index of the intersecting.</param>
         /// <returns>List&lt;Vector2&gt;.</returns>
         /// <exception cref="NotImplementedException"></exception>
-        public static List<Vector2[]> AllPolygonIntersectionPointsAlongLine(this IEnumerable<Polygon> polygons, Vector2 lineNormalDirection,
+        public static List<Vector2[]> AllPolygonIntersectionPointsAlongLine(this IEnumerable<Polygon> polygons, Vector2 sweepLineDirection,
             double perpendicularDistanceToLine, int numSteps, double stepSize, out int firstIntersectingIndex)
         {
-            var lineDir = new Vector2(-lineNormalDirection.Y, lineNormalDirection.X);
-            var lineReference = perpendicularDistanceToLine * lineNormalDirection;
+            sweepLineDirection = sweepLineDirection.Normalize();
+            var lineDir = new Vector2(-sweepLineDirection.Y, sweepLineDirection.X);
+            var lineReference = perpendicularDistanceToLine * sweepLineDirection;
             var intersections = new List<Vector2[]>();
             var sortedPoints = new List<Vertex2D>();
-            var comparer = new VertexSortedByDirection(lineNormalDirection);
+            var comparer = new VertexSortedByDirection(sweepLineDirection);
             foreach (var polygon in polygons.SelectMany(p => p.AllPolygons))
             {
                 polygon.MakePolygonEdgesIfNonExistent();
@@ -450,20 +451,20 @@ namespace TVGL
                 firstIntersectingIndex = -1;
                 return intersections;
             }
-            var firstDistance = sortedPoints[0].Coordinates.Dot(lineNormalDirection);
-            var lastDistance = sortedPoints[^1].Coordinates.Dot(lineNormalDirection);
+            var firstDistance = sortedPoints[0].Coordinates.Dot(sweepLineDirection);
+            var lastDistance = sortedPoints[^1].Coordinates.Dot(sweepLineDirection);
             var tolerance = (lastDistance - firstDistance) * Constants.BaseTolerance;
             var currentLines = new HashSet<PolygonEdge>();
             var nextDistance = firstDistance;
             firstIntersectingIndex = (int)Math.Ceiling((nextDistance - perpendicularDistanceToLine) / stepSize);
             var pointIndex = 0;
-            for (int i = firstIntersectingIndex; i < numSteps; i++)
+            var d = perpendicularDistanceToLine;
+            while (d < lastDistance)
             {
-                var d = perpendicularDistanceToLine + i * stepSize;
                 var thisPoint = sortedPoints[pointIndex];
                 var needToOffset = false;
                 // this while loop updates the current lines. 
-                var thisPointD = thisPoint.Coordinates.Dot(lineNormalDirection);
+                var thisPointD = thisPoint.Coordinates.Dot(sweepLineDirection);
                 while (thisPointD <= d)
                 {
                     if (d.IsPracticallySame(thisPointD, tolerance)) needToOffset = true;
@@ -476,7 +477,7 @@ namespace TVGL
                     thisPoint = sortedPoints[pointIndex];
                 }
                 if (needToOffset)
-                    d += Math.Min(stepSize, sortedPoints[pointIndex].Coordinates.Dot(lineNormalDirection) - d) / 10.0;
+                    d += Math.Min(stepSize, sortedPoints[pointIndex].Coordinates.Dot(sweepLineDirection) - d) / 10.0;
 
                 var numIntersects = currentLines.Count;
                 var intersects = new Vector2[numIntersects];
@@ -484,6 +485,7 @@ namespace TVGL
                 foreach (var line in currentLines)
                     intersects[index++] = MiscFunctions.LineLine2DIntersection(line.FromPoint.Coordinates, line.Vector, lineReference, lineDir);
                 intersections.Add(intersects.OrderBy(x => x.Dot(lineDir)).ToArray());
+                d += stepSize;
             }
             return intersections;
         }
@@ -500,8 +502,9 @@ namespace TVGL
         /// <param name="firstIntersectingIndex">First index of the intersecting.</param>
         /// <returns>List&lt;System.Double[]&gt;.</returns>
         public static List<double[]> AllPolygonIntersectionPointsAlongVerticalLines(this IEnumerable<Polygon> polygons, double startingXValue,
-              int numSteps, double stepSize, out int firstIntersectingIndex)
+             double stepSize, out int firstIntersectingIndex)
         {
+            var xEnd = polygons.Max(p => p.MaxX);
             var intersections = new List<double[]>();
             var sortedPoints = new List<Vertex2D>();
             var comparer = new TwoDSortXFirst();
@@ -520,9 +523,9 @@ namespace TVGL
             var nextDistance = sortedPoints.First().X;
             firstIntersectingIndex = (int)Math.Ceiling((nextDistance - startingXValue) / stepSize);
             var pointIndex = 0;
-            for (int i = firstIntersectingIndex; i < numSteps; i++)
+            var x = startingXValue;
+            while (x < xEnd)
             {
-                var x = startingXValue + i * stepSize;
                 var thisPoint = sortedPoints[pointIndex];
                 var needToOffset = false;
                 while (thisPoint.X <= x)
@@ -544,6 +547,7 @@ namespace TVGL
                 foreach (var line in currentLines)
                     intersects[index++] = line.FindYGivenX(x, out _);
                 intersections.Add(intersects.OrderBy(y => y).ToArray());
+                x += stepSize;
             }
             return intersections;
         }
@@ -560,8 +564,9 @@ namespace TVGL
         /// <param name="firstIntersectingIndex">First index of the intersecting.</param>
         /// <returns>List&lt;System.Double[]&gt;.</returns>
         public static List<double[]> AllPolygonIntersectionPointsAlongHorizontalLines(this IEnumerable<Polygon> polygons,
-            double startingYValue, int numSteps, double stepSize, out int firstIntersectingIndex)
+            double startingYValue, double stepSize, out int firstIntersectingIndex)
         {
+            var yEnd = polygons.Max(p => p.MaxY);
             var intersections = new List<double[]>();
             var sortedPoints = new List<Vertex2D>();
             var comparer = new TwoDSortYFirst();
@@ -580,9 +585,9 @@ namespace TVGL
             var nextDistance = sortedPoints.First().Y;
             firstIntersectingIndex = (int)Math.Ceiling((nextDistance - startingYValue) / stepSize);
             var pointIndex = 0;
-            for (int i = firstIntersectingIndex; i < numSteps; i++)
+            var y = startingYValue;
+            while (y > yEnd)
             {
-                var y = startingYValue + i * stepSize;
                 var thisPoint = sortedPoints[pointIndex];
                 var needToOffset = false;
                 // this while loop updates the current lines. 
@@ -606,6 +611,7 @@ namespace TVGL
                 foreach (var line in currentLines)
                     intersects[index++] = line.FindXGivenY(y, out _);
                 intersections.Add(intersects.OrderBy(x => x).ToArray());
+                y += stepSize;
             }
             return intersections;
         }
