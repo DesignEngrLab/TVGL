@@ -232,6 +232,10 @@ namespace TVGL
         {
             return double.NaN;
         }
+        public override Vector3 GetNormalAtPoint(Vector3 point)
+        {
+            throw new NotImplementedException();
+        }
 
         protected override void CalculateIsPositive()
         {

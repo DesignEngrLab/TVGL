@@ -256,6 +256,21 @@ namespace TVGL
         }
 
         /// <summary>
+        /// Gets the normal at point.
+        /// </summary>
+        /// <param name="point">The point.</param>
+        /// <returns>A Vector3.</returns>
+        public override Vector3 GetNormalAtPoint(Vector3 point)
+        {
+            var a = (point - Apex);
+            var b = a.Cross(Axis);
+            var c = Axis.Cross(b).Normalize();  // outward from the axis to the point
+            var outwardVector = (c - (Axis * Aperture)) / Math.Sqrt(1 + Aperture * Aperture);
+            if (isPositive.HasValue && !isPositive.Value) outwardVector *= -1;
+            return outwardVector;
+        }
+
+        /// <summary>
         /// Points the membership.
         /// </summary>
         /// <param name="point">The point.</param>
@@ -264,7 +279,9 @@ namespace TVGL
         {
             var v = point - Apex;
             var distAtCommonDepth = v.Cross(Axis).Length() - Aperture * v.Dot(Axis);
-            return distAtCommonDepth * cosAperture;
+            var d = distAtCommonDepth * cosAperture;
+            if (IsPositive.HasValue && !IsPositive.Value) d = -d;
+            return d;
         }
 
         protected override void CalculateIsPositive()

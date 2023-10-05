@@ -247,6 +247,16 @@ namespace TVGL
             return PointMembership(x) < 0 == IsPositive;
         }
 
+        public override Vector3 GetNormalAtPoint(Vector3 point)
+        {
+            var a = (point - Anchor);
+            var dirAxis = a.Dot(Axis) < 0 ? -Axis : Axis;
+            var b = dirAxis.Cross(a);
+            var outwardVector = b.Cross(Axis).Normalize();
+            if (isPositive.HasValue && !isPositive.Value) outwardVector *= -1;
+            return outwardVector;
+        }
+
         /// <summary>
         /// Points the membership.
         /// </summary>
@@ -257,7 +267,9 @@ namespace TVGL
             var dxAlong = point.Dot(Axis);
             if (dxAlong < MinDistanceAlongAxis) return MinDistanceAlongAxis - dxAlong;
             if (dxAlong > MaxDistanceAlongAxis) return dxAlong - MaxDistanceAlongAxis;
-            return (point - Anchor).Cross(Axis).Length() - Radius;
+            var d = (point - Anchor).Cross(Axis).Length() - Radius;
+            if (IsPositive.HasValue && !IsPositive.Value) d = -d;
+            return d;
         }
 
         protected override void CalculateIsPositive()

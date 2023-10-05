@@ -248,6 +248,13 @@ namespace TVGL
             return PointMembership(x) < 0 == IsPositive;
         }
 
+        public override Vector3 GetNormalAtPoint(Vector3 point)
+        {
+            var d = (point - Center).Normalize();
+            if (IsPositive.HasValue && !IsPositive.Value) d = -d;
+            return d;
+        }
+
         /// <summary>
         /// Points the membership.
         /// </summary>
@@ -255,7 +262,9 @@ namespace TVGL
         /// <returns>System.Double.</returns>
         public override double PointMembership(Vector3 point)
         {
-            return (point - Center).Length() - Radius;
+            var d = (point - Center).Length() - Radius;
+            if (IsPositive.HasValue && !IsPositive.Value) d = -d;
+            return d;
         }
         /// <summary>
         /// Points the membership.

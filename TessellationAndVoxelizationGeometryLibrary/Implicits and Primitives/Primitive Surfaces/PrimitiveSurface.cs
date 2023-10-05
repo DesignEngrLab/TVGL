@@ -158,6 +158,15 @@ namespace TVGL
         public abstract double PointMembership(Vector3 point);
 
         /// <summary>
+        /// Gets the normal of the surface at the provided point.
+        /// The method may return a 'valid' value even if not on the surface
+        /// (e.g. a point inside a cylinder still has a meaningful normal).
+        /// </summary>
+        /// <param name="point">The point.</param>
+        /// <returns>A Vector3.</returns>
+        public abstract Vector3 GetNormalAtPoint(Vector3 point);
+
+        /// <summary>
         /// Gets or sets the triangle vertex indices.
         /// </summary>
         /// <value>The triangle vertex indices.</value>

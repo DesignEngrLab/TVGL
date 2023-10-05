@@ -95,7 +95,7 @@ namespace TVGL
         {
             return double.NaN;
         }
-
+        public override Vector3 GetNormalAtPoint(Vector3 point) => Vector3.Null;
         protected override void CalculateIsPositive()
         {
             // todo: do we want this to be true=convex and false=concave?

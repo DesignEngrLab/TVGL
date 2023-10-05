@@ -243,8 +243,19 @@ namespace TVGL
         public override double PointMembership(Vector3 point)
         {
             Vector3 ptOnCircle = ClosestPointOnCenterRingToPoint(Axis, Center, MajorRadius, point, distanceFromOriginToBisectingPlane);
-            return (point - ptOnCircle).Length() - MinorRadius;
+            var d = (point - ptOnCircle).Length() - MinorRadius;
+            if (IsPositive.HasValue && !IsPositive.Value) d = -d;
+            return d;
         }
+
+        public override Vector3 GetNormalAtPoint(Vector3 point)
+        {
+            Vector3 ptOnCircle = ClosestPointOnCenterRingToPoint(Axis, Center, MajorRadius, point, distanceFromOriginToBisectingPlane);
+            var d = (point - ptOnCircle).Normalize();
+            if (IsPositive.HasValue && !IsPositive.Value) d = -d;
+            return d;
+        }
+
         /// <summary>
         /// Closests the point on center ring to point.
         /// </summary>

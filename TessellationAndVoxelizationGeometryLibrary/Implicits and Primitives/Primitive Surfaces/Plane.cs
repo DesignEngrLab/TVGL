@@ -512,15 +512,23 @@ namespace TVGL
             }
         }
 
-
-
         /// <summary>
         /// Points the membership.
         /// </summary>
         /// <param name="point">The point.</param>
         /// <returns>System.Double.</returns>
-        public override double PointMembership(Vector3 point) => point.Dot(Normal) - DistanceToOrigin;
-
+        public override double PointMembership(Vector3 point)
+        {
+            var d = point.Dot(Normal) - DistanceToOrigin;
+            if (IsPositive.HasValue && !IsPositive.Value) d = -d;
+            return d;
+        }
+        public override Vector3 GetNormalAtPoint(Vector3 point)
+        {
+            var d = Normal;
+            if (IsPositive.HasValue && !IsPositive.Value) d = -d;
+            return d;
+        }
         protected override void CalculateIsPositive()
         {
             if (Faces != null && Faces.Any())
