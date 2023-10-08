@@ -14,6 +14,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 
 namespace TVGL
 {
@@ -33,7 +34,7 @@ namespace TVGL
         public static double Median(this IEnumerable<double> numbers)
         {
             if (!numbers.Any()) return double.NaN; // throw new ArgumentNullException(nameof(numbers));
-            var numberList =new List<double>(numbers); //we need a list and this list will be mutated, so a copy is made.
+            var numberList = new List<double>(numbers); //we need a list and this list will be mutated, so a copy is made.
             var index = (numberList.Count - 1) / 2;
             var loValue = nthOrderStatistic(numberList, index, 0, numberList.Count - 1);
             double median;
@@ -227,6 +228,105 @@ namespace TVGL
                 error += delta * delta;
             }
             return Math.Sqrt(error / numberList.Count);
+        }
+
+
+        /// <summary>
+        /// Calculates the Area of a standard normal distribution from negative infinity to z.
+        /// </summary>
+        /// <param name="z">The z.</param>
+        /// <returns>A double.</returns>
+        public static double AreaOfStandardNormalDistributionFromNegInfToZ(double z)
+        {
+            // input = z-value (-inf to +inf)
+            // output = p under Standard Normal curve from -inf to z
+            // e.g., if z = 0.0, function returns 0.5000
+            // ACM Algorithm #209
+            //also based on article: https://learn.microsoft.com/en-us/archive/msdn-magazine/2015/november/test-run-the-t-test-using-csharp
+            double y; // 209 scratch variable
+            double p; // result. called 'z' in 209
+            double w; // 209 scratch variable
+            if (z == 0.0)
+                p = 0.0;
+            else
+            {
+                y = Math.Abs(z) / 2;
+                if (y >= 3.0)
+                {
+                    p = 1.0;
+                }
+                else if (y < 1.0)
+                {
+                    w = y * y;
+                    p = ((((((((0.000124818987 * w
+                    - 0.001075204047) * w + 0.005198775019) * w
+                    - 0.019198292004) * w + 0.059054035642) * w
+                    - 0.151968751364) * w + 0.319152932694) * w
+                    - 0.531923007300) * w + 0.797884560593) * y * 2.0;
+                }
+                else
+                {
+                    y = y - 2.0;
+                    p = (((((((((((((-0.000045255659 * y
+                    + 0.000152529290) * y - 0.000019538132) * y
+                    - 0.000676904986) * y + 0.001390604284) * y
+                    - 0.000794620820) * y - 0.002034254874) * y
+                    + 0.006549791214) * y - 0.010557625006) * y
+                    + 0.011630447319) * y - 0.009279453341) * y
+                    + 0.005353579108) * y - 0.002141268741) * y
+                    + 0.000535310849) * y + 0.999936657524;
+                }
+            }
+            if (z > 0.0)
+                return (p + 1.0) / 2;
+            else
+                return (1.0 - p) / 2;
+        }
+
+        /// <summary>
+        /// Calculates the area the under a t-distribution from negative infinity to t.
+        /// </summary>
+        /// <param name="t">The t.</param>
+        /// <param name="df">The df, or degrees-of-freedom.</param>
+        /// <returns>A double.</returns>
+        public static double AreaUnderTDistribution(double t, double df)
+        {
+            // for large integer df or double df
+            // adapted from ACM algorithm 395
+            // returns 2-tail p-value
+            double n = df; // to sync with ACM parameter name
+            double a, b, y;
+            t = t * t;
+            y = t / n;
+            b = y + 1.0;
+            if (y > 1.0E-6) y = Math.Log(b);
+            a = n - 0.5;
+            b = 48.0 * a * a;
+            y = a * y;
+            y = (((((-0.4 * y - 3.3) * y - 24.0) * y - 85.5) /
+            (0.8 * y * y + 100.0 + b) + y + 3.0) / b + 1.0) *
+            Math.Sqrt(y);
+            return 2.0 * AreaOfStandardNormalDistributionFromNegInfToZ(-y); // ACM algorithm 209
+        }
+
+        public static double CalcPTest(double meanX, double meanY, double varX, double varY, int n1, int n2)
+        {
+            double top = (meanX - meanY);
+            double bot = Math.Sqrt((varX / n1) + (varY / n2));
+            double t = top / bot;
+            //In words, the t statistic is the difference between the two sample means, divided by the
+            //square root of the sum of the variances divided by their associated sample sizes.
+            //Next, the degrees of freedom is calculated:
+            double num = ((varX / n1) + (varY / n2)) * ((varX / n1) + (varY / n2));
+            double denomLeft = ((varX / n1) * (varX / n1)) / (n1 - 1);
+            double denomRight = ((varY / n2) * (varY / n2)) / (n2 - 1);
+            double denom = denomLeft + denomRight;
+            double df = num / denom;
+            //The calculation of the degrees of freedom for the Welch t-test is somewhat tricky and
+            //the equation isn’t at all obvious. Fortunately, you’ll never have to modify this calculation.
+            //Method TTest concludes by computing the p-value and displaying all the calculated values:
+            var p =  AreaUnderTDistribution(t, df); // Cumulative two-tail density
+            return p;
         }
     }
 }

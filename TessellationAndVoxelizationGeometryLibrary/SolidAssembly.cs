@@ -153,7 +153,7 @@ namespace TVGL
         /// </summary>
         /// <param name="reader">The reader.</param>
         /// <param name="assembly">The assembly.</param>
-        public static void StreamRead(JsonTextReader reader, out SolidAssembly assembly)
+        internal static void StreamRead(JsonTextReader reader, out SolidAssembly assembly, TessellatedSolidBuildOptions tsBuildOptions)
         {
             var solids = new Dictionary<int, TessellatedSolid>();
             assembly = new SolidAssembly();
@@ -169,7 +169,7 @@ namespace TVGL
                 else if (reader.TokenType == JsonToken.PropertyName && reader.Value.ToString().Contains("TessellatedSolid"))
                 {
                     var solid = new TessellatedSolid();
-                    solid.StreamRead(reader, out var index);
+                    solid.StreamRead(reader, out var index, tsBuildOptions);
                     solids.Add(index, solid);                    
                 }         
             }
@@ -193,7 +193,7 @@ namespace TVGL
             serializationData = new Dictionary<string, JToken>();
             serializationData.Add("TessellatedSolids", JToken.FromObject(Solids.Where(p => p is TessellatedSolid)));
             serializationData.Add("CrossSectionSolids", JToken.FromObject(Solids.Where(p => p is CrossSectionSolid)));
-            serializationData.Add("VolizedSolids", JToken.FromObject(Solids.Where(p => p is VoxelizedSolid)));
+            serializationData.Add("VoxelizedSolids", JToken.FromObject(Solids.Where(p => p is VoxelizedSolid)));
         }
 
         /// <summary>

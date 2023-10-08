@@ -35,7 +35,7 @@ namespace TVGL
         internal STLFileData()
         {
             Normals = new List<Vector3>();
-            Vertices = new List<List<Vector3>>();
+            Vertices = new List<(Vector3, Vector3, Vector3)>();
             Colors = new List<Color>();
         }
 
@@ -74,7 +74,7 @@ namespace TVGL
         /// Gets or sets the Vertices.
         /// </summary>
         /// <value>The vertices.</value>
-        private List<List<Vector3>> Vertices { get; }
+        private List<(Vector3, Vector3, Vector3)> Vertices { get; }
 
         /// <summary>
         /// Gets or sets the normals.
@@ -92,7 +92,7 @@ namespace TVGL
         /// <param name="s">The s.</param>
         /// <param name="filename">The filename.</param>
         /// <returns>List&lt;TessellatedSolid&gt;.</returns>
-        internal static TessellatedSolid[] OpenSolids(Stream s, string filename)
+        internal static TessellatedSolid[] OpenSolids(Stream s, string filename, TessellatedSolidBuildOptions tsBuildOptions)
         {
             string typeString;
             var now = DateTime.Now;
@@ -108,7 +108,7 @@ namespace TVGL
                     typeString = "ASCII STL";
                 else
                 {
-                    Message.output("Unable to read in STL file called {0}", filename, 1);
+                    Message.output("Unable to read in STL file called " + filename, 1);
                     return null;
                 }
             }
@@ -116,9 +116,9 @@ namespace TVGL
             for (int i = 0; i < stlData.Count; i++)
             {
                 var stlFileData = stlData[i];
-                results[i] = new TessellatedSolid(stlFileData.Vertices, stlFileData.Vertices.Count <= Constants.MaxNumberFacesDefaultFullTS,
+                results[i] = new TessellatedSolid(stlFileData.Vertices, stlFileData.Vertices.Count,
                     stlFileData.HasColorSpecified ? stlFileData.Colors : null,
-                                   stlFileData.Units, stlFileData.Name, filename, stlFileData.Comments, stlFileData.Language);
+                    tsBuildOptions, stlFileData.Units, stlFileData.Name, filename, stlFileData.Comments, stlFileData.Language);
             }
             Message.output(
                 "Successfully read in " + typeString + " file called " + filename + " in " +
@@ -203,7 +203,7 @@ namespace TVGL
             if (!ReadExpectedLine(reader, "endfacet"))
                 throw new IOException("Unexpected line.");
             Normals.Add(new Vector3(n));
-            Vertices.Add(points);
+            Vertices.Add((points[0], points[1], points[2]));
         }
 
         #endregion
@@ -318,7 +318,7 @@ namespace TVGL
             }
             Colors.Add(_lastColor);
             Normals.Add(new Vector3(n));
-            Vertices.Add(new List<Vector3> { v1, v2, v3 });
+            Vertices.Add((v1, v2, v3));
         }
         #endregion
 

@@ -103,18 +103,16 @@ namespace TVGL
         {
             _maxError = 0.0;
             _meanSquaredError = 0.0;
-            foreach (var c in Vertices.Select(v => v.Coordinates))
+            if (Vertices == null||Vertices.Count==0) return;
+            foreach (var c in Vertices.Select(v => v.Coordinates)
+                // also add midpoints of edges
+                .Concat(InnerEdges.Select(edge => 0.5 * (edge.To.Coordinates + edge.From.Coordinates))
+                .Concat(OuterEdges.Select(edge => 0.5 * (edge.To.Coordinates + edge.From.Coordinates)))))
             {
                 var d = Math.Abs(PointMembership(c));
                 _meanSquaredError += d * d;
                 if (_maxError < d)
                     _maxError = d;
-            }
-            foreach (var c in InnerEdges.Select(edge => 0.5 * (edge.To.Coordinates + edge.From.Coordinates))
-                    .Concat(OuterEdges.Select(edge => 0.5 * (edge.To.Coordinates + edge.From.Coordinates))))
-            {
-                var d = PointMembership(c);
-                _meanSquaredError += d * d;
             }
             _meanSquaredError /= Vertices.Count + InnerEdges.Count + OuterEdges.Count;
         }
@@ -122,19 +120,13 @@ namespace TVGL
         /// <summary>
         /// Calculates the mean square error.
         /// </summary>
-        /// <param name="vertices">The vertices.</param>
+        /// <param name="points">The vertices.</param>
         /// <returns>System.Double.</returns>
-        public virtual double CalculateMeanSquareError(IEnumerable<Vector3> vertices)// = null)
+        public virtual double CalculateMeanSquareError(IEnumerable<Vector3> points)
         {
-            //if (vertices == null)
-            //{
-            //    vertices = Vertices.Select(v => v.Coordinates)
-            //        .Concat(InnerEdges.Select(edge => 0.5 * (edge.To.Coordinates + edge.From.Coordinates)))
-            //        .Concat(OuterEdges.Select(edge => 0.5 * (edge.To.Coordinates + edge.From.Coordinates)));
-            //}
             var mse = 0.0;
             var n = 0;
-            foreach (var c in vertices)
+            foreach (var c in points)
             {
                 var d = PointMembership(c);
                 mse += d * d;
@@ -145,12 +137,12 @@ namespace TVGL
         /// <summary>
         /// Calculates the mean square error.
         /// </summary>
-        /// <param name="vertices">The vertices.</param>
+        /// <param name="points">The vertices.</param>
         /// <returns>System.Double.</returns>
-        public virtual double CalculateMaxError(IEnumerable<Vector3> vertices)
+        public virtual double CalculateMaxError(IEnumerable<Vector3> points)
         {
             var maxError = 0.0;
-            foreach (var c in vertices)
+            foreach (var c in points)
             {
                 var d = Math.Abs(PointMembership(c));
                 if (maxError < d)
@@ -183,6 +175,15 @@ namespace TVGL
         /// <param name="point">The point.</param>
         /// <returns>System.Double.</returns>
         public abstract double PointMembership(Vector3 point);
+
+        /// <summary>
+        /// Gets the normal of the surface at the provided point.
+        /// The method may return a 'valid' value even if not on the surface
+        /// (e.g. a point inside a cylinder still has a meaningful normal).
+        /// </summary>
+        /// <param name="point">The point.</param>
+        /// <returns>A Vector3.</returns>
+        public abstract Vector3 GetNormalAtPoint(Vector3 point);
 
         /// <summary>
         /// Gets or sets the triangle vertex indices.
@@ -356,7 +357,7 @@ namespace TVGL
         /// <summary>
         /// Defines the inner outer edges.
         /// </summary>
-        private void DefineInnerOuterEdges()
+        internal void DefineInnerOuterEdges()
         {
             MiscFunctions.DefineInnerOuterEdges(Faces, out _innerEdges, out _outerEdges);
         }
@@ -379,8 +380,10 @@ namespace TVGL
         {
             _meanSquaredError = double.NaN;
             _maxError = double.NaN;
+            if (Faces == null) Faces = new HashSet<TriangleFace>();
             if (Faces.Contains(face)) return;
             _area = Area + face.Area;
+            if (Vertices == null) Vertices = new HashSet<Vertex>();
             foreach (var v in face.Vertices.Where(v => !Vertices.Contains(v)))
                 Vertices.Add(v);
             if (face.AB != null && face.BC != null && face.CA != null)
@@ -492,109 +495,20 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Gets or sets the borders.
+        /// Gets or sets the borders. PrimitiveBorders is typically one, unless
+        /// there is a hole. A border is made up of border segments where each
+        /// border segment delineates between a pair of primitives. Since a single
+        /// primitive may border numerous other primitives, there are likely to be
+        /// many border segments in the border. 
         /// </summary>
         /// <value>The borders.</value>
-        public List<PrimitiveBorder> Borders { get; set; }
+        public List<BorderLoop> Borders { get; set; }
 
         /// <summary>
         /// Gets or sets the border segments.
         /// </summary>
         /// <value>The border segments.</value>
         public List<BorderSegment> BorderSegments { get; set; } = new List<BorderSegment>();//initialize to an empty list
-
-        /// <summary>
-        /// Borderses the encircling axis.
-        /// </summary>
-        /// <param name="axis">The axis.</param>
-        /// <param name="anchor">The anchor.</param>
-        /// <returns>IEnumerable&lt;PrimitiveBorder&gt;.</returns>
-        public IEnumerable<PrimitiveBorder> BordersEncirclingAxis(Vector3 axis, Vector3 anchor)
-        {
-            var transform = axis.TransformToXYPlane(out _);
-            foreach (var border in Borders)
-            {
-                var polygon = new Polygon(border.GetVertices().Select(v => v.ConvertTo2DCoordinates(transform)));
-                if (anchor != Vector3.Null && polygon.IsPointInsidePolygon(true, anchor.ConvertTo2DCoordinates(transform)))
-                    yield return border;
-            }
-        }
-
-        /// <summary>
-        /// Borders the encircles axis.
-        /// </summary>
-        /// <param name="edgepath">The edgepath.</param>
-        /// <param name="axis">The axis.</param>
-        /// <param name="anchor">The anchor.</param>
-        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
-        public static bool BorderEncirclesAxis(EdgePath edgepath, Vector3 axis, Vector3 anchor)
-        {
-            if (axis.IsNull() || anchor.IsNull() || edgepath.NumPoints <= 2) return false;
-            var transform = axis.TransformToXYPlane(out _);
-            var coords = edgepath.GetVertices().Select(v => v.ConvertTo2DCoordinates(transform));
-            var borderPolygon = new Polygon(coords);
-            var center3d = anchor.ConvertTo2DCoordinates(transform);
-            return borderPolygon.IsPointInsidePolygon(true, center3d);
-        }
-        /// <summary>
-        /// Borders the encircles axis.
-        /// </summary>
-        /// <param name="path">The path.</param>
-        /// <param name="axis">The axis.</param>
-        /// <param name="anchor">The anchor.</param>
-        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
-        public static bool BorderEncirclesAxis(IEnumerable<Vector3> path, Vector3 axis, Vector3 anchor)
-        {
-            var angle = Math.Abs(FindWindingAroundAxis(path, axis, anchor, out _, out _));
-            return angle > 1.67 * Math.PI;
-            // 1.67 is 5/3, which is 5/6 the way around. so the border would be at least a hexagon.
-        }
-
-        /// <summary>
-        /// Finds the total winding angle around the axis and provides the starting angle.
-        /// </summary>
-        /// <param name="path">The path.</param>
-        /// <param name="axis">The axis.</param>
-        /// <param name="anchor">The anchor.</param>
-        /// <param name="startingAngle">The starting angle.</param>
-        /// <returns>A double.</returns>
-        public static double FindWindingAroundAxis(IEnumerable<Vector3> path, Matrix4x4 transform, Vector3 anchor,
-            out double minAngle, out double maxAngle)
-        {
-            var coords = path.Select(v => v.ConvertTo2DCoordinates(transform));
-            var center = anchor.ConvertTo2DCoordinates(transform);
-            var startPoint = coords.First();
-            var prevVector = startPoint - center;
-            var startingAngle = Math.Atan2(prevVector.Y, prevVector.X);
-            var angleSum = 0.0;
-            minAngle = double.PositiveInfinity;
-            maxAngle = double.NegativeInfinity;
-            foreach (var coord in coords.Skip(1))
-            {
-                var nextVector = coord - center;
-                angleSum += Math.Atan2(prevVector.Cross(nextVector), prevVector.Dot(nextVector));
-                if (minAngle > angleSum) minAngle = angleSum;
-                if (maxAngle < angleSum) maxAngle = angleSum;
-                prevVector = nextVector;
-            }
-            minAngle += startingAngle;
-            maxAngle += startingAngle;
-            return angleSum;
-        }
-        /// <summary>
-        /// Finds the total winding angle around the axis and provides the starting angle.
-        /// </summary>
-        /// <param name="path">The path.</param>
-        /// <param name="axis">The axis.</param>
-        /// <param name="anchor">The anchor.</param>
-        /// <param name="startingAngle">The starting angle.</param>
-        /// <returns>A double.</returns>
-        public static double FindWindingAroundAxis(IEnumerable<Vector3> path, Vector3 axis, Vector3 anchor,
-            out double minAngle, out double maxAngle)
-        {
-            var transform = axis.TransformToXYPlane(out _);
-            return FindWindingAroundAxis(path, transform, anchor, out minAngle, out maxAngle);
-        }
 
 
         /// <summary>
@@ -833,7 +747,7 @@ namespace TVGL
         {
             foreach (var border in Borders)
                 foreach (var segment in border.Segments)
-                    if (segment.GetSecondPrimitive(this) == other)
+                    if (segment.AdjacentPrimitive(this) == other)
                         return segment;
             return null;
         }
@@ -845,43 +759,6 @@ namespace TVGL
         public IEnumerable<Vector3[]> GetOuterEdgesAsVectors()
         {
             return OuterEdges.Select(e => new[] { e.From.Coordinates, e.To.Coordinates });
-        }
-
-
-        public Vector3 GetAxis()
-        {
-            if (this is Plane plane) return plane.Normal;
-            else if (this is Cylinder cylinder) return cylinder.Axis;
-            else if (this is Cone cone) return cone.Axis;
-            else if (this is Torus torus) return torus.Axis;
-            else if (this is Prismatic prismatic) return prismatic.Axis;
-            else return Vector3.Null;
-        }
-
-        public Vector3 GetAnchor()
-        {
-            if (this is Cylinder cylinder) return cylinder.Anchor;
-            else if (this is Cone cone) return cone.Apex;
-            else if (this is Torus torus) return torus.Center;
-            else if (this is Sphere sphere) return sphere.Center;
-            else return Vector3.Null;
-        }
-
-        public double GetRadius(bool max = false)
-        {
-            if (this is Cylinder cylinder) return cylinder.Radius;
-            if (this is Sphere sphere) return sphere.Radius;
-            if (this is Torus torus)
-            {
-                if (max) return Math.Max(torus.MajorRadius, torus.MinorRadius);
-                return torus.MajorRadius;
-            }
-            if (this.Borders == null) return double.NaN;
-
-            var circleBorders = this.Borders.Where(b => b.Curve is Circle);
-            if (!circleBorders.Any()) return 0.0;
-            else if (max) return circleBorders.Max(b => ((Circle)b.Curve).Radius);
-            else return circleBorders.Average(b => ((Circle)b.Curve).Radius);
         }
 
         /// <summary>

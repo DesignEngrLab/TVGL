@@ -280,8 +280,8 @@ namespace TVGL
                     // into the polygon
                     var bestEdge = bestIntersection.EdgeA == currentEdge ? bestIntersection.EdgeB : bestIntersection.EdgeA;
                     var newCandidateEdge = candidateIntersect.EdgeA == currentEdge ? candidateIntersect.EdgeB : candidateIntersect.EdgeA;
-                    var bestAngle = currentEdge.Vector.SmallerAngleBetweenVectors(bestEdge.Vector);
-                    var newCandidateAngle = currentEdge.Vector.SmallerAngleBetweenVectors(newCandidateEdge.Vector);
+                    var bestAngle = currentEdge.Vector.SmallerAngleBetweenVectorsEndToEnd(bestEdge.Vector);
+                    var newCandidateAngle = currentEdge.Vector.SmallerAngleBetweenVectorsEndToEnd(newCandidateEdge.Vector);
                     if (newCandidateAngle > bestAngle) bestIntersection = candidateIntersect;
                     if (newCandidateAngle == bestAngle)
                     {   // really?! if you are here than not only are there two segments that pass through currentEdge at the same

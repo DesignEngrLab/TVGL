@@ -16,7 +16,7 @@ using System;
 using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Text;
-using MIConvexHull;
+using TVGL.ConvexHullDetails;
 using Newtonsoft.Json;
 
 namespace TVGL  // COMMENTEDCHANGE namespace System.Numerics
@@ -24,7 +24,7 @@ namespace TVGL  // COMMENTEDCHANGE namespace System.Numerics
     /// <summary>
     /// A structure encapsulating three single precision floating point values and provides hardware accelerated methods.
     /// </summary>
-    public readonly partial struct Vector3 : IEquatable<Vector3>, IFormattable, IVertex3D, IVertex2D, IVertex
+    public readonly partial struct Vector3 : IEquatable<Vector3>, IFormattable, IPoint3D, IPoint2D, IPoint
     {
 
         /// <summary>
@@ -100,8 +100,8 @@ namespace TVGL  // COMMENTEDCHANGE namespace System.Numerics
         /// </summary>
         /// <returns>A Vector2.</returns>
         public Vector2 ToVector2()
-        { 
-            return new Vector2(X, Y); 
+        {
+            return new Vector2(X, Y);
         }
         #endregion Constructors
 
@@ -472,7 +472,7 @@ namespace TVGL  // COMMENTEDCHANGE namespace System.Numerics
         /// </summary>
         /// <value>The position.</value>
         [JsonIgnore]
-        public double[] Position => new[] { X, Y, Z };
+        public double[] Coordinates => new[] { X, Y, Z };
 
         #endregion Public Static Properties
 
@@ -506,38 +506,40 @@ namespace TVGL  // COMMENTEDCHANGE namespace System.Numerics
         /// <param name="other">The other.</param>
         /// <param name="dotTolerance">The dot tolerance.</param>
         /// <returns>True if the Object is equal or opposite to this Vector3; False otherwise.</returns>
-        public bool IsAlignedOrReverse(Vector3 other, double dotTolerance = Constants.SameFaceNormalDotTolerance)
+        public bool IsAlignedOrReverse(Vector3 other, double dotTolerance = Constants.DotToleranceForSame)
         {
             //Perform a quick check to see if they are perfectly equal or opposite
             if (X == other.X && Y == other.Y && Z == other.Z) return true;
             if (X == -other.X && Y == -other.Y && Z == -other.Z) return true;
-            // if the magnitude of the cross product is nearly zero than the two vectors are aligned
-            var dot = Math.Abs(this.Dot(other));
-            dot = 1 - dot; //so now it's 1-d^2, which is the same as cross product squared (1 = sin^2 + cos^2)
-            dot *= dot;
-            dot /= this.LengthSquared();
-            dot /= other.LengthSquared();
-            return dot.IsNegligible(dotTolerance * dotTolerance);
+            // if the magnitude of the dot product is nearly 1 than the two vectors are aligned
+            // here, we take the absolute value of the dot product since reverse is allowed
+            return Math.Abs(this.Dot(other)) >= dotTolerance;
         }
 
         /// <summary>
         /// Returns a boolean indicating whether the given vector is aligned or exactly in the opposite direction.
         /// </summary>
         /// <param name="other">The other.</param>
-        /// <param name="isReverse">if set to <c>true</c> [is reverse].</param>
+        /// <param name="isReversed">if set to <c>true</c> [is reverse].</param>
         /// <param name="dotTolerance">The dot tolerance.</param>
         /// <returns>True if the Object is equal or opposite to this Vector3; False otherwise.</returns>
-        public bool IsAlignedOrReverse(Vector3 other, out bool isReverse, double dotTolerance = Constants.SameFaceNormalDotTolerance)
+        public bool IsAlignedOrReverse(Vector3 other, out bool isReversed, double dotTolerance = Constants.DotToleranceForSame)
         {
-            isReverse = this.Dot(other) < 0;
             //Perform a quick check to see if they are perfectly equal or opposite
-            if (X == other.X && Y == other.Y && Z == other.Z) return true;
-            if (X == -other.X && Y == -other.Y && Z == -other.Z) return true;
-            // if the magnitude of the cross product is nearly zero than the two vectors are aligned
-            var crossMagnitudeSquared = this.Cross(other).LengthSquared();
-            crossMagnitudeSquared /= this.LengthSquared();
-            crossMagnitudeSquared /= other.LengthSquared();
-            return crossMagnitudeSquared.IsNegligible(dotTolerance * dotTolerance);
+            if (X == other.X && Y == other.Y && Z == other.Z)
+            {
+                isReversed = false;
+                return true;
+            }
+            if (X == -other.X && Y == -other.Y && Z == -other.Z)
+            {
+                isReversed = true;
+                return true;
+            }
+            var dot = this.Dot(other);
+            isReversed = dot < 0;
+            if (isReversed) dot = -dot;
+            return dot >= dotTolerance;
         }
 
         /// <summary>
@@ -546,19 +548,10 @@ namespace TVGL  // COMMENTEDCHANGE namespace System.Numerics
         /// <param name="other">The other.</param>
         /// <param name="dotTolerance">The dot tolerance.</param>
         /// <returns><c>true</c> if the specified d2 is aligned; otherwise, <c>false</c>.</returns>
-        public bool IsAligned(Vector3 other, double dotTolerance = Constants.SameFaceNormalDotTolerance)
+        public bool IsAligned(Vector3 other, double dotTolerance = Constants.DotToleranceForSame)
         {
             if (X == other.X && Y == other.Y && Z == other.Z) return true;
-            // but also need to check that they are in the same direction
-            if (this.Dot(other) < 0) return false;
-            // if the magnitude of the cross product is nearly zero than the two vectors are aligned
-            var crossMagnitudeSquared = this.Cross(other).LengthSquared();
-            crossMagnitudeSquared /= this.LengthSquared();
-            crossMagnitudeSquared /= other.LengthSquared();
-            // now the quantity, crossMagnitudeSquared, is actually the sin^2(angle)
-            // since sin(angle) is nearly the same as angle when angle is small, we are effectively
-            // checking if the angle is less than dotTolerance.
-            return crossMagnitudeSquared.IsNegligible(dotTolerance * dotTolerance);
+            return this.Dot(other) >= dotTolerance;
         }
 
         /// <summary>
@@ -567,9 +560,9 @@ namespace TVGL  // COMMENTEDCHANGE namespace System.Numerics
         /// <param name="other">The other.</param>
         /// <param name="dotTolerance">The dot tolerance.</param>
         /// <returns><c>true</c> if the specified d2 is aligned; otherwise, <c>false</c>.</returns>
-        public bool IsPerpendicular(Vector3 other, double dotTolerance = Constants.SameFaceNormalDotTolerance)
+        public bool IsPerpendicular(Vector3 other, double dotTolerance = Constants.DotToleranceOrthogonal)
         {
-            return (this.Dot(other).IsNegligible(dotTolerance));
+            return this.Dot(other).IsNegligible(dotTolerance);
         }
 
         /// <summary>
@@ -788,7 +781,8 @@ namespace TVGL  // COMMENTEDCHANGE namespace System.Numerics
         }
 
         /// <summary>
-        /// Transforms a vector by the given matrix.
+        /// Multiplies a vector by a matrix. Note that the matrix is after the vector, so each term
+        /// is the dot product of the vector with a column of the matrix.
         /// </summary>
         /// <param name="position">The source vector.</param>
         /// <param name="matrix">The transformation matrix.</param>
@@ -805,7 +799,7 @@ namespace TVGL  // COMMENTEDCHANGE namespace System.Numerics
         /// <summary>
         /// Transforms a vector by the given matrix without the translation component.
         /// This is often used for transforming normals, however note that proper transformations
-        /// of normal vectors requires that the input matrix be the transpose of the inverse of that matrix.
+        /// of normal vectors requires that the input matrix be the transpose of the Inverse of that matrix.
         /// </summary>
         /// <param name="normal">The source vector.</param>
         /// <param name="matrix">The transformation matrix.</param>
@@ -950,27 +944,4 @@ namespace TVGL  // COMMENTEDCHANGE namespace System.Numerics
         }
         #endregion
     }
-
-    /// <summary>
-    /// Interface IVertex3D
-    /// </summary>
-    public interface IVertex3D
-    {
-        /// <summary>
-        /// Gets the x.
-        /// </summary>
-        /// <value>The x.</value>
-        double X { get; }
-        /// <summary>
-        /// Gets the y.
-        /// </summary>
-        /// <value>The y.</value>
-        double Y { get; }
-        /// <summary>
-        /// Gets the z.
-        /// </summary>
-        /// <value>The z.</value>
-        double Z { get; }
-    }
-
 }

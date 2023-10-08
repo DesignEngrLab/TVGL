@@ -32,7 +32,7 @@ namespace StarMathLib
         /// <param name="A">The matrix to invert. This matrix is unchanged by this function.</param>
         /// <returns>The inverted matrix, A^-1.</returns>
         /// <exception cref="System.ArithmeticException">Matrix cannnot be inverted. Can only invert sqare matrices.</exception>
-        internal static double[,] inverse(this double[,] A) // need bool IsSymmetric to switch to Cholesky
+        public static double[,] Inverse(this double[,] A) // need bool IsSymmetric to switch to Cholesky
         {
             var length = A.GetLength(0);
             if (length != A.GetLength(1))
@@ -455,7 +455,7 @@ namespace StarMathLib
         /// <returns>The transpose of A.</returns>
         /// <exception cref="System.ArithmeticException">The matrix, A, is null.</exception>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static double[,] transpose(this double[,] A)
+        public static double[,] Transpose(this double[,] A)
         {
             if (A == null) throw new ArithmeticException("The matrix, A, is null.");
             var numRows = A.GetLength(1);
@@ -475,7 +475,7 @@ namespace StarMathLib
         /// <returns>The transpose of A.</returns>
         /// <exception cref="System.ArithmeticException">The matrix, A, is null.</exception>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static int[,] transpose(this int[,] A)
+        internal static int[,] Transpose(this int[,] A)
         {
             if (A == null) throw new ArithmeticException("The matrix, A, is null.");
             var numRows = A.GetLength(1);
@@ -532,7 +532,7 @@ namespace StarMathLib
                     if (!nonZeroFound) return true;
                 }
             }
-                return A.determinant().IsNegligible();
+                return A.Determinant().IsNegligible();
         }
 
         #endregion
@@ -540,19 +540,19 @@ namespace StarMathLib
         #region Determinant
 
         /// <summary>
-        /// Returns the determinant of matrix, A.
+        /// Returns the Determinant of matrix, A.
         /// </summary>
         /// <param name="A">The input argument matrix. This matrix is unchanged by this function.</param>
-        /// <returns>a single value representing the matrix's determinant.</returns>
+        /// <returns>a single value representing the matrix's Determinant.</returns>
         /// <exception cref="System.ArithmeticException">The matrix, A, is null.</exception>
-        /// <exception cref="System.ArithmeticException">The determinant is only possible for square matrices.</exception>
+        /// <exception cref="System.ArithmeticException">The Determinant is only possible for square matrices.</exception>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static double determinant(this double[,] A)
+        internal static double Determinant(this double[,] A)
         {
             if (A == null) throw new ArithmeticException("The matrix, A, is null.");
             var length = A.GetLength(0);
             if (length != A.GetLength(1))
-                throw new ArithmeticException("The determinant is only possible for square matrices.");
+                throw new ArithmeticException("The Determinant is only possible for square matrices.");
             if (length == 0) return 0.0;
             if (length == 1) return A[0, 0];
             if (length == 2) return (A[0, 0] * A[1, 1]) - (A[0, 1] * A[1, 0]);
@@ -571,15 +571,15 @@ namespace StarMathLib
         /// <param name="A">a.</param>
         /// <returns>ComplexNumber.</returns>
         /// <exception cref="System.ArithmeticException">The matrix, A, is null.</exception>
-        /// <exception cref="System.ArithmeticException">The determinant is only possible for square matrices.</exception>
+        /// <exception cref="System.ArithmeticException">The Determinant is only possible for square matrices.</exception>
         /// <exception cref="System.NotImplementedException"></exception>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static ComplexNumber determinant(this ComplexNumber[,] A)
+        internal static ComplexNumber Determinant(this ComplexNumber[,] A)
         {
             if (A == null) throw new ArithmeticException("The matrix, A, is null.");
             var length = A.GetLength(0);
             if (length != A.GetLength(1))
-                throw new ArithmeticException("The determinant is only possible for square matrices.");
+                throw new ArithmeticException("The Determinant is only possible for square matrices.");
             if (length == 0) return new ComplexNumber();
             if (length == 1) return A[0, 0];
             if (length == 2) return (A[0, 0] * A[1, 1]) - (A[0, 1] * A[1, 0]);
@@ -616,19 +616,19 @@ namespace StarMathLib
         }
 
         /// <summary>
-        /// Returns the determinant of matrix, A.
+        /// Returns the Determinant of matrix, A.
         /// </summary>
         /// <param name="A">The input argument matrix. This matrix is unchanged by this function.</param>
-        /// <returns>a single value representing the matrix's determinant.</returns>
+        /// <returns>a single value representing the matrix's Determinant.</returns>
         /// <exception cref="System.ArithmeticException">The matrix, A, is null.</exception>
-        /// <exception cref="System.ArithmeticException">The determinant is only possible for square matrices.</exception>
+        /// <exception cref="System.ArithmeticException">The Determinant is only possible for square matrices.</exception>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static int determinant(this int[,] A)
         {
             if (A == null) throw new ArithmeticException("The matrix, A, is null.");
             var length = A.GetLength(0);
             if (length != A.GetLength(1))
-                throw new ArithmeticException("The determinant is only possible for square matrices.");
+                throw new ArithmeticException("The Determinant is only possible for square matrices.");
             if (length == 0) return 0;
             if (length == 1) return A[0, 0];
             if (length == 2) return (A[0, 0] * A[1, 1]) - (A[0, 1] * A[1, 0]);
@@ -643,11 +643,11 @@ namespace StarMathLib
         }
 
         /// <summary>
-        /// Returns the determinant of matrix, A. Only used internally for matrices larger than 3.
+        /// Returns the Determinant of matrix, A. Only used internally for matrices larger than 3.
         /// </summary>
         /// <param name="A">The input argument matrix. This matrix is unchanged by this function.</param>
         /// <param name="length">The length of the side of the square matrix.</param>
-        /// <returns>a single value representing the matrix's determinant.</returns>
+        /// <returns>a single value representing the matrix's Determinant.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static int determinantBig(int[,] A, int length)
         {

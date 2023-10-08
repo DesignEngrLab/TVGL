@@ -14,6 +14,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using TVGL.ConvexHullDetails;
 
 namespace TVGL
 {
@@ -71,7 +72,7 @@ namespace TVGL
         public static BoundingBox OrientedBoundingBox(this List<TessellatedSolid> solids)
         {
             foreach(var solid in solids)
-                if (solid.ConvexHull == null) solid.CompleteInitiation();
+                if (solid.ConvexHull == null) solid.BuildConvexHull();
             var vertices = new List<Vertex>();
             foreach (var solid in solids)
                 vertices.AddRange(solid.ConvexHull.Vertices.Any() ? solid.ConvexHull.Vertices : solid.Vertices);
@@ -86,7 +87,7 @@ namespace TVGL
         /// <returns>BoundingBox.</returns>
         public static BoundingBox OrientedBoundingBox(this TessellatedSolid ts)
         {
-            if (ts.ConvexHull == null) ts.CompleteInitiation(ts.FileName.EndsWith(".stl", StringComparison.OrdinalIgnoreCase));
+            if (ts.ConvexHull == null) ts.BuildConvexHull();
             return OrientedBoundingBox(ts.ConvexHull.Vertices.Any() ? ts.ConvexHull.Vertices : ts.Vertices);
         }
 
@@ -106,7 +107,7 @@ namespace TVGL
         /// <typeparam name="T"></typeparam>
         /// <param name="convexHullVertices">The convex hull vertices.</param>
         /// <returns>BoundingBox.</returns>
-        public static BoundingBox OrientedBoundingBox<T>(this IEnumerable<T> convexHullVertices) where T : IVertex3D
+        public static BoundingBox OrientedBoundingBox<T>(this IEnumerable<T> convexHullVertices) where T : IPoint3D
         {
             // here we create 13 directions. Why 13? basically it is all ternary combinations of x,y,and z.
             // skipping symmetric and 0,0,0. Another way to think of it is to make a Direction from a cube with
@@ -179,7 +180,7 @@ namespace TVGL
         /// <param name="convexHullVertices">The convex hull vertices.</param>
         /// <param name="minOBB">The minimum obb.</param>
         /// <returns>BoundingBox.</returns>
-        private static BoundingBox<T> Find_via_ChanTan_AABB_Approach<T>(IEnumerable<T> convexHullVertices, BoundingBox<T> minOBB) where T : IVertex3D
+        private static BoundingBox<T> Find_via_ChanTan_AABB_Approach<T>(IEnumerable<T> convexHullVertices, BoundingBox<T> minOBB) where T : IPoint3D
         {
             var failedConsecutiveRotations = 0;
             var k = 0;
@@ -218,7 +219,7 @@ namespace TVGL
         /// <returns>System.Double.</returns>
         public static double GetLengthAndExtremeVertices<T>(this IEnumerable<T> vertices, Vector3 direction,
             out List<T> bottomVertices,
-            out List<T> topVertices) where T : IVertex3D
+            out List<T> topVertices) where T : IPoint3D
         {
             var dir = direction.Normalize();
             var minD = double.PositiveInfinity;
@@ -261,7 +262,7 @@ namespace TVGL
         /// <returns>System.Double.</returns>
         public static double GetLengthAndExtremeVertex<T>(this IEnumerable<T> vertices, Vector3 direction,
             out T bottomVertex,
-            out T topVertex) where T : IVertex3D
+            out T topVertex) where T : IPoint3D
         {
             var (minD, maxD) = GetDistanceToExtremeVertex(vertices, direction, out bottomVertex, out topVertex);
             return maxD - minD;
@@ -278,7 +279,7 @@ namespace TVGL
         /// <param name="topVertex">The top vertex.</param>
         /// <returns>System.Double.</returns>
         public static (double, double) GetDistanceToExtremeVertex<T>(this IEnumerable<T> vertices, Vector3 direction,
-            out T bottomVertex, out T topVertex) where T : IVertex3D
+            out T bottomVertex, out T topVertex) where T : IPoint3D
         {
             var dir = direction.Normalize();
             var minD = double.PositiveInfinity;
@@ -438,7 +439,7 @@ namespace TVGL
             #region 1) Prune and Reorder the points
             var points = pointsAreConvexHull
                 ? initialPoints as IList<Vector2> ?? initialPoints.ToList()
-                : ConvexHull2D(initialPoints).ToList();
+                : initialPoints.Get2DConvexHull().ToList();
             if (points.Count < 3)
             {
                 var v = points[1] - points[0];
@@ -655,7 +656,7 @@ namespace TVGL
         /// <typeparam name="T"></typeparam>
         /// <param name="vertices">The vertices.</param>
         /// <returns>BoundingBox&lt;T&gt;.</returns>
-        public static BoundingBox<T> FindAxisAlignedBoundingBox<T>(this IEnumerable<T> vertices) where T : IVertex3D
+        public static BoundingBox<T> FindAxisAlignedBoundingBox<T>(this IEnumerable<T> vertices) where T : IPoint3D
         {
             var pointsOnBox = new List<T>[6];
             for (int i = 0; i < 6; i++)
@@ -752,7 +753,7 @@ namespace TVGL
         /// <param name="direction">The Direction.</param>
         /// <returns>BoundingBox.</returns>
         /// <exception cref="System.Exception">Volume should never be negligible, unless the input data is bad</exception>
-        public static BoundingBox<T> FindOBBAlongDirection<T>(this IEnumerable<T> vertices, Vector3 direction) where T : IVertex3D
+        public static BoundingBox<T> FindOBBAlongDirection<T>(this IEnumerable<T> vertices, Vector3 direction) where T : IPoint3D
         {
             var direction1 = direction.Normalize();
             var vertexList = vertices as IList<T> ?? vertices.ToList();
@@ -791,74 +792,6 @@ namespace TVGL
 
         #endregion
 
-
-
-        /// <summary>
-        /// Arranges the edges into loops, which are now stored in a BorderSegment object.
-        /// </summary>
-        /// <param name="edges">The edges.</param>
-        /// <param name="FacesToContain">The faces to contain.</param>
-        /// <returns>IEnumerable&lt;BorderSegment&gt;.</returns>
-        public static IEnumerable<PrimitiveBorder> GetLoops(this HashSet<Edge> edges, HashSet<TriangleFace> FacesToContain)
-        {
-            while (edges.Any())
-            {
-                var currentEdge = edges.First();
-                edges.Remove(currentEdge);
-                var correctDirection = FacesToContain.Contains(currentEdge.OwnedFace);
-                var startVertex = correctDirection ? currentEdge.From : currentEdge.To;
-                var currentVertex = correctDirection ? currentEdge.To : currentEdge.From;
-                var border = new PrimitiveBorder();
-                border.AddEnd(currentEdge, correctDirection);
-                foreach (var forwardDir in new[] { true, false })
-                {
-                    do
-                    {
-                        var possibleEdges = currentVertex.Edges.Where(e => e != currentEdge && edges.Contains(e)).ToList();
-                        if (possibleEdges.Count == 0)
-                        {
-                            currentVertex = null;
-                            currentEdge = null;
-                            continue;
-                        }
-                        if (possibleEdges.Count == 1) currentEdge = possibleEdges[0];
-                        else
-                        {
-                            var forwardVector = currentEdge.Vector.Normalize();
-                            if (currentEdge.From == currentVertex) forwardVector *= -1;
-                            var bestDot = double.NegativeInfinity;
-                            Edge bestEdge = null;
-                            foreach (var e in possibleEdges)
-                            {
-                                var candidateVector = e.Vector.Normalize();
-                                if (e.To == currentVertex) candidateVector *= -1;
-                                var dot = candidateVector.Dot(forwardVector);
-                                if (bestDot < dot)
-                                {
-                                    bestDot = dot;
-                                    bestEdge = e;
-                                }
-                            }
-                            currentEdge = bestEdge;
-                        }
-                        correctDirection = (currentEdge.From == currentVertex) == forwardDir;
-                        edges.Remove(currentEdge);
-                        if (forwardDir) border.AddEnd(currentEdge, correctDirection);
-                        else border.AddBegin(currentEdge, correctDirection);
-                        currentVertex = currentEdge.OtherVertex(currentVertex);
-                    } while (currentEdge != null && currentVertex != startVertex);
-                    border.IsClosed = currentVertex == startVertex && border.NumPoints > 2;
-//#if PRESENT
-                    //TVGL.Presenter.ShowVertexPathsWithSolid(new [] {border.GetVertices().Select(v => v.Coordinates) }, new[] { debugSolid }, false);
-//#endif
-                    if (border.IsClosed) break;
-                    var currentEdgeAndDir = border[0];
-                    currentEdge = currentEdgeAndDir.edge;
-                    currentVertex = currentEdgeAndDir.dir ? currentEdge.From : currentEdge.To;
-                }
-                yield return border;
-            }
-        }
 
     }
 }

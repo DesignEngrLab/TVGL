@@ -15,6 +15,7 @@ using Priority_Queue;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 
 
 namespace TVGL
@@ -57,7 +58,7 @@ namespace TVGL
         /// <summary>
         /// Initializes a new instance of the <see cref="TriangulationLoop"/> class.
         /// </summary>
-        internal TriangulationLoop() : base() 
+        internal TriangulationLoop() : base()
         {
             IsClosed = true;
         }
@@ -200,37 +201,36 @@ namespace TVGL
 
             #region Initial priority queue creation
             var prevEAD = edgeLoop[^1];  // EAD = Edge And Dir
-            TriangleFace prevFace;
             Vertex prevVertex, thisVertex;
             if (prevEAD.dir)
             {
-                prevFace = prevEAD.edge.OtherFace;
                 prevVertex = prevEAD.edge.From;
                 thisVertex = prevEAD.edge.To;
             }
             else
             {
-                prevFace = prevEAD.edge.OwnedFace;
                 prevVertex = prevEAD.edge.To;
                 thisVertex = prevEAD.edge.From;
             }
+            var prevFace = prevEAD.edge.OtherFace ?? prevEAD.edge.OwnedFace;
+
             for (int i = 0; i < origNum; i++)
             {
                 var thisEAD = edgeLoop[i];
-                TriangleFace thisFace = thisEAD.dir ? thisEAD.edge.OtherFace : thisEAD.edge.OwnedFace;
+                TriangleFace thisFace =  thisEAD.edge.OtherFace ?? thisEAD.edge.OwnedFace;
                 neighborNormals.Add(thisEAD.edge, thisFace.Normal);
                 Vertex nextVertex;
                 if (thisEAD.dir)
                 {
-                    thisFace = thisEAD.edge.OtherFace;
+                    //thisFace = thisEAD.edge.OtherFace;
                     nextVertex = thisEAD.edge.To;
                 }
                 else
                 {
-                    thisFace = thisEAD.edge.OwnedFace;
+                    //thisFace = thisEAD.edge.OwnedFace;
                     nextVertex = thisEAD.edge.From;
                 }
-                Edge newEdge = new Edge(nextVertex, prevVertex, false);
+                Edge newEdge = new Edge(nextVertex, prevVertex, true);
                 var triangle = new TriangulationLoop(new[] { prevEAD, thisEAD, (newEdge, true) });
                 candidateTriangles[i] = triangle;
                 sortedOrigCornerIndices.Enqueue(i, CalcObjFunction(weightForSmoothness, triangle, prevFace.Normal, thisFace.Normal, Vector3.Null));
@@ -265,10 +265,10 @@ namespace TVGL
                     // this is tricky, and you kind of have to draw it out
                     posDirTriangle = new TriangulationLoop(new[] { (triangle[2].edge, !triangle[2].dir),posDirTriangle[1],
                 (new Edge(posDirTriangle[1].dir?posDirTriangle[1].edge.To:posDirTriangle[1].edge.From,
-                triangle.FirstVertex,false), true)});
+                triangle.FirstVertex,true), true)});
                     candidateTriangles[posDirIndex] = posDirTriangle;
                     negDirTriangle = new TriangulationLoop(new[] { negDirTriangle[0], (triangle[2].edge, !triangle[2].dir),
-                (new Edge(triangle[2].dir?triangle[2].edge.From:triangle[2].edge.To,negDirTriangle.FirstVertex,false),true)});
+                (new Edge(triangle[2].dir?triangle[2].edge.From:triangle[2].edge.To,negDirTriangle.FirstVertex,true),true)});
                     candidateTriangles[negDirIndex] = negDirTriangle;
 
                     sortedOrigCornerIndices.UpdatePriority(posDirIndex, CalcObjFunction(weightForSmoothness, posDirTriangle,
@@ -368,9 +368,9 @@ namespace TVGL
             }
             if (double.IsInfinity(fLimit))
             {
-//#if PRESENT
-//                Presenter.ShowVertexPathsWithSolid(startDomain.EdgeList.Select(eg => new[] { eg.From.Coordinates, eg.To.Coordinates }), new TessellatedSolid[] { });
-//#endif
+                //#if PRESENT
+                //                Presenter.ShowVertexPathsWithSolid(startDomain.EdgeList.Select(eg => new[] { eg.From.Coordinates, eg.To.Coordinates }), new TessellatedSolid[] { });
+                //#endif
                 return false;
             }
             return true;
@@ -434,8 +434,6 @@ namespace TVGL
             }
             var bestDomainScore = upperLimit;
             var sortedBranches = new SimplePriorityQueue<(TriangulationLoop, int), double>();
-            //Debug.Indent();
-            //Debug.WriteLine("main:  " + string.Join(',', domain.GetVertices().Select(v => v.IndexInList)));
             for (int i = 1; i < domain.Count - 1; i++)
             {
                 var index = i + accessEdgeIndex;
@@ -451,7 +449,7 @@ namespace TVGL
                     var neighborFace = edgeAt3rdVertex.dir ? edgeAt3rdVertex.edge.OtherFace : edgeAt3rdVertex.edge.OwnedFace;
                     if (neighborFace != null) neighborNormal1 = neighborFace.Normal;
                 }
-                else thisTriangle.AddBegin(new Edge(secondVertex, thirdVertex, false), true);
+                else thisTriangle.AddBegin(new Edge(secondVertex, thirdVertex, true), true);
                 if (secondVertex == thirdVertex) secondVertex = thirdVertex;
                 var neighborNormal2 = Vector3.Null;
                 if (i == domain.Count - 2)
@@ -461,7 +459,7 @@ namespace TVGL
                     var neighborFace = lastEdgeAndDir.dir ? lastEdgeAndDir.edge.OtherFace : lastEdgeAndDir.edge.OwnedFace;
                     if (neighborFace != null) neighborNormal2 = neighborFace.Normal;
                 }
-                else thisTriangle.AddBegin(new Edge(thirdVertex, firstVertex, false), true);
+                else thisTriangle.AddBegin(new Edge(thirdVertex, firstVertex, true), true);
                 if (firstVertex == thirdVertex) firstVertex = thirdVertex;
 
                 thisTriangle.Score = CalcObjFunction(dotWeight, thisTriangle, accessFaceNormal, neighborNormal1, neighborNormal2);
@@ -492,7 +490,6 @@ namespace TVGL
                         if (innerIndex >= domain.Count) innerIndex -= domain.Count;
                         rightDomain.Add(domain[innerIndex]);
                     }
-                    //Debug.WriteLine("right: " + string.Join(',', rightDomain.GetVertices().Select(v => v.IndexInList)));
 
                     var vertexIDs = rightDomain.VertexIDList;
                     if (!visitedDomains.TryGetValue(vertexIDs, out rightDomain))
@@ -519,7 +516,6 @@ namespace TVGL
                         if (innerIndex >= domain.Count) innerIndex -= domain.Count;
                         leftDomain.Add(domain[innerIndex]);
                     }
-                    //Debug.WriteLine("left:  " + string.Join(',', leftDomain.GetVertices().Select(v => v.IndexInList)));
 
                     var vertexIDs = leftDomain.VertexIDList;
                     if (!visitedDomains.TryGetValue(vertexIDs, out leftDomain))

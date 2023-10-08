@@ -185,7 +185,7 @@ namespace TVGL
                 else yield return EdgeList[i].To;
             }
             if (keepLastVertex && !IsClosed) //only add the last one if not a closed loop since it would otherwise
-                                              // repeat the first point
+                                             // repeat the first point
             {
                 if (DirectionList[^1]) yield return EdgeList[^1].To;
                 else yield return EdgeList[^1].From;
@@ -208,7 +208,7 @@ namespace TVGL
         /// <returns>IEnumerable&lt;Vector3&gt;.</returns>
         public IEnumerable<Vector3> GetCenters()
         {
-            foreach(var edge in EdgeList)
+            foreach (var edge in EdgeList)
                 yield return edge.Center();
         }
 
@@ -258,6 +258,23 @@ namespace TVGL
             EdgeList.Insert(0, edge);
         }
 
+
+        internal void AddRange(EdgePath ep2)
+        {
+            if (FirstVertex == ep2.FirstVertex)
+                foreach (var (edge, dir) in ep2)
+                    AddBegin(edge, !dir);
+            else if (FirstVertex == ep2.LastVertex)
+                foreach (var (edge, dir) in ep2.Reverse())
+                    AddBegin(edge, dir);
+            else if (LastVertex == ep2.FirstVertex)
+                foreach (var (edge, dir) in ep2)
+                    AddEnd(edge, dir);
+            else if (LastVertex == ep2.LastVertex)
+                foreach (var (edge, dir) in ep2.Reverse())
+                    AddEnd(edge, !dir);
+            else throw new ArgumentException("The two edge paths do not share a common vertex");
+        }
 
         /// <summary>
         /// Determines the index of a specific item in the <see cref="T:System.Collections.Generic.IList`1" />.
@@ -369,7 +386,7 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Copies the specified reverse.
+        /// Copies the specified EdgePath.
         /// </summary>
         /// <param name="reverse">if set to <c>true</c> [reverse].</param>
         /// <param name="copiedTessellatedSolid">The copied tessellated solid.</param>

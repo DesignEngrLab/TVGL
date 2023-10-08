@@ -47,12 +47,12 @@ namespace TVGL
         internal void Invert()
         {
             _normal *= -1;
-            //var firstVertex = face.Vertices[0];
-            //face.Vertices.RemoveAt(0);
-            //face.Vertices.Insert(1, firstVertex);
-            Vertices.Reverse();
-            Edges.Reverse();
+            var tempVertex = C;
+            C = A; A = tempVertex;
+            var tempEdge = AB;
+            AB = BC; BC = tempEdge;
             _curvature = (CurvatureType)(-1 * (int)_curvature);
+            Update();
         }
 
         //Set new normal and area.
@@ -86,8 +86,8 @@ namespace TVGL
         internal void AddEdge(Edge edge)
         {
             if ((A == edge.From && B == edge.To) || (A == edge.To && B == edge.From)) AB = edge;
-            else if ((B == edge.From && C == edge.To)|| (B == edge.To && C == edge.From)) BC = edge;
-            else if ((C == edge.From && A == edge.To)|| (C == edge.To && A == edge.From)) CA = edge;
+            else if ((B == edge.From && C == edge.To) || (B == edge.To && C == edge.From)) BC = edge;
+            else if ((C == edge.From && A == edge.To) || (C == edge.To && A == edge.From)) CA = edge;
             else throw new Exception("Edge does not belong to this face.");
         }
 
@@ -97,11 +97,12 @@ namespace TVGL
         /// <param name="thisVertex">The this vertex.</param>
         /// <param name="willAcceptNullAnswer">if set to <c>true</c> [will accept null answer].</param>
         /// <returns>Edge.</returns>
-        public Edge OtherEdge(Vertex thisVertex, bool willAcceptNullAnswer = false)
+        public Edge OtherEdge(Vertex thisVertex)
         {
-            if (willAcceptNullAnswer)
-                return Edges.FirstOrDefault(e => e != null && e.To != thisVertex && e.From != thisVertex);
-            return Edges.First(e => e != null && e.To != thisVertex && e.From != thisVertex);
+            if (thisVertex == A) return BC;
+            if (thisVertex == B) return CA;
+            if (thisVertex == C) return AB;
+            throw new ArgumentException("The vertex is not a member of this triangle (TriangleFace.OtherEdge()).");
         }
 
         /// <summary>
@@ -110,12 +111,12 @@ namespace TVGL
         /// <param name="thisEdge">The this edge.</param>
         /// <param name="willAcceptNullAnswer">if set to <c>true</c> [will accept null answer].</param>
         /// <returns>Vertex.</returns>
-        public Vertex OtherVertex(Edge thisEdge, bool willAcceptNullAnswer = false)
+        public Vertex OtherVertex(Edge thisEdge)
         {
-            return willAcceptNullAnswer
-                ? Vertices.FirstOrDefault(v => v != null && v != thisEdge.To &&
-                                               v != thisEdge.From)
-                : Vertices.First(v => v != null && v != thisEdge.To && v != thisEdge.From);
+            if (thisEdge == AB) return C;
+            if (thisEdge == BC) return A;
+            if (thisEdge == CA) return B;
+            throw new ArgumentException("The edge is not a member of this triangle (TriangleFace.OtherVertex()).");
         }
 
         /// <summary>
@@ -125,11 +126,27 @@ namespace TVGL
         /// <param name="v2">The v2.</param>
         /// <param name="willAcceptNullAnswer">if set to <c>true</c> [will accept null answer].</param>
         /// <returns>Vertex.</returns>
-        public Vertex OtherVertex(Vertex v1, Vertex v2, bool willAcceptNullAnswer = false)
+        public Vertex OtherVertex(Vertex v1, Vertex v2)
         {
-            return willAcceptNullAnswer
-                ? Vertices.FirstOrDefault(v => v != null && v != v1 && v != v2)
-                : Vertices.First(v => v != null && v != v1 && v != v2);
+            if (v1 == A)
+            {
+                if (v2 == B) return C;
+                if (v2 == C) return B;
+                throw new ArgumentException("The vertex, v2, is not a member of this triangle (TriangleFace.OtherVertex()).");
+            }
+            if (v1 == B)
+            {
+                if (v2 == A) return C;
+                if (v2 == C) return A;
+                throw new ArgumentException("The vertex, v2, is not a member of this triangle (TriangleFace.OtherVertex()).");
+            }
+            if (v1 == C)
+            {
+                if (v2 == B) return A;
+                if (v2 == A) return B;
+                throw new ArgumentException("The vertex, v2, is not a member of this triangle (TriangleFace.OtherVertex()).");
+            }
+            throw new ArgumentException("The vertex, v1, is not a member of this triangle (TriangleFace.OtherVertex()).");
         }
 
         /// <summary>
@@ -144,35 +161,6 @@ namespace TVGL
             if (v1 == B) return C;
             if (v1 == C) return A;
             throw new ArgumentException("The given vertex is not part of this face.");
-        }
-
-        /// <summary>
-        /// Adopts the neighbors normal.
-        /// </summary>
-        /// <param name="ownedFace">The owned face.</param>
-        internal void AdoptNeighborsNormal(TriangleFace ownedFace)
-        {
-            _normal = ownedFace.Normal;
-        }
-
-        /// <summary>
-        /// This is a T-Edge. Set the face normal to be that of the two smaller edges other face.
-        /// </summary>
-        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
-        internal bool AdoptNeighborsNormal()
-        {
-            var edges = Edges.OrderBy(p => p.Length).ToList();
-            var edge1 = edges[0];
-            var edge2 = edges[1];
-            var face1Normal = (this == edge1.OwnedFace ? edge1.OtherFace : edge1.OwnedFace).Normal;
-            var face2Normal = (this == edge2.OwnedFace ? edge2.OtherFace : edge2.OwnedFace).Normal;
-            var dot = face1Normal.Dot(face2Normal);
-            if (dot.IsPracticallySame(1.0, Constants.SameFaceNormalDotTolerance))
-            {
-                _normal = (face1Normal + face2Normal).Normalize();
-                return true;
-            }
-            return false;
         }
 
         #region Constructors
@@ -262,7 +250,7 @@ namespace TVGL
         /// <summary>
         /// The normal
         /// </summary>
-        private Vector3 _normal = Vector3.Null;
+        internal Vector3 _normal = Vector3.Null;
 
         #endregion Constructors
 
@@ -319,9 +307,12 @@ namespace TVGL
         {
             get
             {
-                yield return AB;
-                yield return BC;
-                yield return CA;
+                if (AB != null)
+                    yield return AB;
+                if (BC != null)
+                    yield return BC;
+                if (CA != null)
+                    yield return CA;
             }
         }
 
@@ -396,17 +387,15 @@ namespace TVGL
         /// Gets the adjacent faces.
         /// </summary>
         /// <value>The adjacent faces.</value>
-        public List<TriangleFace> AdjacentFaces
+        public IEnumerable<TriangleFace> AdjacentFaces
         {
             get
             {
-                var adjacentFaces = new List<TriangleFace>();
                 foreach (var e in Edges)
                 {
-                    if (e == null) adjacentFaces.Add(null);
-                    else adjacentFaces.Add(this == e.OwnedFace ? e.OtherFace : e.OwnedFace);
+                    if (e != null)
+                        yield return e.GetMatingFace(this);
                 }
-                return adjacentFaces;
             }
         }
 
@@ -421,6 +410,7 @@ namespace TVGL
                 if (_curvature == CurvatureType.Undefined) DefineFaceCurvature();
                 return _curvature;
             }
+            internal set => _curvature = value;
         }
 
         /// <summary>
@@ -455,7 +445,7 @@ namespace TVGL
             else if (oldVertex == C) C = newVertex;
             else throw new Exception("Vertex not found in face");
             oldVertex.Faces.Remove(this);
-            newVertex.Faces.Add(this);
+            newVertex?.Faces.Add(this);
             Update();
         }
 
@@ -467,12 +457,23 @@ namespace TVGL
         /// <exception cref="System.Exception">Vertex not found in face</exception>
         internal void ReplaceEdge(Edge oldEdge, Edge newEdge)
         {
+            var sameDir = oldEdge.To == newEdge.To || oldEdge.From == newEdge.From;
             if (oldEdge == AB) AB = newEdge;
             else if (oldEdge == BC) BC = newEdge;
             else if (oldEdge == CA) CA = newEdge;
             else throw new Exception("Vertex not found in face");
-            if (oldEdge.OwnedFace == this) oldEdge.OwnedFace = null;
-            if (oldEdge.OtherFace == this) oldEdge.OtherFace = null;
+            if (oldEdge.OwnedFace == this)
+            {
+                oldEdge.OwnedFace = null;
+                if (sameDir) newEdge.OwnedFace = this;
+                else newEdge.OtherFace = this;
+            }
+            else if (oldEdge.OtherFace == this)
+            {
+                oldEdge.OtherFace = null;
+                if (sameDir) newEdge.OtherFace = this;
+                else newEdge.OwnedFace = this;
+            }
             Update();
         }
 

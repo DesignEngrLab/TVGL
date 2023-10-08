@@ -12,7 +12,7 @@
 // <summary></summary>
 // ***********************************************************************
 
-using MIConvexHull;
+using TVGL.ConvexHullDetails;
 using Newtonsoft.Json;
 using System;
 using System.Globalization;
@@ -24,7 +24,7 @@ namespace TVGL  // COMMENTEDCHANGE namespace System.Numerics
     /// <summary>
     /// A structure encapsulating two single precision floating point values and provides hardware accelerated methods.
     /// </summary>
-    public readonly partial struct Vector2 : IEquatable<Vector2>, IFormattable, IVertex2D, IVertex
+    public readonly partial struct Vector2 : IEquatable<Vector2>, IFormattable, IPoint2D, IPoint
     {
         #region Public Static Properties
         /// <summary>
@@ -63,21 +63,13 @@ namespace TVGL  // COMMENTEDCHANGE namespace System.Numerics
         /// Gets the x.
         /// </summary>
         /// <value>The x.</value>
-        double IVertex2D.X => X;
+        double IPoint2D.X => X;
 
         /// <summary>
         /// Gets the y.
         /// </summary>
         /// <value>The y.</value>
-        double IVertex2D.Y => Y;
-
-        /// <summary>
-        /// Gets the position.
-        /// </summary>
-        /// <value>The position.</value>
-        [JsonIgnore]
-
-        public double[] Position => new[] { X, Y };
+        double IPoint2D.Y => Y;
 
         /// <summary>
         /// Gets the <see cref="System.Double"/> with the specified i.
@@ -477,6 +469,72 @@ namespace TVGL  // COMMENTEDCHANGE namespace System.Numerics
         {
             return X * X + Y * Y;
         }
+
+
+        /// <summary>
+        /// Returns a boolean indicating whether the given vector is aligned or exactly in the opposite direction.
+        /// </summary>
+        /// <param name="other">The other.</param>
+        /// <param name="dotTolerance">The dot tolerance.</param>
+        /// <returns>True if the Object is equal or opposite to this Vector3; False otherwise.</returns>
+        public bool IsAlignedOrReverse(Vector2 other, double dotTolerance = Constants.DotToleranceForSame)
+        {
+            //Perform a quick check to see if they are perfectly equal or opposite
+            if (X == other.X && Y == other.Y) return true;
+            if (X == -other.X && Y == -other.Y) return true;
+            // if the magnitude of the dot product is nearly 1 than the two vectors are aligned
+            // here, we take the absolute value of the dot product since reverse is allowed
+            return Math.Abs(this.Dot(other)) >= dotTolerance;
+        }
+
+        /// <summary>
+        /// Returns a boolean indicating whether the given vector is aligned or exactly in the opposite direction.
+        /// </summary>
+        /// <param name="other">The other.</param>
+        /// <param name="isReversed">if set to <c>true</c> [is reverse].</param>
+        /// <param name="dotTolerance">The dot tolerance.</param>
+        /// <returns>True if the Object is equal or opposite to this Vector3; False otherwise.</returns>
+        public bool IsAlignedOrReverse(Vector2 other, out bool isReversed, double dotTolerance = Constants.DotToleranceForSame)
+        {
+            //Perform a quick check to see if they are perfectly equal or opposite
+            if (X == other.X && Y == other.Y)
+            {
+                isReversed = false;
+                return true;
+            }
+            if (X == -other.X && Y == -other.Y)
+            {
+                isReversed = true;
+                return true;
+            }
+            var dot = this.Dot(other);
+            isReversed = dot < 0;
+            if (isReversed) dot = -dot;
+            return dot >= dotTolerance;
+        }
+
+        /// <summary>
+        /// Determines whether the specified d2 is aligned.
+        /// </summary>
+        /// <param name="other">The other.</param>
+        /// <param name="dotTolerance">The dot tolerance.</param>
+        /// <returns><c>true</c> if the specified d2 is aligned; otherwise, <c>false</c>.</returns>
+        public bool IsAligned(Vector2 other, double dotTolerance = Constants.DotToleranceForSame)
+        {
+            if (X == other.X && Y == other.Y) return true;
+            return this.Dot(other) >= dotTolerance;
+        }
+
+        /// <summary>
+        /// Determines whether the specified d2 is perpendicular.
+        /// </summary>
+        /// <param name="other">The other.</param>
+        /// <param name="dotTolerance">The dot tolerance.</param>
+        /// <returns><c>true</c> if the specified d2 is aligned; otherwise, <c>false</c>.</returns>
+        public bool IsPerpendicular(Vector2 other, double dotTolerance = Constants.DotToleranceOrthogonal)
+        {
+            return this.Dot(other).IsNegligible(dotTolerance);
+        }
         #endregion Public Instance Methods
 
         #region Public Static Methods
@@ -631,7 +689,7 @@ namespace TVGL  // COMMENTEDCHANGE namespace System.Numerics
         /// <summary>
         /// Transforms a vector by the given matrix without the translation component.
         /// This is often used for transforming normals, however note that proper transformations
-        /// of normal vectors requires that the input matrix be the transpose of the inverse of that matrix.
+        /// of normal vectors requires that the input matrix be the transpose of the Inverse of that matrix.
         /// </summary>
         /// <param name="position">The source vector.</param>
         /// <param name="matrix">The transformation matrix.</param>
@@ -654,7 +712,7 @@ namespace TVGL  // COMMENTEDCHANGE namespace System.Numerics
         /// <summary>
         /// Transforms a vector by the given matrix without the translation component.
         /// This is often used for transforming normals, however note that proper transformations
-        /// of normal vectors requires that the input matrix be the transpose of the inverse of that matrix.
+        /// of normal vectors requires that the input matrix be the transpose of the Inverse of that matrix.
         /// </summary>
         /// <param name="position">The source vector.</param>
         /// <param name="matrix">The transformation matrix.</param>

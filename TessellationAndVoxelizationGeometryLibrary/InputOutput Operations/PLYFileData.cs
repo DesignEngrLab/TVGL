@@ -90,7 +90,7 @@ namespace TVGL
         /// Gets the face to vertex indices.
         /// </summary>
         /// <value>The face to vertex indices.</value>
-        private List<int[]> faceToVertexIndices;
+        private List<(int,int,int)> faceToVertexIndices;
 
         /// <summary>
         /// The vertex coordinate order
@@ -143,7 +143,7 @@ namespace TVGL
         /// <param name="filename">The filename.</param>
         /// <returns>List&lt;TessellatedSolid&gt;.</returns>
         /// <exception cref="System.ArgumentOutOfRangeException"></exception>
-        internal static TessellatedSolid OpenSolid(Stream s, string filename)
+        internal static TessellatedSolid OpenSolid(Stream s, string filename, TessellatedSolidBuildOptions tsBuildOptions)
         {
             var now = DateTime.Now;
             var reader = new StreamReader(s);
@@ -165,7 +165,7 @@ namespace TVGL
             }
             plyData.FixColors();
             Message.output("Successfully read in " + fileTypeString + " PLY file (" + (DateTime.Now - now) + ").", 3);
-            return new TessellatedSolid(plyData.vertices, plyData.faceToVertexIndices, true, plyData.faceColors,
+            return new TessellatedSolid(plyData.vertices, plyData.faceToVertexIndices, plyData.faceColors,tsBuildOptions,
                 InferUnitsFromComments(plyData.Comments), plyData.Name, filename, plyData.Comments, plyData.Language);
         }
 
@@ -184,7 +184,7 @@ namespace TVGL
                     if (faceColors.Count == i) faceColors.Add(null);
                     if (faceColors[i] != null) continue;
                     float a = 0, r = 0, g = 0, b = 0;
-                    foreach (var vertIndex in faceToVertexIndices[i])
+                    foreach (var vertIndex in faceToVertexIndices[i].EnumerateThruple())
                     {
                         a += vertexColors[vertIndex].Af;
                         r += vertexColors[vertIndex].Rf;
@@ -560,15 +560,18 @@ namespace TVGL
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         private bool ReadFaces(StreamReader reader)
         {
-            faceToVertexIndices = new List<int[]>();
+            faceToVertexIndices = new List<(int, int, int)>();
             for (var i = 0; i < numFaces; i++)
             {
                 var line = ReadLine(reader);
                 var words = line.Split(' ');
                 var numVerts = ReadNumberAsInt(words[0], vertexAmountType);
-                var vertIndices = new int[numVerts];
-                for (var j = 0; j < numVerts; j++)
-                    vertIndices[j] = ReadNumberAsInt(words[1 + j], vertexIndexType);
+                if (numVerts != 3)
+                    throw new NotImplementedException("TVGL is no longer able to read solids with input" +
+                        "polygons of any size except 3.");
+                var vertIndices = (ReadNumberAsInt(words[1], vertexIndexType),
+                    ReadNumberAsInt(words[2], vertexIndexType),
+                    ReadNumberAsInt(words[3], vertexIndexType));
                 faceToVertexIndices.Add(vertIndices);
 
                 if (faceColorDescriptor != null)
@@ -713,13 +716,16 @@ namespace TVGL
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         private bool ReadFaces(BinaryReader reader)
         {
-            faceToVertexIndices = new List<int[]>();
+            faceToVertexIndices = new List<(int, int, int)>();
             for (var i = 0; i < numFaces; i++)
             {
                 var numVerts = ReadNumberAsInt(reader, vertexAmountType, endiannessType);
-                var vertIndices = new int[numVerts];
-                for (var j = 0; j < numVerts; j++)
-                    vertIndices[j] = ReadNumberAsInt(reader, vertexIndexType, endiannessType);
+                if (numVerts != 3)
+                    throw new NotImplementedException("TVGL is no longer able to read solids with input" +
+                        "polygons of any size except 3.");
+                var vertIndices = (ReadNumberAsInt(reader, vertexIndexType, endiannessType),
+                    ReadNumberAsInt(reader, vertexIndexType, endiannessType),
+                    ReadNumberAsInt(reader, vertexIndexType, endiannessType));
                 faceToVertexIndices.Add(vertIndices);
 
                 if (faceColorDescriptor != null)

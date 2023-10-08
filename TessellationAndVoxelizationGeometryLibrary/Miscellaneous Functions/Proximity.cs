@@ -15,7 +15,7 @@
 
 
 using ClipperLib;
-using MIConvexHull;
+using TVGL.ConvexHullDetails;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -346,7 +346,7 @@ namespace TVGL
             if (eigenVectors.Length == 0)
             {
                 if (zSq.IsNegligible()) return Vector3.UnitZ;
-                if (ySq.IsNegligible()) return Vector3.UnitY;   
+                if (ySq.IsNegligible()) return Vector3.UnitY;
                 if (xSq.IsNegligible()) return Vector3.UnitX;
                 var v = new Vector3(xSq, ySq, zSq);
                 return v.GetPerpendicularDirection();
@@ -467,7 +467,7 @@ namespace TVGL
         /// <param name="directions">The directions.</param>
         /// <param name="reverseIsDuplicate">if set to <c>true</c> [reverse is duplicate].</param>
         /// <param name="dotTolerance">The dot tolerance.</param>
-        public static void RemoveDuplicates(this List<Vector3> directions, bool reverseIsDuplicate = false, double dotTolerance = Constants.SameFaceNormalDotTolerance)
+        public static void RemoveDuplicates(this List<Vector3> directions, bool reverseIsDuplicate = false)
         {
             if (!directions.Any()) return;
 
@@ -480,8 +480,8 @@ namespace TVGL
                 var unique = true;
                 for (var j = i + 1; j < temp.Count; j++)
                 {
-                    if ((reverseIsDuplicate && temp[i].IsAlignedOrReverse(temp[j], dotTolerance)) ||
-                        (!reverseIsDuplicate && temp[i].IsAligned(temp[j], dotTolerance)))
+                    if ((reverseIsDuplicate && temp[i].IsAlignedOrReverse(temp[j])) ||
+                        (!reverseIsDuplicate && temp[i].IsAligned(temp[j])))
                     {
                         unique = false;
                         break;
@@ -590,64 +590,6 @@ namespace TVGL
             return guessDirList;
             //foreach (var dir in guessDirList) yield return dir;
         }
-
-        /// <summary>
-        /// Gets the dodecahedron dirs.
-        /// </summary>
-        /// <param name="relativeZ">The relative z.</param>
-        /// <returns>IEnumerable&lt;Vector3&gt;.</returns>
-        public static IEnumerable<Vector3> GetDodecahedronDirs(Vector3 relativeZ)
-        {
-            var rotateMatrix = relativeZ.TransformToXYPlane(out _);
-            foreach (var d in dodecDirs)
-                yield return d.Transform(rotateMatrix);
-        }
-
-        /// <summary>
-        /// The phi cos sin
-        /// </summary>
-        readonly static double phi_CosSin = (1 + Math.Sqrt(5)) / (5 + Math.Sqrt(5)); //0.44721359549996...
-        /// <summary>
-        /// The phi sin SQD
-        /// </summary>
-        readonly static double phi_SinSqd = (3 + Math.Sqrt(5)) / (5 + Math.Sqrt(5)); //0.72360679774997...
-        /// <summary>
-        /// The phi sin
-        /// </summary>
-        readonly static double phi_Sin = (1 + Math.Sqrt(5)) / (Math.Sqrt(10 + 2 * Math.Sqrt(5))); //0.85065080835204...
-        /// <summary>
-        /// The phi cos SQD
-        /// </summary>
-        readonly static double phi_CosSqd = 2 / (5 + Math.Sqrt(5)); //0.27639320225...
-        /// <summary>
-        /// The phi cos
-        /// </summary>
-        readonly static double phi_Cos = 2 / Math.Sqrt(10 + 2 * Math.Sqrt(5)); //0.5257311121191336...
-
-        /// <summary>
-        /// The d1
-        /// </summary>
-        readonly static Vector3 d1 = new Vector3(0, 2 * phi_CosSin, phi_CosSin);
-        /// <summary>
-        /// The d2
-        /// </summary>
-        readonly static Vector3 d2 = new Vector3(phi_Cos, -phi_SinSqd, phi_CosSin);
-        /// <summary>
-        /// The d3
-        /// </summary>
-        readonly static Vector3 d3 = new Vector3(-phi_Cos, -phi_SinSqd, phi_CosSin);
-        /// <summary>
-        /// The d4
-        /// </summary>
-        readonly static Vector3 d4 = new Vector3(phi_Sin, phi_CosSqd, phi_CosSin);
-        /// <summary>
-        /// The d5
-        /// </summary>
-        readonly static Vector3 d5 = new Vector3(-phi_Sin, phi_CosSqd, phi_CosSin);
-        /// <summary>
-        /// The dodec dirs
-        /// </summary>
-        readonly static Vector3[] dodecDirs = new[] { d1, d2, d3, d4, d5 };
         #endregion
 
 
@@ -695,7 +637,7 @@ namespace TVGL
                     lineDir += (pointList[i] - pointList[0]);
                 normal = lineDir.Normalize().GetPerpendicularDirection();
                 var thisPlane = new Plane(pointList[0], normal);
-                if (StraightLine2D.CreateFromPoints(pointList.Select(p => (IVertex2D)p.ConvertTo2DCoordinates(thisPlane.AsTransformToXYPlane)),
+                if (StraightLine2D.CreateFromPoints(pointList.Select(p => (IPoint2D)p.ConvertTo2DCoordinates(thisPlane.AsTransformToXYPlane)),
                     out var straightLine, out var error))
                 {
                     plane = thisPlane;
@@ -720,7 +662,7 @@ namespace TVGL
         /// <param name="v1Length">Length of the v1 (save a small amount of time if already known).</param>
         /// <param name="v2Length">Length of the v2 (save a small amount of time if already known).</param>
         /// <returns><c>true</c> if the specified v1 is discontinuous; otherwise, <c>false</c>.</returns>
-        public static bool LineSegmentsAreDiscontinuous(double dot, double crossLength, double v1Length, double v2Length, double chordError)
+        public static bool LineSegmentsAreC1Discontinuous(double dot, double crossLength, double v1Length, double v2Length, double chordError)
         {
             if (dot < 0)
                 // if the dot is negative then angle is greater than 90-degrees also breaks C1 continuity
@@ -740,9 +682,9 @@ namespace TVGL
             if (sinTheta > 1 || sinTheta < -1) return true;
             var theta = Math.Asin(sinTheta);
 
-            if (theta > Constants.MinSmoothAngle)
+            //if (theta > Constants.MinSmoothAngle)
                 // if theta is bigger than MinSmoothAngle, then it breaks C1 continuity
-                return true;
+            //    return true;
             // with the equation of the chord-length and the fact that the phi's (chord arc angle) add
             // up to the theta (corner angle from vectors), we can do a little manipulation to find phi
             // without finding r and the center. This is presumably more accurate and faster than finding
@@ -756,12 +698,12 @@ namespace TVGL
                 radius = Math.Abs(v2Length / (2 * Math.Sin(phi2)));
                 // radius does not need to be in the condition, but for improved accuracy we solve it
                 // based on the larger phi. 
-                error = radius * (1 - Math.Cos(2 * phi2));
+                error = radius * (1 - Math.Cos(phi2));
             }
             else
             {
                 radius = Math.Abs(v1Length / (2 * Math.Sin(phi1)));
-                error = radius * (1 - Math.Cos(2 * phi1));
+                error = radius * (1 - Math.Cos(phi1));
             }
             return error > chordError;
         }
@@ -885,7 +827,7 @@ namespace TVGL
             {
                 var x = anglePair.X;
                 var y = anglePair.Y;
-                yield return new Vector3(Math.Cos(x) * Math.Cos(y), Math.Sin(x) * Math.Cos(y), Math.Sin(y));
+                yield return new Vector3(radius * Math.Cos(x) * Math.Cos(y), radius * Math.Sin(x) * Math.Cos(y), radius * Math.Sin(y));
             }
         }
     }

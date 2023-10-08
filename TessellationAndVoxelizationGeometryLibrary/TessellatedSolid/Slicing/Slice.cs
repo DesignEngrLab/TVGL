@@ -48,7 +48,7 @@ namespace TVGL
             if (!GetSliceContactData(ts, plane, out contactData, setIntersectionGroups, undoPlaneOffset: undoPlaneOffset))
             {
                 solids = new List<TessellatedSolid>();
-                Debug.WriteLine("CuttingPlane does not cut through the given solid.");
+                Message.output("CuttingPlane does not cut through the given solid.", 2);
                 return;
             }
             MakeSolids(contactData, ts.Units, out solids);
@@ -56,8 +56,8 @@ namespace TVGL
             var totalVolume2 = contactData.SolidContactData.Sum(solidContactData => solidContactData.Volume(ts.SameTolerance));
             if (!totalVolume2.IsPracticallySame(totalVolume1, 100))
             {
-                Debug.WriteLine("Error with Volume function calculation in TVGL. SolidContactData Volumes and Solid Volumes should match, since they use all the same faces.");
-                Debug.WriteLine("Contact Data Total Volume = " + totalVolume2 + ". Solid Total Volume = " + totalVolume1);
+                Message.output("Error with Volume function calculation in TVGL. SolidContactData Volumes and Solid Volumes should match, since they use all the same faces.", 2);
+                Message.output("Contact Data Total Volume = " + totalVolume2 + ". Solid Total Volume = " + totalVolume1, 2);
             }
         }
 
@@ -93,7 +93,7 @@ namespace TVGL
             if (!GetSliceContactData(ts, plane, out newContactData, false, loopsToIgnore))
             {
                 solids = new List<TessellatedSolid>();
-                Debug.WriteLine("CuttingPlane does not cut through the given solid.");
+                Message.output("CuttingPlane does not cut through the given solid.", 2);
                 return;
             }
             MakeSolids(newContactData, ts.Units, out solids);
@@ -101,8 +101,8 @@ namespace TVGL
             var totalVolume2 = newContactData.SolidContactData.Sum(solidContactData => solidContactData.Volume(ts.SameTolerance));
             if (!totalVolume2.IsPracticallySame(totalVolume1, 100))
             {
-                Debug.WriteLine("Error with Volume function calculation in TVGL. SolidContactData Volumes and Solid Volumes should match, since they use all the same faces.");
-                Debug.WriteLine("Contact Data Total Volume = " + totalVolume2 + ". Solid Total Volume = " + totalVolume1);
+                Message.output("Error with Volume function calculation in TVGL. SolidContactData Volumes and Solid Volumes should match, since they use all the same faces.", 2);
+                Message.output("Contact Data Total Volume = " + totalVolume2 + ". Solid Total Volume = " + totalVolume1, 2);
             }
         }
 
@@ -124,14 +124,14 @@ namespace TVGL
             {
                 positiveSideSolid = null;
                 negativeSideSolid = null;
-                Debug.WriteLine("CuttingPlane does not cut through the given solid.");
+                Message.output("CuttingPlane does not cut through the given solid.", 2);
                 return;
             }
             //MakeSingleSolidOnEachSideOfInfitePlane(contactData, ts.Units, out positiveSideSolid, out negativeSideSolid);
             List<TriangleFace> positiveSideFaces = new List<TriangleFace>(contactData.PositiveSideContactData.SelectMany(solidContactData => solidContactData.AllFaces));
-            positiveSideSolid = new TessellatedSolid(positiveSideFaces, true, true, units: ts.Units);
+            positiveSideSolid = new TessellatedSolid(positiveSideFaces, null, TessellatedSolidBuildOptions.Default, units: ts.Units);
             var negativeSideFaces = new List<TriangleFace>(contactData.NegativeSideContactData.SelectMany(solidContactData => solidContactData.AllFaces));
-            negativeSideSolid = new TessellatedSolid(negativeSideFaces, true, true, units: ts.Units);
+            negativeSideSolid = new TessellatedSolid(negativeSideFaces, null, TessellatedSolidBuildOptions.Default, units: ts.Units);
         }
 
         /// <summary>
@@ -174,8 +174,8 @@ namespace TVGL
         /// <param name="solids">The solids.</param>
         public static void MakeSolids(this ContactData contactData, UnitType unitType, out List<TessellatedSolid> solids)
         {
-            solids = contactData.SolidContactData.Select(solidContactData => new TessellatedSolid(solidContactData.AllFaces, true,
-                true, units: unitType)).ToList();
+            solids = contactData.SolidContactData.Select(solidContactData => new TessellatedSolid(solidContactData.AllFaces, null,
+                TessellatedSolidBuildOptions.Default, units: unitType)).ToList();
         }
 
 
@@ -229,8 +229,7 @@ namespace TVGL
                     var negativeLoops = polygon.InnerPolygons.Select(p => loops[p.Index]).ToList();
                     var planeFaces = new List<TriangleFace>();
                     var groupOfOnPlaneFaces = indicesOfTriangles.Select(triIndices => new TriangleFace(
-                        allVertices[triIndices.A], allVertices[triIndices.B], allVertices[triIndices.C],
-                        false));
+                        allVertices[triIndices.A], allVertices[triIndices.B], allVertices[triIndices.C], false));
                     var groupOfLoops = new GroupOfLoops(positiveLoop, negativeLoops, groupOfOnPlaneFaces);
                     groupsOfLoops.Add(groupOfLoops);
                     if (k == -1) posSideGroups.Add(groupOfLoops);
@@ -769,7 +768,7 @@ namespace TVGL
             /// <param name="plane">The plane.</param>
             /// <param name="offSideVertex">The off side vertex.</param>
             /// <param name="planeOffset">The plane offset.</param>
-            /// <exception cref="System.Exception">Cannot Be Null</exception>
+            /// <exception cref="System.Exception">Cannot Be Empty</exception>
             internal StraddleEdge(Edge edge, Plane plane, Vertex offSideVertex, double planeOffset = 0D)
             {
                 OwnedFace = edge.OwnedFace;
@@ -780,7 +779,7 @@ namespace TVGL
                 OnSideVertex = Edge.OtherVertex(OffSideVertex);
                 IntersectVertex = new Vertex(MiscFunctions.PointOnPlaneFromIntersectingLine(plane.Normal,
                     plane.DistanceToOrigin - planeOffset, edge.To.Coordinates, edge.From.Coordinates, out _));
-                if (IntersectVertex == null) throw new Exception("Cannot Be Null");
+                if (IntersectVertex == null) throw new Exception("Cannot Be Empty");
             }
 
             /// <summary>
@@ -790,7 +789,7 @@ namespace TVGL
             /// <returns>TriangleFace.</returns>
             public TriangleFace NextFace(TriangleFace face)
             {
-                return Edge.OwnedFace == face ? Edge.OtherFace : Edge.OwnedFace;
+                return Edge.GetMatingFace(face);
             }
         }
 
@@ -886,7 +885,7 @@ namespace TVGL
                     var prevFace = nextFace;
                     if (prevFace == null)
                         nextFace = (currentEdge.From.Dot(normal) < distanceToOrigin) ? currentEdge.OtherFace : currentEdge.OwnedFace;
-                    else nextFace = (nextFace == currentEdge.OwnedFace) ? currentEdge.OtherFace : currentEdge.OwnedFace;
+                    else nextFace = currentEdge.GetMatingFace(nextFace);
                     Edge nextEdge = null;
                     foreach (var whichEdge in nextFace.Edges)
                     {
@@ -946,7 +945,7 @@ namespace TVGL
         {
             var intDir = Math.Abs((int)direction) - 1;
             var signDir = Math.Sign((int)direction);
-            var distances = tessellatedSolid.Vertices.Select(v =>  v.Coordinates[intDir]).ToList();
+            var distances = tessellatedSolid.Vertices.Select(v => v.Coordinates[intDir]).ToList();
             var positiveShift = 0.0;
             var negativeShift = 0.0;
             distances.SetPositiveAndNegativeShifts(distanceToOrigin, tessellatedSolid.SameTolerance, ref positiveShift, ref negativeShift);

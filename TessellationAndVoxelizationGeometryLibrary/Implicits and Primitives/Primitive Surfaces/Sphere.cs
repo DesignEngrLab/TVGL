@@ -114,6 +114,54 @@ namespace TVGL
             return true;
         }
 
+        public static Sphere CreateFrom4Points(Vector3 p1, Vector3 p2, Vector3 p3, Vector3 p4)
+        {
+            /* see comment at :https://math.stackexchange.com/questions/2585392/equation-of-the-sphere-that-passes-through-4-points 
+             * take the general equation of a sphere: (x_i − a)^2 + (y_i − b)^2 + (z_i − c)^2 = r^2
+             * we have 4 unknowns: a, b, c, r where (a, b, c) is the center of the sphere and r is the radius.
+             * x_i, y_i, z_i are the four points p1, p2, p3, p4 
+             * we can make 3 linear equations where the unknowns are a,b & c by subtracting this equation
+             * for example the equation for p_1 (x_1, y_1, z_1) is subtracted from p2 (x_2, y_2, z_2)
+             * to create: x_1^2−x_2^2 + 2a(x2−x1) + y_1^2 − y_2^2 + 2b(y_2−y_1) + z_1^2 − z_2^2 + 2c(z2−z1)=0
+             * do two more such subtraction, say: p_2 - p_3 and p_3 - p_4.
+             * then solve for a, b, & c
+             * Solve for these, then easily obtain r.
+             * rearranging the difference equation to get coefficients for the matrix
+             * 2(x_j - x_i)a + 2(y_j -y_i)b + 2(z_j - z_i)c = x_j^2 − x_i^2 + y_j^2 - y_i^2 + zj^2 - z_i^2 */
+            var matrix = new Matrix3x3(
+                2 * (p2.X - p1.X), 2 * (p2.Y - p1.Y), 2 * (p2.Z - p1.Z),
+                2 * (p3.X - p2.X), 2 * (p3.Y - p2.Y), 2 * (p3.Z - p2.Z),
+                2 * (p4.X - p3.X), 2 * (p4.Y - p3.Y), 2 * (p4.Z - p3.Z));
+            var b = new Vector3(
+                p2.X * p2.X - p1.X * p1.X + p2.Y * p2.Y - p1.Y * p1.Y + p2.Z * p2.Z - p1.Z * p1.Z,
+                p3.X * p3.X - p2.X * p2.X + p3.Y * p3.Y - p2.Y * p2.Y + p3.Z * p3.Z - p2.Z * p2.Z,
+                p4.X * p4.X - p3.X * p3.X + p4.Y * p4.Y - p3.Y * p3.Y + p4.Z * p4.Z - p3.Z * p3.Z);
+            var center = matrix.Solve(b);
+            var radius = (p1 - center).Length();
+            return new Sphere(center, radius, null);
+        }
+
+        public static Sphere CreateFrom3Points(Vector3 p1, Vector3 p2, Vector3 p3)
+        {
+            var planeNormal = (p2 - p1).Cross(p3 - p1).Normalize();
+            var midPoint1 = 0.5 * (p1 + p2);
+            var planeDist = planeNormal.Dot(midPoint1);
+            var normal1 = (p2 - p1).Normalize();
+            var dist1 = normal1.Dot(midPoint1);
+            var midPoint2 = 0.5 * (p1 + p3);
+            var normal2 = (p3 - p1).Normalize();
+            var dist2 = normal2.Dot(midPoint2);
+            var center = MiscFunctions.PointCommonToThreePlanes(planeNormal, planeDist, normal1, dist1, normal2,
+                dist2);
+            return new Sphere(center, (p1 - center).Length(), null);
+        }
+
+        public static Sphere CreateFrom2Points(Vector3 p1, Vector3 p2)
+        {
+            var center = 0.5 * (p1 + p2);
+            return new Sphere(center, (p1 - center).Length(), null);
+        }
+
         /// <summary>
         /// The face x dir
         /// </summary>
@@ -144,9 +192,9 @@ namespace TVGL
             var x = faceXDir.Dot(v) / Radius;
             var y = faceYDir.Dot(v) / Radius;
             var z = faceZDir.Dot(v) / Radius;
-            var (polarAngle, azimuthAngle) = Sphere.ConvertToSphericalAngles(x, y, z);
+            var sphericalAngles = TVGL.SphericalAnglePair.ConvertToSphericalAngles(x, y, z);
 
-            return new Vector2(azimuthAngle * Radius, polarAngle * Radius);
+            return new Vector2(sphericalAngles.AzimuthAngle * Radius, sphericalAngles.PolarAngle * Radius);
         }
 
         /// <summary>
@@ -164,7 +212,7 @@ namespace TVGL
             }
             var azimuthAngle = point.X / Radius;
             var polarAngle = point.Y / Radius;
-            var baseCoord = ConvertSphericalToCartesian(Radius, polarAngle, azimuthAngle);
+            var baseCoord = TVGL.SphericalAnglePair.ConvertSphericalToCartesian(Radius, polarAngle, azimuthAngle);
             var rotateMatrix = new Matrix4x4(faceXDir, faceYDir, faceZDir, Vector3.Zero);
             baseCoord = baseCoord.Transform(rotateMatrix);
             return baseCoord + Center;
@@ -189,65 +237,6 @@ namespace TVGL
             }
         }
 
-        /// <summary>
-        /// Converts a cartesian coordinate (with a provided center) to spherical angles.
-        /// </summary>
-        /// <param name="point">The point.</param>
-        /// <param name="center">The center.</param>
-        /// <returns>System.ValueTuple&lt;System.Double, System.Double&gt;.</returns>
-        public static (double, double) ConvertToSphericalAngles(Vector3 point, Vector3 center)
-        {
-            return ConvertToSphericalAngles(point - center);
-        }
-
-        /// <summary>
-        /// Converts a cartesian coordinate to spherical angles based at the origin.
-        /// </summary>
-        /// <param name="p">The p.</param>
-        /// <returns>System.ValueTuple&lt;System.Double, System.Double&gt;.</returns>
-        public static (double, double) ConvertToSphericalAngles(Vector3 p)
-        {
-            return ConvertToSphericalAngles(p.X, p.Y, p.Z);
-        }
-
-        /// <summary>
-        /// Converts a cartesian coordinate to spherical angles based at the origin.
-        /// </summary>
-        /// <param name="x">The x.</param>
-        /// <param name="y">The y.</param>
-        /// <param name="z">The z.</param>
-        /// <returns>System.ValueTuple&lt;System.Double, System.Double&gt;.</returns>
-        public static (double, double) ConvertToSphericalAngles(double x, double y, double z)
-        {
-            // this follow the description and first figure at https://wikipedia.org/wiki/Spherical_coordinate_system
-            // ISO physics convention, where polar angle is measured as deviation from z axis
-            var polarAngle = Math.Acos(z);
-            var azimuthalX = Math.Acos(x);
-            var azimuthalY = Math.Acos(y);
-            var azimuthAngle = Math.Atan2(azimuthalY, azimuthalX);
-            return (polarAngle, azimuthAngle);
-        }
-
-
-        /// <summary>
-        /// Converts the spherical coordinate to cartesian coordinates.
-        /// </summary>
-        /// <param name="radius">The radius.</param>
-        /// <param name="polarAngle">The polar angle.</param>
-        /// <param name="azimuthAngle">The azimuth angle.</param>
-        /// <returns>Vector3.</returns>
-        public static Vector3 ConvertSphericalToCartesian(double radius, double polarAngle, double azimuthAngle)
-        {
-            var sinPolar = Math.Sin(polarAngle);
-            var cosPolar = Math.Cos(polarAngle);
-            var sinAzimuth = Math.Sin(azimuthAngle);
-            var cosAzimuth = Math.Cos(azimuthAngle);
-
-            return new Vector3(radius * cosAzimuth * sinPolar, radius * sinAzimuth * sinPolar, radius * cosPolar);
-        }
-
-
-
 
         /// <summary>
         /// Returns where the given point is inside the cylinder.
@@ -259,6 +248,13 @@ namespace TVGL
             return PointMembership(x) < 0 == IsPositive;
         }
 
+        public override Vector3 GetNormalAtPoint(Vector3 point)
+        {
+            var d = (point - Center).Normalize();
+            if (IsPositive.HasValue && !IsPositive.Value) d = -d;
+            return d;
+        }
+
         /// <summary>
         /// Points the membership.
         /// </summary>
@@ -266,7 +262,9 @@ namespace TVGL
         /// <returns>System.Double.</returns>
         public override double PointMembership(Vector3 point)
         {
-            return (point - Center).Length() - Radius;
+            var d = (point - Center).Length() - Radius;
+            if (IsPositive.HasValue && !IsPositive.Value) d = -d;
+            return d;
         }
         /// <summary>
         /// Points the membership.
@@ -337,7 +335,7 @@ namespace TVGL
         /// <param name="center">The center.</param>
         /// <param name="radius">The radius.</param>
         /// <param name="isPositive">if set to <c>true</c> [is positive].</param>
-        public Sphere(Vector3 center, double radius, bool isPositive)
+        public Sphere(Vector3 center, double radius, bool? isPositive)
         {
             Center = center;
             this.isPositive = isPositive;

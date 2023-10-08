@@ -195,8 +195,7 @@ namespace TVGL
             var inverseVoxelSideLength = 1 / VoxelSideLength; // since its quicker to multiple then to divide, maybe doing this once at the top will save some time
                                                               //if (loops.Any())
                                                               //{  // multiple enumeration warning so commenting out above condition. but that sound be a problem for next line
-            var intersections = loops.AllPolygonIntersectionPointsAlongHorizontalLines(yBegin, numVoxelsY,
-                            VoxelSideLength, out var yStartIndex);
+            var intersections = loops.AllPolygonIntersectionPointsAlongHorizontalLines(yBegin, VoxelSideLength, out var yStartIndex);
             var numYlines = intersections.Count;
             for (int j = -Math.Min(0, yStartIndex); j < numYlines; j++)
             {
@@ -235,8 +234,7 @@ namespace TVGL
                 var loops = decomp[k];
                 if (loops.Any())
                 {
-                    var intersections = PolygonOperations.AllPolygonIntersectionPointsAlongHorizontalLines(loops, yBegin, numVoxelsY,
-                        VoxelSideLength, out var yStartIndex);
+                    var intersections = PolygonOperations.AllPolygonIntersectionPointsAlongHorizontalLines(loops, yBegin, VoxelSideLength, out var yStartIndex);
                     var numYlines = intersections.Count;
                     for (int j = 0; j < numYlines; j++)
                     {

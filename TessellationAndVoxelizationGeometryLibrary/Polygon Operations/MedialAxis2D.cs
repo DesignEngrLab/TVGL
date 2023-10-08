@@ -48,7 +48,7 @@ namespace TVGL
                 var smaller = new Polygon(sampled).OffsetRound(-0.001 * perimeter).First();
 
                 //Delaunay Medial Axis
-                var delaunay = MIConvexHull.Triangulation.CreateDelaunay(sampled);
+                var delaunay = ConvexHullDetails.Triangulation.CreateDelaunay(sampled);
                 var lines = new List<List<Vector2>>();
                 foreach (var triangle in delaunay.Cells)
                 {
@@ -247,7 +247,7 @@ namespace TVGL
                         for (var j = 0; j < lines.Count; j++)
                         {
                             var line = lines[j];
-                            if (line[0] == p1) //.Position.Subtract(p1.Position).norm2().IsNegligible(0.0001))
+                            if (line[0] == p1) //.Coordinates.Subtract(p1.Coordinates).norm2().IsNegligible(0.0001))
                             {
                                 if (line[1] == p0)
                                 {
@@ -259,7 +259,7 @@ namespace TVGL
                                 lines.RemoveAt(j);
                                 break;
                             }
-                            if (line[1] == p1) // .Position.Subtract(p1.Position).norm2().IsNegligible(0.0001))
+                            if (line[1] == p1) // .Coordinates.Subtract(p1.Coordinates).norm2().IsNegligible(0.0001))
                             {
                                 if (line[0] == p0)
                                 {

@@ -11,7 +11,7 @@
 // </copyright>
 // <summary></summary>
 // ***********************************************************************
-using MIConvexHull;
+using TVGL.ConvexHullDetails;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -22,9 +22,9 @@ namespace TVGL
 {
     /// <summary>
     /// The 3D vertex can connect to any number of faces and edges. It inherits from the
-    /// MIConvexhull IVertex interface.
+    /// MIConvexhull IPoint interface.
     /// </summary>
-    public sealed class Vertex : TessellationBaseClass, IVertex3D, IVertex
+    public sealed class Vertex : TessellationBaseClass, IPoint3D, IPoint
     {
         /// <summary>
         /// Prevents a default instance of the <see cref="Vertex" /> class from being created.
@@ -121,12 +121,6 @@ namespace TVGL
         public List<TriangleFace> Faces { get; private set; }
 
         /// <summary>
-        /// Gets the position.
-        /// </summary>
-        /// <value>The position.</value>
-        double[] IVertex.Position => Coordinates.Position;
-
-        /// <summary>
         /// Gets the normal.
         /// </summary>
         /// <value>The normal.</value>
@@ -166,7 +160,10 @@ namespace TVGL
                 if (_curvature == CurvatureType.Undefined) DefineCurvature();
                 return _curvature;
             }
+            internal set => _curvature = value;
         }
+
+        public double this[int i] => Coordinates[i];
 
         /// <summary>
         /// The curvature
@@ -189,6 +186,7 @@ namespace TVGL
             else _curvature = CurvatureType.SaddleOrFlat;
         }
 
+        public bool IsNull() => double.IsNaN(X) || double.IsNaN(Y);
         #endregion Properties
     }
 }

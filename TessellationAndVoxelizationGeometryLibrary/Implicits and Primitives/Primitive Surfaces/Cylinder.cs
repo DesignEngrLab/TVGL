@@ -101,7 +101,7 @@ namespace TVGL
             // when the points are a closed path and they encircle the axis, basically we see the simplest resulting
             // polygon as a circle. Perhaps this doesn't capture what was intended but it is the best choice given
             // alternatives
-            if (pathIsClosed && BorderEncirclesAxis(points, Axis, Anchor))
+            if (pathIsClosed && points.BorderEncirclesAxis(Axis, Anchor))
             {
                 var transform = Axis.TransformToXYPlane(out _);
                 foreach (var point in points)
@@ -247,6 +247,16 @@ namespace TVGL
             return PointMembership(x) < 0 == IsPositive;
         }
 
+        public override Vector3 GetNormalAtPoint(Vector3 point)
+        {
+            var a = (point - Anchor);
+            var dirAxis = a.Dot(Axis) < 0 ? -Axis : Axis;
+            var b = dirAxis.Cross(a);
+            var outwardVector = b.Cross(Axis).Normalize();
+            if (isPositive.HasValue && !isPositive.Value) outwardVector *= -1;
+            return outwardVector;
+        }
+
         /// <summary>
         /// Points the membership.
         /// </summary>
@@ -257,7 +267,9 @@ namespace TVGL
             var dxAlong = point.Dot(Axis);
             if (dxAlong < MinDistanceAlongAxis) return MinDistanceAlongAxis - dxAlong;
             if (dxAlong > MaxDistanceAlongAxis) return dxAlong - MaxDistanceAlongAxis;
-            return (point - Anchor).Cross(Axis).Length() - Radius;
+            var d = (point - Anchor).Cross(Axis).Length() - Radius;
+            if (IsPositive.HasValue && !IsPositive.Value) d = -d;
+            return d;
         }
 
         protected override void CalculateIsPositive()
@@ -282,7 +294,7 @@ namespace TVGL
         //    //First, get the planes on the top and bottom.
         //    //Second, determine which plane is further along the axis. The faces on this plane will have a normal == axis
         //    //The bottom plane will have faces in the reverse of the axis.
-        //    var plane1 = MiscFunctions.GetPlaneFromThreePoints(Loop1[0].Position, Loop1[1].Position, Loop1[2].Position);
+        //    var plane1 = MiscFunctions.GetPlaneFromThreePoints(Loop1[0].Coordinates, Loop1[1].Coordinates, Loop1[2].Coordinates);
         //    var plane
         //}
         #endregion

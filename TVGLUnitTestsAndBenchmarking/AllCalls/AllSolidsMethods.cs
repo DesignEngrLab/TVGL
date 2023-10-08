@@ -10,15 +10,13 @@ namespace TVGLUnitTestsAndBenchmarking
         {
             #region TessellatedSolid
             var ts = new TessellatedSolid();
-            ts = new TessellatedSolid(new[] { new List<Vector3>() }, true, new TVGL.Color[0]);
-            ts = new TessellatedSolid(new Vector3[0], new[] { new[] { 1, 2, 3 } }, true, new TVGL.Color[0]);
+            ts = new TessellatedSolid(new Vector3[0], new[] { (1, 2, 3) }, new TVGL.Color[0], TessellatedSolidBuildOptions.Default);
             ts.AddPrimitive(new Plane());
-            ts.CheckModelIntegrity();
+            
             ts.Complexify();
             ts.Copy();
             ts.OrientedBoundingBox();
             ts.CreateSilhouette(Vector3.UnitX);
-            ts.Repair();
             ts.SetToOriginAndSquare(out var backTransform);
             ts.SetToOriginAndSquareToNewSolid(out backTransform);
             ts.Simplify();
@@ -30,8 +28,8 @@ namespace TVGLUnitTestsAndBenchmarking
             ts.GetSliceContactData(new Plane(), out contactData, false);
             ts.ConvexHull.Vertices.MinimumBoundingCylinder();
             ts.ConvexHull.Vertices.OrientedBoundingBox();
-            var length = ts.ConvexHull.Vertices.GetLengthAndExtremeVertices(Vector3.UnitX, out List<IVertex3D> bottomVertices,
-                  out List<IVertex3D> topVertices);
+            var length = ts.ConvexHull.Vertices.GetLengthAndExtremeVertices(Vector3.UnitX, out List<IPoint3D> bottomVertices,
+                  out List<IPoint3D> topVertices);
             length = ts.ConvexHull.Vertices.GetLengthAndExtremeVertex(Vector3.UnitX, out Vertex bottomVertex,
                   out Vertex topVertex);
 

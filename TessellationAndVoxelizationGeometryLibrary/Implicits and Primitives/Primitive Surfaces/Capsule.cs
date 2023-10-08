@@ -73,7 +73,7 @@ namespace TVGL
 
         #region Properties
         /// <summary>
-        /// Gets or sets the anchor1.
+        /// Gets or sets the anchor1, which is the center of sphere at the first end.
         /// </summary>
         /// <value>The anchor1.</value>
         public Vector3 Anchor1
@@ -89,7 +89,7 @@ namespace TVGL
             }
         }
         /// <summary>
-        /// Gets or sets the anchor2.
+        /// Gets or sets the anchor2, which is the center of sphere at the second end.
         /// </summary>
         /// <value>The anchor2.</value>
         public Vector3 Anchor2
@@ -106,7 +106,7 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Gets or sets the radius1.
+        /// Gets or sets the radius1 - the radius of the first end
         /// </summary>
         /// <value>The radius1.</value>
         public double Radius1
@@ -122,7 +122,7 @@ namespace TVGL
             }
         }
         /// <summary>
-        /// Gets or sets the radius2.
+        /// Gets or sets the radius2 - the radius of the second end
         /// </summary>
         /// <value>The radius2.</value>
         public double Radius2
@@ -155,27 +155,32 @@ namespace TVGL
         /// </summary>
         double radius2;
         /// <summary>
-        /// The direction vector
+        /// The direction vector is the unit vector that goes from Anchor1 to Anchor2
         /// </summary>
         Vector3 directionVector;
         /// <summary>
-        /// The direction vector length
+        /// The direction vector length is the distance from Anchor1 to Anchor2
         /// </summary>
         double directionVectorLength;
         /// <summary>
-        /// The plane1 dx
+        /// The plane1 dx is the distance from origin for the plane that separates the cone 
+        /// from the sphere
         /// </summary>
         double plane1Dx;
         /// <summary>
-        /// The plane2 dx
+        /// The plane2 dx is the distance from origin for the plane that separates the cone 
+        /// from the sphere
         /// </summary>
         double plane2Dx;
         /// <summary>
-        /// The cone anchor1
+        /// The cone anchor1 is an adjustment to the Anchor1 to account for the difference in radii
+        /// when creating the cone section. if the radii are the same, then this is the same as Anchor1
+        /// when one end is smaller than the other, then plane at which we switch from cone to sphere is
+        /// outside of the anchors
         /// </summary>
         Vector3 coneAnchor1;
         /// <summary>
-        /// The cone anchor2
+        /// The cone anchor2 is an adjustment to the Anchor2 (see description for coneAnchor1)
         /// </summary>
         Vector3 coneAnchor2;
         /// <summary>
@@ -253,14 +258,47 @@ namespace TVGL
         /// <returns>System.Double.</returns>
         public override double PointMembership(Vector3 point)
         {
-            var dxAlong = point.Dot(directionVector);
-            if (dxAlong < plane1Dx) return (point - Anchor1).Length() - Radius1;
-            if (dxAlong > plane2Dx) return (point - Anchor2).Length() - Radius2;
-            var t = (dxAlong - plane1Dx) / coneLength;
-            var thisRadius = (1 - t) * coneRadius1 + t * coneRadius2;
-            return (point - coneAnchor1).Cross(directionVector).Length() - thisRadius;
+            var dxAlong = (point - coneAnchor1).Dot(directionVector);
+            double d;
+            if (dxAlong < plane1Dx) d = (point - Anchor1).Length() - Radius1;
+            else if (dxAlong > plane2Dx) d = (point - Anchor2).Length() - Radius2;
+            else // in the cone section
+            {
+                var t = (dxAlong - plane1Dx) / coneLength;
+                var thisRadius = (1 - t) * coneRadius1 + t * coneRadius2;
+                var distAtCommonDepth = (point - coneAnchor1).Cross(directionVector).Length() - thisRadius;
+                // to be more exact, we need the cosine of the aperture angle to get the closest distance
+                // instead of finding angle, and then its cosine, we just pythagorean it 
+                var cosAngle = directionVectorLength /
+                    Math.Sqrt(directionVectorLength * directionVectorLength +
+                    (coneRadius1 - coneRadius2) * (coneRadius1 - coneRadius2));
+                d = distAtCommonDepth * cosAngle;
+            }
+            if (IsPositive.HasValue && !IsPositive.Value) d = -d;
+            return d;
         }
 
+        public override Vector3 GetNormalAtPoint(Vector3 point)
+        {
+            var dxAlong = (point - Anchor1).Dot(directionVector.Normalize());
+            Vector3 d;
+            if (dxAlong < plane1Dx) d = (point - Anchor1).Normalize();
+            else if (dxAlong > plane2Dx) d = (point - Anchor2).Normalize();
+            else
+            {
+                var a = (point - Anchor1);
+                var b = directionVector.Cross(a);
+                var c =directionVector.Cross(b).Normalize();
+                var cosAngle = directionVectorLength /
+                    Math.Sqrt(directionVectorLength * directionVectorLength +
+                    (coneRadius1 - coneRadius2) * (coneRadius1 - coneRadius2));
+                var sinAngle = Math.Sqrt(1 - cosAngle * cosAngle);
+                if (coneRadius1 < coneRadius2) sinAngle = -sinAngle;
+                d = c*cosAngle + directionVector*sinAngle;
+            }
+            if (isPositive.HasValue && !isPositive.Value) d *= -1;
+            return d;
+        }
         protected override void CalculateIsPositive()
         {
             if (Faces == null || !Faces.Any()) return;

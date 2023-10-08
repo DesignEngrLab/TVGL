@@ -145,7 +145,7 @@ namespace TVGL
             var x = faceXDir.Dot(v);
             var y = faceYDir.Dot(v);
             /* originally doing the following, which makes intuitive sense, but
-             * since we take the cosine (and sine) of an inverse tangent, we can reduce the computation
+             * since we take the cosine (and sine) of an Inverse tangent, we can reduce the computation
             var angle = Math.Atan2(y, x) * betaFactor;
             return new Vector2(distanceDownCone * Math.Cos(angle), distanceDownCone * Math.Sin(angle));
         */
@@ -205,7 +205,7 @@ namespace TVGL
         {
             // when the points are a closed path and they encircle the axis, then we define the resulting polygon
             // by looking down the axis of the cone
-            if (pathIsClosed && BorderEncirclesAxis(points, Axis, Apex))
+            if (pathIsClosed && points.BorderEncirclesAxis(Axis, Apex))
             {
                 var transform = Axis.TransformToXYPlane(out _);
                 foreach (var point in points)
@@ -256,6 +256,21 @@ namespace TVGL
         }
 
         /// <summary>
+        /// Gets the normal at point.
+        /// </summary>
+        /// <param name="point">The point.</param>
+        /// <returns>A Vector3.</returns>
+        public override Vector3 GetNormalAtPoint(Vector3 point)
+        {
+            var a = (point - Apex);
+            var b = a.Cross(Axis);
+            var c = Axis.Cross(b).Normalize();  // outward from the axis to the point
+            var outwardVector = (c - (Axis * Aperture)) / Math.Sqrt(1 + Aperture * Aperture);
+            if (isPositive.HasValue && !isPositive.Value) outwardVector *= -1;
+            return outwardVector;
+        }
+
+        /// <summary>
         /// Points the membership.
         /// </summary>
         /// <param name="point">The point.</param>
@@ -264,7 +279,9 @@ namespace TVGL
         {
             var v = point - Apex;
             var distAtCommonDepth = v.Cross(Axis).Length() - Aperture * v.Dot(Axis);
-            return distAtCommonDepth * cosAperture;
+            var d = distAtCommonDepth * cosAperture;
+            if (IsPositive.HasValue && !IsPositive.Value) d = -d;
+            return d;
         }
 
         protected override void CalculateIsPositive()

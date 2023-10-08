@@ -32,6 +32,12 @@ namespace TVGL
         {
         }
 
+        internal BorderSegment(EdgePath edgePath)
+        {
+            EdgeList = edgePath.EdgeList;
+            DirectionList = edgePath.DirectionList;
+        }
+
         //First primitive connected to this border segment. There is no logic to determine owned/other; it is arbitrary (currently).
         /// <summary>
         /// Gets or sets the owned primitive.
@@ -51,7 +57,7 @@ namespace TVGL
         /// </summary>
         /// <param name="prim">The prim.</param>
         /// <returns>PrimitiveSurface.</returns>
-        public PrimitiveSurface GetSecondPrimitive(PrimitiveSurface prim)
+        public PrimitiveSurface AdjacentPrimitive(PrimitiveSurface prim)
         {
             if (prim == OwnedPrimitive) return OtherPrimitive;
             if (prim == OtherPrimitive) return OwnedPrimitive;
@@ -147,21 +153,18 @@ namespace TVGL
             var flat = 0;
             foreach (var (edge, _) in this)
             {
-                if (edge.InternalAngle.IsPracticallySame(Math.PI, Constants.SameFaceNormalDotTolerance)) flat++;
-                else if (edge.Curvature == CurvatureType.Concave) concave++;
+                if (edge.Curvature == CurvatureType.Concave) concave++;
                 else if (edge.Curvature == CurvatureType.Convex) convex++;
+                else flat++;
             }
-            var flush = flat > 0 && convex == 0 && concave == 0;
-            var fullyConcave = concave > 0 && flat == 0 && convex == 0;
-            var fullyConvex = convex > 0 && flat == 0 && concave == 0;
-            if (flush)
-                _curvature = CurvatureType.SaddleOrFlat;
-            else if (fullyConcave)
+            if (concave >= flat + convex)
                 _curvature = CurvatureType.Concave;
-            else if (fullyConvex)
+            else if (convex >= flat + concave)
                 _curvature = CurvatureType.Convex;
-            else
+            else if (flat >= convex + concave)
                 _curvature = CurvatureType.SaddleOrFlat;
+            else 
+                _curvature = CurvatureType.Undefined;
         }
 
         /// <summary>
@@ -176,7 +179,23 @@ namespace TVGL
         public new EdgePath Copy(bool reverse = false, TessellatedSolid copiedTessellatedSolid = null,
             int startIndex = 0, int endIndex = -1)
         {
-            throw new NotImplementedException();
+            var copy = new BorderSegment();
+            copy._curvature = _curvature;
+            copy._internalAngle = _internalAngle;
+            copy.Curve = Curve;
+            copy.CurveError = CurveError;
+            if (reverse)
+            {
+                copy.OwnedPrimitive = OtherPrimitive;
+                copy.OtherPrimitive = OwnedPrimitive;
+            }
+            else
+            {
+                copy.OwnedPrimitive = OwnedPrimitive;
+                copy.OtherPrimitive = OtherPrimitive;
+            }
+            this.CopyEdgesPathData(copy, reverse, copiedTessellatedSolid, startIndex, endIndex);
+            return copy;
         }
     }
 }

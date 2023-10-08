@@ -11,13 +11,12 @@
 // </copyright>
 // <summary></summary>
 // ***********************************************************************
+using StarMathLib;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.WebSockets;
 using System.Runtime.CompilerServices;
-using StarMathLib;
-using MIConvexHull;
-using System.Diagnostics.CodeAnalysis;
 
 namespace TVGL
 {
@@ -179,19 +178,20 @@ namespace TVGL
         {
             innerEdgeHash = new HashSet<Edge>();
             outerEdgeHash = new HashSet<Edge>();
-            foreach (var face in faces)
-            {
-                foreach (var edge in face.Edges)
+            if (faces != null && faces.Any())
+                foreach (var face in faces)
                 {
-                    if (innerEdgeHash.Contains(edge)) continue;
-                    if (!outerEdgeHash.Contains(edge)) outerEdgeHash.Add(edge);
-                    else
+                    foreach (var edge in face.Edges)
                     {
-                        innerEdgeHash.Add(edge);
-                        outerEdgeHash.Remove(edge);
+                        if (innerEdgeHash.Contains(edge)) continue;
+                        if (!outerEdgeHash.Contains(edge)) outerEdgeHash.Add(edge);
+                        else
+                        {
+                            innerEdgeHash.Add(edge);
+                            outerEdgeHash.Remove(edge);
+                        }
                     }
                 }
-            }
         }
         #endregion Sort Along Direction
 
@@ -314,7 +314,7 @@ namespace TVGL
         /// <param name="removeOpposites">if set to <c>true</c> [remove opposites].</param>
         /// <returns>List&lt;TriangleFace&gt;.</returns>
         public static List<TriangleFace> FacesWithDistinctNormals(this IEnumerable<TriangleFace> faces,
-            double tolerance = Constants.SameFaceNormalDotTolerance, bool removeOpposites = true)
+            double tolerance = Constants.DotToleranceForSame, bool removeOpposites = true)
         {
             // This is done by sorting the normals first by the x-component, then by the y and then the z.
             // This is to avoid the O(n^2) and be more like O(n). It is a necessary but not sufficient
@@ -332,8 +332,8 @@ namespace TVGL
                 distinctList = distinctList.OrderBy(f => f.Normal[k]).ToList();
                 for (var i = distinctList.Count - 1; i > 0; i--)
                 {
-                    if (distinctList[i].Normal.Dot(distinctList[i - 1].Normal).IsPracticallySame(1.0, tolerance) ||
-                        (removeOpposites && distinctList[i].Normal.Dot(distinctList[i - 1].Normal).IsPracticallySame(-1, tolerance)))
+                    if (distinctList[i].Normal.IsAligned(distinctList[i - 1].Normal, tolerance) ||
+                        (removeOpposites && distinctList[i].Normal.IsAlignedOrReverse(distinctList[i - 1].Normal, tolerance)))
                     {
                         if (distinctList[i].Area <= distinctList[i - 1].Area) distinctList.RemoveAt(i);
                         else distinctList.RemoveAt(i - 1);
@@ -341,67 +341,6 @@ namespace TVGL
                 }
             }
             return distinctList;
-        }
-
-        /// <summary>
-        /// Gets all the flat patches, given a list of primitives.
-        /// </summary>
-        /// <param name="primitives">The primitives.</param>
-        /// <returns>List&lt;Flat&gt;.</returns>
-        public static IEnumerable<Plane> FindFlatPatches(this IEnumerable<PrimitiveSurface> primitives)
-        {
-            // to avoid re-enumerating the faces - make a list. If it's already a list, then you're fine to use directly. 
-            foreach (var prim in primitives)
-            {
-                if (prim is Plane plane)
-                {
-                    yield return plane;
-                    continue;
-                }
-                //Else
-                var usedFaces = new HashSet<TriangleFace>();
-                foreach (var face in prim.Faces)
-                {
-                    if (usedFaces.Contains(face))
-                        continue;
-                    //Start a new flat patch
-                    usedFaces.Add(face);
-                    var flatPatch = new HashSet<TriangleFace> { face };
-                    var stack = new Stack<TriangleFace>(new[] { face });
-                    var flatVertices = new List<Vertex>(face.Vertices);
-                    var area = 0.0;
-                    var numFaces = 0;
-                    while (stack.Any())
-                    {
-                        var newFace = stack.Pop();
-                        //Add new adjacent faces to the stack for consideration
-                        //if the faces are already listed in the flat faces, the first
-                        //"if" statement in the while locations will ignore them.
-                        foreach (var edge in newFace.Edges)
-                        {
-                            var adjacentFace = edge.OwnedFace == newFace ? edge.OtherFace : edge.OwnedFace;
-                            if (adjacentFace == null || adjacentFace.BelongsToPrimitive != prim || usedFaces.Contains(adjacentFace)) continue;
-                            if (newFace.Normal.IsAligned(adjacentFace.Normal, Constants.SameFaceNormalDotTolerance)) continue;
-                            var otherVertex = adjacentFace.A != edge.From && adjacentFace.A != edge.To ? adjacentFace.A :
-                                adjacentFace.B != edge.From && adjacentFace.B != edge.To ? adjacentFace.B :
-                                adjacentFace.C;
-                            flatVertices.Add(otherVertex);
-                            if (!Plane.DefineNormalAndDistanceFromVertices(flatVertices, out double distanceToPlane, out Vector3 normal)
-                               || !distanceToPlane.IsPracticallySame(otherVertex.Dot(normal), Constants.SameFaceNormalDotTolerance * 10))
-                                flatVertices.RemoveAt(flatVertices.Count - 1);
-                            else
-                            {
-                                stack.Push(adjacentFace);
-                                usedFaces.Add(adjacentFace);
-                                flatPatch.Add(adjacentFace);
-                                area += adjacentFace.Area;
-                                numFaces++;
-                            }
-                        }
-                    }
-                    yield return new Plane(flatPatch, false);
-                }
-            }
         }
 
         /// <summary>
@@ -436,9 +375,9 @@ namespace TVGL
                     foreach (var edge in newFace.Edges)
                     {
                         if (nonCrossingEdges.Contains(edge)) continue;
-                        var adjacentFace = edge.OwnedFace == newFace ? edge.OtherFace : edge.OwnedFace;
+                        var adjacentFace = edge.GetMatingFace(newFace);
                         if (adjacentFace == null || !availableFaces.Contains(adjacentFace)) continue;
-                        if (Math.Abs(1 - newFace.Normal.Dot(adjacentFace.Normal)) > Constants.SameFaceNormalDotTolerance) continue;
+                        if (!newFace.Normal.IsAligned(adjacentFace.Normal)) continue;
                         var otherVertex = adjacentFace.A != edge.From && adjacentFace.A != edge.To ? adjacentFace.A :
                             adjacentFace.B != edge.From && adjacentFace.B != edge.To ? adjacentFace.B :
                             adjacentFace.C;
@@ -687,11 +626,11 @@ namespace TVGL
         /// <param name="faceGroupsThatAreBodies">The face groups that are bodies.</param>
         /// <returns>List&lt;TessellatedSolid&gt;.</returns>
         /// <exception cref="Exception"></exception>
-        public static List<TessellatedSolid> GetMultipleSolids(this TessellatedSolid ts, List<int[]> faceGroupsThatAreBodies = null)
+        public static IEnumerable<TessellatedSolid> GetMultipleSolids(this TessellatedSolid ts,
+            List<int[]> faceGroupsThatAreBodies = null)
         {
-            var solids = new List<TessellatedSolid>();
             List<List<TriangleFace>> faceGroups;
-            List<TriangleFace> unusedFaces;
+            HashSet<TriangleFace> unusedFaces;
             if (faceGroupsThatAreBodies != null)
             {
                 faceGroups = GetContiguousFaceGroups(ts, faceGroupsThatAreBodies, out unusedFaces);
@@ -699,77 +638,67 @@ namespace TVGL
             else
             {
                 faceGroups = new List<List<TriangleFace>>();
-                unusedFaces = new List<TriangleFace>(ts.Faces);
+                unusedFaces = new HashSet<TriangleFace>(ts.Faces);
             }
             // now, the bigger job of walking through the faces to find groups
             faceGroups.AddRange(GetContiguousFaceGroups(unusedFaces));
 
             if (faceGroups.Count == 1 && faceGroups[0].Count == ts.NumberOfFaces)
             {
-                solids.Add(ts);
-                return solids;
+                yield return ts;
+                yield break;
             }
-            foreach (var seperateSolid in faceGroups)
+            foreach (var faceGroup in faceGroups)
             {
-                //Copy the non-smooth edges over to the seperate solid
-                Dictionary<(Vector3, Vector3), int> nonSmoothEdgesForSolid = null;
-                if (ts.NonsmoothEdges != null && ts.NonsmoothEdges.Any())
+                var newSolid = new TessellatedSolid(faceGroup, null, new TessellatedSolidBuildOptions
+                {
+                    FindNonsmoothEdges = false,
+                    CopyElementsPassedToConstructor = false,
+                    AutomaticallyRepairHoles = false,
+                    FixEdgeDisassociations = false
+                });
+                if (ts.NonsmoothEdges != null && ts.NonsmoothEdges.Count > 0)
                 {
                     //Get all the edges in order, avoiding duplicates by using a hashset.
                     var edges = new HashSet<Edge>();
-                    foreach (var face in seperateSolid)
+                    foreach (var face in faceGroup)
                         foreach (var edge in face.Edges)
                             edges.Add(edge);
 
-                    nonSmoothEdgesForSolid = new Dictionary<(Vector3, Vector3), int>();
-                    var i = 0;
-                    foreach (var edgePath in ts.NonsmoothEdges)
-                    {
-                        //Check if this edge path belong entirely to this solid.
-                        var belongs = true;
-                        foreach (var (edge, _) in edgePath)
-                        {
-                            if (!edges.Contains(edge))
-                            {
-                                belongs = false;
-                                break;
-                            }
-                        }
-                        if (belongs)
-                        {
-                            foreach (var (edge, _) in edgePath)
-                                nonSmoothEdgesForSolid.Add((edge.From.Coordinates, edge.To.Coordinates), i);
-                            i++;
-                        }
-                    }
-                }
+                    var nonSmoothVectorPairsInOriginial = new HashSet<(Vector3, Vector3)>();
+                    var nonSmoothEdges = new List<Edge>();
+                    foreach (var edge in ts.NonsmoothEdges)
+                        if (edges.Contains(edge))
+                            nonSmoothVectorPairsInOriginial.Add((edge.From.Coordinates, edge.To.Coordinates));
 
-                var newSolid = new TessellatedSolid(seperateSolid, true, false);
-
-                if (nonSmoothEdgesForSolid != null)
-                {
-                    var nonSmoothEdges = new Dictionary<int, EdgePath>();
-                    foreach (var i in nonSmoothEdgesForSolid.Values.Distinct())
-                        nonSmoothEdges.Add(i, new EdgePath());
                     foreach (var edge in newSolid.Edges)
                     {
-                        var pathIndex = -1;
-                        if (nonSmoothEdgesForSolid.TryGetValue((edge.From.Coordinates, edge.To.Coordinates), out pathIndex)
-                            || nonSmoothEdgesForSolid.TryGetValue((edge.To.Coordinates, edge.From.Coordinates), out pathIndex))
-                            nonSmoothEdges[pathIndex].AddEnd(edge);
+                        if (nonSmoothVectorPairsInOriginial.Contains((edge.From.Coordinates, edge.To.Coordinates))
+                            || nonSmoothVectorPairsInOriginial.Contains((edge.To.Coordinates, edge.From.Coordinates)))
+                            nonSmoothEdges.Add(edge);
                     }
-                    newSolid.NonsmoothEdges = nonSmoothEdges.Values.ToList();
+                    if (nonSmoothEdges.Count > 0)
+                        newSolid.NonsmoothEdges = nonSmoothEdges;
                 }
-
-                solids.Add(newSolid);
+                if (ts.Primitives != null && ts.Primitives.Count > 0)
+                {
+                    foreach (var primitive in ts.Primitives)
+                    {
+                        if (faceGroup.Contains(primitive.Faces.First()))
+                        {
+                            var faceIndices = primitive.Faces.Select(f => faceGroup.IndexOf(f)).ToList();
+                            var primCopy = primitive.Copy(faceIndices.Select(idx => newSolid.Faces[idx]));
+                            newSolid.Primitives.Add(primitive); // does it need to be copied?
+                        }
+                    }
+                }
+                    yield return newSolid;
             }
-
-            return solids;
         }
 
         public static List<List<TriangleFace>> GetContiguousFaceGroups(this IEnumerable<TriangleFace> facesInput)
         {
-            var unusedFaces = facesInput.ToHashSet();
+            var unusedFaces = facesInput as HashSet<TriangleFace> ?? facesInput.ToHashSet();
             var faceGroups = new List<List<TriangleFace>>();
             while (unusedFaces.Any())
             {
@@ -793,11 +722,12 @@ namespace TVGL
             return faceGroups;
         }
 
-        public static List<List<TriangleFace>> GetContiguousFaceGroups(TessellatedSolid ts, List<int[]> faceGroupsThatAreBodies, out List<TriangleFace> unusedFaces)
+        public static List<List<TriangleFace>> GetContiguousFaceGroups(TessellatedSolid ts, List<int[]> faceGroupsThatAreBodies,
+            out HashSet<TriangleFace> unusedFaces)
         {
             var faceGroups = new List<List<TriangleFace>>();
-            var unusedFacesDictionary = ts.Faces.ToDictionary(face => face.IndexInList);
-            // first the easy part - simply separate out known groups that have already been determined to be bodies
+            var unusedFacesDictionary = ts.Faces.ToHashSet();    //ToDictionary(face => face.IndexInList);
+                                                                 // first the easy part - simply separate out known groups that have already been determined to be bodies
             if (faceGroupsThatAreBodies != null)
             {
                 foreach (var bodyGroupIndices in faceGroupsThatAreBodies)
@@ -805,13 +735,14 @@ namespace TVGL
                     var faceList = new List<TriangleFace>();
                     foreach (var index in bodyGroupIndices)
                     {
-                        faceList.Add(ts.Faces[index]);
-                        unusedFacesDictionary.Remove(index);
+                        var face = ts.Faces[index];
+                        faceList.Add(face);
+                        unusedFacesDictionary.Remove(face);
                     }
                     faceGroups.Add(faceList);
                 }
             }
-            unusedFaces = unusedFacesDictionary.Values.ToList();
+            unusedFaces = unusedFacesDictionary;
             return faceGroups;
         }
 
@@ -833,7 +764,7 @@ namespace TVGL
         /// the 15 decimal place. Use a small positive number like 1e-9 to set a wider toleranceForCombiningPoints.</param>
         /// <returns>System.Collections.Generic.IEnumerable&lt;TVGL.Vector2&gt;.</returns>
         public static Dictionary<Vector2, List<T>> ProjectTo2DCoordinatesReturnDictionary<T>(this IEnumerable<T> vertices, Vector3 direction,
-                    out Matrix4x4 backTransform, double toleranceForCombiningPoints = Constants.BaseTolerance) where T : IVertex3D
+                    out Matrix4x4 backTransform, double toleranceForCombiningPoints = Constants.BaseTolerance) where T : IPoint3D
         {
             var transform = TransformToXYPlane(direction, out backTransform);
             return ProjectTo2DCoordinatesReturnDictionary(vertices, transform, toleranceForCombiningPoints);
@@ -852,7 +783,7 @@ namespace TVGL
         /// the 15 decimal place. Use a small positive number like 1e-9 to set a wider toleranceForCombiningPoints.</param>
         /// <returns>System.Collections.Generic.IEnumerable&lt;TVGL.Vector2&gt;.</returns>
         public static Dictionary<Vector2, List<T>> ProjectTo2DCoordinatesReturnDictionary<T>(this IEnumerable<T> vertices, Matrix4x4 transform,
-            double toleranceForCombiningPoints = Constants.BaseTolerance) where T : IVertex3D
+            double toleranceForCombiningPoints = Constants.BaseTolerance) where T : IPoint3D
         {
             var resultsDict = new Dictionary<Vector2, List<T>>();
             var numDecimalPoints = 0;
@@ -890,7 +821,7 @@ namespace TVGL
         /// <returns>System.Collections.Generic.IEnumerable&lt;TVGL.Vector2&gt;.</returns>
         public static IEnumerable<Vector2> ProjectTo2DCoordinates<T>(this IEnumerable<T> locations, Vector3 direction,
                     out Matrix4x4 backTransform, double toleranceForCombiningPoints = double.NaN, bool duplicateEntriesToMaintainPolygonalOrdering = false)
-            where T : IVertex3D
+            where T : IPoint3D
         {
             var transform = TransformToXYPlane(direction, out backTransform);
             return ProjectTo2DCoordinates(locations, transform, toleranceForCombiningPoints, duplicateEntriesToMaintainPolygonalOrdering);
@@ -913,7 +844,7 @@ namespace TVGL
         /// to define some polygon with order dictating the definition of edges.</param>
         /// <returns>System.Collections.Generic.IEnumerable&lt;TVGL.Vector2&gt;.</returns>
         public static IEnumerable<Vector2> ProjectTo2DCoordinates<T>(this IEnumerable<T> locations, Matrix4x4 transform,
-            double toleranceForCombiningPoints = double.NaN, bool duplicateEntriesToMaintainPolygonalOrdering = false) where T : IVertex3D
+            double toleranceForCombiningPoints = double.NaN, bool duplicateEntriesToMaintainPolygonalOrdering = false) where T : IPoint3D
         {
             if (double.IsNaN(toleranceForCombiningPoints) || toleranceForCombiningPoints < 0.0)
             {
@@ -952,7 +883,7 @@ namespace TVGL
         /// <param name="direction">The direction.</param>
         /// <param name="backTransform">The back transform.</param>
         /// <returns>Vector2.</returns>
-        public static Vector2 ConvertTo2DCoordinates(this IVertex3D location3D, in Vector3 direction, out Matrix4x4 backTransform)
+        public static Vector2 ConvertTo2DCoordinates(this IPoint3D location3D, in Vector3 direction, out Matrix4x4 backTransform)
         {
             var transform = TransformToXYPlane(direction, out backTransform);
             return ConvertTo2DCoordinates(location3D, transform);
@@ -964,7 +895,7 @@ namespace TVGL
         /// <param name="location3D">The location as a Vector3.</param>
         /// <param name="matrix">The matrix.</param>
         /// <returns>TVGL.Vector2.</returns>
-        public static Vector2 ConvertTo2DCoordinates(this IVertex3D location3D, in Matrix4x4 matrix)
+        public static Vector2 ConvertTo2DCoordinates(this IPoint3D location3D, in Matrix4x4 matrix)
         {
             var x3D = location3D.X;
             var y3D = location3D.Y;
@@ -1118,7 +1049,7 @@ namespace TVGL
         /// <param name="vector1">The v0.</param>
         /// <param name="vector2">The v1.</param>
         /// <returns>System.Double.</returns>
-        public static double LargerAngleBetweenVectors(this Vector2 vector1, Vector2 vector2)
+        public static double LargerAngleBetweenVectorsEndToEnd(this Vector2 vector1, Vector2 vector2)
         {
             var angleCos = vector1.Dot(vector2) / (vector1.Length() * vector2.Length());
             if (angleCos >= 1) return Math.PI;
@@ -1133,7 +1064,7 @@ namespace TVGL
         /// <param name="vector1">The v0.</param>
         /// <param name="vector2">The v1.</param>
         /// <returns>System.Double.</returns>
-        public static double SmallerAngleBetweenVectors(this Vector2 vector1, Vector2 vector2)
+        public static double SmallerAngleBetweenVectorsEndToEnd(this Vector2 vector1, Vector2 vector2)
         {
             var angleCos = vector1.Dot(vector2) / (vector1.Length() * vector2.Length());
             if (angleCos >= 1) return Math.PI;
@@ -1177,9 +1108,9 @@ namespace TVGL
         /// <param name="vector1">The v0.</param>
         /// <param name="vector2">The v1.</param>
         /// <returns>System.Double.</returns>
-        public static double LargerAngleBetweenVectors(this Vector3 vector1, Vector3 vector2)
+        public static double LargerAngleBetweenVectorsEndToEnd(this Vector3 vector1, Vector3 vector2)
         {
-            return Math.PI + Math.Acos(vector1.Dot(vector2) / (vector1.Length() * vector2.Length()));
+            return Math.PI + SmallerAngleBetweenVectorsSameStart(vector1, vector2);
         }
 
         /// <summary>
@@ -1189,9 +1120,34 @@ namespace TVGL
         /// <param name="vector1">The v0.</param>
         /// <param name="vector2">The v1.</param>
         /// <returns>System.Double.</returns>
-        public static double SmallerAngleBetweenVectors(this Vector3 vector1, Vector3 vector2)
+        public static double SmallerAngleBetweenVectorsEndToEnd(this Vector3 vector1, Vector3 vector2)
         {
-            return Math.PI - Math.Acos(vector1.Dot(vector2) / (vector1.Length() * vector2.Length()));
+            return Math.PI - SmallerAngleBetweenVectorsSameStart(vector1, vector2);
+        }
+
+        /// <summary>
+        /// Gets the larger angle between two vectors, assuming vector2 starts that the head of
+        /// vector1. The vectors do not need to be normalized.
+        /// </summary>
+        /// <param name="vector1">The v0.</param>
+        /// <param name="vector2">The v1.</param>
+        /// <returns>System.Double.</returns>
+        public static double LargerAngleBetweenVectorsSameStart(this Vector3 vector1, Vector3 vector2)
+        {
+            return Math.Tau - SmallerAngleBetweenVectorsSameStart(vector1, vector2);
+        }
+
+        /// <summary>
+        /// Gets the smaller angle between two vectors, assuming vector2 starts that the head of
+        /// vector1. The vectors do not need to be normalized.
+        /// </summary>
+        /// <param name="vector1">The v0.</param>
+        /// <param name="vector2">The v1.</param>
+        /// <returns>System.Double.</returns>
+        public static double SmallerAngleBetweenVectorsSameStart(this Vector3 vector1, Vector3 vector2)
+        {
+            var dot = Math.Min(vector1.Dot(vector2) / (vector1.Length() * vector2.Length()), 1);
+            return Math.Acos(dot);
         }
 
         /// <summary>
@@ -1354,12 +1310,12 @@ namespace TVGL
             intersectionPoint = Vector2.Null;
             // okay, so bounding boxes overlap
             //first a quick check to see if points are the same
-            if (aFrom.IsPracticallySame(bAnchor))
+            if (aFrom.IsAligned(bAnchor))
             {
                 intersectionPoint = aFrom;
                 return true;
             }
-            if (aTo.IsPracticallySame(bAnchor))
+            if (aTo.IsAligned(bAnchor))
             {
                 intersectionPoint = aTo;
                 return true;
@@ -1406,7 +1362,7 @@ namespace TVGL
         /// <returns>TVGL.Vector2.</returns>
         public static Vector2 LineLine2DIntersection(Vector2 aAnchor, Vector2 aDirection, Vector2 bAnchor, Vector2 bDirection)
         {
-            if (aAnchor.IsPracticallySame(bAnchor, Constants.BaseTolerance)) return aAnchor;
+            if (aAnchor.IsAligned(bAnchor, Constants.BaseTolerance)) return aAnchor;
             var vCross = aDirection.Cross(bDirection); //2D cross product, determines if parallel
 
             if (vCross.IsNegligible(Constants.BaseTolerance))
@@ -2176,7 +2132,7 @@ namespace TVGL
                 var inPlaneVector = edgePointsToVertex ? -1 * edge.Vector : edge.Vector;
                 yield return (edge, inPlaneVector.AngleCCWBetweenVectorAndDatum(inPlaneStartVector, normal));
                 var face = edgePointsToVertex ? edge.OtherFace : edge.OwnedFace;
-                if (face == lastFace) face = edge.OwnedFace == lastFace ? edge.OtherFace : edge.OwnedFace;
+                if (face == lastFace) face = edge.GetMatingFace(lastFace);
                 lastFace = face;
                 foreach (var e in face.Edges)
                 {
@@ -2255,6 +2211,42 @@ namespace TVGL
         private static IEnumerable<TriangleFace> OrderedFacesCCWAtVertexNoEdges(this Vertex vertex, TriangleFace startingFace)
         {
             throw new NotImplementedException();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+
+        public static Vector4 Unique3DLine(this Vector3 anchor, Vector3 direction)
+        {
+            if (direction.X.IsNegligible() && direction.Y.IsNegligible())
+            {
+                var PolarAngle = direction.Z > 0 ? 0 : Math.PI;
+                return new Vector4(PolarAngle, 0, anchor.X, anchor.Y);
+            }
+            else
+            {
+                var oneOverRadius = 1 / direction.Length();
+                var PolarAngle = Math.Acos(direction.Z * oneOverRadius);
+                var AzimuthAngle = Math.Atan2(direction.Y, direction.X);
+                var distanceToAnchor = direction.Dot(anchor) * oneOverRadius;
+                var pointOnPlane = anchor - distanceToAnchor * direction * oneOverRadius;
+                var tx = pointOnPlane.Dot(new Vector3(direction.Y, -direction.X, 0).Normalize());
+                var ty = pointOnPlane.Dot(new Vector3(direction.Z * direction.X,
+                    direction.Z * direction.Y, -direction.X * direction.X - direction.Y * direction.Y).Normalize());
+                return new Vector4(PolarAngle, AzimuthAngle, tx, ty);
+            }
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static (Vector3 anchor, Vector3 direction) Get3DLineValuesFromUnique(this Vector4 unique3DLine)
+        {
+            var sphericalAngles = new SphericalAnglePair(unique3DLine.X, unique3DLine.Y);
+            var direction = sphericalAngles.ToVector3();
+
+            if (direction.X.IsNegligible() && direction.Y.IsNegligible())
+                return (new Vector3(unique3DLine.Z, unique3DLine.W, 0), new Vector3(0, 0, 1));
+            var iAxis = new Vector3(direction.Y, -direction.X, 0).Normalize();
+            var jAxis = new Vector3(direction.Z * direction.X, direction.Z * direction.Y, -direction.X * direction.X - direction.Y * direction.Y).Normalize();
+            var anchor = unique3DLine.Z * iAxis + unique3DLine.W * jAxis;
+            return (anchor, direction);
         }
 
         /// <summary>

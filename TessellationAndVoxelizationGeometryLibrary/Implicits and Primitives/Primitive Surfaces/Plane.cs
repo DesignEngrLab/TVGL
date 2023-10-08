@@ -92,6 +92,7 @@ namespace TVGL
         [JsonIgnore]
         public Vector3 ClosestPointToOrigin => Normal * DistanceToOrigin;
 
+        public Vector4 AsVector4 => new Vector4(Normal.X, Normal.Y, Normal.Z, -DistanceToOrigin);
 
         #region Constructors
         /// <summary>
@@ -218,9 +219,9 @@ namespace TVGL
             for (int i = 0, j = numVertices - 1; i < numVertices; j = i++)
                 absoluteDiff += new Vector3(Math.Abs(pointList[i].X - pointList[j].X), Math.Abs(pointList[i].Y - pointList[j].Y),
                     Math.Abs(pointList[i].Z - pointList[j].Z));
-            if (absoluteDiff.X.IsNegligible(Constants.ErrorForFaceInSurface)) normal = Vector3.UnitX;
-            else if (absoluteDiff.Y.IsNegligible(Constants.ErrorForFaceInSurface)) normal = Vector3.UnitY;
-            else if (absoluteDiff.Z.IsNegligible(Constants.ErrorForFaceInSurface)) normal = Vector3.UnitZ;
+            if (absoluteDiff.X.IsNegligible()) normal = Vector3.UnitX;
+            else if (absoluteDiff.Y.IsNegligible()) normal = Vector3.UnitY;
+            else if (absoluteDiff.Z.IsNegligible()) normal = Vector3.UnitZ;
             else
             {
                 normal = Vector3.Null;
@@ -322,7 +323,7 @@ namespace TVGL
                 nz * invNorm);
 
             return new Plane(
-                -(normal.X * point1.X + normal.Y * point1.Y + normal.Z * point1.Z), normal);
+                normal.X * point1.X + normal.Y * point1.Y + normal.Z * point1.Z, normal);
         }
 
         /// <summary>
@@ -511,15 +512,23 @@ namespace TVGL
             }
         }
 
-
-
         /// <summary>
         /// Points the membership.
         /// </summary>
         /// <param name="point">The point.</param>
         /// <returns>System.Double.</returns>
-        public override double PointMembership(Vector3 point) => point.Dot(Normal) - DistanceToOrigin;
-
+        public override double PointMembership(Vector3 point)
+        {
+            var d = point.Dot(Normal) - DistanceToOrigin;
+            if (IsPositive.HasValue && !IsPositive.Value) d = -d;
+            return d;
+        }
+        public override Vector3 GetNormalAtPoint(Vector3 point)
+        {
+            var d = Normal;
+            if (IsPositive.HasValue && !IsPositive.Value) d = -d;
+            return d;
+        }
         protected override void CalculateIsPositive()
         {
             if (Faces != null && Faces.Any())

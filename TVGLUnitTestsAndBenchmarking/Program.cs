@@ -1,45 +1,62 @@
-using BenchmarkDotNet.Attributes;
-using BenchmarkDotNet.Running;
-using Microsoft.Diagnostics.Tracing.Parsers.FrameworkEventSource;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using TVGL;
-using TVGLUnitTestsAndBenchmarking.Misc_Tests;
 
 namespace TVGLUnitTestsAndBenchmarking
 {
     internal class Program
     {
-        public static string inputFolder = "TestFiles";
+        public static string inputFolder = "Github\\PartAnalyzer\\TestFiles";
+        //public static string inputFolder = "OneDrive - medemalabs.com";
         static Random r = new Random();
         static double r1 => 2.0 * r.NextDouble() - 1.0;
+        static double r100 => 200.0 * r.NextDouble() - 100.0;
 
 
         [STAThread]
         private static void Main(string[] args)
         {
-            DirectoryInfo dir = Program.BackoutToFolder(inputFolder);
-
             var myWriter = new ConsoleTraceListener();
             Trace.Listeners.Add(myWriter);
-            TVGL.Message.Verbosity = VerbosityLevels.Everything;
-#if PRESENT
-            foreach (var fileName in dir.GetFiles("*").Skip(1))
+            TVGL.Message.Verbosity = VerbosityLevels.OnlyCritical;
+            DirectoryInfo dir = Program.BackoutToFolder(inputFolder);
+            ICPTesting.TestPoints(dir);
+            Console.ReadLine();
+            //return;
+
+            //#if PRESENT
+            var index = 2;
+            var valid3DFileExtensions = new HashSet<string> { ".stl", ".ply", ".obj", ".3mf" };// ".tvglz", 
+            var allFiles = dir.GetFiles("*", SearchOption.AllDirectories).Where(f => valid3DFileExtensions.Contains(f.Extension.ToLower()))
+                ; //.OrderBy(fi => fi.Length);
+            foreach (var fileName in allFiles.Skip(index))
             {
-                Debug.WriteLine("\n\n\nAttempting to open: " + fileName.Name);
-                IO.Open(fileName.FullName, out TessellatedSolid[] solids);
-                //solids[0].Faces[0].Color = Color.ColorDictionary[ColorFamily.Red]["Red"];
+                Console.Write(index + ": Attempting to open: " + fileName.Name);
+                TessellatedSolid[] solids = null;
+                var sw = Stopwatch.StartNew();
+
+                //IO.Open(fileName.FullName, out  solids, TessellatedSolidBuildOptions.Minimal);
+                IO.Open(fileName.FullName, out solids);
+                sw.Stop();
+                if (solids.Length == 0) continue;
+                Console.WriteLine("," + solids[0].NumberOfVertices + "," + solids[0].NumberOfEdges + "," +
+                    solids[0].NumberOfFaces + "," + sw.ElapsedTicks);
                 Presenter.ShowAndHang(solids);
-                //var css = CrossSectionSolid.CreateFromTessellatedSolid(solids[0], CartesianDirections.XPositive, 20);
-                //Presenter.ShowAndHang(css);
-                //IO.Save(css, "test.CSSolid");
+       
+                index++;
             }
-#endif
         }
 
+        private static Plane CreatePerpendicualBisector(Vector3 a, Vector3 b)
+        {
+            var midpoint = (a + b) / 2;
+            var normal = (a - b).Normalize();
+            var plane = new Plane(midpoint, normal);
+            return plane;
+        }
 
         public static DirectoryInfo BackoutToFolder(string folderName = "")
         {
@@ -50,6 +67,33 @@ namespace TVGLUnitTestsAndBenchmarking
                 dir = dir.Parent;
             }
             return new DirectoryInfo(Path.Combine(dir.FullName, folderName));
+        }
+
+        public static IEnumerable<List<Polygon>> GetRandomPolygonThroughSolids(DirectoryInfo dir)
+        {
+            var index = 0;
+            var valid3DFileExtensions = new HashSet<string> { ".stl", ".ply", ".obj", ".3mf", ".tvglz" };
+            var allFiles = dir.GetFiles("*", SearchOption.AllDirectories)
+                .Where(f => valid3DFileExtensions.Contains(f.Extension.ToLower()))
+                .OrderBy(x => Guid.NewGuid());
+            foreach (var fileName in allFiles.Skip(index))
+            {
+                Console.Write(index + ": Attempting to open: " + fileName.Name);
+                TessellatedSolid[] solids = null;
+                var sw = Stopwatch.StartNew();
+
+                //IO.Open(fileName.FullName, out  solids, TessellatedSolidBuildOptions.Minimal);
+                IO.Open(fileName.FullName, out solids);
+                if (solids.Length == 0) continue;
+                var solid = solids.MaxBy(s => s.Volume);
+                var normal = (new Vector3(r1, r1, r1)).Normalize();
+                var distanceAlong = solid.Vertices.GetLengthAndExtremeVertex(normal, out var loVertex, out _);
+                var planeDistance = distanceAlong * r.NextDouble();
+                var plane = new Plane(planeDistance, normal);
+                var polygons = solid.GetCrossSection(plane, out _);
+                if (polygons.Count > 0) yield return polygons;
+                index++;
+            }
         }
 
         public static void DebugOffsetCases(DirectoryInfo dir)
@@ -71,7 +115,7 @@ namespace TVGLUnitTestsAndBenchmarking
                     polygons.Add(p);
                 }
                 if (polygons.All(p => p == null)) continue;
-                Debug.WriteLine("Attempting: " + filename);
+                Console.WriteLine("Attempting: " + filename);
                 Presenter.ShowAndHang(polygons);
                 var result = polygons.OffsetRound(offset, 0.02); //, polygonSimplify: PolygonSimplify.DoNotSimplify);
                 Presenter.ShowAndHang(result);
@@ -97,7 +141,7 @@ namespace TVGLUnitTestsAndBenchmarking
                         polygonsB.Add(p);
                     else polygonsA.Add(p);
                 }
-                Debug.WriteLine("Attempting: " + filename);
+                Console.WriteLine("Attempting: " + filename);
                 Presenter.ShowAndHang(polygonsA);
                 Presenter.ShowAndHang(polygonsB);
                 Presenter.ShowAndHang(new[] { polygonsA, polygonsB }.SelectMany(p => p));
@@ -130,7 +174,7 @@ namespace TVGLUnitTestsAndBenchmarking
             var silhouetteBeforeFace = new List<Polygon>();
             foreach (var fileName in fileNames.Take(1))
             {
-                //Debug.WriteLine("Attempting: " + fileName);
+                //Console.WriteLine("Attempting: " + fileName, 1);
                 IO.Open(fileName.FullName, out Polygon p);
                 silhouetteBeforeFace.Add(p);
             }

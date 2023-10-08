@@ -421,10 +421,10 @@ namespace TVGL
         { return new Matrix3x3(m.M11, m.M21, m.M31, m.M12, m.M22, m.M32, m.M13, m.M23, m.M33); }
 
         /// <summary>
-        /// Calculates the determinant for this matrix.
-        /// The determinant is calculated by expanding the matrix with a third column whose values are (0,0,1).
+        /// Calculates the Determinant for this matrix.
+        /// The Determinant is calculated by expanding the matrix with a third column whose values are (0,0,1).
         /// </summary>
-        /// <returns>The determinant.</returns>
+        /// <returns>The Determinant.</returns>
         public double GetDeterminant()
         {
             if (!IsProjectiveTransform)

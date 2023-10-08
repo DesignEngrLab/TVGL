@@ -15,19 +15,19 @@ using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-
+using TVGL.ConvexHullDetails;
 
 namespace TVGL
 {
     /// <summary>
     /// Class BoundingBox with Generic (T) is for times when you have points you want to save
     /// on the boundary of the bounding box. these points are of type T, which is constrained
-    /// to be an IVertex3D - currently instantiated by Vertex and Vector3
+    /// to be an IPoint3D - currently instantiated by Vertex and Vector3
     /// Implements the <see cref="TVGL.BoundingBox" />
     /// </summary>
     /// <typeparam name="T"></typeparam>
     /// <seealso cref="TVGL.BoundingBox" />
-    public class BoundingBox<T> : BoundingBox where T : IVertex3D
+    public class BoundingBox<T> : BoundingBox where T : IPoint3D
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="BoundingBox{T}"/> class.
@@ -93,7 +93,7 @@ namespace TVGL
                     this.PointsOnFaces[2].ToArray(),
                     this.PointsOnFaces[3].ToArray(),
                     this.PointsOnFaces[4].ToArray(),
-                    this.PointsOnFaces[5].ToArray() 
+                    this.PointsOnFaces[5].ToArray()
                 };
             return copiedBB;
         }
@@ -291,29 +291,31 @@ namespace TVGL
                 var faces = new[]
                 {
                 // negative-X faces
-                new TriangleFace(new []{vertices[0],vertices[4],vertices[7] }),
-                new TriangleFace(new []{vertices[0],vertices[7],vertices[3] }),
+                new TriangleFace(vertices[0],vertices[4],vertices[7]),
+                new TriangleFace(vertices[0],vertices[7],vertices[3]),
                 // positive-X faces
-                new TriangleFace(new []{vertices[6],vertices[5],vertices[1] }),
-                new TriangleFace(new []{vertices[6],vertices[1],vertices[2] }),
+                new TriangleFace(vertices[6],vertices[5],vertices[1]),
+                new TriangleFace(vertices[6],vertices[1],vertices[2]),
                 // negative-Y faces
-                new TriangleFace(new []{vertices[0],vertices[1],vertices[5] }),
-                new TriangleFace(new []{vertices[0],vertices[5],vertices[4] }),
+                new TriangleFace(vertices[0],vertices[1],vertices[5]),
+                new TriangleFace(vertices[0],vertices[5],vertices[4]),
                 // positive-Y faces
-                new TriangleFace(new []{vertices[6],vertices[2],vertices[3] }),
-                new TriangleFace(new []{vertices[6],vertices[3],vertices[7] }),
+                new TriangleFace(vertices[6],vertices[2],vertices[3]),
+                new TriangleFace(vertices[6],vertices[3],vertices[7]),
                 // negative-Z faces
-                new TriangleFace(new []{vertices[0],vertices[3],vertices[2] }),
-                new TriangleFace(new []{vertices[0],vertices[2],vertices[1] }),
+                new TriangleFace(vertices[0],vertices[3],vertices[2]),
+                new TriangleFace(vertices[0],vertices[2],vertices[1]),
                 // positive-Z faces
-                new TriangleFace(new []{vertices[6],vertices[7],vertices[4] }),
-                new TriangleFace(new []{vertices[6],vertices[4],vertices[5] })
+                new TriangleFace(vertices[6],vertices[7],vertices[4]),
+                new TriangleFace(vertices[6],vertices[4],vertices[5])
             };
                 var random = new Random(0);
-                _tessellatedSolid = new TessellatedSolid(faces, true, false, vertices, new[] {
+             var   tessellatedSolidBuildOptions = new TessellatedSolidBuildOptions();
+                tessellatedSolidBuildOptions.CopyElementsPassedToConstructor = false;
+                _tessellatedSolid = new TessellatedSolid(faces, vertices, tessellatedSolidBuildOptions, new[] {
                     new Color(0.6f,(float)random.NextDouble(), (float)random.NextDouble(), (float)random.NextDouble()) });
                 _tessellatedSolid.Primitives = new List<PrimitiveSurface>();
-                for (var i = 0; i < 12; i+=2)
+                for (var i = 0; i < 12; i += 2)
                     _tessellatedSolid.Primitives.Add(new Plane(new List<TriangleFace> { faces[i], faces[i + 1] }));
             }
             return _tessellatedSolid;
@@ -473,7 +475,7 @@ namespace TVGL
             var unitDir = direction.Normalize();
             int directionIndex = -1;
             bool reverse = false;
-            for(var i = 0; i < 3; i++)
+            for (var i = 0; i < 3; i++)
             {
                 if (Directions[i].IsAlignedOrReverse(direction, out reverse, smallAngle))
                 {

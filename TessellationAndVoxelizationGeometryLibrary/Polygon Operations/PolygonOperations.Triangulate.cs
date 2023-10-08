@@ -178,6 +178,13 @@ namespace TVGL
                 }
                 return new List<Vertex2D[]> { new[] { verts[0], verts[1], verts[2] }, new[] { verts[0], verts[2], verts[3] } };
             }
+            if (polygon.IsConvex())
+            {
+                var triangleList = new List<Vertex2D[]>();
+                for (int i = 2; i < polygon.Vertices.Count; i++)
+                    triangleList.Add(new[] { polygon.Vertices[0], polygon.Vertices[i - 1], polygon.Vertices[i] });
+                return triangleList;
+            }
             var triangleFaceList = new List<Vertex2D[]>();
             // this is the returned list of triangles. 
 
@@ -233,8 +240,8 @@ namespace TVGL
                     //throw new Exception("Unable to triangulate polygon.");
                 }
                 successful = 2 * Math.Abs(polygon.Area - triangleArea) / (polygon.Area + triangleArea) < 0.01;
-                System.Diagnostics.Debug.WriteLineIf(!successful && !double.IsNegativeInfinity(triangleArea),
-                    polygon.Area + ",   " + triangleArea);
+                if (!successful && !double.IsNegativeInfinity(triangleArea))
+                    Message.output(polygon.Area + ",   " + triangleArea, 4);
                 if (angle != 0)
                 {
                     var rotateMatrix = new Matrix3x3(c, -s, s, c, 0, 0);
@@ -311,7 +318,7 @@ namespace TVGL
         private static Dictionary<Vertex2D, List<Vertex2D>> FindConnectionsToConvertToMonotonePolygons(Polygon polygon)
         {
             var sortedVertices = new List<Vertex2D>();
-            var comparer = new VertexSortedByXFirst();
+            var comparer = new TwoDSortXFirst();
             foreach (var p in polygon.AllPolygons)
                 sortedVertices = CombineSortedVertexLists(sortedVertices, p.OrderedXVertices, comparer).ToList();
             var connections = new Dictionary<Vertex2D, List<Vertex2D>>();

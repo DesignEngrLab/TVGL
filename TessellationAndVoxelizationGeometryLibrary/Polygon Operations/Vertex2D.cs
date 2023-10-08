@@ -11,7 +11,7 @@
 // </copyright>
 // <summary></summary>
 // ***********************************************************************
-using MIConvexHull;
+using TVGL.ConvexHullDetails;
 
 
 namespace TVGL
@@ -20,7 +20,7 @@ namespace TVGL
     /// Vertex2D class used in Triangulate Polygon
     /// Inherits position from point class
     /// </summary>
-    public class Vertex2D : IVertex2D
+    public class Vertex2D : IPoint2D
     {
         #region Properties
 
@@ -41,6 +41,15 @@ namespace TVGL
         /// </summary>
         /// <value>The y.</value>
         public double Y => Coordinates.Y;
+
+        public double this[int i]
+        {
+            get
+            {
+                if (i == 0) return X;
+                else return Y;
+            }
+        }
 
         /// <summary>
         /// Gets the line that starts at this node.
@@ -119,6 +128,11 @@ namespace TVGL
         internal void Transform(Matrix3x3 matrix)
         {
             Coordinates = Coordinates.Transform(matrix);
+        }
+
+        public bool IsNull()
+        {
+            return Coordinates.IsNull();
         }
         #endregion Constructor
     }

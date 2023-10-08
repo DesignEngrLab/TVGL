@@ -11,6 +11,7 @@
 // </copyright>
 // <summary></summary>
 // ***********************************************************************
+using System;
 using System.Diagnostics;
 
 namespace TVGL
@@ -26,6 +27,18 @@ namespace TVGL
         public static VerbosityLevels Verbosity = VerbosityLevels.OnlyCritical;
 
         /// <summary>
+        /// The text colors of the five levels of criticality
+        /// </summary>
+        static readonly ConsoleColor[] textColors = new[]
+        {
+            ConsoleColor.Red,
+            ConsoleColor.DarkYellow,
+            ConsoleColor.Cyan,
+            ConsoleColor.Blue,
+            ConsoleColor.Gray,
+        };
+
+        /// <summary>
         /// Calling Message.output will output the string, message, to the
         /// Console (a Debug message) but ONLY if the verbosity (see
         /// below) is greater than or equal to your specified limit for this message.
@@ -34,26 +47,15 @@ namespace TVGL
         /// <param name="message">The message.</param>
         /// <param name="verbosityLimit">The verbosity limit.</param>
         /// <returns>Boolean.</returns>
-        internal static bool output(object message, int verbosityLimit = 0)
+        public static bool output(object message, int verbosityLimit = 0)
         {
-            if ((verbosityLimit > (int) Verbosity)
+            if ((verbosityLimit > (int)Verbosity)
                 || string.IsNullOrEmpty(message.ToString()))
                 return false;
-            Debug.WriteLine(message);
-            return true;
-        }
-
-        /// <summary>
-        /// Outputs the one item of the specified list corresponding to the particular verbosity.
-        /// </summary>
-        /// <param name="list">The list.</param>
-        /// <returns>Boolean.</returns>
-        internal static bool output(params object[] list)
-        {
-            if (((int) Verbosity >= list.Length)
-                || string.IsNullOrEmpty(list[(int) Verbosity].ToString()))
-                return false;
-            Debug.WriteLine(list[(int) Verbosity]);
+            Console.ForegroundColor = verbosityLimit >= textColors.Length ? textColors[^1] : textColors[verbosityLimit];
+            var whiteSpace = new string(' ', verbosityLimit * 2);
+            Console.WriteLine(whiteSpace + message);
+            Console.ResetColor();
             return true;
         }
     }

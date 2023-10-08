@@ -83,8 +83,8 @@ namespace TVGL
                 origLeftFace.ReplaceVertex(toVertex, addedVertex);
                 origRightFace.ReplaceVertex(toVertex, addedVertex);
 
-                var newLeftFace = new TriangleFace(new[] { toVertex, addedVertex, leftFarVertex });
-                var newRightFace = new TriangleFace(new[] { addedVertex, toVertex, rightFarVertex });
+                var newLeftFace = new TriangleFace(toVertex, addedVertex, leftFarVertex);
+                var newRightFace = new TriangleFace(addedVertex, toVertex, rightFarVertex);
                 toVertex.Faces.Remove(origLeftFace);
                 toVertex.Faces.Remove(origRightFace);
 

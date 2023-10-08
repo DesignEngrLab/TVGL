@@ -16,6 +16,8 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
+using TVGL.ConvexHullDetails;
 
 namespace TVGL
 {
@@ -114,7 +116,7 @@ namespace TVGL
         /// <summary>
         /// Transforms a vector by the given matrix without the translation component.
         /// This is often used for transforming normals, however note that proper transformations
-        /// of normal vectors requires that the input matrix be the transpose of the inverse of that matrix.
+        /// of normal vectors requires that the input matrix be the transpose of the Inverse of that matrix.
         /// </summary>
         /// <param name="normal">The normal.</param>
         /// <param name="matrix">The transformation matrix.</param>
@@ -341,13 +343,30 @@ namespace TVGL
         /// <summary>
         /// Transforms a vector by the given matrix without the translation component.
         /// This is often used for transforming normals, however note that proper transformations
-        /// of normal vectors requires that the input matrix be the transpose of the inverse of that matrix.
+        /// of normal vectors requires that the input matrix be the transpose of the Inverse of that matrix.
         /// </summary>
         /// <param name="position">The source vector.</param>
         /// <param name="matrix">The transformation matrix.</param>
         /// <returns>The transformed vector.</returns>
         public static Vector3 TransformNoTranslate(this Vector3 position, Matrix4x4 matrix)
         { return Vector3.TransformNoTranslate(position, matrix); }
+
+        /// <summary>
+        /// Multiplies a matrix by a vector. Note that the matrix is before the vector, so each term
+        /// is the dot product of a row of the matrix with the vector.
+        /// </summary>
+        /// <param name="position">The source vector.</param>
+        /// <param name="matrix">The transformation matrix.</param>
+        /// <returns>The transformed vector.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Vector3 Multiply(this Matrix3x3 matrix, Vector3 position)
+        {
+            return new Vector3(
+                position.X * matrix.M11 + position.Y * matrix.M12 + position.Z * matrix.M13,
+                position.X * matrix.M21 + position.Y * matrix.M22 + position.Z * matrix.M23,
+                position.X * matrix.M31 + position.Y * matrix.M32 + position.Z * matrix.M33);
+        }
+
 
 
         /// <summary>
@@ -445,7 +464,7 @@ namespace TVGL
         /// <param name="vector1">The vertex or position in 3D space</param>
         /// <param name="vector2">The vector.</param>
         /// <returns>The dot product.</returns>
-        public static double Dot(this IVertex3D vector1, Vector3 vector2)
+        public static double Dot(this IPoint3D vector1, Vector3 vector2)
         {
             if (vector1 == null) return double.NaN;
             return vector1.X * vector2.X +
@@ -474,6 +493,23 @@ namespace TVGL
         public static double[] ToArray(this Vector3 value1)
         { return new double[] { value1.X, value1.Y, value1.Z }; }
 
+        public static ComplexNumber[] GetEigenValuesAndVectors(this Matrix3x3 A,
+            out Vector3[] eigenVectors)
+        {
+            var matrix = new double[,]
+            {
+                { A.M11, A.M12, A.M13 },
+                { A.M21, A.M22, A.M23 },
+                { A.M31, A.M32, A.M33 }
+            };
+            var eigenValues = matrix.GetEigenValuesAndVectors(out var eigenVectorsArrays);
+            eigenVectors = new Vector3[3];
+            for (int i = 0; i < 3; i++)
+            {
+                eigenVectors[i] = new Vector3(eigenVectorsArrays[i]);
+            }
+            return eigenValues;
+        }
         #endregion
 
         #region Vector4
@@ -576,7 +612,7 @@ namespace TVGL
         /// <summary>
         /// Transforms a vector by the given matrix without the translation component.
         /// This is often used for transforming normals, however note that proper transformations
-        /// of normal vectors requires that the input matrix be the transpose of the inverse of that matrix.
+        /// of normal vectors requires that the input matrix be the transpose of the Inverse of that matrix.
         /// </summary>
         /// <param name="position">The source vector.</param>
         /// <param name="matrix">The transformation matrix.</param>
@@ -600,7 +636,7 @@ namespace TVGL
         /// <param name="vector1">The vertex or position in 3D space</param>
         /// <param name="vector2">The vector.</param>
         /// <returns>The dot product.</returns>
-        public static double Dot(this IVertex3D vector1, Vector4 vector2)
+        public static double Dot(this IPoint3D vector1, Vector4 vector2)
         {
             if (vector1 == null) return double.NaN;
             return vector1.X * vector2.X +
@@ -617,6 +653,23 @@ namespace TVGL
         public static double[] ToArray(this Vector4 value1)
         { return new double[] { value1.X, value1.Y, value1.Z, value1.W }; }
 
+        public static ComplexNumber[] GetEigenValuesAndVectors(this Matrix4x4 A, out Vector4[] eigenVectors)
+        {
+            var matrix = new double[,]
+            {
+                { A.M11, A.M12, A.M13, A.M14 },
+                { A.M21, A.M22, A.M23, A.M24 },
+                { A.M31, A.M32, A.M33, A.M34 },
+                { A.M41, A.M42, A.M43, A.M44 }
+            };
+            var eigenValues = matrix.GetEigenValuesAndVectors(out var eigenVectorsArrays);
+            eigenVectors = new Vector4[4];
+            for (int i = 0; i < 4; i++)
+            {
+                eigenVectors[i] = new Vector4(eigenVectorsArrays[i]);
+            }
+            return eigenValues;
+        }
 
         #endregion
 
@@ -639,6 +692,36 @@ namespace TVGL
         /// <returns>The transposed matrix.</returns>
         public static Matrix4x4 Transpose(this Matrix4x4 matrix)
         { return Matrix4x4.Transpose(matrix); }
+
+        /// <summary>
+        /// Inverts the matrix. For geometric transformations this the
+        /// inverse does the reverse movement.
+        /// </summary>
+        /// <param name="matrix">The matrix.</param>
+        /// <returns>A Matrix4x4.</returns>
+        public static Matrix4x4 Inverse(this Matrix4x4 matrix)
+        {
+            if (Matrix4x4.Invert(matrix, out var result))
+                return result;
+            else return Matrix4x4.Null;
+        }
+
+        #region Solve Ax=b
+        /// <summary>
+        /// Solves for the value x in Ax=b. This is also represented as the
+        /// backslash operation
+        /// </summary>
+        /// <param name="matrix">The matrix.</param>
+        /// <param name="b">The b.</param>
+        /// <returns>Vector4.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Vector3 Solve(this Matrix3x3 matrix, Vector3 b)
+        {
+            if (!Matrix3x3.Invert(matrix, out var invert))
+                return Vector3.Null;
+            return invert.Multiply(b);
+        }
+        #endregion
 
         /// <summary>
         /// Attempts to extract the scale, translation, and rotation components from the given scale/rotation/translation matrix.
@@ -678,7 +761,7 @@ namespace TVGL
         { return Quaternion.Conjugate(value); }
 
         /// <summary>
-        /// Returns the inverse of a Quaternion.
+        /// Returns the Inverse of a Quaternion.
         /// </summary>
         /// <param name="value">The source Quaternion.</param>
         /// <returns>The inverted Quaternion.</returns>
@@ -797,7 +880,7 @@ namespace TVGL
                     var b = new[] { -m.M13, -m.M23 };
                     StarMath.Solve2x2ComplexMatrix(cM, b, out var eigenVectorXY);
                     var eigenVector = new ComplexNumber[] { eigenVectorXY[0], eigenVectorXY[1], new ComplexNumber(1) };
-                    var eVectorLength = Math.Sqrt(eigenVector[0].LengthSquared() + eigenVector[1].LengthSquared() +1);
+                    var eVectorLength = Math.Sqrt(eigenVector[0].LengthSquared() + eigenVector[1].LengthSquared() + 1);
                     eigenVectors[j] = new ComplexNumber[] { eigenVector[0] / eVectorLength, eigenVector[1] / eVectorLength,
                         eigenVector[2] / eVectorLength };
                 }

@@ -120,6 +120,9 @@ namespace TVGL
         /// <value>The height.</value>
         public double Height { get; set; } = double.PositiveInfinity;
 
+        Matrix4x4 transformToXYPlane;
+        Matrix4x4 transformBackFromXYPlane;
+
         #endregion
 
         #region Constructors
@@ -138,10 +141,11 @@ namespace TVGL
         /// <param name="faces">The faces.</param>
         /// <param name="isPositive">if set to <c>true</c> [is positive].</param>
         public Prismatic(Vector3 axis, double minDistanceAlongAxis,
-            double maxDistanceAlongAxis, IEnumerable<TriangleFace> faces = null, bool isPositive = true)
+            double maxDistanceAlongAxis, IEnumerable<TriangleFace> faces = null, bool? isPositive = null)
             : base(faces)
         {
             Axis = axis;
+            transformToXYPlane = axis.TransformToXYPlane(out transformBackFromXYPlane);
             this.isPositive = isPositive;
             MinDistanceAlongAxis = minDistanceAlongAxis;
             MaxDistanceAlongAxis = maxDistanceAlongAxis;
@@ -153,9 +157,10 @@ namespace TVGL
         /// <param name="axis">The axis.</param>
         /// <param name="faces">The faces.</param>
         /// <param name="isPositive">if set to <c>true</c> [is positive].</param>
-        public Prismatic(Vector3 axis, IEnumerable<TriangleFace> faces = null, bool isPositive = true) : base(faces)
+        public Prismatic(Vector3 axis, IEnumerable<TriangleFace> faces = null, bool? isPositive = null) : base(faces)
         {
             Axis = axis;
+            transformToXYPlane = axis.TransformToXYPlane(out transformBackFromXYPlane);
             this.isPositive = isPositive;
             var (min, max) = MinimumEnclosure.GetDistanceToExtremeVertex(Vertices, axis, out _, out _);//vertices are set in base constructor
             MinDistanceAlongAxis = min;
@@ -168,10 +173,11 @@ namespace TVGL
         /// </summary>
         /// <param name="faces">The faces.</param>
         /// <param name="isPositive">if set to <c>true</c> [is positive].</param>
-        public Prismatic(IEnumerable<TriangleFace> faces = null, bool isPositive = true) : base(faces)
+        public Prismatic(IEnumerable<TriangleFace> faces = null, bool? isPositive = null) : base(faces)
         {
-            Axis =  MiscFunctions.FindMostOrthogonalVector(Faces.Select(face =>
+            Axis = MiscFunctions.FindMostOrthogonalVector(Faces.Select(face =>
                  (face.B.Coordinates - face.A.Coordinates).Cross(face.C.Coordinates - face.A.Coordinates)));
+            transformToXYPlane = Axis.TransformToXYPlane(out transformBackFromXYPlane);
             this.isPositive = isPositive;
             var (min, max) = MinimumEnclosure.GetDistanceToExtremeVertex(Vertices, Axis, out _, out _);//vertices are set in base constructor
             MinDistanceAlongAxis = min;
@@ -197,7 +203,7 @@ namespace TVGL
                 var distA = c.A.Dot(curveNormal);
                 var distB = c.B.Dot(curveNormal);
                 var distC = c.C.Dot(curveNormal);
-                var d = distA- distB;
+                var d = distA - distB;
                 mse += d * d;
                 d = distA - distC;
                 mse += d * d;
@@ -226,12 +232,33 @@ namespace TVGL
         {
             return double.NaN;
         }
+        public override Vector3 GetNormalAtPoint(Vector3 point)
+        {
+            throw new NotImplementedException();
+        }
 
         protected override void CalculateIsPositive()
         {
-            // todo: do we want this to be true=convex and false=concave?
-            // it's not exactly the same
-            //throw new NotImplementedException();
+            var coords = Vertices.Select(v => v.ConvertTo2DCoordinates(transformToXYPlane)).ToList();
+            var numConcave = 0;
+            var numConvex = 0;
+            var numFlat = 0;
+            foreach (var face in Faces)
+            {
+                var normal2D = face.Normal.ConvertTo2DCoordinates(transformToXYPlane);
+                var center2D = face.Center.ConvertTo2DCoordinates(transformToXYPlane);
+                foreach (var coord in coords)
+                {
+                    var d = (coord - center2D).Dot(normal2D);
+                    if (d.IsPositiveNonNegligible()) numConcave++;
+                    else if (d.IsNegativeNonNegligible()) numConvex++;
+                    else numFlat++;
+                }
+            }
+            var percentConcave = numConcave / (double)(numConcave + numConvex + numFlat);
+            if (numConcave > numConvex + numFlat) IsPositive = false;
+            else if (numConvex > numConcave + numFlat) IsPositive = true;
+            else IsPositive = null;
         }
     }
 }

@@ -222,7 +222,7 @@ namespace TVGL
         /// <returns>IEnumerable&lt;Vector2&gt;.</returns>
         public override IEnumerable<Vector2> TransformFrom3DTo2D(IEnumerable<Vector3> points, bool pathIsClosed)
         {
-            if (pathIsClosed && BorderEncirclesAxis(points, Axis, Center))
+            if (pathIsClosed && points.BorderEncirclesAxis(Axis, Center))
             {
                 var transform = Axis.TransformToXYPlane(out _);
                 foreach (var point in points)
@@ -243,8 +243,19 @@ namespace TVGL
         public override double PointMembership(Vector3 point)
         {
             Vector3 ptOnCircle = ClosestPointOnCenterRingToPoint(Axis, Center, MajorRadius, point, distanceFromOriginToBisectingPlane);
-            return (point - ptOnCircle).Length() - MinorRadius;
+            var d = (point - ptOnCircle).Length() - MinorRadius;
+            if (IsPositive.HasValue && !IsPositive.Value) d = -d;
+            return d;
         }
+
+        public override Vector3 GetNormalAtPoint(Vector3 point)
+        {
+            Vector3 ptOnCircle = ClosestPointOnCenterRingToPoint(Axis, Center, MajorRadius, point, distanceFromOriginToBisectingPlane);
+            var d = (point - ptOnCircle).Normalize();
+            if (IsPositive.HasValue && !IsPositive.Value) d = -d;
+            return d;
+        }
+
         /// <summary>
         /// Closests the point on center ring to point.
         /// </summary>
@@ -254,7 +265,7 @@ namespace TVGL
         /// <param name="vertexCoord">The vertex coord.</param>
         /// <param name="planeDist">The plane dist.</param>
         /// <returns>Vector3.</returns>
-        public static Vector3 ClosestPointOnCenterRingToPoint(Vector3 axis, Vector3 center, double majorRadius, Vector3 vertexCoord, 
+        public static Vector3 ClosestPointOnCenterRingToPoint(Vector3 axis, Vector3 center, double majorRadius, Vector3 vertexCoord,
             double planeDist = double.NaN)
         {
             if (double.IsNaN(planeDist)) planeDist = center.Dot(axis);
@@ -270,6 +281,37 @@ namespace TVGL
             var firstFace = Faces.First();
             var anchor = ClosestPointOnCenterRingToPoint(Axis, Center, MajorRadius, firstFace.Center);
             isPositive = (firstFace.Center - anchor).Dot(firstFace.Normal) > 0;
+        }
+
+        public double FindLargestEncompassingAnglesInTube()
+        {
+            var globalMinAngle = double.PositiveInfinity;
+            var globalMaxAngle = double.NegativeInfinity;
+            foreach (var path in Borders)
+            {
+                FindWindingAroundTube(path.GetVectors(), out var minAngle, out var maxAngle);
+                if (globalMinAngle > minAngle) globalMinAngle = minAngle;
+                if (globalMaxAngle < maxAngle) globalMaxAngle = maxAngle;
+            }
+            return globalMaxAngle - globalMinAngle;
+        }
+
+        private double FindWindingAroundTube(IEnumerable<Vector3> points, out double minAngle, out double maxAngle)
+        {
+            minAngle = double.PositiveInfinity;
+            maxAngle = double.NegativeInfinity;
+            foreach (var point in points)
+            {
+                var ringPoint = ClosestPointOnCenterRingToPoint(Axis, Center, MajorRadius, point);
+                var xAxis = (ringPoint - Center).Normalize();
+                var localCoord = point - ringPoint;
+                var xCoord = xAxis.Dot(localCoord);
+                var yCoord = Axis.Dot(localCoord);
+                var angle = Math.Atan2(yCoord, xCoord);
+                if (minAngle > angle) minAngle = angle;
+                if (maxAngle < angle) maxAngle = angle;
+            }
+            return maxAngle - minAngle;
         }
     }
 }

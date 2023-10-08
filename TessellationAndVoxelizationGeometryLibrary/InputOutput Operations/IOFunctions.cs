@@ -20,6 +20,7 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.Serialization;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -84,6 +85,49 @@ namespace TVGL
 
         #region Open/Load/Read
 
+
+        /// <summary>
+        /// Opens the specified filename.
+        /// </summary>
+        /// <param name="filename">The filename.</param>
+        /// <param name="solids">The solids.</param>
+        /// <exception cref="System.IO.FileNotFoundException">The file was not found at: " + filename</exception>
+        public static void Open(string filename, out TessellatedSolid[] solids, TessellatedSolidBuildOptions tsBuildOptions = null)
+        {
+            if (File.Exists(filename))
+                using (var fileStream = File.OpenRead(filename))
+                    Open(fileStream, filename, out solids, tsBuildOptions);
+            else throw new FileNotFoundException("The file was not found at: " + filename);
+        }
+
+        /// <summary>
+        /// Opens the specified filename.
+        /// </summary>
+        /// <param name="filename">The filename.</param>
+        /// <param name="solids">The solids.</param>
+        /// <exception cref="System.IO.FileNotFoundException">The file was not found at: " + filename</exception>
+        public static void OpenZip(string filename, out TessellatedSolid[] solids, TessellatedSolidBuildOptions tsBuildOptions = null)
+        {
+            if (File.Exists(filename))
+                using (var fileStream = File.OpenRead(filename))
+                    Open(fileStream, filename, out solids, tsBuildOptions);
+            else throw new FileNotFoundException("The file was not found at: " + filename);
+        }
+
+
+        /// <summary>
+        /// Opens the specified filename.
+        /// </summary>
+        /// <param name="filename">The filename.</param>
+        /// <returns>Solid.</returns>
+        /// <exception cref="System.IO.FileNotFoundException">The file was not found at: " + filename</exception>
+        public static Solid Open(string filename, TessellatedSolidBuildOptions tsBuildOptions = null)
+        {
+            Solid s;
+            Open(filename, out s, tsBuildOptions);
+            return s;
+        }
+
         /// <summary>
         /// Opens the 3D solid or solids from a provided file name.
         /// </summary>
@@ -91,128 +135,13 @@ namespace TVGL
         /// <param name="solid">The solid.</param>
         /// <returns>A list of TessellatedSolids.</returns>
         /// <exception cref="System.IO.FileNotFoundException">The file was not found at: " + filename</exception>
-        public static void Open(string filename, out TessellatedSolid solid)
+        public static void Open<T>(string filename, out T solid, TessellatedSolidBuildOptions tsBuildOptions = null)
+            where T : Solid
         {
             if (File.Exists(filename))
                 using (var fileStream = File.OpenRead(filename))
-                    Open(fileStream, filename, out solid);
+                    Open(fileStream, filename, out solid, tsBuildOptions);
             else throw new FileNotFoundException("The file was not found at: " + filename);
-        }
-
-        /// <summary>
-        /// Opens the specified filename.
-        /// </summary>
-        /// <param name="filename">The filename.</param>
-        /// <param name="solids">The solids.</param>
-        /// <exception cref="System.IO.FileNotFoundException">The file was not found at: " + filename</exception>
-        public static void Open(string filename, out TessellatedSolid[] solids)
-        {
-            if (File.Exists(filename))
-                using (var fileStream = File.OpenRead(filename))
-                    Open(fileStream, filename, out solids);
-            else throw new FileNotFoundException("The file was not found at: " + filename);
-        }
-
-        /// <summary>
-        /// Opens the specified filename.
-        /// </summary>
-        /// <param name="filename">The filename.</param>
-        /// <param name="solids">The solids.</param>
-        /// <exception cref="System.IO.FileNotFoundException">The file was not found at: " + filename</exception>
-        public static void OpenZip(string filename, out TessellatedSolid[] solids)
-        {
-            if (File.Exists(filename))
-                using (var fileStream = File.OpenRead(filename))
-                    Open(fileStream, filename, out solids);
-            else throw new FileNotFoundException("The file was not found at: " + filename);
-        }
-
-        /// <summary>
-        /// Opens the specified filename.
-        /// </summary>
-        /// <param name="filename">The filename.</param>
-        /// <param name="solid">The solid.</param>
-        /// <exception cref="System.IO.FileNotFoundException">The file was not found at: " + filename</exception>
-        public static void Open(string filename, out VoxelizedSolid solid)
-        {
-            if (File.Exists(filename))
-                using (var fileStream = File.OpenRead(filename))
-                    Open(fileStream, out solid);
-            else throw new FileNotFoundException("The file was not found at: " + filename);
-        }
-
-        /// <summary>
-        /// Opens the specified filename.
-        /// </summary>
-        /// <param name="filename">The filename.</param>
-        /// <param name="solid">The solid.</param>
-        /// <exception cref="System.IO.FileNotFoundException">The file was not found at: " + filename</exception>
-        public static void Open(string filename, out CrossSectionSolid solid)
-        {
-            if (File.Exists(filename))
-                using (var fileStream = File.OpenRead(filename))
-                    Open(fileStream, out solid);
-            else throw new FileNotFoundException("The file was not found at: " + filename);
-        }
-
-        /// <summary>
-        /// Opens the specified stream, s. Note that as a Portable class library
-        /// </summary>
-        /// <param name="s">The s.</param>
-        /// <param name="filename">The filename.</param>
-        /// <param name="solid">The solid.</param>
-        /// <returns>TessellatedSolid.</returns>
-        /// <exception cref="Exception">Cannot open file without extension (e.g. f00.stl).
-        /// or
-        /// This function has been recently removed.
-        /// or
-        /// Cannot determine format from extension (not .stl, .ply, .3ds, .lwo, .obj, .objx, or .off.</exception>
-        /// <exception cref="System.Exception">Cannot open file without extension (e.g. f00.stl).
-        /// or
-        /// This function has been recently removed.
-        /// or
-        /// Cannot determine format from extension (not .stl, .ply, .3ds, .lwo, .obj, .objx, or .off.</exception>
-        public static void Open(Stream s, string filename, out TessellatedSolid solid)
-        {
-            try
-            {
-                var extension = GetFileTypeFromExtension(Path.GetExtension(filename));
-                switch (extension)
-                {
-                    case FileType.STL_ASCII:
-                    case FileType.STL_Binary:
-                    case FileType.ThreeMF:
-                    case FileType.Model3MF:
-                    case FileType.AMF:
-                    case FileType.OBJ:
-                    case FileType.OFF:
-                    case FileType.SHELL:
-                        Open(s, filename, out TessellatedSolid[] solids);
-                        solid = solids[0];
-                        break;
-
-                    case FileType.PLY_ASCII:
-                    case FileType.PLY_Binary:
-                        solid = PLYFileData.OpenSolid(s, filename);
-                        break;
-
-                    case FileType.unspecified:
-                        solid = null;
-                        break;
-
-                    default:
-                        var serializer = new JsonSerializer() { TypeNameHandling = TypeNameHandling.Objects };
-                        var sr = new StreamReader(s);
-                        using (var reader = new JsonTextReader(sr))
-                            solid = serializer.Deserialize<TessellatedSolid>(reader);
-                        break;
-                }
-            }
-            catch (Exception exc)
-            {
-                Console.WriteLine("Cannot open file. Message: " + exc.Message);
-                solid = null;
-            }
         }
 
         /// <summary>
@@ -222,7 +151,8 @@ namespace TVGL
         /// <param name="filename">The filename.</param>
         /// <param name="tessellatedSolids">The tessellated solids.</param>
         /// <exception cref="System.Exception">Attempting to open multiple solids with a " + extension.ToString() + " file.</exception>
-        public static void Open(Stream s, string filename, out TessellatedSolid[] tessellatedSolids)
+        public static void Open(Stream s, string filename, out TessellatedSolid[] tessellatedSolids,
+            TessellatedSolidBuildOptions tsBuildOptions = null)
         {
             //try
             //{
@@ -231,33 +161,30 @@ namespace TVGL
             {
                 case FileType.STL_ASCII:
                 case FileType.STL_Binary:
-                    tessellatedSolids = STLFileData.OpenSolids(s, filename); // Standard Tessellation or StereoLithography
+                    tessellatedSolids = STLFileData.OpenSolids(s, filename, tsBuildOptions); // Standard Tessellation or StereoLithography
                     break;
 
                 case FileType.ThreeMF:
-                    tessellatedSolids = ThreeMFFileData.OpenSolids(s, filename);
+                    tessellatedSolids = ThreeMFFileData.OpenSolids(s, filename, tsBuildOptions);
                     break;
 
                 case FileType.Model3MF:
-                    tessellatedSolids = ThreeMFFileData.OpenModelFile(s, filename);
+                    tessellatedSolids = ThreeMFFileData.OpenModelFile(s, filename, tsBuildOptions);
                     break;
 
                 case FileType.AMF:
-                    tessellatedSolids = AMFFileData.OpenSolids(s, filename);
-                    break;
-
-                case FileType.SHELL:
-                    tessellatedSolids = ShellFileData.OpenSolids(s, filename);
+                    tessellatedSolids = AMFFileData.OpenSolids(s, filename, tsBuildOptions);
                     break;
 
                 case FileType.OBJ:
-                    tessellatedSolids = OBJFileData.OpenSolids(s, filename);
+                    tessellatedSolids = OBJFileData.OpenSolids(s, filename, tsBuildOptions);
                     break;
 
                 case FileType.OFF:
                 case FileType.PLY_ASCII:
                 case FileType.PLY_Binary:
-                    throw new Exception("Attempting to open multiple solids with a " + extension.ToString() + " file.");
+                    tessellatedSolids = new[] { PLYFileData.OpenSolid(s, filename, tsBuildOptions) };
+                    break;
                 case FileType.TVGL:
                     OpenTVGL(s, out var solidAssembly);
                     tessellatedSolids = solidAssembly.RootAssembly.AllTessellatedSolidsInGlobalCoordinateSystem();
@@ -278,45 +205,6 @@ namespace TVGL
             //}
         }
 
-        /// <summary>
-        /// Opens the specified s.
-        /// </summary>
-        /// <param name="s">The s.</param>
-        /// <param name="solid">The solid.</param>
-        public static void Open(Stream s, out VoxelizedSolid solid)
-        {
-            var serializer = new JsonSerializer();
-            var sr = new StreamReader(s);
-            using var reader = new JsonTextReader(sr);
-            solid = serializer.Deserialize<VoxelizedSolid>(reader);
-        }
-
-        /// <summary>
-        /// Opens the specified s.
-        /// </summary>
-        /// <param name="s">The s.</param>
-        /// <param name="solid">The solid.</param>
-        public static void Open(Stream s, out CrossSectionSolid solid)
-        {
-            var serializer = new JsonSerializer();
-            var sr = new StreamReader(s);
-            using var reader = new JsonTextReader(sr);
-            solid = serializer.Deserialize<CrossSectionSolid>(reader);
-        }
-
-        /// <summary>
-        /// Opens the specified filename.
-        /// </summary>
-        /// <param name="filename">The filename.</param>
-        /// <returns>Solid.</returns>
-        /// <exception cref="System.IO.FileNotFoundException">The file was not found at: " + filename</exception>
-        public static Solid Open(string filename)
-        {
-            if (File.Exists(filename))
-                using (var fileStream = File.OpenRead(filename))
-                    return Open(fileStream, filename);
-            else throw new FileNotFoundException("The file was not found at: " + filename);
-        }
 
         /// <summary>
         /// Opens the specified s.
@@ -324,61 +212,97 @@ namespace TVGL
         /// <param name="s">The s.</param>
         /// <param name="filename">The filename.</param>
         /// <returns>Solid.</returns>
-        public static Solid Open(Stream s, string filename = "")
+        private static void Open<T>(Stream s, string filename, out T solid, TessellatedSolidBuildOptions tsBuildOptions = null)
+            where T : Solid
         {
-            //try
+            var extension = GetFileTypeFromExtension(Path.GetExtension(filename));
+            Solid solidInner = null;
+            if (extension == FileType.TVGL || extension == FileType.TVGLz)
             {
-                var extension = GetFileTypeFromExtension(Path.GetExtension(filename));
-                switch (extension)
-                {
-                    case FileType.STL_ASCII:
-                    case FileType.STL_Binary:
-                        return STLFileData.OpenSolids(s, filename)[0]; // Standard Tessellation or StereoLithography
-                    case FileType.ThreeMF:
-                        return ThreeMFFileData.OpenSolids(s, filename)[0];
-
-                    case FileType.Model3MF:
-                        return ThreeMFFileData.OpenModelFile(s, filename)[0];
-
-                    case FileType.AMF:
-                        return AMFFileData.OpenSolids(s, filename)[0];
-
-                    case FileType.OBJ:
-                        return OBJFileData.OpenSolids(s, filename)[0];
-
-                    case FileType.OFF:
-                        return OFFFileData.OpenSolid(s, filename);
-
-                    case FileType.PLY_ASCII:
-                    case FileType.PLY_Binary:
-                        return PLYFileData.OpenSolid(s, filename);
-
-                    case FileType.SHELL:
-                        return ShellFileData.OpenSolids(s, filename)[0];
-                    default:
-                        var serializer = new JsonSerializer();
-                        var sr = new StreamReader(s);
-                        using (var reader = new JsonTextReader(sr))
-                        {
-                            JObject jObject = JObject.Load(reader);
-                            var typeString = ((string)jObject["TVGLSolidType"]);
-                            if (string.IsNullOrWhiteSpace(typeString)) return null;
-                            var type = Type.GetType(typeString);
-                            if (type == null)
-                            {
-                                var assembly = Assembly.LoadFrom((string)jObject["InAssembly"]);
-                                type = assembly.GetType(typeString);
-                            }
-                            if (type == null) return null;
-                            return (Solid)JsonConvert.DeserializeObject(jObject.ToString(), type);
-                        }
-                }
+                OpenTVGL(s, out solid, tsBuildOptions);
+                return;
             }
-            //catch (Exception exc)
-            //{
-            //    throw new Exception("Cannot open file. Message: " + exc.Message);
-            //}
+            switch (extension)
+            {
+                case FileType.STL_ASCII:
+                case FileType.STL_Binary:
+                    solidInner = STLFileData.OpenSolids(s, filename, tsBuildOptions)[0]; // Standard Tessellation or StereoLithography
+                    break;
+                case FileType.ThreeMF:
+                    solidInner = ThreeMFFileData.OpenSolids(s, filename, tsBuildOptions)[0];
+                    break;
+                case FileType.Model3MF:
+                    solidInner = ThreeMFFileData.OpenModelFile(s, filename, tsBuildOptions)[0];
+                    break;
+                case FileType.AMF:
+                    solidInner = AMFFileData.OpenSolids(s, filename, tsBuildOptions)[0];
+                    break;
+                case FileType.OBJ:
+                    solidInner = OBJFileData.OpenSolids(s, filename, tsBuildOptions)[0];
+                    break;
+                case FileType.OFF:
+                    solidInner = OFFFileData.OpenSolid(s, filename, tsBuildOptions);
+                    break;
+                case FileType.PLY_ASCII:
+                case FileType.PLY_Binary:
+                    solidInner = PLYFileData.OpenSolid(s, filename, tsBuildOptions);
+                    break;
+            }
+            solid = (T)Convert.ChangeType(solidInner, typeof(T));
         }
+
+
+        #region Open TVGL
+        /// <summary>
+        /// Opens the solid (TessellatedSolid, CrossSectionSolid, VoxelizedSolid) from the stream.
+        /// </summary>
+        /// <param name="s">The s.</param>
+        /// <param name="solid">The solid.</param>
+        private static void OpenTVGL<T>(Stream s, out T solid, TessellatedSolidBuildOptions tsBuildOptions = null) where T : Solid
+        {
+            var serializer = new JsonSerializer
+            {
+                TypeNameHandling = TypeNameHandling.Objects,
+                Context = new StreamingContext(StreamingContextStates.Other, tsBuildOptions)
+            };
+            using var reader = new JsonTextReader(new StreamReader(s));
+            solid = serializer.Deserialize<T>(reader);
+        }
+
+        /// <summary>
+        /// Opens the TVGL.
+        /// </summary>
+        /// <param name="s">The s.</param>
+        /// <param name="solidAssembly">The solid assembly.</param>
+        private static void OpenTVGL(Stream s, out SolidAssembly solidAssembly, TessellatedSolidBuildOptions tsBuildOptions = null)
+        {
+            var serializer = new JsonSerializer
+            {
+                TypeNameHandling = TypeNameHandling.Objects,
+                Context = new StreamingContext(StreamingContextStates.Other, tsBuildOptions)
+            };
+            using var reader = new JsonTextReader(new StreamReader(s));
+            solidAssembly = serializer.Deserialize<SolidAssembly>(reader);
+        }
+
+        /// <summary>
+        /// Opens the TVG lz.
+        /// </summary>
+        /// <param name="s">The s.</param>
+        /// <param name="solidAssembly">The solid assembly.</param>
+        private static void OpenTVGLz(Stream s, out SolidAssembly solidAssembly, TessellatedSolidBuildOptions tsBuildOptions = null)
+        {
+            var serializer = new JsonSerializer
+            {
+                TypeNameHandling = TypeNameHandling.Objects,
+                Context = new StreamingContext(StreamingContextStates.Other, tsBuildOptions)
+            };
+            using var archive = new ZipArchive(s, ZipArchiveMode.Read, true);
+            using var reader = new JsonTextReader(new StreamReader(archive.Entries[0].Open()));
+            solidAssembly = serializer.Deserialize<SolidAssembly>(reader);
+        }
+
+        #endregion
 
         /// <summary>
         /// Opens from string.
@@ -394,7 +318,7 @@ namespace TVGL
             //    reader.Read(data.AsSpan());
             //    reader.Flush();
             //}
-            //stream.Position = 0;
+            //stream.Coordinates = 0;
             var name = "data." + GetExtensionFromFileType(fileType);
             Open(stream, name, out solid);
         }
@@ -423,7 +347,7 @@ namespace TVGL
         /// </summary>
         /// <param name="data">The data.</param>
         /// <param name="solid">The solid.</param>
-        public static void OpenFromString(string data, out VoxelizedSolid solid)
+        public static void OpenFromString<T>(string data, out T solid, TessellatedSolidBuildOptions tsBuildOptions = null) where T : Solid
         {
             var stream = new MemoryStream();
             using (var writer = new StreamWriter(stream))
@@ -432,24 +356,7 @@ namespace TVGL
                 writer.Flush();
             }
             stream.Position = 0;
-            Open(stream, out solid);
-        }
-
-        /// <summary>
-        /// Opens from string.
-        /// </summary>
-        /// <param name="data">The data.</param>
-        /// <param name="solid">The solid.</param>
-        public static void OpenFromString(string data, out CrossSectionSolid solid)
-        {
-            var stream = new MemoryStream();
-            using (var writer = new StreamWriter(stream))
-            {
-                writer.Write(data);
-                writer.Flush();
-            }
-            stream.Position = 0;
-            Open(stream, out solid);
+            Open(stream, "", out solid, tsBuildOptions);
         }
 
         /// <summary>
@@ -1136,7 +1043,7 @@ namespace TVGL
 
                 case FileType.TVGLz:
                     throw new NotImplementedException("Need to provide filepath instread of stream.");
-    
+
                 default:
                     throw new NotSupportedException(
                         "Saving to the " + fileType.ToString() + "format is not yet supported in TVGL.");
@@ -1187,9 +1094,6 @@ namespace TVGL
 
                 case FileType.PLY_Binary:
                     return PLYFileData.SaveSolidBinary(stream, (TessellatedSolid)solid);
-
-                case FileType.SHELL:
-                    return ShellFileData.Save(stream, (TessellatedSolid)solid);
 
                 default:
                     throw new NotSupportedException(
@@ -1329,39 +1233,6 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Saves to TVGL old.
-        /// </summary>
-        /// <param name="solidAssembly">The solid assembly.</param>
-        /// <param name="filename">The filename.</param>
-        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
-        public static bool SaveToTVGL_Old(SolidAssembly solidAssembly, string filename)
-        {
-            using var fileStream = File.OpenWrite(Path.ChangeExtension(filename, GetExtensionFromFileType(FileType.TVGL)));
-            return SaveToTVGL(fileStream, solidAssembly);
-        }
-
-        /// <summary>
-        /// Saves to TVGL old.
-        /// </summary>
-        /// <param name="s">The s.</param>
-        /// <param name="solidAssembly">The solid assembly.</param>
-        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
-        public static bool SaveToTVGL_Old(Stream s, SolidAssembly solidAssembly)
-        {
-            try
-            {
-                var jsonString = JsonConvert.SerializeObject(solidAssembly, Formatting.None);
-                using var writer = new StreamWriter(s);
-                writer.WriteLine(jsonString);
-                return true;
-            }
-            catch
-            {
-                return false;
-            }
-        }
-
-        /// <summary>
         /// Saves to TVG lz.
         /// </summary>
         /// <param name="solidAssembly">The solid assembly.</param>
@@ -1426,7 +1297,7 @@ namespace TVGL
         /// <param name="filename">The filename.</param>
         /// <param name="solidAssembly">The solid assembly.</param>
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
-        public static bool ReadStream(string filename, out SolidAssembly solidAssembly)
+        public static bool ReadStream(string filename, out SolidAssembly solidAssembly, TessellatedSolidBuildOptions tsBuildOptions)
         {
             solidAssembly = null;
             if (!File.Exists(filename))
@@ -1445,7 +1316,7 @@ namespace TVGL
             if (GetFileTypeFromExtension(extension) == FileType.TVGLz)
             {
                 var unzipped = Path.ChangeExtension(filename, GetExtensionFromFileType(FileType.TVGL));
-                if(File.Exists(unzipped)) { File.Delete(unzipped); }    
+                if (File.Exists(unzipped)) { File.Delete(unzipped); }
                 //Unzip the file
                 using (ZipArchive archive = ZipFile.OpenRead(filename))
                 {
@@ -1458,21 +1329,21 @@ namespace TVGL
             }
             else if (GetFileTypeFromExtension(extension) != FileType.TVGL) return false;
 
-            try
-            {
+            //try
+            //{
                 using var s = File.Open(filename, FileMode.Open);
                 using (var streamReader = new StreamReader(s))
                 using (var reader = new JsonTextReader(streamReader))
-                {     
-                    SolidAssembly.StreamRead(reader, out solidAssembly);
+                {
+                    SolidAssembly.StreamRead(reader, out solidAssembly, tsBuildOptions);
                     reader.Close();
                 }
                 return true;
-            }
-            catch
-            {
-                return false;
-            }
+            //}
+            //catch
+            //{
+            //    return false;
+            //}
         }
 
         /// <summary>
@@ -1488,32 +1359,6 @@ namespace TVGL
                 stream.Write(fileContent, 0, fileContent.Length);
 
         }
-
-        /// <summary>
-        /// Opens the TVGL.
-        /// </summary>
-        /// <param name="s">The s.</param>
-        /// <param name="solidAssembly">The solid assembly.</param>
-        public static void OpenTVGL(Stream s, out SolidAssembly solidAssembly)
-        {
-            var serializer = new JsonSerializer();
-            using var reader = new JsonTextReader(new StreamReader(s));
-            solidAssembly = serializer.Deserialize<SolidAssembly>(reader);
-        }
-
-        /// <summary>
-        /// Opens the TVG lz.
-        /// </summary>
-        /// <param name="s">The s.</param>
-        /// <param name="solidAssembly">The solid assembly.</param>
-        public static void OpenTVGLz(Stream s, out SolidAssembly solidAssembly)
-        {
-            var serializer = new JsonSerializer();
-            using var archive = new ZipArchive(s, ZipArchiveMode.Read, true);
-            using var reader = new JsonTextReader(new StreamReader(archive.Entries[0].Open()));
-            solidAssembly = serializer.Deserialize<SolidAssembly>(reader);
-        }
-
         #endregion Save/Write
     }
 }

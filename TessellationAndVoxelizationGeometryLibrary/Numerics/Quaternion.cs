@@ -103,6 +103,18 @@ namespace TVGL
         }
 
         /// <summary>
+        /// Constructs a Quaternion from the given vector and rotation parts.
+        /// </summary>
+        /// <param name="vectorPart">The vector part of the Quaternion.</param>
+        public Quaternion(Vector4 vectorPart)
+        {
+            X = vectorPart.X;
+            Y = vectorPart.Y;
+            Z = vectorPart.Z;
+            W = vectorPart.W;
+        }
+
+        /// <summary>
         /// Calculates the length of the Quaternion.
         /// </summary>
         /// <returns>The computed length of the Quaternion.</returns>
@@ -156,7 +168,7 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Returns the inverse of a Quaternion.
+        /// Returns the Inverse of a Quaternion.
         /// </summary>
         /// <param name="value">The source Quaternion.</param>
         /// <returns>The inverted Quaternion.</returns>

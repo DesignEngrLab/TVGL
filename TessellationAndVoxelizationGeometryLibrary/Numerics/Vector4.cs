@@ -16,14 +16,14 @@ using System;
 using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Text;
-using MIConvexHull;
+using TVGL.ConvexHullDetails;
 
 namespace TVGL  // COMMENTEDCHANGE namespace System.Numerics
 {
     /// <summary>
     /// A structure encapsulating three single precision doubleing point values and provides hardware accelerated methods.
     /// </summary>
-    public readonly partial struct Vector4 : IEquatable<Vector4>, IFormattable, IVertex3D, IVertex
+    public readonly partial struct Vector4 : IEquatable<Vector4>, IFormattable, IPoint3D, IPoint
     {
 
         /// <summary>
@@ -51,7 +51,7 @@ namespace TVGL  // COMMENTEDCHANGE namespace System.Numerics
         /// Gets the position.
         /// </summary>
         /// <value>The position.</value>
-        public double[] Position => new[] { X / W, Y / W, Z / W };
+        public double[] Coordinates => new[] { X / W, Y / W, Z / W };
         #region Constructors
         /// <summary>
         /// Constructs a Vector4 from the given Vector2 and a third value.
@@ -91,6 +91,17 @@ namespace TVGL  // COMMENTEDCHANGE namespace System.Numerics
             X = x;
             Y = y;
             Z = z;
+            W = w;
+        }
+
+        /// <summary>
+        /// Constructs a vector with the given individual elements.
+        /// </summary>
+        public Vector4(Vector3 v, double w) // = 1)
+        {
+            X = v.X;
+            Y = v.Y;
+            Z = v.Z;
             W = w;
         }
 
@@ -144,7 +155,7 @@ namespace TVGL  // COMMENTEDCHANGE namespace System.Numerics
         /// Gets the vector (0,0,0,1).
         /// </summary>
         /// <value>The vector <c>(0,0,0,1)</c>.</value>
-        public static Vector4 UnitW= new Vector4(0.0, 0.0, 0.0, 1.0);
+        public static Vector4 UnitW = new Vector4(0.0, 0.0, 0.0, 1.0);
 
         /// <summary>
         /// Returns the vector (NaN, NaN, NaN, NaN).
@@ -658,6 +669,22 @@ namespace TVGL  // COMMENTEDCHANGE namespace System.Numerics
                 (position.X * matrix.M14) + (position.Y * matrix.M24) + (position.Z * matrix.M34) + matrix.M44
             );
         }
+        /// <summary>
+        /// Transforms a four-dimensional vector by a specified 4x4 matrix.
+        /// </summary>
+        /// <param name="vector">The vector to transform.</param>
+        /// <param name="matrix">The transformation matrix.</param>
+        /// <returns>The transformed vector.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Vector4 Transform(Vector4 vector, Matrix4x4 matrix)
+        {
+            return new Vector4(
+                (vector.X * matrix.M11) + (vector.Y * matrix.M21) + (vector.Z * matrix.M31) + (vector.W * matrix.M41),
+                (vector.X * matrix.M12) + (vector.Y * matrix.M22) + (vector.Z * matrix.M32) + (vector.W * matrix.M42),
+                (vector.X * matrix.M13) + (vector.Y * matrix.M23) + (vector.Z * matrix.M33) + (vector.W * matrix.M43),
+                (vector.X * matrix.M14) + (vector.Y * matrix.M24) + (vector.Z * matrix.M34) + (vector.W * matrix.M44)
+            );
+        }
 
         /// <summary>
         /// Transforms a three-dimensional vector by the specified Quaternion rotation value.
@@ -690,22 +717,6 @@ namespace TVGL  // COMMENTEDCHANGE namespace System.Numerics
             );
         }
 
-        /// <summary>
-        /// Transforms a four-dimensional vector by a specified 4x4 matrix.
-        /// </summary>
-        /// <param name="vector">The vector to transform.</param>
-        /// <param name="matrix">The transformation matrix.</param>
-        /// <returns>The transformed vector.</returns>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Vector4 Transform(Vector4 vector, Matrix4x4 matrix)
-        {
-            return new Vector4(
-                (vector.X * matrix.M11) + (vector.Y * matrix.M21) + (vector.Z * matrix.M31) + (vector.W * matrix.M41),
-                (vector.X * matrix.M12) + (vector.Y * matrix.M22) + (vector.Z * matrix.M32) + (vector.W * matrix.M42),
-                (vector.X * matrix.M13) + (vector.Y * matrix.M23) + (vector.Z * matrix.M33) + (vector.W * matrix.M43),
-                (vector.X * matrix.M14) + (vector.Y * matrix.M24) + (vector.Z * matrix.M34) + (vector.W * matrix.M44)
-            );
-        }
 
         /// <summary>
         /// Transforms a four-dimensional vector by the specified Quaternion rotation value.
@@ -843,7 +854,7 @@ namespace TVGL  // COMMENTEDCHANGE namespace System.Numerics
         /// <remarks>This method returns a string in which each element of the vector is formatted using the "G" (general) format string and the formatting conventions of the current thread culture. The "&lt;" and "&gt;" characters are used to begin and end the string, and the current culture's <see cref="System.Globalization.NumberFormatInfo.NumberGroupSeparator" /> property followed by a space is used to separate each element.</remarks>
         public override readonly string ToString()
         {
-            return ToString("G", CultureInfo.CurrentCulture);
+            return ToString("F3", CultureInfo.CurrentCulture);
         }
 
         /// <summary>
@@ -952,7 +963,7 @@ namespace TVGL  // COMMENTEDCHANGE namespace System.Numerics
         /// <summary>
         /// Transforms a vector by the given matrix without the translation component.
         /// This is often used for transforming normals, however note that proper transformations
-        /// of normal vectors requires that the input matrix be the transpose of the inverse of that matrix.
+        /// of normal vectors requires that the input matrix be the transpose of the Inverse of that matrix.
         /// </summary>
         /// <param name="rowVector">The source vector.</param>
         /// <param name="matrix">The transformation matrix.</param>
@@ -961,8 +972,8 @@ namespace TVGL  // COMMENTEDCHANGE namespace System.Numerics
         public static Vector4 TransformNoTranslate(Vector4 rowVector, Matrix4x4 matrix)
         {
             return new Vector4(
-                rowVector.X * matrix.M11 + rowVector.Y * matrix.M21 + rowVector.Z * matrix.M31 ,
-                rowVector.X * matrix.M12 + rowVector.Y * matrix.M22 + rowVector.Z * matrix.M32 ,
+                rowVector.X * matrix.M11 + rowVector.Y * matrix.M21 + rowVector.Z * matrix.M31,
+                rowVector.X * matrix.M12 + rowVector.Y * matrix.M22 + rowVector.Z * matrix.M32,
                 rowVector.X * matrix.M13 + rowVector.Y * matrix.M23 + rowVector.Z * matrix.M33,
                 rowVector.X * matrix.M14 + rowVector.Y * matrix.M24 + rowVector.Z * matrix.M34 + rowVector.W * matrix.M44);
         }
@@ -974,7 +985,7 @@ namespace TVGL  // COMMENTEDCHANGE namespace System.Numerics
         /// </summary>
         /// <param name="matrix">The matrix.</param>
         /// <param name="b">The b.</param>
-        /// <returns>Vector3.</returns>
+        /// <returns>Vector4.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector4 Solve(Matrix4x4 matrix, Vector4 b)
         {

@@ -14,6 +14,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Runtime.Serialization;
 using System.Threading.Tasks;
@@ -197,13 +198,7 @@ namespace TVGL
         /// <returns>TessellatedSolid.</returns>
         public TessellatedSolid ConvertToTessellatedExtrusions(bool extrudeBack, bool createFullVersion)
         {
-            var faces = new List<TriangleFace>();
-            var facesAsTuples = ConvertToFaces(extrudeBack);
-            foreach (var face in facesAsTuples)
-            {
-                faces.Add(new TriangleFace(new Vertex(face.A), new Vertex(face.B), new Vertex(face.C)));
-            }
-            return new TessellatedSolid(faces, createFullVersion, false);
+            return new TessellatedSolid(ConvertToFaces(extrudeBack), -1, null, TessellatedSolidBuildOptions.Minimal);
         }
 
         /// <summary>
@@ -211,7 +206,7 @@ namespace TVGL
         /// </summary>
         /// <param name="extrudeBack">if set to <c>true</c> [extrude back].</param>
         /// <returns>List&lt;System.ValueTuple&lt;Vector3, Vector3, Vector3&gt;&gt;.</returns>
-        public List<(Vector3 A, Vector3 B, Vector3 C)> ConvertToFaces(bool extrudeBack)
+        private IEnumerable<(Vector3 A, Vector3 B, Vector3 C)> ConvertToFaces(bool extrudeBack)
         {
             //if (!Layer3D.Any()) SetAllVertices();
             var start = Layer2D.FirstOrDefault(p => p.Value.Count > 0).Key;
@@ -308,7 +303,7 @@ namespace TVGL
                 i++;
             }
 
-            return new TessellatedSolid(faces, false, false);
+            return new TessellatedSolid(faces, null, TessellatedSolidBuildOptions.Minimal);
         }
 
         /// <summary>

@@ -1054,12 +1054,12 @@ namespace TVGL
         public static void Complexify(this Polygon polygon, double maxAllowableLength)
         {
             var loopID = polygon.Index;
-            for (int i = 0; i < polygon.Edges.Count; i++)
+            for (int i = polygon.Edges.Count - 1; i >= 0; i--)
             {
                 var thisLine = polygon.Edges[i];
                 if (thisLine.Length > maxAllowableLength)
                 {
-                    var numNewPoints = (int)thisLine.Length / maxAllowableLength;
+                    var numNewPoints = (int)(thisLine.Length / maxAllowableLength);
                     for (int j = 0; j < numNewPoints; j++)
                     {
                         var fraction = j / (double)numNewPoints;
@@ -1071,6 +1071,32 @@ namespace TVGL
             polygon.Reset();
             foreach (var polygonHole in polygon.InnerPolygons)
                 polygonHole.Complexify(maxAllowableLength);
+        }
+
+        /// <summary>
+        /// Complexifies the specified path so that no edge is longer than the maxAllowableLength.
+        /// Note that this method does not assume the path is closed, so it will not add a point
+        /// to the end of the path to get closer to the start.
+        /// </summary>
+        /// <param name="polygon">The polygon.</param>
+        /// <param name="maxAllowableLength">Maximum length of the allowable.</param>
+        /// <returns>Polygon.</returns>
+        public static void Complexify(this List<Vector2> polygon, double maxAllowableLength)
+        {
+            for (int i = polygon.Count - 1; i >= 1; i--)
+            {
+                var thisLineLength = (polygon[i] - polygon[i - 1]).Length();
+                if (thisLineLength > maxAllowableLength)
+                {
+                    var numNewPoints = (int)(thisLineLength / maxAllowableLength);
+                    for (int j = 0; j < numNewPoints; j++)
+                    {
+                        var fraction = j / (double)numNewPoints;
+                        var newCoordinates = fraction * polygon[i - 1] + ((1 - fraction) * polygon[i]);
+                        polygon.Insert(i, newCoordinates);
+                    }
+                }
+            }
         }
         #endregion 
 
