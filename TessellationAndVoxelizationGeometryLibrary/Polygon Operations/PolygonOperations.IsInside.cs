@@ -524,7 +524,7 @@ namespace TVGL
             firstIntersectingIndex = (int)Math.Ceiling((nextDistance - startingXValue) / stepSize);
             var pointIndex = 0;
             var x = startingXValue;
-            while (x < xEnd)
+            while (x <= xEnd)
             {
                 var thisPoint = sortedPoints[pointIndex];
                 var needToOffset = false;
@@ -586,7 +586,7 @@ namespace TVGL
             firstIntersectingIndex = (int)Math.Ceiling((nextDistance - startingYValue) / stepSize);
             var pointIndex = 0;
             var y = startingYValue;
-            while (y > yEnd)
+            while (y <= yEnd)
             {
                 var thisPoint = sortedPoints[pointIndex];
                 var needToOffset = false;
