@@ -535,6 +535,7 @@ namespace TVGL
             UnitType units = UnitType.unspecified, string name = "", string filename = "",
             List<string> comments = null, string language = "") : base(units, name, filename, comments, language)
         {
+            if (buildOptions == null) buildOptions = TessellatedSolidBuildOptions.Minimal;
             if (colors != null && colors.Count == 1)
             {
                 SolidColor = colors[0];
