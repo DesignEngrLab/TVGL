@@ -692,7 +692,7 @@ namespace TVGL
                         }
                     }
                 }
-                    yield return newSolid;
+                yield return newSolid;
             }
         }
 
@@ -2033,6 +2033,48 @@ namespace TVGL
             if (facesAbove.Count == 0 || facesBelow.Count == 0) return false;
             return facesAbove.Count % 2 != 0 && facesBelow.Count % 2 != 0;
             //Even number of intercepts, means the vertex is inside
+        }
+
+        /// <summary>
+        /// Is the vertex inside Axis-Aligned Bounding Box (AABB) of the provided solid.
+        /// </summary>
+        /// <param name="vertexInQuestion">The vertex in question.</param>
+        /// <param name="solid">The ts.</param>
+        /// <param name="onBoundaryIsInside">If true, on boundary is inside.</param>
+        /// <returns>A bool.</returns>
+        public static bool IsVertexInsideAABB(this Vertex vertexInQuestion, Solid solid,
+            bool onBoundaryIsInside = true)
+            => IsPointInsideAABB(vertexInQuestion.Coordinates, solid, onBoundaryIsInside);
+
+        /// <summary>    
+        /// Is the point inside Axis-Aligned Bounding Box (AABB) of the provided solid.
+        /// </summary>
+        /// <param name="pointInQuestion">The point in question.</param>
+        /// <param name="solid">The ts.</param>
+        /// <param name="onBoundaryIsInside">If true, on boundary is inside.</param>
+        /// <returns>A bool.</returns>
+        public static bool IsPointInsideAABB(this Vector3 pointInQuestion, Solid solid,
+    bool onBoundaryIsInside = true)
+            => IsPointInsideAABB(pointInQuestion, solid.Bounds[0], solid.Bounds[1], onBoundaryIsInside);
+
+        /// <summary>
+        /// Is the point inside Axis-Aligned Bounding Box (AABB) defined by the upper and lower bounds.
+        /// </summary>
+        /// <param name="p">The p.</param>
+        /// <param name="lowerBounds">The lower bounds.</param>
+        /// <param name="upperBounds">The upper bounds.</param>
+        /// <param name="onBoundaryIsInside">If true, on boundary is inside.</param>
+        /// <returns>A bool.</returns>
+        private static bool IsPointInsideAABB(Vector3 p, Vector3 lowerBounds, Vector3 upperBounds,
+            bool onBoundaryIsInside)
+        {
+            if (onBoundaryIsInside)
+            {
+                return p.X >= lowerBounds.X && p.Y >= lowerBounds.Y && p.Z >= lowerBounds.Z
+                        && p.X <= upperBounds.X && p.Y <= upperBounds.Y && p.Z <= upperBounds.Z;
+            }
+            return p.X > lowerBounds.X && p.Y > lowerBounds.Y && p.Z > lowerBounds.Z
+                        && p.X < upperBounds.X && p.Y < upperBounds.Y && p.Z < upperBounds.Z;
         }
 
         #endregion isInside Methods (is 2D point inside polygon, vertex inside solid, ect.)
