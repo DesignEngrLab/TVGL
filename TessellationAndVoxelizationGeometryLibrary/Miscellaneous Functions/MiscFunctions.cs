@@ -25,6 +25,11 @@ namespace TVGL
     /// </summary>
     public static partial class MiscFunctions
     {
+        public static Vector3 AggregateNormal(this IEnumerable<TriangleFace> faces)
+        {
+            return faces.Select(f=>f.Normal).Aggregate((v1, v2) => v1 + v2).Normalize();
+        }
+
         #region Sort Along Direction
 
         /// <summary>
@@ -76,7 +81,7 @@ namespace TVGL
         /// <param name="direction">The direction.</param>
         /// <param name="sameTolerance">The same tolerance.</param>
         /// <returns>System.Collections.Generic.IEnumerable&lt;(TVGL.Vertex, double)&gt;.</returns>
-        private static IEnumerable<(Vertex, double)> GetVertexDistances(this IEnumerable<Vertex> vertices,
+        public static IEnumerable<(Vertex, double)> GetVertexDistances(this IEnumerable<Vertex> vertices,
             Vector3 direction,
             double sameTolerance = Constants.BaseTolerance)
         {
@@ -99,7 +104,7 @@ namespace TVGL
         /// <param name="direction">The direction.</param>
         /// <param name="sameTolerance">The same tolerance.</param>
         /// <returns>System.Collections.Generic.IEnumerable&lt;(TVGL.Vector3, double)&gt;.</returns>
-        private static IEnumerable<(Vector3, double)> GetVertexDistances(this IEnumerable<Vector3> vertices,
+        public static IEnumerable<(Vector3, double)> GetVertexDistances(this IEnumerable<Vector3> vertices,
             Vector3 direction,
             double sameTolerance = Constants.BaseTolerance)
         {
@@ -114,6 +119,55 @@ namespace TVGL
             }
             return vertexDistances;
         }
+
+        /// <summary>
+        /// Gets the max vertex distance aloing vector.
+        /// </summary>
+        /// <param name="vertices">The vertices.</param>
+        /// <param name="direction">The direction.</param>
+        /// <returns>A (T maxPoint, double dotDistance) .</returns>
+        public static (T maxPoint, double dotDistance) GetMaxVertexDistanceAloingVector<T>(this IEnumerable<T> vertices, Vector3 direction)
+            where T : IPoint3D
+        {
+            var dotDistance = double.NegativeInfinity;
+            T maxPoint = default;
+            foreach (var vertex in vertices)
+            {
+                //Get distance along the search direction
+                var d = direction.X * vertex.X + direction.Y * vertex.Y + direction.Z * vertex.Z;
+                if (d > dotDistance)
+                {
+                    dotDistance = d;
+                    maxPoint = vertex;
+                }
+            }
+            return (maxPoint, dotDistance);
+        }
+
+        /// <summary>
+        /// Gets the min vertex distance along vector.
+        /// </summary>
+        /// <param name="vertices">The vertices.</param>
+        /// <param name="direction">The direction.</param>
+        /// <returns>A (T minPoint, double dotDistance) .</returns>
+        public static (T minPoint, double dotDistance) GetMinVertexDistanceAlongVector<T>(this IEnumerable<T> vertices, Vector3 direction) 
+            where T : IPoint3D
+        {
+            var dotDistance = double.PositiveInfinity;
+            T minPoint = default;
+            foreach (var vertex in vertices)
+            {
+                //Get distance along the search direction
+                var d = direction.X * vertex.X + direction.Y * vertex.Y + direction.Z * vertex.Z;
+                if (d < dotDistance)
+                {
+                    dotDistance = d;
+                    minPoint = vertex;
+                }
+            }
+            return (minPoint, dotDistance);
+        }
+
 
         /// <summary>
         /// Returns a list of sorted Vector2s along a set direction.
@@ -1973,7 +2027,7 @@ namespace TVGL
             //Added while inconclusive and random direction because there are some special cases that look the
             //same. For instance, consider a vertex sitting at the center of a half moon. Along the z axis,
             //It will go through 1 edge or vertex (special cases) above and one below. Then consider a box
-            //centered on the origin. A point on the origin would point to an edge (of the two triangles
+            //centered on the origin. A point on the origin would point to an edge (of the two faces
             //forming the face) above and one below. Therefore, it was decided that special cases (through
             //edges or locations, will yeild inconclusive results.
             while (inconclusive)

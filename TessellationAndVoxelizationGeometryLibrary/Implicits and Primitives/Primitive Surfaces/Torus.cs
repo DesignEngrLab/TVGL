@@ -240,7 +240,7 @@ namespace TVGL
         /// </summary>
         /// <param name="point">The point.</param>
         /// <returns>System.Double.</returns>
-        public override double PointMembership(Vector3 point)
+        public override double DistanceToPoint(Vector3 point)
         {
             Vector3 ptOnCircle = ClosestPointOnCenterRingToPoint(Axis, Center, MajorRadius, point, distanceFromOriginToBisectingPlane);
             var d = (point - ptOnCircle).Length() - MinorRadius;

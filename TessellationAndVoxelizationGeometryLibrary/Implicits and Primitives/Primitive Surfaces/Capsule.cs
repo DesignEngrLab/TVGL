@@ -166,12 +166,12 @@ namespace TVGL
         /// The plane1 dx is the distance from origin for the plane that separates the cone 
         /// from the sphere
         /// </summary>
-        double plane1Dx;
+        double conePlaneDistance1;
         /// <summary>
         /// The plane2 dx is the distance from origin for the plane that separates the cone 
         /// from the sphere
         /// </summary>
-        double plane2Dx;
+        double conePlaneDistance2;
         /// <summary>
         /// The cone anchor1 is an adjustment to the Anchor1 to account for the difference in radii
         /// when creating the cone section. if the radii are the same, then this is the same as Anchor1
@@ -232,8 +232,8 @@ namespace TVGL
             coneAnchor1 = Anchor1 + deltaR1 * directionVector;
             var deltaR2 = Radius2 * sinPhi;
             coneAnchor2 = Anchor2 + deltaR2 * directionVector;
-            plane1Dx = directionVector.Dot(coneAnchor1);
-            plane2Dx = directionVector.Dot(coneAnchor2);
+            conePlaneDistance1 = directionVector.Dot(coneAnchor1);
+            conePlaneDistance2 = directionVector.Dot(coneAnchor2);
             coneLength = directionVectorLength + (deltaR2 - deltaR1);
             var cosPhi = Math.Sqrt(1 - sinPhi * sinPhi);
             coneRadius1 = radius1 * cosPhi;
@@ -248,7 +248,7 @@ namespace TVGL
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         public bool PointIsInside(Vector3 x)
         {
-            return PointMembership(x) < 0 == IsPositive;
+            return DistanceToPoint(x) < 0;
         }
 
         /// <summary>
@@ -256,15 +256,15 @@ namespace TVGL
         /// </summary>
         /// <param name="point">The point.</param>
         /// <returns>System.Double.</returns>
-        public override double PointMembership(Vector3 point)
+        public override double DistanceToPoint(Vector3 point)
         {
             var dxAlong = (point - coneAnchor1).Dot(directionVector);
             double d;
-            if (dxAlong < plane1Dx) d = (point - Anchor1).Length() - Radius1;
-            else if (dxAlong > plane2Dx) d = (point - Anchor2).Length() - Radius2;
+            if (dxAlong < conePlaneDistance1) d = (point - Anchor1).Length() - Radius1;
+            else if (dxAlong > conePlaneDistance2) d = (point - Anchor2).Length() - Radius2;
             else // in the cone section
             {
-                var t = (dxAlong - plane1Dx) / coneLength;
+                var t = (dxAlong - conePlaneDistance1) / coneLength;
                 var thisRadius = (1 - t) * coneRadius1 + t * coneRadius2;
                 var distAtCommonDepth = (point - coneAnchor1).Cross(directionVector).Length() - thisRadius;
                 // to be more exact, we need the cosine of the aperture angle to get the closest distance
@@ -282,8 +282,8 @@ namespace TVGL
         {
             var dxAlong = (point - Anchor1).Dot(directionVector.Normalize());
             Vector3 d;
-            if (dxAlong < plane1Dx) d = (point - Anchor1).Normalize();
-            else if (dxAlong > plane2Dx) d = (point - Anchor2).Normalize();
+            if (dxAlong < conePlaneDistance1) d = (point - Anchor1).Normalize();
+            else if (dxAlong > conePlaneDistance2) d = (point - Anchor2).Normalize();
             else
             {
                 var a = (point - Anchor1);

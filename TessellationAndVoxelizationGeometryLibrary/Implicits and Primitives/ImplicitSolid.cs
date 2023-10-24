@@ -249,7 +249,7 @@ namespace TVGL
             /// <returns>System.Double.</returns>
             internal override double Run(Vector3 point)
             {
-                return surface.PointMembership(point);
+                return surface.DistanceToPoint(point);
             }
         }
         /// <summary>

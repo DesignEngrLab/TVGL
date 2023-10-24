@@ -109,7 +109,7 @@ namespace TVGL
                 .Concat(InnerEdges.Select(edge => 0.5 * (edge.To.Coordinates + edge.From.Coordinates))
                 .Concat(OuterEdges.Select(edge => 0.5 * (edge.To.Coordinates + edge.From.Coordinates)))))
             {
-                var d = Math.Abs(PointMembership(c));
+                var d = Math.Abs(DistanceToPoint(c));
                 _meanSquaredError += d * d;
                 if (_maxError < d)
                     _maxError = d;
@@ -128,7 +128,7 @@ namespace TVGL
             var n = 0;
             foreach (var c in points)
             {
-                var d = PointMembership(c);
+                var d = DistanceToPoint(c);
                 mse += d * d;
                 n++;
             }
@@ -144,7 +144,7 @@ namespace TVGL
             var maxError = 0.0;
             foreach (var c in points)
             {
-                var d = Math.Abs(PointMembership(c));
+                var d = Math.Abs(DistanceToPoint(c));
                 if (maxError < d)
                     maxError = d;
             }
@@ -174,7 +174,7 @@ namespace TVGL
         /// </summary>
         /// <param name="point">The point.</param>
         /// <returns>System.Double.</returns>
-        public abstract double PointMembership(Vector3 point);
+        public abstract double DistanceToPoint(Vector3 point);
 
         /// <summary>
         /// Gets the normal of the surface at the provided point.

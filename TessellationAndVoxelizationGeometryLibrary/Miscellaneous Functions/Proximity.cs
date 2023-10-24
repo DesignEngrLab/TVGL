@@ -211,7 +211,7 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Closests the point to lines.
+        /// Closest the point to lines.
         /// </summary>
         /// <param name="lines">The lines.</param>
         /// <returns>Vector2.</returns>

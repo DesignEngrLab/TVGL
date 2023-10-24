@@ -91,7 +91,7 @@ namespace TVGL
         /// </summary>
         /// <param name="point">The point.</param>
         /// <returns>System.Double.</returns>
-        public override double PointMembership(Vector3 point)
+        public override double DistanceToPoint(Vector3 point)
         {
             return double.NaN;
         }

@@ -245,7 +245,7 @@ namespace TVGL
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         public bool PointIsInside(Vector3 x)
         {
-            return PointMembership(x) < 0 == IsPositive;
+            return DistanceToPoint(x) < 0;
         }
 
         public override Vector3 GetNormalAtPoint(Vector3 point)
@@ -260,7 +260,7 @@ namespace TVGL
         /// </summary>
         /// <param name="point">The point.</param>
         /// <returns>System.Double.</returns>
-        public override double PointMembership(Vector3 point)
+        public override double DistanceToPoint(Vector3 point)
         {
             var d = (point - Center).Length() - Radius;
             if (IsPositive.HasValue && !IsPositive.Value) d = -d;
