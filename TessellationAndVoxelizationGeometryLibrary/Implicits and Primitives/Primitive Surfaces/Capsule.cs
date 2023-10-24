@@ -261,7 +261,7 @@ namespace TVGL
             var dxAlong = (point - coneAnchor1).Dot(directionVector);
             double d;
             if (dxAlong < 0) d = (point - Anchor1).Length() - Radius1;
-            else if (dxAlong > 0) d = (point - Anchor2).Length() - Radius2;
+            else if (dxAlong > coneLength) d = (point - Anchor2).Length() - Radius2;
             else // in the cone section
             {
                 var t = (dxAlong - conePlaneDistance1) / coneLength;
