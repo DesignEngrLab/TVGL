@@ -27,7 +27,7 @@ namespace TVGL
     {
         public static Vector3 AggregateNormal(this IEnumerable<TriangleFace> faces)
         {
-            return faces.Select(f=>f.Normal).Aggregate((v1, v2) => v1 + v2).Normalize();
+            return faces.Select(f => f.Normal).Aggregate((v1, v2) => v1 + v2).Normalize();
         }
 
         #region Sort Along Direction
@@ -150,7 +150,7 @@ namespace TVGL
         /// <param name="vertices">The vertices.</param>
         /// <param name="direction">The direction.</param>
         /// <returns>A (T minPoint, double dotDistance) .</returns>
-        public static (T minPoint, double dotDistance) GetMinVertexDistanceAlongVector<T>(this IEnumerable<T> vertices, Vector3 direction) 
+        public static (T minPoint, double dotDistance) GetMinVertexDistanceAlongVector<T>(this IEnumerable<T> vertices, Vector3 direction)
             where T : IPoint3D
         {
             var dotDistance = double.PositiveInfinity;
@@ -1748,7 +1748,7 @@ namespace TVGL
             var distanceToOrigin = face.Normal.Dot(face.A.Coordinates);
             var newPoint = PointOnPlaneFromRay(face.Normal, distanceToOrigin, point3D, direction, out signedDistance);
             if (newPoint.IsNull()) return Vector3.Null;
-            return IsVertexInsideTriangle(face, newPoint, onBoundaryIsInside) ? newPoint : Vector3.Null;
+            return IsVertexInsideTriangle(face, newPoint) ? newPoint : Vector3.Null;
         }
 
         /// <summary>
@@ -1792,7 +1792,7 @@ namespace TVGL
                     signedDistance = (Math.Sign((int)direction)) * (newPoint.Z - point3D.Z);
                     break;
             }
-            return IsVertexInsideTriangle(face, newPoint, onBoundaryIsInside) ? newPoint : Vector3.Null;
+            return IsVertexInsideTriangle(face, newPoint) ? newPoint : Vector3.Null;
         }
 
         #endregion Point on Face
@@ -1871,6 +1871,7 @@ namespace TVGL
 
             var d1 = -DistancePointToPlane(rayPosition, normalOfPlane, distOfPlane);
             signedDistance = d1 / dot;
+            if (signedDistance < 0) return Vector3.Null;
             if (signedDistance.IsNegligible()) return rayPosition;
             return rayPosition + (rayDirection * signedDistance);
         }
@@ -1962,12 +1963,16 @@ namespace TVGL
         /// <param name="face">The face.</param>
         /// <param name="vertexInQuestion">The vertex in question.</param>
         /// <param name="onBoundaryIsInside">The on boundary is inside.</param>
-        /// <returns>bool.</returns>
-        public static bool IsVertexInsideTriangle(TriangleFace face, Vector3 vertexInQuestion,
-    bool onBoundaryIsInside = true)
+        /// <returns>bool.</returns
+        public static bool IsVertexInsideTriangle(TriangleFace face, Vector3 q)
         {
-            return IsVertexInsideTriangle(new[] { face.A.Coordinates, face.B.Coordinates, face.C.Coordinates },
-                vertexInQuestion, onBoundaryIsInside);
+            var aToQ = q - face.A.Coordinates;
+            var bToQ = q - face.B.Coordinates;
+            return face.AB.Vector.Cross(aToQ).Dot(aToQ.Cross(face.CA.Vector)) < 0
+                && ((face.BC.Vector).Cross(bToQ)).Dot(bToQ.Cross(face.AB.Vector)) < 0;
+
+            //return ((b - a).Cross(p - a)).Dot((p - a).Cross(c - a)) >= 0
+            //    && ((c - b).Cross(p - b)).Dot((p - b).Cross(a - b)) >= 0;
         }
         /// <summary>
         /// Returns whether a vertex lies on a triangle. User can specify whether the edges of the
