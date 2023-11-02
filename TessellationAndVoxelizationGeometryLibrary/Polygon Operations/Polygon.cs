@@ -201,20 +201,18 @@ namespace TVGL
         /// <param name="index">The index.</param>
         /// <param name="x">The x.</param>
         /// <param name="y">The y.</param>
-        public void InsertVertex(int index, double x, double y)
-        { InsertVertex(index, new Vector2(x, y)); }
+        public Vertex2D InsertVertex(int index, double x, double y)
+        { return InsertVertex(index, new Vector2(x, y)); }
         /// <summary>
         /// Inserts the vertex.
         /// </summary>
         /// <param name="index">The index.</param>
         /// <param name="coordinates">The coordinates.</param>
-        public void InsertVertex(int index, Vector2 coordinates)
+        public Vertex2D InsertVertex(int index, Vector2 coordinates)
         {
             if (index == Vertices.Count)
-            {
-                AddVertexToEnd(coordinates);
-                return;
-            }
+              return  AddVertexToEnd(coordinates);
+            
             var thisVertex = new Vertex2D(coordinates, index, this.Index);
             var prevVertex = index == 0 ? Vertices[^1] : Vertices[index - 1];
             var nextVertex = Vertices[index];
@@ -231,6 +229,7 @@ namespace TVGL
             for (int i = index; i < Vertices.Count; i++)
                 Vertices[i].IndexInList = i;
             Reset();
+            return thisVertex;
         }
 
         /// <summary>
@@ -238,21 +237,22 @@ namespace TVGL
         /// </summary>
         /// <param name="x">The x.</param>
         /// <param name="y">The y.</param>
-        public void AddVertexToEnd(double x, double y)
-        { AddVertexToEnd(new Vector2(x, y)); }
+        public Vertex2D AddVertexToEnd(double x, double y)
+        { return AddVertexToEnd(new Vector2(x, y)); }
         /// <summary>
         /// Adds the vertex to end.
         /// </summary>
         /// <param name="coordinates">The coordinates.</param>
-        public void AddVertexToEnd(Vector2 coordinates)
+        public Vertex2D AddVertexToEnd(Vector2 coordinates)
         {
             if (_vertices == null)
             {
+                var newVertex = new Vertex2D(coordinates, 0, this.Index);
                 _vertices = new List<Vertex2D>
                 {
-                    new Vertex2D(coordinates, 0, this.Index)
+                    newVertex
                 };
-                return;
+                return newVertex;
             }
             var index = Vertices.Count;
             var thisVertex = new Vertex2D(coordinates, index, this.Index);
@@ -269,6 +269,7 @@ namespace TVGL
             nextVertex.EndLine = nextEdge;
             thisVertex.StartLine = nextEdge;
             Reset();
+            return thisVertex;
         }
 
         /// <summary>
