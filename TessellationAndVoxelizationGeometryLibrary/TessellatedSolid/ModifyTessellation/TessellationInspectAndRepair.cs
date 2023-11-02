@@ -17,6 +17,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using TVGL;
 
 namespace TVGL
 {
@@ -1103,10 +1104,10 @@ namespace TVGL
             ts.NonsmoothEdges = new List<Edge>();
             if (double.IsNaN(chordError))
             {
-               var diagonal =  (ts.Bounds[1] - ts.Bounds[0]).Length();
+                var diagonal = (ts.Bounds[1] - ts.Bounds[0]).Length();
                 chordError = 0.03 * diagonal;
             }
-            // i don't like the 2.5 here either, but it is the result of some testing
+            // lastIndex don't like the 2.5 here either, but it is the result of some testing
             foreach (var e in ts.Edges)
             {
                 e.Curvature = CurvatureType.SaddleOrFlat;
@@ -1331,106 +1332,85 @@ namespace TVGL
         /// <param name="borders"></param>
         public static List<BorderLoop> DefineBorders(PrimitiveSurface primitive)
         {
-            var borders = DefineBorders(primitive.BorderSegments, primitive);
-            primitive.Borders = borders;
-            return borders;
+            primitive.Borders = DefineBorders(primitive.BorderSegments, primitive).ToList();
+            return primitive.Borders;
         }
-
-        public static List<BorderLoop> DefineBorders(List<BorderSegment> borderSegments, PrimitiveSurface primitive)
+        public static IEnumerable<BorderLoop> DefineBorders(List<BorderSegment> inputBorderSegments, PrimitiveSurface primitive)
         {
-            var borders = new List<BorderLoop>();
-            foreach (var segment in borderSegments)
+            var borderSegments = new List<BorderSegment>();
+            var dirs = new List<bool>();
+            var startVertices = new List<Vertex>();
+            var endVertices = new List<Vertex>();
+            foreach (var segment in inputBorderSegments)
             {
-                //check if any border contains the vertices 
-                var addToBorder = new List<(BorderLoop border, bool addToEnd, bool aligned)>();
-                foreach (var border in borders.Where(p => !p.IsClosed))
-                {
-                    var addToEnd = false;
-                    var aligned = false;
-                    var match = false;
-                    if (border.FirstVertex == segment.FirstVertex)
-                    {
-                        addToEnd = false;
-                        aligned = false;
-                        match = true;
-                    }
-                    else if (border.FirstVertex == segment.LastVertex)
-                    {
-                        addToEnd = false;
-                        aligned = true;
-                        match = true;
-                    }
-                    else if (border.LastVertex == segment.FirstVertex)
-                    {
-                        addToEnd = true;
-                        aligned = true;
-                        match = true;
-                    }
-                    else if (border.LastVertex == segment.LastVertex)
-                    {
-                        addToEnd = true;
-                        aligned = false;
-                        match = true;
-                    }
-                    if (match)
-                        addToBorder.Add((border, addToEnd, aligned));
-                }
-                if (addToBorder.Count == 0)
+                var dir = segment.OwnedPrimitive == primitive;
+                if (segment.IsClosed || segment.FirstVertex == segment.LastVertex)
                 {
                     var border = new BorderLoop { OwnedPrimitive = primitive };
-                    border.Add(segment, true, primitive == segment.OwnedPrimitive);
+                    border.Add(segment, true, dir);
                     border.UpdateIsClosed();
-                    borders.Add(border);
+                    yield return border;
+                }
+                else if (dir)
+                {
+                    borderSegments.Add(segment);
+                    startVertices.Add(segment.FirstVertex);
+                    endVertices.Add(segment.LastVertex);
+                    dirs.Add(true);
                 }
                 else
                 {
-                    var (border, addToEnd, aligned) = addToBorder[0];
-                    border.Add(segment, addToEnd, aligned);
-                    border.UpdateIsClosed();
-                }
-                //if connected to more than one, combine them
-                if (addToBorder.Count == 2)
-                {
-                    CombineTwoBorders(addToBorder[0].border, addToBorder[1].border);
-                    var border = addToBorder[0].border;
-                    border.UpdateIsClosed();
-                    borders.Remove(addToBorder[1].Item1);
+                    borderSegments.Add(segment);
+                    startVertices.Add(segment.LastVertex);
+                    endVertices.Add(segment.FirstVertex);
+                    dirs.Add(false);
                 }
             }
-            return borders;
-        }
-
-        /// <summary>
-        /// Combines border2 into border1
-        /// </summary>
-        /// <param name="border1"></param>
-        /// <param name="border2"></param>
-        public static void CombineTwoBorders(BorderLoop border1, BorderLoop border2)
-        {
-            //The edgePath has already been added to border1. So, we need to figure out how to attach border2.
-            //Get the vertex that is between border1 and border2
-            //If this vertex is the first vertex in border2, then add border2 to the end of border1.
-            var aligned = border1.LastVertex == border2.FirstVertex || border1.FirstVertex == border2.LastVertex;
-            var addToEnd = border1.LastVertex == border2.FirstVertex || border1.LastVertex == border2.LastVertex;
-            //If aligned and adding to the end, we want to add the edge paths in their current order.
-            //If not aligned and inserting into the beginning, we want to insert the edge paths from the first to the last - thus reversing them.
-            if (aligned == addToEnd)
-                for (int i = 0; i < border2.Segments.Count; i++)
-                {
-                    var path = border2.Segments[i];
-                    border1.Add(path, addToEnd, border2.SegmentDirections[i] == aligned);
-                }
-            //Else if not aligned and adding to the end, we want to add the edge paths in their reverse order.
-            //Else if aligned and inserting into the beginning, we want to insert the edge paths from the last to the first - thus maintaining their order.
-            else
+            var lastIndex = borderSegments.Count - 1;
+            while (lastIndex >= 0)
             {
-                for (var i = border2.Segments.Count - 1; i >= 0; i--)
-                    border1.Add(border2.Segments[i], addToEnd, border2.SegmentDirections[i] == aligned);
+                var start = startVertices[lastIndex];
+                startVertices.RemoveAt(lastIndex);
+                var end = endVertices[lastIndex];
+                endVertices.RemoveAt(lastIndex);
+                var dirI = dirs[lastIndex];
+                dirs.RemoveAt(lastIndex);
+                var border = new BorderLoop { OwnedPrimitive = primitive };
+                border.Add(borderSegments[lastIndex], true, dirI);
+                borderSegments.RemoveAt(lastIndex);
+                var loopUpdated = true;
+                while (loopUpdated && start != end)
+                {
+                    loopUpdated = false;
+                    for (int j = borderSegments.Count - 1; j >= 0; j--)
+                    {
+                        if (end == startVertices[j])
+                        {
+                            border.Add(borderSegments[j], true, dirs[j]);
+                            end = border.LastVertex;
+                        }
+                        else if (start == endVertices[j])
+                        {
+                            border.Add(borderSegments[j], false, dirs[j]);
+                            start = border.FirstVertex;
+                        }
+                        else continue;
+                        loopUpdated = true;
+                        borderSegments.RemoveAt(j);
+                        startVertices.RemoveAt(j);
+                        endVertices.RemoveAt(j);
+                        dirs.RemoveAt(j);
+                    }
+                }
+                border.UpdateIsClosed();
+                yield return border;
+                lastIndex = borderSegments.Count - 1;
             }
         }
 
 
-        internal static void DefineBorderSegments(TessellatedSolid solid)
+
+        private static void DefineBorderSegments(TessellatedSolid solid)
         {
             foreach (var prim in solid.Primitives)
                 prim.BorderSegments = new List<BorderSegment>();
@@ -1501,8 +1481,9 @@ namespace TVGL
                     }
                     else
                     {
-                        CombineTwoEdgePaths(vertex, segment1, segment2);
-                        edgeToSegments[edge2] = segment1;
+                        segment1.AddRange(segment2);
+                        foreach (var (edge, dir) in segment2)
+                            edgeToSegments[edge] = segment1;
                     }
                 }
                 else if (edge1Found)
@@ -1566,23 +1547,6 @@ namespace TVGL
             else deadEnds.Add(v, edge);
         }
 
-        private static void CombineTwoEdgePaths(Vertex vertex, EdgePath edgepath1, EdgePath edgepath2)
-        {
-            var addToEnd = vertex == edgepath1.LastVertex;
-            var addInForward = addToEnd == (vertex == edgepath2.FirstVertex);
-            if (addInForward && addToEnd)
-                foreach (var item in edgepath2)
-                    edgepath1.AddEnd(item.edge, item.dir);
-            else if (addToEnd)
-                foreach (var item in edgepath2.Reverse())
-                    edgepath1.AddEnd(item.edge, !item.dir);
-            else if (addInForward)
-                foreach (var item in edgepath2.Reverse())
-                    edgepath1.AddBegin(item.edge, item.dir);
-            else //add to beginning
-                foreach (var item in edgepath2)
-                    edgepath1.AddBegin(item.edge, !item.dir);
-        }
         #endregion
     }
 }

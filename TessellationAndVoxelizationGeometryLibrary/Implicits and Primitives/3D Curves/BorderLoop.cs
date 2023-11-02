@@ -60,9 +60,7 @@ namespace TVGL
         public IEnumerable<PrimitiveSurface> AdjacentPrimitives()
         {
             foreach (var segment in Segments)
-            {
-                yield return segment.OwnedPrimitive == OwnedPrimitive ? segment.OtherPrimitive : segment.OwnedPrimitive;
-            }
+                yield return segment.AdjacentPrimitive(OwnedPrimitive);
         }
 
         /// <summary>
@@ -72,11 +70,10 @@ namespace TVGL
         public IEnumerable<PrimitiveSurface> AdjacentPrimitivesByVertex()
         {
             var adjacents = new HashSet<PrimitiveSurface>();
-            foreach (var segment in Segments)
-                foreach (var vertex in segment.GetVertices())
-                    foreach (var face in vertex.Faces)
-                        if (face.BelongsToPrimitive != OwnedPrimitive)
-                            adjacents.Add(face.BelongsToPrimitive);
+            foreach (var vertex in GetVertices())
+                foreach (var face in vertex.Faces)
+                    if (face.BelongsToPrimitive != OwnedPrimitive)
+                        adjacents.Add(face.BelongsToPrimitive);
             return adjacents;
         }
 

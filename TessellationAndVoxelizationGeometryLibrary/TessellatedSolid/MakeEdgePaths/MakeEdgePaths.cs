@@ -24,23 +24,27 @@ namespace TVGL
         public static IEnumerable<EdgePath> MakeEdgePaths(this IEnumerable<Edge> edges, bool preferMakeLoopsOverComparer,
             IEdgePathPairEvaluator bestEdgePathComparer)
         {
+            return MakeEdgePaths(edges.Select(e => new EdgePath(e)), preferMakeLoopsOverComparer, bestEdgePathComparer);
+        }
+
+        public static IEnumerable<EdgePath> MakeEdgePaths(this IEnumerable<EdgePath> inputEdgePaths, bool preferMakeLoopsOverComparer,
+            IEdgePathPairEvaluator bestEdgePathComparer)
+        {
             var vertexToEdgeDictionary = new Dictionary<Vertex, List<EdgePath>>();
-            foreach (var edge in edges)
+            foreach (var edgePath in inputEdgePaths)
             {
-                var edgePath = new EdgePath();
-                edgePath.AddBegin(edge, true);
                 List<EdgePath> edgePathList;
-                if (!vertexToEdgeDictionary.TryGetValue(edge.From, out edgePathList))
+                if (!vertexToEdgeDictionary.TryGetValue(edgePath.FirstVertex, out edgePathList))
                 {
                     edgePathList = new List<EdgePath>();
-                    vertexToEdgeDictionary.Add(edge.From, edgePathList);
+                    vertexToEdgeDictionary.Add(edgePath.FirstVertex, edgePathList);
                 }
                 edgePathList.Add(edgePath);
 
-                if (!vertexToEdgeDictionary.TryGetValue(edge.To, out edgePathList))
+                if (!vertexToEdgeDictionary.TryGetValue(edgePath.LastVertex, out edgePathList))
                 {
                     edgePathList = new List<EdgePath>();
-                    vertexToEdgeDictionary.Add(edge.To, edgePathList);
+                    vertexToEdgeDictionary.Add(edgePath.LastVertex, edgePathList);
                 }
                 edgePathList.Add(edgePath);
             }

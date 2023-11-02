@@ -139,11 +139,13 @@ namespace TVGL
         {
             var axis = surface.GetAxis();
             var transform = axis.TransformToXYPlane(out var backTransform);
-            var globalMinAngle = double.PositiveInfinity;
-            var globalMaxAngle = double.NegativeInfinity;
+            var globalMinAngle = -Math.PI;
+            var globalMaxAngle = Math.PI + Math.Tau;
+
             foreach (var path in surface.Borders)
             {
-                FindWindingAroundAxis(path.GetVectors(), transform, surface.GetAnchor(), out var minAngle, out var maxAngle);
+                var vectors = path.GetVectors().Concat(new[] { path.GetVectors().First() });
+                FindWindingAroundAxis(vectors, transform, surface.GetAnchor(), out var minAngle, out var maxAngle);
                 if (globalMinAngle > minAngle) globalMinAngle = minAngle;
                 if (globalMaxAngle < maxAngle) globalMaxAngle = maxAngle;
             }

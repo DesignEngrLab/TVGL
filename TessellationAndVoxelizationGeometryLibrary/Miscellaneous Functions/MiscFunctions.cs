@@ -1967,9 +1967,13 @@ namespace TVGL
         public static bool IsVertexInsideTriangle(TriangleFace face, Vector3 q)
         {
             var aToQ = q - face.A.Coordinates;
+            var aToB = face == face.AB.OwnedFace ? face.AB.Vector : -face.AB.Vector;
+            var aToC = face == face.CA.OwnedFace ? -face.CA.Vector : face.CA.Vector;
+            if (aToB.Cross(aToQ).Dot(aToQ.Cross(aToC))<0) return false;
             var bToQ = q - face.B.Coordinates;
-            return face.AB.Vector.Cross(aToQ).Dot(aToQ.Cross(face.CA.Vector)) < 0
-                && ((face.BC.Vector).Cross(bToQ)).Dot(bToQ.Cross(face.AB.Vector)) < 0;
+            var bToC = face == face.BC.OwnedFace ? face.BC.Vector : -face.BC.Vector;
+            var bToA = -aToB;
+            return bToC.Cross(bToQ).Dot(bToQ.Cross(bToA)) < 0;
 
             //return ((b - a).Cross(p - a)).Dot((p - a).Cross(c - a)) >= 0
             //    && ((c - b).Cross(p - b)).Dot((p - b).Cross(a - b)) >= 0;

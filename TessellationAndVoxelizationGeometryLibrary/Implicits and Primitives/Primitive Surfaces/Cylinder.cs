@@ -266,8 +266,18 @@ namespace TVGL
         public override double DistanceToPoint(Vector3 point)
         {
             var dxAlong = point.Dot(Axis);
-            if (dxAlong < MinDistanceAlongAxis) return MinDistanceAlongAxis - dxAlong;
-            if (dxAlong > MaxDistanceAlongAxis) return dxAlong - MaxDistanceAlongAxis;
+            if (dxAlong < MinDistanceAlongAxis)
+            {
+                dxAlong = MinDistanceAlongAxis - dxAlong;
+                var outward = (point - Anchor).Cross(Axis).Length() - Radius;
+                return Math.Sqrt(dxAlong * dxAlong + outward * outward);
+            }
+            if (dxAlong > MaxDistanceAlongAxis)
+            {
+                dxAlong = MaxDistanceAlongAxis - dxAlong;
+                var outward = (point - Anchor).Cross(Axis).Length() - Radius;
+                return Math.Sqrt(dxAlong * dxAlong + outward * outward);
+            }
             var d = (point - Anchor).Cross(Axis).Length() - Radius;
             // if d is positive, then the point is outside the cylinder
             // if d is negative, then the point is inside the cylinder
