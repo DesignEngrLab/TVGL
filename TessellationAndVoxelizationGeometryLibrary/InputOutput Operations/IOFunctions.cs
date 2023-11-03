@@ -1330,27 +1330,37 @@ namespace TVGL
             if (!File.Exists(filename))
                 return false;
 
-            var extension = Path.GetExtension(filename);
-            if (GetFileTypeFromExtension(extension) == FileType.TVGLz)
-            {
-                var file = new FileInfo(filename);
-                var directory = file.Directory.FullName;
-                //Unzip the file
-                ZipFile.ExtractToDirectory(filename, directory, true);
-                filename = Path.ChangeExtension(filename, GetExtensionFromFileType(FileType.TVGL));
-            }
-            else if (GetFileTypeFromExtension(extension) != FileType.TVGL) return false;
-
             try
             {
-                using var s = File.Open(filename, FileMode.Open);
-                using (var streamReader = new StreamReader(s))
-                using (var reader = new JsonTextReader(streamReader))
-                {     
-                    SolidAssembly.StreamRead(reader, out solidAssembly);
-                    reader.Close();
+                var extension = Path.GetExtension(filename);
+                if (GetFileTypeFromExtension(extension) == FileType.TVGLz)
+                {
+                    using var zipStream = File.Open(filename, FileMode.Open);
+                    using (ZipArchive archive = new ZipArchive(zipStream))
+                    {
+                        ZipArchiveEntry entry = archive.Entries.First();
+                        var stream = entry.Open();
+                        //Do awesome stream stuff!!
+                        using (var streamReader = new StreamReader(stream))
+                        using (var reader = new JsonTextReader(streamReader))
+                        {
+                            SolidAssembly.StreamRead(reader, out solidAssembly);
+                            reader.Close();
+                        }
+                        return true;
+                    }
                 }
-                return true;
+                else
+                {
+                    using var stream = File.Open(filename, FileMode.Open);
+                    using (var streamReader = new StreamReader(stream))
+                    using (var reader = new JsonTextReader(streamReader))
+                    {
+                        SolidAssembly.StreamRead(reader, out solidAssembly);
+                        reader.Close();
+                    }
+                    return true;
+                }
             }
             catch
             {
