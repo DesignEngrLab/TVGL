@@ -12,7 +12,6 @@
 // <summary></summary>
 // ***********************************************************************
 using Newtonsoft.Json;
-using Newtonsoft.Json.Schema;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -139,12 +138,12 @@ namespace TVGL
         {
             var axis = surface.GetAxis();
             var transform = axis.TransformToXYPlane(out var backTransform);
-            var globalMinAngle = -Math.PI;
-            var globalMaxAngle = Math.PI + Math.Tau;
+            var vectors = surface.Borders[0].GetVectors().Concat(new[] { surface.Borders[0].GetVectors().First() });
+            FindWindingAroundAxis(vectors, transform, surface.GetAnchor(), out var globalMinAngle, out var globalMaxAngle);
 
-            foreach (var path in surface.Borders)
+            foreach (var path in surface.Borders.Skip(1))
             {
-                var vectors = path.GetVectors().Concat(new[] { path.GetVectors().First() });
+                vectors = path.GetVectors().Concat(new[] { path.GetVectors().First() });
                 FindWindingAroundAxis(vectors, transform, surface.GetAnchor(), out var minAngle, out var maxAngle);
                 if (globalMinAngle > minAngle) globalMinAngle = minAngle;
                 if (globalMaxAngle < maxAngle) globalMaxAngle = maxAngle;
