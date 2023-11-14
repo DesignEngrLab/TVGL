@@ -297,5 +297,119 @@ namespace TVGL
             else return circleBorders.Average(b => ((Circle)b.Curve).Radius);
         }
 
+
+        /// <summary>
+        /// Finds the intersection between a sphere and a line. Returns true if intersecting.
+        /// </summary>
+        /// <param name="sphere">The sphere.</param>
+        /// <param name="anchor">The anchor of the line.</param>
+        /// <param name="direction">The direction of the line.</param>
+        /// <param name="point1">One of the intersecting points.</param>
+        /// <param name="point2">The other of the intersecting points.</param>
+        /// <param name="t1">The parametric distance from the anchor along the line to point1.</param>
+        /// <param name="t2">The parametric distance from the anchor along the line to point2.</param>
+        /// <returns>A bool where true is intersecting.</returns>
+        public static bool SphereLineIntersection(this Sphere sphere, Vector3 anchor, Vector3 direction, out Vector3 point1, out Vector3 point2, out double t1, out double t2)
+        {
+            return SphereLineIntersection(sphere.Center, sphere.Radius, anchor, direction, out point1, out point2, out t1, out t2);
+        }
+
+
+        /// <summary>
+        /// Finds the intersection between a sphere and a line. Returns true if intersecting.
+        /// </summary>
+        /// <param name="center">The center of the sphere.</param>
+        /// <param name="radius">The radius of the sphere.</param>
+        /// <param name="anchor">The anchor of the line.</param>
+        /// <param name="direction">The direction of the line.</param>
+        /// <param name="point1">One of the intersecting points.</param>
+        /// <param name="point2">The other of the intersecting points.</param>
+        /// <param name="t1">The parametric distance from the anchor along the line to point1.</param>
+        /// <param name="t2">The parametric distance from the anchor along the line to point2.</param>
+        /// <returns>A bool where true is intersecting.</returns>
+        public static bool SphereLineIntersection(Vector3 center, double radius, Vector3 anchor, Vector3 direction, out Vector3 point1, out Vector3 point2, out double t1, out double t2)
+        {
+            // make a triangle from the center of the sphere to the anchor and the anchor plus the direction to the closest point on the line
+            var toCenter = center - anchor;
+            direction = direction.Normalize();
+            var tCenter = toCenter.Dot(direction); // parametric distance from anchor to closest point on line
+            var chordCenter = center + tCenter * direction; // the point on the line closest to the center of the sphere
+            var chordLengthSqd = (chordCenter - center).LengthSquared(); // squared distance from chordCenter to center of sphere
+            if (chordLengthSqd.IsPracticallySame(radius * radius)) // one intersection
+            {
+                point1 = point2 = chordCenter;
+                t1 = t2 = tCenter;
+                return true;
+            }
+            if (chordLengthSqd > radius * radius) // no intersection
+            {
+                point1 = point2 = Vector3.Null;
+                t1 = t2 = double.NaN;
+                return false;
+            }
+            var halfChordLength = Math.Sqrt(radius * radius - chordLengthSqd);
+            point1 = chordCenter - halfChordLength * direction;
+            point2 = chordCenter + halfChordLength * direction;
+            t1 = tCenter - halfChordLength;
+            t2 = tCenter + halfChordLength;
+            return true;
+        }
+
+        /// <summary>
+        /// Finds the intersection between a cylinder and a line. Returns true if intersecting.
+        /// </summary>
+        /// <param name="cylinder">The cylinder.</param>
+        /// <param name="anchor">The anchor of the line.</param>
+        /// <param name="direction">The direction of the line.</param>
+        /// <param name="point1">One of the intersecting points.</param>
+        /// <param name="point2">The other of the intersecting points.</param>
+        /// <param name="t1">The parametric distance from the anchor along the line to point1.</param>
+        /// <param name="t2">The parametric distance from the anchor along the line to point2.</param>
+        public static bool CylinderLineIntersection(this Cylinder cylinder, Vector3 anchor, Vector3 direction, out Vector3 point1, out Vector3 point2, out double t1, out double t2)
+        {
+            return CylinderLineIntersection(cylinder.Axis, cylinder.Radius, cylinder.Anchor, anchor, direction, out point1, out point2, out t1, out t2);
+        }
+
+        /// <summary>
+        /// Finds the intersection between a cylinder and a line. Returns true if intersecting.
+        /// </summary>
+        /// <param name="axis">The axis of the cylinder.</param>
+        /// <param name="radius">The radius of the cylinder.</param>
+        /// <param name="anchorCyl">The anchor of the cylinder..</param>
+        /// <param name="anchorLine">The anchor of the line.</param>
+        /// <param name="direction">The direction of the line.</param>
+        /// <param name="point1">One of the intersecting points.</param>
+        /// <param name="point2">The other of the intersecting points.</param>
+        /// <param name="t1">The parametric distance from the anchor along the line to point1.</param>
+        /// <param name="t2">The parametric distance from the anchor along the line to point2.</param>
+        /// <returns>A bool where true is intersecting.</returns>
+        public static bool CylinderLineIntersection(Vector3 axis, double radius, Vector3 anchorCyl, Vector3 anchorLine, Vector3 direction, out Vector3 point1, out Vector3 point2, out double t1, out double t2)
+        {
+            direction = direction.Normalize();
+            var minDistance = MiscFunctions.SkewedLineIntersection(anchorCyl, axis, anchorLine, direction, out _, out var cylAxisPoint, out var linePoint, out _,
+                out var tChordCenter);
+
+            if (minDistance.IsPracticallySame(radius)) // one intersection
+            {
+                point1 = point2 = linePoint;
+                t1 = t2 = tChordCenter;
+                return true;
+            }
+            if (minDistance > radius) // no intersection
+            {
+                point1 = point2 = Vector3.Null;
+                t1 = t2 = double.NaN;
+                return false;
+            }
+            // here, the halfChoordLength is the distance from the chordCenter to where it would intersect the circle of the cylinder
+            var halfChordLength = Math.Sqrt(radius * radius - minDistance * minDistance);
+            var sinAngleLineCylinder = axis.Cross(direction).Length();
+            var distanceToCylinder = halfChordLength / sinAngleLineCylinder;
+            t1 = tChordCenter - distanceToCylinder;
+            t2 = tChordCenter + distanceToCylinder;
+            point1 = linePoint - distanceToCylinder * direction;
+            point2 = linePoint + distanceToCylinder * direction;
+            return true;
+        }
     }
 }
