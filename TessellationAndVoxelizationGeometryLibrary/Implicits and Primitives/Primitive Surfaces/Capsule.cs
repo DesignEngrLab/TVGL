@@ -260,8 +260,8 @@ namespace TVGL
         {
             var dxAlong = (point - coneAnchor1).Dot(directionVector);
             double d;
-            if (dxAlong < 0) d = (point - Anchor1).Length() - Radius1;
-            else if (dxAlong > coneLength) d = (point - Anchor2).Length() - Radius2;
+            if (dxAlong < 0) d = DistanceFromSphere1(point);
+            else if (dxAlong > coneLength) d = DistanceFromSphere2(point);
             else // in the cone section
             {
                 var t = (dxAlong - conePlaneDistance1) / coneLength;
@@ -298,6 +298,16 @@ namespace TVGL
             }
             if (isPositive.HasValue && !isPositive.Value) d *= -1;
             return d;
+        }
+
+        public double DistanceFromSphere2(Vector3 point)
+        {
+            return (point - Anchor2).Length() - Radius2;
+        }
+
+        public double DistanceFromSphere1(Vector3 point)
+        {
+            return (point - Anchor1).Length() - Radius1;
         }
         protected override void CalculateIsPositive()
         {
