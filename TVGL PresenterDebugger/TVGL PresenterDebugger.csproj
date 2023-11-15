@@ -30,6 +30,7 @@
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Implicits and Primitives\3D Curves\BorderLoop.cs" Link="TVGL\Implicits and Primitives\3D Curves\BorderLoop.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Implicits and Primitives\Primitive Surfaces\Capsule.cs" Link="TVGL\Implicits and Primitives\Primitive Surfaces\Capsule.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Implicits and Primitives\Primitive Surfaces\Cone.cs" Link="TVGL\Implicits and Primitives\Primitive Surfaces\Cone.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Implicits and Primitives\Primitive Surfaces\GeneralQuadric.cs" Link="TVGL\Implicits and Primitives\Primitive Surfaces\GeneralQuadric.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Implicits and Primitives\Primitive Surfaces\Cylinder.cs" Link="TVGL\Implicits and Primitives\Primitive Surfaces\Cylinder.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Implicits and Primitives\Primitive Surfaces\Plane.cs" Link="TVGL\Implicits and Primitives\Primitive Surfaces\Plane.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Implicits and Primitives\Primitive Surfaces\PrimitiveSurface.cs" Link="TVGL\Implicits and Primitives\Primitive Surfaces\PrimitiveSurface.cs" />
@@ -160,16 +161,6 @@
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Miscellaneous Functions\PriorityQueue\SimplePriorityQueue.cs" Link="TVGL\Miscellaneous Functions\PriorityQueue\SimplePriorityQueue.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Miscellaneous Functions\PriorityQueue\GenericPriorityQueue.cs" Link="TVGL\Miscellaneous Functions\PriorityQueue\GenericPriorityQueue.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Miscellaneous Functions\PriorityQueue\GenericPriorityQueueNode.cs" Link="TVGL\Miscellaneous Functions\PriorityQueue\GenericPriorityQueueNode.cs" />
-
-		
-		
-		
-		
-		
-		
-		
-		
-		
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Colors.cs" Link="TVGL\Colors.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Comparators.cs" Link="TVGL\Comparators.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Constants.cs" Link="TVGL\Constants.cs" />
