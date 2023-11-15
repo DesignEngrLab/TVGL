@@ -525,9 +525,7 @@ namespace TVGL
         }
         public override Vector3 GetNormalAtPoint(Vector3 point)
         {
-            var d = Normal;
-            if (IsPositive.HasValue && !IsPositive.Value) d = -d;
-            return d;
+            return Normal;
         }
         protected override void CalculateIsPositive()
         {
