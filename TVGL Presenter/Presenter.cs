@@ -444,7 +444,7 @@ namespace TVGL
 
 
 
-        public static void ShowAndHang(IList<TriangleFace> faces, string heading = "", string title = "", string subtitle = "")
+        public static void ShowAndHang(IEnumerable<TriangleFace> faces, string heading = "", string title = "", string subtitle = "")
         {
             var geomModels = ConvertTessellatedSolidToMGM3D(faces, new Color(KnownColors.LightGray), false);
             var vm = new Window3DPlotViewModel(heading, title, subtitle);
@@ -469,16 +469,17 @@ namespace TVGL
 
         private static IEnumerable<GeometryModel3D> ConvertTessellatedSolidToMGM3D(TessellatedSolid ts)
         { return ConvertTessellatedSolidToMGM3D(ts.Faces, ts.SolidColor, ts.HasUniformColor); }
-        private static IEnumerable<GeometryModel3D> ConvertTessellatedSolidToMGM3D(IList<TriangleFace> faces, Color defaultColor, bool hasUniformColor)
+        private static IEnumerable<GeometryModel3D> ConvertTessellatedSolidToMGM3D(IEnumerable<TriangleFace> faces, Color defaultColor, bool hasUniformColor)
         {
-            var numFaces = faces.Count;
+            var faceList = faces as IList<TriangleFace> ?? faces.ToList();
+            var numFaces = faceList.Count;
             var defaultSharpDXColor = new SharpDX.Color4(defaultColor.Rf, defaultColor.Gf, defaultColor.Bf, defaultColor.Af);
             var positions =
-                faces.SelectMany(
+                faceList.SelectMany(
                     f => f.Vertices.Select(v =>
                         new SharpDX.Vector3((float)v.Coordinates[0], (float)v.Coordinates[1], (float)v.Coordinates[2])));
             var normals =
-                           faces.SelectMany(f =>
+                           faceList.SelectMany(f =>
                                f.Vertices.Select(v =>
                                    new SharpDX.Vector3((float)f.Normal[0], (float)f.Normal[1], (float)f.Normal[2])));
             var indices = Enumerable.Range(0, numFaces * 3);
@@ -502,7 +503,7 @@ namespace TVGL
                 var colorToFaceDict = new Dictionary<SharpDX.Color4, List<int>>();
                 for (int i = 0; i < numFaces; i++)
                 {
-                    var f = faces[i];
+                    var f = faceList[i];
                     var faceColor = (f.Color == null) ? defaultSharpDXColor
                         : new SharpDX.Color4(f.Color.Rf, f.Color.Gf, f.Color.Bf, f.Color.Af);
                     if (colorToFaceDict.TryGetValue(faceColor, out var ints))
