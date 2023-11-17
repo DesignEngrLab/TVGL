@@ -218,7 +218,8 @@ namespace TVGL
         {
             // like the GeneralConic, the shortest perpendicular distance to the surface
             // requires solving a quartic equation
-            throw new NotImplementedException();
+            //throw new NotImplementedException();
+            return QuadricValue(point); 
         }
 
         protected override void CalculateIsPositive()
