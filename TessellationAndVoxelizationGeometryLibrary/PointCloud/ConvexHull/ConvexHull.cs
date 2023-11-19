@@ -34,7 +34,7 @@ namespace TVGL
     /// <summary>
     /// Factory class for computing convex hulls.
     /// </summary>
-    public static class ConvexHull
+    public static partial class ConvexHull
     {
         /// <summary>
         /// Creates a convex hull of the input data.
@@ -109,6 +109,7 @@ namespace TVGL
         {
             return new Polygon((List<Vector2>)ConvexHull.Create2D(polygon.Path).Result);
         }
+
         /// <summary>
         /// Creates the 2D convex hull of the input data.
         /// </summary>
@@ -155,13 +156,13 @@ namespace TVGL
         /// Points of the convex hull.
         /// </summary>
         /// <value>The points.</value>
-        public IEnumerable<TVertex> Points { get; internal set; }
+        public TVertex[] Points { get; internal set; }
 
         /// <summary>
         /// Faces of the convex hull.
         /// </summary>
         /// <value>The faces.</value>
-        public IEnumerable<TFace> Faces { get; internal set; }
+        public TFace[] Faces { get; internal set; }
 
 
         /// <summary>
@@ -202,6 +203,34 @@ namespace TVGL
             {
                 return new ConvexHullCreationResult<TVertex, TFace>(null, ConvexHullCreationResultOutcome.UnknownError, e.Message);
             }
+        }
+
+        /// <summary>
+        /// Finds the distance between two convex hulls. A positive value is the shortest distance
+        /// between the solids, a negative value means the solids overlap. This implementation is
+        /// not accurate for negative values.
+        /// </summary>
+        /// <param name="other">The other convex hull.</param>        
+        /// <param name="v">The vector,v, from the subject object to the other object.</param>
+        /// <returns>The signed distance between the two convex hulls. This implementation is
+        /// not accurate for negative values.</returns>
+        public double DistanceBetween(ConvexHull<TVertex, TFace> other, out Vector3 v)
+        {
+            return ConvexHull.DistanceBetween(this.Points as IList<IPoint3D>, other.Points as IList<IPoint3D>, out v);
+        }
+
+        /// <summary>
+        /// Finds the distance between two convex hulls. A positive value is the shortest distance
+        /// between the solids, a negative value means the solids overlap. This implementation is
+        /// not accurate for negative values.
+        /// </summary>
+        /// <param name="other">The other convex hull points.</param>        
+        /// <param name="v">The vector,v, from the subject object to the other object.</param>
+        /// <returns>The signed distance between the two convex hulls. This implementation is
+        /// not accurate for negative values.</returns>
+        public double DistanceBetween(IList<Vector3> other, out Vector3 v)
+        {
+            return ConvexHull.DistanceBetween(this.Points as IList<IPoint3D>, other.Cast<IPoint3D>().ToList(), out v);
         }
     }
 

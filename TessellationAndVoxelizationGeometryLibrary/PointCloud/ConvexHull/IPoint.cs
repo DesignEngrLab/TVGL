@@ -58,17 +58,20 @@ namespace TVGL
         /// Gets the x.
         /// </summary>
         /// <value>The x.</value>
+        //double X { get; init; }
         double X { get; }
 
         /// <summary>
         /// Gets the y.
         /// </summary>
         /// <value>The y.</value>
+        //double Y { get; init; }
         double Y { get; }
         /// <summary>
-        /// Gets the y.
+        /// Gets the z.
         /// </summary>
-        /// <value>The y.</value>
+        /// <value>The z.</value>
+        //double Z { get; init; }
         double Z { get; }
     }
 

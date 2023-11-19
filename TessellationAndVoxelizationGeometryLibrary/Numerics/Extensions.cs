@@ -464,7 +464,7 @@ namespace TVGL
         /// <param name="vector1">The vertex or position in 3D space</param>
         /// <param name="vector2">The vector.</param>
         /// <returns>The dot product.</returns>
-        public static double Dot(this IPoint3D vector1, Vector3 vector2)
+        public static double Dot(this IPoint3D vector1, IPoint3D vector2)
         {
             if (vector1 == null) return double.NaN;
             return vector1.X * vector2.X +
