@@ -1570,7 +1570,7 @@ namespace TVGL
         /// <param name="t1">The scalar parameter for the location of interSect1 on line1.</param>
         /// <param name="t2">The t2.</param>
         /// <returns>The closest distance between the two lines.</returns>
-        internal static double SkewedLineIntersection(Vector3 anchor1, Vector3 direction1, Vector3 anchor2, Vector3 direction2,
+        public static double SkewedLineIntersection(Vector3 anchor1, Vector3 direction1, Vector3 anchor2, Vector3 direction2,
             out Vector3 center,
             out Vector3 intersect1, out Vector3 intersect2, out double t1, out double t2)
         {

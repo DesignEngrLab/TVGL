@@ -411,5 +411,91 @@ namespace TVGL
             point2 = linePoint + distanceToCylinder * direction;
             return true;
         }
+
+        public static void Tessellate(this PrimitiveSurface surface, double xMin, double xMax, double yMin, double yMax, double zMin, double zMax, double maxEdgeLength)
+        {
+            var meshSize = maxEdgeLength / Math.Sqrt(3);
+            var solid = new ImplicitSolid(surface);
+            solid.Bounds = new[] { new Vector3(xMin, yMin, zMin), new Vector3(xMax, yMax, zMax) };
+            var tessellatedSolid = solid.ConvertToTessellatedSolid(meshSize);
+            surface.SetFacesAndVertices(tessellatedSolid.Faces, true);
+        }
+
+        public static void Tessellate(this PrimitiveSurface surface, double maxEdgeLength = double.NaN)
+        {
+            var xMin = double.NaN;
+            var yMin = double.NaN;
+            var zMin = double.NaN;
+            var xMax = double.NaN;
+            var yMax = double.NaN;
+            var zMax = double.NaN;
+            if (surface is Sphere sphere)
+            {
+                xMin = sphere.Center.X - sphere.Radius;
+                xMax = sphere.Center.X + sphere.Radius;
+                yMin = sphere.Center.Y - sphere.Radius;
+                yMax = sphere.Center.Y + sphere.Radius;
+                zMin = sphere.Center.Z - sphere.Radius;
+                zMax = sphere.Center.Z + sphere.Radius;
+            }
+            else if (surface is Torus torus)
+            {
+                var xFactor = Math.Sqrt(1 - torus.Axis.X * torus.Axis.X);
+                var yFactor = Math.Sqrt(1 - torus.Axis.Y * torus.Axis.Y);
+                var zFactor = Math.Sqrt(1 - torus.Axis.Z * torus.Axis.Z);
+                xMin = torus.Center.X - xFactor * torus.MajorRadius - torus.MinorRadius;
+                xMax = torus.Center.X + xFactor * torus.MajorRadius + torus.MinorRadius;
+                yMin = torus.Center.Y - yFactor * torus.MajorRadius - torus.MinorRadius;
+                yMax = torus.Center.Y + yFactor * torus.MajorRadius + torus.MinorRadius;
+                zMin = torus.Center.Z - zFactor * torus.MajorRadius - torus.MinorRadius;
+                zMax = torus.Center.Z + zFactor * torus.MajorRadius + torus.MinorRadius;
+            }
+            else if (surface is Capsule capsule)
+            {
+                xMin = Math.Min(capsule.Anchor1.X - capsule.Radius1, capsule.Anchor2.X - capsule.Radius2);
+                xMax = Math.Max(capsule.Anchor1.X + capsule.Radius1, capsule.Anchor2.X + capsule.Radius2);
+                yMin = Math.Min(capsule.Anchor1.Y - capsule.Radius1, capsule.Anchor2.Y - capsule.Radius2);
+                yMax = Math.Max(capsule.Anchor1.Y + capsule.Radius1, capsule.Anchor2.Y + capsule.Radius2);
+                zMin = Math.Min(capsule.Anchor1.Z - capsule.Radius1, capsule.Anchor2.Z - capsule.Radius2);
+                zMax = Math.Max(capsule.Anchor1.Z + capsule.Radius1, capsule.Anchor2.Z + capsule.Radius2);
+            }
+            else if (surface is Cylinder cyl && double.IsFinite(cyl.MaxDistanceAlongAxis)
+             && double.IsFinite(cyl.MinDistanceAlongAxis))
+            {
+                var offset = cyl.Anchor.Dot(cyl.Axis);
+                var top = cyl.Anchor + (cyl.MaxDistanceAlongAxis - offset) * cyl.Axis;
+                var bottom = cyl.Anchor + (cyl.MinDistanceAlongAxis - offset) * cyl.Axis;
+                var xFactor = Math.Sqrt(1 - cyl.Axis.X * cyl.Axis.X);
+                var yFactor = Math.Sqrt(1 - cyl.Axis.Y * cyl.Axis.Y);
+                var zFactor = Math.Sqrt(1 - cyl.Axis.Z * cyl.Axis.Z);
+                xMin = Math.Min(top.X, bottom.X) - xFactor * cyl.Radius;
+                xMax = Math.Max(top.X, bottom.X) + xFactor * cyl.Radius;
+                yMin = Math.Min(top.Y, bottom.Y) - yFactor * cyl.Radius;
+                yMax = Math.Max(top.Y, bottom.Y) + yFactor * cyl.Radius;
+                zMin = Math.Min(top.Z, bottom.Z) - zFactor * cyl.Radius;
+                zMax = Math.Max(top.Z, bottom.Z) + zFactor * cyl.Radius;
+            }
+            else if (surface is Cone cone && double.IsFinite(cone.Length))
+            {
+                var top = cone.Apex;
+                var bottom = cone.Apex + cone.Length * cone.Axis;
+                var radius = cone.Length * cone.Aperture;
+                var xFactor = Math.Sqrt(1 - cone.Axis.X * cone.Axis.X);
+                var yFactor = Math.Sqrt(1 - cone.Axis.Y * cone.Axis.Y);
+                var zFactor = Math.Sqrt(1 - cone.Axis.Z * cone.Axis.Z);
+
+                xMin = Math.Min(top.X, bottom.X - xFactor * radius);
+                xMax = Math.Max(top.X, bottom.X + xFactor * radius);
+                yMin = Math.Min(top.Y, bottom.Y - yFactor * radius);
+                yMax = Math.Max(top.Y, bottom.Y + yFactor * radius);
+                zMin = Math.Min(top.Z, bottom.Z - zFactor * radius);
+                zMax = Math.Max(top.Z, bottom.Z + zFactor * radius);
+            }
+            else throw new ArgumentOutOfRangeException("The provided primitive is" +
+                "unbounded in size. Please invoke the overload of this method that accepts coordinate limits");
+            if (double.IsNaN(maxEdgeLength)) 
+                maxEdgeLength = 0.033 * Math.Sqrt((xMax - xMin) * (xMax - xMin) + (yMax - yMin) * (yMax - yMin) + (zMax - zMin) * (zMax - zMin));
+            Tessellate(surface, xMin, xMax, yMin, yMax, zMin, zMax, maxEdgeLength);
+        }
     }
 }

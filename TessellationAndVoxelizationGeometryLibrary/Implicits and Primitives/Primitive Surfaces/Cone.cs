@@ -72,6 +72,14 @@ namespace TVGL
                 sinAperture = value * cosAperture;
             }
         }
+
+
+        /// <summary>
+        /// Gets or sets the maximum distance along the axis.
+        /// </summary>
+        /// <value>The maximum distance along axis.</value>
+        public double Length { get; set; } = double.PositiveInfinity;
+
         /// <summary>
         /// The aperture
         /// </summary>

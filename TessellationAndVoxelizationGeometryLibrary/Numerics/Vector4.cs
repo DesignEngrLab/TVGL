@@ -30,22 +30,22 @@ namespace TVGL  // COMMENTEDCHANGE namespace System.Numerics
         /// The X component of the vector.
         /// </summary>
         /// <value>The x.</value>
-        public double X { get; }
+        public double X { get; init; }
         /// <summary>
         /// The Y component of the vector.
         /// </summary>
         /// <value>The y.</value>
-        public double Y { get; }
+        public double Y { get; init; }
         /// <summary>
         /// The Z component of the vector.
         /// </summary>
         /// <value>The z.</value>
-        public double Z { get; }
+        public double Z { get; init; }
         /// <summary>
         /// The W  (weight or scale) component of the vector.
         /// </summary>
         /// <value>The w.</value>
-        public double W { get; }
+        public double W { get; init; }
 
         /// <summary>
         /// Gets the position.
