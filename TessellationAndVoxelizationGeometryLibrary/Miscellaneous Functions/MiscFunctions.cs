@@ -1877,58 +1877,100 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Finds the point on the x-plane made by a line (which is described by connecting point1 and point2) intersecting
-        /// with that plane.
+        /// Finds the point on the x-plane (plane with normal [1,0,0]) made by a line (which is described by 
+        /// connecting point1 and point2) intersecting with that plane.
         /// </summary>
-        /// <param name="distOfPlane">The dist of plane.</param>
+        /// <param name="distOfPlane">The distance of plane or the x-coordinate of the plane.</param>
         /// <param name="point1">The point1.</param>
         /// <param name="point2">The point2.</param>
-        /// <returns>Vertex.</returns>
-        public static Vector2 PointOnXPlaneFromIntersectingLine(double distOfPlane, Vector3 point1,
+        /// <returns>The coordinates of the intersecting point.</returns>
+        public static Vector3 PointOnXPlaneFromLineSegment(double distOfPlane, Vector3 point1,
             Vector3 point2)
         {
             var toFactor = (distOfPlane - point1.X) / (point2.X - point1.X);
             var fromFactor = 1 - toFactor;
 
-            return new Vector2(-fromFactor * point1.Z - toFactor * point2.Z,
-                fromFactor * point1.Y + toFactor * point2.Y);
+            return new Vector3(distOfPlane, fromFactor * point1.Y + toFactor * point2.Y,
+                                            fromFactor * point1.Z + toFactor * point2.Z);
         }
 
         /// <summary>
-        /// Finds the point on the y-plane made by a line (which is described by connecting point1 and point2) intersecting
-        /// with that plane.
+        /// Finds the point on the y-plane (plane with normal [0,1,0]) made by a line (which is described by 
+        /// connecting point1 and point2) intersecting with that plane.
         /// </summary>
-        /// <param name="distOfPlane">The dist of plane.</param>
+        /// <param name="distOfPlane">The distance of plane or the y-coordinate of the plane.</param>
         /// <param name="point1">The point1.</param>
         /// <param name="point2">The point2.</param>
-        /// <returns>Vertex.</returns>
-        /// <exception cref="Exception">This should never occur. Prevent this from happening</exception>
-        public static Vector2 PointOnYPlaneFromIntersectingLine(double distOfPlane, Vector3 point1,
+        /// <returns>The coordinates of the intersecting point.</returns>
+        public static Vector3 PointOnYPlaneFromLineSegment(double distOfPlane, Vector3 point1,
             Vector3 point2)
         {
             var toFactor = (distOfPlane - point1.Y) / (point2.Y - point1.Y);
             var fromFactor = 1 - toFactor;
 
-            return new Vector2(fromFactor * point1.X + toFactor * point2.X,
-                -fromFactor * point1.Z - toFactor * point2.Z);
+            return new Vector3(fromFactor * point1.X + toFactor * point2.X, distOfPlane,
+                               fromFactor * point1.Z + toFactor * point2.Z);
         }
 
         /// <summary>
-        /// Finds the point on the z- plane made by a line (which is described by connecting point1 and point2) intersecting
-        /// with that plane. Note, the result is a Vector2 - just the x and y value. The z-value would be the input, distOfPlane
+        /// Finds the point on the z- plane (plane with normal [0,0,1]) made by a line (which is described by 
+        /// connecting point1 and point2) intersecting with that plane. 
+        /// Note, the result is a Vector2 - just the x and y value. The z-value would be the input, distOfPlane
         /// </summary>
-        /// <param name="distOfPlane">The dist of plane.</param>
+        /// <param name="distOfPlane">The distance of plane or the z-coordinate of the plane.</param>
         /// <param name="point1">The point1.</param>
         /// <param name="point2">The point2.</param>
-        /// <returns>Vertex.</returns>
-        public static Vector2 PointOnZPlaneFromIntersectingLine(double distOfPlane, Vector3 point1,
+        /// <returns>The coordinates of the intersecting point.</returns>
+        public static Vector3 PointOnZPlaneFromLineSegment(double distOfPlane, Vector3 point1,
             Vector3 point2)
         {
             var toFactor = (distOfPlane - point1.Z) / (point2.Z - point1.Z);
             var fromFactor = 1 - toFactor;
 
-            return new Vector2(fromFactor * point1.X + toFactor * point2.X,
-                fromFactor * point1.Y + toFactor * point2.Y);
+            return new Vector3(fromFactor * point1.X + toFactor * point2.X,
+                fromFactor * point1.Y + toFactor * point2.Y, distOfPlane);
+        }
+
+        /// <summary>
+        /// Finds the point on the x-plane (plane with normal [1,0,0]) made by a line (which is described by 
+        /// connecting anchor and direction) intersecting with that plane.
+        /// </summary>
+        /// <param name="distOfPlane">The distance of plane or the x-coordinate of the plane.</param>
+        /// <param name="anchor">An anchor point on the line.</param>
+        /// <param name="direction">The direction of the line.</param>
+        /// <returns>The coordinates of the intersecting point.</returns>
+        public static Vector3 PointOnXPlaneFromLine(double distOfPlane, Vector3 anchor, Vector3 direction)
+        {
+            var t = (distOfPlane - anchor.X) / direction.X;
+            return new Vector3(distOfPlane, anchor.Y + t * direction.Y, anchor.Z + t * direction.Z);
+        }
+
+        /// <summary>
+        /// Finds the point on the y-plane (plane with normal [0,1,0]) made by a line (which is described by 
+        /// connecting point1 and point2) intersecting with that plane.
+        /// </summary>
+        /// <param name="distOfPlane">The distance of plane or the y-coordinate of the plane.</param>
+        /// <param name="anchor">An anchor point on the line.</param>
+        /// <param name="direction">The direction of the line.</param>
+        /// <returns>The coordinates of the intersecting point.</returns>
+        public static Vector3 PointOnYPlaneFromLine(double distOfPlane, Vector3 anchor, Vector3 direction)
+        {
+            var t = (distOfPlane - anchor.Y) / direction.Y;
+            return new Vector3(anchor.X + t * direction.X, distOfPlane, anchor.Z + t * direction.Z);
+        }
+
+        /// <summary>
+        /// Finds the point on the z- plane (plane with normal [0,0,1]) made by a line (which is described by 
+        /// connecting point1 and point2) intersecting with that plane. 
+        /// </summary>
+        /// <param name="distOfPlane">The distance of plane or the z-coordinate of the plane.</param>
+        /// <param name="anchor">An anchor point on the line.</param>
+        /// <param name="direction">The direction of the line.</param>
+        /// <returns>The coordinates of the intersecting point.</returns>
+        public static Vector3 PointOnZPlaneFromLine(double distOfPlane, Vector3 anchor, Vector3 direction)
+        {
+            var t = (distOfPlane - anchor.Z) / direction.Z;
+            return new Vector3(anchor.X + t * direction.X, anchor.Y + t * direction.Y, distOfPlane);
         }
 
         #endregion Point on Plane
@@ -1969,7 +2011,7 @@ namespace TVGL
             var aToQ = q - face.A.Coordinates;
             var aToB = face == face.AB.OwnedFace ? face.AB.Vector : -face.AB.Vector;
             var aToC = face == face.CA.OwnedFace ? -face.CA.Vector : face.CA.Vector;
-            if (aToB.Cross(aToQ).Dot(aToQ.Cross(aToC))<0) return false;
+            if (aToB.Cross(aToQ).Dot(aToQ.Cross(aToC)) < 0) return false;
             var bToQ = q - face.B.Coordinates;
             var bToC = face == face.BC.OwnedFace ? face.BC.Vector : -face.BC.Vector;
             var bToA = -aToB;
