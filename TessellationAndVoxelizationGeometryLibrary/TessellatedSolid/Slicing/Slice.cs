@@ -960,11 +960,22 @@ namespace TVGL
                 var toDistance = distances[edge.To.IndexInList];
                 if ((fromDistance > planeDistance && toDistance < planeDistance) || (fromDistance < planeDistance && toDistance > planeDistance))
                 {
-                    var ip = (intDir == 0)
-                        ? MiscFunctions.PointOnXPlaneFromIntersectingLine(distanceToOrigin, edge.From.Coordinates, edge.To.Coordinates) :
-                        (intDir == 1)
-                        ? MiscFunctions.PointOnYPlaneFromIntersectingLine(distanceToOrigin, edge.From.Coordinates, edge.To.Coordinates) :
-                        MiscFunctions.PointOnZPlaneFromIntersectingLine(distanceToOrigin, edge.From.Coordinates, edge.To.Coordinates);
+                    Vector2 ip = Vector2.Null;
+                    if (intDir == 0)
+                    {
+                        var ip3D = MiscFunctions.PointOnXPlaneFromLineSegment(distanceToOrigin, edge.From.Coordinates, edge.To.Coordinates);
+                        ip = new Vector2(ip3D.Y, ip3D.Z);
+                    }
+                    else if (intDir == 1)
+                    {
+                        var ip3D = MiscFunctions.PointOnYPlaneFromLineSegment(distanceToOrigin, edge.From.Coordinates, edge.To.Coordinates);
+                        ip = new Vector2(ip3D.Z, ip3D.X);
+                    }
+                    else
+                    {
+                        var ip3D = MiscFunctions.PointOnZPlaneFromLineSegment(distanceToOrigin, edge.From.Coordinates, edge.To.Coordinates);
+                        ip = new Vector2(ip3D.X, ip3D.Y);
+                    }
                     e2VDict.Add(edge, ip);
                 }
             }
@@ -1085,9 +1096,17 @@ namespace TVGL
                 }
                 if (needToOffset)
                     x += Math.Min(stepSize, sortedVertices[vIndex].X - x) / 10.0;
-                if (currentEdges.Any()) loopsAlongX[step] = GetLoops(currentEdges.ToDictionary(ce => ce,
-                    ce => MiscFunctions.PointOnXPlaneFromIntersectingLine(x, ce.From.Coordinates,
-                    ce.To.Coordinates)), Vector3.UnitX, x, out _);
+                if (currentEdges.Any())
+                {
+                    Dictionary<Edge, Vector2> edgeDictionary = new Dictionary<Edge, Vector2>();
+                    foreach (var ce in currentEdges)
+                    {
+                        var pointOnPlane = MiscFunctions.PointOnXPlaneFromLineSegment(x, ce.From.Coordinates,
+                             ce.To.Coordinates);
+                        edgeDictionary.Add(ce, new Vector2(pointOnPlane.Y, pointOnPlane.Z));
+                    }
+                    loopsAlongX[step] = GetLoops(edgeDictionary, Vector3.UnitX, x, out _);
+                }
                 else loopsAlongX[step] = new List<Polygon>();
             }
             return loopsAlongX;
@@ -1128,9 +1147,17 @@ namespace TVGL
                 }
                 if (needToOffset)
                     y += Math.Min(stepSize, sortedVertices[vIndex].Y - y) / 10.0;
-                if (currentEdges.Any()) loopsAlongY[step] = GetLoops(currentEdges.ToDictionary(ce => ce,
-                    ce => MiscFunctions.PointOnYPlaneFromIntersectingLine(y, ce.From.Coordinates,
-                        ce.To.Coordinates)), Vector3.UnitY, y, out _);
+                if (currentEdges.Any())
+                {
+                    var edgeDictionary = new Dictionary<Edge, Vector2>();
+                    foreach (var ce in currentEdges)
+                    {
+                        var pointOnPlane = MiscFunctions.PointOnYPlaneFromLineSegment(y, ce.From.Coordinates,
+                             ce.To.Coordinates);
+                        edgeDictionary.Add(ce, new Vector2(pointOnPlane.Z, pointOnPlane.X));
+                    }
+                    loopsAlongY[step] = GetLoops(edgeDictionary, Vector3.UnitY, y, out _);
+                }
                 else loopsAlongY[step] = new List<Polygon>();
             }
             return loopsAlongY;
@@ -1171,10 +1198,18 @@ namespace TVGL
                 }
                 if (needToOffset)
                     z += Math.Min(stepSize, sortedVertices[vIndex].Z - z) / 10.0;
-                if (currentEdges.Any()) loopsAlongZ[step] = GetLoops(currentEdges.ToDictionary(ce => ce,
-                    ce => MiscFunctions.PointOnZPlaneFromIntersectingLine(z, ce.From.Coordinates,
-                        ce.To.Coordinates)), Vector3.UnitZ, z, out _);
 
+                if (currentEdges.Any())
+                {
+                    var edgeDictionary = new Dictionary<Edge, Vector2>();
+                    foreach (var ce in currentEdges)
+                    {
+                        var pointOnPlane = MiscFunctions.PointOnZPlaneFromLineSegment(z, ce.From.Coordinates,
+                             ce.To.Coordinates);
+                        edgeDictionary.Add(ce, new Vector2(pointOnPlane.X, pointOnPlane.Y));
+                    }
+                    loopsAlongZ[step] = GetLoops(edgeDictionary, Vector3.UnitZ, z, out _);
+                }
                 else loopsAlongZ[step] = new List<Polygon>();
                 //Presenter.ShowAndHang(loopsAlongZ[step]);
             }
