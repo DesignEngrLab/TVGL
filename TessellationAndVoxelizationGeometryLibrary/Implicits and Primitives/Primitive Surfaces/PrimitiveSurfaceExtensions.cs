@@ -333,7 +333,7 @@ namespace TVGL
             var toCenter = center - anchor;
             direction = direction.Normalize();
             var tCenter = toCenter.Dot(direction); // parametric distance from anchor to closest point on line
-            var chordCenter = center + tCenter * direction; // the point on the line closest to the center of the sphere
+            var chordCenter = anchor + tCenter * direction; // the point on the line closest to the center of the sphere
             var chordLengthSqd = (chordCenter - center).LengthSquared(); // squared distance from chordCenter to center of sphere
             if (chordLengthSqd.IsPracticallySame(radius * radius)) // one intersection
             {
