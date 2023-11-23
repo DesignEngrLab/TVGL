@@ -9,7 +9,7 @@ namespace TVGLUnitTestsAndBenchmarking
 {
     internal class Program
     {
-        public static string inputFolder = "Github\\PartAnalyzer\\TestFiles";
+        public static string inputFolder = "TestFiles";
         //public static string inputFolder = "OneDrive - medemalabs.com";
         static Random r = new Random();
         static double r1 => 2.0 * r.NextDouble() - 1.0;
@@ -23,6 +23,7 @@ namespace TVGLUnitTestsAndBenchmarking
             Trace.Listeners.Add(myWriter);
             TVGL.Message.Verbosity = VerbosityLevels.OnlyCritical;
             DirectoryInfo dir = Program.BackoutToFolder(inputFolder);
+            Voxels.TestVoxelization(dir);
             GJK_Testing.Test1();
             PrimitiveSurfaceTessellation.TestPresent();
             Console.ReadLine();

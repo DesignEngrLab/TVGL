@@ -12,7 +12,7 @@ namespace TVGLUnitTestsAndBenchmarking
         {
             Presenter.NVEnable();
             var random = new Random();
-            var fileNames = dir.GetFiles("*").OrderBy(x => random.Next()).ToArray();
+            var fileNames = dir.GetFiles("*.*").OrderBy(x => random.Next()).ToArray();
             //var fileNames = dir.GetFiles("*");
             for (var i = 0; i < fileNames.Length - 0; i++)
             {
@@ -20,7 +20,7 @@ namespace TVGLUnitTestsAndBenchmarking
                 var filename = fileNames[i].FullName;
                 var name = fileNames[i].Name;
                 Console.WriteLine("Attempting: " + filename);
-                var ts = (TessellatedSolid)IO.Open(filename);
+                IO.Open(filename, out TessellatedSolid ts);
                 if (ts.Errors != null)
                 {
                     Console.WriteLine("    ===>" + filename + " has errors: " + ts.Errors.ToString());
@@ -29,7 +29,7 @@ namespace TVGLUnitTestsAndBenchmarking
                 //IO.Save(ts, dir + "/3_bananas");
                 ts.SolidColor = new Color(100, 200, 100, 50);
                 //Presenter.ShowAndHang(ts);
-                var vs = new VoxelizedSolid(ts, 1000);
+                var vs = new VoxelizedSolid(ts, 0.2);
                 Presenter.ShowAndHang(vs);
                 var extrudeSolid = vs.DraftToNewSolid(CartesianDirections.XNegative);
                 Presenter.ShowAndHang(extrudeSolid);

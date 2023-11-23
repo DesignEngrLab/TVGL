@@ -320,10 +320,24 @@ namespace TVGL
         /// <returns>Vector3.</returns>
         public static Vector3 FindMostOrthogonalVector(IEnumerable<Vector3> vectors)
         {
-            double xSum = 0.0, ySum = 0.0, zSum = 0.0;
+            return Get3DEigenVectorsLargeToSmall(vectors).Last();
+        }
+
+        /// <summary>
+        /// Get3S the d eigen vectors large to small.
+        /// </summary>
+        /// <param name="vectors">The vectors.</param>
+        /// <returns>A list of Vector3S.</returns>
+        public static IEnumerable<Vector3> Get3DEigenVectorsLargeToSmall(IEnumerable<Vector3> vectors)
+        {
+            double xSum = 0.0;
+            double ySum = 0.0;
+            double zSum = 0.0;
             double xSq = 0.0;
-            double xy = 0.0, ySq = 0.0;
-            double xz = 0.0, yz = 0.0, zSq = 0.0;
+            double xy = 0.0;
+            double ySq = 0.0;
+            double xz = 0.0, yz = 0.0;
+            double zSq = 0.0;
             foreach (var n in vectors)
             {
                 var x = n.X;
@@ -343,23 +357,70 @@ namespace TVGL
                 xy, ySq, yz,
                 xz, yz, zSq);
             Amatrix.EigenRealsOnly(out var eigenValues, out var eigenVectors);
+
             if (eigenVectors.Length == 0)
             {
-                if (zSq.IsNegligible()) return Vector3.UnitZ;
-                if (ySq.IsNegligible()) return Vector3.UnitY;
-                if (xSq.IsNegligible()) return Vector3.UnitX;
-                var v = new Vector3(xSq, ySq, zSq);
-                return v.GetPerpendicularDirection();
+                if (zSq.IsNegligible())
+                {
+                    if (xSq > ySq)
+                    {
+                        yield return Vector3.UnitX;
+                        yield return Vector3.UnitY;
+                    }
+                    else // if (ySq > xSq)
+                    {
+                        yield return Vector3.UnitY;
+                        yield return Vector3.UnitX;
+                    }
+                    yield return Vector3.UnitZ;
+                }
+                else if (ySq.IsNegligible())
+                {
+                    if (xSq > zSq)
+                    {
+                        yield return Vector3.UnitX;
+                        yield return Vector3.UnitZ;
+                    }
+                    else // if (zSq > xSq)
+                    {
+                        yield return Vector3.UnitZ;
+                        yield return Vector3.UnitX;
+                    }
+                    yield return Vector3.UnitY;
+                }
+                if (xSq.IsNegligible())
+                {
+                    if (ySq > zSq)
+                    {
+                        yield return Vector3.UnitY;
+                        yield return Vector3.UnitZ;
+                    }
+                    else // if (ZSq > ySq)
+                    {
+                        yield return Vector3.UnitZ;
+                        yield return Vector3.UnitY;
+                    }
+                    yield return Vector3.UnitX;
+                }
+                else
+                {
+                    var v = new Vector3(xSq, ySq, zSq);
+                    yield return v;
+                    var w = v.GetPerpendicularDirection();
+                    yield return w;
+                    yield return v.Cross(w).Normalize();
+                }
             }
-            if (eigenVectors.Length == 1)
+            else if (eigenVectors.Length == 1)
             {
                 var direction = eigenVectors[0];
-                var sums = new Vector3(xSum, ySum, zSum);
-                var inline = Math.Abs(direction.Dot(sums) / sums.Length());
+                var sums = new Vector3(xSum, ySum, zSum).Normalize();
+                var inline = Math.Abs(direction.Dot(sums));
                 if (inline.IsPracticallySame(1, 0.1))
                 // then this is a maximum, not a minimum. basically, the eigen analysis was overwhelmed
                 // and no clear second best could be found. is this a plane?!
                 {
+                    yield return direction;
                     var maxLength = 0.0;
                     var maxCross = Vector3.Null;
                     foreach (var n in vectors)
@@ -372,23 +433,71 @@ namespace TVGL
                             maxLength = lengthSqd;
                         }
                     }
-                    return maxCross.Normalize();
+                    yield return maxCross.Normalize();
+                    yield return maxCross.Cross(direction).Normalize();
                 }
-                else return direction;
+                else yield return direction;
             }
-            if (eigenVectors.Length == 2)
+            else if (eigenVectors.Length == 2)
             {
-                if (Math.Abs(eigenValues[0]) < Math.Abs(eigenValues[1]))
-                    return eigenVectors[0];
-                return eigenVectors[1];
+                if (Math.Abs(eigenValues[0]) > Math.Abs(eigenValues[1]))
+                {
+                    yield return eigenVectors[0];
+                    yield return eigenVectors[1];
+                }
+                else
+                {
+                    yield return eigenVectors[1];
+                    yield return eigenVectors[0];
+                }
             }
-            if (Math.Abs(eigenValues[0]) < Math.Abs(eigenValues[1])
-                && Math.Abs(eigenValues[0]) < Math.Abs(eigenValues[2]))
-                return eigenVectors[0];
-            if (Math.Abs(eigenValues[1]) < Math.Abs(eigenValues[0])
-                && Math.Abs(eigenValues[1]) < Math.Abs(eigenValues[2]))
-                return eigenVectors[1];
-            return eigenVectors[2];
+            else //if (eigenVectors.Length == 3)
+            {
+                if (Math.Abs(eigenValues[0]) > Math.Abs(eigenValues[1])
+                                       && Math.Abs(eigenValues[0]) > Math.Abs(eigenValues[2]))
+                {
+                    yield return eigenVectors[0];
+                    if (Math.Abs(eigenValues[1]) > Math.Abs(eigenValues[2]))
+                    {
+                        yield return eigenVectors[1];
+                        yield return eigenVectors[2];
+                    }
+                    else
+                    {
+                        yield return eigenVectors[2];
+                        yield return eigenVectors[1];
+                    }
+                }
+                else if (Math.Abs(eigenValues[1]) > Math.Abs(eigenValues[0])
+                                       && Math.Abs(eigenValues[1]) > Math.Abs(eigenValues[2]))
+                {
+                    yield return eigenVectors[1];
+                    if (Math.Abs(eigenValues[0]) > Math.Abs(eigenValues[2]))
+                    {
+                        yield return eigenVectors[0];
+                        yield return eigenVectors[2];
+                    }
+                    else
+                    {
+                        yield return eigenVectors[2];
+                        yield return eigenVectors[0];
+                    }
+                }
+                else
+                {
+                    yield return eigenVectors[2];
+                    if (Math.Abs(eigenValues[0]) > Math.Abs(eigenValues[1]))
+                    {
+                        yield return eigenVectors[0];
+                        yield return eigenVectors[1];
+                    }
+                    else
+                    {
+                        yield return eigenVectors[1];
+                        yield return eigenVectors[0];
+                    }
+                }
+            }
         }
 
 
@@ -683,7 +792,7 @@ namespace TVGL
             var theta = Math.Asin(sinTheta);
 
             //if (theta > Constants.MinSmoothAngle)
-                // if theta is bigger than MinSmoothAngle, then it breaks C1 continuity
+            // if theta is bigger than MinSmoothAngle, then it breaks C1 continuity
             //    return true;
             // with the equation of the chord-length and the fact that the phi's (chord arc angle) add
             // up to the theta (corner angle from vectors), we can do a little manipulation to find phi
