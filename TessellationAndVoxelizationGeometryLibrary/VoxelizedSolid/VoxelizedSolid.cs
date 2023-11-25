@@ -167,7 +167,7 @@ namespace TVGL
             numVoxelsZ = (int)Math.Ceiling(Dimensions.Z / VoxelSideLength);
             voxels = new IVoxelRow[numVoxelsY * numVoxelsZ];
             for (int i = 0; i < numVoxelsY * numVoxelsZ; i++)
-                voxels[i] = new VoxelRowSparse();
+                voxels[i] = new VoxelRowSparse(numVoxelsX);
             FillInFromTessellation(ts);
             FractionDense = 0;
             UpdateProperties();
@@ -236,7 +236,7 @@ namespace TVGL
                 {
                     var intersections = PolygonOperations.AllPolygonIntersectionPointsAlongHorizontalLines(loops, yBegin, VoxelSideLength, out var yStartIndex);
                     var numYlines = intersections.Count;
-                    for (int j = 0; j < numYlines; j++)
+                    for (int j = yStartIndex; j < numYlines; j++)
                     {
                         var intersectionPoints = intersections[j];
                         var numXRangesOnThisLine = intersectionPoints.Length;
@@ -245,8 +245,8 @@ namespace TVGL
                             var sp = (ushort)((intersectionPoints[m] - Bounds[0][0]) * inverseVoxelSideLength);
                             var ep = (ushort)((intersectionPoints[m + 1] - Bounds[0][0]) * inverseVoxelSideLength);
                             if (ep >= numVoxelsX) ep = (ushort)(numVoxelsX - 1);
-                            ((VoxelRowSparse)voxels[k * zMultiplier + yStartIndex + j]).indices.Add(sp);
-                            ((VoxelRowSparse)voxels[k * zMultiplier + yStartIndex + j]).indices.Add(ep);
+                            ((VoxelRowSparse)voxels[k * zMultiplier + j]).indices.Add(sp);
+                            ((VoxelRowSparse)voxels[k * zMultiplier + j]).indices.Add(ep);
                         }
                     }
                 }
