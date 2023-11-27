@@ -246,8 +246,7 @@ namespace TVGL
             var g = dxdy; //off-diagonal term
             var b1 = pxdydy - pydxdy;
             var b2 = pydxdx - pxdxdy;
-            // d1*x - g*y = b1
-            // -g*x - d2*y = b2
+
             var cx = (b1 * d2 + b2 * g) / (d1 * d2 - g * g);
             var cy = (b2 + g * cx) / d2;
             return new Vector2(cx, cy);
@@ -320,184 +319,73 @@ namespace TVGL
         /// <returns>Vector3.</returns>
         public static Vector3 FindMostOrthogonalVector(IEnumerable<Vector3> vectors)
         {
-            return Get3DEigenVectorsLargeToSmall(vectors).Last();
+            Plane.DefineNormalAndDistanceFromVertices(vectors, out _, out var normal);
+            return normal;
         }
 
         /// <summary>
-        /// Get3S the d eigen vectors large to small.
+        /// GetS the 3d eigen vectors from small to large. This is useful for doing
+        /// a PCA analysis on 3D points.
         /// </summary>
         /// <param name="vectors">The vectors.</param>
         /// <returns>A list of Vector3S.</returns>
-        public static IEnumerable<Vector3> Get3DEigenVectorsLargeToSmall(IEnumerable<Vector3> vectors)
+        public static Vector3[] Get3DEigenVectorsSmallToLarge(IEnumerable<Vector3> vectors)
         {
-            double xSum = 0.0;
-            double ySum = 0.0;
-            double zSum = 0.0;
+            var vectorsList = vectors as IList<Vector3> ?? vectors.ToList();
+            var n = vectorsList.Count;
+            double xMean = 0.0;
+            double yMean = 0.0;
+            double zMean = 0.0;
+
+            foreach (var v in vectorsList)
+            {
+                xMean += v.X;
+                yMean += v.Y;
+                zMean += v.Z;
+            }
+            xMean /= n;
+            yMean /= n;
+            zMean /= n;
+
             double xSq = 0.0;
             double xy = 0.0;
             double ySq = 0.0;
             double xz = 0.0, yz = 0.0;
             double zSq = 0.0;
-            foreach (var n in vectors)
+            foreach (var v in vectorsList)
             {
-                var x = n.X;
-                var y = n.Y;
-                var z = n.Z;
-                xSum += x;
-                ySum += y;
-                zSum += z;
-                xSq += x * x;
-                ySq += y * y;
-                zSq += z * z;
-                xy += x * y;
-                xz += x * z;
-                yz += y * z;
+                var deltaX = v.X - xMean;
+                var deltaY = v.Y - yMean;
+                var deltaZ = v.Z - zMean;
+                xSq += deltaX * deltaX;
+                ySq += deltaY * deltaY;
+                zSq += deltaZ * deltaZ;
+                xy += deltaX * deltaY;
+                xz += deltaX * deltaZ;
+                yz += deltaY * deltaZ;
             }
+            //xSq /= n;
+            //xy /= n;
+            //xz /= n;
+            //ySq /= n;
+            //yz /= n;
+            //zSq /= n;
+
             var Amatrix = new Matrix3x3(xSq, xy, xz,
                 xy, ySq, yz,
                 xz, yz, zSq);
-            Amatrix.EigenRealsOnly(out var eigenValues, out var eigenVectors);
-
-            if (eigenVectors.Length == 0)
-            {
-                if (zSq.IsNegligible())
-                {
-                    if (xSq > ySq)
-                    {
-                        yield return Vector3.UnitX;
-                        yield return Vector3.UnitY;
-                    }
-                    else // if (ySq > xSq)
-                    {
-                        yield return Vector3.UnitY;
-                        yield return Vector3.UnitX;
-                    }
-                    yield return Vector3.UnitZ;
-                }
-                else if (ySq.IsNegligible())
-                {
-                    if (xSq > zSq)
-                    {
-                        yield return Vector3.UnitX;
-                        yield return Vector3.UnitZ;
-                    }
-                    else // if (zSq > xSq)
-                    {
-                        yield return Vector3.UnitZ;
-                        yield return Vector3.UnitX;
-                    }
-                    yield return Vector3.UnitY;
-                }
-                if (xSq.IsNegligible())
-                {
-                    if (ySq > zSq)
-                    {
-                        yield return Vector3.UnitY;
-                        yield return Vector3.UnitZ;
-                    }
-                    else // if (ZSq > ySq)
-                    {
-                        yield return Vector3.UnitZ;
-                        yield return Vector3.UnitY;
-                    }
-                    yield return Vector3.UnitX;
-                }
-                else
-                {
-                    var v = new Vector3(xSq, ySq, zSq);
-                    yield return v;
-                    var w = v.GetPerpendicularDirection();
-                    yield return w;
-                    yield return v.Cross(w).Normalize();
-                }
-            }
-            else if (eigenVectors.Length == 1)
-            {
-                var direction = eigenVectors[0];
-                var sums = new Vector3(xSum, ySum, zSum).Normalize();
-                var inline = Math.Abs(direction.Dot(sums));
-                if (inline.IsPracticallySame(1, 0.1))
-                // then this is a maximum, not a minimum. basically, the eigen analysis was overwhelmed
-                // and no clear second best could be found. is this a plane?!
-                {
-                    yield return direction;
-                    var maxLength = 0.0;
-                    var maxCross = Vector3.Null;
-                    foreach (var n in vectors)
-                    {
-                        var crossDir = n.Cross(direction);
-                        var lengthSqd = crossDir.LengthSquared();
-                        if (lengthSqd > maxLength)
-                        {
-                            maxCross = crossDir;
-                            maxLength = lengthSqd;
-                        }
-                    }
-                    yield return maxCross.Normalize();
-                    yield return maxCross.Cross(direction).Normalize();
-                }
-                else yield return direction;
-            }
-            else if (eigenVectors.Length == 2)
-            {
-                if (Math.Abs(eigenValues[0]) > Math.Abs(eigenValues[1]))
-                {
-                    yield return eigenVectors[0];
-                    yield return eigenVectors[1];
-                }
-                else
-                {
-                    yield return eigenVectors[1];
-                    yield return eigenVectors[0];
-                }
-            }
-            else //if (eigenVectors.Length == 3)
-            {
-                if (Math.Abs(eigenValues[0]) > Math.Abs(eigenValues[1])
-                                       && Math.Abs(eigenValues[0]) > Math.Abs(eigenValues[2]))
-                {
-                    yield return eigenVectors[0];
-                    if (Math.Abs(eigenValues[1]) > Math.Abs(eigenValues[2]))
-                    {
-                        yield return eigenVectors[1];
-                        yield return eigenVectors[2];
-                    }
-                    else
-                    {
-                        yield return eigenVectors[2];
-                        yield return eigenVectors[1];
-                    }
-                }
-                else if (Math.Abs(eigenValues[1]) > Math.Abs(eigenValues[0])
-                                       && Math.Abs(eigenValues[1]) > Math.Abs(eigenValues[2]))
-                {
-                    yield return eigenVectors[1];
-                    if (Math.Abs(eigenValues[0]) > Math.Abs(eigenValues[2]))
-                    {
-                        yield return eigenVectors[0];
-                        yield return eigenVectors[2];
-                    }
-                    else
-                    {
-                        yield return eigenVectors[2];
-                        yield return eigenVectors[0];
-                    }
-                }
-                else
-                {
-                    yield return eigenVectors[2];
-                    if (Math.Abs(eigenValues[0]) > Math.Abs(eigenValues[1]))
-                    {
-                        yield return eigenVectors[0];
-                        yield return eigenVectors[1];
-                    }
-                    else
-                    {
-                        yield return eigenVectors[1];
-                        yield return eigenVectors[0];
-                    }
-                }
-            }
+            var eigenValues = Amatrix.EigenValuesRealsOnly().OrderBy(x => x).ToList();
+            var eigenVectors = Amatrix.EigenVectors(eigenValues);
+            var dot01 = Math.Abs(eigenVectors[0].Dot(eigenVectors[1]));
+            var dot02 = Math.Abs(eigenVectors[0].Dot(eigenVectors[2]));
+            var dot12 = Math.Abs(eigenVectors[1].Dot(eigenVectors[2]));
+            if (dot01 < dot02 && dot01 < dot12)
+                eigenVectors[2] = eigenVectors[0].Cross(eigenVectors[1]);
+            else if (dot02 < dot12 && dot02 < dot01)
+                eigenVectors[1] = eigenVectors[2].Cross(eigenVectors[0]);
+            else if (dot12 < dot02 && dot12 < dot01)
+                eigenVectors[0] = eigenVectors[1].Cross(eigenVectors[2]);
+            return eigenVectors;
         }
 
 
@@ -906,9 +794,11 @@ namespace TVGL
         }
 
         /// <summary>
-        /// ns the equidistant sphere points kogan.
+        /// Generates n equidistant points on a sphere. Following the approach by
+        /// https://scholar.rose-hulman.edu/rhumj/vol18/iss2/5 this may be slightly better than
+        /// Fibonacci points.
         /// </summary>
-        /// <param name="n">The n.</param>
+        /// <param name="n">The number of points, n.</param>
         /// <returns>IEnumerable&lt;Vector2&gt;.</returns>
         public static IEnumerable<Vector2> NEquidistantSpherePointsKogan(int n)
         {
@@ -924,9 +814,11 @@ namespace TVGL
             }
         }
         /// <summary>
-        /// ns the equidistant sphere points kogan.
+        /// Generates n equidistant points on a sphere. Following the approach by
+        /// https://scholar.rose-hulman.edu/rhumj/vol18/iss2/5 this may be slightly better than
+        /// Fibonacci points.
         /// </summary>
-        /// <param name="n">The n.</param>
+        /// <param name="n">The number of points, n.</param>
         /// <param name="radius">The radius.</param>
         /// <returns>IEnumerable&lt;Vector3&gt;.</returns>
         /// <font color="red">Badly formed XML comment.</font>

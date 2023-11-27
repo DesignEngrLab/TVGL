@@ -893,7 +893,7 @@ namespace TVGL
         /// </summary>
         /// <param name="matrix">The matrix.</param>
         /// <returns>IEnumerable&lt;System.Double&gt;.</returns>
-        public static IEnumerable<double> EigenValuesRealsOnly(Matrix3x3 matrix)
+        public static IEnumerable<double> EigenValuesRealsOnly(this Matrix3x3 matrix)
         {
             var a = matrix.M11;
             var b = matrix.M12;
@@ -932,13 +932,13 @@ namespace TVGL
         /// <param name="m">The m.</param>
         /// <param name="lambda">The lambda.</param>
         /// <returns>Vector3.</returns>
-        private static Vector3 GetRealEigenVector(Matrix3x3 m, double lambda)
+        public static Vector3 GetRealEigenVector(this Matrix3x3 m, double lambda)
         {
             var row1 = new Vector3(m.M11 - lambda, m.M12, m.M13);
             var row2 = new Vector3(m.M21, m.M22 - lambda, m.M23);
             var eVector = row1.Cross(row2);
             var eVectorLength = eVector.Length();
-            if (!eVectorLength.IsNegligible())
+            if (!eVectorLength.IsNegligible(Constants.BaseTolerance))
                 return eVector / eVectorLength;
             var row3 = new Vector3(m.M31, m.M32, m.M33 - lambda);
             eVector = row1.Cross(row3);

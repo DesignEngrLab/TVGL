@@ -383,7 +383,8 @@ namespace TVGL
         /// <param name="t1">The parametric distance from the anchor along the line to point1.</param>
         /// <param name="t2">The parametric distance from the anchor along the line to point2.</param>
         /// <returns>A bool where true is intersecting.</returns>
-        public static bool CylinderLineIntersection(Vector3 axis, double radius, Vector3 anchorCyl, Vector3 anchorLine, Vector3 direction, out Vector3 point1, out Vector3 point2, out double t1, out double t2)
+        public static bool CylinderLineIntersection(Vector3 axis, double radius, Vector3 anchorCyl, Vector3 anchorLine, Vector3 direction, 
+            out Vector3 point1, out Vector3 point2, out double t1, out double t2)
         {
             direction = direction.Normalize();
             var minDistance = MiscFunctions.SkewedLineIntersection(anchorCyl, axis, anchorLine, direction, out _, out var cylAxisPoint, out var linePoint, out _,
@@ -410,6 +411,60 @@ namespace TVGL
             point1 = linePoint - distanceToCylinder * direction;
             point2 = linePoint + distanceToCylinder * direction;
             return true;
+        }
+
+        /// <summary>
+        /// Finds the intersection between a capsule and a line. Returns true if intersecting.
+        /// </summary>
+        /// <param name="capsule">The capsule.</param>
+        /// <param name="anchor">An anchor point on the line.</param>
+        /// <param name="direction">The direction of the line.</param>
+        /// <param name="point1">One of the intersecting points.</param>
+        /// <param name="point2">The other of the intersecting points.</param>
+        /// <param name="t1">The parametric distance from the anchor along the line to point1.</param>
+        /// <param name="t2">The parametric distance from the anchor along the line to point2.</param>
+        /// <returns>A bool where true is intersecting.</returns>
+        public static bool CapsuleLineIntersection(Capsule capsule, Vector3 anchor, Vector3 direction, out Vector3 point1,
+            out Vector3 point2, out double t1, out double t2)
+        {
+            var a1ToA2Distance = (capsule.Anchor2 - capsule.Anchor1).Length();
+            var cDir = (capsule.Anchor2 - capsule.Anchor1) / a1ToA2Distance;
+            t1 = double.NaN;
+            t2 = double.NaN;
+            point1 = Vector3.Null;
+            point2 = Vector3.Null;
+            if (SphereLineIntersection(capsule.Anchor1, capsule.Radius1, anchor, direction, out var pointInner1,
+                out var pointInner2, out var tInner1, out var tInner2))
+            {
+                if ((pointInner1 - capsule.Anchor1).Dot(cDir) <= 0)
+                { t1 = tInner1; point1 = pointInner1; }
+                if ((pointInner2 - capsule.Anchor1).Dot(cDir) <= 0)
+                { t2 = tInner2; point2 = pointInner2; }
+            }
+            if (double.IsNaN(t1) || double.IsNaN(t2))
+            {
+                if (SphereLineIntersection(capsule.Anchor2, capsule.Radius2, anchor, direction, out pointInner1, out pointInner2, out tInner1, out tInner2))
+                {
+                    if ((pointInner1 - capsule.Anchor2).Dot(cDir) >= 0)
+                    { t1 = tInner1; point1 = pointInner1; }
+                    if ((pointInner2 - capsule.Anchor2).Dot(cDir) >= 0)
+                    { t2 = tInner2; point2 = pointInner2; }
+                }
+            }
+            if (double.IsNaN(t1) || double.IsNaN(t2))
+            {
+                var axis = (capsule.Anchor2 - capsule.Anchor1).Normalize();
+                if (CylinderLineIntersection(axis, capsule.Radius1, capsule.Anchor1, anchor, direction, out pointInner1, out pointInner2, out tInner1, out tInner2))
+                {
+                    var dot = (pointInner1 - capsule.Anchor1).Dot(cDir);
+                    if (dot < a1ToA2Distance && dot >= 0)
+                    { t1 = tInner1; point1 = pointInner1; }
+                    dot = (pointInner2 - capsule.Anchor1).Dot(cDir);
+                    if (dot < a1ToA2Distance && dot >= 0)
+                    { t2 = tInner2; point2 = pointInner2; }
+                }
+            }
+            return !double.IsNaN(t1) && !double.IsNaN(t2);
         }
 
         public static void Tessellate(this PrimitiveSurface surface, double xMin, double xMax, double yMin, double yMax, double zMin, double zMax, double maxEdgeLength)
