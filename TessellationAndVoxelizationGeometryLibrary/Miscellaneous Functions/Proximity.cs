@@ -380,11 +380,11 @@ namespace TVGL
             var dot02 = Math.Abs(eigenVectors[0].Dot(eigenVectors[2]));
             var dot12 = Math.Abs(eigenVectors[1].Dot(eigenVectors[2]));
             if (dot01 < dot02 && dot01 < dot12)
-                eigenVectors[2] = eigenVectors[0].Cross(eigenVectors[1]);
+                eigenVectors[2] = eigenVectors[0].Cross(eigenVectors[1]).Normalize();
             else if (dot02 < dot12 && dot02 < dot01)
-                eigenVectors[1] = eigenVectors[2].Cross(eigenVectors[0]);
+                eigenVectors[1] = eigenVectors[2].Cross(eigenVectors[0]).Normalize();
             else if (dot12 < dot02 && dot12 < dot01)
-                eigenVectors[0] = eigenVectors[1].Cross(eigenVectors[2]);
+                eigenVectors[0] = eigenVectors[1].Cross(eigenVectors[2]).Normalize();
             return eigenVectors;
         }
 
