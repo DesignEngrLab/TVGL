@@ -38,7 +38,7 @@ namespace TVGL
         /// Radius of circle
         /// </summary>
         [JsonIgnore]
-        public double Radius=> Math.Sqrt(RadiusSquared);
+        public double Radius => Math.Sqrt(RadiusSquared);
 
 
         /// <summary>
@@ -51,7 +51,7 @@ namespace TVGL
         /// Circumference of circle
         /// </summary>
         [JsonIgnore]
-        public double Circumference=> Constants.TwoPi * Radius;
+        public double Circumference => Constants.TwoPi * Radius;
 
         /// <summary>
         /// Creates a circle, given the center point and the radius Squared
@@ -235,6 +235,75 @@ namespace TVGL
                 path.Add(new Vector2(Radius * Math.Cos(theta) + Center.X, Radius * Math.Sin(theta) + Center.Y));
             }
             return new List<Vector2>(path);
+        }
+
+        public bool IntersectWithCircle(Circle other, out Vector2 point1, out Vector2 point2)
+        {
+            var cVector = other.Center - Center;
+            var centerDist = cVector.Length();
+            cVector /= centerDist;
+            if (centerDist.IsPracticallySame(Radius + other.Radius))
+            {
+                point1 = Center + Radius * cVector;
+                point2 = Vector2.Null;
+                return true;
+            }
+            if (centerDist.IsNegligible() || centerDist > Radius + other.Radius)
+            {
+                point1 = Vector2.Null;
+                point2 = Vector2.Null;
+                return false;
+            }
+            var dist2Chord = (centerDist * centerDist - other.RadiusSquared + RadiusSquared) / (2 * centerDist);
+            var halfChord = Math.Sqrt(RadiusSquared - dist2Chord * dist2Chord);
+            var perpVector = new Vector2(-cVector.Y, cVector.X);
+            point1 = Center + dist2Chord * cVector + halfChord * perpVector;
+            point2 = Center + dist2Chord * cVector - halfChord * perpVector;
+            return true;
+        }
+
+        public bool IntersectWithLineSegment(Vector2 from, Vector2 to, out Vector2 point1, out Vector2 point2)
+        {
+            var lineVector = to - from;
+            var lineLength = lineVector.Length();
+            var lineUnitVector = lineVector / lineLength;
+            var perpVector = new Vector2(-lineUnitVector.Y, lineUnitVector.X);
+            var bLine = perpVector.Dot(from);
+            var bCircle = perpVector.Dot(Center);
+            var signedDistToChord = bLine-bCircle;
+            var distToChordSqd = signedDistToChord*signedDistToChord;
+            if (distToChordSqd > RadiusSquared)
+            {
+                point1 = Vector2.Null;
+                point2 = Vector2.Null;
+                return false;
+            }
+            var chordCenter = Center + signedDistToChord * perpVector;
+            var halfChord = Math.Sqrt(RadiusSquared - distToChordSqd);
+            point1 = chordCenter + halfChord * lineUnitVector;
+            point2 = chordCenter - halfChord * lineUnitVector;
+            // p1 is outside if it's located to on the wrong side of from or on the other side of to
+            var p1Outside = (point1 - from).Dot(lineUnitVector) < 0 || (point1 - to).Dot(lineUnitVector) > 0;
+            // p2 is outside if it's located to on the wrong side of from or on the other side of to
+            var p2Outside = (point2 - from).Dot(lineUnitVector) < 0 || (point2 - to).Dot(lineUnitVector) > 0; //if point2 is not on the line segment (from, to)
+            if (p1Outside&& p2Outside)
+            {
+                point1 = Vector2.Null;
+                point2 = Vector2.Null;
+                return false;
+            }
+            if (p1Outside)
+            {
+                point1 = point2;
+                point2 = Vector2.Null;
+                return true;
+            }
+            if (p2Outside)
+            {
+                point2 = Vector2.Null;
+                return true;
+            }
+            return true;
         }
     }
 }

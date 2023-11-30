@@ -31,7 +31,7 @@ namespace TVGL
         /// Gets the voxels.
         /// </summary>
         /// <value>The voxels.</value>
-        internal IVoxelRow[] voxels { get; private set; }
+        public IVoxelRow[] voxels { get; private set; }
 
         /// <summary>
         /// Gets the count.

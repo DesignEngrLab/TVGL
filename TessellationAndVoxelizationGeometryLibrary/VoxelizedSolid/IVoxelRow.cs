@@ -17,7 +17,7 @@ namespace TVGL
     /// Interface IVoxelRow
     /// </summary>
     /// <font color="red">Badly formed XML comment.</font>
-    internal interface IVoxelRow
+    public interface IVoxelRow
     {
         /// <summary>
         /// The length of the row. This is the same as the number of voxels in x (numVoxelsX)

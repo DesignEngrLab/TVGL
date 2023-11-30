@@ -291,7 +291,7 @@ namespace TVGL
                 Color color = null, bool closePaths = false)
         {
             ShowVertexPathsWithSolids(vertices, new List<Solid> { solid }, lineThickness,
-                color == null ? null : new List<Color> { color }, closePaths); ;
+                color == null ? null : new List<Color> { color }, closePaths);
         }
         public static void ShowVertexPaths(IEnumerable<IEnumerable<Vector3>> vertices, IEnumerable<bool> closePaths, Solid solid = null, double lineThickness = 0,
     Color color = null)
