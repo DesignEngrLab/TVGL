@@ -15,6 +15,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.IO.Compression;
@@ -1360,5 +1361,66 @@ namespace TVGL
 
         }
         #endregion Save/Write
+
+        #region Load Assembly
+        public static bool LoadAsSolidAssembly(string filePath, out SolidAssembly solidAssembly)
+        {
+            var extension = IO.GetFileTypeFromExtension(Path.GetExtension(filePath));
+            solidAssembly = null;
+            //try
+            //{
+            if (extension == FileType.unspecified)
+                throw new ArgumentException("Unknown file extension.");
+            else
+            {
+                //unzip if needed
+                if (extension == FileType.TVGLz || extension == FileType.TVGL)
+                {
+                    IO.ReadStream(filePath, out solidAssembly, TessellatedSolidBuildOptions.Default);
+                }
+                else if (extension != FileType.unspecified)
+                {
+                    IO.Open(filePath, out TessellatedSolid[] solids);
+                    solidAssembly = new SolidAssembly(solids);
+                }
+                else
+                    throw new NotSupportedException("File type is not supported: " + extension);
+            }
+            return true;
+        }
+        public static bool LoadMostSignificantAsPart(string filePath, out Solid part)
+        {
+            part = null;
+            if (!LoadAsSolidAssembly(filePath, out var solidAssembly))
+                return false;
+            if (!solidAssembly.Solids.Any(s => s is TessellatedSolid))
+                throw new ArgumentException("No valid tessellated solids defined.");
+
+            var tessellatedSolid = ReturnMostSignificantSolid(solidAssembly.Solids.Cast<TessellatedSolid>().ToArray());
+
+            part = tessellatedSolid;
+            //progress.OverallPercentComplete += 100;
+            return true;
+        }
+
+        private static TessellatedSolid ReturnMostSignificantSolid(TessellatedSolid[] solids)
+        {
+            //If the file contains multiple solids, see if we can get just one solid.
+            TessellatedSolid tessellatedSolid = solids[0];
+            if (solids.Count() > 1)
+            {
+                var minVolume = solids.Min(p => p.Volume);
+                var maxVolume = solids.Max(p => p.Volume);
+                var maxNumFaces = solids.Max(p => p.NumberOfFaces);
+                var significantSolids = solids.Where(p => p.Volume > maxVolume * .1 || p.NumberOfFaces > maxNumFaces * .3);
+                if (significantSolids.Count() > 1)
+                    Debug.WriteLine("Model contains " + significantSolids.Count() + " significant bodies. Attempting analysis on largest part in assembly.");
+                else
+                    Debug.WriteLine("Model contains " + solids.Count() + " bodies, but only one is significant. Attempting analysis on largest part in assembly.");
+                tessellatedSolid = significantSolids.MaxBy(p => p.Volume);
+            }
+            return tessellatedSolid;
+        }
+        #endregion
     }
 }
