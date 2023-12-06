@@ -29,7 +29,7 @@ namespace TVGLUnitTestsAndBenchmarking
             foreach (var face in cyl.Faces)
                 face.Color = new Color(100, 0, 200, 100);
 
-            var quadric = new GeneralQuadric(1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
+            var quadric = new GeneralQuadric(1, -2, 3, 4, 5, 6, 7, 8, 9, 10);
             quadric.Tessellate(-10,10,-10,10,-10,10,1);
             foreach (var face in quadric.Faces)
                 face.Color = new Color(100, 0, 100, 200);

@@ -291,7 +291,7 @@ namespace TVGL
                 Color color = null, bool closePaths = false)
         {
             ShowVertexPathsWithSolids(vertices, new List<Solid> { solid }, lineThickness,
-                color == null ? null : new List<Color> { color }, closePaths); ;
+                color == null ? null : new List<Color> { color }, closePaths);
         }
         public static void ShowVertexPaths(IEnumerable<IEnumerable<Vector3>> vertices, IEnumerable<bool> closePaths, Solid solid = null, double lineThickness = 0,
     Color color = null)
@@ -309,6 +309,18 @@ namespace TVGL
             IEnumerable<Color> colors = null, bool closePaths = false)
         {
             ShowVertexPathsWithSolids(vertices, new List<Solid> { solid }, lineThickness, colors, closePaths);
+        }
+        public static void ShowVertexPathsWithFaces(IEnumerable<IEnumerable<Vector3>> vertices, IEnumerable<TriangleFace> faces = null, double lineThickness = 0,
+            IEnumerable<Color> colors = null, bool closePaths = false)
+        {
+            var lineVisuals = GetVertexPaths(vertices, lineThickness, colors, closePaths);
+            var vm = new Window3DPlotViewModel();
+            vm.Add(lineVisuals);
+            if (faces != null)
+                vm.Add(ConvertTessellatedSolidToMGM3D(faces, new Color(KnownColors.LightGray), false));
+            var window = new Window3DPlot(vm);
+
+            window.ShowDialog();
         }
         public static void ShowVertexPaths(IEnumerable<IEnumerable<Vertex>> vertices, Solid solid = null, double lineThickness = 0,
             IEnumerable<Color> colors = null, bool closePaths = false)

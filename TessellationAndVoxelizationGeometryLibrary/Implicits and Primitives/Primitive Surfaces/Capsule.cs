@@ -280,21 +280,21 @@ namespace TVGL
 
         public override Vector3 GetNormalAtPoint(Vector3 point)
         {
-            var dxAlong = (point - Anchor1).Dot(directionVector.Normalize());
+            var loc = point - Anchor1;
+            var dxAlong = loc.Dot(directionVector.Normalize());
             Vector3 d;
-            if (dxAlong < conePlaneDistance1) d = (point - Anchor1).Normalize();
+            if (dxAlong < conePlaneDistance1) d = loc.Normalize();
             else if (dxAlong > conePlaneDistance2) d = (point - Anchor2).Normalize();
             else
             {
-                var a = (point - Anchor1);
-                var b = directionVector.Cross(a);
-                var c =directionVector.Cross(b).Normalize();
+                var b = directionVector.Cross(loc);
+                var c = directionVector.Cross(b).Normalize();
                 var cosAngle = directionVectorLength /
                     Math.Sqrt(directionVectorLength * directionVectorLength +
                     (coneRadius1 - coneRadius2) * (coneRadius1 - coneRadius2));
                 var sinAngle = Math.Sqrt(1 - cosAngle * cosAngle);
                 if (coneRadius1 < coneRadius2) sinAngle = -sinAngle;
-                d = c*cosAngle + directionVector*sinAngle;
+                d = (c * cosAngle + directionVector * sinAngle).Normalize();
             }
             if (isPositive.HasValue && !isPositive.Value) d *= -1;
             return d;

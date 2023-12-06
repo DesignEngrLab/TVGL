@@ -383,7 +383,7 @@ namespace TVGL
         /// <param name="t1">The parametric distance from the anchor along the line to point1.</param>
         /// <param name="t2">The parametric distance from the anchor along the line to point2.</param>
         /// <returns>A bool where true is intersecting.</returns>
-        public static bool CylinderLineIntersection(Vector3 axis, double radius, Vector3 anchorCyl, Vector3 anchorLine, Vector3 direction, 
+        public static bool CylinderLineIntersection(Vector3 axis, double radius, Vector3 anchorCyl, Vector3 anchorLine, Vector3 direction,
             out Vector3 point1, out Vector3 point2, out double t1, out double t2)
         {
             direction = direction.Normalize();
@@ -414,6 +414,43 @@ namespace TVGL
         }
 
         /// <summary>
+        /// Finds the intersection between a cone and a line. Returns true if intersecting.
+        /// </summary>
+        /// <param name="cone">The cone.</param>
+        /// <param name="anchorLine">The anchor of the line.</param>
+        /// <param name="direction">The direction of the line.</param>
+        /// <param name="point1">One of the intersecting points.</param>
+        /// <param name="point2">The other of the intersecting points.</param>
+        /// <param name="t1">The parametric distance from the anchor along the line to point1.</param>
+        /// <param name="t2">The parametric distance from the anchor along the line to point2.</param>
+        /// <returns>A bool where true is intersecting.</returns>
+        public static bool ConeLineIntersection(Cone cone, Vector3 anchorLine, Vector3 direction,
+            out Vector3 point1, out Vector3 point2, out double t1, out double t2)
+        {
+            return ConeLineIntersection(cone.Apex, cone.Axis, cone.Aperture, anchorLine, direction, out point1, out point2, out t1, out t2);
+        }
+
+        /// <summary>
+        /// Finds the intersection between a cone and a line. Returns true if intersecting.
+        /// </summary>
+        /// <param name="apex">The apex of the cone.</param>
+        /// <param name="axis">The axis of the cone.</param>
+        /// <param name="aperture">The aperture of the cone.</param>
+        /// <param name="anchorLine">The anchor of the line.</param>
+        /// <param name="direction">The direction of the line.</param>
+        /// <param name="point1">One of the intersecting points.</param>
+        /// <param name="point2">The other of the intersecting points.</param>
+        /// <param name="t1">The parametric distance from the anchor along the line to point1.</param>
+        /// <param name="t2">The parametric distance from the anchor along the line to point2.</param>
+        /// <returns>A bool where true is intersecting.</returns>
+        public static bool ConeLineIntersection(Vector3 apex, Vector3 axis, double aperture, Vector3 anchorLine, Vector3 direction,
+            out Vector3 point1, out Vector3 point2, out double t1, out double t2)
+        {
+            direction = direction.Normalize();
+            throw new NotImplementedException();
+        }
+
+        /// <summary>
         /// Finds the intersection between a capsule and a line. Returns true if intersecting.
         /// </summary>
         /// <param name="capsule">The capsule.</param>
@@ -427,6 +464,7 @@ namespace TVGL
         public static bool CapsuleLineIntersection(Capsule capsule, Vector3 anchor, Vector3 direction, out Vector3 point1,
             out Vector3 point2, out double t1, out double t2)
         {
+            if (capsule.Radius1 != capsule.Radius2) throw new Exception("Capsule must have equal radii to use this method.");
             var a1ToA2Distance = (capsule.Anchor2 - capsule.Anchor1).Length();
             var cDir = (capsule.Anchor2 - capsule.Anchor1) / a1ToA2Distance;
             t1 = double.NaN;
@@ -466,6 +504,7 @@ namespace TVGL
             }
             return !double.IsNaN(t1) && !double.IsNaN(t2);
         }
+
 
         public static void Tessellate(this PrimitiveSurface surface, double xMin, double xMax, double yMin, double yMax, double zMin, double zMax, double maxEdgeLength)
         {
@@ -548,7 +587,7 @@ namespace TVGL
             }
             else throw new ArgumentOutOfRangeException("The provided primitive is" +
                 "unbounded in size. Please invoke the overload of this method that accepts coordinate limits");
-            if (double.IsNaN(maxEdgeLength)) 
+            if (double.IsNaN(maxEdgeLength))
                 maxEdgeLength = 0.033 * Math.Sqrt((xMax - xMin) * (xMax - xMin) + (yMax - yMin) * (yMax - yMin) + (zMax - zMin) * (zMax - zMin));
             Tessellate(surface, xMin, xMax, yMin, yMax, zMin, zMax, maxEdgeLength);
         }

@@ -97,6 +97,10 @@ namespace TVGL
 
 
         /// <summary>
+        /// The maximum number of iterations in a nonlinear solve routine.
+        /// </summary>
+        public const int MaxIterationsNonlinearSolve = 67;
+        /// <summary>
         /// The tolerance multiplier (multiplied into the minimum X or Y dimension of the polygon) for
         /// detecting identical/repeat vertices and for intersection checks in various polygon functions.
         /// </summary>
