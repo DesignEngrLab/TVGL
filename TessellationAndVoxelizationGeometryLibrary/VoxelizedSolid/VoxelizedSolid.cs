@@ -232,7 +232,7 @@ namespace TVGL
             for (var k = 0; k < numVoxelsZ; k++)
             {
                 var loops = decomp[k];
-                if (loops.Any())
+                if (loops!=null && loops.Any())
                 {
                     var intersections = PolygonOperations.AllPolygonIntersectionPointsAlongHorizontalLines(loops, yBegin, VoxelSideLength, out var yStartIndex);
                     var numYlines = intersections.Count;
