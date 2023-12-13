@@ -213,15 +213,6 @@ namespace TVGL
             return mse / (3 * Faces.Count);
         }
 
-        /// <summary>
-        /// Returns where the given point is inside the Prismatic.
-        /// </summary>
-        /// <param name="x">The x.</param>
-        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
-        public bool PointIsInside(Vector3 x)
-        {
-            return DistanceToPoint(x) < Constants.BaseTolerance;
-        }
 
         /// <summary>
         /// Points the membership.
