@@ -127,7 +127,7 @@ namespace TVGL
         /// <param name="transform">The transform.</param>
         public BoundingBox(double[] dimensions, Matrix4x4 transform)
         {
-            Dimensions = dimensions;
+            Dimensions = new Vector3(dimensions[0], dimensions[1], dimensions[2]);
             Transform = transform;
         }
 
@@ -140,7 +140,18 @@ namespace TVGL
         /// three directions.
         /// </summary>
         /// <value>The dimensions.</value>
-        public double[] Dimensions { get; }
+        public Vector3 Dimensions { get; set; }
+        /// <summary>
+        /// Gets the bounds. The 0-th Vector3 is the minX, minY, and minZ, the 1st is the maxX, maxY, and maxZ
+        /// </summary>
+        /// <value>The bounds.</value>
+        public Vector3[] Bounds
+        {
+            get
+            {
+                return new[] { TranslationFromOrigin, TranslationFromOrigin + Dimensions };
+            }
+        }
 
         /// <summary>
         /// Gets the transformation from the global frame to this box. This is only a rotate and translate. Along
@@ -310,7 +321,7 @@ namespace TVGL
                 new TriangleFace(vertices[6],vertices[4],vertices[5])
             };
                 var random = new Random(0);
-             var   tessellatedSolidBuildOptions = new TessellatedSolidBuildOptions();
+                var tessellatedSolidBuildOptions = new TessellatedSolidBuildOptions();
                 tessellatedSolidBuildOptions.CopyElementsPassedToConstructor = false;
                 _tessellatedSolid = new TessellatedSolid(faces, vertices, tessellatedSolidBuildOptions, new[] {
                     new Color(0.6f,(float)random.NextDouble(), (float)random.NextDouble(), (float)random.NextDouble()) });
@@ -470,21 +481,8 @@ namespace TVGL
         /// <param name="distance">The distance to move the face by (negative will move the face inward).</param>
         public void MoveFaceOutward(Vector3 direction, double distance)
         {
-            //First, we need to find which bounding box direction this is along
-            //If it is not along any of them, then return without any modification.
-            var unitDir = direction.Normalize();
-            int directionIndex = -1;
-            bool reverse = false;
-            for (var i = 0; i < 3; i++)
-            {
-                if (Directions[i].IsAlignedOrReverse(direction, out reverse, smallAngle))
-                {
-                    directionIndex = i;
-                    break;
-                }
-            }
-            if (directionIndex == -1) return;
-            MoveFaceOutward(directionIndex, !reverse, distance);
+            var cartesian = MiscFunctions.SnapDirectionToCartesian(direction, out _);
+            MoveFaceOutward(cartesian, distance);
         }
 
         /// <summary>
@@ -514,15 +512,28 @@ namespace TVGL
             //along the given directions. When offsetting along a direction, just make that dimension bigger.
             //When offsetting in the reverse of a direction, make the dimension bigger and then shift the origin.
             if (distance.IsNegligible()) return;
-            var direction = Directions[directionIndex];
-            Dimensions[directionIndex] += distance;
+            var delta = new Vector3(directionIndex == 0 ? distance : 0, 
+                                    directionIndex == 1 ? distance : 0, 
+                                    directionIndex == 2 ? distance : 0);
+            Dimensions += delta;
             if (!forward)
             {
-                var translate = TranslationFromOrigin - direction * distance;
+                var translate = TranslationFromOrigin - delta;
                 Transform = new Matrix4x4(Transform.XBasisVector, Transform.YBasisVector,
                     Transform.ZBasisVector, translate);
             }
             ResetLazyFields();
+        }
+        /// <summary>
+        /// Moves the face outward by the provided distance (or inward if distance is negative).
+        /// </summary>
+        /// <param name="direction">the cartesian direction to move</param>
+        /// <param name="distance">The distance to move the face by (negative will move the face inward).</param>
+
+        public void MoveFaceOutward(CartesianDirections direction, double distance)
+        {
+            var intDir = (int)direction;
+            MoveFaceOutward(Math.Abs(intDir) - 1, intDir > 0, distance);
         }
     }
 }

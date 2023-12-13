@@ -12,6 +12,7 @@
 // <summary></summary>
 // ***********************************************************************
 
+using Newtonsoft.Json;
 using System;
 using System.Globalization;
 using System.Runtime.CompilerServices;
@@ -51,6 +52,7 @@ namespace TVGL  // COMMENTEDCHANGE namespace System.Numerics
         /// Gets the position.
         /// </summary>
         /// <value>The position.</value>
+        [JsonIgnore]
         public double[] Coordinates => new[] { X / W, Y / W, Z / W };
         #region Constructors
         /// <summary>

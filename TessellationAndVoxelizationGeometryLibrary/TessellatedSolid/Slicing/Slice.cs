@@ -1196,6 +1196,8 @@ namespace TVGL
                     if (vIndex == sortedVertices.Length) break;
                     thisVertex = sortedVertices[vIndex];
                 }
+                if (vIndex == sortedVertices.Length) break;
+
                 if (needToOffset)
                     z += Math.Min(stepSize, sortedVertices[vIndex].Z - z) / 10.0;
 
