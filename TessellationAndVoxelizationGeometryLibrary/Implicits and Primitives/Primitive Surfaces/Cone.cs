@@ -254,16 +254,6 @@ namespace TVGL
 
 
         /// <summary>
-        /// Returns where the given point is inside the cylinder.
-        /// </summary>
-        /// <param name="x">The x.</param>
-        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
-        public bool PointIsInside(Vector3 x)
-        {
-            return DistanceToPoint(x) < 0;
-        }
-
-        /// <summary>
         /// Gets the normal at point.
         /// </summary>
         /// <param name="point">The point.</param>

@@ -241,15 +241,7 @@ namespace TVGL
         }
 
         #endregion
-        /// <summary>
-        /// Returns where the given point is inside the Capsule.
-        /// </summary>
-        /// <param name="x">The x.</param>
-        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
-        public bool PointIsInside(Vector3 x)
-        {
-            return DistanceToPoint(x) < 0;
-        }
+
 
         /// <summary>
         /// Points the membership.

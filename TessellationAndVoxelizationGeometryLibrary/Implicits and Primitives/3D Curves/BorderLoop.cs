@@ -32,11 +32,10 @@ namespace TVGL
             Segments = new List<BorderSegment>();
             SegmentDirections = new List<bool>();
         }
-
         /// <summary>
-        /// Gets or sets the curve.
+        /// The list of BorderSegments that make up this BorderLoop. Note that a
+        /// BorderLoop is unique to a primitive but the BorderSegments are defined between them.
         /// </summary>
-        /// <value>The curve.</value>
         public List<BorderSegment> Segments { get; set; }
 
         /// <summary>

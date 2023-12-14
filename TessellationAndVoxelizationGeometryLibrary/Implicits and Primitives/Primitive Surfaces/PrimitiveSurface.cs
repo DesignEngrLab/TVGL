@@ -150,6 +150,17 @@ namespace TVGL
             }
             return maxError;
         }
+
+        /// <summary>
+        /// Returns whether the given point is inside the primitive.
+        /// </summary>
+        /// <param name="x">The x.</param>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
+        public virtual bool PointIsInside(Vector3 x)
+        {
+            return DistanceToPoint(x) < 0;
+        }
+
         /// <summary>
         /// Transforms the from3 d to2 d.
         /// </summary>

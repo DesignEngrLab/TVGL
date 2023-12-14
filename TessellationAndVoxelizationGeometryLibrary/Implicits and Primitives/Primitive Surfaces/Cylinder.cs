@@ -237,17 +237,6 @@ namespace TVGL
         }
 
 
-        /// <summary>
-        /// Returns where the given point is inside the cylinder.
-        /// </summary>
-        /// <param name="x">The x.</param>
-        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
-        public bool PointIsInside(Vector3 x)
-        {
-            // negative distance is inside a positive cylinder
-            return DistanceToPoint(x) < 0;
-        }
-
         public override Vector3 GetNormalAtPoint(Vector3 point)
         {
             var a = (point - Anchor);
