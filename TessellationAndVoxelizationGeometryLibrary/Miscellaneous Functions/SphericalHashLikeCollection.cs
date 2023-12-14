@@ -199,10 +199,7 @@ namespace TVGL
             return matchFound && item.Equals(items[i]);
         }
 
-        public IEnumerable<T> GetItems()
-        {
-            return items;
-        }
+        public List<T> Items =>items;
     }
 
 
@@ -256,10 +253,7 @@ namespace TVGL
         /// Returns the result as a list of Cartesian Vector3's.
         /// </summary>
         /// <returns>A list of Vector3S.</returns>
-        public List<Vector3> AsVector3s()
-        {
-            return cartesians;
-        }
+        public List<Vector3> Vector3s => cartesians;
 
 
         void ICollection<SphericalAnglePair>.Add(SphericalAnglePair spherical) => AddIfNotPresent(spherical, spherical.ToVector3());
@@ -388,15 +382,9 @@ namespace TVGL
                     lo = i + 1;
                 else hi = i - 1;
             }
-            int index = lo;
+            i = lo;
             // the following is a unique feature of this binary search
-            if (ScanHoop(ref index, spherical, cartesian, radius))
-            {
-                i = index;
-                return true;
-            }
-            i = -1;
-            return false;
+            return ScanHoop(ref i, spherical, cartesian, radius);
         }
 
 

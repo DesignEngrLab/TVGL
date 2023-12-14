@@ -366,15 +366,8 @@ namespace TVGL
                     lo = i + 1;
                 else hi = i - 1;
             }
-            int index = lo;
-            // the following is a unique feature of this binary search
-            if (ScanHoop(ref index, query, qCart))
-            {
-                i = index;
-                return true;
-            }
-            i = -1;
-            return false;
+            i = lo;
+            return ScanHoop(ref i, query, qCart);
         }
 
 
