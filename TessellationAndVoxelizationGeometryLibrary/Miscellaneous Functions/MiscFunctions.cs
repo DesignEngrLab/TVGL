@@ -2360,39 +2360,59 @@ namespace TVGL
             throw new NotImplementedException();
         }
 
+        /// <summary>
+        /// Store the data for a line as the four variables of Vector4. The x & y value of the output are the x & y 
+        /// values of where the line passes through the plane through zero. The z value is the polar angle (makes
+        /// sense since measured from z-axis) and the w is the azimuthal angle.
+        /// </summary>
+        /// <param name="anchor"></param>
+        /// <param name="direction"></param>
+        /// <returns></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-
-        public static Vector4 Unique3DLine(this Vector3 anchor, Vector3 direction)
+        public static Vector4 Unique3DLine(Vector3 anchor, Vector3 direction)
         {
             if (direction.X.IsNegligible() && direction.Y.IsNegligible())
             {
-                var PolarAngle = direction.Z > 0 ? 0 : Math.PI;
-                return new Vector4(PolarAngle, 0, anchor.X, anchor.Y);
+                if (direction.Z > 0) return new Vector4(anchor.X, anchor.Y, 0, 0);
+                else return new Vector4(-anchor.X, anchor.Y, Math.PI, 0);
             }
             else
             {
-                var oneOverRadius = 1 / direction.Length();
-                var PolarAngle = Math.Acos(direction.Z * oneOverRadius);
-                var AzimuthAngle = Math.Atan2(direction.Y, direction.X);
-                var distanceToAnchor = direction.Dot(anchor) * oneOverRadius;
-                var pointOnPlane = anchor - distanceToAnchor * direction * oneOverRadius;
-                var tx = pointOnPlane.Dot(new Vector3(direction.Y, -direction.X, 0).Normalize());
-                var ty = pointOnPlane.Dot(new Vector3(direction.Z * direction.X,
+                var oneOverRadius = 1 / direction.Length();  // normalizing factor
+                var PolarAngle = Math.Acos(direction.Z * oneOverRadius);  // when z_dir is 1, then angle is zero or pi
+                var AzimuthAngle = Math.Atan2(direction.Y, direction.X);  // regardless of length, we can find azimuth by tangent
+                var distanceToAnchor = direction.Dot(anchor) * oneOverRadius; // like a plane this is the distance from zero-plane (not origin)
+                var pointOnZeroPlane = anchor - distanceToAnchor * direction * oneOverRadius; // direction is still not normalized, hence oneOverRadius
+                var tx = pointOnZeroPlane.Dot(new Vector3(direction.Y, -direction.X, 0).Normalize());  //the distance along new x-dir
+                var ty = pointOnZeroPlane.Dot(new Vector3(direction.Z * direction.X,  // here, y-dir determined by cross-produce with x-dir and normal
                     direction.Z * direction.Y, -direction.X * direction.X - direction.Y * direction.Y).Normalize());
-                return new Vector4(PolarAngle, AzimuthAngle, tx, ty);
+                return new Vector4(tx, ty, PolarAngle, AzimuthAngle);
             }
         }
+
+        /// <summary>
+        /// Decodes the Vector4 into an anchor and a unit vector direction. 
+        /// </summary>
+        /// <param name="unique3DLine">A vector4 where the x & y are values where the line passes through 
+        /// the plane through zero, the z value is the polar angle, and the w is the azimuthal angle. </param>
+        /// <returns></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static (Vector3 anchor, Vector3 direction) Get3DLineValuesFromUnique(this Vector4 unique3DLine)
         {
-            var sphericalAngles = new SphericalAnglePair(unique3DLine.X, unique3DLine.Y);
+            var sphericalAngles = new SphericalAnglePair(unique3DLine.Z, unique3DLine.W);
             var direction = sphericalAngles.ToVector3();
 
             if (direction.X.IsNegligible() && direction.Y.IsNegligible())
-                return (new Vector3(unique3DLine.Z, unique3DLine.W, 0), new Vector3(0, 0, 1));
+            {
+                if (direction.Z > 0)
+                    return (new Vector3(unique3DLine.X, unique3DLine.Y, 0), new Vector3(0, 0, 1));
+                else
+                    return (new Vector3(-unique3DLine.X, unique3DLine.Y, 0), new Vector3(0, 0, -1));
+            }
             var iAxis = new Vector3(direction.Y, -direction.X, 0).Normalize();
-            var jAxis = new Vector3(direction.Z * direction.X, direction.Z * direction.Y, -direction.X * direction.X - direction.Y * direction.Y).Normalize();
-            var anchor = unique3DLine.Z * iAxis + unique3DLine.W * jAxis;
+            var jAxis = new Vector3(direction.Z * direction.X, direction.Z * direction.Y,
+                -direction.X * direction.X - direction.Y * direction.Y).Normalize();
+            var anchor = unique3DLine.X * iAxis + unique3DLine.Y * jAxis;
             return (anchor, direction);
         }
 

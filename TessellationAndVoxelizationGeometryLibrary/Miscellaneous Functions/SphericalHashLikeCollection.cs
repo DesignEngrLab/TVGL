@@ -2,37 +2,29 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using TVGL.threemfclasses;
 
 namespace TVGL
 {
+    /// <summary>
+    /// This collection functions by sorting the 3D vector by the PolarAngle and using a 
+    /// sorted list to easily find matches. The hoop of azimuthal angles are then searched
+    /// within the range of values. 
+    /// This particular one acts like a dictionary and can store an item of type T
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
     public class SphericalHashLikeCollection<T> : SphericalHashLikeCollection
     {
         private readonly List<T> items;
-        private readonly IEqualityComparer<T> itemsComparer;
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="SphericalHashLikeCollection"/> class. Here, an itemEqualityComparer is to provided 
-        /// to 
-        /// </summary>
-        /// <param name="ignoreRadius">If true, ignore radius.</param>
-        /// <param name="treatReflectionsAsSame">If true, treat reflections as same.</param>
-        /// <param name="sameAngleDegreesTolerance">The same angle degrees tolerance.</param>
-        /// <param name="itemEqualityComparer">The item equality comparer.</param>
-        public SphericalHashLikeCollection(bool ignoreRadius, bool treatReflectionsAsSame, double sameAngleDegreesTolerance, 
-            IEqualityComparer<T> itemEqualityComparer)
-            : base(ignoreRadius, treatReflectionsAsSame, sameAngleDegreesTolerance)
-        {
-            items = new List<T>();
-            itemsComparer = itemEqualityComparer;
-        }
         /// <summary>
         /// Initializes a new instance of the <see cref="SphericalHashLikeCollection"/> class.
         /// </summary>
         /// <param name="ignoreRadius">If true, ignore radius.</param>
         /// <param name="treatReflectionsAsSame">If true, treat reflections as same.</param>
         /// <param name="sameAngleDegreesTolerance">The same angle degrees tolerance.</param>
-        public SphericalHashLikeCollection(bool ignoreRadius, bool treatReflectionsAsSame, double sameAngleTolerance)
-            : base(ignoreRadius, treatReflectionsAsSame, sameAngleTolerance)
+        public SphericalHashLikeCollection(bool ignoreRadius, bool treatReflectionsAsSame, double sameAngleDegreesTolerance)
+            : base(ignoreRadius, treatReflectionsAsSame, sameAngleDegreesTolerance)
         {
             items = new List<T>();
         }
@@ -40,7 +32,7 @@ namespace TVGL
         /// <summary>Adds the specified element to the <see cref="HashSet{T}"/>.</summary>
         /// <param name="item">The element to add to the set.</param>
         /// <returns>true if the element is added to the <see cref="HashSet{T}"/> object; false if the element is already present.</returns>
-        public bool Add(SphericalAnglePair spherical, T item) => AddIfNotPresent(spherical, spherical.ToVector3(), item, out _);
+        public bool Add(SphericalAnglePair spherical, T item) => AddIfNotPresent(spherical, spherical.ToVector3(), item);
         public new bool Add(SphericalAnglePair spherical)
         {
             throw new InvalidOperationException("This method is not supported for this collection. Use the Add(SphericalAnglePair, T) method instead.");
@@ -49,37 +41,29 @@ namespace TVGL
         /// <summary>Adds the specified element to the <see cref="HashSet{T}"/>.</summary>
         /// <param name="item">The element to add to the set.</param>
         /// <returns>true if the element is added to the <see cref="HashSet{T}"/> object; false if the element is already present.</returns>
-        public bool Add(Vector3 vector, T item) => AddIfNotPresent(new SphericalAnglePair(vector), vector, item, out _);
+        public bool Add(Vector3 vector, T item) => AddIfNotPresent(new SphericalAnglePair(vector), vector, item);
         public new bool Add(Vector3 vector)
         {
             throw new InvalidOperationException("This method is not supported for this collection. Use the Add(Vector3, T) method instead.");
         }
-        private bool AddIfNotPresent(SphericalAnglePair spherical, Vector3 cartesian, T item, out int i)
-        {
-            var radius = cartesian.Length();
-            var localCartesian = cartesian;
-            if (treatReflectionsAsSame && cartesian.Z < 0)
-            {
-                var newAzimuth = cartesian.Y < 0 ? spherical.AzimuthAngle + Math.PI : spherical.AzimuthAngle - Math.PI;
-                spherical = new SphericalAnglePair(Math.PI - spherical.PolarAngle, newAzimuth);
-                localCartesian = -cartesian;
-            }
-            i = BinarySearch(spherical, localCartesian, radius, out var matchFound);
-            if (matchFound && (itemsComparer == null || item.Equals(default(T)) || itemsComparer.Equals(item, items[i])))
-                    return false;
-            if (i == sphericals.Count)
+        private bool AddIfNotPresent(SphericalAnglePair spherical, Vector3 cartesian, T item)
+        {   
+            if (TryGetIndex(spherical, cartesian, out var i))
+                return false;
+
+            if (i == Count)
             {
                 sphericals.Add(spherical);
                 cartesians.Add(cartesian);
                 items.Add(item);
-                radii.Add(radius);
+                radii.Add(cartesian.Length());
             }
             else
             {
                 sphericals.Insert(i, spherical);
                 cartesians.Insert(i, cartesian);
                 items.Insert(i, item);
-                radii.Insert(i, radius);
+                radii.Insert(i, cartesian.Length());
             }
             return true;
         }
@@ -93,69 +77,109 @@ namespace TVGL
         }
 
         /// <summary>
-        /// 
+        /// Iterator for getting or setting the item for a particular spherical angle pair
         /// </summary>
         /// <param name="sphericalAngles"></param>
         /// <returns></returns>
         public T this[SphericalAnglePair sphericalAngles]
         {
-            get { 
-                this.TryGet(sphericalAngles, out T item, out _);
+            get
+            {
+                TryGet(sphericalAngles, out T item, out _);
                 return item;
             }
-            set { this.Add(sphericalAngles, value); }
+            set
+            {
+                var cartesian = sphericalAngles.ToVector3();
+                if (TryGetIndex(sphericalAngles, cartesian, out var i))
+                    items[i] = value;
+                else
+                {
+                    if (i == Count)
+                    {
+                        sphericals.Add(sphericalAngles);
+                        cartesians.Add(cartesian);
+                        items.Add(value);
+                        radii.Add(cartesian.Length());
+                    }
+                    else
+                    {
+                        sphericals.Insert(i, sphericalAngles);
+                        cartesians.Insert(i, cartesian);
+                        items.Insert(i, value);
+                        radii.Insert(i, cartesian.Length());
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Iterator for getting or setting the item for a particular cartesian direction
+        /// </summary>
+        /// <param name="cartesian"></param>
+        /// <returns></returns>
+        public T this[Vector3 cartesian]
+        {
+            get
+            {
+                TryGet(cartesian, out T item, out _);
+                return item;
+            }
+            set
+            {
+                var spherical =new SphericalAnglePair(cartesian);
+                if (TryGetIndex(spherical, cartesian, out var i))
+                    items[i] = value;
+                else
+                {
+                    if (i == Count)
+                    {
+                        sphericals.Add(spherical);
+                        cartesians.Add(cartesian);
+                        items.Add(value);
+                        radii.Add(cartesian.Length());
+                    }
+                    else
+                    {
+                        sphericals.Insert(i, spherical);
+                        cartesians.Insert(i, cartesian);
+                        items.Insert(i, value);
+                        radii.Insert(i, cartesian.Length());
+                    }
+                }
+            }
         }
 
         public bool TryGet(Vector3 cartesian, out T item, out Vector3 matchingCartesian)
-            => TryGet(new SphericalAnglePair(cartesian), cartesian, out item, out _, out matchingCartesian);
-        public bool TryGet(SphericalAnglePair spherical, out T item, out SphericalAnglePair matchingAnglePair)
-            => TryGet(spherical, spherical.ToVector3(), out item, out matchingAnglePair, out _);
-        private bool TryGet(SphericalAnglePair spherical, Vector3 cartesian, out T item, out SphericalAnglePair matchingSpherical, out Vector3 matchingCartesian)
         {
-            var radius = cartesian.Length();
-            if (treatReflectionsAsSame && cartesian.Z < 0)
-            {
-                var newAzimuth = cartesian.Y < 0 ? spherical.AzimuthAngle + Math.PI : spherical.AzimuthAngle - Math.PI;
-                spherical = new SphericalAnglePair(Math.PI - spherical.PolarAngle, newAzimuth);
-                cartesian = -cartesian;
-            }
-            var i = BinarySearch(spherical, cartesian, radius, out var matchFound);
-            if (matchFound)
+            if (TryGetIndex(new SphericalAnglePair(cartesian), cartesian, out var i))
             {
                 item = items[i];
-                matchingSpherical = sphericals[i];
                 matchingCartesian = cartesians[i];
                 return true;
             }
             item = default;
-            matchingSpherical = default;
             matchingCartesian = default;
             return false;
         }
-
-
-
-        public void CopyTo(SphericalAnglePair[] array, int arrayIndex)
+        public bool TryGet(SphericalAnglePair spherical, out T item, out SphericalAnglePair matchingAnglePair)
         {
-            sphericals.CopyTo(array, arrayIndex);
+            if (TryGetIndex(spherical, spherical.ToVector3(), out var i))
+            {
+                item = items[i];
+                matchingAnglePair = sphericals[i];
+                return true;
+            }
+            item = default;
+            matchingAnglePair = sphericals[i];
+            return false;
         }
 
-        public new bool Remove(Vector3 cartesian) => Remove(new SphericalAnglePair(cartesian), cartesian, default);
-        public new bool Remove(SphericalAnglePair spherical) => Remove(spherical, spherical.ToVector3(), default);
-        public new bool Remove(Vector3 cartesian, T item) => Remove(new SphericalAnglePair(cartesian), cartesian, item);
-        public new bool Remove(SphericalAnglePair spherical, T item) => Remove(spherical, spherical.ToVector3(), item);
-        public new bool Remove(SphericalAnglePair spherical, Vector3 cartesian, T item)
+        public new bool Remove(Vector3 cartesian) => Remove(new SphericalAnglePair(cartesian), cartesian);
+        public new bool Remove(SphericalAnglePair spherical) => Remove(spherical, spherical.ToVector3());
+        public new bool Remove(SphericalAnglePair spherical, Vector3 cartesian)
         {
-            var radius = cartesian.Length();
-            if (treatReflectionsAsSame && cartesian.Z < 0)
-            {
-                var newAzimuth = cartesian.Y < 0 ? spherical.AzimuthAngle + Math.PI : spherical.AzimuthAngle - Math.PI;
-                spherical = new SphericalAnglePair(Math.PI - spherical.PolarAngle, newAzimuth);
-                cartesian = -cartesian;
-            }
-            var i = BinarySearch(spherical, cartesian, radius, out var matchFound);
-            if (matchFound && (itemsComparer == null || item.Equals(default(T)) || itemsComparer.Equals(item, items[i])))
-
+            if (TryGetIndex(spherical, cartesian, out var i))
             {
                 sphericals.RemoveAt(i);
                 cartesians.RemoveAt(i);
@@ -169,19 +193,10 @@ namespace TVGL
 
         public bool Contains(Vector3 cartesian, T item) => Contains(new SphericalAnglePair(cartesian), cartesian, item);
         public bool Contains(SphericalAnglePair spherical, T item) => Contains(spherical, spherical.ToVector3(), item);
-        public bool Contains(Vector3 cartesian) => Contains(new SphericalAnglePair(cartesian), cartesian, default);
-        public bool Contains(SphericalAnglePair spherical) => Contains(spherical, spherical.ToVector3(), default);
-        public bool Contains(SphericalAnglePair spherical, Vector3 cartesian, T item)
+        private bool Contains(SphericalAnglePair spherical, Vector3 cartesian, T item)
         {
-            bool matchFound;
-            if (treatReflectionsAsSame && cartesian.Z < 0)
-            {
-                var newAzimuth = cartesian.Y < 0 ? spherical.AzimuthAngle + Math.PI : spherical.AzimuthAngle - Math.PI;
-                spherical = new SphericalAnglePair(Math.PI - spherical.PolarAngle, newAzimuth);
-                cartesian = -cartesian;
-            }
-            var i = BinarySearch(spherical, cartesian, cartesian.Length(), out matchFound);
-            return matchFound && (itemsComparer == null || item.Equals(default(T)) || itemsComparer.Equals(item, items[i]));
+            bool matchFound = TryGetIndex(spherical, cartesian, out var i);
+            return matchFound && item.Equals(items[i]);
         }
 
         public IEnumerable<T> GetItems()
@@ -190,6 +205,12 @@ namespace TVGL
         }
     }
 
+
+    /// <summary>
+    /// This collection functions by sorting the 3D vector by the PolarAngle and using a 
+    /// sorted list to easily find matches. The hoop of azimuthal angles are then searched
+    /// within the range of values. 
+    /// </summary>
     public class SphericalHashLikeCollection : ICollection<SphericalAnglePair>
     {
         private protected readonly bool ignoreRadius;
@@ -241,21 +262,105 @@ namespace TVGL
         }
 
 
-        void ICollection<SphericalAnglePair>.Add(SphericalAnglePair spherical) => AddIfNotPresent(spherical, spherical.ToVector3(), out _);
+        void ICollection<SphericalAnglePair>.Add(SphericalAnglePair spherical) => AddIfNotPresent(spherical, spherical.ToVector3());
         /// <summary>Adds the specified element to the <see cref="SphericalHashLikeCollection"/>.</summary>
         /// <param name="item">The element to add to the set.</param>
         /// <returns>true if the element is added to the <see cref="HashSet{T}"/> object; false if the element is already present.</returns>
-        public bool Add(SphericalAnglePair spherical) => AddIfNotPresent(spherical, spherical.ToVector3(), out _);
+        public bool Add(SphericalAnglePair spherical) => AddIfNotPresent(spherical, spherical.ToVector3());
 
         /// <summary>Adds the specified element to the <see cref="SphericalHashLikeCollection"/>.</summary>
         /// <param name="item">The element to add to the set.</param>
         /// <returns>true if the element is added to the <see cref="HashSet{T}"/> object; false if the element is already present.</returns>
-        public bool Add(Vector3 vector) => AddIfNotPresent(new SphericalAnglePair(vector), vector, out _);
+        public bool Add(Vector3 vector) => AddIfNotPresent(new SphericalAnglePair(vector), vector);
 
         /// <summary>
         /// Adds the if not present.
         /// </summary>
-        private bool AddIfNotPresent(SphericalAnglePair spherical, Vector3 cartesian, out int i)
+        private bool AddIfNotPresent(SphericalAnglePair spherical, Vector3 cartesian)
+        {
+            var matchFound = TryGetIndex(spherical, cartesian, out var i);
+            if (matchFound)
+                return false;
+            if (i == Count)
+            {
+                sphericals.Add(spherical);
+                cartesians.Add(cartesian);
+                radii.Add(cartesian.Length());
+            }
+            else
+            {
+                sphericals.Insert(i, spherical);
+                cartesians.Insert(i, cartesian);
+                radii.Insert(0, cartesian.Length());
+            }
+            return true;
+        }
+
+        public void Clear()
+        {
+            sphericals.Clear();
+            cartesians.Clear();
+            radii.Clear();
+        }
+
+        public bool Contains(Vector3 item) => Contains(new SphericalAnglePair(item), item);
+        public bool Contains(SphericalAnglePair spherical) => Contains(spherical, spherical.ToVector3());
+        public bool Contains(SphericalAnglePair spherical, Vector3 cartesian)
+        {
+            return TryGetIndex(spherical, cartesian, out _);
+        }
+
+        public IEnumerator<SphericalAnglePair> GetEnumerator()
+        {
+            return sphericals.GetEnumerator();
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return sphericals.GetEnumerator();
+        }
+
+        public void CopyTo(SphericalAnglePair[] array, int arrayIndex)
+        {
+            sphericals.CopyTo(array, arrayIndex);
+        }
+
+        public bool Remove(Vector3 cartesian) => Remove(new SphericalAnglePair(cartesian), cartesian);
+        public bool Remove(SphericalAnglePair spherical) => Remove(spherical, spherical.ToVector3());
+        public bool Remove(SphericalAnglePair spherical, Vector3 cartesian)
+        {
+            var matchFound = TryGetIndex(spherical, cartesian, out var i);
+            if (matchFound)
+            {
+                sphericals.RemoveAt(i);
+                cartesians.RemoveAt(i);
+                radii.RemoveAt(i);
+                return true;
+            }
+            return false;
+        }
+
+        public bool TryGet(Vector3 cartesian, out Vector3 matchingCartesian)
+            => TryGet(new SphericalAnglePair(cartesian), cartesian, out _, out matchingCartesian);
+        public bool TryGet(SphericalAnglePair spherical, out SphericalAnglePair matchingAnglePair)
+            => TryGet(spherical, spherical.ToVector3(), out matchingAnglePair, out _);
+        private bool TryGet(SphericalAnglePair spherical, Vector3 cartesian, out SphericalAnglePair matchingSpherical, out Vector3 matchingCartesian)
+        {
+            var matchFound = TryGetIndex(spherical, cartesian, out var i);
+            if (matchFound)
+            {
+                matchingSpherical = sphericals[i];
+                matchingCartesian = cartesians[i];
+                return true;
+            }
+            matchingSpherical = default;
+            matchingCartesian = default;
+            return false;
+        }
+
+        #region Main Search functions
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        protected bool TryGetIndex(SphericalAnglePair spherical, Vector3 cartesian, out int i)
         {
             var radius = cartesian.Length();
             if (treatReflectionsAsSame && cartesian.Z < 0)
@@ -264,54 +369,34 @@ namespace TVGL
                 spherical = new SphericalAnglePair(Math.PI - spherical.PolarAngle, newAzimuth);
                 cartesian = -cartesian;
             }
-            i = BinarySearch(spherical, cartesian, radius, out var matchFound);
-            if (matchFound)
-                return false;
-            if (i == sphericals.Count)
-            {
-                sphericals.Add(spherical);
-                cartesians.Add(cartesian);
-                radii.Add(radius);
-            }
-            else
-            {
-                sphericals.Insert(i, spherical);
-                cartesians.Insert(i, cartesian);
-                radii.Insert(0, radius);
-            }
-            return true;
-        }
 
-        /// <summary>
-        /// This binary search is modified/simplified from Array.BinarySearch
-        /// (https://referencesource.microsoft.com/mscorlib/a.html#b92d187c91d4c9a9)
-        /// </summary>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private protected int BinarySearch(SphericalAnglePair spherical, Vector3 cartesian, double radius, out bool matchFound)
-        {
-            if (sphericals.Count == 0)
+            // the following binary search is modified/simplified from Array.BinarySearch
+            // (https://referencesource.microsoft.com/mscorlib/a.html#b92d187c91d4c9a9)
+            if (Count == 0)
             {
-                matchFound = false;
-                return 0;
+                i = 0;
+                return false;
             }
             var lo = 0;
-            var hi = sphericals.Count - 1;
+            var hi = Count - 1;
             while (lo <= hi)
             {
-                int i = lo + ((hi - lo) >> 1);
+                i = lo + ((hi - lo) >> 1);
                 if (IsTheSame(cartesian, spherical, radius, i))
-                {
-                    matchFound = true;
-                    return i;
-                }
+                    return true;
                 else if (sphericals[i].PolarAngle < spherical.PolarAngle)
                     lo = i + 1;
                 else hi = i - 1;
             }
             int index = lo;
             // the following is a unique feature of this binary search
-            matchFound = ScanHoop(ref index, spherical, cartesian, radius);
-            return index;
+            if (ScanHoop(ref index, spherical, cartesian, radius))
+            {
+                i = index;
+                return true;
+            }
+            i = -1;
+            return false;
         }
 
 
@@ -322,7 +407,7 @@ namespace TVGL
             // the angle tolerance in either direction
             // this is particularly important since the azimuth angle has its values near
             // pi and -pi at the same location
-            while (++i < sphericals.Count && sphericals[i].PolarAngle - spherical.PolarAngle < angleTolerance)
+            while (++i < Count && sphericals[i].PolarAngle - spherical.PolarAngle < angleTolerance)
                 if (IsTheSame(cartesian, spherical, radius, i))
                 {
                     index = i;
@@ -346,101 +431,14 @@ namespace TVGL
             // however, vectors near the xy plane will have a polar angle near pi/2 and the dot product is not a complete
             // comparison since reflections would yield a negative dot product.
             // this is only true when the two would be reflections would be less than the angle tolerance apart in the polar angles
-            /// (pi/2 - s1.AzimuthAngle) + (pi/2 - s2.AzimuthAngle) < angleTolerance
+            // (pi/2 - s1.AzimuthAngle) + (pi/2 - s2.AzimuthAngle) < angleTolerance
             if (treatReflectionsAsSame && (Math.PI - s1.PolarAngle - sphericals[existingIndex].PolarAngle) < angleTolerance)
             {
                 return Math.Abs(v1.Dot(cartesians[existingIndex])) >= r1 * radii[existingIndex] * dotTolerance;
             }
-            else if (treatReflectionsAsSame)
-                return Math.Abs(v1.Dot(cartesians[existingIndex])) >= r1 * radii[existingIndex] * dotTolerance;
             else return v1.Dot(cartesians[existingIndex]) >= r1 * radii[existingIndex] * dotTolerance;
         }
 
-        public bool TryGet(Vector3 cartesian, out Vector3 matchingCartesian)
-            => TryGet(new SphericalAnglePair(cartesian), cartesian, out _, out matchingCartesian);
-        public bool TryGet(SphericalAnglePair spherical, out SphericalAnglePair matchingAnglePair)
-            => TryGet(spherical, spherical.ToVector3(), out matchingAnglePair, out _);
-        private bool TryGet(SphericalAnglePair spherical, Vector3 cartesian, out SphericalAnglePair matchingSpherical, out Vector3 matchingCartesian)
-        {
-            var radius = cartesian.Length();
-            if (treatReflectionsAsSame && cartesian.Z < 0)
-            {
-                var newAzimuth = cartesian.Y < 0 ? spherical.AzimuthAngle + Math.PI : spherical.AzimuthAngle - Math.PI;
-                spherical = new SphericalAnglePair(Math.PI - spherical.PolarAngle, newAzimuth);
-                cartesian = -cartesian;
-            }
-            var i = BinarySearch(spherical, cartesian, radius, out var matchFound);
-            if (matchFound)
-            {
-                matchingSpherical = sphericals[i];
-                matchingCartesian = cartesians[i];
-                return true;
-            }
-            matchingSpherical = default;
-            matchingCartesian = default;
-            return false;
-        }
-
-
-
-
-        public void Clear()
-        {
-            sphericals.Clear();
-            cartesians.Clear();
-            radii.Clear();
-        }
-
-        public bool Contains(Vector3 item) => Contains(new SphericalAnglePair(item), item);
-        public bool Contains(SphericalAnglePair spherical) => Contains(spherical, spherical.ToVector3());
-        public bool Contains(SphericalAnglePair spherical, Vector3 cartesian)
-        {
-            bool matchFound;
-            if (treatReflectionsAsSame && cartesian.Z < 0)
-            {
-                var newAzimuth = cartesian.Y < 0 ? spherical.AzimuthAngle + Math.PI : spherical.AzimuthAngle - Math.PI;
-                spherical = new SphericalAnglePair(Math.PI - spherical.PolarAngle, newAzimuth);
-                cartesian = -cartesian;
-            }
-            BinarySearch(spherical, cartesian, cartesian.Length(), out matchFound);
-            return matchFound;
-        }
-
-        public IEnumerator<SphericalAnglePair> GetEnumerator()
-        {
-            return sphericals.GetEnumerator();
-        }
-
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return sphericals.GetEnumerator();
-        }
-
-        public void CopyTo(SphericalAnglePair[] array, int arrayIndex)
-        {
-            sphericals.CopyTo(array, arrayIndex);
-        }
-
-        public bool Remove(Vector3 cartesian) => Remove(new SphericalAnglePair(cartesian), cartesian);
-        public bool Remove(SphericalAnglePair spherical) => Remove(spherical, spherical.ToVector3());
-        public bool Remove(SphericalAnglePair spherical, Vector3 cartesian)
-        {
-            var radius = cartesian.Length();
-            if (treatReflectionsAsSame && cartesian.Z < 0)
-            {
-                var newAzimuth = cartesian.Y < 0 ? spherical.AzimuthAngle + Math.PI : spherical.AzimuthAngle - Math.PI;
-                spherical = new SphericalAnglePair(Math.PI - spherical.PolarAngle, newAzimuth);
-                cartesian = -cartesian;
-            }
-            var i = BinarySearch(spherical, cartesian, radius, out var matchFound);
-            if (matchFound)
-            {
-                sphericals.RemoveAt(i);
-                cartesians.RemoveAt(i);
-                radii.RemoveAt(i);
-                return true;
-            }
-            return false;
-        }
+        #endregion
     }
 }
