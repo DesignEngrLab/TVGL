@@ -126,7 +126,7 @@ namespace TVGL
         /// <param name="vertices">The vertices.</param>
         /// <param name="direction">The direction.</param>
         /// <returns>A (T maxPoint, double dotDistance) .</returns>
-        public static (T maxPoint, double dotDistance) GetMaxVertexDistanceAloingVector<T>(this IEnumerable<T> vertices, Vector3 direction)
+        public static (T maxPoint, double dotDistance) GetMaxVertexDistanceAlongVector<T>(this IEnumerable<T> vertices, Vector3 direction)
             where T : IPoint3D
         {
             var dotDistance = double.NegativeInfinity;
