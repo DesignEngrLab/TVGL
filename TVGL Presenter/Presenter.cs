@@ -547,20 +547,21 @@ namespace TVGL
         {
             var color = new System.Windows.Media.Color { R = vs.SolidColor.R, G = vs.SolidColor.G, B = vs.SolidColor.B, A = vs.SolidColor.A };
             var s = (float)vs.VoxelSideLength;
-            s *= 1.4f;
             var xOffset = (float)vs.Offset[0];
             var yOffset = (float)vs.Offset[1];
             var zOffset = (float)vs.Offset[2];
+            var radius = 14 * s;
 
             yield return new PointGeometryModel3D
             {
                 Geometry = new PointGeometry3D
                 {
-                    Positions = new Vector3Collection(vs.GetExposedVoxels().Select(vox => new SharpDX.Vector3(vox.Item1 * s + xOffset,
-                    vox.Item2 * s + yOffset, vox.Item3 * s + zOffset)))
+                    Positions = new Vector3Collection(vs.GetExposedVoxels().Select(vox => new SharpDX.Vector3(vox.xIndex * s + xOffset,
+                    vox.yIndex * s + yOffset, vox.zIndex * s + zOffset))),
+                     
                 },
-                Size = new System.Windows.Size(s, s),
-                FixedSize = true,
+                Size = new System.Windows.Size(3 * Math.Sqrt(s), 3 * Math.Sqrt(s)),
+            //FixedSize = true,
                 Color = color
             };
         }

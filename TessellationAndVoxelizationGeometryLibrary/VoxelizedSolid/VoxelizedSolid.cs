@@ -25,7 +25,7 @@ namespace TVGL
     /// <summary>
     /// Class VoxelizedSparseDense.
     /// </summary>
-    public partial class VoxelizedSolid : Solid, IEnumerable<(int, int, int)>
+    public partial class VoxelizedSolid : Solid, IEnumerable<(int xIndex, int yIndex, int zIndex)>
     {
         #region Properties
 
@@ -503,7 +503,7 @@ namespace TVGL
         /// a boolean.
         /// </summary>
         /// <returns>An enumerator that can be used to iterate through the collection.</returns>
-        public IEnumerator<(int, int, int)> GetEnumerator()
+        public IEnumerator<(int xIndex, int yIndex, int zIndex)> GetEnumerator()
         {
             return new VoxelEnumerator(this);
         }
@@ -563,8 +563,9 @@ namespace TVGL
 
         #endregion Overrides of Solid abstract members
 
-        public IEnumerable<(int, int, int)> GetExposedVoxels()
+        public IEnumerable<(int xIndex, int yIndex, int zIndex)> GetExposedVoxels()
         {
+            // this method
             for (int i = 0; i < numVoxelsX; i++)
                 for (int j = 0; j < numVoxelsY; j++)
                     for (int k = 0; k < numVoxelsZ; k++)

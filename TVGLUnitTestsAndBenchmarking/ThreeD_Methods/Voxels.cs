@@ -27,12 +27,13 @@ namespace TVGLUnitTestsAndBenchmarking
                     continue;
                 }
                 //IO.Save(ts, dir + "/3_bananas");
-                ts.SolidColor = new Color(100, 200, 100, 50);
                 //Presenter.ShowAndHang(ts);
                 var vs = new VoxelizedSolid(ts, 800);
+                vs.SolidColor = new Color(KnownColors.Black);
+                ts.SolidColor = new Color(100, 200, 100, 50);
                 Console.WriteLine("presenting...");
                 //Presenter.ShowAndHang(vs.ConvertToTessellatedSolidMarchingCubes(250));
-                Presenter.ShowAndHang(new Solid[] { vs, ts });
+                Presenter.ShowAndHang(new Solid[] { vs });
                 //continue;
                 var extrudeSolid = vs.DraftToNewSolid(CartesianDirections.XNegative);
                 Presenter.ShowAndHang(extrudeSolid);

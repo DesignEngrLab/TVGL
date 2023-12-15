@@ -68,16 +68,16 @@ namespace TVGL
         {
             get
             {
-                lock (indices)
+                //lock (indices)
                     return GetValue(index);
             }
             set
             {
                 if (value)
-                    lock (indices)
+                    //lock (indices)
                         TurnOn((ushort)index);
                 else
-                    lock (indices)
+                    //lock (indices)
                         TurnOff((ushort)index);
             }
         }

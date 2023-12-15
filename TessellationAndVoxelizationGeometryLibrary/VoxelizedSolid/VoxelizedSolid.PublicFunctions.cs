@@ -22,7 +22,7 @@ namespace TVGL
     /// <summary>
     /// Class VoxelizedSolid.
     /// </summary>
-    public partial class VoxelizedSolid : Solid, IEnumerable<(int, int, int)>
+    public partial class VoxelizedSolid : Solid, IEnumerable<(int xIndex, int yIndex, int zIndex)>
     {
         #region Public Methods that Branch
         /// <summary>

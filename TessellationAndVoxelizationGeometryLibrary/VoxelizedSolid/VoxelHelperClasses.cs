@@ -57,7 +57,7 @@ namespace TVGL
     /// Implements the <see cref="System.Collections.Generic.IEnumerator{System.Int32[]}" />
     /// </summary>
     /// <seealso cref="System.Collections.Generic.IEnumerator{System.Int32[]}" />
-    internal class VoxelEnumerator : IEnumerator<(int, int, int)>
+    internal class VoxelEnumerator : IEnumerator<(int xIndex, int yIndex, int zIndex)>
     {
         /// <summary>
         /// The vs
@@ -66,7 +66,7 @@ namespace TVGL
         /// <summary>
         /// The current voxel position
         /// </summary>
-        private (int, int, int) currentVoxelPosition;
+        private (int xIndex, int yIndex, int zIndex) currentVoxelPosition;
         /// <summary>
         /// The x index
         /// </summary>
@@ -114,7 +114,7 @@ namespace TVGL
         /// Gets the element in the collection at the current position of the enumerator.
         /// </summary>
         /// <value>The current.</value>
-        (int, int, int) IEnumerator<(int, int, int)>.Current => currentVoxelPosition;
+        (int xIndex, int yIndex, int zIndex) IEnumerator<(int xIndex, int yIndex, int zIndex)>.Current => currentVoxelPosition;
 
         /// <summary>
         /// Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.
