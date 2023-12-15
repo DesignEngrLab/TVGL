@@ -22,7 +22,7 @@ namespace TVGL
     /// <summary>
     /// Class VoxelizedSolid.
     /// </summary>
-    public partial class VoxelizedSolid : Solid, IEnumerable<int[]>
+    public partial class VoxelizedSolid : Solid, IEnumerable<(int, int, int)>
     {
         #region Public Methods that Branch
         /// <summary>
@@ -127,6 +127,21 @@ namespace TVGL
             if (zCoord + 1 < numVoxelsZ && voxels[yCoord + zMultiplier * (zCoord + 1)][xCoord]) neighbors++;
 
             return neighbors;
+        }
+
+        public bool IsExposed(int xCoord, int yCoord, int zCoord)
+        {
+            if (!this[xCoord, yCoord, zCoord]) return false;
+            var xNeighbors = voxels[yCoord + zMultiplier * zCoord].GetNeighbors(xCoord, numVoxelsX);
+            if (!xNeighbors.Item1) return true;
+            if (!xNeighbors.Item2) return true;
+            if (yCoord == 0 || yCoord + 1 >= numVoxelsY || zCoord == 0 || zCoord + 1 >= numVoxelsZ)
+                return true;
+            if (!voxels[yCoord - 1 + zMultiplier * zCoord][xCoord]) return true;
+            if (!voxels[yCoord + 1 + zMultiplier * zCoord][xCoord]) return true;
+            if (!voxels[yCoord + zMultiplier * (zCoord - 1)][xCoord]) return true;
+            if (!voxels[yCoord + zMultiplier * (zCoord + 1)][xCoord]) return true;
+            return false;
         }
         #endregion
 

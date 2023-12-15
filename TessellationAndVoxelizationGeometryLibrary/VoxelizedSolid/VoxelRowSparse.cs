@@ -60,43 +60,6 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="VoxelRowSparse" /> struct.
-        /// </summary>
-        /// <param name="row">The row.</param>
-        /// <param name="length">The length.</param>
-        public static VoxelRowSparse CopyToSparse(IVoxelRow row)
-        {
-            var copy = new VoxelRowSparse();
-            if (row is VoxelRowSparse sparse)
-                copy.indices.AddRange(sparse.indices);
-            else
-                copy.indices.AddRange(GetDenseRowAsIndices((VoxelRowDense)row));
-            return copy;
-        }
-
-        public static IEnumerable<ushort> GetDenseRowAsIndices(VoxelRowDense denseRow)
-        {
-            var lastVal = false;
-            ushort i = 0;
-            foreach (var thisByte in denseRow.values)
-            {
-                var currentByte = thisByte;
-                for (int j = 0; j < 8; j++)
-                {
-                    var currentVal = (currentByte & 0b10000000) != 0;
-                    if (currentVal != lastVal)
-                    {
-                        lastVal = currentVal;
-                        yield return i;
-                    }
-                    currentByte <<= 1;
-                    i++;
-                }
-            }
-            if (lastVal) yield return i;
-        }
-
-        /// <summary>
         /// Gets or sets the <see cref="System.Boolean" /> at the specified index.
         /// </summary>
         /// <param name="index">The index.</param>
@@ -290,7 +253,7 @@ namespace TVGL
             for (int i = 0; i < others.Length; i++)
             {
                 IVoxelRow other = others[i];
-                if (other is VoxelRowDense) other = CopyToSparse(other);
+                if (other is VoxelRowDense) other = VoxelizedSolid.CopyToSparse(other);
                 var otherIndices = ((VoxelRowSparse)other).indices;
                 var otherLength = otherIndices.Count;
                 var indexLowerBound = 0;
@@ -309,7 +272,7 @@ namespace TVGL
             for (int i = 0; i < others.Length; i++)
             {
                 IVoxelRow other = others[i];
-                if (other is VoxelRowDense) other = CopyToSparse(other);
+                if (other is VoxelRowDense) other = VoxelizedSolid.CopyToSparse(other);
                 var otherIndices = ((VoxelRowSparse)other).indices;
                 var otherLength = otherIndices.Count;
                 var indexLowerBound = 0;
@@ -335,7 +298,7 @@ namespace TVGL
             for (int i = 0; i < subtrahends.Length; i++)
             {
                 IVoxelRow subtrahend = subtrahends[i];
-                if (subtrahend is VoxelRowDense) subtrahend = CopyToSparse(subtrahend);
+                if (subtrahend is VoxelRowDense) subtrahend = VoxelizedSolid.CopyToSparse(subtrahend);
                 var otherIndices = ((VoxelRowSparse)subtrahend).indices;
                 var otherLength = otherIndices.Count;
                 var indexLowerBound = 0;

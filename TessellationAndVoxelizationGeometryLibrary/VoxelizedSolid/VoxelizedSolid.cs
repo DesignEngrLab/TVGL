@@ -11,10 +11,12 @@
 // </copyright>
 // <summary></summary>
 // ***********************************************************************
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 
 
 
@@ -23,7 +25,7 @@ namespace TVGL
     /// <summary>
     /// Class VoxelizedSparseDense.
     /// </summary>
-    public partial class VoxelizedSolid : Solid, IEnumerable<int[]>
+    public partial class VoxelizedSolid : Solid, IEnumerable<(int, int, int)>
     {
         #region Properties
 
@@ -90,6 +92,20 @@ namespace TVGL
         /// <value>The fraction dense.</value>
         public double FractionDense { get; private set; }
 
+        internal int NumBytesInX
+        {
+            get
+            {
+                if (numBytesInX < 0)
+                {
+                    numBytesInX = numVoxelsX >> 3;  // divide by 2^3 or 8 since 8 bits in a byte
+                    if ((numVoxelsX & 7) != 0) numBytesInX++; // not sure i get this
+                }
+                return numBytesInX;
+            }
+        }
+        int numBytesInX = -1;
+
         #endregion Properties
 
         #region Constructors
@@ -101,11 +117,6 @@ namespace TVGL
         {
         }
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="VoxelizedSolid" /> class.
-        /// </summary>
-        /// <param name="vs">The vs.</param>
-        /// 
 
         /// <summary>
         /// Copies this instance. Note, that this overrides the base class, Solid. You may need to
@@ -126,7 +137,7 @@ namespace TVGL
                 voxels = new IVoxelRow[numVoxelsY * numVoxelsZ]
             };
             for (int i = 0; i < numVoxelsY * numVoxelsZ; i++)
-                copy.voxels[i] = VoxelRowSparse.CopyToSparse(this.voxels[i]);
+                copy.voxels[i] = CopyToSparse(this.voxels[i]);
             copy.FractionDense = 0;
             copy.UpdateProperties();
             return copy;
@@ -147,9 +158,9 @@ namespace TVGL
             Dimensions = Bounds[1].Subtract(Bounds[0]);
             SolidColor = new Color(ts.SolidColor.A, ts.SolidColor.R, ts.SolidColor.G, ts.SolidColor.B);
             VoxelSideLength = Math.Max(Dimensions.X, Math.Max(Dimensions.Y, Dimensions.Z)) / voxelsOnLongSide;
-            numVoxelsX = GetMaxNumberOfVoxels(Dimensions.X , VoxelSideLength,"X");
-            numVoxelsY = GetMaxNumberOfVoxels(Dimensions.Y , VoxelSideLength, "Y");
-            numVoxelsZ = GetMaxNumberOfVoxels(Dimensions.Z , VoxelSideLength, "Z");
+            numVoxelsX = GetMaxNumberOfVoxels(Dimensions.X, VoxelSideLength, "X");
+            numVoxelsY = GetMaxNumberOfVoxels(Dimensions.Y, VoxelSideLength, "Y");
+            numVoxelsZ = GetMaxNumberOfVoxels(Dimensions.Z, VoxelSideLength, "Z");
             voxels = new IVoxelRow[numVoxelsY * numVoxelsZ];
             for (int i = 0; i < numVoxelsY * numVoxelsZ; i++)
                 voxels[i] = new VoxelRowSparse(numVoxelsX);
@@ -173,9 +184,9 @@ namespace TVGL
             Dimensions = Bounds[1].Subtract(Bounds[0]);
             SolidColor = new Color(Constants.DefaultColor);
             VoxelSideLength = voxelSideLength;
-            numVoxelsX = GetMaxNumberOfVoxels(Dimensions.X , VoxelSideLength, "X");
-            numVoxelsY = GetMaxNumberOfVoxels(Dimensions.Y , VoxelSideLength, "Y");
-            numVoxelsZ = GetMaxNumberOfVoxels(Dimensions.Z , VoxelSideLength, "Z");
+            numVoxelsX = GetMaxNumberOfVoxels(Dimensions.X, VoxelSideLength, "X");
+            numVoxelsY = GetMaxNumberOfVoxels(Dimensions.Y, VoxelSideLength, "Y");
+            numVoxelsZ = GetMaxNumberOfVoxels(Dimensions.Z, VoxelSideLength, "Z");
             voxels = new IVoxelRow[numVoxelsY * numVoxelsZ];
             for (int i = 0; i < numVoxelsY * numVoxelsZ; i++)
                 voxels[i] = new VoxelRowSparse(numVoxelsX);
@@ -195,8 +206,8 @@ namespace TVGL
             Bounds = new[] { new Vector3(bounds[0], 0), new Vector3(bounds[1], 1) };
             Dimensions = Bounds[1].Subtract(Bounds[0]);
             VoxelSideLength = Math.Max(Dimensions.X, Math.Max(Dimensions.Y, Dimensions.Z)) / voxelsOnLongSide;
-            numVoxelsX = GetMaxNumberOfVoxels(Dimensions.X , VoxelSideLength, "X");
-            numVoxelsY = GetMaxNumberOfVoxels(Dimensions.Y , VoxelSideLength, "Y");
+            numVoxelsX = GetMaxNumberOfVoxels(Dimensions.X, VoxelSideLength, "X");
+            numVoxelsY = GetMaxNumberOfVoxels(Dimensions.Y, VoxelSideLength, "Y");
             numVoxelsZ = 1;
             voxels = new IVoxelRow[numVoxelsY * numVoxelsZ];
             for (int i = 0; i < numVoxelsY * numVoxelsZ; i++)
@@ -290,9 +301,9 @@ namespace TVGL
             fullBlock.Dimensions = fullBlock.Bounds[1].Subtract(fullBlock.Bounds[0]);
             fullBlock.SolidColor = new Color(Constants.DefaultColor);
             fullBlock.VoxelSideLength = voxelSideLength;
-            fullBlock.numVoxelsX = GetMaxNumberOfVoxels(fullBlock.Dimensions.X , fullBlock.VoxelSideLength, "X");
-            fullBlock.numVoxelsY = GetMaxNumberOfVoxels(fullBlock.Dimensions.Y , fullBlock.VoxelSideLength, "Y");
-            fullBlock.numVoxelsZ = GetMaxNumberOfVoxels(fullBlock.Dimensions.Z , fullBlock.VoxelSideLength, "Z");
+            fullBlock.numVoxelsX = GetMaxNumberOfVoxels(fullBlock.Dimensions.X, fullBlock.VoxelSideLength, "X");
+            fullBlock.numVoxelsY = GetMaxNumberOfVoxels(fullBlock.Dimensions.Y, fullBlock.VoxelSideLength, "Y");
+            fullBlock.numVoxelsZ = GetMaxNumberOfVoxels(fullBlock.Dimensions.Z, fullBlock.VoxelSideLength, "Z");
             fullBlock.voxels = new IVoxelRow[fullBlock.numVoxelsY * fullBlock.numVoxelsZ];
             for (int i = 0; i < fullBlock.numVoxelsY * fullBlock.numVoxelsZ; i++)
             {
@@ -309,7 +320,7 @@ namespace TVGL
         {
             var num = Math.Ceiling(length / voxelSideLength);
             if (num > ushort.MaxValue)
-                throw new Exception("Exceeds maximum voxel limit in "+dimensionStr+"-dir (" +num+" > "+ushort.MaxValue);
+                throw new Exception("Exceeds maximum voxel limit in " + dimensionStr + "-dir (" + num + " > " + ushort.MaxValue);
             return (ushort)num;
         }
 
@@ -326,7 +337,7 @@ namespace TVGL
             for (int i = 0; i < numVoxelsY * numVoxelsZ; i++)
             {
                 if (voxels[i] is VoxelRowDense) continue;
-                voxels[i] = new VoxelRowDense((VoxelRowSparse)voxels[i], numVoxelsX);
+                voxels[i] = CopyToDense(voxels[i], numBytesInX);
             }
             FractionDense = 1;
         }
@@ -340,9 +351,71 @@ namespace TVGL
             for (int i = 0; i < numVoxelsY * numVoxelsZ; i++)
             {
                 if (voxels[i] is VoxelRowSparse) continue;
-                voxels[i] = VoxelRowSparse.CopyToSparse(voxels[i]);
+                voxels[i] = CopyToSparse(voxels[i]);
             }
             FractionDense = 0;
+        }
+
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="VoxelRowSparse" /> struct.
+        /// </summary>
+        /// <param name="row">The row.</param>
+        /// <param name="length">The length.</param>
+        internal static VoxelRowSparse CopyToSparse(IVoxelRow row)
+        {
+            var copy = new VoxelRowSparse();
+            if (row is VoxelRowSparse sparse)
+                copy.indices.AddRange(sparse.indices);
+            else
+                copy.indices.AddRange(GetDenseRowAsSparseIndices((VoxelRowDense)row));
+            return copy;
+        }
+
+        internal static IEnumerable<ushort> GetDenseRowAsSparseIndices(VoxelRowDense denseRow)
+        {
+            var lastVal = false;
+            ushort i = 0;
+            foreach (var thisByte in denseRow.values)
+            {
+                var currentByte = thisByte;
+                for (int j = 0; j < 8; j++)
+                {
+                    var currentVal = (currentByte & 0b10000000) != 0;
+                    if (currentVal != lastVal)
+                    {
+                        lastVal = currentVal;
+                        yield return i;
+                    }
+                    currentByte <<= 1;
+                    i++;
+                }
+            }
+            if (lastVal) yield return i;
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="VoxelRowDense" /> struct.
+        /// This is typically used to copy an existing dense row, or convert from
+        /// a sparse row.
+        /// </summary>
+        /// <param name="row">The row.</param>
+        /// <param name="length">The length.</param>
+        internal static VoxelRowDense CopyToDense(IVoxelRow row, int numBytesInX)
+        {
+            var copy = new VoxelRowDense(numBytesInX);
+            if (row is VoxelRowSparse sparse)
+            {
+                if (sparse.indices.Any())
+                    for (int i = 0; i < sparse.indices.Count; i += 2)
+                        copy.TurnOnRange(sparse.indices[i], sparse.indices[i + 1]);
+            }
+            else
+            {
+                var denseRow = (VoxelRowDense)row;
+                denseRow.values.CopyTo(copy.values, 0);
+            }
+            return copy;
         }
 
         /// <summary>
@@ -430,7 +503,7 @@ namespace TVGL
         /// a boolean.
         /// </summary>
         /// <returns>An enumerator that can be used to iterate through the collection.</returns>
-        public IEnumerator<int[]> GetEnumerator()
+        public IEnumerator<(int, int, int)> GetEnumerator()
         {
             return new VoxelEnumerator(this);
         }
@@ -489,5 +562,15 @@ namespace TVGL
         }
 
         #endregion Overrides of Solid abstract members
+
+        public IEnumerable<(int, int, int)> GetExposedVoxels()
+        {
+            for (int i = 0; i < numVoxelsX; i++)
+                for (int j = 0; j < numVoxelsY; j++)
+                    for (int k = 0; k < numVoxelsZ; k++)
+                        if (IsExposed(i, j, k))
+                            yield return (i, j, k);
+        }
+
     }
 }

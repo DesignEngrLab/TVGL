@@ -28,12 +28,6 @@ namespace TVGL
         /// </summary>
         internal readonly byte[] values;
         /// <summary>
-        /// The length of the row. This is the same as the number of voxels in x (numVoxelsX)
-        /// for the participating solid.
-        /// </summary>
-        /// <value>The maximum number of voxels.</value>
-        public ushort maxNumberOfVoxels { get; }
-        /// <summary>
         /// The number bytes
         /// </summary>
         readonly int numBytes;
@@ -43,30 +37,8 @@ namespace TVGL
         /// <param name="length">The length.</param>
         internal VoxelRowDense(int length)
         {
-            maxNumberOfVoxels = (ushort)length;
-            numBytes = length >> 3;
-            if ((length & 7) != 0) numBytes++;
-            values = new byte[numBytes];
-        }
-        /// <summary>
-        /// Initializes a new instance of the <see cref="VoxelRowDense" /> struct.
-        /// This is typically used to copy an existing dense row, or convert from
-        /// a sparse row.
-        /// </summary>
-        /// <param name="row">The row.</param>
-        /// <param name="length">The length.</param>
-        internal VoxelRowDense(IVoxelRow row, int length) : this(length)
-        {
-            if (row is VoxelRowSparse sparse)
-            {
-                if (sparse.indices.Any())
-                    for (int i = 0; i < sparse.indices.Count; i += 2)
-                        TurnOnRange(sparse.indices[i], sparse.indices[i + 1]);
-            }
-            else
-            {
-                values = (byte[])((VoxelRowDense)row).values.Clone();
-            }
+            numBytes = length;
+            values = new byte[length];
         }
 
         /// <summary>
