@@ -100,7 +100,7 @@ namespace TVGL
         /// </summary>
         /// <param name="xCoord">The x coord.</param>
         /// <returns>System.ValueTuple&lt;System.Boolean, System.Boolean&gt;.</returns>
-        public (bool, bool) GetNeighbors(int xCoord)
+        public (bool, bool) GetNeighbors(int xCoord, ushort upperLimit)
         {
             var bytePos = xCoord >> 3;
             var bitPos = xCoord & 7;

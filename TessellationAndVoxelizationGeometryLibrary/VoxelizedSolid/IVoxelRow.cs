@@ -20,13 +20,6 @@ namespace TVGL
     public interface IVoxelRow
     {
         /// <summary>
-        /// The length of the row. This is the same as the number of voxels in x (numVoxelsX)
-        /// for the participating solid.
-        /// </summary>
-        /// <value>The maximum number of voxels.</value>
-        ushort maxNumberOfVoxels { get; }
-
-        /// <summary>
         /// Gets or sets the <see cref="System.Boolean" /> at the specified index.
         /// </summary>
         /// <param name="xCoord">The x coordinate.</param>
@@ -55,7 +48,7 @@ namespace TVGL
         /// </summary>
         /// <param name="xCoord">The x coord.</param>
         /// <returns>System.ValueTuple&lt;System.Boolean, System.Boolean&gt;.</returns>
-        (bool, bool) GetNeighbors(int xCoord);
+        (bool, bool) GetNeighbors(int xCoord, ushort upperLimit);
         /// <summary>
         /// Unions the specified other rows with this row.
         /// </summary>

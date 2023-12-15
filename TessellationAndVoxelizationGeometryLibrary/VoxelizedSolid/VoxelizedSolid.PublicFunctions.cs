@@ -35,7 +35,14 @@ namespace TVGL
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         public bool this[int xCoord, int yCoord, int zCoord]
         {
-            get => voxels[yCoord + zMultiplier * zCoord][xCoord];
+            get
+            {
+                if (xCoord >= numVoxelsX)
+                    // this is needed because the end voxel index in sparse is sometimes
+                    // set to ushort.MaxValue
+                    return false;
+                return voxels[yCoord + zMultiplier * zCoord][xCoord];
+            }
             set => voxels[yCoord + zMultiplier * zCoord][xCoord] = value;
         }
 
@@ -47,8 +54,8 @@ namespace TVGL
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         public bool this[int[] coordinates]
         {
-            get => voxels[coordinates[1] + zMultiplier * coordinates[2]][coordinates[0]];
-            set => voxels[coordinates[1] + zMultiplier * coordinates[2]][coordinates[0]] = value;
+            get => this[coordinates[0], coordinates[1], coordinates[2]];
+            set => this[coordinates[0], coordinates[1], coordinates[2]] = value;
         }
 
         /// <summary>
@@ -78,7 +85,7 @@ namespace TVGL
         public int[][] GetNeighbors(int xCoord, int yCoord, int zCoord)
         {
             var neighbors = new int[][] { null, null, null, null, null, null };
-            var xNeighbors = voxels[yCoord + zMultiplier * zCoord].GetNeighbors(xCoord);
+            var xNeighbors = voxels[yCoord + zMultiplier * zCoord].GetNeighbors(xCoord, numVoxelsX);
             if (xNeighbors.Item1)
                 neighbors[0] = new[] { xCoord - 1, yCoord, zCoord };
             if (xNeighbors.Item2)
@@ -109,7 +116,7 @@ namespace TVGL
         {
             var neighbors = 0;
 
-            var xNeighbors = voxels[yCoord + zMultiplier * zCoord].GetNeighbors(xCoord);
+            var xNeighbors = voxels[yCoord + zMultiplier * zCoord].GetNeighbors(xCoord, numVoxelsX);
             if (xNeighbors.Item1) neighbors++;
             if (xNeighbors.Item2) neighbors++;
 
@@ -538,7 +545,7 @@ namespace TVGL
         {
             var copy = (VoxelizedSolid)Copy();
             var tDir = Vector3.UnitVector(dir);
-            copy.DirectionalErodeToConstraint(constraintSolid, tDir.Normalize(), tLimit, maskSize, maskOptions);
+            copy.DirectionalErodeToConstraint(constraintSolid, tDir, tLimit, maskSize, maskOptions);
             return copy;
         }
 

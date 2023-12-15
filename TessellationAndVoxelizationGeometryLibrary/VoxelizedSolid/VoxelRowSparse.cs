@@ -32,13 +32,6 @@ namespace TVGL
         internal readonly List<ushort> indices;
 
         /// <summary>
-        /// The length of the row. This is the same as the number of voxels in x (numVoxelsX)
-        /// for the participating solid.
-        /// </summary>
-        /// <value>The maximum number of voxels.</value>
-        public ushort maxNumberOfVoxels { get; }
-
-        /// <summary>
         /// Gets the number of voxels in this row.
         /// </summary>
         /// <value>The count.</value>
@@ -63,7 +56,6 @@ namespace TVGL
         /// <param name="length">The length.</param>
         internal VoxelRowSparse(int length)
         {
-            maxNumberOfVoxels = (ushort)length;
             indices = new List<ushort>();
         }
 
@@ -72,34 +64,36 @@ namespace TVGL
         /// </summary>
         /// <param name="row">The row.</param>
         /// <param name="length">The length.</param>
-        internal VoxelRowSparse(IVoxelRow row, int length)
+        public static VoxelRowSparse CopyToSparse(IVoxelRow row)
         {
-            maxNumberOfVoxels = (ushort)length;
+            var copy = new VoxelRowSparse();
             if (row is VoxelRowSparse sparse)
-                indices = new List<ushort>(sparse.indices);
+                copy.indices.AddRange(sparse.indices);
             else
+                copy.indices.AddRange(GetDenseRowAsIndices((VoxelRowDense)row));
+            return copy;
+        }
+
+        public static IEnumerable<ushort> GetDenseRowAsIndices(VoxelRowDense denseRow)
+        {
+            var lastVal = false;
+            ushort i = 0;
+            foreach (var thisByte in denseRow.values)
             {
-                indices = new List<ushort>();
-                var denseRow = ((VoxelRowDense)row);
-                var lastVal = false;
-                ushort i = 0;
-                foreach (var thisByte in denseRow.values)
+                var currentByte = thisByte;
+                for (int j = 0; j < 8; j++)
                 {
-                    var currentByte = thisByte;
-                    for (int j = 0; j < 8; j++)
+                    var currentVal = (currentByte & 0b10000000) != 0;
+                    if (currentVal != lastVal)
                     {
-                        var currentVal = (currentByte & 0b10000000) != 0;
-                        if (currentVal != lastVal)
-                        {
-                            lastVal = currentVal;
-                            indices.Add(i);
-                        }
-                        currentByte <<= 1;
-                        i++;
+                        lastVal = currentVal;
+                        yield return i;
                     }
+                    currentByte <<= 1;
+                    i++;
                 }
-                if (lastVal) indices.Add(i);
             }
+            if (lastVal) yield return i;
         }
 
         /// <summary>
@@ -143,15 +137,15 @@ namespace TVGL
         /// </summary>
         /// <param name="xCoord">The x coord.</param>
         /// <returns>System.ValueTuple&lt;System.Boolean, System.Boolean&gt;.</returns>
-        public (bool, bool) GetNeighbors(int xCoord)
+        public (bool, bool) GetNeighbors(int xCoord, ushort upperLimit)
         {
             var count = indices.Count;
             if (count == 0) return (false, false);
             if (xCoord == 0)
-            {
-                var upperNeighber = GetValue(xCoord + 1);
-                return (false, upperNeighber);
-            }
+                return (false, GetValue(xCoord + 1));
+            if (xCoord == upperLimit - 1)
+                return (GetValue(xCoord - 1), false);
+
             var i = BinarySearch(indices, count, xCoord, out var valueExists, out var voxelIsOn);
             if (voxelIsOn) //then index is a value in this list - either a lower or upper range
             {
@@ -296,7 +290,7 @@ namespace TVGL
             for (int i = 0; i < others.Length; i++)
             {
                 IVoxelRow other = others[i];
-                if (other is VoxelRowDense) other = new VoxelRowSparse(other, other.maxNumberOfVoxels);
+                if (other is VoxelRowDense) other = CopyToSparse(other);
                 var otherIndices = ((VoxelRowSparse)other).indices;
                 var otherLength = otherIndices.Count;
                 var indexLowerBound = 0;
@@ -315,7 +309,7 @@ namespace TVGL
             for (int i = 0; i < others.Length; i++)
             {
                 IVoxelRow other = others[i];
-                if (other is VoxelRowDense) other = new VoxelRowSparse(other, other.maxNumberOfVoxels);
+                if (other is VoxelRowDense) other = CopyToSparse(other);
                 var otherIndices = ((VoxelRowSparse)other).indices;
                 var otherLength = otherIndices.Count;
                 var indexLowerBound = 0;
@@ -326,7 +320,7 @@ namespace TVGL
                         TurnOffRange(0, otherIndices[0], ref indexLowerBound);
                     for (int j = 1; j < otherLength - 1; j += 2)
                         TurnOffRange(otherIndices[j], otherIndices[j + 1], ref indexLowerBound);
-                    TurnOffRange(otherIndices[otherLength - 1], other.maxNumberOfVoxels, ref indexLowerBound);
+                    TurnOffRange(otherIndices[otherLength - 1], ushort.MaxValue, ref indexLowerBound);
                 }
             }
         }
@@ -341,7 +335,7 @@ namespace TVGL
             for (int i = 0; i < subtrahends.Length; i++)
             {
                 IVoxelRow subtrahend = subtrahends[i];
-                if (subtrahend is VoxelRowDense) subtrahend = new VoxelRowSparse(subtrahend, subtrahend.maxNumberOfVoxels);
+                if (subtrahend is VoxelRowDense) subtrahend = CopyToSparse(subtrahend);
                 var otherIndices = ((VoxelRowSparse)subtrahend).indices;
                 var otherLength = otherIndices.Count;
                 var indexLowerBound = 0;
@@ -500,16 +494,16 @@ namespace TVGL
             if (!indices.Any())
             {
                 indices.Add(0);
-                indices.Add(maxNumberOfVoxels);
+                indices.Add(ushort.MaxValue);
             }
             else
             {
                 if (indices[0] == 0) indices.RemoveAt(0);
                 else indices.Insert(0, 0);
                 var lastIndex = indices.Count - 1;
-                if (indices[lastIndex] == maxNumberOfVoxels)
+                if (indices[lastIndex] == ushort.MaxValue)
                     indices.RemoveAt(lastIndex);
-                else indices.Add(maxNumberOfVoxels);
+                else indices.Add(ushort.MaxValue);
             }
         }
 

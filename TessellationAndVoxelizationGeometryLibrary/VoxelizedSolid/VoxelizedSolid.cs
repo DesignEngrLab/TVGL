@@ -43,7 +43,7 @@ namespace TVGL
         /// Gets the voxels per side.
         /// </summary>
         /// <value>The voxels per side.</value>
-        public int[] VoxelsPerSide => new[] { numVoxelsX, numVoxelsY, numVoxelsZ };
+        public int[] VoxelsPerSide => new int[] { numVoxelsX, numVoxelsY, numVoxelsZ };
         /// <summary>
         /// Gets the voxel bounds.
         /// </summary>
@@ -68,17 +68,17 @@ namespace TVGL
         /// Gets the number voxels x.
         /// </summary>
         /// <value>The number voxels x.</value>
-        public int numVoxelsX { get; private set; }
+        public ushort numVoxelsX { get; private set; }
         /// <summary>
         /// Gets the number voxels y.
         /// </summary>
         /// <value>The number voxels y.</value>
-        public int numVoxelsY { get; private set; }
+        public ushort numVoxelsY { get; private set; }
         /// <summary>
         /// Gets the number voxels z.
         /// </summary>
         /// <value>The number voxels z.</value>
-        public int numVoxelsZ { get; private set; }
+        public ushort numVoxelsZ { get; private set; }
         /// <summary>
         /// Gets the z multiplier.
         /// </summary>
@@ -105,20 +105,31 @@ namespace TVGL
         /// Initializes a new instance of the <see cref="VoxelizedSolid" /> class.
         /// </summary>
         /// <param name="vs">The vs.</param>
-        internal VoxelizedSolid(VoxelizedSolid vs) : this()
+        /// 
+
+        /// <summary>
+        /// Copies this instance. Note, that this overrides the base class, Solid. You may need to
+        /// cast it to VoxelizedSolid in your code. E.g., var copyOfVS = (VoxelizedSolid)vs.copy;
+        /// </summary>
+        /// <returns>Solid.</returns>
+        public VoxelizedSolid Copy()
         {
-            Bounds = new[] { vs.Bounds[0], vs.Bounds[1] };
-            Dimensions = Bounds[1].Subtract(Bounds[0]);
-            SolidColor = new Color(vs.SolidColor.A, vs.SolidColor.R, vs.SolidColor.G, vs.SolidColor.B);
-            VoxelSideLength = vs.VoxelSideLength;
-            numVoxelsX = vs.numVoxelsX;
-            numVoxelsY = vs.numVoxelsY;
-            numVoxelsZ = vs.numVoxelsZ;
-            voxels = new IVoxelRow[numVoxelsY * numVoxelsZ];
+            var copy = new VoxelizedSolid
+            {
+                Bounds = new[] { this.Bounds[0], this.Bounds[1] },
+                Dimensions = Bounds[1].Subtract(Bounds[0]),
+                SolidColor = new Color(this.SolidColor.A, this.SolidColor.R, this.SolidColor.G, this.SolidColor.B),
+                VoxelSideLength = this.VoxelSideLength,
+                numVoxelsX = this.numVoxelsX,
+                numVoxelsY = this.numVoxelsY,
+                numVoxelsZ = this.numVoxelsZ,
+                voxels = new IVoxelRow[numVoxelsY * numVoxelsZ]
+            };
             for (int i = 0; i < numVoxelsY * numVoxelsZ; i++)
-                voxels[i] = new VoxelRowSparse(vs.voxels[i], numVoxelsX);
-            FractionDense = 0;
-            UpdateProperties();
+                copy.voxels[i] = VoxelRowSparse.CopyToSparse(this.voxels[i]);
+            copy.FractionDense = 0;
+            copy.UpdateProperties();
+            return copy;
         }
 
         /// <summary>
@@ -136,9 +147,9 @@ namespace TVGL
             Dimensions = Bounds[1].Subtract(Bounds[0]);
             SolidColor = new Color(ts.SolidColor.A, ts.SolidColor.R, ts.SolidColor.G, ts.SolidColor.B);
             VoxelSideLength = Math.Max(Dimensions.X, Math.Max(Dimensions.Y, Dimensions.Z)) / voxelsOnLongSide;
-            numVoxelsX = (int)Math.Ceiling(Dimensions.X / VoxelSideLength);
-            numVoxelsY = (int)Math.Ceiling(Dimensions.Y / VoxelSideLength);
-            numVoxelsZ = (int)Math.Ceiling(Dimensions.Z / VoxelSideLength);
+            numVoxelsX = GetMaxNumberOfVoxels(Dimensions.X , VoxelSideLength,"X");
+            numVoxelsY = GetMaxNumberOfVoxels(Dimensions.Y , VoxelSideLength, "Y");
+            numVoxelsZ = GetMaxNumberOfVoxels(Dimensions.Z , VoxelSideLength, "Z");
             voxels = new IVoxelRow[numVoxelsY * numVoxelsZ];
             for (int i = 0; i < numVoxelsY * numVoxelsZ; i++)
                 voxels[i] = new VoxelRowSparse(numVoxelsX);
@@ -162,9 +173,9 @@ namespace TVGL
             Dimensions = Bounds[1].Subtract(Bounds[0]);
             SolidColor = new Color(Constants.DefaultColor);
             VoxelSideLength = voxelSideLength;
-            numVoxelsX = (int)Math.Ceiling(Dimensions.X / VoxelSideLength);
-            numVoxelsY = (int)Math.Ceiling(Dimensions.Y / VoxelSideLength);
-            numVoxelsZ = (int)Math.Ceiling(Dimensions.Z / VoxelSideLength);
+            numVoxelsX = GetMaxNumberOfVoxels(Dimensions.X , VoxelSideLength, "X");
+            numVoxelsY = GetMaxNumberOfVoxels(Dimensions.Y , VoxelSideLength, "Y");
+            numVoxelsZ = GetMaxNumberOfVoxels(Dimensions.Z , VoxelSideLength, "Z");
             voxels = new IVoxelRow[numVoxelsY * numVoxelsZ];
             for (int i = 0; i < numVoxelsY * numVoxelsZ; i++)
                 voxels[i] = new VoxelRowSparse(numVoxelsX);
@@ -184,8 +195,8 @@ namespace TVGL
             Bounds = new[] { new Vector3(bounds[0], 0), new Vector3(bounds[1], 1) };
             Dimensions = Bounds[1].Subtract(Bounds[0]);
             VoxelSideLength = Math.Max(Dimensions.X, Math.Max(Dimensions.Y, Dimensions.Z)) / voxelsOnLongSide;
-            numVoxelsX = (int)Math.Ceiling(Dimensions.X / VoxelSideLength);
-            numVoxelsY = (int)Math.Ceiling(Dimensions.Y / VoxelSideLength);
+            numVoxelsX = GetMaxNumberOfVoxels(Dimensions.X , VoxelSideLength, "X");
+            numVoxelsY = GetMaxNumberOfVoxels(Dimensions.Y , VoxelSideLength, "Y");
             numVoxelsZ = 1;
             voxels = new IVoxelRow[numVoxelsY * numVoxelsZ];
             for (int i = 0; i < numVoxelsY * numVoxelsZ; i++)
@@ -232,7 +243,7 @@ namespace TVGL
             for (var k = 0; k < numVoxelsZ; k++)
             {
                 var loops = decomp[k];
-                if (loops!=null && loops.Any())
+                if (loops != null && loops.Any())
                 {
                     var intersections = PolygonOperations.AllPolygonIntersectionPointsAlongHorizontalLines(loops, yBegin, VoxelSideLength, out var yStartIndex);
                     var numYlines = intersections.Count;
@@ -279,9 +290,9 @@ namespace TVGL
             fullBlock.Dimensions = fullBlock.Bounds[1].Subtract(fullBlock.Bounds[0]);
             fullBlock.SolidColor = new Color(Constants.DefaultColor);
             fullBlock.VoxelSideLength = voxelSideLength;
-            fullBlock.numVoxelsX = (int)Math.Ceiling(fullBlock.Dimensions.X / fullBlock.VoxelSideLength);
-            fullBlock.numVoxelsY = (int)Math.Ceiling(fullBlock.Dimensions.Y / fullBlock.VoxelSideLength);
-            fullBlock.numVoxelsZ = (int)Math.Ceiling(fullBlock.Dimensions.Z / fullBlock.VoxelSideLength);
+            fullBlock.numVoxelsX = GetMaxNumberOfVoxels(fullBlock.Dimensions.X , fullBlock.VoxelSideLength, "X");
+            fullBlock.numVoxelsY = GetMaxNumberOfVoxels(fullBlock.Dimensions.Y , fullBlock.VoxelSideLength, "Y");
+            fullBlock.numVoxelsZ = GetMaxNumberOfVoxels(fullBlock.Dimensions.Z , fullBlock.VoxelSideLength, "Z");
             fullBlock.voxels = new IVoxelRow[fullBlock.numVoxelsY * fullBlock.numVoxelsZ];
             for (int i = 0; i < fullBlock.numVoxelsY * fullBlock.numVoxelsZ; i++)
             {
@@ -292,6 +303,14 @@ namespace TVGL
             }
             fullBlock.UpdateProperties();
             return fullBlock;
+        }
+
+        private static ushort GetMaxNumberOfVoxels(double length, double voxelSideLength, string dimensionStr)
+        {
+            var num = Math.Ceiling(length / voxelSideLength);
+            if (num > ushort.MaxValue)
+                throw new Exception("Exceeds maximum voxel limit in "+dimensionStr+"-dir (" +num+" > "+ushort.MaxValue);
+            return (ushort)num;
         }
 
         #endregion Constructors
@@ -321,7 +340,7 @@ namespace TVGL
             for (int i = 0; i < numVoxelsY * numVoxelsZ; i++)
             {
                 if (voxels[i] is VoxelRowSparse) continue;
-                voxels[i] = new VoxelRowSparse((VoxelRowDense)voxels[i], numVoxelsX);
+                voxels[i] = VoxelRowSparse.CopyToSparse(voxels[i]);
             }
             FractionDense = 0;
         }
@@ -376,18 +395,6 @@ namespace TVGL
         #endregion Conversion Methods
 
         #region Overrides of Solid abstract members
-
-        /// <summary>
-        /// Copies this instance. Note, that this overrides the base class, Solid. You may need to
-        /// cast it to VoxelizedSolid in your code. E.g., var copyOfVS = (VoxelizedSolid)vs.copy;
-        /// </summary>
-        /// <returns>Solid.</returns>
-        public VoxelizedSolid Copy()
-        {
-            UpdateToAllSparse();
-            return new VoxelizedSolid(this);
-        }
-
         /// <summary>
         /// Transforms the solid with the specified transform matrix.
         /// </summary>
