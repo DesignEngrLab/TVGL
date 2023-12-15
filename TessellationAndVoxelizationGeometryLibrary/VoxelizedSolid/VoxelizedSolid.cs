@@ -33,7 +33,7 @@ namespace TVGL
         /// Gets the voxels.
         /// </summary>
         /// <value>The voxels.</value>
-        public IVoxelRow[] voxels { get; private set; }
+        public VoxelRowBase[] voxels { get; private set; }
 
         /// <summary>
         /// Gets the count.
@@ -134,7 +134,7 @@ namespace TVGL
                 numVoxelsX = this.numVoxelsX,
                 numVoxelsY = this.numVoxelsY,
                 numVoxelsZ = this.numVoxelsZ,
-                voxels = new IVoxelRow[numVoxelsY * numVoxelsZ]
+                voxels = new VoxelRowBase[numVoxelsY * numVoxelsZ]
             };
             for (int i = 0; i < numVoxelsY * numVoxelsZ; i++)
                 copy.voxels[i] = CopyToSparse(this.voxels[i]);
@@ -161,7 +161,7 @@ namespace TVGL
             numVoxelsX = GetMaxNumberOfVoxels(Dimensions.X, VoxelSideLength, "X");
             numVoxelsY = GetMaxNumberOfVoxels(Dimensions.Y, VoxelSideLength, "Y");
             numVoxelsZ = GetMaxNumberOfVoxels(Dimensions.Z, VoxelSideLength, "Z");
-            voxels = new IVoxelRow[numVoxelsY * numVoxelsZ];
+            voxels = new VoxelRowBase[numVoxelsY * numVoxelsZ];
             for (int i = 0; i < numVoxelsY * numVoxelsZ; i++)
                 voxels[i] = new VoxelRowSparse(numVoxelsX);
             FillInFromTessellation(ts);
@@ -187,7 +187,7 @@ namespace TVGL
             numVoxelsX = GetMaxNumberOfVoxels(Dimensions.X, VoxelSideLength, "X");
             numVoxelsY = GetMaxNumberOfVoxels(Dimensions.Y, VoxelSideLength, "Y");
             numVoxelsZ = GetMaxNumberOfVoxels(Dimensions.Z, VoxelSideLength, "Z");
-            voxels = new IVoxelRow[numVoxelsY * numVoxelsZ];
+            voxels = new VoxelRowBase[numVoxelsY * numVoxelsZ];
             for (int i = 0; i < numVoxelsY * numVoxelsZ; i++)
                 voxels[i] = new VoxelRowSparse(numVoxelsX);
             FillInFromTessellation(ts);
@@ -209,7 +209,7 @@ namespace TVGL
             numVoxelsX = GetMaxNumberOfVoxels(Dimensions.X, VoxelSideLength, "X");
             numVoxelsY = GetMaxNumberOfVoxels(Dimensions.Y, VoxelSideLength, "Y");
             numVoxelsZ = 1;
-            voxels = new IVoxelRow[numVoxelsY * numVoxelsZ];
+            voxels = new VoxelRowBase[numVoxelsY * numVoxelsZ];
             for (int i = 0; i < numVoxelsY * numVoxelsZ; i++)
                 voxels[i] = new VoxelRowSparse(numVoxelsX);
 
@@ -304,7 +304,7 @@ namespace TVGL
             fullBlock.numVoxelsX = GetMaxNumberOfVoxels(fullBlock.Dimensions.X, fullBlock.VoxelSideLength, "X");
             fullBlock.numVoxelsY = GetMaxNumberOfVoxels(fullBlock.Dimensions.Y, fullBlock.VoxelSideLength, "Y");
             fullBlock.numVoxelsZ = GetMaxNumberOfVoxels(fullBlock.Dimensions.Z, fullBlock.VoxelSideLength, "Z");
-            fullBlock.voxels = new IVoxelRow[fullBlock.numVoxelsY * fullBlock.numVoxelsZ];
+            fullBlock.voxels = new VoxelRowBase[fullBlock.numVoxelsY * fullBlock.numVoxelsZ];
             for (int i = 0; i < fullBlock.numVoxelsY * fullBlock.numVoxelsZ; i++)
             {
                 var fullRow = new VoxelRowSparse(fullBlock.numVoxelsX);
@@ -362,7 +362,7 @@ namespace TVGL
         /// </summary>
         /// <param name="row">The row.</param>
         /// <param name="length">The length.</param>
-        internal static VoxelRowSparse CopyToSparse(IVoxelRow row)
+        internal static VoxelRowSparse CopyToSparse(VoxelRowBase row)
         {
             var copy = new VoxelRowSparse();
             if (row is VoxelRowSparse sparse)
@@ -401,7 +401,7 @@ namespace TVGL
         /// </summary>
         /// <param name="row">The row.</param>
         /// <param name="length">The length.</param>
-        internal static VoxelRowDense CopyToDense(IVoxelRow row, int numBytesInX)
+        internal static VoxelRowDense CopyToDense(VoxelRowBase row, int numBytesInX)
         {
             var copy = new VoxelRowDense(numBytesInX);
             if (row is VoxelRowSparse sparse)

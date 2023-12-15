@@ -20,7 +20,7 @@ namespace TVGL
     /// VoxelRowDense represents the dense array of bits for this line of voxels
     /// </summary>
     /// <seealso cref="TVGL.Voxelization.IVoxelRow" />
-    internal readonly struct VoxelRowDense : IVoxelRow
+    internal readonly struct VoxelRowDense : VoxelRowBase
     {
         /// <summary>
         /// The values is the byte array where each bit corresponds to whether or not
@@ -200,7 +200,7 @@ namespace TVGL
         /// <param name="offset">The offset.</param>
         /// <exception cref="System.ArgumentException">Intersect of Dense Voxels currently" +
         ///                   " does not support an offset.</exception>
-        public void Intersect(IVoxelRow[] others, int offset)
+        public void Intersect(VoxelRowBase[] others, int offset)
         {
             if (offset != 0) throw new ArgumentException("Intersect of Dense Voxels currently" +
                   " does not support an offset.");
@@ -210,7 +210,7 @@ namespace TVGL
         /// Intersects the specified others.
         /// </summary>
         /// <param name="others">The others.</param>
-        internal void Intersect(IVoxelRow[] others)
+        internal void Intersect(VoxelRowBase[] others)
         {
             foreach (var item in others)
             {
@@ -237,7 +237,7 @@ namespace TVGL
         /// <param name="offset">The offset.</param>
         /// <exception cref="System.ArgumentException">Subtract of Dense Voxels currently" +
         ///                   " does not support an offset.</exception>
-        public void Subtract(IVoxelRow[] subtrahends, int offset)
+        public void Subtract(VoxelRowBase[] subtrahends, int offset)
         {
             if (offset != 0) throw new ArgumentException("Subtract of Dense Voxels currently" +
                   " does not support an offset.");
@@ -247,7 +247,7 @@ namespace TVGL
         /// Subtracts the specified subtrahends.
         /// </summary>
         /// <param name="subtrahends">The subtrahends.</param>
-        internal void Subtract(IVoxelRow[] subtrahends)
+        internal void Subtract(VoxelRowBase[] subtrahends)
         {
             foreach (var item in subtrahends)
             {
@@ -274,7 +274,7 @@ namespace TVGL
         /// <param name="offset">The offset.</param>
         /// <exception cref="System.ArgumentException">Union of Dense Voxels currently" +
         ///                   " does not support an offset.</exception>
-        public void Union(IVoxelRow[] others, int offset)
+        public void Union(VoxelRowBase[] others, int offset)
         {
             if (offset != 0) throw new ArgumentException("Union of Dense Voxels currently" +
                   " does not support an offset.");
@@ -284,7 +284,7 @@ namespace TVGL
         /// Unions the specified others.
         /// </summary>
         /// <param name="others">The others.</param>
-        internal void Union(IVoxelRow[] others)
+        internal void Union(VoxelRowBase[] others)
         {
             foreach (var item in others)
             {

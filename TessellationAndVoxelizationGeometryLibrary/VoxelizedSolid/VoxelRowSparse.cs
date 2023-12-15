@@ -21,7 +21,7 @@ namespace TVGL
     /// VoxelRowSparse represents a sparse array of bits for this line of voxels
     /// </summary>
     /// <seealso cref="TVGL.Voxelization.IVoxelRow" />
-    internal readonly struct VoxelRowSparse : IVoxelRow
+    internal class VoxelRowSparse : VoxelRowBase
     {
         /// <summary>
         /// The indices are pairs of ranges of on-voxels, where the lo value is the position
@@ -248,11 +248,11 @@ namespace TVGL
         /// </summary>
         /// <param name="others">The others.</param>
         /// <param name="offset">The offset.</param>
-        public void Union(IVoxelRow[] others, int offset = 0)
+        public void Union(VoxelRowBase[] others, int offset = 0)
         {
             for (int i = 0; i < others.Length; i++)
             {
-                IVoxelRow other = others[i];
+                VoxelRowBase other = others[i];
                 if (other is VoxelRowDense) other = VoxelizedSolid.CopyToSparse(other);
                 var otherIndices = ((VoxelRowSparse)other).indices;
                 var otherLength = otherIndices.Count;
@@ -267,11 +267,11 @@ namespace TVGL
         /// </summary>
         /// <param name="others">The others.</param>
         /// <param name="offset">The offset.</param>
-        public void Intersect(IVoxelRow[] others, int offset = 0)
+        public void Intersect(VoxelRowBase[] others, int offset = 0)
         {
             for (int i = 0; i < others.Length; i++)
             {
-                IVoxelRow other = others[i];
+                VoxelRowBase other = others[i];
                 if (other is VoxelRowDense) other = VoxelizedSolid.CopyToSparse(other);
                 var otherIndices = ((VoxelRowSparse)other).indices;
                 var otherLength = otherIndices.Count;
@@ -293,11 +293,11 @@ namespace TVGL
         /// </summary>
         /// <param name="subtrahends">The subtrahends.</param>
         /// <param name="offset">The offset.</param>
-        public void Subtract(IVoxelRow[] subtrahends, int offset = 0)
+        public void Subtract(VoxelRowBase[] subtrahends, int offset = 0)
         {
             for (int i = 0; i < subtrahends.Length; i++)
             {
-                IVoxelRow subtrahend = subtrahends[i];
+                VoxelRowBase subtrahend = subtrahends[i];
                 if (subtrahend is VoxelRowDense) subtrahend = VoxelizedSolid.CopyToSparse(subtrahend);
                 var otherIndices = ((VoxelRowSparse)subtrahend).indices;
                 var otherLength = otherIndices.Count;
