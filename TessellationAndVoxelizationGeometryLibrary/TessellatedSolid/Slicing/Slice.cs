@@ -804,15 +804,20 @@ namespace TVGL
         /// <param name="stepSize">Size of the step.</param>
         /// <returns>List&lt;Polygon&gt;[].</returns>
         /// <exception cref="System.ArgumentException">Either a valid stepSize or a number of slices greater than zero must be specified.</exception>
-        public static List<Polygon>[] GetUniformlySpacedCrossSections(this TessellatedSolid ts, Vector3 direction, double startDistanceAlongDirection = double.NaN,
+        public static List<Polygon>[] GetUniformlySpacedCrossSections(this TessellatedSolid ts, Vector3 direction,
+            double startDistanceAlongDirection = double.NaN, int numSlices = -1, double stepSize = double.NaN)
+            => GetUniformlySpacedCrossSections(ts.Vertices, direction, startDistanceAlongDirection, numSlices, stepSize);
+
+        public static List<Polygon>[] GetUniformlySpacedCrossSections(this IEnumerable<Vertex> vertices, Vector3 direction, double startDistanceAlongDirection = double.NaN,
         int numSlices = -1, double stepSize = double.NaN)
         {
+            //First, sort the vertices along the given axis. Duplicate distances are not important.
+            var sortedVertices = vertices.OrderBy(v => v.Dot(direction)).ToArray();
             if (double.IsNaN(stepSize) && numSlices < 1) throw new ArgumentException("Either a valid stepSize or a number of slices greater than zero must be specified.");
             direction = direction.Normalize();
             var transform = direction.TransformToXYPlane(out _);
             var plane = new Plane(0.0, direction);
-            //First, sort the vertices along the given axis. Duplicate distances are not important.
-            var sortedVertices = ts.Vertices.OrderBy(v => v.Dot(direction)).ToArray();
+   
             var firstDistance = sortedVertices[0].Dot(direction);
             var lastDistance = sortedVertices[^1].Dot(direction);
             var lengthAlongDir = lastDistance - firstDistance;
