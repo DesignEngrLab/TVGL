@@ -20,7 +20,7 @@ namespace TVGL
     /// VoxelRowDense represents the dense array of bits for this line of voxels
     /// </summary>
     /// <seealso cref="TVGL.Voxelization.IVoxelRow" />
-    internal readonly struct VoxelRowDense : VoxelRowBase
+    internal class VoxelRowDense : VoxelRowBase
     {
         /// <summary>
         /// The values is the byte array where each bit corresponds to whether or not
@@ -46,7 +46,7 @@ namespace TVGL
         /// </summary>
         /// <param name="xCoord">The x coord.</param>
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
-        public bool this[int xCoord]
+        internal override bool this[int xCoord]
         {
             get => GetValue(xCoord >> 3, xCoord & 7);
             set
@@ -72,7 +72,7 @@ namespace TVGL
         /// </summary>
         /// <param name="xCoord">The x coord.</param>
         /// <returns>System.ValueTuple&lt;System.Boolean, System.Boolean&gt;.</returns>
-        public (bool, bool) GetNeighbors(int xCoord, ushort upperLimit)
+        internal override (bool, bool) GetNeighbors(int xCoord, ushort upperLimit)
         {
             var bytePos = xCoord >> 3;
             var bitPos = xCoord & 7;
@@ -120,7 +120,7 @@ namespace TVGL
         /// Gets the number of voxels in this row.
         /// </summary>
         /// <value>The count.</value>
-        public int Count
+        internal override int Count
         {
             get
             {
@@ -146,7 +146,7 @@ namespace TVGL
         /// </summary>
         /// <param name="lo">The lo.</param>
         /// <param name="hi">The hi.</param>
-        public void TurnOnRange(ushort lo, ushort hi)
+        internal override void TurnOnRange(ushort lo, ushort hi)
         {
             var startByte = lo >> 3;
             var endByte = (hi - 1) >> 3;
@@ -172,7 +172,7 @@ namespace TVGL
         /// </summary>
         /// <param name="lo">The lo.</param>
         /// <param name="hi">The hi.</param>
-        public void TurnOffRange(ushort lo, ushort hi)
+        internal override void TurnOffRange(ushort lo, ushort hi)
         {
             var startByte = lo >> 3;
             var endByte = (hi - 1) >> 3;
@@ -200,7 +200,7 @@ namespace TVGL
         /// <param name="offset">The offset.</param>
         /// <exception cref="System.ArgumentException">Intersect of Dense Voxels currently" +
         ///                   " does not support an offset.</exception>
-        public void Intersect(VoxelRowBase[] others, int offset)
+        internal override void Intersect(VoxelRowBase[] others, int offset)
         {
             if (offset != 0) throw new ArgumentException("Intersect of Dense Voxels currently" +
                   " does not support an offset.");
@@ -237,7 +237,7 @@ namespace TVGL
         /// <param name="offset">The offset.</param>
         /// <exception cref="System.ArgumentException">Subtract of Dense Voxels currently" +
         ///                   " does not support an offset.</exception>
-        public void Subtract(VoxelRowBase[] subtrahends, int offset)
+        internal override void Subtract(VoxelRowBase[] subtrahends, int offset)
         {
             if (offset != 0) throw new ArgumentException("Subtract of Dense Voxels currently" +
                   " does not support an offset.");
@@ -274,7 +274,7 @@ namespace TVGL
         /// <param name="offset">The offset.</param>
         /// <exception cref="System.ArgumentException">Union of Dense Voxels currently" +
         ///                   " does not support an offset.</exception>
-        public void Union(VoxelRowBase[] others, int offset)
+        internal override void Union(VoxelRowBase[] others, int offset)
         {
             if (offset != 0) throw new ArgumentException("Union of Dense Voxels currently" +
                   " does not support an offset.");
@@ -307,7 +307,7 @@ namespace TVGL
         /// <summary>
         /// Inverts this row - making all on voxels off and vice-versa.
         /// </summary>
-        public void Invert()
+        internal override void Invert()
         {
             for (int i = 0; i < numBytes; i++)
                 values[i] = (byte)~values[i];
@@ -316,7 +316,7 @@ namespace TVGL
         /// <summary>
         /// Clears this row of all on voxels.
         /// </summary>
-        public void Clear()
+        internal override void Clear()
         {
             for (int i = 0; i < numBytes; i++)
                 values[i] = 0b0;
@@ -326,7 +326,7 @@ namespace TVGL
         /// Averages the positions of the on voxels. This is used in finding center of mass.
         /// </summary>
         /// <returns>System.Int32.</returns>
-        public int TotalXPosition()
+        internal override int TotalXPosition()
         {
             var xTotal = 0;
             var byteOffset = 0;

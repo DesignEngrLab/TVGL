@@ -35,7 +35,7 @@ namespace TVGL
         /// Gets the number of voxels in this row.
         /// </summary>
         /// <value>The count.</value>
-        public int Count
+        internal override int Count
         {
             get
             {
@@ -54,7 +54,7 @@ namespace TVGL
         /// We are forced to add the dummy input.
         /// </summary>
         /// <param name="length">The length.</param>
-        internal VoxelRowSparse(int length)
+        internal VoxelRowSparse()
         {
             indices = new List<ushort>();
         }
@@ -64,7 +64,7 @@ namespace TVGL
         /// </summary>
         /// <param name="index">The index.</param>
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
-        public bool this[int index]
+        internal override bool this[int index]
         {
             get
             {
@@ -100,7 +100,7 @@ namespace TVGL
         /// </summary>
         /// <param name="xCoord">The x coord.</param>
         /// <returns>System.ValueTuple&lt;System.Boolean, System.Boolean&gt;.</returns>
-        public (bool, bool) GetNeighbors(int xCoord, ushort upperLimit)
+        internal override (bool, bool) GetNeighbors(int xCoord, ushort upperLimit)
         {
             var count = indices.Count;
             if (count == 0) return (false, false);
@@ -248,7 +248,7 @@ namespace TVGL
         /// </summary>
         /// <param name="others">The others.</param>
         /// <param name="offset">The offset.</param>
-        public void Union(VoxelRowBase[] others, int offset = 0)
+        internal override void Union(VoxelRowBase[] others, int offset = 0)
         {
             for (int i = 0; i < others.Length; i++)
             {
@@ -267,7 +267,7 @@ namespace TVGL
         /// </summary>
         /// <param name="others">The others.</param>
         /// <param name="offset">The offset.</param>
-        public void Intersect(VoxelRowBase[] others, int offset = 0)
+        internal override void Intersect(VoxelRowBase[] others, int offset = 0)
         {
             for (int i = 0; i < others.Length; i++)
             {
@@ -293,7 +293,7 @@ namespace TVGL
         /// </summary>
         /// <param name="subtrahends">The subtrahends.</param>
         /// <param name="offset">The offset.</param>
-        public void Subtract(VoxelRowBase[] subtrahends, int offset = 0)
+        internal override void Subtract(VoxelRowBase[] subtrahends, int offset = 0)
         {
             for (int i = 0; i < subtrahends.Length; i++)
             {
@@ -312,7 +312,7 @@ namespace TVGL
         /// </summary>
         /// <param name="lo">The lo.</param>
         /// <param name="hi">The hi.</param>
-        public void TurnOnRange(ushort lo, ushort hi)
+        internal override void TurnOnRange(ushort lo, ushort hi)
         {
             var dummy = 0;
             TurnOnRange(lo, hi, ref dummy);
@@ -386,7 +386,7 @@ namespace TVGL
         /// </summary>
         /// <param name="lo">The lo.</param>
         /// <param name="hi">The hi.</param>
-        public void TurnOffRange(ushort lo, ushort hi)
+        internal override void TurnOffRange(ushort lo, ushort hi)
         {
             var dummy = 0;
             TurnOffRange(lo, hi, ref dummy);
@@ -452,7 +452,7 @@ namespace TVGL
         /// <summary>
         /// Inverts this row - making all on voxels off and vice-versa.
         /// </summary>
-        public void Invert()
+        internal override void Invert()
         {
             if (!indices.Any())
             {
@@ -473,7 +473,7 @@ namespace TVGL
         /// <summary>
         /// Clears this row of all on voxels.
         /// </summary>
-        public void Clear()
+        internal override void Clear()
         {
             indices.Clear();
         }
@@ -482,7 +482,7 @@ namespace TVGL
         /// Averages the positions of the on voxels. This is used in finding center of mass.
         /// </summary>
         /// <returns>System.Int32.</returns>
-        public int TotalXPosition()
+        internal override int TotalXPosition()
         {
             var rowTotal = 0;
             var numIndices = indices.Count;

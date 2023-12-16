@@ -33,7 +33,7 @@ namespace TVGL
         /// Gets the voxels.
         /// </summary>
         /// <value>The voxels.</value>
-        public VoxelRowBase[] voxels { get; private set; }
+        internal VoxelRowBase[] voxels { get; private set; }
 
         /// <summary>
         /// Gets the count.
@@ -163,7 +163,7 @@ namespace TVGL
             numVoxelsZ = GetMaxNumberOfVoxels(Dimensions.Z, VoxelSideLength, "Z");
             voxels = new VoxelRowBase[numVoxelsY * numVoxelsZ];
             for (int i = 0; i < numVoxelsY * numVoxelsZ; i++)
-                voxels[i] = new VoxelRowSparse(numVoxelsX);
+                voxels[i] = new VoxelRowSparse();
             FillInFromTessellation(ts);
             FractionDense = 0;
             UpdateProperties();
@@ -189,7 +189,7 @@ namespace TVGL
             numVoxelsZ = GetMaxNumberOfVoxels(Dimensions.Z, VoxelSideLength, "Z");
             voxels = new VoxelRowBase[numVoxelsY * numVoxelsZ];
             for (int i = 0; i < numVoxelsY * numVoxelsZ; i++)
-                voxels[i] = new VoxelRowSparse(numVoxelsX);
+                voxels[i] = new VoxelRowSparse();
             FillInFromTessellation(ts);
             FractionDense = 0;
             UpdateProperties();
@@ -211,7 +211,7 @@ namespace TVGL
             numVoxelsZ = 1;
             voxels = new VoxelRowBase[numVoxelsY * numVoxelsZ];
             for (int i = 0; i < numVoxelsY * numVoxelsZ; i++)
-                voxels[i] = new VoxelRowSparse(numVoxelsX);
+                voxels[i] = new VoxelRowSparse();
 
             var yBegin = Bounds[0][1] + VoxelSideLength / 2;
             var inverseVoxelSideLength = 1 / VoxelSideLength; // since its quicker to multiple then to divide, maybe doing this once at the top will save some time
@@ -307,7 +307,7 @@ namespace TVGL
             fullBlock.voxels = new VoxelRowBase[fullBlock.numVoxelsY * fullBlock.numVoxelsZ];
             for (int i = 0; i < fullBlock.numVoxelsY * fullBlock.numVoxelsZ; i++)
             {
-                var fullRow = new VoxelRowSparse(fullBlock.numVoxelsX);
+                var fullRow = new VoxelRowSparse();
                 fullRow.indices.Add(0);
                 fullRow.indices.Add((ushort)fullBlock.numVoxelsX);
                 fullBlock.voxels[i] = fullRow;
