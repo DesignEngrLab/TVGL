@@ -17,6 +17,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Threading.Tasks;
 
 
 
@@ -137,87 +138,94 @@ namespace TVGL
                 voxels = new VoxelRowBase[numVoxelsY * numVoxelsZ]
             };
             for (int i = 0; i < numVoxelsY * numVoxelsZ; i++)
-                copy.voxels[i] = CopyToSparse(this.voxels[i]);
+                if (voxels[i] != null)
+                    copy.voxels[i] = CopyToSparse(this.voxels[i]);
             copy.FractionDense = 0;
             copy.UpdateProperties();
             return copy;
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="VoxelizedSolid" /> class.
+        /// Create a voxelized solid from a tessellated solid.
         /// </summary>
-        /// <param name="ts">The ts.</param>
-        /// <param name="voxelsOnLongSide">The voxels on long side.</param>
-        /// <param name="bounds">The bounds.</param>
-        public VoxelizedSolid(TessellatedSolid ts, int voxelsOnLongSide, IReadOnlyList<Vector3> bounds = null) : this()
+        /// <param name="ts"></param>
+        /// <param name="voxelsOnLongSide"></param>
+        /// <param name="bounds"></param>
+        /// <returns></returns>
+        public static VoxelizedSolid CreateFrom(TessellatedSolid ts, int voxelsOnLongSide, IReadOnlyList<Vector3> bounds = null)
         {
+            var copy = new VoxelizedSolid();
             if (bounds != null)
-                Bounds = new[] { bounds[0], bounds[1] };
+                copy.Bounds = new[] { bounds[0], bounds[1] };
             else
-                Bounds = new[] { ts.Bounds[0], ts.Bounds[1] };
-            Dimensions = Bounds[1].Subtract(Bounds[0]);
-            SolidColor = new Color(ts.SolidColor.A, ts.SolidColor.R, ts.SolidColor.G, ts.SolidColor.B);
-            VoxelSideLength = Math.Max(Dimensions.X, Math.Max(Dimensions.Y, Dimensions.Z)) / voxelsOnLongSide;
-            numVoxelsX = GetMaxNumberOfVoxels(Dimensions.X, VoxelSideLength, "X");
-            numVoxelsY = GetMaxNumberOfVoxels(Dimensions.Y, VoxelSideLength, "Y");
-            numVoxelsZ = GetMaxNumberOfVoxels(Dimensions.Z, VoxelSideLength, "Z");
-            voxels = new VoxelRowBase[numVoxelsY * numVoxelsZ];
-            for (int i = 0; i < numVoxelsY * numVoxelsZ; i++)
-                voxels[i] = new VoxelRowSparse();
-            FillInFromTessellation(ts);
-            FractionDense = 0;
-            UpdateProperties();
+                copy.Bounds = new[] { ts.Bounds[0], ts.Bounds[1] };
+            copy.Dimensions = copy.Bounds[1].Subtract(copy.Bounds[0]);
+            copy.SolidColor = new Color(ts.SolidColor.A, ts.SolidColor.R, ts.SolidColor.G, ts.SolidColor.B);
+            copy.VoxelSideLength = Math.Max(copy.Dimensions.X, Math.Max(copy.Dimensions.Y, copy.Dimensions.Z)) / voxelsOnLongSide;
+            copy.numVoxelsX = GetMaxNumberOfVoxels(copy.Dimensions.X, copy.VoxelSideLength, "X");
+            copy.numVoxelsY = GetMaxNumberOfVoxels(copy.Dimensions.Y, copy.VoxelSideLength, "Y");
+            copy.numVoxelsZ = GetMaxNumberOfVoxels(copy.Dimensions.Z, copy.VoxelSideLength, "Z");
+            copy.voxels = new VoxelRowBase[copy.numVoxelsY * copy.numVoxelsZ];
+            copy.FillInFromTessellation(ts);
+            copy.FractionDense = 0;
+            copy.UpdateProperties();
+            return copy;
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="VoxelizedSolid" /> class.
+        /// Create a voxelized solid from a tessellated solid.
         /// </summary>
-        /// <param name="ts">The ts.</param>
-        /// <param name="voxelSideLength">Length of the voxel side.</param>
-        /// <param name="bounds">The bounds.</param>
-        public VoxelizedSolid(TessellatedSolid ts, double voxelSideLength, IReadOnlyList<Vector3> bounds = null) : this()
+        /// <param name="ts"></param>
+        /// <param name="voxelSideLength"></param>
+        /// <param name="bounds"></param>
+        /// <returns></returns>
+        public static VoxelizedSolid CreateFrom(TessellatedSolid ts, double voxelSideLength, IReadOnlyList<Vector3> bounds = null)
         {
+            var copy = new VoxelizedSolid();
             if (bounds != null)
-                Bounds = new[] { bounds[0], bounds[1] };
+                copy.Bounds = new[] { bounds[0], bounds[1] };
             else
-                Bounds = new[] { ts.Bounds[0], ts.Bounds[1] };
-            Dimensions = Bounds[1].Subtract(Bounds[0]);
-            SolidColor = new Color(Constants.DefaultColor);
-            VoxelSideLength = voxelSideLength;
-            numVoxelsX = GetMaxNumberOfVoxels(Dimensions.X, VoxelSideLength, "X");
-            numVoxelsY = GetMaxNumberOfVoxels(Dimensions.Y, VoxelSideLength, "Y");
-            numVoxelsZ = GetMaxNumberOfVoxels(Dimensions.Z, VoxelSideLength, "Z");
-            voxels = new VoxelRowBase[numVoxelsY * numVoxelsZ];
-            for (int i = 0; i < numVoxelsY * numVoxelsZ; i++)
-                voxels[i] = new VoxelRowSparse();
-            FillInFromTessellation(ts);
-            FractionDense = 0;
-            UpdateProperties();
+                copy.Bounds = new[] { ts.Bounds[0], ts.Bounds[1] };
+            copy.Dimensions = copy.Bounds[1].Subtract(copy.Bounds[0]);
+            copy.SolidColor = new Color(Constants.DefaultColor);
+            copy.VoxelSideLength = voxelSideLength;
+            copy.numVoxelsX = GetMaxNumberOfVoxels(copy.Dimensions.X, copy.VoxelSideLength, "X");
+            copy.numVoxelsY = GetMaxNumberOfVoxels(copy.Dimensions.Y, copy.VoxelSideLength, "Y");
+            copy.numVoxelsZ = GetMaxNumberOfVoxels(copy.Dimensions.Z, copy.VoxelSideLength, "Z");
+            copy.voxels = new VoxelRowBase[copy.numVoxelsY * copy.numVoxelsZ];
+            for (int i = 0; i < copy.numVoxelsY * copy.numVoxelsZ; i++)
+                copy.voxels[i] = new VoxelRowSparse();
+            copy.FillInFromTessellation(ts);
+            copy.FractionDense = 0;
+            copy.UpdateProperties();
+            return copy;
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="VoxelizedSolid" /> class.
+        /// Create a one-layer voxelized solid from a set of polygons
         /// </summary>
-        /// <param name="loops">The loops.</param>
-        /// <param name="voxelsOnLongSide">The voxels on long side.</param>
-        /// <param name="bounds">The bounds.</param>
-        public VoxelizedSolid(IEnumerable<Polygon> loops, int voxelsOnLongSide, IReadOnlyList<Vector2> bounds) : this()
+        /// <param name="loops"></param>
+        /// <param name="voxelsOnLongSide"></param>
+        /// <param name="bounds"></param>
+        /// <returns></returns>
+        public static VoxelizedSolid CreateFrom(IEnumerable<Polygon> loops, int voxelsOnLongSide, IReadOnlyList<Vector2> bounds)
         {
-            Bounds = new[] { new Vector3(bounds[0], 0), new Vector3(bounds[1], 1) };
-            Dimensions = Bounds[1].Subtract(Bounds[0]);
-            VoxelSideLength = Math.Max(Dimensions.X, Math.Max(Dimensions.Y, Dimensions.Z)) / voxelsOnLongSide;
-            numVoxelsX = GetMaxNumberOfVoxels(Dimensions.X, VoxelSideLength, "X");
-            numVoxelsY = GetMaxNumberOfVoxels(Dimensions.Y, VoxelSideLength, "Y");
-            numVoxelsZ = 1;
-            voxels = new VoxelRowBase[numVoxelsY * numVoxelsZ];
-            for (int i = 0; i < numVoxelsY * numVoxelsZ; i++)
-                voxels[i] = new VoxelRowSparse();
+            var copy = new VoxelizedSolid();
+            copy.Bounds = new[] { new Vector3(bounds[0], 0), new Vector3(bounds[1], 1) };
+            copy.Dimensions = copy.Bounds[1].Subtract(copy.Bounds[0]);
+            copy.VoxelSideLength = Math.Max(copy.Dimensions.X, Math.Max(copy.Dimensions.Y, copy.Dimensions.Z)) / voxelsOnLongSide;
+            copy.numVoxelsX = GetMaxNumberOfVoxels(copy.Dimensions.X, copy.VoxelSideLength, "X");
+            copy.numVoxelsY = GetMaxNumberOfVoxels(copy.Dimensions.Y, copy.VoxelSideLength, "Y");
+            copy.numVoxelsZ = 1;
+            copy.voxels = new VoxelRowBase[copy.numVoxelsY * copy.numVoxelsZ];
+            for (int i = 0; i < copy.numVoxelsY * copy.numVoxelsZ; i++)
+                copy.voxels[i] = new VoxelRowSparse();
 
-            var yBegin = Bounds[0][1] + VoxelSideLength / 2;
-            var inverseVoxelSideLength = 1 / VoxelSideLength; // since its quicker to multiple then to divide, maybe doing this once at the top will save some time
-                                                              //if (loops.Any())
-                                                              //{  // multiple enumeration warning so commenting out above condition. but that sound be a problem for next line
-            var intersections = loops.AllPolygonIntersectionPointsAlongHorizontalLines(yBegin, VoxelSideLength, out var yStartIndex);
+            var yBegin = copy.Bounds[0][1] + copy.VoxelSideLength / 2;
+            var inverseVoxelSideLength = 1 / copy.VoxelSideLength; // since its quicker to multiple then to divide, maybe doing this once at the top will save some time
+                                                                   //if (loops.Any())
+                                                                   //{  // multiple enumeration warning so commenting out above condition. but that sound be a problem for next line
+            var intersections = loops.AllPolygonIntersectionPointsAlongHorizontalLines(yBegin, copy.VoxelSideLength, out var yStartIndex);
             var numYlines = intersections.Count;
             for (int j = -Math.Min(0, yStartIndex); j < numYlines; j++)
             {
@@ -225,16 +233,17 @@ namespace TVGL
                 var numXRangesOnThisLine = intersectionPoints.Length;
                 for (var m = 0; m < numXRangesOnThisLine; m += 2)
                 {
-                    var sp = (ushort)((intersectionPoints[m] - Bounds[0][0]) * inverseVoxelSideLength);
-                    var ep = (ushort)((intersectionPoints[m + 1] - Bounds[0][0]) * inverseVoxelSideLength);
-                    if (ep >= numVoxelsX) ep = (ushort)(numVoxelsX - 1);
-                    ((VoxelRowSparse)voxels[yStartIndex + j]).indices.Add(sp);
-                    ((VoxelRowSparse)voxels[yStartIndex + j]).indices.Add(ep);
+                    var sp = (ushort)((intersectionPoints[m] - copy.Bounds[0][0]) * inverseVoxelSideLength);
+                    var ep = (ushort)((intersectionPoints[m + 1] - copy.Bounds[0][0]) * inverseVoxelSideLength);
+                    if (ep >= copy.numVoxelsX) ep = (ushort)(copy.numVoxelsX - 1);
+                    ((VoxelRowSparse)copy.voxels[yStartIndex + j]).indices.Add(sp);
+                    ((VoxelRowSparse)copy.voxels[yStartIndex + j]).indices.Add(ep);
                 }
             }
             //}
-            FractionDense = 0;
-            UpdateProperties();
+            copy.FractionDense = 0;
+            copy.UpdateProperties();
+            return copy;
         }
 
         #region Fill In From Tessellation Functions
@@ -250,11 +259,11 @@ namespace TVGL
             var decomp = ts.GetUniformlySpacedCrossSections(CartesianDirections.ZPositive, zBegin, numVoxelsZ, VoxelSideLength);
             var inverseVoxelSideLength = 1 / VoxelSideLength; // since its quicker to multiple then to divide, maybe doing this once at the top will save some time
 
-            //Parallel.For(0, numVoxelsZ, k =>
-            for (var k = 0; k < numVoxelsZ; k++)
+            Parallel.For(0, numVoxelsZ, k =>
+            //for (var k = 0; k < numVoxelsZ; k++)
             {
                 var loops = decomp[k];
-                if (loops != null && loops.Any())
+                if (loops != null) // && loops.Any())
                 {
                     var intersections = PolygonOperations.AllPolygonIntersectionPointsAlongHorizontalLines(loops, yBegin, VoxelSideLength, out var yStartIndex);
                     var numYlines = intersections.Count;
@@ -262,18 +271,23 @@ namespace TVGL
                     {
                         var intersectionPoints = intersections[j];
                         var numXRangesOnThisLine = intersectionPoints.Length;
-                        for (var m = 0; m < numXRangesOnThisLine; m += 2)
+                        if (numXRangesOnThisLine > 0)
                         {
-                            var sp = (ushort)((intersectionPoints[m] - Bounds[0][0]) * inverseVoxelSideLength);
-                            var ep = (ushort)((intersectionPoints[m + 1] - Bounds[0][0]) * inverseVoxelSideLength);
-                            if (ep >= numVoxelsX) ep = (ushort)(numVoxelsX - 1);
-                            ((VoxelRowSparse)voxels[k * zMultiplier + j]).indices.Add(sp);
-                            ((VoxelRowSparse)voxels[k * zMultiplier + j]).indices.Add(ep);
+                            var voxelRow = new VoxelRowSparse();
+                            voxels[k * zMultiplier + j] = voxelRow;
+                            for (var m = 0; m < numXRangesOnThisLine; m += 2)
+                            {
+                                var sp = (ushort)((intersectionPoints[m] - Bounds[0][0]) * inverseVoxelSideLength);
+                                var ep = (ushort)((intersectionPoints[m + 1] - Bounds[0][0]) * inverseVoxelSideLength);
+                                if (ep >= numVoxelsX) ep = (ushort)(numVoxelsX - 1);
+                                voxelRow.indices.Add(sp);
+                                voxelRow.indices.Add(ep);
+                            }
                         }
                     }
                 }
             }
-            //);
+            );
         }
 
         #endregion Fill In From Tessellation Functions
@@ -521,11 +535,14 @@ namespace TVGL
                 for (int k = 0; k < numVoxelsZ; k++)
                 {
                     var voxelRow = voxels[j + zMultiplier * k];
-                    var rowCount = voxelRow.Count;
-                    xTotal += rowCount * voxelRow.TotalXPosition();
-                    yTotal += rowCount * j;
-                    zTotal += rowCount * k;
-                    Count += rowCount;
+                    if (voxelRow != null)
+                    {
+                        var rowCount = voxelRow.Count;
+                        xTotal += rowCount * voxelRow.TotalXPosition();
+                        yTotal += rowCount * j;
+                        zTotal += rowCount * k;
+                        Count += rowCount;
+                    }
                 }
             _center = new Vector3  //is this right?
             (
@@ -565,12 +582,34 @@ namespace TVGL
 
         public IEnumerable<(int xIndex, int yIndex, int zIndex)> GetExposedVoxels()
         {
-            // this method
-            for (int i = 0; i < numVoxelsX; i++)
-                for (int j = 0; j < numVoxelsY; j++)
-                    for (int k = 0; k < numVoxelsZ; k++)
-                        if (IsExposed(i, j, k))
-                            yield return (i, j, k);
+            //for (int i = 0; i < numVoxelsX; i++)
+            //    for (int j = 0; j < numVoxelsY; j++)
+            //        for (int k = 0; k < numVoxelsZ; k++)
+            //            if (IsExposed(i, j, k))
+            //                yield return (i, j, k);
+            //yield break;
+            for (int yCoord = 0; yCoord < numVoxelsY; yCoord++)
+                for (int zCoord = 0; zCoord < numVoxelsZ; zCoord++)
+                {
+                    var xCoord = -1;
+                    var nextX = -1;
+                    foreach (var xValue in voxels[yCoord + zMultiplier * zCoord].XCoordinates())
+                    {
+                        var lastX = xCoord;
+                        xCoord = nextX;
+                        nextX = xValue;
+                        if (xCoord < 0) continue;
+                        if (xCoord - lastX > 1 || nextX - xCoord > 1
+                        || yCoord == 0 || yCoord + 1 >= numVoxelsY || zCoord == 0 || zCoord + 1 >= numVoxelsZ
+                         || !voxels[yCoord - 1 + zMultiplier * zCoord][xCoord]
+                         || !voxels[yCoord + 1 + zMultiplier * zCoord][xCoord]
+                         || !voxels[yCoord + zMultiplier * (zCoord - 1)][xCoord]
+                         || !voxels[yCoord + zMultiplier * (zCoord + 1)][xCoord])
+                            yield return (xCoord, yCoord, zCoord);
+                        if (nextX >= numVoxelsX) break;
+                    }
+                    if (nextX >= 0 && nextX < numVoxelsX) yield return (nextX, yCoord, zCoord);
+                }
         }
 
     }

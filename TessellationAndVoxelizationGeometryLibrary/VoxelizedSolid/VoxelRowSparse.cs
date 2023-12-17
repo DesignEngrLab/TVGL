@@ -11,6 +11,7 @@
 // </copyright>
 // <summary></summary>
 // ***********************************************************************
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -68,16 +69,16 @@ namespace TVGL
         {
             get
             {
-                //lock (indices)
+                lock (indices)
                     return GetValue(index);
             }
             set
             {
                 if (value)
-                    //lock (indices)
+                    lock (indices)
                         TurnOn((ushort)index);
                 else
-                    //lock (indices)
+                    lock (indices)
                         TurnOff((ushort)index);
             }
         }
@@ -298,6 +299,7 @@ namespace TVGL
             for (int i = 0; i < subtrahends.Length; i++)
             {
                 VoxelRowBase subtrahend = subtrahends[i];
+                if (subtrahend == null) continue;
                 if (subtrahend is VoxelRowDense) subtrahend = VoxelizedSolid.CopyToSparse(subtrahend);
                 var otherIndices = ((VoxelRowSparse)subtrahend).indices;
                 var otherLength = otherIndices.Count;
@@ -356,11 +358,11 @@ namespace TVGL
         private void TurnOnRange(ushort lo, int loIndex, bool loValueExists, bool loVoxelIsOn, ushort hi, int hiIndex,
             bool hiValueExists, bool hiVoxelIsOn, ref int indexLowerBound)
         {
-            if (loValueExists && loVoxelIsOn) loIndex++; //if the lo value already lines up with the beginning of a current range
+            if (loValueExists && loVoxelIsOn) loIndex++; //if the lo value already lines upLim with the beginning of a current range
             // then don't delete it
             if (hiValueExists && hiVoxelIsOn)
             {
-                hiIndex++; //if the new range ends right where an old one picks up then, be sure not
+                hiIndex++; //if the new range ends right where an old one picks upLim then, be sure not
                            // to include this value in the new ranges as it is in the middle of a good range of on's
                 indexLowerBound++;
             }
@@ -424,11 +426,11 @@ namespace TVGL
         private void TurnOffRange(ushort lo, int loIndex, bool loValueExists, bool loVoxelIsOn, ushort hi, int hiIndex,
             bool hiValueExists, bool hiVoxelIsOn, ref int indexLowerBound)
         {
-            if (loValueExists && !loVoxelIsOn) loIndex++; //if the lo value already lines up with the beginning of a current range
+            if (loValueExists && !loVoxelIsOn) loIndex++; //if the lo value already lines upLim with the beginning of a current range
             // then don't delete it
             if (hiValueExists && !hiVoxelIsOn)
             {
-                hiIndex++; //if the new range ends right where an old one picks up then, be sure not
+                hiIndex++; //if the new range ends right where an old one picks upLim then, be sure not
                            // to include this value in the new ranges as it is in the middle of a good range of on's
                 indexLowerBound++;
             }
@@ -493,6 +495,34 @@ namespace TVGL
                 rowTotal += num * (indices[i] + indices[i + 1]);
             }
             return rowTotal;
+        }
+
+        internal override IEnumerable<int> XCoordinates(ushort start = 0, ushort end = ushort.MaxValue)
+        {
+            if (indices.Count == 0) yield break;
+            var startIndex = 1;
+            while (indices[startIndex] < start) startIndex += 2;
+            startIndex--;
+            for (int i = startIndex; i < indices.Count; i += 2)
+            {
+                ushort upLim;
+                bool lastOne;
+                if (indices[i + 1] > end)
+                {
+                    upLim = end;
+                    lastOne = true;
+                }
+                else
+                {
+                    upLim = indices[i + 1];
+                    lastOne = false;
+                }
+                for (int j = indices[i]; j < upLim; j++)
+                {
+                    yield return j;
+                }
+                if (lastOne) yield break;
+            }
         }
     }
 }

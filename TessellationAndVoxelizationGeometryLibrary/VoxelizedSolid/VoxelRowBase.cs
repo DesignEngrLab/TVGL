@@ -11,6 +11,8 @@
 // </copyright>
 // <summary></summary>
 // ***********************************************************************
+using System.Collections.Generic;
+
 namespace TVGL
 {
     /// <summary>
@@ -83,5 +85,8 @@ namespace TVGL
         /// </summary>
         /// <returns>System.Int32.</returns>
         internal abstract int TotalXPosition();
+
+
+        internal abstract IEnumerable<int> XCoordinates(ushort start = 0, ushort end = ushort.MaxValue);
     }
 }

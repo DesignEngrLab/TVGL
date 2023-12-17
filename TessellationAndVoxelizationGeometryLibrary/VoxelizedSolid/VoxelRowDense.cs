@@ -12,6 +12,7 @@
 // <summary></summary>
 // ***********************************************************************
 using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace TVGL
@@ -345,5 +346,39 @@ namespace TVGL
             }
             return xTotal;
         }
+        internal override IEnumerable<int> XCoordinates(ushort start = 0, ushort end = ushort.MaxValue)
+        {
+            int xValue = start>>3; // divide by 8 to get the number of byte to offset
+
+            foreach (var b in values)
+            {
+                if (b != 0)
+                {
+                    if (b > 127) yield return xValue;
+                    if (++xValue >= end) yield break;
+                    if ((b & 64) != 0) yield return xValue;
+                    if (++xValue >= end) yield break;
+                    if ((b & 32) != 0) yield return xValue;
+                    if (++xValue >= end) yield break;
+                    if ((b & 16) != 0) yield return xValue;
+                    if (++xValue >= end) yield break;
+                    if ((b & 8) != 0) yield return xValue;
+                    if (++xValue >= end) yield break;
+                    if ((b & 4) != 0) yield return xValue;
+                    if (++xValue >= end) yield break;
+                    if ((b & 2) != 0) yield return xValue;
+                    if (++xValue >= end) yield break;
+                    if ((b & 1) != 0) yield return xValue;
+                    if (++xValue >= end) yield break;
+                }
+                else
+                {
+                    xValue += 8;
+                    if (xValue >= end) yield break;
+                }
+            }
+
+        }
+
     }
 }
