@@ -591,6 +591,7 @@ namespace TVGL
             for (int yCoord = 0; yCoord < numVoxelsY; yCoord++)
                 for (int zCoord = 0; zCoord < numVoxelsZ; zCoord++)
                 {
+                    if (voxels[yCoord + zMultiplier * zCoord] == null) continue;
                     var xCoord = -1;
                     var nextX = -1;
                     foreach (var xValue in voxels[yCoord + zMultiplier * zCoord].XCoordinates())
@@ -601,10 +602,10 @@ namespace TVGL
                         if (xCoord < 0) continue;
                         if (xCoord - lastX > 1 || nextX - xCoord > 1
                         || yCoord == 0 || yCoord + 1 >= numVoxelsY || zCoord == 0 || zCoord + 1 >= numVoxelsZ
-                         || !voxels[yCoord - 1 + zMultiplier * zCoord][xCoord]
-                         || !voxels[yCoord + 1 + zMultiplier * zCoord][xCoord]
-                         || !voxels[yCoord + zMultiplier * (zCoord - 1)][xCoord]
-                         || !voxels[yCoord + zMultiplier * (zCoord + 1)][xCoord])
+                         || voxels[yCoord - 1 + zMultiplier * zCoord] == null || !voxels[yCoord - 1 + zMultiplier * zCoord][xCoord]
+                         || voxels[yCoord + 1 + zMultiplier * zCoord] == null || !voxels[yCoord + 1 + zMultiplier * zCoord][xCoord]
+                         || voxels[yCoord + zMultiplier * (zCoord - 1)] == null || !voxels[yCoord + zMultiplier * (zCoord - 1)][xCoord]
+                         || voxels[yCoord + zMultiplier * (zCoord + 1)] == null || !voxels[yCoord + zMultiplier * (zCoord + 1)][xCoord])
                             yield return (xCoord, yCoord, zCoord);
                         if (nextX >= numVoxelsX) break;
                     }
