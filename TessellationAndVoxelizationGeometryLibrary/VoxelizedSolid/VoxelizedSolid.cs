@@ -138,7 +138,6 @@ namespace TVGL
                 voxels = new VoxelRowBase[numVoxelsY * numVoxelsZ]
             };
             for (int i = 0; i < numVoxelsY * numVoxelsZ; i++)
-                if (voxels[i] != null)
                     copy.voxels[i] = CopyToSparse(this.voxels[i]);
             copy.FractionDense = 0;
             copy.UpdateProperties();
@@ -166,6 +165,8 @@ namespace TVGL
             copy.numVoxelsY = GetMaxNumberOfVoxels(copy.Dimensions.Y, copy.VoxelSideLength, "Y");
             copy.numVoxelsZ = GetMaxNumberOfVoxels(copy.Dimensions.Z, copy.VoxelSideLength, "Z");
             copy.voxels = new VoxelRowBase[copy.numVoxelsY * copy.numVoxelsZ];
+            for (int i = 0; i < copy.numVoxelsY * copy.numVoxelsZ; i++)
+                copy.voxels[i] = new VoxelRowSparse();
             copy.FillInFromTessellation(ts);
             copy.FractionDense = 0;
             copy.UpdateProperties();

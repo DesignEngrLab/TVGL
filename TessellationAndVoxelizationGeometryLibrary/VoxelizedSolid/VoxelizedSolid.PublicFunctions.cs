@@ -293,12 +293,11 @@ namespace TVGL
             UpdateToAllSparse();
             foreach (var solid in subtrahends)
                 solid.UpdateToAllSparse();
-            //Parallel.For(0, numVoxelsY * numVoxelsZ, i =>
-            for (var i = 0; i < numVoxelsY * numVoxelsZ; i++)
+            Parallel.For(0, numVoxelsY * numVoxelsZ, i =>
+            //for (var i = 0; i < numVoxelsY * numVoxelsZ; i++)
             {
-                if (voxels[i] == null) continue;
                 voxels[i].Subtract(subtrahends.Select(s => s.voxels[i]).ToArray());
-            }  //);
+            });
             UpdateProperties();
         }
         #endregion
@@ -457,7 +456,6 @@ namespace TVGL
             if (direction == CartesianDirections.XPositive)
                 Parallel.For(0, numVoxelsY * numVoxelsZ, i =>
                 {
-                    if (voxels[i] == null) return;
                     var rowIndices = ((VoxelRowSparse)voxels[i]).indices;
                     if (rowIndices.Any())
                     {
@@ -470,7 +468,6 @@ namespace TVGL
             else if (direction == CartesianDirections.XNegative)
                 Parallel.For(0, numVoxelsY * numVoxelsZ, i =>
                 {
-                    if (voxels[i] == null) return;
                     var rowIndices = ((VoxelRowSparse)voxels[i]).indices;
                     if (rowIndices.Any())
                     {
