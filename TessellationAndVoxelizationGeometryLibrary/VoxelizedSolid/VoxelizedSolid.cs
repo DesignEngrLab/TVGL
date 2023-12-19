@@ -280,7 +280,11 @@ namespace TVGL
                                 var sp = (ushort)((intersectionPoints[m] - Bounds[0][0]) * inverseVoxelSideLength);
                                 var ep = (ushort)((intersectionPoints[m + 1] - Bounds[0][0]) * inverseVoxelSideLength);
                                 if (ep >= numVoxelsX) ep = (ushort)(numVoxelsX - 1);
-                                voxelRow.indices.Add(sp);
+                                if (sp == ep) continue;
+                                var numIndices = voxelRow.indices.Count;
+                                if (numIndices > 0 && voxelRow.indices[numIndices - 1] == sp)
+                                    voxelRow.indices.RemoveAt(numIndices - 1);
+                                else voxelRow.indices.Add(sp);
                                 voxelRow.indices.Add(ep);
                             }
                         }

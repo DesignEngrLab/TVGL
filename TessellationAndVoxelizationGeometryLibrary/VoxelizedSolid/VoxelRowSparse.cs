@@ -133,16 +133,15 @@ namespace TVGL
             return currentVoxelIsOn != currentVoxelIsMentionedInRange;
         }
 
-        private bool NextVoxelInRangeIsOn(int xCoord, int rangeIndexStart, int count,
-            bool currentVoxelIsOn)
+        private bool NextVoxelInRangeIsOn(int xCoord, int xIndex, int count, bool currentVoxelIsOn)
         {
             if (currentVoxelIsOn)
                 // since current is on, then the next voxel is true if the value at the next
                 // (xCoord+1) is less than the number at the end of the range
-                return xCoord + 1 < indices[rangeIndexStart + 1];
+                return xCoord + 1 < indices[xIndex + 1];
             // since current is off, the next voxel is true if it is the start of the next range,
             // but first need to check that we are not at the end of the ranges
-            return rangeIndexStart + 2 < count && xCoord + 1 == indices[rangeIndexStart + 2];
+            return xIndex + 2 < count && xCoord + 1 == indices[xIndex + 2];
         }
 
 
@@ -171,7 +170,8 @@ namespace TVGL
                              // last valid range starts at length-2
 
             // set the index to the middle of the range of lo and hi or to the startGuess
-            int index = (startGuessIndex < 0 || startGuessIndex > hi) ? (hi >> 1) & intForceEven : startGuessIndex;
+            int index = (startGuessIndex < 0 || startGuessIndex > hi) ? (hi >> 1) : startGuessIndex;
+            index &= intForceEven;
             // note that when startGuess is invalid, we use half of the hi value (bit-shift by 1 ">> 1"), but this
             // could be an odd number but we only want to search over the even numbers. So, intForceEven forces the
             // index down one if it is odd
@@ -235,7 +235,8 @@ namespace TVGL
                 indices[index + 2]--;
             else // neither neighbor is on
             {  //add this lone voxel in a range of off-voxels
-                if (index < 0) index = 0;
+                index += 2;
+                //if (index < 0) index = 0;
                 indices.Insert(index, (ushort)(value + 1));
                 indices.Insert(index, value);
             }
@@ -394,7 +395,13 @@ namespace TVGL
             var prevLoIsOn = PreviousVoxelInRangeIsOn(loVoxelIsOn, loValueExists);
             if (loVoxelIsOn || prevLoIsOn)
             {   //you're in an on-range (or you're adjacent to the on-range), so don't change the start-of-the-range, change the end-of-the-range               
-                loIndex++;
+                if (NextVoxelInRangeIsOn(lo, loIndex, indices.Count, loVoxelIsOn))
+                {
+                    indices.RemoveAt(loIndex);
+                    indices.RemoveAt(loIndex);
+                    hiIndex -= 2; //to keep the hiIndex correct, we need to decrement by 2
+                }
+                loIndex++; // this sets up where we will start the RemoveRange from (inclusive, so don't want it to be the start)
             }
             else // you're starting a new range
             {
@@ -407,7 +414,7 @@ namespace TVGL
             if (!hiVoxelIsOn) hiIndex++; // if the hi voxel is off then we'll need to delete the upper range as well
 
             indices.RemoveRange(loIndex, hiIndex - loIndex);
-            if (!hiVoxelIsOn)
+            if (!hiVoxelIsOn) // now add the end of the range if we were in an off-range
                 indices.Insert(hiIndex, hi);
             indexLowerBound = hiIndex;
         }
@@ -448,45 +455,61 @@ namespace TVGL
         /// </summary>
         /// <param name="lo">The lo.</param>
         /// <param name="loIndex">Index of the lo.</param>
-        /// <param name="loValueExists">if set to <current>true</current> [lo value exists].</param>
+        /// <param name="loAtRangeValue">if set to <current>true</current> [lo value exists].</param>
         /// <param name="loVoxelIsOn">if set to <current>true</current> [lo voxel is on].</param>
         /// <param name="hi">The hi.</param>
         /// <param name="hiIndex">Index of the hi.</param>
-        /// <param name="hiValueExists">if set to <current>true</current> [hi value exists].</param>
+        /// <param name="hiAtRangeValue">if set to <current>true</current> [hi value exists].</param>
         /// <param name="hiVoxelIsOn">if set to <current>true</current> [hi voxel is on].</param>
         /// <param name="indexLowerBound">The index lower bound.</param>
-        private void TurnOffRange(ushort lo, int loIndex, bool loValueExists, bool loVoxelIsOn,
-                                  ushort hi, int hiIndex, bool hiValueExists, bool hiVoxelIsOn, ref int indexLowerBound)
+        private void TurnOffRange(ushort lo, int loIndex, bool loAtRangeValue, bool loVoxelIsOn,
+                                  ushort hi, int hiIndex, bool hiAtRangeValue, bool hiVoxelIsOn, ref int indexLowerBound)
         {
-            if (!loVoxelIsOn)
-                // starts in an already off-region, so no need to add a break
-                hiIndex++;
-            else if (loValueExists) //oh! you're erasing a range at its start
+            // remove the range from loIndex to hiIndex, but note that the indices are all even and at the start of a
+            // range. There are four situations for each point (start or end): either on or off, either at a range
+            // value or not
+            if (loVoxelIsOn)
             {
-                indices.RemoveAt(loIndex);
-                hiIndex--; // removing so hiIndex will need to decrement up as well
+                if (loAtRangeValue) //oh! you're erasing a range at its start
+                {
+                    indices.RemoveAt(loIndex);
+                    //hiIndex--; // removing so hiIndex will need to decrement up as well
+                }
+                else //you're in an on-range, so need to add an end to that  
+                {
+                    indices.Insert(loIndex + 1, lo);
+                    hiIndex++; // inserting so hiIndex will need to increment up as well
+                    loIndex += 2;
+                }
             }
             else
-            {  //you're in an on-range, so need to add an end to that  
-                indices.Insert(loIndex + 1, lo);
-                hiIndex++; // inserting so hiIndex will need to increment up as well
+            {
+                // starts in an already off-region, so no need to add a break
+                loIndex += 2;
+                //if (loAtRangeValue)? doesn't matter same effect
             }
-
-            loIndex += 2; // start deleting at the next one
-            hiIndex++; // the upper range is not included so, since the binary search now only
-                       // returns beginning of range, we need to increment the upper range by 1
-            if (!hiVoxelIsOn) hiIndex++; // if the hi voxel is off then we'll need to delete the upper range as well
-            var numToRemove = hiIndex - loIndex;
-            if (numToRemove > 0)
-                indices.RemoveRange(loIndex, numToRemove);
 
             if (hiVoxelIsOn)
-                indices.Insert(hiIndex, hi);
-            else if (hiValueExists)
             {
-                if (indices[0] == 45 && indices[1] == 46) ;
-                indices.RemoveAt(hiIndex - 1);
+                if (hiAtRangeValue)
+                {
+                    if (!NextVoxelInRangeIsOn(hi, hiIndex, indices.Count, true))
+                    {
+                        indices.RemoveAt(hiIndex);
+                        indices.RemoveAt(hiIndex);
+                    }
+                    else indices[hiIndex]++;
+                }
+                else indices.Insert(hiIndex, hi++);
             }
+            else //if (!hiAtRangeValue) // then hi is in the off range and doesn't matches with a former off
+            {
+                hiIndex++;
+            }
+            if (hiAtRangeValue) hiIndex++;
+            var numToRemove = hiIndex - loIndex;
+            if (numToRemove > 0)
+                indices.RemoveRange(loIndex, Math.Min(numToRemove, indices.Count-loIndex));
             indexLowerBound = hiIndex;
         }
 

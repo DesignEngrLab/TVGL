@@ -51,6 +51,8 @@ namespace TVGL
                     lock (voxels)
                         voxels[yCoord + zMultiplier * zCoord] = new VoxelRowSparse();
                 }
+                if (yCoord + zMultiplier * zCoord == 119671 && xCoord == 106) ;
+                // && xCoord==317)
                 voxels[yCoord + zMultiplier * zCoord][xCoord] = value;
             }
         }
@@ -161,6 +163,17 @@ namespace TVGL
         /// <font color="red">Badly formed XML comment.</font>
         private void UpdateProperties()
         {
+            for (int k = 0; k < voxels.Length; k++)
+            {
+                VoxelRowBase vx = voxels[k];
+                if (vx == null) continue;
+                var sparse = ((VoxelRowSparse)vx);
+                if (sparse.indices.Count % 2 == 1)
+                    Console.WriteLine("bad ");
+                for (int i = 1; i < sparse.indices.Count; i++)
+                    if (sparse.indices[i] <= sparse.indices[i - 1])
+                        Console.WriteLine("bad ");
+            }
             CalculateCenter();
             CalculateVolume();
         }
@@ -283,7 +296,7 @@ namespace TVGL
             //Parallel.For(0, numVoxelsY * numVoxelsZ, i =>
             for (var i = 0; i < numVoxelsY * numVoxelsZ; i++)
             {
-                if (voxels[i] == null) return;
+                if (voxels[i] == null) continue;
                 voxels[i].Subtract(subtrahends.Select(s => s.voxels[i]).ToArray());
             }  //);
             UpdateProperties();
@@ -469,6 +482,7 @@ namespace TVGL
                 });
             else if (direction == CartesianDirections.YPositive)
                 Parallel.For(0, numVoxelsZ, k =>
+                //for(int k = 0; k < numVoxelsZ; k++)
                 {
                     for (int i = 0; i < numVoxelsX; i++)
                     {

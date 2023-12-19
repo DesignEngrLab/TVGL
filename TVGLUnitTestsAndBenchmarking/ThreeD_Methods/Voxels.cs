@@ -31,7 +31,7 @@ namespace TVGLUnitTestsAndBenchmarking
                 //Presenter.ShowAndHang(ts);
                 var sw = Stopwatch.StartNew();
                 Console.WriteLine("creating...");
-                var vs = VoxelizedSolid.CreateFrom(ts, 1000);
+                var vs = VoxelizedSolid.CreateFrom(ts, 300);
                 vs.SolidColor = new Color(KnownColors.Black);
                 ts.SolidColor = new Color(100, 200, 100, 50);
                 Console.WriteLine(sw.Elapsed.ToString());
@@ -40,7 +40,7 @@ namespace TVGLUnitTestsAndBenchmarking
                 //Presenter.ShowAndHang(vs.ConvertToTessellatedSolidMarchingCubes(250));
                 //Presenter.ShowAndHang(new Solid[] { vs });
                 //continue;
-                var extrudeSolid = vs.DraftToNewSolid(CartesianDirections.YPositive);
+                var extrudeSolid = vs.DraftToNewSolid(CartesianDirections.ZNegative);
                 Console.WriteLine(sw.Elapsed.ToString());
                 //Presenter.ShowAndHang(extrudeSolid);
                 Console.WriteLine("subtracting...");
