@@ -170,7 +170,7 @@ namespace TVGL
                              // last valid range starts at length-2
 
             // set the index to the middle of the range of lo and hi or to the startGuess
-            int index = (startGuessIndex < 0 || startGuessIndex > hi) ? (hi >> 1) : startGuessIndex;
+            int index = (startGuessIndex < 0 || startGuessIndex >= hi) ? (hi >> 1) : startGuessIndex;
             index &= intForceEven;
             // note that when startGuess is invalid, we use half of the hi value (bit-shift by 1 ">> 1"), but this
             // could be an odd number but we only want to search over the even numbers. So, intForceEven forces the
@@ -382,14 +382,35 @@ namespace TVGL
         /// </summary>
         /// <param name="lo">The lo.</param>
         /// <param name="loIndex">Index of the lo.</param>
-        /// <param name="loValueExists">if set to <current>true</current> [lo value exists].</param>
+        /// <param name="loAtRangeValue">if set to <current>true</current> [lo value exists].</param>
         /// <param name="loVoxelIsOn">if set to <current>true</current> [lo voxel is on].</param>
         /// <param name="hi">The hi.</param>
         /// <param name="hiIndex">Index of the hi.</param>
-        /// <param name="hiValueExists">if set to <current>true</current> [hi value exists].</param>
+        /// <param name="hiAtRangeValue">if set to <current>true</current> [hi value exists].</param>
         /// <param name="hiVoxelIsOn">if set to <current>true</current> [hi voxel is on].</param>
         /// <param name="indexLowerBound">The index lower bound.</param>
-        private void TurnOnRange(ushort lo, int loIndex, bool loValueExists, bool loVoxelIsOn,
+        private void TurnOnRange(ushort lo, int loIndex, bool loAtRangeValue, bool loVoxelIsOn,
+                                 ushort hi, int hiIndex, bool hiAtRangeValue, bool hiVoxelIsOn, ref int indexLowerBound)
+        {
+            loIndex++;
+            if (!loVoxelIsOn && !loAtRangeValue)
+            {
+                loIndex++;
+                indices.Insert(loIndex, lo);
+                loIndex++;
+                hiIndex++;
+            }
+            hiIndex++;
+            if (!hiVoxelIsOn && !hiAtRangeValue)
+            {
+                hiIndex++;
+                indices.Insert(hiIndex, hi);
+            }
+            var numToRemove = hiIndex - loIndex;
+            indices.RemoveRange(loIndex, numToRemove); // Math.Min(numToRemove, indices.Count - loIndex));
+            indexLowerBound = hiIndex;
+        }
+        private void TurnOnRangeOLD(ushort lo, int loIndex, bool loValueExists, bool loVoxelIsOn,
                                  ushort hi, int hiIndex, bool hiValueExists, bool hiVoxelIsOn, ref int indexLowerBound)
         {
             var prevLoIsOn = PreviousVoxelInRangeIsOn(loVoxelIsOn, loValueExists);
@@ -465,51 +486,30 @@ namespace TVGL
         private void TurnOffRange(ushort lo, int loIndex, bool loAtRangeValue, bool loVoxelIsOn,
                                   ushort hi, int hiIndex, bool hiAtRangeValue, bool hiVoxelIsOn, ref int indexLowerBound)
         {
-            // remove the range from loIndex to hiIndex, but note that the indices are all even and at the start of a
-            // range. There are four situations for each point (start or end): either on or off, either at a range
-            // value or not
             if (loVoxelIsOn)
-            {
-                if (loAtRangeValue) //oh! you're erasing a range at its start
+            {  // if at start range, do nothing. the removerange will take care of it
+                if (!loAtRangeValue)
                 {
-                    indices.RemoveAt(loIndex);
-                    //hiIndex--; // removing so hiIndex will need to decrement up as well
-                }
-                else //you're in an on-range, so need to add an end to that  
-                {
-                    indices.Insert(loIndex + 1, lo);
-                    hiIndex++; // inserting so hiIndex will need to increment up as well
-                    loIndex += 2;
+                    loIndex++;
+                    indices.Insert(loIndex, lo);
+                    loIndex++;
+                    hiIndex++; //because of the Insert
                 }
             }
-            else
-            {
-                // starts in an already off-region, so no need to add a break
-                loIndex += 2;
-                //if (loAtRangeValue)? doesn't matter same effect
-            }
-
+            else loIndex += 2;
             if (hiVoxelIsOn)
             {
-                if (hiAtRangeValue)
+                if (!hiAtRangeValue) // if hi is on but it's not the first (hiAtRangeValue), 
+                                     // because it's okay for the last exclusive upper range to be on (off in normal range; on in subtracted range)
                 {
-                    if (!NextVoxelInRangeIsOn(hi, hiIndex, indices.Count, true))
-                    {
-                        indices.RemoveAt(hiIndex);
-                        indices.RemoveAt(hiIndex);
-                    }
-                    else indices[hiIndex]++;
+                    hiIndex++; // go to the next spot and add this as the new start for the next on-range1
+                    indices.Insert(hiIndex, hi);
                 }
-                else indices.Insert(hiIndex, hi++);
             }
-            else //if (!hiAtRangeValue) // then hi is in the off range and doesn't matches with a former off
-            {
-                hiIndex++;
-            }
-            if (hiAtRangeValue) hiIndex++;
+            else if (hiAtRangeValue)
+                hiIndex += 2;
             var numToRemove = hiIndex - loIndex;
-            if (numToRemove > 0)
-                indices.RemoveRange(loIndex, Math.Min(numToRemove, indices.Count-loIndex));
+            indices.RemoveRange(loIndex, numToRemove); // Math.Min(numToRemove, indices.Count - loIndex));
             indexLowerBound = hiIndex;
         }
 

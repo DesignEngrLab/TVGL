@@ -169,10 +169,10 @@ namespace TVGL
                 if (vx == null) continue;
                 var sparse = ((VoxelRowSparse)vx);
                 if (sparse.indices.Count % 2 == 1)
-                    Console.WriteLine("bad ");
+                    Console.WriteLine("--------------------------------------------bad ");
                 for (int i = 1; i < sparse.indices.Count; i++)
                     if (sparse.indices[i] <= sparse.indices[i - 1])
-                        Console.WriteLine("bad ");
+                        Console.WriteLine("-----------------------------------------------------bad ");
             }
             CalculateCenter();
             CalculateVolume();
