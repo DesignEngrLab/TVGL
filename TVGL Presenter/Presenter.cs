@@ -19,6 +19,7 @@ using OxyPlot;
 using System;
 using System.Runtime.CompilerServices;
 using System.Windows.Media;
+using System.Diagnostics;
 
 namespace TVGL
 {
@@ -545,6 +546,7 @@ namespace TVGL
 
         private static IEnumerable<GeometryModel3D> ConvertVoxelsToPointModel3D(VoxelizedSolid vs)
         {
+            var sw = Stopwatch.StartNew();
             var color = new System.Windows.Media.Color { R = vs.SolidColor.R, G = vs.SolidColor.G, B = vs.SolidColor.B, A = vs.SolidColor.A };
             var s = (float)vs.VoxelSideLength;
             var xOffset = (float)vs.Offset[0];
@@ -564,6 +566,8 @@ namespace TVGL
             //FixedSize = true,
                 Color = color
             };
+            Console.WriteLine(sw.Elapsed.ToString());
+
         }
 
 

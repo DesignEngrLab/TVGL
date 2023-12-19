@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using TVGL;
@@ -12,7 +13,7 @@ namespace TVGLUnitTestsAndBenchmarking
         {
             Presenter.NVEnable();
             var random = new Random();
-            var fileNames = dir.GetFiles("*.*").OrderBy(x => random.Next()).ToArray();
+            var fileNames = dir.GetFiles("*.*"); //.OrderBy(x => random.Next()).ToArray();
             //var fileNames = dir.GetFiles("*");
             for (var i = 0; i < fileNames.Length - 0; i++)
             {
@@ -28,18 +29,26 @@ namespace TVGLUnitTestsAndBenchmarking
                 }
                 //IO.Save(ts, dir + "/3_bananas");
                 //Presenter.ShowAndHang(ts);
-                var vs = new VoxelizedSolid(ts, 800);
+                var sw = Stopwatch.StartNew();
+                Console.WriteLine("creating...");
+                var vs = VoxelizedSolid.CreateFrom(ts, 500);
                 vs.SolidColor = new Color(KnownColors.Black);
                 ts.SolidColor = new Color(100, 200, 100, 50);
-                Console.WriteLine("presenting...");
+                Console.WriteLine(sw.Elapsed.ToString());
+                sw.Restart();
+                Console.WriteLine("extruding...");
                 //Presenter.ShowAndHang(vs.ConvertToTessellatedSolidMarchingCubes(250));
-                Presenter.ShowAndHang(new Solid[] { vs });
+                //Presenter.ShowAndHang(new Solid[] { vs });
                 //continue;
-                var extrudeSolid = vs.DraftToNewSolid(CartesianDirections.XNegative);
-                Presenter.ShowAndHang(extrudeSolid);
+                var extrudeSolid = vs.DraftToNewSolid(CartesianDirections.ZNegative);
+                Console.WriteLine(sw.Elapsed.ToString());
+                //Presenter.ShowAndHang(extrudeSolid);
+                Console.WriteLine("subtracting...");
+                sw.Restart();
                 extrudeSolid.Subtract(vs);
-                Presenter.ShowAndHang(extrudeSolid);
-                Presenter.ShowAndHang(extrudeSolid.ConvertToTessellatedSolidMarchingCubes(50));
+                Console.WriteLine(sw.Elapsed.ToString());
+                //Presenter.ShowAndHang(extrudeSolid);
+                //Presenter.ShowAndHang(extrudeSolid.ConvertToTessellatedSolidMarchingCubes(5));
 
                 //Snapshot.Match(vs, SnapshotNameExtension.Create(name));
             }

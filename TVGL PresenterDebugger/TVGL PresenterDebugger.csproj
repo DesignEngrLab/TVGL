@@ -155,7 +155,7 @@
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\TessellatedSolid\TessellationBaseClass.cs" Link="TVGL\TessellatedSolid\TessellationBaseClass.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\TessellatedSolid\TVGLConvexHull.cs" Link="TVGL\TessellatedSolid\TVGLConvexHull.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\TessellatedSolid\Vertex.cs" Link="TVGL\TessellatedSolid\Vertex.cs" />
-		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\VoxelizedSolid\IVoxelRow.cs" Link="TVGL\VoxelizedSolid\IVoxelRow.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\VoxelizedSolid\VoxelRowBase.cs" Link="TVGL\VoxelizedSolid\VoxelRowBase.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\VoxelizedSolid\VoxelHelperClasses.cs" Link="TVGL\VoxelizedSolid\VoxelHelperClasses.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\VoxelizedSolid\VoxelizedSolid.cs" Link="TVGL\VoxelizedSolid\VoxelizedSolid.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\VoxelizedSolid\VoxelizedSolid.PublicFunctions.cs" Link="TVGL\VoxelizedSolid\VoxelizedSolid.PublicFunctions.cs" />

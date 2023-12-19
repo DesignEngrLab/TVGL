@@ -41,9 +41,20 @@ namespace TVGL
                     // this is needed because the end voxel index in sparse is sometimes
                     // set to ushort.MaxValue
                     return false;
+                if (voxels[yCoord + zMultiplier * zCoord] == null) return false;
                 return voxels[yCoord + zMultiplier * zCoord][xCoord];
             }
-            set => voxels[yCoord + zMultiplier * zCoord][xCoord] = value;
+            set
+            {
+                if (voxels[yCoord + zMultiplier * zCoord] == null)
+                {
+                    lock (voxels)
+                        voxels[yCoord + zMultiplier * zCoord] = new VoxelRowSparse();
+                }
+                if (yCoord + zMultiplier * zCoord == 119671 && xCoord == 106) ;
+                // && xCoord==317)
+                voxels[yCoord + zMultiplier * zCoord][xCoord] = value;
+            }
         }
 
         /// <summary>
@@ -152,34 +163,21 @@ namespace TVGL
         /// <font color="red">Badly formed XML comment.</font>
         private void UpdateProperties()
         {
+            for (int k = 0; k < voxels.Length; k++)
+            {
+                VoxelRowBase vx = voxels[k];
+                if (vx == null) continue;
+                var sparse = ((VoxelRowSparse)vx);
+                if (sparse.indices.Count % 2 == 1)
+                    Console.WriteLine("--------------------------------------------bad ");
+                for (int i = 1; i < sparse.indices.Count; i++)
+                    if (sparse.indices[i] <= sparse.indices[i - 1])
+                        Console.WriteLine("-----------------------------------------------------bad ");
+            }
             CalculateCenter();
             CalculateVolume();
         }
 
-
-
-        /*
-        var neighbors = new ConcurrentDictionary<int, int>();
-        //Parallel.For(0, xLim, i =>
-        for (int i = 0; i < numVoxelsX; i++)
-        {
-            var neighborCount = 0;
-            for (var j = 0; j < numVoxelsY; j++)
-            {
-                for (var k = 0; k < numVoxelsZ; k++)
-                {
-                    if (!this[i, j, k]) continue;
-                    var num = NumNeighbors(i, j, k, numVoxelsX, numVoxelsY, numVoxelsZ);
-                    neighborCount += num;
-                }
-            }
-            neighbors.TryAdd(i, neighborCount);
-        } //);
-        long totalNeighbors = 0;
-        foreach (var v in neighbors.Values)
-            totalNeighbors += v;
-        SurfaceArea = 6 * (Count - totalNeighbors / 6) * Math.Pow(VoxelSideLength, 2);
-        */
 
         #endregion
 
@@ -296,6 +294,7 @@ namespace TVGL
             foreach (var solid in subtrahends)
                 solid.UpdateToAllSparse();
             Parallel.For(0, numVoxelsY * numVoxelsZ, i =>
+            //for (var i = 0; i < numVoxelsY * numVoxelsZ; i++)
             {
                 voxels[i].Subtract(subtrahends.Select(s => s.voxels[i]).ToArray());
             });
@@ -466,7 +465,7 @@ namespace TVGL
                         rowIndices.Add((ushort)(numVoxelsX + 1));
                     }
                 });
-            if (direction == CartesianDirections.XNegative)
+            else if (direction == CartesianDirections.XNegative)
                 Parallel.For(0, numVoxelsY * numVoxelsZ, i =>
                 {
                     var rowIndices = ((VoxelRowSparse)voxels[i]).indices;
@@ -478,10 +477,11 @@ namespace TVGL
                         rowIndices.Add(end);
                     }
                 });
-            if (direction == CartesianDirections.YPositive)
-                Parallel.For(0, numVoxelsX, i =>
+            else if (direction == CartesianDirections.YPositive)
+                Parallel.For(0, numVoxelsZ, k =>
+                //for(int k = 0; k < numVoxelsZ; k++)
                 {
-                    for (var k = 0; k < numVoxelsZ; k++)
+                    for (int i = 0; i < numVoxelsX; i++)
                     {
                         var j = 0;
                         while (j < numVoxelsY && !this[i, j, k]) j++;
@@ -489,10 +489,10 @@ namespace TVGL
                             this[i, j, k] = true;
                     }
                 });
-            if (direction == CartesianDirections.YNegative)
-                Parallel.For(0, numVoxelsX, i =>
+            else if (direction == CartesianDirections.YNegative)
+                Parallel.For(0, numVoxelsZ, k =>
                 {
-                    for (var k = 0; k < numVoxelsZ; k++)
+                    for (int i = 0; i < numVoxelsX; i++)
                     {
                         var j = numVoxelsY - 1;
                         while (j >= 0 && !this[i, j, k]) j--;
@@ -500,10 +500,10 @@ namespace TVGL
                             this[i, j, k] = true;
                     }
                 });
-            if (direction == CartesianDirections.ZPositive)
-                Parallel.For(0, numVoxelsX, i =>
+            else if (direction == CartesianDirections.ZPositive)
+                Parallel.For(0, numVoxelsY, j =>
                 {
-                    for (var j = 0; j < numVoxelsY; j++)
+                    for (int i = 0; i < numVoxelsX; i++)
                     {
                         var k = 0;
                         while (k < numVoxelsZ && !this[i, j, k]) k++;
@@ -511,17 +511,18 @@ namespace TVGL
                             this[i, j, k] = true;
                     }
                 });
-            if (direction == CartesianDirections.ZNegative)
-                Parallel.For(0, numVoxelsX, i =>
-                {
-                    for (var j = 0; j < numVoxelsY; j++)
-                    {
-                        var k = numVoxelsZ - 1;
-                        while (k >= 0 && !this[i, j, k]) k--;
-                        for (; k >= 0; k--)
-                            this[i, j, k] = true;
-                    }
-                });
+            else // if (direction == CartesianDirections.ZNegative)
+                Parallel.For(0, numVoxelsY, j =>
+                //for (int j = 0; j < numVoxelsY; j++)
+          {
+              for (int i = 0; i < numVoxelsX; i++)
+              {
+                  var k = numVoxelsZ - 1;
+                  while (k >= 0 && !this[i, j, k]) k--;
+                  for (; k >= 0; k--)
+                      this[i, j, k] = true;
+              }
+          });
             UpdateProperties();
         }
         #endregion
@@ -529,7 +530,7 @@ namespace TVGL
         #region Voxel erosion
         /// <summary>
         /// Erodes the solid in the supplied direction until the mask contacts the constraint solid.
-        /// This creates a new solid. The orinal is unaltered.
+        /// This creates a new solid. The original is unaltered.
         /// </summary>
         /// <param name="constraintSolid">The constraint solid.</param>
         /// <param name="dir">The dir.</param>
@@ -581,9 +582,9 @@ namespace TVGL
             var signX = (byte)(Math.Sign(dirX) + 1);
             var signY = (byte)(Math.Sign(dirY) + 1);
             var signZ = (byte)(Math.Sign(dirZ) + 1);
-            var xLim = VoxelsPerSide[0];
-            var yLim = VoxelsPerSide[1];
-            var zLim = VoxelsPerSide[2];
+            var xLim = numBytesInX;
+            var yLim = numVoxelsY;
+            var zLim = numVoxelsZ;
 
             tLimit = tLimit <= 0 ? Math.Sqrt(VoxelsPerSide.Sum(i => i * i)) : tLimit / VoxelSideLength;
             var mLimit = tLimit + Math.Sqrt(VoxelsPerSide.Sum(i => i * i));

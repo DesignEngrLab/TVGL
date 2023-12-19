@@ -12,6 +12,7 @@
 // <summary></summary>
 // ***********************************************************************
 using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace TVGL
@@ -20,7 +21,7 @@ namespace TVGL
     /// VoxelRowDense represents the dense array of bits for this line of voxels
     /// </summary>
     /// <seealso cref="TVGL.Voxelization.IVoxelRow" />
-    internal readonly struct VoxelRowDense : IVoxelRow
+    internal class VoxelRowDense : VoxelRowBase
     {
         /// <summary>
         /// The values is the byte array where each bit corresponds to whether or not
@@ -46,7 +47,7 @@ namespace TVGL
         /// </summary>
         /// <param name="xCoord">The x coord.</param>
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
-        public bool this[int xCoord]
+        internal override bool this[int xCoord]
         {
             get => GetValue(xCoord >> 3, xCoord & 7);
             set
@@ -72,7 +73,7 @@ namespace TVGL
         /// </summary>
         /// <param name="xCoord">The x coord.</param>
         /// <returns>System.ValueTuple&lt;System.Boolean, System.Boolean&gt;.</returns>
-        public (bool, bool) GetNeighbors(int xCoord, ushort upperLimit)
+        internal override (bool, bool) GetNeighbors(int xCoord, ushort upperLimit)
         {
             var bytePos = xCoord >> 3;
             var bitPos = xCoord & 7;
@@ -120,7 +121,7 @@ namespace TVGL
         /// Gets the number of voxels in this row.
         /// </summary>
         /// <value>The count.</value>
-        public int Count
+        internal override int Count
         {
             get
             {
@@ -146,7 +147,7 @@ namespace TVGL
         /// </summary>
         /// <param name="lo">The lo.</param>
         /// <param name="hi">The hi.</param>
-        public void TurnOnRange(ushort lo, ushort hi)
+        internal override void TurnOnRange(ushort lo, ushort hi)
         {
             var startByte = lo >> 3;
             var endByte = (hi - 1) >> 3;
@@ -172,7 +173,7 @@ namespace TVGL
         /// </summary>
         /// <param name="lo">The lo.</param>
         /// <param name="hi">The hi.</param>
-        public void TurnOffRange(ushort lo, ushort hi)
+        internal override void TurnOffRange(ushort lo, ushort hi)
         {
             var startByte = lo >> 3;
             var endByte = (hi - 1) >> 3;
@@ -200,7 +201,7 @@ namespace TVGL
         /// <param name="offset">The offset.</param>
         /// <exception cref="System.ArgumentException">Intersect of Dense Voxels currently" +
         ///                   " does not support an offset.</exception>
-        public void Intersect(IVoxelRow[] others, int offset)
+        internal override void Intersect(VoxelRowBase[] others, int offset)
         {
             if (offset != 0) throw new ArgumentException("Intersect of Dense Voxels currently" +
                   " does not support an offset.");
@@ -210,7 +211,7 @@ namespace TVGL
         /// Intersects the specified others.
         /// </summary>
         /// <param name="others">The others.</param>
-        internal void Intersect(IVoxelRow[] others)
+        internal void Intersect(VoxelRowBase[] others)
         {
             foreach (var item in others)
             {
@@ -237,7 +238,7 @@ namespace TVGL
         /// <param name="offset">The offset.</param>
         /// <exception cref="System.ArgumentException">Subtract of Dense Voxels currently" +
         ///                   " does not support an offset.</exception>
-        public void Subtract(IVoxelRow[] subtrahends, int offset)
+        internal override void Subtract(VoxelRowBase[] subtrahends, int offset)
         {
             if (offset != 0) throw new ArgumentException("Subtract of Dense Voxels currently" +
                   " does not support an offset.");
@@ -247,7 +248,7 @@ namespace TVGL
         /// Subtracts the specified subtrahends.
         /// </summary>
         /// <param name="subtrahends">The subtrahends.</param>
-        internal void Subtract(IVoxelRow[] subtrahends)
+        internal void Subtract(VoxelRowBase[] subtrahends)
         {
             foreach (var item in subtrahends)
             {
@@ -274,7 +275,7 @@ namespace TVGL
         /// <param name="offset">The offset.</param>
         /// <exception cref="System.ArgumentException">Union of Dense Voxels currently" +
         ///                   " does not support an offset.</exception>
-        public void Union(IVoxelRow[] others, int offset)
+        internal override void Union(VoxelRowBase[] others, int offset)
         {
             if (offset != 0) throw new ArgumentException("Union of Dense Voxels currently" +
                   " does not support an offset.");
@@ -284,7 +285,7 @@ namespace TVGL
         /// Unions the specified others.
         /// </summary>
         /// <param name="others">The others.</param>
-        internal void Union(IVoxelRow[] others)
+        internal void Union(VoxelRowBase[] others)
         {
             foreach (var item in others)
             {
@@ -307,7 +308,7 @@ namespace TVGL
         /// <summary>
         /// Inverts this row - making all on voxels off and vice-versa.
         /// </summary>
-        public void Invert()
+        internal override void Invert()
         {
             for (int i = 0; i < numBytes; i++)
                 values[i] = (byte)~values[i];
@@ -316,7 +317,7 @@ namespace TVGL
         /// <summary>
         /// Clears this row of all on voxels.
         /// </summary>
-        public void Clear()
+        internal override void Clear()
         {
             for (int i = 0; i < numBytes; i++)
                 values[i] = 0b0;
@@ -326,7 +327,7 @@ namespace TVGL
         /// Averages the positions of the on voxels. This is used in finding center of mass.
         /// </summary>
         /// <returns>System.Int32.</returns>
-        public int TotalXPosition()
+        internal override int TotalXPosition()
         {
             var xTotal = 0;
             var byteOffset = 0;
@@ -345,5 +346,39 @@ namespace TVGL
             }
             return xTotal;
         }
+        internal override IEnumerable<int> XCoordinates(ushort start = 0, ushort end = ushort.MaxValue)
+        {
+            int xValue = start>>3; // divide by 8 to get the number of byte to offset
+
+            foreach (var b in values)
+            {
+                if (b != 0)
+                {
+                    if (b > 127) yield return xValue;
+                    if (++xValue >= end) yield break;
+                    if ((b & 64) != 0) yield return xValue;
+                    if (++xValue >= end) yield break;
+                    if ((b & 32) != 0) yield return xValue;
+                    if (++xValue >= end) yield break;
+                    if ((b & 16) != 0) yield return xValue;
+                    if (++xValue >= end) yield break;
+                    if ((b & 8) != 0) yield return xValue;
+                    if (++xValue >= end) yield break;
+                    if ((b & 4) != 0) yield return xValue;
+                    if (++xValue >= end) yield break;
+                    if ((b & 2) != 0) yield return xValue;
+                    if (++xValue >= end) yield break;
+                    if ((b & 1) != 0) yield return xValue;
+                    if (++xValue >= end) yield break;
+                }
+                else
+                {
+                    xValue += 8;
+                    if (xValue >= end) yield break;
+                }
+            }
+
+        }
+
     }
 }

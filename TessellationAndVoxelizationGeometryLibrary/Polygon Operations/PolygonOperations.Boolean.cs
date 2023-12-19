@@ -657,7 +657,7 @@ namespace TVGL
             foreach (var polygon in polygons.Skip(1))
             {
                 if (!result.Any()) break;
-                result = result.SelectMany(r => r.Intersect(polygon)).ToList() ;
+                result = result.SelectMany(r => r.Intersect(polygon)).ToList();
             }
             return result;
             sw.Stop();
