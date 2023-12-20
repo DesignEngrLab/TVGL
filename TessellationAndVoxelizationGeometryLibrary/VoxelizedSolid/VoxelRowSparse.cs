@@ -451,9 +451,10 @@ namespace TVGL
                     indices.Insert(hiIndex, hi);
                 }
             }
-            else if (hiAtRangeValue)
+            else 
                 hiIndex += 2;
             var numToRemove = hiIndex - loIndex;
+            if (numToRemove < 0) numToRemove = 0;
             indices.RemoveRange(loIndex, numToRemove);
         }
 

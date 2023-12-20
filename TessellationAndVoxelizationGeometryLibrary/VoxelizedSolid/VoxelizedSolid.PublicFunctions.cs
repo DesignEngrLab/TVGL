@@ -1041,7 +1041,7 @@ namespace TVGL
                         }
                         else if (startDefined)
                         {
-                            voxRow.TurnOffRange(start, numVoxelsX);
+                            voxRow.TurnOffRange(start, xIndex);
                             startDefined = false;
                         }
                         else
