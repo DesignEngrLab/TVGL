@@ -7,7 +7,7 @@
     <Version>1.0.17.1019</Version>
     <Product>Tessellation and Voxelization Geometry Library</Product>
     <PackageId>TVGL</PackageId>
-    <Authors>Matt Campbell, Brandon Massoni, Nima Rafibakhsh</Authors>
+    <Authors>Matt Campbell, Brandon Massoni</Authors>
     <Company>Design Engineering Lab</Company>
     <Description>This dynamic library is focused on Computational Geometry functions likes the ones you would find in CGAL. As opposed
     to copying directly others work, we have sought to create functions from scratch that are optimized or straightforward as a C#

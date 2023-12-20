@@ -247,11 +247,11 @@ namespace TVGL
             var zBegin = ZMin + VoxelSideLength / 2;
             var decomp = ts.GetUniformlySpacedCrossSections(CartesianDirections.ZPositive, zBegin, numVoxelsZ, VoxelSideLength);
 
-            Parallel.For(0, numVoxelsZ, k =>
-            //for (var k = 0; k < numVoxelsZ; k++)
+            //Parallel.For(0, numVoxelsZ, k =>
+            for (var k = 0; k < numVoxelsZ; k++)
             {
                 var loops = decomp[k];
-                if (loops != null) // && loops.Any())
+                if (loops != null && loops.Count > 0)
                 {
                     var intersections = PolygonOperations.AllPolygonIntersectionPointsAlongHorizontalLines(loops, yBegin, VoxelSideLength, out var yStartIndex);
                     var numYlines = intersections.Count;
@@ -278,7 +278,7 @@ namespace TVGL
                     }
                 }
             }
-            );
+            //);
         }
 
         #endregion Fill In From Tessellation Functions
@@ -386,7 +386,7 @@ namespace TVGL
         /// </summary>
         public void UpdateToAllDense()
         {
-            var numBytesInX =(int)Math.Ceiling(numVoxelsX / 8.0);
+            var numBytesInX = (int)Math.Ceiling(numVoxelsX / 8.0);
             if (FractionDense == 1) return;
             for (int i = 0; i < numVoxelsY * numVoxelsZ; i++)
             {

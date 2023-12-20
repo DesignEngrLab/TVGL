@@ -11,6 +11,7 @@
 // </copyright>
 // <summary></summary>
 // ***********************************************************************
+using ClipperLib;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -329,7 +330,7 @@ namespace TVGL
         }
 
 
-        public static VoxelizedSolid Voxelize(this PrimitiveSurface surface, VoxelizedSolid environment)
+        public static VoxelizedSolid Voxelize(this PrimitiveSurface surface, VoxelizedSolid environment, bool treatAsSolid = false)
         {
             var result = VoxelizedSolid.CreateEmpty(environment);
             var minIndices = result.ConvertCoordinatesToIndices(new Vector3(surface.MinX, surface.MinY, surface.MinZ));
@@ -343,12 +344,13 @@ namespace TVGL
             //Parallel.For(minK, maxK, k =>
             for (var k = minK; k < maxK; k++)
             {
-                var zCoord = result.ConvertZCoordToIndex(k);
+                var zCoord = result.ConvertZIndexToCoord(k);
                 for (int j = minJ; j < maxJ; j++)
                 {
-                    var yCoord = result.ConvertYCoordToIndex(j);
-                    foreach (var intersection in surface.LineIntersection(new Vector3(0,yCoord,zCoord),Vector3.UnitX))
+                    var yCoord = result.ConvertYIndexToCoord(j);
+                    foreach (var intersection in GetPrimitiveToLineIntersections(surface, result.XMin, yCoord, zCoord))
                     {
+                        //if (treatAsSolid)
                         var indices = result.ConvertCoordinatesToIndices(intersection.intersection);
                         result[indices] = true;
                     }
@@ -357,31 +359,23 @@ namespace TVGL
             return result;
         }
 
-        public static void Voxelize(this PrimitiveSurface surface, double xMin, double xMax, double yMin, double yMax, double zMin, double zMax, double voxelEdgeLength)
-        {
-            if (surface.Vertices != null && surface.Vertices.Count > 0) return;
-            var solid = new ImplicitSolid(surface);
-            solid.Bounds = new[] { new Vector3(xMin, yMin, zMin), new Vector3(xMax, yMax, zMax) };
-            var tessellatedSolid = solid.ConvertToTessellatedSolid(voxelEdgeLength);
-            surface.SetFacesAndVertices(tessellatedSolid.Faces, true);
-        }
 
-        public static void Voxelize(this PrimitiveSurface surface, double voxelEdgeLength)
+        private static IEnumerable<(Vector3 intersection, double lineT)> GetPrimitiveToLineIntersections(PrimitiveSurface surface, double xCoord,
+             double yCoord, double zCoord)
         {
-            if (surface.Vertices != null && surface.Vertices.Count > 0) return;
-            surface.SetBounds();
-            if (double.IsFinite(surface.MaxX) && double.IsFinite(surface.MaxY) && double.IsFinite(surface.MaxZ) &&
-                 double.IsFinite(surface.MinX) && double.IsFinite(surface.MinY) && double.IsFinite(surface.MinZ))
+            if (surface.Faces == null || surface.Faces.Count == 0)
+                foreach (var result in surface.LineIntersection(new Vector3(xCoord,yCoord,zCoord),Vector3.UnitX))
+                    yield return result;
+            else
             {
-                if (double.IsNaN(voxelEdgeLength))
+                foreach (var face in surface.Faces)
                 {
-                    var diagonal = new Vector3(surface.MaxX - surface.MinX, surface.MaxY - surface.MinY, surface.MaxZ - surface.MinZ);
-                    voxelEdgeLength = 0.033 * diagonal.Length();
+                    var intersectPoint = MiscFunctions.PointOnTriangleFromRay(face, new Vector3(0, yCoord, zCoord),
+                        Vector3.UnitX, out var t);
+                    if (!intersectPoint.IsNull())
+                        yield return (intersectPoint, t);
                 }
-               // Tessellate(surface, surface.MinX, surface.MaxX, surface.MinY, surface.MaxY, surface.MinZ, surface.MaxZ, maxEdgeLength);
             }
-            else throw new ArgumentOutOfRangeException("The provided primitive is" +
-                "unbounded in size. Please invoke the overload of this method that accepts coordinate limits");
         }
     }
 }

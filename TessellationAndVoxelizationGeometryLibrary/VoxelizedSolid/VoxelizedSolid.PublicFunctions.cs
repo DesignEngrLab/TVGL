@@ -15,8 +15,10 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection.Metadata.Ecma335;
 using System.Security.Cryptography;
 using System.Threading.Tasks;
+using System.Xml;
 
 namespace TVGL
 {
@@ -154,19 +156,8 @@ namespace TVGL
         /// Updates the properties.
         /// </summary>
         /// <font color="red">Badly formed XML comment.</font>
-        private void UpdateProperties()
+        public void UpdateProperties()
         {
-            for (int k = 0; k < voxels.Length; k++)
-            {
-                VoxelRowBase vx = voxels[k];
-                if (vx == null) continue;
-                var sparse = ((VoxelRowSparse)vx);
-                if (sparse.indices.Count % 2 == 1)
-                    Console.WriteLine("--------------------------------------------bad ");
-                for (int i = 1; i < sparse.indices.Count; i++)
-                    if (sparse.indices[i] <= sparse.indices[i - 1])
-                        Console.WriteLine("-----------------------------------------------------bad ");
-            }
             CalculateCenter();
             CalculateVolume();
         }
@@ -1005,13 +996,64 @@ namespace TVGL
         public int ConvertXCoordToIndex(double x) => (int)(inverseVoxelSideLength * (x - Offset.X));
         public int ConvertYCoordToIndex(double y) => (int)(inverseVoxelSideLength * (y - Offset.Y));
         public int ConvertZCoordToIndex(double z) => (int)(inverseVoxelSideLength * (z - Offset.Z));
-        private double ConvertXIndexToCoord(int i) => Offset.X + (i + 0.5) * VoxelSideLength;
+        public double ConvertXIndexToCoord(int i) => Offset.X + (i + 0.5) * VoxelSideLength;
         public double ConvertYIndexToCoord(int j) => Offset.Y + (j + 0.5) * VoxelSideLength;
         public double ConvertZIndexToCoord(int k) => Offset.Z + (k + 0.5) * VoxelSideLength;
 
         public Vector3 ConvertIndicesToCoordinates(int[] indices) => new Vector3(ConvertXIndexToCoord(indices[0]),
             ConvertYIndexToCoord(indices[1]), ConvertZIndexToCoord(indices[2]));
+        public Vector3 ConvertIndicesToCoordinates(int xIndex, int yIndex, int zIndex) => new Vector3(ConvertXIndexToCoord(xIndex),
+            ConvertYIndexToCoord(yIndex), ConvertZIndexToCoord(zIndex));
 
+        public void Subtract(PrimitiveSurface surface)
+        {
+            var minIndices = ConvertCoordinatesToIndices(new Vector3(surface.MinX, surface.MinY, surface.MinZ));
+            var maxIndices = ConvertCoordinatesToIndices(new Vector3(surface.MaxX, surface.MaxY, surface.MaxZ));
+            var minJ = Math.Max(0, minIndices[1]);
+            var maxJ = Math.Min(numVoxelsY, maxIndices[1]);
+            var minK = Math.Max(0, minIndices[2]);
+            var maxK = Math.Min(numVoxelsZ, maxIndices[2]);
+
+
+            //Parallel.For(minK, maxK, k =>
+            for (var k = minK; k < maxK; k++)
+            {
+                var zCoord = ConvertZIndexToCoord(k);
+                for (int j = minJ; j < maxJ; j++)
+                {
+                    var yCoord = ConvertYIndexToCoord(j);
+                    var voxRow = (VoxelRowSparse)voxels[k * zMultiplier + j];
+                    var crossings = new PriorityQueue<(bool, double), double>();
+                    foreach (var q in surface.LineIntersection(new Vector3(XMin, yCoord, zCoord), Vector3.UnitX))
+                        crossings.Enqueue((surface.GetNormalAtPoint(q.intersection).X < 0, q.lineT), q.lineT);
+                    var start = (ushort)0;
+                    if (crossings.Count == 0) continue;
+                    var startDefined = !crossings.Peek().Item1;
+                    while (crossings.Count > 0)
+                    {
+                        var next = crossings.Dequeue();
+                        var xIndex = (ushort)ConvertXCoordToIndex(next.Item2);
+                        var breakAfterThis = false;
+                        if (xIndex >= numVoxelsX)
+                        {
+                            if (startDefined) voxRow.TurnOffRange(start, numVoxelsX);
+                            breakAfterThis = true;
+                        }
+                        else if (startDefined)
+                        {
+                            voxRow.TurnOffRange(start, numVoxelsX);
+                            startDefined = false;
+                        }
+                        else
+                        {
+                            start = xIndex;
+                            startDefined = true;
+                        }
+                        if (breakAfterThis) break;
+                    }
+                }
+            } //);
+        }
         #endregion
     }
 }
