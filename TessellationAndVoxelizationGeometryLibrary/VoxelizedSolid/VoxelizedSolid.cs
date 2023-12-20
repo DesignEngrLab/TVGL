@@ -504,29 +504,65 @@ namespace TVGL
         /// <exception cref="System.NotImplementedException"></exception>
         public TessellatedSolid ConvertToTessellatedSolidRectilinear()
         {
-            throw new NotImplementedException();
+            var vertexDictionary = new Dictionary<int, Vertex>();
+            var s = VoxelSideLength;
+            foreach (var expVox in GetExposedVoxelsWithSides())
+            {
+                var neighbors = new[] { expVox.xNeg, expVox.xPos, expVox.yNeg, expVox.yPos, expVox.zNeg, expVox.zPos };
+                var x = expVox.xIndex * s + XMin;  // could use x = ConvertXIndexToCoord(expVox); but we want lower corner here - not center
+                var y = expVox.yIndex * s + YMin;
+                var z = expVox.zIndex * s + ZMin;
+                for (var m = 0; m < 12; m++)
+                {
+                    if (neighbors[m / 2])
+                    {
+                        var faceVertices = new Vertex[3];
+                        for (var n = 0; n < 3; n++)
+                        {
+                            faceVertices[n] = new Vertex(new Vector3(x + coordOffsets[m][n][0] * s, y + coordOffsets[m][n][1] * s,
+                                z + coordOffsets[m][n][2] * s));
+                        }
+                    }
+                }
+            }
         }
 
-        /// <summary>
-        /// Converts to tessellated solid marching cubes.
-        /// </summary>
-        /// <param name="voxelsPerTriangleSpacing">The voxels per triangle spacing.</param>
-        /// <returns>TessellatedSolid.</returns>
-        public TessellatedSolid ConvertToTessellatedSolidMarchingCubes(int voxelsPerTriangleSpacing)
-        {
-            var marchingCubes = new MarchingCubesDenseVoxels(this, voxelsPerTriangleSpacing);
-            var ts = marchingCubes.Generate();
-            return ts;
-        }
+                static readonly int[][][] coordOffsets =
+                {
+            new[]{ new int[] {0, 0, 0}, new int[] { 0, 0, 1}, new int[] {0, 1, 0}},
+            new[]{ new int[] {0, 1, 0}, new int[] {0, 0, 1}, new int[] {0, 1, 1}}, //x-neg
+            new[]{ new int[] {1, 0, 0}, new int[] {1, 1, 0}, new int[] {1, 0, 1}},
+            new[]{ new int[] {1, 1, 0}, new int[] {1, 1, 1}, new int[] {1, 0, 1}}, //x-pos
+            new[]{ new int[] {0, 0, 0}, new int[] { 1, 0, 0}, new int[] {0, 0, 1}},
+            new[]{ new int[] {1, 0, 0}, new int[] {1, 0, 1}, new int[] {0, 0, 1}}, //y-neg
+            new[]{ new int[] {0, 1, 0}, new int[] {0, 1, 1}, new int[] {1, 1, 0}},
+            new[]{ new int[] {1, 1, 0}, new int[] {0, 1, 1}, new int[] {1, 1, 1}}, //y-pos
+            new[]{ new int[] {0, 0, 0}, new int[] {0, 1, 0}, new int[] {1, 0, 0}},
+            new[]{new int[] {1, 0, 0}, new int[] {0, 1, 0}, new int[] {1, 1, 0}}, //z-neg
+            new[]{ new int[] {0, 0, 1}, new int[] {1, 0, 1}, new int[] {0, 1, 1}},
+            new[]{ new int[] {1, 0, 1}, new int[] {1, 1, 1}, new int[] {0, 1, 1}}, //z-pos
+        };
+
+                /// <summary>
+                /// Converts to tessellated solid marching cubes.
+                /// </summary>
+                /// <param name="voxelsPerTriangleSpacing">The voxels per triangle spacing.</param>
+                /// <returns>TessellatedSolid.</returns>
+                public TessellatedSolid ConvertToTessellatedSolidMarchingCubes(int voxelsPerTriangleSpacing)
+                {
+                    var marchingCubes = new MarchingCubesDenseVoxels(this, voxelsPerTriangleSpacing);
+                    var ts = marchingCubes.Generate();
+                    return ts;
+                }
 
         #endregion Conversion Methods
 
-        #region Overrides of Solid abstract members
-        /// <summary>
-        /// Transforms the solid with the specified transform matrix.
-        /// </summary>
-        /// <param name="transformMatrix">The transform matrix.</param>
-        /// <exception cref="System.NotImplementedException"></exception>
+                #region Overrides of Solid abstract members
+                /// <summary>
+                /// Transforms the solid with the specified transform matrix.
+                /// </summary>
+                /// <param name="transformMatrix">The transform matrix.</param>
+                /// <exception cref="System.NotImplementedException"></exception>
         public override void Transform(Matrix4x4 transformMatrix)
         {
             throw new NotImplementedException();
@@ -622,16 +658,9 @@ namespace TVGL
 
         public IEnumerable<(int xIndex, int yIndex, int zIndex)> GetExposedVoxels()
         {
-            //for (int i = 0; i < numVoxelsX; i++)
-            //    for (int j = 0; j < numVoxelsY; j++)
-            //        for (int k = 0; k < numVoxelsZ; k++)
-            //            if (IsExposed(i, j, k))
-            //                yield return (i, j, k);
-            //yield break;
             for (int yCoord = 0; yCoord < numVoxelsY; yCoord++)
                 for (int zCoord = 0; zCoord < numVoxelsZ; zCoord++)
                 {
-                    if (voxels[yCoord + zMultiplier * zCoord] == null) continue;
                     var xCoord = -1;
                     var nextX = -1;
                     foreach (var xValue in voxels[yCoord + zMultiplier * zCoord].XCoordinates())
@@ -642,14 +671,50 @@ namespace TVGL
                         if (xCoord < 0) continue;
                         if (xCoord - lastX > 1 || nextX - xCoord > 1
                         || yCoord == 0 || yCoord + 1 >= numVoxelsY || zCoord == 0 || zCoord + 1 >= numVoxelsZ
-                         || voxels[yCoord - 1 + zMultiplier * zCoord] == null || !voxels[yCoord - 1 + zMultiplier * zCoord][xCoord]
-                         || voxels[yCoord + 1 + zMultiplier * zCoord] == null || !voxels[yCoord + 1 + zMultiplier * zCoord][xCoord]
-                         || voxels[yCoord + zMultiplier * (zCoord - 1)] == null || !voxels[yCoord + zMultiplier * (zCoord - 1)][xCoord]
-                         || voxels[yCoord + zMultiplier * (zCoord + 1)] == null || !voxels[yCoord + zMultiplier * (zCoord + 1)][xCoord])
+                         || !voxels[yCoord - 1 + zMultiplier * zCoord][xCoord]
+                         || !voxels[yCoord + 1 + zMultiplier * zCoord][xCoord]
+                         || !voxels[yCoord + zMultiplier * (zCoord - 1)][xCoord]
+                         || !voxels[yCoord + zMultiplier * (zCoord + 1)][xCoord])
                             yield return (xCoord, yCoord, zCoord);
                         if (nextX >= numVoxelsX) break;
                     }
                     if (nextX >= 0 && nextX < numVoxelsX) yield return (nextX, yCoord, zCoord);
+                }
+        }
+        public IEnumerable<(int xIndex, int yIndex, int zIndex, bool xNeg, bool xPos, bool yNeg, bool yPos, bool zNeg, bool zPos)> GetExposedVoxelsWithSides()
+        {
+            for (int yCoord = 0; yCoord < numVoxelsY; yCoord++)
+                for (int zCoord = 0; zCoord < numVoxelsZ; zCoord++)
+                {
+                    var xCoord = -1;
+                    var nextX = -1;
+                    foreach (var xValue in voxels[yCoord + zMultiplier * zCoord].XCoordinates())
+                    {
+                        var lastX = xCoord;
+                        xCoord = nextX;
+                        nextX = xValue;
+                        if (xCoord < 0) continue; // this is just the first pass to popule the xCoord and nextX values
+                        var xNeg = xCoord - lastX > 1;
+                        var xPos = nextX - xCoord > 1;
+                        var yNeg = yCoord == 0 || !voxels[yCoord - 1 + zMultiplier * zCoord][xCoord];
+                        var yPos = yCoord + 1 >= numVoxelsY || !voxels[yCoord + 1 + zMultiplier * zCoord][xCoord];
+                        var zNeg = zCoord == 0 || !voxels[yCoord + zMultiplier * (zCoord - 1)][xCoord];
+                        var zPos = zCoord + 1 >= numVoxelsZ || !voxels[yCoord + zMultiplier * (zCoord + 1)][xCoord];
+                        if (xNeg || xPos || yNeg || yPos || zNeg || zPos)
+                            yield return (xCoord, yCoord, zCoord, xNeg, xPos, yNeg, yPos, zNeg, zPos);
+                        if (nextX >= numVoxelsX) break;
+                    }
+                    if (nextX >= 0 && nextX < numVoxelsX)
+                    {
+                        var lastX = xCoord;
+                        xCoord = nextX;
+                        var xNeg = xCoord - lastX > 1;
+                        var yNeg = yCoord == 0 || !voxels[yCoord - 1 + zMultiplier * zCoord][xCoord];
+                        var yPos = yCoord + 1 >= numVoxelsY || !voxels[yCoord + 1 + zMultiplier * zCoord][xCoord];
+                        var zNeg = zCoord == 0 || !voxels[yCoord + zMultiplier * (zCoord - 1)][xCoord];
+                        var zPos = zCoord + 1 >= numVoxelsZ || !voxels[yCoord + zMultiplier * (zCoord + 1)][xCoord];
+                        yield return (xCoord, yCoord, zCoord, xNeg, true, yNeg, yPos, zNeg, zPos);
+                    }
                 }
         }
 

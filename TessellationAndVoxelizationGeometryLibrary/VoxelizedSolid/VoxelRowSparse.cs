@@ -334,7 +334,6 @@ namespace TVGL
                 for (int i = 0; i < subtrahends.Length; i++)
                 {
                     VoxelRowBase subtrahend = subtrahends[i];
-                    if (subtrahend == null) continue;
                     if (subtrahend is VoxelRowDense) subtrahend = VoxelizedSolid.CopyToSparse(subtrahend);
                     var otherIndices = ((VoxelRowSparse)subtrahend).indices;
                     var otherLength = otherIndices.Count;
