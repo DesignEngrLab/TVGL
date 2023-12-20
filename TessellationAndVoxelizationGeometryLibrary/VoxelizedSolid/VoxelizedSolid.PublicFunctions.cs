@@ -15,6 +15,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Threading.Tasks;
 
 namespace TVGL
@@ -41,18 +42,10 @@ namespace TVGL
                     // this is needed because the end voxel index in sparse is sometimes
                     // set to ushort.MaxValue
                     return false;
-                if (voxels[yCoord + zMultiplier * zCoord] == null) return false;
                 return voxels[yCoord + zMultiplier * zCoord][xCoord];
             }
             set
             {
-                if (voxels[yCoord + zMultiplier * zCoord] == null)
-                {
-                    lock (voxels)
-                        voxels[yCoord + zMultiplier * zCoord] = new VoxelRowSparse();
-                }
-                if (yCoord + zMultiplier * zCoord == 119671 && xCoord == 106) ;
-                // && xCoord==317)
                 voxels[yCoord + zMultiplier * zCoord][xCoord] = value;
             }
         }
@@ -419,7 +412,7 @@ namespace TVGL
                         {
                             vs1.voxels[j + zMultiplier * k].TurnOffRange(0, (ushort)xIndex);
                             vs2.voxels[j + zMultiplier * k].TurnOffRange((ushort)xIndex,
-                                (ushort)(numVoxelsX + 1));
+                                (ushort)(numVoxelsX));
                         }
                     }
                 });
@@ -462,7 +455,7 @@ namespace TVGL
                         var start = rowIndices[0];
                         rowIndices.Clear();
                         rowIndices.Add(start);
-                        rowIndices.Add((ushort)(numVoxelsX + 1));
+                        rowIndices.Add((ushort)(numVoxelsX));
                     }
                 });
             else if (direction == CartesianDirections.XNegative)
@@ -582,7 +575,7 @@ namespace TVGL
             var signX = (byte)(Math.Sign(dirX) + 1);
             var signY = (byte)(Math.Sign(dirY) + 1);
             var signZ = (byte)(Math.Sign(dirZ) + 1);
-            var xLim = numBytesInX;
+            var xLim = numVoxelsX;
             var yLim = numVoxelsY;
             var zLim = numVoxelsZ;
 
@@ -980,24 +973,44 @@ namespace TVGL
             }
 
             foreach (var dir in searchDirs)
-            //Parallel.ForEach(searchDirs, dir =>
-            {
-                var c = firstVoxel[dir];
-                var d = direction[dir];
-                //var toValue = searchSigns[dir] == -1 ? 0 : voxelsPerDimension[lastLevel][dir];
-                var toValue = searchSigns[dir] == -1 ? VoxelsPerSide[dir] - Math.Ceiling(tLimit) : Math.Ceiling(tLimit);
-                var toInt = Math.Max(toValue, firstInt[dir]) + (searchSigns[dir] == -1 ? 1 : 0);
-                var fromInt = Math.Min(toValue, firstInt[dir]);
-                for (var i = fromInt; i < toInt; i++)
+                Parallel.ForEach(searchDirs, dir =>
                 {
-                    var t = (i - c) / d;
-                    if (t <= tLimit) intersections.Add(t);
-                }
-            } //);
+                    var c = firstVoxel[dir];
+                    var d = direction[dir];
+                    //var toValue = searchSigns[dir] == -1 ? 0 : voxelsPerDimension[lastLevel][dir];
+                    var toValue = searchSigns[dir] == -1 ? VoxelsPerSide[dir] - Math.Ceiling(tLimit) : Math.Ceiling(tLimit);
+                    var toInt = Math.Max(toValue, firstInt[dir]) + (searchSigns[dir] == -1 ? 1 : 0);
+                    var fromInt = Math.Min(toValue, firstInt[dir]);
+                    for (var i = fromInt; i < toInt; i++)
+                    {
+                        var t = (i - c) / d;
+                        if (t <= tLimit) intersections.Add(t);
+                    }
+                });
 
             var sortedIntersections = new SortedSet<double>(intersections).ToArray();
             return sortedIntersections;
         }
+
+        public int[] ConvertCoordinatesToIndices(Vector3 coordinates)
+        {
+            return new int[]
+            {
+                ConvertXCoordToIndex(coordinates.X),
+                ConvertYCoordToIndex(coordinates.Y),
+                ConvertZCoordToIndex(coordinates.Z)
+            };
+        }
+
+        public int ConvertXCoordToIndex(double x) => (int)(inverseVoxelSideLength * (x - Offset.X));
+        public int ConvertYCoordToIndex(double y) => (int)(inverseVoxelSideLength * (y - Offset.Y));
+        public int ConvertZCoordToIndex(double z) => (int)(inverseVoxelSideLength * (z - Offset.Z));
+        private double ConvertXIndexToCoord(int i) => Offset.X + (i + 0.5) * VoxelSideLength;
+        public double ConvertYIndexToCoord(int j) => Offset.Y + (j + 0.5) * VoxelSideLength;
+        public double ConvertZIndexToCoord(int k) => Offset.Z + (k + 0.5) * VoxelSideLength;
+
+        public Vector3 ConvertIndicesToCoordinates(int[] indices) => new Vector3(ConvertXIndexToCoord(indices[0]),
+            ConvertYIndexToCoord(indices[1]), ConvertZIndexToCoord(indices[2]));
 
         #endregion
     }

@@ -57,6 +57,8 @@ namespace TVGL
         /// </summary>
         /// <value>The length of the voxel side.</value>
         public double VoxelSideLength { get; private set; }
+
+        private double inverseVoxelSideLength;
         /// <summary>
         /// Gets the dimensions.
         /// </summary>
@@ -93,19 +95,6 @@ namespace TVGL
         /// <value>The fraction dense.</value>
         public double FractionDense { get; private set; }
 
-        internal int NumBytesInX
-        {
-            get
-            {
-                if (numBytesInX < 0)
-                {
-                    numBytesInX = numVoxelsX >> 3;  // divide by 2^3 or 8 since 8 bits in a byte
-                    if ((numVoxelsX & 7) != 0) numBytesInX++; // not sure i get this
-                }
-                return numBytesInX;
-            }
-        }
-        int numBytesInX = -1;
 
         #endregion Properties
 
@@ -114,9 +103,7 @@ namespace TVGL
         /// <summary>
         /// Prevents a default instance of the <see cref="VoxelizedSolid"/> class from being created.
         /// </summary>
-        private VoxelizedSolid()
-        {
-        }
+        private VoxelizedSolid() { }
 
 
         /// <summary>
@@ -137,8 +124,9 @@ namespace TVGL
                 numVoxelsZ = this.numVoxelsZ,
                 voxels = new VoxelRowBase[numVoxelsY * numVoxelsZ]
             };
+            copy.inverseVoxelSideLength = 1 / copy.VoxelSideLength; // since its quicker to multiply then to divide, maybe doing this once at the top will save some time
             for (int i = 0; i < numVoxelsY * numVoxelsZ; i++)
-                    copy.voxels[i] = CopyToSparse(this.voxels[i]);
+                copy.voxels[i] = CopyToSparse(this.voxels[i]);
             copy.FractionDense = 0;
             copy.UpdateProperties();
             return copy;
@@ -161,6 +149,7 @@ namespace TVGL
             copy.Dimensions = copy.Bounds[1].Subtract(copy.Bounds[0]);
             copy.SolidColor = new Color(ts.SolidColor.A, ts.SolidColor.R, ts.SolidColor.G, ts.SolidColor.B);
             copy.VoxelSideLength = Math.Max(copy.Dimensions.X, Math.Max(copy.Dimensions.Y, copy.Dimensions.Z)) / voxelsOnLongSide;
+            copy.inverseVoxelSideLength = 1 / copy.VoxelSideLength; // since its quicker to multiply then to divide, maybe doing this once at the top will save some time
             copy.numVoxelsX = GetMaxNumberOfVoxels(copy.Dimensions.X, copy.VoxelSideLength, "X");
             copy.numVoxelsY = GetMaxNumberOfVoxels(copy.Dimensions.Y, copy.VoxelSideLength, "Y");
             copy.numVoxelsZ = GetMaxNumberOfVoxels(copy.Dimensions.Z, copy.VoxelSideLength, "Z");
@@ -190,6 +179,7 @@ namespace TVGL
             copy.Dimensions = copy.Bounds[1].Subtract(copy.Bounds[0]);
             copy.SolidColor = new Color(Constants.DefaultColor);
             copy.VoxelSideLength = voxelSideLength;
+            copy.inverseVoxelSideLength = 1 / copy.VoxelSideLength; // since its quicker to multiply then to divide, maybe doing this once at the top will save some time
             copy.numVoxelsX = GetMaxNumberOfVoxels(copy.Dimensions.X, copy.VoxelSideLength, "X");
             copy.numVoxelsY = GetMaxNumberOfVoxels(copy.Dimensions.Y, copy.VoxelSideLength, "Y");
             copy.numVoxelsZ = GetMaxNumberOfVoxels(copy.Dimensions.Z, copy.VoxelSideLength, "Z");
@@ -215,6 +205,7 @@ namespace TVGL
             copy.Bounds = new[] { new Vector3(bounds[0], 0), new Vector3(bounds[1], 1) };
             copy.Dimensions = copy.Bounds[1].Subtract(copy.Bounds[0]);
             copy.VoxelSideLength = Math.Max(copy.Dimensions.X, Math.Max(copy.Dimensions.Y, copy.Dimensions.Z)) / voxelsOnLongSide;
+            copy.inverseVoxelSideLength = 1 / copy.VoxelSideLength; // since its quicker to multiply then to divide, maybe doing this once at the top will save some time
             copy.numVoxelsX = GetMaxNumberOfVoxels(copy.Dimensions.X, copy.VoxelSideLength, "X");
             copy.numVoxelsY = GetMaxNumberOfVoxels(copy.Dimensions.Y, copy.VoxelSideLength, "Y");
             copy.numVoxelsZ = 1;
@@ -223,9 +214,6 @@ namespace TVGL
                 copy.voxels[i] = new VoxelRowSparse();
 
             var yBegin = copy.Bounds[0][1] + copy.VoxelSideLength / 2;
-            var inverseVoxelSideLength = 1 / copy.VoxelSideLength; // since its quicker to multiple then to divide, maybe doing this once at the top will save some time
-                                                                   //if (loops.Any())
-                                                                   //{  // multiple enumeration warning so commenting out above condition. but that sound be a problem for next line
             var intersections = loops.AllPolygonIntersectionPointsAlongHorizontalLines(yBegin, copy.VoxelSideLength, out var yStartIndex);
             var numYlines = intersections.Count;
             for (int j = -Math.Min(0, yStartIndex); j < numYlines; j++)
@@ -234,8 +222,8 @@ namespace TVGL
                 var numXRangesOnThisLine = intersectionPoints.Length;
                 for (var m = 0; m < numXRangesOnThisLine; m += 2)
                 {
-                    var sp = (ushort)((intersectionPoints[m] - copy.Bounds[0][0]) * inverseVoxelSideLength);
-                    var ep = (ushort)((intersectionPoints[m + 1] - copy.Bounds[0][0]) * inverseVoxelSideLength);
+                    var sp = (ushort)copy.ConvertXCoordToIndex(intersectionPoints[m]);
+                    var ep = (ushort)copy.ConvertXCoordToIndex(intersectionPoints[m + 1]);
                     if (ep >= copy.numVoxelsX) ep = (ushort)(copy.numVoxelsX - 1);
                     ((VoxelRowSparse)copy.voxels[yStartIndex + j]).indices.Add(sp);
                     ((VoxelRowSparse)copy.voxels[yStartIndex + j]).indices.Add(ep);
@@ -255,10 +243,9 @@ namespace TVGL
         /// <param name="ts">The ts.</param>
         private void FillInFromTessellation(TessellatedSolid ts)
         {
-            var yBegin = Bounds[0][1] + VoxelSideLength / 2;
-            var zBegin = Bounds[0][2] + VoxelSideLength / 2;
+            var yBegin = YMin + VoxelSideLength / 2;
+            var zBegin = ZMin + VoxelSideLength / 2;
             var decomp = ts.GetUniformlySpacedCrossSections(CartesianDirections.ZPositive, zBegin, numVoxelsZ, VoxelSideLength);
-            var inverseVoxelSideLength = 1 / VoxelSideLength; // since its quicker to multiple then to divide, maybe doing this once at the top will save some time
 
             Parallel.For(0, numVoxelsZ, k =>
             //for (var k = 0; k < numVoxelsZ; k++)
@@ -274,12 +261,11 @@ namespace TVGL
                         var numXRangesOnThisLine = intersectionPoints.Length;
                         if (numXRangesOnThisLine > 0)
                         {
-                            var voxelRow = new VoxelRowSparse();
-                            voxels[k * zMultiplier + j] = voxelRow;
+                            var voxelRow = (VoxelRowSparse)voxels[k * zMultiplier + j];
                             for (var m = 0; m < numXRangesOnThisLine; m += 2)
                             {
-                                var sp = (ushort)((intersectionPoints[m] - Bounds[0][0]) * inverseVoxelSideLength);
-                                var ep = (ushort)((intersectionPoints[m + 1] - Bounds[0][0]) * inverseVoxelSideLength);
+                                var sp = (ushort)ConvertXCoordToIndex(intersectionPoints[m]);
+                                var ep = (ushort)ConvertXCoordToIndex(intersectionPoints[m + 1]);
                                 if (ep >= numVoxelsX) ep = (ushort)(numVoxelsX - 1);
                                 if (sp == ep) continue;
                                 var numIndices = voxelRow.indices.Count;
@@ -320,6 +306,7 @@ namespace TVGL
             fullBlock.Dimensions = fullBlock.Bounds[1].Subtract(fullBlock.Bounds[0]);
             fullBlock.SolidColor = new Color(Constants.DefaultColor);
             fullBlock.VoxelSideLength = voxelSideLength;
+            fullBlock.inverseVoxelSideLength = 1 / fullBlock.VoxelSideLength; // since its quicker to multiply then to divide, maybe doing this once at the top will save some time
             fullBlock.numVoxelsX = GetMaxNumberOfVoxels(fullBlock.Dimensions.X, fullBlock.VoxelSideLength, "X");
             fullBlock.numVoxelsY = GetMaxNumberOfVoxels(fullBlock.Dimensions.Y, fullBlock.VoxelSideLength, "Y");
             fullBlock.numVoxelsZ = GetMaxNumberOfVoxels(fullBlock.Dimensions.Z, fullBlock.VoxelSideLength, "Z");
@@ -333,6 +320,53 @@ namespace TVGL
             }
             fullBlock.UpdateProperties();
             return fullBlock;
+        }
+
+        /// <summary>
+        /// Creates the full block of voxels using the bounds and dimensions of an existing voxelized solid.
+        /// </summary>
+        /// <param name="vs">The vs.</param>
+        /// <returns>VoxelizedSolid.</returns>
+        public static VoxelizedSolid CreateEmpty(VoxelizedSolid vs)
+        {
+            var result = new VoxelizedSolid();
+            result.Bounds = new[] { vs.Bounds[0], vs.Bounds[1] };
+            result.Dimensions = result.Bounds[1].Subtract(result.Bounds[0]);
+            result.SolidColor = vs.SolidColor;
+            result.VoxelSideLength = vs.VoxelSideLength;
+            result.inverseVoxelSideLength = 1 / result.VoxelSideLength; // since its quicker to multiply then to divide, maybe doing this once at the top will save some time
+            result.numVoxelsX = vs.numVoxelsX;
+            result.numVoxelsY = vs.numVoxelsY;
+            result.numVoxelsZ = vs.numVoxelsZ;
+            result.voxels = new VoxelRowBase[result.numVoxelsY * result.numVoxelsZ];
+            for (int i = 0; i < result.numVoxelsY * result.numVoxelsZ; i++)
+                result.voxels[i] = new VoxelRowSparse();
+            result.UpdateProperties();
+            return result;
+        }
+
+        /// <summary>
+        /// Creates the full block given the dimensions and the size.
+        /// </summary>
+        /// <param name="voxelSideLength">Length of the voxel side.</param>
+        /// <param name="bounds">The bounds.</param>
+        /// <returns>VoxelizedSolid.</returns>
+        public static VoxelizedSolid CreateEmpty(double voxelSideLength, IReadOnlyList<Vector3> bounds)
+        {
+            var result = new VoxelizedSolid();
+            result.Bounds = new[] { bounds[0], bounds[1] };
+            result.Dimensions = result.Bounds[1].Subtract(result.Bounds[0]);
+            result.SolidColor = new Color(Constants.DefaultColor);
+            result.VoxelSideLength = voxelSideLength;
+            result.inverseVoxelSideLength = 1 / result.VoxelSideLength; // since its quicker to multiply then to divide, maybe doing this once at the top will save some time
+            result.numVoxelsX = GetMaxNumberOfVoxels(result.Dimensions.X, result.VoxelSideLength, "X");
+            result.numVoxelsY = GetMaxNumberOfVoxels(result.Dimensions.Y, result.VoxelSideLength, "Y");
+            result.numVoxelsZ = GetMaxNumberOfVoxels(result.Dimensions.Z, result.VoxelSideLength, "Z");
+            result.voxels = new VoxelRowBase[result.numVoxelsY * result.numVoxelsZ];
+            for (int i = 0; i < result.numVoxelsY * result.numVoxelsZ; i++)
+                result.voxels[i] = new VoxelRowSparse();
+            result.UpdateProperties();
+            return result;
         }
 
         private static ushort GetMaxNumberOfVoxels(double length, double voxelSideLength, string dimensionStr)
@@ -352,6 +386,7 @@ namespace TVGL
         /// </summary>
         public void UpdateToAllDense()
         {
+            var numBytesInX =(int)Math.Ceiling(numVoxelsX / 8.0);
             if (FractionDense == 1) return;
             for (int i = 0; i < numVoxelsY * numVoxelsZ; i++)
             {

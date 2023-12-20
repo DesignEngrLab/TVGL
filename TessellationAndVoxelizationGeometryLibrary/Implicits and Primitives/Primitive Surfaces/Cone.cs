@@ -291,5 +291,34 @@ namespace TVGL
             var innerRefPoint = Apex + (firstFace.Center - Apex).Dot(Axis) * Axis;
             isPositive = (firstFace.Center - innerRefPoint).Dot(firstFace.Normal) > 0;
         }
+
+        protected override void SetPrimitiveLimits()
+        {
+            if (double.IsFinite(Length))
+            {
+                var top = Apex;
+                var bottom = Apex + Length * Axis;
+                var radius = Length * Aperture;
+                var xFactor = Math.Sqrt(1 - Axis.X * Axis.X);
+                var yFactor = Math.Sqrt(1 - Axis.Y * Axis.Y);
+                var zFactor = Math.Sqrt(1 - Axis.Z * Axis.Z);
+
+                MinX = Math.Min(top.X, bottom.X - xFactor * radius);
+                MaxX = Math.Max(top.X, bottom.X + xFactor * radius);
+                MinY = Math.Min(top.Y, bottom.Y - yFactor * radius);
+                MaxY = Math.Max(top.Y, bottom.Y + yFactor * radius);
+                MinZ = Math.Min(top.Z, bottom.Z - zFactor * radius);
+                MaxZ = Math.Max(top.Z, bottom.Z + zFactor * radius);
+            }
+            else
+            {
+                MinX = MinY = MinZ = double.NegativeInfinity;
+                MaxX = MaxY = MaxZ = double.PositiveInfinity;
+            }
+        }
+        public override IEnumerable<(Vector3 intersection, double lineT)> LineIntersection(Vector3 anchor, Vector3 direction)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

@@ -103,7 +103,7 @@ namespace TVGL
         {
             _maxError = 0.0;
             _meanSquaredError = 0.0;
-            if (Vertices == null||Vertices.Count==0) return;
+            if (Vertices == null || Vertices.Count == 0) return;
             foreach (var c in Vertices.Select(v => v.Coordinates)
                 // also add midpoints of edges
                 .Concat(InnerEdges.Select(edge => 0.5 * (edge.To.Coordinates + edge.From.Coordinates))
@@ -186,6 +186,14 @@ namespace TVGL
         /// <param name="point">The point.</param>
         /// <returns>System.Double.</returns>
         public abstract double DistanceToPoint(Vector3 point);
+
+        /// <summary>
+        /// Returns all intersection of the given line with the primitive surface (which could be zero to four points).
+        /// </summary>
+        /// <param name="anchor"></param>
+        /// <param name="direction"></param>
+        /// <returns></returns>
+        public abstract IEnumerable<(Vector3 intersection, double lineT)> LineIntersection(Vector3 anchor, Vector3 direction);
 
         /// <summary>
         /// Gets the normal of the surface at the provided point.
@@ -534,7 +542,7 @@ namespace TVGL
                     SetBounds();
                 return maxX;
             }
-            private set => maxX = value;
+            protected set => maxX = value;
         }
         private double maxX = double.NaN;
 
@@ -550,7 +558,7 @@ namespace TVGL
                     SetBounds();
                 return minX;
             }
-            private set => minX = value;
+            protected set => minX = value;
 
         }
         private double minX = double.NaN;
@@ -568,7 +576,7 @@ namespace TVGL
                     SetBounds();
                 return maxY;
             }
-            private set => maxY = value;
+            protected set => maxY = value;
         }
         private double maxY = double.NaN;
 
@@ -584,7 +592,7 @@ namespace TVGL
                     SetBounds();
                 return minY;
             }
-            private set => minY = value;
+            protected set => minY = value;
 
         }
         private double minY = double.NaN;
@@ -600,7 +608,7 @@ namespace TVGL
                     SetBounds();
                 return maxZ;
             }
-            private set => maxZ = value;
+            protected set => maxZ = value;
         }
         private double maxZ = double.NaN;
 
@@ -616,7 +624,7 @@ namespace TVGL
                     SetBounds();
                 return minZ;
             }
-            private set => minZ = value;
+            protected set => minZ = value;
 
         }
         private double minZ = double.NaN;
@@ -627,28 +635,31 @@ namespace TVGL
         /// <param name="ignoreIfAlreadySet">if set to <c>true</c> [ignore if already set].</param>
         public void SetBounds()
         {
-            if (!double.IsNaN(maxX) && !double.IsNaN(minX) &&
-                !double.IsNaN(maxY) && !double.IsNaN(minY) &&
-                !double.IsNaN(maxZ) && !double.IsNaN(minZ)) return;
-            MaxX = double.MinValue;
-            MinX = double.MaxValue;
-            MaxY = double.MinValue;
-            MinY = double.MaxValue;
-            MaxZ = double.MinValue;
-            MinZ = double.MaxValue;
-            foreach (var v in Vertices)
+            if (Vertices == null || Vertices.Count == 0) SetPrimitiveLimits();
+            else
             {
-                var x = v.X;
-                var y = v.Y;
-                var z = v.Z;
-                if (x > MaxX) MaxX = x;
-                if (x < MinX) MinX = x;
-                if (y > MaxY) MaxY = y;
-                if (y < MinY) MinY = y;
-                if (z > MaxZ) MaxZ = z;
-                if (z < MinZ) MinZ = z;
+                MaxX = double.MinValue;
+                MinX = double.MaxValue;
+                MaxY = double.MinValue;
+                MinY = double.MaxValue;
+                MaxZ = double.MinValue;
+                MinZ = double.MaxValue;
+                foreach (var v in Vertices)
+                {
+                    var x = v.X;
+                    var y = v.Y;
+                    var z = v.Z;
+                    if (x > MaxX) MaxX = x;
+                    if (x < MinX) MinX = x;
+                    if (y > MaxY) MaxY = y;
+                    if (y < MinY) MinY = y;
+                    if (z > MaxZ) MaxZ = z;
+                    if (z < MinZ) MinZ = z;
+                }
             }
         }
+
+        protected abstract void SetPrimitiveLimits();
 
         /// <summary>
         /// Returns whether a point is within the X,Y,Z bounds of the primitive.

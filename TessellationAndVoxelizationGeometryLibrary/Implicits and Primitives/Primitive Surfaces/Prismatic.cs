@@ -251,5 +251,21 @@ namespace TVGL
             else if (numConvex > numConcave + numFlat) IsPositive = true;
             else IsPositive = null;
         }
+
+        protected override void SetPrimitiveLimits()
+        {
+            MinX = MinY = MinZ = double.NegativeInfinity;
+            MaxX = MaxY = MaxZ = double.PositiveInfinity;
+        }
+
+        public override IEnumerable<(Vector3 intersection, double lineT)> LineIntersection(Vector3 anchor, Vector3 direction)
+        {
+            if (Faces == null || Faces.Count == 0) yield break;
+            foreach (var face in Faces)
+            {
+                var intersectPoint = MiscFunctions.PointOnTriangleFromRay(face, anchor, direction, out var t);
+                if (!intersectPoint.IsNull()) yield return (intersectPoint, t);
+            }
+        }
     }
 }

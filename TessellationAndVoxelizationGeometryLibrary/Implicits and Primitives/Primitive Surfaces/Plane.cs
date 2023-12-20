@@ -535,5 +535,18 @@ namespace TVGL
                 isPositive = firstFace.Normal.Dot(Normal) > 0;
             }
         }
+
+        protected override void SetPrimitiveLimits()
+        {
+            MinX = MinY = MinZ = double.NegativeInfinity;
+            MaxX = MaxY = MaxZ = double.PositiveInfinity;
+        }
+
+        public override IEnumerable<(Vector3 intersection, double lineT)> LineIntersection(Vector3 anchor, Vector3 direction)
+        {
+            var intersectPoint= MiscFunctions.PointOnPlaneFromRay(this, anchor, direction, out var t);
+            if (!intersectPoint.IsNull())
+                yield return (intersectPoint, t);
+        }
     }
 }

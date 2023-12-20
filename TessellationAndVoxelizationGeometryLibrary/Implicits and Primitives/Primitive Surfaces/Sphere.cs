@@ -301,6 +301,59 @@ namespace TVGL
             isPositive = (firstFace.Center - Center).Dot(firstFace.Normal) > 0;
         }
 
+        protected override void SetPrimitiveLimits()
+        {
+            MinX = Center.X - Radius;
+            MaxX = Center.X + Radius;
+            MinY = Center.Y - Radius;
+            MaxY = Center.Y + Radius;
+            MinZ = Center.Z - Radius;
+            MaxZ = Center.Z + Radius;
+        }
+
+        /// <summary>
+        /// Returns the intersections between the line specified by the arguments and this sphere.
+        /// </summary>
+        /// <param name="anchor"></param>
+        /// <param name="direction"></param>
+        /// <returns></returns>
+        /// <exception cref="NotImplementedException"></exception>
+        public override IEnumerable<(Vector3 intersection, double lineT)> LineIntersection(Vector3 anchor, Vector3 direction)
+        {
+            return LineIntersection(Center, Radius, anchor, direction);
+        }
+
+
+        /// <summary>
+        /// Finds the intersection between a sphere and a line. Returns true if intersecting.
+        /// </summary>
+        /// <param name="center">The center of the sphere.</param>
+        /// <param name="radius">The radius of the sphere.</param>
+        /// <param name="anchor">The anchor of the line.</param>
+        /// <param name="direction">The direction of the line.</param>
+        /// <param name="point1">One of the intersecting points.</param>
+        /// <param name="point2">The other of the intersecting points.</param>
+        /// <param name="t1">The parametric distance from the anchor along the line to point1.</param>
+        /// <param name="t2">The parametric distance from the anchor along the line to point2.</param>
+        /// <returns>A bool where true is intersecting.</returns>
+        public static IEnumerable<(Vector3 intersection, double lineT)> LineIntersection(Vector3 center, double radius, Vector3 anchor, Vector3 direction)
+        {
+            // make a triangle from the center of the sphere to the anchor and the anchor plus the direction to the closest point on the line
+            var toCenter = center - anchor;
+            direction = direction.Normalize();
+            var tCenter = toCenter.Dot(direction); // parametric distance from anchor to closest point on line
+            var chordCenter = anchor + tCenter * direction; // the point on the line closest to the center of the sphere
+            var chordLengthSqd = (chordCenter - center).LengthSquared(); // squared distance from chordCenter to center of sphere
+            if (chordLengthSqd.IsPracticallySame(radius * radius)) // one intersection
+                yield return (chordCenter, tCenter);
+            if (chordLengthSqd > radius * radius) // no intersection
+                yield break;
+            var halfChordLength = Math.Sqrt(radius * radius - chordLengthSqd);
+            yield return (chordCenter - halfChordLength * direction, tCenter - halfChordLength);
+            yield return (chordCenter + halfChordLength * direction, tCenter + halfChordLength);
+        }
+
+
 
         #region Constructor
 

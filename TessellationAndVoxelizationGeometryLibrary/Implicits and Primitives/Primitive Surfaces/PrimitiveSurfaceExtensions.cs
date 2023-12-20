@@ -15,6 +15,7 @@ using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace TVGL
 {
@@ -298,216 +299,10 @@ namespace TVGL
         }
 
 
-        /// <summary>
-        /// Finds the intersection between a sphere and a line. Returns true if intersecting.
-        /// </summary>
-        /// <param name="sphere">The sphere.</param>
-        /// <param name="anchor">The anchor of the line.</param>
-        /// <param name="direction">The direction of the line.</param>
-        /// <param name="point1">One of the intersecting points.</param>
-        /// <param name="point2">The other of the intersecting points.</param>
-        /// <param name="t1">The parametric distance from the anchor along the line to point1.</param>
-        /// <param name="t2">The parametric distance from the anchor along the line to point2.</param>
-        /// <returns>A bool where true is intersecting.</returns>
-        public static bool SphereLineIntersection(this Sphere sphere, Vector3 anchor, Vector3 direction, out Vector3 point1, out Vector3 point2, out double t1, out double t2)
-        {
-            return SphereLineIntersection(sphere.Center, sphere.Radius, anchor, direction, out point1, out point2, out t1, out t2);
-        }
-
-
-        /// <summary>
-        /// Finds the intersection between a sphere and a line. Returns true if intersecting.
-        /// </summary>
-        /// <param name="center">The center of the sphere.</param>
-        /// <param name="radius">The radius of the sphere.</param>
-        /// <param name="anchor">The anchor of the line.</param>
-        /// <param name="direction">The direction of the line.</param>
-        /// <param name="point1">One of the intersecting points.</param>
-        /// <param name="point2">The other of the intersecting points.</param>
-        /// <param name="t1">The parametric distance from the anchor along the line to point1.</param>
-        /// <param name="t2">The parametric distance from the anchor along the line to point2.</param>
-        /// <returns>A bool where true is intersecting.</returns>
-        public static bool SphereLineIntersection(Vector3 center, double radius, Vector3 anchor, Vector3 direction, out Vector3 point1, out Vector3 point2, out double t1, out double t2)
-        {
-            // make a triangle from the center of the sphere to the anchor and the anchor plus the direction to the closest point on the line
-            var toCenter = center - anchor;
-            direction = direction.Normalize();
-            var tCenter = toCenter.Dot(direction); // parametric distance from anchor to closest point on line
-            var chordCenter = anchor + tCenter * direction; // the point on the line closest to the center of the sphere
-            var chordLengthSqd = (chordCenter - center).LengthSquared(); // squared distance from chordCenter to center of sphere
-            if (chordLengthSqd.IsPracticallySame(radius * radius)) // one intersection
-            {
-                point1 = point2 = chordCenter;
-                t1 = t2 = tCenter;
-                return true;
-            }
-            if (chordLengthSqd > radius * radius) // no intersection
-            {
-                point1 = point2 = Vector3.Null;
-                t1 = t2 = double.NaN;
-                return false;
-            }
-            var halfChordLength = Math.Sqrt(radius * radius - chordLengthSqd);
-            point1 = chordCenter - halfChordLength * direction;
-            point2 = chordCenter + halfChordLength * direction;
-            t1 = tCenter - halfChordLength;
-            t2 = tCenter + halfChordLength;
-            return true;
-        }
-
-        /// <summary>
-        /// Finds the intersection between a cylinder and a line. Returns true if intersecting.
-        /// </summary>
-        /// <param name="cylinder">The cylinder.</param>
-        /// <param name="anchor">The anchor of the line.</param>
-        /// <param name="direction">The direction of the line.</param>
-        /// <param name="point1">One of the intersecting points.</param>
-        /// <param name="point2">The other of the intersecting points.</param>
-        /// <param name="t1">The parametric distance from the anchor along the line to point1.</param>
-        /// <param name="t2">The parametric distance from the anchor along the line to point2.</param>
-        public static bool CylinderLineIntersection(this Cylinder cylinder, Vector3 anchor, Vector3 direction, out Vector3 point1, out Vector3 point2, out double t1, out double t2)
-        {
-            return CylinderLineIntersection(cylinder.Axis, cylinder.Radius, cylinder.Anchor, anchor, direction, out point1, out point2, out t1, out t2);
-        }
-
-        /// <summary>
-        /// Finds the intersection between a cylinder and a line. Returns true if intersecting.
-        /// </summary>
-        /// <param name="axis">The axis of the cylinder.</param>
-        /// <param name="radius">The radius of the cylinder.</param>
-        /// <param name="anchorCyl">The anchor of the cylinder..</param>
-        /// <param name="anchorLine">The anchor of the line.</param>
-        /// <param name="direction">The direction of the line.</param>
-        /// <param name="point1">One of the intersecting points.</param>
-        /// <param name="point2">The other of the intersecting points.</param>
-        /// <param name="t1">The parametric distance from the anchor along the line to point1.</param>
-        /// <param name="t2">The parametric distance from the anchor along the line to point2.</param>
-        /// <returns>A bool where true is intersecting.</returns>
-        public static bool CylinderLineIntersection(Vector3 axis, double radius, Vector3 anchorCyl, Vector3 anchorLine, Vector3 direction,
-            out Vector3 point1, out Vector3 point2, out double t1, out double t2)
-        {
-            direction = direction.Normalize();
-            var minDistance = MiscFunctions.SkewedLineIntersection(anchorCyl, axis, anchorLine, direction, out _, out var cylAxisPoint, out var linePoint, out _,
-                out var tChordCenter);
-
-            if (minDistance.IsPracticallySame(radius)) // one intersection
-            {
-                point1 = point2 = linePoint;
-                t1 = t2 = tChordCenter;
-                return true;
-            }
-            if (minDistance > radius) // no intersection
-            {
-                point1 = point2 = Vector3.Null;
-                t1 = t2 = double.NaN;
-                return false;
-            }
-            // here, the halfChoordLength is the distance from the chordCenter to where it would intersect the circle of the cylinder
-            var halfChordLength = Math.Sqrt(radius * radius - minDistance * minDistance);
-            var sinAngleLineCylinder = axis.Cross(direction).Length();
-            var distanceToCylinder = halfChordLength / sinAngleLineCylinder;
-            t1 = tChordCenter - distanceToCylinder;
-            t2 = tChordCenter + distanceToCylinder;
-            point1 = linePoint - distanceToCylinder * direction;
-            point2 = linePoint + distanceToCylinder * direction;
-            return true;
-        }
-
-        /// <summary>
-        /// Finds the intersection between a cone and a line. Returns true if intersecting.
-        /// </summary>
-        /// <param name="cone">The cone.</param>
-        /// <param name="anchorLine">The anchor of the line.</param>
-        /// <param name="direction">The direction of the line.</param>
-        /// <param name="point1">One of the intersecting points.</param>
-        /// <param name="point2">The other of the intersecting points.</param>
-        /// <param name="t1">The parametric distance from the anchor along the line to point1.</param>
-        /// <param name="t2">The parametric distance from the anchor along the line to point2.</param>
-        /// <returns>A bool where true is intersecting.</returns>
-        public static bool ConeLineIntersection(Cone cone, Vector3 anchorLine, Vector3 direction,
-            out Vector3 point1, out Vector3 point2, out double t1, out double t2)
-        {
-            return ConeLineIntersection(cone.Apex, cone.Axis, cone.Aperture, anchorLine, direction, out point1, out point2, out t1, out t2);
-        }
-
-        /// <summary>
-        /// Finds the intersection between a cone and a line. Returns true if intersecting.
-        /// </summary>
-        /// <param name="apex">The apex of the cone.</param>
-        /// <param name="axis">The axis of the cone.</param>
-        /// <param name="aperture">The aperture of the cone.</param>
-        /// <param name="anchorLine">The anchor of the line.</param>
-        /// <param name="direction">The direction of the line.</param>
-        /// <param name="point1">One of the intersecting points.</param>
-        /// <param name="point2">The other of the intersecting points.</param>
-        /// <param name="t1">The parametric distance from the anchor along the line to point1.</param>
-        /// <param name="t2">The parametric distance from the anchor along the line to point2.</param>
-        /// <returns>A bool where true is intersecting.</returns>
-        public static bool ConeLineIntersection(Vector3 apex, Vector3 axis, double aperture, Vector3 anchorLine, Vector3 direction,
-            out Vector3 point1, out Vector3 point2, out double t1, out double t2)
-        {
-            direction = direction.Normalize();
-            throw new NotImplementedException();
-        }
-
-        /// <summary>
-        /// Finds the intersection between a capsule and a line. Returns true if intersecting.
-        /// </summary>
-        /// <param name="capsule">The capsule.</param>
-        /// <param name="anchor">An anchor point on the line.</param>
-        /// <param name="direction">The direction of the line.</param>
-        /// <param name="point1">One of the intersecting points.</param>
-        /// <param name="point2">The other of the intersecting points.</param>
-        /// <param name="t1">The parametric distance from the anchor along the line to point1.</param>
-        /// <param name="t2">The parametric distance from the anchor along the line to point2.</param>
-        /// <returns>A bool where true is intersecting.</returns>
-        public static bool CapsuleLineIntersection(Capsule capsule, Vector3 anchor, Vector3 direction, out Vector3 point1,
-            out Vector3 point2, out double t1, out double t2)
-        {
-            if (capsule.Radius1 != capsule.Radius2) throw new Exception("Capsule must have equal radii to use this method.");
-            var a1ToA2Distance = (capsule.Anchor2 - capsule.Anchor1).Length();
-            var cDir = (capsule.Anchor2 - capsule.Anchor1) / a1ToA2Distance;
-            t1 = double.NaN;
-            t2 = double.NaN;
-            point1 = Vector3.Null;
-            point2 = Vector3.Null;
-            if (SphereLineIntersection(capsule.Anchor1, capsule.Radius1, anchor, direction, out var pointInner1,
-                out var pointInner2, out var tInner1, out var tInner2))
-            {
-                if ((pointInner1 - capsule.Anchor1).Dot(cDir) <= 0)
-                { t1 = tInner1; point1 = pointInner1; }
-                if ((pointInner2 - capsule.Anchor1).Dot(cDir) <= 0)
-                { t2 = tInner2; point2 = pointInner2; }
-            }
-            if (double.IsNaN(t1) || double.IsNaN(t2))
-            {
-                if (SphereLineIntersection(capsule.Anchor2, capsule.Radius2, anchor, direction, out pointInner1, out pointInner2, out tInner1, out tInner2))
-                {
-                    if ((pointInner1 - capsule.Anchor2).Dot(cDir) >= 0)
-                    { t1 = tInner1; point1 = pointInner1; }
-                    if ((pointInner2 - capsule.Anchor2).Dot(cDir) >= 0)
-                    { t2 = tInner2; point2 = pointInner2; }
-                }
-            }
-            if (double.IsNaN(t1) || double.IsNaN(t2))
-            {
-                var axis = (capsule.Anchor2 - capsule.Anchor1).Normalize();
-                if (CylinderLineIntersection(axis, capsule.Radius1, capsule.Anchor1, anchor, direction, out pointInner1, out pointInner2, out tInner1, out tInner2))
-                {
-                    var dot = (pointInner1 - capsule.Anchor1).Dot(cDir);
-                    if (dot < a1ToA2Distance && dot >= 0)
-                    { t1 = tInner1; point1 = pointInner1; }
-                    dot = (pointInner2 - capsule.Anchor1).Dot(cDir);
-                    if (dot < a1ToA2Distance && dot >= 0)
-                    { t2 = tInner2; point2 = pointInner2; }
-                }
-            }
-            return !double.IsNaN(t1) && !double.IsNaN(t2);
-        }
-
 
         public static void Tessellate(this PrimitiveSurface surface, double xMin, double xMax, double yMin, double yMax, double zMin, double zMax, double maxEdgeLength)
         {
+            if (surface.Vertices != null && surface.Vertices.Count > 0) return;
             var meshSize = maxEdgeLength / Math.Sqrt(3);
             var solid = new ImplicitSolid(surface);
             solid.Bounds = new[] { new Vector3(xMin, yMin, zMin), new Vector3(xMax, yMax, zMax) };
@@ -517,79 +312,76 @@ namespace TVGL
 
         public static void Tessellate(this PrimitiveSurface surface, double maxEdgeLength = double.NaN)
         {
-            var xMin = double.NaN;
-            var yMin = double.NaN;
-            var zMin = double.NaN;
-            var xMax = double.NaN;
-            var yMax = double.NaN;
-            var zMax = double.NaN;
-            if (surface is Sphere sphere)
+            if (surface.Vertices != null && surface.Vertices.Count > 0) return;
+            surface.SetBounds();
+            if (double.IsFinite(surface.MaxX) && double.IsFinite(surface.MaxY) && double.IsFinite(surface.MaxZ) &&
+                 double.IsFinite(surface.MinX) && double.IsFinite(surface.MinY) && double.IsFinite(surface.MinZ))
             {
-                xMin = sphere.Center.X - sphere.Radius;
-                xMax = sphere.Center.X + sphere.Radius;
-                yMin = sphere.Center.Y - sphere.Radius;
-                yMax = sphere.Center.Y + sphere.Radius;
-                zMin = sphere.Center.Z - sphere.Radius;
-                zMax = sphere.Center.Z + sphere.Radius;
-            }
-            else if (surface is Torus torus)
-            {
-                var xFactor = Math.Sqrt(1 - torus.Axis.X * torus.Axis.X);
-                var yFactor = Math.Sqrt(1 - torus.Axis.Y * torus.Axis.Y);
-                var zFactor = Math.Sqrt(1 - torus.Axis.Z * torus.Axis.Z);
-                xMin = torus.Center.X - xFactor * torus.MajorRadius - torus.MinorRadius;
-                xMax = torus.Center.X + xFactor * torus.MajorRadius + torus.MinorRadius;
-                yMin = torus.Center.Y - yFactor * torus.MajorRadius - torus.MinorRadius;
-                yMax = torus.Center.Y + yFactor * torus.MajorRadius + torus.MinorRadius;
-                zMin = torus.Center.Z - zFactor * torus.MajorRadius - torus.MinorRadius;
-                zMax = torus.Center.Z + zFactor * torus.MajorRadius + torus.MinorRadius;
-            }
-            else if (surface is Capsule capsule)
-            {
-                xMin = Math.Min(capsule.Anchor1.X - capsule.Radius1, capsule.Anchor2.X - capsule.Radius2);
-                xMax = Math.Max(capsule.Anchor1.X + capsule.Radius1, capsule.Anchor2.X + capsule.Radius2);
-                yMin = Math.Min(capsule.Anchor1.Y - capsule.Radius1, capsule.Anchor2.Y - capsule.Radius2);
-                yMax = Math.Max(capsule.Anchor1.Y + capsule.Radius1, capsule.Anchor2.Y + capsule.Radius2);
-                zMin = Math.Min(capsule.Anchor1.Z - capsule.Radius1, capsule.Anchor2.Z - capsule.Radius2);
-                zMax = Math.Max(capsule.Anchor1.Z + capsule.Radius1, capsule.Anchor2.Z + capsule.Radius2);
-            }
-            else if (surface is Cylinder cyl && double.IsFinite(cyl.MaxDistanceAlongAxis)
-             && double.IsFinite(cyl.MinDistanceAlongAxis))
-            {
-                var offset = cyl.Anchor.Dot(cyl.Axis);
-                var top = cyl.Anchor + (cyl.MaxDistanceAlongAxis - offset) * cyl.Axis;
-                var bottom = cyl.Anchor + (cyl.MinDistanceAlongAxis - offset) * cyl.Axis;
-                var xFactor = Math.Sqrt(1 - cyl.Axis.X * cyl.Axis.X);
-                var yFactor = Math.Sqrt(1 - cyl.Axis.Y * cyl.Axis.Y);
-                var zFactor = Math.Sqrt(1 - cyl.Axis.Z * cyl.Axis.Z);
-                xMin = Math.Min(top.X, bottom.X) - xFactor * cyl.Radius;
-                xMax = Math.Max(top.X, bottom.X) + xFactor * cyl.Radius;
-                yMin = Math.Min(top.Y, bottom.Y) - yFactor * cyl.Radius;
-                yMax = Math.Max(top.Y, bottom.Y) + yFactor * cyl.Radius;
-                zMin = Math.Min(top.Z, bottom.Z) - zFactor * cyl.Radius;
-                zMax = Math.Max(top.Z, bottom.Z) + zFactor * cyl.Radius;
-            }
-            else if (surface is Cone cone && double.IsFinite(cone.Length))
-            {
-                var top = cone.Apex;
-                var bottom = cone.Apex + cone.Length * cone.Axis;
-                var radius = cone.Length * cone.Aperture;
-                var xFactor = Math.Sqrt(1 - cone.Axis.X * cone.Axis.X);
-                var yFactor = Math.Sqrt(1 - cone.Axis.Y * cone.Axis.Y);
-                var zFactor = Math.Sqrt(1 - cone.Axis.Z * cone.Axis.Z);
-
-                xMin = Math.Min(top.X, bottom.X - xFactor * radius);
-                xMax = Math.Max(top.X, bottom.X + xFactor * radius);
-                yMin = Math.Min(top.Y, bottom.Y - yFactor * radius);
-                yMax = Math.Max(top.Y, bottom.Y + yFactor * radius);
-                zMin = Math.Min(top.Z, bottom.Z - zFactor * radius);
-                zMax = Math.Max(top.Z, bottom.Z + zFactor * radius);
+                if (double.IsNaN(maxEdgeLength))
+                {
+                    var diagonal = new Vector3(surface.MaxX - surface.MinX, surface.MaxY - surface.MinY, surface.MaxZ - surface.MinZ);
+                    maxEdgeLength = 0.033 * diagonal.Length();
+                }
+                Tessellate(surface, surface.MinX, surface.MaxX, surface.MinY, surface.MaxY, surface.MinZ, surface.MaxZ, maxEdgeLength);
             }
             else throw new ArgumentOutOfRangeException("The provided primitive is" +
                 "unbounded in size. Please invoke the overload of this method that accepts coordinate limits");
-            if (double.IsNaN(maxEdgeLength))
-                maxEdgeLength = 0.033 * Math.Sqrt((xMax - xMin) * (xMax - xMin) + (yMax - yMin) * (yMax - yMin) + (zMax - zMin) * (zMax - zMin));
-            Tessellate(surface, xMin, xMax, yMin, yMax, zMin, zMax, maxEdgeLength);
+        }
+
+
+        public static VoxelizedSolid Voxelize(this PrimitiveSurface surface, VoxelizedSolid environment)
+        {
+            var result = VoxelizedSolid.CreateEmpty(environment);
+            var minIndices = result.ConvertCoordinatesToIndices(new Vector3(surface.MinX, surface.MinY, surface.MinZ));
+            var maxIndices = result.ConvertCoordinatesToIndices(new Vector3(surface.MaxX, surface.MaxY, surface.MaxZ));
+            var minJ = Math.Max(0, minIndices[1]);
+            var maxJ = Math.Min(result.numVoxelsY, maxIndices[1]);
+            var minK = Math.Max(0, minIndices[2]);
+            var maxK = Math.Min(result.numVoxelsZ, maxIndices[2]);
+
+
+            //Parallel.For(minK, maxK, k =>
+            for (var k = minK; k < maxK; k++)
+            {
+                var zCoord = result.ConvertZCoordToIndex(k);
+                for (int j = minJ; j < maxJ; j++)
+                {
+                    var yCoord = result.ConvertYCoordToIndex(j);
+                    foreach (var intersection in surface.LineIntersection(new Vector3(0,yCoord,zCoord),Vector3.UnitX))
+                    {
+                        var indices = result.ConvertCoordinatesToIndices(intersection.intersection);
+                        result[indices] = true;
+                    }
+                }
+            } //);
+            return result;
+        }
+
+        public static void Voxelize(this PrimitiveSurface surface, double xMin, double xMax, double yMin, double yMax, double zMin, double zMax, double voxelEdgeLength)
+        {
+            if (surface.Vertices != null && surface.Vertices.Count > 0) return;
+            var solid = new ImplicitSolid(surface);
+            solid.Bounds = new[] { new Vector3(xMin, yMin, zMin), new Vector3(xMax, yMax, zMax) };
+            var tessellatedSolid = solid.ConvertToTessellatedSolid(voxelEdgeLength);
+            surface.SetFacesAndVertices(tessellatedSolid.Faces, true);
+        }
+
+        public static void Voxelize(this PrimitiveSurface surface, double voxelEdgeLength)
+        {
+            if (surface.Vertices != null && surface.Vertices.Count > 0) return;
+            surface.SetBounds();
+            if (double.IsFinite(surface.MaxX) && double.IsFinite(surface.MaxY) && double.IsFinite(surface.MaxZ) &&
+                 double.IsFinite(surface.MinX) && double.IsFinite(surface.MinY) && double.IsFinite(surface.MinZ))
+            {
+                if (double.IsNaN(voxelEdgeLength))
+                {
+                    var diagonal = new Vector3(surface.MaxX - surface.MinX, surface.MaxY - surface.MinY, surface.MaxZ - surface.MinZ);
+                    voxelEdgeLength = 0.033 * diagonal.Length();
+                }
+               // Tessellate(surface, surface.MinX, surface.MaxX, surface.MinY, surface.MaxY, surface.MinZ, surface.MaxZ, maxEdgeLength);
+            }
+            else throw new ArgumentOutOfRangeException("The provided primitive is" +
+                "unbounded in size. Please invoke the overload of this method that accepts coordinate limits");
         }
     }
 }

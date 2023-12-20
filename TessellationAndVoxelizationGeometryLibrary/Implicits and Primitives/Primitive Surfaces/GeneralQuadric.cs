@@ -297,5 +297,46 @@ namespace TVGL
             // not be used. Instead, the specific class should be used.
             isPositive = null;
         }
+
+        protected override void SetPrimitiveLimits()
+        {
+            //todo: if ellipsoid, then you will actually have values here
+            MinX = MinY = MinZ = double.NegativeInfinity;
+            MaxX = MaxY = MaxZ = double.PositiveInfinity;
+        }
+
+        /// <summary>
+        /// Returns the intersection points between this quadric and the given line.
+        /// </summary>
+        /// <param name="anchor"></param>
+        /// <param name="direction"></param>
+        /// <returns></returns>
+        public override IEnumerable<(Vector3 intersection, double lineT)> LineIntersection(Vector3 anchor, Vector3 direction)
+        {
+            //solve for t in the quadratic equation
+            var a = XSqdCoeff * direction.X * direction.X + YSqdCoeff * direction.Y * direction.Y + ZSqdCoeff * direction.Z * direction.Z
+                + XYCoeff * direction.X * direction.Y + XZCoeff * direction.X * direction.Z + YZCoeff * direction.Y * direction.Z;
+            var b = 2 * (XSqdCoeff * anchor.X * direction.X + YSqdCoeff * anchor.Y * direction.Y + ZSqdCoeff * anchor.Z * direction.Z)
+                               + XYCoeff * (anchor.X * direction.Y + anchor.Y * direction.X)
+                               + XZCoeff * (anchor.X * direction.Z + anchor.Z * direction.X)
+                               + YZCoeff * (anchor.Y * direction.Z + anchor.Z * direction.Y)
+                                              + XCoeff * direction.X + YCoeff * direction.Y + ZCoeff * direction.Z;
+            var c = XSqdCoeff * anchor.X * anchor.X + YSqdCoeff * anchor.Y * anchor.Y + ZSqdCoeff * anchor.Z * anchor.Z
+                + XYCoeff * anchor.X * anchor.Y + XZCoeff * anchor.X * anchor.Z + YZCoeff * anchor.Y * anchor.Z
+                + XCoeff * anchor.X + YCoeff * anchor.Y + ZCoeff * anchor.Z + W;
+            (var root1, var root2) = PolynomialSolve.Quadratic(a, b, c);
+
+            if (root1.IsRealNumber && root1.Real.IsPracticallySame(root2.Real))
+            {
+                var t = 0.5 * (root1.Real + root2.Real);
+                yield return (anchor + t * direction, root1.Real);
+                yield break;
+            }
+            if (root1.IsRealNumber)
+                yield return (anchor + root1.Real * direction, root1.Real);
+            if (root2.IsRealNumber)
+                yield return (anchor + root2.Real * direction, root2.Real);
+        }
+
     }
 }
