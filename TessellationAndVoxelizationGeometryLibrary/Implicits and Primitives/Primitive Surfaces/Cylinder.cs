@@ -313,9 +313,39 @@ namespace TVGL
         /// <param name="anchor"></param>
         /// <param name="direction"></param>
         /// <returns></returns>
-        public override IEnumerable<(Vector3 intersection, double lineT)> LineIntersection(Vector3 anchor, Vector3 direction)
+        public override IEnumerable<(Vector3 intersection, double lineT)> LineIntersection(Vector3 anchorLine, Vector3 direction)
         {
-            return LineIntersection(Axis, Radius, Anchor, anchor, direction);
+            var firstNeedMaxCapPoint = false;
+            var firstNeedMinCapPoint = false;
+            var cylIntersects = LineIntersection(Axis, Radius, Anchor, anchorLine, direction).ToList();
+            if (cylIntersects.Count > 0)
+            {
+                var dot = cylIntersects[0].intersection.Dot(Axis);
+                firstNeedMinCapPoint = double.IsFinite(MinDistanceAlongAxis) && MinDistanceAlongAxis > dot;
+                firstNeedMaxCapPoint = double.IsFinite(MaxDistanceAlongAxis) && MaxDistanceAlongAxis < dot;
+                if (!firstNeedMinCapPoint && !firstNeedMaxCapPoint)
+                    yield return cylIntersects[0];
+            }
+            var secondNeedMaxCapPoint = false;
+            var secondNeedMinCapPoint = false;
+            if (cylIntersects.Count > 1)
+            {
+                var dot = cylIntersects[1].intersection.Dot(Axis);
+                secondNeedMinCapPoint = double.IsFinite(MinDistanceAlongAxis) && MinDistanceAlongAxis > dot;
+                secondNeedMaxCapPoint = double.IsFinite(MaxDistanceAlongAxis) && MaxDistanceAlongAxis < dot;
+                if (!secondNeedMinCapPoint && !secondNeedMaxCapPoint)
+                    yield return cylIntersects[1];
+            }
+            if (firstNeedMinCapPoint || secondNeedMinCapPoint)
+            {
+                var minPlaneIntersect = Plane.LineIntersection(Axis, MinDistanceAlongAxis, anchorLine, direction); 
+                if (!minPlaneIntersect.intersection.IsNull()) yield return minPlaneIntersect;
+            }
+            if (firstNeedMaxCapPoint || secondNeedMaxCapPoint)
+            {
+                var maxPlaneIntersect = Plane.LineIntersection(Axis, MaxDistanceAlongAxis, anchorLine, direction); 
+                if (!maxPlaneIntersect.intersection.IsNull()) yield return maxPlaneIntersect;
+            }
         }
 
         /// <summary>

@@ -281,7 +281,7 @@ namespace TVGL
             else
             {
                 var b = directionVector.Cross(loc);
-                var c = directionVector.Cross(b).Normalize();
+                var c = b.Cross(directionVector).Normalize();
                 var cosAngle = directionVectorLength /
                     Math.Sqrt(directionVectorLength * directionVectorLength +
                     (coneRadius1 - coneRadius2) * (coneRadius1 - coneRadius2));
@@ -332,49 +332,46 @@ namespace TVGL
             if (Radius1 != Radius2) throw new NotImplementedException("Capsule must have equal radii to use this method.");
             var a1ToA2Distance = (Anchor2 - Anchor1).Length();
             var cDir = (Anchor2 - Anchor1) / a1ToA2Distance;
-            var point1Found = false;
-            var point2Found = false;
-            var sphere1Intersects = Sphere.LineIntersection(Anchor1, Radius1, anchor, direction).ToList();
-            if (sphere1Intersects.Count > 0 && (sphere1Intersects[0].intersection - Anchor1).Dot(cDir) <= 0)
+            var pointsFound = 0;
+            var sphereIntersects = Sphere.LineIntersection(Anchor1, Radius1, anchor, direction).ToList();
+            if (sphereIntersects.Count > 0 && (sphereIntersects[0].intersection - Anchor1).Dot(cDir) <= 0)
             {
-                yield return (sphere1Intersects[0].intersection, sphere1Intersects[0].lineT);
-                point1Found = true;
+                yield return sphereIntersects[0];
+                pointsFound++;
             }
-            if (sphere1Intersects.Count > 1 && (sphere1Intersects[1].intersection - Anchor1).Dot(cDir) <= 0)
+            if (sphereIntersects.Count > 1 && (sphereIntersects[1].intersection - Anchor1).Dot(cDir) <= 0)
             {
-                yield return (sphere1Intersects[1].intersection, sphere1Intersects[1].lineT);
-                point2Found = true;
+                yield return sphereIntersects[1];
+                pointsFound++;
             }
 
-            if (!point1Found || point2Found)
+            if (pointsFound >= 2) yield break;
+            sphereIntersects = Sphere.LineIntersection(Anchor2, Radius2, anchor, direction).ToList();
+            if (sphereIntersects.Count > 0 && (sphereIntersects[0].intersection - Anchor2).Dot(cDir) >= 0)
             {
-                var sphere2Intersects = Sphere.LineIntersection(Anchor2, Radius2, anchor, direction).ToList();
-                if (sphere2Intersects.Count > 0 && (sphere2Intersects[0].intersection - Anchor2).Dot(cDir) >= 0)
-                {
-                    yield return (sphere2Intersects[0].intersection, sphere2Intersects[0].lineT);
-                    point1Found = true;
-                }
-                if (sphere2Intersects.Count > 1 && (sphere2Intersects[1].intersection - Anchor1).Dot(cDir) >= 0)
-                {
-                    yield return (sphere2Intersects[1].intersection, sphere2Intersects[1].lineT);
-                    point2Found = true;
-                }
+                yield return sphereIntersects[0];
+                pointsFound++;
             }
-            if (!point1Found || point2Found)
+            if (pointsFound >= 2) yield break;
+            if (sphereIntersects.Count > 1 && (sphereIntersects[1].intersection - Anchor1).Dot(cDir) >= 0)
             {
-                var cylIntersects = Cylinder.LineIntersection(cDir, Radius1, Anchor1, anchor, direction).ToList();
-                if (cylIntersects.Count > 0)  // && (cylIntersects[0].intersection - Anchor1).Dot(cDir) >= 0)
-                {
-                    var dot = (cylIntersects[0].intersection - Anchor1).Dot(cDir);
-                    if (dot < a1ToA2Distance && dot >= 0)
-                        yield return (cylIntersects[0].intersection, cylIntersects[0].lineT);
-                }
-                if (cylIntersects.Count > 1)            
-                {
-                    var dot = (cylIntersects[1].intersection - Anchor1).Dot(cDir);
-                    if (dot < a1ToA2Distance && dot >= 0)
-                        yield return (cylIntersects[1].intersection, cylIntersects[1].lineT);
-                }
+                yield return sphereIntersects[1];
+                pointsFound++;
+            }
+            if (pointsFound >= 2) yield break;
+            var cylIntersects = Cylinder.LineIntersection(cDir, Radius1, Anchor1, anchor, direction).ToList();
+            if (cylIntersects.Count > 0)  // && (cylIntersects[0].intersection - Anchor1).Dot(cDir) >= 0)
+            {
+                var dot = (cylIntersects[0].intersection - Anchor1).Dot(cDir);
+                if (dot < a1ToA2Distance && dot >= 0)
+                    yield return cylIntersects[0];
+            }
+            if (pointsFound >= 2) yield break;
+            if (cylIntersects.Count > 1)
+            {
+                var dot = (cylIntersects[1].intersection - Anchor1).Dot(cDir);
+                if (dot < a1ToA2Distance && dot >= 0)
+                    yield return cylIntersects[1];
             }
         }
 

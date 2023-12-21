@@ -504,14 +504,15 @@ namespace TVGL
         /// <exception cref="System.NotImplementedException"></exception>
         public TessellatedSolid ConvertToTessellatedSolidRectilinear()
         {
-            var vertexDictionary = new Dictionary<int, Vertex>();
+            var vertexDictionary = new Dictionary<long,Vertex>();
+            var faces = new List<TriangleFace>();
             var s = VoxelSideLength;
             foreach (var expVox in GetExposedVoxelsWithSides())
             {
+                var iBase = expVox.xIndex;
+                var jBase= expVox.yIndex;
+                var kBase = expVox.zIndex;
                 var neighbors = new[] { expVox.xNeg, expVox.xPos, expVox.yNeg, expVox.yPos, expVox.zNeg, expVox.zPos };
-                var x = expVox.xIndex * s + XMin;  // could use x = ConvertXIndexToCoord(expVox); but we want lower corner here - not center
-                var y = expVox.yIndex * s + YMin;
-                var z = expVox.zIndex * s + ZMin;
                 for (var m = 0; m < 12; m++)
                 {
                     if (neighbors[m / 2])
@@ -519,13 +520,26 @@ namespace TVGL
                         var faceVertices = new Vertex[3];
                         for (var n = 0; n < 3; n++)
                         {
-                            faceVertices[n] = new Vertex(new Vector3(x + coordOffsets[m][n][0] * s, y + coordOffsets[m][n][1] * s,
-                                z + coordOffsets[m][n][2] * s));
+                            var i = iBase + coordOffsets[m][n][0];   
+                            var j = jBase + coordOffsets[m][n][1];
+                            var k = kBase + coordOffsets[m][n][2];
+                            if (vertexDictionary.TryGetValue(vertexID(i, j, k), out var vertex))
+                                faceVertices[n] = vertex;
+                            else
+                            {
+                                vertex = new Vertex(new Vector3(i * s + XMin, j * s + YMin, k * s + ZMin));
+                                vertexDictionary.Add(vertexID(i, j, k), vertex);
+                                faceVertices[n] = vertex;
+                            }
                         }
+                    faces.Add(new TriangleFace(faceVertices[0], faceVertices[1], faceVertices[2],true));
                     }
                 }
             }
+            return new TessellatedSolid(faces,vertexDictionary.Values);
         }
+        long vertexID(int x, int y, int z)=> (long)x + (long)y * (long)(numVoxelsX + 1) 
+            + (long)z * (long)(numVoxelsX + 1) * (long)(numVoxelsY + 1);
 
                 static readonly int[][][] coordOffsets =
                 {
