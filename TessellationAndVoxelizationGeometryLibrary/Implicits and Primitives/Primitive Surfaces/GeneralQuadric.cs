@@ -170,7 +170,7 @@ namespace TVGL
         /// </summary>
         /// <param name="x">The x.</param>
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
-        public bool PointIsInside(Vector3 x)
+        public override bool PointIsInside(Vector3 x)
         {
             return QuadricValue(x) < 0;
         }

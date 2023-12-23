@@ -99,9 +99,9 @@ namespace TVGL
         public VoxelEnumerator(VoxelizedSolid vs)
         {
             this.vs = vs;
-            this.xLim = vs.VoxelsPerSide[0];
-            this.yLim = vs.VoxelsPerSide[1];
-            this.zLim = vs.VoxelsPerSide[2];
+            this.xLim = vs.numVoxelsX;
+            this.yLim = vs.numVoxelsY;
+            this.zLim = vs.numVoxelsZ;
         }
 
         /// <summary>

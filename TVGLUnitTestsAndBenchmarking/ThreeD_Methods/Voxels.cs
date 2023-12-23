@@ -42,12 +42,19 @@ namespace TVGLUnitTestsAndBenchmarking
                 //continue;
                 var extrudeSolid = vs.DraftToNewSolid(CartesianDirections.ZNegative);
                 Console.WriteLine(sw.Elapsed.ToString());
-                //Presenter.ShowAndHang(extrudeSolid);
+                Presenter.ShowAndHang(extrudeSolid);
                 Console.WriteLine("subtracting...");
                 sw.Restart();
                 extrudeSolid.Subtract(vs);
+                Presenter.ShowAndHang(extrudeSolid);
+
+                var block = VoxelizedSolid.CreateFullBlock(extrudeSolid);
+                (block, var _) = block.SliceOnPlane(new Plane(2, new Vector3(1,1,1)));
+                Presenter.ShowAndHang(block);
                 Console.WriteLine(sw.Elapsed.ToString());
-                //Presenter.ShowAndHang(extrudeSolid);
+                
+                var result = extrudeSolid.DirectionalErodeToConstraintToNewSolid(block, CartesianDirections.YNegative);
+                Presenter.ShowAndHang(result.ConvertToTessellatedSolidRectilinear());
                 //Presenter.ShowAndHang(extrudeSolid.ConvertToTessellatedSolidMarchingCubes(5));
 
                 //Snapshot.Match(vs, SnapshotNameExtension.Create(name));

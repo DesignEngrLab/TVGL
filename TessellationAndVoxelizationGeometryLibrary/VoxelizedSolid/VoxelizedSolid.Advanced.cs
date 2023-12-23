@@ -82,17 +82,17 @@ namespace TVGL
             var xLim = numVoxelsX;
             var yLim = numVoxelsY;
             var zLim = numVoxelsZ;
-
-            tLimit = tLimit <= 0 ? Math.Sqrt(VoxelsPerSide.Sum(i => i * i)) : tLimit / VoxelSideLength;
-            var mLimit = tLimit + Math.Sqrt(VoxelsPerSide.Sum(i => i * i));
+            var diagonal = Math.Sqrt(numVoxelsX*numVoxelsX+numVoxelsY*numVoxelsY+numVoxelsZ*numVoxelsZ);
+            tLimit = tLimit <= 0 ? diagonal : tLimit / VoxelSideLength;
+            var mLimit = tLimit + diagonal;
             var mask = CreateProjectionMask(dir, mLimit);
             var starts = GetAllVoxelsOnBoundingSurfaces(dirX, dirY, dirZ, maskSize);
             var sliceMask = ThickenMask(mask[0], dir, maskSize, maskOptions);
 
             Parallel.ForEach(starts, vox =>
-                ErodeMask(constraintSolid, mask, signX, signY, signZ, xLim, yLim, zLim, sliceMask, vox));
-            //foreach (var vox in starts)
-            //    ErodeMask(constraintSolid, mask, signX, signY, signZ, xLim, yLim, zLim, sliceMask, vox);
+               //foreach (var vox in starts)
+               ErodeMask(constraintSolid, mask, signX, signY, signZ, xLim, yLim, zLim, sliceMask, vox));
+     
             UpdateProperties();
         }
 
@@ -105,14 +105,12 @@ namespace TVGL
         /// <returns>IEnumerable&lt;CartesianDirections&gt;.</returns>
         private static IEnumerable<CartesianDirections> GetVoxelDirections(double dirX, double dirY, double dirZ)
         {
-            var dirs = new List<CartesianDirections>();
             var signedDir = new[] { Math.Sign(dirX), Math.Sign(dirY), Math.Sign(dirZ) };
             for (var i = 0; i < 3; i++)
             {
                 if (signedDir[i] == 0) continue;
-                dirs.Add((CartesianDirections)((i + 1) * -1 * signedDir[i]));
+                yield return (CartesianDirections)((i + 1) * -1 * signedDir[i]);
             }
-            return dirs.ToArray();
         }
 
         /// <summary>
@@ -143,32 +141,24 @@ namespace TVGL
         /// <returns>IEnumerable&lt;System.Int32[]&gt;.</returns>
         private IEnumerable<int[]> GetAllVoxelsOnBoundingSurface(CartesianDirections dir, double toolDia)
         {
-            var limit = new int[3][];
             var offset = (int)Math.Ceiling(0.5 * toolDia / VoxelSideLength);
+            var limit = new (int min, int max)[3];
+            limit[0] = ( 0 - offset, numVoxelsX + offset );
+            limit[1] = ( 0 - offset, numVoxelsY + offset );
+            limit[2] = ( 0 - offset, numVoxelsZ + offset );
 
-            limit[0] = new[] { 0 - offset, VoxelsPerSide[0] + offset };
-            limit[1] = new[] { 0 - offset, VoxelsPerSide[1] + offset };
-            limit[2] = new[] { 0 - offset, VoxelsPerSide[2] + offset };
 
-            var ind = Math.Abs((int)dir) - 1;
-            if (Math.Sign((int)dir) == 1)
-                limit[ind][0] = limit[ind][1] - 1;
-            else
-                limit[ind][1] = limit[ind][0] + 1;
-
-            var arraySize = (limit[0][1] - limit[0][0]) * (limit[1][1] - limit[1][0]) * (limit[2][1] - limit[2][0]);
-            var surfaceVoxels = new int[arraySize][];
-            var m = 0;
-
-            for (var i = limit[0][0]; i < limit[0][1]; i++)
-                for (var j = limit[1][0]; j < limit[1][1]; j++)
-                    for (var k = limit[2][0]; k < limit[2][1]; k++)
-                    {
-                        surfaceVoxels[m] = new[] { i, j, k };
-                        m++;
-                    }
-
-            return surfaceVoxels;
+            // change direction to index
+            var dirIndex = Math.Abs((int)dir) - 1;
+            if (Math.Sign((int)dir) == 1) // if input dir is positive
+                limit[dirIndex].min = limit[dirIndex].max - 1;
+            else // then input dir is negative
+                limit[dirIndex].max = limit[dirIndex].min + 1;
+            // so go everywhere except the the given direction?!
+            for (var i = limit[0].min; i < limit[0].max; i++)
+                for (var j = limit[1].min; j < limit[1].max; j++)
+                    for (var k = limit[2].min; k < limit[2].max; k++)
+                        yield return new[] { i, j, k };
         }
 
         /// <summary>
