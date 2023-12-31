@@ -12,9 +12,7 @@
 // <summary></summary>
 // ***********************************************************************
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace TVGL
@@ -41,8 +39,8 @@ namespace TVGL
         public void Intersect(PrimitiveSurface surface)
         { }
         public void Subtract(PrimitiveSurface surface)
-            {
-                var minIndices = ConvertCoordinatesToIndices(new Vector3(surface.MinX, surface.MinY, surface.MinZ));
+        {
+            var minIndices = ConvertCoordinatesToIndices(new Vector3(surface.MinX, surface.MinY, surface.MinZ));
             var maxIndices = ConvertCoordinatesToIndices(new Vector3(surface.MaxX, surface.MaxY, surface.MaxZ));
             var minJ = Math.Max(0, minIndices[1]);
             var maxJ = Math.Min(numVoxelsY, maxIndices[1]);
@@ -87,8 +85,7 @@ namespace TVGL
                         if (breakAfterThis) break;
                     }
                 }
-            } );
+            });
         }
-        #endregion
     }
 }

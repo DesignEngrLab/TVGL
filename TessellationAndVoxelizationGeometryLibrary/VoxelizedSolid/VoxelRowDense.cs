@@ -327,7 +327,7 @@ namespace TVGL
         /// Averages the positions of the on voxels. This is used in finding center of mass.
         /// </summary>
         /// <returns>System.Int32.</returns>
-        internal override int TotalXPosition()
+        internal override int AverageXPosition()
         {
             var xTotal = 0;
             var byteOffset = 0;
@@ -346,7 +346,7 @@ namespace TVGL
             }
             return xTotal;
         }
-        internal override IEnumerable<int> XCoordinates(ushort start = 0, ushort end = ushort.MaxValue)
+        internal override IEnumerable<int> XIndices(ushort start = 0, ushort end = ushort.MaxValue)
         {
             int xValue = start>>3; // divide by 8 to get the number of byte to offset
 

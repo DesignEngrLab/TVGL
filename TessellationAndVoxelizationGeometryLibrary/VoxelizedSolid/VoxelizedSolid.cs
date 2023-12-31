@@ -523,12 +523,12 @@ namespace TVGL
                             var i = iBase + coordOffsets[m][n][0];
                             var j = jBase + coordOffsets[m][n][1];
                             var k = kBase + coordOffsets[m][n][2];
-                            if (vertexDictionary.TryGetValue(vertexID(i, j, k), out var vertex))
+                            if (vertexDictionary.TryGetValue(GetLongID(i, j, k), out var vertex))
                                 faceVertices[n] = vertex;
                             else
                             {
                                 vertex = new Vertex(new Vector3(i * s + XMin, j * s + YMin, k * s + ZMin));
-                                vertexDictionary.Add(vertexID(i, j, k), vertex);
+                                vertexDictionary.Add(GetLongID(i, j, k), vertex);
                                 faceVertices[n] = vertex;
                             }
                         }
@@ -538,8 +538,14 @@ namespace TVGL
             }
             return new TessellatedSolid(faces, vertexDictionary.Values);
         }
-        long vertexID(int x, int y, int z) => (long)x + (long)y * (long)(numVoxelsX + 1)
-            + (long)z * (long)(numVoxelsX + 1) * (long)(numVoxelsY + 1);
+        public long GetLongID(int x, int y, int z) => (long)x + ((long)y << 21) + ((long)z << 42);
+        public (int x, int y, int z) GetIndicesFromID(long id)
+        {
+            var x = (int)(id & 0x1FFFFF);
+            var y = (int)((id >> 21) & 0x1FFFFF);
+            var z = (int)((id >> 42) & 0x1FFFFF);
+            return (x, y, z);
+        }
 
         static readonly int[][][] coordOffsets =
         {
@@ -628,7 +634,7 @@ namespace TVGL
                     if (voxelRow != null)
                     {
                         var rowCount = voxelRow.Count;
-                        xTotal += rowCount * voxelRow.TotalXPosition();
+                        xTotal += rowCount * voxelRow.AverageXPosition();
                         yTotal += rowCount * j;
                         zTotal += rowCount * k;
                         Count += rowCount;
@@ -688,7 +694,7 @@ namespace TVGL
                 {
                     var xCoord = -1;
                     var nextX = -1;
-                    foreach (var xValue in voxels[yCoord + zMultiplier * zCoord].XCoordinates())
+                    foreach (var xValue in voxels[yCoord + zMultiplier * zCoord].XIndices())
                     {
                         var lastX = xCoord;
                         xCoord = nextX;
@@ -713,7 +719,7 @@ namespace TVGL
                 {
                     var xCoord = -1;
                     var nextX = -1;
-                    foreach (var xValue in voxels[yCoord + zMultiplier * zCoord].XCoordinates())
+                    foreach (var xValue in voxels[yCoord + zMultiplier * zCoord].XIndices())
                     {
                         var lastX = xCoord;
                         xCoord = nextX;

@@ -36,7 +36,7 @@ namespace TVGL
         /// <returns>VoxelizedSolid.</returns>
         public VoxelizedSolid InvertToNewSolid()
         {
-            var vs = (VoxelizedSolid)Copy();
+            var vs = Copy();
             vs.Invert();
             return vs;
         }
@@ -61,7 +61,7 @@ namespace TVGL
         /// <returns>VoxelizedSolid.</returns>
         public VoxelizedSolid UnionToNewSolid(params VoxelizedSolid[] solids)
         {
-            var vs = (VoxelizedSolid)Copy();
+            var vs = Copy();
             vs.Union(solids);
             return vs;
         }
@@ -92,7 +92,7 @@ namespace TVGL
         /// <returns>VoxelizedSolid.</returns>
         public VoxelizedSolid IntersectToNewSolid(params VoxelizedSolid[] solids)
         {
-            var vs = (VoxelizedSolid)Copy();
+            var vs = Copy();
             vs.Intersect(solids);
             return vs;
         }
@@ -123,7 +123,7 @@ namespace TVGL
         /// <returns>VoxelizedSolid.</returns>
         public VoxelizedSolid SubtractToNewSolid(params VoxelizedSolid[] subtrahends)
         {
-            var vs = (VoxelizedSolid)Copy();
+            var vs = Copy();
             vs.Subtract(subtrahends);
             return vs;
         }
@@ -167,9 +167,9 @@ namespace TVGL
             if (distance >= VoxelsPerSide[Math.Abs((int)vd) - 1] || distance < 1)
                 throw new ArgumentOutOfRangeException();
             ushort uCutBefore = (ushort)distance;
-            ushort top = (ushort)numVoxelsX;
-            var vs1 = (VoxelizedSolid)Copy();
-            var vs2 = (VoxelizedSolid)Copy();
+            ushort top = numVoxelsX;
+            var vs1 = Copy();
+            var vs2 = Copy();
             switch (vd)
             {
                 case CartesianDirections.XPositive:
@@ -223,8 +223,8 @@ namespace TVGL
         /// <returns>System.ValueTuple&lt;VoxelizedSolid, VoxelizedSolid&gt;.</returns>
         public (VoxelizedSolid, VoxelizedSolid) SliceOnPlane(Plane plane)
         {
-            var vs1 = (VoxelizedSolid)Copy();
-            var vs2 = (VoxelizedSolid)Copy();
+            var vs1 = Copy();
+            var vs2 = Copy();
 
             var normalOfPlane = plane.Normal;
             var distOfPlane = plane.DistanceToOrigin;
@@ -265,7 +265,7 @@ namespace TVGL
                         {
                             vs1.voxels[j + zMultiplier * k].TurnOffRange(0, (ushort)xIndex);
                             vs2.voxels[j + zMultiplier * k].TurnOffRange((ushort)xIndex,
-                                (ushort)(numVoxelsX));
+                                numVoxelsX);
                         }
                     }
                 });
@@ -286,7 +286,7 @@ namespace TVGL
         /// <returns>VoxelizedSolid.</returns>
         public VoxelizedSolid DraftToNewSolid(CartesianDirections direction)
         {
-            var vs = (VoxelizedSolid)Copy();
+            var vs = Copy();
             vs.Draft(direction);
             return vs;
         }

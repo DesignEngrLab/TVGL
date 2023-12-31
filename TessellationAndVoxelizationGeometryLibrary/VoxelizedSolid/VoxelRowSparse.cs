@@ -496,7 +496,7 @@ namespace TVGL
         /// Averages the positions of the on voxels. This is used in finding center of mass.
         /// </summary>
         /// <returns>System.Int32.</returns>
-        internal override int TotalXPosition()
+        internal override int AverageXPosition()
         {
             lock (indices)
             {
@@ -518,7 +518,7 @@ namespace TVGL
         /// <param name="start"></param>
         /// <param name="end"></param>
         /// <returns></returns>
-        internal override IEnumerable<int> XCoordinates(ushort start = 0, ushort end = ushort.MaxValue)
+        internal override IEnumerable<int> XIndices(ushort start = 0, ushort end = ushort.MaxValue)
         {
             lock (indices)
             {

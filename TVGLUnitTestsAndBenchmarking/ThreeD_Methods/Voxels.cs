@@ -53,8 +53,6 @@ namespace TVGLUnitTestsAndBenchmarking
                 Presenter.ShowAndHang(block);
                 Console.WriteLine(sw.Elapsed.ToString());
                 
-                var result = extrudeSolid.DirectionalErodeToConstraintToNewSolid(block, CartesianDirections.YNegative);
-                Presenter.ShowAndHang(result.ConvertToTessellatedSolidRectilinear());
                 //Presenter.ShowAndHang(extrudeSolid.ConvertToTessellatedSolidMarchingCubes(5));
 
                 //Snapshot.Match(vs, SnapshotNameExtension.Create(name));
