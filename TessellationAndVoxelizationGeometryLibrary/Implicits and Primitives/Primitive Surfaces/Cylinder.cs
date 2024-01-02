@@ -282,6 +282,103 @@ namespace TVGL
             isPositive = (firstFace.Center - axisPointUnderFace).Dot(firstFace.Normal) > 0;
         }
 
+        protected override void SetPrimitiveLimits()
+        {
+            if (double.IsFinite(MaxDistanceAlongAxis)
+             && double.IsFinite(MinDistanceAlongAxis))
+            {
+                var offset = Anchor.Dot(Axis);
+                var top = Anchor + (MaxDistanceAlongAxis - offset) * Axis;
+                var bottom = Anchor + (MinDistanceAlongAxis - offset) * Axis;
+                var xFactor = Math.Sqrt(1 - Axis.X * Axis.X);
+                var yFactor = Math.Sqrt(1 - Axis.Y * Axis.Y);
+                var zFactor = Math.Sqrt(1 - Axis.Z * Axis.Z);
+                MinX = Math.Min(top.X, bottom.X) - xFactor * Radius;
+                MaxX = Math.Max(top.X, bottom.X) + xFactor * Radius;
+                MinY = Math.Min(top.Y, bottom.Y) - yFactor * Radius;
+                MaxY = Math.Max(top.Y, bottom.Y) + yFactor * Radius;
+                MinZ = Math.Min(top.Z, bottom.Z) - zFactor * Radius;
+                MaxZ = Math.Max(top.Z, bottom.Z) + zFactor * Radius;
+            }
+            else
+            {
+                MinX = MinY = MinZ = double.NegativeInfinity;
+                MaxX = MaxY = MaxZ = double.PositiveInfinity;
+            }
+        }
+
+        /// <summary>
+        /// Finds the intersection between this cylinder and the specified line.
+        /// </summary>
+        /// <param name="anchor"></param>
+        /// <param name="direction"></param>
+        /// <returns></returns>
+        public override IEnumerable<(Vector3 intersection, double lineT)> LineIntersection(Vector3 anchorLine, Vector3 direction)
+        {
+            var firstNeedMaxCapPoint = false;
+            var firstNeedMinCapPoint = false;
+            var cylIntersects = LineIntersection(Axis, Radius, Anchor, anchorLine, direction).ToList();
+            if (cylIntersects.Count > 0)
+            {
+                var dot = cylIntersects[0].intersection.Dot(Axis);
+                firstNeedMinCapPoint = double.IsFinite(MinDistanceAlongAxis) && MinDistanceAlongAxis > dot;
+                firstNeedMaxCapPoint = double.IsFinite(MaxDistanceAlongAxis) && MaxDistanceAlongAxis < dot;
+                if (!firstNeedMinCapPoint && !firstNeedMaxCapPoint)
+                    yield return cylIntersects[0];
+            }
+            var secondNeedMaxCapPoint = false;
+            var secondNeedMinCapPoint = false;
+            if (cylIntersects.Count > 1)
+            {
+                var dot = cylIntersects[1].intersection.Dot(Axis);
+                secondNeedMinCapPoint = double.IsFinite(MinDistanceAlongAxis) && MinDistanceAlongAxis > dot;
+                secondNeedMaxCapPoint = double.IsFinite(MaxDistanceAlongAxis) && MaxDistanceAlongAxis < dot;
+                if (!secondNeedMinCapPoint && !secondNeedMaxCapPoint)
+                    yield return cylIntersects[1];
+            }
+            if (firstNeedMinCapPoint || secondNeedMinCapPoint)
+            {
+                var minPlaneIntersect = Plane.LineIntersection(Axis, MinDistanceAlongAxis, anchorLine, direction); 
+                if (!minPlaneIntersect.intersection.IsNull()) yield return minPlaneIntersect;
+            }
+            if (firstNeedMaxCapPoint || secondNeedMaxCapPoint)
+            {
+                var maxPlaneIntersect = Plane.LineIntersection(Axis, MaxDistanceAlongAxis, anchorLine, direction); 
+                if (!maxPlaneIntersect.intersection.IsNull()) yield return maxPlaneIntersect;
+            }
+        }
+
+        /// <summary>
+        /// Finds the intersection between a cylinder and a line. Returns true if intersecting.
+        /// </summary>
+        /// <param name="axis">The axis of the cylinder.</param>
+        /// <param name="radius">The radius of the cylinder.</param>
+        /// <param name="anchorCyl">The anchor of the cylinder..</param>
+        /// <param name="anchorLine">The anchor of the line.</param>
+        /// <param name="direction">The direction of the line.</param>
+        /// <param name="point1">One of the intersecting points.</param>
+        /// <param name="point2">The other of the intersecting points.</param>
+        /// <param name="t1">The parametric distance from the anchor along the line to point1.</param>
+        /// <param name="t2">The parametric distance from the anchor along the line to point2.</param>
+        /// <returns>A bool where true is intersecting.</returns>
+        public static IEnumerable<(Vector3 intersection, double lineT)> LineIntersection(Vector3 axis, double radius, Vector3 anchorCyl, Vector3 anchorLine, Vector3 direction)
+        {
+            direction = direction.Normalize();
+            var minDistance = MiscFunctions.SkewedLineIntersection(anchorCyl, axis, anchorLine, direction, out _, out var cylAxisPoint, out var linePoint, out _,
+                out var tChordCenter);
+
+            if (minDistance.IsPracticallySame(radius)) // one intersection
+                yield return (linePoint, tChordCenter);
+            if (minDistance > radius) // no intersection
+                yield break;
+            // here, the halfChoordLength is the distance from the chordCenter to where it would intersect the circle of the cylinder
+            var halfChordLength = Math.Sqrt(radius * radius - minDistance * minDistance);
+            var sinAngleLineCylinder = axis.Cross(direction).Length();
+            var distanceToCylinder = halfChordLength / sinAngleLineCylinder;
+            yield return (linePoint - distanceToCylinder * direction, tChordCenter - distanceToCylinder);
+            yield return (linePoint + distanceToCylinder * direction, tChordCenter + distanceToCylinder);
+        }
+
 
         //public TessellatedSolid AsTessellatedSolid()
         //{

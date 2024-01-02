@@ -41,11 +41,9 @@ namespace TVGLUnitTestsAndBenchmarking
             #endregion
 
             #region VoxelizedSolid
-            var vs1 = new VoxelizedSolid(ts, 0.1);
+            var vs1 = VoxelizedSolid.CreateFrom(ts, 0.1);
             vs1.ConvertToTessellatedSolidMarchingCubes(5);
             vs1.ConvertToTessellatedSolidRectilinear();
-            var vs2 = (VoxelizedSolid)vs1.Copy();
-            vs1.DirectionalErodeToConstraintToNewSolid(in vs2, CartesianDirections.XNegative);
             vs1.Draft(CartesianDirections.XNegative);
             var vs3 = vs1.DraftToNewSolid(CartesianDirections.XNegative);
 

@@ -261,8 +261,8 @@ namespace TVGLUnitTestsAndBenchmarking
             var buffer = 0.01 * dimensions;
             min -= buffer;
             max += buffer;
-            var vp1 = new VoxelizedSolid(new[] { polygon1 }, numVoxels, new[] { min, max });
-            var vp2 = new VoxelizedSolid(new[] { polygon2 }, numVoxels, new[] { min, max });
+            var vp1 = VoxelizedSolid.CreateFrom(new[] { polygon1 }, numVoxels, new[] { min, max });
+            var vp2 = VoxelizedSolid.CreateFrom(new[] { polygon2 }, numVoxels, new[] { min, max });
             var correctVoxels = operationString switch
             {
                 "Union" => vp1.UnionToNewSolid(vp2),
@@ -274,10 +274,10 @@ namespace TVGLUnitTestsAndBenchmarking
             var showResult = false;
             var tvglError = false;
             var clipperError = false;
-            var tvglVResult = new VoxelizedSolid(tvglResult,numVoxels, new[] { min, max });
+            var tvglVResult = VoxelizedSolid.CreateFrom(tvglResult,numVoxels, new[] { min, max });
             var clipperShallowPolyTree = TVGL.PolygonOperations.
                    CreateShallowPolygonTrees(clipperResult, true);
-            var clipperVResult = new VoxelizedSolid(clipperShallowPolyTree, numVoxels, new[] { min, max });
+            var clipperVResult = VoxelizedSolid.CreateFrom(clipperShallowPolyTree, numVoxels, new[] { min, max });
             if (tvglVResult.SubtractToNewSolid(correctVoxels).Count == 0 && correctVoxels.SubtractToNewSolid(tvglVResult).Count == 0)
                 Console.WriteLine("TVGL result is correct.");
             else

@@ -313,5 +313,23 @@ namespace TVGL
             }
             return maxAngle - minAngle;
         }
+
+        protected override void SetPrimitiveLimits()
+        {
+            var xFactor = Math.Sqrt(1 - Axis.X * Axis.X);
+            var yFactor = Math.Sqrt(1 - Axis.Y * Axis.Y);
+            var zFactor = Math.Sqrt(1 - Axis.Z * Axis.Z);
+            MinX = Center.X - xFactor * MajorRadius - MinorRadius;
+            MaxX = Center.X + xFactor * MajorRadius + MinorRadius;
+            MinY = Center.Y - yFactor * MajorRadius - MinorRadius;
+            MaxY = Center.Y + yFactor * MajorRadius + MinorRadius;
+            MinZ = Center.Z - zFactor * MajorRadius - MinorRadius;
+            MaxZ = Center.Z + zFactor * MajorRadius + MinorRadius;
+        }
+
+        public override IEnumerable<(Vector3 intersection, double lineT)> LineIntersection(Vector3 anchor, Vector3 direction)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

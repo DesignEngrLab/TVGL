@@ -583,7 +583,8 @@ namespace TVGL
             var tolerance = (sortedPoints[^1].Y - sortedPoints[0].Y) * Constants.BaseTolerance;
             var currentLines = new HashSet<PolygonEdge>();
             var nextDistance = sortedPoints.First().Y;
-            firstIntersectingIndex = (int)Math.Ceiling((nextDistance - startingYValue) / stepSize);
+            firstIntersectingIndex = nextDistance.IsPracticallySame(startingYValue) ? 0
+                : (int)Math.Ceiling((nextDistance - startingYValue) / stepSize);
             var pointIndex = 0;
             var y = startingYValue;
             while (y <= yEnd)

@@ -2015,7 +2015,7 @@ namespace TVGL
             var bToQ = q - face.B.Coordinates;
             var bToC = face == face.BC.OwnedFace ? face.BC.Vector : -face.BC.Vector;
             var bToA = -aToB;
-            return bToC.Cross(bToQ).Dot(bToQ.Cross(bToA)) < 0;
+            return bToC.Cross(bToQ).Dot(bToQ.Cross(bToA)) > 0;
 
             //return ((b - a).Cross(p - a)).Dot((p - a).Cross(c - a)) >= 0
             //    && ((c - b).Cross(p - b)).Dot((p - b).Cross(a - b)) >= 0;

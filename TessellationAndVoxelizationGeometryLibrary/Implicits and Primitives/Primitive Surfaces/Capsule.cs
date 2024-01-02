@@ -14,6 +14,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 
 
 
@@ -280,7 +281,7 @@ namespace TVGL
             else
             {
                 var b = directionVector.Cross(loc);
-                var c = directionVector.Cross(b).Normalize();
+                var c = b.Cross(directionVector).Normalize();
                 var cosAngle = directionVectorLength /
                     Math.Sqrt(directionVectorLength * directionVectorLength +
                     (coneRadius1 - coneRadius2) * (coneRadius1 - coneRadius2));
@@ -307,5 +308,72 @@ namespace TVGL
             var firstFace = Faces.First();
             isPositive = (firstFace.Center - Anchor1).Dot(firstFace.Normal) > 0;
         }
+
+        protected override void SetPrimitiveLimits()
+        {
+            MinX = Math.Min(Anchor1.X - Radius1, Anchor2.X - Radius2);
+            MaxX = Math.Max(Anchor1.X + Radius1, Anchor2.X + Radius2);
+            MinY = Math.Min(Anchor1.Y - Radius1, Anchor2.Y - Radius2);
+            MaxY = Math.Max(Anchor1.Y + Radius1, Anchor2.Y + Radius2);
+            MinZ = Math.Min(Anchor1.Z - Radius1, Anchor2.Z - Radius2);
+            MaxZ = Math.Max(Anchor1.Z + Radius1, Anchor2.Z + Radius2);
+        }
+
+        /// <summary>
+        /// Finds the intersection between this capsule and this specified line
+        /// 
+        /// </summary>
+        /// <param name="anchor"></param>
+        /// <param name="direction"></param>
+        /// <returns></returns>
+        /// <exception cref="NotImplementedException"></exception>
+        public override IEnumerable<(Vector3 intersection, double lineT)> LineIntersection(Vector3 anchor, Vector3 direction)
+        {
+            if (Radius1 != Radius2) throw new NotImplementedException("Capsule must have equal radii to use this method.");
+            var a1ToA2Distance = (Anchor2 - Anchor1).Length();
+            var cDir = (Anchor2 - Anchor1) / a1ToA2Distance;
+            var pointsFound = 0;
+            var sphereIntersects = Sphere.LineIntersection(Anchor1, Radius1, anchor, direction).ToList();
+            if (sphereIntersects.Count > 0 && (sphereIntersects[0].intersection - Anchor1).Dot(cDir) <= 0)
+            {
+                yield return sphereIntersects[0];
+                pointsFound++;
+            }
+            if (sphereIntersects.Count > 1 && (sphereIntersects[1].intersection - Anchor1).Dot(cDir) <= 0)
+            {
+                yield return sphereIntersects[1];
+                pointsFound++;
+            }
+
+            if (pointsFound >= 2) yield break;
+            sphereIntersects = Sphere.LineIntersection(Anchor2, Radius2, anchor, direction).ToList();
+            if (sphereIntersects.Count > 0 && (sphereIntersects[0].intersection - Anchor2).Dot(cDir) >= 0)
+            {
+                yield return sphereIntersects[0];
+                pointsFound++;
+            }
+            if (pointsFound >= 2) yield break;
+            if (sphereIntersects.Count > 1 && (sphereIntersects[1].intersection - Anchor1).Dot(cDir) >= 0)
+            {
+                yield return sphereIntersects[1];
+                pointsFound++;
+            }
+            if (pointsFound >= 2) yield break;
+            var cylIntersects = Cylinder.LineIntersection(cDir, Radius1, Anchor1, anchor, direction).ToList();
+            if (cylIntersects.Count > 0)  // && (cylIntersects[0].intersection - Anchor1).Dot(cDir) >= 0)
+            {
+                var dot = (cylIntersects[0].intersection - Anchor1).Dot(cDir);
+                if (dot < a1ToA2Distance && dot >= 0)
+                    yield return cylIntersects[0];
+            }
+            if (pointsFound >= 2) yield break;
+            if (cylIntersects.Count > 1)
+            {
+                var dot = (cylIntersects[1].intersection - Anchor1).Dot(cDir);
+                if (dot < a1ToA2Distance && dot >= 0)
+                    yield return cylIntersects[1];
+            }
+        }
+
     }
 }
