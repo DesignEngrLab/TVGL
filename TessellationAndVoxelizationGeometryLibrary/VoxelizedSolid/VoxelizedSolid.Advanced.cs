@@ -73,49 +73,6 @@ namespace TVGL
             }
             return newSolid;
         }
-        public static VoxelizedSolid MinkowskiSubtractOneNew(VoxelizedSolid reference, bool? xNegFilter = null,
-            bool? xPosFilter = null, bool? yNegFilter = null, bool? yPosFilter = null, bool? zNegFilter = null, bool? zPosFilter = null)
-        {
-            var newSolid = reference.Copy();
-            var lastYIndex = -1;
-            var lastZIndex = -1;
-            var xStartIndex = -1;
-            var xEndIndex = -1;
-            var Xranges = new List<(ushort, ushort)>();
-            foreach ((int xIndex, int yIndex, int zIndex, bool xNeg, bool xPos, bool yNeg, bool yPos, bool zNeg, bool zPos)
-                in reference.GetExposedVoxelsWithSidesNew())
-            {
-                if (yIndex != lastYIndex || zIndex != lastZIndex)
-                {
-                    foreach (var range in Xranges)
-                        newSolid.voxels[lastYIndex + newSolid.zMultiplier * lastZIndex].TurnOffRange(range.Item1, range.Item2);
-                    if (xStartIndex != -1)
-                    {
-                        newSolid.voxels[lastYIndex + newSolid.zMultiplier * lastZIndex].TurnOffRange((ushort)xStartIndex, (ushort)xEndIndex);
-                        xStartIndex = -1;
-                    }
-                    lastYIndex = yIndex;
-                    lastZIndex = zIndex;
-                    Xranges.Clear();
-                }
-                if (xNegFilter.HasValue && xNegFilter.Value != xNeg) continue;
-                if (xPosFilter.HasValue && xPosFilter.Value != xPos) continue;
-                if (yNegFilter.HasValue && yNegFilter.Value != yNeg) continue;
-                if (yPosFilter.HasValue && yPosFilter.Value != yPos) continue;
-                if (zNegFilter.HasValue && zNegFilter.Value != zNeg) continue;
-                if (zPosFilter.HasValue && zPosFilter.Value != zPos) continue;
-                if (xIndex == xEndIndex)
-                    xEndIndex++;
-                else
-                {
-                    if (xStartIndex != -1)
-                        Xranges.Add(((ushort)xStartIndex, (ushort)xEndIndex));
-                    xStartIndex = xIndex;
-                    xEndIndex = xStartIndex + 1;
-                }
-            }
-            return newSolid;
-        }
         public static VoxelizedSolid MinkowskiAddOne(in VoxelizedSolid reference, bool? xNegFilter = null,
             bool? xPosFilter = null, bool? yNegFilter = null, bool? yPosFilter = null, bool? zNegFilter = null, bool? zPosFilter = null)
         { throw new NotImplementedException(); }

@@ -70,7 +70,7 @@ namespace TVGL
         {
             get
             {
-                lock (indices)
+                //lock (indices)
                     return GetValue(index);
             }
             set

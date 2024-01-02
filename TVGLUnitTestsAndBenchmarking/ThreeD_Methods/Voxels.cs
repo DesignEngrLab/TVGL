@@ -12,14 +12,13 @@ namespace TVGLUnitTestsAndBenchmarking
         public static void VoxelRowCompare()
         {
             var r = new Random();
-            for (int i = 8191; i > 0; i =(int)(i*0.75))
+            for (int i = 8192; i > 0; i =(int)(i*0.95))
             {
-                var numtrials = 250;
+                var numtrials = 1000;
                 var swDense = new Stopwatch();
                 var numBytesDense = 0;
                 var swSparse = new Stopwatch();
                 var numBytesSparse = 0;
-                Console.WriteLine("i: " + 8 * i);
                 for (int j = 0; j < numtrials; j++)
                 {
                     var bytes = new byte[i];
@@ -30,7 +29,7 @@ namespace TVGLUnitTestsAndBenchmarking
 
                     //Console.WriteLine("dense: " + string.Join(',', vD.XIndices()));
                     //Console.WriteLine("spars: " + string.Join(',', vS.XIndices()));
-                    var numRanges = 20;
+                    var numRanges = 10;
                     var indices = Enumerable.Range(0, numRanges).Select(x => r.Next(8 * i)).OrderBy(x => x).ToArray();
                     var starts = indices.Take(numRanges / 2).OrderBy(x => r.Next()).ToArray();
                     var ends = indices.Skip(numRanges / 2).OrderBy(x => r.Next()).ToArray();
@@ -101,8 +100,12 @@ namespace TVGLUnitTestsAndBenchmarking
                     numBytesSparse += 2 * vS.indices.Count;
                     //Console.WriteLine(vS.indices.Count/2);
                 }
-                Console.WriteLine("Dense: t = " + swDense.ElapsedTicks + "; s = " + numBytesDense / ((double)numtrials));
-                Console.WriteLine("Sparse: t = " + swSparse.ElapsedTicks + "; s = " + numBytesSparse / ((double)numtrials));
+                //Console.WriteLine("i: " + 8 * i+" Dense: t = " + swDense.ElapsedTicks + "; s = " + numBytesDense / ((double)numtrials));
+                Console.WriteLine(""+8 * i+"," + swDense.ElapsedTicks + "," + numBytesDense / ((double)numtrials));
+                var avgNumBytesSparse = numBytesSparse / ((double)numtrials);
+                var avgRanges = avgNumBytesSparse / 4;
+                //Console.WriteLine("i: " + 8 * i + " Sparse: t = " + swSparse.ElapsedTicks + "; s = " + avgNumBytesSparse +" ("+avgRanges+")");
+                Console.WriteLine(",,,,,"+8 * i + "," + swSparse.ElapsedTicks + "," + avgNumBytesSparse);
             }
         }
 
@@ -128,32 +131,36 @@ namespace TVGLUnitTestsAndBenchmarking
                 //Presenter.ShowAndHang(ts);
                 var sw = Stopwatch.StartNew();
                 Console.WriteLine("creating...");
-                var vs = VoxelizedSolid.CreateFrom(ts, 80);
+                var vs = VoxelizedSolid.CreateFrom(ts, 150);
                 vs.HasUniformColor = true;
                 vs.SolidColor = new Color(KnownColors.Black);
                 ts.SolidColor = new Color(100, 200, 100, 50);
-                Console.WriteLine(sw.Elapsed.ToString());
+                //Console.WriteLine(sw.Elapsed.ToString());
                 sw.Restart();
-                Console.WriteLine("extruding...");
-                //Presenter.ShowAndHang(vs.ConvertToTessellatedSolidRectilinear());
+                //Console.WriteLine("extruding...");
+                Presenter.ShowAndHang(vs.ConvertToTessellatedSolidRectilinear());
                 //Presenter.ShowAndHang(new Solid[] { vs });
                 //continue;
                 var extrudeSolid = vs.DraftToNewSolid(CartesianDirections.YNegative);
-                Console.WriteLine(sw.Elapsed.ToString());
-                //Presenter.ShowAndHang(extrudeSolid.ConvertToTessellatedSolidRectilinear());
-                Console.WriteLine("subtracting...");
-                sw.Restart();
+                //Console.WriteLine(sw.Elapsed.ToString());
+                Presenter.ShowAndHang(extrudeSolid.ConvertToTessellatedSolidRectilinear());
                 vs.SolidColor = new Color(100, 20, 20, 250);
 
+                sw.Restart();
                 var erode = VoxelizedSolid.MinkowskiSubtractOne(vs);
+                erode = VoxelizedSolid.MinkowskiSubtractOne(erode);
+                erode = VoxelizedSolid.MinkowskiSubtractOne(erode);
+                erode = VoxelizedSolid.MinkowskiSubtractOne(erode);
+                Console.WriteLine("eroding old..."+ sw.Elapsed.ToString());
+               
                 erode.SolidColor = new Color(100, 20, 20, 250);
+ sw.Restart();
+                Console.WriteLine("eroding new..." + sw.Elapsed.ToString());
 
-                var erodeNew = VoxelizedSolid.MinkowskiSubtractOneNew(vs);
-
-                Console.WriteLine(sw.Elapsed.ToString());
-                erodeNew.HasUniformColor = true;
-                erodeNew.SolidColor = new Color(200, 250, 20, 20);
-                Presenter.ShowAndHang(new[] { erode.ConvertToTessellatedSolidRectilinear(), erodeNew.ConvertToTessellatedSolidRectilinear() });
+                //if (erode.Equals(erodeNew)) Console.WriteLine("equal");
+                //else throw new Exception();  //Console.WriteLine("not equal");
+                //continue;
+                Presenter.ShowAndHang(new[] { erode.ConvertToTessellatedSolidRectilinear() }); //, vs.ConvertToTessellatedSolidRectilinear() });
 
                 var block = VoxelizedSolid.CreateFullBlock(extrudeSolid);
                 (block, var _) = block.SliceOnPlane(new Plane(2, new Vector3(1, 1, 1)));
