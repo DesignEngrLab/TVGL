@@ -435,13 +435,13 @@ namespace TVGL
                 var currentByte = thisByte;
                 for (int j = 0; j < 8; j++)
                 {
-                    var currentVal = (currentByte & 0b10000000) != 0;
+                    var currentVal = (currentByte & 0b00000001) != 0;
                     if (currentVal != lastVal)
                     {
                         lastVal = currentVal;
                         yield return i;
                     }
-                    currentByte <<= 1;
+                    currentByte >>= 1;
                     i++;
                 }
             }

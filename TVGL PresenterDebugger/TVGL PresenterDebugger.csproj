@@ -16,7 +16,9 @@
 		<PackageReference Include="HelixToolkit.SharpDX.Core.Wpf" Version="2.23.0" />
 		<PackageReference Include="OxyPlot.Wpf" Version="2.1.2" />
 	</ItemGroup>
-
+	<ItemGroup>
+		<InternalsVisibleTo Include="TVGLUnitTestsAndBenchmarking" />
+	</ItemGroup>
 	<ItemGroup>
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\CrossSectionSolid\CrossSectionSolid.cs" Link="TVGL\CrossSectionSolid\CrossSectionSolid.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\CrossSectionSolid\CrossSectionSolid.PublicStaticMethods.cs" Link="TVGL\CrossSectionSolid\CrossSectionSolid.PublicStaticMethods.cs" />

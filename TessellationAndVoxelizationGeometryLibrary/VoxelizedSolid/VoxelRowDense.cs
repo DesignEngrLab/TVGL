@@ -35,11 +35,11 @@ namespace TVGL
         /// <summary>
         /// Initializes a new instance of the <see cref="VoxelRowDense" /> struct.
         /// </summary>
-        /// <param name="length">The length.</param>
-        internal VoxelRowDense(int length)
+        /// <param name="numBytes">The numBytes.</param>
+        internal VoxelRowDense(int numBytes)
         {
-            numBytes = length;
-            values = new byte[length];
+            this.numBytes = numBytes;
+            values = new byte[numBytes];
         }
 
         /// <summary>
@@ -194,7 +194,7 @@ namespace TVGL
             byte hiMask = (byte)(mask << endBitPostion);
             if (startByte == endByte)
             {
-                mask = (byte)(loMask & hiMask);
+                mask = (byte)(loMask | hiMask);
                 values[startByte] &= mask;
                 return;
             }
