@@ -15,7 +15,7 @@ namespace TVGLUnitTestsAndBenchmarking
             var random = new Random();
             var fileNames = dir.GetFiles("*.*"); //.OrderBy(x => random.Next()).ToArray();
             //var fileNames = dir.GetFiles("*");
-            for (var i = 0; i < fileNames.Length - 0; i++)
+            for (var i = 1; i < fileNames.Length - 0; i++)
             {
                 //var filename = FileNames[i];
                 var filename = fileNames[i].FullName;
@@ -31,28 +31,38 @@ namespace TVGLUnitTestsAndBenchmarking
                 //Presenter.ShowAndHang(ts);
                 var sw = Stopwatch.StartNew();
                 Console.WriteLine("creating...");
-                var vs = VoxelizedSolid.CreateFrom(ts, 500);
+                var vs = VoxelizedSolid.CreateFrom(ts, 80);
+                vs.HasUniformColor = true;
                 vs.SolidColor = new Color(KnownColors.Black);
                 ts.SolidColor = new Color(100, 200, 100, 50);
                 Console.WriteLine(sw.Elapsed.ToString());
                 sw.Restart();
                 Console.WriteLine("extruding...");
-                //Presenter.ShowAndHang(vs.ConvertToTessellatedSolidMarchingCubes(250));
+                //Presenter.ShowAndHang(vs.ConvertToTessellatedSolidRectilinear());
                 //Presenter.ShowAndHang(new Solid[] { vs });
                 //continue;
-                var extrudeSolid = vs.DraftToNewSolid(CartesianDirections.ZNegative);
+                var extrudeSolid = vs.DraftToNewSolid(CartesianDirections.YNegative);
                 Console.WriteLine(sw.Elapsed.ToString());
-                Presenter.ShowAndHang(extrudeSolid);
+                //Presenter.ShowAndHang(extrudeSolid.ConvertToTessellatedSolidRectilinear());
                 Console.WriteLine("subtracting...");
                 sw.Restart();
-                extrudeSolid.Subtract(vs);
-                Presenter.ShowAndHang(extrudeSolid);
+                vs.SolidColor = new Color(100, 20, 20, 250);
+
+                var erode = VoxelizedSolid.MinkowskiSubtractOne(vs);
+                erode.SolidColor = new Color(100, 20, 20, 250);
+
+                var erodeNew = VoxelizedSolid.MinkowskiSubtractOneNew(vs);
+
+                Console.WriteLine(sw.Elapsed.ToString());
+                erodeNew.HasUniformColor = true;
+                erodeNew.SolidColor = new Color(200, 250, 20, 20);
+                Presenter.ShowAndHang(new[] { erode.ConvertToTessellatedSolidRectilinear(), erodeNew.ConvertToTessellatedSolidRectilinear() });
 
                 var block = VoxelizedSolid.CreateFullBlock(extrudeSolid);
-                (block, var _) = block.SliceOnPlane(new Plane(2, new Vector3(1,1,1)));
-                Presenter.ShowAndHang(block);
+                (block, var _) = block.SliceOnPlane(new Plane(2, new Vector3(1, 1, 1)));
+                Presenter.ShowAndHang(block.ConvertToTessellatedSolidRectilinear());
                 Console.WriteLine(sw.Elapsed.ToString());
-                
+
                 //Presenter.ShowAndHang(extrudeSolid.ConvertToTessellatedSolidMarchingCubes(5));
 
                 //Snapshot.Match(vs, SnapshotNameExtension.Create(name));

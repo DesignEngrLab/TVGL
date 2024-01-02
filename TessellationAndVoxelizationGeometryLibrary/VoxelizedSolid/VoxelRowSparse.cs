@@ -518,7 +518,7 @@ namespace TVGL
         /// <param name="start"></param>
         /// <param name="end"></param>
         /// <returns></returns>
-        internal override IEnumerable<int> XIndices(ushort start = 0, ushort end = ushort.MaxValue)
+        internal override IEnumerable<ushort> XIndices(ushort start = 0, ushort end = ushort.MaxValue)
         {
             lock (indices)
             {
@@ -540,7 +540,7 @@ namespace TVGL
                         upLim = indices[i + 1];
                         lastOne = false;
                     }
-                    for (int j = indices[i]; j < upLim; j++)
+                    for (var j = indices[i]; j < upLim; j++)
                     {
                         yield return j;
                     }

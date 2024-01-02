@@ -30,15 +30,115 @@ namespace TVGL
         { }
         public void MinkowskiSubtractSphere(PrimitiveSurface surface, double radius)
         { }
-        public void MinkowskiAddOne(PrimitiveSurface surface)
-        { }
-        public void MinkowskiSubtractOne(PrimitiveSurface surface)
-        { }
-        public void Union(PrimitiveSurface surface)
-        { }
-        public void Intersect(PrimitiveSurface surface)
-        { }
-        public void Subtract(PrimitiveSurface surface)
+        public static VoxelizedSolid MinkowskiSubtractOne(VoxelizedSolid reference, bool? xNegFilter = null,
+            bool? xPosFilter = null, bool? yNegFilter = null, bool? yPosFilter = null, bool? zNegFilter = null, bool? zPosFilter = null)
+        {
+            var newSolid = reference.Copy();
+            var lastYIndex = -1;
+            var lastZIndex = -1;
+            var xStartIndex = -1;
+            var xEndIndex = -1;
+            var Xranges = new List<(ushort, ushort)>();
+            foreach ((int xIndex, int yIndex, int zIndex, bool xNeg, bool xPos, bool yNeg, bool yPos, bool zNeg, bool zPos)
+                in reference.GetExposedVoxelsWithSides())
+            {
+                if (yIndex != lastYIndex || zIndex != lastZIndex)
+                {
+                    foreach (var range in Xranges)
+                        newSolid.voxels[lastYIndex + newSolid.zMultiplier * lastZIndex].TurnOffRange(range.Item1, range.Item2);
+                    if (xStartIndex != -1)
+                    {
+                        newSolid.voxels[lastYIndex + newSolid.zMultiplier * lastZIndex].TurnOffRange((ushort)xStartIndex, (ushort)xEndIndex);
+                        xStartIndex = -1;
+                    }
+                    lastYIndex = yIndex;
+                    lastZIndex = zIndex;
+                    Xranges.Clear();
+                }
+                if (xNegFilter.HasValue && xNegFilter.Value != xNeg) continue;
+                if (xPosFilter.HasValue && xPosFilter.Value != xPos) continue;
+                if (yNegFilter.HasValue && yNegFilter.Value != yNeg) continue;
+                if (yPosFilter.HasValue && yPosFilter.Value != yPos) continue;
+                if (zNegFilter.HasValue && zNegFilter.Value != zNeg) continue;
+                if (zPosFilter.HasValue && zPosFilter.Value != zPos) continue;
+                if (xIndex == xEndIndex)
+                    xEndIndex++;
+                else
+                {
+                    if (xStartIndex != -1)
+                        Xranges.Add(((ushort)xStartIndex, (ushort)xEndIndex));
+                    xStartIndex = xIndex;
+                    xEndIndex = xStartIndex + 1;
+                }
+            }
+            return newSolid;
+        }
+        public static VoxelizedSolid MinkowskiSubtractOneNew(VoxelizedSolid reference, bool? xNegFilter = null,
+            bool? xPosFilter = null, bool? yNegFilter = null, bool? yPosFilter = null, bool? zNegFilter = null, bool? zPosFilter = null)
+        {
+            var newSolid = reference.Copy();
+            var lastYIndex = -1;
+            var lastZIndex = -1;
+            var xStartIndex = -1;
+            var xEndIndex = -1;
+            var Xranges = new List<(ushort, ushort)>();
+            foreach ((int xIndex, int yIndex, int zIndex, bool xNeg, bool xPos, bool yNeg, bool yPos, bool zNeg, bool zPos)
+                in reference.GetExposedVoxelsWithSidesNew())
+            {
+                if (yIndex != lastYIndex || zIndex != lastZIndex)
+                {
+                    foreach (var range in Xranges)
+                        newSolid.voxels[lastYIndex + newSolid.zMultiplier * lastZIndex].TurnOffRange(range.Item1, range.Item2);
+                    if (xStartIndex != -1)
+                    {
+                        newSolid.voxels[lastYIndex + newSolid.zMultiplier * lastZIndex].TurnOffRange((ushort)xStartIndex, (ushort)xEndIndex);
+                        xStartIndex = -1;
+                    }
+                    lastYIndex = yIndex;
+                    lastZIndex = zIndex;
+                    Xranges.Clear();
+                }
+                if (xNegFilter.HasValue && xNegFilter.Value != xNeg) continue;
+                if (xPosFilter.HasValue && xPosFilter.Value != xPos) continue;
+                if (yNegFilter.HasValue && yNegFilter.Value != yNeg) continue;
+                if (yPosFilter.HasValue && yPosFilter.Value != yPos) continue;
+                if (zNegFilter.HasValue && zNegFilter.Value != zNeg) continue;
+                if (zPosFilter.HasValue && zPosFilter.Value != zPos) continue;
+                if (xIndex == xEndIndex)
+                    xEndIndex++;
+                else
+                {
+                    if (xStartIndex != -1)
+                        Xranges.Add(((ushort)xStartIndex, (ushort)xEndIndex));
+                    xStartIndex = xIndex;
+                    xEndIndex = xStartIndex + 1;
+                }
+            }
+            return newSolid;
+        }
+        public static VoxelizedSolid MinkowskiAddOne(in VoxelizedSolid reference, bool? xNegFilter = null,
+            bool? xPosFilter = null, bool? yNegFilter = null, bool? yPosFilter = null, bool? zNegFilter = null, bool? zPosFilter = null)
+        { throw new NotImplementedException(); }
+
+        /// <summary>
+        ///  Creates the union of the voxels on the "inside" of this surface with this solid.
+        /// </summary>
+        /// <param name="surface"></param>
+        public void Union(PrimitiveSurface surface) => BooleanOperation(surface, true, false);
+
+        /// <summary>
+        /// Intersects the voxels on the "inside" of this surface with this solid.
+        /// </summary>
+        /// <param name="surface"></param>
+        public void Intersect(PrimitiveSurface surface) => BooleanOperation(surface, false, true);
+
+        /// <summary>
+        /// Subrtracts the voxels on the "inside" of this surface from this solid.
+        /// </summary>
+        /// <param name="surface"></param>
+        public void Subtract(PrimitiveSurface surface) => BooleanOperation(surface, false, false);
+
+        private void BooleanOperation(PrimitiveSurface surface, bool turnOn, bool inverseRange)
         {
             var minIndices = ConvertCoordinatesToIndices(new Vector3(surface.MinX, surface.MinY, surface.MinZ));
             var maxIndices = ConvertCoordinatesToIndices(new Vector3(surface.MaxX, surface.MaxY, surface.MaxZ));
@@ -61,7 +161,7 @@ namespace TVGL
                         crossings.Enqueue((surface.GetNormalAtPoint(q.intersection).X < 0, q.lineT), q.lineT);
                     var start = (ushort)0;
                     if (crossings.Count == 0) continue;
-                    var startDefined = !crossings.Peek().Item1;
+                    var startDefined = inverseRange == crossings.Peek().Item1;
                     while (crossings.Count > 0)
                     {
                         var next = crossings.Dequeue();
@@ -69,12 +169,15 @@ namespace TVGL
                         var breakAfterThis = false;
                         if (xIndex >= numVoxelsX)
                         {
-                            if (startDefined) voxRow.TurnOffRange(start, numVoxelsX);
+                            if (startDefined)
+                                if (turnOn) voxRow.TurnOnRange(start, numVoxelsX);
+                                else voxRow.TurnOffRange(start, numVoxelsX);
                             breakAfterThis = true;
                         }
                         else if (startDefined)
                         {
-                            voxRow.TurnOffRange(start, xIndex);
+                            if (turnOn) voxRow.TurnOnRange(start, xIndex);
+                            else voxRow.TurnOffRange(start, xIndex);
                             startDefined = false;
                         }
                         else

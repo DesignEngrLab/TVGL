@@ -87,6 +87,6 @@ namespace TVGL
         internal abstract int AverageXPosition();
 
 
-        internal abstract IEnumerable<int> XIndices(ushort start = 0, ushort end = ushort.MaxValue);
+        internal abstract IEnumerable<ushort> XIndices(ushort start = 0, ushort end = ushort.MaxValue);
     }
 }

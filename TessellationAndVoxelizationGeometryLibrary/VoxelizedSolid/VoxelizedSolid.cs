@@ -261,7 +261,7 @@ namespace TVGL
                         var numXRangesOnThisLine = intersectionPoints.Length;
                         if (numXRangesOnThisLine > 0)
                         {
-                            var voxelRow = (VoxelRowSparse)voxels[k * zMultiplier + j];
+                            var voxelRow = (VoxelRowSparse)voxels[j + zMultiplier * k];
                             for (var m = 0; m < numXRangesOnThisLine; m += 2)
                             {
                                 var sp = (ushort)ConvertXCoordToIndex(intersectionPoints[m]);
@@ -386,7 +386,7 @@ namespace TVGL
         /// </summary>
         public void UpdateToAllDense()
         {
-            var numBytesInX = (int)Math.Ceiling(numVoxelsX / 8.0);
+            var numBytesInX = 1 + (numVoxelsX >> 3);
             if (FractionDense == 1) return;
             for (int i = 0; i < numVoxelsY * numVoxelsZ; i++)
             {
@@ -536,7 +536,16 @@ namespace TVGL
                     }
                 }
             }
-            return new TessellatedSolid(faces, vertexDictionary.Values);
+            var result = new TessellatedSolid(faces, vertexDictionary.Values);
+            result.Comments = new List<string>(Comments);
+            result.HasUniformColor = HasUniformColor;
+            result.Language = Language;
+            result.Name = Name;
+            result.ReferenceIndex = ReferenceIndex;
+            result.SameTolerance = SameTolerance;
+            result.SolidColor = SolidColor;
+            result.Units = Units;
+            return result;
         }
         public long GetLongID(int x, int y, int z) => (long)x + ((long)y << 21) + ((long)z << 42);
         public (int x, int y, int z) GetIndicesFromID(long id)
@@ -689,8 +698,8 @@ namespace TVGL
         #region Getting Voxels and Neighbors
         public IEnumerable<(int xIndex, int yIndex, int zIndex)> GetExposedVoxels()
         {
-            for (int yCoord = 0; yCoord < numVoxelsY; yCoord++)
-                for (int zCoord = 0; zCoord < numVoxelsZ; zCoord++)
+            for (int zCoord = 0; zCoord < numVoxelsZ; zCoord++)
+                for (int yCoord = 0; yCoord < numVoxelsY; yCoord++)
                 {
                     var xCoord = -1;
                     var nextX = -1;
@@ -712,11 +721,16 @@ namespace TVGL
                     if (nextX >= 0 && nextX < numVoxelsX) yield return (nextX, yCoord, zCoord);
                 }
         }
-        public IEnumerable<(int xIndex, int yIndex, int zIndex, bool xNeg, bool xPos, bool yNeg, bool yPos, bool zNeg, bool zPos)> GetExposedVoxelsWithSides()
+        public IEnumerable<(int xIndex, int yIndex, int zIndex)> GetExposedVoxelsNew()
         {
-            for (int yCoord = 0; yCoord < numVoxelsY; yCoord++)
-                for (int zCoord = 0; zCoord < numVoxelsZ; zCoord++)
+            var numBytesInX = 1 + (numVoxelsX >> 3);
+            var previous = new VoxelRowDense[numVoxelsY];
+            for (int i = 0; i < numVoxelsY; i++)
+                previous[i] = new VoxelRowDense(numBytesInX);
+            for (int zCoord = 0; zCoord < numVoxelsZ; zCoord++)
+                for (int yCoord = 0; yCoord < numVoxelsY; yCoord++)
                 {
+                    var previousRow = previous[yCoord];
                     var xCoord = -1;
                     var nextX = -1;
                     foreach (var xValue in voxels[yCoord + zMultiplier * zCoord].XIndices())
@@ -724,249 +738,371 @@ namespace TVGL
                         var lastX = xCoord;
                         xCoord = nextX;
                         nextX = xValue;
-                        if (xCoord < 0) continue; // this is just the first pass to popule the xCoord and nextX values
-                        var xNeg = xCoord - lastX > 1;
-                        var xPos = nextX - xCoord > 1;
-                        var yNeg = yCoord == 0 || !voxels[yCoord - 1 + zMultiplier * zCoord][xCoord];
+                        previousRow.TurnOffRange((ushort)(xCoord + 1), xValue);
+                        if (xCoord < 0) continue;
+                        if (xCoord - lastX > 1 || nextX - xCoord > 1
+                        || yCoord == 0 || yCoord + 1 >= numVoxelsY || zCoord == 0 || zCoord + 1 >= numVoxelsZ
+                         || !previous[yCoord - 1][xCoord]
+                         || !voxels[yCoord + 1 + zMultiplier * zCoord][xCoord]
+                         || !previousRow[(ushort)xCoord]
+                         || !voxels[yCoord + zMultiplier * (zCoord + 1)][xCoord])
+                            yield return (xCoord, yCoord, zCoord);
+                        previousRow[(ushort)xCoord] = true;
+                        if (nextX >= numVoxelsX) break;
+                    }
+                    if (nextX >= 0 && nextX < numVoxelsX) yield return (nextX, yCoord, zCoord);
+                }
+        }
+        public IEnumerable<(int xIndex, int yIndex, int zIndex, bool xNeg, bool xPos, bool yNeg, bool yPos, bool zNeg, bool zPos)> GetExposedVoxelsWithSidesNew()
+        {
+            var numBytesInX = 1 + (numVoxelsX >> 3);
+            var previous = new VoxelRowDense[numVoxelsY];
+            for (int i = 0; i < numVoxelsY; i++)
+                previous[i] = new VoxelRowDense(numBytesInX);
+
+            for (int zCoord = 0; zCoord < numVoxelsZ; zCoord++)
+                for (int yCoord = 0; yCoord < numVoxelsY; yCoord++)
+                {
+                    if (zCoord == 2 && yCoord == 0)
+                    {
+                        var rr = voxels[yCoord + zMultiplier * zCoord].XIndices().ToList();
+                        Console.WriteLine("new "+string.Join(',',rr));
+                    }
+                    using (var enumerator = voxels[yCoord + zMultiplier * zCoord].XIndices().GetEnumerator())
+                    {
+                        if (!enumerator.MoveNext())
+                        {
+                            previous[yCoord].Clear();
+                            continue;
+                        }
+                        var xCoord = enumerator.Current;
+                        var xNeg = true;
+                        previous[yCoord].TurnOffRange(0, xCoord);
+                        var xPos = !enumerator.MoveNext();
+                        ushort nextX;
+                        if (xPos) nextX = numVoxelsX;
+                        else
+                        {
+                            nextX = enumerator.Current;
+                            xPos = nextX - xCoord > 1;
+                        }
+                        var yNeg = yCoord == 0 || !previous[yCoord - 1][xCoord];
                         var yPos = yCoord + 1 >= numVoxelsY || !voxels[yCoord + 1 + zMultiplier * zCoord][xCoord];
-                        var zNeg = zCoord == 0 || !voxels[yCoord + zMultiplier * (zCoord - 1)][xCoord];
+                        var zNeg = zCoord == 0 || !previous[yCoord][xCoord];
                         var zPos = zCoord + 1 >= numVoxelsZ || !voxels[yCoord + zMultiplier * (zCoord + 1)][xCoord];
+                        if (xNeg || xPos || yNeg || yPos || zNeg || zPos)
+                            yield return (xCoord, yCoord, zCoord, xNeg, xPos, yNeg, yPos, zNeg, zPos);
+                        previous[yCoord][xCoord] = true;
+                        if (nextX >= numVoxelsX)
+                        {
+                            previous[yCoord].TurnOffRange((ushort)(xCoord + 1), numVoxelsX);
+                            continue;
+                        }
+                        while (true)
+                        {
+                            var lastX = xCoord;
+                            xCoord = nextX;
+                            xNeg = xCoord - lastX > 1;
+                            if (xNeg)
+                                previous[yCoord].TurnOffRange((ushort)(lastX + 1), xCoord);
+                            xPos = !enumerator.MoveNext();
+                            if (xPos) nextX = numVoxelsX;
+                            else
+                            {
+                                nextX = enumerator.Current;
+                                xPos = nextX - xCoord > 1;
+                            }
+                            yNeg = yCoord == 0 || !previous[yCoord - 1][xCoord];
+                            yPos = yCoord + 1 >= numVoxelsY || !voxels[yCoord + 1 + zMultiplier * zCoord][xCoord];
+                            zNeg = zCoord == 0 || !previous[yCoord][xCoord];
+                            zPos = zCoord + 1 >= numVoxelsZ || !voxels[yCoord + zMultiplier * (zCoord + 1)][xCoord];
+                            if (xNeg || xPos || yNeg || yPos || zNeg || zPos)
+                                yield return (xCoord, yCoord, zCoord, xNeg, xPos, yNeg, yPos, zNeg, zPos);
+                            previous[yCoord][xCoord] = true;
+                            if (nextX >= numVoxelsX)
+                            {
+                                previous[yCoord].TurnOffRange((ushort)(xCoord + 1), numVoxelsX);
+                                break;
+                            }
+                        }
+                    }
+                }
+        }
+
+    public IEnumerable<(int xIndex, int yIndex, int zIndex, bool xNeg, bool xPos, bool yNeg, bool yPos, bool zNeg, bool zPos)> GetExposedVoxelsWithSides()
+    {
+        for (int zCoord = 0; zCoord < numVoxelsZ; zCoord++)
+            for (int yCoord = 0; yCoord < numVoxelsY; yCoord++)
+                {
+                    if (zCoord == 2 && yCoord == 1)
+                    {
+                        var rr = voxels[yCoord + zMultiplier * zCoord].XIndices().ToList();
+                        Console.WriteLine("old " + string.Join(',', rr));
+                    }
+                    using (var enumerator = voxels[yCoord + zMultiplier * zCoord].XIndices().GetEnumerator())
+                {
+                    if (!enumerator.MoveNext()) continue;
+                    var xCoord = enumerator.Current;
+                    var xNeg = true;
+                    var xPos = !enumerator.MoveNext();
+                    ushort nextX;
+                    if (xPos) nextX = numVoxelsX;
+                    else
+                    {
+                        nextX = enumerator.Current;
+                        xPos = nextX - xCoord > 1;
+                    }
+                    var yNeg = yCoord == 0 || !voxels[yCoord - 1 + zMultiplier * zCoord][xCoord];
+                    var yPos = yCoord + 1 >= numVoxelsY || !voxels[yCoord + 1 + zMultiplier * zCoord][xCoord];
+                    var zNeg = zCoord == 0 || !voxels[yCoord + zMultiplier * (zCoord - 1)][xCoord];
+                    var zPos = zCoord + 1 >= numVoxelsZ || !voxels[yCoord + zMultiplier * (zCoord + 1)][xCoord];
+                    if (xNeg || xPos || yNeg || yPos || zNeg || zPos)
+                        yield return (xCoord, yCoord, zCoord, xNeg, xPos, yNeg, yPos, zNeg, zPos);
+                    if (nextX >= numVoxelsX) continue;
+
+                    while (true)
+                    {
+                        var lastX = xCoord;
+                        xCoord = nextX;
+                        xNeg = xCoord - lastX > 1;
+                        xPos = !enumerator.MoveNext();
+                        if (xPos) nextX = numVoxelsX;
+                        else
+                        {
+                            nextX = enumerator.Current;
+                            xPos = nextX - xCoord > 1;
+                        }
+                        yNeg = yCoord == 0 || !voxels[yCoord - 1 + zMultiplier * zCoord][xCoord];
+                        yPos = yCoord + 1 >= numVoxelsY || !voxels[yCoord + 1 + zMultiplier * zCoord][xCoord];
+                        zNeg = zCoord == 0 || !voxels[yCoord + zMultiplier * (zCoord - 1)][xCoord];
+                        zPos = zCoord + 1 >= numVoxelsZ || !voxels[yCoord + zMultiplier * (zCoord + 1)][xCoord];
                         if (xNeg || xPos || yNeg || yPos || zNeg || zPos)
                             yield return (xCoord, yCoord, zCoord, xNeg, xPos, yNeg, yPos, zNeg, zPos);
                         if (nextX >= numVoxelsX) break;
                     }
-                    if (nextX >= 0 && nextX < numVoxelsX)
-                    {
-                        var lastX = xCoord;
-                        xCoord = nextX;
-                        var xNeg = xCoord - lastX > 1;
-                        var yNeg = yCoord == 0 || !voxels[yCoord - 1 + zMultiplier * zCoord][xCoord];
-                        var yPos = yCoord + 1 >= numVoxelsY || !voxels[yCoord + 1 + zMultiplier * zCoord][xCoord];
-                        var zNeg = zCoord == 0 || !voxels[yCoord + zMultiplier * (zCoord - 1)][xCoord];
-                        var zPos = zCoord + 1 >= numVoxelsZ || !voxels[yCoord + zMultiplier * (zCoord + 1)][xCoord];
-                        yield return (xCoord, yCoord, zCoord, xNeg, true, yNeg, yPos, zNeg, zPos);
-                    }
                 }
-        }
-        #region Public Methods that Branch
-        /// <summary>
-        /// Gets or sets the <see cref="System.Boolean" /> at the specified coordinate.
-        /// true corresponds to "on" and false to "off".
-        /// </summary>
-        /// <param name="xCoord">The x coord.</param>
-        /// <param name="yCoord">The y coord.</param>
-        /// <param name="zCoord">The z coord.</param>
-        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
-        public bool this[int xCoord, int yCoord, int zCoord]
-        {
-            get
-            {
-                if (xCoord >= numVoxelsX)
-                    // this is needed because the end voxel index in sparse is sometimes
-                    // set to ushort.MaxValue
-                    return false;
-                return voxels[yCoord + zMultiplier * zCoord][xCoord];
             }
-            set
-            {
-                voxels[yCoord + zMultiplier * zCoord][xCoord] = value;
-            }
-        }
+    }
 
-        /// <summary>
-        /// Gets or sets the <see cref="System.Boolean" /> at the specified coordinate.
-        /// true corresponds to "on" and false to "off".
-        /// </summary>
-        /// <param name="coordinates">The coordinates.</param>
-        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
-        public bool this[int[] coordinates]
+    #region Public Methods that Branch
+    /// <summary>
+    /// Gets or sets the <see cref="System.Boolean" /> at the specified coordinate.
+    /// true corresponds to "on" and false to "off".
+    /// </summary>
+    /// <param name="xCoord">The x coord.</param>
+    /// <param name="yCoord">The y coord.</param>
+    /// <param name="zCoord">The z coord.</param>
+    /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
+    public bool this[int xCoord, int yCoord, int zCoord]
+    {
+        get
         {
-            get => this[coordinates[0], coordinates[1], coordinates[2]];
-            set => this[coordinates[0], coordinates[1], coordinates[2]] = value;
+            if (xCoord >= numVoxelsX)
+                // this is needed because the end voxel index in sparse is sometimes
+                // set to ushort.MaxValue
+                return false;
+            return voxels[yCoord + zMultiplier * zCoord][xCoord];
         }
-
-        /// <summary>
-        /// Gets the neighbors of the specified voxel position (even if specified is an off-voxel).
-        /// The result is true if there are neighbors and false if there are none.
-        /// the neighbors array is the coordinates or nulls. Where the null represents off-voxels.
-        /// </summary>
-        /// <param name="xCoord">The x coord.</param>
-        /// <param name="yCoord">The y coord.</param>
-        /// <param name="zCoord">The z coord.</param>
-        /// <param name="neighbors">The neighbors.</param>
-        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
-        public bool GetNeighbors(int xCoord, int yCoord, int zCoord, out int[][] neighbors)
+        set
         {
-            neighbors = GetNeighbors(xCoord, yCoord, zCoord);
-            return neighbors.Any(n => n != null);
+            voxels[yCoord + zMultiplier * zCoord][xCoord] = value;
         }
+    }
 
-        /// <summary>
-        /// Gets the neighbors of the specified voxel position (even if specified is an off-voxel).
-        /// The result is an array of coordinates or nulls. Where the null represents off-voxels.
-        /// </summary>
-        /// <param name="xCoord">The x coord.</param>
-        /// <param name="yCoord">The y coord.</param>
-        /// <param name="zCoord">The z coord.</param>
-        /// <returns>System.Int32[][].</returns>
-        public int[][] GetNeighbors(int xCoord, int yCoord, int zCoord)
+    /// <summary>
+    /// Gets or sets the <see cref="System.Boolean" /> at the specified coordinate.
+    /// true corresponds to "on" and false to "off".
+    /// </summary>
+    /// <param name="coordinates">The coordinates.</param>
+    /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
+    public bool this[int[] coordinates]
+    {
+        get => this[coordinates[0], coordinates[1], coordinates[2]];
+        set => this[coordinates[0], coordinates[1], coordinates[2]] = value;
+    }
+
+    /// <summary>
+    /// Gets the neighbors of the specified voxel position (even if specified is an off-voxel).
+    /// The result is true if there are neighbors and false if there are none.
+    /// the neighbors array is the coordinates or nulls. Where the null represents off-voxels.
+    /// </summary>
+    /// <param name="xCoord">The x coord.</param>
+    /// <param name="yCoord">The y coord.</param>
+    /// <param name="zCoord">The z coord.</param>
+    /// <param name="neighbors">The neighbors.</param>
+    /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
+    public bool GetNeighbors(int xCoord, int yCoord, int zCoord, out int[][] neighbors)
+    {
+        neighbors = GetNeighbors(xCoord, yCoord, zCoord);
+        return neighbors.Any(n => n != null);
+    }
+
+    /// <summary>
+    /// Gets the neighbors of the specified voxel position (even if specified is an off-voxel).
+    /// The result is an array of coordinates or nulls. Where the null represents off-voxels.
+    /// </summary>
+    /// <param name="xCoord">The x coord.</param>
+    /// <param name="yCoord">The y coord.</param>
+    /// <param name="zCoord">The z coord.</param>
+    /// <returns>System.Int32[][].</returns>
+    public int[][] GetNeighbors(int xCoord, int yCoord, int zCoord)
+    {
+        var neighbors = new int[][] { null, null, null, null, null, null };
+        var xNeighbors = voxels[yCoord + zMultiplier * zCoord].GetNeighbors(xCoord, numVoxelsX);
+        if (xNeighbors.Item1)
+            neighbors[0] = new[] { xCoord - 1, yCoord, zCoord };
+        if (xNeighbors.Item2)
+            neighbors[1] = new[] { xCoord + 1, yCoord, zCoord };
+
+        if (yCoord > 0 && voxels[yCoord - 1 + zMultiplier * zCoord][xCoord])
+            neighbors[2] = new[] { xCoord, yCoord - 1, zCoord };
+        if (yCoord + 1 < numVoxelsY && voxels[yCoord + 1 + zMultiplier * zCoord][xCoord])
+            neighbors[3] = new[] { xCoord, yCoord + 1, zCoord };
+
+        if (zCoord > 0 && voxels[yCoord + zMultiplier * (zCoord - 1)][xCoord])
+            neighbors[4] = new[] { xCoord, yCoord, zCoord - 1 };
+        if (zCoord + 1 < numVoxelsZ && voxels[yCoord + zMultiplier * (zCoord + 1)][xCoord])
+            neighbors[5] = new[] { xCoord, yCoord, zCoord + 1 };
+
+        return neighbors;
+    }
+
+
+    /// <summary>
+    /// Returns the number of adjacent voxels (0 to 6)
+    /// </summary>
+    /// <param name="xCoord">The x coord.</param>
+    /// <param name="yCoord">The y coord.</param>
+    /// <param name="zCoord">The z coord.</param>
+    /// <returns>System.Int32.</returns>
+    public int NumNeighbors(int xCoord, int yCoord, int zCoord)
+    {
+        var neighbors = 0;
+
+        var xNeighbors = voxels[yCoord + zMultiplier * zCoord].GetNeighbors(xCoord, numVoxelsX);
+        if (xNeighbors.Item1) neighbors++;
+        if (xNeighbors.Item2) neighbors++;
+
+        if (yCoord != 0 && voxels[yCoord - 1 + zMultiplier * zCoord][xCoord]) neighbors++;
+        if (yCoord + 1 < numVoxelsY && voxels[yCoord + 1 + zMultiplier * zCoord][xCoord]) neighbors++;
+
+        if (zCoord != 0 && voxels[yCoord + zMultiplier * (zCoord - 1)][xCoord]) neighbors++;
+        if (zCoord + 1 < numVoxelsZ && voxels[yCoord + zMultiplier * (zCoord + 1)][xCoord]) neighbors++;
+
+        return neighbors;
+    }
+
+    /// <summary>
+    /// Reports whether the specified voxel is exposed. An exposed voxel lacks a direct neighbor on one or
+    /// more of its 6 sides.
+    /// </summary>
+    /// <param name="xCoord"></param>
+    /// <param name="yCoord"></param>
+    /// <param name="zCoord"></param>
+    /// <returns></returns>
+    public bool IsExposed(int xCoord, int yCoord, int zCoord)
+    {
+        if (!this[xCoord, yCoord, zCoord]) return false;
+        var xNeighbors = voxels[yCoord + zMultiplier * zCoord].GetNeighbors(xCoord, numVoxelsX);
+        if (!xNeighbors.Item1) return true;
+        if (!xNeighbors.Item2) return true;
+        if (yCoord == 0 || yCoord + 1 >= numVoxelsY || zCoord == 0 || zCoord + 1 >= numVoxelsZ)
+            return true;
+        if (!voxels[yCoord - 1 + zMultiplier * zCoord][xCoord]) return true;
+        if (!voxels[yCoord + 1 + zMultiplier * zCoord][xCoord]) return true;
+        if (!voxels[yCoord + zMultiplier * (zCoord - 1)][xCoord]) return true;
+        if (!voxels[yCoord + zMultiplier * (zCoord + 1)][xCoord]) return true;
+        return false;
+    }
+
+    /// <summary>
+    /// Converts a 3D coordinate in the the voxels indices that occupy the point.
+    /// </summary>
+    /// <param name="coordinates"></param>
+    /// <returns></returns>
+    public int[] ConvertCoordinatesToIndices(Vector3 coordinates)
+    {
+        return new int[]
         {
-            var neighbors = new int[][] { null, null, null, null, null, null };
-            var xNeighbors = voxels[yCoord + zMultiplier * zCoord].GetNeighbors(xCoord, numVoxelsX);
-            if (xNeighbors.Item1)
-                neighbors[0] = new[] { xCoord - 1, yCoord, zCoord };
-            if (xNeighbors.Item2)
-                neighbors[1] = new[] { xCoord + 1, yCoord, zCoord };
-
-            if (yCoord > 0 && voxels[yCoord - 1 + zMultiplier * zCoord][xCoord])
-                neighbors[2] = new[] { xCoord, yCoord - 1, zCoord };
-            if (yCoord + 1 < numVoxelsY && voxels[yCoord + 1 + zMultiplier * zCoord][xCoord])
-                neighbors[3] = new[] { xCoord, yCoord + 1, zCoord };
-
-            if (zCoord > 0 && voxels[yCoord + zMultiplier * (zCoord - 1)][xCoord])
-                neighbors[4] = new[] { xCoord, yCoord, zCoord - 1 };
-            if (zCoord + 1 < numVoxelsZ && voxels[yCoord + zMultiplier * (zCoord + 1)][xCoord])
-                neighbors[5] = new[] { xCoord, yCoord, zCoord + 1 };
-
-            return neighbors;
-        }
-
-
-        /// <summary>
-        /// Returns the number of adjacent voxels (0 to 6)
-        /// </summary>
-        /// <param name="xCoord">The x coord.</param>
-        /// <param name="yCoord">The y coord.</param>
-        /// <param name="zCoord">The z coord.</param>
-        /// <returns>System.Int32.</returns>
-        public int NumNeighbors(int xCoord, int yCoord, int zCoord)
-        {
-            var neighbors = 0;
-
-            var xNeighbors = voxels[yCoord + zMultiplier * zCoord].GetNeighbors(xCoord, numVoxelsX);
-            if (xNeighbors.Item1) neighbors++;
-            if (xNeighbors.Item2) neighbors++;
-
-            if (yCoord != 0 && voxels[yCoord - 1 + zMultiplier * zCoord][xCoord]) neighbors++;
-            if (yCoord + 1 < numVoxelsY && voxels[yCoord + 1 + zMultiplier * zCoord][xCoord]) neighbors++;
-
-            if (zCoord != 0 && voxels[yCoord + zMultiplier * (zCoord - 1)][xCoord]) neighbors++;
-            if (zCoord + 1 < numVoxelsZ && voxels[yCoord + zMultiplier * (zCoord + 1)][xCoord]) neighbors++;
-
-            return neighbors;
-        }
-
-        /// <summary>
-        /// Reports whether the specified voxel is exposed. An exposed voxel lacks a direct neighbor on one or
-        /// more of its 6 sides.
-        /// </summary>
-        /// <param name="xCoord"></param>
-        /// <param name="yCoord"></param>
-        /// <param name="zCoord"></param>
-        /// <returns></returns>
-        public bool IsExposed(int xCoord, int yCoord, int zCoord)
-        {
-            if (!this[xCoord, yCoord, zCoord]) return false;
-            var xNeighbors = voxels[yCoord + zMultiplier * zCoord].GetNeighbors(xCoord, numVoxelsX);
-            if (!xNeighbors.Item1) return true;
-            if (!xNeighbors.Item2) return true;
-            if (yCoord == 0 || yCoord + 1 >= numVoxelsY || zCoord == 0 || zCoord + 1 >= numVoxelsZ)
-                return true;
-            if (!voxels[yCoord - 1 + zMultiplier * zCoord][xCoord]) return true;
-            if (!voxels[yCoord + 1 + zMultiplier * zCoord][xCoord]) return true;
-            if (!voxels[yCoord + zMultiplier * (zCoord - 1)][xCoord]) return true;
-            if (!voxels[yCoord + zMultiplier * (zCoord + 1)][xCoord]) return true;
-            return false;
-        }
-
-        /// <summary>
-        /// Converts a 3D coordinate in the the voxels indices that occupy the point.
-        /// </summary>
-        /// <param name="coordinates"></param>
-        /// <returns></returns>
-        public int[] ConvertCoordinatesToIndices(Vector3 coordinates)
-        {
-            return new int[]
-            {
                 ConvertXCoordToIndex(coordinates.X),
                 ConvertYCoordToIndex(coordinates.Y),
                 ConvertZCoordToIndex(coordinates.Z)
-            };
-        }
-
-        /// <summary>
-        /// Converst the x-coordinate to the index of the voxel that occupies the point.
-        /// </summary>
-        /// <param name="x"></param>
-        /// <returns></returns>
-        public int ConvertXCoordToIndex(double x) => (int)(inverseVoxelSideLength * (x - Offset.X));
-
-        /// <summary>
-        /// Converts the y-coordinate to the index of the voxel that occupies the point.
-        /// </summary>
-        /// <param name="y"></param>
-        /// <returns></returns>
-        public int ConvertYCoordToIndex(double y) => (int)(inverseVoxelSideLength * (y - Offset.Y));
-
-        /// <summary>
-        /// Converts the z-coordinate to the index of the voxel that occupies the point.
-        /// </summary>
-        /// <param name="z"></param>
-        /// <returns></returns>
-        public int ConvertZCoordToIndex(double z) => (int)(inverseVoxelSideLength * (z - Offset.Z));
-
-        /// <summary>
-        /// Converts the x-index of a voxel to the x-coordinate of the lower bound of the voxel.
-        /// </summary>
-        /// <param name="i"></param>
-        /// <returns></returns>
-        public double ConvertXIndexToCoord(int i) => Offset.X + (i + 0.5) * VoxelSideLength;
-
-        /// <summary>
-        /// Converts the y-index of a voxel to the y-coordinate of the lower bound of the voxel.
-        /// </summary>
-        /// <param name="j"></param>
-        /// <returns></returns>
-        public double ConvertYIndexToCoord(int j) => Offset.Y + (j + 0.5) * VoxelSideLength;
-
-        /// <summary>
-        /// Converts the z-index of a voxel to the z-coordinate of the lower bound of the voxel.
-        /// </summary>
-        /// <param name="k"></param>
-        /// <returns></returns>
-        public double ConvertZIndexToCoord(int k) => Offset.Z + (k + 0.5) * VoxelSideLength;
-
-        /// <summary>
-        /// Converts the indices of a voxel to the 3D-coordinates of the lower bound of the voxel.
-        /// </summary>
-        /// <param name="indices"></param>
-        /// <returns></returns>
-        public Vector3 ConvertIndicesToCoordinates(int[] indices) => new Vector3(ConvertXIndexToCoord(indices[0]),
-            ConvertYIndexToCoord(indices[1]), ConvertZIndexToCoord(indices[2]));
-
-        /// <summary>
-        /// Converts the indices of a voxel to the 3D-coordinates of the lower bound of the voxel.
-        /// </summary>
-        /// <param name="xIndex"></param>
-        /// <param name="yIndex"></param>
-        /// <param name="zIndex"></param>
-        /// <returns></returns>
-        public Vector3 ConvertIndicesToCoordinates(int xIndex, int yIndex, int zIndex) => new Vector3(ConvertXIndexToCoord(xIndex),
-            ConvertYIndexToCoord(yIndex), ConvertZIndexToCoord(zIndex));
-
-        #endregion
-
-        /// <summary>
-        /// Updates the properties.
-        /// </summary>
-        /// <font color="red">Badly formed XML comment.</font>
-        public void UpdateProperties()
-        {
-            CalculateCenter();
-            CalculateVolume();
-        }
-
-
-#endregion
+        };
     }
+
+    /// <summary>
+    /// Converst the x-coordinate to the index of the voxel that occupies the point.
+    /// </summary>
+    /// <param name="x"></param>
+    /// <returns></returns>
+    public int ConvertXCoordToIndex(double x) => (int)(inverseVoxelSideLength * (x - Offset.X));
+
+    /// <summary>
+    /// Converts the y-coordinate to the index of the voxel that occupies the point.
+    /// </summary>
+    /// <param name="y"></param>
+    /// <returns></returns>
+    public int ConvertYCoordToIndex(double y) => (int)(inverseVoxelSideLength * (y - Offset.Y));
+
+    /// <summary>
+    /// Converts the z-coordinate to the index of the voxel that occupies the point.
+    /// </summary>
+    /// <param name="z"></param>
+    /// <returns></returns>
+    public int ConvertZCoordToIndex(double z) => (int)(inverseVoxelSideLength * (z - Offset.Z));
+
+    /// <summary>
+    /// Converts the x-index of a voxel to the x-coordinate of the lower bound of the voxel.
+    /// </summary>
+    /// <param name="i"></param>
+    /// <returns></returns>
+    public double ConvertXIndexToCoord(int i) => Offset.X + (i + 0.5) * VoxelSideLength;
+
+    /// <summary>
+    /// Converts the y-index of a voxel to the y-coordinate of the lower bound of the voxel.
+    /// </summary>
+    /// <param name="j"></param>
+    /// <returns></returns>
+    public double ConvertYIndexToCoord(int j) => Offset.Y + (j + 0.5) * VoxelSideLength;
+
+    /// <summary>
+    /// Converts the z-index of a voxel to the z-coordinate of the lower bound of the voxel.
+    /// </summary>
+    /// <param name="k"></param>
+    /// <returns></returns>
+    public double ConvertZIndexToCoord(int k) => Offset.Z + (k + 0.5) * VoxelSideLength;
+
+    /// <summary>
+    /// Converts the indices of a voxel to the 3D-coordinates of the lower bound of the voxel.
+    /// </summary>
+    /// <param name="indices"></param>
+    /// <returns></returns>
+    public Vector3 ConvertIndicesToCoordinates(int[] indices) => new Vector3(ConvertXIndexToCoord(indices[0]),
+        ConvertYIndexToCoord(indices[1]), ConvertZIndexToCoord(indices[2]));
+
+    /// <summary>
+    /// Converts the indices of a voxel to the 3D-coordinates of the lower bound of the voxel.
+    /// </summary>
+    /// <param name="xIndex"></param>
+    /// <param name="yIndex"></param>
+    /// <param name="zIndex"></param>
+    /// <returns></returns>
+    public Vector3 ConvertIndicesToCoordinates(int xIndex, int yIndex, int zIndex) => new Vector3(ConvertXIndexToCoord(xIndex),
+        ConvertYIndexToCoord(yIndex), ConvertZIndexToCoord(zIndex));
+
+    #endregion
+
+    /// <summary>
+    /// Updates the properties.
+    /// </summary>
+    /// <font color="red">Badly formed XML comment.</font>
+    public void UpdateProperties()
+    {
+        CalculateCenter();
+        CalculateVolume();
+    }
+
+
+    #endregion
+}
 }

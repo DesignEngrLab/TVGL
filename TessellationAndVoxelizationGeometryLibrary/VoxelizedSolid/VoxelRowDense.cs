@@ -65,7 +65,7 @@ namespace TVGL
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         bool GetValue(int byteCoord, int bitPosition)
         {
-            var shift = 7 - bitPosition;
+            var shift = bitPosition;
             return (values[byteCoord] & (0b1 << shift)) != 0;
         }
         /// <summary>
@@ -97,7 +97,7 @@ namespace TVGL
         /// <param name="bitPosition">The bit position.</param>
         void TurnOn(int byteCoord, int bitPosition)
         {
-            var shift = 7 - bitPosition;
+            var shift = bitPosition;
             values[byteCoord] |= (byte)(0b1 << shift);
         }
 
@@ -108,14 +108,22 @@ namespace TVGL
         /// <param name="bitPosition">The bit position.</param>
         void TurnOff(int byteCoord, int bitPosition)
         {
-            if (bitPosition == 7) values[byteCoord] &= 0b11111110;
-            else if (bitPosition == 6) values[byteCoord] &= 0b11111101;
-            else if (bitPosition == 5) values[byteCoord] &= 0b11111011;
-            else if (bitPosition == 4) values[byteCoord] &= 0b11110111;
-            else if (bitPosition == 3) values[byteCoord] &= 0b11101111;
-            else if (bitPosition == 2) values[byteCoord] &= 0b11011111;
-            else if (bitPosition == 1) values[byteCoord] &= 0b10111111;
-            else values[byteCoord] &= 0b01111111;
+            if (bitPosition == 7) values[byteCoord] &= 0b01111111;
+            else if (bitPosition == 6) values[byteCoord] &= 0b10111111;
+            else if (bitPosition == 5) values[byteCoord] &= 0b11011111;
+            else if (bitPosition == 4) values[byteCoord] &= 0b11101111;
+            else if (bitPosition == 3) values[byteCoord] &= 0b11110111;
+            else if (bitPosition == 2) values[byteCoord] &= 0b11111011;
+            else if (bitPosition == 1) values[byteCoord] &= 0b11111101;
+            else values[byteCoord] &= 0b11111110;
+            //if (bitPosition == 7) values[byteCoord] &= 0b11111110;
+            //else if (bitPosition == 6) values[byteCoord] &= 0b11111101;
+            //else if (bitPosition == 5) values[byteCoord] &= 0b11111011;
+            //else if (bitPosition == 4) values[byteCoord] &= 0b11110111;
+            //else if (bitPosition == 3) values[byteCoord] &= 0b11101111;
+            //else if (bitPosition == 2) values[byteCoord] &= 0b11011111;
+            //else if (bitPosition == 1) values[byteCoord] &= 0b10111111;
+            //else values[byteCoord] &= 0b01111111;
         }
         /// <summary>
         /// Gets the number of voxels in this row.
@@ -149,13 +157,14 @@ namespace TVGL
         /// <param name="hi">The hi.</param>
         internal override void TurnOnRange(ushort lo, ushort hi)
         {
+            if (lo >= hi) return;
             var startByte = lo >> 3;
-            var endByte = (hi - 1) >> 3;
+            var endByte = hi >> 3;
             var startBitPostion = lo & 7;
-            var endBitPostion = 7 - ((hi - 1) & 7);
+            var endBitPostion = hi & 7;
             byte mask = 0b11111111;
-            byte loMask = (byte)(mask >> startBitPostion);
-            byte hiMask = (byte)(mask << endBitPostion);
+            byte loMask = (byte)(mask << startBitPostion);
+            byte hiMask = (byte)(mask >> 8 - endBitPostion);
             if (startByte == endByte)
             {
                 mask = (byte)(loMask & hiMask);
@@ -175,22 +184,23 @@ namespace TVGL
         /// <param name="hi">The hi.</param>
         internal override void TurnOffRange(ushort lo, ushort hi)
         {
+            if (lo >= hi) return;
             var startByte = lo >> 3;
-            var endByte = (hi - 1) >> 3;
+            var endByte = hi >> 3;
             var startBitPostion = lo & 7;
-            var endBitPostion = 7 - ((hi - 1) & 7);
+            var endBitPostion = hi & 7;
             byte mask = 0b11111111;
-            byte loMask = (byte)(~(byte)(mask >> startBitPostion));
-            byte hiMask = (byte)(~(byte)(mask << endBitPostion));
+            byte loMask = (byte)(mask >> 8 - startBitPostion);
+            byte hiMask = (byte)(mask << endBitPostion);
             if (startByte == endByte)
             {
                 mask = (byte)(loMask & hiMask);
-                values[startBitPostion] &= mask;
+                values[startByte] &= mask;
                 return;
             }
             values[startByte] &= loMask;
             while (++startByte < endByte)
-                values[startByte] = 0b11111111;
+                values[startByte] = 0b0;
             values[startByte] &= hiMask;
         }
 
@@ -334,41 +344,41 @@ namespace TVGL
             foreach (var b in values)
             {
                 if (b == 0) continue;
-                if ((b & 1) != 0) xTotal += byteOffset + 7;
-                if ((b & 2) != 0) xTotal += byteOffset + 6;
-                if ((b & 4) != 0) xTotal += byteOffset + 5;
-                if ((b & 8) != 0) xTotal += byteOffset + 4;
-                if ((b & 16) != 0) xTotal += byteOffset + 3;
-                if ((b & 32) != 0) xTotal += byteOffset + 2;
-                if ((b & 64) != 0) xTotal += byteOffset + 1;
-                if (b > 127) xTotal += byteOffset;
+                if ((b & 1) != 0) xTotal += byteOffset;
+                if ((b & 2) != 0) xTotal += byteOffset + 1;
+                if ((b & 4) != 0) xTotal += byteOffset + 2;
+                if ((b & 8) != 0) xTotal += byteOffset + 3;
+                if ((b & 16) != 0) xTotal += byteOffset + 4;
+                if ((b & 32) != 0) xTotal += byteOffset + 5;
+                if ((b & 64) != 0) xTotal += byteOffset + 6;
+                if (b > 127) xTotal += byteOffset + 7;
                 byteOffset += 8;
             }
             return xTotal;
         }
-        internal override IEnumerable<int> XIndices(ushort start = 0, ushort end = ushort.MaxValue)
+        internal override IEnumerable<ushort> XIndices(ushort start = 0, ushort end = ushort.MaxValue)
         {
-            int xValue = start>>3; // divide by 8 to get the number of byte to offset
+            var xValue = (ushort)(start >> 3); // divide by 8 to get the number of byte to offset
 
             foreach (var b in values)
             {
                 if (b != 0)
                 {
-                    if (b > 127) yield return xValue;
-                    if (++xValue >= end) yield break;
-                    if ((b & 64) != 0) yield return xValue;
-                    if (++xValue >= end) yield break;
-                    if ((b & 32) != 0) yield return xValue;
-                    if (++xValue >= end) yield break;
-                    if ((b & 16) != 0) yield return xValue;
-                    if (++xValue >= end) yield break;
-                    if ((b & 8) != 0) yield return xValue;
-                    if (++xValue >= end) yield break;
-                    if ((b & 4) != 0) yield return xValue;
+                    if ((b & 1) != 0) yield return xValue;
                     if (++xValue >= end) yield break;
                     if ((b & 2) != 0) yield return xValue;
                     if (++xValue >= end) yield break;
-                    if ((b & 1) != 0) yield return xValue;
+                    if ((b & 4) != 0) yield return xValue;
+                    if (++xValue >= end) yield break;
+                    if ((b & 8) != 0) yield return xValue;
+                    if (++xValue >= end) yield break;
+                    if ((b & 16) != 0) yield return xValue;
+                    if (++xValue >= end) yield break;
+                    if ((b & 32) != 0) yield return xValue;
+                    if (++xValue >= end) yield break;
+                    if ((b & 64) != 0) yield return xValue;
+                    if (++xValue >= end) yield break;
+                    if (b > 127) yield return xValue;
                     if (++xValue >= end) yield break;
                 }
                 else
@@ -377,7 +387,6 @@ namespace TVGL
                     if (xValue >= end) yield break;
                 }
             }
-
         }
 
     }
