@@ -183,9 +183,8 @@ namespace TVGL
         /// <summary>
         /// Gets the vertices.
         /// </summary>
-        /// <param name="keepLastVertex">if set to <c>true</c> [keep last vertex].</param>
         /// <returns>IEnumerable&lt;Vertex&gt;.</returns>
-        public IEnumerable<Vertex> GetVertices(bool keepLastVertex = true)
+        public IEnumerable<Vertex> GetVertices()
         {
             if (EdgeList.Count == 0) yield break;
             for (int i = 0; i < EdgeList.Count; i++)
@@ -193,8 +192,8 @@ namespace TVGL
                 if (DirectionList[i]) yield return EdgeList[i].From;
                 else yield return EdgeList[i].To;
             }
-            if (keepLastVertex && !IsClosed) //only add the last one if not a closed loop since it would otherwise
-                                             // repeat the first point
+            //only add the last one if not a closed loop since it would otherwise repeat the first point
+            if (!IsClosed) 
             {
                 if (DirectionList[^1]) yield return EdgeList[^1].To;
                 else yield return EdgeList[^1].From;
@@ -204,11 +203,11 @@ namespace TVGL
         /// <summary>
         /// Gets the vectors.
         /// </summary>
-        /// <param name="keepLastVertex">if set to <c>true</c> [keep last vertex].</param>
         /// <returns>IEnumerable&lt;Vector3&gt;.</returns>
-        public IEnumerable<Vector3> GetVectors(bool keepLastVertex = true)
+        public IEnumerable<Vector3> GetVectors()
         {
-            return GetVertices(keepLastVertex).Select(v => v.Coordinates);
+            foreach(var vertex in GetVertices())
+                yield return vertex.Coordinates;
         }
 
         /// <summary>

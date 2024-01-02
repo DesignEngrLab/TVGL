@@ -32,10 +32,15 @@ namespace TVGL
         {
         }
 
-        internal BorderSegment(EdgePath edgePath)
+        public BorderSegment(EdgePath edgePath)
         {
             EdgeList = edgePath.EdgeList;
             DirectionList = edgePath.DirectionList;
+            //Set the border segment as a straight line, a curve, or leave it null for something more complex
+            if (StraightLine3D.CreateFromPoints(edgePath.GetVectors(), out var curve, out _))
+                Curve = curve;
+            else if (Circle.CreateFromPoints(edgePath.GetVectors(), out curve, out _))
+                Curve = curve;
         }
 
         //First primitive connected to this border segment. There is no logic to determine owned/other; it is arbitrary (currently).
@@ -75,6 +80,20 @@ namespace TVGL
         /// </summary>
         /// <value>The curve error.</value>
         public double CurveError { get; set; }
+
+        /// <summary>
+        /// Gets whether the [edge path is a straight line].
+        /// </summary>
+        /// <value><c>true</c> if this instance is circular; otherwise, <c>false</c>.</value>
+        [JsonIgnore]
+        public bool IsStraight
+        {
+            get
+            {
+                if (Curve == null) return false;
+                return Curve is StraightLine3D;
+            }
+        }
 
         /// <summary>
         /// Gets whether the [edge path is circular].
@@ -195,6 +214,21 @@ namespace TVGL
                 copy.OtherPrimitive = OtherPrimitive;
             }
             this.CopyEdgesPathData(copy, reverse, copiedTessellatedSolid, startIndex, endIndex);
+            return copy;
+        }
+
+        public new EdgePath CopyToNewPrimitive(PrimitiveSurface owned, PrimitiveSurface other)
+        {
+            var copy = new BorderSegment();
+            copy._curvature = _curvature;
+            copy._internalAngle = _internalAngle;
+            copy.Curve = Curve;
+            copy.CurveError = CurveError;
+            copy.OwnedPrimitive = owned;
+            copy.OtherPrimitive = other;
+            copy.IsClosed = IsClosed;
+            for (int i = 0; i < EdgeList.Count; i++)
+                copy.AddEnd(EdgeList[i], DirectionList[i]);
             return copy;
         }
     }

@@ -194,6 +194,19 @@ namespace TVGL
         private Polygon _polygon;
 
         /// <summary>
+        /// Gets the area of the border loop along a given axis. Zero if an open loop.
+        /// </summary>
+        public double Area(Vector3 axis)
+        {
+            if (!IsClosed) return 0.0;
+            if (_area == 0.0 || !axis.IsAlignedOrReverse(_areaVector))
+                _area = GetVertices().AreaOf3DPolygon(axis);
+            return _area;          
+        }
+        private double _area;
+        private Vector3 _areaVector;
+
+        /// <summary>
         /// Copies the specified copied surface.
         /// </summary>
         /// <param name="copiedSurface">The copied surface.</param>

@@ -1304,15 +1304,6 @@ namespace TVGL
             if (!File.Exists(filename))
                 return false;
 
-            //using (ZipArchive archive = new ZipArchive(postedZipStream))
-            //{
-            //    foreach (ZipArchiveEntry entry in archive.Entries)
-            //    {
-            //        var stream = entry.Open();
-            //        //Do awesome stream stuff!!
-            //    }
-            //}
-
             var extension = Path.GetExtension(filename);
             if (GetFileTypeFromExtension(extension) == FileType.TVGLz)
             {
@@ -1330,8 +1321,8 @@ namespace TVGL
             }
             else if (GetFileTypeFromExtension(extension) != FileType.TVGL) return false;
 
-            //try
-            //{
+            try
+            {
                 using var s = File.Open(filename, FileMode.Open);
                 using (var streamReader = new StreamReader(s))
                 using (var reader = new JsonTextReader(streamReader))
@@ -1340,11 +1331,11 @@ namespace TVGL
                     reader.Close();
                 }
                 return true;
-            //}
-            //catch
-            //{
-            //    return false;
-            //}
+            }
+            catch
+            {
+                return false;
+            }
         }
 
         /// <summary>
@@ -1365,7 +1356,7 @@ namespace TVGL
         #region Load Assembly
         public static bool LoadAsSolidAssembly(string filePath, out SolidAssembly solidAssembly)
         {
-            var extension = IO.GetFileTypeFromExtension(Path.GetExtension(filePath));
+            var extension = GetFileTypeFromExtension(Path.GetExtension(filePath));
             solidAssembly = null;
             //try
             //{
@@ -1376,11 +1367,11 @@ namespace TVGL
                 //unzip if needed
                 if (extension == FileType.TVGLz || extension == FileType.TVGL)
                 {
-                    IO.ReadStream(filePath, out solidAssembly, TessellatedSolidBuildOptions.Default);
+                    ReadStream(filePath, out solidAssembly, TessellatedSolidBuildOptions.Default);
                 }
                 else if (extension != FileType.unspecified)
                 {
-                    IO.Open(filePath, out TessellatedSolid[] solids);
+                    Open(filePath, out TessellatedSolid[] solids);
                     solidAssembly = new SolidAssembly(solids);
                 }
                 else
@@ -1388,6 +1379,7 @@ namespace TVGL
             }
             return true;
         }
+
         public static bool LoadMostSignificantAsPart(string filePath, out Solid part)
         {
             part = null;
