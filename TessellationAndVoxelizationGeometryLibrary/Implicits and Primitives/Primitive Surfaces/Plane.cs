@@ -20,6 +20,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Numerics;
 using System.Runtime.CompilerServices;
 using Newtonsoft.Json;
 using StarMathLib;
@@ -534,6 +535,41 @@ namespace TVGL
                 var firstFace = Faces.First();
                 isPositive = firstFace.Normal.Dot(Normal) > 0;
             }
+        }
+
+        protected override void SetPrimitiveLimits()
+        {
+            MinX = MinY = MinZ = double.NegativeInfinity;
+            MaxX = MaxY = MaxZ = double.PositiveInfinity;
+        }
+
+        /// <summary>
+        /// Finds where the line intersects the plane. Returns null if the line is parallel to the plane.
+        /// </summary>
+        /// <param name="anchor"></param>
+        /// <param name="direction"></param>
+        /// <returns></returns>
+        public override IEnumerable<(Vector3 intersection, double lineT)> LineIntersection(Vector3 anchor, Vector3 direction)
+        {
+            yield return LineIntersection(Normal, DistanceToOrigin, anchor, direction);
+        }
+
+        /// <summary>
+        /// Finds where the line intersects the plane. Returns null if the line is parallel to the plane.
+        /// </summary>
+        /// <param name="planeNormal"></param>
+        /// <param name="planeDistanceToOrigin"></param>
+        /// <param name="anchor"></param>
+        /// <param name="direction"></param>
+        /// <returns></returns>
+        public static (Vector3 intersection, double lineT) LineIntersection(Vector3 planeNormal,
+            double planeDistanceToOrigin, Vector3 anchor, Vector3 direction)
+        {
+            var intersectPoint = MiscFunctions.PointOnPlaneFromRay(planeNormal, planeDistanceToOrigin, anchor,
+                direction, out var t);
+            if (intersectPoint.IsNull())
+                return (Vector3.Null, double.NaN);
+            return (intersectPoint, t);
         }
     }
 }

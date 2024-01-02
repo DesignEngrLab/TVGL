@@ -70,7 +70,7 @@ namespace TVGL
         {
             get
             {
-                lock (indices)
+                //lock (indices)
                     return GetValue(index);
             }
             set
@@ -334,7 +334,6 @@ namespace TVGL
                 for (int i = 0; i < subtrahends.Length; i++)
                 {
                     VoxelRowBase subtrahend = subtrahends[i];
-                    if (subtrahend == null) continue;
                     if (subtrahend is VoxelRowDense) subtrahend = VoxelizedSolid.CopyToSparse(subtrahend);
                     var otherIndices = ((VoxelRowSparse)subtrahend).indices;
                     var otherLength = otherIndices.Count;
@@ -451,9 +450,10 @@ namespace TVGL
                     indices.Insert(hiIndex, hi);
                 }
             }
-            else if (hiAtRangeValue)
+            else 
                 hiIndex += 2;
             var numToRemove = hiIndex - loIndex;
+            if (numToRemove < 0) numToRemove = 0;
             indices.RemoveRange(loIndex, numToRemove);
         }
 
@@ -496,7 +496,7 @@ namespace TVGL
         /// Averages the positions of the on voxels. This is used in finding center of mass.
         /// </summary>
         /// <returns>System.Int32.</returns>
-        internal override int TotalXPosition()
+        internal override int AverageXPosition()
         {
             lock (indices)
             {
@@ -518,7 +518,7 @@ namespace TVGL
         /// <param name="start"></param>
         /// <param name="end"></param>
         /// <returns></returns>
-        internal override IEnumerable<int> XCoordinates(ushort start = 0, ushort end = ushort.MaxValue)
+        internal override IEnumerable<ushort> XIndices(ushort start = 0, ushort end = ushort.MaxValue)
         {
             lock (indices)
             {
@@ -540,7 +540,7 @@ namespace TVGL
                         upLim = indices[i + 1];
                         lastOne = false;
                     }
-                    for (int j = indices[i]; j < upLim; j++)
+                    for (var j = indices[i]; j < upLim; j++)
                     {
                         yield return j;
                     }

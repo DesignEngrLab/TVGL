@@ -16,43 +16,6 @@ using System.Collections.Generic;
 namespace TVGL
 {
     /// <summary>
-    /// Class SameCoordinates.
-    /// Implements the <see cref="System.Collections.Generic.EqualityComparer{System.Int32[]}" />
-    /// </summary>
-    /// <seealso cref="System.Collections.Generic.EqualityComparer{System.Int32[]}" />
-    internal class SameCoordinates : EqualityComparer<int[]>
-    {
-        /// <summary>
-        /// Equalses the specified a1.
-        /// </summary>
-        /// <param name="a1">The a1.</param>
-        /// <param name="a2">The a2.</param>
-        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
-        public override bool Equals(int[] a1, int[] a2)
-        {
-            if (a1 == null && a2 == null)
-                return true;
-            if (a1 == null || a2 == null)
-                return false;
-            return (a1[0] == a2[0] &&
-                    a1[1] == a2[1] &&
-                    a1[2] == a2[2]);
-        }
-
-        /// <summary>
-        /// Returns a hash code for this instance.
-        /// </summary>
-        /// <param name="ax">The ax.</param>
-        /// <returns>A hash code for this instance, suitable for use in hashing algorithms and data structures like a hash table.</returns>
-        public override int GetHashCode(int[] ax)
-        {
-            if (ax is null) return 0;
-            var hCode = ax[0] + (ax[1] << 10) + (ax[2] << 20);
-            return hCode.GetHashCode();
-        }
-    }
-
-    /// <summary>
     /// Class VoxelEnumerator.
     /// Implements the <see cref="System.Collections.Generic.IEnumerator{System.Int32[]}" />
     /// </summary>
@@ -99,9 +62,9 @@ namespace TVGL
         public VoxelEnumerator(VoxelizedSolid vs)
         {
             this.vs = vs;
-            this.xLim = vs.VoxelsPerSide[0];
-            this.yLim = vs.VoxelsPerSide[1];
-            this.zLim = vs.VoxelsPerSide[2];
+            this.xLim = vs.numVoxelsX;
+            this.yLim = vs.numVoxelsY;
+            this.zLim = vs.numVoxelsZ;
         }
 
         /// <summary>

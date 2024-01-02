@@ -84,9 +84,9 @@ namespace TVGL
         /// Averages the positions of the on voxels. This is used in finding center of mass.
         /// </summary>
         /// <returns>System.Int32.</returns>
-        internal abstract int TotalXPosition();
+        internal abstract int AverageXPosition();
 
 
-        internal abstract IEnumerable<int> XCoordinates(ushort start = 0, ushort end = ushort.MaxValue);
+        internal abstract IEnumerable<ushort> XIndices(ushort start = 0, ushort end = ushort.MaxValue);
     }
 }

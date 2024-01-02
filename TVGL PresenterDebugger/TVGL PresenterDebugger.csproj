@@ -16,7 +16,9 @@
 		<PackageReference Include="HelixToolkit.SharpDX.Core.Wpf" Version="2.23.0" />
 		<PackageReference Include="OxyPlot.Wpf" Version="2.1.2" />
 	</ItemGroup>
-
+	<ItemGroup>
+		<InternalsVisibleTo Include="TVGLUnitTestsAndBenchmarking" />
+	</ItemGroup>
 	<ItemGroup>
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\CrossSectionSolid\CrossSectionSolid.cs" Link="TVGL\CrossSectionSolid\CrossSectionSolid.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\CrossSectionSolid\CrossSectionSolid.PublicStaticMethods.cs" Link="TVGL\CrossSectionSolid\CrossSectionSolid.PublicStaticMethods.cs" />
@@ -158,6 +160,7 @@
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\VoxelizedSolid\VoxelRowBase.cs" Link="TVGL\VoxelizedSolid\VoxelRowBase.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\VoxelizedSolid\VoxelHelperClasses.cs" Link="TVGL\VoxelizedSolid\VoxelHelperClasses.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\VoxelizedSolid\VoxelizedSolid.cs" Link="TVGL\VoxelizedSolid\VoxelizedSolid.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\VoxelizedSolid\VoxelizedSolid.Advanced.cs" Link="TVGL\VoxelizedSolid\VoxelizedSolid.Advanced.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\VoxelizedSolid\VoxelizedSolid.PublicFunctions.cs" Link="TVGL\VoxelizedSolid\VoxelizedSolid.PublicFunctions.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\VoxelizedSolid\VoxelRowDense.cs" Link="TVGL\VoxelizedSolid\VoxelRowDense.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\VoxelizedSolid\VoxelRowSparse.cs" Link="TVGL\VoxelizedSolid\VoxelRowSparse.cs" />
