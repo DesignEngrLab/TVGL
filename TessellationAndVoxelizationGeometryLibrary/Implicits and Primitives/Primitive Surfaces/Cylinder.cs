@@ -291,8 +291,11 @@ namespace TVGL
                 var top = Anchor + (MaxDistanceAlongAxis - offset) * Axis;
                 var bottom = Anchor + (MinDistanceAlongAxis - offset) * Axis;
                 var xFactor = Math.Sqrt(1 - Axis.X * Axis.X);
+                if (double.IsNaN(xFactor)) xFactor = 0; // occasionally get NaN due to rounding errors when Axis.X is 1 or -1
                 var yFactor = Math.Sqrt(1 - Axis.Y * Axis.Y);
+                if (double.IsNaN(yFactor)) yFactor = 0; // occasionally get NaN due to rounding errors ""
                 var zFactor = Math.Sqrt(1 - Axis.Z * Axis.Z);
+                if (double.IsNaN(zFactor)) zFactor = 0; // occasionally get NaN due to rounding errors ::
                 MinX = Math.Min(top.X, bottom.X) - xFactor * Radius;
                 MaxX = Math.Max(top.X, bottom.X) + xFactor * Radius;
                 MinY = Math.Min(top.Y, bottom.Y) - yFactor * Radius;

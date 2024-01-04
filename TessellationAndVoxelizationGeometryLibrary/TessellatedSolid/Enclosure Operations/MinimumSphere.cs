@@ -60,7 +60,7 @@ namespace TVGL
                 {
                     var dist = (points[i] - sphere.Center).LengthSquared();
 
-                    if (maxDistSqared < dist)
+                    if (dist.IsGreaterThanNonNegligible(maxDistSqared))
                     {
                         maxDistSqared = dist;
                         indexOfMaxDist = i;
