@@ -161,8 +161,10 @@ namespace TVGL.PointCloud
         /// <param name="points">The points.</param>
         /// <returns>A KDTree.</returns>
         public static KDTree<Vector3, TAccObject> CreateSpherical<TAccObject>(IEnumerable<Vector3> points, IList<TAccObject> accObjects)
-        { return new KDTree<Vector3, TAccObject>(3, points as IList<Vector3> ?? points.ToList(), accObjects, 
-            KDTree<Vector3,TAccObject>.SphericalDistance); }
+        {
+            return new KDTree<Vector3, TAccObject>(3, points as IList<Vector3> ?? points.ToList(), accObjects,
+            KDTree<Vector3, TAccObject>.SphericalDistance);
+        }
 
         /// <summary>
         /// CreateSphericals the KDTree for the list of points.
@@ -170,8 +172,10 @@ namespace TVGL.PointCloud
         /// <param name="points">The points.</param>
         /// <returns>A KDTree.</returns>
         public static KDTree<Vector2, TAccObject> CreateSpherical<TAccObject>(IEnumerable<Vector2> points, IList<TAccObject> accObjects)
-        { return new KDTree<Vector2, TAccObject>(3, points as IList<Vector2> ?? points.ToList(), accObjects,
-            KDTree<Vector2, TAccObject>.SphericalDistance); }
+        {
+            return new KDTree<Vector2, TAccObject>(3, points as IList<Vector2> ?? points.ToList(), accObjects,
+            KDTree<Vector2, TAccObject>.SphericalDistance);
+        }
 
         /// <summary>
         /// CreateSphericals the KDTree for the list of points.
@@ -266,11 +270,20 @@ namespace TVGL.PointCloud
                 OriginalPoints = listOfPoints.ToArray();
                 Count = i;
             }
-            var nullPoint = (TPoint)OriginalPoints[0].GetType().GetField("Null").GetValue(null);
+            var nullPoint = GetDefault(OriginalPoints[0].GetType());
             // Calculate the number of nodes needed to contain the binary tree.
             // This is equivalent to finding the power of 2 greater than the number of points
             TreeSize = (int)Math.Pow(2, (int)(Math.Log(Count) / Math.Log(2)) + 1);
-            TreePoints = Enumerable.Repeat(nullPoint, TreeSize).ToArray();
+            TreePoints = Enumerable.Repeat(nullPoint, TreeSize).Cast<TPoint>().ToArray();
+        }
+
+        public static object GetDefault(Type type)
+        {
+            if (type.IsValueType)
+            {
+                return Activator.CreateInstance(type);
+            }
+            return null;
         }
 
         /// <summary>
@@ -393,7 +406,7 @@ namespace TVGL.PointCloud
               BoundedPriorityList<int, double> nearestNeighbors, double maxSearchRadiusSquared)
         {
             if (TreePoints.Length <= nodeIndex || nodeIndex < 0
-                || TreePoints[nodeIndex].IsNull())
+                || TreePoints[nodeIndex] == null || TreePoints[nodeIndex].IsNull())
                 return;
 
             // Work out the current dimension

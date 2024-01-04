@@ -348,7 +348,7 @@ namespace TVGL
                 for (int j = minJ; j < maxJ; j++)
                 {
                     var yCoord = result.ConvertYIndexToCoord(j);
-                    foreach (var intersection in GetPrimitiveToLineIntersections(surface, result.XMin, yCoord, zCoord))
+                    foreach (var intersection in GetPrimitiveAndLineIntersections(surface, result.XMin, yCoord, zCoord))
                     {
                         //if (treatAsSolid)
                         var indices = result.ConvertCoordinatesToIndices(intersection.intersection);
@@ -360,7 +360,7 @@ namespace TVGL
         }
 
 
-        private static IEnumerable<(Vector3 intersection, double lineT)> GetPrimitiveToLineIntersections(PrimitiveSurface surface, double xCoord,
+        private static IEnumerable<(Vector3 intersection, double lineT)> GetPrimitiveAndLineIntersections(PrimitiveSurface surface, double xCoord,
              double yCoord, double zCoord)
         {
             if (surface.Faces == null || surface.Faces.Count == 0)

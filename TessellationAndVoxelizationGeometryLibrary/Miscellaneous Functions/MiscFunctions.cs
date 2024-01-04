@@ -1853,6 +1853,30 @@ namespace TVGL
         }
 
         /// <summary>
+        /// Finds the point on the plane made by a line. If that line is not going to pass through the
+        /// that plane, then null is returned.
+        /// </summary>
+        /// <param name="normalOfPlane">The normal of plane.</param>
+        /// <param name="distOfPlane">The dist of plane.</param>
+        /// <param name="anchor">An anchor point on the line.</param>
+        /// <param name="lineDirection">The line direction.</param>
+        /// <param name="signedDistance">The signed distance.</param>
+        /// <returns>Vertex.</returns>
+        public static Vector3 PointOnPlaneFromLine(Vector3 normalOfPlane, double distOfPlane, Vector3 anchor,
+            Vector3 lineDirection, out double signedDistance)
+        {
+            var dot = lineDirection.Dot(normalOfPlane);
+            signedDistance = 0.0;
+            if (dot == 0) return Vector3.Null;
+
+            var d1 = -DistancePointToPlane(anchor, normalOfPlane, distOfPlane);
+            signedDistance = d1 / dot;
+            if (signedDistance.IsNegligible()) return anchor;
+            return anchor + (lineDirection * signedDistance);
+        }
+
+
+        /// <summary>
         /// Finds the point on the plane made by a ray. If that ray is not going to pass through the
         /// that plane, then null is returned.
         /// </summary>

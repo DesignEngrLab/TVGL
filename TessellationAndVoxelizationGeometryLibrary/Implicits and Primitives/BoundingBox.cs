@@ -512,8 +512,8 @@ namespace TVGL
             //along the given directions. When offsetting along a direction, just make that dimension bigger.
             //When offsetting in the reverse of a direction, make the dimension bigger and then shift the origin.
             if (distance.IsNegligible()) return;
-            var delta = new Vector3(directionIndex == 0 ? distance : 0, 
-                                    directionIndex == 1 ? distance : 0, 
+            var delta = new Vector3(directionIndex == 0 ? distance : 0,
+                                    directionIndex == 1 ? distance : 0,
                                     directionIndex == 2 ? distance : 0);
             Dimensions += delta;
             if (!forward)
@@ -534,6 +534,66 @@ namespace TVGL
         {
             var intDir = (int)direction;
             MoveFaceOutward(Math.Abs(intDir) - 1, intDir > 0, distance);
+        }
+
+        /// <summary>
+        /// Returns the zero or two points that the line intersects with the bounding box.
+        /// </summary>
+        /// <param name="lineAnchor"></param>
+        /// <param name="direction"></param>
+        /// <returns></returns>
+        public IEnumerable<(Vector3 intersection, double lineT)> LineIntersection(Vector3 lineAnchor, Vector3 direction)
+        {
+            var lowerPt = TranslationFromOrigin;
+            var upperPt = TranslationFromOrigin + Dimensions;
+            var directions = new[] { -Directions[0], -Directions[1], -Directions[2], Directions[0], Directions[1], Directions[2] };
+            var planeDistancesToOrigin = (Directions.Select(d => -d.Dot(lowerPt))
+                .Concat(Directions.Select(d => d.Dot(upperPt)))).ToList();
+            var numPointsFound = 0;
+            for (int i = 0; i < 6; i++)
+            {
+                var intersectPoint = MiscFunctions.PointOnPlaneFromLine(directions[i], planeDistancesToOrigin[i], lineAnchor,
+                    direction, out var t);
+                if (intersectPoint.IsNull()) continue;
+                var outsideOfBox = false;
+                for (int j = 0; j < 6; j++)
+                {
+                    if (i == j) continue;
+                    var ipDistance = intersectPoint.Dot(directions[j]);
+                    if (double.IsNaN(ipDistance) || ipDistance > planeDistancesToOrigin[j])
+                    {
+                        outsideOfBox = true;
+                        break;
+                    }
+                }
+                if (outsideOfBox) continue;
+                yield return (intersectPoint, t);
+                numPointsFound++;
+                if (numPointsFound == 2) yield break;
+            }
+        }
+
+        /// <summary>
+        /// Checks if the given point is inside the bounding box.
+        /// </summary>
+        /// <param name="anchor"></param>
+        /// <returns></returns>
+        /// <exception cref="NotImplementedException"></exception>
+        public bool IsInside(Vector3 anchor)
+        {
+            var anchorDot = anchor.Dot(Directions[0]);
+            var planeDot = TranslationFromOrigin.Dot(Directions[0]);
+            if (anchorDot < planeDot || anchorDot - Dimensions[0] > planeDot) return false;
+
+            anchorDot = anchor.Dot(Directions[1]);
+            planeDot = TranslationFromOrigin.Dot(Directions[1]);
+            if (anchorDot < planeDot || anchorDot - Dimensions[1] > planeDot) return false;
+
+            anchorDot = anchor.Dot(Directions[2]);
+            planeDot = TranslationFromOrigin.Dot(Directions[2]);
+            if (anchorDot < planeDot || anchorDot - Dimensions[2] > planeDot) return false;
+
+            return true;
         }
     }
 }
