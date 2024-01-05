@@ -583,6 +583,14 @@ namespace TVGL
         {
             var marchingCubes = new MarchingCubesDenseVoxels(this, voxelsPerTriangleSpacing);
             var ts = marchingCubes.Generate();
+            ts.Comments = new List<string>(Comments);
+            ts.HasUniformColor = HasUniformColor;
+            ts.Language = Language;
+            ts.Name = Name;
+            ts.ReferenceIndex = ReferenceIndex;
+            ts.SameTolerance = SameTolerance;
+            ts.SolidColor = SolidColor;
+            ts.Units = Units;
             return ts;
         }
 
