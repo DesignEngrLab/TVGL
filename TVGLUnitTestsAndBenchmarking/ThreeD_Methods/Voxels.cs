@@ -12,7 +12,7 @@ namespace TVGLUnitTestsAndBenchmarking
         public static void VoxelRowCompare()
         {
             var r = new Random();
-            for (int i = 8192; i > 0; i =(int)(i*0.95))
+            for (int i = 8192; i > 0; i = (int)(i * 0.95))
             {
                 var numtrials = 1000;
                 var swDense = new Stopwatch();
@@ -101,11 +101,11 @@ namespace TVGLUnitTestsAndBenchmarking
                     //Console.WriteLine(vS.indices.Count/2);
                 }
                 //Console.WriteLine("i: " + 8 * i+" Dense: t = " + swDense.ElapsedTicks + "; s = " + numBytesDense / ((double)numtrials));
-                Console.WriteLine(""+8 * i+"," + swDense.ElapsedTicks + "," + numBytesDense / ((double)numtrials));
+                Console.WriteLine("" + 8 * i + "," + swDense.ElapsedTicks + "," + numBytesDense / ((double)numtrials));
                 var avgNumBytesSparse = numBytesSparse / ((double)numtrials);
                 var avgRanges = avgNumBytesSparse / 4;
                 //Console.WriteLine("i: " + 8 * i + " Sparse: t = " + swSparse.ElapsedTicks + "; s = " + avgNumBytesSparse +" ("+avgRanges+")");
-                Console.WriteLine(",,,,,"+8 * i + "," + swSparse.ElapsedTicks + "," + avgNumBytesSparse);
+                Console.WriteLine(",,,,," + 8 * i + "," + swSparse.ElapsedTicks + "," + avgNumBytesSparse);
             }
         }
 
@@ -151,10 +151,10 @@ namespace TVGLUnitTestsAndBenchmarking
                 erode = VoxelizedSolid.MinkowskiSubtractOne(erode);
                 erode = VoxelizedSolid.MinkowskiSubtractOne(erode);
                 erode = VoxelizedSolid.MinkowskiSubtractOne(erode);
-                Console.WriteLine("eroding old..."+ sw.Elapsed.ToString());
-               
+                Console.WriteLine("eroding old..." + sw.Elapsed.ToString());
+
                 erode.SolidColor = new Color(100, 20, 20, 250);
- sw.Restart();
+                sw.Restart();
                 Console.WriteLine("eroding new..." + sw.Elapsed.ToString());
 
                 //if (erode.Equals(erodeNew)) Console.WriteLine("equal");
@@ -171,6 +171,49 @@ namespace TVGLUnitTestsAndBenchmarking
 
                 //Snapshot.Match(vs, SnapshotNameExtension.Create(name));
             }
+        }
+
+        public static void TestVoxelPrimitiveBoolOps()
+        {
+            Presenter.NVEnable();
+            var vs = VoxelizedSolid.CreateFullBlock(0.08, new[] { Vector3.Zero, new Vector3(10, 10, 10) });
+            var cyl1 = new Cylinder
+            {
+                Anchor = new Vector3(3, 5, 5),
+                Axis = new Vector3(0, 0, 1),
+                Radius = 2,
+                MinDistanceAlongAxis = 5,
+                MaxDistanceAlongAxis = 12,
+                IsPositive = true
+            };
+            cyl1.Tessellate();
+            foreach (var face in cyl1.Faces)
+                face.Color = new Color(100, 250, 10, 10);
+            var cyl2 = new Cylinder
+            {
+                Anchor = new Vector3(0, 5, 5),
+                Axis = new Vector3(-.1, 0.1, 1).Normalize(),
+                Radius = 2,
+                MinDistanceAlongAxis = 5,
+                MaxDistanceAlongAxis = 12,
+                IsPositive = true
+            };
+            cyl2.Tessellate();
+            foreach (var face in cyl2.Faces)
+                face.Color = new Color(100, 10, 250, 10);
+            var capsule = new Capsule(new Vector3(3, 3, 3), 3, new Vector3(2, 2, 15), 3, true);
+            capsule.Tessellate();
+            foreach (var face in capsule.Faces)
+                face.Color = new Color(100, 10, 10, 250);
+            capsule.Tessellate();
+
+            //Presenter.ShowAndHang(vsTs.Faces.Concat(cyl1.Faces.Concat(cyl2.Faces.Concat(capsule.Faces))));
+            vs.Subtract(new PrimitiveSurface[] {  cyl1 , capsule });//cyl1,
+            var vsTs = vs.ConvertToTessellatedSolidRectilinear();
+            foreach (var face in vsTs.Faces)
+                face.Color = new Color(170, 100, 100, 100);
+            Presenter.ShowAndHang(vsTs.Faces.Concat(cyl1.Faces.Concat(cyl2.Faces.Concat(capsule.Faces))));
+            Presenter.ShowAndHang(vs.ConvertToTessellatedSolidRectilinear());
         }
 
 

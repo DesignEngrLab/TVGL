@@ -521,7 +521,7 @@ namespace TVGL
         public override double DistanceToPoint(Vector3 point)
         {
             var d = point.Dot(Normal) - DistanceToOrigin;
-            if (IsPositive.HasValue && !IsPositive.Value) d = -d;
+            if (isPositive.HasValue && !isPositive.Value) d = -d;
             return d;
         }
         public override Vector3 GetNormalAtPoint(Vector3 point)
@@ -565,7 +565,7 @@ namespace TVGL
         public static (Vector3 intersection, double lineT) LineIntersection(Vector3 planeNormal,
             double planeDistanceToOrigin, Vector3 anchor, Vector3 direction)
         {
-            var intersectPoint = MiscFunctions.PointOnPlaneFromRay(planeNormal, planeDistanceToOrigin, anchor,
+            var intersectPoint = MiscFunctions.PointOnPlaneFromLine(planeNormal, planeDistanceToOrigin, anchor,
                 direction, out var t);
             if (intersectPoint.IsNull())
                 return (Vector3.Null, double.NaN);

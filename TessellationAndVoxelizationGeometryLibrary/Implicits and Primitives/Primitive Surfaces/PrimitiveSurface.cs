@@ -71,7 +71,7 @@ namespace TVGL
             _outerEdges = null;
             _maxError = double.NaN;
             _meanSquaredError = double.NaN;
-            isPositive = null;
+            //isPositive = null;
             Borders = null;
             BorderSegments = null;
             MinX = double.NaN;

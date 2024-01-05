@@ -278,7 +278,7 @@ namespace TVGL
             var v = point - Apex;
             var distAtCommonDepth = v.Cross(Axis).Length() - Aperture * v.Dot(Axis);
             var d = distAtCommonDepth * cosAperture;
-            if (IsPositive.HasValue && !IsPositive.Value) d = -d;
+            if (isPositive.HasValue && !isPositive.Value) d = -d;
             return d;
         }
 

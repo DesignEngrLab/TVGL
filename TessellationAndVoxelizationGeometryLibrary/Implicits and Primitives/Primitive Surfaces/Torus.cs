@@ -244,7 +244,7 @@ namespace TVGL
         {
             Vector3 ptOnCircle = ClosestPointOnCenterRingToPoint(Axis, Center, MajorRadius, point, distanceFromOriginToBisectingPlane);
             var d = (point - ptOnCircle).Length() - MinorRadius;
-            if (IsPositive.HasValue && !IsPositive.Value) d = -d;
+            if (isPositive.HasValue && !isPositive.Value) d = -d;
             return d;
         }
 
@@ -252,7 +252,7 @@ namespace TVGL
         {
             Vector3 ptOnCircle = ClosestPointOnCenterRingToPoint(Axis, Center, MajorRadius, point, distanceFromOriginToBisectingPlane);
             var d = (point - ptOnCircle).Normalize();
-            if (IsPositive.HasValue && !IsPositive.Value) d = -d;
+            if (isPositive.HasValue && !isPositive.Value) d = -d;
             return d;
         }
 

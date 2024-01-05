@@ -13,6 +13,7 @@
 // ***********************************************************************
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace TVGL
@@ -116,13 +117,15 @@ namespace TVGL
                     var crossings = new PriorityQueue<(bool, double), double>();
                     foreach (var q in surface.LineIntersection(new Vector3(XMin, yCoord, zCoord), Vector3.UnitX))
                         crossings.Enqueue((surface.GetNormalAtPoint(q.intersection).X < 0, q.lineT), q.lineT);
-                    var start = (ushort)0;
                     if (crossings.Count == 0) continue;
+                    var start = (ushort)0;
+                    // startDefined is true if the start of the range is defined. If it is false,
+                    // then the start of the range is the beginning of the row.
                     var startDefined = inverseRange == crossings.Peek().Item1;
                     while (crossings.Count > 0)
                     {
                         var next = crossings.Dequeue();
-                        var xIndex = (ushort)ConvertXCoordToIndex(next.Item2);
+                        var xIndex = (next.Item2 <= 0) ? (ushort)0 : (ushort)ConvertXCoordToIndex(next.Item2);
                         var breakAfterThis = false;
                         if (xIndex >= numVoxelsX)
                         {
@@ -146,6 +149,95 @@ namespace TVGL
                     }
                 }
             });
+        }
+
+
+        /// <summary>
+        ///  Creates the union of the voxels on the "inside" of this surface with this solid.
+        /// </summary>
+        /// <param name="surfaces"></param>
+        public void Union(IList<PrimitiveSurface> surfaces) => BooleanOperation(surfaces, true, false);
+
+        /// <summary>
+        /// Intersects the voxels on the "inside" of this surface with this solid.
+        /// </summary>
+        /// <param name="surfaces"></param>
+        public void Intersect(IList<PrimitiveSurface> surfaces) => BooleanOperation(surfaces, false, true);
+
+        /// <summary>
+        /// Subrtracts the voxels on the "inside" of this surface from this solid.
+        /// </summary>
+        /// <param name="surfaces"></param>
+        public void Subtract(IList<PrimitiveSurface> surfaces) => BooleanOperation(surfaces, false, false);
+
+        private void BooleanOperation(IList<PrimitiveSurface> surfaces, bool turnOn, bool inverseRange)
+        {
+            var minX = surfaces.Min(s => s.MinX);
+            var minIndices = ConvertCoordinatesToIndices(new Vector3(surfaces.Min(s => s.MinX),
+                surfaces.Min(s => s.MinY), surfaces.Min(s => s.MinZ)));
+            var maxIndices = ConvertCoordinatesToIndices(new Vector3(surfaces.Max(s => s.MaxX),
+                surfaces.Max(s => s.MaxY), surfaces.Max(s => s.MaxZ)));
+            var minJ = Math.Max(0, minIndices[1]);
+            var maxJ = Math.Min(numVoxelsY, maxIndices[1]);
+            var minK = Math.Max(0, minIndices[2]);
+            var maxK = Math.Min(numVoxelsZ, maxIndices[2]);
+
+            //Parallel.For(minK, maxK, k =>
+            for (var k = minK; k < maxK; k++)
+            {                    
+                    var zCoord = ConvertZIndexToCoord(k);
+                for (int j = minJ; j < maxJ; j++)
+                {
+                    var yCoord = ConvertYIndexToCoord(j);
+                    var voxRow = (VoxelRowSparse)voxels[k * zMultiplier + j];
+                    var crossings = new PriorityQueue<(bool, double), double>();
+                if (k>=62 && j>=33) Presenter.ShowAndHang(this.ConvertToTessellatedSolidRectilinear());
+
+                    //foreach (var surface in surfaces)
+                    //{
+                    //    var lineCrossings = surface.LineIntersection(new Vector3(XMin, yCoord, zCoord), Vector3.UnitX).ToList();
+                    //    if (lineCrossings.Count == 1
+                    //        && surface.GetNormalAtPoint(lineCrossings[0].intersection).X.IsNegligible(Constants.DotToleranceOrthogonal))
+                    //        continue;
+                    //    foreach (var q in lineCrossings)
+                    //        crossings.Enqueue((surface.GetNormalAtPoint(q.intersection).X < 0, q.lineT), q.lineT);
+                    //}
+                    foreach (var surface in surfaces)
+                        foreach (var q in surface.LineIntersection(new Vector3(XMin, yCoord, zCoord), Vector3.UnitX))
+                            crossings.Enqueue((surface.GetNormalAtPoint(q.intersection).X < 0, q.lineT), q.lineT);
+
+                    if (crossings.Count == 0) continue;
+                    var start = (ushort)0;
+                    // startDefined is true if the start of the range is defined. If it is false,
+                    // then the start of the range is the beginning of the row.
+                    var startsDefined = (inverseRange != crossings.Peek().Item1) ? 0 : 1;
+                    var show = crossings.Count % 2 == 1;
+                    while (crossings.Count > 0)
+                    {
+                        var next = crossings.Dequeue();
+                        var startingNew = next.Item1 != inverseRange;
+                        var xIndex = (next.Item2 <= 0) ? (ushort)0 : (ushort)ConvertXCoordToIndex(next.Item2);
+                        var breakAfterThis = false;
+                        if (startingNew)
+                        {
+                            if (xIndex >= numVoxelsX)
+                                break;
+                            startsDefined++;
+                            if (startsDefined != 1) continue;
+                            start = xIndex;
+                        }
+                        else
+                        {
+                            startsDefined--;
+                            if (startsDefined != 0) continue;
+                            if (turnOn) voxRow.TurnOnRange(start, xIndex);
+                            else voxRow.TurnOffRange(start, xIndex);
+                            if (xIndex >= numVoxelsX)
+                                break;
+                        }
+                    }
+                }
+            } //);
         }
     }
 }

@@ -239,9 +239,11 @@ namespace TVGL
 
         public override Vector3 GetNormalAtPoint(Vector3 point)
         {
+            var pointDot = point.Dot(Axis);
+            if (pointDot <= MinDistanceAlongAxis) return -Axis;
+            if (pointDot >= MaxDistanceAlongAxis) return Axis;
             var a = (point - Anchor);
-            var dirAxis = a.Dot(Axis) < 0 ? -Axis : Axis;
-            var b = dirAxis.Cross(a);
+            var b = Axis.Cross(a);
             var outwardVector = b.Cross(Axis).Normalize();
             if (isPositive.HasValue && !isPositive.Value) outwardVector *= -1;
             return outwardVector;
@@ -270,7 +272,7 @@ namespace TVGL
             var d = (point - Anchor).Cross(Axis).Length() - Radius;
             // if d is positive, then the point is outside the cylinder
             // if d is negative, then the point is inside the cylinder
-            if (IsPositive.HasValue && !IsPositive.Value) d = -d;
+            if (isPositive.HasValue && !isPositive.Value) d = -d;
             return d;
         }
 
@@ -339,14 +341,17 @@ namespace TVGL
                 if (!secondNeedMinCapPoint && !secondNeedMaxCapPoint)
                     yield return cylIntersects[1];
             }
+            if ((firstNeedMinCapPoint && secondNeedMinCapPoint) || (firstNeedMaxCapPoint && secondNeedMaxCapPoint))
+                // if both intersections are below the min plane or above the max plane then no intersection
+                yield break;
             if (firstNeedMinCapPoint || secondNeedMinCapPoint)
             {
-                var minPlaneIntersect = Plane.LineIntersection(Axis, MinDistanceAlongAxis, anchorLine, direction); 
+                var minPlaneIntersect = Plane.LineIntersection(Axis, MinDistanceAlongAxis, anchorLine, direction);
                 if (!minPlaneIntersect.intersection.IsNull()) yield return minPlaneIntersect;
             }
             if (firstNeedMaxCapPoint || secondNeedMaxCapPoint)
             {
-                var maxPlaneIntersect = Plane.LineIntersection(Axis, MaxDistanceAlongAxis, anchorLine, direction); 
+                var maxPlaneIntersect = Plane.LineIntersection(Axis, MaxDistanceAlongAxis, anchorLine, direction);
                 if (!maxPlaneIntersect.intersection.IsNull()) yield return maxPlaneIntersect;
             }
         }

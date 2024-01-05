@@ -267,7 +267,7 @@ namespace TVGL
                     (coneRadius1 - coneRadius2) * (coneRadius1 - coneRadius2));
                 d = distAtCommonDepth * cosAngle;
             }
-            if (IsPositive.HasValue && !IsPositive.Value) d = -d;
+            if (isPositive.HasValue && !isPositive.Value) d = -d;
             return d;
         }
 
@@ -276,8 +276,8 @@ namespace TVGL
             var loc = point - Anchor1;
             var dxAlong = loc.Dot(directionVector.Normalize());
             Vector3 d;
-            if (dxAlong < conePlaneDistance1) d = loc.Normalize();
-            else if (dxAlong > conePlaneDistance2) d = (point - Anchor2).Normalize();
+            if (dxAlong < 0) d = loc.Normalize();
+            else if (dxAlong > directionVectorLength) d = (point - Anchor2).Normalize();
             else
             {
                 var b = directionVector.Cross(loc);
