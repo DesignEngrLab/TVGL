@@ -571,5 +571,19 @@ namespace TVGL
                 return (Vector3.Null, double.NaN);
             return (intersectPoint, t);
         }
+
+        public static Plane FitToVertices(IEnumerable<Vector3> points,
+                Vector3 firstNormal, out double maxError)
+        {
+            DefineNormalAndDistanceFromVertices(points, out var distanceToPlane, out var planeNormal);
+            if (!firstNormal.IsNull() && firstNormal.Dot(planeNormal) < 0)
+            {
+                distanceToPlane = -distanceToPlane;
+                planeNormal = -planeNormal;
+            }
+            var primitiveSurface = new Plane(distanceToPlane, planeNormal);
+            maxError = primitiveSurface.CalculateMaxError(points);
+            return primitiveSurface;
+        }
     }
 }

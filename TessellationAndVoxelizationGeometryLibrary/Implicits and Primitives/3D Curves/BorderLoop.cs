@@ -56,10 +56,13 @@ namespace TVGL
         /// Returns all primitives that share an edge segment with this border
         /// </summary>
         /// <returns>IEnumerable&lt;PrimitiveSurface&gt;.</returns>
-        public IEnumerable<PrimitiveSurface> AdjacentPrimitives()
+        public ISet<PrimitiveSurface> AdjacentPrimitives()
         {
+            //Use a set to avoid duplicates. DO NOT USE IEnumerable.
+            var set = new HashSet<PrimitiveSurface>();
             foreach (var segment in Segments)
-                yield return segment.AdjacentPrimitive(OwnedPrimitive);
+                set.Add(segment.AdjacentPrimitive(OwnedPrimitive));
+            return set;
         }
 
         /// <summary>
@@ -77,10 +80,22 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Gets or sets the plane error.
+        /// Gets or sets the best-fit plane normal
+        /// </summary>
+        /// <value>The plane error.</value>
+        public Vector3 PlaneNormal { get; set; }
+
+        /// <summary>
+        /// Gets or sets the best-fit plane error
         /// </summary>
         /// <value>The plane error.</value>
         public double PlaneError { get; set; }
+
+        /// <summary>
+        /// Gets or sets the best-fit plane distance
+        /// </summary>
+        /// <value>The plane error.</value>
+        public double PlaneDistance{ get; set; }
 
         /// <summary>
         /// Gets or sets a value indicating whether [encircles axis].
@@ -88,11 +103,13 @@ namespace TVGL
         /// <value><c>true</c> if [encircles axis]; otherwise, <c>false</c>.</value>
         public bool EncirclesAxis { get; set; }
 
+        private bool _curvatureIsSet { get; set; }
 
         /// <summary>
         /// The curvature
         /// </summary>
         private CurvatureType _curvature = CurvatureType.Undefined;
+
         /// <summary>
         /// Gets the curvature.
         /// </summary>
@@ -102,7 +119,7 @@ namespace TVGL
         {
             get
             {
-                if (_curvature == CurvatureType.Undefined)
+                if (!_curvatureIsSet)
                     SetCurvature();
                 return _curvature;
             }
@@ -130,7 +147,8 @@ namespace TVGL
             else if (convex > 0 && flat == 0 && concave == 0)
                 _curvature = CurvatureType.Convex;
             else
-                _curvature = CurvatureType.SaddleOrFlat;
+                _curvature = CurvatureType.Undefined;
+            _curvatureIsSet = true;
         }
 
         /// <summary>
@@ -194,17 +212,9 @@ namespace TVGL
         private Polygon _polygon;
 
         /// <summary>
-        /// Gets the area of the border loop along a given axis. Zero if an open loop.
+        /// Gets the area of the polygon according to the primitives 3D to 2D transform
         /// </summary>
-        public double Area(Vector3 axis)
-        {
-            if (!IsClosed) return 0.0;
-            if (_area == 0.0 || !axis.IsAlignedOrReverse(_areaVector))
-                _area = GetVertices().AreaOf3DPolygon(axis);
-            return _area;          
-        }
-        private double _area;
-        private Vector3 _areaVector;
+        public double Area => AsPolygon.Area;
 
         /// <summary>
         /// Copies the specified copied surface.
