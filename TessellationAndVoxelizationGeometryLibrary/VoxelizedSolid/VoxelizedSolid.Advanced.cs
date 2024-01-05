@@ -191,7 +191,7 @@ namespace TVGL
                     var yCoord = ConvertYIndexToCoord(j);
                     var voxRow = (VoxelRowSparse)voxels[k * zMultiplier + j];
                     var crossings = new PriorityQueue<(bool, double), double>();
-                if (k>=62 && j>=33) Presenter.ShowAndHang(this.ConvertToTessellatedSolidRectilinear());
+                //if (k>=62 && j>=33) Presenter.ShowAndHang(this.ConvertToTessellatedSolidRectilinear());
 
                     //foreach (var surface in surfaces)
                     //{
