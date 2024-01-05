@@ -36,11 +36,6 @@ namespace TVGL
         {
             EdgeList = edgePath.EdgeList;
             DirectionList = edgePath.DirectionList;
-            //Set the border segment as a straight line, a curve, or leave it null for something more complex
-            if (StraightLine3D.CreateFromPoints(edgePath.GetVectors(), out var curve, out _))
-                Curve = curve;
-            else if (Circle.CreateFromPoints(edgePath.GetVectors(), out curve, out _))
-                Curve = curve;
         }
 
         //First primitive connected to this border segment. There is no logic to determine owned/other; it is arbitrary (currently).
@@ -70,10 +65,25 @@ namespace TVGL
         }
 
         /// <summary>
+        /// Need to use a bool to determine if the curve has been defined, since ICurve can be null 
+        /// for more complex edge segments (i.e., those that are not either circular or straight). 
+        /// </summary>
+        private bool isCurveDefined = false;
+
+        private ICurve _curve;
+
+        /// <summary>
         /// Gets or sets the curve.
         /// </summary>
         /// <value>The curve.</value>
-        public ICurve Curve { get; set; }
+        public ICurve Curve
+        {
+            get
+            {
+                if (!isCurveDefined) SetCurve();
+                return _curve;
+            }
+        }
 
         /// <summary>
         /// Gets or sets the curve error.
@@ -122,6 +132,35 @@ namespace TVGL
                     return OwnedPrimitive.TransformFrom2DTo3D(((Circle)Curve).Center);
                 return Vector3.Null;
             }
+        }
+
+        private void SetCurve()
+        {
+            CurveError = double.MaxValue;
+            //Set the border segment as a straight line, a curve, or leave it null for something more complex
+            if (StraightLine3D.CreateFromPoints(GetVectors(), out var curve, out var error))
+            {
+                if (error < Constants.DefaultTessellationError)
+                {
+                    _curve = curve;
+                    CurveError = error;
+                }
+            }           
+            
+            if(OwnedPrimitive is Cylinder && OtherPrimitive is Plane) { }
+            if (OtherPrimitive is Cylinder && OwnedPrimitive is Plane) { }
+            var plane = Plane.FitToVertices(GetVectors(), Vector3.Null, out var planeError);
+            //Get the circle too and compare the error to straight line.
+            if (Circle.CreateFromPoints(GetVectors().ProjectTo2DCoordinates(plane.Normal, out _), out curve, out var circleError))
+            {
+                if (circleError < Constants.DefaultTessellationError && circleError < CurveError)
+                {
+                    _curve = curve;
+                    CurveError = circleError;
+                }
+
+            }          
+            isCurveDefined = true;
         }
 
         /// <summary>
@@ -201,7 +240,7 @@ namespace TVGL
             var copy = new BorderSegment();
             copy._curvature = _curvature;
             copy._internalAngle = _internalAngle;
-            copy.Curve = Curve;
+            copy._curve = Curve;
             copy.CurveError = CurveError;
             if (reverse)
             {
@@ -217,12 +256,12 @@ namespace TVGL
             return copy;
         }
 
-        public new EdgePath CopyToNewPrimitive(PrimitiveSurface owned, PrimitiveSurface other)
+        public BorderSegment CopyToNewPrimitive(PrimitiveSurface owned, PrimitiveSurface other)
         {
             var copy = new BorderSegment();
             copy._curvature = _curvature;
             copy._internalAngle = _internalAngle;
-            copy.Curve = Curve;
+            copy._curve = Curve;
             copy.CurveError = CurveError;
             copy.OwnedPrimitive = owned;
             copy.OtherPrimitive = other;

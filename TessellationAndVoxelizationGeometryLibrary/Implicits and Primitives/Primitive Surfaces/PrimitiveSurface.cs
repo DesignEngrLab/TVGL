@@ -505,12 +505,15 @@ namespace TVGL
         /// <summary>
         /// Adjacents the primitives.
         /// </summary>
-        /// <returns>IEnumerable&lt;PrimitiveSurface&gt;.</returns>
-        public IEnumerable<PrimitiveSurface> AdjacentPrimitives()
+        /// <returns>ISet&lt;PrimitiveSurface&gt;.</returns>
+        public ISet<PrimitiveSurface> AdjacentPrimitives()
         {
+            //Use a set to avoid duplicates. DO NOT USE IEnumerable.
+            var set = new HashSet<PrimitiveSurface>();
             foreach (var border in Borders)
                 foreach (var prim in border.AdjacentPrimitives())
-                    yield return prim;
+                    set.Add(prim);
+            return set;
         }
 
         /// <summary>
