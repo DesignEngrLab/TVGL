@@ -101,9 +101,9 @@ namespace TVGL
         {
             var minIndices = ConvertCoordinatesToIndices(new Vector3(surface.MinX, surface.MinY, surface.MinZ));
             var maxIndices = ConvertCoordinatesToIndices(new Vector3(surface.MaxX, surface.MaxY, surface.MaxZ));
-            var minJ = Math.Max(0, minIndices[1]);
+            var minJ =  minIndices[1];
             var maxJ = Math.Min(numVoxelsY, maxIndices[1]);
-            var minK = Math.Max(0, minIndices[2]);
+            var minK = minIndices[2];
             var maxK = Math.Min(numVoxelsZ, maxIndices[2]);
 
 
@@ -126,7 +126,7 @@ namespace TVGL
                     while (crossings.Count > 0)
                     {
                         var next = crossings.Dequeue();
-                        var xIndex = (next.Item2 <= 0) ? (ushort)0 : (ushort)ConvertXCoordToIndex(next.Item2);
+                        var xIndex = ConvertXCoordToIndex(next.Item2);
                         var breakAfterThis = false;
                         if (xIndex >= numVoxelsX)
                         {
@@ -178,9 +178,9 @@ namespace TVGL
                 surfaces.Min(s => s.MinY), surfaces.Min(s => s.MinZ)));
             var maxIndices = ConvertCoordinatesToIndices(new Vector3(surfaces.Max(s => s.MaxX),
                 surfaces.Max(s => s.MaxY), surfaces.Max(s => s.MaxZ)));
-            var minJ = Math.Max(0, minIndices[1]);
+            var minJ = minIndices[1];
             var maxJ = Math.Min(numVoxelsY, maxIndices[1]);
-            var minK = Math.Max(0, minIndices[2]);
+            var minK = minIndices[2];
             var maxK = Math.Min(numVoxelsZ, maxIndices[2]);
 
             //Parallel.For(minK, maxK, k =>
@@ -193,40 +193,54 @@ namespace TVGL
                     var voxRow = (VoxelRowSparse)voxels[k * zMultiplier + j];
                     var crossingTValues = new List<double>();
                     var crossingDirections = new List<bool>();
-
+                    //if (k>=10&&j>=6)Presenter.ShowAndHang(this.ConvertToTessellatedSolidRectilinear());
+                    var enteringIndex = int.MaxValue;
                     foreach (var surface in surfaces)
                     {
-                        var lineCrossings = surface.LineIntersection(new Vector3(XMin, yCoord, zCoord), Vector3.UnitX).ToList();
-                        if ((lineCrossings.Count == 1
-                            && surface.GetNormalAtPoint(lineCrossings[0].intersection).X.IsNegligible(Constants.DotToleranceOrthogonal))
-                            || lineCrossings.Count == 2 && lineCrossings[0].lineT.IsPracticallySame(lineCrossings[1].lineT))
+                        var lineCrossings = surface.LineIntersection(new Vector3(XMin, yCoord, zCoord), Vector3.UnitX).OrderBy(q => q.lineT).ToList();
+                        if (lineCrossings.Count == 2 && lineCrossings[0].lineT.IsPracticallySame(lineCrossings[1].lineT))
                             continue;
-                        var newIndices = new List<int>();
                         foreach (var q in lineCrossings)
                         {
                             var normalX = surface.GetNormalAtPoint(q.intersection).X;
                             if (normalX.IsNegligible(Constants.DotToleranceOrthogonal)) continue;
                             var entering = normalX < 0;
-                            crossingTValues.Insert(index, q.lineT);
-                            crossingDirections.Insert(index, entering);
-
                             var index = crossingTValues.IncreasingDoublesBinarySearch(q.lineT);
-                            if (crossingDirections.Count > 0 && index > 0 && index < crossingDirections.Count - 1
-                            && entering == crossingDirections[index] && entering == crossingDirections[index - 1])
-                                continue;
-                            if (index >= 1 && crossingDirections[index - 1] == entering)
+
+                            if (entering)
                             {
-                                crossingTValues.RemoveAt(index - 1);
-                                crossingDirections.RemoveAt(index - 1);
+                                if (index == 0 || (index > 0 && !crossingDirections[index - 1]))
+                                {
+                                    crossingTValues.Insert(index, q.lineT);
+                                    crossingDirections.Insert(index, entering);
+                                    enteringIndex = index;
+                                }
+                                else enteringIndex = index - 1;
                             }
-                            else if (index < crossingDirections.Count - 2 && crossingDirections[index + 1] == entering)
+                            else // entering == false
                             {
-                                crossingTValues.RemoveAt(index + 1);
-                                crossingDirections.RemoveAt(index + 1);
+                                if (index == crossingDirections.Count || (index < crossingDirections.Count && crossingDirections[index]))
+                                {
+                                    crossingTValues.Insert(index, q.lineT);
+                                    crossingDirections.Insert(index, entering);
+                                }
+                                // unlike the entering case, we can remove the previous one if it is false (we can't do this in the
+                                // entering case because we are adding a new sorted list of lineCrossings and dont'know what the subsequent
+                                // ones are
+                                if (index -enteringIndex> 1)
+                                {
+                                    crossingTValues.RemoveRange(enteringIndex + 1, index - enteringIndex - 1);
+                                    crossingDirections.RemoveRange(enteringIndex + 1, index - enteringIndex - 1);
+                                }
                             }
                         }
                     }
-
+                    // now we need to remove any entering points that follow an existing entering point
+                    for (int i = crossingTValues.Count - 1 ; i >= 1; i--)
+                    {
+                        if (crossingDirections[i-1] && crossingDirections[i])
+                            crossingTValues.RemoveAt(i);
+                    }
                     if (crossingDirections.Count == 0) continue;
                     if (inverseRange == crossingDirections[0])
                     {
@@ -235,8 +249,9 @@ namespace TVGL
                     }
                     for (int i = 0; i < crossingTValues.Count; i += 2)
                     {
-                        var start = (crossingTValues[i] <= 0) ? (ushort)0 : (ushort)ConvertXCoordToIndex(crossingTValues[i]);
-                        var end = (ushort)ConvertXCoordToIndex(crossingTValues[i + 1]);
+                        var start = ConvertXCoordToIndex(crossingTValues[i]);
+                        // for the end - it could be that the list has an odd number of crossings, in which case the last one is the end
+                        var end = i + 1 == crossingTValues.Count ? numVoxelsX : ConvertXCoordToIndex(crossingTValues[i + 1]);
                         var lastOne = end >= numVoxelsX;
                         if (lastOne) end = numVoxelsX;
 
@@ -244,34 +259,8 @@ namespace TVGL
                         else voxRow.TurnOffRange(start, end);
                         if (lastOne) break;
                     }
-                    //var start = (ushort)0;
-                    //// startDefined is true if the start of the range is defined. If it is false,
-                    //// then the start of the range is the beginning of the row.
-                    //var startsDefined = inverseRange == crossingDirections[0]? 1 : 0;
-                    //while (crossingDirections.Count > 0)
-                    //{
-                    //    var next = crossings.Dequeue();
-                    //    var startingNew = next.Item1 != inverseRange;
-                    //    var xIndex = (next.Item2 <= 0) ? (ushort)0 : (ushort)ConvertXCoordToIndex(next.Item2);
-                    //    var breakAfterThis = false;
-                    //    if (startingNew)
-                    //    {
-                    //        if (xIndex >= numVoxelsX)
-                    //            break;
-                    //        startsDefined++;
-                    //        if (startsDefined != 1) continue;
-                    //        start = xIndex;
-                    //    }
-                    //    else
-                    //    {
-                    //        startsDefined--;
-                    //        if (startsDefined != 0) continue;
-                    //        if (turnOn) voxRow.TurnOnRange(start, xIndex);
-                    //        else voxRow.TurnOffRange(start, xIndex);
-                    //        if (xIndex >= numVoxelsX)
-                    //            break;
-                    //    }
-                    //}
+                    //Presenter.ShowAndHang(this.ConvertToTessellatedSolidRectilinear());
+
                 }
             }  //);
         }

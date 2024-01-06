@@ -335,9 +335,9 @@ namespace TVGL
             var result = VoxelizedSolid.CreateEmpty(environment);
             var minIndices = result.ConvertCoordinatesToIndices(new Vector3(surface.MinX, surface.MinY, surface.MinZ));
             var maxIndices = result.ConvertCoordinatesToIndices(new Vector3(surface.MaxX, surface.MaxY, surface.MaxZ));
-            var minJ = Math.Max(0, minIndices[1]);
+            var minJ =  minIndices[1];
             var maxJ = Math.Min(result.numVoxelsY, maxIndices[1]);
-            var minK = Math.Max(0, minIndices[2]);
+            var minK = minIndices[2];
             var maxK = Math.Min(result.numVoxelsZ, maxIndices[2]);
 
 
@@ -350,6 +350,7 @@ namespace TVGL
                     var yCoord = result.ConvertYIndexToCoord(j);
                     foreach (var intersection in GetPrimitiveAndLineIntersections(surface, result.XMin, yCoord, zCoord))
                     {
+                        if (intersection.lineT < 0 || intersection.lineT > result.XMax) continue;
                         //if (treatAsSolid)
                         var indices = result.ConvertCoordinatesToIndices(intersection.intersection);
                         result[indices] = true;
@@ -364,7 +365,7 @@ namespace TVGL
              double yCoord, double zCoord)
         {
             if (surface.Faces == null || surface.Faces.Count == 0)
-                foreach (var result in surface.LineIntersection(new Vector3(xCoord,yCoord,zCoord),Vector3.UnitX))
+                foreach (var result in surface.LineIntersection(new Vector3(xCoord, yCoord, zCoord), Vector3.UnitX))
                     yield return result;
             else
             {
