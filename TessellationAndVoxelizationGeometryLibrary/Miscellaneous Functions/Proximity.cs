@@ -507,7 +507,7 @@ namespace TVGL
             var numReadOnly = readOnlyDirs.Count;
             foreach (var dir in readOnlyDirs)
                 guessDirList.Insert(0, dir);
-            var sortedProximities = new SortedList<double, (Vector3, Vector3)>(new NoEqualSort(true));
+            var sortedProximities = new SortedList<double, (Vector3, Vector3)>(new NoEqualSort<double>(true));
             var totalProximities = new Dictionary<Vector3, double>();
             for (int i = guessDirList.Count - 1; i >= numReadOnly; i--)
             {

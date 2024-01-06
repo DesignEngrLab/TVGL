@@ -224,8 +224,7 @@ namespace TVGL
                 for (var m = 0; m < numXRangesOnThisLine; m += 2)
                 {
                     var sp = copy.ConvertXCoordToIndex(intersectionPoints[m]);
-                    var ep = copy.ConvertXCoordToIndex(intersectionPoints[m + 1]);
-                    if (ep >= copy.numVoxelsX) ep = (ushort)(copy.numVoxelsX - 1);
+                    var ep = Math.Min((ushort)(copy.numVoxelsX - 1), copy.ConvertXCoordToIndex(intersectionPoints[m + 1]));
                     ((VoxelRowSparse)copy.voxels[yStartIndex + j]).indices.Add(sp);
                     ((VoxelRowSparse)copy.voxels[yStartIndex + j]).indices.Add(ep);
                 }
@@ -266,8 +265,7 @@ namespace TVGL
                             for (var m = 0; m < numXRangesOnThisLine; m += 2)
                             {
                                 var sp = ConvertXCoordToIndex(intersectionPoints[m]);
-                                var ep = ConvertXCoordToIndex(intersectionPoints[m + 1]);
-                                if (ep >= numVoxelsX) ep = (ushort)(numVoxelsX - 1);
+                                var ep = Math.Min((ushort)(numVoxelsX - 1), ConvertXCoordToIndex(intersectionPoints[m + 1]));
                                 if (sp == ep) continue;
                                 var numIndices = voxelRow.indices.Count;
                                 if (numIndices > 0 && voxelRow.indices[numIndices - 1] == sp)

@@ -176,7 +176,7 @@ namespace TVGLUnitTestsAndBenchmarking
         public static void TestVoxelPrimitiveBoolOps()
         {
             Presenter.NVEnable();
-            var vs = VoxelizedSolid.CreateFullBlock(0.02, new[] { Vector3.Zero, new Vector3(10, 10, 10) });
+            var vs = VoxelizedSolid.CreateFullBlock(0.05, new[] { Vector3.Zero, new Vector3(10, 10, 10) });
             var cyl1 = new Cylinder
             {
                 Anchor = new Vector3(3, 5, 5),

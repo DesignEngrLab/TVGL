@@ -625,7 +625,7 @@ namespace TVGL
         /// <returns>SortedList&lt;System.Double, Vertex2D&gt;.</returns>
         public static SortedList<double, Vertex2D> AllPolygonIntersectionPointsAlongHorizontalLine(this Polygon polygon, double YValue)
         {
-            SortedList<double, Vertex2D> result = new SortedList<double, Vertex2D>(new NoEqualSort());
+            SortedList<double, Vertex2D> result = new SortedList<double, Vertex2D>(new NoEqualSort<double>());
             foreach (var poly in polygon.AllPolygons)
             {
                 var startVertex = poly.Vertices[0];

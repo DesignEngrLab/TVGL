@@ -11,6 +11,7 @@
 // </copyright>
 // <summary></summary>
 // ***********************************************************************
+using Priority_Queue;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -101,7 +102,7 @@ namespace TVGL
         {
             var minIndices = ConvertCoordinatesToIndices(new Vector3(surface.MinX, surface.MinY, surface.MinZ));
             var maxIndices = ConvertCoordinatesToIndices(new Vector3(surface.MaxX, surface.MaxY, surface.MaxZ));
-            var minJ =  minIndices[1];
+            var minJ = minIndices[1];
             var maxJ = Math.Min(numVoxelsY, maxIndices[1]);
             var minK = minIndices[2];
             var maxK = Math.Min(numVoxelsZ, maxIndices[2]);
@@ -173,29 +174,52 @@ namespace TVGL
 
         private void BooleanOperation(IList<PrimitiveSurface> surfaces, bool turnOn, bool inverseRange)
         {
-            var minX = surfaces.Min(s => s.MinX);
-            var minIndices = ConvertCoordinatesToIndices(new Vector3(surfaces.Min(s => s.MinX),
-                surfaces.Min(s => s.MinY), surfaces.Min(s => s.MinZ)));
-            var maxIndices = ConvertCoordinatesToIndices(new Vector3(surfaces.Max(s => s.MaxX),
-                surfaces.Max(s => s.MaxY), surfaces.Max(s => s.MaxZ)));
-            var minJ = minIndices[1];
-            var maxJ = Math.Min(numVoxelsY, maxIndices[1]);
-            var minK = minIndices[2];
-            var maxK = Math.Min(numVoxelsZ, maxIndices[2]);
+            var totalMinK = int.MaxValue;
+            var totalMaxK = 0;
+            var surfacePerZLevel = new SimplePriorityQueue<(PrimitiveSurface, ushort), ushort>[numVoxelsZ];
+            foreach (var surface in surfaces)
+            {
+                var minJ = ConvertYCoordToIndex(surface.MinY);
+                var maxJ = Math.Min((ushort)(numVoxelsY - 1), ConvertYCoordToIndex(surface.MaxY));
+                var minK = ConvertZCoordToIndex(surface.MinZ);
+                if (totalMinK > minK) totalMinK = minK;
+                var maxK = Math.Min((ushort)(numVoxelsZ - 1), ConvertZCoordToIndex(surface.MaxZ));
+                if (totalMaxK < maxK) totalMaxK = maxK;
+                for (var k = minK; k <= maxK; k++)
+                {
+                    if (surfacePerZLevel[k] == null)
+                        surfacePerZLevel[k] = new SimplePriorityQueue<(PrimitiveSurface, ushort), ushort>();
+                    surfacePerZLevel[k].Enqueue((surface, maxJ), minJ);
+                }
+            }
 
-            //Parallel.For(minK, maxK, k =>
-            for (var k = minK; k < maxK; k++)
+            //Parallel.For(totalMinK, totalMaxK+1, k =>
+            for (var k = totalMinK; k <= totalMaxK; k++)
             {
                 var zCoord = ConvertZIndexToCoord(k);
-                for (int j = minJ; j < maxJ; j++)
+                var yQueue = surfacePerZLevel[k];
+                var currentSurfaces = new SortedList<ushort, PrimitiveSurface>(new NoEqualSort<ushort>());
+                for (int j =yQueue.GetPriority(yQueue.First); j < numVoxelsY; j++)
                 {
+                    while (currentSurfaces.Count > 0 && currentSurfaces.Keys[0] < j)
+                        currentSurfaces.RemoveAt(0);
+                    while (yQueue.Count > 0 && yQueue.GetPriority(yQueue.First) == j)
+                    {
+                        var next = yQueue.Dequeue();
+                        currentSurfaces.Add(next.Item2, next.Item1);
+                    }
+                    if (currentSurfaces.Count == 0)
+                    {
+                        if (yQueue.Count == 0) break;
+                        else continue;
+                    }
                     var yCoord = ConvertYIndexToCoord(j);
                     var voxRow = (VoxelRowSparse)voxels[k * zMultiplier + j];
                     var crossingTValues = new List<double>();
                     var crossingDirections = new List<bool>();
                     //if (k>=10&&j>=6)Presenter.ShowAndHang(this.ConvertToTessellatedSolidRectilinear());
                     var enteringIndex = int.MaxValue;
-                    foreach (var surface in surfaces)
+                    foreach ((var maxJ, var surface) in currentSurfaces)
                     {
                         var lineCrossings = surface.LineIntersection(new Vector3(XMin, yCoord, zCoord), Vector3.UnitX).OrderBy(q => q.lineT).ToList();
                         if (lineCrossings.Count == 2 && lineCrossings[0].lineT.IsPracticallySame(lineCrossings[1].lineT))
@@ -227,7 +251,7 @@ namespace TVGL
                                 // unlike the entering case, we can remove the previous one if it is false (we can't do this in the
                                 // entering case because we are adding a new sorted list of lineCrossings and dont'know what the subsequent
                                 // ones are
-                                if (index -enteringIndex> 1)
+                                if (index - enteringIndex > 1)
                                 {
                                     crossingTValues.RemoveRange(enteringIndex + 1, index - enteringIndex - 1);
                                     crossingDirections.RemoveRange(enteringIndex + 1, index - enteringIndex - 1);
@@ -236,9 +260,9 @@ namespace TVGL
                         }
                     }
                     // now we need to remove any entering points that follow an existing entering point
-                    for (int i = crossingTValues.Count - 1 ; i >= 1; i--)
+                    for (int i = crossingTValues.Count - 1; i >= 1; i--)
                     {
-                        if (crossingDirections[i-1] && crossingDirections[i])
+                        if (crossingDirections[i - 1] && crossingDirections[i])
                             crossingTValues.RemoveAt(i);
                     }
                     if (crossingDirections.Count == 0) continue;
@@ -261,7 +285,7 @@ namespace TVGL
                     }
                     //Presenter.ShowAndHang(this.ConvertToTessellatedSolidRectilinear());
 
-                }
+                } 
             }  //);
         }
     }
