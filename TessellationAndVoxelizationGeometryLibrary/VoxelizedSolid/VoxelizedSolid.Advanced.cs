@@ -198,15 +198,15 @@ namespace TVGL
             {
                 var zCoord = ConvertZIndexToCoord(k);
                 var yQueue = surfacePerZLevel[k];
-                var currentSurfaces = new SortedList<ushort, PrimitiveSurface>(new NoEqualSort<ushort>());
-                for (int j =yQueue.GetPriority(yQueue.First); j < numVoxelsY; j++)
+                var currentSurfaces = new Queue<(PrimitiveSurface, ushort)>();
+                for (int j = yQueue.GetPriority(yQueue.First); j < numVoxelsY; j++)
                 {
-                    while (currentSurfaces.Count > 0 && currentSurfaces.Keys[0] < j)
-                        currentSurfaces.RemoveAt(0);
+                    while (currentSurfaces.Count > 0 && currentSurfaces.Peek().Item2 < j)
+                        currentSurfaces.Dequeue();
                     while (yQueue.Count > 0 && yQueue.GetPriority(yQueue.First) == j)
                     {
                         var next = yQueue.Dequeue();
-                        currentSurfaces.Add(next.Item2, next.Item1);
+                        currentSurfaces.Enqueue(next);
                     }
                     if (currentSurfaces.Count == 0)
                     {
@@ -219,7 +219,7 @@ namespace TVGL
                     var crossingDirections = new List<bool>();
                     //if (k>=10&&j>=6)Presenter.ShowAndHang(this.ConvertToTessellatedSolidRectilinear());
                     var enteringIndex = int.MaxValue;
-                    foreach ((var maxJ, var surface) in currentSurfaces)
+                    foreach ((var surface, var _) in currentSurfaces)
                     {
                         var lineCrossings = surface.LineIntersection(new Vector3(XMin, yCoord, zCoord), Vector3.UnitX).OrderBy(q => q.lineT).ToList();
                         if (lineCrossings.Count == 2 && lineCrossings[0].lineT.IsPracticallySame(lineCrossings[1].lineT))
@@ -285,7 +285,7 @@ namespace TVGL
                     }
                     //Presenter.ShowAndHang(this.ConvertToTessellatedSolidRectilinear());
 
-                } 
+                }
             }  //);
         }
     }
