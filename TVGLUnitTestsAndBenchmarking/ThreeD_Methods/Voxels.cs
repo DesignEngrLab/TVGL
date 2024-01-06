@@ -176,7 +176,7 @@ namespace TVGLUnitTestsAndBenchmarking
         public static void TestVoxelPrimitiveBoolOps()
         {
             Presenter.NVEnable();
-            var vs = VoxelizedSolid.CreateFullBlock(0.08, new[] { Vector3.Zero, new Vector3(10, 10, 10) });
+            var vs = VoxelizedSolid.CreateFullBlock(0.02, new[] { Vector3.Zero, new Vector3(10, 10, 10) });
             var cyl1 = new Cylinder
             {
                 Anchor = new Vector3(3, 5, 5),
@@ -208,7 +208,7 @@ namespace TVGLUnitTestsAndBenchmarking
             capsule.Tessellate();
 
             //Presenter.ShowAndHang(vsTs.Faces.Concat(cyl1.Faces.Concat(cyl2.Faces.Concat(capsule.Faces))));
-            vs.Subtract(new PrimitiveSurface[] {  cyl1 , capsule });//cyl1,
+            vs.Subtract(new PrimitiveSurface[] { cyl1, cyl2, capsule });
             var vsTs = vs.ConvertToTessellatedSolidRectilinear();
             foreach (var face in vsTs.Faces)
                 face.Color = new Color(170, 100, 100, 100);

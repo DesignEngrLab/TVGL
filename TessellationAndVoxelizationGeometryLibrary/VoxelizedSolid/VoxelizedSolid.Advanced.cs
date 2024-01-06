@@ -14,6 +14,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Threading.Tasks;
 
 namespace TVGL
@@ -184,60 +185,95 @@ namespace TVGL
 
             //Parallel.For(minK, maxK, k =>
             for (var k = minK; k < maxK; k++)
-            {                    
-                    var zCoord = ConvertZIndexToCoord(k);
+            {
+                var zCoord = ConvertZIndexToCoord(k);
                 for (int j = minJ; j < maxJ; j++)
                 {
                     var yCoord = ConvertYIndexToCoord(j);
                     var voxRow = (VoxelRowSparse)voxels[k * zMultiplier + j];
-                    var crossings = new PriorityQueue<(bool, double), double>();
-                //if (k>=62 && j>=33) Presenter.ShowAndHang(this.ConvertToTessellatedSolidRectilinear());
+                    var crossingTValues = new List<double>();
+                    var crossingDirections = new List<bool>();
 
-                    //foreach (var surface in surfaces)
-                    //{
-                    //    var lineCrossings = surface.LineIntersection(new Vector3(XMin, yCoord, zCoord), Vector3.UnitX).ToList();
-                    //    if (lineCrossings.Count == 1
-                    //        && surface.GetNormalAtPoint(lineCrossings[0].intersection).X.IsNegligible(Constants.DotToleranceOrthogonal))
-                    //        continue;
-                    //    foreach (var q in lineCrossings)
-                    //        crossings.Enqueue((surface.GetNormalAtPoint(q.intersection).X < 0, q.lineT), q.lineT);
-                    //}
                     foreach (var surface in surfaces)
-                        foreach (var q in surface.LineIntersection(new Vector3(XMin, yCoord, zCoord), Vector3.UnitX))
-                            crossings.Enqueue((surface.GetNormalAtPoint(q.intersection).X < 0, q.lineT), q.lineT);
-
-                    if (crossings.Count == 0) continue;
-                    var start = (ushort)0;
-                    // startDefined is true if the start of the range is defined. If it is false,
-                    // then the start of the range is the beginning of the row.
-                    var startsDefined = (inverseRange != crossings.Peek().Item1) ? 0 : 1;
-                    var show = crossings.Count % 2 == 1;
-                    while (crossings.Count > 0)
                     {
-                        var next = crossings.Dequeue();
-                        var startingNew = next.Item1 != inverseRange;
-                        var xIndex = (next.Item2 <= 0) ? (ushort)0 : (ushort)ConvertXCoordToIndex(next.Item2);
-                        var breakAfterThis = false;
-                        if (startingNew)
+                        var lineCrossings = surface.LineIntersection(new Vector3(XMin, yCoord, zCoord), Vector3.UnitX).ToList();
+                        if ((lineCrossings.Count == 1
+                            && surface.GetNormalAtPoint(lineCrossings[0].intersection).X.IsNegligible(Constants.DotToleranceOrthogonal))
+                            || lineCrossings.Count == 2 && lineCrossings[0].lineT.IsPracticallySame(lineCrossings[1].lineT))
+                            continue;
+                        var newIndices = new List<int>();
+                        foreach (var q in lineCrossings)
                         {
-                            if (xIndex >= numVoxelsX)
-                                break;
-                            startsDefined++;
-                            if (startsDefined != 1) continue;
-                            start = xIndex;
-                        }
-                        else
-                        {
-                            startsDefined--;
-                            if (startsDefined != 0) continue;
-                            if (turnOn) voxRow.TurnOnRange(start, xIndex);
-                            else voxRow.TurnOffRange(start, xIndex);
-                            if (xIndex >= numVoxelsX)
-                                break;
+                            var normalX = surface.GetNormalAtPoint(q.intersection).X;
+                            if (normalX.IsNegligible(Constants.DotToleranceOrthogonal)) continue;
+                            var entering = normalX < 0;
+                            crossingTValues.Insert(index, q.lineT);
+                            crossingDirections.Insert(index, entering);
+
+                            var index = crossingTValues.IncreasingDoublesBinarySearch(q.lineT);
+                            if (crossingDirections.Count > 0 && index > 0 && index < crossingDirections.Count - 1
+                            && entering == crossingDirections[index] && entering == crossingDirections[index - 1])
+                                continue;
+                            if (index >= 1 && crossingDirections[index - 1] == entering)
+                            {
+                                crossingTValues.RemoveAt(index - 1);
+                                crossingDirections.RemoveAt(index - 1);
+                            }
+                            else if (index < crossingDirections.Count - 2 && crossingDirections[index + 1] == entering)
+                            {
+                                crossingTValues.RemoveAt(index + 1);
+                                crossingDirections.RemoveAt(index + 1);
+                            }
                         }
                     }
+
+                    if (crossingDirections.Count == 0) continue;
+                    if (inverseRange == crossingDirections[0])
+                    {
+                        //crossingDirections.Insert(0, !crossingDirections[0]);
+                        crossingTValues.Insert(0, 0);
+                    }
+                    for (int i = 0; i < crossingTValues.Count; i += 2)
+                    {
+                        var start = (crossingTValues[i] <= 0) ? (ushort)0 : (ushort)ConvertXCoordToIndex(crossingTValues[i]);
+                        var end = (ushort)ConvertXCoordToIndex(crossingTValues[i + 1]);
+                        var lastOne = end >= numVoxelsX;
+                        if (lastOne) end = numVoxelsX;
+
+                        if (turnOn) voxRow.TurnOnRange(start, end);
+                        else voxRow.TurnOffRange(start, end);
+                        if (lastOne) break;
+                    }
+                    //var start = (ushort)0;
+                    //// startDefined is true if the start of the range is defined. If it is false,
+                    //// then the start of the range is the beginning of the row.
+                    //var startsDefined = inverseRange == crossingDirections[0]? 1 : 0;
+                    //while (crossingDirections.Count > 0)
+                    //{
+                    //    var next = crossings.Dequeue();
+                    //    var startingNew = next.Item1 != inverseRange;
+                    //    var xIndex = (next.Item2 <= 0) ? (ushort)0 : (ushort)ConvertXCoordToIndex(next.Item2);
+                    //    var breakAfterThis = false;
+                    //    if (startingNew)
+                    //    {
+                    //        if (xIndex >= numVoxelsX)
+                    //            break;
+                    //        startsDefined++;
+                    //        if (startsDefined != 1) continue;
+                    //        start = xIndex;
+                    //    }
+                    //    else
+                    //    {
+                    //        startsDefined--;
+                    //        if (startsDefined != 0) continue;
+                    //        if (turnOn) voxRow.TurnOnRange(start, xIndex);
+                    //        else voxRow.TurnOffRange(start, xIndex);
+                    //        if (xIndex >= numVoxelsX)
+                    //            break;
+                    //    }
+                    //}
                 }
-            } //);
+            }  //);
         }
     }
 }
