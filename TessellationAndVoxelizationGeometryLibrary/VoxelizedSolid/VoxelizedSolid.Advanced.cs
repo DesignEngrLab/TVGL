@@ -193,8 +193,8 @@ namespace TVGL
                 }
             }
 
-            //Parallel.For(totalMinK, totalMaxK+1, k =>
-            for (var k = totalMinK; k <= totalMaxK; k++)
+            Parallel.For(totalMinK, totalMaxK+1, k =>
+            //for (var k = totalMinK; k <= totalMaxK; k++)
             {
                 var zCoord = ConvertZIndexToCoord(k);
                 var yQueue = surfacePerZLevel[k];
@@ -286,7 +286,7 @@ namespace TVGL
                     //Presenter.ShowAndHang(this.ConvertToTessellatedSolidRectilinear());
 
                 }
-            }  //);
+            }  );
         }
     }
 }

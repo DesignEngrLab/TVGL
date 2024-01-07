@@ -107,7 +107,8 @@ namespace TVGL
     /// A comparer for optimization that can be used for either
     /// ascending or descending.
     /// </summary>
-    public class NoEqualSort<T> : IComparer<T> where T :IComparable
+    public class NoEqualSort : IComparer<double> 
+    //public class NoEqualSort<T> : IComparer<T> where T :IComparable
     {
         /// <summary>
         /// The direction
@@ -132,11 +133,16 @@ namespace TVGL
         /// shown in the following table.Value Meaning Less than zero<paramref name="x" /> is less than <paramref name="y" />
         /// .Zero<paramref name="x" /> equals <paramref name="y" />.Greater than zero<paramref name="x" /> is greater than
         /// <paramref name="y" />.</returns>
-        public int Compare(T x, T y)
+        public int Compare(double x, double y)
         {
-            if (x.CompareTo(y)<0) return direction;
+            if (x < y) return direction;
             return -direction;
         }
+        //public int Compare(T x, T y)
+        //{
+        //    if (x.CompareTo(y) < 0) return direction;
+        //    return -direction;
+        //}
     }
 
     /// <summary>
