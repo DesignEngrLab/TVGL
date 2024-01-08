@@ -1408,14 +1408,11 @@ namespace TVGL
             }
         }
 
-
-
         private static void DefineBorderSegments(TessellatedSolid solid)
         {
             foreach (var prim in solid.Primitives)
                 prim.BorderSegments = new List<BorderSegment>();
-            var borderSegments = GatherEdgesIntoSegments(solid.NonsmoothEdges
-                .Concat(solid.Primitives.SelectMany(prim => prim.OuterEdges)));
+            var borderSegments = GatherEdgesIntoSegments(solid.Primitives.SelectMany(prim => prim.OuterEdges));
             foreach (var segment in borderSegments)
             {
                 var ownedFace = segment.DirectionList[0] ? segment.EdgeList[0].OwnedFace : segment.EdgeList[0].OtherFace;
