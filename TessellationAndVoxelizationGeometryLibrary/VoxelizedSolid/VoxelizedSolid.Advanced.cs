@@ -158,25 +158,25 @@ namespace TVGL
         ///  Creates the union of the voxels on the "inside" of this surface with this solid.
         /// </summary>
         /// <param name="surfaces"></param>
-        public void Union(IList<PrimitiveSurface> surfaces) => BooleanOperation(surfaces, true, false);
+        public void Union(IEnumerable<PrimitiveSurface> surfaces) => BooleanOperation(surfaces, true, false);
 
         /// <summary>
         /// Intersects the voxels on the "inside" of this surface with this solid.
         /// </summary>
         /// <param name="surfaces"></param>
-        public void Intersect(IList<PrimitiveSurface> surfaces) => BooleanOperation(surfaces, false, true);
+        public void Intersect(IEnumerable<PrimitiveSurface> surfaces) => BooleanOperation(surfaces, false, true);
 
         /// <summary>
         /// Subrtracts the voxels on the "inside" of this surface from this solid.
         /// </summary>
         /// <param name="surfaces"></param>
-        public void Subtract(IList<PrimitiveSurface> surfaces) => BooleanOperation(surfaces, false, false);
+        public void Subtract(IEnumerable<PrimitiveSurface> surfaces) => BooleanOperation(surfaces, false, false);
 
-        private void BooleanOperation(IList<PrimitiveSurface> surfaces, bool turnOn, bool inverseRange)
+        private void BooleanOperation(IEnumerable<PrimitiveSurface> surfaces, bool turnOn, bool inverseRange)
         {
             var totalMinK = int.MaxValue;
             var totalMaxK = 0;
-            var surfacePerZLevel = new SimplePriorityQueue<(PrimitiveSurface, ushort), ushort>[numVoxelsZ];
+            var surfacePerZLevel = new PriorityQueue<(PrimitiveSurface, ushort), ushort>[numVoxelsZ];
             foreach (var surface in surfaces)
             {
                 var minJ = ConvertYCoordToIndex(surface.MinY);
@@ -188,7 +188,7 @@ namespace TVGL
                 for (var k = minK; k <= maxK; k++)
                 {
                     if (surfacePerZLevel[k] == null)
-                        surfacePerZLevel[k] = new SimplePriorityQueue<(PrimitiveSurface, ushort), ushort>();
+                        surfacePerZLevel[k] = new PriorityQueue<(PrimitiveSurface, ushort), ushort>();
                     surfacePerZLevel[k].Enqueue((surface, maxJ), minJ);
                 }
             }
@@ -198,12 +198,14 @@ namespace TVGL
             {
                 var zCoord = ConvertZIndexToCoord(k);
                 var yQueue = surfacePerZLevel[k];
+                if (yQueue == null) return;
                 var currentSurfaces = new Queue<(PrimitiveSurface, ushort)>();
-                for (int j = yQueue.GetPriority(yQueue.First); j < numVoxelsY; j++)
+                yQueue.TryPeek(out _, out var startJ);
+                for (int j = startJ; j < numVoxelsY; j++)
                 {
                     while (currentSurfaces.Count > 0 && currentSurfaces.Peek().Item2 < j)
                         currentSurfaces.Dequeue();
-                    while (yQueue.Count > 0 && yQueue.GetPriority(yQueue.First) == j)
+                    while (yQueue.Count > 0 && yQueue.TryPeek(out _, out var nextY) && nextY == j)
                     {
                         var next = yQueue.Dequeue();
                         currentSurfaces.Enqueue(next);
@@ -269,7 +271,7 @@ namespace TVGL
                     if (inverseRange == crossingDirections[0])
                     {
                         //crossingDirections.Insert(0, !crossingDirections[0]);
-                        crossingTValues.Insert(0, 0);
+                        crossingTValues.Insert(0, ConvertXIndexToCoord(0));
                     }
                     for (int i = 0; i < crossingTValues.Count; i += 2)
                     {
@@ -286,7 +288,7 @@ namespace TVGL
                     //Presenter.ShowAndHang(this.ConvertToTessellatedSolidRectilinear());
 
                 }
-            }  );
+            });
         }
     }
 }
