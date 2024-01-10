@@ -11,11 +11,9 @@
 // </copyright>
 // <summary></summary>
 // ***********************************************************************
-using Priority_Queue;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 using System.Threading.Tasks;
 
 namespace TVGL

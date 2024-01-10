@@ -10,6 +10,7 @@ using System.IO;
 using System.Linq;
 
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace TVGLUnitTestsAndBenchmarking
 {
@@ -41,9 +42,20 @@ namespace TVGLUnitTestsAndBenchmarking
 
         internal static void TestSimplify2()
         {
-            IEnumerable<Vector2> polygon = TestCases.MakeStarryCircularPolygon(150000, 30, 1);
-            Presenter.ShowAndHang(polygon);
+            var polygon = new Polygon(TestCases.MakeStarryCircularPolygon(15000, 30, 1));
+            Console.WriteLine(polygon.Area);
+            Console.WriteLine(polygon.Perimeter);
+            Console.WriteLine(polygon.Edges.Max(edge => edge.Length));
+            Console.WriteLine(polygon.Edges.Min(edge => edge.Length));
+            //Presenter.ShowAndHang(polygon);
+            var sw = Stopwatch.StartNew();
+            var simp = polygon.SimplifyByAreaChangeToNewPolygon(0.1);
+            Console.WriteLine("time elapsed =" + sw.Elapsed.ToString());
+            Presenter.ShowAndHang(new[] { polygon, simp });
+            Console.WriteLine(simp.Area);
+            Console.WriteLine(simp.Perimeter);
+            Console.WriteLine(simp.Edges.Max(edge => edge.Length));
+            Console.WriteLine(simp.Edges.Min(edge => edge.Length));
         }
-
     }
 }
