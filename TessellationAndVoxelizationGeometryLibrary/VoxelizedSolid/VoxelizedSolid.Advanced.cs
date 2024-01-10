@@ -100,9 +100,9 @@ namespace TVGL
         {
             var minIndices = ConvertCoordinatesToIndices(new Vector3(surface.MinX, surface.MinY, surface.MinZ));
             var maxIndices = ConvertCoordinatesToIndices(new Vector3(surface.MaxX, surface.MaxY, surface.MaxZ));
-            var minJ = Math.Max(0, minIndices[1]);
+            var minJ = minIndices[1];
             var maxJ = Math.Min(numVoxelsY, maxIndices[1]);
-            var minK = Math.Max(0, minIndices[2]);
+            var minK = minIndices[2];
             var maxK = Math.Min(numVoxelsZ, maxIndices[2]);
 
 
@@ -125,7 +125,7 @@ namespace TVGL
                     while (crossings.Count > 0)
                     {
                         var next = crossings.Dequeue();
-                        var xIndex = (next.Item2 <= 0) ? (ushort)0 : (ushort)ConvertXCoordToIndex(next.Item2);
+                        var xIndex = ConvertXCoordToIndex(next.Item2);
                         var breakAfterThis = false;
                         if (xIndex >= numVoxelsX)
                         {
@@ -156,88 +156,137 @@ namespace TVGL
         ///  Creates the union of the voxels on the "inside" of this surface with this solid.
         /// </summary>
         /// <param name="surfaces"></param>
-        public void Union(IList<PrimitiveSurface> surfaces) => BooleanOperation(surfaces, true, false);
+        public void Union(IEnumerable<PrimitiveSurface> surfaces) => BooleanOperation(surfaces, true, false);
 
         /// <summary>
         /// Intersects the voxels on the "inside" of this surface with this solid.
         /// </summary>
         /// <param name="surfaces"></param>
-        public void Intersect(IList<PrimitiveSurface> surfaces) => BooleanOperation(surfaces, false, true);
+        public void Intersect(IEnumerable<PrimitiveSurface> surfaces) => BooleanOperation(surfaces, false, true);
 
         /// <summary>
         /// Subrtracts the voxels on the "inside" of this surface from this solid.
         /// </summary>
         /// <param name="surfaces"></param>
-        public void Subtract(IList<PrimitiveSurface> surfaces) => BooleanOperation(surfaces, false, false);
+        public void Subtract(IEnumerable<PrimitiveSurface> surfaces) => BooleanOperation(surfaces, false, false);
 
-        private void BooleanOperation(IList<PrimitiveSurface> surfaces, bool turnOn, bool inverseRange)
+        private void BooleanOperation(IEnumerable<PrimitiveSurface> surfaces, bool turnOn, bool inverseRange)
         {
-            var minX = surfaces.Min(s => s.MinX);
-            var minIndices = ConvertCoordinatesToIndices(new Vector3(surfaces.Min(s => s.MinX),
-                surfaces.Min(s => s.MinY), surfaces.Min(s => s.MinZ)));
-            var maxIndices = ConvertCoordinatesToIndices(new Vector3(surfaces.Max(s => s.MaxX),
-                surfaces.Max(s => s.MaxY), surfaces.Max(s => s.MaxZ)));
-            var minJ = Math.Max(0, minIndices[1]);
-            var maxJ = Math.Min(numVoxelsY, maxIndices[1]);
-            var minK = Math.Max(0, minIndices[2]);
-            var maxK = Math.Min(numVoxelsZ, maxIndices[2]);
-
-            //Parallel.For(minK, maxK, k =>
-            for (var k = minK; k < maxK; k++)
-            {                    
-                    var zCoord = ConvertZIndexToCoord(k);
-                for (int j = minJ; j < maxJ; j++)
+            var totalMinK = int.MaxValue;
+            var totalMaxK = 0;
+            var surfacePerZLevel = new PriorityQueue<(PrimitiveSurface, ushort), ushort>[numVoxelsZ];
+            foreach (var surface in surfaces)
+            {
+                var minJ = ConvertYCoordToIndex(surface.MinY);
+                var maxJ = Math.Min((ushort)(numVoxelsY - 1), ConvertYCoordToIndex(surface.MaxY));
+                var minK = ConvertZCoordToIndex(surface.MinZ);
+                if (totalMinK > minK) totalMinK = minK;
+                var maxK = Math.Min((ushort)(numVoxelsZ - 1), ConvertZCoordToIndex(surface.MaxZ));
+                if (totalMaxK < maxK) totalMaxK = maxK;
+                for (var k = minK; k <= maxK; k++)
                 {
+                    if (surfacePerZLevel[k] == null)
+                        surfacePerZLevel[k] = new PriorityQueue<(PrimitiveSurface, ushort), ushort>();
+                    surfacePerZLevel[k].Enqueue((surface, maxJ), minJ);
+                }
+            }
+
+            Parallel.For(totalMinK, totalMaxK+1, k =>
+            //for (var k = totalMinK; k <= totalMaxK; k++)
+            {
+                var zCoord = ConvertZIndexToCoord(k);
+                var yQueue = surfacePerZLevel[k];
+                if (yQueue == null) return;
+                var currentSurfaces = new Queue<(PrimitiveSurface, ushort)>();
+                yQueue.TryPeek(out _, out var startJ);
+                for (int j = startJ; j < numVoxelsY; j++)
+                {
+                    while (currentSurfaces.Count > 0 && currentSurfaces.Peek().Item2 < j)
+                        currentSurfaces.Dequeue();
+                    while (yQueue.Count > 0 && yQueue.TryPeek(out _, out var nextY) && nextY == j)
+                    {
+                        var next = yQueue.Dequeue();
+                        currentSurfaces.Enqueue(next);
+                    }
+                    if (currentSurfaces.Count == 0)
+                    {
+                        if (yQueue.Count == 0) break;
+                        else continue;
+                    }
                     var yCoord = ConvertYIndexToCoord(j);
                     var voxRow = (VoxelRowSparse)voxels[k * zMultiplier + j];
-                    var crossings = new PriorityQueue<(bool, double), double>();
-                //if (k>=62 && j>=33) Presenter.ShowAndHang(this.ConvertToTessellatedSolidRectilinear());
-
-                    //foreach (var surface in surfaces)
-                    //{
-                    //    var lineCrossings = surface.LineIntersection(new Vector3(XMin, yCoord, zCoord), Vector3.UnitX).ToList();
-                    //    if (lineCrossings.Count == 1
-                    //        && surface.GetNormalAtPoint(lineCrossings[0].intersection).X.IsNegligible(Constants.DotToleranceOrthogonal))
-                    //        continue;
-                    //    foreach (var q in lineCrossings)
-                    //        crossings.Enqueue((surface.GetNormalAtPoint(q.intersection).X < 0, q.lineT), q.lineT);
-                    //}
-                    foreach (var surface in surfaces)
-                        foreach (var q in surface.LineIntersection(new Vector3(XMin, yCoord, zCoord), Vector3.UnitX))
-                            crossings.Enqueue((surface.GetNormalAtPoint(q.intersection).X < 0, q.lineT), q.lineT);
-
-                    if (crossings.Count == 0) continue;
-                    var start = (ushort)0;
-                    // startDefined is true if the start of the range is defined. If it is false,
-                    // then the start of the range is the beginning of the row.
-                    var startsDefined = (inverseRange != crossings.Peek().Item1) ? 0 : 1;
-                    var show = crossings.Count % 2 == 1;
-                    while (crossings.Count > 0)
+                    var crossingTValues = new List<double>();
+                    var crossingDirections = new List<bool>();
+                    //if (k>=10&&j>=6)Presenter.ShowAndHang(this.ConvertToTessellatedSolidRectilinear());
+                    var enteringIndex = int.MaxValue;
+                    foreach ((var surface, var _) in currentSurfaces)
                     {
-                        var next = crossings.Dequeue();
-                        var startingNew = next.Item1 != inverseRange;
-                        var xIndex = (next.Item2 <= 0) ? (ushort)0 : (ushort)ConvertXCoordToIndex(next.Item2);
-                        var breakAfterThis = false;
-                        if (startingNew)
+                        var lineCrossings = surface.LineIntersection(new Vector3(XMin, yCoord, zCoord), Vector3.UnitX).OrderBy(q => q.lineT).ToList();
+                        if (lineCrossings.Count == 2 && lineCrossings[0].lineT.IsPracticallySame(lineCrossings[1].lineT))
+                            continue;
+                        foreach (var q in lineCrossings)
                         {
-                            if (xIndex >= numVoxelsX)
-                                break;
-                            startsDefined++;
-                            if (startsDefined != 1) continue;
-                            start = xIndex;
-                        }
-                        else
-                        {
-                            startsDefined--;
-                            if (startsDefined != 0) continue;
-                            if (turnOn) voxRow.TurnOnRange(start, xIndex);
-                            else voxRow.TurnOffRange(start, xIndex);
-                            if (xIndex >= numVoxelsX)
-                                break;
+                            var normalX = surface.GetNormalAtPoint(q.intersection).X;
+                            if (normalX.IsNegligible(Constants.DotToleranceOrthogonal)) continue;
+                            var entering = normalX < 0;
+                            var index = crossingTValues.IncreasingDoublesBinarySearch(q.lineT);
+
+                            if (entering)
+                            {
+                                if (index == 0 || (index > 0 && !crossingDirections[index - 1]))
+                                {
+                                    crossingTValues.Insert(index, q.lineT);
+                                    crossingDirections.Insert(index, entering);
+                                    enteringIndex = index;
+                                }
+                                else enteringIndex = index - 1;
+                            }
+                            else // entering == false
+                            {
+                                if (index == crossingDirections.Count || (index < crossingDirections.Count && crossingDirections[index]))
+                                {
+                                    crossingTValues.Insert(index, q.lineT);
+                                    crossingDirections.Insert(index, entering);
+                                }
+                                // unlike the entering case, we can remove the previous one if it is false (we can't do this in the
+                                // entering case because we are adding a new sorted list of lineCrossings and dont'know what the subsequent
+                                // ones are
+                                if (index - enteringIndex > 1)
+                                {
+                                    crossingTValues.RemoveRange(enteringIndex + 1, index - enteringIndex - 1);
+                                    crossingDirections.RemoveRange(enteringIndex + 1, index - enteringIndex - 1);
+                                }
+                            }
                         }
                     }
+                    // now we need to remove any entering points that follow an existing entering point
+                    for (int i = crossingTValues.Count - 1; i >= 1; i--)
+                    {
+                        if (crossingDirections[i - 1] && crossingDirections[i])
+                            crossingTValues.RemoveAt(i);
+                    }
+                    if (crossingDirections.Count == 0) continue;
+                    if (inverseRange == crossingDirections[0])
+                    {
+                        //crossingDirections.Insert(0, !crossingDirections[0]);
+                        crossingTValues.Insert(0, ConvertXIndexToCoord(0));
+                    }
+                    for (int i = 0; i < crossingTValues.Count; i += 2)
+                    {
+                        var start = ConvertXCoordToIndex(crossingTValues[i]);
+                        // for the end - it could be that the list has an odd number of crossings, in which case the last one is the end
+                        var end = i + 1 == crossingTValues.Count ? numVoxelsX : ConvertXCoordToIndex(crossingTValues[i + 1]);
+                        var lastOne = end >= numVoxelsX;
+                        if (lastOne) end = numVoxelsX;
+
+                        if (turnOn) voxRow.TurnOnRange(start, end);
+                        else voxRow.TurnOffRange(start, end);
+                        if (lastOne) break;
+                    }
+                    //Presenter.ShowAndHang(this.ConvertToTessellatedSolidRectilinear());
+
                 }
-            } //);
+            });
         }
     }
 }

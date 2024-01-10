@@ -11,11 +11,10 @@
 // </copyright>
 // <summary></summary>
 // ***********************************************************************
-using Priority_Queue;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading;
+using TVGL.Miscellaneous_Functions;
 
 
 namespace TVGL
@@ -190,7 +189,7 @@ namespace TVGL
         internal static IEnumerable<TriangulationLoop> QuickTriangulate(TriangulationLoop edgeLoop, double weightForSmoothness)
         {
             var origNum = edgeLoop.Count;
-            var sortedOrigCornerIndices = new SimplePriorityQueue<int, double>(); // sorted by the score/obj.fun and the key is the index
+            var sortedOrigCornerIndices = new UpdatablePriorityQueue<int, double>(); // sorted by the score/obj.fun and the key is the index
             // into the candidate triangles. Note that these do need to be updated occasionally
             var candidateTriangles = new TriangulationLoop[origNum];
             var neighborNormals = new Dictionary<Edge, Vector3>(); // for each each there is one side in which we should know the face normal
@@ -217,7 +216,7 @@ namespace TVGL
             for (int i = 0; i < origNum; i++)
             {
                 var thisEAD = edgeLoop[i];
-                TriangleFace thisFace =  thisEAD.edge.OtherFace ?? thisEAD.edge.OwnedFace;
+                TriangleFace thisFace = thisEAD.edge.OtherFace ?? thisEAD.edge.OwnedFace;
                 neighborNormals.Add(thisEAD.edge, thisFace.Normal);
                 Vertex nextVertex;
                 if (thisEAD.dir)
@@ -433,7 +432,7 @@ namespace TVGL
                 firstVertex = accessEdgeAndDir.edge.To;
             }
             var bestDomainScore = upperLimit;
-            var sortedBranches = new SimplePriorityQueue<(TriangulationLoop, int), double>();
+            var sortedBranches = new PriorityQueue<(TriangulationLoop, int), double>();
             for (int i = 1; i < domain.Count - 1; i++)
             {
                 var index = i + accessEdgeIndex;
@@ -470,8 +469,9 @@ namespace TVGL
                 }
             }
             triangles = new List<TriangulationLoop>();
-            foreach (var branch in sortedBranches.Take(branchingFactorLimit))
+            for (int i = 0; i < branchingFactorLimit; i++)
             {
+                var branch = sortedBranches.Dequeue();
                 var thisTriangle = branch.Item1;
                 var index = branch.Item2;
                 var domainScore = thisTriangle.Score;

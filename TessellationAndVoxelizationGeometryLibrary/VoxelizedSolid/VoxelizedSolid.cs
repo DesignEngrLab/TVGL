@@ -223,9 +223,8 @@ namespace TVGL
                 var numXRangesOnThisLine = intersectionPoints.Length;
                 for (var m = 0; m < numXRangesOnThisLine; m += 2)
                 {
-                    var sp = (ushort)copy.ConvertXCoordToIndex(intersectionPoints[m]);
-                    var ep = (ushort)copy.ConvertXCoordToIndex(intersectionPoints[m + 1]);
-                    if (ep >= copy.numVoxelsX) ep = (ushort)(copy.numVoxelsX - 1);
+                    var sp = copy.ConvertXCoordToIndex(intersectionPoints[m]);
+                    var ep = Math.Min((ushort)(copy.numVoxelsX - 1), copy.ConvertXCoordToIndex(intersectionPoints[m + 1]));
                     ((VoxelRowSparse)copy.voxels[yStartIndex + j]).indices.Add(sp);
                     ((VoxelRowSparse)copy.voxels[yStartIndex + j]).indices.Add(ep);
                 }
@@ -265,9 +264,8 @@ namespace TVGL
                             var voxelRow = (VoxelRowSparse)voxels[j + zMultiplier * k];
                             for (var m = 0; m < numXRangesOnThisLine; m += 2)
                             {
-                                var sp = (ushort)ConvertXCoordToIndex(intersectionPoints[m]);
-                                var ep = (ushort)ConvertXCoordToIndex(intersectionPoints[m + 1]);
-                                if (ep >= numVoxelsX) ep = (ushort)(numVoxelsX - 1);
+                                var sp = ConvertXCoordToIndex(intersectionPoints[m]);
+                                var ep = Math.Min((ushort)(numVoxelsX - 1), ConvertXCoordToIndex(intersectionPoints[m + 1]));
                                 if (sp == ep) continue;
                                 var numIndices = voxelRow.indices.Count;
                                 if (numIndices > 0 && voxelRow.indices[numIndices - 1] == sp)
@@ -819,11 +817,11 @@ namespace TVGL
         /// <param name="yCoord">The y coord.</param>
         /// <param name="zCoord">The z coord.</param>
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
-        public bool this[int xCoord, int yCoord, int zCoord]
+        public bool this[ushort xCoord, ushort yCoord, ushort zCoord]
         {
             get
             {
-                if (xCoord >= numVoxelsX)
+                if (xCoord >= numVoxelsX || yCoord >= numVoxelsY || zCoord >= numVoxelsZ)
                     // this is needed because the end voxel index in sparse is sometimes
                     // set to ushort.MaxValue
                     return false;
@@ -831,6 +829,33 @@ namespace TVGL
             }
             set
             {
+                if (xCoord >= numVoxelsX || yCoord >= numVoxelsY || zCoord >= numVoxelsZ)
+                    throw new ArgumentOutOfRangeException("Voxel index out of range");
+                voxels[yCoord + zMultiplier * zCoord][xCoord] = value;
+            }
+        }
+        /// <summary>
+        /// Gets or sets the <see cref="System.Boolean" /> at the specified coordinate.
+        /// true corresponds to "on" and false to "off".
+        /// </summary>
+        /// <param name="xCoord">The x coord.</param>
+        /// <param name="yCoord">The y coord.</param>
+        /// <param name="zCoord">The z coord.</param>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
+        public bool this[int xCoord, int yCoord, int zCoord]
+        {
+            get
+            {
+                if (xCoord < 0 || yCoord < 0 || zCoord < 0
+                    || xCoord >= numVoxelsX || yCoord >= numVoxelsY || zCoord >= numVoxelsZ)
+                    return false;
+                return voxels[yCoord + zMultiplier * zCoord][xCoord];
+            }
+            set
+            {
+                if (xCoord < 0 || yCoord < 0 || zCoord < 0
+                    || xCoord >= numVoxelsX || yCoord >= numVoxelsY || zCoord >= numVoxelsZ)
+                    throw new ArgumentOutOfRangeException("Voxel index out of range");
                 voxels[yCoord + zMultiplier * zCoord][xCoord] = value;
             }
         }
@@ -842,6 +867,18 @@ namespace TVGL
         /// <param name="coordinates">The coordinates.</param>
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         public bool this[int[] coordinates]
+        {
+            get => this[coordinates[0], coordinates[1], coordinates[2]];
+            set => this[coordinates[0], coordinates[1], coordinates[2]] = value;
+        }
+
+        /// <summary>
+        /// Gets or sets the <see cref="System.Boolean" /> at the specified coordinate.
+        /// true corresponds to "on" and false to "off".
+        /// </summary>
+        /// <param name="coordinates">The coordinates.</param>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
+        public bool this[ushort[] coordinates]
         {
             get => this[coordinates[0], coordinates[1], coordinates[2]];
             set => this[coordinates[0], coordinates[1], coordinates[2]] = value;
@@ -946,9 +983,9 @@ namespace TVGL
         /// </summary>
         /// <param name="coordinates"></param>
         /// <returns></returns>
-        public int[] ConvertCoordinatesToIndices(Vector3 coordinates)
+        public ushort[] ConvertCoordinatesToIndices(Vector3 coordinates)
         {
-            return new int[]
+            return new[]
             {
                 ConvertXCoordToIndex(coordinates.X),
                 ConvertYCoordToIndex(coordinates.Y),
@@ -961,22 +998,31 @@ namespace TVGL
         /// </summary>
         /// <param name="x"></param>
         /// <returns></returns>
-        public int ConvertXCoordToIndex(double x) => (int)(inverseVoxelSideLength * (x - Offset.X));
-
+        public ushort ConvertXCoordToIndex(double x)
+        {
+            if (x < Offset.X) return 0;
+            return (ushort)(inverseVoxelSideLength * (x - Offset.X));
+        }
         /// <summary>
         /// Converts the y-coordinate to the index of the voxel that occupies the point.
         /// </summary>
         /// <param name="y"></param>
         /// <returns></returns>
-        public int ConvertYCoordToIndex(double y) => (int)(inverseVoxelSideLength * (y - Offset.Y));
-
+        public ushort ConvertYCoordToIndex(double y)
+        {
+            if (y < Offset.Y) return 0;
+            return (ushort)(inverseVoxelSideLength * (y - Offset.Y));
+        }
         /// <summary>
         /// Converts the z-coordinate to the index of the voxel that occupies the point.
         /// </summary>
         /// <param name="z"></param>
         /// <returns></returns>
-        public int ConvertZCoordToIndex(double z) => (int)(inverseVoxelSideLength * (z - Offset.Z));
-
+        public ushort ConvertZCoordToIndex(double z)
+        {
+            if (z < Offset.Z) return 0;
+            return (ushort)(inverseVoxelSideLength * (z - Offset.Z));
+        }
         /// <summary>
         /// Converts the x-index of a voxel to the x-coordinate of the lower bound of the voxel.
         /// </summary>

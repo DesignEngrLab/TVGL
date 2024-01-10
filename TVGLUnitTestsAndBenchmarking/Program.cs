@@ -23,9 +23,9 @@ namespace TVGLUnitTestsAndBenchmarking
             Trace.Listeners.Add(myWriter);
             TVGL.Message.Verbosity = VerbosityLevels.OnlyCritical;
             DirectoryInfo dir = Program.BackoutToFolder(inputFolder);
-            Voxels.TestVoxelPrimitiveBoolOps();
+            //Voxels.TestVoxelPrimitiveBoolOps();
             Voxels.TestVoxelization(dir);
-            Voxels.VoxelRowCompare();
+            //Voxels.VoxelRowCompare();
             return;
             //GJK_Testing.Test1();
             PrimitiveSurfaceTessellation.TestPresent();

@@ -11,10 +11,9 @@
 // </copyright>
 // <summary></summary>
 // ***********************************************************************
-using Priority_Queue;
-using System;
 using System.Collections.Generic;
 using System.Linq;
+using TVGL.Miscellaneous_Functions;
 
 namespace TVGL
 {
@@ -48,7 +47,7 @@ namespace TVGL
                 }
                 edgePathList.Add(edgePath);
             }
-            var vertsSortedByValence = new SimplePriorityQueue<Vertex, int>();
+            var vertsSortedByValence = new UpdatablePriorityQueue<Vertex, int>();
             foreach (var vertex in vertexToEdgeDictionary.Keys)
                 vertsSortedByValence.Enqueue(vertex, vertexToEdgeDictionary[vertex].Count);
             var verticesAtEndOfNonCyclicPaths = new HashSet<Vertex>();
@@ -146,7 +145,7 @@ namespace TVGL
                 yield return e;
             foreach (var kvp in vertexWithTwoDictionary)
                 vertexWithHighValenceDictionary.Add(kvp.Key, new List<EdgePath> { kvp.Value.Item1, kvp.Value.Item2 });
-            var vertsSortedByValence = new SimplePriorityQueue<Vertex, int>();
+            var vertsSortedByValence = new UpdatablePriorityQueue<Vertex, int>();
             foreach (var vertex in vertexWithHighValenceDictionary.Keys)
                 vertsSortedByValence.Enqueue(vertex, vertexWithHighValenceDictionary[vertex].Count);
             while (vertsSortedByValence.Count > 0)

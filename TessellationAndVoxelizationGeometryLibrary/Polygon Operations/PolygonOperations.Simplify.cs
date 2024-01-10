@@ -11,11 +11,11 @@
 // </copyright>
 // <summary></summary>
 // ***********************************************************************
-using Priority_Queue;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using TVGL.Miscellaneous_Functions;
 
 
 namespace TVGL
@@ -182,10 +182,10 @@ namespace TVGL
         public static void SimplifyMinLength(this Polygon polygon, double minAllowableLength)
         {
             polygon.MakePolygonEdgesIfNonExistent();
-            var edgeLengthQueue = new SimplePriorityQueue<PolygonEdge, double>(new ForwardSort());
+            var edgeLengthQueue = new UpdatablePriorityQueue<PolygonEdge, double>(new ForwardSort());
             foreach (var edge in polygon.Edges)
                 edgeLengthQueue.Enqueue(edge, edge.Length);
-            while (edgeLengthQueue.Any())
+            while (edgeLengthQueue.Count > 0)
             {
                 var edge = edgeLengthQueue.Dequeue();
                 if (edge.Length > minAllowableLength) break;  //check that it is below the minAllowableLength
@@ -239,7 +239,7 @@ namespace TVGL
             var numPoints = polygon.Count;
 
             #region build initial list of edge lengths
-            var edgeLengthQueue = new SimplePriorityQueue<int, double>(new ForwardSort());
+            var edgeLengthQueue = new UpdatablePriorityQueue<int, double>(new ForwardSort());
             var lengthsArray = new double[numPoints];
             // note that the lengthsArray and the queue work together. This is also done in the SimplifyByAreaChange as well.
             // the queue points to the vertex index and the length is found from the array. Had the priority queue allowed us 
@@ -255,7 +255,7 @@ namespace TVGL
             }
             #endregion
 
-            while (edgeLengthQueue.Any())
+            while (edgeLengthQueue.Count > 0)
             {
                 var index = edgeLengthQueue.Dequeue();  // take off the lowest edge
                 var length = lengthsArray[index]; //retrive the length and...
@@ -329,7 +329,7 @@ namespace TVGL
             var numPoints = allPolygons.Select(p => p.Vertices.Count).ToList();
             var numToRemove = numPoints.Sum() - targetNumberOfPoints;
             if (numToRemove <= 0) return;
-            var edgeLengthQueue = new SimplePriorityQueue<PolygonEdge, double>(new ForwardSort());
+            var edgeLengthQueue = new UpdatablePriorityQueue<PolygonEdge, double>(new ForwardSort());
             foreach (var polygon in allPolygons)
             {
                 polygon.MakePolygonEdgesIfNonExistent();
@@ -419,7 +419,7 @@ namespace TVGL
                     yield return item;
 
             #region build initial list of edge lengths
-            var edgeLengthQueue = new SimplePriorityQueue<int, double>(new ForwardSort());
+            var edgeLengthQueue = new UpdatablePriorityQueue<int, double>(new ForwardSort());
             var lengthsArray = new double[numPoints.Sum()];
             // note that the lengthsArray and the queue work together. This is also done in the SimplifyByAreaChange as well.
             // the queue points to the vertex index and the length is found from the array. Had the priority queue allowed us 
@@ -528,10 +528,8 @@ namespace TVGL
 
             // build initial list of cross products
 
-            // queue is sorted on the cross-product at the polygon corner (requiring knowledge of the previous and next points)
-            // Here we are using the SimplePriorityQueue from BlueRaja (https://github.com/BlueRaja/High-Speed-Priority-Queue-for-C-Sharp)
-            var convexCornerQueue = new SimplePriorityQueue<Vertex2D, double>(new ForwardSort());
-            var concaveCornerQueue = new SimplePriorityQueue<Vertex2D, double>(new ReverseSort());
+            var convexCornerQueue = new UpdatablePriorityQueue<Vertex2D, double>(new ForwardSort());
+            var concaveCornerQueue = new UpdatablePriorityQueue<Vertex2D, double>(new ReverseSort());
             foreach (var vertex in polygon.Vertices)
             {
                 var cross = vertex.EndLine.Vector.Cross(vertex.StartLine.Vector);
@@ -550,8 +548,7 @@ namespace TVGL
                 // first we remove any convex corners that would reduce the area
                 while (relevantSortedList.Count > 0)
                 {
-                    var vertex = relevantSortedList.First();
-                    var smallestArea = relevantSortedList.GetPriority(vertex);
+                    relevantSortedList.TryPeek(out var vertex, out var smallestArea);
                     if (deltaArea < sign * smallestArea) break;
                     relevantSortedList.Dequeue();
                     deltaArea -= sign * smallestArea;
@@ -592,10 +589,8 @@ namespace TVGL
 
             #region build initial list of cross products
 
-            // queue is sorted on the cross-product at the polygon corner (requiring knowledge of the previous and next points)
-            // Here we are using the SimplePriorityQueue from BlueRaja (https://github.com/BlueRaja/High-Speed-Priority-Queue-for-C-Sharp)
-            var convexCornerQueue = new SimplePriorityQueue<int, double>(new ForwardSort());
-            var concaveCornerQueue = new SimplePriorityQueue<int, double>(new ReverseSort());
+            var convexCornerQueue = new UpdatablePriorityQueue<int, double>(new ForwardSort());
+            var concaveCornerQueue = new UpdatablePriorityQueue<int, double>(new ReverseSort());
 
             // cross-products which are kept in the same order as the corners they represent. This is solely used with the above
             // dictionary - to essentially do the reverse lookup. given a corner-index, crossProductsArray will instanly tell us the
@@ -721,7 +716,7 @@ namespace TVGL
             if (numToRemove <= 0) return;
 
             // build initial list of cross products
-            var cornerQueue = new SimplePriorityQueue<Vertex2D, double>(new AbsoluteValueSort());
+            var cornerQueue = new UpdatablePriorityQueue<Vertex2D, double>(new AbsoluteValueSort());
             for (int j = 0; j < allPolygons.Count; j++)
                 for (int i = 0; i < numPoints[j]; i++)
                 {
@@ -770,7 +765,7 @@ namespace TVGL
 
             #region build initial list of cross products
 
-            var cornerQueue = new SimplePriorityQueue<int, double>(new AbsoluteValueSort());
+            var cornerQueue = new UpdatablePriorityQueue<int, double>(new AbsoluteValueSort());
             var crossProductsArray = new double[numPoints.Sum()];
             var index = 0;
             for (int j = 0; j < polygons.Count; j++)
@@ -1150,7 +1145,7 @@ namespace TVGL
             if (numToAdd <= 0) return;
 
             // build initial list of cross products
-            var edgeLengthPQ = new SimplePriorityQueue<PolygonEdge, double>(new ReverseSort());
+            var edgeLengthPQ = new PriorityQueue<PolygonEdge, double>(new ReverseSort());
             var index = 0;
             for (int j = 0; j < allPolygons.Count; j++)
             {
@@ -1230,7 +1225,7 @@ namespace TVGL
         /// <param name="crossProducts">The cross products.</param>
         /// <param name="index">The index.</param>
         private static void AddCrossProductToOneOfTheLists(Vector2 fromPoint, Vector2 currentPoint, Vector2 nextPoint,
-            SimplePriorityQueue<int, double> convexCornerQueue, SimplePriorityQueue<int, double> concaveCornerQueue,
+            UpdatablePriorityQueue<int, double> convexCornerQueue, UpdatablePriorityQueue<int, double> concaveCornerQueue,
             double[] crossProducts, int index)
         {
             var cross = (currentPoint - fromPoint).Cross(nextPoint - currentPoint);
@@ -1245,8 +1240,8 @@ namespace TVGL
         /// <param name="vertex">The vertex.</param>
         /// <param name="convexCornerQueue">The convex corner queue.</param>
         /// <param name="concaveCornerQueue">The concave corner queue.</param>
-        private static void UpdateCrossProductInQueues(Vertex2D vertex, SimplePriorityQueue<Vertex2D, double> convexCornerQueue,
-            SimplePriorityQueue<Vertex2D, double> concaveCornerQueue)
+        private static void UpdateCrossProductInQueues(Vertex2D vertex, UpdatablePriorityQueue<Vertex2D, double> convexCornerQueue,
+            UpdatablePriorityQueue<Vertex2D, double> concaveCornerQueue)
         {
             var newCross = vertex.EndLine.Vector.Cross(vertex.StartLine.Vector);
             var wasInConvex = convexCornerQueue.Contains(vertex);
@@ -1281,7 +1276,7 @@ namespace TVGL
         /// <param name="crossProducts">The cross products.</param>
         /// <param name="index">The index.</param>
         private static void UpdateCrossProductInQueues(Vector2 fromPoint, Vector2 currentPoint, Vector2 nextPoint,
-            SimplePriorityQueue<int, double> convexCornerQueue, SimplePriorityQueue<int, double> concaveCornerQueue,
+            UpdatablePriorityQueue<int, double> convexCornerQueue, UpdatablePriorityQueue<int, double> concaveCornerQueue,
             double[] crossProducts, int index)
         {
             var oldCross = crossProducts[index];
@@ -1317,7 +1312,7 @@ namespace TVGL
         /// <param name="crossProducts">The cross products.</param>
         /// <param name="index">The index.</param>
         private static void AddCrossProductToQueue(Vector2 fromPoint, Vector2 currentPoint,
-            Vector2 nextPoint, SimplePriorityQueue<int, double> cornerQueue,
+            Vector2 nextPoint, UpdatablePriorityQueue<int, double> cornerQueue,
             double[] crossProducts, int index)
         {
             var cross = Math.Abs((currentPoint - fromPoint).Cross(nextPoint - currentPoint));
@@ -1335,7 +1330,7 @@ namespace TVGL
         /// <param name="crossProducts">The cross products.</param>
         /// <param name="index">The index.</param>
         private static void UpdateCrossProductInQueue(Vector2 fromPoint, Vector2 currentPoint, Vector2 nextPoint,
-            SimplePriorityQueue<int, double> cornerQueue, double[] crossProducts, int index)
+            UpdatablePriorityQueue<int, double> cornerQueue, double[] crossProducts, int index)
         {
             var newCross = (currentPoint - fromPoint).Cross(nextPoint - currentPoint);
             crossProducts[index] = newCross;

@@ -240,11 +240,18 @@ namespace TVGL
         public override Vector3 GetNormalAtPoint(Vector3 point)
         {
             var pointDot = point.Dot(Axis);
-            if (pointDot <= MinDistanceAlongAxis) return -Axis;
-            if (pointDot >= MaxDistanceAlongAxis) return Axis;
             var a = (point - Anchor);
             var b = Axis.Cross(a);
-            var outwardVector = b.Cross(Axis).Normalize();
+            Vector3 outwardVector;
+            // if you're within half a percent of the min or max distance along the axis, 
+            // and you're not closer to the radius than the end-caps, then you're on the end-cap
+            if (!pointDot.IsGreaterThanNonNegligible(MinDistanceAlongAxis, 0.005 * height) &&
+                Math.Abs(pointDot - MinDistanceAlongAxis) < Math.Abs(b.Length() - Radius))
+                outwardVector = -Axis;
+            else if (!pointDot.IsLessThanNonNegligible(MaxDistanceAlongAxis, 0.005 * height) &&
+                Math.Abs(pointDot - MaxDistanceAlongAxis) < Math.Abs(b.Length() - Radius))
+                outwardVector = Axis;
+            else outwardVector = b.Cross(Axis).Normalize();
             if (isPositive.HasValue && !isPositive.Value) outwardVector *= -1;
             return outwardVector;
         }

@@ -509,7 +509,7 @@ namespace TVGL.ConvexHullDetails
             var newDxOut = vectorToNewPointX * edgeVectorY - vectorToNewPointY * edgeVectorX;
             if (newDxOut <= tolerance) return false;
             var newDxAlong = edgeVectorX * vectorToNewPointX + edgeVectorY * vectorToNewPointY;
-            int index = BinarySearch(sortedKeys, size, newDxAlong);
+            int index = sortedKeys.IncreasingDoublesBinarySearch(newDxAlong, 0, size - 1);
             if (index >= 0)
             {
                 // non-negative values occur when the same key is found. In this case, we only want to keep
@@ -566,24 +566,6 @@ namespace TVGL.ConvexHullDetails
                 }
             }
             return true;
-        }
-
-        // This binary search is modified/simplified from Array.BinarySearch
-        // (https://referencesource.microsoft.com/mscorlib/a.html#b92d187c91d4c9a9)
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static int BinarySearch(double[] array, int length, double value)
-        {
-            var lo = 0;
-            var hi = length - 1;
-            while (lo <= hi)
-            {
-                int i = lo + ((hi - lo) >> 1);
-                var c = array[i];
-                if (c == value) return i;
-                if (c < value) lo = i + 1;
-                else hi = i - 1;
-            }
-            return ~lo;
         }
     }
 }

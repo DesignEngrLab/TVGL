@@ -14,7 +14,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Priority_Queue;
+using TVGL.Miscellaneous_Functions;
 
 namespace TVGL
 {
@@ -62,7 +62,7 @@ namespace TVGL
         /// <param name="maxLength">The maximum length.</param>
         public static void Complexify(TessellatedSolid ts, int numberOfFaces, double maxLength)
         {
-            var edgeQueue = new SimplePriorityQueue<Edge, double>(new ReverseSort());
+            var edgeQueue = new PriorityQueue<Edge, double>(new ReverseSort());
             foreach (var e in ts.Edges)
                 edgeQueue.Enqueue(e, e.Length);
             var addedEdges = new List<Edge>();
