@@ -151,6 +151,18 @@ namespace TVGL
             _curvatureIsSet = true;
         }
 
+        public void SetBorderPlane()
+        {
+            var vertices = GetVectors();
+            var verticesPlusCenters = new List<Vector3>(vertices);
+            foreach (var center in GetCenters())
+                verticesPlusCenters.Add(center);
+            var plane = Plane.FitToVertices(verticesPlusCenters, Vector3.Null, out var planeResidual);
+            PlaneError = planeResidual;
+            PlaneNormal = plane.Normal;
+            PlaneDistance = plane.DistanceToOrigin;
+        }
+
         /// <summary>
         /// Gets or sets the curve.
         /// </summary>
