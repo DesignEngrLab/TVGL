@@ -524,12 +524,14 @@ namespace TVGL
         /// many border segments in the border. 
         /// </summary>
         /// <value>The borders.</value>
+        [JsonIgnore]
         public List<BorderLoop> Borders { get; set; }
 
         /// <summary>
         /// Gets or sets the border segments.
         /// </summary>
         /// <value>The border segments.</value>
+        [JsonIgnore]
         public List<BorderSegment> BorderSegments { get; set; } = new List<BorderSegment>();//initialize to an empty list
 
 
