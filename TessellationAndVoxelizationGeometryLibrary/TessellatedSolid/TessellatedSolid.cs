@@ -240,6 +240,9 @@ namespace TVGL
             writer.WritePropertyName("Index");
             writer.WriteValue(index);
 
+            writer.WritePropertyName("TessellationError");
+            writer.WriteValue(TessellationError);
+
             writer.WritePropertyName("Volume");
             writer.WriteValue(Volume);
 
@@ -324,6 +327,9 @@ namespace TVGL
                         break;
                     case "Index":
                         index = (int)reader.ReadAsInt32();
+                        break;
+                    case "TessellationError":
+                        TessellationError = (double)reader.ReadAsDouble();
                         break;
                     case "SurfaceArea":
                         _surfaceArea = (double)reader.ReadAsDouble();
@@ -1300,6 +1306,7 @@ namespace TVGL
                 FindNonsmoothEdges = false
             }, Faces.Select(p => p.Color).ToList(), Units, Name + "_Copy",
                 FileName, Comments, Language);
+            copy.TessellationError = TessellationError;
             if (Primitives != null && Primitives.Any())
             {
                 copy.NumberOfPrimitives = NumberOfPrimitives;
