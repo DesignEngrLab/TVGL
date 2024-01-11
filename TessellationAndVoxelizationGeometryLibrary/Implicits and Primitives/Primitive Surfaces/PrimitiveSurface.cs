@@ -52,9 +52,12 @@ namespace TVGL
         /// </summary>
         /// <param name="faces">The faces.</param>
         /// <param name="connectFacesToPrimitive">if set to <c>true</c> [connect faces to primitive].</param>
-        public void SetFacesAndVertices(IEnumerable<TriangleFace> faces, bool connectFacesToPrimitive = true)
+        public void SetFacesAndVertices(IEnumerable<TriangleFace> faces, bool connectFacesToPrimitive = true, 
+            bool keepvalues = false)
         {
-            ResetFaceDependentData();
+            if (!keepvalues)
+                ResetFaceDependentValues();
+            ResetFaceDependentConnectivity();
             Faces = new HashSet<TriangleFace>(faces);
             FaceIndices = Faces.Select(f => f.IndexInList).ToArray();
             if (connectFacesToPrimitive)
@@ -63,23 +66,27 @@ namespace TVGL
             SetVerticesFromFaces();
         }
 
-        private void ResetFaceDependentData()
+        private void ResetFaceDependentValues()
         {
             _area = double.NaN;
-            _adjacentSurfaces = null;
-            _innerEdges = null;
-            _outerEdges = null;
             _maxError = double.NaN;
             _meanSquaredError = double.NaN;
             isPositive = null;
-            Borders = null;
-            BorderSegments = null;
             MinX = double.NaN;
             MinY = double.NaN;
             MinZ = double.NaN;
             MaxX = double.NaN;
             MaxY = double.NaN;
             MaxZ = double.NaN;
+        }
+
+        private void ResetFaceDependentConnectivity()
+        {        
+            _adjacentSurfaces = null;
+            _innerEdges = null;
+            _outerEdges = null;        
+            Borders = null;
+            BorderSegments = null;     
         }
 
 
@@ -798,10 +805,10 @@ namespace TVGL
             return this.MemberwiseClone();
         }
 
-        public PrimitiveSurface Copy(IEnumerable<TriangleFace> faces)
+        public PrimitiveSurface Copy(IEnumerable<TriangleFace> faces, bool keepValues = false)
         {
             var copy = (PrimitiveSurface)this.Clone();
-            copy.SetFacesAndVertices(faces, true);
+            copy.SetFacesAndVertices(faces, true, keepValues);
             return copy;
         }
     }
