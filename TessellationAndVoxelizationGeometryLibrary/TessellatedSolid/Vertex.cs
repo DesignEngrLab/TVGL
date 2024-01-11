@@ -186,7 +186,7 @@ namespace TVGL
             else _curvature = CurvatureType.SaddleOrFlat;
         }
 
-        public bool IsNull() => double.IsNaN(X) || double.IsNaN(Y);
+        public bool IsNull() => double.IsNaN(X) || double.IsNaN(Y) || double.IsNaN(Z);
         #endregion Properties
     }
 }
