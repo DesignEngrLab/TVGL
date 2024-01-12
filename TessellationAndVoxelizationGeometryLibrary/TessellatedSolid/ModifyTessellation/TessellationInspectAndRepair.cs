@@ -1343,7 +1343,8 @@ namespace TVGL
             var endVertices = new List<Vertex>();
             foreach (var segment in inputBorderSegments)
             {
-                var dir = segment.OwnedPrimitive == primitive;
+                var feature = segment.OwnedPrimitive.BelongsToFeature;
+                var dir = segment.OwnedPrimitive == primitive || (feature != null && feature == primitive);
                 if (segment.IsClosed || segment.FirstVertex == segment.LastVertex)
                 {
                     var border = new BorderLoop { OwnedPrimitive = primitive };

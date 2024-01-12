@@ -25,6 +25,8 @@ namespace TVGL
     [JsonObject(MemberSerialization.OptOut)]
     public abstract class PrimitiveSurface : ICloneable
     {
+        public Feature BelongsToFeature { get; set; }
+
         #region Constructors
 
         /// <summary>
