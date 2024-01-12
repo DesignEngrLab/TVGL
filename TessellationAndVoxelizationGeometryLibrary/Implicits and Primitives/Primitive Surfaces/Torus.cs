@@ -327,6 +327,28 @@ namespace TVGL
             MaxZ = Center.Z + zFactor * MajorRadius + MinorRadius;
         }
 
+        public IEnumerable<BorderSegment> MinorRadiusSegments()
+        {
+            var minorRadiusSegments = GetSegmentsWithRadius(MinorRadius, Constants.MediumHighConfidence);
+            if (minorRadiusSegments.Count() >= 2) return minorRadiusSegments;
+
+            //Else, loosen the tolerance          
+            minorRadiusSegments = GetSegmentsWithRadius(MinorRadius, Constants.MediumConfidence);
+            if (minorRadiusSegments.Count() >= 2) return minorRadiusSegments;
+
+            //Else, loosen even 
+            minorRadiusSegments = GetSegmentsWithRadius(MinorRadius, Constants.LowConfidence);
+            return minorRadiusSegments;
+        }
+
+        private IEnumerable<BorderSegment> GetSegmentsWithRadius(double target, double confidence)
+        {
+            var tolerance = target * (1 - confidence);
+            foreach (var segment in BorderSegments)
+                if (segment.IsCircular && ((Circle)segment.Curve).Radius.IsPracticallySame(MinorRadius, tolerance))
+                    yield return segment;
+        }
+
         public override IEnumerable<(Vector3 intersection, double lineT)> LineIntersection(Vector3 anchor, Vector3 direction)
         {
             throw new NotImplementedException();
