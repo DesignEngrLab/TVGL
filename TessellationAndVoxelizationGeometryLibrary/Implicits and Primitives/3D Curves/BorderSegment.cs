@@ -85,6 +85,16 @@ namespace TVGL
             }
         }
 
+        public double Radius
+        {
+            get
+            {
+                if (!isCurveDefined) SetCurve();
+                if (IsStraight) return double.MaxValue;
+                return ((Circle)_curve).Radius;
+            }
+        }
+
         /// <summary>
         /// Gets or sets the curve error.
         /// </summary>
@@ -134,32 +144,37 @@ namespace TVGL
             }
         }
 
-        private void SetCurve()
+        public void SetCurve()
         {
             CurveError = double.MaxValue;
+            //If either primitive is a torus or sphere, the border segment is almost certainly circular.
+            //It is definately not a straight line.
+            var onlyCircles = OwnedPrimitive is Torus || OwnedPrimitive is Sphere || OtherPrimitive is Torus || OtherPrimitive is Sphere;
+            var onlyLines = OwnedPrimitive is Plane && OtherPrimitive is Plane;
+
             //Set the border segment as a straight line, a curve, or leave it null for something more complex
-            if (StraightLine3D.CreateFromPoints(GetVectors(), out var curve, out var error))
+            if (!onlyCircles && StraightLine3D.CreateFromPoints(GetVectors(), out var curve, out var error))
             {
                 if (error < Constants.DefaultTessellationError)
                 {
                     _curve = curve;
                     CurveError = error;
                 }
-            }           
-            
-            if(OwnedPrimitive is Cylinder && OtherPrimitive is Plane) { }
-            if (OtherPrimitive is Cylinder && OwnedPrimitive is Plane) { }
-            var plane = Plane.FitToVertices(GetVectors(), Vector3.Null, out var planeError);
-            //Get the circle too and compare the error to straight line.
-            if (Circle.CreateFromPoints(GetVectors().ProjectTo2DCoordinates(plane.Normal, out _), out curve, out var circleError))
-            {
-                if (circleError < Constants.DefaultTessellationError && circleError < CurveError)
-                {
-                    _curve = curve;
-                    CurveError = circleError;
-                }
+            }
 
-            }          
+            if (!onlyLines)
+            {
+                var plane = Plane.FitToVertices(GetVectors(), Vector3.Null, out var planeError);
+                //Get the circle too and compare the error to straight line.
+                if (Circle.CreateFromPoints(GetVectors().ProjectTo2DCoordinates(plane.Normal, out _), out var circle, out var circleError))
+                {
+                    if (circleError < Constants.DefaultTessellationError && circleError < CurveError)
+                    {
+                        _curve = circle;
+                        CurveError = circleError;
+                    }
+                }
+            }
             isCurveDefined = true;
         }
 
