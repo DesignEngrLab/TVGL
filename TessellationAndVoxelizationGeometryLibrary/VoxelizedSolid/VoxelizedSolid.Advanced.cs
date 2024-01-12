@@ -217,17 +217,16 @@ namespace TVGL
                     var voxRow = (VoxelRowSparse)voxels[k * zMultiplier + j];
                     var crossingTValues = new List<double>();
                     var crossingDirections = new List<bool>();
-                    //if (k>=10&&j>=6)Presenter.ShowAndHang(this.ConvertToTessellatedSolidRectilinear());
                     var enteringIndex = int.MaxValue;
                     foreach ((var surface, var _) in currentSurfaces)
                     {
                         var lineCrossings = surface.LineIntersection(new Vector3(XMin, yCoord, zCoord), Vector3.UnitX).OrderBy(q => q.lineT).ToList();
-                        if (lineCrossings.Count == 2 && lineCrossings[0].lineT.IsPracticallySame(lineCrossings[1].lineT))
+                        if (lineCrossings.Count == 0 || (lineCrossings.Count == 2 && lineCrossings[0].lineT.IsPracticallySame(lineCrossings[1].lineT)))
                             continue;
                         foreach (var q in lineCrossings)
                         {
                             var normalX = surface.GetNormalAtPoint(q.intersection).X;
-                            if (normalX.IsNegligible(Constants.DotToleranceOrthogonal)) continue;
+                            //if (normalX.IsNegligible(Constants.DotToleranceOrthogonal)) continue;
                             var entering = normalX < 0;
                             var index = crossingTValues.IncreasingDoublesBinarySearch(q.lineT);
 
@@ -273,9 +272,9 @@ namespace TVGL
                     }
                     for (int i = 0; i < crossingTValues.Count; i += 2)
                     {
-                        var start = ConvertXCoordToIndex(crossingTValues[i]);
+                        var start = ConvertXCoordToIndex(crossingTValues[i] + XMin);
                         // for the end - it could be that the list has an odd number of crossings, in which case the last one is the end
-                        var end = i + 1 == crossingTValues.Count ? numVoxelsX : ConvertXCoordToIndex(crossingTValues[i + 1]);
+                        var end = i + 1 == crossingTValues.Count ? numVoxelsX : ConvertXCoordToIndex(crossingTValues[i + 1]+XMin);
                         var lastOne = end >= numVoxelsX;
                         if (lastOne) end = numVoxelsX;
 
@@ -284,9 +283,8 @@ namespace TVGL
                         if (lastOne) break;
                     }
                     //Presenter.ShowAndHang(this.ConvertToTessellatedSolidRectilinear());
-
                 }
-            });
+            } //);
         }
     }
 }

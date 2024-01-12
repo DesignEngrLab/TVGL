@@ -460,23 +460,23 @@ namespace TVGL
         /// <summary>
         /// Inverts this row - making all on voxels off and vice-versa.
         /// </summary>
-        internal override void Invert()
+        internal override void Invert(ushort numVoxelsX)
         {
             lock (indices)
             {
                 if (!indices.Any())
                 {
                     indices.Add(0);
-                    indices.Add(ushort.MaxValue);
+                    indices.Add(numVoxelsX);
                 }
                 else
                 {
                     if (indices[0] == 0) indices.RemoveAt(0);
                     else indices.Insert(0, 0);
                     var lastIndex = indices.Count - 1;
-                    if (indices[lastIndex] == ushort.MaxValue)
+                    if (indices[lastIndex] >= numVoxelsX)
                         indices.RemoveAt(lastIndex);
-                    else indices.Add(ushort.MaxValue);
+                    else indices.Add(numVoxelsX);
                 }
             }
         }

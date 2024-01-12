@@ -48,7 +48,7 @@ namespace TVGL
         public void Invert()
         {
             UpdateToAllSparse();
-            Parallel.ForEach(voxels, vx => vx.Invert());
+            Parallel.ForEach(voxels, vx => vx.Invert(numVoxelsX));
             UpdateProperties();
         }
 

@@ -73,7 +73,7 @@ namespace TVGL
         /// <summary>
         /// Inverts this row - making all on voxels off and vice-versa.
         /// </summary>
-        internal abstract void Invert();
+        internal abstract void Invert(ushort numVoxelsX);
 
         /// <summary>
         /// Clears this row of all on voxels.
