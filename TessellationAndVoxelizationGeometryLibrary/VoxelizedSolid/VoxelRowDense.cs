@@ -344,7 +344,7 @@ namespace TVGL
         /// <summary>
         /// Inverts this row - making all on voxels off and vice-versa.
         /// </summary>
-        internal override void Invert()
+        internal override void Invert(ushort numVoxelsX)
         {
             lock (values)
                 for (int i = 0; i < numBytes; i++)
