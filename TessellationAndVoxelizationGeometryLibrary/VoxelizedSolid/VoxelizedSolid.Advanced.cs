@@ -284,7 +284,7 @@ namespace TVGL
                     }
                     //Presenter.ShowAndHang(this.ConvertToTessellatedSolidRectilinear());
                 }
-            } //);
+            } );
         }
     }
 }
