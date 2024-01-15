@@ -41,6 +41,7 @@
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Implicits and Primitives\Primitive Surfaces\Sphere.cs" Link="TVGL\Implicits and Primitives\Primitive Surfaces\Sphere.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Implicits and Primitives\Primitive Surfaces\Torus.cs" Link="TVGL\Implicits and Primitives\Primitive Surfaces\Torus.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Implicits and Primitives\Primitive Surfaces\UnknownRegion.cs" Link="TVGL\Implicits and Primitives\Primitive Surfaces\UnknownRegion.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Implicits and Primitives\Primitive Surfaces\SurfaceGroup.cs" Link="TVGL\Implicits and Primitives\Primitive Surfaces\SurfaceGroup.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Implicits and Primitives\TwoDimensional\AxisAlignedRectangle.cs" Link="TVGL\Implicits and Primitives\TwoDimensional\AxisAlignedRectangle.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Implicits and Primitives\TwoDimensional\Circle.cs" Link="TVGL\Implicits and Primitives\TwoDimensional\Circle.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Implicits and Primitives\TwoDimensional\GeneralConicSection.cs" Link="TVGL\Implicits and Primitives\TwoDimensional\GeneralConicSection.cs" />
