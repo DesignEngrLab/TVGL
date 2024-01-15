@@ -1343,7 +1343,8 @@ namespace TVGL
             var endVertices = new List<Vertex>();
             foreach (var segment in inputBorderSegments)
             {
-                var dir = segment.OwnedPrimitive == primitive;
+                var feature = segment.OwnedPrimitive.BelongsToFeature;
+                var dir = segment.OwnedPrimitive == primitive || (feature != null && feature == primitive);
                 if (segment.IsClosed || segment.FirstVertex == segment.LastVertex)
                 {
                     var border = new BorderLoop { OwnedPrimitive = primitive };
@@ -1408,14 +1409,11 @@ namespace TVGL
             }
         }
 
-
-
         private static void DefineBorderSegments(TessellatedSolid solid)
         {
             foreach (var prim in solid.Primitives)
                 prim.BorderSegments = new List<BorderSegment>();
-            var borderSegments = GatherEdgesIntoSegments(solid.NonsmoothEdges
-                .Concat(solid.Primitives.SelectMany(prim => prim.OuterEdges)));
+            var borderSegments = GatherEdgesIntoSegments(solid.Primitives.SelectMany(prim => prim.OuterEdges));
             foreach (var segment in borderSegments)
             {
                 var ownedFace = segment.DirectionList[0] ? segment.EdgeList[0].OwnedFace : segment.EdgeList[0].OtherFace;

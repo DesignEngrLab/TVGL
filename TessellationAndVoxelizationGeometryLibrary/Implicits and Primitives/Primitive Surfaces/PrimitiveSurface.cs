@@ -25,6 +25,8 @@ namespace TVGL
     [JsonObject(MemberSerialization.OptOut)]
     public abstract class PrimitiveSurface : ICloneable
     {
+        public SurfaceGroup BelongsToGroup { get; set; }
+
         #region Constructors
 
         /// <summary>
@@ -52,9 +54,12 @@ namespace TVGL
         /// </summary>
         /// <param name="faces">The faces.</param>
         /// <param name="connectFacesToPrimitive">if set to <c>true</c> [connect faces to primitive].</param>
-        public void SetFacesAndVertices(IEnumerable<TriangleFace> faces, bool connectFacesToPrimitive = true)
+        public void SetFacesAndVertices(IEnumerable<TriangleFace> faces, bool connectFacesToPrimitive = true, 
+            bool keepvalues = false)
         {
-            ResetFaceDependentData();
+            if (!keepvalues)
+                ResetFaceDependentValues();
+            ResetFaceDependentConnectivity();
             Faces = new HashSet<TriangleFace>(faces);
             FaceIndices = Faces.Select(f => f.IndexInList).ToArray();
             if (connectFacesToPrimitive)
@@ -63,12 +68,9 @@ namespace TVGL
             SetVerticesFromFaces();
         }
 
-        private void ResetFaceDependentData()
+        private void ResetFaceDependentValues()
         {
             _area = double.NaN;
-            _adjacentSurfaces = null;
-            _innerEdges = null;
-            _outerEdges = null;
             _maxError = double.NaN;
             _meanSquaredError = double.NaN;
             //isPositive = null;
@@ -80,6 +82,15 @@ namespace TVGL
             MaxX = double.NaN;
             MaxY = double.NaN;
             MaxZ = double.NaN;
+        }
+
+        private void ResetFaceDependentConnectivity()
+        {        
+            _adjacentSurfaces = null;
+            _innerEdges = null;
+            _outerEdges = null;        
+            Borders = null;
+            BorderSegments = null;     
         }
 
 
@@ -505,12 +516,15 @@ namespace TVGL
         /// <summary>
         /// Adjacents the primitives.
         /// </summary>
-        /// <returns>IEnumerable&lt;PrimitiveSurface&gt;.</returns>
-        public IEnumerable<PrimitiveSurface> AdjacentPrimitives()
+        /// <returns>ISet&lt;PrimitiveSurface&gt;.</returns>
+        public ISet<PrimitiveSurface> AdjacentPrimitives()
         {
+            //Use a set to avoid duplicates. DO NOT USE IEnumerable.
+            var set = new HashSet<PrimitiveSurface>();
             foreach (var border in Borders)
                 foreach (var prim in border.AdjacentPrimitives())
-                    yield return prim;
+                    set.Add(prim);
+            return set;
         }
 
         /// <summary>
@@ -521,12 +535,14 @@ namespace TVGL
         /// many border segments in the border. 
         /// </summary>
         /// <value>The borders.</value>
+        [JsonIgnore]
         public List<BorderLoop> Borders { get; set; }
 
         /// <summary>
         /// Gets or sets the border segments.
         /// </summary>
         /// <value>The border segments.</value>
+        [JsonIgnore]
         public List<BorderSegment> BorderSegments { get; set; } = new List<BorderSegment>();//initialize to an empty list
 
 
@@ -793,10 +809,10 @@ namespace TVGL
             return this.MemberwiseClone();
         }
 
-        public PrimitiveSurface Copy(IEnumerable<TriangleFace> faces)
+        public PrimitiveSurface Copy(IEnumerable<TriangleFace> faces, bool keepValues = false)
         {
             var copy = (PrimitiveSurface)this.Clone();
-            copy.SetFacesAndVertices(faces, true);
+            copy.SetFacesAndVertices(faces, true, keepValues);
             return copy;
         }
     }

@@ -353,7 +353,30 @@ namespace TVGL
             yield return (chordCenter + halfChordLength * direction, tCenter + halfChordLength);
         }
 
+        public static Sphere FitToVertices(double maxRadius, IEnumerable<Vector3> points, Vector3 firstNormal)
+        {
+            if (DefineSphereFromVertices(points, out var sphereCenter, out var sphereRadius)
+                && sphereRadius < maxRadius && !SphereIsTooFlat(sphereCenter, points))
+            {
+                var primitiveSurface = new Sphere(sphereCenter, sphereRadius, (points.First() - sphereCenter).Dot(firstNormal) > 0);
+                return primitiveSurface;
+            }
+            return null;
+        }
 
+        public static bool SphereIsTooFlat(Vector3 center, IEnumerable<Vector3> vertices)
+        {
+            var normals = new List<Vector3>();
+            foreach (var vertex in vertices)
+                normals.Add((vertex - center).Normalize());
+            for (int i = 0; i < normals.Count - 1; i++)
+                for (int j = i + 1; j < normals.Count; j++)
+                {
+                    if (!normals[i].IsAligned(normals[j]))
+                        return false;
+                }
+            return true;
+        }
 
         #region Constructor
 

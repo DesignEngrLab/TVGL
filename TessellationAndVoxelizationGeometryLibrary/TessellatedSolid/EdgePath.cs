@@ -147,7 +147,18 @@ namespace TVGL
                 if (DirectionList[^1] != IsClosed) return EdgeList[^1].To;
                 else return EdgeList[^1].From;
             }
+        }
 
+        /// <summary>
+        /// Reports if the given border the encircles the given axis and anchor.
+        /// </summary>
+        /// <param name="border">The border.</param>
+        /// <param name="axis">The axis.</param>
+        /// <param name="anchor">The anchor.</param>
+        /// <returns>A bool.</returns>
+        public bool EncirclesAxis(Vector3 axis, Vector3 anchor)
+        {
+            return GetVectors().BorderEncirclesAxis(axis, anchor);
         }
 
         /// <summary>
