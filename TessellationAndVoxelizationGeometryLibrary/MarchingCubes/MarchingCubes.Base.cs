@@ -21,12 +21,12 @@ namespace TVGL
     /// Class StoredValue.
     /// </summary>
     /// <typeparam name="ValueT">The type of the value t.</typeparam>
-    internal class StoredValue<ValueT>
+    public class StoredValue<ValueT>
     {
         /// <summary>
         /// The value
         /// </summary>
-        internal ValueT Value;
+        public ValueT Value;
         /// <summary>
         /// The x
         /// </summary>
@@ -54,7 +54,7 @@ namespace TVGL
     /// </summary>
     /// <typeparam name="SolidT">The type of the solid t.</typeparam>
     /// <typeparam name="ValueT">The type of the value t.</typeparam>
-    internal abstract class MarchingCubes<SolidT, ValueT>
+    public abstract class MarchingCubes<SolidT, ValueT>
         where SolidT : Solid
         // where double and ValueT are numbers or bool
     {
@@ -192,7 +192,7 @@ namespace TVGL
         /// Generates this instance.
         /// </summary>
         /// <returns>TessellatedSolid.</returns>
-        internal virtual TessellatedSolid Generate()
+        public virtual TessellatedSolid Generate()
         {
             for (var i = 0; i < numGridX - 1; i++)
                 for (var j = 0; j < numGridY - 1; j++)
