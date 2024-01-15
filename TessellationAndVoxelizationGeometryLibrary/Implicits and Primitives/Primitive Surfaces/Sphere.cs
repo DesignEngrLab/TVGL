@@ -353,17 +353,14 @@ namespace TVGL
             yield return (chordCenter + halfChordLength * direction, tCenter + halfChordLength);
         }
 
-        public static Sphere FitToVertices(double maxRadius, IEnumerable<Vector3> points,
-           Vector3 firstNormal, out double maxError)
+        public static Sphere FitToVertices(double maxRadius, IEnumerable<Vector3> points, Vector3 firstNormal)
         {
             if (DefineSphereFromVertices(points, out var sphereCenter, out var sphereRadius)
                 && sphereRadius < maxRadius && !SphereIsTooFlat(sphereCenter, points))
             {
                 var primitiveSurface = new Sphere(sphereCenter, sphereRadius, (points.First() - sphereCenter).Dot(firstNormal) > 0);
-                maxError = primitiveSurface.CalculateMaxError(points);
                 return primitiveSurface;
             }
-            maxError = double.PositiveInfinity;
             return null;
         }
 

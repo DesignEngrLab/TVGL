@@ -120,17 +120,17 @@ namespace TVGL
         /// </summary>
         /// <param name="vertices">The vertices.</param>
         /// <param name="normalGuess">The normal guess.</param>
-        public Plane(IEnumerable<Vector3> vertices, Vector3 normalGuess)
-        {
-            DefineNormalAndDistanceFromVertices(vertices, out var dto, out var normal);
-            if (normal.Dot(normalGuess) < 0)
-            {
-                normal *= -1;
-                dto *= -1;
-            }
-            DistanceToOrigin = dto;
-            Normal = normal;
-        }
+        //public Plane(IEnumerable<Vector3> vertices, Vector3 normalGuess)
+        //{
+        //    DefineNormalAndDistanceFromVertices(vertices, out var dto, out var normal);
+        //    if (normal.Dot(normalGuess) < 0)
+        //    {
+        //        normal *= -1;
+        //        dto *= -1;
+        //    }
+        //    DistanceToOrigin = dto;
+        //    Normal = normal;
+        //}
 
 
         /// <summary>
@@ -572,17 +572,23 @@ namespace TVGL
             return (intersectPoint, t);
         }
 
-        public static Plane FitToVertices(IEnumerable<Vector3> points,
-                Vector3 firstNormal, out double maxError)
+        /// <summary>
+        /// Creates a plane from fitting the given vertices. The normal is guessed from the given normalGuess.
+        /// </summary>
+        /// <param name="points"></param>
+        /// <param name="normalGuess"></param>
+        /// <returns></returns>
+        public static Plane FitToVertices(IEnumerable<Vector3> points, Vector3 normalGuess)
         {
-            DefineNormalAndDistanceFromVertices(points, out var distanceToPlane, out var planeNormal);
-            if (!firstNormal.IsNull() && firstNormal.Dot(planeNormal) < 0)
+            if (!DefineNormalAndDistanceFromVertices(points, out var distanceToPlane, out var planeNormal))
+                return null;
+            
+            if (!normalGuess.IsNull() && normalGuess.Dot(planeNormal) < 0)
             {
                 distanceToPlane = -distanceToPlane;
                 planeNormal = -planeNormal;
             }
             var primitiveSurface = new Plane(distanceToPlane, planeNormal);
-            maxError = primitiveSurface.CalculateMaxError(points);
             return primitiveSurface;
         }
     }

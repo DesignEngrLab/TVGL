@@ -5,17 +5,17 @@ using System.Linq;
 namespace TVGL
 {
     /// <summary>
-    /// A feature is a group of adjacent primitive surfaces that have border segments.
-    /// This class inherets from primitive surface to be able to use border loops.
+    /// A SurfaceGroup is a group of adjacent primitive surfaces that have border loops.
+    /// This class inherits from primitive surface to be able to use border loops.
     /// It does not make use of border segments.
     /// </summary>
-    public class Feature : PrimitiveSurface
+    public class SurfaceGroup : PrimitiveSurface
     {
         public HashSet<PrimitiveSurface> Surfaces { get; private set; }
 
         public void AddPrimitiveSurface(PrimitiveSurface surface, bool resetBorders = true)
         {
-            if (surface is Feature)
+            if (surface is SurfaceGroup)
                 throw new Exception("Use Combine");
             Surfaces.Add(surface);
             surface.BelongsToFeature = this;
@@ -23,7 +23,7 @@ namespace TVGL
                 SetBorders();
         }
 
-        public void Combine(Feature feature, bool resetBorders = true)
+        public void Combine(SurfaceGroup feature, bool resetBorders = true)
         {
             if (feature == this) return;
             foreach (var primitive in feature.Surfaces)
@@ -32,7 +32,7 @@ namespace TVGL
                 SetBorders();
         }
 
-        public Feature(IEnumerable<PrimitiveSurface> surfaces)
+        public SurfaceGroup(IEnumerable<PrimitiveSurface> surfaces)
         {
             Surfaces = (HashSet<PrimitiveSurface>)surfaces;
             foreach (var surface in Surfaces)
@@ -40,7 +40,7 @@ namespace TVGL
             SetBorders();
         }
 
-        public Feature(PrimitiveSurface surface)
+        public SurfaceGroup(PrimitiveSurface surface)
         {
             Surfaces = new HashSet<PrimitiveSurface> { surface };
             surface.BelongsToFeature = this;
@@ -65,10 +65,10 @@ namespace TVGL
             return vertices;
         }
 
-        public IEnumerable<Feature> AdjacentFeatures()
+        public IEnumerable<SurfaceGroup> AdjacentFeatures()
         {
             //use a hashset to avoid duplicating feautes in the list
-            var adjacentFeatures = new HashSet<Feature>();
+            var adjacentFeatures = new HashSet<SurfaceGroup>();
             foreach(var segment in BorderSegments)
             {
                 var adjacent = Surfaces.Contains(segment.OwnedPrimitive) ? segment.OtherPrimitive : segment.OwnedPrimitive;
