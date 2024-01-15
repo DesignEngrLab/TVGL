@@ -164,9 +164,9 @@ namespace TVGL
 
             if (!onlyLines)
             {
-                var plane = Plane.FitToVertices(GetVectors(), Vector3.Null, out var planeError);
+                var plane = Plane.FitToVertices(GetVectors(), Vector3.Null);
                 //Get the circle too and compare the error to straight line.
-                if (Circle.CreateFromPoints(GetVectors().ProjectTo2DCoordinates(plane.Normal, out _), out var circle, out var circleError))
+                if (plane != null && Circle.CreateFromPoints(GetVectors().ProjectTo2DCoordinates(plane.Normal, out _), out var circle, out var circleError))
                 {
                     if (circleError < Constants.DefaultTessellationError && circleError < CurveError)
                     {
@@ -236,7 +236,7 @@ namespace TVGL
                 _curvature = CurvatureType.Convex;
             else if (flat >= convex + concave)
                 _curvature = CurvatureType.SaddleOrFlat;
-            else 
+            else
                 _curvature = CurvatureType.Undefined;
         }
 

@@ -18,7 +18,7 @@ namespace TVGL
             if (surface is SurfaceGroup)
                 throw new Exception("Use Combine");
             Surfaces.Add(surface);
-            surface.BelongsToFeature = this;
+            surface.BelongsToGroup = this;
             if(resetBorders)
                 SetBorders();
         }
@@ -36,14 +36,14 @@ namespace TVGL
         {
             Surfaces = (HashSet<PrimitiveSurface>)surfaces;
             foreach (var surface in Surfaces)
-                surface.BelongsToFeature = this;
+                surface.BelongsToGroup = this;
             SetBorders();
         }
 
         public SurfaceGroup(PrimitiveSurface surface)
         {
             Surfaces = new HashSet<PrimitiveSurface> { surface };
-            surface.BelongsToFeature = this;
+            surface.BelongsToGroup = this;
             SetBorders();
         }
 
@@ -72,7 +72,7 @@ namespace TVGL
             foreach(var segment in BorderSegments)
             {
                 var adjacent = Surfaces.Contains(segment.OwnedPrimitive) ? segment.OtherPrimitive : segment.OwnedPrimitive;
-                adjacentFeatures.Add(adjacent.BelongsToFeature);
+                adjacentFeatures.Add(adjacent.BelongsToGroup);
             }           
             return adjacentFeatures;
         }

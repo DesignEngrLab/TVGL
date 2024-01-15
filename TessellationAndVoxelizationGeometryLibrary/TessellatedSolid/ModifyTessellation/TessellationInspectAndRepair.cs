@@ -1343,7 +1343,7 @@ namespace TVGL
             var endVertices = new List<Vertex>();
             foreach (var segment in inputBorderSegments)
             {
-                var feature = segment.OwnedPrimitive.BelongsToFeature;
+                var feature = segment.OwnedPrimitive.BelongsToGroup;
                 var dir = segment.OwnedPrimitive == primitive || (feature != null && feature == primitive);
                 if (segment.IsClosed || segment.FirstVertex == segment.LastVertex)
                 {
