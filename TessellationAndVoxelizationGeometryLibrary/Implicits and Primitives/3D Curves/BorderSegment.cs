@@ -134,15 +134,7 @@ namespace TVGL
         /// </summary>
         /// <value>The plane.</value>
         [JsonIgnore]
-        public Vector3 CircleCenter
-        {
-            get
-            {
-                if (IsCircular)
-                    return OwnedPrimitive.TransformFrom2DTo3D(((Circle)Curve).Center);
-                return Vector3.Null;
-            }
-        }
+        public Vector3 CircleCenter = Vector3.Null;
 
         public void SetCurve()
         {
@@ -166,10 +158,11 @@ namespace TVGL
             {
                 var plane = Plane.FitToVertices(GetVectors(), Vector3.Null, out _);
                 //Get the circle too and compare the error to straight line.
-                if (plane != null && Circle.CreateFromPoints(GetVectors().ProjectTo2DCoordinates(plane.Normal, out _), out var circle, out var circleError))
+                if (plane != null && Circle.CreateFromPoints(GetVectors().ProjectTo2DCoordinates(plane.Normal, out var backTransform), out var circle, out var circleError))
                 {
                     if (circleError < Constants.DefaultTessellationError && circleError < CurveError)
                     {
+                        CircleCenter = Vector3.Multiply(new Vector3(((Circle)circle).Center, 0), backTransform);
                         _curve = circle;
                         CurveError = circleError;
                     }
