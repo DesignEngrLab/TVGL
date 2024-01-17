@@ -16,7 +16,7 @@ using System;
 using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Text;
-using TVGL.ConvexHullDetails;
+
 using Newtonsoft.Json;
 
 namespace TVGL  // COMMENTEDCHANGE namespace System.Numerics

@@ -12,7 +12,7 @@
 // <summary></summary>
 // ***********************************************************************
 
-using TVGL.ConvexHullDetails;
+
 using Newtonsoft.Json;
 using System;
 using System.Globalization;

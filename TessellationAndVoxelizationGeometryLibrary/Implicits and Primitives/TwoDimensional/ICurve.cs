@@ -14,7 +14,7 @@
 using System.Collections.Generic;
 using System;
 
-using TVGL.ConvexHullDetails;
+
 
 namespace TVGL
 {

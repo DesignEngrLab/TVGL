@@ -29,27 +29,22 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
 
-namespace TVGL.ConvexHullDetails
+namespace TVGL
 {
-    internal static class ConvexHull2DAlgorithm
+    public static partial class ConvexHullAlgorithm
     {
-        /// <summary>
-        /// For 2D only: Returns the result in counter-clockwise order starting with the element with the lowest X value.
-        /// If there are multiple vertices with the same minimum X, then the one with the lowest Y is chosen.
-        /// </summary>
-        /// <typeparam name="TVertex">The type of the vertex.</typeparam>
-        /// <param name="points">The points.</param>
-        /// <param name="tolerance">The tolerance.</param>
-        /// <returns>List&lt;TVertex&gt;.</returns>
-        /// <exception cref="ArgumentException">Cannot define the 2D convex hull for less than two points.</exception>
-
-        internal static List<TVertex> Create<TVertex>(IList<TVertex> points, double tolerance)
-            where TVertex : IPoint2D, new()
+        public static bool CreateConvexHull<T>(this IList<T> points, out List<T> convexHull, bool isMinimal = true,
+            double tolerance = Constants.DefaultEqualityTolerance)
+            where T : IPoint2D
         {
             // instead of calling points.Count several times, we create this variable. 
             // by the ways points is unaffected by this method
             var numPoints = points.Count;
-            if (numPoints == 2) return points.ToList();
+            if (numPoints == 2)
+            {
+                convexHull = points.ToList();
+                return true;
+            }
             if (numPoints < 2) throw new ArgumentException("Cannot define the 2D convex hull for less than two points.");
             #region Step 1 : Define Convex Octogon
 
@@ -169,17 +164,19 @@ namespace TVGL.ConvexHullDetails
 
             // create the list that is eventually returned by the function. Initially it will have the 3 to 8 extrema
             // (as is produced in the following loop).
-            var convexHullCCW = new List<TVertex>();
+            convexHull = new List<T>();
 
             // on very rare occasions (long skinny diagonal set of points), there may only be two extrema.
             // in this case just add
             if (cvxVNum == 2)
             {
-                convexHullCCW = FindIntermediatePointsForLongSkinny(points, numPoints, indicesUsed[0], indicesUsed[1],
+                convexHull = FindIntermediatePointsForLongSkinny(points, numPoints, indicesUsed[0], indicesUsed[1],
                     out var newUsedIndices);
                 if (!newUsedIndices.Any())
-                    // looks like only two indices total! so all points are co-linear.
-                    return new List<TVertex> { points[indicesUsed[0]], points[indicesUsed[1]] };
+                {    // looks like only two indices total! so all points are co-linear.
+                    convexHull = new List<T> { points[indicesUsed[0]], points[indicesUsed[1]] };
+                    return true;
+                }
                 newUsedIndices.Add(indicesUsed[0]);
                 newUsedIndices.Add(indicesUsed[1]);
                 indicesUsed = newUsedIndices.OrderBy(x => x).ToArray();
@@ -198,7 +195,7 @@ namespace TVGL.ConvexHullDetails
                     var nextPt = points[(i == cvxVNum - 1) ? extremeIndices[0] : extremeIndices[i + 1]];
                     if ((nextPt.X - currentPt.X) * (prevPt.Y - currentPt.Y) +
                         (nextPt.Y - currentPt.Y) * (currentPt.X - prevPt.X) > tolerance)
-                        convexHullCCW.Insert(0,
+                        convexHull.Insert(0,
                             currentPt); //because we are counting backwards, we need to ensure that new points are added
                                         // to the front of the list
                     else
@@ -221,10 +218,10 @@ namespace TVGL.ConvexHullDetails
             //Initialize the point locations and vectors:
             //At minimum, the convex hull must contain two points (e.g. consider three points in a near line,
             //the third point will be added later, since it was not an extreme.)
-            var p0 = convexHullCCW[0];
+            var p0 = convexHull[0];
             var p0X = p0.X;
             var p0Y = p0.Y;
-            var p1 = convexHullCCW[1];
+            var p1 = convexHull[1];
             var p1X = p1.X;
             var p1Y = p1.Y;
             double p2X = 0,
@@ -258,42 +255,42 @@ namespace TVGL.ConvexHullDetails
             //A big if statement to make sure the convex hull wraps properly, since the number of initial cvxHull points changes
             if (cvxVNum > 2)
             {
-                var p2 = convexHullCCW[2];
+                var p2 = convexHull[2];
                 p2X = p2.X;
                 p2Y = p2.Y;
                 v1X = p2X - p1X;
                 v1Y = p2Y - p1Y;
                 if (cvxVNum > 3)
                 {
-                    var p3 = convexHullCCW[3];
+                    var p3 = convexHull[3];
                     p3X = p3.X;
                     p3Y = p3.Y;
                     v2X = p3X - p2X;
                     v2Y = p3Y - p2Y;
                     if (cvxVNum > 4)
                     {
-                        var p4 = convexHullCCW[4];
+                        var p4 = convexHull[4];
                         p4X = p4.X;
                         p4Y = p4.Y;
                         v3X = p4X - p3X;
                         v3Y = p4Y - p3Y;
                         if (cvxVNum > 5)
                         {
-                            var p5 = convexHullCCW[5];
+                            var p5 = convexHull[5];
                             p5X = p5.X;
                             p5Y = p5.Y;
                             v4X = p5X - p4X;
                             v4Y = p5Y - p4Y;
                             if (cvxVNum > 6)
                             {
-                                var p6 = convexHullCCW[6];
+                                var p6 = convexHull[6];
                                 p6X = p6.X;
                                 p6Y = p6.Y;
                                 v5X = p6X - p5X;
                                 v5Y = p6Y - p5Y;
                                 if (cvxVNum > 7)
                                 {
-                                    var p7 = convexHullCCW[7];
+                                    var p7 = convexHull[7];
                                     p7X = p7.X;
                                     p7Y = p7.Y;
                                     v6X = p7X - p6X;
@@ -348,13 +345,13 @@ namespace TVGL.ConvexHullDetails
              * above. These are to be sorted arrays and they are sorted by the distances (stored in sortedDistances) from the
              * started extrema vertex to the last. We are going to make each array really big so that we don't have to waste
              * time extending them later. The sizes array keeps the true length. */
-            var sortedPoints = new TVertex[cvxVNum][];
+            var sortedPoints = new T[cvxVNum][];
             var sortedDistances = new double[cvxVNum][];
             var sizes = new int[cvxVNum];
             for (int i = 0; i < cvxVNum; i++)
             {
                 sizes[i] = 0;
-                sortedPoints[i] = new TVertex[numPoints];
+                sortedPoints[i] = new T[numPoints];
                 sortedDistances[i] = new double[numPoints];
             }
             var indexOfUsedIndices = 0;
@@ -401,20 +398,20 @@ namespace TVGL.ConvexHullDetails
                 var size = sizes[j];
                 if (size == 1)
                     /* If there is one and only one candidate, it must be in the convex hull. Add it now. */
-                    convexHullCCW.Insert(j + 1, sortedPoints[j][0]);
+                    convexHull.Insert(j + 1, sortedPoints[j][0]);
                 else if (size > 1)
                 {
                     /* it seems a shame to have this list since it's nearly the same as the sorted array, but
                      * it is necessary for the removal of points. */
-                    var pointsAlong = new List<TVertex>();
+                    var pointsAlong = new List<T>();
                     /* put the known starting point as the beginning of the list.  */
-                    pointsAlong.Add(convexHullCCW[j]);
+                    pointsAlong.Add(convexHull[j]);
                     for (int k = 0; k < size; k++)
                         pointsAlong.Add(sortedPoints[j][k]);
                     /* put the ending point on the end of the list. Need to check if it wraps back around to 
                      * the first in the loop (hence the simple condition). */
-                    if (j == cvxVNum - 1) pointsAlong.Add(convexHullCCW[0]);
-                    else pointsAlong.Add(convexHullCCW[j + 1]);
+                    if (j == cvxVNum - 1) pointsAlong.Add(convexHull[0]);
+                    else pointsAlong.Add(convexHull[j + 1]);
 
                     /* Now starting from second from end, work backwards looks for places where the angle 
                      * between the vertices is concave (which would produce a negative value of z). */
@@ -441,13 +438,13 @@ namespace TVGL.ConvexHullDetails
                      * Here we insert them backwards (k counts down) to simplify the insert operation (k.e.
                      * since all are inserted @ i, the previous inserts are pushed up to i+1, i+2, etc. */
                     for (i = pointsAlong.Count - 2; i > 0; i--)
-                        convexHullCCW.Insert(j + 1, pointsAlong[i]);
+                        convexHull.Insert(j + 1, pointsAlong[i]);
                 }
             }
 
             #endregion
 
-            return convexHullCCW;
+            return true;
         }
 
         private static List<TVertex> FindIntermediatePointsForLongSkinny<TVertex>(IList<TVertex> points, int numPoints,
@@ -479,8 +476,7 @@ namespace TVGL.ConvexHullDetails
                 }
             }
 
-            var newCvxList = new List<TVertex>();
-            newCvxList.Add(points[usedIndex1]);
+            var newCvxList = new List<TVertex> { points[usedIndex1] };
             if (minCrossIndex != -1)
             {
                 newUsedIndices.Add(minCrossIndex);

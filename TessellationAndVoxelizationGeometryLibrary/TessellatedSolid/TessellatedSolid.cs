@@ -1473,7 +1473,7 @@ namespace TVGL
         internal void BuildConvexHull()
         {
             //Otherwise, create the convex hull and connect the vertices and faces that belong to the hull.
-            ConvexHull = new TVGLConvexHull(this);
+            ConvexHull = new ConvexHull3D(this);
             if (ConvexHull.Vertices != null)
                 foreach (var cvxHullPt in ConvexHull.Vertices)
                     cvxHullPt.PartOfConvexHull = true;

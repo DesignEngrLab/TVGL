@@ -87,26 +87,9 @@
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Numerics\Vector2.cs" Link="TVGL\Numerics\Vector2.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Numerics\Vector3.cs" Link="TVGL\Numerics\Vector3.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Numerics\Vector4.cs" Link="TVGL\Numerics\Vector4.cs" />
-		
-		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\PointCloud\ConvexHull\ConvexHull\Collections.cs" Link="TVGL\PointCloud\ConvexHull\Collections.cs" />
-		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\PointCloud\ConvexHull\ConvexHull\ConvexFace.cs" Link="TVGL\PointCloud\ConvexHull\ConvexFace.cs" />
-		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\PointCloud\ConvexHull\ConvexHull\ConvexHullAlgorithm.2D.cs" Link="TVGL\PointCloud\ConvexHull\ConvexHullAlgorithm.2D.cs" />
-		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\PointCloud\ConvexHull\ConvexHull\ConvexHullAlgorithm.Initialize.cs" Link="TVGL\PointCloud\ConvexHull\ConvexHullAlgorithm.Initialize.cs" />
-		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\PointCloud\ConvexHull\ConvexHull\ConvexHullAlgorithm.MainLoop.cs" Link="TVGL\PointCloud\ConvexHull\ConvexHullAlgorithm.MainLoop.cs" />
-		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\PointCloud\ConvexHull\ConvexHull\DataModel.cs" Link="TVGL\PointCloud\ConvexHull\DataModel.cs" />
-		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\PointCloud\ConvexHull\ConvexHull\MathHelper.cs" Link="TVGL\PointCloud\ConvexHull\MathHelper.cs" />
-		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\PointCloud\ConvexHull\ConvexHull\ObjectManager.cs" Link="TVGL\PointCloud\ConvexHull\ObjectManager.cs" />
-		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\PointCloud\ConvexHull\Triangulation\DelaunayTrianglationInternal.cs" Link="TVGL\PointCloud\ConvexHull\Triangulation\DelaunayTrianglationInternal.cs" />
-		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\PointCloud\ConvexHull\Triangulation\DelaunayTriangulation.cs" Link="TVGL\PointCloud\ConvexHull\Triangulation\DelaunayTriangulation.cs" />
-		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\PointCloud\ConvexHull\Triangulation\TriangulationCell.cs" Link="TVGL\PointCloud\ConvexHull\Triangulation\TriangulationCell.cs" />
-		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\PointCloud\ConvexHull\Triangulation\VoronoiEdge.cs" Link="TVGL\PointCloud\ConvexHull\Triangulation\VoronoiEdge.cs" />
-		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\PointCloud\ConvexHull\Triangulation\VoronoiMesh.cs" Link="TVGL\PointCloud\ConvexHull\Triangulation\VoronoiMesh.cs" />
+	
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\PointCloud\IterativeClosestPoint.cs" Link="TVGL\PointCloud\IterativeClosestPoint.cs" />
-		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\PointCloud\ConvexHull\ConvexHull.cs" Link="TVGL\PointCloud\ConvexHull\ConvexHull.cs" />
-		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\PointCloud\ConvexHull\ConvexHullCreationResultOutcome.cs" Link="TVGL\PointCloud\ConvexHull\ConvexHullCreationResultOutcome.cs" />
-		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\PointCloud\ConvexHull\ConvexHullGenerationException.cs" Link="TVGL\PointCloud\ConvexHull\ConvexHullGenerationException.cs" />
-		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\PointCloud\ConvexHull\IPoint.cs" Link="TVGL\PointCloud\ConvexHull\IPoint.cs" />
-		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\PointCloud\ConvexHull\Triangulation.cs" Link="TVGL\PointCloud\ConvexHull\Triangulation.cs" />
+			<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\PointCloud\ConvexHull\IPoint.cs" Link="TVGL\PointCloud\ConvexHull\IPoint.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\PointCloud\NearestNeighbor\KDTreeGenericWithAccompanying.cs" Link="TVGL\PointCloud\NearestNeighbor\KDTreeGenericWithAccompanying.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\PointCloud\NearestNeighbor\BoundedPriorityList.cs" Link="TVGL\PointCloud\NearestNeighbor\BoundedPriorityList.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\PointCloud\NearestNeighbor\HyperRect.cs" Link="TVGL\PointCloud\NearestNeighbor\HyperRect.cs" />

@@ -202,7 +202,7 @@ namespace TVGL
         /// </summary>
         /// <value>The convex hull.</value>
         [JsonIgnore]
-        public TVGLConvexHull ConvexHull { get; set; }
+        public ConvexHull3D ConvexHull { get; set; }
 
         /// <summary>
         /// The has uniform color
