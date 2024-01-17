@@ -578,8 +578,9 @@ namespace TVGL
         /// <param name="points"></param>
         /// <param name="normalGuess"></param>
         /// <returns></returns>
-        public static Plane FitToVertices(IEnumerable<Vector3> points, Vector3 normalGuess)
+        public static Plane FitToVertices(IEnumerable<Vector3> points, Vector3 normalGuess, out double maxError)
         {
+            maxError = double.MaxValue;
             if (!DefineNormalAndDistanceFromVertices(points, out var distanceToPlane, out var planeNormal))
                 return null;
             
@@ -589,6 +590,7 @@ namespace TVGL
                 planeNormal = -planeNormal;
             }
             var primitiveSurface = new Plane(distanceToPlane, planeNormal);
+            maxError = primitiveSurface.CalculateMaxError(points);
             return primitiveSurface;
         }
     }

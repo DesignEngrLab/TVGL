@@ -164,7 +164,7 @@ namespace TVGL
 
             if (!onlyLines)
             {
-                var plane = Plane.FitToVertices(GetVectors(), Vector3.Null);
+                var plane = Plane.FitToVertices(GetVectors(), Vector3.Null, out _);
                 //Get the circle too and compare the error to straight line.
                 if (plane != null && Circle.CreateFromPoints(GetVectors().ProjectTo2DCoordinates(plane.Normal, out _), out var circle, out var circleError))
                 {

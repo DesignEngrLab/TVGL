@@ -157,15 +157,15 @@ namespace TVGL
             var verticesPlusCenters = new List<Vector3>(vertices);
             foreach (var center in GetCenters())
                 verticesPlusCenters.Add(center);
-            var plane = Plane.FitToVertices(verticesPlusCenters, Vector3.Null);
-            if (plane==null)
+            var plane = Plane.FitToVertices(verticesPlusCenters, Vector3.Null, out var planeMaxError);
+            if (plane == null)
             {
-                PlaneError = double.PositiveInfinity;
+                PlaneError = planeMaxError;
                 PlaneNormal = Vector3.Null;
                 PlaneDistance = double.NaN;
                 return;
             }
-            PlaneError = plane.MaxError;
+            PlaneError = planeMaxError;
             PlaneNormal = plane.Normal;
             PlaneDistance = plane.DistanceToOrigin;
         }
