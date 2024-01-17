@@ -1459,12 +1459,8 @@ namespace TVGL
             }
             // at this point, each edge should be in 2 dictionaries
             var edgeToSegments = new Dictionary<Edge, BorderSegment>();
-            foreach (var entry in connectingVertices)
+            foreach (var (vertex, (edge1, edge2)) in connectingVertices)
             {
-                var vertex = entry.Key;
-                var edgePair = entry.Value;
-                var edge1 = edgePair.Item1;
-                var edge2 = edgePair.Item2;
                 var edge1Found = edgeToSegments.TryGetValue(edge1, out var segment1);
                 var edge2Found = edgeToSegments.TryGetValue(edge2, out var segment2);
                 if (edge1Found && edge2Found)
