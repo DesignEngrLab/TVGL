@@ -14,11 +14,10 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net;
 
 namespace TVGL
 {
-    public static partial class ConvexHullAlgorithm
+    public partial class ConvexHull3D : Solid
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="ConvexHull3D" /> class.
@@ -28,17 +27,16 @@ namespace TVGL
         /// <param name="tolerance">The tolerance.</param>
         /// <param name="createFaces">if set to <c>true</c> [create faces].</param>
         /// <param name="createEdges">if set to <c>true</c> [create edges].</param>
-        public static bool Create(this IList<Vector3> points, out ConvexHull3D convexHull,
+        public static bool Create(IList<Vector3> points, out ConvexHull3D convexHull,
             out List<int> vertexIndices, double tolerance = double.NaN)
         {
             bool success = false;
-            ConvexHull3D convexHullPoints;
             var n = points.Count;
             var vertices = new Vertex[n];
             for (int i = 0; i < n; i++)
                 vertices[i] = new Vertex(points[i], i);
 
-            success = Create(vertices, out convexHull, tolerance);
+            success = Create(vertices, out convexHull, true, tolerance);
             if (success)
             {
                 vertexIndices = vertices.Select(v => v.IndexInList).ToList();
@@ -55,15 +53,17 @@ namespace TVGL
         /// Initializes a new instance of the <see cref="ConvexHull3D" /> class.
         /// </summary>
         /// <param name="ts">The tessellated solid that the convex hull is made from.</param>
-        public static bool Create(this TessellatedSolid ts, out ConvexHull3D convexHull)
-            => Create(ts.Vertices, out convexHull, ts.SameTolerance);
+        public static bool Create(TessellatedSolid ts, out ConvexHull3D convexHull)
+            => Create(ts.Vertices, out convexHull, false, ts.SameTolerance);
 
-        public static bool Create(this IList<Vertex> vertices, out ConvexHull3D convexHull, double tolerance = double.NaN)
+        public static bool Create(IList<Vertex> vertices, out ConvexHull3D convexHull,
+            bool connectVerticesToCvxHullFaces, double tolerance = double.NaN)
         {
             var n = vertices.Count;
+            if (double.IsNaN(tolerance)) tolerance = Constants.BaseTolerance;
             if (SolveAs2D(vertices, out convexHull, tolerance)) return true;
 
-            /* The first step is to quickly identify the three to eight vertices based on the
+            /* The first step is to quickly identify the two to six vertices based on the
              * Akl-Toussaint heuristic. */
             var extremePoints = GetExtremaOnAABB(n, vertices, out var numExtrema);
             List<ConvexHullFace> simplexFaces;
@@ -71,6 +71,7 @@ namespace TVGL
             if (numExtrema == 1)
             {
                 convexHull = new ConvexHull3D { tolerance = tolerance };
+                //if (isMaximal) convexHull.Vertices.AddRange(vertices);
                 convexHull.Vertices.Add(extremePoints[0]);
                 return true;
             }
@@ -112,7 +113,7 @@ namespace TVGL
             foreach (var v in vertices)
             {
                 if (simplexVertices.Contains(v)) continue;
-                AddVertexToProperFace(simplexFaces, v);
+                AddVertexToProperFace(simplexFaces, v, tolerance);
             }
             var faceQueue = new Queue<ConvexHullFace>(simplexFaces);
             var cvxFaces = new List<ConvexHullFace>();
@@ -126,17 +127,39 @@ namespace TVGL
                     var newFaces = new[] {new ConvexHullFace(face.A, face.B, face.peakVertex),
                      new ConvexHullFace(face.B, face.C, face.peakVertex), new ConvexHullFace(face.C, face.A, face.peakVertex)};
                     foreach (var iv in face.InteriorVertices)
-                        AddVertexToProperFace(newFaces, iv);
+                        AddVertexToProperFace(newFaces, iv, tolerance);
                     foreach (var newFace in newFaces)
                         faceQueue.Enqueue(newFace);
                 }
             }
+            convexHull = MakeConvexHullWithFaces(tolerance, connectVerticesToCvxHullFaces, cvxFaces);
             return true;
         }
 
-        private static void AddVertexToProperFace(IList<ConvexHullFace> simplexFaces, Vertex v)
+        private static ConvexHull3D MakeConvexHullWithFaces(double tolerance,
+            bool connectVerticesToCvxHullFaces, List<ConvexHullFace> cvxFaces)
         {
-            var maxDot = 0.0;
+            var cvxHull = new ConvexHull3D { tolerance = tolerance };
+            cvxHull.Faces.AddRange(cvxFaces);
+            var cvxVertexHash = new HashSet<Vertex>();
+            foreach (var f in cvxFaces)
+            {
+                foreach (var v in f.Vertices)
+                {
+                    v.PartOfConvexHull = true;
+                    cvxVertexHash.Add(v);
+                    if (connectVerticesToCvxHullFaces)
+                        v.Faces.Add(f);
+                }
+                foreach (var v in f.InteriorVertices)
+                    v.PartOfConvexHull = true;
+            }
+            return cvxHull;
+        }
+
+        private static void AddVertexToProperFace(IList<ConvexHullFace> simplexFaces, Vertex v, double tolerance)
+        {
+            var maxDot = double.NegativeInfinity;
             ConvexHullFace maxFace = null;
             foreach (var face in simplexFaces)
             {
@@ -147,15 +170,16 @@ namespace TVGL
                     maxFace = face;
                 }
             }
-            if (maxFace != null)
+            if (maxDot >= -tolerance)
             {
-                if (maxFace.peakVertex == null || maxDot > maxFace.peakDistance)
+                if ((maxFace.peakVertex == null && maxDot >= tolerance) || maxDot > maxFace.peakDistance)
                 {
                     if (maxFace.peakVertex != null)
                         maxFace.InteriorVertices.Add(maxFace.peakVertex);
                     maxFace.peakVertex = v;
                     maxFace.peakDistance = maxDot;
                 }
+                else maxFace.InteriorVertices.Add(v);
             }
         }
 
@@ -194,18 +218,15 @@ namespace TVGL
                 }
                 else interiorVertices.Add(vertices[i]);
             }
-            if (convexHull.IsMaximal)
+            foreach (var v in interiorVertices)
             {
-                foreach (var v in interiorVertices)
+                for (var i = 0; i < convexHull.Faces.Count; i += 2)
                 {
-                    for (var i = 0; i < convexHull.Faces.Count; i += 2)
+                    var face = convexHull.Faces[i];
+                    if (MiscFunctions.IsVertexInsideTriangle(face, v.Coordinates))
                     {
-                        var face = convexHull.Faces[i];
-                        if (MiscFunctions.IsVertexInsideTriangle(face, v.Coordinates))
-                        {
-                            face.InteriorVertices.Add(v);
-                            convexHull.Faces[i + 1].InteriorVertices.Add(v);
-                        }
+                        face.InteriorVertices.Add(v);
+                        convexHull.Faces[i + 1].InteriorVertices.Add(v);
                     }
                 }
             }

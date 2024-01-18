@@ -75,8 +75,8 @@ namespace TVGL
             var vertices = new List<Vertex>();
             foreach (var solid in solids)
                 vertices.AddRange(solid.ConvexHull.Vertices.Any() ? solid.ConvexHull.Vertices : solid.Vertices);
-            var convexHull = ConvexHull3D.Create(vertices, solids.First().SameTolerance);
-            return OrientedBoundingBox(convexHull.Vertices);
+            
+            return OrientedBoundingBox(vertices);
         }
 
         /// <summary>

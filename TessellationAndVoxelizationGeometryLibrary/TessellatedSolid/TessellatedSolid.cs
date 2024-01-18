@@ -1473,15 +1473,18 @@ namespace TVGL
         internal void BuildConvexHull()
         {
             //Otherwise, create the convex hull and connect the vertices and faces that belong to the hull.
-            ConvexHull = ConvexHull3D.Create(this);
-            if (ConvexHull.Vertices != null)
-                foreach (var cvxHullPt in ConvexHull.Vertices)
-                    cvxHullPt.PartOfConvexHull = true;
-            foreach (var face in Faces.Where(face => face.Vertices.All(v => v.PartOfConvexHull)))
+            if (ConvexHull3D.Create(this, out var convexHull))
             {
-                face.PartOfConvexHull = true;
-                foreach (var e in face.Edges)
-                    if (e != null) e.PartOfConvexHull = true;
+                ConvexHull = convexHull; // yes, this looks stupid but for some reason it's necessary - can't pass properties as out parameters
+                if (ConvexHull.Vertices != null)
+                    foreach (var cvxHullPt in ConvexHull.Vertices)
+                        cvxHullPt.PartOfConvexHull = true;
+                foreach (var face in Faces.Where(face => face.Vertices.All(v => v.PartOfConvexHull)))
+                {
+                    face.PartOfConvexHull = true;
+                    foreach (var e in face.Edges)
+                        if (e != null) e.PartOfConvexHull = true;
+                }
             }
         }
 

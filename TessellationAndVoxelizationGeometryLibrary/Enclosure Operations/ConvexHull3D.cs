@@ -19,9 +19,8 @@ namespace TVGL
     /// <summary>
     /// The Convex Hull of a Tesselated Solid
     /// </summary>
-    public class ConvexHull3D : Solid
+    public partial class ConvexHull3D : Solid
     {
-        public bool IsMaximal=>double.IsNaN(tolerance);
         /// <summary>
         /// The volume of the Convex Hull.
         /// </summary>
@@ -155,26 +154,14 @@ namespace TVGL
         {
             throw new System.NotImplementedException();
         }
-
-        internal static ConvexHull3D Create(TessellatedSolid tessellatedSolid)
-        {
-            ConvexHullAlgorithm.Create(tessellatedSolid, out var convexHull);
-            return convexHull;
-        }
-
-        internal static ConvexHull3D Create(List<Vertex> vertices, double sameTolerance)
-        {
-            ConvexHullAlgorithm.Create(vertices, out var convexHull, sameTolerance);
-            return convexHull;
-        }
     }
     public class ConvexHullFace : TriangleFace
     {
-        public ConvexHullFace(Vertex vertex1, Vertex vertex2, Vertex vertex3, Vector3 planeNormal) : this(vertex1, vertex2, vertex3)
+        internal ConvexHullFace(Vertex vertex1, Vertex vertex2, Vertex vertex3, Vector3 planeNormal) : this(vertex1, vertex2, vertex3)
         {
             _normal = planeNormal;
         }
-        public ConvexHullFace(Vertex vertex1, Vertex vertex2, Vertex vertex3) : base(vertex1, vertex2, vertex3,false)
+        internal ConvexHullFace(Vertex vertex1, Vertex vertex2, Vertex vertex3) : base(vertex1, vertex2, vertex3,false)
         {
             peakVertex = null;
             InteriorVertices = new List<Vertex>();
