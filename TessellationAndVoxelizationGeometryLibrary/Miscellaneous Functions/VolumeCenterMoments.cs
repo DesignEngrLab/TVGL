@@ -11,18 +11,11 @@
 // </copyright>
 // <summary></summary>
 // ***********************************************************************
-using StarMathLib;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Net.WebSockets;
-using System.Runtime.CompilerServices;
 
 namespace TVGL
 {
-    /// <summary>
-    /// Miscellaneous Functions for TVGL
-    /// </summary>
     public static partial class MiscFunctions
     {
 

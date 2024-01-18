@@ -31,14 +31,14 @@ namespace TVGL
     /// <summary>
     /// An interface for a structure with nD position.
     /// </summary>
-    public interface IPoint
+    public interface IVector
     {
         double this[int i] { get; }
         bool IsNull();
-        static IPoint Null { get; }
+        static IVector Null { get; }
     }
 
-    public interface IPoint2D : IPoint
+    public interface IVector2D : IVector
     {
         /// <summary>
         /// Gets the x.
@@ -52,7 +52,7 @@ namespace TVGL
         /// <value>The y.</value>
         double Y { get; init; }
     }
-    public interface IPoint3D : IPoint2D
+    public interface IVector3D : IVector2D
     {
         /// <summary>
         /// Gets the z.
@@ -66,7 +66,7 @@ namespace TVGL
     /// "Default" vertex.
     /// </summary>
     /// <seealso cref="MIConvexHull.IPoint" />
-    public class DefaultPoint : IPoint
+    public class DefaultPoint : IVector
     {
         public double this[int i]
         {

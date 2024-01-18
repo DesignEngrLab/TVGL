@@ -46,15 +46,15 @@ namespace TVGL.PointCloud
         /// </summary>
         /// <param name="points">The points.</param>
         /// <returns>A KDTree.</returns>
-        public static KDTree<IPoint> Create(IEnumerable<IPoint> points)
-        { return new KDTree<IPoint>(3, points as IList<IPoint> ?? points.ToList()); }
+        public static KDTree<IVector> Create(IEnumerable<IVector> points)
+        { return new KDTree<IVector>(3, points as IList<IVector> ?? points.ToList()); }
 
         /// <summary>
         /// Creates the KDTree for the list of points.
         /// </summary>
         /// <param name="points">The points.</param>
         /// <returns>A KDTree.</returns>
-        public static KDTree<TPoint> Create<TPoint>(IEnumerable<TPoint> points) where TPoint : IPoint
+        public static KDTree<TPoint> Create<TPoint>(IEnumerable<TPoint> points) where TPoint : IVector
         { return new KDTree<TPoint>(3, points as IList<TPoint> ?? points.ToList()); }
 
         /// <summary>
@@ -94,15 +94,15 @@ namespace TVGL.PointCloud
         /// </summary>
         /// <param name="points">The points.</param>
         /// <returns>A KDTree.</returns>
-        public static KDTree<IPoint, TAccObject> Create<TAccObject>(IEnumerable<IPoint> points, IList<TAccObject> accObjects)
-        { return new KDTree<IPoint, TAccObject>(3, points as IList<IPoint> ?? points.ToList(), accObjects); }
+        public static KDTree<IVector, TAccObject> Create<TAccObject>(IEnumerable<IVector> points, IList<TAccObject> accObjects)
+        { return new KDTree<IVector, TAccObject>(3, points as IList<IVector> ?? points.ToList(), accObjects); }
 
         /// <summary>
         /// Creates the KDTree for the list of points.
         /// </summary>
         /// <param name="points">The points.</param>
         /// <returns>A KDTree.</returns>
-        public static KDTree<TPoint, TAccObject> Create<TPoint, TAccObject>(IEnumerable<TPoint> points, IList<TAccObject> accObjects) where TPoint : IPoint
+        public static KDTree<TPoint, TAccObject> Create<TPoint, TAccObject>(IEnumerable<TPoint> points, IList<TAccObject> accObjects) where TPoint : IVector
         { return new KDTree<TPoint, TAccObject>(3, points as IList<TPoint> ?? points.ToList(), accObjects); }
         #endregion
 
@@ -144,15 +144,15 @@ namespace TVGL.PointCloud
         /// </summary>
         /// <param name="points">The points.</param>
         /// <returns>A KDTree.</returns>
-        public static KDTree<IPoint> CreateSpherical(IEnumerable<IPoint> points)
-        { return new KDTree<IPoint>(3, points as IList<IPoint> ?? points.ToList(), KDTree<IPoint>.SphericalDistance); }
+        public static KDTree<IVector> CreateSpherical(IEnumerable<IVector> points)
+        { return new KDTree<IVector>(3, points as IList<IVector> ?? points.ToList(), KDTree<IVector>.SphericalDistance); }
 
         /// <summary>
         /// CreateSphericals the KDTree for the list of points.
         /// </summary>
         /// <param name="points">The points.</param>
         /// <returns>A KDTree.</returns>
-        public static KDTree<TPoint> CreateSpherical<TPoint>(IEnumerable<TPoint> points) where TPoint : IPoint
+        public static KDTree<TPoint> CreateSpherical<TPoint>(IEnumerable<TPoint> points) where TPoint : IVector
         { return new KDTree<TPoint>(3, points as IList<TPoint> ?? points.ToList(), KDTree<TPoint>.SphericalDistance); }
 
         /// <summary>
@@ -198,19 +198,19 @@ namespace TVGL.PointCloud
         /// </summary>
         /// <param name="points">The points.</param>
         /// <returns>A KDTree.</returns>
-        public static KDTree<IPoint, TAccObject> CreateSpherical<TAccObject>(IEnumerable<IPoint> points, IList<TAccObject> accObjects)
-        { return new KDTree<IPoint, TAccObject>(3, points as IList<IPoint> ?? points.ToList(), accObjects, KDTree<IPoint, TAccObject>.SphericalDistance); }
+        public static KDTree<IVector, TAccObject> CreateSpherical<TAccObject>(IEnumerable<IVector> points, IList<TAccObject> accObjects)
+        { return new KDTree<IVector, TAccObject>(3, points as IList<IVector> ?? points.ToList(), accObjects, KDTree<IVector, TAccObject>.SphericalDistance); }
 
         /// <summary>
         /// CreateSphericals the KDTree for the list of points.
         /// </summary>
         /// <param name="points">The points.</param>
         /// <returns>A KDTree.</returns>
-        public static KDTree<TPoint, TAccObject> CreateSpherical<TPoint, TAccObject>(IEnumerable<TPoint> points, IList<TAccObject> accObjects) where TPoint : IPoint
+        public static KDTree<TPoint, TAccObject> CreateSpherical<TPoint, TAccObject>(IEnumerable<TPoint> points, IList<TAccObject> accObjects) where TPoint : IVector
         { return new KDTree<TPoint, TAccObject>(3, points as IList<TPoint> ?? points.ToList(), accObjects, KDTree<TPoint, TAccObject>.SphericalDistance); }
         #endregion
     }
-    public class KDTree<TPoint> where TPoint : IPoint
+    public class KDTree<TPoint> where TPoint : IVector
     {
         /// <summary>
         /// The number of points in the KDTree

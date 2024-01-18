@@ -6,7 +6,7 @@ namespace TVGL.PointCloud
     using System.Linq;
 
     public class KDTree<TPoint, TAccObject> : KDTree<TPoint>
-        where TPoint : IPoint
+        where TPoint : IVector
     {
         /// <summary>
         /// An array of accompanying objects that match one-to-one with the points.

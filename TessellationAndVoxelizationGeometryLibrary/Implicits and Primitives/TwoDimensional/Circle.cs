@@ -73,7 +73,7 @@ namespace TVGL
         /// <typeparam name="T"></typeparam>
         /// <param name="point">The point.</param>
         /// <returns>System.Double.</returns>
-        public double SquaredErrorOfNewPoint<T>(T point) where T : IPoint
+        public double SquaredErrorOfNewPoint<T>(T point) where T : IVector
         {
             var diff = new Vector2(point[0] - Center[0], point[1] - Center[1]);
             var error = Math.Sqrt(diff.Dot(diff)) - Radius;
@@ -88,7 +88,7 @@ namespace TVGL
         /// <param name="curve">The curve.</param>
         /// <param name="error">The error.</param>
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
-        public static bool CreateFromPoints<T>(IEnumerable<T> points, out ICurve curve, out double error) where T : IPoint2D
+        public static bool CreateFromPoints<T>(IEnumerable<T> points, out ICurve curve, out double error) where T : IVector2D
         {
             // Updates the circle using Landau's method ( https://doi.org/10.1016/0734-189X(89)90088-1 ), which
             // seems like it would be same as the Minimum Least Squares approach, but this is a million times
@@ -185,14 +185,14 @@ namespace TVGL
             return true;
         }
         public static Circle CreateFrom2Points<T>(T p1, T p2)
-            where T : IPoint2D
+            where T : IVector2D
         {
             return new Circle(new Vector2(0.5 * (p1.X + p2.X), 0.5 * (p1.Y + p2.Y)),
             0.25 * ((p2.X - p1.X) * (p2.X - p1.X) + (p2.Y - p1.Y) * (p2.Y - p1.Y)));
         }
 
         public static bool CreateFrom3Points<T>(T p1, T p2, T p3, out Circle curve)
-            where T : IPoint2D
+            where T : IVector2D
         {
             double a = p2.X - p1.X;
             double b = p2.Y - p1.Y;

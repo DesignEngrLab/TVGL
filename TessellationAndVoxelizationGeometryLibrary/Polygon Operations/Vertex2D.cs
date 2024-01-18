@@ -18,7 +18,7 @@ namespace TVGL
     /// Vertex2D class used in Triangulate Polygon
     /// Inherits position from point class
     /// </summary>
-    public class Vertex2D : IPoint2D
+    public class Vertex2D : IVector2D
     {
         #region Properties
 

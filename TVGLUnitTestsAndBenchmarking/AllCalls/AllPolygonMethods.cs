@@ -17,7 +17,7 @@ namespace TVGLUnitTestsAndBenchmarking
             poly1.AddInnerPolygon(new Polygon(TestCases.MakeCircularPolygon(3, 3)));
             poly1.BoundingRectangle();
             poly1.ConvertTo3DLocations(Vector3.UnitX, 1.0);
-            poly1.Get2DConvexHull();
+            poly1.CreateConvexHull(out _);
             poly1.ConvertTo3DLocations(Vector3.UnitX, 1.0);
             var tessFaces = poly1.ExtrusionFacesFrom2DPolygons(Vector3.UnitX, 1.0, 4.3);
             poly1.GetPolygonInteraction(poly2);
@@ -42,7 +42,8 @@ namespace TVGLUnitTestsAndBenchmarking
             a.Area();
             a.BoundingRectangle();
             a.ConvertTo3DLocations(Vector3.UnitX, 1.0);
-            a.Get2DConvexHull();
+            a.CreateConvexHull(out _);
+            a.CreateConvexHullMaximal(out _);
             var b = TestCases.MakeCircularPolygon(5, 5);
             //a.Difference(b);
             var length = a.GetLengthAndExtremePoints(new Vector2(1, 1), out List<Vector2> bottomPoints,

@@ -36,7 +36,7 @@ namespace TVGL
     {
         public static List<T> CreateConvexHullMaximal<T>(this IList<T> points, out List<int> convexHullIndices,
             double tolerance = Constants.DefaultEqualityTolerance)
-            where T : IPoint2D, new()
+            where T : IVector2D, new()
         {
             var kdTree = KDTree.Create(points, Enumerable.Range(0, points.Count).ToArray());
             var convexHull = points.CreateConvexHull(out convexHullIndices);
@@ -72,8 +72,10 @@ namespace TVGL
             }
             return convexHull;
         }
+        public static List<Vertex2D> CreateConvexHull(this Polygon polygon, out List<int> convexHullIndices)
+            => CreateConvexHull(polygon.Vertices, out convexHullIndices);
         public static List<T> CreateConvexHull<T>(this IList<T> points, out List<int> convexHullIndices)
-            where T : IPoint2D
+        where T : IVector2D
         {
             // instead of calling points.Count several times, we create this variable. 
             // by the ways points is unaffected by this method
@@ -299,7 +301,7 @@ namespace TVGL
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static bool AddToListAlong<T>((T point, double distance, int index)[] sortedPoints, ref int size,
                 T newPoint, int newPtIndex, double basePointX, double basePointY,
-                double edgeVectorX, double edgeVectorY, double edgeVectorLengthSqd) where T : IPoint2D
+                double edgeVectorX, double edgeVectorY, double edgeVectorLengthSqd) where T : IVector2D
         {
             var vectorToNewPointX = newPoint.X - basePointX;
             var vectorToNewPointY = newPoint.Y - basePointY;
@@ -352,7 +354,7 @@ namespace TVGL
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static bool AddToListAlongMaximal<T>(IList<(T point, double distance, int index)> sortedPoints,
                 T newPoint, int newPtIndex, double basePointX, double basePointY,
-                double edgeVectorX, double edgeVectorY, double edgeVectorLengthSqd, double tolerance) where T : IPoint2D
+                double edgeVectorX, double edgeVectorY, double edgeVectorLengthSqd, double tolerance) where T : IVector2D
         {
             var vectorToNewPointX = newPoint.X - basePointX;
             var vectorToNewPointY = newPoint.Y - basePointY;
@@ -368,7 +370,7 @@ namespace TVGL
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static int IncreasingDxAlongBinarySearch<T>(this IList<(T point, double distance, int index)> array,
-            double queryValue, int inclusiveLowIndex, int inclusiveHighIndex) where T : IPoint2D
+            double queryValue, int inclusiveLowIndex, int inclusiveHighIndex) where T : IVector2D
         {
             while (inclusiveLowIndex <= inclusiveHighIndex)
             {

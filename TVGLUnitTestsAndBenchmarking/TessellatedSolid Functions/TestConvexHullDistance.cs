@@ -20,13 +20,13 @@ namespace TVGLUnitTestsAndBenchmarking
 
             var sphere1 = new Sphere(new Vector3(0, 0, 0), 6, true);
             sphere1.Tessellate();
-            var cvxHull1 = ConvexHull.Create(sphere1.Vertices.ToList());
+            ConvexHull3D.Create(sphere1.Vertices.ToList(), out var cvxHull1, false);
 
             var sphere2 = new Sphere(new Vector3(10, 0, 0), 6, true);
             sphere2.Tessellate();
-            var cvxHull2 = ConvexHull.Create(sphere2.Vertices.ToList());
-            var linesegment = new[] { new Vector3(10, 0, 0), new Vector3(10, 10, 0) };
-            var d = cvxHull1.Result.DistanceBetween(linesegment, out var v);
+            ConvexHull3D.Create(sphere2.Vertices.ToList(), out var cvxHull2, false);
+            var linesegment = new[] { new Vertex(new Vector3(10, 0, 0)), new Vertex(new Vector3(10, 10, 0)) };
+            var d = cvxHull1.Vertices.DistanceBetween(linesegment, out var v);
         }
     }
 }

@@ -1,5 +1,4 @@
-﻿
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 
@@ -24,7 +23,7 @@ namespace TVGL
         /// <returns>The signed distance between the two convex hulls. This implementation is
         /// not accurate for negative values.</returns>
         public static double DistanceBetween<T>(this IList<T> cvxHullPoints1, IList<T> cvxHullPoints2, out Vector3 v)
-            where T : IPoint3D
+            where T : IVector3D
         {
             int k = 0;                /**< Iteration counter                 */
             const int mk = 25;                 /**< Maximum number of GJK iterations  */
@@ -543,7 +542,7 @@ namespace TVGL
             return tmp * n;
         }
 
-        private static T support<T>(IList<T> vertices, T thisS, Vector3 v) where T : IPoint3D
+        private static T support<T>(IList<T> vertices, T thisS, Vector3 v) where T : IVector3D
         {
             int better = -1;
 

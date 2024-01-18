@@ -108,7 +108,7 @@ namespace TVGL
         /// <typeparam name="T"></typeparam>
         /// <param name="convexHullVertices">The convex hull vertices.</param>
         /// <returns>BoundingBox.</returns>
-        public static BoundingBox OrientedBoundingBox<T>(this IEnumerable<T> convexHullVertices) where T : IPoint3D
+        public static BoundingBox OrientedBoundingBox<T>(this IEnumerable<T> convexHullVertices) where T : IVector3D
         {
             // here we create 13 directions. Why 13? basically it is all ternary combinations of x,y,and z.
             // skipping symmetric and 0,0,0. Another way to think of it is to make a Direction from a cube with
@@ -181,7 +181,7 @@ namespace TVGL
         /// <param name="convexHullVertices">The convex hull vertices.</param>
         /// <param name="minOBB">The minimum obb.</param>
         /// <returns>BoundingBox.</returns>
-        private static BoundingBox<T> Find_via_ChanTan_AABB_Approach<T>(IEnumerable<T> convexHullVertices, BoundingBox<T> minOBB) where T : IPoint3D
+        private static BoundingBox<T> Find_via_ChanTan_AABB_Approach<T>(IEnumerable<T> convexHullVertices, BoundingBox<T> minOBB) where T : IVector3D
         {
             var failedConsecutiveRotations = 0;
             var k = 0;
@@ -220,7 +220,7 @@ namespace TVGL
         /// <returns>System.Double.</returns>
         public static double GetLengthAndExtremeVertices<T>(this IEnumerable<T> vertices, Vector3 direction,
             out List<T> bottomVertices,
-            out List<T> topVertices) where T : IPoint3D
+            out List<T> topVertices) where T : IVector3D
         {
             var dir = direction.Normalize();
             var minD = double.PositiveInfinity;
@@ -263,7 +263,7 @@ namespace TVGL
         /// <returns>System.Double.</returns>
         public static double GetLengthAndExtremeVertex<T>(this IEnumerable<T> vertices, Vector3 direction,
             out T bottomVertex,
-            out T topVertex) where T : IPoint3D
+            out T topVertex) where T : IVector3D
         {
             var (minD, maxD) = GetDistanceToExtremeVertex(vertices, direction, out bottomVertex, out topVertex);
             return maxD - minD;
@@ -280,7 +280,7 @@ namespace TVGL
         /// <param name="topVertex">The top vertex.</param>
         /// <returns>System.Double.</returns>
         public static (double, double) GetDistanceToExtremeVertex<T>(this IEnumerable<T> vertices, Vector3 direction,
-            out T bottomVertex, out T topVertex) where T : IPoint3D
+            out T bottomVertex, out T topVertex) where T : IVector3D
         {
             var dir = direction.Normalize();
             var minD = double.PositiveInfinity;
@@ -664,7 +664,7 @@ namespace TVGL
         /// <typeparam name="T"></typeparam>
         /// <param name="vertices">The vertices.</param>
         /// <returns>BoundingBox&lt;T&gt;.</returns>
-        public static BoundingBox<T> FindAxisAlignedBoundingBox<T>(this IEnumerable<T> vertices) where T : IPoint3D
+        public static BoundingBox<T> FindAxisAlignedBoundingBox<T>(this IEnumerable<T> vertices) where T : IVector3D
         {
             var pointsOnBox = new List<T>[6];
             for (int i = 0; i < 6; i++)
@@ -761,7 +761,7 @@ namespace TVGL
         /// <param name="direction">The Direction.</param>
         /// <returns>BoundingBox.</returns>
         /// <exception cref="System.Exception">Volume should never be negligible, unless the input data is bad</exception>
-        public static BoundingBox<T> FindOBBAlongDirection<T>(this IEnumerable<T> vertices, Vector3 direction) where T : IPoint3D
+        public static BoundingBox<T> FindOBBAlongDirection<T>(this IEnumerable<T> vertices, Vector3 direction) where T : IVector3D
         {
             var direction1 = direction.Normalize();
             var vertexList = vertices as IList<T> ?? vertices.ToList();

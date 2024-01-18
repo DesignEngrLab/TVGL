@@ -17,14 +17,13 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-
 namespace TVGL
 {
     /// <summary>
     /// The 3D vertex can connect to any number of faces and edges. It inherits from the
-    /// MIConvexhull IPoint interface.
+    /// MIConvexhull IVector interface.
     /// </summary>
-    public sealed class Vertex : TessellationBaseClass, IPoint3D, IPoint
+    public sealed class Vertex : TessellationBaseClass, IVector3D, IVector
     {
 
         /// <summary>

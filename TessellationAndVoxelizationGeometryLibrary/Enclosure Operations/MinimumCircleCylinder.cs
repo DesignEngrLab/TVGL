@@ -329,7 +329,7 @@ namespace TVGL
         /// <typeparam name="T"></typeparam>
         /// <param name="convexHullVertices">The convex hull vertices.</param>
         /// <returns>BoundingBox.</returns>
-        public static Cylinder MinimumBoundingCylinder<T>(this IEnumerable<T> convexHullVertices) where T : IPoint3D
+        public static Cylinder MinimumBoundingCylinder<T>(this IEnumerable<T> convexHullVertices) where T : IVector3D
         {
             // here we create 13 directions. just like for bounding box
             var directions = new List<Vector3>();
@@ -350,7 +350,7 @@ namespace TVGL
         /// <param name="convexHullVertices">The convex hull vertices.</param>
         /// <param name="directions">The directions.</param>
         /// <returns>Cylinder.</returns>
-        public static Cylinder MinimumBoundingCylinder<T>(IEnumerable<T> convexHullVertices, IEnumerable<Vector3> directions) where T : IPoint3D
+        public static Cylinder MinimumBoundingCylinder<T>(IEnumerable<T> convexHullVertices, IEnumerable<Vector3> directions) where T : IVector3D
         {
             Cylinder minCylinder = null;
             var cvxHullVertsList = convexHullVertices as IList<T> ?? convexHullVertices.ToList();
@@ -371,7 +371,7 @@ namespace TVGL
         /// <param name="convexHullVertices">The convex hull vertices.</param>
         /// <param name="direction">The direction.</param>
         /// <returns>Cylinder.</returns>
-        public static Cylinder MinimumBoundingCylinder<T>(IList<T> convexHullVertices, Vector3 direction) where T : IPoint3D
+        public static Cylinder MinimumBoundingCylinder<T>(IList<T> convexHullVertices, Vector3 direction) where T : IVector3D
         {
             var pointsOnFace = convexHullVertices.ProjectTo2DCoordinates(direction, out var backTransform);
             var circle = MinimumCircle(pointsOnFace);
@@ -399,7 +399,7 @@ namespace TVGL
         /// <param name="vertices">The vertices.</param>
         /// <param name="likelyAxis">The likely axis.</param>
         /// <returns>BoundingBox.</returns>
-        public static Vector3 MinimumBoundingCylinderAxis<T>(this IEnumerable<T> vertices, Vector3 likelyAxis) where T : IPoint3D
+        public static Vector3 MinimumBoundingCylinderAxis<T>(this IEnumerable<T> vertices, Vector3 likelyAxis) where T : IVector3D
         {
             BoundingBox<T> box = null;
             int j = 0;

@@ -15,8 +15,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-
-
 namespace TVGL
 {
     /// <summary>
@@ -107,7 +105,7 @@ namespace TVGL
         /// <param name="error">The error.</param>
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         /// <exception cref="System.NotImplementedException"></exception>
-        public static bool CreateFromPoints<T>(IEnumerable<T> points, out ICurve curve, out double error) where T : IPoint2D
+        public static bool CreateFromPoints<T>(IEnumerable<T> points, out ICurve curve, out double error) where T : IVector2D
         {
             throw new NotImplementedException();
         }
@@ -122,7 +120,7 @@ namespace TVGL
         /// <param name="point">The point.</param>
         /// <returns>System.Double.</returns>
         /// <exception cref="System.NotImplementedException"></exception>
-        public double SquaredErrorOfNewPoint<T>(T point) where T : IPoint
+        public double SquaredErrorOfNewPoint<T>(T point) where T : IVector
         {
             throw new NotImplementedException();
         }

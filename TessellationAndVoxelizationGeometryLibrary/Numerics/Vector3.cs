@@ -24,7 +24,7 @@ namespace TVGL  // COMMENTEDCHANGE namespace System.Numerics
     /// <summary>
     /// A structure encapsulating three single precision floating point values and provides hardware accelerated methods.
     /// </summary>
-    public readonly partial struct Vector3 : IEquatable<Vector3>, IFormattable, IPoint3D, IPoint2D, IPoint
+    public readonly partial struct Vector3 : IEquatable<Vector3>, IFormattable, IVector3D, IVector2D, IVector
     {
 
         /// <summary>

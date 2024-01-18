@@ -6,7 +6,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Runtime.CompilerServices;
 
-namespace TVGL.Miscellaneous_Functions
+namespace TVGL
 {
     /// <summary>
     /// The updatable priority queue is an augmentation of the .NET PriorityQueue

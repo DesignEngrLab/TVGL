@@ -11,9 +11,6 @@
 // </copyright>
 // <summary></summary>
 // ***********************************************************************
-
-
-using Newtonsoft.Json;
 using System;
 using System.Globalization;
 using System.Runtime.CompilerServices;
@@ -24,7 +21,7 @@ namespace TVGL  // COMMENTEDCHANGE namespace System.Numerics
     /// <summary>
     /// A structure encapsulating two single precision floating point values and provides hardware accelerated methods.
     /// </summary>
-    public readonly partial struct Vector2 : IEquatable<Vector2>, IFormattable, IPoint2D
+    public readonly partial struct Vector2 : IEquatable<Vector2>, IFormattable, IVector2D
     {
         #region Public Static Properties
         /// <summary>
