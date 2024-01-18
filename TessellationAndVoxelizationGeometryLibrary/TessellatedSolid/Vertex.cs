@@ -13,6 +13,7 @@
 // ***********************************************************************
 
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -26,12 +27,6 @@ namespace TVGL
     /// </summary>
     public sealed class Vertex : TessellationBaseClass, IPoint3D, IPoint
     {
-        /// <summary>
-        /// Prevents a default instance of the <see cref="Vertex" /> class from being created.
-        /// </summary>
-        private Vertex()
-        {
-        }
 
         /// <summary>
         /// Copies this instance. Does not include reference lists.
@@ -74,6 +69,7 @@ namespace TVGL
             Faces = new List<TriangleFace>();
             IndexInList = -1;
         }
+        public Vertex() : this(Vector3.Null) { }
 
         #endregion Constructor
 
@@ -86,25 +82,40 @@ namespace TVGL
         public Vector3 Coordinates { get; set; }
 
         /// <summary>
-        /// Gets the x.
+        /// Gets or sets the x.
         /// </summary>
         /// <value>The x.</value>
         [JsonIgnore]
-        public double X => Coordinates.X;
+        public double X
+        {
+            get { return Coordinates.X; }
+            init { Coordinates = new Vector3(value, Coordinates.Y, Coordinates.Z); }
+        }
 
         /// <summary>
-        /// Gets the y.
+        /// Gets or sets the y.
         /// </summary>
         /// <value>The y.</value>
         [JsonIgnore]
-        public double Y => Coordinates.Y;
+        public double Y
+        {
+            get { return Coordinates.Y; }
+            init { Coordinates = new Vector3(Coordinates.X, value, Coordinates.Z); }
+        }
 
         /// <summary>
         /// Gets the z.
         /// </summary>
         /// <value>The z.</value>
         [JsonIgnore]
-        public double Z => Coordinates.Z;
+        public double Z
+        {
+            get { return Coordinates.Z; }
+            init
+            {
+                Coordinates = new Vector3(Coordinates.X, Coordinates.Y, value);
+            }
+        }
 
         /// <summary>
         /// Gets the edges.

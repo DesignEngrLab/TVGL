@@ -44,35 +44,22 @@ namespace TVGL
         /// Gets the x.
         /// </summary>
         /// <value>The x.</value>
-        double X { get; }
+        double X { get; init; }
 
         /// <summary>
         /// Gets the y.
         /// </summary>
         /// <value>The y.</value>
-        double Y { get; }
+        double Y { get; init; }
     }
-    public interface IPoint3D : IPoint
+    public interface IPoint3D : IPoint2D
     {
-        /// <summary>
-        /// Gets the x.
-        /// </summary>
-        /// <value>The x.</value>
-        //double X { get; init; }
-        double X { get; }
-
-        /// <summary>
-        /// Gets the y.
-        /// </summary>
-        /// <value>The y.</value>
-        //double Y { get; init; }
-        double Y { get; }
         /// <summary>
         /// Gets the z.
         /// </summary>
         /// <value>The z.</value>
         //double Z { get; init; }
-        double Z { get; }
+        double Z { get; init; }
     }
 
     /// <summary>

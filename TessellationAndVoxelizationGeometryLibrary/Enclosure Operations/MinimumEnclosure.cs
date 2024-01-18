@@ -443,8 +443,8 @@ namespace TVGL
              */
             #region 1) Prune and Reorder the points
             IList<Vector2> points = initialPoints as IList<Vector2> ?? initialPoints.ToList();
-            if (!pointsAreConvexHull && ConvexHullAlgorithm.Run(points, out var cvxHull))
-                points = cvxHull;
+            if (!pointsAreConvexHull)
+                points = ConvexHullAlgorithm.CreateConvexHull(points, out _);
 
             if (points.Count < 3)
             {

@@ -24,7 +24,7 @@ namespace TVGL  // COMMENTEDCHANGE namespace System.Numerics
     /// <summary>
     /// A structure encapsulating two single precision floating point values and provides hardware accelerated methods.
     /// </summary>
-    public readonly partial struct Vector2 : IEquatable<Vector2>, IFormattable, IPoint2D, IPoint
+    public readonly partial struct Vector2 : IEquatable<Vector2>, IFormattable, IPoint2D
     {
         #region Public Static Properties
         /// <summary>
@@ -59,17 +59,6 @@ namespace TVGL  // COMMENTEDCHANGE namespace System.Numerics
         #endregion
 
         #region Public Instance Properties
-        /// <summary>
-        /// Gets the x.
-        /// </summary>
-        /// <value>The x.</value>
-        double IPoint2D.X => X;
-
-        /// <summary>
-        /// Gets the y.
-        /// </summary>
-        /// <value>The y.</value>
-        double IPoint2D.Y => Y;
 
         /// <summary>
         /// Gets the <see cref="System.Double"/> with the specified i.
@@ -90,12 +79,13 @@ namespace TVGL  // COMMENTEDCHANGE namespace System.Numerics
         /// The X component of the vector.
         /// </summary>
         /// <value>The x.</value>
-        public double X { get; }
+        public double X { get; init; }
         /// <summary>
         /// The Y component of the vector.
         /// </summary>
         /// <value>The y.</value>
-        public double Y { get; }
+        public double Y { get; init; }
+
 
         #endregion
 

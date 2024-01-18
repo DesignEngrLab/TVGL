@@ -464,8 +464,8 @@ namespace TVGL
 
         private static double determinant(Vector3 p, Vector3 q, Vector3 r)
         {
-            return p[0] * ((q[1] * r[2]) - (r[1] * q[2])) - p[1] * (q[0] * r[2] - r[0] * q[2])
-                + p[2] * (q[0] * r[1] - r[0] * q[1]);
+            return p.X * ((q.Y * r.Z) - (r.Y * q.Z)) - p.Y * (q.X * r.Z - r.X * q.Z)
+                + p.Z * (q.X * r.Y - r.X * q.Y);
         }
 
         private static Vector3 S2D(Vector3[] s, Vector3 v, ref int nvrtx)

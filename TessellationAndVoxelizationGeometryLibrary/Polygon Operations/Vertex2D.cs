@@ -32,13 +32,21 @@ namespace TVGL
         /// Gets or sets the x.
         /// </summary>
         /// <value>The x.</value>
-        public double X => Coordinates.X;
+        public double X
+        {
+            get { return Coordinates.X; }
+            init { Coordinates = new Vector2(value, Coordinates.Y); }
+        }
 
         /// <summary>
         /// Gets or sets the y.
         /// </summary>
         /// <value>The y.</value>
-        public double Y => Coordinates.Y;
+        public double Y
+        {
+            get { return Coordinates.Y; }
+            init { Coordinates = new Vector2(Coordinates.X, value); }
+        }
 
         public double this[int i]
         {
