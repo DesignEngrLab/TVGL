@@ -13,7 +13,6 @@
 // ***********************************************************************
 
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -69,7 +68,7 @@ namespace TVGL
             Faces = new List<TriangleFace>();
             IndexInList = -1;
         }
-        public Vertex() : this(Vector3.Null) { }
+        private Vertex() { }
 
         #endregion Constructor
 

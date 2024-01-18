@@ -69,7 +69,7 @@ namespace TVGL
                 if (double.IsNaN(_volume)) CalculateVolume();
                 return _volume;
             }
-            set { }
+            set => _volume = value;
         }
 
         /// <summary>

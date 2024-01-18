@@ -40,6 +40,7 @@ namespace TVGL
             //6) Get all the nodes (3+ lines)
             //7) Connect all the nodes to form branches with the lines
             var allBranches = new List<List<Vector2>>();
+           /*
             foreach (var positivePolygon in silhouette.Where(p => p.Area() > 0))
             {
                 var posPolygonList = positivePolygon.ToList();
@@ -276,6 +277,7 @@ namespace TVGL
                     allBranches.Add(branch.ToList());
                 }
             }
+           */
             return allBranches;
         }
     }

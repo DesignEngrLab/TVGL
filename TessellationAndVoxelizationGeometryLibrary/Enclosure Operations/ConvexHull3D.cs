@@ -1,19 +1,17 @@
 ﻿// ***********************************************************************
 // Assembly         : TessellationAndVoxelizationGeometryLibrary
-// Author           : matth
-// Created          : 04-03-2023
+// Author           : Matt Campbell
+// Created          : 01-18-2024
 //
-// Last Modified By : matth
-// Last Modified On : 04-14-2023
+// Last Modified By : --
+// Last Modified On : --
 // ***********************************************************************
 // <copyright file="ConvexHull3D.cs" company="Design Engineering Lab">
-//     2014
+//     2024
 // </copyright>
 // <summary></summary>
 // ***********************************************************************
-using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Linq;
 
 namespace TVGL
@@ -21,17 +19,9 @@ namespace TVGL
     /// <summary>
     /// The Convex Hull of a Tesselated Solid
     /// </summary>
-    public class ConvexHull3D<T> where T : IPoint3D, new()
+    public class ConvexHull3D : Solid
     {
-        /// <summary>
-        /// Calculates the Center and Volume of the convex hull using the faces 
-        /// </summary>
-        /// <param name="center"></param>
-        /// <param name="volume"></param>
-        public void CalculateVolumeAndCenter(out Vector3 center, out double volume)
-            => TessellatedSolid.CalculateVolumeAndCenter(Faces, tolerance, out volume, out center);
-        public double GetSurfaceArea() => Faces.Sum(f => f.Area);
-
+        public bool IsMaximal=>double.IsNaN(tolerance);
         /// <summary>
         /// The volume of the Convex Hull.
         /// </summary>
@@ -40,50 +30,13 @@ namespace TVGL
         /// <summary>
         /// The vertices of the ConvexHull
         /// </summary>
-        public readonly List<T> Vertices = new List<T>();
-        internal readonly List<CHFace> cHFaces = new List<CHFace>();
+        public readonly List<Vertex> Vertices = new List<Vertex>();
+        //internal readonly List<CHFace> cHFaces = new List<CHFace>();
         /// <summary>
         /// Gets the convex hull faces.
         /// </summary>
         /// <value>The convex hull faces.</value>
-        public TriangleFace[] Faces
-        {
-            get
-            {
-                if (Vertices.Count > 0 && faces == null)
-                    faces = MakeFaces(cHFaces, Vertices);
-                return faces;
-            }
-        }
-        private TriangleFace[] faces;
-        private static TriangleFace[] MakeFaces(List<CHFace> cHFaces, List<T> allVertices)
-        {
-            var newVertices = new Vertex[allVertices.Count];
-            for (int i = 0; i < allVertices.Count; i++)
-            {
-                var v = allVertices[i];
-                if (v is Vertex vertex)
-                    newVertices[i] = vertex;
-                else newVertices[i] = new Vertex(new Vector3(v.X, v.Y, v.Z), i);
-            }
-
-            var numCvxHullFaces = 2 * (allVertices.Count - 2); // a little euler's formula magic
-            var faces = new TriangleFace[numCvxHullFaces];
-            var k = 0;
-            foreach (var chFace in cHFaces)
-            {
-                for (var i = 2; i < chFace.BorderVertices.Count; i++)
-                {
-                    faces[k++] = new TriangleFace(new[]
-                    {
-                        newVertices[chFace.BorderVertices[0]],
-                        newVertices[chFace.BorderVertices[i - 1]],
-                        newVertices[chFace.BorderVertices[i]]
-                    }, false);
-                }
-            }
-            return faces;
-        }
+        public readonly List<ConvexHullFace> Faces= new List<ConvexHullFace>();
 
         /// <summary>
         /// Gets the convex hull edges.
@@ -99,9 +52,9 @@ namespace TVGL
             }
         }
         private Edge[] edges;
-        private static Edge[] MakeEdges(TriangleFace[] faces)
+        private static Edge[] MakeEdges(IList<ConvexHullFace> faces)
         {
-            var numVertices = (3 * faces.Length) >> 1;
+            var numVertices = (3 * faces.Count) >> 1;
             var edgeDictionary = new Dictionary<long, Edge>();
             foreach (var face in faces)
             {
@@ -128,30 +81,107 @@ namespace TVGL
             return edgeArray;
         }
 
-        internal CHFace MakeCHFace(int v1Index, int v2Index, int v3Index)
+
+        /// <summary>
+        /// Calculates the center.
+        /// </summary>
+        protected override void CalculateCenter() => Faces.CalculateVolumeAndCenter(SameTolerance, out _volume, out _center);
+
+        /// <summary>
+        /// Calculates the volume.
+        /// </summary>
+        protected override void CalculateVolume() => Faces.CalculateVolumeAndCenter(SameTolerance, out _volume, out _center);
+
+        /// <summary>
+        /// Calculates the surface area.
+        /// </summary>
+        protected override void CalculateSurfaceArea() => _surfaceArea = Faces.Sum(face => face.Area);
+
+        /// <summary>
+        /// Calculates the inertia tensor.
+        /// </summary>
+        /// <exception cref="System.NotImplementedException"></exception>
+        protected override void CalculateInertiaTensor() => _inertiaTensor = Faces.CalculateInertiaTensor(Center);
+
+        public override void Transform(Matrix4x4 transformMatrix)
         {
-            var v1 = Vertices[v1Index] is Vertex vertex1 ? vertex1.Coordinates : new Vector3(Vertices[v1Index].X, Vertices[v1Index].Y, Vertices[v1Index].Z);
-            var v2 = Vertices[v2Index] is Vertex vertex2 ? vertex2.Coordinates : new Vector3(Vertices[v2Index].X, Vertices[v2Index].Y, Vertices[v2Index].Z);
-            var v3 = Vertices[v3Index] is Vertex vertex3 ? vertex3.Coordinates : new Vector3(Vertices[v3Index].X, Vertices[v3Index].Y, Vertices[v3Index].Z);
-            var normal = (v2 - v1).Cross(v3 - v1).Normalize();
-            var d = normal.Dot(v1);
-            return new CHFace
+            var xMin = double.PositiveInfinity;
+            var yMin = double.PositiveInfinity;
+            var zMin = double.PositiveInfinity;
+            var xMax = double.NegativeInfinity;
+            var yMax = double.NegativeInfinity;
+            var zMax = double.NegativeInfinity;
+            foreach (var v in Vertices)
             {
-                BorderVertices = new List<int> { v1Index, v2Index, v3Index },
-                InteriorVertices = new List<int>(),
-                Normal = normal,
-                D = d,
-                Anchor = (v1 + v2 + v3) / 3
-            };
+                v.Coordinates = v.Coordinates.Transform(transformMatrix);
+                if (xMin > v.Coordinates.X) xMin = v.Coordinates.X;
+                if (yMin > v.Coordinates.Y) yMin = v.Coordinates.Y;
+                if (zMin > v.Coordinates.Z) zMin = v.Coordinates.Z;
+                if (xMax < v.Coordinates.X) xMax = v.Coordinates.X;
+                if (yMax < v.Coordinates.Y) yMax = v.Coordinates.Y;
+                if (zMax < v.Coordinates.Z) zMax = v.Coordinates.Z;
+            }
+            Bounds = [new Vector3(xMin, yMin, zMin), new Vector3(xMax, yMax, zMax)];
+
+            //Update the faces
+            foreach (var face in Faces)
+            {
+                face.Update();// Transform(transformMatrix);
+            }
+            //Update the edges
+            if (edges!=null)
+            {
+                foreach (var edge in Edges)
+                {
+                    edge.Update(true);
+                }
+            }
+            _center = _center.Transform(transformMatrix);
+            // I'm not sure this is right, but I'm just using the 3x3 rotational submatrix to rotate the inertia tensor
+            var rotMatrix = new Matrix3x3(transformMatrix.M11, transformMatrix.M12, transformMatrix.M13,
+                    transformMatrix.M21, transformMatrix.M22, transformMatrix.M23,
+                    transformMatrix.M31, transformMatrix.M32, transformMatrix.M33);
+            _inertiaTensor *= rotMatrix;
+        }
+
+        public override Solid TransformToNewSolid(Matrix4x4 transformationMatrix)
+        {
+            var copy = this.Copy();
+            copy.Transform(transformationMatrix);
+            return copy;
+        }
+
+        private Solid Copy()
+        {
+            throw new System.NotImplementedException();
+        }
+
+        internal static ConvexHull3D Create(TessellatedSolid tessellatedSolid)
+        {
+            ConvexHullAlgorithm.Create(tessellatedSolid, out var convexHull);
+            return convexHull;
+        }
+
+        internal static ConvexHull3D Create(List<Vertex> vertices, double sameTolerance)
+        {
+            ConvexHullAlgorithm.Create(vertices, out var convexHull, sameTolerance);
+            return convexHull;
         }
     }
-    public class CHFace
+    public class ConvexHullFace : TriangleFace
     {
-        public List<int> BorderVertices { get; internal init; }
-        public List<int> InteriorVertices { get; internal init; }
-        public Vector3 Normal { get; internal init; }
-        public double D { get; internal init; }
-        public Vector3 Anchor { get; internal init; }
-        public SortedList<double, int> SortedNew { get; internal set; } = new SortedList<double, int>();
+        public ConvexHullFace(Vertex vertex1, Vertex vertex2, Vertex vertex3, Vector3 planeNormal) : this(vertex1, vertex2, vertex3)
+        {
+            _normal = planeNormal;
+        }
+        public ConvexHullFace(Vertex vertex1, Vertex vertex2, Vertex vertex3) : base(vertex1, vertex2, vertex3,false)
+        {
+            peakVertex = null;
+            InteriorVertices = new List<Vertex>();
+        }
+
+        internal Vertex peakVertex { get; set; }
+        internal double peakDistance { get; set; }
+        public List<Vertex> InteriorVertices { get; internal set; }
     }
 }
