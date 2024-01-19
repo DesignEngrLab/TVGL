@@ -1386,7 +1386,10 @@ namespace TVGL
             if (!LoadAsSolidAssembly(filePath, out var solidAssembly))
                 return false;
             if (solidAssembly == null || solidAssembly.Solids == null || !solidAssembly.Solids.Any(s => s is TessellatedSolid))
-                throw new ArgumentException("No valid tessellated solids defined.");
+            {
+                Debug.WriteLine("No valid tessellated solids defined.");
+                return false;
+            }
 
             var tessellatedSolid = ReturnMostSignificantSolid(solidAssembly.Solids.Cast<TessellatedSolid>().ToArray());
 
