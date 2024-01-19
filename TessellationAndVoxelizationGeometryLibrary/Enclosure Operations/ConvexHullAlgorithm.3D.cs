@@ -11,6 +11,7 @@
 // </copyright>
 // <summary></summary>
 // ***********************************************************************
+using MIConvexHull;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -54,7 +55,13 @@ namespace TVGL
         /// </summary>
         /// <param name="ts">The tessellated solid that the convex hull is made from.</param>
         public static bool Create(TessellatedSolid ts, out ConvexHull3D convexHull)
-            => Create(ts.Vertices, out convexHull, false, ts.SameTolerance);
+           // => Create(ts.Vertices, out convexHull, false, ts.SameTolerance);
+        {
+        debugSolid = ts;
+        return Create(ts.Vertices, out convexHull, false, ts.SameTolerance);
+    }
+
+        private static TessellatedSolid debugSolid;
 
         public static bool Create(IList<Vertex> vertices, out ConvexHull3D convexHull,
             bool connectVerticesToCvxHullFaces, double tolerance = double.NaN)
@@ -108,7 +115,9 @@ namespace TVGL
                 };
             }
             else cvxVertices = BuildInitialSimplex(extremePoints, numExtrema, out simplexFaces);
-
+            var simplexSolid = new TessellatedSolid(simplexFaces.Cast<TriangleFace>().ToList(), buildOptions:TessellatedSolidBuildOptions.Minimal);
+            
+            Presenter.ShowAndHang(simplexSolid);
             var simplexVertices = cvxVertices.ToHashSet();
             foreach (var v in vertices)
             {
@@ -121,7 +130,10 @@ namespace TVGL
             {
                 var face = faceQueue.Dequeue();
                 if (face.peakVertex == null)
+                {
                     cvxFaces.Add(face);
+            //Presenter.ShowAndHang(cvxFaces);
+                }
                 else
                 {
                     var newFaces = new[] {new ConvexHullFace(face.A, face.B, face.peakVertex),
@@ -130,6 +142,9 @@ namespace TVGL
                         AddVertexToProperFace(newFaces, iv, tolerance);
                     foreach (var newFace in newFaces)
                         faceQueue.Enqueue(newFace);
+                    foreach (var newFace in newFaces)
+newFace.Color = new Color(KnownColors.LightSteelBlue);
+                        //Presenter.ShowAndHang(faceQueue);
                 }
             }
             convexHull = MakeConvexHullWithFaces(tolerance, connectVerticesToCvxHullFaces, cvxFaces);
@@ -250,7 +265,7 @@ namespace TVGL
                         var baseTriangleArea = (extremePoints[i2].Coordinates - basePoint.Coordinates).Cross(extremePoints[i3].Coordinates - basePoint.Coordinates);
                         for (int i4 = i3 + 1; i4 < numExtrema; i4++)
                         {
-                            var projectedHeight = extremePoints[i4].Coordinates - basePoint.Coordinates;
+                            var projectedHeight = basePoint.Coordinates- extremePoints[i4].Coordinates ;
                             var volume = projectedHeight.Dot(baseTriangleArea);
                             if (Math.Abs(volume) > maxVol)
                             {
@@ -278,9 +293,9 @@ namespace TVGL
             simplexVertices.Add(extremePoints[maxI4]);
 
             simplexFaces.Add(new ConvexHullFace(simplexVertices[0], simplexVertices[1], simplexVertices[2]));
-            simplexFaces.Add(new ConvexHullFace(simplexVertices[0], simplexVertices[1], simplexVertices[3]));
-            simplexFaces.Add(new ConvexHullFace(simplexVertices[1], simplexVertices[2], simplexVertices[3]));
-            simplexFaces.Add(new ConvexHullFace(simplexVertices[2], simplexVertices[0], simplexVertices[3]));
+            simplexFaces.Add(new ConvexHullFace(simplexVertices[0], simplexVertices[3], simplexVertices[1]));
+            simplexFaces.Add(new ConvexHullFace(simplexVertices[1], simplexVertices[3], simplexVertices[2]));
+            simplexFaces.Add(new ConvexHullFace(simplexVertices[2], simplexVertices[3], simplexVertices[0]));
             return simplexVertices;
         }
 

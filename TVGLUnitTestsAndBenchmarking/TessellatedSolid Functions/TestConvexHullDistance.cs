@@ -17,12 +17,16 @@ namespace TVGLUnitTestsAndBenchmarking
         {
 
             var sphere1 = new Sphere(new Vector3(0, 0, 0), 6, true);
-            sphere1.Tessellate(3);
+            sphere1.Tessellate(6);
             foreach (var f in sphere1.Faces)
                 f.Color = new Color(KnownColors.MediumTurquoise);
-            sphere1.Faces.CalculateVolumeAndCenter(1e-10, out var vol, out var center);
+            var testSphere = new TessellatedSolid(sphere1.Faces,buildOptions: new TessellatedSolidBuildOptions
+            {
+                CopyElementsPassedToConstructor=true,
+                DefineConvexHull=false
+            });
             Presenter.ShowAndHang(sphere1.Faces);
-            ConvexHull3D.Create(sphere1.Vertices.ToList(), out var cvxHull1, false);
+            ConvexHull3D.Create(testSphere, out var cvxHull1);
             foreach (var f in cvxHull1.Faces)
                 f.Color = new Color(100,100,0,0);
 
