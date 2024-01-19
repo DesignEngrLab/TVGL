@@ -55,13 +55,31 @@ namespace TVGL
         /// </summary>
         /// <param name="ts">The tessellated solid that the convex hull is made from.</param>
         public static bool Create(TessellatedSolid ts, out ConvexHull3D convexHull)
-           // => Create(ts.Vertices, out convexHull, false, ts.SameTolerance);
         {
-        debugSolid = ts;
-        return Create(ts.Vertices, out convexHull, false, ts.SameTolerance);
-    }
+            /// debug
+            debugSolid = ts;
+            ///
+            if (Create(ts.Vertices, out convexHull, false, ts.SameTolerance))
+            {
+                ts.ConvexHull = convexHull;
+                foreach (var face in ts.Faces.Where(face => face.Vertices.All(v => v.PartOfConvexHull)))
+                {
+                    face.PartOfConvexHull = true;
+                    foreach (var e in face.Edges)
+                        if (e != null) e.PartOfConvexHull = true;
+                }
+                return true;
+            }
+            else
+            {
+                convexHull = null;
+                return false;
+            }
+        }
 
+        /// debug
         private static TessellatedSolid debugSolid;
+        ///
 
         public static bool Create(IList<Vertex> vertices, out ConvexHull3D convexHull,
             bool connectVerticesToCvxHullFaces, double tolerance = double.NaN)
@@ -74,6 +92,7 @@ namespace TVGL
              * Akl-Toussaint heuristic. */
             var extremePoints = GetExtremaOnAABB(n, vertices, out var numExtrema);
             List<ConvexHullFace> simplexFaces;
+            List<Edge> simplexEdges;
             List<Vertex> cvxVertices;
             if (numExtrema == 1)
             {
@@ -115,51 +134,169 @@ namespace TVGL
                 };
             }
             else cvxVertices = BuildInitialSimplex(extremePoints, numExtrema, out simplexFaces);
-            var simplexSolid = new TessellatedSolid(simplexFaces.Cast<TriangleFace>().ToList(), buildOptions:TessellatedSolidBuildOptions.Minimal);
-            
+            /// debug
+            var simplexSolid = new TessellatedSolid(simplexFaces.Cast<TriangleFace>().ToList(), buildOptions: TessellatedSolidBuildOptions.Minimal);
             Presenter.ShowAndHang(simplexSolid);
+            /// end debug
+            // now add all the other vertices to the simplex faces. AddVertexToProperFace will add the vertex to the face that it is "farthest" from
             var simplexVertices = cvxVertices.ToHashSet();
             foreach (var v in vertices)
             {
                 if (simplexVertices.Contains(v)) continue;
                 AddVertexToProperFace(simplexFaces, v, tolerance);
             }
-            var faceQueue = new Queue<ConvexHullFace>(simplexFaces);
-            var cvxFaces = new List<ConvexHullFace>();
-            while (faceQueue.Count > 0)
+            var faceQueue = new UpdatablePriorityQueue<ConvexHullFace, double>(simplexFaces.Select(f => (f, f.peakDistance)), new NoEqualSort(false));
+            var newFaces = new List<ConvexHullFace>();
+            var oldFaces = new List<ConvexHullFace>();
+            var verticesToReassign = new List<Vertex>();
+            while (true)
             {
                 var face = faceQueue.Dequeue();
                 if (face.peakVertex == null)
                 {
-                    face.Color = new Color(KnownColors.LightGreen);
-                    cvxFaces.Add(face);
-            //Presenter.ShowAndHang(cvxFaces);
+                    faceQueue.Enqueue(face, face.peakDistance);
+                    break;
                 }
-                else
-                {
-                    var newFaces = new[] {new ConvexHullFace(face.A, face.B, face.peakVertex),
-                     new ConvexHullFace(face.B, face.C, face.peakVertex), new ConvexHullFace(face.C, face.A, face.peakVertex)};
-                    foreach (var iv in face.InteriorVertices)
-                        AddVertexToProperFace(newFaces, iv, tolerance);
-                    foreach (var newFace in newFaces)
-                        faceQueue.Enqueue(newFace);
-                    foreach (var newFace in newFaces)
-newFace.Color = new Color(KnownColors.LightSteelBlue);
-                        Presenter.ShowAndHang(faceQueue.Concat(cvxFaces));
-                    foreach (var newFace in newFaces)
-                        newFace.Color = new Color(KnownColors.SlateGray);
-                }
+                CreateNewFaceCone(face, newFaces, oldFaces, verticesToReassign);
+                foreach (var iv in verticesToReassign)
+                    AddVertexToProperFace(newFaces, iv, tolerance);
+                foreach (var f in oldFaces)
+                    faceQueue.Remove(f);
+                foreach (var newFace in newFaces)
+                    faceQueue.Enqueue(newFace, newFace.peakDistance);
+                // debug
+                foreach (var f in newFaces)
+                    f.Color = new Color(100, 0, 100, 0);
+                foreach (var f in oldFaces)
+                    f.Color = new Color(100, 100, 0, 0);
+                Presenter.ShowAndHang(faceQueue.UnorderedItems.Select(fq => fq.Element).Concat(oldFaces));
+                foreach (var f in newFaces)
+                    f.Color = new Color(KnownColors.Gray);
+                //// end debug
             }
-            convexHull = MakeConvexHullWithFaces(tolerance, connectVerticesToCvxHullFaces, cvxFaces);
+            convexHull = MakeConvexHullWithFaces(tolerance, connectVerticesToCvxHullFaces,
+                faceQueue.UnorderedItems.Select(fq => fq.Element));
             return true;
         }
 
+        /// <summary>
+        /// This is based on the method described in https://algolist.ru/maths/geom/convhull/qhull3d.php as CALCULATE_HORIZON
+        /// It's subtle and complicated. One difference is that our borders are populated in the clockwise direction since the
+        /// children on the stack are added in the CCW direction.
+        /// </summary>
+        /// <param name="face"></param>
+        /// <param name="newFaces"></param>
+        /// <param name="oldFaces"></param>
+        /// <param name="verticesToReassign"></param>
+        /// <returns></returns>
+        private static void CreateNewFaceCone(ConvexHullFace face, List<ConvexHullFace> newFaces, List<ConvexHullFace> oldFaces, List<Vertex> verticesToReassign)
+        {
+            // clearing the lists for now - in the future make it more performant by overwriting
+            newFaces.Clear();
+            oldFaces.Clear();
+            verticesToReassign.Clear();
+            //
+            var borderFaces = new List<ConvexHullFace>();
+            Edge prevEdge = null;
+            Edge firstEdge = null;
+            var peak = face.peakVertex.Coordinates;
+            var stack = new Stack<(ConvexHullFace, Edge)>();
+            stack.Push((face, null));
+            while (stack.Count > 0)
+            {
+                var (current, connectingEdge) = stack.Pop();
+                if (current.Visited) continue;
+                current.Visited = true;
+                if ((current.Center - peak).Dot(current.Normal) > 0)
+                { // current is part of the convex hull that is to be kept. it is beyond the horizon
+                    // so we stop here but before we move down the stack we need to create a new face
+                    // this border face is stored in the borderFaces list so that at the end we can clear the Visited flags
+                    borderFaces.Add(current);
+                    ConvexHullFace newFace;
+                    if (connectingEdge.OwnedFace == current)
+                    {   // if the current owns the face then the new face will follow the edge backwards
+                        newFace = new ConvexHullFace(connectingEdge.To, connectingEdge.From, current.peakVertex);
+                        connectingEdge.OtherFace = newFace;
+                        newFace.AddEdge(connectingEdge);
+                        if (firstEdge == null) // this is the first time through so we get to own the two in-cone edges as well
+                        {
+                            prevEdge = new Edge(current.peakVertex, connectingEdge.To, newFace, null, false);
+                            newFace.AddEdge(prevEdge);
+                            firstEdge = new Edge(connectingEdge.From, current.peakVertex, newFace, null, false);
+                            newFace.AddEdge(firstEdge);
+                        }
+                        else // then it's not the first time we've been here, so firstEdge AND prevEdge should already be set
+                        {
+                            newFace.AddEdge(prevEdge);
+                            prevEdge.OtherFace = newFace;
+                            if (firstEdge.To == connectingEdge.To || firstEdge.From == connectingEdge.To)
+                            {
+                                newFace.AddEdge(firstEdge);
+                                firstEdge.OtherFace = newFace;
+                            }
+                            else
+                            {
+                                prevEdge = new Edge(current.peakVertex, connectingEdge.To, newFace, null, false);
+                                newFace.AddEdge(prevEdge);
+                                prevEdge.OwnedFace = newFace;
+                            }
+                        }
+                    }
+                    else // the newFace will own the edge
+                    {
+                        newFace = new ConvexHullFace(connectingEdge.From, connectingEdge.To, current.peakVertex);
+                        connectingEdge.OwnedFace = newFace;
+                        newFace.AddEdge(connectingEdge);
+                        if (firstEdge == null) // this is the first time through so we get to own the two in-cone edges as well
+                        {
+                            prevEdge = new Edge(current.peakVertex,connectingEdge.From,  newFace, null, false);
+                            newFace.AddEdge(prevEdge);
+                            firstEdge = new Edge( connectingEdge.To, current.peakVertex,newFace, null, false);
+                            newFace.AddEdge(firstEdge);
+                        }
+                        else // then it's not the first time we've been here, so firstEdge AND prevEdge should already be set
+                        {
+                            newFace.AddEdge(prevEdge);
+                            prevEdge.OtherFace = newFace;
+                            if (firstEdge.To == connectingEdge.From || firstEdge.From == connectingEdge.From)
+                            {
+                                newFace.AddEdge(firstEdge);
+                                firstEdge.OtherFace = newFace;
+                            }
+                            else
+                            {
+                                prevEdge = new Edge(current.peakVertex, connectingEdge.From, newFace, null, false);
+                                newFace.AddEdge(prevEdge);
+                                prevEdge.OwnedFace = newFace;
+                            }
+                        }
+                    }
+                }
+
+                else
+                {
+                    oldFaces.Add(current);
+                    verticesToReassign.Add(face.peakVertex);
+                    verticesToReassign.AddRange(face.InteriorVertices);
+                    foreach (var edge in current.Edges)
+                    {
+                        if (edge == connectingEdge) continue;
+                        stack.Push(((ConvexHullFace)edge.GetMatingFace(current), edge));
+                    }
+                }
+            }
+            foreach (var f in borderFaces)
+                f.Visited = false;
+        }
+
         private static ConvexHull3D MakeConvexHullWithFaces(double tolerance,
-            bool connectVerticesToCvxHullFaces, List<ConvexHullFace> cvxFaces)
+            bool connectVerticesToCvxHullFaces, IEnumerable<ConvexHullFace> cvxFaces)
         {
             var cvxHull = new ConvexHull3D { tolerance = tolerance };
             cvxHull.Faces.AddRange(cvxFaces);
+
             var cvxVertexHash = new HashSet<Vertex>();
+            var cvxEdgeHash = new HashSet<Edge>();
             foreach (var f in cvxFaces)
             {
                 foreach (var v in f.Vertices)
@@ -171,8 +308,19 @@ newFace.Color = new Color(KnownColors.LightSteelBlue);
                 }
                 foreach (var v in f.InteriorVertices)
                     v.PartOfConvexHull = true;
+                foreach (var e in f.Edges)
+                {
+                    e.PartOfConvexHull = true;
+                    cvxEdgeHash.Add(e);
+                    if (connectVerticesToCvxHullFaces)
+                    {
+                        e.From.Edges.Add(e);
+                        e.To.Edges.Add(e);
+                    }
+                }
             }
             cvxHull.Vertices.AddRange(cvxVertexHash);
+            cvxHull.Edges.AddRange(cvxEdgeHash);
             return cvxHull;
         }
 
@@ -268,7 +416,7 @@ newFace.Color = new Color(KnownColors.LightSteelBlue);
                         var baseTriangleArea = (extremePoints[i2].Coordinates - basePoint.Coordinates).Cross(extremePoints[i3].Coordinates - basePoint.Coordinates);
                         for (int i4 = i3 + 1; i4 < numExtrema; i4++)
                         {
-                            var projectedHeight = basePoint.Coordinates- extremePoints[i4].Coordinates ;
+                            var projectedHeight = basePoint.Coordinates - extremePoints[i4].Coordinates;
                             var volume = projectedHeight.Dot(baseTriangleArea);
                             if (Math.Abs(volume) > maxVol)
                             {
@@ -295,10 +443,33 @@ newFace.Color = new Color(KnownColors.LightSteelBlue);
             }
             simplexVertices.Add(extremePoints[maxI4]);
 
-            simplexFaces.Add(new ConvexHullFace(simplexVertices[0], simplexVertices[1], simplexVertices[2]));
-            simplexFaces.Add(new ConvexHullFace(simplexVertices[0], simplexVertices[3], simplexVertices[1]));
-            simplexFaces.Add(new ConvexHullFace(simplexVertices[1], simplexVertices[3], simplexVertices[2]));
-            simplexFaces.Add(new ConvexHullFace(simplexVertices[2], simplexVertices[3], simplexVertices[0]));
+            var face012 = new ConvexHullFace(simplexVertices[0], simplexVertices[1], simplexVertices[2]);
+            var face031 = new ConvexHullFace(simplexVertices[0], simplexVertices[3], simplexVertices[1]);
+            var face132 = new ConvexHullFace(simplexVertices[1], simplexVertices[3], simplexVertices[2]);
+            var face230 = new ConvexHullFace(simplexVertices[2], simplexVertices[3], simplexVertices[0]);
+            var edge01 = new Edge(simplexVertices[0], simplexVertices[1], face012, face031, false);
+            edge01.OwnedFace = face012;
+            edge01.OtherFace = face031;
+            var edge12 = new Edge(simplexVertices[1], simplexVertices[2], face012, face132, false);
+            edge12.OwnedFace = face012;
+            edge12.OtherFace = face132;
+            var edge20 = new Edge(simplexVertices[2], simplexVertices[0], face012, face230, false);
+            edge20.OwnedFace = face012;
+            edge20.OtherFace = face230;
+            var edge03 = new Edge(simplexVertices[0], simplexVertices[3], face031, face230, false);
+            edge03.OwnedFace = face031;
+            edge03.OtherFace = face230;
+            var edge13 = new Edge(simplexVertices[1], simplexVertices[3], face132, face031, false);
+            edge13.OwnedFace = face132;
+            edge13.OtherFace = face031;
+            var edge23 = new Edge(simplexVertices[2], simplexVertices[3], face230, face132, false);
+            edge23.OwnedFace = face230;
+            edge23.OtherFace = face132;
+
+            simplexFaces.Add(face012);
+            simplexFaces.Add(face031);
+            simplexFaces.Add(face132);
+            simplexFaces.Add(face230);
             return simplexVertices;
         }
 
