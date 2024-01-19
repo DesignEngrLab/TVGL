@@ -405,7 +405,7 @@ namespace TVGL
                             var x = (double)reader.ReadAsDouble();
                             var y = (double)reader.ReadAsDouble();
                             var z = (double)reader.ReadAsDouble();
-                            Vertices[vertexIndex] = new Vertex(new Vector3(x, y, z), vertexIndex);
+                            Vertices[vertexIndex] = new Vertex(x, y, z, vertexIndex);
                         }
                         break;
                 }
@@ -1476,9 +1476,6 @@ namespace TVGL
             if (ConvexHull3D.Create(this, out var convexHull))
             {
                 ConvexHull = convexHull; // yes, this looks stupid but for some reason it's necessary - can't pass properties as out parameters
-                if (ConvexHull.Vertices != null)
-                    foreach (var cvxHullPt in ConvexHull.Vertices)
-                        cvxHullPt.PartOfConvexHull = true;
                 foreach (var face in Faces.Where(face => face.Vertices.All(v => v.PartOfConvexHull)))
                 {
                     face.PartOfConvexHull = true;

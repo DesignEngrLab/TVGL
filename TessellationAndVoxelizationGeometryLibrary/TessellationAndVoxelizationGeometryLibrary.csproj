@@ -49,4 +49,8 @@
 	<ItemGroup>
 		<InternalsVisibleTo Include="TVGLUnitTestsAndBenchmarking" />
 	</ItemGroup>
+
+	<ItemGroup>
+	  <ProjectReference Include="..\..\MIConvexHull\MIConvexHull.NET Standard\MIConvexHull.NET Standard.csproj" />
+	</ItemGroup>
 </Project>

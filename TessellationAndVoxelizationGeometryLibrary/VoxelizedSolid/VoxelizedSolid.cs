@@ -527,7 +527,7 @@ namespace TVGL
                                 faceVertices[n] = vertex;
                             else
                             {
-                                vertex = new Vertex(new Vector3(i * s + XMin, j * s + YMin, k * s + ZMin));
+                                vertex = new Vertex(i * s + XMin, j * s + YMin, k * s + ZMin);
                                 vertexDictionary.Add(GetLongID(i, j, k), vertex);
                                 faceVertices[n] = vertex;
                             }

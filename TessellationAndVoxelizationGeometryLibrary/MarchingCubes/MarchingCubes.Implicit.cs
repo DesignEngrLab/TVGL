@@ -77,9 +77,7 @@ namespace TVGL
             if (from.Value.IsPracticallySame(surfaceLevel)) return 0.0;
             if (to.Value.IsPracticallySame(surfaceLevel)) return gridToCoordinateFactor;
             if (to.Value.IsPracticallySame(from.Value)) return gridToCoordinateFactor / 2;
-            return -gridToCoordinateFactor * (surfaceLevel - from.Value) / (to.Value - from.Value);
-            // for some reason the triangles are showing up in reverse!
-            //return gridToCoordinateFactor * (surfaceLevel - from.Value) / (to.Value - from.Value);
+            return gridToCoordinateFactor * (surfaceLevel - from.Value) / (to.Value - from.Value);
         }
     }
 }

@@ -138,7 +138,9 @@ namespace TVGLUnitTestsAndBenchmarking
                 //Console.WriteLine(sw.Elapsed.ToString());
                 sw.Restart();
                 //Console.WriteLine("extruding...");
-                Presenter.ShowAndHang(vs.ConvertToTessellatedSolidRectilinear());
+                var faces = vs.ConvertToTessellatedSolidMarchingCubes(1).Faces;
+                faces.CalculateVolumeAndCenter(1e-9, out var vol, out var center);
+                Presenter.ShowAndHang(vs.ConvertToTessellatedSolidMarchingCubes(1));
                 //Presenter.ShowAndHang(new Solid[] { vs });
                 //continue;
                 var extrudeSolid = vs.DraftToNewSolid(CartesianDirections.YNegative);

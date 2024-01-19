@@ -154,14 +154,15 @@ namespace TVGL
                 foreach (var v in f.InteriorVertices)
                     v.PartOfConvexHull = true;
             }
+            cvxHull.Vertices.AddRange(cvxVertexHash);
             return cvxHull;
         }
 
-        private static void AddVertexToProperFace(IList<ConvexHullFace> simplexFaces, Vertex v, double tolerance)
+        private static void AddVertexToProperFace(IList<ConvexHullFace> faces, Vertex v, double tolerance)
         {
             var maxDot = double.NegativeInfinity;
             ConvexHullFace maxFace = null;
-            foreach (var face in simplexFaces)
+            foreach (var face in faces)
             {
                 var dot = (v.Coordinates - face.Center).Dot(face.Normal);
                 if (dot > maxDot)
@@ -285,8 +286,8 @@ namespace TVGL
 
         private static List<Vertex> GetExtremaOnAABB(int n, IList<Vertex> points, out int numExtrema)
         {
-            var extremePoints = new List<Vertex>(6);
-            for (int i = 0; i < n; i += 2)
+            var extremePoints = Enumerable.Repeat(points[0], 6).ToList();
+            for (int i = 1; i < n; i += 2)
             {
                 if (points[i].X < extremePoints[0].X ||
                     points[i].X == extremePoints[0].X && points[i].Y < extremePoints[0].Y)
@@ -307,18 +308,20 @@ namespace TVGL
                     points[i].Z == extremePoints[5].Z && points[i].Y > extremePoints[5].Y)
                     extremePoints[5] = points[i];
             }
-            var j = 0;
             numExtrema = 6;
-            for (int i = numExtrema - 1; i >= 0; i--)
+            for (int i = numExtrema - 1; i > 0; i--)
             {
-                var thisExtreme = extremePoints[i];
-                var nextExtreme = extremePoints[j];
-                if (thisExtreme == nextExtreme)
+                var extremeI = extremePoints[i];
+                for (int j = 0; j < i; j++)
                 {
-                    numExtrema--;
-                    extremePoints.RemoveAt(i);
+                    var extremeJ = extremePoints[j];
+                    if (extremeI == extremeJ)
+                    {
+                        numExtrema--;
+                        extremePoints.RemoveAt(i);
+                        break;
+                    }
                 }
-                else j = i;
             }
             return extremePoints;
         }

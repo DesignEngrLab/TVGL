@@ -11,7 +11,7 @@
 // </copyright>
 // <summary></summary>
 // ***********************************************************************
-
+using MIConvexHull;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -23,8 +23,10 @@ namespace TVGL
     /// The 3D vertex can connect to any number of faces and edges. It inherits from the
     /// MIConvexhull IVector interface.
     /// </summary>
-    public sealed class Vertex : TessellationBaseClass, IVector3D, IVector
+    public sealed class Vertex : TessellationBaseClass, IVector3D, IVector, MIConvexHull.IVertex
     {
+
+        double[] IVertex.Position => new[] { X, Y, Z };
 
         /// <summary>
         /// Copies this instance. Does not include reference lists.
@@ -50,9 +52,11 @@ namespace TVGL
         /// </summary>
         /// <param name="position">The position.</param>
         /// <param name="indexInListOfVertices">The index in list of vertices.</param>
-        public Vertex(Vector3 position, int indexInListOfVertices)
-            : this(position)
+        public Vertex(Vector3 position, int indexInListOfVertices = -1)
         {
+            Coordinates = position;
+            Edges = new List<Edge>();
+            Faces = new List<TriangleFace>();
             IndexInList = indexInListOfVertices;
         }
 
@@ -60,13 +64,8 @@ namespace TVGL
         /// Initializes a new instance of the <see cref="Vertex" /> class.
         /// </summary>
         /// <param name="position">The position.</param>
-        public Vertex(Vector3 position)
-        {
-            Coordinates = position;
-            Edges = new List<Edge>();
-            Faces = new List<TriangleFace>();
-            IndexInList = -1;
-        }
+        public Vertex(double xCoord, double yCoord, double zCoord, int indexInListOfVertices = -1)
+            : this(new Vector3(xCoord, yCoord, zCoord), indexInListOfVertices) { }
         private Vertex() { }
 
         #endregion Constructor

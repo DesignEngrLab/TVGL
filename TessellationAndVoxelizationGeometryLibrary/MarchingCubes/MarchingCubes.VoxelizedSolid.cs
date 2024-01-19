@@ -79,7 +79,7 @@ namespace TVGL
         /// <returns><c>true</c> if the specified v is inside; otherwise, <c>false</c>.</returns>
         protected override bool IsInside(bool v)
         {
-            return !v;
+            return v;
         }
 
         /// <summary>
