@@ -137,7 +137,7 @@ namespace TVGL
             }
         }
 
-        private bool groundPlaneVisible = true;
+        private bool groundPlaneVisible = false;
         public bool GroundPlaneVisible
         {
             get

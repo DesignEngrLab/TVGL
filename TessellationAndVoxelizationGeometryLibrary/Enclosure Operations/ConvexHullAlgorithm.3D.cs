@@ -131,6 +131,7 @@ namespace TVGL
                 var face = faceQueue.Dequeue();
                 if (face.peakVertex == null)
                 {
+                    face.Color = new Color(KnownColors.LightGreen);
                     cvxFaces.Add(face);
             //Presenter.ShowAndHang(cvxFaces);
                 }
@@ -144,7 +145,9 @@ namespace TVGL
                         faceQueue.Enqueue(newFace);
                     foreach (var newFace in newFaces)
 newFace.Color = new Color(KnownColors.LightSteelBlue);
-                        //Presenter.ShowAndHang(faceQueue);
+                        Presenter.ShowAndHang(faceQueue.Concat(cvxFaces));
+                    foreach (var newFace in newFaces)
+                        newFace.Color = new Color(KnownColors.SlateGray);
                 }
             }
             convexHull = MakeConvexHullWithFaces(tolerance, connectVerticesToCvxHullFaces, cvxFaces);
