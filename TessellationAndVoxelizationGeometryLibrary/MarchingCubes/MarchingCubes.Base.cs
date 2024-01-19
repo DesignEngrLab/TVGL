@@ -272,7 +272,7 @@ namespace TVGL
                 var thisZ = zIndex + _unitOffsetTable[i][2];
                 var id = getIdentifier((int)thisX, (int)thisY, (int)thisZ);
                 var v = cube[i] = GetValue((int)thisX, (int)thisY, (int)thisZ, id);
-                if (IsInside(v.Value))
+                if (!IsInside(v.Value))
                     cubeType |= 1 << i;
             }
             // Based upon the cubeType, the CubeEdgeFlagsTable will tell us which of the 12 edges of the cube
