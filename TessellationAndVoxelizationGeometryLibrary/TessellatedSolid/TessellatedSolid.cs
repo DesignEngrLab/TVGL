@@ -380,11 +380,17 @@ namespace TVGL
                                 case "Capsule":
                                     Primitives.Add(jsonSerializer.Deserialize<Capsule>(reader));
                                     break;
+                                case "Prismatic":
+                                    Primitives.Add(jsonSerializer.Deserialize<Prismatic>(reader));
+                                    break;
                                 case "UnknownRegion":
                                     Primitives.Add(jsonSerializer.Deserialize<UnknownRegion>(reader));
                                     break;
                                 default:
-                                    throw new Exception("Need to add deserialize casting for primitive type: " + primitiveType);
+                                    {
+                                        Console.WriteLine("Need to add deserialize casting for primitive type: " + primitiveType);
+                                        throw new Exception("Need to add deserialize casting for primitive type: " + primitiveType);
+                                    }              
                             }
                         }
                         break;
