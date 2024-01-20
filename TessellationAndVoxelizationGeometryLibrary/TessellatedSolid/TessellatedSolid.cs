@@ -63,14 +63,14 @@ namespace TVGL
         /// </summary>
         /// <value>The number of faces.</value>
         [JsonIgnore]
-        public int NumberOfFaces { get; private set; }
+        public int NumberOfFaces { get; set; }
 
         /// <summary>
         /// Gets the number of vertices.
         /// </summary>
         /// <value>The number of vertices.</value>
         [JsonIgnore]
-        public int NumberOfVertices { get; private set; }
+        public int NumberOfVertices { get; set; }
 
         /// <summary>
         /// Gets the number of edges.
@@ -190,7 +190,8 @@ namespace TVGL
         {
             MakeVertices(vertices, numOfVertices);
             DefineAxisAlignedBoundingBoxAndTolerance(Vertices.Select(v => v.Coordinates));
-            MakeFaces(faceToVertexIndices, numOfFaces, colors);
+            var duplicateFaceCheck = buildOptions == null ? true : buildOptions.DuplicateFaceCheck;
+            MakeFaces(faceToVertexIndices, numOfFaces, colors, true, duplicateFaceCheck);
             TessellationInspectAndRepair.CompleteBuildOptions(this, buildOptions, out _);
         }
 
@@ -678,10 +679,9 @@ namespace TVGL
         /// <param name="colors">The colors.</param>
         /// <param name="doublyLinkToVertices">if set to <c>true</c> [doubly link to vertices].</param>
         internal void MakeFaces(IEnumerable<(int, int, int)> faceToVertexIndices, int numberOfFaces, IList<Color> colors,
-            bool doublyLinkToVertices = true)
+            bool doublyLinkToVertices = true, bool duplicateFaceCheck = true)
         {
             NumberOfFaces = numberOfFaces;
-            var duplicateFaceCheck = true;
             HasUniformColor = true;
             if (colors == null || !colors.Any() || colors.All(c => c == null))
                 SolidColor = new Color(Constants.DefaultColor);
@@ -876,10 +876,7 @@ namespace TVGL
             Vertices = new Vertex[NumberOfVertices];
             var i = 0;
             foreach (var coord in coordinates)
-            {
-                Vertices[i] = new Vertex(coord, i);
-                i++;
-            }
+                Vertices[i] = new Vertex(coord, i++);
         }
 
         #endregion

@@ -22,6 +22,7 @@ namespace TVGL
         public static TessellatedSolidBuildOptions Minimal { get; } =
             new TessellatedSolidBuildOptions
             {
+                DuplicateFaceCheck = false,
                 CheckModelIntegrity = false,
                 AutomaticallyRepairHoles = false,
                 AutomaticallyInvertNegativeSolids = false,
@@ -91,5 +92,10 @@ namespace TVGL
         /// Use "AutomaticallyRepairHoles" for that.
         /// </summary>
         public bool FixEdgeDisassociations { get; set; } = true;
+
+        /// <summary>
+        /// Turn off duplicate face check if streaming from a CAD file or similar. Better to process the faces again later.
+        /// </summary>
+        public bool DuplicateFaceCheck { get; private set; }
     }
 }
