@@ -25,7 +25,7 @@ namespace TVGLUnitTestsAndBenchmarking
                 CopyElementsPassedToConstructor=true,
                 DefineConvexHull=false
             });
-            Presenter.ShowAndHang(sphere1.Faces);
+            //Presenter.ShowAndHang(sphere1.Faces);
             ConvexHull3D.Create(testSphere, out var cvxHull1);
             foreach (var f in cvxHull1.Faces)
                 f.Color = new Color(100,100,0,0);
