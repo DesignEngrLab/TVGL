@@ -173,9 +173,6 @@
 			<Generator>MSBuild:Compile</Generator>
 		</Page>
 	</ItemGroup>
-	<ItemGroup>
-	  <ProjectReference Include="..\..\MIConvexHull\MIConvexHull.NET Standard\MIConvexHull.NET Standard.csproj" />
-	</ItemGroup>
 
 
 </Project>

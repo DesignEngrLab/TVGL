@@ -20,7 +20,7 @@ namespace TVGL.PointCloud
         /// <param name="dimensions">The dimensions.</param>
         /// <param name="points">The points.</param>
         /// <param name="accompanyingObjects">The accompanying objects.</param>
-        internal KDTree(int dimensions, IEnumerable<TPoint> points, IList<TAccObject> accompanyingObjects, Func<TPoint, TPoint, int, double> distanceMetric = null)
+        internal KDTree(int dimensions, IEnumerable<TPoint> points, IList<TAccObject> accompanyingObjects, Func<IVector, IVector, int, double> distanceMetric = null)
             : base(points, distanceMetric)
         {
             this.Dimensions = dimensions;
@@ -45,7 +45,7 @@ namespace TVGL.PointCloud
         /// <param name="radius">The maximum radius to search.</param>
         /// <param name="numberToFind">The number to find.</param>
         /// <returns>A list of (TPoint, TAccObject).</returns>
-        public new IEnumerable<(TPoint, TAccObject)> FindNearest(TPoint target, double radius, int numberToFind = -1)
+        public new IEnumerable<(TPoint, TAccObject)> FindNearest(IVector target, double radius, int numberToFind = -1)
         {
             var nearestNeighbors = numberToFind == -1
                 ? new BoundedPriorityList<int, double>(this.Count)

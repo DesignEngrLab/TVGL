@@ -614,8 +614,15 @@ namespace TVGL
         public void MakeEdgesIfNonExistent()
         {
             if (Edges != null && Edges.Length > 0) return;
-            if (Errors != null)
-                Errors.MakeEdges();
+            if (Errors == null) TessellationInspectAndRepair.CompleteBuildOptions(this,
+                new TessellatedSolidBuildOptions
+                {
+                    AutomaticallyRepairHoles = false,
+                    AutomaticallyRepairNegligibleTFaces = true,
+                    FixEdgeDisassociations = true,
+                    PredefineAllEdges = true
+                }, out _);
+           else Errors.MakeEdges();
         }
 
         /// <summary>
@@ -1473,7 +1480,7 @@ namespace TVGL
         /// <summary>
         /// Calculates the center.
         /// </summary>
-        protected override void CalculateCenter()=>Faces.CalculateVolumeAndCenter(SameTolerance, out _volume, out _center);
+        protected override void CalculateCenter() => Faces.CalculateVolumeAndCenter(SameTolerance, out _volume, out _center);
 
         /// <summary>
         /// Calculates the volume.
@@ -1483,13 +1490,13 @@ namespace TVGL
         /// <summary>
         /// Calculates the surface area.
         /// </summary>
-        protected override void CalculateSurfaceArea()=> _surfaceArea = Faces.Sum(face => face.Area);
+        protected override void CalculateSurfaceArea() => _surfaceArea = Faces.Sum(face => face.Area);
 
         /// <summary>
         /// Calculates the inertia tensor.
         /// </summary>
         /// <exception cref="System.NotImplementedException"></exception>
-        protected override void CalculateInertiaTensor() => _inertiaTensor = Faces.CalculateInertiaTensor(Center);       
+        protected override void CalculateInertiaTensor() => _inertiaTensor = Faces.CalculateInertiaTensor(Center);
 
         #endregion
 

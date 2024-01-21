@@ -13,8 +13,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TVGLUnitTestsAndBenchmarkin
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TVGL PresenterDebugger", "TVGL PresenterDebugger\TVGL PresenterDebugger.csproj", "{CC5F477E-D308-4C86-8C3E-0FB13A5BE656}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MIConvexHull.NET Standard", "..\MIConvexHull\MIConvexHull.NET Standard\MIConvexHull.NET Standard.csproj", "{B37781D6-CA10-4BC7-83B3-B16E50B4C5B4}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -37,10 +35,6 @@ Global
 		{CC5F477E-D308-4C86-8C3E-0FB13A5BE656}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{CC5F477E-D308-4C86-8C3E-0FB13A5BE656}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{CC5F477E-D308-4C86-8C3E-0FB13A5BE656}.Release|Any CPU.Build.0 = Release|Any CPU
-		{B37781D6-CA10-4BC7-83B3-B16E50B4C5B4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{B37781D6-CA10-4BC7-83B3-B16E50B4C5B4}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{B37781D6-CA10-4BC7-83B3-B16E50B4C5B4}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{B37781D6-CA10-4BC7-83B3-B16E50B4C5B4}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

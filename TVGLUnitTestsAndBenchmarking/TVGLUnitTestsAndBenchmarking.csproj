@@ -18,7 +18,6 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<ProjectReference Include="..\..\MIConvexHull\MIConvexHull.NET Standard\MIConvexHull.NET Standard.csproj" />
 		<ProjectReference Include="..\TVGL PresenterDebugger\TVGL PresenterDebugger.csproj" />
 	</ItemGroup>
 

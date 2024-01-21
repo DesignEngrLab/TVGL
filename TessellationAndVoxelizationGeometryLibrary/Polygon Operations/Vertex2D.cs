@@ -116,7 +116,7 @@ namespace TVGL
         /// <summary>
         /// Prevents a default instance of the <see cref="Vertex2D"/> class from being created.
         /// </summary>
-        private Vertex2D() { }
+        internal Vertex2D() { }
 
         /// <summary>
         /// Returns a <see cref="System.String" /> that represents this instance.

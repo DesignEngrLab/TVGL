@@ -23,25 +23,27 @@ namespace TVGLUnitTestsAndBenchmarking
             Trace.Listeners.Add(myWriter);
             TVGL.Message.Verbosity = VerbosityLevels.OnlyCritical;
             DirectoryInfo dir = Program.BackoutToFolder(inputFolder);
-                ConvexHull.Test1();
-            Voxels.TestVoxelization(dir);
+            //Voxels.TestVoxelization(dir);
 
             //#if PRESENT
-            var index = 0;
-            var valid3DFileExtensions = new HashSet<string> { ".stl", ".ply", ".obj", ".3mf" };// ".tvglz", 
-            var allFiles = dir.GetFiles("*Cub*", SearchOption.AllDirectories).Where(f => valid3DFileExtensions.Contains(f.Extension.ToLower()))
+            var index = 4;
+            var valid3DFileExtensions = new HashSet<string> { ".stl", ".ply", ".obj", ".3mf" };//,  ".tvglz" };
+            var allFiles = dir.GetFiles("*", SearchOption.AllDirectories).Where(f => valid3DFileExtensions.Contains(f.Extension.ToLower()))
                 ; //.OrderBy(fi => fi.Length);
             foreach (var fileName in allFiles.Skip(index))
             {
+                if (index == 132)
+                {
+                    index++;
+                    continue;
+                }
                 Console.WriteLine(index + ": Attempting to open: " + fileName.Name);
                 TessellatedSolid[] solids = null;
+                IO.Open(fileName.FullName, out solids);
                 var sw = Stopwatch.StartNew();
-
-                //IO.Open(fileName.FullName, out  solids, TessellatedSolidBuildOptions.Minimal);
-                IO.Open(fileName.FullName, out solids,TessellatedSolidBuildOptions.Minimal);
+                //Presenter.ShowAndHang(solids);
                 ConvexHull.Test2(solids.MaxBy(s => s.Volume));
                 sw.Stop();
-
                 index++;
             }
         }

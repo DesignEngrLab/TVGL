@@ -34,9 +34,45 @@ namespace TVGL
 {
     public static partial class ConvexHullAlgorithm
     {
+        /// <summary>
+        /// Creates the convex hull for a polygon.
+        /// </summary>
+        /// <param name="polygon"></param>
+        /// <param name="convexHullIndices"></param>
+        /// <param name="isMaximal"></param>
+        /// <returns></returns>
+        public static List<Vertex2D> CreateConvexHull(this Polygon polygon, out List<int> convexHullIndices, bool isMaximal = false)
+        {
+            if (isMaximal) return CreateConvexHullMaximal(polygon.Vertices, out convexHullIndices);
+            else
+                return CreateConvexHull(polygon.Vertices, out convexHullIndices);
+        }
+
+        /// <summary>
+        /// Creates the convex hull for a set of polygon.
+        /// </summary>
+        /// <param name="polygon"></param>
+        /// <param name="convexHullIndices"></param>
+        /// <param name="isMaximal"></param>
+        /// <returns></returns>
+        public static List<Vertex2D> CreateConvexHull(this IEnumerable<Polygon> polygon, out List<int> convexHullIndices, bool isMaximal = false)
+        {
+            if (isMaximal) return CreateConvexHullMaximal(polygon.SelectMany(p => p.Vertices).ToList(), out convexHullIndices);
+            else return CreateConvexHull(polygon.SelectMany(p => p.Vertices).ToList(), out convexHullIndices);
+        }
+        /// <summary>
+        /// Creates the convex hull for a set of vertices and then finds any vertices that are on the boundary
+        /// and re-inserts them into the convex hull. This is slower that CreateConvexHull, and it creates a result
+        /// with more vertices. But in some applications it is good to know which vertices are on the boundary.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="points"></param>
+        /// <param name="convexHullIndices"></param>
+        /// <param name="tolerance"></param>
+        /// <returns></returns>
         public static List<T> CreateConvexHullMaximal<T>(this IList<T> points, out List<int> convexHullIndices,
             double tolerance = Constants.DefaultEqualityTolerance)
-            where T : IVector2D, new()
+            where T : IVector2D
         {
             var kdTree = KDTree.Create(points, Enumerable.Range(0, points.Count).ToArray());
             var convexHull = points.CreateConvexHull(out convexHullIndices);
@@ -48,7 +84,7 @@ namespace TVGL
                 var vX = nextEndPoint.X - currentEndPoint.X;
                 var vY = nextEndPoint.Y - currentEndPoint.Y;
                 var vLengthSqd = vX * vX + vY * vY;
-                var midPoint = new T
+                var midPoint = new Vector2
                 {
                     X = 0.5 * (nextEndPoint.X + currentEndPoint.X),
                     Y = 0.5 * (nextEndPoint.Y + currentEndPoint.Y)
@@ -72,8 +108,15 @@ namespace TVGL
             }
             return convexHull;
         }
-        public static List<Vertex2D> CreateConvexHull(this Polygon polygon, out List<int> convexHullIndices)
-            => CreateConvexHull(polygon.Vertices, out convexHullIndices);
+
+        /// <summary>
+        /// Creates the convex hull for a set of vertices. 
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="points"></param>
+        /// <param name="convexHullIndices"></param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentException"></exception>
         public static List<T> CreateConvexHull<T>(this IList<T> points, out List<int> convexHullIndices)
         where T : IVector2D
         {
@@ -155,7 +198,8 @@ namespace TVGL
                     cvxVNum--;
                     extremes.RemoveAt(i);
                 }
-                else j = i;
+                j = i;
+                if (j == cvxVNum) j = 0;
             }
             // before we check if points are on top of one another or have some round-off error issues, these
             // indices are stored and sorted numerically for use in the second half of part 2 where we go through
@@ -243,8 +287,7 @@ namespace TVGL
             {
                 if (indexOfUsedIndices < indicesUsed.Length && i == nextUsedIndex)
                     //in order to avoid a contains function call, we know to only check with next usedIndex in order
-                    nextUsedIndex =
-                        indicesUsed[indexOfUsedIndices++]; //Note: it increments after getting the current index
+                    nextUsedIndex = indicesUsed[indexOfUsedIndices++]; //Note: it increments after getting the current index
                 else
                 {
                     var point = points[i];
@@ -270,27 +313,51 @@ namespace TVGL
              * This approach is linear over the zig-zag polyline defined by each sorted list. This linear approach
              * was defined long ago by a number of authors: McCallum and Avis, Tor and Middleditch (1984), or
              * Melkman (1985) */
-            var convexHull = new List<T>(sortedPoints.SelectMany(edge => edge.Select(pd => pd.point)));
-            convexHullIndices = new List<int>(sortedPoints.SelectMany(edge => edge.Select(pd => pd.index)));
-            var nextPt = convexHull[0];
-            for (int i = convexHull.Count - 1; i > 0; i--)
+            var maxSize = sizes.Sum();
+            List<T> convexHull = new List<T>(maxSize);
+            convexHullIndices = new List<int>(maxSize);
+            for (int i = 0; i < sizes.Length; i++)
             {
-                var currentPt = convexHull[i];
-                var prevPt = convexHull[i - 1];
+                convexHull.AddRange(sortedPoints[i].Take(sizes[i]).Select(pd => pd.point));
+                convexHullIndices.AddRange(sortedPoints[i].Take(sizes[i]).Select(pd => pd.index));
+            }
+            var nextI = 0;
+            var currI = convexHull.Count - 1;
+            var prevI = currI - 1;
+            while (currI >= 0)
+            {
+                var nextPt = convexHull[nextI];
+                var currentPt = convexHull[currI];
+                var prevPt = convexHull[prevI];
                 var lX = currentPt.X - prevPt.X;
                 var lY = currentPt.Y - prevPt.Y;
                 var rX = nextPt.X - currentPt.X;
                 var rY = nextPt.Y - currentPt.Y;
                 double zValue = lX * rY - lY * rX;
-                if (zValue < 0)
+                if (zValue > 0) // then save this convex point (for now)
                 {
-                    convexHull.RemoveAt(i);
-                    convexHullIndices.RemoveAt(i);
+                    nextI = currI;
+                    currI--;
+                    if (currI == 0) prevI = convexHull.Count - 1;
+                    else prevI = currI - 1;
                 }
-                else nextPt = currentPt;
+                else // then remove this concave point
+                {
+                    convexHull.RemoveAt(currI);
+                    convexHullIndices.RemoveAt(currI);
+                    // we don't decrement the index, currI because we need to go back and check if the last
+                    //point is not concave from this deletion.
+                    if (currI == convexHull.Count)
+                    {
+                        currI = convexHull.Count - 1;
+                        nextI = 0;
+                        prevI = currI - 1;
+                    }
+                    if (nextI == convexHull.Count)
+                        nextI = 0;
+                }
             }
             #endregion
-
             return convexHull;
         }
 

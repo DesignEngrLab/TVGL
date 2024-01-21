@@ -11,7 +11,6 @@
 // </copyright>
 // <summary></summary>
 // ***********************************************************************
-using MIConvexHull;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -23,11 +22,8 @@ namespace TVGL
     /// The 3D vertex can connect to any number of faces and edges. It inherits from the
     /// MIConvexhull IVector interface.
     /// </summary>
-    public sealed class Vertex : TessellationBaseClass, IVector3D, IVector, MIConvexHull.IVertex
+    public sealed class Vertex : TessellationBaseClass, IVector3D, IVector
     {
-
-        double[] IVertex.Position => new[] { X, Y, Z };
-
         /// <summary>
         /// Copies this instance. Does not include reference lists.
         /// </summary>
