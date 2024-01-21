@@ -41,20 +41,22 @@ namespace TVGLUnitTestsAndBenchmarking
         {
             var sw = Stopwatch.StartNew();
             ConvexHull3D.Create(ts, out var convexHull1);
-            Console.WriteLine("NEW Convex Hull Time: " + sw.Elapsed.ToString());
+            Presenter.ShowAndHang(ts);
+            Presenter.ShowAndHang(convexHull1.Faces);
 
+            Console.Write(ts.Vertices.Length.ToString()+", NEW Convex Hull Time, " + sw.ElapsedTicks.ToString()+", ");
+             sw = Stopwatch.StartNew();
             var convexHull2 = MakeMIConvexHull(ts.Vertices, ts.SameTolerance);
+            Console.Write(sw.ElapsedTicks.ToString()+",");
 
-            Console.WriteLine("New: "+convexHull1.Faces.Count+", "+convexHull1.Vertices.Count +", "+convexHull1.Volume);
-            Console.WriteLine("MIC: "+convexHull2.Faces.Count+", "+convexHull2.Vertices.Count +", "+convexHull2.Volume);
+            Console.Write("New, "+convexHull1.Faces.Count+", "+convexHull1.Vertices.Count +", "+convexHull1.Volume+",");
+            Console.WriteLine("MIC, "+convexHull2.Faces.Count+", "+convexHull2.Vertices.Count +", "+convexHull2.Volume);
         }
 
         public static ConvexHull3D MakeMIConvexHull(IList<Vertex> vertices, double tolerance)
         {
-           var sw = Stopwatch.StartNew();
 
             var convexHull =MIConvexHull.ConvexHull.Create<Vertex>(vertices, tolerance);
-            Console.WriteLine("MIConvexHull Time: " + sw.Elapsed.ToString());
             var Vertices = convexHull.Result.Points;
             var faces = convexHull.Result.Faces;
             var cvxHull = new ConvexHull3D { tolerance = tolerance };
