@@ -41,16 +41,14 @@ namespace TVGLUnitTestsAndBenchmarking
         {
             var sw = Stopwatch.StartNew();
             ConvexHull3D.Create(ts, out var convexHull1);
-            Presenter.ShowAndHang(ts);
-            Presenter.ShowAndHang(convexHull1.Faces);
 
             Console.Write(ts.Vertices.Length.ToString()+", NEW Convex Hull Time, " + sw.ElapsedTicks.ToString()+", ");
-             sw = Stopwatch.StartNew();
+            sw = Stopwatch.StartNew();
             var convexHull2 = MakeMIConvexHull(ts.Vertices, ts.SameTolerance);
-            Console.Write(sw.ElapsedTicks.ToString()+",");
+            Console.Write(sw.ElapsedTicks.ToString() + ",");
 
-            Console.Write("New, "+convexHull1.Faces.Count+", "+convexHull1.Vertices.Count +", "+convexHull1.Volume+",");
-            Console.WriteLine("MIC, "+convexHull2.Faces.Count+", "+convexHull2.Vertices.Count +", "+convexHull2.Volume);
+            Console.Write("New, " + convexHull1.Faces.Count + ", " + convexHull1.Vertices.Count + ", " + convexHull1.Volume + ",");
+            Console.WriteLine("MIC, " + convexHull2.Faces.Count + ", " + convexHull2.Vertices.Count + ", " + convexHull2.Volume);
         }
 
         public static ConvexHull3D MakeMIConvexHull(IList<Vertex> vertices, double tolerance)

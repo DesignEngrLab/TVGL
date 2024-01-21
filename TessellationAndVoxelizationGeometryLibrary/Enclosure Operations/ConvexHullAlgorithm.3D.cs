@@ -11,7 +11,6 @@
 // </copyright>
 // <summary></summary>
 // ***********************************************************************
-using MIConvexHull;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -56,9 +55,6 @@ namespace TVGL
         /// <param name="ts">The tessellated solid that the convex hull is made from.</param>
         public static bool Create(TessellatedSolid ts, out ConvexHull3D convexHull)
         {
-            /// debug
-            debugSolid = ts;
-            ///
             if (Create(ts.Vertices, out convexHull, false, ts.SameTolerance))
             {
                 ts.ConvexHull = convexHull;
@@ -77,10 +73,6 @@ namespace TVGL
             }
         }
 
-        /// debug
-        private static TessellatedSolid debugSolid;
-        ///
-
         public static bool Create(IList<Vertex> vertices, out ConvexHull3D convexHull,
             bool connectVerticesToCvxHullFaces, double tolerance = double.NaN)
         {
@@ -94,7 +86,6 @@ namespace TVGL
             if (numExtrema == 1)
             {
                 convexHull = new ConvexHull3D { tolerance = tolerance };
-                //if (isMaximal) convexHull.Vertices.AddRange(vertices);
                 convexHull.Vertices.Add(extremePoints[0]);
                 return true;
             }
@@ -112,11 +103,6 @@ namespace TVGL
             }
             else if (numExtrema > 4) FindBestExtremaSubset(extremePoints);
             var simplexFaces = MakeSimplexFaces(extremePoints);
-            /// debug
-            ////var simplexSolid = new TessellatedSolid(simplexFaces.Cast<TriangleFace>().ToList(), 
-            ////    buildOptions: new TessellatedSolidBuildOptions { CopyElementsPassedToConstructor=true, DefineConvexHull=false});
-            ////Presenter.ShowAndHang(simplexSolid);
-            /// end debug
             // now add all the other vertices to the simplex faces. AddVertexToProperFace will add the vertex to the face that it is "farthest" from
             var extremePointsHash = extremePoints.ToHashSet();
             foreach (var v in vertices)
@@ -131,10 +117,9 @@ namespace TVGL
             while (true)
             {
                 var face = faceQueue.Dequeue();
-                face.Color = new Color(KnownColors.LightCyan);
-                Presenter.ShowAndHang(faceQueue.UnorderedItems.Select(fq => fq.Element).Concat([face]));
                 if (face.peakVertex == null)
-                {
+                {   // given the the priority queue is sorted in descending order, if the peak vertex is null then all the other faces are also null
+                    // and we're done, so break the loop. Oh! but before you go, better re-add the face that you just dequeued.
                     faceQueue.Enqueue(face, face.peakDistance);
                     break;
                 }
@@ -145,18 +130,6 @@ namespace TVGL
                     faceQueue.Remove(f);
                 foreach (var newFace in newFaces)
                     faceQueue.Enqueue(newFace, newFace.peakDistance);
-                foreach (var nf in newFaces)
-                    nf.Color = new Color(KnownColors.LightPink);
-                Presenter.ShowAndHang(faceQueue.UnorderedItems.Select(ue => ue.Element));
-                // debug
-                foreach (var f in newFaces)
-                    f.Color = new Color(100, 0, 100, 0);
-                foreach (var f in oldFaces)
-                    f.Color = new Color(100, 100, 0, 0);
-                //Presenter.ShowAndHang(faceQueue.UnorderedItems.Select(fq => fq.Element).Concat(oldFaces));
-                foreach (var f in newFaces)
-                    f.Color = new Color(KnownColors.Gray);
-                //// end debug
             }
             convexHull = MakeConvexHullWithFaces(tolerance, connectVerticesToCvxHullFaces,
                 faceQueue.UnorderedItems.Select(fq => fq.Element));
@@ -197,8 +170,6 @@ namespace TVGL
             newFaces.Clear();
             oldFaces.Clear();
             verticesToReassign.Clear();
-            //
-            //var borderFaces = new List<ConvexHullFace>();
             Edge inConeEdge = null;
             Edge firstInConeEdge = null;
             var peakVertex = startingFace.peakVertex;
@@ -213,7 +184,6 @@ namespace TVGL
                 { // current is part of the convex hull that is to be kept. it is beyond the horizon
                     // so we stop here but before we move down the stack we need to create a new face
                     // this border face is stored in the borderFaces list so that at the end we can clear the Visited flags
-                    //borderFaces.Add(current);
                     ConvexHullFace newFace;
                     if (connectingEdge.OwnedFace == current)
                     {   // if the current owns the face then the new face will follow the edge backwards
@@ -300,8 +270,6 @@ namespace TVGL
                     }
                 }
             }
-            //foreach (var f in borderFaces)
-            //    f.Visited = false;
         }
 
         private static ConvexHull3D MakeConvexHullWithFaces(double tolerance,
@@ -382,10 +350,8 @@ namespace TVGL
                 coords2D = vertices.ProjectTo2DCoordinates(planeNormal, out backTransform).ToList();
             }
             var cvxHull2D = coords2D.CreateConvexHull(out var vertexIndices);
-            //var cvxHull3DPoints = cvxHull2D.ConvertTo3DLocations(backTransform).ToList();
             var indexHash = vertexIndices.ToHashSet();
             convexHull = new ConvexHull3D { tolerance = tolerance };
-            //convexHull.Vertices.AddRange(vertexIndices.Select(ind => vertices[ind]));
             var interiorVertices = new List<Vertex>();
             for (var i = 0; i < vertices.Count; i++)
             {
