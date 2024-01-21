@@ -1470,22 +1470,6 @@ namespace TVGL
             return true;
         }
 
-        internal void BuildConvexHull()
-        {
-            //Otherwise, create the convex hull and connect the vertices and faces that belong to the hull.
-            if (ConvexHull3D.Create(this, out var convexHull))
-            {
-                ConvexHull = convexHull; // yes, this looks stupid but for some reason it's necessary - can't pass properties as out parameters
-                foreach (var face in Faces.Where(face => face.Vertices.All(v => v.PartOfConvexHull)))
-                {
-                    face.PartOfConvexHull = true;
-                    foreach (var e in face.Edges)
-                        if (e != null) e.PartOfConvexHull = true;
-                }
-            }
-        }
-
-
         /// <summary>
         /// Calculates the center.
         /// </summary>

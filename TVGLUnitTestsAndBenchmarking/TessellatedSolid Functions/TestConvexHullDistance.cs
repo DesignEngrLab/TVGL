@@ -26,7 +26,8 @@ namespace TVGLUnitTestsAndBenchmarking
                 DefineConvexHull=false
             });
             //Presenter.ShowAndHang(sphere1.Faces);
-            ConvexHull3D.Create(testSphere, out var cvxHull1);
+            ConvexHull3D.Create(testSphere);
+            var cvxHull1 = testSphere.ConvexHull;
             foreach (var f in cvxHull1.Faces)
                 f.Color = new Color(100,100,0,0);
 
@@ -40,15 +41,19 @@ namespace TVGLUnitTestsAndBenchmarking
         public static void Test2(TessellatedSolid ts)
         {
             var sw = Stopwatch.StartNew();
-            ConvexHull3D.Create(ts, out var convexHull1);
+            ConvexHull3D.Create(ts);
+            sw.Stop();
+            ts.ResetDefaultColor();
+            foreach (var f in ts.ConvexHull.Faces)
+                f.Color = new Color(100,0,100,100);
+            Console.WriteLine("num vertices in solid = "+ts.Vertices.Length.ToString()+", Convex Hull Time, " + sw.ElapsedTicks.ToString()+", ");
+            Presenter.ShowAndHang(ts.Faces.Concat(ts.ConvexHull.Faces));
+            //sw = Stopwatch.StartNew();
+            //var convexHull2 = MakeMIConvexHull(ts.Vertices, ts.SameTolerance);
+            //Console.Write(sw.ElapsedTicks.ToString() + ",");
 
-            Console.Write(ts.Vertices.Length.ToString()+", NEW Convex Hull Time, " + sw.ElapsedTicks.ToString()+", ");
-            sw = Stopwatch.StartNew();
-            var convexHull2 = MakeMIConvexHull(ts.Vertices, ts.SameTolerance);
-            Console.Write(sw.ElapsedTicks.ToString() + ",");
-
-            Console.Write("New, " + convexHull1.Faces.Count + ", " + convexHull1.Vertices.Count + ", " + convexHull1.Volume + ",");
-            Console.WriteLine("MIC, " + convexHull2.Faces.Count + ", " + convexHull2.Vertices.Count + ", " + convexHull2.Volume);
+            //Console.Write("New, " + convexHull1.Faces.Count + ", " + convexHull1.Vertices.Count + ", " + convexHull1.Volume + ",");
+            //Console.WriteLine("MIC, " + convexHull2.Faces.Count + ", " + convexHull2.Vertices.Count + ", " + convexHull2.Volume);
         }
 
         public static ConvexHull3D MakeMIConvexHull(IList<Vertex> vertices, double tolerance)

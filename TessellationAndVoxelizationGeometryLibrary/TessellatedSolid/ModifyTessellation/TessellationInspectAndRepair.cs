@@ -194,7 +194,7 @@ namespace TVGL
             if (buildOptions.DefineConvexHull && !ts.Volume.IsNegligible())
                 try
                 {
-                    ts.BuildConvexHull();
+                    ConvexHull3D.Create(ts);
                 }
                 catch
                 {

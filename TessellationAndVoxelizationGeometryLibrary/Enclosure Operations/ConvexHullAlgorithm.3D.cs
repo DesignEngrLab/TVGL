@@ -20,13 +20,15 @@ namespace TVGL
     public partial class ConvexHull3D : Solid
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="ConvexHull3D" /> class.
-        /// Optionally can choose to create faces and edges. Cannot make edges without faces.
+        /// Creates the convex hull for a set of Coordinates. By the way, this is not 
+        /// faster than using Vertices and - in fact - this method will wrap each coordinate
+        /// within a vertex.
         /// </summary>
-        /// <param name="vertices">The vertices.</param>
-        /// <param name="tolerance">The tolerance.</param>
-        /// <param name="createFaces">if set to <c>true</c> [create faces].</param>
-        /// <param name="createEdges">if set to <c>true</c> [create edges].</param>
+        /// <param name="points"></param>
+        /// <param name="convexHull"></param>
+        /// <param name="vertexIndices"></param>
+        /// <param name="tolerance"></param>
+        /// <returns></returns>
         public static bool Create(IList<Vector3> points, out ConvexHull3D convexHull,
             out List<int> vertexIndices, double tolerance = double.NaN)
         {
@@ -50,12 +52,18 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="ConvexHull3D" /> class.
+        /// Creates the convex hull for a tessellated solid. This result of the method is stored 
+        /// with the "ConvexHull" property of the TessellatedSolid. The vertices of the convex hull
+        /// are a subset of the vertices of the TessellatedSolid and are unaffected by the method.
+        /// So, while convex hull faces and edges connect to the vertices of the convex hull, the
+        /// vertices do not point back to the convex hull faces and edges.
+        /// Addtionally, the "PartOfConvexHull" property of the vertices, edges, and faces are set here.
         /// </summary>
-        /// <param name="ts">The tessellated solid that the convex hull is made from.</param>
-        public static bool Create(TessellatedSolid ts, out ConvexHull3D convexHull)
+        /// <param name="ts"></param>
+        /// <returns></returns>
+        public static bool Create(TessellatedSolid ts)
         {
-            if (Create(ts.Vertices, out convexHull, false, ts.SameTolerance))
+            if (Create(ts.Vertices, out var convexHull, false, ts.SameTolerance))
             {
                 ts.ConvexHull = convexHull;
                 foreach (var face in ts.Faces.Where(face => face.Vertices.All(v => v.PartOfConvexHull)))
@@ -68,31 +76,44 @@ namespace TVGL
             }
             else
             {
-                convexHull = null;
                 return false;
             }
         }
 
+        /// <summary>
+        /// Creates the convex hull for a set of vertices. This method is used by the TessellatedSolid,
+        /// but it can be used within any set of vertices.
+        /// </summary>
+        /// <param name="vertices"></param>
+        /// <param name="convexHull"></param>
+        /// <param name="connectVerticesToCvxHullFaces"></param>
+        /// <param name="tolerance"></param>
+        /// <returns></returns>
         public static bool Create(IList<Vertex> vertices, out ConvexHull3D convexHull,
             bool connectVerticesToCvxHullFaces, double tolerance = double.NaN)
         {
             var n = vertices.Count;
             if (double.IsNaN(tolerance)) tolerance = Constants.BaseTolerance;
+
+            // if the vertices are all on a plane, then we can solve this as a 2D problem
             if (SolveAs2D(vertices, out convexHull, tolerance)) return true;
 
             /* The first step is to quickly identify the two to six vertices based on the
-             * Akl-Toussaint heuristic. */
+             * Akl-Toussaint heuristic, which is simply the points on the AABB */
             var extremePoints = GetExtremaOnAABB(n, vertices, out var numExtrema);
             if (numExtrema == 1)
-            {
+            { // only one extreme point, so the convex hull is a single point
                 convexHull = new ConvexHull3D { tolerance = tolerance };
                 convexHull.Vertices.Add(extremePoints[0]);
                 return true;
             }
             if (numExtrema == 2)
-            {
-                var thirdPoint = Find3rdStartingPoint(extremePoints, vertices);
-                if (thirdPoint == extremePoints[0] || thirdPoint == extremePoints[1])
+            {   // this is not a degenerate case! It's possible that the shape is long and skinny
+                // in order to move forward, we find the third point that is farthest from the line
+                // between the two extreme points. If that third point is one of the extreme points
+                // or is too close to the line, then we have a degenerate case and we return a single
+                var thirdPoint = Find3rdStartingPoint(extremePoints, vertices, out var radialDistance);
+                if (thirdPoint == extremePoints[0] || thirdPoint == extremePoints[1] || radialDistance < tolerance)
                 {
                     convexHull = new ConvexHull3D { tolerance = tolerance };
                     convexHull.Vertices.Add(extremePoints[0]);
@@ -101,8 +122,11 @@ namespace TVGL
                 }
                 extremePoints = new List<Vertex> { extremePoints[0], extremePoints[1], thirdPoint };
             }
-            else if (numExtrema > 4) FindBestExtremaSubset(extremePoints);
+            else if (numExtrema > 4)
+                // if more than 4 extreme points, then we need to reduce to 4 by finding the max volume tetrahedron
+                FindBestExtremaSubset(extremePoints);
             var simplexFaces = MakeSimplexFaces(extremePoints);
+
             // now add all the other vertices to the simplex faces. AddVertexToProperFace will add the vertex to the face that it is "farthest" from
             var extremePointsHash = extremePoints.ToHashSet();
             foreach (var v in vertices)
@@ -110,6 +134,8 @@ namespace TVGL
                 if (extremePointsHash.Contains(v)) continue;
                 AddVertexToProperFace(simplexFaces, v, tolerance);
             }
+
+            // here comes the main loop. We start with the simplex faces and then keep adding faces until we're done
             var faceQueue = new UpdatablePriorityQueue<ConvexHullFace, double>(simplexFaces.Select(f => (f, f.peakDistance)), new NoEqualSort(false));
             var newFaces = new List<ConvexHullFace>();
             var oldFaces = new List<ConvexHullFace>();
@@ -117,12 +143,16 @@ namespace TVGL
             while (true)
             {
                 var face = faceQueue.Dequeue();
+                // solve the face that has the farthest vertex from it.
                 if (face.peakVertex == null)
                 {   // given the the priority queue is sorted in descending order, if the peak vertex is null then all the other faces are also null
                     // and we're done, so break the loop. Oh! but before you go, better re-add the face that you just dequeued.
                     faceQueue.Enqueue(face, face.peakDistance);
                     break;
                 }
+                // this function, CreateNewFaceCone, is the hardest part of the algorithm. But, from its arguments, you can see that it finds
+                // faces to remove (oldFaces), faces to add (newFaces), and vertices to reassign (verticesToReassign) to the new faces.
+                // These three lists are then processed in the 3 foreach loops below.
                 CreateNewFaceCone(face, newFaces, oldFaces, verticesToReassign);
                 foreach (var iv in verticesToReassign)
                     AddVertexToProperFace(newFaces, iv, tolerance);
@@ -131,22 +161,30 @@ namespace TVGL
                 foreach (var newFace in newFaces)
                     faceQueue.Enqueue(newFace, newFace.peakDistance);
             }
+            // now we have the convex hull faces are used to build the convex hull object
             convexHull = MakeConvexHullWithFaces(tolerance, connectVerticesToCvxHullFaces,
                 faceQueue.UnorderedItems.Select(fq => fq.Element));
             return true;
         }
 
-        private static Vertex Find3rdStartingPoint(List<Vertex> extremePoints, IList<Vertex> vertices)
+        /// <summary>
+        /// When only two extrema are found, this method finds a third point that is farthest from the line between the two extrema.
+        /// </summary>
+        /// <param name="extremePoints"></param>
+        /// <param name="vertices"></param>
+        /// <param name="radialDistance"></param>
+        /// <returns></returns>
+        private static Vertex Find3rdStartingPoint(List<Vertex> extremePoints, IList<Vertex> vertices, out double radialDistance)
         {
             var axis = extremePoints[1].Coordinates - extremePoints[0].Coordinates;
-            var maxDistance = double.NegativeInfinity;
+            radialDistance = double.NegativeInfinity;
             Vertex thirdPoint = null;
             foreach (var v in vertices)
             {
                 var distance = (v.Coordinates - extremePoints[0].Coordinates).Cross(axis).LengthSquared();
-                if (distance > maxDistance)
+                if (distance > radialDistance)
                 {
-                    maxDistance = distance;
+                    radialDistance = distance;
                     thirdPoint = v;
                 }
             }
@@ -166,7 +204,6 @@ namespace TVGL
         private static void CreateNewFaceCone(ConvexHullFace startingFace, List<ConvexHullFace> newFaces,
             List<ConvexHullFace> oldFaces, List<Vertex> verticesToReassign)
         {
-            // clearing the lists for now - in the future make it more performant by overwriting
             newFaces.Clear();
             oldFaces.Clear();
             verticesToReassign.Clear();
@@ -176,10 +213,17 @@ namespace TVGL
             var peakCoord = peakVertex.Coordinates;
             var stack = new Stack<(ConvexHullFace, Edge)>();
             stack.Push((startingFace, null));
+
+            // that's initialization. now for the main loop. Using a Depth-First Search, we find all the faces that are
+            // within (and beyond the horizon) from the peakVertex. Imagine this peak vertex as a point sitting in the middle
+            // above the triangle. All the triangles that are visible from this point are the ones that are within the cone.
+            // All these triangles need to be removed (stored in oldFaces) and replaced with new triangles (newFaces).
+            // The new triangles are formed by connecting the edges on the horizon with the peakVertex.
             while (stack.Count > 0)
             {
                 var (current, connectingEdge) = stack.Pop();
-                if (current.Visited) continue;
+                if (current.Visited) continue; // here is the only place where "Visited" is checked. It is only set for
+                // triangles within the cone to avoid cycling or redundant search.
                 if ((current.Center - peakCoord).Dot(current.Normal) > 0)
                 { // current is part of the convex hull that is to be kept. it is beyond the horizon
                     // so we stop here but before we move down the stack we need to create a new face
@@ -192,6 +236,11 @@ namespace TVGL
                         newFace.AddEdge(connectingEdge);
                         if (firstInConeEdge == null) // this is the first time through so we get to own the two in-cone edges as well
                         {
+                            // the new face will have three edges. we re-use the connectingEdge as the first edge, but the other two
+                            // will be in the cone of new faces. From the above link, we learn that if Depth-First Search is used to
+                            // traverse the faces, then the edges on the horizon will be populated exactly in the clockwise direction.
+                            // So, inConeEdge will be the edge between this and the next cone face, and firstInConeEdge will be the
+                            // the last face that the cone wraps around to.
                             inConeEdge = new Edge(peakVertex, connectingEdge.To, newFace, null, false);
                             inConeEdge.OwnedFace = newFace;
                             newFace.AddEdge(inConeEdge);
@@ -249,22 +298,30 @@ namespace TVGL
                     }
                     newFaces.Add(newFace);
                 }
-                else
+                else // the face is within the cone. it'll be deleted in the above method, so we better get its interior vertices
+                     // and the peak and add them to the verticesToReassign list for later reassignment to the new faces
                 {
                     current.Visited = true;
                     oldFaces.Add(current);
                     if (current.peakVertex != null && current.peakVertex != peakVertex)
                         verticesToReassign.Add(current.peakVertex);
                     verticesToReassign.AddRange(current.InteriorVertices);
+
+                    // this is a little complicated, but we need to find the neigbors of the current face that are not the connecting edge
+                    // furthermore, for the trick with the inConeEdge to work, we need to generate children in the CCW direction starting 
+                    // with the one after the connecting edge. So, we need to find the connecting edge in the list of edges and then start
+                    // the loop after that.
                     var connectingIndex = current.AB == connectingEdge ? 0 : current.BC == connectingEdge ? 1 : current.CA == connectingEdge ? 2 : -1;
+                    // at the very start, there are no connecting edges, so -1
                     var i = 0;
                     var neighborCount = connectingIndex >= 0 ? 2 : 3;
-                    foreach (var edge in current.Edges.Concat(current.Edges))
-                    {
+                    foreach (var edge in current.Edges.Concat(current.Edges)) // the concat has us going through the edges twice!
+                    {   // keep going until you pass the connecting edge and then add the rest to the stack
                         if (i++ > connectingIndex)
                         {
-                            if (edge == connectingEdge) continue; //this can  be removed once the code is debugged
+                            //if (edge == connectingEdge) continue; //this can  be removed once the code is debugged
                             stack.Push(((ConvexHullFace)edge.GetMatingFace(current), edge));
+                            // we can break one we have the two connecting edges (or three when connectingIndex is -1 at the very start).
                             if (--neighborCount == 0) break;
                         }
                     }
@@ -272,6 +329,13 @@ namespace TVGL
             }
         }
 
+        /// <summary>
+        /// This method is called at the end of the algorithm to make the convex hull object.
+        /// </summary>
+        /// <param name="tolerance"></param>
+        /// <param name="connectVerticesToCvxHullFaces"></param>
+        /// <param name="cvxFaces"></param>
+        /// <returns></returns>
         private static ConvexHull3D MakeConvexHullWithFaces(double tolerance,
             bool connectVerticesToCvxHullFaces, IEnumerable<ConvexHullFace> cvxFaces)
         {
@@ -289,6 +353,8 @@ namespace TVGL
                     if (connectVerticesToCvxHullFaces)
                         v.Faces.Add(f);
                 }
+                // vertices that are stored in the interior vertices do not define the edges and faces
+                // of the convex hull but it is useful to know that they are on the boundary of the convex hull
                 foreach (var v in f.InteriorVertices)
                     v.PartOfConvexHull = true;
                 foreach (var e in f.Edges)
@@ -307,6 +373,13 @@ namespace TVGL
             return cvxHull;
         }
 
+        /// <summary>
+        /// For each vertex, add it to the interior points of the convex hull face that it is farthest from.
+        /// Actually, the peakVertex and peakDistance properties of ConvexHullFace store the vertex that is farthest
+        /// </summary>
+        /// <param name="faces"></param>
+        /// <param name="v"></param>
+        /// <param name="tolerance"></param>
         private static void AddVertexToProperFace(IList<ConvexHullFace> faces, Vertex v, double tolerance)
         {
             var maxDot = double.NegativeInfinity;
@@ -333,6 +406,14 @@ namespace TVGL
             }
         }
 
+        /// <summary>
+        /// Before the 3D convex hull is run, we find if the points are all on a plane.
+        /// If so, then we can solve this as a 2D problem.
+        /// </summary>
+        /// <param name="vertices"></param>
+        /// <param name="convexHull"></param>
+        /// <param name="tolerance"></param>
+        /// <returns></returns>
         private static bool SolveAs2D(IList<Vertex> vertices, out ConvexHull3D convexHull, double tolerance = double.NaN)
         {
             Plane.DefineNormalAndDistanceFromVertices(vertices, out var distance, out var planeNormal);
@@ -381,7 +462,12 @@ namespace TVGL
             return true;
         }
 
-
+        /// <summary>
+        /// If there are 5 or 6 points from the AABB check, then we run through all possibilities of 4 points 
+        /// to find the one tetrahedron with the largest volume. The one or two points that are not part of the
+        /// tetrahedron are removed from extremePoints
+        /// </summary>
+        /// <param name="extremePoints"></param>
         private static void FindBestExtremaSubset(List<Vertex> extremePoints)
         {
             var maxVol = 0.0;
@@ -414,6 +500,11 @@ namespace TVGL
                 extremePoints.RemoveAt(i);
             }
         }
+        /// <summary>
+        /// This method makes the faces for the simplex. It is called when there are 3 or 4 extreme points.
+        /// </summary>
+        /// <param name="vertices"></param>
+        /// <returns></returns>
         private static List<ConvexHullFace> MakeSimplexFaces(List<Vertex> vertices)
         {
             if (vertices.Count == 3)
@@ -433,8 +524,10 @@ namespace TVGL
             }
             else
             {
+                // in order to get the order correct, we find the volume from the scalar triple product formula
                 var basePoint = vertices[0].Coordinates;
                 var volume = (vertices[1].Coordinates - basePoint).Cross(vertices[2].Coordinates - basePoint).Dot(basePoint - vertices[3].Coordinates);
+                // if the volume is negative then swap the two middle points to get them triangles in the prpoer orientation
                 if (volume < 0) Constants.SwapItemsInList(1, 2, vertices);
 
                 var face012 = new ConvexHullFace(vertices[0], vertices[1], vertices[2]);
@@ -463,6 +556,13 @@ namespace TVGL
             }
         }
 
+        /// <summary>
+        /// Finds the extreme points on the bounding box
+        /// </summary>
+        /// <param name="n"></param>
+        /// <param name="points"></param>
+        /// <param name="numExtrema"></param>
+        /// <returns></returns>
         private static List<Vertex> GetExtremaOnAABB(int n, IList<Vertex> points, out int numExtrema)
         {
             var extremePoints = Enumerable.Repeat(points[0], 6).ToList();
