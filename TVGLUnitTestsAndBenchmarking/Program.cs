@@ -23,46 +23,30 @@ namespace TVGLUnitTestsAndBenchmarking
             Trace.Listeners.Add(myWriter);
             TVGL.Message.Verbosity = VerbosityLevels.OnlyCritical;
             DirectoryInfo dir = Program.BackoutToFolder(inputFolder);
-            //Voxels.TestVoxelPrimitiveBoolOps();
-            Voxels.TestVoxelization(dir);
-            //Voxels.VoxelRowCompare();
-            return;
-            //GJK_Testing.Test1();
-            PrimitiveSurfaceTessellation.TestPresent();
-            Console.ReadLine();
-            return;
+            //Voxels.TestVoxelization(dir);
 
             //#if PRESENT
-            var index = 2;
-            var valid3DFileExtensions = new HashSet<string> { ".stl", ".ply", ".obj", ".3mf" };// ".tvglz", 
+            var index = 4;
+            var valid3DFileExtensions = new HashSet<string> { ".stl", ".ply", ".obj", ".3mf" };//,  ".tvglz" };
             var allFiles = dir.GetFiles("*", SearchOption.AllDirectories).Where(f => valid3DFileExtensions.Contains(f.Extension.ToLower()))
                 ; //.OrderBy(fi => fi.Length);
             foreach (var fileName in allFiles.Skip(index))
             {
-                Console.Write(index + ": Attempting to open: " + fileName.Name);
+                if (index == 132)
+                {
+                    index++;
+                    continue;
+                }
+                Console.WriteLine(index + ": Attempting to open: " + fileName.Name);
                 TessellatedSolid[] solids = null;
-                var sw = Stopwatch.StartNew();
-
-                //IO.Open(fileName.FullName, out  solids, TessellatedSolidBuildOptions.Minimal);
                 IO.Open(fileName.FullName, out solids);
+                var sw = Stopwatch.StartNew();
+                //Presenter.ShowAndHang(solids);
+                ConvexHull.Test2(solids.MaxBy(s => s.Volume));
                 sw.Stop();
-                if (solids.Length == 0) continue;
-                Console.WriteLine("," + solids[0].NumberOfVertices + "," + solids[0].NumberOfEdges + "," +
-                    solids[0].NumberOfFaces + "," + sw.ElapsedTicks);
-                Presenter.ShowAndHang(solids);
-       
                 index++;
             }
         }
-
-        private static Plane CreatePerpendicualBisector(Vector3 a, Vector3 b)
-        {
-            var midpoint = (a + b) / 2;
-            var normal = (a - b).Normalize();
-            var plane = new Plane(midpoint, normal);
-            return plane;
-        }
-
         public static DirectoryInfo BackoutToFolder(string folderName = "")
         {
             var dir = new DirectoryInfo(".");

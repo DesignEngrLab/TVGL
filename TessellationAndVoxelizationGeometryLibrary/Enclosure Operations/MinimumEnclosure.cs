@@ -14,7 +14,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using TVGL.ConvexHullDetails;
 
 namespace TVGL
 {
@@ -71,13 +70,13 @@ namespace TVGL
         /// <returns>BoundingBox.</returns>
         public static BoundingBox OrientedBoundingBox(this List<TessellatedSolid> solids)
         {
-            foreach(var solid in solids)
-                if (solid.ConvexHull == null) solid.BuildConvexHull();
+            foreach (var solid in solids)
+                if (solid.ConvexHull == null) ConvexHull3D.Create(solid);
             var vertices = new List<Vertex>();
             foreach (var solid in solids)
                 vertices.AddRange(solid.ConvexHull.Vertices.Any() ? solid.ConvexHull.Vertices : solid.Vertices);
-            var convexHull = new TVGLConvexHull(vertices, solids.First().SameTolerance);
-            return OrientedBoundingBox(convexHull.Vertices);
+            
+            return OrientedBoundingBox(vertices);
         }
 
         /// <summary>
@@ -87,8 +86,10 @@ namespace TVGL
         /// <returns>BoundingBox.</returns>
         public static BoundingBox OrientedBoundingBox(this TessellatedSolid ts)
         {
-            if (ts.ConvexHull == null) ts.BuildConvexHull();
-            return OrientedBoundingBox(ts.ConvexHull.Vertices.Any() ? ts.ConvexHull.Vertices : ts.Vertices);
+            if (ts.ConvexHull == null) ConvexHull3D.Create(ts);
+            if (ts.ConvexHull == null || !ts.ConvexHull.Vertices.Any())
+                return OrientedBoundingBox(ts.Vertices);
+            else return OrientedBoundingBox(ts.ConvexHull.Vertices);
         }
 
         /// <summary>
@@ -96,7 +97,7 @@ namespace TVGL
         /// </summary>
         /// <param name="convexHull">The convex hull.</param>
         /// <returns>BoundingBox.</returns>
-        public static BoundingBox OrientedBoundingBox(this TVGLConvexHull convexHull)
+        public static BoundingBox OrientedBoundingBox(this ConvexHull3D convexHull)
         {
             return OrientedBoundingBox(convexHull.Vertices);
         }
@@ -107,7 +108,7 @@ namespace TVGL
         /// <typeparam name="T"></typeparam>
         /// <param name="convexHullVertices">The convex hull vertices.</param>
         /// <returns>BoundingBox.</returns>
-        public static BoundingBox OrientedBoundingBox<T>(this IEnumerable<T> convexHullVertices) where T : IPoint3D
+        public static BoundingBox OrientedBoundingBox<T>(this IEnumerable<T> convexHullVertices) where T : IVector3D
         {
             // here we create 13 directions. Why 13? basically it is all ternary combinations of x,y,and z.
             // skipping symmetric and 0,0,0. Another way to think of it is to make a Direction from a cube with
@@ -180,7 +181,7 @@ namespace TVGL
         /// <param name="convexHullVertices">The convex hull vertices.</param>
         /// <param name="minOBB">The minimum obb.</param>
         /// <returns>BoundingBox.</returns>
-        private static BoundingBox<T> Find_via_ChanTan_AABB_Approach<T>(IEnumerable<T> convexHullVertices, BoundingBox<T> minOBB) where T : IPoint3D
+        private static BoundingBox<T> Find_via_ChanTan_AABB_Approach<T>(IEnumerable<T> convexHullVertices, BoundingBox<T> minOBB) where T : IVector3D
         {
             var failedConsecutiveRotations = 0;
             var k = 0;
@@ -219,7 +220,7 @@ namespace TVGL
         /// <returns>System.Double.</returns>
         public static double GetLengthAndExtremeVertices<T>(this IEnumerable<T> vertices, Vector3 direction,
             out List<T> bottomVertices,
-            out List<T> topVertices) where T : IPoint3D
+            out List<T> topVertices) where T : IVector3D
         {
             var dir = direction.Normalize();
             var minD = double.PositiveInfinity;
@@ -262,7 +263,7 @@ namespace TVGL
         /// <returns>System.Double.</returns>
         public static double GetLengthAndExtremeVertex<T>(this IEnumerable<T> vertices, Vector3 direction,
             out T bottomVertex,
-            out T topVertex) where T : IPoint3D
+            out T topVertex) where T : IVector3D
         {
             var (minD, maxD) = GetDistanceToExtremeVertex(vertices, direction, out bottomVertex, out topVertex);
             return maxD - minD;
@@ -279,7 +280,7 @@ namespace TVGL
         /// <param name="topVertex">The top vertex.</param>
         /// <returns>System.Double.</returns>
         public static (double, double) GetDistanceToExtremeVertex<T>(this IEnumerable<T> vertices, Vector3 direction,
-            out T bottomVertex, out T topVertex) where T : IPoint3D
+            out T bottomVertex, out T topVertex) where T : IVector3D
         {
             var dir = direction.Normalize();
             var minD = double.PositiveInfinity;
@@ -425,6 +426,12 @@ namespace TVGL
         {
             if (!initialPoints.Any())
                 return new BoundingRectangle();
+            if (initialPoints.Count() == 1)
+            {
+                var singlePoint = initialPoints.First();
+                return new BoundingRectangle(Vector2.UnitX, Vector2.UnitY, singlePoint.X, singlePoint.X,
+                    singlePoint.Y, singlePoint.Y);
+            }
             /* welcome to a surprisingly complex method that is optimized for linear time.
              * the points are ordered in the CCW polygon from starting with the lowest x-value.
              * Then we rotate the shape from 0 to up to 90-degree to identify all possible 2d
@@ -437,9 +444,10 @@ namespace TVGL
              * 4) Update Angles. After this, we simple add the side points if desired
              */
             #region 1) Prune and Reorder the points
-            var points = pointsAreConvexHull
-                ? initialPoints as IList<Vector2> ?? initialPoints.ToList()
-                : initialPoints.Get2DConvexHull().ToList();
+            IList<Vector2> points = initialPoints as IList<Vector2> ?? initialPoints.ToList();
+            if (!pointsAreConvexHull)
+                points = ConvexHullAlgorithm.CreateConvexHull(points, out _);
+
             if (points.Count < 3)
             {
                 var v = points[1] - points[0];
@@ -656,7 +664,7 @@ namespace TVGL
         /// <typeparam name="T"></typeparam>
         /// <param name="vertices">The vertices.</param>
         /// <returns>BoundingBox&lt;T&gt;.</returns>
-        public static BoundingBox<T> FindAxisAlignedBoundingBox<T>(this IEnumerable<T> vertices) where T : IPoint3D
+        public static BoundingBox<T> FindAxisAlignedBoundingBox<T>(this IEnumerable<T> vertices) where T : IVector3D
         {
             var pointsOnBox = new List<T>[6];
             for (int i = 0; i < 6; i++)
@@ -687,7 +695,7 @@ namespace TVGL
         /// </summary>
         /// <param name="solids">The solids.</param>
         /// <returns>BoundingBox.</returns>
-        public static BoundingBox FindAxisAlignedBoundingBox(this IEnumerable<TessellatedSolid> solids) 
+        public static BoundingBox FindAxisAlignedBoundingBox(this IEnumerable<TessellatedSolid> solids)
         {
             var pointsOnBox = new List<Vertex>[6];
             for (int i = 0; i < 6; i++)
@@ -700,7 +708,7 @@ namespace TVGL
             var zMax = double.NegativeInfinity;
             foreach (var solid in solids)
             {
-                foreach(var v in solid.ConvexHull.Vertices)
+                foreach (var v in solid.ConvexHull.Vertices)
                 {
                     UpdateLimitsAndBox(v, v.X, ref xMin, pointsOnBox[0], true);
                     UpdateLimitsAndBox(v, v.X, ref xMax, pointsOnBox[1], false);
@@ -708,7 +716,7 @@ namespace TVGL
                     UpdateLimitsAndBox(v, v.Y, ref yMax, pointsOnBox[3], false);
                     UpdateLimitsAndBox(v, v.Z, ref zMin, pointsOnBox[4], true);
                     UpdateLimitsAndBox(v, v.Z, ref zMax, pointsOnBox[5], false);
-                } 
+                }
             }
             return new BoundingBox<Vertex>(new[] { xMax - xMin, yMax - yMin, zMax - zMin },
                 new[] { Vector3.UnitX, Vector3.UnitY, Vector3.UnitZ },
@@ -753,7 +761,7 @@ namespace TVGL
         /// <param name="direction">The Direction.</param>
         /// <returns>BoundingBox.</returns>
         /// <exception cref="System.Exception">Volume should never be negligible, unless the input data is bad</exception>
-        public static BoundingBox<T> FindOBBAlongDirection<T>(this IEnumerable<T> vertices, Vector3 direction) where T : IPoint3D
+        public static BoundingBox<T> FindOBBAlongDirection<T>(this IEnumerable<T> vertices, Vector3 direction) where T : IVector3D
         {
             var direction1 = direction.Normalize();
             var vertexList = vertices as IList<T> ?? vertices.ToList();
@@ -770,7 +778,7 @@ namespace TVGL
 
             if ((depth * boundingRectangle.Length1 * boundingRectangle.Length2).IsNegligible())
                 throw new Exception("Volume should never be negligible, unless the input data is bad");
-     
+
             IEnumerable<T>[] verticesOnFaces = new IEnumerable<T>[6];
             verticesOnFaces[0] = bottomVertices;
             verticesOnFaces[1] = topVertices;

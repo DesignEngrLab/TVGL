@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace TVGL.Miscellaneous_Functions
+namespace TVGL
 {
     public static class PlatonicConstants
     {

@@ -11,8 +11,6 @@
 // </copyright>
 // <summary></summary>
 // ***********************************************************************
-using TVGL.ConvexHullDetails;
-
 
 namespace TVGL
 {
@@ -20,7 +18,7 @@ namespace TVGL
     /// Vertex2D class used in Triangulate Polygon
     /// Inherits position from point class
     /// </summary>
-    public class Vertex2D : IPoint2D
+    public class Vertex2D : IVector2D
     {
         #region Properties
 
@@ -34,13 +32,21 @@ namespace TVGL
         /// Gets or sets the x.
         /// </summary>
         /// <value>The x.</value>
-        public double X => Coordinates.X;
+        public double X
+        {
+            get { return Coordinates.X; }
+            init { Coordinates = new Vector2(value, Coordinates.Y); }
+        }
 
         /// <summary>
         /// Gets or sets the y.
         /// </summary>
         /// <value>The y.</value>
-        public double Y => Coordinates.Y;
+        public double Y
+        {
+            get { return Coordinates.Y; }
+            init { Coordinates = new Vector2(Coordinates.X, value); }
+        }
 
         public double this[int i]
         {
@@ -110,7 +116,7 @@ namespace TVGL
         /// <summary>
         /// Prevents a default instance of the <see cref="Vertex2D"/> class from being created.
         /// </summary>
-        private Vertex2D() { }
+        internal Vertex2D() { }
 
         /// <summary>
         /// Returns a <see cref="System.String" /> that represents this instance.

@@ -17,14 +17,13 @@ using System;
 using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Text;
-using TVGL.ConvexHullDetails;
 
 namespace TVGL  // COMMENTEDCHANGE namespace System.Numerics
 {
     /// <summary>
     /// A structure encapsulating three single precision doubleing point values and provides hardware accelerated methods.
     /// </summary>
-    public readonly partial struct Vector4 : IEquatable<Vector4>, IFormattable, IPoint3D, IPoint
+    public readonly struct Vector4 : IEquatable<Vector4>, IFormattable, IVector3D
     {
 
         /// <summary>

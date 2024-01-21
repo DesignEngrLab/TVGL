@@ -1,13 +1,7 @@
-﻿// <copyright file="HyperRect.cs" company="Eric Regina">
-// Copyright (c) Eric Regina. All rights reserved.
-// </copyright>
-
-namespace TVGL.PointCloud
+﻿namespace TVGL.PointCloud
 {
-    using System;
     using System.Linq;
     using System.Runtime.CompilerServices;
-    using TVGL.ConvexHullDetails;
 
     /// <summary>
     /// Represents a hyper-rectangle. An N-Dimensional rectangle.
@@ -47,7 +41,7 @@ namespace TVGL.PointCloud
         /// <param name="targetPoint">We try to find a point in or on the rectangle closest to this point.</param>
         /// <returns>The point on or in the rectangle that is closest to the given point.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal double GetClosestPoint(IPoint targetPoint)
+        internal double GetClosestPoint(IVector targetPoint)
         {
             var distSqd = 0.0;
             for (var i = 0; i < dimensions; i++)

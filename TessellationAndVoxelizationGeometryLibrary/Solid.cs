@@ -69,7 +69,7 @@ namespace TVGL
                 if (double.IsNaN(_volume)) CalculateVolume();
                 return _volume;
             }
-            set { }
+            set => _volume = value;
         }
 
         /// <summary>
@@ -202,7 +202,7 @@ namespace TVGL
         /// </summary>
         /// <value>The convex hull.</value>
         [JsonIgnore]
-        public TVGLConvexHull ConvexHull { get; set; }
+        public ConvexHull3D ConvexHull { get; set; }
 
         /// <summary>
         /// The has uniform color

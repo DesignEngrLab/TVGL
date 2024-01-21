@@ -136,7 +136,7 @@ namespace TVGL
         public double Volume(double tolerance)
         {
             if (_volume > 0) return _volume;
-            TessellatedSolid.CalculateVolumeAndCenter(AllFaces, tolerance, out _volume, out _);
+            MiscFunctions.CalculateVolumeAndCenter(AllFaces, tolerance, out _volume, out _);
             return _volume;
         }
 

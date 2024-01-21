@@ -168,7 +168,7 @@ namespace TVGL
         /// <summary>
         /// Initializes a new instance of the <see cref="TriangleFace" /> class.
         /// </summary>
-        private TriangleFace() { }
+        internal TriangleFace() { }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="TriangleFace" /> class.

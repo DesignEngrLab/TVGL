@@ -24,46 +24,67 @@
  *  
  *****************************************************************************/
 
-namespace TVGL.ConvexHullDetails
+using System.Runtime.CompilerServices;
+
+namespace TVGL
 {
     /// <summary>
-    /// A convex face representation containing adjacency information.
+    /// An interface for a structure with nD position.
     /// </summary>
-    /// <typeparam name="TVertex">The type of the t vertex.</typeparam>
-    /// <typeparam name="TFace">The type of the t face.</typeparam>
-    public abstract class ConvexFace<TVertex, TFace>
-        where TVertex : IPoint
-        where TFace : ConvexFace<TVertex, TFace>
+    public interface IVector
+    {
+        double this[int i] { get; }
+        bool IsNull();
+        static IVector Null { get; }
+    }
+
+    public interface IVector2D : IVector
     {
         /// <summary>
-        /// Adjacency. Array of length "dimension".
-        /// If F = Adjacency[i] then the vertices shared with F are Vertices[j] where j != i.
-        /// In the context of triangulation, can be null (indicates the cell is at boundary).
+        /// Gets the x.
         /// </summary>
-        /// <value>The adjacency.</value>
-        public TFace[] Adjacency { get; set; }
+        /// <value>The x.</value>
+        double X { get; init; }
 
         /// <summary>
-        /// The vertices stored in clockwise order for dimensions 2 - 4, in higher dimensions the order is arbitrary.
-        /// Unless I accidentally switch some index somewhere in which case the order is CCW. Either way, it is consistent.
-        /// 3D Normal = (V[1] - V[0]) x (V[2] - V[1]).
+        /// Gets the y.
         /// </summary>
-        /// <value>The vertices.</value>
-        public TVertex[] Vertices { get; set; }
-
+        /// <value>The y.</value>
+        double Y { get; init; }
+    }
+    public interface IVector3D : IVector2D
+    {
         /// <summary>
-        /// The normal vector of the face. Empty if used in triangulation.
+        /// Gets the z.
         /// </summary>
-        /// <value>The normal.</value>
-        public double[] Normal { get; set; }
+        /// <value>The z.</value>
+        //double Z { get; init; }
+        double Z { get; init; }
     }
 
     /// <summary>
-    /// A default convex face representation.
+    /// "Default" vertex.
     /// </summary>
-    /// <typeparam name="TVertex">The type of the t vertex.</typeparam>
-    public class DefaultConvexFace<TVertex> : ConvexFace<TVertex, DefaultConvexFace<TVertex>>
-        where TVertex : IPoint
+    /// <seealso cref="MIConvexHull.IPoint" />
+    public class DefaultPoint : IVector
     {
+        public double this[int i]
+        {
+            get { return Coordinates[i]; }
+            set { Coordinates[i] = value; }
+        }
+        /// <summary>
+        /// Coordinates of the vertex.
+        /// </summary>
+        /// <value>The position.</value>
+        public double[] Coordinates { get; set; }
+
+        public bool IsNull()
+        {
+            return Coordinates == null;
+        }
+
+        static DefaultPoint Null => new DefaultPoint { Coordinates = null };
+
     }
 }

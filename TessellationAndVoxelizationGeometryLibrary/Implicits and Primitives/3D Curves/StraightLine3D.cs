@@ -11,12 +11,10 @@
 // </copyright>
 // <summary></summary>
 // ***********************************************************************
+using StarMathLib;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using TVGL.ConvexHullDetails;
-using StarMathLib;
-
 
 namespace TVGL
 {
@@ -58,9 +56,9 @@ namespace TVGL
         /// <typeparam name="T"></typeparam>
         /// <param name="point">The point.</param>
         /// <returns>System.Double.</returns>
-        public double SquaredErrorOfNewPoint<T>(T point) where T : IPoint
+        public double SquaredErrorOfNewPoint<T>(T point) where T : IVector
         {
-            if (point is IPoint3D vector3D)
+            if (point is IVector3D vector3D)
             {
                 var cross = (new Vector3(vector3D.X - Anchor.X, vector3D.Y - Anchor.Y, vector3D.Z - Anchor.Z)).Cross(Direction);
                 return cross.Dot(cross);
@@ -78,7 +76,7 @@ namespace TVGL
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         // this is based on this: https://stackoverflow.com/questions/24747643/3d-linear-regression/67303867#67303867
 
-        public static bool CreateFromPoints<T>(IEnumerable<T> points, out ICurve curve, out double error) where T : IPoint2D
+        public static bool CreateFromPoints<T>(IEnumerable<T> points, out ICurve curve, out double error) where T : IVector2D
         {
             double x, y, z;
             double xSqd, ySqd, zSqd;
@@ -87,7 +85,7 @@ namespace TVGL
             var n = 0;
             foreach (var point in points)
             {
-                if (!(point is IPoint3D point3D))
+                if (!(point is IVector3D point3D))
                 {
                     curve = null;
                     error = 0;
@@ -95,7 +93,7 @@ namespace TVGL
                 }
                 var px = point.X;
                 var py = point.Y;
-                var pz = ((IPoint3D)point).Z;
+                var pz = ((IVector3D)point).Z;
                 x += px;
                 y += py;
                 z += pz;
@@ -120,8 +118,8 @@ namespace TVGL
             {
                 var p1 = points.First();
                 var p2 = points.Last();
-                var anchor = new Vector3(p1.X, p1.Y, ((IPoint3D)p1).Z);
-                var dir = new Vector3(p2.X, p2.Y, ((IPoint3D)p2).Z) - anchor;
+                var anchor = new Vector3(p1.X, p1.Y, ((IVector3D)p1).Z);
+                var dir = new Vector3(p2.X, p2.Y, ((IVector3D)p2).Z) - anchor;
                 curve = new StraightLine3D(anchor, dir - anchor);
                 error = 0;
                 return !dir.IsNegligible();

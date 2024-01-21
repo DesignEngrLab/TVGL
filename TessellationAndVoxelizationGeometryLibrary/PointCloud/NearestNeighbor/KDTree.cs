@@ -46,15 +46,15 @@ namespace TVGL.PointCloud
         /// </summary>
         /// <param name="points">The points.</param>
         /// <returns>A KDTree.</returns>
-        public static KDTree<IPoint> Create(IEnumerable<IPoint> points)
-        { return new KDTree<IPoint>(3, points as IList<IPoint> ?? points.ToList()); }
+        public static KDTree<IVector> Create(IEnumerable<IVector> points)
+        { return new KDTree<IVector>(3, points as IList<IVector> ?? points.ToList()); }
 
         /// <summary>
         /// Creates the KDTree for the list of points.
         /// </summary>
         /// <param name="points">The points.</param>
         /// <returns>A KDTree.</returns>
-        public static KDTree<TPoint> Create<TPoint>(IEnumerable<TPoint> points) where TPoint : IPoint
+        public static KDTree<TPoint> Create<TPoint>(IEnumerable<TPoint> points) where TPoint : IVector
         { return new KDTree<TPoint>(3, points as IList<TPoint> ?? points.ToList()); }
 
         /// <summary>
@@ -94,15 +94,15 @@ namespace TVGL.PointCloud
         /// </summary>
         /// <param name="points">The points.</param>
         /// <returns>A KDTree.</returns>
-        public static KDTree<IPoint, TAccObject> Create<TAccObject>(IEnumerable<IPoint> points, IList<TAccObject> accObjects)
-        { return new KDTree<IPoint, TAccObject>(3, points as IList<IPoint> ?? points.ToList(), accObjects); }
+        public static KDTree<IVector, TAccObject> Create<TAccObject>(IEnumerable<IVector> points, IList<TAccObject> accObjects)
+        { return new KDTree<IVector, TAccObject>(3, points as IList<IVector> ?? points.ToList(), accObjects); }
 
         /// <summary>
         /// Creates the KDTree for the list of points.
         /// </summary>
         /// <param name="points">The points.</param>
         /// <returns>A KDTree.</returns>
-        public static KDTree<TPoint, TAccObject> Create<TPoint, TAccObject>(IEnumerable<TPoint> points, IList<TAccObject> accObjects) where TPoint : IPoint
+        public static KDTree<TPoint, TAccObject> Create<TPoint, TAccObject>(IEnumerable<TPoint> points, IList<TAccObject> accObjects) where TPoint : IVector
         { return new KDTree<TPoint, TAccObject>(3, points as IList<TPoint> ?? points.ToList(), accObjects); }
         #endregion
 
@@ -144,15 +144,15 @@ namespace TVGL.PointCloud
         /// </summary>
         /// <param name="points">The points.</param>
         /// <returns>A KDTree.</returns>
-        public static KDTree<IPoint> CreateSpherical(IEnumerable<IPoint> points)
-        { return new KDTree<IPoint>(3, points as IList<IPoint> ?? points.ToList(), KDTree<IPoint>.SphericalDistance); }
+        public static KDTree<IVector> CreateSpherical(IEnumerable<IVector> points)
+        { return new KDTree<IVector>(3, points as IList<IVector> ?? points.ToList(), KDTree<IVector>.SphericalDistance); }
 
         /// <summary>
         /// CreateSphericals the KDTree for the list of points.
         /// </summary>
         /// <param name="points">The points.</param>
         /// <returns>A KDTree.</returns>
-        public static KDTree<TPoint> CreateSpherical<TPoint>(IEnumerable<TPoint> points) where TPoint : IPoint
+        public static KDTree<TPoint> CreateSpherical<TPoint>(IEnumerable<TPoint> points) where TPoint : IVector
         { return new KDTree<TPoint>(3, points as IList<TPoint> ?? points.ToList(), KDTree<TPoint>.SphericalDistance); }
 
         /// <summary>
@@ -198,19 +198,19 @@ namespace TVGL.PointCloud
         /// </summary>
         /// <param name="points">The points.</param>
         /// <returns>A KDTree.</returns>
-        public static KDTree<IPoint, TAccObject> CreateSpherical<TAccObject>(IEnumerable<IPoint> points, IList<TAccObject> accObjects)
-        { return new KDTree<IPoint, TAccObject>(3, points as IList<IPoint> ?? points.ToList(), accObjects, KDTree<IPoint, TAccObject>.SphericalDistance); }
+        public static KDTree<IVector, TAccObject> CreateSpherical<TAccObject>(IEnumerable<IVector> points, IList<TAccObject> accObjects)
+        { return new KDTree<IVector, TAccObject>(3, points as IList<IVector> ?? points.ToList(), accObjects, KDTree<IVector, TAccObject>.SphericalDistance); }
 
         /// <summary>
         /// CreateSphericals the KDTree for the list of points.
         /// </summary>
         /// <param name="points">The points.</param>
         /// <returns>A KDTree.</returns>
-        public static KDTree<TPoint, TAccObject> CreateSpherical<TPoint, TAccObject>(IEnumerable<TPoint> points, IList<TAccObject> accObjects) where TPoint : IPoint
+        public static KDTree<TPoint, TAccObject> CreateSpherical<TPoint, TAccObject>(IEnumerable<TPoint> points, IList<TAccObject> accObjects) where TPoint : IVector
         { return new KDTree<TPoint, TAccObject>(3, points as IList<TPoint> ?? points.ToList(), accObjects, KDTree<TPoint, TAccObject>.SphericalDistance); }
         #endregion
     }
-    public class KDTree<TPoint> where TPoint : IPoint
+    public class KDTree<TPoint> where TPoint : IVector
     {
         /// <summary>
         /// The number of points in the KDTree
@@ -232,20 +232,21 @@ namespace TVGL.PointCloud
         /// Gets the dimensions of the points, typically 2 or 3.
         /// </summary>
         private protected int Dimensions { get; init; }
-        private Func<TPoint, TPoint, int, double> DistanceMetric { get; }
+        private Func<IVector, IVector, int, double> DistanceMetric { get; }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="KDTree"/> class.
         /// </summary>
         /// <param name="dimensions">The dimensions.</param>
         /// <param name="points">The points.</param>
-        internal KDTree(int dimensions, IEnumerable<TPoint> points, Func<TPoint, TPoint, int, double> distanceMetric = null) : this(points, distanceMetric)
+        internal KDTree(int dimensions, IEnumerable<TPoint> points, Func<IVector, IVector, int, double> distanceMetric = null)
+            : this(points, distanceMetric)
         {
             Dimensions = dimensions;
             GenerateTree(0, 0, OriginalPoints);
         }
 
-        private protected KDTree(IEnumerable<TPoint> points, Func<TPoint, TPoint, int, double> distanceMetric)
+        private protected KDTree(IEnumerable<TPoint> points, Func<IVector, IVector, int, double> distanceMetric)
         {
             if (distanceMetric == null)
                 distanceMetric = (p1, p2, dim) => StraightLineDistanceSquared(p1, p2, dim);
@@ -402,7 +403,7 @@ namespace TVGL.PointCloud
         /// <param name="dimension">The current splitting dimension for this recursion branch.</param>
         /// <param name="nearestNeighbors">The <see cref="BoundedPriorityList{TElement,TPriority}"/> containing the nearest numberToFind already discovered.</param>
         /// <param name="maxSearchRadiusSquared">The squared radius of the current largest distance to search from the <paramref name="target"/></param>
-        private protected void SearchForNearestNeighbors(int nodeIndex, TPoint target, HyperRect rect, int dimension,
+        private protected void SearchForNearestNeighbors(int nodeIndex, IVector target, HyperRect rect, int dimension,
               BoundedPriorityList<int, double> nearestNeighbors, double maxSearchRadiusSquared)
         {
             if (TreePoints.Length <= nodeIndex || nodeIndex < 0
@@ -464,7 +465,7 @@ namespace TVGL.PointCloud
                 nearestNeighbors.Add(nodeIndex, distanceSquaredToTarget);
         }
 
-        public static double StraightLineDistanceSquared(TPoint p1, TPoint p2, int dim)
+        public static double StraightLineDistanceSquared(IVector p1, IVector p2, int dim)
         {
             var sum = 0.0;
             for (int i = 0; i < dim; i++)
@@ -474,7 +475,7 @@ namespace TVGL.PointCloud
             }
             return sum;
         }
-        public static double SphericalDistance(TPoint p1, TPoint p2, int dim)
+        public static double SphericalDistance(IVector p1, IVector p2, int dim)
         {
             var dot = 0.0; //dot product between the two vectors: p1 and p2
             var r1 = 0.0; //squared magnitude of p1

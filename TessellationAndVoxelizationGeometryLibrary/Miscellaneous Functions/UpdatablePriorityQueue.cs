@@ -6,7 +6,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Runtime.CompilerServices;
 
-namespace TVGL.Miscellaneous_Functions
+namespace TVGL
 {
     /// <summary>
     /// The updatable priority queue is an augmentation of the .NET PriorityQueue
@@ -169,7 +169,9 @@ namespace TVGL.Miscellaneous_Functions
             ArgumentNullException.ThrowIfNull(items);
 
             _nodes = items.ToArray();
-            _elementIndices = items.Select(item => item.Element).ToDictionary(elt => elt, elt => -1);
+            _size = _nodes.Length;
+            int i = 0;
+            _elementIndices = items.Select(item => item.Element).ToDictionary(elt => elt, elt => i++);
             _comparer = InitializeComparer(comparer);
 
             if (_nodes.Length > 1)
@@ -256,6 +258,7 @@ namespace TVGL.Miscellaneous_Functions
             }
 
             TElement element = _nodes[0].Element;
+            _elementIndices.Remove(element);
             RemoveRootNode();
             return element;
         }
@@ -676,7 +679,6 @@ namespace TVGL.Miscellaneous_Functions
             if (lastNodeIndex > 0)
             {
                 (TElement Element, TPriority Priority) lastNode = _nodes[lastNodeIndex];
-                _elementIndices.Remove(lastNode.Element);
                 if (_comparer == null)
                 {
                     MoveDownDefaultComparer(lastNode, 0);

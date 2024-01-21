@@ -1,12 +1,10 @@
-﻿
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 
 namespace TVGL
 {
-    public static partial class ConvexHull
+    public static partial class ConvexHullAlgorithm
     {
         /// Finds the shortest distance between two convex hulls this is an adaption of the
         /// GJK algorithm - specifically, the c version defined as OpenGJK:
@@ -24,8 +22,8 @@ namespace TVGL
         /// <param name="v">The vector,v, from the subject object to the other object.</param>
         /// <returns>The signed distance between the two convex hulls. This implementation is
         /// not accurate for negative values.</returns>
-        public static double DistanceBetween<T>(IList<T> cvxHullPoints1, IList<T> cvxHullPoints2, out Vector3 v)
-            where T : IPoint3D
+        public static double DistanceBetween<T>(this IList<T> cvxHullPoints1, IList<T> cvxHullPoints2, out Vector3 v)
+            where T : IVector3D
         {
             int k = 0;                /**< Iteration counter                 */
             const int mk = 25;                 /**< Maximum number of GJK iterations  */
@@ -465,8 +463,8 @@ namespace TVGL
 
         private static double determinant(Vector3 p, Vector3 q, Vector3 r)
         {
-            return p[0] * ((q[1] * r[2]) - (r[1] * q[2])) - p[1] * (q[0] * r[2] - r[0] * q[2])
-                + p[2] * (q[0] * r[1] - r[0] * q[1]);
+            return p.X * ((q.Y * r.Z) - (r.Y * q.Z)) - p.Y * (q.X * r.Z - r.X * q.Z)
+                + p.Z * (q.X * r.Y - r.X * q.Y);
         }
 
         private static Vector3 S2D(Vector3[] s, Vector3 v, ref int nvrtx)
@@ -544,7 +542,7 @@ namespace TVGL
             return tmp * n;
         }
 
-        private static T support<T>(IList<T> vertices, T thisS, Vector3 v) where T : IPoint3D
+        private static T support<T>(IList<T> vertices, T thisS, Vector3 v) where T : IVector3D
         {
             int better = -1;
 

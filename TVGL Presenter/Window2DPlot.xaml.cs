@@ -126,7 +126,7 @@ namespace TVGL
         {
             Model.Series.Clear();
             if (plot2DType == Plot2DType.Line)
-                AddLineSeriesToModel(points.ToList(), closeShape, marker);
+                AddLineSeriesToModel(points, closeShape, marker);
             else
                 AddScatterSeriesToModel(points.ToList(), marker);
             SetAxes(points);

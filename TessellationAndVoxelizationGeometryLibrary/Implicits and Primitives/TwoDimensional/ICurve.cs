@@ -11,10 +11,8 @@
 // </copyright>
 // <summary></summary>
 // ***********************************************************************
-using System.Collections.Generic;
 using System;
-
-using TVGL.ConvexHullDetails;
+using System.Collections.Generic;
 
 namespace TVGL
 {
@@ -32,7 +30,7 @@ namespace TVGL
         /// <typeparam name="T"></typeparam>
         /// <param name="point">The point.</param>
         /// <returns>System.Double.</returns>
-        public double SquaredErrorOfNewPoint<T>(T point) where T : IPoint;
+        public double SquaredErrorOfNewPoint<T>(T point) where T : IVector;
 
         /// <summary>
         /// Creates from points.
@@ -50,6 +48,6 @@ namespace TVGL
 
         // Switch to this when C#11 comes out (which it has but waiting for .NET8 in Nov.2023
         //public static abstract bool CreateFromPoints<T>(IEnumerable<T> points, out ICurve curve, out double error)
-        //    where T : IPoint2D;
+        //    where T : IVector2D;
     }
 }

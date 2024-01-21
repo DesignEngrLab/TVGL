@@ -11,9 +11,7 @@
 // </copyright>
 // <summary></summary>
 // ***********************************************************************
-using TVGL.ConvexHullDetails;
 using System.Collections.Generic;
-
 
 namespace TVGL
 {
@@ -55,7 +53,7 @@ namespace TVGL
         /// <typeparam name="T"></typeparam>
         /// <param name="point">The point.</param>
         /// <returns>System.Double.</returns>
-        public double SquaredErrorOfNewPoint<T>(T point) where T : IPoint
+        public double SquaredErrorOfNewPoint<T>(T point) where T : IVector
         {
             var fromAnchor =new Vector2(point[0] - Anchor[0], point[1] - Anchor[1]);
             var cross = fromAnchor.Cross(Direction);
@@ -70,7 +68,7 @@ namespace TVGL
         /// <param name="curve">The curve.</param>
         /// <param name="error">The error.</param>
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
-        public static bool CreateFromPoints<T>(IEnumerable<T> points, out ICurve curve, out double error) where T : IPoint2D
+        public static bool CreateFromPoints<T>(IEnumerable<T> points, out ICurve curve, out double error) where T : IVector2D
         {
             double xCoeff;
             double yCoeff;

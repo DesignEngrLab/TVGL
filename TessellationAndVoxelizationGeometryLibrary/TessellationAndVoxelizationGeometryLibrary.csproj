@@ -33,7 +33,7 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<Compile Remove="TessellatedSolid\Enclosure Operations\MinimumEnclosure - OBBTest.cs" />
+		<Compile Remove="Enclosure Operations\MinimumEnclosure - OBBTest.cs" />
 	</ItemGroup>
 
 	<ItemGroup>

@@ -194,7 +194,7 @@ namespace TVGL
             if (buildOptions.DefineConvexHull && !ts.Volume.IsNegligible())
                 try
                 {
-                    ts.BuildConvexHull();
+                    ConvexHull3D.Create(ts);
                 }
                 catch
                 {
@@ -271,9 +271,14 @@ namespace TVGL
                         removedFaces.Add(longestEdge.OtherFace);
                         faceHash.Remove(longestEdge.OtherFace);
                         ts.RemoveFaces(new[] { longestEdge.OwnedFace, longestEdge.OtherFace });
-                        ts.RemoveEdges(removedEdges);
+                        if (removedEdges != null)
+                            ts.RemoveEdges(removedEdges);
                     }
-                    else LongestEdge(face).FlipEdge(ts);
+                    else
+                    {
+                        LongestEdge(face).FlipEdge(ts);
+                        faceHash.Remove(face);
+                    }
                 }
             }
             return true;
