@@ -4,7 +4,7 @@ using System.Diagnostics;
 
 namespace TVGL
 {
-    public static partial class ConvexHullAlgorithm
+    public static partial class ConvexHull
     {
         /// Finds the shortest distance between two convex hulls this is an adaption of the
         /// GJK algorithm - specifically, the c version defined as OpenGJK:
@@ -22,8 +22,9 @@ namespace TVGL
         /// <param name="v">The vector,v, from the subject object to the other object.</param>
         /// <returns>The signed distance between the two convex hulls. This implementation is
         /// not accurate for negative values.</returns>
-        public static double DistanceBetween<T>(this IList<T> cvxHullPoints1, IList<T> cvxHullPoints2, out Vector3 v)
-            where T : IVector3D
+        public static double DistanceBetween<T1, T2>(this IList<T1> cvxHullPoints1, IList<T2> cvxHullPoints2, out Vector3 v)
+            where T1 : IVector3D
+            where T2 : IVector3D
         {
             int k = 0;                /**< Iteration counter                 */
             const int mk = 25;                 /**< Maximum number of GJK iterations  */
