@@ -279,30 +279,30 @@ namespace TVGL
         /// <param name="bottomVertex">The bottom vertex.</param>
         /// <param name="topVertex">The top vertex.</param>
         /// <returns>System.Double.</returns>
-        public static (double, double) GetDistanceToExtremeVertex<T>(this IEnumerable<T> vertices, Vector3 direction,
+        public static (double btmDistance, double topDistance) GetDistanceToExtremeVertex<T>(this IEnumerable<T> vertices, Vector3 direction,
             out T bottomVertex, out T topVertex) where T : IVector3D
         {
             var dir = direction.Normalize();
-            var minD = double.PositiveInfinity;
+            var btmDistance = double.PositiveInfinity;
             bottomVertex = default; //this is an unfortunate assignment but the compiler doesn't trust
             topVertex = default;  // that is will get assigned in conditions below. Also, can't assign to
                                   //null, since Vector3 is struct
-            var maxD = double.NegativeInfinity;
+            var topDistance = double.NegativeInfinity;
             foreach (var v in vertices)
             {
                 var distance = v.Dot(dir);
-                if (distance < minD)
+                if (distance < btmDistance)
                 {
                     bottomVertex = v;
-                    minD = distance;
+                    btmDistance = distance;
                 }
-                if (distance > maxD)
+                if (distance > topDistance)
                 {
                     topVertex = v;
-                    maxD = distance;
+                    topDistance = distance;
                 }
             }
-            return (minD, maxD);
+            return (btmDistance, topDistance);
         }
 
         /// <summary>
@@ -446,7 +446,7 @@ namespace TVGL
             #region 1) Prune and Reorder the points
             IList<Vector2> points = initialPoints as IList<Vector2> ?? initialPoints.ToList();
             if (!pointsAreConvexHull)
-                points = ConvexHullAlgorithm.CreateConvexHull(points, out _);
+                points = ConvexHull.CreateConvexHull(points, out _);
 
             if (points.Count < 3)
             {

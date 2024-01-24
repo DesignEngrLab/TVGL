@@ -32,7 +32,7 @@ using TVGL.PointCloud;
 
 namespace TVGL
 {
-    public static partial class ConvexHullAlgorithm
+    public static partial class ConvexHull
     {
         /// <summary>
         /// Creates the convex hull for a polygon.

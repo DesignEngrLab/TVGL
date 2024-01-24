@@ -130,6 +130,17 @@ namespace TVGL
             Transform = transform;
         }
 
+        public BoundingBox(Vector3 min, Vector3 max)
+        {
+            Dimensions = max - min;
+            Transform = new Matrix4x4(Vector3.UnitX, Vector3.UnitY, Vector3.UnitZ, min);
+        }
+
+        public BoundingBox(double minX, double minY, double minZ, double maxX, double maxY, double maxZ)
+        {
+            Dimensions = new Vector3(maxX - minX, maxY - minY, maxZ - minZ);
+            Transform = new Matrix4x4(Vector3.UnitX, Vector3.UnitY, Vector3.UnitZ, new Vector3(minX, minY, minZ));
+        }
         #endregion Constructors
 
         #region Constructor Defined Fields
@@ -593,6 +604,70 @@ namespace TVGL
             if (anchorDot < planeDot || anchorDot - Dimensions[2] > planeDot) return false;
 
             return true;
+        }
+        public double MinX
+        {
+            get
+            {
+                if (Transform.XBasisVector == Vector3.UnitX)
+                    return TranslationFromOrigin.X;
+                else throw new NotImplementedException();
+            }
+        }
+        public double MaxX
+        {
+            get
+            {
+                if (Transform.XBasisVector == Vector3.UnitX)
+                    return Dimensions.X + TranslationFromOrigin.X;
+                else throw new NotImplementedException();
+            }
+        }
+        public double MinY
+        {
+            get
+            {
+                if (Transform.YBasisVector == Vector3.UnitY)
+                    return TranslationFromOrigin.Y;
+                else throw new NotImplementedException();
+            }
+        }
+        public double MaxY
+        {
+            get
+            {
+                if (Transform.YBasisVector == Vector3.UnitY)
+                    return Dimensions.Y + TranslationFromOrigin.Y;
+                else throw new NotImplementedException();
+            }
+        }
+        public double MinZ
+        {
+            get
+            {
+                if (Transform.ZBasisVector == Vector3.UnitZ)
+                    return TranslationFromOrigin.Z;
+                else throw new NotImplementedException();
+            }
+        }
+        public double MaxZ
+        {
+            get
+            {
+                if (Transform.ZBasisVector == Vector3.UnitZ)
+                    return Dimensions.Z + TranslationFromOrigin.Z;
+                else throw new NotImplementedException();
+            }
+        }
+
+        public bool Intersects(BoundingBox other)
+        {
+            return MinX < other.MaxX &&
+                MaxX > other.MinX &&
+                MinY < other.MaxY &&
+                MaxY > other.MinY &&
+                MinZ < other.MaxZ &&
+                MaxZ > other.MinZ;
         }
     }
 }

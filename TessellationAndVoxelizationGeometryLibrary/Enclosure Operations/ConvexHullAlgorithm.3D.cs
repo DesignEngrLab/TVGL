@@ -452,7 +452,7 @@ namespace TVGL
                 for (var i = 0; i < convexHull.Faces.Count; i += 2)
                 {
                     var face = convexHull.Faces[i];
-                    if (MiscFunctions.IsVertexInsideTriangle(face, v.Coordinates))
+                    if (MiscFunctions.IsVertexInsideTriangle(new[] { face.A, face.B, face.C }, v.Coordinates))
                     {
                         face.InteriorVertices.Add(v);
                         convexHull.Faces[i + 1].InteriorVertices.Add(v);

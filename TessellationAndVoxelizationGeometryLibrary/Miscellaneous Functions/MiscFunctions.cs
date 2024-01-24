@@ -2040,9 +2040,6 @@ namespace TVGL
             var bToC = face == face.BC.OwnedFace ? face.BC.Vector : -face.BC.Vector;
             var bToA = -aToB;
             return bToC.Cross(bToQ).Dot(bToQ.Cross(bToA)) > 0;
-
-            //return ((b - a).Cross(p - a)).Dot((p - a).Cross(c - a)) >= 0
-            //    && ((c - b).Cross(p - b)).Dot((p - b).Cross(a - b)) >= 0;
         }
         /// <summary>
         /// Returns whether a vertex lies on a triangle. User can specify whether the edges of the
@@ -2074,12 +2071,19 @@ namespace TVGL
             bool onBoundaryIsInside = true)
         {
             if (triangle.Count != 3) throw new Exception("Incorrect number of points in triangle");
-            var p = pointInQuestion;
+            var q = pointInQuestion;
             var a = triangle[0];
             var b = triangle[1];
             var c = triangle[2];
-            return ((b - a).Cross(p - a)).Dot((p - a).Cross(c - a)) >= 0
-                && ((c - b).Cross(p - b)).Dot((p - b).Cross(a - b)) >= 0;
+            var aToQ = q - a;
+            var aToB = b-a;
+            var aToC = c-a;
+            if (aToB.Cross(aToQ).Dot(aToQ.Cross(aToC)) < 0) return false;
+
+            var bToQ = q - b;
+            var bToC = c-b;
+            var bToA = -aToB;
+            return bToC.Cross(bToQ).Dot(bToQ.Cross(bToA)) > 0;
         }
 
         /// <summary>
