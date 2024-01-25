@@ -289,7 +289,7 @@ namespace TVGL
         /// <param name="inclusiveHighIndex">the inclusive starting low index (usually one less than the count)</param>
         /// <returns></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static int IncreasingDoublesBinarySearch(this IList<double> array, double queryValue,
+        public static int IncreasingDoublesBinarySearch(this IList<double> array, double queryValue,
             int inclusiveLowIndex, int inclusiveHighIndex)
         {
             // This binary search is modified/simplified from Array.BinarySearch
@@ -314,7 +314,7 @@ namespace TVGL
         /// <param name="array"></param>
         /// <param name="value"></param>
         /// <returns></returns>
-        internal static int IncreasingDoublesBinarySearch(this IList<double> array, double value)
+        public static int IncreasingDoublesBinarySearch(this IList<double> array, double value)
         => IncreasingDoublesBinarySearch(array, value, 0, array.Count - 1);
 
         /// <summary>

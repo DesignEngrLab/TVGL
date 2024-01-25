@@ -237,7 +237,8 @@ namespace TVGL
         /// <param name="direction">The direction of the line</param>
         /// <returns>returns false if already present</returns>
         public bool Add(Vector3 anchor, Vector3 direction) => AddIfNotPresent(MiscFunctions.Unique3DLine(anchor, direction));
-        void ICollection<Vector4>.Add(Vector4 unique) => AddIfNotPresent(unique);
+        public bool Add(Vector4 unique) => AddIfNotPresent(unique);
+        void ICollection<Vector4>.Add(Vector4 item)=> AddIfNotPresent(item);
 
         /// <summary>
         /// Adds the if not present.

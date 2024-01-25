@@ -40,14 +40,7 @@ namespace TVGL
         /// <param name="curve">The curve.</param>
         /// <param name="error">The error.</param>
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
-        public static bool CreateFromPoints<T>(IEnumerable<T> points, out ICurve curve, out double error)
-        {
-            throw new NotImplementedException("please implement static method in curve: static ICurve " +
-                "CreateFromPoints(IEnumerable<Vector2> points)");
-        }
-
-        // Switch to this when C#11 comes out (which it has but waiting for .NET8 in Nov.2023
-        //public static abstract bool CreateFromPoints<T>(IEnumerable<T> points, out ICurve curve, out double error)
-        //    where T : IVector2D;
+        public static abstract bool CreateFromPoints<T>(IEnumerable<T> points, out ICurve curve, out double error)
+            where T : IVector2D;
     }
 }
