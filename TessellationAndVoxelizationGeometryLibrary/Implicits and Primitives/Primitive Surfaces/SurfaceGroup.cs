@@ -11,7 +11,7 @@ namespace TVGL
     /// </summary>
     public class SurfaceGroup : PrimitiveSurface
     {
-        public HashSet<PrimitiveSurface> Surfaces { get; private set; }
+        public HashSet<PrimitiveSurface> Surfaces { get; set; }
 
         public void AddPrimitiveSurface(PrimitiveSurface surface, bool resetBorders = true)
         {
@@ -39,6 +39,8 @@ namespace TVGL
                 surface.BelongsToGroup = this;
             SetBorders();
         }
+
+        public SurfaceGroup() { }
 
         public SurfaceGroup(PrimitiveSurface surface)
         {
@@ -75,6 +77,20 @@ namespace TVGL
                 adjacentFeatures.Add(adjacent.BelongsToGroup);
             }           
             return adjacentFeatures;
+        }
+
+        public IEnumerable<PrimitiveSurface> GetAdjacentPrimitives()
+        {
+            //Use a hash to avoid returning duplicates.
+            var allAdjacent = new HashSet<PrimitiveSurface>();
+            foreach (var border in BorderSegments)
+            {
+                if (Surfaces.Contains(border.OwnedPrimitive))  
+                    allAdjacent.Add(border.OtherPrimitive);
+                else 
+                    allAdjacent.Add(border.OwnedPrimitive);
+            }
+            return allAdjacent;
         }
 
         public void SetBorders()
