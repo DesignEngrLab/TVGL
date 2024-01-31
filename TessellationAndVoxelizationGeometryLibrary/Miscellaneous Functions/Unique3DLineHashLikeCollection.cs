@@ -1,10 +1,7 @@
-﻿using ClipperLib;
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
 using System.Runtime.CompilerServices;
-using System.Xml;
 
 namespace TVGL
 {
@@ -54,6 +51,8 @@ namespace TVGL
         {
             if (TryGetIndex(unique, out var i))
                 return false;
+            if (treatReflectionsAsSame)
+                unique = Reflect(unique);
             (var anchor, var direction) = MiscFunctions.Get3DLineValuesFromUnique(unique);
             if (i == Count)
             {
@@ -98,6 +97,8 @@ namespace TVGL
                     items[i] = value;
                 else
                 {
+                    if (treatReflectionsAsSame)
+                        unique = Reflect(unique);
                     (var anchor, var direction) = MiscFunctions.Get3DLineValuesFromUnique(unique);
                     if (i == Count)
                     {
@@ -238,7 +239,7 @@ namespace TVGL
         /// <returns>returns false if already present</returns>
         public bool Add(Vector3 anchor, Vector3 direction) => AddIfNotPresent(MiscFunctions.Unique3DLine(anchor, direction));
         public bool Add(Vector4 unique) => AddIfNotPresent(unique);
-        void ICollection<Vector4>.Add(Vector4 item)=> AddIfNotPresent(item);
+        void ICollection<Vector4>.Add(Vector4 item) => AddIfNotPresent(item);
 
         /// <summary>
         /// Adds the if not present.
@@ -248,6 +249,8 @@ namespace TVGL
             var matchFound = TryGetIndex(unique, out var i);
             if (matchFound)
                 return false;
+            if (treatReflectionsAsSame)
+                unique = Reflect(unique);
             if (i == Count)
             {
                 uniqueIDs.Add(unique);
@@ -342,11 +345,8 @@ namespace TVGL
             // comparison since reflections would yield a negative dot product.
             // this is only true when the two would be reflections would be less than the angle tolerance apart in the polar angles
             /// (pi/2 - s1.AzimuthAngle) + (pi/2 - s2.AzimuthAngle) < angleTolerance
-            if (treatReflectionsAsSame && query.Z > Constants.HalfPi)
-            {
-                var newAzimuth = query.W < 0 ? query.W + Math.PI : query.W - Math.PI;
-                query = new Vector4(-query.X, query.Y, Math.PI - query.Z, newAzimuth);
-            }
+            if (treatReflectionsAsSame)
+                query = Reflect(query);
 
             // the following binary search is modified/simplified from Array.BinarySearch
             // (https://referencesource.microsoft.com/mscorlib/a.html#b92d187c91d4c9a9)
@@ -371,6 +371,13 @@ namespace TVGL
             return ScanHoop(ref i, query, qCart);
         }
 
+        protected static Vector4 Reflect(Vector4 query)
+        {
+            if (query.Z <= Constants.HalfPi)
+                return query;
+            var newAzimuth = query.W < 0 ? query.W + Math.PI : query.W - Math.PI;
+            return new Vector4(-query.X, query.Y, Math.PI - query.Z, newAzimuth);
+        }
 
         private bool ScanHoop(ref int index, Vector4 query, Vector3 qCart)
         {

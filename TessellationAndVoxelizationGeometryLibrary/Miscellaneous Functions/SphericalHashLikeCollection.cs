@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using System.Xml;
 using TVGL.threemfclasses;
 
 namespace TVGL
@@ -47,10 +48,12 @@ namespace TVGL
             throw new InvalidOperationException("This method is not supported for this collection. Use the Add(Vector3, T) method instead.");
         }
         private bool AddIfNotPresent(SphericalAnglePair spherical, Vector3 cartesian, T item)
-        {   
+        {
             if (TryGetIndex(spherical, cartesian, out var i))
                 return false;
 
+            if (treatReflectionsAsSame)
+                Reflect(ref spherical, ref cartesian);
             if (i == Count)
             {
                 sphericals.Add(spherical);
@@ -95,6 +98,8 @@ namespace TVGL
                     items[i] = value;
                 else
                 {
+                    if (treatReflectionsAsSame)
+                        Reflect(ref sphericalAngles, ref cartesian);
                     if (i == Count)
                     {
                         sphericals.Add(sphericalAngles);
@@ -127,11 +132,13 @@ namespace TVGL
             }
             set
             {
-                var spherical =new SphericalAnglePair(cartesian);
+                var spherical = new SphericalAnglePair(cartesian);
                 if (TryGetIndex(spherical, cartesian, out var i))
                     items[i] = value;
                 else
                 {
+                    if (treatReflectionsAsSame)
+                        Reflect(ref spherical, ref cartesian);
                     if (i == Count)
                     {
                         sphericals.Add(spherical);
@@ -199,7 +206,7 @@ namespace TVGL
             return matchFound && item.Equals(items[i]);
         }
 
-        public List<T> Items =>items;
+        public List<T> Items => items;
     }
 
 
@@ -275,6 +282,8 @@ namespace TVGL
             var matchFound = TryGetIndex(spherical, cartesian, out var i);
             if (matchFound)
                 return false;
+            if (treatReflectionsAsSame)
+                Reflect(ref spherical, ref cartesian);
             if (i == Count)
             {
                 sphericals.Add(spherical);
@@ -357,12 +366,8 @@ namespace TVGL
         protected bool TryGetIndex(SphericalAnglePair spherical, Vector3 cartesian, out int i)
         {
             var radius = cartesian.Length();
-            if (treatReflectionsAsSame && cartesian.Z < 0)
-            {
-                var newAzimuth = cartesian.Y < 0 ? spherical.AzimuthAngle + Math.PI : spherical.AzimuthAngle - Math.PI;
-                spherical = new SphericalAnglePair(Math.PI - spherical.PolarAngle, newAzimuth);
-                cartesian = -cartesian;
-            }
+            if (treatReflectionsAsSame)
+                Reflect(ref spherical, ref cartesian);
 
             // the following binary search is modified/simplified from Array.BinarySearch
             // (https://referencesource.microsoft.com/mscorlib/a.html#b92d187c91d4c9a9)
@@ -387,6 +392,15 @@ namespace TVGL
             return ScanHoop(ref i, spherical, cartesian, radius);
         }
 
+        protected static void Reflect(ref SphericalAnglePair spherical, ref Vector3 cartesian)
+        {
+            if (cartesian.Z < 0)
+            {
+                var newAzimuth = cartesian.Y < 0 ? spherical.AzimuthAngle + Math.PI : spherical.AzimuthAngle - Math.PI;
+                spherical = new SphericalAnglePair(Math.PI - spherical.PolarAngle, newAzimuth);
+                cartesian = -cartesian;
+            }
+        }
 
         private bool ScanHoop(ref int index, SphericalAnglePair spherical, Vector3 cartesian, double radius)
         {
