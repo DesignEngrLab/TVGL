@@ -1351,6 +1351,7 @@ namespace TVGL
                 foreach (var edge in NonsmoothEdges)
                     copy.NonsmoothEdges.Add(copy.Edges[edge.IndexInList]);
             }
+            TessellationInspectAndRepair.DefineBorders(copy);
             copy.ReferenceIndex = ReferenceIndex;
             return copy;
         }

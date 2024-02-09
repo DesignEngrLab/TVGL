@@ -158,7 +158,7 @@ namespace TVGL
         /// <returns>A bool.</returns>
         public bool EncirclesAxis(Vector3 axis, Vector3 anchor)
         {
-            return GetVectors().BorderEncirclesAxis(axis, anchor);
+            return GetCoordinates().BorderEncirclesAxis(axis, anchor);
         }
 
         /// <summary>
@@ -215,7 +215,7 @@ namespace TVGL
         /// Gets the vectors.
         /// </summary>
         /// <returns>IEnumerable&lt;Vector3&gt;.</returns>
-        public IEnumerable<Vector3> GetVectors()
+        public IEnumerable<Vector3> GetCoordinates()
         {
             foreach(var vertex in GetVertices())
                 yield return vertex.Coordinates;

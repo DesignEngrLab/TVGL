@@ -289,9 +289,15 @@ namespace TVGL
             var globalMaxAngle = double.NegativeInfinity;
             foreach (var path in Borders)
             {
-                FindWindingAroundTube(path.GetVectors(), out var minAngle, out var maxAngle);
+                FindWindingAroundTube(path.GetCoordinates(), out var minAngle, out var maxAngle);
                 if (globalMinAngle > minAngle) globalMinAngle = minAngle;
                 if (globalMaxAngle < maxAngle) globalMaxAngle = maxAngle;
+
+                if (Math.Abs(globalMaxAngle - globalMinAngle) > Math.Tau)
+                {
+                    globalMinAngle = -Math.PI;
+                    globalMaxAngle = Math.PI;
+                }
             }
             return globalMaxAngle - globalMinAngle;
         }

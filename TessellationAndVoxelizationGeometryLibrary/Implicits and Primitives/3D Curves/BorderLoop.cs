@@ -153,7 +153,7 @@ namespace TVGL
 
         public void SetBorderPlane()
         {
-            var vertices = GetVectors();
+            var vertices = GetCoordinates();
             var verticesPlusCenters = new List<Vector3>(vertices);
             foreach (var center in GetCenters())
                 verticesPlusCenters.Add(center);
@@ -221,7 +221,7 @@ namespace TVGL
             get
             {
                 if (_polygon == null)
-                    _polygon = new Polygon(OwnedPrimitive.TransformFrom3DTo2D(GetVectors(), IsClosed));
+                    _polygon = new Polygon(OwnedPrimitive.TransformFrom3DTo2D(GetCoordinates(), IsClosed));
                 return _polygon;
             }
         }

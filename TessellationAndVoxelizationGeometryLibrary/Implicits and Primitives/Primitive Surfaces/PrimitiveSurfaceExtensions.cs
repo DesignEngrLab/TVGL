@@ -79,7 +79,7 @@ namespace TVGL
         /// <returns>A bool.</returns>
         public static bool BorderEncirclesAxis(this BorderLoop border, Vector3 axis, Vector3 anchor)
         {
-            return border.GetVectors().BorderEncirclesAxis(axis, anchor);
+            return border.GetCoordinates().BorderEncirclesAxis(axis, anchor);
         }
 
 
@@ -92,7 +92,7 @@ namespace TVGL
         /// <returns>A bool.</returns>
         public static bool BorderEncirclesAxis(this BorderLoop border, Matrix4x4 transform, Vector3 anchor)
         {
-            return border.GetVectors().BorderEncirclesAxis(transform, anchor);
+            return border.GetCoordinates().BorderEncirclesAxis(transform, anchor);
         }
         /// <param name="transform">The transform.</param>
 
@@ -140,15 +140,20 @@ namespace TVGL
         {
             var axis = surface.GetAxis();
             var transform = axis.TransformToXYPlane(out var backTransform);
-            var vectors = surface.Borders[0].GetVectors().Concat(new[] { surface.Borders[0].GetVectors().First() });
-            FindWindingAroundAxis(vectors, transform, surface.GetAnchor(), out var globalMinAngle, out var globalMaxAngle);
+            var globalMinAngle = double.PositiveInfinity;
+            var globalMaxAngle=double.NegativeInfinity;
 
-            foreach (var path in surface.Borders.Skip(1))
+            foreach (var path in surface.Borders)
             {
-                vectors = path.GetVectors().Concat(new[] { path.GetVectors().First() });
-                FindWindingAroundAxis(vectors, transform, surface.GetAnchor(), out var minAngle, out var maxAngle);
+                FindWindingAroundAxis(path.GetCoordinates(), transform, surface.GetAnchor(), out var minAngle, out var maxAngle);
                 if (globalMinAngle > minAngle) globalMinAngle = minAngle;
                 if (globalMaxAngle < maxAngle) globalMaxAngle = maxAngle;
+
+                if (Math.Abs(globalMaxAngle - globalMinAngle) > Math.Tau)
+                {
+                   globalMinAngle = -Math.PI;
+                    globalMaxAngle = Math.PI;
+                }
             }
             vectorAtMinAngle = new Vector3(Math.Cos(globalMinAngle), Math.Sin(globalMinAngle), 0).TransformNoTranslate(backTransform);
             vectorAtMaxAngle = new Vector3(Math.Cos(globalMaxAngle), Math.Sin(globalMaxAngle), 0).TransformNoTranslate(backTransform);
@@ -158,13 +163,14 @@ namespace TVGL
 
         /// <summary>
         /// Finds the total winding angle around the axis and provides the minimum and maximum angle.
+        /// T
         /// </summary>
         /// <param name="path">The path.</param>
         /// <param name="transform">The transform.</param>
         /// <param name="anchor">The anchor.</param>
         /// <param name="minAngle">The min angle.</param>
         /// <param name="maxAngle">The max angle.</param>
-        /// <returns>A double.</returns>
+        /// <returns>A magnitude of the angle.</returns>
         public static double FindWindingAroundAxis(this IEnumerable<Vector3> path, Matrix4x4 transform, Vector3 anchor,
             out double minAngle, out double maxAngle)
         {

@@ -145,7 +145,7 @@ namespace TVGL
             var onlyLines = OwnedPrimitive is Plane && OtherPrimitive is Plane;
 
             //Set the border segment as a straight line, a curve, or leave it null for something more complex
-            if (!onlyCircles && StraightLine3D.CreateFromPoints(GetVectors(), out var curve, out var error))
+            if (!onlyCircles && StraightLine3D.CreateFromPoints(GetCoordinates(), out var curve, out var error))
             {
                 if (error < Constants.DefaultTessellationError)
                 {
@@ -156,9 +156,9 @@ namespace TVGL
 
             if (!onlyLines)
             {
-                var plane = Plane.FitToVertices(GetVectors(), Vector3.Null, out _);
+                var plane = Plane.FitToVertices(GetCoordinates(), Vector3.Null, out _);
                 //Get the circle too and compare the error to straight line.
-                if (plane != null && Circle.CreateFromPoints(GetVectors().ProjectTo2DCoordinates(plane.Normal, out var backTransform), out var circle, out var circleError))
+                if (plane != null && Circle.CreateFromPoints(GetCoordinates().ProjectTo2DCoordinates(plane.Normal, out var backTransform), out var circle, out var circleError))
                 {
                     if (circleError < Constants.DefaultTessellationError && circleError < CurveError)
                     {

@@ -187,6 +187,7 @@ namespace TVGL
                 borderSegments.Add(loop);
             }
             patches.AddRange(TessellationInspectAndRepair.GetFacePatchesBetweenBorderEdges(borderEdges, ts.Faces, usedFaces));
+            if (ts.Primitives == null) ts.Primitives = new List<PrimitiveSurface>();
             foreach (var patch in patches)
             {
                 ts.Primitives.Add(new UnknownRegion(patch));
