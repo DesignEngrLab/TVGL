@@ -141,18 +141,29 @@ namespace TVGL
             var axis = surface.GetAxis();
             var transform = axis.TransformToXYPlane(out var backTransform);
             var globalMinAngle = double.PositiveInfinity;
-            var globalMaxAngle=double.NegativeInfinity;
+            var globalMaxAngle = double.NegativeInfinity;
 
             foreach (var path in surface.Borders)
             {
                 FindWindingAroundAxis(path.GetCoordinates(), transform, surface.GetAnchor(), out var minAngle, out var maxAngle);
+                if (globalMaxAngle < minAngle)
+                {
+                    minAngle += Math.Tau;
+                    maxAngle += Math.Tau;
+                }
+                if (globalMinAngle > maxAngle)
+                {
+                    minAngle -= Math.Tau;
+                    maxAngle -= Math.Tau;
+                }
                 if (globalMinAngle > minAngle) globalMinAngle = minAngle;
                 if (globalMaxAngle < maxAngle) globalMaxAngle = maxAngle;
 
                 if (Math.Abs(globalMaxAngle - globalMinAngle) > Math.Tau)
                 {
-                   globalMinAngle = -Math.PI;
+                    globalMinAngle = -Math.PI;
                     globalMaxAngle = Math.PI;
+                    break;
                 }
             }
             vectorAtMinAngle = new Vector3(Math.Cos(globalMinAngle), Math.Sin(globalMinAngle), 0).TransformNoTranslate(backTransform);
@@ -171,39 +182,14 @@ namespace TVGL
         /// <param name="minAngle">The min angle.</param>
         /// <param name="maxAngle">The max angle.</param>
         /// <returns>A magnitude of the angle.</returns>
-        public static double FindWindingAroundAxis(this IEnumerable<Vector3> path, Matrix4x4 transform, Vector3 anchor,
-            out double minAngle, out double maxAngle)
+        public static double FindWindingAroundAxis(this IEnumerable<Vector3> path, Matrix4x4 transform,
+            Vector3 anchor, out double minAngle, out double maxAngle)
         {
             var coords = path.Select(v => v.ConvertTo2DCoordinates(transform));
             var center = anchor.ConvertTo2DCoordinates(transform);
-            var startPoint = coords.First();
-            var prevVector = startPoint - center;
-            var angleSum = 0.0;
-            var startingAngle = Math.Atan2(prevVector.Y, prevVector.X);
-            minAngle = startingAngle;
-            maxAngle = startingAngle;
-            foreach (var coord in coords.Skip(1))
-            {
-                var nextVector = coord - center;
-                var angleDelta = Math.Atan2(prevVector.Cross(nextVector), prevVector.Dot(nextVector));
-                angleSum += angleDelta;
-                startingAngle += angleDelta;
-                if (minAngle > startingAngle) minAngle = startingAngle;
-                if (maxAngle < startingAngle) maxAngle = startingAngle;
-                prevVector = nextVector;
-            }
-            while (minAngle < -Math.PI)
-            {
-                minAngle += Math.Tau;
-                maxAngle += Math.Tau;
-            }
-            while (minAngle > Math.PI)
-            {
-                minAngle -= Math.Tau;
-                maxAngle -= Math.Tau;
-            }
-            return Math.Abs(angleSum);
+            return coords.GetWindingAngles(center, true, out minAngle, out maxAngle);
         }
+
         /// <summary>
         /// Finds the total winding angle around the axis and provides the minimum and maximum angle.
         /// </summary>
@@ -341,7 +327,7 @@ namespace TVGL
             var result = VoxelizedSolid.CreateEmpty(environment);
             var minIndices = result.ConvertCoordinatesToIndices(new Vector3(surface.MinX, surface.MinY, surface.MinZ));
             var maxIndices = result.ConvertCoordinatesToIndices(new Vector3(surface.MaxX, surface.MaxY, surface.MaxZ));
-            var minJ =  minIndices[1];
+            var minJ = minIndices[1];
             var maxJ = Math.Min(result.numVoxelsY, maxIndices[1]);
             var minK = minIndices[2];
             var maxK = Math.Min(result.numVoxelsZ, maxIndices[2]);

@@ -24,6 +24,7 @@ using System.Numerics;
 using System.Runtime.CompilerServices;
 using Newtonsoft.Json;
 using StarMathLib;
+using TVGL.threemfclasses;
 
 
 namespace TVGL
@@ -187,12 +188,21 @@ namespace TVGL
             double xSq = 0.0;
             double xy = 0.0, ySq = 0.0;
             double xz = 0.0, yz = 0.0, zSq = 0.0;
+            var x = pointList.First().X;
+            var y = pointList.First().Y;
+            var z = pointList.First().Z;
+            var xIsConstant = true;
+            var yIsConstant = true;
+            var zIsConstant = true;
             foreach (var vertex in pointList)
             {
                 if (vertex.IsNull()) continue;
-                var x = vertex.X;
-                var y = vertex.Y;
-                var z = vertex.Z;
+                xIsConstant &= vertex.X.IsPracticallySame(x);
+                x = vertex.X;
+                yIsConstant &= vertex.Y.IsPracticallySame(y);
+                y = vertex.Y;
+                zIsConstant &= vertex.Z.IsPracticallySame(z);
+                z = vertex.Z;
                 xSum += x;
                 ySum += y;
                 zSum += z;
@@ -202,6 +212,54 @@ namespace TVGL
                 xy += x * y;
                 xz += x * z;
                 yz += y * z;
+            }
+            if ((xIsConstant && yIsConstant) || (xIsConstant && zIsConstant) || (yIsConstant && zIsConstant))
+            {
+                distanceToPlane = double.NaN;
+                normal = Vector3.Null;
+                return false;
+            }
+            if (xIsConstant)
+            {
+                if (x < 0)
+                {
+                    normal = -Vector3.UnitX;
+                    distanceToPlane = -x;
+                }
+                else
+                {
+                    normal = Vector3.UnitX;
+                    distanceToPlane = x;
+                }
+                return true;
+            }
+            if (yIsConstant)
+            {
+                if (y < 0)
+                {
+                    normal = -Vector3.UnitY;
+                    distanceToPlane = -y;
+                }
+                else
+                {
+                    normal = Vector3.UnitY;
+                    distanceToPlane = y;
+                }
+                return true;
+            }
+            if (zIsConstant)
+            {
+                if (z < 0)
+                {
+                    normal = -Vector3.UnitZ;
+                    distanceToPlane = -z;
+                }
+                else
+                {
+                    normal = Vector3.UnitZ;
+                    distanceToPlane = z;
+                }
+                return true;
             }
             var matrix = new double[,] { { xSq, xy, xz }, { xy, ySq, yz }, { xz, yz, zSq } };
             var rhs = new[] { xSum, ySum, zSum };
@@ -216,22 +274,12 @@ namespace TVGL
                 }
                 return true;
             }
-            var absoluteDiff = Vector3.Zero;
-            for (int i = 0, j = numVertices - 1; i < numVertices; j = i++)
-                absoluteDiff += new Vector3(Math.Abs(pointList[i].X - pointList[j].X), Math.Abs(pointList[i].Y - pointList[j].Y),
-                    Math.Abs(pointList[i].Z - pointList[j].Z));
-            if ((absoluteDiff.X/(absoluteDiff.Y+absoluteDiff.Z)).IsNegligible(Constants.BaseTolerance)) normal = Vector3.UnitX;
-            else if ((absoluteDiff.Y / (absoluteDiff.X + absoluteDiff.Z)).IsNegligible(Constants.BaseTolerance)) normal = Vector3.UnitY;
-            else if ((absoluteDiff.Z / (absoluteDiff.Y + absoluteDiff.X)).IsNegligible(Constants.BaseTolerance)) normal = Vector3.UnitZ;
             else
             {
                 normal = Vector3.Null;
                 distanceToPlane = double.NaN;
                 return false;
             }
-            distanceToPlane = pointList[0].Dot(normal);
-            return true;
-            //throw new Exception("Some how all vertices on faces passed into Plane constructor are collinear.");
         }
 
         /// <summary>
@@ -583,7 +631,7 @@ namespace TVGL
             maxError = double.MaxValue;
             if (!DefineNormalAndDistanceFromVertices(points, out var distanceToPlane, out var planeNormal))
                 return null;
-            
+
             if (!normalGuess.IsNull() && normalGuess.Dot(planeNormal) < 0)
             {
                 distanceToPlane = -distanceToPlane;

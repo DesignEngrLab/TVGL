@@ -418,7 +418,7 @@ namespace TVGL
         {
             Plane.DefineNormalAndDistanceFromVertices(vertices, out var distance, out var planeNormal);
             var plane = new Plane(distance, planeNormal);
-            if (plane.CalculateMaxError(vertices.Select(v => v.Coordinates)) > Constants.DefaultPlaneDistanceTolerance)
+            if (plane.Normal.IsNull() || plane.CalculateMaxError(vertices.Select(v => v.Coordinates)) > 3 * tolerance)
             {
                 convexHull = null;
                 return false;

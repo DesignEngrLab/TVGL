@@ -13,6 +13,7 @@
 // ***********************************************************************
 using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
 
 namespace TVGL
@@ -283,41 +284,80 @@ namespace TVGL
             isPositive = (firstFace.Center - anchor).Dot(firstFace.Normal) > 0;
         }
 
-        public double FindLargestEncompassingAnglesInTube()
+        public double FindLargestEncompassingAnglesInTubeCrossSection()
         {
-            var globalMinAngle = double.PositiveInfinity;
-            var globalMaxAngle = double.NegativeInfinity;
-            foreach (var path in Borders)
+            var borderEnumerator = Borders.GetEnumerator();
+            if (!borderEnumerator.MoveNext()) return Math.Tau; // if there are no borders then I guess you have a 
+                                                               //complete torus
+            var border = borderEnumerator.Current;
+            FindWindingAroundTubeCrossSection(border.GetCoordinates(), true, out var globalMinAngle, out var globalMaxAngle);
+            while (borderEnumerator.MoveNext())
             {
-                FindWindingAroundTube(path.GetCoordinates(), out var minAngle, out var maxAngle);
+                border = borderEnumerator.Current;
+                FindWindingAroundTubeCrossSection(border.GetCoordinates(), true, out var minAngle, out var maxAngle);
+                if (globalMaxAngle < minAngle)
+                {
+                    minAngle -= Math.Tau;
+                    maxAngle -= Math.Tau;
+                }
+                if (globalMinAngle > maxAngle)
+                {
+                    minAngle += Math.Tau;
+                    maxAngle += Math.Tau;
+                }
+                var disconnectedRegions = globalMaxAngle < minAngle || globalMinAngle > maxAngle;
+                // an interesting thing about tori is that they can have borders that wrap
+                // around the hoop but go nowhere in terms of the the tube's cross section
+                // so this is manifests as two (and only two?) regions of angle that do not overlap
+
                 if (globalMinAngle > minAngle) globalMinAngle = minAngle;
                 if (globalMaxAngle < maxAngle) globalMaxAngle = maxAngle;
 
+                if (disconnectedRegions)
+                {
+                    if (globalMinAngle < -Math.PI)
+                    {
+                        globalMinAngle += Math.Tau;
+                        globalMaxAngle += Math.Tau;
+
+                    }
+                    else if (globalMinAngle > Math.PI)
+                    {
+                        globalMinAngle -= Math.Tau;
+                        globalMaxAngle -= Math.Tau;
+
+                    }
+                    var c = Faces.First().Center;
+                    FindWindingAroundTubeCrossSection([c], true, out var angle, out _);
+                    if (angle < globalMinAngle || angle > globalMaxAngle)
+                    {
+                        (globalMinAngle, globalMaxAngle) = (globalMaxAngle, globalMinAngle);
+                        if (globalMinAngle > Math.PI) globalMinAngle -= Math.Tau;
+                        else globalMaxAngle += Math.Tau;
+                    }
+                    break;
+                }
                 if (Math.Abs(globalMaxAngle - globalMinAngle) > Math.Tau)
                 {
                     globalMinAngle = -Math.PI;
                     globalMaxAngle = Math.PI;
+                    break;
                 }
             }
             return globalMaxAngle - globalMinAngle;
         }
 
-        private double FindWindingAroundTube(IEnumerable<Vector3> points, out double minAngle, out double maxAngle)
+        private double FindWindingAroundTubeCrossSection(IEnumerable<Vector3> points, bool closedPath, out double minAngle, out double maxAngle)
         {
-            minAngle = double.PositiveInfinity;
-            maxAngle = double.NegativeInfinity;
-            foreach (var point in points)
-            {
-                var ringPoint = ClosestPointOnCenterRingToPoint(Axis, Center, MajorRadius, point);
-                var xAxis = (ringPoint - Center).Normalize();
-                var localCoord = point - ringPoint;
-                var xCoord = xAxis.Dot(localCoord);
-                var yCoord = Axis.Dot(localCoord);
-                var angle = Math.Atan2(yCoord, xCoord);
-                if (minAngle > angle) minAngle = angle;
-                if (maxAngle < angle) maxAngle = angle;
-            }
-            return maxAngle - minAngle;
+            return
+                PolygonOperations.GetWindingAngles(
+                    points.Select(p =>
+                    {
+                        var ringPoint = ClosestPointOnCenterRingToPoint(Axis, Center, MajorRadius, p);
+                        var xAxis = (ringPoint - Center).Normalize();
+                        var localCoord = p - ringPoint;
+                        return new Vector2(xAxis.Dot(localCoord), Axis.Dot(localCoord));
+                    }), Vector2.Zero, closedPath, out minAngle, out maxAngle);
         }
 
         protected override void SetPrimitiveLimits()

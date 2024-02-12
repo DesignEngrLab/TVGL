@@ -59,34 +59,42 @@ namespace StarMathLib
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static bool solveViaCramersRule3(this double[,] a, IList<double> b, out double[] answer)
         {
-            var denominator = Determinant(a);
-            if (Math.Abs(denominator) < TVGL.Constants.BaseTolerance)
-            {
-                answer = Array.Empty<double>();
-                return false;
-            }
-            denominator = 1 / denominator;
-            answer = new[]
-            {
-              denominator*  ((b[0] * a[1, 1] * a[2, 2])
+            var oneOverDeterminant = 1 / Determinant(a);
+            var x = oneOverDeterminant * ((b[0] * a[1, 1] * a[2, 2])
                  + (a[0, 1] * a[1, 2] * b[2])
                  + (a[0, 2] * b[1] * a[2, 1])
                  - (b[0] * a[1, 2] * a[2, 1])
                  - (a[0, 1] * b[1] * a[2, 2])
-                 - (a[0, 2] * a[1, 1] * b[2])),
-               denominator*   ( (a[0, 0] * b[1] * a[2, 2])
+                 - (a[0, 2] * a[1, 1] * b[2]));
+            if (double.IsNaN(x))
+            {
+                answer = Array.Empty<double>();
+                return false;
+            }
+            var y =
+               oneOverDeterminant * ((a[0, 0] * b[1] * a[2, 2])
                   + (b[0] * a[1, 2] * a[2, 0])
                   + (a[0, 2] * a[1, 0] * b[2])
                   - (a[0, 0] * a[1, 2] * b[2])
                   - (b[0] * a[1, 0] * a[2, 2])
-                  - (a[0, 2] * b[1] * a[2, 0])),
-               denominator*   ( (a[0, 0] * a[1, 1] * b[2])
-                  + (a[0, 1] * b[1] * a[2, 0])
-                  + (b[0] * a[1, 0] * a[2, 1])
-                  - (a[0, 0] * b[1] * a[2, 1])
-                  - (a[0, 1] * a[1, 0] * b[2])
-                  - (b[0] * a[1, 1] * a[2, 0]))
-            };
+                  - (a[0, 2] * b[1] * a[2, 0]));
+            if (double.IsNaN(y))
+            {
+                answer = Array.Empty<double>();
+                return false;
+            }
+            var z = oneOverDeterminant * ((a[0, 0] * a[1, 1] * b[2])
+                              + (a[0, 1] * b[1] * a[2, 0])
+                              + (b[0] * a[1, 0] * a[2, 1])
+                              - (a[0, 0] * b[1] * a[2, 1])
+                              - (a[0, 1] * a[1, 0] * b[2])
+                              - (b[0] * a[1, 1] * a[2, 0]));
+            if (double.IsNaN(z))
+            {
+                answer = Array.Empty<double>();
+                return false;
+            }
+            answer = [x, y, z];
             return true;
         }
 

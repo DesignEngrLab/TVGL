@@ -24,6 +24,64 @@ namespace TVGL
     public static partial class PolygonOperations
     {
         /// <summary>
+        /// Gets the winding number of a point with respect to a polygon. Like the winding number, but in terms
+        /// of angle. So instead of "1" (as in 1 cycle), this return 2 * Math.PI. The min and max angles are also
+        /// provided.
+        /// </summary>
+        /// <param name="coords"></param>
+        /// <param name="center"></param>
+        /// <param name="minAngle"> will be between -pi and +pi</param>
+        /// <param name="maxAngle">the maximum angle. it is not necessarily the minAngle + totalAnlge</param>
+        /// <returns>totalAngle</returns>
+        public static double GetWindingAngles(this Polygon polygon, Vector2 center, out double minAngle, out double maxAngle)
+            => polygon.Path.GetWindingAngles(center, true, out minAngle, out maxAngle);
+
+        /// <summary>
+        /// Gets the winding number of a point with respect to a polygon. Like the winding number, but in terms
+        /// of angle. So instead of "1" (as in 1 cycle), this return 2 * Math.PI. The min and max angles are also
+        /// provided.
+        /// </summary>
+        /// <param name="coords"></param>
+        /// <param name="center"></param>
+        /// <param name="closedPath">Should the first point be repeated at the end to represent a closed path.</param>
+        /// <param name="minAngle"> will be between -pi and +pi</param>
+        /// <param name="maxAngle">the maximum angle. it is not necessarily the minAngle + totalAnlge</param>
+        /// <returns>totalAngle</returns>
+        public static double GetWindingAngles(this IEnumerable<Vector2> coords, Vector2 center,
+            bool closedPath, out double minAngle, out double maxAngle)
+        {
+            var startPoint = coords.First();
+            var prevVector = startPoint - center;
+            var angle = Math.Atan2(prevVector.Y, prevVector.X);
+            var startAngle = angle;
+            minAngle = angle;
+            maxAngle = angle;
+            var points = closedPath ? coords.Skip(1).Concat([startPoint]) : coords.Skip(1);
+            foreach (var coord in points)
+            {
+                var nextVector = coord - center;
+                var angleDelta = Math.Atan2(prevVector.Cross(nextVector), prevVector.Dot(nextVector));
+                angle += angleDelta;
+                if (minAngle > angle) minAngle = angle;
+                if (maxAngle < angle) maxAngle = angle;
+                prevVector = nextVector;
+            }
+            var totalAngle = angle - startAngle;
+            while (minAngle < -Math.PI)
+            {
+                minAngle += Math.Tau;
+                maxAngle += Math.Tau;
+            }
+            while (minAngle > Math.PI)
+            {
+                minAngle -= Math.Tau;
+                maxAngle -= Math.Tau;
+            }
+            return Math.Abs(totalAngle);
+        }
+
+
+        /// <summary>
         /// Returns the single polygon that is encompasses the point or is closest to it. This will be a
         /// simple polygon as the method transverses each input as a polygon tree and simply find the loop
         /// (positive or negative/hole) the polygon.
