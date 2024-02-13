@@ -1,6 +1,4 @@
 ﻿using System;
-#if !PRESENT
-#endif
 using TVGL;
 using System.Linq;
 using System.Diagnostics;

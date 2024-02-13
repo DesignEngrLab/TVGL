@@ -32,14 +32,11 @@ namespace TVGLUnitTestsAndBenchmarking
                 ; //.OrderBy(fi => fi.Length);
             foreach (var fileName in allFiles.Skip(index))
             {
-                if (index == 132)
-                {
-                    index++;
-                    continue;
-                }
                 Console.WriteLine(index + ": Attempting to open: " + fileName.Name);
                 TessellatedSolid[] solids = null;
                 IO.Open(fileName.FullName, out solids);
+                var vs = VoxelizedSolid.CreateFrom(solids[0], 66);
+                Presenter.ShowAndHang(vs);
                 var sw = Stopwatch.StartNew();
                 //Presenter.ShowAndHang(solids);
                 ConvexHull.Test2(solids.MaxBy(s => s.Volume));

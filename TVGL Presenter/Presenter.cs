@@ -547,29 +547,26 @@ namespace TVGL
         private static IEnumerable<GeometryModel3D> ConvertVoxelsToPointModel3D(VoxelizedSolid vs)
         {
             var sw = Stopwatch.StartNew();
-            var color = new System.Windows.Media.Color { R = vs.SolidColor.R, G = vs.SolidColor.G, B = vs.SolidColor.B, A = vs.SolidColor.A };
             var s = (float)vs.VoxelSideLength;
             var xOffset = (float)vs.Offset[0];
             var yOffset = (float)vs.Offset[1];
             var zOffset = (float)vs.Offset[2];
-            var radius = 14 * s;
+            var radius = s;
 
             yield return new PointGeometryModel3D
             {
+                 FigureRatio=.2,
                 Geometry = new PointGeometry3D
                 {
                     Positions = new Vector3Collection(vs.GetExposedVoxels().Select(vox => new SharpDX.Vector3(vox.xIndex * s + xOffset,
                     vox.yIndex * s + yOffset, vox.zIndex * s + zOffset))),
-                     
+
                 },
                 Size = new System.Windows.Size(3 * Math.Sqrt(s), 3 * Math.Sqrt(s)),
-            //FixedSize = true,
-                Color = color
+                Color = new System.Windows.Media.Color { R = vs.SolidColor.R, G = vs.SolidColor.G, B = vs.SolidColor.B, A = vs.SolidColor.A }
             };
             Console.WriteLine(sw.Elapsed.ToString());
-
         }
-
 
 
         public static void ShowAndHangTransparentsAndSolids(IEnumerable<Solid> transparents, IEnumerable<Solid> solids)
