@@ -140,7 +140,7 @@ namespace TVGL
             var newFaces = new List<ConvexHullFace>();
             var oldFaces = new List<ConvexHullFace>();
             var verticesToReassign = new List<Vertex>();
-            while (true)
+            while (faceQueue.Count > 0)
             {
                 var face = faceQueue.Dequeue();
                 // solve the face that has the farthest vertex from it.
