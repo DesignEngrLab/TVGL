@@ -363,6 +363,8 @@ namespace TVGL
                 i = lo + ((hi - lo) >> 1);
                 if (IsTheSame(query, qCart, uniqueIDs[i], directions[i]))
                     return true;
+                if (uniqueIDs[i].Z.IsPracticallySame(query.Z, angleTolerance))
+                    return ScanHoop(ref i, query, qCart);
                 else if (uniqueIDs[i].Z < query.Z)
                     lo = i + 1;
                 else hi = i - 1;
@@ -376,7 +378,7 @@ namespace TVGL
             if (query.Z <= Constants.HalfPi)
                 return query;
             var newAzimuth = query.W < 0 ? query.W + Math.PI : query.W - Math.PI;
-            return new Vector4(-query.X, query.Y, Math.PI - query.Z, newAzimuth);
+            return new Vector4(query.X, query.Y, Math.PI - query.Z, newAzimuth);
         }
 
         private bool ScanHoop(ref int index, Vector4 query, Vector3 qCart)

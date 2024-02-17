@@ -383,6 +383,8 @@ namespace TVGL
                 i = lo + ((hi - lo) >> 1);
                 if (IsTheSame(cartesian, spherical, radius, i))
                     return true;
+                if (sphericals[i].PolarAngle.IsPracticallySame(spherical.PolarAngle, angleTolerance))
+                    return ScanHoop(ref i, spherical, cartesian, radius);
                 else if (sphericals[i].PolarAngle < spherical.PolarAngle)
                     lo = i + 1;
                 else hi = i - 1;
