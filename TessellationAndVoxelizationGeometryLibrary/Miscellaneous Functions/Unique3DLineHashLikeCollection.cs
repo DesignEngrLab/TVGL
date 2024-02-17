@@ -49,21 +49,21 @@ namespace TVGL
         }
         private bool AddIfNotPresent(Vector4 unique, T item)
         {
-            if (TryGetIndex(unique, out var i))
+            if (TryGetIndex(unique, out var i, out var matchUnique))
                 return false;
             if (treatReflectionsAsSame)
-                unique = Reflect(unique);
-            (var anchor, var direction) = MiscFunctions.Get3DLineValuesFromUnique(unique);
+                matchUnique = Reflect(matchUnique);
+            (var anchor, var direction) = MiscFunctions.Get3DLineValuesFromUnique(matchUnique);
             if (i == Count)
             {
-                uniqueIDs.Add(unique);
+                uniqueIDs.Add(matchUnique);
                 anchors.Add(anchor);
                 directions.Add(direction);
                 items.Add(item);
             }
             else
             {
-                uniqueIDs.Insert(i, unique);
+                uniqueIDs.Insert(i, matchUnique);
                 anchors.Insert(i, anchor);
                 directions.Insert(i, direction);
                 items.Insert(i, item);
@@ -93,23 +93,21 @@ namespace TVGL
             }
             set
             {
-                if (TryGetIndex(unique, out var i))
+                if (TryGetIndex(unique, out var i, out var match))
                     items[i] = value;
                 else
                 {
-                    if (treatReflectionsAsSame)
-                        unique = Reflect(unique);
-                    (var anchor, var direction) = MiscFunctions.Get3DLineValuesFromUnique(unique);
+                    (var anchor, var direction) = MiscFunctions.Get3DLineValuesFromUnique(match);
                     if (i == Count)
                     {
-                        uniqueIDs.Add(unique);
+                        uniqueIDs.Add(match);
                         anchors.Add(anchor);
                         directions.Add(direction);
                         items.Add(value);
                     }
                     else
                     {
-                        uniqueIDs.Insert(i, unique);
+                        uniqueIDs.Insert(i, match);
                         anchors.Insert(i, anchor);
                         directions.Insert(i, direction);
                         items.Insert(i, value);
@@ -120,7 +118,7 @@ namespace TVGL
 
         public bool TryGet(Vector3 anchor, Vector3 direction, out T item, out Vector3 matchingAnchor, out Vector3 matchingDirection)
         {
-            if (TryGetIndex(MiscFunctions.Unique3DLine(anchor, direction), out var i))
+            if (TryGetIndex(MiscFunctions.Unique3DLine(anchor, direction), out var i, out var matchingQuery))
             {
                 item = items[i];
                 matchingAnchor = anchors[i];
@@ -134,21 +132,19 @@ namespace TVGL
         }
         public bool TryGet(Vector4 unique, out T item, out Vector4 matchingUnique)
         {
-            if (TryGetIndex(unique, out var i))
+            if (TryGetIndex(unique, out var i, out matchingUnique))
             {
                 item = items[i];
-                matchingUnique = uniqueIDs[i];
                 return true;
             }
             item = default;
-            matchingUnique = uniqueIDs[i];
             return false;
         }
 
         public new bool Remove(Vector3 anchor, Vector3 direction) => Remove(MiscFunctions.Unique3DLine(anchor, direction));
         public new bool Remove(Vector4 unique)
         {
-            var matchFound = TryGetIndex(unique, out var i);
+            var matchFound = TryGetIndex(unique, out var i, out _);
             if (matchFound)
             {
                 uniqueIDs.RemoveAt(i);
@@ -165,7 +161,7 @@ namespace TVGL
             => Contains(MiscFunctions.Unique3DLine(anchor, direction), item);
         public bool Contains(Vector4 unique, T item)
         {
-            bool matchFound = TryGetIndex(unique, out var i);
+            bool matchFound = TryGetIndex(unique, out var i, out _);
             return matchFound && item.Equals(items[i]);
         }
 
@@ -246,22 +242,20 @@ namespace TVGL
         /// </summary>
         private bool AddIfNotPresent(Vector4 unique)
         {
-            var matchFound = TryGetIndex(unique, out var i);
+            var matchFound = TryGetIndex(unique, out var i, out var match);
             if (matchFound)
                 return false;
-            if (treatReflectionsAsSame)
-                unique = Reflect(unique);
             if (i == Count)
             {
-                uniqueIDs.Add(unique);
-                (var anchor, var dir) = MiscFunctions.Get3DLineValuesFromUnique(unique);
+                uniqueIDs.Add(match);
+                (var anchor, var dir) = MiscFunctions.Get3DLineValuesFromUnique(match);
                 anchors.Add(anchor);
                 directions.Add(dir);
             }
             else
             {
-                uniqueIDs.Insert(i, unique);
-                (var anchor, var dir) = MiscFunctions.Get3DLineValuesFromUnique(unique);
+                uniqueIDs.Insert(i, match);
+                (var anchor, var dir) = MiscFunctions.Get3DLineValuesFromUnique(match);
                 anchors.Insert(i, anchor);
                 directions.Insert(i, dir);
             }
@@ -277,7 +271,7 @@ namespace TVGL
 
         public bool Contains(Vector4 unique)
         {
-            return TryGetIndex(unique, out _);
+            return TryGetIndex(unique, out _, out _);
         }
         public bool Contains(Vector3 anchor, Vector3 direction)
             => Contains(MiscFunctions.Unique3DLine(anchor, direction));
@@ -300,7 +294,7 @@ namespace TVGL
         public bool Remove(Vector3 anchor, Vector3 direction) => Remove(MiscFunctions.Unique3DLine(anchor, direction));
         public bool Remove(Vector4 unique)
         {
-            var matchFound = TryGetIndex(unique, out var i);
+            var matchFound = TryGetIndex(unique, out var i, out _);
             if (matchFound)
             {
                 uniqueIDs.RemoveAt(i);
@@ -317,15 +311,13 @@ namespace TVGL
             => TryGet(unique, out matchingUnique, out _, out _);
         private bool TryGet(Vector4 unique, out Vector4 matchingUnique, out Vector3 matchingAnchor, out Vector3 matchingDirection)
         {
-            var matchFound = TryGetIndex(unique, out var i);
+            var matchFound = TryGetIndex(unique, out var i, out matchingUnique);
             if (matchFound)
             {
-                matchingUnique = uniqueIDs[i];
                 matchingAnchor = anchors[i];
                 matchingDirection = directions[i];
                 return true;
             }
-            matchingUnique = default;
             matchingAnchor = default;
             matchingDirection = default;
             return false;
@@ -337,7 +329,7 @@ namespace TVGL
 
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        protected bool TryGetIndex(Vector4 query, out int i)
+        protected bool TryGetIndex(Vector4 query, out int i, out Vector4 matchingQuery)
         {
             // when treatReflectionsAsSame is true, all vectors with negative z are reflected about the origin (NOT the xy plane)
             // this means that the polar angle should only be between 0 and pi/2 and the azimuth angle is shifted by pi
@@ -345,8 +337,7 @@ namespace TVGL
             // comparison since reflections would yield a negative dot product.
             // this is only true when the two would be reflections would be less than the angle tolerance apart in the polar angles
             /// (pi/2 - s1.AzimuthAngle) + (pi/2 - s2.AzimuthAngle) < angleTolerance
-            if (treatReflectionsAsSame)
-                query = Reflect(query);
+            matchingQuery = treatReflectionsAsSame ? Reflect(query) : query;
 
             // the following binary search is modified/simplified from Array.BinarySearch
             // (https://referencesource.microsoft.com/mscorlib/a.html#b92d187c91d4c9a9)
@@ -355,22 +346,25 @@ namespace TVGL
                 i = 0;
                 return false;
             }
-            var qCart = SphericalAnglePair.ConvertSphericalToCartesian(1, query.Z, query.W);
+            var qCart = SphericalAnglePair.ConvertSphericalToCartesian(1, matchingQuery.Z, matchingQuery.W);
             var lo = 0;
             var hi = uniqueIDs.Count - 1;
             while (lo <= hi)
             {
                 i = lo + ((hi - lo) >> 1);
-                if (IsTheSame(query, qCart, uniqueIDs[i], directions[i]))
+                if (IsTheSame(matchingQuery, qCart, uniqueIDs[i], directions[i]))
+                {
+                    matchingQuery = uniqueIDs[i];
                     return true;
-                if (uniqueIDs[i].Z.IsPracticallySame(query.Z, angleTolerance))
-                    return ScanHoop(ref i, query, qCart);
-                else if (uniqueIDs[i].Z < query.Z)
+                }
+                if (uniqueIDs[i].Z.IsPracticallySame(matchingQuery.Z, angleTolerance))
+                    return ScanHoop(ref i, ref matchingQuery, qCart);
+                else if (uniqueIDs[i].Z < matchingQuery.Z)
                     lo = i + 1;
                 else hi = i - 1;
             }
-            i = lo;
-            return ScanHoop(ref i, query, qCart);
+            i = Math.Min(lo, Count - 1);
+            return ScanHoop(ref i, ref matchingQuery, qCart);
         }
 
         protected static Vector4 Reflect(Vector4 query)
@@ -381,26 +375,62 @@ namespace TVGL
             return new Vector4(query.X, query.Y, Math.PI - query.Z, newAzimuth);
         }
 
-        private bool ScanHoop(ref int index, Vector4 query, Vector3 qCart)
+        private bool ScanHoop(ref int index, ref Vector4 query, Vector3 qCart)
         {
             var i = index;
+            var gtIndex = query.Z > uniqueIDs[i].Z;
+            var insertLocationSet = false;
+            var insertIndex = -1;
             // given that the list is sorted in polar angle, we can scan the hoop up to
             // the angle tolerance in either direction
             // this is particularly important since the azimuth angle has its values near
             // pi and -pi at the same location
             while (++i < uniqueIDs.Count && uniqueIDs[i].Z - query.Z < angleTolerance)
+            {
+                if (!insertLocationSet && gtIndex != query.Z > uniqueIDs[i].Z)
+                {
+                    insertIndex = i;
+                    insertLocationSet = true;
+                }
                 if (IsTheSame(query, qCart, uniqueIDs[i], directions[i]))
                 {
+                    query = uniqueIDs[i];
                     index = i;
                     return true;
                 }
+            }
             i = index;
             while (--i >= 0 && query.Z - uniqueIDs[i].Z < angleTolerance)
+            {
+                if (!insertLocationSet && gtIndex != query.Z > uniqueIDs[i].Z)
+                {
+                    insertIndex = i + 1;
+                    insertLocationSet = true;
+                }
                 if (IsTheSame(query, qCart, uniqueIDs[i], directions[i]))
                 {
+                    query = uniqueIDs[i];
                     index = i;
                     return true;
                 }
+            }
+            if (!insertLocationSet)
+            {
+                insertIndex = index;
+                if (gtIndex)
+                {
+                    while (insertIndex < uniqueIDs.Count && query.Z > uniqueIDs[insertIndex].Z)
+                        insertIndex++;
+                    index = insertIndex;
+                }
+                else
+                {
+                    while (insertIndex >= 0 && query.Z < uniqueIDs[insertIndex].Z) 
+                        insertIndex--;
+                    index = insertIndex+1;
+                }
+            }
+            else index = insertIndex;
             return false;
         }
 
