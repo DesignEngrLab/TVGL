@@ -362,10 +362,8 @@ namespace TVGL
             {
                 i = lo + ((hi - lo) >> 1);
                 if (IsTheSame(query, qCart, uniqueIDs[i], directions[i]))
-                {
-                    query = uniqueIDs[i];
                     return true;
-                }
+                
                 if (uniqueIDs[i].Z.IsPracticallySame(query.Z, angleTolerance))
                     return ScanHoop(ref i,  query, qCart);
                 else if (uniqueIDs[i].Z < query.Z)
