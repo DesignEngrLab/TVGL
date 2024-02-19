@@ -181,6 +181,8 @@ namespace TVGL
         /// <param name="p">The p.</param>
         /// <returns>Vector2.</returns>
         public static Vector2 ClosestPointOnLineSegmentToPoint(this PolygonEdge line, Vector2 p)
+            => ClosestPointOnLineSegmentToPoint(line.FromPoint.Coordinates, line.ToPoint.Coordinates, p);
+        public static Vector2 ClosestPointOnLineSegmentToPoint(Vector2 fromPoint, Vector2 toPoint, Vector2 p)
         {
             //First, project the point in question onto the infinite line, getting its distance on the line from 
             //the line.FromPoint
@@ -188,19 +190,19 @@ namespace TVGL
             //(1) If the distance is <= 0, the infinite line intersection is outside the line segment interval, on the FromPoint side.
             //(2) If the distance is >= the line.Length, the infinite line intersection is outside the line segment interval, on the ToPoint side.
             //(3) Otherwise, the infinite line intersection is inside the line segment interval.
-            var fromPoint = line.FromPoint;
-            var lineVector = line.ToPoint.Coordinates - line.FromPoint.Coordinates;
-            var distanceToSegment = (p - fromPoint.Coordinates).Dot(lineVector) / line.Length;
+            var lineVector = toPoint - fromPoint;
+            var lineLength = lineVector.Length();
+            var distanceToSegment = (p - fromPoint).Dot(lineVector) / lineLength;
 
             if (distanceToSegment <= 0.0)
             {
-                return fromPoint.Coordinates;
+                return fromPoint;
             }
-            if (distanceToSegment >= line.Length)
+            if (distanceToSegment >= lineLength)
             {
-                return line.ToPoint.Coordinates;
+                return toPoint;
             }
-            distanceToSegment = distanceToSegment / line.Length;
+            distanceToSegment = distanceToSegment / lineLength;
             return new Vector2(fromPoint.X + lineVector.X * distanceToSegment,
                 fromPoint.Y + lineVector.Y * distanceToSegment);
         }

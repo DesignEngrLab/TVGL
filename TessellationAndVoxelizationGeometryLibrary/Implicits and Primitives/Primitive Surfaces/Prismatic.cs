@@ -213,7 +213,124 @@ namespace TVGL
             return mse / (3 * Faces.Count);
         }
 
+        public List<Vector2> PolyLine
+        {
+            get
+            {
+                if (polyLine == null)
+                    polyLine = CreatePolyLine();
+                return polyLine;
+            }
+        }
+        List<Vector2> polyLine;
 
+        private List<Vector2> CreatePolyLine()
+        {
+            var points = new List<Vector2>();
+            var edges = new Dictionary<Vector2, List<Vector2>>();
+            var vertex2DDict = Vertices.ToDictionary(v => v, v => v.ConvertTo2DCoordinates(transformToXYPlane));
+            var vector2VertexDict = vertex2DDict.ToDictionary(v => v.Value, v => v.Key);
+            foreach (var v in Vertices)
+            {
+                var neighbors = new List<Vector2>();
+                var v2D = vertex2DDict[v];
+                foreach (var e in v.Edges)
+                {
+                    if (!InnerEdges.Contains(e) && !OuterEdges.Contains(e)) continue;
+                    neighbors.Add(vertex2DDict[e.OtherVertex(v)]);
+                }
+                points.Add(v2D);
+                edges.Add(v2D, neighbors);
+            }
+            var axesDictionary = new Dictionary<Vector2, (Vector2 X, Vector2 Y)>();
+            foreach (var p in points)
+            {
+                var neighbors = edges[p];
+                var xDir = Vector2.Zero;
+                foreach (var edge in neighbors)
+                {
+                    var vector = edge - p;
+                    if (vector.X < 0) vector = -vector;
+                    xDir += vector;
+                }
+                xDir = xDir.Normalize();
+                var yDir = new Vector2(-xDir.Y, xDir.X);
+                axesDictionary.Add(p, (xDir, yDir));
+            }
+            var endPoints = points.ToHashSet();
+            var success = false;
+            do
+            {
+                foreach (var point in endPoints)
+                {
+                    var posXNeighbors = 0;
+                    var negXNeighbors = 0;
+                    var neighbors = edges[point];
+                    var axis = axesDictionary[point];
+                    foreach (var neighbor in neighbors)
+                    {
+                        var vector = neighbor - point;
+                        if (vector.Dot(axis.X) >= 0) posXNeighbors++;
+                        else negXNeighbors++;
+                    }
+                    if (posXNeighbors != 0 && negXNeighbors != 0) endPoints.Remove(point);
+                }
+                if (endPoints.Count == 2)
+                {
+                    success = true;
+                    break;
+                }
+                //if (endPoints.Count == 0 || endPoints.Count == 1) break;
+                break;
+            }
+            while (true);
+            if (!success)
+                throw new NotImplementedException("Need to figure out how" +
+                    "to handle cases when it starts with less than 2 endpoints.");
+            var start = endPoints.First();
+            var end = endPoints.Last();
+            var startVertex = vector2VertexDict[start];
+            var startFace = startVertex.Faces.First(Faces.Contains);
+            var cross = startFace.Normal.Cross(startFace.Center - startVertex.Coordinates);
+            if (cross.Dot(Axis) < 0) (start, end) = (end, start);
+            // now run a Dijkstra's algorithm to find the shortest path from start to end
+            var visited = new HashSet<Vector2>();
+            var pq = new PriorityQueue<DijkstraNode, double>();
+            pq.Enqueue(new DijkstraNode(start, 0, null), 0);
+            while (pq.Count > 0)
+            {
+                var node = pq.Dequeue();
+                if (!visited.Add(node.Point)) continue;
+                if (node.Point == end) return node.Path;
+                var neighbors = edges[node.Point];
+                foreach (var neighbor in neighbors)
+                {
+                    if (visited.Contains(neighbor)) continue;
+                    var vector = neighbor - node.Point;
+                    var newDistance = node.Distance + vector.LengthSquared();
+                    pq.Enqueue(new DijkstraNode(neighbor, newDistance, node.Path), newDistance);
+                }
+            }
+            return null;
+        }
+        class DijkstraNode
+        {
+            public Vector2 Point;
+            public List<Vector2> Path;
+            public double Distance;
+            public DijkstraNode(Vector2 point, double distance, List<Vector2> prevPath)
+            {
+                Point = point;
+                Distance = distance;
+                if (prevPath == null)
+                    Path = new List<Vector2> { point };
+                else
+                {
+                    Path = new List<Vector2>(prevPath);
+                    Path.Add(point);
+                }
+            }
+        }
         /// <summary>
         /// Points the membership.
         /// </summary>
@@ -221,15 +338,52 @@ namespace TVGL
         /// <returns>System.Double.</returns>
         public override double DistanceToPoint(Vector3 point)
         {
-            return double.NaN;
+            var point2D = point.ConvertTo2DCoordinates(transformToXYPlane);
+            var minDistance = double.PositiveInfinity;
+            var minI = -1;
+            for (var i = 1; i < PolyLine.Count; i++)
+            {
+                var from = PolyLine[i - 1];
+                var to = PolyLine[i];
+                var closest = MiscFunctions.ClosestPointOnLineSegmentToPoint(from, to, point2D);
+                var distance = (closest - point2D).LengthSquared();
+                if (distance < minDistance)
+                {
+                    minDistance = distance;
+                    minI = i;
+                }
+            }
+            if ((point2D - PolyLine[minI - 1]).Cross(PolyLine[minI] - PolyLine[minI - 1]) < 0)
+                return -Math.Sqrt(minDistance);
+            return Math.Sqrt(minDistance);
         }
         public override Vector3 GetNormalAtPoint(Vector3 point)
         {
-            throw new NotImplementedException();
+            var point2D = point.ConvertTo2DCoordinates(transformToXYPlane);
+            var minDistance = double.PositiveInfinity;
+            var minI = -1;
+            for (var i = 1; i < PolyLine.Count; i++)
+            {
+                var from = PolyLine[i - 1];
+                var to = PolyLine[i];
+                var closest = MiscFunctions.ClosestPointOnLineSegmentToPoint(from, to, point2D);
+                var distance = (closest - point2D).LengthSquared();
+                if (distance < minDistance)
+                {
+                    minDistance = distance;
+                    minI = i;
+                }
+            }
+            var normal = (point2D - PolyLine[minI]).Normalize().ConvertTo3DLocation(transformBackFromXYPlane);
+            if ((point2D - PolyLine[minI - 1]).Cross(PolyLine[minI] - PolyLine[minI - 1]) < 0)
+                return -normal;
+            return normal;
         }
 
         protected override void CalculateIsPositive()
         {
+            IsPositive = null;
+            return;
             var coords = Vertices.Select(v => v.ConvertTo2DCoordinates(transformToXYPlane)).ToList();
             var numConcave = 0;
             var numConvex = 0;
