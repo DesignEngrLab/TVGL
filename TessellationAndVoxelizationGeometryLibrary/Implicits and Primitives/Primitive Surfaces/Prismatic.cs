@@ -120,8 +120,26 @@ namespace TVGL
         /// <value>The height.</value>
         public double Height { get; set; } = double.PositiveInfinity;
 
-        Matrix4x4 transformToXYPlane;
-        Matrix4x4 transformBackFromXYPlane;
+        Matrix4x4 transformToXYPlane
+        {
+            get
+            {
+                if (_transformToXYPlane.IsNull()) 
+                    _transformToXYPlane = Axis.TransformToXYPlane(out _transformBackFromXYPlane);
+                return _transformToXYPlane;
+            }
+        }
+        Matrix4x4 _transformToXYPlane = Matrix4x4.Null;
+        Matrix4x4 transformBackFromXYPlane
+        {
+            get
+            {
+                if (_transformToXYPlane.IsNull())
+                    _transformToXYPlane = Axis.TransformToXYPlane(out _transformBackFromXYPlane);
+                return _transformBackFromXYPlane;
+            }
+        }
+        Matrix4x4 _transformBackFromXYPlane = Matrix4x4.Null;
 
         #endregion
 
@@ -230,6 +248,7 @@ namespace TVGL
             var edges = new Dictionary<Vector2, List<Vector2>>();
             var vertex2DDict = Vertices.ToDictionary(v => v, v => v.ConvertTo2DCoordinates(transformToXYPlane));
             var vector2VertexDict = vertex2DDict.ToDictionary(v => v.Value, v => v.Key);
+            
             foreach (var v in Vertices)
             {
                 var neighbors = new List<Vector2>();
