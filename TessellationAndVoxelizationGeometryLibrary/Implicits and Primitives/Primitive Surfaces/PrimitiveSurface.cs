@@ -517,7 +517,7 @@ namespace TVGL
         /// Adjacents the primitives.
         /// </summary>
         /// <returns>ISet&lt;PrimitiveSurface&gt;.</returns>
-        public ISet<PrimitiveSurface> AdjacentPrimitives()
+        public virtual HashSet<PrimitiveSurface> AdjacentPrimitives()
         {
             //Use a set to avoid duplicates. DO NOT USE IEnumerable.
             var set = new HashSet<PrimitiveSurface>();

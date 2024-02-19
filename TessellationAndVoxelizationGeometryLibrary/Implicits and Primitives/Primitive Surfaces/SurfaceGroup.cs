@@ -78,16 +78,15 @@ namespace TVGL
             }           
             return adjacentFeatures;
         }
-
-        public IEnumerable<PrimitiveSurface> GetAdjacentPrimitives()
-        {
+        public override HashSet<PrimitiveSurface> AdjacentPrimitives()
+        {          
             //Use a hash to avoid returning duplicates.
             var allAdjacent = new HashSet<PrimitiveSurface>();
             foreach (var border in BorderSegments)
             {
-                if (Surfaces.Contains(border.OwnedPrimitive))  
+                if (Surfaces.Contains(border.OwnedPrimitive))
                     allAdjacent.Add(border.OtherPrimitive);
-                else 
+                else
                     allAdjacent.Add(border.OwnedPrimitive);
             }
             return allAdjacent;

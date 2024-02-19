@@ -124,7 +124,7 @@ namespace TVGL
         {
             get
             {
-                if (_transformToXYPlane.IsNull()) 
+                if (_transformToXYPlane.IsNull())
                     _transformToXYPlane = Axis.TransformToXYPlane(out _transformBackFromXYPlane);
                 return _transformToXYPlane;
             }
@@ -202,31 +202,6 @@ namespace TVGL
 
         #endregion
 
-        /// <summary>
-        /// Calculates the mean square error.
-        /// </summary>
-        /// <param name="vertices">The vertices.</param>
-        /// <returns>System.Double.</returns>
-        public override double CalculateMeanSquareError(IEnumerable<Vector3> vertices = null)
-        {
-            if (Axis.X is double.NaN) return double.MaxValue;
-            var mse = 0.0;
-            foreach (var c in Faces)
-            {
-                var inPlane1 = c.Normal.Cross(Axis);
-                var curveNormal = inPlane1.Cross(Axis).Normalize();
-                var distA = c.A.Dot(curveNormal);
-                var distB = c.B.Dot(curveNormal);
-                var distC = c.C.Dot(curveNormal);
-                var d = distA - distB;
-                mse += d * d;
-                d = distA - distC;
-                mse += d * d;
-                d = distB - distC;
-                mse += d * d;
-            }
-            return mse / (3 * Faces.Count);
-        }
 
         public List<Vector2> PolyLine
         {
@@ -245,7 +220,7 @@ namespace TVGL
             var edges = new Dictionary<Vector2, List<Vector2>>();
             var vertex2DDict = Vertices.ToDictionary(v => v, v => v.ConvertTo2DCoordinates(transformToXYPlane));
             var vector2VertexDict = vertex2DDict.ToDictionary(v => v.Value, v => v.Key);
-            
+
             foreach (var v in Vertices)
             {
                 var neighbors = new List<Vector2>();
@@ -258,7 +233,16 @@ namespace TVGL
                 points.Add(v2D);
                 edges.Add(v2D, neighbors);
             }
-            var axesDictionary = new Dictionary<Vector2, (Vector2 X, Vector2 Y)>();
+#if PRESENT
+            var edgePlots = new List<Vector2[]>();
+            foreach ((var from, var tos) in edges)
+            {
+                foreach (var to in tos)
+                    edgePlots.Add([from, to]);
+            }
+            Presenter.ShowAndHang(edgePlots);
+#endif
+                var axesDictionary = new Dictionary<Vector2, (Vector2 X, Vector2 Y)>();
             foreach (var p in points)
             {
                 var neighbors = edges[p];
@@ -301,8 +285,11 @@ namespace TVGL
             }
             while (true);
             if (!success)
-                throw new NotImplementedException("Need to figure out how" +
-                    "to handle cases when it starts with less than 2 endpoints.");
+            {
+                return new List<Vector2>();
+                //throw new NotImplementedException("Need to figure out how" +
+                //    "to handle cases when it starts with less than 2 endpoints.");
+            }
             var start = endPoints.First();
             var end = endPoints.Last();
             var startVertex = vector2VertexDict[start];
@@ -327,7 +314,7 @@ namespace TVGL
                     pq.Enqueue(new DijkstraNode(neighbor, newDistance, node.Path), newDistance);
                 }
             }
-            return null;
+            return new List<Vector2>();
         }
         class DijkstraNode
         {
@@ -369,6 +356,7 @@ namespace TVGL
                     minI = i;
                 }
             }
+            if (minI==-1) return double.PositiveInfinity;
             if ((point2D - PolyLine[minI - 1]).Cross(PolyLine[minI] - PolyLine[minI - 1]) < 0)
                 return -Math.Sqrt(minDistance);
             return Math.Sqrt(minDistance);
