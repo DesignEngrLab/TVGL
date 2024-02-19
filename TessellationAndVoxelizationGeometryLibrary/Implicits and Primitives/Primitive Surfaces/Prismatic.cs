@@ -163,7 +163,6 @@ namespace TVGL
             : base(faces)
         {
             Axis = axis;
-            transformToXYPlane = axis.TransformToXYPlane(out transformBackFromXYPlane);
             this.isPositive = isPositive;
             MinDistanceAlongAxis = minDistanceAlongAxis;
             MaxDistanceAlongAxis = maxDistanceAlongAxis;
@@ -178,7 +177,6 @@ namespace TVGL
         public Prismatic(Vector3 axis, IEnumerable<TriangleFace> faces = null, bool? isPositive = null) : base(faces)
         {
             Axis = axis;
-            transformToXYPlane = axis.TransformToXYPlane(out transformBackFromXYPlane);
             this.isPositive = isPositive;
             var (min, max) = MinimumEnclosure.GetDistanceToExtremeVertex(Vertices, axis, out _, out _);//vertices are set in base constructor
             MinDistanceAlongAxis = min;
@@ -195,7 +193,6 @@ namespace TVGL
         {
             Axis = MiscFunctions.FindMostOrthogonalVector(Faces.Select(face =>
                  (face.B.Coordinates - face.A.Coordinates).Cross(face.C.Coordinates - face.A.Coordinates)));
-            transformToXYPlane = Axis.TransformToXYPlane(out transformBackFromXYPlane);
             this.isPositive = isPositive;
             var (min, max) = MinimumEnclosure.GetDistanceToExtremeVertex(Vertices, Axis, out _, out _);//vertices are set in base constructor
             MinDistanceAlongAxis = min;
