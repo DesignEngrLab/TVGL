@@ -130,10 +130,11 @@ namespace TVGL
                     new[] { directions[i], Vector3.UnitY, Vector3.UnitZ }, default, default,
                     default);
                 box = Find_via_ChanTan_AABB_Approach(convexHullVertices, box);
-                if (box.Volume >= minVolume) continue;
+                if (box == null || box.Volume >= minVolume) continue;
                 minVolume = box.Volume;
                 minBox = box;
             }
+            if (minBox == null) return null;
             // to make a consistent result, we will put the longest dimension along X, the second along Y and the shortest
             // on Z. Also, we will flip directions so that the more positive direction is chosen, which makes for smaller
             // rotation angles to square the solid
@@ -191,6 +192,7 @@ namespace TVGL
             {
                 //Find new OBB along OBB.direction2 and OBB.direction3, keeping the best OBB.
                 var newObb = FindOBBAlongDirection(cvxHullVertList, minOBB.Directions[i++]);
+                if (newObb == null) return null;
                 if (newObb.Volume.IsLessThanNonNegligible(minOBB.Volume))
                 {
                     minOBB = newObb;
@@ -466,6 +468,7 @@ namespace TVGL
             /* the cvxPoints will be arranged from a point with minimum X-value around in a CCW loop to the last point 
              * however, we want the last point that has minX, so that we can easily get the next angle  */
             var pointsCount = points.Count;
+            if (pointsCount == 0) return new BoundingRectangle();
             var lastIndex = pointsCount - 1;
             //Good picture of extreme vertices in the following link
             //http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.155.5671&rep=rep1&type=pdf
@@ -777,7 +780,10 @@ namespace TVGL
                                                            // but this is quicker and more accurate to reproduce with cross-product 
 
             if ((depth * boundingRectangle.Length1 * boundingRectangle.Length2).IsNegligible())
-                throw new Exception("Volume should never be negligible, unless the input data is bad");
+            {
+                //Console.WriteLine("Volume should never be negligible, unless the input data is bad");
+                return null;
+            }             
 
             IEnumerable<T>[] verticesOnFaces = new IEnumerable<T>[6];
             verticesOnFaces[0] = bottomVertices;

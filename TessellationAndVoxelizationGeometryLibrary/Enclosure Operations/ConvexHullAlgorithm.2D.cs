@@ -172,11 +172,18 @@ namespace TVGL
                     maxY = y;
                 }
             }
-            // what if all points are on a horizontal line? temporarily set to max and min Y to min X. This'll be fixed
-            // in the function: FindIntermediatePointsForLongSkinny
-            if (minY == maxY) minYIndex = maxYIndex = minXIndex;
-            // what if all points are on a vertical line? then do the opposite
-            if (minX == maxX) minXIndex = maxXIndex = minYIndex;
+            // what if all points are on a horizontal line? return the max and min X points
+            if (minY == maxY)
+            {
+                convexHullIndices = [minXIndex, maxXIndex];
+                return [points[minXIndex], points[maxXIndex]];
+            }
+            // what if all points are on a vertical line? return the max and min Y points
+            if (minX == maxX)
+            {
+                convexHullIndices = [minYIndex, maxYIndex];
+                return [points[minYIndex], points[maxYIndex]];
+            }
             //put these on a list in counter-clockwise (CCW) direction
             var extremes = new List<(T point, double distance, int index)> {
                 (points[minXIndex],0, minXIndex),
