@@ -120,7 +120,7 @@ namespace TVGL
                 var p2 = points.Last();
                 var anchor = new Vector3(p1.X, p1.Y, ((IVector3D)p1).Z);
                 var dir = new Vector3(p2.X, p2.Y, ((IVector3D)p2).Z) - anchor;
-                curve = new StraightLine3D(anchor, dir - anchor);
+                curve = new StraightLine3D(anchor, (dir - anchor).Normalize());
                 error = 0;
                 return !dir.IsNegligible();
             }
