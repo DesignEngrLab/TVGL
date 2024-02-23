@@ -165,15 +165,15 @@ namespace TVGL
                 }
             if (buildOptions.AutomaticallyRepairNegligibleTFaces && buildOptions.PredefineAllEdges)
             {
-                //try
-                //{
-                if (!PropagateFixToNegligibleFaces(removedFaces))
-                    Message.output("Unable to flip edges to avoid negligible faces.", 1);
-                //}
-                //catch
-                //{
-                //    //Continue
-                //}
+                try
+                {
+                    if (!PropagateFixToNegligibleFaces(removedFaces))
+                        Message.output("Unable to flip edges to avoid negligible faces.", 1);
+                }
+                catch
+                {
+                    //Continue
+                }
             }
 
             if (buildOptions.AutomaticallyRepairHoles)
@@ -1414,7 +1414,7 @@ namespace TVGL
             }
         }
 
-        private static void DefineBorderSegments(TessellatedSolid solid)
+        public static void DefineBorderSegments(TessellatedSolid solid)
         {
             foreach (var prim in solid.Primitives)
                 prim.BorderSegments = new List<BorderSegment>();
@@ -1430,7 +1430,9 @@ namespace TVGL
                 segment.OwnedPrimitive = ownedPrimitive;
                 segment.OtherPrimitive = otherPrimitive;
                 ownedPrimitive.BorderSegments.Add(segment);
-                otherPrimitive.BorderSegments.Add(segment);
+                if(segment.OtherPrimitive != null)
+                    otherPrimitive.BorderSegments.Add(segment);
+                segment.SetCurve();
             }
         }
         public static void RedefineBorderSegments(TessellatedSolid solid, PrimitiveSurface primitive)
