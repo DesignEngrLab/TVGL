@@ -56,7 +56,7 @@ namespace TVGL
         /// Returns all primitives that share an edge segment with this border
         /// </summary>
         /// <returns>IEnumerable&lt;PrimitiveSurface&gt;.</returns>
-        public ISet<PrimitiveSurface> AdjacentPrimitives()
+        public HashSet<PrimitiveSurface> AdjacentPrimitives()
         {
             //Use a set to avoid duplicates. DO NOT USE IEnumerable.
             var set = new HashSet<PrimitiveSurface>();

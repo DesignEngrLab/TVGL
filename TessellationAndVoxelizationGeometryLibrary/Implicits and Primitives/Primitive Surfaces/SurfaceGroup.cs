@@ -34,7 +34,7 @@ namespace TVGL
 
         public SurfaceGroup(IEnumerable<PrimitiveSurface> surfaces)
         {
-            Surfaces = (HashSet<PrimitiveSurface>)surfaces;
+            Surfaces = surfaces.ToHashSet();
             foreach (var surface in Surfaces)
                 surface.BelongsToGroup = this;
             SetBorders();
@@ -67,7 +67,7 @@ namespace TVGL
             return vertices;
         }
 
-        public IEnumerable<SurfaceGroup> AdjacentFeatures()
+        public IEnumerable<SurfaceGroup> AdjacentGroups()
         {
             //use a hashset to avoid duplicating feautes in the list
             var adjacentFeatures = new HashSet<SurfaceGroup>();

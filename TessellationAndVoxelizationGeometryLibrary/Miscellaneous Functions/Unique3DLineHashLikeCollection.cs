@@ -248,7 +248,7 @@ namespace TVGL
         private bool AddIfNotPresent(Vector4 unique)
         {
             unique = treatReflectionsAsSame ? Reflect(unique) : unique;
-            if(TryGetIndex(unique, out var i))
+            if (TryGetIndex(unique, out var i))
                 return false;
             if (i == Count)
             {
@@ -363,23 +363,26 @@ namespace TVGL
                 i = lo + ((hi - lo) >> 1);
                 if (IsTheSame(query, qCart, uniqueIDs[i], directions[i]))
                     return true;
-                
+
                 if (uniqueIDs[i].Z.IsPracticallySame(query.Z, angleTolerance))
-                    return ScanHoop(ref i,  query, qCart);
+                    return ScanHoop(ref i, query, qCart);
                 else if (uniqueIDs[i].Z < query.Z)
                     lo = i + 1;
                 else hi = i - 1;
             }
             i = Math.Min(lo, Count - 1);
-            return ScanHoop(ref i,  query, qCart);
+            return ScanHoop(ref i, query, qCart);
         }
 
-        protected static Vector4 Reflect(Vector4 query)
+        protected Vector4 Reflect(Vector4 query)
         {
             if (query.Z <= Constants.HalfPi)
                 return query;
-            var newAzimuth = query.W < 0 ? query.W + Math.PI : query.W - Math.PI;
-            return new Vector4(query.X, query.Y, Math.PI - query.Z, newAzimuth);
+            if (query.Z.IsPracticallySame(Math.PI, angleTolerance))
+                return new Vector4(query.X, -query.Y, 0, query.W);
+            var newAzimuth = query.W.IsNegligible() ? Math.PI
+                : query.W < 0 ? query.W + Math.PI : query.W - Math.PI;
+            return new Vector4(query.X, -query.Y, Math.PI - query.Z, newAzimuth);
         }
 
         private bool ScanHoop(ref int index, Vector4 query, Vector3 qCart)
@@ -430,9 +433,9 @@ namespace TVGL
                 }
                 else
                 {
-                    while (insertIndex >= 0 && query.Z < uniqueIDs[insertIndex].Z) 
+                    while (insertIndex >= 0 && query.Z < uniqueIDs[insertIndex].Z)
                         insertIndex--;
-                    index = insertIndex+1;
+                    index = insertIndex + 1;
                 }
             }
             else index = insertIndex;
@@ -445,14 +448,23 @@ namespace TVGL
             // (pi/2 - s1.AzimuthAngle) + (pi/2 - s2.AzimuthAngle) < angleTolerance
             if (treatReflectionsAsSame && (Math.PI - a.Z - b.Z) < angleTolerance)
             {
-                return aCartesian.IsAlignedOrReverse(bCartesian, dotTolerance) && PlaneSquaredDistance(a, b) < sqdDistanceTolerance;
+                return aCartesian.IsAlignedOrReverse(bCartesian, dotTolerance) 
+                    && PlaneSquaredDistance(a, b, sqdDistanceTolerance);
             }
-            else return aCartesian.IsAligned(bCartesian, dotTolerance) && PlaneSquaredDistance(a, b) < sqdDistanceTolerance;
+            else return aCartesian.IsAligned(bCartesian, dotTolerance) 
+                    && PlaneSquaredDistance(a, b, sqdDistanceTolerance);
         }
 
-        private static double PlaneSquaredDistance(Vector4 a, Vector4 b)
+        private static bool PlaneSquaredDistance(Vector4 a, Vector4 b, double tolerance)
         {
-            return (a.X - b.X) * (a.X - b.X) + (a.Y - b.Y) * (a.Y - b.Y);
+            //if ((a.X - b.X) * (a.X - b.X) + (a.Y - b.Y) * (a.Y - b.Y)<tolerance)
+            //    return true;
+            var deltaAzimuth = a.W - b.W;
+            var sinDeltaAzimuth = Math.Sin(deltaAzimuth);
+            var cosDeltaAzimuth = Math.Cos(deltaAzimuth);
+            var aX = a.X * cosDeltaAzimuth - a.Y * sinDeltaAzimuth;
+            var aY = a.X * sinDeltaAzimuth + a.Y * cosDeltaAzimuth;
+            return (aX - b.X) * (aX - b.X) + (aY - b.Y) * (aY - b.Y) < tolerance;
         }
         #endregion
     }

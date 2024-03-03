@@ -2409,11 +2409,20 @@ namespace TVGL
                 var oneOverRadius = 1 / direction.Length();  // normalizing factor
                 var PolarAngle = Math.Acos(direction.Z * oneOverRadius);  // when z_dir is 1, then angle is zero or pi
                 var AzimuthAngle = Math.Atan2(direction.Y, direction.X);  // regardless of length, we can find azimuth by tangent
+                var inPlaneYDir = new Vector3(direction.Y, -direction.X, 0).Normalize(); // the y-dir will never have a z-component - it is like
+                // the latitude lines on a globe
+                var inPlaneXDir =  // here, x-dir determined by y cross z where z is the given direction
+                    // cross product is i = (y1z2 - y2z1), j = (x2z1 - x1z2), k = (x1y2 - x2y1)
+                    // x1 = direction.Y, y1 = -direction.X, z1=0
+                    // x2 = direction.X, y2 = direction.Y, z2 = direction.z
+                     new Vector3(-direction.Z * direction.X,
+                     -direction.Y * direction.Z, 
+                     direction.X * direction.X + direction.Y * direction.Y).Normalize();
+
                 var distanceToAnchor = direction.Dot(anchor) * oneOverRadius; // like a plane this is the distance from zero-plane (not origin)
                 var pointOnZeroPlane = anchor - distanceToAnchor * direction * oneOverRadius; // direction is still not normalized, hence oneOverRadius
-                var tx = pointOnZeroPlane.Dot(new Vector3(direction.Y, -direction.X, 0).Normalize());  //the distance along new x-dir
-                var ty = pointOnZeroPlane.Dot(new Vector3(direction.Z * direction.X,  // here, y-dir determined by cross-produce with x-dir and normal
-                    direction.Z * direction.Y, -direction.X * direction.X - direction.Y * direction.Y).Normalize());
+                var tx = pointOnZeroPlane.Dot(inPlaneXDir);  //the distance along new x-dir
+                var ty = pointOnZeroPlane.Dot(inPlaneYDir);  //the distance along new y-dir
                 return new Vector4(tx, ty, PolarAngle, AzimuthAngle);
             }
         }
