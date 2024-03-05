@@ -238,29 +238,30 @@ namespace TVGL
         /// <param name="anchor">An anchor point on the line</param>
         /// <param name="direction">The direction of the line</param>
         /// <returns>returns false if already present</returns>
-        public bool Add(Vector3 anchor, Vector3 direction) => AddIfNotPresent(MiscFunctions.Unique3DLine(anchor, direction));
-        public bool Add(Vector4 unique) => AddIfNotPresent(unique);
-        void ICollection<Vector4>.Add(Vector4 item) => AddIfNotPresent(item);
+        public bool Add(Vector3 anchor, Vector3 direction, out Vector4 unique)
+            => AddIfNotPresent(MiscFunctions.Unique3DLine(anchor, direction), out unique);
+        public bool Add(Vector4 unique, out Vector4 matching) => AddIfNotPresent(unique, out matching);
+        void ICollection<Vector4>.Add(Vector4 item) => AddIfNotPresent(item, out _);
 
         /// <summary>
         /// Adds the if not present.
         /// </summary>
-        private bool AddIfNotPresent(Vector4 unique)
+        private bool AddIfNotPresent(Vector4 unique, out Vector4 matching)
         {
-            unique = treatReflectionsAsSame ? Reflect(unique) : unique;
-            if (TryGetIndex(unique, out var i))
+            matching = treatReflectionsAsSame ? Reflect(unique) : unique;
+            if (TryGetIndex(matching, out var i))
                 return false;
             if (i == Count)
             {
-                uniqueIDs.Add(unique);
-                (var anchor, var dir) = MiscFunctions.Get3DLineValuesFromUnique(unique);
+                uniqueIDs.Add(matching);
+                (var anchor, var dir) = MiscFunctions.Get3DLineValuesFromUnique(matching);
                 anchors.Add(anchor);
                 directions.Add(dir);
             }
             else
             {
-                uniqueIDs.Insert(i, unique);
-                (var anchor, var dir) = MiscFunctions.Get3DLineValuesFromUnique(unique);
+                uniqueIDs.Insert(i, matching);
+                (var anchor, var dir) = MiscFunctions.Get3DLineValuesFromUnique(matching);
                 anchors.Insert(i, anchor);
                 directions.Insert(i, dir);
             }
