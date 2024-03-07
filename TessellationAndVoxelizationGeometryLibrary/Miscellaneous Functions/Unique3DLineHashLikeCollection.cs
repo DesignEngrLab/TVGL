@@ -380,7 +380,7 @@ namespace TVGL
             if (query.Z <= Constants.HalfPi)
                 return query;
             if (query.Z.IsPracticallySame(Math.PI, angleTolerance))
-                return new Vector4(query.X, -query.Y, 0, query.W);
+                return new Vector4(-query.X, query.Y, 0, query.W);
             var newAzimuth = query.W.IsNegligible() ? Math.PI
                 : query.W < 0 ? query.W + Math.PI : query.W - Math.PI;
             return new Vector4(query.X, -query.Y, Math.PI - query.Z, newAzimuth);
@@ -445,27 +445,41 @@ namespace TVGL
 
         private bool IsTheSame(Vector4 a, Vector3 aCartesian, Vector4 b, Vector3 bCartesian)
         {
-            // this is only true when the two would be reflections would be less than the angle tolerance apart in the polar angles
-            // (pi/2 - s1.AzimuthAngle) + (pi/2 - s2.AzimuthAngle) < angleTolerance
-            if (treatReflectionsAsSame && (Math.PI - a.Z - b.Z) < angleTolerance)
-            {
-                return aCartesian.IsAlignedOrReverse(bCartesian, dotTolerance) 
-                    && PlaneSquaredDistance(a, b, sqdDistanceTolerance);
-            }
-            else return aCartesian.IsAligned(bCartesian, dotTolerance) 
-                    && PlaneSquaredDistance(a, b, sqdDistanceTolerance);
-        }
+            // There are three cases:
+            // 1. if both are aligned but at the poles
+            // 2. if reflections is on and both a & b are in the x-y plane and oppsites of each other
+            // 3. nominal case
 
-        private static bool PlaneSquaredDistance(Vector4 a, Vector4 b, double tolerance)
-        {
-            //if ((a.X - b.X) * (a.X - b.X) + (a.Y - b.Y) * (a.Y - b.Y)<tolerance)
-            //    return true;
-            var deltaAzimuth = a.W - b.W;
-            var sinDeltaAzimuth = Math.Sin(deltaAzimuth);
-            var cosDeltaAzimuth = Math.Cos(deltaAzimuth);
-            var aX = a.X * cosDeltaAzimuth - a.Y * sinDeltaAzimuth;
-            var aY = a.X * sinDeltaAzimuth + a.Y * cosDeltaAzimuth;
-            return (aX - b.X) * (aX - b.X) + (aY - b.Y) * (aY - b.Y) < tolerance;
+            // Case 1: if both are aligned but at the poles
+            if ((a.Z < angleTolerance && b.Z < angleTolerance) || (Math.PI - a.Z < angleTolerance && Math.PI - b.Z < angleTolerance))
+            {
+                if (!aCartesian.IsAligned(bCartesian, dotTolerance))
+                    // wait, what about reflections? well, if reflections are on, then the polar angle is always less than pi/2 anyway
+                    // so they need to be aligned at the north pole to reach this point
+                    return false;
+                // now here's something tricky, the azimuth angles for the two directions could be all over the place, so, we
+                // need to put one in the frame of the other
+                var deltaAzimuth = a.W - b.W;
+                var sinDeltaAzimuth = Math.Sin(deltaAzimuth);
+                var cosDeltaAzimuth = Math.Cos(deltaAzimuth);
+                var aX = a.X * cosDeltaAzimuth - a.Y * sinDeltaAzimuth;
+                var aY = a.X * sinDeltaAzimuth + a.Y * cosDeltaAzimuth;
+                return (aX - b.X) * (aX - b.X) + (aY - b.Y) * (aY - b.Y) < sqdDistanceTolerance;
+            }
+
+            // Case 2:reflections are both in the x-y plane
+            if (treatReflectionsAsSame && Math.PI - a.Z - b.Z < angleTolerance &&
+                aCartesian.IsAligned(-bCartesian, dotTolerance))
+            {   // note that when reflections is on, polar angle goes from 0 to pi/2
+                // if both are at pi/2 then this number would be close to zero
+                return (a.X - b.X) * (a.X - b.X) + (a.Y + b.Y) * (a.Y + b.Y) < sqdDistanceTolerance;
+                // what's weird here is that opposite azimuth angles at the equator have the same x direction
+                // (downard toward the south pole), but opposte y-directions. Hence, the distance function reverses
+                // the b.Y coordinate. that is why it is added (subtracting its negative)
+             }
+            // Case 3:directions are aligned and the x and y coordinates are close
+            return aCartesian.IsAligned(bCartesian, dotTolerance)
+                    && (a.X - b.X) * (a.X - b.X) + (a.Y - b.Y) * (a.Y - b.Y) < sqdDistanceTolerance;
         }
         #endregion
     }
