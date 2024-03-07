@@ -292,7 +292,7 @@ namespace TVGL_Presenter
         /// <param name="saturation"></param>
         /// <param name="value"></param>
         /// <returns></returns>
-        public static System.Drawing.Color ColorFromHSV(double hue, double saturation = 1, double value = 1)
+        public static Color ColorFromHSV(double hue, double saturation = 1, double value = 1)
         {
             int hi = Convert.ToInt32(Math.Floor(hue / 60)) % 6;
             double f = hue / 60 - Math.Floor(hue / 60);
@@ -304,17 +304,17 @@ namespace TVGL_Presenter
             int t = Convert.ToInt32(value * (1 - (1 - f) * saturation));
 
             if (hi == 0)
-                return System.Drawing.Color.FromArgb(255, v, t, p);
+                return new Color(255, v, t, p);
             else if (hi == 1)
-                return System.Drawing.Color.FromArgb(255, q, v, p);
+                return new Color(255, q, v, p);
             else if (hi == 2)
-                return System.Drawing.Color.FromArgb(255, p, v, t);
+                return new Color(255, p, v, t);
             else if (hi == 3)
-                return System.Drawing.Color.FromArgb(255, p, q, v);
+                return new Color(255, p, q, v);
             else if (hi == 4)
-                return System.Drawing.Color.FromArgb(255, t, p, v);
+                return new Color(255, t, p, v);
             else
-                return System.Drawing.Color.FromArgb(255, v, p, q);
+                return new Color(255, v, p, q);
         }
     }
 }
