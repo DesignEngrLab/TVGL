@@ -157,6 +157,7 @@
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Verbosity.cs" Link="TVGL\Verbosity.cs" />
 		<Compile Include="..\TVGL Presenter\Window3DPlotViewModel.cs" Link="Presenter\Window3DPlotViewModel.cs" />
 		<Compile Include="..\TVGL Presenter\Presenter.cs" Link="Presenter\Presenter.cs" />
+		<Compile Include="..\TVGL Presenter\DebugUtilities.cs" Link="Presenter\DebugUtilities.cs" />
 		<Compile Include="..\TVGL Presenter\PresenterAsync.cs" Link="Presenter\PresenterAsync.cs" />
 		<Compile Include="..\TVGL Presenter\PresenterNVOptimusEnabler.cs" Link="Presenter\PresenterNVOptimusEnabler.cs" />
 		<Compile Include="..\TVGL Presenter\Window2DPlot.xaml.cs" Link="Presenter\Window2DPlot.xaml.cs" />
