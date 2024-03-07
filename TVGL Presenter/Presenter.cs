@@ -43,6 +43,21 @@ namespace TVGL
         /// <param name="plot2DType">Type of the plot2 d.</param>
         /// <param name="closeShape">if set to <c>true</c> [close shape].</param>
         /// <param name="marker">The marker.</param>
+        public static void ShowAndHang(double[,] data, string title = "")
+        {
+            var window = new Window2DPlot(data, title);
+            window.ShowDialog();
+        }
+
+
+        /// <summary>
+        /// Shows the provided objects and "hangs" (halts code until user closes presenter window).
+        /// </summary>
+        /// <param name="points">The points.</param>
+        /// <param name="title">The title.</param>
+        /// <param name="plot2DType">Type of the plot2 d.</param>
+        /// <param name="closeShape">if set to <c>true</c> [close shape].</param>
+        /// <param name="marker">The marker.</param>
         public static void ShowAndHang(IEnumerable<Vector2> points, string title = "", Plot2DType plot2DType = Plot2DType.Line,
             bool closeShape = true, MarkerType marker = MarkerType.Circle)
         {

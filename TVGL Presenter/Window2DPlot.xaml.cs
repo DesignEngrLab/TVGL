@@ -82,6 +82,26 @@ namespace TVGL
             InitializeComponent();
         }
 
+
+        public Window2DPlot(double[,] data, string title) : this(title)
+        {
+            Model.Series.Clear();
+            var heatMapSeries = new HeatMapSeries
+            {
+                X0 = 0,
+                X1 = 99,
+                Y0 = 0,
+                Y1 = 99,
+                Interpolate = true,
+                RenderMethod = HeatMapRenderMethod.Bitmap,
+                Data = data
+            };
+
+            Model.Series.Add(heatMapSeries);
+            Model.InvalidatePlot(false);
+            InitializeComponent();
+        }
+
         /// <summary>
         ///     Initializes a new instance of the <see cref="Window2DPlot" /> class.
         /// </summary>
