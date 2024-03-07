@@ -11,15 +11,13 @@
 // </copyright>
 // <summary></summary>
 // ***********************************************************************
-using System.Collections.Generic;
-using System.Linq;
-using HelixToolkit.Wpf.SharpDX;
 using HelixToolkit.SharpDX.Core;
+using HelixToolkit.Wpf.SharpDX;
 using OxyPlot;
 using System;
-using System.Runtime.CompilerServices;
-using System.Windows.Media;
+using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 
 namespace TVGL
 {
@@ -33,16 +31,11 @@ namespace TVGL
         #region 2D Plots via OxyPlot
 
         #region Plotting 2D coordinates both scatter and polygons
-
-
         /// <summary>
-        /// Shows the provided objects and "hangs" (halts code until user closes presenter window).
+        /// Show the matrix of data as a 2D plot (heatmap)
         /// </summary>
-        /// <param name="points">The points.</param>
-        /// <param name="title">The title.</param>
-        /// <param name="plot2DType">Type of the plot2 d.</param>
-        /// <param name="closeShape">if set to <c>true</c> [close shape].</param>
-        /// <param name="marker">The marker.</param>
+        /// <param name="data"></param>
+        /// <param name="title"></param>
         public static void ShowAndHang(double[,] data, string title = "")
         {
             var window = new Window2DPlot(data, title);
