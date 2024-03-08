@@ -851,9 +851,12 @@ namespace TVGL
         /// <param name="angleDegreesTolerance">The minimum angle between line directions - usually about 4 degrees.</param>
         /// <param name="maxDistanceFromCOM"></param>
         /// <returns>A tuple of the line anchor, the line direction, and the primitives centered about that line</returns>
-        public static IEnumerable<(Vector3 anchor, Vector3 direction, List<PrimitiveSurface>)> FindBestRotations(TessellatedSolid solid, double distanceTolerance,
-            double angleDegreesTolerance, double maxDistanceFromCOM = double.PositiveInfinity)
+        public static IEnumerable<(Vector3 anchor, Vector3 direction, List<PrimitiveSurface>)> FindBestRotations(TessellatedSolid solid,
+            double distanceTolerance = double.NaN,
+            double angleDegreesTolerance = 4.0, double maxDistanceFromCOM = double.PositiveInfinity)
         {
+            if (double.IsNaN(distanceTolerance)) distanceTolerance =
+                    0.0001 * (solid.Bounds[1] - solid.Bounds[0]).Length();
             var uniqueLines = new Unique3DLineHashLikeCollection(true, distanceTolerance, angleDegreesTolerance);
             var dirToPrimsDictionary = new Dictionary<Vector4, List<PrimitiveSurface>>();
             var com = solid.Center;
@@ -888,11 +891,11 @@ namespace TVGL
                 var axis = prim.GetAxis();
                 if (anchor.IsNull() && axis.IsNull()) // if both are null, then it is not descriptive enough to add to any line
                     continue;
-                
+
                 // go through each of the unique lines and see if this primitive is close to it
                 foreach (var uniqueLine in uniqueLines)
                 {
-                    (var lineAnchor, var lineDirection) = Get3DLineValuesFromUnique(uniqueLine);                   
+                    (var lineAnchor, var lineDirection) = Get3DLineValuesFromUnique(uniqueLine);
                     if (!anchor.IsNull()  // if it has a center, but the center is off of the line, then skip
                         && (anchor - lineAnchor).Cross(lineDirection).Length() > distanceTolerance)
                         continue;
