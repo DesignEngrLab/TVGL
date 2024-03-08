@@ -2437,8 +2437,7 @@ namespace TVGL
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static (Vector3 anchor, Vector3 direction) Get3DLineValuesFromUnique(this Vector4 unique3DLine)
         {
-            var sphericalAngles = new SphericalAnglePair(unique3DLine.Z, unique3DLine.W);
-            var direction = sphericalAngles.ToVector3();
+            var direction =SphericalAnglePair.ConvertSphericalToCartesian(1, unique3DLine.Z, unique3DLine.W));
 
             if (direction.X.IsNegligible() && direction.Y.IsNegligible())
             {
@@ -2447,8 +2446,8 @@ namespace TVGL
                 else
                     return (new Vector3(-unique3DLine.X, unique3DLine.Y, 0), new Vector3(0, 0, -1));
             }
-            var iAxis = new Vector3(direction.Y, -direction.X, 0).Normalize();
-            var jAxis = new Vector3(direction.Z * direction.X, direction.Z * direction.Y,
+            var jAxis = new Vector3(-direction.Y, direction.X, 0).Normalize();
+            var iAxis = new Vector3(direction.Z * direction.X, direction.Z * direction.Y,
                 -direction.X * direction.X - direction.Y * direction.Y).Normalize();
             var anchor = unique3DLine.X * iAxis + unique3DLine.Y * jAxis;
             return (anchor, direction);
