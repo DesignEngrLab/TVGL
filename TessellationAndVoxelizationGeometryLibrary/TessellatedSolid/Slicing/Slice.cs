@@ -804,11 +804,12 @@ namespace TVGL
         /// <param name="stepSize">Size of the step.</param>
         /// <returns>List&lt;Polygon&gt;[].</returns>
         /// <exception cref="System.ArgumentException">Either a valid stepSize or a number of slices greater than zero must be specified.</exception>
-        public static List<Polygon>[] GetUniformlySpacedCrossSections(this TessellatedSolid ts, Vector3 direction,
+        public static List<Polygon>[] GetUniformlySpacedCrossSections(this TessellatedSolid ts, Vector3 direction, out Dictionary<Vertex2D, Edge>[] vertex2DToEdges,
             double startDistanceAlongDirection = double.NaN, int numSlices = -1, double stepSize = double.NaN)
-            => GetUniformlySpacedCrossSections(ts.Vertices, direction, startDistanceAlongDirection, numSlices, stepSize);
+            => GetUniformlySpacedCrossSections(ts.Vertices, direction, out vertex2DToEdges, startDistanceAlongDirection, numSlices, stepSize);
 
-        public static List<Polygon>[] GetUniformlySpacedCrossSections(this IEnumerable<Vertex> vertices, Vector3 direction, double startDistanceAlongDirection = double.NaN,
+        public static List<Polygon>[] GetUniformlySpacedCrossSections(this IEnumerable<Vertex> vertices, Vector3 direction,
+           out Dictionary<Vertex2D, Edge>[] vertex2DToEdges, double startDistanceAlongDirection = double.NaN,
         int numSlices = -1, double stepSize = double.NaN)
         {
             //First, sort the vertices along the given axis. Duplicate distances are not important.
@@ -817,7 +818,7 @@ namespace TVGL
             direction = direction.Normalize();
             var transform = direction.TransformToXYPlane(out _);
             var plane = new Plane(0.0, direction);
-   
+
             var firstDistance = sortedVertices[0].Dot(direction);
             var lastDistance = sortedVertices[^1].Dot(direction);
             var lengthAlongDir = lastDistance - firstDistance;
@@ -828,6 +829,7 @@ namespace TVGL
                 startDistanceAlongDirection = firstDistance + 0.5 * stepSize;
 
             var result = new List<Polygon>[numSlices];
+            vertex2DToEdges = new Dictionary<Vertex2D, Edge>[numSlices];
             var currentEdges = new HashSet<Edge>();
             var nextDistance = sortedVertices.First().Dot(direction);
             var vIndex = 0;
@@ -852,9 +854,12 @@ namespace TVGL
                     d += Math.Min(stepSize, sortedVertices[vIndex].Dot(direction) - d) / 10.0;
                 plane.DistanceToOrigin = d;
                 if (currentEdges.Any())
+                {
                     result[step] = GetLoops(currentEdges.ToDictionary(ce => ce, ce =>
                        MiscFunctions.PointOnPlaneFromIntersectingLine(plane, ce.From.Coordinates, ce.To.Coordinates, out _)
-                           .ConvertTo2DCoordinates(transform)), plane.Normal, plane.DistanceToOrigin, out _);
+                           .ConvertTo2DCoordinates(transform)), plane.Normal, plane.DistanceToOrigin, out var v2EDictionary);
+                    vertex2DToEdges[step] = v2EDictionary;
+                }
                 else result[step] = new List<Polygon>();
             }
             return result;

@@ -79,7 +79,7 @@ namespace TVGL
             //stepDistances[i] = stepDistances[i - 1] + stepSize;
             var bounds = new[] { ts.Bounds[0].Copy(), ts.Bounds[1].Copy() };
 
-            var layers = ts.GetUniformlySpacedCrossSections(direction, stepDistances[0], numberOfLayers, stepSize);
+            var layers = ts.GetUniformlySpacedCrossSections(direction, out _, stepDistances[0], numberOfLayers, stepSize);
             var layerDict = new Dictionary<int, IList<Polygon>>();
             for (int i = 0; i < layers.Length; i++)
                 layerDict.Add(i, layers[i]);
@@ -136,7 +136,7 @@ namespace TVGL
             foreach (var layerKeyValuePair in Layer2D)
             {
                 var index = layerKeyValuePair.Key;
-                var zValue = StepDistances[index];               
+                var zValue = StepDistances[index];
 
                 //Check that the loop does not contain any duplicate points
                 var skipHoles = false;
@@ -151,7 +151,7 @@ namespace TVGL
                         layer2DLoops = PolygonOperations.OffsetSquare(layer2DLoops, -Constants.LineSlopeTolerance * 10, Constants.LineSlopeTolerance);
                         //If still no luck, then skip the inner loops
                         skipHoles = ContainsDuplicatePoints(layer2DLoops);
-                    }            
+                    }
                 }
 
                 var numLoops = layer2DLoops.Sum(poly => 1 + poly.NumberOfInnerPolygons);
@@ -162,7 +162,7 @@ namespace TVGL
                 {
                     if (skipHoles)
                     {
-                        var loop = new Vector3[poly.Path.Count];           
+                        var loop = new Vector3[poly.Path.Count];
                         for (int i = 0; i < loop.Length; i++)
                             loop[i] = new Vector3(poly.Path[i], zValue).Multiply(BackTransform);
                         layer[j++] = loop;
@@ -176,8 +176,8 @@ namespace TVGL
                                 loop[i] = new Vector3(path[i], zValue).Multiply(BackTransform);
                             layer[j++] = loop;
                         }
-                    }                    
-                }                  
+                    }
+                }
             }
             return result;
         }
@@ -212,7 +212,7 @@ namespace TVGL
         public void SetLayer2DArea()
         {
             Layer2DArea = new Dictionary<int, double>();
-            foreach(var layer in Layer2D)
+            foreach (var layer in Layer2D)
             {
                 Layer2DArea.Add(layer.Key, layer.Value.Sum(p => p.Area));
             }
@@ -257,9 +257,9 @@ namespace TVGL
                         polygons.Add(newPolygon);
                     }
                     newLayer2D[j++] = polygons;
-                }                   
+                }
                 Layer2D = newLayer2D;
-            }           
+            }
             if (Layer2DArea != null && Layer2DArea.Any())
             {
                 var j = 0;

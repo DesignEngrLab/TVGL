@@ -1130,6 +1130,58 @@ namespace TVGL
         }
 
         /// <summary>
+        /// Gets the counter-clockwise rotated angle of vector from the x-axis
+        /// </summary>
+        /// <param name="vectorA">The vector a.</param>
+        /// <param name="datum">The datum.</param>
+        /// <returns>double.</returns>
+        public static double AngleCCWFromHorizontal(this Vector2 vector)
+        {
+            var angle = Math.Atan2(vector.Y, vector.X);
+            if (angle >= 0) return angle;
+            return Constants.TwoPi + angle;
+        }
+
+        /// <summary>
+        /// Gets the clockwise rotated angle of vector from the x-axis
+        /// </summary>
+        /// <param name="vectorA">The vector a.</param>
+        /// <param name="datum">The datum.</param>
+        /// <returns>double.</returns>
+        public static double AngleCWFromHorizontal(this Vector2 vector)
+        {
+            var angle = Math.Atan2(-vector.Y, vector.X);
+            if (angle >= 0) return angle;
+            return Constants.TwoPi + angle;
+        }
+
+        /// <summary>
+        /// Gets the counter-clockwise rotated angle of vector from the x-axis
+        /// </summary>
+        /// <param name="vectorA">The vector a.</param>
+        /// <param name="datum">The datum.</param>
+        /// <returns>double.</returns>
+        public static double AngleCCWFromVertical(this Vector2 vector)
+        {
+            var angle = Math.Atan2(vector.Y, vector.X) - Constants.HalfPi;
+            if (angle >= 0) return angle;
+            return Constants.TwoPi + angle;
+        }
+
+        /// <summary>
+        /// Gets the clockwise rotated angle of vector from the x-axis
+        /// </summary>
+        /// <param name="vectorA">The vector a.</param>
+        /// <param name="datum">The datum.</param>
+        /// <returns>double.</returns>
+        public static double AngleCWFromVertical(this Vector2 vector)
+        {
+            var angle = Math.Atan2(-vector.Y, vector.X) - Constants.HalfPi;
+            if (angle >= 0) return angle;
+            return Constants.TwoPi + angle;
+        }
+
+        /// <summary>
         /// Gets the counter-clockwise rotated angle of vector-A from the datum vector
         /// </summary>
         /// <param name="vectorA">The vector a.</param>
@@ -2076,12 +2128,12 @@ namespace TVGL
             var b = triangle[1];
             var c = triangle[2];
             var aToQ = q - a;
-            var aToB = b-a;
-            var aToC = c-a;
+            var aToB = b - a;
+            var aToC = c - a;
             if (aToB.Cross(aToQ).Dot(aToQ.Cross(aToC)) < 0) return false;
 
             var bToQ = q - b;
-            var bToC = c-b;
+            var bToC = c - b;
             var bToA = -aToB;
             return bToC.Cross(bToQ).Dot(bToQ.Cross(bToA)) > 0;
         }
@@ -2412,10 +2464,10 @@ namespace TVGL
                 var inPlaneYDir = new Vector3(-direction.Y, direction.X, 0).Normalize(); // the y-dir will never have a z-component - it is like
                 // the latitude lines on a globe
                 var inPlaneXDir =  // here, x-dir determined by y cross z where z is the given direction
-                    // cross product is i = (y1z2 - y2z1), j = (x2z1 - x1z2), k = (x1y2 - x2y1)
-                    // x1 = -direction.Y, y1 = direction.X, z1=0
-                    // x2 = direction.X, y2 = direction.Y, z2 = direction.z
-                     new Vector3(direction.Z * direction.X, direction.Y * direction.Z, 
+                                   // cross product is i = (y1z2 - y2z1), j = (x2z1 - x1z2), k = (x1y2 - x2y1)
+                                   // x1 = -direction.Y, y1 = direction.X, z1=0
+                                   // x2 = direction.X, y2 = direction.Y, z2 = direction.z
+                     new Vector3(direction.Z * direction.X, direction.Y * direction.Z,
                      -direction.X * direction.X - direction.Y * direction.Y).Normalize();
                 // note how in the result, the z-component is always negative. this is like the longitude lines on a globe that point
                 // to the south pole
@@ -2437,7 +2489,7 @@ namespace TVGL
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static (Vector3 anchor, Vector3 direction) Get3DLineValuesFromUnique(this Vector4 unique3DLine)
         {
-            var direction =SphericalAnglePair.ConvertSphericalToCartesian(1, unique3DLine.Z, unique3DLine.W));
+            var direction = SphericalAnglePair.ConvertSphericalToCartesian(1, unique3DLine.Z, unique3DLine.W);
 
             if (direction.X.IsNegligible() && direction.Y.IsNegligible())
             {
