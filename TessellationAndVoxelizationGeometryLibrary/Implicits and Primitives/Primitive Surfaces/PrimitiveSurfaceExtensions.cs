@@ -247,6 +247,8 @@ namespace TVGL
             else if (surface is Cone cone) return cone.Axis;
             else if (surface is Torus torus) return torus.Axis;
             else if (surface is Prismatic prismatic) return prismatic.Axis;
+            else if (surface is Capsule capsule) return (capsule.Anchor2 - capsule.Anchor1).Normalize();
+            else if (surface is GeneralQuadric gq) return gq.Axis1;
             else return Vector3.Null;
         }
 
@@ -262,6 +264,8 @@ namespace TVGL
             else if (s is Cone cone) return cone.Apex;
             else if (s is Torus torus) return torus.Center;
             else if (s is Sphere sphere) return sphere.Center;
+            else if (s is Capsule capsule) return 0.5 * (capsule.Anchor1 + capsule.Anchor2);
+            else if (s is GeneralQuadric gq) return gq.Center;
             else return GetCenterOfMass(s.Faces);
         }
 
@@ -277,6 +281,7 @@ namespace TVGL
         public static double GetRadius(this PrimitiveSurface s, bool max = false)
         {
             if (s is Cylinder cylinder) return cylinder.Radius;
+            else if (s is Capsule capsule) return 0.5 * (capsule.Radius1 + capsule.Radius2);
             if (s is Sphere sphere) return sphere.Radius;
             if (s is Torus torus)
             {

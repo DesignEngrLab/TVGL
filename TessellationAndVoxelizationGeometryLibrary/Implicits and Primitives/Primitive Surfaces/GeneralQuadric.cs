@@ -338,5 +338,67 @@ namespace TVGL
                 yield return (anchor + root2.Real * direction, root2.Real);
         }
 
+        /// <summary>
+        /// The is the mathematical center of the quadric. It is not the centroid of the faces.
+        /// It is the location where the gradient of the quadric function is zero.
+        /// It would be the center of an ellipsoid, but for other quadrics, it is ...?
+        /// Desmos it up!
+        /// </summary>
+        public Vector3 Center
+        {
+            get
+            {
+                if (center.IsNull())
+                {
+                    // the center is defined where the gradient is zero for the quadric function
+                    // this produces a system of 3 equations with 3 unknowns
+                    var coeffs = new Matrix3x3(2 * XSqdCoeff, XYCoeff, XZCoeff,
+                                               XYCoeff, 2 * YSqdCoeff, YZCoeff,
+                                               XZCoeff, YZCoeff, 2 * ZSqdCoeff);
+                    var b = new Vector3(-XCoeff, -YCoeff, -ZCoeff);
+                    center = coeffs.Solve(b);
+                }
+                return center;
+            }
+        }
+        Vector3 center = Vector3.Null;
+
+
+        public Vector3 Axis1
+        {
+            get
+            {
+                if (axis1.IsNull())
+                {
+                    throw new NotImplementedException();
+                }
+                return axis1;
+            }
+        }
+        public Vector3 Axis2
+        {
+            get
+            {
+                if (axis2.IsNull())
+                {
+                    throw new NotImplementedException();
+                }
+                return axis2;
+            }
+        }
+        public Vector3 Axis3
+        {
+            get
+            {
+                if (axis3.IsNull())
+                {
+                    throw new NotImplementedException();
+                }
+                return axis3;
+            }
+        }
+        Vector3 axis1 = Vector3.Null;
+        Vector3 axis2 = Vector3.Null;
+        Vector3 axis3 = Vector3.Null;
     }
 }

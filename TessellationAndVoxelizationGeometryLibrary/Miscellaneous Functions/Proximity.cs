@@ -837,5 +837,80 @@ namespace TVGL
                 yield return new Vector3(radius * Math.Cos(x) * Math.Cos(y), radius * Math.Sin(x) * Math.Cos(y), radius * Math.Sin(y));
             }
         }
+
+
+        /// <summary>
+        /// Returns lines (an anchor and a direction) that are the best guesses for the axes of rotation for the part.
+        /// It is possible that it will return as many lines as primitives, so it is up to the calling to decide how
+        /// many to consider. They are ordered in descending order of the number of primitives, then by the total area
+        /// of the primitives that agree with the line.
+        /// </summary>
+        /// <param name="solid"></param>
+        /// <param name="distanceTolerance">The minimum straightline distance between unique anchors. Note anchors will all
+        /// be on a plane cutting through the origin.</param>
+        /// <param name="angleDegreesTolerance">The minimum angle between line directions - usually about 4 degrees.</param>
+        /// <param name="maxDistanceFromCOM"></param>
+        /// <returns>A tuple of the line anchor, the line direction, and the primitives centered about that line</returns>
+        public static IEnumerable<(Vector3 anchor, Vector3 direction, List<PrimitiveSurface>)> FindBestRotations(TessellatedSolid solid, double distanceTolerance,
+            double angleDegreesTolerance, double maxDistanceFromCOM = double.PositiveInfinity)
+        {
+            var uniqueLines = new Unique3DLineHashLikeCollection(true, distanceTolerance, angleDegreesTolerance);
+            var dirToPrimsDictionary = new Dictionary<Vector4, List<PrimitiveSurface>>();
+            var com = solid.Center;
+            var otherPrimitives = new List<PrimitiveSurface>(); //these shouldn't define a rotation axis, but they should contribute to one
+                                                                //if they are coincident with one. So, we will process these later.
+            var dotTolerance = Math.Cos(angleDegreesTolerance * Constants.DegreesToRadiansFactor);
+            foreach (var prim in solid.Primitives.OrderByDescending(p => p.Area))
+            {
+                if (prim is Plane || prim is Sphere || prim is Prismatic || prim is GeneralQuadric)
+                    otherPrimitives.Add(prim);
+                if (prim is Cylinder || prim is Cone || prim is Torus || prim is Capsule)
+                {
+                    var anchor = prim.GetAnchor();
+                    var axis = prim.GetAxis();
+                    var distFromCenter = (anchor - com).Cross(axis).Length();
+                    if (distFromCenter > maxDistanceFromCOM) continue;
+                    var uniqueLine = Unique3DLine(anchor, axis);
+
+                    if (uniqueLines.TryGet(uniqueLine, out var matchingDir))
+                        dirToPrimsDictionary[matchingDir].Add(prim);
+                    else
+                    {
+                        uniqueLines.Add(matchingDir, out _);
+                        dirToPrimsDictionary.Add(matchingDir, new() { prim });
+                    }
+                }
+            }
+            // now attribute any other primitives to one of the lines if its close
+            foreach (var prim in otherPrimitives)
+            {
+                var anchor = prim.GetAnchor();
+                var axis = prim.GetAxis();
+                if (anchor.IsNull() && axis.IsNull()) // if both are null, then it is not descriptive enough to add to any line
+                    continue;
+                
+                // go through each of the unique lines and see if this primitive is close to it
+                foreach (var uniqueLine in uniqueLines)
+                {
+                    (var lineAnchor, var lineDirection) = Get3DLineValuesFromUnique(uniqueLine);                   
+                    if (!anchor.IsNull()  // if it has a center, but the center is off of the line, then skip
+                        && (anchor - lineAnchor).Cross(lineDirection).Length() > distanceTolerance)
+                        continue;
+                    // if it has an axis, but the axis is not aligned with the line, then skip
+                    if (!axis.IsNull() && !axis.IsAlignedOrReverse(lineDirection, dotTolerance))
+                        continue;
+                    // otherwise, you've found a match so add and then break to the next primitive
+                    dirToPrimsDictionary[uniqueLine].Add(prim);
+                    break;
+                }
+            }
+            var scoringList = dirToPrimsDictionary.Select(kvp => (kvp.Key, kvp.Value.Count, kvp.Value.Sum(p => p.Area))).ToList();
+            foreach (var c in scoringList.OrderByDescending(s => s.Item2)
+                .ThenByDescending(s => s.Item3))
+            {
+                var (anchor, direction) = MiscFunctions.Get3DLineValuesFromUnique(c.Key);
+                yield return (anchor, direction, dirToPrimsDictionary[c.Key]);
+            }
+        }
     }
 }
