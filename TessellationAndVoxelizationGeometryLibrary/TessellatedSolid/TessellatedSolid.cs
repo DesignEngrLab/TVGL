@@ -1469,7 +1469,7 @@ namespace TVGL
         /// Turns the model inside out.
         /// </summary>
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
-        internal bool TurnModelInsideOut()
+        public bool TurnModelInsideOut()
         {
             _volume = -1 * _volume;
             _inertiaTensor = Matrix3x3.Null;
