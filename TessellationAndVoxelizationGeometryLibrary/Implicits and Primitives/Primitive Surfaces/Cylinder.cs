@@ -150,11 +150,23 @@ namespace TVGL
         /// <value>The direction.</value>
         public Vector3 Axis { get; set; }
 
+        private Circle _circle;
         /// <summary>
         /// Gets the circle.
         /// </summary>
         /// <value>The circle.</value>
-        public Circle Circle => new Circle(TransformFrom3DTo2D(Axis), Radius * Radius);
+        public Circle Circle {
+            get
+            {
+                if(_circle.Area == 0)   
+                    _circle = new Circle(TransformFrom3DTo2D(Axis), Radius * Radius);
+                return _circle;
+            }
+            set
+            {
+                _circle = value;
+            }
+        }       
 
         /// <summary>
         /// Gets the radius.

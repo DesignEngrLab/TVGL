@@ -324,7 +324,9 @@ namespace TVGL
         /// <returns>Cylinder.</returns>
         public static Cylinder MinimumBoundingCylinder(TessellatedSolid ts, BoundingBox box)
         {
-            return MinimumBoundingCylinder(ts.ConvexHull.Vertices, box.Directions);
+            if(ts.ConvexHull != null)
+                return MinimumBoundingCylinder(ts.ConvexHull.Vertices, box.Directions);
+            return MinimumBoundingCylinder(ts.Vertices, box.Directions);
         }
 
         /// <summary>
@@ -385,6 +387,7 @@ namespace TVGL
             {
                 Axis = direction,
                 Anchor = anchor,
+                Circle = circle,//Set circle directly from projection, since cylinder.Circle set function was not aligned on center. 
                 Radius = circle.Radius,
                 MinDistanceAlongAxis = min,
                 MaxDistanceAlongAxis = max

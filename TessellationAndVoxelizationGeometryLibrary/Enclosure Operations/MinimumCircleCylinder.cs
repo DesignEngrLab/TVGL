@@ -16,7 +16,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 
-namespace TVGL.Testing
+namespace TVGL.Test
 {
     /// <summary>
     ///     The MinimumEnclosure class includes static functions for defining smallest enclosures for a
@@ -393,6 +393,7 @@ namespace TVGL.Testing
             {
                 Axis = direction,
                 Anchor = anchor,
+                Circle = circle,
                 Radius = circle.Radius,
                 MinDistanceAlongAxis = min,
                 MaxDistanceAlongAxis = max
