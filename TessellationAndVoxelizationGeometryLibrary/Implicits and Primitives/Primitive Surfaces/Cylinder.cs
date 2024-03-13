@@ -158,8 +158,12 @@ namespace TVGL
         public Circle Circle {
             get
             {
-                if(_circle.Area == 0)   
-                    _circle = new Circle(TransformFrom3DTo2D(Axis), Radius * Radius);
+                if(_circle.Area == 0)
+                {
+                    var transform = MiscFunctions.TransformToXYPlane(Axis, out var _backTransform);
+                    var center = Anchor.ConvertTo2DCoordinates(transform);
+                    _circle = new Circle(center, Radius * Radius);
+                }
                 return _circle;
             }
             set

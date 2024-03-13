@@ -387,7 +387,7 @@ namespace TVGL
             {
                 Axis = direction,
                 Anchor = anchor,
-                Circle = circle,//Set circle directly from projection, since cylinder.Circle set function was not aligned on center. 
+                Circle = circle,//might as well set this since we have it.
                 Radius = circle.Radius,
                 MinDistanceAlongAxis = min,
                 MaxDistanceAlongAxis = max
