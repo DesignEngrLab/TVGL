@@ -723,6 +723,8 @@ namespace TVGL
         public static List<Polygon> Subtract(this Polygon minuend, Polygon subtrahend,
                     PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles, double tolerance = double.NaN)
         {
+            if (!subtrahend.Path.Any() || subtrahend.Area.IsNegligible())
+                return [minuend];
             if (areaSimplificationFraction > 0)
             {
                 minuend = minuend.SimplifyFast();
