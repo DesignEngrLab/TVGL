@@ -125,6 +125,7 @@ namespace TVGL
             : base(units, name, filename, comments, language)
         {
             var vertsPerFaceList = vertsPerFace as IList<(Vector3, Vector3, Vector3)> ?? vertsPerFace.ToList();
+            if (numOfFaces == -1) numOfFaces = vertsPerFace.Count();
             DefineAxisAlignedBoundingBoxAndTolerance(vertsPerFaceList.SelectMany(v => v.EnumerateThruple()));
             var scaleFactor = 1.0;
             if ((Bounds[1] - Bounds[0]).Length() < 0.1)
