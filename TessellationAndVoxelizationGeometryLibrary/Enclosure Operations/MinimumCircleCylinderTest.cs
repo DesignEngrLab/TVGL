@@ -50,6 +50,8 @@ namespace TVGL
             var startIndex = 3;
             var maxDistSqared = circle.RadiusSquared;
             bool newPointFoundOutsideCircle;
+            var maxStall = (int)Math.Max(1.5 * numPoints, 100);
+            var stallCounter = maxStall;
             var indexOfMaxDist = -1;
             do
             {
@@ -61,6 +63,8 @@ namespace TVGL
                     if (dist.IsGreaterThanNonNegligible(maxDistSqared))
                     {
                         maxDistSqared = dist;
+                        if (indexOfMaxDist == i) stallCounter--;
+                        else stallCounter = maxStall;
                         indexOfMaxDist = i;
                         newPointFoundOutsideCircle = true;
                     }
@@ -74,7 +78,7 @@ namespace TVGL
                     startIndex = 4;
                     maxDistSqared = circle.RadiusSquared;
                 }
-            } while (newPointFoundOutsideCircle);
+            } while (newPointFoundOutsideCircle && stallCounter > 0);
             return circle;
         }
 
@@ -111,17 +115,17 @@ namespace TVGL
             return circle;
         }
         private static Circle FindCircle(Vector2[] points)
-        { 
-          // we know that 1,2,3 defined (were encompassed by) the last circle
-          // the new 0 is outside of the 1-2-3 circle
-          // so we need to
-          // 1. make the 0-1 circle and check with 2 & 3
-          // 2. make the 0-2 circle and check with 1 & 3
-          // 3. make the 0-3 circle and check with 1 & 2
-          // 4. make the 0-1-2 circle and check with 3 
-          // 5. make the 0-1-3 circle and check with 2
-          // 6. make the 0-2-3 circle and check with 1
-          // for the latter 3 we want to return the smallest that includes the 4th point
+        {
+            // we know that 1,2,3 defined (were encompassed by) the last circle
+            // the new 0 is outside of the 1-2-3 circle
+            // so we need to
+            // 1. make the 0-1 circle and check with 2 & 3
+            // 2. make the 0-2 circle and check with 1 & 3
+            // 3. make the 0-3 circle and check with 1 & 2
+            // 4. make the 0-1-2 circle and check with 3 
+            // 5. make the 0-1-3 circle and check with 2
+            // 6. make the 0-2-3 circle and check with 1
+            // for the latter 3 we want to return the smallest that includes the 4th point
 
             // 1. make the 0-1 circle and check with 2 & 3
             var circle = Circle.CreateFrom2Points(points[0], points[1]);
