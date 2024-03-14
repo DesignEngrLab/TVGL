@@ -39,6 +39,7 @@ namespace TVGL
             //throw new NotImplementedException();
             var points = pointsInput.ToArray();
             var numPoints = points.Length;
+            var maxNumStalledIterations = (int)(1.1 * numPoints);
             if (numPoints == 0)
                 throw new ArgumentException("No points provided.");
             else if (numPoints == 1)
@@ -52,6 +53,7 @@ namespace TVGL
             var startIndex = 4;
             var maxDistSqared = sphere.RadiusSquared;
             bool newPointFoundOutsideSphere;
+            var stallCounter = 0;
             var indexOfMaxDist = -1;
             do
             {
@@ -60,9 +62,11 @@ namespace TVGL
                 {
                     var dist = (points[i] - sphere.Center).LengthSquared();
 
-                    if (dist.IsGreaterThanNonNegligible(maxDistSqared))
+                    if (dist > maxDistSqared)
                     {
                         maxDistSqared = dist;
+                        if (indexOfMaxDist == i) stallCounter++;
+                        else stallCounter = 0;
                         indexOfMaxDist = i;
                         newPointFoundOutsideSphere = true;
                     }
@@ -76,7 +80,7 @@ namespace TVGL
                     maxDistSqared = sphere.RadiusSquared;
                     startIndex = 5;
                 }
-            } while (newPointFoundOutsideSphere);
+            } while (newPointFoundOutsideSphere && stallCounter < maxNumStalledIterations);
             return new Sphere(sphere.Center, Math.Sqrt(sphere.RadiusSquared), null);
         }
 

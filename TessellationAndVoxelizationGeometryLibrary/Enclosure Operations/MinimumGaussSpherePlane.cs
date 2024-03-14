@@ -38,6 +38,7 @@ namespace TVGL
         {
             var points = pointsInput as Vector3[] ?? pointsInput.ToArray();
             var numPoints = points.Length;
+            var maxNumStalledIterations = (int)(1.1 * numPoints);
             if (numPoints == 0)
                 throw new ArgumentException("No points provided.");
             if (numPoints <= 4)
@@ -45,8 +46,9 @@ namespace TVGL
 
             int numPointsInPlane = 1;
             Plane plane = default;
+            var stallCounter = 0;
             var newPointFoundOutsidePlane = true;
-            while (newPointFoundOutsidePlane)
+            while (newPointFoundOutsidePlane && stallCounter < maxNumStalledIterations)
             {
                 plane = FindBoundingPlane(points, orientingVector, tolerance, ref numPointsInPlane);
                 newPointFoundOutsidePlane = false;
@@ -55,9 +57,11 @@ namespace TVGL
                 for (int i = numPointsInPlane; i < numPoints; i++)
                 {
                     var dist = points[i].Dot(plane.Normal);
-                    if (minDist.IsGreaterThanNonNegligible(dist, tolerance))
+                    if (minDist > dist)
                     {
                         minDist = dist;
+                        if (indexOfMinDist == i) stallCounter++;
+                        else stallCounter = 0;
                         indexOfMinDist = i;
                         newPointFoundOutsidePlane = true;
                     }
@@ -135,7 +139,7 @@ namespace TVGL
         private static Plane CreatePlaneFrom2Points(Vector3 p1, Vector3 p2, Vector3 orientingVector)
         {
             var center = (p1 + p2) / 2;
-            var plane= new Plane(center, center);
+            var plane = new Plane(center, center);
             if (plane.Normal.IsNull())
             {  // the two points midpoint happens to be the origin
                 plane.Normal = orientingVector.Normalize();
