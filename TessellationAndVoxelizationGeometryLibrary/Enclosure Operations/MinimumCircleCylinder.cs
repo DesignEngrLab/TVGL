@@ -60,9 +60,10 @@ namespace TVGL
                 {
                     var dist = (points[i] - circle.Center).LengthSquared();
 
-                    if (dist >maxDistSqared)
+                    if (dist > maxDistSqared)
                     {
-                        if(maxDistSqared.IsPracticallySame(dist, 1 - Constants.MediumConfidence)) stallCounter++;
+                        if (indexOfMaxDist == i) stallCounter++;
+                        //if (maxDistSqared.IsPracticallySame(dist, 1 - Constants.MediumConfidence)) stallCounter++;
                         else stallCounter = 0;
                         maxDistSqared = dist;
                         indexOfMaxDist = i;
@@ -74,15 +75,16 @@ namespace TVGL
                     var maxPoint = points[indexOfMaxDist];
                     Array.Copy(points, 0, points, 1, indexOfMaxDist);
                     points[0] = maxPoint;
-                    var newCircle = FindCircle(points);
+                    circle = FindCircle(points);
+                    //var newCircle = FindCircle(points);
                     startIndex = 4;
                     //Only update if the circle is not valid, while the old one was, don't update.
-                    if(!newCircle.RadiusSquared.IsNegligible() && 
-                        newCircle.RadiusSquared > circle.RadiusSquared)
-                    {
-                        circle = newCircle;
-                        maxDistSqared = circle.RadiusSquared;
-                    }           
+                    //if(!newCircle.RadiusSquared.IsNegligible() && 
+                    //    newCircle.RadiusSquared > circle.RadiusSquared)
+                    //{
+                    //    circle = newCircle;
+                    //    maxDistSqared = circle.RadiusSquared;
+                    //}           
                 }
             } while (newPointFoundOutsideCircle && stallCounter < maxNumStalledIterations);
             return circle;
@@ -330,7 +332,7 @@ namespace TVGL
         /// <returns>Cylinder.</returns>
         public static Cylinder MinimumBoundingCylinder(TessellatedSolid ts, BoundingBox box)
         {
-            if(ts.ConvexHull != null)
+            if (ts.ConvexHull != null)
                 return MinimumBoundingCylinder(ts.ConvexHull.Vertices, box.Directions);
             return MinimumBoundingCylinder(ts.Vertices, box.Directions);
         }
@@ -374,7 +376,7 @@ namespace TVGL
                 {
                     minCylinderVolume = cylinder.Volume;
                     minCylinder = cylinder;
-                }  
+                }
             }
             return minCylinder;
         }

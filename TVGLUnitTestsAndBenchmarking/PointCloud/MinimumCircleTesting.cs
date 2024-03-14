@@ -62,7 +62,18 @@ namespace TVGLUnitTestsAndBenchmarking
             }
         }
 
-
+        internal static void Test2()
+        {
+            var path = @"../../../PointCloud/points0.csv";
+            var points = new List<Vector2>();
+            var lines = File.ReadAllLines(path);
+            foreach (var line in lines)
+            {
+                var values = line.Split(',');
+                points.Add(new Vector2(double.Parse(values[0]), double.Parse(values[1])));
+            }
+            var circle = TVGL.MinimumEnclosure.MinimumCircle(points);
+        }
 
         internal static void Test4(IEnumerable<List<Polygon>> polygonalLayers)
         {
