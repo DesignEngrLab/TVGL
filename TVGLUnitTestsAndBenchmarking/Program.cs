@@ -19,6 +19,7 @@ namespace TVGLUnitTestsAndBenchmarking
         [STAThread]
         private static void Main(string[] args)
         {
+            MinimumCircleTesting.Test1(50000, 50);
             MinimumCircleTesting.Test2();
             var myWriter = new ConsoleTraceListener();
             Trace.Listeners.Add(myWriter);

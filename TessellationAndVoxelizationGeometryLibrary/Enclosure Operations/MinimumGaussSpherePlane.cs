@@ -38,7 +38,7 @@ namespace TVGL
         {
             var points = pointsInput as Vector3[] ?? pointsInput.ToArray();
             var numPoints = points.Length;
-            var maxNumStalledIterations = (int)(1.1 * numPoints);
+            var maxNumStalledIterations = 10;
             if (numPoints == 0)
                 throw new ArgumentException("No points provided.");
             if (numPoints <= 4)

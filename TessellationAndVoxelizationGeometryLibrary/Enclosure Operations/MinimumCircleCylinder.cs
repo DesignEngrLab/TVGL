@@ -38,7 +38,12 @@ namespace TVGL
         {
             var points = pointsInput.ToArray();
             var numPoints = points.Length;
-            var maxNumStalledIterations = (int)(1.1 * numPoints);
+            var maxNumStalledIterations = 10; // why 10? it was (int)(1.1 * numPoints);
+            // since the circle can be made up of at most 3 points, we can just check for that
+            // there is an oscillation between two or more points that would all be a index-4.
+            // worst case scenario there are 5 points that are all on the circle and all "appear"
+            // outside of the circle when they aren't main contributors to it (in positions 0,1,or 2)
+            // so cycling twice through this list or 10 times is more than sufficient
             if (numPoints == 0)
                 throw new ArgumentException("No points provided.");
             else if (numPoints == 1)
@@ -62,29 +67,29 @@ namespace TVGL
 
                     if (dist > maxDistSqared)
                     {
-                        if (indexOfMaxDist == i) stallCounter++;
-                        //if (maxDistSqared.IsPracticallySame(dist, 1 - Constants.MediumConfidence)) stallCounter++;
-                        else stallCounter = 0;
                         maxDistSqared = dist;
+                        if (indexOfMaxDist == i) stallCounter++;
+                        else stallCounter = 0;
                         indexOfMaxDist = i;
                         newPointFoundOutsideCircle = true;
                     }
                 }
                 if (newPointFoundOutsideCircle)
                 {
+                    Console.WriteLine(indexOfMaxDist+", "+maxDistSqared);
                     var maxPoint = points[indexOfMaxDist];
                     Array.Copy(points, 0, points, 1, indexOfMaxDist);
                     points[0] = maxPoint;
                     circle = FindCircle(points);
-                    //var newCircle = FindCircle(points);
-                    startIndex = 4;
-                    //Only update if the circle is not valid, while the old one was, don't update.
-                    //if(!newCircle.RadiusSquared.IsNegligible() && 
-                    //    newCircle.RadiusSquared > circle.RadiusSquared)
-                    //{
-                    //    circle = newCircle;
-                    //    maxDistSqared = circle.RadiusSquared;
-                    //}           
+                    maxDistSqared = circle.RadiusSquared;
+                    startIndex = 4;      
+                    // should we start at 3 or 4? initially the circle was defined with the first 2 or 3 points.
+                    // (if it were 2 then the third point was inside the circle and was ineffecitve).
+                    // but these indices would be 0,1,2 - so shouldn't the next point to check be 3?!
+                    // no, because when the new point was moved to the front of the list, the least
+                    // contributor would have been at index-2, and now that's index-3 (this is done in the
+                    // FindCircle function), so we don't need to check it again. FindCircle, swapped points in
+                    // the first four positions (0,1,2,3) so that the defining circle was made by 0,1 & 2.
                 }
             } while (newPointFoundOutsideCircle && stallCounter < maxNumStalledIterations);
             return circle;
@@ -161,10 +166,12 @@ namespace TVGL
             Circle tempCircle;
             // circle 0-1-2
             var minRadiusSqd = double.PositiveInfinity;
-            if (Circle.CreateFrom3Points(points[0], points[1], points[2], out circle)
+            if (Circle.CreateFrom3Points(points[0], points[1], points[2], out tempCircle)
                 && !(points[3] - circle.Center).LengthSquared().IsGreaterThanNonNegligible(circle.RadiusSquared))
-                // this one uses IsGreaterThanNonNegligible to prevent infinite cycling when more points are on the circle
+            { // this one uses IsGreaterThanNonNegligible to prevent infinite cycling when more points are on the circle
+                circle = tempCircle;
                 minRadiusSqd = circle.RadiusSquared;
+            }
             // circle 0-1-3
             var swap3And2 = false;
             if (Circle.CreateFrom3Points(points[0], points[1], points[3], out tempCircle)
@@ -332,7 +339,7 @@ namespace TVGL
         /// <returns>Cylinder.</returns>
         public static Cylinder MinimumBoundingCylinder(TessellatedSolid ts, BoundingBox box)
         {
-            if (ts.ConvexHull != null)
+            if(ts.ConvexHull != null)
                 return MinimumBoundingCylinder(ts.ConvexHull.Vertices, box.Directions);
             return MinimumBoundingCylinder(ts.Vertices, box.Directions);
         }
@@ -376,7 +383,7 @@ namespace TVGL
                 {
                     minCylinderVolume = cylinder.Volume;
                     minCylinder = cylinder;
-                }
+                }  
             }
             return minCylinder;
         }
@@ -390,6 +397,8 @@ namespace TVGL
         /// <returns>Cylinder.</returns>
         public static Cylinder MinimumBoundingCylinder<T>(IList<T> convexHullVertices, Vector3 direction) where T : IVector3D
         {
+            if (direction.IsNull() || direction == Vector3.Zero)
+                return null;
             var pointsOnFace = convexHullVertices.ProjectTo2DCoordinates(direction, out var backTransform);
             var circle = MinimumCircle(pointsOnFace);
             var (min, max) = TVGL.MinimumEnclosure.GetDistanceToExtremeVertex(convexHullVertices, direction, out _, out _);
