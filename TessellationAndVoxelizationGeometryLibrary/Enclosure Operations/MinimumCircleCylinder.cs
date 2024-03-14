@@ -388,6 +388,8 @@ namespace TVGL
         /// <returns>Cylinder.</returns>
         public static Cylinder MinimumBoundingCylinder<T>(IList<T> convexHullVertices, Vector3 direction) where T : IVector3D
         {
+            if (direction.IsNull() || direction == Vector3.Zero)
+                return null;
             var pointsOnFace = convexHullVertices.ProjectTo2DCoordinates(direction, out var backTransform);
             var circle = MinimumCircle(pointsOnFace);
             var (min, max) = TVGL.MinimumEnclosure.GetDistanceToExtremeVertex(convexHullVertices, direction, out _, out _);
