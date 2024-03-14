@@ -1391,6 +1391,8 @@ namespace TVGL
                 return false;
             }
 
+            //Casting from the solidAssembly, Solids list puts each solid in the coordinate system
+            //that it was locally defined in (not it's global position in the assembly - which we don't want).
             var tessellatedSolid = ReturnMostSignificantSolid(solidAssembly.Solids.Cast<TessellatedSolid>().ToArray());
 
             part = tessellatedSolid;
