@@ -13,7 +13,10 @@
 // ***********************************************************************
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
 using System.Linq;
+using System.Timers;
 
 namespace TVGL
 {
@@ -53,6 +56,9 @@ namespace TVGL
             bool newPointFoundOutsideCircle;
             var stallCounter = 0;
             var indexOfMaxDist = -1;
+            var timer = new Stopwatch();
+            timer.Start();
+            TimeSpan timeTaken = timer.Elapsed;
             do
             {
                 newPointFoundOutsideCircle = false;
@@ -60,11 +66,11 @@ namespace TVGL
                 {
                     var dist = (points[i] - circle.Center).LengthSquared();
 
-                    if (dist >maxDistSqared)
+                    if (dist > maxDistSqared)
                     {
-                        if(maxDistSqared.IsPracticallySame(dist, 1 - Constants.MediumConfidence)) stallCounter++;
-                        else stallCounter = 0;
                         maxDistSqared = dist;
+                        if (indexOfMaxDist == i) stallCounter++;
+                        else stallCounter = 0;
                         indexOfMaxDist = i;
                         newPointFoundOutsideCircle = true;
                     }
@@ -74,17 +80,26 @@ namespace TVGL
                     var maxPoint = points[indexOfMaxDist];
                     Array.Copy(points, 0, points, 1, indexOfMaxDist);
                     points[0] = maxPoint;
-                    var newCircle = FindCircle(points);
-                    startIndex = 4;
-                    //Only update if the circle is not valid, while the old one was, don't update.
-                    if(!newCircle.RadiusSquared.IsNegligible() && 
-                        newCircle.RadiusSquared > circle.RadiusSquared)
+                    circle = FindCircle(points);
+                    maxDistSqared = circle.RadiusSquared;
+                    startIndex = 4;      
+                }
+                if(timer.Elapsed.TotalSeconds > 10)
+                {
+                    var desktop = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
+                    var datetime = DateTime.Now;
+                    var filename = Path.Join(desktop, "points0.csv");
+                    var i = 1;
+                    while (File.Exists(filename))
                     {
-                        circle = newCircle;
-                        maxDistSqared = circle.RadiusSquared;
-                    }           
+                        filename = Path.Join(desktop, "points", i.ToString(), ".csv");
+                        i++;
+                    }      
+                    File.WriteAllLines(filename, pointsInput.Select(p => p.X + "," + p.Y)); ;
+                    break;
                 }
             } while (newPointFoundOutsideCircle && stallCounter < maxNumStalledIterations);
+            timer.Stop();
             return circle;
         }
 
