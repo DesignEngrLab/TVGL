@@ -907,9 +907,10 @@ namespace TVGL
                     break;
                 }
             }
-            var scoringList = dirToPrimsDictionary.Select(kvp => (kvp.Key, kvp.Value.Count, kvp.Value.Sum(p => p.Area))).ToList();
-            foreach (var c in scoringList.OrderByDescending(s => s.Item2)
-                .ThenByDescending(s => s.Item3))
+            //Use area to choose the optimal direction rather than number of surfaces.
+            //This is a better indication most of the time.
+            var scoringList = dirToPrimsDictionary.Select(kvp => (kvp.Key, kvp.Value.Sum(p => p.Area))).ToList();
+            foreach (var c in scoringList.OrderByDescending(s => s.Item2))
             {
                 var (anchor, direction) = MiscFunctions.Get3DLineValuesFromUnique(c.Key);
                 yield return (anchor, direction, dirToPrimsDictionary[c.Key]);
