@@ -25,6 +25,9 @@ namespace TVGL
     {
         /// <summary>
         /// Gets the values.
+        /// Don't make this a concurrent dictionary. Since the operations are generally very small and quick,
+        /// parallel threads will cost more to boot up that the time they save, resulting in slower processing.
+        /// Could use a GPU.
         /// </summary>
         /// <value>The values.</value>
         public T[] Values { get; private protected set; }

@@ -1354,7 +1354,7 @@ namespace TVGL
         #endregion Save/Write
 
         #region Load Assembly
-        public static bool LoadAsSolidAssembly(string filePath, out SolidAssembly solidAssembly)
+        public static bool LoadAsSolidAssembly(string filePath, out SolidAssembly solidAssembly, TessellatedSolidBuildOptions buildOptions)
         {
             var extension = GetFileTypeFromExtension(Path.GetExtension(filePath));
             solidAssembly = null;
@@ -1367,7 +1367,7 @@ namespace TVGL
                 //unzip if needed
                 if (extension == FileType.TVGLz || extension == FileType.TVGL)
                 {
-                    ReadStream(filePath, out solidAssembly, TessellatedSolidBuildOptions.Default);
+                    ReadStream(filePath, out solidAssembly, buildOptions);
                 }
                 else if (extension != FileType.unspecified)
                 {
@@ -1380,10 +1380,10 @@ namespace TVGL
             return true;
         }
 
-        public static bool LoadMostSignificantAsPart(string filePath, out Solid part)
+        public static bool LoadMostSignificantAsPart(string filePath, out Solid part, TessellatedSolidBuildOptions buildOptions)
         {
             part = null;
-            if (!LoadAsSolidAssembly(filePath, out var solidAssembly))
+            if (!LoadAsSolidAssembly(filePath, out var solidAssembly, buildOptions))
                 return false;
             if (solidAssembly == null || solidAssembly.Solids == null || !solidAssembly.Solids.Any(s => s is TessellatedSolid))
             {
