@@ -62,9 +62,9 @@ namespace TVGL
 
                     if (dist >maxDistSqared)
                     {
-                        maxDistSqared = dist;
-                        if (indexOfMaxDist == i) stallCounter++;
+                        if(maxDistSqared.IsPracticallySame(dist, 1 - Constants.MediumConfidence)) stallCounter++;
                         else stallCounter = 0;
+                        maxDistSqared = dist;
                         indexOfMaxDist = i;
                         newPointFoundOutsideCircle = true;
                     }
@@ -74,9 +74,15 @@ namespace TVGL
                     var maxPoint = points[indexOfMaxDist];
                     Array.Copy(points, 0, points, 1, indexOfMaxDist);
                     points[0] = maxPoint;
-                    circle = FindCircle(points);
+                    var newCircle = FindCircle(points);
                     startIndex = 4;
-                    maxDistSqared = circle.RadiusSquared;
+                    //Only update if the circle is not valid, while the old one was, don't update.
+                    if(!newCircle.RadiusSquared.IsNegligible() && 
+                        newCircle.RadiusSquared > circle.RadiusSquared)
+                    {
+                        circle = newCircle;
+                        maxDistSqared = circle.RadiusSquared;
+                    }           
                 }
             } while (newPointFoundOutsideCircle && stallCounter < maxNumStalledIterations);
             return circle;
