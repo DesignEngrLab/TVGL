@@ -341,11 +341,11 @@ namespace TVGL
             var directions = new List<Vector3>();
             for (var i = -1; i <= 1; i++)
                 for (var j = -1; j <= 1; j++)
-                    directions.Add(new Vector3(1, i, j));
-            directions.Add(new Vector3(0, 0, 1));
-            directions.Add(new Vector3(0, 1, 0));
-            directions.Add(new Vector3(0, 1, 1));
-            directions.Add(new Vector3(0, -1, 1));
+                    directions.Add(new Vector3(1, i, j).Normalize());
+            directions.Add(new Vector3(0, 0, 1).Normalize());
+            directions.Add(new Vector3(0, 1, 0).Normalize());
+            directions.Add(new Vector3(0, 1, 1).Normalize());
+            directions.Add(new Vector3(0, -1, 1).Normalize());
             return MinimumBoundingCylinder(convexHullVertices, directions);
         }
 
@@ -364,8 +364,11 @@ namespace TVGL
             foreach (var direction in directions)
             {
                 var cylinder = MinimumBoundingCylinder(cvxHullVertsList, direction);
-                if (minCylinderVolume > cylinder.Volume)
+                if (cylinder.Volume < minCylinderVolume)
+                {
+                    minCylinderVolume = cylinder.Volume;
                     minCylinder = cylinder;
+                }  
             }
             return minCylinder;
         }
