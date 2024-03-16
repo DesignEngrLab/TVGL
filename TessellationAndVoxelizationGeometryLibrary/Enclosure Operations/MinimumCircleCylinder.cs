@@ -76,7 +76,7 @@ namespace TVGL
                 }
                 if (newPointFoundOutsideCircle)
                 {
-                    Console.WriteLine(indexOfMaxDist+", "+maxDistSqared);
+                    //Console.WriteLine(indexOfMaxDist+", "+maxDistSqared);
                     var maxPoint = points[indexOfMaxDist];
                     Array.Copy(points, 0, points, 1, indexOfMaxDist);
                     points[0] = maxPoint;

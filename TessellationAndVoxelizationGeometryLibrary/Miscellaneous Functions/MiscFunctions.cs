@@ -2493,10 +2493,28 @@ namespace TVGL
 
             if (direction.X.IsNegligible() && direction.Y.IsNegligible())
             {
-                if (direction.Z > 0)
-                    return (new Vector3(unique3DLine.X, unique3DLine.Y, 0), new Vector3(0, 0, 1));
+                if (unique3DLine.W.IsNegligible())
+                {
+                    if (direction.Z > 0)
+                        return (new Vector3(unique3DLine.X, unique3DLine.Y, 0), new Vector3(0, 0, 1));
+                    else
+                        return (new Vector3(-unique3DLine.X, unique3DLine.Y, 0), new Vector3(0, 0, -1));
+                }
                 else
-                    return (new Vector3(-unique3DLine.X, unique3DLine.Y, 0), new Vector3(0, 0, -1));
+                {
+                    var cos = Math.Cos(unique3DLine.W);
+                    var sin = Math.Sin(unique3DLine.W);
+                    var x = (unique3DLine.X * cos - unique3DLine.Y * sin);
+                    var y = (unique3DLine.X * sin + unique3DLine.Y * cos);
+                    if (direction.Z > 0)
+                    {
+                        if (direction.Z > 0)
+                            return (new Vector3(x, y, 0), new Vector3(0, 0, 1));
+                        else
+                            return (new Vector3(-x, y, 0), new Vector3(0, 0, -1));
+                    }
+
+                }
             }
             var jAxis = new Vector3(-direction.Y, direction.X, 0).Normalize();
             var iAxis = new Vector3(direction.Z * direction.X, direction.Z * direction.Y,
