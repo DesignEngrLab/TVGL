@@ -2139,85 +2139,25 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Determines if a point is inside a tesselated solid (polyhedron).
-        /// And the polygon is not self-intersecting
-        /// http://www.cescg.org/CESCG-2012/papers/Horvat-Ray-casting_point-in-polyhedron_test.pdf
+        /// Determines if the pint is inside the water-tight tessellated solid. This is a very simple
+        /// implementattion where we simply use the IsPointInsidePolygon by first making the slice 
+        /// polygons and then checking each one. This may not be the most efficient method.
         /// </summary>
-        /// <param name="ts">The ts.</param>
-        /// <param name="vertexInQuestion">The vertex in question.</param>
-        /// <param name="onBoundaryIsInside">if set to <c>true</c> [on boundary is inside].</param>
-        /// <returns><c>true</c> if [is vertex inside solid] [the specified ts]; otherwise, <c>false</c>.</returns>
-        public static bool IsVertexInsideSolid(TessellatedSolid ts, Vertex vertexInQuestion,
-            bool onBoundaryIsInside = true)
+        /// <param name="ts"></param>
+        /// <param name="PointInQuestion"></param>
+        /// <param name="onBoundaryIsInside"></param>
+        /// <returns></returns>
+        public static bool IsPointInsideSolid(TessellatedSolid ts, Vector3 PointInQuestion, bool onBoundaryIsInside = true)
         {
-            //ToDo: Rewrite function to use plane list as in SolidIntersectionFunction
-            var facesAbove = new List<TriangleFace>();
-            var facesBelow = new List<TriangleFace>();
-            var inconclusive = true;
-            var rnd = new Random(0);
-            //Added while inconclusive and random direction because there are some special cases that look the
-            //same. For instance, consider a vertex sitting at the center of a half moon. Along the z axis,
-            //It will go through 1 edge or vertex (special cases) above and one below. Then consider a box
-            //centered on the origin. A point on the origin would point to an edge (of the two faces
-            //forming the face) above and one below. Therefore, it was decided that special cases (through
-            //edges or locations, will yeild inconclusive results.
-            while (inconclusive)
+            var slice = Slice.GetCrossSection(ts, CartesianDirections.ZPositive, PointInQuestion.Z, out _);
+            foreach (var polygon in slice)
             {
-                inconclusive = false;
-                var direction = Vector3.Normalize(new Vector3(rnd.NextDouble(), rnd.NextDouble(), rnd.NextDouble()));
-                foreach (var face in ts.Faces)
-                {
-                    if (face.Vertices.Any(vertex => vertexInQuestion.X.IsPracticallySame(vertex.X) &&
-                                                    vertexInQuestion.Y.IsPracticallySame(vertex.Y) &&
-                                                    vertexInQuestion.Z.IsPracticallySame(vertex.Z)))
-                    {
-                        return onBoundaryIsInside;
-                    }
-
-                    var distanceToOrigin = face.Normal.Dot(face.A.Coordinates);
-                    var t = -(vertexInQuestion.Coordinates.Dot(face.Normal) - distanceToOrigin) /
-                            direction.Dot(face.Normal);
-                    //Note that if t == 0, then it is on the face
-                    //else, find the intersection point and determine if it is inside the polygon (face)
-                    var newVertex = t.IsNegligible()
-                        ? vertexInQuestion
-                        : new Vertex(vertexInQuestion.Coordinates + (direction * t));
-                    if (!IsVertexInsideTriangle(face, newVertex.Coordinates)) continue;
-                    //If the distance between the vertex and a plane is neglible and the vertex is inside that face
-                    if (t.IsNegligible())
-                    {
-                        return onBoundaryIsInside;
-                    }
-                    if (t > 0.0) //Face is higher on Z axis than vertex.
-                    {
-                        //Check to make sure no adjacent faces were already added to list (e.g., the projected vertex goes
-                        //through an edge).
-                        var onAdjacentFace = face.AdjacentFaces.Any(adjacentFace => facesAbove.Contains(adjacentFace));
-                        //Else, inconclusive (e.g., corners of cresent moon)
-                        if (!onAdjacentFace) facesAbove.Add(face);
-                        else
-                        {
-                            inconclusive = true;
-                            break;
-                        }
-                    }
-                    else //Face is lower on Z axis than vertex.
-                    {
-                        //Check to make sure no adjacent faces were already added to list (e.g., the projected vertex goes
-                        //through an edge).
-                        var onAdjacentFace = face.AdjacentFaces.Any(adjacentFace => facesBelow.Contains(adjacentFace));
-                        if (!onAdjacentFace) facesBelow.Add(face);
-                        else //Else, inconclusive (e.g., corners of cresent moon)
-                        {
-                            inconclusive = true;
-                            break;
-                        }
-                    }
-                }
+                var V = new Vector2(PointInQuestion.X, PointInQuestion.Y);
+                if (polygon.IsPointInsidePolygon(false, V, out _, onBoundaryIsInside))
+                    return true;
             }
-            if (facesAbove.Count == 0 || facesBelow.Count == 0) return false;
-            return facesAbove.Count % 2 != 0 && facesBelow.Count % 2 != 0;
-            //Even number of intercepts, means the vertex is inside
+            //Presenter.ShowAndHang(slice);
+            return false;
         }
 
         /// <summary>
@@ -2493,29 +2433,28 @@ namespace TVGL
 
             if (direction.X.IsNegligible() && direction.Y.IsNegligible())
             {
+                double x, y;
                 if (unique3DLine.W.IsNegligible())
                 {
-                    if (direction.Z > 0)
-                        return (new Vector3(unique3DLine.X, unique3DLine.Y, 0), new Vector3(0, 0, 1));
-                    else
-                        return (new Vector3(-unique3DLine.X, unique3DLine.Y, 0), new Vector3(0, 0, -1));
+                    x = unique3DLine.X;
+                    y = unique3DLine.Y;
                 }
                 else
                 {
                     var cos = Math.Cos(unique3DLine.W);
                     var sin = Math.Sin(unique3DLine.W);
-                    var x = (unique3DLine.X * cos - unique3DLine.Y * sin);
-                    var y = (unique3DLine.X * sin + unique3DLine.Y * cos);
+                    x = unique3DLine.X * cos - unique3DLine.Y * sin;
+                    y = unique3DLine.X * sin + unique3DLine.Y * cos;
+                }
+                if (direction.Z > 0)
+                {
                     if (direction.Z > 0)
-                    {
-                        if (direction.Z > 0)
-                            return (new Vector3(x, y, 0), new Vector3(0, 0, 1));
-                        else
-                            return (new Vector3(-x, y, 0), new Vector3(0, 0, -1));
-                    }
-
+                        return (new Vector3(x, y, 0), new Vector3(0, 0, 1));
+                    else
+                        return (new Vector3(-x, y, 0), new Vector3(0, 0, -1));
                 }
             }
+
             var jAxis = new Vector3(-direction.Y, direction.X, 0).Normalize();
             var iAxis = new Vector3(direction.Z * direction.X, direction.Z * direction.Y,
                 -direction.X * direction.X - direction.Y * direction.Y).Normalize();
