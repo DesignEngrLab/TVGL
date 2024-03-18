@@ -219,9 +219,15 @@ namespace TVGL
             var points = new List<Vector2>();
             var edges = new Dictionary<Vector2, List<Vector2>>();
             var vertex2DDict = Vertices.ToDictionary(v => v, v => v.ConvertTo2DCoordinates(transformToXYPlane));
-            var vector2VertexDict = vertex2DDict.ToDictionary(v => v.Value, v => v.Key);
 
-            foreach (var v in Vertices)
+            var vector2VertexDict = new Dictionary<Vector2, Vertex>();
+            foreach (var (key, value) in vertex2DDict)
+            {
+                if (!vector2VertexDict.ContainsKey(value))
+                    vector2VertexDict.Add(value, key);
+            }
+
+            foreach (var v in vector2VertexDict.Values)
             {
                 var neighbors = new List<Vector2>();
                 var v2D = vertex2DDict[v];
