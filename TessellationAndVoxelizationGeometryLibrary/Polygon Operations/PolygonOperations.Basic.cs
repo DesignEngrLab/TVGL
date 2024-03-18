@@ -95,6 +95,7 @@ namespace TVGL
         public static double Area(this IEnumerable<Vector2> polygon)
         {
             var area = 0.0;
+            if (polygon.Count() < 3) return area;
             using var enumerator = polygon.GetEnumerator();
             enumerator.MoveNext();
             var basePoint = enumerator.Current;
