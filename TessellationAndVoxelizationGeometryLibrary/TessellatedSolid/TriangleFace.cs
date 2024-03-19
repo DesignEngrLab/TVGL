@@ -19,8 +19,7 @@ namespace TVGL
 {
     /// <summary>
     /// This class defines a flat triangle face. The implementation began with triangular faces in mind.
-    /// It should be double-checked for higher polygons.   It inherits from the ConvexFace class in
-    /// MIConvexHull
+    /// It should be double-checked for higher polygons.   It inherits from the ConvexFace class 
     /// </summary>
     public class TriangleFace : TessellationBaseClass
     {

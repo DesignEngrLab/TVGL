@@ -9,7 +9,9 @@ namespace TVGLUnitTestsAndBenchmarking
 {
     internal class Program
     {
-        public static string inputFolder = "TestFiles";
+        //public static string inputFolder = "TestFiles";
+        public static string inputFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "Input");
+
         //public static string inputFolder = "OneDrive - medemalabs.com";
         static Random r = new Random();
         static double r1 => 2.0 * r.NextDouble() - 1.0;
@@ -19,8 +21,6 @@ namespace TVGLUnitTestsAndBenchmarking
         [STAThread]
         private static void Main(string[] args)
         {
-            MinimumCircleTesting.Test1(50000, 50);
-            MinimumCircleTesting.Test2();
             var myWriter = new ConsoleTraceListener();
             Trace.Listeners.Add(myWriter);
             TVGL.Message.Verbosity = VerbosityLevels.OnlyCritical;
@@ -28,8 +28,8 @@ namespace TVGLUnitTestsAndBenchmarking
             //Voxels.TestVoxelization(dir);
 
             //#if PRESENT
-            var index = 4;
-            var valid3DFileExtensions = new HashSet<string> { ".stl", ".ply", ".obj", ".3mf" };//,  ".tvglz" };
+            var index = 0;
+            var valid3DFileExtensions = new HashSet<string> { ".stl", ".ply", ".obj", ".3mf" ,  ".tvglz" };
             var allFiles = dir.GetFiles("*", SearchOption.AllDirectories).Where(f => valid3DFileExtensions.Contains(f.Extension.ToLower()))
                 ; //.OrderBy(fi => fi.Length);
             foreach (var fileName in allFiles.Skip(index))
@@ -37,8 +37,8 @@ namespace TVGLUnitTestsAndBenchmarking
                 Console.WriteLine(index + ": Attempting to open: " + fileName.Name);
                 TessellatedSolid[] solids = null;
                 IO.Open(fileName.FullName, out solids);
-                var vs = VoxelizedSolid.CreateFrom(solids[0], 66);
-                Presenter.ShowAndHang(vs);
+                //var vs = VoxelizedSolid.CreateFrom(solids[0], 66);
+                //Presenter.ShowAndHang(vs);
                 var sw = Stopwatch.StartNew();
                 //Presenter.ShowAndHang(solids);
                 ConvexHull.Test2(solids.MaxBy(s => s.Volume));

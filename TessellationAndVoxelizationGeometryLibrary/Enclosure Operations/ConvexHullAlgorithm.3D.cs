@@ -224,7 +224,7 @@ namespace TVGL
                 var (current, connectingEdge) = stack.Pop();
                 if (current.Visited) continue; // here is the only place where "Visited" is checked. It is only set for
                 // triangles within the cone to avoid cycling or redundant search.
-                if ((current.Center - peakCoord).Dot(current.Normal) > 0)
+                if ((current.A.Coordinates - peakCoord).Dot(current.Normal) > 0)
                 { // current is part of the convex hull that is to be kept. it is beyond the horizon
                     // so we stop here but before we move down the stack we need to create a new face
                     // this border face is stored in the borderFaces list so that at the end we can clear the Visited flags
@@ -382,15 +382,16 @@ namespace TVGL
         /// <param name="tolerance"></param>
         private static void AddVertexToProperFace(IList<ConvexHullFace> faces, Vertex v, double tolerance)
         {
-            var maxDot = double.NegativeInfinity;
+           var maxDot = double.NegativeInfinity;
             ConvexHullFace maxFace = null;
             foreach (var face in faces)
             {
-                var dot = (v.Coordinates - face.Center).Dot(face.Normal);
+                var dot = (v.Coordinates - face.A.Coordinates).Dot(face.Normal);
                 if (dot > maxDot)
                 {
                     maxDot = dot;
                     maxFace = face;
+                    //if (maxDot >= tolerance) break;
                 }
             }
             if (maxDot >= -tolerance)
@@ -494,7 +495,7 @@ namespace TVGL
                     }
                 }
             }
-            for (int i = numExtrema - 1; i > 0; i--)
+            for (int i = numExtrema - 1; i >= 0; i--)
             {
                 if (i == maxI1 || i == maxI2 || i == maxI3 || i == maxI4) continue;
                 extremePoints.RemoveAt(i);

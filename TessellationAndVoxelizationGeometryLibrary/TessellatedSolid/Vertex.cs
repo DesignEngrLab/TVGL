@@ -19,8 +19,7 @@ using System.Linq;
 namespace TVGL
 {
     /// <summary>
-    /// The 3D vertex can connect to any number of faces and edges. It inherits from the
-    /// MIConvexhull IVector interface.
+    /// The 3D vertex can connect to any number of faces and edges. 
     /// </summary>
     public sealed class Vertex : TessellationBaseClass, IVector3D, IVector
     {

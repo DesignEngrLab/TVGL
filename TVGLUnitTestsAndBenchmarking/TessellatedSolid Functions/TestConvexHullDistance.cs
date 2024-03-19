@@ -2,6 +2,9 @@
 using TVGL;
 using System.Linq;
 using System.Diagnostics;
+using System.IO;
+using System.Windows.Documents;
+using System.Collections.Generic;
 
 
 namespace TVGLUnitTestsAndBenchmarking
@@ -39,22 +42,43 @@ namespace TVGLUnitTestsAndBenchmarking
             ts.ResetDefaultColor();
             foreach (var f in ts.ConvexHull.Faces)
                 f.Color = new Color(100, 0, 100, 100);
-            Console.WriteLine("num vertices in solid = " + ts.Vertices.Length.ToString() + ", Convex Hull Time, " + sw.ElapsedTicks.ToString() + ", ");
+            Console.WriteLine("num vertices in solid = " + ts.Vertices.Length.ToString() + ", Convex Hull Time, " + sw.ToString() + ", ");
             Presenter.ShowAndHang(ts.Faces.Concat(ts.ConvexHull.Faces));
         }
         public static void Test3(TessellatedSolid ts)
         {
             var sw = Stopwatch.StartNew();
             var rand = new Random();
-            var slicePlane = new Plane(ts.Center + new Vector3(0, 0, 0),SphericalAnglePair.ConvertSphericalToCartesian(1, rand.NextDouble()*Math.PI, 
-                2*Math.PI*rand.NextDouble()-Math.PI));
+            var slicePlane = new Plane(ts.Center + new Vector3(0, 0, 0), SphericalAnglePair.ConvertSphericalToCartesian(1, rand.NextDouble() * Math.PI,
+                2 * Math.PI * rand.NextDouble() - Math.PI));
             var xSections = ts.GetCrossSection(slicePlane, out _);
             if (xSections.Count == 0) return;
             //Presenter.ShowAndHang(xSections.Select(p => p.Vertices.Select(v => v.Coordinates)));
 
-            var cvxHull =   xSections.CreateConvexHull(out _);
+            var cvxHull = xSections.CreateConvexHull(out _);
             //Presenter.ShowAndHang((new[] { cvxHull.Select(v=>v.Coordinates)}).Concat(xSections.Select(p=>p.Vertices.Select(v=>v.Coordinates))));
 
+        }
+
+
+        public static void Test4()
+        {
+            var path = @"../../../TessellatedSolid Functions/cvxpoints.csv";
+            var sw = Stopwatch.StartNew();
+            var lines = File.ReadAllLines(path);
+            var points = new List<Vector3>();
+            foreach (var line in lines)
+            {
+                var v = line.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
+                //var v = line.Split(' ')
+                    .Select(double.Parse).ToArray();
+                points.Add(new Vector3(v));
+            }
+            ConvexHull3D.Create(points, out var cvxHull, out _);
+
+            sw.Stop();
+            Console.WriteLine("num vertices in solid = " + cvxHull.Vertices.Count.ToString() + ", Convex Hull Time, " + sw.ToString() + ", ");
+            //Presenter.ShowAndHang(cvxHull.Faces);
         }
     }
 
