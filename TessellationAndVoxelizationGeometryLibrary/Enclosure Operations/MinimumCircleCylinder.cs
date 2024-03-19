@@ -415,6 +415,46 @@ namespace TVGL
         }
 
         /// <summary>
+        /// Gets the bounding cylinder, given an anchor and axis (i.e., 3D line forming the central axis)
+        /// This is really simple - just get the circle given the anchor as a center point.
+        /// Useful in cases were other criteria is being used to determine the best fit of the cylinder, 
+        /// like surface alignment.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="convexHullVertices">The convex hull vertices.</param>
+        /// <param name="direction">The direction.</param>
+        /// <returns>Cylinder.</returns>
+        public static Cylinder BoundingCylinderAlongCenterLine(IEnumerable<Vector3> convexHullVertices, Vector3 anchor, Vector3 axis)
+        {
+            if (axis.IsNull() || axis == Vector3.Zero || anchor.IsNull() || convexHullVertices.Count() < 4)
+                return null;
+
+            //Get the furthest vertex distance from the center line.
+            var radiusSquared = 0.0;
+            foreach(var vertex in convexHullVertices)
+            {
+                var r2 = MiscFunctions.DistancePointToLine(vertex, anchor, axis, out _, true);
+                if(r2 > radiusSquared)
+                    radiusSquared = r2;
+            }
+            var center2D = anchor.ConvertTo2DCoordinates(axis, out var _);
+            var circle = new Circle(center2D, radiusSquared);
+            
+            //Get the depth of the cylinder.
+            var (min, max) = GetDistanceToExtremeVertex(convexHullVertices, axis, out _, out _);
+            //var anchor = circle.Center.ConvertTo3DLocation(backTransform);
+            return new Cylinder
+            {
+                Axis = axis,
+                Anchor = anchor,
+                Circle = circle,//Set circle directly from projection, since cylinder.Circle set function was not aligned on center. 
+                Radius = circle.Radius,
+                MinDistanceAlongAxis = min,
+                MaxDistanceAlongAxis = max
+            };
+        }
+
+        /// <summary>
         /// The maximum minimum bound cyl iterations
         /// </summary>
         const int MaxMinBoundCylIterations = 120;

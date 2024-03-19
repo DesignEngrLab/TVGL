@@ -1665,13 +1665,14 @@ namespace TVGL
         /// <param name="lineRefPt">The line reference point on the line.</param>
         /// <param name="lineVector">The line direction vector.</param>
         /// <returns>System.Double.</returns>
-        public static double DistancePointToLine(Vector3 qPoint, Vector3 lineRefPt, Vector3 lineVector)
+        public static double DistancePointToLine(Vector3 qPoint, Vector3 lineRefPt, Vector3 lineVector, bool returnSquared = false)
         {
-            return DistancePointToLine(qPoint, lineRefPt, lineVector, out _);
+            return DistancePointToLine(qPoint, lineRefPt, lineVector, out _, returnSquared);
         }
 
         /// <summary>
-        /// Returns the distance the point on an infinite line.
+        /// Returns the distance the point on an infinite line. Option to return the squared distance
+        /// to eliminate the use of a square root operation.
         /// </summary>
         /// <param name="qPoint">q is the point that is off of the line.</param>
         /// <param name="lineRefPt">p is a reference point on the line.</param>
@@ -1679,7 +1680,7 @@ namespace TVGL
         /// <param name="pointOnLine">The point on line closest to point, q.</param>
         /// <returns>System.Double.</returns>
         public static double DistancePointToLine(Vector3 qPoint, Vector3 lineRefPt, Vector3 lineVector,
-            out Vector3 pointOnLine)
+            out Vector3 pointOnLine, bool returnSquared = false)
         {
             /* pointOnLine is found by setting the dot-product of the lineVector and the vector formed by (pointOnLine-p)
              * set equal to zero. This is really just solving to "t" the distance along the line from the lineRefPt. */
@@ -1688,7 +1689,7 @@ namespace TVGL
                      / (lineVector.X * lineVector.X + lineVector.Y * lineVector.Y + lineVector.Z * lineVector.Z);
             pointOnLine = new Vector3(
             lineRefPt.X + lineVector.X * t, lineRefPt.Y + lineVector.Y * t, lineRefPt.Z + lineVector.Z * t);
-            return qPoint.Distance(pointOnLine);
+            return returnSquared ? qPoint.DistanceSquared(pointOnLine) : qPoint.Distance(pointOnLine);
         }
 
         /// <summary>
