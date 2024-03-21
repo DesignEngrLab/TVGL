@@ -6,7 +6,7 @@ using TVGL.PointCloud;
 
 namespace TVGL
 {
-    public static partial class ConvexHull
+    public static partial class ConvexHull2D
     {
         /// <summary>
         /// Creates the convex hull for a polygon.
@@ -19,7 +19,7 @@ namespace TVGL
         {
             if (isMaximal) return CreateConvexHullMaximal(polygon.Vertices, out convexHullIndices);
             else
-                return CreateConvexHull(polygon.Vertices, out convexHullIndices);
+                return Create(polygon.Vertices, out convexHullIndices);
         }
 
         /// <summary>
@@ -32,7 +32,7 @@ namespace TVGL
         public static List<Vertex2D> CreateConvexHull(this IEnumerable<Polygon> polygon, out List<int> convexHullIndices, bool isMaximal = false)
         {
             if (isMaximal) return CreateConvexHullMaximal(polygon.SelectMany(p => p.Vertices).ToList(), out convexHullIndices);
-            else return CreateConvexHull(polygon.SelectMany(p => p.Vertices).ToList(), out convexHullIndices);
+            else return Create(polygon.SelectMany(p => p.Vertices).ToList(), out convexHullIndices);
         }
         /// <summary>
         /// Creates the convex hull for a set of vertices and then finds any vertices that are on the boundary
@@ -49,7 +49,7 @@ namespace TVGL
             where T : IVector2D
         {
             var kdTree = KDTree.Create(points, Enumerable.Range(0, points.Count).ToArray());
-            var convexHull = points.CreateConvexHull(out convexHullIndices);
+            var convexHull = Create(points, out convexHullIndices);
             var usedIndices = new HashSet<int>(convexHullIndices);
             var nextEndPoint = points[^1];
             for (int i = convexHull.Count - 1; i >= 0; i++)
@@ -91,7 +91,7 @@ namespace TVGL
         /// <param name="convexHullIndices"></param>
         /// <returns></returns>
         /// <exception cref="ArgumentException"></exception>
-        public static List<T> CreateConvexHull<T>(this IList<T> points, out List<int> convexHullIndices)
+        public static List<T> Create<T>(IList<T> points, out List<int> convexHullIndices)
         where T : IVector2D
         {
             // instead of calling points.Count several times, we create this variable. 

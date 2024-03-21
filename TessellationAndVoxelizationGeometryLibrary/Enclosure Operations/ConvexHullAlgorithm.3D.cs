@@ -431,7 +431,7 @@ namespace TVGL
                 distance *= -1;
                 coords2D = vertices.ProjectTo2DCoordinates(planeNormal, out backTransform).ToList();
             }
-            var cvxHull2D = coords2D.CreateConvexHull(out var vertexIndices);
+            var cvxHull2D = ConvexHull2D.Create(coords2D, out var vertexIndices);
             var indexHash = vertexIndices.ToHashSet();
             convexHull = new ConvexHull3D { tolerance = tolerance };
             var interiorVertices = new List<Vertex>();

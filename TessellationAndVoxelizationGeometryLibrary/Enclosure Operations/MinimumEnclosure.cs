@@ -448,7 +448,7 @@ namespace TVGL
             #region 1) Prune and Reorder the points
             IList<Vector2> points = initialPoints as IList<Vector2> ?? initialPoints.ToList();
             if (!pointsAreConvexHull)
-                points = ConvexHull.CreateConvexHull(points, out _);
+                points = ConvexHull2D.Create(points, out _);
 
             if (points.Count < 3)
             {
@@ -538,8 +538,11 @@ namespace TVGL
             var bestRectangle = new BoundingRectangle(Vector2.UnitX, Vector2.UnitY, 0, 0, double.PositiveInfinity,
                 double.PositiveInfinity, double.PositiveInfinity, double.PositiveInfinity, double.PositiveInfinity);
             var bestExtremeIndices = new int[4];
-            while (smallestAngle <= oneQuarterRotation)
+            var maxIterations = points.Count();
+            var iteration = 0;
+            while (smallestAngle <= oneQuarterRotation && iteration < maxIterations)
             {
+                iteration++;
                 #region 3) find new rectangle properties and keep if the best
                 //Get unit vectors for the sides of the new rectangle and find the dimensions
                 var currentPoint = points[extremeIndices[smallestAngleIndex]];
@@ -587,14 +590,7 @@ namespace TVGL
                 }
                 #endregion
                 #region 4) Update angles
-                // the smallestAngleIndex was used above, with nextIndex. Move nextIndex 
-                // up until we arrive at a new non-collinear point.
-                do
-                {
-                    nextIndex = (nextIndex == lastIndex) ? 0 : nextIndex + 1;
-                } while (unitVectorPointInto.Dot(points[nextIndex]).IsPracticallySame(d2Min));
-                //actually, we need go back one. otherwise we skip this line originally made by nextIndex
-                extremeIndices[smallestAngleIndex] = nextIndex == 0 ? lastIndex : nextIndex - 1;
+                extremeIndices[smallestAngleIndex] = nextIndex;
                 double angle = GetAngleWithNext(extremeIndices[smallestAngleIndex], points, smallestAngleIndex, lastIndex);
                 angles[smallestAngleIndex] = (angle < 0) ? double.PositiveInfinity : angle;
                 smallestAngle = angles[0];

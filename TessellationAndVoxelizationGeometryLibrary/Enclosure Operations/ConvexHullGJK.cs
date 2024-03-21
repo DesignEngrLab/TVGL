@@ -4,7 +4,7 @@ using System.Diagnostics;
 
 namespace TVGL
 {
-    public static partial class ConvexHull
+    public static partial class ConvexHullGJK
     {
         /// Finds the shortest distance between two convex hulls this is an adaption of the
         /// GJK algorithm - specifically, the c version defined as OpenGJK:
