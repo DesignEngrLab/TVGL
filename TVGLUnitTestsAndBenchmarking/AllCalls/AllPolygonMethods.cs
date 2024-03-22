@@ -26,7 +26,7 @@ namespace TVGLUnitTestsAndBenchmarking
             isItTrueThat = poly1.IsConvex();
             isItTrueThat = poly1.IsPositive;
             var poly3 = new Polygon(TestCases.MakeCircularPolygon(5, 5));
-            var intersections=poly1.GetPolygonInteraction(poly2);
+            var intersections = poly1.GetPolygonInteraction(poly2);
             var lines = poly1.Edges;
             var extrema = poly1.MaxX;
             extrema = poly1.MaxY;
@@ -42,7 +42,7 @@ namespace TVGLUnitTestsAndBenchmarking
             a.Area();
             a.BoundingRectangle();
             a.ConvertTo3DLocations(Vector3.UnitX, 1.0);
-            a.CreateConvexHull(out _);
+            ConvexHull2D.Create(a, out _);
             a.CreateConvexHullMaximal(out _);
             var b = TestCases.MakeCircularPolygon(5, 5);
             //a.Difference(b);
