@@ -32,6 +32,13 @@ namespace TVGL
         /// <value>The name.</value>
         public string Name { get; set; }
 
+        public int NumberOfSolidBodies { get; set; }
+
+        //If a CAD model was healed, the converter may still list the body as a sheet.
+        //Otherwise, if there are a mix of sheet and solid bodies, there may be an issue
+        //in the original conversion.
+        public int NumberOfSheetBodies { get; set; }
+
         /// <summary>
         /// Gets or sets the root assembly.
         /// </summary>
@@ -105,6 +112,8 @@ namespace TVGL
             for(var i = 0; i < Solids.Length; i++)
                 Solids[i].ReferenceIndex = i;
             _distinctSolids.Clear();
+            NumberOfSolidBodies = Solids.Count(t => t is TessellatedSolid ts && !ts.SourceIsSheetBody);
+            NumberOfSheetBodies = Solids.Count(t => t is TessellatedSolid ts && ts.SourceIsSheetBody);
         }
 
         /// <summary>
@@ -121,12 +130,7 @@ namespace TVGL
             sheets = Solids.Where(t => t is TessellatedSolid ts && ts.SourceIsSheetBody).Select(t => (TessellatedSolid)t);
         }
 
-        public bool ContainsBothBodyTypes()
-        {
-            var containsSolids = Solids.Any(t => t is TessellatedSolid ts && !ts.SourceIsSheetBody);
-            var containsSheets = Solids.Any(t => t is TessellatedSolid ts && ts.SourceIsSheetBody);
-            return containsSolids && containsSheets;
-        }
+        public bool ContainsBothBodyTypes() => NumberOfSheetBodies > 0 && NumberOfSolidBodies > 0;  
 
         /// <summary>
         /// Determines whether this instance is empty.

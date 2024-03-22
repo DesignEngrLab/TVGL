@@ -1396,11 +1396,10 @@ namespace TVGL
             var tessellatedSolid = ReturnMostSignificantSolid(solidAssembly);
 
             part = tessellatedSolid;
-            //progress.OverallPercentComplete += 100;
             return true;
         }
 
-        private static TessellatedSolid ReturnMostSignificantSolid(SolidAssembly solidAssembly)
+        public static TessellatedSolid ReturnMostSignificantSolid(SolidAssembly solidAssembly)
         {
             solidAssembly.GetTessellatedSolids(out var solids, out var sheets);
             if (solids.Any())//prefer solids over sheets.
@@ -1414,7 +1413,7 @@ namespace TVGL
                     var maxNumFaces = solids.Max(p => p.NumberOfFaces);
                     var significantSolids = solids.Where(p => p.Volume > maxVolume * .1 || p.NumberOfFaces > maxNumFaces * .3);
                     if (significantSolids.Count() > 1)
-                        Debug.WriteLine("Model contains " + significantSolids.Count() + " significant bodies. Attempting analysis on largest part in assembly.");
+                        Debug.WriteLine("Model contains " + significantSolids.Count() + " significant solid bodies. Attempting analysis on largest part in assembly.");
                     else
                         Debug.WriteLine("Model contains " + solids.Count() + " solid bodies, but only one is significant. Attempting analysis on largest part in assembly.");
                     tessellatedSolid = significantSolids.MaxBy(p => p.Volume);
@@ -1431,7 +1430,7 @@ namespace TVGL
                     var maxNumFaces = sheets.Max(p => p.NumberOfFaces);
                     var significantSolids = sheets.Where(p => p.Volume > maxVolume * .1 || p.NumberOfFaces > maxNumFaces * .3);
                     if (significantSolids.Count() > 1)
-                        Debug.WriteLine("Model contains " + significantSolids.Count() + " significant bodies. Attempting analysis on largest part in assembly.");
+                        Debug.WriteLine("Model contains " + significantSolids.Count() + " significant sheet bodies. Attempting analysis on largest part in assembly.");
                     else
                         Debug.WriteLine("Model contains " + sheets.Count() + " sheet bodies, but only one is significant. Attempting analysis on largest part in assembly.");
                     tessellatedSolid = significantSolids.MaxBy(p => p.Volume);
