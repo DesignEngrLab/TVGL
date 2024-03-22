@@ -93,7 +93,8 @@ namespace TVGL
             bool connectVerticesToCvxHullFaces, double tolerance = double.NaN)
         {
             var n = vertices.Count;
-            if (double.IsNaN(tolerance)) tolerance = Constants.BaseTolerance;
+            if (double.IsNaN(tolerance) || tolerance < Constants.BaseTolerance)
+                tolerance = Constants.BaseTolerance;
 
             // if the vertices are all on a plane, then we can solve this as a 2D problem
             if (SolveAs2D(vertices, out convexHull, tolerance)) return true;
@@ -382,7 +383,7 @@ namespace TVGL
         /// <param name="tolerance"></param>
         private static void AddVertexToProperFace(IList<ConvexHullFace> faces, Vertex v, double tolerance)
         {
-           var maxDot = double.NegativeInfinity;
+            var maxDot = double.NegativeInfinity;
             ConvexHullFace maxFace = null;
             foreach (var face in faces)
             {
@@ -396,7 +397,7 @@ namespace TVGL
             }
             if (maxDot >= -tolerance)
             {
-                if ((maxFace.peakVertex == null && maxDot >= tolerance) || maxDot > maxFace.peakDistance)
+                if ((maxFace.peakVertex == null || maxDot > maxFace.peakDistance) && maxDot >= tolerance)
                 {
                     if (maxFace.peakVertex != null)
                         maxFace.InteriorVertices.Add(maxFace.peakVertex);
