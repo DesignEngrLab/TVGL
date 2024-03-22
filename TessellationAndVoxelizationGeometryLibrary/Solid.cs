@@ -73,11 +73,6 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Gets the axis aligned bounding box volume. 
-        /// </summary>
-        public double AxisAlignedBoundingBoxVolume => (XMax - XMin) * (YMax - YMin) * (ZMax - ZMin);
-
-        /// <summary>
         /// Calculates the volume.
         /// </summary>
         protected abstract void CalculateVolume();

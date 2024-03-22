@@ -1382,6 +1382,8 @@ namespace TVGL
 
         public static bool LoadMostSignificantAsPart(string filePath, out Solid part, TessellatedSolidBuildOptions buildOptions)
         {
+            if (!buildOptions.DefineConvexHull)
+                throw new Exception("Determining part significance requires the Convex Hull to be defined.");
             part = null;
             if (!LoadAsSolidAssembly(filePath, out var solidAssembly, buildOptions))
                 return false;
@@ -1399,6 +1401,12 @@ namespace TVGL
             return true;
         }
 
+        /// <summary>
+        /// Returns the most significant solids, based on a number of faces and convex hull volume.
+        /// </summary>
+        /// <param name="solidAssembly"></param>
+        /// <param name="significantSolids"></param>
+        /// <returns></returns>
         public static TessellatedSolid ReturnMostSignificantSolid(SolidAssembly solidAssembly, out IEnumerable<TessellatedSolid> significantSolids)
         {
             solidAssembly.GetTessellatedSolids(out var solids, out var sheets);
@@ -1412,14 +1420,14 @@ namespace TVGL
                 }
                 else 
                 {
-                    var maxVolume = solids.Max(p => p.AxisAlignedBoundingBoxVolume);
+                    var maxVolume = solids.Max(p => p.ConvexHull.Volume);
                     var maxNumFaces = solids.Max(p => p.NumberOfFaces);
-                    significantSolids = solids.Where(p => p.AxisAlignedBoundingBoxVolume > maxVolume * .1 || p.NumberOfFaces > maxNumFaces * .3);
+                    significantSolids = solids.Where(p => p.ConvexHull.Volume > maxVolume * .1 || p.NumberOfFaces > maxNumFaces * .3);
                     if (significantSolids.Count() > 1)
                         Debug.WriteLine("Model contains " + significantSolids.Count() + " significant solid bodies. Attempting analysis on largest part in assembly.");
                     else
                         Debug.WriteLine("Model contains " + solids.Count() + " solid bodies, but only one is significant. Attempting analysis on largest part in assembly.");
-                    return significantSolids.MaxBy(p => p.AxisAlignedBoundingBoxVolume);
+                    return significantSolids.MaxBy(p => p.ConvexHull.Volume);
                 }    
             }
             else if(sheets.Any())
@@ -1434,14 +1442,14 @@ namespace TVGL
                     //use AxisAlignedBoundingBoxVolume rather than volume in case volume was calculated incorrectly
                     //as is possible if the sheet is built incorrectly - full of errors. The convex hull volume 
                     //could also be considered.
-                    var maxVolume = sheets.Max(p => p.AxisAlignedBoundingBoxVolume);
+                    var maxVolume = sheets.Max(p => p.ConvexHull.Volume);
                     var maxNumFaces = sheets.Max(p => p.NumberOfFaces);
-                    significantSolids = sheets.Where(p => p.AxisAlignedBoundingBoxVolume > maxVolume * .1 || p.NumberOfFaces > maxNumFaces * .3);
+                    significantSolids = sheets.Where(p => p.ConvexHull.Volume > maxVolume * .1 || p.NumberOfFaces > maxNumFaces * .3);
                     if (significantSolids.Count() > 1)
                         Debug.WriteLine("Model contains " + significantSolids.Count() + " significant sheet bodies. Attempting analysis on largest part in assembly.");
                     else
                         Debug.WriteLine("Model contains " + sheets.Count() + " sheet bodies, but only one is significant. Attempting analysis on largest part in assembly.");
-                    return significantSolids.MaxBy(p => p.AxisAlignedBoundingBoxVolume);
+                    return significantSolids.MaxBy(p => p.ConvexHull.Volume);
                 }
             }
             significantSolids = null;
