@@ -79,7 +79,7 @@ namespace TVGL
         /// Gets the index in list.
         /// </summary>
         /// <value>The index in list.</value>
-        public int IndexInList { get; internal set; }
+        public int IndexInList { get; set; }
 
         #endregion Properties
 
