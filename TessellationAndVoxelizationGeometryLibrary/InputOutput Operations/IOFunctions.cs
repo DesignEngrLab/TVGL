@@ -1393,50 +1393,58 @@ namespace TVGL
 
             //Casting from the solidAssembly, Solids list puts each solid in the coordinate system
             //that it was locally defined in (not it's global position in the assembly - which we don't want).
-            var tessellatedSolid = ReturnMostSignificantSolid(solidAssembly);
+            var tessellatedSolid = ReturnMostSignificantSolid(solidAssembly, out _);
 
             part = tessellatedSolid;
             return true;
         }
 
-        public static TessellatedSolid ReturnMostSignificantSolid(SolidAssembly solidAssembly)
+        public static TessellatedSolid ReturnMostSignificantSolid(SolidAssembly solidAssembly, out IEnumerable<TessellatedSolid> significantSolids)
         {
             solidAssembly.GetTessellatedSolids(out var solids, out var sheets);
             if (solids.Any())//prefer solids over sheets.
             {
                 //If the file contains multiple solids, see if we can get just one solid.
-                TessellatedSolid tessellatedSolid = solids.First();
-                if (solids.Count() > 1)
+                if (solids.Count() == 1)
+                {
+                    significantSolids = new List<TessellatedSolid> { solids.First() };
+                    return solids.First();
+                }
+                else 
                 {
                     var minVolume = solids.Min(p => p.Volume);
                     var maxVolume = solids.Max(p => p.Volume);
                     var maxNumFaces = solids.Max(p => p.NumberOfFaces);
-                    var significantSolids = solids.Where(p => p.Volume > maxVolume * .1 || p.NumberOfFaces > maxNumFaces * .3);
+                    significantSolids = solids.Where(p => p.Volume > maxVolume * .1 || p.NumberOfFaces > maxNumFaces * .3);
                     if (significantSolids.Count() > 1)
                         Debug.WriteLine("Model contains " + significantSolids.Count() + " significant solid bodies. Attempting analysis on largest part in assembly.");
                     else
                         Debug.WriteLine("Model contains " + solids.Count() + " solid bodies, but only one is significant. Attempting analysis on largest part in assembly.");
-                    tessellatedSolid = significantSolids.MaxBy(p => p.Volume);
-                }
-                return tessellatedSolid;
+                    return significantSolids.MaxBy(p => p.Volume);
+                }    
             }
-            else
+            else if(sheets.Any())
             {
-                TessellatedSolid tessellatedSolid = sheets.First();
-                if (sheets.Count() > 1)
+                if (sheets.Count() == 1)
+                {
+                    significantSolids = new List<TessellatedSolid> { sheets.First() };
+                    return sheets.First();          
+                }
+                else 
                 {
                     var minVolume = sheets.Min(p => p.Volume);
                     var maxVolume = sheets.Max(p => p.Volume);
                     var maxNumFaces = sheets.Max(p => p.NumberOfFaces);
-                    var significantSolids = sheets.Where(p => p.Volume > maxVolume * .1 || p.NumberOfFaces > maxNumFaces * .3);
+                    significantSolids = sheets.Where(p => p.Volume > maxVolume * .1 || p.NumberOfFaces > maxNumFaces * .3);
                     if (significantSolids.Count() > 1)
                         Debug.WriteLine("Model contains " + significantSolids.Count() + " significant sheet bodies. Attempting analysis on largest part in assembly.");
                     else
                         Debug.WriteLine("Model contains " + sheets.Count() + " sheet bodies, but only one is significant. Attempting analysis on largest part in assembly.");
-                    tessellatedSolid = significantSolids.MaxBy(p => p.Volume);
+                    return significantSolids.MaxBy(p => p.Volume);
                 }
-                return tessellatedSolid;
             }
+            significantSolids = null;
+            return null;
         }
         #endregion
     }
