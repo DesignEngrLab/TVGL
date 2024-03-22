@@ -1548,6 +1548,72 @@ namespace TVGL
             else deadEnds.Add(v, edge);
         }
 
-        #endregion
-    }
+        public static void CharacterizeBorders(TessellatedSolid solid)
+        {
+            foreach (var primitive in solid.Primitives)
+                foreach (var border in primitive.Borders)
+                    CharacterizeBorder(primitive, border);
+        }
+
+        public static void CharacterizeBorder(PrimitiveSurface primitive, BorderLoop border)
+        {
+            border.OwnedPrimitive = primitive;
+            border.EncirclesAxis = primitive.BorderEncirclesAxis(border);
+            //Set the curve for the border. This is required so we can check IsCircular for the border.
+            //This is not necessarily the same as the border segment, since there could be multiple segments
+            //that make up a primitive border.
+            SetCurve(border, primitive);
+            border.SetBorderPlane();
+        }
+
+        private static void SetCurve(BorderLoop border, PrimitiveSurface prim)
+        {
+            FindBestCurve(prim.TransformFrom3DTo2D(border.GetCoordinates(), true),
+                       double.PositiveInfinity, out var curve, out var curveError);
+            border.Curve = curve;
+            border.CurveError = curveError;
+        }
+
+        private static bool FindBestCurve(IEnumerable<Vector2> points, double maxError, out ICurve curve, out double error)
+        {
+            curve = null;
+            var pointList = points as IList<Vector2> ?? points.ToList();
+            // first see if it's a line
+            StraightLine2D.CreateFromPoints(pointList, out var straightLine, out error);
+            if (error < maxError)
+            {
+                curve = straightLine;
+                maxError = error;
+            }
+            if (pointList.Count > 2)
+            {
+                Circle.CreateFromPoints(pointList, out var circle, out error);
+                if (error < maxError)
+                {
+                    curve = circle;
+                    maxError = error;
+
+                }
+            }
+            if (pointList.Count >= 5)
+            {
+                GeneralConicSection.CreateFromPoints(pointList, out var conic, out error);
+                if (error < maxError)
+                {
+                    curve = conic;
+                    return true;
+                }
+            }
+            if (curve == null)
+            {
+                error = double.PositiveInfinity;
+                return false;
+            }
+            // then it is a line or circle
+            error = maxError;
+            return true;
+        }
+
+    #endregion
+}
 }
