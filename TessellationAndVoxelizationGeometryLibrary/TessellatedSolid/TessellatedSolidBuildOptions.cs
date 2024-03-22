@@ -33,15 +33,12 @@ namespace TVGL
                 PredefineAllEdges = false,
             };
 
-
         /// <summary>Gets or sets whether the model is check for connectivity and water-tightness.
         /// Note this check is n log n, so it may be slow for large models, but it is necessary to
         /// make edges and solve most geometry functions (e.g. splitting or slicing). If you are only 
         /// showing the model and not calling any operations then this can be false.
         /// </summary>
         public bool CheckModelIntegrity { get; set; } = true;
-
-
 
         /// <summary>
         /// Gets or sets a value indicating whether or not to check model after build and repair.
@@ -96,6 +93,6 @@ namespace TVGL
         /// <summary>
         /// Turn off duplicate face check if streaming from a CAD file or similar. Better to process the faces again later.
         /// </summary>
-        public bool DuplicateFaceCheck { get; private set; }
+        public bool DuplicateFaceCheck { get; set; }
     }
 }

@@ -100,11 +100,32 @@ namespace TVGL
         /// </summary>
         public void CompleteInitialization()
         {
-            Solids = _distinctSolids.Keys.ToArray();
+            Solids = _distinctSolids.Keys.ToArray(); 
             //Set the index for each of the solids.
             for(var i = 0; i < Solids.Length; i++)
                 Solids[i].ReferenceIndex = i;
             _distinctSolids.Clear();
+        }
+
+        /// <summary>
+        /// Gets the TessellatedSolids from the SolidAssembly. Optional argument to return one type (recommended).
+        /// Use case is when a model has both solid bodies and surface bodies. In this case, you usually just want
+        /// the solid bodies. Otherwise, you could try stitching them together.
+        /// </summary>
+        /// <param name="containsBothTypes"></param>
+        /// <param name="onlyReturnOneBodyType"></param>
+        /// <returns></returns>
+        public void GetTessellatedSolids(out IEnumerable<TessellatedSolid> solids, out IEnumerable<TessellatedSolid> sheets)
+        {
+            solids = Solids.Where(t => t is TessellatedSolid ts && !ts.SourceIsSheetBody).Select(t => (TessellatedSolid)t);
+            sheets = Solids.Where(t => t is TessellatedSolid ts && ts.SourceIsSheetBody).Select(t => (TessellatedSolid)t);
+        }
+
+        public bool ContainsBothBodyTypes()
+        {
+            var containsSolids = Solids.Any(t => t is TessellatedSolid ts && !ts.SourceIsSheetBody);
+            var containsSheets = Solids.Any(t => t is TessellatedSolid ts && ts.SourceIsSheetBody);
+            return containsSolids && containsSheets;
         }
 
         /// <summary>

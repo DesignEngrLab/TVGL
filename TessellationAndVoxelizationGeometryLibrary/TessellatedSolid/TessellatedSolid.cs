@@ -38,6 +38,12 @@ namespace TVGL
         public double TessellationError { get; set; } = Constants.DefaultTessellationError;
 
         /// <summary>
+        /// Generally we don't want to mix solid and sheet bodies when importing CAD files.
+        /// </summary>
+        [JsonIgnore]
+        public bool SourceIsSheetBody { get; set; } = false;
+
+        /// <summary>
         /// Gets the faces.
         /// </summary>
         /// <value>The faces.</value>
@@ -239,6 +245,9 @@ namespace TVGL
             writer.WritePropertyName("Name");
             writer.WriteValue(Name);
 
+            writer.WritePropertyName("SourceIsSheetBody");
+            writer.WriteValue(SourceIsSheetBody);
+
             writer.WritePropertyName("Index");
             writer.WriteValue(index);
 
@@ -326,6 +335,9 @@ namespace TVGL
                 {
                     case "Name":
                         Name = reader.ReadAsString();
+                        break;
+                    case "SourceIsSheetBody":
+                        SourceIsSheetBody = (bool)reader.ReadAsBoolean();
                         break;
                     case "Index":
                         index = (int)reader.ReadAsInt32();
@@ -1314,10 +1326,11 @@ namespace TVGL
                 CopyElementsPassedToConstructor = true,
                 DefineConvexHull = ConvexHull != null,
                 PredefineAllEdges = false,
-                FindNonsmoothEdges = false
+                FindNonsmoothEdges = false,
             }, Faces.Select(p => p.Color).ToList(), Units, Name + "_Copy",
                 FileName, Comments, Language);
             copy.TessellationError = TessellationError;
+            copy.SourceIsSheetBody = SourceIsSheetBody;
             if (Primitives != null && Primitives.Any())
             {
                 copy.NumberOfPrimitives = NumberOfPrimitives;
@@ -1344,7 +1357,6 @@ namespace TVGL
                     edgeNew.PartOfConvexHull = edge.PartOfConvexHull;
                     copy.Edges[i] = edgeNew;
                 }
-
             }
             if (NonsmoothEdges != null && NonsmoothEdges.Any())
             {
