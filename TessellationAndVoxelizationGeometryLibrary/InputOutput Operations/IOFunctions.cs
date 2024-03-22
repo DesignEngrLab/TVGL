@@ -1412,15 +1412,14 @@ namespace TVGL
                 }
                 else 
                 {
-                    var minVolume = solids.Min(p => p.Volume);
-                    var maxVolume = solids.Max(p => p.Volume);
+                    var maxVolume = solids.Max(p => p.AxisAlignedBoundingBoxVolume);
                     var maxNumFaces = solids.Max(p => p.NumberOfFaces);
-                    significantSolids = solids.Where(p => p.Volume > maxVolume * .1 || p.NumberOfFaces > maxNumFaces * .3);
+                    significantSolids = solids.Where(p => p.AxisAlignedBoundingBoxVolume > maxVolume * .1 || p.NumberOfFaces > maxNumFaces * .3);
                     if (significantSolids.Count() > 1)
                         Debug.WriteLine("Model contains " + significantSolids.Count() + " significant solid bodies. Attempting analysis on largest part in assembly.");
                     else
                         Debug.WriteLine("Model contains " + solids.Count() + " solid bodies, but only one is significant. Attempting analysis on largest part in assembly.");
-                    return significantSolids.MaxBy(p => p.Volume);
+                    return significantSolids.MaxBy(p => p.AxisAlignedBoundingBoxVolume);
                 }    
             }
             else if(sheets.Any())
@@ -1432,15 +1431,17 @@ namespace TVGL
                 }
                 else 
                 {
-                    var minVolume = sheets.Min(p => p.Volume);
-                    var maxVolume = sheets.Max(p => p.Volume);
+                    //use AxisAlignedBoundingBoxVolume rather than volume in case volume was calculated incorrectly
+                    //as is possible if the sheet is built incorrectly - full of errors. The convex hull volume 
+                    //could also be considered.
+                    var maxVolume = sheets.Max(p => p.AxisAlignedBoundingBoxVolume);
                     var maxNumFaces = sheets.Max(p => p.NumberOfFaces);
-                    significantSolids = sheets.Where(p => p.Volume > maxVolume * .1 || p.NumberOfFaces > maxNumFaces * .3);
+                    significantSolids = sheets.Where(p => p.AxisAlignedBoundingBoxVolume > maxVolume * .1 || p.NumberOfFaces > maxNumFaces * .3);
                     if (significantSolids.Count() > 1)
                         Debug.WriteLine("Model contains " + significantSolids.Count() + " significant sheet bodies. Attempting analysis on largest part in assembly.");
                     else
                         Debug.WriteLine("Model contains " + sheets.Count() + " sheet bodies, but only one is significant. Attempting analysis on largest part in assembly.");
-                    return significantSolids.MaxBy(p => p.Volume);
+                    return significantSolids.MaxBy(p => p.AxisAlignedBoundingBoxVolume);
                 }
             }
             significantSolids = null;
