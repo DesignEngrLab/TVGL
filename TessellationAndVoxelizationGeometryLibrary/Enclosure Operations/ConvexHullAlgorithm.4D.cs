@@ -38,7 +38,7 @@ namespace TVGL
             for (int i = 0; i < n; i++)
                 vertices[i] = new Vertex4D(points[i], i);
 
-            success = Create(vertices, out convexHull, true, tolerance);
+            success = Create(vertices, out convexHull, tolerance);
             if (success)
             {
                 vertexIndices = vertices.Select(v => v.IndexInList).ToList();
@@ -92,6 +92,7 @@ namespace TVGL
         public static bool Create(IList<Vertex4D> vertices, out ConvexHull4D convexHull, double tolerance = double.NaN)
         {
             var n = vertices.Count;
+            var nSqd = n * n;
             if (double.IsNaN(tolerance) || tolerance < Constants.BaseTolerance)
                 tolerance = Constants.BaseTolerance;
 
@@ -153,7 +154,7 @@ namespace TVGL
                 // this function, CreateNewFaceCone, is the hardest part of the algorithm. But, from its arguments, you can see that it finds
                 // faces to remove (oldFaces), faces to add (newFaces), and vertices to reassign (verticesToReassign) to the new faces.
                 // These three lists are then processed in the 3 foreach loops below.
-                CreateNewFaceCone(face, newFaces, oldFaces, verticesToReassign);
+                CreateNewFaceCone(face, newFaces, oldFaces, verticesToReassign, n, nSqd);
                 foreach (var iv in verticesToReassign)
                     AddVertexToProperFace(newFaces, iv, tolerance);
                 foreach (var f in oldFaces)
@@ -190,144 +191,92 @@ namespace TVGL
             return thirdPoint;
         }
 
-        /// <summary>
-        /// This is based on the method described in https://algolist.ru/maths/geom/convhull/qhull3d.php as CALCULATE_HORIZON
-        /// It's subtle and complicated. One difference is that our borders are populated in the clockwise direction since the
-        /// children on the stack are added in the CCW direction.
-        /// </summary>
-        /// <param name="startingFace"></param>
-        /// <param name="newFaces"></param>
-        /// <param name="oldFaces"></param>
-        /// <param name="verticesToReassign"></param>
-        /// <returns></returns>
         private static void CreateNewFaceCone(ConvexHullFace4D startingFace, List<ConvexHullFace4D> newFaces,
-            List<ConvexHullFace4D> oldFaces, List<Vertex4D> verticesToReassign)
+            List<ConvexHullFace4D> oldFaces, List<Vertex4D> verticesToReassign, int factor1, int factor2)
         {
             newFaces.Clear();
             oldFaces.Clear();
             verticesToReassign.Clear();
-            Edge4D inConeEdge = null;
-            Edge4D firstInConeEdge = null;
             var peakVertex = startingFace.peakVertex;
             var peakCoord = peakVertex.Coordinates;
             var stack = new Stack<(ConvexHullFace4D, Edge4D)>();
             stack.Push((startingFace, null));
-
+            var newConeEdges = new Dictionary<int, Edge4D>();
             // that's initialization. now for the main loop. Using a Depth-First Search, we find all the faces that are
-            // within (and beyond the horizon) from the peakVertex. Imagine this peak Vertex4D as a point sitting in the middle
+            // within (and beyond the horizon) from the v3. Imagine this peak Vertex4D as a point sitting in the middle
             // above the triangle. All the triangles that are visible from this point are the ones that are within the cone.
             // All these triangles need to be removed (stored in oldFaces) and replaced with new triangles (newFaces).
-            // The new triangles are formed by connecting the edges on the horizon with the peakVertex.
+            // The new triangles are formed by connecting the edges on the horizon with the v3.
             while (stack.Count > 0)
             {
                 var (current, connectingEdge) = stack.Pop();
                 if (current.Visited) continue; // here is the only place where "Visited" is checked. It is only set for
                 // triangles within the cone to avoid cycling or redundant search.
-                if ((current.A.Coordinates - peakCoord).Dot(current.Normal) > 0)
-                { // current is part of the convex hull that is to be kept. it is beyond the horizon
+                if ((peakCoord - current.A.Coordinates).Dot(current.Normal) < 0)
+                {   // the vector from this current face to the peakCoord is below the current normal. Therefore
+                    // current is beyond the horizon and is not to be replaced.
                     // so we stop here but before we move down the stack we need to create a new face
                     // this border face is stored in the borderFaces list so that at the end we can clear the Visited flags
-                    ConvexHullFace4D newFace;
+                    var underVertex = current.VertexOppositeEdge(connectingEdge).Coordinates;
+                    var newFace = new ConvexHullFace4D(connectingEdge.A, connectingEdge.B, connectingEdge.C, peakVertex, underVertex);
                     if (connectingEdge.OwnedFace == current)
-                    {   // if the current owns the face then the new face will follow the edge backwards
-                        newFace = new ConvexHullFace4D(connectingEdge.To, connectingEdge.From, peakVertex);
                         connectingEdge.OtherFace = newFace;
-                        newFace.AddEdge(connectingEdge);
-                        if (firstInConeEdge == null) // this is the first time through so we get to own the two in-cone edges as well
-                        {
-                            // the new face will have three edges. we re-use the connectingEdge as the first edge, but the other two
-                            // will be in the cone of new faces. From the above link, we learn that if Depth-First Search is used to
-                            // traverse the faces, then the edges on the horizon will be populated exactly in the clockwise direction.
-                            // So, inConeEdge will be the edge between this and the next cone face, and firstInConeEdge will be the
-                            // the last face that the cone wraps around to.
-                            inConeEdge = new Edge4D(peakVertex, connectingEdge.To, newFace, null, false);
-                            inConeEdge.OwnedFace = newFace;
-                            newFace.AddEdge(inConeEdge);
-                            firstInConeEdge = new Edge4D(connectingEdge.From, peakVertex, newFace, null, false);
-                            newFace.AddEdge(firstInConeEdge);
-                            firstInConeEdge.OwnedFace = newFace;
-                        }
-                        else // then it's not the first time we've been here, so firstEdge AND prevEdge should already be set
-                        {
-                            newFace.AddEdge(inConeEdge);
-                            inConeEdge.OtherFace = newFace;
-                            if (firstInConeEdge.To == connectingEdge.To || firstInConeEdge.From == connectingEdge.To)
-                            {
-                                newFace.AddEdge(firstInConeEdge);
-                                firstInConeEdge.OtherFace = newFace;
-                            }
-                            else
-                            {
-                                inConeEdge = new Edge4D(peakVertex, connectingEdge.To, newFace, null, false);
-                                newFace.AddEdge(inConeEdge);
-                                inConeEdge.OwnedFace = newFace;
-                            }
-                        }
-                    }
-                    else // the newFace will own the edge
-                    {
-                        newFace = new ConvexHullFace4D(connectingEdge.From, connectingEdge.To, peakVertex);
-                        connectingEdge.OwnedFace = newFace;
-                        newFace.AddEdge(connectingEdge);
-                        if (firstInConeEdge == null) // this is the first time through so we get to own the two in-cone edges as well
-                        {
-                            inConeEdge = new Edge4D(peakVertex, connectingEdge.From, newFace, null, false);
-                            inConeEdge.OwnedFace = newFace;
-                            newFace.AddEdge(inConeEdge);
-                            firstInConeEdge = new Edge4D(connectingEdge.To, peakVertex, newFace, null, false);
-                            newFace.AddEdge(firstInConeEdge);
-                            firstInConeEdge.OwnedFace = newFace;
-                        }
-                        else // then it's not the first time we've been here, so firstEdge AND prevEdge should already be set
-                        {
-                            newFace.AddEdge(inConeEdge);
-                            inConeEdge.OtherFace = newFace;
-                            if (firstInConeEdge.To == connectingEdge.From || firstInConeEdge.From == connectingEdge.From)
-                            {
-                                newFace.AddEdge(firstInConeEdge);
-                                firstInConeEdge.OtherFace = newFace;
-                            }
-                            else
-                            {
-                                inConeEdge = new Edge4D(peakVertex, connectingEdge.From, newFace, null, false);
-                                newFace.AddEdge(inConeEdge);
-                                inConeEdge.OwnedFace = newFace;
-                            }
-                        }
-                    }
+                    else connectingEdge.OwnedFace = newFace;
+                    newFace.AddEdge(connectingEdge);
                     newFaces.Add(newFace);
+                    // now the other edges of this new face may have already been created. If so, we need to connect them
+                    MakeNewInConeEdge(factor1, factor2, connectingEdge.A, connectingEdge.B, peakVertex, newConeEdges, newFace);
+                    MakeNewInConeEdge(factor1, factor2, connectingEdge.A, connectingEdge.C, peakVertex, newConeEdges, newFace);
+                    MakeNewInConeEdge(factor1, factor2, connectingEdge.B, connectingEdge.C, peakVertex, newConeEdges, newFace);
                 }
                 else // the face is within the cone. it'll be deleted in the above method, so we better get its interior vertices
-                     // and the peak and add them to the verticesToReassign list for later reassignment to the new faces
-                {
+                {    // and the peak and add them to the verticesToReassign list for later reassignment to the new faces
                     current.Visited = true;
                     oldFaces.Add(current);
                     if (current.peakVertex != null && current.peakVertex != peakVertex)
                         verticesToReassign.Add(current.peakVertex);
                     verticesToReassign.AddRange(current.InteriorVertices);
 
-                    // this is a little complicated, but we need to find the neigbors of the current face that are not the connecting edge
-                    // furthermore, for the trick with the inConeEdge to work, we need to generate children in the CCW direction starting 
-                    // with the one after the connecting edge. So, we need to find the connecting edge in the list of edges and then start
-                    // the loop after that.
-                    var connectingIndex = current.AB == connectingEdge ? 0 : current.BC == connectingEdge ? 1 : current.CA == connectingEdge ? 2 : -1;
-                    // at the very start, there are no connecting edges, so -1
-                    var i = 0;
-                    var neighborCount = connectingIndex >= 0 ? 2 : 3;
-                    foreach (var edge in current.Edges.Concat(current.Edges)) // the concat has us going through the edges twice!
-                    {   // keep going until you pass the connecting edge and then add the rest to the stack
-                        if (i++ > connectingIndex)
-                        {
-                            //if (edge == connectingEdge) continue; //this can  be removed once the code is debugged
-                            stack.Push(((ConvexHullFace4D)edge.GetMatingFace(current), edge));
-                            // we can break one we have the two connecting edges (or three when connectingIndex is -1 at the very start).
-                            if (--neighborCount == 0) break;
-                        }
-                    }
+                    // find the neigbors of the current face that are not the connecting edge (the edge we came from)
+                    if (current.ABC != connectingEdge) stack.Push((current.ABC.AdjacentFace(current), current.ABC));
+                    if (current.ABD != connectingEdge) stack.Push((current.ABD.AdjacentFace(current), current.ABD));
+                    if (current.ACD != connectingEdge) stack.Push((current.ACD.AdjacentFace(current), current.ACD));
+                    if (current.BCD != connectingEdge) stack.Push((current.BCD.AdjacentFace(current), current.BCD));
                 }
             }
         }
 
+        private static void MakeNewInConeEdge(int factor1, int factor2, Vertex4D v1, Vertex4D v2, Vertex4D v3,
+            Dictionary<int, Edge4D> newConeEdges, ConvexHullFace4D newFace)
+        {
+            int id;
+            if (v1.IndexInList > v2.IndexInList && v1.IndexInList > v3.IndexInList)
+            {
+                if (v2.IndexInList > v3.IndexInList) id = factor2 * v1.IndexInList + factor1 * v2.IndexInList + v3.IndexInList;
+                else id = factor2 * v1.IndexInList + factor1 * v3.IndexInList + v2.IndexInList;
+            }
+            else if (v2.IndexInList > v1.IndexInList && v2.IndexInList > v3.IndexInList)
+            {
+                if (v1.IndexInList > v3.IndexInList) id = factor2 * v2.IndexInList + factor1 * v1.IndexInList + v3.IndexInList;
+                else id = factor2 * v2.IndexInList + factor1 * v3.IndexInList + v1.IndexInList;
+            }
+            else // then v3 is the largest
+            {
+                if (v2.IndexInList > v1.IndexInList) id = factor2 * v3.IndexInList + factor1 * v2.IndexInList + v1.IndexInList;
+                else id = factor2 * v3.IndexInList + factor1 * v1.IndexInList + v2.IndexInList;
+            }
+            if (newConeEdges.TryGetValue(id, out var existingConeEdge))
+            {
+                newFace.AddEdge(existingConeEdge);
+                existingConeEdge.OtherFace = newFace;
+            }
+            else
+            {
+                var coneEdge = new Edge4D(v1, v2, v3, newFace, null);
+                newFace.AddEdge(coneEdge);
+                newConeEdges.Add(id, coneEdge);
+            }
+        }
         /// <summary>
         /// This method is called at the end of the algorithm to make the convex hull object.
         /// </summary>
@@ -335,8 +284,7 @@ namespace TVGL
         /// <param name="connectVerticesToCvxHullFaces"></param>
         /// <param name="cvxFaces"></param>
         /// <returns></returns>
-        private static ConvexHull4D MakeConvexHullWithFaces(double tolerance,
-            bool connectVerticesToCvxHullFaces, IEnumerable<ConvexHullFace4D> cvxFaces)
+        private static ConvexHull4D MakeConvexHullWithFaces(double tolerance, IEnumerable<ConvexHullFace4D> cvxFaces)
         {
             var cvxHull = new ConvexHull4D { tolerance = tolerance };
             cvxHull.Faces.AddRange(cvxFaces);
@@ -354,7 +302,7 @@ namespace TVGL
 
         /// <summary>
         /// For each Vertex4D, add it to the interior points of the convex hull face that it is farthest from.
-        /// Actually, the peakVertex and peakDistance properties of ConvexHullFace4D store the Vertex4D that is farthest
+        /// Actually, the v3 and peakDistance properties of ConvexHullFace4D store the Vertex4D that is farthest
         /// </summary>
         /// <param name="faces"></param>
         /// <param name="v"></param>
@@ -396,6 +344,8 @@ namespace TVGL
         /// <returns></returns>
         private static bool SolveAs3D(IList<Vertex4D> vertices, out ConvexHull4D convexHull, double tolerance = double.NaN)
         {
+            convexHull = null;
+            // todo: add code that mimics Plane.DefineNormalAndDistanceFromVertices(...);
             return false;
         }
 
@@ -444,12 +394,12 @@ namespace TVGL
         /// <returns></returns>
         private static List<ConvexHullFace4D> MakeSimplexFaces(List<Vertex4D> vertices)
         {
-            if (vertices.Count<=3) throw new ArgumentException("There must be at least 4 vertices to make a simplex");
+            if (vertices.Count <= 3) throw new ArgumentException("There must be at least 4 vertices to make a simplex");
             if (vertices.Count == 4)
             {   // if there are only 4 vertices, then we make two faces back-to-back
-                var faceOwned = new ConvexHullFace4D(vertices[0], vertices[1], vertices[2], vertices[3],Vector4.Zero);
+                var faceOwned = new ConvexHullFace4D(vertices[0], vertices[1], vertices[2], vertices[3], Vector4.Zero);
                 // here we use the origin to orient one of the faces
-                var faceOther = new ConvexHullFace4D(vertices[3],vertices[2], vertices[1], vertices[0], faceOwned.Normal + vertices[3].Coordinates);
+                var faceOther = new ConvexHullFace4D(vertices[3], vertices[2], vertices[1], vertices[0], faceOwned.Normal + vertices[3].Coordinates);
                 // to make this face the opposite orientation, we create an "under point" by adding the normal of the previous face to one of the points of the face
                 var edge012 = new Edge4D(vertices[0], vertices[1], vertices[2], faceOwned, faceOther);
                 edge012.OwnedFace = faceOwned;
@@ -460,7 +410,7 @@ namespace TVGL
                 var edge230 = new Edge4D(vertices[2], vertices[3], vertices[0], faceOwned, faceOther);
                 edge230.OwnedFace = faceOwned;
                 edge230.OtherFace = faceOther;
-                var edge301 = new Edge4D(vertices[3], vertices[0],vertices[1],  faceOwned, faceOther);
+                var edge301 = new Edge4D(vertices[3], vertices[0], vertices[1], faceOwned, faceOther);
                 edge301.OwnedFace = faceOwned;
                 edge301.OtherFace = faceOther;
                 return [faceOwned, faceOther];

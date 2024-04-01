@@ -225,8 +225,9 @@ namespace TVGL
                 var (current, connectingEdge) = stack.Pop();
                 if (current.Visited) continue; // here is the only place where "Visited" is checked. It is only set for
                 // triangles within the cone to avoid cycling or redundant search.
-                if ((current.A.Coordinates - peakCoord).Dot(current.Normal) > 0)
-                { // current is part of the convex hull that is to be kept. it is beyond the horizon
+                if ((peakCoord - current.A.Coordinates).Dot(current.Normal) < 0)
+                {   // the vector from this current face to the peakCoord is below the current normal. Therefore
+                    // current is beyond the horizon and is not to be replaced.
                     // so we stop here but before we move down the stack we need to create a new face
                     // this border face is stored in the borderFaces list so that at the end we can clear the Visited flags
                     ConvexHullFace newFace;

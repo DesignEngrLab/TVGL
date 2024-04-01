@@ -51,6 +51,13 @@ namespace TVGL
         public Vertex4D C { get; set; }
         public ConvexHullFace4D OwnedFace { get; set; }
         public ConvexHullFace4D OtherFace { get; set; }
+
+        internal ConvexHullFace4D AdjacentFace(ConvexHullFace4D face)
+        {
+            if (face == OwnedFace) return OtherFace;
+            if (face == OtherFace) return OwnedFace;
+            throw new Exception("The face is not adjacent to this edge.");
+        }
     }
     public class Vertex4D
     {
@@ -155,9 +162,30 @@ namespace TVGL
         public List<Vertex4D> InteriorVertices { get; set; }
         public bool Visited { get; set; }
 
-        internal void AddEdge(Edge4D connectingEdge)
+        internal void AddEdge(Edge4D edge)
         {
-            throw new NotImplementedException();
+            var AIsAttached = (A == edge.A || A == edge.B || A == edge.C);
+            var BIsAttached = (B == edge.A || B == edge.B || B == edge.C);
+            var CIsAttached = (C == edge.A || C == edge.B || C == edge.C);
+            var DIsAttached = (D == edge.A || D == edge.B || D == edge.C);
+            if (!AIsAttached && BIsAttached && CIsAttached && DIsAttached)
+                BCD = edge;
+            else if (AIsAttached && !BIsAttached && CIsAttached && DIsAttached)
+                ACD = edge;
+            else if (AIsAttached && BIsAttached && !CIsAttached && DIsAttached)
+                ABD = edge;
+            else if (AIsAttached && BIsAttached && CIsAttached && !DIsAttached)
+                ABC = edge;
+            else throw new Exception("The edge is not part of this face.");
+        }
+
+        internal Vertex4D VertexOppositeEdge(Edge4D edge)
+        {
+            if (edge == ABC) return D;
+            if (edge == ABD) return C;
+            if (edge == ACD) return B;
+            if (edge == BCD) return A;
+            throw new Exception("The edge is not part of this face.");
         }
     }
 }
