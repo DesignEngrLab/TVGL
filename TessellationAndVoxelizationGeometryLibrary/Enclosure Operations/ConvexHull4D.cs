@@ -13,7 +13,7 @@ namespace TVGL
         /// <summary>
         /// The volume of the Convex Hull.
         /// </summary>
-        public double tolerance { get; public init; }
+        public double tolerance { get; init; }
 
         /// <summary>
         /// The vertices of the ConvexHull
@@ -37,6 +37,18 @@ namespace TVGL
 
     public class Edge4D
     {
+        public Edge4D(Vertex4D vertexA, Vertex4D vertexB, Vertex4D vertexC, ConvexHullFace4D ownedFace, ConvexHullFace4D otherFace)
+        {
+            A = vertexA;
+            B = vertexB;
+            C = vertexC;
+            OwnedFace = ownedFace;
+            OtherFace = otherFace;
+        }
+
+        public Vertex4D A { get; set; }
+        public Vertex4D B { get; set; }
+        public Vertex4D C { get; set; }
         public ConvexHullFace4D OwnedFace { get; set; }
         public ConvexHullFace4D OtherFace { get; set; }
     }
@@ -50,48 +62,79 @@ namespace TVGL
 
         public Vector4 Coordinates { get; }
         public int IndexInList { get; }
+        public double X => Coordinates[0];
+        public double Y => Coordinates[1];
+        public double Z => Coordinates[2];
+        public double W => Coordinates[3];
     }
 
     public class ConvexHullFace4D
     {
-        //public ConvexHullFace4D(Vertex4D vertex1, Vertex4D vertex2, Vertex4D vertex3, Vertex4D vertex4, Vector4 planeNormal)
-        //{
-        //    Normal = planeNormal;
-        //    InteriorVertices = new List<Vertex4D>();
-        //}
         public ConvexHullFace4D(Vertex4D vertex1, Vertex4D vertex2, Vertex4D vertex3, Vertex4D vertex4, Vector4 knownUnderPoint)
         {
             InteriorVertices = new List<Vertex4D>();
             Normal = DetermineNormal(vertex1.Coordinates, vertex2.Coordinates, vertex3.Coordinates, vertex4.Coordinates, knownUnderPoint);
         }
 
-        private Vector4 DetermineNormal(Vector4 p0, Vector4 p1, Vector4 p2, Vector4 p3, Vector4 f)
+        private Vector4 DetermineNormal(Vector4 p0, Vector4 p1, Vector4 p2, Vector4 p3, Vector4 knownUnderPoint)
         {
-            // 1. get two in-plane vectors that are not parallel
-            var (v1, v2) = GetInPlaneBasis(p0, p1, p2, p3);
-            // 2. get the normal
-            var q = f - p0;
-            var v1Dx = v1.Dot(q) * v1;
-            var v2Dx = v2.Dot(q) * v2;
+            // following the approach at https://www.mathwizurd.com/linalg/2018/11/15/find-a-normal-vector-to-a-hyperplane
+            // f is the vector that should have a positive dot product with the normal. It's used to flip the normal if necessary.
+            var f = p0 - knownUnderPoint;
+            var d1 = (p1 - p0);
+            var d2 = (p2 - p0);
+            var d3 = (p3 - p0);
 
-            var normal = -f + 2 * p0 + v1Dx + v2Dx;
-            return normal.Normalize();
+            if (d1.X.IsNegligible())
+            {
+                if (d2.X.IsNegligible())
+                {
+                    if (d3.X.IsNegligible())
+                    {  // all vectors are parallel to the x-axis so the normal is the x-axis
+                        if (f.X < 0) return -Vector4.UnitX;
+                        return Vector4.UnitX;
+                    }
+                    // move d1 to the bottom and d3 to the top
+                    (d1, d3) = (d3, d1);
+                }
+                // swap d1 and d2
+                (d1, d2) = (d2, d1);
+            }
+            // d1.X is not negligible so we can use it to eliminate the x component of d2 and d3
+            d2 = d1.X * d2 - d2.X * d1;
+            d3 = d1.X * d3 - d3.X * d1;
+
+            if (d2.Y.IsNegligible())
+            {
+                if (d3.Y.IsNegligible())
+                {
+                    //throw new Exception("Two vectors are parallel to the y-axis. this is reparable by considering w, but...");
+                    if (d2.Z.IsNegligible())
+                    {
+                        if (d3.Z.IsNegligible())
+                            throw new Exception("There is a linear dependence with two of the four points defining this hyperplane.");
+                        //(d2, d3) = (d3, d2);
+                        // d2.Y is negligible, but d2.Z is not, so we can use it to eliminate the z component of d3
+                        // setting y to -1, z = 0 and w = 0
+                        var normalXY = new Vector4(d1.Y / d1.X, -1, 0, 0);
+                        if (f.Dot(normalXY) > 0) return normalXY.Normalize();
+                        else return -normalXY.Normalize();
+                    }
+                    // swap d2 and d3 so that d2.Y is not negligible
+                    (d2, d3) = (d3, d2);
+                }
+            }
+            // d2.Y is not negligible so we can use it to eliminate the y component of d3
+            d3 = d2.Y * d3 - d3.Y * d2;
+            // setting w to -1
+            var z = d3.W / d3.Z;
+            var y = (d2.W - d2.Z * z) / d2.Y;
+            var x = (d1.W - d1.Y * y - d1.Z * z) / d1.X;
+            var normal = new Vector4(x, y, z, -1);
+            if (f.Dot(normal) > 0) return normal.Normalize();
+            else return -normal.Normalize();
         }
 
-        private static (Vector4, Vector4) GetInPlaneBasis(Vector4 p0, Vector4 p1, Vector4 p2, Vector4 p3)
-        {
-            var d1 = (p1 - p0).Normalize();
-            var d2 = (p2 - p0).Normalize();
-            var d3 = (p3 - p0).Normalize();
-            var dot_12 = d1.Dot(d2);
-            var dot_13 = d1.Dot(d3);
-            var dot_23 = d2.Dot(d3);
-            if (dot_12 < dot_13 && dot_12 < dot_23)
-                return (d1.Normalize(), d2.Normalize());
-            else if (dot_13 < dot_12 && dot_13 < dot_23)
-                return (d1.Normalize(), d3.Normalize());
-            return (d2.Normalize(), d3.Normalize());
-        }
 
         public Vertex4D A { get; set; }
         public Vertex4D B { get; set; }

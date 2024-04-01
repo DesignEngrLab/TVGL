@@ -76,7 +76,7 @@ namespace TVGL
             //}
             //else
             //{
-                return false;
+            return false;
             //}
         }
 
@@ -89,8 +89,7 @@ namespace TVGL
         /// <param name="connectVerticesToCvxHullFaces"></param>
         /// <param name="tolerance"></param>
         /// <returns></returns>
-        public static bool Create(IList<Vertex4D> vertices, out ConvexHull4D convexHull,
-            bool connectVerticesToCvxHullFaces, double tolerance = double.NaN)
+        public static bool Create(IList<Vertex4D> vertices, out ConvexHull4D convexHull, double tolerance = double.NaN)
         {
             var n = vertices.Count;
             if (double.IsNaN(tolerance) || tolerance < Constants.BaseTolerance)
@@ -163,8 +162,7 @@ namespace TVGL
                     faceQueue.Enqueue(newFace, newFace.peakDistance);
             }
             // now we have the convex hull faces are used to build the convex hull object
-            convexHull = MakeConvexHullWithFaces(tolerance, connectVerticesToCvxHullFaces,
-                faceQueue.UnorderedItems.Select(fq => fq.Element));
+            convexHull = MakeConvexHullWithFaces(tolerance, faceQueue.UnorderedItems.Select(fq => fq.Element));
             return true;
         }
 
@@ -347,27 +345,7 @@ namespace TVGL
             var cvxEdgeHash = new HashSet<Edge4D>();
             foreach (var f in cvxFaces)
             {
-                foreach (var v in f.Vertices)
-                {
-                    v.PartOfConvexHull = true;
-                    cvxVertexHash.Add(v);
-                    if (connectVerticesToCvxHullFaces)
-                        v.Faces.Add(f);
-                }
-                // vertices that are stored in the interior vertices do not define the edges and faces
-                // of the convex hull but it is useful to know that they are on the boundary of the convex hull
-                foreach (var v in f.InteriorVertices)
-                    v.PartOfConvexHull = true;
-                foreach (var e in f.Edges)
-                {
-                    e.PartOfConvexHull = true;
-                    cvxEdgeHash.Add(e);
-                    if (connectVerticesToCvxHullFaces)
-                    {
-                        e.From.Edges.Add(e);
-                        e.To.Edges.Add(e);
-                    }
-                }
+
             }
             cvxHull.Vertices.AddRange(cvxVertexHash);
             cvxHull.Edges.AddRange(cvxEdgeHash);
@@ -466,52 +444,67 @@ namespace TVGL
         /// <returns></returns>
         private static List<ConvexHullFace4D> MakeSimplexFaces(List<Vertex4D> vertices)
         {
-            if (vertices.Count == 3)
-            {
-                var face012 = new ConvexHullFace4D(vertices[0], vertices[1], vertices[2]);
-                var face210 = new ConvexHullFace4D(vertices[2], vertices[1], vertices[0]);
-                var edge01 = new Edge4D(vertices[0], vertices[1], face012, face210, false);
-                edge01.OwnedFace = face012;
-                edge01.OtherFace = face210;
-                var edge12 = new Edge4D(vertices[1], vertices[2], face012, face210, false);
-                edge12.OwnedFace = face012;
-                edge12.OtherFace = face210;
-                var edge20 = new Edge4D(vertices[2], vertices[0], face012, face210, false);
-                edge20.OwnedFace = face012;
-                edge20.OtherFace = face210;
-                return [face012, face210];
+            if (vertices.Count<=3) throw new ArgumentException("There must be at least 4 vertices to make a simplex");
+            if (vertices.Count == 4)
+            {   // if there are only 4 vertices, then we make two faces back-to-back
+                var faceOwned = new ConvexHullFace4D(vertices[0], vertices[1], vertices[2], vertices[3],Vector4.Zero);
+                // here we use the origin to orient one of the faces
+                var faceOther = new ConvexHullFace4D(vertices[3],vertices[2], vertices[1], vertices[0], faceOwned.Normal + vertices[3].Coordinates);
+                // to make this face the opposite orientation, we create an "under point" by adding the normal of the previous face to one of the points of the face
+                var edge012 = new Edge4D(vertices[0], vertices[1], vertices[2], faceOwned, faceOther);
+                edge012.OwnedFace = faceOwned;
+                edge012.OtherFace = faceOther;
+                var edge123 = new Edge4D(vertices[1], vertices[2], vertices[3], faceOwned, faceOther);
+                edge123.OwnedFace = faceOwned;
+                edge123.OtherFace = faceOther;
+                var edge230 = new Edge4D(vertices[2], vertices[3], vertices[0], faceOwned, faceOther);
+                edge230.OwnedFace = faceOwned;
+                edge230.OtherFace = faceOther;
+                var edge301 = new Edge4D(vertices[3], vertices[0],vertices[1],  faceOwned, faceOther);
+                edge301.OwnedFace = faceOwned;
+                edge301.OtherFace = faceOther;
+                return [faceOwned, faceOther];
             }
-            else
+            else // there are 5 or 6 vertices, so we make a proper tesseract
             {
-                // in order to get the order correct, we find the volume from the scalar triple product formula
-                var basePoint = vertices[0].Coordinates;
-                var volume = (vertices[1].Coordinates - basePoint).Cross(vertices[2].Coordinates - basePoint).Dot(basePoint - vertices[3].Coordinates);
-                // if the volume is negative then swap the two middle points to get them triangles in the prpoer orientation
-                if (volume < 0) Constants.SwapItemsInList(1, 2, vertices);
+                var face4 = new ConvexHullFace4D(vertices[0], vertices[1], vertices[2], vertices[3], vertices[4].Coordinates);
+                var face3 = new ConvexHullFace4D(vertices[4], vertices[0], vertices[1], vertices[2], vertices[3].Coordinates);
+                var face2 = new ConvexHullFace4D(vertices[3], vertices[4], vertices[0], vertices[1], vertices[2].Coordinates);
+                var face1 = new ConvexHullFace4D(vertices[2], vertices[3], vertices[4], vertices[0], vertices[1].Coordinates);
+                var face0 = new ConvexHullFace4D(vertices[1], vertices[2], vertices[3], vertices[4], vertices[0].Coordinates);
 
-                var face012 = new ConvexHullFace4D(vertices[0], vertices[1], vertices[2]);
-                var face031 = new ConvexHullFace4D(vertices[0], vertices[3], vertices[1]);
-                var face132 = new ConvexHullFace4D(vertices[1], vertices[3], vertices[2]);
-                var face230 = new ConvexHullFace4D(vertices[2], vertices[3], vertices[0]);
-                var edge01 = new Edge4D(vertices[0], vertices[1], face012, face031, false);
-                edge01.OwnedFace = face012;
-                edge01.OtherFace = face031;
-                var edge12 = new Edge4D(vertices[1], vertices[2], face012, face132, false);
-                edge12.OwnedFace = face012;
-                edge12.OtherFace = face132;
-                var edge20 = new Edge4D(vertices[2], vertices[0], face012, face230, false);
-                edge20.OwnedFace = face012;
-                edge20.OtherFace = face230;
-                var edge03 = new Edge4D(vertices[0], vertices[3], face031, face230, false);
-                edge03.OwnedFace = face031;
-                edge03.OtherFace = face230;
-                var edge13 = new Edge4D(vertices[1], vertices[3], face132, face031, false);
-                edge13.OwnedFace = face132;
-                edge13.OtherFace = face031;
-                var edge23 = new Edge4D(vertices[2], vertices[3], face230, face132, false);
-                edge23.OwnedFace = face230;
-                edge23.OtherFace = face132;
-                return [face012, face031, face132, face230];
+                var edge = new Edge4D(vertices[2], vertices[3], vertices[4], face0, face1);
+                face0.AddEdge(edge);
+                face1.AddEdge(edge);
+                edge = new Edge4D(vertices[3], vertices[4], vertices[1], face0, face2);
+                face0.AddEdge(edge);
+                face2.AddEdge(edge);
+                edge = new Edge4D(vertices[4], vertices[1], vertices[2], face0, face3);
+                face0.AddEdge(edge);
+                face3.AddEdge(edge);
+                edge = new Edge4D(vertices[1], vertices[2], vertices[3], face0, face4);
+                face0.AddEdge(edge);
+                face4.AddEdge(edge);
+                edge = new Edge4D(vertices[3], vertices[4], vertices[0], face1, face2);
+                face1.AddEdge(edge);
+                face2.AddEdge(edge);
+                edge = new Edge4D(vertices[4], vertices[0], vertices[2], face1, face3);
+                face1.AddEdge(edge);
+                face3.AddEdge(edge);
+                edge = new Edge4D(vertices[0], vertices[2], vertices[3], face1, face4);
+                face1.AddEdge(edge);
+                face4.AddEdge(edge);
+                edge = new Edge4D(vertices[4], vertices[0], vertices[1], face2, face3);
+                face2.AddEdge(edge);
+                face3.AddEdge(edge);
+                edge = new Edge4D(vertices[0], vertices[1], vertices[3], face2, face4);
+                face2.AddEdge(edge);
+                face4.AddEdge(edge);
+                edge = new Edge4D(vertices[0], vertices[1], vertices[2], face3, face4);
+                face3.AddEdge(edge);
+                face4.AddEdge(edge);
+
+                return [face4, face3, face2, face1, face0];
             }
         }
 
@@ -537,13 +530,19 @@ namespace TVGL
                     points[i].Y == extremePoints[2].Y && points[i].Z < extremePoints[2].Z)
                     extremePoints[2] = points[i];
                 if (points[i].Y > extremePoints[3].Y ||
-                    points[i].Y == extremePoints[3].Y && points[i].X > extremePoints[3].X)
+                    points[i].Y == extremePoints[3].Y && points[i].W > extremePoints[3].W)
                     extremePoints[3] = points[i];
                 if (points[i].Z < extremePoints[4].Z ||
-                    points[i].Z == extremePoints[4].Z && points[i].X < extremePoints[4].X)
+                    points[i].Z == extremePoints[4].Z && points[i].W < extremePoints[4].W)
                     extremePoints[4] = points[i];
                 if (points[i].Z > extremePoints[5].Z ||
-                    points[i].Z == extremePoints[5].Z && points[i].Y > extremePoints[5].Y)
+                    points[i].Z == extremePoints[5].Z && points[i].X > extremePoints[5].X)
+                    extremePoints[5] = points[i];
+                if (points[i].W < extremePoints[4].W ||
+                    points[i].W == extremePoints[4].W && points[i].X < extremePoints[4].X)
+                    extremePoints[4] = points[i];
+                if (points[i].W > extremePoints[5].W ||
+                    points[i].W == extremePoints[5].W && points[i].Y > extremePoints[5].Y)
                     extremePoints[5] = points[i];
             }
             numExtrema = 6;
