@@ -1,21 +1,4 @@
-﻿// ***********************************************************************
-// Assembly         : TessellationAndVoxelizationGeometryLibrary
-// Author           : matth
-// Created          : 04-03-2023
-//
-// Last Modified By : matth
-// Last Modified On : 04-14-2023
-// ***********************************************************************
-// <copyright file="ConvexHull4D.cs" company="Design Engineering Lab">
-//     2014
-// </copyright>
-// <summary></summary>
-// ***********************************************************************
-using System;
-using System.Collections.Generic;
-using System.Linq;
-
-namespace TVGL
+﻿namespace ConvexHull.NET
 {
     public partial class ConvexHull4D
     {

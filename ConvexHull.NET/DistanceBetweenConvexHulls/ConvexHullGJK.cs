@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-
-namespace TVGL
+﻿namespace ConvexHull.NET
 {
     public static partial class ConvexHullGJK
     {

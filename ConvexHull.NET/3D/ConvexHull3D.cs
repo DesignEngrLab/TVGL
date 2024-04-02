@@ -1,25 +1,9 @@
-﻿// ***********************************************************************
-// Assembly         : TessellationAndVoxelizationGeometryLibrary
-// Author           : Matt Campbell
-// Created          : 01-18-2024
-//
-// Last Modified By : --
-// Last Modified On : --
-// ***********************************************************************
-// <copyright file="ConvexHull3D.cs" company="Design Engineering Lab">
-//     2024
-// </copyright>
-// <summary></summary>
-// ***********************************************************************
-using System.Collections.Generic;
-using System.Linq;
-
-namespace TVGL
+﻿namespace ConvexHull.NET
 {
     /// <summary>
     /// The Convex Hull of a Tesselated Solid
     /// </summary>
-    public partial class ConvexHull3D : Solid
+    public partial class ConvexHull3D 
     {
         /// <summary>
         /// The volume of the Convex Hull.

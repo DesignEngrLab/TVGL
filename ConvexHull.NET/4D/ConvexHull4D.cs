@@ -1,9 +1,4 @@
-﻿
-using System;
-using System.Collections.Generic;
-using System.Linq;
-
-namespace TVGL
+﻿namespace ConvexHull.NET
 {
     /// <summary>
     /// The Convex Hull of a Tesselated Solid

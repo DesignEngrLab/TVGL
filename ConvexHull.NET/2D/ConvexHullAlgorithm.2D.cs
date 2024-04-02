@@ -1,12 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.CompilerServices;
-using TVGL.PointCloud;
-
-namespace TVGL
+﻿namespace ConvexHull.NET
 {
-    public static partial class ConvexHull2D
+    public static class ConvexHull2D
     {
         /// <summary>
         /// Creates the convex hull for a polygon.
