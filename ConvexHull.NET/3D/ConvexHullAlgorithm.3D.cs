@@ -1,6 +1,6 @@
 ﻿namespace ConvexHull.NET
 {
-    public partial class ConvexHull3D 
+    public partial class ConvexHull3D
     {
         /// <summary>
         /// Creates the convex hull for a set of Coordinates. By the way, this is not 
@@ -17,11 +17,11 @@
         {
             bool success = false;
             var n = points.Count;
-            var vertices = new Vertex[n];
+            var vertices = new ConvexHullVertex[n];
             for (int i = 0; i < n; i++)
-                vertices[i] = new Vertex(points[i], i);
+                vertices[i] = new ConvexHullVertex { Coordinates = points[i], IndexInList = i };
 
-            success = Create(vertices, out convexHull, true, tolerance);
+            success = Create<ConvexHullVertex, ConvexHullEdge, ConvexHullFace>(vertices, out convexHull, true, tolerance);
             if (success)
             {
                 vertexIndices = vertices.Select(v => v.IndexInList).ToList();
@@ -33,36 +33,6 @@
                 return false;
             }
         }
-
-        /// <summary>
-        /// Creates the convex hull for a tessellated solid. This result of the method is stored 
-        /// with the "ConvexHull" property of the TessellatedSolid. The vertices of the convex hull
-        /// are a subset of the vertices of the TessellatedSolid and are unaffected by the method.
-        /// So, while convex hull faces and edges connect to the vertices of the convex hull, the
-        /// vertices do not point back to the convex hull faces and edges.
-        /// Addtionally, the "PartOfConvexHull" property of the vertices, edges, and faces are set here.
-        /// </summary>
-        /// <param name="ts"></param>
-        /// <returns></returns>
-        public static bool Create(TessellatedSolid ts)
-        {
-            if (Create(ts.Vertices, out var convexHull, false, ts.SameTolerance))
-            {
-                ts.ConvexHull = convexHull;
-                foreach (var face in ts.Faces.Where(face => face.Vertices.All(v => v.PartOfConvexHull)))
-                {
-                    face.PartOfConvexHull = true;
-                    foreach (var e in face.Edges)
-                        if (e != null) e.PartOfConvexHull = true;
-                }
-                return true;
-            }
-            else
-            {
-                return false;
-            }
-        }
-
         /// <summary>
         /// Creates the convex hull for a set of vertices. This method is used by the TessellatedSolid,
         /// but it can be used within any set of vertices.
@@ -72,8 +42,11 @@
         /// <param name="connectVerticesToCvxHullFaces"></param>
         /// <param name="tolerance"></param>
         /// <returns></returns>
-        public static bool Create(IList<Vertex> vertices, out ConvexHull3D convexHull,
+        public static bool Create<TVertex, TEdge, TFace>(IList<TVertex> vertices, out ConvexHull3D convexHull,
             bool connectVerticesToCvxHullFaces, double tolerance = double.NaN)
+            where TVertex : IConvexVertex3D, new()
+            where TEdge : IConvexEdge3D, new()
+            where TFace : IConvexFace3D, new()
         {
             var n = vertices.Count;
             if (double.IsNaN(tolerance) || tolerance < Constants.BaseTolerance)
@@ -87,7 +60,7 @@
             var extremePoints = GetExtremaOnAABB(n, vertices, out var numExtrema);
             if (numExtrema == 1)
             { // only one extreme point, so the convex hull is a single point
-                convexHull = new ConvexHull3D { tolerance = tolerance };
+                convexHull = new ConvexHull3D();
                 convexHull.Vertices.Add(extremePoints[0]);
                 return true;
             }
@@ -97,19 +70,19 @@
                 // between the two extreme points. If that third point is one of the extreme points
                 // or is too close to the line, then we have a degenerate case and we return a single
                 var thirdPoint = Find3rdStartingPoint(extremePoints, vertices, out var radialDistance);
-                if (thirdPoint == extremePoints[0] || thirdPoint == extremePoints[1] || radialDistance < tolerance)
+                if (thirdPoint.Equals(extremePoints[0]) || thirdPoint.Equals(extremePoints[1]) || radialDistance < tolerance)
                 {
-                    convexHull = new ConvexHull3D { tolerance = tolerance };
+                    convexHull = new ConvexHull3D();
                     convexHull.Vertices.Add(extremePoints[0]);
                     convexHull.Vertices.Add(extremePoints[1]);
                     return true;
                 }
-                extremePoints = new List<Vertex> { extremePoints[0], extremePoints[1], thirdPoint };
+                extremePoints = new List<TVertex> { extremePoints[0], extremePoints[1], thirdPoint };
             }
             else if (numExtrema > 4)
                 // if more than 4 extreme points, then we need to reduce to 4 by finding the max volume tetrahedron
                 FindBestExtremaSubset(extremePoints);
-            var simplexFaces = MakeSimplexFaces(extremePoints);
+            var simplexFaces = MakeSimplexFaces<TVertex, TEdge,TFace>(extremePoints);
 
             // now add all the other vertices to the simplex faces. AddVertexToProperFace will add the vertex to the face that it is "farthest" from
             var extremePointsHash = extremePoints.ToHashSet();
@@ -120,10 +93,10 @@
             }
 
             // here comes the main loop. We start with the simplex faces and then keep adding faces until we're done
-            var faceQueue = new UpdatablePriorityQueue<ConvexHullFace, double>(simplexFaces.Select(f => (f, f.peakDistance)), new NoEqualSort(false));
-            var newFaces = new List<ConvexHullFace>();
-            var oldFaces = new List<ConvexHullFace>();
-            var verticesToReassign = new List<Vertex>();
+            var faceQueue = new UpdatablePriorityQueue<TFace, double>(simplexFaces.Select(f => (f, f.peakDistance)), new NoEqualSort(false));
+            var newFaces = new List<TFace>();
+            var oldFaces = new List<TFace>();
+            var verticesToReassign = new List<TVertex>();
             while (faceQueue.Count > 0)
             {
                 var face = faceQueue.Dequeue();
@@ -137,7 +110,7 @@
                 // this function, CreateNewFaceCone, is the hardest part of the algorithm. But, from its arguments, you can see that it finds
                 // faces to remove (oldFaces), faces to add (newFaces), and vertices to reassign (verticesToReassign) to the new faces.
                 // These three lists are then processed in the 3 foreach loops below.
-                CreateNewFaceCone(face, newFaces, oldFaces, verticesToReassign);
+                CreateNewFaceCone<TVertex, TEdge, TFace>(face, newFaces, oldFaces, verticesToReassign);
                 foreach (var iv in verticesToReassign)
                     AddVertexToProperFace(newFaces, iv, tolerance);
                 foreach (var f in oldFaces)
@@ -158,14 +131,15 @@
         /// <param name="vertices"></param>
         /// <param name="radialDistance"></param>
         /// <returns></returns>
-        private static Vertex Find3rdStartingPoint(List<Vertex> extremePoints, IList<Vertex> vertices, out double radialDistance)
+        private static TVertex Find3rdStartingPoint<TVertex>(List<TVertex> extremePoints, IList<TVertex> vertices, out double radialDistance)
+            where TVertex : IConvexVertex3D
         {
             var axis = extremePoints[1].Coordinates - extremePoints[0].Coordinates;
             radialDistance = double.NegativeInfinity;
-            Vertex thirdPoint = null;
+            TVertex? thirdPoint = default;
             foreach (var v in vertices)
             {
-                var distance = (v.Coordinates - extremePoints[0].Coordinates).Cross(axis).LengthSquared();
+                var distance = Vector3.Cross(v.Coordinates - extremePoints[0].Coordinates, axis).LengthSquared();
                 if (distance > radialDistance)
                 {
                     radialDistance = distance;
@@ -185,18 +159,21 @@
         /// <param name="oldFaces"></param>
         /// <param name="verticesToReassign"></param>
         /// <returns></returns>
-        private static void CreateNewFaceCone(ConvexHullFace startingFace, List<ConvexHullFace> newFaces,
-            List<ConvexHullFace> oldFaces, List<Vertex> verticesToReassign)
+        private static void CreateNewFaceCone<TVertex, TEdge, TFace>(TFace startingFace, List<TFace> newFaces,
+            List<TFace> oldFaces, List<TVertex> verticesToReassign)
+            where TVertex : IConvexVertex3D
+            where TEdge : IConvexEdge3D
+            where TFace : IConvexFace3D
         {
             newFaces.Clear();
             oldFaces.Clear();
             verticesToReassign.Clear();
-            Edge inConeEdge = null;
-            Edge firstInConeEdge = null;
+            TEdge? inConeEdge = default;
+            TEdge? firstInConeEdge = default;
             var peakVertex = startingFace.peakVertex;
             var peakCoord = peakVertex.Coordinates;
-            var stack = new Stack<(ConvexHullFace, Edge)>();
-            stack.Push((startingFace, null));
+            var stack = new Stack<(TFace, TEdge)>();
+            stack.Push((startingFace, default));
 
             // that's initialization. now for the main loop. Using a Depth-First Search, we find all the faces that are
             // within (and beyond the horizon) from the peakVertex. Imagine this peak vertex as a point sitting in the middle
@@ -214,7 +191,7 @@
                     // so we stop here but before we move down the stack we need to create a new face
                     // this border face is stored in the borderFaces list so that at the end we can clear the Visited flags
                     ConvexHullFace newFace;
-                    if (connectingEdge.OwnedFace == current)
+                    if (connectingEdge.OwnedFace.Equals(current))
                     {   // if the current owns the face then the new face will follow the edge backwards
                         newFace = new ConvexHullFace(connectingEdge.To, connectingEdge.From, peakVertex);
                         connectingEdge.OtherFace = newFace;
@@ -321,14 +298,16 @@
         /// <param name="connectVerticesToCvxHullFaces"></param>
         /// <param name="cvxFaces"></param>
         /// <returns></returns>
-        private static ConvexHull3D MakeConvexHullWithFaces(double tolerance,
-            bool connectVerticesToCvxHullFaces, IEnumerable<ConvexHullFace> cvxFaces)
+        private static ConvexHull3D MakeConvexHullWithFaces<TVertex, TEdge, TFace>(double tolerance, IEnumerable<TFace> cvxFaces)
+            where TVertex : IConvexVertex3D
+            where TEdge : IConvexEdge3D
+            where TFace : IConvexFace3D
         {
-            var cvxHull = new ConvexHull3D { tolerance = tolerance };
-            cvxHull.Faces.AddRange(cvxFaces);
+            var cvxHull = new ConvexHull3D();
+            cvxHull.Faces.AddRange(cvxFaces.Cast<IConvexFace3D>());
 
-            var cvxVertexHash = new HashSet<Vertex>();
-            var cvxEdgeHash = new HashSet<Edge>();
+            var cvxVertexHash = new HashSet<TVertex>();
+            var cvxEdgeHash = new HashSet<TEdge>();
             foreach (var f in cvxFaces)
             {
                 foreach (var v in f.Vertices)
@@ -365,10 +344,12 @@
         /// <param name="faces"></param>
         /// <param name="v"></param>
         /// <param name="tolerance"></param>
-        private static void AddVertexToProperFace(IList<ConvexHullFace> faces, Vertex v, double tolerance)
+        private static void AddVertexToProperFace<TFace, TVertex>(IList<TFace> faces, TVertex v, double tolerance)
+            where TFace : IConvexFace3D
+            where TVertex : IConvexVertex3D
         {
             var maxDot = double.NegativeInfinity;
-            ConvexHullFace maxFace = null;
+            TFace maxFace = default;
             foreach (var face in faces)
             {
                 var dot = (v.Coordinates - face.A.Coordinates).Dot(face.Normal);
@@ -400,7 +381,8 @@
         /// <param name="convexHull"></param>
         /// <param name="tolerance"></param>
         /// <returns></returns>
-        private static bool SolveAs2D(IList<Vertex> vertices, out ConvexHull3D convexHull, double tolerance = double.NaN)
+        private static bool SolveAs2D<TVertex>(IList<TVertex> vertices, out ConvexHull3D convexHull, double tolerance = double.NaN)
+            where TVertex : IConvexVertex3D
         {
             Plane.DefineNormalAndDistanceFromVertices(vertices, out var distance, out var planeNormal);
             var plane = new Plane(distance, planeNormal);
@@ -418,8 +400,8 @@
             }
             var cvxHull2D = ConvexHull2D.Create(coords2D, out var vertexIndices);
             var indexHash = vertexIndices.ToHashSet();
-            convexHull = new ConvexHull3D { tolerance = tolerance };
-            var interiorVertices = new List<Vertex>();
+            convexHull = new ConvexHull3D();
+            var interiorVertices = new List<TVertex>();
             for (var i = 0; i < vertices.Count; i++)
             {
                 if (indexHash.Contains(i))
@@ -454,7 +436,7 @@
         /// tetrahedron are removed from extremePoints
         /// </summary>
         /// <param name="extremePoints"></param>
-        private static void FindBestExtremaSubset(List<Vertex> extremePoints)
+        private static void FindBestExtremaSubset<TVertex>(List<TVertex> extremePoints) where TVertex : IConvexVertex3D
         {
             var maxVol = 0.0;
             var numExtrema = extremePoints.Count;
@@ -466,11 +448,12 @@
                 {
                     for (int i3 = i2 + 1; i3 < numExtrema - 1; i3++)
                     {
-                        var baseTriangleArea = (extremePoints[i2].Coordinates - basePoint.Coordinates).Cross(extremePoints[i3].Coordinates - basePoint.Coordinates);
+                        var baseTriangleArea =Vector3.Cross(extremePoints[i2].Coordinates - basePoint.Coordinates,
+                            extremePoints[i3].Coordinates - basePoint.Coordinates);
                         for (int i4 = i3 + 1; i4 < numExtrema; i4++)
                         {
                             var projectedHeight = basePoint.Coordinates - extremePoints[i4].Coordinates;
-                            var volume = Math.Abs(projectedHeight.Dot(baseTriangleArea));
+                            var volume = Math.Abs(Vector3.Dot(projectedHeight, baseTriangleArea));
                             if (volume > maxVol)
                             {
                                 maxVol = volume;
@@ -491,19 +474,21 @@
         /// </summary>
         /// <param name="vertices"></param>
         /// <returns></returns>
-        private static List<ConvexHullFace> MakeSimplexFaces(List<Vertex> vertices)
+        private static List<TFace> MakeSimplexFaces<TVertex, TEdge, TFace>(List<TVertex> vertices) where TVertex : IConvexVertex3D
+            where TEdge : IConvexEdge3D
+            where TFace : IConvexFace3D
         {
             if (vertices.Count == 3)
             {
                 var face012 = new ConvexHullFace(vertices[0], vertices[1], vertices[2]);
                 var face210 = new ConvexHullFace(vertices[2], vertices[1], vertices[0]);
-                var edge01 = new Edge(vertices[0], vertices[1], face012, face210, false);
+                var edge01 = new TEdge(vertices[0], vertices[1], face012, face210, false);
                 edge01.OwnedFace = face012;
                 edge01.OtherFace = face210;
-                var edge12 = new Edge(vertices[1], vertices[2], face012, face210, false);
+                var edge12 = new TEdge(vertices[1], vertices[2], face012, face210, false);
                 edge12.OwnedFace = face012;
                 edge12.OtherFace = face210;
-                var edge20 = new Edge(vertices[2], vertices[0], face012, face210, false);
+                var edge20 = new TEdge(vertices[2], vertices[0], face012, face210, false);
                 edge20.OwnedFace = face012;
                 edge20.OtherFace = face210;
                 return [face012, face210];
@@ -512,30 +497,31 @@
             {
                 // in order to get the order correct, we find the volume from the scalar triple product formula
                 var basePoint = vertices[0].Coordinates;
-                var volume = (vertices[1].Coordinates - basePoint).Cross(vertices[2].Coordinates - basePoint).Dot(basePoint - vertices[3].Coordinates);
+                var volume = Vector3.Dot(Vector3.Cross(vertices[1].Coordinates - basePoint, vertices[2].Coordinates - basePoint),
+                    basePoint - vertices[3].Coordinates);
                 // if the volume is negative then swap the two middle points to get them triangles in the prpoer orientation
                 if (volume < 0) Constants.SwapItemsInList(1, 2, vertices);
 
-                var face012 = new ConvexHullFace(vertices[0], vertices[1], vertices[2]);
-                var face031 = new ConvexHullFace(vertices[0], vertices[3], vertices[1]);
-                var face132 = new ConvexHullFace(vertices[1], vertices[3], vertices[2]);
-                var face230 = new ConvexHullFace(vertices[2], vertices[3], vertices[0]);
-                var edge01 = new Edge(vertices[0], vertices[1], face012, face031, false);
+                var face012 = new TFace(vertices[0], vertices[1], vertices[2]);
+                var face031 = new TFace(vertices[0], vertices[3], vertices[1]);
+                var face132 = new TFace(vertices[1], vertices[3], vertices[2]);
+                var face230 = new TlFace(vertices[2], vertices[3], vertices[0]);
+                var edge01 = new TEdge(vertices[0], vertices[1], face012, face031, false);
                 edge01.OwnedFace = face012;
                 edge01.OtherFace = face031;
-                var edge12 = new Edge(vertices[1], vertices[2], face012, face132, false);
+                var edge12 = new TEdge(vertices[1], vertices[2], face012, face132, false);
                 edge12.OwnedFace = face012;
                 edge12.OtherFace = face132;
-                var edge20 = new Edge(vertices[2], vertices[0], face012, face230, false);
+                var edge20 = new TEdge(vertices[2], vertices[0], face012, face230, false);
                 edge20.OwnedFace = face012;
                 edge20.OtherFace = face230;
-                var edge03 = new Edge(vertices[0], vertices[3], face031, face230, false);
+                var edge03 = new TEdge(vertices[0], vertices[3], face031, face230, false);
                 edge03.OwnedFace = face031;
                 edge03.OtherFace = face230;
-                var edge13 = new Edge(vertices[1], vertices[3], face132, face031, false);
+                var edge13 = new TEdge(vertices[1], vertices[3], face132, face031, false);
                 edge13.OwnedFace = face132;
                 edge13.OtherFace = face031;
-                var edge23 = new Edge(vertices[2], vertices[3], face230, face132, false);
+                var edge23 = new TEdge(vertices[2], vertices[3], face230, face132, false);
                 edge23.OwnedFace = face230;
                 edge23.OtherFace = face132;
                 return [face012, face031, face132, face230];
@@ -549,28 +535,29 @@
         /// <param name="points"></param>
         /// <param name="numExtrema"></param>
         /// <returns></returns>
-        private static List<Vertex> GetExtremaOnAABB(int n, IList<Vertex> points, out int numExtrema)
+        private static List<TVertex> GetExtremaOnAABB<TVertex>(int n, IList<TVertex> points, out int numExtrema)
+            where TVertex : IConvexVertex3D
         {
             var extremePoints = Enumerable.Repeat(points[0], 6).ToList();
             for (int i = 1; i < n; i += 2)
             {
-                if (points[i].X < extremePoints[0].X ||
-                    points[i].X == extremePoints[0].X && points[i].Y < extremePoints[0].Y)
+                if (points[i].Coordinates.X < extremePoints[0].Coordinates.X ||
+                    points[i].Coordinates.X == extremePoints[0].Coordinates.X && points[i].Coordinates.Y < extremePoints[0].Coordinates.Y)
                     extremePoints[0] = points[i];
-                if (points[i].X > extremePoints[1].X ||
-                    points[i].X == extremePoints[1].X && points[i].Z > extremePoints[1].Z)
+                if (points[i].Coordinates.X > extremePoints[1].Coordinates.X ||
+                    points[i].Coordinates.X == extremePoints[1].Coordinates.X && points[i].Coordinates.Z > extremePoints[1].Coordinates.Z)
                     extremePoints[1] = points[i];
-                if (points[i].Y < extremePoints[2].Y ||
-                    points[i].Y == extremePoints[2].Y && points[i].Z < extremePoints[2].Z)
+                if (points[i].Coordinates.Y < extremePoints[2].Coordinates.Y ||
+                    points[i].Coordinates.Y == extremePoints[2].Coordinates.Y && points[i].Coordinates.Z < extremePoints[2].Coordinates.Z)
                     extremePoints[2] = points[i];
-                if (points[i].Y > extremePoints[3].Y ||
-                    points[i].Y == extremePoints[3].Y && points[i].X > extremePoints[3].X)
+                if (points[i].Coordinates.Y > extremePoints[3].Coordinates.Y ||
+                    points[i].Coordinates.Y == extremePoints[3].Coordinates.Y && points[i].Coordinates.X > extremePoints[3].Coordinates.X)
                     extremePoints[3] = points[i];
-                if (points[i].Z < extremePoints[4].Z ||
-                    points[i].Z == extremePoints[4].Z && points[i].X < extremePoints[4].X)
+                if (points[i].Coordinates.Z < extremePoints[4].Coordinates.Z ||
+                    points[i].Coordinates.Z == extremePoints[4].Coordinates.Z && points[i].Coordinates.X < extremePoints[4].Coordinates.X)
                     extremePoints[4] = points[i];
-                if (points[i].Z > extremePoints[5].Z ||
-                    points[i].Z == extremePoints[5].Z && points[i].Y > extremePoints[5].Y)
+                if (points[i].Coordinates.Z > extremePoints[5].Coordinates.Z ||
+                    points[i].Coordinates.Z == extremePoints[5].Coordinates.Z && points[i].Coordinates.Y > extremePoints[5].Coordinates.Y)
                     extremePoints[5] = points[i];
             }
             numExtrema = 6;
@@ -580,7 +567,7 @@
                 for (int j = 0; j < i; j++)
                 {
                     var extremeJ = extremePoints[j];
-                    if (extremeI == extremeJ)
+                    if (extremeI.Equals(extremeJ))
                     {
                         numExtrema--;
                         extremePoints.RemoveAt(i);
