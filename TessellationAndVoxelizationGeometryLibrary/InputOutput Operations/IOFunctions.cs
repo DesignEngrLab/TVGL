@@ -1310,32 +1310,46 @@ namespace TVGL
                 var unzipped = Path.ChangeExtension(filename, GetExtensionFromFileType(FileType.TVGL));
                 if (File.Exists(unzipped)) { File.Delete(unzipped); }
                 //Unzip the file
-                using (ZipArchive archive = ZipFile.OpenRead(filename))
+                using ZipArchive archive = ZipFile.OpenRead(filename);
+                foreach (ZipArchiveEntry entry in archive.Entries)
                 {
-                    foreach (ZipArchiveEntry entry in archive.Entries)
-                    {
-                        entry.ExtractToFile(unzipped);
-                    }
-                }
-                filename = unzipped;
-            }
-            else if (GetFileTypeFromExtension(extension) != FileType.TVGL) return false;
-
-            try
-            {
-                using var s = File.Open(filename, FileMode.Open);
-                using (var streamReader = new StreamReader(s))
-                using (var reader = new JsonTextReader(streamReader))
-                {
+                    using var s = entry.Open();
+                    using var streamReader = new StreamReader(s);
+                    using var reader = new JsonTextReader(streamReader);
                     SolidAssembly.StreamRead(reader, out solidAssembly, tsBuildOptions);
                     reader.Close();
                 }
                 return true;
             }
-            catch
-            {
+            else if (GetFileTypeFromExtension(extension) != FileType.TVGL) return false;
+            return false;
+        }
+
+        /// <summary>
+        /// Reads the stream.
+        /// </summary>
+        /// <param name="filename">The filename.</param>
+        /// <param name="solidAssembly">The solid assembly.</param>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
+        public static bool Unzip(string filename, out string outputFilename)
+        {
+            outputFilename = "";
+            if (!File.Exists(filename))
                 return false;
+
+            var extension = Path.GetExtension(filename);
+            if (GetFileTypeFromExtension(extension) == FileType.TVGLz)
+            {
+                var unzipped = Path.ChangeExtension(filename, GetExtensionFromFileType(FileType.TVGL));
+                if (File.Exists(unzipped)) { File.Delete(unzipped); }
+                using ZipArchive archive = ZipFile.OpenRead(filename);
+                foreach (ZipArchiveEntry entry in archive.Entries)
+                    entry.ExtractToFile(unzipped);
+                outputFilename = unzipped;
+                return true;
             }
+            else if (GetFileTypeFromExtension(extension) != FileType.TVGL) return false;
+            return false;
         }
 
         /// <summary>
@@ -1409,51 +1423,19 @@ namespace TVGL
         /// <returns></returns>
         public static TessellatedSolid ReturnMostSignificantSolid(SolidAssembly solidAssembly, out IEnumerable<TessellatedSolid> significantSolids)
         {
-            solidAssembly.GetTessellatedSolids(out var solids, out var sheets);
-            if (solids.Any())//prefer solids over sheets.
-            {
-                //If the file contains multiple solids, see if we can get just one solid.
-                if (solids.Count() == 1)
-                {
-                    significantSolids = new List<TessellatedSolid> { solids.First() };
-                    return solids.First();
-                }
-                else 
-                {
-                    var maxVolume = solids.Max(p => p.ConvexHull.Volume);
-                    var maxNumFaces = solids.Max(p => p.NumberOfFaces);
-                    significantSolids = solids.Where(p => p.ConvexHull.Volume > maxVolume * .1 || p.NumberOfFaces > maxNumFaces * .3);
-                    if (significantSolids.Count() > 1)
-                        Debug.WriteLine("Model contains " + significantSolids.Count() + " significant solid bodies. Attempting analysis on largest part in assembly.");
-                    else
-                        Debug.WriteLine("Model contains " + solids.Count() + " solid bodies, but only one is significant. Attempting analysis on largest part in assembly.");
-                    return significantSolids.MaxBy(p => p.ConvexHull.Volume);
-                }    
-            }
-            else if(sheets.Any())
-            {
-                if (sheets.Count() == 1)
-                {
-                    significantSolids = new List<TessellatedSolid> { sheets.First() };
-                    return sheets.First();          
-                }
-                else 
-                {
-                    //use AxisAlignedBoundingBoxVolume rather than volume in case volume was calculated incorrectly
-                    //as is possible if the sheet is built incorrectly - full of errors. The convex hull volume 
-                    //could also be considered.
-                    var maxVolume = sheets.Max(p => p.ConvexHull.Volume);
-                    var maxNumFaces = sheets.Max(p => p.NumberOfFaces);
-                    significantSolids = sheets.Where(p => p.ConvexHull.Volume > maxVolume * .1 || p.NumberOfFaces > maxNumFaces * .3);
-                    if (significantSolids.Count() > 1)
-                        Debug.WriteLine("Model contains " + significantSolids.Count() + " significant sheet bodies. Attempting analysis on largest part in assembly.");
-                    else
-                        Debug.WriteLine("Model contains " + sheets.Count() + " sheet bodies, but only one is significant. Attempting analysis on largest part in assembly.");
-                    return significantSolids.MaxBy(p => p.ConvexHull.Volume);
-                }
-            }
-            significantSolids = null;
-            return null;
+            significantSolids = new List<TessellatedSolid>();   
+            if (solidAssembly.Solids == null || !solidAssembly.Solids.Any(p => p is TessellatedSolid)) return null;
+            var solids = solidAssembly.Solids.Where(p => p is TessellatedSolid).Select(p => p as TessellatedSolid).ToList();
+            var maxVolume = solidAssembly.Solids.Max(p => p.ConvexHull.Volume);
+            var maxNumFaces = solidAssembly.Solids.Max(p => ((TessellatedSolid)p).NumberOfFaces);
+            //Minimum number of primitives is either 4 OR if no solids have 4 primitives, it is the max number of primitives
+            var minPrimitivesRequired = Math.Min(solids.Max(p => p.NumberOfPrimitives), 4);
+            significantSolids = solids.Where(p => (p.ConvexHull.Volume > maxVolume * .1 || p.NumberOfFaces > maxNumFaces * .3) && p.NumberOfPrimitives >= minPrimitivesRequired);
+            if (significantSolids.Count() > 1)
+                Debug.WriteLine("Model contains " + significantSolids.Count() + " significant solid bodies. Attempting analysis on largest part in assembly.");
+            else
+                Debug.WriteLine("Model contains " + solids.Count() + " solid bodies, but only one is significant. Attempting analysis on largest part in assembly.");
+            return significantSolids.MaxBy(p => p.ConvexHull.Volume);
         }
         #endregion
     }
