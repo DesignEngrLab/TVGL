@@ -39,21 +39,18 @@ namespace TVGL
             var min = intDir == 0 ? ts.Bounds[0].X : intDir == 1 ? ts.Bounds[0].Y : ts.Bounds[0].Z;
             var lengthAlongDir = max - min;
             var stepSize = lengthAlongDir / numberOfLayers;
-            var stepDistances = new Dictionary<int, double>();
-            //var stepDistances = new double[numberOfLayers];
-            stepDistances.Add(0, min + 0.5 * stepSize);
-            //stepDistances[0] = ts.Bounds[0][intDir] + 0.5 * stepSize;
-            for (int i = 1; i < numberOfLayers; i++)
-                stepDistances.Add(i, stepDistances[i - 1] + stepSize);
-            //stepDistances[i] = stepDistances[i - 1] + stepSize;
-            var bounds = new[] { ts.Bounds[0].Copy(), ts.Bounds[1].Copy() };
 
-            var layers = ts.GetUniformlySpacedCrossSections(direction, stepDistances[0], numberOfLayers, stepSize);
+            var bounds = new[] { ts.Bounds[0], ts.Bounds[1] };
+
+            var layers = ts.GetUniformlySpacedCrossSections(direction, out var stepDistances, min + 0.5 * stepSize, numberOfLayers, stepSize);
             var layerDict = new Dictionary<int, IList<Polygon>>();
             for (int i = 0; i < layers.Length; i++)
                 layerDict.Add(i, layers[i]);
             var directionVector = Vector3.UnitVector(direction);
-            return new CrossSectionSolid(directionVector, stepDistances, ts.SameTolerance, layerDict, bounds, ts.Units);
+            var stepDistanceDictionary = new Dictionary<int, double>();
+            for (int i = 0; i < stepDistances.Length; i++)
+                stepDistanceDictionary.Add(i, stepDistances[i]);
+            return new CrossSectionSolid(directionVector, stepDistanceDictionary, ts.SameTolerance, layerDict, bounds, ts.Units);
         }
 
 

@@ -362,8 +362,7 @@ namespace TVGL
                 foreach (var e in f.Edges)
                 {
                     e.PartOfConvexHull = true;
-                    cvxEdgeHash.Add(e);
-                    if (connectVerticesToCvxHullFaces)
+                    if (cvxEdgeHash.Add(e) && connectVerticesToCvxHullFaces)
                     {
                         e.From.Edges.Add(e);
                         e.To.Edges.Add(e);

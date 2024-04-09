@@ -623,7 +623,17 @@ namespace TVGL
             else
             {
                 Faces = faces as TriangleFace[] ?? faces.ToArray();
-                DoublyConnectVerticesToFaces();
+                if (Faces[0].A.Faces == null || !Faces[0].A.Faces.Contains(Faces[0]))
+                {
+                    // if the vertices are not doubly linked to the faces, then do that now (this is the most common case)
+                    foreach (var face in Faces)
+                    {
+                        foreach (var vertex in face.Vertices)
+                        {
+                            vertex.Faces.Add(face);
+                        }
+                    }
+                }
             }
             TessellationInspectAndRepair.CompleteBuildOptions(this, buildOptions, out _);
         }
@@ -644,21 +654,6 @@ namespace TVGL
                 }, out _);
            else Errors.MakeEdges();
         }
-
-        /// <summary>
-        /// Connect vertices baco to ths faces.
-        /// </summary>
-        public void DoublyConnectVerticesToFaces()
-        {
-            foreach (var face in Faces)
-            {
-                foreach (var vertex in face.Vertices)
-                {
-                    vertex.Faces.Add(face);
-                }
-            }
-        }
-
 
         #endregion
 
