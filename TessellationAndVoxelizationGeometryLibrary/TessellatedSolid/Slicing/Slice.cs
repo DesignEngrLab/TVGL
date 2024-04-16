@@ -804,11 +804,11 @@ namespace TVGL
         /// <param name="stepSize">Size of the step.</param>
         /// <returns>List&lt;Polygon&gt;[].</returns>
         /// <exception cref="System.ArgumentException">Either a valid stepSize or a number of slices greater than zero must be specified.</exception>
-        public static List<Polygon>[] GetUniformlySpacedCrossSections(this TessellatedSolid ts, Vector3 direction, out Dictionary<Vertex2D, Edge>[] vertex2DToEdges,
+        public static List<Polygon>[] GetUniformlySpacedCrossSections(this TessellatedSolid ts, Vector3 direction, out double[] sliceOffsets, out Dictionary<Vertex2D, Edge>[] vertex2DToEdges,
             double startDistanceAlongDirection = double.NaN, int numSlices = -1, double stepSize = double.NaN)
-            => GetUniformlySpacedCrossSections(ts.Vertices, direction, out vertex2DToEdges, startDistanceAlongDirection, numSlices, stepSize);
+            => GetUniformlySpacedCrossSections(ts.Vertices, direction,out sliceOffsets, out vertex2DToEdges, startDistanceAlongDirection, numSlices, stepSize);
 
-        public static List<Polygon>[] GetUniformlySpacedCrossSections(this IEnumerable<Vertex> vertices, Vector3 direction,
+        public static List<Polygon>[] GetUniformlySpacedCrossSections(this IEnumerable<Vertex> vertices, Vector3 direction, out double[] sliceOffsets,
            out Dictionary<Vertex2D, Edge>[] vertex2DToEdges, double startDistanceAlongDirection = double.NaN,
         int numSlices = -1, double stepSize = double.NaN)
         {
@@ -829,6 +829,8 @@ namespace TVGL
                 startDistanceAlongDirection = firstDistance + 0.5 * stepSize;
 
             var result = new List<Polygon>[numSlices];
+            sliceOffsets = new double[numSlices];
+
             vertex2DToEdges = new Dictionary<Vertex2D, Edge>[numSlices];
             var currentEdges = new HashSet<Edge>();
             var nextDistance = sortedVertices.First().Dot(direction);
@@ -836,6 +838,7 @@ namespace TVGL
             for (int step = 0; step < numSlices; step++)
             {
                 var d = startDistanceAlongDirection + step * stepSize;
+                sliceOffsets[step] = d;
                 var thisVertex = sortedVertices[vIndex];
                 var needToOffset = false;
                 while (thisVertex.Dot(direction) <= d)
