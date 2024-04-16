@@ -1,4 +1,4 @@
-﻿namespace ConvexHull.NET
+﻿namespace PointCloud.NET
 {
     /// <summary>
     /// The Convex Hull of a Tesselated Solid

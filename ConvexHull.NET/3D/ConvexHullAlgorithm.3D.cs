@@ -1,4 +1,4 @@
-﻿namespace ConvexHull.NET
+﻿namespace PointCloud.NET
 {
     public partial class ConvexHull3D
     {
@@ -13,7 +13,7 @@
         /// <param name="tolerance"></param>
         /// <returns></returns>
         public static bool Create(IList<Vector3> points, out ConvexHull3D convexHull,
-            out List<int> vertexIndices, double tolerance = double.NaN)
+            out List<int>? vertexIndices, double tolerance = double.NaN)
         {
             bool success = false;
             var n = points.Count;
@@ -82,7 +82,7 @@
             else if (numExtrema > 4)
                 // if more than 4 extreme points, then we need to reduce to 4 by finding the max volume tetrahedron
                 FindBestExtremaSubset(extremePoints);
-            var simplexFaces = MakeSimplexFaces<TVertex, TEdge,TFace>(extremePoints);
+            var simplexFaces = MakeSimplexFaces<TVertex, TEdge, TFace>(extremePoints);
 
             // now add all the other vertices to the simplex faces. AddVertexToProperFace will add the vertex to the face that it is "farthest" from
             var extremePointsHash = extremePoints.ToHashSet();
@@ -93,7 +93,7 @@
             }
 
             // here comes the main loop. We start with the simplex faces and then keep adding faces until we're done
-            var faceQueue = new UpdatablePriorityQueue<TFace, double>(simplexFaces.Select(f => (f, f.peakDistance)), new NoEqualSort(false));
+            var faceQueue = new UpdatablePriorityQueue<TFace, double>(simplexFaces.Select(f => (f, f.peakDistance)), new No); //, new NoEqualSort(false));
             var newFaces = new List<TFace>();
             var oldFaces = new List<TFace>();
             var verticesToReassign = new List<TVertex>();
@@ -298,38 +298,62 @@
         /// <param name="connectVerticesToCvxHullFaces"></param>
         /// <param name="cvxFaces"></param>
         /// <returns></returns>
-        private static ConvexHull3D MakeConvexHullWithFaces<TVertex, TEdge, TFace>(double tolerance, IEnumerable<TFace> cvxFaces)
+        private static ConvexHull3D<TVertex, TEdge, TFace> MakeConvexHullWithFaces<TVertex, TEdge, TFace>(double tolerance, IEnumerable<TFace> cvxFaces)
             where TVertex : IConvexVertex3D
             where TEdge : IConvexEdge3D
             where TFace : IConvexFace3D
         {
-            var cvxHull = new ConvexHull3D();
-            cvxHull.Faces.AddRange(cvxFaces.Cast<IConvexFace3D>());
+            var cvxHull = new ConvexHull3D<TVertex, TEdge, TFace>();
+            cvxHull.Faces.AddRange(cvxFaces);
 
             var cvxVertexHash = new HashSet<TVertex>();
             var cvxEdgeHash = new HashSet<TEdge>();
-            foreach (var f in cvxFaces)
+            foreach (var f in cvxHull.Faces)
             {
-                foreach (var v in f.Vertices)
-                {
-                    v.PartOfConvexHull = true;
-                    cvxVertexHash.Add(v);
-                    if (connectVerticesToCvxHullFaces)
-                        v.Faces.Add(f);
-                }
+                // process f.A, f.B, and f.C
+                cvxVertexHash.Add((TVertex)f.A);
+                if (f.A is IConnectToFaces<TFace>)
+                    ((IConnectToFaces<TFace>)f.A).Faces.Add(f);
+                // process f.B
+                cvxVertexHash.Add((TVertex)f.B);
+                if (f.B is IConnectToFaces<TFace>)
+                    ((IConnectToFaces<TFace>)f.B).Faces.Add(f);
+                // process  f.C
+                cvxVertexHash.Add((TVertex)f.C);
+                if (f.C is IConnectToFaces<TFace>)
+                    ((IConnectToFaces<TFace>)f.C).Faces.Add(f);
+                
                 // vertices that are stored in the interior vertices do not define the edges and faces
                 // of the convex hull but it is useful to know that they are on the boundary of the convex hull
                 foreach (var v in f.InteriorVertices)
-                    v.PartOfConvexHull = true;
-                foreach (var e in f.Edges)
+                    if (v is IBelongBoolean)
+                        ((IBelongBoolean)v).PartOfConvexHull = true;
+                // process f.AB
+                if (f.AB is IBelongBoolean)
+                    ((IBelongBoolean)f.AB).PartOfConvexHull = true;
+                cvxEdgeHash.Add((TEdge)f.AB);
+                if (f.AB.From is IConnectToEdges<TEdge>)
                 {
-                    e.PartOfConvexHull = true;
-                    cvxEdgeHash.Add(e);
-                    if (connectVerticesToCvxHullFaces)
-                    {
-                        e.From.Edges.Add(e);
-                        e.To.Edges.Add(e);
-                    }
+                    ((IConnectToEdges<TEdge>)f.AB.From).Edges.Add((TEdge)f.AB);
+                    ((IConnectToEdges<TEdge>)f.AB.To).Edges.Add((TEdge)f.AB);
+                }
+                // process f.BC
+                if (f.BC is IBelongBoolean)
+                    ((IBelongBoolean)f.BC).PartOfConvexHull = true;
+                cvxEdgeHash.Add((TEdge)f.BC);
+                if (f.BC.From is IConnectToEdges<TEdge>)
+                {
+                    ((IConnectToEdges<TEdge>)f.BC.From).Edges.Add((TEdge)f.BC);
+                    ((IConnectToEdges<TEdge>)f.BC.To).Edges.Add((TEdge)f.BC);
+                }
+                // process f.CA
+                if (f.CA is IBelongBoolean)
+                    ((IBelongBoolean)f.CA).PartOfConvexHull = true;
+                cvxEdgeHash.Add((TEdge)f.CA);
+                if (f.CA.From is IConnectToEdges<TEdge>)
+                {
+                    ((IConnectToEdges<TEdge>)f.CA.From).Edges.Add((TEdge)f.CA);
+                    ((IConnectToEdges<TEdge>)f.CA.To).Edges.Add((TEdge)f.CA);
                 }
             }
             cvxHull.Vertices.AddRange(cvxVertexHash);
@@ -344,12 +368,12 @@
         /// <param name="faces"></param>
         /// <param name="v"></param>
         /// <param name="tolerance"></param>
-        private static void AddVertexToProperFace<TFace, TVertex>(IList<TFace> faces, TVertex v, double tolerance)
+        private static void AddVertexToProperFace<TFace, TVertex>(TFace[] faces, TVertex v, double tolerance)
             where TFace : IConvexFace3D
             where TVertex : IConvexVertex3D
         {
             var maxDot = double.NegativeInfinity;
-            TFace maxFace = default;
+            TFace? maxFace = default;
             foreach (var face in faces)
             {
                 var dot = (v.Coordinates - face.A.Coordinates).Dot(face.Normal);
@@ -448,7 +472,7 @@
                 {
                     for (int i3 = i2 + 1; i3 < numExtrema - 1; i3++)
                     {
-                        var baseTriangleArea =Vector3.Cross(extremePoints[i2].Coordinates - basePoint.Coordinates,
+                        var baseTriangleArea = Vector3.Cross(extremePoints[i2].Coordinates - basePoint.Coordinates,
                             extremePoints[i3].Coordinates - basePoint.Coordinates);
                         for (int i4 = i3 + 1; i4 < numExtrema; i4++)
                         {
@@ -474,21 +498,21 @@
         /// </summary>
         /// <param name="vertices"></param>
         /// <returns></returns>
-        private static List<TFace> MakeSimplexFaces<TVertex, TEdge, TFace>(List<TVertex> vertices) where TVertex : IConvexVertex3D
-            where TEdge : IConvexEdge3D
-            where TFace : IConvexFace3D
+        private static TFace[] MakeSimplexFaces<TVertex, TEdge, TFace>(List<TVertex> vertices) where TVertex : IConvexVertex3D
+            where TEdge : IConvexEdge3D, new()
+            where TFace : IConvexFace3D, new()
         {
             if (vertices.Count == 3)
             {
-                var face012 = new ConvexHullFace(vertices[0], vertices[1], vertices[2]);
-                var face210 = new ConvexHullFace(vertices[2], vertices[1], vertices[0]);
-                var edge01 = new TEdge(vertices[0], vertices[1], face012, face210, false);
+                var face012 = new TFace { A = vertices[0], B = vertices[1], C = vertices[2] };
+                var face210 = new TFace { A = vertices[2], B = vertices[1], C = vertices[0] };
+                var edge01 = new TEdge { From = vertices[0], To = vertices[1], OwnedFace = face012, OtherFace = face210 };
                 edge01.OwnedFace = face012;
                 edge01.OtherFace = face210;
-                var edge12 = new TEdge(vertices[1], vertices[2], face012, face210, false);
+                var edge12 = new TEdge { From = vertices[1], To = vertices[2], OwnedFace = face012, OtherFace = face210 };
                 edge12.OwnedFace = face012;
                 edge12.OtherFace = face210;
-                var edge20 = new TEdge(vertices[2], vertices[0], face012, face210, false);
+                var edge20 = new TEdge { From = vertices[2], To = vertices[0], OwnedFace = face012, OtherFace = face210 };
                 edge20.OwnedFace = face012;
                 edge20.OtherFace = face210;
                 return [face012, face210];
@@ -502,26 +526,26 @@
                 // if the volume is negative then swap the two middle points to get them triangles in the prpoer orientation
                 if (volume < 0) Constants.SwapItemsInList(1, 2, vertices);
 
-                var face012 = new TFace(vertices[0], vertices[1], vertices[2]);
-                var face031 = new TFace(vertices[0], vertices[3], vertices[1]);
-                var face132 = new TFace(vertices[1], vertices[3], vertices[2]);
-                var face230 = new TlFace(vertices[2], vertices[3], vertices[0]);
-                var edge01 = new TEdge(vertices[0], vertices[1], face012, face031, false);
+                var face012 = new TFace { A = vertices[0], B = vertices[1], C = vertices[2] };
+                var face031 = new TFace { A = vertices[0], B = vertices[3], C = vertices[1] };
+                var face132 = new TFace { A = vertices[1], B = vertices[3], C = vertices[2] };
+                var face230 = new TFace { A = vertices[2], B = vertices[3], C = vertices[0] };
+                var edge01 = new TEdge { From = vertices[0], To = vertices[1], OwnedFace = face012, OtherFace = face031 };
                 edge01.OwnedFace = face012;
                 edge01.OtherFace = face031;
-                var edge12 = new TEdge(vertices[1], vertices[2], face012, face132, false);
+                var edge12 = new TEdge { From = vertices[1], To = vertices[2], OwnedFace = face012, OtherFace = face132 };
                 edge12.OwnedFace = face012;
                 edge12.OtherFace = face132;
-                var edge20 = new TEdge(vertices[2], vertices[0], face012, face230, false);
+                var edge20 = new TEdge { From = vertices[2], To = vertices[0], OwnedFace = face012, OtherFace = face230 };
                 edge20.OwnedFace = face012;
                 edge20.OtherFace = face230;
-                var edge03 = new TEdge(vertices[0], vertices[3], face031, face230, false);
+                var edge03 = new TEdge { From = vertices[0], To = vertices[3], OwnedFace = face031, OtherFace = face230 };
                 edge03.OwnedFace = face031;
                 edge03.OtherFace = face230;
-                var edge13 = new TEdge(vertices[1], vertices[3], face132, face031, false);
+                var edge13 = new TEdge { From = vertices[1], To = vertices[3], OwnedFace = face132, OtherFace = face031 };
                 edge13.OwnedFace = face132;
                 edge13.OtherFace = face031;
-                var edge23 = new TEdge(vertices[2], vertices[3], face230, face132, false);
+                var edge23 = new TEdge { From = vertices[2], To = vertices[3], OwnedFace = face230, OtherFace = face132 };
                 edge23.OwnedFace = face230;
                 edge23.OtherFace = face132;
                 return [face012, face031, face132, face230];

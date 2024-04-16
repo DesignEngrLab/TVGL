@@ -1,5 +1,5 @@
 ﻿
-namespace ConvexHull.NET
+namespace PointCloud.NET
 {
     public class ConvexHullVertex : IConvexVertex3D
     {

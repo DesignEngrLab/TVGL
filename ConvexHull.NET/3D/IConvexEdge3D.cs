@@ -1,4 +1,4 @@
-﻿namespace ConvexHull.NET
+﻿namespace PointCloud.NET
 {
     public interface IConvexEdge3D : IEquatable<IConvexEdge3D>
     {

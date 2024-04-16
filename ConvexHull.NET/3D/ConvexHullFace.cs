@@ -1,20 +1,7 @@
-﻿namespace ConvexHull.NET
+﻿namespace PointCloud.NET
 {
     public class ConvexHullFace : IConvexFace3D
     {
-        public ConvexHullFace()
-        {
-        }
-        internal ConvexHullFace(IConvexVertex3D vertex1, IConvexVertex3D vertex2, IConvexVertex3D vertex3, Vector3 planeNormal)
-            : this(vertex1, vertex2, vertex3)
-        {
-            Normal = planeNormal;
-        }
-        internal ConvexHullFace(IConvexVertex3D vertex1, IConvexVertex3D vertex2, IConvexVertex3D vertex3)
-        {
-            peakVertex = null;
-            InteriorVertices = new List<IConvexVertex3D>();
-        }
         public Vector3 Normal { get; init; }
 
         public IConvexVertex3D peakVertex { get;  set; }

@@ -1,4 +1,4 @@
-﻿namespace ConvexHull.NET
+﻿namespace PointCloud.NET
 {
     /// <summary>
     /// The MinimumEnclosure class includes static functions for defining smallest enclosures for a

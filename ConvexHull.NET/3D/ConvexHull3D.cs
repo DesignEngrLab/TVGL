@@ -1,9 +1,12 @@
-﻿namespace ConvexHull.NET
+﻿namespace PointCloud.NET
 {
     /// <summary>
     /// The Convex Hull of a Tesselated Solid
     /// </summary>
-    public partial class ConvexHull3D
+    public partial class ConvexHull3D<TVertex, TEdge, TFace>
+            where TVertex : IConvexVertex3D
+            where TEdge : IConvexEdge3D
+            where TFace : IConvexFace3D
     {
         /// <summary>
         /// The volume of the Convex Hull.
@@ -13,18 +16,18 @@
         /// <summary>
         /// The vertices of the ConvexHull
         /// </summary>
-        public readonly List<IConvexVertex3D> Vertices = new List<IConvexVertex3D>();
+        public readonly List<TVertex> Vertices = new List<TVertex>();
         /// <summary>
         /// Gets the convex hull faces.
         /// </summary>
         /// <value>The convex hull faces.</value>
-        public readonly List<IConvexFace3D> Faces = new List<IConvexFace3D>();
+        public readonly List<TFace> Faces = new List<TFace>();
 
         /// <summary>
         /// Gets the convex hull edges.
         /// </summary>
         /// <value>The convex hull edges.</value>
-        public List<IConvexEdge3D> Edges = new List<IConvexEdge3D>();
+        public List<TEdge> Edges = new List<TEdge>();
 
 
 
@@ -48,6 +51,7 @@
         public double CalculateSurfaceArea()
         {
             return double.NaN;
+            //return Faces.Sum(f => f.Area);
         }
     }
 
