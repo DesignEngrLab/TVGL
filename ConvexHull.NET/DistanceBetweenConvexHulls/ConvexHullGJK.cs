@@ -2,32 +2,34 @@
 {
     public static partial class ConvexHullGJK
     {
-        /// Finds the shortest distance between two convex hulls this is an adaption of the
-        /// GJK algorithm - specifically, the c version defined as OpenGJK:
+        /// Finds the shortest distance between two convex hulls. This is an adaption of the GJK algorithm
+        /// that was originally developed by Gilbert-Johnson-Keerthi in 1988. In 2017, Montanari, Petrinic, &Barbieri 
+        /// improved upon it slightly (https://dl.acm.org/doi/abs/10.1145/3083724).
+        /// The implementation here is a translation of the Montanari's' work
         /// https://github.com/MattiaMontanari/openGJK/
 
 
         /// <summary>
         /// Finds the distance between two convex hulls. A positive value is the shortest distance
-        /// between the solids, a negative value means the solids overlap. This implementation is
-        /// not accurate for negative values.
+        /// between the solids, a zero means they are touching or overlapping. This implementation does
+        /// not produce negative values.
         /// </summary>
         /// <param name="cvxHullPoints1">The convex hull points for 1.</param>
         /// <param name="cvxHullPoints2">The  convex hull points 2.</param>
         /// <param name="other">The other convex hull points.</param>        
-        /// <param name="v">The vector,v, from the subject object to the other object.</param>
+        /// <param name="v">The vector,dir, from the subject object to the other object.</param>
         /// <returns>The signed distance between the two convex hulls. This implementation is
         /// not accurate for negative values.</returns>
         public static double DistanceBetween<T1, T2>(this IList<T1> cvxHullPoints1, IList<T2> cvxHullPoints2, out Vector3 v)
             where T1 : IVector3D
             where T2 : IVector3D
         {
-            int k = 0;                /**< Iteration counter                 */
-            const int mk = 25;                 /**< Maximum number of GJK iterations  */
-            const double eps_rel = Constants.BaseTolerance; /**< Tolerance on relative             */
-            const double eps_tot = Constants.BaseTolerance / 100; /**< Tolerance on absolute distance    */
+            int iter = 0;                /**< Iteration counter                 */
+            const int maxIter = 1000;                 /**< Maximum number of GJK iterations  */
+            const double relativeTolerance = Constants.BaseTolerance; /**< Tolerance on relative             */
+            const double relativeToleranceSqd = relativeTolerance * relativeTolerance;
+            const double absTolerance = Constants.BaseTolerance / 100; /**< Tolerance on absolute distance    */
 
-            const double eps_rel2 = eps_rel * eps_rel;
             double norm2Wmax = 0;
 
             /* Initialise search direction */
@@ -42,20 +44,19 @@
             /* Begin GJK iteration */
             do
             {
-                k++;
+                iter++;
 
                 /* Support function */
-                currentPt1 = support(cvxHullPoints1, currentPt1, -v);
-                currentPt2 = support(cvxHullPoints2, currentPt2, v);
+                currentPt1 = FindMaxDotProduct(cvxHullPoints1, currentPt1, -v);
+                currentPt2 = FindMaxDotProduct(cvxHullPoints2, currentPt2, v);
                 var w = new Vector3(currentPt1.X - currentPt2.X, currentPt1.Y - currentPt2.Y, currentPt1.Z - currentPt2.Z);
 
-                /* Test first exit condition (new point already in simplex/can't move
-                 * further) */
-                double exeedtol_rel = vLength - v.Dot(w);
-                if (exeedtol_rel <= (eps_rel * vLength) || exeedtol_rel < eps_tot)
+                /* Test first exit condition (new point already in simplex/can't move further) */
+                double deltaLength = vLength - v.Dot(w);
+                if (deltaLength <= (relativeTolerance * vLength) || deltaLength < absTolerance)
                     break;
 
-                if (vLength < eps_rel2)  // it a null V
+                if (vLength < relativeToleranceSqd)  // it a null V
                     break;
 
                 /* Add new vertex to simplex */
@@ -63,14 +64,14 @@
                 numVertsInSimplex++;
 
                 /* Invoke distance sub-algorithm */
-                if (numVertsInSimplex == 4) v = S3D(simplex, v, ref numVertsInSimplex);
-                else if (numVertsInSimplex == 3) v = S2D(simplex, v, ref numVertsInSimplex);
-                else if (numVertsInSimplex == 2) v = S1D(simplex, v, ref numVertsInSimplex);
+                if (numVertsInSimplex == 4) v = NearestSimplex3(simplex, v, ref numVertsInSimplex);
+                else if (numVertsInSimplex == 3) v = NearestSimplex2(simplex, v, ref numVertsInSimplex);
+                else if (numVertsInSimplex == 2) v = NearestSimplex1(simplex, v, ref numVertsInSimplex);
 
                 /* Test */
-                for (int jj = 0; jj < numVertsInSimplex; jj++)
+                for (int i = 0; i < numVertsInSimplex; i++)
                 {
-                    double tesnorm = simplex[jj].LengthSquared();
+                    double tesnorm = simplex[i].LengthSquared();
                     if (tesnorm > norm2Wmax)
                     {
                         norm2Wmax = tesnorm;
@@ -78,20 +79,19 @@
                 }
                 vLength = v.LengthSquared();
 
-                if (vLength <= (eps_tot * eps_tot * norm2Wmax))
+                if (vLength <= (absTolerance * absTolerance * norm2Wmax))
                     break;
 
-            } while (numVertsInSimplex != 4 && k != 25);
+            } while (numVertsInSimplex != 4 && iter < maxIter);
 
-            Debug.WriteLineIf(k == mk, "\n * * * * * * * * * * * * MAXIMUM ITERATION NUMBER REACHED!!!  "
+            Debug.WriteLineIf(iter == maxIter, "\n * * * * * * * * * * * * MAXIMUM ITERATION NUMBER REACHED!!!  "
                 + " * * * * * * * * * * * * * * \n");
             v = -v;
             return Math.Sqrt(vLength);
         }
 
-        private static Vector3 S3D(Vector3[] s, Vector3 v, ref int nvrtx)
+        private static Vector3 NearestSimplex3(Vector3[] s, Vector3 v, ref int numVertsInSimplex)
         {
-            int i, j, k, t;
             var s1 = s[3];
             var s2 = s[2];
             var s3 = s[1];
@@ -114,7 +114,7 @@
             if (dotTotal == 0)
             { /* case 0.0 -------------------------------------- */
                 v = s1;
-                nvrtx = 1; s[0] = s1;
+                numVertsInSimplex = 1; s[0] = s1;
                 return v;
             }
 
@@ -124,42 +124,43 @@
             var testPlaneTwo = hff3(s1, s3, s4) != sss;
             var testPlaneThree = hff3(s1, s4, s2) != sss;
             var testPlaneFour = hff3(s1, s2, s3) != sss;
+            int i, j, k;
 
             if (testPlaneTwo && testPlaneThree && testPlaneFour)
             {
-                nvrtx = 4;
+                numVertsInSimplex = 4;
                 return Vector3.Zero;
             }
             else if (!testPlaneTwo && testPlaneThree && testPlaneFour)
             {
-                nvrtx = 3;
+                numVertsInSimplex = 3;
                 s[2] = s[3];
-                return S2D(s, v, ref nvrtx);
+                return NearestSimplex2(s, v, ref numVertsInSimplex);
             }
             else if (testPlaneTwo && !testPlaneThree && testPlaneFour)
             {
-                nvrtx = 3;
+                numVertsInSimplex = 3;
                 s[1] = s2;
                 s[2] = s[3];
-                return S2D(s, v, ref nvrtx);
+                return NearestSimplex2(s, v, ref numVertsInSimplex);
             }
             else if (testPlaneTwo && testPlaneThree && !testPlaneFour)
             {
-                nvrtx = 3;
+                numVertsInSimplex = 3;
                 s[0] = s3;
                 s[1] = s2;
                 s[2] = s[3];
-                return S2D(s, v, ref nvrtx);
+                return NearestSimplex2(s, v, ref numVertsInSimplex);
             }
             else if (testPlaneTwo || testPlaneThree || testPlaneFour)
             {
                 // Two triangles face the origins:
-                //    The only positive hff3 is for triangle 1,i,j, therefore k must be in
+                //    The only positive hff3 is for triangle 1,i,j, therefore iter must be in
                 //    the solution as it supports the the point of minimum norm.
 
-                // 1,i,j, are the indices of the points on the triangle and remove k from
+                // 1,i,j, are the indices of the points on the triangle and remove iter from
                 // simplex
-                nvrtx = 3;
+                numVertsInSimplex = 3;
                 if (testPlaneTwo && !testPlaneThree && !testPlaneFour)
                 {
                     k = 2; // s2
@@ -187,19 +188,19 @@
                     {
                         if (!hff2(s1, sk, si))
                         {
-                            nvrtx = 3;
+                            numVertsInSimplex = 3;
                             s[2] = s[3]; s[1] = si; s[0] = sk;
                             return projectOnPlane(s1, si, sk, v);
                         }
                         else if (!hff2(s1, sk, sj))
                         {
-                            nvrtx = 3;
+                            numVertsInSimplex = 3;
                             s[2] = s[3]; s[1] = sj; s[0] = sk;
                             return projectOnPlane(s1, sj, sk, v);
                         }
                         else
                         {
-                            nvrtx = 2;
+                            numVertsInSimplex = 2;
                             s[1] = s[3]; s[0] = sk;
                             return projectOnLine(s1, sk, v);
                         }
@@ -208,13 +209,13 @@
                     {
                         if (!hff2(s1, si, sk))
                         {
-                            nvrtx = 3;
+                            numVertsInSimplex = 3;
                             s[2] = s[3]; s[1] = si; s[0] = sk;
                             return projectOnPlane(s1, si, sk, v);
                         }
                         else
                         {
-                            nvrtx = 2;
+                            numVertsInSimplex = 2;
                             s[1] = s[3]; s[0] = si;
                             return projectOnLine(s1, si, v);
                         }
@@ -223,21 +224,21 @@
                     {
                         if (!hff2(s1, sj, sk))
                         {
-                            nvrtx = 3; s[2] = s[3]; s[1] = sj; s[0] = sk;
+                            numVertsInSimplex = 3; s[2] = s[3]; s[1] = sj; s[0] = sk;
                             return projectOnPlane(s1, sj, sk, v);
                         }
                         else
                         {
-                            nvrtx = 2; s[1] = s[3]; s[0] = sj;
+                            numVertsInSimplex = 2; s[1] = s[3]; s[0] = sj;
                             return projectOnLine(s1, sj, v);
                         }
                     }
                 }
                 else if (dotTotal == 2)
                 {
-                    // Two edges have positive hff1, meaning that for two edges the origin's
+                    // Two edges have positive hff1, meaning that for two edges the origin'vertices
                     // project fall on the segement.
-                    //  Certainly the edge 1,k supports the the point of minimum norm, and so
+                    //  Certainly the edge 1,iter supports the the point of minimum norm, and so
                     //  hff1_1k is positive
 
                     if (hff1_tests[i])
@@ -246,12 +247,12 @@
                         {
                             if (!hff2(s1, si, sk))
                             {
-                                nvrtx = 3; s[2] = s[3]; s[1] = si; s[0] = sk;
+                                numVertsInSimplex = 3; s[2] = s[3]; s[1] = si; s[0] = sk;
                                 return projectOnPlane(s1, si, sk, v);
                             }
                             else
                             {
-                                nvrtx = 2; s[1] = s[3]; s[0] = sk;
+                                numVertsInSimplex = 2; s[1] = s[3]; s[0] = sk;
                                 return projectOnLine(s1, sk, v);
                             }
                         }
@@ -259,12 +260,12 @@
                         {
                             if (!hff2(s1, sk, sj))
                             {
-                                nvrtx = 3; s[2] = s[3]; s[1] = sj; s[0] = sk;
+                                numVertsInSimplex = 3; s[2] = s[3]; s[1] = sj; s[0] = sk;
                                 return projectOnPlane(s1, sj, sk, v);
                             }
                             else
                             {
-                                nvrtx = 2; s[1] = s[3]; s[0] = sk;
+                                numVertsInSimplex = 2; s[1] = s[3]; s[0] = sk;
                                 return projectOnLine(s1, sk, v);
                             }
                         }
@@ -275,12 +276,12 @@
                         {
                             if (!hff2(s1, sj, sk))
                             {
-                                nvrtx = 3; s[2] = s[3]; s[1] = sj; s[0] = sk;
+                                numVertsInSimplex = 3; s[2] = s[3]; s[1] = sj; s[0] = sk;
                                 return projectOnPlane(s1, sj, sk, v);
                             }
                             else
                             {
-                                nvrtx = 2; s[1] = s[3]; s[0] = sj;
+                                numVertsInSimplex = 2; s[1] = s[3]; s[0] = sj;
                                 return projectOnLine(s1, sj, v);
                             }
                         }
@@ -288,12 +289,12 @@
                         {
                             if (!hff2(s1, sk, si))
                             {
-                                nvrtx = 3; s[2] = s[3]; s[1] = si; s[0] = sk;
+                                numVertsInSimplex = 3; s[2] = s[3]; s[1] = si; s[0] = sk;
                                 return projectOnPlane(s1, si, sk, v);
                             }
                             else
                             {
-                                nvrtx = 2; s[1] = s[3]; s[0] = sk;
+                                numVertsInSimplex = 2; s[1] = s[3]; s[0] = sk;
                                 return projectOnLine(s1, sk, v);
                             }
                         }
@@ -307,7 +308,7 @@
                 else if (dotTotal == 3)
                 {
                     // MM : ALL THIS HYPHOTESIS IS FALSE
-                    // sk is s.t. hff3 for sk < 0. So, sk must support the origin because
+                    // sk is vertices.t. hff3 for sk < 0. So, sk must FindMaxDotProduct the origin because
                     // there are 2 triangles facing the origin.
 
                     var hff2_ik = hff2(s1, si, sk);
@@ -321,7 +322,7 @@
                     }
                     if (hff2_ki && hff2_kj)
                     {
-                        nvrtx = 2; s[1] = s[3]; s[0] = sk;
+                        numVertsInSimplex = 2; s[1] = s[3]; s[0] = sk;
                         return projectOnLine(s1, sk, v);
                     }
                     else if (hff2_ki)
@@ -329,13 +330,13 @@
                         // discard i
                         if (hff2_jk)
                         {
-                            // discard k
-                            nvrtx = 2; s[1] = s[3]; s[0] = sj;
+                            // discard iter
+                            numVertsInSimplex = 2; s[1] = s[3]; s[0] = sj;
                             return projectOnLine(s1, sj, v);
                         }
                         else
                         {
-                            nvrtx = 3; s[2] = s[3]; s[1] = sj; s[0] = sk;
+                            numVertsInSimplex = 3; s[2] = s[3]; s[1] = sj; s[0] = sk;
                             return projectOnPlane(s1, sk, sj, v);
                         }
                     }
@@ -344,12 +345,12 @@
                         // discard j
                         if (hff2_ik)
                         {
-                            nvrtx = 2; s[1] = s[3]; s[0] = si;
+                            numVertsInSimplex = 2; s[1] = s[3]; s[0] = si;
                             return projectOnLine(s1, si, v);
                         }
                         else
                         {
-                            nvrtx = 3; s[2] = s[3]; s[1] = si; s[0] = sk;
+                            numVertsInSimplex = 3; s[2] = s[3]; s[1] = si; s[0] = sk;
                             return projectOnPlane(s1, sk, si, v);
                         }
                     }
@@ -385,24 +386,24 @@
 
                     if (!hff2(s1, si, sj))
                     {
-                        nvrtx = 3; s[2] = s[3]; s[1] = si; s[0] = sj;
+                        numVertsInSimplex = 3; s[2] = s[3]; s[1] = si; s[0] = sj;
                         return projectOnPlane(s1, si, sj, v);
                     }
                     else if (!hff2(s1, si, sk))
                     {
-                        nvrtx = 3; s[2] = s[3]; s[1] = si; s[0] = sk;
+                        numVertsInSimplex = 3; s[2] = s[3]; s[1] = si; s[0] = sk;
                         return projectOnPlane(s1, si, sk, v);
                     }
                     else
                     {
-                        nvrtx = 2; s[1] = s[3]; s[0] = si;
+                        numVertsInSimplex = 2; s[1] = s[3]; s[0] = si;
                         return projectOnLine(s1, si, v);
                     }
                 }
                 else if (dotTotal == 2)
                 {
                     // Here si is set such that hff(s1,si) < 0
-                    nvrtx = 3;
+                    numVertsInSimplex = 3;
                     if (!testLineThree)
                     {
                         k = 2;
@@ -429,28 +430,28 @@
                     {
                         if (!hff2(s1, sk, sj))
                         {
-                            nvrtx = 3; s[2] = s[3]; s[1] = sj; s[0] = sk;
+                            numVertsInSimplex = 3; s[2] = s[3]; s[1] = sj; s[0] = sk;
                             return projectOnPlane(s1, sj, sk, v);
                         }
                         else if (!hff2(s1, sk, si))
                         {
-                            nvrtx = 3; s[2] = s[3]; s[1] = si; s[0] = sk;
+                            numVertsInSimplex = 3; s[2] = s[3]; s[1] = si; s[0] = sk;
                             return projectOnPlane(s1, sk, si, v);
                         }
                         else
                         {
-                            nvrtx = 2; s[1] = s[3]; s[0] = sk;
+                            numVertsInSimplex = 2; s[1] = s[3]; s[0] = sk;
                             return projectOnLine(s1, sk, v);
                         }
                     }
                     else if (!hff2(s1, sj, si))
                     {
-                        nvrtx = 3; s[2] = s[3]; s[1] = si; s[0] = sj;
+                        numVertsInSimplex = 3; s[2] = s[3]; s[1] = si; s[0] = sj;
                         return projectOnPlane(s1, si, sj, v);
                     }
                     else
                     {
-                        nvrtx = 2; s[1] = s[3]; s[0] = sj;
+                        numVertsInSimplex = 2; s[1] = s[3]; s[0] = sj;
                         return projectOnLine(s1, sj, v);
                     }
                 }
@@ -464,7 +465,7 @@
                 + p.Z * (q.X * r.Y - r.X * q.Y);
         }
 
-        private static Vector3 S2D(Vector3[] s, Vector3 v, ref int nvrtx)
+        private static Vector3 NearestSimplex2(Vector3[] s, Vector3 v, ref int nvrtx)
         {
             var s1p = s[2];
             var s2p = s[1];
@@ -482,7 +483,7 @@
                         var hff2f_32 = !hff2(s1p, s3p, s2p);
                         if (hff2f_32)
                         {
-                            return projectOnPlane(s1p, s2p, s3p, v); // Update s, no need to update c
+                            return projectOnPlane(s1p, s2p, s3p, v); // Update vertices, no need to update c
                                                                      // Return V{1,2,3}
                         }
                         else
@@ -494,14 +495,14 @@
                     }
                     else
                     {
-                        return projectOnPlane(s1p, s2p, s3p, v); // Update s, no need to update c
+                        return projectOnPlane(s1p, s2p, s3p, v); // Update vertices, no need to update c
                                                                  // Return V{1,2,3}
                     }
                 }
                 else
                 {
                     nvrtx = 2; s[0] = s[2];
-                    return projectOnLine(s1p, s2p, v); // Update v
+                    return projectOnLine(s1p, s2p, v); // Update dir
                 }
             }
             else if (hff1f_s13)
@@ -509,7 +510,7 @@
                 var hff2f_32 = !hff2(s1p, s3p, s2p);
                 if (hff2f_32)
                 {
-                    return projectOnPlane(s1p, s2p, s3p, v); // Update s, no need to update v
+                    return projectOnPlane(s1p, s2p, s3p, v); // Update vertices, no need to update dir
                                                              // Return V{1,2,3}
                 }
                 else
@@ -539,38 +540,47 @@
             return tmp * n;
         }
 
-        private static T support<T>(IList<T> vertices, T thisS, Vector3 v) where T : IVector3D
+        /// <summary>
+        /// Find the vertex with the maximum dot product with the given direction. The datum is likely the minimum
+        /// dot product vertex. In the original GJK work this function was can "Support", but that is a throw-away
+        /// name for a function that merely supports the main loop.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="vertices"></param>
+        /// <param name="datum"></param>
+        /// <param name="dir"></param>
+        /// <returns></returns>
+        private static T FindMaxDotProduct<T>(IList<T> vertices, T datum, Vector3 dir) where T : IVector3D
         {
-            int better = -1;
+            int maxIndex = -1;
 
-            var maxs = thisS.Dot(v);
+            var maxValue = datum.Dot(dir);
 
             for (int i = 0; i < vertices.Count; ++i)
             {
-                var vrt = vertices[i];
-                var ss1 = vrt.Dot(v);
-                if (ss1 > maxs)
+                var dot = vertices[i].Dot(dir);
+                if (dot > maxValue)
                 {
-                    maxs = ss1;
-                    better = i;
+                    maxValue = dot;
+                    maxIndex = i;
                 }
             }
-            if (better >= 0)
-                return vertices[better];
-            else return thisS;
+            if (maxIndex >= 0)
+                return vertices[maxIndex];
+            else return datum;
         }
-        private static Vector3 S1D(Vector3[] s, Vector3 v, ref int nvrtx)
+        private static Vector3 NearestSimplex1(Vector3[] vertices, Vector3 v, ref int nvrtx)
         {
-            var s1p = s[1];
-            var s2p = s[0];
+            var s1p = vertices[1];
+            var s2p = vertices[0];
 
             if (hff1(s1p, s2p))
-                return projectOnLine(s1p, s2p, v); // Update v, no need to update s
+                return projectOnLine(s1p, s2p, v); // Update dir, no need to update vertices
             else
             {
-                s[0] = s[1];    // Update v and s
+                vertices[0] = vertices[1];    // Update dir and vertices
                 nvrtx = 1;
-                return s[0];
+                return vertices[0];
             }
         }
 
@@ -578,7 +588,7 @@
         {
             var pq = p - q;
 
-            var tmp = p.Dot(pq) / pq.Dot(pq);
+            var tmp = p.Dot(pq) / pq.LengthSquared();
             return p - tmp * pq;
         }
 
@@ -591,9 +601,8 @@
         {
             var pq = q - p;
             var pr = r - p;
-            var ntmp = pq.Cross(pr);
-            var n = pq.Cross(ntmp);
-
+            var n = pq.Cross(pr);
+            n = pq.Cross(n);
 
             return p.Dot(n) < 0;
         }
@@ -603,7 +612,7 @@
             var pq = q - p;
             var pr = r - p;
             var n = pq.Cross(pr);
-            return p.Dot(n) <= 0; // discard s if true
+            return p.Dot(n) <= 0; // discard vertices if true
         }
 
     }
