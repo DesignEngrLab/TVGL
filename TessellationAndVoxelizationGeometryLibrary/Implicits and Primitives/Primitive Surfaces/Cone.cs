@@ -318,7 +318,28 @@ namespace TVGL
         }
         public override IEnumerable<(Vector3 intersection, double lineT)> LineIntersection(Vector3 anchor, Vector3 direction)
         {
-            throw new NotImplementedException();
+            direction = direction.Normalize();
+            var anchorToApex = Apex - anchor;
+            // handle the special case where the line passes through cone's apex
+            if (anchorToApex.IsAlignedOrReverse(direction))
+            {
+                yield return (anchor, anchorToApex.Length());
+                yield break;
+            }
+            var a = cosAperture;
+            var b = 2 * anchor.Dot(direction) - 2 * Apex.Dot(direction) * cosAperture - direction.Dot(Axis);
+            var c = anchor.LengthSquared() + Apex.LengthSquared() - 2 * anchor.Dot(Apex) * cosAperture -
+                anchor.Dot(Axis) + Apex.LengthSquared();
+            (var root1, var root2) = PolynomialSolve.Quadratic(a, b, c);
+            if (root1.IsRealNumber && !root1.Real.IsPracticallySame(root2.Real))
+            {   // if root1 is real then root2 is also real, and we pierce the cone at two points
+                yield return (anchor + root1.Real * direction, root1.Real);
+                yield return (anchor + root2.Real * direction, root2.Real);
+            }
+            else if (root1.IsRealNumber)
+                // if practically the same, then we only glance the cone at one point
+                yield return (anchor + root1.Real * direction, root1.Real);
+            // otherwise the cone is missed entirely
         }
     }
 }
