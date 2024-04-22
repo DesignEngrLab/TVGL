@@ -33,6 +33,21 @@
         }
     }
     /// <summary>
+    /// Creates the convex hull for a set of Vertices. In the absence of specified edge and face types, the default
+    /// objects are used (ConvexHullEdge, ConvexHullFace).
+    /// </summary>
+    /// <param name="points"></param>
+    /// <param name="convexHull"></param>
+    /// <param name="vertexIndices"></param>
+    /// <param name="tolerance"></param>
+    /// <returns></returns>
+    public static bool Create<TVertex>(IList<TVertex> vertices, out ConvexHull3D<TVertex, ConvexHullEdge, ConvexHullFace> convexHull,
+        bool connectVerticesToCvxHullFaces, double tolerance = double.NaN)
+        where TVertex : IConvexVertex3D, new()
+    => Create<TVertex, ConvexHullEdge, ConvexHullFace>(vertices, out convexHull, connectVerticesToCvxHullFaces, tolerance);
+
+    
+    /// <summary>
     /// Creates the convex hull for a set of vertices. This method is used by the TessellatedSolid,
     /// but it can be used within any set of vertices.
     /// </summary>
@@ -44,8 +59,8 @@
     public static bool Create<TVertex, TEdge, TFace>(IList<TVertex> vertices, out ConvexHull3D<TVertex, TEdge, TFace> convexHull,
         bool connectVerticesToCvxHullFaces, double tolerance = double.NaN)
         where TVertex : IConvexVertex3D, new()
-        where TEdge : IConvexEdge, new()
-        where TFace : IConvexFace, new()
+        where TEdge : IConvexEdge3D, new()
+        where TFace : IConvexFace3D, new()
     {
         var n = vertices.Count;
         if (double.IsNaN(tolerance) || tolerance < Constants.BaseTolerance)
@@ -161,8 +176,8 @@
     private static void CreateNewFaceCone<TVertex, TEdge, TFace>(TFace startingFace, List<TFace> newFaces,
         List<TFace> oldFaces, List<TVertex> verticesToReassign)
         where TVertex : IConvexVertex3D
-        where TEdge : IConvexEdge
-        where TFace : IConvexFace
+        where TEdge : IConvexEdge3D
+        where TFace : IConvexFace3D
     {
         newFaces.Clear();
         oldFaces.Clear();
@@ -189,10 +204,10 @@
                 // current is beyond the horizon and is not to be replaced.
                 // so we stop here but before we move down the stack we need to create a new face
                 // this border face is stored in the borderFaces list so that at the end we can clear the Visited flags
-                ConvexHullFace newFace;
+                TFace newFace;
                 if (connectingEdge.OwnedFace.Equals(current))
                 {   // if the current owns the face then the new face will follow the edge backwards
-                    newFace = new ConvexHullFace(connectingEdge.To, connectingEdge.From, peakVertex);
+                    newFace = new TFace(connectingEdge.To, connectingEdge.From, peakVertex);
                     connectingEdge.OtherFace = newFace;
                     newFace.AddEdge(connectingEdge);
                     if (firstInConeEdge == null) // this is the first time through so we get to own the two in-cone edges as well
@@ -299,8 +314,8 @@
     /// <returns></returns>
     private static ConvexHull3D<TVertex, TEdge, TFace> MakeConvexHullWithFaces<TVertex, TEdge, TFace>(double tolerance, IEnumerable<TFace> cvxFaces)
         where TVertex : IConvexVertex3D
-        where TEdge : IConvexEdge
-        where TFace : IConvexFace
+        where TEdge : IConvexEdge3D
+        where TFace : IConvexFace3D
     {
         var cvxHull = new ConvexHull3D<TVertex, TEdge, TFace>();
         cvxHull.Faces.AddRange(cvxFaces);
@@ -368,7 +383,7 @@
     /// <param name="v"></param>
     /// <param name="tolerance"></param>
     private static void AddVertexToProperFace<TFace, TVertex>(TFace[] faces, TVertex v, double tolerance)
-        where TFace : IConvexFace
+        where TFace : IConvexFace3D
         where TVertex : IConvexVertex3D
     {
         var maxDot = double.NegativeInfinity;
@@ -498,8 +513,8 @@
     /// <param name="vertices"></param>
     /// <returns></returns>
     private static TFace[] MakeSimplexFaces<TVertex, TEdge, TFace>(List<TVertex> vertices) where TVertex : IConvexVertex3D
-        where TEdge : IConvexEdge, new()
-        where TFace : IConvexFace, new()
+        where TEdge : IConvexEdge3D, new()
+        where TFace : IConvexFace3D, new()
     {
         if (vertices.Count == 3)
         {

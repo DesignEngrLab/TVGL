@@ -36,7 +36,7 @@ internal static class Constants
     {
 #if !CUSTOMVECTOR
         var length = Math.Sqrt(vector.Dot(vector));
-        return new Vector2(vector.X / length,  vector.Y / length);
+        return new Vector2(vector.X / length, vector.Y / length);
 #else
         return Vector2.Normalize(vector);
 #endif
@@ -110,33 +110,6 @@ internal static class Constants
         var temp = points[i];
         points[i] = points[j];
         points[j] = temp;
-    }
-
-    internal static double GetCoord(this Vector2 vector, int index)
-    {
-        if (index == 0)
-            return vector.X;
-        return vector.Y;
-    }
-
-    internal static double GetCoord(this Vector3 vector, int index)
-    {
-        if (index == 0)
-            return vector.X;
-        if (index == 1)
-            return vector.Y;
-        return vector.Z;
-    }
-
-    internal static double GetCoord(this Vector4 vector, int index)
-    {
-        if (index == 0)
-            return vector.X;
-        if (index == 1)
-            return vector.Y;
-        if (index == 2)
-            return vector.Z;
-        return vector.W;
     }
 
     internal static bool IsNegligible(this double value)

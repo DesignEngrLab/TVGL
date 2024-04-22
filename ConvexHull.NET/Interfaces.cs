@@ -6,7 +6,7 @@ public interface IConvexVertex : IEquatable<IConvexVertex>
 
 }
 public interface IConnectToFaces<TFace>
-where TFace : IConvexFace
+where TFace : IConvexFace3D
 {
     List<TFace> Faces { get; set; }
 }

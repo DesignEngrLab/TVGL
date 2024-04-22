@@ -10,14 +10,13 @@ public enum DistanceMetric
 }
 public class KDTree
 {
-    #region Straight Line Distance
     /// <summary>
     /// Creates the KDTree for the list of points.
     /// </summary>
     /// <param name="points">The points.</param>
     /// <returns>A KDTree.</returns>
     public static KDTree<Vector2> Create(IEnumerable<Vector2> points, DistanceMetric distanceMetric = DistanceMetric.StraightLine)
-    => new KDTree<Vector2>(points as IList<Vector2> ?? points.ToList(),distanceMetric);
+    => new KDTree<Vector2>(points as IList<Vector2> ?? points.ToList(), distanceMetric, 2);
 
     /// <summary>
     /// Creates the KDTree for the list of points.
@@ -25,7 +24,7 @@ public class KDTree
     /// <param name="points">The points.</param>
     /// <returns>A KDTree.</returns>
     public static KDTree<Vector3> Create(IEnumerable<Vector3> points, DistanceMetric distanceMetric = DistanceMetric.StraightLine)
-    =>new KDTree<Vector3>(points as IList<Vector3> ?? points.ToList(), distanceMetric); 
+    => new KDTree<Vector3>(points as IList<Vector3> ?? points.ToList(), distanceMetric, 3);
 
 
     /// <summary>
@@ -34,7 +33,7 @@ public class KDTree
     /// <param name="points">The points.</param>
     /// <returns>A KDTree.</returns>
     public static KDTree<Vector4> Create(IEnumerable<Vector4> points, DistanceMetric distanceMetric = DistanceMetric.StraightLine)
-    { return new KDTree<Vector4>(points as IList<Vector4> ?? points.ToList(),distanceMetric); }
+    => new KDTree<Vector4>(points as IList<Vector4> ?? points.ToList(), distanceMetric, 4);
 
 
     /// <summary>
@@ -43,8 +42,12 @@ public class KDTree
     /// <param name="points">The points.</param>
     /// <returns>A KDTree.</returns>
     public static KDTree<TPoint> Create<TPoint>(IEnumerable<TPoint> points, DistanceMetric distanceMetric = DistanceMetric.StraightLine)
-        where TPoint : IConvexVertex3D, new()
-    => new KDTree<TPoint>(points as IList<TPoint> ?? points.ToList()); }
+        where TPoint : IConvexVertex, new()
+    {
+        var typeOfTPoint = typeof(TPoint);
+        var dimensions = typeOfTPoint is IConvexVertex2D ? 2 : typeOfTPoint is IConvexVertex3D ? 3 : 4;
+        return new KDTree<TPoint>(points as IList<TPoint> ?? points.ToList(), distanceMetric, dimensions);
+    }
 
     /// <summary>
     /// Creates the KDTree for the list of points.
@@ -52,21 +55,9 @@ public class KDTree
     /// <param name="points">The points.</param>
     /// <returns>A KDTree.</returns>
     public static KDTree<TPoint, TAccObject> Create<TPoint, TAccObject>(IEnumerable<TPoint> points, IList<TAccObject> accObjects) where TPoint : IConvexVertex3D, new()
-    { return new KDTree<TPoint, TAccObject>(3, points as IList<TPoint> ?? points.ToList(), accObjects); }
-    #endregion
-
-    #region Over Spherical Surface
-    /// <summary>
-    /// Creates the KDTree for the list of points.
-    /// </summary>
-    /// <param name="points">The points.</param>
-    /// <returns>A KDTree.</returns>
-    public static KDTree<Vector3> CreateSpherical(IEnumerable<Vector3> points)
-    { return new KDTree<Vector3>(3, points as IList<Vector3> ?? points.ToList(), KDTree<Vector3>.SphericalDistance); }
-
-    #endregion
+    => new KDTree<TPoint, TAccObject>(3, points as IList<TPoint> ?? points.ToList(), accObjects);
 }
-public class KDTree<TPoint> //where TPoint : IVector
+public class KDTree<TPoint> //where TPoint : IConvexVertex
 {
     /// <summary>
     /// The number of points in the KDTree
@@ -85,14 +76,21 @@ public class KDTree<TPoint> //where TPoint : IVector
     /// </summary>
     private protected int TreeSize { get; init; }
 
-    private Func<TPoint, TPoint, double> DistanceMetricFunction { get; }
+    private Func<TPoint, TPoint, double>? DistanceMetricFunc { get; }
+    private protected Func<TPoint, int, double>? GetCoordFunc { get; }
 
-    readonly int Dimensions;
-    internal KDTree(IEnumerable<TPoint> points, DistanceMetric distanceMetric)
+    private protected readonly int Dimensions;
+    readonly Type typeOfTPoint;
+    readonly object defaultPoint;
+    internal KDTree(IEnumerable<TPoint> points, DistanceMetric distanceMetric, int dimensions)
     {
+        Dimensions = dimensions;
         if (points == null) throw new ArgumentNullException(nameof(points), "The list of points cannot be null.");
-        var typeOfTPoint = typeof(TPoint);
-        DistanceMetricFunction = DetermineDistanceMetric(typeOfTPoint, distanceMetric);
+        typeOfTPoint = typeof(TPoint);
+        defaultPoint = GetDefault(typeOfTPoint);
+
+        DistanceMetricFunc = DetermineDistanceMetric(typeOfTPoint, distanceMetric);
+        GetCoordFunc = DetermineGetCoord(typeOfTPoint);
 
         if (points is ICollection<TPoint> pointCollection)
         {
@@ -114,11 +112,10 @@ public class KDTree<TPoint> //where TPoint : IVector
             OriginalPoints = listOfPoints.ToArray();
             Count = i;
         }
-        var nullPoint = GetDefault(OriginalPoints[0].GetType());
         // Calculate the number of nodes needed to contain the binary tree.
         // This is equivalent to finding the power of 2 greater than the number of points
         TreeSize = (int)Math.Pow(2, (int)(Math.Log(Count) / Math.Log(2)) + 1);
-        TreePoints = Enumerable.Repeat(nullPoint, TreeSize).Cast<TPoint>().ToArray();
+        TreePoints = Enumerable.Repeat(defaultPoint, TreeSize).Cast<TPoint>().ToArray();
         GenerateTree(0, 0, OriginalPoints);
     }
 
@@ -144,6 +141,59 @@ public class KDTree<TPoint> //where TPoint : IVector
         }
         throw new ArgumentException("The type of TPoint is not supported for the given distance metric.");
     }
+
+    private Func<TPoint, int, double>? DetermineGetCoord(Type typeOfTPoint)
+    {
+        //if (typeOfTPoint is Vector2)
+        //    return new Func<Vector2, int, double>(GetCoord);
+        //    //return (Vector2 a, int b) => GetCoord((Vector2)a, b);
+        //if (typeOfTPoint is Vector3)
+        //    return (a, b) => GetCoord((Vector3)a, b);
+        //if (typeOfTPoint is Vector4)
+        //    return (a, b) => GetCoord((Vector4)a, b);
+        if (typeOfTPoint is IConvexVertex2D)
+            return (a, b) => GetCoord((IConvexVertex2D)a, b);
+        if (typeOfTPoint is IConvexVertex3D)
+            return (a, b) => GetCoord((IConvexVertex3D)a, b);
+        if (typeOfTPoint is IConvexVertex4D)
+            return (a, b) => GetCoord((IConvexVertex4D)a, b);
+        throw new ArgumentException("The type of TPoint is not supported for the given distance metric.");
+    }
+
+    internal static double GetCoord(IConvexVertex2D vector, int index)
+        => GetCoord(vector.Coordinates, index);
+    internal static double GetCoord(IConvexVertex3D vector, int index)
+        => GetCoord(vector.Coordinates, index);
+    internal static double GetCoord(IConvexVertex4D vector, int index)
+        => GetCoord(vector.Coordinates, index);
+
+    internal static double GetCoord(Vector2 vector, int index)
+    {
+        if (index == 0)
+            return vector.X;
+        return vector.Y;
+    }
+
+    internal static double GetCoord(Vector3 vector, int index)
+    {
+        if (index == 0)
+            return vector.X;
+        if (index == 1)
+            return vector.Y;
+        return vector.Z;
+    }
+
+    internal static double GetCoord(Vector4 vector, int index)
+    {
+        if (index == 0)
+            return vector.X;
+        if (index == 1)
+            return vector.Y;
+        if (index == 2)
+            return vector.Z;
+        return vector.W;
+    }
+
 
     public static object GetDefault(Type type)
     {
@@ -194,7 +244,7 @@ public class KDTree<TPoint> //where TPoint : IVector
         // but here, we just take the lower of the two middle points
         var count = points.Length;
         var leftSideLength = count / 2;
-        var medianPointValue = points.Select(p => p[dim]).NthOrderStatistic(leftSideLength);
+        var medianPointValue = points.Select(p => GetCoordFunc(p, dim)).NthOrderStatistic(leftSideLength);
         //is this a plus one or not?
 
         var leftPoints = new TPoint[leftSideLength];
@@ -206,12 +256,12 @@ public class KDTree<TPoint> //where TPoint : IVector
         for (int i = 0; i < points.Length; i++)
         {
             TPoint pt = points[i];
-            if (pt[dim] > medianPointValue)
+            if (GetCoordFunc(pt, dim) > medianPointValue)
             {
                 rightPoints[rightIndex] = pt;
                 rightIndex++;
             }
-            else if (pt[dim] < medianPointValue)
+            else if (GetCoordFunc(pt, dim) < medianPointValue)
             {
                 leftPoints[leftIndex] = pt;
                 leftIndex++;
@@ -274,7 +324,7 @@ public class KDTree<TPoint> //where TPoint : IVector
           BoundedPriorityList<int, double> nearestNeighbors, double maxSearchRadiusSquared)
     {
         if (TreePoints.Length <= nodeIndex || nodeIndex < 0
-            || TreePoints[nodeIndex] == null || TreePoints[nodeIndex].IsNull())
+            || TreePoints[nodeIndex].Equals(defaultPoint))
             return;
 
         // Work out the current dimension
@@ -283,15 +333,15 @@ public class KDTree<TPoint> //where TPoint : IVector
         // Split our hyper-rectangle into 2 sub rectangles along the current
         // node's target on the current dimension
         var leftRect = new HyperRect(rect.MinPoint, rect.MaxPoint);
-        leftRect.MaxPoint[dim] = TreePoints[nodeIndex][dim];
+        leftRect.MaxPoint[dim] = GetCoordFunc(TreePoints[nodeIndex], dim);
 
         var rightRect = new HyperRect(rect.MinPoint, rect.MaxPoint);
-        rightRect.MinPoint[dim] = TreePoints[nodeIndex][dim];
+        rightRect.MinPoint[dim] = GetCoordFunc(TreePoints[nodeIndex], dim);
 
         // Determine which side the target resides in
         HyperRect nearerRect, furtherRect;
         int nearerNode, furtherNode;
-        if (target[dim] <= TreePoints[nodeIndex][dim])
+        if (GetCoordFunc(target, dim) <= GetCoordFunc(TreePoints[nodeIndex], dim))
         {
             nearerRect = leftRect;
             furtherRect = rightRect;
@@ -312,7 +362,7 @@ public class KDTree<TPoint> //where TPoint : IVector
         // Walk down into the further branch but only if our capacity hasn't been reached
         // OR if there's a region in the further rectangle that's closer to the target than our
         // current furtherest nearest neighbor
-        var distanceSquaredToTarget = furtherRect.GetClosestPoint(target);
+        var distanceSquaredToTarget = GetClosestPoint(furtherRect, target);
 
         if (distanceSquaredToTarget <= maxSearchRadiusSquared)
         {
@@ -327,7 +377,7 @@ public class KDTree<TPoint> //where TPoint : IVector
         }
 
         // Try to add the current node to our nearest numberToFind list
-        distanceSquaredToTarget = DistanceMetricFunction(TreePoints[nodeIndex], target);
+        distanceSquaredToTarget = DistanceMetricFunc(TreePoints[nodeIndex], target);
         if (distanceSquaredToTarget <= maxSearchRadiusSquared)
             nearestNeighbors.Add(nodeIndex, distanceSquaredToTarget);
     }
@@ -418,5 +468,31 @@ public class KDTree<TPoint> //where TPoint : IVector
     private protected static int ParentIndex(int index)
     {
         return (index - 1) / 2;
+    }
+
+
+
+    /// <summary>
+    /// Gets the point on the rectangle that is closest to the given point.
+    /// If the point is within the rectangle, then the input point is the same as the
+    /// output point.f the point is outside the rectangle then the point on the rectangle
+    /// that is closest to the given point is returned.
+    /// </summary>
+    /// <param name="targetPoint">We try to find a point in or on the rectangle closest to this point.</param>
+    /// <returns>The point on or in the rectangle that is closest to the given point.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal double GetClosestPoint(HyperRect hyperRect, TPoint targetPoint)
+    {
+        var distSqd = 0.0;
+        for (var i = 0; i < Dimensions; i++)
+        {
+            var targetPointCoord = GetCoordFunc(targetPoint, i);
+            if (hyperRect.MinPoint[i] > targetPointCoord)
+                distSqd += (hyperRect.MinPoint[i] - targetPointCoord) * (hyperRect.MinPoint[i] - targetPointCoord);
+            else if (hyperRect.MaxPoint[i] < targetPointCoord)
+                distSqd += (hyperRect.MaxPoint[i] - targetPointCoord) * (hyperRect.MaxPoint[i] - targetPointCoord);
+            // else Point is within rectangle, and the distance should not increase
+        }
+        return distSqd;
     }
 }
