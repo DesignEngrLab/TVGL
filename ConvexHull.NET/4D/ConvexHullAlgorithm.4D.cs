@@ -1,4 +1,4 @@
-﻿namespace PointCloud.NET
+﻿namespace PointCloudNet
 {
     public partial class ConvexHull4D
     {

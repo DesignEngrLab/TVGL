@@ -1,33 +1,6 @@
-﻿namespace PointCloud.NET
-{
-    public static class ConvexHull2D
+﻿namespace PointCloudNet;    
+public static class ConvexHull2D
     {
-        /// <summary>
-        /// Creates the convex hull for a polygon.
-        /// </summary>
-        /// <param name="polygon"></param>
-        /// <param name="convexHullIndices"></param>
-        /// <param name="isMaximal"></param>
-        /// <returns></returns>
-        public static List<Vertex2D> CreateConvexHull(this Polygon polygon, out List<int> convexHullIndices, bool isMaximal = false)
-        {
-            if (isMaximal) return CreateConvexHullMaximal(polygon.Vertices, out convexHullIndices);
-            else
-                return Create(polygon.Vertices, out convexHullIndices);
-        }
-
-        /// <summary>
-        /// Creates the convex hull for a set of polygon.
-        /// </summary>
-        /// <param name="polygon"></param>
-        /// <param name="convexHullIndices"></param>
-        /// <param name="isMaximal"></param>
-        /// <returns></returns>
-        public static List<Vertex2D> CreateConvexHull(this IEnumerable<Polygon> polygon, out List<int> convexHullIndices, bool isMaximal = false)
-        {
-            if (isMaximal) return CreateConvexHullMaximal(polygon.SelectMany(p => p.Vertices).ToList(), out convexHullIndices);
-            else return Create(polygon.SelectMany(p => p.Vertices).ToList(), out convexHullIndices);
-        }
         /// <summary>
         /// Creates the convex hull for a set of vertices and then finds any vertices that are on the boundary
         /// and re-inserts them into the convex hull. This is slower that CreateConvexHull, and it creates a result
@@ -39,23 +12,23 @@
         /// <param name="tolerance"></param>
         /// <returns></returns>
         public static List<T> CreateConvexHullMaximal<T>(this IList<T> points, out List<int> convexHullIndices,
-            double tolerance = Constants.DefaultEqualityTolerance)
-            where T : IVector2D
+            double tolerance = Constants.BaseTolerance)
+            where T : IConvexVertex2D
         {
+            var convexHull = CreateConvexHull(points, out convexHullIndices);
             var kdTree = KDTree.Create(points, Enumerable.Range(0, points.Count).ToArray());
-            var convexHull = Create(points, out convexHullIndices);
             var usedIndices = new HashSet<int>(convexHullIndices);
             var nextEndPoint = points[^1];
             for (int i = convexHull.Count - 1; i >= 0; i++)
             {
                 var currentEndPoint = convexHull[i];
-                var vX = nextEndPoint.X - currentEndPoint.X;
-                var vY = nextEndPoint.Y - currentEndPoint.Y;
+                var vX = nextEndPoint.Coordinates.X - currentEndPoint.Coordinates.X;
+                var vY = nextEndPoint.Coordinates.Y - currentEndPoint.Coordinates.Y;
                 var vLengthSqd = vX * vX + vY * vY;
                 var midPoint = new Vector2
                 {
-                    X = 0.5 * (nextEndPoint.X + currentEndPoint.X),
-                    Y = 0.5 * (nextEndPoint.Y + currentEndPoint.Y)
+                    X = 0.5f * (nextEndPoint.Coordinates.X + currentEndPoint.Coordinates.X),
+                    Y = 0.5f * (nextEndPoint.Coordinates.Y + currentEndPoint.Coordinates.Y)
                 };
                 var radius = Math.Sqrt(vLengthSqd) * 0.5;
                 var sortedPoints = new List<(T point, double distance, int index)>
@@ -64,7 +37,7 @@
                 {
                     if (usedIndices.Contains(pointData.Item2)) continue;
                     if (AddToListAlongMaximal(sortedPoints, pointData.Item1, pointData.Item2,
-                        currentEndPoint.X, currentEndPoint.Y, vX, vY, vLengthSqd, tolerance))
+                        currentEndPoint.Coordinates.X, currentEndPoint.Coordinates.Y, vX, vY, vLengthSqd, tolerance))
                         usedIndices.Add(pointData.Item2);
                 }
                 for (int j = 1; j < sortedPoints.Count; j++)
@@ -85,8 +58,8 @@
         /// <param name="convexHullIndices"></param>
         /// <returns></returns>
         /// <exception cref="ArgumentException"></exception>
-        public static List<T> Create<T>(IList<T> points, out List<int> convexHullIndices)
-        where T : IVector2D
+        public static List<T> CreateConvexHull<T>(IList<T> points, out List<int> convexHullIndices)
+        where T : IConvexVertex2D
         {
             // instead of calling points.Count several times, we create this variable. 
             // by the ways points is unaffected by this method
@@ -114,27 +87,27 @@
             for (var i = 0; i < numPoints; i++)
             {
                 var p = points[i];
-                var x = p.X;
-                var y = p.Y;
-                if (x < minX || (x == minX && y < points[minXIndex].Y))
+                var x = p.Coordinates.X;
+                var y = p.Coordinates.Y;
+                if (x < minX || (x == minX && y < points[minXIndex].Coordinates.Y))
                 {
                     minXIndex = i;
                     minX = x;
                 }
 
-                if (y < minY || (y == minY && x > points[maxXIndex].X))
+                if (y < minY || (y == minY && x > points[maxXIndex].Coordinates.X))
                 {
                     minYIndex = i;
                     minY = y;
                 }
 
-                if (x > maxX || (x == maxX && y > points[maxXIndex].Y))
+                if (x > maxX || (x == maxX && y > points[maxXIndex].Coordinates.Y))
                 {
                     maxXIndex = i;
                     maxX = x;
                 }
 
-                if (y > maxY || (y == maxY && x < points[minXIndex].X))
+                if (y > maxY || (y == maxY && x < points[minXIndex].Coordinates.X))
                 {
                     maxYIndex = i;
                     maxY = y;
@@ -195,11 +168,11 @@
             //At minimum, the convex hull must contain two points (e.g. consider three points in a near line,
             //the third point will be added later, since it was not an extreme.)
             var p0 = extremes[0].point;
-            var p0X = p0.X;
-            var p0Y = p0.Y;
+            var p0X = p0.Coordinates.X;
+            var p0Y = p0.Coordinates.Y;
             var p1 = extremes[1].point;
-            var p1X = p1.X;
-            var p1Y = p1.Y;
+            var p1X = p1.Coordinates.X;
+            var p1Y = p1.Coordinates.Y;
             var v0X = p1X - p0X;
             var v0Y = p1Y - p0Y;
             double p2X = 0, p2Y = 0, p3X = 0, p3Y = 0;
@@ -208,15 +181,15 @@
             if (cvxVNum > 2)
             {
                 var p2 = extremes[2].point;
-                p2X = p2.X;
-                p2Y = p2.Y;
+                p2X = p2.Coordinates.X;
+                p2Y = p2.Coordinates.Y;
                 v1X = p2X - p1X;
                 v1Y = p2Y - p1Y;
                 if (cvxVNum > 3)
                 {
                     var p3 = extremes[3].point;
-                    p3X = p3.X;
-                    p3Y = p3.Y;
+                    p3X = p3.Coordinates.X;
+                    p3Y = p3.Coordinates.Y;
                     v2X = p3X - p2X;
                     v2Y = p3Y - p2Y;
                     //Wrap around from 3
@@ -266,8 +239,8 @@
                 else
                 {
                     var point = points[i];
-                    var newPointX = point.X;
-                    var newPointY = point.Y;
+                    var newPointX = point.Coordinates.X;
+                    var newPointY = point.Coordinates.Y;
                     if (AddToListAlong(sortedPoints[0], ref sizes[0], point, i, p0X, p0Y, v0X, v0Y, v0LengthSqd))
                         continue;
                     if (AddToListAlong(sortedPoints[1], ref sizes[1], point, i, p1X, p1Y, v1X, v1Y, v1LengthSqd))
@@ -304,10 +277,10 @@
                 var nextPt = convexHull[nextI];
                 var currentPt = convexHull[currI];
                 var prevPt = convexHull[prevI];
-                var lX = currentPt.X - prevPt.X;
-                var lY = currentPt.Y - prevPt.Y;
-                var rX = nextPt.X - currentPt.X;
-                var rY = nextPt.Y - currentPt.Y;
+                var lX = currentPt.Coordinates.X - prevPt.Coordinates.X;
+                var lY = currentPt.Coordinates.Y - prevPt.Coordinates.Y;
+                var rX = nextPt.Coordinates.X - currentPt.Coordinates.X;
+                var rY = nextPt.Coordinates.Y - currentPt.Coordinates.Y;
                 double zValue = lX * rY - lY * rX;
                 if (zValue > 0) // then save this convex point (for now)
                 {
@@ -343,10 +316,10 @@
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static bool AddToListAlong<T>((T point, double distance, int index)[] sortedPoints, ref int size,
                 T newPoint, int newPtIndex, double basePointX, double basePointY,
-                double edgeVectorX, double edgeVectorY, double edgeVectorLengthSqd) where T : IVector2D
+                double edgeVectorX, double edgeVectorY, double edgeVectorLengthSqd) where T : IConvexVertex2D
         {
-            var vectorToNewPointX = newPoint.X - basePointX;
-            var vectorToNewPointY = newPoint.Y - basePointY;
+            var vectorToNewPointX = newPoint.Coordinates.X - basePointX;
+            var vectorToNewPointY = newPoint.Coordinates.Y - basePointY;
             var newDxOut = vectorToNewPointX * edgeVectorY - vectorToNewPointY * edgeVectorX;
             if (newDxOut < 0) return false;
             var newDxAlong = edgeVectorX * vectorToNewPointX + edgeVectorY * vectorToNewPointY;
@@ -362,7 +335,7 @@
                 //  the same key is found. In this case, we only want to keep
                 // the one vertex that sticks out the farthest.
                 var ptOnList = sortedPoints[index].point;
-                var onListDxOut = (ptOnList.X - basePointX) * edgeVectorY - (ptOnList.Y - basePointY) * edgeVectorX;
+                var onListDxOut = (ptOnList.Coordinates.X - basePointX) * edgeVectorY - (ptOnList.Coordinates.Y - basePointY) * edgeVectorX;
                 if (newDxOut > onListDxOut)
                     sortedPoints[index] = (newPoint, newDxAlong, newPtIndex);
             }
@@ -376,8 +349,8 @@
 
                 var prevPt = sortedPoints[index - 1].point;
                 var nextPt = sortedPoints[index].point;
-                double lX = newPoint.X - prevPt.X, lY = newPoint.Y - prevPt.Y;
-                double rX = nextPt.X - newPoint.X, rY = nextPt.Y - newPoint.Y;
+                double lX = newPoint.Coordinates.X - prevPt.Coordinates.X, lY = newPoint.Coordinates.Y - prevPt.Coordinates.Y;
+                double rX = nextPt.Coordinates.X - newPoint.Coordinates.X, rY = nextPt.Coordinates.Y - newPoint.Coordinates.Y;
                 double zValue = lX * rY - lY * rX;
                 // if cross produce is negative
                 // then don't add it.
@@ -396,10 +369,10 @@
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static bool AddToListAlongMaximal<T>(IList<(T point, double distance, int index)> sortedPoints,
                 T newPoint, int newPtIndex, double basePointX, double basePointY,
-                double edgeVectorX, double edgeVectorY, double edgeVectorLengthSqd, double tolerance) where T : IVector2D
+                double edgeVectorX, double edgeVectorY, double edgeVectorLengthSqd, double tolerance) where T : IConvexVertex2D
         {
-            var vectorToNewPointX = newPoint.X - basePointX;
-            var vectorToNewPointY = newPoint.Y - basePointY;
+            var vectorToNewPointX = newPoint.Coordinates.X - basePointX;
+            var vectorToNewPointY = newPoint.Coordinates.Y - basePointY;
             var newDxOut = vectorToNewPointX * edgeVectorY - vectorToNewPointY * edgeVectorX;
             if (newDxOut < 0) return false;
             var newDxAlong = edgeVectorX * vectorToNewPointX + edgeVectorY * vectorToNewPointY;
@@ -412,7 +385,7 @@
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static int IncreasingDxAlongBinarySearch<T>(this IList<(T point, double distance, int index)> array,
-            double queryValue, int inclusiveLowIndex, int inclusiveHighIndex) where T : IVector2D
+        double queryValue, int inclusiveLowIndex, int inclusiveHighIndex) where T : IConvexVertex2D
         {
             while (inclusiveLowIndex <= inclusiveHighIndex)
             {
@@ -425,5 +398,5 @@
             }
             return inclusiveLowIndex;
         }
+
     }
-}

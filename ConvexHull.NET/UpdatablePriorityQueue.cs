@@ -2,7 +2,7 @@
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 
-namespace PointCloud.NET
+namespace PointCloudNet
 {
     /// <summary>
     /// The updatable priority queue is an augmentation of the .NET PriorityQueue

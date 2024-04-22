@@ -5,12 +5,4 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
-
-  <ItemGroup>
-    <Compile Remove="NoEqualSort.cs" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Include="NoEqualSort.cs" />
-  </ItemGroup>
 </Project>

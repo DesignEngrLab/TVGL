@@ -13,7 +13,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TVGLUnitTestsAndBenchmarkin
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TVGL PresenterDebugger", "TVGL PresenterDebugger\TVGL PresenterDebugger.csproj", "{CC5F477E-D308-4C86-8C3E-0FB13A5BE656}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConvexHull.NET", "ConvexHull.NET\ConvexHull.NET.csproj", "{E3750A1D-5510-4B07-A8CB-2D992A45A6E6}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PointCloudNet", "ConvexHull.NET\PointCloudNet.csproj", "{E3750A1D-5510-4B07-A8CB-2D992A45A6E6}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
