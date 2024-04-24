@@ -18,8 +18,9 @@ namespace TVGL.PointCloud
         public static Matrix4x4 Run(IList<Vector3> targetPoints, IList<Vector3> originalPoints, IList<Vector3> targetNormals,
             IList<Vector3> originalNormals, double minError = 1e-7, int stepsSinceImprovement = 50, int maxIterations = 500)
         {
-            return Run(KDTree.Create(targetPoints, Enumerable.Range(0, targetPoints.Count).ToList()),
-                KDTree.Create(originalPoints, Enumerable.Range(0, targetPoints.Count).ToList()), minError, stepsSinceImprovement, maxIterations);
+            return Run(KDTree.Create(targetPoints, Enumerable.Range(0, targetPoints.Count).ToList()), CalculateNormalInfo(targetNormals),
+                KDTree.Create(originalPoints, Enumerable.Range(0, originalPoints.Count).ToList()),
+                CalculateNormalInfo(originalNormals), minError, stepsSinceImprovement, maxIterations);
         }
 
         private static Matrix4x4 Run(KDTree<Vector3, int> targetCloud, KDTree<Vector3, int> origCloud, double minError = 1e-7,
@@ -77,7 +78,7 @@ namespace TVGL.PointCloud
                     .Where(i => Math.Abs(Angle[i]) > AngThr && closestPointsTargetToStart[i].Item1.Distance(fromTargetToStarting[i]) < DistThr).ToList();
                 //                EffIdx_sim = find(abs(Angle) > AngThr & DD' < DistThr );
                 //                EffIdx = intersect(EffIdx_sim, bi_eff);
-                var TargetIndices = EffIdx_sim.Intersect(bi_eff).ToList(); 
+                var TargetIndices = EffIdx_sim.Intersect(bi_eff).ToList();
                 var targetMatches = TargetIndices.Select(index => fromTargetToStarting[index]).ToList();
                 //                TargetIndices = EffIdx;
                 //                targetMatches = fromTargetToStarting(:, TargetIndices);
@@ -536,6 +537,31 @@ namespace TVGL.PointCloud
                 Matrix3x3.Invert(covariance, out var omega);
 
                 normals[i] = new NormalInfo { U = u, Normal = eigenVectors[orderOfEigens[0]], Omega = omega };
+            }
+            return normals;
+        }
+
+
+
+        private static NormalInfo[] CalculateNormalInfo(IList<Vector3> data)
+        {
+            var numPoints = data.Count;
+            var normals = new NormalInfo[numPoints];
+            var numNeighbors = Math.Min(20, numPoints);
+            var S = new Matrix3x3(0.001, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0);
+            for (int i = 0; i < numPoints; i++)
+            {
+                var point = data[i];
+
+                var inPlane1 = data[i].GetPerpendicularDirection();
+                var inPlane2 = Vector3.Cross(data[i], inPlane1).Normalize();
+                var u = new Matrix3x3(data[i].X, inPlane1.X, inPlane2.X,
+                    data[i].Y, inPlane1.Y, inPlane2.Y,
+                    data[i].Z, inPlane1.Z, inPlane2.Z);
+               var covariance = u * S * (u.Transpose());
+                Matrix3x3.Invert(covariance, out var omega);
+
+                normals[i] = new NormalInfo { U = u, Normal = data[i], Omega = omega };
             }
             return normals;
         }
