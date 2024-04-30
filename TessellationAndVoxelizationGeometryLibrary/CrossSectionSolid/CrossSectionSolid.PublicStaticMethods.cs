@@ -42,7 +42,7 @@ namespace TVGL
 
             var bounds = new[] { ts.Bounds[0], ts.Bounds[1] };
 
-            var layers = ts.GetUniformlySpacedCrossSections(direction, out var stepDistances,out _, min + 0.5 * stepSize, numberOfLayers, stepSize);
+            var layers = ts.GetUniformlySpacedCrossSections(direction, out var stepDistances, out _, out _, min + 0.5 * stepSize, numberOfLayers, stepSize);
             var layerDict = new Dictionary<int, IList<Polygon>>();
             for (int i = 0; i < layers.Length; i++)
                 layerDict.Add(i, layers[i]);
@@ -76,7 +76,7 @@ namespace TVGL
             //stepDistances[i] = stepDistances[i - 1] + stepSize;
             var bounds = new[] { ts.Bounds[0].Copy(), ts.Bounds[1].Copy() };
 
-            var layers = ts.GetUniformlySpacedCrossSections(direction, out _, out _, stepDistances[0], numberOfLayers, stepSize);
+            var layers = ts.GetUniformlySpacedCrossSections(direction, out _, out _, out _, stepDistances[0], numberOfLayers, stepSize);
             var layerDict = new Dictionary<int, IList<Polygon>>();
             for (int i = 0; i < layers.Length; i++)
                 layerDict.Add(i, layers[i]);

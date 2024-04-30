@@ -804,12 +804,13 @@ namespace TVGL
         /// <param name="stepSize">Size of the step.</param>
         /// <returns>List&lt;Polygon&gt;[].</returns>
         /// <exception cref="System.ArgumentException">Either a valid stepSize or a number of slices greater than zero must be specified.</exception>
-        public static List<Polygon>[] GetUniformlySpacedCrossSections(this TessellatedSolid ts, Vector3 direction, out double[] sliceOffsets, out Dictionary<Vertex2D, Edge>[] vertex2DToEdges,
+        public static List<Polygon>[] GetUniformlySpacedCrossSections(this TessellatedSolid ts, Vector3 direction, out double[] sliceOffsets, 
+            out Dictionary<Vertex2D, Edge>[] vertex2DToEdges, out List<bool>[] completePolygons,
             double startDistanceAlongDirection = double.NaN, int numSlices = -1, double stepSize = double.NaN)
-            => GetUniformlySpacedCrossSections(ts.Vertices, direction,out sliceOffsets, out vertex2DToEdges, startDistanceAlongDirection, numSlices, stepSize);
+            => GetUniformlySpacedCrossSections(ts.Vertices, direction,out sliceOffsets, out vertex2DToEdges,out completePolygons, startDistanceAlongDirection, numSlices, stepSize);
 
         public static List<Polygon>[] GetUniformlySpacedCrossSections(this IEnumerable<Vertex> vertices, Vector3 direction, out double[] sliceOffsets,
-           out Dictionary<Vertex2D, Edge>[] vertex2DToEdges, double startDistanceAlongDirection = double.NaN,
+           out Dictionary<Vertex2D, Edge>[] vertex2DToEdges, out List<bool>[] completePolygons, double startDistanceAlongDirection = double.NaN,
         int numSlices = -1, double stepSize = double.NaN)
         {
             //First, sort the vertices along the given axis. Duplicate distances are not important.
@@ -832,6 +833,7 @@ namespace TVGL
             sliceOffsets = new double[numSlices];
 
             vertex2DToEdges = new Dictionary<Vertex2D, Edge>[numSlices];
+            completePolygons = new List<bool>[numSlices];
             var currentEdges = new HashSet<Edge>();
             var nextDistance = sortedVertices.First().Dot(direction);
             var vIndex = 0;
@@ -860,8 +862,9 @@ namespace TVGL
                 {
                     result[step] = GetLoops(currentEdges.ToDictionary(ce => ce, ce =>
                        MiscFunctions.PointOnPlaneFromIntersectingLine(plane, ce.From.Coordinates, ce.To.Coordinates, out _)
-                           .ConvertTo2DCoordinates(transform)), plane.Normal, plane.DistanceToOrigin, out var v2EDictionary);
+                           .ConvertTo2DCoordinates(transform)), plane.Normal, plane.DistanceToOrigin, out var v2EDictionary, out var completedLoops);
                     vertex2DToEdges[step] = v2EDictionary;
+                    completePolygons[step] = completedLoops;
                 }
                 else result[step] = new List<Polygon>();
             }
@@ -877,9 +880,10 @@ namespace TVGL
         /// <param name="e2VDictionary">The e2 v dictionary.</param>
         /// <returns>List&lt;Polygon&gt;.</returns>
         private static List<Polygon> GetLoops(Dictionary<Edge, Vector2> edgeDictionary, Vector3 normal, double distanceToOrigin,
-            out Dictionary<Vertex2D, Edge> e2VDictionary)
+            out Dictionary<Vertex2D, Edge> e2VDictionary, out List<bool> completedLoops)
         {
             var polygons = new List<Polygon>();
+            completedLoops = new List<bool>();
             e2VDictionary = new Dictionary<Vertex2D, Edge>();
             while (edgeDictionary.Any())
             {
@@ -907,7 +911,10 @@ namespace TVGL
                         {
                             finishedLoop = true;
                             if (path.Count > 2)
+                            {
+                                completedLoops.Add(true);
                                 AddToPolygons(path, edgesInLoop, polygons, e2VDictionary);
+                            }
                             break;
                         }
                         else if (edgeDictionary.ContainsKey(whichEdge))
@@ -920,7 +927,10 @@ namespace TVGL
                     {
                         Message.output("Incomplete loop.", 3);
                         if (path.Count > 2)
+                        {
+                        completedLoops.Add(false);
                             AddToPolygons(path, edgesInLoop, polygons, e2VDictionary);
+                        }
                         finishedLoop = true;
                     }
                     else currentEdge = nextEdge;
@@ -954,7 +964,7 @@ namespace TVGL
         /// <param name="v2EDictionary">The v2 e dictionary.</param>
         /// <returns>List&lt;Polygon&gt;.</returns>
         public static List<Polygon> GetCrossSection(this TessellatedSolid tessellatedSolid, CartesianDirections direction,
-            double distanceToOrigin, out Dictionary<Vertex2D, Edge> v2EDictionary)
+            double distanceToOrigin, out Dictionary<Vertex2D, Edge> v2EDictionary, out List<bool> completedPolygons)
         {
             var intDir = Math.Abs((int)direction) - 1;
             var signDir = Math.Sign((int)direction);
@@ -962,7 +972,7 @@ namespace TVGL
             var positiveShift = 0.0;
             var negativeShift = 0.0;
             distances.SetPositiveAndNegativeShifts(distanceToOrigin, tessellatedSolid.SameTolerance, ref positiveShift, ref negativeShift);
-            var planeDistance = distanceToOrigin + ((positiveShift < -negativeShift) ? positiveShift : negativeShift);
+            var planeDistance =signDir*( distanceToOrigin + ((positiveShift < -negativeShift) ? positiveShift : negativeShift));
 
             var transform = direction.TransformToXYPlane(out _);
             tessellatedSolid.MakeEdgesIfNonExistent();
@@ -992,7 +1002,7 @@ namespace TVGL
                     e2VDict.Add(edge, ip);
                 }
             }
-            return GetLoops(e2VDict, Vector3.UnitVector(intDir), distanceToOrigin, out v2EDictionary);
+            return GetLoops(e2VDict, Vector3.UnitVector(intDir), distanceToOrigin, out v2EDictionary, out completedPolygons);
         }
 
         /// <summary>
@@ -1002,12 +1012,13 @@ namespace TVGL
         /// <param name="plane">The plane.</param>
         /// <param name="v2EDictionary">The v2 e dictionary.</param>
         /// <returns>List&lt;Polygon&gt;.</returns>
-        public static List<Polygon> GetCrossSection(this TessellatedSolid tessellatedSolid, Plane plane, out Dictionary<Vertex2D, Edge> v2EDictionary)
+        public static List<Polygon> GetCrossSection(this TessellatedSolid tessellatedSolid, Plane plane, 
+            out Dictionary<Vertex2D, Edge> v2EDictionary, out List<bool> completedPolygons)
         {
             var direction = plane.Normal;
             var closestCartesianDirection = direction.SnapDirectionToCartesian(out var withinTolerance, tessellatedSolid.SameTolerance);
             if (withinTolerance)
-                return tessellatedSolid.GetCrossSection(closestCartesianDirection, plane.DistanceToOrigin, out v2EDictionary);
+                return tessellatedSolid.GetCrossSection(closestCartesianDirection, plane.DistanceToOrigin, out v2EDictionary, out completedPolygons);
 
             var distances = tessellatedSolid.Vertices.Select(v => v.Dot(direction)).ToList();
             var positiveShift = 0.0;
@@ -1029,7 +1040,7 @@ namespace TVGL
                     e2VDict.Add(edge, ip);
                 }
             }
-            return GetLoops(e2VDict, plane.Normal, plane.DistanceToOrigin, out v2EDictionary);
+            return GetLoops(e2VDict, plane.Normal, plane.DistanceToOrigin, out v2EDictionary, out completedPolygons);
         }
 
         /// <summary>
@@ -1043,7 +1054,7 @@ namespace TVGL
         /// <returns>List&lt;Polygon&gt;[].</returns>
         /// <exception cref="System.ArgumentException">Either a valid stepSize or a number of slices greater than zero must be specified.</exception>
         public static List<Polygon>[] GetUniformlySpacedCrossSections(this TessellatedSolid ts, CartesianDirections direction, out double[] sliceOffsets,
-            out Dictionary<Vertex2D, Edge>[] vertex2DToEdges, double startDistanceAlongDirection = double.NaN, int numSlices = -1, double stepSize = double.NaN)
+            out Dictionary<Vertex2D, Edge>[] vertex2DToEdges, out List<bool>[] completePolygons, double startDistanceAlongDirection = double.NaN, int numSlices = -1, double stepSize = double.NaN)
         {
             if (double.IsNaN(stepSize) && numSlices < 1) throw new ArgumentException("Either a valid stepSize or a number of slices greater than zero must be specified.");
             var intDir = Math.Abs((int)direction) - 1;
@@ -1063,27 +1074,30 @@ namespace TVGL
             switch (direction)
             {
                 case CartesianDirections.XPositive:
-                    return AllSlicesAlongX(ts, startDistanceAlongDirection, numSlices, stepSize, out sliceOffsets, out vertex2DToEdges);
+                    return AllSlicesAlongX(ts, startDistanceAlongDirection, numSlices, stepSize, out sliceOffsets, out vertex2DToEdges, out completePolygons);
                 case CartesianDirections.YPositive:
-                    return AllSlicesAlongY(ts, startDistanceAlongDirection, numSlices, stepSize, out sliceOffsets, out vertex2DToEdges);
+                    return AllSlicesAlongY(ts, startDistanceAlongDirection, numSlices, stepSize, out sliceOffsets, out vertex2DToEdges, out completePolygons);
                 case CartesianDirections.ZPositive:
-                    return AllSlicesAlongZ(ts, startDistanceAlongDirection, numSlices, stepSize, out sliceOffsets, out vertex2DToEdges);
+                    return AllSlicesAlongZ(ts, startDistanceAlongDirection, numSlices, stepSize, out sliceOffsets, out vertex2DToEdges, out completePolygons);
                 case CartesianDirections.XNegative:
-                    var slicesX = AllSlicesAlongX(ts, startDistanceAlongDirection, numSlices, stepSize, out sliceOffsets, out vertex2DToEdges);
+                    var slicesX = AllSlicesAlongX(ts, startDistanceAlongDirection, numSlices, stepSize, out sliceOffsets, out vertex2DToEdges, out completePolygons);
                     Array.Reverse(sliceOffsets);
                     Array.Reverse(slicesX);
+                    Array.Reverse(completePolygons);
                     Array.Reverse(vertex2DToEdges);
                     return slicesX;
                 case CartesianDirections.YNegative:
-                    var slicesY = AllSlicesAlongY(ts, startDistanceAlongDirection, numSlices, stepSize, out sliceOffsets, out vertex2DToEdges);
+                    var slicesY = AllSlicesAlongY(ts, startDistanceAlongDirection, numSlices, stepSize, out sliceOffsets, out vertex2DToEdges, out completePolygons);
                     Array.Reverse(sliceOffsets);
                     Array.Reverse(slicesY);
+                    Array.Reverse(completePolygons);
                     Array.Reverse(vertex2DToEdges);
                     return slicesY;
                 default:
-                    var slicesZ = AllSlicesAlongZ(ts, startDistanceAlongDirection, numSlices, stepSize, out sliceOffsets, out vertex2DToEdges);
+                    var slicesZ = AllSlicesAlongZ(ts, startDistanceAlongDirection, numSlices, stepSize, out sliceOffsets, out vertex2DToEdges, out completePolygons);
                     Array.Reverse(sliceOffsets);
                     Array.Reverse(slicesZ);
+                    Array.Reverse(completePolygons);
                     Array.Reverse(vertex2DToEdges);
                     return slicesZ;
             }
@@ -1098,12 +1112,12 @@ namespace TVGL
         /// <param name="stepSize">Size of the step.</param>
         /// <returns>List&lt;Polygon&gt;[].</returns>
         private static List<Polygon>[] AllSlicesAlongX(TessellatedSolid ts, double startDistanceAlongDirection, int numSlices, double stepSize,
-            out double[] sliceOffsets, out Dictionary<Vertex2D, Edge>[] vertex2DToEdges)
+            out double[] sliceOffsets, out Dictionary<Vertex2D, Edge>[] vertex2DToEdges, out List<bool>[] completedPolygons)
         {
             var loopsAlongX = new List<Polygon>[numSlices];
             sliceOffsets = new double[numSlices];
             vertex2DToEdges = new Dictionary<Vertex2D, Edge>[numSlices];
-
+            completedPolygons = new List<bool>[numSlices];
             //First, sort the vertices along the given axis. Duplicate distances are not important.
             var sortedVertices = ts.Vertices.OrderBy(v => v.X).ToArray();
             var currentEdges = new HashSet<Edge>();
@@ -1138,8 +1152,9 @@ namespace TVGL
                              ce.To.Coordinates);
                         edgeDictionary.Add(ce, new Vector2(pointOnPlane.Y, pointOnPlane.Z));
                     }
-                    loopsAlongX[step] = GetLoops(edgeDictionary, Vector3.UnitX, x, out var v2EDictionary);
+                    loopsAlongX[step] = GetLoops(edgeDictionary, Vector3.UnitX, x, out var v2EDictionary, out var completedLoops);
                     vertex2DToEdges[step] = v2EDictionary;
+                    completedPolygons[step] = completedLoops;
                 }
                 else loopsAlongX[step] = new List<Polygon>();
             }
@@ -1155,12 +1170,13 @@ namespace TVGL
         /// <param name="stepSize">Size of the step.</param>
         /// <returns>List&lt;Polygon&gt;[].</returns>
         private static List<Polygon>[] AllSlicesAlongY(TessellatedSolid ts, double startDistanceAlongDirection, int numSlices, double stepSize,
-            out double[] sliceOffsets, out Dictionary<Vertex2D, Edge>[] vertex2DToEdges)
+            out double[] sliceOffsets, out Dictionary<Vertex2D, Edge>[] vertex2DToEdges, out List<bool>[] completedPolygons)
         {
             var loopsAlongY = new List<Polygon>[numSlices];
             sliceOffsets = new double[numSlices];
             vertex2DToEdges = new Dictionary<Vertex2D, Edge>[numSlices];
-           
+            completedPolygons = new List<bool>[numSlices];
+
             //First, sort the vertices along the given axis. Duplicate distances are not important.
             var sortedVertices = ts.Vertices.OrderBy(v => v.Y).ToArray();
             var currentEdges = new HashSet<Edge>();
@@ -1195,8 +1211,9 @@ namespace TVGL
                              ce.To.Coordinates);
                         edgeDictionary.Add(ce, new Vector2(pointOnPlane.Z, pointOnPlane.X));
                     }
-                    loopsAlongY[step] = GetLoops(edgeDictionary, Vector3.UnitY, y, out var v2EDictionary);
+                    loopsAlongY[step] = GetLoops(edgeDictionary, Vector3.UnitY, y, out var v2EDictionary, out var completedLoops);
                     vertex2DToEdges[step] = v2EDictionary;
+                    completedPolygons[step] = completedLoops;
                 }
                 else loopsAlongY[step] = new List<Polygon>();
             }
@@ -1212,12 +1229,13 @@ namespace TVGL
         /// <param name="stepSize">Size of the step.</param>
         /// <returns>List&lt;Polygon&gt;[].</returns>
         private static List<Polygon>[] AllSlicesAlongZ(TessellatedSolid ts, double startDistanceAlongDirection, int numSlices, double stepSize,
-            out double[] sliceOffsets, out Dictionary<Vertex2D, Edge>[] vertex2DToEdges)
+            out double[] sliceOffsets, out Dictionary<Vertex2D, Edge>[] vertex2DToEdges, out List<bool>[] completedPolygons)
         {
             var loopsAlongZ = new List<Polygon>[numSlices];
             sliceOffsets = new double[numSlices];
             vertex2DToEdges = new Dictionary<Vertex2D, Edge>[numSlices];
-          
+            completedPolygons = new List<bool>[numSlices];
+
             //First, sort the vertices along the given axis. Duplicate distances are not important.
             var sortedVertices = ts.Vertices.OrderBy(v => v.Z).ToArray();
             var currentEdges = new HashSet<Edge>();
@@ -1255,8 +1273,9 @@ namespace TVGL
                              ce.To.Coordinates);
                         edgeDictionary.Add(ce, new Vector2(pointOnPlane.X, pointOnPlane.Y));
                     }
-                    loopsAlongZ[step] = GetLoops(edgeDictionary, Vector3.UnitZ, z, out var v2EDictionary);
+                    loopsAlongZ[step] = GetLoops(edgeDictionary, Vector3.UnitZ, z, out var v2EDictionary, out var completedLoops);
                     vertex2DToEdges[step] = v2EDictionary;
+                    completedPolygons[step] = completedLoops;
                 }
                 else loopsAlongZ[step] = new List<Polygon>();
                 //Presenter.ShowAndHang(loopsAlongZ[step]);

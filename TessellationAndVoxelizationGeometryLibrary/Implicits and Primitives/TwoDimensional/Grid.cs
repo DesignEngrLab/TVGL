@@ -98,12 +98,8 @@ namespace TVGL
         /// <param name="pixelBorder">The pixel border.</param>
         public void Initialize(double minX, double maxX, double minY, double maxY, int pixelsPerRow, int pixelBorder = 2)
         {
-            MaxX = maxX;
-            MinX = minX;
-            MaxY = maxY;
-            MinY = minY;
-            XLength = maxX - MinX;
-            YLength = maxY - MinY;
+            XLength = maxX - minX;
+            YLength = maxY - minY;
             var MaxLength = XLength > YLength ? XLength : YLength;
 
             //Calculate the size of a pixel based on the max of the two dimensions in question. 
@@ -114,15 +110,16 @@ namespace TVGL
             YCount = (int)Math.Ceiling(YLength * inversePixelSideLength);
             // shift the grid slightly so that the part is centered in the grid
             var xStickout = XCount * PixelSideLength - XLength;
-            MinX -= xStickout / 2;
+            MinX = minX - xStickout / 2;
             var yStickout = YCount * PixelSideLength - YLength;
-            MinY -= yStickout / 2;
+            MinY = minY - yStickout / 2;
             // add the pixel border...2x since includes both sides (left and right, or top and bottom)
             XCount += pixelBorder * 2;
             YCount += pixelBorder * 2;
-            MinX -= pixelBorder*PixelSideLength;
-            MinY -= pixelBorder*PixelSideLength;
-
+            MinX -= pixelBorder * PixelSideLength;
+            MinY -= pixelBorder * PixelSideLength;
+            MaxX = MinX + XCount * PixelSideLength;
+            MaxY = MinY + YCount * PixelSideLength;
             MaxIndex = XCount * YCount - 1;
             Values = new T[XCount * YCount];
         }

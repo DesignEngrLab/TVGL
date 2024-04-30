@@ -2150,7 +2150,7 @@ namespace TVGL
         /// <returns></returns>
         public static bool IsPointInsideSolid(TessellatedSolid ts, Vector3 PointInQuestion, bool onBoundaryIsInside = true)
         {
-            var slice = Slice.GetCrossSection(ts, CartesianDirections.ZPositive, PointInQuestion.Z, out _);
+            var slice = Slice.GetCrossSection(ts, CartesianDirections.ZPositive, PointInQuestion.Z, out _, out _);
             foreach (var polygon in slice)
             {
                 var V = new Vector2(PointInQuestion.X, PointInQuestion.Y);
