@@ -42,7 +42,7 @@ namespace TVGL
 
             var bounds = new[] { ts.Bounds[0], ts.Bounds[1] };
 
-            var layers = ts.GetUniformlySpacedCrossSections(direction, out var stepDistances, min + 0.5 * stepSize, numberOfLayers, stepSize);
+            var layers = ts.GetUniformlySpacedCrossSections(direction, out var stepDistances,out _, min + 0.5 * stepSize, numberOfLayers, stepSize);
             var layerDict = new Dictionary<int, IList<Polygon>>();
             for (int i = 0; i < layers.Length; i++)
                 layerDict.Add(i, layers[i]);
