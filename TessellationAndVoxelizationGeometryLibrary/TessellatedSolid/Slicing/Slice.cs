@@ -872,6 +872,155 @@ namespace TVGL
         }
 
         /// <summary>
+        /// Gets the uniformly spaced slices.
+        /// </summary>
+        /// <param name="ts">The ts.</param>
+        /// <param name="direction">The direction.</param>
+        /// <param name="startDistanceAlongDirection">The start distance along direction.</param>
+        /// <param name="numSlices">The number slices.</param>
+        /// <param name="stepSize">Size of the step.</param>
+        /// <returns>List&lt;Polygon&gt;[].</returns>
+        /// <exception cref="System.ArgumentException">Either a valid stepSize or a number of slices greater than zero must be specified.</exception>
+        public static List<Polygon>[] GetUniformlySpacedCrossSections(this TessellatedSolid ts, CartesianDirections direction, out double[] sliceOffsets,
+            out Dictionary<Vertex2D, Edge>[] vertex2DToEdges, out List<bool>[] completePolygons, double startDistanceAlongDirection = double.NaN, int numSlices = -1, double stepSize = double.NaN)
+        {
+            if (double.IsNaN(stepSize) && numSlices < 1) throw new ArgumentException("Either a valid stepSize or a number of slices greater than zero must be specified.");
+            var intDir = Math.Abs((int)direction) - 1;
+
+            if ((ts.Bounds[0] - ts.Bounds[1]).IsNegligible(ts.SameTolerance))
+                ts.DefineAxisAlignedBoundingBoxAndTolerance();
+            var lengthAlongDir = ts.Bounds[1][intDir] - ts.Bounds[0][intDir];
+            stepSize = Math.Abs(stepSize);
+            if (double.IsNaN(stepSize)) stepSize = lengthAlongDir / numSlices;
+            if (numSlices < 1) numSlices = (int)(lengthAlongDir / stepSize);
+            if (double.IsNaN(startDistanceAlongDirection))
+            {
+                if (direction < 0)
+                    startDistanceAlongDirection = ts.Bounds[1][intDir] - 0.5 * stepSize;
+                else startDistanceAlongDirection = ts.Bounds[0][intDir] + 0.5 * stepSize;
+            }
+            switch (direction)
+            {
+                case CartesianDirections.XPositive:
+                    return AllSlicesAlongX(ts, startDistanceAlongDirection, numSlices, stepSize, out sliceOffsets, out vertex2DToEdges, out completePolygons);
+                case CartesianDirections.YPositive:
+                    return AllSlicesAlongY(ts, startDistanceAlongDirection, numSlices, stepSize, out sliceOffsets, out vertex2DToEdges, out completePolygons);
+                case CartesianDirections.ZPositive:
+                    return AllSlicesAlongZ(ts, startDistanceAlongDirection, numSlices, stepSize, out sliceOffsets, out vertex2DToEdges, out completePolygons);
+                case CartesianDirections.XNegative:
+                    var slicesX = AllSlicesAlongX(ts, startDistanceAlongDirection, numSlices, stepSize, out sliceOffsets, out vertex2DToEdges, out completePolygons);
+                    Array.Reverse(sliceOffsets);
+                    Array.Reverse(slicesX);
+                    Array.Reverse(completePolygons);
+                    Array.Reverse(vertex2DToEdges);
+                    return slicesX;
+                case CartesianDirections.YNegative:
+                    var slicesY = AllSlicesAlongY(ts, startDistanceAlongDirection, numSlices, stepSize, out sliceOffsets, out vertex2DToEdges, out completePolygons);
+                    Array.Reverse(sliceOffsets);
+                    Array.Reverse(slicesY);
+                    Array.Reverse(completePolygons);
+                    Array.Reverse(vertex2DToEdges);
+                    return slicesY;
+                default:
+                    var slicesZ = AllSlicesAlongZ(ts, startDistanceAlongDirection, numSlices, stepSize, out sliceOffsets, out vertex2DToEdges, out completePolygons);
+                    Array.Reverse(sliceOffsets);
+                    Array.Reverse(slicesZ);
+                    Array.Reverse(completePolygons);
+                    Array.Reverse(vertex2DToEdges);
+                    return slicesZ;
+            }
+        }
+
+
+        /// <summary>
+        /// Gets the cross section.
+        /// </summary>
+        /// <param name="tessellatedSolid">The tessellated solid.</param>
+        /// <param name="direction">The direction.</param>
+        /// <param name="distanceToOrigin">The distance to origin.</param>
+        /// <param name="v2EDictionary">The v2 e dictionary.</param>
+        /// <returns>List&lt;Polygon&gt;.</returns>
+        public static List<Polygon> GetCrossSection(this TessellatedSolid tessellatedSolid, CartesianDirections direction,
+            double distanceToOrigin, out Dictionary<Vertex2D, Edge> v2EDictionary, out List<bool> completedPolygons)
+        {
+            var intDir = Math.Abs((int)direction) - 1;
+            var signDir = Math.Sign((int)direction);
+            var distances = tessellatedSolid.Vertices.Select(v => v.Coordinates[intDir]).ToList();
+            var positiveShift = 0.0;
+            var negativeShift = 0.0;
+            distances.SetPositiveAndNegativeShifts(distanceToOrigin, tessellatedSolid.SameTolerance, ref positiveShift, ref negativeShift);
+            var planeDistance = signDir * (distanceToOrigin + ((positiveShift < -negativeShift) ? positiveShift : negativeShift));
+
+            var transform = direction.TransformToXYPlane(out _);
+            tessellatedSolid.MakeEdgesIfNonExistent();
+            var e2VDict = new Dictionary<Edge, Vector2>();
+            foreach (var edge in tessellatedSolid.Edges)
+            {
+                var fromDistance = distances[edge.From.IndexInList];
+                var toDistance = distances[edge.To.IndexInList];
+                if ((fromDistance > planeDistance && toDistance < planeDistance) || (fromDistance < planeDistance && toDistance > planeDistance))
+                {
+                    Vector2 ip = Vector2.Null;
+                    if (intDir == 0)
+                    {
+                        var ip3D = MiscFunctions.PointOnXPlaneFromLineSegment(distanceToOrigin, edge.From.Coordinates, edge.To.Coordinates);
+                        ip = new Vector2(signDir * ip3D.Y, ip3D.Z);
+                    }
+                    else if (intDir == 1)
+                    {
+                        var ip3D = MiscFunctions.PointOnYPlaneFromLineSegment(distanceToOrigin, edge.From.Coordinates, edge.To.Coordinates);
+                        ip = new Vector2(signDir * ip3D.Z, ip3D.X);
+                    }
+                    else
+                    {
+                        var ip3D = MiscFunctions.PointOnZPlaneFromLineSegment(distanceToOrigin, edge.From.Coordinates, edge.To.Coordinates);
+                        ip = new Vector2(signDir * ip3D.X, ip3D.Y);
+                    }
+                    e2VDict.Add(edge, ip);
+                }
+            }
+            return GetLoops(e2VDict, Vector3.UnitVector(intDir), distanceToOrigin, out v2EDictionary, out completedPolygons);
+        }
+
+        /// <summary>
+        /// Gets the cross section.
+        /// </summary>
+        /// <param name="tessellatedSolid">The tessellated solid.</param>
+        /// <param name="plane">The plane.</param>
+        /// <param name="v2EDictionary">The v2 e dictionary.</param>
+        /// <returns>List&lt;Polygon&gt;.</returns>
+        public static List<Polygon> GetCrossSection(this TessellatedSolid tessellatedSolid, Plane plane,
+            out Dictionary<Vertex2D, Edge> v2EDictionary, out List<bool> completedPolygons)
+        {
+            var direction = plane.Normal;
+            var closestCartesianDirection = direction.SnapDirectionToCartesian(out var withinTolerance, tessellatedSolid.SameTolerance);
+            if (withinTolerance)
+                return tessellatedSolid.GetCrossSection(closestCartesianDirection, plane.DistanceToOrigin, out v2EDictionary, out completedPolygons);
+
+            var distances = tessellatedSolid.Vertices.Select(v => v.Dot(direction)).ToList();
+            var positiveShift = 0.0;
+            var negativeShift = 0.0;
+            distances.SetPositiveAndNegativeShifts(plane.DistanceToOrigin, tessellatedSolid.SameTolerance, ref positiveShift, ref negativeShift);
+            var planeDistance = plane.DistanceToOrigin + ((positiveShift < -negativeShift) ? positiveShift : negativeShift);
+
+            var transform = direction.TransformToXYPlane(out _);
+            tessellatedSolid.MakeEdgesIfNonExistent();
+            var e2VDict = new Dictionary<Edge, Vector2>();
+            foreach (var edge in tessellatedSolid.Edges)
+            {
+                var fromDistance = distances[edge.From.IndexInList];
+                var toDistance = distances[edge.To.IndexInList];
+                if ((fromDistance > planeDistance && toDistance < planeDistance) || (fromDistance < planeDistance && toDistance > planeDistance))
+                {
+                    var ip = MiscFunctions.PointOnPlaneFromIntersectingLine(plane, edge.From.Coordinates, edge.To.Coordinates, out _)
+                        .ConvertTo2DCoordinates(transform);
+                    e2VDict.Add(edge, ip);
+                }
+            }
+            return GetLoops(e2VDict, plane.Normal, plane.DistanceToOrigin, out v2EDictionary, out completedPolygons);
+        }
+
+        /// <summary>
         /// Gets the loops.
         /// </summary>
         /// <param name="edgeDictionary">The edge dictionary.</param>
@@ -952,155 +1101,6 @@ namespace TVGL
             polygons.Add(polygon);
             for (int i = 0; i < polygon.Vertices.Count; i++)
                 e2VDictionary.Add(polygon.Vertices[i], edgesInLoop[i]);
-        }
-
-
-        /// <summary>
-        /// Gets the cross section.
-        /// </summary>
-        /// <param name="tessellatedSolid">The tessellated solid.</param>
-        /// <param name="direction">The direction.</param>
-        /// <param name="distanceToOrigin">The distance to origin.</param>
-        /// <param name="v2EDictionary">The v2 e dictionary.</param>
-        /// <returns>List&lt;Polygon&gt;.</returns>
-        public static List<Polygon> GetCrossSection(this TessellatedSolid tessellatedSolid, CartesianDirections direction,
-            double distanceToOrigin, out Dictionary<Vertex2D, Edge> v2EDictionary, out List<bool> completedPolygons)
-        {
-            var intDir = Math.Abs((int)direction) - 1;
-            var signDir = Math.Sign((int)direction);
-            var distances = tessellatedSolid.Vertices.Select(v => v.Coordinates[intDir]).ToList();
-            var positiveShift = 0.0;
-            var negativeShift = 0.0;
-            distances.SetPositiveAndNegativeShifts(distanceToOrigin, tessellatedSolid.SameTolerance, ref positiveShift, ref negativeShift);
-            var planeDistance =signDir*( distanceToOrigin + ((positiveShift < -negativeShift) ? positiveShift : negativeShift));
-
-            var transform = direction.TransformToXYPlane(out _);
-            tessellatedSolid.MakeEdgesIfNonExistent();
-            var e2VDict = new Dictionary<Edge, Vector2>();
-            foreach (var edge in tessellatedSolid.Edges)
-            {
-                var fromDistance = distances[edge.From.IndexInList];
-                var toDistance = distances[edge.To.IndexInList];
-                if ((fromDistance > planeDistance && toDistance < planeDistance) || (fromDistance < planeDistance && toDistance > planeDistance))
-                {
-                    Vector2 ip = Vector2.Null;
-                    if (intDir == 0)
-                    {
-                        var ip3D = MiscFunctions.PointOnXPlaneFromLineSegment(distanceToOrigin, edge.From.Coordinates, edge.To.Coordinates);
-                        ip = new Vector2(ip3D.Y, ip3D.Z);
-                    }
-                    else if (intDir == 1)
-                    {
-                        var ip3D = MiscFunctions.PointOnYPlaneFromLineSegment(distanceToOrigin, edge.From.Coordinates, edge.To.Coordinates);
-                        ip = new Vector2(ip3D.Z, ip3D.X);
-                    }
-                    else
-                    {
-                        var ip3D = MiscFunctions.PointOnZPlaneFromLineSegment(distanceToOrigin, edge.From.Coordinates, edge.To.Coordinates);
-                        ip = new Vector2(ip3D.X, ip3D.Y);
-                    }
-                    e2VDict.Add(edge, ip);
-                }
-            }
-            return GetLoops(e2VDict, Vector3.UnitVector(intDir), distanceToOrigin, out v2EDictionary, out completedPolygons);
-        }
-
-        /// <summary>
-        /// Gets the cross section.
-        /// </summary>
-        /// <param name="tessellatedSolid">The tessellated solid.</param>
-        /// <param name="plane">The plane.</param>
-        /// <param name="v2EDictionary">The v2 e dictionary.</param>
-        /// <returns>List&lt;Polygon&gt;.</returns>
-        public static List<Polygon> GetCrossSection(this TessellatedSolid tessellatedSolid, Plane plane, 
-            out Dictionary<Vertex2D, Edge> v2EDictionary, out List<bool> completedPolygons)
-        {
-            var direction = plane.Normal;
-            var closestCartesianDirection = direction.SnapDirectionToCartesian(out var withinTolerance, tessellatedSolid.SameTolerance);
-            if (withinTolerance)
-                return tessellatedSolid.GetCrossSection(closestCartesianDirection, plane.DistanceToOrigin, out v2EDictionary, out completedPolygons);
-
-            var distances = tessellatedSolid.Vertices.Select(v => v.Dot(direction)).ToList();
-            var positiveShift = 0.0;
-            var negativeShift = 0.0;
-            distances.SetPositiveAndNegativeShifts(plane.DistanceToOrigin, tessellatedSolid.SameTolerance, ref positiveShift, ref negativeShift);
-            var planeDistance = plane.DistanceToOrigin + ((positiveShift < -negativeShift) ? positiveShift : negativeShift);
-
-            var transform = direction.TransformToXYPlane(out _);
-            tessellatedSolid.MakeEdgesIfNonExistent();
-            var e2VDict = new Dictionary<Edge, Vector2>();
-            foreach (var edge in tessellatedSolid.Edges)
-            {
-                var fromDistance = distances[edge.From.IndexInList];
-                var toDistance = distances[edge.To.IndexInList];
-                if ((fromDistance > planeDistance && toDistance < planeDistance) || (fromDistance < planeDistance && toDistance > planeDistance))
-                {
-                    var ip = MiscFunctions.PointOnPlaneFromIntersectingLine(plane, edge.From.Coordinates, edge.To.Coordinates, out _)
-                        .ConvertTo2DCoordinates(transform);
-                    e2VDict.Add(edge, ip);
-                }
-            }
-            return GetLoops(e2VDict, plane.Normal, plane.DistanceToOrigin, out v2EDictionary, out completedPolygons);
-        }
-
-        /// <summary>
-        /// Gets the uniformly spaced slices.
-        /// </summary>
-        /// <param name="ts">The ts.</param>
-        /// <param name="direction">The direction.</param>
-        /// <param name="startDistanceAlongDirection">The start distance along direction.</param>
-        /// <param name="numSlices">The number slices.</param>
-        /// <param name="stepSize">Size of the step.</param>
-        /// <returns>List&lt;Polygon&gt;[].</returns>
-        /// <exception cref="System.ArgumentException">Either a valid stepSize or a number of slices greater than zero must be specified.</exception>
-        public static List<Polygon>[] GetUniformlySpacedCrossSections(this TessellatedSolid ts, CartesianDirections direction, out double[] sliceOffsets,
-            out Dictionary<Vertex2D, Edge>[] vertex2DToEdges, out List<bool>[] completePolygons, double startDistanceAlongDirection = double.NaN, int numSlices = -1, double stepSize = double.NaN)
-        {
-            if (double.IsNaN(stepSize) && numSlices < 1) throw new ArgumentException("Either a valid stepSize or a number of slices greater than zero must be specified.");
-            var intDir = Math.Abs((int)direction) - 1;
-          
-                if ((ts.Bounds[0] - ts.Bounds[1]).IsNegligible(ts.SameTolerance))
-                    ts.DefineAxisAlignedBoundingBoxAndTolerance();
-            var lengthAlongDir = ts.Bounds[1][intDir] - ts.Bounds[0][intDir];
-            stepSize = Math.Abs(stepSize);
-            if (double.IsNaN(stepSize)) stepSize = lengthAlongDir / numSlices;
-            if (numSlices < 1) numSlices = (int)(lengthAlongDir / stepSize);
-            if (double.IsNaN(startDistanceAlongDirection))
-            {
-                if (direction < 0)
-                    startDistanceAlongDirection = ts.Bounds[1][intDir] - 0.5 * stepSize;
-                else startDistanceAlongDirection = ts.Bounds[0][intDir] + 0.5 * stepSize;
-            }
-            switch (direction)
-            {
-                case CartesianDirections.XPositive:
-                    return AllSlicesAlongX(ts, startDistanceAlongDirection, numSlices, stepSize, out sliceOffsets, out vertex2DToEdges, out completePolygons);
-                case CartesianDirections.YPositive:
-                    return AllSlicesAlongY(ts, startDistanceAlongDirection, numSlices, stepSize, out sliceOffsets, out vertex2DToEdges, out completePolygons);
-                case CartesianDirections.ZPositive:
-                    return AllSlicesAlongZ(ts, startDistanceAlongDirection, numSlices, stepSize, out sliceOffsets, out vertex2DToEdges, out completePolygons);
-                case CartesianDirections.XNegative:
-                    var slicesX = AllSlicesAlongX(ts, startDistanceAlongDirection, numSlices, stepSize, out sliceOffsets, out vertex2DToEdges, out completePolygons);
-                    Array.Reverse(sliceOffsets);
-                    Array.Reverse(slicesX);
-                    Array.Reverse(completePolygons);
-                    Array.Reverse(vertex2DToEdges);
-                    return slicesX;
-                case CartesianDirections.YNegative:
-                    var slicesY = AllSlicesAlongY(ts, startDistanceAlongDirection, numSlices, stepSize, out sliceOffsets, out vertex2DToEdges, out completePolygons);
-                    Array.Reverse(sliceOffsets);
-                    Array.Reverse(slicesY);
-                    Array.Reverse(completePolygons);
-                    Array.Reverse(vertex2DToEdges);
-                    return slicesY;
-                default:
-                    var slicesZ = AllSlicesAlongZ(ts, startDistanceAlongDirection, numSlices, stepSize, out sliceOffsets, out vertex2DToEdges, out completePolygons);
-                    Array.Reverse(sliceOffsets);
-                    Array.Reverse(slicesZ);
-                    Array.Reverse(completePolygons);
-                    Array.Reverse(vertex2DToEdges);
-                    return slicesZ;
-            }
         }
 
         /// <summary>
