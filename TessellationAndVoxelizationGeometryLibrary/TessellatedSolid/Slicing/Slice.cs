@@ -804,10 +804,10 @@ namespace TVGL
         /// <param name="stepSize">Size of the step.</param>
         /// <returns>List&lt;Polygon&gt;[].</returns>
         /// <exception cref="System.ArgumentException">Either a valid stepSize or a number of slices greater than zero must be specified.</exception>
-        public static List<Polygon>[] GetUniformlySpacedCrossSections(this TessellatedSolid ts, Vector3 direction, out double[] sliceOffsets, 
+        public static List<Polygon>[] GetUniformlySpacedCrossSections(this TessellatedSolid ts, Vector3 direction, out double[] sliceOffsets,
             out Dictionary<Vertex2D, Edge>[] vertex2DToEdges, out List<bool>[] completePolygons,
             double startDistanceAlongDirection = double.NaN, int numSlices = -1, double stepSize = double.NaN)
-            => GetUniformlySpacedCrossSections(ts.Vertices, direction,out sliceOffsets, out vertex2DToEdges,out completePolygons, startDistanceAlongDirection, numSlices, stepSize);
+            => GetUniformlySpacedCrossSections(ts.Vertices, direction, out sliceOffsets, out vertex2DToEdges, out completePolygons, startDistanceAlongDirection, numSlices, stepSize);
 
         public static List<Polygon>[] GetUniformlySpacedCrossSections(this IEnumerable<Vertex> vertices, Vector3 direction, out double[] sliceOffsets,
            out Dictionary<Vertex2D, Edge>[] vertex2DToEdges, out List<bool>[] completePolygons, double startDistanceAlongDirection = double.NaN,
@@ -1077,7 +1077,7 @@ namespace TVGL
                         Message.output("Incomplete loop.", 3);
                         if (path.Count > 2)
                         {
-                        completedLoops.Add(false);
+                            completedLoops.Add(false);
                             AddToPolygons(path, edgesInLoop, polygons, e2VDictionary);
                         }
                         finishedLoop = true;
