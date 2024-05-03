@@ -979,7 +979,7 @@ namespace TVGL
                     e2VDict.Add(edge, ip);
                 }
             }
-            return GetLoops(e2VDict, Vector3.UnitVector(intDir), distanceToOrigin, out v2EDictionary, out completedPolygons);
+            return GetLoops(e2VDict, signDir * Vector3.UnitVector(intDir), distanceToOrigin, out v2EDictionary, out completedPolygons);
         }
 
         /// <summary>
