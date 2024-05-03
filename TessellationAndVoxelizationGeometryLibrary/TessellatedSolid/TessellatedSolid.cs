@@ -626,12 +626,12 @@ namespace TVGL
                 if (Faces[0].A.Faces == null || !Faces[0].A.Faces.Contains(Faces[0]))
                 {
                     // if the vertices are not doubly linked to the faces, then do that now (this is the most common case)
-                    foreach (var face in Faces)
+                    for (int i = 0; i < Faces.Length; i++)
                     {
+                        var face = Faces[i];
+                        face.IndexInList = i;
                         foreach (var vertex in face.Vertices)
-                        {
                             vertex.Faces.Add(face);
-                        }
                     }
                 }
             }

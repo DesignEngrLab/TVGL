@@ -1040,10 +1040,11 @@ namespace TVGL
                 var edgesInLoop = new List<Edge>();
                 var firstEdgeInLoop = edgeDictionary.First().Key;
                 var currentEdge = firstEdgeInLoop;
-                var finishedLoop = false;
                 TriangleFace nextFace = null;
+                bool finishedLoop;
                 do
                 {
+                    finishedLoop = false;
                     var intersectVertex2D = edgeDictionary[currentEdge];
                     edgeDictionary.Remove(currentEdge);
                     edgesInLoop.Add(currentEdge);
@@ -1053,23 +1054,27 @@ namespace TVGL
                         nextFace = (currentEdge.From.Dot(normal) < distanceToOrigin) ? currentEdge.OtherFace : currentEdge.OwnedFace;
                     else nextFace = currentEdge.GetMatingFace(nextFace);
                     Edge nextEdge = null;
-                    foreach (var whichEdge in nextFace.Edges)
+                    if (nextFace != null)
                     {
-                        if (currentEdge == whichEdge) continue;
-                        if (whichEdge == firstEdgeInLoop)
+                        foreach (var whichEdge in nextFace.Edges)
                         {
-                            finishedLoop = true;
-                            if (path.Count > 2)
+                            if (currentEdge == whichEdge) continue;
+                            if (whichEdge == firstEdgeInLoop)
                             {
-                                completedLoops.Add(true);
-                                AddToPolygons(path, edgesInLoop, polygons, e2VDictionary);
+                                finishedLoop = true;
+                                if (path.Count > 2)
+                                {
+                                    completedLoops.Add(true);
+                                    AddToPolygons(path, edgesInLoop, polygons, e2VDictionary);
+                                    //Presenter.ShowAndHang(polygons);
+                                }
+                                break;
                             }
-                            break;
-                        }
-                        else if (edgeDictionary.ContainsKey(whichEdge))
-                        {
-                            nextEdge = whichEdge;
-                            break;
+                            else if (edgeDictionary.ContainsKey(whichEdge))
+                            {
+                                nextEdge = whichEdge;
+                                break;
+                            }
                         }
                     }
                     if (!finishedLoop && nextEdge == null)
@@ -1085,7 +1090,17 @@ namespace TVGL
                     else currentEdge = nextEdge;
                 } while (!finishedLoop);
             }
-            return polygons.CreateShallowPolygonTrees(false);
+            var completePolygons = new List<Polygon>();
+            var incompletePolygons = new List<Polygon>();
+            for (int i = 0; i < completedLoops.Count; i++)
+            {
+                if (completedLoops[i])
+                    completePolygons.Add(polygons[i]);
+                else incompletePolygons.Add(polygons[i]);
+            }
+            completePolygons = completePolygons.CreateShallowPolygonTrees(true);
+            completedLoops = Enumerable.Repeat(true, completePolygons.Count).Concat(Enumerable.Repeat(false, incompletePolygons.Count)).ToList();
+            return completePolygons.Concat(incompletePolygons).ToList();
         }
 
         /// <summary>
