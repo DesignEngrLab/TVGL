@@ -11,7 +11,7 @@
     /// <param name="vertexIndices"></param>
     /// <param name="tolerance"></param>
     /// <returns></returns>
-    public static bool Create(IList<Vector3> points, out ConvexHull3D convexHull,
+    public static bool Create(IList<Vector3> points, out ConvexHull3D<ConvexHullVertex, ConvexHullEdge, ConvexHullFace> convexHull,
         out List<int>? vertexIndices, double tolerance = double.NaN)
     {
         bool success = false;
@@ -419,7 +419,7 @@
     /// <param name="convexHull"></param>
     /// <param name="tolerance"></param>
     /// <returns></returns>
-    private static bool SolveAs2D<TVertex>(IList<TVertex> vertices, out ConvexHull3D convexHull, double tolerance = double.NaN)
+    private static bool SolveAs2D<TVertex, TEdge, TFace>(IList<TVertex> vertices, out ConvexHull3D<ConvexHullVertex, ConvexHullEdge, ConvexHullFace> convexHull, double tolerance = double.NaN)
         where TVertex : IConvexVertex3D
     {
         Plane.DefineNormalAndDistanceFromVertices(vertices, out var distance, out var planeNormal);

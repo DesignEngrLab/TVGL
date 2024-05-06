@@ -34,7 +34,7 @@ internal static class Constants
 
     internal static Vector2 Normalize(this Vector2 vector)
     {
-#if !CUSTOMVECTOR
+#if CUSTOMVECTOR
         var length = Math.Sqrt(vector.Dot(vector));
         return new Vector2(vector.X / length, vector.Y / length);
 #else
