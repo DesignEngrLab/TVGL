@@ -54,13 +54,14 @@ namespace TVGL
         /// </summary>
         /// <param name="faces">The faces.</param>
         /// <param name="connectFacesToPrimitive">if set to <c>true</c> [connect faces to primitive].</param>
-        public void SetFacesAndVertices(IEnumerable<TriangleFace> faces, bool connectFacesToPrimitive = true, 
+        public void SetFacesAndVertices(IEnumerable<TriangleFace> faces, bool connectFacesToPrimitive = true,
             bool keepvalues = false)
         {
             if (!keepvalues)
                 ResetFaceDependentValues();
             ResetFaceDependentConnectivity();
-            Faces = new HashSet<TriangleFace>(faces);
+            if (faces == null) Faces = new HashSet<TriangleFace>();
+            else Faces = new HashSet<TriangleFace>(faces);
             FaceIndices = Faces.Select(f => f.IndexInList).ToArray();
             if (connectFacesToPrimitive)
                 foreach (var face in Faces)
@@ -85,12 +86,12 @@ namespace TVGL
         }
 
         private void ResetFaceDependentConnectivity()
-        {        
+        {
             _adjacentSurfaces = null;
             _innerEdges = null;
-            _outerEdges = null;        
+            _outerEdges = null;
             Borders = null;
-            BorderSegments = null;     
+            BorderSegments = null;
         }
 
 

@@ -222,6 +222,21 @@ namespace TVGL
         }
 
         /// <summary>
+        /// Get the value at the specified x and y indices.
+        /// </summary>        
+        public T this[int x, int y]
+        {
+            get
+            {
+                TryGet(x, y, out var result);
+                return result;
+            }
+            set
+            {
+                Set(x, y, value);
+            }
+        }
+        /// <summary>
         /// Plots the line.
         /// </summary>
         /// <param name="x0">The x0.</param>
