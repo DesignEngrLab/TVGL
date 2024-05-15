@@ -795,7 +795,37 @@ namespace TVGL
 
         #region Get Cross Sections
         /// <summary>
-        /// Gets the uniformly spaced slices.
+        /// Gets many uniformly spaced cross-sections through the tessellated solid.
+        /// </summary>
+        /// <param name="ts"></param>
+        /// <param name="direction"></param>
+        /// <param name="sliceOffsets"></param>
+        /// <param name="startDistanceAlongDirection"></param>
+        /// <param name="numSlices"></param>
+        /// <param name="stepSize"></param>
+        /// <returns></returns>
+        public static List<Polygon>[] GetUniformlySpacedCrossSections(this TessellatedSolid ts, Vector3 direction, out double[] sliceOffsets,
+            double startDistanceAlongDirection = double.NaN, int numSlices = -1, double stepSize = double.NaN)
+            => GetUniformlySpacedCrossSections(ts.Vertices, direction, out sliceOffsets, out _, out _, startDistanceAlongDirection, numSlices, stepSize);
+
+        /// <summary>
+        /// Gets many uniformly spaced cross-sections through the tessellated solid.
+        /// </summary>
+        /// <param name="ts"></param>
+        /// <param name="direction"></param>
+        /// <param name="sliceOffsets"></param>
+        /// <param name="vertex2DToEdges"></param>
+        /// <param name="startDistanceAlongDirection"></param>
+        /// <param name="numSlices"></param>
+        /// <param name="stepSize"></param>
+        /// <returns></returns>
+        public static List<Polygon>[] GetUniformlySpacedCrossSections(this TessellatedSolid ts, Vector3 direction, out double[] sliceOffsets,
+            out Dictionary<Vertex2D, Edge>[] vertex2DToEdges,
+            double startDistanceAlongDirection = double.NaN, int numSlices = -1, double stepSize = double.NaN)
+            => GetUniformlySpacedCrossSections(ts.Vertices, direction, out sliceOffsets, out vertex2DToEdges, out _, startDistanceAlongDirection, numSlices, stepSize);
+
+        /// <summary>
+        /// Gets many uniformly spaced cross-sections through the tessellated solid.
         /// </summary>
         /// <param name="ts">The ts.</param>
         /// <param name="direction">The direction.</param>
@@ -809,6 +839,66 @@ namespace TVGL
             double startDistanceAlongDirection = double.NaN, int numSlices = -1, double stepSize = double.NaN)
             => GetUniformlySpacedCrossSections(ts.Vertices, direction, out sliceOffsets, out vertex2DToEdges, out completePolygons, startDistanceAlongDirection, numSlices, stepSize);
 
+        /// <summary>
+        /// Gets many uniformly spaced cross-sections through the tessellated solid.
+        /// </summary>
+        /// <param name="vertices"></param>
+        /// <param name="direction"></param>
+        /// <param name="sliceOffsets"></param>
+        /// <param name="startDistanceAlongDirection"></param>
+        /// <param name="numSlices"></param>
+        /// <param name="stepSize"></param>
+        /// <returns></returns>
+        public static List<Polygon>[] GetUniformlySpacedCrossSections(this IEnumerable<Vertex> vertices, Vector3 direction, out double[] sliceOffsets,
+           double startDistanceAlongDirection = double.NaN,
+        int numSlices = -1, double stepSize = double.NaN)
+        => GetUniformlySpacedCrossSections(vertices, direction, out sliceOffsets, out _, out _, startDistanceAlongDirection, numSlices, stepSize);
+
+        /// <summary>
+        /// Gets many uniformly spaced cross-sections through the tessellated solid.
+        /// </summary>
+        /// <param name="vertices"></param>
+        /// <param name="direction"></param>
+        /// <param name="sliceOffsets"></param>
+        /// <param name="completePolygons"></param>
+        /// <param name="startDistanceAlongDirection"></param>
+        /// <param name="numSlices"></param>
+        /// <param name="stepSize"></param>
+        /// <returns></returns>
+        public static List<Polygon>[] GetUniformlySpacedCrossSections(this IEnumerable<Vertex> vertices, Vector3 direction, out double[] sliceOffsets,
+           out List<bool>[] completePolygons, double startDistanceAlongDirection = double.NaN,
+        int numSlices = -1, double stepSize = double.NaN)
+        => GetUniformlySpacedCrossSections(vertices, direction, out sliceOffsets, out _, out completePolygons, startDistanceAlongDirection, numSlices, stepSize);
+
+        /// <summary>
+        /// Gets many uniformly spaced cross-sections through the tessellated solid.
+        /// </summary>
+        /// <param name="vertices"></param>
+        /// <param name="direction"></param>
+        /// <param name="sliceOffsets"></param>
+        /// <param name="vertex2DToEdges"></param>
+        /// <param name="startDistanceAlongDirection"></param>
+        /// <param name="numSlices"></param>
+        /// <param name="stepSize"></param>
+        /// <returns></returns>
+        public static List<Polygon>[] GetUniformlySpacedCrossSections(this IEnumerable<Vertex> vertices, Vector3 direction, out double[] sliceOffsets,
+           out Dictionary<Vertex2D, Edge>[] vertex2DToEdges,  double startDistanceAlongDirection = double.NaN,
+        int numSlices = -1, double stepSize = double.NaN)
+        => GetUniformlySpacedCrossSections(vertices, direction, out sliceOffsets, out vertex2DToEdges, out _, startDistanceAlongDirection, numSlices, stepSize);
+
+        /// <summary>
+        /// Gets many uniformly spaced cross-sections through the tessellated solid.
+        /// </summary>
+        /// <param name="vertices"></param>
+        /// <param name="direction"></param>
+        /// <param name="sliceOffsets"></param>
+        /// <param name="vertex2DToEdges"></param>
+        /// <param name="completePolygons"></param>
+        /// <param name="startDistanceAlongDirection"></param>
+        /// <param name="numSlices"></param>
+        /// <param name="stepSize"></param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentException"></exception>
         public static List<Polygon>[] GetUniformlySpacedCrossSections(this IEnumerable<Vertex> vertices, Vector3 direction, out double[] sliceOffsets,
            out Dictionary<Vertex2D, Edge>[] vertex2DToEdges, out List<bool>[] completePolygons, double startDistanceAlongDirection = double.NaN,
         int numSlices = -1, double stepSize = double.NaN)
@@ -872,7 +962,37 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Gets the uniformly spaced slices.
+        /// Gets many uniformly spaced cross-sections through the tessellated solid.
+        /// </summary>
+        /// <param name="ts"></param>
+        /// <param name="direction"></param>
+        /// <param name="sliceOffsets"></param>
+        /// <param name="startDistanceAlongDirection"></param>
+        /// <param name="numSlices"></param>
+        /// <param name="stepSize"></param>
+        /// <returns></returns>
+        public static List<Polygon>[] GetUniformlySpacedCrossSections(this TessellatedSolid ts, CartesianDirections direction, out double[] sliceOffsets,
+           double startDistanceAlongDirection = double.NaN, int numSlices = -1, double stepSize = double.NaN)
+        => GetUniformlySpacedCrossSections(ts, direction, out sliceOffsets, out _, out _, startDistanceAlongDirection, numSlices, stepSize);
+
+        /// <summary>
+        /// Gets many uniformly spaced cross-sections through the tessellated solid.
+        /// </summary>
+        /// <param name="ts"></param>
+        /// <param name="direction"></param>
+        /// <param name="sliceOffsets"></param>
+        /// <param name="vertex2DToEdges"></param>
+        /// <param name="startDistanceAlongDirection"></param>
+        /// <param name="numSlices"></param>
+        /// <param name="stepSize"></param>
+        /// <returns></returns>
+        public static List<Polygon>[] GetUniformlySpacedCrossSections(this TessellatedSolid ts, CartesianDirections direction, out double[] sliceOffsets,
+            out Dictionary<Vertex2D, Edge>[] vertex2DToEdges,  double startDistanceAlongDirection = double.NaN, int numSlices = -1, double stepSize = double.NaN)
+        => GetUniformlySpacedCrossSections(ts, direction, out sliceOffsets, out vertex2DToEdges, out _, startDistanceAlongDirection, numSlices, stepSize);
+
+
+        /// <summary>
+        /// Gets many uniformly spaced cross-sections through the tessellated solid.
         /// </summary>
         /// <param name="ts">The ts.</param>
         /// <param name="direction">The direction.</param>
@@ -931,9 +1051,32 @@ namespace TVGL
             }
         }
 
+        /// <summary>
+        /// Gets the cross-section through the tessellated solid at the specified distance from the origin in the specified direction.
+        /// </summary>
+        /// <param name="tessellatedSolid"></param>
+        /// <param name="direction"></param>
+        /// <param name="distanceToOrigin"></param>
+        /// <returns></returns>
+        public static List<Polygon> GetCrossSection(this TessellatedSolid tessellatedSolid, CartesianDirections direction,
+            double distanceToOrigin)
+      => tessellatedSolid.GetCrossSection(direction, distanceToOrigin, out _, out _);
 
         /// <summary>
-        /// Gets the cross section.
+        /// Gets the cross-section through the tessellated solid at the specified distance from the origin in the specified direction.
+        /// </summary>
+        /// <param name="tessellatedSolid"></param>
+        /// <param name="direction"></param>
+        /// <param name="distanceToOrigin"></param>
+        /// <param name="v2EDictionary"></param>
+        /// <returns></returns>
+        public static List<Polygon> GetCrossSection(this TessellatedSolid tessellatedSolid, CartesianDirections direction,
+            double distanceToOrigin, out Dictionary<Vertex2D, Edge> v2EDictionary)
+      => tessellatedSolid.GetCrossSection(direction, distanceToOrigin, out v2EDictionary, out _);
+
+
+        /// <summary>
+        /// Gets the cross-section through the tessellated solid at the specified distance from the origin in the specified direction.
         /// </summary>
         /// <param name="tessellatedSolid">The tessellated solid.</param>
         /// <param name="direction">The direction.</param>
@@ -983,7 +1126,27 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Gets the cross section.
+        /// Gets the cross-section through the tessellated solid at the specified plane.
+        /// </summary>
+        /// <param name="tessellatedSolid"></param>
+        /// <param name="plane"></param>
+        /// <returns></returns>
+        public static List<Polygon> GetCrossSection(this TessellatedSolid tessellatedSolid, Plane plane)
+        => tessellatedSolid.GetCrossSection(plane, out _, out _);
+
+        /// <summary>
+        /// Gets the cross-section through the tessellated solid at the specified plane.
+        /// 
+        /// </summary>
+        /// <param name="tessellatedSolid"></param>
+        /// <param name="plane"></param>
+        /// <param name="v2EDictionary"></param>
+        /// <returns></returns>
+        public static List<Polygon> GetCrossSection(this TessellatedSolid tessellatedSolid, Plane plane, out Dictionary<Vertex2D, Edge> v2EDictionary)
+            => tessellatedSolid.GetCrossSection(plane, out v2EDictionary, out _);
+
+        /// <summary>
+        /// Gets the cross-section through the tessellated solid at the specified plane.
         /// </summary>
         /// <param name="tessellatedSolid">The tessellated solid.</param>
         /// <param name="plane">The plane.</param>
