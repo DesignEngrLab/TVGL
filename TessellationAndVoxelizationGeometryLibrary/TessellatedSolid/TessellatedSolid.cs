@@ -1450,6 +1450,8 @@ namespace TVGL
                     edge.Update(true);
                 }
             }
+            _volume = double.NaN;
+            _surfaceArea = double.NaN;
             _center = _center.Transform(transformMatrix);
             // I'm not sure this is right, but I'm just using the 3x3 rotational submatrix to rotate the inertia tensor
             var rotMatrix = new Matrix3x3(transformMatrix.M11, transformMatrix.M12, transformMatrix.M13,
