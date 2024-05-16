@@ -168,6 +168,38 @@ namespace TVGL
             return (minPoint, dotDistance);
         }
 
+        /// <summary>
+        /// Gets the min vertex distance along vector.
+        /// </summary>
+        /// <param name="vertices">The vertices.</param>
+        /// <param name="direction">The direction.</param>
+        /// <returns>A (T minPoint, double dotDistance) .</returns>
+        public static (T minPoint, double minDistance, T maxPoint, double maxDistance)
+            GetMinAndMaxAlongVector<T>(this IEnumerable<T> vertices, Vector3 direction)
+            where T : IVector3D
+        {
+            var minDistance = double.PositiveInfinity;
+            var maxDistance = double.NegativeInfinity;
+            T minPoint = default;
+            T maxPoint = default;
+            foreach (var vertex in vertices)
+            {
+                //Get distance along the search direction
+                var d = direction.X * vertex.X + direction.Y * vertex.Y + direction.Z * vertex.Z;
+                if (d < minDistance)
+                {
+                    minDistance = d;
+                    minPoint = vertex;
+                }
+                if (d > maxDistance)
+                {
+                    maxDistance = d;
+                    maxPoint = vertex;
+                }
+            }
+            return (minPoint,minDistance,maxPoint, maxDistance);
+        }
+
 
         /// <summary>
         /// Returns a list of sorted Vector2s along a set direction.
