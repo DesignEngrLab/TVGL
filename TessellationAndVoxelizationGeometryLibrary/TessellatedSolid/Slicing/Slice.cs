@@ -1106,23 +1106,23 @@ namespace TVGL
                     Vector2 ip = Vector2.Null;
                     if (intDir == 0)
                     {
-                        var ip3D = MiscFunctions.PointOnXPlaneFromLineSegment(distanceToOrigin, edge.From.Coordinates, edge.To.Coordinates);
-                        ip = new Vector2(signDir * ip3D.Y, ip3D.Z);
+                        var ip3D = MiscFunctions.PointOnXPlaneFromLineSegment(planeDistance, edge.From.Coordinates, edge.To.Coordinates);
+                        ip = new Vector2(-signDir* ip3D.Z, ip3D.Y);
                     }
                     else if (intDir == 1)
                     {
-                        var ip3D = MiscFunctions.PointOnYPlaneFromLineSegment(distanceToOrigin, edge.From.Coordinates, edge.To.Coordinates);
-                        ip = new Vector2(signDir * ip3D.Z, ip3D.X);
+                        var ip3D = MiscFunctions.PointOnYPlaneFromLineSegment(planeDistance, edge.From.Coordinates, edge.To.Coordinates);
+                        ip = new Vector2( ip3D.X, -signDir *ip3D.Z);
                     }
                     else
                     {
-                        var ip3D = MiscFunctions.PointOnZPlaneFromLineSegment(distanceToOrigin, edge.From.Coordinates, edge.To.Coordinates);
-                        ip = new Vector2(signDir * ip3D.X, ip3D.Y);
+                        var ip3D = MiscFunctions.PointOnZPlaneFromLineSegment(planeDistance, edge.From.Coordinates, edge.To.Coordinates);
+                        ip = new Vector2(ip3D.X, signDir * ip3D.Y);
                     }
                     e2VDict.Add(edge, ip);
                 }
             }
-            return GetLoops(e2VDict, signDir * Vector3.UnitVector(intDir), distanceToOrigin, out v2EDictionary, out completedPolygons);
+            return GetLoops(e2VDict, signDir * Vector3.UnitVector(intDir), signDir * planeDistance, out v2EDictionary, out completedPolygons);
         }
 
         /// <summary>
