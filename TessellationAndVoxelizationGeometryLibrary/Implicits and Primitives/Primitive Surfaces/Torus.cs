@@ -115,6 +115,8 @@ namespace TVGL
         /// <value>The minor radius.</value>
         public double MinorRadius { get; set; }
 
+        public override string KeyString => "Torus|" + Center.ToString() + "|" + Axis.ToString() + "|" +
+            "|" + MajorRadius.ToString("F5") + "|" + MinorRadius.ToString("F5") + GetCommonKeyDetails();
 
         /// <summary>
         /// Transforms the shape by the provided transformation matrix.

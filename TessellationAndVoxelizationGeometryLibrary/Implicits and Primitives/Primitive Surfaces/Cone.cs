@@ -106,6 +106,11 @@ namespace TVGL
         /// <value>The axis.</value>
         public Vector3 Axis { get; set; }
 
+
+        public override string KeyString => "Cone|" + Axis.ToString() +
+            "|" + Apex.ToString() +"|" + Aperture.ToString("F5") + GetCommonKeyDetails();
+
+
         /// <summary>
         /// Transforms the shape by the provided transformation matrix.
         /// </summary>

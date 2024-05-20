@@ -222,6 +222,10 @@ namespace TVGL
         /// <value>The total internal angle.</value>
         public double TotalInternalAngle { get; set; }
 
+
+        public override string KeyString => "Cylinder|" + Axis.ToString() +
+            "|" + Anchor.ToString() + "|" + Radius.ToString("F5") + "|" + MinDistanceAlongAxis.ToString("F5")
+            + "|" + MaxDistanceAlongAxis.ToString("F5") + GetCommonKeyDetails();
         #endregion
 
         #region Constructors

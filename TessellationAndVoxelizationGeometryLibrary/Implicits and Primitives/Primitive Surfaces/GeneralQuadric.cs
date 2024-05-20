@@ -400,5 +400,12 @@ namespace TVGL
         Vector3 axis1 = Vector3.Null;
         Vector3 axis2 = Vector3.Null;
         Vector3 axis3 = Vector3.Null;
+
+        public override string KeyString => "Quadric|" + XSqdCoeff.ToString("F5") + "|" +
+            YSqdCoeff.ToString("F5") + "|" + ZSqdCoeff.ToString("F5") + "|" +
+            XYCoeff.ToString("F5") + "|" + XZCoeff.ToString("F5") + "|" +
+            YZCoeff.ToString("F5") + "|" + XCoeff.ToString("F5") + "|" +
+            YCoeff.ToString("F5") + "|" + ZCoeff.ToString("F5") + "|" + W.ToString("F5") 
+            + GetCommonKeyDetails();
     }
 }

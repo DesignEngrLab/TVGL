@@ -139,6 +139,10 @@ namespace TVGL
             }
         }
 
+        public override string KeyString => "Capsule|" + Anchor1.ToString() +
+            "|" + Radius1.ToString("F5") + "|" + Anchor2.ToString() + "|" + Radius2.ToString("F5")
+            + GetCommonKeyDetails();
+
         /// <summary>
         /// The anchor1
         /// </summary>

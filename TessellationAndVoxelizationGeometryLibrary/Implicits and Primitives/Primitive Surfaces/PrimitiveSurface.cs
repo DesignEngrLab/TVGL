@@ -816,5 +816,22 @@ namespace TVGL
             copy.SetFacesAndVertices(faces, true, keepValues);
             return copy;
         }
+
+        public abstract string KeyString { get; }
+
+        private protected string GetCommonKeyDetails()
+        {
+            var key = "|";
+            if (IsPositive.HasValue)
+            {
+                if (IsPositive.Value) key += "P";
+                else key += "N";
+            }
+            if (Faces != null && Faces.Any())
+                key += "|" + Faces.Sum(f => f.Area).ToString("F5");
+            if (OuterEdges!= null && OuterEdges.Any())
+                key += "|" + OuterEdges.Sum(f => f.Length).ToString("F5");
+            return key;
+        }
     }
 }

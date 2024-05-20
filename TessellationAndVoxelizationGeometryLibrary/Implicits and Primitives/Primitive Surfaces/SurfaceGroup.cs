@@ -13,13 +13,27 @@ namespace TVGL
     {
         public HashSet<PrimitiveSurface> Surfaces { get; set; }
 
+        public override string KeyString
+        {
+            get
+            {
+                var key = "Group|";
+                foreach (var surface in Surfaces)
+                {
+                    key += surface.GetType().Name + "|";
+                }
+                key += GetCommonKeyDetails();
+                return key;
+            }
+        }
+
         public void AddPrimitiveSurface(PrimitiveSurface surface, bool resetBorders = true)
         {
             if (surface is SurfaceGroup)
                 throw new Exception("Use Combine");
             Surfaces.Add(surface);
             surface.BelongsToGroup = this;
-            if(resetBorders)
+            if (resetBorders)
                 SetBorders();
         }
 
@@ -52,15 +66,15 @@ namespace TVGL
         public new IEnumerable<TriangleFace> Faces()
         {
             //Okay to return IEnumerable, since no duplicates will occur.
-            foreach(var surface in Surfaces)
-                foreach(var face in surface.Faces) 
+            foreach (var surface in Surfaces)
+                foreach (var face in surface.Faces)
                     yield return face;
         }
 
         public new IEnumerable<Vertex> Vertices()
         {
             //Duplicates will occur.
-            var vertices = new HashSet<Vertex>();   
+            var vertices = new HashSet<Vertex>();
             foreach (var surface in Surfaces)
                 foreach (var vertex in surface.Vertices)
                     vertices.Add(vertex);
@@ -71,15 +85,15 @@ namespace TVGL
         {
             //use a hashset to avoid duplicating feautes in the list
             var adjacentFeatures = new HashSet<SurfaceGroup>();
-            foreach(var segment in BorderSegments)
+            foreach (var segment in BorderSegments)
             {
                 var adjacent = Surfaces.Contains(segment.OwnedPrimitive) ? segment.OtherPrimitive : segment.OwnedPrimitive;
                 adjacentFeatures.Add(adjacent.BelongsToGroup);
-            }           
+            }
             return adjacentFeatures;
         }
         public override HashSet<PrimitiveSurface> AdjacentPrimitives()
-        {          
+        {
             //Use a hash to avoid returning duplicates.
             var allAdjacent = new HashSet<PrimitiveSurface>();
             foreach (var border in BorderSegments)
@@ -121,7 +135,7 @@ namespace TVGL
         /// <param name="color">The color.</param>
         public new void SetColor(Color color)
         {
-            foreach(var face in Faces())
+            foreach (var face in Faces())
                 face.Color = color;
         }
 

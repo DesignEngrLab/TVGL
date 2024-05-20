@@ -45,6 +45,10 @@ namespace TVGL
         /// <value>The distance to origin.</value>
         public double DistanceToOrigin { get; set; }
 
+
+        public override string KeyString => "Plane|" + Normal.ToString() + "|" + DistanceToOrigin.ToString("F5")
+            + "|" + GetCommonKeyDetails();
+
         /// <summary>
         /// Gets as transform from xy plane.
         /// </summary>
@@ -95,6 +99,7 @@ namespace TVGL
         public Vector3 ClosestPointToOrigin => Normal * DistanceToOrigin;
 
         public Vector4 AsVector4 => new Vector4(Normal.X, Normal.Y, Normal.Z, -DistanceToOrigin);
+
 
         #region Constructors
         /// <summary>

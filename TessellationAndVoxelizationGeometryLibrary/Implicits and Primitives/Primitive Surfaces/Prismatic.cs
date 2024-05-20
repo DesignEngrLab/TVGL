@@ -141,6 +141,8 @@ namespace TVGL
         }
         Matrix4x4 _transformBackFromXYPlane = Matrix4x4.Null;
 
+        public override string KeyString => "Primsatic|" + Axis.ToString() + "|" + GetCommonKeyDetails();
+
         #endregion
 
         #region Constructors
@@ -431,5 +433,6 @@ namespace TVGL
                 if (!intersectPoint.IsNull()) yield return (intersectPoint, t);
             }
         }
+
     }
 }
