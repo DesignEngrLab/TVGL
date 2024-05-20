@@ -1410,7 +1410,7 @@ namespace TVGL
             //Casting from the solidAssembly, Solids list puts each solid in the coordinate system
             //that it was locally defined in (not it's global position in the assembly - which we don't want).
             var tessellatedSolid = ReturnMostSignificantSolid(solidAssembly, out _);
-
+            tessellatedSolid.FileName = new FileInfo(filePath).Name;    
             part = tessellatedSolid;
             return true;
         }
