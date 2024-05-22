@@ -201,7 +201,7 @@ namespace TVGL
                 return false;
             }
             value = Values[index];
-            return !EqualityComparer<T>.Default.Equals(value, default(T));
+            return true; // !EqualityComparer<T>.Default.Equals(value, default(T));
         }
 
         /// <summary>
@@ -358,7 +358,7 @@ namespace TVGL
         /// <param name="y">The y.</param>
         /// <returns>System.Int32.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public int GetIndex(double x, double y) => YCount * GetXIndex(x) + GetYIndex(y);
+        public int GetIndex(double x, double y) => GetIndex(GetXIndex(x), GetYIndex(y));
 
         /// <summary>
         /// Gets the index.
@@ -367,7 +367,12 @@ namespace TVGL
         /// <param name="yIndex">Index of the y.</param>
         /// <returns>System.Int32.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public int GetIndex(int xIndex, int yIndex) => YCount * xIndex + yIndex;
+        public int GetIndex(int xIndex, int yIndex)
+        {
+
+            if (xIndex < 0 || xIndex >= XCount || yIndex < 0 || yIndex >= YCount) return -1;
+            return YCount * xIndex + yIndex;
+        }
 
         /// <summary>
         /// Gets the index of the x.

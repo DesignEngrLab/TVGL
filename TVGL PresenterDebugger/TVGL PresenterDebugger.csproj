@@ -27,6 +27,7 @@
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Implicits and Primitives\3D Curves\StraightLine3D.cs" Link="TVGL\Implicits and Primitives\3D Curves\StraightLine3D.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Implicits and Primitives\3D Curves\BorderSegment.cs" Link="TVGL\Implicits and Primitives\3D Curves\BorderSegment.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Implicits and Primitives\3D Curves\BorderLoop.cs" Link="TVGL\Implicits and Primitives\3D Curves\BorderLoop.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Implicits and Primitives\Primitive Surfaces\CappedCylinder.cs" Link="TVGL\Implicits and Primitives\Primitive Surfaces\CappedCylinder.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Implicits and Primitives\Primitive Surfaces\Capsule.cs" Link="TVGL\Implicits and Primitives\Primitive Surfaces\Capsule.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Implicits and Primitives\Primitive Surfaces\Cone.cs" Link="TVGL\Implicits and Primitives\Primitive Surfaces\Cone.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Implicits and Primitives\Primitive Surfaces\GeneralQuadric.cs" Link="TVGL\Implicits and Primitives\Primitive Surfaces\GeneralQuadric.cs" />
