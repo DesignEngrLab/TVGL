@@ -159,6 +159,22 @@ namespace TVGL
             MaxIndex = XCount * YCount - 1;
             Values = new T[XCount * YCount];
         }
+        public void Initialize<U>(Grid<U> grid)
+        {
+            PixelSideLength = grid.PixelSideLength;
+            inversePixelSideLength = grid.inversePixelSideLength;
+            MinX =grid.MinX;
+            MaxX = grid.MaxX;
+            MinY =grid.MinY;
+            MaxY = grid.MaxY;
+            XLength = MaxX - MinX;
+            YLength = MaxY - MinY;
+
+            XCount = grid.XCount;
+            YCount = grid.YCount;
+            MaxIndex = grid.MaxIndex;
+            Values = new T[grid.Values.Length];
+        }
 
         /// <summary>
         /// Indiceses this instance.
