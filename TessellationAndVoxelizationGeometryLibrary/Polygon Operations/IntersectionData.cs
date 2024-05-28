@@ -322,7 +322,7 @@ namespace TVGL
         /// </summary>
         /// <param name="numVertices">The number vertices.</param>
         /// <returns>System.Collections.Generic.List&lt;System.Int32&gt;[].</returns>
-        internal List<int>[] MakeIntersectionLookupList(int numVertices)
+        public List<int>[] MakeIntersectionLookupList(int numVertices)
         {
             // now make the lookupList. One list per vertex. If the vertex does not intersect, then it is left as null.
             // this is potentially memory intensive but speeds up the matching  when creating new polygons

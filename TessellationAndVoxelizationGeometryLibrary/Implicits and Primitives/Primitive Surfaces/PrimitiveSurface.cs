@@ -829,9 +829,20 @@ namespace TVGL
             }
             if (Faces != null && Faces.Any())
                 key += "|" + Faces.Sum(f => f.Area).ToString("F5");
-            if (OuterEdges!= null && OuterEdges.Any())
+            if (OuterEdges != null && OuterEdges.Any())
                 key += "|" + OuterEdges.Sum(f => f.Length).ToString("F5");
             return key;
+        }
+
+
+        public Polygon GetAsPolygon()
+        {
+            var polygons = new List<Polygon>();
+            var vertexLoops = OuterEdges.MakeEdgePaths(true,
+                new EdgePathLoopsAroundInputFaces(Faces)).Select(ep => ep.GetVertices().ToList());
+            foreach (var loop in vertexLoops)
+                polygons.Add(new Polygon(TransformFrom3DTo2D(loop.Select(v => v.Coordinates), true)));
+            return polygons.CreateShallowPolygonTrees(false).First();
         }
     }
 }

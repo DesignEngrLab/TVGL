@@ -204,7 +204,7 @@ namespace TVGL
                 else yield return EdgeList[i].To;
             }
             //only add the last one if not a closed loop since it would otherwise repeat the first point
-            if (!IsClosed) 
+            if (!IsClosed)
             {
                 if (DirectionList[^1]) yield return EdgeList[^1].To;
                 else yield return EdgeList[^1].From;
@@ -217,7 +217,7 @@ namespace TVGL
         /// <returns>IEnumerable&lt;Vector3&gt;.</returns>
         public IEnumerable<Vector3> GetCoordinates()
         {
-            foreach(var vertex in GetVertices())
+            foreach (var vertex in GetVertices())
                 yield return vertex.Coordinates;
         }
 
@@ -328,202 +328,202 @@ namespace TVGL
             //DirectionList.Insert(index, item.dir);
         }
 
-    /// <summary>
-    /// Removes the <see cref="TVertex:System.Collections.Generic.IList`1" /> item at the specified index.
-    /// </summary>
-    /// <param name="index">The zero-based index of the item to remove.</param>
-    public void RemoveAt(int index)
-    {
-        EdgeList.RemoveAt(index);
-        DirectionList.RemoveAt(index);
-    }
-
-    /// <summary>
-    /// Adds an item to the <see cref="TVertex:System.Collections.Generic.ICollection`1" />.
-    /// </summary>
-    /// <param name="item">The object to add to the <see cref="TVertex:System.Collections.Generic.ICollection`1" />.</param>
-    /// <exception cref="System.NotSupportedException">Add is ambiguous. Use either AddBegin or AddEnd</exception>
-    public void Add((Edge edge, bool dir) item)
-    {
-        throw new NotSupportedException("Add is ambiguous. Use either AddBegin or AddEnd");
-        //EdgeList.Add(item.edge);
-        //DirectionList.Add(item.dir);
-    }
-
-    /// <summary>
-    /// Removes all items from the <see cref="TVertex:System.Collections.Generic.ICollection`1" />.
-    /// </summary>
-    public void Clear()
-    {
-        EdgeList.Clear();
-        DirectionList.Clear();
-    }
-
-    /// <summary>
-    /// Determines whether the <see cref="TVertex:System.Collections.Generic.ICollection`1" /> contains a specific value.
-    /// </summary>
-    /// <param name="item">The object to locate in the <see cref="TVertex:System.Collections.Generic.ICollection`1" />.</param>
-    /// <returns><see langword="true" /> if <paramref name="item" /> is found in the <see cref="TVertex:System.Collections.Generic.ICollection`1" />; otherwise, <see langword="false" />.</returns>
-    public bool Contains((Edge edge, bool dir) item)
-    {
-        return IndexOf(item) != -1;
-    }
-
-    /// <summary>
-    /// Determines whether this instance contains the object.
-    /// </summary>
-    /// <param name="edge">The edge.</param>
-    /// <returns><c>true</c> if [contains] [the specified edge]; otherwise, <c>false</c>.</returns>
-    internal bool Contains(Edge edge)
-    {
-        return EdgeList.Contains(edge);
-    }
-
-    /// <summary>
-    /// Copies the elements of the <see cref="TVertex:System.Collections.Generic.ICollection`1" /> to an <see cref="TVertex:System.Array" />, starting at a particular <see cref="TVertex:System.Array" /> index.
-    /// </summary>
-    /// <param name="array">The one-dimensional <see cref="TVertex:System.Array" /> that is the destination of the elements copied from <see cref="TVertex:System.Collections.Generic.ICollection`1" />. The <see cref="TVertex:System.Array" /> must have zero-based indexing.</param>
-    /// <param name="arrayIndex">The zero-based index in <paramref name="array" /> at which copying begins.</param>
-    public void CopyTo((Edge edge, bool dir)[] array, int arrayIndex)
-    {
-        for (int i = arrayIndex; i < array.Length; i++)
-            array[i] = (EdgeList[i], DirectionList[i]);
-    }
-
-    /// <summary>
-    /// Removes the first occurrence of a specific object from the <see cref="TVertex:System.Collections.Generic.ICollection`1" />.
-    /// </summary>
-    /// <param name="item">The object to remove from the <see cref="TVertex:System.Collections.Generic.ICollection`1" />.</param>
-    /// <returns><see langword="true" /> if <paramref name="item" /> was successfully removed from the <see cref="TVertex:System.Collections.Generic.ICollection`1" />; otherwise, <see langword="false" />. This method also returns <see langword="false" /> if <paramref name="item" /> is not found in the original <see cref="TVertex:System.Collections.Generic.ICollection`1" />.</returns>
-    public bool Remove((Edge edge, bool dir) item)
-    {
-        var i = IndexOf(item);
-        if (i == -1) return false;
-        RemoveAt(i);
-        return true;
-    }
-
-    /// <summary>
-    /// Copies the specified EdgePath.
-    /// </summary>
-    /// <param name="reverse">if set to <c>true</c> [reverse].</param>
-    /// <param name="copiedTessellatedSolid">The copied tessellated solid.</param>
-    /// <param name="startIndex">The start index.</param>
-    /// <param name="endIndex">The end index.</param>
-    /// <returns>EdgePath.</returns>
-    public EdgePath Copy(bool reverse = false, TessellatedSolid copiedTessellatedSolid = null,
-        int startIndex = 0, int endIndex = -1)
-    {
-        var copy = new EdgePath();
-        this.CopyEdgesPathData(copy, reverse, copiedTessellatedSolid, startIndex, endIndex);
-        return copy;
-    }
-    /// <summary>
-    /// Copies the data (properties) from this EdgePath over to another.
-    /// </summary>
-    /// <param name="copy">The copy.</param>
-    /// <param name="reverse">if set to <c>true</c> [reverse].</param>
-    /// <param name="copiedTessellatedSolid">The copied tessellated solid.</param>
-    /// <param name="startIndex">The start index.</param>
-    /// <param name="endIndex">The end index.</param>
-    protected void CopyEdgesPathData(EdgePath copy, bool reverse = false, TessellatedSolid copiedTessellatedSolid = null,
-        int startIndex = 0, int endIndex = -1)
-    {
-        copy.IsClosed = this.IsClosed && startIndex == 0 && (endIndex == -1 || endIndex >= EdgeList.Count);
-        if (endIndex == -1) endIndex = EdgeList.Count;
-        if (copiedTessellatedSolid == null)
+        /// <summary>
+        /// Removes the <see cref="TVertex:System.Collections.Generic.IList`1" /> item at the specified index.
+        /// </summary>
+        /// <param name="index">The zero-based index of the item to remove.</param>
+        public void RemoveAt(int index)
         {
-            for (int i = startIndex; i < endIndex; i++)
+            EdgeList.RemoveAt(index);
+            DirectionList.RemoveAt(index);
+        }
+
+        /// <summary>
+        /// Adds an item to the <see cref="TVertex:System.Collections.Generic.ICollection`1" />.
+        /// </summary>
+        /// <param name="item">The object to add to the <see cref="TVertex:System.Collections.Generic.ICollection`1" />.</param>
+        /// <exception cref="System.NotSupportedException">Add is ambiguous. Use either AddBegin or AddEnd</exception>
+        public void Add((Edge edge, bool dir) item)
+        {
+            throw new NotSupportedException("Add is ambiguous. Use either AddBegin or AddEnd");
+            //EdgeList.Add(item.edge);
+            //DirectionList.Add(item.dir);
+        }
+
+        /// <summary>
+        /// Removes all items from the <see cref="TVertex:System.Collections.Generic.ICollection`1" />.
+        /// </summary>
+        public void Clear()
+        {
+            EdgeList.Clear();
+            DirectionList.Clear();
+        }
+
+        /// <summary>
+        /// Determines whether the <see cref="TVertex:System.Collections.Generic.ICollection`1" /> contains a specific value.
+        /// </summary>
+        /// <param name="item">The object to locate in the <see cref="TVertex:System.Collections.Generic.ICollection`1" />.</param>
+        /// <returns><see langword="true" /> if <paramref name="item" /> is found in the <see cref="TVertex:System.Collections.Generic.ICollection`1" />; otherwise, <see langword="false" />.</returns>
+        public bool Contains((Edge edge, bool dir) item)
+        {
+            return IndexOf(item) != -1;
+        }
+
+        /// <summary>
+        /// Determines whether this instance contains the object.
+        /// </summary>
+        /// <param name="edge">The edge.</param>
+        /// <returns><c>true</c> if [contains] [the specified edge]; otherwise, <c>false</c>.</returns>
+        internal bool Contains(Edge edge)
+        {
+            return EdgeList.Contains(edge);
+        }
+
+        /// <summary>
+        /// Copies the elements of the <see cref="TVertex:System.Collections.Generic.ICollection`1" /> to an <see cref="TVertex:System.Array" />, starting at a particular <see cref="TVertex:System.Array" /> index.
+        /// </summary>
+        /// <param name="array">The one-dimensional <see cref="TVertex:System.Array" /> that is the destination of the elements copied from <see cref="TVertex:System.Collections.Generic.ICollection`1" />. The <see cref="TVertex:System.Array" /> must have zero-based indexing.</param>
+        /// <param name="arrayIndex">The zero-based index in <paramref name="array" /> at which copying begins.</param>
+        public void CopyTo((Edge edge, bool dir)[] array, int arrayIndex)
+        {
+            for (int i = arrayIndex; i < array.Length; i++)
+                array[i] = (EdgeList[i], DirectionList[i]);
+        }
+
+        /// <summary>
+        /// Removes the first occurrence of a specific object from the <see cref="TVertex:System.Collections.Generic.ICollection`1" />.
+        /// </summary>
+        /// <param name="item">The object to remove from the <see cref="TVertex:System.Collections.Generic.ICollection`1" />.</param>
+        /// <returns><see langword="true" /> if <paramref name="item" /> was successfully removed from the <see cref="TVertex:System.Collections.Generic.ICollection`1" />; otherwise, <see langword="false" />. This method also returns <see langword="false" /> if <paramref name="item" /> is not found in the original <see cref="TVertex:System.Collections.Generic.ICollection`1" />.</returns>
+        public bool Remove((Edge edge, bool dir) item)
+        {
+            var i = IndexOf(item);
+            if (i == -1) return false;
+            RemoveAt(i);
+            return true;
+        }
+
+        /// <summary>
+        /// Copies the specified EdgePath.
+        /// </summary>
+        /// <param name="reverse">if set to <c>true</c> [reverse].</param>
+        /// <param name="copiedTessellatedSolid">The copied tessellated solid.</param>
+        /// <param name="startIndex">The start index.</param>
+        /// <param name="endIndex">The end index.</param>
+        /// <returns>EdgePath.</returns>
+        public EdgePath Copy(bool reverse = false, TessellatedSolid copiedTessellatedSolid = null,
+            int startIndex = 0, int endIndex = -1)
+        {
+            var copy = new EdgePath();
+            this.CopyEdgesPathData(copy, reverse, copiedTessellatedSolid, startIndex, endIndex);
+            return copy;
+        }
+        /// <summary>
+        /// Copies the data (properties) from this EdgePath over to another.
+        /// </summary>
+        /// <param name="copy">The copy.</param>
+        /// <param name="reverse">if set to <c>true</c> [reverse].</param>
+        /// <param name="copiedTessellatedSolid">The copied tessellated solid.</param>
+        /// <param name="startIndex">The start index.</param>
+        /// <param name="endIndex">The end index.</param>
+        protected void CopyEdgesPathData(EdgePath copy, bool reverse = false, TessellatedSolid copiedTessellatedSolid = null,
+            int startIndex = 0, int endIndex = -1)
+        {
+            copy.IsClosed = this.IsClosed && startIndex == 0 && (endIndex == -1 || endIndex >= EdgeList.Count);
+            if (endIndex == -1) endIndex = EdgeList.Count;
+            if (copiedTessellatedSolid == null)
             {
-                if (reverse)
-                    copy.AddBegin(EdgeList[i], !DirectionList[i]);
-                else
-                    copy.AddEnd(EdgeList[i], DirectionList[i]);
+                for (int i = startIndex; i < endIndex; i++)
+                {
+                    if (reverse)
+                        copy.AddBegin(EdgeList[i], !DirectionList[i]);
+                    else
+                        copy.AddEnd(EdgeList[i], DirectionList[i]);
+                }
+            }
+            else
+            {
+                for (int i = startIndex; i < endIndex; i++)
+                {
+                    if (reverse)
+                        copy.AddBegin(copiedTessellatedSolid.Edges[EdgeList[i].IndexInList], !DirectionList[i]);
+                    else
+                        copy.AddEnd(copiedTessellatedSolid.Edges[EdgeList[i].IndexInList], DirectionList[i]);
+                }
             }
         }
-        else
+
+        /// <summary>
+        /// The serialization data
+        /// </summary>
+        [JsonExtensionData]
+        protected IDictionary<string, JToken> serializationData;
+
+        /// <summary>
+        /// Called when [serializing method].
+        /// </summary>
+        /// <param name="context">The context.</param>
+        [OnSerializing]
+        protected void OnSerializingMethod(StreamingContext context)
         {
-            for (int i = startIndex; i < endIndex; i++)
+            serializationData = new Dictionary<string, JToken>();
+            serializationData.Add("EdgeIndices", JToken.FromObject(EdgeList.Select(e => e.IndexInList)));
+            serializationData.Add("Dirs", string.Join(null, DirectionList.Select(dir => dir ? "1" : "0")));
+        }
+
+        /// <summary>
+        /// Completes the post serialization.
+        /// </summary>
+        /// <param name="ts">The ts.</param>
+        internal void CompletePostSerialization(TessellatedSolid ts)
+        {
+            foreach (var edgeIndex in serializationData["EdgeIndices"].ToObject<IEnumerable<int>>())
+                EdgeList.Add(ts.Edges[edgeIndex]);
+            foreach (var s in serializationData["Dirs"].ToObject<string>())
+                DirectionList.Add(s == '1');
+        }
+
+        /// <summary>
+        /// Gets the range.
+        /// </summary>
+        /// <param name="lb">The lb.</param>
+        /// <param name="ub">The ub.</param>
+        /// <returns>IEnumerable&lt;System.ValueTuple&lt;Edge, System.Boolean&gt;&gt;.</returns>
+        internal IEnumerable<(Edge edge, bool dir)> GetRange(int lb, int ub)
+        {
+            for (int i = lb; i < ub; i++)
+                yield return (EdgeList[i], DirectionList[i]);
+        }
+        /// <summary>
+        /// Removes the range.
+        /// </summary>
+        /// <param name="lb">The lb.</param>
+        /// <param name="ub">The ub.</param>
+        internal void RemoveRange(int lb, int ub)
+        {
+            var numberToRemove = ub - lb;
+            EdgeList.RemoveRange(lb, numberToRemove);
+            DirectionList.RemoveRange(lb, numberToRemove);
+        }
+        /// <summary>
+        /// Returns an enumerator that iterates through the collection.
+        /// </summary>
+        /// <returns>An enumerator that can be used to iterate through the collection.</returns>
+        public IEnumerator<(Edge edge, bool dir)> GetEnumerator()
+        {
+            for (int i = 0; i < EdgeList.Count; i++)
             {
-                if (reverse)
-                    copy.AddBegin(copiedTessellatedSolid.Edges[EdgeList[i].IndexInList], !DirectionList[i]);
-                else
-                    copy.AddEnd(copiedTessellatedSolid.Edges[EdgeList[i].IndexInList], DirectionList[i]);
+                yield return (EdgeList[i], DirectionList[i]);
             }
         }
-    }
 
-    /// <summary>
-    /// The serialization data
-    /// </summary>
-    [JsonExtensionData]
-    protected IDictionary<string, JToken> serializationData;
-
-    /// <summary>
-    /// Called when [serializing method].
-    /// </summary>
-    /// <param name="context">The context.</param>
-    [OnSerializing]
-    protected void OnSerializingMethod(StreamingContext context)
-    {
-        serializationData = new Dictionary<string, JToken>();
-        serializationData.Add("EdgeIndices", JToken.FromObject(EdgeList.Select(e => e.IndexInList)));
-        serializationData.Add("Dirs", string.Join(null, DirectionList.Select(dir => dir ? "1" : "0")));
-    }
-
-    /// <summary>
-    /// Completes the post serialization.
-    /// </summary>
-    /// <param name="ts">The ts.</param>
-    internal void CompletePostSerialization(TessellatedSolid ts)
-    {
-        foreach (var edgeIndex in serializationData["EdgeIndices"].ToObject<IEnumerable<int>>())
-            EdgeList.Add(ts.Edges[edgeIndex]);
-        foreach (var s in serializationData["Dirs"].ToObject<string>())
-            DirectionList.Add(s == '1');
-    }
-
-    /// <summary>
-    /// Gets the range.
-    /// </summary>
-    /// <param name="lb">The lb.</param>
-    /// <param name="ub">The ub.</param>
-    /// <returns>IEnumerable&lt;System.ValueTuple&lt;Edge, System.Boolean&gt;&gt;.</returns>
-    internal IEnumerable<(Edge edge, bool dir)> GetRange(int lb, int ub)
-    {
-        for (int i = lb; i < ub; i++)
-            yield return (EdgeList[i], DirectionList[i]);
-    }
-    /// <summary>
-    /// Removes the range.
-    /// </summary>
-    /// <param name="lb">The lb.</param>
-    /// <param name="ub">The ub.</param>
-    internal void RemoveRange(int lb, int ub)
-    {
-        var numberToRemove = ub - lb;
-        EdgeList.RemoveRange(lb, numberToRemove);
-        DirectionList.RemoveRange(lb, numberToRemove);
-    }
-    /// <summary>
-    /// Returns an enumerator that iterates through the collection.
-    /// </summary>
-    /// <returns>An enumerator that can be used to iterate through the collection.</returns>
-    public IEnumerator<(Edge edge, bool dir)> GetEnumerator()
-    {
-        for (int i = 0; i < EdgeList.Count; i++)
+        /// <summary>
+        /// Gets the enumerator.
+        /// </summary>
+        /// <returns>IEnumerator.</returns>
+        IEnumerator IEnumerable.GetEnumerator()
         {
-            yield return (EdgeList[i], DirectionList[i]);
+            return GetEnumerator();
         }
     }
-
-    /// <summary>
-    /// Gets the enumerator.
-    /// </summary>
-    /// <returns>IEnumerator.</returns>
-    IEnumerator IEnumerable.GetEnumerator()
-    {
-        return GetEnumerator();
-    }
-}
 }
