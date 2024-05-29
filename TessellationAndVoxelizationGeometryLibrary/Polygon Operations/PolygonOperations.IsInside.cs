@@ -676,7 +676,7 @@ namespace TVGL
         }
         /// <summary>
         /// Find all the polygon intersection points along a single horizontal line.
-        /// Returns a list of intersections from lowest to highest along with the vertex that the line starts from.
+        /// Returns a list of intersections from lowest x to highest x along with the vertex that the line starts from.
         /// </summary>
         /// <param name="polygon">The polygon.</param>
         /// <param name="YValue">The y value.</param>
@@ -698,6 +698,34 @@ namespace TVGL
                         result.Add(line.FindXGivenY(YValue, out _), current);
                     current = next;
                     currentIsAbove = nextIsAbove;
+                } while (current != startVertex);
+            }
+            return result;
+        }
+        /// <summary>
+        /// Find all the polygon intersection points along a single vertical line.
+        /// Returns a list of intersections from lowest y to highest y along with the vertex that the line starts from.
+        /// </summary>
+        /// <param name="polygon">The polygon.</param>
+        /// <param name="YValue">The y value.</param>
+        /// <returns>SortedList&lt;System.Double, Vertex2D&gt;.</returns>
+        public static SortedList<double, Vertex2D> AllPolygonIntersectionPointsAlongVertical(this Polygon polygon, double XValue)
+        {
+            SortedList<double, Vertex2D> result = new SortedList<double, Vertex2D>(new NoEqualSort());
+            foreach (var poly in polygon.AllPolygons)
+            {
+                var startVertex = poly.Vertices[0];
+                var current = startVertex;
+                var currentIsToTheRight = startVertex.X >= XValue;
+                do
+                {
+                    var line = current.StartLine;
+                    var next = line.ToPoint;
+                    var nextIsToTheRight = next.X >= XValue;
+                    if (nextIsToTheRight != currentIsToTheRight)
+                        result.Add(line.FindYGivenX(XValue, out _), current);
+                    current = next;
+                    currentIsToTheRight = nextIsToTheRight;
                 } while (current != startVertex);
             }
             return result;
