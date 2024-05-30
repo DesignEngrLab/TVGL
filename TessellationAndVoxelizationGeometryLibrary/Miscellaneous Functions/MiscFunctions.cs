@@ -1500,7 +1500,7 @@ namespace TVGL
         /// <returns>TVGL.Vector2.</returns>
         public static Vector2 LineLine2DIntersection(Vector2 aAnchor, Vector2 aDirection, Vector2 bAnchor, Vector2 bDirection)
         {
-            if (aAnchor.IsAligned(bAnchor, Constants.BaseTolerance)) return aAnchor;
+            if (aAnchor.IsPracticallySame(bAnchor, Constants.BaseTolerance)) return aAnchor;
             var vCross = aDirection.Cross(bDirection); //2D cross product, determines if parallel
 
             if (vCross.IsNegligible(Constants.BaseTolerance))
