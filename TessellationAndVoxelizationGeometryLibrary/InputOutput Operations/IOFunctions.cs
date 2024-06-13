@@ -994,7 +994,7 @@ namespace TVGL
                 fileType = GetFileTypeFromExtension(Path.GetExtension(filename));
             var dir = Path.GetDirectoryName(filename);
             filename = Path.GetFileName(Path.ChangeExtension(filename, GetExtensionFromFileType(fileType)));
-            if (!string.IsNullOrWhiteSpace(dir)) filename = dir + Path.DirectorySeparatorChar + filename;
+            if (!string.IsNullOrWhiteSpace(dir)) filename = Path.Combine(dir, filename);
             using var fileStream = File.OpenWrite(filename);
             return Save(fileStream, solid, fileType);
         }
@@ -1084,7 +1084,7 @@ namespace TVGL
 
                 case FileType.TVGL:
                 case FileType.TVGLz:
-                    return Save(stream, new[] { solid });
+                    return SaveToTVGL(stream, solid);
 
                 //Filetypes that save as single solids
                 case FileType.OFF:
@@ -1234,7 +1234,7 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Saves to TVG lz.
+        /// Saves to TVGLz.
         /// </summary>
         /// <param name="solidAssembly">The solid assembly.</param>
         /// <param name="filename">The filename.</param>
@@ -1283,6 +1283,77 @@ namespace TVGL
                     writer.Formatting = Formatting.None;
                     solidAssembly.StreamWrite(writer);
                     writer.Close();
+                }
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+
+
+        /// <summary>
+        /// Saves to zipped TVGL file format.
+        /// </summary>
+        /// <param name="solidAssembly">The solid assembly.</param>
+        /// <param name="filename">The filename.</param>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
+        public static bool SaveToTVGLz(Solid solid, string filename)
+        {
+            //Delete the existing file if it exists, so that our stream doesn't get corrupted
+            //(i.e. if the existing location is longer than what we write, some of the original fil will remain
+            var tvgl = Path.ChangeExtension(filename, GetExtensionFromFileType(FileType.TVGL));
+            var tvglz = Path.ChangeExtension(filename, GetExtensionFromFileType(FileType.TVGLz));
+            if (File.Exists(tvgl)) File.Delete(tvgl);
+            if (File.Exists(tvglz)) File.Delete(tvglz);
+
+            using var fileStream = File.OpenWrite(tvgl);
+            if (!SaveToTVGL(fileStream, solid))
+                return false;
+            try
+            {
+                using (ZipArchive zip = ZipFile.Open(tvglz, ZipArchiveMode.Create))
+                {
+                    zip.CreateEntryFromFile(tvgl, "TVGL", CompressionLevel.Optimal);
+                }
+                //Delete temp file
+                if (File.Exists(tvgl)) File.Delete(tvgl);
+            }
+            catch
+            {
+                return false;
+            }
+            return true;
+        }
+
+        /// <summary>
+        /// Saves to TVGL.
+        /// </summary>
+        /// <param name="fileStream">The file stream.</param>
+        /// <param name="solidAssembly">The solid assembly.</param>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
+        private static bool SaveToTVGL(Stream stream, Solid solid)
+        {
+            try
+            {
+                JsonSerializer serializer = new JsonSerializer
+                {
+                    NullValueHandling = NullValueHandling.Ignore,
+                    DefaultValueHandling = DefaultValueHandling.Ignore,
+                    TypeNameHandling = TypeNameHandling.Auto,
+                    ReferenceLoopHandling = ReferenceLoopHandling.Ignore,
+                };
+                var sw = new StreamWriter(stream);
+                using (var writer = new JsonTextWriter(sw))
+                {
+                    var jObject = JObject.FromObject(solid, serializer);
+                    var solidType = solid.GetType();
+                    jObject.AddFirst(new JProperty("TVGLSolidType", solid.GetType().FullName));
+                    if (!Assembly.GetExecutingAssembly().Equals(solidType.Assembly))
+                        jObject.AddFirst(new JProperty("InAssembly", solidType.Assembly.Location));
+                    jObject.WriteTo(writer);
                 }
                 return true;
             }
@@ -1410,7 +1481,7 @@ namespace TVGL
             //Casting from the solidAssembly, Solids list puts each solid in the coordinate system
             //that it was locally defined in (not it's global position in the assembly - which we don't want).
             var tessellatedSolid = ReturnMostSignificantSolid(solidAssembly, out _);
-            tessellatedSolid.FileName = new FileInfo(filePath).Name;    
+            tessellatedSolid.FileName = new FileInfo(filePath).Name;
             part = tessellatedSolid;
             return true;
         }
@@ -1423,7 +1494,7 @@ namespace TVGL
         /// <returns></returns>
         public static TessellatedSolid ReturnMostSignificantSolid(SolidAssembly solidAssembly, out IEnumerable<TessellatedSolid> significantSolids)
         {
-            significantSolids = new List<TessellatedSolid>();   
+            significantSolids = new List<TessellatedSolid>();
             if (solidAssembly.Solids == null || !solidAssembly.Solids.Any(p => p is TessellatedSolid)) return null;
             var solids = solidAssembly.Solids.Where(p => p is TessellatedSolid).Select(p => p as TessellatedSolid).ToList();
             var maxVolume = solidAssembly.Solids.Max(p => p.ConvexHull.Volume);

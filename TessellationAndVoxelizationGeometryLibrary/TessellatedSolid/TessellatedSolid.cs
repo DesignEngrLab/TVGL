@@ -404,18 +404,28 @@ namespace TVGL
                                     {
                                         Console.WriteLine("Need to add deserialize casting for primitive type: " + primitiveType);
                                         throw new Exception("Need to add deserialize casting for primitive type: " + primitiveType);
-                                    }              
+                                    }
                             }
                         }
                         break;
                     case "FaceIndices":
                         reader.Read();//start array [
-                        for (var faceIndex = 0; faceIndex < NumberOfFaces; faceIndex++)
+                        var faceIndex = 0;
+                        for (var faceRowIndex = 0; faceRowIndex < NumberOfFaces; faceRowIndex++)
                         {
                             var a = (int)reader.ReadAsInt32();
                             var b = (int)reader.ReadAsInt32();
                             var c = (int)reader.ReadAsInt32();
+                            if (a==b|| a==c || b==c) continue;
                             Faces[faceIndex] = new TriangleFace(Vertices[a], Vertices[b], Vertices[c]) { IndexInList = faceIndex };
+                            faceIndex++;
+                        }
+                        if (NumberOfFaces != faceIndex)
+                        {
+                            var newFaces = new TriangleFace[faceIndex];
+                            Array.Copy(Faces, newFaces, faceIndex);
+                            Faces = newFaces;
+                            NumberOfFaces = faceIndex;
                         }
                         break;
                     case "VertexCoords":
@@ -652,7 +662,7 @@ namespace TVGL
                     FixEdgeDisassociations = true,
                     PredefineAllEdges = true
                 }, out _);
-           else Errors.MakeEdges();
+            else Errors.MakeEdges();
         }
 
         #endregion

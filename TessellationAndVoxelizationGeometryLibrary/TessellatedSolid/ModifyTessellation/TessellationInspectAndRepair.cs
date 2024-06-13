@@ -94,7 +94,7 @@ namespace TVGL
         /// Gets a value indicating whether there is an incorrect face-to-edge ratio.
         /// For watertight solids, there should be 1.5 edges per face.
         /// </summary>
-        public bool IncorrectFaceEdgeRatio { get; private set; }
+        public bool CorrectFaceEdgeRatio { get; private set; }
         #endregion Properties
 
         #region Main Method from TessellatedSolid Constructor
@@ -402,7 +402,7 @@ namespace TVGL
             if (InconsistentMatingFacePairs.Count > 0)
                 ContainsErrors = true;
 
-            IncorrectFaceEdgeRatio = 3 * ts.NumberOfFaces == 2 * (alreadyDefinedEdges.Count + (numOverUsedFaceEdges + numSingleSidedEdges) / 2);
+            CorrectFaceEdgeRatio = 3 * ts.NumberOfFaces == 2 * (alreadyDefinedEdges.Count + (numOverUsedFaceEdges + numSingleSidedEdges) / 2);
 
             if (ContainsErrors)
             {
@@ -555,7 +555,7 @@ namespace TVGL
             if (tsErrors.InconsistentMatingFacePairs.Count > 0) Message.output("==> " + tsErrors.InconsistentMatingFacePairs.Count
                 + " edges with opposite-facing faces.", 3);
 
-            if (tsErrors.IncorrectFaceEdgeRatio)
+            if (tsErrors.CorrectFaceEdgeRatio)
                 Message.output("==> While re-connecting faces and edges has lead to errors, there is a likelihood that water-tightness can be acheived."
                     , 3);
             else Message.output("==> The model is not water-tight. It merely represents a surface, but fixing holes may restore it.", 3);
