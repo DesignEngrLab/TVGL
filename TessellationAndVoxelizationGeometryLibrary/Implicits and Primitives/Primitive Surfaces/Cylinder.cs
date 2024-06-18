@@ -47,10 +47,29 @@ namespace TVGL
             // but this is not correct since M11 is often non-unity during rotation
         }
 
+        private Vector3 FaceXDir
+        {
+            get
+            {
+                if (faceXDir.IsNull())
+                    faceXDir = Axis.GetPerpendicularDirection();
+                return faceXDir;
+            }
+        }
         /// <summary>
         /// The face x dir
         /// </summary>
         private Vector3 faceXDir = Vector3.Null;
+
+        private Vector3 FaceYDir
+        {
+            get
+            {
+                if (faceYDir.IsNull())
+                    faceYDir = Axis.Cross(FaceXDir);
+                return faceYDir;
+            }
+        }
         /// <summary>
         /// The face y dir
         /// </summary>
@@ -64,13 +83,8 @@ namespace TVGL
         public override Vector2 TransformFrom3DTo2D(Vector3 point)
         {
             var v = point - Anchor;
-            if (faceXDir.IsNull())
-            {
-                faceXDir = Axis.GetPerpendicularDirection();
-                faceYDir = Axis.Cross(faceXDir);
-            }
-            var x = faceXDir.Dot(v);
-            var y = faceYDir.Dot(v);
+            var x = FaceXDir.Dot(v);
+            var y = FaceYDir.Dot(v);
             var angle = Math.Atan2(y, x);
 
             return new Vector2(angle * Radius, v.Dot(Axis));
@@ -84,8 +98,8 @@ namespace TVGL
         public override Vector3 TransformFrom2DTo3D(Vector2 point)
         {
             var angle = (point.X / Radius) % Constants.TwoPi;
-            var result = Anchor + Radius * Math.Cos(angle) * faceXDir;
-            result += Radius * Math.Sin(angle) * faceYDir;
+            var result = Anchor + Radius * Math.Cos(angle) * FaceXDir;
+            result += Radius * Math.Sin(angle) * FaceYDir;
             result += point.Y * Axis;
             return result;
         }
@@ -155,10 +169,11 @@ namespace TVGL
         /// Gets the circle.
         /// </summary>
         /// <value>The circle.</value>
-        public Circle Circle {
+        public Circle Circle
+        {
             get
             {
-                if(_circle.Area == 0)
+                if (_circle.Area == 0)
                 {
                     var transform = MiscFunctions.TransformToXYPlane(Axis, out var _backTransform);
                     var center = Anchor.ConvertTo2DCoordinates(transform);
@@ -170,7 +185,7 @@ namespace TVGL
             {
                 _circle = value;
             }
-        }       
+        }
 
         /// <summary>
         /// Gets the radius.
