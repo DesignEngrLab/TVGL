@@ -1021,6 +1021,21 @@ namespace TVGL
         /// Converts the 2D coordinates into 3D locations in a plane defined by normal direction and distance.
         /// </summary>
         /// <param name="coordinates">The coordinates.</param>
+        /// <param name="normalDirection">The normal direction of the new plane.</param>
+        /// <param name="distanceAlongDirection">The distance of the plane from the origin.</param>
+        /// <returns>System.Collections.Generic.IEnumerable&lt;TVGL.Vector3&gt;.</returns>
+        public static Vector3 ConvertTo3DLocation(this Vector2 coordinate, Vector3 normalDirection,
+                    double distanceAlongDirection)
+        {
+            TransformToXYPlane(normalDirection, out var backTransform);
+            var transform = backTransform * Matrix4x4.CreateTranslation(normalDirection * distanceAlongDirection);
+            return ConvertTo3DLocation(coordinate, transform);
+        }
+
+        /// <summary>
+        /// Converts the 2D coordinates into 3D locations in a plane defined by normal direction and distance.
+        /// </summary>
+        /// <param name="coordinates">The coordinates.</param>
         /// <param name="transform">The transform matrix.</param>
         /// <returns>System.Collections.Generic.IEnumerable&lt;TVGL.Vector3&gt;.</returns>
         public static IEnumerable<Vector3> ConvertTo3DLocations(this IEnumerable<Vector2> coordinates, Matrix4x4 transform)

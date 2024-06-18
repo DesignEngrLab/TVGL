@@ -1430,7 +1430,7 @@ namespace TVGL
                 segment.OwnedPrimitive = ownedPrimitive;
                 segment.OtherPrimitive = otherPrimitive;
                 ownedPrimitive.BorderSegments.Add(segment);
-                if(segment.OtherPrimitive != null)
+                if (segment.OtherPrimitive != null)
                     otherPrimitive.BorderSegments.Add(segment);
                 segment.SetCurve();
             }
@@ -1552,23 +1552,25 @@ namespace TVGL
         {
             foreach (var primitive in solid.Primitives)
                 foreach (var border in primitive.Borders)
-                    CharacterizeBorder(primitive, border);
+                    CharacterizeBorder(border);
         }
 
-        public static void CharacterizeBorder(PrimitiveSurface primitive, BorderLoop border)
+        public static void CharacterizeBorder(BorderLoop border)
         {
-            border.OwnedPrimitive = primitive;
+            border.SetBorderPlane();
+            var primitive = border.OwnedPrimitive;
             border.EncirclesAxis = primitive.BorderEncirclesAxis(border);
             //Set the curve for the border. This is required so we can check IsCircular for the border.
             //This is not necessarily the same as the border segment, since there could be multiple segments
             //that make up a primitive border.
             SetCurve(border, primitive);
-            border.SetBorderPlane();
         }
 
         private static void SetCurve(BorderLoop border, PrimitiveSurface prim)
         {
-            FindBestCurve(prim.TransformFrom3DTo2D(border.GetCoordinates(), true),
+            if (border.IsPlanar)
+                prim = new Plane(border.PlaneDistance, border.PlaneNormal);
+            FindBestCurve(prim.TransformFrom3DTo2D(border.GetCoordinates(), border.IsClosed),
                        double.PositiveInfinity, out var curve, out var curveError);
             border.Curve = curve;
             border.CurveError = curveError;
@@ -1614,6 +1616,6 @@ namespace TVGL
             return true;
         }
 
-    #endregion
-}
+        #endregion
+    }
 }
