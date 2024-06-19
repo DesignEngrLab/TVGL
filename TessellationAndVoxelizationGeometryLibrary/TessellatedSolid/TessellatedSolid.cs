@@ -446,6 +446,9 @@ namespace TVGL
             foreach (var prim in Primitives)
                 prim.CompletePostSerialization(this);
 
+            //Lastly, define the border segments and border loops for each primitive.
+            TessellationInspectAndRepair.DefineBorders(this);
+            TessellationInspectAndRepair.CharacterizeBorders(this);
             //Get the max min bounds and set tolerance
             DefineAxisAlignedBoundingBoxAndTolerance();
             //DoublyConnectVerticesToFaces();

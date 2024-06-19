@@ -1416,6 +1416,7 @@ namespace TVGL
 
         public static void DefineBorderSegments(TessellatedSolid solid)
         {
+            solid.MakeEdgesIfNonExistent();
             foreach (var prim in solid.Primitives)
                 prim.BorderSegments = new List<BorderSegment>();
             var borderSegments = GatherEdgesIntoSegments(solid.Primitives.SelectMany(prim => prim.OuterEdges));
