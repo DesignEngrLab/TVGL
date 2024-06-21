@@ -38,7 +38,7 @@ namespace TVGL
             else if (Math.Abs(pointDot - MaxDistanceAlongAxis) < Math.Abs(b.Length() - Radius))
                 outwardVector = Axis;
             else outwardVector = b.Cross(Axis).Normalize();
-            if (isPositive.HasValue && !isPositive.Value) outwardVector *= -1;
+            if (IsPositive.HasValue && !IsPositive.Value) outwardVector *= -1;
             return outwardVector;
         }
 
@@ -65,7 +65,7 @@ namespace TVGL
             var d = (point - Anchor).Cross(Axis).Length() - Radius;
             // if d is positive, then the point is outside the CappedCylinder
             // if d is negative, then the point is inside the CappedCylinder
-            if (isPositive.HasValue && !isPositive.Value) d = -d;
+            if (IsPositive.HasValue && !IsPositive.Value) d = -d;
             return d;
         }
 

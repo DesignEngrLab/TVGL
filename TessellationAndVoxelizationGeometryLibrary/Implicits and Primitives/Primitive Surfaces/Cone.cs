@@ -269,7 +269,7 @@ namespace TVGL
             var b = a.Cross(Axis);
             var c = Axis.Cross(b).Normalize();  // outward from the axis to the point
             var outwardVector = (c - (Axis * Aperture)) / Math.Sqrt(1 + Aperture * Aperture);
-            if (isPositive.HasValue && !isPositive.Value) outwardVector *= -1;
+            if (IsPositive.HasValue && !IsPositive.Value) outwardVector *= -1;
             return outwardVector;
         }
 
@@ -283,7 +283,7 @@ namespace TVGL
             var v = point - Apex;
             var distAtCommonDepth = v.Cross(Axis).Length() - Aperture * v.Dot(Axis);
             var d = distAtCommonDepth * cosAperture;
-            if (isPositive.HasValue && !isPositive.Value) d = -d;
+            if (IsPositive.HasValue && !IsPositive.Value) d = -d;
             return d;
         }
 

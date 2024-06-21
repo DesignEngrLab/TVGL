@@ -277,7 +277,7 @@ namespace TVGL
             var a = point - Anchor;
             var b = Axis.Cross(a);
             var outwardVector = b.Cross(Axis).Normalize();
-            if (isPositive.HasValue && !isPositive.Value) outwardVector *= -1;
+            if (IsPositive.HasValue && !IsPositive.Value) outwardVector *= -1;
             return outwardVector;
         }
 
@@ -291,7 +291,7 @@ namespace TVGL
             var d = (point - Anchor).Cross(Axis).Length() - Radius;
             // if d is positive, then the point is outside the cylinder
             // if d is negative, then the point is inside the cylinder
-            if (isPositive.HasValue && !isPositive.Value) d = -d;
+            if (IsPositive.HasValue && !IsPositive.Value) d = -d;
             return d;
         }
 

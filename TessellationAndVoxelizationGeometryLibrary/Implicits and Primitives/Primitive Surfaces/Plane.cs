@@ -572,7 +572,7 @@ namespace TVGL
         public override double DistanceToPoint(Vector3 point)
         {
             var d = point.Dot(Normal) - DistanceToOrigin;
-            if (isPositive.HasValue && !isPositive.Value) d = -d;
+            if (IsPositive.HasValue && !IsPositive.Value) d = -d;
             return d;
         }
         public override Vector3 GetNormalAtPoint(Vector3 point)

@@ -271,7 +271,7 @@ namespace TVGL
                     (coneRadius1 - coneRadius2) * (coneRadius1 - coneRadius2));
                 d = distAtCommonDepth * cosAngle;
             }
-            if (isPositive.HasValue && !isPositive.Value) d = -d;
+            if (IsPositive.HasValue && !IsPositive.Value) d = -d;
             return d;
         }
 
@@ -293,7 +293,7 @@ namespace TVGL
                 if (coneRadius1 < coneRadius2) sinAngle = -sinAngle;
                 d = (c * cosAngle + directionVector * sinAngle).Normalize();
             }
-            if (isPositive.HasValue && !isPositive.Value) d *= -1;
+            if (IsPositive.HasValue && !IsPositive.Value) d *= -1;
             return d;
         }
 

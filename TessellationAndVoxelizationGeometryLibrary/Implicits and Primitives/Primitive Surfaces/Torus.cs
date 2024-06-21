@@ -36,12 +36,11 @@ namespace TVGL
         /// <param name="minorRadius">The minor radius.</param>
         /// <param name="isPositive">if set to <c>true</c> [is positive].</param>
         /// <param name="faces">The faces.</param>
-        public Torus(Vector3 center, Vector3 axis, double majorRadius, double minorRadius, bool isPositive,
+        public Torus(Vector3 center, Vector3 axis, double majorRadius, double minorRadius, 
             IEnumerable<TriangleFace> faces) : base(faces)
         {
             Center = center;
             Axis = axis;
-            this.isPositive = isPositive;
             MajorRadius = majorRadius;
             MinorRadius = minorRadius;
         }
@@ -246,7 +245,7 @@ namespace TVGL
         {
             Vector3 ptOnCircle = ClosestPointOnCenterRingToPoint(Axis, Center, MajorRadius, point, distanceFromOriginToBisectingPlane);
             var d = (point - ptOnCircle).Length() - MinorRadius;
-            if (isPositive.HasValue && !isPositive.Value) d = -d;
+            if (IsPositive.HasValue && !IsPositive.Value) d = -d;
             return d;
         }
 
@@ -254,7 +253,7 @@ namespace TVGL
         {
             Vector3 ptOnCircle = ClosestPointOnCenterRingToPoint(Axis, Center, MajorRadius, point, distanceFromOriginToBisectingPlane);
             var d = (point - ptOnCircle).Normalize();
-            if (isPositive.HasValue && !isPositive.Value) d = -d;
+            if (IsPositive.HasValue && !IsPositive.Value) d = -d;
             return d;
         }
 

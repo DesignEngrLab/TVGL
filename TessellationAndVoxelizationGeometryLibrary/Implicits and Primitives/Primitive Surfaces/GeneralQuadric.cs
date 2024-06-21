@@ -13,6 +13,7 @@
 // ***********************************************************************
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace TVGL
 {
@@ -291,11 +292,9 @@ namespace TVGL
 
         protected override void CalculateIsPositive()
         {
-            // for ellipsoids (including spheres), paraboloids, cones and cylinders, a
-            // meaningful isPositive can be calculated. For hyperboloids, it is not clear.
-            // if a cone, cylinder or sphere is desired than the general quadric should 
-            // not be used. Instead, the specific class should be used.
-            isPositive = null;
+            if (Faces == null || !Faces.Any()) return;
+            var firstFace = Faces.First();
+            isPositive = firstFace.Normal.Dot(firstFace.Center - Center) > 0;
         }
 
         protected override void SetPrimitiveLimits()
