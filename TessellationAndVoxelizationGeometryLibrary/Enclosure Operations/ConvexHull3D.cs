@@ -35,13 +35,13 @@ namespace TVGL
         /// Gets the convex hull faces.
         /// </summary>
         /// <value>The convex hull faces.</value>
-        public readonly List<ConvexHullFace> Faces= new List<ConvexHullFace>();
+        public readonly List<ConvexHullFace> Faces = new List<ConvexHullFace>();
 
         /// <summary>
         /// Gets the convex hull edges.
         /// </summary>
         /// <value>The convex hull edges.</value>
-        public List<Edge> Edges=new List<Edge>();
+        public List<Edge> Edges = new List<Edge>();
 
 
 
@@ -92,10 +92,10 @@ namespace TVGL
                 face.Update();// Transform(transformMatrix);
             }
             //Update the edges
-                foreach (var edge in Edges)
-                {
-                    edge.Update(true);
-                }
+            foreach (var edge in Edges)
+            {
+                edge.Update(true);
+            }
             _center = _center.Transform(transformMatrix);
             // I'm not sure this is right, but I'm just using the 3x3 rotational submatrix to rotate the inertia tensor
             var rotMatrix = new Matrix3x3(transformMatrix.M11, transformMatrix.M12, transformMatrix.M13,
@@ -108,6 +108,14 @@ namespace TVGL
         {
             throw new System.NotImplementedException();
         }
+
+        public bool IsInside(Vector3 point)
+        {
+            foreach (var face in Faces)
+                if ((point - face.A.Coordinates).Dot(face.Normal) > 0) 
+                    return false;
+            return true;
+        }
     }
     public class ConvexHullFace : TriangleFace
     {
@@ -115,7 +123,7 @@ namespace TVGL
         {
             _normal = planeNormal;
         }
-        internal ConvexHullFace(Vertex vertex1, Vertex vertex2, Vertex vertex3) : base(vertex1, vertex2, vertex3,false)
+        internal ConvexHullFace(Vertex vertex1, Vertex vertex2, Vertex vertex3) : base(vertex1, vertex2, vertex3, false)
         {
             peakVertex = null;
             InteriorVertices = new List<Vertex>();
