@@ -1842,7 +1842,7 @@ namespace TVGL
         /// <param name="signedDistance">The signed distance.</param>
         /// <param name="onBoundaryIsInside">if set to <c>true</c> [on boundary is inside].</param>
         /// <returns>TVGL.Vector3.</returns>
-        public static Vector3 PointOnTriangleFromRay(TriangleFace face, Vector3 point3D, Vector3 direction,
+        public static Vector3 PointOnTriangleFromRay(this TriangleFace face, Vector3 point3D, Vector3 direction,
             out double signedDistance, bool onBoundaryIsInside = true)
         {
             var distanceToOrigin = face.Normal.Dot(face.A.Coordinates);
@@ -1995,7 +1995,6 @@ namespace TVGL
 
             var d1 = -DistancePointToPlane(rayPosition, normalOfPlane, distOfPlane);
             signedDistance = d1 / dot;
-            if (signedDistance < 0) return Vector3.Null;
             if (signedDistance.IsNegligible()) return rayPosition;
             return rayPosition + (rayDirection * signedDistance);
         }
