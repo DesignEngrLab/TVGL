@@ -109,10 +109,10 @@ namespace TVGL
             throw new System.NotImplementedException();
         }
 
-        public bool IsInside(Vector3 point)
+        public bool IsInside(Vector3 point, double offset = 0)
         {
             foreach (var face in Faces)
-                if ((point - face.A.Coordinates).Dot(face.Normal) > 0) 
+                if ((point - face.A.Coordinates).Dot(face.Normal) > offset) 
                     return false;
             return true;
         }

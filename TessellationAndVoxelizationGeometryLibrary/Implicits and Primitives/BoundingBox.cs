@@ -586,22 +586,22 @@ namespace TVGL
         /// <summary>
         /// Checks if the given point is inside the bounding box.
         /// </summary>
-        /// <param name="anchor"></param>
+        /// <param name="point"></param>
         /// <returns></returns>
         /// <exception cref="NotImplementedException"></exception>
-        public bool IsInside(Vector3 anchor)
+        public bool IsInside(Vector3 point, double offset = 0)
         {
-            var anchorDot = anchor.Dot(Directions[0]);
+            var anchorDot = point.Dot(Directions[0]);
             var planeDot = TranslationFromOrigin.Dot(Directions[0]);
-            if (anchorDot < planeDot || anchorDot - Dimensions[0] > planeDot) return false;
+            if (anchorDot < planeDot - offset || anchorDot > planeDot + Dimensions[0] + offset) return false;
 
-            anchorDot = anchor.Dot(Directions[1]);
+            anchorDot = point.Dot(Directions[1]);
             planeDot = TranslationFromOrigin.Dot(Directions[1]);
-            if (anchorDot < planeDot || anchorDot - Dimensions[1] > planeDot) return false;
+            if (anchorDot < planeDot - offset || anchorDot > planeDot + Dimensions[1] + offset) return false;
 
-            anchorDot = anchor.Dot(Directions[2]);
+            anchorDot = point.Dot(Directions[2]);
             planeDot = TranslationFromOrigin.Dot(Directions[2]);
-            if (anchorDot < planeDot || anchorDot - Dimensions[2] > planeDot) return false;
+            if (anchorDot < planeDot - offset || anchorDot > planeDot + Dimensions[2] + offset) return false;
 
             return true;
         }
