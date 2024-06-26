@@ -1451,7 +1451,7 @@ namespace TVGL
             Bounds = new[] { new Vector3(xMin, yMin, zMin), new Vector3(xMax, yMax, zMax) };
 
             //Update the faces
-            foreach (var face in Faces)
+            foreach (var face in Faces.Concat(ConvexHull.Faces))
             {
                 face.Update();// Transform(transformMatrix);
             }
