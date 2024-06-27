@@ -1101,9 +1101,29 @@ namespace TVGL
         /// Gets the random color names.
         /// </summary>
         /// <returns>IEnumerable&lt;System.String&gt;.</returns>
-        public static IEnumerable<string> GetRandomColorNames()
+        public static IEnumerable<string> GetRandomColorNames(string seed)
         {
-            var random = new Random();
+            int hash1 = 5381;
+            int hash2 = hash1;
+
+            for (int i = 0; i < seed.Length && seed[i] != '\0'; i += 2)
+            {
+                hash1 = ((hash1 << 5) + hash1) ^ seed[i];
+                if (i == seed.Length - 1 || seed[i + 1] == '\0')
+                    break;
+                hash2 = ((hash2 << 5) + hash2) ^ seed[i + 1];
+            }
+
+            var intSeed = hash1 + (hash2 * 1566083941);
+            return GetRandomColorNames(intSeed);
+        }
+        /// <summary>
+        /// Gets the random color names.
+        /// </summary>
+        /// <returns>IEnumerable&lt;System.String&gt;.</returns>
+        public static IEnumerable<string> GetRandomColorNames(int seed = int.MinValue)
+        {
+            var random = seed == int.MinValue ? new Random() : new Random(seed);
             var families = ColorDictionary.Values.OrderBy(dummy => random.NextDouble())
                 .Select(dict => dict.Keys.OrderBy(dummy2 => random.NextDouble()).ToList()).ToList();
             var innerIndex = 0;
