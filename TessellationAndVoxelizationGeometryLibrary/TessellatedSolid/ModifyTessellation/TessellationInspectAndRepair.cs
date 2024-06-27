@@ -1217,7 +1217,7 @@ namespace TVGL
                 var plane = new Plane(distance, planeNormal);
                 var success = false;
                 List<TriangulationLoop> triangleFaceList1 = null;
-                List<Vertex[]> triangleFaceList2 = null;
+                List<(Vertex A, Vertex B, Vertex C) > triangleFaceList2 = null;
                 var closeToPlane = plane.CalculateMaxError(vertices.Select(v => v.Coordinates)) < Constants.BaseTolerance;
                 if (closeToPlane)
                 {
@@ -1288,7 +1288,7 @@ namespace TVGL
                     Message.output("loop successfully repaired with SweepLine 2D Triangulate" + triangleFaceList2.Count, 4);
                     foreach (var triangle in triangleFaceList2)
                     {
-                        var newFace = new TriangleFace(triangle, planeNormal);
+                        var newFace = new TriangleFace(triangle.A, triangle.B, triangle.C);
                         newFaces.Add(newFace);
                         var fromVertex = newFace.C;
                         foreach (var toVertex in newFace.Vertices)

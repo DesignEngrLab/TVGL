@@ -766,7 +766,7 @@ namespace TVGL
                     var listOfFlatFaces = new List<TriangleFace>();
                     foreach (var vertexSet in triangulatedList)
                     {
-                        var face = new TriangleFace(vertexSet, normal, doublyLinkToVertices);
+                        var face = new TriangleFace(vertexSet.A, vertexSet.B, vertexSet.C, doublyLinkToVertices);
                         if (!HasUniformColor) face.Color = color;
                         listOfFaces.Add(face);
                         listOfFlatFaces.Add(face);
@@ -1074,7 +1074,7 @@ namespace TVGL
         /// Adds the faces.
         /// </summary>
         /// <param name="facesToAdd">The faces to add.</param>
-        internal void AddFaces(IList<TriangleFace> facesToAdd)
+        public void AddFaces(IList<TriangleFace> facesToAdd)
         {
             var numToAdd = facesToAdd.Count;
             var newFaces = new TriangleFace[NumberOfFaces + numToAdd];
@@ -1132,7 +1132,7 @@ namespace TVGL
         /// Removes the faces.
         /// </summary>
         /// <param name="removeIndices">The remove indices.</param>
-        internal void RemoveFaces(List<int> removeIndices)
+        public void RemoveFaces(List<int> removeIndices)
         {
             //First. Remove all the references to each edge and vertex.
             foreach (var faceIndex in removeIndices)

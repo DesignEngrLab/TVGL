@@ -63,7 +63,7 @@ namespace TVGL
             SetBorders();
         }
 
-        public new IEnumerable<TriangleFace> Faces()
+        public new IEnumerable<TriangleFace> GetFaces()
         {
             //Okay to return IEnumerable, since no duplicates will occur.
             foreach (var surface in Surfaces)
@@ -135,7 +135,7 @@ namespace TVGL
         /// <param name="color">The color.</param>
         public new void SetColor(Color color)
         {
-            foreach (var face in Faces())
+            foreach (var face in GetFaces())
                 face.Color = color;
         }
 
