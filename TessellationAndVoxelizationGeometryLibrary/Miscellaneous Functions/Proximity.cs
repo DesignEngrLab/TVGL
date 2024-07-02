@@ -851,7 +851,7 @@ namespace TVGL
         /// <param name="angleDegreesTolerance">The minimum angle between line directions - usually about 4 degrees.</param>
         /// <param name="maxDistanceFromCOM"></param>
         /// <returns>A tuple of the line anchor, the line direction, and the primitives centered about that line</returns>
-        public static IEnumerable<(Vector3 anchor, Vector3 direction, List<PrimitiveSurface>)> FindBestRotations(TessellatedSolid solid,
+        public static IEnumerable<(Vector3 anchor, Vector3 direction, List<PrimitiveSurface> surfaces, double area)> FindBestRotations(TessellatedSolid solid,
             double distanceTolerance = double.NaN,
             double angleDegreesTolerance = 4.0, double maxDistanceFromCOM = double.PositiveInfinity)
         {
@@ -910,10 +910,10 @@ namespace TVGL
             //Use area to choose the optimal direction rather than number of surfaces.
             //This is a better indication most of the time.
             var scoringList = dirToPrimsDictionary.Select(kvp => (kvp.Key, kvp.Value.Sum(p => p.Area))).ToList();
-            foreach (var c in scoringList.OrderByDescending(s => s.Item2))
+            foreach ((Vector4 lineDescriptor, double area) in scoringList.OrderByDescending(s => s.Item2))
             {
-                var (anchor, direction) = MiscFunctions.Get3DLineValuesFromUnique(c.Key);
-                yield return (anchor, direction, dirToPrimsDictionary[c.Key]);
+                var (anchor, direction) = MiscFunctions.Get3DLineValuesFromUnique(lineDescriptor);
+                yield return (anchor, direction, dirToPrimsDictionary[lineDescriptor],area);
             }
         }
     }
