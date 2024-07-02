@@ -852,8 +852,7 @@ namespace TVGL
         /// <param name="maxDistanceFromCOM"></param>
         /// <returns>A tuple of the line anchor, the line direction, and the primitives centered about that line</returns>
         public static IEnumerable<(Vector3 anchor, Vector3 direction, List<PrimitiveSurface> surfaces, double area)> FindBestRotations(TessellatedSolid solid,
-            double distanceTolerance = double.NaN,
-            double angleDegreesTolerance = 4.0, double maxDistanceFromCOM = double.PositiveInfinity)
+            double distanceTolerance = double.NaN, double angleDegreesTolerance = 4.0)
         {
             if (double.IsNaN(distanceTolerance)) distanceTolerance =
                     0.0001 * (solid.Bounds[1] - solid.Bounds[0]).Length();
@@ -871,8 +870,6 @@ namespace TVGL
                 {
                     var anchor = prim.GetAnchor();
                     var axis = prim.GetAxis();
-                    var distFromCenter = (anchor - com).Cross(axis).Length();
-                    if (distFromCenter > maxDistanceFromCOM) continue;
                     var uniqueLine = Unique3DLine(anchor, axis);
 
                     if (uniqueLines.TryGet(uniqueLine, out var matchingDir))
