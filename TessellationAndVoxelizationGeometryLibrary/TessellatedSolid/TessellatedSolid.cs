@@ -44,6 +44,11 @@ namespace TVGL
         public bool SourceIsSheetBody { get; set; } = false;
 
         /// <summary>
+        /// Used to avoid unnecessary re-checking of primitives via complex optimization methods.
+        /// </summary>
+        public bool PrimitivesDetermined { get; set; } = false;
+
+        /// <summary>
         /// Gets the faces.
         /// </summary>
         /// <value>The faces.</value>
@@ -240,7 +245,7 @@ namespace TVGL
         /// </summary>
         /// <param name="writer">The writer.</param>
         /// <param name="index">The index.</param>
-        public void StreamWrite(JsonTextWriter writer, int index)
+        public void StreamWrite(JsonTextWriter writer, int index = -1)
         {
             writer.WritePropertyName("Name");
             writer.WriteValue(Name);
@@ -248,9 +253,14 @@ namespace TVGL
             writer.WritePropertyName("SourceIsSheetBody");
             writer.WriteValue(SourceIsSheetBody);
 
-            writer.WritePropertyName("Index");
-            writer.WriteValue(index);
+            writer.WritePropertyName(nameof(PrimitivesDetermined));
+            writer.WriteValue(PrimitivesDetermined);
 
+            if (index >= 0)
+            {
+                writer.WritePropertyName("ReferenceIndex");
+                writer.WriteValue(index);
+            }
             writer.WritePropertyName("TessellationError");
             writer.WriteValue(TessellationError);
 
@@ -338,6 +348,9 @@ namespace TVGL
                         break;
                     case "SourceIsSheetBody":
                         SourceIsSheetBody = (bool)reader.ReadAsBoolean();
+                        break;
+                    case "PrimitivesDetermined":
+                        PrimitivesDetermined = (bool)reader.ReadAsBoolean();
                         break;
                     case "Index":
                         index = (int)reader.ReadAsInt32();
@@ -437,6 +450,9 @@ namespace TVGL
                             var z = (double)reader.ReadAsDouble();
                             Vertices[vertexIndex] = new Vertex(x, y, z, vertexIndex);
                         }
+                        break;
+                    case "ReferenceIndex":
+                        ReferenceIndex = (int)reader.ReadAsInt32();
                         break;
                 }
 

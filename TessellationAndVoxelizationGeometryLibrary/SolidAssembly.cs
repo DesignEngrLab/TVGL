@@ -15,7 +15,9 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
+using System.Reflection;
 using System.Runtime.Serialization;
 
 namespace TVGL
@@ -32,13 +34,28 @@ namespace TVGL
         /// <value>The name.</value>
         public string Name { get; set; }
 
-        public int NumberOfSolidBodies { get; set; }
+        public int NumberOfSolidBodies
+        {
+            get
+            {
+                if (numberOfSolidBodies < 0)
+                    numberOfSolidBodies = Solids.Count(t => t is TessellatedSolid ts && !ts.SourceIsSheetBody);
+                return numberOfSolidBodies;
+            }
+        }
 
         //If a CAD model was healed, the converter may still list the body as a sheet.
         //Otherwise, if there are a mix of sheet and solid bodies, there may be an issue
         //in the original conversion.
-        public int NumberOfSheetBodies { get; set; }
-
+        public int NumberOfSheetBodies
+        {
+            get
+            {
+                if (numberOfSheetBodies < 0)
+                    numberOfSheetBodies = Solids.Count(t => t is TessellatedSolid ts && ts.SourceIsSheetBody);
+                return numberOfSheetBodies;
+            }
+        }
         /// <summary>
         /// Gets or sets the root assembly.
         /// </summary>
@@ -63,17 +80,8 @@ namespace TVGL
         /// <summary>
         /// Initializes a new instance of the <see cref="SolidAssembly"/> class.
         /// </summary>
-        public SolidAssembly() 
+        public SolidAssembly()
         { //Empty Constructor for JSON
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="SolidAssembly"/> class.
-        /// </summary>
-        /// <param name="name">The name.</param>
-        public SolidAssembly(string name)
-        {
-            Name = name;
             RootAssembly = new SubAssembly(this);
             _distinctSolids = new Dictionary<Solid, int>();
         }
@@ -81,11 +89,20 @@ namespace TVGL
         /// <summary>
         /// Initializes a new instance of the <see cref="SolidAssembly"/> class.
         /// </summary>
+        /// <param name="name">The name.</param>
+        public SolidAssembly(string name):this()
+        {
+            Name = name;
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="SolidAssembly"/> class.
+        /// </summary>
         /// <param name="solids">The solids.</param>
         /// <param name="fileName">Name of the file.</param>
-        public SolidAssembly(IEnumerable<Solid> solids, string fileName = "")
+        public SolidAssembly(IEnumerable<Solid> solids, string fileName = ""):this()
         {
-            if(fileName.Length > 0)
+            if (fileName.Length > 0)
                 Name = fileName;
             else
             {
@@ -94,8 +111,6 @@ namespace TVGL
                     Name = "SolidAssembly";
             }
 
-            RootAssembly = new SubAssembly(this);
-            _distinctSolids = new Dictionary<Solid, int>();
             foreach (var solid in solids)
                 RootAssembly.Add(solid, Matrix4x4.Identity);
 
@@ -107,13 +122,11 @@ namespace TVGL
         /// </summary>
         public void CompleteInitialization()
         {
-            Solids = _distinctSolids.Keys.ToArray(); 
+            Solids = _distinctSolids.Keys.ToArray();
             //Set the index for each of the solids.
-            for(var i = 0; i < Solids.Length; i++)
+            for (var i = 0; i < Solids.Length; i++)
                 Solids[i].ReferenceIndex = i;
             _distinctSolids.Clear();
-            NumberOfSolidBodies = Solids.Count(t => t is TessellatedSolid ts && !ts.SourceIsSheetBody);
-            NumberOfSheetBodies = Solids.Count(t => t is TessellatedSolid ts && ts.SourceIsSheetBody);
         }
 
         /// <summary>
@@ -130,7 +143,7 @@ namespace TVGL
             sheets = Solids.Where(t => t is TessellatedSolid ts && ts.SourceIsSheetBody).Select(t => (TessellatedSolid)t);
         }
 
-        public bool ContainsBothBodyTypes() => NumberOfSheetBodies > 0 && NumberOfSolidBodies > 0;  
+        public bool ContainsBothBodyTypes() => NumberOfSheetBodies > 0 && NumberOfSolidBodies > 0;
 
         /// <summary>
         /// Determines whether this instance is empty.
@@ -169,7 +182,7 @@ namespace TVGL
                     }
                     writer.WriteEndObject();
                 }
-            }     
+            }
             writer.WriteEndObject();
         }
 
@@ -195,8 +208,26 @@ namespace TVGL
                 {
                     var solid = new TessellatedSolid();
                     solid.StreamRead(reader, out var index, tsBuildOptions);
-                    solids.Add(index, solid);                    
-                }         
+                    solids.Add(index, solid);
+                }
+                /* what if assembly could store other types of solids (e.g. VoxelizedSolids)
+                else if (reader.TokenType == JsonToken.PropertyName)
+                {
+                    var typeString = reader.Value.ToString();
+                    var splitIndex = typeString.FindIndex(char.IsNumber);
+                    var index = int.Parse(typeString.Substring(splitIndex));
+                    typeString.Substring(0, splitIndex);
+                    var type = Assembly.GetExecutingAssembly().GetType(typeString);
+                    JObject obj = JObject.Load(reader);
+                    if (type != null && obj != null)
+                    {
+                        var solidInner = obj.ToObject(type) as Solid;
+                        if (solidInner != null)
+                            solids.Add(index, solidInner);
+                        else
+                            Debug.WriteLine("Unknown type: " + typeString);
+                    }
+                */
             }
             assembly.Solids = solids.Values.ToArray();
             assembly.RootAssembly.SetGlobalAssembly(assembly);
@@ -240,6 +271,8 @@ namespace TVGL
         /// </summary>
         [JsonExtensionData]
         protected IDictionary<string, JToken> serializationData;
+        private int numberOfSolidBodies = -1;
+        private int numberOfSheetBodies = -1;
     }
 
     //A wrapper class for solids that recursively contains subassemblies and solid parts. 
@@ -345,7 +378,7 @@ namespace TVGL
         {
             var returnList = new List<(TessellatedSolid, Matrix4x4)>();
             var allParts = AllPartsInGlobalCoordinateSystem.Where(s => s.Item1 is TessellatedSolid);
-            foreach(var part in allParts)
+            foreach (var part in allParts)
                 returnList.Add(((TessellatedSolid)part.Item1, part.Item2));
             return returnList;
         }
