@@ -211,8 +211,8 @@ namespace TVGL
         public Vertex2D InsertVertex(int index, Vector2 coordinates)
         {
             if (index == Vertices.Count)
-              return  AddVertexToEnd(coordinates);
-            
+                return AddVertexToEnd(coordinates);
+
             var thisVertex = new Vertex2D(coordinates, index, this.Index);
             var prevVertex = index == 0 ? Vertices[^1] : Vertices[index - 1];
             var nextVertex = Vertices[index];
@@ -604,6 +604,7 @@ namespace TVGL
                 tolerance *= 10;
             }
             _vertices = new List<Vertex2D>();
+            if (_path.Count == 0) return;
             var prevX = Math.Round(_path[0].X, NumSigDigits);
             var prevY = Math.Round(_path[0].Y, NumSigDigits);
 
