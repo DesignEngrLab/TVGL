@@ -13,6 +13,7 @@
 // ***********************************************************************
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
 
@@ -98,8 +99,9 @@ namespace TVGL
             for (int i = polygon.Count - 1; i >= 0; i--)
             {
                 var backwardPoint = i == 0 ? polygon[^1] : polygon[i - 1];
+                var dot = (currentPoint - backwardPoint).Dot(forwardPoint - currentPoint);
                 var cross = (currentPoint - backwardPoint).Cross(forwardPoint - currentPoint);
-                if (cross.IsNegligible()) polygon.RemoveAt(i);
+                if (cross.IsNegligible() && dot > 0) polygon.RemoveAt(i);
                 else forwardPoint = currentPoint;
                 currentPoint = backwardPoint;
             }
@@ -183,30 +185,22 @@ namespace TVGL
             var edgeLengthQueue = new UpdatablePriorityQueue<PolygonEdge, double>(new ForwardSort());
             foreach (var edge in polygon.Edges)
                 edgeLengthQueue.Enqueue(edge, edge.Length);
-            while (edgeLengthQueue.Count > 0)
+            while (edgeLengthQueue.Count > 3)
             {
                 var edge = edgeLengthQueue.Dequeue();
                 if (edge.Length > minAllowableLength) break;  //check that it is below the minAllowableLength
                                                               // let's delete the vertex that is adjacent with the next shorter line
                 var center = edge.Center;
-                Vertex2D deleteVertex, keepVertex;
-                PolygonEdge otherEdge;
-                if (edge.FromPoint.EndLine.Length < edge.ToPoint.StartLine.Length)
-                {
-                    deleteVertex = edge.FromPoint;
-                    keepVertex = edge.ToPoint;
-                    otherEdge = edge.FromPoint.EndLine;
-                }
-                else
-                {
-                    keepVertex = edge.FromPoint;
-                    deleteVertex = edge.ToPoint;
-                    otherEdge = edge.ToPoint.StartLine;
-                }
+                var deleteVertex = edge.FromPoint;
+                var keepVertex = edge.ToPoint;
+                var otherEdge = deleteVertex.EndLine;
+                var edgeToUpdate = keepVertex.StartLine;
                 keepVertex.Coordinates = center;
                 var newEdge = deleteVertex.DeleteVertex();
                 edgeLengthQueue.Remove(otherEdge);
                 edgeLengthQueue.Enqueue(newEdge, newEdge.Length);
+                edgeToUpdate.Reset();
+                edgeLengthQueue.UpdatePriority(edgeToUpdate, edgeToUpdate.Length);
             }
             RecreateVertices(polygon);
         }
@@ -230,10 +224,11 @@ namespace TVGL
         /// <param name="path">The path.</param>
         /// <param name="minAllowableLength">Minimum length of the allowable.</param>
         /// <returns>IEnumerable&lt;Vector2&gt;.</returns>
-        public static IEnumerable<Vector2> SimplifyMinLengthToNewList(this IEnumerable<Vector2> path, double minAllowableLength)
+        public static IEnumerable<Vector2> SimplifyMinLengthToNewList(this IEnumerable<Vector2> path, double minAllowableLength,
+            bool removeCollinearPoints = true)
         {
-            // first remove collinear points
-            var polygon = path.RemoveCollinearEdgesToNewList();
+            // first remove collinear points             
+            var polygon = removeCollinearPoints ? path.RemoveCollinearEdgesToNewList() : path as IList<Vector2> ?? path.ToList();
             var numPoints = polygon.Count;
 
             #region build initial list of edge lengths
@@ -394,8 +389,9 @@ namespace TVGL
         /// <param name="path">The path.</param>
         /// <param name="targetNumberOfPoints">The target number of points.</param>
         /// <returns>List&lt;List&lt;Vector2&gt;&gt;.</returns>
-        public static IEnumerable<Vector2> SimplifyMinLength(this IEnumerable<Vector2> path, int targetNumberOfPoints)
-        { return SimplifyMinLength(new[] { path }, targetNumberOfPoints).First(); }
+        public static IEnumerable<Vector2> SimplifyMinLength(this IEnumerable<Vector2> path, int targetNumberOfPoints,
+            bool removeCollinearPoints = true)
+        { return SimplifyMinLength(new[] { path }, targetNumberOfPoints, removeCollinearPoints).First(); }
 
         /// <summary>
         /// Simplifies the specified polygons so that no edge is less than the minimum allowable length.
@@ -406,10 +402,12 @@ namespace TVGL
         /// <returns>List&lt;List&lt;Vector2&gt;&gt;.</returns>
         /// <exception cref="ArgumentOutOfRangeException">targetNumberOfPoints - The number of points to remove in PolygonOperations.Simplify"
         /// + " is more than the total number of points in the polygon(s).</exception>
-        public static IEnumerable<IList<Vector2>> SimplifyMinLength(this IEnumerable<IEnumerable<Vector2>> paths, int targetNumberOfPoints)
+        public static IEnumerable<IList<Vector2>> SimplifyMinLength(this IEnumerable<IEnumerable<Vector2>> paths, int targetNumberOfPoints,
+            bool removeCollinearPoints = true)
         {
-            // first remove collinear points and set up lists
-            var polygons = paths.Select(p => p.RemoveCollinearEdgesToNewList()).ToList();
+            // first remove collinear points and set up lists            
+            var polygons = removeCollinearPoints ? paths.Select(p => p.RemoveCollinearEdgesToNewList()).ToList()
+                : paths.Select(p => p as IList<Vector2> ?? p.ToList()).ToList();
             var numPoints = polygons.Select(p => p.Count).ToList();
             var numToRemove = numPoints.Sum() - targetNumberOfPoints;
             if (numToRemove <= 0)
@@ -567,9 +565,10 @@ namespace TVGL
         /// <param name="paths">The paths.</param>
         /// <param name="allowableChangeInAreaFraction">The allowable change in area fraction.</param>
         /// <returns>List&lt;List&lt;Vector2&gt;&gt;.</returns>
-        public static IEnumerable<IEnumerable<Vector2>> SimplifyByAreaChangeToNewLists(this IEnumerable<IEnumerable<Vector2>> paths, double allowableChangeInAreaFraction)
+        public static IEnumerable<IEnumerable<Vector2>> SimplifyByAreaChangeToNewLists(this IEnumerable<IEnumerable<Vector2>> paths,
+            double allowableChangeInAreaFraction, bool removeCollinearPoints = true)
         {
-            return paths.Select(p => SimplifyByAreaChangeToNewList(p, allowableChangeInAreaFraction));
+            return paths.Select(p => SimplifyByAreaChangeToNewList(p, allowableChangeInAreaFraction, removeCollinearPoints));
         }
 
         /// <summary>
@@ -578,9 +577,11 @@ namespace TVGL
         /// <param name="path">The path.</param>
         /// <param name="allowableChangeInAreaFraction">The allowable change in area fraction.</param>
         /// <returns>IEnumerable&lt;Vector2&gt;.</returns>
-        public static IEnumerable<Vector2> SimplifyByAreaChangeToNewList(this IEnumerable<Vector2> path, double allowableChangeInAreaFraction)
+        public static IEnumerable<Vector2> SimplifyByAreaChangeToNewList(this IEnumerable<Vector2> path, double allowableChangeInAreaFraction,
+            bool removeCollinearPoints = true)
         {
-            var polygon = path.RemoveCollinearEdgesToNewList();
+            // first remove collinear points and set up lists            
+            var polygon = removeCollinearPoints ? path.RemoveCollinearEdgesToNewList() : path as IList<Vector2> ?? path.ToList();
             var numPoints = polygon.Count;
             var origArea = Math.Abs(polygon.Area());
             if (origArea.IsNegligible()) return polygon;
@@ -740,8 +741,9 @@ namespace TVGL
         /// <param name="path">The path.</param>
         /// <param name="targetNumberOfPoints">The target number of points.</param>
         /// <returns>List&lt;List&lt;Vector2&gt;&gt;.</returns>
-        public static IEnumerable<Vector2> SimplifyByAreaChangeToNewList(this IEnumerable<Vector2> path, int targetNumberOfPoints)
-        { return SimplifyByAreaChangeToNewLists(new[] { path }, targetNumberOfPoints).First(); }
+        public static IEnumerable<Vector2> SimplifyByAreaChangeToNewList(this IEnumerable<Vector2> path, int targetNumberOfPoints,
+            bool removeCollinearPoints = true)
+        { return SimplifyByAreaChangeToNewLists(new[] { path }, targetNumberOfPoints, removeCollinearPoints).First(); }
 
         /// <summary>
         /// Simplifies the specified polygon to the target number of points using the minimal area change approach.
@@ -751,10 +753,12 @@ namespace TVGL
         /// <returns>List&lt;List&lt;Vector2&gt;&gt;.</returns>
         /// <exception cref="ArgumentOutOfRangeException">targetNumberOfPoints - The number of points to remove in PolygonOperations.Simplify"
         /// + " is more than the total number of points in the polygon(s).</exception>
-        public static IEnumerable<IList<Vector2>> SimplifyByAreaChangeToNewLists(this IEnumerable<IEnumerable<Vector2>> paths, int targetNumberOfPoints)
+        public static IEnumerable<IList<Vector2>> SimplifyByAreaChangeToNewLists(this IEnumerable<IEnumerable<Vector2>> paths, int targetNumberOfPoints,
+            bool removeCollinearPoints = true)
         {
-            // first remove collinear points and set up lists
-            var polygons = paths.Select(p => p.RemoveCollinearEdgesToNewList()).ToList();
+            // first remove collinear points and set up lists            
+            var polygons = removeCollinearPoints ? paths.Select(p => p.RemoveCollinearEdgesToNewList()).ToList()
+                : paths.Select(p => p as IList<Vector2> ?? p.ToList()).ToList();
             var numPoints = polygons.Select(p => p.Count).ToList();
             var numToRemove = numPoints.Sum() - targetNumberOfPoints;
             if (numToRemove <= 0)
