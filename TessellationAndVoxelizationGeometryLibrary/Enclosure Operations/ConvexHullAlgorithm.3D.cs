@@ -125,7 +125,7 @@ namespace TVGL
             }
             else if (numExtrema > 4)
                 // if more than 4 extreme points, then we need to reduce to 4 by finding the max volume tetrahedron
-                FindBestExtremaSubset(extremePoints);
+                FindBestExtremaSubset(extremePoints, vertices);
             var simplexFaces = MakeSimplexFaces(extremePoints);
 
             // now add all the other vertices to the simplex faces. AddVertexToProperFace will add the vertex to the face that it is "farthest" from
@@ -177,7 +177,7 @@ namespace TVGL
         /// <returns></returns>
         private static Vertex Find3rdStartingPoint(List<Vertex> extremePoints, IList<Vertex> vertices, out double radialDistance)
         {
-            var axis = extremePoints[1].Coordinates - extremePoints[0].Coordinates;
+            var axis = extremePoints[^1].Coordinates - extremePoints[0].Coordinates;
             radialDistance = double.NegativeInfinity;
             Vertex thirdPoint = null;
             foreach (var v in vertices)
@@ -470,7 +470,7 @@ namespace TVGL
         /// tetrahedron are removed from extremePoints
         /// </summary>
         /// <param name="extremePoints"></param>
-        private static void FindBestExtremaSubset(List<Vertex> extremePoints)
+        private static void FindBestExtremaSubset(List<Vertex> extremePoints, IList<Vertex> vertices)
         {
             var maxVol = 0.0;
             var numExtrema = extremePoints.Count;
@@ -482,7 +482,8 @@ namespace TVGL
                 {
                     for (int i3 = i2 + 1; i3 < numExtrema - 1; i3++)
                     {
-                        var baseTriangleArea = (extremePoints[i2].Coordinates - basePoint.Coordinates).Cross(extremePoints[i3].Coordinates - basePoint.Coordinates);
+                        var baseTriangleArea = (extremePoints[i2].Coordinates - basePoint.Coordinates)
+                            .Cross(extremePoints[i3].Coordinates - basePoint.Coordinates);
                         for (int i4 = i3 + 1; i4 < numExtrema; i4++)
                         {
                             var projectedHeight = basePoint.Coordinates - extremePoints[i4].Coordinates;
@@ -496,10 +497,19 @@ namespace TVGL
                     }
                 }
             }
+            if (maxVol == 0)
+            {
+                // it's still possible that something was missed here due to the extrema being in a plane
+                // In order to solve this, we re-run the above loop but generate a third point that is
+                // far from the connecting line 
+                var thirdPoint = Find3rdStartingPoint(extremePoints, vertices, out _);
+                extremePoints = new List<Vertex> { extremePoints[0], extremePoints[1], thirdPoint };
+                return;
+            }
             for (int i = numExtrema - 1; i >= 0; i--)
             {
-                if (i == maxI1 || i == maxI2 || i == maxI3 || i == maxI4) continue;
-                extremePoints.RemoveAt(i);
+                if (i != maxI1 && i != maxI2 && i != maxI3 && i != maxI4)
+                    extremePoints.RemoveAt(i);
             }
         }
         /// <summary>
