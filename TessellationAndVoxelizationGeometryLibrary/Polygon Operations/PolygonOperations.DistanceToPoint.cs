@@ -140,16 +140,28 @@ namespace TVGL
         {
             var minDistance = double.MaxValue;
             closestEdge = null;
+            var atAnEndPoint = false;
             foreach (var edge in edges)
             {
                 /* pointOnLine is found by setting the dot-product of the lineVector and the vector formed by (pointOnLine-p)
                 * set equal to zero. This is really just solving to "t" the distance along the line from the lineRefPt. */
-                var d = SqDistancePointToLineSegment(x, y, edge);
+                var d = SqDistancePointToLineSegment(x, y, edge, out var atThisEndPoint);
                 if (d < minDistance)
                 {
+                    atAnEndPoint = atThisEndPoint;
                     closestEdge = edge;
                     minDistance = d;
                 }
+            }
+            if (atAnEndPoint)
+            {
+                var queryPoint = new Vector2(x, y);
+                var prevEdge = closestEdge.FromPoint.EndLine;
+                var t = 0.01;
+                var prevEdgeClosePoint = new Vector2(closestEdge.FromPoint.X - t * prevEdge.Vector.X, closestEdge.FromPoint.Y - t * prevEdge.Vector.Y);
+                var thisEdgeClosePoint = new Vector2(closestEdge.FromPoint.X + t * closestEdge.Vector.X, closestEdge.FromPoint.Y + t * closestEdge.Vector.Y);
+                if ((prevEdgeClosePoint - queryPoint).LengthSquared() < (thisEdgeClosePoint - queryPoint).LengthSquared())
+                    closestEdge = prevEdge;
             }
             return Math.Sqrt(minDistance);
         }
@@ -163,8 +175,9 @@ namespace TVGL
         /// <param name="y">The y.</param>
         /// <param name="edge">The edge.</param>
         /// <returns>System.Double.</returns>
-        private static double SqDistancePointToLineSegment(double x, double y, PolygonEdge edge)
+        private static double SqDistancePointToLineSegment(double x, double y, PolygonEdge edge, out bool atEndpoint)
         {
+            atEndpoint = false;
             var A = x - edge.FromPoint.X;
             var B = y - edge.FromPoint.Y;
             var C = edge.Vector.X;
@@ -178,13 +191,15 @@ namespace TVGL
             double xx, yy;
             if (param < 0)
             {
+                atEndpoint = true;
                 xx = edge.FromPoint.X;
                 yy = edge.FromPoint.Y;
             }
             else if (param > 1)
             {
-                xx = edge.Vector.X;
-                yy = edge.Vector.Y;
+                atEndpoint = true;
+                xx = edge.ToPoint.X;
+                yy = edge.ToPoint.Y;
             }
             else
             {
