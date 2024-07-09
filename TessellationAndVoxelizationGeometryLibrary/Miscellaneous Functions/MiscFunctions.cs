@@ -197,7 +197,7 @@ namespace TVGL
                     maxPoint = vertex;
                 }
             }
-            return (minPoint,minDistance,maxPoint, maxDistance);
+            return (minPoint, minDistance, maxPoint, maxDistance);
         }
 
 
@@ -1102,7 +1102,7 @@ namespace TVGL
             var xDir = zDir.GetPerpendicularDirection();
             var yDir = zDir.Cross(xDir);
             backTransform = new Matrix4x4(xDir, yDir, zDir, Vector3.Zero);
-            Matrix4x4.Invert(backTransform, out var forwardTransform);
+            var forwardTransform = backTransform.Transpose();
             return forwardTransform;
         }
 

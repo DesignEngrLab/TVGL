@@ -315,7 +315,8 @@ namespace TVGL
             // camera up position.
             dir = Vector3.UnitY.Cross(direction).Normalize();
             if (additionalRotation == 0) return dir;
-            return dir.Transform(Quaternion.CreateFromAxisAngle(direction, additionalRotation));
+            var yDir = direction.Cross(dir).Normalize();
+            return Math.Cos(additionalRotation) * dir + Math.Sin(additionalRotation) * yDir;
         }
         /// <summary>
         /// Finds the axis that is most orthogonal to the given set.
@@ -910,7 +911,7 @@ namespace TVGL
             foreach ((Vector4 lineDescriptor, double area) in scoringList.OrderByDescending(s => s.Item2))
             {
                 var (anchor, direction) = MiscFunctions.Get3DLineValuesFromUnique(lineDescriptor);
-                yield return (anchor, direction, dirToPrimsDictionary[lineDescriptor],area);
+                yield return (anchor, direction, dirToPrimsDictionary[lineDescriptor], area);
             }
         }
     }
