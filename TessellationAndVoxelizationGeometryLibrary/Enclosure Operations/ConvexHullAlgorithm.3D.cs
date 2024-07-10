@@ -499,17 +499,35 @@ namespace TVGL
             }
             if (maxVol == 0)
             {
-                // it's still possible that something was missed here due to the extrema being in a plane
-                // In order to solve this, we re-run the above loop but generate a third point that is
-                // far from the connecting line 
-                var thirdPoint = Find3rdStartingPoint(extremePoints, vertices, out _);
-                extremePoints = new List<Vertex> { extremePoints[0], extremePoints[1], thirdPoint };
+                // if the max volume is still zero, then all the given extrema are in a plane.
+                // if this is the case, then we find a point farthest from the plane.
+                var planeNormal = (extremePoints[1].Coordinates - extremePoints[0].Coordinates)
+                    .Cross(extremePoints[2].Coordinates - extremePoints[0].Coordinates);
+                var maxDist = 0.0;
+                Vertex maxVertex = null;
+                foreach (var v in vertices)
+                {
+                    var distToPlane = Math.Abs((v.Coordinates - extremePoints[0].Coordinates).Dot(planeNormal));
+                    if (distToPlane > maxDist)
+                    {
+                        maxDist = distToPlane;
+                        maxVertex = v;
+                    }
+                }
+                if (maxDist < Constants.BaseTolerance) throw new Exception("All points are in a plane, but plane was not detected.");
+                extremePoints.Add(maxVertex);
+                FindBestExtremaSubset(extremePoints, vertices); // now that we know the volume won't be zero,
+                                                                // we can run this again...recursion will never happen a second time
+                                                                // time.....right?
                 return;
             }
-            for (int i = numExtrema - 1; i >= 0; i--)
+            else
             {
-                if (i != maxI1 && i != maxI2 && i != maxI3 && i != maxI4)
-                    extremePoints.RemoveAt(i);
+                for (int i = numExtrema - 1; i >= 0; i--)
+                {
+                    if (i != maxI1 && i != maxI2 && i != maxI3 && i != maxI4)
+                        extremePoints.RemoveAt(i);
+                }
             }
         }
         /// <summary>
