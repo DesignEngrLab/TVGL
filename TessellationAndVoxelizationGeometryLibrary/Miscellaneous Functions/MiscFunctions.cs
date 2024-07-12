@@ -1731,11 +1731,8 @@ namespace TVGL
         {
             /* pointOnLine is found by setting the dot-product of the lineVector and the vector formed by (pointOnLine-p)
              * set equal to zero. This is really just solving to "t" the distance along the line from the lineRefPt. */
-            var t = (lineVector.X * (qPoint.X - lineRefPt.X) + lineVector.Y * (qPoint.Y - lineRefPt.Y) +
-                      lineVector.Z * (qPoint.Z - lineRefPt.Z))
-                     / (lineVector.X * lineVector.X + lineVector.Y * lineVector.Y + lineVector.Z * lineVector.Z);
-            pointOnLine = new Vector3(
-            lineRefPt.X + lineVector.X * t, lineRefPt.Y + lineVector.Y * t, lineRefPt.Z + lineVector.Z * t);
+            var t = lineVector.Dot(qPoint - lineRefPt) / lineVector.LengthSquared();
+            pointOnLine = lineVector + t * lineRefPt;
             return returnSquared ? qPoint.DistanceSquared(pointOnLine) : qPoint.Distance(pointOnLine);
         }
 
@@ -1750,12 +1747,9 @@ namespace TVGL
         public static double DistancePointToLine(Vector2 qPoint, Vector2 lineRefPt, Vector2 lineVector,
         out Vector2 pointOnLine)
         {
-            /* pointOnLine is found by setting the dot-product of the lineVector and the vector formed by (pointOnLine-p)
-            * set equal to zero. This is really just solving to "t" the distance along the line from the lineRefPt. */
-            var t = (lineVector.X * (qPoint.X - lineRefPt.X) + lineVector.Y * (qPoint.Y - lineRefPt.Y))
-                    / (lineVector.X * lineVector.X + lineVector.Y * lineVector.Y);
-            pointOnLine = new Vector2(lineRefPt.X + lineVector.X * t, lineRefPt.Y + lineVector.Y * t);
-            return qPoint.Distance(pointOnLine);
+            var t = lineVector.Dot(qPoint - lineRefPt) / lineVector.LengthSquared();
+            pointOnLine = lineVector + t * lineRefPt;
+            return  qPoint.Distance(pointOnLine);
         }
 
         /// <summary>

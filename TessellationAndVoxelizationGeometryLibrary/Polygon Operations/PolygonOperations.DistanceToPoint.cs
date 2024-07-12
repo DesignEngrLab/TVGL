@@ -156,12 +156,12 @@ namespace TVGL
             if (atAnEndPoint)
             {
                 var queryPoint = new Vector2(x, y);
-                var prevEdge = closestEdge.FromPoint.EndLine;
+                var nextEdge = closestEdge.ToPoint.StartLine;
                 var t = 0.01;
-                var prevEdgeClosePoint = new Vector2(closestEdge.FromPoint.X - t * prevEdge.Vector.X, closestEdge.FromPoint.Y - t * prevEdge.Vector.Y);
-                var thisEdgeClosePoint = new Vector2(closestEdge.FromPoint.X + t * closestEdge.Vector.X, closestEdge.FromPoint.Y + t * closestEdge.Vector.Y);
+                var prevEdgeClosePoint = nextEdge.FromPoint.Coordinates + t * nextEdge.Vector;
+                var thisEdgeClosePoint = closestEdge.FromPoint.Coordinates + (1-t) * closestEdge.Vector;
                 if ((prevEdgeClosePoint - queryPoint).LengthSquared() < (thisEdgeClosePoint - queryPoint).LengthSquared())
-                    closestEdge = prevEdge;
+                    closestEdge = nextEdge;
             }
             return Math.Sqrt(minDistance);
         }
