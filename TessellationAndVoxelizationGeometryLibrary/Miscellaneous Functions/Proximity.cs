@@ -13,6 +13,7 @@
 // ***********************************************************************
 using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
 
 namespace TVGL
@@ -596,7 +597,53 @@ namespace TVGL
         }
         #endregion
 
+        /// <summary>
+        /// Given a set of 2D points in arbitrary order that are known to be on a curve, this function
+        /// finds the extremes by a simple method of keeping a triangle of the two most extreme points
+        /// (the method is O(n) and simple, but is it robust?)
+        /// </summary>
+        /// <param name="points"></param>
+        /// <returns></returns>
+        public static (Vector2, Vector2) FindExtremesAlong2DCurve(IEnumerable<Vector2> points)
+        {
+            var start = Vector2.Null;
+            var end = Vector2.Null;
+            foreach (var p in points)
+                KeepExtremesInTriangle(ref start, ref end, p);
+            return (start, end);
+        }
 
+        private static void KeepExtremesInTriangle(ref Vector2 start2D, ref Vector2 end2D, Vector2 point2D)
+        {
+            if (start2D.IsNull())
+                start2D = point2D;
+            else if (end2D.IsNull())
+                end2D = point2D;
+            else
+            {
+                // make a triangle of the first two point in extents and the new point
+                // keep the two points in extents that have edges in opposite directions. Given that these are coming in a points along a curve
+                // then only one should positive dot products with its edges
+                if ((point2D - start2D).Dot(end2D - point2D) > 0) return;
+                if ((end2D - point2D).Dot(start2D - end2D) > 0)
+                    end2D = point2D;
+                else if ((start2D - end2D).Dot(point2D - start2D) > 0)
+                    start2D = point2D;
+                else
+                {
+                    // ah shoot, there all negative. A definite possibility, take the two points that are farther apart (share the longest
+                    // side of the triangle.
+                    var d0 = (start2D - end2D).LengthSquared();
+                    var d1 = (point2D - start2D).LengthSquared();
+                    var d2 = (point2D - end2D).LengthSquared();
+                    if (d0 >= d1 && d0 >= d2) return;
+                    else if (d1 >= d0 && d1 >= d2)
+                        end2D = point2D;
+                    else
+                        start2D = point2D;
+                }
+            }
+        }
 
         /// <summary>
         /// Finds the best planar curve.

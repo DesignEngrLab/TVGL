@@ -138,30 +138,38 @@ namespace TVGL
         /// <returns>System.Double.</returns>
         private static double MinDistanceToPolygon(double x, double y, IEnumerable<PolygonEdge> edges, out PolygonEdge closestEdge)
         {
+            var queryPoint = new Vector2(x, y);
             var minDistance = double.MaxValue;
             closestEdge = null;
-            var atAnEndPoint = false;
+            Vertex2D closestVertex = null;
             foreach (var edge in edges)
             {
                 /* pointOnLine is found by setting the dot-product of the lineVector and the vector formed by (pointOnLine-p)
                 * set equal to zero. This is really just solving to "t" the distance along the line from the lineRefPt. */
-                var d = SqDistancePointToLineSegment(x, y, edge, out var atThisEndPoint);
+                var d = SqDistancePointToLineSegment(x, y, edge, out var atEndPoint);
                 if (d < minDistance)
                 {
-                    atAnEndPoint = atThisEndPoint;
+                    if (atEndPoint)
+                    {
+                        var fromDistance = edge.FromPoint.Coordinates.DistanceSquared(queryPoint);
+                        var toDistance = edge.ToPoint.Coordinates.DistanceSquared(queryPoint);
+                        closestVertex = fromDistance < toDistance ? edge.FromPoint : edge.ToPoint;
+                    }
+                    else closestVertex = null;
                     closestEdge = edge;
                     minDistance = d;
                 }
             }
-            if (atAnEndPoint)
+            if (closestVertex!=null)
             {
-                var queryPoint = new Vector2(x, y);
-                var nextEdge = closestEdge.ToPoint.StartLine;
+                var startLine = closestVertex.StartLine;
+                var endLine = closestVertex.EndLine;
                 var t = 0.01;
-                var prevEdgeClosePoint = nextEdge.FromPoint.Coordinates + t * nextEdge.Vector;
-                var thisEdgeClosePoint = closestEdge.FromPoint.Coordinates + (1-t) * closestEdge.Vector;
-                if ((prevEdgeClosePoint - queryPoint).LengthSquared() < (thisEdgeClosePoint - queryPoint).LengthSquared())
-                    closestEdge = nextEdge;
+                var startLinePoint = closestVertex.Coordinates + t * startLine.Vector;
+                var endLinePoint = closestVertex.Coordinates - t * endLine.Vector;
+                if (startLinePoint.DistanceSquared(queryPoint)<endLinePoint.DistanceSquared(queryPoint))
+                    closestEdge = startLine;
+                else closestEdge = endLine;
             }
             return Math.Sqrt(minDistance);
         }
