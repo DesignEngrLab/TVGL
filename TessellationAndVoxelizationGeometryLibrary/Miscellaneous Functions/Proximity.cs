@@ -606,10 +606,12 @@ namespace TVGL
         /// <returns></returns>
         public static (Vector2, Vector2) FindExtremesAlong2DCurve(IEnumerable<Vector2> points)
         {
+            var pointList = points as IList<Vector2> ?? points.ToList();
             var start = Vector2.Null;
             var end = Vector2.Null;
-            foreach (var p in points)
-                KeepExtremesInTriangle(ref start, ref end, p);
+            var centerOfMass = pointList.Aggregate(Vector2.Zero, (current, p) => current + p) / pointList.Count;
+            foreach (var point in pointList.OrderBy(p => p.DistanceSquared(centerOfMass)))
+                KeepExtremesInTriangle(ref start, ref end, point);
             return (start, end);
         }
 
