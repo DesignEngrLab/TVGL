@@ -11,7 +11,7 @@
 // </copyright>
 // <summary></summary>
 // ***********************************************************************
-using Newtonsoft.Json;
+
 using System;
 using System.Diagnostics.Eventing.Reader;
 using System.Linq;

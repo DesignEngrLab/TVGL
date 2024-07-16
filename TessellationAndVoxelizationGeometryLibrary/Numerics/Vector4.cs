@@ -12,11 +12,11 @@
 // <summary></summary>
 // ***********************************************************************
 
-using Newtonsoft.Json;
 using System;
 using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Text;
+using System.Text.Json.Serialization;
 
 namespace TVGL  // COMMENTEDCHANGE namespace System.Numerics
 {

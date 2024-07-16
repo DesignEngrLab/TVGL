@@ -12,14 +12,14 @@
 // <summary></summary>
 // ***********************************************************************
 
-using Newtonsoft.Json;
 using System;
 using System.Globalization;
 using System.Runtime.InteropServices;
+using System.Text.Json.Serialization;
 // COMMENTEDCHANGE using System.Runtime.Intrinsics;
 // COMMENTEDCHANGE using System.Runtime.Intrinsics.X86;
 
-namespace TVGL  
+namespace TVGL
 {
     /// <summary>
     /// A structure encapsulating a 4x4 matrix.

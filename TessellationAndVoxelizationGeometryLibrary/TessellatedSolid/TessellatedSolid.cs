@@ -11,13 +11,12 @@
 // </copyright>
 // <summary></summary>
 // ***********************************************************************
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
+
 using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
-using System.Runtime.Serialization;
+using System.Text.Json.Serialization;
 
 namespace TVGL
 {
@@ -28,7 +27,7 @@ namespace TVGL
     /// <remarks>This is the currently the <strong>main</strong> class within TVGL all filetypes are read in as a TessellatedSolid,
     /// and
     /// all interesting operations work on the TessellatedSolid.</remarks>
-    public partial class TessellatedSolid : Solid
+    public partial class TessellatedSolid : Solid, IJsonOnSerializing,IJsonOnDeserialized
     {
         #region Fields and Properties
         /// <summary>
@@ -211,8 +210,7 @@ namespace TVGL
         /// Called when [serializing method].
         /// </summary>
         /// <param name="context">The context.</param>
-        [OnSerializing]
-        protected void OnSerializingMethod(StreamingContext context)
+        public void OnSerializing()
         {
             //if (serializationData == null)
             serializationData = new Dictionary<string, JToken>();
@@ -247,6 +245,8 @@ namespace TVGL
         /// <param name="index">The index.</param>
         public void StreamWrite(JsonTextWriter writer, int index = -1)
         {
+
+
             writer.WritePropertyName("Name");
             writer.WriteValue(Name);
 
@@ -330,7 +330,8 @@ namespace TVGL
         {
             // todo: resolive this with OnDeserializedMethod. Are both needed?
             index = -1;
-            var jsonSerializer = new Newtonsoft.Json.JsonSerializer();
+            var jsonSerializer = new JsonSerializer();
+            var primitiveDict = new Dictionary<string, PrimitiveSurface>();
             reader.Read();
             while (reader.TokenType != JsonToken.EndObject)
             {
@@ -351,9 +352,6 @@ namespace TVGL
                         break;
                     case "PrimitivesDetermined":
                         PrimitivesDetermined = (bool)reader.ReadAsBoolean();
-                        break;
-                    case "Index":
-                        index = (int)reader.ReadAsInt32();
                         break;
                     case "TessellationError":
                         TessellationError = (double)reader.ReadAsDouble();
@@ -383,44 +381,26 @@ namespace TVGL
                         {
                             //Get the property name, which in this case, is the name of the primitive plus an index.
                             reader.Read();
-                            var primitiveType = reader.Value.ToString().Split('_')[0];
-
+                            var primitiveString =reader.Value.ToString();
+                            var primitiveType = Type.GetType( "TVGL." + primitiveString.Split('_')[0]);
                             //Get the next object, which is a primitive. Cast it to the appropriate primitive type.
                             reader.Read();
-                            switch (primitiveType)
-                            {
-                                case "Plane":
-                                    Primitives.Add(jsonSerializer.Deserialize<Plane>(reader));
-                                    break;
-                                case "Cylinder":
-                                    Primitives.Add(jsonSerializer.Deserialize<Cylinder>(reader));
-                                    break;
-                                case "Cone":
-                                    Primitives.Add(jsonSerializer.Deserialize<Cone>(reader));
-                                    break;
-                                case "Sphere":
-                                    Primitives.Add(jsonSerializer.Deserialize<Sphere>(reader));
-                                    break;
-                                case "Torus":
-                                    Primitives.Add(jsonSerializer.Deserialize<Torus>(reader));
-                                    break;
-                                case "Capsule":
-                                    Primitives.Add(jsonSerializer.Deserialize<Capsule>(reader));
-                                    break;
-                                case "Prismatic":
-                                    Primitives.Add(jsonSerializer.Deserialize<Prismatic>(reader));
-                                    break;
-                                case "UnknownRegion":
-                                    Primitives.Add(jsonSerializer.Deserialize<UnknownRegion>(reader));
-                                    break;
-                                default:
-                                    {
-                                        Console.WriteLine("Need to add deserialize casting for primitive type: " + primitiveType);
-                                        throw new Exception("Need to add deserialize casting for primitive type: " + primitiveType);
-                                    }
-                            }
+                            var primitive = (PrimitiveSurface)jsonSerializer.Deserialize(reader, primitiveType);
+                            primitiveDict.Add(primitiveString, primitive);
+                            Primitives.Add(primitive);
                         }
                         break;
+                    //case "PrimitiveColors":
+
+                    //    var dataString = reader.Value.ToString();
+                    //    var colorStartIndex = dataString.IndexOf("Color");
+                    //    if (colorStartIndex >= 0)
+                    //    {
+                    //        var colorEndIndex = dataString.IndexOf(",", colorStartIndex);
+                    //        var colorString = dataString.Substring(colorStartIndex, colorEndIndex - colorStartIndex);
+                    //        primitive.SetColor(new Color(colorString));
+                    //    }
+                    //    break;
                     case "FaceIndices":
                         reader.Read();//start array [
                         var faceIndex = 0;
@@ -429,7 +409,7 @@ namespace TVGL
                             var a = (int)reader.ReadAsInt32();
                             var b = (int)reader.ReadAsInt32();
                             var c = (int)reader.ReadAsInt32();
-                            if (a==b|| a==c || b==c) continue;
+                            if (a == b || a == c || b == c) continue;
                             Faces[faceIndex] = new TriangleFace(Vertices[a], Vertices[b], Vertices[c]) { IndexInList = faceIndex };
                             faceIndex++;
                         }
@@ -452,10 +432,10 @@ namespace TVGL
                         }
                         break;
                     case "ReferenceIndex":
+                    case "Index":
                         ReferenceIndex = (int)reader.ReadAsInt32();
                         break;
                 }
-
                 reader.Read();//go to next
             }
             //Lastly, assign faces and vertices to the primitives
@@ -500,10 +480,9 @@ namespace TVGL
         /// Called when [deserialized method].
         /// </summary>
         /// <param name="context">The context.</param>
-        [OnDeserialized]
-        protected void OnDeserializedMethod(StreamingContext context)
+        public void OnDeserialized()
         {
-            // todo: resolive this with StreamRead. Are both needed?
+            // todo: resolve this with StreamRead. Are both needed?
             JArray jArray = (JArray)serializationData["VertexCoords"];
             var vertexArray = jArray.ToObject<double[]>();
             var numVertices = vertexArray.Length / 3;

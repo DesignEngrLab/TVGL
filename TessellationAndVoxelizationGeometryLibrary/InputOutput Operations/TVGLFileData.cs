@@ -11,13 +11,9 @@
 // </copyright>
 // <summary></summary>
 // ***********************************************************************
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using System;
+
 using System.IO;
 using System.IO.Compression;
-using System.IO.Pipes;
-using System.Reflection;
 
 namespace TVGL
 {
@@ -160,11 +156,12 @@ namespace TVGL
                     var ts = (TessellatedSolid)solid;
                     var useOnSerialization = false;//Don't serialize the TessellatedSolids directly. We are doing to do this with a stream.
                     //var jsonString = ((string)JsonConvert.SerializeObject(ts, Newtonsoft.Json.Formatting.None));//ignore last character so that the object is not closed
-                                                                                                                //JSON uses a key value structure. We already wrote the key, now we write the value to end this object. This adds its own comma.
+                                                  //JSON uses a key value structure. We already wrote the key, now we write the value to end this object. This adds its own comma.
                     //writer.WriteRawValue(jsonString);
                     writer.WriteStartObject();
                     {
-                        ts.StreamWrite(writer);
+                        writer.WriteRawValue(JsonConvert.SerializeObject(ts, Formatting.None));
+                        //ts.StreamWrite(writer);
                     }
                     writer.WriteEndObject();
                     writer.Close();

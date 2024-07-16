@@ -11,20 +11,19 @@
 // </copyright>
 // <summary></summary>
 // ***********************************************************************
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
+
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.Serialization;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace TVGL
 {
     /// <summary>
     /// Class EdgePath.
     /// </summary>
-    [JsonObject]
     public class EdgePath : IList<(Edge edge, bool dir)>
     {
         /// <summary>
@@ -49,14 +48,14 @@ namespace TVGL
         /// Gets the edges and direction.
         /// </summary>
         /// <value>The edges and direction.</value>
-        [JsonIgnore]
+        
         public List<Edge> EdgeList { get; protected set; }
 
         /// <summary>
         /// Gets the edges and direction.
         /// </summary>
         /// <value>The edges and direction.</value>
-        [JsonIgnore]
+        
         public List<bool> DirectionList { get; protected set; }
 
         /// <summary>
@@ -67,7 +66,7 @@ namespace TVGL
         /// Gets the length.
         /// </summary>
         /// <value>The length.</value>
-        [JsonIgnore]
+        
         public double Length
         {
             get
@@ -105,7 +104,7 @@ namespace TVGL
         /// Gets the number points.
         /// </summary>
         /// <value>The number points.</value>
-        [JsonIgnore]
+        
         public int NumPoints
         {
             get
@@ -119,7 +118,7 @@ namespace TVGL
         /// Gets the first vertex.
         /// </summary>
         /// <value>The first vertex.</value>
-        [JsonIgnore]
+        
         public Vertex FirstVertex
         {
             get
@@ -133,7 +132,7 @@ namespace TVGL
         /// Gets the last vertex.
         /// </summary>
         /// <value>The last vertex.</value>
-        [JsonIgnore]
+        
         public Vertex LastVertex
         {
             get
@@ -165,14 +164,14 @@ namespace TVGL
         /// Gets the number of elements contained in the <see cref="TVertex:System.Collections.Generic.ICollection`1" />.
         /// </summary>
         /// <value>The count.</value>
-        [JsonIgnore]
+        
         public int Count => EdgeList.Count;
 
         /// <summary>
         /// Gets a value indicating whether the <see cref="TVertex:System.Collections.Generic.ICollection`1" /> is read-only.
         /// </summary>
         /// <value><c>true</c> if this instance is read only; otherwise, <c>false</c>.</value>
-        [JsonIgnore]
+        
         public bool IsReadOnly => true;
 
         /// <summary>
@@ -180,7 +179,7 @@ namespace TVGL
         /// </summary>
         /// <param name="index">The index.</param>
         /// <returns>System.ValueTuple&lt;Edge, System.Boolean&gt;.</returns>
-        [JsonIgnore]
+        
         public (Edge edge, bool dir) this[int index]
         {
             get => (EdgeList[index], DirectionList[index]);
@@ -454,36 +453,6 @@ namespace TVGL
         }
 
         /// <summary>
-        /// The serialization data
-        /// </summary>
-        [JsonExtensionData]
-        protected IDictionary<string, JToken> serializationData;
-
-        /// <summary>
-        /// Called when [serializing method].
-        /// </summary>
-        /// <param name="context">The context.</param>
-        [OnSerializing]
-        protected void OnSerializingMethod(StreamingContext context)
-        {
-            serializationData = new Dictionary<string, JToken>();
-            serializationData.Add("EdgeIndices", JToken.FromObject(EdgeList.Select(e => e.IndexInList)));
-            serializationData.Add("Dirs", string.Join(null, DirectionList.Select(dir => dir ? "1" : "0")));
-        }
-
-        /// <summary>
-        /// Completes the post serialization.
-        /// </summary>
-        /// <param name="ts">The ts.</param>
-        internal void CompletePostSerialization(TessellatedSolid ts)
-        {
-            foreach (var edgeIndex in serializationData["EdgeIndices"].ToObject<IEnumerable<int>>())
-                EdgeList.Add(ts.Edges[edgeIndex]);
-            foreach (var s in serializationData["Dirs"].ToObject<string>())
-                DirectionList.Add(s == '1');
-        }
-
-        /// <summary>
         /// Gets the range.
         /// </summary>
         /// <param name="lb">The lb.</param>
@@ -524,6 +493,48 @@ namespace TVGL
         IEnumerator IEnumerable.GetEnumerator()
         {
             return GetEnumerator();
+        }
+    }
+    public class EdgePathJsonConverter : JsonConverter<EdgePath>
+    {
+        private readonly TessellatedSolid ts;
+
+        public EdgePathJsonConverter(TessellatedSolid ts)
+        {
+            this.ts = ts;
+        }
+        public override EdgePath Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+        {
+            var ep = new EdgePath();
+            while (reader.Read())
+            {
+                if (reader.TokenType == JsonTokenType.EndObject) break;
+                if (reader.TokenType != JsonTokenType.PropertyName) continue;
+                var propertyName = reader.GetString();
+                reader.Read();
+                switch (propertyName)
+                {
+                    case "EdgeIndices":
+                        foreach (var edgeIndex in JsonSerializer.Deserialize<IEnumerable<int>>(ref reader, options))
+                    ep.EdgeList.Add(ts.Edges[edgeIndex]);
+                        break;
+                    case "Dirs":
+                        foreach (var s in JsonSerializer.Deserialize<string>(ref reader, options))
+                            ep.DirectionList.Add(s == '1');
+                        break;
+                }
+            }
+            return ep;
+        }
+
+        public override void Write(Utf8JsonWriter writer, EdgePath value, JsonSerializerOptions options)
+        {
+            writer.WriteStartObject();
+            writer.WritePropertyName("EdgeIndices");
+            JsonSerializer.Serialize(writer, value.EdgeList.Select(e => e.IndexInList), options);
+            writer.WritePropertyName("Dirs");
+            JsonSerializer.Serialize(writer, string.Join(null, value.DirectionList.Select(dir => dir ? "1" : "0")), options);
+            writer.WriteEndObject();
         }
     }
 }

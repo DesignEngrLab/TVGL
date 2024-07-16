@@ -16,10 +16,9 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Linq;
-using System.Runtime.Serialization;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 
 
 
@@ -30,7 +29,7 @@ namespace TVGL
     /// Implements the <see cref="TVGL.Solid" />
     /// </summary>
     /// <seealso cref="TVGL.Solid" />
-    public partial class CrossSectionSolid : Solid
+    public partial class CrossSectionSolid : Solid, IJsonOnDeserialized, IJsonOnSerializing
     {
         /// <summary>
         /// Layers are the 2D polygons for every cross section in this feature.
@@ -384,13 +383,11 @@ namespace TVGL
         /// Gets or sets the first index.
         /// </summary>
         /// <value>The first index.</value>
-        [JsonProperty]
         private int FirstIndex { get; set; }
         /// <summary>
         /// Gets or sets the last index.
         /// </summary>
         /// <value>The last index.</value>
-        [JsonProperty]
         private int LastIndex { get; set; }
 
 
@@ -398,8 +395,7 @@ namespace TVGL
         /// Called when [serializing method].
         /// </summary>
         /// <param name="context">The context.</param>
-        [OnSerializing]
-        protected void OnSerializingMethod(StreamingContext context)
+        public void OnSerializing()
         {
             serializationData = new Dictionary<string, JToken>();
             serializationData.Add("CrossSections",
@@ -412,10 +408,9 @@ namespace TVGL
         /// Called when [deserialized method].
         /// </summary>
         /// <param name="context">The context.</param>
-        [OnDeserialized]
-        protected void OnDeserializedMethod(StreamingContext context)
+        public void OnDeserialized()
         {
-            JArray jArray = (JArray)serializationData["CrossSections"];
+            var jArray = (JArray)serializationData["CrossSections"];
             var layerArray = jArray.ToObject<double[][][]>();
             Layer2D = new Dictionary<int, IList<Polygon>>();
             var j = 0;

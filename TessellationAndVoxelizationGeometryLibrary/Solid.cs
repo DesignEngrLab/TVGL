@@ -11,9 +11,9 @@
 // </copyright>
 // <summary></summary>
 // ***********************************************************************
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
+
 using System.Collections.Generic;
+using System.Text.Json.Serialization;
 
 namespace TVGL
 {
@@ -220,7 +220,7 @@ namespace TVGL
         /// Gets or sets the primitive objects that make up the solid
         /// </summary>
         /// <value>The primitives.</value>
-        [JsonProperty(ItemTypeNameHandling = TypeNameHandling.Auto, TypeNameHandling = TypeNameHandling.Auto)]
+        [JsonPropertyName(ItemTypeNameHandling = TypeNameHandling.Auto, TypeNameHandling = TypeNameHandling.Auto)]
         public List<PrimitiveSurface> Primitives { get; set; }
 
         /// <summary>

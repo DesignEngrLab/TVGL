@@ -11,22 +11,20 @@
 // </copyright>
 // <summary></summary>
 // ***********************************************************************
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
+
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
-using System.Runtime.Serialization;
+using System.Text.Json.Serialization;
 
 namespace TVGL
 {
     /// <summary>
     /// Class SolidAssembly.
     /// </summary>
-    [JsonObject(MemberSerialization.OptOut)]
-    public class SolidAssembly
+    public class SolidAssembly :IJsonOnDeserialized, IJsonOnSerializing
     {
         /// <summary>
         /// Gets or sets the name.
@@ -178,7 +176,9 @@ namespace TVGL
                     var ts = (TessellatedSolid)solid;
                     writer.WriteStartObject();
                     {
-                        ts.StreamWrite(writer, i++);
+                        ts.ReferenceIndex = i;
+                        writer.WriteRawValue(JsonConvert.SerializeObject(ts, Formatting.None));
+                        //ts.StreamWrite(writer, i++);
                     }
                     writer.WriteEndObject();
                 }
@@ -242,8 +242,7 @@ namespace TVGL
         /// Called when [serializing method].
         /// </summary>
         /// <param name="context">The context.</param>
-        [OnSerializing]
-        protected void OnSerializingMethod(StreamingContext context)
+        public void OnSerializing()
         {
             if (!useOnSerialization) return;
             serializationData = new Dictionary<string, JToken>();
@@ -256,14 +255,14 @@ namespace TVGL
         /// Called when [deserialized method].
         /// </summary>
         /// <param name="context">The context.</param>
-        [OnDeserialized]
-        protected void OnDeserializedMethod(StreamingContext context)
+        public void OnDeserialized()
         {
             if (!useOnSerialization) return;
             JArray jArray = (JArray)serializationData["TessellatedSolids"];
             Solids = jArray.ToObject<TessellatedSolid[]>();
             RootAssembly.SetGlobalAssembly(this);
         }
+
 
         // everything else gets stored here
         /// <summary>
@@ -279,7 +278,6 @@ namespace TVGL
     /// <summary>
     /// Class SubAssembly.
     /// </summary>
-    [JsonObject(MemberSerialization.OptOut)]
     public class SubAssembly
     {
         /// <summary>

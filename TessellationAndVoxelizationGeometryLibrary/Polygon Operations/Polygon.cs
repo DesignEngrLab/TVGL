@@ -14,10 +14,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.Serialization;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace TVGL
 {
@@ -25,7 +23,7 @@ namespace TVGL
     /// <summary>
     /// Class Polygon.
     /// </summary>
-    public class Polygon
+    public class Polygon 
     {
         /// <summary>
         /// The list of 2D points that make up a polygon.
@@ -307,7 +305,7 @@ namespace TVGL
         /// <summary>
         /// The inner polygons
         /// </summary>
-        [JsonProperty("Inners")]
+        [JsonPropertyName("Inners")]
         List<Polygon> _innerPolygons;
 
         /// <summary>
@@ -334,7 +332,7 @@ namespace TVGL
         /// The index of this child in its parent's child list.
         /// </summary>
         /// <value>The index.</value>
-        [JsonProperty]
+        [JsonPropertyName]
         public int Index
         {
             get => index;
@@ -813,8 +811,7 @@ namespace TVGL
         /// Called when [serializing method].
         /// </summary>
         /// <param name="context">The context.</param>
-        [OnSerializing]
-        protected void OnSerializingMethod(StreamingContext context)
+        public void OnSerializing()
         {
             serializationData = new Dictionary<string, JToken>();
             serializationData.Add("Coordinates", JToken.FromObject(Path.ConvertTo1DDoublesCollection()));
@@ -824,8 +821,7 @@ namespace TVGL
         /// Called when [deserialized method].
         /// </summary>
         /// <param name="context">The context.</param>
-        [OnDeserialized]
-        protected void OnDeserializedMethod(StreamingContext context)
+        public void OnDeserialized()
         {
             JArray jArray = (JArray)serializationData["Coordinates"];
             _path = PolygonOperations.ConvertToVector2s(jArray.ToObject<IEnumerable<double>>()).ToList();
@@ -833,7 +829,19 @@ namespace TVGL
             MakeVerticesFromPath(false);
         }
     }
+    public class PolygonJsonConverter : JsonConverter<Polygon>
+    {
+        public override Polygon Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+        {             throw new NotImplementedException();
+        }
+{
+            
 
+        public override void Write(Utf8JsonWriter writer, Polygon value, JsonSerializerOptions options)
+        {
+            throw new NotImplementedException();
+        }
+    }
 }
 
 

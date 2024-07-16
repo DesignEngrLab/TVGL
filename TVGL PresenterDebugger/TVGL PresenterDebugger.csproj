@@ -9,9 +9,9 @@
 		<DefineConstants>TRACE;CLIPPER, PRESENT</DefineConstants>
 	</PropertyGroup>
 	<ItemGroup>
-		<PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
-		<PackageReference Include="HelixToolkit.SharpDX.Core.Wpf" Version="2.23.0" />
+		<PackageReference Include="HelixToolkit.SharpDX.Core.Wpf" Version="2.25.0" />
 		<PackageReference Include="OxyPlot.Wpf" Version="2.1.2" />
+		<PackageReference Include="System.Text.Json" Version="8.0.4" />
 	</ItemGroup>
 	<ItemGroup>
 		<InternalsVisibleTo Include="TVGLUnitTestsAndBenchmarking" />
@@ -58,6 +58,7 @@
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\InputOutput Operations\OFFFileData.cs" Link="TVGL\InputOutput Operations\OFFFileData.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\InputOutput Operations\PLYFileData.cs" Link="TVGL\InputOutput Operations\PLYFileData.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\InputOutput Operations\STLFileData.cs" Link="TVGL\InputOutput Operations\STLFileData.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\InputOutput Operations\TVGLFileData.cs" Link="TVGL\InputOutput Operations\TVGLFileData.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\MarchingCubes\MarchingCubes.Base.cs" Link="TVGL\MarchingCubes\MarchingCubes.Base.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\MarchingCubes\MarchingCubes.Implicit.cs" Link="TVGL\MarchingCubes\MarchingCubes.Implicit.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\MarchingCubes\MarchingCubes.VoxelizedSolid.cs" Link="TVGL\MarchingCubes\MarchingCubes.VoxelizedSolid.cs" />
