@@ -12,12 +12,10 @@
 // <summary></summary>
 // ***********************************************************************
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
-using System.Runtime.Serialization;
 
 namespace TVGL
 {
@@ -290,19 +288,39 @@ namespace TVGL
             }
             writer.WriteEndObject();//}
 
-            writer.WritePropertyName("Colors");
             if (HasUniformColor || Faces.All(f => f.Color == null || f.Color.Equals(Faces[0].Color)))
-                writer.WriteValue(SolidColor.ToString());
+            {
+                if (SolidColor != null && !SolidColor.Equals(new Color(Constants.DefaultColor)))
+                {
+                    writer.WritePropertyName("Colors");
+                    writer.WriteValue(SolidColor.ToString());
+                }
+            }
             else
             {
+                // See comment in StreamWrite for the trick used here to store colors compactly.
+                writer.WritePropertyName("Colors");
                 var colorList = new List<string>();
-                var lastColor = new Color(KnownColors.LightGray).ToString();
-                foreach (var f in Faces)
+                var lastColor = Faces[0].Color;
+                colorList.Add(lastColor.ToString().Substring(1));
+                var numRepeats = 0;
+                foreach (var f in Faces.Skip(1))
                 {
-                    if (f.Color != null) lastColor = f.Color.ToString();
-                    colorList.Add(lastColor);
+                    if (f.Color == null || f.Color.Equals(lastColor))
+                        numRepeats++; // colorList[i] = "";
+                    else
+                    {
+                        if (numRepeats > 0)
+                        {
+                            colorList.Add(numRepeats.ToString());
+                            numRepeats = 0;
+                        }
+                        lastColor = f.Color;
+                        colorList.Add(lastColor.ToString().Substring(1));
+                    }
                 }
-                writer.WriteValue(string.Join(' ', colorList));
+                if (numRepeats > 0) colorList.Add(numRepeats.ToString());
+                writer.WriteValue(string.Join(',', colorList));
             }
         }
 
@@ -316,7 +334,7 @@ namespace TVGL
         {
             // todo: resolive this with OnDeserializedMethod. Are both needed?
             index = -1;
-            Color[] colors=null;
+            Color[] colors = null;
 
             var jsonSerializer = new Newtonsoft.Json.JsonSerializer();
             reader.Read();
@@ -412,10 +430,34 @@ namespace TVGL
                         ReferenceIndex = (int)reader.ReadAsInt32();
                         break;
                     case "Colors":
-                        var colorStringsArray = reader.ReadAsString().Split(' ');
-                        colors = new Color[colorStringsArray.Length];
+                        // to make saving colors for faces both quick and compact, we use a little trick to 
+                        // store the number of repeats of a color. If the color is the same as the last color,
+                        // then the next entry is a numeral that represents the number of repeats. One could 
+                        // be more extreme and store one color and all the face indices that are that color
+                        // (this would require a dictionary here, plus the list of indices could be long)
+                        // or we could just store a color foreach face - regardless of repeating colors.
+                        // This approach is a compromise of these two. It is fast and makes fairly compact results.
+                        var colorStringsArray = reader.ReadAsString().Split(',');
+                        colors = new Color[Faces.Length];
+                        var k = 0; //face counter
+                        var lastColor = new Color(Constants.DefaultColor);
                         for (int i = 0; i < colorStringsArray.Length; i++)
-                            colors[i] = new Color(colorStringsArray[i]);
+                        {
+                            var cStr = colorStringsArray[i];
+                            // it's fast to check if the first character is a letter, so this 
+                            // reduces the number of times we need to try to parse a number.
+                            if (!char.IsLetter(cStr[0]) && int.TryParse(cStr, out var numRepeats))
+                            {
+                                for (var j = 0; j < numRepeats; j++)
+                                    colors[k++] = lastColor;
+                            }
+                            else
+                            {
+                                cStr = "#" + cStr;
+                                lastColor = new Color(cStr);
+                                colors[k++] = lastColor;
+                            }
+                        }
                         break;
                 }
 
