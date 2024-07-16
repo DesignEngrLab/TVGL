@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -11,6 +12,7 @@ namespace TVGL
     /// </summary>
     public class SurfaceGroup : PrimitiveSurface
     {
+        [JsonIgnore]
         public HashSet<PrimitiveSurface> Surfaces { get; set; }
 
         public override string KeyString
