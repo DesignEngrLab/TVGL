@@ -208,35 +208,6 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Called when [serializing method].
-        /// </summary>
-        /// <param name="context">The context.</param>
-        [OnSerializing]
-        protected void OnSerializingMethod(StreamingContext context)
-        {
-            //if (serializationData == null)
-            serializationData = new Dictionary<string, JToken>();
-            //Don't bother storing the convex hull, so we can keep the size down as much as possible. CVXHull is fast to recalculate.
-            serializationData.Add("FaceIndices",
-                JToken.FromObject(Faces.SelectMany(face => face.Vertices.Select(v => v.IndexInList)).ToArray()));
-            serializationData.Add("VertexCoords",
-               JToken.FromObject(Vertices.ConvertTo1DDoublesCollection()));
-            if (HasUniformColor || Faces.All(f => f.Color == null || f.Color.Equals(Faces[0].Color)))
-                serializationData.Add("Colors", SolidColor.ToString());
-            else
-            {
-                var colorList = new List<string>();
-                var lastColor = new Color(KnownColors.LightGray).ToString();
-                foreach (var f in Faces)
-                {
-                    if (f.Color != null) lastColor = f.Color.ToString();
-                    colorList.Add(lastColor);
-                }
-                serializationData.Add("Colors", JToken.FromObject(colorList));
-            }
-        }
-
-        /// <summary>
         /// The comma
         /// </summary>
         private const string comma = ",";
@@ -502,80 +473,6 @@ namespace TVGL
         }
 
 
-        /// <summary>
-        /// Called when [deserialized method].
-        /// </summary>
-        /// <param name="context">The context.</param>
-        [OnDeserialized]
-        protected void OnDeserializedMethod(StreamingContext context)
-        {
-            // todo: resolive this with StreamRead. Are both needed?
-            JArray jArray = (JArray)serializationData["VertexCoords"];
-            var vertexArray = jArray.ToObject<double[]>();
-            var numVertices = vertexArray.Length / 3;
-            var coords = GetCoordsFromJson(vertexArray, numVertices);
-
-            jArray = (JArray)serializationData["FaceIndices"];
-            var faceIndicesArray = jArray.ToObject<int[]>();
-            var numFaces = faceIndicesArray.Length / 3;
-            var faceIndices = GetFaceIndicesFromJson(faceIndicesArray, numFaces);
-
-            jArray = serializationData["Colors"] as JArray;
-            Color[] colors;
-            if (jArray == null)
-            { colors = new[] { new Color(serializationData["Colors"].ToString()) }; }
-            else
-            {
-                var colorStringsArray = jArray.ToObject<string[]>();
-                colors = new Color[colorStringsArray.Length];
-                for (int i = 0; i < colorStringsArray.Length; i++)
-                    colors[i] = new Color(colorStringsArray[i]);
-            }
-
-            MakeVertices(coords, numVertices);
-            DefineAxisAlignedBoundingBoxAndTolerance(Vertices.Select(v => v.Coordinates));
-            MakeFaces(faceIndices, numFaces, colors);
-            if (Primitives != null && Primitives.Any())
-            {
-                foreach (var surface in Primitives)
-                    surface.CompletePostSerialization(this);
-            }
-            TessellationInspectAndRepair.CompleteBuildOptions(this, (TessellatedSolidBuildOptions)context.Context, out var removedFaces);
-            if (removedFaces.Count > 0)
-            {
-                // if the build/repair altered the faces, then we may need to check if there
-                // are any faces still referenced in the primitives that need to be removed.
-                var removedHash = removedFaces.ToHashSet();
-                foreach (var prim in Primitives)
-                {
-                    prim.FaceIndices = null;
-                    var needToResetOtherElements = false;
-                    foreach (var face in prim.Faces)
-                        if (removedHash.Contains(face))
-                        {
-                            prim.Faces.Remove(face);
-                            needToResetOtherElements = true;
-                        }
-                    if (needToResetOtherElements)
-                    {
-                        prim.SetVerticesFromFaces();
-                        prim.DefineInnerOuterEdges();
-                    }
-                }
-            }
-        }
-
-        private static IEnumerable<(int, int, int)> GetFaceIndicesFromJson(int[] faceIndicesArray, int numFaces)
-        {
-            for (int i = 0; i < faceIndicesArray.Length / 3; i++)
-                yield return (faceIndicesArray[3 * i], faceIndicesArray[3 * i + 1], faceIndicesArray[3 * i + 2]);
-        }
-
-        private static IEnumerable<Vector3> GetCoordsFromJson(double[] vertexArray, int numVertices)
-        {
-            for (int i = 0; i < numVertices; i++)
-                yield return new Vector3(vertexArray[3 * i], vertexArray[3 * i + 1], vertexArray[3 * i + 2]);
-        }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="TessellatedSolid" /> class. This constructor is
