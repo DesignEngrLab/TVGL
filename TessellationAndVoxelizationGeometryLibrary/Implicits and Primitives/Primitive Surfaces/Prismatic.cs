@@ -233,7 +233,7 @@ namespace TVGL
             }
 
             // next, we define the start and end points of the path
-            (Vector2 start, Vector2 end) = MiscFunctions.FindExtremesAlong2DCurve(vertex2DDict.Values);
+            (Vector2 start, var _, Vector2 end, var _) = this.FindExtremesAlong2DCurve(vertex2DDict.Values);
 
             // now run a Dijkstra's algorithm to find the shortest path from start to end
             var visited = new HashSet<Vector2>();
@@ -250,8 +250,8 @@ namespace TVGL
                     break;
                 }
                 var vertex = vector2VertexDict[node.Point];
-                var neighbors = vertex.Edges.Where(e => InnerEdges.Contains(e)||OuterEdges.Contains(e))
-                    .Select(e =>vertex2DDict[e.OtherVertex(vertex)]);
+                var neighbors = vertex.Edges.Where(e => InnerEdges.Contains(e) || OuterEdges.Contains(e))
+                    .Select(e => vertex2DDict[e.OtherVertex(vertex)]);
                 foreach (var neighbor in neighbors)
                 {
                     if (visited.Contains(neighbor)) continue;
@@ -269,7 +269,7 @@ namespace TVGL
             if (cross.Dot(Axis) < 0) solution.Reverse();
             return solution;
         }
-        
+
         class DijkstraNode
         {
             public Vector2 Point;

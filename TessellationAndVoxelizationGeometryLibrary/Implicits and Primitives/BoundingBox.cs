@@ -415,28 +415,28 @@ namespace TVGL
             if (Dimensions[0] <= Dimensions[1])
             {
                 if (Dimensions[1] <= Dimensions[2])
-                    _sortedDirectionIndicesByLength = new[] { 0, 1, 2 };
+                    _sortedDirectionIndicesByLength = [0, 1, 2];
                 else if (Dimensions[0] <= Dimensions[2])
-                    _sortedDirectionIndicesByLength = new[] { 0, 2, 1 };
+                    _sortedDirectionIndicesByLength = [0, 2, 1];
                 else
-                    _sortedDirectionIndicesByLength = new[] { 2, 0, 1 };
+                    _sortedDirectionIndicesByLength = [2, 0, 1];
             }
             // then X>Y
             else if (Dimensions[1] > Dimensions[2])
-                _sortedDirectionIndicesByLength = new[] { 2, 1, 0 };
+                _sortedDirectionIndicesByLength = [2, 1, 0];
             else if (Dimensions[0] <= Dimensions[2])
-                _sortedDirectionIndicesByLength = new[] { 1, 0, 2 };
+                _sortedDirectionIndicesByLength = [1, 0, 2];
             else
-                _sortedDirectionIndicesByLength = new[] { 1, 2, 0 };
+                _sortedDirectionIndicesByLength = [1, 2, 0];
 
-            _sortedDimensions = new[] {
+            _sortedDimensions = [
                 Dimensions[_sortedDirectionIndicesByLength[0]],
                 Dimensions[_sortedDirectionIndicesByLength[1]],
-                Dimensions[_sortedDirectionIndicesByLength[2]] };
-            _sortedDirectionsByLength = new[] {
+                Dimensions[_sortedDirectionIndicesByLength[2]] ];
+            _sortedDirectionsByLength = [
                 Directions[_sortedDirectionIndicesByLength[0]],
                 Directions[_sortedDirectionIndicesByLength[1]],
-                Directions[_sortedDirectionIndicesByLength[2]] };
+                Directions[_sortedDirectionIndicesByLength[2]] ];
         }
 
         /// <summary>

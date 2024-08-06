@@ -15,6 +15,7 @@ using ClipperLib;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Data.Common;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -296,7 +297,86 @@ namespace TVGL
             else return circleBorders.Average(b => ((Circle)b.Curve).Radius);
         }
 
+        /// <summary>
+        /// Given a set of 2D points in arbitrary order that are known to be on a curve, this function
+        /// finds the extremes
+        /// </summary>
+        /// <param name="points"></param>
+        /// <returns></returns>
+        public static (Vector2 start, Vector2 startDirj, Vector2 end, Vector2 endDir) FindExtremesAlong2DCurve(this PrimitiveSurface surface, IEnumerable<Vector2> points)
+        {
+            var int2PointDict = new Dictionary<int, (Vector2, Vertex)>();
+            var pointsEnumerator = points.GetEnumerator();
+            foreach (var v in surface.Vertices)
+            {
+                pointsEnumerator.MoveNext();
+                var point = pointsEnumerator.Current;
+                int2PointDict.Add(v.IndexInList, (point, v));
+            }
+            var possibleExtremes = new List<(Vector2, Vector2, Vector2)>();
+            foreach ((Vector2 location, Vertex vertex) in int2PointDict.Values)
+            {
+                var outVectors = new List<Vector2>();
+                var outer1 = Vector2.Null;
+                var outer2 = Vector2.Null;
+                foreach (var edge in vertex.Edges)
+                {
+                    if (!surface.OuterEdges.Contains(edge)) continue;
+                    var otherVertex = edge.OtherVertex(vertex);
+                    var otherLocation = int2PointDict[otherVertex.IndexInList].Item1;
+                    var vector = otherLocation - location;
+                    if (outer1.IsNull())
+                        outer1 = vector;
+                    else
+                    {
+                        outer2 = vector;
+                        break;
+                    }
+                }
+                if (outer1.IsNull() || outer2.IsNull() || outer1.Dot(outer2) < 0)
+                    continue;
+                possibleExtremes.Add((location, outer1, outer2));
+            }
+            if (possibleExtremes.Count == 2) return (possibleExtremes[0].Item1, (possibleExtremes[0].Item2 + possibleExtremes[0].Item3).Normalize(),
+                    possibleExtremes[1].Item1, (possibleExtremes[1].Item2 + possibleExtremes[1].Item3).Normalize());
+            for (int i = possibleExtremes.Count - 1; i > 0; i--)
+            {
+                (var point, var v1, var v2) = possibleExtremes[i];
+                for (int j = i - 1; j >= 0; j--)
+                {
+                    (var otherPoint, var w1, var w2) = possibleExtremes[j];
+                    if (point.IsPracticallySame(otherPoint))
+                    {
+                        possibleExtremes.RemoveAt(i);
+                        break;
+                    }
+                    var iTrapsJ = PointASeesPointB(point, v1, v2, otherPoint);
+                    var jTrapsI = PointASeesPointB(otherPoint, w1, w2, point);
+                    if (iTrapsJ == jTrapsI) continue;
+                    if (jTrapsI)
+                    {
+                        possibleExtremes.RemoveAt(i);
+                        break;
+                    }
+                    else // if (iTrapsJ)
+                    {
+                        i--;
+                        possibleExtremes.RemoveAt(j);
+                    }
+                    if (possibleExtremes.Count == 2) break;
+                }
+                if (possibleExtremes.Count == 2) break;
+            }
+            return (possibleExtremes[0].Item1, (possibleExtremes[0].Item2 + possibleExtremes[0].Item3).Normalize(),
+                   possibleExtremes[1].Item1, (possibleExtremes[1].Item2 + possibleExtremes[1].Item3).Normalize());
+        }
 
+        private static bool PointASeesPointB(Vector2 pointA, Vector2 vA1, Vector2 vA2, Vector2 pointB)
+        {
+            var vNew = pointB - pointA;
+            if (vNew.LengthSquared() < Constants.BaseTolerance * Constants.BaseTolerance) return false;
+            return vNew.Dot(vA1) > 0 && vNew.Dot(vA2) > 0;
+        }
 
         public static void Tessellate(this PrimitiveSurface surface, double xMin, double xMax, double yMin, double yMax, double zMin, double zMax, double maxEdgeLength)
         {
