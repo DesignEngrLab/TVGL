@@ -65,22 +65,48 @@ namespace TVGL
             SetBorders();
         }
 
-        public new IEnumerable<TriangleFace> GetFaces()
+        public override HashSet<TriangleFace> Faces
         {
-            //Okay to return IEnumerable, since no duplicates will occur.
+            get
+            {
+                if (faces == null) GetFaces();
+                return faces;
+            }
+        }
+        HashSet<TriangleFace> faces;
+        void GetFaces()
+        {
+            var surfWithMostFaces = Surfaces.MaxBy(s => s.Faces.Count);
+            // to be slightly efficient we "copy" the hashset from the surface with the most faces
+            faces = new HashSet<TriangleFace>(surfWithMostFaces.Faces, surfWithMostFaces.Faces.Comparer);
             foreach (var surface in Surfaces)
+            {   // then add the remainding surfaces' faces to this hashset
+                if (surface == surfWithMostFaces) continue;
                 foreach (var face in surface.Faces)
-                    yield return face;
+                    faces.Add(face);
+            }
         }
 
-        public new IEnumerable<Vertex> Vertices()
+        public override HashSet<Vertex> Vertices
         {
-            //Duplicates will occur.
-            var vertices = new HashSet<Vertex>();
+            get
+            {
+                if (vertices == null) GetVertices();
+                return vertices;
+            }
+        }
+        HashSet<Vertex> vertices;
+        void GetVertices()
+        {
+            var surfWithMostvertices = Surfaces.MaxBy(s => s.Vertices.Count);
+            // to be slightly efficient we "copy" the hashset from the surface with the most vertices
+            vertices = new HashSet<Vertex>(surfWithMostvertices.Vertices, surfWithMostvertices.Vertices.Comparer);
             foreach (var surface in Surfaces)
-                foreach (var vertex in surface.Vertices)
-                    vertices.Add(vertex);
-            return vertices;
+            {   // then add the remainding survertices' vertices to this hashset
+                if (surface == surfWithMostvertices) continue;
+                foreach (var vertice in surface.Vertices)
+                    vertices.Add(vertice);
+            }
         }
 
         public IEnumerable<SurfaceGroup> AdjacentGroups()
@@ -137,7 +163,7 @@ namespace TVGL
         /// <param name="color">The color.</param>
         public new void SetColor(Color color)
         {
-            foreach (var face in GetFaces())
+            foreach (var face in Faces)
                 face.Color = color;
         }
 

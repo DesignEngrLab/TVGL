@@ -338,14 +338,14 @@ namespace TVGL
         /// </summary>
         /// <value>The triangle faces.</value>
         [JsonIgnore]
-        public HashSet<TriangleFace> Faces { get; set; }
+        public virtual HashSet<TriangleFace> Faces { get; set; }
 
         /// <summary>
         /// Gets the vertices.
         /// </summary>
         /// <value>The vertices.</value>
         [JsonIgnore]
-        public HashSet<Vertex> Vertices { get; set; }
+        public virtual HashSet<Vertex> Vertices { get; set; }
 
         /// <summary>
         /// Gets the inner edges.
