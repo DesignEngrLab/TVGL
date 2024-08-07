@@ -332,8 +332,7 @@ namespace TVGL
         /// <exception cref="System.Exception">Need to add deserialize casting for primitive type: " + primitiveType</exception>
         internal void StreamRead(JsonTextReader reader, out int index, TessellatedSolidBuildOptions tsBuildOptions)
         {
-            // todo: resolive this with OnDeserializedMethod. Are both needed?
-            index = -1;
+            // todo: resolve this with OnDeserializedMethod. Are both needed?
             Color[] colors = null;
 
             var jsonSerializer = new Newtonsoft.Json.JsonSerializer();
@@ -428,6 +427,7 @@ namespace TVGL
                     case "Index":
                     case "ReferenceIndex":
                         ReferenceIndex = (int)reader.ReadAsInt32();
+                        index = ReferenceIndex;
                         break;
                     case "Colors":
                         // to make saving colors for faces both quick and compact, we use a little trick to 
