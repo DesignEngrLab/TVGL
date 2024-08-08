@@ -334,6 +334,7 @@ namespace TVGL
         {
             // todo: resolve this with OnDeserializedMethod. Are both needed?
             Color[] colors = null;
+            index = -1;
 
             var jsonSerializer = new Newtonsoft.Json.JsonSerializer();
             reader.Read();
