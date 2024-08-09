@@ -10,7 +10,7 @@ namespace TVGLUnitTestsAndBenchmarking
     internal class Program
     {
         //public static string inputFolder = "TestFiles";
-        public static string inputFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "Input");
+        public static string inputFolder = "Input";
 
         //public static string inputFolder = "OneDrive - medemalabs.com";
         static Random r = new Random();

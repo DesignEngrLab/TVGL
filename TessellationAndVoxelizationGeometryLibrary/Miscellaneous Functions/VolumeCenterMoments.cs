@@ -13,6 +13,7 @@
 // ***********************************************************************
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace TVGL
 {
@@ -56,7 +57,20 @@ namespace TVGL
                 zCenter += (a.Z + b.Z + c.Z) * currentVolumeTerm;
                 // center is found by a weighted sum of the centers of each tetrahedron. The weighted sum coordinate are collected here.
             }
-
+            if (volume.IsNegligible())
+            {  // then its likely that all triangles are in the same plane
+                volume = 0;
+                // the best center would be the weighted average of the centers of the triangles (by area)
+                center = Vector3.Zero;
+                foreach (var face in faces)
+                {
+                    center += face.Center * face.Area;
+                    volume += face.Area;
+                }
+                center /= volume;
+                volume = 0;
+                return;
+            }
             //Divide the volume by 3 and the center by 4. Since center is also mutliplied by the currentVolume, it is actually divided by 3 * 4 = 12;                
             volume *= oneThird;
             center = new Vector3(xCenter * oneTwelth, yCenter * oneTwelth, zCenter * oneTwelth) / volume;

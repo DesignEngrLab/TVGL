@@ -363,12 +363,18 @@ namespace TVGL
                         i--;
                         possibleExtremes.RemoveAt(j);
                     }
-                    if (possibleExtremes.Count == 2) break;
+                    //if (possibleExtremes.Count == 2) break;
                 }
-                if (possibleExtremes.Count == 2) break;
+                //if (possibleExtremes.Count == 2) break;
             }
-            return (possibleExtremes[0].Item1, (possibleExtremes[0].Item2 + possibleExtremes[0].Item3).Normalize(),
-                   possibleExtremes[1].Item1, (possibleExtremes[1].Item2 + possibleExtremes[1].Item3).Normalize());
+            if (possibleExtremes.Count == 0)
+                throw new Exception("No points found at the extremes of the curve.");
+            if (possibleExtremes.Count == 1)
+                return (possibleExtremes[0].Item1, (possibleExtremes[0].Item2 + possibleExtremes[0].Item3).Normalize(),
+                   Vector2.Null, Vector2.Null);
+            else
+                return (possibleExtremes[0].Item1, (possibleExtremes[0].Item2 + possibleExtremes[0].Item3).Normalize(),
+                       possibleExtremes[1].Item1, (possibleExtremes[1].Item2 + possibleExtremes[1].Item3).Normalize());
         }
 
         private static bool PointASeesPointB(Vector2 pointA, Vector2 vA1, Vector2 vA2, Vector2 pointB)

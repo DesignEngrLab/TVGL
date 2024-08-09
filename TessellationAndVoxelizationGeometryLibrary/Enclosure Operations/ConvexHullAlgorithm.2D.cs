@@ -1,12 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using TVGL.PointCloud;
 
 namespace TVGL
 {
-    public static partial class ConvexHull2D
+    public static class ConvexHull2D
     {
         /// <summary>
         /// Creates the convex hull for a polygon.
@@ -266,9 +267,11 @@ namespace TVGL
              * are inside or out. If they are out, add them to the proper row of the hullCands array. */
             for (var i = 0; i < numPoints; i++)
             {
-                if (indexOfUsedIndices < indicesUsed.Length && i == nextUsedIndex)
-                    //in order to avoid a contains function call, we know to only check with next usedIndex in order
-                    nextUsedIndex = indicesUsed[indexOfUsedIndices++]; //Note: it increments after getting the current index
+                if (i == nextUsedIndex) //in order to avoid a Contains function call, we know to only check with nextUsedIndex 
+                {
+                    if (indexOfUsedIndices < indicesUsed.Length)
+                        nextUsedIndex = indicesUsed[indexOfUsedIndices++];
+                }
                 else
                 {
                     var point = points[i];
@@ -305,7 +308,7 @@ namespace TVGL
             var nextI = 0;
             var currI = convexHull.Count - 1;
             var prevI = currI - 1;
-            while (currI >= 0)
+            while (currI >= 0 && convexHull.Count > 2)
             {
                 var nextPt = convexHull[nextI];
                 var currentPt = convexHull[currI];
@@ -315,7 +318,7 @@ namespace TVGL
                 var rX = nextPt.X - currentPt.X;
                 var rY = nextPt.Y - currentPt.Y;
                 double zValue = lX * rY - lY * rX;
-                if (zValue > 0) // then save this convex point (for now)
+                if (zValue > 0 || (zValue == 0 && lX != 0 && lY != 0 && rX != 0 && rY != 0)) // then save this convex point (for now)
                 {
                     nextI = currI;
                     currI--;
@@ -376,9 +379,8 @@ namespace TVGL
             {
                 // here a new value is found. 
                 // as a slight time saver, we can check the two points that will surround this new point. 
-                // If it makes a concave corner then don't add it. this part is actually in the middle 
-                // condition ("else if (index < size)"). We don't need to perform this check if the insertion
-                // is at either at. At the beginning ("index == 0"), we still need to increment the rest of the list
+                // If it makes a concave corner then don't add it. We don't need to perform this check if the insertion
+                // is at either end. At the beginning ("index == 0"), we still need to increment the rest of the list
 
                 var prevPt = sortedPoints[index - 1].point;
                 var nextPt = sortedPoints[index].point;
@@ -430,6 +432,30 @@ namespace TVGL
                 else inclusiveHighIndex = i - 1;
             }
             return inclusiveLowIndex;
+        }
+
+        /// <summary>
+        /// Finds the signed distance from a point to a convex hull. If the point is inside the convex hull, the distance is negative.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="convexHull"></param>
+        /// <param name="point"></param>
+        /// <returns></returns>
+        public static double SignedDistanceToPoint<T>(IList<T> convexHull, Vector2 point)
+        where T : IVector2D
+        {
+            var dist = double.NegativeInfinity;
+            var prevPoint = convexHull[^1];
+            for (int i = 0, j = convexHull.Count - 1; i < convexHull.Count; j = i++)
+            {
+                var nextPoint = convexHull[i];
+                var edgeNormal = new Vector2(prevPoint.Y - nextPoint.Y, nextPoint.X - prevPoint.X).Normalize();
+                var toPt = new Vector2(point.X - prevPoint.X, point.Y - prevPoint.Y);
+                var dot = toPt.Dot(edgeNormal);
+                if (dot > dist) dist = dot;
+                prevPoint = nextPoint;
+            }
+            return dist;
         }
     }
 }
