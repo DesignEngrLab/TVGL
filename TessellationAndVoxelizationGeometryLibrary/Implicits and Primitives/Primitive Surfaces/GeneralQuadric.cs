@@ -11,9 +11,12 @@
 // </copyright>
 // <summary></summary>
 // ***********************************************************************
+using StarMathLib;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using System.Runtime.CompilerServices;
 
 namespace TVGL
 {
@@ -84,19 +87,31 @@ namespace TVGL
             this.ZCoeff = zCoeff;
             this.W = w;
         }
-        public GeneralQuadric(double[] coefficients)
+        public GeneralQuadric(IEnumerable<double> coefficients)
         {
-            this.XSqdCoeff = coefficients[0];
-            this.YSqdCoeff = coefficients[1];
-            this.ZSqdCoeff = coefficients[2];
-            this.XYCoeff = coefficients[3];
-            this.XZCoeff = coefficients[4];
-            this.YZCoeff = coefficients[5];
-            this.XCoeff = coefficients[6];
-            this.YCoeff = coefficients[7];
-            this.ZCoeff = coefficients[8];
-            this.W = coefficients[9];
+            var enumerator = coefficients.GetEnumerator();
+            enumerator.MoveNext();
+            this.XSqdCoeff = enumerator.Current;
+            enumerator.MoveNext();
+            this.YSqdCoeff = enumerator.Current;
+            enumerator.MoveNext();
+            this.ZSqdCoeff = enumerator.Current;
+            enumerator.MoveNext();
+            this.XYCoeff = enumerator.Current;
+            enumerator.MoveNext();
+            this.XZCoeff = enumerator.Current;
+            enumerator.MoveNext();
+            this.YZCoeff = enumerator.Current;
+            enumerator.MoveNext();
+            this.XCoeff = enumerator.Current;
+            enumerator.MoveNext();
+            this.YCoeff = enumerator.Current;
+            enumerator.MoveNext();
+            this.ZCoeff = enumerator.Current;
+            enumerator.MoveNext();
+            this.W = enumerator.Current;
         }
+
         /// <summary>
         /// GeneralQuadric
         /// </summary>
@@ -404,7 +419,140 @@ namespace TVGL
             YSqdCoeff.ToString("F5") + "|" + ZSqdCoeff.ToString("F5") + "|" +
             XYCoeff.ToString("F5") + "|" + XZCoeff.ToString("F5") + "|" +
             YZCoeff.ToString("F5") + "|" + XCoeff.ToString("F5") + "|" +
-            YCoeff.ToString("F5") + "|" + ZCoeff.ToString("F5") + "|" + W.ToString("F5") 
+            YCoeff.ToString("F5") + "|" + ZCoeff.ToString("F5") + "|" + W.ToString("F5")
             + GetCommonKeyDetails();
+
+        /// <summary>
+        /// Defines the quadric from points using minimum least squares.
+        /// </summary>
+        /// <param name="verts"></param>
+        /// <param name="errSqd"></param>
+        /// <returns></returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static GeneralQuadric DefineFromPoints(IEnumerable<Vector3> samples, out double errSqd)
+        {
+            var numVerts = 0;
+            double Sx = 0.0, Sy = 0.0, Sz = 0.0;
+            double Sxx = 0.0;
+            double Sxy = 0.0, Syy = 0.0;
+            double Sxz = 0.0, Syz = 0.0, Szz = 0.0;
+            double Sxxx = 0.0, Sxxy = 0.0, Sxyy = 0.0, Syyy = 0.0;
+            double Sxxz = 0.0, Sxzz = 0.0, Szzz = 0.0;
+            double Syyz = 0.0, Syzz = 0.0, Sxyz = 0.0;
+            double Sx4 = 0.0, Sy4 = 0.0, Sz4 = 0.0;
+            double Sx3y = 0.0, Sx3z = 0.0, Sxy3 = 0.0, Sy3z = 0.0, Sxz3 = 0.0, Syz3 = 0.0;
+            double Sx2y2 = 0.0, Sx2z2 = 0.0, Sy2z2 = 0.0;
+            double Sx2yz = 0.0, Sxy2z = 0.0, Sxyz2 = 0.0;
+            foreach (var point in samples)
+            {
+                var x = point.X;
+                var y = point.Y;
+                var z = point.Z;
+                Sx += x;
+                Sy += y;
+                Sz += z;
+                var xx = x * x;
+                var yy = y * y;
+                var zz = z * z;
+                Sxx += xx;
+                Syy += yy;
+                Szz += zz;
+                var xy = x * y;
+                var xz = x * z;
+                var yz = y * z;
+                Sxy += xy;
+                Sxz += xz;
+                Syz += yz;
+                Sxxx += xx * x;
+                Sxxy += xx * y;
+                Sxyy += xy * y;
+                Syyy += yy * y;
+                Sxxz += xx * z;
+                Sxzz += xz * z;
+                Szzz += zz * z;
+                Syyz += yy * z;
+                Syzz += yz * z;
+                Sx4 += xx * xx;
+                Sy4 += yy * yy;
+                Sz4 += zz * zz;
+                Sx3y += xx * xy;
+                Sx3z += xx * xz;
+                Sxy3 += xy * yy;
+                Sy3z += yy * yz;
+                Sxz3 += xz * zz;
+                Syz3 += yz * zz;
+                Sx2y2 += xx * yy;
+                Sx2z2 += xx * zz;
+                Sy2z2 += yy * zz;
+                Sx2yz += xx * yz;
+                Sxy2z += yy * xz;
+                Sxyz2 += xy * zz;
+                numVerts++;
+            }
+            if (numVerts >= 10)
+            {
+                double[,] Amatrix = {
+                    { Sx4,   Sx2y2, Sx2z2, Sx3y,  Sx3z,  Sx2yz, Sxxx, Sxxy, Sxxz },
+                    { Sx2y2, Sy4,   Sy2z2, Sxy3,  Sxy2z, Sy3z,  Sxyy, Syyy, Syyz },
+                    { Sx2z2, Sy2z2, Sz4,   Sxyz2, Sxz3,  Syz3,  Sxzz, Syzz, Szzz },
+                    { Sx3y,  Sxy3,  Sxyz2, Sx2y2, Sx2yz, Sxy2z, Sxxy, Sxyy, Sxyz },
+                    { Sx3z,  Sxy2z, Sxz3,  Sx2yz, Sx2z2, Sxyz2, Sxxz, Sxyz, Sxzz },
+                    { Sx2yz, Sy3z,  Syz3,  Sxy2z, Sxyz2, Sy2z2, Sxyz, Syyz, Syzz },
+                    { Sxxx,  Sxyy,  Sxzz,  Sxxy,  Sxxz,  Sxyz,  Sxx,  Sxy,  Sxz },
+                    { Sxxy,  Syyy,  Syzz,  Sxyy,  Sxyz,  Syyz,  Sxy,  Syy,  Syz },
+                    { Sxxz,  Syyz,  Szzz,  Sxyz,  Sxzz,  Syzz,  Sxz,  Syz,  Szz }
+                };
+                // we set the constant term, W (or the 'J' term), to -1, this allows us to bring over
+                // the unique part of the gradient to the solved side
+                double[] b = [Sxx, Syy, Szz, Sxy, Sxz, Syz, Sx, Sy, Sz];
+                if (Amatrix.solve(b, out var coefficients, true))
+                {
+                    var quadric = new GeneralQuadric(coefficients.Concat([-1]));
+                    errSqd = quadric.XSqdCoeff * Sxx + quadric.YSqdCoeff * Syy + quadric.ZSqdCoeff * Szz
+                        + quadric.XYCoeff * Sxy + quadric.XZCoeff * Sxz + quadric.YZCoeff * Syz
+                        + quadric.XCoeff * Sx + quadric.YCoeff * Sy + quadric.ZCoeff * Sz + quadric.W;
+                    errSqd *= errSqd / numVerts;
+                    return quadric;
+                }
+            }
+            errSqd = double.NaN;
+            return null;
+        }
+
+        /// <summary>
+        /// Defines the quadric as a cylinder. The error in terms should be close to zero for a perfect cylinder.
+        /// </summary>
+        /// <param name="errorInTerms"></param>
+        /// <returns></returns>
+        /// <exception cref="NotImplementedException"></exception>
+        public Cylinder DefineAsCylinder(out double errorInTerms)
+        {
+            var A = XSqdCoeff / YSqdCoeff;
+            var theta = Math.Acos(Math.Sqrt(A));
+            var C = ZSqdCoeff / YSqdCoeff;
+            errorInTerms = C - Math.Sin(theta) * Math.Sin(theta);
+            errorInTerms *= errorInTerms;
+            var D = XYCoeff / YSqdCoeff;
+            errorInTerms += D * D;
+            var E = XZCoeff / YSqdCoeff;
+            var Eerr = E - Math.Sin(2 * theta);
+            errorInTerms += Eerr * Eerr;
+            var F = YZCoeff / YSqdCoeff;
+            errorInTerms += F * F;
+            var G = XCoeff / YSqdCoeff;
+            var tx = G / (2 * A);
+            var H = YCoeff / YSqdCoeff;
+            var ty = 0.5 * H;
+            var Ierr = (ZCoeff / YSqdCoeff) - tx * Math.Sin(2 * theta);
+            errorInTerms += Ierr * Ierr;
+            var J = W / YSqdCoeff;
+            var radius = Math.Sqrt(A * tx * tx + ty * ty - J);
+            throw new NotImplementedException("But what about phi? How do we find it? It fell out of the equations.");
+            return new Cylinder
+            {
+                Radius = radius,
+            };
+        }
+
     }
 }
