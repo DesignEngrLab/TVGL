@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using TVGL;
+using TVGLUnitTestsAndBenchmarking.Misc_Tests;
 
 namespace TVGLUnitTestsAndBenchmarking
 {
@@ -21,6 +22,8 @@ namespace TVGLUnitTestsAndBenchmarking
         [STAThread]
         private static void Main(string[] args)
         {
+            CoordinateTransforms.Test1();
+            return;
             var myWriter = new ConsoleTraceListener();
             Trace.Listeners.Add(myWriter);
             TVGL.Message.Verbosity = VerbosityLevels.OnlyCritical;

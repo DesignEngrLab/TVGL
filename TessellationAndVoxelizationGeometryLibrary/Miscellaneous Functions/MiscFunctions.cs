@@ -1103,14 +1103,42 @@ namespace TVGL
             //var xDir = zDir.GetPerpendicularDirection();
             //var yDir = zDir.Cross(xDir);
             //backTransform = new Matrix4x4(xDir, yDir, zDir, Vector3.Zero);
+            var dirMagSquared = direction.LengthSquared();
+            if (dirMagSquared.IsPracticallySame(0.0))
+                throw new ArgumentException("The direction cannot be the zero vector.");
+            if (dirMagSquared.IsPracticallySame(1.0))
+            {
+                var g = Math.Sqrt(direction.X * direction.X + direction.Z * direction.Z);
+                var oneOverG = 1 / g;
+                var xOverG = direction.X * oneOverG;
+                var zOverG = direction.Z * oneOverG;
+                backTransform = new Matrix4x4(zOverG, 0, -xOverG, -xOverG * direction.Y, g, -zOverG * direction.Y, direction.X, direction.Y, direction.Z, 0, 0, 0);
+                return backTransform.Transpose();
+            }
+            else
+            {
+                var h = 1 / direction.Length();
+                var g = 1 / Math.Sqrt(direction.X * direction.X + direction.Z * direction.Z);
 
-            var h =1/ direction.Length();
-            var g =1/ Math.Sqrt(direction.X*direction.X+ direction.Z*direction.Z);
+                var xOverG = direction.X * g;
+                var zOverG = direction.Z * g;
+                var yOverH = direction.Y * h;
+                backTransform = new Matrix4x4(zOverG, 0, -xOverG, -xOverG * yOverH, h / g, -zOverG * yOverH, direction.X * h, yOverH, direction.Z * h, 0, 0, 0);
+                return backTransform.Transpose();
+            }
+        }
 
-            var xOverG = direction.X * g;
-            var zOverG = direction.Z * g;
-            var yOverH = direction.Y * h;
-            backTransform = new Matrix4x4(zOverG, 0, -xOverG, -xOverG * yOverH, h / g, -zOverG * yOverH, direction.X * h, yOverH, direction.Z * h, 0, 0, 0);
+
+        public static Matrix4x4 TransformToXYPlaneOLD(this Vector3 direction, out Matrix4x4 backTransform, double tolerance = Constants.BaseTolerance)
+        {
+            var closestCartesianDirection = SnapDirectionToCartesian(direction, out var withinTolerance, tolerance);
+            if (withinTolerance)
+                return TransformToXYPlane(closestCartesianDirection, out backTransform);
+
+            var zDir = direction.Normalize();
+            var xDir = zDir.GetPerpendicularDirection();
+            var yDir = zDir.Cross(xDir);
+            backTransform = new Matrix4x4(xDir, yDir, zDir, Vector3.Zero);
             return backTransform.Transpose();
         }
 
@@ -1759,7 +1787,7 @@ namespace TVGL
         {
             var t = lineVector.Dot(qPoint - lineRefPt) / lineVector.LengthSquared();
             pointOnLine = lineVector + t * lineRefPt;
-            return  qPoint.Distance(pointOnLine);
+            return qPoint.Distance(pointOnLine);
         }
 
         /// <summary>
