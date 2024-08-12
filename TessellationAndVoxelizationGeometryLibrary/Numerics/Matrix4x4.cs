@@ -1640,6 +1640,45 @@ namespace TVGL
         }
 
         /// <summary>
+        /// Calculates the Frobenius Norm of the given matrix. This is simply
+        /// the sum of the squares of all the elements.
+        /// </summary>
+        /// <returns></returns>
+        public double FrobeniusNorm()
+        {
+            return M11 * M11 + M12 * M12 + M13 * M13 + M14 * M14 +
+                   M21 * M21 + M22 * M22 + M23 * M23 + M24 * M24 +
+                   M31 * M31 + M32 * M32 + M33 * M33 + M34 * M34 +
+                   M41 * M41 + M42 * M42 + M43 * M43 + M44 * M44;
+        }
+
+        /// <summary>
+        /// Calculates the max norm of this matrix, which is the 
+        /// absolute value of the element farthest from zero.
+        /// </summary>
+        /// <returns></returns>
+        public double MaxNorm()
+        {
+            var max = Math.Abs(M11);
+            max = Math.Max(max, Math.Abs(M12));
+            max = Math.Max(max, Math.Abs(M13));
+            max = Math.Max(max, Math.Abs(M14));
+            max = Math.Max(max, Math.Abs(M21));
+            max = Math.Max(max, Math.Abs(M22));
+            max = Math.Max(max, Math.Abs(M23));
+            max = Math.Max(max, Math.Abs(M24));
+            max = Math.Max(max, Math.Abs(M31));
+            max = Math.Max(max, Math.Abs(M32));
+            max = Math.Max(max, Math.Abs(M33));
+            max = Math.Max(max, Math.Abs(M34));
+            max = Math.Max(max, Math.Abs(M41));
+            max = Math.Max(max, Math.Abs(M42));
+            max = Math.Max(max, Math.Abs(M43));
+            max = Math.Max(max, Math.Abs(M44));
+            return max;
+        }
+
+        /// <summary>
         /// Returns a new matrix with the negated elements of the given matrix.
         /// </summary>
         /// <param name="value">The source matrix.</param>

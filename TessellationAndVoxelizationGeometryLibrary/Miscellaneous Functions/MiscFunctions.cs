@@ -1098,13 +1098,23 @@ namespace TVGL
             if (withinTolerance)
                 return TransformToXYPlane(closestCartesianDirection, out backTransform);
 
-            var zDir = direction.Normalize();
-            var xDir = zDir.GetPerpendicularDirection();
-            var yDir = zDir.Cross(xDir);
-            backTransform = new Matrix4x4(xDir, yDir, zDir, Vector3.Zero);
-            var forwardTransform = backTransform.Transpose();
-            return forwardTransform;
+            // this is the old approach that is more than twice as slow as the new one (64 ns vs 24ns)
+            //var zDir = direction.Normalize();
+            //var xDir = zDir.GetPerpendicularDirection();
+            //var yDir = zDir.Cross(xDir);
+            //backTransform = new Matrix4x4(xDir, yDir, zDir, Vector3.Zero);
+
+            var h =1/ direction.Length();
+            var g =1/ Math.Sqrt(direction.X*direction.X+ direction.Z*direction.Z);
+
+            var xOverG = direction.X * g;
+            var zOverG = direction.Z * g;
+            var yOverH = direction.Y * h;
+            backTransform = new Matrix4x4(zOverG, 0, -xOverG, -xOverG * yOverH, h / g, -zOverG * yOverH, direction.X * h, yOverH, direction.Z * h, 0, 0, 0);
+            return backTransform.Transpose();
         }
+
+
 
         /// <summary>
         /// Create a transforms from normal direction for 2D xy plane.

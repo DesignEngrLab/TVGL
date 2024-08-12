@@ -9,9 +9,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TVGL Presenter", "TVGL Presenter\TVGL Presenter.csproj", "{FD6643D7-ED2C-4FB8-B7A2-F64CDB7CD7EF}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TVGLUnitTestsAndBenchmarking", "TVGLUnitTestsAndBenchmarking\TVGLUnitTestsAndBenchmarking.csproj", "{39E24BC5-932B-49EF-B8BC-7999472408BE}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Testing", "TVGLUnitTestsAndBenchmarking\Testing.csproj", "{39E24BC5-932B-49EF-B8BC-7999472408BE}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TVGL PresenterDebugger", "TVGL PresenterDebugger\TVGL PresenterDebugger.csproj", "{CC5F477E-D308-4C86-8C3E-0FB13A5BE656}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Benchmarking", "Benchmarking\Benchmarking.csproj", "{92F02B61-B577-42E1-B3F7-DA6D5D6B1F99}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -35,6 +37,10 @@ Global
 		{CC5F477E-D308-4C86-8C3E-0FB13A5BE656}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{CC5F477E-D308-4C86-8C3E-0FB13A5BE656}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{CC5F477E-D308-4C86-8C3E-0FB13A5BE656}.Release|Any CPU.Build.0 = Release|Any CPU
+		{92F02B61-B577-42E1-B3F7-DA6D5D6B1F99}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{92F02B61-B577-42E1-B3F7-DA6D5D6B1F99}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{92F02B61-B577-42E1-B3F7-DA6D5D6B1F99}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{92F02B61-B577-42E1-B3F7-DA6D5D6B1F99}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
