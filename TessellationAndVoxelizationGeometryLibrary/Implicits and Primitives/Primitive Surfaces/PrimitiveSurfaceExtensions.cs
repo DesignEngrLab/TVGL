@@ -303,7 +303,8 @@ namespace TVGL
         /// </summary>
         /// <param name="points"></param>
         /// <returns></returns>
-        public static (Vector2 start, Vector2 startDirj, Vector2 end, Vector2 endDir) FindExtremesAlong2DCurve(this PrimitiveSurface surface, IEnumerable<Vector2> points)
+        public static (Vector2 start, Vector2 startDirj, Vector2 end, Vector2 endDir) FindExtremesAlong2DCurve(this PrimitiveSurface surface,
+            IEnumerable<Vector2> points)
         {
             var int2PointDict = new Dictionary<int, (Vector2, Vertex)>();
             var pointsEnumerator = points.GetEnumerator();
@@ -325,6 +326,8 @@ namespace TVGL
                     var otherVertex = edge.OtherVertex(vertex);
                     var otherLocation = int2PointDict[otherVertex.IndexInList].Item1;
                     var vector = otherLocation - location;
+                    if (vector.LengthSquared() < Constants.BaseTolerance) continue;
+                    vector = vector.Normalize();
                     if (outer1.IsNull())
                         outer1 = vector;
                     else
@@ -333,39 +336,72 @@ namespace TVGL
                         break;
                     }
                 }
-                if (outer1.IsNull() || outer2.IsNull() || outer1.Dot(outer2) < 0)
+                if (outer1.IsNull() || (!outer2.IsNull() && outer1.Dot(outer2) < 0))
                     continue;
                 possibleExtremes.Add((location, outer1, outer2));
             }
             if (possibleExtremes.Count == 2) return (possibleExtremes[0].Item1, (possibleExtremes[0].Item2 + possibleExtremes[0].Item3).Normalize(),
                     possibleExtremes[1].Item1, (possibleExtremes[1].Item2 + possibleExtremes[1].Item3).Normalize());
-            for (int i = possibleExtremes.Count - 1; i > 0; i--)
+            while (true)
             {
-                (var point, var v1, var v2) = possibleExtremes[i];
-                for (int j = i - 1; j >= 0; j--)
+                for (int i = possibleExtremes.Count - 1; i > 0; i--)
                 {
-                    (var otherPoint, var w1, var w2) = possibleExtremes[j];
-                    if (point.IsPracticallySame(otherPoint))
+                    (var point, var v1, var v2) = possibleExtremes[i];
+                    for (int j = i - 1; j >= 0; j--)
                     {
-                        possibleExtremes.RemoveAt(i);
-                        break;
-                    }
-                    var iTrapsJ = PointASeesPointB(point, v1, v2, otherPoint);
-                    var jTrapsI = PointASeesPointB(otherPoint, w1, w2, point);
-                    if (iTrapsJ == jTrapsI) continue;
-                    if (jTrapsI)
-                    {
-                        possibleExtremes.RemoveAt(i);
-                        break;
-                    }
-                    else // if (iTrapsJ)
-                    {
-                        i--;
-                        possibleExtremes.RemoveAt(j);
+                        (var otherPoint, var w1, var w2) = possibleExtremes[j];
+                        if (point.IsPracticallySame(otherPoint))
+                        {
+                            possibleExtremes.RemoveAt(i);
+                            break;
+                        }
+                        var iTrapsJ = PointASeesPointB(point, v1, v2, otherPoint);
+                        var jTrapsI = PointASeesPointB(otherPoint, w1, w2, point);
+                        if (iTrapsJ == jTrapsI) continue;
+                        if (jTrapsI)
+                        {
+                            possibleExtremes.RemoveAt(i);
+                            break;
+                        }
+                        else // if (iTrapsJ)
+                        {
+                            i--;
+                            possibleExtremes.RemoveAt(j);
+                        }
+                        //if (possibleExtremes.Count == 2) break;
                     }
                     //if (possibleExtremes.Count == 2) break;
                 }
-                //if (possibleExtremes.Count == 2) break;
+                if (possibleExtremes.Count <= 2) break;
+                // more than 2 - then rework the possibleExtremes with connections to the nearest neighbors
+                // (here, were are assuming the number is super small like 3 to 6)
+                for (int i = possibleExtremes.Count - 1; i > 0; i--)
+                {
+                    (var point, _, _) = possibleExtremes[i];
+                    var closestVector1 = Vector2.Null;
+                    var closestVector2 = Vector2.Null;
+                    var closestDistance1 = double.PositiveInfinity;
+                    var closestDistance2 = double.PositiveInfinity;
+                    for (int j = i - 1; j >= 0; j--)
+                    {
+                        (var otherPoint, _, _) = possibleExtremes[j];
+                        var v = otherPoint- point;
+                        var distance =v.LengthSquared();
+                        if (distance < closestDistance1)
+                        {
+                            closestDistance2 = closestDistance1;
+                            closestVector2 = closestVector1;
+                            closestDistance1 = distance;
+                            closestVector1 = v;
+                        }
+                        else if (distance < closestDistance2)
+                        {
+                            closestDistance2 = distance;
+                            closestVector2 = v;
+                        }
+                    }
+                    possibleExtremes[i] = (point, closestVector1, closestVector2);
+                }
             }
             if (possibleExtremes.Count == 0)
                 throw new Exception("No points found at the extremes of the curve.");
@@ -381,7 +417,7 @@ namespace TVGL
         {
             var vNew = pointB - pointA;
             if (vNew.LengthSquared() < Constants.BaseTolerance * Constants.BaseTolerance) return false;
-            return vNew.Dot(vA1) > 0 && vNew.Dot(vA2) > 0;
+            return (vA1.IsNull() || vNew.Dot(vA1) >= 0) && (vA2.IsNull() || vNew.Dot(vA2) >= 0);
         }
 
         public static void Tessellate(this PrimitiveSurface surface, double xMin, double xMax, double yMin, double yMax, double zMin, double zMax, double maxEdgeLength)
