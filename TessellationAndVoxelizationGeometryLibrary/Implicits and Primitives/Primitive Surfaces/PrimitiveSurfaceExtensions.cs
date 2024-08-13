@@ -326,7 +326,7 @@ namespace TVGL
                     var otherVertex = edge.OtherVertex(vertex);
                     var otherLocation = int2PointDict[otherVertex.IndexInList].Item1;
                     var vector = otherLocation - location;
-                    if (vector.LengthSquared() < Constants.BaseTolerance) continue;
+                    if (vector.LengthSquared().IsNegligible()) continue;
                     vector = vector.Normalize();
                     if (outer1.IsNull())
                         outer1 = vector;
@@ -342,7 +342,7 @@ namespace TVGL
             }
             if (possibleExtremes.Count == 2) return (possibleExtremes[0].Item1, (possibleExtremes[0].Item2 + possibleExtremes[0].Item3).Normalize(),
                     possibleExtremes[1].Item1, (possibleExtremes[1].Item2 + possibleExtremes[1].Item3).Normalize());
-            while (true)
+            while (possibleExtremes.Count > 2)
             {
                 for (int i = possibleExtremes.Count - 1; i > 0; i--)
                 {
@@ -385,8 +385,8 @@ namespace TVGL
                     for (int j = i - 1; j >= 0; j--)
                     {
                         (var otherPoint, _, _) = possibleExtremes[j];
-                        var v = otherPoint- point;
-                        var distance =v.LengthSquared();
+                        var v = otherPoint - point;
+                        var distance = v.LengthSquared();
                         if (distance < closestDistance1)
                         {
                             closestDistance2 = closestDistance1;
@@ -400,7 +400,9 @@ namespace TVGL
                             closestVector2 = v;
                         }
                     }
-                    possibleExtremes[i] = (point, closestVector1, closestVector2);
+                    if (closestVector1.Dot(closestVector2) > 0)
+                        possibleExtremes[i] = (point, closestVector1, closestVector2);
+                    else possibleExtremes.RemoveAt(i);
                 }
             }
             if (possibleExtremes.Count == 0)
