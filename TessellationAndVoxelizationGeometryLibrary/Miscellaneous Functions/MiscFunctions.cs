@@ -1092,7 +1092,7 @@ namespace TVGL
         /// <param name="backTransform">The back transform.</param>
         /// <param name="tolerance">This tolerance is used to snap to the cartesian direction if the dot product is within this value.</param>
         /// <returns>System.Vector2.</returns>
-        public static Matrix4x4 TransformToXYPlane(this Vector3 direction, out Matrix4x4 backTransform, double tolerance = Constants.BaseTolerance)
+        public static Matrix4x4 TransformToXYPlane(this Vector3 direction, out Matrix4x4 backTransform, double tolerance = Constants.DefaultEqualityTolerance)
         {
             var closestCartesianDirection = SnapDirectionToCartesian(direction, out var withinTolerance, tolerance);
             if (withinTolerance)

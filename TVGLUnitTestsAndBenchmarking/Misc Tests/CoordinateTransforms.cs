@@ -25,5 +25,26 @@ namespace TVGLUnitTestsAndBenchmarking.Misc_Tests
                 }
             }
         }
+
+        internal static void Test2()
+        {
+            var angle =  Math.PI / 2;
+            var v1 = new Vector3(2e-12, 1, -7e-12).Normalize();
+            var m1 = v1.GetOrthogonalDirection(angle);
+
+
+            var v2 = Vector3.UnitY;
+            var m2 = v2.GetOrthogonalDirection(angle);
+
+
+
+
+            var v3 = new Vector3(0, -1, .1).Normalize();
+            var m3 = v1.GetOrthogonalDirection(angle);
+
+
+            var v4 = -Vector3.UnitY;
+            var m4 = v2.GetOrthogonalDirection(angle);
+        }
     }
 }
