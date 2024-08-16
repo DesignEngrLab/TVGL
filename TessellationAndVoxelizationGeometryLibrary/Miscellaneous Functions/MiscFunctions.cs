@@ -1770,7 +1770,7 @@ namespace TVGL
             /* pointOnLine is found by setting the dot-product of the lineVector and the vector formed by (pointOnLine-p)
              * set equal to zero. This is really just solving to "t" the distance along the line from the lineRefPt. */
             var t = lineVector.Dot(qPoint - lineRefPt) / lineVector.LengthSquared();
-            pointOnLine = lineVector + t * lineRefPt;
+            pointOnLine = lineRefPt + t * lineVector;
             return returnSquared ? qPoint.DistanceSquared(pointOnLine) : qPoint.Distance(pointOnLine);
         }
 
@@ -1785,8 +1785,10 @@ namespace TVGL
         public static double DistancePointToLine(Vector2 qPoint, Vector2 lineRefPt, Vector2 lineVector,
         out Vector2 pointOnLine)
         {
+            /* pointOnLine is found by setting the dot-product of the lineVector and the vector formed by (pointOnLine-p)
+            * set equal to zero. This is really just solving to "t" the distance along the line from the lineRefPt. */
             var t = lineVector.Dot(qPoint - lineRefPt) / lineVector.LengthSquared();
-            pointOnLine = lineVector + t * lineRefPt;
+            pointOnLine = lineRefPt + t * lineVector;
             return qPoint.Distance(pointOnLine);
         }
 
