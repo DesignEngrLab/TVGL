@@ -311,30 +311,28 @@ namespace TVGL
                 var vertices = Corners.Select(p => new Vertex(p)).ToArray();
                 var faces = new[]
                 {
-                // negative-X faces
-                new TriangleFace(vertices[0],vertices[4],vertices[7]),
-                new TriangleFace(vertices[0],vertices[7],vertices[3]),
-                // positive-X faces
-                new TriangleFace(vertices[6],vertices[5],vertices[1]),
-                new TriangleFace(vertices[6],vertices[1],vertices[2]),
-                // negative-Y faces
-                new TriangleFace(vertices[0],vertices[1],vertices[5]),
-                new TriangleFace(vertices[0],vertices[5],vertices[4]),
-                // positive-Y faces
-                new TriangleFace(vertices[6],vertices[2],vertices[3]),
-                new TriangleFace(vertices[6],vertices[3],vertices[7]),
-                // negative-Z faces
-                new TriangleFace(vertices[0],vertices[3],vertices[2]),
-                new TriangleFace(vertices[0],vertices[2],vertices[1]),
-                // positive-Z faces
-                new TriangleFace(vertices[6],vertices[7],vertices[4]),
-                new TriangleFace(vertices[6],vertices[4],vertices[5])
-            };
-                var random = new Random(0);
+                    // negative-X faces
+                    new TriangleFace(vertices[0],vertices[4],vertices[7]),
+                    new TriangleFace(vertices[0],vertices[7],vertices[3]),
+                    // positive-X faces
+                    new TriangleFace(vertices[6],vertices[5],vertices[1]),
+                    new TriangleFace(vertices[6],vertices[1],vertices[2]),
+                    // negative-Y faces
+                    new TriangleFace(vertices[0],vertices[1],vertices[5]),
+                    new TriangleFace(vertices[0],vertices[5],vertices[4]),
+                    // positive-Y faces
+                    new TriangleFace(vertices[6],vertices[2],vertices[3]),
+                    new TriangleFace(vertices[6],vertices[3],vertices[7]),
+                    // negative-Z faces
+                    new TriangleFace(vertices[0],vertices[3],vertices[2]),
+                    new TriangleFace(vertices[0],vertices[2],vertices[1]),
+                    // positive-Z faces
+                    new TriangleFace(vertices[6],vertices[7],vertices[4]),
+                    new TriangleFace(vertices[6],vertices[4],vertices[5])
+                };
                 var tessellatedSolidBuildOptions = new TessellatedSolidBuildOptions();
                 tessellatedSolidBuildOptions.CopyElementsPassedToConstructor = false;
-                _tessellatedSolid = new TessellatedSolid(faces, vertices, tessellatedSolidBuildOptions, new[] {
-                    new Color(0.6f,(float)random.NextDouble(), (float)random.NextDouble(), (float)random.NextDouble()) });
+                _tessellatedSolid = new TessellatedSolid(faces, vertices, tessellatedSolidBuildOptions);
                 _tessellatedSolid.Primitives = new List<PrimitiveSurface>();
                 for (var i = 0; i < 12; i += 2)
                     _tessellatedSolid.Primitives.Add(new Plane(new List<TriangleFace> { faces[i], faces[i + 1] }));

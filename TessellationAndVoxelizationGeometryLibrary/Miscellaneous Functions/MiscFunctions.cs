@@ -1120,10 +1120,10 @@ namespace TVGL
                 var h = 1 / direction.Length();
                 var g = 1 / Math.Sqrt(direction.X * direction.X + direction.Z * direction.Z);
 
-                var xOverG = direction.X * g;
-                var zOverG = direction.Z * g;
-                var yOverH = direction.Y * h;
-                backTransform = new Matrix4x4(zOverG, 0, -xOverG, -xOverG * yOverH, h / g, -zOverG * yOverH, direction.X * h, yOverH, direction.Z * h, 0, 0, 0);
+                var xOverG = direction.X * oneOverG;
+                var zOverG = direction.Z * oneOverG;
+                var yOverH = direction.Y * oneOverH;
+                backTransform = new Matrix4x4(zOverG, 0, -xOverG, -xOverG * yOverH, g * oneOverH, -zOverG * yOverH, direction.X * oneOverH, yOverH, direction.Z * oneOverH, 0, 0, 0);
                 return backTransform.Transpose();
             }
         }

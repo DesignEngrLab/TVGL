@@ -249,7 +249,7 @@ namespace TVGL
         public static void ShowPoints(IEnumerable<Vector3> points, double radius = 0, Color color = null)
         {
             if (radius == 0) radius = 1;
-            if (color == null) color = new Color(KnownColors.White);
+            if (color == null) color = new Color(KnownColors.Red);
             var pointVisuals = GetPointModels(points, radius, color);
             var vm = new Window3DPlotViewModel();
             vm.Add(pointVisuals);
