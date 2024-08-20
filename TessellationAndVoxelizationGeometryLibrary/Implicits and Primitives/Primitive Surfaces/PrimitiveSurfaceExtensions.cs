@@ -491,11 +491,10 @@ namespace TVGL
         /// <param name="radius"></param>
         /// <param name="numPoints"></param>
         internal static void GetCircleTessellation(out Vertex[] vertices, out TriangleFace[] faces,
-            Vector3 circleCenter, Vector3 normalDirection, double radius, int numPoints)
+            Vector3 circleCenter, Vector3 normalDirection, double radius, int numPoints, bool reverseFaces)
         {
             var cosAxis = normalDirection.GetPerpendicularDirection();
             var sinAxis = normalDirection.Cross(cosAxis);
-            var rotationMatrix = Matrix4x4.CreateRotationZ(2 * Math.PI / numPoints);
             vertices = new Vertex[numPoints + 1];
             var centerVertex = new Vertex(circleCenter);
             vertices[numPoints] = centerVertex;
@@ -509,11 +508,18 @@ namespace TVGL
 
             faces = new TriangleFace[numPoints];
             var j = numPoints - 1;
-            for (int i = 0; i < numPoints; i++)
-            {
-                faces[i] = new TriangleFace(centerVertex, vertices[j], vertices[i]);
-                j = i;
-            }
+            if (reverseFaces)
+                for (int i = 0; i < numPoints; i++)
+                {
+                    faces[i] = new TriangleFace(centerVertex, vertices[i], vertices[j]);
+                    j = i;
+                }
+            else
+                for (int i = 0; i < numPoints; i++)
+                {
+                    faces[i] = new TriangleFace(centerVertex, vertices[j], vertices[i]);
+                    j = i;
+                }
         }
 
         /// <summary>
@@ -551,7 +557,7 @@ namespace TVGL
             var baseCircleRadius = cone.Length * cone.Aperture;
             var baseCircleCenter = cone.Apex + cone.Length * axis;
 
-            GetCircleTessellation(out var btmVertices, out var btmFaces, cone.Apex, axis, baseCircleRadius, numPoints);
+            GetCircleTessellation(out var btmVertices, out var btmFaces, cone.Apex, axis, baseCircleRadius, numPoints, false);
             List<Vertex> vertices;
             List<TriangleFace> faces;
             var apexVertex = new Vertex(cone.Apex);
@@ -616,8 +622,8 @@ namespace TVGL
             var cylinderMinAxisPoint = cylinder.Anchor + (cylinder.MinDistanceAlongAxis - anchorDist) * axis;
             var cylinderMaxAxisPoint = cylinderMinAxisPoint + (cylinder.MaxDistanceAlongAxis - cylinder.MinDistanceAlongAxis) * axis;
 
-            GetCircleTessellation(out var btmVertices, out var btmFaces, cylinderMinAxisPoint, -axis, cylinder.Radius, numPoints);
-            GetCircleTessellation(out var topVertices, out var topFaces, cylinderMaxAxisPoint, axis, cylinder.Radius, numPoints);
+            GetCircleTessellation(out var btmVertices, out var btmFaces, cylinderMinAxisPoint, axis, cylinder.Radius, numPoints, true);
+            GetCircleTessellation(out var topVertices, out var topFaces, cylinderMaxAxisPoint, axis, cylinder.Radius, numPoints, false);
             List<Vertex> vertices;
             List<TriangleFace> faces;
             if (keepOpen)
@@ -754,10 +760,124 @@ namespace TVGL
                 Primitives = [btmPlane, topPlane, cylinder, innerCylinder]
             };
         }
+
+
+        /// <summary>
+        /// Creates a tessellated solid for a sphere by attempting to equally space the points.
+        /// </summary>
+        /// <param name="sphere"></param>
+        /// <param name="numPoints"></param>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
+        public static TessellatedSolid Tessellate(this Sphere sphere, double maxEdgeLength)
+        {
+            // assuming equilateral triangles are spread over sphere (which is a conservative assumption, since
+            // equilateral triangles will have the most area)
+            var equiTriArea = 0.25 * maxEdgeLength * maxEdgeLength * Math.Sqrt(3);
+            var numTriangles = (int)(Math.PI * sphere.Radius * sphere.Radius / equiTriArea); // wait! isn't there a 4 in 
+                                                                                             // the formula for the area of a sphere ? yes, but after some (brief) testing, it seems that this 
+                                                                                             // overall heuristic is off by a factor of 4. So, we'll just leave it out.
+            return Tessellate(sphere, numTriangles - 2);
+        }
+
+        /// <summary>
+        /// Creates a tessellated solid for a sphere by attempting to equally space the points.
+        /// </summary>
+        /// <param name="sphere"></param>
+        /// <param name="numPoints"></param>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
+        public static TessellatedSolid Tessellate(this Sphere sphere, int numPoints = 100)
+        {
+            var vertices = MiscFunctions.NEquidistantSpherePointsKogan(numPoints, sphere.Radius).Select(p => new Vertex(p + sphere.Center)).ToList();
+            if (!ConvexHull3D.Create(vertices, out var convexHull, false))
+                throw new Exception("Convex hull could not be created for sphere.");
+            var faces = convexHull.Faces.Select(cf => new TriangleFace(cf.A, cf.B, cf.C)).ToList();
+
+            var tessellatedSolidBuildOptions = new TessellatedSolidBuildOptions();
+            tessellatedSolidBuildOptions.CopyElementsPassedToConstructor = false;
+            sphere.SetFacesAndVertices(faces, true, true);
+            return new TessellatedSolid(faces, vertices, tessellatedSolidBuildOptions)
+            {
+                Primitives = [sphere]
+            };
+        }
+
+
+        /// <summary>
+        /// Creates a tessellated solid for a torus which is determined by rings of points.
+        /// </summary>
+        /// <param name="torus"></param>
+        /// <param name="numPoints"></param>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
+        public static TessellatedSolid Tessellate(this Torus torus, double maxEdgeLength)
+        {
+            var r = torus.MajorRadius + torus.MinorRadius;
+            // using law of cosines
+            var maxAngle = Math.Acos(1 - maxEdgeLength * maxEdgeLength / (2 * r * r));
+            var numPointsInMajor = (int)(2 * Math.PI / maxAngle);
+            r = torus.MinorRadius;
+            maxAngle = Math.Acos(1 - maxEdgeLength * maxEdgeLength / (2 * r * r));
+            var numPointsInMinor = (int)(2 * Math.PI / maxAngle);
+            return Tessellate(torus, numPointsInMajor, numPointsInMinor);
+        }
+
+        /// <summary>
+        /// Creates a tessellated solid for a torus which is determined by rings of points.
+        /// </summary>
+        /// <param name="torus"></param>
+        /// <param name="numPoints"></param>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
+        public static TessellatedSolid Tessellate(this Torus torus, int numPointsInMajor = 30, int numPointsInMinor = 30)
+        {
+            var vertices = new Vertex[numPointsInMinor * numPointsInMajor];
+            var cosAxis = torus.Axis.GetPerpendicularDirection();
+            var sinAxis = torus.Axis.Cross(cosAxis);
+            var centerPoints = new Vector3[numPointsInMajor];
+            for (int i = 0; i < numPointsInMajor; i++)
+            {
+                var angle = i * 2 * Math.PI / numPointsInMajor;
+                var centerPoint = torus.Center + torus.MajorRadius * (cosAxis * Math.Cos(angle) + sinAxis * Math.Sin(angle));
+                sinAxis = torus.Axis;
+                cosAxis = (centerPoint - torus.Center).Normalize();
+
+                for (int j = 0; j < numPointsInMinor; j++)
+                {
+                    angle = j * 2 * Math.PI / numPointsInMajor;
+                    vertices[i * 30 + j] = new Vertex(centerPoint + torus.MinorRadius * (cosAxis * Math.Cos(angle) + sinAxis * Math.Sin(angle)));
+                }
+            }
+            var faces = new TriangleFace[2*numPointsInMinor * numPointsInMajor];
+            var prevI = numPointsInMajor - 1;
+            var k = 0;
+            for (int i = 0; i < numPointsInMajor; i++)
+            {
+                var prevJ = numPointsInMinor - 1;
+                for (int j = 0; j < numPointsInMinor; j++)
+                {
+                    faces[k++] = new TriangleFace(vertices[prevI * 30 + prevJ], vertices[i * 30 + prevJ], vertices[prevI * 30 + j]);
+                    faces[k++] = new TriangleFace(vertices[prevI * 30 + j], vertices[i * 30 + prevJ], vertices[i * 30 + j]);
+                    prevJ = j;
+                }
+                prevI = i;
+            }
+            var tessellatedSolidBuildOptions = new TessellatedSolidBuildOptions();
+            tessellatedSolidBuildOptions.CopyElementsPassedToConstructor = false;
+            torus.SetFacesAndVertices(faces, true, true);
+            return new TessellatedSolid(faces, vertices, tessellatedSolidBuildOptions)
+            {
+                Primitives = [torus]
+            };
+        }
+
+
+
         #endregion
 
         private static IEnumerable<(Vector3 intersection, double lineT)> GetPrimitiveAndLineIntersections(PrimitiveSurface surface, double xCoord,
-             double yCoord, double zCoord)
+         double yCoord, double zCoord)
         {
             if (surface.Faces == null || surface.Faces.Count == 0)
                 foreach (var result in surface.LineIntersection(new Vector3(xCoord, yCoord, zCoord), Vector3.UnitX))
