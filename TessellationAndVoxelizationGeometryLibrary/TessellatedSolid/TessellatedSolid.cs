@@ -1410,13 +1410,15 @@ namespace TVGL
                 if (yMax < v.Coordinates.Y) yMax = v.Coordinates.Y;
                 if (zMax < v.Coordinates.Z) zMax = v.Coordinates.Z;
             }
-            Bounds = new[] { new Vector3(xMin, yMin, zMin), new Vector3(xMax, yMax, zMax) };
+            Bounds = [ new Vector3(xMin, yMin, zMin), new Vector3(xMax, yMax, zMax) ];
 
             //Update the faces
-            foreach (var face in Faces.Concat(ConvexHull.Faces))
-            {
+            foreach (var face in Faces)
                 face.Update();// Transform(transformMatrix);
-            }
+            
+            if (ConvexHull != null)
+                ConvexHull.Transform(transformMatrix);
+            
             //Update the edges
             if (NumberOfEdges > 1)
             {
