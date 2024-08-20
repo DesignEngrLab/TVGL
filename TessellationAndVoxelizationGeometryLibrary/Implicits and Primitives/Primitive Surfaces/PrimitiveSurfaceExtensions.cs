@@ -422,6 +422,17 @@ namespace TVGL
 
 
         #region Tessellation of PrimitiveSurfaces
+        /// <summary>
+        /// A generic tessellation of a primitive surface using marching cubes.
+        /// </summary>
+        /// <param name="surface"></param>
+        /// <param name="xMin"></param>
+        /// <param name="xMax"></param>
+        /// <param name="yMin"></param>
+        /// <param name="yMax"></param>
+        /// <param name="zMin"></param>
+        /// <param name="zMax"></param>
+        /// <param name="maxEdgeLength"></param>
         public static void Tessellate(this PrimitiveSurface surface, double xMin, double xMax, double yMin, double yMax, double zMin, double zMax, double maxEdgeLength)
         {
             if (surface.Vertices != null && surface.Vertices.Count > 0) return;
@@ -431,6 +442,12 @@ namespace TVGL
             var tessellatedSolid = solid.ConvertToTessellatedSolid(meshSize);
             surface.SetFacesAndVertices(tessellatedSolid.Faces, true);
         }
+        /// <summary>
+        /// A generic tessellation of a primitive surface using marching cubes.
+        /// </summary>
+        /// <param name="surface"></param>
+        /// <param name="maxEdgeLength"></param>
+        /// <exception cref="ArgumentOutOfRangeException"></exception>
         public static void Tessellate(this PrimitiveSurface surface, double maxEdgeLength = double.NaN)
         {
             if (surface.Vertices != null && surface.Vertices.Count > 0) return;
@@ -833,23 +850,24 @@ namespace TVGL
         public static TessellatedSolid Tessellate(this Torus torus, int numPointsInMajor = 30, int numPointsInMinor = 30)
         {
             var vertices = new Vertex[numPointsInMinor * numPointsInMajor];
-            var cosAxis = torus.Axis.GetPerpendicularDirection();
-            var sinAxis = torus.Axis.Cross(cosAxis);
+            var cosMajorAxis = torus.Axis.GetPerpendicularDirection();
+            var sinMajorAxis = torus.Axis.Cross(cosMajorAxis);
             var centerPoints = new Vector3[numPointsInMajor];
             for (int i = 0; i < numPointsInMajor; i++)
             {
                 var angle = i * 2 * Math.PI / numPointsInMajor;
-                var centerPoint = torus.Center + torus.MajorRadius * (cosAxis * Math.Cos(angle) + sinAxis * Math.Sin(angle));
-                sinAxis = torus.Axis;
-                cosAxis = (centerPoint - torus.Center).Normalize();
+                var centerPoint = torus.Center + torus.MajorRadius * (cosMajorAxis * Math.Cos(angle) + sinMajorAxis * Math.Sin(angle));
+                var sinMinorAxis = torus.Axis;
+                var cosMinorAxis = (centerPoint - torus.Center).Normalize();
 
                 for (int j = 0; j < numPointsInMinor; j++)
                 {
-                    angle = j * 2 * Math.PI / numPointsInMajor;
-                    vertices[i * 30 + j] = new Vertex(centerPoint + torus.MinorRadius * (cosAxis * Math.Cos(angle) + sinAxis * Math.Sin(angle)));
+                    angle = j * 2 * Math.PI / numPointsInMinor;
+                    vertices[i * numPointsInMinor + j] = new Vertex(centerPoint + torus.MinorRadius
+                        * (cosMinorAxis * Math.Cos(angle) + sinMinorAxis * Math.Sin(angle)));
                 }
             }
-            var faces = new TriangleFace[2*numPointsInMinor * numPointsInMajor];
+            var faces = new TriangleFace[2 * numPointsInMinor * numPointsInMajor];
             var prevI = numPointsInMajor - 1;
             var k = 0;
             for (int i = 0; i < numPointsInMajor; i++)
@@ -857,14 +875,17 @@ namespace TVGL
                 var prevJ = numPointsInMinor - 1;
                 for (int j = 0; j < numPointsInMinor; j++)
                 {
-                    faces[k++] = new TriangleFace(vertices[prevI * 30 + prevJ], vertices[i * 30 + prevJ], vertices[prevI * 30 + j]);
-                    faces[k++] = new TriangleFace(vertices[prevI * 30 + j], vertices[i * 30 + prevJ], vertices[i * 30 + j]);
+                    faces[k++] = new TriangleFace(vertices[i * numPointsInMinor + j],
+                        vertices[prevI * numPointsInMinor + j],
+                        vertices[prevI * numPointsInMinor + prevJ]);
+                    faces[k++] = new TriangleFace(vertices[i * numPointsInMinor + j],
+                        vertices[prevI * numPointsInMinor + prevJ],
+                        vertices[i * numPointsInMinor + prevJ]);
                     prevJ = j;
                 }
                 prevI = i;
             }
-            var tessellatedSolidBuildOptions = new TessellatedSolidBuildOptions();
-            tessellatedSolidBuildOptions.CopyElementsPassedToConstructor = false;
+            var tessellatedSolidBuildOptions = new TessellatedSolidBuildOptions { CopyElementsPassedToConstructor = false };
             torus.SetFacesAndVertices(faces, true, true);
             return new TessellatedSolid(faces, vertices, tessellatedSolidBuildOptions)
             {
