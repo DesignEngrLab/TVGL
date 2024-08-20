@@ -670,7 +670,7 @@ namespace TVGL
             // using law of cosines
             var maxAngle = Math.Acos(1 - maxEdgeLength * maxEdgeLength / (2 * innerRadius * innerRadius));
             var numPoints = (int)(2 * Math.PI / maxAngle);
-            return Tessellate(cylinder, innerRadius, numPoints);
+            return TessellateHollowCylinder(cylinder, innerRadius, numPoints);
         }
 
         /// <summary>
