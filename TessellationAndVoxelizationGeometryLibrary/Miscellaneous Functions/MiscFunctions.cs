@@ -1117,8 +1117,9 @@ namespace TVGL
             }
             else
             {
-                var h = 1 / direction.Length();
-                var g = 1 / Math.Sqrt(direction.X * direction.X + direction.Z * direction.Z);
+                var oneOverH = 1 / direction.Length();
+                var g = Math.Sqrt(direction.X * direction.X + direction.Z * direction.Z);
+                var oneOverG = 1 / g;
 
                 var xOverG = direction.X * oneOverG;
                 var zOverG = direction.Z * oneOverG;
@@ -1127,21 +1128,6 @@ namespace TVGL
                 return backTransform.Transpose();
             }
         }
-
-
-        public static Matrix4x4 TransformToXYPlaneOLD(this Vector3 direction, out Matrix4x4 backTransform, double tolerance = Constants.BaseTolerance)
-        {
-            var closestCartesianDirection = SnapDirectionToCartesian(direction, out var withinTolerance, tolerance);
-            if (withinTolerance)
-                return TransformToXYPlane(closestCartesianDirection, out backTransform);
-
-            var zDir = direction.Normalize();
-            var xDir = zDir.GetPerpendicularDirection();
-            var yDir = zDir.Cross(xDir);
-            backTransform = new Matrix4x4(xDir, yDir, zDir, Vector3.Zero);
-            return backTransform.Transpose();
-        }
-
 
 
         /// <summary>
