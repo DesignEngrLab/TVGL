@@ -1415,9 +1415,10 @@ namespace TVGL
             //Update the faces
             foreach (var face in Faces)
                 face.Update();// Transform(transformMatrix);
-            
+
             if (ConvexHull != null)
-                ConvexHull.Transform(transformMatrix);
+                foreach (var face in ConvexHull.Faces)
+                    face.Update(); 
             
             //Update the edges
             if (NumberOfEdges > 1)
