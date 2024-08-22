@@ -90,7 +90,7 @@ namespace TVGL
         /// Initializes a new instance of the <see cref="SolidAssembly"/> class.
         /// </summary>
         /// <param name="name">The name.</param>
-        public SolidAssembly(string name):this()
+        public SolidAssembly(string name) : this()
         {
             Name = name;
         }
@@ -100,7 +100,7 @@ namespace TVGL
         /// </summary>
         /// <param name="solids">The solids.</param>
         /// <param name="fileName">Name of the file.</param>
-        public SolidAssembly(IEnumerable<Solid> solids, string fileName = ""):this()
+        public SolidAssembly(IEnumerable<Solid> solids, string fileName = "") : this()
         {
             if (fileName.Length > 0)
                 Name = fileName;
@@ -206,8 +206,7 @@ namespace TVGL
                 }
                 else if (reader.TokenType == JsonToken.PropertyName && reader.Value.ToString().Contains("TessellatedSolid"))
                 {
-                    var solid = new TessellatedSolid();
-                    solid.StreamRead(reader, out var index, tsBuildOptions);
+                    var solid = TessellatedSolid.StreamRead(reader, out var index, tsBuildOptions);
                     solids.Add(index, solid);
                 }
                 /* what if assembly could store other types of solids (e.g. VoxelizedSolids)

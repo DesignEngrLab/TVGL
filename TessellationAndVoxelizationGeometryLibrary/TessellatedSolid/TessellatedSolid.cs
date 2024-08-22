@@ -330,8 +330,9 @@ namespace TVGL
         /// <param name="reader">The reader.</param>
         /// <param name="index">The index.</param>
         /// <exception cref="System.Exception">Need to add deserialize casting for primitive type: " + primitiveType</exception>
-        internal void StreamRead(JsonTextReader reader, out int index, TessellatedSolidBuildOptions tsBuildOptions)
+        internal static TessellatedSolid StreamRead(JsonTextReader reader, out int index, TessellatedSolidBuildOptions tsBuildOptions)
         {
+            var ts = new TessellatedSolid();
             // todo: resolve this with OnDeserializedMethod. Are both needed?
             Color[] colors = null;
             index = -1;
@@ -349,39 +350,39 @@ namespace TVGL
                 switch (propertyName)
                 {
                     case "Name":
-                        Name = reader.ReadAsString();
+                        ts.Name = reader.ReadAsString();
                         break;
                     case "SourceIsSheetBody":
-                        SourceIsSheetBody = (bool)reader.ReadAsBoolean();
+                        ts.SourceIsSheetBody = (bool)reader.ReadAsBoolean();
                         break;
                     case "PrimitivesDetermined":
-                        PrimitivesDetermined = (bool)reader.ReadAsBoolean();
+                        ts.PrimitivesDetermined = (bool)reader.ReadAsBoolean();
                         break;
                     case "TessellationError":
-                        TessellationError = (double)reader.ReadAsDouble();
+                        ts.TessellationError = (double)reader.ReadAsDouble();
                         break;
                     case "SurfaceArea":
-                        _surfaceArea = (double)reader.ReadAsDouble();
+                        ts._surfaceArea = (double)reader.ReadAsDouble();
                         break;
                     case "Volume":
-                        Volume = (double)reader.ReadAsDouble();
+                        ts.Volume = (double)reader.ReadAsDouble();
                         break;
                     case "NumberOfVertices":
-                        NumberOfVertices = (int)reader.ReadAsInt32();
-                        Vertices = new Vertex[NumberOfVertices];
+                        ts.NumberOfVertices = (int)reader.ReadAsInt32();
+                        ts.Vertices = new Vertex[ts.NumberOfVertices];
                         break;
                     case "NumberOfFaces":
-                        NumberOfFaces = (int)reader.ReadAsInt32();
-                        Faces = new TriangleFace[NumberOfFaces];
+                        ts.NumberOfFaces = (int)reader.ReadAsInt32();
+                        ts.Faces = new TriangleFace[ts.NumberOfFaces];
                         break;
                     case "NumberOfPrimitives":
-                        NumberOfPrimitives = (int)reader.ReadAsInt32();
-                        Primitives = new List<PrimitiveSurface>(NumberOfPrimitives);
+                        ts.NumberOfPrimitives = (int)reader.ReadAsInt32();
+                        ts.Primitives = new List<PrimitiveSurface>(ts.NumberOfPrimitives);
                         break;
                     case "Primitives":
                         //Start reading primitives                          
                         reader.Read();//skip object container "{"
-                        for (var primitiveIndex = 0; primitiveIndex < NumberOfPrimitives; primitiveIndex++)
+                        for (var primitiveIndex = 0; primitiveIndex < ts.NumberOfPrimitives; primitiveIndex++)
                         {
                             //Get the property name, which in this case, is the name of the primitive plus an index.
                             reader.Read();
@@ -391,44 +392,44 @@ namespace TVGL
 
                             //Get the next object, which is a primitive. Cast it to the appropriate primitive type.
                             reader.Read();
-                            Primitives.Add((PrimitiveSurface)jsonSerializer.Deserialize(reader, primitiveType));
+                            ts.Primitives.Add((PrimitiveSurface)jsonSerializer.Deserialize(reader, primitiveType));
                         }
                         reader.Read();//end of array },
                         break;
                     case "FaceIndices":
                         reader.Read();//start array [
                         var faceIndex = 0;
-                        for (var faceRowIndex = 0; faceRowIndex < NumberOfFaces; faceRowIndex++)
+                        for (var faceRowIndex = 0; faceRowIndex < ts.NumberOfFaces; faceRowIndex++)
                         {
                             var a = (int)reader.ReadAsInt32();
                             var b = (int)reader.ReadAsInt32();
                             var c = (int)reader.ReadAsInt32();
                             if (a == b || a == c || b == c) continue;
-                            Faces[faceIndex] = new TriangleFace(Vertices[a], Vertices[b], Vertices[c]) { IndexInList = faceIndex };
+                            ts.Faces[faceIndex] = new TriangleFace(ts.Vertices[a], ts.Vertices[b], ts.Vertices[c]) { IndexInList = faceIndex };
                             faceIndex++;
                         }
-                        if (NumberOfFaces != faceIndex)
+                        if (ts.NumberOfFaces != faceIndex)
                         {
                             var newFaces = new TriangleFace[faceIndex];
-                            Array.Copy(Faces, newFaces, faceIndex);
-                            Faces = newFaces;
-                            NumberOfFaces = faceIndex;
+                            Array.Copy(ts.Faces, newFaces, faceIndex);
+                            ts.Faces = newFaces;
+                            ts.NumberOfFaces = faceIndex;
                         }
                         break;
                     case "VertexCoords":
                         reader.Read();//start array [
-                        for (var vertexIndex = 0; vertexIndex < NumberOfVertices; vertexIndex++)
+                        for (var vertexIndex = 0; vertexIndex < ts.NumberOfVertices; vertexIndex++)
                         {
                             var x = (double)reader.ReadAsDouble();
                             var y = (double)reader.ReadAsDouble();
                             var z = (double)reader.ReadAsDouble();
-                            Vertices[vertexIndex] = new Vertex(x, y, z, vertexIndex);
+                            ts.Vertices[vertexIndex] = new Vertex(x, y, z, vertexIndex);
                         }
                         break;
                     case "Index":
                     case "ReferenceIndex":
-                        ReferenceIndex = (int)reader.ReadAsInt32();
-                        index = ReferenceIndex;
+                        ts.ReferenceIndex = (int)reader.ReadAsInt32();
+                        index = ts.ReferenceIndex;
                         break;
                     case "Colors":
                         // to make saving colors for faces both quick and compact, we use a little trick to 
@@ -439,7 +440,7 @@ namespace TVGL
                         // or we could just store a color foreach face - regardless of repeating colors.
                         // This approach is a compromise of these two. It is fast and makes fairly compact results.
                         var colorStringsArray = reader.ReadAsString().Split(',');
-                        colors = new Color[Faces.Length];
+                        colors = new Color[ts.Faces.Length];
                         var k = 0; //face counter
                         var lastColor = new Color(Constants.DefaultColor);
                         for (int i = 0; i < colorStringsArray.Length; i++)
@@ -465,38 +466,38 @@ namespace TVGL
                 reader.Read();//go to next
             }
             //Lastly, assign faces and vertices to the primitives
-            foreach (var prim in Primitives)
-                prim.CompletePostSerialization(this);
+            foreach (var prim in ts.Primitives)
+                prim.CompletePostSerialization(ts);
 
-            HasUniformColor = true;
+            ts.HasUniformColor = true;
             if (colors == null || colors.Length == 0)
-                SolidColor = new Color(Constants.DefaultColor);
+                ts.SolidColor = new Color(Constants.DefaultColor);
             else if (colors.Length == 1)
-                SolidColor = colors[0];
+                ts.SolidColor = colors[0];
             else
             {
-                HasUniformColor = false;
+                ts.HasUniformColor = false;
                 for (int i = 0; i < colors.Length; i++)
-                    Faces[i].Color = colors[i];
-                for (int i = colors.Length; i < Faces.Length; i++)
-                    Faces[i].Color = new Color(Constants.DefaultColor);
+                    ts.Faces[i].Color = colors[i];
+                for (int i = colors.Length; i < ts.Faces.Length; i++)
+                    ts.Faces[i].Color = new Color(Constants.DefaultColor);
             }
 
-            //Lastly, define the border segments and border loops for each primitive.
-            TessellationInspectAndRepair.DefineBorders(this);
-            TessellationInspectAndRepair.CharacterizeBorders(this);
             //Get the max min bounds and set tolerance
-            DefineAxisAlignedBoundingBoxAndTolerance();
-            //DoublyConnectVerticesToFaces();
+            ts.DefineAxisAlignedBoundingBoxAndTolerance();
+            
             //Build edges, convex hull, and anything else we need.
-            TessellationInspectAndRepair.CompleteBuildOptions(this, tsBuildOptions, out var removedFaces);
+            TessellationInspectAndRepair.CompleteBuildOptions(ts, tsBuildOptions, out var removedFaces);
+            //Lastly, define the border segments and border loops for each primitive.
+            TessellationInspectAndRepair.DefineBorders(ts);
+            TessellationInspectAndRepair.CharacterizeBorders(ts);
 
             if (removedFaces.Count > 0)
             {
                 // if the build/repair altered the faces, then we may need to check if there
                 // are any faces still referenced in the primitives that need to be removed.
                 var removedHash = removedFaces.ToHashSet();
-                foreach (var prim in Primitives)
+                foreach (var prim in ts.Primitives)
                 {
                     prim.FaceIndices = null;
                     var needToResetOtherElements = false;
@@ -513,6 +514,7 @@ namespace TVGL
                     }
                 }
             }
+            return ts;
         }
 
 

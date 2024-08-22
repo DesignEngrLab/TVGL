@@ -11,13 +11,11 @@
 // </copyright>
 // <summary></summary>
 // ***********************************************************************
-using ClipperLib;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using TVGL;
 
 namespace TVGL
 {
@@ -1116,6 +1114,9 @@ namespace TVGL
             foreach (var e in ts.Edges)
             {
                 e.Curvature = CurvatureType.SaddleOrFlat;
+                if (e.OwnedFace != null && e.OtherFace != null && e.OwnedFace.BelongsToPrimitive != null &&
+                    e.OwnedFace.BelongsToPrimitive == e.OtherFace.BelongsToPrimitive)
+                    continue;
                 var angleFromFlat = e.InternalAngle - Math.PI;
                 if (angleFromFlat.IsNegligible(Constants.DefaultSameAngleRadians)) continue;
                 if (Math.Abs(angleFromFlat) >= Constants.MinSmoothAngle || e.IsDiscontinuous(chordError))
@@ -1217,7 +1218,7 @@ namespace TVGL
                 var plane = new Plane(distance, planeNormal);
                 var success = false;
                 List<TriangulationLoop> triangleFaceList1 = null;
-                List<(Vertex A, Vertex B, Vertex C) > triangleFaceList2 = null;
+                List<(Vertex A, Vertex B, Vertex C)> triangleFaceList2 = null;
                 var closeToPlane = plane.CalculateMaxError(vertices.Select(v => v.Coordinates)) < Constants.BaseTolerance;
                 if (closeToPlane)
                 {
@@ -1418,8 +1419,10 @@ namespace TVGL
         {
             solid.MakeEdgesIfNonExistent();
             foreach (var prim in solid.Primitives)
-                prim.BorderSegments = new List<BorderSegment>();
-            var borderSegments = GatherEdgesIntoSegments(solid.Primitives.SelectMany(prim => prim.OuterEdges));
+                if (prim.BorderSegments != null) prim.BorderSegments.Clear();
+                else prim.BorderSegments = new List<BorderSegment>();
+            var borderSegments = GatherEdgesIntoSegments(solid.Primitives.SelectMany(prim => prim.OuterEdges)
+                .Concat(solid.NonsmoothEdges));
             foreach (var segment in borderSegments)
             {
                 var ownedFace = segment.DirectionList[0] ? segment.EdgeList[0].OwnedFace : segment.EdgeList[0].OtherFace;
