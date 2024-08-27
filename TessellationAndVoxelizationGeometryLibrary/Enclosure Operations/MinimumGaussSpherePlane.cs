@@ -7,7 +7,7 @@ namespace TVGL
     public static partial class MinimumEnclosure
     {
         /// <summary>
-        /// Gets the minimums the gauss sphere plane. That is, the plane closest to the origin that
+        /// Gets the minimum gauss sphere plane. That is, the plane farthest from the origin that
         /// encompasses all the provided points. 
         /// This is similar to the minimum bounding circle and sphere algorithms
         /// minimizes the maximum distance to the points.
@@ -38,7 +38,7 @@ namespace TVGL
         {
             var points = pointsInput as Vector3[] ?? pointsInput.ToArray();
             var numPoints = points.Length;
-            var maxNumStalledIterations = 10;
+            var maxNumStalledIterations = 16;
             if (numPoints == 0)
                 throw new ArgumentException("No points provided.");
             if (numPoints <= 4)
@@ -47,6 +47,7 @@ namespace TVGL
             int numPointsInPlane = 1;
             Plane plane = default;
             var stallCounter = 0;
+            var lastIndex = -1;
             var newPointFoundOutsidePlane = true;
             while (newPointFoundOutsidePlane && stallCounter < maxNumStalledIterations)
             {
@@ -60,18 +61,19 @@ namespace TVGL
                     if (minDist > dist)
                     {
                         minDist = dist;
-                        if (indexOfMinDist == i) stallCounter++;
-                        else stallCounter = 0;
                         indexOfMinDist = i;
                         newPointFoundOutsidePlane = true;
                     }
                 }
+                if (indexOfMinDist == lastIndex) stallCounter++;
+                else stallCounter = 0;
                 if (newPointFoundOutsidePlane)
                 {
                     var maxPoint = points[indexOfMinDist];
                     Array.Copy(points, 0, points, 1, indexOfMinDist);
                     points[0] = maxPoint;
                     numPointsInPlane++;
+                    lastIndex = indexOfMinDist;
                 }
             }
             return plane;

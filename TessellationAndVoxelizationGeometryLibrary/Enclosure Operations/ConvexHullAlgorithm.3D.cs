@@ -501,8 +501,7 @@ namespace TVGL
             {
                 // if the max volume is still zero, then all the given extrema are in a plane.
                 // if this is the case, then we find a point farthest from the plane.
-                var planeNormal = (extremePoints[1].Coordinates - extremePoints[0].Coordinates)
-                    .Cross(extremePoints[2].Coordinates - extremePoints[0].Coordinates);
+                Plane.DefineNormalAndDistanceFromVertices(extremePoints, out _, out var planeNormal);
                 var maxDist = 0.0;
                 Vertex maxVertex = null;
                 foreach (var v in vertices)

@@ -542,14 +542,10 @@ namespace TVGL
             if (A + C - 1 < 0) throw new NotImplementedException("The quadric is not a cylinder.");
             var y = Math.Sqrt(A + C - 1);
             Vector3 axis;
-            if (y.IsNegligible()) axis = Vector3.UnitY;
-            else axis = new Vector3(-D / (2 * y), y, -F / (2 * y));
-            var bSqrt = Math.Sqrt(B);
-            var t_y = -H / (2 * bSqrt);
-            double t_x;
-            //if (axis.X.IsNegligible()) t_x = 0;
-            //else
-                 t_x = (0.5 * I * bSqrt - t_y * axis.Y * axis.Z) / axis.X;
+             axis = new Vector3(-D / (2 * y), y, -F / (2 * y));
+            var g = Math.Sqrt(axis.X * axis.X + axis.Z * axis.Z);
+            var t_y = -H / (2 * g);
+            var t_x = (t_y * axis.X * axis.Y - 0.5 * G * g) / axis.Z;
             var mTo = axis.TransformToXYPlane(out var mFrom);
             var anchor = new Vector3(t_x, t_y, 0).Transform(mFrom);
             var radius = Math.Sqrt(t_x * t_x + t_y * t_y - J);

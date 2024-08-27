@@ -1,3 +1,4 @@
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -28,9 +29,41 @@ namespace TVGLUnitTestsAndBenchmarking
             DirectoryInfo dir = Program.BackoutToFolder(inputFolder);
             //Voxels.TestVoxelization(dir);
 
+            var axis = new Vector3(r1, r1, r1).Normalize();
+            var anchor = new Vector3(r100, r100, r100) / 10;
+            var radius = Math.Sqrt(Math.Abs(r100));
+            var cylinder = new Cylinder
+            {
+                Anchor = anchor,
+                Axis = axis,
+                Radius = radius,
+            };
+            var cosAxis = axis.GetPerpendicularDirection();
+            var sinAxis = axis.Cross(cosAxis);
+            var tx = r100;
+            var ty = r100;
+            var k = 100;
+            var zStep = 0.2;
+            var angleStep = 0.5;
+            var helixPoints = new Vector3[k];
+            for (int i = 0; i < k; i++)
+            {
+                var ctr = anchor + axis * zStep * i;
+                helixPoints[i] = ctr + radius * Math.Cos(angleStep * i) * cosAxis + radius * Math.Sin(angleStep * i) * sinAxis;
+            }
+            cylinder.MinDistanceAlongAxis = helixPoints[0].Dot(axis);
+            cylinder.MaxDistanceAlongAxis = helixPoints[^1].Dot(axis);
+            cylinder.Tessellate();
+            cylinder.SetColor(new Color(50, 250, 50, 250));
+            var gq = GeneralQuadric.DefineFromPoints(helixPoints, out _);
+            gq.Tessellate(-50,50, -50, 50, -50, 50,1);
+            gq.SetColor(new Color(50, 50, 250, 250));
+            Presenter.ShowVertexPathsWithFaces([ helixPoints ], cylinder.Faces.Concat(gq.Faces), 4);
+            var cylGQ = gq.DefineAsCylinder();
+            return;
             //#if PRESENT
             var index = 0;
-            var valid3DFileExtensions = new HashSet<string> { ".stl", ".ply", ".obj", ".3mf" ,  ".tvglz" };
+            var valid3DFileExtensions = new HashSet<string> { ".stl", ".ply", ".obj", ".3mf", ".tvglz" };
             var allFiles = dir.GetFiles("*", SearchOption.AllDirectories).Where(f => valid3DFileExtensions.Contains(f.Extension.ToLower()))
                 ; //.OrderBy(fi => fi.Length);
             foreach (var fileName in allFiles.Skip(index))

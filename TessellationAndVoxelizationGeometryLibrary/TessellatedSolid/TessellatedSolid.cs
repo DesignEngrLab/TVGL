@@ -155,7 +155,7 @@ namespace TVGL
             MakeVertices(vertsPerFaceList, scaleFactor, out var faceToVertexIndices);
             //Complete Construction with Common Functions
             MakeFaces(faceToVertexIndices, numOfFaces, colors);
-            TessellationInspectAndRepair.CompleteBuildOptions(this, buildOptions, out _);
+            TessellationInspectAndRepair.CompleteBuildOptions(this, buildOptions, out _, out _, out _);
         }
 
         /// <summary>
@@ -202,7 +202,7 @@ namespace TVGL
             DefineAxisAlignedBoundingBoxAndTolerance(Vertices.Select(v => v.Coordinates));
             var duplicateFaceCheck = buildOptions == null ? true : buildOptions.DuplicateFaceCheck;
             MakeFaces(faceToVertexIndices, numOfFaces, colors, true, duplicateFaceCheck);
-            TessellationInspectAndRepair.CompleteBuildOptions(this, buildOptions, out _);
+            TessellationInspectAndRepair.CompleteBuildOptions(this, buildOptions, out _, out _, out _);
         }
 
         /// <summary>
@@ -485,17 +485,16 @@ namespace TVGL
 
             //Get the max min bounds and set tolerance
             ts.DefineAxisAlignedBoundingBoxAndTolerance();
-            
-            //Build edges, convex hull, and anything else we need.
-            TessellationInspectAndRepair.CompleteBuildOptions(ts, tsBuildOptions, out var removedFaces);
-            //Lastly, define the border segments and border loops for each primitive.
-            TessellationInspectAndRepair.DefineBorders(ts);
-            TessellationInspectAndRepair.CharacterizeBorders(ts);
 
+            //Build edges, convex hull, and anything else we need.
+            TessellationInspectAndRepair.CompleteBuildOptions(ts, tsBuildOptions, out var removedFaces, out var removedEdges,
+                out var removedVertices);
+
+            // if the build/repair altered the faces, vertices or edges, then we may need to check if there
+            // are any faces still referenced in the primitives that need to be removed. This is uniquie to this
+            // input function as the primitives are only stored (available in native form) in the TVGL format.
             if (removedFaces.Count > 0)
             {
-                // if the build/repair altered the faces, then we may need to check if there
-                // are any faces still referenced in the primitives that need to be removed.
                 var removedHash = removedFaces.ToHashSet();
                 foreach (var prim in ts.Primitives)
                 {
@@ -514,6 +513,9 @@ namespace TVGL
                     }
                 }
             }
+            //Lastly, define the border segments and border loops for each primitive.
+            TessellationInspectAndRepair.DefineBorders(ts);
+            TessellationInspectAndRepair.CharacterizeBorders(ts);
             return ts;
         }
 
@@ -612,7 +614,7 @@ namespace TVGL
                     }
                 }
             }
-            TessellationInspectAndRepair.CompleteBuildOptions(this, buildOptions, out _);
+            TessellationInspectAndRepair.CompleteBuildOptions(this, buildOptions, out _, out _, out _);
         }
 
         /// <summary>
@@ -621,14 +623,15 @@ namespace TVGL
         public void MakeEdgesIfNonExistent()
         {
             if (Edges != null && Edges.Length > 0) return;
-            if (Errors == null) TessellationInspectAndRepair.CompleteBuildOptions(this,
+            if (Errors == null)
+                TessellationInspectAndRepair.CompleteBuildOptions(this,
                 new TessellatedSolidBuildOptions
                 {
                     AutomaticallyRepairHoles = false,
-                    AutomaticallyRepairNegligibleTFaces = true,
+                    AutomaticallyRepairNegligibleFaces = true,
                     FixEdgeDisassociations = true,
                     PredefineAllEdges = true
-                }, out _);
+                }, out _, out _, out _);
             else Errors.MakeEdges();
         }
 
@@ -1293,7 +1296,7 @@ namespace TVGL
             var copy = new TessellatedSolid(Faces, Vertices, new TessellatedSolidBuildOptions
             {
                 AutomaticallyInvertNegativeSolids = false,
-                AutomaticallyRepairNegligibleTFaces = false,
+                AutomaticallyRepairNegligibleFaces = false,
                 AutomaticallyRepairHoles = false,
                 CopyElementsPassedToConstructor = true,
                 DefineConvexHull = ConvexHull != null,
@@ -1412,7 +1415,7 @@ namespace TVGL
                 if (yMax < v.Coordinates.Y) yMax = v.Coordinates.Y;
                 if (zMax < v.Coordinates.Z) zMax = v.Coordinates.Z;
             }
-            Bounds = [ new Vector3(xMin, yMin, zMin), new Vector3(xMax, yMax, zMax) ];
+            Bounds = [new Vector3(xMin, yMin, zMin), new Vector3(xMax, yMax, zMax)];
 
             //Update the faces
             foreach (var face in Faces)
@@ -1420,8 +1423,8 @@ namespace TVGL
 
             if (ConvexHull != null)
                 foreach (var face in ConvexHull.Faces)
-                    face.Update(); 
-            
+                    face.Update();
+
             //Update the edges
             if (NumberOfEdges > 1)
             {

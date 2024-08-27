@@ -103,16 +103,18 @@ namespace TVGL
         /// </summary>
         /// <param name="fromSTL">if set to <c>true</c> [from STL].</param>
         internal static void CompleteBuildOptions(TessellatedSolid ts, TessellatedSolidBuildOptions buildOptions,
-            out List<TriangleFace> removedFaces)
+            out List<TriangleFace> removedFaces, out List<Edge> removedEdges, out List<Vertex> removedVertices)
         {
             if (buildOptions == null) buildOptions = TessellatedSolidBuildOptions.Default;
             if (!buildOptions.CheckModelIntegrity)
             {
                 removedFaces = new List<TriangleFace>();
+                removedEdges = new List<Edge>();
+                removedVertices = new List<Vertex>();
                 return;
             }
             var buildAndErrorInfo = new TessellationInspectAndRepair(ts);
-            buildAndErrorInfo.CompleteBuildOptions(buildOptions, out removedFaces);
+            buildAndErrorInfo.CompleteBuildOptions(buildOptions, out removedFaces, out removedEdges, out removedVertices);
         }
 
         /// <summary>
@@ -120,18 +122,19 @@ namespace TVGL
         /// with the exception of CopyElementsPassedToConstructor. These are actually handled in the main constructor
         /// body - but only one constructor uses it: the one accepting faces and vertices.
         /// </summary>
-        /// <param name="fromSTL">if set to <c>true</c> [from STL].</param>
         void CompleteBuildOptions(TessellatedSolidBuildOptions buildOptions,
-            out List<TriangleFace> removedFaces)
+            out List<TriangleFace> removedFaces, out List<Edge> removedEdges, out List<Vertex> removedVertices)
         {
-            removedFaces = new List<TriangleFace>();
             CheckModelIntegrityPreBuild();
+            removedFaces = new List<TriangleFace>();
+            removedEdges = new List<Edge>();
+            removedVertices = new List<Vertex>();
             if (buildOptions.FixEdgeDisassociations && OverusedEdges.Count + SingleSidedEdgeData.Count > 0)
             {
                 try
                 {
                     TeaseApartOverUsedEdges();
-                    var removedVertices = MatchUpRemainingSingleSidedEdge();
+                    removedVertices.AddRange(MatchUpRemainingSingleSidedEdge());
                     ts.RemoveVertices(removedVertices);
                 }
                 catch
@@ -139,7 +142,7 @@ namespace TVGL
                     Message.output("Error setting up all faces-edges-vertices associations.", 1);
                 }
             }
-            if (buildOptions.AutomaticallyRepairNegligibleTFaces && InconsistentMatingFacePairs.Any())
+            if (buildOptions.AutomaticallyRepairNegligibleFaces && InconsistentMatingFacePairs.Any())
                 try
                 {
                     if (!FlipFacesBasedOnInconsistentEdges())
@@ -161,11 +164,11 @@ namespace TVGL
                 {
                     Message.output("Unable to construct edges.", 1);
                 }
-            if (buildOptions.AutomaticallyRepairNegligibleTFaces && buildOptions.PredefineAllEdges)
+            if (buildOptions.AutomaticallyRepairNegligibleFaces && buildOptions.PredefineAllEdges)
             {
                 try
                 {
-                    if (!PropagateFixToNegligibleFaces(removedFaces))
+                    if (!PropagateFixToNegligibleFaces(removedVertices, removedFaces, removedEdges))
                         Message.output("Unable to flip edges to avoid negligible faces.", 1);
                 }
                 catch
@@ -233,7 +236,8 @@ namespace TVGL
         /// other two vertices of the quadrilateral, so that 2 proper triangles are created.
         /// </summary>
         /// <returns>A bool.</returns>
-        private bool PropagateFixToNegligibleFaces(List<TriangleFace> removedFaces)
+        private bool PropagateFixToNegligibleFaces(List<Vertex> allRemovedVertices,
+             List<TriangleFace> removedFaces, List<Edge> allRemovedEdges)
         {
             var faceHash = FacesWithNegligibleArea.ToHashSet();
             var negligibleArea = ts.SameTolerance * ts.SameTolerance;
@@ -246,12 +250,14 @@ namespace TVGL
                 {
                     shortestEdge.CollapseEdge(out var removedEdges);
                     ts.RemoveVertex(shortestEdge.From);
+                    allRemovedVertices.Add(shortestEdge.From);
                     removedFaces.Add(shortestEdge.OwnedFace);
                     faceHash.Remove(shortestEdge.OwnedFace);
                     removedFaces.Add(shortestEdge.OtherFace);
                     faceHash.Remove(shortestEdge.OtherFace);
                     ts.RemoveFaces(new[] { shortestEdge.OwnedFace, shortestEdge.OtherFace });
                     ts.RemoveEdges(removedEdges);
+                    allRemovedEdges.AddRange(removedEdges);
                 }
                 else
                 { // else we need to flip the longest edge as described above
@@ -270,12 +276,18 @@ namespace TVGL
                         faceHash.Remove(longestEdge.OtherFace);
                         ts.RemoveFaces(new[] { longestEdge.OwnedFace, longestEdge.OtherFace });
                         if (removedEdges != null)
+                        {
                             ts.RemoveEdges(removedEdges);
+                            allRemovedEdges.AddRange(removedEdges);
+                        }
                     }
                     else
                     {
-                        LongestEdge(face).FlipEdge(ts);
+                        var removedEdge = LongestEdge(face);
+                        removedEdge.FlipEdge(ts);
                         faceHash.Remove(face);
+                        removedFaces.Add(face);
+                        allRemovedEdges.Remove(removedEdge);
                     }
                 }
             }
@@ -570,8 +582,11 @@ namespace TVGL
         /// <exception cref="System.Exception"></exception>
         internal void MakeEdges()
         {
-            ts.NumberOfEdges = FacePairsForEdges.Count
-                + InconsistentMatingFacePairs.Count + SingleSidedEdgeData.Count;
+            ts.NumberOfEdges = FacePairsForEdges.Count;
+            if (InconsistentMatingFacePairs != null)
+                ts.NumberOfEdges += InconsistentMatingFacePairs.Count;
+            if (SingleSidedEdgeData != null)
+                ts.NumberOfEdges += SingleSidedEdgeData.Count;
             ts.Edges = new Edge[ts.NumberOfEdges];
             var i = 0;
             // first make the proper edges between two faces

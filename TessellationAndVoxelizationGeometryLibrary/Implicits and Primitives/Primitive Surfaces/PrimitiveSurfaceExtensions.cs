@@ -320,8 +320,8 @@ namespace TVGL
                 var outer2 = Vector2.Null;
                 foreach (var edge in vertex.Edges)
                 {
-                    if (!surface.OuterEdges.Contains(edge)) continue;
                     var otherVertex = edge.OtherVertex(vertex);
+                    if (!surface.OuterEdges.Contains(edge) && !surface.Vertices.Contains(otherVertex)) continue;
                     var otherLocation = int2PointDict[otherVertex.IndexInList].Item1;
                     var vector = otherLocation - location;
                     if (vector.LengthSquared().IsNegligible()) continue;
@@ -334,7 +334,12 @@ namespace TVGL
                         break;
                     }
                 }
-                if (outer1.IsNull() || (!outer2.IsNull() && outer1.Dot(outer2) < 0))
+                if (outer1.IsNull() && possibleExtremes.Count > 0)
+                    // this is subtle. if not outers then don't bother - unless you still haven't saved at least one. then might
+                    // as well keep this one
+                    continue;
+                if (!outer2.IsNull() && outer1.Dot(outer2) < 0)
+                    // if you have 2 outers they can't be in opposite (dot < 0) directions 
                     continue;
                 possibleExtremes.Add((location, outer1, outer2));
             }
@@ -380,8 +385,9 @@ namespace TVGL
                     var closestVector2 = Vector2.Null;
                     var closestDistance1 = double.PositiveInfinity;
                     var closestDistance2 = double.PositiveInfinity;
-                    for (int j = i - 1; j >= 0; j--)
+                    for (int j = 0; j < possibleExtremes.Count; j++)
                     {
+                        if (i == j) continue;
                         (var otherPoint, _, _) = possibleExtremes[j];
                         var v = otherPoint - point;
                         var distance = v.LengthSquared();
@@ -401,6 +407,7 @@ namespace TVGL
                     if (closestVector1.Dot(closestVector2) > 0)
                         possibleExtremes[i] = (point, closestVector1, closestVector2);
                     else possibleExtremes.RemoveAt(i);
+                    if (possibleExtremes.Count <= 2) break;
                 }
             }
             if (possibleExtremes.Count == 0)
