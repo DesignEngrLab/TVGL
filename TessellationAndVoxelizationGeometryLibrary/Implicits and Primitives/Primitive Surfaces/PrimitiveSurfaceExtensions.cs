@@ -345,6 +345,7 @@ namespace TVGL
             }
             if (possibleExtremes.Count == 2) return (possibleExtremes[0].Item1, (possibleExtremes[0].Item2 + possibleExtremes[0].Item3).Normalize(),
                     possibleExtremes[1].Item1, (possibleExtremes[1].Item2 + possibleExtremes[1].Item3).Normalize());
+            var numExtremes = possibleExtremes.Count;
             while (possibleExtremes.Count > 2)
             {
                 for (int i = possibleExtremes.Count - 1; i > 0; i--)
@@ -409,6 +410,20 @@ namespace TVGL
                     else possibleExtremes.RemoveAt(i);
                     if (possibleExtremes.Count <= 2) break;
                 }
+                if (numExtremes == 3 && possibleExtremes.Count == 3)
+                {   // This means that we've tried twice to reduce from 3 but failed. Which, in turn, 
+                    // means the 3 points are arranged in an accute a triangle. So, throw out the one 
+                    // that is closer to the other two
+                    var distanceSqd0 = possibleExtremes[0].Item2.LengthSquared() + possibleExtremes[0].Item3.LengthSquared();
+                    var distanceSqd1 = possibleExtremes[1].Item2.LengthSquared() + possibleExtremes[1].Item3.LengthSquared();
+                    var distanceSqd2 = possibleExtremes[2].Item2.LengthSquared() + possibleExtremes[2].Item3.LengthSquared();
+                    if (distanceSqd2 < distanceSqd1 && distanceSqd2 < distanceSqd0)
+                        possibleExtremes.RemoveAt(2);
+                    else if (distanceSqd1 < distanceSqd2 && distanceSqd1 < distanceSqd0)
+                        possibleExtremes.RemoveAt(1);
+                    else possibleExtremes.RemoveAt(0);
+                }
+                numExtremes = possibleExtremes.Count;
             }
             if (possibleExtremes.Count == 0)
                 throw new Exception("No points found at the extremes of the curve.");
@@ -663,10 +678,10 @@ namespace TVGL
 
             var sideFaces = new List<TriangleFace>();
             var j = numPoints - 1;
-            for (int i = 1; i <= numPoints; i++)
+            for (int i = 0; i < numPoints; i++)
             {
-                sideFaces.Add(new TriangleFace(btmVertices[j], topVertices[j], topVertices[i]));
-                sideFaces.Add(new TriangleFace(btmVertices[j], topVertices[i], btmVertices[i]));
+                sideFaces.Add(new TriangleFace(btmVertices[i], topVertices[i], topVertices[j]));
+                sideFaces.Add(new TriangleFace(btmVertices[i], topVertices[j], btmVertices[j]));
                 j = i;
             }
             faces.AddRange(sideFaces);

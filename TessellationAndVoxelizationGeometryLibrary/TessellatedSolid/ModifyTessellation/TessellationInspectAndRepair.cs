@@ -552,7 +552,7 @@ namespace TVGL
             Message.output("Errors found in model:", 3);
             Message.output("======================", 3);
             if (tsErrors.ModelHasNegativeVolume)
-                Message.output("==> The model has negative area. The normals of the faces are pointed inward, or this is only a concave surface - not a watertiht solid.", 3);
+                Message.output("==> The model has negative area. The normals of the faces are pointed inward, or this is only a concave surface - not a watertight solid.", 3);
             if (tsErrors.FacesWithNegligibleArea.Count > 0)
                 Message.output("==> " + tsErrors.FacesWithNegligibleArea.Count + " faces with negligible area.", 3);
             if (tsErrors.OverusedEdges.Count > 0)
