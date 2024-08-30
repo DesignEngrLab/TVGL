@@ -379,7 +379,7 @@ namespace TVGL
                 if (possibleExtremes.Count <= 2) break;
                 // more than 2 - then rework the possibleExtremes with connections to the nearest neighbors
                 // (here, were are assuming the number is super small like 3 to 6)
-                for (int i = possibleExtremes.Count - 1; i > 0; i--)
+                for (int i = possibleExtremes.Count - 1; i >= 0; i--)
                 {
                     (var point, _, _) = possibleExtremes[i];
                     var closestVector1 = Vector2.Null;

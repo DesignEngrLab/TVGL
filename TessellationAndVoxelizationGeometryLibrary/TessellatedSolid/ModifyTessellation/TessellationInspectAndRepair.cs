@@ -237,7 +237,7 @@ namespace TVGL
         /// </summary>
         /// <returns>A bool.</returns>
         private bool PropagateFixToNegligibleFaces(List<Vertex> allRemovedVertices,
-             List<TriangleFace> removedFaces, List<Edge> allRemovedEdges)
+             List<TriangleFace> allRemovedFaces, List<Edge> allRemovedEdges)
         {
             var faceHash = FacesWithNegligibleArea.ToHashSet();
             var negligibleArea = ts.SameTolerance * ts.SameTolerance;
@@ -251,16 +251,16 @@ namespace TVGL
                     shortestEdge.CollapseEdge(out var removedEdges);
                     ts.RemoveVertex(shortestEdge.From);
                     allRemovedVertices.Add(shortestEdge.From);
-                    removedFaces.Add(shortestEdge.OwnedFace);
+                    allRemovedFaces.Add(shortestEdge.OwnedFace);
                     faceHash.Remove(shortestEdge.OwnedFace);
-                    removedFaces.Add(shortestEdge.OtherFace);
+                    allRemovedFaces.Add(shortestEdge.OtherFace);
                     faceHash.Remove(shortestEdge.OtherFace);
                     ts.RemoveFaces(new[] { shortestEdge.OwnedFace, shortestEdge.OtherFace });
                     ts.RemoveEdges(removedEdges);
                     allRemovedEdges.AddRange(removedEdges);
                 }
                 else
-                { // else we need to flip the longest edge as described above
+                {
                     var longestEdge = LongestEdge(face);
                     if (longestEdge.GetMatingFace(face).Area.IsNegligible(negligibleArea))
                     {   // the mating face is also negligible, so we need to remove 2 faces, 
@@ -270,9 +270,9 @@ namespace TVGL
                         ModifyTessellation.MergeVertexAndKill3EdgesAnd2Faces(removedVertex, keepVertex,
                             longestEdge.OwnedFace, longestEdge.OtherFace, out var removedEdges);
                         ts.RemoveVertex(removedVertex);
-                        removedFaces.Add(longestEdge.OwnedFace);
+                        allRemovedFaces.Add(longestEdge.OwnedFace);
                         faceHash.Remove(longestEdge.OwnedFace);
-                        removedFaces.Add(longestEdge.OtherFace);
+                        allRemovedFaces.Add(longestEdge.OtherFace);
                         faceHash.Remove(longestEdge.OtherFace);
                         ts.RemoveFaces(new[] { longestEdge.OwnedFace, longestEdge.OtherFace });
                         if (removedEdges != null)
@@ -281,13 +281,14 @@ namespace TVGL
                             allRemovedEdges.AddRange(removedEdges);
                         }
                     }
-                    else
+                    else // else we need to flip the longest edge as described above
                     {
                         var removedEdge = LongestEdge(face);
-                        removedEdge.FlipEdge(ts);
+                        allRemovedEdges.Add(removedEdge);
+                        allRemovedFaces.Add(removedEdge.OwnedFace);
+                        allRemovedFaces.Add(removedEdge.OtherFace);
+                        removedEdge.FlipEdge(ts, out var newEdge);
                         faceHash.Remove(face);
-                        removedFaces.Add(face);
-                        allRemovedEdges.Remove(removedEdge);
                     }
                 }
             }

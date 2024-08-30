@@ -498,7 +498,8 @@ namespace TVGL
                 var removedHash = removedFaces.ToHashSet();
                 foreach (var prim in ts.Primitives)
                 {
-                    prim.FaceIndices = null;
+                    prim.FaceIndices = null;  // these will no longer be correct - even if the primitive is
+                    // far away from the change - that's because the indices of the faces may change everything
                     var needToResetOtherElements = false;
                     foreach (var face in prim.Faces)
                         if (removedHash.Contains(face))

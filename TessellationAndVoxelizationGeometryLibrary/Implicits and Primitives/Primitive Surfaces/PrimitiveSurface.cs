@@ -67,6 +67,26 @@ namespace TVGL
             if (connectFacesToPrimitive)
                 foreach (var face in Faces)
                     face.BelongsToPrimitive = this;
+
+            var firstFace = Faces.First();
+            var faceNormal = firstFace.Normal;
+            if (this is Plane plane)
+            {
+                if (faceNormal.Dot(plane.Normal) < 0)
+                {
+                    plane.Normal = -plane.Normal;
+                    plane.DistanceToOrigin = -plane.DistanceToOrigin;
+                }
+            }
+            else if (this is not UnknownRegion && this is not Prismatic)
+            {   // can't check unknown or prismatic since these RELY on faces for determining normal
+                var primNormalAtFirst = GetNormalAtPoint(firstFace.Center);
+                if (faceNormal.Dot(primNormalAtFirst) < 0)
+                {
+                    if (IsPositive.HasValue) IsPositive = !IsPositive;
+                    else IsPositive = false;
+                }
+            }
             SetVerticesFromFaces();
         }
 
