@@ -218,6 +218,7 @@ namespace TVGL
 
         private List<Vector2> CreatePolyLine()
         {
+            if (Vertices == null || Vertices.Count == 0) return new List<Vector2>();
             // the polyLine is the 2D projection of the 3D vertices onto the plane perpendicular to the axis
             // here we want the set of vertices that makes the shortest path around the perimeter of the Prismatic
             // we will use a Dijkstra's algorithm to find this path. 

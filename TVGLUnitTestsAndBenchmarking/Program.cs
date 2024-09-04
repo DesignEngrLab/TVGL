@@ -11,8 +11,8 @@ namespace TVGLUnitTestsAndBenchmarking
 {
     internal class Program
     {
-        //public static string inputFolder = "TestFiles";
-        public static string inputFolder = "Input";
+        public static string inputFolder = "TestFiles";
+        //public static string inputFolder = "Input";
 
         //public static string inputFolder = "OneDrive - medemalabs.com";
         static Random r = new Random();
@@ -28,40 +28,46 @@ namespace TVGLUnitTestsAndBenchmarking
             TVGL.Message.Verbosity = VerbosityLevels.OnlyCritical;
             DirectoryInfo dir = Program.BackoutToFolder(inputFolder);
             //Voxels.TestVoxelization(dir);
+            for (int iter = 0; iter < 100; iter++)
+            {
 
-            var axis = new Vector3(r1, r1, r1).Normalize();
-            var anchor = new Vector3(r100, r100, r100) / 10;
-            var radius = Math.Sqrt(Math.Abs(r100));
-            var cylinder = new Cylinder
-            {
-                Anchor = anchor,
-                Axis = axis,
-                Radius = radius,
-            };
-            var cosAxis = axis.GetPerpendicularDirection();
-            var sinAxis = axis.Cross(cosAxis);
-            var tx = r100;
-            var ty = r100;
-            var k = 100;
-            var zStep = 0.2;
-            var angleStep = 0.5;
-            var helixPoints = new Vector3[k];
-            for (int i = 0; i < k; i++)
-            {
-                var ctr = anchor + axis * zStep * i;
-                helixPoints[i] = ctr + radius * Math.Cos(angleStep * i) * cosAxis + radius * Math.Sin(angleStep * i) * sinAxis;
+                var axis = new Vector3(r1, r1, r1).Normalize();
+                //var axis = Vector3.UnitZ;
+                var anchor = new Vector3(r100, r100, r100) / 10;
+                anchor = anchor - anchor.Dot(axis) * axis;
+                var radius = Math.Sqrt(Math.Abs(r100));
+                var cylinder = new Cylinder
+                {
+                    Anchor = anchor,
+                    Axis = axis,
+                    Radius = radius,
+                };
+                var cosAxis = axis.GetPerpendicularDirection();
+                var sinAxis = axis.Cross(cosAxis);
+                var tx = r100;
+                var ty = r100;
+                var k = 10;
+                var zStep = 0.2;
+                var angleStep = 0.5;
+                var helixPoints = new Vector3[k];
+                for (int i = 0; i < k; i++)
+                {
+                    var ctr = anchor + axis * zStep * i;
+                    helixPoints[i] = ctr + radius * Math.Cos(angleStep * i) * cosAxis + radius * Math.Sin(angleStep * i) * sinAxis;
+                    helixPoints[i] += 0.001 * new Vector3(r1, r1, r1);
+                }
+                cylinder.MinDistanceAlongAxis = helixPoints[0].Dot(axis);
+                cylinder.MaxDistanceAlongAxis = helixPoints[^1].Dot(axis);
+                cylinder.Tessellate();
+                cylinder.SetColor(new Color(50, 250, 50, 250));
+                var gq = GeneralQuadric.DefineFromPoints(helixPoints, out _);
+                gq.Tessellate(-50, 50, -50, 50, -50, 50, 2);
+                gq.SetColor(new Color(50, 50, 250, 250));
+                Presenter.ShowVertexPathsWithFaces([helixPoints], cylinder.Faces.Concat(gq.Faces), 4);
+                var cylGQ = gq.DefineAsCylinder();
             }
-            cylinder.MinDistanceAlongAxis = helixPoints[0].Dot(axis);
-            cylinder.MaxDistanceAlongAxis = helixPoints[^1].Dot(axis);
-            cylinder.Tessellate();
-            cylinder.SetColor(new Color(50, 250, 50, 250));
-            var gq = GeneralQuadric.DefineFromPoints(helixPoints, out _);
-            gq.Tessellate(-50,50, -50, 50, -50, 50,1);
-            gq.SetColor(new Color(50, 50, 250, 250));
-            Presenter.ShowVertexPathsWithFaces([ helixPoints ], cylinder.Faces.Concat(gq.Faces), 4);
-            var cylGQ = gq.DefineAsCylinder();
             return;
-            //#if PRESENT
+
             var index = 0;
             var valid3DFileExtensions = new HashSet<string> { ".stl", ".ply", ".obj", ".3mf", ".tvglz" };
             var allFiles = dir.GetFiles("*", SearchOption.AllDirectories).Where(f => valid3DFileExtensions.Contains(f.Extension.ToLower()))
@@ -74,8 +80,8 @@ namespace TVGLUnitTestsAndBenchmarking
                 //var vs = VoxelizedSolid.CreateFrom(solids[0], 66);
                 //Presenter.ShowAndHang(vs);
                 var sw = Stopwatch.StartNew();
-                //Presenter.ShowAndHang(solids);
-                ConvexHull.Test2(solids.MaxBy(s => s.Volume));
+                Presenter.ShowAndHang(solids);
+                //ConvexHull.Test2(solids.MaxBy(s => s.Volume));
                 sw.Stop();
                 index++;
             }

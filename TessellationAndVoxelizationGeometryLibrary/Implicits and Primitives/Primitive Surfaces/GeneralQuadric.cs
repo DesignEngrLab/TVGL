@@ -472,6 +472,7 @@ namespace TVGL
                 Szzz += zz * z;
                 Syyz += yy * z;
                 Syzz += yz * z;
+                Sxyz += xy * z;
                 Sx4 += xx * xx;
                 Sy4 += yy * yy;
                 Sz4 += zz * zz;
@@ -539,21 +540,102 @@ namespace TVGL
             var I = K * ZCoeff;
             var J = K * W;
 
-            if (A + C - 1 < 0) throw new NotImplementedException("The quadric is not a cylinder.");
-            var y = Math.Sqrt(A + C - 1);
-            Vector3 axis;
-             axis = new Vector3(-D / (2 * y), y, -F / (2 * y));
-            var g = Math.Sqrt(axis.X * axis.X + axis.Z * axis.Z);
-            var t_y = -H / (2 * g);
-            var t_x = (t_y * axis.X * axis.Y - 0.5 * G * g) / axis.Z;
-            var mTo = axis.TransformToXYPlane(out var mFrom);
-            var anchor = new Vector3(t_x, t_y, 0).Transform(mFrom);
-            var radius = Math.Sqrt(t_x * t_x + t_y * t_y - J);
+            Vector3 axis, anchor;
+            double radius;
+
+            if (A.IsNegligible(Constants.BaseTolerance) && B.IsPracticallySame(1, Constants.BaseTolerance)
+                && C.IsPracticallySame(1, Constants.BaseTolerance))
+            {
+                axis = Vector3.UnitX;
+                var ty = -0.5 * H;
+                var tz = -0.5 * I;
+                anchor = new Vector3(0, ty, tz);
+                radius = Math.Sqrt(ty * ty + tz * tz - J);
+            }
+            else if (A.IsPracticallySame(1, Constants.BaseTolerance)
+                && B.IsNegligible(Constants.BaseTolerance) && C.IsPracticallySame(1, Constants.BaseTolerance))
+            {
+                axis = Vector3.UnitY;
+                var tx = -0.5 * G;
+                var tz = -0.5 * I;
+                anchor = new Vector3(tx, 0, tz);
+                radius = Math.Sqrt(tx * tx + tz * tz - J);
+            }
+            else
+            {
+                if (A.IsPracticallySame(1, Constants.BaseTolerance)
+                && B.IsPracticallySame(1, Constants.BaseTolerance) && C.IsNegligible(Constants.BaseTolerance))
+                    axis = Vector3.UnitZ;
+                else
+                {
+                    if (A + C - 1 < 0) throw new NotImplementedException("The quadric is not a cylinder.");
+                    var y = Math.Sqrt(A + C - 1);
+                    axis = new Vector3(-D / (2 * y), y, -F / (2 * y));
+                }
+                var g = Math.Sqrt(axis.X * axis.X + axis.Z * axis.Z);
+                var ty = -H / (2 * g);
+                var tx = (ty * axis.X * axis.Y - 0.5 * G * g) / axis.Z;
+                var mTo = axis.TransformToXYPlane(out var mFrom);
+                anchor = new Vector3(tx, ty, 0).Transform(mFrom);
+                radius = Math.Sqrt(tx * tx + ty * ty - J);
+            }
             return new Cylinder
             {
                 Axis = axis,
                 Anchor = anchor,
                 Radius = radius,
+            };
+
+        }
+
+        /// <summary>
+        /// Defines the quadric as a cone. The error in terms should be close to zero for a perfect cone.
+        /// </summary>
+        /// <param name="errorInTerms"></param>
+        /// <returns></returns>
+        /// <exception cref="NotImplementedException"></exception>
+        public Cone DefineAsCone()
+        {
+            Vector3 apex, axis;
+            double mSqd;
+            var thetaY = Math.Atan2(XYCoeff, YZCoeff);
+
+            var thetaX1 = Math.Atan(Math.Sin(thetaY) * YZCoeff / XZCoeff);
+            var thetaX2 = Math.Atan(Math.Cos(thetaY) * XYCoeff / XZCoeff);
+            var thetaX = 0.5 * (thetaX1 + thetaX2);
+            var rotMatrix = Matrix4x4.CreateRotationY(thetaY) * Matrix4x4.CreateRotationX(-thetaX);
+            if (thetaX.IsNegligible(Constants.BaseTolerance) || thetaY.IsPracticallySame(Math.PI,
+                Constants.BaseTolerance))
+            {
+                axis = Vector3.UnitY;
+                throw new NotImplementedException();
+                //var tx = -K * XCoeff;
+                //var ty = -K * YCoeff;
+                //var tz = K*ZCoeff/mSqd;
+                //apex = apex.Transform(rotMatrix);
+
+            }
+            else
+            {
+                axis = Vector3.UnitZ.Transform(rotMatrix);
+                mSqd = (Math.Cos(thetaX) * Math.Cos(thetaX) - YSqdCoeff) /
+                    (Math.Sin(thetaX) * Math.Sin(thetaX));
+                var K = (1 - 0.5 * mSqd) / (XSqdCoeff + YSqdCoeff + ZSqdCoeff);
+                var cTX = Math.Cos(thetaX);
+                var sTX = Math.Sin(thetaX);
+                var cTY = Math.Cos(thetaY);
+                var sTY = Math.Sin(thetaY);
+                var aMatrix = new Matrix3x3(-cTY, sTY*sTX,mSqd*sTY*cTX, 
+                    0,-cTX,mSqd*sTX,
+                    sTY,cTY*sTX,mSqd*cTY*cTX);
+                apex = aMatrix.Solve(new Vector3(K * XCoeff, K * YCoeff, K * ZCoeff));
+                apex = apex.Transform(rotMatrix);
+            }
+            return new Cone
+            {
+                Axis = axis,
+                Apex = apex,
+                Aperture = Math.Sqrt(mSqd)
             };
 
         }
