@@ -308,7 +308,7 @@ namespace TVGL
             var point2D = point.ConvertTo2DCoordinates(transformToXYPlane);
             var minDistance = double.PositiveInfinity;
             var minI = -1;
-            Presenter.ShowAndHang(PolyLine);
+            //Presenter.ShowAndHang(PolyLine);
             for (var i = 1; i < PolyLine.Count; i++)
             {
                 var from = PolyLine[i - 1];
