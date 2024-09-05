@@ -64,7 +64,8 @@ namespace TVGLUnitTestsAndBenchmarking
                 gq.Tessellate(-50, 50, -50, 50, -50, 50, 2);
                 gq.SetColor(new Color(50, 50, 250, 250));
                 Presenter.ShowVertexPathsWithFaces([helixPoints], cylinder.Faces.Concat(gq.Faces), 4);
-                var cylGQ = gq.DefineAsCylinder();
+
+                gq.DefineAsCylinder(out var cylGQ);
             }
             return;
 

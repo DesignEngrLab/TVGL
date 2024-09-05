@@ -29,7 +29,11 @@ namespace TVGL
         /// Initializes a new instance of the <see cref="UnknownRegion" /> class.
         /// </summary>
         /// <param name="faces">The faces.</param>
-        public UnknownRegion(IEnumerable<TriangleFace> faces) : base(faces) { }
+        public UnknownRegion(IEnumerable<TriangleFace> faces)
+        {
+            if (faces != null)
+                SetFacesAndVertices(faces);
+        }
         /// <summary>
         /// Initializes a new instance of the <see cref="UnknownRegion"/> class.
         /// </summary>
@@ -147,12 +151,12 @@ namespace TVGL
             if (closestElt is Edge edge)
             {
                 var vecToEdgeCenter = (edge.Center() - point).Normalize();
-                var ownDot =Faces.Contains(edge.OwnedFace)?
+                var ownDot = Faces.Contains(edge.OwnedFace) ?
                     Math.Abs(vecToEdgeCenter.Dot(edge.OwnedFace.Normal))
                     : double.PositiveInfinity;
-                var othDot =Faces.Contains(edge.OtherFace)
+                var othDot = Faces.Contains(edge.OtherFace)
                     ? Math.Abs(vecToEdgeCenter.Dot(edge.OtherFace.Normal))
-                    :double.PositiveInfinity;
+                    : double.PositiveInfinity;
                 return ownDot > othDot ? edge.OwnedFace.Normal : edge.OtherFace.Normal;
             }
             var vertex = (Vertex)closestElt;

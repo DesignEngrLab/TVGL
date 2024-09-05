@@ -258,13 +258,14 @@ namespace TVGL
         /// <param name="radius">The radius.</param>
         /// <param name="isPositive">if set to <c>true</c> [is positive].</param>
         /// <param name="faces">The faces.</param>
-        public Cylinder(Vector3 axis, Vector3 anchor, double radius, IEnumerable<TriangleFace> faces) : base(faces)
+        public Cylinder(Vector3 axis, Vector3 anchor, double radius, IEnumerable<TriangleFace> faces)
         {
             Axis = axis;
             Anchor = anchor;
             Radius = radius;
             if (faces != null)
             {
+                SetFacesAndVertices(faces);
                 var (min, max) = MinimumEnclosure.GetDistanceToExtremeVertex(Vertices, axis, out _, out _);//vertices are set in base constructor
                 MinDistanceAlongAxis = min;
                 MaxDistanceAlongAxis = max;

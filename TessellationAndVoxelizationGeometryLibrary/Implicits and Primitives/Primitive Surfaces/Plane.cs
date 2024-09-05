@@ -106,7 +106,6 @@ namespace TVGL
         /// <param name="faces">The faces.</param>
         /// <param name="connectFacesToPrimitive">if set to <c>true</c> [connect faces to primitive].</param>
         public Plane(IEnumerable<TriangleFace> faces, bool connectFacesToPrimitive = true)
-            : base(faces, connectFacesToPrimitive)
         {
             Vertices = new HashSet<Vertex>(faces.SelectMany(f => f.Vertices).Distinct());
             DefineNormalAndDistanceFromVertices(Vertices, out var dto, out var normal);
@@ -117,6 +116,9 @@ namespace TVGL
             }
             DistanceToOrigin = dto;
             Normal = normal;
+
+            if (faces != null)
+                SetFacesAndVertices(faces,connectFacesToPrimitive);
         }
 
         /// <summary>

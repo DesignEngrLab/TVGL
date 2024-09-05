@@ -50,11 +50,12 @@ namespace TVGL
         /// <param name="isPositive">if set to <c>true</c> [is positive].</param>
         /// <param name="faces">The faces all.</param>
         public Cone(Vector3 apex, Vector3 axis, double aperture, IEnumerable<TriangleFace> faces)
-            : base(faces)
         {
             Apex = apex;
             Axis = axis;
             Aperture = aperture;
+            if (faces != null)
+                SetFacesAndVertices(faces);
         }
 
         /// <summary>

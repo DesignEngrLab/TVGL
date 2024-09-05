@@ -162,13 +162,15 @@ namespace TVGL
         /// <param name="isPositive">if set to <c>true</c> [is positive].</param>
         public Prismatic(Vector3 axis, double minDistanceAlongAxis,
             double maxDistanceAlongAxis, IEnumerable<TriangleFace> faces = null, bool? isPositive = null)
-            : base(faces)
         {
             Axis = axis;
             this.isPositive = isPositive;
             MinDistanceAlongAxis = minDistanceAlongAxis;
             MaxDistanceAlongAxis = maxDistanceAlongAxis;
             Height = MaxDistanceAlongAxis - MinDistanceAlongAxis;
+
+            if (faces != null)
+                SetFacesAndVertices(faces);
         }
         /// <summary>
         /// Initializes a new instance of the <see cref="Prismatic" /> class.
@@ -176,7 +178,7 @@ namespace TVGL
         /// <param name="axis">The axis.</param>
         /// <param name="faces">The faces.</param>
         /// <param name="isPositive">if set to <c>true</c> [is positive].</param>
-        public Prismatic(Vector3 axis, IEnumerable<TriangleFace> faces = null, bool? isPositive = null) : base(faces)
+        public Prismatic(Vector3 axis, IEnumerable<TriangleFace> faces = null, bool? isPositive = null)
         {
             Axis = axis;
             this.isPositive = isPositive;
@@ -184,6 +186,9 @@ namespace TVGL
             MinDistanceAlongAxis = min;
             MaxDistanceAlongAxis = max;
             Height = MaxDistanceAlongAxis - MinDistanceAlongAxis;
+
+            if (faces != null)
+                SetFacesAndVertices(faces);
         }
 
         /// <summary>
@@ -191,15 +196,19 @@ namespace TVGL
         /// </summary>
         /// <param name="faces">The faces.</param>
         /// <param name="isPositive">if set to <c>true</c> [is positive].</param>
-        public Prismatic(IEnumerable<TriangleFace> faces = null, bool? isPositive = null) : base(faces)
+        public Prismatic(IEnumerable<TriangleFace> faces = null, bool? isPositive = null)
         {
-            Axis = MiscFunctions.FindMostOrthogonalVector(Faces.Select(face =>
-                 (face.B.Coordinates - face.A.Coordinates).Cross(face.C.Coordinates - face.A.Coordinates)));
             this.isPositive = isPositive;
-            var (min, max) = MinimumEnclosure.GetDistanceToExtremeVertex(Vertices, Axis, out _, out _);//vertices are set in base constructor
-            MinDistanceAlongAxis = min;
-            MaxDistanceAlongAxis = max;
-            Height = MaxDistanceAlongAxis - MinDistanceAlongAxis;
+            if (faces != null)
+            {
+                SetFacesAndVertices(faces);
+                Axis = MiscFunctions.FindMostOrthogonalVector(Faces.Select(face =>
+                     (face.B.Coordinates - face.A.Coordinates).Cross(face.C.Coordinates - face.A.Coordinates)));
+                var (min, max) = MinimumEnclosure.GetDistanceToExtremeVertex(Vertices, Axis, out _, out _);//vertices are set in base constructor
+                MinDistanceAlongAxis = min;
+                MaxDistanceAlongAxis = max;
+                Height = MaxDistanceAlongAxis - MinDistanceAlongAxis;
+            }
         }
 
         #endregion
@@ -299,6 +308,7 @@ namespace TVGL
             var point2D = point.ConvertTo2DCoordinates(transformToXYPlane);
             var minDistance = double.PositiveInfinity;
             var minI = -1;
+            Presenter.ShowAndHang(PolyLine);
             for (var i = 1; i < PolyLine.Count; i++)
             {
                 var from = PolyLine[i - 1];

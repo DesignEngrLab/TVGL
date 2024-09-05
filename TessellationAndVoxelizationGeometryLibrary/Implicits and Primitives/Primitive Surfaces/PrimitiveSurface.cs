@@ -28,28 +28,6 @@ namespace TVGL
         [JsonIgnore]
         public SurfaceGroup BelongsToGroup { get; set; }
 
-        #region Constructors
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="PrimitiveSurface" /> class.
-        /// </summary>
-        /// <param name="faces">The faces.</param>
-        /// <param name="connectFacesToPrimitive">if set to <c>true</c> [connect faces to primitive].</param>
-        protected PrimitiveSurface(IEnumerable<TriangleFace> faces, bool connectFacesToPrimitive = true)
-        {
-            if (faces == null) return;
-            SetFacesAndVertices(faces, connectFacesToPrimitive);
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="PrimitiveSurface" /> class.
-        /// </summary>
-        protected PrimitiveSurface()
-        {
-        }
-
-        #endregion Constructors
-
         /// <summary>
         /// Sets the faces and vertices.
         /// </summary>

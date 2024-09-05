@@ -123,7 +123,6 @@ namespace TVGL
         public GeneralQuadric(double xSqdCoeff, double ySqdCoeff, double zSqdCoeff, double xyCoeff,
              double xzCoeff, double yzCoeff, double xCoeff, double yCoeff, double zCoeff, double w,
              IEnumerable<TriangleFace> faces)
-            : base(faces)
         {
             this.XSqdCoeff = xSqdCoeff;
             this.YSqdCoeff = ySqdCoeff;
@@ -135,6 +134,8 @@ namespace TVGL
             this.YCoeff = yCoeff;
             this.ZCoeff = zCoeff;
             this.W = w;
+            if (faces != null)
+                SetFacesAndVertices(faces);
         }
 
         /// <summary>
@@ -526,7 +527,7 @@ namespace TVGL
         /// <param name="errorInTerms"></param>
         /// <returns></returns>
         /// <exception cref="NotImplementedException"></exception>
-        public Cylinder DefineAsCylinder()
+        public bool DefineAsCylinder(out Cylinder cylinder)
         {
             var K = 2 / (XSqdCoeff + YSqdCoeff + ZSqdCoeff);
             var A = K * XSqdCoeff;
@@ -568,7 +569,11 @@ namespace TVGL
                     axis = Vector3.UnitZ;
                 else
                 {
-                    if (A + C - 1 < 0) throw new NotImplementedException("The quadric is not a cylinder.");
+                    if (A + C - 1 < 0)
+                    {
+                        cylinder = new Cylinder();
+                        return false;
+                    }
                     var y = Math.Sqrt(A + C - 1);
                     axis = new Vector3(-D / (2 * y), y, -F / (2 * y));
                 }
@@ -579,13 +584,13 @@ namespace TVGL
                 anchor = new Vector3(tx, ty, 0).Transform(mFrom);
                 radius = Math.Sqrt(tx * tx + ty * ty - J);
             }
-            return new Cylinder
+            cylinder = new Cylinder
             {
                 Axis = axis,
                 Anchor = anchor,
                 Radius = radius,
             };
-
+            return true;
         }
 
         /// <summary>
@@ -594,7 +599,7 @@ namespace TVGL
         /// <param name="errorInTerms"></param>
         /// <returns></returns>
         /// <exception cref="NotImplementedException"></exception>
-        public Cone DefineAsCone()
+        public bool DefineAsCone(out Cone cone)
         {
             Vector3 apex, axis;
             double mSqd;
@@ -625,19 +630,19 @@ namespace TVGL
                 var sTX = Math.Sin(thetaX);
                 var cTY = Math.Cos(thetaY);
                 var sTY = Math.Sin(thetaY);
-                var aMatrix = new Matrix3x3(-cTY, sTY*sTX,mSqd*sTY*cTX, 
-                    0,-cTX,mSqd*sTX,
-                    sTY,cTY*sTX,mSqd*cTY*cTX);
+                var aMatrix = new Matrix3x3(-cTY, sTY * sTX, mSqd * sTY * cTX,
+                    0, -cTX, mSqd * sTX,
+                    sTY, cTY * sTX, mSqd * cTY * cTX);
                 apex = aMatrix.Solve(new Vector3(K * XCoeff, K * YCoeff, K * ZCoeff));
                 apex = apex.Transform(rotMatrix);
             }
-            return new Cone
+            cone = new Cone
             {
                 Axis = axis,
                 Apex = apex,
                 Aperture = Math.Sqrt(mSqd)
             };
-
+            return true;
         }
 
     }
