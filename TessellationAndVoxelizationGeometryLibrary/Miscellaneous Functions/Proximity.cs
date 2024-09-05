@@ -305,7 +305,7 @@ namespace TVGL
         {
             Vector3 dir;
             //If the vector is only in the y-direction, then return the x direction
-            if (direction.Y.IsPracticallySame(1.0))
+            if (direction.Y.IsPracticallySame(1.0)|| direction.Y.IsPracticallySame(-1.0))
             {
                 if (additionalRotation == 0) return Vector3.UnitX;
                 return Math.Cos(additionalRotation) * Vector3.UnitX - Math.Sin(additionalRotation) * Vector3.UnitZ;
