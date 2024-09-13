@@ -231,24 +231,28 @@ namespace TVGL
             // until we leave the triangle. Sometimes the triangle is to thin that none are found.
             // sometimes only the +up or the -down find a pixel.
             var averageSlope = 0.5 * (slopeStepMax + slopeStepMed);
+
+
+            if (xStartIndex == xSwitchIndex)
+            {
+                if (vMed.X == vMin.X)
+                    // slope would be infiity if x values are the same. catch it with this if statement
+                    yStart = 0.5 * (vMin.Y + vMed.Y);
+                else yStart += averageSlope * (vMed.X - vMin.X) * inversePixelSideLength;
+                // it is important here (and at the end of the main loop) to switch at the middle vertex
+                // given how extreme triangles can be - it is crucial that our calculation for the center
+                // spine of the triangle is as accurate as possible.
+                slopeStepMed = PixelSideLength * (vMax.Y - vMed.Y) / (vMax.X - vMed.X);
+                averageSlope = 0.5 * (slopeStepMax + slopeStepMed);
+                yStart += averageSlope * (PixelSideLength - vMed.X + xSnap) * inversePixelSideLength;
+            }
+            else
+                yStart += averageSlope * (PixelSideLength - vMin.X + xSnap) * inversePixelSideLength;
+
+
             // chances are, we skip the first pixel in x. This is because the xSnap is less than vMin.X
             if (xSnap.IsLessThanNonNegligible(vMin.X))
-            {   // but skipping the first pixel means we need to adjust the yStart
-                if (xStartIndex == xSwitchIndex)
-                {
-                    if (vMed.X == vMin.X)
-                        // slope would be infiity if x values are the same. catch it with this if statement
-                        yStart = 0.5 * (vMin.Y + vMed.Y);
-                    else yStart += averageSlope * (vMed.X - vMin.X) * inversePixelSideLength;
-                    // it is important here (and at the end of the main loop) to switch at the middle vertex
-                    // given how extreme triangles can be - it is crucial that our calculation for the center
-                    // spine of the triangle is as accurate as possible.
-                    slopeStepMed = PixelSideLength * (vMax.Y - vMed.Y) / (vMax.X - vMed.X);
-                    averageSlope = 0.5 * (slopeStepMax + slopeStepMed);
-                    yStart += averageSlope * (PixelSideLength - vMed.X + xSnap) * inversePixelSideLength;
-                }
-                else
-                    yStart += averageSlope * (PixelSideLength - vMin.X + xSnap) * inversePixelSideLength;
+            {
                 // now we need to increment the xSnap and xStartIndex
                 xStartIndex++;
                 xSnap += PixelSideLength;
@@ -462,7 +466,7 @@ namespace TVGL
                     else maxX = vC.X;
                 }
                 foreach (var pixel in PlotSteepLine(minX, minY, maxX, maxY))
-                    yield return (pixel.Item1 % XCount,pixel.Item2);
+                    yield return (pixel.Item1 % XCount, pixel.Item2);
             }
         }
 
