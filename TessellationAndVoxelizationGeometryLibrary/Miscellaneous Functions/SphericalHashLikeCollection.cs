@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Xml;
 using TVGL.threemfclasses;
@@ -14,7 +15,7 @@ namespace TVGL
     /// This particular one acts like a dictionary and can store an item of type T
     /// </summary>
     /// <typeparam name="T"></typeparam>
-    public class SphericalHashLikeCollection<T> : SphericalHashLikeCollection
+    public class SphericalHashLikeCollection<T> : SphericalHashLikeCollection, IEnumerable<(Vector3, T)>, IEnumerable
     {
         private readonly List<T> items;
 
@@ -218,7 +219,17 @@ namespace TVGL
             return matchFound && item.Equals(items[i]);
         }
 
-        public List<T> Items => items;
+        public new IEnumerator<(Vector3, T)> GetEnumerator()
+        {
+            return keyValuePairs.GetEnumerator();
+        }
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return keyValuePairs.GetEnumerator();
+        }
+
+        public List<T> Values => items;
+        private IEnumerable<(Vector3 Key, T Value)> keyValuePairs => cartesians.Zip(items);
     }
 
 
@@ -466,14 +477,14 @@ namespace TVGL
                 insertIndex = index;
                 if (gtIndex)
                 {
-                    while (insertIndex < sphericals.Count 
+                    while (insertIndex < sphericals.Count
                         && spherical.PolarAngle > sphericals[insertIndex].PolarAngle)
                         insertIndex++;
                     index = insertIndex;
                 }
                 else
                 {
-                    while (insertIndex >= 0 
+                    while (insertIndex >= 0
                         && spherical.PolarAngle < sphericals[insertIndex].PolarAngle)
                         insertIndex--;
                     index = insertIndex + 1;
