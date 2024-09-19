@@ -47,10 +47,8 @@ namespace TVGL
             for (int i = 0; i < layers.Length; i++)
                 layerDict.Add(i, layers[i]);
             var directionVector = Vector3.UnitVector(direction);
-            var stepDistanceDictionary = new Dictionary<int, double>();
-            for (int i = 0; i < stepDistances.Length; i++)
-                stepDistanceDictionary.Add(i, stepDistances[i]);
-            return new CrossSectionSolid(directionVector, stepDistanceDictionary, ts.SameTolerance, layerDict, bounds, ts.Units);
+
+            return new CrossSectionSolid(directionVector, stepDistances, ts.SameTolerance, layerDict, bounds, ts.Units);
         }
 
 
@@ -67,12 +65,12 @@ namespace TVGL
             var (min, max) = ts.Vertices.GetDistanceToExtremeVertex(direction, out _, out _);
             var lengthAlongDir = max - min;
             var stepSize = lengthAlongDir / numberOfLayers;
-            var stepDistances = new Dictionary<int, double>();
+            var stepDistances = new double[numberOfLayers];
             //var stepDistances = new double[numberOfLayers];
-            stepDistances.Add(0, min + 0.5 * stepSize);
+            stepDistances[0] = min + 0.5 * stepSize;
             //stepDistances[0] = ts.Bounds[0][intDir] + 0.5 * stepSize;
             for (int i = 1; i < numberOfLayers; i++)
-                stepDistances.Add(i, stepDistances[i - 1] + stepSize);
+                stepDistances[i] = stepDistances[i - 1] + stepSize;
             //stepDistances[i] = stepDistances[i - 1] + stepSize;
             var bounds = new[] { ts.Bounds[0].Copy(), ts.Bounds[1].Copy() };
 
@@ -97,7 +95,7 @@ namespace TVGL
             IEnumerable<Polygon> shape, double sameTolerance, UnitType units)
         {
             var shapeList = shape as IList<Polygon> ?? shape.ToList();
-            var stepDistances = new Dictionary<int, double> { { 0, distanceOfPlane }, { 1, distanceOfPlane + extrudeThickness } };
+            double[] stepDistances = [distanceOfPlane, distanceOfPlane + extrudeThickness];
             var layers2D = new Dictionary<int, IList<Polygon>> { { 0, shapeList }, { 1, shapeList } };
             return new CrossSectionSolid(buildDirection, stepDistances, sameTolerance, layers2D, null, units);
         }
@@ -116,7 +114,7 @@ namespace TVGL
         public static CrossSectionSolid CreateConstantCrossSectionSolid(Vector3 buildDirection, double distanceOfPlane, double extrudeThickness,
             Polygon shape, double sameTolerance, UnitType units)
         {
-            var stepDistances = new Dictionary<int, double> { { 0, distanceOfPlane }, { 1, distanceOfPlane + extrudeThickness } };
+            double[] stepDistances = [distanceOfPlane, distanceOfPlane + extrudeThickness];
             var layers2D = new Dictionary<int, IList<Polygon>> { { 0, new[] { shape } }, { 1, new[] { shape } } };
             return new CrossSectionSolid(buildDirection, stepDistances, sameTolerance, layers2D, null, units);
         }
@@ -223,9 +221,15 @@ namespace TVGL
         {
             var direction = Direction * -1;
             var transform = direction.TransformToXYPlane(out var backTransform);
-            //Get the solid offset, since Layer2D may not be the full size as the StepDistances.
-            var maxD = StepDistances.Keys.Max() - Layer2D.Keys.Max();
-            StepDistances = newStepDistances;
+            TransformMatrix = transform;
+            BackTransform = backTransform;
+            var temp = FirstIndex; FirstIndex = LastIndex; LastIndex = temp;
+            
+            Array.Reverse(StepDistances);
+            
+                //Get the solid offset, since Layer2D may not be the full size as the StepDistances.
+                var maxD = NumLayers - Layer2D.Keys.Max();
+            //StepDistances = newStepDistances;
             if (Layer2D != null && Layer2D.Any())
             {
                 var min = Layer2D.Keys.Min();

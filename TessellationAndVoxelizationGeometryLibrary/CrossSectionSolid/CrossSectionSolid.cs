@@ -64,9 +64,8 @@ namespace TVGL
         /// </summary>
         /// <value>The step distances.</value>
         /// <font color="red">Badly formed XML comment.</font>
-        public Dictionary<int, double> StepDistances { get; private set; }
-        // an alternate approach without using dictionaries should be pursued
-        //public Vector2 StepDistances { get; }
+        public double[] StepDistances { get; private set; }
+
         /// <summary>
         /// This is the direction that the cross sections will be extruded along
         /// </summary>
@@ -100,7 +99,7 @@ namespace TVGL
         /// </summary>
         /// <param name="stepDistances">The step distances.</param>
         [JsonConstructor]
-        public CrossSectionSolid(Dictionary<int, double> stepDistances)
+        public CrossSectionSolid(double[] stepDistances)
         {
             Layer2D = new Dictionary<int, IList<Polygon>>();
             StepDistances = stepDistances;
@@ -114,12 +113,12 @@ namespace TVGL
         /// <param name="sameTolerance">The same tolerance.</param>
         /// <param name="bounds">The bounds.</param>
         /// <param name="units">The units.</param>
-        public CrossSectionSolid(Vector3 direction, Dictionary<int, double> stepDistances, double sameTolerance, Vector3[] bounds = null, UnitType units = UnitType.unspecified)
+        public CrossSectionSolid(Vector3 direction, double[] stepDistances, double sameTolerance, Vector3[] bounds = null, UnitType units = UnitType.unspecified)
             : this(stepDistances)
         {
             TransformMatrix = direction.TransformToXYPlane(out var backTransform);
             BackTransform = backTransform;
-            NumLayers = stepDistances.Count;
+            NumLayers = stepDistances.Length;
             if (bounds != null)
                 Bounds = new[] { bounds[0].Copy(), bounds[1].Copy() };
             Units = units;
@@ -135,10 +134,10 @@ namespace TVGL
         /// <param name="Layer2D">The layer2 d.</param>
         /// <param name="bounds">The bounds.</param>
         /// <param name="units">The units.</param>
-        public CrossSectionSolid(Vector3 direction, Dictionary<int, double> stepDistances, double sameTolerance,
+        public CrossSectionSolid(Vector3 direction, double[] stepDistances, double sameTolerance,
             IDictionary<int, IList<Polygon>> Layer2D, Vector3[] bounds = null, UnitType units = UnitType.unspecified)
         {
-            NumLayers = stepDistances.Count;
+            NumLayers = stepDistances.Length;
             StepDistances = stepDistances;
             Units = units;
             SameTolerance = sameTolerance;
@@ -438,10 +437,9 @@ namespace TVGL
             var yCenter = 0.0;
             var zCenter = 0.0;
             var totalArea = 0.0;
-            foreach (var stepDistanceKVP in StepDistances)  // skip the first, this is shown above.
+            for (int index = 0; index < StepDistances.Length; index++)
             {
-                var index = stepDistanceKVP.Key;
-                var distance = stepDistanceKVP.Value;
+                var distance = StepDistances[index];
                 if (!Layer2D.TryGetValue(index, out var layer2D)) continue;
                 if (layer2D == null || layer2D.Count == 0) continue;
                 foreach (var polygon in layer2D)
@@ -463,14 +461,12 @@ namespace TVGL
         protected override void CalculateVolume()
         {
             _volume = 0.0;
-            var index = StepDistances.Keys.First();
-            var prevDistance = StepDistances.Values.First();
-            Layer2D.TryGetValue(index, out var layer2D);
+            var prevDistance = StepDistances[0];
+            Layer2D.TryGetValue(0, out var layer2D);
             var prevArea = layer2D == null || layer2D.Count == 0 ? 0.0 : layer2D.Sum(p => p.Area);
-            foreach (var stepDistanceKVP in StepDistances.Skip(1))  // skip the first, this is shown above.
+            for (int index = 1; index < StepDistances.Length; index++)
             {
-                index = stepDistanceKVP.Key;
-                var distance = stepDistanceKVP.Value;
+                var distance = StepDistances[index];
                 Layer2D.TryGetValue(index, out layer2D);
                 var area = layer2D == null || layer2D.Count == 0 ? 0.0 : layer2D.Sum(p => p.Area);
                 _volume += (prevArea + area) * (distance - prevDistance);
@@ -491,14 +487,12 @@ namespace TVGL
             // this is probably not correct. I simply took the code for CalculateVolume and changed
             // polygon area to polygon perimeter.
             var area = 0.0;
-            var index = StepDistances.Keys.First();
-            var prevDistance = StepDistances.Values.First();
-            Layer2D.TryGetValue(index, out var layer2D);
+            var prevDistance = StepDistances[0];
+            Layer2D.TryGetValue(0, out var layer2D);
             var prevPerimeter = layer2D == null || layer2D.Count == 0 ? 0.0 : layer2D.Sum(p => p.Perimeter);
-            foreach (var stepDistanceKVP in StepDistances.Skip(1))  // skip the first, this is shown above.
+            for (int index = 0; index < StepDistances.Length; index++)
             {
-                index = stepDistanceKVP.Key;
-                var distance = stepDistanceKVP.Value;
+                var distance = StepDistances[index];
                 Layer2D.TryGetValue(index, out layer2D);
                 var perimeter = layer2D == null || layer2D.Count == 0 ? 0.0 : layer2D.Sum(p => p.Perimeter);
                 area += (prevPerimeter + perimeter) * (distance - prevDistance);
