@@ -213,13 +213,13 @@ namespace TVGL
         /// Reverses the specified new step distances.
         /// </summary>
         /// <param name="newStepDistances">The new step distances.</param>
-        public void Reverse(Dictionary<int, double> newStepDistances)
+        public void Reverse(double[] newStepDistances=null)
         {
             var newLayers = new List<Polygon>[NumLayers];
             Array.Copy(Layer2D, FirstIndex, newLayers, NumLayers - LastIndex - 1, LastIndex - FirstIndex + 1);
             Array.Reverse(newLayers);
+            if (newStepDistances!=null)
+                StepDistances = newStepDistances;
         }
-
-      
     }
 }
