@@ -117,8 +117,7 @@ namespace TVGL
             DistanceToOrigin = dto;
             Normal = normal;
 
-            if (faces != null)
-                SetFacesAndVertices(faces,connectFacesToPrimitive);
+            SetFacesAndVertices(faces, connectFacesToPrimitive);
         }
 
         /// <summary>

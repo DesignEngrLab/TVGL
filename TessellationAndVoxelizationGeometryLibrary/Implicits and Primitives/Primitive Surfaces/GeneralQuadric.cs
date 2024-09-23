@@ -134,8 +134,7 @@ namespace TVGL
             this.YCoeff = yCoeff;
             this.ZCoeff = zCoeff;
             this.W = w;
-            if (faces != null)
-                SetFacesAndVertices(faces);
+            SetFacesAndVertices(faces);
         }
 
         /// <summary>

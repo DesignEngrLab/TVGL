@@ -532,7 +532,7 @@ namespace StarMathLib
                     if (!nonZeroFound) return true;
                 }
             }
-                return A.Determinant().IsNegligible();
+            return A.Determinant().IsNegligible();
         }
 
         #endregion
@@ -594,6 +594,36 @@ namespace StarMathLib
             //return determinantBig(A, length);
         }
 
+        public static double GetDeterminant4(double a, double b, double c, double d, double e, double f, double g, double h, double i, double j,
+            double k, double l, double m, double n, double o, double p)
+        {
+            double kp_lo = k * p - l * o;
+            double jp_ln = j * p - l * n;
+            double jo_kn = j * o - k * n;
+            double ip_lm = i * p - l * m;
+            double io_km = i * o - k * m;
+            double in_jm = i * n - j * m;
+
+            return a * (f * kp_lo - g * jp_ln + h * jo_kn) -
+                   b * (e * kp_lo - g * ip_lm + h * io_km) +
+                   c * (e * jp_ln - f * ip_lm + h * in_jm) -
+                   d * (e * jo_kn - f * io_km + g * in_jm);
+        }
+        public static ComplexNumber GetDeterminant4(ComplexNumber a, ComplexNumber b, ComplexNumber c, ComplexNumber d, ComplexNumber e, ComplexNumber f, ComplexNumber g, ComplexNumber h, ComplexNumber i, ComplexNumber j,
+            ComplexNumber k, ComplexNumber l, ComplexNumber m, ComplexNumber n, ComplexNumber o, ComplexNumber p)
+        {
+            var kp_lo = k * p - l * o;
+            var jp_ln = j * p - l * n;
+            var jo_kn = j * o - k * n;
+            var ip_lm = i * p - l * m;
+            var io_km = i * o - k * m;
+            var in_jm = i * n - j * m;
+
+            return a * (f * kp_lo - g * jp_ln + h * jo_kn) -
+                   b * (e * kp_lo - g * ip_lm + h * io_km) +
+                   c * (e * jp_ln - f * ip_lm + h * in_jm) -
+                   d * (e * jo_kn - f * io_km + g * in_jm);
+        }
         /// <summary>
         /// Determinants the big.
         /// </summary>

@@ -11,6 +11,7 @@
 // </copyright>
 // <summary></summary>
 // ***********************************************************************
+using ClipperLib;
 using StarMathLib;
 using System;
 using System.Collections.Generic;
@@ -505,7 +506,9 @@ namespace TVGL
             eigenVectors = new Vector3[3];
             for (int i = 0; i < 3; i++)
             {
-                eigenVectors[i] = new Vector3(eigenVectorsArrays[i]);
+                eigenVectors[i] = new Vector3(eigenVectorsArrays[i][0].Real,
+                    eigenVectorsArrays[i][1].Real,
+                    eigenVectorsArrays[i][2].Real);
             }
             return eigenValues;
         }
@@ -665,7 +668,9 @@ namespace TVGL
             eigenVectors = new Vector4[4];
             for (int i = 0; i < 4; i++)
             {
-                eigenVectors[i] = new Vector4(eigenVectorsArrays[i]);
+                eigenVectors[i] = new Vector4(eigenVectorsArrays[i][0].Real,
+                    eigenVectorsArrays[i][1].Real,
+                    eigenVectorsArrays[i][2].Real, 1);
             }
             return eigenValues;
         }
@@ -877,11 +882,11 @@ namespace TVGL
                         {new ComplexNumber(m.M21),m.M22 - lambda},
                     };
                     var b = new[] { -m.M13, -m.M23 };
-                    StarMath.Solve2x2ComplexMatrix(cM, b, out var eigenVectorXY);
-                    var eigenVector = new ComplexNumber[] { eigenVectorXY[0], eigenVectorXY[1], new ComplexNumber(1) };
+                    StarMath.Solve2x2ComplexMatrix(cM, b, out var eigenVector1, out var eigenVector2);
+                    var eigenVector = new ComplexNumber[] { eigenVector1, eigenVector2, new ComplexNumber(1) };
                     var eVectorLength = Math.Sqrt(eigenVector[0].LengthSquared() + eigenVector[1].LengthSquared() + 1);
-                    eigenVectors[j] = new ComplexNumber[] { eigenVector[0] / eVectorLength, eigenVector[1] / eVectorLength,
-                        eigenVector[2] / eVectorLength };
+                    eigenVectors[j] = [ eigenVector[0] / eVectorLength, eigenVector[1] / eVectorLength,
+                        eigenVector[2] / eVectorLength ];
                 }
             }
             return eigenVectors;

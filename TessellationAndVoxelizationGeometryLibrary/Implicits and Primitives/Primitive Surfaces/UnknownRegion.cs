@@ -31,8 +31,7 @@ namespace TVGL
         /// <param name="faces">The faces.</param>
         public UnknownRegion(IEnumerable<TriangleFace> faces)
         {
-            if (faces != null)
-                SetFacesAndVertices(faces);
+            SetFacesAndVertices(faces);
         }
         /// <summary>
         /// Initializes a new instance of the <see cref="UnknownRegion"/> class.

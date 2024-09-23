@@ -45,7 +45,7 @@ namespace TVGL
             if (connectFacesToPrimitive)
                 foreach (var face in Faces)
                     face.BelongsToPrimitive = this;
-
+            if (faces == null) return;
             var firstFace = Faces.First();
             var faceNormal = firstFace.Normal;
             if (this is Plane plane)

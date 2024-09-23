@@ -54,8 +54,7 @@ namespace TVGL
             Apex = apex;
             Axis = axis;
             Aperture = aperture;
-            if (faces != null)
-                SetFacesAndVertices(faces);
+            SetFacesAndVertices(faces);
         }
 
         /// <summary>
@@ -109,7 +108,7 @@ namespace TVGL
 
 
         public override string KeyString => "Cone|" + Axis.ToString() +
-            "|" + Apex.ToString() +"|" + Aperture.ToString("F5") + GetCommonKeyDetails();
+            "|" + Apex.ToString() + "|" + Aperture.ToString("F5") + GetCommonKeyDetails();
 
 
         /// <summary>

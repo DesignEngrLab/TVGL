@@ -263,9 +263,9 @@ namespace TVGL
             Axis = axis;
             Anchor = anchor;
             Radius = radius;
+            SetFacesAndVertices(faces);
             if (faces != null)
             {
-                SetFacesAndVertices(faces);
                 var (min, max) = MinimumEnclosure.GetDistanceToExtremeVertex(Vertices, axis, out _, out _);//vertices are set in base constructor
                 MinDistanceAlongAxis = min;
                 MaxDistanceAlongAxis = max;

@@ -61,6 +61,7 @@ namespace TVGL
         /// </summary>
         /// <value>The na n.</value>
         public static ComplexNumber NaN => new ComplexNumber(double.NaN, double.NaN);
+        public static ComplexNumber Zero => new ComplexNumber(0.0, 0.0);
 
         /// <summary>
         /// Calculates the length of the ComplexNumber.
@@ -298,11 +299,19 @@ namespace TVGL
         /// <param name="complex">The divisor.</param>
         /// <returns>The result of the division.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static ComplexNumber Divide(double real, ComplexNumber complex)
+        public static ComplexNumber Reciprocal(ComplexNumber complex)
         {
             var oneOverDenom = 1 / (complex.Real * complex.Real + complex.Imaginary * complex.Imaginary);
-            return new ComplexNumber(oneOverDenom * real * complex.Real, -oneOverDenom * real * complex.Imaginary);
+            return new ComplexNumber(oneOverDenom * complex.Real, -oneOverDenom * complex.Imaginary);
         }
+        /// <summary>
+        /// Divides a ComplexNumber by another ComplexNumber.
+        /// </summary>
+        /// <param name="real">The source ComplexNumber.</param>
+        /// <param name="complex">The divisor.</param>
+        /// <returns>The result of the division.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static ComplexNumber Divide(double real, ComplexNumber complex) => real * Reciprocal(complex);
 
         /// <summary>
         /// Divides a ComplexNumber by another ComplexNumber.

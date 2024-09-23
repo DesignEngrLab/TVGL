@@ -36,7 +36,7 @@ namespace TVGLUnitTestsAndBenchmarking
             #endregion
 
             #region CrossSectionSolid
-            var cs = new CrossSectionSolid(new Dictionary<int, double>());
+            var cs = new CrossSectionSolid(new double[0]);
             //cs.Add(new List<Vertex>)
             #endregion
 

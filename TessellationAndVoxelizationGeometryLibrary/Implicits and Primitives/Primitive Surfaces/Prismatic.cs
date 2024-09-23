@@ -169,8 +169,7 @@ namespace TVGL
             MaxDistanceAlongAxis = maxDistanceAlongAxis;
             Height = MaxDistanceAlongAxis - MinDistanceAlongAxis;
 
-            if (faces != null)
-                SetFacesAndVertices(faces);
+            SetFacesAndVertices(faces);
         }
         /// <summary>
         /// Initializes a new instance of the <see cref="Prismatic" /> class.
@@ -187,8 +186,7 @@ namespace TVGL
             MaxDistanceAlongAxis = max;
             Height = MaxDistanceAlongAxis - MinDistanceAlongAxis;
 
-            if (faces != null)
-                SetFacesAndVertices(faces);
+            SetFacesAndVertices(faces);
         }
 
         /// <summary>
@@ -199,9 +197,9 @@ namespace TVGL
         public Prismatic(IEnumerable<TriangleFace> faces = null, bool? isPositive = null)
         {
             this.isPositive = isPositive;
+            SetFacesAndVertices(faces);
             if (faces != null)
             {
-                SetFacesAndVertices(faces);
                 Axis = MiscFunctions.FindMostOrthogonalVector(Faces.Select(face =>
                      (face.B.Coordinates - face.A.Coordinates).Cross(face.C.Coordinates - face.A.Coordinates)));
                 var (min, max) = MinimumEnclosure.GetDistanceToExtremeVertex(Vertices, Axis, out _, out _);//vertices are set in base constructor

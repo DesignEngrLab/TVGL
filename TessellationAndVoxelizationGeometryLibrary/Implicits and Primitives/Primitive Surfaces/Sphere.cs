@@ -396,8 +396,7 @@ namespace TVGL
             this.isPositive = isPositive;
             Radius = radius;
 
-            if (faces != null)
-                SetFacesAndVertices(faces);
+            SetFacesAndVertices(faces);
         }
 
         /// <summary>

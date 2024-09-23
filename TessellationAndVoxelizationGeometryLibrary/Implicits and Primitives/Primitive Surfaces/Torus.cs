@@ -44,8 +44,7 @@ namespace TVGL
             MajorRadius = majorRadius;
             MinorRadius = minorRadius;
 
-            if (faces != null)
-                SetFacesAndVertices(faces);
+            SetFacesAndVertices(faces);
         }
         /// <summary>
         /// Initializes a new instance of the <see cref="Torus" /> class.
