@@ -11,11 +11,8 @@
 // </copyright>
 // <summary></summary>
 // ***********************************************************************
-using ClipperLib;
 using StarMathLib;
-using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Runtime.CompilerServices;
 
 
@@ -493,25 +490,6 @@ namespace TVGL
         public static double[] ToArray(this Vector3 value1)
         { return new double[] { value1.X, value1.Y, value1.Z }; }
 
-        public static ComplexNumber[] GetEigenValuesAndVectors(this Matrix3x3 A,
-            out Vector3[] eigenVectors)
-        {
-            var matrix = new double[,]
-            {
-                { A.M11, A.M12, A.M13 },
-                { A.M21, A.M22, A.M23 },
-                { A.M31, A.M32, A.M33 }
-            };
-            var eigenValues = matrix.GetEigenValuesAndVectors(out var eigenVectorsArrays);
-            eigenVectors = new Vector3[3];
-            for (int i = 0; i < 3; i++)
-            {
-                eigenVectors[i] = new Vector3(eigenVectorsArrays[i][0].Real,
-                    eigenVectorsArrays[i][1].Real,
-                    eigenVectorsArrays[i][2].Real);
-            }
-            return eigenValues;
-        }
         #endregion
 
         #region Vector4
@@ -655,26 +633,6 @@ namespace TVGL
         public static double[] ToArray(this Vector4 value1)
         { return new double[] { value1.X, value1.Y, value1.Z, value1.W }; }
 
-        public static ComplexNumber[] GetEigenValuesAndVectors(this Matrix4x4 A, out Vector4[] eigenVectors)
-        {
-            var matrix = new double[,]
-            {
-                { A.M11, A.M12, A.M13, A.M14 },
-                { A.M21, A.M22, A.M23, A.M24 },
-                { A.M31, A.M32, A.M33, A.M34 },
-                { A.M41, A.M42, A.M43, A.M44 }
-            };
-            var eigenValues = matrix.GetEigenValuesAndVectors(out var eigenVectorsArrays);
-            eigenVectors = new Vector4[4];
-            for (int i = 0; i < 4; i++)
-            {
-                eigenVectors[i] = new Vector4(eigenVectorsArrays[i][0].Real,
-                    eigenVectorsArrays[i][1].Real,
-                    eigenVectorsArrays[i][2].Real, 1);
-            }
-            return eigenValues;
-        }
-
         #endregion
 
         #region Matrix3x3, Matrix4x4, Quaternion, and Plane
@@ -809,151 +767,97 @@ namespace TVGL
         public static double DotNormal(this Plane plane, Vector3 value)
         { return Plane.DotNormal(plane, value); }
 
-        /// <summary>
-        /// Eigens the specified eigen values.
-        /// </summary>
-        /// <param name="matrix">The matrix.</param>
-        /// <param name="eigenValues">The eigen values.</param>
-        /// <param name="eigenVectors">The eigen vectors.</param>
-        public static void Eigen(this Matrix3x3 matrix, out ComplexNumber[] eigenValues, out ComplexNumber[][] eigenVectors)
+
+        #region Eigenvalues and EigenVectors
+
+        public static ComplexNumber[] GetEigenValuesAndVectors(this Matrix3x3 A,
+            out ComplexNumber[][] eigenVectors)
         {
-            eigenValues = EigenValues(matrix).ToArray();
-            eigenVectors = matrix.EigenVectors(eigenValues);
+            return StarMath.GetEigenValuesAndVectors3(A.M11, A.M12, A.M13,
+                A.M21, A.M22, A.M23,
+                A.M31, A.M32, A.M33, out eigenVectors);
         }
-        /// <summary>
-        /// Eigens the values.
-        /// </summary>
-        /// <param name="m">The m.</param>
-        /// <returns>IEnumerable&lt;ComplexNumber&gt;.</returns>
-        public static IEnumerable<ComplexNumber> EigenValues(this Matrix3x3 m)
+        public static ComplexNumber[] GetEigenValues(this Matrix3x3 A)
         {
-            var a = m.M11;
-            var b = m.M12;
-            var c = m.M13;
-            var d = m.M21;
-            var e = m.M22;
-            var f = m.M23;
-            var g = m.M31;
-            var h = m.M32;
-            var i = m.M33;
-            var cubicCoeff = -1.0;
-            var squaredCoeff = a + e + i;
-            var linearCoeff = f * h + b * d + c * g - a * i - e * i - a * e;
-            var offset = a * e * i + b * f * g + c * d * h - a * f * h - b * d * i - c * e * g;
-            return PolynomialSolve.Cubic(cubicCoeff, squaredCoeff, linearCoeff, offset, false);
+            return StarMath.GetEigenValues3(A.M11, A.M12, A.M13,
+                A.M21, A.M22, A.M23,
+                A.M31, A.M32, A.M33);
         }
-        /// <summary>
-        /// Eigens the reals only.
-        /// </summary>
-        /// <param name="matrix">The matrix.</param>
-        /// <param name="eigenValues">The eigen values.</param>
-        /// <param name="eigenVectors">The eigen vectors.</param>
-        public static void EigenRealsOnly(this Matrix3x3 matrix, out double[] eigenValues, out Vector3[] eigenVectors)
+        public static List<double> GetRealEigenValues(this Matrix3x3 A)
         {
-            eigenValues = EigenValuesRealsOnly(matrix).ToArray();
-            eigenVectors = matrix.EigenVectors(eigenValues);
+            var eigValues = StarMath.GetEigenValues3(A.M11, A.M12, A.M13,
+                A.M21, A.M22, A.M23,
+                A.M31, A.M32, A.M33);
+            var realEigenValues = new List<double>();
+            if (eigValues[0].IsRealNumber)
+                realEigenValues.Add(eigValues[0].Real);
+            if (eigValues[1].IsRealNumber)
+                realEigenValues.Add(eigValues[1].Real);
+            if (eigValues[2].IsRealNumber)
+                realEigenValues.Add(eigValues[2].Real);
+            return realEigenValues;
+        }
+        public static ComplexNumber[][] GetEigenVectors(this Matrix3x3 A, ComplexNumber[] eigenValues)
+        {
+            return StarMath.GetEigenVectors3(A.M11, A.M12, A.M13,
+                A.M21, A.M22, A.M23,
+                A.M31, A.M32, A.M33, eigenValues);
+        }
+        public static ComplexNumber[] GetEigenVector(this Matrix3x3 A, ComplexNumber eigenValue)
+        {
+            return StarMath.GetEigenVector3(A.M11, A.M12, A.M13,
+                A.M21, A.M22, A.M23,
+                A.M31, A.M32, A.M33, eigenValue);
         }
 
 
-        /// <summary>
-        /// Eigens the vectors.
-        /// </summary>
-        /// <param name="m">The m.</param>
-        /// <param name="eigenValues">The eigen values.</param>
-        /// <returns>ComplexNumber[][].</returns>
-        public static ComplexNumber[][] EigenVectors(this Matrix3x3 m, IList<ComplexNumber> eigenValues)
+        public static ComplexNumber[] GetEigenValuesAndVectors(this Matrix4x4 A,
+            out ComplexNumber[][] eigenVectors)
         {
-            var n = eigenValues.Count;
-            var eigenVectors = new ComplexNumber[n][];
-            for (int j = 0; j < n; j++)
-            {
-                var lambda = eigenValues[j];
-                if (lambda.IsRealNumber)
-                {
-                    var eVector = GetRealEigenVector(m, lambda.Real);
-                    eigenVectors[j] = new[] { new ComplexNumber(eVector.X), new ComplexNumber(eVector.Y), new ComplexNumber(eVector.Z) };
-                }
-                else
-                {
-                    // arbitrarily set the z-component of the eigenvector to 1 + 0i, then solve for x and y 
-                    var cM = new ComplexNumber[,]
-                    {
-                        {m.M11 - lambda, new ComplexNumber(m.M12)},
-                        {new ComplexNumber(m.M21),m.M22 - lambda},
-                    };
-                    var b = new[] { -m.M13, -m.M23 };
-                    StarMath.Solve2x2ComplexMatrix(cM, b, out var eigenVector1, out var eigenVector2);
-                    var eigenVector = new ComplexNumber[] { eigenVector1, eigenVector2, new ComplexNumber(1) };
-                    var eVectorLength = Math.Sqrt(eigenVector[0].LengthSquared() + eigenVector[1].LengthSquared() + 1);
-                    eigenVectors[j] = [ eigenVector[0] / eVectorLength, eigenVector[1] / eVectorLength,
-                        eigenVector[2] / eVectorLength ];
-                }
-            }
-            return eigenVectors;
+            return StarMath.GetEigenValuesAndVectors4(A.M11, A.M12, A.M13,A.M14,
+                A.M21, A.M22, A.M23, A.M24,
+                A.M31, A.M32, A.M33, A.M34,
+                A.M41, A.M42, A.M43, A.M44, out eigenVectors);
         }
-
-        /// <summary>
-        /// Eigens the values reals only.
-        /// </summary>
-        /// <param name="matrix">The matrix.</param>
-        /// <returns>IEnumerable&lt;System.Double&gt;.</returns>
-        public static IEnumerable<double> EigenValuesRealsOnly(this Matrix3x3 matrix)
+        public static ComplexNumber[] GetEigenValues(this Matrix4x4 A)
         {
-            var a = matrix.M11;
-            var b = matrix.M12;
-            var c = matrix.M13;
-            var d = matrix.M21;
-            var e = matrix.M22;
-            var f = matrix.M23;
-            var g = matrix.M31;
-            var h = matrix.M32;
-            var i = matrix.M33;
-            var cubicCoeff = -1.0;
-            var squaredCoeff = a + e + i;
-            var linearCoeff = f * h + b * d + c * g - a * i - e * i - a * e;
-            var offset = a * e * i + b * f * g + c * d * h - a * f * h - b * d * i - c * e * g;
-            return PolynomialSolve.Cubic(cubicCoeff, squaredCoeff, linearCoeff, offset, true).Select(ev => ev.Real);
+            return StarMath.GetEigenValues4(A.M11, A.M12, A.M13, A.M14,
+                A.M21, A.M22, A.M23, A.M24,
+                A.M31, A.M32, A.M33, A.M34,
+                A.M41, A.M42, A.M43, A.M44);
         }
-
-        /// <summary>
-        /// Eigens the vectors.
-        /// </summary>
-        /// <param name="m">The m.</param>
-        /// <param name="eigenValues">The eigen values.</param>
-        /// <returns>Vector3[].</returns>
-        public static Vector3[] EigenVectors(this Matrix3x3 m, IList<double> eigenValues)
+        public static List<double> GetRealEigenValues(this Matrix4x4 A)
         {
-            var n = eigenValues.Count;
-            var eigenVectors = new Vector3[n];
-            for (int j = 0; j < n; j++)
-                eigenVectors[j] = GetRealEigenVector(m, eigenValues[j]);
-            return eigenVectors;
+            var eigValues = StarMath.GetEigenValues4(A.M11, A.M12, A.M13, A.M14,
+                A.M21, A.M22, A.M23, A.M24,
+                A.M31, A.M32, A.M33, A.M34,
+                A.M41, A.M42, A.M43, A.M44);
+            var realEigenValues = new List<double>();
+            if (eigValues[0].IsRealNumber)
+                realEigenValues.Add(eigValues[0].Real);
+            if (eigValues[1].IsRealNumber)
+                realEigenValues.Add(eigValues[1].Real);
+            if (eigValues[2].IsRealNumber)
+                realEigenValues.Add(eigValues[2].Real);
+            if (eigValues[3].IsRealNumber)
+                realEigenValues.Add(eigValues[3].Real);
+            return realEigenValues;
         }
-
-        /// <summary>
-        /// Gets the real eigen vector.
-        /// </summary>
-        /// <param name="m">The m.</param>
-        /// <param name="lambda">The lambda.</param>
-        /// <returns>Vector3.</returns>
-        public static Vector3 GetRealEigenVector(this Matrix3x3 m, double lambda)
+        public static ComplexNumber[][] GetEigenVectors(this Matrix4x4 A, ComplexNumber[] eigenValues)
         {
-            var row1 = new Vector3(m.M11 - lambda, m.M12, m.M13);
-            var row2 = new Vector3(m.M21, m.M22 - lambda, m.M23);
-            var eVector = row1.Cross(row2);
-            var eVectorLength = eVector.Length();
-            if (!eVectorLength.IsNegligible(Constants.BaseTolerance))
-                return eVector / eVectorLength;
-            var row3 = new Vector3(m.M31, m.M32, m.M33 - lambda);
-            eVector = row1.Cross(row3);
-            eVectorLength = eVector.Length();
-            if (!eVectorLength.IsNegligible())
-                return eVector / eVectorLength;
-            eVector = row2.Cross(row3);
-            eVectorLength = eVector.Length();
-            return eVector / eVectorLength;
+            return StarMath.GetEigenVectors4(A.M11, A.M12, A.M13, A.M14,
+                A.M21, A.M22, A.M23, A.M24,
+                A.M31, A.M32, A.M33, A.M34,
+                A.M41, A.M42, A.M43, A.M44, eigenValues);
+        }
+        public static ComplexNumber[] GetEigenVector(this Matrix4x4 A, ComplexNumber eigenValue)
+        {
+            return StarMath.GetEigenVector4(A.M11, A.M12, A.M13, A.M14,
+                A.M21, A.M22, A.M23, A.M24,
+                A.M31, A.M32, A.M33, A.M34,
+                A.M41, A.M42, A.M43, A.M44, eigenValue);
         }
         #endregion
-
+        #endregion
     }
 }

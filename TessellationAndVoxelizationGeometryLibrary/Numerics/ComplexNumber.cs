@@ -276,12 +276,7 @@ namespace TVGL
         /// <param name="value2">The divisor.</param>
         /// <returns>The result of the division.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static ComplexNumber Divide(ComplexNumber value1, ComplexNumber value2)
-        {
-            var oneOverDenom = 1 / (value2.Real * value2.Real + value2.Imaginary * value2.Imaginary);
-            return new ComplexNumber(oneOverDenom * (value1.Real * value2.Real + value1.Imaginary * value2.Imaginary),
-                oneOverDenom * (value1.Imaginary * value2.Real - value1.Real * value2.Imaginary));
-        }
+        public static ComplexNumber Divide(ComplexNumber value1, ComplexNumber value2) => value1 * Reciprocal(value2);
 
         /// <summary>
         /// Divides a ComplexNumber by another ComplexNumber.

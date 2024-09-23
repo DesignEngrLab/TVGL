@@ -527,16 +527,26 @@ namespace TVGL.PointCloud
                 var point = data.OriginalPoints[i];
                 var neighbors = data.FindNearest(point, numNeighbors).ToList();
                 Matrix3x3 covariance = MakeCovarianceMatrix(neighbors);
-                var eigenValues = covariance.GetEigenValuesAndVectors(out var eigenVectors);
-                int[] orderOfEigens = OrderEigenValues(eigenValues[0], eigenValues[1], eigenValues[2]);
-
-                var u = new Matrix3x3(eigenVectors[orderOfEigens[0]].X, eigenVectors[orderOfEigens[1]].X, eigenVectors[orderOfEigens[2]].X,
-                    eigenVectors[orderOfEigens[0]].Y, eigenVectors[orderOfEigens[1]].Y, eigenVectors[orderOfEigens[2]].Y,
-                    eigenVectors[orderOfEigens[0]].Z, eigenVectors[orderOfEigens[1]].Z, eigenVectors[orderOfEigens[2]].Z);
+                var eigenValues = covariance.GetRealEigenValues();
+                var maxEigenValue = eigenValues.Max();
+                var primaryDirComplex = covariance.GetEigenVector(new ComplexNumber(maxEigenValue));
+                var primaryDir = new Vector3(primaryDirComplex[0].Real, primaryDirComplex[1].Real, primaryDirComplex[2].Real);
+                Vector3 secondDir;
+                if (eigenValues.Count > 1)
+                {
+                    var secondEigenValue = eigenValues.Where(x => x != maxEigenValue).Max();
+                    var secondDirComplex = covariance.GetEigenVector(new ComplexNumber(secondEigenValue));
+                    secondDir = new Vector3(secondDirComplex[0].Real, secondDirComplex[1].Real, secondDirComplex[2].Real);
+                }
+                else secondDir = primaryDir.GetPerpendicularDirection();
+                var thirdDir = Vector3.Cross(primaryDir, secondDir).Normalize();
+                var u = new Matrix3x3(primaryDir.X, secondDir.X, thirdDir.X,
+                    primaryDir.Y, secondDir.Y, thirdDir.Y,
+                   primaryDir.Z, secondDir.Z, thirdDir.Z);
                 covariance = u * S * (u.Transpose());
                 Matrix3x3.Invert(covariance, out var omega);
 
-                normals[i] = new NormalInfo { U = u, Normal = eigenVectors[orderOfEigens[0]], Omega = omega };
+                normals[i] = new NormalInfo { U = u, Normal = primaryDir, Omega = omega };
             }
             return normals;
         }
@@ -558,36 +568,13 @@ namespace TVGL.PointCloud
                 var u = new Matrix3x3(data[i].X, inPlane1.X, inPlane2.X,
                     data[i].Y, inPlane1.Y, inPlane2.Y,
                     data[i].Z, inPlane1.Z, inPlane2.Z);
-               var covariance = u * S * (u.Transpose());
+                var covariance = u * S * (u.Transpose());
                 Matrix3x3.Invert(covariance, out var omega);
 
                 normals[i] = new NormalInfo { U = u, Normal = data[i], Omega = omega };
             }
             return normals;
         }
-
-        private static int[] OrderEigenValues(ComplexNumber e1, ComplexNumber e2, ComplexNumber e3)
-        {
-            var e1Mag = e1.LengthSquared();
-            var e2Mag = e2.LengthSquared();
-            var e3Mag = e3.LengthSquared();
-            if (e1Mag < e2Mag)
-            {
-                if (e1Mag < e3Mag)
-                {
-                    if (e2Mag < e3Mag) return new int[] { 0, 1, 2 };
-                    else return new int[] { 0, 2, 1 };
-                }
-                else return new int[] { 2, 0, 1 };
-            }
-            else if (e2Mag < e3Mag)
-            {
-                if (e1Mag < e3Mag) return new int[] { 1, 0, 2 };
-                else return new int[] { 1, 2, 0 };
-            }
-            else return new int[] { 2, 1, 0 };
-        }
-
 
         private static Matrix3x3 MakeCovarianceMatrix(List<Vector3> vectors)
         {
