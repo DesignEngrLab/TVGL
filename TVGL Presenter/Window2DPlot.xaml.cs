@@ -75,6 +75,14 @@ namespace TVGL
             Model = new PlotModel();
         }
 
+
+        public Window2DPlot(PlotModel model, string title)
+        {
+            Title = title;
+            Model = model;
+            InitializeComponent();
+        }
+
         public Window2DPlot(IEnumerable<Vector2> points, string title, Plot2DType plot2DType, bool closeShape,
          MarkerType marker) : this(title)
         {
