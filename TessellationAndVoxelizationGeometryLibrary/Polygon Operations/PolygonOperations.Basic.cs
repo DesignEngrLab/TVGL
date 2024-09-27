@@ -277,5 +277,56 @@ namespace TVGL
             }
             return mirror.CreatePolygonTree(true).First();
         }
+
+        /// <summary>
+        /// Simplifies (reduces the number of edges) and smoothes (removes concave points) the polygon.
+        /// Why concave? One must choose either convex or concave. In the methods envisioned
+        /// </summary>
+        /// <param name="polygon"></param>
+        /// <param name="pixelSideLength"></param>
+        public static void SimplifyAndSmoothRectilinearPolygon(this Polygon polygon, double pixelSideLength)
+        {
+            var unitLengthSqd = pixelSideLength * pixelSideLength;
+            polygon.RemoveCollinearEdges();
+            if (polygon.Vertices.Count < 5) return;
+            var nextVertex = polygon.Vertices[0];
+            var nextNextVertex = polygon.Vertices[1];
+            var vertex = polygon.Vertices[^1];
+            var prevVertex = polygon.Vertices[^2];
+            var prevPrevVertex = polygon.Vertices[^3];
+            for (var i = polygon.Vertices.Count - 4; i >= 2; i--)
+            {
+                var prevEdge = vertex.Coordinates - prevVertex.Coordinates;
+                var prevPrevEdge = prevVertex.Coordinates - prevPrevVertex.Coordinates;
+                var nextEdge = nextVertex.Coordinates - vertex.Coordinates;
+                var nextNextEdge = nextNextVertex.Coordinates - nextVertex.Coordinates;
+                var cornerCross = prevEdge.Cross(nextEdge);
+                var nextCross = nextEdge.Cross(nextNextEdge);
+                var prevCross = prevPrevEdge.Cross(prevEdge);
+                if (cornerCross < 0) // then concave
+                {
+                    if (prevCross > 0 && nextCross > 0 && (nextEdge.LengthSquared().IsPracticallySame(pixelSideLength) ||
+                        prevEdge.LengthSquared().IsPracticallySame(pixelSideLength)))
+
+                    {
+                        polygon.Vertices.RemoveAt(i);
+                        i--;
+                    }
+                    if (prevCross < 0 && nextCross > 0 && nextEdge.LengthSquared().IsPracticallySame(pixelSideLength) &&
+                        prevPrevEdge.LengthSquared().IsPracticallySame(pixelSideLength))
+                    {
+                        prevVertex.Coordinates = 0.5 * (prevVertex.Coordinates + vertex.Coordinates);
+                        polygon.Vertices.RemoveAt(i);
+                        i -= 2;
+                    }
+                }
+                nextNextVertex = nextVertex;
+                nextVertex = vertex;
+                vertex = prevVertex;
+                prevVertex = prevPrevVertex;
+                prevPrevVertex = i < 0 ? polygon.Vertices[polygon.Vertices.Count - i] : polygon.Vertices[i];
+            }
+
+        }
     }
 }
