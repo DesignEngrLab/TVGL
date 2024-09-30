@@ -118,6 +118,10 @@ namespace TVGL
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static (ComplexNumber, ComplexNumber) Quadratic(double squaredCoeff, double linearCoeff, double constant)
         {
+            if (squaredCoeff.IsNegligible())
+            {
+                return (new ComplexNumber(-constant / linearCoeff), ComplexNumber.NaN);
+            }
             if ((constant / squaredCoeff).IsNegligible())
             {
                 return (new ComplexNumber(0), new ComplexNumber(-linearCoeff / squaredCoeff));
