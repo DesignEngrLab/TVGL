@@ -282,7 +282,14 @@ namespace TVGL.PointCloud
         {
             if (type.IsValueType)
             {
-                return Activator.CreateInstance(type);
+                if (type == typeof(Vector2))
+                    return Vector2.Null;
+                else if (type == typeof(Vector3))
+                    return Vector3.Null;
+                else if (type == typeof(Vector4))
+                    return Vector4.Null;
+                else
+                    return Activator.CreateInstance(type);
             }
             return null;
         }
