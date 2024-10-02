@@ -595,7 +595,7 @@ namespace TVGL
             var baseCircleRadius = cone.Length * cone.Aperture;
             var baseCircleCenter = cone.Apex + cone.Length * axis;
 
-            GetCircleTessellation(out var btmVertices, out var btmFaces, cone.Apex, axis, baseCircleRadius, numPoints, false);
+            GetCircleTessellation(out var btmVertices, out var btmFaces, baseCircleCenter, axis, baseCircleRadius, numPoints, false);
             List<Vertex> vertices;
             List<TriangleFace> faces;
             var apexVertex = new Vertex(cone.Apex);
@@ -610,14 +610,13 @@ namespace TVGL
                 faces = btmFaces.ToList();
             }
 
-            var sideFaces = new List<TriangleFace>();
             var j = numPoints - 1;
             for (int i = 0; i < numPoints; i++)
             {
-                sideFaces.Add(new TriangleFace(apexVertex, btmVertices[i], btmVertices[j]));
+                faces.Add(new TriangleFace(apexVertex, btmVertices[i], btmVertices[j]));
                 j = i;
             }
-            cone.SetFacesAndVertices(sideFaces);
+            cone.SetFacesAndVertices(faces);
             var btmPlane = new Plane(cone.Apex + axis * cone.Length, axis);
             btmPlane.SetFacesAndVertices(btmFaces, true, true);
             var tessellatedSolidBuildOptions = new TessellatedSolidBuildOptions { CopyElementsPassedToConstructor = false };

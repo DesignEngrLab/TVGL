@@ -330,6 +330,8 @@ namespace TVGL
                     new TriangleFace(vertices[6],vertices[7],vertices[4]),
                     new TriangleFace(vertices[6],vertices[4],vertices[5])
                 };
+                for (int i = 0; i < 12; i++)
+                    faces[i].IndexInList = i;
                 var tessellatedSolidBuildOptions = new TessellatedSolidBuildOptions();
                 tessellatedSolidBuildOptions.CopyElementsPassedToConstructor = false;
                 _tessellatedSolid = new TessellatedSolid(faces, vertices, tessellatedSolidBuildOptions);
