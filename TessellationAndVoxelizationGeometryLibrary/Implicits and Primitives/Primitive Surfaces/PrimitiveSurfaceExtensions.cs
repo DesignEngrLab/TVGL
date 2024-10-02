@@ -558,6 +558,8 @@ namespace TVGL
                     faces[i] = new TriangleFace(centerVertex, vertices[j], vertices[i]);
                     j = i;
                 }
+            for (int i = 0; i < faces.Length; i++)
+                faces[i].IndexInList = i;
         }
 
         /// <summary>
@@ -598,6 +600,7 @@ namespace TVGL
             GetCircleTessellation(out var btmVertices, out var btmFaces, baseCircleCenter, axis, baseCircleRadius, numPoints, false);
             List<Vertex> vertices;
             List<TriangleFace> faces;
+            Plane btmPlane = null;
             var apexVertex = new Vertex(cone.Apex);
             if (keepOpen)
             {
@@ -608,21 +611,25 @@ namespace TVGL
             {
                 vertices = btmVertices.Concat([apexVertex]).ToList();
                 faces = btmFaces.ToList();
+                btmPlane = new Plane(cone.Apex + axis * cone.Length, axis);
+                btmPlane.SetFacesAndVertices(btmFaces, true, true);
             }
 
             var j = numPoints - 1;
+            var coneFaces = new List<TriangleFace>();
             for (int i = 0; i < numPoints; i++)
             {
-                faces.Add(new TriangleFace(apexVertex, btmVertices[i], btmVertices[j]));
+                coneFaces.Add(new TriangleFace(apexVertex, btmVertices[i], btmVertices[j]));
                 j = i;
             }
-            cone.SetFacesAndVertices(faces);
-            var btmPlane = new Plane(cone.Apex + axis * cone.Length, axis);
-            btmPlane.SetFacesAndVertices(btmFaces, true, true);
+            cone.SetFacesAndVertices(coneFaces);
+            faces.AddRange(coneFaces);
+            for (int i = 0; i < faces.Count; i++)
+                faces[i].IndexInList = i;
             var tessellatedSolidBuildOptions = new TessellatedSolidBuildOptions { CopyElementsPassedToConstructor = false };
             return new TessellatedSolid(faces, vertices, tessellatedSolidBuildOptions)
             {
-                Primitives = [btmPlane, cone]
+                Primitives = keepOpen ? [cone] : [btmPlane, cone]
             };
         }
 
@@ -682,20 +689,25 @@ namespace TVGL
                 sideFaces.Add(new TriangleFace(btmVertices[i], topVertices[j], btmVertices[j]));
                 j = i;
             }
-            faces.AddRange(sideFaces);
-
-
-            var btmPlane = new Plane(cylinderMinAxisPoint, -axis);
-            btmPlane.SetFacesAndVertices(btmFaces, true, true);
-            var topPlane = new Plane(cylinderMaxAxisPoint, axis);
-            topPlane.SetFacesAndVertices(topFaces, true, true);
             cylinder.SetFacesAndVertices(sideFaces, true, true);
-
+            faces.AddRange(sideFaces);
+            for (int i = 0; i < faces.Count; i++)
+                faces[i].IndexInList = i;
             var tessellatedSolidBuildOptions = new TessellatedSolidBuildOptions { CopyElementsPassedToConstructor = false };
-
+            if (keepOpen)
+            {
+                var btmPlane = new Plane(cylinderMinAxisPoint, -axis);
+                btmPlane.SetFacesAndVertices(btmFaces, true, true);
+                var topPlane = new Plane(cylinderMaxAxisPoint, axis);
+                topPlane.SetFacesAndVertices(topFaces, true, true);
+                return new TessellatedSolid(faces, vertices, tessellatedSolidBuildOptions)
+                {
+                    Primitives = [btmPlane, topPlane, cylinder]
+                };
+            }
             return new TessellatedSolid(faces, vertices, tessellatedSolidBuildOptions)
             {
-                Primitives = [btmPlane, topPlane, cylinder]
+                Primitives =  [cylinder] 
             };
         }
 
@@ -792,6 +804,8 @@ namespace TVGL
             };
             innerCylinder.SetFacesAndVertices(innerFaces, true, true);
 
+            for (int i = 0; i < faces.Length; i++)
+                faces[i].IndexInList = i;
             return new TessellatedSolid(faces, vertices, tessellatedSolidBuildOptions)
             {
                 Primitives = [btmPlane, topPlane, cylinder, innerCylinder]
@@ -830,6 +844,8 @@ namespace TVGL
             if (!ConvexHull3D.Create(vertices, out var convexHull, false))
                 throw new Exception("Convex hull could not be created for sphere.");
             var faces = convexHull.Faces.Select(cf => new TriangleFace(cf.A, cf.B, cf.C)).ToList();
+            for (int i = 0; i < faces.Count; i++)
+                faces[i].IndexInList = i;
 
             var tessellatedSolidBuildOptions = new TessellatedSolidBuildOptions();
             tessellatedSolidBuildOptions.CopyElementsPassedToConstructor = false;
@@ -905,6 +921,8 @@ namespace TVGL
                 }
                 prevI = i;
             }
+            for (int i = 0; i < faces.Length; i++)
+                faces[i].IndexInList = i;
             var tessellatedSolidBuildOptions = new TessellatedSolidBuildOptions { CopyElementsPassedToConstructor = false };
             torus.SetFacesAndVertices(faces, true, true);
             return new TessellatedSolid(faces, vertices, tessellatedSolidBuildOptions)

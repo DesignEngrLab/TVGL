@@ -1093,7 +1093,8 @@ namespace TVGL
         /// <param name="removeFaces">The remove faces.</param>
         public void RemoveFaces(IEnumerable<TriangleFace> removeFaces)
         {
-            RemoveFaces(removeFaces.Select(f => f.IndexInList).ToList());
+            RemoveFaces(removeFaces.Select(f => f.IndexInList)
+                .OrderBy(i=>i).ToList());
         }
 
         /// <summary>
