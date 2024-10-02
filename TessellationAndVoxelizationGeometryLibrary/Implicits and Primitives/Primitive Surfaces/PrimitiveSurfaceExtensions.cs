@@ -696,18 +696,18 @@ namespace TVGL
             var tessellatedSolidBuildOptions = new TessellatedSolidBuildOptions { CopyElementsPassedToConstructor = false };
             if (keepOpen)
             {
-                var btmPlane = new Plane(cylinderMinAxisPoint, -axis);
-                btmPlane.SetFacesAndVertices(btmFaces, true, true);
-                var topPlane = new Plane(cylinderMaxAxisPoint, axis);
-                topPlane.SetFacesAndVertices(topFaces, true, true);
                 return new TessellatedSolid(faces, vertices, tessellatedSolidBuildOptions)
                 {
-                    Primitives = [btmPlane, topPlane, cylinder]
+                    Primitives = [cylinder]
                 };
             }
+            var btmPlane = new Plane(cylinderMinAxisPoint, -axis);
+            btmPlane.SetFacesAndVertices(btmFaces, true, true);
+            var topPlane = new Plane(cylinderMaxAxisPoint, axis);
+            topPlane.SetFacesAndVertices(topFaces, true, true);
             return new TessellatedSolid(faces, vertices, tessellatedSolidBuildOptions)
             {
-                Primitives =  [cylinder] 
+                Primitives = [btmPlane, topPlane, cylinder]
             };
         }
 
