@@ -68,15 +68,15 @@ namespace TVGL
         /// </summary>
         /// <param name="solids">The solids.</param>
         /// <returns>BoundingBox.</returns>
-        public static BoundingBox OrientedBoundingBox(this List<TessellatedSolid> solids)
+        public static BoundingBox FindMinimumBoundingBox(this List<TessellatedSolid> solids)
         {
             foreach (var solid in solids)
                 if (solid.ConvexHull == null) ConvexHull3D.Create(solid);
             var vertices = new List<Vertex>();
             foreach (var solid in solids)
                 vertices.AddRange(solid.ConvexHull.Vertices.Any() ? solid.ConvexHull.Vertices : solid.Vertices);
-            
-            return OrientedBoundingBox(vertices);
+
+            return FindMinimumBoundingBox(vertices);
         }
 
         /// <summary>
@@ -84,12 +84,12 @@ namespace TVGL
         /// </summary>
         /// <param name="ts">The ts.</param>
         /// <returns>BoundingBox.</returns>
-        public static BoundingBox OrientedBoundingBox(this TessellatedSolid ts)
+        public static BoundingBox FindMinimumBoundingBox(this TessellatedSolid ts)
         {
             if (ts.ConvexHull == null) ConvexHull3D.Create(ts);
             if (ts.ConvexHull == null || !ts.ConvexHull.Vertices.Any())
-                return OrientedBoundingBox(ts.Vertices);
-            else return OrientedBoundingBox(ts.ConvexHull.Vertices);
+                return FindMinimumBoundingBox(ts.Vertices);
+            else return FindMinimumBoundingBox(ts.ConvexHull.Vertices);
         }
 
         /// <summary>
@@ -97,9 +97,9 @@ namespace TVGL
         /// </summary>
         /// <param name="convexHull">The convex hull.</param>
         /// <returns>BoundingBox.</returns>
-        public static BoundingBox OrientedBoundingBox(this ConvexHull3D convexHull)
+        public static BoundingBox FindMinimumBoundingBox(this ConvexHull3D convexHull)
         {
-            return OrientedBoundingBox(convexHull.Vertices);
+            return FindMinimumBoundingBox(convexHull.Vertices);
         }
 
         /// <summary>
@@ -108,9 +108,9 @@ namespace TVGL
         /// <typeparam name="T"></typeparam>
         /// <param name="convexHullVertices">The convex hull vertices.</param>
         /// <returns>BoundingBox.</returns>
-        public static BoundingBox OrientedBoundingBox<T>(this IEnumerable<T> convexHullVertices) where T : IVector3D
+        public static BoundingBox FindMinimumBoundingBox<T>(this IEnumerable<T> convexHullVertices) where T : IVector3D
         {
-            // here we create 13 directions. Why 13? basically it is all ternary combinations of x,y,and z.
+            // here we create 13 directions. Why 13? basically it is all ternary (-1,0,+1) combinations of x,y,and z.
             // skipping symmetric and 0,0,0. Another way to think of it is to make a Direction from a cube with
             // vectors emanating from every vertex, edge, and face. that would be 8+12+6 = 26. And since there
             // is no need to do mirror image directions this is 26/2 or 13.
@@ -126,10 +126,7 @@ namespace TVGL
             BoundingBox<T> minBox = null;
             for (var i = 0; i < 13; i++)
             {
-                var box = new BoundingBox<T>(new[] { double.PositiveInfinity, 1, 1 },
-                    new[] { directions[i], Vector3.UnitY, Vector3.UnitZ }, default, default,
-                    default);
-                box = Find_via_ChanTan_AABB_Approach(convexHullVertices, box);
+                var box = Find_via_ChanTan_AABB_Approach(convexHullVertices, directions[i]);
                 if (box == null || box.Volume >= minVolume) continue;
                 minVolume = box.Volume;
                 minBox = box;
@@ -138,9 +135,9 @@ namespace TVGL
             // to make a consistent result, we will put the longest dimension along X, the second along Y and the shortest
             // on Z. Also, we will flip directions so that the more positive direction is chosen, which makes for smaller
             // rotation angles to square the solid
-            var largestDirection = minBox.SortedDirectionsByLength[2];
-            var minPointsLargestDir = minBox.PointsOnFaces[2 * minBox.SortedDirectionIndicesByLength[2]];
-            var maxPointsLargestDir = minBox.PointsOnFaces[2 * minBox.SortedDirectionIndicesByLength[2] + 1];
+            var largestDirection = minBox.SortedDirectionsLongToShort[0];
+            var minPointsLargestDir = minBox.PointsOnFaces[2 * minBox.SortedDirectionIndicesLongToShort[0]];
+            var maxPointsLargestDir = minBox.PointsOnFaces[2 * minBox.SortedDirectionIndicesLongToShort[0] + 1];
             if (largestDirection.Dot(new Vector3(1, 1, 1)) < 0)
             {
                 largestDirection = -largestDirection;
@@ -148,9 +145,9 @@ namespace TVGL
                 minPointsLargestDir = maxPointsLargestDir;
                 maxPointsLargestDir = temp;
             }
-            var midDirection = minBox.SortedDirectionsByLength[1];
-            var minPointsMediumDir = minBox.PointsOnFaces[2 * minBox.SortedDirectionIndicesByLength[1]];
-            var maxPointsMediumDir = minBox.PointsOnFaces[2 * minBox.SortedDirectionIndicesByLength[1] + 1];
+            var midDirection = minBox.SortedDirectionsLongToShort[1];
+            var minPointsMediumDir = minBox.PointsOnFaces[2 * minBox.SortedDirectionIndicesLongToShort[1]];
+            var maxPointsMediumDir = minBox.PointsOnFaces[2 * minBox.SortedDirectionIndicesLongToShort[1] + 1];
             if (midDirection.Dot(new Vector3(1, 1, 1)) < 0)
             {
                 midDirection = -midDirection;
@@ -159,18 +156,20 @@ namespace TVGL
                 maxPointsMediumDir = temp;
             }
             var smallestDirection = largestDirection.Cross(midDirection);
-            var minPointsSmallDir = minBox.PointsOnFaces[2 * minBox.SortedDirectionIndicesByLength[0]];
-            var maxPointsSmallDir = minBox.PointsOnFaces[2 * minBox.SortedDirectionIndicesByLength[0] + 1];
-            if (smallestDirection.Dot(minBox.SortedDirectionsByLength[0]) < 0)
+            var minPointsSmallDir = minBox.PointsOnFaces[2 * minBox.SortedDirectionIndicesLongToShort[2]];
+            var maxPointsSmallDir = minBox.PointsOnFaces[2 * minBox.SortedDirectionIndicesLongToShort[2] + 1];
+            if (smallestDirection.Dot(minBox.SortedDirectionsLongToShort[2]) < 0)
             {
                 var temp = minPointsSmallDir;
                 minPointsSmallDir = maxPointsSmallDir;
                 maxPointsSmallDir = temp;
             }
-            return new BoundingBox<T>(minBox.SortedDimensions.Reverse().ToArray(),
-                new[] { largestDirection, midDirection, smallestDirection },
-                new[] { minPointsLargestDir, maxPointsLargestDir, minPointsMediumDir, maxPointsMediumDir,
-                    minPointsSmallDir,maxPointsSmallDir });
+            return new BoundingBox<T>(
+                [ minBox.SortedDimensionsLongToShort[0]* largestDirection,
+                    minBox.SortedDimensionsLongToShort[1]* midDirection,
+                    minBox.SortedDimensionsLongToShort[2]* smallestDirection ],
+                [ minPointsLargestDir, maxPointsLargestDir, minPointsMediumDir, maxPointsMediumDir,
+                    minPointsSmallDir,maxPointsSmallDir ]);
         }
 
         #region ChanTan AABB Approach
@@ -182,16 +181,19 @@ namespace TVGL
         /// <param name="convexHullVertices">The convex hull vertices.</param>
         /// <param name="minOBB">The minimum obb.</param>
         /// <returns>BoundingBox.</returns>
-        private static BoundingBox<T> Find_via_ChanTan_AABB_Approach<T>(IEnumerable<T> convexHullVertices, BoundingBox<T> minOBB) where T : IVector3D
+        private static BoundingBox<T> Find_via_ChanTan_AABB_Approach<T>(IEnumerable<T> convexHullVertices, Vector3 start) where T : IVector3D
         {
+            var minOBB = FindOBBAlongDirection(convexHullVertices, start);
             var failedConsecutiveRotations = 0;
             var k = 0;
             var i = 0;
             var cvxHullVertList = convexHullVertices as IList<T> ?? convexHullVertices.ToList();
             do
             {
+                if (++i == 3) i = 0;
+                start = minOBB.Directions[i];
                 //Find new OBB along OBB.direction2 and OBB.direction3, keeping the best OBB.
-                var newObb = FindOBBAlongDirection(cvxHullVertList, minOBB.Directions[i++]);
+                var newObb = FindOBBAlongDirection(cvxHullVertList, start);
                 if (newObb == null) return null;
                 if (newObb.Volume.IsLessThanNonNegligible(minOBB.Volume))
                 {
@@ -199,7 +201,6 @@ namespace TVGL
                     failedConsecutiveRotations = 0;
                 }
                 else failedConsecutiveRotations++;
-                if (i == 3) i = 0;
                 k++;
             } while (failedConsecutiveRotations < 3 && k < MaxRotationsForOBB);
             return minOBB;
@@ -683,9 +684,7 @@ namespace TVGL
                 UpdateLimitsAndBox(v, v.Z, ref zMin, pointsOnBox[4], true);
                 UpdateLimitsAndBox(v, v.Z, ref zMax, pointsOnBox[5], false);
             }
-            return new BoundingBox<T>(new[] { xMax - xMin, yMax - yMin, zMax - zMin },
-                new[] { Vector3.UnitX, Vector3.UnitY, Vector3.UnitZ },
-                pointsOnBox);
+            return new BoundingBox<T>(xMin, yMin, zMin, xMax, yMax, zMax, pointsOnBox);
         }
 
 
@@ -717,8 +716,7 @@ namespace TVGL
                     UpdateLimitsAndBox(v, v.Z, ref zMax, pointsOnBox[5], false);
                 }
             }
-            return new BoundingBox<Vertex>(new[] { xMax - xMin, yMax - yMin, zMax - zMin },
-                new[] { Vector3.UnitX, Vector3.UnitY, Vector3.UnitZ },
+            return new BoundingBox<Vertex>(xMin, yMin, zMin, xMax ,yMax, zMax,
                 pointsOnBox);
         }
 
@@ -779,7 +777,7 @@ namespace TVGL
             {
                 //Console.WriteLine("Volume should never be negligible, unless the input data is bad");
                 return null;
-            }             
+            }
 
             IEnumerable<T>[] verticesOnFaces = new IEnumerable<T>[6];
             verticesOnFaces[0] = bottomVertices;
@@ -796,8 +794,8 @@ namespace TVGL
             verticesOnFaces[4] = boundingRectangle.PointsOnSides[2].SelectMany(p => pointsDict[p]);
             verticesOnFaces[5] = boundingRectangle.PointsOnSides[3].SelectMany(p => pointsDict[p]);
             //}
-            return new BoundingBox<T>(new[] { depth, boundingRectangle.Length1, boundingRectangle.Length2 },
-                new[] { direction1, direction2, direction3 }, verticesOnFaces);
+            return new BoundingBox<T>([ depth*direction1, boundingRectangle.Length1*direction2,
+                boundingRectangle.Length2*direction3 ], verticesOnFaces);
         }
 
         #endregion

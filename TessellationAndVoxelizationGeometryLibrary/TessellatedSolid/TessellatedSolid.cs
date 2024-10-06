@@ -616,6 +616,7 @@ namespace TVGL
                 }
             }
             TessellationInspectAndRepair.CompleteBuildOptions(this, buildOptions, out _, out _, out _);
+            DefineAxisAlignedBoundingBoxAndTolerance();
         }
 
         /// <summary>
@@ -1379,9 +1380,8 @@ namespace TVGL
         /// <returns>TessellatedSolid.</returns>
         public TessellatedSolid SetToOriginAndSquareToNewSolid(out BoundingBox originalBoundingBox)
         {
-            originalBoundingBox = this.OrientedBoundingBox();
-            Matrix4x4.Invert(originalBoundingBox.Transform, out var transform);
-            return (TessellatedSolid)TransformToNewSolid(transform);
+            originalBoundingBox = this.FindMinimumBoundingBox();
+            return (TessellatedSolid)TransformToNewSolid(originalBoundingBox.TransformToOrigin);
         }
         /// <summary>
         /// Translates and Squares Tesselated Solid based on its oriented bounding box.
@@ -1390,9 +1390,8 @@ namespace TVGL
         /// <param name="originalBoundingBox">The original bounding box.</param>
         public void SetToOriginAndSquare(out BoundingBox originalBoundingBox)
         {
-            originalBoundingBox = this.OrientedBoundingBox();
-            Matrix4x4.Invert(originalBoundingBox.Transform, out var transform);
-            Transform(transform);
+            originalBoundingBox = this.FindMinimumBoundingBox();
+            Transform(originalBoundingBox.TransformToOrigin);
         }
 
         /// <summary>

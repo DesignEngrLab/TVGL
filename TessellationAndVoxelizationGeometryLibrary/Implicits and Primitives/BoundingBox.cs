@@ -29,22 +29,13 @@ namespace TVGL
     public class BoundingBox<T> : BoundingBox where T : IVector3D
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="BoundingBox{T}"/> class.
-        /// </summary>
-        /// <param name="dimensions">The dimensions.</param>
-        /// <param name="transform">The transform.</param>
-        public BoundingBox(double[] dimensions, Matrix4x4 transform) : base(dimensions, transform)
-        {
-        }
-
-        /// <summary>
         /// Initializes a new instance of the <see cref="BoundingBox{T}" /> class.
         /// </summary>
         /// <param name="dimensions">The dimensions.</param>
-        /// <param name="directions">The directions.</param>
+        /// <param name="vectors">The directions.</param>
         /// <param name="pointsOnFaces">The points on faces.</param>
-        public BoundingBox(double[] dimensions, Vector3[] directions, IList<IEnumerable<T>> pointsOnFaces)
-    : this(dimensions, directions, pointsOnFaces[0].First(), pointsOnFaces[2].First(),
+        public BoundingBox(Vector3[] vectors, IList<IEnumerable<T>> pointsOnFaces)
+    : this(vectors, pointsOnFaces[0].First(), pointsOnFaces[2].First(),
          pointsOnFaces[4].First())
         {
             PointsOnFaces = pointsOnFaces.Select(pof => pof.ToArray()).ToArray();
@@ -53,19 +44,27 @@ namespace TVGL
         /// Initializes a new instance of the <see cref="BoundingBox{T}"/> class.
         /// </summary>
         /// <param name="dimensions">The dimensions.</param>
-        /// <param name="directions">The directions.</param>
+        /// <param name="vectors">The directions.</param>
         /// <param name="minPointOnDirection0">The minimum point on direction0.</param>
         /// <param name="minPointOnDirection1">The minimum point on direction1.</param>
         /// <param name="minPointOnDirection2">The minimum point on direction2.</param>
-        public BoundingBox(double[] dimensions, Vector3[] directions, T minPointOnDirection0,
+        public BoundingBox(Vector3[] vectors, T minPointOnDirection0,
         T minPointOnDirection1, T minPointOnDirection2)
-        : base(dimensions, directions,
-             MiscFunctions.PointCommonToThreePlanes(directions[0].Normalize(),
-                 minPointOnDirection0.Dot(directions[0].Normalize()), directions[1].Normalize(),
-                 minPointOnDirection1.Dot(directions[1].Normalize()), directions[2].Normalize(),
-                 minPointOnDirection2.Dot(directions[2].Normalize())))
+        : base(vectors,
+             MiscFunctions.PointCommonToThreePlanes(vectors[0].Normalize(),
+                 minPointOnDirection0.Dot(vectors[0].Normalize()), vectors[1].Normalize(),
+                 minPointOnDirection1.Dot(vectors[1].Normalize()), vectors[2].Normalize(),
+                 minPointOnDirection2.Dot(vectors[2].Normalize())))
         { }
 
+        public BoundingBox(Vector3[] vectors, Vector3 translation)
+        : base(vectors, translation) { }
+
+        public BoundingBox(double minX, double minY, double minZ, double maxX, double maxY, double maxZ, List<T>[] pointsOnBox)
+            : base(minX, minY, minZ, maxX, maxY, maxZ)
+        {
+            PointsOnFaces = pointsOnBox.Select(pof => pof.ToArray()).ToArray();
+        }
 
         /// <summary>
         /// The PointsOnFaces is an array of 6 lists which are vertices of the tessellated solid
@@ -83,7 +82,7 @@ namespace TVGL
         /// <returns>BoundingBox.</returns>
         public override BoundingBox Copy()
         {
-            var copiedBB = new BoundingBox<T>(this.Dimensions.ToArray(), this.Transform);
+            var copiedBB = new BoundingBox<T>(this.Vectors.ToArray(), this.TranslationFromOrigin);
             if (PointsOnFaces != null)
                 copiedBB.PointsOnFaces = new T[][]
                 {
@@ -101,56 +100,58 @@ namespace TVGL
     /// <summary>
     /// The BoundingBox is a simple class for representing an arbitrarily oriented box
     /// or 3D prismatic rectangle. It is defined by 1) the Matrix4x4 transform which includes the
-    /// rotation and translation from the gloval frame, 2) the dimension of the box at this coordinate
+    /// rotation and translation from the global frame, 2) the dimension of the box at this coordinate
     /// frame (the box is only in the positive octant of this local frame), 3) (optional) any points
     /// of the enclosing solid that touch the box.
     /// </summary>
     public class BoundingBox
     {
         #region Constructors
-        /// <summary>
-        /// Initializes a new instance of the <see cref="BoundingBox" /> class.
-        /// </summary>
-        /// <param name="dimensions">The dimensions.</param>
-        /// <param name="directions">The directions.</param>
-        /// <param name="translationFromOrigin">The translation to the lowest corner from the  origin.</param>
-        public BoundingBox(double[] dimensions, Vector3[] directions, Vector3 translationFromOrigin)
-          : this(dimensions, new Matrix4x4(directions[0].Normalize(), directions[1].Normalize(),
-              directions[2].Normalize(), translationFromOrigin))
-        { }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="BoundingBox" /> class.
-        /// </summary>
-        /// <param name="dimensions">The dimensions.</param>
-        /// <param name="transform">The transform.</param>
-        public BoundingBox(double[] dimensions, Matrix4x4 transform)
+        public BoundingBox(Vector3[] vectors, Vector3 translation)
         {
-            Dimensions = new Vector3(dimensions[0], dimensions[1], dimensions[2]);
-            Transform = transform;
+            Vectors = vectors;
+            TranslationFromOrigin = translation;
+            IsAxisAligned = vectors[0].IsAligned(Vector3.UnitX, dotAligned) &&
+                    vectors[1].IsAligned(Vector3.UnitY, dotAligned) &&
+                    vectors[2].IsAligned(Vector3.UnitZ, dotAligned);
         }
+        private const double dotAligned = 0.999; // about 2.5 degrees
 
-        public BoundingBox(Vector3 min, Vector3 max)
-        {
-            Dimensions = max - min;
-            Transform = new Matrix4x4(Vector3.UnitX, Vector3.UnitY, Vector3.UnitZ, min);
-        }
 
+        /// <summary>
+        /// Create a bounding box from a minimum and maximum point, which are the two extreme corners of the box.
+        /// The box is aligned with the global frame.
+        /// </summary>
+        /// <param name="min"></param>
+        /// <param name="max"></param>
+        public BoundingBox(Vector3 min, Vector3 max) : this(min.X, min.Y, min.Z, max.X, max.Y, max.Z) { }
+
+        /// <summary>
+        /// Create a bounding box from a minimum and maximum point, which are the two extreme corners of the box.
+        /// The box is aligned with the global frame.
+        /// </summary>
+        /// <param name="minX"></param>
+        /// <param name="minY"></param>
+        /// <param name="minZ"></param>
+        /// <param name="maxX"></param>
+        /// <param name="maxY"></param>
+        /// <param name="maxZ"></param>
         public BoundingBox(double minX, double minY, double minZ, double maxX, double maxY, double maxZ)
         {
-            Dimensions = new Vector3(maxX - minX, maxY - minY, maxZ - minZ);
-            Transform = new Matrix4x4(Vector3.UnitX, Vector3.UnitY, Vector3.UnitZ, new Vector3(minX, minY, minZ));
+            Vectors = [(maxX - minX) * Vector3.UnitX, (maxY - minY) * Vector3.UnitY, (maxZ - minZ) * Vector3.UnitZ];
+            TranslationFromOrigin = new Vector3(minX, minY, minZ);
+            IsAxisAligned = true;
         }
         #endregion Constructors
 
         #region Constructor Defined Fields
+        public Vector3[] Vectors { get; }
+        public Vector3 TranslationFromOrigin { get; }
+        public bool IsAxisAligned { get; }
+        #endregion
 
-        /// <summary>
-        /// The dimensions of the bounding box. The 3 values correspond to length of box in each of the
-        /// three directions.
-        /// </summary>
-        /// <value>The dimensions.</value>
-        public Vector3 Dimensions { get; set; }
+
+        #region Properties
         /// <summary>
         /// Gets the bounds. The 0-th Vector3 is the minX, minY, and minZ, the 1st is the maxX, maxY, and maxZ
         /// </summary>
@@ -159,20 +160,112 @@ namespace TVGL
         {
             get
             {
-                return new[] { TranslationFromOrigin, TranslationFromOrigin + Dimensions };
+                return _bounds ??= GetBoxBounds(Vectors, TranslationFromOrigin);
             }
         }
+        private Vector3[] _bounds;
+
+        public static Vector3[] GetBoxBounds(Vector3[] vectors, Vector3 origin)
+        {
+            var minX = origin.X;
+            var maxX = origin.X;
+            var minY = origin.Y;
+            var maxY = origin.Y;
+            var minZ = origin.Z;
+            var maxZ = origin.Z;
+            for (int i = 0; i < 3; i++)
+            {
+                if (vectors[i].X < 0) minX += vectors[i].X;
+                else maxX += vectors[i].X;
+                if (vectors[i].Y < 0) minY += vectors[i].Y;
+                else maxY += vectors[i].Y;
+                if (vectors[i].Z < 0) minZ += vectors[i].Z;
+                else maxZ += vectors[i].Z;
+            }
+            return [new Vector3(minX, minY, minZ), new Vector3(maxX, maxY, maxZ)];
+        }
+
+
+
+        /// <summary>
+        /// Gets the transformation from the global frame to this box. This is only a rotates and translates.
+        /// "From Origin" means from an axis algined box in the first octant with a corner at the origin
+        /// </summary>
+        /// <value>The transform.</value>
+        public Matrix4x4 TransformFromOrigin
+        {
+            get
+            {
+                if (_transformFromOrigin.IsNull())
+                    _transformFromOrigin = new Matrix4x4(Directions[0], Directions[1], Directions[2], TranslationFromOrigin);
+                return _transformFromOrigin;
+            }
+        }
+        private Matrix4x4 _transformFromOrigin = Matrix4x4.Null;
+
+        /// <summary>
+        /// Gets the transformation from this box to the global frame. This is only a rotate and translate.
+        /// </summary>
+        /// <value>The transform.</value>
+        public Matrix4x4 TransformToOrigin
+        {
+            get
+            {
+                if (_transformToOrign.IsNull())
+                    _transformToOrign = new Matrix4x4(Directions[0].X, Directions[1].X, Directions[2].X,
+                        Directions[0].Y, Directions[1].Y, Directions[2].Y,
+                        Directions[0].Z, Directions[1].Z, Directions[2].Z,
+                        -TranslationFromOrigin.Dot(Directions[0]),
+                        -TranslationFromOrigin.Dot(Directions[1]),
+                        -TranslationFromOrigin.Dot(Directions[2]));
+                return _transformToOrign;
+            }
+        }
+        private Matrix4x4 _transformToOrign = Matrix4x4.Null;
 
         /// <summary>
         /// Gets the transformation from the global frame to this box. This is only a rotate and translate. Along
         /// with the Dimensions, it fully defines the box
         /// </summary>
         /// <value>The transform.</value>
-        public Matrix4x4 Transform { get; private set; }
+        public Matrix4x4 TransformFromUnitBox
+        {
+            get
+            {
+                if (_transformFromUnitBox.IsNull())
+                    _transformFromUnitBox = new Matrix4x4(Vectors[0], Vectors[1], Vectors[2], TranslationFromOrigin);
+                return _transformFromUnitBox;
+            }
+        }
+        private Matrix4x4 _transformFromUnitBox = Matrix4x4.Null;
 
-        #endregion Constructor Defined Fields
 
-        #region Properties
+        /// <summary>
+        /// Gets the transformation from the global frame to this box. This is only a rotate and translate. Along
+        /// with the Dimensions, it fully defines the box
+        /// </summary>
+        /// <value>The transform.</value>
+        public Matrix4x4 TransformToUnitBox
+        {
+            get
+            {
+                if (_transformToUnitBox.IsNull())
+                {
+                    var sX = 1 / Dimensions.X;
+                    var sY = 1 / Dimensions.Y;
+                    var sZ = 1 / Dimensions.Z;
+                    _transformToUnitBox = new Matrix4x4(sX * Directions[0].X, sY * Directions[1].X, sZ * Directions[2].X,
+                        sX * Directions[0].Y, sY * Directions[1].Y, sZ * Directions[2].Y,
+                        sX * Directions[0].Z, sY * Directions[1].Z, sZ * Directions[2].Z,
+                        -sX * TranslationFromOrigin.Dot(Directions[0]),
+                        -sY * TranslationFromOrigin.Dot(Directions[1]),
+                        -sZ * TranslationFromOrigin.Dot(Directions[2]));
+                }
+                return _transformToUnitBox;
+            }
+        }
+        private Matrix4x4 _transformToUnitBox = Matrix4x4.Null;
+
 
         //the following properties are set with a lazy private fields
         /// <summary>
@@ -187,37 +280,12 @@ namespace TVGL
         {
             get
             {
-                return _directions ??= new[]
-                    {Transform.XBasisVector, Transform.YBasisVector, Transform.ZBasisVector};
+                return _directions ??= [Vectors[0] / Dimensions[0], Vectors[1] / Dimensions[1], Vectors[2] / Dimensions[2]];
             }
         }
-
-        /// <summary>
-        /// The directions
-        /// </summary>
         private Vector3[] _directions;
 
-        /// <summary>
-        /// The minimum plane distance to the origin. This is the simplest way to locate the box in space.
-        /// These three values along with the direction vectors indicate the three planes of the lower
-        /// corner of the box. If you add dimensions to this, you would get the maximum plane distances
-        /// </summary>
-        /// <value>The translation from origin.</value>
-        [JsonIgnore]
-        public Vector3 TranslationFromOrigin
-        {
-            get
-            {
-                if (_translationFromOrigin.IsNull())
-                    _translationFromOrigin = Transform.TranslationAsVector;
-                return _translationFromOrigin;
-            }
-        }
 
-        /// <summary>
-        /// The translation from origin
-        /// </summary>
-        private Vector3 _translationFromOrigin = Vector3.Null;
 
         /// <summary>
         /// Corner vertices are ordered as follows, where - = low and + = high along directions 0, 1, and 2 respectively.
@@ -229,8 +297,7 @@ namespace TVGL
         {
             get
             {
-                if (_corners == null) MakeCornerPoints();
-                return _corners;
+                return _corners ??= MakeCornerPoints(Vectors, TranslationFromOrigin);
             }
         }
 
@@ -244,27 +311,28 @@ namespace TVGL
         /// The dimensions are also updated, in the event that the points of faces were altered (replaced or shifted).
         /// </summary>
         /// <returns>BoundingBox.</returns>
-        private void MakeCornerPoints()
+        public static Vector3[] MakeCornerPoints(Vector3[] vectors, Vector3 origin)
         {
             ///     Corner vertices are ordered as follows, where - = low and + = high along directions 0, 1, and 2 respectively.
             ///     [0] = ---, [1] = +-- , [2] = ++- , [3] = -+-, [4] = --+ , [5] = +-+, [6] = +++, [7] = -++
-            _corners = new Vector3[8];
+            var corners = new Vector3[8];
             // ---
-            _corners[0] = TranslationFromOrigin;
+            corners[0] = origin;
             // +--
-            _corners[1] = _corners[0] + Directions[0] * Dimensions[0];
+            corners[1] = corners[0] + vectors[0];
             // ++-
-            _corners[2] = _corners[1] + Directions[1] * Dimensions[1];
+            corners[2] = corners[1] + vectors[1];
             // -+-
-            _corners[3] = _corners[0] + Directions[1] * Dimensions[1];
+            corners[3] = corners[0] + vectors[1];
             // --+
-            _corners[4] = _corners[0] + Directions[2] * Dimensions[2];
+            corners[4] = corners[0] + vectors[2];
             // +-+
-            _corners[5] = _corners[1] + Directions[2] * Dimensions[2];
+            corners[5] = corners[1] + vectors[2];
             // +++
-            _corners[6] = _corners[2] + Directions[2] * Dimensions[2];
+            corners[6] = corners[2] + vectors[2];
             // -++
-            _corners[7] = _corners[3] + Directions[2] * Dimensions[2];
+            corners[7] = corners[3] + vectors[2];
+            return corners;
         }
 
         /// <summary>
@@ -277,22 +345,29 @@ namespace TVGL
             get
             {
                 if (_center.IsNull())
-                {
-                    // since the transform would change 0,0,0 into the bottom corner
-                    // it would also change Dimensions into the opposite corner.
-                    // there the center can be found by transforming half the dimensions
-                    _center = (0.5 * new Vector3(Dimensions)).Multiply(Transform);
-                }
+                    _center = TranslationFromOrigin + 0.5 * (Vectors[0] + Vectors[1] + Vectors[2]);
                 return _center;
             }
-            set => _center = value;
         }
-
-        /// <summary>
-        /// The center
-        /// </summary>
         private Vector3 _center = Vector3.Null;
 
+
+        /// <summary>
+        /// The dimensions of the bounding box. The 3 values correspond to length of box in each of the
+        /// three directions.
+        /// </summary>
+        /// <value>The dimensions.</value>
+        public Vector3 Dimensions
+        {
+            get
+            {
+                if (_dimensions.IsNull())
+                    _dimensions = new Vector3(Vectors[0].Length(), Vectors[1].Length(), Vectors[2].Length());
+                return _dimensions;
+
+            }
+        }
+        private Vector3 _dimensions = Vector3.Null;
         /// <summary>
         /// The volume of the bounding box.
         /// </summary>
@@ -348,111 +423,112 @@ namespace TVGL
         private TessellatedSolid _tessellatedSolid;
 
         /// <summary>
-        /// The direction indices sorted by the dimensions from smallest to greatest.
+        /// The direction indices sorted by the dimensions from shortest to longest.
         /// </summary>
         /// <value>The length of the sorted direction indices by.</value>
         [JsonIgnore]
-        public IList<int> SortedDirectionIndicesByLength
-        {
-            get
-            {
-                if (_sortedDirectionIndicesByLength == null)
-                    SetSortedDirections();
-                return _sortedDirectionIndicesByLength;
-            }
-        }
+        public int[] SortedDirectionIndicesShortToLong =>
+            _sortedDirectionIndicesShortToLong ??= SortDirectionsShortToLong(Dimensions);
+        private int[] _sortedDirectionIndicesShortToLong;
 
         /// <summary>
-        /// The sorted direction indices by length
+        /// Sorts the directions by the distance along that direction. Smallest to largest.
         /// </summary>
-        private IList<int> _sortedDirectionIndicesByLength;
-
+        public static int[] SortDirectionsShortToLong(Vector3 dimensions)
+        {
+            if (dimensions[0] <= dimensions[1])
+            {
+                if (dimensions[1] <= dimensions[2])
+                    return [0, 1, 2];
+                else if (dimensions[0] <= dimensions[2])
+                    return [0, 2, 1];
+                else return [2, 0, 1];
+            }
+            // then we know X>Y
+            else if (dimensions[1] > dimensions[2])
+                return [2, 1, 0];
+            else if (dimensions[0] <= dimensions[2])
+                return [1, 0, 2];
+            else return [1, 2, 0];
+        }
         /// <summary>
         /// The direction indices sorted by the dimensions from smallest to greatest.
         /// </summary>
         /// <value>The length of the sorted directions by.</value>
         [JsonIgnore]
-        public IList<Vector3> SortedDirectionsByLength
-        {
-            get
-            {
-                if (_sortedDirectionsByLength == null)
-                    SetSortedDirections();
-                return _sortedDirectionsByLength;
-            }
-        }
-
-        /// <summary>
-        /// The sorted directions by length
-        /// </summary>
-        private IList<Vector3> _sortedDirectionsByLength;
+        public Vector3[] SortedDirectionsShortToLong =>
+        [
+            Directions[SortedDirectionIndicesShortToLong[0]],
+            Directions[SortedDirectionIndicesShortToLong[1]],
+            Directions[SortedDirectionIndicesShortToLong[2]]
+        ];
 
         /// <summary>
         /// The sorted dimensions from smallest to greatest.
         /// </summary>
         /// <value>The sorted dimensions.</value>
         [JsonIgnore]
-        public double[] SortedDimensions
-        {
-            get
-            {
-                if (_sortedDimensions == null)
-                    SetSortedDirections();
-                return _sortedDimensions;
-            }
-        }
+        public double[] SortedDimensionsShortToLong =>
+            [
+            Dimensions[SortedDirectionIndicesShortToLong[0]],
+            Dimensions[SortedDirectionIndicesShortToLong[1]],
+            Dimensions[SortedDirectionIndicesShortToLong[2]]
+            ];
 
         /// <summary>
-        /// The sorted dimensions
+        /// The direction indices sorted by the dimensions from shortest to longest.
         /// </summary>
-        private double[] _sortedDimensions;
+        /// <value>The length of the sorted direction indices by.</value>
+        [JsonIgnore]
+        public int[] SortedDirectionIndicesLongToShort =>
+            _sortedDirectionIndicesLongToShort ??= SortDirectionsLongToShort(Dimensions);
+        private int[] _sortedDirectionIndicesLongToShort;
 
         /// <summary>
         /// Sorts the directions by the distance along that direction. Smallest to largest.
         /// </summary>
-        private void SetSortedDirections()
+        public static int[] SortDirectionsLongToShort(Vector3 dimensions)
         {
-            if (Dimensions[0] <= Dimensions[1])
+            if (dimensions[0] >= dimensions[1])
             {
-                if (Dimensions[1] <= Dimensions[2])
-                    _sortedDirectionIndicesByLength = [0, 1, 2];
-                else if (Dimensions[0] <= Dimensions[2])
-                    _sortedDirectionIndicesByLength = [0, 2, 1];
-                else
-                    _sortedDirectionIndicesByLength = [2, 0, 1];
+                if (dimensions[1] >= dimensions[2])
+                    return [0, 1, 2];
+                else if (dimensions[0] >= dimensions[2])
+                    return [0, 2, 1];
+                else return [2, 0, 1];
             }
-            // then X>Y
-            else if (Dimensions[1] > Dimensions[2])
-                _sortedDirectionIndicesByLength = [2, 1, 0];
-            else if (Dimensions[0] <= Dimensions[2])
-                _sortedDirectionIndicesByLength = [1, 0, 2];
-            else
-                _sortedDirectionIndicesByLength = [1, 2, 0];
-
-            _sortedDimensions = [
-                Dimensions[_sortedDirectionIndicesByLength[0]],
-                Dimensions[_sortedDirectionIndicesByLength[1]],
-                Dimensions[_sortedDirectionIndicesByLength[2]] ];
-            _sortedDirectionsByLength = [
-                Directions[_sortedDirectionIndicesByLength[0]],
-                Directions[_sortedDirectionIndicesByLength[1]],
-                Directions[_sortedDirectionIndicesByLength[2]] ];
+            // then we know X<Y
+            else if (dimensions[1] < dimensions[2])
+                return [2, 1, 0];
+            else if (dimensions[0] >= dimensions[2])
+                return [1, 0, 2];
+            else return [1, 2, 0];
         }
+        /// <summary>
+        /// The direction indices sorted by the dimensions from smallest to greatest.
+        /// </summary>
+        /// <value>The length of the sorted directions by.</value>
+        [JsonIgnore]
+        public Vector3[] SortedDirectionsLongToShort =>
+        [
+            Directions[SortedDirectionIndicesLongToShort[0]],
+            Directions[SortedDirectionIndicesLongToShort[1]],
+            Directions[SortedDirectionIndicesLongToShort[2]]
+        ];
 
         /// <summary>
-        /// Resets the lazy fields.
+        /// The sorted dimensions from smallest to greatest.
         /// </summary>
-        private void ResetLazyFields()
-        {
-            _center = Vector3.Null;
-            _corners = null;
-            _directions = null;
-            _translationFromOrigin = Vector3.Null;
-            _sortedDimensions = null;
-            _sortedDirectionIndicesByLength = null;
-            _sortedDirectionsByLength = null;
-            _tessellatedSolid = null;
-        }
+        /// <value>The sorted dimensions.</value>
+        [JsonIgnore]
+        public double[] SortedDimensionsLongToShort =>
+            [
+            Dimensions[SortedDirectionIndicesLongToShort[0]],
+            Dimensions[SortedDirectionIndicesLongToShort[1]],
+            Dimensions[SortedDirectionIndicesLongToShort[2]]
+            ];
+
+
 
         #endregion Properties
 
@@ -462,53 +538,10 @@ namespace TVGL
         /// <returns>BoundingBox.</returns>
         public virtual BoundingBox Copy()
         {
-            return new BoundingBox(this.Dimensions.ToArray(), this.Transform);
+            return new BoundingBox(Vectors.ToArray(), TranslationFromOrigin);
         }
 
-        /// <summary>
-        /// The small angle
-        /// </summary>
-        private const double smallAngle = 0.0038;  // current value is one minus cosine of 5 Degrees
 
-        /// <summary>
-        /// Moves a face outward by the provided distance (or inward if distance is negative).
-        /// This does not alter the bounding box, but returns a new one.
-        /// </summary>
-        /// <param name="direction">The direction vector corresponding to the face normal (this must be within 5 degrees or it won't apply).</param>
-        /// <param name="distance">The distance to move the face by (negative will move the face inward).</param>
-        /// <returns>BoundingBox.</returns>
-        public BoundingBox MoveFaceOutwardToNewSolid(Vector3 direction, double distance)
-        {
-            var copy = this.Copy();
-            copy.MoveFaceOutward(direction, distance);
-            return copy;
-        }
-
-        /// <summary>
-        /// Moves the face outward by the provided distance (or inward if distance is negative).
-        /// </summary>
-        /// <param name="direction">The direction vector corresponding to the face normal (this must be within 5 degrees or it won't apply).</param>
-        /// <param name="distance">The distance to move the face by (negative will move the face inward).</param>
-        public void MoveFaceOutward(Vector3 direction, double distance)
-        {
-            var cartesian = MiscFunctions.SnapDirectionToCartesian(direction, out _);
-            MoveFaceOutward(cartesian, distance);
-        }
-
-        /// <summary>
-        /// Moves a face outward by the provided distance (or inward if distance is negative).
-        /// This does not alter the bounding box, but returns a new one.
-        /// </summary>
-        /// <param name="directionIndex">Index of the direction.</param>
-        /// <param name="forward">if set to <c>true</c> [forward].</param>
-        /// <param name="distance">The distance to move the face by (negative will move the face inward).</param>
-        /// <returns>BoundingBox.</returns>
-        public BoundingBox MoveFaceOutwardToNewSolid(int directionIndex, bool forward, double distance)
-        {
-            var copy = this.Copy();
-            copy.MoveFaceOutward(directionIndex, forward, distance);
-            return copy;
-        }
 
         /// <summary>
         /// Moves the face outward by the provided distance (or inward if distance is negative).
@@ -516,23 +549,19 @@ namespace TVGL
         /// <param name="directionIndex">Index of the direction.</param>
         /// <param name="forward">if set to <c>true</c> [forward].</param>
         /// <param name="distance">The distance to move the face by (negative will move the face inward).</param>
-        public void MoveFaceOutward(int directionIndex, bool forward, double distance)
+        public BoundingBox MoveFaceOutward(int directionIndex, bool forward, double distance)
         {
-            //The bounding box is oriented from its origin (TranslationFromOrigin) outward
-            //along the given directions. When offsetting along a direction, just make that dimension bigger.
-            //When offsetting in the reverse of a direction, make the dimension bigger and then shift the origin.
-            if (distance.IsNegligible()) return;
-            var delta = new Vector3(directionIndex == 0 ? distance : 0,
-                                    directionIndex == 1 ? distance : 0,
-                                    directionIndex == 2 ? distance : 0);
-            Dimensions += delta;
-            if (!forward)
+            var newVectors = new Vector3[3];
+            for (int i = 0; i < 3; i++)
             {
-                var translate = TranslationFromOrigin - delta;
-                Transform = new Matrix4x4(Transform.XBasisVector, Transform.YBasisVector,
-                    Transform.ZBasisVector, translate);
+                if (i == directionIndex)
+                    newVectors[i] = Vectors[i] + distance * Directions[i];
+                else
+                    newVectors[i] = Vectors[i];
             }
-            ResetLazyFields();
+            var newOrigin = forward ? TranslationFromOrigin :
+                TranslationFromOrigin - distance * Directions[directionIndex];
+            return new BoundingBox(newVectors, newOrigin);
         }
         /// <summary>
         /// Moves the face outward by the provided distance (or inward if distance is negative).
@@ -540,10 +569,10 @@ namespace TVGL
         /// <param name="direction">the cartesian direction to move</param>
         /// <param name="distance">The distance to move the face by (negative will move the face inward).</param>
 
-        public void MoveFaceOutward(CartesianDirections direction, double distance)
+        public BoundingBox MoveFaceOutward(CartesianDirections direction, double distance)
         {
             var intDir = (int)direction;
-            MoveFaceOutward(Math.Abs(intDir) - 1, intDir > 0, distance);
+            return MoveFaceOutward(Math.Abs(intDir) - 1, intDir > 0, distance);
         }
 
         /// <summary>
@@ -605,69 +634,26 @@ namespace TVGL
 
             return true;
         }
-        public double MinX
-        {
-            get
-            {
-                if (Transform.XBasisVector == Vector3.UnitX)
-                    return TranslationFromOrigin.X;
-                else throw new NotImplementedException();
-            }
-        }
-        public double MaxX
-        {
-            get
-            {
-                if (Transform.XBasisVector == Vector3.UnitX)
-                    return Dimensions.X + TranslationFromOrigin.X;
-                else throw new NotImplementedException();
-            }
-        }
-        public double MinY
-        {
-            get
-            {
-                if (Transform.YBasisVector == Vector3.UnitY)
-                    return TranslationFromOrigin.Y;
-                else throw new NotImplementedException();
-            }
-        }
-        public double MaxY
-        {
-            get
-            {
-                if (Transform.YBasisVector == Vector3.UnitY)
-                    return Dimensions.Y + TranslationFromOrigin.Y;
-                else throw new NotImplementedException();
-            }
-        }
-        public double MinZ
-        {
-            get
-            {
-                if (Transform.ZBasisVector == Vector3.UnitZ)
-                    return TranslationFromOrigin.Z;
-                else throw new NotImplementedException();
-            }
-        }
-        public double MaxZ
-        {
-            get
-            {
-                if (Transform.ZBasisVector == Vector3.UnitZ)
-                    return Dimensions.Z + TranslationFromOrigin.Z;
-                else throw new NotImplementedException();
-            }
-        }
 
         public bool Intersects(BoundingBox other)
         {
-            return MinX < other.MaxX &&
-                MaxX > other.MinX &&
-                MinY < other.MaxY &&
-                MaxY > other.MinY &&
-                MinZ < other.MaxZ &&
-                MaxZ > other.MinZ;
+            if (IsAxisAligned && other.IsAxisAligned)
+                return Bounds[0].X < other.Bounds[1].X &&
+                    Bounds[1].X > other.Bounds[0].X &&
+                    Bounds[0].Y < other.Bounds[1].Y &&
+                    Bounds[1].Y > other.Bounds[0].Y &&
+                    Bounds[0].Z < other.Bounds[1].Z &&
+                    Bounds[1].Z > other.Bounds[0].Z;
+            else
+            {
+                var corners = other.Corners;
+                for (int i = 0; i < 8; i++)
+                    if (IsInside(corners[i])) return true;
+                corners = Corners;
+                for (int i = 0; i < 8; i++)
+                    if (other.IsInside(corners[i])) return true;
+                return false;
+            }
         }
     }
 }
