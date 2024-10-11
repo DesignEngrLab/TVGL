@@ -33,6 +33,7 @@
 *************************************************************************/
 
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using TVGL;
@@ -722,17 +723,18 @@ namespace StarMathLib
         internal static ComplexNumber[][] GetEigenVectors4(double M11, double M12, double M13, double M14,
             double M21, double M22, double M23, double M24,
             double M31, double M32, double M33, double M34,
-            double M41, double M42, double M43, double M44, ComplexNumber[] eigenValues)
+            double M41, double M42, double M43, double M44, IEnumerable<ComplexNumber> eigenValues)
         {
             var eigenVectors = new ComplexNumber[4][];
-            for (var i = 0; i < 4; i++)
-                eigenVectors[i] = GetEigenVector4(M11, M12, M13, M14, M21, M22, M23, M24, M31, M32, M33, M34, M41, M42, M43, M44,
-                     eigenValues[i]);
+            var i = 0;
+            foreach (var eV in eigenValues)
+                eigenVectors[i++] = GetEigenVector4(M11, M12, M13, M14, M21, M22, M23, M24, M31, M32, M33, M34, M41, M42, M43, M44,
+                     eV);
             return eigenVectors;
         }
 
         internal static ComplexNumber[] GetEigenVector4(double M11, double M12, double M13, double M14, double M21, double M22, double M23,
-            double M24, double M31, double M32, double M33, double M34, double M41, double M42, double M43, double M44, 
+            double M24, double M31, double M32, double M33, double M34, double M41, double M42, double M43, double M44,
             ComplexNumber lambda)
         {
             var y11 = M11 - lambda;
@@ -791,11 +793,12 @@ namespace StarMathLib
             return PolynomialSolve.Cubic(a, b, c, d).ToArray();
         }
         internal static ComplexNumber[][] GetEigenVectors3(double x11, double x12, double x13,
-            double x21, double x22, double x23, double x31, double x32, double x33, ComplexNumber[] eigenValues)
+            double x21, double x22, double x23, double x31, double x32, double x33, IEnumerable<ComplexNumber> eigenValues)
         {
             var eigenVectors = new ComplexNumber[3][];
-            for (var i = 0; i < 3; i++)
-                eigenVectors[i] = GetEigenVector3(x11, x12, x13, x21, x22, x23, x31, x32, x33, eigenValues[i]);
+            var i = 0;
+            foreach (var eValue in eigenValues)
+                eigenVectors[i++] = GetEigenVector3(x11, x12, x13, x21, x22, x23, x31, x32, x33, eValue);
             return eigenVectors;
         }
 

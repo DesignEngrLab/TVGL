@@ -797,7 +797,7 @@ namespace TVGL
                 realEigenValues.Add(eigValues[2].Real);
             return realEigenValues;
         }
-        public static ComplexNumber[][] GetEigenVectors(this Matrix3x3 A, ComplexNumber[] eigenValues)
+        public static ComplexNumber[][] GetEigenVectors(this Matrix3x3 A, IEnumerable<ComplexNumber> eigenValues)
         {
             return StarMath.GetEigenVectors3(A.M11, A.M12, A.M13,
                 A.M21, A.M22, A.M23,
@@ -843,7 +843,7 @@ namespace TVGL
                 realEigenValues.Add(eigValues[3].Real);
             return realEigenValues;
         }
-        public static ComplexNumber[][] GetEigenVectors(this Matrix4x4 A, ComplexNumber[] eigenValues)
+        public static ComplexNumber[][] GetEigenVectors(this Matrix4x4 A, IEnumerable<ComplexNumber> eigenValues)
         {
             return StarMath.GetEigenVectors4(A.M11, A.M12, A.M13, A.M14,
                 A.M21, A.M22, A.M23, A.M24,
