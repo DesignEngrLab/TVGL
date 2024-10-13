@@ -29,7 +29,7 @@ namespace TVGLUnitTestsAndBenchmarking
 
             #region All Vector2 Methods
             v2_1 = new Vector2();
-            Vector2 nullVector2 = Vector2.Null;
+            Vector2 nullVector2 = Vector2.NaN;
             Vector2 zeroVector2 = Vector2.Zero;
             Vector2 oneVector2 = Vector2.One;
             Vector2 unitVector2X = Vector2.UnitX;

@@ -265,7 +265,7 @@ namespace TVGL
                     break;
                 var newPoint = (polygon[index] + polygon[prevIndex]) / 2; //find midpoint on this short line and use as new location for previous point
                 polygon[prevIndex] = newPoint;
-                polygon[index] = Vector2.Null; // remove this point
+                polygon[index] = Vector2.NaN; // remove this point
                 edgeLengthQueue.UpdatePriority(prevIndex, (newPoint - polygon[prevprevIndex]).LengthSquared());  // update priorities of previous-previous line
                 edgeLengthQueue.UpdatePriority(nextIndex, (polygon[nextIndex] - newPoint).LengthSquared()); // and the next line
             }
@@ -451,7 +451,7 @@ namespace TVGL
                     continue;
                 var newPoint = (polygons[polygonIndex][cornerIndex] + polygons[polygonIndex][prevIndex]) / 2; //find midpoint on this short line and use as new location for previous point
                 polygons[polygonIndex][prevIndex] = newPoint;
-                polygons[polygonIndex][cornerIndex] = Vector2.Null; // remove this point
+                polygons[polygonIndex][cornerIndex] = Vector2.NaN; // remove this point
                 edgeLengthQueue.UpdatePriority(prevIndex, (newPoint - polygons[polygonIndex][prevprevIndex]).LengthSquared());  // update priorities of previous-previous line
                 edgeLengthQueue.UpdatePriority(nextIndex, (polygons[polygonIndex][nextIndex] - newPoint).LengthSquared()); // and the next line
             }
@@ -633,7 +633,7 @@ namespace TVGL
                     deltaArea -= sign * smallestArea;
                     //  set the corner to null. we'll remove null corners at the end. for now, just set to null.
                     // this is for speed and keep the indices correct in the various collections
-                    polygon[index] = Vector2.Null;
+                    polygon[index] = Vector2.NaN;
                     // find the four neighbors - two on each side. the closest two (prevIndex and nextIndex) need to be updated
                     // which requires each other (now that the corner in question has been removed) and their neighbors on the other side
                     // (nextnextIndex and prevprevIndex)
@@ -783,7 +783,7 @@ namespace TVGL
                 var polygonIndex = 0;
                 // the index is from stringing together all the original polygons into one long array
                 while (cornerIndex >= polygons[polygonIndex].Count) cornerIndex -= polygons[polygonIndex++].Count;
-                polygons[polygonIndex][cornerIndex] = Vector2.Null;
+                polygons[polygonIndex][cornerIndex] = Vector2.NaN;
 
                 // find the four neighbors - two on each side. the closest two (prevIndex and nextIndex) need to be updated
                 // which requires each other (now that the corner in question has been removed) and their neighbors on the other side
@@ -795,8 +795,8 @@ namespace TVGL
                 // if the polygon has been reduced to 2 points, then we're going to delete it
                 if (nextnextIndex == prevIndex || nextIndex == prevprevIndex) // then reduced to two points.
                 {
-                    polygons[polygonIndex][nextIndex] = Vector2.Null;
-                    polygons[polygonIndex][nextnextIndex] = Vector2.Null;
+                    polygons[polygonIndex][nextIndex] = Vector2.NaN;
+                    polygons[polygonIndex][nextnextIndex] = Vector2.NaN;
                     numToRemove -= 2;
                 }
                 var polygonStartIndex = index - cornerIndex;

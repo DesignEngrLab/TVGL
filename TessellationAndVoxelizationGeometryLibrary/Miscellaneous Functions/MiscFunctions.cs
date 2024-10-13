@@ -1297,7 +1297,7 @@ namespace TVGL
         {
             t_a = double.NaN;
             t_b = double.NaN;
-            intersectionPoint = Vector2.Null;
+            intersectionPoint = Vector2.NaN;
             var aVector = aTo - aFrom; //vector along p-line
             var bVector = bTo - bFrom; //vector along q-line
             var vCross = aVector.Cross(bVector); //2D cross product, determines if parallel
@@ -1374,7 +1374,7 @@ namespace TVGL
             {
                 t_a = double.NaN;
                 t_b = double.NaN;
-                intersectionPoint = Vector2.Null;
+                intersectionPoint = Vector2.NaN;
                 return false;
             }
 
@@ -1387,7 +1387,7 @@ namespace TVGL
             {
                 t_a = double.NaN;
                 t_b = double.NaN;
-                intersectionPoint = Vector2.Null;
+                intersectionPoint = Vector2.NaN;
                 return false;
             }
             t_a = dotFromA / (dotFromA + dotToA);
@@ -1413,7 +1413,7 @@ namespace TVGL
         public static bool SegmentLine2DIntersection(Vector2 aFrom, Vector2 aTo, Vector2 bAnchor, Vector2 bDirection,
             out Vector2 intersectionPoint, bool considerCollinearOverlapAsIntersect = false)
         {
-            intersectionPoint = Vector2.Null;
+            intersectionPoint = Vector2.NaN;
             // okay, so bounding boxes overlap
             //first a quick check to see if points are the same
             if (aFrom.IsAligned(bAnchor))
@@ -1472,7 +1472,7 @@ namespace TVGL
             var vCross = aDirection.Cross(bDirection); //2D cross product, determines if parallel
 
             if (vCross.IsNegligible(Constants.BaseTolerance))
-                return Vector2.Null;
+                return Vector2.NaN;
 
             var oneOverdeterminnant = 1.0 / aDirection.Cross(bDirection); //2D cross product, determines if parallel
             var t_a = oneOverdeterminnant * (bDirection.Y * (bAnchor.X - aAnchor.X) - bDirection.X * (bAnchor.Y - aAnchor.Y));

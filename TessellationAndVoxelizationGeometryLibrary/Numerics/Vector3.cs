@@ -17,7 +17,6 @@ using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Text;
 
-using Newtonsoft.Json;
 
 namespace TVGL  // COMMENTEDCHANGE namespace System.Numerics
 {

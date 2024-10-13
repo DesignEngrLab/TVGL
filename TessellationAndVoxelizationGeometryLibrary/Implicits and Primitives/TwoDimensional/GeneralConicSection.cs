@@ -278,7 +278,7 @@ namespace TVGL
                 conicJ = new GeneralConicSection(aj, bj, cj, rj, sj, true);
             else conicJ = new GeneralConicSection(aj / tj, bj / tj, cj / tj, rj / tj, sj / tj, false);
             var minDistance = double.PositiveInfinity;
-            pointOnCurve = Vector2.Null;
+            pointOnCurve = Vector2.NaN;
             foreach (var p in IntersectingConics(conic, conicJ))
             {
                 var distance = (new Vector2(p.X - point[0], p.Y - point[1])).LengthSquared();

@@ -58,7 +58,7 @@ namespace TVGL
         /// <summary>
         /// The vector
         /// </summary>
-        private Vector2 _vector = Vector2.Null;
+        private Vector2 _vector = Vector2.NaN;
 
         /// <summary>
         /// Gets the center.
@@ -77,7 +77,7 @@ namespace TVGL
         /// <summary>
         /// The center
         /// </summary>
-        private Vector2 _center = Vector2.Null;
+        private Vector2 _center = Vector2.NaN;
 
         /// <summary>
         /// Gets the y intercept.
@@ -335,10 +335,10 @@ namespace TVGL
         /// </summary>
         internal void Reset()
         {
-            _center = Vector2.Null;
+            _center = Vector2.NaN;
             _horizontalSlope = double.NaN;
             _length = double.NaN;
-            _vector = Vector2.Null;
+            _vector = Vector2.NaN;
             _verticalSlope = double.NaN;
             _xIntercept = double.NaN;
             _yIntercept = double.NaN;

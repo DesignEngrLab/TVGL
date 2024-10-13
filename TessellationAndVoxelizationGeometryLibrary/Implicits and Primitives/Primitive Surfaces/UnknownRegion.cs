@@ -56,7 +56,7 @@ namespace TVGL
         /// <returns>Vector2.</returns>
         public override Vector2 TransformFrom3DTo2D(Vector3 point)
         {
-            return Vector2.Null;
+            return Vector2.NaN;
         }
 
         /// <summary>

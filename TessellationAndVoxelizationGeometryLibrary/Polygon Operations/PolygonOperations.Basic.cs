@@ -57,8 +57,8 @@ namespace TVGL
         {
             var perimeter = 0.0;
             var firstpass = true;
-            var firstPoint = Vector2.Null;
-            var prevPoint = Vector2.Null;
+            var firstPoint = Vector2.NaN;
+            var prevPoint = Vector2.NaN;
             foreach (var currentPt in polygon)
             {
                 if (firstpass)

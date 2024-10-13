@@ -970,7 +970,7 @@ namespace TVGL
                 var toDistance = distances[edge.To.IndexInList];
                 if ((fromDistance > planeDistance && toDistance < planeDistance) || (fromDistance < planeDistance && toDistance > planeDistance))
                 {
-                    Vector2 ip = Vector2.Null;
+                    Vector2 ip = Vector2.NaN;
                     if (intDir == 0)
                     {
                         var ip3D = MiscFunctions.PointOnXPlaneFromLineSegment(distanceToOrigin, edge.From.Coordinates, edge.To.Coordinates);

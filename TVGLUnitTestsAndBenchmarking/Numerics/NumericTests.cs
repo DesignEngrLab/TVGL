@@ -58,8 +58,8 @@ namespace TVGLUnitTestsAndBenchmarking
             {
                 var m = Matrix3x3.Null;
                 var mInv = Matrix3x3.Null;
-                var v1 = Vector2.Null;
-                var v2 = Vector2.Null;
+                var v1 = Vector2.NaN;
+                var v2 = Vector2.NaN;
                 do
                 {
                     m = new Matrix3x3(r100, r100, r100, r100, r100, r100);
@@ -77,8 +77,8 @@ namespace TVGLUnitTestsAndBenchmarking
             {
                 var m = Matrix3x3.Null;
                 var mInv = Matrix3x3.Null;
-                var v1 = Vector2.Null;
-                var v2 = Vector2.Null;
+                var v1 = Vector2.NaN;
+                var v2 = Vector2.NaN;
                 do
                 {
                     m = new Matrix3x3(r100, r100, r100, r100, r100, r100, r100, r100, r100);

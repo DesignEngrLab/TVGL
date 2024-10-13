@@ -16,15 +16,12 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using StarMathLib;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
-using System.Numerics;
 using System.Runtime.CompilerServices;
-using Newtonsoft.Json;
-using StarMathLib;
-using TVGL.threemfclasses;
 
 
 namespace TVGL

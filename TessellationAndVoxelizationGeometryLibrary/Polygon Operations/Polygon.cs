@@ -543,7 +543,7 @@ namespace TVGL
         /// <summary>
         /// The centroid
         /// </summary>
-        private Vector2 _centroid = Vector2.Null;
+        private Vector2 _centroid = Vector2.NaN;
 
         /// <summary>
         /// Calculates the centroid.
@@ -799,7 +799,7 @@ namespace TVGL
             area = double.NaN;
             pathArea = double.NaN;
             perimeter = double.NaN;
-            _centroid = Vector2.Null;
+            _centroid = Vector2.NaN;
         }
 
         /// <summary>

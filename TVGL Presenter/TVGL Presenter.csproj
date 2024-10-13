@@ -1,14 +1,14 @@
 <Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
 
 	<PropertyGroup>
-		<TargetFramework>net8.0-windows</TargetFramework>
+		<TargetFramework>net9.0-windows</TargetFramework>
 		<UseWPF>true</UseWPF>
 	</PropertyGroup>
 
 	<ItemGroup>
 		<ProjectReference Include="..\TessellationAndVoxelizationGeometryLibrary\TessellationAndVoxelizationGeometryLibrary.csproj" />
-		<PackageReference Include="OxyPlot.Wpf" Version="2.1.2" />
-		<PackageReference Include="HelixToolkit.SharpDX.Core.Wpf" Version="2.23.0" />
+		<PackageReference Include="OxyPlot.Wpf" Version="2.2.0" />
+		<PackageReference Include="HelixToolkit.SharpDX.Core.Wpf" Version="2.25.0" />
 	</ItemGroup>
 
 </Project>

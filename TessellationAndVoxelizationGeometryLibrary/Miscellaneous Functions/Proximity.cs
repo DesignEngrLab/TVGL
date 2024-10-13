@@ -236,7 +236,7 @@ namespace TVGL
                 pydxdx += piy * dixdix;
                 n++;
             }
-            if (n == 0) return Vector2.Null;
+            if (n == 0) return Vector2.NaN;
             if (n == 1) return new Vector2(pix, piy);
             var d1 = dydy;
             var d2 = dxdx;

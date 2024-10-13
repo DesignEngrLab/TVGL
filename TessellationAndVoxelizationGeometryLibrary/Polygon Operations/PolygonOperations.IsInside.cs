@@ -1002,7 +1002,7 @@ namespace TVGL
                 // the two lines do not touch since their bounding boxes do not overlap
                 return false;
             // okay, so bounding boxes DO overlap
-            var intersectionCoordinates = Vector2.Null;
+            var intersectionCoordinates = Vector2.NaN;
             var where = WhereIsIntersection.Intermediate;
 
             var lineACrossLineB = aVector.Cross(bVector); //2D cross product, determines if parallel

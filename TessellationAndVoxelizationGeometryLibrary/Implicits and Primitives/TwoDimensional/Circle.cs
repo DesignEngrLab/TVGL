@@ -99,9 +99,9 @@ namespace TVGL
             double Sxxx = 0.0, Sxxy = 0.0, Sxyy = 0.0, Syyy = 0.0;
             double xMin = double.PositiveInfinity, yMin = double.PositiveInfinity;
             double xMax = double.NegativeInfinity, yMax = double.NegativeInfinity;
-            var p1 = Vector2.Null;
-            var p2 = Vector2.Null;
-            var p3 = Vector2.Null;
+            var p1 = Vector2.NaN;
+            var p2 = Vector2.NaN;
+            var p3 = Vector2.NaN;
             foreach (var p in points)
             {
                 var x = p.X;
@@ -243,13 +243,13 @@ namespace TVGL
             if (centerDist.IsPracticallySame(Radius + other.Radius))
             {
                 point1 = Center + Radius * cVector;
-                point2 = Vector2.Null;
+                point2 = Vector2.NaN;
                 return true;
             }
             if (centerDist.IsNegligible() || centerDist > Radius + other.Radius)
             {
-                point1 = Vector2.Null;
-                point2 = Vector2.Null;
+                point1 = Vector2.NaN;
+                point2 = Vector2.NaN;
                 return false;
             }
             var dist2Chord = (centerDist * centerDist - other.RadiusSquared + RadiusSquared) / (2 * centerDist);
@@ -272,8 +272,8 @@ namespace TVGL
             var distToChordSqd = signedDistToChord*signedDistToChord;
             if (distToChordSqd > RadiusSquared)
             {
-                point1 = Vector2.Null;
-                point2 = Vector2.Null;
+                point1 = Vector2.NaN;
+                point2 = Vector2.NaN;
                 return false;
             }
             var chordCenter = Center + signedDistToChord * perpVector;
@@ -286,19 +286,19 @@ namespace TVGL
             var p2Outside = (point2 - from).Dot(lineUnitVector) < 0 || (point2 - to).Dot(lineUnitVector) > 0; //if point2 is not on the line segment (from, to)
             if (p1Outside&& p2Outside)
             {
-                point1 = Vector2.Null;
-                point2 = Vector2.Null;
+                point1 = Vector2.NaN;
+                point2 = Vector2.NaN;
                 return false;
             }
             if (p1Outside)
             {
                 point1 = point2;
-                point2 = Vector2.Null;
+                point2 = Vector2.NaN;
                 return true;
             }
             if (p2Outside)
             {
-                point2 = Vector2.Null;
+                point2 = Vector2.NaN;
                 return true;
             }
             return true;

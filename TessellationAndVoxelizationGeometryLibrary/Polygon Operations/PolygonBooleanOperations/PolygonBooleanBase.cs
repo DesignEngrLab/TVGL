@@ -219,7 +219,7 @@ namespace TVGL
                     if (knownWrongPoints != null && knownWrongPoints[currentEdge.FromPoint.IndexInList]) includesWrongPoints = true;
                     newPath.Add(currentEdge.FromPoint.Coordinates);
                     //newPathHash.Add(currentEdge.FromPoint.Coordinates);
-                    intersectionCoordinates = Vector2.Null; // this is set to null because its value is used in ClosestNextIntersectionOnThisEdge
+                    intersectionCoordinates = Vector2.NaN; // this is set to null because its value is used in ClosestNextIntersectionOnThisEdge
                                                             // when multiple intersections cross the edge. If we got through the first pass then there are no previous intersections on
                                                             // the edge that concern us. We want that function to report the first one for the edge
 //#if PRESENT
