@@ -241,7 +241,7 @@ namespace TVGL
         public override Vector3 GetNormalAtPoint(Vector3 point)
         {
             var d = (point - Center).Normalize();
-            if (isPositive.HasValue && !isPositive.Value) d = -d;
+            if (IsPositive.HasValue && !IsPositive.Value) d = -d;
             return d;
         }
 
@@ -253,7 +253,7 @@ namespace TVGL
         public override double DistanceToPoint(Vector3 point)
         {
             var d = (point - Center).Length() - Radius;
-            if (isPositive.HasValue && !isPositive.Value) d = -d;
+            if (IsPositive.HasValue && !IsPositive.Value) d = -d;
             return d;
         }
         /// <summary>
@@ -391,11 +391,12 @@ namespace TVGL
         /// <param name="isPositive">if set to <c>true</c> [is positive].</param>
         /// <param name="faces">The faces.</param>
         public Sphere(Vector3 center, double radius, bool isPositive, IEnumerable<TriangleFace> faces)
-            : base(faces)
         {
             Center = center;
             this.isPositive = isPositive;
             Radius = radius;
+
+            SetFacesAndVertices(faces);
         }
 
         /// <summary>
@@ -430,6 +431,8 @@ namespace TVGL
         /// </summary>
         /// <value>The radius.</value>
         public double Radius { get; set; }
+
+        public override string KeyString => "Sphere|" + Center.ToString() + "|" + Radius.ToString("F5") + "|" + GetCommonKeyDetails();
 
         #endregion
     }

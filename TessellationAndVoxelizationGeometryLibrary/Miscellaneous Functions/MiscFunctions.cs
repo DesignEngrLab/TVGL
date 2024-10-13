@@ -168,6 +168,38 @@ namespace TVGL
             return (minPoint, dotDistance);
         }
 
+        /// <summary>
+        /// Gets the min vertex distance along vector.
+        /// </summary>
+        /// <param name="vertices">The vertices.</param>
+        /// <param name="direction">The direction.</param>
+        /// <returns>A (T minPoint, double dotDistance) .</returns>
+        public static (T minPoint, double minDistance, T maxPoint, double maxDistance)
+            GetMinAndMaxAlongVector<T>(this IEnumerable<T> vertices, Vector3 direction)
+            where T : IVector3D
+        {
+            var minDistance = double.PositiveInfinity;
+            var maxDistance = double.NegativeInfinity;
+            T minPoint = default;
+            T maxPoint = default;
+            foreach (var vertex in vertices)
+            {
+                //Get distance along the search direction
+                var d = direction.X * vertex.X + direction.Y * vertex.Y + direction.Z * vertex.Z;
+                if (d < minDistance)
+                {
+                    minDistance = d;
+                    minPoint = vertex;
+                }
+                if (d > maxDistance)
+                {
+                    maxDistance = d;
+                    maxPoint = vertex;
+                }
+            }
+            return (minPoint, minDistance, maxPoint, maxDistance);
+        }
+
 
         /// <summary>
         /// Returns a list of sorted Vector2s along a set direction.
@@ -989,6 +1021,21 @@ namespace TVGL
         /// Converts the 2D coordinates into 3D locations in a plane defined by normal direction and distance.
         /// </summary>
         /// <param name="coordinates">The coordinates.</param>
+        /// <param name="normalDirection">The normal direction of the new plane.</param>
+        /// <param name="distanceAlongDirection">The distance of the plane from the origin.</param>
+        /// <returns>System.Collections.Generic.IEnumerable&lt;TVGL.Vector3&gt;.</returns>
+        public static Vector3 ConvertTo3DLocation(this Vector2 coordinate, Vector3 normalDirection,
+                    double distanceAlongDirection)
+        {
+            TransformToXYPlane(normalDirection, out var backTransform);
+            var transform = backTransform * Matrix4x4.CreateTranslation(normalDirection * distanceAlongDirection);
+            return ConvertTo3DLocation(coordinate, transform);
+        }
+
+        /// <summary>
+        /// Converts the 2D coordinates into 3D locations in a plane defined by normal direction and distance.
+        /// </summary>
+        /// <param name="coordinates">The coordinates.</param>
         /// <param name="transform">The transform matrix.</param>
         /// <returns>System.Collections.Generic.IEnumerable&lt;TVGL.Vector3&gt;.</returns>
         public static IEnumerable<Vector3> ConvertTo3DLocations(this IEnumerable<Vector2> coordinates, Matrix4x4 transform)
@@ -1045,19 +1092,43 @@ namespace TVGL
         /// <param name="backTransform">The back transform.</param>
         /// <param name="tolerance">This tolerance is used to snap to the cartesian direction if the dot product is within this value.</param>
         /// <returns>System.Vector2.</returns>
-        public static Matrix4x4 TransformToXYPlane(this Vector3 direction, out Matrix4x4 backTransform, double tolerance = Constants.BaseTolerance)
+        public static Matrix4x4 TransformToXYPlane(this Vector3 direction, out Matrix4x4 backTransform, double tolerance = Constants.DefaultEqualityTolerance)
         {
             var closestCartesianDirection = SnapDirectionToCartesian(direction, out var withinTolerance, tolerance);
             if (withinTolerance)
                 return TransformToXYPlane(closestCartesianDirection, out backTransform);
 
-            var zDir = direction.Normalize();
-            var xDir = zDir.GetPerpendicularDirection();
-            var yDir = zDir.Cross(xDir);
-            backTransform = new Matrix4x4(xDir, yDir, zDir, Vector3.Zero);
-            Matrix4x4.Invert(backTransform, out var forwardTransform);
-            return forwardTransform;
+            // this is the old approach that is more than twice as slow as the new one (64 ns vs 24ns)
+            //var zDir = direction.Normalize();
+            //var xDir = zDir.GetPerpendicularDirection();
+            //var yDir = zDir.Cross(xDir);
+            //backTransform = new Matrix4x4(xDir, yDir, zDir, Vector3.Zero);
+            var dirMagSquared = direction.LengthSquared();
+            if (dirMagSquared.IsPracticallySame(0.0))
+                throw new ArgumentException("The direction cannot be the zero vector.");
+            if (dirMagSquared.IsPracticallySame(1.0))
+            {
+                var g = Math.Sqrt(direction.X * direction.X + direction.Z * direction.Z);
+                var oneOverG = 1 / g;
+                var xOverG = direction.X * oneOverG;
+                var zOverG = direction.Z * oneOverG;
+                backTransform = new Matrix4x4(zOverG, 0, -xOverG, -xOverG * direction.Y, g, -zOverG * direction.Y, direction.X, direction.Y, direction.Z, 0, 0, 0);
+                return backTransform.Transpose();
+            }
+            else
+            {
+                var oneOverH = 1 / direction.Length();
+                var g = Math.Sqrt(direction.X * direction.X + direction.Z * direction.Z);
+                var oneOverG = 1 / g;
+
+                var xOverG = direction.X * oneOverG;
+                var zOverG = direction.Z * oneOverG;
+                var yOverH = direction.Y * oneOverH;
+                backTransform = new Matrix4x4(zOverG, 0, -xOverG, -xOverG * yOverH, g * oneOverH, -zOverG * yOverH, direction.X * oneOverH, yOverH, direction.Z * oneOverH, 0, 0, 0);
+                return backTransform.Transpose();
+            }
         }
+
 
         /// <summary>
         /// Create a transforms from normal direction for 2D xy plane.
@@ -1468,7 +1539,7 @@ namespace TVGL
         /// <returns>TVGL.Vector2.</returns>
         public static Vector2 LineLine2DIntersection(Vector2 aAnchor, Vector2 aDirection, Vector2 bAnchor, Vector2 bDirection)
         {
-            if (aAnchor.IsAligned(bAnchor, Constants.BaseTolerance)) return aAnchor;
+            if (aAnchor.IsPracticallySame(bAnchor, Constants.BaseTolerance)) return aAnchor;
             var vCross = aDirection.Cross(bDirection); //2D cross product, determines if parallel
 
             if (vCross.IsNegligible(Constants.BaseTolerance))
@@ -1684,11 +1755,8 @@ namespace TVGL
         {
             /* pointOnLine is found by setting the dot-product of the lineVector and the vector formed by (pointOnLine-p)
              * set equal to zero. This is really just solving to "t" the distance along the line from the lineRefPt. */
-            var t = (lineVector.X * (qPoint.X - lineRefPt.X) + lineVector.Y * (qPoint.Y - lineRefPt.Y) +
-                      lineVector.Z * (qPoint.Z - lineRefPt.Z))
-                     / (lineVector.X * lineVector.X + lineVector.Y * lineVector.Y + lineVector.Z * lineVector.Z);
-            pointOnLine = new Vector3(
-            lineRefPt.X + lineVector.X * t, lineRefPt.Y + lineVector.Y * t, lineRefPt.Z + lineVector.Z * t);
+            var t = lineVector.Dot(qPoint - lineRefPt) / lineVector.LengthSquared();
+            pointOnLine = lineRefPt + t * lineVector;
             return returnSquared ? qPoint.DistanceSquared(pointOnLine) : qPoint.Distance(pointOnLine);
         }
 
@@ -1705,9 +1773,8 @@ namespace TVGL
         {
             /* pointOnLine is found by setting the dot-product of the lineVector and the vector formed by (pointOnLine-p)
             * set equal to zero. This is really just solving to "t" the distance along the line from the lineRefPt. */
-            var t = (lineVector.X * (qPoint.X - lineRefPt.X) + lineVector.Y * (qPoint.Y - lineRefPt.Y))
-                    / (lineVector.X * lineVector.X + lineVector.Y * lineVector.Y);
-            pointOnLine = new Vector2(lineRefPt.X + lineVector.X * t, lineRefPt.Y + lineVector.Y * t);
+            var t = lineVector.Dot(qPoint - lineRefPt) / lineVector.LengthSquared();
+            pointOnLine = lineRefPt + t * lineVector;
             return qPoint.Distance(pointOnLine);
         }
 
@@ -1795,7 +1862,7 @@ namespace TVGL
         /// <param name="signedDistance">The signed distance.</param>
         /// <param name="onBoundaryIsInside">if set to <c>true</c> [on boundary is inside].</param>
         /// <returns>TVGL.Vector3.</returns>
-        public static Vector3 PointOnTriangleFromRay(TriangleFace face, Vector3 point3D, Vector3 direction,
+        public static Vector3 PointOnTriangleFromRay(this TriangleFace face, Vector3 point3D, Vector3 direction,
             out double signedDistance, bool onBoundaryIsInside = true)
         {
             var distanceToOrigin = face.Normal.Dot(face.A.Coordinates);
@@ -1948,7 +2015,6 @@ namespace TVGL
 
             var d1 = -DistancePointToPlane(rayPosition, normalOfPlane, distOfPlane);
             signedDistance = d1 / dot;
-            if (signedDistance < 0) return Vector3.Null;
             if (signedDistance.IsNegligible()) return rayPosition;
             return rayPosition + (rayDirection * signedDistance);
         }
@@ -2150,7 +2216,7 @@ namespace TVGL
         /// <returns></returns>
         public static bool IsPointInsideSolid(TessellatedSolid ts, Vector3 PointInQuestion, bool onBoundaryIsInside = true)
         {
-            var slice = Slice.GetCrossSection(ts, CartesianDirections.ZPositive, PointInQuestion.Z, out _);
+            var slice = Slice.GetCrossSection(ts, CartesianDirections.ZPositive, PointInQuestion.Z, out _, out _);
             foreach (var polygon in slice)
             {
                 var V = new Vector2(PointInQuestion.X, PointInQuestion.Y);

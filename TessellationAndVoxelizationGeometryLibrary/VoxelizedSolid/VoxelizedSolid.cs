@@ -245,7 +245,7 @@ namespace TVGL
         {
             var yBegin = YMin + VoxelSideLength / 2;
             var zBegin = ZMin + VoxelSideLength / 2;
-            var decomp = ts.GetUniformlySpacedCrossSections(CartesianDirections.ZPositive, zBegin, numVoxelsZ, VoxelSideLength);
+            var decomp = ts.GetUniformlySpacedCrossSections(CartesianDirections.ZPositive, out _, out _, out _, zBegin, numVoxelsZ, VoxelSideLength);
 
             //Parallel.For(0, numVoxelsZ, k =>
             for (var k = 0; k < numVoxelsZ; k++)

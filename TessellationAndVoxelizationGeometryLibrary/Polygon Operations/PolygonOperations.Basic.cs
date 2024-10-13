@@ -277,5 +277,100 @@ namespace TVGL
             }
             return mirror.CreatePolygonTree(true).First();
         }
+
+        /// <summary>
+        /// Simplifies (reduces the number of edges) and smoothes (removes concave points) the polygon.
+        /// Why concave? One must choose either convex or concave. In the methods envisioned
+        /// </summary>
+        /// <param name="polygon"></param>
+        /// <param name="pixelSideLength"></param>
+        public static void SimplifyAndSmoothRectilinearPolygon(this Polygon polygon, double pixelSideLength, bool movesMayBeDiagonal)
+        {
+            SimplifyAndSmoothRectilinearPolygonTop(polygon, pixelSideLength,movesMayBeDiagonal);
+            foreach (var hole in polygon.InnerPolygons)
+                SimplifyAndSmoothRectilinearPolygon(hole, pixelSideLength, movesMayBeDiagonal);
+        }
+        private static void SimplifyAndSmoothRectilinearPolygonTop(this Polygon polygon, double pixelSideLength, bool movesMayBeDiagonal)
+        {
+            const double longEdgeFactor = 5;
+            var smallEdgeLengthSqd = pixelSideLength * pixelSideLength;
+            if (movesMayBeDiagonal)
+            {
+                smallEdgeLengthSqd *= 2;
+            }
+            var longEdgeLengthSqd = longEdgeFactor * longEdgeFactor * smallEdgeLengthSqd;
+            polygon.RemoveCollinearEdges();
+            var unitLengthEdges = new Stack<int>();
+            var medEdges = new Stack<int>();
+            var longEdges = new Stack<int>();
+            double length;
+            var n = polygon.Edges.Count - 1;
+            for (int i = 0; i <= n; i++)
+            {
+                length = polygon.Edges[i].Vector.LengthSquared();
+                if (!length.IsGreaterThanNonNegligible(smallEdgeLengthSqd))
+                    unitLengthEdges.Push(i);
+                else if (!length.IsLessThanNonNegligible(longEdgeLengthSqd))
+                    longEdges.Push(i);
+                else
+                    medEdges.Push(i);
+            }
+            length = polygon.Edges[0].Vector.LengthSquared();
+            var nextEdgeIs = !length.IsGreaterThanNonNegligible(smallEdgeLengthSqd)
+                ? PixelEdgeLength.Unit : !length.IsLessThanNonNegligible(longEdgeLengthSqd) ?
+                PixelEdgeLength.Long : PixelEdgeLength.Med;
+            length = polygon.Edges[^1].Vector.LengthSquared();
+            var lastEdgeIs = pixelEdgeType(n, unitLengthEdges, medEdges, longEdges);
+            var currentEdgeIs = lastEdgeIs;
+            var nextVector = polygon.Edges[0].Vector.Normalize();
+            for (int i = n; i >= 0; i--)
+            {
+                var currentEdge = polygon.Edges[i];
+                var currVector = currentEdge.Vector.Normalize();
+                var prevEdgeIs = i == 0 ? lastEdgeIs : pixelEdgeType(i - 1, unitLengthEdges, medEdges, longEdges);
+                // four possibilities
+                // 4. unit length edges that are followed by a long length edge, then the long edge is rounded off
+                // (like case 3 above) (also note that this is not else if since it'd have been caught by case 1 as well)
+                if (currentEdgeIs == PixelEdgeLength.Unit && nextEdgeIs == PixelEdgeLength.Long)
+                {
+                    var newCoord = currentEdge.ToPoint.Coordinates + pixelSideLength * nextVector;
+                    polygon.InsertVertex(i + 1, newCoord);
+                }
+                // 1. unit length edge are all reduced to centerpoint
+                // 2. med length edge are reduced to centerpoint if they neighbor two unit length edges
+                if (currentEdgeIs == PixelEdgeLength.Unit
+                    || (currentEdgeIs == PixelEdgeLength.Med && nextEdgeIs == PixelEdgeLength.Unit && prevEdgeIs == PixelEdgeLength.Unit))
+                    currentEdge.ToPoint.Coordinates = 0.5 * (currentEdge.FromPoint.Coordinates + currentEdge.ToPoint.Coordinates);
+                // 3. long length edges is followed by a unit length edge then reduce by one pixel
+                else if (currentEdgeIs == PixelEdgeLength.Long && nextEdgeIs == PixelEdgeLength.Unit)
+                    currentEdge.ToPoint.Coordinates -= pixelSideLength * currVector;
+
+                nextVector = currVector;
+                nextEdgeIs = currentEdgeIs;
+                currentEdgeIs = prevEdgeIs;
+            }
+        }
+
+        private static PixelEdgeLength pixelEdgeType(int n, Stack<int> unitLengthEdges, Stack<int> medEdges, Stack<int> longEdges)
+        {
+            if (unitLengthEdges.TryPeek(out var m) && m == n)
+            {
+                unitLengthEdges.Pop();
+                return PixelEdgeLength.Unit;
+            }
+            if (medEdges.TryPeek(out m) && m == n)
+            {
+                medEdges.Pop();
+                return PixelEdgeLength.Med;
+            }
+            longEdges.Pop();
+            return PixelEdgeLength.Long;
+        }
+        private enum PixelEdgeLength
+        {
+            Unit,
+            Med,
+            Long
+        }
     }
 }

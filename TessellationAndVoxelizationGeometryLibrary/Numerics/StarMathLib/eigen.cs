@@ -33,6 +33,8 @@
 *************************************************************************/
 
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using TVGL;
 
@@ -63,17 +65,27 @@ namespace StarMathLib
         /// <exception cref="System.ArithmeticException">Eigen decomposition does not converge.</exception>
         /// <exception cref="System.ArithmeticException">Eigen decomposition failed due to norm = 0.</exception>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static ComplexNumber[] GetEigenValuesAndVectors(this double[,] A, out double[][] eigenVectors)
+        public static ComplexNumber[] GetEigenValuesAndVectors(this double[,] A, out ComplexNumber[][] eigenVectors)
         {
             var length = A.GetLength(0);
             if (length != A.GetLength(1))
                 throw new ArithmeticException("Matrix, A, must be square.");
-            eigenVectors = new double[length][];
+            if (length == 2)
+                return GetEigenValuesAndVectors2(A[0, 0], A[0, 1], A[1, 0], A[1, 1], out eigenVectors);
+            if (length == 3)
+                return GetEigenValuesAndVectors3(A[0, 0], A[0, 1], A[0, 2], A[1, 0], A[1, 1], A[1, 2], A[2, 0], A[2, 1], A[2, 2], out eigenVectors);
+            if (length == 4)
+                return GetEigenValuesAndVectors4(A[0, 0], A[0, 1], A[0, 2], A[0, 3],
+                    A[1, 0], A[1, 1], A[1, 2], A[1, 3],
+                    A[2, 0], A[2, 1], A[2, 2], A[2, 3],
+                    A[3, 0], A[3, 1], A[3, 2], A[3, 3],
+                    out eigenVectors);
+            eigenVectors = new ComplexNumber[length][];
             /* start out with the eigenvectors assigned to unit vectors */
             for (var i = 0; i < length; i++)
             {
-                var eigenVector = new double[length];
-                eigenVector[i] = 1.0;
+                var eigenVector = new ComplexNumber[length];
+                eigenVector[i] = new ComplexNumber(1.0);
                 eigenVectors[i] = eigenVector;
             }
             var eigenvaluesReal = new double[length];
@@ -148,7 +160,7 @@ namespace StarMathLib
                         ort[i] = B[mm1, i];
                     for (var j = m; j <= high; j++)
                     {
-                        var g = 0.0;
+                        var g = ComplexNumber.Zero;
                         for (var i = m; i <= high; i++)
                             g += ort[i] * eigenVectors[j][i];
                         // Double division avoids possible underflow
@@ -251,9 +263,9 @@ namespace StarMathLib
                         // Accumulate transformations
                         for (var i = 0; i < length; i++)
                         {
-                            z = eigenVectors[nm1][i];
-                            eigenVectors[nm1][i] = (q * z) + (p * eigenVectors[n][i]);
-                            eigenVectors[n][i] = (q * eigenVectors[n][i]) - (p * z);
+                            var zA = eigenVectors[nm1][i];
+                            eigenVectors[nm1][i] = (q * zA) + (p * eigenVectors[n][i]);
+                            eigenVectors[n][i] = (q * eigenVectors[n][i]) - (p * zA);
                         }
                         // Complex pair
                     }
@@ -310,7 +322,7 @@ namespace StarMathLib
                     iter++;
                     if (iter >= 30 * length)
                     {
-                            throw new ArithmeticException("Eigen decomposition does not converge.");
+                        throw new ArithmeticException("Eigen decomposition does not converge.");
                     }
 
                     // Look for two consecutive small sub-diagonal elements
@@ -408,16 +420,16 @@ namespace StarMathLib
                             // Accumulate transformations
                             for (var i = 0; i < length; i++)
                             {
-                                p = (x * eigenVectors[k][i]) + (y * eigenVectors[kp1][i]);
+                                var pA = (x * eigenVectors[k][i]) + (y * eigenVectors[kp1][i]);
 
                                 if (notlast)
                                 {
-                                    p = p + (z * eigenVectors[kp2][i]);
-                                    eigenVectors[kp2][i] -= p * r;
+                                    pA = pA + (z * eigenVectors[kp2][i]);
+                                    eigenVectors[kp2][i] -= pA * r;
                                 }
 
-                                eigenVectors[k][i] -= p;
-                                eigenVectors[kp1][i] -= p * q;
+                                eigenVectors[k][i] -= pA;
+                                eigenVectors[kp1][i] -= pA * q;
                             }
                         } // (s != 0)
                     } // k loop
@@ -517,8 +529,8 @@ namespace StarMathLib
                     else
                     {
                         var res = ComplexNumberDivide(0.0, -B[n, nm1], B[nm1, nm1] - p, q);
-                        B[nm1, nm1] = res[0];
-                        B[n, nm1] = res[1];
+                        B[nm1, nm1] = res.Item1;
+                        B[n, nm1] = res.Item2;
                     }
 
                     B[nm1, n] = 0.0;
@@ -548,8 +560,8 @@ namespace StarMathLib
                             if (eigenvaluesImag[i].IsNegligible())
                             {
                                 var res = ComplexNumberDivide(-ra, -sa, w, q);
-                                B[nm1, i] = res[0];
-                                B[n, i] = res[1];
+                                B[nm1, i] = res.Item1;
+                                B[n, i] = res.Item2;
                             }
                             else
                             {
@@ -564,8 +576,8 @@ namespace StarMathLib
                                     vr = eps * norm * (Math.Abs(w) + Math.Abs(q) + Math.Abs(x) + Math.Abs(y) + Math.Abs(z));
                                 var res = ComplexNumberDivide((x * r) - (z * ra) + (q * sa), (x * s) - (z * sa) - (q * ra), vr,
                                     vi);
-                                B[nm1, i] = res[0];
-                                B[n, i] = res[1];
+                                B[nm1, i] = res.Item1;
+                                B[n, i] = res.Item2;
                                 if (Math.Abs(x) > (Math.Abs(z) + Math.Abs(q)))
                                 {
                                     B[nm1, ip1] = (-ra - (w * B[nm1, i]) + (q * B[n, i])) / x;
@@ -574,8 +586,8 @@ namespace StarMathLib
                                 else
                                 {
                                     res = ComplexNumberDivide(-r - (y * B[nm1, i]), -s - (y * B[n, i]), z, q);
-                                    B[nm1, ip1] = res[0];
-                                    B[n, ip1] = res[1];
+                                    B[nm1, ip1] = res.Item1;
+                                    B[n, ip1] = res.Item2;
                                 }
                             }
 
@@ -599,10 +611,10 @@ namespace StarMathLib
             {
                 for (var i = 0; i < length; i++)
                 {
-                    z = 0.0;
+                    var zA = ComplexNumber.Zero;
                     for (var k = 0; k <= j; k++)
-                        z += (eigenVectors[k][i] * B[j, k]);
-                    eigenVectors[j][i] = z;
+                        zA += (eigenVectors[k][i] * B[j, k]);
+                    eigenVectors[j][i] = zA;
                 }
             }
 
@@ -613,29 +625,264 @@ namespace StarMathLib
             return result;
         }
 
+        internal static ComplexNumber[] GetEigenValuesAndVectors4(double M11, double M12, double M13, double M14,
+            double M21, double M22, double M23, double M24,
+            double M31, double M32, double M33, double M34,
+            double M41, double M42, double M43, double M44, out ComplexNumber[][] eigenVectors)
+        {
+
+            var eigValues = GetEigenValues4(M11, M12, M13, M14, M21, M22, M23, M24, M31, M32, M33, M34, M41, M42, M43, M44);
+            eigenVectors = GetEigenVectors4(M11, M12, M13, M14, M21, M22, M23, M24, M31, M32, M33, M34, M41, M42, M43, M44, eigValues);
+            return eigValues;
+        }
+
+        internal static ComplexNumber[] GetEigenValues4(double M11, double M12, double M13, double M14,
+            double M21, double M22, double M23, double M24,
+            double M31, double M32, double M33, double M34,
+            double M41, double M42, double M43, double M44)
+        {
+            double a = M11, b = M12, c = M13, d = M14; // | a b c d |  
+            double e = M21, f = M22, g = M23, h = M24; // | e f g h |
+            double i = M31, j = M32, k = M33, l = M34; // | i j k l | 
+            double m = M41, n = M42, o = M43, p = M44; // | m n o p |
+
+            double fourthOrderCoeff = 1;
+            double cubedCoeff = -a - f - k - p;
+            var af = a * f;
+            var ak = a * k;
+            var ap = a * p;
+            var be = b * e;
+            var ci = c * i;
+            var dm = d * m;
+            var fk = f * k;
+            var fp = f * p;
+            var gj = g * j;
+            var hn = h * n;
+            var kp = k * p;
+            var lo = l * o;
+            double squaredCoeff = af + ak + ap - be - ci - dm + fk + fp - gj - hn + kp - lo;
+            var afk = af * k;
+            var afp = af * p;
+            var agj = a * gj;
+            var ahn = a * hn;
+            var akp = a * kp;
+            var alo = a * lo;
+            var bek = be * k;
+            var bep = be * p;
+            var bgi = b * g * i;
+            var bhm = b * h * m;
+            var cej = c * e * j;
+            var cfi = ci * f;
+            var cip = ci * p;
+            var clm = c * l * m;
+            var den = d * e * n;
+            var dfm = dm * f;
+            var dio = d * i * o;
+            var dkm = dm * k;
+            var fkp = f * kp;
+            var flo = f * lo;
+            var gjp = gj * p;
+            var gln = g * l * n;
+            var hjo = h * j * o;
+            var hkn = hn * k;
+            double linearCoeff = -afk - afp + agj + ahn - akp + alo + bek
+                + bep - bgi - bhm - cej + cfi + cip - clm - den + dfm
+                - dio + dkm - fkp + flo + gjp - gln - hjo + hkn;
+            var afkp = afk * p;
+            var aflo = af * lo;
+            var agjp = agj * p;
+            var agln = a * gln;
+            var ahjo = a * hjo;
+            var ahkn = ahn * k;
+            var bekp = bek * p;
+            var belo = be * lo;
+            var bgip = bgi * p;
+            var bglm = b * g * l * m;
+            var bhio = b * h * i * o;
+            var bhkm = bhm * k;
+            var cejp = cej * p;
+            var celn = c * e * l * n;
+            var cfip = cfi * p;
+            var cflm = f * clm;
+            var chin = ci * hn;
+            var chjm = c * h * j * m;
+            var dejo = d * e * j * o;
+            var dekn = den * k;
+            var dfio = dio * f;
+            var dfkm = dfm * k;
+            var dgin = d * g * i * n;
+            var dgjm = dm * gj;
+            double offset = afkp - aflo - agjp + agln + ahjo - ahkn - bekp + belo + bgip
+                - bglm - bhio + bhkm + cejp - celn - cfip + cflm + chin - chjm - dejo
+                + dekn + dfio - dfkm - dgin + dgjm;
+
+            var roots = PolynomialSolve.Quartic(fourthOrderCoeff, cubedCoeff, squaredCoeff, linearCoeff, offset).ToArray();
+            return roots;
+        }
+
+        internal static ComplexNumber[][] GetEigenVectors4(double M11, double M12, double M13, double M14,
+            double M21, double M22, double M23, double M24,
+            double M31, double M32, double M33, double M34,
+            double M41, double M42, double M43, double M44, IEnumerable<ComplexNumber> eigenValues)
+        {
+            var eigenVectors = new ComplexNumber[4][];
+            var i = 0;
+            foreach (var eV in eigenValues)
+                eigenVectors[i++] = GetEigenVector4(M11, M12, M13, M14, M21, M22, M23, M24, M31, M32, M33, M34, M41, M42, M43, M44,
+                     eV);
+            return eigenVectors;
+        }
+
+        internal static ComplexNumber[] GetEigenVector4(double M11, double M12, double M13, double M14, double M21, double M22, double M23,
+            double M24, double M31, double M32, double M33, double M34, double M41, double M42, double M43, double M44,
+            ComplexNumber lambda)
+        {
+            var y11 = M11 - lambda;
+            var y22 = M22 - lambda;
+            var y33 = M33 - lambda;
+            var y44 = M44 - lambda;
+
+            if (Solve3x3ComplexMatrix(y11, new ComplexNumber(M12), new ComplexNumber(M13), new ComplexNumber(M21),
+                        y22, new ComplexNumber(M23), new ComplexNumber(M31), new ComplexNumber(M32), y33,
+                        new ComplexNumber(-M14), new ComplexNumber(-M24), new ComplexNumber(-M34),
+                        out var ans41, out var ans42, out var ans43))
+            {
+                double normFactor1 = 1 / Math.Sqrt(1 + ans41.LengthSquared() + ans42.LengthSquared() + ans43.LengthSquared());
+                return [ans41 * normFactor1, ans42 * normFactor1, ans43 * normFactor1, new ComplexNumber(normFactor1)];
+            }
+            else if (Solve3x3ComplexMatrix(y22, new ComplexNumber(M23), new ComplexNumber(M24), new ComplexNumber(M32),
+                        y33, new ComplexNumber(M34), new ComplexNumber(M42), new ComplexNumber(M43), y44,
+                        new ComplexNumber(-M21), new ComplexNumber(-M31), new ComplexNumber(-M41), out var ans11, out var ans12, out var ans13))
+            {
+                double normFactor1 = 1 / Math.Sqrt(1 + ans11.LengthSquared() + ans12.LengthSquared() + ans13.LengthSquared());
+                return [new ComplexNumber(normFactor1), ans11 * normFactor1, ans12 * normFactor1, ans13 * normFactor1];
+            }
+            else if (Solve3x3ComplexMatrix(y11, new ComplexNumber(M13), new ComplexNumber(M14), new ComplexNumber(M31),
+                        y33, new ComplexNumber(M34), new ComplexNumber(M41), new ComplexNumber(M43), y44,
+                        new ComplexNumber(-M12), new ComplexNumber(-M32), new ComplexNumber(-M42),
+                        out var ans21, out var ans22, out var ans23))
+            {
+                double normFactor1 = 1 / Math.Sqrt(1 + ans21.LengthSquared() + ans22.LengthSquared() + ans23.LengthSquared());
+                return [ans21 * normFactor1, new ComplexNumber(normFactor1), ans22 * normFactor1, ans23 * normFactor1];
+            }
+            else if (Solve3x3ComplexMatrix(y11, new ComplexNumber(M12), new ComplexNumber(M14), new ComplexNumber(M21),
+                        y22, new ComplexNumber(M24), new ComplexNumber(M41), new ComplexNumber(M42), y44,
+                        new ComplexNumber(-M13), new ComplexNumber(-M23), new ComplexNumber(-M43),
+                        out var ans31, out var ans32, out var ans33))
+            {
+                double normFactor1 = 1 / Math.Sqrt(1 + ans31.LengthSquared() + ans32.LengthSquared() + ans33.LengthSquared());
+                return [ans31 * normFactor1, ans32 * normFactor1, new ComplexNumber(normFactor1), ans33 * normFactor1];
+            }
+            return null;
+        }
+
+        internal static ComplexNumber[] GetEigenValuesAndVectors3(double x11, double x12, double x13,
+            double x21, double x22, double x23, double x31, double x32, double x33, out ComplexNumber[][] eigenVectors)
+        {
+            var lambdas = GetEigenValues3(x11, x12, x13, x21, x22, x23, x31, x32, x33);
+            eigenVectors = GetEigenVectors3(x11, x12, x13, x21, x22, x23, x31, x32, x33, lambdas);
+            return lambdas;
+        }
+        internal static ComplexNumber[] GetEigenValues3(double x11, double x12, double x13,
+            double x21, double x22, double x23, double x31, double x32, double x33)
+        {
+            var d = x11 * x22 * x33 + x12 * x23 * x31 + x13 * x21 * x32 - x11 * x23 * x32 - x13 * x22 * x31 - x12 * x21 * x33;
+            var c = x23 * x32 + x12 * x21 + x13 * x31 - x11 * x22 - x33 * (x11 + x22);
+            var b = x11 + x22 + x33;
+            var a = -1.0;
+            return PolynomialSolve.Cubic(a, b, c, d).ToArray();
+        }
+        internal static ComplexNumber[][] GetEigenVectors3(double x11, double x12, double x13,
+            double x21, double x22, double x23, double x31, double x32, double x33, IEnumerable<ComplexNumber> eigenValues)
+        {
+            var eigenVectors = new ComplexNumber[3][];
+            var i = 0;
+            foreach (var eValue in eigenValues)
+                eigenVectors[i++] = GetEigenVector3(x11, x12, x13, x21, x22, x23, x31, x32, x33, eValue);
+            return eigenVectors;
+        }
+
+        internal static ComplexNumber[] GetEigenVector3(double x11, double x12, double x13, double x21, double x22,
+            double x23, double x31, double x32, double x33, ComplexNumber eigenValue)
+        {
+            var y11 = x11 - eigenValue;
+            var y22 = x22 - eigenValue;
+            var y33 = x33 - eigenValue;
+            if (Solve2x2ComplexMatrix(y11, new ComplexNumber(x12), new ComplexNumber(x21), y22,
+                        new ComplexNumber(-x13), new ComplexNumber(-x23), out var ans31, out var ans32))
+            {
+                var normFactor3 = 1 / Math.Sqrt(1 + ans31.LengthSquared() + ans32.LengthSquared());
+                return [ans31 * normFactor3, ans32 * normFactor3, new ComplexNumber(normFactor3)];
+            }
+            else if (Solve2x2ComplexMatrix(y22, new ComplexNumber(x23), new ComplexNumber(x32),
+                        y33, new ComplexNumber(-x21), new ComplexNumber(-x31), out var ans11, out var ans12))
+            {
+                var normFactor1 = 1 / Math.Sqrt(1 + ans11.LengthSquared() + ans12.LengthSquared());
+                return [new ComplexNumber(normFactor1), ans11 * normFactor1, ans12 * normFactor1];
+            }
+            else if (Solve2x2ComplexMatrix(y11, new ComplexNumber(x13), new ComplexNumber(x31), y33,
+                        new ComplexNumber(-x12), new ComplexNumber(-x32), out var ans21, out var ans22))
+            {
+                var normFactor2 = 1 / Math.Sqrt(1 + ans21.LengthSquared() + ans22.LengthSquared());
+                return [ans21 * normFactor2, new ComplexNumber(normFactor2), ans22 * normFactor2];
+            }
+            return null;
+        }
+
+        internal static ComplexNumber[] GetEigenValuesAndVectors2(double x11, double x12,
+            double x21, double x22, out ComplexNumber[][] eigenVectors)
+        {
+            var (lambda1, lambda2) = GetEigenValues2(x11, x12, x21, x22);
+            eigenVectors = GetEigenVectors2(x11, x12, x21, x22, lambda1, lambda2);
+            return [lambda1, lambda2];
+        }
+        internal static (ComplexNumber, ComplexNumber) GetEigenValues2(double x11, double x12,
+            double x21, double x22)
+        {
+            var c = x11 * x22 - x12 * x21;
+            var b = -x11 - x22;
+            return PolynomialSolve.Quadratic(1, b, c);
+        }
+        internal static ComplexNumber[][] GetEigenVectors2(double x11, double x12,
+            double x21, double x22, ComplexNumber lambda1, ComplexNumber lambda2)
+        {
+            return new ComplexNumber[][]
+                 {
+                     GetEigenVector2(x11, x12, x21, x22, lambda1),
+                     GetEigenVector2(x11, x12, x21, x22, lambda2)
+                 };
+        }
+
+        internal static ComplexNumber[] GetEigenVector2(double x11, double x12, double x21, double x22, ComplexNumber lambda)
+        {
+            var y11 = x11 - lambda;
+            var y22 = x22 - lambda;
+            if (y11.LengthSquared() > y22.LengthSquared())
+            {
+                var f = -x21 / y22;
+                var normFactor = 1.0 / Math.Sqrt(1 + f.Real * f.Real + f.Imaginary * f.Imaginary);
+                return [new ComplexNumber(normFactor), -x21 * normFactor / y22];
+            }
+            else
+            {
+                var f = -x12 / y11;
+                var normFactor = 1.0 / Math.Sqrt(1 + f.Real * f.Real + f.Imaginary * f.Imaginary);
+                return [-x12 * normFactor / y11, new ComplexNumber(normFactor)];
+            }
+        }
+
         /// <summary>
-        /// Complexes the number divide.
+        /// Does complex number division for the main function without needing to cast to the ComplexNumber structure.
         /// </summary>
         /// <param name="xreal">The xreal.</param>
         /// <param name="ximag">The ximag.</param>
         /// <param name="yreal">The yreal.</param>
         /// <param name="yimag">The yimag.</param>
         /// <returns>System.Double[].</returns>
-        private static double[] ComplexNumberDivide(double xreal, double ximag, double yreal, double yimag)
+        private static (double, double) ComplexNumberDivide(double xreal, double ximag, double yreal, double yimag)
         {
-            if (Math.Abs(yimag) < Math.Abs(yreal))
-            {
-                return new[]
-                {
-                    (xreal + (ximag*(yimag/yreal)))/(yreal + (yimag*(yimag/yreal))),
-                    (ximag - (xreal*(yimag/yreal)))/(yreal + (yimag*(yimag/yreal)))
-                };
-            }
-            return new[]
-            {
-                (ximag + (xreal*(yreal/yimag)))/(yimag + (yreal*(yreal/yimag))),
-                (-xreal + (ximag*(yreal/yimag)))/(yimag + (yreal*(yreal/yimag)))
-            };
+            var yReciprocal = 1.0 / (yreal * yreal + yimag * yimag);
+            return ((xreal * yreal + ximag * yimag) * yReciprocal, (ximag * yreal - xreal * yimag) * yReciprocal);
         }
     }
 }

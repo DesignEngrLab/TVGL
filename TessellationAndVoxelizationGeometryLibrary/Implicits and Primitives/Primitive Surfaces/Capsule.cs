@@ -139,6 +139,10 @@ namespace TVGL
             }
         }
 
+        public override string KeyString => "Capsule|" + Anchor1.ToString() +
+            "|" + Radius1.ToString("F5") + "|" + Anchor2.ToString() + "|" + Radius2.ToString("F5")
+            + GetCommonKeyDetails();
+
         /// <summary>
         /// The anchor1
         /// </summary>
@@ -267,7 +271,7 @@ namespace TVGL
                     (coneRadius1 - coneRadius2) * (coneRadius1 - coneRadius2));
                 d = distAtCommonDepth * cosAngle;
             }
-            if (isPositive.HasValue && !isPositive.Value) d = -d;
+            if (IsPositive.HasValue && !IsPositive.Value) d = -d;
             return d;
         }
 
@@ -289,7 +293,7 @@ namespace TVGL
                 if (coneRadius1 < coneRadius2) sinAngle = -sinAngle;
                 d = (c * cosAngle + directionVector * sinAngle).Normalize();
             }
-            if (isPositive.HasValue && !isPositive.Value) d *= -1;
+            if (IsPositive.HasValue && !IsPositive.Value) d *= -1;
             return d;
         }
 

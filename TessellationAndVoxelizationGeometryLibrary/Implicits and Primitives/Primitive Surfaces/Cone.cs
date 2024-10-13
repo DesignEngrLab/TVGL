@@ -50,11 +50,11 @@ namespace TVGL
         /// <param name="isPositive">if set to <c>true</c> [is positive].</param>
         /// <param name="faces">The faces all.</param>
         public Cone(Vector3 apex, Vector3 axis, double aperture, IEnumerable<TriangleFace> faces)
-            : base(faces)
         {
             Apex = apex;
             Axis = axis;
             Aperture = aperture;
+            SetFacesAndVertices(faces);
         }
 
         /// <summary>
@@ -105,6 +105,11 @@ namespace TVGL
         /// </summary>
         /// <value>The axis.</value>
         public Vector3 Axis { get; set; }
+
+
+        public override string KeyString => "Cone|" + Axis.ToString() +
+            "|" + Apex.ToString() + "|" + Aperture.ToString("F5") + GetCommonKeyDetails();
+
 
         /// <summary>
         /// Transforms the shape by the provided transformation matrix.
@@ -264,7 +269,7 @@ namespace TVGL
             var b = a.Cross(Axis);
             var c = Axis.Cross(b).Normalize();  // outward from the axis to the point
             var outwardVector = (c - (Axis * Aperture)) / Math.Sqrt(1 + Aperture * Aperture);
-            if (isPositive.HasValue && !isPositive.Value) outwardVector *= -1;
+            if (IsPositive.HasValue && !IsPositive.Value) outwardVector *= -1;
             return outwardVector;
         }
 
@@ -278,7 +283,7 @@ namespace TVGL
             var v = point - Apex;
             var distAtCommonDepth = v.Cross(Axis).Length() - Aperture * v.Dot(Axis);
             var d = distAtCommonDepth * cosAperture;
-            if (isPositive.HasValue && !isPositive.Value) d = -d;
+            if (IsPositive.HasValue && !IsPositive.Value) d = -d;
             return d;
         }
 
@@ -318,7 +323,28 @@ namespace TVGL
         }
         public override IEnumerable<(Vector3 intersection, double lineT)> LineIntersection(Vector3 anchor, Vector3 direction)
         {
-            throw new NotImplementedException();
+            direction = direction.Normalize();
+            var anchorToApex = Apex - anchor;
+            // handle the special case where the line passes through cone's apex
+            if (anchorToApex.IsAlignedOrReverse(direction))
+            {
+                yield return (anchor, anchorToApex.Length());
+                yield break;
+            }
+            var a = cosAperture;
+            var b = 2 * anchor.Dot(direction) - 2 * Apex.Dot(direction) * cosAperture - direction.Dot(Axis);
+            var c = anchor.LengthSquared() + Apex.LengthSquared() - 2 * anchor.Dot(Apex) * cosAperture -
+                anchor.Dot(Axis) + Apex.LengthSquared();
+            (var root1, var root2) = PolynomialSolve.Quadratic(a, b, c);
+            if (root1.IsRealNumber && !root1.Real.IsPracticallySame(root2.Real))
+            {   // if root1 is real then root2 is also real, and we pierce the cone at two points
+                yield return (anchor + root1.Real * direction, root1.Real);
+                yield return (anchor + root2.Real * direction, root2.Real);
+            }
+            else if (root1.IsRealNumber)
+                // if practically the same, then we only glance the cone at one point
+                yield return (anchor + root1.Real * direction, root1.Real);
+            // otherwise the cone is missed entirely
         }
     }
 }

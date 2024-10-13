@@ -36,14 +36,15 @@ namespace TVGL
         /// <param name="minorRadius">The minor radius.</param>
         /// <param name="isPositive">if set to <c>true</c> [is positive].</param>
         /// <param name="faces">The faces.</param>
-        public Torus(Vector3 center, Vector3 axis, double majorRadius, double minorRadius, bool isPositive,
-            IEnumerable<TriangleFace> faces) : base(faces)
+        public Torus(Vector3 center, Vector3 axis, double majorRadius, double minorRadius,
+            IEnumerable<TriangleFace> faces)
         {
             Center = center;
             Axis = axis;
-            this.isPositive = isPositive;
             MajorRadius = majorRadius;
             MinorRadius = minorRadius;
+
+            SetFacesAndVertices(faces);
         }
         /// <summary>
         /// Initializes a new instance of the <see cref="Torus" /> class.
@@ -115,7 +116,38 @@ namespace TVGL
         /// <value>The minor radius.</value>
         public double MinorRadius { get; set; }
 
+        public override string KeyString => "Torus|" + Center.ToString() + "|" + Axis.ToString() + "|" +
+            "|" + MajorRadius.ToString("F5") + "|" + MinorRadius.ToString("F5") + GetCommonKeyDetails();
 
+        public Matrix4x4 TransformToXYPlane
+        {
+            get
+            {
+                if (transformToXYPlane.IsNull())
+                    CreateEquationTransforms();
+                return transformToXYPlane;
+            }
+        }
+        Matrix4x4 transformToXYPlane = Matrix4x4.Null;
+        public Matrix4x4 TransformFromYPlane
+        {
+            get
+            {
+                if (transformFromXYPlane.IsNull())
+                    CreateEquationTransforms();
+                return transformFromXYPlane;
+            }
+        }
+
+        private void CreateEquationTransforms()
+        {
+            var translate = Matrix4x4.CreateTranslation(-Center);
+            var rotate = Axis.TransformToXYPlane(out var backTransform);
+            transformToXYPlane = translate * rotate;
+            transformFromXYPlane = backTransform * -translate;
+        }
+
+        Matrix4x4 transformFromXYPlane = Matrix4x4.Null;
         /// <summary>
         /// Transforms the shape by the provided transformation matrix.
         /// </summary>
@@ -244,7 +276,7 @@ namespace TVGL
         {
             Vector3 ptOnCircle = ClosestPointOnCenterRingToPoint(Axis, Center, MajorRadius, point, distanceFromOriginToBisectingPlane);
             var d = (point - ptOnCircle).Length() - MinorRadius;
-            if (isPositive.HasValue && !isPositive.Value) d = -d;
+            if (IsPositive.HasValue && !IsPositive.Value) d = -d;
             return d;
         }
 
@@ -252,7 +284,7 @@ namespace TVGL
         {
             Vector3 ptOnCircle = ClosestPointOnCenterRingToPoint(Axis, Center, MajorRadius, point, distanceFromOriginToBisectingPlane);
             var d = (point - ptOnCircle).Normalize();
-            if (isPositive.HasValue && !isPositive.Value) d = -d;
+            if (IsPositive.HasValue && !IsPositive.Value) d = -d;
             return d;
         }
 
@@ -396,7 +428,23 @@ namespace TVGL
 
         public override IEnumerable<(Vector3 intersection, double lineT)> LineIntersection(Vector3 anchor, Vector3 direction)
         {
-            throw new NotImplementedException();
+            var newAnchor = anchor.Transform(TransformToXYPlane);
+            var newDirection = direction.TransformNoTranslate(TransformToXYPlane).Normalize();
+            var RSqd = MajorRadius * MajorRadius;
+            var k0 = newAnchor.Dot(newAnchor) + RSqd - MinorRadius * MinorRadius;
+            var k1 = 2 * newDirection.Dot(newAnchor);
+            var roots = PolynomialSolve.Quartic(1,
+                2 * k1,
+                2 * k0 + k1 * k1 - 4 * RSqd * (newDirection.X * newDirection.X + newDirection.Y * newDirection.Y),
+                2 * k0 * k1 - 8 * RSqd * (newAnchor.X * newDirection.X + newAnchor.Y * newDirection.Y),
+                k0 * k0 - 4 * RSqd * (newAnchor.X * newAnchor.X + newAnchor.Y * newAnchor.Y));
+            foreach (var root in roots)
+            {
+                if (root.IsRealNumber)
+                {
+                    yield return (anchor + root.Real * direction, root.Real);
+                }
+            }
         }
     }
 }

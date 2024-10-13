@@ -134,20 +134,34 @@ namespace TVGL
             if (matrix.IsSingular())
             {
                 if (!matrix[0, 0].IsNegligible()) direction = Vector3.UnitX;
-                else if (!matrix[1,1].IsNegligible()) direction = Vector3.UnitY;
+                else if (!matrix[1, 1].IsNegligible()) direction = Vector3.UnitY;
                 direction = Vector3.UnitZ;
             }
             else
             {
                 var eigens = StarMath.GetEigenValuesAndVectors(matrix, out var eigenVectors);
-                var indexOfLargestEigenvalue =
+                // either all 3 are real or 2 are complex conjugates
+                var containsComplex = !eigens[0].IsRealNumber || !eigens[1].IsRealNumber;
+                int indexToUse = -1;
+                if (containsComplex)
+                {
+                    if (eigens[0].IsRealNumber) indexToUse = 0;
+                    else if (eigens[1].IsRealNumber) indexToUse = 1;
+                    else indexToUse = 2;
+                }
+                else
+                {
+                    indexToUse = 
                     (Math.Abs(eigens[0].Real) >= Math.Abs(eigens[1].Real) &&
                     Math.Abs(eigens[0].Real) >= Math.Abs(eigens[2].Real))
                     ? 0 :
                     (Math.Abs(eigens[1].Real) >= Math.Abs(eigens[0].Real) &&
                     Math.Abs(eigens[1].Real) >= Math.Abs(eigens[2].Real))
                     ? 1 : 2;
-                direction = new Vector3(eigenVectors[indexOfLargestEigenvalue]);
+                }
+                direction = new Vector3(eigenVectors[indexToUse][0].Real,
+                    eigenVectors[indexToUse][1].Real,
+                    eigenVectors[indexToUse][2].Real);
             }
             curve = new StraightLine3D(new Vector3(x, y, z), direction.Normalize());
             //var result = new StraightLine3D(new Vector3(x, y, z), direction.Normalize());

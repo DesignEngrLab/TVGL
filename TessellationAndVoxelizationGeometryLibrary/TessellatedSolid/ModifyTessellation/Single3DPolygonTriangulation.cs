@@ -171,11 +171,20 @@ namespace TVGL
         /// <param name="edgePath">The edge path.</param>
         /// <param name="weightForSmoothness">The weight for smoothness.</param>
         /// <returns>IEnumerable&lt;System.ValueTuple&lt;Vertex[], Vector3&gt;&gt;.</returns>
-        public static IEnumerable<(List<Vertex> vertices, Vector3 normal)> QuickTriangulate(IList<(Edge edge, bool dir)> edgePath, double weightForSmoothness)
+        public static IEnumerable<(Vertex A, Vertex B, Vertex C, Vector3 normal)> QuickTriangulate(IList<(Edge edge, bool dir)> edgePath, double weightForSmoothness)
         {
             var triangles = QuickTriangulate(new TriangulationLoop(edgePath), weightForSmoothness);
             foreach (var triangle in triangles)
-                yield return (triangle.GetVertices().ToList(), triangle.Normal);
+            {
+                var enumerator = triangle.GetVertices().GetEnumerator();
+                enumerator.MoveNext();
+                var A = enumerator.Current;
+                enumerator.MoveNext();
+                var B = enumerator.Current;
+                enumerator.MoveNext();
+                var C = enumerator.Current;
+                yield return (A, B, C, triangle.Normal);
+            }
         }
 
         /// <summary>

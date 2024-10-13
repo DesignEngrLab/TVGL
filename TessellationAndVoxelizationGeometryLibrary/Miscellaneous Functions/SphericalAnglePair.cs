@@ -77,6 +77,20 @@ namespace TVGL
             return new Vector3(radius * cosAzimuth * sinPolar, radius * sinAzimuth * sinPolar, radius * cosPolar);
         }
 
+        /// <summary>
+        /// Creates the transformation matrix to transform to the XY plane. That is, move the vector to the z-axis.
+        /// </summary>
+        /// <param name="backTransform"></param>
+        /// <returns></returns>
+        public Matrix4x4 TransformToXYPlane(out Matrix4x4 backTransform)
+        {
+            var rotZNegAzimuth = Matrix4x4.CreateRotationZ(-AzimuthAngle);
+            var rotYPolar = Matrix4x4.CreateRotationY(PolarAngle);
+            var result = rotZNegAzimuth * rotYPolar;
+            backTransform = Matrix4x4.Transpose(result);
+            return result;
+        }
+
         // the following code is trying to create a int32 hash from the two angles
         const int maxInt = 32768; // 2^15, so  this would occupy half of the bits of an int32
         const double maxIntDivPi = maxInt / Math.PI;

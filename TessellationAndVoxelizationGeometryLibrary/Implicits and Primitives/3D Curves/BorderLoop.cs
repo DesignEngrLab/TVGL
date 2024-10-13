@@ -95,7 +95,7 @@ namespace TVGL
         /// Gets or sets the best-fit plane distance
         /// </summary>
         /// <value>The plane error.</value>
-        public double PlaneDistance{ get; set; }
+        public double PlaneDistance { get; set; }
 
         /// <summary>
         /// Gets or sets a value indicating whether [encircles axis].
@@ -168,6 +168,7 @@ namespace TVGL
             PlaneError = planeMaxError;
             PlaneNormal = plane.Normal;
             PlaneDistance = plane.DistanceToOrigin;
+            IsPlanar = PlaneError < Constants.BaseTolerance;
         }
 
         /// <summary>
@@ -206,7 +207,13 @@ namespace TVGL
             get
             {
                 if (IsCircular)
-                    return OwnedPrimitive.TransformFrom2DTo3D(((Circle)Curve).Center);
+                {
+                    var center2D = ((Circle)Curve).Center;
+                    if (IsPlanar)
+                        return MiscFunctions.ConvertTo3DLocation(center2D, PlaneNormal, PlaneDistance);
+                    else
+                        return OwnedPrimitive.TransformFrom2DTo3D(center2D);
+                }
                 return Vector3.Null;
             }
         }
@@ -401,5 +408,7 @@ namespace TVGL
                 else return Segments[^1].FirstVertex;
             }
         }
+
+        public bool IsPlanar { get; internal set; }
     }
 }

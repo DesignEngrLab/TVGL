@@ -11,8 +11,12 @@
 // </copyright>
 // <summary></summary>
 // ***********************************************************************
+using StarMathLib;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
+using System.Linq;
+using System.Runtime.CompilerServices;
 
 namespace TVGL
 {
@@ -83,19 +87,31 @@ namespace TVGL
             this.ZCoeff = zCoeff;
             this.W = w;
         }
-        public GeneralQuadric(double[] coefficients)
+        public GeneralQuadric(IEnumerable<double> coefficients)
         {
-            this.XSqdCoeff = coefficients[0];
-            this.YSqdCoeff = coefficients[1];
-            this.ZSqdCoeff = coefficients[2];
-            this.XYCoeff = coefficients[3];
-            this.XZCoeff = coefficients[4];
-            this.YZCoeff = coefficients[5];
-            this.XCoeff = coefficients[6];
-            this.YCoeff = coefficients[7];
-            this.ZCoeff = coefficients[8];
-            this.W = coefficients[9];
+            var enumerator = coefficients.GetEnumerator();
+            enumerator.MoveNext();
+            this.XSqdCoeff = enumerator.Current;
+            enumerator.MoveNext();
+            this.YSqdCoeff = enumerator.Current;
+            enumerator.MoveNext();
+            this.ZSqdCoeff = enumerator.Current;
+            enumerator.MoveNext();
+            this.XYCoeff = enumerator.Current;
+            enumerator.MoveNext();
+            this.XZCoeff = enumerator.Current;
+            enumerator.MoveNext();
+            this.YZCoeff = enumerator.Current;
+            enumerator.MoveNext();
+            this.XCoeff = enumerator.Current;
+            enumerator.MoveNext();
+            this.YCoeff = enumerator.Current;
+            enumerator.MoveNext();
+            this.ZCoeff = enumerator.Current;
+            enumerator.MoveNext();
+            this.W = enumerator.Current;
         }
+
         /// <summary>
         /// GeneralQuadric
         /// </summary>
@@ -107,7 +123,6 @@ namespace TVGL
         public GeneralQuadric(double xSqdCoeff, double ySqdCoeff, double zSqdCoeff, double xyCoeff,
              double xzCoeff, double yzCoeff, double xCoeff, double yCoeff, double zCoeff, double w,
              IEnumerable<TriangleFace> faces)
-            : base(faces)
         {
             this.XSqdCoeff = xSqdCoeff;
             this.YSqdCoeff = ySqdCoeff;
@@ -119,6 +134,7 @@ namespace TVGL
             this.YCoeff = yCoeff;
             this.ZCoeff = zCoeff;
             this.W = w;
+            SetFacesAndVertices(faces);
         }
 
         /// <summary>
@@ -291,11 +307,9 @@ namespace TVGL
 
         protected override void CalculateIsPositive()
         {
-            // for ellipsoids (including spheres), paraboloids, cones and cylinders, a
-            // meaningful isPositive can be calculated. For hyperboloids, it is not clear.
-            // if a cone, cylinder or sphere is desired than the general quadric should 
-            // not be used. Instead, the specific class should be used.
-            isPositive = null;
+            if (Faces == null || !Faces.Any()) return;
+            var firstFace = Faces.First();
+            isPositive = firstFace.Normal.Dot(firstFace.Center - Center) > 0;
         }
 
         protected override void SetPrimitiveLimits()
@@ -400,5 +414,235 @@ namespace TVGL
         Vector3 axis1 = Vector3.Null;
         Vector3 axis2 = Vector3.Null;
         Vector3 axis3 = Vector3.Null;
+
+        public override string KeyString => "Quadric|" + XSqdCoeff.ToString("F5") + "|" +
+            YSqdCoeff.ToString("F5") + "|" + ZSqdCoeff.ToString("F5") + "|" +
+            XYCoeff.ToString("F5") + "|" + XZCoeff.ToString("F5") + "|" +
+            YZCoeff.ToString("F5") + "|" + XCoeff.ToString("F5") + "|" +
+            YCoeff.ToString("F5") + "|" + ZCoeff.ToString("F5") + "|" + W.ToString("F5")
+            + GetCommonKeyDetails();
+
+        /// <summary>
+        /// Defines the quadric from points using minimum least squares.
+        /// </summary>
+        /// <param name="verts"></param>
+        /// <param name="errSqd"></param>
+        /// <returns></returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static GeneralQuadric DefineFromPoints(IEnumerable<Vector3> samples, out double errSqd)
+        {
+            var numVerts = 0;
+            double Sx = 0.0, Sy = 0.0, Sz = 0.0;
+            double Sxx = 0.0;
+            double Sxy = 0.0, Syy = 0.0;
+            double Sxz = 0.0, Syz = 0.0, Szz = 0.0;
+            double Sxxx = 0.0, Sxxy = 0.0, Sxyy = 0.0, Syyy = 0.0;
+            double Sxxz = 0.0, Sxzz = 0.0, Szzz = 0.0;
+            double Syyz = 0.0, Syzz = 0.0, Sxyz = 0.0;
+            double Sx4 = 0.0, Sy4 = 0.0, Sz4 = 0.0;
+            double Sx3y = 0.0, Sx3z = 0.0, Sxy3 = 0.0, Sy3z = 0.0, Sxz3 = 0.0, Syz3 = 0.0;
+            double Sx2y2 = 0.0, Sx2z2 = 0.0, Sy2z2 = 0.0;
+            double Sx2yz = 0.0, Sxy2z = 0.0, Sxyz2 = 0.0;
+            foreach (var point in samples)
+            {
+                var x = point.X;
+                var y = point.Y;
+                var z = point.Z;
+                Sx += x;
+                Sy += y;
+                Sz += z;
+                var xx = x * x;
+                var yy = y * y;
+                var zz = z * z;
+                Sxx += xx;
+                Syy += yy;
+                Szz += zz;
+                var xy = x * y;
+                var xz = x * z;
+                var yz = y * z;
+                Sxy += xy;
+                Sxz += xz;
+                Syz += yz;
+                Sxxx += xx * x;
+                Sxxy += xx * y;
+                Sxyy += xy * y;
+                Syyy += yy * y;
+                Sxxz += xx * z;
+                Sxzz += xz * z;
+                Szzz += zz * z;
+                Syyz += yy * z;
+                Syzz += yz * z;
+                Sxyz += xy * z;
+                Sx4 += xx * xx;
+                Sy4 += yy * yy;
+                Sz4 += zz * zz;
+                Sx3y += xx * xy;
+                Sx3z += xx * xz;
+                Sxy3 += xy * yy;
+                Sy3z += yy * yz;
+                Sxz3 += xz * zz;
+                Syz3 += yz * zz;
+                Sx2y2 += xx * yy;
+                Sx2z2 += xx * zz;
+                Sy2z2 += yy * zz;
+                Sx2yz += xx * yz;
+                Sxy2z += yy * xz;
+                Sxyz2 += xy * zz;
+                numVerts++;
+            }
+            if (numVerts >= 10)
+            {
+                double[,] Amatrix = {
+                    { Sx4,   Sx2y2, Sx2z2, Sx3y,  Sx3z,  Sx2yz, Sxxx, Sxxy, Sxxz },
+                    { Sx2y2, Sy4,   Sy2z2, Sxy3,  Sxy2z, Sy3z,  Sxyy, Syyy, Syyz },
+                    { Sx2z2, Sy2z2, Sz4,   Sxyz2, Sxz3,  Syz3,  Sxzz, Syzz, Szzz },
+                    { Sx3y,  Sxy3,  Sxyz2, Sx2y2, Sx2yz, Sxy2z, Sxxy, Sxyy, Sxyz },
+                    { Sx3z,  Sxy2z, Sxz3,  Sx2yz, Sx2z2, Sxyz2, Sxxz, Sxyz, Sxzz },
+                    { Sx2yz, Sy3z,  Syz3,  Sxy2z, Sxyz2, Sy2z2, Sxyz, Syyz, Syzz },
+                    { Sxxx,  Sxyy,  Sxzz,  Sxxy,  Sxxz,  Sxyz,  Sxx,  Sxy,  Sxz },
+                    { Sxxy,  Syyy,  Syzz,  Sxyy,  Sxyz,  Syyz,  Sxy,  Syy,  Syz },
+                    { Sxxz,  Syyz,  Szzz,  Sxyz,  Sxzz,  Syzz,  Sxz,  Syz,  Szz }
+                };
+                // we set the constant term, W (or the 'J' term), to -1, this allows us to bring over
+                // the unique part of the gradient to the solved side
+                double[] b = [Sxx, Syy, Szz, Sxy, Sxz, Syz, Sx, Sy, Sz];
+                if (Amatrix.solve(b, out var coefficients, true))
+                {
+                    var quadric = new GeneralQuadric(coefficients.Concat([-1]));
+                    errSqd = quadric.XSqdCoeff * Sxx + quadric.YSqdCoeff * Syy + quadric.ZSqdCoeff * Szz
+                        + quadric.XYCoeff * Sxy + quadric.XZCoeff * Sxz + quadric.YZCoeff * Syz
+                        + quadric.XCoeff * Sx + quadric.YCoeff * Sy + quadric.ZCoeff * Sz + quadric.W;
+                    errSqd *= errSqd / numVerts;
+                    return quadric;
+                }
+            }
+            errSqd = double.NaN;
+            return null;
+        }
+
+        /// <summary>
+        /// Defines the quadric as a cylinder. The error in terms should be close to zero for a perfect cylinder.
+        /// </summary>
+        /// <param name="errorInTerms"></param>
+        /// <returns></returns>
+        /// <exception cref="NotImplementedException"></exception>
+        public bool DefineAsCylinder(out Cylinder cylinder)
+        {
+            var K = 2 / (XSqdCoeff + YSqdCoeff + ZSqdCoeff);
+            var A = K * XSqdCoeff;
+            var B = K * YSqdCoeff;
+            var C = K * ZSqdCoeff;
+            var D = K * XYCoeff;
+            var E = K * XZCoeff;
+            var F = K * YZCoeff;
+            var G = K * XCoeff;
+            var H = K * YCoeff;
+            var I = K * ZCoeff;
+            var J = K * W;
+
+            Vector3 axis, anchor;
+            double radius;
+
+            if (A.IsNegligible(Constants.BaseTolerance) && B.IsPracticallySame(1, Constants.BaseTolerance)
+                && C.IsPracticallySame(1, Constants.BaseTolerance))
+            {
+                axis = Vector3.UnitX;
+                var ty = -0.5 * H;
+                var tz = -0.5 * I;
+                anchor = new Vector3(0, ty, tz);
+                radius = Math.Sqrt(ty * ty + tz * tz - J);
+            }
+            else if (A.IsPracticallySame(1, Constants.BaseTolerance)
+                && B.IsNegligible(Constants.BaseTolerance) && C.IsPracticallySame(1, Constants.BaseTolerance))
+            {
+                axis = Vector3.UnitY;
+                var tx = -0.5 * G;
+                var tz = -0.5 * I;
+                anchor = new Vector3(tx, 0, tz);
+                radius = Math.Sqrt(tx * tx + tz * tz - J);
+            }
+            else
+            {
+                if (A.IsPracticallySame(1, Constants.BaseTolerance)
+                && B.IsPracticallySame(1, Constants.BaseTolerance) && C.IsNegligible(Constants.BaseTolerance))
+                    axis = Vector3.UnitZ;
+                else
+                {
+                    if (A + C - 1 < 0)
+                    {
+                        cylinder = new Cylinder();
+                        return false;
+                    }
+                    var y = Math.Sqrt(A + C - 1);
+                    axis = new Vector3(-D / (2 * y), y, -F / (2 * y));
+                }
+                var g = Math.Sqrt(axis.X * axis.X + axis.Z * axis.Z);
+                var ty = -H / (2 * g);
+                var tx = (ty * axis.X * axis.Y - 0.5 * G * g) / axis.Z;
+                var mTo = axis.TransformToXYPlane(out var mFrom);
+                anchor = new Vector3(tx, ty, 0).Transform(mFrom);
+                radius = Math.Sqrt(tx * tx + ty * ty - J);
+            }
+            cylinder = new Cylinder
+            {
+                Axis = axis,
+                Anchor = anchor,
+                Radius = radius,
+            };
+            return true;
+        }
+
+        /// <summary>
+        /// Defines the quadric as a cone. The error in terms should be close to zero for a perfect cone.
+        /// </summary>
+        /// <param name="errorInTerms"></param>
+        /// <returns></returns>
+        /// <exception cref="NotImplementedException"></exception>
+        public bool DefineAsCone(out Cone cone)
+        {
+            Vector3 apex, axis;
+            double mSqd;
+            var thetaY = Math.Atan2(XYCoeff, YZCoeff);
+
+            var thetaX1 = Math.Atan(Math.Sin(thetaY) * YZCoeff / XZCoeff);
+            var thetaX2 = Math.Atan(Math.Cos(thetaY) * XYCoeff / XZCoeff);
+            var thetaX = 0.5 * (thetaX1 + thetaX2);
+            var rotMatrix = Matrix4x4.CreateRotationY(thetaY) * Matrix4x4.CreateRotationX(-thetaX);
+            if (thetaX.IsNegligible(Constants.BaseTolerance) || thetaY.IsPracticallySame(Math.PI,
+                Constants.BaseTolerance))
+            {
+                axis = Vector3.UnitY;
+                throw new NotImplementedException();
+                //var tx = -K * XCoeff;
+                //var ty = -K * YCoeff;
+                //var tz = K*ZCoeff/mSqd;
+                //apex = apex.Transform(rotMatrix);
+
+            }
+            else
+            {
+                axis = Vector3.UnitZ.Transform(rotMatrix);
+                mSqd = (Math.Cos(thetaX) * Math.Cos(thetaX) - YSqdCoeff) /
+                    (Math.Sin(thetaX) * Math.Sin(thetaX));
+                var K = (1 - 0.5 * mSqd) / (XSqdCoeff + YSqdCoeff + ZSqdCoeff);
+                var cTX = Math.Cos(thetaX);
+                var sTX = Math.Sin(thetaX);
+                var cTY = Math.Cos(thetaY);
+                var sTY = Math.Sin(thetaY);
+                var aMatrix = new Matrix3x3(-cTY, sTY * sTX, mSqd * sTY * cTX,
+                    0, -cTX, mSqd * sTX,
+                    sTY, cTY * sTX, mSqd * cTY * cTX);
+                apex = aMatrix.Solve(new Vector3(K * XCoeff, K * YCoeff, K * ZCoeff));
+                apex = apex.Transform(rotMatrix);
+            }
+            cone = new Cone
+            {
+                Axis = axis,
+                Apex = apex,
+                Aperture = Math.Sqrt(mSqd)
+            };
+            return true;
+        }
+
     }
 }

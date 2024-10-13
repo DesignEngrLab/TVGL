@@ -186,13 +186,10 @@ namespace StarMathLib
         /// <param name="b">The b.</param>
         /// <param name="answer">The answer.</param>
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
-        internal static bool Solve2x2ComplexMatrix(ComplexNumber[,] a, IList<double> b, out ComplexNumber[] answer)
+        internal static bool Solve2x2ComplexMatrix(ComplexNumber[,] a, IList<double> b, out ComplexNumber answer0, out ComplexNumber answer1)
         {
-            var n = b.Count;
-            var bComplex = new ComplexNumber[n];
-            for (int i = 0; i < n; i++)
-                bComplex[i] = new ComplexNumber(b[i]);
-            return Solve2x2ComplexMatrix(a, bComplex, out answer);
+            return Solve2x2ComplexMatrix(a[0, 0], a[0, 1], a[1, 0], a[1, 1],
+           new ComplexNumber(b[0]), new ComplexNumber(b[1]), out answer0, out answer1);
         }
         /// <summary>
         /// Solve2x2s the complex matrix.
@@ -202,20 +199,81 @@ namespace StarMathLib
         /// <param name="answer">The answer.</param>
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static bool Solve2x2ComplexMatrix(ComplexNumber[,] a, IList<ComplexNumber> b, out ComplexNumber[] answer)
+        internal static bool Solve2x2ComplexMatrix(ComplexNumber a00, ComplexNumber a01, ComplexNumber a10, ComplexNumber a11,
+            ComplexNumber b0, ComplexNumber b1, out ComplexNumber answer0, out ComplexNumber answer1)
         {
-            var denominator = a[0, 0] * a[1, 1] - a[0, 1] * a[1, 0];
+            var denominator = a00 * a11 - a01 * a10;
             if (denominator.Length() < TVGL.Constants.BaseTolerance)
             {
-                answer = Array.Empty<ComplexNumber>();
+                answer0 = ComplexNumber.NaN;
+                answer1 = ComplexNumber.NaN;
                 return false;
             }
             denominator = 1 / denominator;
-            answer = new[]
+            answer0 = denominator * (b0 * a11 - b1 * a01);
+            answer1 = denominator * (b1 * a00 - b0 * a10);
+            return true;
+        }
+
+
+        /// <summary>
+        /// Solve2x2s the complex matrix.
+        /// </summary>
+        /// <param name="a">a.</param>
+        /// <param name="b">The b.</param>
+        /// <param name="answer">The answer.</param>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
+        internal static bool Solve3x3ComplexMatrix(ComplexNumber[,] a, IList<double> b, out ComplexNumber answer0, out ComplexNumber answer1,
+             out ComplexNumber answer2)
+        {
+            return Solve3x3ComplexMatrix(a[0, 0], a[0, 1], a[0, 2],
+                a[1, 0], a[1, 1], a[1, 2],
+                a[2, 0], a[2, 1], a[2, 2],
+                new ComplexNumber(b[0]), new ComplexNumber(b[1]), new ComplexNumber(b[2]),
+                out answer0, out answer1, out answer2);
+        }
+        /// <summary>
+        /// Solve2x2s the complex matrix.
+        /// </summary>
+        /// <param name="a">a.</param>
+        /// <param name="b">The b.</param>
+        /// <param name="answer">The answer.</param>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal static bool Solve3x3ComplexMatrix(ComplexNumber M11, ComplexNumber M12, ComplexNumber M13, ComplexNumber M21,
+            ComplexNumber M22, ComplexNumber M23, ComplexNumber M31, ComplexNumber M32, ComplexNumber M33,
+            ComplexNumber b0, ComplexNumber b1, ComplexNumber b2, out ComplexNumber answer0, out ComplexNumber answer1, out ComplexNumber answer2)
+        {
+            var det = (M11 * M22 * M33)
+                      + (M12 * M23 * M31)
+                      + (M13 * M21 * M32)
+                      - (M11 * M23 * M32)
+                      - (M12 * M21 * M33)
+                      - (M13 * M22 * M31);
+            if (det.IsNegligible())
             {
-              denominator * (b[0]*a[1,1]-b[1]*a[0,1]),
-              denominator * (b[1]*a[0,0]-b[0]*a[1,0])
-            };
+                answer0 = ComplexNumber.NaN;
+                answer1 = ComplexNumber.NaN;
+                answer2 = ComplexNumber.NaN;
+                return false;
+            }
+            var invDet = ComplexNumber.Reciprocal(det);
+            var N11 = (M22 * M33 - M23 * M32) * invDet;
+            var N12 = (M13 * M32 - M12 * M33) * invDet;
+            var N13 = (M12 * M23 - M13 * M22) * invDet;
+            // Second row
+            var N21 = (M23 * M31 - M21 * M33) * invDet;
+            var N22 = (M11 * M33 - M13 * M31) * invDet;
+            var N23 = (M13 * M21 - M11 * M23) * invDet;
+            // Third row
+            var N31 = (M21 * M32 - M31 * M22) * invDet;
+            var N32 = (M31 * M12 - M11 * M32) * invDet;
+            var N33 = (M11 * M22 - M12 * M21) * invDet;
+
+            answer0 = N11 * b0 + N12 * b1 + N13 * b2;
+            answer1 = N21 * b0 + N22 * b1 + N23 * b2;
+            answer2 = N31 * b0 + N32 * b1 + N33 * b2;
+
             return true;
         }
 

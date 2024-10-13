@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -11,7 +12,22 @@ namespace TVGL
     /// </summary>
     public class SurfaceGroup : PrimitiveSurface
     {
+        [JsonIgnore]
         public HashSet<PrimitiveSurface> Surfaces { get; set; }
+
+        public override string KeyString
+        {
+            get
+            {
+                var key = "Group|";
+                foreach (var surface in Surfaces)
+                {
+                    key += surface.GetType().Name + "|";
+                }
+                key += GetCommonKeyDetails();
+                return key;
+            }
+        }
 
         public void AddPrimitiveSurface(PrimitiveSurface surface, bool resetBorders = true)
         {
@@ -19,7 +35,7 @@ namespace TVGL
                 throw new Exception("Use Combine");
             Surfaces.Add(surface);
             surface.BelongsToGroup = this;
-            if(resetBorders)
+            if (resetBorders)
                 SetBorders();
         }
 
@@ -49,37 +65,63 @@ namespace TVGL
             SetBorders();
         }
 
-        public new IEnumerable<TriangleFace> Faces()
+        public override HashSet<TriangleFace> Faces
         {
-            //Okay to return IEnumerable, since no duplicates will occur.
-            foreach(var surface in Surfaces)
-                foreach(var face in surface.Faces) 
-                    yield return face;
+            get
+            {
+                if (faces == null) GetFaces();
+                return faces;
+            }
+        }
+        HashSet<TriangleFace> faces;
+        void GetFaces()
+        {
+            var surfWithMostFaces = Surfaces.MaxBy(s => s.Faces.Count);
+            // to be slightly efficient we "copy" the hashset from the surface with the most faces
+            faces = new HashSet<TriangleFace>(surfWithMostFaces.Faces, surfWithMostFaces.Faces.Comparer);
+            foreach (var surface in Surfaces)
+            {   // then add the remainding surfaces' faces to this hashset
+                if (surface == surfWithMostFaces) continue;
+                foreach (var face in surface.Faces)
+                    faces.Add(face);
+            }
         }
 
-        public new IEnumerable<Vertex> Vertices()
+        public override HashSet<Vertex> Vertices
         {
-            //Duplicates will occur.
-            var vertices = new HashSet<Vertex>();   
+            get
+            {
+                if (vertices == null) GetVertices();
+                return vertices;
+            }
+        }
+        HashSet<Vertex> vertices;
+        void GetVertices()
+        {
+            var surfWithMostvertices = Surfaces.MaxBy(s => s.Vertices.Count);
+            // to be slightly efficient we "copy" the hashset from the surface with the most vertices
+            vertices = new HashSet<Vertex>(surfWithMostvertices.Vertices, surfWithMostvertices.Vertices.Comparer);
             foreach (var surface in Surfaces)
-                foreach (var vertex in surface.Vertices)
-                    vertices.Add(vertex);
-            return vertices;
+            {   // then add the remainding survertices' vertices to this hashset
+                if (surface == surfWithMostvertices) continue;
+                foreach (var vertice in surface.Vertices)
+                    vertices.Add(vertice);
+            }
         }
 
         public IEnumerable<SurfaceGroup> AdjacentGroups()
         {
             //use a hashset to avoid duplicating feautes in the list
             var adjacentFeatures = new HashSet<SurfaceGroup>();
-            foreach(var segment in BorderSegments)
+            foreach (var segment in BorderSegments)
             {
                 var adjacent = Surfaces.Contains(segment.OwnedPrimitive) ? segment.OtherPrimitive : segment.OwnedPrimitive;
                 adjacentFeatures.Add(adjacent.BelongsToGroup);
-            }           
+            }
             return adjacentFeatures;
         }
         public override HashSet<PrimitiveSurface> AdjacentPrimitives()
-        {          
+        {
             //Use a hash to avoid returning duplicates.
             var allAdjacent = new HashSet<PrimitiveSurface>();
             foreach (var border in BorderSegments)
@@ -121,7 +163,7 @@ namespace TVGL
         /// <param name="color">The color.</param>
         public new void SetColor(Color color)
         {
-            foreach(var face in Faces())
+            foreach (var face in Faces)
                 face.Color = color;
         }
 

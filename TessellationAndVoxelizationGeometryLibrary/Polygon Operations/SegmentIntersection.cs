@@ -56,13 +56,13 @@ namespace TVGL
         /// starting from EdgeB. This is used internally in polygon operations.
         /// </summary>
         /// <value><c>true</c> if [entered a]; otherwise, <c>false</c>.</value>
-        internal bool VisitedA { get; set; }
+        public bool VisitedA { get; set; }
         /// <summary>
         /// Gets or sets a value indicating whether [the intersection has already been visited before].
         /// starting from EdgeB. This is used internally in polygon operations.
         /// </summary>
         /// <value><c>true</c> if [entered a]; otherwise, <c>false</c>.</value>
-        internal bool VisitedB { get; set; }
+        public bool VisitedB { get; set; }
 
 
         /// <summary>

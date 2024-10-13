@@ -11,12 +11,10 @@
 // </copyright>
 // <summary></summary>
 // ***********************************************************************
-using ClipperLib;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 
 namespace TVGL
 {
@@ -296,8 +294,166 @@ namespace TVGL
             else return circleBorders.Average(b => ((Circle)b.Curve).Radius);
         }
 
+        /// <summary>
+        /// Given a set of 2D points in arbitrary order that are known to be on a curve, this function
+        /// finds the extremes
+        /// </summary>
+        /// <param name="points"></param>
+        /// <returns></returns>
+        public static (Vector2 start, Vector2 startDirj, Vector2 end, Vector2 endDir) FindExtremesAlong2DCurve(this PrimitiveSurface surface,
+            IEnumerable<Vector2> points)
+        {
+            var int2PointDict = new Dictionary<int, (Vector2, Vertex)>();
+            var pointsEnumerator = points.GetEnumerator();
+            foreach (var v in surface.Vertices)
+            {
+                pointsEnumerator.MoveNext();
+                var point = pointsEnumerator.Current;
+                int2PointDict.Add(v.IndexInList, (point, v));
+            }
+            var possibleExtremes = new List<(Vector2, Vector2, Vector2)>();
+            foreach ((Vector2 location, Vertex vertex) in int2PointDict.Values)
+            {
+                var outVectors = new List<Vector2>();
+                var outer1 = Vector2.Null;
+                var outer2 = Vector2.Null;
+                foreach (var edge in vertex.Edges)
+                {
+                    var otherVertex = edge.OtherVertex(vertex);
+                    if (!surface.OuterEdges.Contains(edge) && !surface.Vertices.Contains(otherVertex)) continue;
+                    var otherLocation = int2PointDict[otherVertex.IndexInList].Item1;
+                    var vector = otherLocation - location;
+                    if (vector.LengthSquared().IsNegligible()) continue;
+                    vector = vector.Normalize();
+                    if (outer1.IsNull())
+                        outer1 = vector;
+                    else
+                    {
+                        outer2 = vector;
+                        break;
+                    }
+                }
+                if (outer1.IsNull() && possibleExtremes.Count > 0)
+                    // this is subtle. if not outers then don't bother - unless you still haven't saved at least one. then might
+                    // as well keep this one
+                    continue;
+                if (!outer2.IsNull() && outer1.Dot(outer2) < 0)
+                    // if you have 2 outers they can't be in opposite (dot < 0) directions 
+                    continue;
+                possibleExtremes.Add((location, outer1, outer2));
+            }
+            if (possibleExtremes.Count == 2) return (possibleExtremes[0].Item1, (possibleExtremes[0].Item2 + possibleExtremes[0].Item3).Normalize(),
+                    possibleExtremes[1].Item1, (possibleExtremes[1].Item2 + possibleExtremes[1].Item3).Normalize());
+            var numExtremes = possibleExtremes.Count;
+            while (possibleExtremes.Count > 2)
+            {
+                for (int i = possibleExtremes.Count - 1; i > 0; i--)
+                {
+                    (var point, var v1, var v2) = possibleExtremes[i];
+                    for (int j = i - 1; j >= 0; j--)
+                    {
+                        (var otherPoint, var w1, var w2) = possibleExtremes[j];
+                        if (point.IsPracticallySame(otherPoint))
+                        {
+                            possibleExtremes.RemoveAt(i);
+                            break;
+                        }
+                        var iTrapsJ = PointASeesPointB(point, v1, v2, otherPoint);
+                        var jTrapsI = PointASeesPointB(otherPoint, w1, w2, point);
+                        if (iTrapsJ == jTrapsI) continue;
+                        if (jTrapsI)
+                        {
+                            possibleExtremes.RemoveAt(i);
+                            break;
+                        }
+                        else // if (iTrapsJ)
+                        {
+                            i--;
+                            possibleExtremes.RemoveAt(j);
+                        }
+                        //if (possibleExtremes.Count == 2) break;
+                    }
+                    //if (possibleExtremes.Count == 2) break;
+                }
+                if (possibleExtremes.Count <= 2) break;
+                // more than 2 - then rework the possibleExtremes with connections to the nearest neighbors
+                // (here, were are assuming the number is super small like 3 to 6)
+                for (int i = possibleExtremes.Count - 1; i >= 0; i--)
+                {
+                    (var point, _, _) = possibleExtremes[i];
+                    var closestVector1 = Vector2.Null;
+                    var closestVector2 = Vector2.Null;
+                    var closestDistance1 = double.PositiveInfinity;
+                    var closestDistance2 = double.PositiveInfinity;
+                    for (int j = 0; j < possibleExtremes.Count; j++)
+                    {
+                        if (i == j) continue;
+                        (var otherPoint, _, _) = possibleExtremes[j];
+                        var v = otherPoint - point;
+                        var distance = v.LengthSquared();
+                        if (distance < closestDistance1)
+                        {
+                            closestDistance2 = closestDistance1;
+                            closestVector2 = closestVector1;
+                            closestDistance1 = distance;
+                            closestVector1 = v;
+                        }
+                        else if (distance < closestDistance2)
+                        {
+                            closestDistance2 = distance;
+                            closestVector2 = v;
+                        }
+                    }
+                    if (closestVector1.Dot(closestVector2) > 0)
+                        possibleExtremes[i] = (point, closestVector1, closestVector2);
+                    else possibleExtremes.RemoveAt(i);
+                    if (possibleExtremes.Count <= 2) break;
+                }
+                if (numExtremes == 3 && possibleExtremes.Count == 3)
+                {   // This means that we've tried twice to reduce from 3 but failed. Which, in turn, 
+                    // means the 3 points are arranged in an accute a triangle. So, throw out the one 
+                    // that is closer to the other two
+                    var distanceSqd0 = possibleExtremes[0].Item2.LengthSquared() + possibleExtremes[0].Item3.LengthSquared();
+                    var distanceSqd1 = possibleExtremes[1].Item2.LengthSquared() + possibleExtremes[1].Item3.LengthSquared();
+                    var distanceSqd2 = possibleExtremes[2].Item2.LengthSquared() + possibleExtremes[2].Item3.LengthSquared();
+                    if (distanceSqd2 < distanceSqd1 && distanceSqd2 < distanceSqd0)
+                        possibleExtremes.RemoveAt(2);
+                    else if (distanceSqd1 < distanceSqd2 && distanceSqd1 < distanceSqd0)
+                        possibleExtremes.RemoveAt(1);
+                    else possibleExtremes.RemoveAt(0);
+                }
+                numExtremes = possibleExtremes.Count;
+            }
+            if (possibleExtremes.Count == 0)
+                throw new Exception("No points found at the extremes of the curve.");
+            if (possibleExtremes.Count == 1)
+                return (possibleExtremes[0].Item1, (possibleExtremes[0].Item2 + possibleExtremes[0].Item3).Normalize(),
+                   Vector2.Null, Vector2.Null);
+            else
+                return (possibleExtremes[0].Item1, (possibleExtremes[0].Item2 + possibleExtremes[0].Item3).Normalize(),
+                       possibleExtremes[1].Item1, (possibleExtremes[1].Item2 + possibleExtremes[1].Item3).Normalize());
+        }
+
+        private static bool PointASeesPointB(Vector2 pointA, Vector2 vA1, Vector2 vA2, Vector2 pointB)
+        {
+            var vNew = pointB - pointA;
+            if (vNew.LengthSquared() < Constants.BaseTolerance * Constants.BaseTolerance) return false;
+            return (vA1.IsNull() || vNew.Dot(vA1) >= 0) && (vA2.IsNull() || vNew.Dot(vA2) >= 0);
+        }
 
 
+        #region Tessellation of PrimitiveSurfaces
+        /// <summary>
+        /// A generic tessellation of a primitive surface using marching cubes.
+        /// </summary>
+        /// <param name="surface"></param>
+        /// <param name="xMin"></param>
+        /// <param name="xMax"></param>
+        /// <param name="yMin"></param>
+        /// <param name="yMax"></param>
+        /// <param name="zMin"></param>
+        /// <param name="zMax"></param>
+        /// <param name="maxEdgeLength"></param>
         public static void Tessellate(this PrimitiveSurface surface, double xMin, double xMax, double yMin, double yMax, double zMin, double zMax, double maxEdgeLength)
         {
             if (surface.Vertices != null && surface.Vertices.Count > 0) return;
@@ -307,7 +463,12 @@ namespace TVGL
             var tessellatedSolid = solid.ConvertToTessellatedSolid(meshSize);
             surface.SetFacesAndVertices(tessellatedSolid.Faces, true);
         }
-
+        /// <summary>
+        /// A generic tessellation of a primitive surface using marching cubes.
+        /// </summary>
+        /// <param name="surface"></param>
+        /// <param name="maxEdgeLength"></param>
+        /// <exception cref="ArgumentOutOfRangeException"></exception>
         public static void Tessellate(this PrimitiveSurface surface, double maxEdgeLength = double.NaN)
         {
             if (surface.Vertices != null && surface.Vertices.Count > 0) return;
@@ -357,9 +518,425 @@ namespace TVGL
             return result;
         }
 
+        /// <summary>
+        /// Creates a the faces and vertices for a circle positioned in 3D space at circleCenter with normalDirection as the outward normal
+        /// and the given radius. The number of points in the circle is determined by numPoints.
+        /// </summary>
+        /// <param name="vertices"></param>
+        /// <param name="faces"></param>
+        /// <param name="circleCenter"></param>
+        /// <param name="normalDirection"></param>
+        /// <param name="radius"></param>
+        /// <param name="numPoints"></param>
+        internal static void GetCircleTessellation(out Vertex[] vertices, out TriangleFace[] faces,
+            Vector3 circleCenter, Vector3 normalDirection, double radius, int numPoints, bool reverseFaces)
+        {
+            var cosAxis = normalDirection.GetPerpendicularDirection();
+            var sinAxis = normalDirection.Cross(cosAxis);
+            vertices = new Vertex[numPoints + 1];
+            var centerVertex = new Vertex(circleCenter);
+            vertices[numPoints] = centerVertex;
+
+            for (int i = 0; i < numPoints; i++)
+            {
+                var angle = i * 2 * Math.PI / numPoints;
+                var coord = circleCenter + radius * (cosAxis * Math.Cos(angle) + sinAxis * Math.Sin(angle));
+                vertices[i] = new Vertex(coord);
+            }
+
+            faces = new TriangleFace[numPoints];
+            var j = numPoints - 1;
+            if (reverseFaces)
+                for (int i = 0; i < numPoints; i++)
+                {
+                    faces[i] = new TriangleFace(centerVertex, vertices[i], vertices[j]);
+                    j = i;
+                }
+            else
+                for (int i = 0; i < numPoints; i++)
+                {
+                    faces[i] = new TriangleFace(centerVertex, vertices[j], vertices[i]);
+                    j = i;
+                }
+            for (int i = 0; i < faces.Length; i++)
+                faces[i].IndexInList = i;
+        }
+
+        /// <summary>
+        /// Create a tessellated solid for a cone. Long skinny triangles are created from the apex to the base circle.
+        /// </summary>
+        /// <param name="cone"></param>
+        /// <param name="maxEdgeLength"></param>
+        /// <param name="keepOpen"></param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentException"></exception>
+        public static TessellatedSolid Tessellate(this Cone cone, double maxEdgeLength, bool keepOpen = false)
+        {
+            if (double.IsInfinity(cone.Length))
+                throw new ArgumentException("The cone must have finite a finite length.");
+            var baseCircleRadius = cone.Length * cone.Aperture;
+            // using law of cosines
+            var maxAngle = Math.Acos(1 - maxEdgeLength * maxEdgeLength / (2 * baseCircleRadius * baseCircleRadius));
+            var numPoints = (int)(2 * Math.PI / maxAngle);
+            return Tessellate(cone, numPoints, keepOpen);
+        }
+
+        /// <summary>
+        /// Create a tessellated solid for a cone. Long skinny triangles are created from the apex to the base circle.
+        /// </summary>
+        /// <param name="cone"></param>
+        /// <param name="numPoints"></param>
+        /// <param name="keepOpen">if true then no triangles are added for the base circle</param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentException"></exception>
+        public static TessellatedSolid Tessellate(this Cone cone, int numPoints = 30, bool keepOpen = false)
+        {
+            if (double.IsInfinity(cone.Length))
+                throw new ArgumentException("The cone must have finite a finite length.");
+            var axis = cone.Axis.Normalize();
+            var baseCircleRadius = cone.Length * cone.Aperture;
+            var baseCircleCenter = cone.Apex + cone.Length * axis;
+
+            GetCircleTessellation(out var btmVertices, out var btmFaces, baseCircleCenter, axis, baseCircleRadius, numPoints, false);
+            List<Vertex> vertices;
+            List<TriangleFace> faces;
+            Plane btmPlane = null;
+            var apexVertex = new Vertex(cone.Apex);
+            if (keepOpen)
+            {
+                vertices = btmVertices.SkipLast(1).Concat([apexVertex]).ToList();
+                faces = new List<TriangleFace>();
+            }
+            else
+            {
+                vertices = btmVertices.Concat([apexVertex]).ToList();
+                faces = btmFaces.ToList();
+                btmPlane = new Plane(cone.Apex + axis * cone.Length, axis);
+                btmPlane.SetFacesAndVertices(btmFaces, true, true);
+            }
+
+            var j = numPoints - 1;
+            var coneFaces = new List<TriangleFace>();
+            for (int i = 0; i < numPoints; i++)
+            {
+                coneFaces.Add(new TriangleFace(apexVertex, btmVertices[i], btmVertices[j]));
+                j = i;
+            }
+            cone.SetFacesAndVertices(coneFaces);
+            faces.AddRange(coneFaces);
+            for (int i = 0; i < faces.Count; i++)
+                faces[i].IndexInList = i;
+            var tessellatedSolidBuildOptions = new TessellatedSolidBuildOptions { CopyElementsPassedToConstructor = false };
+            return new TessellatedSolid(faces, vertices, tessellatedSolidBuildOptions)
+            {
+                Primitives = keepOpen ? [cone] : [btmPlane, cone]
+            };
+        }
+
+        /// <summary>
+        /// Create a tessellated solid for a cone. Long skinny triangles are created from the apex to the base circle.
+        /// </summary>
+        /// <param name="cone"></param>
+        /// <param name="maxEdgeLength"></param>
+        /// <param name="keepOpen"></param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentException"></exception>
+        public static TessellatedSolid Tessellate(this Cylinder cylinder, double maxEdgeLength, bool keepOpen = false)
+        {
+            // using law of cosines
+            var maxAngle = Math.Acos(1 - maxEdgeLength * maxEdgeLength / (2 * cylinder.Radius * cylinder.Radius));
+            var numPoints = (int)(2 * Math.PI / maxAngle);
+            return Tessellate(cylinder, numPoints, keepOpen);
+        }
+
+        /// <summary>
+        /// Create a tessellated solid for a cylinder. Long skinny triangles are created from one end to the other.
+        /// </summary>
+        /// <param name="cylinder"></param>
+        /// <param name="numPoints"></param>
+        /// <param name="keepOpen">if true then no triangles are added for the circles on the ends</param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentException"></exception>
+        public static TessellatedSolid Tessellate(this Cylinder cylinder, int numPoints = 30, bool keepOpen = false)
+        {
+            if (double.IsInfinity(cylinder.MinDistanceAlongAxis) || double.IsInfinity(cylinder.MaxDistanceAlongAxis))
+                throw new ArgumentException("The cylinder must have finite min and max distances along the axis.");
+            var axis = cylinder.Axis.Normalize();
+            var anchorDist = cylinder.Anchor.Dot(axis);
+            var cylinderMinAxisPoint = cylinder.Anchor + (cylinder.MinDistanceAlongAxis - anchorDist) * axis;
+            var cylinderMaxAxisPoint = cylinderMinAxisPoint + (cylinder.MaxDistanceAlongAxis - cylinder.MinDistanceAlongAxis) * axis;
+
+            GetCircleTessellation(out var btmVertices, out var btmFaces, cylinderMinAxisPoint, axis, cylinder.Radius, numPoints, true);
+            GetCircleTessellation(out var topVertices, out var topFaces, cylinderMaxAxisPoint, axis, cylinder.Radius, numPoints, false);
+            List<Vertex> vertices;
+            List<TriangleFace> faces;
+            if (keepOpen)
+            {
+                vertices = btmVertices.SkipLast(1).Concat(topVertices.SkipLast(1)).ToList();
+                faces = new List<TriangleFace>();
+            }
+            else
+            {
+                vertices = btmVertices.Concat(topVertices).ToList();
+                faces = btmFaces.Concat(topFaces).ToList();
+            }
+
+            var sideFaces = new List<TriangleFace>();
+            var j = numPoints - 1;
+            for (int i = 0; i < numPoints; i++)
+            {
+                sideFaces.Add(new TriangleFace(btmVertices[i], topVertices[i], topVertices[j]));
+                sideFaces.Add(new TriangleFace(btmVertices[i], topVertices[j], btmVertices[j]));
+                j = i;
+            }
+            cylinder.SetFacesAndVertices(sideFaces, true, true);
+            faces.AddRange(sideFaces);
+            for (int i = 0; i < faces.Count; i++)
+                faces[i].IndexInList = i;
+            var tessellatedSolidBuildOptions = new TessellatedSolidBuildOptions { CopyElementsPassedToConstructor = false };
+            if (keepOpen)
+            {
+                return new TessellatedSolid(faces, vertices, tessellatedSolidBuildOptions)
+                {
+                    Primitives = [cylinder]
+                };
+            }
+            var btmPlane = new Plane(cylinderMinAxisPoint, -axis);
+            btmPlane.SetFacesAndVertices(btmFaces, true, true);
+            var topPlane = new Plane(cylinderMaxAxisPoint, axis);
+            topPlane.SetFacesAndVertices(topFaces, true, true);
+            return new TessellatedSolid(faces, vertices, tessellatedSolidBuildOptions)
+            {
+                Primitives = [btmPlane, topPlane, cylinder]
+            };
+        }
+
+
+        /// <summary>
+        /// Create a tessellated solid for a cone. Long skinny triangles are created from the apex to the base circle.
+        /// </summary>
+        /// <param name="cone"></param>
+        /// <param name="maxEdgeLength"></param>
+        /// <param name="keepOpen"></param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentException"></exception>
+        public static TessellatedSolid TessellateHollowCylinder(this Cylinder cylinder, double innerRadius, double maxEdgeLength)
+        {
+            // using law of cosines
+            var maxAngle = Math.Acos(1 - maxEdgeLength * maxEdgeLength / (2 * innerRadius * innerRadius));
+            var numPoints = (int)(2 * Math.PI / maxAngle);
+            return TessellateHollowCylinder(cylinder, innerRadius, numPoints);
+        }
+
+        /// <summary>
+        /// Creates a tessellated solid for a tube or hollow cylinder.
+        /// </summary>
+        /// <param name="cylinder"></param>
+        /// <param name="innerRadius"></param>
+        /// <param name="numPoints"></param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentException"></exception>
+        public static TessellatedSolid TessellateHollowCylinder(this Cylinder cylinder, double innerRadius, int numPoints = 30)
+        {
+            if (double.IsInfinity(cylinder.MinDistanceAlongAxis) || double.IsInfinity(cylinder.MaxDistanceAlongAxis))
+                throw new ArgumentException("The cylinder must have finite min and max distances along the axis.");
+            if (innerRadius >= cylinder.Radius)
+                throw new ArgumentException("The inner radius must be smaller than the cylinder's given (outer) radius.");
+            var centerDot = cylinder.Axis.Dot(cylinder.Anchor);
+            var bottomCenter = cylinder.Anchor + (centerDot - cylinder.MinDistanceAlongAxis) * cylinder.Axis;
+            var topCenter = cylinder.Anchor + (centerDot - cylinder.MaxDistanceAlongAxis) * cylinder.Axis;
+            var cosAxis = cylinder.Axis.GetPerpendicularDirection();
+            var sinAxis = cylinder.Axis.Cross(cosAxis);
+            var outerRadius = cylinder.Radius;
+            var btmInnerVertices = new Vertex[numPoints];
+            var btmOuterVertices = new Vertex[numPoints];
+            var topInnerVertices = new Vertex[numPoints];
+            var topOuterVertices = new Vertex[numPoints];
+            for (int i = 0; i < numPoints; i++)
+            {
+                var angle = i * 2 * Math.PI / numPoints;
+                var cosAngle = Math.Cos(angle);
+                var sinAngle = Math.Sin(angle);
+                var radialVector = cosAxis * cosAngle + sinAxis * sinAngle;
+                var innerVector = innerRadius * radialVector;
+                var outerVector = outerRadius * radialVector;
+                btmInnerVertices[i] = new Vertex(bottomCenter + innerVector);
+                btmOuterVertices[i] = new Vertex(bottomCenter + outerVector);
+                topInnerVertices[i] = new Vertex(topCenter + innerVector);
+                topOuterVertices[i] = new Vertex(topCenter + outerVector);
+            }
+            var bottomFaces = new List<TriangleFace>();
+            var topFaces = new List<TriangleFace>();
+            var innerFaces = new List<TriangleFace>();
+            var outerFaces = new List<TriangleFace>();
+            var j = numPoints - 1;
+            for (int i = 0; i < numPoints; i++)
+            {
+                bottomFaces.Add(new TriangleFace(btmInnerVertices[j], btmOuterVertices[j], btmOuterVertices[i]));
+                bottomFaces.Add(new TriangleFace(btmInnerVertices[j], btmOuterVertices[i], btmInnerVertices[i]));
+                topFaces.Add(new TriangleFace(topOuterVertices[j], topInnerVertices[j], topInnerVertices[i]));
+                topFaces.Add(new TriangleFace(topOuterVertices[j], topInnerVertices[i], topOuterVertices[i]));
+                outerFaces.Add(new TriangleFace(btmOuterVertices[j], topOuterVertices[j], topOuterVertices[i]));
+                outerFaces.Add(new TriangleFace(btmOuterVertices[j], topOuterVertices[i], btmOuterVertices[i]));
+                innerFaces.Add(new TriangleFace(btmInnerVertices[i], topInnerVertices[i], topInnerVertices[j]));
+                innerFaces.Add(new TriangleFace(btmInnerVertices[i], topInnerVertices[j], btmInnerVertices[j]));
+                j = i;
+            }
+
+            var tessellatedSolidBuildOptions = new TessellatedSolidBuildOptions();
+            tessellatedSolidBuildOptions.CopyElementsPassedToConstructor = false;
+            var faces = bottomFaces.Concat(topFaces).Concat(outerFaces).ToArray();
+            var vertices = btmInnerVertices.Concat(btmOuterVertices).Concat(
+                topInnerVertices).Concat(topOuterVertices).ToArray();
+            var btmPlane = new Plane(cylinder.MinDistanceAlongAxis, cylinder.Axis);
+            btmPlane.SetFacesAndVertices(bottomFaces, true, true);
+            var topPlane = new Plane(cylinder.MaxDistanceAlongAxis, cylinder.Axis);
+            topPlane.SetFacesAndVertices(topFaces, true, true);
+            cylinder.SetFacesAndVertices(outerFaces, true, true);
+            var innerCylinder = new Cylinder
+            {
+                Axis = cylinder.Axis,
+                Anchor = cylinder.Anchor,
+                Radius = innerRadius,
+                MinDistanceAlongAxis = cylinder.MinDistanceAlongAxis,
+                MaxDistanceAlongAxis = cylinder.MaxDistanceAlongAxis,
+                IsPositive = false
+            };
+            innerCylinder.SetFacesAndVertices(innerFaces, true, true);
+
+            for (int i = 0; i < faces.Length; i++)
+                faces[i].IndexInList = i;
+            return new TessellatedSolid(faces, vertices, tessellatedSolidBuildOptions)
+            {
+                Primitives = [btmPlane, topPlane, cylinder, innerCylinder]
+            };
+        }
+
+
+        /// <summary>
+        /// Creates a tessellated solid for a sphere by attempting to equally space the points.
+        /// </summary>
+        /// <param name="sphere"></param>
+        /// <param name="numPoints"></param>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
+        public static TessellatedSolid Tessellate(this Sphere sphere, double maxEdgeLength)
+        {
+            // assuming equilateral triangles are spread over sphere (which is a conservative assumption, since
+            // equilateral triangles will have the most area)
+            var equiTriArea = 0.25 * maxEdgeLength * maxEdgeLength * Math.Sqrt(3);
+            var numTriangles = (int)(Math.PI * sphere.Radius * sphere.Radius / equiTriArea); // wait! isn't there a 4 in 
+                                                                                             // the formula for the area of a sphere ? yes, but after some (brief) testing, it seems that this 
+                                                                                             // overall heuristic is off by a factor of 4. So, we'll just leave it out.
+            return Tessellate(sphere, numTriangles - 2);
+        }
+
+        /// <summary>
+        /// Creates a tessellated solid for a sphere by attempting to equally space the points.
+        /// </summary>
+        /// <param name="sphere"></param>
+        /// <param name="numPoints"></param>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
+        public static TessellatedSolid Tessellate(this Sphere sphere, int numPoints = 100)
+        {
+            var vertices = MiscFunctions.NEquidistantSpherePointsKogan(numPoints, sphere.Radius).Select(p => new Vertex(p + sphere.Center)).ToList();
+            if (!ConvexHull3D.Create(vertices, out var convexHull, false))
+                throw new Exception("Convex hull could not be created for sphere.");
+            var faces = convexHull.Faces.Select(cf => new TriangleFace(cf.A, cf.B, cf.C)).ToList();
+            for (int i = 0; i < faces.Count; i++)
+                faces[i].IndexInList = i;
+
+            var tessellatedSolidBuildOptions = new TessellatedSolidBuildOptions();
+            tessellatedSolidBuildOptions.CopyElementsPassedToConstructor = false;
+            sphere.SetFacesAndVertices(faces, true, true);
+            return new TessellatedSolid(faces, vertices, tessellatedSolidBuildOptions)
+            {
+                Primitives = [sphere]
+            };
+        }
+
+
+        /// <summary>
+        /// Creates a tessellated solid for a torus which is determined by rings of points.
+        /// </summary>
+        /// <param name="torus"></param>
+        /// <param name="numPoints"></param>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
+        public static TessellatedSolid Tessellate(this Torus torus, double maxEdgeLength)
+        {
+            var r = torus.MajorRadius + torus.MinorRadius;
+            // using law of cosines
+            var maxAngle = Math.Acos(1 - maxEdgeLength * maxEdgeLength / (2 * r * r));
+            var numPointsInMajor = (int)(2 * Math.PI / maxAngle);
+            r = torus.MinorRadius;
+            maxAngle = Math.Acos(1 - maxEdgeLength * maxEdgeLength / (2 * r * r));
+            var numPointsInMinor = (int)(2 * Math.PI / maxAngle);
+            return Tessellate(torus, numPointsInMajor, numPointsInMinor);
+        }
+
+        /// <summary>
+        /// Creates a tessellated solid for a torus which is determined by rings of points.
+        /// </summary>
+        /// <param name="torus"></param>
+        /// <param name="numPoints"></param>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
+        public static TessellatedSolid Tessellate(this Torus torus, int numPointsInMajor = 30, int numPointsInMinor = 30)
+        {
+            var vertices = new Vertex[numPointsInMinor * numPointsInMajor];
+            var cosMajorAxis = torus.Axis.GetPerpendicularDirection();
+            var sinMajorAxis = torus.Axis.Cross(cosMajorAxis);
+            var centerPoints = new Vector3[numPointsInMajor];
+            for (int i = 0; i < numPointsInMajor; i++)
+            {
+                var angle = i * 2 * Math.PI / numPointsInMajor;
+                var centerPoint = torus.Center + torus.MajorRadius * (cosMajorAxis * Math.Cos(angle) + sinMajorAxis * Math.Sin(angle));
+                var sinMinorAxis = torus.Axis;
+                var cosMinorAxis = (centerPoint - torus.Center).Normalize();
+
+                for (int j = 0; j < numPointsInMinor; j++)
+                {
+                    angle = j * 2 * Math.PI / numPointsInMinor;
+                    vertices[i * numPointsInMinor + j] = new Vertex(centerPoint + torus.MinorRadius
+                        * (cosMinorAxis * Math.Cos(angle) + sinMinorAxis * Math.Sin(angle)));
+                }
+            }
+            var faces = new TriangleFace[2 * numPointsInMinor * numPointsInMajor];
+            var prevI = numPointsInMajor - 1;
+            var k = 0;
+            for (int i = 0; i < numPointsInMajor; i++)
+            {
+                var prevJ = numPointsInMinor - 1;
+                for (int j = 0; j < numPointsInMinor; j++)
+                {
+                    faces[k++] = new TriangleFace(vertices[i * numPointsInMinor + j],
+                        vertices[prevI * numPointsInMinor + j],
+                        vertices[prevI * numPointsInMinor + prevJ]);
+                    faces[k++] = new TriangleFace(vertices[i * numPointsInMinor + j],
+                        vertices[prevI * numPointsInMinor + prevJ],
+                        vertices[i * numPointsInMinor + prevJ]);
+                    prevJ = j;
+                }
+                prevI = i;
+            }
+            for (int i = 0; i < faces.Length; i++)
+                faces[i].IndexInList = i;
+            var tessellatedSolidBuildOptions = new TessellatedSolidBuildOptions { CopyElementsPassedToConstructor = false };
+            torus.SetFacesAndVertices(faces, true, true);
+            return new TessellatedSolid(faces, vertices, tessellatedSolidBuildOptions)
+            {
+                Primitives = [torus]
+            };
+        }
+
+
+
+        #endregion
 
         private static IEnumerable<(Vector3 intersection, double lineT)> GetPrimitiveAndLineIntersections(PrimitiveSurface surface, double xCoord,
-             double yCoord, double zCoord)
+         double yCoord, double zCoord)
         {
             if (surface.Faces == null || surface.Faces.Count == 0)
                 foreach (var result in surface.LineIntersection(new Vector3(xCoord, yCoord, zCoord), Vector3.UnitX))

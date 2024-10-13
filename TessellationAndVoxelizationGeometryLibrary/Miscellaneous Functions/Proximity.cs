@@ -13,6 +13,7 @@
 // ***********************************************************************
 using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
 
 namespace TVGL
@@ -304,8 +305,11 @@ namespace TVGL
         {
             Vector3 dir;
             //If the vector is only in the y-direction, then return the x direction
-            if (direction.X.IsNegligible() && direction.Z.IsNegligible())
-                return Vector3.UnitX;
+            if (direction.Y.IsPracticallySame(1.0)|| direction.Y.IsPracticallySame(-1.0))
+            {
+                if (additionalRotation == 0) return Vector3.UnitX;
+                return Math.Cos(additionalRotation) * Vector3.UnitX - Math.Sin(additionalRotation) * Vector3.UnitZ;
+            }
             // otherwise we will return something in the x-z plane, which is created by
             // taking the cross product of the Y-direction with this vector.
             // The thinking is that - since this is used in the function above (to translate
@@ -315,7 +319,8 @@ namespace TVGL
             // camera up position.
             dir = Vector3.UnitY.Cross(direction).Normalize();
             if (additionalRotation == 0) return dir;
-            return dir.Transform(Quaternion.CreateFromAxisAngle(direction, additionalRotation));
+            var yDir = direction.Cross(dir).Normalize();
+            return Math.Cos(additionalRotation) * dir + Math.Sin(additionalRotation) * yDir;
         }
         /// <summary>
         /// Finds the axis that is most orthogonal to the given set.
@@ -328,72 +333,6 @@ namespace TVGL
             Plane.DefineNormalAndDistanceFromVertices(vectors, out _, out var normal);
             return normal;
         }
-
-        /// <summary>
-        /// GetS the 3d eigen vectors from small to large. This is useful for doing
-        /// a PCA analysis on 3D points.
-        /// </summary>
-        /// <param name="vectors">The vectors.</param>
-        /// <returns>A list of Vector3S.</returns>
-        public static Vector3[] Get3DEigenVectorsSmallToLarge(IEnumerable<Vector3> vectors)
-        {
-            var vectorsList = vectors as IList<Vector3> ?? vectors.ToList();
-            var n = vectorsList.Count;
-            double xMean = 0.0;
-            double yMean = 0.0;
-            double zMean = 0.0;
-
-            foreach (var v in vectorsList)
-            {
-                xMean += v.X;
-                yMean += v.Y;
-                zMean += v.Z;
-            }
-            xMean /= n;
-            yMean /= n;
-            zMean /= n;
-
-            double xSq = 0.0;
-            double xy = 0.0;
-            double ySq = 0.0;
-            double xz = 0.0, yz = 0.0;
-            double zSq = 0.0;
-            foreach (var v in vectorsList)
-            {
-                var deltaX = v.X - xMean;
-                var deltaY = v.Y - yMean;
-                var deltaZ = v.Z - zMean;
-                xSq += deltaX * deltaX;
-                ySq += deltaY * deltaY;
-                zSq += deltaZ * deltaZ;
-                xy += deltaX * deltaY;
-                xz += deltaX * deltaZ;
-                yz += deltaY * deltaZ;
-            }
-            //xSq /= n;
-            //xy /= n;
-            //xz /= n;
-            //ySq /= n;
-            //yz /= n;
-            //zSq /= n;
-
-            var Amatrix = new Matrix3x3(xSq, xy, xz,
-                xy, ySq, yz,
-                xz, yz, zSq);
-            var eigenValues = Amatrix.EigenValuesRealsOnly().OrderBy(x => x).ToList();
-            var eigenVectors = Amatrix.EigenVectors(eigenValues);
-            var dot01 = Math.Abs(eigenVectors[0].Dot(eigenVectors[1]));
-            var dot02 = Math.Abs(eigenVectors[0].Dot(eigenVectors[2]));
-            var dot12 = Math.Abs(eigenVectors[1].Dot(eigenVectors[2]));
-            if (dot01 < dot02 && dot01 < dot12)
-                eigenVectors[2] = eigenVectors[0].Cross(eigenVectors[1]).Normalize();
-            else if (dot02 < dot12 && dot02 < dot01)
-                eigenVectors[1] = eigenVectors[2].Cross(eigenVectors[0]).Normalize();
-            else if (dot12 < dot02 && dot12 < dot01)
-                eigenVectors[0] = eigenVectors[1].Cross(eigenVectors[2]).Normalize();
-            return eigenVectors;
-        }
-
 
         /// <summary>
         /// Finds the axis from normals.
@@ -594,8 +533,6 @@ namespace TVGL
             //foreach (var dir in guessDirList) yield return dir;
         }
         #endregion
-
-
 
         /// <summary>
         /// Finds the best planar curve.
@@ -851,9 +788,8 @@ namespace TVGL
         /// <param name="angleDegreesTolerance">The minimum angle between line directions - usually about 4 degrees.</param>
         /// <param name="maxDistanceFromCOM"></param>
         /// <returns>A tuple of the line anchor, the line direction, and the primitives centered about that line</returns>
-        public static IEnumerable<(Vector3 anchor, Vector3 direction, List<PrimitiveSurface>)> FindBestRotations(TessellatedSolid solid,
-            double distanceTolerance = double.NaN,
-            double angleDegreesTolerance = 4.0, double maxDistanceFromCOM = double.PositiveInfinity)
+        public static IEnumerable<(Vector3 anchor, Vector3 direction, List<PrimitiveSurface> surfaces, double area)> FindBestRotations(TessellatedSolid solid,
+            double distanceTolerance = double.NaN, double angleDegreesTolerance = 4.0)
         {
             if (double.IsNaN(distanceTolerance)) distanceTolerance =
                     0.0001 * (solid.Bounds[1] - solid.Bounds[0]).Length();
@@ -871,8 +807,6 @@ namespace TVGL
                 {
                     var anchor = prim.GetAnchor();
                     var axis = prim.GetAxis();
-                    var distFromCenter = (anchor - com).Cross(axis).Length();
-                    if (distFromCenter > maxDistanceFromCOM) continue;
                     var uniqueLine = Unique3DLine(anchor, axis);
 
                     if (uniqueLines.TryGet(uniqueLine, out var matchingDir))
@@ -910,10 +844,10 @@ namespace TVGL
             //Use area to choose the optimal direction rather than number of surfaces.
             //This is a better indication most of the time.
             var scoringList = dirToPrimsDictionary.Select(kvp => (kvp.Key, kvp.Value.Sum(p => p.Area))).ToList();
-            foreach (var c in scoringList.OrderByDescending(s => s.Item2))
+            foreach ((Vector4 lineDescriptor, double area) in scoringList.OrderByDescending(s => s.Item2))
             {
-                var (anchor, direction) = MiscFunctions.Get3DLineValuesFromUnique(c.Key);
-                yield return (anchor, direction, dirToPrimsDictionary[c.Key]);
+                var (anchor, direction) = MiscFunctions.Get3DLineValuesFromUnique(lineDescriptor);
+                yield return (anchor, direction, dirToPrimsDictionary[lineDescriptor], area);
             }
         }
     }

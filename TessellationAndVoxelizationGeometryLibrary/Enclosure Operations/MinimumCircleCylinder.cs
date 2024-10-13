@@ -227,7 +227,7 @@ namespace TVGL
                 return null;
             var pointsOnFace = convexHullVertices.ProjectTo2DCoordinates(direction, out var backTransform);
             var circle = MinimumCircle(pointsOnFace);
-            var (min, max) = TVGL.MinimumEnclosure.GetDistanceToExtremeVertex(convexHullVertices, direction, out _, out _);
+            var (min, max) = GetDistanceToExtremeVertex(convexHullVertices, direction, out _, out _);
             var anchor = circle.Center.ConvertTo3DLocation(backTransform);
             return new Cylinder
             {

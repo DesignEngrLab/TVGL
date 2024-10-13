@@ -11,13 +11,11 @@
 // </copyright>
 // <summary></summary>
 // ***********************************************************************
-using ClipperLib;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using TVGL;
 
 namespace TVGL
 {
@@ -94,7 +92,7 @@ namespace TVGL
         /// Gets a value indicating whether there is an incorrect face-to-edge ratio.
         /// For watertight solids, there should be 1.5 edges per face.
         /// </summary>
-        public bool IncorrectFaceEdgeRatio { get; private set; }
+        public bool CorrectFaceEdgeRatio { get; private set; }
         #endregion Properties
 
         #region Main Method from TessellatedSolid Constructor
@@ -105,16 +103,18 @@ namespace TVGL
         /// </summary>
         /// <param name="fromSTL">if set to <c>true</c> [from STL].</param>
         internal static void CompleteBuildOptions(TessellatedSolid ts, TessellatedSolidBuildOptions buildOptions,
-            out List<TriangleFace> removedFaces)
+            out List<TriangleFace> removedFaces, out List<Edge> removedEdges, out List<Vertex> removedVertices)
         {
             if (buildOptions == null) buildOptions = TessellatedSolidBuildOptions.Default;
             if (!buildOptions.CheckModelIntegrity)
             {
                 removedFaces = new List<TriangleFace>();
+                removedEdges = new List<Edge>();
+                removedVertices = new List<Vertex>();
                 return;
             }
             var buildAndErrorInfo = new TessellationInspectAndRepair(ts);
-            buildAndErrorInfo.CompleteBuildOptions(buildOptions, out removedFaces);
+            buildAndErrorInfo.CompleteBuildOptions(buildOptions, out removedFaces, out removedEdges, out removedVertices);
         }
 
         /// <summary>
@@ -122,18 +122,19 @@ namespace TVGL
         /// with the exception of CopyElementsPassedToConstructor. These are actually handled in the main constructor
         /// body - but only one constructor uses it: the one accepting faces and vertices.
         /// </summary>
-        /// <param name="fromSTL">if set to <c>true</c> [from STL].</param>
         void CompleteBuildOptions(TessellatedSolidBuildOptions buildOptions,
-            out List<TriangleFace> removedFaces)
+            out List<TriangleFace> removedFaces, out List<Edge> removedEdges, out List<Vertex> removedVertices)
         {
-            removedFaces = new List<TriangleFace>();
             CheckModelIntegrityPreBuild();
+            removedFaces = new List<TriangleFace>();
+            removedEdges = new List<Edge>();
+            removedVertices = new List<Vertex>();
             if (buildOptions.FixEdgeDisassociations && OverusedEdges.Count + SingleSidedEdgeData.Count > 0)
             {
                 try
                 {
                     TeaseApartOverUsedEdges();
-                    var removedVertices = MatchUpRemainingSingleSidedEdge();
+                    removedVertices.AddRange(MatchUpRemainingSingleSidedEdge());
                     ts.RemoveVertices(removedVertices);
                 }
                 catch
@@ -141,7 +142,7 @@ namespace TVGL
                     Message.output("Error setting up all faces-edges-vertices associations.", 1);
                 }
             }
-            if (buildOptions.AutomaticallyRepairNegligibleTFaces && InconsistentMatingFacePairs.Any())
+            if (buildOptions.AutomaticallyRepairNegligibleFaces && InconsistentMatingFacePairs.Any())
                 try
                 {
                     if (!FlipFacesBasedOnInconsistentEdges())
@@ -163,11 +164,11 @@ namespace TVGL
                 {
                     Message.output("Unable to construct edges.", 1);
                 }
-            if (buildOptions.AutomaticallyRepairNegligibleTFaces && buildOptions.PredefineAllEdges)
+            if (buildOptions.AutomaticallyRepairNegligibleFaces && buildOptions.PredefineAllEdges)
             {
                 try
                 {
-                    if (!PropagateFixToNegligibleFaces(removedFaces))
+                    if (!PropagateFixToNegligibleFaces(removedVertices, removedFaces, removedEdges))
                         Message.output("Unable to flip edges to avoid negligible faces.", 1);
                 }
                 catch
@@ -235,7 +236,8 @@ namespace TVGL
         /// other two vertices of the quadrilateral, so that 2 proper triangles are created.
         /// </summary>
         /// <returns>A bool.</returns>
-        private bool PropagateFixToNegligibleFaces(List<TriangleFace> removedFaces)
+        private bool PropagateFixToNegligibleFaces(List<Vertex> allRemovedVertices,
+             List<TriangleFace> allRemovedFaces, List<Edge> allRemovedEdges)
         {
             var faceHash = FacesWithNegligibleArea.ToHashSet();
             var negligibleArea = ts.SameTolerance * ts.SameTolerance;
@@ -248,15 +250,17 @@ namespace TVGL
                 {
                     shortestEdge.CollapseEdge(out var removedEdges);
                     ts.RemoveVertex(shortestEdge.From);
-                    removedFaces.Add(shortestEdge.OwnedFace);
+                    allRemovedVertices.Add(shortestEdge.From);
+                    allRemovedFaces.Add(shortestEdge.OwnedFace);
                     faceHash.Remove(shortestEdge.OwnedFace);
-                    removedFaces.Add(shortestEdge.OtherFace);
+                    allRemovedFaces.Add(shortestEdge.OtherFace);
                     faceHash.Remove(shortestEdge.OtherFace);
                     ts.RemoveFaces(new[] { shortestEdge.OwnedFace, shortestEdge.OtherFace });
                     ts.RemoveEdges(removedEdges);
+                    allRemovedEdges.AddRange(removedEdges);
                 }
                 else
-                { // else we need to flip the longest edge as described above
+                {
                     var longestEdge = LongestEdge(face);
                     if (longestEdge.GetMatingFace(face).Area.IsNegligible(negligibleArea))
                     {   // the mating face is also negligible, so we need to remove 2 faces, 
@@ -266,17 +270,24 @@ namespace TVGL
                         ModifyTessellation.MergeVertexAndKill3EdgesAnd2Faces(removedVertex, keepVertex,
                             longestEdge.OwnedFace, longestEdge.OtherFace, out var removedEdges);
                         ts.RemoveVertex(removedVertex);
-                        removedFaces.Add(longestEdge.OwnedFace);
+                        allRemovedFaces.Add(longestEdge.OwnedFace);
                         faceHash.Remove(longestEdge.OwnedFace);
-                        removedFaces.Add(longestEdge.OtherFace);
+                        allRemovedFaces.Add(longestEdge.OtherFace);
                         faceHash.Remove(longestEdge.OtherFace);
                         ts.RemoveFaces(new[] { longestEdge.OwnedFace, longestEdge.OtherFace });
                         if (removedEdges != null)
+                        {
                             ts.RemoveEdges(removedEdges);
+                            allRemovedEdges.AddRange(removedEdges);
+                        }
                     }
-                    else
+                    else // else we need to flip the longest edge as described above
                     {
-                        LongestEdge(face).FlipEdge(ts);
+                        var removedEdge = LongestEdge(face);
+                        allRemovedEdges.Add(removedEdge);
+                        allRemovedFaces.Add(removedEdge.OwnedFace);
+                        allRemovedFaces.Add(removedEdge.OtherFace);
+                        removedEdge.FlipEdge(ts, out var newEdge);
                         faceHash.Remove(face);
                     }
                 }
@@ -402,7 +413,7 @@ namespace TVGL
             if (InconsistentMatingFacePairs.Count > 0)
                 ContainsErrors = true;
 
-            IncorrectFaceEdgeRatio = 3 * ts.NumberOfFaces == 2 * (alreadyDefinedEdges.Count + (numOverUsedFaceEdges + numSingleSidedEdges) / 2);
+            CorrectFaceEdgeRatio = 3 * ts.NumberOfFaces == 2 * (alreadyDefinedEdges.Count + (numOverUsedFaceEdges + numSingleSidedEdges) / 2);
 
             if (ContainsErrors)
             {
@@ -542,7 +553,7 @@ namespace TVGL
             Message.output("Errors found in model:", 3);
             Message.output("======================", 3);
             if (tsErrors.ModelHasNegativeVolume)
-                Message.output("==> The model has negative area. The normals of the faces are pointed inward, or this is only a concave surface - not a watertiht solid.", 3);
+                Message.output("==> The model has negative area. The normals of the faces are pointed inward, or this is only a concave surface - not a watertight solid.", 3);
             if (tsErrors.FacesWithNegligibleArea.Count > 0)
                 Message.output("==> " + tsErrors.FacesWithNegligibleArea.Count + " faces with negligible area.", 3);
             if (tsErrors.OverusedEdges.Count > 0)
@@ -555,7 +566,7 @@ namespace TVGL
             if (tsErrors.InconsistentMatingFacePairs.Count > 0) Message.output("==> " + tsErrors.InconsistentMatingFacePairs.Count
                 + " edges with opposite-facing faces.", 3);
 
-            if (tsErrors.IncorrectFaceEdgeRatio)
+            if (tsErrors.CorrectFaceEdgeRatio)
                 Message.output("==> While re-connecting faces and edges has lead to errors, there is a likelihood that water-tightness can be acheived."
                     , 3);
             else Message.output("==> The model is not water-tight. It merely represents a surface, but fixing holes may restore it.", 3);
@@ -572,8 +583,11 @@ namespace TVGL
         /// <exception cref="System.Exception"></exception>
         internal void MakeEdges()
         {
-            ts.NumberOfEdges = FacePairsForEdges.Count
-                + InconsistentMatingFacePairs.Count + SingleSidedEdgeData.Count;
+            ts.NumberOfEdges = FacePairsForEdges.Count;
+            if (InconsistentMatingFacePairs != null)
+                ts.NumberOfEdges += InconsistentMatingFacePairs.Count;
+            if (SingleSidedEdgeData != null)
+                ts.NumberOfEdges += SingleSidedEdgeData.Count;
             ts.Edges = new Edge[ts.NumberOfEdges];
             var i = 0;
             // first make the proper edges between two faces
@@ -1116,6 +1130,9 @@ namespace TVGL
             foreach (var e in ts.Edges)
             {
                 e.Curvature = CurvatureType.SaddleOrFlat;
+                if (e.OwnedFace != null && e.OtherFace != null && e.OwnedFace.BelongsToPrimitive != null &&
+                    e.OwnedFace.BelongsToPrimitive == e.OtherFace.BelongsToPrimitive)
+                    continue;
                 var angleFromFlat = e.InternalAngle - Math.PI;
                 if (angleFromFlat.IsNegligible(Constants.DefaultSameAngleRadians)) continue;
                 if (Math.Abs(angleFromFlat) >= Constants.MinSmoothAngle || e.IsDiscontinuous(chordError))
@@ -1217,7 +1234,7 @@ namespace TVGL
                 var plane = new Plane(distance, planeNormal);
                 var success = false;
                 List<TriangulationLoop> triangleFaceList1 = null;
-                List<Vertex[]> triangleFaceList2 = null;
+                List<(Vertex A, Vertex B, Vertex C)> triangleFaceList2 = null;
                 var closeToPlane = plane.CalculateMaxError(vertices.Select(v => v.Coordinates)) < Constants.BaseTolerance;
                 if (closeToPlane)
                 {
@@ -1288,7 +1305,7 @@ namespace TVGL
                     Message.output("loop successfully repaired with SweepLine 2D Triangulate" + triangleFaceList2.Count, 4);
                     foreach (var triangle in triangleFaceList2)
                     {
-                        var newFace = new TriangleFace(triangle, planeNormal);
+                        var newFace = new TriangleFace(triangle.A, triangle.B, triangle.C);
                         newFaces.Add(newFace);
                         var fromVertex = newFace.C;
                         foreach (var toVertex in newFace.Vertices)
@@ -1416,9 +1433,12 @@ namespace TVGL
 
         public static void DefineBorderSegments(TessellatedSolid solid)
         {
+            solid.MakeEdgesIfNonExistent();
             foreach (var prim in solid.Primitives)
-                prim.BorderSegments = new List<BorderSegment>();
-            var borderSegments = GatherEdgesIntoSegments(solid.Primitives.SelectMany(prim => prim.OuterEdges));
+                if (prim.BorderSegments != null) prim.BorderSegments.Clear();
+                else prim.BorderSegments = new List<BorderSegment>();
+            var borderSegments = GatherEdgesIntoSegments(solid.Primitives.SelectMany(prim => prim.OuterEdges)
+                .Concat(solid.NonsmoothEdges));
             foreach (var segment in borderSegments)
             {
                 var ownedFace = segment.DirectionList[0] ? segment.EdgeList[0].OwnedFace : segment.EdgeList[0].OtherFace;
@@ -1430,7 +1450,7 @@ namespace TVGL
                 segment.OwnedPrimitive = ownedPrimitive;
                 segment.OtherPrimitive = otherPrimitive;
                 ownedPrimitive.BorderSegments.Add(segment);
-                if(segment.OtherPrimitive != null)
+                if (segment.OtherPrimitive != null)
                     otherPrimitive.BorderSegments.Add(segment);
                 segment.SetCurve();
             }
@@ -1552,23 +1572,25 @@ namespace TVGL
         {
             foreach (var primitive in solid.Primitives)
                 foreach (var border in primitive.Borders)
-                    CharacterizeBorder(primitive, border);
+                    CharacterizeBorder(border);
         }
 
-        public static void CharacterizeBorder(PrimitiveSurface primitive, BorderLoop border)
+        public static void CharacterizeBorder(BorderLoop border)
         {
-            border.OwnedPrimitive = primitive;
+            border.SetBorderPlane();
+            var primitive = border.OwnedPrimitive;
             border.EncirclesAxis = primitive.BorderEncirclesAxis(border);
             //Set the curve for the border. This is required so we can check IsCircular for the border.
             //This is not necessarily the same as the border segment, since there could be multiple segments
             //that make up a primitive border.
             SetCurve(border, primitive);
-            border.SetBorderPlane();
         }
 
         private static void SetCurve(BorderLoop border, PrimitiveSurface prim)
         {
-            FindBestCurve(prim.TransformFrom3DTo2D(border.GetCoordinates(), true),
+            if (border.IsPlanar)
+                prim = new Plane(border.PlaneDistance, border.PlaneNormal);
+            FindBestCurve(prim.TransformFrom3DTo2D(border.GetCoordinates(), border.IsClosed),
                        double.PositiveInfinity, out var curve, out var curveError);
             border.Curve = curve;
             border.CurveError = curveError;
@@ -1614,6 +1636,6 @@ namespace TVGL
             return true;
         }
 
-    #endregion
-}
+        #endregion
+    }
 }

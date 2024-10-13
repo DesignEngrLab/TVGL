@@ -16,6 +16,7 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using Newtonsoft.Json;
 using StarMathLib;
 using System;
 using System.Collections.Generic;
@@ -41,6 +42,10 @@ namespace TVGL
         /// </summary>
         /// <value>The distance to origin.</value>
         public double DistanceToOrigin { get; set; }
+
+
+        public override string KeyString => "Plane|" + Normal.ToString() + "|" + DistanceToOrigin.ToString("F5")
+            + "|" + GetCommonKeyDetails();
 
         /// <summary>
         /// Gets as transform from xy plane.
@@ -93,6 +98,7 @@ namespace TVGL
 
         public Vector4 AsVector4 => new Vector4(Normal.X, Normal.Y, Normal.Z, -DistanceToOrigin);
 
+
         #region Constructors
         /// <summary>
         /// Initializes a new instance of the <see cref="Plane" /> class.
@@ -100,7 +106,6 @@ namespace TVGL
         /// <param name="faces">The faces.</param>
         /// <param name="connectFacesToPrimitive">if set to <c>true</c> [connect faces to primitive].</param>
         public Plane(IEnumerable<TriangleFace> faces, bool connectFacesToPrimitive = true)
-            : base(faces, connectFacesToPrimitive)
         {
             Vertices = new HashSet<Vertex>(faces.SelectMany(f => f.Vertices).Distinct());
             DefineNormalAndDistanceFromVertices(Vertices, out var dto, out var normal);
@@ -111,6 +116,8 @@ namespace TVGL
             }
             DistanceToOrigin = dto;
             Normal = normal;
+
+            SetFacesAndVertices(faces, connectFacesToPrimitive);
         }
 
         /// <summary>
@@ -566,7 +573,7 @@ namespace TVGL
         public override double DistanceToPoint(Vector3 point)
         {
             var d = point.Dot(Normal) - DistanceToOrigin;
-            if (isPositive.HasValue && !isPositive.Value) d = -d;
+            if (IsPositive.HasValue && !IsPositive.Value) d = -d;
             return d;
         }
         public override Vector3 GetNormalAtPoint(Vector3 point)

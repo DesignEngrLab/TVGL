@@ -25,46 +25,46 @@ namespace TVGL
     [JsonObject(MemberSerialization.OptOut)]
     public abstract class PrimitiveSurface : ICloneable
     {
+        [JsonIgnore]
         public SurfaceGroup BelongsToGroup { get; set; }
-
-        #region Constructors
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="PrimitiveSurface" /> class.
-        /// </summary>
-        /// <param name="faces">The faces.</param>
-        /// <param name="connectFacesToPrimitive">if set to <c>true</c> [connect faces to primitive].</param>
-        protected PrimitiveSurface(IEnumerable<TriangleFace> faces, bool connectFacesToPrimitive = true)
-        {
-            if (faces == null) return;
-            SetFacesAndVertices(faces, connectFacesToPrimitive);
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="PrimitiveSurface" /> class.
-        /// </summary>
-        protected PrimitiveSurface()
-        {
-        }
-
-        #endregion Constructors
 
         /// <summary>
         /// Sets the faces and vertices.
         /// </summary>
         /// <param name="faces">The faces.</param>
         /// <param name="connectFacesToPrimitive">if set to <c>true</c> [connect faces to primitive].</param>
-        public void SetFacesAndVertices(IEnumerable<TriangleFace> faces, bool connectFacesToPrimitive = true, 
+        public void SetFacesAndVertices(IEnumerable<TriangleFace> faces, bool connectFacesToPrimitive = true,
             bool keepvalues = false)
         {
             if (!keepvalues)
                 ResetFaceDependentValues();
             ResetFaceDependentConnectivity();
-            Faces = new HashSet<TriangleFace>(faces);
+            if (faces == null) Faces = new HashSet<TriangleFace>();
+            else Faces = new HashSet<TriangleFace>(faces);
             FaceIndices = Faces.Select(f => f.IndexInList).ToArray();
             if (connectFacesToPrimitive)
                 foreach (var face in Faces)
                     face.BelongsToPrimitive = this;
+            if (faces == null) return;
+            var firstFace = Faces.First();
+            var faceNormal = firstFace.Normal;
+            if (this is Plane plane)
+            {
+                if (faceNormal.Dot(plane.Normal) < 0)
+                {
+                    plane.Normal = -plane.Normal;
+                    plane.DistanceToOrigin = -plane.DistanceToOrigin;
+                }
+            }
+            else if (this is not UnknownRegion && this is not Prismatic)
+            {   // can't check unknown or prismatic since these RELY on faces for determining normal
+                var primNormalAtFirst = GetNormalAtPoint(firstFace.Center);
+                if (faceNormal.Dot(primNormalAtFirst) < 0)
+                {
+                    if (IsPositive.HasValue) IsPositive = !IsPositive;
+                    else IsPositive = false;
+                }
+            }
             SetVerticesFromFaces();
         }
 
@@ -85,12 +85,12 @@ namespace TVGL
         }
 
         private void ResetFaceDependentConnectivity()
-        {        
+        {
             _adjacentSurfaces = null;
             _innerEdges = null;
-            _outerEdges = null;        
+            _outerEdges = null;
             Borders = null;
-            BorderSegments = null;     
+            BorderSegments = null;
         }
 
 
@@ -336,14 +336,14 @@ namespace TVGL
         /// </summary>
         /// <value>The triangle faces.</value>
         [JsonIgnore]
-        public HashSet<TriangleFace> Faces { get; set; }
+        public virtual HashSet<TriangleFace> Faces { get; set; }
 
         /// <summary>
         /// Gets the vertices.
         /// </summary>
         /// <value>The vertices.</value>
         [JsonIgnore]
-        public HashSet<Vertex> Vertices { get; set; }
+        public virtual HashSet<Vertex> Vertices { get; set; }
 
         /// <summary>
         /// Gets the inner edges.
@@ -814,6 +814,34 @@ namespace TVGL
             var copy = (PrimitiveSurface)this.Clone();
             copy.SetFacesAndVertices(faces, true, keepValues);
             return copy;
+        }
+
+        public abstract string KeyString { get; }
+
+        private protected string GetCommonKeyDetails()
+        {
+            var key = "|";
+            if (IsPositive.HasValue)
+            {
+                if (IsPositive.Value) key += "P";
+                else key += "N";
+            }
+            if (Faces != null && Faces.Any())
+                key += "|" + Faces.Sum(f => f.Area).ToString("F5");
+            if (OuterEdges != null && OuterEdges.Any())
+                key += "|" + OuterEdges.Sum(f => f.Length).ToString("F5");
+            return key;
+        }
+
+
+        public Polygon GetAsPolygon()
+        {
+            var polygons = new List<Polygon>();
+            var vertexLoops = OuterEdges.MakeEdgePaths(true,
+                new EdgePathLoopsAroundInputFaces(Faces)).Select(ep => ep.GetVertices().ToList());
+            foreach (var loop in vertexLoops)
+                polygons.Add(new Polygon(TransformFrom3DTo2D(loop.Select(v => v.Coordinates), true)));
+            return polygons.CreateShallowPolygonTrees(false).First();
         }
     }
 }

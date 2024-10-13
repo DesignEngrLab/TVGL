@@ -11,11 +11,8 @@
 // </copyright>
 // <summary></summary>
 // ***********************************************************************
-using ClipperLib;
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net;
 
 namespace TVGL
 {
@@ -26,45 +23,64 @@ namespace TVGL
     /// </summary>
     public static partial class ModifyTessellation
     {
-        public static void FlipEdge(this Edge edge, TessellatedSolid ts)
+        public static void FlipEdge(this Edge edge, TessellatedSolid ts, out Edge newEdge)
         {
-            var edgeIndex1 = edge.IndexInList;
-            var oldFace1 = edge.OwnedFace;
-            var oldEdge2 = oldFace1.OtherEdge(edge.From);
-            var edgeIndex2 = oldEdge2.IndexInList;
-            var matingFace2 = oldEdge2.GetMatingFace(oldFace1);
-            var oldEdge3 = oldFace1.OtherEdge(edge.To);
-            var edgeIndex3 = oldEdge3.IndexInList;
-            var matingFace3 = oldEdge3.GetMatingFace(oldFace1);
-            var oldFace2 = edge.OtherFace;
-            var oldEdge4 = oldFace2.OtherEdge(edge.From);
-            var edgeIndex4 = oldEdge4.IndexInList;
-            var matingFace4 = oldEdge4.GetMatingFace(oldFace1);
-            var oldEdge5 = oldFace2.OtherEdge(edge.To);
-            var edgeIndex5 = oldEdge5.IndexInList;
-            var matingFace5 = oldEdge5.GetMatingFace(oldFace1);
+            var oldOwnedFace = edge.OwnedFace;
+            var oldOtherFace = edge.OtherFace;
+            // make a bunch of variables for the four edges around this patch
+            var borderEdge1 = oldOwnedFace.OtherEdge(edge.From);
+            var replaceOwned1 = borderEdge1.OwnedFace==oldOwnedFace;
+            var borderEdge2 = oldOwnedFace.OtherEdge(edge.To);
+            var replaceOwned2 = borderEdge2.OwnedFace==oldOwnedFace;
+            var borderEdge3 = oldOtherFace.OtherEdge(edge.From);
+            var replaceOwned3 = borderEdge3.OwnedFace ==oldOtherFace;
+            var borderEdge4 = oldOtherFace.OtherEdge(edge.To);
+            var replaceOwned4 = borderEdge4.OwnedFace==oldOtherFace;
 
-            edge.From.Faces.Remove(oldFace1);
-            edge.From.Faces.Remove(oldFace2);
-            edge.To.Faces.Remove(oldFace1);
-            edge.To.Faces.Remove(oldFace2);
+            // remove references in the vertices to the 2 old faces (that we're about to delete)
+            edge.From.Faces.Remove(oldOwnedFace);
+            edge.From.Faces.Remove(oldOtherFace);
+            edge.To.Faces.Remove(oldOwnedFace);
+            edge.To.Faces.Remove(oldOtherFace);
+            var oppOldOwnedVertex = oldOwnedFace.OtherVertex(edge.From, edge.To); // the vertex on the old owned face
+            // that is opposite (opp) the edge that we are flipping
+            oppOldOwnedVertex.Faces.Remove(oldOwnedFace);
+            var oppOldOtherVertex = oldOtherFace.OtherVertex(edge.From, edge.To);
+            oppOldOtherVertex.Faces.Remove(oldOtherFace);
 
-            var leftVertex = oldFace1.OtherVertex(edge.From, edge.To);
-            var rightVertex = oldFace2.OtherVertex(edge.From, edge.To);
-            leftVertex.Faces.Remove(oldFace1);
-            rightVertex.Faces.Remove(oldFace2);
+            // now make the two new faces
+            var newFace1 = new TriangleFace(oppOldOwnedVertex, edge.From, oppOldOtherVertex, true);
+            ts.Faces[oldOwnedFace.IndexInList] = newFace1;
+            newFace1.IndexInList = oldOwnedFace.IndexInList;
+            var newFace2 = new TriangleFace(oppOldOwnedVertex, oppOldOtherVertex, edge.To, true);
+            ts.Faces[oldOtherFace.IndexInList] = newFace2;
+            newFace2.IndexInList = oldOtherFace.IndexInList;
+            var primitive = oldOtherFace.BelongsToPrimitive == oldOwnedFace.BelongsToPrimitive
+                ? oldOwnedFace.BelongsToPrimitive
+                : oldOwnedFace.Area>oldOtherFace.Area ? oldOwnedFace.BelongsToPrimitive:
+                oldOtherFace.BelongsToPrimitive;
+            newFace1.BelongsToPrimitive = primitive;
+            newFace2.BelongsToPrimitive = primitive;
 
+            // now fix the edges up
+            newEdge = new Edge(oppOldOtherVertex, oppOldOwnedVertex, newFace1, newFace2, true);
+            ts.Edges[edge.IndexInList] = newEdge;
+            newEdge.IndexInList = edge.IndexInList;
+            if (replaceOwned1) borderEdge1.OwnedFace = newFace2;
+            else borderEdge1.OtherFace = newFace2;
+            newFace2.AddEdge(borderEdge1);
+            if (replaceOwned2) borderEdge2.OwnedFace = newFace1;
+            else borderEdge2.OtherFace = newFace1;
+            newFace1.AddEdge(borderEdge2);
+            if (replaceOwned3) borderEdge3.OwnedFace = newFace2;
+            else borderEdge3.OtherFace = newFace2;
+            newFace2.AddEdge(borderEdge3);
+            if (replaceOwned4) borderEdge4.OwnedFace = newFace1;
+            else borderEdge4.OtherFace = newFace1;
+            newFace1.AddEdge(borderEdge4);
 
-            var newFace1 = new TriangleFace(leftVertex, edge.From, rightVertex, true);
-            ts.Faces[oldFace1.IndexInList] = newFace1;
-            var newFace2 = new TriangleFace(leftVertex, rightVertex, edge.To, true);
-            ts.Faces[oldFace2.IndexInList] = newFace2;
-
-            ts.Edges[edgeIndex1] = new Edge(rightVertex, leftVertex, newFace1, newFace2, true);
-            ts.Edges[edgeIndex2] = new Edge(leftVertex, edge.From, newFace1, matingFace3, true);
-            ts.Edges[edgeIndex3] = new Edge(edge.From, rightVertex, newFace1, matingFace5, true);
-            ts.Edges[edgeIndex4] = new Edge(rightVertex, edge.To, newFace2, matingFace4, true);
-            ts.Edges[edgeIndex5] = new Edge(edge.To, leftVertex, newFace2, matingFace2, true);
+            primitive.AddFace(newFace1);
+            primitive.AddFace(newFace2);
         }
 
 

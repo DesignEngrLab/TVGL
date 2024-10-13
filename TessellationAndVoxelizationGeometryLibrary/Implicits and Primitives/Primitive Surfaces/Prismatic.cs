@@ -141,6 +141,8 @@ namespace TVGL
         }
         Matrix4x4 _transformBackFromXYPlane = Matrix4x4.Null;
 
+        public override string KeyString => "Primsatic|" + Axis.ToString() + "|" + GetCommonKeyDetails();
+
         #endregion
 
         #region Constructors
@@ -160,13 +162,14 @@ namespace TVGL
         /// <param name="isPositive">if set to <c>true</c> [is positive].</param>
         public Prismatic(Vector3 axis, double minDistanceAlongAxis,
             double maxDistanceAlongAxis, IEnumerable<TriangleFace> faces = null, bool? isPositive = null)
-            : base(faces)
         {
             Axis = axis;
             this.isPositive = isPositive;
             MinDistanceAlongAxis = minDistanceAlongAxis;
             MaxDistanceAlongAxis = maxDistanceAlongAxis;
             Height = MaxDistanceAlongAxis - MinDistanceAlongAxis;
+
+            SetFacesAndVertices(faces);
         }
         /// <summary>
         /// Initializes a new instance of the <see cref="Prismatic" /> class.
@@ -174,7 +177,7 @@ namespace TVGL
         /// <param name="axis">The axis.</param>
         /// <param name="faces">The faces.</param>
         /// <param name="isPositive">if set to <c>true</c> [is positive].</param>
-        public Prismatic(Vector3 axis, IEnumerable<TriangleFace> faces = null, bool? isPositive = null) : base(faces)
+        public Prismatic(Vector3 axis, IEnumerable<TriangleFace> faces = null, bool? isPositive = null)
         {
             Axis = axis;
             this.isPositive = isPositive;
@@ -182,6 +185,8 @@ namespace TVGL
             MinDistanceAlongAxis = min;
             MaxDistanceAlongAxis = max;
             Height = MaxDistanceAlongAxis - MinDistanceAlongAxis;
+
+            SetFacesAndVertices(faces);
         }
 
         /// <summary>
@@ -189,15 +194,19 @@ namespace TVGL
         /// </summary>
         /// <param name="faces">The faces.</param>
         /// <param name="isPositive">if set to <c>true</c> [is positive].</param>
-        public Prismatic(IEnumerable<TriangleFace> faces = null, bool? isPositive = null) : base(faces)
+        public Prismatic(IEnumerable<TriangleFace> faces = null, bool? isPositive = null)
         {
-            Axis = MiscFunctions.FindMostOrthogonalVector(Faces.Select(face =>
-                 (face.B.Coordinates - face.A.Coordinates).Cross(face.C.Coordinates - face.A.Coordinates)));
             this.isPositive = isPositive;
-            var (min, max) = MinimumEnclosure.GetDistanceToExtremeVertex(Vertices, Axis, out _, out _);//vertices are set in base constructor
-            MinDistanceAlongAxis = min;
-            MaxDistanceAlongAxis = max;
-            Height = MaxDistanceAlongAxis - MinDistanceAlongAxis;
+            SetFacesAndVertices(faces);
+            if (faces != null)
+            {
+                Axis = MiscFunctions.FindMostOrthogonalVector(Faces.Select(face =>
+                     (face.B.Coordinates - face.A.Coordinates).Cross(face.C.Coordinates - face.A.Coordinates)));
+                var (min, max) = MinimumEnclosure.GetDistanceToExtremeVertex(Vertices, Axis, out _, out _);//vertices are set in base constructor
+                MinDistanceAlongAxis = min;
+                MaxDistanceAlongAxis = max;
+                Height = MaxDistanceAlongAxis - MinDistanceAlongAxis;
+            }
         }
 
         #endregion
@@ -216,102 +225,41 @@ namespace TVGL
 
         private List<Vector2> CreatePolyLine()
         {
-            var points = new List<Vector2>();
-            var edges = new Dictionary<Vector2, List<Vector2>>();
+            if (Vertices == null || Vertices.Count == 0) return new List<Vector2>();
+            // the polyLine is the 2D projection of the 3D vertices onto the plane perpendicular to the axis
+            // here we want the set of vertices that makes the shortest path around the perimeter of the Prismatic
+            // we will use a Dijkstra's algorithm to find this path. 
+            // in order to quickly retrieve the 2D coordinates of the vertices, we will create two dictionaries
             var vertex2DDict = Vertices.ToDictionary(v => v, v => v.ConvertTo2DCoordinates(transformToXYPlane));
-
+            // an the reverse is also needed.
             var vector2VertexDict = new Dictionary<Vector2, Vertex>();
             foreach (var (key, value) in vertex2DDict)
             {
                 if (!vector2VertexDict.ContainsKey(value))
+                    // if more than one, then just the first is fine (we do not need to be thorough in this direction
                     vector2VertexDict.Add(value, key);
             }
 
-            foreach (var v in vector2VertexDict.Values)
-            {
-                var neighbors = new List<Vector2>();
-                var v2D = vertex2DDict[v];
-                foreach (var e in v.Edges)
-                {
-                    if (!InnerEdges.Contains(e) && !OuterEdges.Contains(e)) continue;
-                    neighbors.Add(vertex2DDict[e.OtherVertex(v)]);
-                }
-                points.Add(v2D);
-                edges.Add(v2D, neighbors);
-            }
-#if PRESENT
-            var edgePlots = new List<Vector2[]>();
-            foreach ((var from, var tos) in edges)
-            {
-                foreach (var to in tos)
-                    edgePlots.Add([from, to]);
-            }
-            Presenter.ShowAndHang(edgePlots);
-#endif
-                var axesDictionary = new Dictionary<Vector2, (Vector2 X, Vector2 Y)>();
-            foreach (var p in points)
-            {
-                var neighbors = edges[p];
-                var xDir = Vector2.Zero;
-                foreach (var edge in neighbors)
-                {
-                    var vector = edge - p;
-                    if (vector.X < 0) vector = -vector;
-                    xDir += vector;
-                }
-                xDir = xDir.Normalize();
-                var yDir = new Vector2(-xDir.Y, xDir.X);
-                axesDictionary.Add(p, (xDir, yDir));
-            }
-            var endPoints = points.ToHashSet();
-            var success = false;
-            do
-            {
-                foreach (var point in endPoints)
-                {
-                    var posXNeighbors = 0;
-                    var negXNeighbors = 0;
-                    var neighbors = edges[point];
-                    var axis = axesDictionary[point];
-                    foreach (var neighbor in neighbors)
-                    {
-                        var vector = neighbor - point;
-                        if (vector.Dot(axis.X) >= 0) posXNeighbors++;
-                        else negXNeighbors++;
-                    }
-                    if (posXNeighbors != 0 && negXNeighbors != 0) endPoints.Remove(point);
-                }
-                if (endPoints.Count == 2)
-                {
-                    success = true;
-                    break;
-                }
-                //if (endPoints.Count == 0 || endPoints.Count == 1) break;
-                break;
-            }
-            while (true);
-            if (!success)
-            {
-                return new List<Vector2>();
-                //throw new NotImplementedException("Need to figure out how" +
-                //    "to handle cases when it starts with less than 2 endpoints.");
-            }
-            var start = endPoints.First();
-            var end = endPoints.Last();
-            var startVertex = vector2VertexDict[start];
-            var startFace = startVertex.Faces.First(Faces.Contains);
-            var cross = startFace.Normal.Cross(startFace.Center - startVertex.Coordinates);
-            if (cross.Dot(Axis) < 0) (start, end) = (end, start);
+            // next, we define the start and end points of the path
+            (Vector2 start, var _, Vector2 end, var _) = this.FindExtremesAlong2DCurve(vertex2DDict.Values);
+
             // now run a Dijkstra's algorithm to find the shortest path from start to end
             var visited = new HashSet<Vector2>();
             var pq = new PriorityQueue<DijkstraNode, double>();
             pq.Enqueue(new DijkstraNode(start, 0, null), 0);
+            List<Vector2> solution = null;
             while (pq.Count > 0)
             {
                 var node = pq.Dequeue();
                 if (!visited.Add(node.Point)) continue;
-                if (node.Point == end) return node.Path;
-                var neighbors = edges[node.Point];
+                if (node.Point == end)
+                {
+                    solution = node.Path;
+                    break;
+                }
+                var vertex = vector2VertexDict[node.Point];
+                var neighbors = vertex.Edges.Where(e => InnerEdges.Contains(e) || OuterEdges.Contains(e))
+                    .Select(e => vertex2DDict[e.OtherVertex(vertex)]);
                 foreach (var neighbor in neighbors)
                 {
                     if (visited.Contains(neighbor)) continue;
@@ -320,8 +268,16 @@ namespace TVGL
                     pq.Enqueue(new DijkstraNode(neighbor, newDistance, node.Path), newDistance);
                 }
             }
-            return new List<Vector2>();
+            if (solution == null) return new List<Vector2>();
+            // if the solution is found, we need to check the direction of the path so that it is counter-clockwise
+            // when viewed from the positive direction of the axis
+            var startVertex = vector2VertexDict[start];
+            var startFace = startVertex.Faces.First(Faces.Contains);
+            var cross = startFace.Normal.Cross(startFace.Center - startVertex.Coordinates);
+            if (cross.Dot(Axis) < 0) solution.Reverse();
+            return solution;
         }
+
         class DijkstraNode
         {
             public Vector2 Point;
@@ -350,6 +306,7 @@ namespace TVGL
             var point2D = point.ConvertTo2DCoordinates(transformToXYPlane);
             var minDistance = double.PositiveInfinity;
             var minI = -1;
+            //Presenter.ShowAndHang(PolyLine);
             for (var i = 1; i < PolyLine.Count; i++)
             {
                 var from = PolyLine[i - 1];
@@ -362,7 +319,7 @@ namespace TVGL
                     minI = i;
                 }
             }
-            if (minI==-1) return double.PositiveInfinity;
+            if (minI == -1) return double.PositiveInfinity;
             if ((point2D - PolyLine[minI - 1]).Cross(PolyLine[minI] - PolyLine[minI - 1]) < 0)
                 return -Math.Sqrt(minDistance);
             return Math.Sqrt(minDistance);
@@ -431,5 +388,6 @@ namespace TVGL
                 if (!intersectPoint.IsNull()) yield return (intersectPoint, t);
             }
         }
+
     }
 }

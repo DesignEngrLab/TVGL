@@ -14,6 +14,8 @@
 using HelixToolkit.SharpDX.Core;
 using HelixToolkit.Wpf.SharpDX;
 using OxyPlot;
+using OxyPlot.Axes;
+using OxyPlot.Series;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -165,6 +167,61 @@ namespace TVGL
 
         #endregion
 
+        public static void ShowHeatmap(double[,] values, bool normalizeValues = false)
+        {
+            var data = values;
+            if (normalizeValues)
+            {
+                var zMax = values.Max2D();
+                var zMin = values.Min2D();
+                data = new double[values.GetLength(0), values.GetLength(1)];
+                for (var i = 0; i < values.GetLength(0); i++)
+                {
+                    for (var j = 0; j < values.GetLength(1); j++)
+                    {
+                        data[i, j] = (values[i, j] - zMin) / (zMax - zMin);
+                    }
+                }
+            }
+
+            var contourSeries = new ContourSeries
+            {
+                Color = OxyColors.Black,
+                LabelBackground = OxyColors.White,
+                Data = data,
+                //ColumnCoordinates = xCoordinates,
+                //RowCoordinates = yCoordinates,
+            };
+
+
+            //var xMin = xCoordinates.Min();
+            //var xMax = xCoordinates.Max();
+            //var yMin = yCoordinates.Min();
+            //var yMax = yCoordinates.Max();
+            var heatMapSeries = new HeatMapSeries()
+            {
+                X0 = 0, // xMin,
+                X1 = values.GetLength(0), // xMax,
+                Y0 = 0, //yMin,
+                Y1 = values.GetLength(1), // yMax,
+                Data = data,
+            };
+
+
+            var heatmap = new PlotModel();
+            heatmap.Axes.Add(new LinearColorAxis
+            {
+                Position = AxisPosition.Right,
+                Palette = OxyPalettes.Jet(500),
+                HighColor = OxyColors.Gray,
+                LowColor = OxyColors.Black,
+            });
+            heatmap.Series.Add(heatMapSeries);
+            //heatmap.Series.Add(contourSeries);
+
+            var window = new Window2DPlot(heatmap, "Contour Map");
+            window.ShowDialog();
+        }
         #endregion
 
 
@@ -249,7 +306,7 @@ namespace TVGL
         public static void ShowPoints(IEnumerable<Vector3> points, double radius = 0, Color color = null)
         {
             if (radius == 0) radius = 1;
-            if (color == null) color = new Color(KnownColors.White);
+            if (color == null) color = new Color(KnownColors.Red);
             var pointVisuals = GetPointModels(points, radius, color);
             var vm = new Window3DPlotViewModel();
             vm.Add(pointVisuals);

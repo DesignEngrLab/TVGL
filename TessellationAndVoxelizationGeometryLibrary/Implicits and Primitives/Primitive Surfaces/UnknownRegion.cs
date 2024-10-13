@@ -11,7 +11,9 @@
 // </copyright>
 // <summary></summary>
 // ***********************************************************************
+using System;
 using System.Collections.Generic;
+using System.Linq;
 
 
 namespace TVGL
@@ -21,11 +23,16 @@ namespace TVGL
     /// </summary>
     public class UnknownRegion : PrimitiveSurface
     {
+        public override string KeyString => "Unknown|" + GetCommonKeyDetails();
+
         /// <summary>
         /// Initializes a new instance of the <see cref="UnknownRegion" /> class.
         /// </summary>
         /// <param name="faces">The faces.</param>
-        public UnknownRegion(IEnumerable<TriangleFace> faces) : base(faces) { }
+        public UnknownRegion(IEnumerable<TriangleFace> faces)
+        {
+            SetFacesAndVertices(faces);
+        }
         /// <summary>
         /// Initializes a new instance of the <see cref="UnknownRegion"/> class.
         /// </summary>
@@ -93,9 +100,70 @@ namespace TVGL
         /// <returns>System.Double.</returns>
         public override double DistanceToPoint(Vector3 point)
         {
-            return double.NaN;
+            var (distance, _) = GetClosest(point);
+            return distance;
         }
-        public override Vector3 GetNormalAtPoint(Vector3 point) => Vector3.Null;
+        private (double distance, TessellationBaseClass closestElt) GetClosest(Vector3 point)
+        {
+            var shortestDistance = double.PositiveInfinity;
+            TessellationBaseClass closestElt = null;
+            foreach (var face in Faces)
+            {
+                var ptOnTri =
+                MiscFunctions.PointOnTriangleFromRay(face, point, face.Normal, out var signedDistance);
+                if (ptOnTri.IsNull()) continue;
+                if (Math.Abs(signedDistance) < shortestDistance)
+                {
+                    shortestDistance = Math.Abs(signedDistance);
+                    closestElt = face;
+                }
+            }
+            foreach (var v in Vertices)
+            {
+                var distance = v.Coordinates.Distance(point);
+                if (Math.Abs(distance) < shortestDistance)
+                {
+                    shortestDistance = Math.Abs(distance);
+                    closestElt = v;
+                }
+            }
+            foreach (var edge in InnerEdges.Concat(OuterEdges))
+            {
+                var lineVector = edge.Vector.Normalize();
+                var distance = MiscFunctions.DistancePointToLine(point, edge.From.Coordinates, lineVector, out var pointOnLine);
+                var t = (pointOnLine - edge.From.Coordinates).Dot(lineVector);
+                if (t < 0 || t > edge.Length) continue;
+                if (Math.Abs(distance) < shortestDistance)
+                {
+                    shortestDistance = Math.Abs(distance);
+                    closestElt = edge;
+                }
+            }
+            return (shortestDistance, closestElt);
+        }
+
+        public override Vector3 GetNormalAtPoint(Vector3 point)
+        {
+            var (distance, closestElt) = GetClosest(point);
+            if (closestElt is TriangleFace face) return face.Normal;
+
+            if (closestElt is Edge edge)
+            {
+                var vecToEdgeCenter = (edge.Center() - point).Normalize();
+                var ownDot = Faces.Contains(edge.OwnedFace) ?
+                    Math.Abs(vecToEdgeCenter.Dot(edge.OwnedFace.Normal))
+                    : double.PositiveInfinity;
+                var othDot = Faces.Contains(edge.OtherFace)
+                    ? Math.Abs(vecToEdgeCenter.Dot(edge.OtherFace.Normal))
+                    : double.PositiveInfinity;
+                return ownDot > othDot ? edge.OwnedFace.Normal : edge.OtherFace.Normal;
+            }
+            var vertex = (Vertex)closestElt;
+            var vecToVertex = (vertex.Coordinates - point).Normalize();
+            var closestFace = vertex.Faces.Where(f => Faces.Contains(f))
+                .MaxBy(f => Math.Abs(vecToVertex.Dot(f.Normal)));
+            return closestFace.Normal;
+        }
         protected override void CalculateIsPositive()
         {
             // todo: do we want this to be true=convex and false=concave?

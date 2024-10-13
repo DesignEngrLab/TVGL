@@ -15,7 +15,7 @@ namespace TVGLUnitTestsAndBenchmarking
             
             ts.Complexify();
             ts.Copy();
-            //ts.OrientedBoundingBox();
+            ts.FindMinimumBoundingBox();
             ts.CreateSilhouette(Vector3.UnitX);
             ts.SetToOriginAndSquare(out var backTransform);
             ts.SetToOriginAndSquareToNewSolid(out backTransform);
@@ -26,17 +26,17 @@ namespace TVGLUnitTestsAndBenchmarking
             ts.SliceOnInfiniteFlat(new Plane(), out List<TessellatedSolid> solids, out ContactData contactData);
             ts.SliceOnFlatAsSingleSolids(new Plane(), out TessellatedSolid positiveSideSolids, out TessellatedSolid negativeSideSolid);
             ts.GetSliceContactData(new Plane(), out contactData, false);
-            //ts.ConvexHull.Vertices.MinimumBoundingCylinder();
-            //ts.ConvexHull.Vertices.OrientedBoundingBox();
-            //var length = ts.ConvexHull.Vertices.GetLengthAndExtremeVertices(Vector3.UnitX, out List<IVector3D> bottomVertices,
-            //      out List<IVector3D> topVertices);
-            //length = ts.ConvexHull.Vertices.GetLengthAndExtremeVertex(Vector3.UnitX, out Vertex bottomVertex,
-            //      out Vertex topVertex);
+            ts.ConvexHull.Vertices.MinimumBoundingCylinder();
+            ts.ConvexHull.Vertices.FindMinimumBoundingBox();
+            var length = ts.ConvexHull.Vertices.GetLengthAndExtremeVertices(Vector3.UnitX, out List<IVector3D> bottomVertices,
+                  out List<IVector3D> topVertices);
+            length = ts.ConvexHull.Vertices.GetLengthAndExtremeVertex(Vector3.UnitX, out Vertex bottomVertex,
+                  out Vertex topVertex);
 
             #endregion
 
             #region CrossSectionSolid
-            var cs = new CrossSectionSolid(new Dictionary<int, double>());
+            var cs = new CrossSectionSolid(new double[0]);
             //cs.Add(new List<Vertex>)
             #endregion
 

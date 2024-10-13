@@ -17,6 +17,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Xml.Linq;
 
 namespace TVGL
 {
@@ -110,7 +111,17 @@ namespace TVGL
             zBuff.Initialize(MinX, MaxX, MinY, MaxY, pixelsPerRow, pixelBorder);
             var faces = subsetFaces != null ? subsetFaces : zBuff.solidFaces;
             foreach (TriangleFace face in faces)
+            {
+                //if (face.IndexInList == 376)
+                //if (face.Center.X < -27 && face.Center.Z > 3.5 && face.Normal.Dot(Vector3.UnitY) > 0.98)
+                //{
+                //    solid.HasUniformColor = false;
+                //    solid.ResetDefaultColor();
+                //    face.Color = new Color(KnownColors.Red);
+                //    Presenter.ShowAndHang(solid);
+                //}
                 zBuff.UpdateZBufferWithFace(face);
+            }
             return zBuff;
         }
 
@@ -128,14 +139,14 @@ namespace TVGL
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public virtual void UpdateZBufferWithFace(TriangleFace face)
         {
-            //return CheckZBufferWithFace(face, true, out _, out _);
             foreach (var indexAndHeight in GetIndicesCoveredByFace(face))
             {
                 var index = indexAndHeight.index;
                 var zHeight = indexAndHeight.zHeight;
-                // since the grid is not initialized, we update it if the grid cell is empty or if we found a better face
                 var tuple = Values[index];
                 if (tuple == default || zHeight >= tuple.Item2)
+                    // since the grid elements are not initialized, we update it if the 
+                    // grid cell is empty (ie default) or if we found a better face
                     Values[index] = (face, zHeight);
             }
         }
@@ -221,9 +232,19 @@ namespace TVGL
             var xEndIndex = GetXIndex(vMax.X);
             // x is snapped to the grid. This value should be a little less than vMin.X
             var xSnap = GetSnappedX(xStartIndex);  //snapped vMin.X value;
-            var yStart = vMin.Y;
-            // the triangles line slopes are really normalized by the pixel side length
-            // this is essentially the amount of movement in y for each pixel in x
+                                                   // the triangles line slopes are really normalized by the pixel side length
+                                                   // this is essentially the amount of movement in y for each pixel in x
+
+            // there are 3 possibilities at the start (this is confusing...but it's best to get this right
+            // before the loop (even if some duplicate code). It only happens at the start so it's better
+            // to handle clearly at the onset then having extra conditions in the main loop (see "while (true)" below)
+            // What we need to find is both the most accurate value for ySpine and the averageSlope.
+            // 1. xStartIndex<xSwitchIndex (nominal case - handle cleanly in the main loop)
+            // 1. vMin.X == vMed.X
+            // 1a. vMin.X == xSnap -> this is the only way that pixels can be in the xStartIndex column
+            // 1b. vMin.X != xSnap -> this is the only way that pixels can be in the xStartIndex + 1 column
+            // 2. vMin.X != vMed.X, but xStartIndex == xSwitchIndex
+
             var slopeStepMed = PixelSideLength * (vMed.Y - vMin.Y) / (vMed.X - vMin.X);
             var slopeStepMax = PixelSideLength * (vMax.Y - vMin.Y) / (vMax.X - vMin.X);
             // the average slope is used to determine the middle most y values for the triangle
@@ -231,44 +252,67 @@ namespace TVGL
             // until we leave the triangle. Sometimes the triangle is to thin that none are found.
             // sometimes only the +up or the -down find a pixel.
             var averageSlope = 0.5 * (slopeStepMax + slopeStepMed);
-            // chances are, we skip the first pixel in x. This is because the xSnap is less than vMin.X
-            if (xSnap.IsLessThanNonNegligible(vMin.X))
-            {   // but skipping the first pixel means we need to adjust the yStart
-                if (xStartIndex == xSwitchIndex)
+            double ySpine; // this is the most important variable! it's the vertical coordinate
+            // of the "spine of the triangle, given the x coord at the grid point
+            int xIndex;
+            bool slopeSwitched = false;
+            if (xStartIndex < xSwitchIndex)
+            {
+                xIndex = xStartIndex + 1;
+                xSnap += PixelSideLength;
+                ySpine = vMin.Y + (xSnap - vMin.X) * averageSlope * inversePixelSideLength;
+            }
+            else // xStartIndex == xSwitchIndex, so the first two vertices are in the same grid column
+            {
+                slopeSwitched = true;
+                if (vMin.X < vMed.X) // vertices are in the same colum but not a vertical wall
                 {
-                    if (vMed.X == vMin.X)
-                        // slope would be infiity if x values are the same. catch it with this if statement
-                        yStart = 0.5 * (vMin.Y + vMed.Y);
-                    else yStart += averageSlope * (vMed.X - vMin.X) * inversePixelSideLength;
-                    // it is important here (and at the end of the main loop) to switch at the middle vertex
-                    // given how extreme triangles can be - it is crucial that our calculation for the center
-                    // spine of the triangle is as accurate as possible.
+                    xIndex = xStartIndex + 1;
+                    xSnap += PixelSideLength;
+                    ySpine = vMin.Y + (vMed.X - vMin.X) * averageSlope * inversePixelSideLength;
+                    var rightXDelta = xSnap - vMed.X;
                     slopeStepMed = PixelSideLength * (vMax.Y - vMed.Y) / (vMax.X - vMed.X);
                     averageSlope = 0.5 * (slopeStepMax + slopeStepMed);
-                    yStart += averageSlope * (PixelSideLength - vMed.X + xSnap) * inversePixelSideLength;
+                    ySpine += averageSlope * rightXDelta * inversePixelSideLength;
                 }
-                else
-                    yStart += averageSlope * (PixelSideLength - vMin.X + xSnap) * inversePixelSideLength;
-                // now we need to increment the xSnap and xStartIndex
-                xStartIndex++;
-                xSnap += PixelSideLength;
+                else // vmin.X == vMed.X
+                {
+                    if (xSnap.IsLessThanNonNegligible(vMin.X))
+                    {
+                        xIndex = xStartIndex + 1;
+                        xSnap += PixelSideLength;
+                        ySpine = 0.5 * (vMin.Y + vMed.Y);
+                        var rightXDelta = xSnap - vMed.X;
+                        slopeStepMed = PixelSideLength * (vMax.Y - vMed.Y) / (vMax.X - vMed.X);
+                        averageSlope = 0.5 * (slopeStepMax + slopeStepMed);
+                        ySpine += averageSlope * rightXDelta * inversePixelSideLength;
+                    }
+                    else
+                    {   // the only way there can be pixels in the xStartIndex column that are in
+                        // the triangle is if the triangle has a vertical wall with the same x-coord
+                        // as the snapped x value.
+                        ySpine = 0.5 * (vMin.Y + vMed.Y);
+                        xIndex = xStartIndex;
+                        slopeStepMed = PixelSideLength * (vMax.Y - vMed.Y) / (vMax.X - vMed.X);
+                        averageSlope = 0.5 * (slopeStepMax + slopeStepMed);
+                    }
+                }
             }
-            var pixXMinusVAx = xSnap - vAx;
-            // *** main loop ***
-            var xIndex = xStartIndex;
+            var pixXMinusVAx = xSnap - vAx;  // this weird variable (along with the two at the top of the loop) is used in the PixelIsInside method
             while (true)
             {
                 // the following 2 lines are calculated to save repeat calculations in the PixelIsInside method
                 var vBAy_by_pixXVAx = vBAy * pixXMinusVAx;
                 var vCAy_by_pixXVAx = vCAy * pixXMinusVAx;
                 // get the starting y index and the snapped y value
-                var yStartIndex = GetYIndex(yStart);
+                var yStartIndex = GetYIndex(ySpine);
                 var ySnapStart = GetSnappedY(yStartIndex);
+                // first check this central (spine) point
                 if (PixelIsInside(ySnapStart - vAy, vBAx, vBAy_by_pixXVAx, area, oneOverArea,
                     vCAy_by_pixXVAx, vCAx, zA, zB, zC, out var zHeight))
                     yield return (GetIndex(xIndex, yStartIndex), zHeight);
 
-                // first search down until we leave the triangle.  
+                // second search down until we leave the triangle.  
                 var ySnap = ySnapStart;
                 var yIndex = yStartIndex;
                 while (true)
@@ -280,12 +324,11 @@ namespace TVGL
                         yield return (GetIndex(xIndex, yIndex), zHeight);
                     else break;
                 }
-                // now in the positive direction
+                // third now in the positive direction
                 ySnap = ySnapStart;
                 yIndex = yStartIndex;
                 while (true)
-                {   // note that the yIndex and ySnap are incremented at the end of the loop
-                    // this is subtle but save a re-calculation of the center pixel
+                {
                     yIndex++;
                     ySnap += PixelSideLength;
                     if (PixelIsInside(ySnap - vAy, vBAx, vBAy_by_pixXVAx, area, oneOverArea,
@@ -294,27 +337,28 @@ namespace TVGL
                     else break;
                 }
 
-                // here is the main loop exit condition
-                if (xIndex >= xEndIndex) break;
+                // finally, we increment the xIndex and xSnap and the difference of xSnap from
+                // vA.X which is used repeatedly in the PixelIsInside method
+                if (++xIndex > xEndIndex) break;
+                xSnap += PixelSideLength;
+                pixXMinusVAx += PixelSideLength;
 
-                // like the beginning, if the middle vertex is encountered, we must take
-                // special care to get the correct yStart value
-                if (xIndex == xSwitchIndex)
+                // now update ySpine
+                // if the middle vertex was just stepped over (and yes, this can happen even at the
+                // beginning of the loop because xStartIndex and xSwitchIndex can be the same (but
+                // the vertex x-coords are different and we were just in the 'else' statement above
+                if (!slopeSwitched && xIndex > xSwitchIndex)
                 {
-                    var leftXDelta = vMed.X - GetSnappedX(xIndex);
-                    yStart += averageSlope * leftXDelta * inversePixelSideLength;
+                    slopeSwitched = true;
+                    var rightXDelta = xSnap - vMed.X;
+                    var leftXDelta = PixelSideLength - rightXDelta;
+                    ySpine += averageSlope * leftXDelta * inversePixelSideLength;
                     slopeStepMed = PixelSideLength * (vMax.Y - vMed.Y) / (vMax.X - vMed.X);
                     averageSlope = 0.5 * (slopeStepMax + slopeStepMed);
-                    var rightXDelta = PixelSideLength - leftXDelta;
-                    yStart += averageSlope * rightXDelta * inversePixelSideLength;
+                    ySpine += averageSlope * rightXDelta * inversePixelSideLength;
                 }
-                // otherwise, we just increment the yStart by the average slope
-                else yStart += averageSlope;
-
-                // finally, we increment the xIndex and xSnap (well, xSnap is not really
-                // needed but it's difference from vA.X is used repeatedly in the PixelIsInside method)
-                xIndex++;
-                pixXMinusVAx += PixelSideLength;
+                // otherwise, we just increment the ySpine by the average slope
+                else ySpine += averageSlope;
             }
         }
 
@@ -462,7 +506,7 @@ namespace TVGL
                     else maxX = vC.X;
                 }
                 foreach (var pixel in PlotSteepLine(minX, minY, maxX, maxY))
-                    yield return (pixel.Item1 % XCount,pixel.Item2);
+                    yield return (pixel.Item1 % XCount, pixel.Item2);
             }
         }
 

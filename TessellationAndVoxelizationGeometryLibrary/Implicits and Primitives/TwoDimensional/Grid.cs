@@ -98,12 +98,8 @@ namespace TVGL
         /// <param name="pixelBorder">The pixel border.</param>
         public void Initialize(double minX, double maxX, double minY, double maxY, int pixelsPerRow, int pixelBorder = 2)
         {
-            MaxX = maxX;
-            MinX = minX;
-            MaxY = maxY;
-            MinY = minY;
-            XLength = maxX - MinX;
-            YLength = maxY - MinY;
+            XLength = maxX - minX;
+            YLength = maxY - minY;
             var MaxLength = XLength > YLength ? XLength : YLength;
 
             //Calculate the size of a pixel based on the max of the two dimensions in question. 
@@ -114,15 +110,16 @@ namespace TVGL
             YCount = (int)Math.Ceiling(YLength * inversePixelSideLength);
             // shift the grid slightly so that the part is centered in the grid
             var xStickout = XCount * PixelSideLength - XLength;
-            MinX -= xStickout / 2;
+            MinX = minX - xStickout / 2;
             var yStickout = YCount * PixelSideLength - YLength;
-            MinY -= yStickout / 2;
+            MinY = minY - yStickout / 2;
             // add the pixel border...2x since includes both sides (left and right, or top and bottom)
             XCount += pixelBorder * 2;
             YCount += pixelBorder * 2;
-            MinX -= pixelBorder*PixelSideLength;
-            MinY -= pixelBorder*PixelSideLength;
-
+            MinX -= pixelBorder * PixelSideLength;
+            MinY -= pixelBorder * PixelSideLength;
+            MaxX = MinX + XCount * PixelSideLength;
+            MaxY = MinY + YCount * PixelSideLength;
             MaxIndex = XCount * YCount - 1;
             Values = new T[XCount * YCount];
         }
@@ -161,6 +158,22 @@ namespace TVGL
 
             MaxIndex = XCount * YCount - 1;
             Values = new T[XCount * YCount];
+        }
+        public void Initialize<U>(Grid<U> grid)
+        {
+            PixelSideLength = grid.PixelSideLength;
+            inversePixelSideLength = grid.inversePixelSideLength;
+            MinX =grid.MinX;
+            MaxX = grid.MaxX;
+            MinY =grid.MinY;
+            MaxY = grid.MaxY;
+            XLength = MaxX - MinX;
+            YLength = MaxY - MinY;
+
+            XCount = grid.XCount;
+            YCount = grid.YCount;
+            MaxIndex = grid.MaxIndex;
+            Values = new T[grid.Values.Length];
         }
 
         /// <summary>
@@ -204,7 +217,7 @@ namespace TVGL
                 return false;
             }
             value = Values[index];
-            return !EqualityComparer<T>.Default.Equals(value, default(T));
+            return true; // !EqualityComparer<T>.Default.Equals(value, default(T));
         }
 
         /// <summary>
@@ -224,6 +237,21 @@ namespace TVGL
             Values[index] = newValue;
         }
 
+        /// <summary>
+        /// Get the value at the specified x and y indices.
+        /// </summary>        
+        public T this[int x, int y]
+        {
+            get
+            {
+                TryGet(x, y, out var result);
+                return result;
+            }
+            set
+            {
+                Set(x, y, value);
+            }
+        }
         /// <summary>
         /// Plots the line.
         /// </summary>
@@ -346,7 +374,7 @@ namespace TVGL
         /// <param name="y">The y.</param>
         /// <returns>System.Int32.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public int GetIndex(double x, double y) => YCount * GetXIndex(x) + GetYIndex(y);
+        public int GetIndex(double x, double y) => GetIndex(GetXIndex(x), GetYIndex(y));
 
         /// <summary>
         /// Gets the index.
@@ -355,7 +383,12 @@ namespace TVGL
         /// <param name="yIndex">Index of the y.</param>
         /// <returns>System.Int32.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public int GetIndex(int xIndex, int yIndex) => YCount * xIndex + yIndex;
+        public int GetIndex(int xIndex, int yIndex)
+        {
+
+            if (xIndex < 0 || xIndex >= XCount || yIndex < 0 || yIndex >= YCount) return -1;
+            return YCount * xIndex + yIndex;
+        }
 
         /// <summary>
         /// Gets the index of the x.

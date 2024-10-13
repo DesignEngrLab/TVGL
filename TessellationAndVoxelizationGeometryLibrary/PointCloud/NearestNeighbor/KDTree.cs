@@ -271,18 +271,30 @@ namespace TVGL.PointCloud
                 OriginalPoints = listOfPoints.ToArray();
                 Count = i;
             }
-            var nullPoint = GetDefault(OriginalPoints[0].GetType());
+            var nullPoint = GetNullObject(OriginalPoints[0]);
+            //var nullPoint = GetDefault(OriginalPoints[0].GetType());
             // Calculate the number of nodes needed to contain the binary tree.
             // This is equivalent to finding the power of 2 greater than the number of points
             TreeSize = (int)Math.Pow(2, (int)(Math.Log(Count) / Math.Log(2)) + 1);
             TreePoints = Enumerable.Repeat(nullPoint, TreeSize).Cast<TPoint>().ToArray();
         }
 
-        public static object GetDefault(Type type)
+        private object GetNullObject(TPoint point)
         {
-            if (type.IsValueType)
+            var t = point.GetType();
+            if (t.IsValueType)
             {
-                return Activator.CreateInstance(type);
+                switch (point)
+                {
+                    case Vector2 _:
+                        return Vector2.Null;
+                    case Vector3 _:
+                        return Vector3.Null;
+                    case Vector4 _:
+                        return Vector4.Null;
+                    default:
+                        return Activator.CreateInstance(point.GetType());
+                }
             }
             return null;
         }

@@ -26,7 +26,7 @@ namespace TVGL
                 CheckModelIntegrity = false,
                 AutomaticallyRepairHoles = false,
                 AutomaticallyInvertNegativeSolids = false,
-                AutomaticallyRepairNegligibleTFaces = false,
+                AutomaticallyRepairNegligibleFaces = false,
                 CopyElementsPassedToConstructor = false,
                 DefineConvexHull = false,
                 FindNonsmoothEdges = false,
@@ -54,7 +54,7 @@ namespace TVGL
         /// This includes flipping faces that have opposite normals, and resolving negligible faces. This does not
         /// patch major holes (like "AutomaticallyRepairHoles") but it can fix cracks - where vertices/edges are duplicated for separate
         /// faces.</summary>
-        public bool AutomaticallyRepairNegligibleTFaces { get; set; } = true;
+        public bool AutomaticallyRepairNegligibleFaces { get; set; } = true;
 
         /// <summary>Gets or sets whether the model will be inverted if the volume is negative. Generally, this is
         /// advised, but if the model is known to be a partial surface (in which case the volume may naturally be

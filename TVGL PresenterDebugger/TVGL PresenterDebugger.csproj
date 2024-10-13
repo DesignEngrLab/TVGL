@@ -26,6 +26,7 @@
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Implicits and Primitives\3D Curves\StraightLine3D.cs" Link="TVGL\Implicits and Primitives\3D Curves\StraightLine3D.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Implicits and Primitives\3D Curves\BorderSegment.cs" Link="TVGL\Implicits and Primitives\3D Curves\BorderSegment.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Implicits and Primitives\3D Curves\BorderLoop.cs" Link="TVGL\Implicits and Primitives\3D Curves\BorderLoop.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Implicits and Primitives\Primitive Surfaces\CappedCylinder.cs" Link="TVGL\Implicits and Primitives\Primitive Surfaces\CappedCylinder.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Implicits and Primitives\Primitive Surfaces\Capsule.cs" Link="TVGL\Implicits and Primitives\Primitive Surfaces\Capsule.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Implicits and Primitives\Primitive Surfaces\Cone.cs" Link="TVGL\Implicits and Primitives\Primitive Surfaces\Cone.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Implicits and Primitives\Primitive Surfaces\GeneralQuadric.cs" Link="TVGL\Implicits and Primitives\Primitive Surfaces\GeneralQuadric.cs" />
@@ -56,6 +57,7 @@
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\InputOutput Operations\OFFFileData.cs" Link="TVGL\InputOutput Operations\OFFFileData.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\InputOutput Operations\PLYFileData.cs" Link="TVGL\InputOutput Operations\PLYFileData.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\InputOutput Operations\STLFileData.cs" Link="TVGL\InputOutput Operations\STLFileData.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\InputOutput Operations\TVGLFileData.cs" Link="TVGL\InputOutput Operations\TVGLFileData.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\MarchingCubes\MarchingCubes.Base.cs" Link="TVGL\MarchingCubes\MarchingCubes.Base.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\MarchingCubes\MarchingCubes.Implicit.cs" Link="TVGL\MarchingCubes\MarchingCubes.Implicit.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\MarchingCubes\MarchingCubes.VoxelizedSolid.cs" Link="TVGL\MarchingCubes\MarchingCubes.VoxelizedSolid.cs" />
@@ -63,6 +65,7 @@
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Miscellaneous Functions\MiscFunctions.cs" Link="TVGL\Miscellaneous Functions\MiscFunctions.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Miscellaneous Functions\VolumeCenterMoments.cs" Link="TVGL\Miscellaneous Functions\VolumeCenterMoments.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Miscellaneous Functions\Proximity.cs" Link="TVGL\Miscellaneous Functions\Proximity.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Miscellaneous Functions\PlatonicConstants.cs" Link="TVGL\Miscellaneous Functions\PlatonicConstants.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Miscellaneous Functions\SphericalAnglePair.cs" Link="TVGL\Miscellaneous Functions\SphericalAnglePair.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Miscellaneous Functions\SphericalHashLikeCollection.cs" Link="TVGL\Miscellaneous Functions\SphericalHashLikeCollection.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Miscellaneous Functions\Unique3DLineHashLikeCollection.cs" Link="TVGL\Miscellaneous Functions\Unique3DLineHashLikeCollection.cs" />
@@ -105,6 +108,7 @@
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Polygon Operations\PolygonOperations.Basic.cs" Link="TVGL\Polygon Operations\PolygonOperations.Basic.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Polygon Operations\PolygonOperations.Boolean.cs" Link="TVGL\Polygon Operations\PolygonOperations.Boolean.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Polygon Operations\PolygonOperations.CreateTrees.cs" Link="TVGL\Polygon Operations\PolygonOperations.CreateTrees.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Polygon Operations\PolygonOperations.DistanceToPoint.cs" Link="TVGL\Polygon Operations\PolygonOperations.DistanceToPoint.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Polygon Operations\PolygonOperations.IsInside.cs" Link="TVGL\Polygon Operations\PolygonOperations.IsInside.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Polygon Operations\PolygonOperations.Offsetting.cs" Link="TVGL\Polygon Operations\PolygonOperations.Offsetting.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Polygon Operations\PolygonOperations.Simplify.cs" Link="TVGL\Polygon Operations\PolygonOperations.Simplify.cs" />

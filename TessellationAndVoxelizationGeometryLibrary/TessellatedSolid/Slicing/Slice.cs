@@ -795,7 +795,37 @@ namespace TVGL
 
         #region Get Cross Sections
         /// <summary>
-        /// Gets the uniformly spaced slices.
+        /// Gets many uniformly spaced cross-sections through the tessellated solid.
+        /// </summary>
+        /// <param name="ts"></param>
+        /// <param name="direction"></param>
+        /// <param name="sliceOffsets"></param>
+        /// <param name="startDistanceAlongDirection"></param>
+        /// <param name="numSlices"></param>
+        /// <param name="stepSize"></param>
+        /// <returns></returns>
+        public static List<Polygon>[] GetUniformlySpacedCrossSections(this TessellatedSolid ts, Vector3 direction, out double[] sliceOffsets,
+            double startDistanceAlongDirection = double.NaN, int numSlices = -1, double stepSize = double.NaN)
+            => GetUniformlySpacedCrossSections(ts.Vertices, direction, out sliceOffsets, out _, out _, startDistanceAlongDirection, numSlices, stepSize);
+
+        /// <summary>
+        /// Gets many uniformly spaced cross-sections through the tessellated solid.
+        /// </summary>
+        /// <param name="ts"></param>
+        /// <param name="direction"></param>
+        /// <param name="sliceOffsets"></param>
+        /// <param name="vertex2DToEdges"></param>
+        /// <param name="startDistanceAlongDirection"></param>
+        /// <param name="numSlices"></param>
+        /// <param name="stepSize"></param>
+        /// <returns></returns>
+        public static List<Polygon>[] GetUniformlySpacedCrossSections(this TessellatedSolid ts, Vector3 direction, out double[] sliceOffsets,
+            out Dictionary<Vertex2D, Edge>[] vertex2DToEdges,
+            double startDistanceAlongDirection = double.NaN, int numSlices = -1, double stepSize = double.NaN)
+            => GetUniformlySpacedCrossSections(ts.Vertices, direction, out sliceOffsets, out vertex2DToEdges, out _, startDistanceAlongDirection, numSlices, stepSize);
+
+        /// <summary>
+        /// Gets many uniformly spaced cross-sections through the tessellated solid.
         /// </summary>
         /// <param name="ts">The ts.</param>
         /// <param name="direction">The direction.</param>
@@ -804,12 +834,73 @@ namespace TVGL
         /// <param name="stepSize">Size of the step.</param>
         /// <returns>List&lt;Polygon&gt;[].</returns>
         /// <exception cref="System.ArgumentException">Either a valid stepSize or a number of slices greater than zero must be specified.</exception>
-        public static List<Polygon>[] GetUniformlySpacedCrossSections(this TessellatedSolid ts, Vector3 direction, out Dictionary<Vertex2D, Edge>[] vertex2DToEdges,
+        public static List<Polygon>[] GetUniformlySpacedCrossSections(this TessellatedSolid ts, Vector3 direction, out double[] sliceOffsets,
+            out Dictionary<Vertex2D, Edge>[] vertex2DToEdges, out int[] numCompletePolygonsPerLayer,
             double startDistanceAlongDirection = double.NaN, int numSlices = -1, double stepSize = double.NaN)
-            => GetUniformlySpacedCrossSections(ts.Vertices, direction, out vertex2DToEdges, startDistanceAlongDirection, numSlices, stepSize);
+            => GetUniformlySpacedCrossSections(ts.Vertices, direction, out sliceOffsets, out vertex2DToEdges, out numCompletePolygonsPerLayer, startDistanceAlongDirection, numSlices, stepSize);
 
-        public static List<Polygon>[] GetUniformlySpacedCrossSections(this IEnumerable<Vertex> vertices, Vector3 direction,
+        /// <summary>
+        /// Gets many uniformly spaced cross-sections through the tessellated solid.
+        /// </summary>
+        /// <param name="vertices"></param>
+        /// <param name="direction"></param>
+        /// <param name="sliceOffsets"></param>
+        /// <param name="startDistanceAlongDirection"></param>
+        /// <param name="numSlices"></param>
+        /// <param name="stepSize"></param>
+        /// <returns></returns>
+        public static List<Polygon>[] GetUniformlySpacedCrossSections(this IEnumerable<Vertex> vertices, Vector3 direction, out double[] sliceOffsets,
+           double startDistanceAlongDirection = double.NaN,
+        int numSlices = -1, double stepSize = double.NaN)
+        => GetUniformlySpacedCrossSections(vertices, direction, out sliceOffsets, out _, out _, startDistanceAlongDirection, numSlices, stepSize);
+
+        /// <summary>
+        /// Gets many uniformly spaced cross-sections through the tessellated solid.
+        /// </summary>
+        /// <param name="vertices"></param>
+        /// <param name="direction"></param>
+        /// <param name="sliceOffsets"></param>
+        /// <param name="completePolygons"></param>
+        /// <param name="startDistanceAlongDirection"></param>
+        /// <param name="numSlices"></param>
+        /// <param name="stepSize"></param>
+        /// <returns></returns>
+        public static List<Polygon>[] GetUniformlySpacedCrossSections(this IEnumerable<Vertex> vertices, Vector3 direction, out double[] sliceOffsets,
+           out int[] completePolygons, double startDistanceAlongDirection = double.NaN,
+        int numSlices = -1, double stepSize = double.NaN)
+        => GetUniformlySpacedCrossSections(vertices, direction, out sliceOffsets, out _, out completePolygons, startDistanceAlongDirection, numSlices, stepSize);
+
+        /// <summary>
+        /// Gets many uniformly spaced cross-sections through the tessellated solid.
+        /// </summary>
+        /// <param name="vertices"></param>
+        /// <param name="direction"></param>
+        /// <param name="sliceOffsets"></param>
+        /// <param name="vertex2DToEdges"></param>
+        /// <param name="startDistanceAlongDirection"></param>
+        /// <param name="numSlices"></param>
+        /// <param name="stepSize"></param>
+        /// <returns></returns>
+        public static List<Polygon>[] GetUniformlySpacedCrossSections(this IEnumerable<Vertex> vertices, Vector3 direction, out double[] sliceOffsets,
            out Dictionary<Vertex2D, Edge>[] vertex2DToEdges, double startDistanceAlongDirection = double.NaN,
+        int numSlices = -1, double stepSize = double.NaN)
+        => GetUniformlySpacedCrossSections(vertices, direction, out sliceOffsets, out vertex2DToEdges, out _, startDistanceAlongDirection, numSlices, stepSize);
+
+        /// <summary>
+        /// Gets many uniformly spaced cross-sections through the tessellated solid.
+        /// </summary>
+        /// <param name="vertices"></param>
+        /// <param name="direction"></param>
+        /// <param name="sliceOffsets"></param>
+        /// <param name="vertex2DToEdges"></param>
+        /// <param name="numCompletePolygonsPerLayer"></param>
+        /// <param name="startDistanceAlongDirection"></param>
+        /// <param name="numSlices"></param>
+        /// <param name="stepSize"></param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentException"></exception>
+        public static List<Polygon>[] GetUniformlySpacedCrossSections(this IEnumerable<Vertex> vertices, Vector3 direction, out double[] sliceOffsets,
+           out Dictionary<Vertex2D, Edge>[] vertex2DToEdges, out int[] numCompletePolygonsPerLayer, double startDistanceAlongDirection = double.NaN,
         int numSlices = -1, double stepSize = double.NaN)
         {
             //First, sort the vertices along the given axis. Duplicate distances are not important.
@@ -829,13 +920,17 @@ namespace TVGL
                 startDistanceAlongDirection = firstDistance + 0.5 * stepSize;
 
             var result = new List<Polygon>[numSlices];
+            sliceOffsets = new double[numSlices];
+
             vertex2DToEdges = new Dictionary<Vertex2D, Edge>[numSlices];
+            numCompletePolygonsPerLayer = new int[numSlices];
             var currentEdges = new HashSet<Edge>();
             var nextDistance = sortedVertices.First().Dot(direction);
             var vIndex = 0;
             for (int step = 0; step < numSlices; step++)
             {
                 var d = startDistanceAlongDirection + step * stepSize;
+                sliceOffsets[step] = d;
                 var thisVertex = sortedVertices[vIndex];
                 var needToOffset = false;
                 while (thisVertex.Dot(direction) <= d)
@@ -855,10 +950,11 @@ namespace TVGL
                 plane.DistanceToOrigin = d;
                 if (currentEdges.Any())
                 {
-                    result[step] = GetLoops(currentEdges.ToDictionary(ce => ce, ce =>
+                    result[step] = CreatePolygons(currentEdges.ToDictionary(ce => ce, ce =>
                        MiscFunctions.PointOnPlaneFromIntersectingLine(plane, ce.From.Coordinates, ce.To.Coordinates, out _)
-                           .ConvertTo2DCoordinates(transform)), plane.Normal, plane.DistanceToOrigin, out var v2EDictionary);
+                           .ConvertTo2DCoordinates(transform)), plane.Normal, plane.DistanceToOrigin, out var v2EDictionary, out var numComplete);
                     vertex2DToEdges[step] = v2EDictionary;
+                    numCompletePolygonsPerLayer[step] = numComplete;
                 }
                 else result[step] = new List<Polygon>();
             }
@@ -866,84 +962,121 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Gets the loops.
+        /// Gets many uniformly spaced cross-sections through the tessellated solid.
         /// </summary>
-        /// <param name="edgeDictionary">The edge dictionary.</param>
-        /// <param name="normal">The normal.</param>
-        /// <param name="distanceToOrigin">The distance to origin.</param>
-        /// <param name="e2VDictionary">The e2 v dictionary.</param>
-        /// <returns>List&lt;Polygon&gt;.</returns>
-        private static List<Polygon> GetLoops(Dictionary<Edge, Vector2> edgeDictionary, Vector3 normal, double distanceToOrigin,
-            out Dictionary<Vertex2D, Edge> e2VDictionary)
+        /// <param name="ts"></param>
+        /// <param name="direction"></param>
+        /// <param name="sliceOffsets"></param>
+        /// <param name="startDistanceAlongDirection"></param>
+        /// <param name="numSlices"></param>
+        /// <param name="stepSize"></param>
+        /// <returns></returns>
+        public static List<Polygon>[] GetUniformlySpacedCrossSections(this TessellatedSolid ts, CartesianDirections direction, out double[] sliceOffsets,
+           double startDistanceAlongDirection = double.NaN, int numSlices = -1, double stepSize = double.NaN)
+        => GetUniformlySpacedCrossSections(ts, direction, out sliceOffsets, out _, out _, startDistanceAlongDirection, numSlices, stepSize);
+
+        /// <summary>
+        /// Gets many uniformly spaced cross-sections through the tessellated solid.
+        /// </summary>
+        /// <param name="ts"></param>
+        /// <param name="direction"></param>
+        /// <param name="sliceOffsets"></param>
+        /// <param name="vertex2DToEdges"></param>
+        /// <param name="startDistanceAlongDirection"></param>
+        /// <param name="numSlices"></param>
+        /// <param name="stepSize"></param>
+        /// <returns></returns>
+        public static List<Polygon>[] GetUniformlySpacedCrossSections(this TessellatedSolid ts, CartesianDirections direction, out double[] sliceOffsets,
+            out Dictionary<Vertex2D, Edge>[] vertex2DToEdges, double startDistanceAlongDirection = double.NaN, int numSlices = -1, double stepSize = double.NaN)
+        => GetUniformlySpacedCrossSections(ts, direction, out sliceOffsets, out vertex2DToEdges, out _, startDistanceAlongDirection, numSlices, stepSize);
+
+
+        /// <summary>
+        /// Gets many uniformly spaced cross-sections through the tessellated solid.
+        /// </summary>
+        /// <param name="ts">The ts.</param>
+        /// <param name="direction">The direction.</param>
+        /// <param name="startDistanceAlongDirection">The start distance along direction.</param>
+        /// <param name="numSlices">The number slices.</param>
+        /// <param name="stepSize">Size of the step.</param>
+        /// <returns>List&lt;Polygon&gt;[].</returns>
+        /// <exception cref="System.ArgumentException">Either a valid stepSize or a number of slices greater than zero must be specified.</exception>
+        public static List<Polygon>[] GetUniformlySpacedCrossSections(this TessellatedSolid ts, CartesianDirections direction, out double[] sliceOffsets,
+            out Dictionary<Vertex2D, Edge>[] vertex2DToEdges, out int[] numCompletedPolygonsPerLayer, double startDistanceAlongDirection = double.NaN, int numSlices = -1, double stepSize = double.NaN)
         {
-            var polygons = new List<Polygon>();
-            e2VDictionary = new Dictionary<Vertex2D, Edge>();
-            while (edgeDictionary.Any())
+            if (double.IsNaN(stepSize) && numSlices < 1) throw new ArgumentException("Either a valid stepSize or a number of slices greater than zero must be specified.");
+            var intDir = Math.Abs((int)direction) - 1;
+
+            if ((ts.Bounds[0] - ts.Bounds[1]).IsNegligible(ts.SameTolerance))
+                ts.DefineAxisAlignedBoundingBoxAndTolerance();
+            var lengthAlongDir = ts.Bounds[1][intDir] - ts.Bounds[0][intDir];
+            stepSize = Math.Abs(stepSize);
+            if (double.IsNaN(stepSize)) stepSize = lengthAlongDir / numSlices;
+            if (numSlices < 1) numSlices = (int)(lengthAlongDir / stepSize);
+            if (double.IsNaN(startDistanceAlongDirection))
             {
-                var path = new List<Vector2>();
-                var edgesInLoop = new List<Edge>();
-                var firstEdgeInLoop = edgeDictionary.First().Key;
-                var currentEdge = firstEdgeInLoop;
-                var finishedLoop = false;
-                TriangleFace nextFace = null;
-                do
-                {
-                    var intersectVertex2D = edgeDictionary[currentEdge];
-                    edgeDictionary.Remove(currentEdge);
-                    edgesInLoop.Add(currentEdge);
-                    path.Add(intersectVertex2D);
-                    var prevFace = nextFace;
-                    if (prevFace == null)
-                        nextFace = (currentEdge.From.Dot(normal) < distanceToOrigin) ? currentEdge.OtherFace : currentEdge.OwnedFace;
-                    else nextFace = currentEdge.GetMatingFace(nextFace);
-                    Edge nextEdge = null;
-                    foreach (var whichEdge in nextFace.Edges)
-                    {
-                        if (currentEdge == whichEdge) continue;
-                        if (whichEdge == firstEdgeInLoop)
-                        {
-                            finishedLoop = true;
-                            if (path.Count > 2)
-                                AddToPolygons(path, edgesInLoop, polygons, e2VDictionary);
-                            break;
-                        }
-                        else if (edgeDictionary.ContainsKey(whichEdge))
-                        {
-                            nextEdge = whichEdge;
-                            break;
-                        }
-                    }
-                    if (!finishedLoop && nextEdge == null)
-                    {
-                        Message.output("Incomplete loop.", 3);
-                        if (path.Count > 2)
-                            AddToPolygons(path, edgesInLoop, polygons, e2VDictionary);
-                        finishedLoop = true;
-                    }
-                    else currentEdge = nextEdge;
-                } while (!finishedLoop);
+                if (direction < 0)
+                    startDistanceAlongDirection = ts.Bounds[1][intDir] - 0.5 * stepSize;
+                else startDistanceAlongDirection = ts.Bounds[0][intDir] + 0.5 * stepSize;
             }
-            return polygons.CreateShallowPolygonTrees(false);
+            switch (direction)
+            {
+                case CartesianDirections.XPositive:
+                    return AllSlicesAlongX(ts, startDistanceAlongDirection, numSlices, stepSize, out sliceOffsets, out vertex2DToEdges, out numCompletedPolygonsPerLayer);
+                case CartesianDirections.YPositive:
+                    return AllSlicesAlongY(ts, startDistanceAlongDirection, numSlices, stepSize, out sliceOffsets, out vertex2DToEdges, out numCompletedPolygonsPerLayer);
+                case CartesianDirections.ZPositive:
+                    return AllSlicesAlongZ(ts, startDistanceAlongDirection, numSlices, stepSize, out sliceOffsets, out vertex2DToEdges, out numCompletedPolygonsPerLayer);
+                case CartesianDirections.XNegative:
+                    var slicesX = AllSlicesAlongX(ts, startDistanceAlongDirection, numSlices, stepSize, out sliceOffsets, out vertex2DToEdges, out numCompletedPolygonsPerLayer);
+                    Array.Reverse(sliceOffsets);
+                    Array.Reverse(slicesX);
+                    Array.Reverse(numCompletedPolygonsPerLayer);
+                    Array.Reverse(vertex2DToEdges);
+                    return slicesX;
+                case CartesianDirections.YNegative:
+                    var slicesY = AllSlicesAlongY(ts, startDistanceAlongDirection, numSlices, stepSize, out sliceOffsets, out vertex2DToEdges, out numCompletedPolygonsPerLayer);
+                    Array.Reverse(sliceOffsets);
+                    Array.Reverse(slicesY);
+                    Array.Reverse(numCompletedPolygonsPerLayer);
+                    Array.Reverse(vertex2DToEdges);
+                    return slicesY;
+                default:
+                    var slicesZ = AllSlicesAlongZ(ts, startDistanceAlongDirection, numSlices, stepSize, out sliceOffsets, out vertex2DToEdges, out numCompletedPolygonsPerLayer);
+                    Array.Reverse(sliceOffsets);
+                    Array.Reverse(slicesZ);
+                    Array.Reverse(numCompletedPolygonsPerLayer);
+                    Array.Reverse(vertex2DToEdges);
+                    return slicesZ;
+            }
         }
 
         /// <summary>
-        /// Adds to polygons.
+        /// Gets the cross-section through the tessellated solid at the specified distance from the origin in the specified direction.
         /// </summary>
-        /// <param name="path">The path.</param>
-        /// <param name="edgesInLoop">The edges in loop.</param>
-        /// <param name="polygons">The polygons.</param>
-        /// <param name="e2VDictionary">The e2 v dictionary.</param>
-        private static void AddToPolygons(List<Vector2> path, List<Edge> edgesInLoop, List<Polygon> polygons, Dictionary<Vertex2D, Edge> e2VDictionary)
-        {
-            var polygon = new Polygon(path);
-            polygons.Add(polygon);
-            for (int i = 0; i < polygon.Vertices.Count; i++)
-                e2VDictionary.Add(polygon.Vertices[i], edgesInLoop[i]);
-        }
+        /// <param name="tessellatedSolid"></param>
+        /// <param name="direction"></param>
+        /// <param name="distanceToOrigin"></param>
+        /// <returns></returns>
+        public static List<Polygon> GetCrossSection(this TessellatedSolid tessellatedSolid, CartesianDirections direction,
+            double distanceToOrigin)
+      => tessellatedSolid.GetCrossSection(direction, distanceToOrigin, out _, out _);
+
+        /// <summary>
+        /// Gets the cross-section through the tessellated solid at the specified distance from the origin in the specified direction.
+        /// </summary>
+        /// <param name="tessellatedSolid"></param>
+        /// <param name="direction"></param>
+        /// <param name="distanceToOrigin"></param>
+        /// <param name="v2EDictionary"></param>
+        /// <returns></returns>
+        public static List<Polygon> GetCrossSection(this TessellatedSolid tessellatedSolid, CartesianDirections direction,
+            double distanceToOrigin, out Dictionary<Vertex2D, Edge> v2EDictionary)
+      => tessellatedSolid.GetCrossSection(direction, distanceToOrigin, out v2EDictionary, out _);
 
 
         /// <summary>
-        /// Gets the cross section.
+        /// Gets the cross-section through the tessellated solid at the specified distance from the origin in the specified direction.
         /// </summary>
         /// <param name="tessellatedSolid">The tessellated solid.</param>
         /// <param name="direction">The direction.</param>
@@ -951,7 +1084,7 @@ namespace TVGL
         /// <param name="v2EDictionary">The v2 e dictionary.</param>
         /// <returns>List&lt;Polygon&gt;.</returns>
         public static List<Polygon> GetCrossSection(this TessellatedSolid tessellatedSolid, CartesianDirections direction,
-            double distanceToOrigin, out Dictionary<Vertex2D, Edge> v2EDictionary)
+            double distanceToOrigin, out Dictionary<Vertex2D, Edge> v2EDictionary, out int numCompletedPolygons)
         {
             var intDir = Math.Abs((int)direction) - 1;
             var signDir = Math.Sign((int)direction);
@@ -959,7 +1092,7 @@ namespace TVGL
             var positiveShift = 0.0;
             var negativeShift = 0.0;
             distances.SetPositiveAndNegativeShifts(distanceToOrigin, tessellatedSolid.SameTolerance, ref positiveShift, ref negativeShift);
-            var planeDistance = distanceToOrigin + ((positiveShift < -negativeShift) ? positiveShift : negativeShift);
+            var planeDistance = signDir * (distanceToOrigin + ((positiveShift < -negativeShift) ? positiveShift : negativeShift));
 
             var transform = direction.TransformToXYPlane(out _);
             tessellatedSolid.MakeEdgesIfNonExistent();
@@ -973,38 +1106,59 @@ namespace TVGL
                     Vector2 ip = Vector2.NaN;
                     if (intDir == 0)
                     {
-                        var ip3D = MiscFunctions.PointOnXPlaneFromLineSegment(distanceToOrigin, edge.From.Coordinates, edge.To.Coordinates);
-                        ip = new Vector2(ip3D.Y, ip3D.Z);
+                        var ip3D = MiscFunctions.PointOnXPlaneFromLineSegment(planeDistance, edge.From.Coordinates, edge.To.Coordinates);
+                        ip = new Vector2(-signDir * ip3D.Z, ip3D.Y);
                     }
                     else if (intDir == 1)
                     {
-                        var ip3D = MiscFunctions.PointOnYPlaneFromLineSegment(distanceToOrigin, edge.From.Coordinates, edge.To.Coordinates);
-                        ip = new Vector2(ip3D.Z, ip3D.X);
+                        var ip3D = MiscFunctions.PointOnYPlaneFromLineSegment(planeDistance, edge.From.Coordinates, edge.To.Coordinates);
+                        ip = new Vector2(ip3D.X, -signDir * ip3D.Z);
                     }
                     else
                     {
-                        var ip3D = MiscFunctions.PointOnZPlaneFromLineSegment(distanceToOrigin, edge.From.Coordinates, edge.To.Coordinates);
-                        ip = new Vector2(ip3D.X, ip3D.Y);
+                        var ip3D = MiscFunctions.PointOnZPlaneFromLineSegment(planeDistance, edge.From.Coordinates, edge.To.Coordinates);
+                        ip = new Vector2(ip3D.X, signDir * ip3D.Y);
                     }
                     e2VDict.Add(edge, ip);
                 }
             }
-            return GetLoops(e2VDict, Vector3.UnitVector(intDir), distanceToOrigin, out v2EDictionary);
+            return CreatePolygons(e2VDict, signDir * Vector3.UnitVector(intDir), signDir * planeDistance, out v2EDictionary, out numCompletedPolygons);
         }
 
         /// <summary>
-        /// Gets the cross section.
+        /// Gets the cross-section through the tessellated solid at the specified plane.
+        /// </summary>
+        /// <param name="tessellatedSolid"></param>
+        /// <param name="plane"></param>
+        /// <returns></returns>
+        public static List<Polygon> GetCrossSection(this TessellatedSolid tessellatedSolid, Plane plane)
+        => tessellatedSolid.GetCrossSection(plane, out _, out _);
+
+        /// <summary>
+        /// Gets the cross-section through the tessellated solid at the specified plane.
+        /// 
+        /// </summary>
+        /// <param name="tessellatedSolid"></param>
+        /// <param name="plane"></param>
+        /// <param name="v2EDictionary"></param>
+        /// <returns></returns>
+        public static List<Polygon> GetCrossSection(this TessellatedSolid tessellatedSolid, Plane plane, out Dictionary<Vertex2D, Edge> v2EDictionary)
+            => tessellatedSolid.GetCrossSection(plane, out v2EDictionary, out _);
+
+        /// <summary>
+        /// Gets the cross-section through the tessellated solid at the specified plane.
         /// </summary>
         /// <param name="tessellatedSolid">The tessellated solid.</param>
         /// <param name="plane">The plane.</param>
         /// <param name="v2EDictionary">The v2 e dictionary.</param>
         /// <returns>List&lt;Polygon&gt;.</returns>
-        public static List<Polygon> GetCrossSection(this TessellatedSolid tessellatedSolid, Plane plane, out Dictionary<Vertex2D, Edge> v2EDictionary)
+        public static List<Polygon> GetCrossSection(this TessellatedSolid tessellatedSolid, Plane plane,
+            out Dictionary<Vertex2D, Edge> v2EDictionary, out int numCompletedPolygons)
         {
             var direction = plane.Normal;
             var closestCartesianDirection = direction.SnapDirectionToCartesian(out var withinTolerance, tessellatedSolid.SameTolerance);
             if (withinTolerance)
-                return tessellatedSolid.GetCrossSection(closestCartesianDirection, plane.DistanceToOrigin, out v2EDictionary);
+                return tessellatedSolid.GetCrossSection(closestCartesianDirection, plane.DistanceToOrigin, out v2EDictionary, out numCompletedPolygons);
 
             var distances = tessellatedSolid.Vertices.Select(v => v.Dot(direction)).ToList();
             var positiveShift = 0.0;
@@ -1026,49 +1180,113 @@ namespace TVGL
                     e2VDict.Add(edge, ip);
                 }
             }
-            return GetLoops(e2VDict, plane.Normal, plane.DistanceToOrigin, out v2EDictionary);
+            return CreatePolygons(e2VDict, plane.Normal, plane.DistanceToOrigin, out v2EDictionary, out numCompletedPolygons);
         }
 
         /// <summary>
-        /// Gets the uniformly spaced slices.
+        /// Gets the loops.
         /// </summary>
-        /// <param name="ts">The ts.</param>
-        /// <param name="direction">The direction.</param>
-        /// <param name="startDistanceAlongDirection">The start distance along direction.</param>
-        /// <param name="numSlices">The number slices.</param>
-        /// <param name="stepSize">Size of the step.</param>
-        /// <returns>List&lt;Polygon&gt;[].</returns>
-        /// <exception cref="System.ArgumentException">Either a valid stepSize or a number of slices greater than zero must be specified.</exception>
-        public static List<Polygon>[] GetUniformlySpacedCrossSections(this TessellatedSolid ts, CartesianDirections direction, double startDistanceAlongDirection = double.NaN, int numSlices = -1,
-            double stepSize = double.NaN)
+        /// <param name="edgeDictionary">The edge dictionary.</param>
+        /// <param name="normal">The normal.</param>
+        /// <param name="distanceToOrigin">The distance to origin.</param>
+        /// <param name="e2VDictionary">The e2 v dictionary.</param>
+        /// <returns>List&lt;Polygon&gt;.</returns>
+        private static List<Polygon> CreatePolygons(Dictionary<Edge, Vector2> edgeDictionary, Vector3 normal, double distanceToOrigin,
+            out Dictionary<Vertex2D, Edge> e2VDictionary, out int numCompletedLoops)
         {
-            if (double.IsNaN(stepSize) && numSlices < 1) throw new ArgumentException("Either a valid stepSize or a number of slices greater than zero must be specified.");
-            var intDir = Math.Abs((int)direction) - 1;
-            var lengthAlongDir = ts.Bounds[1][intDir] - ts.Bounds[0][intDir];
-            stepSize = Math.Abs(stepSize);
-            if (double.IsNaN(stepSize)) stepSize = lengthAlongDir / numSlices;
-            if (numSlices < 1) numSlices = (int)(lengthAlongDir / stepSize);
-            if (double.IsNaN(startDistanceAlongDirection))
+            var polygons = new List<Polygon>(); // this is the main result - create polygons
+            var partialPolygons = new List<Polygon>(); // this is a list of partial polygons that are not closed loops
+            numCompletedLoops = 0;  // while polygons are returned - a subset may be incomplete. These incompletes are added to the end of the list
+                                    // this output variable keeps track of the number of complete, so - in many cases - it's the same length as the polygons list
+            e2VDictionary = new Dictionary<Vertex2D, Edge>(); //essentially the same as the input dictionary but reversed and the key
+                                                              // is the newly defined vertex (which wraps the given Vector2).
+            while (edgeDictionary.Any()) // while there are still edges to process in the dictionary
             {
-                if (direction < 0)
-                    startDistanceAlongDirection = ts.Bounds[1][intDir] - 0.5 * stepSize;
-                else startDistanceAlongDirection = ts.Bounds[0][intDir] + 0.5 * stepSize;
+                var path = new List<Vector2>();
+                var edgesInLoop = new List<Edge>();
+                (Edge firstEdgeInLoop, TriangleFace nextFace) = GetStartingEdgeAndFace(edgeDictionary.Keys, normal);
+                var currentEdge = firstEdgeInLoop;
+                bool finishedLoop;
+                do
+                {
+                    finishedLoop = false;
+                    var intersectCoord = edgeDictionary[currentEdge];
+                    edgeDictionary.Remove(currentEdge);
+                    edgesInLoop.Add(currentEdge);
+                    path.Add(intersectCoord);
+                    var prevFace = nextFace;
+                    nextFace = currentEdge.GetMatingFace(nextFace);
+                    Edge nextEdge = null;
+                    if (nextFace != null)
+                    {
+                        foreach (var whichEdge in nextFace.Edges) // which of the 3 edges do we go to next?
+                        {
+                            if (currentEdge == whichEdge) continue; // not this one - this is the one you're coming from
+                            if (whichEdge == firstEdgeInLoop) // oh! you've come back to the beginning
+                            {
+                                finishedLoop = true;
+                                if (path.Count > 2) // don't keep completed loops of two edges or less
+                                    AddToPolygons(path, edgesInLoop, polygons, e2VDictionary);
+                                break;
+                            }
+                            else if (edgeDictionary.ContainsKey(whichEdge))
+                            {
+                                nextEdge = whichEdge; // this is the next edge. we know this because it is also in the input dictionary
+                                break;
+                            }
+                        }
+                    }
+                    // if nextEdge is null, then we have a problem. there is no where to go from here. we have a dead end. how did this happen?
+                    // it often happens if you are slicing through non-water tight solids or simply an indepedent surface
+                    if (!finishedLoop && nextEdge == null)
+                    {
+                        // see if there are other partials that can be linked to this. for example
+                        AddToPolygons(path, edgesInLoop, partialPolygons, e2VDictionary);
+                        finishedLoop = true;
+                    }
+                    else currentEdge = nextEdge;
+                } while (!finishedLoop);
             }
-            switch (direction)
+            polygons = polygons.CreateShallowPolygonTrees(true);
+            numCompletedLoops = polygons.Count;
+            polygons.AddRange(partialPolygons);
+            return polygons;
+        }
+
+        private static (Edge, TriangleFace) GetStartingEdgeAndFace(ICollection<Edge> edges, Vector3 normal)
+        {
+            foreach (var e in edges)
             {
-                case CartesianDirections.XPositive:
-                    return AllSlicesAlongX(ts, startDistanceAlongDirection, numSlices, stepSize);
-                case CartesianDirections.YPositive:
-                    return AllSlicesAlongY(ts, startDistanceAlongDirection, numSlices, stepSize);
-                case CartesianDirections.ZPositive:
-                    return AllSlicesAlongZ(ts, startDistanceAlongDirection, numSlices, stepSize);
-                case CartesianDirections.XNegative:
-                    return AllSlicesAlongX(ts, startDistanceAlongDirection, numSlices, stepSize).Reverse().ToArray();
-                case CartesianDirections.YNegative:
-                    return AllSlicesAlongY(ts, startDistanceAlongDirection, numSlices, stepSize).Reverse().ToArray();
-                default:
-                    return AllSlicesAlongZ(ts, startDistanceAlongDirection, numSlices, stepSize).Reverse().ToArray();
+                if (e.OwnedFace == null && e.Vector.Dot(normal) > 0) // read next comment
+                    return (e, null);
+                if (e.OtherFace == null && e.Vector.Dot(normal) < 0) // read next comment
+                    return (e, null);
             }
+            var startEdge = edges.First();
+
+            // for a given edge, which face should it be starting with (so that the polygon is made with proper
+            // right-hand rule)? We can determine this by the direction that the edge and the normal of the slice plane. If the dot product
+            // of these two is positive, then the polygon is starting at the owned face. If it is negative, the start is the other face.
+            // this logic is used in the previous foreach to find edges that are good starts because there is nothing behind them - 
+            // meaning that they should be the first edge in a partial loop.
+            var startFace = (startEdge.Vector.Dot(normal) > 0) ? startEdge.OwnedFace : startEdge.OtherFace;
+
+            return (startEdge, startFace);
+        }
+
+        /// <summary>
+        /// Adds to polygons.
+        /// </summary>
+        /// <param name="path">The path.</param>
+        /// <param name="edgesInLoop">The edges in loop.</param>
+        /// <param name="polygons">The polygons.</param>
+        /// <param name="e2VDictionary">The e2 v dictionary.</param>
+        private static void AddToPolygons(List<Vector2> path, List<Edge> edgesInLoop, List<Polygon> polygons, Dictionary<Vertex2D, Edge> e2VDictionary)
+        {
+            var polygon = new Polygon(path);
+            polygons.Add(polygon);
+            for (int i = 0; i < polygon.Vertices.Count; i++)
+                e2VDictionary.Add(polygon.Vertices[i], edgesInLoop[i]);
         }
 
         /// <summary>
@@ -1079,9 +1297,13 @@ namespace TVGL
         /// <param name="numSlices">The number slices.</param>
         /// <param name="stepSize">Size of the step.</param>
         /// <returns>List&lt;Polygon&gt;[].</returns>
-        private static List<Polygon>[] AllSlicesAlongX(TessellatedSolid ts, double startDistanceAlongDirection, int numSlices, double stepSize)
+        private static List<Polygon>[] AllSlicesAlongX(TessellatedSolid ts, double startDistanceAlongDirection, int numSlices, double stepSize,
+            out double[] sliceOffsets, out Dictionary<Vertex2D, Edge>[] vertex2DToEdges, out int[] numCompletedPolygonsPerLayer)
         {
             var loopsAlongX = new List<Polygon>[numSlices];
+            sliceOffsets = new double[numSlices];
+            vertex2DToEdges = new Dictionary<Vertex2D, Edge>[numSlices];
+            numCompletedPolygonsPerLayer = new int[numSlices];
             //First, sort the vertices along the given axis. Duplicate distances are not important.
             var sortedVertices = ts.Vertices.OrderBy(v => v.X).ToArray();
             var currentEdges = new HashSet<Edge>();
@@ -1090,6 +1312,7 @@ namespace TVGL
             for (int step = 0; step < numSlices; step++)
             {
                 var x = startDistanceAlongDirection + step * stepSize;
+                sliceOffsets[step] = x;
                 var thisVertex = sortedVertices[vIndex];
                 var needToOffset = false;
                 while (thisVertex.X <= x)
@@ -1115,7 +1338,9 @@ namespace TVGL
                              ce.To.Coordinates);
                         edgeDictionary.Add(ce, new Vector2(pointOnPlane.Y, pointOnPlane.Z));
                     }
-                    loopsAlongX[step] = GetLoops(edgeDictionary, Vector3.UnitX, x, out _);
+                    loopsAlongX[step] = CreatePolygons(edgeDictionary, Vector3.UnitX, x, out var v2EDictionary, out var numComplete);
+                    vertex2DToEdges[step] = v2EDictionary;
+                    numCompletedPolygonsPerLayer[step] = numComplete;
                 }
                 else loopsAlongX[step] = new List<Polygon>();
             }
@@ -1130,9 +1355,14 @@ namespace TVGL
         /// <param name="numSlices">The number slices.</param>
         /// <param name="stepSize">Size of the step.</param>
         /// <returns>List&lt;Polygon&gt;[].</returns>
-        private static List<Polygon>[] AllSlicesAlongY(TessellatedSolid ts, double startDistanceAlongDirection, int numSlices, double stepSize)
+        private static List<Polygon>[] AllSlicesAlongY(TessellatedSolid ts, double startDistanceAlongDirection, int numSlices, double stepSize,
+            out double[] sliceOffsets, out Dictionary<Vertex2D, Edge>[] vertex2DToEdges, out int[] numCompletedPolygonsPerLayer)
         {
             var loopsAlongY = new List<Polygon>[numSlices];
+            sliceOffsets = new double[numSlices];
+            vertex2DToEdges = new Dictionary<Vertex2D, Edge>[numSlices];
+            numCompletedPolygonsPerLayer = new int[numSlices];
+
             //First, sort the vertices along the given axis. Duplicate distances are not important.
             var sortedVertices = ts.Vertices.OrderBy(v => v.Y).ToArray();
             var currentEdges = new HashSet<Edge>();
@@ -1141,6 +1371,7 @@ namespace TVGL
             for (int step = 0; step < numSlices; step++)
             {
                 var y = startDistanceAlongDirection + step * stepSize;
+                sliceOffsets[step] = y;
                 var thisVertex = sortedVertices[vIndex];
                 var needToOffset = false;
                 while (thisVertex.Y <= y)
@@ -1166,7 +1397,9 @@ namespace TVGL
                              ce.To.Coordinates);
                         edgeDictionary.Add(ce, new Vector2(pointOnPlane.Z, pointOnPlane.X));
                     }
-                    loopsAlongY[step] = GetLoops(edgeDictionary, Vector3.UnitY, y, out _);
+                    loopsAlongY[step] = CreatePolygons(edgeDictionary, Vector3.UnitY, y, out var v2EDictionary, out var numComplete);
+                    vertex2DToEdges[step] = v2EDictionary;
+                    numCompletedPolygonsPerLayer[step] = numComplete;
                 }
                 else loopsAlongY[step] = new List<Polygon>();
             }
@@ -1181,9 +1414,14 @@ namespace TVGL
         /// <param name="numSlices">The number slices.</param>
         /// <param name="stepSize">Size of the step.</param>
         /// <returns>List&lt;Polygon&gt;[].</returns>
-        private static List<Polygon>[] AllSlicesAlongZ(TessellatedSolid ts, double startDistanceAlongDirection, int numSlices, double stepSize)
+        private static List<Polygon>[] AllSlicesAlongZ(TessellatedSolid ts, double startDistanceAlongDirection, int numSlices, double stepSize,
+            out double[] sliceOffsets, out Dictionary<Vertex2D, Edge>[] vertex2DToEdges, out int[] numCompletedPolygonsPerLayer)
         {
             var loopsAlongZ = new List<Polygon>[numSlices];
+            sliceOffsets = new double[numSlices];
+            vertex2DToEdges = new Dictionary<Vertex2D, Edge>[numSlices];
+            numCompletedPolygonsPerLayer = new int[numSlices];
+
             //First, sort the vertices along the given axis. Duplicate distances are not important.
             var sortedVertices = ts.Vertices.OrderBy(v => v.Z).ToArray();
             var currentEdges = new HashSet<Edge>();
@@ -1192,6 +1430,7 @@ namespace TVGL
             for (int step = 0; step < numSlices; step++)
             {
                 var z = startDistanceAlongDirection + step * stepSize;
+                sliceOffsets[step] = z;
                 var thisVertex = sortedVertices[vIndex];
                 var needToOffset = false;
                 while (thisVertex.Z <= z)
@@ -1220,10 +1459,11 @@ namespace TVGL
                              ce.To.Coordinates);
                         edgeDictionary.Add(ce, new Vector2(pointOnPlane.X, pointOnPlane.Y));
                     }
-                    loopsAlongZ[step] = GetLoops(edgeDictionary, Vector3.UnitZ, z, out _);
+                    loopsAlongZ[step] = CreatePolygons(edgeDictionary, Vector3.UnitZ, z, out var v2EDictionary, out var numComplete);
+                    vertex2DToEdges[step] = v2EDictionary;
+                    numCompletedPolygonsPerLayer[step] = numComplete;
                 }
                 else loopsAlongZ[step] = new List<Polygon>();
-                //Presenter.ShowAndHang(loopsAlongZ[step]);
             }
             return loopsAlongZ;
         }

@@ -39,7 +39,7 @@ namespace TVGL
         /// <param name="forceToPositive">if set to <c>true</c> [force to positive].</param>
         /// <returns>IEnumerable&lt;Vertex[]&gt; where each represents a triangular polygonal face.</returns>
         /// <exception cref="System.ArgumentException">The vertices must all have a unique IndexInList value - vertexLoop</exception>
-        public static IEnumerable<Vertex[]> Triangulate(this IEnumerable<Vertex> vertexLoop, Vector3 normal, bool forceToPositive = false)
+        public static IEnumerable<(Vertex A, Vertex B, Vertex C)> Triangulate(this IEnumerable<Vertex> vertexLoop, Vector3 normal, bool forceToPositive = false)
         {
             var transform = normal.TransformToXYPlane(out _);
             var coords = new List<Vertex2D>();
@@ -58,11 +58,12 @@ namespace TVGL
                 if (indexToVertexDict[triangleIndices.A] != indexToVertexDict[triangleIndices.B]
                     && indexToVertexDict[triangleIndices.B] != indexToVertexDict[triangleIndices.C]
                     && indexToVertexDict[triangleIndices.C] != indexToVertexDict[triangleIndices.A])
-                    yield return new[]
-                        {indexToVertexDict[triangleIndices.A], indexToVertexDict[triangleIndices.B],
-                        indexToVertexDict[triangleIndices.C]};
+                    yield return (
+                        indexToVertexDict[triangleIndices.A], indexToVertexDict[triangleIndices.B],
+                        indexToVertexDict[triangleIndices.C]);
             }
         }
+
         /// <summary>
         /// Triangulates the specified loop of 3D vertices using the projection from the provided normal.
         /// </summary>
