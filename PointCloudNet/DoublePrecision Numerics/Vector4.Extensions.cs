@@ -92,5 +92,11 @@ namespace PointCloud.Numerics
         public static double Dot(this Vector4 vector1, Vector4 vector2)
         { return Vector4.Dot(vector1, vector2); }
 
+
+
+        public static bool IsNull(this Vector4 vector)
+        {
+            return double.IsNaN(vector.X) || double.IsNaN(vector.Y) || double.IsNaN(vector.Z) || double.IsNaN(vector.W);
+        }
     }
 }

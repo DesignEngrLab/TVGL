@@ -264,7 +264,7 @@ namespace TVGL
                 t1 = root1.Real;
                 t2 = double.NaN;
                 point1 = anchor + t1 * direction;
-                point2 = Vector3.Null;
+                point2 = Vector3.NaN;
                 return root1.IsRealNumber;
             }
         }
@@ -375,7 +375,7 @@ namespace TVGL
                 return center;
             }
         }
-        Vector3 center = Vector3.Null;
+        Vector3 center = Vector3.NaN;
 
 
         public Vector3 Axis1
@@ -411,9 +411,9 @@ namespace TVGL
                 return axis3;
             }
         }
-        Vector3 axis1 = Vector3.Null;
-        Vector3 axis2 = Vector3.Null;
-        Vector3 axis3 = Vector3.Null;
+        Vector3 axis1 = Vector3.NaN;
+        Vector3 axis2 = Vector3.NaN;
+        Vector3 axis3 = Vector3.NaN;
 
         public override string KeyString => "Quadric|" + XSqdCoeff.ToString("F5") + "|" +
             YSqdCoeff.ToString("F5") + "|" + ZSqdCoeff.ToString("F5") + "|" +

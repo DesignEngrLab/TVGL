@@ -28,7 +28,7 @@ namespace TVGL
                 return edge.OwnedFace.Normal.Cross(edgeUnitVector);
             else if (edge.OtherFace != null && innerFaces.Contains(edge.OtherFace))
                 return edgeUnitVector.Cross(edge.OtherFace.Normal);
-            else return Vector3.Null;
+            else return Vector3.NaN;
 
         }
 
@@ -48,7 +48,7 @@ namespace TVGL
                 return edge.OtherFace.Normal.Cross(edgeUnitVector);
             else if (edge.OtherFace == null && edge.OwnedFace != null)
                 return edgeUnitVector.Cross(edge.OwnedFace.Normal);
-            else return Vector3.Null;
+            else return Vector3.NaN;
         }
 
         public virtual double ScorePair(Vector3 vector1, Vector3 vector2)

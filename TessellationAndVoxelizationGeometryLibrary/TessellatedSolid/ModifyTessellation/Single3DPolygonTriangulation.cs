@@ -239,7 +239,7 @@ namespace TVGL
                 Edge newEdge = new Edge(nextVertex, prevVertex, true);
                 var triangle = new TriangulationLoop(new[] { prevEAD, thisEAD, (newEdge, true) });
                 candidateTriangles[i] = triangle;
-                sortedOrigCornerIndices.Enqueue(i, CalcObjFunction(weightForSmoothness, triangle, prevFace.Normal, thisFace.Normal, Vector3.Null));
+                sortedOrigCornerIndices.Enqueue(i, CalcObjFunction(weightForSmoothness, triangle, prevFace.Normal, thisFace.Normal, Vector3.NaN));
                 neighborNormals.Add(newEdge, triangle.Normal);
                 prevEAD = thisEAD;
                 prevFace = thisFace;
@@ -278,10 +278,10 @@ namespace TVGL
                     candidateTriangles[negDirIndex] = negDirTriangle;
 
                     sortedOrigCornerIndices.UpdatePriority(posDirIndex, CalcObjFunction(weightForSmoothness, posDirTriangle,
-                        triangle.Normal, neighborNormals[posDirTriangle[1].edge], Vector3.Null));
+                        triangle.Normal, neighborNormals[posDirTriangle[1].edge], Vector3.NaN));
 
                     sortedOrigCornerIndices.UpdatePriority(negDirIndex, CalcObjFunction(weightForSmoothness, negDirTriangle,
-                        neighborNormals[negDirTriangle[0].edge], triangle.Normal, Vector3.Null));
+                        neighborNormals[negDirTriangle[0].edge], triangle.Normal, Vector3.NaN));
 
                     neighborNormals.Remove(triangle[0].edge);
                     neighborNormals.Remove(triangle[1].edge);
@@ -448,7 +448,7 @@ namespace TVGL
                 var thirdVertex = edgeAt3rdVertex.dir ? edgeAt3rdVertex.edge.To : edgeAt3rdVertex.edge.From;
                 var thisTriangle = new TriangulationLoop();
                 thisTriangle.Add(accessEdgeAndDir);
-                var neighborNormal1 = Vector3.Null;
+                var neighborNormal1 = Vector3.NaN;
                 if (i == 1)
                 {
                     thisTriangle.Add(edgeAt3rdVertex);
@@ -457,7 +457,7 @@ namespace TVGL
                 }
                 else thisTriangle.AddBegin(new Edge(secondVertex, thirdVertex, true), true);
                 if (secondVertex == thirdVertex) secondVertex = thirdVertex;
-                var neighborNormal2 = Vector3.Null;
+                var neighborNormal2 = Vector3.NaN;
                 if (i == domain.Count - 2)
                 {
                     var lastEdgeAndDir = domain[accessEdgeIndex == 0 ? domain.Count - 1 : accessEdgeIndex - 1];

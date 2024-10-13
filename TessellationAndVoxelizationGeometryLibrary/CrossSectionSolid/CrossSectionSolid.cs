@@ -182,7 +182,7 @@ namespace TVGL
             else
                 polygons.Add(feature2D);
             _volume = double.NaN;
-            _center = Vector3.Null;
+            _center = Vector3.NaN;
             _inertiaTensor = Matrix3x3.Null;
             _surfaceArea = double.NaN;
             if (_firstIndex > layer) _firstIndex = layer;

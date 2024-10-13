@@ -2,6 +2,14 @@
 
 public class ConvexHullFace : IConvexFace3D
 {
+    public ConvexHullFace(ConvexHullVertex a, ConvexHullVertex b, ConvexHullVertex c, Vector3 normal)
+    {
+        A = a;
+        B = b;
+        C = c;
+        Normal = normal;
+    }
+
     public Vector3 Normal { get; init; }
 
     public IConvexVertex3D peakVertex { get;  set; }

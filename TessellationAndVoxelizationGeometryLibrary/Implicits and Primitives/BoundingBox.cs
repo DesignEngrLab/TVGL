@@ -349,7 +349,7 @@ namespace TVGL
                 return _center;
             }
         }
-        private Vector3 _center = Vector3.Null;
+        private Vector3 _center = Vector3.NaN;
 
 
         /// <summary>
@@ -367,7 +367,7 @@ namespace TVGL
 
             }
         }
-        private Vector3 _dimensions = Vector3.Null;
+        private Vector3 _dimensions = Vector3.NaN;
         /// <summary>
         /// The volume of the bounding box.
         /// </summary>

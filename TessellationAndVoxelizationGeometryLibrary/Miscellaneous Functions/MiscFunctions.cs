@@ -11,6 +11,7 @@
 // </copyright>
 // <summary></summary>
 // ***********************************************************************
+using PointCloud.Numerics;
 using StarMathLib;
 using System;
 using System.Collections.Generic;
@@ -1566,7 +1567,7 @@ namespace TVGL
             var matrixOfNormals = new double[,] { { n1.X, n1.Y, n1.Z }, { n2.X, n2.Y, n2.Z }, { n3.X, n3.Y, n3.Z } };
             var distances = new[] { d1, d2, d3 };
             if (!matrixOfNormals.solve(distances, out var mInv))
-                return Vector3.Null;
+                return Vector3.NaN;
             return new Vector3(mInv);
         }
 
@@ -1641,7 +1642,7 @@ namespace TVGL
             var a = new[,] { { n1.X, n1.Y, n1.Z }, { n2.X, n2.Y, n2.Z }, { directionOfLine.X, directionOfLine.Y, directionOfLine.Z } };
             var b = new[] { d1, d2, 0 };
             if (!a.solve(b, out var aInv))
-                pointOnLine = Vector3.Null;
+                pointOnLine = Vector3.NaN;
             else pointOnLine = new Vector3(aInv);
         }
 
@@ -1846,8 +1847,8 @@ namespace TVGL
         {
             var distanceToOrigin = normal.Dot(vertices[0]);
             var newPoint = PointOnPlaneFromIntersectingLine(normal, distanceToOrigin, point1, point2, out relativeDistance);
-            if (newPoint.IsNull()) return Vector3.Null;
-            return IsVertexInsideTriangle(vertices, newPoint, onBoundaryIsInside) ? newPoint : Vector3.Null;
+            if (newPoint.IsNull()) return Vector3.NaN;
+            return IsVertexInsideTriangle(vertices, newPoint, onBoundaryIsInside) ? newPoint : Vector3.NaN;
         }
 
         /// <summary>
@@ -1867,8 +1868,8 @@ namespace TVGL
         {
             var distanceToOrigin = face.Normal.Dot(face.A.Coordinates);
             var newPoint = PointOnPlaneFromRay(face.Normal, distanceToOrigin, point3D, direction, out signedDistance);
-            if (newPoint.IsNull()) return Vector3.Null;
-            return IsVertexInsideTriangle(face, newPoint) ? newPoint : Vector3.Null;
+            if (newPoint.IsNull()) return Vector3.NaN;
+            return IsVertexInsideTriangle(face, newPoint) ? newPoint : Vector3.NaN;
         }
 
         /// <summary>
@@ -1894,25 +1895,25 @@ namespace TVGL
             {
                 case CartesianDirections.XNegative:
                 case CartesianDirections.XPositive:
-                    if (face.Normal.X.IsNegligible()) return Vector3.Null;
+                    if (face.Normal.X.IsNegligible()) return Vector3.NaN;
                     newPoint = new Vector3((d - n.Y * point3D.Y - n.Z * point3D.Z) / n.X, point3D.Y, point3D.Z);
                     signedDistance = (Math.Sign((int)direction)) * (newPoint.X - point3D.X);
                     break;
 
                 case CartesianDirections.YNegative:
                 case CartesianDirections.YPositive:
-                    if (face.Normal.Y.IsNegligible()) return Vector3.Null;
+                    if (face.Normal.Y.IsNegligible()) return Vector3.NaN;
                     newPoint = new Vector3(point3D.X, (d - n.X * point3D.X - n.Z * point3D.Z) / n.Y, point3D.Z);
                     signedDistance = (Math.Sign((int)direction)) * (newPoint.Y - point3D.Y);
                     break;
 
                 default:
-                    if (face.Normal.Z.IsNegligible()) return Vector3.Null;
+                    if (face.Normal.Z.IsNegligible()) return Vector3.NaN;
                     newPoint = new Vector3(point3D.X, point3D.Y, (d - n.X * point3D.X - n.Y * point3D.Y) / n.Z);
                     signedDistance = (Math.Sign((int)direction)) * (newPoint.Z - point3D.Z);
                     break;
             }
-            return IsVertexInsideTriangle(face, newPoint) ? newPoint : Vector3.Null;
+            return IsVertexInsideTriangle(face, newPoint) ? newPoint : Vector3.NaN;
         }
 
         #endregion Point on Face
@@ -1987,7 +1988,7 @@ namespace TVGL
         {
             var dot = lineDirection.Dot(normalOfPlane);
             signedDistance = 0.0;
-            if (dot == 0) return Vector3.Null;
+            if (dot == 0) return Vector3.NaN;
 
             var d1 = -DistancePointToPlane(anchor, normalOfPlane, distOfPlane);
             signedDistance = d1 / dot;
@@ -2011,7 +2012,7 @@ namespace TVGL
         {
             var dot = rayDirection.Dot(normalOfPlane);
             signedDistance = 0.0;
-            if (dot == 0) return Vector3.Null;
+            if (dot == 0) return Vector3.NaN;
 
             var d1 = -DistancePointToPlane(rayPosition, normalOfPlane, distOfPlane);
             signedDistance = d1 / dot;

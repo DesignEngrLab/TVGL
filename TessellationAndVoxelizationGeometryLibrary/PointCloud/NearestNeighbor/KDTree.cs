@@ -289,7 +289,7 @@ namespace TVGL.PointCloud
                     case Vector2 _:
                         return Vector2.Null;
                     case Vector3 _:
-                        return Vector3.Null;
+                        return Vector3.NaN;
                     case Vector4 _:
                         return Vector4.Null;
                     default:

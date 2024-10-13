@@ -61,8 +61,8 @@ namespace TVGL
         /// </summary>
         public void Update()
         {
-            _center = Vector3.Null;
-            _normal = Vector3.Null;
+            _center = Vector3.NaN;
+            _normal = Vector3.NaN;
             _area = double.NaN;
         }
 
@@ -249,7 +249,7 @@ namespace TVGL
         /// <summary>
         /// The normal
         /// </summary>
-        internal Vector3 _normal = Vector3.Null;
+        internal Vector3 _normal = Vector3.NaN;
 
         #endregion Constructors
 
@@ -337,7 +337,7 @@ namespace TVGL
         /// <summary>
         /// The center
         /// </summary>
-        private Vector3 _center = Vector3.Null;
+        private Vector3 _center = Vector3.NaN;
 
         /// <summary>
         /// Gets the area.

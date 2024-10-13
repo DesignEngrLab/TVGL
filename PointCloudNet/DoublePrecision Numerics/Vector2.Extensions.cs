@@ -98,5 +98,10 @@ namespace PointCloud.Numerics
         public static double[] ToArray(this Vector2 value1)
         { return new double[] { value1.X, value1.Y }; }
 
+
+        public static bool IsNull(this Vector2 vector)
+        {
+            return double.IsNaN(vector.X) || double.IsNaN(vector.Y);
+        }
     }
 }

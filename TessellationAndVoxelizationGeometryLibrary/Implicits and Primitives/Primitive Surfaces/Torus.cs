@@ -95,11 +95,11 @@ namespace TVGL
         /// <summary>
         /// The center
         /// </summary>
-        private Vector3 center = Vector3.Null;
+        private Vector3 center = Vector3.NaN;
         /// <summary>
         /// The axis
         /// </summary>
-        private Vector3 axis = Vector3.Null;
+        private Vector3 axis = Vector3.NaN;
         /// <summary>
         /// The distance to bisecting plane
         /// </summary>
@@ -177,15 +177,15 @@ namespace TVGL
         /// <summary>
         /// The face x dir
         /// </summary>
-        private Vector3 faceXDir = Vector3.Null;
+        private Vector3 faceXDir = Vector3.NaN;
         /// <summary>
         /// The face y dir
         /// </summary>
-        private Vector3 faceYDir = Vector3.Null;
+        private Vector3 faceYDir = Vector3.NaN;
         /// <summary>
         /// The face z dir
         /// </summary>
-        private Vector3 faceZDir = Vector3.Null;
+        private Vector3 faceZDir = Vector3.NaN;
 
         /// <summary>
         /// Transforms the from3 d to2 d.

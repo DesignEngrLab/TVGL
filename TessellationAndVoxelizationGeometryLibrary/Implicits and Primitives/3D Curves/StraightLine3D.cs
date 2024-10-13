@@ -130,7 +130,7 @@ namespace TVGL
                 { xy - x * y,   ySqd - y * y, yz - y * z }   ,
                 { xz - x * z,   yz - y * z,   zSqd - z * z }
             };
-            var direction = Vector3.Null;
+            var direction = Vector3.NaN;
             if (matrix.IsSingular())
             {
                 if (!matrix[0, 0].IsNegligible()) direction = Vector3.UnitX;

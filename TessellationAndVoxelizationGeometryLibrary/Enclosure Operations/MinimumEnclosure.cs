@@ -340,8 +340,8 @@ namespace TVGL
         {
             var dir = direction.Normalize();
             var minD = double.PositiveInfinity;
-            bottomVertex = Vector3.Null;
-            topVertex = Vector3.Null;
+            bottomVertex = Vector3.NaN;
+            topVertex = Vector3.NaN;
             var maxD = double.NegativeInfinity;
             foreach (var v in vertices)
             {

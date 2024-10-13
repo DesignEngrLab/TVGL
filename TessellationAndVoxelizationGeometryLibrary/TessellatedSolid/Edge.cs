@@ -131,7 +131,7 @@ namespace TVGL
         /// <summary>
         /// The vector
         /// </summary>
-        Vector3 _vector = Vector3.Null;
+        Vector3 _vector = Vector3.NaN;
 
 
         /// <summary>
@@ -243,7 +243,7 @@ namespace TVGL
         /// <summary>
         /// The normal
         /// </summary>
-        Vector3 _normal = Vector3.Null;
+        Vector3 _normal = Vector3.NaN;
         /// <summary>
         /// Determines the normal.
         /// </summary>

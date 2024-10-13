@@ -73,7 +73,7 @@ namespace TVGL
         /// <returns>Vector3.</returns>
         public override Vector3 TransformFrom2DTo3D(Vector2 point)
         {
-            return Vector3.Null;
+            return Vector3.NaN;
         }
 
         /// <summary>

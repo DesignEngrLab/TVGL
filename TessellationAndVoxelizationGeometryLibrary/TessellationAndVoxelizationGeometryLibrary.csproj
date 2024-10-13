@@ -37,13 +37,16 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<None Remove="Numerics\README.txt" />
 		<None Remove="Polygon Operations\Clipper\License.txt" />
 		<None Remove="Polygon Operations\Clipper\README" />
 	</ItemGroup>
 
 	<ItemGroup>
 		<InternalsVisibleTo Include="TVGLUnitTestsAndBenchmarking" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
 	</ItemGroup>
 
 	<ItemGroup>

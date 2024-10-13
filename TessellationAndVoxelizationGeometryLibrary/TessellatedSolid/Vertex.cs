@@ -141,7 +141,7 @@ namespace TVGL
         /// The normal
         /// </summary>
         [JsonIgnore] //cannot serialize null values.
-        private Vector3 _normal = Vector3.Null;
+        private Vector3 _normal = Vector3.NaN;
 
         /// <summary>
         /// Determines the normal.

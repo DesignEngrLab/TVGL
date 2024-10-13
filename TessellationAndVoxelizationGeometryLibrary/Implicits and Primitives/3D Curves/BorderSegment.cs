@@ -134,7 +134,7 @@ namespace TVGL
         /// </summary>
         /// <value>The plane.</value>
         [JsonIgnore]
-        public Vector3 CircleCenter = Vector3.Null;
+        public Vector3 CircleCenter = Vector3.NaN;
 
         /// <summary>
         /// Gets or sets the best-fit plane normal
@@ -165,7 +165,7 @@ namespace TVGL
             var coordinates = GetCoordinates();
             PlaneError = double.MaxValue;
             PlaneDistance = double.NaN;
-            PlaneNormal = Vector3.Null;
+            PlaneNormal = Vector3.NaN;
 
             //Set the border segment as a straight line, a curve, or leave it null for something more complex
             if (StraightLine3D.CreateFromPoints(coordinates, out var curve, out var error))
@@ -179,7 +179,7 @@ namespace TVGL
 
             if(coordinates.Count() > 2) //!//onlyLines)
             {
-                var plane = Plane.FitToVertices(coordinates, Vector3.Null, out var planeError);
+                var plane = Plane.FitToVertices(coordinates, Vector3.NaN, out var planeError);
                 //Get the circle too and compare the error to straight line.
                 if (plane != null && Circle.CreateFromPoints(coordinates.ProjectTo2DCoordinates(plane.Normal, out var backTransform), out var circle, out var circleError))
                 {

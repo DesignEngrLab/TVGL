@@ -1,5 +1,8 @@
-﻿namespace PointCloud;
-    public partial class ConvexHull3D
+﻿using PointCloud.Numerics;
+using PointCloudNet;
+
+namespace PointCloud;
+public partial class ConvexHull3D
 {
     /// <summary>
     /// Creates the convex hull for a set of Coordinates. By the way, this is not 
@@ -46,7 +49,7 @@
         where TVertex : IConvexVertex3D, new()
     => Create<TVertex, ConvexHullEdge, ConvexHullFace>(vertices, out convexHull, connectVerticesToCvxHullFaces, tolerance);
 
-    
+
     /// <summary>
     /// Creates the convex hull for a set of vertices. This method is used by the TessellatedSolid,
     /// but it can be used within any set of vertices.
@@ -422,19 +425,20 @@
     private static bool SolveAs2D<TVertex, TEdge, TFace>(IList<TVertex> vertices, out ConvexHull3D<ConvexHullVertex, ConvexHullEdge, ConvexHullFace> convexHull, double tolerance = double.NaN)
         where TVertex : IConvexVertex3D
     {
-        Plane.DefineNormalAndDistanceFromVertices(vertices, out var distance, out var planeNormal);
-        var plane = new Plane(distance, planeNormal);
-        if (plane.Normal.IsNull() || plane.CalculateMaxError(vertices.Select(v => v.Coordinates)) > tolerance)
+        PlaneMethods.DefineNormalAndDistanceFromVertices(vertices.Select(p => p.Coordinates), out var distance, out var planeNormal);
+        var plane = (distance, planeNormal);
+        if (plane.planeNormal.IsNull() || plane.CalculateMaxError(vertices.Select(v => v.Coordinates)) > tolerance)
         {
             convexHull = null;
             return false;
         }
-        var coords2D = vertices.ProjectTo2DCoordinates(planeNormal, out var backTransform).ToList();
+        var coords2D = PlaneMethods.ProjectTo2DCoordinates(vertices, planeNormal).ToList();
+        //var coords2D = vertices.ProjectTo2DCoordinates(planeNormal, out var backTransform).ToList();
         if (coords2D.Area() < 0)
         {
             planeNormal *= -1;
             distance *= -1;
-            coords2D = vertices.ProjectTo2DCoordinates(planeNormal, out backTransform).ToList();
+            coords2D = vertices.ProjectTo2DCoordinates(planeNormal).ToList();
         }
         var cvxHull2D = ConvexHull2D.Create(coords2D, out var vertexIndices);
         var indexHash = vertexIndices.ToHashSet();
@@ -458,7 +462,7 @@
             for (var i = 0; i < convexHull.Faces.Count; i += 2)
             {
                 var face = convexHull.Faces[i];
-                if (MiscFunctions.IsVertexInsideTriangle(new[] { face.A, face.B, face.C }, v.Coordinates))
+                if (IsVertexInsideTriangle(face.A.Coordinates, face.B.Coordinates, face.C.Coordinates, v.Coordinates))
                 {
                     face.InteriorVertices.Add(v);
                     convexHull.Faces[i + 1].InteriorVertices.Add(v);
@@ -466,6 +470,19 @@
             }
         }
         return true;
+    }
+
+    private static bool IsVertexInsideTriangle(Vector3 a, Vector3 b, Vector3 c, Vector3 q)
+    {
+        var aToQ = q - a;
+        var aToB = b - a;
+        var aToC = c - a;
+        if (aToB.Cross(aToQ).Dot(aToQ.Cross(aToC)) < 0) return false;
+
+        var bToQ = q - b;
+        var bToC = c - b;
+        var bToA = -aToB;
+        return bToC.Cross(bToQ).Dot(bToQ.Cross(bToA)) > 0;
     }
 
     /// <summary>

@@ -706,7 +706,7 @@ namespace TVGL
         {
             get
             {
-                if (Vertices == null || Vertices.Count == 0) return Vector3.Null;
+                if (Vertices == null || Vertices.Count == 0) return Vector3.NaN;
                 SetBounds();
                 return new Vector3(MaxX + MinX, MaxY + MinY, MaxZ + MinZ) / 2;
             }

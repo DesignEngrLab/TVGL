@@ -89,7 +89,7 @@ namespace TVGL
             if (numVerts < 3)
             {
                 radius = double.NaN;
-                center = Vector3.Null;
+                center = Vector3.NaN;
                 return false;
             }
             var A1 = Sxx + Syy + Szz;
@@ -165,15 +165,15 @@ namespace TVGL
         /// <summary>
         /// The face x dir
         /// </summary>
-        private Vector3 faceXDir = Vector3.Null;
+        private Vector3 faceXDir = Vector3.NaN;
         /// <summary>
         /// The face y dir
         /// </summary>
-        private Vector3 faceYDir = Vector3.Null;
+        private Vector3 faceYDir = Vector3.NaN;
         /// <summary>
         /// The face z dir
         /// </summary>
-        private Vector3 faceZDir = Vector3.Null;
+        private Vector3 faceZDir = Vector3.NaN;
 
         /// <summary>
         /// Transforms the from 3d to 2d.

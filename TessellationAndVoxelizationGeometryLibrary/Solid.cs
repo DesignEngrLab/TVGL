@@ -56,7 +56,7 @@ namespace TVGL
         /// <summary>
         /// The center
         /// </summary>
-        protected Vector3 _center = Vector3.Null;
+        protected Vector3 _center = Vector3.NaN;
 
         /// <summary>
         /// Gets the volume.

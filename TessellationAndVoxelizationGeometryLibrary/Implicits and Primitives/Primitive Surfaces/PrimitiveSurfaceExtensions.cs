@@ -12,6 +12,8 @@
 // <summary></summary>
 // ***********************************************************************
 using Newtonsoft.Json;
+using PointCloud;
+using PointCloud.Numerics;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -247,7 +249,7 @@ namespace TVGL
             else if (surface is Prismatic prismatic) return prismatic.Axis;
             else if (surface is Capsule capsule) return (capsule.Anchor2 - capsule.Anchor1).Normalize();
             else if (surface is GeneralQuadric gq) return gq.Axis1;
-            else return Vector3.Null;
+            else return Vector3.NaN;
         }
 
         /// <summary>
@@ -315,8 +317,8 @@ namespace TVGL
             foreach ((Vector2 location, Vertex vertex) in int2PointDict.Values)
             {
                 var outVectors = new List<Vector2>();
-                var outer1 = Vector2.Null;
-                var outer2 = Vector2.Null;
+                var outer1 = Vector2.NaN;
+                var outer2 = Vector2.NaN;
                 foreach (var edge in vertex.Edges)
                 {
                     var otherVertex = edge.OtherVertex(vertex);

@@ -157,11 +157,11 @@ namespace TVGL
             var verticesPlusCenters = new List<Vector3>(vertices);
             foreach (var center in GetCenters())
                 verticesPlusCenters.Add(center);
-            var plane = Plane.FitToVertices(verticesPlusCenters, Vector3.Null, out var planeMaxError);
+            var plane = Plane.FitToVertices(verticesPlusCenters, Vector3.NaN, out var planeMaxError);
             if (plane == null)
             {
                 PlaneError = planeMaxError;
-                PlaneNormal = Vector3.Null;
+                PlaneNormal = Vector3.NaN;
                 PlaneDistance = double.NaN;
                 return;
             }
@@ -214,7 +214,7 @@ namespace TVGL
                     else
                         return OwnedPrimitive.TransformFrom2DTo3D(center2D);
                 }
-                return Vector3.Null;
+                return Vector3.NaN;
             }
         }
 

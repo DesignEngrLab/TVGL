@@ -15,6 +15,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Benchmarking", "Benchmarkin
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Testing", "Testing\Testing.csproj", "{9D6DB429-32EE-46EF-BB91-5C1344856962}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PointCloudNet", "PointCloudNet\PointCloudNet.csproj", "{ED15BFF3-CB3B-45A2-B17B-518DA92B2A90}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -41,6 +43,10 @@ Global
 		{9D6DB429-32EE-46EF-BB91-5C1344856962}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9D6DB429-32EE-46EF-BB91-5C1344856962}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9D6DB429-32EE-46EF-BB91-5C1344856962}.Release|Any CPU.Build.0 = Release|Any CPU
+		{ED15BFF3-CB3B-45A2-B17B-518DA92B2A90}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{ED15BFF3-CB3B-45A2-B17B-518DA92B2A90}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{ED15BFF3-CB3B-45A2-B17B-518DA92B2A90}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{ED15BFF3-CB3B-45A2-B17B-518DA92B2A90}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

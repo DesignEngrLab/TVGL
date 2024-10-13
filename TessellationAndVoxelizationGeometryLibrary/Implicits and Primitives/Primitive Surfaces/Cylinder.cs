@@ -59,7 +59,7 @@ namespace TVGL
         /// <summary>
         /// The face x dir
         /// </summary>
-        private Vector3 faceXDir = Vector3.Null;
+        private Vector3 faceXDir = Vector3.NaN;
 
         private Vector3 FaceYDir
         {
@@ -73,7 +73,7 @@ namespace TVGL
         /// <summary>
         /// The face y dir
         /// </summary>
-        private Vector3 faceYDir = Vector3.Null;
+        private Vector3 faceYDir = Vector3.NaN;
 
         /// <summary>
         /// Transforms the from 3d to 2d.

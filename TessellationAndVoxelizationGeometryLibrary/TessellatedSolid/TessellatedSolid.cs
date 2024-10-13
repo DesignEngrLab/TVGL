@@ -730,7 +730,7 @@ namespace TVGL
                 // todo: can stl have polygons greater than triangle?! if not, then simplify this code. it's unnecessaril complicated
                 else
                 {
-                    var normal = MiscFunctions.DetermineNormalForA3DPolygon(faceVertices, faceVertices.Length, out _, Vector3.Null, out _);
+                    var normal = MiscFunctions.DetermineNormalForA3DPolygon(faceVertices, faceVertices.Length, out _, Vector3.NaN, out _);
                     var triangulatedList = faceVertices.Triangulate(normal);
                     var listOfFlatFaces = new List<TriangleFace>();
                     foreach (var vertexSet in triangulatedList)

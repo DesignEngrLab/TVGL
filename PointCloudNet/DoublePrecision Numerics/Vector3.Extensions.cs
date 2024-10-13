@@ -1,6 +1,7 @@
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
+using StarMathLib;
 using System.Diagnostics;
 
 using System.Runtime.Intrinsics;
@@ -146,7 +147,7 @@ namespace PointCloud.Numerics
             eigenVectors = new Vector3[3];
             for (int i = 0; i < 3; i++)
             {
-                eigenVectors[i] = new Vector3(eigenVectorsArrays[i]);
+                eigenVectors[i] = new Vector3(eigenVectorsArrays[i][0].Real, eigenVectorsArrays[i][1].Real, eigenVectorsArrays[i][2].Real);
             }
             return eigenValues;
         }
