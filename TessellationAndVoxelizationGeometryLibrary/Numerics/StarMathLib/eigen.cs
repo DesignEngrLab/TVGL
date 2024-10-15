@@ -802,7 +802,7 @@ namespace StarMathLib
             return eigenVectors;
         }
 
-        internal static ComplexNumber[] GetEigenVector3(double x11, double x12, double x13, double x21, double x22,
+        public static ComplexNumber[] GetEigenVector3(double x11, double x12, double x13, double x21, double x22,
             double x23, double x31, double x32, double x33, ComplexNumber eigenValue)
         {
             var y11 = x11 - eigenValue;
