@@ -17,21 +17,32 @@ namespace TVGL
         /// The vertices of the ConvexHull
         /// </summary>
         public readonly List<Vertex4D> Vertices = new List<Vertex4D>();
-        //public readonly List<CHFace> cHFaces = new List<CHFace>();
         /// <summary>
         /// Gets the convex hull faces.
         /// </summary>
         /// <value>The convex hull faces.</value>
-        public readonly List<ConvexHullFace4D> Faces = new List<ConvexHullFace4D>();
+        public readonly List<ConvexHullFace4D> Tetrahedra = new List<ConvexHullFace4D>();
 
         /// <summary>
         /// Gets the convex hull edges.
         /// </summary>
         /// <value>The convex hull edges.</value>
-        public readonly List<Edge4D> Edges = new List<Edge4D>();
+        public readonly List<Edge4D> Faces = new List<Edge4D>();
+        /// <summary>
+        /// Gets the vertex pairs.
+        /// </summary>
+        /// <value>The convex hull edges.</value>
+        public readonly List<VertexPair> VertexPairs = new List<VertexPair>();
 
 
     }
+    public class VertexPair
+    {
+        public required Vertex4D Vertex1 { get; init; }
+        public required Vertex4D Vertex2 { get; init; }
+        public List<ConvexHullFace4D> Tetrahedra { get; } = new List<ConvexHullFace4D>();
+    }
+
 
     public class Edge4D
     {
@@ -40,20 +51,20 @@ namespace TVGL
             A = vertexA;
             B = vertexB;
             C = vertexC;
-            OwnedFace = ownedFace;
-            OtherFace = otherFace;
+            OwnedTetra = ownedFace;
+            OtherTetra = otherFace;
         }
 
         public Vertex4D A { get; set; }
         public Vertex4D B { get; set; }
         public Vertex4D C { get; set; }
-        public ConvexHullFace4D OwnedFace { get; set; }
-        public ConvexHullFace4D OtherFace { get; set; }
+        public ConvexHullFace4D OwnedTetra { get; set; }
+        public ConvexHullFace4D OtherTetra { get; set; }
 
-        internal ConvexHullFace4D AdjacentFace(ConvexHullFace4D face)
+        internal ConvexHullFace4D AdjacentTetra(ConvexHullFace4D face)
         {
-            if (face == OwnedFace) return OtherFace;
-            if (face == OtherFace) return OwnedFace;
+            if (face == OwnedTetra) return OtherTetra;
+            if (face == OtherTetra) return OwnedTetra;
             throw new Exception("The face is not adjacent to this edge.");
         }
     }
@@ -75,72 +86,112 @@ namespace TVGL
 
     public class ConvexHullFace4D
     {
+        static int counter = 0;
         public ConvexHullFace4D(Vertex4D vertex1, Vertex4D vertex2, Vertex4D vertex3, Vertex4D vertex4, Vector4 knownUnderPoint)
         {
+            ID = counter++;
+            A = vertex1;
+            B = vertex2;
+            C = vertex3;
+            D = vertex4;
             InteriorVertices = new List<Vertex4D>();
             Normal = DetermineNormal(vertex1.Coordinates, vertex2.Coordinates, vertex3.Coordinates, vertex4.Coordinates, knownUnderPoint);
         }
 
-        private Vector4 DetermineNormal(Vector4 p0, Vector4 p1, Vector4 p2, Vector4 p3, Vector4 knownUnderPoint)
+        private Vector4 DetermineNormalOLD(Vector4 p0, Vector4 p1, Vector4 p2, Vector4 p3, Vector4 knownUnderPoint)
         {
             // following the approach at https://www.mathwizurd.com/linalg/2018/11/15/find-a-normal-vector-to-a-hyperplane
             // f is the vector that should have a positive dot product with the normal. It's used to flip the normal if necessary.
             var f = p0 - knownUnderPoint;
-            var d1 = (p1 - p0);
-            var d2 = (p2 - p0);
-            var d3 = (p3 - p0);
+            var d1 = p1 - p0;
+            var d2 = p2 - p0;
+            var d3 = p3 - p0;
 
-            if (d1.X.IsNegligible())
+            var matrix = new Matrix3x3(d1.Y, d1.Z, d1.W, d2.Y, d2.Z, d2.W, d3.Y, d3.Z, d3.W);
+            var b = new Vector3(d1.X, d2.X, d3.X);
+            var normal3 = matrix.Solve(b);
+            var normalSum = Vector4.Zero;
+            var normalX = new Vector4(-1, normal3.X, normal3.Y, normal3.Z);
+            if (!normalX.IsNull())
             {
-                if (d2.X.IsNegligible())
-                {
-                    if (d3.X.IsNegligible())
-                    {  // all vectors are parallel to the x-axis so the normal is the x-axis
-                        if (f.X < 0) return -Vector4.UnitX;
-                        return Vector4.UnitX;
-                    }
-                    // move d1 to the bottom and d3 to the top
-                    (d1, d3) = (d3, d1);
-                }
-                // swap d1 and d2
-                (d1, d2) = (d2, d1);
+                normalX = normalX.Normalize();
+                if (f.Dot(normalX) < 0) normalX = -normalX;
+                if (normalX.Dot(d1).IsNegligible() && normalX.Dot(d2).IsNegligible() && normalX.Dot(d3).IsNegligible())
+                    return normalX;
+                else normalSum += normalX;
             }
-            // d1.X is not negligible so we can use it to eliminate the x component of d2 and d3
-            d2 = d1.X * d2 - d2.X * d1;
-            d3 = d1.X * d3 - d3.X * d1;
+            matrix = new Matrix3x3(d1.X, d1.Z, d1.W, d2.X, d2.Z, d2.W, d3.X, d3.Z, d3.W);
+            b = new Vector3(d1.Y, d2.Y, d3.Y);
+            normal3 = matrix.Solve(b);
+            var normalY = new Vector4(normal3.X, -1, normal3.Y, normal3.Z);
+            if (!normalY.IsNull())
+            {
+                normalY = normalY.Normalize();
+                if (f.Dot(normalY) < 0) normalY = -normalY;
+                if (normalY.Dot(d1).IsNegligible() && normalY.Dot(d2).IsNegligible() && normalY.Dot(d3).IsNegligible())
+                    return normalY;
+                else normalSum += normalY;
+            }
+            matrix = new Matrix3x3(d1.X, d1.Y, d1.W, d2.X, d2.Y, d2.W, d3.X, d3.Y, d3.W);
+            b = new Vector3(d1.Z, d2.Z, d3.Z);
+            normal3 = matrix.Solve(b);
+            var normalZ = new Vector4(normal3.X, normal3.Y, -1, normal3.Z);
+            if (!normalZ.IsNull())
+            {
+                normalZ = normalZ.Normalize();
+                if (f.Dot(normalZ) < 0) normalZ = -normalZ;
+                if (normalZ.Dot(d1).IsNegligible() && normalZ.Dot(d2).IsNegligible() && normalZ.Dot(d3).IsNegligible())
+                    return normalZ;
+                else normalSum += normalZ;
+            }
+            matrix = new Matrix3x3(d1.X, d1.Y, d1.Z, d2.X, d2.Y, d2.Z, d3.X, d3.Y, d3.Z);
+            b = new Vector3(d1.W, d2.W, d3.W);
+            normal3 = matrix.Solve(b);
+            var normalW = new Vector4(normal3.X, normal3.Y, normal3.Z, -1);
+            if (!normalW.IsNull())
+            {
+                normalW = normalW.Normalize();
+                if (f.Dot(normalW) < 0) normalW = -normalW;
+                if (normalW.Dot(d1).IsNegligible() && normalW.Dot(d2).IsNegligible() && normalW.Dot(d3).IsNegligible())
+                    return normalW;
+                else normalSum += normalW;
+            }
+            //return normalSum.Normalize();
+            normalSum = normalSum.Normalize();
+            Console.WriteLine(normalSum.Dot(d1) + " " + normalSum.Dot(d2) + " " + normalSum.Dot(d3));
 
-            if (d2.Y.IsNegligible())
-            {
-                if (d3.Y.IsNegligible())
-                {
-                    //throw new Exception("Two vectors are parallel to the y-axis. this is reparable by considering w, but...");
-                    if (d2.Z.IsNegligible())
-                    {
-                        if (d3.Z.IsNegligible())
-                            throw new Exception("There is a linear dependence with two of the four points defining this hyperplane.");
-                        //(d2, d3) = (d3, d2);
-                        // d2.Y is negligible, but d2.Z is not, so we can use it to eliminate the z component of d3
-                        // setting y to -1, z = 0 and w = 0
-                        var normalXY = new Vector4(d1.Y / d1.X, -1, 0, 0);
-                        if (f.Dot(normalXY) > 0) return normalXY.Normalize();
-                        else return -normalXY.Normalize();
-                    }
-                    // swap d2 and d3 so that d2.Y is not negligible
-                    (d2, d3) = (d3, d2);
-                }
-            }
-            // d2.Y is not negligible so we can use it to eliminate the y component of d3
-            d3 = d2.Y * d3 - d3.Y * d2;
-            // setting w to -1
-            var z = d3.W / d3.Z;
-            var y = (d2.W - d2.Z * z) / d2.Y;
-            var x = (d1.W - d1.Y * y - d1.Z * z) / d1.X;
-            var normal = new Vector4(x, y, z, -1);
-            if (f.Dot(normal) > 0) return normal.Normalize();
-            else return -normal.Normalize();
+            return normalSum;
         }
 
+        private Vector4 DetermineNormal(Vector4 p0, Vector4 p1, Vector4 p2, Vector4 p3, Vector4 knownUnderPoint)
+        {
+            var f = p0 - knownUnderPoint;
+            var d1 = p1 - p0;
+            var d2 = p2 - p1;
+            var d3 = p3 - p2;
 
+
+            // This was generated using Mathematica
+            var nx = d1.W * (d2.Z * d3.Y - d2.Y * d3.Z)
+                 + d1.Z * (d2.Y * d3.W - d2.W * d3.Y)
+                 + d1.Y * (d2.W * d3.Z - d2.Z * d3.W);
+            var ny = d1.W * (d2.X * d3.Z - d2.Z * d3.X)
+                     + d1.Z * (d2.W * d3.X - d2.X * d3.W)
+                     + d1.X * (d2.Z * d3.W - d2.W * d3.Z);
+            var nz = d1.W * (d2.Y * d3.X - d2.X * d3.Y)
+                     + d1.Y * (d2.X * d3.W - d2.W * d3.X)
+                     + d1.X * (d2.W * d3.Y - d2.Y * d3.W);
+            var nw = d1.Z * (d2.X * d3.Y - d2.Y * d3.X)
+                     + d1.Y * (d2.Z * d3.X - d2.X * d3.Z)
+                     + d1.X * (d2.Y * d3.Z - d2.Z * d3.Y);
+            var normal = new Vector4(nx, ny, nz, nw).Normalize();
+            if (f.Dot(normal) < 0) normal = -normal;
+            Console.WriteLine(normal.Dot(d1) + " " + normal.Dot(d2) + " " + normal.Dot(d3));
+            if (normal.IsNull()) ;
+            return normal;
+        }
+
+        public int ID;
         public Vertex4D A { get; set; }
         public Vertex4D B { get; set; }
         public Vertex4D C { get; set; }
@@ -177,7 +228,7 @@ namespace TVGL
             else throw new Exception("The edge is not part of this face.");
         }
 
-        internal Vertex4D VertexOppositeEdge(Edge4D edge)
+        internal Vertex4D VertexOppositeFace(Edge4D edge)
         {
             if (edge == ABC) return D;
             if (edge == ABD) return C;

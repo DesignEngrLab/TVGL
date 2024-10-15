@@ -1,5 +1,4 @@
-﻿
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -50,8 +49,11 @@ namespace TVGL
         /// <returns></returns>
         public static bool Create(IList<Vertex4D> vertices, out ConvexHull4D convexHull, double tolerance = double.NaN)
         {
+            for (int i = 1; i < vertices.Count; i++)
+                if (vertices[i].IndexInList <= vertices[i - 1].IndexInList)
+                    throw new Exception("The vertices must be in order of their index in the list");
             var n = vertices.Count;
-            var nSqd = n * n;
+            var nSqd = (long)(n * n);
             if (double.IsNaN(tolerance) || tolerance < Constants.BaseTolerance)
                 tolerance = Constants.BaseTolerance;
 
@@ -67,23 +69,10 @@ namespace TVGL
                 convexHull.Vertices.Add(extremePoints[0]);
                 return true;
             }
-            if (numExtrema == 2)
-            {   // this is not a degenerate case! It's possible that the shape is long and skinny
-                // in order to move forward, we find the third point that is farthest from the line
-                // between the two extreme points. If that third point is one of the extreme points
-                // or is too close to the line, then we have a degenerate case and we return a single
-                var thirdPoint = Find3rdStartingPoint(extremePoints, vertices, out var radialDistance);
-                if (thirdPoint == extremePoints[0] || thirdPoint == extremePoints[1] || radialDistance < tolerance)
-                {
-                    convexHull = new ConvexHull4D { tolerance = tolerance };
-                    convexHull.Vertices.Add(extremePoints[0]);
-                    convexHull.Vertices.Add(extremePoints[1]);
-                    return true;
-                }
-                extremePoints = new List<Vertex4D> { extremePoints[0], extremePoints[1], thirdPoint };
-            }
-            else if (numExtrema > 4)
-                // if more than 4 extreme points, then we need to reduce to 4 by finding the max volume tetrahedron
+            if (numExtrema < 5)
+                throw new NotImplementedException();
+            else if (numExtrema > 5)
+                // if more than 5 extreme points, then we need to reduce to 5 by finding the max volume tesseract
                 FindBestExtremaSubset(extremePoints);
             var simplexFaces = MakeSimplexFaces(extremePoints);
 
@@ -94,7 +83,6 @@ namespace TVGL
                 if (extremePointsHash.Contains(v)) continue;
                 AddVertexToProperFace(simplexFaces, v, tolerance);
             }
-
             // here comes the main loop. We start with the simplex faces and then keep adding faces until we're done
             var faceQueue = new UpdatablePriorityQueue<ConvexHullFace4D, double>(simplexFaces.Select(f => (f, f.peakDistance)),
                 new NoEqualSort(false));
@@ -123,112 +111,90 @@ namespace TVGL
                     faceQueue.Enqueue(newFace, newFace.peakDistance);
             }
             // now we have the convex hull faces are used to build the convex hull object
-            convexHull = MakeConvexHullWithFaces(tolerance, faceQueue.UnorderedItems.Select(fq => fq.Element));
+            convexHull = MakeConvexHullWithFaces(tolerance, faceQueue.UnorderedItems.Select(fq => fq.Element), n);
             return true;
         }
-
-        /// <summary>
-        /// When only two extrema are found, this method finds a third point that is farthest from the line between the two extrema.
-        /// </summary>
-        /// <param name="extremePoints"></param>
-        /// <param name="vertices"></param>
-        /// <param name="radialDistance"></param>
-        /// <returns></returns>
-        private static Vertex4D Find3rdStartingPoint(List<Vertex4D> extremePoints, IList<Vertex4D> vertices, out double radialDistance)
+        private static void CreateNewFaceCone(ConvexHullFace4D startingTetra, List<ConvexHullFace4D> newTetras,
+            List<ConvexHullFace4D> oldTetras, List<Vertex4D> verticesToReassign, int base1Factor, long base2Factor)
         {
-            var axis = extremePoints[1].Coordinates - extremePoints[0].Coordinates;
-            radialDistance = double.NegativeInfinity;
-            Vertex4D thirdPoint = null;
-            foreach (var v in vertices)
-            {
-                var distance = (v.Coordinates - extremePoints[0].Coordinates).Cross(axis).LengthSquared();
-                if (distance > radialDistance)
-                {
-                    radialDistance = distance;
-                    thirdPoint = v;
-                }
-            }
-            return thirdPoint;
-        }
-
-        private static void CreateNewFaceCone(ConvexHullFace4D startingFace, List<ConvexHullFace4D> newFaces,
-            List<ConvexHullFace4D> oldFaces, List<Vertex4D> verticesToReassign, int factor1, int factor2)
-        {
-            newFaces.Clear();
-            oldFaces.Clear();
+            newTetras.Clear();
+            oldTetras.Clear();
             verticesToReassign.Clear();
-            var peakVertex = startingFace.peakVertex;
+            var peakVertex = startingTetra.peakVertex;
             var peakCoord = peakVertex.Coordinates;
             var stack = new Stack<(ConvexHullFace4D, Edge4D)>();
-            stack.Push((startingFace, null));
-            var newConeEdges = new Dictionary<int, Edge4D>();
-            // that's initialization. now for the main loop. Using a Depth-First Search, we find all the faces that are
-            // within (and beyond the horizon) from the v3. Imagine this peak Vertex4D as a point sitting in the middle
+            stack.Push((startingTetra, null));
+            var newConeFaces = new Dictionary<long, Edge4D>();
+            // that's initialization. now for the main loop. Using a Depth-First Search, we find all the tetras that are
+            // within (and beyond the horizon) from the peak vertex. Imagine this peak Vertex4D as a point sitting in the middle
             // above the triangle. All the triangles that are visible from this point are the ones that are within the cone.
-            // All these triangles need to be removed (stored in oldFaces) and replaced with new triangles (newFaces).
-            // The new triangles are formed by connecting the edges on the horizon with the v3.
+            // All these triangles need to be removed (stored in oldTetras) and replaced with new ones (newTetras).
+            // The new triangles are formed by connecting the edges on the horizon with the peak.
             while (stack.Count > 0)
             {
-                var (current, connectingEdge) = stack.Pop();
+                var (current, connectingFace) = stack.Pop();
                 if (current.Visited) continue; // here is the only place where "Visited" is checked. It is only set for
                 // triangles within the cone to avoid cycling or redundant search.
                 if ((peakCoord - current.A.Coordinates).Dot(current.Normal) < 0)
-                {   // the vector from this current face to the peakCoord is below the current normal. Therefore
+                {   // the vector from this current tetra to the peak is below the current normal. Therefore
                     // current is beyond the horizon and is not to be replaced.
-                    // so we stop here but before we move down the stack we need to create a new face
-                    // this border face is stored in the borderFaces list so that at the end we can clear the Visited flags
-                    var underVertex = current.VertexOppositeEdge(connectingEdge).Coordinates;
-                    var newFace = new ConvexHullFace4D(connectingEdge.A, connectingEdge.B, connectingEdge.C, peakVertex, underVertex);
-                    if (connectingEdge.OwnedFace == current)
-                        connectingEdge.OtherFace = newFace;
-                    else connectingEdge.OwnedFace = newFace;
-                    newFace.AddEdge(connectingEdge);
-                    newFaces.Add(newFace);
-                    // now the other edges of this new face may have already been created. If so, we need to connect them
-                    MakeNewInConeEdge(factor1, factor2, connectingEdge.A, connectingEdge.B, peakVertex, newConeEdges, newFace);
-                    MakeNewInConeEdge(factor1, factor2, connectingEdge.A, connectingEdge.C, peakVertex, newConeEdges, newFace);
-                    MakeNewInConeEdge(factor1, factor2, connectingEdge.B, connectingEdge.C, peakVertex, newConeEdges, newFace);
+                    // so we stop here but before we move down the stack we need to create a new tetra
+                    var underVertex = current.VertexOppositeFace(connectingFace).Coordinates;
+                    var newTetra = new ConvexHullFace4D(connectingFace.A, connectingFace.B, connectingFace.C, peakVertex, underVertex);
+                    if (connectingFace.OwnedTetra == current)
+                        connectingFace.OtherTetra = newTetra;
+                    else connectingFace.OwnedTetra = newTetra;
+                    newTetra.AddEdge(connectingFace);
+                    newTetras.Add(newTetra);
+                    // now the other faces of this new tetra may have already been created. If so, we need to connect them
+                    MakeNewInConeFace(base1Factor, base2Factor, connectingFace.A, connectingFace.B, peakVertex, newConeFaces, newTetra);
+                    MakeNewInConeFace(base1Factor, base2Factor, connectingFace.A, connectingFace.C, peakVertex, newConeFaces, newTetra);
+                    MakeNewInConeFace(base1Factor, base2Factor, connectingFace.B, connectingFace.C, peakVertex, newConeFaces, newTetra);
                 }
                 else // the face is within the cone. it'll be deleted in the above method, so we better get its interior vertices
                 {    // and the peak and add them to the verticesToReassign list for later reassignment to the new faces
                     current.Visited = true;
-                    oldFaces.Add(current);
+                    oldTetras.Add(current);
                     if (current.peakVertex != null && current.peakVertex != peakVertex)
                         verticesToReassign.Add(current.peakVertex);
                     verticesToReassign.AddRange(current.InteriorVertices);
 
                     // find the neigbors of the current face that are not the connecting edge (the edge we came from)
-                    if (current.ABC != connectingEdge) stack.Push((current.ABC.AdjacentFace(current), current.ABC));
-                    if (current.ABD != connectingEdge) stack.Push((current.ABD.AdjacentFace(current), current.ABD));
-                    if (current.ACD != connectingEdge) stack.Push((current.ACD.AdjacentFace(current), current.ACD));
-                    if (current.BCD != connectingEdge) stack.Push((current.BCD.AdjacentFace(current), current.BCD));
+                    if (current.ABC != connectingFace) stack.Push((current.ABC.AdjacentTetra(current), current.ABC));
+                    if (current.ABD != connectingFace) stack.Push((current.ABD.AdjacentTetra(current), current.ABD));
+                    if (current.ACD != connectingFace) stack.Push((current.ACD.AdjacentTetra(current), current.ACD));
+                    if (current.BCD != connectingFace) stack.Push((current.BCD.AdjacentTetra(current), current.BCD));
                 }
             }
         }
 
-        private static void MakeNewInConeEdge(int factor1, int factor2, Vertex4D v1, Vertex4D v2, Vertex4D v3,
-            Dictionary<int, Edge4D> newConeEdges, ConvexHullFace4D newFace)
+
+        private static void MakeNewInConeFace(int base1Factor, long base2Factor, Vertex4D v1, Vertex4D v2, Vertex4D v3,
+            Dictionary<long, Edge4D> newConeEdges, ConvexHullFace4D newFace)
         {
-            int id;
+            long id;
             if (v1.IndexInList > v2.IndexInList && v1.IndexInList > v3.IndexInList)
             {
-                if (v2.IndexInList > v3.IndexInList) id = factor2 * v1.IndexInList + factor1 * v2.IndexInList + v3.IndexInList;
-                else id = factor2 * v1.IndexInList + factor1 * v3.IndexInList + v2.IndexInList;
+                id = base2Factor * v1.IndexInList;
+                if (v2.IndexInList > v3.IndexInList) id += base1Factor * v2.IndexInList + v3.IndexInList;
+                else id += base1Factor * v3.IndexInList + v2.IndexInList;
             }
             else if (v2.IndexInList > v1.IndexInList && v2.IndexInList > v3.IndexInList)
             {
-                if (v1.IndexInList > v3.IndexInList) id = factor2 * v2.IndexInList + factor1 * v1.IndexInList + v3.IndexInList;
-                else id = factor2 * v2.IndexInList + factor1 * v3.IndexInList + v1.IndexInList;
+                id = base2Factor * v2.IndexInList;
+                if (v1.IndexInList > v3.IndexInList) id += base1Factor * v1.IndexInList + v3.IndexInList;
+                else id += base1Factor * v3.IndexInList + v1.IndexInList;
             }
             else // then v3 is the largest
             {
-                if (v2.IndexInList > v1.IndexInList) id = factor2 * v3.IndexInList + factor1 * v2.IndexInList + v1.IndexInList;
-                else id = factor2 * v3.IndexInList + factor1 * v1.IndexInList + v2.IndexInList;
+                id = base2Factor * v3.IndexInList;
+                if (v2.IndexInList > v1.IndexInList) id += base1Factor * v2.IndexInList + v1.IndexInList;
+                else id += base1Factor * v1.IndexInList + v2.IndexInList;
             }
             if (newConeEdges.TryGetValue(id, out var existingConeEdge))
             {
                 newFace.AddEdge(existingConeEdge);
-                existingConeEdge.OtherFace = newFace;
+                existingConeEdge.OtherTetra = newFace;
             }
             else
             {
@@ -242,22 +208,54 @@ namespace TVGL
         /// </summary>
         /// <param name="tolerance"></param>
         /// <param name="connectVerticesToCvxHullFaces"></param>
-        /// <param name="cvxFaces"></param>
+        /// <param name="tetras"></param>
         /// <returns></returns>
-        private static ConvexHull4D MakeConvexHullWithFaces(double tolerance, IEnumerable<ConvexHullFace4D> cvxFaces)
+        private static ConvexHull4D MakeConvexHullWithFaces(double tolerance, IEnumerable<ConvexHullFace4D> tetras, int baseFactor)
         {
             var cvxHull = new ConvexHull4D { tolerance = tolerance };
-            cvxHull.Faces.AddRange(cvxFaces);
+            cvxHull.Tetrahedra.AddRange(tetras);
 
             var cvxVertexHash = new HashSet<Vertex4D>();
-            var cvxEdgeHash = new HashSet<Edge4D>();
-            foreach (var f in cvxFaces)
+            var cvxFaceHash = new HashSet<Edge4D>();
+            var vertexPairs = new Dictionary<long, VertexPair>();
+            foreach (var tetra in tetras)
             {
-
+                cvxFaceHash.Add(tetra.ABC);
+                cvxFaceHash.Add(tetra.ABD);
+                cvxFaceHash.Add(tetra.ACD);
+                cvxFaceHash.Add(tetra.BCD);
+                cvxVertexHash.Add(tetra.A);
+                cvxVertexHash.Add(tetra.B);
+                cvxVertexHash.Add(tetra.C);
+                cvxVertexHash.Add(tetra.D);
+                AddVertexPair(vertexPairs, tetra.A, tetra.B, baseFactor, tetra);
+                AddVertexPair(vertexPairs, tetra.A, tetra.C, baseFactor, tetra);
+                AddVertexPair(vertexPairs, tetra.A, tetra.D, baseFactor, tetra);
+                AddVertexPair(vertexPairs, tetra.B, tetra.C, baseFactor, tetra);
+                AddVertexPair(vertexPairs, tetra.B, tetra.D, baseFactor, tetra);
+                AddVertexPair(vertexPairs, tetra.C, tetra.D, baseFactor, tetra);
             }
             cvxHull.Vertices.AddRange(cvxVertexHash);
-            cvxHull.Edges.AddRange(cvxEdgeHash);
+            cvxHull.Faces.AddRange(cvxFaceHash);
+            cvxHull.VertexPairs.AddRange(vertexPairs.Values);
             return cvxHull;
+        }
+
+        private static void AddVertexPair(Dictionary<long, VertexPair> vertexPairs, Vertex4D a, Vertex4D b, int baseFactor, ConvexHullFace4D tetra)
+        {
+            var id = a.IndexInList > b.IndexInList ? baseFactor * a.IndexInList + b.IndexInList : baseFactor * b.IndexInList + a.IndexInList;
+            if (vertexPairs.TryGetValue(id, out var existingPair))
+                existingPair.Tetrahedra.Add(tetra);
+            else
+            {
+                VertexPair newPair = null;
+                if (a.IndexInList > b.IndexInList)
+                    newPair = new VertexPair { Vertex1 = b, Vertex2 = a };
+                else
+                    newPair = new VertexPair { Vertex1 = a, Vertex2 = b };
+                newPair.Tetrahedra.Add(tetra);
+                vertexPairs.Add(id, newPair);
+            }
         }
 
         /// <summary>
@@ -310,43 +308,42 @@ namespace TVGL
         }
 
         /// <summary>
-        /// If there are 5 or 6 points from the AABB check, then we run through all possibilities of 4 points 
-        /// to find the one tetrahedron with the largest volume. The one or two points that are not part of the
+        /// If there are 6,7 or8 points from the AABB check, then we run through all possibilities of 5 points 
+        /// to find the one tesseract with the largest volume. The one or two points that are not part of the
         /// tetrahedron are removed from extremePoints
         /// </summary>
         /// <param name="extremePoints"></param>
         private static void FindBestExtremaSubset(List<Vertex4D> extremePoints)
         {
-            var maxVol = 0.0;
-            var numExtrema = extremePoints.Count;
-            int maxI1 = -1, maxI2 = -1, maxI3 = -1, maxI4 = -1;
-            for (int i1 = 0; i1 < numExtrema - 3; i1++)
-            {
-                var basePoint = extremePoints[i1];
-                for (int i2 = i1 + 1; i2 < numExtrema - 2; i2++)
+            var n = extremePoints.Count;
+            var sums = Enumerable.Repeat(0.0, n).ToList();
+            for (int i = 0; i < n - 1; i++)
+                for (int j = i + 1; j < n; j++)
                 {
-                    for (int i3 = i2 + 1; i3 < numExtrema - 1; i3++)
+                    var distSqd = (extremePoints[i].Coordinates - extremePoints[j].Coordinates).LengthSquared();
+                    sums[i] += distSqd;
+                    sums[j] += distSqd;
+                }
+            while (n > 5)
+            {
+                var min = double.PositiveInfinity;
+                var minIndex = -1;
+                for (int i = 0; i < n; i++)
+                {
+                    if (min > sums[i])
                     {
-                        var baseTriangleArea = (extremePoints[i2].Coordinates - basePoint.Coordinates).Cross(extremePoints[i3].Coordinates - basePoint.Coordinates);
-                        for (int i4 = i3 + 1; i4 < numExtrema; i4++)
-                        {
-                            var projectedHeight = basePoint.Coordinates - extremePoints[i4].Coordinates;
-                            var volume = Math.Abs(projectedHeight.Dot(baseTriangleArea));
-                            if (volume > maxVol)
-                            {
-                                maxVol = volume;
-                                maxI1 = i1; maxI2 = i2; maxI3 = i3; maxI4 = i4;
-                            }
-                        }
+                        min = sums[i];
+                        minIndex = i;
                     }
                 }
-            }
-            for (int i = numExtrema - 1; i >= 0; i--)
-            {
-                if (i == maxI1 || i == maxI2 || i == maxI3 || i == maxI4) continue;
-                extremePoints.RemoveAt(i);
+                sums.RemoveAt(minIndex);
+                extremePoints.RemoveAt(minIndex);
+                n--;
             }
         }
+
+
+
         /// <summary>
         /// This method makes the faces for the simplex. It is called when there are 3 or 4 extreme points.
         /// </summary>
@@ -361,18 +358,18 @@ namespace TVGL
                 // here we use the origin to orient one of the faces
                 var faceOther = new ConvexHullFace4D(vertices[3], vertices[2], vertices[1], vertices[0], faceOwned.Normal + vertices[3].Coordinates);
                 // to make this face the opposite orientation, we create an "under point" by adding the normal of the previous face to one of the points of the face
-                var edge012 = new Edge4D(vertices[0], vertices[1], vertices[2], faceOwned, faceOther);
-                edge012.OwnedFace = faceOwned;
-                edge012.OtherFace = faceOther;
-                var edge123 = new Edge4D(vertices[1], vertices[2], vertices[3], faceOwned, faceOther);
-                edge123.OwnedFace = faceOwned;
-                edge123.OtherFace = faceOther;
-                var edge230 = new Edge4D(vertices[2], vertices[3], vertices[0], faceOwned, faceOther);
-                edge230.OwnedFace = faceOwned;
-                edge230.OtherFace = faceOther;
-                var edge301 = new Edge4D(vertices[3], vertices[0], vertices[1], faceOwned, faceOther);
-                edge301.OwnedFace = faceOwned;
-                edge301.OtherFace = faceOther;
+                var edge = new Edge4D(vertices[0], vertices[1], vertices[2], faceOwned, faceOther);
+                faceOwned.AddEdge(edge);
+                faceOther.AddEdge(edge);
+                edge = new Edge4D(vertices[1], vertices[2], vertices[3], faceOwned, faceOther);
+                faceOwned.AddEdge(edge);
+                faceOther.AddEdge(edge);
+                edge = new Edge4D(vertices[2], vertices[3], vertices[0], faceOwned, faceOther);
+                faceOwned.AddEdge(edge);
+                faceOther.AddEdge(edge);
+                edge = new Edge4D(vertices[3], vertices[0], vertices[1], faceOwned, faceOther);
+                faceOwned.AddEdge(edge);
+                faceOther.AddEdge(edge);
                 return [faceOwned, faceOther];
             }
             else // there are 5 or 6 vertices, so we make a proper tesseract
@@ -427,7 +424,8 @@ namespace TVGL
         /// <returns></returns>
         private static List<Vertex4D> GetExtremaOnAABB(int n, IList<Vertex4D> points, out int numExtrema)
         {
-            var extremePoints = Enumerable.Repeat(points[0], 6).ToList();
+            numExtrema = 8;
+            var extremePoints = Enumerable.Repeat(points[0], numExtrema).ToList();
             for (int i = 1; i < n; i += 2)
             {
                 if (points[i].X < extremePoints[0].X ||
@@ -448,14 +446,13 @@ namespace TVGL
                 if (points[i].Z > extremePoints[5].Z ||
                     points[i].Z == extremePoints[5].Z && points[i].X > extremePoints[5].X)
                     extremePoints[5] = points[i];
-                if (points[i].W < extremePoints[4].W ||
-                    points[i].W == extremePoints[4].W && points[i].X < extremePoints[4].X)
-                    extremePoints[4] = points[i];
-                if (points[i].W > extremePoints[5].W ||
-                    points[i].W == extremePoints[5].W && points[i].Y > extremePoints[5].Y)
-                    extremePoints[5] = points[i];
+                if (points[i].W < extremePoints[6].W ||
+                    points[i].W == extremePoints[6].W && points[i].X < extremePoints[6].X)
+                    extremePoints[6] = points[i];
+                if (points[i].W > extremePoints[7].W ||
+                    points[i].W == extremePoints[7].W && points[i].Y > extremePoints[7].Y)
+                    extremePoints[7] = points[i];
             }
-            numExtrema = 6;
             for (int i = numExtrema - 1; i > 0; i--)
             {
                 var extremeI = extremePoints[i];

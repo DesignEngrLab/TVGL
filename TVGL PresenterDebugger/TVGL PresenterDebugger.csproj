@@ -128,7 +128,9 @@
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Enclosure Operations\MinimumEnclosure.cs" Link="TVGL\Enclosure Operations\MinimumEnclosure.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Enclosure Operations\ConvexHullAlgorithm.2D.cs" Link="TVGL\Enclosure Operations\ConvexHullAlgorithm.2D.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Enclosure Operations\ConvexHullAlgorithm.3D.cs" Link="TVGL\Enclosure Operations\ConvexHullAlgorithm.3D.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Enclosure Operations\ConvexHullAlgorithm.4D.cs" Link="TVGL\Enclosure Operations\ConvexHullAlgorithm.4D.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Enclosure Operations\ConvexHull3D.cs" Link="TVGL\Enclosure Operations\ConvexHull3D.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Enclosure Operations\ConvexHull4D.cs" Link="TVGL\Enclosure Operations\ConvexHull4D.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Enclosure Operations\ConvexHullGJK.cs" Link="TVGL\Enclosure Operations\ConvexHullGJK.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\TessellatedSolid\MakeEdgePaths\MakeEdgePaths.cs" Link="TVGL\TessellatedSolid\MakeEdgePaths\MakeEdgePaths.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\TessellatedSolid\MakeEdgePaths\EdgePathObjectiveFunctions.cs" Link="TVGL\TessellatedSolid\MakeEdgePaths\EdgePathObjectiveFunctions.cs" />
