@@ -376,6 +376,7 @@ namespace TVGL
                 }
                 else face[i] = -1;
                 i++;
+                if (i >= 3) break;
             }
             if (success) return face;
             return null;

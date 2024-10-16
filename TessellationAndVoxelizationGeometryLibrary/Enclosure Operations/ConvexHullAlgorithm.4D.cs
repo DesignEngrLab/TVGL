@@ -193,6 +193,7 @@ namespace TVGL
             }
             if (newConeEdges.TryGetValue(id, out var existingConeEdge))
             {
+                if (existingConeEdge.OtherTetra != null) ;
                 newFace.AddEdge(existingConeEdge);
                 existingConeEdge.OtherTetra = newFace;
             }

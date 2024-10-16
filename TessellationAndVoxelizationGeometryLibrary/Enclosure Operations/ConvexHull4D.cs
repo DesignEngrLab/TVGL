@@ -98,78 +98,14 @@ namespace TVGL
             Normal = DetermineNormal(vertex1.Coordinates, vertex2.Coordinates, vertex3.Coordinates, vertex4.Coordinates, knownUnderPoint);
         }
 
-        private Vector4 DetermineNormalOLD(Vector4 p0, Vector4 p1, Vector4 p2, Vector4 p3, Vector4 knownUnderPoint)
+        private Vector4 DetermineNormal(Vector4 p0, Vector4 p1, Vector4 p2, Vector4 p3, Vector4 knownUnderPoint)
         {
             // following the approach at https://www.mathwizurd.com/linalg/2018/11/15/find-a-normal-vector-to-a-hyperplane
             // f is the vector that should have a positive dot product with the normal. It's used to flip the normal if necessary.
             var f = p0 - knownUnderPoint;
             var d1 = p1 - p0;
-            var d2 = p2 - p0;
-            var d3 = p3 - p0;
-
-            var matrix = new Matrix3x3(d1.Y, d1.Z, d1.W, d2.Y, d2.Z, d2.W, d3.Y, d3.Z, d3.W);
-            var b = new Vector3(d1.X, d2.X, d3.X);
-            var normal3 = matrix.Solve(b);
-            var normalSum = Vector4.Zero;
-            var normalX = new Vector4(-1, normal3.X, normal3.Y, normal3.Z);
-            if (!normalX.IsNull())
-            {
-                normalX = normalX.Normalize();
-                if (f.Dot(normalX) < 0) normalX = -normalX;
-                if (normalX.Dot(d1).IsNegligible() && normalX.Dot(d2).IsNegligible() && normalX.Dot(d3).IsNegligible())
-                    return normalX;
-                else normalSum += normalX;
-            }
-            matrix = new Matrix3x3(d1.X, d1.Z, d1.W, d2.X, d2.Z, d2.W, d3.X, d3.Z, d3.W);
-            b = new Vector3(d1.Y, d2.Y, d3.Y);
-            normal3 = matrix.Solve(b);
-            var normalY = new Vector4(normal3.X, -1, normal3.Y, normal3.Z);
-            if (!normalY.IsNull())
-            {
-                normalY = normalY.Normalize();
-                if (f.Dot(normalY) < 0) normalY = -normalY;
-                if (normalY.Dot(d1).IsNegligible() && normalY.Dot(d2).IsNegligible() && normalY.Dot(d3).IsNegligible())
-                    return normalY;
-                else normalSum += normalY;
-            }
-            matrix = new Matrix3x3(d1.X, d1.Y, d1.W, d2.X, d2.Y, d2.W, d3.X, d3.Y, d3.W);
-            b = new Vector3(d1.Z, d2.Z, d3.Z);
-            normal3 = matrix.Solve(b);
-            var normalZ = new Vector4(normal3.X, normal3.Y, -1, normal3.Z);
-            if (!normalZ.IsNull())
-            {
-                normalZ = normalZ.Normalize();
-                if (f.Dot(normalZ) < 0) normalZ = -normalZ;
-                if (normalZ.Dot(d1).IsNegligible() && normalZ.Dot(d2).IsNegligible() && normalZ.Dot(d3).IsNegligible())
-                    return normalZ;
-                else normalSum += normalZ;
-            }
-            matrix = new Matrix3x3(d1.X, d1.Y, d1.Z, d2.X, d2.Y, d2.Z, d3.X, d3.Y, d3.Z);
-            b = new Vector3(d1.W, d2.W, d3.W);
-            normal3 = matrix.Solve(b);
-            var normalW = new Vector4(normal3.X, normal3.Y, normal3.Z, -1);
-            if (!normalW.IsNull())
-            {
-                normalW = normalW.Normalize();
-                if (f.Dot(normalW) < 0) normalW = -normalW;
-                if (normalW.Dot(d1).IsNegligible() && normalW.Dot(d2).IsNegligible() && normalW.Dot(d3).IsNegligible())
-                    return normalW;
-                else normalSum += normalW;
-            }
-            //return normalSum.Normalize();
-            normalSum = normalSum.Normalize();
-            Console.WriteLine(normalSum.Dot(d1) + " " + normalSum.Dot(d2) + " " + normalSum.Dot(d3));
-
-            return normalSum;
-        }
-
-        private Vector4 DetermineNormal(Vector4 p0, Vector4 p1, Vector4 p2, Vector4 p3, Vector4 knownUnderPoint)
-        {
-            var f = p0 - knownUnderPoint;
-            var d1 = p1 - p0;
             var d2 = p2 - p1;
             var d3 = p3 - p2;
-
 
             // This was generated using Mathematica
             var nx = d1.W * (d2.Z * d3.Y - d2.Y * d3.Z)
@@ -186,8 +122,8 @@ namespace TVGL
                      + d1.X * (d2.Y * d3.Z - d2.Z * d3.Y);
             var normal = new Vector4(nx, ny, nz, nw).Normalize();
             if (f.Dot(normal) < 0) normal = -normal;
-            Console.WriteLine(normal.Dot(d1) + " " + normal.Dot(d2) + " " + normal.Dot(d3));
-            if (normal.IsNull()) ;
+            //Console.WriteLine(normal.Dot(d1) + " " + normal.Dot(d2) + " " + normal.Dot(d3));
+            if (normal.IsNull()) return f.Normalize();
             return normal;
         }
 
