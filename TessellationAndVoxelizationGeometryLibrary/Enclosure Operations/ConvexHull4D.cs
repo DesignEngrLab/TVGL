@@ -140,6 +140,16 @@ namespace TVGL
         public double peakDistance { get; set; }
         public Vector4 Normal { get; private set; }
 
+        public IEnumerable<Edge4D> Faces
+        {
+            get
+            {
+                yield return ABC;
+                yield return ABD;
+                yield return ACD;
+                yield return BCD;
+            }
+        }
         /// <summary>
         /// Gets the collection of vertices that are on the boundary of the convex hull but are not actively effecting the boundary representation
         /// of the convex hull

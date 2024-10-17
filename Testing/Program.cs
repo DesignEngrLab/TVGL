@@ -29,7 +29,7 @@ namespace TVGLUnitTestsAndBenchmarking
             TVGL.Message.Verbosity = VerbosityLevels.OnlyCritical;
             DirectoryInfo dir = Program.BackoutToFolder(inputFolder);
 
-            var index = 24;
+            var index = 34;
             var valid3DFileExtensions = new HashSet<string> { ".stl", ".ply", ".obj", ".3mf", ".tvglz" };
             var allFiles = dir.GetFiles("*", SearchOption.AllDirectories).Where(f => valid3DFileExtensions.Contains(f.Extension.ToLower()))
                 ; //.OrderBy(fi => fi.Length);
@@ -39,7 +39,7 @@ namespace TVGLUnitTestsAndBenchmarking
                 TessellatedSolid[] solids = null;
                 IO.Open(fileName.FullName, out solids);
                 var ts = solids[0];
-                //Presenter.ShowAndHang(ts);
+                Presenter.ShowAndHang(ts);
                 var vert4Ds = new Vertex4D[ts.NumberOfVertices];
                 for (int i = 0; i < ts.NumberOfVertices; i++)
                 {
@@ -53,8 +53,7 @@ namespace TVGLUnitTestsAndBenchmarking
                 foreach (var tetra in ch4d.Tetrahedra)
                 {
                     var color = colorEnumerator.MoveNext() ? colorEnumerator.Current : null;
-                    Edge4D[] edge4s = [tetra.ABC, tetra.ABD, tetra.ACD, tetra.BCD];
-                    foreach (var edge4D in edge4s)
+                    foreach (var edge4D in tetra.Faces)
                     {
                         var aIndex = edge4D.A.IndexInList;
                         var bIndex = edge4D.B.IndexInList;
