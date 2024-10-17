@@ -6,6 +6,10 @@ namespace TVGL
 {
     public partial class ConvexHull4D
     {
+        const double jiggleToleranceFactor = 100;
+        const int defaultNumAttempts = 10;
+
+
         /// <summary>
         /// Creates the convex hull for a set of Coordinates. By the way, this is not 
         /// faster than using Vertices and - in fact - this method will wrap each coordinate
@@ -47,7 +51,8 @@ namespace TVGL
         /// <param name="connectVerticesToCvxHullFaces"></param>
         /// <param name="tolerance"></param>
         /// <returns></returns>
-        public static bool Create(IList<Vertex4D> vertices, out ConvexHull4D convexHull, double tolerance = double.NaN)
+        public static bool Create(IList<Vertex4D> vertices, out ConvexHull4D convexHull, double tolerance = double.NaN,
+            int numAttempts = defaultNumAttempts)
         {
             for (int i = 1; i < vertices.Count; i++)
                 if (vertices[i].IndexInList <= vertices[i - 1].IndexInList)
@@ -69,9 +74,9 @@ namespace TVGL
                 convexHull.Vertices.Add(extremePoints[0]);
                 return true;
             }
-            if (numExtrema < 5)
+            if (numExtrema < 4)
                 throw new NotImplementedException();
-            else if (numExtrema > 5)
+            else if (numExtrema > 4)
                 // if more than 5 extreme points, then we need to reduce to 5 by finding the max volume tesseract
                 FindBestExtremaSubset(extremePoints);
             var simplexFaces = MakeSimplexFaces(extremePoints);
@@ -102,7 +107,8 @@ namespace TVGL
                 // this function, CreateNewFaceCone, is the hardest part of the algorithm. But, from its arguments, you can see that it finds
                 // faces to remove (oldFaces), faces to add (newFaces), and vertices to reassign (verticesToReassign) to the new faces.
                 // These three lists are then processed in the 3 foreach loops below.
-                CreateNewFaceCone(face, newFaces, oldFaces, verticesToReassign, n, nSqd);
+                if (!CreateNewFaceCone(face, newFaces, oldFaces, verticesToReassign, n, nSqd))
+                    return JigglePointsAndTryAgain(vertices, out convexHull, tolerance, numAttempts - 1);
                 foreach (var iv in verticesToReassign)
                     AddVertexToProperFace(newFaces, iv, tolerance);
                 foreach (var f in oldFaces)
@@ -114,7 +120,67 @@ namespace TVGL
             convexHull = MakeConvexHullWithFaces(tolerance, faceQueue.UnorderedItems.Select(fq => fq.Element), n);
             return true;
         }
-        private static void CreateNewFaceCone(ConvexHullFace4D startingTetra, List<ConvexHullFace4D> newTetras,
+        private static bool JigglePointsAndTryAgain(IList<Vertex4D> vertices, out ConvexHull4D convexHull, double tolerance,
+            int numAttempts)
+        {
+            Console.WriteLine("jiggling " + (defaultNumAttempts - numAttempts).ToString());
+            convexHull = null;
+            if (numAttempts < 0)
+                return false;
+
+            tolerance *= jiggleToleranceFactor;
+            var random = new Random();
+            var jiggledPoints = new Vertex4D[vertices.Count];
+            for (int i = 0; i < vertices.Count; i++)
+            {
+                var p = vertices[i].Coordinates;
+                jiggledPoints[i] = new Vertex4D(new Vector4(p.X + 2 * tolerance * (random.NextDouble() - 1), p.Y + 2 * tolerance * (random.NextDouble() - 1),
+                    p.Z + 2 * tolerance * (random.NextDouble() - 1), p.W + 2 * tolerance * (random.NextDouble() - 1)), i);
+            }
+            if (!Create(jiggledPoints, out var jiggledConvexHull, tolerance, numAttempts))
+                return false;
+
+            convexHull = new ConvexHull4D
+            { tolerance = tolerance };
+            var vertsArray = new Vertex4D[jiggledConvexHull.Vertices.Count];
+            for (int i = 0; i < jiggledConvexHull.Vertices.Count; i++)
+                vertsArray[i] = vertices[jiggledConvexHull.Vertices[i].IndexInList];
+            convexHull.Vertices.AddRange(vertsArray);
+
+            var vertPairArray = new VertexPair[jiggledConvexHull.VertexPairs.Count];
+            for (int i = 0; i < jiggledConvexHull.Vertices.Count; i++)
+                vertPairArray[i] = new VertexPair
+                {
+                    Vertex1 = vertices[jiggledConvexHull.VertexPairs[i].Vertex1.IndexInList],
+                    Vertex2 = vertices[jiggledConvexHull.VertexPairs[i].Vertex2.IndexInList]
+                };
+            convexHull.VertexPairs.AddRange(vertPairArray);
+            var newConeFaces = new Dictionary<long, Edge4D>();
+            var n = vertices.Count;
+            var nSqd = (long)(n * n);
+
+            //cvxHull.Tetrahedra.AddRange(tetras);
+            foreach (var tetra in jiggledConvexHull.Tetrahedra)
+            {
+                var newTetra = new ConvexHullFace4D
+                {
+                    A = vertices[tetra.A.IndexInList],
+                    B = vertices[tetra.B.IndexInList],
+                    C = vertices[tetra.C.IndexInList],
+                    D = vertices[tetra.D.IndexInList],
+                    Normal = tetra.Normal,
+                };
+                convexHull.Tetrahedra.Add(newTetra);
+                MakeNewInConeFace(n, nSqd, newTetra.A, newTetra.B, newTetra.C, newConeFaces, newTetra);
+                MakeNewInConeFace(n, nSqd, newTetra.A, newTetra.B, newTetra.D, newConeFaces, newTetra);
+                MakeNewInConeFace(n, nSqd, newTetra.A, newTetra.C, newTetra.D, newConeFaces, newTetra);
+                MakeNewInConeFace(n, nSqd, newTetra.B, newTetra.C, newTetra.D, newConeFaces, newTetra);
+            }
+            convexHull.Faces.AddRange(newConeFaces.Values);
+            return true;
+        }
+
+        private static bool CreateNewFaceCone(ConvexHullFace4D startingTetra, List<ConvexHullFace4D> newTetras,
             List<ConvexHullFace4D> oldTetras, List<Vertex4D> verticesToReassign, int base1Factor, long base2Factor)
         {
             newTetras.Clear();
@@ -133,10 +199,10 @@ namespace TVGL
             while (stack.Count > 0)
             {
                 var (current, connectingFace) = stack.Dequeue();
-                if (current.Visited) continue; // here is the only place where "Visited" is checked. It is only set for
+                if (current == null || current.Visited) continue; // here is the only place where "Visited" is checked. It is only set for
                 // triangles within the cone to avoid cycling or redundant search.
-                var dot = (peakCoord - current.A.Coordinates).Dot(current.Normal);
-                if (dot >= 0) // && CheckAndRetrieveConeEdge(base1Factor, base2Factor, peakVertex, newConeFaces, current))
+                var dot = (peakCoord - current.A.Coordinates).Dot(current.GetNormal(true));
+                if (dot > 0) // && CheckAndRetrieveConeEdge(base1Factor, base2Factor, peakVertex, newConeFaces, current))
                 {    // and the peak and add them to the verticesToReassign list for later reassignment to the new faces
                     current.Visited = true;
                     oldTetras.Add(current);
@@ -150,46 +216,85 @@ namespace TVGL
                     if (current.ACD != connectingFace) stack.Enqueue((current.ACD.AdjacentTetra(current), current.ACD));
                     if (current.BCD != connectingFace) stack.Enqueue((current.BCD.AdjacentTetra(current), current.BCD));
                 }
-                else // the face is within the cone. it'll be deleted in the above method, so we better get its interior vertices
-                {   // the vector from this current tetra to the peak is below the current normal. Therefore
-                    // current is beyond the horizon and is not to be replaced.
-                    // so we stop here but before we move down the stack we need to create a new tetra
+                else
+                {
                     var underVertex = current.VertexOppositeFace(connectingFace).Coordinates;
-                    var newTetra = new ConvexHullFace4D(connectingFace.A, connectingFace.B, connectingFace.C, peakVertex, underVertex);
+                    var normal = DetermineNormal(connectingFace.A.Coordinates, connectingFace.B.Coordinates,
+                        connectingFace.C.Coordinates, peakVertex.Coordinates, underVertex); //, current.Normal);
+                    var newTetra = new ConvexHullFace4D
+                    {
+                        A = connectingFace.A,
+                        B = connectingFace.B,
+                        C = connectingFace.C,
+                        D = peakVertex,
+                        Normal = normal
+                    };
                     if (connectingFace.OwnedTetra == current)
                         connectingFace.OtherTetra = newTetra;
                     else connectingFace.OwnedTetra = newTetra;
                     newTetra.AddEdge(connectingFace);
                     newTetras.Add(newTetra);
                     // now the other faces of this new tetra may have already been created. If so, we need to connect them
-                    MakeNewInConeFace(base1Factor, base2Factor, connectingFace.A, connectingFace.B, peakVertex, newConeFaces, newTetra);
-                    MakeNewInConeFace(base1Factor, base2Factor, connectingFace.A, connectingFace.C, peakVertex, newConeFaces, newTetra);
-                    MakeNewInConeFace(base1Factor, base2Factor, connectingFace.B, connectingFace.C, peakVertex, newConeFaces, newTetra);
+                    if (!MakeNewInConeFace(base1Factor, base2Factor, connectingFace.A, connectingFace.B, peakVertex, newConeFaces, newTetra))
+                        return false;
+                    if (!MakeNewInConeFace(base1Factor, base2Factor, connectingFace.A, connectingFace.C, peakVertex, newConeFaces, newTetra))
+                        return false;
+                    if (!MakeNewInConeFace(base1Factor, base2Factor, connectingFace.B, connectingFace.C, peakVertex, newConeFaces, newTetra))
+                        return false;
                 }
             }
+            return true;
         }
 
-        private static bool CheckAndRetrieveConeEdge(int base1Factor, long base2Factor, Vertex4D peakVertex, Dictionary<long, Edge4D> newConeFaces, ConvexHullFace4D current)
+
+        internal static Vector4 DetermineNormal(Vector4 p0, Vector4 p1, Vector4 p2, Vector4 p3, Vector4 knownUnderPoint)
         {
-            if (RetrieveNewEdge4D(base1Factor, base2Factor, current.A, current.B, peakVertex, newConeFaces, out var existingConeEdge, out _)
-                && existingConeEdge.OtherTetra != null)
-                return false;
-            if (RetrieveNewEdge4D(base1Factor, base2Factor, current.A, current.C, peakVertex, newConeFaces, out existingConeEdge, out _)
-                && existingConeEdge.OtherTetra != null)
-                return false;
-            if (RetrieveNewEdge4D(base1Factor, base2Factor, current.A, current.D, peakVertex, newConeFaces, out existingConeEdge, out _)
-                && existingConeEdge.OtherTetra != null)
-                return false;
-            if (RetrieveNewEdge4D(base1Factor, base2Factor, current.B, current.C, peakVertex, newConeFaces, out existingConeEdge, out _)
-                && existingConeEdge.OtherTetra != null)
-                return false;
-            if (RetrieveNewEdge4D(base1Factor, base2Factor, current.B, current.D, peakVertex, newConeFaces, out existingConeEdge, out _)
-                && existingConeEdge.OtherTetra != null)
-                return false;
-            if (RetrieveNewEdge4D(base1Factor, base2Factor, current.C, current.D, peakVertex, newConeFaces, out existingConeEdge, out _)
-                && existingConeEdge.OtherTetra != null)
-                return false;
-            return true;
+            // following the approach at https://www.mathwizurd.com/linalg/2018/11/15/find-a-normal-vector-to-a-hyperplane
+            // f is the vector that should have a positive dot product with the normal. It's used to flip the normal if necessary.
+            var f = p0 - knownUnderPoint;
+            Vector4 normal;
+            var successfulNormal = GetNormalComponents(p0, p1, p2, p3, out var nx, out var ny, out var nz, out var nw);
+            if (!successfulNormal)
+                return Vector4.Null;
+            else
+                normal = new Vector4(nx, ny, nz, nw).Normalize();
+
+            var flipForUnderVertex = f.Dot(normal) < 0;
+            var a = new Vector3(p0.X, p0.Y, p0.Z);
+            var b = new Vector3(p1.X, p1.Y, p1.Z);
+            var c = new Vector3(p2.X, p2.Y, p2.Z);
+            var d = new Vector3(p3.X, p3.Y, p3.Z);
+            var vol3D = Math.Abs((a - d).Dot((b - d).Cross(c - d))); // / 6; for speed sake just avoid div by 6
+
+            if (vol3D.IsNegligible(Constants.BaseTolerance))
+                return Vector4.Null;
+
+            if (flipForUnderVertex) normal = -normal;
+            return normal;
+        }
+
+        private static bool GetNormalComponents(Vector4 p0, Vector4 p1, Vector4 p2, Vector4 p3, out double nx, out double ny, out double nz, out double nw)
+        {
+            var d1 = p1 - p0;
+            var d2 = p2 - p0;
+            var d3 = p3 - p0;
+
+            // these look like terms from the determinant...but the why is where I'm confused.
+            // is this GrahamSchmidt or just solving for the null vector?
+            nx = d1.W * (d2.Z * d3.Y - d2.Y * d3.Z)
+                + d1.Z * (d2.Y * d3.W - d2.W * d3.Y)
+                + d1.Y * (d2.W * d3.Z - d2.Z * d3.W);
+            ny = d1.W * (d2.X * d3.Z - d2.Z * d3.X)
+                    + d1.Z * (d2.W * d3.X - d2.X * d3.W)
+                    + d1.X * (d2.Z * d3.W - d2.W * d3.Z);
+            nz = d1.W * (d2.Y * d3.X - d2.X * d3.Y)
+                    + d1.Y * (d2.X * d3.W - d2.W * d3.X)
+                    + d1.X * (d2.W * d3.Y - d2.Y * d3.W);
+            nw = d1.Z * (d2.X * d3.Y - d2.Y * d3.X)
+                    + d1.Y * (d2.Z * d3.X - d2.X * d3.Z)
+                    + d1.X * (d2.Y * d3.Z - d2.Z * d3.Y);
+            return Math.Min(d1.LengthSquared(), Math.Min(d2.LengthSquared(), d3.LengthSquared())) <= 10000 * Math.Max(Math.Max(Math.Abs(nx), Math.Abs(ny)),
+                    Math.Max(Math.Abs(nz), Math.Abs(nw)));
         }
 
         private static bool RetrieveNewEdge4D(int base1Factor, long base2Factor, Vertex4D v1, Vertex4D v2, Vertex4D v3,
@@ -217,21 +322,22 @@ namespace TVGL
             return newConeEdges.TryGetValue(id, out existingConeEdge);
         }
 
-        private static void MakeNewInConeFace(int base1Factor, long base2Factor, Vertex4D v1, Vertex4D v2, Vertex4D v3,
-            Dictionary<long, Edge4D> newConeEdges, ConvexHullFace4D newFace)
+        private static bool MakeNewInConeFace(int base1Factor, long base2Factor, Vertex4D v1, Vertex4D v2, Vertex4D v3,
+            Dictionary<long, Edge4D> newConeEdges, ConvexHullFace4D newTetra)
         {
             if (RetrieveNewEdge4D(base1Factor, base2Factor, v1, v2, v3, newConeEdges, out var existingConeEdge, out long id))
             {
-                if (existingConeEdge.OtherTetra != null) ;
-                newFace.AddEdge(existingConeEdge);
-                existingConeEdge.OtherTetra = newFace;
+                if (existingConeEdge.OtherTetra != null) return false;
+                newTetra.AddEdge(existingConeEdge);
+                existingConeEdge.OtherTetra = newTetra;
             }
             else
             {
-                var coneEdge = new Edge4D(v1, v2, v3, newFace, null);
-                newFace.AddEdge(coneEdge);
+                var coneEdge = new Edge4D(v1, v2, v3, newTetra, null);
+                newTetra.AddEdge(coneEdge);
                 newConeEdges.Add(id, coneEdge);
             }
+            return true;
         }
 
         /// <summary>
@@ -302,7 +408,7 @@ namespace TVGL
             ConvexHullFace4D maxFace = null;
             foreach (var face in faces)
             {
-                var dot = (v.Coordinates - face.A.Coordinates).Dot(face.Normal);
+                var dot = (v.Coordinates - face.A.Coordinates).Dot(face.GetNormal(false));
                 if (dot > maxDot)
                 {
                     maxDot = dot;
@@ -344,7 +450,7 @@ namespace TVGL
         /// tetrahedron are removed from extremePoints
         /// </summary>
         /// <param name="extremePoints"></param>
-        private static void FindBestExtremaSubset(List<Vertex4D> extremePoints)
+        private static void FindBestExtremaSubsetOLD(List<Vertex4D> extremePoints)
         {
             var n = extremePoints.Count;
             var sums = Enumerable.Repeat(0.0, n).ToList();
@@ -355,7 +461,7 @@ namespace TVGL
                     sums[i] += distSqd;
                     sums[j] += distSqd;
                 }
-            while (n > 5)
+            while (n > 4)
             {
                 var min = double.PositiveInfinity;
                 var minIndex = -1;
@@ -372,6 +478,31 @@ namespace TVGL
                 n--;
             }
         }
+        private static void FindBestExtremaSubset(List<Vertex4D> extremePoints)
+        {
+            var n = extremePoints.Count;
+            var maxSum = 0.0;
+            var iMax = -1;
+            var jMax = -1;
+            var kMax = -1;
+            var mMax = -1;
+            for (int i = 0; i < n - 3; i++)
+                for (int j = i + 1; j < n - 2; j++)
+                    for (int k = j + 1; k < n - 1; k++)
+                        for (int m = k + 1; m < n; m++)
+                        {
+                            GetNormalComponents(extremePoints[i].Coordinates, extremePoints[j].Coordinates, extremePoints[k].Coordinates,
+                                extremePoints[m].Coordinates, out var nx, out var ny, out var nz, out var nw);
+                            var sum = Math.Abs(nx) + Math.Abs(ny) + Math.Abs(nz) + Math.Abs(nw);
+                            if (maxSum < sum)
+                            {
+                                maxSum = sum; iMax = i; jMax = j; kMax = k; mMax = m;
+                            }
+                        }
+            for (int i = n - 1; i >= 0; i--)
+                if (i != iMax && i != jMax && i != kMax && i != mMax)
+                    extremePoints.RemoveAt(i);
+        }
 
 
 
@@ -383,11 +514,30 @@ namespace TVGL
         private static List<ConvexHullFace4D> MakeSimplexFaces(List<Vertex4D> vertices)
         {
             if (vertices.Count <= 3) throw new ArgumentException("There must be at least 4 vertices to make a simplex");
-            if (vertices.Count == 4)
-            {   // if there are only 4 vertices, then we make two faces back-to-back
-                var faceOwned = new ConvexHullFace4D(vertices[0], vertices[1], vertices[2], vertices[3], Vector4.Zero);
+            //if (vertices.Count == 4)
+            {
+                //throw new NotImplementedException();
+                var normal = DetermineNormal(vertices[0].Coordinates, vertices[1].Coordinates, vertices[2].Coordinates, vertices[3].Coordinates, Vector4.Null);
+
+                // make two faces back-to-back
+                var faceOwned = new ConvexHullFace4D
+                {
+                    A = vertices[0],
+                    B = vertices[1],
+                    C = vertices[2],
+                    D = vertices[3],
+                    Normal = normal
+                };
                 // here we use the origin to orient one of the faces
-                var faceOther = new ConvexHullFace4D(vertices[3], vertices[2], vertices[1], vertices[0], faceOwned.Normal + vertices[3].Coordinates);
+                var faceOther = new ConvexHullFace4D
+                {
+                    A = vertices[3],
+                    B = vertices[2],
+                    C = vertices[1],
+                    D = vertices[0],
+                    Normal = -normal
+                };
+                //(vertices[3], vertices[2], vertices[1], vertices[0], faceOwned.Normal + vertices[3].Coordinates);
                 // to make this face the opposite orientation, we create an "under point" by adding the normal of the previous face to one of the points of the face
                 var edge = new Edge4D(vertices[0], vertices[1], vertices[2], faceOwned, faceOther);
                 faceOwned.AddEdge(edge);
@@ -402,14 +552,16 @@ namespace TVGL
                 faceOwned.AddEdge(edge);
                 faceOther.AddEdge(edge);
                 return [faceOwned, faceOther];
+
             }
+            /*
             else // there are 5 or 6 vertices, so we make a proper tesseract
             {
-                var face4 = new ConvexHullFace4D(vertices[0], vertices[1], vertices[2], vertices[3], vertices[4].Coordinates);
-                var face3 = new ConvexHullFace4D(vertices[4], vertices[0], vertices[1], vertices[2], vertices[3].Coordinates);
-                var face2 = new ConvexHullFace4D(vertices[3], vertices[4], vertices[0], vertices[1], vertices[2].Coordinates);
-                var face1 = new ConvexHullFace4D(vertices[2], vertices[3], vertices[4], vertices[0], vertices[1].Coordinates);
-                var face0 = new ConvexHullFace4D(vertices[1], vertices[2], vertices[3], vertices[4], vertices[0].Coordinates);
+                var face4 = new ConvexHullFace4D(vertices[0], vertices[1], vertices[2], vertices[3], vertices[4].Coordinates, Vector4.Null);
+                var face3 = new ConvexHullFace4D(vertices[4], vertices[0], vertices[1], vertices[2], vertices[3].Coordinates, Vector4.Null);
+                var face2 = new ConvexHullFace4D(vertices[3], vertices[4], vertices[0], vertices[1], vertices[2].Coordinates, Vector4.Null);
+                var face1 = new ConvexHullFace4D(vertices[2], vertices[3], vertices[4], vertices[0], vertices[1].Coordinates, Vector4.Null);
+                var face0 = new ConvexHullFace4D(vertices[1], vertices[2], vertices[3], vertices[4], vertices[0].Coordinates, Vector4.Null);
 
                 var edge = new Edge4D(vertices[2], vertices[3], vertices[4], face0, face1);
                 face0.AddEdge(edge);
@@ -443,7 +595,7 @@ namespace TVGL
                 face4.AddEdge(edge);
 
                 return [face4, face3, face2, face1, face0];
-            }
+            }*/
         }
 
         /// <summary>

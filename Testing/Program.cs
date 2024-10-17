@@ -1,12 +1,9 @@
-using Newtonsoft.Json.Linq;
-using StarMathLib;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using TVGL;
-using TVGLUnitTestsAndBenchmarking.Misc_Tests;
 
 namespace TVGLUnitTestsAndBenchmarking
 {
@@ -29,7 +26,7 @@ namespace TVGLUnitTestsAndBenchmarking
             TVGL.Message.Verbosity = VerbosityLevels.OnlyCritical;
             DirectoryInfo dir = Program.BackoutToFolder(inputFolder);
 
-            var index = 34;
+            var index = 26;
             var valid3DFileExtensions = new HashSet<string> { ".stl", ".ply", ".obj", ".3mf", ".tvglz" };
             var allFiles = dir.GetFiles("*", SearchOption.AllDirectories).Where(f => valid3DFileExtensions.Contains(f.Extension.ToLower()))
                 ; //.OrderBy(fi => fi.Length);
@@ -39,7 +36,7 @@ namespace TVGLUnitTestsAndBenchmarking
                 TessellatedSolid[] solids = null;
                 IO.Open(fileName.FullName, out solids);
                 var ts = solids[0];
-                Presenter.ShowAndHang(ts);
+                //Presenter.ShowAndHang(ts);
                 var vert4Ds = new Vertex4D[ts.NumberOfVertices];
                 for (int i = 0; i < ts.NumberOfVertices; i++)
                 {
@@ -63,8 +60,7 @@ namespace TVGLUnitTestsAndBenchmarking
                         faces.Add(face);
                     }
                 }
-                Console.WriteLine("presenting...");
-                Presenter.ShowAndHang(faces);
+                //Presenter.ShowAndHang(faces);
                 var alpha = 0.15 * (ts.Bounds[1] - ts.Bounds[0]).Length();
                 var alphaSqd = alpha * alpha;
                 for (int i = faces.Count - 1; i >= ts.NumberOfFaces; i--)
@@ -75,6 +71,7 @@ namespace TVGLUnitTestsAndBenchmarking
                         (face.C.Coordinates - face.B.Coordinates).LengthSquared() > alphaSqd)
                         faces.RemoveAt(i);
                 }
+                Console.WriteLine("presenting...");
                 Presenter.ShowAndHang(faces);
                 index++;
             }
