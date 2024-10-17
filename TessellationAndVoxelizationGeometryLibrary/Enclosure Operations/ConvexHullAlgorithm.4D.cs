@@ -122,8 +122,8 @@ namespace TVGL
             verticesToReassign.Clear();
             var peakVertex = startingTetra.peakVertex;
             var peakCoord = peakVertex.Coordinates;
-            var stack = new Stack<(ConvexHullFace4D, Edge4D)>();
-            stack.Push((startingTetra, null));
+            var stack = new Queue<(ConvexHullFace4D, Edge4D)>();
+            stack.Enqueue((startingTetra, null));
             var newConeFaces = new Dictionary<long, Edge4D>();
             // that's initialization. now for the main loop. Using a Depth-First Search, we find all the tetras that are
             // within (and beyond the horizon) from the peak vertex. Imagine this peak Vertex4D as a point sitting in the middle
@@ -132,10 +132,25 @@ namespace TVGL
             // The new triangles are formed by connecting the edges on the horizon with the peak.
             while (stack.Count > 0)
             {
-                var (current, connectingFace) = stack.Pop();
+                var (current, connectingFace) = stack.Dequeue();
                 if (current.Visited) continue; // here is the only place where "Visited" is checked. It is only set for
                 // triangles within the cone to avoid cycling or redundant search.
-                if ((peakCoord - current.A.Coordinates).Dot(current.Normal) < 0)
+                var dot = (peakCoord - current.A.Coordinates).Dot(current.Normal);
+                if (dot >= 0) // && CheckAndRetrieveConeEdge(base1Factor, base2Factor, peakVertex, newConeFaces, current))
+                {    // and the peak and add them to the verticesToReassign list for later reassignment to the new faces
+                    current.Visited = true;
+                    oldTetras.Add(current);
+                    if (current.peakVertex != null && current.peakVertex != peakVertex)
+                        verticesToReassign.Add(current.peakVertex);
+                    verticesToReassign.AddRange(current.InteriorVertices);
+
+                    // find the neigbors of the current face that are not the connecting edge (the edge we came from)
+                    if (current.ABC != connectingFace) stack.Enqueue((current.ABC.AdjacentTetra(current), current.ABC));
+                    if (current.ABD != connectingFace) stack.Enqueue((current.ABD.AdjacentTetra(current), current.ABD));
+                    if (current.ACD != connectingFace) stack.Enqueue((current.ACD.AdjacentTetra(current), current.ACD));
+                    if (current.BCD != connectingFace) stack.Enqueue((current.BCD.AdjacentTetra(current), current.BCD));
+                }
+                else // the face is within the cone. it'll be deleted in the above method, so we better get its interior vertices
                 {   // the vector from this current tetra to the peak is below the current normal. Therefore
                     // current is beyond the horizon and is not to be replaced.
                     // so we stop here but before we move down the stack we need to create a new tetra
@@ -151,28 +166,35 @@ namespace TVGL
                     MakeNewInConeFace(base1Factor, base2Factor, connectingFace.A, connectingFace.C, peakVertex, newConeFaces, newTetra);
                     MakeNewInConeFace(base1Factor, base2Factor, connectingFace.B, connectingFace.C, peakVertex, newConeFaces, newTetra);
                 }
-                else // the face is within the cone. it'll be deleted in the above method, so we better get its interior vertices
-                {    // and the peak and add them to the verticesToReassign list for later reassignment to the new faces
-                    current.Visited = true;
-                    oldTetras.Add(current);
-                    if (current.peakVertex != null && current.peakVertex != peakVertex)
-                        verticesToReassign.Add(current.peakVertex);
-                    verticesToReassign.AddRange(current.InteriorVertices);
-
-                    // find the neigbors of the current face that are not the connecting edge (the edge we came from)
-                    if (current.ABC != connectingFace) stack.Push((current.ABC.AdjacentTetra(current), current.ABC));
-                    if (current.ABD != connectingFace) stack.Push((current.ABD.AdjacentTetra(current), current.ABD));
-                    if (current.ACD != connectingFace) stack.Push((current.ACD.AdjacentTetra(current), current.ACD));
-                    if (current.BCD != connectingFace) stack.Push((current.BCD.AdjacentTetra(current), current.BCD));
-                }
             }
         }
 
-
-        private static void MakeNewInConeFace(int base1Factor, long base2Factor, Vertex4D v1, Vertex4D v2, Vertex4D v3,
-            Dictionary<long, Edge4D> newConeEdges, ConvexHullFace4D newFace)
+        private static bool CheckAndRetrieveConeEdge(int base1Factor, long base2Factor, Vertex4D peakVertex, Dictionary<long, Edge4D> newConeFaces, ConvexHullFace4D current)
         {
-            long id;
+            if (RetrieveNewEdge4D(base1Factor, base2Factor, current.A, current.B, peakVertex, newConeFaces, out var existingConeEdge, out _)
+                && existingConeEdge.OtherTetra != null)
+                return false;
+            if (RetrieveNewEdge4D(base1Factor, base2Factor, current.A, current.C, peakVertex, newConeFaces, out existingConeEdge, out _)
+                && existingConeEdge.OtherTetra != null)
+                return false;
+            if (RetrieveNewEdge4D(base1Factor, base2Factor, current.A, current.D, peakVertex, newConeFaces, out existingConeEdge, out _)
+                && existingConeEdge.OtherTetra != null)
+                return false;
+            if (RetrieveNewEdge4D(base1Factor, base2Factor, current.B, current.C, peakVertex, newConeFaces, out existingConeEdge, out _)
+                && existingConeEdge.OtherTetra != null)
+                return false;
+            if (RetrieveNewEdge4D(base1Factor, base2Factor, current.B, current.D, peakVertex, newConeFaces, out existingConeEdge, out _)
+                && existingConeEdge.OtherTetra != null)
+                return false;
+            if (RetrieveNewEdge4D(base1Factor, base2Factor, current.C, current.D, peakVertex, newConeFaces, out existingConeEdge, out _)
+                && existingConeEdge.OtherTetra != null)
+                return false;
+            return true;
+        }
+
+        private static bool RetrieveNewEdge4D(int base1Factor, long base2Factor, Vertex4D v1, Vertex4D v2, Vertex4D v3,
+            Dictionary<long, Edge4D> newConeEdges, out Edge4D existingConeEdge, out long id)
+        {
             if (v1.IndexInList > v2.IndexInList && v1.IndexInList > v3.IndexInList)
             {
                 id = base2Factor * v1.IndexInList;
@@ -191,7 +213,14 @@ namespace TVGL
                 if (v2.IndexInList > v1.IndexInList) id += base1Factor * v2.IndexInList + v1.IndexInList;
                 else id += base1Factor * v1.IndexInList + v2.IndexInList;
             }
-            if (newConeEdges.TryGetValue(id, out var existingConeEdge))
+            existingConeEdge = null;
+            return newConeEdges.TryGetValue(id, out existingConeEdge);
+        }
+
+        private static void MakeNewInConeFace(int base1Factor, long base2Factor, Vertex4D v1, Vertex4D v2, Vertex4D v3,
+            Dictionary<long, Edge4D> newConeEdges, ConvexHullFace4D newFace)
+        {
+            if (RetrieveNewEdge4D(base1Factor, base2Factor, v1, v2, v3, newConeEdges, out var existingConeEdge, out long id))
             {
                 if (existingConeEdge.OtherTetra != null) ;
                 newFace.AddEdge(existingConeEdge);
@@ -204,6 +233,7 @@ namespace TVGL
                 newConeEdges.Add(id, coneEdge);
             }
         }
+
         /// <summary>
         /// This method is called at the end of the algorithm to make the convex hull object.
         /// </summary>
