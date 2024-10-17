@@ -1,12 +1,9 @@
-using Newtonsoft.Json.Linq;
-using StarMathLib;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using TVGL;
-using TVGLUnitTestsAndBenchmarking.Misc_Tests;
 
 namespace TVGLUnitTestsAndBenchmarking
 {
@@ -28,49 +25,8 @@ namespace TVGLUnitTestsAndBenchmarking
             Trace.Listeners.Add(myWriter);
             TVGL.Message.Verbosity = VerbosityLevels.OnlyCritical;
             DirectoryInfo dir = Program.BackoutToFolder(inputFolder);
-            //Voxels.TestVoxelization(dir);
-            for (int iter = 0; iter < 100; iter++)
-            {
 
-                var axis = new Vector3(r1, r1, r1).Normalize();
-                //var axis = Vector3.UnitZ;
-                var anchor = new Vector3(r100, r100, r100) / 10;
-                anchor = anchor - anchor.Dot(axis) * axis;
-                var radius = Math.Sqrt(Math.Abs(r100));
-                var cylinder = new Cylinder
-                {
-                    Anchor = anchor,
-                    Axis = axis,
-                    Radius = radius,
-                };
-                var cosAxis = axis.GetPerpendicularDirection();
-                var sinAxis = axis.Cross(cosAxis);
-                var tx = r100;
-                var ty = r100;
-                var k = 10;
-                var zStep = 0.2;
-                var angleStep = 0.5;
-                var helixPoints = new Vector3[k];
-                for (int i = 0; i < k; i++)
-                {
-                    var ctr = anchor + axis * zStep * i;
-                    helixPoints[i] = ctr + radius * Math.Cos(angleStep * i) * cosAxis + radius * Math.Sin(angleStep * i) * sinAxis;
-                    helixPoints[i] += 0.001 * new Vector3(r1, r1, r1);
-                }
-                cylinder.MinDistanceAlongAxis = helixPoints[0].Dot(axis);
-                cylinder.MaxDistanceAlongAxis = helixPoints[^1].Dot(axis);
-                cylinder.Tessellate();
-                cylinder.SetColor(new Color(50, 250, 50, 250));
-                var gq = GeneralQuadric.DefineFromPoints(helixPoints, out _);
-                gq.Tessellate(-50, 50, -50, 50, -50, 50, 2);
-                gq.SetColor(new Color(50, 50, 250, 250));
-                Presenter.ShowVertexPathsWithFaces([helixPoints], cylinder.Faces.Concat(gq.Faces), 4);
-
-                gq.DefineAsCylinder(out var cylGQ);
-            }
-            return;
-
-            var index = 0;
+            var index = 26;
             var valid3DFileExtensions = new HashSet<string> { ".stl", ".ply", ".obj", ".3mf", ".tvglz" };
             var allFiles = dir.GetFiles("*", SearchOption.AllDirectories).Where(f => valid3DFileExtensions.Contains(f.Extension.ToLower()))
                 ; //.OrderBy(fi => fi.Length);
@@ -79,12 +35,44 @@ namespace TVGLUnitTestsAndBenchmarking
                 Console.WriteLine(index + ": Attempting to open: " + fileName.Name);
                 TessellatedSolid[] solids = null;
                 IO.Open(fileName.FullName, out solids);
-                //var vs = VoxelizedSolid.CreateFrom(solids[0], 66);
-                //Presenter.ShowAndHang(vs);
-                var sw = Stopwatch.StartNew();
-                Presenter.ShowAndHang(solids);
-                //ConvexHull.Test2(solids.MaxBy(s => s.Volume));
-                sw.Stop();
+                var ts = solids[0];
+                //Presenter.ShowAndHang(ts);
+                var vert4Ds = new Vertex4D[ts.NumberOfVertices];
+                for (int i = 0; i < ts.NumberOfVertices; i++)
+                {
+                    var pt = ts.Vertices[i].Coordinates;
+                    var pt4 = new Vector4(pt, pt.X * pt.X + pt.Y * pt.Y + pt.Z * pt.Z);
+                    vert4Ds[i] = new Vertex4D(pt4, i);
+                }
+                ConvexHull4D.Create(vert4Ds, out var ch4d);
+                var faces = ts.Faces.ToList();
+                var colorEnumerator = Color.GetRandomColors().GetEnumerator();
+                foreach (var tetra in ch4d.Tetrahedra)
+                {
+                    var color = colorEnumerator.MoveNext() ? colorEnumerator.Current : null;
+                    foreach (var edge4D in tetra.Faces)
+                    {
+                        var aIndex = edge4D.A.IndexInList;
+                        var bIndex = edge4D.B.IndexInList;
+                        var cIndex = edge4D.C.IndexInList;
+                        var face = new TriangleFace(ts.Vertices[aIndex], ts.Vertices[bIndex], ts.Vertices[cIndex]);
+                        face.Color = new Color(133, color.R, color.G, color.B);
+                        faces.Add(face);
+                    }
+                }
+                //Presenter.ShowAndHang(faces);
+                var alpha = 0.15 * (ts.Bounds[1] - ts.Bounds[0]).Length();
+                var alphaSqd = alpha * alpha;
+                for (int i = faces.Count - 1; i >= ts.NumberOfFaces; i--)
+                {
+                    var face = faces[i];
+                    if ((face.A.Coordinates - face.B.Coordinates).LengthSquared() > alphaSqd ||
+                        (face.A.Coordinates - face.C.Coordinates).LengthSquared() > alphaSqd ||
+                        (face.C.Coordinates - face.B.Coordinates).LengthSquared() > alphaSqd)
+                        faces.RemoveAt(i);
+                }
+                Console.WriteLine("presenting...");
+                Presenter.ShowAndHang(faces);
                 index++;
             }
         }
