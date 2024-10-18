@@ -8,7 +8,7 @@ namespace TVGL
     {
         const double jiggleToleranceFactor = 33;
         const int defaultNumAttempts = 10;
-        const double initStepFactor = 1e-6;
+        const double initStepFactor = 1e-7;
 
         /// <summary>
         /// Creates the convex hull for a set of Coordinates. By the way, this is not 
@@ -60,7 +60,7 @@ namespace TVGL
                 vertices = vertexList.ToArray();
             }
             var tolerance = initStepFactor * new Vector3(xMax - xMin, yMax - yMin, zMax - zMin).Length();
-            success = Create(vertices, out convexHull, tolerance,defaultNumAttempts);
+            success = Create(vertices, out convexHull, tolerance, defaultNumAttempts);
             if (success)
             {
                 vertexIndices = vertices.Select(v => v.IndexInList).ToList();
@@ -94,7 +94,7 @@ namespace TVGL
             }
 
             var stepSize = initStepFactor * new Vector3(xMax - xMin, yMax - yMin, zMax - zMin).Length();
-            return Create(vertices, out convexHull, stepSize,defaultNumAttempts);
+            return Create(vertices, out convexHull, stepSize, defaultNumAttempts);
         }
 
 
@@ -116,10 +116,9 @@ namespace TVGL
                 convexHull.Vertices.Add(extremePoints[0]);
                 return true;
             }
-            if (numExtrema < 4)
-                throw new NotImplementedException();
+            if (numExtrema == 3)
+                AddFourthPointToExtremaSet(vertices, extremePoints);
             else if (numExtrema > 4)
-                // if more than 5 extreme points, then we need to reduce to 5 by finding the max volume tesseract
                 FindBestExtremaSubset(extremePoints);
             var simplexFaces = MakeSimplexFaces(extremePoints);
 
@@ -162,7 +161,26 @@ namespace TVGL
             convexHull = MakeConvexHullWithFaces(faceQueue.UnorderedItems.Select(fq => fq.Element), n);
             return true;
         }
-        private static bool JigglePointsAndTryAgain(IList<Vertex4D> vertices, out ConvexHull4D convexHull, double tolerance,
+
+        private static void AddFourthPointToExtremaSet(Vertex4D[] vertices,List<Vertex4D> extremePoints)
+        {
+            var maxSum = 0.0;
+            var iMax = -1;
+            for (int i = 0; i <vertices.Length; i++)
+            {
+                if (vertices[i] == extremePoints[0] || vertices[i] == extremePoints[1] || vertices[i] == extremePoints[2])
+                    continue;
+                GetNormalComponents(vertices[i].Coordinates, extremePoints[0].Coordinates, extremePoints[1].Coordinates,
+                    extremePoints[2].Coordinates, out var nx, out var ny, out var nz, out var nw);
+                var sum = Math.Abs(nx) + Math.Abs(ny) + Math.Abs(nz) + Math.Abs(nw);
+                if (maxSum < sum)
+                {
+                    maxSum = sum; iMax = i; 
+                }
+            }
+            extremePoints.Add(vertices[iMax]);
+        }
+        private static bool JigglePointsAndTryAgain(IList<Vertex4D> vertices, out ConvexHull4D convexHull, double stepSize,
             int numAttempts)
         {
             Console.WriteLine("randomizing to avoid degeneracies " + (defaultNumAttempts - numAttempts).ToString());
@@ -170,9 +188,6 @@ namespace TVGL
             if (numAttempts < 0)
                 return false;
 
-            tolerance *= Math.Sqrt(jiggleToleranceFactor);
-            //tolerance *= jiggleToleranceFactor;
-            var stepSize = tolerance * jiggleToleranceFactor;
             var random = new Random();
             var jiggledPoints = new Vertex4D[vertices.Count];
             for (int i = 0; i < vertices.Count; i++)
@@ -181,7 +196,7 @@ namespace TVGL
                 jiggledPoints[i] = new Vertex4D(new Vector4(p.X + 2 * stepSize * (random.NextDouble() - 1), p.Y + 2 * stepSize * (random.NextDouble() - 1),
                     p.Z + 2 * stepSize * (random.NextDouble() - 1), p.W + 2 * stepSize * (random.NextDouble() - 1)), i);
             }
-            if (!Create(jiggledPoints, out var jiggledConvexHull, tolerance, numAttempts))
+            if (!Create(jiggledPoints, out var jiggledConvexHull, stepSize * jiggleToleranceFactor, numAttempts))
                 return false;
 
             convexHull = new ConvexHull4D();
@@ -191,7 +206,7 @@ namespace TVGL
             convexHull.Vertices.AddRange(vertsArray);
 
             var newConeFaces = new Dictionary<long, Edge4D>();
-            var vertexPairs =new Dictionary<long, VertexPair>();
+            var vertexPairs = new Dictionary<long, VertexPair>();
             var n = vertices.Count;
             var nSqd = (long)(n * n);
 
