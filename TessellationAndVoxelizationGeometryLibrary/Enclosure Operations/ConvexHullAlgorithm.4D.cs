@@ -6,6 +6,10 @@ namespace TVGL
 {
     public partial class ConvexHull4D
     {
+        const double jiggleToleranceFactor = 33;
+        const int defaultNumAttempts = 10;
+        const double initStepFactor = 1e-6;
+
         /// <summary>
         /// Creates the convex hull for a set of Coordinates. By the way, this is not 
         /// faster than using Vertices and - in fact - this method will wrap each coordinate
@@ -16,16 +20,47 @@ namespace TVGL
         /// <param name="vertexIndices"></param>
         /// <param name="tolerance"></param>
         /// <returns></returns>
-        public static bool Create(IList<Vector4> points, out ConvexHull4D convexHull,
-            out List<int> vertexIndices, double tolerance = double.NaN)
+        public static bool Create(IEnumerable<Vector4> points, out ConvexHull4D convexHull,
+            out List<int> vertexIndices)
         {
             bool success = false;
-            var n = points.Count;
-            var vertices = new Vertex4D[n];
-            for (int i = 0; i < n; i++)
-                vertices[i] = new Vertex4D(points[i], i);
-
-            success = Create(vertices, out convexHull, tolerance);
+            Vertex4D[] vertices;
+            double xMin = double.PositiveInfinity, xMax = double.NegativeInfinity;
+            double yMin = double.PositiveInfinity, yMax = double.NegativeInfinity;
+            double zMin = double.PositiveInfinity, zMax = double.NegativeInfinity;
+            if (points is IList<Vector4> pointList)
+            {
+                vertices = new Vertex4D[pointList.Count];
+                for (int i = 0; i < pointList.Count; i++)
+                {
+                    var p = pointList[i];
+                    vertices[i] = new Vertex4D(p, i);
+                    if (xMin > p.X) xMin = p.X;
+                    if (xMax < p.X) xMax = p.X;
+                    if (yMin > p.Y) yMin = p.Y;
+                    if (yMax < p.Y) yMax = p.Y;
+                    if (zMin > p.Z) zMin = p.Z;
+                    if (zMax < p.Z) zMax = p.Z;
+                }
+            }
+            else
+            {
+                var vertexList = new List<Vertex4D>();
+                var i = 0;
+                foreach (var p in points)
+                {
+                    vertexList.Add(new Vertex4D(p, i++));
+                    if (xMin > p.X) xMin = p.X;
+                    if (xMax < p.X) xMax = p.X;
+                    if (yMin > p.Y) yMin = p.Y;
+                    if (yMax < p.Y) yMax = p.Y;
+                    if (zMin > p.Z) zMin = p.Z;
+                    if (zMax < p.Z) zMax = p.Z;
+                }
+                vertices = vertexList.ToArray();
+            }
+            var tolerance = initStepFactor * new Vector3(xMax - xMin, yMax - yMin, zMax - zMin).Length();
+            success = Create(vertices, out convexHull, tolerance,defaultNumAttempts);
             if (success)
             {
                 vertexIndices = vertices.Select(v => v.IndexInList).ToList();
@@ -38,34 +73,46 @@ namespace TVGL
             }
         }
 
-        /// <summary>
-        /// Creates the convex hull for a set of vertices. This method is used by the TessellatedSolid,
-        /// but it can be used within any set of vertices.
-        /// </summary>
-        /// <param name="vertices"></param>
-        /// <param name="convexHull"></param>
-        /// <param name="connectVerticesToCvxHullFaces"></param>
-        /// <param name="tolerance"></param>
-        /// <returns></returns>
-        public static bool Create(IList<Vertex4D> vertices, out ConvexHull4D convexHull, double tolerance = double.NaN)
+        public static bool Create(IEnumerable<Vertex4D> points, out ConvexHull4D convexHull)
         {
-            for (int i = 1; i < vertices.Count; i++)
+            Vertex4D[] vertices = points.ToArray();
+            double xMin = vertices[0].X, xMax = vertices[0].X;
+            double yMin = vertices[0].Y, yMax = vertices[0].Y;
+            double zMin = vertices[0].Z, zMax = vertices[0].Z;
+
+            for (int i = 1; i < vertices.Length; i++)
+            {
+                var p = vertices[i];
+                if (xMin > p.X) xMin = p.X;
+                if (xMax < p.X) xMax = p.X;
+                if (yMin > p.Y) yMin = p.Y;
+                if (yMax < p.Y) yMax = p.Y;
+                if (zMin > p.Z) zMin = p.Z;
+                if (zMax < p.Z) zMax = p.Z;
                 if (vertices[i].IndexInList <= vertices[i - 1].IndexInList)
                     throw new Exception("The vertices must be in order of their index in the list");
-            var n = vertices.Count;
+            }
+
+            var stepSize = initStepFactor * new Vector3(xMax - xMin, yMax - yMin, zMax - zMin).Length();
+            return Create(vertices, out convexHull, stepSize,defaultNumAttempts);
+        }
+
+
+        private static bool Create(Vertex4D[] vertices, out ConvexHull4D convexHull, double innerStepSize,
+            int numAttempts)
+        {
+            var n = vertices.Length;
             var nSqd = (long)(n * n);
-            if (double.IsNaN(tolerance) || tolerance < Constants.BaseTolerance)
-                tolerance = Constants.BaseTolerance;
 
             // if the vertices are all on a plane, then we can solve this as a 2D problem
-            if (SolveAs3D(vertices, out convexHull, tolerance)) return true;
+            if (SolveAs3D(vertices, out convexHull, Constants.BaseTolerance)) return true;
 
             /* The first step is to quickly identify the two to six vertices based on the
              * Akl-Toussaint heuristic, which is simply the points on the AABB */
             var extremePoints = GetExtremaOnAABB(n, vertices, out var numExtrema);
             if (numExtrema == 1)
             { // only one extreme point, so the convex hull is a single point
-                convexHull = new ConvexHull4D { tolerance = tolerance };
+                convexHull = new ConvexHull4D();
                 convexHull.Vertices.Add(extremePoints[0]);
                 return true;
             }
@@ -81,7 +128,7 @@ namespace TVGL
             foreach (var v in vertices)
             {
                 if (extremePointsHash.Contains(v)) continue;
-                AddVertexToProperFace(simplexFaces, v, tolerance);
+                AddVertexToProperFace(simplexFaces, v, Constants.BaseTolerance);
             }
             // here comes the main loop. We start with the simplex faces and then keep adding faces until we're done
             var faceQueue = new UpdatablePriorityQueue<ConvexHullFace4D, double>(simplexFaces.Select(f => (f, f.peakDistance)),
@@ -102,19 +149,81 @@ namespace TVGL
                 // this function, CreateNewFaceCone, is the hardest part of the algorithm. But, from its arguments, you can see that it finds
                 // faces to remove (oldFaces), faces to add (newFaces), and vertices to reassign (verticesToReassign) to the new faces.
                 // These three lists are then processed in the 3 foreach loops below.
-                CreateNewFaceCone(face, newFaces, oldFaces, verticesToReassign, n, nSqd);
+                if (!CreateNewFaceCone(face, newFaces, oldFaces, verticesToReassign, n, nSqd))
+                    return JigglePointsAndTryAgain(vertices, out convexHull, innerStepSize, numAttempts - 1);
                 foreach (var iv in verticesToReassign)
-                    AddVertexToProperFace(newFaces, iv, tolerance);
+                    AddVertexToProperFace(newFaces, iv, Constants.BaseTolerance);
                 foreach (var f in oldFaces)
                     faceQueue.Remove(f);
                 foreach (var newFace in newFaces)
                     faceQueue.Enqueue(newFace, newFace.peakDistance);
             }
             // now we have the convex hull faces are used to build the convex hull object
-            convexHull = MakeConvexHullWithFaces(tolerance, faceQueue.UnorderedItems.Select(fq => fq.Element), n);
+            convexHull = MakeConvexHullWithFaces(faceQueue.UnorderedItems.Select(fq => fq.Element), n);
             return true;
         }
-        private static void CreateNewFaceCone(ConvexHullFace4D startingTetra, List<ConvexHullFace4D> newTetras,
+        private static bool JigglePointsAndTryAgain(IList<Vertex4D> vertices, out ConvexHull4D convexHull, double tolerance,
+            int numAttempts)
+        {
+            Console.WriteLine("randomizing to avoid degeneracies " + (defaultNumAttempts - numAttempts).ToString());
+            convexHull = null;
+            if (numAttempts < 0)
+                return false;
+
+            tolerance *= Math.Sqrt(jiggleToleranceFactor);
+            //tolerance *= jiggleToleranceFactor;
+            var stepSize = tolerance * jiggleToleranceFactor;
+            var random = new Random();
+            var jiggledPoints = new Vertex4D[vertices.Count];
+            for (int i = 0; i < vertices.Count; i++)
+            {
+                var p = vertices[i].Coordinates;
+                jiggledPoints[i] = new Vertex4D(new Vector4(p.X + 2 * stepSize * (random.NextDouble() - 1), p.Y + 2 * stepSize * (random.NextDouble() - 1),
+                    p.Z + 2 * stepSize * (random.NextDouble() - 1), p.W + 2 * stepSize * (random.NextDouble() - 1)), i);
+            }
+            if (!Create(jiggledPoints, out var jiggledConvexHull, tolerance, numAttempts))
+                return false;
+
+            convexHull = new ConvexHull4D();
+            var vertsArray = new Vertex4D[jiggledConvexHull.Vertices.Count];
+            for (int i = 0; i < jiggledConvexHull.Vertices.Count; i++)
+                vertsArray[i] = vertices[jiggledConvexHull.Vertices[i].IndexInList];
+            convexHull.Vertices.AddRange(vertsArray);
+
+            var newConeFaces = new Dictionary<long, Edge4D>();
+            var vertexPairs =new Dictionary<long, VertexPair>();
+            var n = vertices.Count;
+            var nSqd = (long)(n * n);
+
+            //cvxHull.Tetrahedra.AddRange(tetras);
+            foreach (var tetra in jiggledConvexHull.Tetrahedra)
+            {
+                var newTetra = new ConvexHullFace4D
+                {
+                    A = vertices[tetra.A.IndexInList],
+                    B = vertices[tetra.B.IndexInList],
+                    C = vertices[tetra.C.IndexInList],
+                    D = vertices[tetra.D.IndexInList],
+                    Normal = tetra.Normal,
+                };
+                convexHull.Tetrahedra.Add(newTetra);
+                MakeNewInConeFace(n, nSqd, newTetra.A, newTetra.B, newTetra.C, newConeFaces, newTetra);
+                MakeNewInConeFace(n, nSqd, newTetra.A, newTetra.B, newTetra.D, newConeFaces, newTetra);
+                MakeNewInConeFace(n, nSqd, newTetra.A, newTetra.C, newTetra.D, newConeFaces, newTetra);
+                MakeNewInConeFace(n, nSqd, newTetra.B, newTetra.C, newTetra.D, newConeFaces, newTetra);
+                AddVertexPair(vertexPairs, newTetra.A, newTetra.B, n, newTetra);
+                AddVertexPair(vertexPairs, newTetra.A, newTetra.C, n, newTetra);
+                AddVertexPair(vertexPairs, newTetra.A, newTetra.D, n, newTetra);
+                AddVertexPair(vertexPairs, newTetra.B, newTetra.C, n, newTetra);
+                AddVertexPair(vertexPairs, newTetra.B, newTetra.D, n, newTetra);
+                AddVertexPair(vertexPairs, newTetra.C, newTetra.D, n, newTetra);
+            }
+            convexHull.Faces.AddRange(newConeFaces.Values);
+            convexHull.VertexPairs.AddRange(vertexPairs.Values);
+            return true;
+        }
+
+        private static bool CreateNewFaceCone(ConvexHullFace4D startingTetra, List<ConvexHullFace4D> newTetras,
             List<ConvexHullFace4D> oldTetras, List<Vertex4D> verticesToReassign, int base1Factor, long base2Factor)
         {
             newTetras.Clear();
@@ -211,9 +320,9 @@ namespace TVGL
         /// <param name="connectVerticesToCvxHullFaces"></param>
         /// <param name="tetras"></param>
         /// <returns></returns>
-        private static ConvexHull4D MakeConvexHullWithFaces(double tolerance, IEnumerable<ConvexHullFace4D> tetras, int baseFactor)
+        private static ConvexHull4D MakeConvexHullWithFaces(IEnumerable<ConvexHullFace4D> tetras, int baseFactor)
         {
-            var cvxHull = new ConvexHull4D { tolerance = tolerance };
+            var cvxHull = new ConvexHull4D();
             cvxHull.Tetrahedra.AddRange(tetras);
 
             var cvxVertexHash = new HashSet<Vertex4D>();

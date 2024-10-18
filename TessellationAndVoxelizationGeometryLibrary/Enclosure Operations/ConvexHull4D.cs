@@ -11,7 +11,7 @@ namespace TVGL
         /// <summary>
         /// The volume of the Convex Hull.
         /// </summary>
-        public double tolerance { get; init; }
+        //public double tolerance { get; init; }
 
         /// <summary>
         /// The vertices of the ConvexHull
