@@ -303,14 +303,14 @@ namespace TVGL
                 normal = new Vector4(nx, ny, nz, nw).Normalize();
 
             var flipForUnderVertex = f.Dot(normal) < 0;
-            var a = new Vector3(p0.X, p0.Y, p0.Z);
-            var b = new Vector3(p1.X, p1.Y, p1.Z);
-            var c = new Vector3(p2.X, p2.Y, p2.Z);
-            var d = new Vector3(p3.X, p3.Y, p3.Z);
-            var vol3D = Math.Abs((a - d).Dot((b - d).Cross(c - d))); // / 6; for speed sake just avoid div by 6
+            //var a = new Vector3(p0.X, p0.Y, p0.Z);
+            //var b = new Vector3(p1.X, p1.Y, p1.Z);
+            //var c = new Vector3(p2.X, p2.Y, p2.Z);
+            //var d = new Vector3(p3.X, p3.Y, p3.Z);
+            //var vol3D = Math.Abs((a - d).Dot((b - d).Cross(c - d))); // / 6; for speed sake just avoid div by 6
 
-            if (vol3D.IsNegligible(Constants.BaseTolerance))
-                return Vector4.Null;
+            //if (vol3D.IsNegligible(Constants.BaseTolerance))
+            //    return Vector4.Null;
 
             if (flipForUnderVertex) normal = -normal;
             return normal;
@@ -336,7 +336,7 @@ namespace TVGL
             nw = d1.Z * (d2.X * d3.Y - d2.Y * d3.X)
                     + d1.Y * (d2.Z * d3.X - d2.X * d3.Z)
                     + d1.X * (d2.Y * d3.Z - d2.Z * d3.Y);
-            return Math.Min(d1.LengthSquared(), Math.Min(d2.LengthSquared(), d3.LengthSquared())) <= 10000 * Math.Max(Math.Max(Math.Abs(nx), Math.Abs(ny)),
+            return Math.Min(d1.LengthSquared(), Math.Min(d2.LengthSquared(), d3.LengthSquared())) <= 1e6 * Math.Max(Math.Max(Math.Abs(nx), Math.Abs(ny)),
                     Math.Max(Math.Abs(nz), Math.Abs(nw)));
         }
 
@@ -451,7 +451,7 @@ namespace TVGL
             ConvexHullFace4D maxFace = null;
             foreach (var face in faces)
             {
-                var dot = (v.Coordinates - face.A.Coordinates).Dot(face.GetNormal(false));
+                var dot = (v.Coordinates - face.A.Coordinates).Dot(face.GetNormal(true));
                 if (dot > maxDot)
                 {
                     maxDot = dot;
