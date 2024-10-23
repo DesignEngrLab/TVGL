@@ -58,6 +58,7 @@ namespace TVGL
             bool newPointFoundOutsideCircle;
             var stallCounter = 0;
             var indexOfMaxDist = -1;
+            var requiredImprovementPercent = Constants.HighConfidence;
             do
             {
                 newPointFoundOutsideCircle = false;
@@ -69,7 +70,9 @@ namespace TVGL
                     {
                         maxDistSqared = dist;
                         if (indexOfMaxDist == i) stallCounter++;
-                        else stallCounter = 0;
+                        //Only set the stall counter back to zero if there was a significant change.
+                        else if(dist * requiredImprovementPercent > maxDistSqared)
+                            stallCounter = 0;
                         indexOfMaxDist = i;
                         newPointFoundOutsideCircle = true;
                     }
