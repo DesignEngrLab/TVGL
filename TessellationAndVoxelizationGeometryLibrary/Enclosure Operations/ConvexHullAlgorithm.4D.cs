@@ -6,9 +6,9 @@ namespace TVGL
 {
     public partial class ConvexHull4D
     {
-        const double jiggleToleranceFactor = 33;
-        const int defaultNumAttempts = 10;
-        const double initStepFactor = 1e-7;
+        const double jiggleIncreaseFactor = 7;
+        internal const int DefaultNumAttempts = 10;
+        internal const double InitStepFactor = 3.33 * Constants.BaseTolerance;
 
         /// <summary>
         /// Creates the convex hull for a set of Coordinates. By the way, this is not 
@@ -59,8 +59,8 @@ namespace TVGL
                 }
                 vertices = vertexList.ToArray();
             }
-            var tolerance = initStepFactor * new Vector3(xMax - xMin, yMax - yMin, zMax - zMin).Length();
-            success = Create(vertices, out convexHull, tolerance, defaultNumAttempts);
+            var tolerance = InitStepFactor * new Vector3(xMax - xMin, yMax - yMin, zMax - zMin).Length();
+            success = Create(vertices, out convexHull, tolerance, DefaultNumAttempts);
             if (success)
             {
                 vertexIndices = vertices.Select(v => v.IndexInList).ToList();
@@ -93,8 +93,8 @@ namespace TVGL
                     throw new Exception("The vertices must be in order of their index in the list");
             }
 
-            var stepSize = initStepFactor * new Vector3(xMax - xMin, yMax - yMin, zMax - zMin).Length();
-            return Create(vertices, out convexHull, stepSize, defaultNumAttempts);
+            var stepSize = InitStepFactor * new Vector3(xMax - xMin, yMax - yMin, zMax - zMin).Length();
+            return Create(vertices, out convexHull, stepSize, DefaultNumAttempts);
         }
 
 
@@ -102,7 +102,7 @@ namespace TVGL
             int numAttempts)
         {
             var n = vertices.Length;
-            var nSqd = (long)(n * n);
+            var nSqd = (long)n * (long)n;
 
             // if the vertices are all on a plane, then we can solve this as a 2D problem
             if (SolveAs3D(vertices, out convexHull, Constants.BaseTolerance)) return true;
@@ -113,7 +113,7 @@ namespace TVGL
             if (numExtrema == 1)
             { // only one extreme point, so the convex hull is a single point
                 convexHull = new ConvexHull4D();
-                convexHull.Vertices.Add(extremePoints[0]);
+                convexHull.Vertices = [extremePoints[0]];
                 return true;
             }
             if (numExtrema == 3)
@@ -162,11 +162,11 @@ namespace TVGL
             return true;
         }
 
-        private static void AddFourthPointToExtremaSet(Vertex4D[] vertices,List<Vertex4D> extremePoints)
+        private static void AddFourthPointToExtremaSet(Vertex4D[] vertices, List<Vertex4D> extremePoints)
         {
             var maxSum = 0.0;
             var iMax = -1;
-            for (int i = 0; i <vertices.Length; i++)
+            for (int i = 0; i < vertices.Length; i++)
             {
                 if (vertices[i] == extremePoints[0] || vertices[i] == extremePoints[1] || vertices[i] == extremePoints[2])
                     continue;
@@ -175,7 +175,7 @@ namespace TVGL
                 var sum = Math.Abs(nx) + Math.Abs(ny) + Math.Abs(nz) + Math.Abs(nw);
                 if (maxSum < sum)
                 {
-                    maxSum = sum; iMax = i; 
+                    maxSum = sum; iMax = i;
                 }
             }
             extremePoints.Add(vertices[iMax]);
@@ -183,7 +183,7 @@ namespace TVGL
         private static bool JigglePointsAndTryAgain(IList<Vertex4D> vertices, out ConvexHull4D convexHull, double stepSize,
             int numAttempts)
         {
-            Console.WriteLine("randomizing to avoid degeneracies " + (defaultNumAttempts - numAttempts).ToString());
+            Console.WriteLine("randomizing to avoid degeneracies " + (DefaultNumAttempts - numAttempts).ToString() + "(step size = " + stepSize + ")");
             convexHull = null;
             if (numAttempts < 0)
                 return false;
@@ -196,21 +196,22 @@ namespace TVGL
                 jiggledPoints[i] = new Vertex4D(new Vector4(p.X + 2 * stepSize * (random.NextDouble() - 1), p.Y + 2 * stepSize * (random.NextDouble() - 1),
                     p.Z + 2 * stepSize * (random.NextDouble() - 1), p.W + 2 * stepSize * (random.NextDouble() - 1)), i);
             }
-            if (!Create(jiggledPoints, out var jiggledConvexHull, stepSize * jiggleToleranceFactor, numAttempts))
+            if (!Create(jiggledPoints, out var jiggledConvexHull, stepSize * jiggleIncreaseFactor, numAttempts))
                 return false;
 
             convexHull = new ConvexHull4D();
-            var vertsArray = new Vertex4D[jiggledConvexHull.Vertices.Count];
-            for (int i = 0; i < jiggledConvexHull.Vertices.Count; i++)
+            var vertsArray = new Vertex4D[jiggledConvexHull.Vertices.Length];
+            for (int i = 0; i < jiggledConvexHull.Vertices.Length; i++)
                 vertsArray[i] = vertices[jiggledConvexHull.Vertices[i].IndexInList];
-            convexHull.Vertices.AddRange(vertsArray);
+            convexHull.Vertices = vertsArray;
 
             var newConeFaces = new Dictionary<long, Edge4D>();
-            var vertexPairs = new Dictionary<long, VertexPair>();
+            var vertexPairs = new Dictionary<long, VertexPair4D>();
             var n = vertices.Count;
             var nSqd = (long)(n * n);
 
-            //cvxHull.Tetrahedra.AddRange(tetras);
+            convexHull.Tetrahedra = new ConvexHullFace4D[jiggledConvexHull.Tetrahedra.Length];
+            var k = 0;
             foreach (var tetra in jiggledConvexHull.Tetrahedra)
             {
                 var newTetra = new ConvexHullFace4D
@@ -221,7 +222,7 @@ namespace TVGL
                     D = vertices[tetra.D.IndexInList],
                     Normal = tetra.Normal,
                 };
-                convexHull.Tetrahedra.Add(newTetra);
+                convexHull.Tetrahedra[k++] = newTetra;
                 MakeNewInConeFace(n, nSqd, newTetra.A, newTetra.B, newTetra.C, newConeFaces, newTetra);
                 MakeNewInConeFace(n, nSqd, newTetra.A, newTetra.B, newTetra.D, newConeFaces, newTetra);
                 MakeNewInConeFace(n, nSqd, newTetra.A, newTetra.C, newTetra.D, newConeFaces, newTetra);
@@ -233,8 +234,8 @@ namespace TVGL
                 AddVertexPair(vertexPairs, newTetra.B, newTetra.D, n, newTetra);
                 AddVertexPair(vertexPairs, newTetra.C, newTetra.D, n, newTetra);
             }
-            convexHull.Faces.AddRange(newConeFaces.Values);
-            convexHull.VertexPairs.AddRange(vertexPairs.Values);
+            convexHull.Faces = newConeFaces.Values.ToArray();
+            convexHull.VertexPairs = vertexPairs.Values.ToArray();
             return true;
         }
 
@@ -351,33 +352,37 @@ namespace TVGL
             nw = d1.Z * (d2.X * d3.Y - d2.Y * d3.X)
                     + d1.Y * (d2.Z * d3.X - d2.X * d3.Z)
                     + d1.X * (d2.Y * d3.Z - d2.Z * d3.Y);
-            return Math.Min(d1.LengthSquared(), Math.Min(d2.LengthSquared(), d3.LengthSquared())) <= 1e6 * Math.Max(Math.Max(Math.Abs(nx), Math.Abs(ny)),
-                    Math.Max(Math.Abs(nz), Math.Abs(nw)));
+            return Constants.BaseTolerance * Math.Min(d1.LengthSquared(), Math.Min(d2.LengthSquared(), d3.LengthSquared()))
+                <= Math.Max(Math.Max(Math.Abs(nx), Math.Abs(ny)), Math.Max(Math.Abs(nz), Math.Abs(nw)));
         }
 
         private static bool RetrieveNewEdge4D(int base1Factor, long base2Factor, Vertex4D v1, Vertex4D v2, Vertex4D v3,
             Dictionary<long, Edge4D> newConeEdges, out Edge4D existingConeEdge, out long id)
         {
-            if (v1.IndexInList > v2.IndexInList && v1.IndexInList > v3.IndexInList)
-            {
-                id = base2Factor * v1.IndexInList;
-                if (v2.IndexInList > v3.IndexInList) id += base1Factor * v2.IndexInList + v3.IndexInList;
-                else id += base1Factor * v3.IndexInList + v2.IndexInList;
-            }
-            else if (v2.IndexInList > v1.IndexInList && v2.IndexInList > v3.IndexInList)
-            {
-                id = base2Factor * v2.IndexInList;
-                if (v1.IndexInList > v3.IndexInList) id += base1Factor * v1.IndexInList + v3.IndexInList;
-                else id += base1Factor * v3.IndexInList + v1.IndexInList;
-            }
-            else // then v3 is the largest
-            {
-                id = base2Factor * v3.IndexInList;
-                if (v2.IndexInList > v1.IndexInList) id += base1Factor * v2.IndexInList + v1.IndexInList;
-                else id += base1Factor * v1.IndexInList + v2.IndexInList;
-            }
+            id = GetIDForTriple(base1Factor, base2Factor, v1.IndexInList, v2.IndexInList, v3.IndexInList);
             existingConeEdge = null;
             return newConeEdges.TryGetValue(id, out existingConeEdge);
+        }
+
+        internal static long GetIDForTriple(int base1Factor, long base2Factor, int v1, int v2, int v3)
+        {
+            long id;
+            if (v1 > v2 && v1 > v3)
+            {
+                id = base2Factor * v1;
+                if (v2 > v3) return id + base1Factor * v2 + v3;
+                else return id + base1Factor * v3 + v2;
+            }
+            if (v2 > v1 && v2 > v3)
+            {
+                id = base2Factor * v2;
+                if (v1 > v3) return id + base1Factor * v1 + v3;
+                else return id + base1Factor * v3 + v1;
+            }
+            // then v3 is the largest
+            id = base2Factor * v3;
+            if (v2 > v1) return id + base1Factor * v2 + v1;
+            else return id + base1Factor * v1 + v2;
         }
 
         private static bool MakeNewInConeFace(int base1Factor, long base2Factor, Vertex4D v1, Vertex4D v2, Vertex4D v3,
@@ -408,21 +413,21 @@ namespace TVGL
         private static ConvexHull4D MakeConvexHullWithFaces(IEnumerable<ConvexHullFace4D> tetras, int baseFactor)
         {
             var cvxHull = new ConvexHull4D();
-            cvxHull.Tetrahedra.AddRange(tetras);
+            cvxHull.Tetrahedra = tetras.ToArray();
 
-            var cvxVertexHash = new HashSet<Vertex4D>();
+            var sortedVertices = new SortedSet<Vertex4D>(new SortByIndexInList());
             var cvxFaceHash = new HashSet<Edge4D>();
-            var vertexPairs = new Dictionary<long, VertexPair>();
+            var vertexPairs = new Dictionary<long, VertexPair4D>();
             foreach (var tetra in tetras)
             {
                 cvxFaceHash.Add(tetra.ABC);
                 cvxFaceHash.Add(tetra.ABD);
                 cvxFaceHash.Add(tetra.ACD);
                 cvxFaceHash.Add(tetra.BCD);
-                cvxVertexHash.Add(tetra.A);
-                cvxVertexHash.Add(tetra.B);
-                cvxVertexHash.Add(tetra.C);
-                cvxVertexHash.Add(tetra.D);
+                sortedVertices.Add(tetra.A);
+                sortedVertices.Add(tetra.B);
+                sortedVertices.Add(tetra.C);
+                sortedVertices.Add(tetra.D);
                 AddVertexPair(vertexPairs, tetra.A, tetra.B, baseFactor, tetra);
                 AddVertexPair(vertexPairs, tetra.A, tetra.C, baseFactor, tetra);
                 AddVertexPair(vertexPairs, tetra.A, tetra.D, baseFactor, tetra);
@@ -430,24 +435,24 @@ namespace TVGL
                 AddVertexPair(vertexPairs, tetra.B, tetra.D, baseFactor, tetra);
                 AddVertexPair(vertexPairs, tetra.C, tetra.D, baseFactor, tetra);
             }
-            cvxHull.Vertices.AddRange(cvxVertexHash);
-            cvxHull.Faces.AddRange(cvxFaceHash);
-            cvxHull.VertexPairs.AddRange(vertexPairs.Values);
+            cvxHull.Vertices = sortedVertices.ToArray();
+            cvxHull.Faces = cvxFaceHash.ToArray();
+            cvxHull.VertexPairs = vertexPairs.Values.ToArray();
             return cvxHull;
         }
 
-        private static void AddVertexPair(Dictionary<long, VertexPair> vertexPairs, Vertex4D a, Vertex4D b, int baseFactor, ConvexHullFace4D tetra)
+        private static void AddVertexPair(Dictionary<long, VertexPair4D> vertexPairs, Vertex4D a, Vertex4D b, int baseFactor, ConvexHullFace4D tetra)
         {
             var id = a.IndexInList > b.IndexInList ? baseFactor * a.IndexInList + b.IndexInList : baseFactor * b.IndexInList + a.IndexInList;
             if (vertexPairs.TryGetValue(id, out var existingPair))
                 existingPair.Tetrahedra.Add(tetra);
             else
             {
-                VertexPair newPair = null;
+                VertexPair4D newPair = null;
                 if (a.IndexInList > b.IndexInList)
-                    newPair = new VertexPair { Vertex1 = b, Vertex2 = a };
+                    newPair = new VertexPair4D { Vertex1 = b, Vertex2 = a };
                 else
-                    newPair = new VertexPair { Vertex1 = a, Vertex2 = b };
+                    newPair = new VertexPair4D { Vertex1 = a, Vertex2 = b };
                 newPair.Tetrahedra.Add(tetra);
                 vertexPairs.Add(id, newPair);
             }

@@ -10,9 +10,7 @@ namespace TVGLUnitTestsAndBenchmarking
     internal class Program
     {
         public static string inputFolder = "TestFiles";
-        //public static string inputFolder = "Input";
 
-        //public static string inputFolder = "OneDrive - medemalabs.com";
         static Random r = new Random();
         static double r1 => 2.0 * r.NextDouble() - 1.0;
         static double r100 => 200.0 * r.NextDouble() - 100.0;
@@ -26,7 +24,7 @@ namespace TVGLUnitTestsAndBenchmarking
             TVGL.Message.Verbosity = VerbosityLevels.OnlyCritical;
             DirectoryInfo dir = Program.BackoutToFolder(inputFolder);
 
-            var index = 0;
+            var index = 011;
             var valid3DFileExtensions = new HashSet<string> { ".stl", ".ply", ".obj", ".3mf", ".tvglz" };
             var allFiles = dir.GetFiles("*", SearchOption.AllDirectories).Where(f => valid3DFileExtensions.Contains(f.Extension.ToLower()))
                 ; //.OrderBy(fi => fi.Length);
@@ -36,43 +34,34 @@ namespace TVGLUnitTestsAndBenchmarking
                 TessellatedSolid[] solids = null;
                 IO.Open(fileName.FullName, out solids);
                 var ts = solids[0];
-                //Presenter.ShowAndHang(ts);
-                var vert4Ds = new Vector4[ts.NumberOfVertices];
-                for (int i = 0; i < ts.NumberOfVertices; i++)
-                {
-                    var pt = ts.Vertices[i].Coordinates;
-                    var pt4 = new Vector4(pt, pt.X * pt.X + pt.Y * pt.Y + pt.Z * pt.Z);
-                    vert4Ds[i] = pt4; // new Vertex4D(pt4, i);
-                }
-                ConvexHull4D.Create(vert4Ds, out var ch4d, out _);
+                var alpha = 0.2 * (ts.Bounds[1] - ts.Bounds[0]).Length();
+                var alphaSqd = alpha * alpha;
+                ts.Complexify(0.3 * alpha);
+                
+                Delaunay3D.Create(ts.Vertices, out var delaunay3D);
+                
                 var faces = ts.Faces.ToList();
                 //faces.Clear();
                 var colorEnumerator = Color.GetRandomColors().GetEnumerator();
-                var alpha = 0.15 * (ts.Bounds[1] - ts.Bounds[0]).Length();
-                var alphaSqd = alpha * alpha;
-                var tetsToDelete = new HashSet<ConvexHullFace4D>();
-                foreach (var vp in ch4d.VertexPairs)
+                var tetsToDelete = new HashSet<Tetrahedron>();
+                foreach (var vp in delaunay3D.Edges)
                 {
-                    var v1 = vp.Vertex1.Coordinates;
-                    var v13D = new Vector3(v1.X, v1.Y, v1.Z);
-                    var v2 = vp.Vertex2.Coordinates;
-                    var v23D = new Vector3(v2.X, v2.Y, v2.Z);
-                    if ((v13D-v23D).LengthSquared() > alphaSqd)
+                    if (vp.Vector.LengthSquared() > alphaSqd)
                         foreach (var tet in vp.Tetrahedra)
                             tetsToDelete.Add(tet);
                 }
 
-                foreach (var tetra in ch4d.Tetrahedra)
+                foreach (var tetra in delaunay3D.Tetrahedra)
                 {
                     if (tetsToDelete.Contains(tetra)) continue;
                     var color = colorEnumerator.MoveNext() ? colorEnumerator.Current : null;
                     foreach (var edge4D in tetra.Faces)
                     {
-                        var aIndex = edge4D.A.IndexInList;
-                        var bIndex = edge4D.B.IndexInList;
-                        var cIndex = edge4D.C.IndexInList;
+                        var aIndex = edge4D.Vertex1.IndexInList;
+                        var bIndex = edge4D.Vertex2.IndexInList;
+                        var cIndex = edge4D.Vertex3.IndexInList;
                         var face = new TriangleFace(ts.Vertices[aIndex], ts.Vertices[bIndex], ts.Vertices[cIndex]);
-                        face.Color = new Color(133, color.R, color.G, color.B);
+                        face.Color =  new Color(133, color.R, color.G, color.B);
                         faces.Add(face);
                     }
                 }

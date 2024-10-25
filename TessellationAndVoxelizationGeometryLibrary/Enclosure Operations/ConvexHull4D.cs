@@ -9,34 +9,29 @@ namespace TVGL
     public partial class ConvexHull4D
     {
         /// <summary>
-        /// The volume of the Convex Hull.
-        /// </summary>
-        //public double tolerance { get; init; }
-
-        /// <summary>
         /// The vertices of the ConvexHull
         /// </summary>
-        public readonly List<Vertex4D> Vertices = new List<Vertex4D>();
+        public Vertex4D[] Vertices { get; private set; }
         /// <summary>
         /// Gets the convex hull faces.
         /// </summary>
         /// <value>The convex hull faces.</value>
-        public readonly List<ConvexHullFace4D> Tetrahedra = new List<ConvexHullFace4D>();
+        public ConvexHullFace4D[] Tetrahedra { get; private set; }
 
         /// <summary>
         /// Gets the convex hull edges.
         /// </summary>
         /// <value>The convex hull edges.</value>
-        public readonly List<Edge4D> Faces = new List<Edge4D>();
+        public Edge4D[] Faces { get; private set; }
         /// <summary>
         /// Gets the vertex pairs.
         /// </summary>
         /// <value>The convex hull edges.</value>
-        public readonly List<VertexPair> VertexPairs = new List<VertexPair>();
+        public VertexPair4D[] VertexPairs { get; private set; }
 
 
     }
-    public class VertexPair
+    public class VertexPair4D
     {
         public required Vertex4D Vertex1 { get; init; }
         public required Vertex4D Vertex2 { get; init; }
@@ -68,7 +63,7 @@ namespace TVGL
             throw new Exception("The face is not adjacent to this edge.");
         }
     }
-    public class Vertex4D
+    public class Vertex4D: TessellationBaseClass
     {
         public Vertex4D(Vector4 vector4, int i)
         {
@@ -82,23 +77,14 @@ namespace TVGL
         public double Y => Coordinates[1];
         public double Z => Coordinates[2];
         public double W => Coordinates[3];
+
+        public override CurvatureType Curvature { get => throw new NotImplementedException(); internal set => throw new NotImplementedException(); }
+
+        public override Vector3 Normal => throw new NotImplementedException();
     }
 
     public class ConvexHullFace4D
     {
-        // ***these are just for debugging
-        public ConvexHullFace4D()
-        {
-            ID = counter++;
-        }
-
-        static int counter = 0;
-        public int ID;
-
-        // *** delete when running well
-
-
-
         public required Vertex4D A { get; init; }
         public required Vertex4D B { get; init; }
         public required Vertex4D C { get; init; }
