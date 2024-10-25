@@ -41,7 +41,7 @@ namespace TVGLUnitTestsAndBenchmarking
                 Delaunay3D.Create(ts.Vertices, out var delaunay3D);
                 
                 var faces = ts.Faces.ToList();
-                //faces.Clear();
+                faces.Clear();
                 var colorEnumerator = Color.GetRandomColors().GetEnumerator();
                 var tetsToDelete = new HashSet<Tetrahedron>();
                 foreach (var vp in delaunay3D.Edges)
@@ -51,17 +51,20 @@ namespace TVGLUnitTestsAndBenchmarking
                             tetsToDelete.Add(tet);
                 }
 
+
                 foreach (var tetra in delaunay3D.Tetrahedra)
                 {
                     if (tetsToDelete.Contains(tetra)) continue;
                     var color = colorEnumerator.MoveNext() ? colorEnumerator.Current : null;
                     foreach (var edge4D in tetra.Faces)
                     {
+                        if (edge4D.OtherTetra==tetra && tetsToDelete.Contains(edge4D.OwnedTetra)) continue;
+                        if (edge4D.OwnedTetra==tetra && tetsToDelete.Contains(edge4D.OtherTetra)) continue;
                         var aIndex = edge4D.Vertex1.IndexInList;
                         var bIndex = edge4D.Vertex2.IndexInList;
                         var cIndex = edge4D.Vertex3.IndexInList;
                         var face = new TriangleFace(ts.Vertices[aIndex], ts.Vertices[bIndex], ts.Vertices[cIndex]);
-                        face.Color =  new Color(133, color.R, color.G, color.B);
+                        face.Color = new Color(Constants.DefaultColor); // new Color(133, color.R, color.G, color.B);
                         faces.Add(face);
                     }
                 }

@@ -36,7 +36,7 @@ namespace TVGL
     /// <summary>
     /// TetraMeshFace is a triangular face in a tetrahedral mesh between two tetrahedra.
     /// </summary>
-    public class TetraMeshFace
+    public struct TetraMeshFace
     {
         /// <summary>
         /// Vertex 1 of the face.
@@ -77,7 +77,7 @@ namespace TVGL
     /// Tetrahedron in a tetrahedral mesh where vertices, edges and faces are shared
     /// between neighbors.
     /// </summary>
-    public readonly struct Tetrahedron
+    public class Tetrahedron
     {
         /// <summary>
         /// Vertex A of the tetrahedron.
