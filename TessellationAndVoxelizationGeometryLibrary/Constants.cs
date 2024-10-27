@@ -74,7 +74,7 @@ namespace TVGL
         /// conservative value for smooth. However, it is not uncommon to have slants in a model well below this. A 2-to-1 slope makes an
         /// angle of 26.6-degrees. So, we consider a little lower as the cutoff.
         /// </summary>
-        public const double MinSmoothAngle = DefaultTessellationMaxAngleErrorDegrees * Math.PI / 180;
+        public const double MinSmoothAngle = 1.6 * DefaultTessellationMaxAngleErrorDegrees * Math.PI / 180;
 
         /// <summary>
         /// The tolerance used for simplifying polygons by joining to similary sloped lines.

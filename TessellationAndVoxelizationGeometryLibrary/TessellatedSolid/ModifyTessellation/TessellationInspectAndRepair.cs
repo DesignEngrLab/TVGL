@@ -1126,7 +1126,7 @@ namespace TVGL
                 var diagonal = (ts.Bounds[1] - ts.Bounds[0]).Length();
                 chordError = 0.03 * diagonal;
             }
-            // lastIndex don't like the 2.5 here either, but it is the result of some testing
+           
             foreach (var e in ts.Edges)
             {
                 e.Curvature = CurvatureType.SaddleOrFlat;
