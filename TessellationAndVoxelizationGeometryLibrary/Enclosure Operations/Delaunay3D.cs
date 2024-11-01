@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace TVGL
@@ -111,6 +112,56 @@ namespace TVGL
         /// The face formed by vertices B, C, and D.
         /// </summary>
         public readonly TetraMeshFace BCD;
+        public TetraMeshEdge AB;
+        public TetraMeshEdge AC;
+        public TetraMeshEdge AD;
+        public TetraMeshEdge BC;
+        public TetraMeshEdge BD;
+        public TetraMeshEdge CD;
+
+
+        public TetraMeshEdge GetOppositeEdge(TetraMeshEdge edge)
+        {
+            if (A!=edge.From && B != edge.From && C != edge.From)
+            {
+                var other1 = D;
+                if (edge.To == A) return GetEdge(A, D);
+            }
+            throw new NotImplementedException("Sam to finish");
+            if (face == ABC) return CD;
+            if (face == ABD) return BC;
+            if (face == ACD) return BD;
+            if (face == BCD) return AD;
+            return null;
+        }
+        public TetraMeshEdge GetEdge(Vertex a, Vertex b)
+        {
+            if (a == A)
+            {
+                if (b == B) return AB;
+                if (b == C) return AC;
+                if (b == D) return AD;
+            }
+            if (a == B)
+            {
+                if (b == A) return AB;
+                if (b == C) return BC;
+                if (b == D) return BD;
+            }
+            if (a == C)
+            {
+                if (b == A) return AC;
+                if (b == B) return BC;
+                if (b == D) return CD;
+            }
+            if (a == D)
+            {
+                if (b == A) return AD;
+                if (b == B) return BD;
+                if (b == C) return CD;
+            }
+            return null;
+        }
 
         public Tetrahedron(Vertex a, Vertex b, Vertex c, Vertex d, TetraMeshFace abc, TetraMeshFace abd, TetraMeshFace acd, TetraMeshFace bcd)
         {
