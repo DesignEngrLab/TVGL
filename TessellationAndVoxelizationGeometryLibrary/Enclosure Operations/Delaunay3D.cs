@@ -122,7 +122,7 @@ namespace TVGL
 
         public TetraMeshEdge GetOppositeEdge(TetraMeshEdge edge)
         {
-            if (A!=edge.From && B != edge.From && C != edge.From)
+            if (A != edge.From && B != edge.From && C != edge.From)
             {
                 var other1 = D;
                 if (edge.To == A) return GetEdge(A, D);
@@ -293,12 +293,12 @@ namespace TVGL
                 (var faceACD, var ownACD) = AddTetraMeshFace(faceDict, vA, vC, vD, vB, baseFactor, baseSqdFactor);
                 (var faceBCD, var ownBCD) = AddTetraMeshFace(faceDict, vB, vC, vD, vA, baseFactor, baseSqdFactor);
                 var newTetra = new Tetrahedron(vA, vB, vC, vD, faceABC, faceABD, faceACD, faceBCD);
-                AddVertexPair(vpDict, newTetra.A, newTetra.B, baseFactor, newTetra);
-                AddVertexPair(vpDict, newTetra.A, newTetra.C, baseFactor, newTetra);
-                AddVertexPair(vpDict, newTetra.A, newTetra.D, baseFactor, newTetra);
-                AddVertexPair(vpDict, newTetra.B, newTetra.C, baseFactor, newTetra);
-                AddVertexPair(vpDict, newTetra.B, newTetra.D, baseFactor, newTetra);
-                AddVertexPair(vpDict, newTetra.C, newTetra.D, baseFactor, newTetra);
+                newTetra.AB = AddVertexPair(vpDict, newTetra.A, newTetra.B, baseFactor, newTetra);
+                newTetra.AC = AddVertexPair(vpDict, newTetra.A, newTetra.C, baseFactor, newTetra);
+                newTetra.AD = AddVertexPair(vpDict, newTetra.A, newTetra.D, baseFactor, newTetra);
+                newTetra.BC = AddVertexPair(vpDict, newTetra.B, newTetra.C, baseFactor, newTetra);
+                newTetra.BD = AddVertexPair(vpDict, newTetra.B, newTetra.D, baseFactor, newTetra);
+                newTetra.CD = AddVertexPair(vpDict, newTetra.C, newTetra.D, baseFactor, newTetra);
                 if (ownABC) faceABC.OwnedTetra = newTetra;
                 else faceABC.OtherTetra = newTetra;
                 if (ownABD) faceABD.OwnedTetra = newTetra;
@@ -325,17 +325,16 @@ namespace TVGL
             return (newFace, true);
         }
 
-        private static void AddVertexPair(Dictionary<long, TetraMeshEdge> vertexPairs, Vertex a, Vertex b, long baseFactor, Tetrahedron tetra)
+        private static TetraMeshEdge AddVertexPair(Dictionary<long, TetraMeshEdge> vertexPairs, Vertex a, Vertex b, long baseFactor, Tetrahedron tetra)
         {
             var id = a.IndexInList > b.IndexInList ? baseFactor * a.IndexInList + b.IndexInList : baseFactor * b.IndexInList + a.IndexInList;
-            if (vertexPairs.TryGetValue(id, out var existingPair))
-                existingPair.Tetrahedra.Add(tetra);
-            else
+            if (!vertexPairs.TryGetValue(id, out TetraMeshEdge tetraMeshEdge))
             {
-                var newEdge = a.IndexInList > b.IndexInList ? new TetraMeshEdge(a, b) : new TetraMeshEdge(b, a);
-                newEdge.Tetrahedra.Add(tetra);
-                vertexPairs.Add(id, newEdge);
+                tetraMeshEdge = a.IndexInList > b.IndexInList ? new TetraMeshEdge(a, b) : new TetraMeshEdge(b, a);
+                vertexPairs.Add(id, tetraMeshEdge);
             }
+            tetraMeshEdge.Tetrahedra.Add(tetra);
+            return tetraMeshEdge;
         }
 
 
