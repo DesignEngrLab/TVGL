@@ -1,0 +1,170 @@
+﻿using System;
+
+namespace TVGL {
+    public class Delaunay2D
+    {
+        public class Delaunay2D
+        {
+            /// <summary>
+            /// Gets the vertices of the Delaunay Tetrahedral Mesh
+            /// </summary>
+            public Vertex[] Vertices { get; private set; }
+            /// <summary>
+            /// Gets the tetrahedra of the Delaunay Tetrahedral Mesh
+            /// </summary>
+            public [] Tetrahedra { get; private set; }
+
+            /// <summary>       
+            /// Gets the faces of the Delaunay Tetrahedral Mesh
+            /// </summary>
+            public TetraMeshFace[] Faces { get; private set; }
+            /// <summary>        
+            /// Gets the edges of the Delaunay Tetrahedral Mesh
+            /// </summary>
+            public TetraMeshEdge[] Edges { get; private set; }
+
+            /// <summary>
+            /// Create the Delaunay 3D mesh of tetrahedra from a list/array of vertices.
+            /// The vertices will appear in the mesh in a separate list (Vertices) if reuseInputVertices is true.
+            /// The vertices will be unaffected.
+            /// </summary>
+            /// <param name="points"></param>
+            /// <param name="delaunay3D"></param>
+            /// <param name="reuseInputVertices"></param>
+            /// <returns></returns>
+            public static bool Create(IList<Vertex> points, out Delaunay3D delaunay3D, bool reuseInputVertices)
+            {
+                if (!reuseInputVertices) return Create(points, out delaunay3D);
+                bool success = CreateInner(points, out var convexHull4D);
+                if (!success)
+                {
+                    delaunay3D = null;
+                    return false;
+                }
+                delaunay3D = new Delaunay3D();
+                delaunay3D.Vertices = convexHull4D.Vertices.Select(v => points[v.IndexInList]).ToArray();
+                delaunay3D.Vertices = new Vertex[convexHull4D.Vertices.Length];
+                foreach (var v in convexHull4D.Vertices)
+                    delaunay3D.Vertices[v.IndexInList] = new Vertex(v.X, v.Y, v.Z, v.IndexInList);
+                CreateRemainingMeshElementsFromCvxHull4D(delaunay3D, convexHull4D);
+                return true;
+            }
+
+            /// <summary>
+            /// Create the Delaunay 3D mesh of tetrahedra from the points.
+            /// </summary>
+            /// <param name="points"></param>
+            /// <param name="delaunay3D"></param>
+            /// <returns></returns>
+            public static bool Create(IEnumerable<IVector3D> points, out Delaunay3D delaunay3D)
+            {
+                bool success = CreateInner(points, out var convexHull4D);
+                if (!success)
+                {
+                    delaunay3D = null;
+                    return false;
+                }
+                delaunay3D = new Delaunay3D();
+                delaunay3D.Vertices = new Vertex[convexHull4D.Vertices.Length];
+                foreach (var v in convexHull4D.Vertices)
+                    delaunay3D.Vertices[v.IndexInList] = new Vertex(v.X, v.Y, v.Z, v.IndexInList);
+                CreateRemainingMeshElementsFromCvxHull4D(delaunay3D, convexHull4D);
+                return true;
+            }
+
+            private static void CreateRemainingMeshElementsFromCvxHull4D(Delaunay3D delaunay3D, ConvexHull4D convexHull4D)
+            {
+                var baseFactor = delaunay3D.Vertices.Length;
+                var baseSqdFactor = (long)baseFactor * (long)baseFactor;
+                delaunay3D.Tetrahedra = new Tetrahedron[convexHull4D.Tetrahedra.Length];
+
+                var faceDict = new Dictionary<long, TetraMeshFace>();
+                var vpDict = new Dictionary<long, TetraMeshEdge>();
+                var k = 0;
+                foreach (var tetra in convexHull4D.Tetrahedra)
+                {
+                    var vA = delaunay3D.Vertices[tetra.A.IndexInList];
+                    var vB = delaunay3D.Vertices[tetra.B.IndexInList];
+                    var vC = delaunay3D.Vertices[tetra.C.IndexInList];
+                    var vD = delaunay3D.Vertices[tetra.D.IndexInList];
+                    (var faceABC, var ownABC) = AddTetraMeshFace(faceDict, vA, vB, vC, vD, baseFactor, baseSqdFactor);
+                    (var faceABD, var ownABD) = AddTetraMeshFace(faceDict, vA, vB, vD, vC, baseFactor, baseSqdFactor);
+                    (var faceACD, var ownACD) = AddTetraMeshFace(faceDict, vA, vC, vD, vB, baseFactor, baseSqdFactor);
+                    (var faceBCD, var ownBCD) = AddTetraMeshFace(faceDict, vB, vC, vD, vA, baseFactor, baseSqdFactor);
+                    var newTetra = new Tetrahedron(vA, vB, vC, vD, faceABC, faceABD, faceACD, faceBCD);
+                    newTetra.AB = AddVertexPair(vpDict, newTetra.A, newTetra.B, baseFactor, newTetra);
+                    newTetra.AC = AddVertexPair(vpDict, newTetra.A, newTetra.C, baseFactor, newTetra);
+                    newTetra.AD = AddVertexPair(vpDict, newTetra.A, newTetra.D, baseFactor, newTetra);
+                    newTetra.BC = AddVertexPair(vpDict, newTetra.B, newTetra.C, baseFactor, newTetra);
+                    newTetra.BD = AddVertexPair(vpDict, newTetra.B, newTetra.D, baseFactor, newTetra);
+                    newTetra.CD = AddVertexPair(vpDict, newTetra.C, newTetra.D, baseFactor, newTetra);
+                    if (ownABC) faceABC.OwnedTetra = newTetra;
+                    else faceABC.OtherTetra = newTetra;
+                    if (ownABD) faceABD.OwnedTetra = newTetra;
+                    else faceABD.OtherTetra = newTetra;
+                    if (ownACD) faceACD.OwnedTetra = newTetra;
+                    else faceACD.OtherTetra = newTetra;
+                    if (ownBCD) faceBCD.OwnedTetra = newTetra;
+                    else faceBCD.OtherTetra = newTetra;
+                    delaunay3D.Tetrahedra[k++] = newTetra;
+                }
+                delaunay3D.Faces = faceDict.Values.ToArray();
+                delaunay3D.Edges = vpDict.Values.ToArray();
+            }
+
+            private static (TetraMeshFace, bool) AddTetraMeshFace(Dictionary<long, TetraMeshFace> faceDict, Vertex a, Vertex b, Vertex c, Vertex other,
+                int baseFactor, long baseSqdFactor)
+            {
+                var id = ConvexHull4D.GetIDForTriple(baseFactor, baseSqdFactor, a.IndexInList, b.IndexInList, c.IndexInList);
+                if (faceDict.TryGetValue(id, out var tetraMeshFace))
+                    return (tetraMeshFace, false);
+                var reverse = (b.Coordinates - a.Coordinates).Cross(c.Coordinates - a.Coordinates).Dot(a.Coordinates - other.Coordinates) < 0;
+                var newFace = reverse ? new TetraMeshFace { Vertex1 = c, Vertex2 = b, Vertex3 = a } : new TetraMeshFace { Vertex1 = a, Vertex2 = b, Vertex3 = c };
+                faceDict.Add(id, newFace);
+                return (newFace, true);
+            }
+
+            private static TetraMeshEdge AddVertexPair(Dictionary<long, TetraMeshEdge> vertexPairs, Vertex a, Vertex b, long baseFactor, Tetrahedron tetra)
+            {
+                var id = a.IndexInList > b.IndexInList ? baseFactor * a.IndexInList + b.IndexInList : baseFactor * b.IndexInList + a.IndexInList;
+                if (!vertexPairs.TryGetValue(id, out TetraMeshEdge tetraMeshEdge))
+                {
+                    tetraMeshEdge = a.IndexInList > b.IndexInList ? new TetraMeshEdge(a, b) : new TetraMeshEdge(b, a);
+                    vertexPairs.Add(id, tetraMeshEdge);
+                }
+                tetraMeshEdge.Tetrahedra.Add(tetra);
+                return tetraMeshEdge;
+            }
+
+
+            private static bool CreateInner(IEnumerable<IVector3D> points, out ConvexHull4D convexHull)
+            {
+                bool success = false;
+                Vertex4D[] vertices;
+                if (points is IList<Vector3> pointList)
+                {
+                    vertices = new Vertex4D[pointList.Count];
+                    for (int i = 0; i < pointList.Count; i++)
+                    {
+                        var p = pointList[i];
+                        var w = p.X * p.X + p.Y * p.Y + p.Z * p.Z;
+                        vertices[i] = new Vertex4D(new Vector4(p, w), i);
+                    }
+                }
+                else
+                {
+                    var vertexList = new List<Vertex4D>();
+                    var i = 0;
+                    foreach (var p in points)
+                    {
+                        var w = p.X * p.X + p.Y * p.Y + p.Z * p.Z;
+                        vertexList.Add(new Vertex4D(new Vector4(p.X, p.Y, p.Z, w), i++));
+                    }
+                    vertices = vertexList.ToArray();
+                }
+                success = ConvexHull4D.Create(vertices, out convexHull);
+                return success;
+            }
+        }
+    }
+}

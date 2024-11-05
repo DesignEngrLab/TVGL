@@ -119,22 +119,55 @@ namespace TVGL
         public TetraMeshEdge BD;
         public TetraMeshEdge CD;
 
+        public bool concave;
 
-        public TetraMeshEdge GetOppositeEdge(TetraMeshEdge edge)
+        
+        public TetraMeshEdge? GetOppositeEdge(TetraMeshEdge edge)
         {
-            if (A != edge.From && B != edge.From && C != edge.From)
+            int code;
+            if (edge.From == A)
+                code = 0b1000;
+            else if (edge.From == B)
+                code = 0b0100;
+            else if (edge.From == C)
+                code = 0b0010;
+            else if (edge.From == D)
+                code = 0b0001;
+            else
+                return null;
+
+            if (edge.To == A)
+                code += 0b1000;
+            else if (edge.To == B)
+                code += 0b0100;
+            else if (edge.To == C)
+                code += 0b0010;
+            else if (edge.To == D)
+                code += 0b0001;
+            else 
+                return null;
+
+            switch (code)
             {
-                var other1 = D;
-                if (edge.To == A) return GetEdge(A, D);
+                case 0b1100:
+                    return AB;
+                case 0b1010:
+                    return AC;
+                case 0b1001:
+                    return AD;
+                case 0b0110:
+                    return BC;
+                case 0b0101:
+                    return BD;
+                case 0b0011:
+                    return CD;
+                default:
+                    return null;
             }
-            throw new NotImplementedException("Sam to finish");
-            if (face == ABC) return CD;
-            if (face == ABD) return BC;
-            if (face == ACD) return BD;
-            if (face == BCD) return AD;
-            return null;
         }
-        public TetraMeshEdge GetEdge(Vertex a, Vertex b)
+        
+
+        public TetraMeshEdge? GetEdge(Vertex a, Vertex b)
         {
             if (a == A)
             {
