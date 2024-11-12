@@ -23,7 +23,7 @@ namespace TVGL
     /// </summary>
     public class UnknownRegion : PrimitiveSurface
     {
-        public override string KeyString => "Unknown|" + GetCommonKeyDetails();
+        public override string KeyString => "Unknown" + GetCommonKeyDetails();
 
         /// <summary>
         /// Initializes a new instance of the <see cref="UnknownRegion" /> class.

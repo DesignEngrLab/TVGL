@@ -432,7 +432,7 @@ namespace TVGL
         /// <value>The radius.</value>
         public double Radius { get; set; }
 
-        public override string KeyString => "Sphere|" + Center.ToString() + "|" + Radius.ToString("F5") + "|" + GetCommonKeyDetails();
+        public override string KeyString => "Sphere|" + Center.ToString() + "|" + Radius.ToString("F5") + GetCommonKeyDetails();
 
         #endregion
     }

@@ -68,7 +68,7 @@ namespace TVGL
         /// </summary>
         /// <param name="solids">The solids.</param>
         /// <returns>BoundingBox.</returns>
-        public static BoundingBox FindMinimumBoundingBox(this List<TessellatedSolid> solids)
+        public static BoundingBox<Vertex> FindMinimumBoundingBox(this List<TessellatedSolid> solids)
         {
             foreach (var solid in solids)
                 if (solid.ConvexHull == null) ConvexHull3D.Create(solid);
@@ -84,7 +84,7 @@ namespace TVGL
         /// </summary>
         /// <param name="ts">The ts.</param>
         /// <returns>BoundingBox.</returns>
-        public static BoundingBox FindMinimumBoundingBox(this TessellatedSolid ts)
+        public static BoundingBox<Vertex> FindMinimumBoundingBox(this TessellatedSolid ts)
         {
             if (ts.ConvexHull == null) ConvexHull3D.Create(ts);
             if (ts.ConvexHull == null || !ts.ConvexHull.Vertices.Any())
@@ -97,7 +97,7 @@ namespace TVGL
         /// </summary>
         /// <param name="convexHull">The convex hull.</param>
         /// <returns>BoundingBox.</returns>
-        public static BoundingBox FindMinimumBoundingBox(this ConvexHull3D convexHull)
+        public static BoundingBox<Vertex> FindMinimumBoundingBox(this ConvexHull3D convexHull)
         {
             return FindMinimumBoundingBox(convexHull.Vertices);
         }
@@ -108,7 +108,7 @@ namespace TVGL
         /// <typeparam name="T"></typeparam>
         /// <param name="convexHullVertices">The convex hull vertices.</param>
         /// <returns>BoundingBox.</returns>
-        public static BoundingBox FindMinimumBoundingBox<T>(this IEnumerable<T> convexHullVertices) where T : IVector3D
+        public static BoundingBox<T> FindMinimumBoundingBox<T>(this IEnumerable<T> convexHullVertices) where T : IVector3D
         {
             // here we create 13 directions. Why 13? basically it is all ternary (-1,0,+1) combinations of x,y,and z.
             // skipping symmetric and 0,0,0. Another way to think of it is to make a Direction from a cube with

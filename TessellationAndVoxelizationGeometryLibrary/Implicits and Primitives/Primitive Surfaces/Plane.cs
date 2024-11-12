@@ -45,7 +45,7 @@ namespace TVGL
 
 
         public override string KeyString => "Plane|" + Normal.ToString() + "|" + DistanceToOrigin.ToString("F5")
-            + "|" + GetCommonKeyDetails();
+             + GetCommonKeyDetails();
 
         /// <summary>
         /// Gets as transform from xy plane.

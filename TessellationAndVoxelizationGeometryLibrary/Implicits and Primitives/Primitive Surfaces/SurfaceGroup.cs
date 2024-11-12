@@ -184,7 +184,7 @@ namespace TVGL
 
         public override double DistanceToPoint(Vector3 point)
         {
-            throw new NotImplementedException();
+           return Surfaces.Min(s => s.DistanceToPoint(point));
         }
 
         public override IEnumerable<(Vector3 intersection, double lineT)> LineIntersection(Vector3 anchor, Vector3 direction)
@@ -194,12 +194,18 @@ namespace TVGL
 
         public override Vector3 GetNormalAtPoint(Vector3 point)
         {
-            throw new NotImplementedException();
+            var closestSurface= Surfaces.MinBy(s => s.DistanceToPoint(point));
+            return closestSurface.GetNormalAtPoint(point);
         }
 
         protected override void CalculateIsPositive()
         {
-            throw new NotImplementedException();
+           if (Surfaces.All(s=> s.IsPositive.HasValue && s.IsPositive.Value))
+                isPositive = true;
+            else if (Surfaces.All(s => s.IsPositive.HasValue && !s.IsPositive.Value))
+                isPositive = false;
+            else
+                isPositive = null;
         }
 
         protected override void SetPrimitiveLimits()
