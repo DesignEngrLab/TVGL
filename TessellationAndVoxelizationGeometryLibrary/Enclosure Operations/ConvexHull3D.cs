@@ -116,6 +116,37 @@ namespace TVGL
                     return false;
             return true;
         }
+
+        /// <summary>
+        /// Finds the intersection points between the line and the convex hull. The first point is with a face that has 
+        /// nearly the same direction as the line. The second one is opposite.
+        /// </summary>
+        /// <param name="anchor"></param>
+        /// <param name="direction"></param>
+        /// <returns></returns>
+        public IEnumerable<(Vector3 intersection, double lineT)> LineIntersection(Vector3 anchor, Vector3 direction)
+        {
+            var orderedFaces = Faces.OrderByDescending(f => f.Normal.Dot(direction));
+            foreach(var face in orderedFaces)
+            {
+                var intersectPt = MiscFunctions.PointOnTriangleFromRay(face, anchor, direction, out var signedDistance);
+                if (!intersectPt.IsNull())
+                {
+                    yield return (intersectPt, signedDistance);
+                    break;
+                }
+            }
+            foreach (var face in orderedFaces.Reverse())
+            {
+                var intersectPt = MiscFunctions.PointOnTriangleFromRay(face, anchor, direction, out var signedDistance);
+                if (!intersectPt.IsNull())
+                {
+                    yield return (intersectPt, signedDistance);
+                    break;
+                }
+            }
+        }
+
     }
     public class ConvexHullFace : TriangleFace
     {
