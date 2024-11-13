@@ -12,12 +12,8 @@
 // <summary></summary>
 // ***********************************************************************
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
 using System.Runtime.CompilerServices;
-using System.Xml.Linq;
 
 namespace TVGL
 {
@@ -75,6 +71,10 @@ namespace TVGL
         /// </summary>
         protected TriangleFace[] solidFaces;
 
+        public Vector3 Direction;
+
+        public Dictionary<PrimitiveSurface, Dictionary<int, double>> PrimitiveZmins;
+
         /// <summary>
         /// Initializes a new instance of the <see cref="ZBuffer"/> class.
         /// </summary>
@@ -86,6 +86,7 @@ namespace TVGL
             int pixelBorder = 2, IEnumerable<TriangleFace> subsetFaces = null)
         {
             var zBuff = new ZBuffer(solid);
+            zBuff.Direction = direction;
             // get the transform matrix to apply to every point
             zBuff.transform = direction.TransformToXYPlane(out zBuff.backTransform);
 
@@ -110,18 +111,30 @@ namespace TVGL
             //Finish initializing the grid now that we have the bounds.
             zBuff.Initialize(MinX, MaxX, MinY, MaxY, pixelsPerRow, pixelBorder);
             var faces = subsetFaces != null ? subsetFaces : zBuff.solidFaces;
-            foreach (TriangleFace face in faces)
+            if(subsetFaces != null)
             {
-                //if (face.IndexInList == 376)
-                //if (face.Center.X < -27 && face.Center.Z > 3.5 && face.Normal.Dot(Vector3.UnitY) > 0.98)
-                //{
-                //    solid.HasUniformColor = false;
-                //    solid.ResetDefaultColor();
-                //    face.Color = new Color(KnownColors.Red);
-                //    Presenter.ShowAndHang(solid);
-                //}
-                zBuff.UpdateZBufferWithFace(face);
+                foreach (TriangleFace face in faces)
+                {
+                    //if (face.IndexInList == 376)
+                    //if (face.Center.X < -27 && face.Center.Z > 3.5 && face.Normal.Dot(Vector3.UnitY) > 0.98)
+                    //{
+                    //    solid.HasUniformColor = false;
+                    //    solid.ResetDefaultColor();
+                    //    face.Color = new Color(KnownColors.Red);
+                    //    Presenter.ShowAndHang(solid);
+                    //}
+                    zBuff.UpdateZBufferWithFace(face);
+                }
             }
+            else
+            {
+                zBuff.PrimitiveZmins = [];
+                foreach (var surface in solid.Primitives)
+                {
+                    zBuff.UpdateZBufferWithSurface(surface);
+                }
+            }
+
             return zBuff;
         }
 
@@ -132,6 +145,40 @@ namespace TVGL
             solidFaces = solid.Faces;
         }
 
+        public virtual (int, double) ProjectOnGrid(Vector3 vertex)
+        {
+            var p = vertex.Transform(transform);
+            var index = GetIndex(p.X, p.Y);
+            return (index, p.Z);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public virtual void UpdateZBufferWithSurface(PrimitiveSurface prim)
+        {
+            Dictionary<int, double> lowestZValues = [];
+            foreach (var face in prim.Faces)
+            {
+                foreach (var (index, zHeight) in GetIndicesCoveredByFace(face))
+                {
+                    var tuple = Values[index];
+                    if (tuple == default || zHeight >= tuple.Item2)
+                        // since the grid elements are not initialized, we update it if the 
+                        // grid cell is empty (ie default) or if we found a better face
+                        Values[index] = (face, zHeight);
+
+                    if (lowestZValues.TryGetValue(index, out double value))
+                    {
+                        if (value > zHeight)
+                            lowestZValues[index] = zHeight;
+                    }
+                    else
+                    {
+                        lowestZValues.Add(index, zHeight);
+                    }
+                }
+            }
+            PrimitiveZmins.Add(prim, lowestZValues);
+        }
 
         /// </summary>
         /// <param name="face">The face.</param>
@@ -139,10 +186,8 @@ namespace TVGL
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public virtual void UpdateZBufferWithFace(TriangleFace face)
         {
-            foreach (var indexAndHeight in GetIndicesCoveredByFace(face))
+            foreach (var (index, zHeight) in GetIndicesCoveredByFace(face))
             {
-                var index = indexAndHeight.index;
-                var zHeight = indexAndHeight.zHeight;
                 var tuple = Values[index];
                 if (tuple == default || zHeight >= tuple.Item2)
                     // since the grid elements are not initialized, we update it if the 
