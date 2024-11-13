@@ -375,6 +375,10 @@ namespace TVGL
         [JsonIgnore]
         public double Volume => Dimensions[0] * Dimensions[1] * Dimensions[2];
 
+        [JsonIgnore]
+        public double DiagonalLength => Math.Sqrt(Dimensions[0] * Dimensions[0] + 
+            Dimensions[1] * Dimensions[1] + Dimensions[2] * Dimensions[2]);
+
         /// <summary>
         /// The Solid Representation of the bounding box. This is not set by defualt.
         /// </summary>
@@ -421,6 +425,12 @@ namespace TVGL
         /// The tessellated solid
         /// </summary>
         private TessellatedSolid _tessellatedSolid;
+
+        [JsonIgnore]
+        public double ShortestDimension => SortedDimensionsShortToLong[0];
+
+        [JsonIgnore]
+        public double LongestDimension => SortedDimensionsShortToLong[2];
 
         /// <summary>
         /// The direction indices sorted by the dimensions from shortest to longest.
