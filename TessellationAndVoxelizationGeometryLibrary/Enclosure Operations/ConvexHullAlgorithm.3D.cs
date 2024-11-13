@@ -38,7 +38,7 @@ namespace TVGL
             for (int i = 0; i < n; i++)
                 vertices[i] = new Vertex(points[i], i);
 
-            success = Create(vertices, out convexHull, true, tolerance);
+            success = Create(vertices, out convexHull, true, true, tolerance);
             if (success)
             {
                 vertexIndices = vertices.Select(v => v.IndexInList).ToList();
@@ -61,9 +61,9 @@ namespace TVGL
         /// </summary>
         /// <param name="ts"></param>
         /// <returns></returns>
-        public static bool Create(TessellatedSolid ts)
+        public static bool Create(TessellatedSolid ts, bool recordPartOfConvexHull)
         {
-            if (Create(ts.Vertices, out var convexHull, false, ts.SameTolerance))
+            if (Create(ts.Vertices, out var convexHull, false, recordPartOfConvexHull, ts.SameTolerance))
             {
                 ts.ConvexHull = convexHull;
                 foreach (var face in ts.Faces.Where(face => face.Vertices.All(v => v.PartOfConvexHull)))
@@ -87,10 +87,11 @@ namespace TVGL
         /// <param name="vertices"></param>
         /// <param name="convexHull"></param>
         /// <param name="connectVerticesToCvxHullFaces"></param>
+        /// <param name="recordPartOfConvexHull"></param>
         /// <param name="tolerance"></param>
         /// <returns></returns>
         public static bool Create(IList<Vertex> vertices, out ConvexHull3D convexHull,
-            bool connectVerticesToCvxHullFaces, double tolerance = double.NaN)
+            bool connectVerticesToCvxHullFaces, bool recordPartOfConvexHull, double tolerance = double.NaN)
         {
             var n = vertices.Count;
             if (double.IsNaN(tolerance) || tolerance < Constants.BaseTolerance)
@@ -163,7 +164,7 @@ namespace TVGL
                     faceQueue.Enqueue(newFace, newFace.peakDistance);
             }
             // now we have the convex hull faces are used to build the convex hull object
-            convexHull = MakeConvexHullWithFaces(tolerance, connectVerticesToCvxHullFaces,
+            convexHull = MakeConvexHullWithFaces(tolerance, connectVerticesToCvxHullFaces, recordPartOfConvexHull,
                 faceQueue.UnorderedItems.Select(fq => fq.Element));
             return true;
         }
@@ -339,7 +340,7 @@ namespace TVGL
         /// <param name="cvxFaces"></param>
         /// <returns></returns>
         private static ConvexHull3D MakeConvexHullWithFaces(double tolerance,
-            bool connectVerticesToCvxHullFaces, IEnumerable<ConvexHullFace> cvxFaces)
+            bool connectVerticesToCvxHullFaces, bool recordPartOfConvexHull, IEnumerable<ConvexHullFace> cvxFaces)
         {
             var cvxHull = new ConvexHull3D { tolerance = tolerance };
             cvxHull.Faces.AddRange(cvxFaces);
@@ -350,18 +351,23 @@ namespace TVGL
             {
                 foreach (var v in f.Vertices)
                 {
-                    v.PartOfConvexHull = true;
                     cvxVertexHash.Add(v);
+                    if (recordPartOfConvexHull)
+                        v.PartOfConvexHull = true;
                     if (connectVerticesToCvxHullFaces)
                         v.Faces.Add(f);
                 }
                 // vertices that are stored in the interior vertices do not define the edges and faces
                 // of the convex hull but it is useful to know that they are on the boundary of the convex hull
-                foreach (var v in f.InteriorVertices)
-                    v.PartOfConvexHull = true;
+                if (recordPartOfConvexHull)
+                {
+                    foreach (var v in f.InteriorVertices)
+                        v.PartOfConvexHull = true;
+                }
                 foreach (var e in f.Edges)
                 {
-                    e.PartOfConvexHull = true;
+                    if (recordPartOfConvexHull)
+                        e.PartOfConvexHull = true;
                     if (cvxEdgeHash.Add(e) && connectVerticesToCvxHullFaces)
                     {
                         e.From.Edges.Add(e);

@@ -841,7 +841,7 @@ namespace TVGL
         public static TessellatedSolid Tessellate(this Sphere sphere, int numPoints = 100)
         {
             var vertices = MiscFunctions.NEquidistantSpherePointsKogan(numPoints, sphere.Radius).Select(p => new Vertex(p + sphere.Center)).ToList();
-            if (!ConvexHull3D.Create(vertices, out var convexHull, false))
+            if (!ConvexHull3D.Create(vertices, out var convexHull, false, false))
                 throw new Exception("Convex hull could not be created for sphere.");
             var faces = convexHull.Faces.Select(cf => new TriangleFace(cf.A, cf.B, cf.C)).ToList();
             for (int i = 0; i < faces.Count; i++)

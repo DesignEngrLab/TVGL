@@ -195,7 +195,7 @@ namespace TVGL
             if (buildOptions.DefineConvexHull && !ts.Volume.IsNegligible())
                 try
                 {
-                    ConvexHull3D.Create(ts);
+                    ConvexHull3D.Create(ts, true);
                 }
                 catch
                 {
@@ -1126,7 +1126,7 @@ namespace TVGL
                 var diagonal = (ts.Bounds[1] - ts.Bounds[0]).Length();
                 chordError = 0.03 * diagonal;
             }
-           
+
             foreach (var e in ts.Edges)
             {
                 e.Curvature = CurvatureType.SaddleOrFlat;

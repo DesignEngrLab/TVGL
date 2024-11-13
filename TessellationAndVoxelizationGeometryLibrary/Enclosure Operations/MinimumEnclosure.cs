@@ -71,7 +71,7 @@ namespace TVGL
         public static BoundingBox<Vertex> FindMinimumBoundingBox(this List<TessellatedSolid> solids)
         {
             foreach (var solid in solids)
-                if (solid.ConvexHull == null) ConvexHull3D.Create(solid);
+                if (solid.ConvexHull == null) ConvexHull3D.Create(solid, false);
             var vertices = new List<Vertex>();
             foreach (var solid in solids)
                 vertices.AddRange(solid.ConvexHull.Vertices.Any() ? solid.ConvexHull.Vertices : solid.Vertices);
@@ -86,7 +86,7 @@ namespace TVGL
         /// <returns>BoundingBox.</returns>
         public static BoundingBox<Vertex> FindMinimumBoundingBox(this TessellatedSolid ts)
         {
-            if (ts.ConvexHull == null) ConvexHull3D.Create(ts);
+            if (ts.ConvexHull == null) ConvexHull3D.Create(ts, false);
             if (ts.ConvexHull == null || !ts.ConvexHull.Vertices.Any())
                 return FindMinimumBoundingBox(ts.Vertices);
             else return FindMinimumBoundingBox(ts.ConvexHull.Vertices);
@@ -716,7 +716,7 @@ namespace TVGL
                     UpdateLimitsAndBox(v, v.Z, ref zMax, pointsOnBox[5], false);
                 }
             }
-            return new BoundingBox<Vertex>(xMin, yMin, zMin, xMax ,yMax, zMax,
+            return new BoundingBox<Vertex>(xMin, yMin, zMin, xMax, yMax, zMax,
                 pointsOnBox);
         }
 
