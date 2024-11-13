@@ -777,7 +777,7 @@ namespace TVGL
                 OffSideVertex = offSideVertex;
                 OriginalOffSideVertex = offSideVertex;
                 OnSideVertex = Edge.OtherVertex(OffSideVertex);
-                IntersectVertex = new Vertex(MiscFunctions.PointOnPlaneFromIntersectingLine(plane.Normal,
+                IntersectVertex = new Vertex(MiscFunctions.PointOnPlaneFromIntersectingLineSegment(plane.Normal,
                     plane.DistanceToOrigin - planeOffset, edge.To.Coordinates, edge.From.Coordinates, out _));
                 if (IntersectVertex == null) throw new Exception("Cannot Be Empty");
             }
@@ -951,7 +951,7 @@ namespace TVGL
                 if (currentEdges.Any())
                 {
                     result[step] = CreatePolygons(currentEdges.ToDictionary(ce => ce, ce =>
-                       MiscFunctions.PointOnPlaneFromIntersectingLine(plane, ce.From.Coordinates, ce.To.Coordinates, out _)
+                       MiscFunctions.PointOnPlaneFromIntersectingLineSegment(plane, ce.From.Coordinates, ce.To.Coordinates, out _)
                            .ConvertTo2DCoordinates(transform)), plane.Normal, plane.DistanceToOrigin, out var v2EDictionary, out var numComplete);
                     vertex2DToEdges[step] = v2EDictionary;
                     numCompletePolygonsPerLayer[step] = numComplete;
@@ -1175,7 +1175,7 @@ namespace TVGL
                 var toDistance = distances[edge.To.IndexInList];
                 if ((fromDistance > planeDistance && toDistance < planeDistance) || (fromDistance < planeDistance && toDistance > planeDistance))
                 {
-                    var ip = MiscFunctions.PointOnPlaneFromIntersectingLine(plane, edge.From.Coordinates, edge.To.Coordinates, out _)
+                    var ip = MiscFunctions.PointOnPlaneFromIntersectingLineSegment(plane, edge.From.Coordinates, edge.To.Coordinates, out _)
                         .ConvertTo2DCoordinates(transform);
                     e2VDict.Add(edge, ip);
                 }

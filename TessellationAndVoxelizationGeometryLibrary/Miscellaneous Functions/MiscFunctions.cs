@@ -1822,11 +1822,11 @@ namespace TVGL
         /// <param name="onBoundaryIsInside">The on boundary is inside.</param>
         /// <returns>Vertex.</returns>
         /// <exception cref="Exception">This should never occur. Prevent this from happening</exception>
-        public static Vector3 PointOnTriangleFromLine(this TriangleFace face, Vector3 point1,
+        public static Vector3 PointOnTriangleFromLineSegment(this TriangleFace face, Vector3 point1,
             Vector3 point2, out double relativeDistance, bool onBoundaryIsInside = true)
         {
             var positions = face.Vertices.Select(vertex => vertex.Coordinates).ToList();
-            return PointOnTriangleFromLine(positions, face.Normal, point1, point2, out relativeDistance, onBoundaryIsInside);
+            return PointOnTriangleFromLineSegment(positions, face.Normal, point1, point2, out relativeDistance, onBoundaryIsInside);
         }
 
         /// <summary>
@@ -1841,11 +1841,11 @@ namespace TVGL
         /// <param name="relativeDistance">The relative distance.</param>
         /// <param name="onBoundaryIsInside">The on boundary is inside.</param>
         /// <returns>Vertex.</returns>
-        public static Vector3 PointOnTriangleFromLine(this List<Vector3> vertices, Vector3 normal, Vector3 point1,
+        public static Vector3 PointOnTriangleFromLineSegment(this List<Vector3> vertices, Vector3 normal, Vector3 point1,
             Vector3 point2, out double relativeDistance, bool onBoundaryIsInside = true)
         {
             var distanceToOrigin = normal.Dot(vertices[0]);
-            var newPoint = PointOnPlaneFromIntersectingLine(normal, distanceToOrigin, point1, point2, out relativeDistance);
+            var newPoint = PointOnPlaneFromIntersectingLineSegment(normal, distanceToOrigin, point1, point2, out relativeDistance);
             if (newPoint.IsNull()) return Vector3.Null;
             return IsVertexInsideTriangle(vertices, newPoint, onBoundaryIsInside) ? newPoint : Vector3.Null;
         }
@@ -1930,9 +1930,9 @@ namespace TVGL
         /// If less than zero, then intersection occurs on the other side of point1 (not between points). If greater than one,
         /// then intersection is on the other side of point2.</param>
         /// <returns>IntersectionPoint.</returns>
-        public static Vector3 PointOnPlaneFromIntersectingLine(Plane plane, Vector3 point1, Vector3 point2, out double relativeDistance)
+        public static Vector3 PointOnPlaneFromIntersectingLineSegment(Plane plane, Vector3 point1, Vector3 point2, out double relativeDistance)
         {
-            return PointOnPlaneFromIntersectingLine(plane.Normal, plane.DistanceToOrigin, point1, point2, out relativeDistance);
+            return PointOnPlaneFromIntersectingLineSegment(plane.Normal, plane.DistanceToOrigin, point1, point2, out relativeDistance);
         }
 
         /// <summary>
@@ -1948,7 +1948,7 @@ namespace TVGL
         /// then intersection is on the other side of point2.</param>
         /// <returns>Vertex.</returns>
         /// <exception cref="Exception">This should never occur. Prevent this from happening</exception>
-        public static Vector3 PointOnPlaneFromIntersectingLine(Vector3 normalOfPlane, double distOfPlane, Vector3 point1,
+        public static Vector3 PointOnPlaneFromIntersectingLineSegment(Vector3 normalOfPlane, double distOfPlane, Vector3 point1,
             Vector3 point2, out double relativeDistance)
         {
             var d1 = normalOfPlane.Dot(point1);
