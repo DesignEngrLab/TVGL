@@ -54,11 +54,26 @@ namespace TVGL
         /// <summary>
         /// The tetrahedron that owns this face. The face's normal points away from the owned tetrahedron.
         /// </summary>
-        public Tetrahedron OwnedTetra { get; internal set; }
+        public Tetrahedron OwnedTetra { get; set; }
         /// <summary>
         /// The other tetrahedron of the face. The face's normal points into the other tetrahedron.
         /// </summary>
-        public Tetrahedron OtherTetra { get; internal set; }
+        public Tetrahedron OtherTetra { get; set; }
+
+        public static bool operator ==(TetraMeshFace face1, TetraMeshFace face2)
+        {
+            if (face1.Vertex1 == face2.Vertex1 &&
+                face1.Vertex2 == face2.Vertex2 &&
+                face1.Vertex3 == face2.Vertex3)
+                return true;
+            else
+                return false;
+        }
+
+        public static bool operator !=(TetraMeshFace face1, TetraMeshFace face2)
+        {
+            return !(face1 == face2);
+        }
 
         /// <summary>
         /// Enumerates the vertices of the face.
@@ -99,19 +114,19 @@ namespace TVGL
         /// <summary>
         /// The face formed by vertices A, B, and C.
         /// </summary>
-        public readonly TetraMeshFace ABC;
+        public TetraMeshFace ABC;
         /// <summary>
         /// The face formed by vertices A, B, and D.
         /// </summary>
-        public readonly TetraMeshFace ABD;
+        public TetraMeshFace ABD;
         /// <summary>
         /// The face formed by vertices A, C, and D.
         /// </summary>
-        public readonly TetraMeshFace ACD;
+        public TetraMeshFace ACD;
         /// <summary>
         /// The face formed by vertices B, C, and D.
         /// </summary>
-        public readonly TetraMeshFace BCD;
+        public TetraMeshFace BCD;
         public TetraMeshEdge AB;
         public TetraMeshEdge AC;
         public TetraMeshEdge AD;
@@ -340,7 +355,17 @@ namespace TVGL
                 else faceACD.OtherTetra = newTetra;
                 if (ownBCD) faceBCD.OwnedTetra = newTetra;
                 else faceBCD.OtherTetra = newTetra;
-                delaunay3D.Tetrahedra[k++] = newTetra;
+                delaunay3D.Tetrahedra[k] = newTetra;
+
+                //Added code
+                delaunay3D.Tetrahedra[k].ABC.OwnedTetra = faceABC.OwnedTetra;
+                delaunay3D.Tetrahedra[k].ABC.OtherTetra = faceABC.OtherTetra;
+                delaunay3D.Tetrahedra[k].ABD.OwnedTetra = faceABD.OwnedTetra;
+                delaunay3D.Tetrahedra[k].ABD.OtherTetra = faceABD.OtherTetra;
+                delaunay3D.Tetrahedra[k].ACD.OwnedTetra = faceACD.OwnedTetra;
+                delaunay3D.Tetrahedra[k].ACD.OtherTetra = faceACD.OtherTetra;
+                delaunay3D.Tetrahedra[k].BCD.OwnedTetra = faceBCD.OwnedTetra;
+                delaunay3D.Tetrahedra[k++].BCD.OtherTetra = faceBCD.OtherTetra;
             }
             delaunay3D.Faces = faceDict.Values.ToArray();
             delaunay3D.Edges = vpDict.Values.ToArray();
