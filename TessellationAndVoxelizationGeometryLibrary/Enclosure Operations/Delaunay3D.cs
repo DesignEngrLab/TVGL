@@ -62,12 +62,13 @@ namespace TVGL
 
         public static bool operator ==(TetraMeshFace face1, TetraMeshFace face2)
         {
-            if (face1.Vertex1 == face2.Vertex1 &&
-                face1.Vertex2 == face2.Vertex2 &&
-                face1.Vertex3 == face2.Vertex3)
-                return true;
-            else
-                return false;
+            return face1.Equals(face2);
+            //if (face1.Vertex1 == face2.Vertex1 &&
+            //    face1.Vertex2 == face2.Vertex2 &&
+            //    face1.Vertex3 == face2.Vertex3)
+            //    return true;
+            //else
+            //    return false;
         }
 
         public static bool operator !=(TetraMeshFace face1, TetraMeshFace face2)
@@ -136,7 +137,7 @@ namespace TVGL
 
         public bool concave;
 
-        
+
         public TetraMeshEdge? GetOppositeEdge(TetraMeshEdge edge)
         {
             int code;
@@ -159,7 +160,7 @@ namespace TVGL
                 code += 0b0010;
             else if (edge.To == D)
                 code += 0b0001;
-            else 
+            else
                 return null;
 
             switch (code)
@@ -180,7 +181,7 @@ namespace TVGL
                     return null;
             }
         }
-        
+
 
         public TetraMeshEdge? GetEdge(Vertex a, Vertex b)
         {
