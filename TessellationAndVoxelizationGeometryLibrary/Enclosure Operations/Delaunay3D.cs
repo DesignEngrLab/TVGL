@@ -341,7 +341,7 @@ namespace TVGL
                 edgeBC.Tetrahedra.Add(newTetra);
                 edgeBD.Tetrahedra.Add(newTetra);
                 edgeCD.Tetrahedra.Add(newTetra);
-                delaunay3D.Tetrahedra[k] = newTetra;
+                delaunay3D.Tetrahedra[k++] = newTetra;
             }
             delaunay3D.Faces = faceDict.Values.ToArray();
             delaunay3D.Edges = vpDict.Values.ToArray();
