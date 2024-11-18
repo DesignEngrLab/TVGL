@@ -757,6 +757,23 @@ namespace TVGL  // COMMENTEDCHANGE namespace System.Numerics
              oppositeAmount * value1.Z + value2.Z * amount);
         }
 
+        public static Vector3 Slerp(Vector3 start, Vector3 end, double percent)
+        {
+            // Dot product - the cosine of the angle between 2 vectors.
+            var dot = start.Dot(end);
+            // Clamp it to be in the range of Acos()
+            // This may be unnecessary, but floating point
+            // precision can be a fickle mistress.
+            dot = Math.Clamp(dot, -1.0, 1.0);
+            var omega = Math.Acos(dot);
+            var sinOmega =Math.Sqrt(1-dot*dot);
+            var oneOverSinOmega = 1 / sinOmega;
+            return start * oneOverSinOmega * Math.Sin((1 - percent) * omega) + end * oneOverSinOmega * Math.Sin(percent * omega);
+
+        }
+
+
+
         /// <summary>
         /// Transforms a vector by the given matrix.
         /// </summary>

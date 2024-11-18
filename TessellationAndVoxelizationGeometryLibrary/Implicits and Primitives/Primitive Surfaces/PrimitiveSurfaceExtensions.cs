@@ -134,39 +134,40 @@ namespace TVGL
         /// <param name="vectorAtMinAngle">The vector at min angle.</param>
         /// <param name="vectorAtMaxAngle">The vector at max angle.</param>
         /// <returns>A double.</returns>
-        public static double FindLargestEncompassingAngleForAxis(this PrimitiveSurface surface, out Vector3 vectorAtMinAngle, out Vector3 vectorAtMaxAngle)
+        public static double FindLargestEncompassingAngleForAxis(this PrimitiveSurface surface, out Vector3 vectorAtMinAngle,
+            out Vector3 vectorAtMaxAngle, out double minAngle, out double maxAngle)
         {
             var axis = surface.GetAxis();
             var transform = axis.TransformToXYPlane(out var backTransform);
-            var globalMinAngle = double.PositiveInfinity;
-            var globalMaxAngle = double.NegativeInfinity;
+            minAngle = double.PositiveInfinity;
+            maxAngle = double.NegativeInfinity;
 
             foreach (var path in surface.Borders)
             {
-                FindWindingAroundAxis(path.GetCoordinates(), transform, surface.GetAnchor(), out var minAngle, out var maxAngle);
-                if (globalMaxAngle < minAngle)
+                FindWindingAroundAxis(path.GetCoordinates(), transform, surface.GetAnchor(), out var minAngleIn, out var maxAngleIn);
+                if (maxAngle < minAngleIn)
                 {
-                    minAngle += Math.Tau;
-                    maxAngle += Math.Tau;
+                    minAngleIn += Math.Tau;
+                    maxAngleIn += Math.Tau;
                 }
-                if (globalMinAngle > maxAngle)
+                if (minAngle > maxAngleIn)
                 {
-                    minAngle -= Math.Tau;
-                    maxAngle -= Math.Tau;
+                    minAngleIn -= Math.Tau;
+                    maxAngleIn -= Math.Tau;
                 }
-                if (globalMinAngle > minAngle) globalMinAngle = minAngle;
-                if (globalMaxAngle < maxAngle) globalMaxAngle = maxAngle;
+                if (minAngle > minAngleIn) minAngle = minAngleIn;
+                if (maxAngle < maxAngleIn) maxAngle = maxAngleIn;
 
-                if (Math.Abs(globalMaxAngle - globalMinAngle) > Math.Tau)
+                if (Math.Abs(maxAngle - minAngle) > Math.Tau)
                 {
-                    globalMinAngle = -Math.PI;
-                    globalMaxAngle = Math.PI;
+                    minAngle = -Math.PI;
+                    maxAngle = Math.PI;
                     break;
                 }
             }
-            vectorAtMinAngle = new Vector3(Math.Cos(globalMinAngle), Math.Sin(globalMinAngle), 0).TransformNoTranslate(backTransform);
-            vectorAtMaxAngle = new Vector3(Math.Cos(globalMaxAngle), Math.Sin(globalMaxAngle), 0).TransformNoTranslate(backTransform);
-            return globalMaxAngle - globalMinAngle;
+            vectorAtMinAngle = new Vector3(Math.Cos(minAngle), Math.Sin(minAngle), 0).TransformNoTranslate(backTransform);
+            vectorAtMaxAngle = new Vector3(Math.Cos(maxAngle), Math.Sin(maxAngle), 0).TransformNoTranslate(backTransform);
+            return maxAngle - minAngle;
         }
 
 
