@@ -19,16 +19,19 @@ namespace TVGL
         {
             get
             {
-                var key = "Group|";
-                foreach (var surface in Surfaces)
+                if (string.IsNullOrEmpty(key))
                 {
-                    key += surface.GetType().Name + "|";
+                    key = "Group|";
+                    foreach (var surface in Surfaces)
+                    {
+                        key += surface.GetType().Name + "|";
+                    }
+                    key += GetCommonKeyDetails();
                 }
-                key += GetCommonKeyDetails();
                 return key;
             }
         }
-
+        string key;
         public void AddPrimitiveSurface(PrimitiveSurface surface, bool resetBorders = true)
         {
             if (surface is SurfaceGroup)
@@ -69,44 +72,48 @@ namespace TVGL
         {
             get
             {
-                if (faces == null) GetFaces();
+                if (faces == null) faces = GetFaces(Surfaces);
                 return faces;
             }
         }
         HashSet<TriangleFace> faces;
-        void GetFaces()
+       static HashSet<TriangleFace> GetFaces(HashSet<PrimitiveSurface> surfaces)
         {
-            var surfWithMostFaces = Surfaces.MaxBy(s => s.Faces.Count);
+            var result = new HashSet<TriangleFace>();
+            var surfWithMostFaces = surfaces.MaxBy(s => s.Faces.Count);
             // to be slightly efficient we "copy" the hashset from the surface with the most faces
-            faces = new HashSet<TriangleFace>(surfWithMostFaces.Faces, surfWithMostFaces.Faces.Comparer);
-            foreach (var surface in Surfaces)
+            result = new HashSet<TriangleFace>(surfWithMostFaces.Faces, surfWithMostFaces.Faces.Comparer);
+            foreach (var surface in surfaces)
             {   // then add the remainding surfaces' faces to this hashset
                 if (surface == surfWithMostFaces) continue;
                 foreach (var face in surface.Faces)
-                    faces.Add(face);
+                    result.Add(face);
             }
+            return result;
         }
 
         public override HashSet<Vertex> Vertices
         {
             get
             {
-                if (vertices == null) GetVertices();
+                if (vertices == null) vertices = GetVertices(Surfaces);
                 return vertices;
             }
         }
         HashSet<Vertex> vertices;
-        void GetVertices()
+        static HashSet<Vertex> GetVertices(HashSet<PrimitiveSurface> surfaces)
         {
-            var surfWithMostvertices = Surfaces.MaxBy(s => s.Vertices.Count);
+            var result = new HashSet<Vertex>(); 
+            var surfWithMostvertices = surfaces.MaxBy(s => s.Vertices.Count);
             // to be slightly efficient we "copy" the hashset from the surface with the most vertices
-            vertices = new HashSet<Vertex>(surfWithMostvertices.Vertices, surfWithMostvertices.Vertices.Comparer);
-            foreach (var surface in Surfaces)
+            result = new HashSet<Vertex>(surfWithMostvertices.Vertices, surfWithMostvertices.Vertices.Comparer);
+            foreach (var surface in surfaces)
             {   // then add the remainding survertices' vertices to this hashset
                 if (surface == surfWithMostvertices) continue;
                 foreach (var vertice in surface.Vertices)
-                    vertices.Add(vertice);
+                    result.Add(vertice);
             }
+            return result;
         }
 
         public IEnumerable<SurfaceGroup> AdjacentGroups()
@@ -184,7 +191,7 @@ namespace TVGL
 
         public override double DistanceToPoint(Vector3 point)
         {
-           return Surfaces.Min(s => s.DistanceToPoint(point));
+            return Surfaces.Min(s => s.DistanceToPoint(point));
         }
 
         public override IEnumerable<(Vector3 intersection, double lineT)> LineIntersection(Vector3 anchor, Vector3 direction)
@@ -194,13 +201,13 @@ namespace TVGL
 
         public override Vector3 GetNormalAtPoint(Vector3 point)
         {
-            var closestSurface= Surfaces.MinBy(s => s.DistanceToPoint(point));
+            var closestSurface = Surfaces.MinBy(s => s.DistanceToPoint(point));
             return closestSurface.GetNormalAtPoint(point);
         }
 
         protected override void CalculateIsPositive()
         {
-           if (Surfaces.All(s=> s.IsPositive.HasValue && s.IsPositive.Value))
+            if (Surfaces.All(s => s.IsPositive.HasValue && s.IsPositive.Value))
                 isPositive = true;
             else if (Surfaces.All(s => s.IsPositive.HasValue && !s.IsPositive.Value))
                 isPositive = false;
