@@ -424,7 +424,7 @@ namespace TVGL
         /// <param name="setPointsOnSide">if set to <c>true</c> [set points on side].</param>
         /// <returns>System.Double.</returns>
         /// <exception cref="Exception">Area should never be negligible unless data is messed up.</exception>
-        private static BoundingRectangle RotatingCalipers2DMethod(IEnumerable<Vector2> initialPoints,
+        public static BoundingRectangle RotatingCalipers2DMethod(IEnumerable<Vector2> initialPoints,
             bool pointsAreConvexHull, bool setCornerPoints, bool setPointsOnSide)
         {
             if (!initialPoints.Any())
