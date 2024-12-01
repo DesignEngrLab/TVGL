@@ -932,10 +932,11 @@ namespace TVGL
                 var d = startDistanceAlongDirection + step * stepSize;
                 sliceOffsets[step] = d;
                 var thisVertex = sortedVertices[vIndex];
+                var thisVertexDot = thisVertex.Dot(direction);
                 var needToOffset = false;
-                while (thisVertex.Dot(direction) <= d)
+                while (thisVertexDot <= d)
                 {
-                    if (d.IsPracticallySame(thisVertex.Dot(direction))) needToOffset = true;
+                    if (d.IsPracticallySame(thisVertexDot)) needToOffset = true;
                     foreach (var edge in thisVertex.Edges)
                     {
                         if (currentEdges.Contains(edge)) currentEdges.Remove(edge);
@@ -944,9 +945,15 @@ namespace TVGL
                     vIndex++;
                     if (vIndex == sortedVertices.Length) break;
                     thisVertex = sortedVertices[vIndex];
+                    thisVertexDot = thisVertex.Dot(direction);
                 }
                 if (needToOffset)
-                    d += Math.Min(stepSize, sortedVertices[vIndex].Dot(direction) - d) / 10.0;
+                {
+                    if (vIndex < sortedVertices.Length)
+                        d += 0.001 * Math.Min(stepSize, sortedVertices[vIndex].Dot(direction) - d);
+                    else
+                        d += 0.001 * stepSize;
+                }
                 plane.DistanceToOrigin = d;
                 if (currentEdges.Any())
                 {

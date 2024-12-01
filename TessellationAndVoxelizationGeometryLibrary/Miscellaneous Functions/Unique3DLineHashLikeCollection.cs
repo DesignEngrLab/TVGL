@@ -170,11 +170,10 @@ namespace TVGL
             return matchFound && item.Equals(items[i]);
         }
 
-
-        public IEnumerable<T> GetItems()
-        {
-            return items;
-        }
+        /// <summary>
+        /// Gets the values stored in this collection.
+        /// </summary>
+        public List<T> Values => items;
     }
 
 
