@@ -217,7 +217,7 @@ namespace TVGL
                 return false;
             }
             value = Values[index];
-            return true; // !EqualityComparer<T>.Default.Equals(value, default(T));
+            return  !EqualityComparer<T>.Default.Equals(value, default(T));
         }
 
         /// <summary>

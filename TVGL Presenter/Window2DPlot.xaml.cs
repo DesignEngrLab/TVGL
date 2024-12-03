@@ -293,11 +293,8 @@ namespace TVGL
             if (!points.Any()) return;
             var series = new LineSeries { MarkerType = marker };
 
-            //Add color to series if applicable
             if (color != null)
-            {
                 series.Color = OxyColor.FromRgb(color.R, color.G, color.B);
-            }
 
             foreach (var point in points)
                 //point[0] == x, point[1] == y
@@ -381,7 +378,6 @@ namespace TVGL
         {
             return points.Select(p => new[] { p.X, p.Y }).ToList();
         }
-
 
     }
 }

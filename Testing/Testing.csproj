@@ -21,11 +21,12 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <ProjectReference Include="..\TVGL PresenterDebugger\TVGL PresenterDebugger.csproj" />
+	  <Folder Include="ThreeD_Methods\" />
 	</ItemGroup>
 
 	<ItemGroup>
-	  <Folder Include="ThreeD_Methods\" />
+	  <ProjectReference Include="..\TessellationAndVoxelizationGeometryLibrary\TessellationAndVoxelizationGeometryLibrary.csproj" />
+	  <ProjectReference Include="..\TVGL Presenter\TVGL Presenter.csproj" />
 	</ItemGroup>
 
 </Project>

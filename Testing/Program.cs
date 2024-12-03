@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using TVGL;
 
 namespace TVGLUnitTestsAndBenchmarking
@@ -24,7 +25,7 @@ namespace TVGLUnitTestsAndBenchmarking
             TVGL.Message.Verbosity = VerbosityLevels.OnlyCritical;
             DirectoryInfo dir = Program.BackoutToFolder(inputFolder);
 
-            var index = 011;
+            var index = 01;
             var valid3DFileExtensions = new HashSet<string> { ".stl", ".ply", ".obj", ".3mf", ".tvglz" };
             var allFiles = dir.GetFiles("*", SearchOption.AllDirectories).Where(f => valid3DFileExtensions.Contains(f.Extension.ToLower()))
                 ; //.OrderBy(fi => fi.Length);
@@ -34,42 +35,14 @@ namespace TVGLUnitTestsAndBenchmarking
                 TessellatedSolid[] solids = null;
                 IO.Open(fileName.FullName, out solids);
                 var ts = solids[0];
-                var alpha = 0.2 * (ts.Bounds[1] - ts.Bounds[0]).Length();
-                var alphaSqd = alpha * alpha;
-                ts.Complexify(0.3 * alpha);
-                
-                Delaunay3D.Create(ts.Vertices, out var delaunay3D);
-                
-                var faces = ts.Faces.ToList();
-                faces.Clear();
-                var colorEnumerator = Color.GetRandomColors().GetEnumerator();
-                var tetsToDelete = new HashSet<Tetrahedron>();
-                foreach (var vp in delaunay3D.Edges)
+                for (int i = 0; i < 100; i++)
                 {
-                    if (vp.Vector.LengthSquared() > alphaSqd)
-                        foreach (var tet in vp.Tetrahedra)
-                            tetsToDelete.Add(tet);
-                }
+                    ts.Transform(Matrix4x4.CreateFromYawPitchRoll(0.1, 0.1, 0.1));
+                    Presenter.Show(ts, i.ToString(), Presenter.HoldType.AddToQueue, 25);
 
-
-                foreach (var tetra in delaunay3D.Tetrahedra)
-                {
-                    if (tetsToDelete.Contains(tetra)) continue;
-                    var color = colorEnumerator.MoveNext() ? colorEnumerator.Current : null;
-                    foreach (var edge4D in tetra.Faces)
-                    {
-                        if (edge4D.OtherTetra==tetra && tetsToDelete.Contains(edge4D.OwnedTetra)) continue;
-                        if (edge4D.OwnedTetra==tetra && tetsToDelete.Contains(edge4D.OtherTetra)) continue;
-                        var aIndex = edge4D.Vertex1.IndexInList;
-                        var bIndex = edge4D.Vertex2.IndexInList;
-                        var cIndex = edge4D.Vertex3.IndexInList;
-                        var face = new TriangleFace(ts.Vertices[aIndex], ts.Vertices[bIndex], ts.Vertices[cIndex]);
-                        face.Color = new Color(Constants.DefaultColor); // new Color(133, color.R, color.G, color.B);
-                        faces.Add(face);
-                    }
                 }
-                Console.WriteLine("presenting...");
-                Presenter.ShowAndHang(faces);
+                Thread.Sleep(3333);
+                return;
                 index++;
             }
         }
