@@ -44,8 +44,7 @@ namespace TVGL
             {
                 if (updateInterval == value) return;
                 updateInterval = value;
-                this.OnPropertyChanged("UpdateInterval");
-                this.timer.Change(0, updateInterval);
+                this.timer.Change(startupTimerInterval, updateInterval);
             }
         }
         private Queue<IList<GeometryModel3D>> SeriesQueue;
@@ -63,6 +62,7 @@ namespace TVGL
 
         private string title;
         private int updateInterval = 15;
+        private const int startupTimerInterval = 0;
         private bool hasClosed;
 
         public Window OwnedWindow { get; }
@@ -72,7 +72,7 @@ namespace TVGL
         public Held3DViewModel(Window window)
         {
             this.OwnedWindow = window;
-            this.timer = new Timer(OnTimerElapsed);
+            this.timer = new Timer(OnTimerElapsed, null, startupTimerInterval, UpdateInterval);
             SeriesQueue = new Queue<IList<GeometryModel3D>>();
 
             EffectsManager = new DefaultEffectsManager();
@@ -88,20 +88,6 @@ namespace TVGL
             this.DirectionalLightDirection6 = new Vector3D(10, -10, -20);
 
         }
-
-
-        internal void OnLoaded(object sender, RoutedEventArgs e)
-        {
-            this.timer.Change(Timeout.Infinite, Timeout.Infinite);
-
-            //PlotModel.Axes.Add(new LinearAxis { Position = AxisPosition.Left, Minimum = -100, Maximum = 200 });
-            //PlotModel.InvalidatePlot(true);
-
-            this.OnPropertyChanged("PlotModel");
-
-            this.timer.Change(0, UpdateInterval);
-        }
-
 
         private void OnTimerElapsed(object state)
         {
@@ -126,7 +112,8 @@ namespace TVGL
                 });
             for (int i = lastNumberItems - 1; i >= newNumberItems; i--)
                 OwnedWindow.Dispatcher.Invoke(() => Solids.RemoveAt(i));
-
+            if (lastNumberItems == 0)
+                OwnedWindow.Dispatcher.Invoke(ResetCameraCommand);
             lastNumberItems = newNumberItems;
             return true;
         }

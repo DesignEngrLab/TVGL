@@ -30,8 +30,6 @@ namespace TVGL
 
         private void ResetCameraButtonClick(object sender, RoutedEventArgs e) => held3DViewModel.ResetCameraCommand();
 
-        private void OnLoaded(object sender, RoutedEventArgs e) => held3DViewModel.OnLoaded(sender, e);
-
         private void OnClosing(object sender, System.ComponentModel.CancelEventArgs e) => held3DViewModel.OnClosing(sender, e);
     }
 }

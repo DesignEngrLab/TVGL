@@ -38,11 +38,11 @@ namespace TVGLUnitTestsAndBenchmarking
                 for (int i = 0; i < 100; i++)
                 {
                     ts.Transform(Matrix4x4.CreateFromYawPitchRoll(0.1, 0.1, 0.1));
-                    Presenter.Show(ts, i.ToString(), Presenter.HoldType.AddToQueue, 25);
+                    Presenter.Show(ts, i.ToString(), Presenter.HoldType.AddToQueue,60, index %3);
 
                 }
-                Thread.Sleep(3333);
-                return;
+                //Thread.Sleep(3333);
+                //return;
                 index++;
             }
         }
