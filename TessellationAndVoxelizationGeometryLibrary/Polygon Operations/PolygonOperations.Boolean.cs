@@ -675,7 +675,7 @@ namespace TVGL
         /// <returns>List&lt;Polygon&gt;.</returns>
         internal static List<Polygon> BooleanViaClipper(Polygon polygonA, Polygon polygonB, FillRule fillType, Clipper2Lib.ClipType clipType)
         {
-            return BooleanViaClipper(fillType, clipType, new[] { polygonA }, new[] { polygonB });
+            return BooleanViaClipper(fillType, clipType, [polygonA], [polygonB]);
         }
         #endregion
 
@@ -692,19 +692,8 @@ namespace TVGL
         public static List<Polygon> Subtract(this Polygon minuend, Polygon subtrahend,
                     PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles, double tolerance = double.NaN)
         {
-            if (!subtrahend.Path.Any() || subtrahend.Area.IsNegligible())
-                return [minuend];
-            if (areaSimplificationFraction > 0)
-            {
-                minuend = minuend.SimplifyFast();
-                //minuend = minuend.SimplifyByAreaChangeToNewPolygon(areaSimplificationFraction);
-                if (subtrahend != null)
-                    subtrahend = subtrahend?.SimplifyFast();
-                //    subtrahend = subtrahend?.SimplifyByAreaChangeToNewPolygon(areaSimplificationFraction);
-            }
 #if CLIPPER
-            return BooleanViaClipper(FillRule.Positive, Clipper2Lib.ClipType.Difference, new[] { minuend },
-                            new[] { subtrahend });
+            return BooleanViaClipper(FillRule.Positive, Clipper2Lib.ClipType.Difference, [minuend], [subtrahend]);
 #elif !COMPARE
                     var polygonBInverted = subtrahend.Copy(true, true);
                     var relationship = GetPolygonInteraction(minuend, polygonBInverted);
@@ -771,14 +760,6 @@ namespace TVGL
         public static List<Polygon> Subtract(this IEnumerable<Polygon> minuends, IEnumerable<Polygon> subtrahends,
                     PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles, double tolerance = double.NaN)
         {
-            if (areaSimplificationFraction > 0)
-            {
-                minuends = minuends.Select(p => SimplifyFast(p));
-                //minuends = minuends.SimplifyByAreaChangeToNewPolygons(areaSimplificationFraction);
-                if (subtrahends != null)
-                    subtrahends = subtrahends.Select(p => SimplifyFast(p));
-                //subtrahends = subtrahends.SimplifyByAreaChangeToNewPolygons(areaSimplificationFraction);
-            }
 #if CLIPPER
             return BooleanViaClipper(FillRule.Positive, Clipper2Lib.ClipType.Difference, minuends, subtrahends);
 #elif !COMPARE
@@ -852,14 +833,6 @@ namespace TVGL
         public static List<Polygon> ExclusiveOr(this Polygon polygonA, Polygon polygonB,
             PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles)
         {
-            if (areaSimplificationFraction > 0)
-            {
-                polygonA = polygonA.SimplifyFast();
-                //polygonA = polygonA.SimplifyByAreaChangeToNewPolygon(areaSimplificationFraction);
-                if (polygonB != null)
-                    polygonB = polygonB.SimplifyFast();
-                //polygonB = polygonB?.SimplifyByAreaChangeToNewPolygon(areaSimplificationFraction);
-            }
 #if CLIPPER
             return BooleanViaClipper(FillRule.Positive, Clipper2Lib.ClipType.Xor, new[] { polygonA }, new[] { polygonB });
 #elif !COMPARE
