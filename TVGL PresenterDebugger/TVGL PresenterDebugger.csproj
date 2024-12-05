@@ -10,8 +10,8 @@
 	</PropertyGroup>
 	<ItemGroup>
 		<PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
-		<PackageReference Include="HelixToolkit.SharpDX.Core.Wpf" Version="2.23.0" />
-		<PackageReference Include="OxyPlot.Wpf" Version="2.1.2" />
+		<PackageReference Include="HelixToolkit.SharpDX.Core.Wpf" Version="2.25.0" />
+		<PackageReference Include="OxyPlot.Wpf" Version="2.2.0" />
 	</ItemGroup>
 	<ItemGroup>
 		<InternalsVisibleTo Include="TVGLUnitTestsAndBenchmarking" />
