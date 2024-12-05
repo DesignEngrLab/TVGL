@@ -11,6 +11,7 @@
 // </copyright>
 // <summary></summary>
 // ***********************************************************************
+using Clipper2Lib;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -156,25 +157,15 @@ namespace TVGL
         public static List<Polygon> Union(this Polygon polygonA, Polygon polygonB,
             PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles)
         {
-            if (areaSimplificationFraction > 0)
-            {
-                polygonA = polygonA.SimplifyFast();
-                //polygonA = polygonA.SimplifyByAreaChangeToNewPolygon(areaSimplificationFraction);
-                if (polygonB != null)
-                {
-                    polygonB = polygonB?.SimplifyFast();
-                    //polygonB = polygonB?.SimplifyByAreaChangeToNewPolygon(areaSimplificationFraction);
-                }
-            }
 #if CLIPPER
-            return BooleanViaClipper(ClipperLib.PolyFillType.Positive, ClipperLib.ClipType.Union, new[] { polygonA },
+            return BooleanViaClipper(FillRule.Positive, Clipper2Lib.ClipType.Union, new[] { polygonA },
                   new[] { polygonB });
 #elif !COMPARE
             var relationship = GetPolygonInteraction(polygonA, polygonB);
             return Union(polygonA, polygonB, relationship, outputAsCollectionType);
 #else
             sw.Restart();
-            var pClipper = BooleanViaClipper(ClipperLib.PolyFillType.pftPositive, ClipperLib.ClipType.ctUnion, new[] { polygonA },
+            var pClipper = BooleanViaClipper(FillRule.Positive, Clipper2Lib.ClipType.ctUnion, new[] { polygonA },
                   new[] { polygonB });
             sw.Stop();
             var clipTime = sw.Elapsed;
@@ -240,11 +231,8 @@ namespace TVGL
         /// <returns>System.Collections.Generic.List&lt;TVGL.TwoDimensional.Polygon&gt;.</returns>
         public static List<Polygon> UnionPolygons(this IEnumerable<Polygon> polygons, PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles)
         {
-            if (areaSimplificationFraction > 0)
-                polygons = polygons.Select(p => SimplifyFast(p));
-            //polygons = polygons.SimplifyByAreaChangeToNewPolygons(areaSimplificationFraction);
 #if CLIPPER
-            return BooleanViaClipper(ClipperLib.PolyFillType.Positive, ClipperLib.ClipType.Union, polygons);
+            return BooleanViaClipper(FillRule.Positive, Clipper2Lib.ClipType.Union, polygons);
 #elif !COMPARE
             var polygonList = polygons.ToList();
             for (int i = polygonList.Count - 1; i > 0; i--)
@@ -281,7 +269,7 @@ namespace TVGL
             return polygonList;
 #else
             sw.Restart();
-            var pClipper = BooleanViaClipper(ClipperLib.PolyFillType.pftPositive, ClipperLib.ClipType.ctUnion, polygons);
+            var pClipper = BooleanViaClipper(FillRule.Positive, Clipper2Lib.ClipType.ctUnion, polygons);
             sw.Stop();
             var clipTime = sw.Elapsed;
 
@@ -349,16 +337,8 @@ namespace TVGL
         public static List<Polygon> UnionPolygons(this IEnumerable<Polygon> polygonsA, IEnumerable<Polygon> polygonsB, PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles,
             double tolerance = double.NaN)
         {
-            if (areaSimplificationFraction > 0)
-            {
-                polygonsA = polygonsA.Select(p => SimplifyFast(p));
-                //polygonsA = polygonsA.SimplifyByAreaChangeToNewPolygons(areaSimplificationFraction);
-                if (polygonsB != null)
-                    polygonsB = polygonsB?.Select(p => SimplifyFast(p));
-                //polygonsB = polygonsB?.SimplifyByAreaChangeToNewPolygons(areaSimplificationFraction);
-            }
 #if CLIPPER
-            return BooleanViaClipper(ClipperLib.PolyFillType.Positive, ClipperLib.ClipType.Union, polygonsA, polygonsB);
+            return BooleanViaClipper(FillRule.Positive, Clipper2Lib.ClipType.Union, polygonsA, polygonsB);
 #elif !COMPARE
             if (polygonsB is null)
                 return UnionPolygons(polygonsA, outputAsCollectionType);
@@ -398,7 +378,7 @@ namespace TVGL
             var unionedPolygons = polygonsA.ToList();
             var polygonBList = polygonsB.ToList();
             sw.Restart();
-            var pClipper = BooleanViaClipper(ClipperLib.PolyFillType.pftPositive, ClipperLib.ClipType.ctUnion, polygonsA, polygonsB);
+            var pClipper = BooleanViaClipper(FillRule.Positive, Clipper2Lib.ClipType.ctUnion, polygonsA, polygonsB);
             sw.Stop();
             var clipTime = sw.Elapsed;
 
@@ -475,26 +455,15 @@ namespace TVGL
         public static List<Polygon> Intersect(this Polygon polygonA, Polygon polygonB,
             PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles, double tolerance = double.NaN)
         {
-            if (areaSimplificationFraction > 0)
-            {
-                polygonA = polygonA.SimplifyFast();
-                //polygonA = polygonA.SimplifyByAreaChangeToNewPolygon(areaSimplificationFraction);
-                if (polygonB != null)
-                {
-                    //If not null
-                    polygonB = polygonB?.SimplifyFast();
-                    //polygonB = polygonB?.SimplifyByAreaChangeToNewPolygon(areaSimplificationFraction);
-                }
-            }
 #if CLIPPER
-            return BooleanViaClipper(ClipperLib.PolyFillType.Positive, ClipperLib.ClipType.Intersection, new[] { polygonA },
+            return BooleanViaClipper(FillRule.Positive, Clipper2Lib.ClipType.Intersection, new[] { polygonA },
                     new[] { polygonB });
 #elif !COMPARE
             var relationship = GetPolygonInteraction(polygonA, polygonB);
             return Intersect(polygonA, polygonB, relationship, outputAsCollectionType, tolerance);
 #else
             sw.Restart();
-            var pClipper = BooleanViaClipper(ClipperLib.PolyFillType.pftPositive, ClipperLib.ClipType.ctIntersection, new[] { polygonA },
+            var pClipper = BooleanViaClipper(FillRule.Positive, Clipper2Lib.ClipType.ctIntersection, new[] { polygonA },
                     new[] { polygonB });
             sw.Stop();
             var clipTime = sw.Elapsed;
@@ -561,7 +530,7 @@ namespace TVGL
                 //polygonsB = polygonsB?.SimplifyByAreaChangeToNewPolygons(areaSimplificationFraction);
             }
 #if CLIPPER
-            return BooleanViaClipper(ClipperLib.PolyFillType.Positive, ClipperLib.ClipType.Intersection, polygonsA, polygonsB);
+            return BooleanViaClipper(FillRule.Positive, Clipper2Lib.ClipType.Intersection, polygonsA, polygonsB);
 #elif !COMPARE
             if (polygonsB is null)
                 return UnionPolygons(polygonsA, outputAsCollectionType);
@@ -579,7 +548,7 @@ namespace TVGL
             var polygonAList = new List<Polygon>(polygonsA);
             var polygonBList = polygonsB.ToList();
             sw.Restart();
-            var pClipper = BooleanViaClipper(ClipperLib.PolyFillType.pftPositive, ClipperLib.ClipType.ctIntersection, polygonsA, polygonsB);
+            var pClipper = BooleanViaClipper(FillRule.Positive, Clipper2Lib.ClipType.ctIntersection, polygonsA, polygonsB);
             sw.Stop();
             var clipTime = sw.Elapsed;
             sw.Restart();
@@ -633,7 +602,7 @@ namespace TVGL
                 polygons = polygons.Select(p => SimplifyFast(p));
             //polygons = polygons.SimplifyByAreaChangeToNewPolygons(areaSimplificationFraction);
 #if CLIPPER
-            return BooleanViaClipper(ClipperLib.PolyFillType.Positive, ClipperLib.ClipType.Intersection, polygons);
+            return BooleanViaClipper(FillRule.Positive, Clipper2Lib.ClipType.Intersection, polygons);
 #elif !COMPARE
             var result = new List<Polygon>();
             if (!polygons.Any()) return result;
@@ -647,7 +616,7 @@ namespace TVGL
 #else
             var polygonList = polygons.ToList();
             sw.Restart();
-            var pClipper = BooleanViaClipper(ClipperLib.PolyFillType.pftPositive, ClipperLib.ClipType.ctIntersection, polygons);
+            var pClipper = BooleanViaClipper(FillRule.Positive, Clipper2Lib.ClipType.ctIntersection, polygons);
             sw.Stop();
             var clipTime = sw.Elapsed;
             sw.Restart();
@@ -690,8 +659,8 @@ namespace TVGL
         /// <param name="fillType">Type of the fill.</param>
         /// <param name="clipType">Type of the clip.</param>
         /// <returns>List&lt;Polygon&gt;.</returns>
-        internal static List<Polygon> BooleanViaClipper(IEnumerable<Polygon> polygonsA, IEnumerable<Polygon> polygonsB, ClipperLib.PolyFillType fillType,
-            ClipperLib.ClipType clipType)
+        internal static List<Polygon> BooleanViaClipper(IEnumerable<Polygon> polygonsA, IEnumerable<Polygon> polygonsB, FillRule fillType,
+            Clipper2Lib.ClipType clipType)
         {
             return BooleanViaClipper(fillType, clipType, polygonsA, polygonsB);
         }
@@ -704,7 +673,7 @@ namespace TVGL
         /// <param name="fillType">Type of the fill.</param>
         /// <param name="clipType">Type of the clip.</param>
         /// <returns>List&lt;Polygon&gt;.</returns>
-        internal static List<Polygon> BooleanViaClipper(Polygon polygonA, Polygon polygonB, ClipperLib.PolyFillType fillType, ClipperLib.ClipType clipType)
+        internal static List<Polygon> BooleanViaClipper(Polygon polygonA, Polygon polygonB, FillRule fillType, Clipper2Lib.ClipType clipType)
         {
             return BooleanViaClipper(fillType, clipType, new[] { polygonA }, new[] { polygonB });
         }
@@ -734,7 +703,7 @@ namespace TVGL
                 //    subtrahend = subtrahend?.SimplifyByAreaChangeToNewPolygon(areaSimplificationFraction);
             }
 #if CLIPPER
-            return BooleanViaClipper(ClipperLib.PolyFillType.Positive, ClipperLib.ClipType.Difference, new[] { minuend },
+            return BooleanViaClipper(FillRule.Positive, Clipper2Lib.ClipType.Difference, new[] { minuend },
                             new[] { subtrahend });
 #elif !COMPARE
                     var polygonBInverted = subtrahend.Copy(true, true);
@@ -742,7 +711,7 @@ namespace TVGL
                     return Intersect(minuend, polygonBInverted, relationship, outputAsCollectionType, tolerance);
 #else
                     sw.Restart();
-                    var pClipper = BooleanViaClipper(ClipperLib.PolyFillType.pftPositive, ClipperLib.ClipType.ctDifference, new[] { minuend },
+                    var pClipper = BooleanViaClipper(FillRule.Positive, Clipper2Lib.ClipType.ctDifference, new[] { minuend },
                         new[] { subtrahend });
                     sw.Stop();
                     var clipTime = sw.Elapsed;
@@ -811,7 +780,7 @@ namespace TVGL
                 //subtrahends = subtrahends.SimplifyByAreaChangeToNewPolygons(areaSimplificationFraction);
             }
 #if CLIPPER
-            return BooleanViaClipper(ClipperLib.PolyFillType.Positive, ClipperLib.ClipType.Difference, minuends, subtrahends);
+            return BooleanViaClipper(FillRule.Positive, Clipper2Lib.ClipType.Difference, minuends, subtrahends);
 #elif !COMPARE
                     var minuendsList = minuends.ToList();
         foreach (var polyB in subtrahends)
@@ -828,7 +797,7 @@ namespace TVGL
 #else
                     var minuendsList = minuends.ToList();
                     sw.Restart();
-                    var pClipper = BooleanViaClipper(ClipperLib.PolyFillType.pftPositive, ClipperLib.ClipType.ctDifference, minuends, subtrahends);
+                    var pClipper = BooleanViaClipper(FillRule.Positive, Clipper2Lib.ClipType.ctDifference, minuends, subtrahends);
                     sw.Stop();
                     var clipTime = sw.Elapsed;
                     sw.Restart();
@@ -892,13 +861,13 @@ namespace TVGL
                 //polygonB = polygonB?.SimplifyByAreaChangeToNewPolygon(areaSimplificationFraction);
             }
 #if CLIPPER
-            return BooleanViaClipper(ClipperLib.PolyFillType.Positive, ClipperLib.ClipType.Xor, new[] { polygonA }, new[] { polygonB });
+            return BooleanViaClipper(FillRule.Positive, Clipper2Lib.ClipType.Xor, new[] { polygonA }, new[] { polygonB });
 #elif !COMPARE
             var relationship = GetPolygonInteraction(polygonA, polygonB);
             return ExclusiveOr(polygonA, polygonB, relationship, outputAsCollectionType);
 #else
             sw.Restart();
-            var pClipper = BooleanViaClipper(ClipperLib.PolyFillType.pftPositive, ClipperLib.ClipType.ctXor, new[] { polygonA }, new[] { polygonB });
+            var pClipper = BooleanViaClipper(FillRule.Positive, Clipper2Lib.ClipType.ctXor, new[] { polygonA }, new[] { polygonB });
             sw.Stop();
             var clipTime = sw.Elapsed;
             sw.Restart();

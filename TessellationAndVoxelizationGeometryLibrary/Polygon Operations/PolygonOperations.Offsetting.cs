@@ -227,7 +227,7 @@ namespace TVGL
         private static List<Polygon> Offset(this Polygon polygon, double offset, bool notMiter, double tolerance, double deltaAngle = double.NaN)
         {
 #if CLIPPER
-            return OffsetViaClipper(polygon, offset, notMiter, tolerance, deltaAngle);
+            return OffsetViaClipper([polygon], offset, notMiter, tolerance, deltaAngle);
 #elif !COMPARE
             var bb = polygon.BoundingRectangle();
             // if the offset is negative then perhaps we just delete the entire polygon if it is smaller than
