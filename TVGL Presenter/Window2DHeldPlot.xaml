@@ -1,0 +1,14 @@
+﻿<Window x:Name="load" x:Class="TVGL.Window2DHeldPlot"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" 
+        xmlns:oxy="http://oxyplot.org/wpf" xmlns:tvgl="clr-namespace:TVGL" 
+        d:DataContext="{d:DesignInstance Type=tvgl:HeldViewModel}" 
+        Title="{Binding Title}" Height="480" Width="640" Loaded="OnLoaded" Closing="OnClosing">
+        <Grid>
+            <oxy:PlotView Model="{Binding PlotModel}"/>
+        </Grid>
+    </Window>
+

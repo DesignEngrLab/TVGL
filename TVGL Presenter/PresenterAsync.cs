@@ -11,14 +11,11 @@
 // </copyright>
 // <summary></summary>
 // ***********************************************************************
-using System.Collections.Generic;
-using System.Linq;
-using HelixToolkit.Wpf.SharpDX;
-using HelixToolkit.SharpDX.Core;
 using OxyPlot;
 using System;
+using System.Collections.Generic;
+using System.Threading;
 using System.Windows;
-using System.Threading.Tasks;
 
 namespace TVGL
 {
@@ -29,177 +26,163 @@ namespace TVGL
     /// </summary>
     public static partial class Presenter
     {
-        static List<Window> openWindows = new List<Window>();
-        #region 2D Plots via OxyPlot
+        public enum HoldType { AddToQueue, Immediate };
 
-        #region Plotting 2D coordinates both scatter and polygons
-
-
-        /// <summary>
-        /// Shows the provided objects and "hangs" (halts code until user closes presenter window).
-        /// </summary>
-        /// <param name="points">The points.</param>
-        /// <param name="title">The title.</param>
-        /// <param name="plot2DType">Type of the plot2 d.</param>
-        /// <param name="closeShape">if set to <c>true</c> [close shape].</param>
-        /// <param name="marker">The marker.</param>
-        public static async Task Show(IEnumerable<Vector2> points, bool makeNew = false, string title = "", Plot2DType plot2DType = Plot2DType.Line,
-            bool closeShape = true, MarkerType marker = MarkerType.Circle)
-        {
-            Window currentWindow;
-            if (makeNew || !openWindows.Any(w => w is Window2DPlot))
-            {
-                currentWindow = new Window2DPlot(points, title, plot2DType, closeShape, marker);
-                openWindows.Insert(0, currentWindow);
-                 currentWindow.Show();
-            }
-            else
-            {
-                currentWindow = openWindows.First(w => w is Window2DPlot);
-                currentWindow.Activate();
-                ((Window2DPlot)currentWindow).PlotData(points, plot2DType, closeShape, marker);
-            }
-        }    
-
-        /// <summary>
-        /// Shows the provided objects and "hangs" (halts code until user closes presenter window).
-        /// </summary>
-        /// <param name="pointsList">The points list.</param>
-        /// <param name="title">The title.</param>
-        /// <param name="plot2DType">Type of the plot2 d.</param>
-        /// <param name="closeShape">if set to <c>true</c> [close shape].</param>
-        /// <param name="marker">The marker.</param>
-        public static void Show(IEnumerable<IEnumerable<Vector2>> pointsList, string title = "", Plot2DType plot2DType = Plot2DType.Line,
-            bool closeShape = true, MarkerType marker = MarkerType.Circle)
-        {
-            var window = new Window2DPlot(pointsList, title, plot2DType, closeShape, marker);
-            window.Show();
-
-        }
-
-        /// <summary>
-        /// Shows the provided objects and "hangs" (halts code until user closes presenter window).
-        /// </summary>
-        /// <param name="pointsLists">The points lists.</param>
-        /// <param name="title">The title.</param>
-        /// <param name="plot2DType">Type of the plot2 d.</param>
-        /// <param name="closeShape">if set to <c>true</c> [close shape].</param>
-        /// <param name="marker">The marker.</param>
-        public static void Show(IEnumerable<IEnumerable<IEnumerable<Vector2>>> pointsLists, string title = "", Plot2DType plot2DType = Plot2DType.Line,
-            bool closeShape = true, MarkerType marker = MarkerType.Circle)
-        {
-
-            var window = new Window2DPlot(pointsLists, title, plot2DType, closeShape, marker);
-            window.Show();
-        }
-
-        public static void Show(IEnumerable<Polygon> polygons, string title = "", Plot2DType plot2DType = Plot2DType.Line,
-            bool closeShape = true, MarkerType marker = MarkerType.Circle)
-        {
-            var points = polygons.SelectMany(polygon => polygon.AllPolygons.Select(p => p.Path)).ToList();
-            var window = new Window2DPlot(points, title, plot2DType, closeShape, marker);
-            window.Show();
-        }
-
+        static List<Window2DHeldPlot> plot2DHeldWindows = new List<Window2DHeldPlot>();
+        static List<Window3DHeldPlot> plot3DHeldWindows = new List<Window3DHeldPlot>();
         public static void Show(Polygon polygon, string title = "", Plot2DType plot2DType = Plot2DType.Line,
-            bool closeShape = true, MarkerType marker = MarkerType.Circle)
+            bool closeShape = true, MarkerType marker = MarkerType.Circle, HoldType holdType = HoldType.Immediate, int timetoShow = -1, int id = -1)
         {
-             Show(new[] { polygon }, title, plot2DType, closeShape, marker);
+            var window = GetOrCreateWindow(id);
+            window.Dispatcher.Invoke(() =>
+            {
+                var vm = (HeldViewModel)window.DataContext;
+                if (holdType == HoldType.Immediate)
+                    vm.AddNewSeries(polygon, plot2DType, closeShape, marker);
+                else vm.EnqueueNewSeries(polygon, plot2DType, closeShape, marker);
+
+                if (!string.IsNullOrEmpty(title)) vm.Title = title;
+
+                if (timetoShow > 0)
+                    vm.UpdateInterval = timetoShow;
+
+                if (!window.IsVisible && !vm.HasClosed)
+                    window.Show();
+            });
         }
 
-
-        /// <summary>
-        /// Shows two different lists of polygons using a unique marker for each.
-        /// </summary>
-        /// <param name="points1">The points1.</param>
-        /// <param name="points2">The points2.</param>
-        /// <param name="title">The title.</param>
-        /// <param name="plot2DType">Type of the plot2 d.</param>
-        /// <param name="closeShape">if set to <c>true</c> [close shape].</param>
-        /// <param name="marker1">The marker1.</param>
-        /// <param name="marker2">The marker2.</param>
-        public static void Show(IEnumerable<IEnumerable<Vector2>> points1,
-            IEnumerable<IEnumerable<Vector2>> points2, string title = "",
-            Plot2DType plot2DType = Plot2DType.Line,
-            bool closeShape = true, MarkerType marker1 = MarkerType.Circle,
-            MarkerType marker2 = MarkerType.Cross)
+        private static Window GetOrCreateWindow(int id)
         {
-            var window = new Window2DPlot(points1, points2, title, plot2DType, closeShape, marker1, marker2);
-            window.Show(); 
+            Window2DHeldPlot window = null;
+            var makeNew = false;
+            if (id < 0)
+            {
+                if (plot2DHeldWindows.Count != 0)
+                    id = plot2DHeldWindows.Count - 1;
+                else id = 0;
+            }
+            if (id >= 0 && id < plot2DHeldWindows.Count)
+            {
+                window = plot2DHeldWindows[id];
+                if (window == null) makeNew = true;
+                else
+                {
+                    bool hasClosed = true;
+                    window.Dispatcher.Invoke(() => hasClosed = ((HeldViewModel)window.DataContext).HasClosed);
+                    if (hasClosed)
+                    {
+                        plot2DHeldWindows[id] = null;
+                        makeNew = true;
+                    }
+                }
+            }
+            else makeNew = true;
+
+            if (makeNew) // then number is outside current count
+            {
+                while (plot2DHeldWindows.Count <= id)
+                    plot2DHeldWindows.Add(null);
+                Thread newWindowThread = new Thread(ThreadStartingPoint);
+                newWindowThread.SetApartmentState(ApartmentState.STA);
+                newWindowThread.IsBackground = true;
+                newWindowThread.Start(id);
+                while (plot2DHeldWindows[id] == null)
+                    Thread.Sleep(100);
+                window = plot2DHeldWindows[id];
+            }
+            return window;
         }
 
-        #endregion
-
-
-
-        #region 2D plots projecting vertices to 2D
-        /// <summary>
-        /// Shows the provided objects and "hangs" (halts code until user closes presenter window).
-        /// </summary>
-        /// <param name="vertices">The vertices.</param>
-        /// <param name="direction">The direction.</param>
-        /// <param name="title">The title.</param>
-        /// <param name="plot2DType">Type of the plot2 d.</param>
-        /// <param name="closeShape">if set to <c>true</c> [close shape].</param>
-        /// <param name="marker">The marker.</param>
-        //public static void Show(IEnumerable<Vertex> vertices, Vector3 direction, string title = "",
-        //    Plot2DType plot2DType = Plot2DType.Line,
-        //    bool closeShape = true, MarkerType marker = MarkerType.Circle)
-        //{
-        //    return Show(vertices.ProjectTo2DCoordinates(direction, out _), title, plot2DType, closeShape,
-        //          marker);
-        //}
-
-        /// <summary>
-        /// Shows the provided objects and "hangs" (halts code until user closes presenter window).
-        /// </summary>
-        /// <param name="vertices">The vertices.</param>
-        /// <param name="direction">The direction.</param>
-        /// <param name="title">The title.</param>
-        /// <param name="plot2DType">Type of the plot2 d.</param>
-        /// <param name="closeShape">if set to <c>true</c> [close shape].</param>
-        /// <param name="marker">The marker.</param>
-        public static void Show(IEnumerable<IEnumerable<Vertex>> vertices, Vector3 direction, string title = "",
-            Plot2DType plot2DType = Plot2DType.Line,
-            bool closeShape = true, MarkerType marker = MarkerType.Circle)
+        private static void ThreadStartingPoint(object indexObj)
         {
-            Show(vertices.Select(listsOfVerts => listsOfVerts.ProjectTo2DCoordinates(direction, out _)),
-                  title, plot2DType, closeShape, marker);
+            var index = (int)indexObj;
+            var window = new Window2DHeldPlot();
+            plot2DHeldWindows[index] = window;
+            window.Show();
+            System.Windows.Threading.Dispatcher.Run();
         }
-
-        #endregion
-
-        #endregion
 
 
         #region Show and Hang Solids
-        public static void Show(TessellatedSolid ts, string heading = "", string title = "",
-            string subtitle = "")
+        public static void Show(Solid solid, string title = "",
+            HoldType holdType = HoldType.Immediate, int timetoShow = -1, int id = -1)
         {
-             Show(new[] { ts });
-        }
-        public static void Show(VoxelizedSolid vs, string heading = "", string title = "",
-            string subtitle = "")
-        {
-             Show(new[] { vs });
+            if (solid is CrossSectionSolid css)
+                throw new NotImplementedException();
+            else
+                Show([solid], title, holdType, timetoShow, id);
         }
 
-        public static void Show(VoxelizedSolid correctVoxels, IEnumerable<Polygon> shallowTree)
+        public static void Show(ICollection<Solid> solids, string title = "",
+            HoldType holdType = HoldType.Immediate, int timetoShow = -1, int id = -1)
         {
-            throw new NotImplementedException();
+            var window = GetOrCreate3DWindow(id);
+            window.Dispatcher.Invoke(() =>
+            {
+                var vm = (Held3DViewModel)window.DataContext;
+                if (!string.IsNullOrEmpty(title)) vm.Title = title;
+
+                if (timetoShow > 0)
+                    vm.UpdateInterval = timetoShow;
+                if (holdType == HoldType.Immediate)
+                    vm.AddNewSeries(ConvertSolidsToModel3D(solids));
+                else vm.EnqueueNewSeries(ConvertSolidsToModel3D(solids));
+                if (!window.IsVisible && !vm.HasClosed)
+                    window.Show();
+            });
+        }
+        private static Window GetOrCreate3DWindow(int id)
+        {
+            Window3DHeldPlot window = null;
+            var makeNew = false;
+            if (id < 0)
+            {
+                if (plot3DHeldWindows.Count != 0)
+                    id = plot3DHeldWindows.Count - 1;
+                else id = 0;
+            }
+            if (id >= 0 && id < plot3DHeldWindows.Count)
+            {
+                window = plot3DHeldWindows[id];
+                if (window == null) makeNew = true;
+                else
+                {
+                    bool hasClosed = true;
+                    window.Dispatcher.Invoke(() => hasClosed = ((Held3DViewModel)window.DataContext).HasClosed);
+                    if (hasClosed)
+                    {
+                        plot3DHeldWindows[id] = null;
+                        makeNew = true;
+                    }
+                }
+            }
+            else makeNew = true;
+
+            if (makeNew) // then number is outside current count
+            {
+                while (plot3DHeldWindows.Count <= id)
+                    plot3DHeldWindows.Add(null);
+                Thread newWindowThread = new Thread(ThreadStartingPoint3D);
+                newWindowThread.SetApartmentState(ApartmentState.STA);
+                newWindowThread.IsBackground = true;
+                newWindowThread.Start(id);
+                while (plot3DHeldWindows[id] == null)
+                    Thread.Sleep(100);
+                window = plot3DHeldWindows[id];
+            }
+            return window;
+        }
+        private static void ThreadStartingPoint3D(object indexObj)
+        {
+            var index = (int)indexObj;
+            var window = new Window3DHeldPlot();
+            plot3DHeldWindows[index] = window;
+            window.Show();
+            System.Windows.Threading.Dispatcher.Run();
         }
 
 
-        public static void Show(IEnumerable<Solid> solids, string heading = "", string title = "",
-            string subtitle = "")
-        {
-            var vm = new Window3DPlotViewModel(heading, title, subtitle);
-            vm.Add(ConvertSolidsToModel3D(solids));
-            var window = new Window3DPlot(vm);
-            window.Show(); 
-        }
 
         #endregion
-
     }
 }

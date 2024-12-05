@@ -24,7 +24,7 @@ namespace TVGLUnitTestsAndBenchmarking
                 DefineConvexHull = false
             });
             //Presenter.ShowAndHang(sphere1.Faces);
-            ConvexHull3D.Create(testSphere);
+            ConvexHull3D.Create(testSphere, true);
             var cvxHull1 = testSphere.ConvexHull;
             foreach (var f in cvxHull1.Faces)
                 f.Color = new Color(100, 100, 0, 0);
@@ -37,7 +37,7 @@ namespace TVGLUnitTestsAndBenchmarking
         public static void Test2(TessellatedSolid ts)
         {
             var sw = Stopwatch.StartNew();
-            ConvexHull3D.Create(ts);
+            ConvexHull3D.Create(ts, true);
             sw.Stop();
             ts.ResetDefaultColor();
             foreach (var f in ts.ConvexHull.Faces)

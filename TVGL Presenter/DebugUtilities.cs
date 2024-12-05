@@ -135,19 +135,11 @@ namespace TVGL_Presenter
                 foreach (var feature in features)
                     foreach (var border in feature.Borders)
                         lines.Add(border.GetCoordinates());
-                var colors = color == null ? new Color[] { white } : new Color[] { color };
-#if MEDEMA
-                Global.Presenter.ShowVertexPaths(lines, ts, lineThickness, colors);
-#else
-                Presenter.ShowVertexPaths(lines, ts, lineThickness, colors);
-#endif         
+                color = color ?? white;
+                Presenter.ShowPathsAndSolids([lines], [false], [lineThickness], [color], ts);
             }
             else
-#if MEDEMA
-                Global.Presenter.ShowAndHang(ts);
-#else
                 Presenter.ShowAndHang(ts);
-#endif    
         }
 
         /// <summary>
@@ -194,11 +186,7 @@ namespace TVGL_Presenter
             }
             var lines = ts.GetWireFrame(borders, primitives);
             var colors = color == null ? new Color[] { white } : new Color[] { color };
-#if MEDEMA
-            Global.Presenter.ShowVertexPaths(lines, ts, lineThickness, colors);
-#else
-            Presenter.ShowVertexPaths(lines, ts, lineThickness, colors);
-#endif
+            Presenter.ShowPathsAndSolids([lines], [false], [lineThickness], colors, ts);
         }
 
         public static List<IEnumerable<Vector3>> GetWireFrame(this TessellatedSolid ts, IEnumerable<BorderLoop> borders = null,
@@ -287,12 +275,7 @@ namespace TVGL_Presenter
                 var height = MinimumEnclosure.GetLengthAndExtremeVertex(cylinder.Vertices, cylinder.Axis, out _, out _);
                 var bottom = cylinder.Anchor + cylinder.Axis * ((centerTValue - anchorTValue) - halfheight);
                 var top = cylinder.Anchor + cylinder.Axis * ((centerTValue - anchorTValue) + halfheight);
-#if MEDEMA
-                Global.Presenter.ShowVertexPaths(new List<Vector3> { bottom, top }, solid);
-#else
-                Presenter.ShowVertexPaths(new List<Vector3> { bottom, top }, solid);
-#endif
-
+                Presenter.ShowPathAndSolids(new List<Vector3> { bottom, top }, false, solids: solid);
             }
             else if (bestPrimitiveSurface is Cone cone)
             {
@@ -322,11 +305,7 @@ namespace TVGL_Presenter
                 var circlePoints = circle.CreatePath(36);
                 var circle3D = circlePoints.ConvertTo3DLocations(cone.Axis, d).ToList();
                 var centerLine = new List<Vector3> { cone.Apex, bottom, edgePoint };
-#if MEDEMA
-                Global.Presenter.ShowVertexPaths(new List<Vector3> { cone.Apex, bottom, edgePoint }, solid);
-#else
-                Presenter.ShowVertexPaths(new List<Vector3> { cone.Apex, bottom, edgePoint }, solid);
-#endif
+                Presenter.ShowPathAndSolids(new List<Vector3> { cone.Apex, bottom, edgePoint }, false, solids: solid);
             }
             else if (bestPrimitiveSurface is Torus torus)
             {
@@ -346,11 +325,7 @@ namespace TVGL_Presenter
                         torus.Center-d2*(torus.MajorRadius+torus.MinorRadius),
                         torus.Center+d1*(torus.MajorRadius+torus.MinorRadius)
                     };
-#if MEDEMA
-                Global.Presenter.ShowVertexPaths(torusPoints, solid);
-#else
-                Presenter.ShowVertexPaths(torusPoints, solid);
-#endif
+                Presenter.ShowPathAndSolids(torusPoints, false, solids: solid);
             }
             else if (bestPrimitiveSurface is Sphere)
             {
@@ -359,21 +334,13 @@ namespace TVGL_Presenter
                                 sphere.Center + sphere.Radius * Vector3.UnitX, sphere.Center - sphere.Radius * Vector3.UnitX, sphere.Center,
                                 sphere.Center + sphere.Radius * Vector3.UnitY, sphere.Center - sphere.Radius * Vector3.UnitY, sphere.Center,
                                 sphere.Center + sphere.Radius * Vector3.UnitZ, sphere.Center - sphere.Radius * Vector3.UnitZ};
-#if MEDEMA
-                Global.Presenter.ShowVertexPaths(spherePoints, solid);
-#else
-                Presenter.ShowVertexPaths(spherePoints, solid);
-#endif
+                Presenter.ShowPathAndSolids(spherePoints, false, solids: solid);
 
             }
             //For all other surface types, just show the colored primitive
             else
             {
-#if MEDEMA
-                Global.Presenter.ShowAndHang(solid);
-#else
                 Presenter.ShowAndHang(solid);
-#endif
             }
         }
 

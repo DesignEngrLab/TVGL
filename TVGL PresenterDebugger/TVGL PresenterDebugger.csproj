@@ -163,18 +163,28 @@
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\SolidAssembly.cs" Link="TVGL\SolidAssembly.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Verbosity.cs" Link="TVGL\Verbosity.cs" />
 		<Compile Include="..\TVGL Presenter\Window3DPlotViewModel.cs" Link="Presenter\Window3DPlotViewModel.cs" />
+		<Compile Include="..\TVGL Presenter\HeldViewModel.cs" Link="Presenter\HeldViewModel.cs" />
+		<Compile Include="..\TVGL Presenter\Held3DViewModel.cs" Link="Presenter\Held3DViewModel.cs" />
 		<Compile Include="..\TVGL Presenter\Presenter.cs" Link="Presenter\Presenter.cs" />
 		<Compile Include="..\TVGL Presenter\DebugUtilities.cs" Link="Presenter\DebugUtilities.cs" />
 		<Compile Include="..\TVGL Presenter\PresenterAsync.cs" Link="Presenter\PresenterAsync.cs" />
 		<Compile Include="..\TVGL Presenter\PresenterNVOptimusEnabler.cs" Link="Presenter\PresenterNVOptimusEnabler.cs" />
 		<Compile Include="..\TVGL Presenter\Window2DPlot.xaml.cs" Link="Presenter\Window2DPlot.xaml.cs" />
 		<Compile Include="..\TVGL Presenter\Window3DPlot.xaml.cs" Link="Presenter\Window3DPlot.xaml.cs" />
+		<Compile Include="..\TVGL Presenter\Window2DHeldPlot.xaml.cs" Link="Presenter\Window2DHeldPlot.xaml.cs" />
+		<Compile Include="..\TVGL Presenter\Window3DHeldPlot.xaml.cs" Link="Presenter\Window3DHeldPlot.xaml.cs" />
 	</ItemGroup>
 	<ItemGroup>
 		<Page Include="..\TVGL Presenter\Window2DPlot.xaml" Link="Presenter\Window2DPlot.xaml">
 			<Generator>MSBuild:Compile</Generator>
 		</Page>
 		<Page Include="..\TVGL Presenter\Window3DPlot.xaml" Link="Presenter\Window3DPlot.xaml">
+			<Generator>MSBuild:Compile</Generator>
+		</Page>
+		<Page Include="..\TVGL Presenter\Window2DHeldPlot.xaml" Link="Presenter\Window2DHeldPlot.xaml">
+			<Generator>MSBuild:Compile</Generator>
+		</Page>
+		<Page Include="..\TVGL Presenter\Window3DHeldPlot.xaml" Link="Presenter\Window3DHeldPlot.xaml">
 			<Generator>MSBuild:Compile</Generator>
 		</Page>
 	</ItemGroup>
