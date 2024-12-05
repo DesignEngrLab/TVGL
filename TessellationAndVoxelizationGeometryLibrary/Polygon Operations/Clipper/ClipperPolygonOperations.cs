@@ -50,7 +50,8 @@ namespace TVGL
         /// <summary>
         /// The scale
         /// </summary>
-        const double scale = 1000000;
+        const double scale = 45720000; // this is (2^6)*(3^2)*(5^4)*127 = 45720000
+        // why this number? see my reasoning here: https://github.com/DesignEngrLab/TVGL/wiki/Determining-the-Double-to-Long-Dimension-Multiplier
         const double invScale = 1 / scale;
         #region Offset
         /// <summary>
