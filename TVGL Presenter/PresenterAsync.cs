@@ -11,9 +11,11 @@
 // </copyright>
 // <summary></summary>
 // ***********************************************************************
+using HelixToolkit.Wpf.SharpDX;
 using OxyPlot;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Windows;
 
@@ -131,6 +133,27 @@ namespace TVGL
                     window.Show();
             });
         }
+        public static void Show(IEnumerable<IEnumerable<Vector3>> paths, IEnumerable<bool> closePaths = null,
+            IEnumerable<double> lineThicknesses = null, IEnumerable<Color> colors = null, string title = "",
+            HoldType holdType = HoldType.Immediate, int timetoShow = -1, int id = -1, params Solid[] solids)
+        {
+            var window = GetOrCreate3DWindow(id);
+            window.Dispatcher.Invoke(() =>
+            {
+                var vm = (Held3DViewModel)window.DataContext;
+                if (!string.IsNullOrEmpty(title)) vm.Title = title;
+
+                if (timetoShow > 0)
+                    vm.UpdateInterval = timetoShow;
+                if (holdType == HoldType.Immediate)
+                    vm.AddNewSeries(ConvertSolidsToModel3D(solids).Concat(ConvertPathsToLineModels(paths,closePaths,lineThicknesses,colors)));
+                else vm.EnqueueNewSeries(ConvertSolidsToModel3D(solids).Concat(ConvertPathsToLineModels(paths, closePaths, lineThicknesses, colors)));
+                if (!window.IsVisible && !vm.HasClosed)
+                    window.Show();
+            });
+        }
+
+
         private static Window GetOrCreate3DWindow(int id)
         {
             Window3DHeldPlot window = null;
