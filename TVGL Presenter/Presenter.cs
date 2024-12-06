@@ -233,7 +233,7 @@ namespace TVGL
             string subtitle = "")
         {
             if (solid is CrossSectionSolid css)
-                ShowPaths(css.GetCrossSectionsAs3DLoops());
+                ShowAndHang(css.GetCrossSectionsAs3DLoops());
             else
                 ShowAndHang(new[] { solid }, heading, title, subtitle);
         }
@@ -306,10 +306,10 @@ namespace TVGL
 
 
         #region ShowPaths with or without Solid(s)
-        public static void ShowAndHang(IEnumerable<Vector3> points, double radius = 0, Color color = null)
+        public static void ShowPointsAndHang(IEnumerable<Vector3> points, double radius = 0, Color color = null)
         {
             if (radius == 0) radius = 1;
-            if (color == null) color = new Color(KnownColors.Red);
+            color ??= new Color(KnownColors.Red);
             var pointVisuals = GetPointModels(points, radius, color);
             var vm = new Window3DPlotViewModel();
             vm.Add(pointVisuals);
@@ -317,7 +317,7 @@ namespace TVGL
             window.ShowDialog();
         }
 
-        public static void ShowAndHang(IEnumerable<IEnumerable<Vector3>> pointSets, double radius = 0, IEnumerable<Color> colors = null)
+        public static void ShowPointsAndHang(IEnumerable<IEnumerable<Vector3>> pointSets, double radius = 0, IEnumerable<Color> colors = null)
         {
             if (radius == 0) radius = 1;
             //set the default color to be the first color in the list. If none was provided, use black.
@@ -357,16 +357,6 @@ namespace TVGL
 
 
         #region ShowPaths with or without Solid(s)
-
-        public static void ShowAndHang(IEnumerable<IEnumerable<IEnumerable<Vector3>>> path, IEnumerable<bool> closePaths = null,
-            IEnumerable<double> lineThicknesses = null, IEnumerable<Color> colors = null)
-       => ShowAndHang(path, closePaths, lineThicknesses, colors);
-
-        public static void ShowAndHang(IEnumerable<IEnumerable<Vector3>> path, IEnumerable<bool> closePaths = null,
-            IEnumerable<double> lineThicknesses = null, IEnumerable<Color> colors = null)
-       => ShowAndHang(path, closePaths, lineThicknesses, colors);
-
-
         public static void ShowAndHang(IEnumerable<IEnumerable<IEnumerable<Vector3>>> paths, IEnumerable<bool> closePaths = null,
             IEnumerable<double> lineThicknesses = null, IEnumerable<Color> colors = null, params Solid[] solids)
         {
@@ -395,7 +385,7 @@ namespace TVGL
             window.ShowDialog();
         }
 
-        public static void ShowAndHang(IEnumerable<Vector3> path, bool closePaths, double lineThickness = -1, Color color = null, params Solid[] solids)
+        public static void ShowAndHang(IEnumerable<Vector3> path, bool closePaths = false, double lineThickness = -1, Color color = null, params Solid[] solids)
             => ShowAndHang([path], [closePaths], [lineThickness == -1 ? 1 : lineThickness], [color == null ? new Color(KnownColors.Black) : color], solids);
 
 

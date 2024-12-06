@@ -45,7 +45,7 @@ namespace TVGLUnitTestsAndBenchmarking.Misc_Tests
                     paths.Add(yLine);
                 }
                 var colors = paths.Select(c => new Color(KnownColors.DodgerBlue));
-                Presenter.ShowPathsAndSolids([paths], [true], [1], colors, solid);
+                Presenter.ShowAndHang([paths], [true], [1], colors, solid);
             }
         }
 
@@ -104,7 +104,7 @@ namespace TVGLUnitTestsAndBenchmarking.Misc_Tests
                     paths.Add(yLine);
                 }
                 var colors = paths.Select(c => new Color(KnownColors.DodgerBlue));
-                Presenter.ShowPathsAndSolids([paths], [true], [1], colors, solid);
+                Presenter.ShowAndHang([paths], [true], [1], colors, solid);
             }
         }
 
@@ -139,7 +139,7 @@ namespace TVGLUnitTestsAndBenchmarking.Misc_Tests
                     paths.Add(yLine);
                 }
                 var colors = paths.Select(c => new Color(KnownColors.DodgerBlue));
-                Presenter.ShowPathsAndSolids([paths], [true], [1], colors, solid);
+                Presenter.ShowAndHang([paths], [true], [1], colors, solid);
             }
         }
 
