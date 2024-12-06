@@ -29,13 +29,13 @@ namespace TVGL
             var oldOtherFace = edge.OtherFace;
             // make a bunch of variables for the four edges around this patch
             var borderEdge1 = oldOwnedFace.OtherEdge(edge.From);
-            var replaceOwned1 = borderEdge1.OwnedFace==oldOwnedFace;
+            var replaceOwned1 = borderEdge1.OwnedFace == oldOwnedFace;
             var borderEdge2 = oldOwnedFace.OtherEdge(edge.To);
-            var replaceOwned2 = borderEdge2.OwnedFace==oldOwnedFace;
+            var replaceOwned2 = borderEdge2.OwnedFace == oldOwnedFace;
             var borderEdge3 = oldOtherFace.OtherEdge(edge.From);
-            var replaceOwned3 = borderEdge3.OwnedFace ==oldOtherFace;
+            var replaceOwned3 = borderEdge3.OwnedFace == oldOtherFace;
             var borderEdge4 = oldOtherFace.OtherEdge(edge.To);
-            var replaceOwned4 = borderEdge4.OwnedFace==oldOtherFace;
+            var replaceOwned4 = borderEdge4.OwnedFace == oldOtherFace;
 
             // remove references in the vertices to the 2 old faces (that we're about to delete)
             edge.From.Faces.Remove(oldOwnedFace);
@@ -57,7 +57,7 @@ namespace TVGL
             newFace2.IndexInList = oldOtherFace.IndexInList;
             var primitive = oldOtherFace.BelongsToPrimitive == oldOwnedFace.BelongsToPrimitive
                 ? oldOwnedFace.BelongsToPrimitive
-                : oldOwnedFace.Area>oldOtherFace.Area ? oldOwnedFace.BelongsToPrimitive:
+                : oldOwnedFace.Area > oldOtherFace.Area ? oldOwnedFace.BelongsToPrimitive :
                 oldOtherFace.BelongsToPrimitive;
             newFace1.BelongsToPrimitive = primitive;
             newFace2.BelongsToPrimitive = primitive;
@@ -78,9 +78,11 @@ namespace TVGL
             if (replaceOwned4) borderEdge4.OwnedFace = newFace1;
             else borderEdge4.OtherFace = newFace1;
             newFace1.AddEdge(borderEdge4);
-
-            primitive.AddFace(newFace1);
-            primitive.AddFace(newFace2);
+            if (primitive != null)
+            {
+                primitive.AddFace(newFace1);
+                primitive.AddFace(newFace2);
+            }
         }
 
 
