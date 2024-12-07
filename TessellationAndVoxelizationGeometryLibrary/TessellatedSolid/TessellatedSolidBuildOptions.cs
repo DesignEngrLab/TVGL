@@ -1,11 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace TVGL
+﻿namespace TVGL
 {
     /// <summary>Provides options for how a tessellated solid is constructed.</summary>
     public class TessellatedSolidBuildOptions
@@ -15,6 +8,9 @@ namespace TVGL
         /// Actually, the defaults are nearly the same as Default with the exception of PredefineAllEdges.
         /// </summary>
         public static TessellatedSolidBuildOptions Default { get; } = new TessellatedSolidBuildOptions();
+
+        //If the reference index is set, it will get that specific solid.
+        public int ReferenceIndex { get; set; } = -1;
 
         /// <summary>
         /// Singleton for options that does the least: fastest, smallest size. All options are false.
