@@ -111,6 +111,7 @@
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Polygon Operations\PolygonOperations.CreateTrees.cs" Link="TVGL\Polygon Operations\PolygonOperations.CreateTrees.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Polygon Operations\PolygonOperations.DistanceToPoint.cs" Link="TVGL\Polygon Operations\PolygonOperations.DistanceToPoint.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Polygon Operations\PolygonOperations.IsInside.cs" Link="TVGL\Polygon Operations\PolygonOperations.IsInside.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Polygon Operations\PolygonOperations.Minkowski.cs" Link="TVGL\Polygon Operations\PolygonOperations.Minkowski.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Polygon Operations\PolygonOperations.Offsetting.cs" Link="TVGL\Polygon Operations\PolygonOperations.Offsetting.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Polygon Operations\PolygonOperations.Simplify.cs" Link="TVGL\Polygon Operations\PolygonOperations.Simplify.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Polygon Operations\PolygonOperations.Triangulate.cs" Link="TVGL\Polygon Operations\PolygonOperations.Triangulate.cs" />

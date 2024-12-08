@@ -5,7 +5,8 @@ using System.Security.Cryptography.X509Certificates;
 using TVGL;
 using TVGL.amfclasses;
 
-namespace TVGL {
+namespace TVGL
+{
     public class Delaunay2D
     {
         /// <summary>
@@ -35,17 +36,17 @@ namespace TVGL {
         public static bool Create(List<Vertex> points, out Delaunay2D delaunay2D)
         {
             Console.Write("starting convex hull/Delaunay...");
-        var TmpPoints = new List<Vertex>();
-        double[] z_values = new double[points.Count()];
+            var TmpPoints = new List<Vertex>();
+            double[] z_values = new double[points.Count()];
 
-        for (int i = 0; i < points.Count(); i++)
-        {
-            //Saves the vectors as vertices
-            z_values[i] = points[i].Z;
-            TmpPoints.Add(new Vertex(points[i].X, points[i].Y, points[i].X * points[i].X + points[i].Y * points[i].Y, i));
-        }
+            for (int i = 0; i < points.Count(); i++)
+            {
+                //Saves the vectors as vertices
+                z_values[i] = points[i].Z;
+                TmpPoints.Add(new Vertex(points[i].X, points[i].Y, points[i].X * points[i].X + points[i].Y * points[i].Y, i));
+            }
 
-            if (ConvexHull3D.Create(TmpPoints, out var convexHull, true))
+            if (ConvexHull3D.Create(TmpPoints, out var convexHull, true, false))
             {
                 Console.WriteLine("...finished");
 
@@ -63,7 +64,8 @@ namespace TVGL {
                 foreach (var face in solid.Faces)
                     face.Update();
 
-                delaunay2D = new Delaunay2D() {
+                delaunay2D = new Delaunay2D()
+                {
                     Vertices = TmpPoints.ToArray(),
                     Faces = solid.Faces.ToArray(),
                 };
@@ -71,7 +73,6 @@ namespace TVGL {
                 //colorFaces(solid);
                 Console.WriteLine("After delaunay");
                 delaunay2D.colorFaces(solid);
-                Presenter.ShowAndHang(solid);
                 return true;
             }
             else
@@ -99,5 +100,5 @@ namespace TVGL {
             }
         }
     }
-    }
+}
 

@@ -32,16 +32,22 @@ namespace TVGL
 
         static List<Window2DHeldPlot> plot2DHeldWindows = new List<Window2DHeldPlot>();
         static List<Window3DHeldPlot> plot3DHeldWindows = new List<Window3DHeldPlot>();
-        public static void Show(Polygon polygon, string title = "", Plot2DType plot2DType = Plot2DType.Line,
+        public static void Show(IEnumerable<Vector2> path, string title = "", Plot2DType plot2DType = Plot2DType.Line,
             bool closeShape = true, MarkerType marker = MarkerType.Circle, HoldType holdType = HoldType.Immediate, int timetoShow = -1, int id = -1)
+            => Show([path], title, plot2DType, closeShape, marker, holdType, timetoShow, id);
+
+        public static void Show(IEnumerable<IEnumerable<Vector2>> paths, string title = "",
+            Plot2DType plot2DType = Plot2DType.Line, bool closeShape = true,
+            MarkerType marker = MarkerType.Circle, HoldType holdType = HoldType.Immediate,
+            int timetoShow = -1, int id = -1)
         {
             var window = GetOrCreateWindow(id);
             window.Dispatcher.Invoke(() =>
             {
                 var vm = (HeldViewModel)window.DataContext;
                 if (holdType == HoldType.Immediate)
-                    vm.AddNewSeries(polygon, plot2DType, closeShape, marker);
-                else vm.EnqueueNewSeries(polygon, plot2DType, closeShape, marker);
+                    vm.AddNewSeries(paths, plot2DType, closeShape, marker);
+                else vm.EnqueueNewSeries(paths, plot2DType, closeShape, marker);
 
                 if (!string.IsNullOrEmpty(title)) vm.Title = title;
 
@@ -52,6 +58,15 @@ namespace TVGL
                     window.Show();
             });
         }
+        public static void Show(Polygon polygon, string title = "", Plot2DType plot2DType = Plot2DType.Line,
+            bool closeShape = true, MarkerType marker = MarkerType.Circle, HoldType holdType = HoldType.Immediate, int timetoShow = -1, int id = -1)
+            => Show(polygon.Path, title, plot2DType, closeShape, marker, holdType, timetoShow, id);
+
+        public static void Show(IEnumerable<Polygon> polygon, string title = "",
+            Plot2DType plot2DType = Plot2DType.Line, bool closeShape = true,
+            MarkerType marker = MarkerType.Circle, HoldType holdType = HoldType.Immediate,
+            int timetoShow = -1, int id = -1)
+            => Show(polygon.Select(p => p.Path), title, plot2DType, closeShape, marker, holdType, timetoShow, id);
 
         private static Window GetOrCreateWindow(int id)
         {
@@ -146,7 +161,7 @@ namespace TVGL
                 if (timetoShow > 0)
                     vm.UpdateInterval = timetoShow;
                 if (holdType == HoldType.Immediate)
-                    vm.AddNewSeries(ConvertSolidsToModel3D(solids).Concat(ConvertPathsToLineModels(paths,closePaths,lineThicknesses,colors)));
+                    vm.AddNewSeries(ConvertSolidsToModel3D(solids).Concat(ConvertPathsToLineModels(paths, closePaths, lineThicknesses, colors)));
                 else vm.EnqueueNewSeries(ConvertSolidsToModel3D(solids).Concat(ConvertPathsToLineModels(paths, closePaths, lineThicknesses, colors)));
                 if (!window.IsVisible && !vm.HasClosed)
                     window.Show();
