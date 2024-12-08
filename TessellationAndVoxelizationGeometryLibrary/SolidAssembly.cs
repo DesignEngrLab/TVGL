@@ -282,6 +282,16 @@ namespace TVGL
     public class SubAssembly
     {
         /// <summary>
+        /// Name of the sub-assembly.
+        /// </summary>
+        public string Name { get; set; }
+
+        /// <summary>
+        /// Reference ID from CAD conversion. Multiple sub-assemblies may have the same reference ID and/or name if they are duplicates.
+        /// </summary>
+        public int RefID { get; set; }
+
+        /// <summary>
         /// Gets or sets the solid assembly global information.
         /// </summary>
         /// <value>The solid assembly global information.</value>
@@ -322,8 +332,10 @@ namespace TVGL
         /// Initializes a new instance of the <see cref="SubAssembly"/> class.
         /// </summary>
         /// <param name="globalAssembly">The global assembly.</param>
-        public SubAssembly(SolidAssembly globalAssembly)
+        public SubAssembly(SolidAssembly globalAssembly, string name = "", int refID = -1 )
         {
+            RefID = refID;
+            Name = name;
             SolidAssemblyGlobalInfo = globalAssembly;
             SubAssemblies = new List<(SubAssembly assembly, Matrix4x4 backtransform)>();
             Solids = new List<(int solid, Matrix4x4 backtransform)>();
