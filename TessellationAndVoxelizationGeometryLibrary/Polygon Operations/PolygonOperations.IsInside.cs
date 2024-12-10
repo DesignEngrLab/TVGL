@@ -25,7 +25,7 @@ namespace TVGL
     {
         /// <summary>
         /// Gets the winding number of a point with respect to a polygon. Like the winding number, but in terms
-        /// of angle. So instead of "1" (as in 1 cycle), this return 2 * Math.PI. The min and max angles are also
+        /// of angle. So instead of "1" (as in 1 cycle), this returns 2 * Math.PI. The min and max angles are also
         /// provided.
         /// </summary>
         /// <param name="coords"></param>

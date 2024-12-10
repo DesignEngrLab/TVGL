@@ -34,8 +34,7 @@ namespace TVGL
         /// <value>The x.</value>
         public double X
         {
-            get { return Coordinates.X; }
-            init { Coordinates = new Vector2(value, Coordinates.Y); }
+            get { return Coordinates.X/Coordinates.W; }
         }
 
         /// <summary>
@@ -44,8 +43,7 @@ namespace TVGL
         /// <value>The y.</value>
         public double Y
         {
-            get { return Coordinates.Y; }
-            init { Coordinates = new Vector2(Coordinates.X, value); }
+            get { return Coordinates.Y / Coordinates.W; }
         }
 
         public double this[int i]
@@ -73,7 +71,7 @@ namespace TVGL
         /// Gets the base class, Point of this node.
         /// </summary>
         /// <value>The point.</value>
-        public Vector2 Coordinates { get; set; }
+        public Vector2IP Coordinates { get; set; }
 
         /// <summary>
         /// Gets the index in list.
@@ -91,7 +89,7 @@ namespace TVGL
         /// <param name="currentPoint">The current point.</param>
         /// <param name="referenceID">The reference identifier.</param>
         /// <param name="loopID">The loop identifier.</param>
-        public Vertex2D(Vector2 currentPoint, int referenceID, int loopID)
+        public Vertex2D(Vector2IP currentPoint, int referenceID, int loopID)
         {
             LoopID = loopID;
             Coordinates = currentPoint;
