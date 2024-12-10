@@ -139,7 +139,7 @@ namespace TVGL
         private void MakeThisPolygonsEdges()
         {
             var numPoints = Vertices.Count;
-            _edges = new List<PolygonEdge>(numPoints);
+            var edgeArray = new PolygonEdge[numPoints];
             for (int i = 0, j = numPoints - 1; i < numPoints; j = i++)
             // note this compact approach to setting i and j. 
             {
@@ -148,8 +148,9 @@ namespace TVGL
                 var polySegment = new PolygonEdge(fromNode, toNode);
                 fromNode.StartLine = polySegment;
                 toNode.EndLine = polySegment;
-                _edges.Add(polySegment);
+                edgeArray[i] = polySegment;
             }
+            _edges = edgeArray.ToList();
         }
 
         /// <summary>
@@ -282,6 +283,27 @@ namespace TVGL
             if (_innerPolygons is null)
                 return false;
             return _innerPolygons.Remove(polygon);
+        }
+
+        /// <summary>
+        /// Removes the hole at the index.
+        /// </summary>
+        /// <param name="index"></param>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
+        public bool RemoveHole(int index)
+        {
+            if (_innerPolygons is null || index < 0 || index >= _innerPolygons.Count)
+                return false;
+            _innerPolygons.RemoveAt(index);
+            return true;
+        }
+
+        /// <summary>
+        /// Removes all holes in the top polygon.
+        /// </summary>
+        public void RemoveAllHoles()
+        {
+            _innerPolygons?.Clear();
         }
         /// <summary>
         /// Gets the inner polygons.

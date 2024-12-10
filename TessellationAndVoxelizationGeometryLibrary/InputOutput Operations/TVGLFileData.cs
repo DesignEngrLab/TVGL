@@ -17,6 +17,7 @@ using System;
 using System.IO;
 using System.IO.Compression;
 using System.IO.Pipes;
+using System.Linq;
 using System.Reflection;
 
 namespace TVGL
@@ -89,9 +90,16 @@ namespace TVGL
             using var reader = new JsonTextReader(new StreamReader(s));
             SolidAssembly.StreamRead(reader, out var solidAssembly, tsBuildOptions);
 
-            var solidInner = GetMostSignificantSolid(solidAssembly, out _);
-            solid = solidInner as T;
-
+            if(tsBuildOptions.ReferenceIndex != -1)
+            {
+                var solidInner = solidAssembly.Solids.First(p => p.ReferenceIndex == tsBuildOptions.ReferenceIndex);
+                solid = solidInner as T;
+            }
+            else
+            {
+                var solidInner = GetMostSignificantSolid(solidAssembly, out _);
+                solid = solidInner as T;
+            }
             return solid != null;
         }
 

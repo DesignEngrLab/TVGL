@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Linq;
 using System.Threading;
 using System.Windows;
 
@@ -45,25 +46,30 @@ namespace TVGL
             }
         }
         private Queue<ICollection<LineSeries>> SeriesQueue;
-        internal void AddNewSeries(Polygon polygon, Plot2DType plot2DType, bool closeShape, MarkerType marker)
+        internal void AddNewSeries(IEnumerable<IEnumerable<Vector2>> paths, Plot2DType plot2DType, bool closeShape, MarkerType marker)
         {
             SeriesQueue.Clear();
-            EnqueueNewSeries(polygon, plot2DType, closeShape, marker);
+            EnqueueNewSeries(paths, plot2DType, closeShape, marker);
         }
 
-        internal void EnqueueNewSeries(Polygon polygon, Plot2DType plot2DType, bool closeShape, MarkerType marker)
+        internal void EnqueueNewSeries(IEnumerable<IEnumerable<Vector2>> paths, Plot2DType plot2DType, bool closeShape, MarkerType marker)
         {
-            var series = new LineSeries();
-            foreach (var vertex in polygon.Vertices)
-                series.Points.Add(new DataPoint(vertex.X, vertex.Y));
-            if (closeShape)
-                series.Points.Add(new DataPoint(polygon.Vertices[0].X, polygon.Vertices[0].Y));
-            series.MarkerType = marker;
-            if (plot2DType == Plot2DType.Line)
-                series.LineStyle = LineStyle.Solid;
-            else series.LineStyle = LineStyle.None;
-            series.MarkerType = marker;
-            SeriesQueue.Enqueue([series]);
+            var listOfPlots = new List<LineSeries>();
+            foreach (var path in paths)
+            {
+                var series = new LineSeries();
+                foreach (var vertex in path)
+                    series.Points.Add(new DataPoint(vertex.X, vertex.Y));
+                if (closeShape)
+                    series.Points.Add(new DataPoint(path.First().X, path.First().Y));
+                series.MarkerType = marker;
+                if (plot2DType == Plot2DType.Line)
+                    series.LineStyle = LineStyle.Solid;
+                else series.LineStyle = LineStyle.None;
+                series.MarkerType = marker;
+                listOfPlots.Add(series);
+            }
+            SeriesQueue.Enqueue(listOfPlots);
         }
 
 
