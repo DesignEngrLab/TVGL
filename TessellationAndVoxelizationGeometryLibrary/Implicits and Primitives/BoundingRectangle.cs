@@ -49,7 +49,17 @@ namespace TVGL
         /// Offsets are the distances defining the lines of the rectangle. They are ordered:
         /// Direction1-min, Direction1-max, Direction2-min, Direction2-max
         /// </summary>
-        internal readonly double[] Offsets;
+        internal double Offsets(int index)
+        {
+            if (index == 0) return MinD1;
+            if (index == 1) return MaxD1;
+            if (index == 2) return MinD2;
+            return MaxD2;
+        }
+        public double MinD1 { get; private init; }
+        public double MaxD1 { get; private init; }
+        public double MinD2 { get; private init; }
+        public double MaxD2 { get; private init; }
 
         /// <summary>
         /// Length of Bounding Rectangle
@@ -85,13 +95,27 @@ namespace TVGL
         {
             Direction1 = unitVectorAlongSide;
             Direction2 = unitVectorPointInto;
-            Offsets = new[] { d1Min, d1Max, d2Min, d2Max };
+            MinD1 = d1Min;
+            MaxD1 = d1Max;
+            MinD2 = d2Min;
+            MaxD2 = d2Max;
             Length1 = double.IsNaN(length1) ? d1Max - d1Min : length1;
             Length2 = double.IsNaN(length2) ? d2Max - d2Min : length2;
             Area = double.IsNaN(area) ? Length1 * Length2 : area;
             PointsOnSides = sidePoints;
             CenterPosition = Direction1 * (d1Min + 0.5 * Length1)
                 + Direction2 * (d2Min + 0.5 * Length2);
+        }
+
+        public Matrix3x3 TransformToSquaredAtOrigin
+        {
+            get
+            {
+                var minPoint = Direction1 * MinD1 + Direction2 * MinD2;
+                var translation = Matrix3x3.CreateTranslation(-minPoint);
+                var rotation = Matrix3x3.CreateRotation(-Math.Atan2(Direction1.Y, Direction1.X));
+                return rotation * translation;
+            }
         }
 
 
@@ -102,10 +126,10 @@ namespace TVGL
         /// <exception cref="System.Exception">Points are ordered incorrectly</exception>
         public Vector2[] CornerPoints()
         {
-            var v1Min = Direction1 * Offsets[0];
-            var v1Max = Direction1 * Offsets[1];
-            var v2Min = Direction2 * Offsets[2];
-            var v2Max = Direction2 * Offsets[3];
+            var v1Min = Direction1 * MinD1;
+            var v1Max = Direction1 * MaxD1;
+            var v2Min = Direction2 * MinD2;
+            var v2Max = Direction2 * MaxD2;
             var p1 = v1Min + v2Min;
             var p2 = v1Max + v2Min;
             var p3 = v1Max + v2Max;

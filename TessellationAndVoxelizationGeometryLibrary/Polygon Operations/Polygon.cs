@@ -11,12 +11,13 @@
 // </copyright>
 // <summary></summary>
 // ***********************************************************************
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.Serialization;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using System;
+using System.Collections.Generic;
+using System.Collections.Immutable;
+using System.Linq;
+using System.Runtime.Serialization;
 
 
 namespace TVGL
@@ -310,15 +311,16 @@ namespace TVGL
         /// </summary>
         /// <value>The inner polygons.</value>
         [JsonIgnore]
-        public IEnumerable<Polygon> InnerPolygons
-        {
-            get
-            {
-                if (_innerPolygons is null) yield break;
-                foreach (var hole in _innerPolygons)
-                    yield return hole;
-            }
-        }
+        public IReadOnlyList<Polygon> InnerPolygons =>
+            _innerPolygons == null ? ImmutableArray<Polygon>.Empty : _innerPolygons.AsReadOnly();
+        //{
+        //    get
+        //{
+        //    if (_innerPolygons is null) yield break;
+        //    foreach (var hole in _innerPolygons)
+        //        yield return hole;
+        //}
+        //}
         /// <summary>
         /// Gets the number of inner polygons.
         /// </summary>
@@ -357,20 +359,7 @@ namespace TVGL
         /// </summary>
         /// <value>The index.</value>
         [JsonProperty]
-        public int Index
-        {
-            get => index;
-            set =>
-                //if (index == value) return;
-                //if (value < 0)
-                //    throw new ArgumentException("The ID or Index of a polygon must be a non-negative integer.");
-                index = value;
-            //if (_vertices != null)
-            //    foreach (var v in Vertices)
-            //    {
-            //        v.LoopID = index;
-            //    }
-        }
+        public int Index { get; set; }
 
         /// <summary>
         /// Gets or sets whether the path is CCW positive. This will reverse the path if it was ordered CW.
@@ -528,11 +517,6 @@ namespace TVGL
         /// Minimum Y value
         /// </summary>
         private double minY = double.PositiveInfinity;
-
-        /// <summary>
-        /// The index
-        /// </summary>
-        private int index = -1;
 
         /// <summary>
         /// Gets the minimum y.
@@ -719,7 +703,7 @@ namespace TVGL
                 _innerPolygons.Select(p => p.Copy(true, invert)).ToList() : null;
             var copiedArea = copyInnerPolygons ? this.area : this.pathArea;
             if (invert) copiedArea *= -1;
-            var copiedPolygon = new Polygon(thisPath, this.index)
+            var copiedPolygon = new Polygon(thisPath, this.Index)
             {
                 area = copiedArea,
                 maxX = this.maxX,
@@ -823,6 +807,17 @@ namespace TVGL
             pathArea = double.NaN;
             perimeter = double.NaN;
             _centroid = Vector2.Null;
+        }
+
+        public void ReIndexPolygon()
+        {
+            var id = 0;
+            foreach (var polygon in AllPolygons)
+            {
+                polygon.Index = id++;
+                foreach (var v in polygon.Vertices)
+                    v.LoopID = polygon.Index;
+            }
         }
 
         /// <summary>

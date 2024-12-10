@@ -59,6 +59,7 @@ namespace TVGL
         public static double NthOrderStatistic(this IEnumerable<double> numbers, int nthPosition)
         {
             var numberList = new List<double>(numbers); //we need a list and this list will be mutated, so a copy is made.
+            if (numberList.Count <= nthPosition) return double.PositiveInfinity;
             return nthOrderStatistic(numberList, nthPosition, 0, numberList.Count - 1);
         }
         /// <summary>

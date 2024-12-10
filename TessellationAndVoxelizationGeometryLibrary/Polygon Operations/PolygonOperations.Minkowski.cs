@@ -23,16 +23,29 @@ namespace TVGL
     public static partial class PolygonOperations
     {
         /// <summary>
-        /// The Minkowski sum of the two polygons. This only functions on the outermost
+        /// The Minkowski sum of the two polygons. This only functions on the outermost polygon (no holes).
+        /// However, the operation does work on negative polygons, so the result can be fused totheger but this
+        /// is left for the user's code due to ambiguities that may arise.
         /// </summary>
         /// <param name="a"></param>
         /// <param name="b"></param>
         /// <returns></returns>
-        public static Polygon MinkowskiSum(Polygon a, Polygon b)
+        public static Polygon MinkowskiSum(this Polygon a, Polygon b)
+            => MinkowskiSum(a, a.IsConvex(), b, b.IsConvex());
+
+        /// <summary>
+        /// The Minkowski sum of the two polygons. This only functions on the outermost polygon (no holes).
+        /// However, the operation does work on negative polygons, so the result can be fused totheger but this
+        /// is left for the user's code due to ambiguities that may arise.
+        /// </summary>
+        /// <param name="a"></param>
+        /// <param name="aIsConvex"></param>
+        /// <param name="b"></param>
+        /// <param name="bIsConvex"></param>
+        /// <returns></returns>
+        public static Polygon MinkowskiSum(this Polygon a, bool aIsConvex, Polygon b, bool bIsConvex)
         {
-            var aIsConvex = a.IsConvex();
-            var bIsConvex = b.IsConvex();
-            if (a.IsConvex() && b.IsConvex())
+            if (aIsConvex && bIsConvex)
                 return MinkowskiSumConvex(a, b);
             if (aIsConvex && bIsConvex)
             {
@@ -46,6 +59,37 @@ namespace TVGL
             else if (bIsConvex)
                 return MinkowskiSumConcaveConvex(a, b);
             return MinkowskiSumGeneral(a, b);
+        }
+
+        /// <summary>
+        /// The Minkowski difference of the two polygons. This only functions on the outermost polygon (no holes).
+        /// Note that this is NOT the same as the Minkowski sum of the negative of the second polygon (as is the case
+        /// of the NoFitPolygon). Instead, this is the method used to calculate the polygon used to find overlap 
+        /// (like in the GJK algorithm).
+        /// </summary>
+        /// <param name="a"></param>
+        /// <param name="b"></param>
+        /// <returns></returns>
+        public static Polygon MinkowskiDifference(this Polygon a, Polygon b)
+            => MinkowskiDifference(a, a.IsConvex(), b, b.IsConvex());
+
+
+        /// <summary>
+        /// The Minkowski difference of the two polygons. This only functions on the outermost polygon (no holes).
+        /// Note that this is NOT the same as the Minkowski sum of the negative of the second polygon (as is the case
+        /// of the NoFitPolygon). Instead, this is the method used to calculate the polygon used to find overlap 
+        /// (like in the GJK algorithm).
+        /// </summary>
+        /// <param name="a"></param>
+        /// <param name="aIsConvex"></param>
+        /// <param name="b"></param>
+        /// <param name="bIsConvex"></param>
+        /// <returns></returns>
+        public static Polygon MinkowskiDifference(this Polygon a, bool aIsConvex, Polygon b, bool bIsConvex)
+        {
+            if (aIsConvex && bIsConvex)
+                return MinkowskiDiffConvex(a, b);
+            else return MinkowskiDiffGeneral(a, b);
         }
 
         private static Polygon MinkowskiSumConvex(Polygon a, Polygon b)
@@ -257,15 +301,10 @@ namespace TVGL
 
                 result[i] = p;
             }
+            //Presenter.ShowAndHang([result.Concat([a.Path.ToArray(), b.Path.ToArray()])]);
             return MakeQuadrilateralsAndMerge(aNum, bNum, result);
         }
 
-        public static Polygon MinkowskiDifference(Polygon a, Polygon b)
-        {
-            if (a.IsConvex() && b.IsConvex())
-                return MinkowskiDiffConvex(a, b);
-            else return MinkowskiDiffGeneral(a, b);
-        }
         private static Polygon MinkowskiDiffGeneral(Polygon a, Polygon b)
         {
             int aNum = a.Vertices.Count;
@@ -303,8 +342,8 @@ namespace TVGL
                     else quads[k++] = new Polygon(quad);
                 }
             var sumPoly = quads.Take(k).UnionPolygons()[0];
-            sumPoly.RemoveAllHoles();
             //Presenter.ShowAndHang(sumPoly);
+            //sumPoly.RemoveAllHoles();
             return sumPoly;
         }
     }

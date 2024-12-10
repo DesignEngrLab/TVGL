@@ -580,7 +580,7 @@ namespace TVGL
                         for (int i = 0; i < 4; i++)
                         {
                             var direction = (i < 2) ? bestRectangle.Direction1 : bestRectangle.Direction2;
-                            sidePoints[i] = FindSidePoints(bestExtremeIndices[i], bestRectangle.Offsets[i], points, direction, lastIndex);
+                            sidePoints[i] = FindSidePoints(bestExtremeIndices[i], bestRectangle.Offsets(i), points, direction, lastIndex);
                         }
                         bestRectangle = new BoundingRectangle(unitVectorAlongSide, unitVectorPointInto, d1Min, d1Max, d2Min, d2Max,
                             length1, length2, area, sidePoints);
