@@ -147,10 +147,10 @@ namespace TVGL
             // if at this point then one or more values in the vectors is zero/negligible since the above booleans were
             // defined with this restriction
             if (xPrev == 0 && xNext == 0) // then line is vertical
-                return (Math.Sign(yPrev) == Math.Sign(yNext)) ? MonotonicityChange.Neither : MonotonicityChange.Y;
+                return (Int128.Sign(yPrev) == Math.Sign(yNext)) ? MonotonicityChange.Neither : MonotonicityChange.Y;
             // eww, the latter in that return is problematic at it would be a knife edge. but that's not this functions job to police
             if (yPrev == 0 && yNext == 0) // then line is horizontal
-                return (Math.Sign(xPrev) == Math.Sign(xNext)) ? MonotonicityChange.Neither : MonotonicityChange.X;
+                return (Int128.Sign(xPrev) == Math.Sign(xNext)) ? MonotonicityChange.Neither : MonotonicityChange.X;
 
             // at this point, we've checked that 1) no vector is zero, 2) all are nonnegligible,
             // 3) either both x's or both y's are negligible.

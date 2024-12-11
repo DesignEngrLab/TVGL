@@ -199,20 +199,20 @@ namespace TVGL
         /// <summary>
         /// The sweep direction
         /// </summary>
-        private readonly Vector2 sweepDirection;
+        private readonly Vector2IP sweepDirection;
         /// <summary>
         /// The along direction
         /// </summary>
-        private readonly Vector2 alongDirection;
+        private readonly Vector2IP alongDirection;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="VertexSortedByDirection"/> class.
         /// </summary>
         /// <param name="sweepDirection">The sweep direction.</param>
-        internal VertexSortedByDirection(Vector2 sweepDirection)
+        internal VertexSortedByDirection(Vector2IP sweepDirection)
         {
             this.sweepDirection = sweepDirection;
-            alongDirection = new Vector2(-sweepDirection.Y, sweepDirection.X);
+            alongDirection = new Vector2IP(-sweepDirection.Y, sweepDirection.X, sweepDirection.W);
 
         }
         /// <summary>

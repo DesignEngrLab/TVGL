@@ -201,16 +201,8 @@ namespace TVGL
         /// Inserts the vertex.
         /// </summary>
         /// <param name="index">The index.</param>
-        /// <param name="x">The x.</param>
-        /// <param name="y">The y.</param>
-        public Vertex2D InsertVertex(int index, double x, double y)
-        { return InsertVertex(index, new Vector2(x, y)); }
-        /// <summary>
-        /// Inserts the vertex.
-        /// </summary>
-        /// <param name="index">The index.</param>
         /// <param name="coordinates">The coordinates.</param>
-        public Vertex2D InsertVertex(int index, Vector2 coordinates)
+        internal Vertex2D InsertVertex(int index, Vector2IP coordinates)
         {
             if (index == Vertices.Count)
                 return AddVertexToEnd(coordinates);
@@ -237,15 +229,8 @@ namespace TVGL
         /// <summary>
         /// Adds the vertex to end.
         /// </summary>
-        /// <param name="x">The x.</param>
-        /// <param name="y">The y.</param>
-        public Vertex2D AddVertexToEnd(double x, double y)
-        { return AddVertexToEnd(new Vector2(x, y)); }
-        /// <summary>
-        /// Adds the vertex to end.
-        /// </summary>
         /// <param name="coordinates">The coordinates.</param>
-        public Vertex2D AddVertexToEnd(Vector2 coordinates)
+        internal Vertex2D AddVertexToEnd(Vector2IP coordinates)
         {
             if (_vertices == null)
             {
@@ -648,33 +633,17 @@ namespace TVGL
         /// <param name="index">The index.</param>
         public Polygon(IEnumerable<Vertex2D> vertices, int index = -1)
         {
-            _vertices = vertices as List<Vertex2D> ?? vertices.ToList();
-            SetBounds();
             Index = index;
+            _vertices = vertices as List<Vertex2D> ?? vertices.ToList();
 
-            var tolerance = (MaxX - MinX + MaxY - MinY) * Constants.PolygonSameTolerance / 2;
-            NumSigDigits = 0;
-            while (tolerance < 1 && NumSigDigits < 15)
-            {
-                NumSigDigits++;
-                tolerance *= 10;
-            }
-            var prevX = Math.Round(_vertices[0].X, NumSigDigits);
-            var prevY = Math.Round(_vertices[0].Y, NumSigDigits);
-
+            var prev = _vertices[0];
             for (int i = _vertices.Count - 1; i >= 0; i--)
             {
-                var x = Math.Round(_vertices[i].X, NumSigDigits);
-                var y = Math.Round(_vertices[i].Y, NumSigDigits);
-                if (x != prevX || y != prevY)
-                {
-                    _vertices[i].Coordinates = new Vector2(x, y);
-                    prevX = x;
-                    prevY = y;
-                }
-                else
+                if (_vertices[i].Coordinates == prev.Coordinates)
                     _vertices.RemoveAt(i);
+                else prev = _vertices[i];
             }
+            SetBounds();
         }
 
         /// <summary>
@@ -845,6 +814,7 @@ namespace TVGL
         protected void OnDeserializedMethod(StreamingContext context)
         {
             JArray jArray = (JArray)serializationData["Coordinates"];
+            // todo: parse array into int128s
             _path = PolygonOperations.ConvertToVector2s(jArray.ToObject<IEnumerable<double>>()).ToList();
             SetBounds();
             MakeVerticesFromPath(false);

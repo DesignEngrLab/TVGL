@@ -280,18 +280,6 @@ namespace TVGL  // COMMENTEDCHANGE namespace System.Numerics
         }
 
         /// <summary>
-        /// Multiplies two vectors together.
-        /// </summary>
-        /// <param name="left">The first source vector.</param>
-        /// <param name="right">The second source vector.</param>
-        /// <returns>The product vector.</returns>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Vector2 operator *(Vector2 left, Vector2 right)
-        {
-            return new Vector2(left.X * right.X, left.Y * right.Y);
-        }
-
-        /// <summary>
         /// Multiplies a vector by the given scalar.
         /// </summary>
         /// <param name="left">The scalar value.</param>
@@ -300,7 +288,7 @@ namespace TVGL  // COMMENTEDCHANGE namespace System.Numerics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector2 operator *(double left, Vector2 right)
         {
-            return new Vector2(left, left) * right;
+            return new Vector2(left * right.X, left * right.Y);
         }
 
         /// <summary>
@@ -312,7 +300,7 @@ namespace TVGL  // COMMENTEDCHANGE namespace System.Numerics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector2 operator *(Vector2 left, double right)
         {
-            return left * new Vector2(right, right);
+            return new Vector2(left.X * right, left.Y * right);
         }
 
         /// <summary>
@@ -772,18 +760,6 @@ namespace TVGL  // COMMENTEDCHANGE namespace System.Numerics
         public static Vector2 Subtract(Vector2 left, Vector2 right)
         {
             return left - right;
-        }
-
-        /// <summary>
-        /// Multiplies two vectors together.
-        /// </summary>
-        /// <param name="left">The first source vector.</param>
-        /// <param name="right">The second source vector.</param>
-        /// <returns>The product vector.</returns>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Vector2 Multiply(Vector2 left, Vector2 right)
-        {
-            return left * right;
         }
 
         /// <summary>

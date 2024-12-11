@@ -12,6 +12,8 @@
 // <summary></summary>
 // ***********************************************************************
 
+using System;
+
 namespace TVGL
 {
     /// <summary>
@@ -34,7 +36,7 @@ namespace TVGL
         /// <value>The x.</value>
         public double X
         {
-            get { return Coordinates.X/Coordinates.W; }
+            get { return (double)Coordinates.X / (double)Coordinates.W; }
         }
 
         /// <summary>
@@ -43,7 +45,7 @@ namespace TVGL
         /// <value>The y.</value>
         public double Y
         {
-            get { return Coordinates.Y / Coordinates.W; }
+            get { return (double)Coordinates.Y / (double)Coordinates.W; }
         }
 
         public double this[int i]
@@ -71,13 +73,15 @@ namespace TVGL
         /// Gets the base class, Point of this node.
         /// </summary>
         /// <value>The point.</value>
-        public Vector2IP Coordinates { get; set; }
+        internal Vector2IP Coordinates { get; set; }
 
         /// <summary>
         /// Gets the index in list.
         /// </summary>
         /// <value>The index in list.</value>
         public int IndexInList { get; set; }
+        double IVector2D.X { get => throw new System.NotImplementedException(); init => throw new System.NotImplementedException(); }
+        double IVector2D.Y { get => throw new System.NotImplementedException(); init => throw new System.NotImplementedException(); }
 
         #endregion Properties
 
@@ -89,13 +93,16 @@ namespace TVGL
         /// <param name="currentPoint">The current point.</param>
         /// <param name="referenceID">The reference identifier.</param>
         /// <param name="loopID">The loop identifier.</param>
-        public Vertex2D(Vector2IP currentPoint, int referenceID, int loopID)
+        internal Vertex2D(Vector2IP currentPoint, int referenceID, int loopID)
         {
             LoopID = loopID;
             Coordinates = currentPoint;
             IndexInList = referenceID;
         }
-
+        [Obsolete]
+        public Vertex2D(Vector2 vector2, int v, int i)
+        {
+        }
         /// <summary>
         /// Copies this instance.
         /// </summary>
@@ -115,6 +122,8 @@ namespace TVGL
         /// Prevents a default instance of the <see cref="Vertex2D"/> class from being created.
         /// </summary>
         internal Vertex2D() { }
+
+
 
         /// <summary>
         /// Returns a <see cref="System.String" /> that represents this instance.

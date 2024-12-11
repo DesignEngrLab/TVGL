@@ -101,12 +101,13 @@ namespace TVGL
             out List<Polygon> negativeSidePolygons, out List<Polygon> positiveSidePolygons, double offsetAtLineForNegativeSide = 0.0,
             double offsetAtLineForPositiveSide = 0.0)
         {
+            var lineNormal = new Vector2IP(lineNormalDirection,(long)(Vector2IP.InitialW*perpendicularDistanceToLine));
             // like 3D slicing, it is too complicated to try and manage collinear points or line segments. it is better to just change the slice
             // distance by some small amount. This is checked and handled in the ShiftLineToAvoidCollinearPoints
             var distances = new List<double>();
             foreach (var polygons in shallowPolygonTree.AllPolygons)
                 foreach (var vertex in polygons.Vertices)
-                    distances.Add(vertex.Coordinates.Dot(lineNormalDirection));
+                    distances.Add(vertex.Coordinates.Dot(lineNormal));
 
             var positiveShift = 0.0;
             var negativeShift = 0.0;

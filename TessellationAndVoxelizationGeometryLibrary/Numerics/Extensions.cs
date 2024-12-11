@@ -148,16 +148,6 @@ namespace TVGL
         public static Vector2 Subtract(this Vector2 left, Vector2 right)
         { return Vector2.Subtract(left, right); }
 
-
-        /// <summary>
-        /// Multiplies two vectors together.
-        /// </summary>
-        /// <param name="left">The first source vector.</param>
-        /// <param name="right">The second source vector.</param>
-        /// <returns>The product vector.</returns>
-        public static Vector2 Multiply(this Vector2 left, Vector2 right)
-        { return Vector2.Multiply(left, right); }
-
         /// <summary>
         /// Multiplies a vector by the given scalar.
         /// </summary>

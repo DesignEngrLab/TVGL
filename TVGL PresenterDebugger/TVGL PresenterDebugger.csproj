@@ -96,6 +96,8 @@
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\PointCloud\NearestNeighbor\HyperRect.cs" Link="TVGL\PointCloud\NearestNeighbor\HyperRect.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\PointCloud\NearestNeighbor\KDTree.cs" Link="TVGL\PointCloud\NearestNeighbor\KDTree.cs" />
 
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Polygon Operations\Vector2IP.cs" Link="TVGL\Polygon Operations\Vector2IP.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Polygon Operations\RationalIP.cs" Link="TVGL\Polygon Operations\RationalIP.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Polygon Operations\Clipper\clipper.cs" Link="TVGL\Polygon Operations\Clipper\clipper.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Polygon Operations\Clipper\ClipperPolygonOperations.cs" Link="TVGL\Polygon Operations\Clipper\ClipperPolygonOperations.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Polygon Operations\IntersectionData.cs" Link="TVGL\Polygon Operations\IntersectionData.cs" />

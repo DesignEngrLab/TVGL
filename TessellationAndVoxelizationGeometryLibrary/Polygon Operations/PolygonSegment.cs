@@ -12,6 +12,8 @@
 // <summary></summary>
 // ***********************************************************************
 
+using System;
+
 namespace TVGL
 {
     /// <summary>
@@ -31,7 +33,7 @@ namespace TVGL
             get
             {
                 if (double.IsNaN(_length))
-                    _length = Vector.Length();
+                    _length = Math.Sqrt(LengthSquared);
                 return _length;
             }
         }
@@ -45,7 +47,22 @@ namespace TVGL
         /// Gets the length of the line.
         /// </summary>
         /// <value>The length.</value>
-        public Vector2 Vector
+        public double LengthSquared
+        {
+            get
+            {
+                if (double.IsNaN(_lengthSquared))
+                    _lengthSquared = Vector2IP.DistanceSquared(ToPoint.Coordinates, FromPoint.Coordinates).AsDouble;
+                return _lengthSquared;
+            }
+        }
+        private double _lengthSquared = double.NaN;
+
+        /// <summary>
+        /// Gets the length of the line.
+        /// </summary>
+        /// <value>The length.</value>
+        internal Vector2IP Vector
         {
             get
             {
@@ -54,22 +71,21 @@ namespace TVGL
                 return _vector;
             }
         }
-
         /// <summary>
         /// The vector
         /// </summary>
-        private Vector2 _vector = Vector2.Null;
+        private Vector2IP _vector = Vector2IP.Zero;
 
         /// <summary>
         /// Gets the center.
         /// </summary>
         /// <value>The center.</value>
-        public Vector2 Center
+        internal Vector2IP Center
         {
             get
             {
                 if (_center.IsNull())
-                    _center = new Vector2((ToPoint.X + FromPoint.X) / 2, (ToPoint.Y + FromPoint.Y) / 2);
+                    _center =Vector2IP.MidPoint(ToPoint.Coordinates,FromPoint.Coordinates);
                 return _center;
             }
         }
@@ -77,104 +93,29 @@ namespace TVGL
         /// <summary>
         /// The center
         /// </summary>
-        private Vector2 _center = Vector2.Null;
+        private Vector2IP _center;
 
-        /// <summary>
-        /// Gets the y intercept.
-        /// </summary>
-        /// <value>The y intercept.</value>
-        public double YIntercept
-        {
-            get
-            {
-                if (double.IsNaN(_yIntercept))
-                    _yIntercept = FindYGivenX(0, out _);
-                return _yIntercept;
-            }
-        }
-
-        /// <summary>
-        /// The y intercept
-        /// </summary>
-        private double _yIntercept = double.NaN;
-
-        /// <summary>
-        /// Gets the x intercept.
-        /// </summary>
-        /// <value>The x intercept.</value>
-        public double XIntercept
-        {
-            get
-            {
-                if (double.IsNaN(_xIntercept))
-                    _xIntercept = FindXGivenY(0, out _);
-                return _xIntercept;
-            }
-        }
-
-        /// <summary>
-        /// The x intercept
-        /// </summary>
-        private double _xIntercept = double.NaN;
-
-        /// <summary>
-        /// Gets the vertical slope (delta-Y / delta-X). A vertical line would have infinite slope.
-        /// </summary>
-        /// <value>The vertical slope.</value>
-        public double VerticalSlope
-        {
-            get
-            {
-                if (double.IsNaN(_verticalSlope))
-                    _verticalSlope = Vector.Y / Vector.X;
-                return _verticalSlope;
-            }
-        }
-
-        /// <summary>
-        /// The vertical slope
-        /// </summary>
-        private double _verticalSlope = double.NaN;
-
-        /// <summary>
-        /// Gets the horizontal slope (delta X/delta Y). A horizontal line would have infinite slope.
-        /// </summary>
-        /// <value>The horizontal slope.</value>
-        public double HorizontalSlope
-        {
-            get
-            {
-                if (double.IsNaN(_horizontalSlope))
-                    _horizontalSlope = Vector.X / Vector.Y;
-                return _horizontalSlope;
-            }
-        }
-
-        /// <summary>
-        /// The horizontal slope
-        /// </summary>
-        private double _horizontalSlope = double.NaN;
 
         /// <summary>
         /// Gets the x maximum.
         /// </summary>
         /// <value>The x maximum.</value>
-        public double XMax { get; private set; }
+        internal RationalIP XMax { get; private set; }
         /// <summary>
         /// Gets the x minimum.
         /// </summary>
         /// <value>The x minimum.</value>
-        public double XMin { get; private set; }
+        internal RationalIP XMin { get; private set; }
         /// <summary>
         /// Gets the y maximum.
         /// </summary>
         /// <value>The y maximum.</value>
-        public double YMax { get; private set; }
+        internal RationalIP YMax { get; private set; }
         /// <summary>
         /// Gets the y minimum.
         /// </summary>
         /// <value>The y minimum.</value>
-        public double YMin { get; private set; }
+        internal RationalIP YMin { get; private set; }
 
         /// <summary>
         /// Gets the index in list.
@@ -195,10 +136,28 @@ namespace TVGL
         {
             FromPoint = fromNode;
             ToPoint = toNode;
-            XMax = (FromPoint.X > ToPoint.X) ? FromPoint.X : ToPoint.X;
-            XMin = (FromPoint.X < ToPoint.X) ? FromPoint.X : ToPoint.X;
-            YMax = (FromPoint.Y > ToPoint.Y) ? FromPoint.Y : ToPoint.Y;
-            YMin = (FromPoint.Y < ToPoint.Y) ? FromPoint.Y : ToPoint.Y;
+            if (RationalIP.CompareTo(FromPoint.Coordinates.X, FromPoint.Coordinates.W,
+                ToPoint.Coordinates.X, ToPoint.Coordinates.W) > 0)
+            {
+                XMax = new RationalIP(FromPoint.Coordinates.X, FromPoint.Coordinates.W);
+                XMin = new RationalIP(ToPoint.Coordinates.X, ToPoint.Coordinates.W);
+            }
+            else
+            {
+                XMax = new RationalIP(ToPoint.Coordinates.X, ToPoint.Coordinates.W);
+                XMin = new RationalIP(FromPoint.Coordinates.X, FromPoint.Coordinates.W);
+            }
+            if (RationalIP.CompareTo(FromPoint.Coordinates.Y, FromPoint.Coordinates.W,
+                ToPoint.Coordinates.Y, ToPoint.Coordinates.W) > 0)
+            {
+                YMax = new RationalIP(FromPoint.Coordinates.Y, FromPoint.Coordinates.W);
+                YMin = new RationalIP(ToPoint.Coordinates.Y, ToPoint.Coordinates.W);
+            }
+            else
+            {
+                YMax = new RationalIP(ToPoint.Coordinates.Y, ToPoint.Coordinates.W);
+                YMin = new RationalIP(FromPoint.Coordinates.Y, FromPoint.Coordinates.W);
+            }
         }
 
         #endregion Constructor
@@ -335,13 +294,9 @@ namespace TVGL
         /// </summary>
         internal void Reset()
         {
-            _center = Vector2.Null;
-            _horizontalSlope = double.NaN;
+            _center = default;
             _length = double.NaN;
-            _vector = Vector2.Null;
-            _verticalSlope = double.NaN;
-            _xIntercept = double.NaN;
-            _yIntercept = double.NaN;
+            _vector = default;
             XMax = (FromPoint.X > ToPoint.X) ? FromPoint.X : ToPoint.X;
             XMin = (FromPoint.X < ToPoint.X) ? FromPoint.X : ToPoint.X;
             YMax = (FromPoint.Y > ToPoint.Y) ? FromPoint.Y : ToPoint.Y;
