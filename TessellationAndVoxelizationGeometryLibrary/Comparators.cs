@@ -107,7 +107,7 @@ namespace TVGL
     /// A comparer for optimization that can be used for either
     /// ascending or descending.
     /// </summary>
-    public class NoEqualSort : IComparer<double> 
+    public class NoEqualSort : IComparer<double>
     //public class NoEqualSort<T> : IComparer<T> where T :IComparable
     {
         /// <summary>
@@ -223,11 +223,13 @@ namespace TVGL
         /// <returns>System.Int32.</returns>
         public int Compare(Vertex2D v1, Vertex2D v2)
         {
-            var d1 = v1.Coordinates.Dot(sweepDirection);
-            var d2 = v2.Coordinates.Dot(sweepDirection);
-            if (d1.IsPracticallySame(d2))
-                return (v1.Coordinates.Dot(alongDirection) < v2.Coordinates.Dot(alongDirection)) ? -1 : 1;
-            return (d1 < d2) ? -1 : 1;
+            var d1 = v1.Coordinates.Dot2D(sweepDirection);
+            var d2 = v2.Coordinates.Dot2D(sweepDirection);
+            var compare = d1.CompareTo(d2);
+            if (compare == 0)
+                return v1.Coordinates.Dot2D(alongDirection).CompareTo(v2.Coordinates.Dot2D(alongDirection));
+
+            else return compare;
         }
     }
 

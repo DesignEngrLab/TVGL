@@ -33,7 +33,7 @@ namespace TVGL
             get
             {
                 if (double.IsNaN(_length))
-                    _length = Math.Sqrt(LengthSquared);
+                    _length = Math.Sqrt(LengthSquared.AsDouble);
                 return _length;
             }
         }
@@ -47,16 +47,16 @@ namespace TVGL
         /// Gets the length of the line.
         /// </summary>
         /// <value>The length.</value>
-        public double LengthSquared
+        internal RationalIP LengthSquared
         {
             get
             {
-                if (double.IsNaN(_lengthSquared))
-                    _lengthSquared = Vector2IP.DistanceSquared2D(ToPoint.Coordinates, FromPoint.Coordinates).AsDouble;
+                if (_lengthSquared.IsNull())
+                    _lengthSquared = Vector2IP.DistanceSquared2D(ToPoint.Coordinates, FromPoint.Coordinates);
                 return _lengthSquared;
             }
         }
-        private double _lengthSquared = double.NaN;
+        private RationalIP _lengthSquared;
 
         /// <summary>
         /// Gets the length of the line.

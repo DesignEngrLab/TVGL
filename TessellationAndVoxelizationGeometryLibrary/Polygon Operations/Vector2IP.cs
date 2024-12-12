@@ -12,10 +12,7 @@
 // <summary></summary>
 // ***********************************************************************
 using System;
-using System.Numerics;
 using System.Runtime.CompilerServices;
-using System.Security.AccessControl;
-using TVGL.Polygon_Operations;
 
 namespace TVGL
 {

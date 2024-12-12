@@ -311,7 +311,8 @@ namespace TVGL
         private static (List<Vector2> points, List<bool> knownWrongPoints) MainOffsetRoutine(Polygon polygon, double offset, bool notMiter,
             double maxLengthSquared, out int maxNumberOfPolygons, double deltaAngle = double.NaN)
         {
-            var tolerance = Math.Pow(10, -polygon.NumSigDigits);
+            var rashOffset = new RationalIP((Int128)(offset * (double)Vector2IP.InitialW), Vector2IP.InitialW);
+            //var tolerance = Math.Pow(10, -polygon.NumSigDigits);
             maxNumberOfPolygons = 1;
             // set up the return list (predict size to prevent re-allocation) and rotation matrix for OffsetRound
             var numPoints = polygon.Edges.Count;
@@ -322,44 +323,55 @@ namespace TVGL
             var offsetSign = Math.Sign(offset);
             var rotMatrix = roundCorners ? Matrix3x3.CreateRotation(offsetSign * deltaAngle) : Matrix3x3.Null;
             if (notMiter && !roundCorners) startingListSize = (int)(1.5 * startingListSize);
-            var pointsList = new List<Vector2>(startingListSize);
+            var pointsList = new List<Vector2IP>(startingListSize);
             var wrongPoints = new List<bool>(startingListSize);
             // previous line starts at the end of the list and then updates to whatever next line was. In addition to the previous line, we
             // also want to capture the unit vector pointing outward (which is in the {Y, -X} direction). The prevLineLengthReciprocal was originally
             // thought to have uses outside of the unit vector but it doesn't. Anyway, slight speed up in calculating it once
-            var prevLine = polygon.Edges[0];
-            var prevLineLengthReciprocal = 1.0 / prevLine.Length;
-            var prevUnitNormal = new Vector2(prevLine.Vector.Y * prevLineLengthReciprocal, -prevLine.Vector.X * prevLineLengthReciprocal);
+            var startLine = polygon.Edges[0];
+            var startNormal = startLine.Normal;
+            var start2DMag = (startNormal.X * startNormal.X + startNormal.Y * startNormal.Y).SquareRoot();
+            var startOffsetNormal = new Vector2IP(startNormal.X, startNormal.Y, (startNormal.W - start2DMag * rashOffset).AsInt128);
+            var prevLine = startLine;
+            var prevNormal = startNormal;
+            var prev2DMag = start2DMag;
+            var prevOffsetNormal = startOffsetNormal;
             for (int i = 1; i <= numPoints; i++)
             {
-                var nextLine = (i == numPoints) ? polygon.Edges[0] : polygon.Edges[i];
-                var nextLineLengthReciprocal = 1.0 / nextLine.Length;
-                var nextUnitNormal = new Vector2(nextLine.Vector.Y * nextLineLengthReciprocal, -nextLine.Vector.X * nextLineLengthReciprocal);
-                // establish the new offset points for the point connecting prevLine to nextLive. this is stored as "point".
-                var point = nextLine.FromPoint.Coordinates;
-                var cross = prevLine.Vector.Cross(nextLine.Vector);
-                var dot = prevLine.Vector.Dot(nextLine.Vector);
-                // cross/dot is the tan(angle). both dot and cross are quicker than square-root or trigonometric functions
-                // and essentially tan(angle) * offset will be the distance between two points emanating from the polygons edges at
-                // this point. If it is less than the tolerance, then just make one point - it doesn't matter if offset is negative/positive
-                // or if angle is convex or concave. Oh, the 100 is added to account for problems that arise when intersections weren't detected
-                if ((cross * offset / dot).IsNegligible(100 * tolerance))
+                PolygonEdge thisLine;
+                Vector2IP thisNormal;
+                Int128 this2DMag;
+                // tilt plane away so that it represents offset line
+                Vector2IP thisOffsetNormal; 
+                if (i == numPoints)
                 {
-                    if (prevUnitNormal.Dot(nextUnitNormal) > 0)
-                        // if line is practically straight, and going the same direction, then simply offset it without all the complication below
-                        pointsList.Add(point + offset * prevUnitNormal);
-                    else pointsList.Add(point);
+                    thisLine = startLine;
+                    thisNormal = startNormal;
+                    this2DMag = start2DMag;
+                    thisOffsetNormal = startOffsetNormal;
                 }
-                // if the cross is positive and the offset is positive (or there both negative), then we will need to make extra points
-                // let's start with the roundCorners
-                else if (cross * offset > 0)
+                else
+                {
+                     thisLine = (i == numPoints) ? polygon.Edges[0] : polygon.Edges[i];
+                     thisNormal = thisLine.Normal;
+                     this2DMag = (thisNormal.X * thisNormal.X + thisNormal.Y * thisNormal.Y).SquareRoot();
+                    // tilt plane away so that it represents offset line
+                     thisOffsetNormal = new Vector2IP(thisNormal.X, thisNormal.Y, (thisNormal.W - this2DMag * rashOffset).AsInt128);
+                }
+                var isConvex = prevLine.Normal.Cross(thisLine.Normal).W > 0;
+                if (isConvex == offset > 0) // then making a positive corner (not an overlapping feature)
                 {
                     if ((polygon.IsPositive && offset < 0) || (!polygon.IsPositive && offset > 0)) maxNumberOfPolygons++;
                     if (roundCorners)
                     {
-                        var firstPoint = point + offset * prevUnitNormal;
+                        // the nominal points are at the intersection of the offset lines (thisOffsetNormal and prevOffsetNormal) and the
+                        // plane perpendicular to the line representing the point and the W-axis [0,0,1]...actually, this is the edge vector
+                        // with the w component removed.
+                        var firstPoint = PGA2D.PointAtLineIntersection(prevOffsetNormal, new Vector2IP(prevLine.Vector.X, prevLine.Vector.Y, 0));
                         pointsList.Add(firstPoint);
-                        var lastPoint = point + offset * nextUnitNormal;
+                        var lastPoint = PGA2D.PointAtLineIntersection(prevOffsetNormal, new Vector2IP(thisLine.Vector.X, thisLine.Vector.Y, 0));
+                        
+                        /*
                         var firstToLastVector = lastPoint - firstPoint;
                         var firstToLastNormal = new Vector2(firstToLastVector.Y, -firstToLastVector.X);
                         // to avoid "costly" call to Math.Sin and Math.Cos, we create the transform matrix that 1) translates to origin
@@ -375,46 +387,28 @@ namespace TVGL
                             firstPoint = nextPoint;
                             nextPoint = firstPoint.Transform(transform);
                         }
+                        */
                         pointsList.Add(lastPoint);
                     }
                     // if the cross is positive and the offset is positive, then we will need to make extra points for the 
                     // squaredCorners
                     else if (notMiter)
-                    {
-                        // find these two points by calling the LineLine2DIntersection function twice. 
-                        var middleUnitVector = (prevUnitNormal + nextUnitNormal).Normalize();
-                        var middlePoint = point + offset * middleUnitVector;
-                        var middleDir = new Vector2(-middleUnitVector.Y, middleUnitVector.X);
-                        pointsList.Add(MiscFunctions.LineLine2DIntersection(point + offset * prevUnitNormal,
-                            prevLine.Vector, middlePoint, middleDir));
-                        pointsList.Add(MiscFunctions.LineLine2DIntersection(middlePoint, middleDir,
-                            point + offset * nextUnitNormal, nextLine.Vector));
-                    }
-                    // miter and concave connections are done the same way...
+                        pointsList.Add(PGA2D.PointAtLineIntersection(prevOffsetNormal, thisOffsetNormal));
                     else
                     {
-                        var intersection = MiscFunctions.LineLine2DIntersection(point + offset * prevUnitNormal,
-                            prevLine.Vector, point + offset * nextUnitNormal, nextLine.Vector);
-                        // if the corner is too shape the new point will be placed far away (near infinity). This is to rein it in
-                        var vectorToCorner = intersection - point;
-                        var vectorToCornerLengthSquared = vectorToCorner.LengthSquared();
-                        if (vectorToCornerLengthSquared > maxLengthSquared)
-                            intersection =
-                                point + vectorToCorner * Math.Sqrt(maxLengthSquared / vectorToCornerLengthSquared);
-                        pointsList.Add(intersection);
+                        var firstPoint = PGA2D.PointAtLineIntersection(prevOffsetNormal, new Vector2IP(prevLine.Vector.X, prevLine.Vector.Y, 0));
+                        pointsList.Add(firstPoint);
+                        var lastPoint = PGA2D.PointAtLineIntersection(prevOffsetNormal, new Vector2IP(thisLine.Vector.X, thisLine.Vector.Y, 0));
+                        pointsList.Add(lastPoint);
                     }
                 }
                 else
-                {
-                    numFalsesToAdd = pointsList.Count - wrongPoints.Count;
-                    for (int k = 0; k < numFalsesToAdd; k++) wrongPoints.Add(false);
-                    wrongPoints.Add(true);
-                    wrongPoints.Add(true);
-                    pointsList.Add(point + offset * prevUnitNormal);
-                    pointsList.Add(point + offset * nextUnitNormal);
-                }
-                prevLine = nextLine;
-                prevUnitNormal = nextUnitNormal;
+                    pointsList.Add(PGA2D.PointAtLineIntersection(thisOffsetNormal, prevOffsetNormal));
+
+                prevLine = thisLine;
+                prevNormal = thisNormal;
+                prev2DMag = this2DMag;
+                prevOffsetNormal = thisOffsetNormal;
             }
             numFalsesToAdd = pointsList.Count - wrongPoints.Count;
             for (int k = 0; k < numFalsesToAdd; k++) wrongPoints.Add(false);

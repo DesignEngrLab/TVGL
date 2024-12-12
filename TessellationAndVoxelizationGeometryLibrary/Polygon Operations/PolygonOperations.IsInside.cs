@@ -693,7 +693,7 @@ namespace TVGL
                 var intersects = new double[numIntersects];
                 var index = 0;
                 foreach (var line in currentLines)
-                    intersects[index++] = line.FindXGivenY(y, out _);
+                    intersects[index++] = FindXGivenY(line,y, out _);
                 intersections.Add(intersects.OrderBy(x => x).ToArray());
                 y += stepSize;
             }

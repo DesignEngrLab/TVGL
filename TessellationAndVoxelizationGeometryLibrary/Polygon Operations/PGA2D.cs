@@ -127,15 +127,10 @@ namespace TVGL
             // consider the problem as (x + y)^2 = num where x is the integer
             // part and y is the fractional part. if the fractional part is
             // greater than 1 then we add to the integer part.
-            if (Int128.Abs(delta) > (intTerm << 1))
-            {
-                fracTerm = (double)delta / (double)(intTerm << 1);
-                intTerm += (Int128)fracTerm;
-                delta = num - intTerm * intTerm;
-            }
+            intTerm += Int128.DivRem(delta, intTerm << 1).Quotient;
             // occasionally this is still larger. this happens because 2xy +y^2 
             // produce and extra unit, but never more than once.
-            if (intTerm * intTerm > num)
+            while (intTerm * intTerm > num)
                 intTerm--;
             return intTerm;
         }

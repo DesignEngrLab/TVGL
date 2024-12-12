@@ -27,6 +27,7 @@ namespace TVGL
             Den = w;
         }
         internal double AsDouble => (double)Num / (double)Den;
+        internal Int128 AsInt128 => Int128.DivRem(Num , Den).Quotient;
 
         public static RationalIP One = new RationalIP(1, 1);
 
@@ -63,11 +64,23 @@ namespace TVGL
             return new RationalIP(leftNum * rightDen - rightNum * leftDen, leftDen * rightDen);
         }
 
+
+        public static RationalIP operator -(Int128 left, RationalIP right)
+       => Subtract(left*right.Den, right.Den, right.Num, right.Den);
+
+
         public static RationalIP operator *(RationalIP left, RationalIP right)
        => Multiply(left.Num, left.Den, right.Num, right.Den);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         static RationalIP Multiply(Int128 leftNum, Int128 leftDen, Int128 rightNum, Int128 rightDen)
         => new RationalIP(leftNum * rightNum, leftDen * rightDen);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static RationalIP operator *(Int128 left, RationalIP right)
+       => new RationalIP(left * right.Num, right.Den);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static RationalIP operator *(RationalIP left, Int128 right)
+       => new RationalIP(left.Num * right, left.Den);
 
         public static RationalIP operator /(RationalIP left, RationalIP right)
        => Divide(left.Num, left.Den, right.Num, right.Den);
