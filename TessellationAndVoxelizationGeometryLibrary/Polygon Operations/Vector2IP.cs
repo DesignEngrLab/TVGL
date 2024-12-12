@@ -12,8 +12,10 @@
 // <summary></summary>
 // ***********************************************************************
 using System;
+using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Security.AccessControl;
+using TVGL.Polygon_Operations;
 
 namespace TVGL
 {
@@ -32,6 +34,7 @@ namespace TVGL
         => new Vector2IP(vector.X, vector.Y, InitialW);
         internal Vector2IP(double x, double y)
         => new Vector2IP(x, y, InitialW);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal Vector2IP(double x, double y, Int128 w)
        => new Vector2IP((Int128)x * w, (Int128)y * w, w);
         internal Vector2IP(Int128 x, Int128 y, Int128 w)
@@ -40,24 +43,32 @@ namespace TVGL
             Y = y;
             W = w;
         }
+
         public static Vector2IP Zero = default;
         public static Vector2IP UnitX = new Vector2IP(Int128.One, Int128.Zero, Int128.One);
         public static Vector2IP UnitY = new Vector2IP(Int128.Zero, Int128.One, Int128.One);
 
-        public RationalIP Dot(Vector2IP that)
+        internal bool IsNull()
+        {
+            return this == Zero;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public RationalIP Dot2D(Vector2IP that)
         {
             return new RationalIP(this.X * that.X + this.Y * that.Y, this.W * that.W);
         }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public Int128 Dot3D(Vector2IP that)
+        {
+            return this.X * that.X + this.Y * that.Y+ this.W * that.W;
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Vector2IP Cross(Vector2IP that)
         {
             return new Vector2IP(this.Y * that.W - this.W * that.Y,
                 this.W * that.X - this.X * that.W,
                 this.X * that.Y - this.Y * that.W);
-        }
-
-        internal bool IsNull()
-        {
-            return this == Zero;
         }
 
         internal Vector2IP Transform(Matrix3x3 matrix)
@@ -76,7 +87,8 @@ namespace TVGL
             throw new NotImplementedException();
         }
 
-        internal static RationalIP DistanceSquared(Vector2IP left, Vector2IP right)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal static RationalIP DistanceSquared2D(Vector2IP left, Vector2IP right)
         {
             if (left.W == right.W)
                 return new RationalIP((left.X - right.X) * (left.X - right.X) + (left.Y - right.Y) * (left.Y - right.Y),
@@ -86,6 +98,17 @@ namespace TVGL
                                (left.Y * right.W - right.Y * left.W) * (left.Y * right.W - right.Y * left.W),
                               left.W * left.W * right.W * right.W);
         }
+
+        internal Int128 Length3D()
+        {
+            return LengthSquared3D().SquareRoot();
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal Int128 LengthSquared3D()
+        {
+            return X * X + Y * Y + W * W;
+        }
+
 
 
         #region Public Static Operators
@@ -159,6 +182,7 @@ namespace TVGL
         {
             return obj is Vector2IP && Equals((Vector2IP)obj);
         }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool Equals(Vector2IP that)
         {
             if (this.W == that.W)
@@ -167,6 +191,7 @@ namespace TVGL
                 this.Y * that.W == that.Y * this.W;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static Vector2IP MidPoint(Vector2IP left, Vector2IP right)
         {
             return new Vector2IP(left.X * right.W + right.X * left.W,

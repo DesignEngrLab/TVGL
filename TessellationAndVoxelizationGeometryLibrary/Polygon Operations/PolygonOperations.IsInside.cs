@@ -474,6 +474,32 @@ namespace TVGL
             return inside;
         }
 
+        /// <summary>
+        /// Returns Y value given an X value
+        /// </summary>
+        /// <param name="x">The xval.</param>
+        /// <param name="isBetweenEndPoints">if set to <c>true</c> [is between end points].</param>
+        /// <returns>System.Double.</returns>
+        internal static RationalIP FindYGivenX(PolygonEdge segment, Int128 x, Int128 w, out bool isBetweenEndPoints)
+        {
+            var vertLine = new Vector2IP(x, Int128.Zero, w);
+            var point = PGA2D.PointAtLineAndPolyEdge(vertLine, segment, out _, out isBetweenEndPoints);
+            return new RationalIP(point.Y, point.W);
+        }
+
+        /// <summary>
+        /// Returns X value given a Y value
+        /// </summary>
+        /// <param name="y">The y.</param>
+        /// <param name="isBetweenEndPoints">if set to <c>true</c> [is between end points].</param>
+        /// <returns>System.Double.</returns>
+        internal static RationalIP FindXGivenY(PolygonEdge segment, Int128 y, Int128 w, out bool isBetweenEndPoints)
+        {
+            var horzLine = new Vector2IP(Int128.Zero, y, w);
+            var point = PGA2D.PointAtLineAndPolyEdge(horzLine, segment, out _, out isBetweenEndPoints);
+            return new RationalIP(point.Y, point.W);
+        }
+
         #region Line Intersections with Polygon
 
         /// <summary>

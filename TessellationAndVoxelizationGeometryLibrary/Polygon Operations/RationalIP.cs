@@ -28,6 +28,13 @@ namespace TVGL
         }
         internal double AsDouble => (double)Num / (double)Den;
 
+        public static RationalIP One = new RationalIP(1, 1);
+
+        public static RationalIP Zero = default;
+        internal bool IsNull()
+        {
+            return this == Zero;
+        }
 
         #region internal Static Operators
         /// <summary>

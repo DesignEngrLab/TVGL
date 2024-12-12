@@ -52,7 +52,7 @@ namespace TVGL
             get
             {
                 if (double.IsNaN(_lengthSquared))
-                    _lengthSquared = Vector2IP.DistanceSquared(ToPoint.Coordinates, FromPoint.Coordinates).AsDouble;
+                    _lengthSquared = Vector2IP.DistanceSquared2D(ToPoint.Coordinates, FromPoint.Coordinates).AsDouble;
                 return _lengthSquared;
             }
         }
@@ -71,10 +71,21 @@ namespace TVGL
                 return _vector;
             }
         }
-        /// <summary>
-        /// The vector
-        /// </summary>
         private Vector2IP _vector = Vector2IP.Zero;
+
+
+        internal Vector2IP Normal
+        {
+            get
+            {
+                if (normal.IsNull())
+                    normal = ToPoint.Coordinates.Cross(FromPoint.Coordinates);
+                return normal;
+            }
+        }
+        private Vector2IP normal = Vector2IP.Zero;
+
+
 
         /// <summary>
         /// Gets the center.
@@ -85,7 +96,7 @@ namespace TVGL
             get
             {
                 if (_center.IsNull())
-                    _center =Vector2IP.MidPoint(ToPoint.Coordinates,FromPoint.Coordinates);
+                    _center = Vector2IP.MidPoint(ToPoint.Coordinates, FromPoint.Coordinates);
                 return _center;
             }
         }
@@ -94,28 +105,62 @@ namespace TVGL
         /// The center
         /// </summary>
         private Vector2IP _center;
+        private RationalIP xMax;
+        private RationalIP xMin;
+        private RationalIP yMax;
+        private RationalIP yMin;
 
 
         /// <summary>
         /// Gets the x maximum.
         /// </summary>
         /// <value>The x maximum.</value>
-        internal RationalIP XMax { get; private set; }
+        internal RationalIP XMax
+        {
+            get
+            {
+                if (xMax.IsNull()) SetXLimits();
+                return xMax;
+            }
+        }
         /// <summary>
         /// Gets the x minimum.
         /// </summary>
         /// <value>The x minimum.</value>
-        internal RationalIP XMin { get; private set; }
+        internal RationalIP XMin
+        {
+            get
+            {
+                if (xMin.IsNull()) SetXLimits();
+                return xMin;
+            }
+        }
+
         /// <summary>
         /// Gets the y maximum.
         /// </summary>
         /// <value>The y maximum.</value>
-        internal RationalIP YMax { get; private set; }
+        internal RationalIP YMax
+        {
+            get
+            {
+                if (yMax.IsNull()) SetYLimits();
+                return yMax;
+            }
+        }
+
         /// <summary>
         /// Gets the y minimum.
         /// </summary>
         /// <value>The y minimum.</value>
-        internal RationalIP YMin { get; private set; }
+        internal RationalIP YMin
+        {
+            get
+            {
+                if (yMin.IsNull()) SetYLimits();
+                return yMin;
+            }
+        }
 
         /// <summary>
         /// Gets the index in list.
@@ -136,27 +181,35 @@ namespace TVGL
         {
             FromPoint = fromNode;
             ToPoint = toNode;
+        }
+
+        void SetXLimits()
+        {
             if (RationalIP.CompareTo(FromPoint.Coordinates.X, FromPoint.Coordinates.W,
                 ToPoint.Coordinates.X, ToPoint.Coordinates.W) > 0)
             {
-                XMax = new RationalIP(FromPoint.Coordinates.X, FromPoint.Coordinates.W);
-                XMin = new RationalIP(ToPoint.Coordinates.X, ToPoint.Coordinates.W);
+                xMax = new RationalIP(FromPoint.Coordinates.X, FromPoint.Coordinates.W);
+                xMin = new RationalIP(ToPoint.Coordinates.X, ToPoint.Coordinates.W);
             }
             else
             {
-                XMax = new RationalIP(ToPoint.Coordinates.X, ToPoint.Coordinates.W);
-                XMin = new RationalIP(FromPoint.Coordinates.X, FromPoint.Coordinates.W);
+                xMax = new RationalIP(ToPoint.Coordinates.X, ToPoint.Coordinates.W);
+                xMin = new RationalIP(FromPoint.Coordinates.X, FromPoint.Coordinates.W);
             }
+        }
+
+        void SetYLimits()
+        {
             if (RationalIP.CompareTo(FromPoint.Coordinates.Y, FromPoint.Coordinates.W,
                 ToPoint.Coordinates.Y, ToPoint.Coordinates.W) > 0)
             {
-                YMax = new RationalIP(FromPoint.Coordinates.Y, FromPoint.Coordinates.W);
-                YMin = new RationalIP(ToPoint.Coordinates.Y, ToPoint.Coordinates.W);
+                yMax = new RationalIP(FromPoint.Coordinates.Y, FromPoint.Coordinates.W);
+                yMin = new RationalIP(ToPoint.Coordinates.Y, ToPoint.Coordinates.W);
             }
             else
             {
-                YMax = new RationalIP(ToPoint.Coordinates.Y, ToPoint.Coordinates.W);
-                YMin = new RationalIP(FromPoint.Coordinates.Y, FromPoint.Coordinates.W);
+                yMax = new RationalIP(ToPoint.Coordinates.Y, ToPoint.Coordinates.W);
+                yMin = new RationalIP(FromPoint.Coordinates.Y, FromPoint.Coordinates.W);
             }
         }
 
@@ -208,79 +261,6 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Returns Y value given an X value
-        /// </summary>
-        /// <param name="xval">The xval.</param>
-        /// <param name="isBetweenEndPoints">if set to <c>true</c> [is between end points].</param>
-        /// <returns>System.Double.</returns>
-        public double FindYGivenX(double xval, out bool isBetweenEndPoints)
-        {
-            if (xval.IsPracticallySame(FromPoint.X))
-            {
-                isBetweenEndPoints = true;
-                return FromPoint.Y;
-            }
-            if (xval.IsPracticallySame(ToPoint.X))
-            {
-                isBetweenEndPoints = true;
-                return ToPoint.Y;
-            }
-            isBetweenEndPoints = (FromPoint.X < xval) != (ToPoint.X < xval);
-            // if both true or both false then endpoints are on same side of point
-            if (FromPoint.Y.IsPracticallySame(ToPoint.Y))
-            {
-                //Any y value on the line will do
-                return FromPoint.Y;
-            }
-            if (FromPoint.X.IsPracticallySame(ToPoint.X))
-            {
-                isBetweenEndPoints = (xval.IsPracticallySame(FromPoint.X));
-                //return either positive or negative infinity depending on the direction of the line.
-                if (ToPoint.Y - FromPoint.Y > 0)
-                    return double.MaxValue;
-                return double.MinValue;
-            }
-            return VerticalSlope * (xval - FromPoint.X) + FromPoint.Y;
-        }
-
-        /// <summary>
-        /// Returns X value given a Y value
-        /// </summary>
-        /// <param name="yval">The y.</param>
-        /// <param name="isBetweenEndPoints">if set to <c>true</c> [is between end points].</param>
-        /// <returns>System.Double.</returns>
-        public double FindXGivenY(double yval, out bool isBetweenEndPoints)
-        {
-            if (yval.IsPracticallySame(FromPoint.Y))
-            {
-                isBetweenEndPoints = true;
-                return FromPoint.X;
-            }
-            if (yval.IsPracticallySame(ToPoint.Y))
-            {
-                isBetweenEndPoints = true;
-                return ToPoint.X;
-            }
-            isBetweenEndPoints = (FromPoint.Y < yval) != (ToPoint.Y < yval);
-            // if both true or both false then endpoints are on same side of point
-            //If a vertical line, return an x value on that line (e.g., ToNode.X)
-            if (FromPoint.X.IsPracticallySame(ToPoint.X))
-            {
-                return FromPoint.X;
-            }
-
-            //If a flat line give either positive or negative infinity depending on the direction of the line.
-            if (FromPoint.Y.IsPracticallySame(ToPoint.Y))
-            {
-                isBetweenEndPoints = (yval.IsPracticallySame(FromPoint.Y));
-                if (ToPoint.X - FromPoint.X > 0)
-                    return double.MaxValue;
-                return double.MinValue;
-            }
-            return HorizontalSlope * (yval - FromPoint.Y) + FromPoint.X;
-        }
-
-        /// <summary>
         /// Returns a <see cref="System.String" /> that represents this instance.
         /// </summary>
         /// <returns>A <see cref="System.String" /> that represents this instance.</returns>
@@ -297,10 +277,10 @@ namespace TVGL
             _center = default;
             _length = double.NaN;
             _vector = default;
-            XMax = (FromPoint.X > ToPoint.X) ? FromPoint.X : ToPoint.X;
-            XMin = (FromPoint.X < ToPoint.X) ? FromPoint.X : ToPoint.X;
-            YMax = (FromPoint.Y > ToPoint.Y) ? FromPoint.Y : ToPoint.Y;
-            YMin = (FromPoint.Y < ToPoint.Y) ? FromPoint.Y : ToPoint.Y;
+            xMax = default;
+            xMin = default;
+            yMax = default;
+            yMin = default;
         }
 
         #endregion Methods

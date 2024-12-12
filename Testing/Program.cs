@@ -16,7 +16,6 @@ namespace TVGLUnitTestsAndBenchmarking
         static double r1 => 2.0 * r.NextDouble() - 1.0;
         static double r100 => 200.0 * r.NextDouble() - 100.0;
 
-
         [STAThread]
         private static void Main(string[] args)
         {
