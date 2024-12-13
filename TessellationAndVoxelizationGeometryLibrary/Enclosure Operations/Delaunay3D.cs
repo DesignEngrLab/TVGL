@@ -224,6 +224,22 @@ namespace TVGL
             }
         }
 
+        /// <summary>
+        /// Enumerates the edges of the tetrahedron.
+        /// </summary>
+        public IEnumerable<TetraMeshEdge> Edges
+        {
+            get
+            {
+                yield return AB;
+                yield return AC;
+                yield return AD;
+                yield return BC;
+                yield return BD;
+                yield return CD;
+            }
+        }
+
     }
     public class Delaunay3D
     {
