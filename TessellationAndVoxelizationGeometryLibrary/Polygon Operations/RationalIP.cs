@@ -26,12 +26,22 @@ namespace TVGL
             Num = y;
             Den = w;
         }
-        internal double AsDouble => (double)Num / (double)Den;
-        internal Int128 AsInt128 => Int128.DivRem(Num , Den).Quotient;
+        internal double AsDouble => AsDoubleValue(Num, Den);
+
+        internal static double AsDoubleValue(Int128 num, Int128 den)
+        {
+            (Int128 quotient, Int128 remainder) = Int128.DivRem(num, den);
+            // to increase precision, we add the remainder divided by the denominator
+            return (double)quotient + ((double)remainder / (double)den);
+        }
+
+        internal Int128 AsInt128 => Int128.DivRem(Num, Den).Quotient;
 
         public static RationalIP One = new RationalIP(1, 1);
 
         public static RationalIP Zero = default;
+        public static RationalIP PositiveInfinity = new RationalIP(Int128.MaxValue, Int128.Zero);
+        public static RationalIP NegativeInfinity = new RationalIP(Int128.MinValue, Int128.Zero);
         internal bool IsNull()
         {
             return this == Zero;
@@ -66,7 +76,7 @@ namespace TVGL
 
 
         public static RationalIP operator -(Int128 left, RationalIP right)
-       => Subtract(left*right.Den, right.Den, right.Num, right.Den);
+       => Subtract(left * right.Den, right.Den, right.Num, right.Den);
 
 
         public static RationalIP operator *(RationalIP left, RationalIP right)
@@ -146,6 +156,38 @@ namespace TVGL
             else if (left > right) return 1;
             else return -1;
         }
+
+        internal bool IsLessThanVectorX(Vector2IP coordinates)
+        => CompareTo(Num, Den, coordinates.X, coordinates.W) < 0;
+        internal static bool IsLessThanVectorX(Vector2IP left, Vector2IP right)
+        => CompareTo(left.X, left.W, right.X, right.W) < 0;
+        internal bool IsLessThanVectorY(Vector2IP coordinates)
+        => CompareTo(Num, Den, coordinates.Y, coordinates.W) < 0;
+        internal static bool IsLessThanVectorY(Vector2IP left, Vector2IP right)
+        => CompareTo(left.Y, left.W, right.Y, right.W) < 0;
+        internal bool IsGreaterThanVectorX(Vector2IP coordinates)
+        => CompareTo(Num, Den, coordinates.X, coordinates.W) > 0;
+        internal static bool IsGreaterThanVectorX(Vector2IP left, Vector2IP right)
+        => CompareTo(left.X, left.W, right.X, right.W) > 0;
+        internal bool IsGreaterThanVectorY(Vector2IP coordinates)
+        => CompareTo(Num, Den, coordinates.Y, coordinates.W) > 0;
+        internal static bool IsGreaterThanVectorY(Vector2IP left, Vector2IP right)
+        => CompareTo(left.Y, left.W, right.Y, right.W) > 0;
+
+        internal bool IsEqualVectorX(Vector2IP coordinates)
+        => CompareTo(Num, Den, coordinates.X, coordinates.W) == 0;
+        internal static bool IsEqualVectorX(Vector2IP left, Vector2IP right)
+        => CompareTo(left.X, left.W, right.X, right.W) == 0;
+        internal bool IsEqualVectorY(Vector2IP coordinates)
+        => CompareTo(Num, Den, coordinates.Y, coordinates.W) == 0;
+        internal static bool IsEqualVectorY(Vector2IP left, Vector2IP right)
+        => CompareTo(left.Y, left.W, right.Y, right.W) == 0;
+
+        internal static bool IsInfinity(RationalIP r)
+        {
+            return r.Den == Int128.Zero;
+        }
+
         #endregion
     }
 }

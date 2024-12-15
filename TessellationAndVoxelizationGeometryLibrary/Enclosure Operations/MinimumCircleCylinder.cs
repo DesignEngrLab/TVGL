@@ -71,7 +71,7 @@ namespace TVGL
                         maxDistSqared = dist;
                         if (indexOfMaxDist == i) stallCounter++;
                         //Only set the stall counter back to zero if there was a significant change.
-                        else if(dist * requiredImprovementPercent > maxDistSqared)
+                        else if (dist * requiredImprovementPercent > maxDistSqared)
                             stallCounter = 0;
                         indexOfMaxDist = i;
                         newPointFoundOutsideCircle = true;
@@ -85,7 +85,7 @@ namespace TVGL
                     points[0] = maxPoint;
                     circle = FindCircle(points);
                     maxDistSqared = circle.RadiusSquared;
-                    startIndex = 4;      
+                    startIndex = 4;
                     // should we start at 3 or 4? initially the circle was defined with the first 2 or 3 points.
                     // (if it were 2 then the third point was inside the circle and was ineffecitve).
                     // but these indices would be 0,1,2 - so shouldn't the next point to check be 3?!
@@ -299,7 +299,8 @@ namespace TVGL
         /// <returns>Circle.</returns>
         private static Circle MaximumInnerCircleInHole(Polygon polygon, Vector2 centerPoint)
         {
-            var shortestDistance = double.MaxValue;
+            var centerPtPGA = new Vector2IP(centerPoint);
+            var shortestDistance = RationalIP.PositiveInfinity;
             //1. For every line on the path, get the closest point on the edge to the center point. 
             //   Skip if min distance to line (perpendicular) forms a point not on the line.
             foreach (var line in polygon.Edges)
@@ -307,31 +308,17 @@ namespace TVGL
                 var v1 = line.ToPoint.Coordinates - line.FromPoint.Coordinates;
                 //Correctly ordering the points should yield a negative area if the circle is inside a hole or outside a positive polygon.
                 //Note also that zero area will occur when the points line up, which we want to ignore (the line ends will be checked anyways)
-                if (!(new List<Vector2> { line.FromPoint.Coordinates, line.ToPoint.Coordinates, centerPoint })
-                    .Area().IsNegativeNonNegligible())
-                    continue;
-
-                //Figure out how far the center point is away from the line
-                var d = MiscFunctions.DistancePointToLine(centerPoint, line.FromPoint.Coordinates, v1, out var pointOnLine);
-                if (d > shortestDistance) continue;
-
-                //Now we need to figure out if the lines intersect
-                if (!MiscFunctions.SegmentSegment2DIntersection(line.FromPoint.Coordinates, line.ToPoint.Coordinates,
-                    centerPoint, pointOnLine, out _, out _, out _)) continue;
-                //if(intersectionPoint != tempPoint) throw new Exception("Error in implementation. This should always be true.");
-                shortestDistance = d;
+                if (line.Vector.Cross(centerPtPGA - line.ToPoint.Coordinates).W < 0)
+                {
+                    //Figure out how far the center point is away from the line
+                    var d = PGA2D.ShortestDistancePointToLineSegment(line, centerPtPGA, out var distanceIsAtEndPoint);
+                    if (d <= shortestDistance) // && !distanceIsAtEndPoint) 
+                        shortestDistance = d;
+                }
             }
-
-            //2. For every point in path and every closest edge point find distance to center.
-            //   The shortest distance determines the diameter of the inner circle.
-            foreach (var point in polygon.Path)
-            {
-                var d = point.DistanceSquared(centerPoint);
-                if (d < shortestDistance) shortestDistance = d;
-            }
-
-            if (shortestDistance.IsPracticallySame(double.MaxValue)) return new Circle(centerPoint, 0.0); //Not inside any hole or outside any positive polygon
-            return new Circle(centerPoint, shortestDistance);
+            if (shortestDistance ==RationalIP.PositiveInfinity)
+                return new Circle(centerPoint, 0.0); //Not inside any hole or outside any positive polygon
+            return new Circle(centerPoint, shortestDistance.AsDouble);
         }
 
         /// <summary>
@@ -342,7 +329,7 @@ namespace TVGL
         /// <returns>Cylinder.</returns>
         public static Cylinder MinimumBoundingCylinder(TessellatedSolid ts, BoundingBox box)
         {
-            if(ts.ConvexHull != null)
+            if (ts.ConvexHull != null)
                 return MinimumBoundingCylinder(ts.ConvexHull.Vertices, box.Directions);
             return MinimumBoundingCylinder(ts.Vertices, box.Directions);
         }
@@ -386,7 +373,7 @@ namespace TVGL
                 {
                     minCylinderVolume = cylinder.Volume;
                     minCylinder = cylinder;
-                }  
+                }
             }
             return minCylinder;
         }
@@ -434,15 +421,15 @@ namespace TVGL
 
             //Get the furthest vertex distance from the center line.
             var radiusSquared = 0.0;
-            foreach(var vertex in convexHullVertices)
+            foreach (var vertex in convexHullVertices)
             {
                 var r2 = MiscFunctions.DistancePointToLine(vertex, anchor, axis, out _, true);
-                if(r2 > radiusSquared)
+                if (r2 > radiusSquared)
                     radiusSquared = r2;
             }
             var center2D = anchor.ConvertTo2DCoordinates(axis, out var _);
             var circle = new Circle(center2D, radiusSquared);
-            
+
             //Get the depth of the cylinder.
             var (min, max) = GetDistanceToExtremeVertex(convexHullVertices, axis, out _, out _);
             //var anchor = circle.Center.ConvertTo3DLocation(backTransform);

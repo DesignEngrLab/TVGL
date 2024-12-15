@@ -130,13 +130,13 @@ namespace TVGL
                 var canRemoveEarlierEdge = true;
                 for (var i = edgeIndex; i < sortedEdges.Count; i++)
                 {
-                    if (sortedEdges[i].XMax < vertex.X)
+                    if (sortedEdges[i].XMax.IsLessThanVectorX(vertex.Coordinates))
                     {
                         if (canRemoveEarlierEdge) edgeIndex = i;
                         continue;
                     }
                     canRemoveEarlierEdge = false;
-                    if (sortedEdges[i].XMin > vertex.X)
+                    if (sortedEdges[i].XMin.IsGreaterThanVectorX(vertex.Coordinates))
                         break;
                     switch (DetermineLineToPointVerticalReferenceType(vertex.Coordinates, sortedEdges[i]))
                     {
@@ -168,148 +168,43 @@ namespace TVGL
             return null; //all points are on boundary, so it is unclear if it is inside
         }
 
-        /// <summary>
-        /// Determines if a point is inside a polygon, where a polygon is an ordered list of 2D points.
-        /// And the polygon is not self-intersecting
-        /// This is a newer basically the same as our other method, but is less verbose.
-        /// Making use of W. Randolph Franklin's compact algorithm
-        /// https://wrf.ecse.rpi.edu//Research/Short_Notes/pnpoly.html
-        /// Major Assumptions:
-        /// 1) The polygon can be convex
-        /// 2) The direction of the polygon does not matter
-        /// </summary>
-        /// <param name="polygon">The polygon.</param>
-        /// <param name="onlyTopPolygon">if set to <c>true</c> [only top polygon].</param>
-        /// <param name="pointInQuestion">The point in question.</param>
-        /// <returns><c>true</c> if [is point inside polygon] [the specified point in question]; otherwise, <c>false</c>.</returns>
-        public static bool IsPointInsidePolygon(this Polygon polygon, bool onlyTopPolygon, Vector2 pointInQuestion)
-        {
-            var insideTopPolygon = IsPointInsidePolygon(polygon, pointInQuestion);
-            if (onlyTopPolygon || !insideTopPolygon) return insideTopPolygon;
 
-            //Else, it is inside the top polygon and we need to check the inner polygons
-            var smallestArea = polygon.PathArea;
-            var smallestEnclosingPolygon = polygon;
-            foreach (var subPolygon in polygon.AllPolygons.Skip(1))
-            {
-                if (IsPointInsidePolygon(subPolygon, pointInQuestion))
-                {
-                    var absArea = Math.Abs(subPolygon.PathArea);
-                    if (absArea < smallestArea)
-                    {
-                        smallestArea = absArea;
-                        smallestEnclosingPolygon = subPolygon;
-                    }
-                }
-            }
-            //The point is inside the smallest polygon. If that polygon is positive,
-            //then return true. If it is a hole, then return false.
-            return smallestEnclosingPolygon.IsPositive;
+        public static bool IsPointInsidePolygon(this Polygon polygon, bool onlyTopPolygon, Vector2 pointInQuestion, out bool isExactlyOnEdge)
+        => IsPointInsidePolygon(polygon, onlyTopPolygon, new Vector2IP(pointInQuestion), out isExactlyOnEdge);
+        internal static bool IsPointInsidePolygon(this Polygon polygon, bool onlyTopPolygon, Vector2IP pointInQuestion, out bool isExactlyOnEdge)
+        {
+            var insideTopPolygon = IsPointInsidePolygon(polygon, pointInQuestion, out isExactlyOnEdge);
+            if (onlyTopPolygon) return polygon.IsPositive == insideTopPolygon;
+            if (!insideTopPolygon) return !polygon.IsPositive;
+            foreach (var inner in polygon.InnerPolygons)
+                if (IsPointInsidePolygon(inner, pointInQuestion, out isExactlyOnEdge)) 
+                    return true;
+            return false;
         }
 
-        /// <summary>
-        /// Determines whether [is point inside polygon] [the specified point in question].
-        /// </summary>
-        /// <param name="polygon">The polygon.</param>
-        /// <param name="pointInQuestion">The point in question.</param>
-        /// <returns><c>true</c> if [is point inside polygon] [the specified point in question]; otherwise, <c>false</c>.</returns>
-        private static bool IsPointInsidePolygon(this Polygon polygon, Vector2 pointInQuestion)
+        internal static bool IsPointInsidePolygon(this Polygon polygon, Vector2IP pointInQuestion, out bool isExactlyOnEdge)
         {
-            //1) Get the axis aligned bounding box of the path. This is super fast.
-            //If the point is inside the bounding box, continue to check with more detailed methods, 
-            //Else, retrun false.
-            var p = pointInQuestion;
-            var path = polygon.Path;
-            var xMax = double.NegativeInfinity;
-            var yMax = double.NegativeInfinity;
-            var xMin = double.PositiveInfinity;
-            var yMin = double.PositiveInfinity;
-            foreach (var point in path)
-            {
-                if (point.X < xMin) xMin = point.X;
-                if (point.X > xMax) xMax = point.X;
-                if (point.Y < yMin) yMin = point.Y;
-                if (point.Y > yMax) yMax = point.Y;
-            }
-            if (p.Y < yMin || p.Y > yMax || p.X < xMin || p.X > xMax) return false;
-
-            //2) Next, see how many lines are to the left of the point, using a fixed y value.
-            //This compact, effecient 7 lines of code is from W. Randolph Franklin
-            //<https://wrf.ecse.rpi.edu//Research/Short_Notes/pnpoly.html>
-            var inside = false;
-            for (int i = 0, j = path.Count - 1; i < path.Count; j = i++)
-            {
-                if ((path[i].Y > p.Y) != (path[j].Y > p.Y) &&
-                    p.X < (path[j].X - path[i].X) * (p.Y - path[i].Y) / (path[j].Y - path[i].Y) + path[i].X)
-                {
-                    inside = !inside;
-                }
-            }
-            return inside;
-        }
-
-        /// <summary>
-        /// Determines if a point is inside a polygon. The polygon can be positive or negative. In either case,
-        /// the result is true is the polygon encloses the point. Additionally output parameters can be used to
-        /// locate the closest line above or below the point.
-        /// </summary>
-        /// <param name="polygon">The polygon.</param>
-        /// <param name="onlyTopPolygon">if set to <c>true</c> [only top polygon].</param>
-        /// <param name="pointInQuestion">The point in question.</param>
-        /// <param name="onBoundary">if set to <c>true</c> [on boundary].</param>
-        /// <param name="onBoundaryIsInside">if set to <c>true</c> [on boundary is inside].</param>
-        /// <returns><c>true</c> if [is point inside polygon] [the specified point in question]; otherwise, <c>false</c>.</returns>
-        /// <exception cref="System.ArgumentException">In IsPointInsidePolygon, the point in question is surrounded by" +
-        ///                     " an undetermined number of lines which makes it impossible to determined if inside.</exception>
-        public static bool IsPointInsidePolygon(this Polygon polygon, bool onlyTopPolygon, Vector2 pointInQuestion,
-            out bool onBoundary, bool onBoundaryIsInside = true)
-        {
-            var qX = pointInQuestion.X;  // for conciseness and the smallest bit of additional speed,
-            var qY = pointInQuestion.Y;  // we declare these local variables.
-            //This function has three layers of checks. 
-            //(1) Check if the point is inside the axis aligned bounding box. If it is not, then return false.
-            //(2) Check if the point is == to a polygon point, return onBoundaryIsInside.
-            //(3) Use line-sweeping / ray casting to determine if the polygon contains the point.
-            onBoundary = false;
-            //1) Check if center point is within bounding box of each polygon
-            if (qX < polygon.MinX || qY < polygon.MinY ||
-                qX > polygon.MaxX || qY > polygon.MaxY)
+            isExactlyOnEdge = false;
+            if (polygon.MinXIP.IsGreaterThanVectorX(pointInQuestion)
+                || polygon.MinYIP.IsGreaterThanVectorY(pointInQuestion)
+                || polygon.MaxXIP.IsLessThanVectorX(pointInQuestion)
+                || polygon.MaxYIP.IsLessThanVectorY(pointInQuestion))
                 return false;
-            //2) If the point in question is == a point in points, then it is inside the polygon
-            if (polygon.Path.Any(point => point.Equals(pointInQuestion)))
+            var above = 0;
+            var below = 0;
+            foreach (var edge in polygon.Edges)
             {
-                onBoundary = true;
-                return onBoundaryIsInside;
-            }
-            var numberAbove = 0;
-            var numberBelow = 0;
-            foreach (var subPolygon in polygon.AllPolygons)
-            {
-                foreach (var line in subPolygon.Edges)
+                var type = DetermineLineToPointVerticalReferenceType(pointInQuestion, edge);
+                if (type == VerticalLineReferenceType.On)
                 {
-                    switch (DetermineLineToPointVerticalReferenceType(pointInQuestion, line))
-                    {
-                        case VerticalLineReferenceType.On:
-                            onBoundary = true;
-                            return onBoundaryIsInside;
-                        case VerticalLineReferenceType.Above:
-                            numberAbove++;
-                            break;
-                        case VerticalLineReferenceType.Below:
-                            numberBelow++;
-                            break;
-                    }
+                    isExactlyOnEdge = true;
+                    return true;
                 }
-                if (onlyTopPolygon) break;
+                else if (type == VerticalLineReferenceType.Above) above++;
+                else below++;
             }
-            var insideAbove = numberAbove % 2 != 0;
-            var insideBelow = numberBelow % 2 != 0;
-            if (insideAbove != insideBelow)
-            {
-                throw new ArgumentException("In IsPointInsidePolygon, the point in question is surrounded by" +
-                    " an undetermined number of lines which makes it impossible to determined if inside.");
-            }
-            return insideAbove;
+            var decider = above > below ? above : below; // go with the larger number
+            return decider % 2 != 0;
         }
 
 
@@ -319,27 +214,33 @@ namespace TVGL
         /// <param name="point">The point.</param>
         /// <param name="line">The line.</param>
         /// <returns>VerticalLineReferenceType.</returns>
-        private static VerticalLineReferenceType DetermineLineToPointVerticalReferenceType(Vector2 point, PolygonEdge line)
+        private static VerticalLineReferenceType DetermineLineToPointVerticalReferenceType(Vector2IP point, PolygonEdge line)
         {
-            // this is basically the function PolygonEdge.YGivenX, but it is a little different here since check if line is horizontal cusp
-            if (point.X == line.FromPoint.Coordinates.X && point.X == line.ToPoint.Coordinates.X)
-            {   // this means the line is vertical and lines up with the point. Other adjacent line segments will be found
-                return VerticalLineReferenceType.NotIntersecting;
-            }
             if (point == line.FromPoint.Coordinates)
             {
                 var signOfOverallDirection = line.Vector.X * line.FromPoint.EndLine.Vector.X;
                 // this is a cusp - where the polygon line turns around at this point
                 if (signOfOverallDirection < 0) return VerticalLineReferenceType.NotIntersecting;
-            }
-            //if (point.IsPracticallySame(line.ToPoint.Coordinates, tolerance))
-            // this is commented (and left for instruction) since it will be captured by the line segment after this one         
-            if ((line.FromPoint.X < point.X) == (line.ToPoint.X < point.X)) return VerticalLineReferenceType.NotIntersecting;
-            // if both true or both false then endpoints are on same side of point
-            var intersectionYValue = line.VerticalSlope * (point.X - line.FromPoint.X) + line.FromPoint.Y;
-            if (intersectionYValue == point.Y)
                 return VerticalLineReferenceType.On;
-            if (intersectionYValue > point.Y)
+            }
+            // this is basically the function PolygonEdge.YGivenX, but it is a little different here since check if line is horizontal cusp
+            if (RationalIP.IsEqualVectorX(point, line.FromPoint.Coordinates) && RationalIP.IsEqualVectorX(point, line.ToPoint.Coordinates))
+            {
+                var fromIsBelow = RationalIP.IsGreaterThanVectorY(point, line.FromPoint.Coordinates);
+                var toIsBelow = RationalIP.IsGreaterThanVectorY(point, line.ToPoint.Coordinates);
+                if (fromIsBelow != toIsBelow) return VerticalLineReferenceType.On;
+                if (fromIsBelow) return VerticalLineReferenceType.Below;
+                return VerticalLineReferenceType.Above;
+            }
+
+            if (RationalIP.IsLessThanVectorX(line.FromPoint.Coordinates, point) == RationalIP.IsLessThanVectorX(line.ToPoint.Coordinates, point))
+                // if both true or both false then endpoints are on same side of point
+                return VerticalLineReferenceType.NotIntersecting;
+
+            var intersectionYValue = PGA2D.YValueGivenXOnLine(point.X, point.W, line.Normal);
+            if (intersectionYValue.IsEqualVectorY(point))
+                return VerticalLineReferenceType.On;
+            if (intersectionYValue.IsGreaterThanVectorY(point))
                 return VerticalLineReferenceType.Above;
             return VerticalLineReferenceType.Below;
         }
@@ -378,7 +279,7 @@ namespace TVGL
             onBoundary = false;
             foreach (var p in sortedPoints)
             {
-                while (p.X > sortedLines[lineIndex].XMax)
+                while (sortedLines[lineIndex].XMax.IsLessThanVectorX(p.Coordinates))
                 {
                     lineIndex++;
                     if (lineIndex == numSortedLines) return false;
@@ -386,21 +287,20 @@ namespace TVGL
                 for (int i = lineIndex; i < numSortedLines; i++)
                 {
                     var line = sortedLines[lineIndex];
-                    if (line.XMin > p.X) break;
+                    if (line.XMin.IsGreaterThanVectorX(p.Coordinates)) break;
                     if (p.Coordinates == line.FromPoint.Coordinates || p.Coordinates == line.ToPoint.Coordinates)
                     {
                         onBoundary = true;
                         if (!onBoundaryIsInside) return false;
                     }
-                    var lineYValue = line.FindYGivenX(p.X, out var isBetweenEndPoints);
+                    var lineYValue =PGA2D.YValueGivenXOnEdge(p.Coordinates.X,p.Coordinates.W, line, out var isBetweenEndPoints);
                     if (!isBetweenEndPoints) continue;
-                    var yDistance = lineYValue - p.Y;
-                    if (yDistance == 0)
+                    if (lineYValue.IsEqualVectorY(p.Coordinates))
                     {
                         onBoundary = true;
                         if (!onBoundaryIsInside) return false;
                     }
-                    else if (yDistance > 0)
+                    else if (lineYValue.IsGreaterThanVectorY(p.Coordinates))
                     {
                         evenNumberOfCrossings = !evenNumberOfCrossings;
                     }
@@ -587,7 +487,7 @@ namespace TVGL
         public static List<double[]> AllPolygonIntersectionPointsAlongVerticalLines(this IEnumerable<Polygon> polygons, double startingXValue,
              double stepSize, out int firstIntersectingIndex)
         {
-            var xEnd = polygons.Max(p => p.MaxX);
+            var xEnd = polygons.Max(p => p.MaxXIP);
             var intersections = new List<double[]>();
             var sortedPoints = new List<Vertex2D>();
             var comparer = new TwoDSortXFirst();
@@ -649,7 +549,7 @@ namespace TVGL
         public static List<double[]> AllPolygonIntersectionPointsAlongHorizontalLines(this IEnumerable<Polygon> polygons,
             double startingYValue, double stepSize, out int firstIntersectingIndex)
         {
-            var yEnd = polygons.Max(p => p.MaxY);
+            var yEnd = polygons.Max(p => p.MaxYIP);
             var intersections = new List<double[]>();
             var sortedPoints = new List<Vertex2D>();
             var comparer = new TwoDSortYFirst();
@@ -693,7 +593,7 @@ namespace TVGL
                 var intersects = new double[numIntersects];
                 var index = 0;
                 foreach (var line in currentLines)
-                    intersects[index++] = FindXGivenY(line,y, out _);
+                    intersects[index++] = FindXGivenY(line, y, out _);
                 intersections.Add(intersects.OrderBy(x => x).ToArray());
                 y += stepSize;
             }
@@ -832,17 +732,14 @@ namespace TVGL
         private static PolyRelInternal GetSinglePolygonRelationshipAndIntersections(this Polygon subPolygonA, Polygon subPolygonB,
             out List<SegmentIntersection> intersections)
         {
-            var numSigDigs = Math.Min(subPolygonA.NumSigDigits, subPolygonB.NumSigDigits);
-            var needToRoundA = subPolygonA.NumSigDigits != numSigDigs;
-            var needToRoundB = subPolygonB.NumSigDigits != numSigDigs;
             intersections = new List<SegmentIntersection>();
             var possibleDuplicates = new List<(int, PolygonEdge, PolygonEdge)>();
             //As a first check, determine if the axis aligned bounding boxes overlap. If not, then we can
             // safely return that the polygons are separated.
-            if (subPolygonA.MinX > subPolygonB.MaxX ||
-                subPolygonA.MaxX < subPolygonB.MinX ||
-                subPolygonA.MinY > subPolygonB.MaxY ||
-                subPolygonA.MaxY < subPolygonB.MinY)
+            if (subPolygonA.MinXIP > subPolygonB.MaxXIP ||
+                subPolygonA.MaxXIP < subPolygonB.MinXIP ||
+                subPolygonA.MinYIP > subPolygonB.MaxYIP ||
+                subPolygonA.MaxYIP < subPolygonB.MinYIP)
                 return PolyRelInternal.Separated;
 
             subPolygonA.MakePolygonEdgesIfNonExistent();
@@ -860,33 +757,33 @@ namespace TVGL
             var bIndex = 0;
             while (aIndex < aLines.Length && bIndex < bLines.Length) // this while loop increments both B lines and A lines
             {
-                var aXMin = needToRoundA ? Math.Round(aLines[aIndex].XMin, numSigDigs) : aLines[aIndex].XMin;
-                var bXMin = needToRoundB ? Math.Round(bLines[bIndex].XMin, numSigDigs) : bLines[bIndex].XMin;
+                var aXMin = aLines[aIndex].XMin;
+                var bXMin = bLines[bIndex].XMin;
                 if (aXMin < bXMin) // if the next A-line is lower compare it to all B-lines
                 {
                     var aLine = aLines[aIndex++];
-                    var aXMax = needToRoundA ? Math.Round(aLine.XMax, numSigDigs) : aLine.XMax;
+                    var aXMax = aLine.XMax;
                     var localBIndex = bIndex; //the localBIndex is incremented in the following loop, but we
                                               //need to come back to the main bIndex above
                     while (aXMax >= bXMin)
                     {
                         // the real savings comes from the second condition in the while loop. We do not need to check bLines
                         // that have higher XMin than the current aLine's xMax. In this way, the number of comparisons is greatly limited
-                        AddIntersectionBetweenLines(aLine, bLines[localBIndex++], intersections, possibleDuplicates, numSigDigs, needToRoundA, needToRoundB);
+                        AddIntersectionBetweenLines(aLine, bLines[localBIndex++], intersections, possibleDuplicates);
                         if (localBIndex >= bLines.Length) break;
-                        bXMin = needToRoundB ? Math.Round(bLines[localBIndex].XMin, numSigDigs) : bLines[localBIndex].XMin;
+                        bXMin = bLines[localBIndex].XMin;
                     }
                 }
                 else
                 {
                     var bLine = bLines[bIndex++];
-                    var bXMax = needToRoundB ? Math.Round(bLine.XMax, numSigDigs) : bLine.XMax;
+                    var bXMax = bLine.XMax;
                     var localAIndex = aIndex;
                     while (bXMax >= aXMin)
                     {
-                        AddIntersectionBetweenLines(aLines[localAIndex++], bLine, intersections, possibleDuplicates, numSigDigs, needToRoundA, needToRoundB);
+                        AddIntersectionBetweenLines(aLines[localAIndex++], bLine, intersections, possibleDuplicates);
                         if (localAIndex >= aLines.Length) break;
-                        aXMin = needToRoundA ? Math.Round(aLines[localAIndex].XMin, numSigDigs) : aLines[localAIndex].XMin;
+                        aXMin = aLines[localAIndex].XMin;
                     }
                 }
             }
@@ -937,9 +834,9 @@ namespace TVGL
             }
             if (isOpposite)
             {
-                if (subPolygonA.Area.IsPracticallySame(-subPolygonB.Area, equalTolerance) && subPolygonA.MinX.IsPracticallySame(subPolygonB.MinX, equalTolerance)
-                    && subPolygonA.MinY.IsPracticallySame(subPolygonB.MinY, equalTolerance) && subPolygonA.MaxX.IsPracticallySame(subPolygonB.MaxX, equalTolerance)
-                    && subPolygonA.MaxY.IsPracticallySame(subPolygonB.MaxY, equalTolerance))
+                if (subPolygonA.Area.IsPracticallySame(-subPolygonB.Area, equalTolerance) && subPolygonA.MinXIP.IsPracticallySame(subPolygonB.MinXIP, equalTolerance)
+                    && subPolygonA.MinYIP.IsPracticallySame(subPolygonB.MinYIP, equalTolerance) && subPolygonA.MaxXIP.IsPracticallySame(subPolygonB.MaxXIP, equalTolerance)
+                    && subPolygonA.MaxYIP.IsPracticallySame(subPolygonB.MaxYIP, equalTolerance))
                     return relationship | PolyRelInternal.EqualButOpposite;
                 return relationship;
             }
@@ -1031,44 +928,40 @@ namespace TVGL
         /// <param name="needToRoundB">if set to <c>true</c> [need to round b].</param>
         /// <returns>PolygonSegmentRelationship.</returns>
         internal static bool AddIntersectionBetweenLines(PolygonEdge lineA, PolygonEdge lineB,
-            List<SegmentIntersection> intersections, List<(int, PolygonEdge, PolygonEdge)> possibleDuplicates, int numSigDigs,
-            bool needToRoundA, bool needToRoundB)
+            List<SegmentIntersection> intersections, List<(int, PolygonEdge, PolygonEdge)> possibleDuplicates)
         {
-            #region initialize local variables
-            var aFrom = needToRoundA ? new Vector2(Math.Round(lineA.FromPoint.X, numSigDigs), Math.Round(lineA.FromPoint.Y, numSigDigs))
-                : lineA.FromPoint.Coordinates;
-            var aTo = needToRoundA ? new Vector2(Math.Round(lineA.ToPoint.X, numSigDigs), Math.Round(lineA.ToPoint.Y, numSigDigs))
-                : lineA.ToPoint.Coordinates;
-            if (needToRoundA && aTo == aFrom) return false;
-            var aVector = aTo - aFrom;
-            var bFrom = needToRoundB ? new Vector2(Math.Round(lineB.FromPoint.X, numSigDigs), Math.Round(lineB.FromPoint.Y, numSigDigs))
-                : lineB.FromPoint.Coordinates;
-            var bTo = needToRoundB ? new Vector2(Math.Round(lineB.ToPoint.X, numSigDigs), Math.Round(lineB.ToPoint.Y, numSigDigs))
-                : lineB.ToPoint.Coordinates;
-            if (needToRoundB && bTo == bFrom) return false;
-            var bVector = bTo - bFrom;
-            #endregion
-
             // first check if bounding boxes overlap. Actually, we don't need to check the x values (lineA.XMax < lineB.XMin || 
             // lineB.XMax < lineA.XMin)- this is already known from the calling function and the way it calls based on sorted x values
-            if (Math.Max(aFrom.Y, aTo.Y) < Math.Min(bFrom.Y, bTo.Y) || Math.Max(bFrom.Y, bTo.Y) < Math.Min(aFrom.Y, aTo.Y))
+            if (lineA.YMax < lineB.YMin || lineB.YMax < lineA.YMin)
                 // the two lines do not touch since their bounding boxes do not overlap
                 return false;
             // okay, so bounding boxes DO overlap
-            var intersectionCoordinates = Vector2.Null;
+            Vector2IP intersectionCoordinates;
             var where = WhereIsIntersection.Intermediate;
 
-            var lineACrossLineB = aVector.Cross(bVector); //2D cross product, determines if parallel
+            var lineACrossLineB = lineA.Normal.Cross(lineB.Normal); //2D cross product, determines if parallel
             //first a quick check to see if points are the same
-            if (aFrom == bFrom)
+            if (lineA.FromPoint.Coordinates == lineB.FromPoint.Coordinates)
             {
-                intersectionCoordinates = aFrom;
+                intersectionCoordinates = lineA.FromPoint.Coordinates;
                 where = WhereIsIntersection.BothStarts;
             }
+            else if (lineA.FromPoint.Coordinates == lineB.ToPoint.Coordinates)
+            {
+                intersectionCoordinates = lineA.FromPoint.Coordinates;
+                where = WhereIsIntersection.AtStartOfA;
+            }
+            else if (lineB.FromPoint.Coordinates == lineA.ToPoint.Coordinates)
+            {
+                intersectionCoordinates = lineB.FromPoint.Coordinates;
+                where = WhereIsIntersection.AtStartOfB;
+            }
+            // what about the ToPoints? we don't check these given that the lines are treated as FromPoint inclusive and ToPoint exclusive
             else
             {
+                PGA2D.PointAtPolyEdgeIntersection(lineA, lineB, out var t1, out var onSegment1, out var t2, out var onSegment2);
                 var fromPointVector = bFrom - aFrom; // the vector connecting starts
-                if (lineACrossLineB == 0) // the two lines are parallel (cross product will be zero)
+                if (lineACrossLineB.W == 0) // the two lines are parallel (cross product will be zero)
                 {
                     var intersectionFound = false;
                     if (fromPointVector.Cross(aVector) == 0)
@@ -1179,7 +1072,7 @@ namespace TVGL
             }
             CollinearityTypes collinear;
             SegmentRelationship relationship;
-            (relationship, collinear) = DeterminePolygonSegmentRelationship(lineA, lineB, aVector, bVector, numSigDigs, needToRoundA, needToRoundB, where, lineACrossLineB);
+            (relationship, collinear) = DeterminePolygonSegmentRelationship(lineA, lineB, aVector, bVector, where, lineACrossLineB.W);
             intersections.Add(new SegmentIntersection(lineA, lineB, intersectionCoordinates, relationship, where, collinear));
             return true;
         }
@@ -1199,7 +1092,7 @@ namespace TVGL
         /// <param name="lineACrossLineB">The line a cross line b.</param>
         /// <returns>System.ValueTuple&lt;SegmentRelationship, CollinearityTypes&gt;.</returns>
         internal static (SegmentRelationship, CollinearityTypes) DeterminePolygonSegmentRelationship(PolygonEdge edgeA, PolygonEdge edgeB,
-            in Vector2 aVector, in Vector2 bVector, int numSigDigs, bool needToRoundA, bool needToRoundB, in WhereIsIntersection where, double lineACrossLineB)
+            in Vector2 aVector, in Vector2 bVector, in WhereIsIntersection where, double lineACrossLineB)
         {
             // first off - handle the intermediate case right away. since it's simple and happens often
             if (where == WhereIsIntersection.Intermediate)
@@ -1211,14 +1104,8 @@ namespace TVGL
             if (where == WhereIsIntersection.AtStartOfA)
             { //then lineB and prevB are the same
                 var previousALine = edgeA.FromPoint.EndLine;
-                if (needToRoundA)
-                {
-                    previousAVector = new Vector2(
-                        Math.Round(previousALine.ToPoint.X, numSigDigs) - Math.Round(previousALine.FromPoint.X, numSigDigs),
-                        Math.Round(previousALine.ToPoint.Y, numSigDigs) - Math.Round(previousALine.FromPoint.Y, numSigDigs)
-                        );
-                }
-                else previousAVector = previousALine.Vector;
+
+                previousAVector = previousALine.Vector;
                 previousBVector = bVector;
                 lineACrossPrevB = lineACrossLineB;
                 prevACrossLineB = prevACrossPrevB = previousAVector.Cross(previousBVector);
@@ -1227,41 +1114,19 @@ namespace TVGL
             { //then lineA and prevA are the same
                 previousAVector = aVector;
                 var previousBLine = edgeB.FromPoint.EndLine;
-                if (needToRoundB)
-                {
-                    previousBVector = new Vector2(
-                        Math.Round(previousBLine.ToPoint.X - previousBLine.FromPoint.X, numSigDigs),
-                        Math.Round(previousBLine.ToPoint.Y - previousBLine.FromPoint.Y, numSigDigs)
-                        );
-                }
-                else previousBVector = previousBLine.Vector;
+
+                previousBVector = previousBLine.Vector;
                 prevACrossLineB = lineACrossLineB;
                 lineACrossPrevB = prevACrossPrevB = previousAVector.Cross(previousBVector);
             }
             else // then where == BothLinesStart
             {
                 var previousALine = edgeA.FromPoint.EndLine;
-                if (needToRoundA)
-                {
-                    previousAVector = new Vector2(
-                        Math.Round(previousALine.ToPoint.X - previousALine.FromPoint.X, numSigDigs),
-                        Math.Round(previousALine.ToPoint.Y - previousALine.FromPoint.Y, numSigDigs)
-                        );
-                }
-                else previousAVector = previousALine.Vector;
+
+                previousAVector = previousALine.Vector;
                 var previousBLine = edgeB.FromPoint.EndLine;
-                if (needToRoundB)
-                {
-                    previousBVector = new Vector2(
-                        Math.Round(previousBLine.ToPoint.X - previousBLine.FromPoint.X, numSigDigs),
-                        Math.Round(previousBLine.ToPoint.Y - previousBLine.FromPoint.Y, numSigDigs)
-                        );
-                    //previousBVector = new Vector2(
-                    //    Math.Round(previousBLine.ToPoint.X, numSigDigs) - Math.Round(previousBLine.FromPoint.X, numSigDigs),
-                    //    Math.Round(previousBLine.ToPoint.Y, numSigDigs) - Math.Round(previousBLine.FromPoint.Y, numSigDigs)
-                    //    );
-                }
-                else previousBVector = previousBLine.Vector;
+
+                previousBVector = previousBLine.Vector;
                 prevACrossLineB = previousAVector.Cross(bVector);
                 lineACrossPrevB = aVector.Cross(previousBVector);
                 prevACrossPrevB = previousAVector.Cross(previousBVector);
@@ -1404,10 +1269,10 @@ namespace TVGL
         /// <returns><c>true</c> if [has a bounding box that encompasses] [the specified polygon b]; otherwise, <c>false</c>.</returns>
         internal static bool HasABoundingBoxThatEncompasses(this Polygon polygonA, Polygon polygonB)
         {
-            return (polygonA.MaxX >= polygonB.MaxX
-                && polygonA.MaxY >= polygonB.MaxY
-                && polygonA.MinX <= polygonB.MinX
-                && polygonA.MinY <= polygonB.MinY);
+            return (polygonA.MaxXIP >= polygonB.MaxXIP
+                && polygonA.MaxYIP >= polygonB.MaxYIP
+                && polygonA.MinXIP <= polygonB.MinXIP
+                && polygonA.MinYIP <= polygonB.MinYIP);
         }
 
 
@@ -1424,9 +1289,13 @@ namespace TVGL
             for (int i = 0; i < length; i++)
             {
                 var point = orderedPoints[i];
-                if (point.StartLine.OtherPoint(point).X >= point.X)
+                if (RationalIP.IsGreaterThanVectorX(point.StartLine.OtherPoint(point).Coordinates,
+                    point.Coordinates) ||
+                    RationalIP.IsEqualVectorX(point.StartLine.OtherPoint(point).Coordinates,
+                    point.Coordinates))
                     result[k++] = point.StartLine;
-                if (point.EndLine.OtherPoint(point).X > point.X)
+                if (RationalIP.IsGreaterThanVectorX(point.EndLine.OtherPoint(point).Coordinates,
+                    point.Coordinates))
                     result[k++] = point.EndLine;
                 if (k >= length) break;
             }
@@ -1452,7 +1321,7 @@ namespace TVGL
                     var other = orderedLines[j];
                     if (current.XMax < other.XMin) break;
                     if (current.IsAdjacentTo(other)) continue;
-                    AddIntersectionBetweenLines(current, other, intersections, possibleDuplicates, polygonA.NumSigDigits, false, false);
+                    AddIntersectionBetweenLines(current, other, intersections, possibleDuplicates);
                 }
             }
             RemoveDuplicateIntersections(possibleDuplicates, intersections);

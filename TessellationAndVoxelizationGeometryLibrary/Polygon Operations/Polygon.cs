@@ -443,11 +443,12 @@ namespace TVGL
         /// </summary>
         /// <value>The maximum x.</value>
         [JsonIgnore]
-        public double MaxX
+        public double MaxX => MaxXIP.AsDouble;
+        internal RationalIP MaxXIP
         {
             get
             {
-                if (double.IsInfinity(maxX))
+                if (RationalIP.IsInfinity(maxX))
                     SetBounds();
                 return maxX;
             }
@@ -456,18 +457,19 @@ namespace TVGL
         /// <summary>
         /// The maximum x
         /// </summary>
-        private double maxX = double.NegativeInfinity;
+        private RationalIP maxX = RationalIP.NegativeInfinity;
 
         /// <summary>
         /// Miniumum X value
         /// </summary>
         /// <value>The minimum x.</value>
         [JsonIgnore]
-        public double MinX
+        public double MinX => MinXIP.AsDouble;
+        internal RationalIP MinXIP
         {
             get
             {
-                if (double.IsInfinity(minX))
+                if (RationalIP.IsInfinity(minX))
                     SetBounds();
                 return minX;
             }
@@ -476,18 +478,19 @@ namespace TVGL
         /// <summary>
         /// The minimum x
         /// </summary>
-        private double minX = double.PositiveInfinity;
+        private RationalIP minX = RationalIP.PositiveInfinity;
 
         /// <summary>
         /// Maxiumum Y value
         /// </summary>
         /// <value>The maximum y.</value>
         [JsonIgnore]
-        public double MaxY
+        public double MaxY => MaxYIP.AsDouble;
+        internal RationalIP MaxYIP
         {
             get
             {
-                if (double.IsInfinity(maxY))
+                if (RationalIP.IsInfinity(maxY))
                     SetBounds();
                 return maxY;
             }
@@ -496,23 +499,24 @@ namespace TVGL
         /// <summary>
         /// The maximum y
         /// </summary>
-        private double maxY = double.NegativeInfinity;
+        private RationalIP maxY = RationalIP.NegativeInfinity;
 
         /// <summary>
         /// Minimum Y value
         /// </summary>
-        private double minY = double.PositiveInfinity;
+        private RationalIP minY = RationalIP.PositiveInfinity;
 
         /// <summary>
         /// Gets the minimum y.
         /// </summary>
         /// <value>The minimum y.</value>
         [JsonIgnore]
-        public double MinY
+        public double MinY => MinYIP.AsDouble;
+        internal RationalIP MinYIP
         {
             get
             {
-                if (double.IsInfinity(minY))
+                if (RationalIP.IsInfinity(minY))
                     SetBounds();
                 return minY;
             }
@@ -569,51 +573,25 @@ namespace TVGL
         public Polygon(IEnumerable<Vector2> coordinates, int index = -1, bool RemovePointsLessThanTolerance = true)
         {
             Index = index;
-            _path = new List<Vector2>();
-            foreach (var p in coordinates)
-            {
-                if (p.X > maxX) maxX = p.X;
-                if (p.X < minX) minX = p.X;
-                if (p.Y > maxY) maxY = p.Y;
-                if (p.Y < minY) minY = p.Y;
-                _path.Add(p);
-            }
-            MakeVerticesFromPath(RemovePointsLessThanTolerance);
+            MakeVerticesFromPath(coordinates);
         }
 
         /// <summary>
         /// Makes the vertices from path.
         /// </summary>
         /// <param name="RemovePointsLessThanTolerance">if set to <c>true</c> [remove points less than tolerance].</param>
-        private void MakeVerticesFromPath(bool RemovePointsLessThanTolerance = true)
+        private void MakeVerticesFromPath(IEnumerable<Vector2> coordinates)
         {
-            var tolerance = (MaxX - MinX + MaxY - MinY) * Constants.PolygonSameTolerance / 2;
-            NumSigDigits = 0;
-            while (tolerance < 1 && NumSigDigits < 15)
-            {
-                NumSigDigits++;
-                tolerance *= 10;
-            }
+            var lastPoint = Vector2IP.Zero;
             _vertices = new List<Vertex2D>();
-            if (_path.Count == 0) return;
-            var prevX = Math.Round(_path[0].X, NumSigDigits);
-            var prevY = Math.Round(_path[0].Y, NumSigDigits);
-
-            for (int i = _path.Count - 1; i >= 0; i--)
+            var i = 0;
+            foreach (var v2 in coordinates)
             {
-                var x = Math.Round(_path[i].X, NumSigDigits);
-                var y = Math.Round(_path[i].Y, NumSigDigits);
-                if (!RemovePointsLessThanTolerance || x != prevX || y != prevY)
-                {
-                    var coord = new Vector2(x, y);
-                    _path[i] = coord;
-                    _vertices.Add(new Vertex2D(coord, i, Index));
-                    prevX = x;
-                    prevY = y;
-                }
-                else _path.RemoveAt(i);
+                var newPt = new Vector2IP(v2);
+                if (newPt == lastPoint) continue;
+                _vertices.Add(new Vertex2D(newPt, i++, Index));
+                lastPoint = newPt;
             }
-            _vertices.Reverse();
         }
 
         /// <summary>
@@ -643,7 +621,6 @@ namespace TVGL
                     _vertices.RemoveAt(i);
                 else prev = _vertices[i];
             }
-            SetBounds();
         }
 
         /// <summary>
@@ -706,7 +683,7 @@ namespace TVGL
             {
                 var cross = firstLine.Vector.Cross(secondLine.Vector);
                 if (secondLine.Length.IsNegligible(Constants.PolygonSameTolerance)) continue; // without updating the first line             
-                if (cross < 0)
+                if (cross.W < 0)
                     return false;
                 firstLine = secondLine;
             }
@@ -718,25 +695,12 @@ namespace TVGL
         /// </summary>
         private void SetBounds()
         {
-            if (_path != null)
+            foreach (var point in _vertices)
             {
-                foreach (var point in _path)
-                {
-                    if (point.X > maxX) maxX = point.X;
-                    if (point.X < minX) minX = point.X;
-                    if (point.Y > maxY) maxY = point.Y;
-                    if (point.Y < minY) minY = point.Y;
-                }
-            }
-            else
-            {
-                foreach (var point in _vertices)
-                {
-                    if (point.X > maxX) maxX = point.X;
-                    if (point.X < minX) minX = point.X;
-                    if (point.Y > maxY) maxY = point.Y;
-                    if (point.Y < minY) minY = point.Y;
-                }
+                if (maxX.IsLessThanVectorX(point.Coordinates)) maxX = new RationalIP(point.Coordinates.X, point.Coordinates.W);
+                if (minX.IsGreaterThanVectorX(point.Coordinates)) minX = new RationalIP(point.Coordinates.X, point.Coordinates.W);
+                if (maxY.IsLessThanVectorY(point.Coordinates)) maxY = new RationalIP(point.Coordinates.Y, point.Coordinates.W);
+                if (minY.IsGreaterThanVectorY(point.Coordinates)) minY = new RationalIP(point.Coordinates.Y, point.Coordinates.W);
             }
         }
 
@@ -748,18 +712,9 @@ namespace TVGL
         {
             foreach (var polygon in AllPolygons)
             {
-                polygon.minX = double.PositiveInfinity;
-                polygon.minY = double.PositiveInfinity;
-                polygon.maxX = double.NegativeInfinity;
-                polygon.maxY = double.NegativeInfinity;
                 foreach (var v in polygon.Vertices)
-                {
                     v.Transform(transformMatrix);
-                    if (minX > v.X) minX = v.X;
-                    if (minY > v.Y) minY = v.Y;
-                    if (maxX < v.X) maxX = v.X;
-                    if (maxY < v.Y) maxY = v.Y;
-                }
+                
                 polygon.Reset();
             }
         }
@@ -776,6 +731,10 @@ namespace TVGL
             pathArea = double.NaN;
             perimeter = double.NaN;
             _centroid = Vector2.Null;
+            minX = RationalIP.PositiveInfinity;
+            minY = RationalIP.PositiveInfinity;
+            maxX = RationalIP.NegativeInfinity;
+            maxY = RationalIP.NegativeInfinity;
         }
 
         public void ReIndexPolygon()
@@ -817,7 +776,7 @@ namespace TVGL
             // todo: parse array into int128s
             _path = PolygonOperations.ConvertToVector2s(jArray.ToObject<IEnumerable<double>>()).ToList();
             SetBounds();
-            MakeVerticesFromPath(false);
+            MakeVerticesFromPath(_path);
         }
     }
 

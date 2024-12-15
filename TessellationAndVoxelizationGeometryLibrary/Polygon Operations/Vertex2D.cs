@@ -36,7 +36,8 @@ namespace TVGL
         /// <value>The x.</value>
         public double X
         {
-            get { return (double)Coordinates.X / (double)Coordinates.W; }
+            get => RationalIP.AsDoubleValue(Coordinates.X, Coordinates.W);
+            init => throw new System.NotImplementedException();
         }
 
         /// <summary>
@@ -45,7 +46,8 @@ namespace TVGL
         /// <value>The y.</value>
         public double Y
         {
-            get { return (double)Coordinates.Y / (double)Coordinates.W; }
+            get => RationalIP.AsDoubleValue(Coordinates.Y, Coordinates.W);
+            init => throw new System.NotImplementedException();
         }
 
         public double this[int i]
@@ -80,9 +82,6 @@ namespace TVGL
         /// </summary>
         /// <value>The index in list.</value>
         public int IndexInList { get; set; }
-        double IVector2D.X { get => throw new System.NotImplementedException(); init => throw new System.NotImplementedException(); }
-        double IVector2D.Y { get => throw new System.NotImplementedException(); init => throw new System.NotImplementedException(); }
-
         #endregion Properties
 
         #region Constructor

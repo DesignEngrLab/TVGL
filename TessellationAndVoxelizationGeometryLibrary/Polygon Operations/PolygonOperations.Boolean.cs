@@ -65,14 +65,14 @@ namespace TVGL
                 }
 
                 var tolerance = 0.2;
-                var clipperMinX = clipperResult == null || !clipperResult.Any() ? 0 : clipperResult.Min(p => p.MinX);
-                var clipperMinY = clipperResult == null || !clipperResult.Any() ? 0 : clipperResult.Min(p => p.MinY);
-                var clipperMaxX = clipperResult == null || !clipperResult.Any() ? 0 : clipperResult.Max(p => p.MaxX);
-                var clipperMaxY = clipperResult == null || !clipperResult.Any() ? 0 : clipperResult.Max(p => p.MaxY);
-                var tvglMinX = tvglResult == null || !tvglResult.Any() ? 0 : tvglResult.Min(p => p.MinX);
-                var tvglMinY = tvglResult == null || !tvglResult.Any() ? 0 : tvglResult.Min(p => p.MinY);
-                var tvglMaxX = tvglResult == null || !tvglResult.Any() ? 0 : tvglResult.Max(p => p.MaxX);
-                var tvglMaxY = tvglResult == null || !tvglResult.Any() ? 0 : tvglResult.Max(p => p.MaxY);
+                var clipperMinX = clipperResult == null || !clipperResult.Any() ? 0 : clipperResult.Min(p => p.MinXIP);
+                var clipperMinY = clipperResult == null || !clipperResult.Any() ? 0 : clipperResult.Min(p => p.MinYIP);
+                var clipperMaxX = clipperResult == null || !clipperResult.Any() ? 0 : clipperResult.Max(p => p.MaxXIP);
+                var clipperMaxY = clipperResult == null || !clipperResult.Any() ? 0 : clipperResult.Max(p => p.MaxYIP);
+                var tvglMinX = tvglResult == null || !tvglResult.Any() ? 0 : tvglResult.Min(p => p.MinXIP);
+                var tvglMinY = tvglResult == null || !tvglResult.Any() ? 0 : tvglResult.Min(p => p.MinYIP);
+                var tvglMaxX = tvglResult == null || !tvglResult.Any() ? 0 : tvglResult.Max(p => p.MaxXIP);
+                var tvglMaxY = tvglResult == null || !tvglResult.Any() ? 0 : tvglResult.Max(p => p.MaxYIP);
                 var extremaTolerance = tolerance * (new[] { clipperMaxX - clipperMinX, clipperMaxY - clipperMinY, tvglMaxX - tvglMinX, tvglMaxY - tvglMinY }).Min();
                 var numPolygonsTVGL = tvglResult == null || !tvglResult.Any() ? 0 : tvglResult.Sum(poly => poly.AllPolygons.Count());
                 var numPolygonsClipper = clipperResult == null || !clipperResult.Any() ? 0 : clipperResult.Sum(poly => poly.AllPolygons.Count());

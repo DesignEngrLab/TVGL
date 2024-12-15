@@ -58,14 +58,14 @@ namespace TVGL
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Int128 Dot3D(Vector2IP that)
         {
-            return this.X * that.X + this.Y * that.Y+ this.W * that.W;
+            return this.X * that.X + this.Y * that.Y + this.W * that.W;
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Vector2IP Cross(Vector2IP that)
         {
             return new Vector2IP(this.Y * that.W - this.W * that.Y,
                 this.W * that.X - this.X * that.W,
-                this.X * that.Y - this.Y * that.W);
+                this.X * that.Y - this.Y * that.X);
         }
 
         internal Vector2IP Transform(Matrix3x3 matrix)

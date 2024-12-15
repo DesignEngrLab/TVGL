@@ -160,64 +160,18 @@ namespace TVGL
                     minDistance = d;
                 }
             }
-            if (closestVertex!=null)
+            if (closestVertex != null)
             {
                 var startLine = closestVertex.StartLine;
                 var endLine = closestVertex.EndLine;
                 var t = 0.01;
                 var startLinePoint = closestVertex.Coordinates + t * startLine.Vector;
                 var endLinePoint = closestVertex.Coordinates - t * endLine.Vector;
-                if (startLinePoint.DistanceSquared(queryPoint)<endLinePoint.DistanceSquared(queryPoint))
+                if (startLinePoint.DistanceSquared(queryPoint) < endLinePoint.DistanceSquared(queryPoint))
                     closestEdge = startLine;
                 else closestEdge = endLine;
             }
             return Math.Sqrt(minDistance);
-        }
-
-        //Refer to Joshua's answer: https://stackoverflow.com/questions/849211/shortest-distance-between-a-point-and-a-line-segment
-        //x, y is your target point and x1, y1 to x2, y2 is your line segment.
-        /// <summary>
-        /// Sqs the distance point to line segment.
-        /// </summary>
-        /// <param name="x">The x.</param>
-        /// <param name="y">The y.</param>
-        /// <param name="edge">The edge.</param>
-        /// <returns>System.Double.</returns>
-        private static double SqDistancePointToLineSegment(double x, double y, PolygonEdge edge, out bool atEndpoint)
-        {
-            atEndpoint = false;
-            var A = x - edge.FromPoint.X;
-            var B = y - edge.FromPoint.Y;
-            var C = edge.Vector.X;
-            var D = edge.Vector.Y;
-
-            var dot = A * C + B * D;
-            var param = -1.0;
-            if (!edge.Length.IsNegligible()) //in case of 0 length line
-                param = dot / (edge.Length * edge.Length);
-
-            double xx, yy;
-            if (param < 0)
-            {
-                atEndpoint = true;
-                xx = edge.FromPoint.X;
-                yy = edge.FromPoint.Y;
-            }
-            else if (param > 1)
-            {
-                atEndpoint = true;
-                xx = edge.ToPoint.X;
-                yy = edge.ToPoint.Y;
-            }
-            else
-            {
-                xx = edge.FromPoint.X + param * C;
-                yy = edge.FromPoint.Y + param * D;
-            }
-
-            var dx = x - xx;
-            var dy = y - yy;
-            return dx * dx + dy * dy;
         }
     }
 }
