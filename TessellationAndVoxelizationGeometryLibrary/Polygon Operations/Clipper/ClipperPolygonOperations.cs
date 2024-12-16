@@ -50,7 +50,8 @@ namespace TVGL
         /// <summary>
         /// The scale
         /// </summary>
-        const double scale = 45720000; // this is (2^6)*(3^2)*(5^4)*127 = 45720000
+        const double scale = 1000000; // this is (2^6)*(3^2)*(5^4)*127 = 45720000
+        //const double scale = 45720000; // this is (2^6)*(3^2)*(5^4)*127 = 45720000
         // why this number? see my reasoning here: https://github.com/DesignEngrLab/TVGL/wiki/Determining-the-Double-to-Long-Dimension-Multiplier
         const double invScale = 1 / scale;
         #region Offset
@@ -165,8 +166,12 @@ namespace TVGL
                     }
                 }
             }
+            var clipperSolution = Clipper.BooleanOp(clipType, clipperSubject, clipperClip, fillMethod);
+            //Convert back to points and return solution
+            var solution = clipperSolution.Select(clipperPath => new Polygon(clipperPath.Select(point => new Vector2(point.X / scale, point.Y / scale))));
+            return solution.CreateShallowPolygonTrees(true);
             //If subject is null, use the clip as the subject for unions. Else, return empty.
-            if (!clipperSubject.Any())
+            /* if (!clipperSubject.Any())
             {
                 if (clip == null || !clipperClip.Any())
                 {
@@ -195,6 +200,7 @@ namespace TVGL
             //Convert back to points and return solution
             var solution = clipperSolution.Select(clipperPath => new Polygon(clipperPath.Select(point => new Vector2(point.X / scale, point.Y / scale))));
             return solution.CreateShallowPolygonTrees(true);
+            */
         }
         #endregion
     }

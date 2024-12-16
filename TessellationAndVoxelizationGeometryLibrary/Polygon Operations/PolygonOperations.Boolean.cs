@@ -650,35 +650,6 @@ namespace TVGL
 
         #endregion Intersect Public Methods
 
-        #region Direct Access to Clipper API
-        /// <summary>
-        /// Booleans the via clipper.
-        /// </summary>
-        /// <param name="polygonsA">The polygons a.</param>
-        /// <param name="polygonsB">The polygons b.</param>
-        /// <param name="fillType">Type of the fill.</param>
-        /// <param name="clipType">Type of the clip.</param>
-        /// <returns>List&lt;Polygon&gt;.</returns>
-        internal static List<Polygon> BooleanViaClipper(IEnumerable<Polygon> polygonsA, IEnumerable<Polygon> polygonsB, FillRule fillType,
-            Clipper2Lib.ClipType clipType)
-        {
-            return BooleanViaClipper(fillType, clipType, polygonsA, polygonsB);
-        }
-
-        /// <summary>
-        /// Booleans the via clipper.
-        /// </summary>
-        /// <param name="polygonA">The polygon a.</param>
-        /// <param name="polygonB">The polygon b.</param>
-        /// <param name="fillType">Type of the fill.</param>
-        /// <param name="clipType">Type of the clip.</param>
-        /// <returns>List&lt;Polygon&gt;.</returns>
-        internal static List<Polygon> BooleanViaClipper(Polygon polygonA, Polygon polygonB, FillRule fillType, Clipper2Lib.ClipType clipType)
-        {
-            return BooleanViaClipper(fillType, clipType, [polygonA], [polygonB]);
-        }
-        #endregion
-
         #region Subtract Public Methods
 
         /// <summary>

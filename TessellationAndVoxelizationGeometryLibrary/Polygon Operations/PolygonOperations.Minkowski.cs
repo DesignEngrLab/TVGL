@@ -11,6 +11,7 @@
 // </copyright>
 // <summary></summary>
 // ***********************************************************************
+using Clipper2Lib;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -291,18 +292,36 @@ namespace TVGL
         private static Polygon MinkowskiSumGeneral(Polygon a, Polygon b)
         {
             int aNum = a.Vertices.Count;
-            int bNum = b.Vertices.Count;
-            var result = new Vector2[aNum][];
+            var aPathD = new PathD(aNum);
             for (int i = 0; i < aNum; i++)
+                aPathD.Add(new PointD(a.Path[i].X, a.Path[i].Y));
+            
+            int bNum = b.Vertices.Count;
+            var bPathD = new PathD(bNum);
+            for (int i = 0; i < bNum; i++)
+                bPathD.Add(new PointD(b.Path[i].X, b.Path[i].Y));
+            var pathsD = Clipper2Lib.Minkowski.Sum(aPathD, bPathD, true, 6);
+            var resultPolygons = new List<Polygon>();
+            foreach (var pathD in pathsD)
             {
-                var p = new Vector2[bNum];
-                for (int j = 0; j < bNum; j++)
-                    p[j] = a.Path[i] + b.Path[j];
-
-                result[i] = p;
+                var path = new List<Vector2>();
+                foreach (var pointD in pathD)
+                    path.Add(new Vector2(pointD.x, pointD.y));
+                resultPolygons.Add(new Polygon(path));
             }
-            //Presenter.ShowAndHang([result.Concat([a.Path.ToArray(), b.Path.ToArray()])]);
-            return MakeQuadrilateralsAndMerge(aNum, bNum, result);
+            return resultPolygons.CreatePolygonTree(true).FirstOrDefault();
+
+            //var result = new Vector2[aNum][];
+            //for (int i = 0; i < aNum; i++)
+            //{
+            //    var p = new Vector2[bNum];
+            //    for (int j = 0; j < bNum; j++)
+            //        p[j] = a.Path[i] + b.Path[j];
+
+            //    result[i] = p;
+            //}
+            ////Presenter.ShowAndHang([result.Concat([a.Path.ToArray(), b.Path.ToArray()])]);
+            //return MakeQuadrilateralsAndMerge(aNum, bNum, result);
         }
 
         private static Polygon MinkowskiDiffGeneral(Polygon a, Polygon b)
