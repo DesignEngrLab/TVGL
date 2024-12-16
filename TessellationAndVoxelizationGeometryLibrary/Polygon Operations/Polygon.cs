@@ -11,12 +11,13 @@
 // </copyright>
 // <summary></summary>
 // ***********************************************************************
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.Serialization;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using System;
+using System.Collections.Generic;
+using System.Collections.Immutable;
+using System.Linq;
+using System.Runtime.Serialization;
 
 
 namespace TVGL
@@ -139,7 +140,7 @@ namespace TVGL
         private void MakeThisPolygonsEdges()
         {
             var numPoints = Vertices.Count;
-            _edges = new List<PolygonEdge>(numPoints);
+            var edgeArray = new PolygonEdge[numPoints];
             for (int i = 0, j = numPoints - 1; i < numPoints; j = i++)
             // note this compact approach to setting i and j. 
             {
@@ -148,8 +149,9 @@ namespace TVGL
                 var polySegment = new PolygonEdge(fromNode, toNode);
                 fromNode.StartLine = polySegment;
                 toNode.EndLine = polySegment;
-                _edges.Add(polySegment);
+                edgeArray[i] = polySegment;
             }
+            _edges = edgeArray.ToList();
         }
 
         /// <summary>
@@ -283,20 +285,42 @@ namespace TVGL
                 return false;
             return _innerPolygons.Remove(polygon);
         }
+
+        /// <summary>
+        /// Removes the hole at the index.
+        /// </summary>
+        /// <param name="index"></param>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
+        public bool RemoveHole(int index)
+        {
+            if (_innerPolygons is null || index < 0 || index >= _innerPolygons.Count)
+                return false;
+            _innerPolygons.RemoveAt(index);
+            return true;
+        }
+
+        /// <summary>
+        /// Removes all holes in the top polygon.
+        /// </summary>
+        public void RemoveAllHoles()
+        {
+            _innerPolygons?.Clear();
+        }
         /// <summary>
         /// Gets the inner polygons.
         /// </summary>
         /// <value>The inner polygons.</value>
         [JsonIgnore]
-        public IEnumerable<Polygon> InnerPolygons
-        {
-            get
-            {
-                if (_innerPolygons is null) yield break;
-                foreach (var hole in _innerPolygons)
-                    yield return hole;
-            }
-        }
+        public ImmutableArray<Polygon> InnerPolygons =>
+            _innerPolygons == null ? ImmutableArray<Polygon>.Empty : _innerPolygons.ToImmutableArray();
+        //{
+        //    get
+        //{
+        //    if (_innerPolygons is null) yield break;
+        //    foreach (var hole in _innerPolygons)
+        //        yield return hole;
+        //}
+        //}
         /// <summary>
         /// Gets the number of inner polygons.
         /// </summary>
@@ -335,20 +359,7 @@ namespace TVGL
         /// </summary>
         /// <value>The index.</value>
         [JsonProperty]
-        public int Index
-        {
-            get => index;
-            set =>
-                //if (index == value) return;
-                //if (value < 0)
-                //    throw new ArgumentException("The ID or Index of a polygon must be a non-negative integer.");
-                index = value;
-            //if (_vertices != null)
-            //    foreach (var v in Vertices)
-            //    {
-            //        v.LoopID = index;
-            //    }
-        }
+        public int Index { get; set; }
 
         /// <summary>
         /// Gets or sets whether the path is CCW positive. This will reverse the path if it was ordered CW.
@@ -506,11 +517,6 @@ namespace TVGL
         /// Minimum Y value
         /// </summary>
         private double minY = double.PositiveInfinity;
-
-        /// <summary>
-        /// The index
-        /// </summary>
-        private int index = -1;
 
         /// <summary>
         /// Gets the minimum y.
@@ -697,7 +703,7 @@ namespace TVGL
                 _innerPolygons.Select(p => p.Copy(true, invert)).ToList() : null;
             var copiedArea = copyInnerPolygons ? this.area : this.pathArea;
             if (invert) copiedArea *= -1;
-            var copiedPolygon = new Polygon(thisPath, this.index)
+            var copiedPolygon = new Polygon(thisPath, this.Index)
             {
                 area = copiedArea,
                 maxX = this.maxX,
@@ -801,6 +807,17 @@ namespace TVGL
             pathArea = double.NaN;
             perimeter = double.NaN;
             _centroid = Vector2.Null;
+        }
+
+        public void ReIndexPolygon()
+        {
+            var id = 0;
+            foreach (var polygon in AllPolygons)
+            {
+                polygon.Index = id++;
+                foreach (var v in polygon.Vertices)
+                    v.LoopID = polygon.Index;
+            }
         }
 
         /// <summary>

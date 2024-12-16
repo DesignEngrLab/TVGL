@@ -117,6 +117,7 @@
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Polygon Operations\PolygonOperations.CreateTrees.cs" Link="TVGL\Polygon Operations\PolygonOperations.CreateTrees.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Polygon Operations\PolygonOperations.DistanceToPoint.cs" Link="TVGL\Polygon Operations\PolygonOperations.DistanceToPoint.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Polygon Operations\PolygonOperations.IsInside.cs" Link="TVGL\Polygon Operations\PolygonOperations.IsInside.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Polygon Operations\PolygonOperations.Minkowski.cs" Link="TVGL\Polygon Operations\PolygonOperations.Minkowski.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Polygon Operations\PolygonOperations.Offsetting.cs" Link="TVGL\Polygon Operations\PolygonOperations.Offsetting.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Polygon Operations\PolygonOperations.Simplify.cs" Link="TVGL\Polygon Operations\PolygonOperations.Simplify.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Polygon Operations\PolygonOperations.Triangulate.cs" Link="TVGL\Polygon Operations\PolygonOperations.Triangulate.cs" />
@@ -136,6 +137,7 @@
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Enclosure Operations\ConvexHullAlgorithm.3D.cs" Link="TVGL\Enclosure Operations\ConvexHullAlgorithm.3D.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Enclosure Operations\ConvexHullAlgorithm.4D.cs" Link="TVGL\Enclosure Operations\ConvexHullAlgorithm.4D.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Enclosure Operations\Delaunay3D.cs" Link="TVGL\Enclosure Operations\Delaunay3D.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Enclosure Operations\Delaunay2D.cs" Link="TVGL\Enclosure Operations\Delaunay2D.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Enclosure Operations\ConvexHull3D.cs" Link="TVGL\Enclosure Operations\ConvexHull3D.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Enclosure Operations\ConvexHull4D.cs" Link="TVGL\Enclosure Operations\ConvexHull4D.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Enclosure Operations\ConvexHullGJK.cs" Link="TVGL\Enclosure Operations\ConvexHullGJK.cs" />

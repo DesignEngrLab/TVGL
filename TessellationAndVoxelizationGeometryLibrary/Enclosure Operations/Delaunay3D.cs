@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace TVGL
@@ -36,7 +37,7 @@ namespace TVGL
     /// <summary>
     /// TetraMeshFace is a triangular face in a tetrahedral mesh between two tetrahedra.
     /// </summary>
-    public struct TetraMeshFace
+    public class TetraMeshFace
     {
         /// <summary>
         /// Vertex 1 of the face.
@@ -53,11 +54,12 @@ namespace TVGL
         /// <summary>
         /// The tetrahedron that owns this face. The face's normal points away from the owned tetrahedron.
         /// </summary>
-        public Tetrahedron OwnedTetra { get; internal set; }
+        public Tetrahedron OwnedTetra { get; set; }
         /// <summary>
         /// The other tetrahedron of the face. The face's normal points into the other tetrahedron.
         /// </summary>
-        public Tetrahedron OtherTetra { get; internal set; }
+        public Tetrahedron OtherTetra { get; set; }
+
 
         /// <summary>
         /// Enumerates the vertices of the face.
@@ -77,51 +79,121 @@ namespace TVGL
     /// Tetrahedron in a tetrahedral mesh where vertices, edges and faces are shared
     /// between neighbors.
     /// </summary>
-    public class Tetrahedron
+    public readonly struct Tetrahedron
     {
         /// <summary>
         /// Vertex A of the tetrahedron.
         /// </summary>
-        public readonly Vertex A;
+        public readonly required Vertex A { get; init; }
         /// <summary>
         /// Vertex B of the tetrahedron.
         /// </summary>
-        public readonly Vertex B;
+        public readonly required Vertex B { get; init; }
         /// <summary>
         /// Vertex C of the tetrahedron.
         /// </summary>
-        public readonly Vertex C;
+        public readonly required Vertex C { get; init; }
         /// <summary>
         /// Vertex D of the tetrahedron.
         /// </summary>
-        public readonly Vertex D;
+        public readonly required Vertex D { get; init; }
         /// <summary>
         /// The face formed by vertices A, B, and C.
         /// </summary>
-        public readonly TetraMeshFace ABC;
+        public readonly required TetraMeshFace ABC { get; init; }
         /// <summary>
         /// The face formed by vertices A, B, and D.
         /// </summary>
-        public readonly TetraMeshFace ABD;
+        public readonly required TetraMeshFace ABD { get; init; }
         /// <summary>
         /// The face formed by vertices A, C, and D.
         /// </summary>
-        public readonly TetraMeshFace ACD;
+        public readonly required TetraMeshFace ACD { get; init; }
         /// <summary>
         /// The face formed by vertices B, C, and D.
         /// </summary>
-        public readonly TetraMeshFace BCD;
+        public readonly required TetraMeshFace BCD { get; init; }
+        public readonly required TetraMeshEdge AB { get; init; }
+        public readonly required TetraMeshEdge AC { get; init; }
+        public readonly required TetraMeshEdge AD { get; init; }
+        public readonly required TetraMeshEdge BC { get; init; }
+        public readonly required TetraMeshEdge BD { get; init; }
+        public readonly required TetraMeshEdge CD { get; init; }
 
-        public Tetrahedron(Vertex a, Vertex b, Vertex c, Vertex d, TetraMeshFace abc, TetraMeshFace abd, TetraMeshFace acd, TetraMeshFace bcd)
+
+
+        public TetraMeshEdge? GetOppositeEdge(TetraMeshEdge edge)
         {
-            A = a;
-            B = b;
-            C = c;
-            D = d;
-            ABC = abc;
-            ABD = abd;
-            ACD = acd;
-            BCD = bcd;
+            int code;
+            if (edge.From == A)
+                code = 0b1000;
+            else if (edge.From == B)
+                code = 0b0100;
+            else if (edge.From == C)
+                code = 0b0010;
+            else if (edge.From == D)
+                code = 0b0001;
+            else
+                return null;
+
+            if (edge.To == A)
+                code += 0b1000;
+            else if (edge.To == B)
+                code += 0b0100;
+            else if (edge.To == C)
+                code += 0b0010;
+            else if (edge.To == D)
+                code += 0b0001;
+            else
+                return null;
+
+            switch (code)
+            {
+                case 0b1100:
+                    return AB;
+                case 0b1010:
+                    return AC;
+                case 0b1001:
+                    return AD;
+                case 0b0110:
+                    return BC;
+                case 0b0101:
+                    return BD;
+                case 0b0011:
+                    return CD;
+                default:
+                    return null;
+            }
+        }
+
+
+        public TetraMeshEdge? GetEdge(Vertex a, Vertex b)
+        {
+            if (a == A)
+            {
+                if (b == B) return AB;
+                if (b == C) return AC;
+                if (b == D) return AD;
+            }
+            if (a == B)
+            {
+                if (b == A) return AB;
+                if (b == C) return BC;
+                if (b == D) return BD;
+            }
+            if (a == C)
+            {
+                if (b == A) return AC;
+                if (b == B) return BC;
+                if (b == D) return CD;
+            }
+            if (a == D)
+            {
+                if (b == A) return AD;
+                if (b == B) return BD;
+                if (b == C) return CD;
+            }
+            return null;
         }
 
         /// <summary>
@@ -149,6 +221,22 @@ namespace TVGL
                 yield return ABD;
                 yield return ACD;
                 yield return BCD;
+            }
+        }
+
+        /// <summary>
+        /// Enumerates the edges of the tetrahedron.
+        /// </summary>
+        public IEnumerable<TetraMeshEdge> Edges
+        {
+            get
+            {
+                yield return AB;
+                yield return AC;
+                yield return AD;
+                yield return BC;
+                yield return BD;
+                yield return CD;
             }
         }
 
@@ -222,7 +310,8 @@ namespace TVGL
             return true;
         }
 
-        private static void CreateRemainingMeshElementsFromCvxHull4D(Delaunay3D delaunay3D, ConvexHull4D convexHull4D)
+        private static void CreateRemainingMeshElementsFromCvxHull4D(Delaunay3D delaunay3D, 
+            ConvexHull4D convexHull4D)
         {
             var baseFactor = delaunay3D.Vertices.Length;
             var baseSqdFactor = (long)baseFactor * (long)baseFactor;
@@ -241,13 +330,18 @@ namespace TVGL
                 (var faceABD, var ownABD) = AddTetraMeshFace(faceDict, vA, vB, vD, vC, baseFactor, baseSqdFactor);
                 (var faceACD, var ownACD) = AddTetraMeshFace(faceDict, vA, vC, vD, vB, baseFactor, baseSqdFactor);
                 (var faceBCD, var ownBCD) = AddTetraMeshFace(faceDict, vB, vC, vD, vA, baseFactor, baseSqdFactor);
-                var newTetra = new Tetrahedron(vA, vB, vC, vD, faceABC, faceABD, faceACD, faceBCD);
-                AddVertexPair(vpDict, newTetra.A, newTetra.B, baseFactor, newTetra);
-                AddVertexPair(vpDict, newTetra.A, newTetra.C, baseFactor, newTetra);
-                AddVertexPair(vpDict, newTetra.A, newTetra.D, baseFactor, newTetra);
-                AddVertexPair(vpDict, newTetra.B, newTetra.C, baseFactor, newTetra);
-                AddVertexPair(vpDict, newTetra.B, newTetra.D, baseFactor, newTetra);
-                AddVertexPair(vpDict, newTetra.C, newTetra.D, baseFactor, newTetra);
+                var edgeAB = AddVertexPair(vpDict, vA, vB, baseFactor);
+                var edgeAC = AddVertexPair(vpDict, vA, vC, baseFactor);
+                var edgeAD = AddVertexPair(vpDict, vA, vD, baseFactor);
+                var edgeBC = AddVertexPair(vpDict, vB, vC, baseFactor);
+                var edgeBD = AddVertexPair(vpDict, vB, vD, baseFactor);
+                var edgeCD = AddVertexPair(vpDict, vC, vD, baseFactor);
+                var newTetra = new Tetrahedron
+                {
+                    A = vA, B = vB, C = vC, D = vD,
+                    ABC = faceABC, ABD = faceABD, ACD = faceACD, BCD = faceBCD,
+                    AB = edgeAB, AC = edgeAC, AD = edgeAD, BC = edgeBC, BD = edgeBD, CD = edgeCD
+                };
                 if (ownABC) faceABC.OwnedTetra = newTetra;
                 else faceABC.OtherTetra = newTetra;
                 if (ownABD) faceABD.OwnedTetra = newTetra;
@@ -256,6 +350,13 @@ namespace TVGL
                 else faceACD.OtherTetra = newTetra;
                 if (ownBCD) faceBCD.OwnedTetra = newTetra;
                 else faceBCD.OtherTetra = newTetra;
+
+                edgeAB.Tetrahedra.Add(newTetra);
+                edgeAC.Tetrahedra.Add(newTetra);
+                edgeAD.Tetrahedra.Add(newTetra);
+                edgeBC.Tetrahedra.Add(newTetra);
+                edgeBD.Tetrahedra.Add(newTetra);
+                edgeCD.Tetrahedra.Add(newTetra);
                 delaunay3D.Tetrahedra[k++] = newTetra;
             }
             delaunay3D.Faces = faceDict.Values.ToArray();
@@ -274,17 +375,15 @@ namespace TVGL
             return (newFace, true);
         }
 
-        private static void AddVertexPair(Dictionary<long, TetraMeshEdge> vertexPairs, Vertex a, Vertex b, long baseFactor, Tetrahedron tetra)
+        private static TetraMeshEdge AddVertexPair(Dictionary<long, TetraMeshEdge> vertexPairs, Vertex a, Vertex b, long baseFactor)
         {
             var id = a.IndexInList > b.IndexInList ? baseFactor * a.IndexInList + b.IndexInList : baseFactor * b.IndexInList + a.IndexInList;
-            if (vertexPairs.TryGetValue(id, out var existingPair))
-                existingPair.Tetrahedra.Add(tetra);
-            else
+            if (!vertexPairs.TryGetValue(id, out TetraMeshEdge tetraMeshEdge))
             {
-                var newEdge = a.IndexInList > b.IndexInList ? new TetraMeshEdge(a, b) : new TetraMeshEdge(b, a);
-                newEdge.Tetrahedra.Add(tetra);
-                vertexPairs.Add(id, newEdge);
+                tetraMeshEdge = a.IndexInList > b.IndexInList ? new TetraMeshEdge(a, b) : new TetraMeshEdge(b, a);
+                vertexPairs.Add(id, tetraMeshEdge);
             }
+            return tetraMeshEdge;
         }
 
 

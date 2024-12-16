@@ -136,7 +136,7 @@ namespace TVGL_Presenter
                     foreach (var border in feature.Borders)
                         lines.Add(border.GetCoordinates());
                 color = color ?? white;
-                Presenter.ShowPathsAndSolids([lines], [false], [lineThickness], [color], ts);
+                Presenter.ShowAndHang([lines], [false], [lineThickness], [color], ts);
             }
             else
                 Presenter.ShowAndHang(ts);
@@ -186,7 +186,7 @@ namespace TVGL_Presenter
             }
             var lines = ts.GetWireFrame(borders, primitives);
             var colors = color == null ? new Color[] { white } : new Color[] { color };
-            Presenter.ShowPathsAndSolids([lines], [false], [lineThickness], colors, ts);
+            Presenter.ShowAndHang([lines], [false], [lineThickness], colors, ts);
         }
 
         public static List<IEnumerable<Vector3>> GetWireFrame(this TessellatedSolid ts, IEnumerable<BorderLoop> borders = null,
@@ -275,7 +275,7 @@ namespace TVGL_Presenter
                 var height = MinimumEnclosure.GetLengthAndExtremeVertex(cylinder.Vertices, cylinder.Axis, out _, out _);
                 var bottom = cylinder.Anchor + cylinder.Axis * ((centerTValue - anchorTValue) - halfheight);
                 var top = cylinder.Anchor + cylinder.Axis * ((centerTValue - anchorTValue) + halfheight);
-                Presenter.ShowPathAndSolids(new List<Vector3> { bottom, top }, false, solids: solid);
+                Presenter.ShowAndHang(new List<Vector3> { bottom, top }, false, solids: solid);
             }
             else if (bestPrimitiveSurface is Cone cone)
             {
@@ -305,7 +305,7 @@ namespace TVGL_Presenter
                 var circlePoints = circle.CreatePath(36);
                 var circle3D = circlePoints.ConvertTo3DLocations(cone.Axis, d).ToList();
                 var centerLine = new List<Vector3> { cone.Apex, bottom, edgePoint };
-                Presenter.ShowPathAndSolids(new List<Vector3> { cone.Apex, bottom, edgePoint }, false, solids: solid);
+                Presenter.ShowAndHang(new List<Vector3> { cone.Apex, bottom, edgePoint }, false, solids: solid);
             }
             else if (bestPrimitiveSurface is Torus torus)
             {
@@ -325,7 +325,7 @@ namespace TVGL_Presenter
                         torus.Center-d2*(torus.MajorRadius+torus.MinorRadius),
                         torus.Center+d1*(torus.MajorRadius+torus.MinorRadius)
                     };
-                Presenter.ShowPathAndSolids(torusPoints, false, solids: solid);
+                Presenter.ShowAndHang(torusPoints, false, solids: solid);
             }
             else if (bestPrimitiveSurface is Sphere)
             {
@@ -334,7 +334,7 @@ namespace TVGL_Presenter
                                 sphere.Center + sphere.Radius * Vector3.UnitX, sphere.Center - sphere.Radius * Vector3.UnitX, sphere.Center,
                                 sphere.Center + sphere.Radius * Vector3.UnitY, sphere.Center - sphere.Radius * Vector3.UnitY, sphere.Center,
                                 sphere.Center + sphere.Radius * Vector3.UnitZ, sphere.Center - sphere.Radius * Vector3.UnitZ};
-                Presenter.ShowPathAndSolids(spherePoints, false, solids: solid);
+                Presenter.ShowAndHang(spherePoints, false, solids: solid);
 
             }
             //For all other surface types, just show the colored primitive
