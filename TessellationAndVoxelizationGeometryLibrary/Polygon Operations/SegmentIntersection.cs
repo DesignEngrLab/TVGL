@@ -35,7 +35,7 @@ namespace TVGL
         /// Gets the intersection coordinates.
         /// </summary>
         /// <value>The intersect coordinates.</value>
-        public Vector2 IntersectCoordinates { get; }
+        public Vector2IP IntersectCoordinates { get; }
         /// <summary>
         /// Gets the relationship.
         /// </summary>

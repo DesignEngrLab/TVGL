@@ -928,7 +928,7 @@ namespace TVGL
         /// <param name="needToRoundB">if set to <c>true</c> [need to round b].</param>
         /// <returns>PolygonSegmentRelationship.</returns>
         internal static bool AddIntersectionBetweenLines(PolygonEdge lineA, PolygonEdge lineB,
-            List<SegmentIntersection> intersections, List<(int, PolygonEdge, PolygonEdge)> possibleDuplicates)
+            List<SegmentIntersection> intersections)
         {
             // first check if bounding boxes overlap. Actually, we don't need to check the x values (lineA.XMax < lineB.XMin || 
             // lineB.XMax < lineA.XMin)- this is already known from the calling function and the way it calls based on sorted x values
@@ -939,7 +939,7 @@ namespace TVGL
             Vector2IP intersectionCoordinates;
             var where = WhereIsIntersection.Intermediate;
 
-            var lineACrossLineB = lineA.Normal.Cross(lineB.Normal); //2D cross product, determines if parallel
+            var lineACrossLineB = lineA.Normal.Cross(lineB.Normal); 
             //first a quick check to see if points are the same
             if (lineA.FromPoint.Coordinates == lineB.FromPoint.Coordinates)
             {
