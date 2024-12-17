@@ -729,20 +729,7 @@ namespace TVGL
         /// Determines whether this instance is convex.
         /// </summary>
         /// <returns><c>true</c> if this instance is convex; otherwise, <c>false</c>.</returns>
-        public bool IsConvex()
-        {
-            if (Area < 0) return false; //It must have an area greater than zero
-            var firstLine = Edges.Last();
-            foreach (var secondLine in Edges)
-            {
-                var cross = firstLine.Vector.Cross(secondLine.Vector);
-                if (secondLine.Length.IsNegligible(Constants.PolygonSameTolerance)) continue; // without updating the first line             
-                if (cross < 0)
-                    return false;
-                firstLine = secondLine;
-            }
-            return true;
-        }
+        public bool IsConvex() => Vertices.All(v => v.IsConvex.GetValueOrDefault(true));
 
         /// <summary>
         /// Sets the bounds.

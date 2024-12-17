@@ -12,9 +12,12 @@
 // <summary></summary>
 // ***********************************************************************
 using Clipper2Lib;
+using SharpDX.Direct2D1;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using System.Numerics;
 
 namespace TVGL
 {
@@ -31,7 +34,7 @@ namespace TVGL
         /// <param name="a"></param>
         /// <param name="b"></param>
         /// <returns></returns>
-        public static Polygon MinkowskiSum(this Polygon a, Polygon b)
+        public static List<Polygon> MinkowskiSum(this Polygon a, Polygon b)
             => MinkowskiSum(a, a.IsConvex(), b, b.IsConvex());
 
         /// <summary>
@@ -44,22 +47,20 @@ namespace TVGL
         /// <param name="b"></param>
         /// <param name="bIsConvex"></param>
         /// <returns></returns>
-        public static Polygon MinkowskiSum(this Polygon a, bool aIsConvex, Polygon b, bool bIsConvex)
+        public static List<Polygon> MinkowskiSum(this Polygon a, bool aIsConvex, Polygon b, bool bIsConvex)
         {
             if (aIsConvex && bIsConvex)
-                return MinkowskiSumConvex(a, b);
-            if (aIsConvex && bIsConvex)
-            {
-                return MinkowskiSumConvex(a, b);
-            }
+                return [MinkowskiSumConvex(a, b)];
             else if (aIsConvex)
             {
                 var result = MinkowskiSumConcaveConvex(b, a);
-                return new Polygon(result.Path.Select(p => -p));
+                foreach (var poly in result)
+                    poly.Transform(Matrix3x3.CreateScale(-1));
+                return result;
             }
             else if (bIsConvex)
                 return MinkowskiSumConcaveConvex(a, b);
-            return MinkowskiSumGeneral(a, b);
+            return [MinkowskiSumGeneralBrute(a, b)];
         }
 
         /// <summary>
@@ -164,7 +165,68 @@ namespace TVGL
             return minIndex;
         }
 
-        private static Polygon MinkowskiSumConcaveConvex(Polygon a, Polygon b)
+        private static List<Polygon> MinkowskiSumConcaveConvex(Polygon a, Polygon b)
+        {
+            var aStartEdge = a.Edges[FindMinY(a.Vertices)];
+            var bStartEdge = b.Edges[FindMinY(b.Vertices)];
+            var flipResult = a.IsPositive != b.IsPositive;
+            var visitedHash = new HashSet<(Vertex2D, Vertex2D)>(new EdgePairToIntComparator(a, b));
+            var aEdgeAngles = a.Edges.ToDictionary(e => e, e => Constants.Pseudoangle(e.Vector.X, e.Vector.Y));
+            var bEdgeAngles = b.Edges.ToDictionary(e => e, e => Constants.Pseudoangle(e.Vector.X, e.Vector.Y));
+            ConvolutionCycle(a, b, aStartEdge, bStartEdge, visitedHash, aEdgeAngles, bEdgeAngles, out var result, out var knownWrongPoints);
+
+            var complexPath = new Polygon(result);
+            return complexPath.RemoveSelfIntersections(
+                flipResult ? ResultType.OnlyKeepNegative : ResultType.OnlyKeepPositive, knownWrongPoints);
+        }
+
+        private static void ConvolutionCycle(Polygon a, Polygon b, PolygonEdge aStartEdge, PolygonEdge bStartEdge,
+            HashSet<(Vertex2D, Vertex2D)> visitedHash, Dictionary<PolygonEdge, double> aEdgeAngles,
+            Dictionary<PolygonEdge, double> bEdgeAngles, out List<Vector2> result, out List<bool> knownWrongPoints)
+        {
+            var prevAEdge = aStartEdge;
+            var prevBEdge = bStartEdge;
+            result = new List<Vector2> { prevAEdge.ToPoint.Coordinates + prevBEdge.ToPoint.Coordinates };
+            knownWrongPoints = new List<bool> { false };
+            var nextAEdge = prevAEdge.ToPoint.StartLine;
+            var nextBEdge = prevBEdge.ToPoint.StartLine;
+            do
+            {
+                var aAngle = aEdgeAngles[nextAEdge];
+                var aPrevAngle = aEdgeAngles[prevAEdge];
+                var bAngle = bEdgeAngles[nextBEdge];
+                var bPrevAngle = bEdgeAngles[prevBEdge];
+                if (firstAngleIsBetweenOthersCCW(aAngle, bPrevAngle, bAngle))
+                {
+                    result.Add(nextAEdge.ToPoint.Coordinates + prevBEdge.ToPoint.Coordinates);
+                    visitedHash.Add((nextAEdge.ToPoint, prevBEdge.ToPoint));
+                    var prevACrossNextA = prevAEdge.Vector.Cross(nextAEdge.Vector);
+                    knownWrongPoints.Add(prevACrossNextA < 0);
+                    prevAEdge = nextAEdge;
+                    nextAEdge = nextAEdge.ToPoint.StartLine;
+                }
+                if (firstAngleIsBetweenOthersCCW(bAngle, aPrevAngle, aAngle))
+                {
+                    result.Add(nextBEdge.ToPoint.Coordinates + prevAEdge.ToPoint.Coordinates);
+                    var prevBCrossNextB = prevBEdge.Vector.Cross(nextBEdge.Vector);
+                    knownWrongPoints.Add(prevBCrossNextB < 0);
+                    prevBEdge = nextBEdge;
+                    nextBEdge = nextBEdge.ToPoint.StartLine;
+                }
+                //Presenter.ShowAndHang(result);
+
+            } while (prevAEdge != aStartEdge || prevBEdge != bStartEdge);
+        }
+
+        private static bool firstAngleIsBetweenOthersCCW(double aAngle, double bPrevAngle, double bAngle)
+        {
+            if (bPrevAngle <= aAngle && aAngle <= bAngle) return true;
+            if (bPrevAngle > bAngle)
+                if (aAngle >= bPrevAngle || aAngle <= bAngle) return true;
+            return false;
+        }
+
+        private static List<Polygon> MinkowskiSumConcaveConvexOLD(Polygon a, Polygon b)
         {
             var flipResult = a.IsPositive != b.IsPositive;
             int aStartIndex = FindMinY(a.Vertices);
@@ -183,124 +245,62 @@ namespace TVGL
             bool converged;
             do
             {
-                converged = AddNextBennellSongPoint(a, b, aStartIndex, bStartIndex,
-                    ref i, ref j, aLength, bLength, ref lastPoint, result, ref direction, ref edgeVector);
+                converged = false;
+                lastPoint = lastPoint + edgeVector;
+                result.Add(lastPoint);
+                Presenter.ShowAndHang(result);
+
+                if (Math.Sign(b.Edges[(j + bStartIndex) % bLength].Vector.Cross(a.Edges[(i + aStartIndex) % aLength].Vector)) == direction)
+                {
+                    edgeVector = direction * b.Edges[(j + bStartIndex) % bLength].Vector;
+                    j += direction;
+                    if (j < 0) j = bLength - 1;
+                }
+                else
+                {
+                    edgeVector = a.Edges[(i + aStartIndex) % aLength].Vector;
+                    if (i == aLength)
+                        converged = true;
+                    i++;
+                    var nextEdgeVector = a.Edges[(i + aStartIndex) % aLength].Vector;
+                    var isConcave = edgeVector.Cross(nextEdgeVector) < 0;
+                    if (direction == 1 && isConcave)
+                    {
+                        j--;
+                        if (j < 0) j = bLength - 1;
+                        direction = -1;
+                    }
+                    else if (direction == -1 && !isConcave)
+                    {
+                        j++;
+                        direction = 1;
+                    }
+                }
             } while (!converged);
 
             var minkowski = new Polygon(result);
             //Presenter.ShowAndHang(minkowski);
             if (flipResult)
                 minkowski = minkowski.Copy(true, true);
-            minkowski = minkowski.RemoveSelfIntersections(ResultType.OnlyKeepPositive).LargestPolygon();
+            minkowski = minkowski.RemoveSelfIntersections(ResultType.BothPermitted).LargestPolygon();
             minkowski.RemoveAllHoles();
             if (flipResult)
                 minkowski = minkowski.Copy(true, true);
-            return minkowski;
+            return [minkowski];
         }
 
-        private static Polygon MinkowskiSumGeneralBennellSong(Polygon a, Polygon b)
-        {
-            var bSpitIndices = new List<(int, bool)>();
-            var aLength = a.Vertices.Count;
-            var bLength = b.Vertices.Count;
-            var flipResult = a.IsPositive != b.IsPositive;
-            int aStartIndex = FindMinY(a.Vertices);
-            int bStartIndex = FindMinY(b.Vertices);
-            var lastIsConvex = true;
-            for (int i = 0, j = bLength - 1; i < bLength; j = i++)
-            {
-                var cross = b.Edges[(j + bStartIndex) % bLength].Vector.Cross(b.Edges[(i + bStartIndex) % bLength].Vector);
-                var thisIsConvex = cross >= 0;
-                if (thisIsConvex != lastIsConvex) bSpitIndices.Add((j + bStartIndex, thisIsConvex));
-                lastIsConvex = thisIsConvex;
-            }
-            if (!lastIsConvex) bSpitIndices.Insert(0, (bStartIndex, true));
-            var minkowskis = new List<Polygon>();
-            foreach ((int startIndex, bool isConvex) in bSpitIndices)
-            {
-                var i = 0;
-                var j = 0;
-                var bDelta = 1;
-                var bAddSign = 1;
-                var lastPoint = a.Path[(i + aStartIndex) % aLength] + b.Path[(j + bStartIndex) % bLength];
-                var result = new List<Vector2>();
-                var direction = 1; // positive is counterclockwise
-                aStartIndex++;  // because these are used for angles and edges in the remainder of the function,
-                bStartIndex++;  // then we need to increment by one, since edge index, i, ends at vertex index, i
-                                // (or rather, edge index i+1 starts at vertex index i)
-                var edgeVector = Vector2.Zero;
-                bool converged;
-                do
-                {
-                    converged = AddNextBennellSongPoint(a, b, aStartIndex, bStartIndex,
-                        ref i, ref j, aLength, bLength, ref lastPoint, result, ref direction, ref edgeVector);
-                } while (!converged);
-
-                var thisSumPolygon = new Polygon(result);
-                //Presenter.ShowAndHang(minkowski);
-                if (flipResult)
-                    thisSumPolygon = thisSumPolygon.Copy(true, true);
-                thisSumPolygon = thisSumPolygon.RemoveSelfIntersections(ResultType.OnlyKeepPositive).LargestPolygon();
-                thisSumPolygon.RemoveAllHoles();
-                minkowskis.Add(thisSumPolygon);
-            }
-            var minkowski = minkowskis.UnionPolygons().LargestPolygon();
-            minkowski.RemoveAllHoles();
-            if (flipResult)
-                minkowski = minkowski.Copy(true, true);
-            return minkowski;
-        }
-
-        private static bool AddNextBennellSongPoint(Polygon aConcave, Polygon bConvex, int aStartIndex, int bStartIndex, ref int i, ref int j, int aLength, int bLength, ref Vector2 lastPoint, List<Vector2> result, ref int direction, ref Vector2 edgeVector)
-        {
-            var converged = false;
-            lastPoint = lastPoint + edgeVector;
-            result.Add(lastPoint);
-            //Presenter.ShowAndHang(result);
-
-            if (Math.Sign(bConvex.Edges[(j + bStartIndex) % bLength].Vector.Cross(aConcave.Edges[(i + aStartIndex) % aLength].Vector)) == direction)
-            {
-                edgeVector = direction * bConvex.Edges[(j + bStartIndex) % bLength].Vector;
-                j += direction;
-                if (j < 0) j = bLength - 1;
-            }
-            else
-            {
-                edgeVector = aConcave.Edges[(i + aStartIndex) % aLength].Vector;
-                if (i == aLength)
-                    converged = true;
-                i++;
-                var nextEdgeVector = aConcave.Edges[(i + aStartIndex) % aLength].Vector;
-                var isConcave = edgeVector.Cross(nextEdgeVector) < 0;
-                if (direction == 1 && isConcave)
-                {
-                    j--;
-                    if (j < 0) j = bLength - 1;
-                    direction = -1;
-                }
-                else if (direction == -1 && !isConcave)
-                {
-                    j++;
-                    direction = 1;
-                }
-            }
-
-            return converged;
-        }
-
-
-        private static Polygon MinkowskiSumGeneral(Polygon a, Polygon b)
+        private static Polygon MinkowskiSumGeneralBrute(Polygon a, Polygon b)
         {
             int aNum = a.Vertices.Count;
             var aPathD = new PathD(aNum);
             for (int i = 0; i < aNum; i++)
                 aPathD.Add(new PointD(a.Path[i].X, a.Path[i].Y));
-            
+
             int bNum = b.Vertices.Count;
             var bPathD = new PathD(bNum);
             for (int i = 0; i < bNum; i++)
                 bPathD.Add(new PointD(b.Path[i].X, b.Path[i].Y));
-            var pathsD = Clipper2Lib.Minkowski.Sum(aPathD, bPathD, true, 6);
+            var pathsD = Clipper2Lib.Minkowski.Sum(aPathD, bPathD, true, 7);
             var resultPolygons = new List<Polygon>();
             foreach (var pathD in pathsD)
             {
@@ -310,60 +310,92 @@ namespace TVGL
                 resultPolygons.Add(new Polygon(path));
             }
             return resultPolygons.CreatePolygonTree(true).FirstOrDefault();
+        }
 
-            //var result = new Vector2[aNum][];
-            //for (int i = 0; i < aNum; i++)
-            //{
-            //    var p = new Vector2[bNum];
-            //    for (int j = 0; j < bNum; j++)
-            //        p[j] = a.Path[i] + b.Path[j];
 
-            //    result[i] = p;
-            //}
-            ////Presenter.ShowAndHang([result.Concat([a.Path.ToArray(), b.Path.ToArray()])]);
-            //return MakeQuadrilateralsAndMerge(aNum, bNum, result);
+        private static List<Polygon> MinkowskiSumGeneral(Polygon a, Polygon b)
+        {
+            var aConcaveVertices = a.Vertices.Where(v => !v.IsConvex.GetValueOrDefault(false)).ToList();
+            var bConcaveVertices = b.Vertices.Where(v => !v.IsConvex.GetValueOrDefault(false)).ToList();
+            if (aConcaveVertices.Count > bConcaveVertices.Count)
+            {
+                var result = MinkowskiSumGeneral(b, bConcaveVertices, a);
+                foreach (var poly in result)
+                    poly.Transform(Matrix3x3.CreateScale(-1));
+                return result;
+            }
+            else return MinkowskiSumGeneral(a, aConcaveVertices, b);
+        }
+        private static List<Polygon> MinkowskiSumGeneral(Polygon a, List<Vertex2D> aConcaveVertices, Polygon b)
+        {
+            var aStartEdge = a.Edges[FindMinY(a.Vertices)];
+            var bStartEdge = b.Edges[FindMinY(b.Vertices)];
+            var flipResult = a.IsPositive != b.IsPositive;
+            var visitedHash = new HashSet<(Vertex2D, Vertex2D)>(new EdgePairToIntComparator(a, b));
+            var aEdgeAngles = a.Edges.ToDictionary(e => e, e => Constants.Pseudoangle(e.Vector.X, e.Vector.Y));
+            var bEdgeAngles = b.Edges.ToDictionary(e => e, e => Constants.Pseudoangle(e.Vector.X, e.Vector.Y));
+            ConvolutionCycle(a, b, aStartEdge, bStartEdge, visitedHash, aEdgeAngles, bEdgeAngles,
+                out var result, out var knownWrongPoints);
+
+            foreach (var aConcavity in aConcaveVertices)
+            {
+                var aAngle = aEdgeAngles[aConcavity.StartLine];
+                foreach (var bVertex in b.Vertices)
+                {
+                    if (visitedHash.Contains((aConcavity, bVertex)))
+                        continue;
+                    var bAngle = bEdgeAngles[bVertex.StartLine];
+                    var bPrevAngle = bEdgeAngles[bVertex.EndLine];
+                    if (firstAngleIsBetweenOthersCCW(aAngle, bPrevAngle, bAngle))
+                        ConvolutionCycle(a, b, aConcavity.EndLine, bVertex.EndLine, visitedHash, aEdgeAngles, bEdgeAngles,
+                            out var newResult, out var newKnownWrongPoints);
+                }
+            }
+            var complexPath = new Polygon(result);
+            return complexPath.RemoveSelfIntersections(
+                flipResult ? ResultType.OnlyKeepNegative : ResultType.OnlyKeepPositive, knownWrongPoints);
         }
 
         private static Polygon MinkowskiDiffGeneral(Polygon a, Polygon b)
         {
             int aNum = a.Vertices.Count;
-            int bNum = b.Vertices.Count;
-            var result = new Vector2[aNum][];
+            var aPathD = new PathD(aNum);
             for (int i = 0; i < aNum; i++)
-            {
-                var p = new Vector2[bNum];
-                for (int j = 0; j < bNum; j++)
-                    p[j] = a.Path[i] - b.Path[j];
+                aPathD.Add(new PointD(a.Path[i].X, a.Path[i].Y));
 
-                result[i] = p;
+            int bNum = b.Vertices.Count;
+            var bPathD = new PathD(bNum);
+            for (int i = 0; i < bNum; i++)
+                bPathD.Add(new PointD(b.Path[i].X, b.Path[i].Y));
+            var pathsD = Clipper2Lib.Minkowski.Diff(aPathD, bPathD, true, 7);
+            var resultPolygons = new List<Polygon>();
+            foreach (var pathD in pathsD)
+            {
+                var path = new List<Vector2>();
+                foreach (var pointD in pathD)
+                    path.Add(new Vector2(pointD.x, pointD.y));
+                resultPolygons.Add(new Polygon(path));
             }
-            return MakeQuadrilateralsAndMerge(aNum, bNum, result);
+            return resultPolygons.CreatePolygonTree(true).FirstOrDefault();
         }
 
-        private static Polygon MakeQuadrilateralsAndMerge(int aNum, int bNum, Vector2[][] result)
+    }
+
+    internal class EdgePairToIntComparator : IEqualityComparer<(Vertex2D, Vertex2D)>
+    {
+        readonly int factor;
+        public EdgePairToIntComparator(Polygon a, Polygon b)
         {
-            var k = 0;
-            var quads = new Polygon[aNum * bNum];
-            for (int i = 0; i < aNum; i++)
-                for (int j = 0; j < bNum; j++)
-                {
-                    var quad = new Vector2[]
-                    {
-                    result[i % aNum][j % bNum],
-                    result[(i + 1) % aNum][j % bNum],
-                    result[(i + 1) % aNum][(j + 1) % bNum],
-                    result[i % aNum][(j + 1) % bNum]
-                    };
-                    var quadArea = quad.Area();
-                    if (quadArea.IsNegligible()) continue;
-                    if (quad.Area() < 0)
-                        quads[k++] = new Polygon(quad.Reverse());
-                    else quads[k++] = new Polygon(quad);
-                }
-            var sumPoly = quads.Take(k).UnionPolygons()[0];
-            //Presenter.ShowAndHang(sumPoly);
-            //sumPoly.RemoveAllHoles();
-            return sumPoly;
+            factor = a.Edges.Count;
+        }
+        public bool Equals((Vertex2D, Vertex2D) x, (Vertex2D, Vertex2D) y)
+        {
+            return x.Item1 == y.Item1 && x.Item2 == y.Item2;
+        }
+
+        public int GetHashCode([DisallowNull] (Vertex2D, Vertex2D) obj)
+        {
+            return obj.Item1.IndexInList + obj.Item2.IndexInList * factor;
         }
     }
 }

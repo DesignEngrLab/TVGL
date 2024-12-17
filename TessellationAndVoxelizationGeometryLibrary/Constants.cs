@@ -221,7 +221,28 @@ namespace TVGL
             return -1;
         }
 
-
+        /// <summary>
+        /// The Pseudoangle function is used to sort points in a counter-clockwise order.
+        /// It is intended to be much faster than the atan2 function. 
+        /// https://stackoverflow.com/questions/16542042/fastest-way-to-sort-vectors-by-angle-without-actually-computing-that-angle
+        /// It is not as accurate as atan2, but it is monotonic and preserves the ordering starting
+        /// with 0 at the positive x-axis and increasing counter-clockwise to 2 (at 180 degrees)
+        /// and then increasing to 4 (at 360 degrees). It appears to be more than 10X faster than atan2.
+        /// | Method      | Mean      | Error     | StdDev    |
+        /// |------------ |----------:|----------:|----------:|
+        /// | ATan2       | 3.3143 ns | 0.0660 ns | 0.1503 ns |
+        /// | PseudoAngle | 0.2663 ns | 0.0120 ns | 0.0100 ns | (using BenchmarkDotNet)
+        /// </summary>
+        /// <param name="dx"></param>
+        /// <param name="dy"></param>
+        /// <returns></returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static double Pseudoangle(double dx, double dy)
+        {
+            var p = dx / (Math.Abs(dx) + Math.Abs(dy)); // -1 .. 1 increasing with x
+            if (dy < 0) return 3 + p;  //  2 .. 4 increasing with x
+            return 1 - p;  //  0 .. 2 decreasing with x
+        }
 
         internal static void SwapItemsInList<T>(int i, int j, IList<T> points)
         {

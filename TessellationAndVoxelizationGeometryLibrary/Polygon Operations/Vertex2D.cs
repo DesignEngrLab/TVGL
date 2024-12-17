@@ -57,6 +57,22 @@ namespace TVGL
             }
         }
 
+        public bool? IsConvex
+        {
+            get
+            {
+                if (isConvex == null)
+                {
+                    isConvex = false;
+                    if (StartLine != null && EndLine != null)
+                    {
+                        isConvex = EndLine.Vector.Cross(StartLine.Vector) > 0;
+                    }
+                }
+                return isConvex;
+            }
+        }
+        private bool? isConvex;
         /// <summary>
         /// Gets the line that starts at this node.
         /// </summary>
