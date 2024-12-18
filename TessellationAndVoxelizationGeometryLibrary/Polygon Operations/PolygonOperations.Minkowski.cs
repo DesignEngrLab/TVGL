@@ -12,7 +12,6 @@
 // <summary></summary>
 // ***********************************************************************
 using Clipper2Lib;
-using SharpDX.Direct2D1;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
@@ -60,7 +59,8 @@ namespace TVGL
             }
             else if (bIsConvex)
                 return MinkowskiSumConcaveConvex(a, b);
-            return [MinkowskiSumGeneralBrute(a, b)];
+            return MinkowskiSumGeneral(a, b);
+            //return [MinkowskiSumGeneralBrute(a, b)];
         }
 
         /// <summary>
@@ -198,23 +198,25 @@ namespace TVGL
                 var bPrevAngle = bEdgeAngles[prevBEdge];
                 if (firstAngleIsBetweenOthersCCW(aAngle, bPrevAngle, bAngle))
                 {
-                    result.Add(nextAEdge.ToPoint.Coordinates + prevBEdge.ToPoint.Coordinates);
                     visitedHash.Add((nextAEdge.ToPoint, prevBEdge.ToPoint));
-                    var prevACrossNextA = prevAEdge.Vector.Cross(nextAEdge.Vector);
-                    knownWrongPoints.Add(prevACrossNextA < 0);
+                    result.Add(nextAEdge.ToPoint.Coordinates + prevBEdge.ToPoint.Coordinates);
+                    var prevBCrossNextB = prevBEdge.Vector.Cross(nextBEdge.Vector);
+                    knownWrongPoints.Add(prevBCrossNextB < 0);
+                    //var prevACrossNextA = prevAEdge.Vector.Cross(nextAEdge.Vector);
+                    //knownWrongPoints.Add(prevACrossNextA < 0);
                     prevAEdge = nextAEdge;
                     nextAEdge = nextAEdge.ToPoint.StartLine;
                 }
                 if (firstAngleIsBetweenOthersCCW(bAngle, aPrevAngle, aAngle))
                 {
                     result.Add(nextBEdge.ToPoint.Coordinates + prevAEdge.ToPoint.Coordinates);
-                    var prevBCrossNextB = prevBEdge.Vector.Cross(nextBEdge.Vector);
-                    knownWrongPoints.Add(prevBCrossNextB < 0);
+                    visitedHash.Add((nextAEdge.ToPoint, prevBEdge.ToPoint));
+                    var prevACrossNextA = prevAEdge.Vector.Cross(nextAEdge.Vector);
+                    //var prevBCrossNextB = prevBEdge.Vector.Cross(nextBEdge.Vector);
+                    //knownWrongPoints.Add(prevBCrossNextB < 0);
                     prevBEdge = nextBEdge;
                     nextBEdge = nextBEdge.ToPoint.StartLine;
                 }
-                //Presenter.ShowAndHang(result);
-
             } while (prevAEdge != aStartEdge || prevBEdge != bStartEdge);
         }
 
@@ -320,14 +322,15 @@ namespace TVGL
             if (aConcaveVertices.Count > bConcaveVertices.Count)
             {
                 var result = MinkowskiSumGeneral(b, bConcaveVertices, a);
-                foreach (var poly in result)
-                    poly.Transform(Matrix3x3.CreateScale(-1));
+                //foreach (var poly in result)
+                //    poly.Transform(Matrix3x3.CreateScale(-1));
                 return result;
             }
             else return MinkowskiSumGeneral(a, aConcaveVertices, b);
         }
         private static List<Polygon> MinkowskiSumGeneral(Polygon a, List<Vertex2D> aConcaveVertices, Polygon b)
         {
+            var polygons = new List<Polygon>();
             var aStartEdge = a.Edges[FindMinY(a.Vertices)];
             var bStartEdge = b.Edges[FindMinY(b.Vertices)];
             var flipResult = a.IsPositive != b.IsPositive;
@@ -336,6 +339,13 @@ namespace TVGL
             var bEdgeAngles = b.Edges.ToDictionary(e => e, e => Constants.Pseudoangle(e.Vector.X, e.Vector.Y));
             ConvolutionCycle(a, b, aStartEdge, bStartEdge, visitedHash, aEdgeAngles, bEdgeAngles,
                 out var result, out var knownWrongPoints);
+            Presenter.ShowAndHang(result);
+
+            var complexPath = new Polygon(result);
+            polygons.AddRange(complexPath.RemoveSelfIntersections(
+                flipResult ? ResultType.OnlyKeepNegative : ResultType.OnlyKeepPositive));  //, knownWrongPoints);
+            //polygons.AddRange(complexPath.RemoveSelfIntersections(ResultType.BothPermitted, knownWrongPoints));
+            Presenter.ShowAndHang(polygons);
 
             foreach (var aConcavity in aConcaveVertices)
             {
@@ -347,13 +357,16 @@ namespace TVGL
                     var bAngle = bEdgeAngles[bVertex.StartLine];
                     var bPrevAngle = bEdgeAngles[bVertex.EndLine];
                     if (firstAngleIsBetweenOthersCCW(aAngle, bPrevAngle, bAngle))
+                    {
                         ConvolutionCycle(a, b, aConcavity.EndLine, bVertex.EndLine, visitedHash, aEdgeAngles, bEdgeAngles,
-                            out var newResult, out var newKnownWrongPoints);
+                            out result, out knownWrongPoints);
+                        complexPath = new Polygon(result);
+                        polygons.AddRange(complexPath.RemoveSelfIntersections(
+                            flipResult ? ResultType.OnlyKeepNegative : ResultType.OnlyKeepPositive));  //, knownWrongPoints));
+                    }
                 }
             }
-            var complexPath = new Polygon(result);
-            return complexPath.RemoveSelfIntersections(
-                flipResult ? ResultType.OnlyKeepNegative : ResultType.OnlyKeepPositive, knownWrongPoints);
+            return polygons.CreatePolygonTree(true);
         }
 
         private static Polygon MinkowskiDiffGeneral(Polygon a, Polygon b)

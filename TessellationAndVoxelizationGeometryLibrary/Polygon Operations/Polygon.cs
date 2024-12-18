@@ -729,7 +729,7 @@ namespace TVGL
         /// Determines whether this instance is convex.
         /// </summary>
         /// <returns><c>true</c> if this instance is convex; otherwise, <c>false</c>.</returns>
-        public bool IsConvex() => Vertices.All(v => v.IsConvex.GetValueOrDefault(true));
+        public bool IsConvex() => Vertices.All(v => v.IsConvex.GetValueOrDefault());
 
         /// <summary>
         /// Sets the bounds.

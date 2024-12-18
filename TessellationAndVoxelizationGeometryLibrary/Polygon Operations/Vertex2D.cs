@@ -63,11 +63,8 @@ namespace TVGL
             {
                 if (isConvex == null)
                 {
-                    isConvex = false;
                     if (StartLine != null && EndLine != null)
-                    {
                         isConvex = EndLine.Vector.Cross(StartLine.Vector) > 0;
-                    }
                 }
                 return isConvex;
             }
