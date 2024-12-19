@@ -110,7 +110,8 @@ namespace TVGL
             var bEdgeAngles = b.Edges.ToDictionary(e => e, e => Constants.Pseudoangle(e.Vector.X, e.Vector.Y));
             var complexPaths = new List<Polygon>();
             var knownWrongPoints = new List<List<bool>>();
-            ConvolutionCycle(a, b, aStartEdge, bStartEdge, visitedHash, aEdgeAngles, bEdgeAngles, complexPaths, knownWrongPoints);
+            ConvolutionCycle(a, b, aStartEdge, bStartEdge, visitedHash, aEdgeAngles, bEdgeAngles, complexPaths,
+                knownWrongPoints, new List<Vertex2D>(), 0, new List<bool>());
 
             return complexPaths[0].RemoveSelfIntersections(
                 flipResult ? ResultType.OnlyKeepNegative : ResultType.OnlyKeepPositive, knownWrongPoints[0]);
@@ -118,13 +119,11 @@ namespace TVGL
 
         private static void ConvolutionCycle(Polygon a, Polygon b, Vertex2D aStart, Vertex2D bStart,
             Dictionary<(Vertex2D, Vertex2D, bool), Vertex2D> visitedHash, Dictionary<PolygonEdge, double> aEdgeAngles,
-            Dictionary<PolygonEdge, double> bEdgeAngles, List<Polygon> results, List<List<bool>> allKnownWrongPoints)
+            Dictionary<PolygonEdge, double> bEdgeAngles, List<Polygon> results, List<List<bool>> allKnownWrongPoints,
+            List<Vertex2D> result, int currentLoopIndex, List<bool> knownWrongPoints)
         {
             var aVertex = aStart;
             var bVertex = bStart;
-            var result = new List<Vertex2D>(); // { aVertex.ToPoint.Coordinates + bVertex.ToPoint.Coordinates };
-            var knownWrongPoints = new List<bool>(); // { bVertex.Vector.Cross(nextBEdge.Vector) < 0 };
-            var currentLoopIndex = results.Count;
             while (true)
             {
                 var newPointAdded = false;
@@ -173,8 +172,19 @@ namespace TVGL
                                 currentLoopIndex++;
                                 foreach (var vert in result.Take(i))
                                     vert.LoopID = currentLoopIndex;
-                                results.Add(new Polygon(result.Take(i + 1), currentLoopIndex, false));
-                                allKnownWrongPoints.Add(knownWrongPoints.Take(i + 1).ToList());
+                                foreach (((Vertex2D, Vertex2D, bool) key, Vertex2D value) in visitedHash)
+                                {
+                                    if (value == result[i - 1])
+                                    {
+                                        aVertex = key.Item1;
+                                        bVertex = key.Item2;
+                                        break;
+                                    }
+                                }
+
+                                ConvolutionCycle(a, b, aVertex, bVertex, visitedHash, aEdgeAngles, bEdgeAngles,
+                                    results, allKnownWrongPoints, result.Take(i-1).ToList(), currentLoopIndex,
+                                    knownWrongPoints.Take(i-1).ToList());
                             }
                             return;
                         }
@@ -237,19 +247,15 @@ namespace TVGL
             var complexPaths = new List<Polygon>();
             var knownWrongPoints = new List<List<bool>>();
             ConvolutionCycle(a, b, aStartVertex, bStartVertex,
-                visitedHash, aEdgeAngles, bEdgeAngles, complexPaths, knownWrongPoints);
+                visitedHash, aEdgeAngles, bEdgeAngles, complexPaths, knownWrongPoints, new List<Vertex2D>(), 0, new List<bool>());
 
             foreach (var aConcavity in aConcaveVertices)
                 foreach (var bVertex in b.Vertices)
-                    ConvolutionCycle(a, b, aConcavity, bVertex,
-                        visitedHash, aEdgeAngles, bEdgeAngles, complexPaths, knownWrongPoints);
-                   
-            Presenter.ShowAndHang(complexPaths.Skip(1));
-            //MergeIncompletePolygons(complexPaths, knownWrongPoints);
-            //foreach (var c in complexPaths)
-            //    c.IsClosed = true;
+                    ConvolutionCycle(a, b, aConcavity, bVertex, visitedHash, aEdgeAngles,
+                        bEdgeAngles, complexPaths, knownWrongPoints, new List<Vertex2D>(), complexPaths.Count, new List<bool>());
+
             Presenter.ShowAndHang(complexPaths);
-            return complexPaths.Where(c => c.IsClosed).UnionPolygons().CreatePolygonTree(true);
+            return complexPaths.Where(c => c.IsClosed && c.Vertices.Count>0).UnionPolygons().CreatePolygonTree(true);
             //return polygons.CreatePolygonTree(true);
         }
 
