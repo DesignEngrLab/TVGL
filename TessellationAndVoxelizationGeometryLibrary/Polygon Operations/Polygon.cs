@@ -376,6 +376,7 @@ namespace TVGL
             }
         }
 
+        public bool IsClosed { get; set; }
 
         /// <summary>
         /// This reverses the polygon, including updates to area and the point path.
@@ -581,8 +582,10 @@ namespace TVGL
         /// <param name="RemovePointsLessThanTolerance">if set to <c>true</c> [remove points less than tolerance].</param>
 
 
-        public Polygon(IEnumerable<Vector2> coordinates, int index = -1, bool RemovePointsLessThanTolerance = true)
+        public Polygon(IEnumerable<Vector2> coordinates, int index = -1, bool RemovePointsLessThanTolerance = true,
+            bool isClosed = true)
         {
+            IsClosed = isClosed;
             Index = index;
             _path = new List<Vector2>();
             foreach (var p in coordinates)
@@ -646,8 +649,9 @@ namespace TVGL
         /// </summary>
         /// <param name="vertices">The vertices.</param>
         /// <param name="index">The index.</param>
-        public Polygon(IEnumerable<Vertex2D> vertices, int index = -1)
+        public Polygon(IEnumerable<Vertex2D> vertices, int index = -1, bool isClosed = true)
         {
+            IsClosed = isClosed;
             _vertices = vertices as List<Vertex2D> ?? vertices.ToList();
             SetBounds();
             Index = index;
@@ -729,8 +733,73 @@ namespace TVGL
         /// Determines whether this instance is convex.
         /// </summary>
         /// <returns><c>true</c> if this instance is convex; otherwise, <c>false</c>.</returns>
-        public bool IsConvex() => Vertices.All(v => v.IsConvex.GetValueOrDefault());
+        public bool IsConvex
+        {
+            get
+            {
+                if (!_isConvex.HasValue)
+                {
+                    MakePolygonEdgesIfNonExistent();
+                    _isConvex = true;
+                    foreach (var v in Vertices)
+                    {
+                        if (v.StartLine == null || v.EndLine == null)
+                        {
+                            v.IsConvex = null;
+                            _isConvex = false;
+                        }
+                        else
+                        {
+                            v.IsConvex = v.EndLine.Vector.Cross(v.StartLine.Vector) > 0;
+                            if (!v.IsConvex.Value)
+                                _isConvex = false;
+                        }
+                    }
+                }
+                return _isConvex.Value;
+            }
+        }
+        private bool? _isConvex = null;
 
+        /// <summary>
+        /// Gets the vertices of the top (not inner) polygon that are convex.
+        /// </summary>
+        /// <returns></returns>
+        public IEnumerable<Vertex2D> GetConvexVertices()
+        {
+            MakePolygonEdgesIfNonExistent();
+            foreach (var v in Vertices)
+            {
+                if (v.IsConvex.HasValue && v.IsConvex.Value)
+                    yield return v;
+                else if (v.StartLine != null && v.EndLine != null)
+                {
+                    v.IsConvex = v.EndLine.Vector.Cross(v.StartLine.Vector) > 0;
+                    if (v.IsConvex.Value)
+                        yield return v;
+                }
+            }
+        }
+        /// <summary>
+        /// Gets the vertices of the top (not inner) polygon that are concave.
+        /// </summary>
+        /// <returns></returns>
+        public IEnumerable<Vertex2D> GetConcaveVertices()
+        {
+            MakePolygonEdgesIfNonExistent();
+            foreach (var v in Vertices)
+            {
+                if (v.IsConvex.HasValue && !v.IsConvex.Value)
+                    yield return v;
+                else if (v.StartLine != null && v.EndLine != null)
+                {
+                    v.IsConvex = v.EndLine.Vector.Cross(v.StartLine.Vector) > 0;
+                    if (!v.IsConvex.Value)
+                        yield return v;
+                }
+            }
+        }
+        
         /// <summary>
         /// Sets the bounds.
         /// </summary>
