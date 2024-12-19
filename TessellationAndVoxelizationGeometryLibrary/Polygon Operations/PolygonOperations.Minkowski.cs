@@ -52,56 +52,58 @@ namespace TVGL
 
         private static Polygon MinkowskiSumConvex(Polygon a, Polygon b)
         {
-            int aStartIndex = FindMinY(a.Vertices);
-            int bStartIndex = FindMinY(b.Vertices);
-
-            var result = new List<Vector2>();
-            var i = 0;
-            var j = 0;
-            var aLength = a.Vertices.Count;
-            var bLength = b.Vertices.Count;
-            while (i < aLength || j < bLength)
+            var aStartVertex = FindMinY(a.Vertices);
+            var bStartVertex = FindMinY(b.Vertices);
+            var aVertex = aStartVertex;
+            var bVertex = bStartVertex;
+            var result = new List<Vertex2D>();
+            var vertNum = 0;
+            var aCompleted = false;
+            var bCompleted = false;
+            do
             {
-                result.Add(a.Path[(i + aStartIndex) % aLength] + b.Path[(j + bStartIndex) % bLength]);
-                var cross = (a.Path[(i + 1 + aStartIndex) % aLength] - a.Path[(i + aStartIndex) % aLength])
+                result.Add(new Vertex2D(aVertex.Coordinates + bVertex.Coordinates, vertNum++, 0));
+                var cross = aVertex.StartLine.Vector
                     // will this always be correct? I'm worried that angle could be greater than 180, and then a
                     // false result would be returned. ...although, I tried to come up with a case to break it
                     // and couldn't I guess because you can't have an angle greater than 180 on convex shapes
-                    .Cross(b.Path[(j + 1 + bStartIndex) % bLength] - b.Path[(j + bStartIndex) % bLength]);
-                if (cross >= 0 && i < aLength)
-                    ++i;
-                if (cross <= 0 && j < bLength)
-                    ++j;
-            }
+                    .Cross(bVertex.StartLine.Vector);
+                if (cross >= 0 && !aCompleted)
+                    aVertex = aVertex.StartLine.ToPoint;
+                if (cross <= 0 && !bCompleted)
+                    bVertex = bVertex.StartLine.ToPoint;
+                aCompleted = aVertex == aStartVertex;
+                bCompleted = bVertex == bStartVertex;
+            } while (!aCompleted || !bCompleted);
             return new Polygon(result);
         }
 
-        private static int FindMinY(List<Vertex2D> vertices)
+        private static Vertex2D FindMinY(List<Vertex2D> vertices)
         {
-            var minIndex = -1;
+            Vertex2D minVertex = null;
             var minX = double.MaxValue;
             var minY = double.MaxValue;
-            for (int i = 0; i < vertices.Count; i++)
+            foreach (var v in vertices)
             {
-                if (vertices[i].Y < minY)
+                if (v.Y < minY)
                 {
-                    minIndex = i;
-                    minX = vertices[i].X;
-                    minY = vertices[i].Y;
+                    minVertex = v;
+                    minX = v.X;
+                    minY = v.Y;
                 }
-                else if (vertices[i].Y.IsPracticallySame(minY) && vertices[i].X < minX)
+                else if (v.Y.IsPracticallySame(minY) && v.X < minX)
                 {
-                    minIndex = i;
-                    minX = vertices[i].X;
+                    minVertex = v;
+                    minX = v.X;
                 }
             }
-            return minIndex;
+            return minVertex;
         }
 
         private static List<Polygon> MinkowskiSumConvexConcave(Polygon a, Polygon b)
         {
-            var aStartEdge = a.Vertices[FindMinY(a.Vertices)];
-            var bStartEdge = b.Vertices[FindMinY(b.Vertices)];
+            var aStartEdge = FindMinY(a.Vertices);
+            var bStartEdge = FindMinY(b.Vertices);
             var flipResult = a.IsPositive != b.IsPositive;
             var visitedHash = new Dictionary<(Vertex2D, Vertex2D, bool), Vertex2D>(new EdgePairToIntComparator(a, b));
             var aEdgeAngles = a.Edges.ToDictionary(e => e, e => Constants.Pseudoangle(e.Vector.X, e.Vector.Y));
@@ -208,10 +210,10 @@ namespace TVGL
 
         private static Vertex2D WhichExistingToUse(List<Polygon> results, Vertex2D aExistingVertex, Vertex2D bExistingVertex)
         {
-            if (aExistingVertex == null ) return bExistingVertex;
+            if (aExistingVertex == null) return bExistingVertex;
             if (bExistingVertex == null) return aExistingVertex;
             if (results[aExistingVertex.LoopID].IsClosed) return bExistingVertex;
-            if ( results[bExistingVertex.LoopID].IsClosed) return aExistingVertex;
+            if (results[bExistingVertex.LoopID].IsClosed) return aExistingVertex;
             return null;
         }
 
@@ -226,42 +228,28 @@ namespace TVGL
         private static List<Polygon> MinkowskiSumGeneral(Polygon a, List<Vertex2D> aConcaveVertices, Polygon b)
         {
             var polygons = new List<Polygon>();
-            var aStartEdge = a.Edges[FindMinY(a.Vertices)].FromPoint;
-            var bStartEdge = b.Edges[FindMinY(a.Vertices)].FromPoint;
+            var aStartVertex = FindMinY(a.Vertices);
+            var bStartVertex = FindMinY(b.Vertices);
             var flipResult = a.IsPositive != b.IsPositive;
             var visitedHash = new Dictionary<(Vertex2D, Vertex2D, bool), Vertex2D>(new EdgePairToIntComparator(a, b));
             var aEdgeAngles = a.Edges.ToDictionary(e => e, e => Constants.Pseudoangle(e.Vector.X, e.Vector.Y));
             var bEdgeAngles = b.Edges.ToDictionary(e => e, e => Constants.Pseudoangle(e.Vector.X, e.Vector.Y));
             var complexPaths = new List<Polygon>();
             var knownWrongPoints = new List<List<bool>>();
-            ConvolutionCycle(a, b, aStartEdge, bStartEdge,
+            ConvolutionCycle(a, b, aStartVertex, bStartVertex,
                 visitedHash, aEdgeAngles, bEdgeAngles, complexPaths, knownWrongPoints);
-            visitedHash.Clear();
-            //Presenter.ShowAndHang(complexPaths);
+
             foreach (var aConcavity in aConcaveVertices)
-            {
-                //var aAngle = aEdgeAngles[aConcavity.StartLine];
                 foreach (var bVertex in b.Vertices)
-                {
-                    //if (!visitedHash.ContainsKey((aConcavity, bVertex)))
-                    //{
-                    //var bPrevAngle = bEdgeAngles[bVertex.EndLine];
-                    //var bAngle = bEdgeAngles[bVertex.StartLine];
-                    //if (firstAngleIsBetweenOthersCCW(aAngle, bPrevAngle, bAngle))
-                    //{
                     ConvolutionCycle(a, b, aConcavity, bVertex,
                         visitedHash, aEdgeAngles, bEdgeAngles, complexPaths, knownWrongPoints);
-                    //Presenter.ShowAndHang(complexPaths);
-                    //}
-                    //}
-                }
-            }
-            Presenter.ShowAndHang(complexPaths.Skip(2));
-            MergeIncompletePolygons(complexPaths, knownWrongPoints);
-            foreach (var c in complexPaths)
-                c.IsClosed = true;
+                   
+            Presenter.ShowAndHang(complexPaths.Skip(1));
+            //MergeIncompletePolygons(complexPaths, knownWrongPoints);
+            //foreach (var c in complexPaths)
+            //    c.IsClosed = true;
             Presenter.ShowAndHang(complexPaths);
-            return complexPaths.UnionPolygons().CreatePolygonTree(true);
+            return complexPaths.Where(c => c.IsClosed).UnionPolygons().CreatePolygonTree(true);
             //return polygons.CreatePolygonTree(true);
         }
 
@@ -277,29 +265,6 @@ namespace TVGL
                     if (loop.Vertices[0] == complexPaths[j].Vertices[0]) ;
                 }
             }
-        }
-
-        private static Polygon MinkowskiDiffGeneral(Polygon a, Polygon b)
-        {
-            int aNum = a.Vertices.Count;
-            var aPathD = new PathD(aNum);
-            for (int i = 0; i < aNum; i++)
-                aPathD.Add(new PointD(a.Path[i].X, a.Path[i].Y));
-
-            int bNum = b.Vertices.Count;
-            var bPathD = new PathD(bNum);
-            for (int i = 0; i < bNum; i++)
-                bPathD.Add(new PointD(b.Path[i].X, b.Path[i].Y));
-            var pathsD = Clipper2Lib.Minkowski.Diff(aPathD, bPathD, true, 7);
-            var resultPolygons = new List<Polygon>();
-            foreach (var pathD in pathsD)
-            {
-                var path = new List<Vector2>();
-                foreach (var pointD in pathD)
-                    path.Add(new Vector2(pointD.x, pointD.y));
-                resultPolygons.Add(new Polygon(path));
-            }
-            return resultPolygons.CreatePolygonTree(true).FirstOrDefault();
         }
 
     }
