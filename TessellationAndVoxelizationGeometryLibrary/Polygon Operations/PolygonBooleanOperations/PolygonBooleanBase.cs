@@ -187,7 +187,6 @@ namespace TVGL
         protected List<Vector2> MakePolygonThroughIntersections(List<int>[] intersectionLookup, List<SegmentIntersection> intersections,
             SegmentIntersection startingIntersection, PolygonEdge startingEdge, bool switchPolygon,
             out bool includesWrongPoints, List<bool> knownWrongPoints = null)
-
         {
             bool? completed;
             includesWrongPoints = false;
@@ -216,14 +215,15 @@ namespace TVGL
                 // out of the loop. The intersection is identified here, but processed above
                 {
                     currentEdge = currentEdge.ToPoint.StartLine;
-                    if (knownWrongPoints != null && knownWrongPoints[currentEdge.FromPoint.IndexInList]) includesWrongPoints = true;
+                    if (knownWrongPoints != null && knownWrongPoints[currentEdge.FromPoint.IndexInList]) 
+                        includesWrongPoints = true;
                     newPath.Add(currentEdge.FromPoint.Coordinates);
                     //newPathHash.Add(currentEdge.FromPoint.Coordinates);
                     intersectionCoordinates = Vector2.Null; // this is set to null because its value is used in ClosestNextIntersectionOnThisEdge
                                                             // when multiple intersections cross the edge. If we got through the first pass then there are no previous intersections on
                                                             // the edge that concern us. We want that function to report the first one for the edge
 //#if PRESENT
-//                    Presenter.ShowAndHang(newPath);
+                    Presenter.ShowAndHang(newPath);
 //#endif
                 }
             } while (false == (completed = PolygonCompleted(intersectionData, startingIntersection, currentEdge, startingEdge)));

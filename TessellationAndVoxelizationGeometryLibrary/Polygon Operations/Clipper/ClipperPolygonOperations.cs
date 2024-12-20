@@ -143,24 +143,16 @@ namespace TVGL
         /// <param name="clipIsClosed">if set to <c>true</c> [clip is closed].</param>
         /// <returns>List&lt;Polygon&gt;.</returns>
         /// <exception cref="System.Exception">Clipper Union Failed</exception>
-        private static List<Polygon> BooleanViaClipper(FillRule fillMethod, ClipType clipType, IEnumerable<Polygon> subject, 
+        private static List<Polygon> BooleanViaClipper(FillRule fillMethod, ClipType clipType, IEnumerable<Polygon> subject,
             IEnumerable<Polygon> clip, PolygonCollection outputAsCollectionType)
         {
             //Convert to int points and remove collinear edges
-            var clipperSubject = new Paths64();
-            foreach (var polygon in subject)
-                foreach (var polygonElement in polygon.AllPolygons.Where(p => !p.PathArea.IsNegligible(Constants.BaseTolerance)))
-                    clipperSubject.Add(new Path64(polygonElement.Path.Select(p => new Point64(p.X * scale, p.Y * scale))));
-            
-            var clipperClip = new Paths64();
-            if (clip != null)
-                foreach (var polygon in clip)
-                    foreach (var polygonElement in polygon.AllPolygons.Where(p => !p.PathArea.IsNegligible(Constants.BaseTolerance)))
-                        clipperClip.Add(new Path64(polygonElement.Path.Select(p => new Point64(p.X * scale, p.Y * scale))));
-            
+            var clipperSubject = ConvertToClipperPaths(subject);
+            var clipperClip = ConvertToClipperPaths(clip);
+
             var clipperSolution = Clipper.BooleanOp(clipType, clipperSubject, clipperClip, fillMethod);
             //Convert back to points and return solution
-            var solution = clipperSolution.Select(clipperPath 
+            var solution = clipperSolution.Select(clipperPath
                 => new Polygon(clipperPath.Select(point => new Vector2(point.X / scale, point.Y / scale))));
 
             if (outputAsCollectionType == PolygonCollection.PolygonWithHoles)
@@ -199,6 +191,15 @@ namespace TVGL
             var solution = clipperSolution.Select(clipperPath => new Polygon(clipperPath.Select(point => new Vector2(point.X / scale, point.Y / scale))));
             return solution.CreateShallowPolygonTrees(true);
             */
+        }
+
+        internal static Paths64 ConvertToClipperPaths(IEnumerable<Polygon> subject)
+        {
+            var clipperSubject = new Paths64();
+            foreach (var polygon in subject)
+                foreach (var polygonElement in polygon.AllPolygons.Where(p => !p.PathArea.IsNegligible(Constants.BaseTolerance)))
+                    clipperSubject.Add(new Path64(polygonElement.Path.Select(p => new Point64(p.X * scale, p.Y * scale))));
+            return clipperSubject;
         }
         #endregion
     }
