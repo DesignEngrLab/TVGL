@@ -12,12 +12,10 @@
 // <summary></summary>
 // ***********************************************************************
 using Clipper2Lib;
-using SharpDX;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
-using System.Reflection.Metadata;
 
 namespace TVGL
 {
@@ -138,27 +136,21 @@ namespace TVGL
                     nextBEdge = nextBEdge.ToPoint.StartLine;
                 }
             } while (prevAEdge != aStartEdge || prevBEdge != bStartEdge);
-            var polygons = new List<Polygon> { new Polygon(result) };
-            //Presenter.ShowAndHang(polygons);
-            var clipperPaths = Clipper.Union(PolygonOperations.ConvertToClipperPaths(polygons), FillRule.Negative);
+            
+            var clipperPaths = PolygonOperations.ConvertToClipperPaths([new Polygon(result)]);
+            if (flipResult)
+            {
+                //foreach (var c in clipperPaths)
+                //    Clipper.ReversePath(c);
+                clipperPaths = Clipper.Union(clipperPaths, FillRule.Negative);
+            }
+            //else
+            clipperPaths = Clipper.Union(clipperPaths, FillRule.Positive);
 
-            polygons = clipperPaths.Select(clipperPath
+            var polygons = clipperPaths.Select(clipperPath
               => new Polygon(clipperPath.Select(point => new Vector2(point.X / scale, point.Y / scale)))).ToList();
             //Presenter.ShowAndHang(polygons);
             return polygons;
-            //return polygons[0].RemoveSelfIntersections(
-            //    flipResult ? ResultType.OnlyKeepNegative : ResultType.OnlyKeepPositive, knownWrongPoints);
-            //if (flipResult)
-            //{
-            //    //foreach (var c in polygons)
-            //    //    c.Reverse();
-            //    polygons = polygons.IntersectPolygons(PolygonCollection.SeparateLoops); //.CreatePolygonTree(true);
-            //    //foreach (var c in polygons)
-            //    //    c.Reverse();
-            //    Presenter.ShowAndHang(polygons);
-            //    return polygons;
-            //}
-            //return polygons.UnionPolygons(PolygonCollection.SeparateLoops); //.CreatePolygonTree(true);
         }
 
 

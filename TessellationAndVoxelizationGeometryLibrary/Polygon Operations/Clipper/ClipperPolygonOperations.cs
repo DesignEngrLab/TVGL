@@ -195,10 +195,14 @@ namespace TVGL
 
         internal static Paths64 ConvertToClipperPaths(IEnumerable<Polygon> subject)
         {
+            if (subject == null) return new Paths64();
             var clipperSubject = new Paths64();
             foreach (var polygon in subject)
+            {
+                if (polygon == null) continue;
                 foreach (var polygonElement in polygon.AllPolygons.Where(p => !p.PathArea.IsNegligible(Constants.BaseTolerance)))
                     clipperSubject.Add(new Path64(polygonElement.Path.Select(p => new Point64(p.X * scale, p.Y * scale))));
+            }
             return clipperSubject;
         }
         #endregion

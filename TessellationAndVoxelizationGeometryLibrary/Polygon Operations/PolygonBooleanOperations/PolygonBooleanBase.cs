@@ -223,7 +223,7 @@ namespace TVGL
                                                             // when multiple intersections cross the edge. If we got through the first pass then there are no previous intersections on
                                                             // the edge that concern us. We want that function to report the first one for the edge
 //#if PRESENT
-                    Presenter.ShowAndHang(newPath);
+//                    Presenter.ShowAndHang(newPath);
 //#endif
                 }
             } while (false == (completed = PolygonCompleted(intersectionData, startingIntersection, currentEdge, startingEdge)));
