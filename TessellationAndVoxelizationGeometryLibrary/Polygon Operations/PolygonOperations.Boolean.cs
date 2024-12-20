@@ -111,7 +111,7 @@ namespace TVGL
                     //if (vertsTVGL == vertsClipper)
                     //   Message.output("+++ both have {0} vertices(s)", vertsTVGL);
                     //else
-                    Message.output("    --- verts: TVGL= "+vertsTVGL+"  : Clipper={1} "+ vertsClipper, 2);
+                    Message.output("    --- verts: TVGL= " + vertsTVGL + "  : Clipper={1} " + vertsClipper, 2);
 
                     //if (areaTVGL.IsPracticallySame(areaClipper, tolerance))
                     //   Message.output("+++ both have area of {0}", areaTVGL);
@@ -158,8 +158,8 @@ namespace TVGL
             PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles)
         {
 #if CLIPPER
-            return BooleanViaClipper(FillRule.Positive, Clipper2Lib.ClipType.Union, new[] { polygonA },
-                  new[] { polygonB });
+            return BooleanViaClipper(FillRule.Positive, ClipType.Union, [polygonA],
+                [polygonB], outputAsCollectionType);
 #elif !COMPARE
             var relationship = GetPolygonInteraction(polygonA, polygonB);
             return Union(polygonA, polygonB, relationship, outputAsCollectionType);
@@ -232,7 +232,8 @@ namespace TVGL
         public static List<Polygon> UnionPolygons(this IEnumerable<Polygon> polygons, PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles)
         {
 #if CLIPPER
-            return BooleanViaClipper(FillRule.Positive, Clipper2Lib.ClipType.Union, polygons);
+            return BooleanViaClipper(FillRule.Positive, Clipper2Lib.ClipType.Union, polygons, null,
+                outputAsCollectionType);
 #elif !COMPARE
             var polygonList = polygons.ToList();
             for (int i = polygonList.Count - 1; i > 0; i--)
@@ -338,7 +339,7 @@ namespace TVGL
             double tolerance = double.NaN)
         {
 #if CLIPPER
-            return BooleanViaClipper(FillRule.Positive, Clipper2Lib.ClipType.Union, polygonsA, polygonsB);
+            return BooleanViaClipper(FillRule.Positive, Clipper2Lib.ClipType.Union, polygonsA, polygonsB, outputAsCollectionType);
 #elif !COMPARE
             if (polygonsB is null)
                 return UnionPolygons(polygonsA, outputAsCollectionType);
@@ -456,8 +457,8 @@ namespace TVGL
             PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles, double tolerance = double.NaN)
         {
 #if CLIPPER
-            return BooleanViaClipper(FillRule.Positive, Clipper2Lib.ClipType.Intersection, new[] { polygonA },
-                    new[] { polygonB });
+            return BooleanViaClipper(FillRule.Positive, Clipper2Lib.ClipType.Intersection, [polygonA], [polygonB],
+                outputAsCollectionType);
 #elif !COMPARE
             var relationship = GetPolygonInteraction(polygonA, polygonB);
             return Intersect(polygonA, polygonB, relationship, outputAsCollectionType, tolerance);
@@ -530,7 +531,7 @@ namespace TVGL
                 //polygonsB = polygonsB?.SimplifyByAreaChangeToNewPolygons(areaSimplificationFraction);
             }
 #if CLIPPER
-            return BooleanViaClipper(FillRule.Positive, Clipper2Lib.ClipType.Intersection, polygonsA, polygonsB);
+            return BooleanViaClipper(FillRule.Positive, ClipType.Intersection, polygonsA, polygonsB, outputAsCollectionType);
 #elif !COMPARE
             if (polygonsB is null)
                 return UnionPolygons(polygonsA, outputAsCollectionType);
@@ -602,7 +603,7 @@ namespace TVGL
                 polygons = polygons.Select(p => SimplifyFast(p));
             //polygons = polygons.SimplifyByAreaChangeToNewPolygons(areaSimplificationFraction);
 #if CLIPPER
-            return BooleanViaClipper(FillRule.Positive, Clipper2Lib.ClipType.Intersection, polygons);
+            return BooleanViaClipper(FillRule.Positive, Clipper2Lib.ClipType.Intersection, polygons, null, outputAsCollectionType);
 #elif !COMPARE
             var result = new List<Polygon>();
             if (!polygons.Any()) return result;
@@ -664,7 +665,8 @@ namespace TVGL
                     PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles, double tolerance = double.NaN)
         {
 #if CLIPPER
-            return BooleanViaClipper(FillRule.Positive, Clipper2Lib.ClipType.Difference, [minuend], [subtrahend]);
+            return BooleanViaClipper(FillRule.Positive, Clipper2Lib.ClipType.Difference, [minuend], [subtrahend],
+                outputAsCollectionType);
 #elif !COMPARE
                     var polygonBInverted = subtrahend.Copy(true, true);
                     var relationship = GetPolygonInteraction(minuend, polygonBInverted);
@@ -732,7 +734,7 @@ namespace TVGL
                     PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles, double tolerance = double.NaN)
         {
 #if CLIPPER
-            return BooleanViaClipper(FillRule.Positive, Clipper2Lib.ClipType.Difference, minuends, subtrahends);
+            return BooleanViaClipper(FillRule.Positive, Clipper2Lib.ClipType.Difference, minuends, subtrahends, outputAsCollectionType);
 #elif !COMPARE
                     var minuendsList = minuends.ToList();
         foreach (var polyB in subtrahends)
@@ -805,7 +807,8 @@ namespace TVGL
             PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles)
         {
 #if CLIPPER
-            return BooleanViaClipper(FillRule.Positive, Clipper2Lib.ClipType.Xor, new[] { polygonA }, new[] { polygonB });
+            return BooleanViaClipper(FillRule.Positive, ClipType.Xor, [polygonA], [polygonB],
+                outputAsCollectionType);
 #elif !COMPARE
             var relationship = GetPolygonInteraction(polygonA, polygonB);
             return ExclusiveOr(polygonA, polygonB, relationship, outputAsCollectionType);

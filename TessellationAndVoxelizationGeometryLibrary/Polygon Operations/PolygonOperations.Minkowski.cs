@@ -11,14 +11,11 @@
 // </copyright>
 // <summary></summary>
 // ***********************************************************************
-using Clipper2Lib;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
-using System.Numerics;
-using System.Windows.Input;
+using System.Reflection.Metadata;
 
 namespace TVGL
 {
@@ -37,17 +34,17 @@ namespace TVGL
         /// <returns></returns>
         public static List<Polygon> MinkowskiSum(this Polygon a, Polygon b)
         {
-            var aConcaveVertices = a.GetConcaveVertices().ToList();
-            var bConcaveVertices = b.GetConcaveVertices().ToList();
-            if (aConcaveVertices.Count == 0 & bConcaveVertices.Count == 0)
+            var aConcaveVertices = a.GetConcaveVertices().ToArray();
+            var bConcaveVertices = b.GetConcaveVertices().ToArray();
+            if (aConcaveVertices.Length == 0 & bConcaveVertices.Length == 0)
                 return [MinkowskiSumConvex(a, b)];
-            else if (aConcaveVertices.Count == 0)
-                return MinkowskiSumConvexConcave(a, b);
-            else if (bConcaveVertices.Count == 0)
-                return MinkowskiSumConvexConcave(b, a);
-            if (aConcaveVertices.Count < bConcaveVertices.Count)
-                return MinkowskiSumGeneral(a, aConcaveVertices, b);
-            else return MinkowskiSumGeneral(b, bConcaveVertices, a);
+            else if (aConcaveVertices.Length == 0)
+                return MinkowskiSumMain(a, Array.Empty<Vertex2D>(), b);
+            else if (bConcaveVertices.Length == 0)
+                return MinkowskiSumMain(b, Array.Empty<Vertex2D>(), a);
+            if (aConcaveVertices.Length < bConcaveVertices.Length)
+                return MinkowskiSumMain(a, aConcaveVertices, b);
+            else return MinkowskiSumMain(b, bConcaveVertices, a);
         }
 
         private static Polygon MinkowskiSumConvex(Polygon a, Polygon b)
@@ -100,122 +97,225 @@ namespace TVGL
             return minVertex;
         }
 
-        private static List<Polygon> MinkowskiSumConvexConcave(Polygon a, Polygon b)
+
+        private static List<Polygon> MinkowskiSumMain(Polygon a, Vertex2D[] aConcaveVertices, Polygon b)
         {
-            var aStartEdge = FindMinY(a.Vertices);
-            var bStartEdge = FindMinY(b.Vertices);
+            var polygons = new List<Polygon>();
             var flipResult = a.IsPositive != b.IsPositive;
             var visitedHash = new Dictionary<(Vertex2D, Vertex2D, bool), Vertex2D>(new EdgePairToIntComparator(a, b));
             var aEdgeAngles = a.Edges.ToDictionary(e => e, e => Constants.Pseudoangle(e.Vector.X, e.Vector.Y));
             var bEdgeAngles = b.Edges.ToDictionary(e => e, e => Constants.Pseudoangle(e.Vector.X, e.Vector.Y));
-            var complexPaths = new List<Polygon>();
-            var knownWrongPoints = new List<List<bool>>();
-            ConvolutionCycle(a, b, aStartEdge, bStartEdge, visitedHash, aEdgeAngles, bEdgeAngles, complexPaths,
-                knownWrongPoints, new List<Vertex2D>(), 0, new List<bool>());
+            var startsQueue = new Stack<(Vertex2D, Vertex2D)>();
+            startsQueue.Push((FindMinY(a.Vertices), FindMinY(b.Vertices)));
+            foreach (var aConcavity in aConcaveVertices)
+                foreach (var bVertex in b.Vertices)
+                    startsQueue.Push((aConcavity, bVertex));
 
-            return complexPaths[0].RemoveSelfIntersections(
-                flipResult ? ResultType.OnlyKeepNegative : ResultType.OnlyKeepPositive, knownWrongPoints[0]);
+            var knownWrongPoints = new List<List<bool>>();
+            while (startsQueue.Count > 0)
+            {
+                var (aStartVertex, bStartVertex) = startsQueue.Pop();
+                var aParent = aStartVertex.EndLine.FromPoint;
+                var aAngle = aEdgeAngles[aParent.StartLine];
+                var aPrevAngle = aEdgeAngles[aParent.EndLine];
+                var bAngle = bEdgeAngles[bStartVertex.StartLine];
+                var bPrevAngle = bEdgeAngles[bStartVertex.EndLine];
+                var followDir = GetFollowDirection(visitedHash, aParent, bStartVertex, out _, out _, aAngle, aPrevAngle,
+                    bAngle, bPrevAngle);
+                if (followDir == ConvolutionDirection.A || followDir == ConvolutionDirection.AButQueueUpB || followDir == ConvolutionDirection.Both)
+                {
+                    var startVertex = new Vertex2D(aStartVertex.Coordinates + bStartVertex.Coordinates, 0,polygons.Count);
+                    visitedHash.Add((aParent, bStartVertex, true), startVertex);
+                    ConvolutionCycle(a, b, aStartVertex, bStartVertex,
+                        visitedHash, aEdgeAngles, bEdgeAngles,startsQueue ,polygons, knownWrongPoints, new List<Vertex2D> { startVertex },
+                      0, new List<bool> { false });
+                }
+                else
+                {
+                    var bParent = bStartVertex.EndLine.FromPoint;
+                     aAngle = aEdgeAngles[aStartVertex.StartLine];
+                     aPrevAngle = aEdgeAngles[aStartVertex.EndLine];
+                     bAngle = bEdgeAngles[bParent.StartLine];
+                     bPrevAngle = bEdgeAngles[bParent.EndLine];
+                     followDir = GetFollowDirection(visitedHash, aStartVertex, bParent, out _, out _, aAngle, aPrevAngle,
+                        bAngle, bPrevAngle);
+                    if (followDir == ConvolutionDirection.B|| followDir == ConvolutionDirection.Both)
+                    {
+                        var startVertex = new Vertex2D(aStartVertex.Coordinates + bStartVertex.Coordinates, 0, polygons.Count);
+                        visitedHash.Add((aStartVertex, bParent, false), startVertex);
+                        ConvolutionCycle(a, b, aStartVertex, bStartVertex,
+                            visitedHash, aEdgeAngles, bEdgeAngles,startsQueue, polygons, knownWrongPoints, new List<Vertex2D> { startVertex },
+                          0, new List<bool> { false });
+                    }
+                }
+            }
+
+            //Presenter.ShowAndHang(polygons);
+            polygons.RemoveAll(c => !c.IsClosed || c.Vertices.Count <= 2);
+
+            if (flipResult)
+                foreach (var c in polygons)
+                    c.Reverse();
+            foreach (var c in polygons)
+                c.RemoveSelfIntersections(ResultType.OnlyKeepPositive);
+            //Presenter.ShowAndHang(polygons);
+            polygons = polygons.UnionPolygons(PolygonCollection.SeparateLoops); //.CreatePolygonTree(true);
+            //Presenter.ShowAndHang(polygons);
+            if (flipResult)
+                foreach (var c in polygons)
+                    c.Reverse();
+            return polygons;
         }
 
         private static void ConvolutionCycle(Polygon a, Polygon b, Vertex2D aStart, Vertex2D bStart,
             Dictionary<(Vertex2D, Vertex2D, bool), Vertex2D> visitedHash, Dictionary<PolygonEdge, double> aEdgeAngles,
-            Dictionary<PolygonEdge, double> bEdgeAngles, List<Polygon> results, List<List<bool>> allKnownWrongPoints,
-            List<Vertex2D> result, int currentLoopIndex, List<bool> knownWrongPoints)
+            Dictionary<PolygonEdge, double> bEdgeAngles, Stack<(Vertex2D, Vertex2D)> startsQueue, List<Polygon> results,
+            List<List<bool>> allKnownWrongPoints, List<Vertex2D> result, int currentLoopIndex, List<bool> knownWrongPoints)
         {
             var aVertex = aStart;
             var bVertex = bStart;
             while (true)
             {
-                var newPointAdded = false;
+                //Presenter.ShowAndHang(result.Select(v => v.Coordinates), closeShape: false);
                 var nextAEdge = aVertex.StartLine;
-                var nextBEdge = bVertex.StartLine;
                 var aAngle = aEdgeAngles[nextAEdge];
                 var aPrevAngle = aEdgeAngles[aVertex.EndLine];
+                var nextBEdge = bVertex.StartLine;
                 var bAngle = bEdgeAngles[nextBEdge];
                 var bPrevAngle = bEdgeAngles[bVertex.EndLine];
-                if (!visitedHash.TryGetValue((aVertex, bVertex, true), out var aExistingVertex)
-                    && firstAngleIsBetweenOthersCCW(aAngle, bPrevAngle, bAngle))
-                {
-                    var newVertex = new Vertex2D(aVertex.Coordinates + bVertex.Coordinates, visitedHash.Count, currentLoopIndex);
-                    visitedHash.Add((aVertex, bVertex, true), newVertex);
-                    result.Add(newVertex);
-                    var prevBCrossNextB = bVertex.EndLine.Vector.Cross(nextBEdge.Vector);
-                    knownWrongPoints.Add(prevBCrossNextB < 0);
-                    aVertex = nextAEdge.ToPoint;
-                    newPointAdded = true;
-                }
-                if (!visitedHash.TryGetValue((aVertex, bVertex, false), out var bExistingVertex) &&
-                    ((!newPointAdded && firstAngleIsBetweenOthersCCW(bAngle, aPrevAngle, aAngle))
-                    || (newPointAdded && aAngle.IsPracticallySame(bAngle))))
-                {
-                    var newVertex = new Vertex2D(aVertex.Coordinates + bVertex.Coordinates, visitedHash.Count, currentLoopIndex);
-                    visitedHash.Add((aVertex, bVertex, false), newVertex);
-                    result.Add(newVertex);
-                    var prevACrossNextA = aVertex.EndLine.Vector.Cross(nextAEdge.Vector);
-                    knownWrongPoints.Add(prevACrossNextA < 0);
-                    bVertex = nextBEdge.ToPoint;
-                    newPointAdded = true;
-                }
-                //Presenter.ShowAndHang(result.Select(v => v.Coordinates), closeShape: false);
-                if (!newPointAdded)
-                {
-                    if (result.Count == 0) return;
-                    //var repeatVertex = aExistingVertex ?? bExistingVertex;
-                    for (var i = 0; i < result.Count; i++)
-                    {
-                        if (aExistingVertex == result[i] || bExistingVertex == result[i])
-                        {
-                            allKnownWrongPoints.Add(knownWrongPoints.Skip(i).ToList());
-                            results.Add(new Polygon(result.Skip(i), currentLoopIndex, true));
-                            if (i > 0)
-                            {
-                                currentLoopIndex++;
-                                foreach (var vert in result.Take(i))
-                                    vert.LoopID = currentLoopIndex;
-                                foreach (((Vertex2D, Vertex2D, bool) key, Vertex2D value) in visitedHash)
-                                {
-                                    if (value == result[i - 1])
-                                    {
-                                        aVertex = key.Item1;
-                                        bVertex = key.Item2;
-                                        break;
-                                    }
-                                }
+                var followDirection = GetFollowDirection(visitedHash, aVertex, bVertex, out var aExistingVertex,
+                    out var bExistingVertex, aAngle, aPrevAngle, bAngle, bPrevAngle);
 
-                                ConvolutionCycle(a, b, aVertex, bVertex, visitedHash, aEdgeAngles, bEdgeAngles,
-                                    results, allKnownWrongPoints, result.Take(i-1).ToList(), currentLoopIndex,
-                                    knownWrongPoints.Take(i-1).ToList());
-                            }
-                            return;
-                        }
-                    }
-                    for (int i = 0; i < results.Count; i++)
-                    {
-                        Polygon loop = results[i];
-                        if (loop.IsClosed) continue;
-                        if (loop.Vertices[0] == aExistingVertex || loop.Vertices[0] == bExistingVertex)
+                switch (followDirection)
+                {
+                    case ConvolutionDirection.Both:
+                        var newVertex = new Vertex2D(aVertex.Coordinates + nextBEdge.ToPoint.Coordinates, visitedHash.Count, currentLoopIndex);
+                        visitedHash.Add((aVertex, bVertex, false), newVertex);
+                        visitedHash.Add((aVertex, bVertex, true), newVertex);
+                        result.Add(newVertex);
+                        var prevACrossNextA = aVertex.EndLine.Vector.Cross(nextAEdge.Vector);
+                        knownWrongPoints.Add(prevACrossNextA < 0);
+                        bVertex = nextBEdge.ToPoint;
+                        newVertex = new Vertex2D(nextAEdge.ToPoint.Coordinates + bVertex.Coordinates, visitedHash.Count, currentLoopIndex);
+                        //visitedHash.Add((aVertex, bVertex, true), newVertex);
+                        result.Add(newVertex);
+                        var prevBCrossNextB = bVertex.EndLine.Vector.Cross(nextBEdge.Vector);
+                        knownWrongPoints.Add(prevBCrossNextB < 0);
+                        aVertex = nextAEdge.ToPoint;
+                        break;
+                    case ConvolutionDirection.AButQueueUpB:
+                        startsQueue.Push((aVertex, nextBEdge.ToPoint));
+                        goto case ConvolutionDirection.A;
+                    case ConvolutionDirection.A:
+                        newVertex = new Vertex2D(nextAEdge.ToPoint.Coordinates + bVertex.Coordinates, visitedHash.Count, currentLoopIndex);
+                        visitedHash.Add((aVertex, bVertex, true), newVertex);
+                        result.Add(newVertex);
+                        prevBCrossNextB = bVertex.EndLine.Vector.Cross(nextBEdge.Vector);
+                        knownWrongPoints.Add(prevBCrossNextB < 0);
+                        aVertex = nextAEdge.ToPoint;
+                        break;
+                    case ConvolutionDirection.B:
+                        newVertex = new Vertex2D(aVertex.Coordinates + nextBEdge.ToPoint.Coordinates, visitedHash.Count, currentLoopIndex);
+                        visitedHash.Add((aVertex, bVertex, false), newVertex);
+                        result.Add(newVertex);
+                        prevACrossNextA = aVertex.EndLine.Vector.Cross(nextAEdge.Vector);
+                        knownWrongPoints.Add(prevACrossNextA < 0);
+                        bVertex = nextBEdge.ToPoint;
+                        break;
+                    default:
+
+                        //Presenter.ShowAndHang(result.Select(v => v.Coordinates), closeShape: false);
+                        if (result.Count == 0) return;
+                        //var repeatVertex = aExistingVertex ?? bExistingVertex;
+                        for (var i = 0; i < result.Count; i++)
                         {
-                            foreach (var vert in result)
-                                vert.LoopID = i;
-                            if (loop.Vertices[^1] == result[0])
+                            if (aExistingVertex == result[i] || bExistingVertex == result[i])
                             {
-                                results[i] = new Polygon(result.Concat(loop.Vertices.Take(loop.Vertices.Count - 1)), i, true);
-                                allKnownWrongPoints[i] = knownWrongPoints.Concat(allKnownWrongPoints[i]).ToList();
+                                allKnownWrongPoints.Add(knownWrongPoints.Skip(i).ToList());
+                                results.Add(new Polygon(result.Skip(i), currentLoopIndex, true));
+                                if (i > 0)
+                                {
+                                    currentLoopIndex++;
+                                    foreach (var vert in result.Take(i))
+                                        vert.LoopID = currentLoopIndex;
+                                    foreach (((Vertex2D, Vertex2D, bool) key, Vertex2D value) in visitedHash)
+                                    {
+                                        if (value == result[i - 1])
+                                        {
+                                            aVertex = key.Item1;
+                                            bVertex = key.Item2;
+                                            break;
+                                        }
+                                    }
+
+                                    ConvolutionCycle(a, b, aVertex, bVertex, visitedHash, aEdgeAngles, bEdgeAngles,startsQueue,
+                                        results, allKnownWrongPoints, result.Take(i).ToList(), currentLoopIndex,
+                                        knownWrongPoints.Take(i).ToList());
+                                }
+                                return;
                             }
-                            else
-                            {
-                                results[i] = new Polygon(result.Concat(loop.Vertices), i, false);
-                                allKnownWrongPoints[i] = knownWrongPoints.Concat(allKnownWrongPoints[i]).ToList();
-                            }
-                            return;
                         }
-                    }
-                    var repeatVertex = WhichExistingToUse(results, aExistingVertex, bExistingVertex);
-                    results.Add(new Polygon(result.Concat([repeatVertex]), currentLoopIndex, false));
-                    allKnownWrongPoints.Add(knownWrongPoints);
-                    return;
+                        for (int i = 0; i < results.Count; i++)
+                        {
+                            Polygon loop = results[i];
+                            if (loop.IsClosed) continue;
+                            if (loop.Vertices[0] == aExistingVertex || loop.Vertices[0] == bExistingVertex)
+                            {
+                                foreach (var vert in result)
+                                    vert.LoopID = i;
+                                if (loop.Vertices[^1] == result[0])
+                                {
+                                    results[i] = new Polygon(result.Concat(loop.Vertices.Take(loop.Vertices.Count - 1)), i, true);
+                                    allKnownWrongPoints[i] = knownWrongPoints.Concat(allKnownWrongPoints[i]).ToList();
+                                }
+                                else
+                                {
+                                    results[i] = new Polygon(result.Concat(loop.Vertices), i, false);
+                                    allKnownWrongPoints[i] = knownWrongPoints.Concat(allKnownWrongPoints[i]).ToList();
+                                }
+                                return;
+                            }
+                        }
+                        var repeatVertex = WhichExistingToUse(results, aExistingVertex, bExistingVertex);
+                        results.Add(new Polygon(result.Concat([repeatVertex]), currentLoopIndex, false));
+                        allKnownWrongPoints.Add(knownWrongPoints);
+                        return;
                 }
             }
+        }
+
+        private static ConvolutionDirection GetFollowDirection(Dictionary<(Vertex2D, Vertex2D, bool), Vertex2D> visitedHash, Dictionary<PolygonEdge, double> aEdgeAngles,
+            Dictionary<PolygonEdge, double> bEdgeAngles, Vertex2D aVertex, Vertex2D bVertex, PolygonEdge nextAEdge, PolygonEdge nextBEdge,
+            out Vertex2D aExistingVertex, out Vertex2D bExistingVertex)
+        {
+            var aAngle = aEdgeAngles[nextAEdge];
+            var aPrevAngle = aEdgeAngles[aVertex.EndLine];
+            var bAngle = bEdgeAngles[nextBEdge];
+            var bPrevAngle = bEdgeAngles[bVertex.EndLine];
+            return GetFollowDirection(visitedHash, aVertex, bVertex, out aExistingVertex, out bExistingVertex, aAngle, aPrevAngle,
+                bAngle, bPrevAngle);
+        }
+
+        private static ConvolutionDirection GetFollowDirection(Dictionary<(Vertex2D, Vertex2D, bool), Vertex2D> visitedHash, Vertex2D aVertex,
+            Vertex2D bVertex, out Vertex2D aExistingVertex, out Vertex2D bExistingVertex, double aAngle, double aPrevAngle, double bAngle,
+            double bPrevAngle)
+        {
+            var sameAngle = aAngle.IsPracticallySame(bAngle);
+            var canFollowA = firstAngleIsBetweenOthersCCW(aAngle, bPrevAngle, bAngle);
+            var aAlreadyVisited = visitedHash.TryGetValue((aVertex, bVertex, true), out aExistingVertex);
+            var canFollowB = firstAngleIsBetweenOthersCCW(bAngle, aPrevAngle, aAngle);
+            var bAlreadyVisited = visitedHash.TryGetValue((aVertex, bVertex, false), out bExistingVertex);
+            if (sameAngle && !aAlreadyVisited && !bAlreadyVisited)
+                return ConvolutionDirection.Both;
+            else if (!aAlreadyVisited && canFollowA)
+            {
+                if (!bAlreadyVisited && canFollowB)
+                    return ConvolutionDirection.AButQueueUpB;
+                return ConvolutionDirection.A;
+            }
+            else if (!bAlreadyVisited && canFollowB)
+                return ConvolutionDirection.B;
+            return ConvolutionDirection.None;
         }
 
         private static Vertex2D WhichExistingToUse(List<Polygon> results, Vertex2D aExistingVertex, Vertex2D bExistingVertex)
@@ -235,30 +335,6 @@ namespace TVGL
             return false;
         }
 
-        private static List<Polygon> MinkowskiSumGeneral(Polygon a, List<Vertex2D> aConcaveVertices, Polygon b)
-        {
-            var polygons = new List<Polygon>();
-            var aStartVertex = FindMinY(a.Vertices);
-            var bStartVertex = FindMinY(b.Vertices);
-            var flipResult = a.IsPositive != b.IsPositive;
-            var visitedHash = new Dictionary<(Vertex2D, Vertex2D, bool), Vertex2D>(new EdgePairToIntComparator(a, b));
-            var aEdgeAngles = a.Edges.ToDictionary(e => e, e => Constants.Pseudoangle(e.Vector.X, e.Vector.Y));
-            var bEdgeAngles = b.Edges.ToDictionary(e => e, e => Constants.Pseudoangle(e.Vector.X, e.Vector.Y));
-            var complexPaths = new List<Polygon>();
-            var knownWrongPoints = new List<List<bool>>();
-            ConvolutionCycle(a, b, aStartVertex, bStartVertex,
-                visitedHash, aEdgeAngles, bEdgeAngles, complexPaths, knownWrongPoints, new List<Vertex2D>(), 0, new List<bool>());
-
-            foreach (var aConcavity in aConcaveVertices)
-                foreach (var bVertex in b.Vertices)
-                    ConvolutionCycle(a, b, aConcavity, bVertex, visitedHash, aEdgeAngles,
-                        bEdgeAngles, complexPaths, knownWrongPoints, new List<Vertex2D>(), complexPaths.Count, new List<bool>());
-
-            Presenter.ShowAndHang(complexPaths);
-            return complexPaths.Where(c => c.IsClosed && c.Vertices.Count>0).UnionPolygons().CreatePolygonTree(true);
-            //return polygons.CreatePolygonTree(true);
-        }
-
         private static void MergeIncompletePolygons(List<Polygon> complexPaths, List<List<bool>> knownWrongPoints)
         {
             for (int i = complexPaths.Count - 1; i >= 0; i--)
@@ -274,7 +350,14 @@ namespace TVGL
         }
 
     }
-
+    internal enum ConvolutionDirection
+    {
+        None,
+        A,
+        B,
+        Both,
+        AButQueueUpB
+    }
     internal class EdgePairToIntComparator : IEqualityComparer<(Vertex2D, Vertex2D, bool)>
     {
         readonly int baseFactor1;
