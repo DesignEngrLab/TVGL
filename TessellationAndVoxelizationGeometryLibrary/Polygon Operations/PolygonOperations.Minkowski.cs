@@ -36,45 +36,9 @@ namespace TVGL
         {
             var aConcaveVertices = a.GetConcaveVertices().ToArray();
             var bConcaveVertices = b.GetConcaveVertices().ToArray();
-            if (aConcaveVertices.Length == 0 & bConcaveVertices.Length == 0)
-                return [MinkowskiSumConvex(a, b)];
-            else if (aConcaveVertices.Length == 0)
-                //return MinkowskiSumConcaveConvex(a, b);
-                return MinkowskiSumMain(a, Array.Empty<Vertex2D>(), b);
-            else if (bConcaveVertices.Length == 0)
-                //return MinkowskiSumConcaveConvex(b, a);
-                return MinkowskiSumMain(b, Array.Empty<Vertex2D>(), a);
             if (aConcaveVertices.Length < bConcaveVertices.Length)
                 return MinkowskiSumMain(a, aConcaveVertices, b);
             else return MinkowskiSumMain(b, bConcaveVertices, a);
-        }
-
-        private static Polygon MinkowskiSumConvex(Polygon a, Polygon b)
-        {
-            var aStartVertex = FindMinY(a.Vertices);
-            var bStartVertex = FindMinY(b.Vertices);
-            var aVertex = aStartVertex;
-            var bVertex = bStartVertex;
-            var result = new List<Vertex2D>();
-            var vertNum = 0;
-            var aCompleted = false;
-            var bCompleted = false;
-            do
-            {
-                result.Add(new Vertex2D(aVertex.Coordinates + bVertex.Coordinates, vertNum++, 0));
-                var cross = aVertex.StartLine.Vector
-                    // will this always be correct? I'm worried that angle could be greater than 180, and then a
-                    // false result would be returned. ...although, I tried to come up with a case to break it
-                    // and couldn't I guess because you can't have an angle greater than 180 on convex shapes
-                    .Cross(bVertex.StartLine.Vector);
-                if (cross >= 0 && !aCompleted)
-                    aVertex = aVertex.StartLine.ToPoint;
-                if (cross <= 0 && !bCompleted)
-                    bVertex = bVertex.StartLine.ToPoint;
-                aCompleted = aVertex == aStartVertex;
-                bCompleted = bVertex == bStartVertex;
-            } while (!aCompleted || !bCompleted);
-            return new Polygon(result);
         }
 
         private static Vertex2D FindMinY(List<Vertex2D> vertices)
@@ -98,62 +62,6 @@ namespace TVGL
             }
             return minVertex;
         }
-
-        private static List<Polygon> MinkowskiSumConcaveConvex(Polygon a, Polygon b)
-        {
-            var aStartEdge = FindMinY(a.Vertices).EndLine;
-            var bStartEdge = FindMinY(b.Vertices).EndLine;
-            var flipResult = a.IsPositive != b.IsPositive;
-            var aEdgeAngles = a.Edges.ToDictionary(e => e, e => Constants.Pseudoangle(e.Vector.X, e.Vector.Y));
-            var bEdgeAngles = b.Edges.ToDictionary(e => e, e => Constants.Pseudoangle(e.Vector.X, e.Vector.Y));
-
-            var prevAEdge = aStartEdge;
-            var prevBEdge = bStartEdge;
-            var result = new List<Vector2> { prevAEdge.ToPoint.Coordinates + prevBEdge.ToPoint.Coordinates };
-            var knownWrongPoints = new List<bool> { false };
-            var nextAEdge = prevAEdge.ToPoint.StartLine;
-            var nextBEdge = prevBEdge.ToPoint.StartLine;
-            do
-            {
-                var aAngle = aEdgeAngles[nextAEdge];
-                var aPrevAngle = aEdgeAngles[prevAEdge];
-                var bAngle = bEdgeAngles[nextBEdge];
-                var bPrevAngle = bEdgeAngles[prevBEdge];
-                if (firstAngleIsBetweenOthersCCW(aAngle, bPrevAngle, bAngle))
-                {
-                    result.Add(nextAEdge.ToPoint.Coordinates + prevBEdge.ToPoint.Coordinates);
-                    var prevBCrossNextB = prevBEdge.Vector.Cross(nextBEdge.Vector);
-                    knownWrongPoints.Add(prevBCrossNextB < 0);
-                    prevAEdge = nextAEdge;
-                    nextAEdge = nextAEdge.ToPoint.StartLine;
-                }
-                if (firstAngleIsBetweenOthersCCW(bAngle, aPrevAngle, aAngle))
-                {
-                    result.Add(nextBEdge.ToPoint.Coordinates + prevAEdge.ToPoint.Coordinates);
-                    var prevACrossNextA = prevAEdge.Vector.Cross(nextAEdge.Vector);
-                    knownWrongPoints.Add(prevACrossNextA < 0);
-                    prevBEdge = nextBEdge;
-                    nextBEdge = nextBEdge.ToPoint.StartLine;
-                }
-            } while (prevAEdge != aStartEdge || prevBEdge != bStartEdge);
-            
-            var clipperPaths = PolygonOperations.ConvertToClipperPaths([new Polygon(result)]);
-            if (flipResult)
-            {
-                //foreach (var c in clipperPaths)
-                //    Clipper.ReversePath(c);
-                clipperPaths = Clipper.Union(clipperPaths, FillRule.Negative);
-            }
-            //else
-            clipperPaths = Clipper.Union(clipperPaths, FillRule.Positive);
-
-            var polygons = clipperPaths.Select(clipperPath
-              => new Polygon(clipperPath.Select(point => new Vector2(point.X / scale, point.Y / scale)))).ToList();
-            //Presenter.ShowAndHang(polygons);
-            return polygons;
-        }
-
-
 
         private static List<Polygon> MinkowskiSumMain(Polygon a, Vertex2D[] aConcaveVertices, Polygon b)
         {
@@ -221,19 +129,6 @@ namespace TVGL
               => new Polygon(clipperPath.Select(point => new Vector2(point.X / scale, point.Y / scale)))).ToList();
             //Presenter.ShowAndHang(polygons);
             return polygons;
-            polygons.RemoveAll(c => !c.IsClosed || c.Vertices.Count <= 2);
-
-            if (flipResult)
-            {
-                foreach (var c in polygons)
-                    c.Reverse();
-                polygons = polygons.IntersectPolygons(PolygonCollection.SeparateLoops); //.CreatePolygonTree(true);
-                foreach (var c in polygons)
-                    c.Reverse();
-                return polygons;
-            }
-            return polygons.UnionPolygons(PolygonCollection.SeparateLoops); //.CreatePolygonTree(true);
-                                                                            //Presenter.ShowAndHang(polygons);
         }
 
         private static void ConvolutionCycle(Polygon a, Polygon b, Vertex2D aStart, Vertex2D bStart,
