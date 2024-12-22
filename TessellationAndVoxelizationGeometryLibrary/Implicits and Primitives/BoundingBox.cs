@@ -555,6 +555,7 @@ namespace TVGL
 
         /// <summary>
         /// Moves the face outward by the provided distance (or inward if distance is negative).
+        /// Note that this returns a new bounding box and does not alter the original.
         /// </summary>
         /// <param name="directionIndex">Index of the direction.</param>
         /// <param name="forward">if set to <c>true</c> [forward].</param>
