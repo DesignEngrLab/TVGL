@@ -311,7 +311,7 @@ namespace TVGL
         private static (List<Vector2> points, List<bool> knownWrongPoints) MainOffsetRoutine(Polygon polygon, double offset, bool notMiter,
             double maxLengthSquared, out int maxNumberOfPolygons, double deltaAngle = double.NaN)
         {
-            var rashOffset = new RationalIP((Int128)(offset * (double)Vector2IP.InitialW), Vector2IP.InitialW);
+            var rashOffset = new RationalIP(offset);
             //var tolerance = Math.Pow(10, -polygon.NumSigDigits);
             maxNumberOfPolygons = 1;
             // set up the return list (predict size to prevent re-allocation) and rotation matrix for OffsetRound

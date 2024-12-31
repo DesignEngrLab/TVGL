@@ -26,6 +26,8 @@ namespace TVGL
         internal Int128 X { get; init; }
         internal Int128 Y { get; init; }
         internal Int128 W { get; init; }
+        public Vector2 AsVector2 => new Vector2(RationalIP.AsDoubleValue(X, W),
+            RationalIP.AsDoubleValue(Y, W));
 
         internal Vector2IP(Vector2 vector)
         => new Vector2IP(vector.X, vector.Y, InitialW);
@@ -182,6 +184,8 @@ namespace TVGL
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool Equals(Vector2IP that)
         {
+            if (this.W == 0 && that.W == 0)
+                return this.X * that.Y == that.X * this.Y;
             if (this.W == that.W)
                 return this.X == that.X && this.Y == that.Y;
             return this.X * that.W == that.X * this.W &&

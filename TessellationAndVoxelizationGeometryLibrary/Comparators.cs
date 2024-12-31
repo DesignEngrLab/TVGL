@@ -146,46 +146,61 @@ namespace TVGL
     }
 
     /// <summary>
-    /// Class TwoDSortXFirst.
-    /// Implements the <see cref="System.Collections.Generic.IComparer{IPoint2D}" />
+    /// A comparer for optimization that can be used for either
+    /// ascending or descending.
     /// </summary>
-    /// <seealso cref="System.Collections.Generic.IComparer{IPoint2D}" />
-    internal class TwoDSortXFirst : IComparer<IVector2D>
+    public class NoEqualRationalSort : IComparer<RationalIP>
+    //public class NoEqualSort<T> : IComparer<T> where T :IComparable
     {
+        /// <summary>
+        /// The direction
+        /// </summary>
+        private readonly int direction;
 
         /// <summary>
-        /// Compares the specified v1.
+        /// Initializes a new instance of the <see cref="NoEqualSort" /> class.
         /// </summary>
-        /// <param name="v1">The v1.</param>
-        /// <param name="v2">The v2.</param>
-        /// <returns>System.Int32.</returns>
-        public int Compare(IVector2D v1, IVector2D v2)
+        /// <param name="ascendingOrder">if set to <c>true</c> [ascending order].</param>
+        public NoEqualRationalSort(bool ascendingOrder = true)
         {
-            if (v1.X.IsPracticallySame(v2.X))
-                return (v1.Y < v2.Y) ? -1 : 1;
-            return (v1.X < v2.X) ? -1 : 1;
+            direction = ascendingOrder ? -1 : 1;
+        }
+
+        int IComparer<RationalIP>.Compare(RationalIP x, RationalIP y)
+        {
+            if (direction == x.CompareTo(y))
+                return 1;
+            return -1;
         }
     }
 
     /// <summary>
-    /// Class TwoDSortYFirst.
-    /// Implements the <see cref="System.Collections.Generic.IComparer{IPoint2D}" />
+    /// Class to compare 2D vertices by their x-value (lower first)
+    /// If equal than returns the one with the lower y
     /// </summary>
-    /// <seealso cref="System.Collections.Generic.IComparer{IPoint2D}" />
-    internal class TwoDSortYFirst : IComparer<IVector2D>
+    internal class TwoDSortXFirst : IComparer<Vertex2D>
     {
 
-        /// <summary>
-        /// Compares the specified v1.
-        /// </summary>
-        /// <param name="v1">The v1.</param>
-        /// <param name="v2">The v2.</param>
-        /// <returns>System.Int32.</returns>
-        public int Compare(IVector2D v1, IVector2D v2)
+
+        public int Compare(Vertex2D v1, Vertex2D v2)
         {
-            if (v1.Y.IsPracticallySame(v2.Y))
-                return (v1.X < v2.X) ? -1 : 1;
-            return (v1.Y < v2.Y) ? -1 : 1;
+            if (v1.IsSameXAs(v2))
+                return v1.HasLessYThan(v2) ? -1 : 1;
+            return v1.HasLessXThan(v2) ? -1 : 1;
+        }
+    }
+
+    /// <summary>
+    /// Class to compare 2D vertices by their y-value (lower first)
+    /// If equal than returns the one with the lower x
+    /// </summary>
+    internal class TwoDSortYFirst : IComparer<Vertex2D>
+    {
+        public int Compare(Vertex2D v1, Vertex2D v2)
+        {
+            if (v1.IsSameYAs(v2))
+                return v1.HasLessXThan(v2) ? -1 : 1;
+            return v1.HasLessYThan(v2) ? -1 : 1;
         }
     }
 
@@ -223,11 +238,11 @@ namespace TVGL
         /// <returns>System.Int32.</returns>
         public int Compare(Vertex2D v1, Vertex2D v2)
         {
-            var d1 = v1.Coordinates.Dot2D(sweepDirection);
-            var d2 = v2.Coordinates.Dot2D(sweepDirection);
+            var d1 = v1.Coordinates.Dot3D(sweepDirection);
+            var d2 = v2.Coordinates.Dot3D(sweepDirection);
             var compare = d1.CompareTo(d2);
             if (compare == 0)
-                return v1.Coordinates.Dot2D(alongDirection).CompareTo(v2.Coordinates.Dot2D(alongDirection));
+                return v1.Coordinates.Dot3D(alongDirection).CompareTo(v2.Coordinates.Dot3D(alongDirection));
 
             else return compare;
         }

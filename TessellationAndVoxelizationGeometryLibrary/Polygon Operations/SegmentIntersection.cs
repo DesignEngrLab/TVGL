@@ -35,7 +35,7 @@ namespace TVGL
         /// Gets the intersection coordinates.
         /// </summary>
         /// <value>The intersect coordinates.</value>
-        public Vector2IP IntersectCoordinates { get; }
+        internal Vector2IP IntersectCoordinates { get; }
         /// <summary>
         /// Gets the relationship.
         /// </summary>
@@ -74,7 +74,7 @@ namespace TVGL
         /// <param name="relationship">The relationship.</param>
         /// <param name="whereIsIntersection">The where is intersection.</param>
         /// <param name="collinearity">The collinearity.</param>
-        internal SegmentIntersection(PolygonEdge edgeA, PolygonEdge edgeB, Vector2 intersectionPoint, SegmentRelationship relationship,
+        internal SegmentIntersection(PolygonEdge edgeA, PolygonEdge edgeB, Vector2IP intersectionPoint, SegmentRelationship relationship,
             WhereIsIntersection whereIsIntersection, CollinearityTypes collinearity)
         {
             this.EdgeA = edgeA;

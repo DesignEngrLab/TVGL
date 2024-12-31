@@ -107,91 +107,83 @@ namespace TVGL
         ///              " MakePolygonEdgesIfNonExistent on parent polygon before this calling this method. - vertex</exception>
         public static MonotonicityChange GetMonotonicityChange(this Vertex2D vertex)
         {
-            if (vertex.EndLine == null) throw new ArgumentException("vertex does not connect to polygon edges. Be sure to invoke" +
+            if (vertex.EndLine == null|| vertex.StartLine == null) throw new ArgumentException("vertex does not connect to polygon edges. Be sure to invoke" +
              " MakePolygonEdgesIfNonExistent on parent polygon before this calling this method.", nameof(vertex));
             var xPrev = vertex.EndLine.Vector.X;
             var yPrev = vertex.EndLine.Vector.Y;
             if (xPrev == 0 && yPrev == 0) return MonotonicityChange.SameAsPrevious;
-            double xNext, yNext;
+            Int128 xNext, yNext;
             var neighborVertex = vertex;
-            do
+            do  // this loop simply seem to advance to the first vertex that has a non-zero length vector
             {
                 neighborVertex = neighborVertex.StartLine.ToPoint;
                 xNext = neighborVertex.EndLine.Vector.X;
                 yNext = neighborVertex.EndLine.Vector.Y;
             }
-            while (xNext == 0 && yNext == 0);
-
-            //at this point one or both of the x&y deltas are non-negligible.
-            /**** I wish this were enough (the next 6 lines) but it leads to problems
-            var xProduct = xNext * xPrev;
-            var yProduct = yNext * yPrev;
-            if (xProduct > 0 && yProduct > 0) return MonotonicityChange.Neither;
-            if (xProduct < 0 && yProduct < 0) return MonotonicityChange.Both;
-            if (xProduct > 0) return MonotonicityChange.Y;
-            return MonotonicityChange.X;
-            ****/
+            while (xNext == Int128.Zero && yNext == Int128.Zero);
 
             // first check the cases where all four numbers are not negligible
-            var xChangesDir = (xPrev < 0 && xNext > 0) || (xPrev > 0 && xNext < 0);
-            var yChangesDir = (yPrev < 0 && yNext > 0) || (yPrev > 0 && yNext < 0);
+            var xChangesDir = (Int128.IsNegative(xPrev) && Int128.IsPositive(xNext))
+                || (Int128.IsPositive(xPrev) && Int128.IsNegative(xNext));
+            var yChangesDir = (Int128.IsNegative(yPrev) && Int128.IsPositive(yNext))
+                || (Int128.IsPositive(yPrev) && Int128.IsNegative(yNext));
             if (xChangesDir && yChangesDir) return MonotonicityChange.Both;
-            var xSameDir = (xPrev < 0 && xNext < 0)
-                || (xPrev > 0 && xNext > 0);
+            var xSameDir = (Int128.IsNegative(xPrev) && Int128.IsNegative(xNext))
+                || (Int128.IsPositive(xPrev) && Int128.IsPositive(xNext));
             if (yChangesDir && xSameDir) return MonotonicityChange.Y;
-            var ySameDir = (yPrev < 0 && yNext < 0)
-                || (yPrev > 0 && yNext > 0);
+            var ySameDir = (Int128.IsNegative(yPrev) && Int128.IsNegative(yNext))
+                || (Int128.IsPositive(yPrev) && Int128.IsPositive(yNext));
             if (xChangesDir && ySameDir) return MonotonicityChange.X;
             if (xSameDir && ySameDir) return MonotonicityChange.Neither;
 
             // if at this point then one or more values in the vectors is zero/negligible since the above booleans were
             // defined with this restriction
-            if (xPrev == 0 && xNext == 0) // then line is vertical
-                return (Int128.Sign(yPrev) == Math.Sign(yNext)) ? MonotonicityChange.Neither : MonotonicityChange.Y;
+            if (xPrev == 0 && xNext == Int128.Zero) // then line is vertical
+                return (Int128.Sign(yPrev) == Int128.Sign(yNext)) ? MonotonicityChange.Neither : MonotonicityChange.Y;
             // eww, the latter in that return is problematic at it would be a knife edge. but that's not this functions job to police
-            if (yPrev == 0 && yNext == 0) // then line is horizontal
-                return (Int128.Sign(xPrev) == Math.Sign(xNext)) ? MonotonicityChange.Neither : MonotonicityChange.X;
+            if (yPrev == Int128.Zero && yNext == Int128.Zero) // then line is horizontal
+                return (Int128.Sign(xPrev) == Int128.Sign(xNext)) ? MonotonicityChange.Neither : MonotonicityChange.X;
 
             // at this point, we've checked that 1) no vector is zero, 2) all are nonnegligible,
             // 3) either both x's or both y's are negligible.
             neighborVertex = vertex;
-            if (xPrev == 0) //we know that yPrev != 0 (given first condition) and we know xNext != 0 (given
+            if (xPrev == Int128.Zero) //we know that yPrev != 0 (given first condition) and we know xNext != 0 (given
                             // the condition before the last). it's possible that yNext is zero, but it doesn't affect the approach
             {
                 do
                 {
                     neighborVertex = neighborVertex.EndLine.FromPoint;
                     xPrev = neighborVertex.EndLine.Vector.X;
-                } while (xPrev == 0);
-                xChangesDir = Math.Sign(xPrev) != Math.Sign(xNext);
+                } while (xPrev == Int128.Zero);
+                xChangesDir = Int128.Sign(xPrev) != Int128.Sign(xNext);
             }
-            else if (xNext == 0)
+            else if (xNext == Int128.Zero)
             {
                 do
                 {
                     neighborVertex = neighborVertex.StartLine.ToPoint;
                     xNext = neighborVertex.EndLine.Vector.X;
-                } while (xNext == 0);
-                xChangesDir = Math.Sign(xPrev) != Math.Sign(xNext);
+                } while (xNext == Int128.Zero);
+                xChangesDir = Int128.Sign(xPrev) != Int128.Sign(xNext);
             }
             neighborVertex = vertex;
-            if (yPrev == 0)
+            if (yPrev == Int128.Zero)
             {
                 do
                 {
                     neighborVertex = neighborVertex.EndLine.FromPoint;
                     yPrev = neighborVertex.EndLine.Vector.Y;
-                } while (yPrev == 0);
-                yChangesDir = (Math.Sign(yPrev) != Math.Sign(yNext));
+                } while (yPrev == Int128.Zero);
+                yChangesDir = (Int128.Sign(yPrev) != Int128.Sign(yNext));
             }
-            else if (yNext == 0)
+            else if (yNext == Int128.Zero)
             {
                 do
                 {
                     neighborVertex = neighborVertex.StartLine.ToPoint;
                     yNext = neighborVertex.EndLine.Vector.Y;
-                } while (yNext == 0);
-                yChangesDir = Math.Sign(yPrev) != Math.Sign(yNext);
+                } while (yNext == Int128.Zero);
+                yChangesDir = Int128.Sign(yPrev) != Int128.Sign(yNext);
             }
             if (xChangesDir && yChangesDir) return MonotonicityChange.Both;
             if (xChangesDir) return MonotonicityChange.X;

@@ -27,25 +27,27 @@ namespace TVGL
         /// <param name="currentEdge">The current edge.</param>
         /// <param name="startAgain">if set to <c>true</c> [start again].</param>
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
-        protected override bool ValidStartingIntersection(SegmentIntersection intersectionData, out PolygonEdge currentEdge,
-            out bool startAgain)
+        protected override bool ValidStartingIntersection(SegmentIntersection intersectionData,
+            out PolygonEdge currentEdge, out bool startAgain)
         {
             startAgain = false;
             if (intersectionData.Relationship == SegmentRelationship.NoOverlap)
             {
-                if (intersectionData.CollinearityType == CollinearityTypes.ABeforeBAfter && !intersectionData.VisitedA && !intersectionData.VisitedB)
+                if (intersectionData.CollinearityType == CollinearityTypes.ABeforeBAfter 
+                    && !intersectionData.VisitedA && !intersectionData.VisitedB)
                 {
                     currentEdge = intersectionData.EdgeB;
                     return true;
                 }
-                if (intersectionData.CollinearityType == CollinearityTypes.AAfterBBefore && !intersectionData.VisitedB && !intersectionData.VisitedA)
+                if (intersectionData.CollinearityType == CollinearityTypes.AAfterBBefore
+                    && !intersectionData.VisitedB && !intersectionData.VisitedA)
                 {
                     currentEdge = intersectionData.EdgeA;
                     return true;
                 }
                 if (intersectionData.CollinearityType == CollinearityTypes.None)
                 {
-                    startAgain = !(intersectionData.VisitedB || intersectionData.VisitedA);
+                    startAgain = !(intersectionData.VisitedB || intersectionData.VisitedA); // true if both false
                     if (!intersectionData.VisitedA)
                     {
                         currentEdge = intersectionData.EdgeA;

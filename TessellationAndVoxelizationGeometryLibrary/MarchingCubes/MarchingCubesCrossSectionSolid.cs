@@ -204,10 +204,10 @@ namespace TVGL
                 var fromPoint = polygon.Path[numSegments - 1];
                 var lastPoint = polygon.Path[numSegments - 2];
                 var lastSegment = fromPoint - lastPoint;
-                var iMin = Math.Max((int)((polygon.MinXIP - _xMin) * coordToGridFactor) - Constants.MarchingCubesBufferFactor, 0);
-                var iMax = Math.Min((int)((polygon.MaxXIP - _xMin) * coordToGridFactor) + Constants.MarchingCubesBufferFactor, numGridX - 1);
-                var jMin = Math.Max((int)((polygon.MinYIP - _yMin) * coordToGridFactor) - Constants.MarchingCubesBufferFactor, 0);
-                var jMax = Math.Min((int)((polygon.MaxYIP - _yMin) * coordToGridFactor) + Constants.MarchingCubesBufferFactor, numGridY - 1);
+                var iMin = Math.Max((int)((polygon.MinX - _xMin) * coordToGridFactor) - Constants.MarchingCubesBufferFactor, 0);
+                var iMax = Math.Min((int)((polygon.MaxX - _xMin) * coordToGridFactor) + Constants.MarchingCubesBufferFactor, numGridX - 1);
+                var jMin = Math.Max((int)((polygon.MinY - _yMin) * coordToGridFactor) - Constants.MarchingCubesBufferFactor, 0);
+                var jMax = Math.Min((int)((polygon.MaxY - _yMin) * coordToGridFactor) + Constants.MarchingCubesBufferFactor, numGridY - 1);
                 foreach (var toPoint in polygon.Path)
                 {
                     var segment = toPoint - fromPoint;
@@ -289,10 +289,10 @@ namespace TVGL
                 var numSegments = polygon.Path.Count;
                 var fromPoint = polygon.Path[numSegments - 1];
                 var lastPoint = polygon.Path[numSegments - 2];
-                var polygonMinX = polygon.MinXIP;
-                var polygonMinY = polygon.MinYIP;
-                var polygonMaxX = polygon.MaxXIP;
-                var polygonMaxY = polygon.MaxYIP;
+                var polygonMinX = polygon.MinX;
+                var polygonMinY = polygon.MinY;
+                var polygonMaxX = polygon.MaxX;
+                var polygonMaxY = polygon.MaxY;
                 var iMin = Math.Max((int)((polygonMinX - _xMin) * coordToGridFactor) - Constants.MarchingCubesBufferFactor, 0);
                 var iMax = Math.Min((int)((polygonMaxX - _xMin) * coordToGridFactor) + Constants.MarchingCubesBufferFactor + 1, numGridX);
                 var jMin = Math.Max((int)((polygonMinY - _yMin) * coordToGridFactor) - Constants.MarchingCubesBufferFactor, 0);

@@ -21,11 +21,21 @@ namespace TVGL
         internal Int128 Num { get; init; }
         internal Int128 Den { get; init; }
 
-        internal RationalIP(Int128 y, Int128 w)
+        internal RationalIP(Int128 r, Int128 w)
         {
-            Num = y;
+            Num = r;
             Den = w;
         }
+
+        public RationalIP(double r, long w) : this()
+        {
+            Num = (Int128)(r * w);
+            Den = w;
+        }
+
+
+        public RationalIP(double r) : this(r, Vector2IP.InitialW) { }
+
         internal double AsDouble => AsDoubleValue(Num, Den);
 
         internal static double AsDoubleValue(Int128 num, Int128 den)

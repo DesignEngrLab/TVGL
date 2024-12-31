@@ -177,7 +177,7 @@ namespace TVGL
             if (onlyTopPolygon) return polygon.IsPositive == insideTopPolygon;
             if (!insideTopPolygon) return !polygon.IsPositive;
             foreach (var inner in polygon.InnerPolygons)
-                if (IsPointInsidePolygon(inner, pointInQuestion, out isExactlyOnEdge)) 
+                if (IsPointInsidePolygon(inner, pointInQuestion, out isExactlyOnEdge))
                     return true;
             return false;
         }
@@ -293,7 +293,7 @@ namespace TVGL
                         onBoundary = true;
                         if (!onBoundaryIsInside) return false;
                     }
-                    var lineYValue =PGA2D.YValueGivenXOnEdge(p.Coordinates.X,p.Coordinates.W, line, out var isBetweenEndPoints);
+                    var lineYValue = PGA2D.YValueGivenXOnEdge(p.Coordinates.X, p.Coordinates.W, line, out var isBetweenEndPoints);
                     if (!isBetweenEndPoints) continue;
                     if (lineYValue.IsEqualVectorY(p.Coordinates))
                     {
@@ -397,7 +397,7 @@ namespace TVGL
         {
             var horzLine = new Vector2IP(Int128.Zero, y, w);
             var point = PGA2D.PointAtLineAndPolyEdge(horzLine, segment, out _, out isBetweenEndPoints);
-            return new RationalIP(point.Y, point.W);
+            return new RationalIP(point.X, point.W);
         }
 
         #region Line Intersections with Polygon
@@ -415,15 +415,34 @@ namespace TVGL
         /// <param name="firstIntersectingIndex">First index of the intersecting.</param>
         /// <returns>List&lt;Vector2&gt;.</returns>
         /// <exception cref="NotImplementedException"></exception>
-        public static List<Vector2[]> AllPolygonIntersectionPointsAlongLine(this IEnumerable<Polygon> polygons, Vector2 sweepLineDirection,
-            double perpendicularDistanceToLine, int numSteps, double stepSize, out int firstIntersectingIndex)
+        public static Vector2[][] AllPolygonIntersectionPointsAlongLines(this IEnumerable<Polygon> polygons, Vector2 sweepLineDirection,
+            double perpendicularDistanceToLine, double stepSize, out int firstIntersectingIndex)
         {
             sweepLineDirection = sweepLineDirection.Normalize();
-            var lineDir = new Vector2(-sweepLineDirection.Y, sweepLineDirection.X);
-            var lineReference = perpendicularDistanceToLine * sweepLineDirection;
-            var intersections = new List<Vector2[]>();
+            var sweepDirX = (Int128)(sweepLineDirection.X * Vector2IP.InitialW);
+            var sweepDirY = (Int128)(sweepLineDirection.Y * Vector2IP.InitialW);
+            var startingNumerator = (Int128)(perpendicularDistanceToLine * Vector2IP.InitialW);
+            var stepSizeNumerator = (Int128)(stepSize * Vector2IP.InitialW);
+            var intersections = AllPolygonIntersectionPointsAlongLines(polygons, sweepDirX, sweepDirY,
+                startingNumerator, stepSizeNumerator,
+                Vector2IP.InitialW, out firstIntersectingIndex);
+            var result = new Vector2[intersections.Length][];
+            for (int i = 0; i < intersections.Length; i++)
+                result[i] = intersections[i].Select(x => x.AsVector2).ToArray();
+
+            return result;
+        }
+
+        internal static Vector2IP[][] AllPolygonIntersectionPointsAlongLines(this IEnumerable<Polygon> polygons,
+            Int128 sweepDirX, Int128 sweepDirY,
+            Int128 startingSweepDistance, Int128 stepSize, Int128 commonW, out int firstIntersectingIndex)
+        {
+            var startingSweepRash = new RationalIP(startingSweepDistance, commonW);
+            var stepRash = new RationalIP(stepSize, commonW);
+            // as the above overload shows, this method is meant to accept the sweepDir components as normalized
+            var referencePlane = new Vector2IP(sweepDirX, sweepDirY, -startingSweepDistance * commonW);
             var sortedPoints = new List<Vertex2D>();
-            var comparer = new VertexSortedByDirection(sweepLineDirection);
+            var comparer = new VertexSortedByDirection(referencePlane);
             foreach (var polygon in polygons.SelectMany(p => p.AllPolygons))
             {
                 polygon.MakePolygonEdgesIfNonExistent();
@@ -432,25 +451,24 @@ namespace TVGL
             if (sortedPoints.Count == 0)
             {
                 firstIntersectingIndex = -1;
-                return intersections;
+                return Array.Empty<Vector2IP[]>();
             }
-            var firstDistance = sortedPoints[0].Coordinates.Dot(sweepLineDirection);
-            var lastDistance = sortedPoints[^1].Coordinates.Dot(sweepLineDirection);
-            var tolerance = (lastDistance - firstDistance) * Constants.BaseTolerance;
             var currentLines = new HashSet<PolygonEdge>();
-            var nextDistance = firstDistance;
-            firstIntersectingIndex = (int)Math.Ceiling((nextDistance - perpendicularDistanceToLine) / stepSize);
+            var firstVertex = sortedPoints.First();
+            var lastVertexDot = sortedPoints.Last().Coordinates.Dot2D(referencePlane);
+            var nextDistance = firstVertex.Coordinates.Dot2D(referencePlane);
+            firstIntersectingIndex = 1 + (int)((nextDistance - startingSweepRash) / stepRash).AsInt128;
+            nextDistance = new RationalIP(startingSweepDistance + firstIntersectingIndex * stepSize, commonW);
+            var lastIntersectingIndex = 1 + (int)((lastVertexDot - startingSweepRash) / stepRash).AsInt128;
+            var intersections = new Vector2IP[lastIntersectingIndex - firstIntersectingIndex][];
             var pointIndex = 0;
-            var d = perpendicularDistanceToLine;
-            while (d < lastDistance)
+            for (var outerIndex = 0; outerIndex < lastIntersectingIndex; outerIndex++)
             {
                 var thisPoint = sortedPoints[pointIndex];
-                var needToOffset = false;
                 // this while loop updates the current lines. 
-                var thisPointD = thisPoint.Coordinates.Dot(sweepLineDirection);
-                while (thisPointD <= d)
+                var thisPointDot = thisPoint.Coordinates.Dot2D(referencePlane);
+                while (nextDistance >= thisPointDot)
                 {
-                    if (d.IsPracticallySame(thisPointD, tolerance)) needToOffset = true;
                     if (currentLines.Contains(thisPoint.StartLine)) currentLines.Remove(thisPoint.StartLine);
                     else currentLines.Add(thisPoint.StartLine);
                     if (currentLines.Contains(thisPoint.EndLine)) currentLines.Remove(thisPoint.EndLine);
@@ -459,16 +477,17 @@ namespace TVGL
                     if (pointIndex == sortedPoints.Count) return intersections;
                     thisPoint = sortedPoints[pointIndex];
                 }
-                if (needToOffset)
-                    d += Math.Min(stepSize, sortedPoints[pointIndex].Coordinates.Dot(sweepLineDirection) - d) / 10.0;
 
-                var numIntersects = currentLines.Count;
-                var intersects = new Vector2[numIntersects];
-                var index = 0;
-                foreach (var line in currentLines)
-                    intersects[index++] = MiscFunctions.LineLine2DIntersection(line.FromPoint.Coordinates, line.Vector, lineReference, lineDir);
-                intersections.Add(intersects.OrderBy(x => x.Dot(lineDir)).ToArray());
-                d += stepSize;
+                var intersects = new List<Vector2IP>(currentLines.Count);
+                var scanLine = new Vector2IP(sweepDirX, sweepDirY, -(nextDistance * commonW).AsInt128);
+                foreach (var edge in currentLines)
+                {
+                    var point = PGA2D.PointAtLineAndPolyEdge(referencePlane, edge, out _, out var isOnLine);
+                    if (isOnLine)
+                        intersects.Add(point);
+                }
+                intersections[outerIndex] = intersects.OrderBy(m => m).ToArray();
+                nextDistance += stepRash;
             }
             return intersections;
         }
@@ -484,36 +503,54 @@ namespace TVGL
         /// <param name="stepSize">Size of the step.</param>
         /// <param name="firstIntersectingIndex">First index of the intersecting.</param>
         /// <returns>List&lt;System.Double[]&gt;.</returns>
-        public static List<double[]> AllPolygonIntersectionPointsAlongVerticalLines(this IEnumerable<Polygon> polygons, double startingXValue,
+        public static double[][] AllPolygonIntersectionPointsAlongVerticalLines(this IEnumerable<Polygon> polygons, double startingXValue,
              double stepSize, out int firstIntersectingIndex)
         {
+            var startingNumerator = (Int128)startingXValue * Vector2IP.InitialW;
+            var stepSizeNumerator = (Int128)stepSize * Vector2IP.InitialW;
+            var intersections = AllPolygonIntersectionPointsAlongVerticalLines(polygons, startingNumerator, stepSizeNumerator,
+                Vector2IP.InitialW, out firstIntersectingIndex);
+            var result = new double[intersections.Length][];
+            for (int i = 0; i < intersections.Length; i++)
+                result[i] = intersections[i].Select(x => x.AsDouble).ToArray();
+
+            return result;
+
+        }
+
+        internal static RationalIP[][] AllPolygonIntersectionPointsAlongVerticalLines(this IEnumerable<Polygon> polygons,
+            Int128 startingXValue, Int128 stepSize, Int128 commonW, out int firstIntersectingIndex)
+        {
             var xEnd = polygons.Max(p => p.MaxXIP);
-            var intersections = new List<double[]>();
+            var startingXRash = new RationalIP(startingXValue, commonW);
+            var stepRash = new RationalIP(stepSize, commonW);
             var sortedPoints = new List<Vertex2D>();
             var comparer = new TwoDSortXFirst();
             foreach (var polygon in polygons.SelectMany(p => p.AllPolygons))
             {
                 polygon.MakePolygonEdgesIfNonExistent();
-                sortedPoints = CombineSortedVertexLists(sortedPoints, polygon.OrderedXVertices, comparer).ToList();
+                sortedPoints = CombineSortedVertexLists(sortedPoints, polygon.Vertices.OrderBy(x => x, comparer), comparer).ToList();
             }
             if (sortedPoints.Count == 0)
             {
                 firstIntersectingIndex = -1;
-                return intersections;
+                return Array.Empty<RationalIP[]>();
             }
-            var tolerance = (sortedPoints[^1].X - sortedPoints[0].X) * Constants.BaseTolerance;
             var currentLines = new HashSet<PolygonEdge>();
-            var nextDistance = sortedPoints.First().X;
-            firstIntersectingIndex = (int)Math.Ceiling((nextDistance - startingXValue) / stepSize);
+            var firstVertex = sortedPoints.First();
+            var nextDistance = new RationalIP(firstVertex.Coordinates.X, firstVertex.Coordinates.W);
+            firstIntersectingIndex = 1 + (int)((nextDistance - startingXRash) / stepRash).AsInt128;
+            nextDistance = new RationalIP(startingXValue + firstIntersectingIndex * stepSize, commonW);
+            var lastIntersectingIndex = 1 + (int)((xEnd - startingXRash) / stepRash).AsInt128;
+            var intersections = new RationalIP[lastIntersectingIndex - firstIntersectingIndex][];
             var pointIndex = 0;
-            var x = startingXValue;
-            while (x <= xEnd)
+            for (var outerIndex = 0; outerIndex < lastIntersectingIndex; outerIndex++)
             {
                 var thisPoint = sortedPoints[pointIndex];
-                var needToOffset = false;
-                while (thisPoint.X <= x)
+                // this while loop updates the current lines. 
+                while (nextDistance.IsGreaterThanVectorX(thisPoint.Coordinates)
+                    || nextDistance.IsEqualVectorX(thisPoint.Coordinates))
                 {
-                    if (x.IsPracticallySame(thisPoint.X, tolerance)) needToOffset = true;
                     if (currentLines.Contains(thisPoint.StartLine)) currentLines.Remove(thisPoint.StartLine);
                     else currentLines.Add(thisPoint.StartLine);
                     if (currentLines.Contains(thisPoint.EndLine)) currentLines.Remove(thisPoint.EndLine);
@@ -522,15 +559,16 @@ namespace TVGL
                     if (pointIndex == sortedPoints.Count) return intersections;
                     thisPoint = sortedPoints[pointIndex];
                 }
-                if (needToOffset)
-                    x += Math.Min(stepSize, sortedPoints[pointIndex + 1].X - x) / 10.0;
-                var numIntersects = currentLines.Count;
-                var intersects = new double[numIntersects];
-                var index = 0;
+
+                var intersects = new List<RationalIP>(currentLines.Count);
                 foreach (var line in currentLines)
-                    intersects[index++] = line.FindYGivenX(x, out _);
-                intersections.Add(intersects.OrderBy(y => y).ToArray());
-                x += stepSize;
+                {
+                    var yRash = FindYGivenX(line, nextDistance.Num, nextDistance.Den, out var isOnLine);
+                    if (isOnLine)
+                        intersects.Add(yRash);
+                }
+                intersections[outerIndex] = intersects.OrderBy(m => m).ToArray();
+                nextDistance += stepRash;
             }
             return intersections;
         }
@@ -546,11 +584,26 @@ namespace TVGL
         /// <param name="stepSize">Size of the step.</param>
         /// <param name="firstIntersectingIndex">First index of the intersecting.</param>
         /// <returns>List&lt;System.Double[]&gt;.</returns>
-        public static List<double[]> AllPolygonIntersectionPointsAlongHorizontalLines(this IEnumerable<Polygon> polygons,
+        public static double[][] AllPolygonIntersectionPointsAlongHorizontalLines(this IEnumerable<Polygon> polygons,
             double startingYValue, double stepSize, out int firstIntersectingIndex)
         {
+            var startingNumerator = (Int128)startingYValue * Vector2IP.InitialW;
+            var stepSizeNumerator = (Int128)stepSize * Vector2IP.InitialW;
+            var intersections = AllPolygonIntersectionPointsAlongHorizontalLines(polygons, startingNumerator, stepSizeNumerator,
+                Vector2IP.InitialW, out firstIntersectingIndex);
+            var result = new double[intersections.Length][];
+            for (int i = 0; i < intersections.Length; i++)
+                result[i] = intersections[i].Select(x => x.AsDouble).ToArray();
+
+            return result;
+        }
+
+        internal static RationalIP[][] AllPolygonIntersectionPointsAlongHorizontalLines(this IEnumerable<Polygon> polygons,
+            Int128 startingYValue, Int128 stepSize, Int128 commonW, out int firstIntersectingIndex)
+        {
             var yEnd = polygons.Max(p => p.MaxYIP);
-            var intersections = new List<double[]>();
+            var startingYRash = new RationalIP(startingYValue, commonW);
+            var stepRash = new RationalIP(stepSize, commonW);
             var sortedPoints = new List<Vertex2D>();
             var comparer = new TwoDSortYFirst();
             foreach (var polygon in polygons.SelectMany(p => p.AllPolygons))
@@ -561,23 +614,24 @@ namespace TVGL
             if (sortedPoints.Count == 0)
             {
                 firstIntersectingIndex = -1;
-                return intersections;
+                return Array.Empty<RationalIP[]>();
             }
-            var tolerance = (sortedPoints[^1].Y - sortedPoints[0].Y) * Constants.BaseTolerance;
             var currentLines = new HashSet<PolygonEdge>();
-            var nextDistance = sortedPoints.First().Y;
-            firstIntersectingIndex = nextDistance.IsPracticallySame(startingYValue) ? 0
-                : (int)Math.Ceiling((nextDistance - startingYValue) / stepSize);
+            var firstVertex = sortedPoints.First();
+            var nextDistance = new RationalIP(firstVertex.Coordinates.Y, firstVertex.Coordinates.W);
+            firstIntersectingIndex = 1 + (int)((nextDistance - startingYRash) / stepRash).AsInt128;
+            nextDistance = new RationalIP(startingYValue + firstIntersectingIndex * stepSize, commonW);
+
+            var lastIntersectingIndex = 1 + (int)((yEnd - startingYRash) / stepRash).AsInt128;
+            var intersections = new RationalIP[lastIntersectingIndex - firstIntersectingIndex][];
             var pointIndex = 0;
-            var y = startingYValue;
-            while (y <= yEnd)
+            for (var outerIndex = 0; outerIndex < lastIntersectingIndex; outerIndex++)
             {
                 var thisPoint = sortedPoints[pointIndex];
-                var needToOffset = false;
                 // this while loop updates the current lines. 
-                while (thisPoint.Y <= y)
+                while (nextDistance.IsGreaterThanVectorY(thisPoint.Coordinates)
+                    || nextDistance.IsEqualVectorY(thisPoint.Coordinates))
                 {
-                    if (y.IsPracticallySame(thisPoint.Y, tolerance)) needToOffset = true;
                     if (currentLines.Contains(thisPoint.StartLine)) currentLines.Remove(thisPoint.StartLine);
                     else currentLines.Add(thisPoint.StartLine);
                     if (currentLines.Contains(thisPoint.EndLine)) currentLines.Remove(thisPoint.EndLine);
@@ -586,19 +640,20 @@ namespace TVGL
                     if (pointIndex == sortedPoints.Count) return intersections;
                     thisPoint = sortedPoints[pointIndex];
                 }
-                if (needToOffset)
-                    y += Math.Min(stepSize, sortedPoints[pointIndex].Y - y) / 10.0;
 
-                var numIntersects = currentLines.Count;
-                var intersects = new double[numIntersects];
-                var index = 0;
+                var intersects = new List<RationalIP>(currentLines.Count);
                 foreach (var line in currentLines)
-                    intersects[index++] = FindXGivenY(line, y, out _);
-                intersections.Add(intersects.OrderBy(x => x).ToArray());
-                y += stepSize;
+                {
+                    var xRash = FindXGivenY(line, nextDistance.Num, nextDistance.Den, out var isOnLine);
+                    if (isOnLine)
+                        intersects.Add(xRash);
+                }
+                intersections[outerIndex] = intersects.OrderBy(m => m).ToArray();
+                nextDistance += stepRash;
             }
             return intersections;
         }
+
         /// <summary>
         /// Find all the polygon intersection points along a single horizontal line.
         /// Returns a list of intersections from lowest x to highest x along with the vertex that the line starts from.
@@ -606,23 +661,30 @@ namespace TVGL
         /// <param name="polygon">The polygon.</param>
         /// <param name="YValue">The y value.</param>
         /// <returns>SortedList&lt;System.Double, Vertex2D&gt;.</returns>
-        public static SortedList<double, Vertex2D> AllPolygonIntersectionPointsAlongHorizontalLine(this Polygon polygon, double YValue)
+        public static SortedList<double, PolygonEdge> AllPolygonIntersectionPointsAlongHorizontal(this Polygon polygon, double YValue)
         {
-            SortedList<double, Vertex2D> result = new SortedList<double, Vertex2D>(new NoEqualSort());
+            var yRational = new RationalIP(YValue);
+            var intersectsRash = AllPolygonIntersectionPointsAlongHorizontal(polygon, yRational);
+            return new SortedList<double, PolygonEdge>(intersectsRash.ToDictionary(x => x.Key.AsDouble, x => x.Value));
+        }
+
+        internal static SortedList<RationalIP, PolygonEdge> AllPolygonIntersectionPointsAlongHorizontal(this Polygon polygon, RationalIP yRational)
+        {
+            var result = new SortedList<RationalIP, PolygonEdge>(new NoEqualRationalSort());
             foreach (var poly in polygon.AllPolygons)
             {
                 var startVertex = poly.Vertices[0];
                 var current = startVertex;
-                var currentIsAbove = startVertex.Y >= YValue;
+                var currentIsBelow = yRational.IsLessThanVectorY(startVertex.Coordinates);
                 do
                 {
                     var line = current.StartLine;
                     var next = line.ToPoint;
-                    var nextIsAbove = next.Y >= YValue;
-                    if (nextIsAbove != currentIsAbove)
-                        result.Add(line.FindXGivenY(YValue, out _), current);
+                    var nextIsBelow = yRational.IsLessThanVectorY(next.Coordinates);
+                    if (nextIsBelow != currentIsBelow)
+                        result.Add(FindXGivenY(line, yRational.Num, yRational.Den, out _), line);
                     current = next;
-                    currentIsAbove = nextIsAbove;
+                    currentIsBelow = nextIsBelow;
                 } while (current != startVertex);
             }
             return result;
@@ -634,21 +696,28 @@ namespace TVGL
         /// <param name="polygon">The polygon.</param>
         /// <param name="YValue">The y value.</param>
         /// <returns>SortedList&lt;System.Double, Vertex2D&gt;.</returns>
-        public static SortedList<double, Vertex2D> AllPolygonIntersectionPointsAlongVertical(this Polygon polygon, double XValue)
+        public static SortedList<double, PolygonEdge> AllPolygonIntersectionPointsAlongVertical(this Polygon polygon, double XValue)
         {
-            SortedList<double, Vertex2D> result = new SortedList<double, Vertex2D>(new NoEqualSort());
+            var xRational = new RationalIP(XValue);
+            var intersectsRash = AllPolygonIntersectionPointsAlongVertical(polygon, xRational);
+            return new SortedList<double, PolygonEdge>(intersectsRash.ToDictionary(x => x.Key.AsDouble, x => x.Value));
+        }
+
+        internal static SortedList<RationalIP, PolygonEdge> AllPolygonIntersectionPointsAlongVertical(this Polygon polygon, RationalIP xRational)
+        {
+            var result = new SortedList<RationalIP, PolygonEdge>(new NoEqualRationalSort());
             foreach (var poly in polygon.AllPolygons)
             {
                 var startVertex = poly.Vertices[0];
                 var current = startVertex;
-                var currentIsToTheRight = startVertex.X >= XValue;
+                var currentIsToTheRight = xRational.IsLessThanVectorX(current.Coordinates);
                 do
                 {
                     var line = current.StartLine;
                     var next = line.ToPoint;
-                    var nextIsToTheRight = next.X >= XValue;
+                    var nextIsToTheRight = xRational.IsLessThanVectorX(next.Coordinates);
                     if (nextIsToTheRight != currentIsToTheRight)
-                        result.Add(line.FindYGivenX(XValue, out _), current);
+                        result.Add(FindYGivenX(line, xRational.Num, xRational.Den, out _), line);
                     current = next;
                     currentIsToTheRight = nextIsToTheRight;
                 } while (current != startVertex);
@@ -908,11 +977,6 @@ namespace TVGL
         }
 
         /// <summary>
-        /// The unit cross is parallel
-        /// </summary>
-        const double unitCrossIsParallel = 1e-10;
-
-        /// <summary>
         /// Determines if Two polygon line segments intersect. Because they are part of a polygon, it is decided to make the
         /// fromPoint Inclusive, and the toPoint exclusive. Thus, if lines touch at their endpoints, it is only recorded
         /// if both points are from points. Also no "close" operations are used (e.g. IsPracticallySame). Because the method is
@@ -936,168 +1000,49 @@ namespace TVGL
                 // the two lines do not touch since their bounding boxes do not overlap
                 return false;
             // okay, so bounding boxes DO overlap
-            Vector2IP intersectionCoordinates;
-            var where = WhereIsIntersection.Intermediate;
-
-            var lineACrossLineB = lineA.Normal.Cross(lineB.Normal); 
+            // first, see if the edges have the same carrier line. Basically, check if the line normals are the same
+            // we could call the VectorIP.Equals method, but we will unpack it since we will also want to check if lines
+            // are parallel
+            var parallel = lineA.Normal.X * lineB.Normal.Y == lineB.Normal.X * lineA.Normal.Y;
+            var sameCarrier = parallel && (lineA.Normal.W == lineB.Normal.W
+                || (lineA.Normal.X * lineB.Normal.W == lineB.Normal.X * lineA.Normal.W
+                    && lineA.Normal.Y * lineB.Normal.W == lineB.Normal.Y * lineA.Normal.W));
+            if (parallel && !sameCarrier)
+                return false;
+            if (sameCarrier)
+                // This means that the two lines are collinear and we need to check if they overlap.
+                return AddCollinearIntersection(lineA, lineB, intersections);
+            var cross = lineA.Normal.Cross(lineB.Normal);
             //first a quick check to see if points are the same
             if (lineA.FromPoint.Coordinates == lineB.FromPoint.Coordinates)
             {
-                intersectionCoordinates = lineA.FromPoint.Coordinates;
-                where = WhereIsIntersection.BothStarts;
-            }
-            else if (lineA.FromPoint.Coordinates == lineB.ToPoint.Coordinates)
-            {
-                intersectionCoordinates = lineA.FromPoint.Coordinates;
-                where = WhereIsIntersection.AtStartOfA;
-            }
-            else if (lineB.FromPoint.Coordinates == lineA.ToPoint.Coordinates)
-            {
-                intersectionCoordinates = lineB.FromPoint.Coordinates;
-                where = WhereIsIntersection.AtStartOfB;
+                intersections.Add(new SegmentIntersection(lineA, lineB, lineA.FromPoint.Coordinates,
+                    cross.W > 0 ? SegmentRelationship.AEnclosesB : SegmentRelationship.BEnclosesA, WhereIsIntersection.BothStarts, CollinearityTypes.None));
+                return true;
             }
             // what about the ToPoints? we don't check these given that the lines are treated as FromPoint inclusive and ToPoint exclusive
-            else
-            {
-                PGA2D.PointAtPolyEdgeIntersection(lineA, lineB, out var t1, out var onSegment1, out var t2, out var onSegment2);
-                var fromPointVector = bFrom - aFrom; // the vector connecting starts
-                if (lineACrossLineB.W == 0) // the two lines are parallel (cross product will be zero)
-                {
-                    var intersectionFound = false;
-                    if (fromPointVector.Cross(aVector) == 0)
-                    {
-                        // if fromPointCross is also parallel with the line vector (either lineA or lineB since they are parallel to each other)
-                        // and since bounding boxes do overlap, then the lines are collinear and overlapping
-                        // While there are technically infinite points that are intersecting, we only record when the start of the line
-                        // is common. It is possible that the starts (FromPoints) are not overlapping at all - in which case nothing is added.
-                        // It is also possible that both FromPoints are on the other line - if so, then we add both. This is the one other place 
-                        // where a second IntersectionData is added
-                        if ((bTo - aFrom).Dot(fromPointVector) < 0)
-                        {   // since fromPointVector goes from lineA.FromPoint to lineB.FromPoint - if going from line.FromPoint to lineB.ToPoint is
-                            // opposite then lineA.FromPoint is on lineB
-                            intersectionCoordinates = aFrom;
-                            where = WhereIsIntersection.AtStartOfA;
-                            intersectionFound = true;
-                        }
-                        if ((bFrom - aTo).Dot(fromPointVector) < 0)
-                        { // now check the other way. Note, since fromPointVector is backwards here, we just make the other vector backwards as well
+            //if (lineA.FromPoint.Coordinates == lineB.ToPoint.Coordinates)
+            //{
+            //    intersections.Add(new SegmentIntersection(lineA, lineB, lineA.FromPoint.Coordinates,
+            //        cross.W > 0 ? SegmentRelationship.AEnclosesB : SegmentRelationship.BEnclosesA, WhereIsIntersection.AtStartOfA, CollinearityTypes.None));
+            //    return true;
+            //}
+            //if (lineB.FromPoint.Coordinates == lineA.ToPoint.Coordinates)
+            //{
+            //    intersections.Add(new SegmentIntersection(lineA, lineB, lineB.FromPoint.Coordinates,
+            //        cross.W > 0 ? SegmentRelationship.AEnclosesB : SegmentRelationship.BEnclosesA, WhereIsIntersection.AtStartOfB, CollinearityTypes.None));
+            //    return true;
+            //}
 
-                            if (intersectionFound) // okay, well, you need to add TWO points. Going to go ahead and finish off the lineB point here
-                            {
-                                CollinearityTypes collinearB;
-                                SegmentRelationship relationshipB;
-                                (relationshipB, collinearB) = DeterminePolygonSegmentRelationship(lineA, lineB, aVector, bVector, numSigDigs, needToRoundA, needToRoundB,
-                                    WhereIsIntersection.AtStartOfB, lineACrossLineB);
+            var intersectionCoordinates = PGA2D.PointAtPolyEdgeIntersection(lineA, lineB, out var t1, out var onSegment1, out var t2, out var onSegment2);
+            intersections.Add(new SegmentIntersection(lineA, lineB, intersectionCoordinates,
+            cross.W > 0 ? SegmentRelationship.AEnclosesB : SegmentRelationship.BEnclosesA, WhereIsIntersection.Intermediate, CollinearityTypes.None));
 
-                                intersections.Add(new SegmentIntersection(lineA, lineB, bFrom, relationshipB,
-                                    WhereIsIntersection.AtStartOfB, collinearB));
-                            }
-                            else
-                            {
-                                where = WhereIsIntersection.AtStartOfB;
-                                intersectionCoordinates = bFrom;
-                                intersectionFound = true;
-                            }
-                        }
-                        //technically the lines overlap even if the previous two condition are not met, but since the overlap doesn't include
-                        // either from Point, then we do not record it. It will be recorded when the next segment is checked
-                    }
-                    if (!intersectionFound) return false; // otherwise the lines are parallel but not at same distance/intercept. Or, they are
-                                                          //inline but the from's other both segments are outside of the intersection - we consider this not an intersection. 
-                                                          //Instead those will be solved in the next/adjacent polygon segment
-                }
-                else
-                {
-                    // now check the intersection by detecting where non-parallel lines cross
-                    // solve for the t scalar values for the two lines.
-                    // the line is define as all values of t from 0 to 1 in the equations
-                    // line1(t_1) = (1 - t_1)*line1.From + t_1*line1.To
-                    // line2(t_2) = (1 - t_2)*line2.From + t_2*line2.To
-                    // ...solving for the x-value at the intersection...
-                    // xIntersect =  (1 - t_1)*line1.From.X + t_1*line1.To.X = (1 - t_2)*line2.From.X + t_2*line2.To.X (Eq.1)
-                    // yIntersect =  (1 - t_1)*line1.From.Y + t_1*line1.To.Y = (1 - t_2)*line2.From.Y + t_2*line2.To.Y (Eq.2)
-                    //rewriting Eq.1 as...
-                    // t_1*(line1.To.X - line1.From.X) + t_2*(line2.From.X - line2.To.X) = line2.From.X - line1.From.X 
-                    // which can be simplified to...
-                    // t_1*(line1.Vector.X) - t_2*(line2.Vector.X) = vStart.X
-                    // similiarly for Y
-                    // t_1*(line1.Vector.Y) - t_2*(line2.Vector.Y) = vStart.Y
-                    // solve as a system of two equations
-                    //   |   line1.Vector.X      -line2.Vector.X   | |  t_1  |    | vStart.X  |
-                    //   |                                         |*|       | =  |           |
-                    //   |   line1.Vector.Y      -line2.Vector.Y   | |  t_2  |    | vStart.Y  |
-                    var oneOverdeterminnant = 1 / lineACrossLineB;
-                    var t_1 = oneOverdeterminnant * (bVector.Y * fromPointVector.X - bVector.X * fromPointVector.Y);
-                    if (t_1 < 0 || t_1 >= 1)
-                        //if (t_1.IsLessThanNonNegligible(0, Constants.PolygonSameTolerance)
-                        //    || !t_1.IsLessThanNonNegligible(1.0, Constants.PolygonSameTolerance))
-                        return false;
-                    var t_2 = oneOverdeterminnant * (aVector.Y * fromPointVector.X - aVector.X * fromPointVector.Y);
-                    if (t_2 < 0 || t_2 >= 1)
-                        return false;
-                    var aIntersection = new Vector2(
-                            Math.Round(aFrom.X + t_1 * aVector.X, numSigDigs),
-                            Math.Round(aFrom.Y + t_1 * aVector.Y, numSigDigs));
-                    var bIntersection = new Vector2(
-                            Math.Round(bFrom.X + t_2 * bVector.X, numSigDigs),
-                            Math.Round(bFrom.Y + t_2 * bVector.Y, numSigDigs));
-                    if (aIntersection == aFrom)
-                    {
-                        intersectionCoordinates = aFrom;
-                        where = WhereIsIntersection.AtStartOfA;
-                        if (aFrom == bTo)
-                            possibleDuplicates.Insert(0, (intersections.Count, lineA, lineB.ToPoint.StartLine));
-                    }
-                    else if (bIntersection == bFrom)
-                    {
-                        intersectionCoordinates = bFrom;
-                        where = WhereIsIntersection.AtStartOfB;
-                        if (bFrom == aTo)
-                            possibleDuplicates.Insert(0, (intersections.Count, lineA.ToPoint.StartLine, lineB));
-                    }
-                    else
-                    {
-                        intersectionCoordinates = new Vector2(
-                            Math.Round((aFrom.X + t_1 * aVector.X + bFrom.X + t_2 * bVector.X) / 2, numSigDigs),
-                            Math.Round((aFrom.Y + t_1 * aVector.Y + bFrom.Y + t_2 * bVector.Y) / 2, numSigDigs));
-                        where = WhereIsIntersection.Intermediate;
-                        if (intersectionCoordinates == aTo && intersectionCoordinates == bTo)
-                            possibleDuplicates.Insert(0, (intersections.Count, lineA.ToPoint.StartLine, lineB.ToPoint.StartLine));
-                        else if (intersectionCoordinates == aTo)
-                            possibleDuplicates.Insert(0, (intersections.Count, lineA.ToPoint.StartLine, lineB));
-                        else if (intersectionCoordinates == bTo)
-                            possibleDuplicates.Insert(0, (intersections.Count, lineA, lineB.ToPoint.StartLine));
-                    }
-                }
-            }
-            CollinearityTypes collinear;
-            SegmentRelationship relationship;
-            (relationship, collinear) = DeterminePolygonSegmentRelationship(lineA, lineB, aVector, bVector, where, lineACrossLineB.W);
-            intersections.Add(new SegmentIntersection(lineA, lineB, intersectionCoordinates, relationship, where, collinear));
             return true;
         }
 
-
-        /// <summary>
-        /// Determines the polygon segment relationship.
-        /// </summary>
-        /// <param name="edgeA">The edge a.</param>
-        /// <param name="edgeB">The edge b.</param>
-        /// <param name="aVector">a vector.</param>
-        /// <param name="bVector">The b vector.</param>
-        /// <param name="numSigDigs">The number sig digs.</param>
-        /// <param name="needToRoundA">if set to <c>true</c> [need to round a].</param>
-        /// <param name="needToRoundB">if set to <c>true</c> [need to round b].</param>
-        /// <param name="where">The where.</param>
-        /// <param name="lineACrossLineB">The line a cross line b.</param>
-        /// <returns>System.ValueTuple&lt;SegmentRelationship, CollinearityTypes&gt;.</returns>
-        internal static (SegmentRelationship, CollinearityTypes) DeterminePolygonSegmentRelationship(PolygonEdge edgeA, PolygonEdge edgeB,
-            in Vector2 aVector, in Vector2 bVector, in WhereIsIntersection where, double lineACrossLineB)
+        private static bool AddCollinearIntersection(PolygonEdge lineA, PolygonEdge lineB, List<SegmentIntersection> intersections)
         {
-            // first off - handle the intermediate case right away. since it's simple and happens often
-            if (where == WhereIsIntersection.Intermediate)
-                return (lineACrossLineB < 0 ? SegmentRelationship.CrossOver_BOutsideAfter : SegmentRelationship.CrossOver_AOutsideAfter, CollinearityTypes.None);
-            // set up other useful vectors and cross products
             double prevACrossPrevB, lineACrossPrevB, prevACrossLineB;
             Vector2 previousAVector, previousBVector;
             // based on where the intersection happens, we can quicken the calculation of these

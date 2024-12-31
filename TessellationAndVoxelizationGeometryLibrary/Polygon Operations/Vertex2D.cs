@@ -123,6 +123,7 @@ namespace TVGL
         internal Vertex2D() { }
 
 
+        #endregion Constructor
 
         /// <summary>
         /// Returns a <see cref="System.String" /> that represents this instance.
@@ -146,6 +147,12 @@ namespace TVGL
         {
             return Coordinates.IsNull();
         }
-        #endregion Constructor
+
+        public bool IsSameXAs(Vertex2D that) => RationalIP.Equals(this.Coordinates.X, this.Coordinates.W, that.Coordinates.X, that.Coordinates.W);
+        public bool IsSameYAs(Vertex2D that) => RationalIP.Equals(this.Coordinates.Y, this.Coordinates.W, that.Coordinates.Y, that.Coordinates.W);
+        public bool HasLessXThan(Vertex2D that) => RationalIP.IsLessThanVectorX(this.Coordinates, that.Coordinates);
+        public bool HasLessYThan(Vertex2D that) => RationalIP.IsLessThanVectorY(this.Coordinates, that.Coordinates);
+        public bool HasGreaterXThan(Vertex2D that) => RationalIP.IsGreaterThanVectorX(this.Coordinates, that.Coordinates);
+        public bool HasGreaterYThan(Vertex2D that) => RationalIP.IsGreaterThanVectorY(this.Coordinates, that.Coordinates);
     }
 }
