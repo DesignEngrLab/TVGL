@@ -17,6 +17,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
+using System.Reflection.Metadata.Ecma335;
 using System.Runtime.Serialization;
 
 
@@ -144,6 +145,7 @@ namespace TVGL
             for (int i = 0, j = numPoints - 1; i < numPoints; j = i++)
             // note this compact approach to setting i and j. 
             {
+                if (!IsClosed && i == 0) continue;
                 var fromNode = Vertices[j];
                 var toNode = Vertices[i];
                 var polySegment = new PolygonEdge(fromNode, toNode);
