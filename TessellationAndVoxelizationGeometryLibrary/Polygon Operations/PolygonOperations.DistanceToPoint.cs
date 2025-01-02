@@ -138,40 +138,21 @@ namespace TVGL
         /// <returns>System.Double.</returns>
         private static double MinDistanceToPolygon(double x, double y, IEnumerable<PolygonEdge> edges, out PolygonEdge closestEdge)
         {
-            var queryPoint = new Vector2(x, y);
-            var minDistance = double.MaxValue;
+            var queryPoint = new Vector2IP(x, y);
+            var minDistance = RationalIP.PositiveInfinity;
             closestEdge = null;
-            Vertex2D closestVertex = null;
             foreach (var edge in edges)
             {
                 /* pointOnLine is found by setting the dot-product of the lineVector and the vector formed by (pointOnLine-p)
                 * set equal to zero. This is really just solving to "t" the distance along the line from the lineRefPt. */
-                var d = SqDistancePointToLineSegment(x, y, edge, out var atEndPoint);
+                var d = PGA2D.ShortestDistancePointToLineSegment(edge, queryPoint, out _);
                 if (d < minDistance)
                 {
-                    if (atEndPoint)
-                    {
-                        var fromDistance = edge.FromPoint.Coordinates.DistanceSquared(queryPoint);
-                        var toDistance = edge.ToPoint.Coordinates.DistanceSquared(queryPoint);
-                        closestVertex = fromDistance < toDistance ? edge.FromPoint : edge.ToPoint;
-                    }
-                    else closestVertex = null;
                     closestEdge = edge;
                     minDistance = d;
                 }
             }
-            if (closestVertex != null)
-            {
-                var startLine = closestVertex.StartLine;
-                var endLine = closestVertex.EndLine;
-                var t = 0.01;
-                var startLinePoint = closestVertex.Coordinates + t * startLine.Vector;
-                var endLinePoint = closestVertex.Coordinates - t * endLine.Vector;
-                if (startLinePoint.DistanceSquared(queryPoint) < endLinePoint.DistanceSquared(queryPoint))
-                    closestEdge = startLine;
-                else closestEdge = endLine;
-            }
-            return Math.Sqrt(minDistance);
+            return minDistance.SquareRoot().AsDouble;
         }
     }
 }

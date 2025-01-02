@@ -376,13 +376,13 @@ namespace TVGL
                 {
                     if (visitedIntersectionPairs.Contains((newFlippedEdge, edgeB))) continue;
                     visitedIntersectionPairs.Add((newFlippedEdge, edgeB));
-                    PolygonOperations.AddIntersectionBetweenLines(newFlippedEdge, edgeB, newIntersections, possibleDuplicates, polygon.NumSigDigits, false, false);
+                    PolygonOperations.AddIntersectionBetweenLines(newFlippedEdge, edgeB, newIntersections);
                 }
                 else
                 {
                     if (visitedIntersectionPairs.Contains((edgeA, newFlippedEdge))) continue;
                     visitedIntersectionPairs.Add((edgeA, newFlippedEdge));
-                    PolygonOperations.AddIntersectionBetweenLines(edgeA, newFlippedEdge, newIntersections, possibleDuplicates, polygon.NumSigDigits, false, false);
+                    PolygonOperations.AddIntersectionBetweenLines(edgeA, newFlippedEdge, newIntersections);
                 }
             }
             var newSubPolygonToInt = new Dictionary<Polygon, int>();

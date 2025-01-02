@@ -68,7 +68,11 @@ namespace TVGL
             polygon.MakePolygonEdgesIfNonExistent();
             foreach (var vertex in polygon.Vertices)
             {
-                if (vertex.EndLine.Vector.Cross(vertex.StartLine.Vector).IsNegligible())
+                if (vertex.EndLine.Normal.Cross(vertex.StartLine.Normal).LengthSquared3D()
+                    < Vector2IP.InitialW)
+                    // if the cross product of the normals is zero, then the lines are collinear
+                    // here, we claim that "zero" is anything less than the initialW value
+                    // is this a good value?
                     vertex.DeleteVertex();
             }
             polygon.RecreateVertices();

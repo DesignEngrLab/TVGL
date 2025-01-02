@@ -46,6 +46,7 @@ namespace TVGL
         }
 
         internal Int128 AsInt128 => Int128.DivRem(Num, Den).Quotient;
+        public RationalIP SquareRoot() => new RationalIP(Num.SquareRoot(), Den.SquareRoot());
 
         public static RationalIP One = new RationalIP(1, 1);
 
@@ -196,6 +197,20 @@ namespace TVGL
         internal static bool IsInfinity(RationalIP r)
         {
             return r.Den == Int128.Zero;
+        }
+
+        internal bool IsNegative()
+        {
+            if (Num == Int128.Zero) return false;
+            if (Den == Int128.Zero) return Int128.IsNegative(Num);
+            return Int128.IsNegative(Num) != Int128.IsNegative(Den);
+        }
+
+        internal bool IsPositive()
+        {
+            if (Num == Int128.Zero) return false;
+            if (Den == Int128.Zero) return Int128.IsPositive(Num);
+            return Int128.IsNegative(Num) == Int128.IsNegative(Den);
         }
 
         #endregion

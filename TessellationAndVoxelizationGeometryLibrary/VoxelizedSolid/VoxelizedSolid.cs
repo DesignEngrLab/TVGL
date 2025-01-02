@@ -216,7 +216,7 @@ namespace TVGL
 
             var yBegin = copy.Bounds[0][1] + copy.VoxelSideLength / 2;
             var intersections = loops.AllPolygonIntersectionPointsAlongHorizontalLines(yBegin, copy.VoxelSideLength, out var yStartIndex);
-            var numYlines = intersections.Count;
+            var numYlines = intersections.Length;
             for (int j = -Math.Min(0, yStartIndex); j < numYlines; j++)
             {
                 var intersectionPoints = intersections[j];
@@ -254,7 +254,7 @@ namespace TVGL
                 if (loops != null && loops.Count > 0)
                 {
                     var intersections = PolygonOperations.AllPolygonIntersectionPointsAlongHorizontalLines(loops, yBegin, VoxelSideLength, out var yStartIndex);
-                    var numYlines = intersections.Count;
+                    var numYlines = intersections.Length;
                     for (int j = yStartIndex; j < numYlines; j++)
                     {
                         var intersectionPoints = intersections[j];

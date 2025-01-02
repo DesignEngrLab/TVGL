@@ -838,7 +838,7 @@ namespace TVGL
                     {
                         // the real savings comes from the second condition in the while loop. We do not need to check bLines
                         // that have higher XMin than the current aLine's xMax. In this way, the number of comparisons is greatly limited
-                        AddIntersectionBetweenLines(aLine, bLines[localBIndex++], intersections, possibleDuplicates);
+                        AddIntersectionBetweenLines(aLine, bLines[localBIndex++], intersections);
                         if (localBIndex >= bLines.Length) break;
                         bXMin = bLines[localBIndex].XMin;
                     }
@@ -850,7 +850,7 @@ namespace TVGL
                     var localAIndex = aIndex;
                     while (bXMax >= aXMin)
                     {
-                        AddIntersectionBetweenLines(aLines[localAIndex++], bLine, intersections, possibleDuplicates);
+                        AddIntersectionBetweenLines(aLines[localAIndex++], bLine, intersections);
                         if (localAIndex >= aLines.Length) break;
                         aXMin = aLines[localAIndex].XMin;
                     }
@@ -882,8 +882,8 @@ namespace TVGL
                 relationship |= PolyRelInternal.CoincidentEdges;
             if (intersections.Any(intersection => intersection.WhereIntersection != WhereIsIntersection.Intermediate))
                 relationship |= PolyRelInternal.CoincidentVertices;
-            var equalTolerance = Math.Pow(10, -numSigDigs);
-            var isEqual = subPolygonA.PathArea.IsPracticallySame(subPolygonB.PathArea, equalTolerance);
+            
+            var isEqual = subPolygonA.PathArea.IsPracticallySame(subPolygonB.PathArea, Constants.BaseTolerance);
             foreach (var intersect in intersections)
             {
                 if (!isEqual) break;
@@ -903,9 +903,9 @@ namespace TVGL
             }
             if (isOpposite)
             {
-                if (subPolygonA.Area.IsPracticallySame(-subPolygonB.Area, equalTolerance) && subPolygonA.MinXIP.IsPracticallySame(subPolygonB.MinXIP, equalTolerance)
-                    && subPolygonA.MinYIP.IsPracticallySame(subPolygonB.MinYIP, equalTolerance) && subPolygonA.MaxXIP.IsPracticallySame(subPolygonB.MaxXIP, equalTolerance)
-                    && subPolygonA.MaxYIP.IsPracticallySame(subPolygonB.MaxYIP, equalTolerance))
+                if (subPolygonA.Area.IsPracticallySame(-subPolygonB.Area, equalTolerance) && subPolygonA.MinXIP==subPolygonB.MinXIP
+                    && subPolygonA.MinYIP==subPolygonB.MinYIP && subPolygonA.MaxXIP==subPolygonB.MaxXIP
+                    && subPolygonA.MaxYIP==subPolygonB.MaxYIP)
                     return relationship | PolyRelInternal.EqualButOpposite;
                 return relationship;
             }
@@ -1266,7 +1266,7 @@ namespace TVGL
                     var other = orderedLines[j];
                     if (current.XMax < other.XMin) break;
                     if (current.IsAdjacentTo(other)) continue;
-                    AddIntersectionBetweenLines(current, other, intersections, possibleDuplicates);
+                    AddIntersectionBetweenLines(current, other, intersections);
                 }
             }
             RemoveDuplicateIntersections(possibleDuplicates, intersections);

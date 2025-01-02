@@ -29,13 +29,11 @@ namespace TVGL
         public Vector2 AsVector2 => new Vector2(RationalIP.AsDoubleValue(X, W),
             RationalIP.AsDoubleValue(Y, W));
 
-        internal Vector2IP(Vector2 vector)
-        => new Vector2IP(vector.X, vector.Y, InitialW);
-        internal Vector2IP(double x, double y)
-        => new Vector2IP(x, y, InitialW);
+        internal Vector2IP(Vector2 vector) : this(vector.X, vector.Y, InitialW) { }
+        internal Vector2IP(double x, double y) : this(x, y, InitialW) { }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal Vector2IP(double x, double y, Int128 w)
-       => new Vector2IP((Int128)x * w, (Int128)y * w, w);
+        internal Vector2IP(double x, double y, Int128 w) : this((Int128)x * w, (Int128)y * w, w) { }
         internal Vector2IP(Int128 x, Int128 y, Int128 w)
         {
             X = x;
@@ -47,6 +45,12 @@ namespace TVGL
         public static Vector2IP UnitX = new Vector2IP(Int128.One, Int128.Zero, Int128.One);
         public static Vector2IP UnitY = new Vector2IP(Int128.Zero, Int128.One, Int128.One);
 
+        public Vector2 AsNormalizedVector2()
+        {
+            var length = (X * X + Y * Y).SquareRoot();
+            return new Vector2(RationalIP.AsDoubleValue(X, length),
+                RationalIP.AsDoubleValue(Y, length));
+        }
         internal bool IsNull()
         {
             return this == Zero;
@@ -106,6 +110,12 @@ namespace TVGL
         internal Int128 LengthSquared3D()
         {
             return X * X + Y * Y + W * W;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal RationalIP LengthSquared2D()
+        {
+            return new RationalIP(X * X + Y * Y, W * W);
         }
 
 

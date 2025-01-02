@@ -51,11 +51,13 @@ namespace TVGL
             while (GetNextStartingIntersection(interaction.IntersectionData, out var startingIntersection,
                 out var startEdge, out var switchPolygon, ref indexIntersectionStart))
             {
-                var polyCoordinates = MakePolygonThroughIntersections(intersectionLookup, interaction.IntersectionData, startingIntersection,
-                    startEdge, switchPolygon, out _).ToList();
-                var area = polyCoordinates.Area();
+                var newPolygon = MakePolygonThroughIntersections(intersectionLookup, interaction.IntersectionData, startingIntersection,
+                    startEdge, switchPolygon, out _);
+                var area = newPolygon.Area;
                 if (area.IsNegligible(minimumArea)) continue;
-                newPolygons.Add(new Polygon(polyCoordinates.RemoveCollinearEdgesDestructiveList(), polygonIndex++));
+                newPolygon.RemoveCollinearEdges();
+                newPolygon.Index = polygonIndex++;
+                newPolygons.Add(newPolygon);
             }
             // to handle the non-intersecting subpolygons
             var nonIntersectingASubPolygons = new List<Polygon>(polygonA.AllPolygons);
@@ -184,14 +186,14 @@ namespace TVGL
         /// <param name="knownWrongPoints">The known wrong points.</param>
         /// <returns>Polygon.</returns>
         /// <exception cref="NotImplementedException"></exception>
-        protected List<Vector2> MakePolygonThroughIntersections(List<int>[] intersectionLookup, List<SegmentIntersection> intersections,
+        protected Polygon MakePolygonThroughIntersections(List<int>[] intersectionLookup, List<SegmentIntersection> intersections,
             SegmentIntersection startingIntersection, PolygonEdge startingEdge, bool switchPolygon,
             out bool includesWrongPoints, List<bool> knownWrongPoints = null)
 
         {
             bool? completed;
             includesWrongPoints = false;
-            var newPath = new List<Vector2>();
+            var newPath = new List<Vector2IP>();
             var intersectionData = startingIntersection;
             var currentEdge = startingEdge;
             do
@@ -219,7 +221,7 @@ namespace TVGL
                     if (knownWrongPoints != null && knownWrongPoints[currentEdge.FromPoint.IndexInList]) includesWrongPoints = true;
                     newPath.Add(currentEdge.FromPoint.Coordinates);
                     //newPathHash.Add(currentEdge.FromPoint.Coordinates);
-                    intersectionCoordinates = Vector2.Null; // this is set to null because its value is used in ClosestNextIntersectionOnThisEdge
+                    intersectionCoordinates = Vector2IP.Zero; // this is set to null because its value is used in ClosestNextIntersectionOnThisEdge
                                                             // when multiple intersections cross the edge. If we got through the first pass then there are no previous intersections on
                                                             // the edge that concern us. We want that function to report the first one for the edge
 //#if PRESENT
@@ -231,7 +233,7 @@ namespace TVGL
             //            Presenter.ShowAndHang(newPath);
             //#endif
             if (completed == null) newPath.Clear();
-            return newPath;
+            return new Polygon(newPath,-1);
         }
 
         /// <summary>
@@ -247,7 +249,7 @@ namespace TVGL
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         /// <exception cref="NotImplementedException"></exception>
         private bool ClosestNextIntersectionOnThisEdge(List<int>[] intersectionLookup, PolygonEdge currentEdge, List<SegmentIntersection> allIntersections,
-        Vector2 formerIntersectCoords, out SegmentIntersection bestIntersection, out bool switchPolygon)
+        Vector2IP formerIntersectCoords, out SegmentIntersection bestIntersection, out bool switchPolygon)
         {
             var intersectionIndices = intersectionLookup[currentEdge.IndexInList];
             bestIntersection = null;
@@ -256,19 +258,19 @@ namespace TVGL
                 switchPolygon = false;
                 return false;
             }
-            var minDistanceToIntersection = double.PositiveInfinity;
+            var minDistanceToIntersection = RationalIP.PositiveInfinity;
             var datum = !formerIntersectCoords.IsNull() ? formerIntersectCoords : currentEdge.FromPoint.Coordinates;
             foreach (var index in intersectionIndices)
             {
                 var candidateIntersect = allIntersections[index];
                 var currentEdgeIsFromPolygonA = candidateIntersect.EdgeA == currentEdge;
                 if (formerIntersectCoords.Equals(candidateIntersect.IntersectCoordinates)) continue;
-                var distance = 0.0;
+                var distance = RationalIP.Zero;
                 if (!(formerIntersectCoords.IsNull() && (candidateIntersect.WhereIntersection == WhereIsIntersection.BothStarts ||
                     (candidateIntersect.WhereIntersection == WhereIsIntersection.AtStartOfA && currentEdgeIsFromPolygonA) ||
                     (candidateIntersect.WhereIntersection == WhereIsIntersection.AtStartOfB && !currentEdgeIsFromPolygonA))))
-                    distance = currentEdge.Vector.Dot(candidateIntersect.IntersectCoordinates - datum);
-                if (distance < 0) continue;
+                    distance = currentEdge.Vector.Dot2D(candidateIntersect.IntersectCoordinates - datum);
+                if (distance.IsNegative()) continue;
                 if (minDistanceToIntersection > distance)
                 {
                     minDistanceToIntersection = distance;
@@ -280,14 +282,15 @@ namespace TVGL
                     // into the polygon
                     var bestEdge = bestIntersection.EdgeA == currentEdge ? bestIntersection.EdgeB : bestIntersection.EdgeA;
                     var newCandidateEdge = candidateIntersect.EdgeA == currentEdge ? candidateIntersect.EdgeB : candidateIntersect.EdgeA;
-                    var bestAngle = currentEdge.Vector.SmallerAngleBetweenVectorsEndToEnd(bestEdge.Vector);
-                    var newCandidateAngle = currentEdge.Vector.SmallerAngleBetweenVectorsEndToEnd(newCandidateEdge.Vector);
-                    if (newCandidateAngle > bestAngle) bestIntersection = candidateIntersect;
-                    if (newCandidateAngle == bestAngle)
+                    var wCross = bestEdge.Normal.Cross(newCandidateEdge.Normal).W;
+                    //var bestAngle = currentEdge.Normal.SmallerAngleBetweenVectorsEndToEnd(bestEdge.Normal);
+                    //var newCandidateAngle = currentEdge.Normal.SmallerAngleBetweenVectorsEndToEnd(newCandidateEdge.Normal);
+                    if (wCross > 0) bestIntersection = candidateIntersect;
+                    if (wCross == Int128.Zero)
                     {   // really?! if you are here than not only are there two segments that pass through currentEdge at the same
                         // point, but the do so at the same angle! So, we are going to choose the one that is shorter
-                        var bestRemainingLength = (bestEdge.ToPoint.Coordinates - bestIntersection.IntersectCoordinates).LengthSquared();
-                        var newCandRemainingLength = (newCandidateEdge.ToPoint.Coordinates - candidateIntersect.IntersectCoordinates).LengthSquared();
+                        var bestRemainingLength = (bestEdge.ToPoint.Coordinates - bestIntersection.IntersectCoordinates).LengthSquared2D();
+                        var newCandRemainingLength = (newCandidateEdge.ToPoint.Coordinates - candidateIntersect.IntersectCoordinates).LengthSquared2D();
                         if (newCandRemainingLength < bestRemainingLength) bestIntersection = candidateIntersect;
                     }
                 }

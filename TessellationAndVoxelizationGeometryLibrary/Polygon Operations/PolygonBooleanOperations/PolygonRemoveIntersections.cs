@@ -44,18 +44,19 @@ namespace TVGL
             while (GetNextStartingIntersection(intersections, out var startingIntersection,
                 out var startEdge, out var switchPolygon, ref indexIntersectionStart))
             {
-                var polyCoordinates = MakePolygonThroughIntersections(intersectionLookup, intersections, startingIntersection,
-                    startEdge, switchPolygon, out var includesWrongPoints, knownWrongPoints).ToList();
+                var newPolygon = MakePolygonThroughIntersections(intersectionLookup, intersections, startingIntersection,
+                    startEdge, switchPolygon, out var includesWrongPoints, knownWrongPoints);
                 if (includesWrongPoints) continue;
-                var area = polyCoordinates.Area();
+                var area = newPolygon.Area;
                 if (area.IsNegligible(polygon.Area * Constants.PolygonSameTolerance)) continue;
                 if (area * (int)resultType < 0) // note that the ResultType enum has assigned negative values that are used
                                                 //in conjunction with the area of the sign. Only if the product is negative - do we do something 
                 {
                     if (resultType == ResultType.OnlyKeepNegative || resultType == ResultType.OnlyKeepPositive) continue;
-                    else polyCoordinates.Reverse();
+                    else newPolygon.Reverse();
                 }
-                newPolygons.Add(new Polygon(polyCoordinates.SimplifyMinLengthToNewList(Math.Pow(10, -polygon.NumSigDigits))));
+                newPolygon.SimplifyMinLength(polygon.Area * Constants.PolygonSameTolerance);
+                newPolygons.Add(newPolygon);
             }
             return newPolygons.OrderByDescending(p => Math.Abs(p.Area))
                 .Take(maxNumberOfPolygons).Reverse()

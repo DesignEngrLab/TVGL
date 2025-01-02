@@ -2220,8 +2220,9 @@ namespace TVGL
             foreach (var polygon in slice)
             {
                 var V = new Vector2(PointInQuestion.X, PointInQuestion.Y);
-                if (polygon.IsPointInsidePolygon(false, V, out _, onBoundaryIsInside))
-                    return true;
+                var isInside = polygon.IsPointInsidePolygon(false, V, out var onBoundary);
+                if (isInside && (!onBoundary || onBoundaryIsInside)) return true;
+                return true;
             }
             //Presenter.ShowAndHang(slice);
             return false;

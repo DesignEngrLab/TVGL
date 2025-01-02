@@ -38,6 +38,31 @@ namespace TVGL
             // was one body. Getting the max one makes sense since there may be smaller artifacts returned from the operation.
         }
 
+        public static double MinX(this IEnumerable<Polygon> polygons)
+        {
+            if (polygons == null || !polygons.Any()) return double.NaN;
+            var minXRash = polygons.Select(p => p.MinXIP).Aggregate(RationalIP.PositiveInfinity, (min, p) => p < min ? p : min);
+            return minXRash.AsDouble;
+        }
+        public static double MinY(this IEnumerable<Polygon> polygons)
+        {
+            if (polygons == null || !polygons.Any()) return double.NaN;
+            var minXRash = polygons.Select(p => p.MinYIP).Aggregate(RationalIP.PositiveInfinity, (min, p) => p < min ? p : min);
+            return minXRash.AsDouble;
+        }
+        public static double MaxX(this IEnumerable<Polygon> polygons)
+        {
+            if (polygons == null || !polygons.Any()) return double.NaN;
+            var minXRash = polygons.Select(p => p.MaxXIP).Aggregate(RationalIP.NegativeInfinity, (max, p) => p > max ? p : max);
+            return minXRash.AsDouble;
+        }
+        public static double MaxY(this IEnumerable<Polygon> polygons)
+        {
+            if (polygons == null || !polygons.Any()) return double.NaN;
+            var minXRash = polygons.Select(p => p.MaxYIP).Aggregate(RationalIP.NegativeInfinity, (max, p) => p > max ? p : max);
+            return minXRash.AsDouble;
+        }
+
         /// <summary>
         /// Gets the perimeter for a 2D set of points. Consider using Polygon class when possible.
         /// </summary>
@@ -307,7 +332,7 @@ namespace TVGL
             var n = polygon.Edges.Count - 1;
             for (int i = 0; i <= n; i++)
             {
-                length = polygon.Edges[i].Vector.LengthSquared();
+                length = polygon.Edges[i].Vector.LengthSquared2D().AsDouble;
                 if (!length.IsGreaterThanNonNegligible(smallEdgeLengthSqd))
                     unitLengthEdges.Push(i);
                 else if (!length.IsLessThanNonNegligible(longEdgeLengthSqd))
@@ -315,18 +340,18 @@ namespace TVGL
                 else
                     medEdges.Push(i);
             }
-            length = polygon.Edges[0].Vector.LengthSquared();
+            length = polygon.Edges[0].Vector.LengthSquared2D().AsDouble;
             var nextEdgeIs = !length.IsGreaterThanNonNegligible(smallEdgeLengthSqd)
                 ? PixelEdgeLength.Unit : !length.IsLessThanNonNegligible(longEdgeLengthSqd) ?
                 PixelEdgeLength.Long : PixelEdgeLength.Med;
-            length = polygon.Edges[^1].Vector.LengthSquared();
+            length = polygon.Edges[^1].Vector.LengthSquared2D().AsDouble;
             var lastEdgeIs = pixelEdgeType(n, unitLengthEdges, medEdges, longEdges);
             var currentEdgeIs = lastEdgeIs;
-            var nextVector = polygon.Edges[0].Vector.Normalize();
+            var nextVector = polygon.Edges[0].Vector.AsNormalizedVector2();
             for (int i = n; i >= 0; i--)
             {
                 var currentEdge = polygon.Edges[i];
-                var currVector = currentEdge.Vector.Normalize();
+                var currVector = currentEdge.Vector.AsNormalizedVector2();
                 var prevEdgeIs = i == 0 ? lastEdgeIs : pixelEdgeType(i - 1, unitLengthEdges, medEdges, longEdges);
                 // four possibilities
                 // 4. unit length edges that are followed by a long length edge, then the long edge is rounded off
@@ -343,7 +368,7 @@ namespace TVGL
                     currentEdge.ToPoint.Coordinates = Vector2IP.MidPoint(currentEdge.FromPoint.Coordinates , currentEdge.ToPoint.Coordinates);
                 // 3. long length edges is followed by a unit length edge then reduce by one pixel
                 else if (currentEdgeIs == PixelEdgeLength.Long && nextEdgeIs == PixelEdgeLength.Unit)
-                    currentEdge.ToPoint.Coordinates -= pixelSideLength * currVector;
+                    currentEdge.ToPoint.Coordinates -=new Vector2IP(pixelSideLength * currVector);
 
                 nextVector = currVector;
                 nextEdgeIs = currentEdgeIs;

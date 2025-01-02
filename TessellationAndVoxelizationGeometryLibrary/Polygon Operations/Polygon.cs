@@ -570,7 +570,7 @@ namespace TVGL
         /// <param name="RemovePointsLessThanTolerance">if set to <c>true</c> [remove points less than tolerance].</param>
 
 
-        public Polygon(IEnumerable<Vector2> coordinates, int index = -1, bool RemovePointsLessThanTolerance = true)
+        public Polygon(IEnumerable<Vector2> coordinates, int index = -1)
         {
             Index = index;
             MakeVerticesFromPath(coordinates);
@@ -588,6 +588,19 @@ namespace TVGL
             foreach (var v2 in coordinates)
             {
                 var newPt = new Vector2IP(v2);
+                if (newPt == lastPoint) continue;
+                _vertices.Add(new Vertex2D(newPt, i++, Index));
+                lastPoint = newPt;
+            }
+        }
+        internal Polygon(IEnumerable<Vector2IP> coordinates, int index = -1)
+        {
+            Index = index;
+            var lastPoint = Vector2IP.Zero;
+            _vertices = new List<Vertex2D>();
+            var i = 0;
+            foreach (var newPt in coordinates)
+            {
                 if (newPt == lastPoint) continue;
                 _vertices.Add(new Vertex2D(newPt, i++, Index));
                 lastPoint = newPt;
