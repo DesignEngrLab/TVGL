@@ -241,6 +241,7 @@ namespace TVGL
                             }
                         }
                         var repeatVertex = WhichExistingToUse(results, aExistingVertex, bExistingVertex);
+                        if(repeatVertex == null) return;
                         results.Add(new Polygon(result.Concat([repeatVertex]), currentLoopIndex, false));
                         allKnownWrongPoints.Add(knownWrongPoints);
                         return;
