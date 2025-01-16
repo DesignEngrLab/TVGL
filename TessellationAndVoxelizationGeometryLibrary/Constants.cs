@@ -743,15 +743,15 @@ namespace TVGL
         /// <summary>
         /// The no overlap
         /// </summary>
-        NoOverlap,
+        //NoOverlap,
         /// <summary>
         /// The abutting
         /// </summary>
-        Abutting,
+        //Abutting,
         /// <summary>
         /// The double overlap
         /// </summary>
-        DoubleOverlap,
+        //DoubleOverlap,
         /// <summary>
         /// The b encloses a
         /// </summary>
@@ -763,11 +763,11 @@ namespace TVGL
         /// <summary>
         /// The cross over b outside after
         /// </summary>
-        CrossOver_BOutsideAfter,
+        //CrossOver_BOutsideAfter,
         /// <summary>
         /// The cross over a outside after
         /// </summary>
-        CrossOver_AOutsideAfter,
+        //CrossOver_AOutsideAfter,
     }
 
     /// <summary>
@@ -782,27 +782,27 @@ namespace TVGL
         /// <summary>
         /// The both same direction
         /// </summary>
-        BothSameDirection,
+        Same,
         /// <summary>
         /// The both opposite direction
         /// </summary>
-        BothOppositeDirection,
+        Opposite,
         /// <summary>
         /// The after
         /// </summary>
-        After,
+        //After,
         /// <summary>
         /// The before
         /// </summary>
-        Before,
+        //Before,
         /// <summary>
         /// a after b before
         /// </summary>
-        AAfterBBefore, // case 14
+        //AAfterBBefore, // case 14
         /// <summary>
         /// a before b after
         /// </summary>
-        ABeforeBAfter
+        //ABeforeBAfter
     }
 
     /// <summary>

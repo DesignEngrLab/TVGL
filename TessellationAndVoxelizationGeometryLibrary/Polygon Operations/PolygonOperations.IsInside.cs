@@ -802,7 +802,6 @@ namespace TVGL
             out List<SegmentIntersection> intersections)
         {
             intersections = new List<SegmentIntersection>();
-            var possibleDuplicates = new List<(int, PolygonEdge, PolygonEdge)>();
             //As a first check, determine if the axis aligned bounding boxes overlap. If not, then we can
             // safely return that the polygons are separated.
             if (subPolygonA.MinXIP > subPolygonB.MaxXIP ||
@@ -857,10 +856,10 @@ namespace TVGL
                 }
             }
 
-            var relationship = PolyRelInternal.Separated;
 
+            var relationship = PolyRelInternal.Separated;
             if (intersections.Count == 0) // since there are no intersections all the nodeTypes of a vertices of a polygon should be the same
-                                          // and they are either Inside or Outside. There can be any OnBorder as these would have registered as intersections as well
+                                          // and they are either Inside or Outside. There can't be any OnBorder as these would have registered as intersections as well
                                           // however inner polygons could exhibit difference values than the outer (consider edge case: nested squares). For example,
                                           // A encompasses B but a hole in B is smaller and fits inside hole of A. This should be registered as Intersecting
             {
@@ -877,25 +876,27 @@ namespace TVGL
                 return PolyRelInternal.Separated;
             }
 
-            RemoveDuplicateIntersections(possibleDuplicates, intersections);
             if (intersections.Any(intersection => intersection.CollinearityType != CollinearityTypes.None))
                 relationship |= PolyRelInternal.CoincidentEdges;
             if (intersections.Any(intersection => intersection.WhereIntersection != WhereIsIntersection.Intermediate))
                 relationship |= PolyRelInternal.CoincidentVertices;
-            
+
             var isEqual = subPolygonA.PathArea.IsPracticallySame(subPolygonB.PathArea, Constants.BaseTolerance);
-            foreach (var intersect in intersections)
-            {
-                if (!isEqual) break;
-                isEqual = !(intersect.Relationship != SegmentRelationship.DoubleOverlap || intersect.CollinearityType != CollinearityTypes.BothSameDirection);
-            }
+            if (isEqual)
+                foreach (var intersect in intersections)
+                {
+                    if (intersect.CollinearityType != CollinearityTypes.Same)
+                    {
+                        isEqual = false;
+                        break;
+                    }
+                }
             if (isEqual)
                 return relationship | PolyRelInternal.Equal;
             var isOpposite = true;
             foreach (var intersect in intersections)
             {
-                if (intersect.Relationship != SegmentRelationship.NoOverlap || intersect.Relationship != SegmentRelationship.Abutting ||
-                    intersect.CollinearityType != CollinearityTypes.BothOppositeDirection)
+                if (intersect.CollinearityType != CollinearityTypes.Opposite)
                 {
                     isOpposite = false;
                     break;
@@ -903,15 +904,15 @@ namespace TVGL
             }
             if (isOpposite)
             {
-                if (subPolygonA.Area.IsPracticallySame(-subPolygonB.Area, equalTolerance) && subPolygonA.MinXIP==subPolygonB.MinXIP
-                    && subPolygonA.MinYIP==subPolygonB.MinYIP && subPolygonA.MaxXIP==subPolygonB.MaxXIP
-                    && subPolygonA.MaxYIP==subPolygonB.MaxYIP)
+                if (subPolygonA.Area.IsPracticallySame(-subPolygonB.Area, Constants.BaseTolerance) && subPolygonA.MinXIP == subPolygonB.MinXIP
+                    && subPolygonA.MinYIP == subPolygonB.MinYIP && subPolygonA.MaxXIP == subPolygonB.MaxXIP
+                    && subPolygonA.MaxYIP == subPolygonB.MaxYIP)
                     return relationship | PolyRelInternal.EqualButOpposite;
                 return relationship;
             }
 
-            if (intersections.Any(intersection => intersection.Relationship == SegmentRelationship.CrossOver_BOutsideAfter ||
-            intersection.Relationship == SegmentRelationship.CrossOver_AOutsideAfter ||
+            if (intersections.Any(intersection => intersection.Relationship == SegmentRelationship.BEnclosesA ||
+            intersection.Relationship == SegmentRelationship.AEnclosesB ||
             (intersection.Relationship == SegmentRelationship.DoubleOverlap && (subPolygonA.IsPositive || subPolygonB.IsPositive))))
                 return relationship | PolyRelInternal.EdgesCross | PolyRelInternal.Intersection;
 
@@ -946,34 +947,6 @@ namespace TVGL
             return relationship | PolyRelInternal.AInsideB;
 
             //else throw new Exception("debug? no default polygon relationship found.")
-        }
-
-
-        /// <summary>
-        /// Removes the duplicate intersections.
-        /// </summary>
-        /// <param name="possibleDuplicates">The possible duplicates.</param>
-        /// <param name="intersections">The intersections.</param>
-        private static void RemoveDuplicateIntersections(List<(int index, PolygonEdge lineA, PolygonEdge lineB)> possibleDuplicates,
-            List<SegmentIntersection> intersections)
-        {
-            foreach (var dupeData in possibleDuplicates)
-            {
-                var duplicateIntersection = intersections[dupeData.index];
-
-                for (int i = 0; i < intersections.Count; i++)
-                {
-                    if (i == dupeData.index) continue;
-                    if (((intersections[i].EdgeA == dupeData.lineA && intersections[i].EdgeB == dupeData.lineB) ||
-                        (intersections[i].EdgeA == dupeData.lineB && intersections[i].EdgeB == dupeData.lineA)) &&
-                        intersections[i].WhereIntersection != WhereIsIntersection.Intermediate &&
-                       duplicateIntersection.IntersectCoordinates == intersections[i].IntersectCoordinates)
-                    {
-                        intersections.RemoveAt(dupeData.index);
-                        break;
-                    }
-                }
-            }
         }
 
         /// <summary>
@@ -1020,21 +993,8 @@ namespace TVGL
                     cross.W > 0 ? SegmentRelationship.AEnclosesB : SegmentRelationship.BEnclosesA, WhereIsIntersection.BothStarts, CollinearityTypes.None));
                 return true;
             }
-            // what about the ToPoints? we don't check these given that the lines are treated as FromPoint inclusive and ToPoint exclusive
-            //if (lineA.FromPoint.Coordinates == lineB.ToPoint.Coordinates)
-            //{
-            //    intersections.Add(new SegmentIntersection(lineA, lineB, lineA.FromPoint.Coordinates,
-            //        cross.W > 0 ? SegmentRelationship.AEnclosesB : SegmentRelationship.BEnclosesA, WhereIsIntersection.AtStartOfA, CollinearityTypes.None));
-            //    return true;
-            //}
-            //if (lineB.FromPoint.Coordinates == lineA.ToPoint.Coordinates)
-            //{
-            //    intersections.Add(new SegmentIntersection(lineA, lineB, lineB.FromPoint.Coordinates,
-            //        cross.W > 0 ? SegmentRelationship.AEnclosesB : SegmentRelationship.BEnclosesA, WhereIsIntersection.AtStartOfB, CollinearityTypes.None));
-            //    return true;
-            //}
-
             var intersectionCoordinates = PGA2D.PointAtPolyEdgeIntersection(lineA, lineB, out var t1, out var onSegment1, out var t2, out var onSegment2);
+            var where = t1.Num == 0 ? WhereIsIntersection.AtStartOfA : t2.Num == 0 ? WhereIsIntersection.AtStartOfB : WhereIsIntersection.Intermediate;
             intersections.Add(new SegmentIntersection(lineA, lineB, intersectionCoordinates,
             cross.W > 0 ? SegmentRelationship.AEnclosesB : SegmentRelationship.BEnclosesA, WhereIsIntersection.Intermediate, CollinearityTypes.None));
 
@@ -1090,8 +1050,8 @@ namespace TVGL
             if (lineACrossLineB == 0 && prevACrossPrevB == 0 && lineACrossPrevB == 0 && prevACrossLineB == 0)
             {
                 if (aVector.Dot(bVector) > 0)
-                    return (SegmentRelationship.DoubleOverlap, CollinearityTypes.BothSameDirection);
-                return (SegmentRelationship.Abutting, CollinearityTypes.BothOppositeDirection);
+                    return (SegmentRelationship.DoubleOverlap, CollinearityTypes.Same);
+                return (SegmentRelationship.Abutting, CollinearityTypes.Opposite);
             }
             // most restrictive is when both lines are parallel
             if (lineACrossLineB == 0 && prevACrossPrevB == 0)
@@ -1100,7 +1060,7 @@ namespace TVGL
                 var prevADotPrevB = previousAVector.Dot(previousBVector);
                 if (lineADotLineB > 0 && prevADotPrevB > 0)
                     //case 16
-                    return (SegmentRelationship.DoubleOverlap, CollinearityTypes.BothSameDirection);
+                    return (SegmentRelationship.DoubleOverlap, CollinearityTypes.Same);
                 if (lineADotLineB < 0 && prevADotPrevB < 0 && lineACrossPrevB != 0)
                 // a rare version of case 5 or 6 where the lines enter and leave the point on parallel lines, but
                 // there is no collinearity! A's cross product of the corner would be the same as B's. If this corner
@@ -1108,7 +1068,7 @@ namespace TVGL
                 {
                     var cross = previousAVector.Cross(aVector);
                     if (cross.IsNegligible())
-                        return (SegmentRelationship.Abutting, CollinearityTypes.BothOppositeDirection);
+                        return (SegmentRelationship.Abutting, CollinearityTypes.Opposite);
                     return (cross > 0 ? SegmentRelationship.NoOverlap : SegmentRelationship.DoubleOverlap,
                         CollinearityTypes.None);
                 }
@@ -1126,7 +1086,7 @@ namespace TVGL
                 var lineADotPrevB = aVector.Dot(previousBVector);
                 var prevADotLineB = previousAVector.Dot(bVector);
                 if (lineADotPrevB < 0 && prevADotLineB < 0)  // case 15
-                    return (SegmentRelationship.Abutting, CollinearityTypes.BothOppositeDirection);
+                    return (SegmentRelationship.Abutting, CollinearityTypes.Opposite);
                 if (lineADotPrevB > 0 && prevADotLineB > 0)  // a very unusual case (although it shows up in the chunky polygon
                     return (previousAVector.Cross(aVector) >= 0 ? SegmentRelationship.BEnclosesA : SegmentRelationship.AEnclosesB,
                         CollinearityTypes.None);
@@ -1255,7 +1215,6 @@ namespace TVGL
         public static List<SegmentIntersection> GetSelfIntersections(this Polygon polygonA)
         {
             var intersections = new List<SegmentIntersection>();
-            var possibleDuplicates = new List<(int index, PolygonEdge lineA, PolygonEdge lineB)>();
             var numLines = polygonA.Edges.Count;
             var orderedLines = GetOrderedLines(polygonA.OrderedXVertices);
             for (int i = 0; i < numLines - 1; i++)
@@ -1269,7 +1228,6 @@ namespace TVGL
                     AddIntersectionBetweenLines(current, other, intersections);
                 }
             }
-            RemoveDuplicateIntersections(possibleDuplicates, intersections);
             return intersections;
         }
 
