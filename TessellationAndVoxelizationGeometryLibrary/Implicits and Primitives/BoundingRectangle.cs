@@ -114,7 +114,7 @@ namespace TVGL
                 var minPoint = Direction1 * MinD1 + Direction2 * MinD2;
                 var translation = Matrix3x3.CreateTranslation(-minPoint);
                 var rotation = Matrix3x3.CreateRotation(-Math.Atan2(Direction1.Y, Direction1.X));
-                return rotation * translation;
+                return translation * rotation;
             }
         }
 

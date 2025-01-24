@@ -30,12 +30,16 @@ namespace TVGL
         /// <returns>Polygon.</returns>
         public static Polygon LargestPolygon(this IEnumerable<Polygon> polygons)
         {
-            return polygons
-                .Aggregate((poly1, poly2) => poly1.Area > poly2.Area ? poly1 : poly2);
-            // the preceding use of "Aggregate" is a cryptic but quick trick to get the max using Linq. See: 
-            //https://stackoverflow.com/questions/3188693/how-can-i-get-linq-to-return-the-object-which-has-the-max-value-for-a-given-prop
-            // Union returns a collection of polygons, but we know that it should be one polygon with holes - since the tessellated solid
-            // was one body. Getting the max one makes sense since there may be smaller artifacts returned from the operation.
+            return polygons.MaxBy(p => p.Area);
+        }
+        /// <summary>
+        /// Get the smallest polygon by net area from the collections of polygons
+        /// </summary>
+        /// <param name="polygons">The polygons.</param>
+        /// <returns>Polygon.</returns>
+        public static Polygon SmallestPolygon(this IEnumerable<Polygon> polygons)
+        {
+            return polygons.MinBy(p => p.Area);
         }
 
         public static double MinX(this IEnumerable<Polygon> polygons)
@@ -311,7 +315,7 @@ namespace TVGL
         /// <param name="pixelSideLength"></param>
         public static void SimplifyAndSmoothRectilinearPolygon(this Polygon polygon, double pixelSideLength, bool movesMayBeDiagonal)
         {
-            SimplifyAndSmoothRectilinearPolygonTop(polygon, pixelSideLength,movesMayBeDiagonal);
+            SimplifyAndSmoothRectilinearPolygonTop(polygon, pixelSideLength, movesMayBeDiagonal);
             foreach (var hole in polygon.InnerPolygons)
                 SimplifyAndSmoothRectilinearPolygon(hole, pixelSideLength, movesMayBeDiagonal);
         }

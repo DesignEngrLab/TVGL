@@ -87,9 +87,9 @@ namespace TVGL
         internal static bool OpenTVGL<T>(Stream s, out T solid, TessellatedSolidBuildOptions tsBuildOptions = null)
         where T : Solid
         {
+            if (tsBuildOptions == null) tsBuildOptions = TessellatedSolidBuildOptions.Default;
             using var reader = new JsonTextReader(new StreamReader(s));
             SolidAssembly.StreamRead(reader, out var solidAssembly, tsBuildOptions);
-
             if(tsBuildOptions.ReferenceIndex != -1)
             {
                 var solidInner = solidAssembly.Solids.First(p => p.ReferenceIndex == tsBuildOptions.ReferenceIndex);

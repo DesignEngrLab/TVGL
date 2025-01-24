@@ -296,8 +296,8 @@ namespace TVGL
         /// </summary>
         /// <value>The inner polygons.</value>
         [JsonIgnore]
-        public IReadOnlyList<Polygon> InnerPolygons =>
-            _innerPolygons == null ? ImmutableArray<Polygon>.Empty : _innerPolygons.AsReadOnly();
+        public ImmutableArray<Polygon> InnerPolygons =>
+            _innerPolygons == null ? ImmutableArray<Polygon>.Empty : _innerPolygons.ToImmutableArray();
         //{
         //    get
         //{
