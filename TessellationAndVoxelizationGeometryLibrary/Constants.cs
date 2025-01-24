@@ -243,6 +243,14 @@ namespace TVGL
             if (dy < 0) return 3 + p;  //  2 .. 4 increasing with x
             return 1 - p;  //  0 .. 2 decreasing with x
         }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static double Pseudoangle(Int128 dx, Int128 dy)
+        {
+            var denominator = Int128.Abs(dx) + Int128.Abs(dy);
+            var p = new RationalIP(dx, denominator).AsDouble; // -1 .. 1 increasing with x
+            if (dy < 0) return 3 + p;  //  2 .. 4 increasing with x
+            return 1 - p;  //  0 .. 2 decreasing with x
+        }
 
         internal static void SwapItemsInList<T>(int i, int j, IList<T> points)
         {

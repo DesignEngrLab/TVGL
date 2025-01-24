@@ -995,7 +995,7 @@ namespace TVGL
             if (sameCarrier)
                 // This means that the two lines are collinear and we need to check if they overlap.
                 return AddCollinearIntersection(lineA, lineB, intersections, sameStart);
-            var cross = lineA.Normal.Cross(lineB.Normal);
+            
             Vector2IP intersectionCoordinates;
             WhereIsIntersection where;
             //first a quick check to see if points are the same
@@ -1003,28 +1003,78 @@ namespace TVGL
             {
                 intersectionCoordinates = lineA.FromPoint.Coordinates;
                 where = WhereIsIntersection.BothStarts;
+                SegmentRelationship segmentRelationship = GetSegmentRelationship(lineA.Vector, -lineA.FromPoint.EndLine.Vector,
+                    lineB.Vector, -lineB.FromPoint.EndLine.Vector);
+                intersections.Add(new SegmentIntersection(lineA, lineB, lineA.FromPoint.Coordinates,
+                    segmentRelationship, where, CollinearityTypes.None));
             }
             else
             {
                 intersectionCoordinates = PGA2D.PointAtPolyEdgeIntersection(lineA, lineB, out var t1, out var onSegment1, out var t2, out var onSegment2);
                 where = t1.Num == 0 ? WhereIsIntersection.AtStartOfA : t2.Num == 0 ? WhereIsIntersection.AtStartOfB : WhereIsIntersection.Intermediate;
-            }
-            if (where == WhereIsIntersection.Intermediate)
-                intersections.Add(new SegmentIntersection(lineA, lineB, intersectionCoordinates,
-                cross.W > 0 ? SegmentRelationship.CrossOver_AOutsideAfter : SegmentRelationship.CrossOver_BOutsideAfter, WhereIsIntersection.Intermediate, CollinearityTypes.None));
-            else
-            {
-                SegmentRelationship segmentRelationship = GetSegmentRelationship(lineA.Vector,-lineA.FromPoint.EndLine.Vector,
-                    lineB.Vector, -lineB.FromPoint.EndLine.Vector, cross);
-                intersections.Add(new SegmentIntersection(lineA, lineB, lineA.FromPoint.Coordinates,
-                    segmentRelationship, where, CollinearityTypes.None));
+
+                if (where == WhereIsIntersection.Intermediate)
+                    intersections.Add(new SegmentIntersection(lineA, lineB, intersectionCoordinates,
+                    lineA.Normal.Cross(lineB.Normal).W > 0 ? SegmentRelationship.CrossOver_AOutsideAfter : SegmentRelationship.CrossOver_BOutsideAfter, WhereIsIntersection.Intermediate, CollinearityTypes.None));
+                else
+                {
+                    SegmentRelationship segmentRelationship =
+                        where == WhereIsIntersection.AtStartOfA
+                        ? GetSegmentRelationship(lineA.Vector, -lineA.FromPoint.EndLine.Vector,
+                        lineB.Vector, -lineB.Vector, bFraction: t2)
+                        : GetSegmentRelationship(lineA.Vector, -lineA.Vector,
+                        lineB.Vector, -lineB.FromPoint.EndLine.Vector, t1);
+                    intersections.Add(new SegmentIntersection(lineA, lineB, lineA.FromPoint.Coordinates,
+                        segmentRelationship, where, CollinearityTypes.None));
+                }
             }
             return true;
         }
 
-        private static SegmentRelationship GetSegmentRelationship(Vector2IP aOut, Vector2IP aIn, Vector2IP bOunt, Vector2IP bIn, Vector2IP cross)
+        private static SegmentRelationship GetSegmentRelationship(Vector2IP aOut, Vector2IP aIn, Vector2IP bOut, Vector2IP bIn, RationalIP aFraction = RationalIP.Zero,
+            RationalIP bFraction = -1)
         {
-            var angleAOut = Constants.
+            var angleAOut = Constants.Pseudoangle(aOut.X, aOut.Y); // pseudo-angle is a monotonic function of the angle from 0 to 4
+            var angleAIn = Constants.Pseudoangle(aIn.X, aIn.Y);
+            var angleBOut = Constants.Pseudoangle(bOut.X, bOut.Y);
+            var angleBIn = Constants.Pseudoangle(bIn.X, bIn.Y);
+            var outsAreEqual = angleAOut == angleBOut;
+            var insAreEqual = angleAIn == angleBIn;
+            var abutAIn = angleAIn == angleBOut;
+            var abutBIn = angleBIn == angleAOut;
+            // see if either B edge is inside A. This is done by moving all angles above aOut
+            var angleAInTemp = angleAIn < angleAOut ? angleAIn + 4 : angleAIn;
+            var angleBOutTemp = angleBOut < angleAOut ? angleBOut + 4 : angleBOut;
+            var angleBInTemp = angleBIn < angleAOut ? angleBIn + 4 : angleBIn;
+            if (angleBOutTemp <= angleAInTemp)
+            {
+                if (angleBInTemp <= angleAInTemp)
+                {
+                    if (angleBInTemp < angleBOutTemp)
+                        return SegmentRelationship.DoubleOverlap;
+                    else return SegmentRelationship.AEnclosesB;
+                }
+                return SegmentRelationship.CrossOver_AOutsideAfter;
+            }
+            if (angleBInTemp <= angleAInTemp)
+                return SegmentRelationship.CrossOver_BOutsideAfter;
+
+
+            // see if either A edge is inside B. This is done by moving all angles above bOut
+            angleAInTemp = angleAIn < angleBOut ? angleAIn + 4 : angleAIn;
+            var angleAOutTemp = angleAOut < angleBOut ? angleAOut + 4 : angleAOut;
+            angleBInTemp = angleBIn < angleBOut ? angleBIn + 4 : angleBIn;
+            if (angleAOutTemp <= angleBInTemp)
+            {
+                if (angleAInTemp <= angleBInTemp)
+                    return SegmentRelationship.BEnclosesA;
+                return SegmentRelationship.CrossOver_BOutsideAfter;
+            }
+            if (angleAInTemp <= angleBInTemp)
+                return SegmentRelationship.CrossOver_AOutsideAfter;
+            return SegmentRelationship.NoOverlap;
+            SegmentRelationship.Abutting nooverlap, doubleoverlap equal
+                segmentRelationship = SegmentRelationship.;
         }
 
         private static bool AddCollinearIntersection(PolygonEdge lineA, PolygonEdge lineB, List<SegmentIntersection> intersections, bool sameStart)
