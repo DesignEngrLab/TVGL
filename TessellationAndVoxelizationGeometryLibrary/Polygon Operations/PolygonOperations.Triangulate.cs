@@ -149,7 +149,7 @@ namespace TVGL
         /// <exception cref="System.Exception">Unable to triangulate polygon.</exception>
         private static List<Vertex2D[]> Triangulate(this Polygon polygon, bool handleSelfIntersects = true)
         {
-            if (polygon.Area.IsNegligible() || (polygon.IsConvex() && !polygon.InnerPolygons.Any()))
+            if (polygon.Area.IsNegligible() || (polygon.IsConvex && !polygon.InnerPolygons.Any()))
             {
                 var triangleList = new List<Vertex2D[]>();
                 for (int i = 2; i < polygon.Vertices.Count; i++)
@@ -179,7 +179,7 @@ namespace TVGL
                 }
                 return new List<Vertex2D[]> { new[] { verts[0], verts[1], verts[2] }, new[] { verts[0], verts[2], verts[3] } };
             }
-            if (polygon.IsConvex() && !polygon.InnerPolygons.Any())
+            if (polygon.IsConvex && !polygon.InnerPolygons.Any())
             {
                 var triangleList = new List<Vertex2D[]>();
                 for (int i = 2; i < polygon.Vertices.Count; i++)

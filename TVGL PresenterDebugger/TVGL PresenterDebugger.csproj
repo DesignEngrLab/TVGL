@@ -96,6 +96,13 @@
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\PointCloud\NearestNeighbor\HyperRect.cs" Link="TVGL\PointCloud\NearestNeighbor\HyperRect.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\PointCloud\NearestNeighbor\KDTree.cs" Link="TVGL\PointCloud\NearestNeighbor\KDTree.cs" />
 
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Polygon Operations\Clipper\github.com.AngusJohnson.Clipper2\Clipper.cs" Link="TVGL\Polygon Operations\Clipper\github.com.AngusJohnson.Clipper2\Clipper.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Polygon Operations\Clipper\github.com.AngusJohnson.Clipper2\Clipper.Core.cs" Link="TVGL\Polygon Operations\Clipper\github.com.AngusJohnson.Clipper2\Clipper.Core.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Polygon Operations\Clipper\github.com.AngusJohnson.Clipper2\Clipper.Engine.cs" Link="TVGL\Polygon Operations\Clipper\github.com.AngusJohnson.Clipper2\Clipper.Engine.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Polygon Operations\Clipper\github.com.AngusJohnson.Clipper2\Clipper.Offset.cs" Link="TVGL\Polygon Operations\Clipper\github.com.AngusJohnson.Clipper2\Clipper.Offset.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Polygon Operations\Clipper\github.com.AngusJohnson.Clipper2\Clipper.Minkowski.cs" Link="TVGL\Polygon Operations\Clipper\github.com.AngusJohnson.Clipper2\Clipper.Minkowski.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Polygon Operations\Clipper\github.com.AngusJohnson.Clipper2\Clipper.RectClip.cs" Link="TVGL\Polygon Operations\Clipper\github.com.AngusJohnson.Clipper2\Clipper.RectClip.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Polygon Operations\Clipper\github.com.AngusJohnson.Clipper2\HashCode.cs" Link="TVGL\Polygon Operations\Clipper\github.com.AngusJohnson.Clipper2\HashCode.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Polygon Operations\PGA2D.cs" Link="TVGL\Polygon Operations\PGA2D.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Polygon Operations\Vector2IP.cs" Link="TVGL\Polygon Operations\Vector2IP.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Polygon Operations\RationalIP.cs" Link="TVGL\Polygon Operations\RationalIP.cs" />
