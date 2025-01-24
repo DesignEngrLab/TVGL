@@ -85,12 +85,12 @@ namespace TVGL
                 return false;
             }
             startAgain = !(intersectionData.VisitedB || intersectionData.VisitedA);
-            if (intersectionData.Relationship == SegmentRelationship.AEnclosesB && !intersectionData.VisitedA)
+            if (intersectionData.Relationship == SegmentRelationship.CrossOver_AOutsideAfter && !intersectionData.VisitedA)
             {
                 currentEdge = intersectionData.EdgeA;
                 return true;
             }
-            if (intersectionData.Relationship == SegmentRelationship.BEnclosesA && !intersectionData.VisitedB)
+            if (intersectionData.Relationship == SegmentRelationship.CrossOver_BOutsideAfter && !intersectionData.VisitedB)
             {
                 currentEdge = intersectionData.EdgeB;
                 return true;

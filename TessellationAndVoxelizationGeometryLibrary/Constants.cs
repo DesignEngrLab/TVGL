@@ -743,15 +743,15 @@ namespace TVGL
         /// <summary>
         /// The no overlap
         /// </summary>
-        //NoOverlap,
+        NoOverlap,
         /// <summary>
         /// The abutting
         /// </summary>
-        //Abutting,
+        Abutting,
         /// <summary>
         /// The double overlap
         /// </summary>
-        //DoubleOverlap,
+        DoubleOverlap,
         /// <summary>
         /// The b encloses a
         /// </summary>
@@ -763,11 +763,15 @@ namespace TVGL
         /// <summary>
         /// The cross over b outside after
         /// </summary>
-        //CrossOver_BOutsideAfter,
+        CrossOver_BOutsideAfter,
         /// <summary>
         /// The cross over a outside after
         /// </summary>
-        //CrossOver_AOutsideAfter,
+        CrossOver_AOutsideAfter,
+        /// <summary>
+        /// The two edges are identical!
+        /// </summary>
+        Equal,
     }
 
     /// <summary>

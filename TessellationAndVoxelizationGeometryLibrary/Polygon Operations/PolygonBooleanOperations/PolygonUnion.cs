@@ -65,12 +65,12 @@ namespace TVGL
                 currentEdge = null;
                 return false;
             }
-            if (intersectionData.Relationship == SegmentRelationship.AEnclosesB && !intersectionData.VisitedB && !intersectionData.VisitedA)
+            if (intersectionData.Relationship == SegmentRelationship.CrossOver_AOutsideAfter && !intersectionData.VisitedB && !intersectionData.VisitedA)
             {
                 currentEdge = intersectionData.EdgeA;
                 return true;
             }
-            if (intersectionData.Relationship == SegmentRelationship.BEnclosesA && !intersectionData.VisitedB && !intersectionData.VisitedA)
+            if (intersectionData.Relationship == SegmentRelationship.CrossOver_BOutsideAfter && !intersectionData.VisitedB && !intersectionData.VisitedA)
             {
                 currentEdge = intersectionData.EdgeB;
                 return true;
@@ -98,8 +98,8 @@ namespace TVGL
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         protected override bool SwitchAtThisIntersection(SegmentIntersection intersectionData, bool currentEdgeIsFromPolygonA)
         {
-            if ((currentEdgeIsFromPolygonA && intersectionData.Relationship == SegmentRelationship.AEnclosesB) ||
-                (!currentEdgeIsFromPolygonA && intersectionData.Relationship == SegmentRelationship.BEnclosesA))
+            if ((currentEdgeIsFromPolygonA && intersectionData.Relationship == SegmentRelationship.CrossOver_AOutsideAfter) ||
+                (!currentEdgeIsFromPolygonA && intersectionData.Relationship == SegmentRelationship.CrossOver_BOutsideAfter))
                 return false;
             return true;
         }
