@@ -767,75 +767,55 @@ namespace TVGL
     /// <summary>
     /// Enum SegmentRelationship
     /// </summary>
+
+    [Flags]
     public enum SegmentRelationship
     {
         /// <summary>
         /// The no overlap
         /// </summary>
-        NoOverlap,
+        NoOverlap = 0,
         /// <summary>
-        /// The abutting
+        /// The no overlap
         /// </summary>
-        Abutting,
+        ValidOverlap = 1,
         /// <summary>
-        /// The double overlap
+        /// coincident edges
         /// </summary>
-        DoubleOverlap,
-        /// <summary>
-        /// The b encloses a
-        /// </summary>
-        BEnclosesA,
-        /// <summary>
-        /// a encloses b
-        /// </summary>
-        AEnclosesB,
-        /// <summary>
-        /// The cross over b outside after
-        /// </summary>
-        CrossOver_BOutsideAfter,
-        /// <summary>
-        /// The cross over a outside after
-        /// </summary>
-        CrossOver_AOutsideAfter,
+        CoincidentEdges = 2 | ValidOverlap,
         /// <summary>
         /// The two edges are identical!
         /// </summary>
-        Equal,
-    }
-
-    /// <summary>
-    /// Enum CollinearityTypes
-    /// </summary>
-    public enum CollinearityTypes
-    {
-        /// <summary>
-        /// The none
-        /// </summary>
-        None,
-        /// <summary>
-        /// The both same direction
-        /// </summary>
-        Same,
+        Equal = 4 | CoincidentEdges,
         /// <summary>
         /// The both opposite direction
         /// </summary>
-        Opposite,
+        OppositeAndEqual = 8 | CoincidentEdges,
+        ///// <summary>
+        ///// The abutting
+        ///// </summary>
+        //Abutting,
         /// <summary>
-        /// The after
+        /// The double overlap
         /// </summary>
-        //After,
+        DoubleOverlap = 16 | ValidOverlap,
         /// <summary>
-        /// The before
+        /// The b encloses a
         /// </summary>
-        //Before,
+        BEnclosesA = 32,
         /// <summary>
-        /// a after b before
+        /// a encloses b
         /// </summary>
-        //AAfterBBefore, // case 14
+        AEnclosesB = 64,
         /// <summary>
-        /// a before b after
+        /// The cross over b outside after
         /// </summary>
-        //ABeforeBAfter
+        CrossOver_BOutsideAfter = 128 | ValidOverlap,
+        /// <summary>
+        /// The cross over a outside after
+        /// </summary>
+        CrossOver_AOutsideAfter = 256 | ValidOverlap
+
     }
 
     /// <summary>

@@ -34,17 +34,17 @@ namespace TVGL
             startAgain = false;
             if (intersectionData.Relationship == SegmentRelationship.DoubleOverlap)
             {
-                if (intersectionData.CollinearityType == CollinearityTypes.ABeforeBAfter && !intersectionData.VisitedA && !intersectionData.VisitedB)
+                if (intersectionData.Relationship == SegmentRelationship.BEnclosesA && !intersectionData.VisitedA && !intersectionData.VisitedB)
                 {
                     currentEdge = intersectionData.EdgeB;
                     return true;
                 }
-                if (intersectionData.CollinearityType == CollinearityTypes.AAfterBBefore && !intersectionData.VisitedA && !intersectionData.VisitedB)
+                if (intersectionData.Relationship == SegmentRelationship.AEnclosesB && !intersectionData.VisitedA && !intersectionData.VisitedB)
                 {
                     currentEdge = intersectionData.EdgeA;
                     return true;
                 }
-                if (intersectionData.CollinearityType == CollinearityTypes.None)
+                if ((intersectionData.Relationship | SegmentRelationship.CoincidentEdges) < SegmentRelationship.CoincidentEdges)
                 {
                     startAgain = !(intersectionData.VisitedB || intersectionData.VisitedA);
                     if (!intersectionData.VisitedA)

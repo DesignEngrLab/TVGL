@@ -46,11 +46,7 @@ namespace TVGL
         /// </summary>
         /// <value>The where intersection.</value>
         public WhereIsIntersection WhereIntersection { get; }
-        /// <summary>
-        /// Gets the type of the collinearity.
-        /// </summary>
-        /// <value>The type of the collinearity.</value>
-        public CollinearityTypes CollinearityType { get; }
+
         /// <summary>
         /// Gets or sets a value indicating whether [the intersection has already been visited before].
         /// starting from EdgeB. This is used internally in polygon operations.
@@ -75,14 +71,13 @@ namespace TVGL
         /// <param name="whereIsIntersection">The where is intersection.</param>
         /// <param name="collinearity">The collinearity.</param>
         internal SegmentIntersection(PolygonEdge edgeA, PolygonEdge edgeB, Vector2IP intersectionPoint, SegmentRelationship relationship,
-            WhereIsIntersection whereIsIntersection, CollinearityTypes collinearity)
+            WhereIsIntersection whereIsIntersection)
         {
             this.EdgeA = edgeA;
             this.EdgeB = edgeB;
             this.IntersectCoordinates = intersectionPoint;
             this.Relationship = relationship;
             this.WhereIntersection = whereIsIntersection;
-            this.CollinearityType = collinearity;
             VisitedA = false;
             VisitedB = false;
         }

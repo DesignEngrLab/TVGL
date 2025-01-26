@@ -33,19 +33,17 @@ namespace TVGL
             startAgain = false;
             if (intersectionData.Relationship == SegmentRelationship.NoOverlap)
             {
-                if (intersectionData.CollinearityType == CollinearityTypes.ABeforeBAfter 
-                    && !intersectionData.VisitedA && !intersectionData.VisitedB)
+                if (intersectionData.Relationship == SegmentRelationship.BEnclosesA && !intersectionData.VisitedA && !intersectionData.VisitedB)
                 {
                     currentEdge = intersectionData.EdgeB;
                     return true;
                 }
-                if (intersectionData.CollinearityType == CollinearityTypes.AAfterBBefore
-                    && !intersectionData.VisitedB && !intersectionData.VisitedA)
+                if (intersectionData.Relationship == SegmentRelationship.AEnclosesB && !intersectionData.VisitedA && !intersectionData.VisitedB)
                 {
                     currentEdge = intersectionData.EdgeA;
                     return true;
                 }
-                if (intersectionData.CollinearityType == CollinearityTypes.None)
+                if ((intersectionData.Relationship | SegmentRelationship.CoincidentEdges) < SegmentRelationship.CoincidentEdges)
                 {
                     startAgain = !(intersectionData.VisitedB || intersectionData.VisitedA); // true if both false
                     if (!intersectionData.VisitedA)
@@ -118,8 +116,7 @@ namespace TVGL
              (currentEdge == currentIntersection.EdgeB && currentIntersection.VisitedB))
                 return true;
             if (startingIntersection != currentIntersection) return false;
-            if (currentIntersection.Relationship == SegmentRelationship.NoOverlap &&
-                currentIntersection.CollinearityType == CollinearityTypes.None)
+            if (currentIntersection.Relationship == SegmentRelationship.NoOverlap)
                 return currentEdge == startingEdge;
             return true;
         }
