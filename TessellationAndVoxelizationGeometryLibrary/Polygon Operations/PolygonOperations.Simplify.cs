@@ -528,12 +528,12 @@ namespace TVGL
 
             // build initial list of cross products
 
-            var convexCornerQueue = new UpdatablePriorityQueue<Vertex2D, double>(new ForwardSort());
-            var concaveCornerQueue = new UpdatablePriorityQueue<Vertex2D, double>(new ReverseSort());
+            var convexCornerQueue = new UpdatablePriorityQueue<Vertex2D, RationalIP>(new NoEqualRationalSort(true));
+            var concaveCornerQueue = new UpdatablePriorityQueue<Vertex2D, RationalIP>(new NoEqualRationalSort(false));
             foreach (var vertex in polygon.Vertices)
             {
-                var cross = vertex.EndLine.Vector.Cross(vertex.StartLine.Vector);
-                if (cross > 0) convexCornerQueue.Enqueue(vertex, cross);
+                var cross = vertex.EndLine.Vector.Cross2D(vertex.StartLine.Vector);
+                if (cross.IsPositive()) convexCornerQueue.Enqueue(vertex, cross);
                 else concaveCornerQueue.Enqueue(vertex, cross);
             }
 
@@ -724,7 +724,7 @@ namespace TVGL
                 for (int i = 0; i < numPoints[j]; i++)
                 {
                     var vertex = allPolygons[j].Vertices[i];
-                    cornerQueue.Enqueue(vertex, vertex.EndLine.Vector.Cross(vertex.StartLine.Vector));
+                    cornerQueue.Enqueue(vertex, vertex.EndLine.Vector.Cross2D(vertex.StartLine.Vector));
                 }
             while (numToRemove-- > 0)
             {
@@ -732,8 +732,8 @@ namespace TVGL
                 var nextVertex = vertex.StartLine.ToPoint;
                 var prevVertex = vertex.EndLine.FromPoint;
                 vertex.DeleteVertex();
-                cornerQueue.UpdatePriority(prevVertex, prevVertex.EndLine.Vector.Cross(prevVertex.StartLine.Vector));
-                cornerQueue.UpdatePriority(nextVertex, nextVertex.EndLine.Vector.Cross(nextVertex.StartLine.Vector));
+                cornerQueue.UpdatePriority(prevVertex, prevVertex.EndLine.Vector.Cross2D(prevVertex.StartLine.Vector));
+                cornerQueue.UpdatePriority(nextVertex, nextVertex.EndLine.Vector.Cross2D(nextVertex.StartLine.Vector));
             }
             foreach (var polygon in allPolygons)
                 RecreateVertices(polygon);

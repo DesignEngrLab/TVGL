@@ -254,7 +254,7 @@ namespace TVGL
             return outers.IntersectPolygons(inners).Where(p => p.IsPositive).ToList();
 #else
             sw.Restart();
-            var pClipper = OffsetViaClipper(polygon, offset, notMiter, tolerance, deltaAngle);
+            var pClipper = OffsetViaClipper([polygon], offset, notMiter, tolerance, deltaAngle);
             sw.Stop();
             var clipTime = sw.Elapsed;
             sw.Restart();
@@ -308,7 +308,7 @@ namespace TVGL
         /// <param name="maxNumberOfPolygons">The maximum number of polygons.</param>
         /// <param name="deltaAngle">The delta angle.</param>
         /// <returns>System.ValueTuple&lt;List&lt;Vector2&gt;, List&lt;System.Boolean&gt;&gt;.</returns>
-        private static (List<Vector2> points, List<bool> knownWrongPoints) MainOffsetRoutine(Polygon polygon, double offset, bool notMiter,
+        private static (List<Vector2IP> points, List<bool> knownWrongPoints) MainOffsetRoutine(Polygon polygon, double offset, bool notMiter,
             double maxLengthSquared, out int maxNumberOfPolygons, double deltaAngle = double.NaN)
         {
             var rashOffset = new RationalIP(offset);

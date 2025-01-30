@@ -73,6 +73,25 @@ namespace TVGL
                 this.W * that.X - this.X * that.W,
                 this.X * that.Y - this.Y * that.X);
         }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public RationalIP Cross2D(Vector2IP that)
+        {
+            return new RationalIP(this.X * that.Y - this.Y * that.X,
+                this.W * that.W);
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public int CrossSign(Vector2IP that)
+        {
+            var numeratorSign = Int128.Sign(this.X * that.Y - this.Y * that.X);
+            if (this.W == 0 || that.W == 0)
+                return numeratorSign;
+            if (numeratorSign == 0)
+                return 0;
+            var denominatorSign = Int128.Sign(this.W * that.W);
+            if (numeratorSign == denominatorSign)
+                return 1;
+            return -1;
+        }
 
         internal Vector2IP Transform(Matrix3x3 matrix)
         {

@@ -181,8 +181,8 @@ namespace TVGL
         /// <param name="line">The line.</param>
         /// <param name="p">The p.</param>
         /// <returns>Vector2.</returns>
-        public static Vector2 ClosestPointOnLineSegmentToPoint(this PolygonEdge line, Vector2 p)
-            => ClosestPointOnLineSegmentToPoint(line.FromPoint.Coordinates, line.ToPoint.Coordinates, p);
+        //public static Vector2 ClosestPointOnLineSegmentToPoint(this PolygonEdge line, Vector2 p)
+        //    => ClosestPointOnLineSegmentToPoint(line.FromPoint.Coordinates, line.ToPoint.Coordinates, p);
         public static Vector2 ClosestPointOnLineSegmentToPoint(Vector2 fromPoint, Vector2 toPoint, Vector2 p)
         {
             //First, project the point in question onto the infinite line, getting its distance on the line from 
@@ -305,7 +305,7 @@ namespace TVGL
         {
             Vector3 dir;
             //If the vector is only in the y-direction, then return the x direction
-            if (direction.Y.IsPracticallySame(1.0)|| direction.Y.IsPracticallySame(-1.0))
+            if (direction.Y.IsPracticallySame(1.0) || direction.Y.IsPracticallySame(-1.0))
             {
                 if (additionalRotation == 0) return Vector3.UnitX;
                 return Math.Cos(additionalRotation) * Vector3.UnitX - Math.Sin(additionalRotation) * Vector3.UnitZ;
@@ -668,34 +668,11 @@ namespace TVGL
             {
                 if (vertex == current || vertex == previous) continue;
                 var currentVector = vertex.Coordinates - current.Coordinates;
-                var angle = currentVector.AngleCWBetweenVectorAAndDatum(lastVector);
+                var dot = currentVector.X * lastVector.X + currentVector.Y * lastVector.Y;
+                var cross = currentVector.X * lastVector.Y - currentVector.Y * lastVector.X;
+                var angle = Constants.Pseudoangle(dot, cross);
+                //var angle = currentVector.AngleCWBetweenVectorAAndDatum(lastVector);
                 if (minAngle > angle && !angle.IsNegligible())
-                {
-                    minAngle = angle;
-                    bestVertex = vertex;
-                }
-            }
-            return bestVertex;
-        }
-
-        /// <summary>
-        /// Chooses the tightest left turn.
-        /// </summary>
-        /// <param name="nextVertices">The next vertices.</param>
-        /// <param name="current">The current.</param>
-        /// <param name="previous">The previous.</param>
-        /// <returns>Vertex2D.</returns>
-        internal static Vertex2D ChooseTightestLeftTurn(this IEnumerable<Vertex2D> nextVertices, Vertex2D current, Vertex2D previous)
-        {
-            var lastVector = previous.Coordinates - current.Coordinates;
-            var minAngle = double.PositiveInfinity;
-            Vertex2D bestVertex = null;
-            foreach (var vertex in nextVertices)
-            {
-                if (vertex == current || vertex == previous) continue;
-                var currentVector = vertex.Coordinates - current.Coordinates;
-                var angle = currentVector.AngleCWBetweenVectorAAndDatum(lastVector);
-                if (minAngle > angle)
                 {
                     minAngle = angle;
                     bestVertex = vertex;

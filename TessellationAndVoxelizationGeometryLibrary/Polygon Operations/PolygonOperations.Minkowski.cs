@@ -157,13 +157,13 @@ namespace TVGL
                         visitedHash.Add((aVertex, bVertex, false), newVertex);
                         visitedHash.Add((aVertex, bVertex, true), newVertex);
                         result.Add(newVertex);
-                        var prevACrossNextA = aVertex.EndLine.Vector.Cross(nextAEdge.Vector);
+                        var prevACrossNextA = aVertex.EndLine.Vector.CrossSign(nextAEdge.Vector);
                         knownWrongPoints.Add(prevACrossNextA < 0);
                         bVertex = nextBEdge.ToPoint;
                         newVertex = new Vertex2D(nextAEdge.ToPoint.Coordinates + bVertex.Coordinates, visitedHash.Count, currentLoopIndex);
                         //visitedHash.Add((aVertex, bVertex, true), newVertex);
                         result.Add(newVertex);
-                        var prevBCrossNextB = bVertex.EndLine.Vector.Cross(nextBEdge.Vector);
+                        var prevBCrossNextB = bVertex.EndLine.Vector.CrossSign(nextBEdge.Vector);
                         knownWrongPoints.Add(prevBCrossNextB < 0);
                         aVertex = nextAEdge.ToPoint;
                         break;
@@ -174,7 +174,7 @@ namespace TVGL
                         newVertex = new Vertex2D(nextAEdge.ToPoint.Coordinates + bVertex.Coordinates, visitedHash.Count, currentLoopIndex);
                         visitedHash.Add((aVertex, bVertex, true), newVertex);
                         result.Add(newVertex);
-                        prevBCrossNextB = bVertex.EndLine.Vector.Cross(nextBEdge.Vector);
+                        prevBCrossNextB = bVertex.EndLine.Vector.CrossSign(nextBEdge.Vector);
                         knownWrongPoints.Add(prevBCrossNextB < 0);
                         aVertex = nextAEdge.ToPoint;
                         break;
@@ -182,7 +182,7 @@ namespace TVGL
                         newVertex = new Vertex2D(aVertex.Coordinates + nextBEdge.ToPoint.Coordinates, visitedHash.Count, currentLoopIndex);
                         visitedHash.Add((aVertex, bVertex, false), newVertex);
                         result.Add(newVertex);
-                        prevACrossNextA = aVertex.EndLine.Vector.Cross(nextAEdge.Vector);
+                        prevACrossNextA = aVertex.EndLine.Vector.CrossSign(nextAEdge.Vector);
                         knownWrongPoints.Add(prevACrossNextA < 0);
                         bVertex = nextBEdge.ToPoint;
                         break;
