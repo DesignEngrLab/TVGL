@@ -623,6 +623,11 @@ namespace TVGL
         public static List<double[]> AllPolygonIntersectionPointsAlongHorizontalLines(this IEnumerable<Polygon> polygons,
             double startingYValue, double stepSize, out int firstIntersectingIndex)
         {
+            if (polygons == null || !polygons.Any())
+            {
+                firstIntersectingIndex = -1;
+                return new List<double[]>();
+            }
             var yEnd = polygons.Max(p => p.MaxY);
             var intersections = new List<double[]>();
             var sortedPoints = new List<Vertex2D>();
