@@ -49,4 +49,8 @@
 	<ItemGroup>
 		<InternalsVisibleTo Include="TVGLUnitTestsAndBenchmarking" />
 	</ItemGroup>
+
+	<ItemGroup>
+	  <Folder Include="Polygon Operations\Clipper\github.com.AngusJohnson.Clipper2\" />
+	</ItemGroup>
 </Project>

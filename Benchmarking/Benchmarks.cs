@@ -14,22 +14,22 @@ namespace Benchmarking
         private Vector3 q;
         private double[,] matrix;
         private ComplexNumber c1, c2;
+        private double rise, run;
 
         [GlobalSetup]
         public void Setup()
         {
-
-             c1 = new ComplexNumber(r100, r100);
-             c2 = new ComplexNumber(r100, r100);
-            //var ans1 = StarMath.ComplexNumberDivide(c1.Real, c1.Imaginary, c2.Real, c2.Imaginary);
-            var ans2 = c1 / c2;
-        }
-
-        //[Benchmark]
-        //public double[] OLD() => StarMath.ComplexNumberDivide(c1.Real, c1.Imaginary, c2.Real, c2.Imaginary);
+                var angle = Math.PI * r1;
+                var radius = 0.1 + 4 * r.NextDouble();
+                var run = radius * Math.Cos(angle);
+                var rise = radius * Math.Sin(angle);
+            }
 
         [Benchmark]
-        public ComplexNumber NEW() => c1 / c2;
+        public double ATan2() => Math.Atan2(rise, run);
+
+        [Benchmark]
+        public double PseudoAngle() => Constants.Pseudoangle(run, rise);
 
 
 

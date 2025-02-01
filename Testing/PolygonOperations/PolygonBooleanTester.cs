@@ -375,7 +375,7 @@ namespace TVGLUnitTestsAndBenchmarking
             var polygon1 = new Polygon(polysValue.Item1);
             var polygon2 = new Polygon(polysValue.Item2);
 
-            //Presenter.ShowAndHang(new[] { polygon1, polygon2 });
+            Presenter.ShowAndHang(new[] { polygon1, polygon2 });
             var polygons = polygon1.Union(polygon2);
 
             //var polygons = new List<Polygon> { polygon1 };
@@ -386,7 +386,7 @@ namespace TVGLUnitTestsAndBenchmarking
             //polygon1 = polygon1.Intersect(new Polygon(hole1))[0];
             //Presenter.ShowAndHang(polygons);
             //var polygon1 = new Polygon(coords1, true);
-            // Presenter.ShowAndHang(polygon1);
+            //Presenter.ShowAndHang(polygon1);
             //var polygons3 = polygon1.OffsetRound(88);
             var offsetBase = Math.Sqrt(polygons.LargestPolygon().PathArea);
             var factors = new[] { -.01, 0.01, -.03, 0.03, -.1, 0.1, -.3, 0.3, -1, 1, -3, 3, -10 };

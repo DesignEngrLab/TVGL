@@ -17,6 +17,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
+using System.Reflection.Metadata.Ecma335;
 using System.Runtime.Serialization;
 
 
@@ -144,6 +145,7 @@ namespace TVGL
             for (int i = 0, j = numPoints - 1; i < numPoints; j = i++)
             // note this compact approach to setting i and j. 
             {
+                if (!IsClosed && i == 0) continue;
                 var fromNode = Vertices[j];
                 var toNode = Vertices[i];
                 var polySegment = new PolygonEdge(fromNode, toNode);
@@ -376,6 +378,7 @@ namespace TVGL
             }
         }
 
+        public bool IsClosed { get; set; }
 
         /// <summary>
         /// This reverses the polygon, including updates to area and the point path.
@@ -581,8 +584,10 @@ namespace TVGL
         /// <param name="RemovePointsLessThanTolerance">if set to <c>true</c> [remove points less than tolerance].</param>
 
 
-        public Polygon(IEnumerable<Vector2> coordinates, int index = -1, bool RemovePointsLessThanTolerance = true)
+        public Polygon(IEnumerable<Vector2> coordinates, int index = -1, bool RemovePointsLessThanTolerance = true,
+            bool isClosed = true)
         {
+            IsClosed = isClosed;
             Index = index;
             _path = new List<Vector2>();
             foreach (var p in coordinates)
@@ -646,8 +651,9 @@ namespace TVGL
         /// </summary>
         /// <param name="vertices">The vertices.</param>
         /// <param name="index">The index.</param>
-        public Polygon(IEnumerable<Vertex2D> vertices, int index = -1)
+        public Polygon(IEnumerable<Vertex2D> vertices, int index = -1, bool isClosed = true)
         {
+            IsClosed = isClosed;
             _vertices = vertices as List<Vertex2D> ?? vertices.ToList();
             SetBounds();
             Index = index;
@@ -729,21 +735,73 @@ namespace TVGL
         /// Determines whether this instance is convex.
         /// </summary>
         /// <returns><c>true</c> if this instance is convex; otherwise, <c>false</c>.</returns>
-        public bool IsConvex()
+        public bool IsConvex
         {
-            if (Area < 0) return false; //It must have an area greater than zero
-            var firstLine = Edges.Last();
-            foreach (var secondLine in Edges)
+            get
             {
-                var cross = firstLine.Vector.Cross(secondLine.Vector);
-                if (secondLine.Length.IsNegligible(Constants.PolygonSameTolerance)) continue; // without updating the first line             
-                if (cross < 0)
-                    return false;
-                firstLine = secondLine;
+                if (!_isConvex.HasValue)
+                {
+                    MakePolygonEdgesIfNonExistent();
+                    _isConvex = true;
+                    foreach (var v in Vertices)
+                    {
+                        if (v.StartLine == null || v.EndLine == null)
+                        {
+                            v.IsConvex = null;
+                            _isConvex = false;
+                        }
+                        else
+                        {
+                            v.IsConvex = v.EndLine.Vector.Cross(v.StartLine.Vector) >= 0;
+                            if (!v.IsConvex.Value)
+                                _isConvex = false;
+                        }
+                    }
+                }
+                return _isConvex.Value;
             }
-            return true;
         }
+        private bool? _isConvex = null;
 
+        /// <summary>
+        /// Gets the vertices of the top (not inner) polygon that are convex.
+        /// </summary>
+        /// <returns></returns>
+        public IEnumerable<Vertex2D> GetConvexVertices()
+        {
+            MakePolygonEdgesIfNonExistent();
+            foreach (var v in Vertices)
+            {
+                if (v.IsConvex.HasValue && v.IsConvex.Value)
+                    yield return v;
+                else if (v.StartLine != null && v.EndLine != null)
+                {
+                    v.IsConvex = v.EndLine.Vector.Cross(v.StartLine.Vector) >= 0;
+                    if (v.IsConvex.Value)
+                        yield return v;
+                }
+            }
+        }
+        /// <summary>
+        /// Gets the vertices of the top (not inner) polygon that are concave.
+        /// </summary>
+        /// <returns></returns>
+        public IEnumerable<Vertex2D> GetConcaveVertices()
+        {
+            MakePolygonEdgesIfNonExistent();
+            foreach (var v in Vertices)
+            {
+                if (v.IsConvex.HasValue && !v.IsConvex.Value)
+                    yield return v;
+                else if (v.StartLine != null && v.EndLine != null)
+                {
+                    v.IsConvex = v.EndLine.Vector.Cross(v.StartLine.Vector) >= 0;
+                    if (!v.IsConvex.Value)
+                        yield return v;
+                }
+            }
+        }
+        
         /// <summary>
         /// Sets the bounds.
         /// </summary>
