@@ -522,6 +522,8 @@ namespace TVGL
         /// <returns>Polygon.</returns>
         public static void SimplifyByAreaChange(this Polygon polygon, double allowableChangeInAreaFraction)
         {
+            throw new NotImplementedException("This method has bugs left from the conversion to VectorIOP");
+            /*
             polygon.RemoveCollinearEdges();
             var origArea = Math.Abs(polygon.Area);
             if (origArea.IsNegligible()) return;
@@ -560,6 +562,7 @@ namespace TVGL
                 }
             }
             RecreateVertices(polygon);
+            */
         }
 
 
@@ -711,6 +714,9 @@ namespace TVGL
         /// <returns>IEnumerable&lt;Polygon&gt;.</returns>
         public static void SimplifyByAreaChange(this IEnumerable<Polygon> polygons, int targetNumberOfPoints)
         {
+
+            throw new NotImplementedException("This method has bugs left from the conversion to VectorIOP");
+            /*
             // first remove collinear points and set up lists
             var allPolygons = polygons.SelectMany(p => p.AllPolygons).ToList();
             allPolygons.RemoveCollinearEdges();
@@ -737,6 +743,7 @@ namespace TVGL
             }
             foreach (var polygon in allPolygons)
                 RecreateVertices(polygon);
+            */
         }
 
         /// <summary>
@@ -1054,6 +1061,9 @@ namespace TVGL
         /// <returns>Polygon.</returns>
         public static void Complexify(this Polygon polygon, double maxAllowableLength)
         {
+
+            throw new NotImplementedException("This method has bugs left from the conversion to VectorIOP");
+            /*
             var loopID = polygon.Index;
             for (int i = polygon.Edges.Count - 1; i >= 0; i--)
             {
@@ -1072,6 +1082,7 @@ namespace TVGL
             polygon.Reset();
             foreach (var polygonHole in polygon.InnerPolygons)
                 polygonHole.Complexify(maxAllowableLength);
+            */
         }
 
         /// <summary>
@@ -1249,6 +1260,9 @@ namespace TVGL
         private static void UpdateCrossProductInQueues(Vertex2D vertex, UpdatablePriorityQueue<Vertex2D, double> convexCornerQueue,
             UpdatablePriorityQueue<Vertex2D, double> concaveCornerQueue)
         {
+
+            throw new NotImplementedException("This method has bugs left from the conversion to VectorIOP");
+            /*
             var newCross = vertex.EndLine.Vector.Cross(vertex.StartLine.Vector);
             var wasInConvex = convexCornerQueue.Contains(vertex);
             if (newCross < 0)
@@ -1269,6 +1283,7 @@ namespace TVGL
                 concaveCornerQueue.Remove(vertex);
                 convexCornerQueue.Enqueue(vertex, newCross);
             }
+            */
         }
 
         /// <summary>

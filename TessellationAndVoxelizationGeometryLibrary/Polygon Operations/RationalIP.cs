@@ -213,6 +213,11 @@ namespace TVGL
             return Int128.IsNegative(Num) == Int128.IsNegative(Den);
         }
 
+        internal static RationalIP Abs(RationalIP rationalIP)
+        {
+            return new RationalIP(Int128.Abs(rationalIP.Num), Int128.Abs(rationalIP.Den));
+        }
+
         #endregion
     }
 }

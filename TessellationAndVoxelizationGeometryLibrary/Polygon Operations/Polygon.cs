@@ -711,7 +711,7 @@ namespace TVGL
                         }
                         else
                         {
-                            v.IsConvex = v.EndLine.Vector.Cross(v.StartLine.Vector) >= 0;
+                            v.IsConvex = v.EndLine.Vector.CrossSign(v.StartLine.Vector) >= 0;
                             if (!v.IsConvex.Value)
                                 _isConvex = false;
                         }
@@ -735,7 +735,7 @@ namespace TVGL
                     yield return v;
                 else if (v.StartLine != null && v.EndLine != null)
                 {
-                    v.IsConvex = v.EndLine.Vector.Cross(v.StartLine.Vector) >= 0;
+                    v.IsConvex = v.EndLine.Vector.CrossSign(v.StartLine.Vector) >= 0;
                     if (v.IsConvex.Value)
                         yield return v;
                 }
@@ -754,7 +754,7 @@ namespace TVGL
                     yield return v;
                 else if (v.StartLine != null && v.EndLine != null)
                 {
-                    v.IsConvex = v.EndLine.Vector.Cross(v.StartLine.Vector) >= 0;
+                    v.IsConvex = v.EndLine.Vector.CrossSign(v.StartLine.Vector) >= 0;
                     if (!v.IsConvex.Value)
                         yield return v;
                 }

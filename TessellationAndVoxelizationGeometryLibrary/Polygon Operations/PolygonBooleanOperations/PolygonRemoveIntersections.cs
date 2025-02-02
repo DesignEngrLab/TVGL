@@ -78,7 +78,7 @@ namespace TVGL
                 currentEdge = null;
                 return false;
             }
-            if (int.IsEvenInteger(intersectionData.Relationship)) // must be odd. otherwise it is a noa a ValidOverlap
+            if (int.IsEvenInteger((int)intersectionData.Relationship)) // must be odd. otherwise it is a noa a ValidOverlap
             {
                 currentEdge = null;
                 return false;

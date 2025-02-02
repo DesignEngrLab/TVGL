@@ -107,7 +107,7 @@ namespace TVGL
         public static IEnumerable<Vector2[]> TriangulateToCoordinates(this Polygon polygon)
         {
             foreach (var triangle in polygon.Triangulate())
-                yield return new[] { triangle[0].Coordinates, triangle[1].Coordinates, triangle[2].Coordinates };
+                yield return new[] { triangle[0].Coordinates.AsVector2, triangle[1].Coordinates.AsVector2, triangle[2].Coordinates.AsVector2 };
         }
 
         /// <summary>
@@ -171,7 +171,7 @@ namespace TVGL
             {
                 polygon.MakePolygonEdgesIfNonExistent();
                 IList<Vertex2D> verts = polygon.Vertices;
-                var concaveEdge = polygon.Vertices.FirstOrDefault(v => v.EndLine.Vector.Cross(v.StartLine.Vector) < 0);
+                var concaveEdge = polygon.Vertices.FirstOrDefault(v => v.EndLine.Vector.CrossSign(v.StartLine.Vector) < 0);
                 if (concaveEdge != null)
                 {
                     while (verts[0].IndexInList != concaveEdge.IndexInList)
@@ -199,10 +199,10 @@ namespace TVGL
             {
                 if (selfIntersections.All(si => si.WhereIntersection == WhereIsIntersection.BothStarts))
                     return polygon.RemoveSelfIntersections(ResultType.OnlyKeepPositive).SelectMany(p => p.Triangulate(false)).ToList();
-                else 
+                else
                 {
                     //Try to simplify and then re-check to see if it is valid now. This will also fix threading issues.
-                    polygon = SimplifyByAreaChangeToNewPolygon(polygon, areaSimplificationFraction); 
+                    polygon = SimplifyByAreaChangeToNewPolygon(polygon, areaSimplificationFraction);
                     selfIntersections = polygon.GetSelfIntersections().Where(intersect => intersect.Relationship != SegmentRelationship.NoOverlap).ToList();
                     if (selfIntersections.Count > 0)
                     {
@@ -232,10 +232,11 @@ namespace TVGL
                 {
                     foreach (var monoPoly in CreateXMonotonePolygons(polygon))
                         localTriangleFaceList.AddRange(TriangulateMonotonePolygon(monoPoly));
-                    triangleArea = 0.5 * localTriangleFaceList
-                       .Sum(tri => Math.Abs((tri[1].Coordinates - tri[0].Coordinates).Cross(tri[2].Coordinates - tri[0].Coordinates)));
+                    var triangleAreaRational = localTriangleFaceList
+                          .Aggregate(RationalIP.Zero, (acc, tri) => acc + RationalIP.Abs((tri[1].Coordinates - tri[0].Coordinates).Cross2D(tri[2].Coordinates - tri[0].Coordinates)));
+                    triangleArea = new RationalIP(triangleAreaRational.Num, 2 * triangleAreaRational.Den).AsDouble;
                 }
-                catch 
+                catch
                 {
                     //IO.Save(polygon, "errorPolygon" + DateTime.Now.ToOADate() + ".json");
                     //throw new Exception("Unable to triangulate polygon.");
@@ -279,7 +280,7 @@ namespace TVGL
         /// <returns>IEnumerable&lt;Polygon&gt;.</returns>
         public static IEnumerable<Polygon> CreateXMonotonePolygons(this Polygon polygon)
         {
-            if (polygon.PartitionIntoMonotoneBoxes(MonotonicityChange.X).Count()==1)
+            if (polygon.PartitionIntoMonotoneBoxes(MonotonicityChange.X).Count() == 1)
             {
                 yield return polygon;
                 yield break;
@@ -330,7 +331,7 @@ namespace TVGL
             foreach (var vertex in sortedVertices)
             {
                 var monoChange = GetMonotonicityChange(vertex);
-                var cornerCross = vertex.EndLine.Vector.Cross(vertex.StartLine.Vector);
+                var cornerCross = vertex.EndLine.Vector.CrossSign(vertex.StartLine.Vector);
                 if (monoChange == MonotonicityChange.SameAsPrevious || monoChange == MonotonicityChange.Neither || monoChange == MonotonicityChange.Y)
                 // then it's regular
                 {
@@ -450,18 +451,18 @@ namespace TVGL
         /// <param name="point">The point.</param>
         /// <param name="minfeasible">The minfeasible.</param>
         /// <returns>PolygonEdge.</returns>
-        private static PolygonEdge FindClosestLowerDatum(IEnumerable<PolygonEdge> edges, Vector2 point, double minfeasible = 0.0)
+        private static PolygonEdge FindClosestLowerDatum(IEnumerable<PolygonEdge> edges, Vector2IP point)
         {
             var numEdges = 0;
-            var closestDistance = double.PositiveInfinity;
+            var closestDistance = RationalIP.PositiveInfinity;
             PolygonEdge closestEdge = null;
             foreach (var edge in edges)
             {
                 numEdges++;
-                var intersectionYValue = edge.FindYGivenX(point.X, out var betweenPoints);
+                var intersectionYValue = PGA2D.YValueGivenXOnEdge(point.X, point.W, edge, out var betweenPoints);
                 if (!betweenPoints) continue;
-                var delta = point.Y - intersectionYValue;
-                if (delta >= minfeasible && delta < closestDistance)
+                var delta =new RationalIP(point.Y,point.W) - intersectionYValue;
+                if (delta < closestDistance)
                 {
                     closestDistance = delta;
                     closestEdge = edge;
@@ -507,7 +508,7 @@ namespace TVGL
                     Vertex2D vertex1 = concaveFunnelStack.Pop();
                     Vertex2D vertex2 = concaveFunnelStack.Pop();
                     while (vertex2 != null && newVertexIsOnBottom ==
-                        (vertex1.Coordinates - nextVertex.Coordinates).Cross(vertex2.Coordinates - vertex1.Coordinates) < 0)
+                        (vertex1.Coordinates - nextVertex.Coordinates).CrossSign(vertex2.Coordinates - vertex1.Coordinates) < 0)
                     {
                         if (newVertexIsOnBottom)
                             yield return new[] { nextVertex, vertex2, vertex1 };
@@ -586,7 +587,7 @@ namespace TVGL
             var rightContinues = rightEnumerator.MoveNext();
             while (leftContinues || rightContinues)
             {
-                if (!rightContinues || 
+                if (!rightContinues ||
                     leftContinues && comparer.Compare(leftEnumerator.Current, rightEnumerator.Current) <= 0)
                 {
                     yield return leftEnumerator.Current;

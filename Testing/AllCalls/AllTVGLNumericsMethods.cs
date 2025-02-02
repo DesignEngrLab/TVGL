@@ -50,7 +50,6 @@ namespace TVGLUnitTestsAndBenchmarking
 
             v2_2 = v2_1 + v2_1;
             v2_2 = v2_1 - v2_1;
-            v2_2 = v2_1 * v2_1; //not dot or cross - basically a 
             //component to component product vector whos terms sum to dot product
             v2_2 = v2_1 - v2_1;
             v2_2 = v2_1 / v2_1;

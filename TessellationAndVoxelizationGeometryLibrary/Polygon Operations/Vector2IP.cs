@@ -141,6 +141,15 @@ namespace TVGL
 
         #region Public Static Operators
         /// <summary>
+        /// Multiply scalar and vector.
+        /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Vector2IP operator *(RationalIP c, Vector2IP vector)
+        {
+            return new Vector2IP(c.Num * vector.X, c.Num * vector.Y, c.Den * vector.W);
+        }
+
+        /// <summary>
         /// Adds two vectors together.
         /// </summary>
         /// <param name="left">The first source vector.</param>

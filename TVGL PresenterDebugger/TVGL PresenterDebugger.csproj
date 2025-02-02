@@ -106,7 +106,6 @@
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Polygon Operations\PGA2D.cs" Link="TVGL\Polygon Operations\PGA2D.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Polygon Operations\Vector2IP.cs" Link="TVGL\Polygon Operations\Vector2IP.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Polygon Operations\RationalIP.cs" Link="TVGL\Polygon Operations\RationalIP.cs" />
-		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Polygon Operations\Clipper\clipper.cs" Link="TVGL\Polygon Operations\Clipper\clipper.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Polygon Operations\Clipper\ClipperPolygonOperations.cs" Link="TVGL\Polygon Operations\Clipper\ClipperPolygonOperations.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Polygon Operations\IntersectionData.cs" Link="TVGL\Polygon Operations\IntersectionData.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Polygon Operations\MedialAxis2D.cs" Link="TVGL\Polygon Operations\MedialAxis2D.cs" />
