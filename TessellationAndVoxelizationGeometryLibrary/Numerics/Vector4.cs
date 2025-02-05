@@ -471,6 +471,23 @@ namespace TVGL  // COMMENTEDCHANGE namespace System.Numerics
         }
 
         /// <summary>
+        /// Returns the Vector4 as a Vector3. If homogenize is true, then the 
+        /// X, Y, and Z values are divided by the W value. If false, the W value is ignored.
+        /// </summary>
+        /// <param name="homogenize"></param>
+        /// <returns></returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public Vector3 ToVector3(bool homogenize = false)
+        {
+            if (homogenize)
+            {
+                if (W == 0) return new Vector3(double.NaN, double.NaN, double.NaN);
+                return new Vector3(X / W, Y / W, Z / W);
+            }
+            return new Vector3(X, Y, Z);
+        }
+
+        /// <summary>
         /// Performs a linear interpolation between two vectors based on the given weighting.
         /// </summary>
         /// <param name="value1">The first vector.</param>
