@@ -15,7 +15,6 @@ using StarMathLib;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net.WebSockets;
 using System.Runtime.CompilerServices;
 
 namespace TVGL
@@ -25,11 +24,23 @@ namespace TVGL
     /// </summary>
     public static partial class MiscFunctions
     {
-        public static Vector3 AggregateNormal(this IEnumerable<TriangleFace> faces)
+        public static Vector3 AverageFaceNormals(this IEnumerable<TriangleFace> faces, bool weightedByFaceArea = false)
         {
-            return faces.Select(f => f.Normal).Aggregate((v1, v2) => v1 + v2).Normalize();
+            if (weightedByFaceArea)
+            {
+                var result = Vector3.Zero;
+                foreach (var face in faces)
+                    result += face.Normal * face.Area;
+                return result.Normalize();
+            }
+            else
+            {
+                var result = Vector3.Zero;
+                foreach (var face in faces)
+                    result += face.Normal;
+                return result.Normalize();
+            }
         }
-
         #region Sort Along Direction
 
         /// <summary>
