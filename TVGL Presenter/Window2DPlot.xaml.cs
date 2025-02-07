@@ -118,7 +118,7 @@ namespace TVGL
         /// <param name="plot2DType">Type of the plot2 d.</param>
         /// <param name="closeShape">if set to <c>true</c> [close shape].</param>
         /// <param name="marker">The marker.</param>
-        public Window2DPlot(IEnumerable<IEnumerable<Vector2>> listOfArrayOfPoints, string title, Plot2DType plot2DType, bool closeShape,
+        public Window2DPlot(IEnumerable<IEnumerable<Vector2>> listOfArrayOfPoints, string title, Plot2DType plot2DType, IEnumerable<bool> closeShape,
             MarkerType marker) : this(title)
         {
             PlotData(listOfArrayOfPoints, plot2DType, closeShape, marker);
@@ -162,15 +162,21 @@ namespace TVGL
         }
 
 
-        internal void PlotData(IEnumerable<IEnumerable<Vector2>> listOfArrayOfPoints, Plot2DType plot2DType, bool closeShape, MarkerType marker)
+        internal void PlotData(IEnumerable<IEnumerable<Vector2>> listOfArrayOfPoints, Plot2DType plot2DType, IEnumerable<bool> closePaths, MarkerType marker)
         {
             var allPoints = new List<Vector2>();
+            var closedEnumerator = closePaths.GetEnumerator();
             foreach (var points in listOfArrayOfPoints)
             {
                 if (points == null || !points.Any()) continue;
+
+                while (!closedEnumerator.MoveNext())
+                    closedEnumerator = closePaths.GetEnumerator();
+                var isClosed = closedEnumerator.Current;
+
                 allPoints.AddRange(points);
                 if (plot2DType == Plot2DType.Line)
-                    AddLineSeriesToModel(points, closeShape, marker);
+                    AddLineSeriesToModel(points, isClosed, marker);
                 else
                     AddScatterSeriesToModel(points, marker);
             }

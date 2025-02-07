@@ -82,9 +82,8 @@ namespace TVGL
 
 
         /// <summary>
-        /// Returns the single polygon that is encompasses the point or is closest to it. This will be a
-        /// simple polygon as the method transverses each input as a polygon tree and simply find the loop
-        /// (positive or negative/hole) the polygon.
+        /// Returns true if the outer polygon encompasses the inner one. This is a quick check involving only
+        /// one point on the inner. It does not check if the two polygons intersect
         /// </summary>
         /// <param name="outer">The outer polygon.</param>
         /// <param name="onlyTopOuterPolygon">if set to <c>true</c> only top outer polygon is checked and none of the innner polygons.</param>
@@ -92,7 +91,7 @@ namespace TVGL
         /// <param name="onlyTopInnerPolygon">if set to <c>true</c> [only top inner polygon].</param>
         /// <param name="onBoundary">if set to <c>true</c> [on boundary].</param>
         /// <returns>Polygon.</returns>
-        internal static bool? IsNonIntersectingPolygonInside(this Polygon outer, bool onlyTopOuterPolygon, Polygon inner,
+        public static bool? IsNonIntersectingPolygonInside(this Polygon outer, bool onlyTopOuterPolygon, Polygon inner,
             bool onlyTopInnerPolygon, out bool onBoundary)
         {
             onBoundary = false;
@@ -624,6 +623,11 @@ namespace TVGL
         public static List<double[]> AllPolygonIntersectionPointsAlongHorizontalLines(this IEnumerable<Polygon> polygons,
             double startingYValue, double stepSize, out int firstIntersectingIndex)
         {
+            if (polygons == null || !polygons.Any())
+            {
+                firstIntersectingIndex = -1;
+                return new List<double[]>();
+            }
             var yEnd = polygons.Max(p => p.MaxY);
             var intersections = new List<double[]>();
             var sortedPoints = new List<Vertex2D>();

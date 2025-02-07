@@ -58,9 +58,10 @@ namespace TVGL
         public static List<Polygon> CreateShallowPolygonTrees(this IEnumerable<Polygon> polygons, bool vertexNegPosOrderIsGuaranteedCorrect,
             bool alreadyOrderedInIncreasingArea = false)
         {
+            var polygonList = new List<Polygon>();
+            if (polygons == null) return polygonList;
             var polygonTrees = CreatePolygonTree(polygons, vertexNegPosOrderIsGuaranteedCorrect, alreadyOrderedInIncreasingArea);
 
-            var polygonList = new List<Polygon>();
             foreach (var polygon in polygonTrees.SelectMany(p => p.AllPolygons))
                 if (polygon.IsPositive) polygonList.Add(polygon);
 

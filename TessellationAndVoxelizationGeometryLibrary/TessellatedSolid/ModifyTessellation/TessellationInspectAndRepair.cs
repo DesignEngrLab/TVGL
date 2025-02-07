@@ -1146,8 +1146,9 @@ namespace TVGL
 
 
         public static IEnumerable<HashSet<TriangleFace>> GetFacePatchesBetweenBorderEdges(HashSet<Edge> borderEdges,
-            IEnumerable<TriangleFace> faces, HashSet<TriangleFace> usedFaces)
+            IEnumerable<TriangleFace> faces, HashSet<TriangleFace> usedFaces = null)
         {
+            if (usedFaces == null) usedFaces = new HashSet<TriangleFace>();
             var remainingFaces = new HashSet<TriangleFace>(faces);
             //Pick a start edge, then collect all adjacent faces on one side of the face, without crossing over significant edges.
             //This collection of faces will be used to create a patch.

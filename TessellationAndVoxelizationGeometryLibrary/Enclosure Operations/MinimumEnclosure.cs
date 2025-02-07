@@ -469,7 +469,6 @@ namespace TVGL
             /* the cvxPoints will be arranged from a point with minimum X-value around in a CCW loop to the last point 
              * however, we want the last point that has minX, so that we can easily get the next angle  */
             var pointsCount = points.Count;
-            if (pointsCount == 0) return new BoundingRectangle();
             var lastIndex = pointsCount - 1;
             //Good picture of extreme vertices in the following link
             //http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.155.5671&rep=rep1&type=pdf
@@ -480,16 +479,25 @@ namespace TVGL
 
             #region 2) Get Extreme Points and initial angles
             var extremeIndices = new int[4];
-            var nextIndex = 1;
+            // the points are arranged in a loop but not starting at the minX (minY for ties)! 
+            // So the first loop must check ALL points.
             //Point0 = min X, (at the lowest Y value for ties)
-            while (points[extremeIndices[0]].X >= points[nextIndex].X)
+            var minX = double.PositiveInfinity;
+            var minY = double.PositiveInfinity;
+            for (int i = 0; i < points.Count; i++)
             {
-                extremeIndices[0] = nextIndex;
-                nextIndex++;
-                if (nextIndex == pointsCount) nextIndex = 0;
+                if (minX > points[i].X || (minX == points[i].X && minY > points[i].Y))
+                {
+                    extremeIndices[0] = i;
+                    minX = points[i].X;
+                    minY = points[i].Y;
+                }
             }
-            //Point1 = min Y (at the max X value for ties. This is done in the following while-loop)
             extremeIndices[1] = extremeIndices[0];
+            var nextIndex = (extremeIndices[1] + 1) % points.Count;
+            // now going forward. we can trust that we don't need to check all the points.
+            // Once, the dimension changes direction we can leave
+            //Point1 = min Y (at the max X value for ties. This is done in the following while-loop)
             while (points[extremeIndices[1]].Y >= points[nextIndex].Y)
             {
                 extremeIndices[1] = nextIndex;
@@ -580,7 +588,7 @@ namespace TVGL
                         for (int i = 0; i < 4; i++)
                         {
                             var direction = (i < 2) ? bestRectangle.Direction1 : bestRectangle.Direction2;
-                            sidePoints[i] = FindSidePoints(bestExtremeIndices[i], bestRectangle.Offsets[i], points, direction, lastIndex);
+                            sidePoints[i] = FindSidePoints(bestExtremeIndices[i], bestRectangle.Offsets(i), points, direction, lastIndex);
                         }
                         bestRectangle = new BoundingRectangle(unitVectorAlongSide, unitVectorPointInto, d1Min, d1Max, d2Min, d2Max,
                             length1, length2, area, sidePoints);

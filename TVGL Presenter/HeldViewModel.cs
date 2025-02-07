@@ -15,7 +15,7 @@ namespace TVGL
     {
         public string Title
         {
-            get => title; 
+            get => title;
             set
             {
                 if (title == value) return;
@@ -25,7 +25,7 @@ namespace TVGL
         }
         public bool HasClosed
         {
-            get => hasClosed; 
+            get => hasClosed;
             set
             {
                 if (hasClosed == value) return;
@@ -46,21 +46,26 @@ namespace TVGL
             }
         }
         private Queue<ICollection<LineSeries>> SeriesQueue;
-        internal void AddNewSeries(IEnumerable<IEnumerable<Vector2>> paths, Plot2DType plot2DType, bool closeShape, MarkerType marker)
+        internal void AddNewSeries(IEnumerable<IEnumerable<Vector2>> paths, Plot2DType plot2DType, IEnumerable<bool> closePaths, MarkerType marker)
         {
             SeriesQueue.Clear();
-            EnqueueNewSeries(paths, plot2DType, closeShape, marker);
+            EnqueueNewSeries(paths, plot2DType, closePaths, marker);
         }
 
-        internal void EnqueueNewSeries(IEnumerable<IEnumerable<Vector2>> paths, Plot2DType plot2DType, bool closeShape, MarkerType marker)
+        internal void EnqueueNewSeries(IEnumerable<IEnumerable<Vector2>> paths, Plot2DType plot2DType, IEnumerable<bool> closePaths, MarkerType marker)
         {
             var listOfPlots = new List<LineSeries>();
+            if (closePaths == null) closePaths = [true];
+            var closedEnumerator = closePaths.GetEnumerator();
             foreach (var path in paths)
             {
+                while (!closedEnumerator.MoveNext())
+                    closedEnumerator = closePaths.GetEnumerator();
+                var isClosed = closedEnumerator.Current;
                 var series = new LineSeries();
                 foreach (var vertex in path)
                     series.Points.Add(new DataPoint(vertex.X, vertex.Y));
-                if (closeShape)
+                if (isClosed)
                     series.Points.Add(new DataPoint(path.First().X, path.First().Y));
                 series.MarkerType = marker;
                 if (plot2DType == Plot2DType.Line)
@@ -120,8 +125,9 @@ namespace TVGL
             if (SeriesQueue.Count == 0) return false;
             var series = SeriesQueue.Dequeue();
             PlotModel.Series.Clear();
-            foreach (var s in series)
-                PlotModel.Series.Add(s);
+            lock (series)
+                foreach (var s in series)
+                    PlotModel.Series.Add(s);
             return true;
         }
 

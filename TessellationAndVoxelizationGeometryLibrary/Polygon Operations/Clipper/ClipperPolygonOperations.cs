@@ -11,7 +11,7 @@
 // </copyright>
 // <summary></summary>
 // ***********************************************************************
-using ClipperLib;
+using Clipper2Lib;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -22,7 +22,7 @@ namespace TVGL
     /// <summary>
     /// Enum PolygonFillType
     /// </summary>
-    public enum PolygonFillType //http://www.angusj.com/delphi/clipper/documentation/Docs/Units/ClipperLib/Types/PolyFillType.htm
+    public enum PolygonFillType //http://www.angusj.com/delphi/clipper/documentation/Docs/Units/Clipper2Lib/Types/PolyFillType.htm
     {
         /// <summary>
         /// The positive
@@ -50,22 +50,11 @@ namespace TVGL
         /// <summary>
         /// The scale
         /// </summary>
-        const double scale = 1000000;
+        //const double scale = 1000000; // this is (2^6)*(3^2)*(5^4)*127 = 45720000
+        const double scale = 45720000; // this is (2^6)*(3^2)*(5^4)*127 = 45720000
+        // why this number? see my reasoning here: https://github.com/DesignEngrLab/TVGL/wiki/Determining-the-Double-to-Long-Dimension-Multiplier
+        const double invScale = 1 / scale;
         #region Offset
-        /// <summary>
-        /// Offsets the via clipper.
-        /// </summary>
-        /// <param name="polygon">The polygon.</param>
-        /// <param name="offset">The offset.</param>
-        /// <param name="notMiter">if set to <c>true</c> [not miter].</param>
-        /// <param name="tolerance">The tolerance.</param>
-        /// <param name="deltaAngle">The delta angle.</param>
-        /// <returns>List&lt;Polygon&gt;.</returns>
-        private static List<Polygon> OffsetViaClipper(Polygon polygon, double offset, bool notMiter, double tolerance, double deltaAngle)
-        {
-            return OffsetViaClipper(new[] { polygon }, offset, notMiter, tolerance, deltaAngle);
-        }
-
         /// <summary>
         /// Offsets the via clipper.
         /// </summary>
@@ -84,20 +73,20 @@ namespace TVGL
                 tolerance = totalLength * 0.001;
             }
 
-            var joinType = notMiter ? (double.IsNaN(deltaAngle) ? JoinType.jtSquare : JoinType.jtRound) : JoinType.jtMiter;
-            //Convert Points (TVGL) to IntPoints (Clipper)
-            var clipperSubject = allPolygons.Select(loop => loop.Vertices.Select(point => new IntPoint(point.X * scale, point.Y * scale)).ToList()).ToList();
+            var joinType = notMiter ? (double.IsNaN(deltaAngle) ? JoinType.Square : JoinType.Round) : JoinType.Miter;
+            //Convert Points (TVGL) to Point64s (Clipper)
+            var clipperSubject = new Paths64(allPolygons.Select(loop
+                => new Path64(loop.Vertices.Select(point => new Point64(point.X * scale, point.Y * scale)))));
 
             //Setup Clipper
             var clip = new ClipperOffset(2, Math.Abs(tolerance) * scale);
-            clip.AddPaths(clipperSubject, joinType, EndType.etClosedPolygon);
+            clip.AddPaths(clipperSubject, joinType, EndType.Polygon);
 
             //Begin an evaluation
-            var clipperSolution = new List<List<IntPoint>>();
-            clip.Execute(clipperSolution, offset * scale);
+            clip.Execute(offset * scale, clipperSubject);
 
             //Convert back to points and return solution
-            var solution = clipperSolution.Select(clipperPath => new Polygon(clipperPath.Select(point => new Vector2(point.X / scale, point.Y / scale))));
+            var solution = clipperSubject.Select(clipperPath => new Polygon(clipperPath.Select(point => new Vector2(point.X * invScale, point.Y * invScale))));
             return solution.CreateShallowPolygonTrees(true);
         }
 
@@ -110,7 +99,7 @@ namespace TVGL
         /// <returns>List&lt;Polygon&gt;.</returns>
         public static List<Polygon> OffsetLineViaClipper(this IEnumerable<Vector2> polyline, double offset, double tolerance)
         {
-            return OffsetLinesViaClipper(new[] { polyline }, offset, tolerance);
+            return OffsetLinesViaClipper([polyline], offset, tolerance);
         }
 
         /// <summary>
@@ -124,19 +113,18 @@ namespace TVGL
         {
             if (double.IsNaN(tolerance) || tolerance.IsNegligible()) tolerance = Constants.BaseTolerance;
 
-            //Convert Points (TVGL) to IntPoints (Clipper)
-            var clipperSubject = polylines.Select(line => line.Select(point => new IntPoint(point.X * scale, point.Y * scale)).ToList()).ToList();
+            //Convert Points (TVGL) to Point64s (Clipper)
+            var clipperSubject = new Paths64(polylines.Select(line => new Path64(line.Select(point => new Point64(point.X * scale, point.Y * scale)))));
 
             //Setup Clipper
-            var clip = new ClipperOffset(2, tolerance * scale);
-            clip.AddPaths(clipperSubject, JoinType.jtSquare, EndType.etOpenSquare);
+            var clip = new ClipperOffset(2, Math.Abs(tolerance) * scale);
+            clip.AddPaths(clipperSubject, JoinType.Square, EndType.Square);
 
             //Begin an evaluation
-            var clipperSolution = new List<List<IntPoint>>();
-            clip.Execute(clipperSolution, offset * scale);
+            clip.Execute(offset * scale, clipperSubject);
 
             //Convert back to points and return solution
-            var solution = clipperSolution.Select(clipperPath => new Polygon(clipperPath.Select(point => new Vector2(point.X / scale, point.Y / scale))));
+            var solution = clipperSubject.Select(clipperPath => new Polygon(clipperPath.Select(point => new Vector2(point.X * invScale, point.Y * invScale))));
             return solution.CreateShallowPolygonTrees(true);
         }
 
@@ -155,31 +143,25 @@ namespace TVGL
         /// <param name="clipIsClosed">if set to <c>true</c> [clip is closed].</param>
         /// <returns>List&lt;Polygon&gt;.</returns>
         /// <exception cref="System.Exception">Clipper Union Failed</exception>
-        private static List<Polygon> BooleanViaClipper(PolyFillType fillMethod, ClipType clipType, IEnumerable<Polygon> subject,
-            IEnumerable<Polygon> clip = null, bool subjectIsClosed = true, bool clipIsClosed = true)
+        private static List<Polygon> BooleanViaClipper(FillRule fillMethod, ClipType clipType, IEnumerable<Polygon> subject,
+            IEnumerable<Polygon> clip, PolygonCollection outputAsCollectionType)
         {
             //Convert to int points and remove collinear edges
-            var clipperSubject = new List<List<IntPoint>>();
-            foreach (var polygon in subject)
-            {
-                foreach(var polygonElement in polygon.AllPolygons.Where(p => !p.PathArea.IsNegligible(Constants.BaseTolerance)))
-                {
-                    clipperSubject.Add(polygonElement.Path.Select(p => new IntPoint(p.X * scale, p.Y * scale)).ToList());
-                }
-            }
-            var clipperClip = new List<List<IntPoint>>();
-            if (clip != null)
-            {
-                foreach (var polygon in clip)
-                {
-                    foreach (var polygonElement in polygon.AllPolygons.Where(p => !p.PathArea.IsNegligible(Constants.BaseTolerance)))
-                    {
-                        clipperClip.Add(polygonElement.Path.Select(p => new IntPoint(p.X * scale, p.Y * scale)).ToList());
-                    }
-                }
-            }
+            var clipperSubject = ConvertToClipperPaths(subject);
+            var clipperClip = ConvertToClipperPaths(clip);
+
+            var clipperSolution = Clipper.BooleanOp(clipType, clipperSubject, clipperClip, fillMethod);
+            //Convert back to points and return solution
+            var solution = clipperSolution.Select(clipperPath
+                => new Polygon(clipperPath.Select(point => new Vector2(point.X / scale, point.Y / scale))));
+
+            if (outputAsCollectionType == PolygonCollection.PolygonWithHoles)
+                return solution.CreateShallowPolygonTrees(true);
+            if (outputAsCollectionType == PolygonCollection.PolygonTrees)
+                return solution.CreatePolygonTree(true);
+            return solution.ToList();
             //If subject is null, use the clip as the subject for unions. Else, return empty.
-            if (!clipperSubject.Any())
+            /* if (!clipperSubject.Any())
             {
                 if (clip == null || !clipperClip.Any())
                 {
@@ -192,23 +174,36 @@ namespace TVGL
                     clip = null;
                 }
             }
-
+            var clipper = new Clipper64();
             //Setup Clipper
-            var clipper = new ClipperLib.Clipper() { StrictlySimple = true };
-            clipper.AddPaths(clipperSubject, PolyType.ptSubject, subjectIsClosed);
+            clipper.AddPaths(clipperSubject, PathType.Subject, subjectIsClosed);
 
             //Don't add the clip unless it is not null (and has not been set to be the subject - see a few lines above) 
             if (clip != null && clipperClip.Any())
-                clipper.AddPaths(clipperClip, PolyType.ptClip, clipIsClosed);
+                clipper.AddPaths(clipperClip, PathType.Clip, clipIsClosed);
 
             //Begin an evaluation
-            var clipperSolution = new List<List<IntPoint>>();
-            var result = clipper.Execute(clipType, clipperSolution, fillMethod, fillMethod);
+            var clipperSolution = new Paths64();
+            var result = clipper.Execute(clipType, fillMethod, clipperSolution);
             if (!result) throw new Exception("Clipper Union Failed");
 
             //Convert back to points and return solution
             var solution = clipperSolution.Select(clipperPath => new Polygon(clipperPath.Select(point => new Vector2(point.X / scale, point.Y / scale))));
             return solution.CreateShallowPolygonTrees(true);
+            */
+        }
+
+        internal static Paths64 ConvertToClipperPaths(IEnumerable<Polygon> subject)
+        {
+            if (subject == null) return new Paths64();
+            var clipperSubject = new Paths64();
+            foreach (var polygon in subject)
+            {
+                if (polygon == null) continue;
+                foreach (var polygonElement in polygon.AllPolygons.Where(p => !p.PathArea.IsNegligible(Constants.BaseTolerance)))
+                    clipperSubject.Add(new Path64(polygonElement.Path.Select(p => new Point64(p.X * scale, p.Y * scale))));
+            }
+            return clipperSubject;
         }
         #endregion
     }

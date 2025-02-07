@@ -946,7 +946,7 @@ namespace TVGL
         /// </summary>
         /// <param name="removeVertex">The remove vertex.</param>
         /// <param name="removeReferecesToVertex">if set to <c>true</c> [remove refereces to vertex].</param>
-        internal void RemoveVertex(Vertex removeVertex, bool removeReferecesToVertex = true)
+        public void RemoveVertex(Vertex removeVertex, bool removeReferecesToVertex = true)
         {
             RemoveVertex(removeVertex.IndexInList, removeReferecesToVertex);
         }
@@ -956,7 +956,7 @@ namespace TVGL
         /// </summary>
         /// <param name="removeVIndex">Index of the remove v.</param>
         /// <param name="removeReferecesToVertex">if set to <c>true</c> [remove refereces to vertex].</param>
-        internal void RemoveVertex(int removeVIndex, bool removeReferecesToVertex = true)
+        public void RemoveVertex(int removeVIndex, bool removeReferecesToVertex = true)
         {
             if (removeReferecesToVertex) RemoveReferencesToVertex(Vertices[removeVIndex]);
             NumberOfVertices--;
@@ -1063,7 +1063,7 @@ namespace TVGL
         /// Removes the face.
         /// </summary>
         /// <param name="removeFace">The remove face.</param>
-        internal void RemoveFace(TriangleFace removeFace)
+        public void RemoveFace(TriangleFace removeFace)
         {
             RemoveFace(removeFace.IndexInList);
         }
@@ -1072,7 +1072,7 @@ namespace TVGL
         /// Removes the face.
         /// </summary>
         /// <param name="removeFaceIndex">Index of the remove face.</param>
-        internal void RemoveFace(int removeFaceIndex)
+        public void RemoveFace(int removeFaceIndex)
         {
             //First. Remove all the references to each edge and vertex.
             RemoveReferencesToFace(removeFaceIndex);
@@ -1186,7 +1186,7 @@ namespace TVGL
         /// Removes the edge.
         /// </summary>
         /// <param name="removeEdge">The remove edge.</param>
-        internal void RemoveEdge(Edge removeEdge)
+        public void RemoveEdge(Edge removeEdge)
         {
             RemoveEdge(removeEdge.IndexInList);
         }
@@ -1195,7 +1195,7 @@ namespace TVGL
         /// Removes the edge.
         /// </summary>
         /// <param name="removeEdgeIndex">Index of the remove edge.</param>
-        internal void RemoveEdge(int removeEdgeIndex)
+        public void RemoveEdge(int removeEdgeIndex)
         {
             RemoveReferencesToEdge(removeEdgeIndex);
             NumberOfEdges--;

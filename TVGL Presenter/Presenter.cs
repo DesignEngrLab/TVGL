@@ -74,7 +74,7 @@ namespace TVGL
         public static void ShowAndHang(IEnumerable<IEnumerable<Vector2>> pointsList, string title = "", Plot2DType plot2DType = Plot2DType.Line,
             bool closeShape = true, MarkerType marker = MarkerType.Circle)
         {
-            var window = new Window2DPlot(pointsList, title, plot2DType, closeShape, marker);
+            var window = new Window2DPlot(pointsList, title, plot2DType, [closeShape], marker);
             window.ShowDialog();
         }
 
@@ -95,17 +95,18 @@ namespace TVGL
         }
 
         public static void ShowAndHang(IEnumerable<Polygon> polygons, string title = "", Plot2DType plot2DType = Plot2DType.Line,
-            bool closeShape = true, MarkerType marker = MarkerType.Circle)
+             MarkerType marker = MarkerType.Circle)
         {
             var points = polygons.SelectMany(polygon => polygon.AllPolygons.Select(p => p.Path)).ToList();
-            var window = new Window2DPlot(points, title, plot2DType, closeShape, marker);
+            var closed = polygons.SelectMany(polygon => polygon.AllPolygons.Select(p => p.IsClosed)).ToList();
+            var window = new Window2DPlot(points, title, plot2DType,closed, marker);
             window.ShowDialog();
         }
 
         public static void ShowAndHang(Polygon polygon, string title = "", Plot2DType plot2DType = Plot2DType.Line,
-            bool closeShape = true, MarkerType marker = MarkerType.Circle)
+             MarkerType marker = MarkerType.Circle)
         {
-            ShowAndHang(new[] { polygon }, title, plot2DType, closeShape, marker);
+            ShowAndHang([polygon], title, plot2DType, marker);
         }
 
 

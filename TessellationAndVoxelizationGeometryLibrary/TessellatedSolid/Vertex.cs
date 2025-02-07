@@ -149,7 +149,7 @@ namespace TVGL
         /// <exception cref="System.NotImplementedException"></exception>
         private void DetermineNormal()
         {
-            _normal = Faces.AggregateNormal();
+            _normal = Faces.AverageFaceNormals();
         }
 
         /// <summary>
