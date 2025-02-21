@@ -1504,12 +1504,12 @@ namespace TVGL
             intersectionPoint = Vector2.Null;
             // okay, so bounding boxes overlap
             //first a quick check to see if points are the same
-            if (aFrom.IsAligned(bAnchor))
+            if (aFrom.IsPracticallySame(bAnchor))
             {
                 intersectionPoint = aFrom;
                 return true;
             }
-            if (aTo.IsAligned(bAnchor))
+            if (aTo.IsPracticallySame(bAnchor))
             {
                 intersectionPoint = aTo;
                 return true;

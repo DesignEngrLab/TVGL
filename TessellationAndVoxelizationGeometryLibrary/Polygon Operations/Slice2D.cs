@@ -110,7 +110,7 @@ namespace TVGL
 
             var positiveShift = 0.0;
             var negativeShift = 0.0;
-            distances.SetPositiveAndNegativeShifts(perpendicularDistanceToLine,Math.Pow(10, -shallowPolygonTree.NumSigDigits), ref positiveShift, ref negativeShift);
+            distances.SetPositiveAndNegativeShifts(perpendicularDistanceToLine, Math.Pow(10, -shallowPolygonTree.NumSigDigits), ref positiveShift, ref negativeShift);
             /*   First (1), a line hash is used to find all the lines to the left and the intersection lines.
                  Second (2), the intersection point for each of the intersecting lines is found.
                  Third (3), these intersection points are ordered in the perpendicular direction to the search direction
@@ -122,8 +122,12 @@ namespace TVGL
             var lineDir = new Vector2(-lineNormalDirection.Y, lineNormalDirection.X);
             var anchorpoint = perpendicularDistanceToLine * lineNormalDirection;
             var sortedPoints = new SortedList<double, (Vector2, PolygonEdge)>();
-            foreach (var polygons in shallowPolygonTree.AllPolygons)
-                foreach (var line in polygons.Edges)
+            negativeSidePolygons = new List<Polygon>();
+            positiveSidePolygons = new List<Polygon>();
+            foreach (var polygon in shallowPolygonTree.AllPolygons)
+            {
+                var untouched = true;
+                foreach (var line in polygon.Edges)
                 {
                     if (MiscFunctions.SegmentLine2DIntersection(line.FromPoint.Coordinates, line.ToPoint.Coordinates,
                          anchorpoint, lineDir, out var intersectionPoint))
@@ -131,9 +135,17 @@ namespace TVGL
                         intersectionLines.Add(line);
                         var distanceAlong = lineDir.Dot(intersectionPoint);
                         sortedPoints.Add(distanceAlong, (intersectionPoint, line));
+                        untouched = false;
                         //!line.ToPoint.Coordinates.Dot(lineNormalDirection).IsLessThanNonNegligible(distanceAlongDirection));
                     }
                 }
+                if (untouched)
+                {
+                    if (polygon.Vertices[0].Coordinates.Dot(lineNormalDirection) > perpendicularDistanceToLine)
+                        positiveSidePolygons.Add(polygon);
+                    else negativeSidePolygons.Add(polygon);
+                }
+            }
             // we don't really need the distances, so  convert the values to an array
             var pointsOnLineTuples = sortedPoints.Values.ToArray();
             // this is what is returned. although now sure if this is useful in any case
@@ -178,7 +190,8 @@ namespace TVGL
                 }
                 while (!intersectionLines.Contains(polySegment));
             }
-            negativeSidePolygons = negSidePolyCoords.Select(loop => new Polygon(loop)).ToList();
+            negativeSidePolygons.AddRange(negSidePolyCoords.Select(loop => new Polygon(loop)));
+            negativeSidePolygons = negativeSidePolygons.CreateShallowPolygonTrees(true);
 
             #endregion patching up negative side polygons
 
@@ -215,7 +228,8 @@ namespace TVGL
                 }
                 while (!intersectionLines.Contains(polySegment));
             }
-            positiveSidePolygons = posSidePolyCoords.Select(loop => new Polygon(loop)).ToList();
+            positiveSidePolygons.AddRange(posSidePolyCoords.Select(loop => new Polygon(loop)));
+            positiveSidePolygons= positiveSidePolygons.CreateShallowPolygonTrees(true);
 
             #endregion patching up positive side polygons
 

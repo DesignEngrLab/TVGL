@@ -558,6 +558,21 @@ namespace TVGL
         /// <param name="stepSize">Size of the step.</param>
         /// <param name="firstIntersectingIndex">First index of the intersecting.</param>
         /// <returns>List&lt;System.Double[]&gt;.</returns>
+        public static List<double[]> AllPolygonIntersectionPointsAlongVerticalLines(this Polygon polygon, double startingXValue,
+             double stepSize, out int firstIntersectingIndex)
+        =>AllPolygonIntersectionPointsAlongVerticalLines([polygon], startingXValue, stepSize, out firstIntersectingIndex);
+
+        /// <summary>
+        /// Find all the polygon intersection points along vertical lines.
+        /// Returns a list of double arrays. the double array values correspond to only the y-coordinates. the x-coordinates are determined
+        /// by the input. x = startingXValue + (i+firstIntersectingIndex)*stepSize
+        /// </summary>
+        /// <param name="polygons">The polygons.</param>
+        /// <param name="startingXValue">The starting x value.</param>
+        /// <param name="numSteps">The number steps.</param>
+        /// <param name="stepSize">Size of the step.</param>
+        /// <param name="firstIntersectingIndex">First index of the intersecting.</param>
+        /// <returns>List&lt;System.Double[]&gt;.</returns>
         public static List<double[]> AllPolygonIntersectionPointsAlongVerticalLines(this IEnumerable<Polygon> polygons, double startingXValue,
              double stepSize, out int firstIntersectingIndex)
         {
@@ -608,6 +623,21 @@ namespace TVGL
             }
             return intersections;
         }
+
+        /// <summary>
+        /// Find all the polygon intersection points along horizontal lines.
+        /// Returns a list of double arrays. the double array values correspond to only the x-coordinates. the y-coordinates are
+        /// determined by the input. y = startingYValue + (i+firstIntersectingIndex)*stepSize
+        /// </summary>
+        /// <param name="polygon">The polygon.</param>
+        /// <param name="startingYValue">The starting y value.</param>
+        /// <param name="numSteps">The number steps.</param>
+        /// <param name="stepSize">Size of the step.</param>
+        /// <param name="firstIntersectingIndex">First index of the intersecting.</param>
+        /// <returns>List&lt;System.Double[]&gt;.</returns>
+        public static List<double[]> AllPolygonIntersectionPointsAlongHorizontalLines(this Polygon polygon,
+            double startingYValue, double stepSize, out int firstIntersectingIndex)
+        => AllPolygonIntersectionPointsAlongHorizontalLines([polygon], startingYValue, stepSize, out firstIntersectingIndex);
 
         /// <summary>
         /// Find all the polygon intersection points along horizontal lines.
