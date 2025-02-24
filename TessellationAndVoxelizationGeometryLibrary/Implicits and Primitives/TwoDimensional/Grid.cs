@@ -298,8 +298,8 @@ namespace TVGL
             }
             var D = 2 * dx - dy;
             var x = GetXIndex(x0);
-            var bottom = GetYIndex(y0);
-            var top = GetYIndex(y1);
+            var bottom =Math.Max(0, GetYIndex(y0));
+            var top = Math.Min(YCount-1, GetYIndex(y1));
             for (var y = bottom; y <= top; y++)
             {
                 yield return (x, y);
@@ -336,8 +336,8 @@ namespace TVGL
             var D = 2 * dy - dx;
 
             var y = GetYIndex(y0);
-            var left = GetXIndex(x0);
-            var right = GetXIndex(x1);
+            var left =Math.Max(0, GetXIndex(x0));
+            var right =Math.Min(XCount-1, GetXIndex(x1));
             for (var x = left; x <= right; x++)
             {
                 yield return (x, y);

@@ -121,7 +121,9 @@ namespace TVGL
         private bool Update()
         {
             if (SeriesQueue.Count == 0) return false;
-            var series = SeriesQueue.Dequeue();
+            ICollection<LineSeries> series = null;
+            try { series = SeriesQueue.Dequeue(); }
+            catch { return false; }
             PlotModel.Series.Clear();
             lock (series)
                 foreach (var s in series)
