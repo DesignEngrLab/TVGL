@@ -1,10 +1,8 @@
 ﻿using OxyPlot;
-using OxyPlot.Axes;
 using OxyPlot.Series;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Windows;
@@ -123,7 +121,9 @@ namespace TVGL
         private bool Update()
         {
             if (SeriesQueue.Count == 0) return false;
-            var series = SeriesQueue.Dequeue();
+            ICollection<LineSeries> series = null;
+            try { series = SeriesQueue.Dequeue(); }
+            catch { return false; }
             PlotModel.Series.Clear();
             lock (series)
                 foreach (var s in series)

@@ -1441,7 +1441,13 @@ namespace TVGL
 
             // now use the Meet operator to find the intersection point in homogeneous coordinates.
             var interPoint3 = new Vector3(bLine.Z * aLine.Y - bLine.Y * aLine.Z, bLine.X * aLine.Z - bLine.Z * aLine.X, bLine.Y * aLine.X - bLine.X * aLine.Y); // MeetAtProjective2DPointUA(lg1, lg2);
-
+            if (interPoint3.Z.IsNegligible())
+            {
+                t_a = double.NaN;
+                t_b = double.NaN;
+                intersectionPoint = Vector2.Null;
+                return false;
+            }
             // there are several ways to check whether to intersection point is in between the endpoints (see https://observablehq.com/@skydog23/point-in-segment)
             // but since one may also want to know the fraction along the line as indicated by the return values t_a and t_b, we define one
             // based on dot products with the sub line to to the total line
@@ -1498,12 +1504,12 @@ namespace TVGL
             intersectionPoint = Vector2.Null;
             // okay, so bounding boxes overlap
             //first a quick check to see if points are the same
-            if (aFrom.IsAligned(bAnchor))
+            if (aFrom.IsPracticallySame(bAnchor))
             {
                 intersectionPoint = aFrom;
                 return true;
             }
-            if (aTo.IsAligned(bAnchor))
+            if (aTo.IsPracticallySame(bAnchor))
             {
                 intersectionPoint = aTo;
                 return true;

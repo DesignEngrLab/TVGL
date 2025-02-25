@@ -71,7 +71,7 @@ namespace TVGL
                         maxDistSqared = dist;
                         if (indexOfMaxDist == i) stallCounter++;
                         //Only set the stall counter back to zero if there was a significant change.
-                        else if(dist * requiredImprovementPercent > maxDistSqared)
+                        else if (dist * requiredImprovementPercent > maxDistSqared)
                             stallCounter = 0;
                         indexOfMaxDist = i;
                         newPointFoundOutsideCircle = true;
@@ -85,9 +85,10 @@ namespace TVGL
                     points[0] = maxPoint;
                     circle = FindCircle(points);
                     maxDistSqared = circle.RadiusSquared;
-                    startIndex = 4;      
+                    //Presenter.ShowAndHang(points.Take(6), plot2DType: Plot2DType.Points);
+                    startIndex = 4;
                     // should we start at 3 or 4? initially the circle was defined with the first 2 or 3 points.
-                    // (if it were 2 then the third point was inside the circle and was ineffecitve).
+                    // (if it were 2 then the third point was inside the circle and was ineffective).
                     // but these indices would be 0,1,2 - so shouldn't the next point to check be 3?!
                     // no, because when the new point was moved to the front of the list, the least
                     // contributor would have been at index-2, and now that's index-3 (this is done in the
@@ -170,7 +171,7 @@ namespace TVGL
             // circle 0-1-2
             var minRadiusSqd = double.PositiveInfinity;
             if (Circle.CreateFrom3Points(points[0], points[1], points[2], out tempCircle)
-                && !(points[3] - circle.Center).LengthSquared().IsGreaterThanNonNegligible(circle.RadiusSquared))
+                && (points[3] - circle.Center).LengthSquared() <= circle.RadiusSquared)
             { // this one uses IsGreaterThanNonNegligible to prevent infinite cycling when more points are on the circle
                 circle = tempCircle;
                 minRadiusSqd = circle.RadiusSquared;
@@ -342,7 +343,7 @@ namespace TVGL
         /// <returns>Cylinder.</returns>
         public static Cylinder MinimumBoundingCylinder(TessellatedSolid ts, BoundingBox box)
         {
-            if(ts.ConvexHull != null)
+            if (ts.ConvexHull != null)
                 return MinimumBoundingCylinder(ts.ConvexHull.Vertices, box.Directions);
             return MinimumBoundingCylinder(ts.Vertices, box.Directions);
         }
@@ -386,7 +387,7 @@ namespace TVGL
                 {
                     minCylinderVolume = cylinder.Volume;
                     minCylinder = cylinder;
-                }  
+                }
             }
             return minCylinder;
         }
@@ -434,15 +435,15 @@ namespace TVGL
 
             //Get the furthest vertex distance from the center line.
             var radiusSquared = 0.0;
-            foreach(var vertex in convexHullVertices)
+            foreach (var vertex in convexHullVertices)
             {
                 var r2 = MiscFunctions.DistancePointToLine(vertex, anchor, axis, out _, true);
-                if(r2 > radiusSquared)
+                if (r2 > radiusSquared)
                     radiusSquared = r2;
             }
             var center2D = anchor.ConvertTo2DCoordinates(axis, out var _);
             var circle = new Circle(center2D, radiusSquared);
-            
+
             //Get the depth of the cylinder.
             var (min, max) = GetDistanceToExtremeVertex(convexHullVertices, axis, out _, out _);
             //var anchor = circle.Center.ConvertTo3DLocation(backTransform);

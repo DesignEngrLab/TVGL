@@ -378,7 +378,7 @@ namespace TVGL
             }
         }
 
-        public bool IsClosed { get; set; }
+        public bool IsClosed { get; set; } = true;
 
         /// <summary>
         /// This reverses the polygon, including updates to area and the point path.
