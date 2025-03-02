@@ -94,78 +94,52 @@ namespace TVGL
         /// <param name="maxX">The maximum x.</param>
         /// <param name="minY">The minimum y.</param>
         /// <param name="maxY">The maximum y.</param>
-        /// <param name="pixelsPerRow">The pixels per row.</param>
         /// <param name="pixelBorder">The pixel border.</param>
-        public void Initialize(double minX, double maxX, double minY, double maxY, int pixelsPerRow, int pixelBorder = 2)
+        public void Initialize(double minX, double maxX, double minY, double maxY,
+            double pixelSideLength = double.NaN, int pixelsPerRow = -1, int pixelBorder = 2)
         {
             XLength = maxX - minX;
             YLength = maxY - minY;
-            var MaxLength = XLength > YLength ? XLength : YLength;
+            if (!double.IsNaN(PixelSideLength))
+                PixelSideLength = pixelSideLength;
+            else if (pixelsPerRow > 0)
+            {
+                //Calculate the size of a pixel based on the max of the two dimensions in question. 
+                var MaxLength = XLength > YLength ? XLength : YLength;
+                PixelSideLength = MaxLength / (pixelsPerRow - pixelBorder * 2);
+            }
+            else throw new ArgumentException("While both pixelsPerRow and pixelSideLength are optional" +
+                "arguments, you must specify one of them.");
 
-            //Calculate the size of a pixel based on the max of the two dimensions in question. 
-            //Subtract pixelsPerRow by 2xpixelBorder
-            PixelSideLength = MaxLength / (pixelsPerRow - pixelBorder * 2);
+            MinX = minX;
+            MinY = minY;
             inversePixelSideLength = 1 / PixelSideLength;
+
             XCount = (int)Math.Ceiling(XLength * inversePixelSideLength);
             YCount = (int)Math.Ceiling(YLength * inversePixelSideLength);
-            // shift the grid slightly so that the part is centered in the grid
+            // shift the grid slightly so that the part grid points are better aligned within the bounds
             var xStickout = XCount * PixelSideLength - XLength;
-            MinX = minX - xStickout / 2;
+            MinX -= xStickout / 2;
             var yStickout = YCount * PixelSideLength - YLength;
-            MinY = minY - yStickout / 2;
-            // add the pixel border...2x since includes both sides (left and right, or top and bottom)
+            MinY -= yStickout / 2;
+            // add the pixel border...2 since includes both sides (left and right, or top and bottom)
             XCount += pixelBorder * 2;
             YCount += pixelBorder * 2;
+            MaxIndex = XCount * YCount - 1;
+
             MinX -= pixelBorder * PixelSideLength;
             MinY -= pixelBorder * PixelSideLength;
             MaxX = MinX + XCount * PixelSideLength;
             MaxY = MinY + YCount * PixelSideLength;
-            MaxIndex = XCount * YCount - 1;
-            Values = new T[XCount * YCount];
-        }
-
-        /// <summary>
-        /// Initializes the specified minimum x.
-        /// </summary>
-        /// <param name="minX">The minimum x.</param>
-        /// <param name="maxX">The maximum x.</param>
-        /// <param name="minY">The minimum y.</param>
-        /// <param name="maxY">The maximum y.</param>
-        /// <param name="pixelSideLength">Length of the pixel side.</param>
-        /// <param name="pixelBorder">The pixel border.</param>
-        public void Initialize(double minX, double maxX, double minY, double maxY, double pixelSideLength, int pixelBorder = 2)
-        {
-            MaxX = maxX;
-            MinX = minX;
-            MaxY = maxY;
-            MinY = minY;
-            XLength = maxX - MinX;
-            YLength = maxY - MinY;
-            //Calculate the size of each pixel based on the max of the two dimensions in question. 
-            //Subtract pixelsPerRow by 1, since we will be adding a half a pixel to each side.
-            PixelSideLength = pixelSideLength; // MaxLength / (pixelsPerRow - pixelBorder * 2);
-            inversePixelSideLength = 1 / PixelSideLength;
-            XCount = (int)Math.Ceiling(XLength * inversePixelSideLength);
-            YCount = (int)Math.Ceiling(YLength * inversePixelSideLength);
-            // shift the grid slightly so that the part grid points are better aligned within the bounds
-            var xStickout = XLength - XCount * PixelSideLength;
-            MinX += xStickout / 2;
-            var yStickout = YLength - YCount * PixelSideLength;
-            MinY += yStickout / 2;
-            // add the pixel border...2 since includes both sides (left and right, or top and bottom)
-            XCount += pixelBorder * 2;
-            YCount += pixelBorder * 2;
-
-            MaxIndex = XCount * YCount - 1;
             Values = new T[XCount * YCount];
         }
         public void Initialize<U>(Grid<U> grid)
         {
             PixelSideLength = grid.PixelSideLength;
             inversePixelSideLength = grid.inversePixelSideLength;
-            MinX =grid.MinX;
+            MinX = grid.MinX;
             MaxX = grid.MaxX;
-            MinY =grid.MinY;
+            MinY = grid.MinY;
             MaxY = grid.MaxY;
             XLength = MaxX - MinX;
             YLength = MaxY - MinY;
@@ -217,7 +191,7 @@ namespace TVGL
                 return false;
             }
             value = Values[index];
-            return  !EqualityComparer<T>.Default.Equals(value, default(T));
+            return !EqualityComparer<T>.Default.Equals(value, default(T));
         }
 
         /// <summary>
@@ -298,8 +272,8 @@ namespace TVGL
             }
             var D = 2 * dx - dy;
             var x = GetXIndex(x0);
-            var bottom =Math.Max(0, GetYIndex(y0));
-            var top = Math.Min(YCount-1, GetYIndex(y1));
+            var bottom = Math.Max(0, GetYIndex(y0));
+            var top = Math.Min(YCount - 1, GetYIndex(y1));
             for (var y = bottom; y <= top; y++)
             {
                 yield return (x, y);
@@ -336,8 +310,8 @@ namespace TVGL
             var D = 2 * dy - dx;
 
             var y = GetYIndex(y0);
-            var left =Math.Max(0, GetXIndex(x0));
-            var right =Math.Min(XCount-1, GetXIndex(x1));
+            var left = Math.Max(0, GetXIndex(x0));
+            var right = Math.Min(XCount - 1, GetXIndex(x1));
             for (var x = left; x <= right; x++)
             {
                 yield return (x, y);

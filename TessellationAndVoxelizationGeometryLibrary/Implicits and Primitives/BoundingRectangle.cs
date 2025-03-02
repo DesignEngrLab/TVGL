@@ -146,5 +146,17 @@ namespace TVGL
             }
             return cornerPoints;
         }
+
+        public static double OverlappingArea(BoundingRectangle a, BoundingRectangle b)
+        {
+           return Math.Max(0, (Math.Min(a.MaxD1, b.MaxD1) - Math.Max(a.MinD1, b.MinD1)))
+                * Math.Max(0, (Math.Min(a.MaxD2, b.MaxD2) - Math.Max(a.MinD2, b.MinD2)));
+        }
+
+        public static double DifferenceArea(BoundingRectangle a, BoundingRectangle b)
+        {
+            return a.Area + b.Area - 2 * OverlappingArea(a, b);
+        }
+
     }
 }

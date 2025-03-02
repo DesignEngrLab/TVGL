@@ -99,7 +99,7 @@ namespace TVGL
         {
             var points = polygons.SelectMany(polygon => polygon.AllPolygons.Select(p => p.Path)).ToList();
             var closed = polygons.SelectMany(polygon => polygon.AllPolygons.Select(p => p.IsClosed)).ToList();
-            var window = new Window2DPlot(points, title, plot2DType,closed, marker);
+            var window = new Window2DPlot(points, title, plot2DType, closed, marker);
             window.ShowDialog();
         }
 
@@ -170,7 +170,16 @@ namespace TVGL
         }
 
         #endregion
+        
+        public static void ShowAndHang<T>(Grid<T> grid, Func<T, double> converter, bool normalizeValues = false)
+        {
+            var values = new double[grid.XCount, grid.YCount];
+            for (int i = 0; i < grid.XCount; i++)
+                for (int j = 0; j < grid.YCount; j++)
+                    values[i, j] = converter(grid[i, j]);
 
+            ShowHeatmap(values, normalizeValues);
+        }
         public static void ShowHeatmap(double[,] values, bool normalizeValues = false)
         {
             var data = values;
