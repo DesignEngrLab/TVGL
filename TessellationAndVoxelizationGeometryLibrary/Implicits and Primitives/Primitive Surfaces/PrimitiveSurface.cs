@@ -400,15 +400,6 @@ namespace TVGL
         {
             _meanSquaredError = double.NaN;
             _maxError = double.NaN;
-            foreach(var v in Vertices)
-                v.Coordinates = v.Coordinates.Transform(transformMatrix);
-            foreach (var f in Faces)
-                f.Update();
-            foreach (var e in InnerEdges)
-                e.Update();
-            foreach (var e in OuterEdges)
-                e.Update();
-            ResetFaceDependentValues();
         }
 
         /// <summary>
