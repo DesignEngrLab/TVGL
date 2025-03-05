@@ -124,6 +124,7 @@ namespace TVGL
             ICollection<LineSeries> series = null;
             try { series = SeriesQueue.Dequeue(); }
             catch { return false; }
+            if (series == null) return false;
             PlotModel.Series.Clear();
             lock (series)
                 foreach (var s in series)
