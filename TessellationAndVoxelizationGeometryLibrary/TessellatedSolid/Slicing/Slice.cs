@@ -900,7 +900,7 @@ namespace TVGL
         /// <returns></returns>
         /// <exception cref="ArgumentException"></exception>
         public static List<Polygon>[] GetUniformlySpacedCrossSections(this IEnumerable<Vertex> vertices, Vector3 direction, out double[] sliceOffsets,
-           out Dictionary<Vertex2D, Edge>[] vertex2DToEdges, out int[] numCompletePolygonsPerLayer, double startDistanceAlongDirection = double.NaN,
+           out Dictionary<Vertex2D, Edge>[] vertex2DToEdges, out int[] numCompletePolygonsPerLayer, double startDistanceAlongDirection = double.NegativeInfinity,
         int numSlices = -1, double stepSize = double.NaN)
         {
             //First, sort the vertices along the given axis. Duplicate distances are not important.
@@ -910,14 +910,15 @@ namespace TVGL
             var transform = direction.TransformToXYPlane(out _);
             var plane = new Plane(0.0, direction);
 
-            var firstDistance = sortedVertices[0].Dot(direction);
+            var firstDistance = Math.Max(startDistanceAlongDirection, sortedVertices[0].Dot(direction));
             var lastDistance = sortedVertices[^1].Dot(direction);
+            //if (double.IsNaN(startDistanceAlongDirection))
+            //    startDistanceAlongDirection = firstDistance;
+            startDistanceAlongDirection = firstDistance + 0.5 * stepSize;
             var lengthAlongDir = lastDistance - firstDistance;
             stepSize = Math.Abs(stepSize);
             if (double.IsNaN(stepSize)) stepSize = lengthAlongDir / numSlices;
             if (numSlices < 1) numSlices = (int)(lengthAlongDir / stepSize);
-            if (double.IsNaN(startDistanceAlongDirection))
-                startDistanceAlongDirection = firstDistance + 0.5 * stepSize;
 
             var result = new List<Polygon>[numSlices];
             sliceOffsets = new double[numSlices];

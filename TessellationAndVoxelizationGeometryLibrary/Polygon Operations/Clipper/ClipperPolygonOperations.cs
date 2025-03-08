@@ -160,37 +160,6 @@ namespace TVGL
             if (outputAsCollectionType == PolygonCollection.PolygonTrees)
                 return solution.CreatePolygonTree(true);
             return solution.ToList();
-            //If subject is null, use the clip as the subject for unions. Else, return empty.
-            /* if (!clipperSubject.Any())
-            {
-                if (clip == null || !clipperClip.Any())
-                {
-                    return new List<Polygon>();
-                }
-                //Use the clip as the subject if this is a union operation and the clip is not null.
-                if (clipType == ClipType.Union)
-                {
-                    clipperSubject = clipperClip;
-                    clip = null;
-                }
-            }
-            var clipper = new Clipper64();
-            //Setup Clipper
-            clipper.AddPaths(clipperSubject, PathType.Subject, subjectIsClosed);
-
-            //Don't add the clip unless it is not null (and has not been set to be the subject - see a few lines above) 
-            if (clip != null && clipperClip.Any())
-                clipper.AddPaths(clipperClip, PathType.Clip, clipIsClosed);
-
-            //Begin an evaluation
-            var clipperSolution = new Paths64();
-            var result = clipper.Execute(clipType, fillMethod, clipperSolution);
-            if (!result) throw new Exception("Clipper Union Failed");
-
-            //Convert back to points and return solution
-            var solution = clipperSolution.Select(clipperPath => new Polygon(clipperPath.Select(point => new Vector2(point.X / scale, point.Y / scale))));
-            return solution.CreateShallowPolygonTrees(true);
-            */
         }
 
         internal static Paths64 ConvertToClipperPaths(IEnumerable<Polygon> subject)

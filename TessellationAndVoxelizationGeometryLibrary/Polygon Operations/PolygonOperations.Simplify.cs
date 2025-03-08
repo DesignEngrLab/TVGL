@@ -514,16 +514,23 @@ namespace TVGL
         /// Simplifies the specified polygon no more than the allowable change in area fraction.
         /// </summary>
         /// <param name="polygon">The polygon.</param>
-        /// <param name="allowableChangeInAreaFraction">The allowable change in area fraction.</param>
+        /// <param name="allowableConvexReductionInAreaFraction">The allowable change in area fraction.</param>
         /// <returns>Polygon.</returns>
-        public static void SimplifyByAreaChange(this Polygon polygon, double allowableChangeInAreaFraction)
+        public static void SimplifyByAreaChange(this Polygon polygon, double allowableConvexReductionInAreaFraction,
+            double allowableConcaveIncreaseInAreaFraction = double.NaN)
         {
+            if (double.IsNaN(allowableConcaveIncreaseInAreaFraction))
+                allowableConcaveIncreaseInAreaFraction = allowableConvexReductionInAreaFraction;
+            var convexArea = 2 * polygon.Area * allowableConvexReductionInAreaFraction;
+            var concaveArea = 2 * polygon.Area * allowableConcaveIncreaseInAreaFraction;
+            //multiplied by 2 in order to reduce all the divide by 2 that happens when we
+            //change cross-product to area of a triangle
+
             polygon.RemoveCollinearEdges();
             var origArea = Math.Abs(polygon.Area);
             if (origArea.IsNegligible()) return;
 
             // build initial list of cross products
-
             var convexCornerQueue = new UpdatablePriorityQueue<Vertex2D, double>(new ForwardSort());
             var concaveCornerQueue = new UpdatablePriorityQueue<Vertex2D, double>(new ReverseSort());
             foreach (var vertex in polygon.Vertices)
@@ -538,16 +545,16 @@ namespace TVGL
             // before reaching a reduction of deltaArea - followed by a reduction of concave edges so that no more than deltaArea is re-added
             for (int sign = 1; sign >= -1; sign -= 2)
             {
-                var deltaArea = 2 * allowableChangeInAreaFraction * origArea; //multiplied by 2 in order to reduce all the divide by 2
-                                                                              // that happens when we change cross-product to area of a triangle
+                var totalArea = (sign == 1) ? convexArea : concaveArea;
                 var relevantSortedList = (sign == 1) ? convexCornerQueue : concaveCornerQueue;
                 // first we remove any convex corners that would reduce the area
                 while (relevantSortedList.Count > 0)
                 {
-                    relevantSortedList.TryPeek(out var vertex, out var smallestArea);
-                    if (deltaArea < sign * smallestArea) break;
+                    relevantSortedList.TryPeek(out var vertex, out var smallestAreaSigned);
+                    var smallestArea = sign * smallestAreaSigned;
+                    if (totalArea < smallestArea) break;
                     relevantSortedList.Dequeue();
-                    deltaArea -= sign * smallestArea;
+                    totalArea -= smallestArea;
                     var nextVertex = vertex.StartLine.ToPoint;
                     var prevVertex = vertex.EndLine.FromPoint;
                     vertex.DeleteVertex();
