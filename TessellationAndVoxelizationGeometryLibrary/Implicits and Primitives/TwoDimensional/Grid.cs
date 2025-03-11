@@ -402,7 +402,7 @@ namespace TVGL
 
 
 
-        public Polygon ConvertGridToPolygon()
+        public IEnumerable<Polygon> ConvertGridToPolygons()
         {
             //First, find all the lower left hand corners of potential polygons.
             //These pixels will have a null pixel to the left, below, and left-below diagonal.
@@ -491,9 +491,8 @@ namespace TVGL
                 polygon.SimplifyByAreaChange(0.001);
                 polygon.Transform(transform);
                 if (polygon.Vertices.Count <= 2 || polygon.Area.IsNegligible()) continue;
-                polygons.Add(polygon);
+                yield return polygon;
             }
-            return polygons.CreatePolygonTree(false).LargestPolygon();
         }
 
 
