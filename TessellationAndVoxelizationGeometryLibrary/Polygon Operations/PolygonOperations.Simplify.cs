@@ -68,6 +68,7 @@ namespace TVGL
             polygon.MakePolygonEdgesIfNonExistent();
             foreach (var vertex in polygon.Vertices)
             {
+                if (vertex.EndLine == null || vertex.StartLine == null) continue;
                 if (vertex.EndLine.Vector.Cross(vertex.StartLine.Vector).IsNegligible())
                     vertex.DeleteVertex();
             }
@@ -1390,8 +1391,8 @@ namespace TVGL
                     current.IndexInList = index++;
                     current.LoopID = polygon.Index;
                     polygon.Vertices.Add(current);
-                    current = current.StartLine.ToPoint;
-                } while (current != firstVertex);
+                    current = current.StartLine?.ToPoint;
+                } while (current != null && current != firstVertex);
             }
             polygon.Reset();
             if (!topOnly)

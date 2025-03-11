@@ -109,9 +109,9 @@ namespace TVGL
             }
 
             //Finish initializing the grid now that we have the bounds.
-            zBuff.Initialize(MinX, MaxX, MinY, MaxY, pixelsPerRow, pixelBorder);
+            zBuff.Initialize(MinX, MaxX, MinY, MaxY, pixelsPerRow: pixelsPerRow, pixelBorder: pixelBorder);
             var faces = subsetFaces != null ? subsetFaces : zBuff.solidFaces;
-            if(subsetFaces != null)
+            if (subsetFaces != null)
             {
                 foreach (TriangleFace face in faces)
                 {
@@ -613,6 +613,11 @@ namespace TVGL
                 }
             }
             return outline;
+        }
+
+        public override bool IsInsideForPolygonCreation(int index)
+        {
+            return Values[index].Item1 != null;
         }
     }
 }

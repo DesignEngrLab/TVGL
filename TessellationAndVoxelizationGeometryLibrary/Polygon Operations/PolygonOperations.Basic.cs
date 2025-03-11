@@ -296,13 +296,13 @@ namespace TVGL
         }
         private static void SimplifyAndSmoothRectilinearPolygonTop(this Polygon polygon, double pixelSideLength, bool movesMayBeDiagonal)
         {
-            const double longEdgeFactor = 5;
             var smallEdgeLengthSqd = pixelSideLength * pixelSideLength;
             if (movesMayBeDiagonal)
-            {
                 smallEdgeLengthSqd *= 2;
-            }
+
+            const double longEdgeFactor = 5;
             var longEdgeLengthSqd = longEdgeFactor * longEdgeFactor * smallEdgeLengthSqd;
+
             polygon.RemoveCollinearEdges();
             var unitLengthEdges = new Stack<int>();
             var medEdges = new Stack<int>();
@@ -311,6 +311,7 @@ namespace TVGL
             var n = polygon.Edges.Count - 1;
             for (int i = 0; i <= n; i++)
             {
+                if (!polygon.IsClosed && i == 0) continue;
                 length = polygon.Edges[i].Vector.LengthSquared();
                 if (!length.IsGreaterThanNonNegligible(smallEdgeLengthSqd))
                     unitLengthEdges.Push(i);
@@ -319,16 +320,21 @@ namespace TVGL
                 else
                     medEdges.Push(i);
             }
-            length = polygon.Edges[0].Vector.LengthSquared();
-            var nextEdgeIs = !length.IsGreaterThanNonNegligible(smallEdgeLengthSqd)
-                ? PixelEdgeLength.Unit : !length.IsLessThanNonNegligible(longEdgeLengthSqd) ?
-                PixelEdgeLength.Long : PixelEdgeLength.Med;
+            PixelEdgeLength nextEdgeIs = PixelEdgeLength.Med; // this doesn't invoke any changes
+            if (polygon.IsClosed)
+            {
+                length = polygon.Edges[0].Vector.LengthSquared();
+                nextEdgeIs = !length.IsGreaterThanNonNegligible(smallEdgeLengthSqd)
+                    ? PixelEdgeLength.Unit : !length.IsLessThanNonNegligible(longEdgeLengthSqd) ?
+                    PixelEdgeLength.Long : PixelEdgeLength.Med;
+            }
             length = polygon.Edges[^1].Vector.LengthSquared();
             var lastEdgeIs = pixelEdgeType(n, unitLengthEdges, medEdges, longEdges);
             var currentEdgeIs = lastEdgeIs;
-            var nextVector = polygon.Edges[0].Vector.Normalize();
+            var nextVector = polygon.Edges[0] != null ? polygon.Edges[0].Vector.Normalize() : Vector2.Null;
             for (int i = n; i >= 0; i--)
             {
+                if (!polygon.IsClosed && i == 0) break;
                 var currentEdge = polygon.Edges[i];
                 var currVector = currentEdge.Vector.Normalize();
                 var prevEdgeIs = i == 0 ? lastEdgeIs : pixelEdgeType(i - 1, unitLengthEdges, medEdges, longEdges);
@@ -340,15 +346,17 @@ namespace TVGL
                     var newCoord = currentEdge.ToPoint.Coordinates + pixelSideLength * nextVector;
                     polygon.InsertVertex(i + 1, newCoord);
                 }
-                // 1. unit length edge are all reduced to centerpoint
-                // 2. med length edge are reduced to centerpoint if they neighbor two unit length edges
-                if (currentEdgeIs == PixelEdgeLength.Unit
-                    || (currentEdgeIs == PixelEdgeLength.Med && nextEdgeIs == PixelEdgeLength.Unit && prevEdgeIs == PixelEdgeLength.Unit))
-                    currentEdge.ToPoint.Coordinates = 0.5 * (currentEdge.FromPoint.Coordinates + currentEdge.ToPoint.Coordinates);
-                // 3. long length edges is followed by a unit length edge then reduce by one pixel
-                else if (currentEdgeIs == PixelEdgeLength.Long && nextEdgeIs == PixelEdgeLength.Unit)
-                    currentEdge.ToPoint.Coordinates -= pixelSideLength * currVector;
-
+                if (polygon.IsClosed || (i != n && i != n - 1)) // don't modify the endpoint of a polyline (start and end edge[i].ToPoint's
+                {                                               // when polygon is not closed
+                    // 1. unit length edge are all reduced to centerpoint
+                    // 2. med length edge are reduced to centerpoint if they neighbor two unit length edges
+                    if (currentEdgeIs == PixelEdgeLength.Unit
+                        || (currentEdgeIs == PixelEdgeLength.Med && nextEdgeIs == PixelEdgeLength.Unit && prevEdgeIs == PixelEdgeLength.Unit))
+                        currentEdge.ToPoint.Coordinates = 0.5 * (currentEdge.FromPoint.Coordinates + currentEdge.ToPoint.Coordinates);
+                    // 3. long length edges is followed by a unit length edge then reduce by one pixel
+                    else if (currentEdgeIs == PixelEdgeLength.Long && nextEdgeIs == PixelEdgeLength.Unit)
+                        currentEdge.ToPoint.Coordinates -= pixelSideLength * currVector;
+                }
                 nextVector = currVector;
                 nextEdgeIs = currentEdgeIs;
                 currentEdgeIs = prevEdgeIs;
@@ -367,8 +375,12 @@ namespace TVGL
                 medEdges.Pop();
                 return PixelEdgeLength.Med;
             }
-            longEdges.Pop();
-            return PixelEdgeLength.Long;
+            if (longEdges.TryPeek(out m) && m == n)
+            {
+                longEdges.Pop();
+                return PixelEdgeLength.Long;
+            }
+            return PixelEdgeLength.Med; // if polygon is not closed, and Med does the least in terms of changes.
         }
         private enum PixelEdgeLength
         {
