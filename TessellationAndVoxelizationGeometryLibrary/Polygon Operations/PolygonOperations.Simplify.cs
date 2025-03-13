@@ -1062,6 +1062,8 @@ namespace TVGL
             for (int i = polygon.Edges.Count - 1; i >= 0; i--)
             {
                 var thisLine = polygon.Edges[i];
+                if (thisLine == null && i == 0 && !polygon.IsClosed)
+                    continue;
                 if (thisLine.Length > maxAllowableLength)
                 {
                     var numNewPoints = (int)(thisLine.Length / maxAllowableLength);
