@@ -565,18 +565,20 @@ namespace TVGL
         {
             var xCenter = 0.0;
             var yCenter = 0.0;
+            var area = 0.0;
             foreach (var p in AllPolygons)
             {
                 for (int i = 0, j = Vertices.Count - 1; i < Vertices.Count; j = i++)
                 {
                     var pj = Vertices[j];
                     var pi = Vertices[i];
-                    var a = pj.X * pi.Y - pi.X * pj.Y;
-                    xCenter += (pj.X + pi.X) * a;
-                    yCenter += (pj.Y + pi.Y) * a;
+                    var doubleTriangleArea = pj.X * pi.Y - pi.X * pj.Y;
+                    xCenter += (pj.X + pi.X) * doubleTriangleArea;
+                    yCenter += (pj.Y + pi.Y) * doubleTriangleArea;
+                    area += doubleTriangleArea;
                 }
             }
-            _centroid = new Vector2(xCenter, yCenter) / (6 * Area);
+            _centroid = new Vector2(xCenter, yCenter) / (6 * area);
         }
 
         /// <summary>
