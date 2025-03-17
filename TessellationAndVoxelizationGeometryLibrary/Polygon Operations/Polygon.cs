@@ -446,7 +446,11 @@ namespace TVGL
             {
                 lock (_vertices)
                     if (double.IsNaN(perimeter))
-                        perimeter = Path.Perimeter();
+                    {
+                        if (IsClosed)
+                            perimeter = Edges.Sum(e => e.Length);
+                        else perimeter = Edges.Take(Edges.Count - 1).Sum(e => e?.Length ?? 0);
+                    }
                 return perimeter + InnerPolygons.Sum(p => p.Perimeter);
             }
         }
@@ -801,7 +805,7 @@ namespace TVGL
                 }
             }
         }
-        
+
         /// <summary>
         /// Sets the bounds.
         /// </summary>

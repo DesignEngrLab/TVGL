@@ -644,5 +644,57 @@ namespace TVGL
             return true;
         }
 
+        public static GeneralQuadric FromPrimitiveSurface(PrimitiveSurface primitive) {
+            if (primitive is GeneralQuadric quadric) return quadric;
+            else if (primitive is Plane plane) return new GeneralQuadric(0, 0, 0, 0, 0, 0, plane.Normal.X, plane.Normal.Y, plane.Normal.Z, -plane.DistanceToOrigin);
+            else if (primitive is Sphere sphere) return new GeneralQuadric(1, 1, 1, 0, 0, 0, -2 * sphere.Center.X, -2 * sphere.Center.Y, -2 * sphere.Center.Z,
+                sphere.Center.X * sphere.Center.X + sphere.Center.Y * sphere.Center.Y + sphere.Center.Z + sphere.Center.Z - sphere.Radius * sphere.Radius);
+            else if (primitive is Cylinder cylinder)
+            {
+                Vector3 unitAxis = cylinder.Axis.Normalize();
+                double vx2 = unitAxis.X * unitAxis.X;
+                double vy2 = unitAxis.Y * unitAxis.Y;
+                double vz2 = unitAxis.Z * unitAxis.Z;
+
+                double x02 = cylinder.Anchor.X * cylinder.Anchor.X;
+                double y02 = cylinder.Anchor.Y * cylinder.Anchor.Y;
+                double z02 = cylinder.Anchor.Z * cylinder.Anchor.Z;
+
+                double xCoeff = 2 * (1 - vx2) * cylinder.Anchor.X - 2 * unitAxis.X * unitAxis.Y * cylinder.Anchor.Y - 2 * unitAxis.X * unitAxis.Z * cylinder.Anchor.Z;
+                double yCoeff = 2 * (1 - vy2) * cylinder.Anchor.Y - 2 * unitAxis.X * unitAxis.Y * cylinder.Anchor.X - 2 * unitAxis.Y * unitAxis.Z * cylinder.Anchor.Z;
+                double zCoeff = 2 * (1 - vz2) * cylinder.Anchor.Z - 2 * unitAxis.X * unitAxis.Z * cylinder.Anchor.X - 2 * unitAxis.Y * unitAxis.Z * cylinder.Anchor.Y;
+                double wConst = cylinder.Radius * cylinder.Radius
+                    - x02 - y02 - z02
+                    + vx2 * x02 + vy2 * y02 + vz2 * z02
+                    + 2 * unitAxis.X * unitAxis.Y * cylinder.Anchor.X * cylinder.Anchor.Y
+                    + 2 * unitAxis.X * unitAxis.Z * cylinder.Anchor.X * cylinder.Anchor.Z
+                    + 2 * unitAxis.Y * unitAxis.Z * cylinder.Anchor.Y * cylinder.Anchor.Z;
+                return new GeneralQuadric(vx2 - 1, vy2 - 1, vz2 - 1, 2 * unitAxis.X * unitAxis.Y, 2 * unitAxis.X * unitAxis.Z, 2 * unitAxis.Y * unitAxis.Z, xCoeff, yCoeff, zCoeff, wConst);
+            }
+            else if (primitive is Cone cone)
+            {
+                Vector3 unitAxis = cone.Axis.Normalize();
+                double vx2 = unitAxis.X * unitAxis.X;
+                double vy2 = unitAxis.Y * unitAxis.Y;
+                double vz2 = unitAxis.Z * unitAxis.Z;
+
+                double x02 = cone.Apex.X * cone.Apex.X;
+                double y02 = cone.Apex.Y * cone.Apex.Y;
+                double z02 = cone.Apex.Z * cone.Apex.Z;
+
+                double cosSqd = 1 / (cone.Aperture * cone.Aperture + 1);
+
+                double xCoeff = 2 * (cosSqd - vx2) * cone.Apex.X - 2 * unitAxis.X * unitAxis.Y * cone.Apex.Y - 2 * unitAxis.X * unitAxis.Z * cone.Apex.Z;
+                double yCoeff = 2 * (cosSqd - vy2) * cone.Apex.Y - 2 * unitAxis.X * unitAxis.Y * cone.Apex.X - 2 * unitAxis.Y * unitAxis.Z * cone.Apex.Z;
+                double zCoeff = 2 * (cosSqd - vz2) * cone.Apex.Z - 2 * unitAxis.X * unitAxis.Z * cone.Apex.X - 2 * unitAxis.Y * unitAxis.Z * cone.Apex.Y;
+                double wConst = vx2 * x02 + vy2 * y02 + vz2 * z02
+                    + 2 * unitAxis.X * unitAxis.Y * cone.Apex.X * cone.Apex.Y
+                    + 2 * unitAxis.X * unitAxis.Z * cone.Apex.X * cone.Apex.Z
+                    + 2 * unitAxis.Y * unitAxis.Z * cone.Apex.Y * cone.Apex.Z
+                    - cosSqd * (x02 + y02 + z02);
+                return new GeneralQuadric(vx2 - cosSqd, vy2 - cosSqd, vz2 - cosSqd, 2 * unitAxis.X * unitAxis.Y, 2 * unitAxis.X * unitAxis.Z, 2 * unitAxis.Y * unitAxis.Z, xCoeff, yCoeff, zCoeff, wConst);
+            }
+            else throw new NotImplementedException();
+        }
     }
 }

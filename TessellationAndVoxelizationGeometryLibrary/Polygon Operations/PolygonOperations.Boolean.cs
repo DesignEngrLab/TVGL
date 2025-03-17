@@ -603,7 +603,8 @@ namespace TVGL
                 polygons = polygons.Select(p => SimplifyFast(p));
             //polygons = polygons.SimplifyByAreaChangeToNewPolygons(areaSimplificationFraction);
 #if CLIPPER
-            return BooleanViaClipper(FillRule.Positive, Clipper2Lib.ClipType.Intersection, polygons, null, outputAsCollectionType);
+
+            return BooleanViaClipper(FillRule.Positive, ClipType.Intersection, polygons.Take(1), polygons.Skip(1), outputAsCollectionType);
 #elif !COMPARE
             var result = new List<Polygon>();
             if (!polygons.Any()) return result;
