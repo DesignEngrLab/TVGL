@@ -23,6 +23,20 @@ namespace TVGLUnitTestsAndBenchmarking
             var myWriter = new ConsoleTraceListener();
             Trace.Listeners.Add(myWriter);
             TVGL.Message.Verbosity = VerbosityLevels.OnlyCritical;
+
+
+            var c = new Vector2(13, 25);
+            var r = 7;
+            var path = new List<Vector2>();
+            for (int i = 0; i < 22; i++)
+            {
+                path.Add(new Vector2(c.X + r * Math.Cos(i * Math.PI / 11), c.Y + r * Math.Sin(i * Math.PI / 11)));
+            }
+            var testPolygon = new Polygon(path);
+            Presenter.ShowAndHang(testPolygon);
+            var cNew = testPolygon.Centroid;
+            Console.WriteLine(cNew);
+
             DirectoryInfo dir = Program.BackoutToFolder(inputFolder);
             var index = 01;
             var valid3DFileExtensions = new HashSet<string> { ".stl", ".ply", ".obj", ".3mf", ".tvglz" };
@@ -37,7 +51,7 @@ namespace TVGLUnitTestsAndBenchmarking
                 for (int i = 0; i < 100; i++)
                 {
                     ts.Transform(Matrix4x4.CreateFromYawPitchRoll(0.1, 0.1, 0.1));
-                    Presenter.Show(ts, i.ToString(), Presenter.HoldType.AddToQueue,60, index %3);
+                    Presenter.Show(ts, i.ToString(), Presenter.HoldType.AddToQueue, 60, index % 3);
 
                 }
                 //Thread.Sleep(3333);

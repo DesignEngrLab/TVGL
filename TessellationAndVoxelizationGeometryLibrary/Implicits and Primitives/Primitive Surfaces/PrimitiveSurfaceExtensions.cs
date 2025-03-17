@@ -455,14 +455,16 @@ namespace TVGL
         /// <param name="zMin"></param>
         /// <param name="zMax"></param>
         /// <param name="maxEdgeLength"></param>
-        public static void Tessellate(this PrimitiveSurface surface, double xMin, double xMax, double yMin, double yMax, double zMin, double zMax, double maxEdgeLength)
+        public static TessellatedSolid Tessellate(this PrimitiveSurface surface, double xMin, double xMax, double yMin, double yMax, double zMin, double zMax, double maxEdgeLength)
         {
-            if (surface.Vertices != null && surface.Vertices.Count > 0) return;
+            //if (surface.Vertices != null && surface.Vertices.Count > 0) return;
             var meshSize = maxEdgeLength / Math.Sqrt(3);
-            var solid = new ImplicitSolid(surface);
-            solid.Bounds = new[] { new Vector3(xMin, yMin, zMin), new Vector3(xMax, yMax, zMax) };
+            var surfaceCopy = surface.Copy(null);
+            var solid = new ImplicitSolid(surfaceCopy);
+            solid.Bounds = [new Vector3(xMin, yMin, zMin), new Vector3(xMax, yMax, zMax)];
             var tessellatedSolid = solid.ConvertToTessellatedSolid(meshSize);
-            surface.SetFacesAndVertices(tessellatedSolid.Faces, true);
+            surfaceCopy.SetFacesAndVertices(tessellatedSolid.Faces, true);
+            return tessellatedSolid;
         }
         /// <summary>
         /// A generic tessellation of a primitive surface using marching cubes.
