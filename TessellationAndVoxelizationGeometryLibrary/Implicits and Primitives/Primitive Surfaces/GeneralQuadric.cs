@@ -644,7 +644,8 @@ namespace TVGL
             return true;
         }
 
-        public static GeneralQuadric FromPrimitiveSurface(PrimitiveSurface primitive) {
+        public static GeneralQuadric FromPrimitiveSurface(PrimitiveSurface primitive)
+        {
             if (primitive is GeneralQuadric quadric) return quadric;
             else if (primitive is Plane plane) return new GeneralQuadric(0, 0, 0, 0, 0, 0, plane.Normal.X, plane.Normal.Y, plane.Normal.Z, -plane.DistanceToOrigin);
             else if (primitive is Sphere sphere) return new GeneralQuadric(1, 1, 1, 0, 0, 0, -2 * sphere.Center.X, -2 * sphere.Center.Y, -2 * sphere.Center.Z,

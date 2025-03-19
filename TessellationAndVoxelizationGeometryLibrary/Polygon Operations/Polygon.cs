@@ -578,7 +578,7 @@ namespace TVGL
                     area += doubleTriangleArea;
                 }
             }
-            _centroid = new Vector2(xCenter, yCenter) / (6 * area);
+            _centroid = new Vector2(xCenter, yCenter) / (3 * area);
         }
 
         /// <summary>
