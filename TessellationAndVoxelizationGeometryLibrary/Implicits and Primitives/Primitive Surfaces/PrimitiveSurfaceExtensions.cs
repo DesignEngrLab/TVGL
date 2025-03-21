@@ -457,16 +457,32 @@ namespace TVGL
         /// <param name="maxEdgeLength"></param>
         public static TessellatedSolid Tessellate(this PrimitiveSurface surface, double xMin, double xMax, double yMin, double yMax, double zMin, double zMax, double maxEdgeLength)
         {
-            //if (surface.Vertices != null && surface.Vertices.Count > 0) return;
+            var tessellatedSolid = TessellateToNewSolid(surface, xMin, xMax, yMin, yMax, zMin, zMax,maxEdgeLength);
+            surface.Faces = tessellatedSolid.Primitives[0].Faces;
+            surface.Vertices = tessellatedSolid.Primitives[0].Vertices;
+            tessellatedSolid.MakeEdgesIfNonExistent();
+            return tessellatedSolid;
+        }
+        /// <summary>
+        /// A generic tessellation of a primitive surface using marching cubes.
+        /// </summary>
+        /// <param name="surface"></param>
+        /// <param name="xMin"></param>
+        /// <param name="xMax"></param>
+        /// <param name="yMin"></param>
+        /// <param name="yMax"></param>
+        /// <param name="zMin"></param>
+        /// <param name="zMax"></param>
+        /// <param name="maxEdgeLength"></param>
+        public static TessellatedSolid TessellateToNewSolid(this PrimitiveSurface surface, double xMin, double xMax, double yMin, double yMax, double zMin, double zMax, double maxEdgeLength)
+        {
             var meshSize = maxEdgeLength / Math.Sqrt(3);
             var surfaceCopy = surface.Copy(null);
             var solid = new ImplicitSolid(surfaceCopy);
             solid.Bounds = [new Vector3(xMin, yMin, zMin), new Vector3(xMax, yMax, zMax)];
             var tessellatedSolid = solid.ConvertToTessellatedSolid(meshSize);
             surfaceCopy.SetFacesAndVertices(tessellatedSolid.Faces, true);
-            surface.Faces = surfaceCopy.Faces;
-            surface.Vertices = surfaceCopy.Vertices;
-            tessellatedSolid.MakeEdgesIfNonExistent();
+            tessellatedSolid.AddPrimitive(surfaceCopy);
             return tessellatedSolid;
         }
         /// <summary>
