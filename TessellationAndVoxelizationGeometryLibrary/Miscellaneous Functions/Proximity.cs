@@ -27,14 +27,14 @@ namespace TVGL
     {
         #region Closest Point/Vertex
         /// <summary>
-        /// Finds the closest vertex (3D Point) on a triangle (a,b,c) to the given vertex (p).
+        /// Finds the closest vertex (3D Point) on a triangle (a,b,c) to the given vertex (c).
         /// It may be one of the three given points (a,b,c), a point on the edge,
         /// or a point on the face.
         /// </summary>
         /// <param name="a">a.</param>
         /// <param name="b">The b.</param>
         /// <param name="c">The c.</param>
-        /// <param name="p">The p.</param>
+        /// <param name="p">The c.</param>
         /// <param name="uvw">The uvw.</param>
         /// <returns>Vector3.</returns>
         /// <source> OpenVDB 4.0.2 Proximity::closestPointOnTriangleToPoint
@@ -42,7 +42,7 @@ namespace TVGL
         public static Vector3 ClosestVertexOnTriangleToVertex(Vector3 a, Vector3 b, Vector3 c, Vector3 p,
             out Vector3 uvw)
         {
-            //UVW is the vector of the point in question (p) to the nearest point on the triangle (a,b,c), I think.
+            //UVW is the vector of the point in question (c) to the nearest point on the triangle (a,b,c), I think.
             double uvw1, uvw2;
             // degenerate triangle, singular
             if (a.Distance(b).IsNegligible() && a.Distance(c).IsNegligible())
@@ -132,54 +132,88 @@ namespace TVGL
             //a + ab*uvw[1] + ac*uvw[2]; // = u*a + v*b + w*c , u= va*denom = 1.0-v-w
         }
 
+
         /// <summary>
-        /// Gets the closest vertex (3D Point) on line segment (ab) from the given point (p).
-        /// It also returns the distance to the line segment.
+        /// Gets the closest vertex (3D Point) on line segment (ab) from the given point (c).
+        /// It also returns the t parameter of the line segment (a + t*(b-a)), so this is a
+        /// number between 0 and 1. If the point is outside the line segment, the t value
+        /// is set to 0 or 1, and the closest point is the corresponding end point.
         /// </summary>
         /// <param name="a">a.</param>
         /// <param name="b">The b.</param>
-        /// <param name="p">The p.</param>
-        /// <param name="distanceToSegment">The distance to segment.</param>
+        /// <param name="c">The c.</param>
+        /// <param name="tParameter">The distance to segment.</param>
         /// <returns>Vector3.</returns>
         /// <source> OpenVDB 4.0.2 Proximity::closestPointOnSegmentToPoint
         /// Converted on 8.31.2017 by Brandon Massoni </source>
-        public static Vector3 ClosestVertexOnSegmentToVertex(Vector3 a, Vector3 b, Vector3 p, out double distanceToSegment)
+        private static Vector3 ClosestVertexOnSegmentToVertex(Vector3 a, Vector3 b, Vector3 c, out double tParameter)
         {
             var ab = b.Subtract(a);
-            distanceToSegment = p.Subtract(a).Dot(ab);
-
-            if (distanceToSegment <= 0.0)
-            {
-                // c projects outside the [a,b] interval, on the a side.
-                distanceToSegment = 0.0;
+            tParameter = c.Subtract(a).Dot(ab);
+            if (tParameter <= 0.0)
+            {   // c projects outside the [a,b] interval, on the a side.
+                tParameter = 0.0;
                 return a;
             }
+            // always nonnegative since denom = ||ab||^2
+            double denom = ab.Dot(ab);
+            if (tParameter >= denom)
+            {   // c projects outside the [a,b] interval, on the b side.
+                tParameter = 1.0;
+                return b;
+            }
+            // c projects inside the [a,b] interval.
+            tParameter = tParameter / denom;
+            return a + (ab * tParameter); // a + (ab * t);
+        }
+        
+        /// <summary>
+        /// Gets the closest 3D Point on line segment (defined by fromPt-toPt) from the given point (vertex).
+        /// It also returns the distance to the line segment.
+        /// </summary>
+        /// <param name="fromPt">fromPt.</param>
+        /// <param name="toPoint">The toPoint.</param>
+        /// <param name="vertex">The vertex.</param>
+        /// <param name="distanceToSegment">The distance to segment.</param>
+        /// <returns>Vector3.</returns>
+        /// <source> This is based on the above method, but 
+        /// rewritten for general use by MICampbell on 03.21.2025 </source>
+        public static Vector3 ClosestPointOnLineSegmentToPoint(Vector3 fromPt, Vector3 toPoint, Vector3 vertex, out double distanceToSegment)
+        {
+            var v = toPoint - fromPt;
+            var vLengthSqd = v.LengthSquared();
+            //var vUnit = v / vLength;  // this would be the "costly" inverse square root, but let's put it off until we need it
+
+            var distanceAlong = (vertex - fromPt).Dot(v); //really would need to divide by v so that unit length along vector
+
+            if (distanceAlong <= 0.0)
+            {   // point is "behind" the fromPt end of the segment, so the closest point is fromPt
+                distanceToSegment = (vertex - fromPt).Length();
+                return fromPt;
+            }
+            if (distanceAlong >= vLengthSqd)
+            {   // algebraically, we think that the point is "beyond" the toPoint if the result of distanceAlong
+                // is greater than the length of the segment. To avoid a square root, we multiple both sides by the
+                // length of v, which makes the LHS what was found above and the RHS as simply vLengthSqd
+                distanceToSegment = (vertex - toPoint).Length();
+                return toPoint;
+            }
             else
-            {
-
-                // always nonnegative since denom = ||ab||^2
-                double denom = ab.Dot(ab);
-
-                if (distanceToSegment >= denom)
-                {
-                    // c projects outside the [a,b] interval, on the b side.
-                    distanceToSegment = 1.0;
-                    return b;
-                }
-                else
-                {
-                    // c projects inside the [a,b] interval.
-                    distanceToSegment = distanceToSegment / denom;
-                    return a + (ab * distanceToSegment); // a + (ab * t);
-                }
+            {   // the point closest to the vertex is along the segment
+                // this point is q = fromPt + t * v/||v||
+                // note that distance along is t*||v||
+                // so the second term in this RHS for q ("t * v/||v||") is the same as distanceAlong*v/vLengthSqd
+                var q = fromPt + v * distanceAlong / vLengthSqd;
+                distanceToSegment = (vertex - q).Length();
+                return q;
             }
         }
 
         /// <summary>
-        /// Gets the closest point on the line segment from the given point (p).
+        /// Gets the closest point on the line segment from the given point (c).
         /// </summary>
         /// <param name="line">The line.</param>
-        /// <param name="p">The p.</param>
+        /// <param name="p">The c.</param>
         /// <returns>Vector2.</returns>
         public static Vector2 ClosestPointOnLineSegmentToPoint(this PolygonEdge line, Vector2 p)
             => ClosestPointOnLineSegmentToPoint(line.FromPoint.Coordinates, line.ToPoint.Coordinates, p);
@@ -305,7 +339,7 @@ namespace TVGL
         {
             Vector3 dir;
             //If the vector is only in the y-direction, then return the x direction
-            if (direction.Y.IsPracticallySame(1.0)|| direction.Y.IsPracticallySame(-1.0))
+            if (direction.Y.IsPracticallySame(1.0) || direction.Y.IsPracticallySame(-1.0))
             {
                 if (additionalRotation == 0) return Vector3.UnitX;
                 return Math.Cos(additionalRotation) * Vector3.UnitX - Math.Sin(additionalRotation) * Vector3.UnitZ;
