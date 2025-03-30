@@ -715,7 +715,7 @@ namespace TVGL
                 _innerPolygons.Select(p => p.Copy(true, invert)).ToList() : null;
             var copiedArea = copyInnerPolygons ? this.area : this.pathArea;
             if (invert) copiedArea *= -1;
-            var copiedPolygon = new Polygon(thisPath, this.Index)
+            var copiedPolygon = new Polygon(thisPath, this.Index,false,this.IsClosed)
             {
                 area = copiedArea,
                 maxX = this.maxX,
@@ -879,8 +879,12 @@ namespace TVGL
             foreach (var polygon in AllPolygons)
             {
                 polygon.Index = id++;
-                foreach (var v in polygon.Vertices)
+                for (int i = 0; i < polygon.Vertices.Count; i++)
+                {
+                    Vertex2D v = polygon.Vertices[i];
+                    v.IndexInList = i;
                     v.LoopID = polygon.Index;
+                }
             }
         }
 
