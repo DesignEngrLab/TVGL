@@ -17,6 +17,7 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Text.Json.Serialization;
 
 namespace TVGL
 {
@@ -358,6 +359,8 @@ namespace TVGL
         /// It would be the center of an ellipsoid, but for other quadrics, it is ...?
         /// Desmos it up!
         /// </summary>
+        /// 
+        [JsonIgnore]
         public Vector3 Center
         {
             get
@@ -377,7 +380,7 @@ namespace TVGL
         }
         Vector3 center = Vector3.Null;
 
-
+        [JsonIgnore]
         public Vector3 Axis1
         {
             get
@@ -389,6 +392,7 @@ namespace TVGL
                 return axis1;
             }
         }
+        [JsonIgnore]
         public Vector3 Axis2
         {
             get
@@ -400,6 +404,8 @@ namespace TVGL
                 return axis2;
             }
         }
+
+        [JsonIgnore]
         public Vector3 Axis3
         {
             get
@@ -415,6 +421,8 @@ namespace TVGL
         Vector3 axis2 = Vector3.Null;
         Vector3 axis3 = Vector3.Null;
 
+
+        [JsonIgnore]
         public override string KeyString => "Quadric|" + XSqdCoeff.ToString("F5") + "|" +
             YSqdCoeff.ToString("F5") + "|" + ZSqdCoeff.ToString("F5") + "|" +
             XYCoeff.ToString("F5") + "|" + XZCoeff.ToString("F5") + "|" +
