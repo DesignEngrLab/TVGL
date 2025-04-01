@@ -387,7 +387,7 @@ namespace TVGL
             {
                 if (axis1.IsNull())
                 {
-                    throw new NotImplementedException();
+                    //throw new NotImplementedException();
                 }
                 return axis1;
             }
@@ -399,7 +399,7 @@ namespace TVGL
             {
                 if (axis2.IsNull())
                 {
-                    throw new NotImplementedException();
+                    //throw new NotImplementedException();
                 }
                 return axis2;
             }
@@ -412,7 +412,7 @@ namespace TVGL
             {
                 if (axis3.IsNull())
                 {
-                    throw new NotImplementedException();
+                    //throw new NotImplementedException();
                 }
                 return axis3;
             }
