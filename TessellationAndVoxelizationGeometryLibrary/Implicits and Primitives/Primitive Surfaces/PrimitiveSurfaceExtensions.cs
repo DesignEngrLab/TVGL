@@ -457,13 +457,32 @@ namespace TVGL
         /// <param name="maxEdgeLength"></param>
         public static TessellatedSolid Tessellate(this PrimitiveSurface surface, double xMin, double xMax, double yMin, double yMax, double zMin, double zMax, double maxEdgeLength)
         {
-            //if (surface.Vertices != null && surface.Vertices.Count > 0) return;
+            var tessellatedSolid = TessellateToNewSolid(surface, xMin, xMax, yMin, yMax, zMin, zMax,maxEdgeLength);
+            surface.Faces = tessellatedSolid.Primitives[0].Faces;
+            surface.Vertices = tessellatedSolid.Primitives[0].Vertices;
+            tessellatedSolid.MakeEdgesIfNonExistent();
+            return tessellatedSolid;
+        }
+        /// <summary>
+        /// A generic tessellation of a primitive surface using marching cubes.
+        /// </summary>
+        /// <param name="surface"></param>
+        /// <param name="xMin"></param>
+        /// <param name="xMax"></param>
+        /// <param name="yMin"></param>
+        /// <param name="yMax"></param>
+        /// <param name="zMin"></param>
+        /// <param name="zMax"></param>
+        /// <param name="maxEdgeLength"></param>
+        public static TessellatedSolid TessellateToNewSolid(this PrimitiveSurface surface, double xMin, double xMax, double yMin, double yMax, double zMin, double zMax, double maxEdgeLength)
+        {
             var meshSize = maxEdgeLength / Math.Sqrt(3);
             var surfaceCopy = surface.Copy(null);
             var solid = new ImplicitSolid(surfaceCopy);
             solid.Bounds = [new Vector3(xMin, yMin, zMin), new Vector3(xMax, yMax, zMax)];
             var tessellatedSolid = solid.ConvertToTessellatedSolid(meshSize);
             surfaceCopy.SetFacesAndVertices(tessellatedSolid.Faces, true);
+            tessellatedSolid.AddPrimitive(surfaceCopy);
             return tessellatedSolid;
         }
         /// <summary>
@@ -472,9 +491,9 @@ namespace TVGL
         /// <param name="surface"></param>
         /// <param name="maxEdgeLength"></param>
         /// <exception cref="ArgumentOutOfRangeException"></exception>
-        public static void Tessellate(this PrimitiveSurface surface, double maxEdgeLength = double.NaN)
+        public static TessellatedSolid Tessellate(this PrimitiveSurface surface, double maxEdgeLength = double.NaN)
         {
-            if (surface.Vertices != null && surface.Vertices.Count > 0) return;
+            //if (surface.Vertices != null && surface.Vertices.Count > 0) return null;
             surface.SetBounds();
             if (double.IsFinite(surface.MaxX) && double.IsFinite(surface.MaxY) && double.IsFinite(surface.MaxZ) &&
                  double.IsFinite(surface.MinX) && double.IsFinite(surface.MinY) && double.IsFinite(surface.MinZ))
@@ -484,7 +503,7 @@ namespace TVGL
                     var diagonal = new Vector3(surface.MaxX - surface.MinX, surface.MaxY - surface.MinY, surface.MaxZ - surface.MinZ);
                     maxEdgeLength = 0.033 * diagonal.Length();
                 }
-                Tessellate(surface, surface.MinX, surface.MaxX, surface.MinY, surface.MaxY, surface.MinZ, surface.MaxZ, maxEdgeLength);
+                return Tessellate(surface, surface.MinX, surface.MaxX, surface.MinY, surface.MaxY, surface.MinZ, surface.MaxZ, maxEdgeLength);
             }
             else throw new ArgumentOutOfRangeException("The provided primitive is" +
                 "unbounded in size. Please invoke the overload of this method that accepts coordinate limits");

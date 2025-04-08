@@ -17,6 +17,7 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Text.Json.Serialization;
 
 namespace TVGL
 {
@@ -358,6 +359,8 @@ namespace TVGL
         /// It would be the center of an ellipsoid, but for other quadrics, it is ...?
         /// Desmos it up!
         /// </summary>
+        /// 
+        [JsonIgnore]
         public Vector3 Center
         {
             get
@@ -377,36 +380,39 @@ namespace TVGL
         }
         Vector3 center = Vector3.Null;
 
-
+        [JsonIgnore]
         public Vector3 Axis1
         {
             get
             {
                 if (axis1.IsNull())
                 {
-                    throw new NotImplementedException();
+                    //throw new NotImplementedException();
                 }
                 return axis1;
             }
         }
+        [JsonIgnore]
         public Vector3 Axis2
         {
             get
             {
                 if (axis2.IsNull())
                 {
-                    throw new NotImplementedException();
+                    //throw new NotImplementedException();
                 }
                 return axis2;
             }
         }
+
+        [JsonIgnore]
         public Vector3 Axis3
         {
             get
             {
                 if (axis3.IsNull())
                 {
-                    throw new NotImplementedException();
+                    //throw new NotImplementedException();
                 }
                 return axis3;
             }
@@ -415,6 +421,8 @@ namespace TVGL
         Vector3 axis2 = Vector3.Null;
         Vector3 axis3 = Vector3.Null;
 
+
+        [JsonIgnore]
         public override string KeyString => "Quadric|" + XSqdCoeff.ToString("F5") + "|" +
             YSqdCoeff.ToString("F5") + "|" + ZSqdCoeff.ToString("F5") + "|" +
             XYCoeff.ToString("F5") + "|" + XZCoeff.ToString("F5") + "|" +
@@ -644,7 +652,8 @@ namespace TVGL
             return true;
         }
 
-        public static GeneralQuadric FromPrimitiveSurface(PrimitiveSurface primitive) {
+        public static GeneralQuadric FromPrimitiveSurface(PrimitiveSurface primitive)
+        {
             if (primitive is GeneralQuadric quadric) return quadric;
             else if (primitive is Plane plane) return new GeneralQuadric(0, 0, 0, 0, 0, 0, plane.Normal.X, plane.Normal.Y, plane.Normal.Z, -plane.DistanceToOrigin);
             else if (primitive is Sphere sphere) return new GeneralQuadric(1, 1, 1, 0, 0, 0, -2 * sphere.Center.X, -2 * sphere.Center.Y, -2 * sphere.Center.Z,
