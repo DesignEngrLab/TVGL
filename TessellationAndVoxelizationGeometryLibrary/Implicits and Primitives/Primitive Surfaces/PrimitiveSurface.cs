@@ -110,7 +110,7 @@ namespace TVGL
         /// <summary>
         /// Calculates the both errors.
         /// </summary>
-        private void CalculateBothErrors()
+        internal protected virtual void CalculateBothErrors()
         {
             _maxError = 0.0;
             _meanSquaredError = 0.0;
@@ -311,7 +311,7 @@ namespace TVGL
         /// <summary>
         /// The mean squared error
         /// </summary>
-        double _meanSquaredError = double.NaN;
+        internal protected double _meanSquaredError = double.NaN;
         /// <summary>
         /// Gets the maximum error.
         /// </summary>
@@ -329,7 +329,7 @@ namespace TVGL
         /// <summary>
         /// The maximum error
         /// </summary>
-        double _maxError = double.NaN;
+        internal protected double _maxError = double.NaN;
 
         /// <summary>
         /// Gets or sets the triangle faces.
