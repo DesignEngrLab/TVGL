@@ -115,9 +115,9 @@ namespace TVGL
         /// Transforms the shape by the provided transformation matrix.
         /// </summary>
         /// <param name="transformMatrix">The transform matrix.</param>
-        public override void Transform(Matrix4x4 transformMatrix)
+        public override void Transform(Matrix4x4 transformMatrix, bool transformFacesAndVertices)
         {
-            base.Transform(transformMatrix);
+            base.Transform(transformMatrix, transformFacesAndVertices);
             Apex = Apex.Transform(transformMatrix);
             Axis = Axis.TransformNoTranslate(transformMatrix);
             Axis = Axis.Normalize();
