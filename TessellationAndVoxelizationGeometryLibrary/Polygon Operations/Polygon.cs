@@ -436,7 +436,7 @@ namespace TVGL
 
 
         /// <summary>
-        /// Gets the area of the polygon. Negative Area for holes.
+        /// Gets the total length of all the paths, including from inner polygons. 
         /// </summary>
         /// <value>The perimeter.</value>
         [JsonIgnore]
