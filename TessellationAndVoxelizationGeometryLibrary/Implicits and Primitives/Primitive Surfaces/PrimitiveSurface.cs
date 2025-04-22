@@ -12,7 +12,6 @@
 // <summary></summary>
 // ***********************************************************************
 using Newtonsoft.Json;
-using Newtonsoft.Json.Schema;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -854,7 +853,9 @@ namespace TVGL
             return copy;
         }
 
-        public abstract string KeyString { get; }
+        //Follows the format:
+        //"Plane|" + Normal.ToString() + "|" + DistanceToOrigin.ToString("F5") + GetCommonKeyDetails();
+        public abstract string KeyString { get; } 
 
         private protected string GetCommonKeyDetails()
         {
