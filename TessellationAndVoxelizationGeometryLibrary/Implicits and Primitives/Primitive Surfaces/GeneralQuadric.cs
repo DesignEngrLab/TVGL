@@ -190,7 +190,7 @@ namespace TVGL
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         public override bool PointIsInside(Vector3 x)
         {
-            return QuadricValue(x) < 0;
+            return QuadricValue(x) < 0 == IsPositive.GetValueOrDefault(true);
         }
 
         /// <summary>
@@ -203,7 +203,9 @@ namespace TVGL
             var x = 2 * XSqdCoeff * point.X + XYCoeff * point.Y + XZCoeff * point.Z + XCoeff;
             var y = 2 * YSqdCoeff * point.Y + XYCoeff * point.X + YZCoeff * point.Z + YCoeff;
             var z = 2 * ZSqdCoeff * point.Z + XZCoeff * point.X + YZCoeff * point.Y + ZCoeff;
-            return new Vector3(x, y, z);
+            if (IsPositive.GetValueOrDefault(true))
+                return new Vector3(x, y, z);
+            else return new Vector3(-x, -y, -z);
         }
 
         /// <summary>
@@ -227,51 +229,6 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Finds the intersection between a quadric and a line. Returns true if intersecting.
-        /// </summary>
-        /// <param name="quadric">The quadric.</param>
-        /// <param name="anchor">An anchor point on the line.</param>
-        /// <param name="direction">The direction of the line.</param>
-        /// <param name="point1">One of the intersecting points.</param>
-        /// <param name="point2">The other of the intersecting points.</param>
-        /// <param name="t1">The parametric distance from the anchor along the line to point1.</param>
-        /// <param name="t2">The parametric distance from the anchor along the line to point2.</param>
-        /// <returns>A bool where true is intersecting.</returns>
-        public bool LineIntersection(Vector3 anchor, Vector3 direction, out Vector3 point1,
-            out Vector3 point2, out double t1, out double t2)
-        {
-            //solve for t in the quadratic equation
-            var a = XSqdCoeff * direction.X * direction.X + YSqdCoeff * direction.Y * direction.Y + ZSqdCoeff * direction.Z * direction.Z
-                + XYCoeff * direction.X * direction.Y + XZCoeff * direction.X * direction.Z + YZCoeff * direction.Y * direction.Z;
-            var b = 2 * (XSqdCoeff * anchor.X * direction.X + YSqdCoeff * anchor.Y * direction.Y + ZSqdCoeff * anchor.Z * direction.Z)
-                               + XYCoeff * (anchor.X * direction.Y + anchor.Y * direction.X)
-                               + XZCoeff * (anchor.X * direction.Z + anchor.Z * direction.X)
-                               + YZCoeff * (anchor.Y * direction.Z + anchor.Z * direction.Y)
-                                              + XCoeff * direction.X + YCoeff * direction.Y + ZCoeff * direction.Z;
-            var c = XSqdCoeff * anchor.X * anchor.X + YSqdCoeff * anchor.Y * anchor.Y + ZSqdCoeff * anchor.Z * anchor.Z
-                + XYCoeff * anchor.X * anchor.Y + XZCoeff * anchor.X * anchor.Z + YZCoeff * anchor.Y * anchor.Z
-                + XCoeff * anchor.X + YCoeff * anchor.Y + ZCoeff * anchor.Z + W;
-            (var root1, var root2) = PolynomialSolve.Quadratic(a, b, c);
-
-            if (root1.IsRealNumber && !root1.Real.IsPracticallySame(root2.Real))
-            {
-                t1 = root1.Real;
-                t2 = root2.Real;
-                point1 = anchor + t1 * direction;
-                point2 = anchor + t2 * direction;
-                return true;
-            }
-            else
-            {
-                t1 = root1.Real;
-                t2 = double.NaN;
-                point1 = anchor + t1 * direction;
-                point2 = Vector3.Null;
-                return root1.IsRealNumber;
-            }
-        }
-
-        /// <summary>
         /// Finds the signed distance from the surface to the point
         /// </summary>
         /// <param name="point">The point.</param>
@@ -281,19 +238,23 @@ namespace TVGL
             // start with the assumption that the normal is the best direction to go
             var dir = GetNormalAtPoint(point).Normalize();
             var dot = double.NaN;
-            var minPointDist = double.NaN;
+            var minPointDist = double.PositiveInfinity;
             var iterLeft = Constants.MaxIterationsNonlinearSolve;
             while (iterLeft-- > 0)
             {
-                LineIntersection(point, dir, out var point1, out var point2, out _, out _);
-                var dxToPoint1 = Vector3.DistanceSquared(point, point1);
-                var dxToPoint2 = Vector3.DistanceSquared(point, point2);
-                // get the distance to the closest point and store in minPoint and minPointDist
-                var minPoint = point1;
-                minPointDist = dxToPoint1;
-                if (minPoint.IsNull() || dxToPoint2 < dxToPoint1)
+                var minPoint = Vector3.Null;
+                var methodEnumerator = LineIntersection(point, dir).GetEnumerator();
+                if (methodEnumerator.MoveNext())
                 {
-                    minPoint = point2;
+                    minPoint = methodEnumerator.Current.intersection;
+                    minPointDist = Vector3.DistanceSquared(point, minPoint);
+                }
+                if (methodEnumerator.MoveNext())
+                {
+                    var dxToPoint2 = Vector3.DistanceSquared(point, methodEnumerator.Current.intersection);
+                    if (dxToPoint2 < minPointDist)
+
+                        minPoint = methodEnumerator.Current.intersection;
                     minPointDist = dxToPoint2;
                 }
                 if (minPoint.IsNull()) break;
