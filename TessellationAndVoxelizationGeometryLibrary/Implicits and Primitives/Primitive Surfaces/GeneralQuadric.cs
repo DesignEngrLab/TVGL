@@ -253,9 +253,10 @@ namespace TVGL
                 {
                     var dxToPoint2 = Vector3.DistanceSquared(point, methodEnumerator.Current.intersection);
                     if (dxToPoint2 < minPointDist)
-
+                    {
                         minPoint = methodEnumerator.Current.intersection;
-                    minPointDist = dxToPoint2;
+                        minPointDist = dxToPoint2;
+                    }
                 }
                 if (minPoint.IsNull()) break;
                 // the nw direction is the vector from the point to the closest point
