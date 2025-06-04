@@ -286,9 +286,9 @@ namespace TVGLUnitTestsAndBenchmarking
             v3_1 = plane.Normal;
             d = plane.DistanceToOrigin;
             plane = Plane.CreateFromVertices(v3_1, unitVector3X, v3_2);
-             plane.Normalize();
-            plane.Transform(m4x4);
-            plane.Transform(quat);
+            plane.Normalize();
+            plane.Transform(m4x4, false);
+            plane.Transform(quat, false);
             dot = plane.DotCoordinate(v3_1);
             dot = plane.DotNormal(v3_1);
             isItTrueThat = plane == planeOther;
