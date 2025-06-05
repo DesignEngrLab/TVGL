@@ -25,6 +25,9 @@ namespace TVGLUnitTestsAndBenchmarking
             TVGL.Message.Verbosity = VerbosityLevels.OnlyCritical;
 
 
+            IO.Open(IO.BackoutToFile("badCircle.json").FullName, out Polygon polygon);
+            Presenter.ShowAndHang(polygon);
+            var circle = MinimumEnclosure.MinimumCircle(polygon.Path);
             var c = new Vector2(13, 25);
             var r = 7;
             var path = new List<Vector2>();
@@ -37,7 +40,7 @@ namespace TVGLUnitTestsAndBenchmarking
             var cNew = testPolygon.Centroid;
             Console.WriteLine(cNew);
 
-            DirectoryInfo dir = Program.BackoutToFolder(inputFolder);
+            DirectoryInfo dir = IO.BackoutToFolder(inputFolder);
             var index = 01;
             var valid3DFileExtensions = new HashSet<string> { ".stl", ".ply", ".obj", ".3mf", ".tvglz" };
             var allFiles = dir.GetFiles("*", SearchOption.AllDirectories).Where(f => valid3DFileExtensions.Contains(f.Extension.ToLower()))
@@ -58,16 +61,6 @@ namespace TVGLUnitTestsAndBenchmarking
                 //return;
                 index++;
             }
-        }
-        public static DirectoryInfo BackoutToFolder(string folderName = "")
-        {
-            var dir = new DirectoryInfo(".");
-            while (!Directory.Exists(Path.Combine(dir.FullName, folderName)))
-            {
-                if (dir == null) throw new FileNotFoundException("Folder not found", folderName);
-                dir = dir.Parent;
-            }
-            return new DirectoryInfo(Path.Combine(dir.FullName, folderName));
         }
 
         public static IEnumerable<List<Polygon>> GetRandomPolygonThroughSolids(DirectoryInfo dir)

@@ -1444,7 +1444,7 @@ namespace TVGL
             _inertiaTensor *= rotMatrix;
             if (Primitives != null)
                 foreach (var primitive in Primitives)
-                    primitive.Transform(transformMatrix);
+                    primitive.Transform(transformMatrix, false);
         }
 
         /// <summary>

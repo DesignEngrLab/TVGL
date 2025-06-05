@@ -24,7 +24,6 @@ namespace TVGL
     /// <typeparam name="T"></typeparam>
     public abstract class Grid<T>
     {
-
         public abstract bool IsInsideForPolygonCreation(int index);
 
         /// <summary>

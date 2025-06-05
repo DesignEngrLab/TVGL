@@ -30,9 +30,9 @@ namespace TVGL
         /// </summary>
         /// <param name="transformMatrix">The transform matrix.</param>
         /// <exception cref="System.NotImplementedException"></exception>
-        public override void Transform(Matrix4x4 transformMatrix)
+        public override void Transform(Matrix4x4 transformMatrix, bool transformFacesAndVertices)
         {
-            base.Transform(transformMatrix);
+            base.Transform(transformMatrix, transformFacesAndVertices);
             throw new NotImplementedException();
         }
 

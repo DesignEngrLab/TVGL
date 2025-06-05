@@ -170,7 +170,7 @@ namespace TVGL
         }
 
         #endregion
-        
+
         public static void ShowAndHang<T>(Grid<T> grid, Func<T, double> converter, bool normalizeValues = false)
         {
             var values = new double[grid.XCount, grid.YCount];
@@ -390,6 +390,19 @@ namespace TVGL
             {
                 vm.Add(solids.Where(s => s != null).SelectMany(s => ConvertTessellatedSolidToMGM3D((TessellatedSolid)s)));
             }
+            var window = new Window3DPlot(vm);
+
+            window.ShowDialog();
+        }
+
+        public static void ShowAndHang(IEnumerable<IEnumerable<Vector3>> paths, IEnumerable<bool> closePaths = null,
+            IEnumerable<double> lineThicknesses = null, IEnumerable<Color> colors = null, IEnumerable<TriangleFace> faces = null)
+        {
+            var vm = new Window3DPlotViewModel();
+            vm.Add(ConvertPathsToLineModels(paths, closePaths, lineThicknesses, colors));
+            if (faces != null)
+                vm.Add(ConvertTessellatedSolidToMGM3D(faces, new TVGLColor(KnownColors.LightGray), false));
+            
             var window = new Window3DPlot(vm);
 
             window.ShowDialog();
