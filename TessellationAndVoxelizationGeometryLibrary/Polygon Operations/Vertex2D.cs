@@ -60,7 +60,7 @@ namespace TVGL
         // Returns true if the vertex is convex in the polygon. If it is concave
         // then it is false. If the vertex is not attached at the StartLine or 
         // the Endline or one of the following methods in Polygon have 
-        // NOT been invoked (IsConvex, GetConvexVertices, GetConcaveVertices)
+        // NOT been invoked (SetVertexConvexities)
         // then it will be null.
         public bool? IsConvex { get; internal set; } 
 

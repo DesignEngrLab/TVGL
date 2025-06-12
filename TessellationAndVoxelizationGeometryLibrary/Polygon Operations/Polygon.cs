@@ -715,7 +715,7 @@ namespace TVGL
                 _innerPolygons.Select(p => p.Copy(true, invert)).ToList() : null;
             var copiedArea = copyInnerPolygons ? this.area : this.pathArea;
             if (invert) copiedArea *= -1;
-            var copiedPolygon = new Polygon(thisPath, this.Index,false,this.IsClosed)
+            var copiedPolygon = new Polygon(thisPath, this.Index, false, this.IsClosed)
             {
                 area = copiedArea,
                 maxX = this.maxX,
@@ -736,6 +736,25 @@ namespace TVGL
         {
         }
 
+        public void SetVertexConvexities()
+        {
+            MakePolygonEdgesIfNonExistent();
+            _isConvex = true;
+            foreach (var v in Vertices)
+            {
+                if (v.StartLine == null || v.EndLine == null)
+                {
+                    v.IsConvex = null;
+                    _isConvex = false;
+                }
+                else
+                {
+                    v.IsConvex = v.EndLine.Vector.Cross(v.StartLine.Vector) >= 0;
+                    if (!v.IsConvex.Value)
+                        _isConvex = false;
+                }
+            }
+        }
 
         /// <summary>
         /// Determines whether this instance is convex.
@@ -745,25 +764,7 @@ namespace TVGL
         {
             get
             {
-                if (!_isConvex.HasValue)
-                {
-                    MakePolygonEdgesIfNonExistent();
-                    _isConvex = true;
-                    foreach (var v in Vertices)
-                    {
-                        if (v.StartLine == null || v.EndLine == null)
-                        {
-                            v.IsConvex = null;
-                            _isConvex = false;
-                        }
-                        else
-                        {
-                            v.IsConvex = v.EndLine.Vector.Cross(v.StartLine.Vector) >= 0;
-                            if (!v.IsConvex.Value)
-                                _isConvex = false;
-                        }
-                    }
-                }
+                if (!_isConvex.HasValue) SetVertexConvexities();
                 return _isConvex.Value;
             }
         }
@@ -778,14 +779,10 @@ namespace TVGL
             MakePolygonEdgesIfNonExistent();
             foreach (var v in Vertices)
             {
-                if (v.IsConvex.HasValue && v.IsConvex.Value)
+                if (!v.IsConvex.HasValue && v.StartLine != null && v.EndLine != null)
+                    SetVertexConvexities();
+                if (v.IsConvex.GetValueOrDefault(false))
                     yield return v;
-                else if (v.StartLine != null && v.EndLine != null)
-                {
-                    v.IsConvex = v.EndLine.Vector.Cross(v.StartLine.Vector) >= 0;
-                    if (v.IsConvex.Value)
-                        yield return v;
-                }
             }
         }
         /// <summary>
@@ -797,14 +794,10 @@ namespace TVGL
             MakePolygonEdgesIfNonExistent();
             foreach (var v in Vertices)
             {
-                if (v.IsConvex.HasValue && !v.IsConvex.Value)
+                if (!v.IsConvex.HasValue && v.StartLine != null && v.EndLine != null)
+                    SetVertexConvexities();
+                if (!v.IsConvex.GetValueOrDefault(true))
                     yield return v;
-                else if (v.StartLine != null && v.EndLine != null)
-                {
-                    v.IsConvex = v.EndLine.Vector.Cross(v.StartLine.Vector) >= 0;
-                    if (!v.IsConvex.Value)
-                        yield return v;
-                }
             }
         }
 
