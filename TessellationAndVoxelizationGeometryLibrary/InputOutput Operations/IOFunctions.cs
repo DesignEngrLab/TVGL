@@ -1253,10 +1253,12 @@ namespace TVGL
         /// <exception cref="System.NotImplementedException">Need to provide filepath instread of stream.</exception>
         public static bool Save(Stream stream, SolidAssembly solidAssembly, FileType fileType = FileType.TVGL)
         {
-            if (solidAssembly.NumberOfSolidBodies == 0) return false;
+            //Return TVGL if from either solid bodies, sheet bodies, or both. Note that "sheet body"
+            //in this case, refers to the original format. It may in fact be a closed solid body.
+            if (solidAssembly.IsEmpty()) return false;
             if (fileType != FileType.TVGL && fileType != FileType.TVGLz)
             {
-                if (solidAssembly.NumberOfSolidBodies == 1)
+                if (solidAssembly.NumberOfSolidBodies == 1 || solidAssembly.NumberOfSheetBodies == 1)
                     return Save(stream, solidAssembly.Solids[0], fileType);
                 else
                 {
