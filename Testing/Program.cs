@@ -25,8 +25,10 @@ namespace TVGLUnitTestsAndBenchmarking
             TVGL.Message.Verbosity = VerbosityLevels.OnlyCritical;
 
 
-            IO.Open(IO.BackoutToFile("badCircle.json").FullName, out Polygon polygon);
+            //IO.Open(IO.BackoutToFile("badCircle.json").FullName, out Polygon polygon);
+            var polygon = new Polygon(new List<Vector2> { new Vector2(7,7),new Vector2(10, 0), new Vector2(8, 8), new Vector2(0, 10) });
             Presenter.ShowAndHang(polygon);
+            polygon.IsChiral();
             var circle = MinimumEnclosure.MinimumCircle(polygon.Path);
             var c = new Vector2(13, 25);
             var r = 7;
