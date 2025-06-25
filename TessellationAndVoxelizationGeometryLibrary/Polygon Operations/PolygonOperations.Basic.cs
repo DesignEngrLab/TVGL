@@ -384,12 +384,13 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Finds whether the polygon is chiral or not. A chiral polygon is one that cannot be superimposed on 
-        /// its mirror image. The 
+        /// Finds whether the polygon is the same when flipped over. Originally, this was called IsChiral 
+        /// (a chiral polygon is one that cannot be superimposed on its mirror image), but that seems like
+        /// a double negative. It could be called IsAchiral, but that's just too esoteric. 
         /// </summary>
         /// <param name="polygon"></param>
         /// <returns></returns>
-        public static bool IsChiral(this Polygon polygon)
+        public static bool HasFlippedSymmetry(this Polygon polygon)
         {
             var numVerts = polygon.Vertices.Count;
             var twiceNumVerts = 2 * numVerts;
