@@ -259,8 +259,8 @@ namespace TVGL
                     }
                 }
                 if (minPoint.IsNull()) break;
-                // the nw direction is the vector from the point to the closest point
-                var newDir = (point - minPoint).Normalize();
+                // the new direction is the vector from the point to the closest point
+                var newDir = GetNormalAtPoint(minPoint);
                 // it should be the same as the normal, but if not, then we need to iterate
                 dot = Vector3.Dot(dir, newDir);
                 if (Math.Abs(dot) > Constants.DotToleranceForSame) break;
