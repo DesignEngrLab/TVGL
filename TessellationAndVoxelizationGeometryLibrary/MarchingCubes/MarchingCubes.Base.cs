@@ -204,6 +204,8 @@ namespace TVGL
             };
             for (int i = 0; i < faces.Count; i++)
                 faces[i].IndexInList = i;
+            if (faces.Count == 0)
+                return new TessellatedSolid();
             return new TessellatedSolid(faces);
             // vertexDictionaries.SelectMany(d => d.Values), false,
             //new[] { solid.SolidColor }, solid.Units, solid.Name + "TS", solid.FileName, comments, solid.Language);
