@@ -858,7 +858,6 @@ namespace TVGL
         public void Reset()
         {
             _path = null;
-            _edges = null;
             _orderedXVertices = null;
             area = double.NaN;
             pathArea = double.NaN;
