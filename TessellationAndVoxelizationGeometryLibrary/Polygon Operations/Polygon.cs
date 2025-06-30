@@ -387,6 +387,7 @@ namespace TVGL
         public void Reverse(bool reverseInnerPolygons = false)
         {
             _vertices.Reverse();
+            _edges = null;
             Reset();
         }
 
