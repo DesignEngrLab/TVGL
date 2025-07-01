@@ -387,6 +387,7 @@ namespace TVGL
         public void Reverse(bool reverseInnerPolygons = false)
         {
             _vertices.Reverse();
+            _edges = null;
             Reset();
         }
 
@@ -858,7 +859,6 @@ namespace TVGL
         public void Reset()
         {
             _path = null;
-            _edges = null;
             _orderedXVertices = null;
             area = double.NaN;
             pathArea = double.NaN;
