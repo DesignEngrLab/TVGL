@@ -36,7 +36,8 @@ namespace TVGL
         /// </references>
         public static Circle MinimumCircle(this IEnumerable<Vector2> pointsInput)
         {
-            var points = pointsInput.ToArray();
+            //Get the convex hull, since that function is linear and will make this non-linear function run more quickly.
+            var points = ConvexHull2D.Create(pointsInput.ToArray(), out _).ToArray();
             var numPoints = points.Length;
             var maxNumStalledIterations = 10; // why 10? it was (int)(1.1 * numPoints);
             // since the circle can be made up of at most 3 points, we can just check for that
@@ -66,13 +67,17 @@ namespace TVGL
                 {
                     var dist = (points[i] - circle.Center).LengthSquared();
 
-                    if (dist > maxDistSqared)
+                    //To handle rounding error, make sure ONLY to update IF the distance 
+                    //is greater than non-negligible.
+                    if (dist.IsGreaterThanNonNegligible(maxDistSqared))
                     {
-                        maxDistSqared = dist;
-                        if (indexOfMaxDist == i) stallCounter++;
+                        //Stall count if the index is less than six, in case it keeps bouncing between the same points.
+                        if (indexOfMaxDist == i || indexOfMaxDist < 6) stallCounter++;
                         //Only set the stall counter back to zero if there was a significant change.
                         else if (dist * requiredImprovementPercent > maxDistSqared)
                             stallCounter = 0;
+                        //Set max distance ONLY AFTER handling the stall counter logic.
+                        maxDistSqared = dist;
                         indexOfMaxDist = i;
                         newPointFoundOutsideCircle = true;
                     }
@@ -94,6 +99,8 @@ namespace TVGL
                     // contributor would have been at index-2, and now that's index-3 (this is done in the
                     // FindCircle function), so we don't need to check it again. FindCircle, swapped points in
                     // the first four positions (0,1,2,3) so that the defining circle was made by 0,1 & 2.
+                    //var filePathOut = Path.Join(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "cvxpoints.csv");
+                    //System.IO.File.WriteAllLines(filePathOut, pointsInput.Select(p => p.X + "," + p.Y));
                 }
             } while (newPointFoundOutsideCircle && stallCounter < maxNumStalledIterations);
             return circle;
