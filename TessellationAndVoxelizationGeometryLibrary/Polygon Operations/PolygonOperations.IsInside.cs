@@ -153,8 +153,8 @@ namespace TVGL
                     if (onBoundary) break;
                 }
                 if (onBoundary) continue;
-                var insideAbove = numberAbove % 2 != 0;
-                var insideBelow = numberBelow % 2 != 0;
+                var insideAbove = int.IsOddInteger(numberAbove);
+                var insideBelow = int.IsOddInteger(numberBelow);
                 if (insideAbove != insideBelow)
                 {
                     continue;
@@ -302,8 +302,8 @@ namespace TVGL
                 }
                 if (onlyTopPolygon) break;
             }
-            var insideAbove = numberAbove % 2 != 0;
-            var insideBelow = numberBelow % 2 != 0;
+            var insideAbove = int.IsOddInteger(numberAbove );
+            var insideBelow =int.IsOddInteger(numberBelow );
             if (insideAbove != insideBelow)
             {
                 throw new ArgumentException("In IsPointInsidePolygon, the point in question is surrounded by" +

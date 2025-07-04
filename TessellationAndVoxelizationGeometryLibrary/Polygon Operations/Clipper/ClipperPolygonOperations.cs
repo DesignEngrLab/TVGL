@@ -146,6 +146,7 @@ namespace TVGL
         private static List<Polygon> BooleanViaClipper(FillRule fillMethod, ClipType clipType, IEnumerable<Polygon> subject,
             IEnumerable<Polygon> clip, PolygonCollection outputAsCollectionType)
         {
+            if ((subject == null || !subject.Any()) && (clip == null || !clip.Any())) return new List<Polygon>();
             if (subject == null || !subject.Any()) return clip.Select(p => p.Copy(true, false)).ToList();
             if (clip == null || !clip.Any()) return subject.Select(p => p.Copy(true, false)).ToList();
 
