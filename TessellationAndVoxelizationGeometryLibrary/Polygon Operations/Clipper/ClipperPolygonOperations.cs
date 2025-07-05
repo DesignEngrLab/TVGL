@@ -47,6 +47,8 @@ namespace TVGL
     /// </summary>
     public static partial class PolygonOperations
     {
+
+
         /// <summary>
         /// The scale
         /// </summary>
@@ -75,8 +77,7 @@ namespace TVGL
 
             var joinType = notMiter ? (double.IsNaN(deltaAngle) ? JoinType.Square : JoinType.Round) : JoinType.Miter;
             //Convert Points (TVGL) to Point64s (Clipper)
-            var clipperSubject = new Paths64(allPolygons.Select(loop
-                => new Path64(loop.Vertices.Select(point => new Point64(point.X * scale, point.Y * scale)))));
+            var clipperSubject = ConvertToClipperPaths(polygons);
 
             //Setup Clipper
             var clip = new ClipperOffset(2, Math.Abs(tolerance) * scale);
@@ -173,10 +174,15 @@ namespace TVGL
             foreach (var polygon in subject)
             {
                 if (polygon == null) continue;
-                foreach (var polygonElement in polygon.AllPolygons.Where(p => !p.PathArea.IsNegligible(Constants.BaseTolerance)))
-                    clipperSubject.Add(new Path64(polygonElement.Path.Select(p => new Point64(p.X * scale, p.Y * scale))));
+                clipperSubject.AddRange(ConvertToClipperPaths(polygon));
             }
             return clipperSubject;
+        }
+
+        private static IEnumerable<Path64> ConvertToClipperPaths(Polygon polygon)
+        {
+            foreach (var polygonElement in polygon.AllPolygons.Where(p => !p.PathArea.IsNegligible(Constants.BaseTolerance)))
+                yield return new Path64(polygonElement.Path.Select(p => new Point64(p.X * scale, p.Y * scale)));
         }
         #endregion
     }
