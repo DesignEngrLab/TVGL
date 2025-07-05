@@ -39,10 +39,10 @@ namespace TVGLUnitTestsAndBenchmarking
             //new Vector2(00, 3.5),
         });
             var B = A.Copy(true, false);
-            var C = A.Copy(true, false);
+            var C = A.Copy(true, true);
             C.Transform(Matrix3x3.CreateScale(5, -5, new Vector2(0, 7)));
-            //var box = new Polygon([new Vector2(-1, -32), new Vector2(62, -32), new Vector2(62, 43), new Vector2(-1, 43),]);
-            //C = box.Subtract(C).LargestPolygon();
+            var box = new Polygon([new Vector2(-1, -32), new Vector2(62, -32), new Vector2(62, 43), new Vector2(-1, 43),]);
+            C = box.Subtract(C).LargestPolygon();
             Presenter.ShowAndHang([C, B]);
             //var B = new Polygon(new List<Vector2> { new Vector2(10,10), new Vector2(16, 10),
             //    new Vector2(16, 6),
@@ -54,14 +54,14 @@ namespace TVGLUnitTestsAndBenchmarking
             //A.Reverse();
             A = C;
             var negB = new Polygon(B.Path.Select(p => -p));
-            var ASumB = A.MinkowskiSum(B).LargestPolygon();
-            var ASumNegB = PolygonOperations.MinkowskiSumViaClipper([A], [negB], PolygonCollection.PolygonTrees);
-            //var ASumNegB0 = ASumNegB[2];
-            var ASumNegB1 = ASumNegB[0].InnerPolygons[0];
+           // var ASumB = A.MinkowskiSumNew(B).LargestPolygon();
+            var ASumNegB = A.MinkowskiSum(negB);
+            var ASumNegB0 = ASumNegB[0];
+            var ASumNegB1 = ASumNegB[1];
             //var ASumNegB0 = A.MinkowskiSum(negB)[0];
             //var ASumNegB1 = A.MinkowskiSum(negB)[1];
             //Presenter.ShowAndHang([A, B,negB]);
-            Presenter.ShowAndHang([A, B, negB, ASumNegB1]);
+            //Presenter.ShowAndHang([A, B, negB, ASumNegB0, ASumNegB1]);
             ASumNegB1.Complexify(0.5);
             for (int k = 0; k < 3; k++)
                 for (int i = 0; i < ASumNegB1.Vertices.Count; i++)

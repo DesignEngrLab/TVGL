@@ -33,21 +33,39 @@ namespace TVGL
         /// <returns></returns>
         public static List<Polygon> MinkowskiSum(this Polygon a, Polygon b)
         {
-            if (a == null || b == null) return new List<Polygon>();
+            int aVertCount = a.Vertices.Count, bVertCount = b.Vertices.Count;
+            var tmp = new Polygon[bVertCount];
+            var jj = 0;
+            foreach (var pathPt in b.Vertices)
+            {
+                var path2 = new Vector2[aVertCount];
+                var ii = 0;
+                foreach (var basePt in a.Vertices)
+                    path2[ii++] = pathPt.Coordinates + basePt.Coordinates;
+                tmp[jj++] = new Polygon(path2);
+            }
 
-            //Convert to int points and remove collinear edges
-            var clipperSubject = ConvertToClipperPaths(a).First();
-            var clipperClip = ConvertToClipperPaths(b).First();
+            var result = new Polygon[bVertCount * aVertCount];
+            var k = 0;
+            int g = bVertCount - 1;
 
-            var clipperSolution = Clipper.MinkowskiSum(clipperSubject, clipperClip, true);
-            //Convert back to points and return solution
-            var solution = clipperSolution.Select(clipperPath
-                => new Polygon(clipperPath.Select(point => new Vector2(point.X / scale, point.Y / scale))));
-
-            return solution.ToList();
+            int h = aVertCount - 1;
+            for (int i = 0; i < bVertCount; i++)
+            {
+                for (int j = 0; j < aVertCount; j++)
+                {
+                    var quad = new Polygon([ tmp[g].Vertices[h], tmp[i].Vertices[h], 
+                        tmp[i].Vertices[j], tmp[g].Vertices[j] ]);
+                    if (!quad.IsPositive)
+                        quad.Reverse(); //result.Add(Clipper.ReversePath(quad));
+                    else
+                        result[k++] = quad;
+                    h = j;
+                }
+                g = i;
+            }
+            return result.UnionPolygons(PolygonCollection.SeparateLoops);
         }
-
-
 
     }
 }
