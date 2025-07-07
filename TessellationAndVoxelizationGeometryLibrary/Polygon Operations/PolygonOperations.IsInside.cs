@@ -92,22 +92,25 @@ namespace TVGL
         /// <param name="onBoundary">if set to <c>true</c> [on boundary].</param>
         /// <returns>Polygon.</returns>
         public static bool? IsNonIntersectingPolygonInside(this Polygon outer, bool onlyTopOuterPolygon, Polygon inner,
-            bool onlyTopInnerPolygon, out bool onBoundary)
+            out bool onBoundary, double boundaryTolerance = Constants.DefaultEqualityTolerance)
         {
+            if (Math.Abs(inner.PathArea) > Math.Abs(outer.PathArea)
+                || (!onlyTopOuterPolygon && Math.Abs(inner.PathArea) > Math.Abs(outer.Area)))
+            {
+                onBoundary = false;
+                return false;
+            }
             onBoundary = false;
             foreach (var subPolygon in inner.AllPolygons)
             {
                 foreach (var vector2 in subPolygon.Path)
                 {
-                    if (!outer.IsPointInsidePolygon(onlyTopOuterPolygon, vector2, out var thisPointOnBoundary))
+                    if (!outer.IsPointInsidePolygon(onlyTopOuterPolygon, vector2, out var thisPointOnBoundary, boundaryTolerance))
                         // negative has a point outside of positive. no point in checking other points
                         return false;
                     if (thisPointOnBoundary) onBoundary = true;
-                    else if (onlyTopInnerPolygon)
-                        return true;
-                    else break;
+                    else return true;
                 }
-                if (onlyTopInnerPolygon) break;
             }
             return null; //all points are on boundary, so it is unclear if it is inside
         }
@@ -262,7 +265,7 @@ namespace TVGL
         /// <exception cref="System.ArgumentException">In IsPointInsidePolygon, the point in question is surrounded by" +
         ///                     " an undetermined number of lines which makes it impossible to determined if inside.</exception>
         public static bool IsPointInsidePolygon(this Polygon polygon, bool onlyTopPolygon, Vector2 pointInQuestion,
-            out bool onBoundary, bool onBoundaryIsInside = true)
+             out bool onBoundary, double boundaryTolerance = Constants.DefaultEqualityTolerance, bool onBoundaryIsInside = true)
         {
             var qX = pointInQuestion.X;  // for conciseness and the smallest bit of additional speed,
             var qY = pointInQuestion.Y;  // we declare these local variables.
@@ -287,7 +290,7 @@ namespace TVGL
             {
                 foreach (var line in subPolygon.Edges)
                 {
-                    switch (DetermineLineToPointVerticalReferenceType(pointInQuestion, line))
+                    switch (DetermineLineToPointVerticalReferenceType(pointInQuestion, line, boundaryTolerance))
                     {
                         case VerticalLineReferenceType.On:
                             onBoundary = true;
@@ -302,8 +305,8 @@ namespace TVGL
                 }
                 if (onlyTopPolygon) break;
             }
-            var insideAbove = int.IsOddInteger(numberAbove );
-            var insideBelow =int.IsOddInteger(numberBelow );
+            var insideAbove = int.IsOddInteger(numberAbove);
+            var insideBelow = int.IsOddInteger(numberBelow);
             if (insideAbove != insideBelow)
             {
                 throw new ArgumentException("In IsPointInsidePolygon, the point in question is surrounded by" +
@@ -319,12 +322,15 @@ namespace TVGL
         /// <param name="point">The point.</param>
         /// <param name="line">The line.</param>
         /// <returns>VerticalLineReferenceType.</returns>
-        private static VerticalLineReferenceType DetermineLineToPointVerticalReferenceType(Vector2 point, PolygonEdge line)
+        private static VerticalLineReferenceType DetermineLineToPointVerticalReferenceType(Vector2 point, PolygonEdge line,
+            double boundaryTolerance = Constants.DefaultEqualityTolerance)
         {
             // this is basically the function PolygonEdge.YGivenX, but it is a little different here since check if line is horizontal cusp
             if (point.X == line.FromPoint.Coordinates.X && point.X == line.ToPoint.Coordinates.X)
             {   // this means the line is vertical and lines up with the point. Other adjacent line segments will be found
-                return VerticalLineReferenceType.NotIntersecting;
+                if (point.Y >= line.YMin && point.Y <= line.YMax)
+                    return VerticalLineReferenceType.On;
+                else return VerticalLineReferenceType.NotIntersecting;
             }
             if (point == line.FromPoint.Coordinates)
             {
@@ -337,7 +343,7 @@ namespace TVGL
             if ((line.FromPoint.X < point.X) == (line.ToPoint.X < point.X)) return VerticalLineReferenceType.NotIntersecting;
             // if both true or both false then endpoints are on same side of point
             var intersectionYValue = line.VerticalSlope * (point.X - line.FromPoint.X) + line.FromPoint.Y;
-            if (intersectionYValue == point.Y)
+            if (intersectionYValue.IsPracticallySame(point.Y, boundaryTolerance))
                 return VerticalLineReferenceType.On;
             if (intersectionYValue > point.Y)
                 return VerticalLineReferenceType.Above;
@@ -560,7 +566,7 @@ namespace TVGL
         /// <returns>List&lt;System.Double[]&gt;.</returns>
         public static List<double[]> AllPolygonIntersectionPointsAlongVerticalLines(this Polygon polygon, double startingXValue,
              double stepSize, out int firstIntersectingIndex)
-        =>AllPolygonIntersectionPointsAlongVerticalLines([polygon], startingXValue, stepSize, out firstIntersectingIndex);
+        => AllPolygonIntersectionPointsAlongVerticalLines([polygon], startingXValue, stepSize, out firstIntersectingIndex);
 
         /// <summary>
         /// Find all the polygon intersection points along vertical lines.
