@@ -223,6 +223,29 @@ namespace TVGL
         }
 
 
+        public static DirectoryInfo BackoutToFolder(string folderName)
+        {
+            var dir = new DirectoryInfo(".");
+            while (!Directory.Exists(Path.Combine(dir.FullName, folderName)))
+            {
+                if (dir == null) throw new FileNotFoundException("Folder not found", folderName);
+                dir = dir.Parent;
+            }
+            return new DirectoryInfo(Path.Combine(dir.FullName, folderName));
+        }
+
+
+        public static FileInfo BackoutToFile(string fileName)
+        {
+            var dir = new DirectoryInfo(".");
+            while (!File.Exists(Path.Combine(dir.FullName, fileName)))
+            {
+                if (dir == null) throw new FileNotFoundException("File not found", fileName);
+                dir = dir.Parent;
+            }
+            return new FileInfo(Path.Combine(dir.FullName, fileName));
+        }
+
         #endregion
         #region Open Array of Solids
         /// <summary>

@@ -11,7 +11,7 @@ namespace TVGLUnitTestsAndBenchmarking.Misc_Tests
     {
         internal static void Test1()
         {
-            DirectoryInfo dir = Program.BackoutToFolder(Program.inputFolder);
+            DirectoryInfo dir = IO.BackoutToFolder(Program.inputFolder);
             foreach (var fileName in dir.GetFiles("*").Skip(0))
             {
                 Console.WriteLine("\n\n\nAttempting to open: " + fileName.Name);
@@ -51,7 +51,7 @@ namespace TVGLUnitTestsAndBenchmarking.Misc_Tests
 
         internal static void Test2()
         {
-            DirectoryInfo dir = Program.BackoutToFolder(Program.inputFolder);
+            DirectoryInfo dir = IO.BackoutToFolder(Program.inputFolder);
             foreach (var fileName in dir.GetFiles("*").Skip(20))
             {
                 //Console.WriteLine("\n\n\nAttempting to open: " + fileName.Name);
@@ -110,7 +110,7 @@ namespace TVGLUnitTestsAndBenchmarking.Misc_Tests
 
         internal static void Test3()
         {
-            DirectoryInfo dir = Program.BackoutToFolder(Program.inputFolder);
+            DirectoryInfo dir = IO.BackoutToFolder(Program.inputFolder);
             foreach (var fileName in dir.GetFiles("").Skip(40))
             {
                 //Console.WriteLine("\n\n\nAttempting to open: " + fileName.Name);

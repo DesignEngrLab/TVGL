@@ -91,7 +91,7 @@ namespace TVGL
                 for (int i = branches.Count - 1; i >= 0; i--)
                 {
                     if (polygon.HasABoundingBoxThatEncompasses(branches[i]) &&  // for speed, check the bb first
-                        polygon.IsNonIntersectingPolygonInside(true, branches[i], true, out _) == true)
+                        polygon.IsNonIntersectingPolygonInside(true, branches[i], out _) == true)
                     {
                         polygon.AddInnerPolygon(branches[i]);
                         branches.RemoveAt(i);
