@@ -1438,8 +1438,15 @@ namespace TVGL
             foreach (var prim in solid.Primitives)
                 if (prim.BorderSegments != null) prim.BorderSegments.Clear();
                 else prim.BorderSegments = new List<BorderSegment>();
-            var borderSegments = GatherEdgesIntoSegments(solid.Primitives.SelectMany(prim => prim.OuterEdges)
-                .Concat(solid.NonsmoothEdges));
+
+            //Gather the edges into border segments. Only use solid.NonsmoothEdges if it has been set and is not null or empty.
+            IEnumerable<BorderSegment> borderSegments;
+            if (solid.NonsmoothEdges != null && solid.NonsmoothEdges.Count > 0)
+                borderSegments = GatherEdgesIntoSegments(solid.Primitives.SelectMany(prim => prim.OuterEdges).Concat(solid.NonsmoothEdges));
+            else
+                borderSegments = GatherEdgesIntoSegments(solid.Primitives.SelectMany(prim => prim.OuterEdges));
+
+            //Set Owned/Other Connection to Primitive and set the curve details for the border segment.
             foreach (var segment in borderSegments)
             {
                 var ownedFace = segment.DirectionList[0] ? segment.EdgeList[0].OwnedFace : segment.EdgeList[0].OtherFace;
