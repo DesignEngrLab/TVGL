@@ -141,23 +141,31 @@ namespace TVGL
             {
                 var eigens = StarMath.GetEigenValuesAndVectors(matrix, out var eigenVectors);
                 // either all 3 are real or 2 are complex conjugates
+                var validForUse = new bool[3];
+                for (int i = 0; i < 3; i++)
+                {
+                    if (eigenVectors[i] == null) validForUse[i] = false;
+                    else validForUse[i] = eigens[i].IsRealNumber;
+                }
                 var containsComplex = !eigens[0].IsRealNumber || !eigens[1].IsRealNumber;
                 int indexToUse = -1;
-                if (containsComplex)
-                {
-                    if (eigens[0].IsRealNumber) indexToUse = 0;
-                    else if (eigens[1].IsRealNumber) indexToUse = 1;
-                    else indexToUse = 2;
-                }
+                if (validForUse[0] &&
+                    (!validForUse[1] || Math.Abs(eigens[0].Real) >= Math.Abs(eigens[1].Real)) &&
+                   (!validForUse[2] || Math.Abs(eigens[0].Real) >= Math.Abs(eigens[2].Real)))
+                    indexToUse = 0;
+                else if (validForUse[1] &&
+                      (!validForUse[0] || Math.Abs(eigens[1].Real) >= Math.Abs(eigens[0].Real)) &&
+                     (!validForUse[2] || Math.Abs(eigens[1].Real) >= Math.Abs(eigens[2].Real)))
+                    indexToUse = 1;
+                else if (validForUse[2] &&
+                      (!validForUse[1] || Math.Abs(eigens[2].Real) >= Math.Abs(eigens[1].Real)) &&
+                     (!validForUse[0] || Math.Abs(eigens[2].Real) >= Math.Abs(eigens[0].Real)))
+                    indexToUse = 2;
                 else
                 {
-                    indexToUse = 
-                    (Math.Abs(eigens[0].Real) >= Math.Abs(eigens[1].Real) &&
-                    Math.Abs(eigens[0].Real) >= Math.Abs(eigens[2].Real))
-                    ? 0 :
-                    (Math.Abs(eigens[1].Real) >= Math.Abs(eigens[0].Real) &&
-                    Math.Abs(eigens[1].Real) >= Math.Abs(eigens[2].Real))
-                    ? 1 : 2;
+                    curve = null;
+                    error = 0;
+                    return false;
                 }
                 direction = new Vector3(eigenVectors[indexToUse][0].Real,
                     eigenVectors[indexToUse][1].Real,

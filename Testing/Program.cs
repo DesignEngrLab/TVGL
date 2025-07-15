@@ -25,42 +25,66 @@ namespace TVGLUnitTestsAndBenchmarking
             TVGL.Message.Verbosity = VerbosityLevels.OnlyCritical;
 
 
-            IO.Open(IO.BackoutToFile("badCircle.json").FullName, out Polygon polygon);
-            Presenter.ShowAndHang(polygon);
-            var circle = MinimumEnclosure.MinimumCircle(polygon.Path);
-            var c = new Vector2(13, 25);
-            var r = 7;
-            var path = new List<Vector2>();
-            for (int i = 0; i < 22; i++)
-            {
-                path.Add(new Vector2(c.X + r * Math.Cos(i * Math.PI / 11), c.Y + r * Math.Sin(i * Math.PI / 11)));
-            }
-            var testPolygon = new Polygon(path);
-            Presenter.ShowAndHang(testPolygon);
-            var cNew = testPolygon.Centroid;
-            Console.WriteLine(cNew);
-
-            DirectoryInfo dir = IO.BackoutToFolder(inputFolder);
-            var index = 01;
-            var valid3DFileExtensions = new HashSet<string> { ".stl", ".ply", ".obj", ".3mf", ".tvglz" };
-            var allFiles = dir.GetFiles("*", SearchOption.AllDirectories).Where(f => valid3DFileExtensions.Contains(f.Extension.ToLower()))
-                ; //.OrderBy(fi => fi.Length);
-            foreach (var fileName in allFiles.Skip(index))
-            {
-                Console.WriteLine(index + ": Attempting to open: " + fileName.Name);
-                TessellatedSolid[] solids = null;
-                IO.Open(fileName.FullName, out solids);
-                var ts = solids[0];
-                for (int i = 0; i < 100; i++)
+            var A = new Polygon(new List<Vector2> {
+            new Vector2(0, 3), new Vector2(9,0),new Vector2(12, 0),
+            new Vector2(3,3),
+            new Vector2(3,12), new Vector2(13,15),
+            new Vector2(0,12),
+            //new Vector2(0, 5)
+            //new Vector2(3,2.2), new Vector2(4, 2),
+            //new Vector2(4, 0.5), new Vector2(5, 2),
+            //new Vector2(3, 2.5),
+            //new Vector2(2, .7), new Vector2(1, 3),new Vector2(1, 3),
+            //new Vector2(3, 2.75), new Vector2(3, 3.5),
+            //new Vector2(00, 3.5),
+        });
+            var B = A.Copy(true, false);
+            var C = A.Copy(true, true);
+            C.Transform(Matrix3x3.CreateScale(5, -5, new Vector2(0, 7)));
+            var box = new Polygon([new Vector2(-1, -32), new Vector2(62, -32), new Vector2(62, 43), new Vector2(-1, 43),]);
+            C = box.Subtract(C).LargestPolygon();
+            Presenter.ShowAndHang([C, B]);
+            //var B = new Polygon(new List<Vector2> { new Vector2(10,10), new Vector2(16, 10),
+            //    new Vector2(16, 6),
+            //    new Vector2(17,9),
+            //    new Vector2(17,11)
+            //    ,new Vector2(10,11)
+            //});
+            //A.Transform(Matrix3x3.CreateTranslation(5, 11));
+            //A.Reverse();
+            A = C;
+            var negB = new Polygon(B.Path.Select(p => -p));
+           // var ASumB = A.MinkowskiSumNew(B).LargestPolygon();
+            var ASumNegB = A.MinkowskiSum(negB);
+            var ASumNegB0 = ASumNegB[0];
+            var ASumNegB1 = ASumNegB[1];
+            //var ASumNegB0 = A.MinkowskiSum(negB)[0];
+            //var ASumNegB1 = A.MinkowskiSum(negB)[1];
+            //Presenter.ShowAndHang([A, B,negB]);
+            //Presenter.ShowAndHang([A, B, negB, ASumNegB0, ASumNegB1]);
+            ASumNegB1.Complexify(0.5);
+            for (int k = 0; k < 3; k++)
+                for (int i = 0; i < ASumNegB1.Vertices.Count; i++)
                 {
-                    ts.Transform(Matrix4x4.CreateFromYawPitchRoll(0.1, 0.1, 0.1));
-                    Presenter.Show(ts, i.ToString(), Presenter.HoldType.AddToQueue, 60, index % 3);
-
+                    var translate = ASumNegB1.Path[i];
+                    var bmov = B.Copy(true, true);
+                    bmov.Transform(Matrix3x3.CreateTranslation(translate));
+                    Presenter.Show([A, B, ASumNegB1, bmov], holdType: Presenter.HoldType.AddToQueue, timetoShow: 25);
                 }
-                //Thread.Sleep(3333);
-                //return;
-                index++;
-            }
+            Console.ReadKey();
+            //var nfp1 = nfp0.InnerPolygons[0];
+            //Presenter.ShowAndHang([A, B, nfp1]);
+            //nfp1.Complexify(0.5);
+            //for (int k = 0; k < 3; k++)
+            //    for (int i = 0; i < nfp1.Vertices.Count; i++)
+            //    {
+            //        var translate = nfp1.Path[i];
+            //        var bmov = B.Copy(true, true);
+            //        bmov.Transform(Matrix3x3.CreateTranslation(translate));
+            //        Presenter.Show([A, B, nfp1, bmov], holdType: Presenter.HoldType.AddToQueue, timetoShow: 83);
+            //    }
+            //B.Transform(Matrix3x3.CreateScale(1));
+            //A = new Polygon(A.CreateConvexHull(out _));
         }
 
         public static IEnumerable<List<Polygon>> GetRandomPolygonThroughSolids(DirectoryInfo dir)

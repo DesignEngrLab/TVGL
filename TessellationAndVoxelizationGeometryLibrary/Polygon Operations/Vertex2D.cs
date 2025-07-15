@@ -12,6 +12,8 @@
 // <summary></summary>
 // ***********************************************************************
 
+using System;
+
 namespace TVGL
 {
     /// <summary>
@@ -60,9 +62,9 @@ namespace TVGL
         // Returns true if the vertex is convex in the polygon. If it is concave
         // then it is false. If the vertex is not attached at the StartLine or 
         // the Endline or one of the following methods in Polygon have 
-        // NOT been invoked (IsConvex, GetConvexVertices, GetConcaveVertices)
+        // NOT been invoked (SetVertexConvexities)
         // then it will be null.
-        public bool? IsConvex { get; internal set; } 
+        public bool? IsConvex { get; internal set; }
 
         /// <summary>
         /// Gets the line that starts at this node.
@@ -143,9 +145,32 @@ namespace TVGL
             Coordinates = Coordinates.Transform(matrix);
         }
 
+        /// <summary>
+        /// Determines whether the current instance represents a null or uninitialized state.
+        /// </summary>
+        /// <remarks>This method delegates the null-check to the <see cref="Coordinates"/> instance.
+        /// Ensure that the <see cref="Coordinates"/> property is properly initialized before calling this
+        /// method.</remarks>
+        /// <returns><see langword="true"/> if the current instance is considered null or uninitialized; otherwise, <see
+        /// langword="false"/>.</returns>
         public bool IsNull()
         {
             return Coordinates.IsNull();
+        }
+
+        /// <summary>
+        /// Calculates the internal angle at this vertex formed by the start and end lines. Result is a positive angle
+        /// bewten 0 and 2π radians.
+        /// </summary>
+        /// <returns>The internal angle in radians between the two lines. Returns <see cref="double.NaN"/> if either <see
+        /// cref="StartLine"/> or <see cref="EndLine"/> is <c>null</c>.</returns>
+        public double GetInternalAngle()
+        {
+            if (StartLine == null || EndLine == null)
+                return double.NaN;
+            var vector1 = EndLine.Vector;
+            var vector2 = StartLine.Vector;
+            return Math.PI - Math.Atan2(vector1.Cross(vector2), vector1.Dot(vector2));
         }
         #endregion Constructor
     }

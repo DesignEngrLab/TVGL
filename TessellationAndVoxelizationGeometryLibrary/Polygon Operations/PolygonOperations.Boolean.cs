@@ -121,7 +121,7 @@ namespace TVGL
                     //    Message.output("+++ both have perimeter of {0}", perimeterTVGL);
                     //else
                     Message.output("    --- polygons: TVGL=" + perimeterTVGL + "  : Clipper={1} " + perimeterClipper, 2);
-                    if (perimeterClipper - perimeterTVGL > 0 && Math.Round(perimeterClipper - perimeterTVGL) % 2 == 0)
+                    if (perimeterClipper - perimeterTVGL > 0 && int.IsEvenInteger((int)Math.Round(perimeterClipper - perimeterTVGL)))
                         Message.output("<><><><><><><> clipper is connecting separate poly's :", (int)(perimeterClipper - perimeterTVGL) / 2);
                     return true;
                 }

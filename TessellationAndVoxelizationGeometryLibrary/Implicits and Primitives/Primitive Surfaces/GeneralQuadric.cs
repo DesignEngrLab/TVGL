@@ -233,7 +233,7 @@ namespace TVGL
         /// </summary>
         /// <param name="point">The point.</param>
         /// <returns>System.Double.</returns>
-        public override double DistanceToPoint(Vector3 point)
+ /*       public override double DistanceToPoint(Vector3 point)
         {
             // start with the assumption that the normal is the best direction to go
             var dir = GetNormalAtPoint(point).Normalize();
@@ -249,6 +249,12 @@ namespace TVGL
                     minPoint = methodEnumerator.Current.intersection;
                     minPointDist = Vector3.DistanceSquared(point, minPoint);
                 }
+                else
+                {
+                    minPoint = GetPointOnQuadric(point);
+                    minPointDist = Vector3.DistanceSquared(point, minPoint);
+                    dir = point - minPoint;
+                }
                 if (methodEnumerator.MoveNext())
                 {
                     var dxToPoint2 = Vector3.DistanceSquared(point, methodEnumerator.Current.intersection);
@@ -259,16 +265,74 @@ namespace TVGL
                     }
                 }
                 if (minPoint.IsNull()) break;
-                // the nw direction is the vector from the point to the closest point
-                var newDir = (point - minPoint).Normalize();
+                // the new direction is the vector from the point to the closest point
+                var newDir = GetNormalAtPoint(minPoint);
                 // it should be the same as the normal, but if not, then we need to iterate
                 dot = Vector3.Dot(dir, newDir);
                 if (Math.Abs(dot) > Constants.DotToleranceForSame) break;
                 dir = newDir;
             }
             return Math.Sign(dot) * Math.Sqrt(minPointDist);
+        }*/
+
+        public Vector3 FlowToSurface(Vector3 anchor, double tol)
+        {
+            GeneralQuadric outerQuadric = new GeneralQuadric(XSqdCoeff, YSqdCoeff, ZSqdCoeff, XYCoeff, XZCoeff, YZCoeff, XCoeff, YCoeff, ZCoeff, W - QuadricValue(anchor));
+            Vector3 FarSideAnchor = (outerQuadric.LineIntersection(anchor, GetNormalAtPoint(anchor)).MaxBy(x => x.intersection.DistanceSquared(anchor))).intersection;
+            double stepSize = anchor.Distance(FarSideAnchor) / 2;
+            Vector3 previousPoint = anchor;
+            Vector3 currentPoint = previousPoint - (QuadricValue(anchor) / Math.Abs(QuadricValue(anchor))) * GetNormalAtPoint(anchor) * stepSize;
+            while ((currentPoint - previousPoint).Length() > tol)
+            {
+                while (QuadricValue(currentPoint) * QuadricValue(anchor) > 0)
+                {
+                    previousPoint = currentPoint;
+                    currentPoint = currentPoint - (QuadricValue(currentPoint) / Math.Abs(QuadricValue(currentPoint))) * GetNormalAtPoint(currentPoint).Normalize() * stepSize;
+                }
+                stepSize /= 10;
+                anchor = currentPoint;
+            }
+            return currentPoint;
         }
 
+        public Vector3 GetPointOnQuadric(Vector3 anchor)
+        {
+            var intersections = LineIntersection(anchor, GetNormalAtPoint(anchor));
+            Vector3 newAnchor = anchor;
+            while (!intersections.GetEnumerator().MoveNext())
+            {
+                GeneralQuadric outerQuadric = new GeneralQuadric(XSqdCoeff, YSqdCoeff, ZSqdCoeff, XYCoeff, XZCoeff, YZCoeff, XCoeff, YCoeff, ZCoeff, W - QuadricValue(newAnchor));
+                Vector3 FarSideAnchor = (outerQuadric.LineIntersection(newAnchor, GetNormalAtPoint(newAnchor)).MaxBy(x => x.intersection.DistanceSquared(newAnchor))).intersection;
+                newAnchor = newAnchor - (QuadricValue(newAnchor) / Math.Abs(QuadricValue(newAnchor))) *GetNormalAtPoint(anchor).Normalize() * anchor.Distance(FarSideAnchor) / 2;
+                intersections = LineIntersection(newAnchor, GetNormalAtPoint(newAnchor));
+            }
+            return intersections.MinBy(x => x.intersection.DistanceSquared(anchor)).intersection;
+        }
+
+        public override double DistanceToPoint(Vector3 point)
+        {
+            Vector3 startPoint = GetPointOnQuadric(point);
+            double[] u = { startPoint.X, startPoint.Y, startPoint.Z, 0 };
+            double[] du = { double.PositiveInfinity, double.PositiveInfinity, double.PositiveInfinity, double.PositiveInfinity };
+            int iters = 0;
+            while (iters < 1000 && (du[0] * du[0] + du[1] * du[1] + du[2] * du[2] + du[3] * du[3]) < 1E-6) {
+                double[,] H = { { 2 + 2 * XSqdCoeff * u[3], XYCoeff * u[3], XZCoeff * u[3], 2 * XSqdCoeff * u[0] + XYCoeff * u[1] + XZCoeff * u[2] + XCoeff },
+                { XYCoeff * u[3], 2 + 2 * YSqdCoeff * u[3], YZCoeff * u[3], 2 * YSqdCoeff * u[1] + XYCoeff * u[0] + YZCoeff * u[2] + YCoeff },
+                { XZCoeff * u[3], YZCoeff * u[3], 2 + 2 * ZSqdCoeff * u[3], 2 * YSqdCoeff * u[2] + XZCoeff * u[0] + YZCoeff * u[1] + ZCoeff },
+                { 2 * XSqdCoeff * u[0] + XYCoeff * u[1] + XZCoeff * u[2] + XCoeff, 2 * YSqdCoeff * u[1] + XYCoeff * u[0] + YZCoeff * u[2] + YCoeff, 2 * YSqdCoeff * u[2] + XZCoeff * u[0] + YZCoeff * u[1] + ZCoeff, 0} };
+                double[] RHS = { 2 * (u[0] - point.X) + u[3] * (2 * XSqdCoeff * u[0] + XYCoeff * u[1] + XZCoeff * u[2] + XCoeff), 
+                2 * (u[1] - point.Y) + 2 * YSqdCoeff * u[1] + XYCoeff * u[0] + YZCoeff * u[2] + YCoeff,
+                2 * (u[2] - point.Z) + 2 * YSqdCoeff * u[2] + XZCoeff * u[0] + YZCoeff * u[1] + ZCoeff,
+                QuadricValue(new Vector3(u[..3]))};
+                StarMath.solve(H, RHS, out du, true);
+                u[0] += du[0];
+                u[1] += du[1];
+                u[2] += du[2];
+                u[3] += du[3];
+            }
+            Vector3 newPoint = new Vector3(u[..3]);
+            return point.Distance(newPoint);
+        }
         protected override void CalculateIsPositive()
         {
             if (Faces == null || !Faces.Any()) return;
