@@ -1524,20 +1524,17 @@ namespace TVGL
             double yz2 = rotation.Y * z2;
             double zz2 = rotation.Z * z2;
 
-            double q11 = 1.0 - 2.0 * (yy2 + zz2);
-            //double q11 = 1.0 - yy2 - zz2;
+            double q11 = 1.0 - yy2 - zz2;
             double q21 = xy2 - wz2;
             double q31 = xz2 + wy2;
 
             double q12 = xy2 + wz2;
-            double q22 = 1.0 - 2.0 * (xx2 + zz2);
-            //double q22 = 1.0 - xx2 - zz2;
+            double q22 = 1.0 - xx2 - zz2;
             double q32 = yz2 - wx2;
 
             double q13 = xz2 - wy2;
             double q23 = yz2 + wx2;
-            double q33 = 1.0 - 2.0 * (xx2 + yy2);
-            //double q33 = 1.0 - xx2 - yy2;
+            double q33 = 1.0 - xx2 - yy2;
 
             return new Matrix4x4(
              // First row
@@ -1947,33 +1944,6 @@ namespace TVGL
         value1.M41 * value2.M13 + value1.M42 * value2.M23 + value1.M43 * value2.M33 + value2.M43 //, 1
         );
 
-        }
-
-        /// <summary>
-        /// Creates a new <see cref="Matrix4x4"/> from the given 4x4 array.
-        /// </summary>
-        /// <param name="data">The array for the matrix</param>
-        public Matrix4x4(double[,] data)
-        {
-            for (int i = 0; i < 4; i++)
-            {
-                for (int j = 0; j < 4; j++)
-                {
-                    this[i, j] = data[i, j];
-                }
-            }
-        }
-
-        /// <summary>
-        /// Creates a new <see cref="Matrix4x4"/> from the given 4x4 array.
-        /// </summary>
-        /// <param name="data">The array for the matrix</param>
-        public Matrix4x4(double[] data)
-        {
-            for (int i = 0; i < 16; i++)
-            {
-                this[i] = data[i];
-            }
         }
 
         /// <summary>
