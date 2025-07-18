@@ -1,121 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using TVGL;
 
-namespace TVGL_Presenter
+namespace TVGL
 {
-
     public static class DebugUtilities
     {
-#if MEDEMA
-        public static void ShowAndHang(List<Configuration> configurations)
-        {
-            foreach (var config in configurations)
-            {
-                ShowAndHang(config);
-            }
-        }
-
-        public static void ShowAndHang(this Configuration configuration)
-        {
-            var i = 0;
-            var listSolids = new List<TessellatedSolid>();
-            foreach (var part in configuration.Parts)
-            {
-                part.SquaredSolid.HasUniformColor = true;
-                part.SquaredSolid.SolidColor = GetCommonColorFromIndex(i);
-                listSolids.Add(part.SquaredSolid);
-                i++;
-            }
-            Global.Presenter.ShowAndHang(listSolids);
-        }
-
-        public static void ShowAndHang(this ProcessPlan manufacturingPlan)
-        {
-            var i = 0;
-            var listSolids = new List<TessellatedSolid>();
-            var stockMaterial = new List<TessellatedSolid>();
-            var part = (PartModel)manufacturingPlan.Result;
-            part.SquaredSolid.HasUniformColor = true;
-            part.SquaredSolid.SolidColor = GetCommonColorFromIndex(i);
-            listSolids.Add(part.SquaredSolid);
-
-            foreach (var acquire in manufacturingPlan.Where(p => p is Acquire))
-            {
-                var geometry = ((Stock)((Acquire)acquire).Result).Geometry;
-                geometry.StockSolid.HasUniformColor = true;
-                geometry.StockSolid.SolidColor = GetCommonColorFromIndex(i);
-                stockMaterial.Add(geometry.StockSolid);
-                i++;
-            }
-            Global.Presenter.ShowAndHangTransparentsAndSolids(stockMaterial, listSolids);
-        }
-
-        public static void ShowAndHangHybridSubstrate(this ProcessPlan manufacturingPlan)
-        {
-            var listSolids = new List<TessellatedSolid>();
-            var stockMaterial = new List<TessellatedSolid>();
-            var substrateColor = new Color(KnownColors.Orange);
-            var part = (PartModel)manufacturingPlan.Result;
-            part.SquaredSolid.HasUniformColor = true;
-            part.SquaredSolid.SolidColor = substrateColor;//i think this is a mistake. why make the part the substract color?
-            listSolids.Add(part.SquaredSolid);
-
-            foreach (var acquire in manufacturingPlan.Where(p => p is Acquire))
-            {
-                var stock = (Stock)((Acquire)acquire).Result;
-                if (stock.Type == StockAndProcessType.WireFeedstock) continue;
-                stock.Geometry.StockSolid.HasUniformColor = true;
-                stock.Geometry.StockSolid.SolidColor = substrateColor;
-                stockMaterial.Add(stock.Geometry.StockSolid);
-            }
-            Global.Presenter.ShowAndHangTransparentsAndSolids(stockMaterial, listSolids);
-        }
-
-        public static void ShowAndHangHybrid(this ProcessPlan manufacturingPlan)
-        {
-            var listSolids = new List<TessellatedSolid>();
-            var stockMaterial = new List<TessellatedSolid>();
-            var additiveColor = new Color(KnownColors.Blue);
-            var substrateColor = new Color(KnownColors.Orange);
-            var part = (PartModel)manufacturingPlan.Result;
-            part.SquaredSolid.HasUniformColor = true;
-            part.SquaredSolid.SolidColor = substrateColor;//i think this is a mistake. why make the part the substract color?
-            listSolids.Add(part.SquaredSolid);
-            foreach (var acquire in manufacturingPlan.Where(p => p is Acquire))
-            {
-                var stock = (Stock)((Acquire)acquire).Result;
-                var color = stock.Type == StockAndProcessType.WireFeedstock ? additiveColor : substrateColor;
-                stock.Geometry.StockSolid.HasUniformColor = true;
-                stock.Geometry.StockSolid.SolidColor = color;
-                stockMaterial.Add(stock.Geometry.StockSolid);
-            }
-            Global.Presenter.ShowAndHangTransparentsAndSolids(stockMaterial, listSolids);
-        }
-#endif
-
-        public static readonly List<Color> Colors = new List<Color> {
-            new Color(KnownColors.Crimson),
-            new Color(KnownColors.Green),
-            new Color(KnownColors.Blue),
-            new Color(KnownColors.Orange),
-            new Color(KnownColors.Purple),
-            new Color(KnownColors.Tan),
-            new Color(KnownColors.SteelBlue),
-            new Color(KnownColors.Tomato),
-            new Color(KnownColors.Wheat),
-            new Color(KnownColors.YellowGreen),
-            new Color(KnownColors.Yellow),
-            new Color(KnownColors.Goldenrod),
-            new Color(KnownColors.SpringGreen)
-        };
-
-        public static Color GetCommonColorFromIndex(int index)
-        {
-            return Colors[index % Colors.Count];
-        }
-
         /// <summary>
         /// Shows and colors the machining primitives of a solid or the given machining primitives.
         /// </summary>
@@ -136,10 +26,10 @@ namespace TVGL_Presenter
                     foreach (var border in feature.Borders)
                         lines.Add(border.GetCoordinates());
                 color = color ?? white;
-                Presenter.ShowAndHang([lines], [false], [lineThickness], [color], ts);
+                Global.Presenter3D.ShowAndHang([lines], [false], [lineThickness], [color], ts);
             }
             else
-                Presenter.ShowAndHang(ts);
+                Global.Presenter3D.ShowAndHang(ts);
         }
 
         /// <summary>
@@ -162,11 +52,7 @@ namespace TVGL_Presenter
             if (showBorders)
                 ts.ShowWireFrame(false, null, primitives, lineThickness, color);
             else
-#if MEDEMA
-                Global.Presenter.ShowAndHang(ts);
-#else
-                Presenter.ShowAndHang(ts);
-#endif                
+                Global.Presenter3D.ShowAndHang(ts);
         }
 
         /// <summary>
@@ -186,7 +72,7 @@ namespace TVGL_Presenter
             }
             var lines = ts.GetWireFrame(borders, primitives);
             var colors = color == null ? new Color[] { white } : new Color[] { color };
-            Presenter.ShowAndHang([lines], [false], [lineThickness], colors, ts);
+            Global.Presenter3D.ShowAndHang([lines], [false], [lineThickness], colors, ts);
         }
 
         public static List<IEnumerable<Vector3>> GetWireFrame(this TessellatedSolid ts, IEnumerable<BorderLoop> borders = null,
@@ -235,11 +121,7 @@ namespace TVGL_Presenter
                     if (primitiveSurface is Cylinder)
                         foreach (var f in primitiveSurface.Faces)
                             f.Color = new Color(KnownColors.Red);
-#if MEDEMA
-                    if (primitiveSurface is ThreadSurface)
-                        foreach (var f in primitiveSurface.Faces)
-                            f.Color = new Color(KnownColors.Blue);
-#endif
+
                     if (primitiveSurface is Cone)
                         foreach (var f in primitiveSurface.Faces)
                             f.Color = new Color(KnownColors.DarkOrange);
@@ -258,6 +140,9 @@ namespace TVGL_Presenter
                     else if (primitiveSurface is UnknownRegion)
                         foreach (var f in primitiveSurface.Faces)
                             f.Color = new Color(KnownColors.Brown);
+                    else
+                        foreach (var f in primitiveSurface.Faces)
+                            f.Color = new Color(KnownColors.Blue);
                 }
             }
         }
@@ -275,7 +160,7 @@ namespace TVGL_Presenter
                 var height = MinimumEnclosure.GetLengthAndExtremeVertex(cylinder.Vertices, cylinder.Axis, out _, out _);
                 var bottom = cylinder.Anchor + cylinder.Axis * ((centerTValue - anchorTValue) - halfheight);
                 var top = cylinder.Anchor + cylinder.Axis * ((centerTValue - anchorTValue) + halfheight);
-                Presenter.ShowAndHang(new List<Vector3> { bottom, top }, false, solids: solid);
+                Global.Presenter3D.ShowAndHang(new List<Vector3> { bottom, top }, false, solids: solid);
             }
             else if (bestPrimitiveSurface is Cone cone)
             {
@@ -305,7 +190,7 @@ namespace TVGL_Presenter
                 var circlePoints = circle.CreatePath(36);
                 var circle3D = circlePoints.ConvertTo3DLocations(cone.Axis, d).ToList();
                 var centerLine = new List<Vector3> { cone.Apex, bottom, edgePoint };
-                Presenter.ShowAndHang(new List<Vector3> { cone.Apex, bottom, edgePoint }, false, solids: solid);
+                Global.Presenter3D.ShowAndHang(new List<Vector3> { cone.Apex, bottom, edgePoint }, false, solids: solid);
             }
             else if (bestPrimitiveSurface is Torus torus)
             {
@@ -325,7 +210,7 @@ namespace TVGL_Presenter
                         torus.Center-d2*(torus.MajorRadius+torus.MinorRadius),
                         torus.Center+d1*(torus.MajorRadius+torus.MinorRadius)
                     };
-                Presenter.ShowAndHang(torusPoints, false, solids: solid);
+                Global.Presenter3D.ShowAndHang(torusPoints, false, solids: solid);
             }
             else if (bestPrimitiveSurface is Sphere)
             {
@@ -334,13 +219,13 @@ namespace TVGL_Presenter
                                 sphere.Center + sphere.Radius * Vector3.UnitX, sphere.Center - sphere.Radius * Vector3.UnitX, sphere.Center,
                                 sphere.Center + sphere.Radius * Vector3.UnitY, sphere.Center - sphere.Radius * Vector3.UnitY, sphere.Center,
                                 sphere.Center + sphere.Radius * Vector3.UnitZ, sphere.Center - sphere.Radius * Vector3.UnitZ};
-                Presenter.ShowAndHang(spherePoints, false, solids: solid);
+                Global.Presenter3D.ShowAndHang(spherePoints, false, solids: solid);
 
             }
             //For all other surface types, just show the colored primitive
             else
             {
-                Presenter.ShowAndHang(solid);
+                Global.Presenter3D.ShowAndHang(solid);
             }
         }
 
@@ -374,11 +259,7 @@ namespace TVGL_Presenter
                     }
                 }
             }
-#if MEDEMA
-            Global.Plotter.ShowAndHang(bitmap, "ZBuffer");
-#else
-            Presenter.ShowAndHang(bitmap, "ZBuffer");
-#endif
+            Global.Presenter2D.ShowAndHang(bitmap, "ZBuffer");
         }
 
         /// <summary>

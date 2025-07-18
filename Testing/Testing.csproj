@@ -26,7 +26,8 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <ProjectReference Include="..\TVGL PresenterDebugger\TVGL PresenterDebugger.csproj" />
+	  <ProjectReference Include="..\TessellationAndVoxelizationGeometryLibrary\TessellationAndVoxelizationGeometryLibrary.csproj" />
+	  <ProjectReference Include="..\TVGL Presenter\WindowsDesktopPresenter.csproj" />
 	</ItemGroup>
 
 </Project>

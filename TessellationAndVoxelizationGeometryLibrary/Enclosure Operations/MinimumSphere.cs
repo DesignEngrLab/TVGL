@@ -194,9 +194,9 @@ namespace TVGL
             }
             if (!fourPointIsBest)
             {
-                if (swap3And0) Constants.SwapItemsInList(3, 0, points);
-                else if (swap3And1) Constants.SwapItemsInList(3, 1, points);
-                else if (swap3And2) Constants.SwapItemsInList(3, 2, points);
+                if (swap3And0) Global.SwapItemsInList(3, 0, points);
+                else if (swap3And1) Global.SwapItemsInList(3, 1, points);
+                else if (swap3And2) Global.SwapItemsInList(3, 2, points);
             }
             return sphere;
         }
@@ -342,22 +342,22 @@ namespace TVGL
 
             if (fourPointIsBest)
             {
-                if (swap4With1) Constants.SwapItemsInList(4, 1, points);
-                else if (swap4With2) Constants.SwapItemsInList(4, 2, points);
-                else if (swap4And3) Constants.SwapItemsInList(4, 3, points);
+                if (swap4With1) Global.SwapItemsInList(4, 1, points);
+                else if (swap4With2) Global.SwapItemsInList(4, 2, points);
+                else if (swap4And3) Global.SwapItemsInList(4, 3, points);
             }
             else
             {
                 if (swap12With34)
                 {
-                    Constants.SwapItemsInList(3, 1, points);
-                    Constants.SwapItemsInList(4, 2, points);
+                    Global.SwapItemsInList(3, 1, points);
+                    Global.SwapItemsInList(4, 2, points);
                 }
                 else if (swap1With4)
-                    Constants.SwapItemsInList(1, 4, points);
-                else if (swap3And1) Constants.SwapItemsInList(1, 3, points);
-                else if (swap4And2) Constants.SwapItemsInList(4, 2, points);
-                else if (swap3And2) Constants.SwapItemsInList(3, 2, points);
+                    Global.SwapItemsInList(1, 4, points);
+                else if (swap3And1) Global.SwapItemsInList(1, 3, points);
+                else if (swap4And2) Global.SwapItemsInList(4, 2, points);
+                else if (swap3And2) Global.SwapItemsInList(3, 2, points);
             }
             return sphere;
         }

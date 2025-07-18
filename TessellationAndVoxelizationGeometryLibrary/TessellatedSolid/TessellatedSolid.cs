@@ -1,16 +1,4 @@
-﻿// ***********************************************************************
-// Assembly         : TessellationAndVoxelizationGeometryLibrary
-// Author           : matth
-// Created          : 04-03-2023
-//
-// Last Modified By : matth
-// Last Modified On : 04-14-2023
-// ***********************************************************************
-// <copyright file="TessellatedSolid.cs" company="Design Engineering Lab">
-//     2014
-// </copyright>
-// <summary></summary>
-// ***********************************************************************
+﻿using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -687,7 +675,7 @@ namespace TVGL
             var faceChecksums = new HashSet<long>();
             if (NumberOfVertices > Constants.CubeRootOfLongMaxValue)
             {
-                Message.output("Repeat Face check is disabled since the number of vertices exceeds "
+                Global.Logger.LogWarning("Repeat Face check is disabled since the number of vertices exceeds "
                                + Constants.CubeRootOfLongMaxValue);
                 duplicateFaceCheck = false;
             }

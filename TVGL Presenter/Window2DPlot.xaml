@@ -1,4 +1,4 @@
-﻿<Window x:Name="window" x:Class="TVGL.Window2DPlot"
+﻿<Window x:Name="window" x:Class="WindowsDesktopPresenter.Window2DPlot"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:oxy="http://oxyplot.org/wpf"

@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Windows;
 
-namespace TVGL
+namespace WindowsDesktopPresenter
 {
     /// <summary>
     /// Interaction logic for PlotWindow.xaml
@@ -13,12 +13,12 @@ namespace TVGL
     {
         public Window2DHeldPlot()
         {
-            DataContext = new HeldViewModel();
+            DataContext = new Held2DViewModel();
             InitializeComponent();
         }
 
-        private void OnLoaded(object sender, RoutedEventArgs e) => ((HeldViewModel)DataContext).OnLoaded(sender, e);
+        private void OnLoaded(object sender, RoutedEventArgs e) => ((Held2DViewModel)DataContext).OnLoaded(sender, e);
 
-        private void OnClosing(object sender, System.ComponentModel.CancelEventArgs e) => ((HeldViewModel)DataContext).OnClosing(sender, e);
+        private void OnClosing(object sender, System.ComponentModel.CancelEventArgs e) => ((Held2DViewModel)DataContext).OnClosing(sender, e);
     }
 }

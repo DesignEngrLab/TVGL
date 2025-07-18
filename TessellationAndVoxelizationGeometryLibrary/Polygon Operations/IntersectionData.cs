@@ -423,8 +423,8 @@ namespace TVGL
             var newPolygonRelations = new PolyRelInternal[numPolygonsInA * numPolygonsInB];
             for (int i = 0; i < numPolygonsInA; i++)
                 for (int j = 0; j < numPolygonsInB; j++)
-                    newPolygonRelations[numPolygonsInB * i + j] = Constants.SwitchAAndBPolygonRelationship(polygonRelations[numPolygonsInA * j + i]);
-            return new PolygonInteractionRecord((ABRelationships)Constants.SwitchAAndBPolygonRelationship((PolyRelInternal)Relationship),
+                    newPolygonRelations[numPolygonsInB * i + j] = Global.SwitchAAndBPolygonRelationship(polygonRelations[numPolygonsInA * j + i]);
+            return new PolygonInteractionRecord((ABRelationships)Global.SwitchAAndBPolygonRelationship((PolyRelInternal)Relationship),
                 newIntersections, newPolygonRelations, newSubPolygonToInt,
               numPolygonsInB, numPolygonsInA, isBPositive, isAPositive)
             {

@@ -12,6 +12,7 @@
 // <summary></summary>
 // ***********************************************************************
 using Clipper2Lib;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
@@ -151,8 +152,8 @@ namespace TVGL
             var aStartEdge = FindMinY(a.Vertices).EndLine;
             var bStartEdge = FindMinY(b.Vertices).EndLine;
             var flipResult = a.IsPositive != b.IsPositive;
-            var aEdgeAngles = a.Edges.ToDictionary(e => e, e => Constants.Pseudoangle(e.Vector.X, e.Vector.Y));
-            var bEdgeAngles = b.Edges.ToDictionary(e => e, e => Constants.Pseudoangle(e.Vector.X, e.Vector.Y));
+            var aEdgeAngles = a.Edges.ToDictionary(e => e, e => Global.Pseudoangle(e.Vector.X, e.Vector.Y));
+            var bEdgeAngles = b.Edges.ToDictionary(e => e, e => Global.Pseudoangle(e.Vector.X, e.Vector.Y));
 
             var prevAEdge = aStartEdge;
             var prevBEdge = bStartEdge;
@@ -207,8 +208,8 @@ namespace TVGL
             var polygons = new List<Polygon>();
             var flipResult = a.IsPositive != b.IsPositive;
             var visitedHash = new Dictionary<(Vertex2D, Vertex2D, bool), Vertex2D>(new EdgePairToIntComparator(a, b));
-            var aEdgeAngles = a.Edges.ToDictionary(e => e, e => Constants.Pseudoangle(e.Vector.X, e.Vector.Y));
-            var bEdgeAngles = b.Edges.ToDictionary(e => e, e => Constants.Pseudoangle(e.Vector.X, e.Vector.Y));
+            var aEdgeAngles = a.Edges.ToDictionary(e => e, e => Global.Pseudoangle(e.Vector.X, e.Vector.Y));
+            var bEdgeAngles = b.Edges.ToDictionary(e => e, e => Global.Pseudoangle(e.Vector.X, e.Vector.Y));
             var startsQueue = new Stack<(Vertex2D, Vertex2D)>();
             startsQueue.Push((FindMinY(a.Vertices), FindMinY(b.Vertices)));
             foreach (var aConcavity in aConcaveVertices)

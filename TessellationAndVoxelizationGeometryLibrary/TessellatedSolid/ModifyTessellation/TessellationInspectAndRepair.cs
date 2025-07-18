@@ -16,6 +16,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 
 namespace TVGL
 {
@@ -139,14 +140,14 @@ namespace TVGL
                 }
                 catch
                 {
-                    Message.output("Error setting up all faces-edges-vertices associations.", 1);
+                    Global.Logger.LogError("Error setting up all faces-edges-vertices associations.", 1);
                 }
             }
             if (buildOptions.AutomaticallyRepairNegligibleFaces && InconsistentMatingFacePairs.Any())
                 try
                 {
                     if (!FlipFacesBasedOnInconsistentEdges())
-                        Message.output("Unable to resolve face all inconsistent faces.", 1);
+                        Global.Logger.LogError("Unable to resolve face all inconsistent faces.", 1);
                 }
                 catch
                 {
@@ -162,14 +163,14 @@ namespace TVGL
                 }
                 catch
                 {
-                    Message.output("Unable to construct edges.", 1);
+                    Global.Logger.LogInformation("Unable to construct edges.", 1);
                 }
             if (buildOptions.AutomaticallyRepairNegligibleFaces && buildOptions.PredefineAllEdges)
             {
                 try
                 {
                     if (!PropagateFixToNegligibleFaces(removedVertices, removedFaces, removedEdges))
-                        Message.output("Unable to flip edges to avoid negligible faces.", 1);
+                        Global.Logger.LogInformation("Unable to flip edges to avoid negligible faces.", 1);
                 }
                 catch
                 {
@@ -188,7 +189,7 @@ namespace TVGL
                     }
                     catch
                     {
-                        Message.output("Unable to repair all holes in the model.", 1);
+                        Global.Logger.LogInformation("Unable to repair all holes in the model.", 1);
                     }
             }
             //If the volume is zero, creating the convex hull may cause a null exception
@@ -199,7 +200,7 @@ namespace TVGL
                 }
                 catch
                 {
-                    Message.output("Unable to create convex hull.", 1);
+                    Global.Logger.LogInformation("Unable to create convex hull.", 1);
 
                 }
             if (buildOptions.FindNonsmoothEdges)
@@ -212,7 +213,7 @@ namespace TVGL
                 }
                 catch
                 {
-                    Message.output("Unable to find all non-smooth edges.", 1);
+                    Global.Logger.LogInformation("Unable to find all non-smooth edges.", 1);
                 }
             }
             if (buildOptions.CheckModelPostBuild)
@@ -223,7 +224,7 @@ namespace TVGL
                 }
                 catch
                 {
-                    Message.output("Failed final post-build check.", 1);
+                    Global.Logger.LogInformation("Failed final post-build check.", 1);
                 }
             }
         }
@@ -331,7 +332,7 @@ namespace TVGL
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         void CheckModelIntegrityPreBuild()
         {
-            Message.output("Model Integrity Check...", 3);
+            Global.Logger.LogInformation("Model Integrity Check...", 3);
 
             if (ts.Volume < 0)
             {
@@ -423,7 +424,7 @@ namespace TVGL
             else
             {
                 ts.Errors = null;
-                Message.output("No errors found.", 3);
+                Global.Logger.LogInformation("No errors found.", 3);
             }
         }
 
@@ -434,12 +435,12 @@ namespace TVGL
         void CheckModelIntegrityPostBuild()
         {
             if (3 * ts.NumberOfFaces != 2 * ts.NumberOfEdges)
-                Message.output("3 x numFaces = " + 3 * ts.NumberOfFaces + ", 2 x numEdges = " + 2 * ts.NumberOfEdges, 0);
+                Global.Logger.LogInformation("3 x numFaces = " + 3 * ts.NumberOfFaces + ", 2 x numEdges = " + 2 * ts.NumberOfEdges, 0);
             if (ts.Errors == null)
-                Message.output("No errors were found initially.", 2);
+                Global.Logger.LogInformation("No errors were found initially.", 2);
             else
             {
-                Message.output("Errors were found initially.", 2);
+                Global.Logger.LogInformation("Errors were found initially.", 2);
             }//Check if each face has cyclic references with each edge, vertex, and adjacent faces.
             var numSingleSidedEdges = 0;
             var errors = false;
@@ -450,13 +451,13 @@ namespace TVGL
                     if (edge.OwnedFace != face && edge.OtherFace != face)
                     {
                         errors = true;
-                        Message.output("face's edge doesn't reconnect to face", 0);
+                        Global.Logger.LogInformation("face's edge doesn't reconnect to face", 0);
                     }
                 }
                 foreach (var vertex in face.Vertices.Where(vertex => !vertex.Faces.Contains(face)))
                 {
                     errors = true;
-                    Message.output("face's vertex doesn't reconnect to face", 0);
+                    Global.Logger.LogInformation("face's vertex doesn't reconnect to face", 0);
                 }
             }
             //Check if each edge has cyclic references with each vertex and each face.
@@ -465,24 +466,24 @@ namespace TVGL
                 if (!edge.OwnedFace.Edges.Contains(edge))
                 {
                     errors = true;
-                    Message.output("edge's face doesn't reconnect to edge", 0);
+                    Global.Logger.LogInformation("edge's face doesn't reconnect to edge", 0);
                 }
                 if (edge.OtherFace == null)
                     numSingleSidedEdges++;
                 else if (!edge.OtherFace.Edges.Contains(edge))
                 {
                     errors = true;
-                    Message.output("edge's face doesn't reconnect to edge", 0);
+                    Global.Logger.LogInformation("edge's face doesn't reconnect to edge", 0);
                 }
                 if (!edge.From.Edges.Contains(edge))
                 {
                     errors = true;
-                    Message.output("edge's vertex doesn't reconnect to edge", 0);
+                    Global.Logger.LogInformation("edge's vertex doesn't reconnect to edge", 0);
                 }
                 if (!edge.To.Edges.Contains(edge))
                 {
                     errors = true;
-                    Message.output("edge's vertex doesn't reconnect to edge", 0);
+                    Global.Logger.LogInformation("edge's vertex doesn't reconnect to edge", 0);
                 }
             }
             if (numSingleSidedEdges != 0 ||
@@ -490,7 +491,7 @@ namespace TVGL
                 || (ts.Errors != null && ts.Errors.SingleSidedEdges != null && ts.Errors.SingleSidedEdges?.Count != 0))
             {
                 errors = true;
-                Message.output("there are " + numSingleSidedEdges + " single sided edges", 0);
+                Global.Logger.LogInformation("there are " + numSingleSidedEdges + " single sided edges", 0);
             }
             //Check if each vertex has cyclic references with each edge and each face.
             foreach (var vertex in ts.Vertices)
@@ -498,19 +499,19 @@ namespace TVGL
                 foreach (var edge in vertex.Edges.Where(edge => edge.To != vertex && edge.From != vertex))
                 {
                     errors = true;
-                    Message.output("vertex's edge doesn't reconnect to vertex", 0);
+                    Global.Logger.LogInformation("vertex's edge doesn't reconnect to vertex", 0);
                 }
                 foreach (var face in vertex.Faces.Where(face => !face.Vertices.Contains(vertex)))
                 {
                     errors = true;
-                    Message.output("vertex's face doesn't reconnect to vertex", 0);
+                    Global.Logger.LogInformation("vertex's face doesn't reconnect to vertex", 0);
                 }
             }
             if (errors)
-                Message.output("The model still contains errors.", 0);
+                Global.Logger.LogInformation("The model still contains errors.", 0);
             else if (ts.Errors != null)
             {
-                Message.output("All errors in the model have been fixed.", 1);
+                Global.Logger.LogInformation("All errors in the model have been fixed.", 1);
                 ts.Errors = null;
             }
         }
@@ -550,26 +551,26 @@ namespace TVGL
 
         private static void ReportErrors(TessellationInspectAndRepair tsErrors)
         {
-            Message.output("Errors found in model:", 3);
-            Message.output("======================", 3);
+            Global.Logger.LogInformation("Errors found in model:", 3);
+            Global.Logger.LogInformation("======================", 3);
             if (tsErrors.ModelHasNegativeVolume)
-                Message.output("==> The model has negative area. The normals of the faces are pointed inward, or this is only a concave surface - not a watertight solid.", 3);
+                Global.Logger.LogInformation("==> The model has negative area. The normals of the faces are pointed inward, or this is only a concave surface - not a watertight solid.", 3);
             if (tsErrors.FacesWithNegligibleArea.Count > 0)
-                Message.output("==> " + tsErrors.FacesWithNegligibleArea.Count + " faces with negligible area.", 3);
+                Global.Logger.LogInformation("==> " + tsErrors.FacesWithNegligibleArea.Count + " faces with negligible area.", 3);
             if (tsErrors.OverusedEdges.Count > 0)
             {
-                Message.output("==> " + tsErrors.OverusedEdges.Count + " overused edges.", 3);
-                Message.output("    The number of faces per overused edge: " + string.Join(',',
+                Global.Logger.LogInformation("==> " + tsErrors.OverusedEdges.Count + " overused edges.", 3);
+                Global.Logger.LogInformation("    The number of faces per overused edge: " + string.Join(',',
                                tsErrors.OverusedEdges.Select(p => p.Count)), 3);
             }
-            if (tsErrors.SingleSidedEdgeData.Count > 0) Message.output("==> " + tsErrors.SingleSidedEdgeData.Count + " single-sided edges.", 3);
-            if (tsErrors.InconsistentMatingFacePairs.Count > 0) Message.output("==> " + tsErrors.InconsistentMatingFacePairs.Count
+            if (tsErrors.SingleSidedEdgeData.Count > 0) Global.Logger.LogInformation("==> " + tsErrors.SingleSidedEdgeData.Count + " single-sided edges.", 3);
+            if (tsErrors.InconsistentMatingFacePairs.Count > 0) Global.Logger.LogInformation("==> " + tsErrors.InconsistentMatingFacePairs.Count
                 + " edges with opposite-facing faces.", 3);
 
             if (tsErrors.CorrectFaceEdgeRatio)
-                Message.output("==> While re-connecting faces and edges has lead to errors, there is a likelihood that water-tightness can be acheived."
+                Global.Logger.LogInformation("==> While re-connecting faces and edges has lead to errors, there is a likelihood that water-tightness can be acheived."
                     , 3);
-            else Message.output("==> The model is not water-tight. It merely represents a surface, but fixing holes may restore it.", 3);
+            else Global.Logger.LogInformation("==> The model is not water-tight. It merely represents a surface, but fixing holes may restore it.", 3);
         }
 
         #endregion Check Model Integrity
@@ -1214,7 +1215,7 @@ namespace TVGL
             var k = 0;
             foreach (var loop in loops)
             {
-                Message.output("Patching hole #" + ++k + " (has " + loop.Count + " edges) in tessellation.", 2);
+                Global.Logger.LogInformation("Patching hole #" + ++k + " (has " + loop.Count + " edges) in tessellation.", 2);
                 //if a simple triangle, create a new face from vertices
                 if (loop.Count == 3)
                 {
@@ -1275,7 +1276,7 @@ namespace TVGL
                 int winningTask = Task.WaitAny(tasks.ToArray());
                 if (winningTask == 0)
                 {
-                    Message.output("loop successfully repaired with 3D QuickTriangulate " + triangleFaceList1.Count, 4);
+                    Global.Logger.LogInformation("loop successfully repaired with 3D QuickTriangulate " + triangleFaceList1.Count, 4);
                     foreach (var triangle in triangleFaceList1)
                     {
                         var newFace = new TriangleFace(triangle.GetVertices(), -triangle.Normal);
@@ -1303,7 +1304,7 @@ namespace TVGL
                 }
                 else if (winningTask == 1)
                 {
-                    Message.output("loop successfully repaired with SweepLine 2D Triangulate" + triangleFaceList2.Count, 4);
+                    Global.Logger.LogInformation("loop successfully repaired with SweepLine 2D Triangulate" + triangleFaceList2.Count, 4);
                     foreach (var triangle in triangleFaceList2)
                     {
                         var newFace = new TriangleFace(triangle.A, triangle.B, triangle.C);

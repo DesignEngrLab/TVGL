@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Threading;
 using TVGL;
+using WindowsDesktopPresenter;
 
 namespace TVGLUnitTestsAndBenchmarking
 {
@@ -20,10 +20,8 @@ namespace TVGLUnitTestsAndBenchmarking
         [STAThread]
         private static void Main(string[] args)
         {
-            var myWriter = new ConsoleTraceListener();
-            Trace.Listeners.Add(myWriter);
-            TVGL.Message.Verbosity = VerbosityLevels.OnlyCritical;
-
+            Global.Presenter2D = new Presenter2D();
+            Global.Presenter3D = new Presenter3D();
 
             var A = new Polygon(new List<Vector2> {
             new Vector2(0, 3), new Vector2(9,0),new Vector2(12, 0),
@@ -54,7 +52,7 @@ namespace TVGLUnitTestsAndBenchmarking
             //A.Reverse();
             A = C;
             var negB = new Polygon(B.Path.Select(p => -p));
-           // var ASumB = A.MinkowskiSumNew(B).LargestPolygon();
+            // var ASumB = A.MinkowskiSumNew(B).LargestPolygon();
             var ASumNegB = A.MinkowskiSum(negB);
             var ASumNegB0 = ASumNegB[0];
             var ASumNegB1 = ASumNegB[1];
@@ -69,7 +67,7 @@ namespace TVGLUnitTestsAndBenchmarking
                     var translate = ASumNegB1.Path[i];
                     var bmov = B.Copy(true, true);
                     bmov.Transform(Matrix3x3.CreateTranslation(translate));
-                    Presenter.Show([A, B, ASumNegB1, bmov], holdType: Presenter.HoldType.AddToQueue, timetoShow: 25);
+                    Presenter.Show([A, B, ASumNegB1, bmov], holdType: HoldType.AddToQueue, timetoShow: 25);
                 }
             Console.ReadKey();
             //var nfp1 = nfp0.InnerPolygons[0];
