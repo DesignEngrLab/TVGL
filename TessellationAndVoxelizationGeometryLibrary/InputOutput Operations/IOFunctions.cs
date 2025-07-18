@@ -312,7 +312,7 @@ namespace TVGL
                     tessellatedSolids = solidAssembly.RootAssembly.AllTessellatedSolidsInGlobalCoordinateSystem();
                     break;
                 default:
-                    Global.Logger.LogError(filename + " is not a recognized 3D format.");
+                    Log.Error(filename + " is not a recognized 3D format.");
                     tessellatedSolids = Array.Empty<TessellatedSolid>();
                     break;
             }
@@ -406,14 +406,14 @@ namespace TVGL
                         TVGLFileData.OpenTVGLz(s, out solidAssembly);
                         break;
                     default:
-                        Global.Logger.LogInformation(filename + " is not a recognized 3D format.");
+                        Log.Information(filename + " is not a recognized 3D format.");
                         solidAssembly = null;
                         break;
                 }
             }
             catch (Exception exc)
             {
-                Global.Logger.LogInformation("Cannot open file. Message: " + exc.Message);
+                Log.Information("Cannot open file. Message: " + exc.Message);
                 return false;
             }
             return solidAssembly != null;
@@ -1247,7 +1247,7 @@ namespace TVGL
             }
             else
             {
-                Global.Logger.LogInformation("The fileType must be TVGL or TVGLz to save as a SolidAssembly.");
+                Log.Information("The fileType must be TVGL or TVGLz to save as a SolidAssembly.");
                 return false;
             }
         }
@@ -1284,7 +1284,7 @@ namespace TVGL
                     return Save(stream, solidAssembly.Solids[0], fileType);
                 else
                 {
-                    Global.Logger.LogInformation("The fileType must be TVGL or TVGLz to save as a SolidAssembly.");
+                    Log.Information("The fileType must be TVGL or TVGLz to save as a SolidAssembly.");
                     return false;
                 }
             }

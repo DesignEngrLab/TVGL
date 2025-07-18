@@ -164,13 +164,13 @@ namespace TVGL
                     item.transformMatrix, threeMFData.Name + "_", tsBuildOptions));
             }
 
-            Global.Logger.LogInformation("Successfully read in 3Dmodel file (" + (DateTime.Now - now) + ").", 3);
+            Log.Information("Successfully read in 3Dmodel file (" + (DateTime.Now - now) + ").", 3);
             return results.ToArray();
             //}
             //catch (Exception exception)
             //{
-            //    Global.Logger.LogInformation("Unable to read in 3Dmodel file.", 1);
-            //    Global.Logger.LogInformation("Exception: " + exception.Message, 3);
+            //    Log.Information("Unable to read in 3Dmodel file.", 1);
+            //    Log.Information("Exception: " + exception.Message, 3);
             //    return null;
             //}
         }
@@ -384,13 +384,13 @@ namespace TVGL
                     var serializer = new XmlSerializer(typeof(ThreeMFFileData), defXMLNameSpaceModel);
                     serializer.Serialize(writer, threeMFData);
                 }
-                Global.Logger.LogInformation("Successfully wrote 3MF file to stream.", 3);
+                Log.Information("Successfully wrote 3MF file to stream.", 3);
                 return true;
             }
             catch (Exception exception)
             {
-                Global.Logger.LogInformation("Unable to write in model file.", 1);
-                Global.Logger.LogInformation("Exception: " + exception.Message, 3);
+                Log.Information("Unable to write in model file.", 1);
+                Log.Information("Exception: " + exception.Message, 3);
                 return false;
             }
         }

@@ -103,7 +103,7 @@ namespace TVGL.PointCloud
                         if (!StarMath.solve(H, b, out dx) || dx.Any(x => double.IsNaN(x)))
                         {
                             // throw new Exception("H is singular");
-                            Global.Logger.LogWarning("H is singular");
+                            Log.Warning("H is singular");
                             break;
                         }
                     }

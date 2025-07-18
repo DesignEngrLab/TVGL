@@ -115,17 +115,17 @@ namespace TVGL
             var now = DateTime.Now;
             // Try to read in BINARY format
             if (TryReadBinary(s, out var offData))
-                Global.Logger.LogInformation("Successfully read in binary OFF file (" + (DateTime.Now - now) + ").", 3);
+                Log.Information("Successfully read in binary OFF file (" + (DateTime.Now - now) + ").", 3);
             else
             {
                 // Reset position of stream
                 s.Position = 0;
                 // Read in ASCII format
                 if (TryReadAscii(s, out offData))
-                    Global.Logger.LogInformation("Successfully read in ASCII OFF file (" + (DateTime.Now - now) + ").", 3);
+                    Log.Information("Successfully read in ASCII OFF file (" + (DateTime.Now - now) + ").", 3);
                 else
                 {
-                    Global.Logger.LogInformation("Unable to read in OFF file (" + (DateTime.Now - now) + ").", 1);
+                    Log.Information("Unable to read in OFF file (" + (DateTime.Now - now) + ").", 1);
                     return null;
                 }
             }
@@ -306,13 +306,13 @@ namespace TVGL
                     writer.WriteLine(faceString);
                 }
                 writer.Flush();
-                Global.Logger.LogInformation("Successfully wrote OFF file to stream.", 3);
+                Log.Information("Successfully wrote OFF file to stream.", 3);
                 return true;
             }
             catch (Exception exception)
             {
-                Global.Logger.LogError("Unable to write in model file.", 1);
-                Global.Logger.LogError("Exception: " + exception.Message, 3);
+                Log.Error("Unable to write in model file.", 1);
+                Log.Error("Exception: " + exception.Message, 3);
                 return false;
             }
         }

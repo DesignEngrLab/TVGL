@@ -119,7 +119,7 @@ namespace TVGL
             var now = DateTime.Now;
             // Try to read in BINARY format
             if (!TryRead(s, filename, out var objData))
-                Global.Logger.LogError("Unable to read in OBJ file called " + filename, 1);
+                Log.Error("Unable to read in OBJ file called " + filename, 1);
             var results = new List<TessellatedSolid>();
             var j = 0;
             for (int i = 0; i < objData.Count; i++)
@@ -136,7 +136,7 @@ namespace TVGL
                 foreach (var solid in multipleSolids)
                     results.Add(solid);
             }
-            Global.Logger.LogInformation(
+            Log.Information(
                 "Successfully read in " + typeString + " file called " + filename + " in " +
                 (DateTime.Now - now).TotalSeconds + " seconds.", 4);
             return results.ToArray();

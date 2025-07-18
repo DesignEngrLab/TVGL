@@ -1525,16 +1525,19 @@ namespace TVGL
             double zz2 = rotation.Z * z2;
 
             double q11 = 1.0 - 2.0 * (yy2 + zz2);
+            //double q11 = 1.0 - yy2 - zz2;
             double q21 = xy2 - wz2;
             double q31 = xz2 + wy2;
 
             double q12 = xy2 + wz2;
             double q22 = 1.0 - 2.0 * (xx2 + zz2);
+            //double q22 = 1.0 - xx2 - zz2;
             double q32 = yz2 - wx2;
 
             double q13 = xz2 - wy2;
             double q23 = yz2 + wx2;
             double q33 = 1.0 - 2.0 * (xx2 + yy2);
+            //double q33 = 1.0 - xx2 - yy2;
 
             return new Matrix4x4(
              // First row
@@ -1813,7 +1816,7 @@ namespace TVGL
                 //    Sse.Add(Sse.Add(Sse * Sse.Shuffle(row, row, 0x00), Sse.LoadVector128(&value2.M11)),
                 //                    Sse * Sse.Shuffle(row, row, 0x55), Sse.LoadVector128(&value2.M21))),
                 //            Sse.Add(Sse * Sse.Shuffle(row, row, 0xAA), Sse.LoadVector128(&value2.M31)),
-                //                    Sse * Sse.Shuffle(row, row, 0xFF), Sse.LoadVector128(&value2.M41))));
+                //                    Sse * Sse.Shuffle(row, row, 0xFF), Sse.LoadVector128(&value2.M41)))));
 
                 //// 0x00 is _MM_SHUFFLE(0,0,0,0), 0x55 is _MM_SHUFFLE(1,1,1,1), etc.
                 //// TODO: Replace with a method once it's added to the API.
@@ -1823,21 +1826,21 @@ namespace TVGL
                 //    Sse.Add(Sse.Add(Sse * Sse.Shuffle(row, row, 0x00), Sse.LoadVector128(&value2.M11)),
                 //                    Sse * Sse.Shuffle(row, row, 0x55), Sse.LoadVector128(&value2.M21))),
                 //            Sse.Add(Sse * Sse.Shuffle(row, row, 0xAA), Sse.LoadVector128(&value2.M31)),
-                //                    Sse * Sse.Shuffle(row, row, 0xFF), Sse.LoadVector128(&value2.M41))));
+                //                    Sse * Sse.Shuffle(row, row, 0xFF), Sse.LoadVector128(&value2.M41)))));
 
                 //row = Sse.LoadVector128(&value1.M31);
                 //Sse.Store(&value1.M31,
                 //    Sse.Add(Sse.Add(Sse * Sse.Shuffle(row, row, 0x00), Sse.LoadVector128(&value2.M11)),
                 //                    Sse * Sse.Shuffle(row, row, 0x55), Sse.LoadVector128(&value2.M21))),
                 //            Sse.Add(Sse * Sse.Shuffle(row, row, 0xAA), Sse.LoadVector128(&value2.M31)),
-                //                    Sse * Sse.Shuffle(row, row, 0xFF), Sse.LoadVector128(&value2.M41))));
+                //                    Sse * Sse.Shuffle(row, row, 0xFF), Sse.LoadVector128(&value2.M41)))));
 
                 //row = Sse.LoadVector128(&value1.M41);
                 //Sse.Store(&value1.M41,
                 //    Sse.Add(Sse.Add(Sse * Sse.Shuffle(row, row, 0x00), Sse.LoadVector128(&value2.M11)),
                 //                    Sse * Sse.Shuffle(row, row, 0x55), Sse.LoadVector128(&value2.M21))),
                 //            Sse.Add(Sse * Sse.Shuffle(row, row, 0xAA), Sse.LoadVector128(&value2.M31)),
-                //                    Sse * Sse.Shuffle(row, row, 0xFF), Sse.LoadVector128(&value2.M41))));
+                //                    Sse * Sse.Shuffle(row, row, 0xFF), Sse.LoadVector128(&value2.M41)))));
                 //return value1;
             }
             if (value1.IsProjectiveTransform && value2.IsProjectiveTransform)
@@ -1970,6 +1973,134 @@ namespace TVGL
             for (int i = 0; i < 16; i++)
             {
                 this[i] = data[i];
+            }
+        }
+
+        /// <summary>
+        /// Multiplies a matrix by a scalar value.
+        /// </summary>
+        /// <param name="value1">The source matrix.</param>
+        /// <param name="value2">The scaling factor.</param>
+        /// <returns>The scaled matrix.</returns>
+        public static Matrix4x4 operator *(double value1, Matrix4x4 value2)
+        { return value2 * value1; }
+        /// <summary>
+        /// Implements the * operator.
+        /// </summary>
+        /// <param name="value1">The value1.</param>
+        /// <param name="value2">The value2.</param>
+        /// <returns>The result of the operator.</returns>
+        public static Matrix4x4 operator *(Matrix4x4 value1, double value2)
+        {
+            if (false) // COMMENTEDCHANGE (Sse.IsSupported)
+            {
+                //Vector128<double> value2Vec = Vector128.Create(value2);
+                //Sse.Store(&value1.M11, Sse * Sse.LoadVector128(&value1.M11), value2Vec));
+                //Sse.Store(&value1.M21, Sse * Sse.LoadVector128(&value1.M21), value2Vec));
+                //Sse.Store(&value1.M31, Sse * Sse.LoadVector128(&value1.M31), value2Vec));
+                //Sse.Store(&value1.M41, Sse * Sse.LoadVector128(&value1.M41), value2Vec));
+                //return value1;
+            }
+            if (value1.IsProjectiveTransform)
+                return new Matrix4x4(
+                value1.M11 * value2, value1.M12 * value2, value1.M13 * value2, value1.M14 * value2,
+                value1.M21 * value2, value1.M22 * value2, value1.M23 * value2, value1.M24 * value2,
+                value1.M31 * value2, value1.M32 * value2, value1.M33 * value2, value1.M34 * value2,
+                value1.M41 * value2, value1.M42 * value2, value1.M43 * value2, value1.M44 * value2
+                );
+
+            return new Matrix4x4(
+            value1.M11 * value2, value1.M12 * value2, value1.M13 * value2,
+            value1.M21 * value2, value1.M22 * value2, value1.M23 * value2,
+            value1.M31 * value2, value1.M32 * value2, value1.M33 * value2,
+            value1.M41 * value2, value1.M42 * value2, value1.M43 * value2
+            );
+
+        }
+
+        /// <summary>
+        /// Returns a boolean indicating whether the given two matrices are equal.
+        /// </summary>
+        /// <param name="value1">The first matrix to compare.</param>
+        /// <param name="value2">The second matrix to compare.</param>
+        /// <returns>True if the given matrices are equal; False otherwise.</returns>
+        public static bool operator ==(Matrix4x4 value1, Matrix4x4 value2)
+        {
+            if (false) // COMMENTEDCHANGE (Sse.IsSupported)
+            {
+                //return
+                //    VectorMath.Equal(Sse.LoadVector128(&value1.M11), Sse.LoadVector128(&value2.M11)) &&
+                //    VectorMath.Equal(Sse.LoadVector128(&value1.M21), Sse.LoadVector128(&value2.M21)) &&
+                //    VectorMath.Equal(Sse.LoadVector128(&value1.M31), Sse.LoadVector128(&value2.M31)) &&
+                //    VectorMath.Equal(Sse.LoadVector128(&value1.M41), Sse.LoadVector128(&value2.M41));
+            }
+
+            return (value1.IsProjectiveTransform == value2.IsProjectiveTransform &&
+                value1.M11 == value2.M11 && value1.M22 == value2.M22 && value1.M33 == value2.M33 && value1.M44 == value2.M44 && // Check diagonal element first for early out.
+                    value1.M12 == value2.M12 && value1.M13 == value2.M13 && value1.M14 == value2.M14 && value1.M21 == value2.M21 &&
+                    value1.M23 == value2.M23 && value1.M24 == value2.M24 && value1.M31 == value2.M31 && value1.M32 == value2.M32 &&
+                    value1.M34 == value2.M34 && value1.M41 == value2.M41 && value1.M42 == value2.M42 && value1.M43 == value2.M43);
+        }
+
+        /// <summary>
+        /// Returns a boolean indicating whether the given two matrices are not equal.
+        /// </summary>
+        /// <param name="value1">The first matrix to compare.</param>
+        /// <param name="value2">The second matrix to compare.</param>
+        /// <returns>True if the given matrices are not equal; False if they are equal.</returns>
+        public static bool operator !=(Matrix4x4 value1, Matrix4x4 value2)
+        {
+            if (false) // COMMENTEDCHANGE (Sse.IsSupported)
+            {
+                //return
+                //    VectorMath.NotEqual(Sse.LoadVector128(&value1.M11), Sse.LoadVector128(&value2.M11)) ||
+                //    VectorMath.NotEqual(Sse.LoadVector128(&value1.M21), Sse.LoadVector128(&value2.M21)) ||
+                //    VectorMath.NotEqual(Sse.LoadVector128(&value1.M31), Sse.LoadVector128(&value2.M31)) ||
+                //    VectorMath.NotEqual(Sse.LoadVector128(&value1.M41), Sse.LoadVector128(&value2.M41));
+            }
+
+            return !(value1 == value2);
+        }
+
+        /// <summary>
+        /// Returns a boolean indicating whether this matrix instance is equal to the other given matrix.
+        /// </summary>
+        /// <param name="other">The matrix to compare this instance to.</param>
+        /// <returns>True if the matrices are equal; False otherwise.</returns>
+        public bool Equals(Matrix4x4 other) => this == other;
+
+        /// <summary>
+        /// Returns a boolean indicating whether the given Object is equal to this matrix instance.
+        /// </summary>
+        /// <param name="obj">The Object to compare against.</param>
+        /// <returns>True if the Object is equal to this matrix; False otherwise.</returns>
+        public override bool Equals(object obj) => (obj is Matrix4x4 other) && (this == other);
+
+        /// <summary>
+        /// Returns a String representing this matrix instance.
+        /// </summary>
+        /// <returns>The string representation.</returns>
+        public override string ToString()
+        {
+            return string.Format(CultureInfo.CurrentCulture, "{{ {{M11:{0} M12:{1} M13:{2} M14:{3}}} {{M21:{4} M22:{5} M23:{6} M24:{7}}} {{M31:{8} M32:{9} M33:{10} M34:{11}}} {{M41:{12} M42:{13} M43:{14} M44:{15}}} }}",
+                                 M11, M12, M13, M14,
+                                 M21, M22, M23, M24,
+                                 M31, M32, M33, M34,
+                                 M41, M42, M43, M44);
+        }
+
+        /// <summary>
+        /// Returns the hash code for this instance.
+        /// </summary>
+        /// <returns>The hash code.</returns>
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                return M11.GetHashCode() + M12.GetHashCode() + M13.GetHashCode() + M14.GetHashCode() +
+                       M21.GetHashCode() + M22.GetHashCode() + M23.GetHashCode() + M24.GetHashCode() +
+                       M31.GetHashCode() + M32.GetHashCode() + M33.GetHashCode() + M34.GetHashCode() +
+                       M41.GetHashCode() + M42.GetHashCode() + M43.GetHashCode() + M44.GetHashCode();
             }
         }
     }

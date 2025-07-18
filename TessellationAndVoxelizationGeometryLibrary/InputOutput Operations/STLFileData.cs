@@ -109,7 +109,7 @@ namespace TVGL
                     typeString = "ASCII STL";
                 else
                 {
-                    Global.Logger.LogError("Unable to read in STL file called " + filename, 1);
+                    Log.Error("Unable to read in STL file called " + filename, 1);
                     return null;
                 }
             }
@@ -121,7 +121,7 @@ namespace TVGL
                     stlFileData.HasColorSpecified ? stlFileData.Colors : null,
                     tsBuildOptions, stlFileData.Units, stlFileData.Name, filename, stlFileData.Comments, stlFileData.Language);
             }
-            Global.Logger.LogInformation(
+            Log.Information(
                 "Successfully read in " + typeString + " file called " + filename + " in " +
                 (DateTime.Now - now).TotalSeconds + " seconds.", 4);
             return results;
@@ -375,13 +375,13 @@ namespace TVGL
                 }
                 writer.WriteLine("endsolid " + solid.Name);
                 writer.Flush();
-                Global.Logger.LogInformation("Successfully wrote STL file to stream.", 4);
+                Log.Information("Successfully wrote STL file to stream.", 4);
                 return true;
             }
             catch (Exception exception)
             {
-                Global.Logger.LogInformation("Unable to write in model file.", 1);
-                Global.Logger.LogInformation("Exception: " + exception.Message, 3);
+                Log.Information("Unable to write in model file.", 1);
+                Log.Information("Exception: " + exception.Message, 3);
                 return false;
             }
         }

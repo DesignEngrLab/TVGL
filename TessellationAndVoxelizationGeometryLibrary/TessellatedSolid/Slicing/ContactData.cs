@@ -103,7 +103,7 @@ namespace TVGL
             }
 
             var area2 = triangleFaces.Sum(face => face.Area);
-            if (!Area.IsPracticallySame(area2, 0.01 * Area)) Global.Logger.LogWarning("SolidContactData loop area and face area do not match.", 2);
+            if (!Area.IsPracticallySame(area2, 0.01 * Area)) Log.Warning("SolidContactData loop area and face area do not match.", 2);
             //Set Immutable Lists
             OnSideContactFaces = onSideContactFaces;
             PositiveLoops = positiveLoops;
@@ -480,7 +480,7 @@ namespace TVGL
             IEnumerable<int> straddleFaceIndices, IEnumerable<int> adjOnsideFaceIndices, int index, bool fromPositiveSide,
             IEnumerable<Vertex> straddleEdgeOnSideVertices, bool isClosed = true)
         {
-            if (!IsClosed) Global.Logger.LogError("Slice loop is not closed!", 3);
+            if (!IsClosed) Log.Error("Slice loop is not closed!", 3);
             VertexLoop = vertexLoop.ToArray();
             OnSideContactFaces = onSideContactFaces;
             IsClosed = isClosed;

@@ -96,34 +96,34 @@ namespace TVGL
                     //tvglMaxY.IsPracticallySame(clipperMaxY, extremaTolerance)
                     )
                 {
-                    Global.Logger.LogInformation("***** " + operationString + " matches", 4);
-                    Global.Logger.LogInformation("clipper time = " + clipTime + "; tvgl time = " + tvglTime, 4);
+                    Log.Information("***** " + operationString + " matches", 4);
+                    Log.Information("clipper time = " + clipTime + "; tvgl time = " + tvglTime, 4);
                     return false;
                 }
                 else
                 {
                     //if (numPolygonsClipper == 0) return false;
-                    Global.Logger.LogInformation(operationString + " does not match", 2);
-                    Global.Logger.LogInformation("clipper time = " + clipTime + "; tvgl time = " + tvglTime, 2);
+                    Log.Information(operationString + " does not match", 2);
+                    Log.Information("clipper time = " + clipTime + "; tvgl time = " + tvglTime, 2);
                     //if (numPolygonsTVGL == numPolygonsClipper)
-                    //    Global.Logger.LogInformation("+++ both have {0} polygon(s)", numPolygonsTVGL, numPolygonsClipper);
+                    //    Log.Information("+++ both have {0} polygon(s)", numPolygonsTVGL, numPolygonsClipper);
                     //else 
-                    Global.Logger.LogInformation("    --- polygons: TVGL=" + numPolygonsTVGL + "  : Clipper={1} " + numPolygonsClipper, 2);
+                    Log.Information("    --- polygons: TVGL=" + numPolygonsTVGL + "  : Clipper={1} " + numPolygonsClipper, 2);
                     //if (vertsTVGL == vertsClipper)
-                    //   Global.Logger.LogInformation("+++ both have {0} vertices(s)", vertsTVGL);
+                    //   Log.Information("+++ both have {0} vertices(s)", vertsTVGL);
                     //else
-                    Global.Logger.LogInformation("    --- verts: TVGL= " + vertsTVGL + "  : Clipper={1} " + vertsClipper, 2);
+                    Log.Information("    --- verts: TVGL= " + vertsTVGL + "  : Clipper={1} " + vertsClipper, 2);
 
                     //if (areaTVGL.IsPracticallySame(areaClipper, tolerance))
-                    //   Global.Logger.LogInformation("+++ both have area of {0}", areaTVGL);
+                    //   Log.Information("+++ both have area of {0}", areaTVGL);
                     //else
-                    Global.Logger.LogInformation("    --- polygons: TVGL=" + areaTVGL + "  : Clipper={1} " + areaClipper, 2);
+                    Log.Information("    --- polygons: TVGL=" + areaTVGL + "  : Clipper={1} " + areaClipper, 2);
                     //if (perimeterTVGL.IsPracticallySame(perimeterClipper, tolerance))
-                    //    Global.Logger.LogInformation("+++ both have perimeter of {0}", perimeterTVGL);
+                    //    Log.Information("+++ both have perimeter of {0}", perimeterTVGL);
                     //else
-                    Global.Logger.LogInformation("    --- polygons: TVGL=" + perimeterTVGL + "  : Clipper={1} " + perimeterClipper, 2);
+                    Log.Information("    --- polygons: TVGL=" + perimeterTVGL + "  : Clipper={1} " + perimeterClipper, 2);
                     if (perimeterClipper - perimeterTVGL > 0 && int.IsEvenInteger((int)Math.Round(perimeterClipper - perimeterTVGL)))
-                        Global.Logger.LogInformation("<><><><><><><> clipper is connecting separate poly's :", (int)(perimeterClipper - perimeterTVGL) / 2);
+                        Log.Information("<><><><><><><> clipper is connecting separate poly's :", (int)(perimeterClipper - perimeterTVGL) / 2);
                     return true;
                 }
             }

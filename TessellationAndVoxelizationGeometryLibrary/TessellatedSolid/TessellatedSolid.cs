@@ -675,7 +675,7 @@ namespace TVGL
             var faceChecksums = new HashSet<long>();
             if (NumberOfVertices > Constants.CubeRootOfLongMaxValue)
             {
-                Global.Logger.LogWarning("Repeat Face check is disabled since the number of vertices exceeds "
+                Log.Warning("Repeat Face check is disabled since the number of vertices exceeds "
                                + Constants.CubeRootOfLongMaxValue);
                 duplicateFaceCheck = false;
             }
