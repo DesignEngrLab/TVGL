@@ -98,7 +98,7 @@ namespace TVGL
 
             var positiveShift = 0.0;
             var negativeShift = 0.0;
-            distances.SetPositiveAndNegativeShifts(perpendicularDistanceToLine,Math.Pow(10, -shallowPolygonTree.NumSigDigits), ref positiveShift, ref negativeShift);
+            distances.SetPositiveAndNegativeShifts(perpendicularDistanceToLine, Math.Pow(10, -shallowPolygonTree.NumSigDigits), ref positiveShift, ref negativeShift);
             /*   First (1), a line hash is used to find all the lines to the left and the intersection lines.
                  Second (2), the intersection point for each of the intersecting lines is found.
                  Third (3), these intersection points are ordered in the perpendicular direction to the search direction
@@ -110,8 +110,12 @@ namespace TVGL
             var lineDir = new Vector2IP(-lineNormalDirection.Y, lineNormalDirection.X);
             var anchorpoint = perpendicularDistanceToLine * lineNormalDirection;
             var sortedPoints = new SortedList<double, (Vector2, PolygonEdge)>();
-            foreach (var polygons in shallowPolygonTree.AllPolygons)
-                foreach (var line in polygons.Edges)
+            negativeSidePolygons = new List<Polygon>();
+            positiveSidePolygons = new List<Polygon>();
+            foreach (var polygon in shallowPolygonTree.AllPolygons)
+            {
+                var untouched = true;
+                foreach (var line in polygon.Edges)
                 {
                     var intersectionPoint=
                         PGA2D.PointAtLineAndPolyEdge(lineNormal, line, out _, out var onSegment);
