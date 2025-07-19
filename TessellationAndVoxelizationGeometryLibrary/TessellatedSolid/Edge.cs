@@ -250,7 +250,9 @@ namespace TVGL
         /// <exception cref="System.NotImplementedException"></exception>
         private void DetermineNormal()
         {
-            throw new NotImplementedException();
+            _normal = new Vector3(OwnedFace.Normal.X+OtherFace.Normal.X, 
+                OwnedFace.Normal.Y + OtherFace.Normal.Y,
+                OwnedFace.Normal.Z + OtherFace.Normal.Z).Normalize();
         }
 
         /// <summary>

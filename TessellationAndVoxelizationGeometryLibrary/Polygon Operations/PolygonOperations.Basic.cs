@@ -321,13 +321,13 @@ namespace TVGL
         }
         private static void SimplifyAndSmoothRectilinearPolygonTop(this Polygon polygon, double pixelSideLength, bool movesMayBeDiagonal)
         {
-            const double longEdgeFactor = 5;
             var smallEdgeLengthSqd = pixelSideLength * pixelSideLength;
             if (movesMayBeDiagonal)
-            {
                 smallEdgeLengthSqd *= 2;
-            }
+
+            const double longEdgeFactor = 5;
             var longEdgeLengthSqd = longEdgeFactor * longEdgeFactor * smallEdgeLengthSqd;
+
             polygon.RemoveCollinearEdges();
             var unitLengthEdges = new Stack<int>();
             var medEdges = new Stack<int>();
@@ -354,6 +354,7 @@ namespace TVGL
             var nextVector = polygon.Edges[0].Vector.AsNormalizedVector2();
             for (int i = n; i >= 0; i--)
             {
+                if (!polygon.IsClosed && i == 0) break;
                 var currentEdge = polygon.Edges[i];
                 var currVector = currentEdge.Vector.AsNormalizedVector2();
                 var prevEdgeIs = i == 0 ? lastEdgeIs : pixelEdgeType(i - 1, unitLengthEdges, medEdges, longEdges);
@@ -392,9 +393,67 @@ namespace TVGL
                 medEdges.Pop();
                 return PixelEdgeLength.Med;
             }
-            longEdges.Pop();
-            return PixelEdgeLength.Long;
+            if (longEdges.TryPeek(out m) && m == n)
+            {
+                longEdges.Pop();
+                return PixelEdgeLength.Long;
+            }
+            return PixelEdgeLength.Med; // if polygon is not closed, and Med does the least in terms of changes.
         }
+
+        /// <summary>
+        /// Finds whether the polygon is the same when flipped over. Originally, this was called IsChiral 
+        /// (a chiral polygon is one that cannot be superimposed on its mirror image), but that seems like
+        /// a double negative. It could be called IsAchiral, but that's just too esoteric. 
+        /// </summary>
+        /// <param name="polygon"></param>
+        /// <returns></returns>
+        public static bool HasFlippedSymmetry(this Polygon polygon)
+        {
+            var numVerts = polygon.Vertices.Count;
+            var twiceNumVerts = 2 * numVerts;
+            // Step 1: Create the "forward" and "mirrored" signature sequence, which is
+            // a sequence of alternating edge lengths and internal angles.
+            var forwardSignature = new double[twiceNumVerts]; // Signature is [L0, A0, L1, A1, ..., L(n-1), A(n-1)]
+            var mirroredSignature = new double[twiceNumVerts]; // Signature is [L0, A(n-1), L(n-1),..., A1, L1, A0]
+            var maxLength = double.NegativeInfinity;
+            var maxAngle = double.NegativeInfinity;
+            for (int i = 0; i < numVerts; i++)
+            {
+                var length = polygon.Edges[i].Length;
+                if (maxLength < length) maxLength = length;
+                var internalAngle = polygon.Vertices[i].GetInternalAngle();
+                if (maxAngle < internalAngle) maxAngle = internalAngle;
+                forwardSignature[2 * i] = length;
+                forwardSignature[2 * i + 1] = internalAngle;
+                mirroredSignature[(2 * (numVerts - i)) % (twiceNumVerts)] = length;
+                mirroredSignature[2 * (numVerts - i) - 1] = internalAngle;
+
+            }
+            // Step 2: The Linear-Time Test
+            // A polygon is achiral if its mirrored signature is a cyclic permutation
+            // of its forward signature. 
+            var angleEpsilon = 0.001 * maxAngle; // Epsilon for angle comparison
+            var lengthEpsilon = 0.001 * maxLength; // Epsilon for length comparison
+            for (int i = 0; i <= twiceNumVerts; i++)
+            {
+                bool match = true;
+                var useLengthError = true;
+                for (int j = 0; j < twiceNumVerts; j++)
+                {
+                    if (!mirroredSignature[j].IsPracticallySame(forwardSignature[(i + j) % (twiceNumVerts)], useLengthError ? lengthEpsilon : angleEpsilon))
+                    {
+                        match = false;
+                        break;
+                    }
+                    useLengthError = !useLengthError; // alternate between length and angle comparison
+                }
+                if (match)
+                    return true;
+            }
+            return false;
+        }
+
         private enum PixelEdgeLength
         {
             Unit,

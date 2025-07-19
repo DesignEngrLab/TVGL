@@ -563,7 +563,7 @@ namespace TVGL
                 var basePoint = vertices[0].Coordinates;
                 var volume = (vertices[1].Coordinates - basePoint).Cross(vertices[2].Coordinates - basePoint).Dot(basePoint - vertices[3].Coordinates);
                 // if the volume is negative then swap the two middle points to get them triangles in the prpoer orientation
-                if (volume < 0) Constants.SwapItemsInList(1, 2, vertices);
+                if (volume < 0) Global.SwapItemsInList(1, 2, vertices);
 
                 var face012 = new ConvexHullFace(vertices[0], vertices[1], vertices[2]);
                 var face031 = new ConvexHullFace(vertices[0], vertices[3], vertices[1]);

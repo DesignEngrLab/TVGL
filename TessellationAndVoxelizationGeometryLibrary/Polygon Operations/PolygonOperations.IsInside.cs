@@ -13,7 +13,6 @@
 // ***********************************************************************
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.Eventing.Reader;
 using System.Linq;
 
 
@@ -93,22 +92,25 @@ namespace TVGL
         /// <param name="onBoundary">if set to <c>true</c> [on boundary].</param>
         /// <returns>Polygon.</returns>
         public static bool? IsNonIntersectingPolygonInside(this Polygon outer, bool onlyTopOuterPolygon, Polygon inner,
-            bool onlyTopInnerPolygon, out bool onBoundary)
+            out bool onBoundary, double boundaryTolerance = Constants.DefaultEqualityTolerance)
         {
+            if (Math.Abs(inner.PathArea) > Math.Abs(outer.PathArea)
+                || (!onlyTopOuterPolygon && Math.Abs(inner.PathArea) > Math.Abs(outer.Area)))
+            {
+                onBoundary = false;
+                return false;
+            }
             onBoundary = false;
             foreach (var subPolygon in inner.AllPolygons)
             {
                 foreach (var vector2 in subPolygon.Path)
                 {
-                    if (!outer.IsPointInsidePolygon(onlyTopOuterPolygon, vector2, out var thisPointOnBoundary))
+                    if (!outer.IsPointInsidePolygon(onlyTopOuterPolygon, vector2, out var thisPointOnBoundary, boundaryTolerance))
                         // negative has a point outside of positive. no point in checking other points
                         return false;
                     if (thisPointOnBoundary) onBoundary = true;
-                    else if (onlyTopInnerPolygon)
-                        return true;
-                    else break;
+                    else return true;
                 }
-                if (onlyTopInnerPolygon) break;
             }
             return null; //all points are on boundary, so it is unclear if it is inside
         }
@@ -154,8 +156,8 @@ namespace TVGL
                     if (onBoundary) break;
                 }
                 if (onBoundary) continue;
-                var insideAbove = numberAbove % 2 != 0;
-                var insideBelow = numberBelow % 2 != 0;
+                var insideAbove = int.IsOddInteger(numberAbove);
+                var insideBelow = int.IsOddInteger(numberBelow);
                 if (insideAbove != insideBelow)
                 {
                     continue;
@@ -573,6 +575,21 @@ namespace TVGL
             }
             return intersections;
         }
+
+        /// <summary>
+        /// Find all the polygon intersection points along horizontal lines.
+        /// Returns a list of double arrays. the double array values correspond to only the x-coordinates. the y-coordinates are
+        /// determined by the input. y = startingYValue + (i+firstIntersectingIndex)*stepSize
+        /// </summary>
+        /// <param name="polygon">The polygon.</param>
+        /// <param name="startingYValue">The starting y value.</param>
+        /// <param name="numSteps">The number steps.</param>
+        /// <param name="stepSize">Size of the step.</param>
+        /// <param name="firstIntersectingIndex">First index of the intersecting.</param>
+        /// <returns>List&lt;System.Double[]&gt;.</returns>
+        public static List<double[]> AllPolygonIntersectionPointsAlongHorizontalLines(this Polygon polygon,
+            double startingYValue, double stepSize, out int firstIntersectingIndex)
+        => AllPolygonIntersectionPointsAlongHorizontalLines([polygon], startingYValue, stepSize, out firstIntersectingIndex);
 
         /// <summary>
         /// Find all the polygon intersection points along horizontal lines.

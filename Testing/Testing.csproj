@@ -10,6 +10,7 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+	  <Compile Remove="Minkowski.cs" />
 	  <Compile Remove="ThreeD_Methods\Voxels.cs" />
 	</ItemGroup>
 
@@ -26,7 +27,7 @@
 
 	<ItemGroup>
 	  <ProjectReference Include="..\TessellationAndVoxelizationGeometryLibrary\TessellationAndVoxelizationGeometryLibrary.csproj" />
-	  <ProjectReference Include="..\TVGL Presenter\TVGL Presenter.csproj" />
+	  <ProjectReference Include="..\TVGL Presenter\WindowsDesktopPresenter.csproj" />
 	</ItemGroup>
 
 </Project>

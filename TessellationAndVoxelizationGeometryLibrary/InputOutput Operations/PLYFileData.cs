@@ -1,20 +1,8 @@
-﻿// ***********************************************************************
-// Assembly         : TessellationAndVoxelizationGeometryLibrary
-// Author           : matth
-// Created          : 04-03-2023
-//
-// Last Modified By : matth
-// Last Modified On : 04-14-2023
-// ***********************************************************************
-// <copyright file="PLYFileData.cs" company="Design Engineering Lab">
-//     2014
-// </copyright>
-// <summary></summary>
-// ***********************************************************************
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Microsoft.Extensions.Logging;
 
 
 namespace TVGL
@@ -164,7 +152,7 @@ namespace TVGL
                 plyData.ReadMesh(binaryReader);
             }
             plyData.FixColors();
-            Message.output("Successfully read in " + fileTypeString + " PLY file (" + (DateTime.Now - now) + ").", 3);
+            Log.Information("Successfully read in " + fileTypeString + " PLY file (" + (DateTime.Now - now) + ").", 3);
             return new TessellatedSolid(plyData.vertices, plyData.faceToVertexIndices, plyData.faceColors,tsBuildOptions,
                 InferUnitsFromComments(plyData.Comments), plyData.Name, filename, plyData.Comments, plyData.Language);
         }
@@ -431,7 +419,7 @@ namespace TVGL
                         #endregion Uniform_Color
 
                         case ShapeElement.Edge:
-                            Message.output("Unprocessed properties for edge elements: " + values);
+                            Log.Information("Unprocessed properties for edge elements: " + values);
                             break;
                     }
                 }
@@ -506,7 +494,7 @@ namespace TVGL
                     default:
                         throw new ArgumentOutOfRangeException();
                 }
-                if (!successful) Message.output("Error found in reading PLY mesh. Error in " + shapeElement);
+                if (!successful) Log.Error("Error found in reading PLY mesh. Error in " + shapeElement);
             }
         }
 
@@ -839,13 +827,13 @@ namespace TVGL
                                                      solid.SolidColor.A);
                     writer.Flush();
                 }
-                Message.output("Successfully wrote PLY file to stream.", 3);
+                Log.Information("Successfully wrote PLY file to stream.", 3);
                 return true;
             }
             catch (Exception exception)
             {
-                Message.output("Unable to write in model file.", 1);
-                Message.output("Exception: " + exception.Message, 3);
+                Log.Information("Unable to write in model file.", 1);
+                Log.Information("Exception: " + exception.Message, 3);
                 return false;
             }
         }
@@ -901,13 +889,13 @@ namespace TVGL
                         binaryWriter.Write(solid.SolidColor.A);
                     }
                 }
-                Message.output("Successfully wrote PLY file to stream.", 3);
+                Log.Information("Successfully wrote PLY file to stream.", 3);
                 return true;
             }
             catch (Exception exception)
             {
-                Message.output("Unable to write in model file.", 1);
-                Message.output("Exception: " + exception.Message, 3);
+                Log.Information("Unable to write in model file.", 1);
+                Log.Information("Exception: " + exception.Message, 3);
                 return false;
             }
         }

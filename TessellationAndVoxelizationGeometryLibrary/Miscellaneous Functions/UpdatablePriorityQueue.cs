@@ -329,6 +329,7 @@ namespace TVGL
             if (_size != 0)
             {
                 (element, priority) = _nodes[0];
+                _elementIndices.Remove(element);
                 RemoveRootNode();
                 return true;
             }

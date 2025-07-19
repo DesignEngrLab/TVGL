@@ -12,6 +12,7 @@
 // <summary></summary>
 // ***********************************************************************
 using Clipper2Lib;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
@@ -25,6 +26,53 @@ namespace TVGL
     public static partial class PolygonOperations
     {
         /// <summary>
+        /// Creates the minkowski sum of the two polygons. There are flat (hole-less) polygons.
+        /// If you want the minkowski sum of a hole, you have to do that separately.
+        /// </summary>
+        /// <param name="a"></param>
+        /// <param name="b"></param>
+        /// <returns></returns>
+        public static List<Polygon> MinkowskiSumClipper(this Polygon a, Polygon b)
+        {
+            int aVertCount = a.Vertices.Count;
+            int bVertCount = b.Vertices.Count;
+            var aAtEveryBPt = new Polygon[bVertCount];
+            var polyIndex = 0;
+            // make a copy of the 'a' polygon at every point of 'b'
+            foreach (var bVertex in b.Vertices)
+            {
+                var bCoords = bVertex.Coordinates;
+                var path = new Vector2[aVertCount];
+                var vertIndex = 0;
+                foreach (var aVertex in a.Vertices)
+                    path[vertIndex++] = bCoords + aVertex.Coordinates;
+                aAtEveryBPt[polyIndex++] = new Polygon(path);
+            }
+
+            var quadrilaterals = new Polygon[bVertCount * aVertCount];
+            var quadIndex = 0;
+            int prevBIndex = bVertCount - 1;
+            for (int bIndex = 0; bIndex < bVertCount; bIndex++)
+            {
+                int prevAIndex = aVertCount - 1;
+                for (int aIndex = 0; aIndex < aVertCount; aIndex++)
+                {
+                    var quad = new Polygon([ aAtEveryBPt[prevBIndex].Vertices[prevAIndex], 
+                        aAtEveryBPt[bIndex].Vertices[prevAIndex],
+                        aAtEveryBPt[bIndex].Vertices[aIndex],
+                        aAtEveryBPt[prevBIndex].Vertices[aIndex] ]);
+                    if (!quad.IsPositive)
+                        quad.Reverse(); //result.Add(Clipper.ReversePath(quad));
+                    else
+                        quadrilaterals[quadIndex++] = quad;
+                    prevAIndex = aIndex;
+                }
+                prevBIndex = bIndex;
+            }
+            return quadrilaterals.UnionPolygons(PolygonCollection.SeparateLoops);
+        }
+
+        /// <summary>
         /// The Minkowski sum of the two polygons. This only functions on the outermost polygon (no holes).
         /// However, the operation does work on negative polygons, so the result can be fused totheger but this
         /// is left for the user's code due to ambiguities that may arise.
@@ -36,9 +84,45 @@ namespace TVGL
         {
             var aConcaveVertices = a.GetConcaveVertices().ToArray();
             var bConcaveVertices = b.GetConcaveVertices().ToArray();
+            if (aConcaveVertices.Length == 0 & bConcaveVertices.Length == 0)
+                return [MinkowskiSumConvex(a, b)];
+            else if (aConcaveVertices.Length == 0)
+                //return MinkowskiSumConcaveConvex(a, b);
+                return MinkowskiSumMain(a, Array.Empty<Vertex2D>(), b);
+            else if (bConcaveVertices.Length == 0)
+                //return MinkowskiSumConcaveConvex(b, a);
+                return MinkowskiSumMain(b, Array.Empty<Vertex2D>(), a);
             if (aConcaveVertices.Length < bConcaveVertices.Length)
-                return MinkowskiSumMain(a, aConcaveVertices, b);
-            else return MinkowskiSumMain(b, bConcaveVertices, a);
+                return MinkowskiSumClipper(a, b);
+            else return MinkowskiSumClipper(b, a);
+        }
+
+        private static Polygon MinkowskiSumConvex(Polygon a, Polygon b)
+        {
+            var aStartVertex = FindMinY(a.Vertices);
+            var bStartVertex = FindMinY(b.Vertices);
+            var aVertex = aStartVertex;
+            var bVertex = bStartVertex;
+            var result = new List<Vertex2D>();
+            var vertNum = 0;
+            var aCompleted = false;
+            var bCompleted = false;
+            do
+            {
+                result.Add(new Vertex2D(aVertex.Coordinates + bVertex.Coordinates, vertNum++, 0));
+                var cross = aVertex.StartLine.Vector
+                    // will this always be correct? I'm worried that angle could be greater than 180, and then a
+                    // false result would be returned. ...although, I tried to come up with a case to break it
+                    // and couldn't I guess because you can't have an angle greater than 180 on convex shapes
+                    .Cross(bVertex.StartLine.Vector);
+                if (cross >= 0 && !aCompleted)
+                    aVertex = aVertex.StartLine.ToPoint;
+                if (cross <= 0 && !bCompleted)
+                    bVertex = bVertex.StartLine.ToPoint;
+                aCompleted = aVertex == aStartVertex;
+                bCompleted = bVertex == bStartVertex;
+            } while (!aCompleted || !bCompleted);
+            return new Polygon(result);
         }
 
         private static Vertex2D FindMinY(List<Vertex2D> vertices)
@@ -63,13 +147,69 @@ namespace TVGL
             return minVertex;
         }
 
+        private static List<Polygon> MinkowskiSumConcaveConvex(Polygon a, Polygon b)
+        {
+            var aStartEdge = FindMinY(a.Vertices).EndLine;
+            var bStartEdge = FindMinY(b.Vertices).EndLine;
+            var flipResult = a.IsPositive != b.IsPositive;
+            var aEdgeAngles = a.Edges.ToDictionary(e => e, e => Global.Pseudoangle(e.Vector.X, e.Vector.Y));
+            var bEdgeAngles = b.Edges.ToDictionary(e => e, e => Global.Pseudoangle(e.Vector.X, e.Vector.Y));
+
+            var prevAEdge = aStartEdge;
+            var prevBEdge = bStartEdge;
+            var result = new List<Vector2> { prevAEdge.ToPoint.Coordinates + prevBEdge.ToPoint.Coordinates };
+            var knownWrongPoints = new List<bool> { false };
+            var nextAEdge = prevAEdge.ToPoint.StartLine;
+            var nextBEdge = prevBEdge.ToPoint.StartLine;
+            do
+            {
+                var aAngle = aEdgeAngles[nextAEdge];
+                var aPrevAngle = aEdgeAngles[prevAEdge];
+                var bAngle = bEdgeAngles[nextBEdge];
+                var bPrevAngle = bEdgeAngles[prevBEdge];
+                if (firstAngleIsBetweenOthersCCW(aAngle, bPrevAngle, bAngle))
+                {
+                    result.Add(nextAEdge.ToPoint.Coordinates + prevBEdge.ToPoint.Coordinates);
+                    var prevBCrossNextB = prevBEdge.Vector.Cross(nextBEdge.Vector);
+                    knownWrongPoints.Add(prevBCrossNextB < 0);
+                    prevAEdge = nextAEdge;
+                    nextAEdge = nextAEdge.ToPoint.StartLine;
+                }
+                if (firstAngleIsBetweenOthersCCW(bAngle, aPrevAngle, aAngle))
+                {
+                    result.Add(nextBEdge.ToPoint.Coordinates + prevAEdge.ToPoint.Coordinates);
+                    var prevACrossNextA = prevAEdge.Vector.Cross(nextAEdge.Vector);
+                    knownWrongPoints.Add(prevACrossNextA < 0);
+                    prevBEdge = nextBEdge;
+                    nextBEdge = nextBEdge.ToPoint.StartLine;
+                }
+            } while (prevAEdge != aStartEdge || prevBEdge != bStartEdge);
+
+            var clipperPaths = PolygonOperations.ConvertToClipperPaths([new Polygon(result)]);
+            if (flipResult)
+            {
+                //foreach (var c in clipperPaths)
+                //    Clipper.ReversePath(c);
+                clipperPaths = Clipper.Union(clipperPaths, FillRule.Negative);
+            }
+            //else
+            clipperPaths = Clipper.Union(clipperPaths, FillRule.Positive);
+
+            var polygons = clipperPaths.Select(clipperPath
+              => new Polygon(clipperPath.Select(point => new Vector2(point.X / scale, point.Y / scale)))).ToList();
+            //Presenter.ShowAndHang(polygons);
+            return polygons;
+        }
+
+
+
         private static List<Polygon> MinkowskiSumMain(Polygon a, Vertex2D[] aConcaveVertices, Polygon b)
         {
             var polygons = new List<Polygon>();
             var flipResult = a.IsPositive != b.IsPositive;
             var visitedHash = new Dictionary<(Vertex2D, Vertex2D, bool), Vertex2D>(new EdgePairToIntComparator(a, b));
-            var aEdgeAngles = a.Edges.ToDictionary(e => e, e => Constants.Pseudoangle(e.Vector.X, e.Vector.Y));
-            var bEdgeAngles = b.Edges.ToDictionary(e => e, e => Constants.Pseudoangle(e.Vector.X, e.Vector.Y));
+            var aEdgeAngles = a.Edges.ToDictionary(e => e, e => Global.Pseudoangle(e.Vector.X, e.Vector.Y));
+            var bEdgeAngles = b.Edges.ToDictionary(e => e, e => Global.Pseudoangle(e.Vector.X, e.Vector.Y));
             var startsQueue = new Stack<(Vertex2D, Vertex2D)>();
             startsQueue.Push((FindMinY(a.Vertices), FindMinY(b.Vertices)));
             foreach (var aConcavity in aConcaveVertices)
@@ -129,6 +269,19 @@ namespace TVGL
               => new Polygon(clipperPath.Select(point => new Vector2(point.X / scale, point.Y / scale)))).ToList();
             //Presenter.ShowAndHang(polygons);
             return polygons;
+            polygons.RemoveAll(c => !c.IsClosed || c.Vertices.Count <= 2);
+
+            if (flipResult)
+            {
+                foreach (var c in polygons)
+                    c.Reverse();
+                polygons = polygons.IntersectPolygons(PolygonCollection.SeparateLoops); //.CreatePolygonTree(true);
+                foreach (var c in polygons)
+                    c.Reverse();
+                return polygons;
+            }
+            return polygons.UnionPolygons(PolygonCollection.SeparateLoops); //.CreatePolygonTree(true);
+                                                                            //Presenter.ShowAndHang(polygons);
         }
 
         private static void ConvolutionCycle(Polygon a, Polygon b, Vertex2D aStart, Vertex2D bStart,
@@ -241,7 +394,6 @@ namespace TVGL
                             }
                         }
                         var repeatVertex = WhichExistingToUse(results, aExistingVertex, bExistingVertex);
-                        if(repeatVertex == null) return;
                         results.Add(new Polygon(result.Concat([repeatVertex]), currentLoopIndex, false));
                         allKnownWrongPoints.Add(knownWrongPoints);
                         return;

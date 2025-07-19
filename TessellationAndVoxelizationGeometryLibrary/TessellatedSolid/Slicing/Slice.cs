@@ -1,16 +1,4 @@
-﻿// ***********************************************************************
-// Assembly         : TessellationAndVoxelizationGeometryLibrary
-// Author           : matth
-// Created          : 04-03-2023
-//
-// Last Modified By : matth
-// Last Modified On : 04-14-2023
-// ***********************************************************************
-// <copyright file="Slice.cs" company="Design Engineering Lab">
-//     2014
-// </copyright>
-// <summary></summary>
-// ***********************************************************************
+﻿using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -48,7 +36,7 @@ namespace TVGL
             if (!GetSliceContactData(ts, plane, out contactData, setIntersectionGroups, undoPlaneOffset: undoPlaneOffset))
             {
                 solids = new List<TessellatedSolid>();
-                Message.output("CuttingPlane does not cut through the given solid.", 2);
+                Log.Information("CuttingPlane does not cut through the given solid.", 2);
                 return;
             }
             MakeSolids(contactData, ts.Units, out solids);
@@ -56,8 +44,8 @@ namespace TVGL
             var totalVolume2 = contactData.SolidContactData.Sum(solidContactData => solidContactData.Volume(ts.SameTolerance));
             if (!totalVolume2.IsPracticallySame(totalVolume1, 100))
             {
-                Message.output("Error with Volume function calculation in TVGL. SolidContactData Volumes and Solid Volumes should match, since they use all the same faces.", 2);
-                Message.output("Contact Data Total Volume = " + totalVolume2 + ". Solid Total Volume = " + totalVolume1, 2);
+                Log.Information("Error with Volume function calculation in TVGL. SolidContactData Volumes and Solid Volumes should match, since they use all the same faces.", 2);
+                Log.Information("Contact Data Total Volume = " + totalVolume2 + ". Solid Total Volume = " + totalVolume1, 2);
             }
         }
 
@@ -93,7 +81,7 @@ namespace TVGL
             if (!GetSliceContactData(ts, plane, out newContactData, false, loopsToIgnore))
             {
                 solids = new List<TessellatedSolid>();
-                Message.output("CuttingPlane does not cut through the given solid.", 2);
+                Log.Information("CuttingPlane does not cut through the given solid.", 2);
                 return;
             }
             MakeSolids(newContactData, ts.Units, out solids);
@@ -101,8 +89,8 @@ namespace TVGL
             var totalVolume2 = newContactData.SolidContactData.Sum(solidContactData => solidContactData.Volume(ts.SameTolerance));
             if (!totalVolume2.IsPracticallySame(totalVolume1, 100))
             {
-                Message.output("Error with Volume function calculation in TVGL. SolidContactData Volumes and Solid Volumes should match, since they use all the same faces.", 2);
-                Message.output("Contact Data Total Volume = " + totalVolume2 + ". Solid Total Volume = " + totalVolume1, 2);
+                Log.Information("Error with Volume function calculation in TVGL. SolidContactData Volumes and Solid Volumes should match, since they use all the same faces.", 2);
+                Log.Information("Contact Data Total Volume = " + totalVolume2 + ". Solid Total Volume = " + totalVolume1, 2);
             }
         }
 
@@ -124,7 +112,7 @@ namespace TVGL
             {
                 positiveSideSolid = null;
                 negativeSideSolid = null;
-                Message.output("CuttingPlane does not cut through the given solid.", 2);
+                Log.Information("CuttingPlane does not cut through the given solid.", 2);
                 return;
             }
             //MakeSingleSolidOnEachSideOfInfitePlane(contactData, ts.Units, out positiveSideSolid, out negativeSideSolid);
@@ -836,7 +824,7 @@ namespace TVGL
         /// <exception cref="System.ArgumentException">Either a valid stepSize or a number of slices greater than zero must be specified.</exception>
         public static List<Polygon>[] GetUniformlySpacedCrossSections(this TessellatedSolid ts, Vector3 direction, out double[] sliceOffsets,
             out Dictionary<Vertex2D, Edge>[] vertex2DToEdges, out int[] numCompletePolygonsPerLayer,
-            double startDistanceAlongDirection = double.NaN, int numSlices = -1, double stepSize = double.NaN)
+            double startDistanceAlongDirection = double.NegativeInfinity, int numSlices = -1, double stepSize = double.NaN)
             => GetUniformlySpacedCrossSections(ts.Vertices, direction, out sliceOffsets, out vertex2DToEdges, out numCompletePolygonsPerLayer, startDistanceAlongDirection, numSlices, stepSize);
 
         /// <summary>
@@ -900,7 +888,7 @@ namespace TVGL
         /// <returns></returns>
         /// <exception cref="ArgumentException"></exception>
         public static List<Polygon>[] GetUniformlySpacedCrossSections(this IEnumerable<Vertex> vertices, Vector3 direction, out double[] sliceOffsets,
-           out Dictionary<Vertex2D, Edge>[] vertex2DToEdges, out int[] numCompletePolygonsPerLayer, double startDistanceAlongDirection = double.NaN,
+           out Dictionary<Vertex2D, Edge>[] vertex2DToEdges, out int[] numCompletePolygonsPerLayer, double startDistanceAlongDirection = double.NegativeInfinity,
         int numSlices = -1, double stepSize = double.NaN)
         {
             //First, sort the vertices along the given axis. Duplicate distances are not important.
@@ -910,14 +898,15 @@ namespace TVGL
             var transform = direction.TransformToXYPlane(out _);
             var plane = new Plane(0.0, direction);
 
-            var firstDistance = sortedVertices[0].Dot(direction);
+            var firstDistance = Math.Max(startDistanceAlongDirection, sortedVertices[0].Dot(direction));
             var lastDistance = sortedVertices[^1].Dot(direction);
+            //if (double.IsNaN(startDistanceAlongDirection))
+            //    startDistanceAlongDirection = firstDistance;
+            startDistanceAlongDirection = firstDistance + 0.5 * stepSize;
             var lengthAlongDir = lastDistance - firstDistance;
             stepSize = Math.Abs(stepSize);
             if (double.IsNaN(stepSize)) stepSize = lengthAlongDir / numSlices;
             if (numSlices < 1) numSlices = (int)(lengthAlongDir / stepSize);
-            if (double.IsNaN(startDistanceAlongDirection))
-                startDistanceAlongDirection = firstDistance + 0.5 * stepSize;
 
             var result = new List<Polygon>[numSlices];
             sliceOffsets = new double[numSlices];

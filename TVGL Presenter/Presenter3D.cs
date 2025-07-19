@@ -1,236 +1,21 @@
-﻿// ***********************************************************************
-// Assembly         : TVGL Presenter
-// Author           : Matt
-// Created          : 05-20-2016
-//
-// Last Modified By : Matt
-// Last Modified On : 05-24-2016
-// ***********************************************************************
-// <copyright file="Presenter.cs" company="">
-//     Copyright ©  2014
-// </copyright>
-// <summary></summary>
-// ***********************************************************************
-using HelixToolkit.SharpDX.Core;
+﻿using HelixToolkit.SharpDX.Core;
 using HelixToolkit.Wpf.SharpDX;
-using OxyPlot;
-using OxyPlot.Axes;
-using OxyPlot.Series;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-
+using TVGL;
 using MediaColor = System.Windows.Media.Color;
 using TVGLColor = TVGL.Color;
 
-namespace TVGL
+namespace WindowsDesktopPresenter
 {
-    /// <summary>
-    /// The Class HelixPresenter is the only class within the TVGL Helix Presenter
-    /// project (TVGL_Presenter.dll). It is a simple static class with one main
-    /// function, "Show".
-    /// </summary>
-    public static partial class Presenter
+    public class Presenter3D : IPresenter3D
     {
-        #region 2D Plots via OxyPlot
-
-        #region Plotting 2D coordinates both scatter and polygons
-        /// <summary>
-        /// Show the matrix of data as a 2D plot (heatmap)
-        /// </summary>
-        /// <param name="data"></param>
-        /// <param name="title"></param>
-        public static void ShowAndHang(double[,] data, string title = "")
-        {
-            var window = new Window2DPlot(data, title);
-            window.ShowDialog();
-        }
-
-
-        /// <summary>
-        /// Shows the provided objects and "hangs" (halts code until user closes presenter window).
-        /// </summary>
-        /// <param name="points">The points.</param>
-        /// <param name="title">The title.</param>
-        /// <param name="plot2DType">Type of the plot2 d.</param>
-        /// <param name="closeShape">if set to <c>true</c> [close shape].</param>
-        /// <param name="marker">The marker.</param>
-        public static void ShowAndHang(IEnumerable<Vector2> points, string title = "", Plot2DType plot2DType = Plot2DType.Line,
-            bool closeShape = true, MarkerType marker = MarkerType.Circle)
-        {
-            var window = new Window2DPlot(points, title, plot2DType, closeShape, marker);
-            window.ShowDialog();
-        }
-
-        /// <summary>
-        /// Shows the provided objects and "hangs" (halts code until user closes presenter window).
-        /// </summary>
-        /// <param name="pointsList">The points list.</param>
-        /// <param name="title">The title.</param>
-        /// <param name="plot2DType">Type of the plot2 d.</param>
-        /// <param name="closeShape">if set to <c>true</c> [close shape].</param>
-        /// <param name="marker">The marker.</param>
-        public static void ShowAndHang(IEnumerable<IEnumerable<Vector2>> pointsList, string title = "", Plot2DType plot2DType = Plot2DType.Line,
-            bool closeShape = true, MarkerType marker = MarkerType.Circle)
-        {
-            var window = new Window2DPlot(pointsList, title, plot2DType, [closeShape], marker);
-            window.ShowDialog();
-        }
-
-        /// <summary>
-        /// Shows the provided objects and "hangs" (halts code until user closes presenter window).
-        /// </summary>
-        /// <param name="pointsLists">The points lists.</param>
-        /// <param name="title">The title.</param>
-        /// <param name="plot2DType">Type of the plot2 d.</param>
-        /// <param name="closeShape">if set to <c>true</c> [close shape].</param>
-        /// <param name="marker">The marker.</param>
-        public static void ShowAndHang(IEnumerable<IEnumerable<IEnumerable<Vector2>>> pointsLists, string title = "", Plot2DType plot2DType = Plot2DType.Line,
-            bool closeShape = true, MarkerType marker = MarkerType.Circle)
-        {
-
-            var window = new Window2DPlot(pointsLists, title, plot2DType, closeShape, marker);
-            window.ShowDialog();
-        }
-
-        public static void ShowAndHang(IEnumerable<Polygon> polygons, string title = "", Plot2DType plot2DType = Plot2DType.Line,
-             MarkerType marker = MarkerType.Circle)
-        {
-            var points = polygons.SelectMany(polygon => polygon.AllPolygons.Select(p => p.Path)).ToList();
-            var closed = polygons.SelectMany(polygon => polygon.AllPolygons.Select(p => p.IsClosed)).ToList();
-            var window = new Window2DPlot(points, title, plot2DType,closed, marker);
-            window.ShowDialog();
-        }
-
-        public static void ShowAndHang(Polygon polygon, string title = "", Plot2DType plot2DType = Plot2DType.Line,
-             MarkerType marker = MarkerType.Circle)
-        {
-            ShowAndHang([polygon], title, plot2DType, marker);
-        }
-
-
-        /// <summary>
-        /// Shows two different lists of polygons using a unique marker for each.
-        /// </summary>
-        /// <param name="points1">The points1.</param>
-        /// <param name="points2">The points2.</param>
-        /// <param name="title">The title.</param>
-        /// <param name="plot2DType">Type of the plot2 d.</param>
-        /// <param name="closeShape">if set to <c>true</c> [close shape].</param>
-        /// <param name="marker1">The marker1.</param>
-        /// <param name="marker2">The marker2.</param>
-        public static void ShowAndHang(IEnumerable<IEnumerable<Vector2>> points1,
-            IEnumerable<IEnumerable<Vector2>> points2, string title = "",
-            Plot2DType plot2DType = Plot2DType.Line,
-            bool closeShape = true, MarkerType marker1 = MarkerType.Circle,
-            MarkerType marker2 = MarkerType.Cross)
-        {
-            var window = new Window2DPlot(points1, points2, title, plot2DType, closeShape, marker1, marker2);
-            window.ShowDialog();
-        }
-
-        #endregion
-
-
-
-        #region 2D plots projecting vertices to 2D
-        /// <summary>
-        /// Shows the provided objects and "hangs" (halts code until user closes presenter window).
-        /// </summary>
-        /// <param name="vertices">The vertices.</param>
-        /// <param name="direction">The direction.</param>
-        /// <param name="title">The title.</param>
-        /// <param name="plot2DType">Type of the plot2 d.</param>
-        /// <param name="closeShape">if set to <c>true</c> [close shape].</param>
-        /// <param name="marker">The marker.</param>
-        public static void ShowAndHang(IEnumerable<Vertex> vertices, Vector3 direction, string title = "",
-            Plot2DType plot2DType = Plot2DType.Line,
-            bool closeShape = true, MarkerType marker = MarkerType.Circle)
-        {
-            ShowAndHang(vertices.ProjectTo2DCoordinates(direction, out _), title, plot2DType, closeShape,
-                marker);
-        }
-
-        /// <summary>
-        /// Shows the provided objects and "hangs" (halts code until user closes presenter window).
-        /// </summary>
-        /// <param name="vertices">The vertices.</param>
-        /// <param name="direction">The direction.</param>
-        /// <param name="title">The title.</param>
-        /// <param name="plot2DType">Type of the plot2 d.</param>
-        /// <param name="closeShape">if set to <c>true</c> [close shape].</param>
-        /// <param name="marker">The marker.</param>
-        public static void ShowAndHang(IEnumerable<IEnumerable<Vertex>> vertices, Vector3 direction, string title = "",
-            Plot2DType plot2DType = Plot2DType.Line,
-            bool closeShape = true, MarkerType marker = MarkerType.Circle)
-        {
-            ShowAndHang(vertices.Select(listsOfVerts => listsOfVerts.ProjectTo2DCoordinates(direction, out _)),
-                title, plot2DType, closeShape, marker);
-        }
-
-        #endregion
-
-        public static void ShowHeatmap(double[,] values, bool normalizeValues = false)
-        {
-            var data = values;
-            if (normalizeValues)
-            {
-                var zMax = values.Max2D();
-                var zMin = values.Min2D();
-                data = new double[values.GetLength(0), values.GetLength(1)];
-                for (var i = 0; i < values.GetLength(0); i++)
-                {
-                    for (var j = 0; j < values.GetLength(1); j++)
-                    {
-                        data[i, j] = (values[i, j] - zMin) / (zMax - zMin);
-                    }
-                }
-            }
-
-            var contourSeries = new ContourSeries
-            {
-                Color = OxyColors.Black,
-                LabelBackground = OxyColors.White,
-                Data = data,
-                //ColumnCoordinates = xCoordinates,
-                //RowCoordinates = yCoordinates,
-            };
-
-
-            //var xMin = xCoordinates.Min();
-            //var xMax = xCoordinates.Max();
-            //var yMin = yCoordinates.Min();
-            //var yMax = yCoordinates.Max();
-            var heatMapSeries = new HeatMapSeries()
-            {
-                X0 = 0, // xMin,
-                X1 = values.GetLength(0), // xMax,
-                Y0 = 0, //yMin,
-                Y1 = values.GetLength(1), // yMax,
-                Data = data,
-            };
-
-
-            var heatmap = new PlotModel();
-            heatmap.Axes.Add(new LinearColorAxis
-            {
-                Position = AxisPosition.Right,
-                Palette = OxyPalettes.Jet(500),
-                HighColor = OxyColors.Gray,
-                LowColor = OxyColors.Black,
-            });
-            heatmap.Series.Add(heatMapSeries);
-            //heatmap.Series.Add(contourSeries);
-
-            var window = new Window2DPlot(heatmap, "Contour Map");
-            window.ShowDialog();
-        }
-        #endregion
-
+        List<Window3DHeldPlot> plot3DHeldWindows = new List<Window3DHeldPlot>();
 
         #region Show and Hang Solids
-        public static void ShowAndHang(Solid solid, string heading = "", string title = "",
+        public void ShowAndHang(Solid solid, string heading = "", string title = "",
             string subtitle = "")
         {
             if (solid is CrossSectionSolid css)
@@ -239,7 +24,7 @@ namespace TVGL
                 ShowAndHang(new[] { solid }, heading, title, subtitle);
         }
 
-        public static void ShowAndHang(IEnumerable<Solid> solids, string heading = "", string title = "", string subtitle = "")
+        public void ShowAndHang(IEnumerable<Solid> solids, string heading = "", string title = "", string subtitle = "")
         {
             var vm = new Window3DPlotViewModel(heading, title, subtitle);
             vm.Add(ConvertSolidsToModel3D(solids));
@@ -256,7 +41,7 @@ namespace TVGL
         /// <param name="vertices">The vertices.</param>
         /// <param name="colors">The colors.</param>
         /// <param name="solid">The ts.</param>
-        public static void ShowGaussSphereWithIntensity(IEnumerable<Vertex> vertices, IList<Color> colors, Solid solid)
+        public void ShowGaussSphereWithIntensity(IEnumerable<Vertex> vertices, IList<Color> colors, Solid solid)
         {
 
             var vm = new Window3DPlotViewModel();
@@ -307,7 +92,7 @@ namespace TVGL
 
 
         #region ShowPaths with or without Solid(s)
-        public static void ShowPointsAndHang(IEnumerable<Vector3> points, double radius = 0, Color color = null)
+        public void ShowPointsAndHang(IEnumerable<Vector3> points, double radius = 0, Color color = null)
         {
             if (radius == 0) radius = 1;
             color ??= new Color(KnownColors.Red);
@@ -318,7 +103,7 @@ namespace TVGL
             window.ShowDialog();
         }
 
-        public static void ShowPointsAndHang(IEnumerable<IEnumerable<Vector3>> pointSets, double radius = 0, IEnumerable<Color> colors = null)
+        public void ShowPointsAndHang(IEnumerable<IEnumerable<Vector3>> pointSets, double radius = 0, IEnumerable<Color> colors = null)
         {
             if (radius == 0) radius = 1;
             //set the default color to be the first color in the list. If none was provided, use black.
@@ -337,7 +122,7 @@ namespace TVGL
             window.ShowDialog();
         }
 
-        public static IEnumerable<GeometryModel3D> GetPointModels(IEnumerable<Vector3> points, double radius = 0, Color tvglColor = null)
+        public IEnumerable<GeometryModel3D> GetPointModels(IEnumerable<Vector3> points, double radius = 0, Color tvglColor = null)
         {
             var color = new MediaColor { R = tvglColor.R, G = tvglColor.G, B = tvglColor.B, A = tvglColor.A };
             yield return new PointGeometryModel3D
@@ -358,7 +143,7 @@ namespace TVGL
 
 
         #region ShowPaths with or without Solid(s)
-        public static void ShowAndHang(IEnumerable<IEnumerable<IEnumerable<Vector3>>> paths, IEnumerable<bool> closePaths = null,
+        public void ShowAndHang(IEnumerable<IEnumerable<IEnumerable<Vector3>>> paths, IEnumerable<bool> closePaths = null,
             IEnumerable<double> lineThicknesses = null, IEnumerable<Color> colors = null, params Solid[] solids)
         {
             var vm = new Window3DPlotViewModel();
@@ -372,7 +157,7 @@ namespace TVGL
             window.ShowDialog();
         }
 
-        public static void ShowAndHang(IEnumerable<IEnumerable<Vector3>> paths, IEnumerable<bool> closePaths = null,
+        public void ShowAndHang(IEnumerable<IEnumerable<Vector3>> paths, IEnumerable<bool> closePaths = null,
             IEnumerable<double> lineThicknesses = null, IEnumerable<Color> colors = null, params Solid[] solids)
         {
             var vm = new Window3DPlotViewModel();
@@ -386,11 +171,24 @@ namespace TVGL
             window.ShowDialog();
         }
 
-        public static void ShowAndHang(IEnumerable<Vector3> path, bool closePaths = false, double lineThickness = -1, Color color = null, params Solid[] solids)
+        public void ShowAndHang(IEnumerable<IEnumerable<Vector3>> paths, IEnumerable<bool> closePaths = null,
+            IEnumerable<double> lineThicknesses = null, IEnumerable<Color> colors = null, IEnumerable<TriangleFace> faces = null)
+        {
+            var vm = new Window3DPlotViewModel();
+            vm.Add(ConvertPathsToLineModels(paths, closePaths, lineThicknesses, colors));
+            if (faces != null)
+                vm.Add(ConvertTessellatedSolidToMGM3D(faces, new TVGLColor(KnownColors.LightGray), false));
+
+            var window = new Window3DPlot(vm);
+
+            window.ShowDialog();
+        }
+
+        public void ShowAndHang(IEnumerable<Vector3> path, bool closePaths = false, double lineThickness = -1, Color color = null, params Solid[] solids)
             => ShowAndHang([path], [closePaths], [lineThickness == -1 ? 1 : lineThickness], [color == null ? new Color(KnownColors.Black) : color], solids);
 
 
-        private static List<LineGeometryModel3D> ConvertPathsToLineModels(IEnumerable<IEnumerable<Vector3>> paths,
+        private List<LineGeometryModel3D> ConvertPathsToLineModels(IEnumerable<IEnumerable<Vector3>> paths,
             IEnumerable<bool> closePaths, IEnumerable<double> lineThicknesses, IEnumerable<TVGLColor> colors)
         {
             var lineVisuals = new List<LineGeometryModel3D>();
@@ -421,7 +219,7 @@ namespace TVGL
             return lineVisuals;
         }
 
-        private static List<LineGeometryModel3D> ConvertPathsToLineModels(IEnumerable<IEnumerable<IEnumerable<Vector3>>> paths,
+        private List<LineGeometryModel3D> ConvertPathsToLineModels(IEnumerable<IEnumerable<IEnumerable<Vector3>>> paths,
             IEnumerable<bool> closePaths, IEnumerable<double> lineThicknesses, IEnumerable<TVGLColor> colors)
         {
             var lineVisuals = new List<LineGeometryModel3D>();
@@ -454,7 +252,7 @@ namespace TVGL
             return lineVisuals;
         }
 
-        private static LineGeometryModel3D GetVertexPath(IEnumerable<Vector3> path, double thickness, TVGLColor color, bool closePath)
+        private LineGeometryModel3D GetVertexPath(IEnumerable<Vector3> path, double thickness, TVGLColor color, bool closePath)
         {
             var contour = path.Select(point => new SharpDX.Vector3((float)point[0], (float)point[1], (float)point[2]));
 
@@ -497,7 +295,7 @@ namespace TVGL
 
 
 
-        public static void ShowAndHang(IEnumerable<TriangleFace> faces, string heading = "", string title = "", string subtitle = "")
+        public void ShowAndHang(IEnumerable<TriangleFace> faces, string heading = "", string title = "", string subtitle = "")
         {
             var geomModels = ConvertTessellatedSolidToMGM3D(faces, new Color(KnownColors.LightGray), false);
             var vm = new Window3DPlotViewModel(heading, title, subtitle);
@@ -506,7 +304,7 @@ namespace TVGL
             window.ShowDialog();
         }
 
-        public static IEnumerable<GeometryModel3D> ConvertSolidsToModel3D(IEnumerable<Solid> solids)
+        public IEnumerable<GeometryModel3D> ConvertSolidsToModel3D(IEnumerable<Solid> solids)
         {
             foreach (var ts in solids.Where(ts => ts is TessellatedSolid))
                 foreach (var m3d in ConvertTessellatedSolidToMGM3D((TessellatedSolid)ts))
@@ -520,9 +318,9 @@ namespace TVGL
                     yield return GetVertexPath(layer, 1, null, true);
         }
 
-        private static IEnumerable<GeometryModel3D> ConvertTessellatedSolidToMGM3D(TessellatedSolid ts)
+        private IEnumerable<GeometryModel3D> ConvertTessellatedSolidToMGM3D(TessellatedSolid ts)
         { return ConvertTessellatedSolidToMGM3D(ts.Faces, ts.SolidColor, ts.HasUniformColor); }
-        private static IEnumerable<GeometryModel3D> ConvertTessellatedSolidToMGM3D(IEnumerable<TriangleFace> faces, Color defaultColor, bool hasUniformColor)
+        private IEnumerable<GeometryModel3D> ConvertTessellatedSolidToMGM3D(IEnumerable<TriangleFace> faces, Color defaultColor, bool hasUniformColor)
         {
             var faceList = faces as IList<TriangleFace> ?? faces.ToList();
             var numFaces = faceList.Count;
@@ -584,7 +382,7 @@ namespace TVGL
             }
         }
 
-        private static IEnumerable<GeometryModel3D> ConvertVoxelsToPointModel3D(VoxelizedSolid vs)
+        private IEnumerable<GeometryModel3D> ConvertVoxelsToPointModel3D(VoxelizedSolid vs)
         {
             var sw = Stopwatch.StartNew();
             var s = (float)vs.VoxelSideLength;
@@ -607,5 +405,88 @@ namespace TVGL
             };
             Console.WriteLine(sw.Elapsed.ToString());
         }
+
+        public void Show(Solid solid, string title = "",
+    HoldType holdType = HoldType.Immediate, int timetoShow = -1, int id = -1)
+        {
+            if (solid is CrossSectionSolid css)
+                throw new NotImplementedException();
+            else
+                Show([solid], title, holdType, timetoShow, id);
+        }
+
+        public void Show(ICollection<Solid> solids, string title = "",
+            HoldType holdType = HoldType.Immediate, int timetoShow = -1, int id = -1)
+        {
+            var window = PresenterAsyncMethods.GetOrCreate3DWindow(id, plot3DHeldWindows);
+            window.Dispatcher.Invoke(() =>
+            {
+                var vm = (Held3DViewModel)window.DataContext;
+                if (!string.IsNullOrEmpty(title)) vm.Title = title;
+
+                if (timetoShow > 0)
+                    vm.UpdateInterval = timetoShow;
+                if (holdType == HoldType.Immediate)
+                    vm.AddNewSeries(ConvertSolidsToModel3D(solids));
+                else vm.EnqueueNewSeries(ConvertSolidsToModel3D(solids));
+                if (!window.IsVisible && !vm.HasClosed)
+                    window.Show();
+            });
+        }
+        public void Show(IEnumerable<IEnumerable<Vector3>> paths, IEnumerable<bool> closePaths = null,
+            IEnumerable<double> lineThicknesses = null, IEnumerable<Color> colors = null, string title = "",
+            HoldType holdType = HoldType.Immediate, int timetoShow = -1, int id = -1, params Solid[] solids)
+        {
+            var window = PresenterAsyncMethods.GetOrCreate3DWindow(id, plot3DHeldWindows);
+            window.Dispatcher.Invoke(() =>
+            {
+                var vm = (Held3DViewModel)window.DataContext;
+                if (!string.IsNullOrEmpty(title)) vm.Title = title;
+
+                if (timetoShow > 0)
+                    vm.UpdateInterval = timetoShow;
+                if (holdType == HoldType.Immediate)
+                    vm.AddNewSeries(ConvertSolidsToModel3D(solids).Concat(ConvertPathsToLineModels(paths, closePaths, lineThicknesses, colors)));
+                else vm.EnqueueNewSeries(ConvertSolidsToModel3D(solids).Concat(ConvertPathsToLineModels(paths, closePaths, lineThicknesses, colors)));
+                if (!window.IsVisible && !vm.HasClosed)
+                    window.Show();
+            });
+        }
+
+        public void ShowAndHangTransparentsAndSolids(IEnumerable<TessellatedSolid> transparentSolids, IEnumerable<TessellatedSolid> solids)
+        {
+            throw new NotImplementedException();
+        }
+
+        public static void NVEnable()
+        {
+            NVOptimusEnabler nvEnabler = new NVOptimusEnabler();
+
+        }
+    }
+
+    public sealed class NVOptimusEnabler
+    {
+        static NVOptimusEnabler()
+        {
+            try
+            {
+
+                if (Environment.Is64BitProcess)
+                    NativeMethods.LoadNvApi64();
+                else
+                    NativeMethods.LoadNvApi32();
+            }
+            catch { } // will always fail since 'fake' entry point doesn't exists
+        }
+    };
+
+    internal static class NativeMethods
+    {
+        [System.Runtime.InteropServices.DllImport("nvapi64.dll", EntryPoint = "fake")]
+        internal static extern int LoadNvApi64();
+
+        [System.Runtime.InteropServices.DllImport("nvapi.dll", EntryPoint = "fake")]
+        internal static extern int LoadNvApi32();
     }
 }

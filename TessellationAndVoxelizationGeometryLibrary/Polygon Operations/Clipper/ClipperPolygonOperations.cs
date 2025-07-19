@@ -47,6 +47,8 @@ namespace TVGL
     /// </summary>
     public static partial class PolygonOperations
     {
+
+
         /// <summary>
         /// The scale
         /// </summary>
@@ -75,8 +77,7 @@ namespace TVGL
 
             var joinType = notMiter ? (double.IsNaN(deltaAngle) ? JoinType.Square : JoinType.Round) : JoinType.Miter;
             //Convert Points (TVGL) to Point64s (Clipper)
-            var clipperSubject = new Paths64(allPolygons.Select(loop
-                => new Path64(loop.Vertices.Select(point => new Point64(point.X * scale, point.Y * scale)))));
+            var clipperSubject = ConvertToClipperPaths(polygons);
 
             //Setup Clipper
             var clip = new ClipperOffset(2, Math.Abs(tolerance) * scale);
@@ -147,8 +148,8 @@ namespace TVGL
             IEnumerable<Polygon> clip, PolygonCollection outputAsCollectionType)
         {
             //Convert to int points and remove collinear edges
-            var clipperSubject = ConvertToClipperPaths(subject);
-            var clipperClip = ConvertToClipperPaths(clip);
+            Paths64 clipperSubject = subject != null ? ConvertToClipperPaths(subject) : null;
+            Paths64 clipperClip = clip != null ? ConvertToClipperPaths(clip):null;
 
             var clipperSolution = Clipper.BooleanOp(clipType, clipperSubject, clipperClip, fillMethod);
             //Convert back to points and return solution
@@ -160,37 +161,6 @@ namespace TVGL
             if (outputAsCollectionType == PolygonCollection.PolygonTrees)
                 return solution.CreatePolygonTree(true);
             return solution.ToList();
-            //If subject is null, use the clip as the subject for unions. Else, return empty.
-            /* if (!clipperSubject.Any())
-            {
-                if (clip == null || !clipperClip.Any())
-                {
-                    return new List<Polygon>();
-                }
-                //Use the clip as the subject if this is a union operation and the clip is not null.
-                if (clipType == ClipType.Union)
-                {
-                    clipperSubject = clipperClip;
-                    clip = null;
-                }
-            }
-            var clipper = new Clipper64();
-            //Setup Clipper
-            clipper.AddPaths(clipperSubject, PathType.Subject, subjectIsClosed);
-
-            //Don't add the clip unless it is not null (and has not been set to be the subject - see a few lines above) 
-            if (clip != null && clipperClip.Any())
-                clipper.AddPaths(clipperClip, PathType.Clip, clipIsClosed);
-
-            //Begin an evaluation
-            var clipperSolution = new Paths64();
-            var result = clipper.Execute(clipType, fillMethod, clipperSolution);
-            if (!result) throw new Exception("Clipper Union Failed");
-
-            //Convert back to points and return solution
-            var solution = clipperSolution.Select(clipperPath => new Polygon(clipperPath.Select(point => new Vector2(point.X / scale, point.Y / scale))));
-            return solution.CreateShallowPolygonTrees(true);
-            */
         }
 
         internal static Paths64 ConvertToClipperPaths(IEnumerable<Polygon> subject)
@@ -200,10 +170,15 @@ namespace TVGL
             foreach (var polygon in subject)
             {
                 if (polygon == null) continue;
-                foreach (var polygonElement in polygon.AllPolygons.Where(p => !p.PathArea.IsNegligible(Constants.BaseTolerance)))
-                    clipperSubject.Add(new Path64(polygonElement.Path.Select(p => new Point64(p.X * scale, p.Y * scale))));
+                clipperSubject.AddRange(ConvertToClipperPaths(polygon));
             }
             return clipperSubject;
+        }
+
+        private static IEnumerable<Path64> ConvertToClipperPaths(Polygon polygon)
+        {
+            foreach (var polygonElement in polygon.AllPolygons.Where(p => !p.PathArea.IsNegligible(Constants.BaseTolerance)))
+                yield return new Path64(polygonElement.Path.Select(p => new Point64(p.X * scale, p.Y * scale)));
         }
         #endregion
     }

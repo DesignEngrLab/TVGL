@@ -29,7 +29,7 @@ namespace Benchmarking
         public double ATan2() => Math.Atan2(rise, run);
 
         [Benchmark]
-        public double PseudoAngle() => Constants.Pseudoangle(run, rise);
+        public double PseudoAngle() => Global.Pseudoangle(run, rise);
 
 
 

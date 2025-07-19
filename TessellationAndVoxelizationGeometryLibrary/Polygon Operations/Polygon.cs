@@ -363,7 +363,7 @@ namespace TVGL
             }
         }
 
-        public bool IsClosed { get; set; }
+        public bool IsClosed { get; set; } = true;
 
         /// <summary>
         /// This reverses the polygon, including updates to area and the point path.
@@ -372,6 +372,7 @@ namespace TVGL
         public void Reverse(bool reverseInnerPolygons = false)
         {
             _vertices.Reverse();
+            _edges = null;
             Reset();
         }
 
@@ -421,7 +422,7 @@ namespace TVGL
 
 
         /// <summary>
-        /// Gets the area of the polygon. Negative Area for holes.
+        /// Gets the total length of all the paths, including from inner polygons. 
         /// </summary>
         /// <value>The perimeter.</value>
         [JsonIgnore]
@@ -431,7 +432,11 @@ namespace TVGL
             {
                 lock (_vertices)
                     if (double.IsNaN(perimeter))
-                        perimeter = Path.Perimeter();
+                    {
+                        if (IsClosed)
+                            perimeter = Edges.Sum(e => e.Length);
+                        else perimeter = Edges.Take(Edges.Count - 1).Sum(e => e?.Length ?? 0);
+                    }
                 return perimeter + InnerPolygons.Sum(p => p.Perimeter);
             }
         }
@@ -550,18 +555,20 @@ namespace TVGL
         {
             var xCenter = 0.0;
             var yCenter = 0.0;
+            var area = 0.0;
             foreach (var p in AllPolygons)
             {
                 for (int i = 0, j = Vertices.Count - 1; i < Vertices.Count; j = i++)
                 {
                     var pj = Vertices[j];
                     var pi = Vertices[i];
-                    var a = pj.X * pi.Y - pi.X * pj.Y;
-                    xCenter += (pj.X + pi.X) * a;
-                    yCenter += (pj.Y + pi.Y) * a;
+                    var doubleTriangleArea = pj.X * pi.Y - pi.X * pj.Y;
+                    xCenter += (pj.X + pi.X) * doubleTriangleArea;
+                    yCenter += (pj.Y + pi.Y) * doubleTriangleArea;
+                    area += doubleTriangleArea;
                 }
             }
-            _centroid = new Vector2(xCenter, yCenter) / (6 * Area);
+            _centroid = new Vector2(xCenter, yCenter) / (3 * area);
         }
 
         /// <summary>
@@ -668,7 +675,7 @@ namespace TVGL
                 _innerPolygons.Select(p => p.Copy(true, invert)).ToList() : null;
             var copiedArea = copyInnerPolygons ? this.area : this.pathArea;
             if (invert) copiedArea *= -1;
-            var copiedPolygon = new Polygon(thisPath, this.Index)
+            var copiedPolygon = new Polygon(thisPath, this.Index, false, this.IsClosed)
             {
                 area = copiedArea,
                 maxX = this.maxX,
@@ -689,6 +696,25 @@ namespace TVGL
         {
         }
 
+        public void SetVertexConvexities()
+        {
+            MakePolygonEdgesIfNonExistent();
+            _isConvex = true;
+            foreach (var v in Vertices)
+            {
+                if (v.StartLine == null || v.EndLine == null)
+                {
+                    v.IsConvex = null;
+                    _isConvex = false;
+                }
+                else
+                {
+                    v.IsConvex = v.EndLine.Vector.CrossSign(v.StartLine.Vector) >= 0;
+                    if (!v.IsConvex.Value)
+                        _isConvex = false;
+                }
+            }
+        }
 
         /// <summary>
         /// Determines whether this instance is convex.
@@ -698,25 +724,7 @@ namespace TVGL
         {
             get
             {
-                if (!_isConvex.HasValue)
-                {
-                    MakePolygonEdgesIfNonExistent();
-                    _isConvex = true;
-                    foreach (var v in Vertices)
-                    {
-                        if (v.StartLine == null || v.EndLine == null)
-                        {
-                            v.IsConvex = null;
-                            _isConvex = false;
-                        }
-                        else
-                        {
-                            v.IsConvex = v.EndLine.Vector.CrossSign(v.StartLine.Vector) >= 0;
-                            if (!v.IsConvex.Value)
-                                _isConvex = false;
-                        }
-                    }
-                }
+                if (!_isConvex.HasValue) SetVertexConvexities();
                 return _isConvex.Value;
             }
         }
@@ -731,14 +739,10 @@ namespace TVGL
             MakePolygonEdgesIfNonExistent();
             foreach (var v in Vertices)
             {
-                if (v.IsConvex.HasValue && v.IsConvex.Value)
+                if (!v.IsConvex.HasValue && v.StartLine != null && v.EndLine != null)
+                    SetVertexConvexities();
+                if (v.IsConvex.GetValueOrDefault(false))
                     yield return v;
-                else if (v.StartLine != null && v.EndLine != null)
-                {
-                    v.IsConvex = v.EndLine.Vector.CrossSign(v.StartLine.Vector) >= 0;
-                    if (v.IsConvex.Value)
-                        yield return v;
-                }
             }
         }
         /// <summary>
@@ -750,17 +754,13 @@ namespace TVGL
             MakePolygonEdgesIfNonExistent();
             foreach (var v in Vertices)
             {
-                if (v.IsConvex.HasValue && !v.IsConvex.Value)
+                if (!v.IsConvex.HasValue && v.StartLine != null && v.EndLine != null)
+                    SetVertexConvexities();
+                if (!v.IsConvex.GetValueOrDefault(true))
                     yield return v;
-                else if (v.StartLine != null && v.EndLine != null)
-                {
-                    v.IsConvex = v.EndLine.Vector.CrossSign(v.StartLine.Vector) >= 0;
-                    if (!v.IsConvex.Value)
-                        yield return v;
-                }
             }
         }
-        
+
         /// <summary>
         /// Sets the bounds.
         /// </summary>
@@ -783,9 +783,18 @@ namespace TVGL
         {
             foreach (var polygon in AllPolygons)
             {
+                polygon.minX = double.PositiveInfinity;
+                polygon.minY = double.PositiveInfinity;
+                polygon.maxX = double.NegativeInfinity;
+                polygon.maxY = double.NegativeInfinity;
                 foreach (var v in polygon.Vertices)
+                {
                     v.Transform(transformMatrix);
-                
+                    if (minX > v.X) minX = v.X;
+                    if (minY > v.Y) minY = v.Y;
+                    if (maxX < v.X) maxX = v.X;
+                    if (maxY < v.Y) maxY = v.Y;
+                }
                 polygon.Reset();
             }
         }
@@ -796,7 +805,6 @@ namespace TVGL
         public void Reset()
         {
             _path = null;
-            _edges = null;
             _orderedXVertices = null;
             area = double.NaN;
             pathArea = double.NaN;
@@ -806,6 +814,8 @@ namespace TVGL
             minY = RationalIP.PositiveInfinity;
             maxX = RationalIP.NegativeInfinity;
             maxY = RationalIP.NegativeInfinity;
+            foreach (var edge in Edges)
+                edge.Reset();
         }
 
         public void ReIndexPolygon()
@@ -814,8 +824,12 @@ namespace TVGL
             foreach (var polygon in AllPolygons)
             {
                 polygon.Index = id++;
-                foreach (var v in polygon.Vertices)
+                for (int i = 0; i < polygon.Vertices.Count; i++)
+                {
+                    Vertex2D v = polygon.Vertices[i];
+                    v.IndexInList = i;
                     v.LoopID = polygon.Index;
+                }
             }
         }
 

@@ -42,9 +42,9 @@ namespace TVGL
         /// Transforms the shape by the provided transformation matrix.
         /// </summary>
         /// <param name="transformMatrix">The transform matrix.</param>
-        public override void Transform(Matrix4x4 transformMatrix)
+        public override void Transform(Matrix4x4 transformMatrix, bool transformFacesAndVertices)
         {
-            base.Transform(transformMatrix);
+            base.Transform(transformMatrix, transformFacesAndVertices);
         }
         /// <summary>
         /// Calculates the mean square error.
@@ -53,7 +53,7 @@ namespace TVGL
         /// <returns>System.Double.</returns>
         public override double CalculateMeanSquareError(IEnumerable<Vector3> vertices = null)
         {
-            return 0.0;
+            return double.PositiveInfinity;
         }
 
         /// <summary>
@@ -93,6 +93,35 @@ namespace TVGL
             }
         }
 
+
+        /// <summary>
+        /// Calculates the both errors.
+        /// </summary>
+       internal protected override void CalculateBothErrors()
+        {
+            _maxError = double.PositiveInfinity;
+            _meanSquaredError = double.PositiveInfinity;
+        }
+
+        /// <summary>
+        /// Calculates the mean square error.
+        /// </summary>
+        /// <param name="points">The vertices.</param>
+        /// <returns>System.Double.</returns>
+        public override double CalculateMaxError(IEnumerable<Vector3> points)
+        {
+            return double.PositiveInfinity;
+        }
+
+        /// <summary>
+        /// Returns whether the given point is inside the primitive.
+        /// </summary>
+        /// <param name="x">The x.</param>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
+        public override bool PointIsInside(Vector3 x)
+        {
+            return false;
+        }
         /// <summary>
         /// Points the membership.
         /// </summary>

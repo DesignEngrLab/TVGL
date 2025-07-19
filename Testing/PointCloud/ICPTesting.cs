@@ -1,10 +1,12 @@
-﻿using System;
+﻿using Microsoft.Extensions.Logging;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using TVGL;
 using TVGL.PointCloud;
+using WindowsDesktopPresenter;
 
 namespace TVGLUnitTestsAndBenchmarking
 {
@@ -17,9 +19,6 @@ namespace TVGLUnitTestsAndBenchmarking
 
         internal static void Test1()
         {
-            var myWriter = new ConsoleTraceListener();
-            Trace.Listeners.Add(myWriter);
-            TVGL.Message.Verbosity = VerbosityLevels.Everything;
             var points = new List<Vector3> {
                 new Vector3(3, 1,1),
                 new Vector3(2, 6,1),
@@ -33,8 +32,8 @@ namespace TVGLUnitTestsAndBenchmarking
             var transfrom = Matrix4x4.CreateFromQuaternion(quat) * translate;
             var targetPoints = points.Select(p => p.Transform(transfrom)).ToList();
             var tPredicted = IterativeClosestPoint3D.Run(points, targetPoints);
-            Message.  output(transfrom);
-            Message.output(tPredicted);
+            Global.Logger.LogInformation(transfrom.ToString());
+            Global.Logger.LogInformation(tPredicted.ToString());
         }
         public static void TestPoints(DirectoryInfo dir)
         {

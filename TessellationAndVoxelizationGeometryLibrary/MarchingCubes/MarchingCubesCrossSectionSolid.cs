@@ -276,7 +276,7 @@ namespace TVGL
                     for (int i = 0; i < numGridX; i++)
                     {
                         while (xIndex < intersections.Length && x > intersections[xIndex]) xIndex++;
-                        if (xIndex % 2 == 0)
+                        if (int.IsEvenInteger(xIndex))
                             grid[i, j] = double.PositiveInfinity;
                         else grid[i, j] = double.NegativeInfinity;
                         x += discretization;

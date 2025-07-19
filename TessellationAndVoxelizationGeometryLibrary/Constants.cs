@@ -1,19 +1,5 @@
-﻿// ***********************************************************************
-// Assembly         : TessellationAndVoxelizationGeometryLibrary
-// Author           : matth
-// Created          : 04-03-2023
-//
-// Last Modified By : matth
-// Last Modified On : 04-03-2023
-// ***********************************************************************
-// <copyright file="Constants.cs" company="Design Engineering Lab">
-//     2014
-// </copyright>
-// <summary></summary>
-// ***********************************************************************
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Runtime.CompilerServices;
 
 namespace TVGL
@@ -240,14 +226,6 @@ namespace TVGL
         public static double Pseudoangle(double dx, double dy)
         {
             var p = dx / (Math.Abs(dx) + Math.Abs(dy)); // -1 .. 1 increasing with x
-            if (dy < 0) return 3 + p;  //  2 .. 4 increasing with x
-            return 1 - p;  //  0 .. 2 decreasing with x
-        }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static double Pseudoangle(Int128 dx, Int128 dy)
-        {
-            var denominator = Int128.Abs(dx) + Int128.Abs(dy);
-            var p = new RationalIP(dx, denominator).AsDouble; // -1 .. 1 increasing with x
             if (dy < 0) return 3 + p;  //  2 .. 4 increasing with x
             return 1 - p;  //  0 .. 2 decreasing with x
         }

@@ -12,6 +12,7 @@
 // <summary></summary>
 // ***********************************************************************
 using System;
+using System.Collections.Generic;
 
 namespace TVGL
 {
@@ -50,6 +51,7 @@ namespace TVGL
         /// <param name="surface1">The surface1.</param>
         public ImplicitSolid(PrimitiveSurface surface1) : this()
         {
+            Primitives = new List<PrimitiveSurface> { surface1 };
             operationTree = new LeafSurface(surface1);
         }
         /// <summary>
@@ -60,6 +62,7 @@ namespace TVGL
         /// <param name="booleanOperation">The boolean operation.</param>
         public ImplicitSolid(PrimitiveSurface surfaceA, PrimitiveSurface surfaceB, BooleanOperationType booleanOperation) : this()
         {
+            Primitives = new List<PrimitiveSurface> { surfaceA, surfaceB };
             operationTree = MakeBooleanOperation(new LeafSurface(surfaceA), new LeafSurface(surfaceB), booleanOperation);
         }
 

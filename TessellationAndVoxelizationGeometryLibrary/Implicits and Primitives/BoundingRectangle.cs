@@ -146,5 +146,31 @@ namespace TVGL
             }
             return cornerPoints;
         }
+
+        /// <summary>
+        /// Finds the overlapping area between two bounding rectangles.
+        /// </summary>
+        /// <param name="a"></param>
+        /// <param name="b"></param>
+        /// <returns></returns>
+        public static double OverlappingArea(BoundingRectangle a, BoundingRectangle b)
+        {
+            if (!a.Direction1.IsAligned(b.Direction1))
+                throw new ArgumentException("Bounding rectangles must be aligned in the same direction.");
+            return Math.Max(0, (Math.Min(a.MaxD1, b.MaxD1) - Math.Max(a.MinD1, b.MinD1)))
+                * Math.Max(0, (Math.Min(a.MaxD2, b.MaxD2) - Math.Max(a.MinD2, b.MinD2)));
+        }
+
+        /// <summary>
+        /// This is really the area of the XOR of the two rectangles.
+        /// </summary>
+        /// <param name="a"></param>
+        /// <param name="b"></param>
+        /// <returns></returns>
+        public static double DifferenceArea(BoundingRectangle a, BoundingRectangle b)
+        {
+            return a.Area + b.Area - 2 * OverlappingArea(a, b);
+        }
+
     }
 }

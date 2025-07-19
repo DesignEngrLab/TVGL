@@ -38,7 +38,7 @@ namespace TVGL
             var index = (numberList.Count - 1) / 2;
             var loValue = nthOrderStatistic(numberList, index, 0, numberList.Count - 1);
             double median;
-            if (numberList.Count % 2 != 0) median = loValue;
+            if (int.IsOddInteger(numberList.Count)) median = loValue;
             else
             {
                 var hiValue = nthOrderStatistic(numberList, index + 1, 0, numberList.Count - 1);
@@ -50,7 +50,6 @@ namespace TVGL
         /// <summary>
         /// Returns Nth smallest element from the list. Here n starts from 0 so that n=0 returns minimum,
         /// n=1 returns 2nd smallest element etc.
-        /// Note: specified list would be mutated in the process.
         /// Reference: Introduction to Algorithms 3rd Edition, Corman et al, pp 216
         /// </summary>
         /// <param name="numbers">The numbers.</param>
@@ -326,7 +325,7 @@ namespace TVGL
             //The calculation of the degrees of freedom for the Welch t-test is somewhat tricky and
             //the equation isn’t at all obvious. Fortunately, you’ll never have to modify this calculation.
             //Method TTest concludes by computing the p-value and displaying all the calculated values:
-            var p =  AreaUnderTDistribution(t, df); // Cumulative two-tail density
+            var p = AreaUnderTDistribution(t, df); // Cumulative two-tail density
             return p;
         }
     }

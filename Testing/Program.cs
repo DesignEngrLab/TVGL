@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Threading;
 using TVGL;
+using WindowsDesktopPresenter;
 
 namespace TVGLUnitTestsAndBenchmarking
 {
@@ -19,42 +19,69 @@ namespace TVGLUnitTestsAndBenchmarking
         [STAThread]
         private static void Main(string[] args)
         {
-            var myWriter = new ConsoleTraceListener();
-            Trace.Listeners.Add(myWriter);
-            TVGL.Message.Verbosity = VerbosityLevels.OnlyCritical;
-            DirectoryInfo dir = Program.BackoutToFolder(inputFolder);
-            PolygonBooleanTester.FullComparison();
-            return;
-            var index = 01;
-            var valid3DFileExtensions = new HashSet<string> { ".stl", ".ply", ".obj", ".3mf", ".tvglz" };
-            var allFiles = dir.GetFiles("*", SearchOption.AllDirectories).Where(f => valid3DFileExtensions.Contains(f.Extension.ToLower()))
-                ; //.OrderBy(fi => fi.Length);
-            foreach (var fileName in allFiles.Skip(index))
-            {
-                Console.WriteLine(index + ": Attempting to open: " + fileName.Name);
-                TessellatedSolid[] solids = null;
-                IO.Open(fileName.FullName, out solids);
-                var ts = solids[0];
-                for (int i = 0; i < 100; i++)
-                {
-                    ts.Transform(Matrix4x4.CreateFromYawPitchRoll(0.1, 0.1, 0.1));
-                    Presenter.Show(ts, i.ToString(), Presenter.HoldType.AddToQueue,60, index %3);
+            Global.Presenter2D = new Presenter2D();
+            Global.Presenter3D = new Presenter3D();
 
+            var A = new Polygon(new List<Vector2> {
+            new Vector2(0, 3), new Vector2(9,0),new Vector2(12, 0),
+            new Vector2(3,3),
+            new Vector2(3,12), new Vector2(13,15),
+            new Vector2(0,12),
+            //new Vector2(0, 5)
+            //new Vector2(3,2.2), new Vector2(4, 2),
+            //new Vector2(4, 0.5), new Vector2(5, 2),
+            //new Vector2(3, 2.5),
+            //new Vector2(2, .7), new Vector2(1, 3),new Vector2(1, 3),
+            //new Vector2(3, 2.75), new Vector2(3, 3.5),
+            //new Vector2(00, 3.5),
+        });
+            var B = A.Copy(true, false);
+            var C = A.Copy(true, true);
+            C.Transform(Matrix3x3.CreateScale(5, -5, new Vector2(0, 7)));
+            var box = new Polygon([new Vector2(-1, -32), new Vector2(62, -32), new Vector2(62, 43), new Vector2(-1, 43),]);
+            C = box.Subtract(C).LargestPolygon();
+            Presenter.ShowAndHang([C, B]);
+            //var B = new Polygon(new List<Vector2> { new Vector2(10,10), new Vector2(16, 10),
+            //    new Vector2(16, 6),
+            //    new Vector2(17,9),
+            //    new Vector2(17,11)
+            //    ,new Vector2(10,11)
+            //});
+            //A.Transform(Matrix3x3.CreateTranslation(5, 11));
+            //A.Reverse();
+            A = C;
+            var negB = new Polygon(B.Path.Select(p => -p));
+            // var ASumB = A.MinkowskiSumNew(B).LargestPolygon();
+            var ASumNegB = A.MinkowskiSum(negB);
+            var ASumNegB0 = ASumNegB[0];
+            var ASumNegB1 = ASumNegB[1];
+            //var ASumNegB0 = A.MinkowskiSum(negB)[0];
+            //var ASumNegB1 = A.MinkowskiSum(negB)[1];
+            //Presenter.ShowAndHang([A, B,negB]);
+            //Presenter.ShowAndHang([A, B, negB, ASumNegB0, ASumNegB1]);
+            ASumNegB1.Complexify(0.5);
+            for (int k = 0; k < 3; k++)
+                for (int i = 0; i < ASumNegB1.Vertices.Count; i++)
+                {
+                    var translate = ASumNegB1.Path[i];
+                    var bmov = B.Copy(true, true);
+                    bmov.Transform(Matrix3x3.CreateTranslation(translate));
+                    Presenter.Show([A, B, ASumNegB1, bmov], holdType: HoldType.AddToQueue, timetoShow: 25);
                 }
-                //Thread.Sleep(3333);
-                //return;
-                index++;
-            }
-        }
-        public static DirectoryInfo BackoutToFolder(string folderName = "")
-        {
-            var dir = new DirectoryInfo(".");
-            while (!Directory.Exists(Path.Combine(dir.FullName, folderName)))
-            {
-                if (dir == null) throw new FileNotFoundException("Folder not found", folderName);
-                dir = dir.Parent;
-            }
-            return new DirectoryInfo(Path.Combine(dir.FullName, folderName));
+            Console.ReadKey();
+            //var nfp1 = nfp0.InnerPolygons[0];
+            //Presenter.ShowAndHang([A, B, nfp1]);
+            //nfp1.Complexify(0.5);
+            //for (int k = 0; k < 3; k++)
+            //    for (int i = 0; i < nfp1.Vertices.Count; i++)
+            //    {
+            //        var translate = nfp1.Path[i];
+            //        var bmov = B.Copy(true, true);
+            //        bmov.Transform(Matrix3x3.CreateTranslation(translate));
+            //        Presenter.Show([A, B, nfp1, bmov], holdType: Presenter.HoldType.AddToQueue, timetoShow: 83);
+            //    }
+            //B.Transform(Matrix3x3.CreateScale(1));
+            //A = new Polygon(A.CreateConvexHull(out _));
         }
 
         public static IEnumerable<List<Polygon>> GetRandomPolygonThroughSolids(DirectoryInfo dir)

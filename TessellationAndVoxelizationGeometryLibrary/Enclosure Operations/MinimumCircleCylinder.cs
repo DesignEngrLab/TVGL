@@ -85,9 +85,10 @@ namespace TVGL
                     points[0] = maxPoint;
                     circle = FindCircle(points);
                     maxDistSqared = circle.RadiusSquared;
+                    //Presenter.ShowAndHang(points.Take(6), plot2DType: Plot2DType.Points);
                     startIndex = 4;
                     // should we start at 3 or 4? initially the circle was defined with the first 2 or 3 points.
-                    // (if it were 2 then the third point was inside the circle and was ineffecitve).
+                    // (if it were 2 then the third point was inside the circle and was ineffective).
                     // but these indices would be 0,1,2 - so shouldn't the next point to check be 3?!
                     // no, because when the new point was moved to the front of the list, the least
                     // contributor would have been at index-2, and now that's index-3 (this is done in the
@@ -115,7 +116,7 @@ namespace TVGL
             {
                 // since 0 and 2 are furthest apart, we need to swap 1 and 2
                 // so that the two points in the circle are at the beinning of the list
-                Constants.SwapItemsInList(1, 2, points);
+                Global.SwapItemsInList(1, 2, points);
                 return circle;
             }
             circle = Circle.CreateFrom2Points(points[1], points[2]);
@@ -123,7 +124,7 @@ namespace TVGL
             {
                 // since 1 and 2 are furthest apart, we need to swap 0 and 2
                 // so that the two points in the circle are at the beinning of the list
-                Constants.SwapItemsInList(0, 2, points);
+                Global.SwapItemsInList(0, 2, points);
                 return circle;
             }
             // otherwise, it's the 3-point circle
@@ -154,7 +155,7 @@ namespace TVGL
             if ((points[1] - circle.Center).LengthSquared() <= circle.RadiusSquared
                 && (points[3] - circle.Center).LengthSquared() <= circle.RadiusSquared)
             {
-                Constants.SwapItemsInList(1, 2, points);
+                Global.SwapItemsInList(1, 2, points);
                 return circle;
             }
             // 3. make the 0-3 circle and check with 1 & 2
@@ -162,7 +163,7 @@ namespace TVGL
             if ((points[1] - circle.Center).LengthSquared() <= circle.RadiusSquared
                 && (points[2] - circle.Center).LengthSquared() <= circle.RadiusSquared)
             {
-                Constants.SwapItemsInList(1, 3, points);
+                Global.SwapItemsInList(1, 3, points);
                 return circle;
             }
 
@@ -170,7 +171,7 @@ namespace TVGL
             // circle 0-1-2
             var minRadiusSqd = double.PositiveInfinity;
             if (Circle.CreateFrom3Points(points[0], points[1], points[2], out tempCircle)
-                && !(points[3] - circle.Center).LengthSquared().IsGreaterThanNonNegligible(circle.RadiusSquared))
+                && (points[3] - tempCircle.Center).LengthSquared() <= tempCircle.RadiusSquared)
             { // this one uses IsGreaterThanNonNegligible to prevent infinite cycling when more points are on the circle
                 circle = tempCircle;
                 minRadiusSqd = circle.RadiusSquared;
@@ -194,8 +195,8 @@ namespace TVGL
                 swap3And1 = true;
                 circle = tempCircle;
             }
-            if (swap3And1) Constants.SwapItemsInList(3, 1, points);
-            else if (swap3And2) Constants.SwapItemsInList(3, 2, points);
+            if (swap3And1) Global.SwapItemsInList(3, 1, points);
+            else if (swap3And2) Global.SwapItemsInList(3, 2, points);
             return circle;
         }
 

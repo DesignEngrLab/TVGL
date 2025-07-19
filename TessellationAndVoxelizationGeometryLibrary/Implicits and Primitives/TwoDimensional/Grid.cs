@@ -13,6 +13,7 @@
 // ***********************************************************************
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.CompilerServices;
 
 namespace TVGL
@@ -23,6 +24,8 @@ namespace TVGL
     /// <typeparam name="T"></typeparam>
     public abstract class Grid<T>
     {
+        public abstract bool IsInsideForPolygonCreation(int index);
+
         /// <summary>
         /// Gets the values.
         /// Don't make this a concurrent dictionary. Since the operations are generally very small and quick,
@@ -94,78 +97,52 @@ namespace TVGL
         /// <param name="maxX">The maximum x.</param>
         /// <param name="minY">The minimum y.</param>
         /// <param name="maxY">The maximum y.</param>
-        /// <param name="pixelsPerRow">The pixels per row.</param>
         /// <param name="pixelBorder">The pixel border.</param>
-        public void Initialize(double minX, double maxX, double minY, double maxY, int pixelsPerRow, int pixelBorder = 2)
+        public void Initialize(double minX, double maxX, double minY, double maxY,
+            double pixelSideLength = double.NaN, int pixelsPerRow = -1, int pixelBorder = 2)
         {
             XLength = maxX - minX;
             YLength = maxY - minY;
-            var MaxLength = XLength > YLength ? XLength : YLength;
+            if (!double.IsNaN(pixelSideLength))
+                PixelSideLength = pixelSideLength;
+            else if (pixelsPerRow > 0)
+            {
+                //Calculate the size of a pixel based on the max of the two dimensions in question. 
+                var MaxLength = XLength > YLength ? XLength : YLength;
+                PixelSideLength = MaxLength / (pixelsPerRow - pixelBorder * 2);
+            }
+            else throw new ArgumentException("While both pixelsPerRow and pixelSideLength are optional" +
+                "arguments, you must specify one of them.");
 
-            //Calculate the size of a pixel based on the max of the two dimensions in question. 
-            //Subtract pixelsPerRow by 2xpixelBorder
-            PixelSideLength = MaxLength / (pixelsPerRow - pixelBorder * 2);
+            MinX = minX;
+            MinY = minY;
             inversePixelSideLength = 1 / PixelSideLength;
+
             XCount = (int)Math.Ceiling(XLength * inversePixelSideLength);
             YCount = (int)Math.Ceiling(YLength * inversePixelSideLength);
-            // shift the grid slightly so that the part is centered in the grid
+            // shift the grid slightly so that the part grid points are better aligned within the bounds
             var xStickout = XCount * PixelSideLength - XLength;
-            MinX = minX - xStickout / 2;
+            MinX -= xStickout / 2;
             var yStickout = YCount * PixelSideLength - YLength;
-            MinY = minY - yStickout / 2;
-            // add the pixel border...2x since includes both sides (left and right, or top and bottom)
+            MinY -= yStickout / 2;
+            // add the pixel border...2 since includes both sides (left and right, or top and bottom)
             XCount += pixelBorder * 2;
             YCount += pixelBorder * 2;
+            MaxIndex = XCount * YCount - 1;
+
             MinX -= pixelBorder * PixelSideLength;
             MinY -= pixelBorder * PixelSideLength;
             MaxX = MinX + XCount * PixelSideLength;
             MaxY = MinY + YCount * PixelSideLength;
-            MaxIndex = XCount * YCount - 1;
-            Values = new T[XCount * YCount];
-        }
-
-        /// <summary>
-        /// Initializes the specified minimum x.
-        /// </summary>
-        /// <param name="minX">The minimum x.</param>
-        /// <param name="maxX">The maximum x.</param>
-        /// <param name="minY">The minimum y.</param>
-        /// <param name="maxY">The maximum y.</param>
-        /// <param name="pixelSideLength">Length of the pixel side.</param>
-        /// <param name="pixelBorder">The pixel border.</param>
-        public void Initialize(double minX, double maxX, double minY, double maxY, double pixelSideLength, int pixelBorder = 2)
-        {
-            MaxX = maxX;
-            MinX = minX;
-            MaxY = maxY;
-            MinY = minY;
-            XLength = maxX - MinX;
-            YLength = maxY - MinY;
-            //Calculate the size of each pixel based on the max of the two dimensions in question. 
-            //Subtract pixelsPerRow by 1, since we will be adding a half a pixel to each side.
-            PixelSideLength = pixelSideLength; // MaxLength / (pixelsPerRow - pixelBorder * 2);
-            inversePixelSideLength = 1 / PixelSideLength;
-            XCount = (int)Math.Ceiling(XLength * inversePixelSideLength);
-            YCount = (int)Math.Ceiling(YLength * inversePixelSideLength);
-            // shift the grid slightly so that the part grid points are better aligned within the bounds
-            var xStickout = XLength - XCount * PixelSideLength;
-            MinX += xStickout / 2;
-            var yStickout = YLength - YCount * PixelSideLength;
-            MinY += yStickout / 2;
-            // add the pixel border...2 since includes both sides (left and right, or top and bottom)
-            XCount += pixelBorder * 2;
-            YCount += pixelBorder * 2;
-
-            MaxIndex = XCount * YCount - 1;
             Values = new T[XCount * YCount];
         }
         public void Initialize<U>(Grid<U> grid)
         {
             PixelSideLength = grid.PixelSideLength;
             inversePixelSideLength = grid.inversePixelSideLength;
-            MinX =grid.MinX;
+            MinX = grid.MinX;
             MaxX = grid.MaxX;
-            MinY =grid.MinY;
+            MinY = grid.MinY;
             MaxY = grid.MaxY;
             XLength = MaxX - MinX;
             YLength = MaxY - MinY;
@@ -217,7 +194,7 @@ namespace TVGL
                 return false;
             }
             value = Values[index];
-            return  !EqualityComparer<T>.Default.Equals(value, default(T));
+            return !EqualityComparer<T>.Default.Equals(value, default(T));
         }
 
         /// <summary>
@@ -298,8 +275,8 @@ namespace TVGL
             }
             var D = 2 * dx - dy;
             var x = GetXIndex(x0);
-            var bottom = GetYIndex(y0);
-            var top = GetYIndex(y1);
+            var bottom = Math.Max(0, GetYIndex(y0));
+            var top = Math.Min(YCount - 1, GetYIndex(y1));
             for (var y = bottom; y <= top; y++)
             {
                 yield return (x, y);
@@ -336,8 +313,8 @@ namespace TVGL
             var D = 2 * dy - dx;
 
             var y = GetYIndex(y0);
-            var left = GetXIndex(x0);
-            var right = GetXIndex(x1);
+            var left = Math.Max(0, GetXIndex(x0));
+            var right = Math.Min(XCount - 1, GetXIndex(x1));
             for (var x = left; x <= right; x++)
             {
                 yield return (x, y);
@@ -421,5 +398,130 @@ namespace TVGL
         /// <returns>System.Double.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public double GetSnappedY(int y) => y * PixelSideLength + MinY;
+
+
+
+        public IEnumerable<Polygon> ConvertGridToPolygons()
+        {
+            //First, find all the lower left hand corners of potential polygons.
+            //These pixels will have a null pixel to the left, below, and left-below diagonal.
+            //Second, while any possible start pixels remain, start a new polygon.
+            //try moving to the next valid pixel along a the CCW direction
+            //and by remembering the previous move. Continue wrapping around the exterior
+            //of valid pixels until you return the start pixel. Rinse and repeat until
+            //all possible start pixels have either been accessed via wrapping or used for new polygons.
+
+            //Wrapping CCW is pretty interesting. Whenever we move to a valid pixel,
+            //we reverse the direction to be from the new pixel to the prior pixel.
+            //Then we check CCW from that direction until we hit the next valid pixel.
+            //Deltas are arranges in this specific CCW order because we are starting
+            //polygons from their lower left, which ensures that the first CCW valid pixel
+            //will either be to the right or above the start pixel.
+
+            // triple-N: no-null-neighbors are cells that have no neighbors below,
+            // to the left or to the SW. these triple-N cells are used to start the polygons
+            var tripleNCells = new Dictionary<int, int>();
+            for (var i = 0; i <= MaxIndex; i++)
+            {
+                if (IsInsideForPolygonCreation(i) && IsTripleN(i, this, out var j))
+                    tripleNCells.Add(i, j);
+            }
+
+            //var MATRIX = new double[grid.XCount, grid.YCount];
+            //for (int i = 0; i < grid.XCount; i++)
+            //    for (int j = 0; j < grid.YCount; j++)
+            //        MATRIX[i, j] = (grid[i, j].Item1 == null) ? 0 : 1;
+            //Global.Plotter.ShowHeatmap(MATRIX);
+            // this tranform is what must be applied to resulting polygons to scale and
+            // shift them back to the original values
+            var transform = Matrix3x3.CreateScale(PixelSideLength);
+            transform *= Matrix3x3.CreateTranslation(MinX, MinY);
+
+            var polygons = new List<Polygon>();
+            while (tripleNCells.Any())
+            {
+                //var lastDir = -1; //this is used to stored the direction that the
+                // last cell came from. actually, it is the negative of that direction
+                (var index, var lastDir) = tripleNCells.First();
+                var (startX, startY) = GetXYIndicesFromPixelIndices(index);
+                var x = startX;
+                var y = startY;
+                //var visitedCells = new HashSet<int>(); //keep the hash and order in 
+                var loop = new List<Vector2>();    // the list
+                do
+                {
+                    var isTripleN = tripleNCells.Remove(index);
+                    var coord = new Vector2(x, y);
+                    //if (!visitedCells.Add(index)) break;
+                    // the only reason we keep the hash is because in long skinny sections,
+                    // the same pixel might appear twice. to simplify things we only allow
+                    // a pixel to exist once in a polygon. this avoids self-intersections
+                    loop.Add(coord);
+
+                    // whether the first or some intermediate pixel, we need to check to see if
+                    // it should be removed from the tripleNCells since these define the starting position of loops
+                    //if (isTripleN) tripleNCells.Remove(index);  
+                    var limit = isTripleN ? lastDir + 5 : lastDir + 8;
+                    for (int i = lastDir; i < limit; i++)
+                    {
+                        //To allow for starting at any direction, but still considering up to 8 directions, 
+                        //we allow the indices to wrap around. This is accomplished with i % 8.
+                        var dir = i % 8;
+                        var newX = x + deltas[dir][0];
+                        var newY = y + deltas[dir][1];
+                        var newIndex = GetIndex(newX, newY);
+                        if (!IsInsideForPolygonCreation(newIndex)) 
+                            continue;
+                        //Update x, y, and the index
+                        index = newIndex;
+                        x = newX;
+                        y = newY;
+                        // ...set the lastDir to the negative of the current
+                        // so that next time through, you start from that prior cell
+                        //This ensures that the pixels are added in CCW order
+                        lastDir = (dir + 5) % 8;
+                        break;
+                    }
+                } while (x != startX || y != startY);
+                var polygon = new Polygon(loop);
+                //Global.Plotter.ShowAndHang(polygon);
+                polygon.SimplifyAndSmoothRectilinearPolygon(1, true);
+                //Global.Plotter.ShowAndHang(polygon);
+                polygon.SimplifyByAreaChange(0.001);
+                polygon.Transform(transform);
+                if (polygon.Vertices.Count <= 2 || polygon.Area.IsNegligible()) continue;
+                yield return polygon;
+            }
+        }
+
+
+        //The pixels that we are looking for to start at have null pixels to their left, below, and left-below diagonal
+        private static bool IsTripleN(int index, Grid<T> grid, out int j)
+        {
+            var (x, y) = grid.GetXYIndicesFromPixelIndices(index);
+            for (int i = 0; i < 8; i++)
+            {
+                for (int d = 0; d < 4; d++)
+                {
+                    j = (i + d) % 8;
+                    if (d == 3) return true;
+                    if (grid.IsInsideForPolygonCreation(grid.GetIndex(x + deltas[j][0], y + deltas[j][1])))
+                        break;
+                }
+            }
+            j = -1;
+            return false;
+        }
+        private static int[][] deltas =
+    [
+        [1, -1], // 0, SE
+                [1, 0], // 1 E
+                [1, 1], //3, NE
+                [0, 1], // 4 N
+                [-1, 1], //5 NW
+                [-1, 0],  // 6 W
+                [-1, -1], //7 SW
+                [ 0, -1 ] // S
+    ];
     }
 }

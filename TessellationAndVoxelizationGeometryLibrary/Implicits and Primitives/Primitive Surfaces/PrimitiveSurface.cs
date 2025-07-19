@@ -12,7 +12,6 @@
 // <summary></summary>
 // ***********************************************************************
 using Newtonsoft.Json;
-using Newtonsoft.Json.Schema;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -34,9 +33,9 @@ namespace TVGL
         /// <param name="faces">The faces.</param>
         /// <param name="connectFacesToPrimitive">if set to <c>true</c> [connect faces to primitive].</param>
         public void SetFacesAndVertices(IEnumerable<TriangleFace> faces, bool connectFacesToPrimitive = true,
-            bool keepvalues = false)
+            bool doNotResetFaceDependentValues = false)
         {
-            if (!keepvalues)
+            if (!doNotResetFaceDependentValues)
                 ResetFaceDependentValues();
             ResetFaceDependentConnectivity();
             if (faces == null) Faces = new HashSet<TriangleFace>();
@@ -110,7 +109,7 @@ namespace TVGL
         /// <summary>
         /// Calculates the both errors.
         /// </summary>
-        private void CalculateBothErrors()
+        internal protected virtual void CalculateBothErrors()
         {
             _maxError = 0.0;
             _meanSquaredError = 0.0;
@@ -311,7 +310,7 @@ namespace TVGL
         /// <summary>
         /// The mean squared error
         /// </summary>
-        double _meanSquaredError = double.NaN;
+        internal protected double _meanSquaredError = double.NaN;
         /// <summary>
         /// Gets the maximum error.
         /// </summary>
@@ -329,7 +328,7 @@ namespace TVGL
         /// <summary>
         /// The maximum error
         /// </summary>
-        double _maxError = double.NaN;
+        internal protected double _maxError = double.NaN;
 
         /// <summary>
         /// Gets or sets the triangle faces.
@@ -396,10 +395,17 @@ namespace TVGL
         /// Transforms the shape by the provided transformation matrix.
         /// </summary>
         /// <param name="transformMatrix">The transform matrix.</param>
-        public virtual void Transform(Matrix4x4 transformMatrix)
+        public virtual void Transform(Matrix4x4 transformMatrix, bool transformFacesAndVertices)
         {
             _meanSquaredError = double.NaN;
             _maxError = double.NaN;
+            if (transformFacesAndVertices)
+            {
+                foreach (var v in Vertices)
+                    v.Coordinates = v.Coordinates.Transform(transformMatrix);
+                foreach (var f in Faces)
+                    f.Update();
+            }
         }
 
         /// <summary>
@@ -809,14 +815,47 @@ namespace TVGL
             return this.MemberwiseClone();
         }
 
-        public PrimitiveSurface Copy(IEnumerable<TriangleFace> faces, bool keepValues = false)
+        public PrimitiveSurface Copy(IEnumerable<TriangleFace> faces, bool doNotResetFaceDependentValues = false)
         {
             var copy = (PrimitiveSurface)this.Clone();
-            copy.SetFacesAndVertices(faces, true, keepValues);
+            copy.SetFacesAndVertices(faces, true, doNotResetFaceDependentValues);
             return copy;
         }
 
-        public abstract string KeyString { get; }
+        public PrimitiveSurface Copy()
+        {
+            var copy = (PrimitiveSurface)this.Clone();
+            if (Faces != null && Faces.Count != 0)
+            {
+                var i = 0;
+                //NumberOfVertices = vertices.Count;
+                var newVertices = new Vertex[Vertices.Count];
+                var oldNewVertexIndexDict = new Dictionary<int, int>();
+                foreach (var vertex in Vertices)
+                {
+                    oldNewVertexIndexDict.Add(vertex.IndexInList, i);
+                    newVertices[i] = new Vertex(vertex.Coordinates, i);
+                    i++;
+                }
+                i = 0;
+                var newFaces = new TriangleFace[Faces.Count];
+                foreach (var oldFace in Faces)
+                {
+                    var newFace = new TriangleFace(newVertices[oldNewVertexIndexDict[oldFace.A.IndexInList]],
+                        newVertices[oldNewVertexIndexDict[oldFace.B.IndexInList]], newVertices[oldNewVertexIndexDict[oldFace.C.IndexInList]]);
+                    newFace.IndexInList = i;
+                    newFace.Color = oldFace.Color;
+                    newFaces[i] = newFace;
+                    i++;
+                }
+                copy.SetFacesAndVertices(newFaces, true);
+            }
+            return copy;
+        }
+
+        //Follows the format:
+        //"Plane|" + Normal.ToString() + "|" + DistanceToOrigin.ToString("F5") + GetCommonKeyDetails();
+        public abstract string KeyString { get; } 
 
         private protected string GetCommonKeyDetails()
         {

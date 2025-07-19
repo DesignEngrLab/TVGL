@@ -17,6 +17,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+using Microsoft.Extensions.Logging;
 
 
 namespace TVGL
@@ -108,7 +109,7 @@ namespace TVGL
                     typeString = "ASCII STL";
                 else
                 {
-                    Message.output("Unable to read in STL file called " + filename, 1);
+                    Log.Error("Unable to read in STL file called " + filename, 1);
                     return null;
                 }
             }
@@ -120,7 +121,7 @@ namespace TVGL
                     stlFileData.HasColorSpecified ? stlFileData.Colors : null,
                     tsBuildOptions, stlFileData.Units, stlFileData.Name, filename, stlFileData.Comments, stlFileData.Language);
             }
-            Message.output(
+            Log.Information(
                 "Successfully read in " + typeString + " file called " + filename + " in " +
                 (DateTime.Now - now).TotalSeconds + " seconds.", 4);
             return results;
@@ -374,13 +375,13 @@ namespace TVGL
                 }
                 writer.WriteLine("endsolid " + solid.Name);
                 writer.Flush();
-                Message.output("Successfully wrote STL file to stream.", 4);
+                Log.Information("Successfully wrote STL file to stream.", 4);
                 return true;
             }
             catch (Exception exception)
             {
-                Message.output("Unable to write in model file.", 1);
-                Message.output("Exception: " + exception.Message, 3);
+                Log.Information("Unable to write in model file.", 1);
+                Log.Information("Exception: " + exception.Message, 3);
                 return false;
             }
         }

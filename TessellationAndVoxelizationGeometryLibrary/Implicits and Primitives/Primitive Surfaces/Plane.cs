@@ -399,10 +399,10 @@ namespace TVGL
         /// </summary>
         /// <param name="matrix">The matrix.</param>
         /// <returns>Plane.</returns>
-        public Plane TransformToNewPlane(Matrix4x4 matrix)
+        public Plane TransformToNewPlane(Matrix4x4 matrix, bool transformFacesAndVertices)
         {
             var copy = (Plane)this.Clone();
-            copy.Transform(matrix);
+            copy.Transform(matrix, transformFacesAndVertices);
             return copy;
         }
         /// <summary>
@@ -411,9 +411,9 @@ namespace TVGL
         /// <param name="matrix">The transformation matrix to apply to the Plane.</param>
         /// <returns>The transformed Plane.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public override void Transform(Matrix4x4 matrix)
+        public override void Transform(Matrix4x4 matrix, bool transformFacesAndVertices)
         {
-            base.Transform(matrix);
+            base.Transform(matrix, transformFacesAndVertices);
             var pointOnPlane = DistanceToOrigin * Normal;
             pointOnPlane = pointOnPlane.Transform(matrix);
             Normal = Normal.TransformNoTranslate(matrix);
@@ -427,10 +427,10 @@ namespace TVGL
         /// </summary>
         /// <param name="rotation">The rotation.</param>
         /// <returns>Plane.</returns>
-        public Plane TransformToNewPlane(Quaternion rotation)
+        public Plane TransformToNewPlane(Quaternion rotation,bool transformFacesAndVertices)
         {
             var copy = (Plane)this.Clone();
-            copy.Transform(rotation);
+            copy.Transform(rotation, transformFacesAndVertices);
             return copy;
         }
 
@@ -440,10 +440,10 @@ namespace TVGL
         /// <param name="rotation">The Quaternion rotation to apply to the Plane.</param>
         /// <returns>A new Plane that results from applying the rotation.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Transform(Quaternion rotation)
+        public void Transform(Quaternion rotation, bool transformFacesAndVertices)
         {
             // Compute rotation matrix.
-            base.Transform(Matrix4x4.Identity);
+            base.Transform(Matrix4x4.Identity, transformFacesAndVertices);
             double x2 = rotation.X + rotation.X;
             double y2 = rotation.Y + rotation.Y;
             double z2 = rotation.Z + rotation.Z;

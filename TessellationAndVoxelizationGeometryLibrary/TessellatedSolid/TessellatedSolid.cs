@@ -1,16 +1,4 @@
-﻿// ***********************************************************************
-// Assembly         : TessellationAndVoxelizationGeometryLibrary
-// Author           : matth
-// Created          : 04-03-2023
-//
-// Last Modified By : matth
-// Last Modified On : 04-14-2023
-// ***********************************************************************
-// <copyright file="TessellatedSolid.cs" company="Design Engineering Lab">
-//     2014
-// </copyright>
-// <summary></summary>
-// ***********************************************************************
+﻿using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -687,7 +675,7 @@ namespace TVGL
             var faceChecksums = new HashSet<long>();
             if (NumberOfVertices > Constants.CubeRootOfLongMaxValue)
             {
-                Message.output("Repeat Face check is disabled since the number of vertices exceeds "
+                Log.Warning("Repeat Face check is disabled since the number of vertices exceeds "
                                + Constants.CubeRootOfLongMaxValue);
                 duplicateFaceCheck = false;
             }
@@ -946,7 +934,7 @@ namespace TVGL
         /// </summary>
         /// <param name="removeVertex">The remove vertex.</param>
         /// <param name="removeReferecesToVertex">if set to <c>true</c> [remove refereces to vertex].</param>
-        internal void RemoveVertex(Vertex removeVertex, bool removeReferecesToVertex = true)
+        public void RemoveVertex(Vertex removeVertex, bool removeReferecesToVertex = true)
         {
             RemoveVertex(removeVertex.IndexInList, removeReferecesToVertex);
         }
@@ -956,7 +944,7 @@ namespace TVGL
         /// </summary>
         /// <param name="removeVIndex">Index of the remove v.</param>
         /// <param name="removeReferecesToVertex">if set to <c>true</c> [remove refereces to vertex].</param>
-        internal void RemoveVertex(int removeVIndex, bool removeReferecesToVertex = true)
+        public void RemoveVertex(int removeVIndex, bool removeReferecesToVertex = true)
         {
             if (removeReferecesToVertex) RemoveReferencesToVertex(Vertices[removeVIndex]);
             NumberOfVertices--;
@@ -1063,7 +1051,7 @@ namespace TVGL
         /// Removes the face.
         /// </summary>
         /// <param name="removeFace">The remove face.</param>
-        internal void RemoveFace(TriangleFace removeFace)
+        public void RemoveFace(TriangleFace removeFace)
         {
             RemoveFace(removeFace.IndexInList);
         }
@@ -1072,7 +1060,7 @@ namespace TVGL
         /// Removes the face.
         /// </summary>
         /// <param name="removeFaceIndex">Index of the remove face.</param>
-        internal void RemoveFace(int removeFaceIndex)
+        public void RemoveFace(int removeFaceIndex)
         {
             //First. Remove all the references to each edge and vertex.
             RemoveReferencesToFace(removeFaceIndex);
@@ -1186,7 +1174,7 @@ namespace TVGL
         /// Removes the edge.
         /// </summary>
         /// <param name="removeEdge">The remove edge.</param>
-        internal void RemoveEdge(Edge removeEdge)
+        public void RemoveEdge(Edge removeEdge)
         {
             RemoveEdge(removeEdge.IndexInList);
         }
@@ -1195,7 +1183,7 @@ namespace TVGL
         /// Removes the edge.
         /// </summary>
         /// <param name="removeEdgeIndex">Index of the remove edge.</param>
-        internal void RemoveEdge(int removeEdgeIndex)
+        public void RemoveEdge(int removeEdgeIndex)
         {
             RemoveReferencesToEdge(removeEdgeIndex);
             NumberOfEdges--;
@@ -1444,7 +1432,7 @@ namespace TVGL
             _inertiaTensor *= rotMatrix;
             if (Primitives != null)
                 foreach (var primitive in Primitives)
-                    primitive.Transform(transformMatrix);
+                    primitive.Transform(transformMatrix, false);
         }
 
         /// <summary>

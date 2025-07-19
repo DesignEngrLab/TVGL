@@ -14,6 +14,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Microsoft.Extensions.Logging;
 
 namespace TVGL
 {
@@ -131,7 +132,7 @@ namespace TVGL
         public static void Simplify(TessellatedSolid ts, int numberOfFaces, double minLength)
         {
             if (ts.Errors != null)
-                Message.output(
+                Log.Warning(
                     "** The model should be free of errors before running this routine (run TessellatedSolid.Repair()).",
                     1);
             var sortedEdges = ts.Edges.OrderBy(e => e.Length).ToList();
