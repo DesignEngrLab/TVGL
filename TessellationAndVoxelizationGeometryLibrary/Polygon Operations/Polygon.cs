@@ -45,7 +45,7 @@ namespace TVGL
                         _path = new List<Vector2>();
                         foreach (var point in _vertices)
                         {
-                            _path.Add(new Vector2(point.X, point.Y));
+                            _path.Add( new Vector2(point.X, point.Y));
                         }
                     }
                 }
@@ -178,7 +178,7 @@ namespace TVGL
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         public bool AddInnerPolygon(Polygon polygon)
         {
-            if (polygon is null || (polygon._path is null && polygon._vertices is null)) return false;
+            if (polygon is null || polygon.Vertices is null) return false;
             //if (this.IsNonIntersectingPolygonInside(polygon, false, out _) == false) return false;
             //if (polygon.IsPositive) polygon.Reverse();
             _innerPolygons ??= new List<Polygon>();
@@ -783,18 +783,8 @@ namespace TVGL
         {
             foreach (var polygon in AllPolygons)
             {
-                polygon.minX = double.PositiveInfinity;
-                polygon.minY = double.PositiveInfinity;
-                polygon.maxX = double.NegativeInfinity;
-                polygon.maxY = double.NegativeInfinity;
                 foreach (var v in polygon.Vertices)
-                {
                     v.Transform(transformMatrix);
-                    if (minX > v.X) minX = v.X;
-                    if (minY > v.Y) minY = v.Y;
-                    if (maxX < v.X) maxX = v.X;
-                    if (maxY < v.Y) maxY = v.Y;
-                }
                 polygon.Reset();
             }
         }

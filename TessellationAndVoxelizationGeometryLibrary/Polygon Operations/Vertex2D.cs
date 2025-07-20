@@ -99,10 +99,22 @@ namespace TVGL
         /// <param name="currentPoint">The current point.</param>
         /// <param name="referenceID">The reference identifier.</param>
         /// <param name="loopID">The loop identifier.</param>
-        public Vertex2D(Vector2 currentPoint, int referenceID, int loopID)
+        internal Vertex2D(Vector2IP currentPoint, int referenceID, int loopID)
         {
             LoopID = loopID;
             Coordinates = currentPoint;
+            IndexInList = referenceID;
+        }
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Node" /> class.
+        /// </summary>
+        /// <param name="currentPoint">The current point.</param>
+        /// <param name="referenceID">The reference identifier.</param>
+        /// <param name="loopID">The loop identifier.</param>
+        internal Vertex2D(Vector2 currentPoint, int referenceID, int loopID)
+        {
+            LoopID = loopID;
+            Coordinates =new Vector2IP(currentPoint);
             IndexInList = referenceID;
         }
 
@@ -176,7 +188,7 @@ namespace TVGL
                 return double.NaN;
             var vector1 = EndLine.Vector;
             var vector2 = StartLine.Vector;
-            return Math.PI - Math.Atan2(vector1.Cross(vector2), vector1.Dot(vector2));
+            return Math.PI - Math.Atan2(vector1.Cross2D(vector2).AsDouble, vector1.Dot2D(vector2).AsDouble);
         }
         #endregion Constructor
     }

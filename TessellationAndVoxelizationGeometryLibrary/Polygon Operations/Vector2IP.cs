@@ -22,18 +22,83 @@ namespace TVGL
     /// </summary>
     internal readonly struct Vector2IP : IEquatable<Vector2IP>, IFormattable
     {
-        internal static long InitialW = 45720000;
         internal Int128 X { get; init; }
         internal Int128 Y { get; init; }
         internal Int128 W { get; init; }
         public Vector2 AsVector2 => new Vector2(RationalIP.AsDoubleValue(X, W),
             RationalIP.AsDoubleValue(Y, W));
 
-        internal Vector2IP(Vector2 vector) : this(vector.X, vector.Y, InitialW) { }
-        internal Vector2IP(double x, double y) : this(x, y, InitialW) { }
+        internal Vector2IP(Vector2 vector) : this(vector.X, vector.Y) { }
+        internal Vector2IP(double x, double y)
+        {
+            if (Math.Abs(x - (int)x) < RationalIP.toIntError && Math.Abs(y - (int)y) < RationalIP.toIntError)
+            {   // if already an integer, then just return value with a denominator of 1
+                X = (int)x;
+                Y = (int)y;
+                W = Int128.One;
+            }
+            else if (Math.Abs(127 * x - (int)(127 * x)) < RationalIP.toIntError &&
+                Math.Abs(127 * y - (int)(127 * y)) < RationalIP.toIntError)
+            {   // 127?! is weird but a common conversion from millimeter to inch
+                X = (int)(127 * x);
+                X = (int)(127 * x);
+                W = 127;
+            }
+            else if (Math.Abs(3 * x - (int)(3 * x)) < RationalIP.toIntError &&
+                Math.Abs(3 * y - (int)(3 * y)) < RationalIP.toIntError)
+            {   // 127?! is weird but a common conversion from millimeter to inch
+                X = (int)(3 * x);
+                X = (int)(3 * x);
+                W = 3;
+            }
+            else
+            {   // now we do the detective work to find what reductions can be 
+                // made to the MaxToIntFactor
+                var longX = (long)(x * RationalIP.MaxToIntFactor);
+                var longY = (long)(y * RationalIP.MaxToIntFactor);
+                var num2s = Math.Min(6, Math.Min(long.TrailingZeroCount(longX), long.TrailingZeroCount(longY)));
+                // since MaxToIntFactor has 6 two's in it, we can reduce by up to 32
+                var xStr = longX.ToString();
+                var yStr = longY.ToString(); //assuming the fives are paired with 2's then we'd have leading zeros
+                var num5s = Math.Min(4, Math.Min(xStr.Length - xStr.TrimEnd('0').Length, yStr.Length - yStr.TrimEnd('0').Length));
+                var reductionFactor = (int)(Math.Pow(2, num2s) * Math.Pow(5, num5s));
+                X = longX / reductionFactor;
+                Y = longY / reductionFactor;
+                W = RationalIP.MaxToIntFactor / reductionFactor;
+                var possible5s = num5s - num2s;
+                for (int i = 0; i < possible5s; i++)
+                {
+                    if (X % 5 == 0 && Y % 5 == 0)
+                    {
+                        X /= 5;
+                        Y /= 5;
+                        W /= 5;
+                    }
+                    else break;
+                }
+                if (X % 3 == 0&& Y % 3 == 0)
+                {
+                    X /= 3;
+                    Y /= 3;
+                    W /= 3;
+                    if (X % 3 == 0 && Y % 3 == 0)
+                    {
+                        X /= 3;
+                        Y /= 3;
+                        W /= 3;
+                    }
+                }
+                if (X % 127 == 0 && Y % 127 == 0)
+                {
+                    X /= 127;
+                    Y /= 127;
+                    W /= 127;
+                }
+            }
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal Vector2IP(double x, double y, Int128 w) : this((Int128)x * w, (Int128)y * w, w) { }
+        internal Vector2IP(double x, double y, long w) : this((Int128)(x * w), (Int128)(y * w), w) { }
         internal Vector2IP(Int128 x, Int128 y, Int128 w)
         {
             X = x;
@@ -53,7 +118,7 @@ namespace TVGL
         }
         internal bool IsNull()
         {
-            return this == Zero;
+            return W == 0 && Y == 0 && X == 0;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -82,12 +147,14 @@ namespace TVGL
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int CrossSign(Vector2IP that)
         {
-            var numeratorSign = Int128.Sign(this.X * that.Y - this.Y * that.X);
+            var thisXThatY = this.X * that.Y;
+            var thisYThatX = this.Y * that.X;
+            if (thisXThatY == thisYThatX)
+                return 0; // collinear
+            var numeratorSign = (thisXThatY > thisYThatX) ? 1 : -1;
             if (this.W == 0 || that.W == 0)
                 return numeratorSign;
-            if (numeratorSign == 0)
-                return 0;
-            var denominatorSign = Int128.Sign(this.W * that.W);
+            var denominatorSign = Int128.Sign(this.W) == Int128.Sign(that.W) ? 1 : -1;
             if (numeratorSign == denominatorSign)
                 return 1;
             return -1;
@@ -222,6 +289,9 @@ namespace TVGL
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool Equals(Vector2IP that)
         {
+            if (this.IsNull() && that.IsNull()) return true;
+            if (this.IsNull() || that.IsNull()) return false;
+
             if (this.W == 0 && that.W == 0)
                 return this.X * that.Y == that.X * this.Y;
             if (this.W == that.W)

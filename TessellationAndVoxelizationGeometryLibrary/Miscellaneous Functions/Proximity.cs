@@ -704,7 +704,7 @@ namespace TVGL
                 var currentVector = vertex.Coordinates - current.Coordinates;
                 var dot = currentVector.X * lastVector.X + currentVector.Y * lastVector.Y;
                 var cross = currentVector.X * lastVector.Y - currentVector.Y * lastVector.X;
-                var angle = Constants.Pseudoangle(dot, cross);
+                var angle = Global.Pseudoangle(dot, cross);
                 //var angle = currentVector.AngleCWBetweenVectorAAndDatum(lastVector);
                 if (minAngle > angle && !angle.IsNegligible())
                 {

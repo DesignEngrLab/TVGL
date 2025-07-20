@@ -12,12 +12,17 @@
 // <summary></summary>
 // ***********************************************************************
 using System;
+using System.Linq;
 using System.Runtime.CompilerServices;
 
 namespace TVGL
 {
     internal readonly struct RationalIP : IEquatable<RationalIP>, IComparable<RationalIP>
     {
+        internal const int MaxToIntFactor = 45720000; // this is (2^6)*(3^2)*(5^4)*127 = 45720000
+                                                      // why this number? see my reasoning here: https://github.com/DesignEngrLab/TVGL/wiki/Determining-the-Double-to-Long-Dimension-Multiplier
+        internal const double toIntError = 1e-7; // can't be less than reciprocal of MaxToIntFactor (2.18e-8)
+
         internal Int128 Num { get; init; }
         internal Int128 Den { get; init; }
 
@@ -33,8 +38,68 @@ namespace TVGL
             Den = w;
         }
 
-
-        public RationalIP(double r) : this(r, Vector2IP.InitialW) { }
+        /// <summary>
+        /// Make the real number into a rational. This is the classic Diophantine problem.
+        /// To solve well, we should check all integers, but that'll take a while
+        /// and we would want to stop at our limit define as MaxToIntFactor. So, knowing the
+        /// prime factorization of MaxToIntFactor, we solve this with some conditions.
+        /// </summary>
+        /// <param name="r"></param>
+        public RationalIP(double r)
+        {
+            if (Math.Abs(r - (int)r) < toIntError)
+            {   // if already an integer, then just return value with a denominator of 1
+                Num = (int)r;
+                Den = 1;
+            }
+            else if (Math.Abs(127 * r - (int)(127 * r)) < toIntError)
+            {   // 127?! is weird but a common conversion from millimeter to inch
+                Num = (int)(127 * r);
+                Den = 127;
+            }
+            else if (Math.Abs(3 * r - (int)(3 * r)) < toIntError)
+            {   // also check 1/3's which may happen often enough
+                Num = (int)(3 * r);
+                Den = 3;
+            }
+            else
+            {   // now we do the detective work to find what reductions can be 
+                // made to the MaxToIntFactor
+                var numLong = (long)(r * MaxToIntFactor);
+                var num2s = Math.Min(6, long.TrailingZeroCount(numLong)); // since MaxToIntFactor 
+                // has 6 two's in it, we can reduce by upto 32
+                var pStr = Num.ToString(); //assuming the fives are paired with 2's then we'd have leading zeros
+                var num5s = Math.Min(4, pStr.Length - pStr.TrimEnd('0').Length);
+                var reductionFactor = (int)(Math.Pow(2, num2s) * Math.Pow(5, num5s));
+                Num = numLong / reductionFactor;
+                Den = MaxToIntFactor / reductionFactor;
+                var possible5s = num5s - num2s;
+                for (int i = 0; i < possible5s; i++)
+                {
+                    if (Num % 5 == 0)
+                    {
+                        Num /= 5;
+                        Den /= 5;
+                    }
+                    else break;
+                }
+                if (Num % 3 == 0)
+                {
+                    Num /= 3;
+                    Den /= 3;
+                    if (Num % 3 == 0)
+                    {
+                        Num /= 3;
+                        Den /= 3;
+                    }
+                }
+                if (Num % 127 == 0)
+                {
+                    Num /= 127;
+                    Den /= 127;
+                }
+            }
+        }
 
         internal double AsDouble => AsDoubleValue(Num, Den);
 
@@ -42,10 +107,11 @@ namespace TVGL
         {
             (Int128 quotient, Int128 remainder) = Int128.DivRem(num, den);
             // to increase precision, we add the remainder divided by the denominator
+            if (remainder == 0) return (double)quotient;
             return (double)quotient + ((double)remainder / (double)den);
         }
 
-        internal Int128 AsInt128 => Int128.DivRem(Num, Den).Quotient;
+        internal Int128 AsInt128 => Num / Den;
         public RationalIP SquareRoot() => new RationalIP(Num.SquareRoot(), Den.SquareRoot());
 
         public static RationalIP One = new RationalIP(1, 1);
@@ -161,6 +227,28 @@ namespace TVGL
                 else if (leftNum > rightNum) return 1;
                 else return -1;
             }
+            if (leftDen == 0)
+            {
+                var lNumSign = Int128.Sign(leftNum);
+                if (lNumSign != 0) return lNumSign;
+                else // then left is zero
+                {
+                    var rNumSign = Int128.Sign(rightNum);
+                    if (rNumSign == 0) return 0;
+                    return (rNumSign == Int128.Sign(rightDen)) ? 1 : -1;
+                }
+            }
+            if (rightDen == 0)
+            {
+                var rNumSign = Int128.Sign(rightNum);
+                if (rNumSign != 0) return rNumSign;
+                else // then left is zero
+                {
+                    var lNumSign = Int128.Sign(leftNum);
+                    if (lNumSign == 0) return 0;
+                    return (lNumSign == Int128.Sign(leftDen)) ? 1 : -1;
+                }
+            }
             var left = leftNum * rightDen;
             var right = rightNum * leftDen;
             if (left == right) return 0;
@@ -199,18 +287,12 @@ namespace TVGL
             return r.Den == Int128.Zero;
         }
 
-        internal bool IsNegative()
-        {
-            if (Num == Int128.Zero) return false;
-            if (Den == Int128.Zero) return Int128.IsNegative(Num);
-            return Int128.IsNegative(Num) != Int128.IsNegative(Den);
-        }
 
-        internal bool IsPositive()
+        internal int Sign()
         {
-            if (Num == Int128.Zero) return false;
-            if (Den == Int128.Zero) return Int128.IsPositive(Num);
-            return Int128.IsNegative(Num) == Int128.IsNegative(Den);
+            if (Num == Int128.Zero) return 0;
+            if (Den == Int128.Zero) return Int128.Sign(Num);
+            return Int128.IsPositive(Num) == Int128.IsPositive(Den) ? 1 : -1;
         }
 
         internal static RationalIP Abs(RationalIP rationalIP)

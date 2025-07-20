@@ -118,51 +118,24 @@ namespace TVGL
         }
 
         internal static RationalIP FractionOnLineSegment(PolygonEdge polygonEdge, Vector2IP point, out bool onSegment)
-            => FractionOnLineSegment(polygonEdge.FromPoint.Coordinates, polygonEdge.ToPoint.Coordinates, point, out onSegment);
-        internal static RationalIP FractionOnLineSegment(Vector2IP start, Vector2IP end, Vector2IP point,
-            out bool onSegment)
         {
-            if (end == point)
+            if (polygonEdge.ToPoint.Coordinates == point)
             {
                 onSegment = false; // like indexing, we follow the rule inclusive of the first, exclusive of the last
                 return RationalIP.One;
             }
-            else if (start == point)
+            else if (polygonEdge.FromPoint.Coordinates == point)
             {
                 onSegment = true;
                 return RationalIP.Zero;
             }
-            var fullVector = end.Cross(start);
-            var firstTriangle = point.Cross(start);
-            var secondTriangle = end.Cross(point);
-            Int128 firstSign, secondSign;
-            if (fullVector.W == 0)
-            {
-                firstSign = Int128.Sign(fullVector.X) != Int128.Sign(firstTriangle.X) &&
-                     Int128.Sign(fullVector.Y) != Int128.Sign(firstTriangle.Y) ? Int128.NegativeOne : Int128.One;
-                secondSign = Int128.Sign(fullVector.X) != Int128.Sign(secondTriangle.X) &&
-                     Int128.Sign(fullVector.Y) != Int128.Sign(secondTriangle.Y) ? Int128.NegativeOne : Int128.One;
-            }
-            else
-            {
-                firstSign = Int128.Sign(fullVector.W) != Int128.Sign(firstTriangle.W)
-                    ? Int128.NegativeOne : Int128.One;
-                secondSign = Int128.Sign(fullVector.W) != Int128.Sign(secondTriangle.W)
-                    ? Int128.NegativeOne : Int128.One;
-            }
-            var firstLength = firstTriangle.Length3D();
-            var secondLength = secondTriangle.Length3D();
-            if (firstSign == Int128.One && secondSign == Int128.One)
-            {
-                onSegment = true;
-                return new RationalIP(firstLength, firstLength + secondLength);
-            }
-            onSegment = false;
-            var fullLength = fullVector.Length3D();
-
-            if (firstSign == Int128.One)
-                return new RationalIP(fullLength + secondLength, fullLength);
-            return new RationalIP(-firstLength, fullLength);
+            var v = polygonEdge.Vector;
+            var vDotV = v.Dot3D(v);
+            if (Int128.IsNegative(vDotV)) throw new OverflowException();
+            var u = point - polygonEdge.FromPoint.Coordinates;
+            var uDotV = u.Dot3D(v);
+            onSegment = uDotV >= 0 && uDotV < vDotV;
+            return new RationalIP(uDotV, vDotV);
         }
 
         internal static Vector2IP LineJoiningTwoPoints(Vector2IP from, Vector2IP to)

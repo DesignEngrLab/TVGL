@@ -47,15 +47,11 @@ namespace TVGL
     /// </summary>
     public static partial class PolygonOperations
     {
-
-
         /// <summary>
         /// The scale
         /// </summary>
-        //const double scale = 1000000; // this is (2^6)*(3^2)*(5^4)*127 = 45720000
-        const double scale = 45720000; // this is (2^6)*(3^2)*(5^4)*127 = 45720000
-        // why this number? see my reasoning here: https://github.com/DesignEngrLab/TVGL/wiki/Determining-the-Double-to-Long-Dimension-Multiplier
-        const double invScale = 1 / scale;
+        const double scale = 1000000; 
+        const double invScale = 1.0 / ((double)scale);
         #region Offset
         /// <summary>
         /// Offsets the via clipper.
@@ -149,7 +145,7 @@ namespace TVGL
         {
             //Convert to int points and remove collinear edges
             Paths64 clipperSubject = subject != null ? ConvertToClipperPaths(subject) : null;
-            Paths64 clipperClip = clip != null ? ConvertToClipperPaths(clip):null;
+            Paths64 clipperClip = clip != null ? ConvertToClipperPaths(clip) : null;
 
             var clipperSolution = Clipper.BooleanOp(clipType, clipperSubject, clipperClip, fillMethod);
             //Convert back to points and return solution

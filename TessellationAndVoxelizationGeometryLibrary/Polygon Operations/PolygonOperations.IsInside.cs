@@ -105,7 +105,7 @@ namespace TVGL
             {
                 foreach (var vector2 in subPolygon.Path)
                 {
-                    if (!outer.IsPointInsidePolygon(onlyTopOuterPolygon, vector2, out var thisPointOnBoundary, boundaryTolerance))
+                    if (!outer.IsPointInsidePolygon(onlyTopOuterPolygon, vector2, out var thisPointOnBoundary)) //, boundaryTolerance))
                         // negative has a point outside of positive. no point in checking other points
                         return false;
                     if (thisPointOnBoundary) onBoundary = true;
@@ -422,13 +422,13 @@ namespace TVGL
             double perpendicularDistanceToLine, double stepSize, out int firstIntersectingIndex)
         {
             sweepLineDirection = sweepLineDirection.Normalize();
-            var sweepDirX = (Int128)(sweepLineDirection.X * Vector2IP.InitialW);
-            var sweepDirY = (Int128)(sweepLineDirection.Y * Vector2IP.InitialW);
-            var startingNumerator = (Int128)(perpendicularDistanceToLine * Vector2IP.InitialW);
-            var stepSizeNumerator = (Int128)(stepSize * Vector2IP.InitialW);
+            var vector2IP = new Vector2IP(sweepLineDirection.X, sweepLineDirection.Y);
+            var sweepDirX = (Int128)(sweepLineDirection.X * RationalIP.MaxToIntFactor);
+            var sweepDirY = (Int128)(sweepLineDirection.Y * RationalIP.MaxToIntFactor);
+            var startingNumerator = (Int128)(perpendicularDistanceToLine * RationalIP.MaxToIntFactor);
+            var stepSizeNumerator = (Int128)(stepSize * RationalIP.MaxToIntFactor);
             var intersections = AllPolygonIntersectionPointsAlongLines(polygons, sweepDirX, sweepDirY,
-                startingNumerator, stepSizeNumerator,
-                Vector2IP.InitialW, out firstIntersectingIndex);
+                startingNumerator, stepSizeNumerator, RationalIP.MaxToIntFactor, out firstIntersectingIndex);
             var result = new Vector2[intersections.Length][];
             for (int i = 0; i < intersections.Length; i++)
                 result[i] = intersections[i].Select(x => x.AsVector2).ToArray();
@@ -509,10 +509,12 @@ namespace TVGL
         public static double[][] AllPolygonIntersectionPointsAlongVerticalLines(this IEnumerable<Polygon> polygons, double startingXValue,
              double stepSize, out int firstIntersectingIndex)
         {
-            var startingNumerator = (Int128)startingXValue * Vector2IP.InitialW;
-            var stepSizeNumerator = (Int128)stepSize * Vector2IP.InitialW;
+            var vector2IPDummy = new Vector2IP(startingXValue, stepSize);
+            var startingNumerator = vector2IPDummy.X;
+            var stepSizeNumerator = vector2IPDummy.Y;
+            var commonW = vector2IPDummy.W;
             var intersections = AllPolygonIntersectionPointsAlongVerticalLines(polygons, startingNumerator, stepSizeNumerator,
-                Vector2IP.InitialW, out firstIntersectingIndex);
+                commonW, out firstIntersectingIndex);
             var result = new double[intersections.Length][];
             for (int i = 0; i < intersections.Length; i++)
                 result[i] = intersections[i].Select(x => x.AsDouble).ToArray();
@@ -587,7 +589,7 @@ namespace TVGL
         /// <param name="stepSize">Size of the step.</param>
         /// <param name="firstIntersectingIndex">First index of the intersecting.</param>
         /// <returns>List&lt;System.Double[]&gt;.</returns>
-        public static List<double[]> AllPolygonIntersectionPointsAlongHorizontalLines(this Polygon polygon,
+        public static double[][] AllPolygonIntersectionPointsAlongHorizontalLines(this Polygon polygon,
             double startingYValue, double stepSize, out int firstIntersectingIndex)
         => AllPolygonIntersectionPointsAlongHorizontalLines([polygon], startingYValue, stepSize, out firstIntersectingIndex);
 
@@ -605,10 +607,12 @@ namespace TVGL
         public static double[][] AllPolygonIntersectionPointsAlongHorizontalLines(this IEnumerable<Polygon> polygons,
             double startingYValue, double stepSize, out int firstIntersectingIndex)
         {
-            var startingNumerator = (Int128)startingYValue * Vector2IP.InitialW;
-            var stepSizeNumerator = (Int128)stepSize * Vector2IP.InitialW;
+            var vector2IPDummy = new Vector2IP(startingYValue,stepSize);
+            var startingNumerator = vector2IPDummy.X;
+            var stepSizeNumerator = vector2IPDummy.Y;
+            var commonW = vector2IPDummy.W;
             var intersections = AllPolygonIntersectionPointsAlongHorizontalLines(polygons, startingNumerator, stepSizeNumerator,
-                Vector2IP.InitialW, out firstIntersectingIndex);
+               commonW, out firstIntersectingIndex);
             var result = new double[intersections.Length][];
             for (int i = 0; i < intersections.Length; i++)
                 result[i] = intersections[i].Select(x => x.AsDouble).ToArray();
@@ -1022,10 +1026,10 @@ namespace TVGL
 
         private static SegmentRelationship GetSegmentRelationship(Vector2IP aOut, Vector2IP aIn, Vector2IP bOut, Vector2IP bIn)
         {
-            var angleAOut = Constants.Pseudoangle(aOut.X, aOut.Y); // pseudo-angle is a monotonic function of the angle from 0 to 4
-            var angleAIn = Constants.Pseudoangle(aIn.X, aIn.Y);
-            var angleBOut = Constants.Pseudoangle(bOut.X, bOut.Y);
-            var angleBIn = Constants.Pseudoangle(bIn.X, bIn.Y);
+            var angleAOut = Global.Pseudoangle(aOut.X, aOut.Y); // pseudo-angle is a monotonic function of the angle from 0 to 4
+            var angleAIn = Global.Pseudoangle(aIn.X, aIn.Y);
+            var angleBOut = Global.Pseudoangle(bOut.X, bOut.Y);
+            var angleBIn = Global.Pseudoangle(bIn.X, bIn.Y);
             var insAreEqual = angleAIn == angleBIn;
             var outsAreEqual = angleAOut == angleBOut;
             var aInEqualsBOut = angleAIn == angleBOut;

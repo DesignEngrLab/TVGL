@@ -21,7 +21,7 @@ namespace TVGLUnitTestsAndBenchmarking
         {
             Global.Presenter2D = new Presenter2D();
             Global.Presenter3D = new Presenter3D();
-
+            PolygonBooleanTester.TestOffsetting();
             var A = new Polygon(new List<Vector2> {
             new Vector2(0, 3), new Vector2(9,0),new Vector2(12, 0),
             new Vector2(3,3),

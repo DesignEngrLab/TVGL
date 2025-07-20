@@ -217,23 +217,23 @@ namespace TVGL
                 // out of the loop. The intersection is identified here, but processed above
                 {
                     currentEdge = currentEdge.ToPoint.StartLine;
-                    if (knownWrongPoints != null && knownWrongPoints[currentEdge.FromPoint.IndexInList]) 
+                    if (knownWrongPoints != null && knownWrongPoints[currentEdge.FromPoint.IndexInList])
                         includesWrongPoints = true;
                     newPath.Add(currentEdge.FromPoint.Coordinates);
                     //newPathHash.Add(currentEdge.FromPoint.Coordinates);
                     intersectionCoordinates = Vector2IP.Zero; // this is set to null because its value is used in ClosestNextIntersectionOnThisEdge
-                                                            // when multiple intersections cross the edge. If we got through the first pass then there are no previous intersections on
-                                                            // the edge that concern us. We want that function to report the first one for the edge
-//#if PRESENT
-//                    Presenter.ShowAndHang(newPath);
-//#endif
+                                                              // when multiple intersections cross the edge. If we got through the first pass then there are no previous intersections on
+                                                              // the edge that concern us. We want that function to report the first one for the edge
+                                                              //#if PRESENT
+                                                              //                    Presenter.ShowAndHang(newPath);
+                                                              //#endif
                 }
             } while (false == (completed = PolygonCompleted(intersectionData, startingIntersection, currentEdge, startingEdge)));
             //#if PRESENT
             //            Presenter.ShowAndHang(newPath);
             //#endif
             if (completed == null) newPath.Clear();
-            return new Polygon(newPath,-1);
+            return new Polygon(newPath, -1);
         }
 
         /// <summary>
@@ -270,7 +270,7 @@ namespace TVGL
                     (candidateIntersect.WhereIntersection == WhereIsIntersection.AtStartOfA && currentEdgeIsFromPolygonA) ||
                     (candidateIntersect.WhereIntersection == WhereIsIntersection.AtStartOfB && !currentEdgeIsFromPolygonA))))
                     distance = currentEdge.Vector.Dot2D(candidateIntersect.IntersectCoordinates - datum);
-                if (distance.IsNegative()) continue;
+                if (distance.Sign() < 0) continue; //if the distance is negative, then the intersection is behind the current edge
                 if (minDistanceToIntersection > distance)
                 {
                     minDistanceToIntersection = distance;

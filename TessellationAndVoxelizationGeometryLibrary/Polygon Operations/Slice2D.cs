@@ -88,6 +88,7 @@ namespace TVGL
             out List<Polygon> negativeSidePolygons, out List<Polygon> positiveSidePolygons, double offsetAtLineForNegativeSide = 0.0,
             double offsetAtLineForPositiveSide = 0.0)
         {
+            /*
             var lineNormal = new Vector2IP(lineNormalDirection.X, lineNormalDirection.Y, (long)(Vector2IP.InitialW*perpendicularDistanceToLine));
             var offsetNegSide = new RationalIP(offsetAtLineForNegativeSide);
             var offsetPosSide = new RationalIP(offsetAtLineForPositiveSide);
@@ -104,7 +105,7 @@ namespace TVGL
                  Third (3), these intersection points are ordered in the perpendicular direction to the search direction
                  Fourth (4), a smart slicing algorithm is used to cut the full shape into a partial shape, using
                  the intersection points and lines.*/
-
+            /*
             //(1) Find the intersection lines and the lines to the left of the current distance
             var intersectionLines = new HashSet<PolygonEdge>();
             var lineDir = new Vector2IP(-lineNormalDirection.Y, lineNormalDirection.X);
@@ -223,6 +224,8 @@ namespace TVGL
             #endregion patching up positive side polygons
 
             return pointsOnLineTuples.Select(p => p.Item1.AsVector2).ToArray();
+            */
+            throw new NotImplementedException();
         }
     }
 }
