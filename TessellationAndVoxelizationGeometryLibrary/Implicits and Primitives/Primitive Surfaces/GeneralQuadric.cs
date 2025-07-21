@@ -233,7 +233,7 @@ namespace TVGL
         /// </summary>
         /// <param name="point">The point.</param>
         /// <returns>System.Double.</returns>
- /*       public override double DistanceToPoint(Vector3 point)
+        public override double DistanceToPoint(Vector3 point)
         {
             // start with the assumption that the normal is the best direction to go
             var dir = GetNormalAtPoint(point).Normalize();
@@ -251,9 +251,7 @@ namespace TVGL
                 }
                 else
                 {
-                    minPoint = GetPointOnQuadric(point);
-                    minPointDist = Vector3.DistanceSquared(point, minPoint);
-                    dir = point - minPoint;
+                    return DistanceToPointSQP(point);
                 }
                 if (methodEnumerator.MoveNext())
                 {
@@ -273,7 +271,7 @@ namespace TVGL
                 dir = newDir;
             }
             return Math.Sign(dot) * Math.Sqrt(minPointDist);
-        }*/
+        }
 
         public Vector3 FlowToSurface(Vector3 anchor, double tol)
         {
@@ -295,11 +293,12 @@ namespace TVGL
             return currentPoint;
         }
 
-        public Vector3 GetPointOnQuadric(Vector3 anchor)
+        public Vector3 GetPointNearQuadric(Vector3 anchor)
         {
             var intersections = LineIntersection(anchor, GetNormalAtPoint(anchor));
             Vector3 newAnchor = anchor;
-            while (!intersections.GetEnumerator().MoveNext())
+            int iters = 0;
+            while (!intersections.GetEnumerator().MoveNext() && iters < 10)
             {
                 GeneralQuadric outerQuadric = new GeneralQuadric(XSqdCoeff, YSqdCoeff, ZSqdCoeff, XYCoeff, XZCoeff, YZCoeff, XCoeff, YCoeff, ZCoeff, W - QuadricValue(newAnchor));
                 Vector3 FarSideAnchor = (outerQuadric.LineIntersection(newAnchor, GetNormalAtPoint(newAnchor)).MaxBy(x => x.intersection.DistanceSquared(newAnchor))).intersection;
@@ -309,9 +308,9 @@ namespace TVGL
             return intersections.MinBy(x => x.intersection.DistanceSquared(anchor)).intersection;
         }
 
-        public override double DistanceToPoint(Vector3 point)
+        public double DistanceToPointSQP(Vector3 point)
         {
-            Vector3 startPoint = GetPointOnQuadric(point);
+            Vector3 startPoint = GetPointNearQuadric(point);
             double[] u = { startPoint.X, startPoint.Y, startPoint.Z, 0 };
             double[] du = { double.PositiveInfinity, double.PositiveInfinity, double.PositiveInfinity, double.PositiveInfinity };
             int iters = 0;
@@ -331,7 +330,7 @@ namespace TVGL
                 u[3] += du[3];
             }
             Vector3 newPoint = new Vector3(u[..3]);
-            return point.Distance(newPoint);
+            return QuadricValue(point)/Math.Abs(QuadricValue(point)) * point.Distance(newPoint);
         }
         protected override void CalculateIsPositive()
         {
