@@ -220,6 +220,11 @@ namespace TVGL
             System.Windows.Threading.Dispatcher.Run();
         }
 
+        public static void ShowVertexPaths(List<List<Vector3>> ptsWbounds)
+        {
+            throw new NotImplementedException();
+        }
+
 
 
         #endregion

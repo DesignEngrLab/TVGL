@@ -21,7 +21,7 @@ namespace TVGL.PointCloud
             return Run(KDTree.Create(targetPoints, Enumerable.Range(0, targetPoints.Count).ToList()), CalculateNormalInfo(targetNormals),
                 KDTree.Create(originalPoints, Enumerable.Range(0, originalPoints.Count).ToList()),
                 CalculateNormalInfo(originalNormals), minError, stepsSinceImprovement, maxIterations);
-        }
+        }//https://chatgpt.com/c/685af5be-06d4-800a-99af-d8713c3ab80e
 
         private static Matrix4x4 Run(KDTree<Vector3, int> targetCloud, KDTree<Vector3, int> origCloud, double minError = 1e-7,
             int stepsSinceImprovement = 50, int maxIterations = 500)
@@ -93,20 +93,26 @@ namespace TVGL.PointCloud
                 //    %%%%%%%%%%% obtain rotation and translation via solving quadratic programming.
                 CalHbCobig_Gabor(targetMatches, diffTemp, R, relevantRefNormalInfo, relevantMovNormalInfo, sigma_itr, out var H, out var b, out var J);
                 //                    [H, b, J] = CalHbCobig_Gabor(targetMatches, targetMatches - startMatches, R, RefInfo(StartingIndices), MovInfo(TargetIndices), sigma_itr);
-                if (!StarMath.solve(H, b, out var dx) || dx.Any(x => double.IsNaN(x)))
+                //if (!StarMath.solve(H, b, out var dx) || dx.Any(x => double.IsNaN(x)))
+                //{
+                //    RandomlyPerturbMatrix(H);
+                //    if (!StarMath.solve(H, b, out dx) || dx.Any(x => double.IsNaN(x)))
+                //    {
+                //        RandomlyPerturbMatrix(H);
+                //        if (!StarMath.solve(H, b, out dx) || dx.Any(x => double.IsNaN(x)))
+                //        {
+                //            // throw new Exception("H is singular");
+                //            Message.output("H is singular");
+                //            break;
+                //        }
+                //    }
+                //}
+                if (!TrySolveWithDamping(H, b, out var dx))
                 {
-                    RandomlyPerturbMatrix(H);
-                    if (!StarMath.solve(H, b, out dx) || dx.Any(x => double.IsNaN(x)))
-                    {
-                        RandomlyPerturbMatrix(H);
-                        if (!StarMath.solve(H, b, out dx) || dx.Any(x => double.IsNaN(x)))
-                        {
-                            // throw new Exception("H is singular");
-                            Message.output("H is singular");
-                            break;
-                        }
-                    }
+                    Message.output("H is singular");
+                    break;
                 }
+
                 dx = dx.Select(x => -x).ToArray();
                 //                dx = -pinv(H) * b;
                 double[,] dRMatrix = StarMath.ExpMatrix(SkewFun(dx.Take(3).ToArray()));
@@ -150,6 +156,28 @@ namespace TVGL.PointCloud
                 sigma_itr = sigma_itr * DecayPram;
             }
             return bestTransform;
+        }
+        private static bool TrySolveWithDamping(double[,] H, double[] b, out double[] dx, double lambda = 1e-4, int maxTries = 3)
+        {
+            dx = null;
+            for (int attempt = 0; attempt < maxTries; attempt++)
+            {
+                // Clone the matrix to preserve the original
+                var H_damped = (double[,])H.Clone();
+
+                // Apply Levenberg-Marquardt damping (modify diagonal elements)
+                for (int i = 0; i < H_damped.GetLength(0); i++)
+                    H_damped[i, i] += lambda;
+
+                // Try solving the system
+                if (StarMath.solve(H_damped, b, out dx) && dx.All(x => !double.IsNaN(x)))
+                    return true;
+
+                lambda *= 10; // Increase damping if solve fails
+            }
+
+            dx = null;
+            return false;
         }
 
         private static double GetDistanceThreshold(Vector3[] originalPoints)
@@ -241,7 +269,13 @@ namespace TVGL.PointCloud
             var v1 = PtsDiff.Select(p => p.X).ToList();
             var v2 = PtsDiff.Select(p => p.Y).ToList();
             var v3 = PtsDiff.Select(p => p.Z).ToList();
-
+            // Quick degenerate geometry check
+            int degenerateCount = 0;
+            for (int i = 0; i < PtsDiff.Count; i++)
+            {
+                if (Math.Abs(v1[i]) < 1e-10 && Math.Abs(v2[i]) < 1e-10 && Math.Abs(v3[i]) < 1e-10)
+                    degenerateCount++;
+            }
             var infoR1 = RefNormInfo.Select(rni => rni.Omega.M11).ToList();
             //infoR1 = infoRMat(1, 1:3:end);
             var infoR2 = RefNormInfo.Select(rni => rni.Omega.M12).ToList();
@@ -276,6 +310,10 @@ namespace TVGL.PointCloud
             var R7 = R.M31;
             var R8 = R.M32;
             var R9 = R.M33;
+            // Determinant of R check
+            double detR = R.M11 * (R.M22 * R.M33 - R.M23 * R.M32)
+                        - R.M12 * (R.M21 * R.M33 - R.M23 * R.M31)
+                        + R.M13 * (R.M21 * R.M32 - R.M22 * R.M31);
 
             var infobi = new List<double[]>();
             var m1 = ZipCoefficientAdd((1, infoR1), (R1 * R1, infoM1), (R2 * R2, infoM4), (R3 * R3, infoM6), (R1 * R2 * 2, infoM2), (R1 * R3 * 2, infoM3), (R2 * R3 * 2, infoM5));
@@ -303,15 +341,23 @@ namespace TVGL.PointCloud
                         m5 = infobi(5,:);
                         m6 = infobi(6,:);
             */
+            //var w = new double[v1.Count];
+            //for (int i = 0; i < w.Length; i++)
+            //{
+            //    w[i] = -(v1[i] * (m1[i] * v1[i] + m2[i] * v2[i] + m3[i] * v3[i])
+            //        + v2[i] * (m2[i] * v1[i] + m4[i] * v2[i] + m5[i] * v3[i])
+            //        + v3[i] * (m3[i] * v1[i] + m5[i] * v2[i] + m6[i] * v3[i]));
+            //    // w = -exp(-(v1.* (m1.* v1 + m2.* v2 + m3.* v3) + v2.* (m2.* v1 + m4.* v2 + m5.* v3) + v3.* (m3.* v1 + m5.* v2 + m6.* v3)) / (2.* sigma ^ 2)) / sigma ^ 2;
+            //    w[i] = -Math.Exp(w[i] / (2 * sigma * sigma));
+            //    w[i] /= sigma * sigma;
+            //}
             var w = new double[v1.Count];
             for (int i = 0; i < w.Length; i++)
             {
-                w[i] = -(v1[i] * (m1[i] * v1[i] + m2[i] * v2[i] + m3[i] * v3[i])
-                    + v2[i] * (m2[i] * v1[i] + m4[i] * v2[i] + m5[i] * v3[i])
-                    + v3[i] * (m3[i] * v1[i] + m5[i] * v2[i] + m6[i] * v3[i]));
-                // w = -exp(-(v1.* (m1.* v1 + m2.* v2 + m3.* v3) + v2.* (m2.* v1 + m4.* v2 + m5.* v3) + v3.* (m3.* v1 + m5.* v2 + m6.* v3)) / (2.* sigma ^ 2)) / sigma ^ 2;
-                w[i] = -Math.Exp(w[i] / (2 * sigma * sigma));
-                w[i] /= sigma * sigma;
+                double quad = v1[i] * (m1[i] * v1[i] + m2[i] * v2[i] + m3[i] * v3[i]) +
+                              v2[i] * (m2[i] * v1[i] + m4[i] * v2[i] + m5[i] * v3[i]) +
+                              v3[i] * (m3[i] * v1[i] + m5[i] * v2[i] + m6[i] * v3[i]);
+                w[i] = -Math.Exp(-quad / (2 * sigma * sigma)) / (sigma * sigma);
             }
             //w = w.Select(wi => -Math.Exp(wi / (2 * sigma * sigma)) / sigma * sigma).ToArray();
             //var sez = ZipMultiplyAdd((v1.Select(x => -x).ToList(), ZipMultiplyAdd((m1, v1), (m2, v2), (m3, v3))), (v2, ZipMultiplyAdd((m2, v1), (m4, v2), (m5, v3))),
@@ -456,7 +502,7 @@ namespace TVGL.PointCloud
             }
             return result;
         }
-
+        //This line was not correct (result[1, i] = matrix.M21;) updated
         private static double[,] ConcatenateAlongColumns(IEnumerable<Matrix3x3> matrices, int length)
         {
             var result = new double[3, 3 * length];
@@ -464,7 +510,7 @@ namespace TVGL.PointCloud
             foreach (var matrix in matrices)
             {
                 result[0, i] = matrix.M11;
-                result[1, 1] = matrix.M21;
+                result[1, i] = matrix.M21;
                 result[2, i] = matrix.M31;
                 i++;
                 result[0, i] = matrix.M12;
@@ -527,18 +573,35 @@ namespace TVGL.PointCloud
                 var point = data.OriginalPoints[i];
                 var neighbors = data.FindNearest(point, numNeighbors).ToList();
                 Matrix3x3 covariance = MakeCovarianceMatrix(neighbors);
+                //var eigenValues = covariance.GetRealEigenValues();
+                //var maxEigenValue = eigenValues.Max();
+                //var primaryDirComplex = covariance.GetEigenVector(new ComplexNumber(maxEigenValue));
+                //var primaryDir = new Vector3(primaryDirComplex[0].Real, primaryDirComplex[1].Real, primaryDirComplex[2].Real);
+                //Vector3 secondDir;
+                //if (eigenValues.Count > 1)
+                //{
+                //    var secondEigenValue = eigenValues.Where(x => x != maxEigenValue).Max();
+                //    var secondDirComplex = covariance.GetEigenVector(new ComplexNumber(secondEigenValue));
+                //    secondDir = new Vector3(secondDirComplex[0].Real, secondDirComplex[1].Real, secondDirComplex[2].Real);
+                //}
+                //else secondDir = primaryDir.GetPerpendicularDirection();
                 var eigenValues = covariance.GetRealEigenValues();
-                var maxEigenValue = eigenValues.Max();
-                var primaryDirComplex = covariance.GetEigenVector(new ComplexNumber(maxEigenValue));
+                var minEigenValue = eigenValues.Min();
+                var primaryDirComplex = covariance.GetEigenVector(new ComplexNumber(minEigenValue));
                 var primaryDir = new Vector3(primaryDirComplex[0].Real, primaryDirComplex[1].Real, primaryDirComplex[2].Real);
+
                 Vector3 secondDir;
                 if (eigenValues.Count > 1)
                 {
-                    var secondEigenValue = eigenValues.Where(x => x != maxEigenValue).Max();
+                    var secondEigenValue = eigenValues.Where(x => x != minEigenValue).Max();
                     var secondDirComplex = covariance.GetEigenVector(new ComplexNumber(secondEigenValue));
                     secondDir = new Vector3(secondDirComplex[0].Real, secondDirComplex[1].Real, secondDirComplex[2].Real);
                 }
-                else secondDir = primaryDir.GetPerpendicularDirection();
+                else
+                {
+                    secondDir = primaryDir.GetPerpendicularDirection();
+                }
+
                 var thirdDir = Vector3.Cross(primaryDir, secondDir).Normalize();
                 var u = new Matrix3x3(primaryDir.X, secondDir.X, thirdDir.X,
                     primaryDir.Y, secondDir.Y, thirdDir.Y,
