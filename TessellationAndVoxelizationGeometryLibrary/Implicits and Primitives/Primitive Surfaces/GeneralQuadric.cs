@@ -66,6 +66,10 @@ namespace TVGL
         /// W is the constant term. like weight in homogeneous coordinate systems.
         /// </summary>
         public double W { get; }
+        /// <summary>
+        /// Gets the type of the quadric surface: real/imaginary ellipsoid, one/two sheet hyperboloid, etc.
+        /// </summary>
+        public string type { get; }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="GeneralQuadric"/> class.
@@ -298,13 +302,16 @@ namespace TVGL
             var intersections = LineIntersection(anchor, GetNormalAtPoint(anchor));
             Vector3 newAnchor = anchor;
             int iters = 0;
-            while (!intersections.GetEnumerator().MoveNext() && iters < 10)
+            while (!intersections.GetEnumerator().MoveNext() && iters < 5)
             {
                 GeneralQuadric outerQuadric = new GeneralQuadric(XSqdCoeff, YSqdCoeff, ZSqdCoeff, XYCoeff, XZCoeff, YZCoeff, XCoeff, YCoeff, ZCoeff, W - QuadricValue(newAnchor));
-                Vector3 FarSideAnchor = (outerQuadric.LineIntersection(newAnchor, GetNormalAtPoint(newAnchor)).MaxBy(x => x.intersection.DistanceSquared(newAnchor))).intersection;
-                newAnchor = newAnchor - (QuadricValue(newAnchor) / Math.Abs(QuadricValue(newAnchor))) *GetNormalAtPoint(anchor).Normalize() * anchor.Distance(FarSideAnchor) / 2;
-                intersections = LineIntersection(newAnchor, GetNormalAtPoint(newAnchor));
+                Vector3 FarSideAnchor = (outerQuadric.LineIntersection(newAnchor + 1E-6 * GetNormalAtPoint(newAnchor), GetNormalAtPoint(newAnchor)).MaxBy(x => x.intersection.DistanceSquared(newAnchor))).intersection;
+                newAnchor = newAnchor - Math.Sign(QuadricValue(newAnchor)) * GetNormalAtPoint(newAnchor).Normalize() * newAnchor.Distance(FarSideAnchor) / 2;
+                intersections = LineIntersection(newAnchor, outerQuadric.GetNormalAtPoint(newAnchor));
+                iters++;
             }
+            if (QuadricValue(newAnchor).IsNegligible(1e-3)) return newAnchor;
+            if (!intersections.GetEnumerator().MoveNext()) return newAnchor;
             return intersections.MinBy(x => x.intersection.DistanceSquared(anchor)).intersection;
         }
 
