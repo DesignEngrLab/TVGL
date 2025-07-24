@@ -122,7 +122,7 @@ namespace WindowsDesktopPresenter
             window.ShowDialog();
         }
 
-        public IEnumerable<GeometryModel3D> GetPointModels(IEnumerable<Vector3> points, double radius = 0, Color tvglColor = null)
+        public static IEnumerable<GeometryModel3D> GetPointModels(IEnumerable<Vector3> points, double radius = 0, Color tvglColor = null)
         {
             var color = new MediaColor { R = tvglColor.R, G = tvglColor.G, B = tvglColor.B, A = tvglColor.A };
             yield return new PointGeometryModel3D
@@ -252,7 +252,7 @@ namespace WindowsDesktopPresenter
             return lineVisuals;
         }
 
-        private LineGeometryModel3D GetVertexPath(IEnumerable<Vector3> path, double thickness, TVGLColor color, bool closePath)
+        private static LineGeometryModel3D GetVertexPath(IEnumerable<Vector3> path, double thickness, TVGLColor color, bool closePath)
         {
             var contour = path.Select(point => new SharpDX.Vector3((float)point[0], (float)point[1], (float)point[2]));
 
@@ -304,7 +304,7 @@ namespace WindowsDesktopPresenter
             window.ShowDialog();
         }
 
-        public IEnumerable<GeometryModel3D> ConvertSolidsToModel3D(IEnumerable<Solid> solids)
+        public static IEnumerable<GeometryModel3D> ConvertSolidsToModel3D(IEnumerable<Solid> solids)
         {
             foreach (var ts in solids.Where(ts => ts is TessellatedSolid))
                 foreach (var m3d in ConvertTessellatedSolidToMGM3D((TessellatedSolid)ts))
@@ -318,9 +318,9 @@ namespace WindowsDesktopPresenter
                     yield return GetVertexPath(layer, 1, null, true);
         }
 
-        private IEnumerable<GeometryModel3D> ConvertTessellatedSolidToMGM3D(TessellatedSolid ts)
+        private static IEnumerable<GeometryModel3D> ConvertTessellatedSolidToMGM3D(TessellatedSolid ts)
         { return ConvertTessellatedSolidToMGM3D(ts.Faces, ts.SolidColor, ts.HasUniformColor); }
-        private IEnumerable<GeometryModel3D> ConvertTessellatedSolidToMGM3D(IEnumerable<TriangleFace> faces, Color defaultColor, bool hasUniformColor)
+        private static IEnumerable<GeometryModel3D> ConvertTessellatedSolidToMGM3D(IEnumerable<TriangleFace> faces, Color defaultColor, bool hasUniformColor)
         {
             var faceList = faces as IList<TriangleFace> ?? faces.ToList();
             var numFaces = faceList.Count;
@@ -382,7 +382,7 @@ namespace WindowsDesktopPresenter
             }
         }
 
-        private IEnumerable<GeometryModel3D> ConvertVoxelsToPointModel3D(VoxelizedSolid vs)
+        private static IEnumerable<GeometryModel3D> ConvertVoxelsToPointModel3D(VoxelizedSolid vs)
         {
             var sw = Stopwatch.StartNew();
             var s = (float)vs.VoxelSideLength;
