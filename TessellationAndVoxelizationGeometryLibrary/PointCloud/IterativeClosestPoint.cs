@@ -21,7 +21,7 @@ namespace TVGL.PointCloud
             return Run(KDTree.Create(targetPoints, Enumerable.Range(0, targetPoints.Count).ToList()), CalculateNormalInfo(targetNormals),
                 KDTree.Create(originalPoints, Enumerable.Range(0, originalPoints.Count).ToList()),
                 CalculateNormalInfo(originalNormals), minError, stepsSinceImprovement, maxIterations);
-        }//https://chatgpt.com/c/685af5be-06d4-800a-99af-d8713c3ab80e
+        }
 
         private static Matrix4x4 Run(KDTree<Vector3, int> targetCloud, KDTree<Vector3, int> origCloud, double minError = 1e-7,
             int stepsSinceImprovement = 50, int maxIterations = 500)
