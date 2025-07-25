@@ -125,7 +125,7 @@ namespace TVGL
         /// Generates the marching cubes solid
         /// </summary>
         /// <returns>TessellatedSolid.</returns>
-        public override TessellatedSolid Generate()
+        internal override TessellatedSolid Generate()
         {
             if (onLayers) return GenerateOnLayers();
             else return GenerateBetweenLayers();
@@ -599,11 +599,12 @@ namespace TVGL
         /// <param name="sign">The sign.</param>
         /// <returns>System.Double.</returns>
         protected override double GetOffset(StoredValue<double> from, StoredValue<double> to,
-            int direction, int sign)
+            int direction)
         {
             if (from.Value.IsNegligible()) return 0.0;
             if (to.Value.IsNegligible()) return gridToCoordinateFactor;
-            if (direction == 2 && (double.IsInfinity(from.Value) || double.IsInfinity(to.Value))) return 0.5 * gridToCoordinateFactor;
+            if (direction == 2 && (double.IsInfinity(from.Value) || double.IsInfinity(to.Value)))
+                return 0.5 * gridToCoordinateFactor;
             return -gridToCoordinateFactor * from.Value / (to.Value - from.Value);
         }
     }

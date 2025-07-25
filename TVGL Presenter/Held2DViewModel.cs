@@ -6,10 +6,12 @@ using System.ComponentModel;
 using System.Linq;
 using System.Threading;
 using System.Windows;
+using TVGL;
+using MarkerType = TVGL.MarkerType;
 
-namespace TVGL
+namespace WindowsDesktopPresenter
 {
-    internal class HeldViewModel : INotifyPropertyChanged, IDisposable
+    internal class Held2DViewModel : INotifyPropertyChanged, IDisposable
     {
         public string Title
         {
@@ -44,13 +46,15 @@ namespace TVGL
             }
         }
         private Queue<ICollection<LineSeries>> SeriesQueue;
-        internal void AddNewSeries(IEnumerable<IEnumerable<Vector2>> paths, Plot2DType plot2DType, IEnumerable<bool> closePaths, MarkerType marker)
+        internal void AddNewSeries(IEnumerable<IEnumerable<Vector2>> paths, Plot2DType plot2DType, IEnumerable<bool> closePaths, 
+            MarkerType marker)
         {
             SeriesQueue.Clear();
             EnqueueNewSeries(paths, plot2DType, closePaths, marker);
         }
 
-        internal void EnqueueNewSeries(IEnumerable<IEnumerable<Vector2>> paths, Plot2DType plot2DType, IEnumerable<bool> closePaths, MarkerType marker)
+        internal void EnqueueNewSeries(IEnumerable<IEnumerable<Vector2>> paths, Plot2DType plot2DType, IEnumerable<bool> closePaths, 
+            MarkerType marker)
         {
             var listOfPlots = new List<LineSeries>();
             if (closePaths == null) closePaths = [true];
@@ -65,11 +69,11 @@ namespace TVGL
                     series.Points.Add(new DataPoint(vertex.X, vertex.Y));
                 if (isClosed)
                     series.Points.Add(new DataPoint(path.First().X, path.First().Y));
-                series.MarkerType = marker;
+                series.MarkerType = (OxyPlot.MarkerType)(int)marker;
                 if (plot2DType == Plot2DType.Line)
                     series.LineStyle = LineStyle.Solid;
                 else series.LineStyle = LineStyle.None;
-                series.MarkerType = marker;
+                series.MarkerType = (OxyPlot.MarkerType)(int)marker;
                 listOfPlots.Add(series);
             }
             SeriesQueue.Enqueue(listOfPlots);
@@ -82,7 +86,7 @@ namespace TVGL
         private bool hasClosed;
         private readonly Timer timer;
 
-        public HeldViewModel()
+        public Held2DViewModel()
         {
             this.timer = new Timer(OnTimerElapsed);
             SeriesQueue = new Queue<ICollection<LineSeries>>();

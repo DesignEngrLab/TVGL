@@ -12,6 +12,7 @@
 // <summary></summary>
 // ***********************************************************************
 using Clipper2Lib;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -95,34 +96,34 @@ namespace TVGL
                     //tvglMaxY.IsPracticallySame(clipperMaxY, extremaTolerance)
                     )
                 {
-                    Message.output("***** " + operationString + " matches", 4);
-                    Message.output("clipper time = " + clipTime + "; tvgl time = " + tvglTime, 4);
+                    Log.Information("***** " + operationString + " matches", 4);
+                    Log.Information("clipper time = " + clipTime + "; tvgl time = " + tvglTime, 4);
                     return false;
                 }
                 else
                 {
                     //if (numPolygonsClipper == 0) return false;
-                    Message.output(operationString + " does not match", 2);
-                    Message.output("clipper time = " + clipTime + "; tvgl time = " + tvglTime, 2);
+                    Log.Information(operationString + " does not match", 2);
+                    Log.Information("clipper time = " + clipTime + "; tvgl time = " + tvglTime, 2);
                     //if (numPolygonsTVGL == numPolygonsClipper)
-                    //    Message.output("+++ both have {0} polygon(s)", numPolygonsTVGL, numPolygonsClipper);
+                    //    Log.Information("+++ both have {0} polygon(s)", numPolygonsTVGL, numPolygonsClipper);
                     //else 
-                    Message.output("    --- polygons: TVGL=" + numPolygonsTVGL + "  : Clipper={1} " + numPolygonsClipper, 2);
+                    Log.Information("    --- polygons: TVGL=" + numPolygonsTVGL + "  : Clipper={1} " + numPolygonsClipper, 2);
                     //if (vertsTVGL == vertsClipper)
-                    //   Message.output("+++ both have {0} vertices(s)", vertsTVGL);
+                    //   Log.Information("+++ both have {0} vertices(s)", vertsTVGL);
                     //else
-                    Message.output("    --- verts: TVGL= " + vertsTVGL + "  : Clipper={1} " + vertsClipper, 2);
+                    Log.Information("    --- verts: TVGL= " + vertsTVGL + "  : Clipper={1} " + vertsClipper, 2);
 
                     //if (areaTVGL.IsPracticallySame(areaClipper, tolerance))
-                    //   Message.output("+++ both have area of {0}", areaTVGL);
+                    //   Log.Information("+++ both have area of {0}", areaTVGL);
                     //else
-                    Message.output("    --- polygons: TVGL=" + areaTVGL + "  : Clipper={1} " + areaClipper, 2);
+                    Log.Information("    --- polygons: TVGL=" + areaTVGL + "  : Clipper={1} " + areaClipper, 2);
                     //if (perimeterTVGL.IsPracticallySame(perimeterClipper, tolerance))
-                    //    Message.output("+++ both have perimeter of {0}", perimeterTVGL);
+                    //    Log.Information("+++ both have perimeter of {0}", perimeterTVGL);
                     //else
-                    Message.output("    --- polygons: TVGL=" + perimeterTVGL + "  : Clipper={1} " + perimeterClipper, 2);
+                    Log.Information("    --- polygons: TVGL=" + perimeterTVGL + "  : Clipper={1} " + perimeterClipper, 2);
                     if (perimeterClipper - perimeterTVGL > 0 && int.IsEvenInteger((int)Math.Round(perimeterClipper - perimeterTVGL)))
-                        Message.output("<><><><><><><> clipper is connecting separate poly's :", (int)(perimeterClipper - perimeterTVGL) / 2);
+                        Log.Information("<><><><><><><> clipper is connecting separate poly's :", (int)(perimeterClipper - perimeterTVGL) / 2);
                     return true;
                 }
             }

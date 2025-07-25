@@ -11,6 +11,7 @@
 // </copyright>
 // <summary></summary>
 // ***********************************************************************
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -242,7 +243,7 @@ namespace TVGL
                 }
                 successful = 2 * Math.Abs(polygon.Area - triangleArea) / (polygon.Area + triangleArea) < 0.01;
                 if (!successful && !double.IsNegativeInfinity(triangleArea))
-                    Message.output(polygon.Area + ",   " + triangleArea, 4);
+                    Log.Information(polygon.Area + ",   " + triangleArea, 4);
                 if (angle != 0)
                 {
                     var rotateMatrix = new Matrix3x3(c, -s, s, c, 0, 0);

@@ -91,7 +91,7 @@ namespace TVGL
         /// <param name="sign">The sign.</param>
         /// <returns>System.Double.</returns>
         protected override double GetOffset(StoredValue<bool> from, StoredValue<bool> to,
-            int direction, int sign)
+            int direction)
         {
             var iFrom = (int)(coordToVoxelIndex * ((_xMin + from.X * gridToCoordinateFactor) - solid.Offset.X));
             var jFrom = (int)(coordToVoxelIndex * ((_yMin + from.Y * gridToCoordinateFactor) - solid.Offset.Y));

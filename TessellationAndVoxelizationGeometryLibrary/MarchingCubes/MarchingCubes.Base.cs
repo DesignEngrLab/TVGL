@@ -74,12 +74,15 @@ namespace TVGL
             _xMin = solid.XMin - buffer;
             _yMin = solid.YMin - buffer;
             _zMin = solid.ZMin - buffer;
-            var _xMax = solid.XMax + buffer;
-            var _yMax = solid.YMax + buffer;
-            var _zMax = solid.ZMax + buffer;
+             _xMax = solid.XMax + buffer;
+             _yMax = solid.YMax + buffer;
+             _zMax = solid.ZMax + buffer;
             numGridX = (int)Math.Ceiling((_xMax - _xMin) / discretization) + 1;
+            _xMax = _xMin + (numGridX - 1) * discretization;
             numGridY = (int)Math.Ceiling((_yMax - _yMin) / discretization) + 1;
+            _yMax = _yMin + (numGridY - 1) * discretization;
             numGridZ = (int)Math.Ceiling((_zMax - _zMin) / discretization) + 1;
+            _zMax = _zMin + (numGridZ - 1) * discretization;
             yMultiplier = numGridX;
             zMultiplier = numGridX * numGridY;
 
@@ -102,7 +105,7 @@ namespace TVGL
         /// <summary>
         /// The vertex dictionaries
         /// </summary>
-        private readonly Dictionary<long, Vertex>[] vertexDictionaries;
+        protected readonly Dictionary<long, Vertex>[] vertexDictionaries;
         /// <summary>
         /// The solid
         /// </summary>
@@ -122,7 +125,7 @@ namespace TVGL
         /// <summary>
         /// The value dictionary
         /// </summary>
-        private readonly Dictionary<long, StoredValue<ValueT>> valueDictionary;
+        protected readonly Dictionary<long, StoredValue<ValueT>> valueDictionary;
         /// <summary>
         /// The faces
         /// </summary>
@@ -139,17 +142,21 @@ namespace TVGL
         /// </summary>
         protected int numGridX, numGridY, numGridZ;
         /// <summary>
-        /// The x minimum
+        /// The minima
         /// </summary>
         protected double _xMin, _yMin, _zMin;
         /// <summary>
+        /// The maxima
+        /// </summary>
+        protected double _xMax, _yMax, _zMax;
+        /// <summary>
         /// The y multiplier
         /// </summary>
-        protected int yMultiplier;
+        protected long yMultiplier;
         /// <summary>
         /// The z multiplier
         /// </summary>
-        protected int zMultiplier;
+        protected long zMultiplier;
 
         #endregion to be assigned in inherited constructor
 
@@ -182,7 +189,7 @@ namespace TVGL
         /// <param name="sign">The sign.</param>
         /// <returns>System.Double.</returns>
         protected abstract double GetOffset(StoredValue<ValueT> from, StoredValue<ValueT> to,
-            int direction, int sign);
+            int direction);
 
         #endregion Abstract Methods
 
@@ -192,7 +199,7 @@ namespace TVGL
         /// Generates this instance.
         /// </summary>
         /// <returns>TessellatedSolid.</returns>
-        public virtual TessellatedSolid Generate()
+        internal virtual TessellatedSolid Generate()
         {
             for (var i = 0; i < numGridX - 1; i++)
                 for (var j = 0; j < numGridY - 1; j++)
@@ -200,7 +207,7 @@ namespace TVGL
                         MakeFacesInCube(i, j, k);
             var comments = new List<string>(solid.Comments)
             {
-                "tessellation (via marching cubes) of the voxelized solid, " + solid.Name
+                "tessellation (via marching cubes) of the solid, " + solid.Name
             };
             for (int i = 0; i < faces.Count; i++)
                 faces[i].IndexInList = i;
@@ -220,7 +227,7 @@ namespace TVGL
         /// <returns>System.Int64.</returns>
         protected long getIdentifier(int x, int y, int z)
         {
-            return x + (long)(yMultiplier * y) + zMultiplier * z;
+            return (long)x + yMultiplier * y + zMultiplier * z;
         }
 
         /// <summary>
@@ -293,13 +300,10 @@ namespace TVGL
                 //if there is an intersection on this edge
                 if ((edgeFlags & 1) != 0)
                 {
-                    var direction = Math.Abs((int)directionTable[i]) - 1;
-                    var sign = directionTable[i] > 0 ? 1 : -1;
+                    var direction = (int)directionTable[i] - 1;
                     var fromCorner = cube[EdgeCornerIndexTable[i][0]];
                     var toCorner = cube[EdgeCornerIndexTable[i][1]];
-                    // var id = fromCorner.ID ;
-                    var id = sign > 0 ? fromCorner.ID : toCorner.ID;
-                    if (vertexDictionaries[direction].TryGetValue(id, out var value))
+                    if (vertexDictionaries[direction].TryGetValue(fromCorner.ID, out var value))
                         EdgeVertex[i] = value;
                     else
                     {
@@ -309,16 +313,16 @@ namespace TVGL
                             _zMin + fromCorner.Z * gridToCoordinateFactor);
                         var offSetUnitVector = (direction == 0) ? Vector3.UnitX :
                             (direction == 1) ? Vector3.UnitY : Vector3.UnitZ;
-                        double offset = GetOffset(fromCorner, toCorner, direction, sign);
-                        coord = coord + (offSetUnitVector * sign * offset);
+                        double offset = GetOffset(fromCorner, toCorner, direction);
+                        coord = coord + (offSetUnitVector * offset);
                         EdgeVertex[i] = new Vertex(coord);
-                        vertexDictionaries[direction].Add(id, EdgeVertex[i]);
+                        vertexDictionaries[direction].Add(fromCorner.ID, EdgeVertex[i]);
                     }
                 }
                 edgeFlags >>= 1;
             }
             //now the triangular faces are created that connect the vertices identified above.
-            //based on the les that were found. There can be up to five per cube
+            //based on the ones that were found. There can be up to five per cube
             var faceVertices = new Vertex[3];
             for (var i = 0; i < NumFacesTable[cubeType]; i++)
             {

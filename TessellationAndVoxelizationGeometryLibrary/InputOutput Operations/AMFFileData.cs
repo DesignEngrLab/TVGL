@@ -11,6 +11,7 @@
 // </copyright>
 // <summary></summary>
 // ***********************************************************************
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -107,12 +108,12 @@ namespace TVGL
                 var streamReader = new StreamReader(s);
                 var amfDeserializer = new XmlSerializer(typeof(AMFFileData));
                 amfData = (AMFFileData)amfDeserializer.Deserialize(streamReader);
-                Message.output("Successfully read in AMF file (" + (DateTime.Now - now) + ").", 3);
+                Log.Information("Successfully read in AMF file (" + (DateTime.Now - now) + ").", 3);
             }
             catch (Exception exception)
             {
-                Message.output("Unable to read in AMF file (" + (DateTime.Now - now) + ").", 1);
-                Message.output("Exception: " + exception.Message, 3);
+                Log.Information("Unable to read in AMF file (" + (DateTime.Now - now) + ").", 1);
+                Log.Information("Exception: " + exception.Message, 3);
                 return null;
             }
             amfData.FileName = filename;
@@ -219,13 +220,13 @@ namespace TVGL
                     var serializer = new XmlSerializer(typeof(AMFFileData));
                     serializer.Serialize(writer, amfFileData);
                 }
-                Message.output("Successfully wrote AMF file to stream.", 3);
+                Log.Information("Successfully wrote AMF file to stream.", 3);
                 return true;
             }
             catch (Exception exception)
             {
-                Message.output("Unable to write in model file.", 1);
-                Message.output("Exception: " + exception.Message, 3);
+                Log.Information("Unable to write in model file.", 1);
+                Log.Information("Exception: " + exception.Message, 3);
                 return false;
             }
         }

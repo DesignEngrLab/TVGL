@@ -15,6 +15,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using Microsoft.Extensions.Logging;
 
 
 
@@ -499,7 +500,7 @@ namespace TVGL
         /// <exception cref="System.NotImplementedException"></exception>
         public TessellatedSolid ConvertToTessellatedSolidRectilinear()
         {
-            Message.output("Converting voxelized solid to tessellated solid rectilinear", 2);
+            Log.Information("Converting voxelized solid to tessellated solid rectilinear", 2);
             var vertexDictionary = new Dictionary<long, Vertex>();
             var faces = new List<TriangleFace>();
             var s = VoxelSideLength;

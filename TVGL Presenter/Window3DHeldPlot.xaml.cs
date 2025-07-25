@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Windows;
 
-namespace TVGL
+namespace WindowsDesktopPresenter
 {
     /// <summary>
     /// Interaction logic for PlotWindow.xaml
@@ -13,7 +13,7 @@ namespace TVGL
     public partial class Window3DHeldPlot : Window
     {
         Held3DViewModel held3DViewModel;
-        internal Window3DHeldPlot()
+        public Window3DHeldPlot()
         {
             DataContext = held3DViewModel = new Held3DViewModel(this);
             InitializeComponent();

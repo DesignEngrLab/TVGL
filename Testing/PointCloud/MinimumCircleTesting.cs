@@ -99,12 +99,12 @@ namespace TVGLUnitTestsAndBenchmarking
                     throw new Exception("all three min circle algorithms disagree!");
 
                 else if (!oldBingEqual && !bingMCEqual)
-                    Message.output("Old and MC agree but Bing is different", 0);
+                    Global.Logger.LogInformation("Old and MC agree but Bing is different", 0);
                 else if (!oldBingEqual && !oldMCEqual)
-                    Message.output("MC and Bing agree but old is different", 0);
+                    Global.Logger.LogInformation("MC and Bing agree but old is different", 0);
                 else if (!bingMCEqual && !oldMCEqual)
-                    Message.output("Old and Bing agree but MC is different", 0);
-                else Message.output("All three agree", 1);
+                    Global.Logger.LogInformation("Old and Bing agree but MC is different", 0);
+                else Global.Logger.LogInformation("All three agree", 1);
             */
             }
         }

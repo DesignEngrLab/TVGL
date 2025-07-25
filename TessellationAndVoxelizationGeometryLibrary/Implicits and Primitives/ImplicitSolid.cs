@@ -93,44 +93,54 @@ namespace TVGL
             }
         }
         /// <summary>
-        /// Adds the new top of tree.
+        /// Merges the csgSolidA with the current by placing it on top of the current
+        /// and joined with the given booleanOperation. csgSolidA is the first argument
+        /// in the boolean operation (the current tree is the second argument).
         /// </summary>
         /// <param name="csgSolidA">The CSG solid a.</param>
         /// <param name="booleanOperation">The boolean operation.</param>
         public void AddNewTopOfTree(ImplicitSolid csgSolidA, BooleanOperationType booleanOperation)
         {
+            Primitives.AddRange(csgSolidA.Primitives);
             var top = MakeBooleanOperation(csgSolidA.operationTree, operationTree, booleanOperation);
             operationTree = top;
         }
 
         /// <summary>
-        /// Adds the new top of tree.
+        /// Merges the csgSolidB with the current by placing it on top of the current
+        /// and joined with the given booleanOperation. csgSolidB is the second argument
+        /// in the boolean operation(the current tree is the first argument).
         /// </summary>
         /// <param name="booleanOperation">The boolean operation.</param>
         /// <param name="csgSolidB">The CSG solid b.</param>
         public void AddNewTopOfTree(BooleanOperationType booleanOperation, ImplicitSolid csgSolidB)
         {
+            Primitives.AddRange(csgSolidB.Primitives);
             var top = MakeBooleanOperation(operationTree, csgSolidB.operationTree, booleanOperation);
             operationTree = top;
         }
         /// <summary>
-        /// Adds the new top of tree.
+        /// Adds the primitiveSurfaceA to the top of tree and joins it with the current. primitiveSurfaceA 
+        /// is the first argument in the boolean operation (the current tree is the second argument).
         /// </summary>
         /// <param name="primitiveSurfaceA">The primitive surface a.</param>
         /// <param name="booleanOperation">The boolean operation.</param>
         public void AddNewTopOfTree(PrimitiveSurface primitiveSurfaceA, BooleanOperationType booleanOperation)
         {
+            Primitives.Add(primitiveSurfaceA);
             var top = MakeBooleanOperation(new LeafSurface(primitiveSurfaceA), operationTree, booleanOperation);
             operationTree = top;
         }
 
         /// <summary>
-        /// Adds the new top of tree.
+        /// Adds the primitiveSurfaceB to the top of tree and joins it with the current. primitiveSurfaceB 
+        /// is the second argument in the boolean operation (the current tree is the first argument).
         /// </summary>
         /// <param name="booleanOperation">The boolean operation.</param>
         /// <param name="primitiveSurfaceB">The primitive surface b.</param>
         public void AddNewTopOfTree(BooleanOperationType booleanOperation, PrimitiveSurface primitiveSurfaceB)
         {
+            Primitives.Add(primitiveSurfaceB);
             var top = MakeBooleanOperation(operationTree, new LeafSurface(primitiveSurfaceB), booleanOperation);
             operationTree = top;
         }

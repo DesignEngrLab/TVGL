@@ -116,7 +116,7 @@ namespace TVGL
             {
                 // since 0 and 2 are furthest apart, we need to swap 1 and 2
                 // so that the two points in the circle are at the beinning of the list
-                Constants.SwapItemsInList(1, 2, points);
+                Global.SwapItemsInList(1, 2, points);
                 return circle;
             }
             circle = Circle.CreateFrom2Points(points[1], points[2]);
@@ -124,7 +124,7 @@ namespace TVGL
             {
                 // since 1 and 2 are furthest apart, we need to swap 0 and 2
                 // so that the two points in the circle are at the beinning of the list
-                Constants.SwapItemsInList(0, 2, points);
+                Global.SwapItemsInList(0, 2, points);
                 return circle;
             }
             // otherwise, it's the 3-point circle
@@ -155,7 +155,7 @@ namespace TVGL
             if ((points[1] - circle.Center).LengthSquared() <= circle.RadiusSquared
                 && (points[3] - circle.Center).LengthSquared() <= circle.RadiusSquared)
             {
-                Constants.SwapItemsInList(1, 2, points);
+                Global.SwapItemsInList(1, 2, points);
                 return circle;
             }
             // 3. make the 0-3 circle and check with 1 & 2
@@ -163,7 +163,7 @@ namespace TVGL
             if ((points[1] - circle.Center).LengthSquared() <= circle.RadiusSquared
                 && (points[2] - circle.Center).LengthSquared() <= circle.RadiusSquared)
             {
-                Constants.SwapItemsInList(1, 3, points);
+                Global.SwapItemsInList(1, 3, points);
                 return circle;
             }
 
@@ -195,8 +195,8 @@ namespace TVGL
                 swap3And1 = true;
                 circle = tempCircle;
             }
-            if (swap3And1) Constants.SwapItemsInList(3, 1, points);
-            else if (swap3And2) Constants.SwapItemsInList(3, 2, points);
+            if (swap3And1) Global.SwapItemsInList(3, 1, points);
+            else if (swap3And2) Global.SwapItemsInList(3, 2, points);
             return circle;
         }
 

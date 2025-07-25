@@ -11,6 +11,7 @@
 // </copyright>
 // <summary></summary>
 // ***********************************************************************
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
@@ -311,7 +312,7 @@ namespace TVGL
                     tessellatedSolids = solidAssembly.RootAssembly.AllTessellatedSolidsInGlobalCoordinateSystem();
                     break;
                 default:
-                    Message.output(filename + " is not a recognized 3D format.");
+                    Log.Error(filename + " is not a recognized 3D format.");
                     tessellatedSolids = Array.Empty<TessellatedSolid>();
                     break;
             }
@@ -405,14 +406,14 @@ namespace TVGL
                         TVGLFileData.OpenTVGLz(s, out solidAssembly);
                         break;
                     default:
-                        Message.output(filename + " is not a recognized 3D format.");
+                        Log.Information(filename + " is not a recognized 3D format.");
                         solidAssembly = null;
                         break;
                 }
             }
             catch (Exception exc)
             {
-                Message.output("Cannot open file. Message: " + exc.Message);
+                Log.Information("Cannot open file. Message: " + exc.Message);
                 return false;
             }
             return solidAssembly != null;
@@ -1246,7 +1247,7 @@ namespace TVGL
             }
             else
             {
-                Message.output("The fileType must be TVGL or TVGLz to save as a SolidAssembly.");
+                Log.Information("The fileType must be TVGL or TVGLz to save as a SolidAssembly.");
                 return false;
             }
         }
@@ -1283,7 +1284,7 @@ namespace TVGL
                     return Save(stream, solidAssembly.Solids[0], fileType);
                 else
                 {
-                    Message.output("The fileType must be TVGL or TVGLz to save as a SolidAssembly.");
+                    Log.Information("The fileType must be TVGL or TVGLz to save as a SolidAssembly.");
                     return false;
                 }
             }

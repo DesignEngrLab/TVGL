@@ -1,64 +1,13 @@
-﻿// ***********************************************************************
-// Assembly         : TVGL Presenter
-// Author           : Matt
-// Created          : 05-20-2016
-//
-// Last Modified By : Matt
-// Last Modified On : 05-24-2016
-// ***********************************************************************
-// <copyright file="Window3DPlot.xaml.cs" company="OxyPlot">
-//     The MIT License (MIT)
-/*
-  Copyright(c) 2014 OxyPlot contributors
-
-
-  Permission is hereby granted, free of charge, to any person obtaining a
-  copy of this software and associated documentation files (the
-  "Software"), to deal in the Software without restriction, including
-  without limitation the rights to use, copy, modify, merge, publish,
-  distribute, sublicense, and/or sell copies of the Software, and to
-  permit persons to whom the Software is furnished to do so, subject to
-  the following conditions:
-  
-  The above copyright notice and this permission notice shall be included
-  in all copies or substantial portions of the Software.
-  
-  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-  OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-  MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
-  IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
-  CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
-  TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
-  SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.*/
-// </copyright>
-// <summary></summary>
-// ***********************************************************************
-
-using OxyPlot;
+﻿using OxyPlot;
 using OxyPlot.Series;
 using System.Collections.Generic;
 using System.Linq;
 using System.Windows;
+using TVGL;
+using MarkerType = TVGL.MarkerType;
 
-
-
-namespace TVGL
+namespace WindowsDesktopPresenter
 {
-    /// <summary>
-    ///     Enum Plot2DType
-    /// </summary>
-    public enum Plot2DType
-    {
-        /// <summary>
-        ///     The line
-        /// </summary>
-        Line,
-
-        /// <summary>
-        ///     The points
-        /// </summary>
-        Points
-    }
 
     /// <summary>
     ///     Class Window2DPlot.
@@ -225,7 +174,7 @@ namespace TVGL
                         var color = colorPalet.Current;
                         var series = new LineSeries
                         {
-                            MarkerType = marker,
+                            MarkerType = (OxyPlot.MarkerType)(int)marker,
                             Color = OxyColor.FromRgb(color.R, color.G, color.B)
                         };
                         foreach (var point in points)
@@ -297,7 +246,7 @@ namespace TVGL
         private void AddLineSeriesToModel(IList<double[]> points, bool closeShape, MarkerType marker, TVGL.Color color = null)
         {
             if (!points.Any()) return;
-            var series = new LineSeries { MarkerType = marker };
+            var series = new LineSeries { MarkerType = (OxyPlot.MarkerType)(int)marker };
 
             if (color != null)
                 series.Color = OxyColor.FromRgb(color.R, color.G, color.B);
@@ -328,7 +277,7 @@ namespace TVGL
         {
             var series = new LineSeries
             {
-                MarkerType = marker,
+                MarkerType = (OxyPlot.MarkerType)(int)marker,
                 LineStyle = LineStyle.None
             };
             //Add color to series if applicable
