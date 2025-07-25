@@ -280,7 +280,7 @@ namespace TVGL
         /// <param name="xIndex">Index of the x.</param>
         /// <param name="yIndex">Index of the y.</param>
         /// <param name="zIndex">Index of the z.</param>
-        protected void MakeFacesInCube(int xIndex, int yIndex, int zIndex)
+        protected virtual void MakeFacesInCube(int xIndex, int yIndex, int zIndex)
         {
             // first solve for the eight values at the vertices of the cubes. The "GetValue" function
             // will either grab the value from the StoredValues or will invoke the "GetValueFromSolid"

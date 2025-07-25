@@ -96,16 +96,15 @@ namespace TVGL
             FindZPointFromXandY();
             FindXPointFromYandZ();
             FindYPointFromXandZ();
-            foreach (var id in vertexDictionaries.SelectMany(vertexDictionary => vertexDictionary.Keys).Distinct())
+            var ids = new HashSet<long>(vertexDictionaries.SelectMany(vertexDictionary => vertexDictionary.Keys));
+            foreach (var id in ids)
             {
                 var (xIndex, yIndex, zIndex) = getIndicesFromIdentifier(id);
                 if (xIndex + 1 != numGridX && yIndex + 1 != numGridY && zIndex + 1 != numGridZ)
                     MakeFacesInCube(xIndex, yIndex, zIndex);
             }
-            var comments = new List<string>(solid.Comments)
-            {
-                "tessellation (via marching cubes) of the voxelized solid, " + solid.Name
-            };
+            //var comments = new List<string>(solid.Comments
+            //    .Concat("tessellation (via marching cubes) of the implicit solid, " + solid.Name));
             for (int i = 0; i < faces.Count; i++)
                 faces[i].IndexInList = i;
             if (faces.Count == 0)
@@ -114,6 +113,85 @@ namespace TVGL
             // vertexDictionaries.SelectMany(d => d.Values), false,
             //new[] { solid.SolidColor }, solid.Units, solid.Name + "TS", solid.FileName, comments, solid.Language);
         }
+
+
+        /// <summary>
+        /// MakeFacesInCube is the main/difficult function in the Marching Cubes algorithm
+        /// </summary>
+        /// <param name="xIndex">Index of the x.</param>
+        /// <param name="yIndex">Index of the y.</param>
+        /// <param name="zIndex">Index of the z.</param>
+        protected override void MakeFacesInCube(int xIndex, int yIndex, int zIndex)
+        {
+            // first solve for the eight values at the vertices of the cubes. The "GetValue" function
+            // will either grab the value from the StoredValues or will invoke the "GetValueFromSolid"
+            // which is a necessary function of inherited classes. For each one of the eight that is
+            // inside the solid, the cubeType is updated to reflect this. Each of the eight bits in the
+            // byte will correspond to the "inside" or "outside" of the vertex.
+            int cubeType = 0;
+            var cube = new StoredValue<double>[8];
+            //Find which vertices are inside of the surface and which are outside
+            for (var i = 0; i < 8; i++)
+            {
+                var thisX = xIndex + _unitOffsetTable[i][0];
+                var thisY = yIndex + _unitOffsetTable[i][1];
+                var thisZ = zIndex + _unitOffsetTable[i][2];
+                var id = getIdentifier((int)thisX, (int)thisY, (int)thisZ);
+                var v = cube[i] = GetValue((int)thisX, (int)thisY, (int)thisZ, id);
+                if (!IsInside(v.Value))
+                    cubeType |= 1 << i;
+            }
+            // Based upon the cubeType, the CubeEdgeFlagsTable will tell us which of the 12 edges of the cube
+            // intersect with the surface of the solid
+            int edgeFlags = CubeEdgeFlagsTable[cubeType];
+
+            //If the cube is entirely inside or outside of the surface, then there will be no intersections
+            if (edgeFlags == 0) return;
+            var EdgeVertex = new Vertex[12];
+            //this loop creates or retrieves the vertices that are on the edges of the
+            //marching cube. These are stored in the EdgeVertexIndexTable
+            for (var i = 0; i < 12; i++)
+            {
+                //if there is an intersection on this edge
+                if ((edgeFlags & 1) != 0)
+                {
+                    var direction = (int)directionTable[i] - 1;
+                    var fromCorner = cube[EdgeCornerIndexTable[i][0]];
+                    var toCorner = cube[EdgeCornerIndexTable[i][1]];
+                    if (vertexDictionaries[direction].TryGetValue(fromCorner.ID, out var value))
+                        EdgeVertex[i] = value;
+                    else
+                    {
+                        //return;
+                        var coord = new Vector3(
+                           _xMin + fromCorner.X * gridToCoordinateFactor,
+                            _yMin + fromCorner.Y * gridToCoordinateFactor,
+                            _zMin + fromCorner.Z * gridToCoordinateFactor);
+                        var offSetUnitVector = (direction == 0) ? Vector3.UnitX :
+                            (direction == 1) ? Vector3.UnitY : Vector3.UnitZ;
+                        double offset = GetOffset(fromCorner, toCorner, direction);
+                        coord = coord + (offSetUnitVector * offset);
+                        EdgeVertex[i] = new Vertex(coord);
+                        vertexDictionaries[direction].Add(fromCorner.ID, EdgeVertex[i]);
+                    }
+                }
+                edgeFlags >>= 1;
+            }
+            //now the triangular faces are created that connect the vertices identified above.
+            //based on the ones that were found. There can be up to five per cube
+            var faceVertices = new Vertex[3];
+            for (var i = 0; i < NumFacesTable[cubeType]; i++)
+            {
+                for (var j = 0; j < 3; j++)
+                {
+                    var vertexIndex = FaceVertexIndicesTable[cubeType][3 * i + j];
+                    faceVertices[j] = EdgeVertex[vertexIndex];
+                }
+                faces.Add(new TriangleFace(faceVertices));
+            }
+        }
+
+
 
         private void FindZPointFromXandY()
         {
