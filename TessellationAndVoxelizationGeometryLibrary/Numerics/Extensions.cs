@@ -590,6 +590,23 @@ namespace TVGL
         { return Vector4.Multiply(position, matrix); }
 
         /// <summary>
+        /// Multiplies a matrix by a vector. Note that the matrix is before the vector, so each term
+        /// is the dot product of a row of the matrix with the vector.
+        /// </summary>
+        /// <param name="b">The source vector.</param>
+        /// <param name="A">The transformation matrix.</param>
+        /// <returns>The transformed vector.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Vector4 Multiply(this Matrix4x4 A, Vector4 b)
+        {
+            return new Vector4(
+                b.X * A.M11 + b.Y * A.M12 + b.Z * A.M13 + b.W * A.M14,
+                b.X * A.M21 + b.Y * A.M22 + b.Z * A.M23 + b.W * A.M24,
+                b.X * A.M31 + b.Y * A.M32 + b.Z * A.M33 + b.W * A.M34,
+                b.X * A.M41 + b.Y * A.M42 + b.Z * A.M43 + b.W * A.M44);
+        }
+
+        /// <summary>
         /// Transforms a vector by the given matrix without the translation component.
         /// This is often used for transforming normals, however note that proper transformations
         /// of normal vectors requires that the input matrix be the transpose of the Inverse of that matrix.
@@ -681,6 +698,22 @@ namespace TVGL
         {
             if (!Matrix3x3.Invert(matrix, out var invert))
                 return Vector3.Null;
+            return invert.Multiply(b);
+        }
+
+
+        /// <summary>
+        /// Solves for the value x in Ax=b. This is also represented as the
+        /// backslash operation
+        /// </summary>
+        /// <param name="matrix">The matrix.</param>
+        /// <param name="b">The b.</param>
+        /// <returns>Vector4.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Vector4 Solve(this Matrix4x4 matrix, Vector4 b)
+        {
+            if (!Matrix4x4.Invert(matrix, out var invert))
+                return Vector4.Null;
             return invert.Multiply(b);
         }
         #endregion
