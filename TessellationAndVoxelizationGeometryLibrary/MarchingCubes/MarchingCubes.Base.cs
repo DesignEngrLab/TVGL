@@ -231,6 +231,20 @@ namespace TVGL
         }
 
         /// <summary>
+        /// Extracts the x, y, and z indices from a given identifier.
+        /// </summary>
+        /// <param name="identifier">The identifier from which to extract the indices.</param>
+        /// <returns>A tuple containing the x, y, and z indices derived from the identifier.</returns>
+        protected (int, int, int) getIndicesFromIdentifier(long identifier)
+        {
+            var z = (int)(identifier / zMultiplier);
+            identifier -= z * zMultiplier;
+            var y = (int)(identifier / yMultiplier);
+            var x = (int)(identifier - y * yMultiplier);
+            return (x, y, z);
+        }
+
+        /// <summary>
         /// Gets the value.
         /// </summary>
         /// <param name="x">The x.</param>
@@ -242,9 +256,9 @@ namespace TVGL
         {
             if (valueDictionary.TryGetValue(identifier, out var prevValue))
             {
-                if (prevValue.NumTimesCalled < 7)
-                    prevValue.NumTimesCalled++;
-                else valueDictionary.Remove(identifier);
+                //if (prevValue.NumTimesCalled < 7)
+                //    prevValue.NumTimesCalled++;
+                //else valueDictionary.Remove(identifier);
                 return prevValue;
             }
             var newValue = new StoredValue<ValueT>
@@ -266,7 +280,7 @@ namespace TVGL
         /// <param name="xIndex">Index of the x.</param>
         /// <param name="yIndex">Index of the y.</param>
         /// <param name="zIndex">Index of the z.</param>
-        protected void MakeFacesInCube(int xIndex, int yIndex, int zIndex)
+        protected virtual void MakeFacesInCube(int xIndex, int yIndex, int zIndex)
         {
             // first solve for the eight values at the vertices of the cubes. The "GetValue" function
             // will either grab the value from the StoredValues or will invoke the "GetValueFromSolid"

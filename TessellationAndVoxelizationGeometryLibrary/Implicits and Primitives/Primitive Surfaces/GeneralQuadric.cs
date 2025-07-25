@@ -315,29 +315,36 @@ namespace TVGL
             return intersections.MinBy(x => x.intersection.DistanceSquared(anchor)).intersection;
         }
 
-        public double DistanceToPointSQP(Vector3 point)
+        /// <summary>
+        /// Finds the closest signed distance between the given point and the quadric.
+        /// </summary>
+        /// <param name="point"></param>
+        /// <returns></returns>
+        public override double DistanceToPoint(Vector3 point)
         {
-            Vector3 startPoint = GetPointNearQuadric(point);
-            double[] u = { startPoint.X, startPoint.Y, startPoint.Z, 0 };
-            double[] du = { double.PositiveInfinity, double.PositiveInfinity, double.PositiveInfinity, double.PositiveInfinity };
-            int iters = 0;
-            while (iters < 1000 && (du[0] * du[0] + du[1] * du[1] + du[2] * du[2] + du[3] * du[3]) < 1E-6) {
-                double[,] H = { { 2 + 2 * XSqdCoeff * u[3], XYCoeff * u[3], XZCoeff * u[3], 2 * XSqdCoeff * u[0] + XYCoeff * u[1] + XZCoeff * u[2] + XCoeff },
-                { XYCoeff * u[3], 2 + 2 * YSqdCoeff * u[3], YZCoeff * u[3], 2 * YSqdCoeff * u[1] + XYCoeff * u[0] + YZCoeff * u[2] + YCoeff },
-                { XZCoeff * u[3], YZCoeff * u[3], 2 + 2 * ZSqdCoeff * u[3], 2 * YSqdCoeff * u[2] + XZCoeff * u[0] + YZCoeff * u[1] + ZCoeff },
-                { 2 * XSqdCoeff * u[0] + XYCoeff * u[1] + XZCoeff * u[2] + XCoeff, 2 * YSqdCoeff * u[1] + XYCoeff * u[0] + YZCoeff * u[2] + YCoeff, 2 * YSqdCoeff * u[2] + XZCoeff * u[0] + YZCoeff * u[1] + ZCoeff, 0} };
-                double[] RHS = { 2 * (u[0] - point.X) + u[3] * (2 * XSqdCoeff * u[0] + XYCoeff * u[1] + XZCoeff * u[2] + XCoeff), 
-                2 * (u[1] - point.Y) + 2 * YSqdCoeff * u[1] + XYCoeff * u[0] + YZCoeff * u[2] + YCoeff,
-                2 * (u[2] - point.Z) + 2 * YSqdCoeff * u[2] + XZCoeff * u[0] + YZCoeff * u[1] + ZCoeff,
-                QuadricValue(new Vector3(u[..3]))};
-                StarMath.solve(H, RHS, out du, true);
-                u[0] += du[0];
-                u[1] += du[1];
-                u[2] += du[2];
-                u[3] += du[3];
+            var closestPt = GetPointOnQuadric(point);
+            var closestPt4 = new Vector4(closestPt, 0); // the fourth number "w" here represents the Lagrange multiplier
+            var delta = Vector4.Zero;
+            int iterations = 0;
+            do // run a condensed SQP algorithm
+            {
+                var hessian = new Matrix4x4(
+                    2 + 2 * XSqdCoeff * closestPt4.W, XYCoeff * closestPt4.W, XZCoeff * closestPt4.W, 2 * XSqdCoeff * closestPt4.X + XYCoeff * closestPt4.Y + XZCoeff * closestPt4.Z + XCoeff,
+                    XYCoeff * closestPt4.W, 2 + 2 * YSqdCoeff * closestPt4.W, YZCoeff * closestPt4.W, 2 * YSqdCoeff * closestPt4.Y + XYCoeff * closestPt4.X + YZCoeff * closestPt4.Z + YCoeff,
+                    XZCoeff * closestPt4.W, YZCoeff * closestPt4.W, 2 + 2 * ZSqdCoeff * closestPt4.W, 2 * YSqdCoeff * closestPt4.Z + XZCoeff * closestPt4.X + YZCoeff * closestPt4.Y + ZCoeff,
+                    2 * XSqdCoeff * closestPt4.X + XYCoeff * closestPt4.Y + XZCoeff * closestPt4.Z + XCoeff, 2 * YSqdCoeff * closestPt4.Y + XYCoeff * closestPt4.X + YZCoeff * closestPt4.Z + YCoeff, 2 * YSqdCoeff * closestPt4.Z + XZCoeff * closestPt4.X + YZCoeff * closestPt4.Y + ZCoeff, 0);
+                var rhs = new Vector4(
+                    2 * (closestPt4.X - point.X) + closestPt4.W * (2 * XSqdCoeff * closestPt4.X + XYCoeff * closestPt4.Y + XZCoeff * closestPt4.Z + XCoeff),
+                    2 * (closestPt4.Y - point.Y) + 2 * YSqdCoeff * closestPt4.Y + XYCoeff * closestPt4.X + YZCoeff * closestPt4.Z + YCoeff,
+                    2 * (closestPt4.Z - point.Z) + 2 * YSqdCoeff * closestPt4.Z + XZCoeff * closestPt4.X + YZCoeff * closestPt4.Y + ZCoeff,
+                    QuadricValue(closestPt));
+                delta = hessian.Solve(rhs);
+                // add the negative to the previous point to get an updated point
+                closestPt4 -= delta;
             }
-            Vector3 newPoint = new Vector3(u[..3]);
-            return QuadricValue(point)/Math.Abs(QuadricValue(point)) * point.Distance(newPoint);
+            while (iterations++ < 1000 && delta.LengthSquared() > 1E-6); // while less than 1000 iterations or the delta is small
+            closestPt = closestPt4.ToVector3(false);
+            return Math.Sign(QuadricValue(point)) * point.Distance(closestPt);
         }
         protected override void CalculateIsPositive()
         {
