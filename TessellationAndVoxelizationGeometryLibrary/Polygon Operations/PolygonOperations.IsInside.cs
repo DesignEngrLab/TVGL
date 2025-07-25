@@ -877,6 +877,7 @@ namespace TVGL
                     }
                 }
             }
+            Presenter.ShowAndHang([subPolygonA, subPolygonB, new Polygon(intersections.Select(id => id.IntersectCoordinates.AsVector2))]);
 
 
             var relationship = PolyRelInternal.Separated; // this is just the default, setting it to zero would be the same
@@ -947,7 +948,6 @@ namespace TVGL
             // considered as non-overlapping. if both postive or both negative then there is overlap in their material
             if (subPolygonA.IsPositive == atLeastOneAEncloseB)
                 return relationship | PolyRelInternal.BInsideA;
-
             //if (atLeastOneBEncloseA && subPolygonB.IsPositive)
             return relationship | PolyRelInternal.AInsideB;
 
@@ -1003,6 +1003,8 @@ namespace TVGL
             }
             var intersectionCoordinates = PGA2D.PointAtPolyEdgeIntersection(lineA, lineB, out var t1,
                  out var onSegment1, out var t2, out var onSegment2);
+            //if (!onSegment1 || !onSegment2)
+            //    return false;
             var where = t1.Num == 0 ? WhereIsIntersection.AtStartOfA : t2.Num == 0
                   ? WhereIsIntersection.AtStartOfB : WhereIsIntersection.Intermediate;
 

@@ -370,7 +370,7 @@ namespace TVGLUnitTestsAndBenchmarking
         {
             //foreach (var polys in TestCases.GetAllTwoArgumentEdgeCases())
             //{
-            var polysValue = TestCases.MakeBumpyRings(50, 28, 1.8);
+            var polysValue = TestCases.MakeBumpyRings(10, 28, 1.8);
             //var polysValue = TestCases.EdgeCases["tinyOffsetProb"];
             var polygon1 = new Polygon(polysValue.Item1);
             var polygon2 = new Polygon(polysValue.Item2);

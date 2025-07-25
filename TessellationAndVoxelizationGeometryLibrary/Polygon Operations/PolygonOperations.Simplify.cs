@@ -68,8 +68,7 @@ namespace TVGL
             polygon.MakePolygonEdgesIfNonExistent();
             foreach (var vertex in polygon.Vertices)
             {
-                var cross = vertex.EndLine.Normal.Cross(vertex.StartLine.Normal);
-                if (cross.IsNull())
+                if (vertex.EndLine.Normal.X * vertex.StartLine.Normal.Y == vertex.StartLine.Normal.X * vertex.EndLine.Normal.Y) // this means that the lines are parallel
                     // if the cross product of the normals is zero, then the lines are collinear
                     // here, we claim that "zero" is anything less than the initialW value
                     // is this a good value?
