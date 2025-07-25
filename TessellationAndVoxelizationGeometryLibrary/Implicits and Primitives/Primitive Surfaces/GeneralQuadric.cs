@@ -66,6 +66,10 @@ namespace TVGL
         /// W is the constant term. like weight in homogeneous coordinate systems.
         /// </summary>
         public double W { get; }
+        /// <summary>
+        /// Gets the type of the quadric surface: real/imaginary ellipsoid, one/two sheet hyperboloid, etc.
+        /// </summary>
+        public string type { get; }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="GeneralQuadric"/> class.
@@ -233,7 +237,7 @@ namespace TVGL
         /// </summary>
         /// <param name="point">The point.</param>
         /// <returns>System.Double.</returns>
- /*       public override double DistanceToPoint(Vector3 point)
+        public override double DistanceToPoint(Vector3 point)
         {
             // start with the assumption that the normal is the best direction to go
             var dir = GetNormalAtPoint(point).Normalize();
@@ -251,9 +255,7 @@ namespace TVGL
                 }
                 else
                 {
-                    minPoint = GetPointOnQuadric(point);
-                    minPointDist = Vector3.DistanceSquared(point, minPoint);
-                    dir = point - minPoint;
+                    return DistanceToPointSQP(point);
                 }
                 if (methodEnumerator.MoveNext())
                 {
@@ -273,7 +275,7 @@ namespace TVGL
                 dir = newDir;
             }
             return Math.Sign(dot) * Math.Sqrt(minPointDist);
-        }*/
+        }
 
         public Vector3 FlowToSurface(Vector3 anchor, double tol)
         {
@@ -295,17 +297,21 @@ namespace TVGL
             return currentPoint;
         }
 
-        public Vector3 GetPointOnQuadric(Vector3 anchor)
+        public Vector3 GetPointNearQuadric(Vector3 anchor)
         {
             var intersections = LineIntersection(anchor, GetNormalAtPoint(anchor));
             Vector3 newAnchor = anchor;
-            while (!intersections.GetEnumerator().MoveNext())
+            int iters = 0;
+            while (!intersections.GetEnumerator().MoveNext() && iters < 5)
             {
                 GeneralQuadric outerQuadric = new GeneralQuadric(XSqdCoeff, YSqdCoeff, ZSqdCoeff, XYCoeff, XZCoeff, YZCoeff, XCoeff, YCoeff, ZCoeff, W - QuadricValue(newAnchor));
-                Vector3 FarSideAnchor = (outerQuadric.LineIntersection(newAnchor, GetNormalAtPoint(newAnchor)).MaxBy(x => x.intersection.DistanceSquared(newAnchor))).intersection;
-                newAnchor = newAnchor - (QuadricValue(newAnchor) / Math.Abs(QuadricValue(newAnchor))) * GetNormalAtPoint(anchor).Normalize() * anchor.Distance(FarSideAnchor) / 2;
-                intersections = LineIntersection(newAnchor, GetNormalAtPoint(newAnchor));
+                Vector3 FarSideAnchor = (outerQuadric.LineIntersection(newAnchor + 1E-6 * GetNormalAtPoint(newAnchor), GetNormalAtPoint(newAnchor)).MaxBy(x => x.intersection.DistanceSquared(newAnchor))).intersection;
+                newAnchor = newAnchor - Math.Sign(QuadricValue(newAnchor)) * GetNormalAtPoint(newAnchor).Normalize() * newAnchor.Distance(FarSideAnchor) / 2;
+                intersections = LineIntersection(newAnchor, outerQuadric.GetNormalAtPoint(newAnchor));
+                iters++;
             }
+            if (QuadricValue(newAnchor).IsNegligible(1e-3)) return newAnchor;
+            if (!intersections.GetEnumerator().MoveNext()) return newAnchor;
             return intersections.MinBy(x => x.intersection.DistanceSquared(anchor)).intersection;
         }
 
@@ -340,6 +346,7 @@ namespace TVGL
             closestPt = closestPt4.ToVector3(false);
             return Math.Sign(QuadricValue(point)) * point.Distance(closestPt);
         }
+        
         protected override void CalculateIsPositive()
         {
             if (Faces == null || !Faces.Any()) return;
