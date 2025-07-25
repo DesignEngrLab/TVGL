@@ -13,6 +13,7 @@
 // ***********************************************************************
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace TVGL
 {
@@ -54,6 +55,7 @@ namespace TVGL
         /// <returns>ValueT.</returns>
         protected override double GetValueFromSolid(int x, int y, int z)
         {
+            //return 0;
             return solid[
                   _xMin + x * gridToCoordinateFactor,
                             _yMin + y * gridToCoordinateFactor,
@@ -94,10 +96,12 @@ namespace TVGL
             FindZPointFromXandY();
             FindXPointFromYandZ();
             FindYPointFromXandZ();
-            for (var i = 0; i < numGridX - 1; i++)
-                for (var j = 0; j < numGridY - 1; j++)
-                    foreach (var k in zIndices)
-                        MakeFacesInCube(i, j, k);
+            foreach (var id in vertexDictionaries.SelectMany(vertexDictionary => vertexDictionary.Keys).Distinct())
+            {
+                var (xIndex, yIndex, zIndex) = getIndicesFromIdentifier(id);
+                if (xIndex + 1 != numGridX && yIndex + 1 != numGridY && zIndex + 1 != numGridZ)
+                    MakeFacesInCube(xIndex, yIndex, zIndex);
+            }
             var comments = new List<string>(solid.Comments)
             {
                 "tessellation (via marching cubes) of the voxelized solid, " + solid.Name
@@ -113,8 +117,8 @@ namespace TVGL
 
         private void FindZPointFromXandY()
         {
-            for (var i = 0; i < numGridX - 1; i++)
-                for (var j = 0; j < numGridY - 1; j++)
+            for (var i = 0; i < numGridX; i++)
+                for (var j = 0; j < numGridY; j++)
                 {
                     var anchor = new Vector3(_xMin + i * gridToCoordinateFactor,
                               _yMin + j * gridToCoordinateFactor, 0.0);
@@ -211,7 +215,7 @@ namespace TVGL
                             hashID += zMultiplier;
                             valueDictionary.Add(hashID, new StoredValue<double>
                             {
-                                Value = posDir1 ? 1 : -1,
+                                Value = posDir2 ? 1 : -1,
                                 X = i,
                                 Y = j,
                                 Z = zLowIndex2 + 1,
@@ -222,10 +226,229 @@ namespace TVGL
                     }
                 }
         }
+
         private void FindYPointFromXandZ()
         {
+            for (var i = 0; i < numGridX; i++)
+                for (var k = 0; k < numGridZ; k++)
+                {
+                    var anchor = new Vector3(_xMin + i * gridToCoordinateFactor,
+                              0.0, _zMin + k * gridToCoordinateFactor);
+                    var intersectionEnumerator = surface.LineIntersection(anchor, Vector3.UnitY).GetEnumerator();
+                    if (!intersectionEnumerator.MoveNext()) continue;
+                    (Vector3 p1, _) = intersectionEnumerator.Current;
+                    if (p1.Y < _yMin || p1.Y > _yMax)
+                    {
+                        if (!intersectionEnumerator.MoveNext()) continue;
+                        (p1, _) = intersectionEnumerator.Current;
+                        if (p1.Y < _yMin || p1.Y > _yMax)
+                            continue;
+                    }
+                    var posDir1 = surface.GetNormalAtPoint(p1).Y > 0;
+                    var yLowIndex1 = (int)((p1.Y - _yMin) * coordToGridFactor);
+                    var p2 = Vector3.Null;
+                    var hashID = getIdentifier(i, yLowIndex1, k);
+                    if (intersectionEnumerator.MoveNext())
+                    {
+                        (p2, _) = intersectionEnumerator.Current;
+                        if (p2.Y < _yMin || p2.Y > _yMax)
+                            p2 = Vector3.Null;
+                    }
+                    if (p2.IsNull())
+                    {
+                        vertexDictionaries[1].Add(hashID, new Vertex(p1));
+                        valueDictionary.TryAdd(hashID, new StoredValue<double>
+                        {
+                            Value = posDir1 ? -1 : 1,
+                            X = i,
+                            Y = yLowIndex1,
+                            Z = k,
+                            NumTimesCalled = 0,
+                            ID = hashID
+                        });
+                        if (yLowIndex1 != numGridY - 1)
+                        {
+                            hashID += yMultiplier;
+                            valueDictionary.TryAdd(hashID, new StoredValue<double>
+                            {
+                                Value = posDir1 ? 1 : -1,
+                                X = i,
+                                Y = yLowIndex1 + 1,
+                                Z = k,
+                                NumTimesCalled = 0,
+                                ID = hashID
+                            });
+                        }
+                    }
+                    else
+                    {
+                        var posDir2 = surface.GetNormalAtPoint(p2).Y > 0;
+                        var yLowIndex2 = (int)((p2.Y - _yMin) * coordToGridFactor);
+                        if (yLowIndex1 == yLowIndex2 || (posDir1 == posDir2 &&
+                            (yLowIndex1 + 1 == yLowIndex2 || yLowIndex1 == yLowIndex2 + 1)))
+                            continue; // can't have two vertices at the same y level or adjacent y levels
+
+                        vertexDictionaries[1].Add(hashID, new Vertex(p1));
+                        valueDictionary.TryAdd(hashID, new StoredValue<double>
+                        {
+                            Value = posDir1 ? -1 : 1,
+                            X = i,
+                            Y = yLowIndex1,
+                            Z = k,
+                            NumTimesCalled = 0,
+                            ID = hashID
+                        });
+                        if (yLowIndex1 != numGridY - 1)
+                        {
+                            hashID += yMultiplier;
+                            valueDictionary.TryAdd(hashID, new StoredValue<double>
+                            {
+                                Value = posDir1 ? 1 : -1,
+                                X = i,
+                                Y = yLowIndex1 + 1,
+                                Z = k,
+                                NumTimesCalled = 0,
+                                ID = hashID
+                            });
+                        }
+                        hashID = getIdentifier(i, yLowIndex2, k);
+                        vertexDictionaries[1].Add(hashID, new Vertex(p2));
+                        valueDictionary.TryAdd(hashID, new StoredValue<double>
+                        {
+                            Value = posDir2 ? -1 : 1,
+                            X = i,
+                            Y = yLowIndex2,
+                            Z = k,
+                            NumTimesCalled = 0,
+                            ID = hashID
+                        });
+                        if (yLowIndex2 != numGridY - 1)
+                        {
+                            hashID += yMultiplier;
+                            valueDictionary.TryAdd(hashID, new StoredValue<double>
+                            {
+                                Value = posDir2 ? 1 : -1,
+                                X = i,
+                                Y = yLowIndex2 + 1,
+                                Z = k,
+                                NumTimesCalled = 0,
+                                ID = hashID
+                            });
+                        }
+                    }
+                }
         }
+
         private void FindXPointFromYandZ()
         {
+            for (var j = 0; j < numGridY; j++)
+                for (var k = 0; k < numGridZ; k++)
+                {
+                    var anchor = new Vector3(0.0, _yMin + j * gridToCoordinateFactor,
+                              _zMin + k * gridToCoordinateFactor);
+                    var intersectionEnumerator = surface.LineIntersection(anchor, Vector3.UnitX).GetEnumerator();
+                    if (!intersectionEnumerator.MoveNext()) continue;
+                    (Vector3 p1, _) = intersectionEnumerator.Current;
+                    if (p1.X < _xMin || p1.X > _xMax)
+                    {
+                        if (!intersectionEnumerator.MoveNext()) continue;
+                        (p1, _) = intersectionEnumerator.Current;
+                        if (p1.X < _xMin || p1.X > _xMax)
+                            continue;
+                    }
+                    var posDir1 = surface.GetNormalAtPoint(p1).X > 0;
+                    var xLowIndex1 = (int)((p1.X - _xMin) * coordToGridFactor);
+                    var p2 = Vector3.Null;
+                    var hashID = getIdentifier(xLowIndex1, j, k);
+                    if (intersectionEnumerator.MoveNext())
+                    {
+                        (p2, _) = intersectionEnumerator.Current;
+                        if (p2.X < _xMin || p2.X > _xMax)
+                            p2 = Vector3.Null;
+                    }
+                    if (p2.IsNull())
+                    {
+                        vertexDictionaries[0].Add(hashID, new Vertex(p1));
+                        valueDictionary.TryAdd(hashID, new StoredValue<double>
+                        {
+                            Value = posDir1 ? -1 : 1,
+                            X = xLowIndex1,
+                            Y = j,
+                            Z = k,
+                            NumTimesCalled = 0,
+                            ID = hashID
+                        });
+                        if (xLowIndex1 != numGridX - 1)
+                        {
+                            hashID += 1; // x multiplier is 1
+                            valueDictionary.TryAdd(hashID, new StoredValue<double>
+                            {
+                                Value = posDir1 ? 1 : -1,
+                                X = xLowIndex1 + 1,
+                                Y = j,
+                                Z = k,
+                                NumTimesCalled = 0,
+                                ID = hashID
+                            });
+                        }
+                    }
+                    else
+                    {
+                        var posDir2 = surface.GetNormalAtPoint(p2).X > 0;
+                        var xLowIndex2 = (int)((p2.X - _xMin) * coordToGridFactor);
+                        if (xLowIndex1 == xLowIndex2 || (posDir1 == posDir2 &&
+                            (xLowIndex1 + 1 == xLowIndex2 || xLowIndex1 == xLowIndex2 + 1)))
+                            continue; // can't have two vertices at the same x level or adjacent x levels
+
+                        vertexDictionaries[0].Add(hashID, new Vertex(p1));
+                        valueDictionary.TryAdd(hashID, new StoredValue<double>
+                        {
+                            Value = posDir1 ? -1 : 1,
+                            X = xLowIndex1,
+                            Y = j,
+                            Z = k,
+                            NumTimesCalled = 0,
+                            ID = hashID
+                        });
+                        if (xLowIndex1 != numGridX - 1)
+                        {
+                            hashID += 1; // x multiplier is 1
+                            valueDictionary.TryAdd(hashID, new StoredValue<double>
+                            {
+                                Value = posDir1 ? 1 : -1,
+                                X = xLowIndex1 + 1,
+                                Y = j,
+                                Z = k,
+                                NumTimesCalled = 0,
+                                ID = hashID
+                            });
+                        }
+                        hashID = getIdentifier(xLowIndex2, j, k);
+                        vertexDictionaries[0].Add(hashID, new Vertex(p2));
+                        valueDictionary.TryAdd(hashID, new StoredValue<double>
+                        {
+                            Value = posDir2 ? -1 : 1,
+                            X = xLowIndex2,
+                            Y = j,
+                            Z = k,
+                            NumTimesCalled = 0,
+                            ID = hashID
+                        });
+                        if (xLowIndex2 != numGridX - 1)
+                        {
+                            hashID += 1; // x multiplier is 1
+                            valueDictionary.TryAdd(hashID, new StoredValue<double>
+                            {
+                                Value = posDir2 ? 1 : -1,
+                                X = xLowIndex2 + 1,
+                                Y = j,
+                                Z = k,
+                                NumTimesCalled = 0,
+                                ID = hashID
+                            });
+                        }
+                    }
+                }
         }
+    }
 }
