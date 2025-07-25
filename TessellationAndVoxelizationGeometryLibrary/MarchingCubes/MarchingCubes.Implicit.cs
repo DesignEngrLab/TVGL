@@ -96,7 +96,7 @@ namespace TVGL
             FindYPointFromXandZ();
             for (var i = 0; i < numGridX - 1; i++)
                 for (var j = 0; j < numGridY - 1; j++)
-                    foreach (var k in zIndices)
+                    for (var k = 0; k < numGridZ - 1; k++)
                         MakeFacesInCube(i, j, k);
             var comments = new List<string>(solid.Comments)
             {
@@ -141,7 +141,7 @@ namespace TVGL
                     if (p2.IsNull())
                     {
                         vertexDictionaries[2].Add(hashID, new Vertex(p1));
-                        valueDictionary.Add(hashID, new StoredValue<double>
+                        valueDictionary.TryAdd(hashID, new StoredValue<double>
                         {
                             Value = posDir1 ? -1 : 1,
                             X = i,
@@ -153,7 +153,7 @@ namespace TVGL
                         if (zLowIndex1 != numGridZ - 1)
                         {
                             hashID += zMultiplier;
-                            valueDictionary.Add(hashID, new StoredValue<double>
+                            valueDictionary.TryAdd(hashID, new StoredValue<double>
                             {
                                 Value = posDir1 ? 1 : -1,
                                 X = i,
@@ -173,7 +173,7 @@ namespace TVGL
                             continue; // can't have two vertices at the same z level or adjacent z levels
 
                         vertexDictionaries[2].Add(hashID, new Vertex(p1));
-                        valueDictionary.Add(hashID, new StoredValue<double>
+                        valueDictionary.TryAdd(hashID, new StoredValue<double>
                         {
                             Value = posDir1 ? -1 : 1,
                             X = i,
@@ -185,7 +185,7 @@ namespace TVGL
                         if (zLowIndex1 != numGridZ - 1)
                         {
                             hashID += zMultiplier;
-                            valueDictionary.Add(hashID, new StoredValue<double>
+                            valueDictionary.TryAdd(hashID, new StoredValue<double>
                             {
                                 Value = posDir1 ? 1 : -1,
                                 X = i,
@@ -197,7 +197,7 @@ namespace TVGL
                         }
                         hashID = getIdentifier(i, j, zLowIndex2);
                         vertexDictionaries[2].Add(hashID, new Vertex(p2));
-                        valueDictionary.Add(hashID, new StoredValue<double>
+                        valueDictionary.TryAdd(hashID, new StoredValue<double>
                         {
                             Value = posDir2 ? -1 : 1,
                             X = i,
@@ -209,7 +209,7 @@ namespace TVGL
                         if (zLowIndex2 != numGridZ - 1)
                         {
                             hashID += zMultiplier;
-                            valueDictionary.Add(hashID, new StoredValue<double>
+                            valueDictionary.TryAdd(hashID, new StoredValue<double>
                             {
                                 Value = posDir1 ? 1 : -1,
                                 X = i,
@@ -228,4 +228,5 @@ namespace TVGL
         private void FindXPointFromYandZ()
         {
         }
+    }
 }
