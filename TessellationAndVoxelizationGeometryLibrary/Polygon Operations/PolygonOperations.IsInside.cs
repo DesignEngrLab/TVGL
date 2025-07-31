@@ -1010,7 +1010,7 @@ namespace TVGL
 
             if (where == WhereIsIntersection.Intermediate)
                 intersections.Add(new SegmentIntersection(lineA, lineB, intersectionCoordinates,
-                lineA.Normal.Cross(lineB.Normal).W > 0 ? SegmentRelationship.CrossOver_AOutsideAfter : SegmentRelationship.CrossOver_BOutsideAfter, WhereIsIntersection.Intermediate));
+                lineA.Normal.Cross3D(lineB.Normal).W > 0 ? SegmentRelationship.CrossOver_AOutsideAfter : SegmentRelationship.CrossOver_BOutsideAfter, WhereIsIntersection.Intermediate));
             else
             {
                 SegmentRelationship segmentRelationship =

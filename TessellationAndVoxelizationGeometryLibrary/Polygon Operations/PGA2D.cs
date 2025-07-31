@@ -42,13 +42,13 @@ namespace TVGL
         }
         internal static Vector2IP PointAtLineIntersection(Vector2IP lineNormal1, Vector2IP lineNormal2)
         {
-            return lineNormal1.Cross(lineNormal2);
+            return lineNormal1.Cross3D(lineNormal2);
             // if (intersection.W == 0) //Lines are parallel, but what to return
         }
 
         internal static Vector2IP PointAtLineAndPolyEdge(Vector2IP lineNormal, PolygonEdge polyEdge)
         {
-            var intersection = lineNormal.Cross(polyEdge.Normal);
+            var intersection = lineNormal.Cross3D(polyEdge.Normal);
             if (intersection.W == 0) return polyEdge.FromPoint.Coordinates;
             return intersection;
 
@@ -56,18 +56,18 @@ namespace TVGL
         internal static Vector2IP PointAtLineAndPolyEdge(Vector2IP lineNormal, PolygonEdge polyEdge,
               out RationalIP t, out bool onSegment)
         {
-            var point = lineNormal.Cross(polyEdge.Normal);
+            var point = lineNormal.Cross3D(polyEdge.Normal);
             t = FractionOnLineSegment(polyEdge, point, out onSegment);
             return point;
         }
         internal static Vector2IP PointAtPolyEdgeIntersection(PolygonEdge polyEdge1, PolygonEdge polyEdge2)
         {
-            return polyEdge1.Normal.Cross(polyEdge2.Normal);
+            return polyEdge1.Normal.Cross3D(polyEdge2.Normal);
         }
         internal static Vector2IP PointAtPolyEdgeIntersection(PolygonEdge polyEdge1, PolygonEdge polyEdge2,
             out RationalIP t1, out bool onSegment1, out RationalIP t2, out bool onSegment2)
         {
-            var point = polyEdge1.Normal.Cross(polyEdge2.Normal);
+            var point = polyEdge1.Normal.Cross3D(polyEdge2.Normal);
             t1 = FractionOnLineSegment(polyEdge1, point, out onSegment1);
             t2 = FractionOnLineSegment(polyEdge2, point, out onSegment2);
             return point;
@@ -132,7 +132,7 @@ namespace TVGL
             var v = polygonEdge.Vector;
             var vDotV = v.Dot3D(v);
             if (Int128.IsNegative(vDotV)) throw new OverflowException();
-            var u = point - polygonEdge.FromPoint.Coordinates;
+            var u = Vector2IP.Minus3D(point, polygonEdge.FromPoint.Coordinates);
             var uDotV = u.Dot3D(v);
             onSegment = uDotV >= 0 && uDotV < vDotV;
             return new RationalIP(uDotV, vDotV);
@@ -140,7 +140,7 @@ namespace TVGL
 
         internal static Vector2IP LineJoiningTwoPoints(Vector2IP from, Vector2IP to)
         {
-            return to.Cross(from);
+            return to.Cross3D(from);
         }
 
 

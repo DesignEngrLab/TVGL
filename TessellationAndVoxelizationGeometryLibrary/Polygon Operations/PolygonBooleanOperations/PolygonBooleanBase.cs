@@ -269,7 +269,8 @@ namespace TVGL
                 if (!(formerIntersectCoords.IsNull() && (candidateIntersect.WhereIntersection == WhereIsIntersection.BothStarts ||
                     (candidateIntersect.WhereIntersection == WhereIsIntersection.AtStartOfA && currentEdgeIsFromPolygonA) ||
                     (candidateIntersect.WhereIntersection == WhereIsIntersection.AtStartOfB && !currentEdgeIsFromPolygonA))))
-                    distance = currentEdge.Vector.Dot2D(candidateIntersect.IntersectCoordinates - datum);
+                    // todo: review and improve vector2ip math here
+                    distance = currentEdge.Vector.Dot2D(Vector2IP.Minus2D(candidateIntersect.IntersectCoordinates, datum));
                 if (distance.Sign() < 0) continue; //if the distance is negative, then the intersection is behind the current edge
                 if (minDistanceToIntersection > distance)
                 {
@@ -282,15 +283,15 @@ namespace TVGL
                     // into the polygon
                     var bestEdge = bestIntersection.EdgeA == currentEdge ? bestIntersection.EdgeB : bestIntersection.EdgeA;
                     var newCandidateEdge = candidateIntersect.EdgeA == currentEdge ? candidateIntersect.EdgeB : candidateIntersect.EdgeA;
-                    var wCross = bestEdge.Normal.Cross(newCandidateEdge.Normal).W;
+                    var wCross = bestEdge.Normal.Cross3D(newCandidateEdge.Normal).W;
                     //var bestAngle = currentEdge.Normal.SmallerAngleBetweenVectorsEndToEnd(bestEdge.Normal);
                     //var newCandidateAngle = currentEdge.Normal.SmallerAngleBetweenVectorsEndToEnd(newCandidateEdge.Normal);
                     if (wCross > 0) bestIntersection = candidateIntersect;
                     if (wCross == Int128.Zero)
                     {   // really?! if you are here than not only are there two segments that pass through currentEdge at the same
                         // point, but the do so at the same angle! So, we are going to choose the one that is shorter
-                        var bestRemainingLength = (bestEdge.ToPoint.Coordinates - bestIntersection.IntersectCoordinates).LengthSquared2D();
-                        var newCandRemainingLength = (newCandidateEdge.ToPoint.Coordinates - candidateIntersect.IntersectCoordinates).LengthSquared2D();
+                        var bestRemainingLength = (Vector2IP.Minus2D(bestEdge.ToPoint.Coordinates, bestIntersection.IntersectCoordinates)).LengthSquared2D();
+                        var newCandRemainingLength = (Vector2IP.Minus2D(newCandidateEdge.ToPoint.Coordinates, candidateIntersect.IntersectCoordinates)).LengthSquared2D();
                         if (newCandRemainingLength < bestRemainingLength) bestIntersection = candidateIntersect;
                     }
                 }

@@ -67,7 +67,7 @@ namespace TVGL
             get
             {
                 if (_vector.IsNull())
-                    _vector = ToPoint.Coordinates - FromPoint.Coordinates;
+                    _vector = Vector2IP.Minus3D(ToPoint.Coordinates, FromPoint.Coordinates);
                 return _vector;
             }
         }
@@ -79,7 +79,7 @@ namespace TVGL
             get
             {
                 if (normal.IsNull())
-                    normal = ToPoint.Coordinates.Cross(FromPoint.Coordinates);
+                    normal = ToPoint.Coordinates.Cross3D(FromPoint.Coordinates);
                 return normal;
             }
         }

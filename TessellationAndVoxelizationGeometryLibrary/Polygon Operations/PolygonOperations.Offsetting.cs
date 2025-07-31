@@ -358,7 +358,7 @@ namespace TVGL
                     // tilt plane away so that it represents offset line
                      thisOffsetNormal = new Vector2IP(thisNormal.X, thisNormal.Y, (thisNormal.W - this2DMag * rashOffset).AsInt128);
                 }
-                var isConvex = prevLine.Normal.Cross(thisLine.Normal).W > 0;
+                var isConvex = prevLine.Normal.Cross3D(thisLine.Normal).W > 0;
                 if (isConvex == offset > 0) // then making a positive corner (not an overlapping feature)
                 {
                     if ((polygon.IsPositive && offset < 0) || (!polygon.IsPositive && offset > 0)) maxNumberOfPolygons++;

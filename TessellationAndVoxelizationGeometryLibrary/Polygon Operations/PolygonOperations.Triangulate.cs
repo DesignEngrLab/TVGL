@@ -234,7 +234,9 @@ namespace TVGL
                     foreach (var monoPoly in CreateXMonotonePolygons(polygon))
                         localTriangleFaceList.AddRange(TriangulateMonotonePolygon(monoPoly));
                     var triangleAreaRational = localTriangleFaceList
-                          .Aggregate(RationalIP.Zero, (acc, tri) => acc + RationalIP.Abs((tri[1].Coordinates - tri[0].Coordinates).Cross2D(tri[2].Coordinates - tri[0].Coordinates)));
+                          .Aggregate(RationalIP.Zero, (acc, tri) => acc + RationalIP.Abs(Vector2IP.Minus2D(tri[1].Coordinates, tri[0].Coordinates)
+                          // todo: there's a better way to do this by combining the 3 Vector2IP operations into one
+                          .Cross2D(Vector2IP.Minus2D(tri[2].Coordinates, tri[0].Coordinates))));
                     triangleArea = new RationalIP(triangleAreaRational.Num, 2 * triangleAreaRational.Den).AsDouble;
                 }
                 catch
@@ -509,7 +511,8 @@ namespace TVGL
                     Vertex2D vertex1 = concaveFunnelStack.Pop();
                     Vertex2D vertex2 = concaveFunnelStack.Pop();
                     while (vertex2 != null && newVertexIsOnBottom ==
-                        (vertex1.Coordinates - nextVertex.Coordinates).CrossSign(vertex2.Coordinates - vertex1.Coordinates) < 0)
+                       Vector2IP.Minus2D(vertex1.Coordinates, nextVertex.Coordinates)
+                       .CrossSign(Vector2IP.Minus2D(vertex2.Coordinates, vertex1.Coordinates)) < 0)
                     {
                         if (newVertexIsOnBottom)
                             yield return new[] { nextVertex, vertex2, vertex1 };

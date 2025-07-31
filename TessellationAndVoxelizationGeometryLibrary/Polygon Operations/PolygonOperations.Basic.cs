@@ -363,7 +363,8 @@ namespace TVGL
                 // (like case 3 above) (also note that this is not else if since it'd have been caught by case 1 as well)
                 if (currentEdgeIs == PixelEdgeLength.Unit && nextEdgeIs == PixelEdgeLength.Long)
                 {
-                    var newCoord = currentEdge.ToPoint.Coordinates + new Vector2IP(pixelSideLength * nextVector);
+                    var newCoord =Vector2IP.Add2D(currentEdge.ToPoint.Coordinates ,
+                        new Vector2IP(pixelSideLength * nextVector));
                     polygon.InsertVertex(i + 1, newCoord);
                 }
                 // 1. unit length edge are all reduced to centerpoint
@@ -373,7 +374,8 @@ namespace TVGL
                     currentEdge.ToPoint.Coordinates = Vector2IP.MidPoint(currentEdge.FromPoint.Coordinates , currentEdge.ToPoint.Coordinates);
                 // 3. long length edges is followed by a unit length edge then reduce by one pixel
                 else if (currentEdgeIs == PixelEdgeLength.Long && nextEdgeIs == PixelEdgeLength.Unit)
-                    currentEdge.ToPoint.Coordinates -=new Vector2IP(pixelSideLength * currVector);
+                    currentEdge.ToPoint.Coordinates =Vector2IP.Minus2D(currentEdge.ToPoint.Coordinates,
+                        new Vector2IP(pixelSideLength * currVector));
 
                 nextVector = currVector;
                 nextEdgeIs = currentEdgeIs;

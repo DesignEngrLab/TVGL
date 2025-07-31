@@ -45,7 +45,7 @@ namespace TVGL
                 var path = new Vector2IP[aVertCount];
                 var vertIndex = 0;
                 foreach (var aVertex in a.Vertices)
-                    path[vertIndex++] = bCoords + aVertex.Coordinates;
+                    path[vertIndex++] = Vector2IP.Add2D(bCoords, aVertex.Coordinates);
                 aAtEveryBPt[polyIndex++] = new Polygon(path);
             }
 
@@ -57,7 +57,7 @@ namespace TVGL
                 int prevAIndex = aVertCount - 1;
                 for (int aIndex = 0; aIndex < aVertCount; aIndex++)
                 {
-                    var quad = new Polygon([ aAtEveryBPt[prevBIndex].Vertices[prevAIndex], 
+                    var quad = new Polygon([ aAtEveryBPt[prevBIndex].Vertices[prevAIndex],
                         aAtEveryBPt[bIndex].Vertices[prevAIndex],
                         aAtEveryBPt[bIndex].Vertices[aIndex],
                         aAtEveryBPt[prevBIndex].Vertices[aIndex] ]);
@@ -109,11 +109,11 @@ namespace TVGL
             var bCompleted = false;
             do
             {
-                result.Add(new Vertex2D(aVertex.Coordinates + bVertex.Coordinates, vertNum++, 0));
+                result.Add(new Vertex2D(Vector2IP.Add2D(aVertex.Coordinates, bVertex.Coordinates), vertNum++, 0));
                 var cross = aVertex.StartLine.Vector.CrossSign(bVertex.StartLine.Vector);
-                    // will this always be correct? I'm worried that angle could be greater than 180, and then a
-                    // false result would be returned. ...although, I tried to come up with a case to break it
-                    // and couldn't I guess because you can't have an angle greater than 180 on convex shapes
+                // will this always be correct? I'm worried that angle could be greater than 180, and then a
+                // false result would be returned. ...although, I tried to come up with a case to break it
+                // and couldn't I guess because you can't have an angle greater than 180 on convex shapes
                 if (cross >= 0 && !aCompleted)
                     aVertex = aVertex.StartLine.ToPoint;
                 if (cross <= 0 && !bCompleted)
@@ -156,7 +156,7 @@ namespace TVGL
 
             var prevAEdge = aStartEdge;
             var prevBEdge = bStartEdge;
-            var result = new List<Vector2IP> { prevAEdge.ToPoint.Coordinates + prevBEdge.ToPoint.Coordinates };
+            var result = new List<Vector2IP> { Vector2IP.Add2D(prevAEdge.ToPoint.Coordinates, prevBEdge.ToPoint.Coordinates) };
             var knownWrongPoints = new List<bool> { false };
             var nextAEdge = prevAEdge.ToPoint.StartLine;
             var nextBEdge = prevBEdge.ToPoint.StartLine;
@@ -168,7 +168,7 @@ namespace TVGL
                 var bPrevAngle = bEdgeAngles[prevBEdge];
                 if (firstAngleIsBetweenOthersCCW(aAngle, bPrevAngle, bAngle))
                 {
-                    result.Add(nextAEdge.ToPoint.Coordinates + prevBEdge.ToPoint.Coordinates);
+                    result.Add(Vector2IP.Add2D(nextAEdge.ToPoint.Coordinates, prevBEdge.ToPoint.Coordinates));
                     var prevBCrossNextB = prevBEdge.Vector.CrossSign(nextBEdge.Vector);
                     knownWrongPoints.Add(prevBCrossNextB < 0);
                     prevAEdge = nextAEdge;
@@ -176,7 +176,7 @@ namespace TVGL
                 }
                 if (firstAngleIsBetweenOthersCCW(bAngle, aPrevAngle, aAngle))
                 {
-                    result.Add(nextBEdge.ToPoint.Coordinates + prevAEdge.ToPoint.Coordinates);
+                    result.Add(Vector2IP.Add2D(nextBEdge.ToPoint.Coordinates, prevAEdge.ToPoint.Coordinates));
                     var prevACrossNextA = prevAEdge.Vector.CrossSign(nextAEdge.Vector);
                     knownWrongPoints.Add(prevACrossNextA < 0);
                     prevBEdge = nextBEdge;
@@ -228,7 +228,7 @@ namespace TVGL
                     bAngle, bPrevAngle);
                 if (followDir == ConvolutionDirection.A || followDir == ConvolutionDirection.AButQueueUpB || followDir == ConvolutionDirection.Both)
                 {
-                    var startVertex = new Vertex2D(aStartVertex.Coordinates + bStartVertex.Coordinates, 0, polygons.Count);
+                    var startVertex = new Vertex2D(Vector2IP.Add2D(aStartVertex.Coordinates, bStartVertex.Coordinates), 0, polygons.Count);
                     visitedHash.Add((aParent, bStartVertex, true), startVertex);
                     ConvolutionCycle(a, b, aStartVertex, bStartVertex,
                         visitedHash, aEdgeAngles, bEdgeAngles, startsQueue, polygons, knownWrongPoints, new List<Vertex2D> { startVertex },
@@ -245,7 +245,7 @@ namespace TVGL
                        bAngle, bPrevAngle);
                     if (followDir == ConvolutionDirection.B || followDir == ConvolutionDirection.Both)
                     {
-                        var startVertex = new Vertex2D(aStartVertex.Coordinates + bStartVertex.Coordinates, 0, polygons.Count);
+                        var startVertex = new Vertex2D(Vector2IP.Add2D(aStartVertex.Coordinates, bStartVertex.Coordinates), 0, polygons.Count);
                         visitedHash.Add((aStartVertex, bParent, false), startVertex);
                         ConvolutionCycle(a, b, aStartVertex, bStartVertex,
                             visitedHash, aEdgeAngles, bEdgeAngles, startsQueue, polygons, knownWrongPoints, new List<Vertex2D> { startVertex },
@@ -305,14 +305,14 @@ namespace TVGL
                 switch (followDirection)
                 {
                     case ConvolutionDirection.Both:
-                        var newVertex = new Vertex2D(aVertex.Coordinates + nextBEdge.ToPoint.Coordinates, visitedHash.Count, currentLoopIndex);
+                        var newVertex = new Vertex2D(Vector2IP.Add2D(aVertex.Coordinates, nextBEdge.ToPoint.Coordinates), visitedHash.Count, currentLoopIndex);
                         visitedHash.Add((aVertex, bVertex, false), newVertex);
                         visitedHash.Add((aVertex, bVertex, true), newVertex);
                         result.Add(newVertex);
                         var prevACrossNextA = aVertex.EndLine.Vector.CrossSign(nextAEdge.Vector);
                         knownWrongPoints.Add(prevACrossNextA < 0);
                         bVertex = nextBEdge.ToPoint;
-                        newVertex = new Vertex2D(nextAEdge.ToPoint.Coordinates + bVertex.Coordinates, visitedHash.Count, currentLoopIndex);
+                        newVertex = new Vertex2D(Vector2IP.Add2D(nextAEdge.ToPoint.Coordinates, bVertex.Coordinates), visitedHash.Count, currentLoopIndex);
                         //visitedHash.Add((aVertex, bVertex, true), newVertex);
                         result.Add(newVertex);
                         var prevBCrossNextB = bVertex.EndLine.Vector.CrossSign(nextBEdge.Vector);
@@ -323,7 +323,7 @@ namespace TVGL
                         startsQueue.Push((aVertex, nextBEdge.ToPoint));
                         goto case ConvolutionDirection.A;
                     case ConvolutionDirection.A:
-                        newVertex = new Vertex2D(nextAEdge.ToPoint.Coordinates + bVertex.Coordinates, visitedHash.Count, currentLoopIndex);
+                        newVertex = new Vertex2D(Vector2IP.Add2D(nextAEdge.ToPoint.Coordinates, bVertex.Coordinates), visitedHash.Count, currentLoopIndex);
                         visitedHash.Add((aVertex, bVertex, true), newVertex);
                         result.Add(newVertex);
                         prevBCrossNextB = bVertex.EndLine.Vector.CrossSign(nextBEdge.Vector);
@@ -331,7 +331,7 @@ namespace TVGL
                         aVertex = nextAEdge.ToPoint;
                         break;
                     case ConvolutionDirection.B:
-                        newVertex = new Vertex2D(aVertex.Coordinates + nextBEdge.ToPoint.Coordinates, visitedHash.Count, currentLoopIndex);
+                        newVertex = new Vertex2D(Vector2IP.Add2D(aVertex.Coordinates, nextBEdge.ToPoint.Coordinates), visitedHash.Count, currentLoopIndex);
                         visitedHash.Add((aVertex, bVertex, false), newVertex);
                         result.Add(newVertex);
                         prevACrossNextA = aVertex.EndLine.Vector.CrossSign(nextAEdge.Vector);

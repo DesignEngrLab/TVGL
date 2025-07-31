@@ -695,13 +695,13 @@ namespace TVGL
         /// <returns>Vertex2D.</returns>
         internal static Vertex2D ChooseTightestLeftTurn(List<Vertex2D> nextVertices, Vertex2D current, Vertex2D previous)
         {
-            var lastVector = previous.Coordinates - current.Coordinates;
+            var lastVector = Vector2IP.Minus2D(previous.Coordinates, current.Coordinates);
             var minAngle = double.PositiveInfinity;
             Vertex2D bestVertex = null;
             foreach (var vertex in nextVertices)
             {
                 if (vertex == current || vertex == previous) continue;
-                var currentVector = vertex.Coordinates - current.Coordinates;
+                var currentVector = Vector2IP.Minus2D(vertex.Coordinates, current.Coordinates);
                 var dot = currentVector.X * lastVector.X + currentVector.Y * lastVector.Y;
                 var cross = currentVector.X * lastVector.Y - currentVector.Y * lastVector.X;
                 var angle = Global.Pseudoangle(dot, cross);

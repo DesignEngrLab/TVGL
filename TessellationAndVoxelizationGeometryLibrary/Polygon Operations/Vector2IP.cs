@@ -76,7 +76,7 @@ namespace TVGL
                     }
                     else break;
                 }
-                if (X % 3 == 0&& Y % 3 == 0)
+                if (X % 3 == 0 && Y % 3 == 0)
                 {
                     X /= 3;
                     Y /= 3;
@@ -132,7 +132,7 @@ namespace TVGL
             return this.X * that.X + this.Y * that.Y + this.W * that.W;
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Vector2IP Cross(Vector2IP that)
+        public Vector2IP Cross3D(Vector2IP that)
         {
             return new Vector2IP(this.Y * that.W - this.W * that.Y,
                 this.W * that.X - this.X * that.W,
@@ -208,12 +208,18 @@ namespace TVGL
 
         #region Public Static Operators
         /// <summary>
-        /// Multiply scalar and vector.
+        /// Adds two vectors together.
         /// </summary>
+        /// <param name="left">The first source vector.</param>
+        /// <param name="right">The second source vector.</param>
+        /// <returns>The summed vector.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Vector2IP operator *(RationalIP c, Vector2IP vector)
+        public static Vector2IP Add2D(Vector2IP left, Vector2IP right)
         {
-            return new Vector2IP(c.Num * vector.X, c.Num * vector.Y, c.Den * vector.W);
+            if (left.W == right.W)
+                return new Vector2IP(left.X + right.X, left.Y + right.Y, left.W);
+            return new Vector2IP(left.X * right.W + right.X * left.W,
+                left.Y * right.W + right.Y * left.W, left.W * right.W);
         }
 
         /// <summary>
@@ -223,12 +229,9 @@ namespace TVGL
         /// <param name="right">The second source vector.</param>
         /// <returns>The summed vector.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Vector2IP operator +(Vector2IP left, Vector2IP right)
+        public static Vector2IP Add3D(Vector2IP left, Vector2IP right)
         {
-            if (left.W == right.W)
-                return new Vector2IP(left.X + right.X, left.Y + right.Y, left.W);
-            return new Vector2IP(left.X * right.W + right.X * left.W,
-                left.Y * right.W + right.Y * left.W, left.W * right.W);
+            return new Vector2IP(left.X + right.X, left.Y + right.Y, left.W + right.W);
         }
 
         /// <summary>
@@ -238,12 +241,25 @@ namespace TVGL
         /// <param name="right">The second source vector.</param>
         /// <returns>The difference vector.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Vector2IP operator -(Vector2IP left, Vector2IP right)
+        public static Vector2IP Minus2D(Vector2IP left, Vector2IP right)
         {
             if (left.W == right.W)
                 return new Vector2IP(left.X - right.X, left.Y - right.Y, left.W);
             return new Vector2IP(left.X * right.W - right.X * left.W,
                 left.Y * right.W - right.Y * left.W, left.W * right.W);
+        }
+
+
+        /// <summary>
+        /// Subtracts the second vector from the first.
+        /// </summary>
+        /// <param name="left">The first source vector.</param>
+        /// <param name="right">The second source vector.</param>
+        /// <returns>The difference vector.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Vector2IP Minus3D(Vector2IP left, Vector2IP right)
+        {
+            return new Vector2IP(left.X - right.X, left.Y - right.Y, left.W - right.W);
         }
 
 
