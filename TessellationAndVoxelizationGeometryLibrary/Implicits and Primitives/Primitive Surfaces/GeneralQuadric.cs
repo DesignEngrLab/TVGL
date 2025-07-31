@@ -216,7 +216,8 @@ namespace TVGL
         /// <returns>System.Double.</returns>
         public double QuadricValue(Vector3 point)
         {
-            return XSqdCoeff * point.X * point.X
+            int sgn = IsPositive.GetValueOrDefault(true) ? 1 : -1;
+            return sgn * (XSqdCoeff * point.X * point.X
                 + YSqdCoeff * point.Y * point.Y
                 + ZSqdCoeff * point.Z * point.Z
                 + XYCoeff * point.X * point.Y
@@ -225,7 +226,7 @@ namespace TVGL
                 + XCoeff * point.X
                 + YCoeff * point.Y
                 + ZCoeff * point.Z
-                + W;
+                + W);
         }
 
         /// <summary>
@@ -233,7 +234,7 @@ namespace TVGL
         /// </summary>
         /// <param name="point">The point.</param>
         /// <returns>System.Double.</returns>
- /*       public override double DistanceToPoint(Vector3 point)
+        /*public override double DistanceToPoint(Vector3 point)
         {
             // start with the assumption that the normal is the best direction to go
             var dir = GetNormalAtPoint(point).Normalize();
@@ -251,9 +252,7 @@ namespace TVGL
                 }
                 else
                 {
-                    minPoint = GetPointOnQuadric(point);
-                    minPointDist = Vector3.DistanceSquared(point, minPoint);
-                    dir = point - minPoint;
+                    return DistanceToPointSQP(point);
                 }
                 if (methodEnumerator.MoveNext())
                 {
@@ -272,7 +271,7 @@ namespace TVGL
                 if (Math.Abs(dot) > Constants.DotToleranceForSame) break;
                 dir = newDir;
             }
-            return Math.Sign(dot) * Math.Sqrt(minPointDist);
+            return Math.Sign(QuadricValue(point)) * Math.Sign(dot) * Math.Sqrt(minPointDist);
         }*/
 
         public Vector3 FlowToSurface(Vector3 anchor, double tol)
@@ -295,17 +294,20 @@ namespace TVGL
             return currentPoint;
         }
 
-        public Vector3 GetPointOnQuadric(Vector3 anchor)
+        public Vector3 GetPointNearQuadric(Vector3 anchor)
         {
             var intersections = LineIntersection(anchor, GetNormalAtPoint(anchor));
             Vector3 newAnchor = anchor;
-            while (!intersections.GetEnumerator().MoveNext())
+            int iters = 0;
+            while (!intersections.GetEnumerator().MoveNext() && iters++ < 100)
             {
                 GeneralQuadric outerQuadric = new GeneralQuadric(XSqdCoeff, YSqdCoeff, ZSqdCoeff, XYCoeff, XZCoeff, YZCoeff, XCoeff, YCoeff, ZCoeff, W - QuadricValue(newAnchor));
-                Vector3 FarSideAnchor = (outerQuadric.LineIntersection(newAnchor, GetNormalAtPoint(newAnchor)).MaxBy(x => x.intersection.DistanceSquared(newAnchor))).intersection;
-                newAnchor = newAnchor - (QuadricValue(newAnchor) / Math.Abs(QuadricValue(newAnchor))) * GetNormalAtPoint(anchor).Normalize() * anchor.Distance(FarSideAnchor) / 2;
-                intersections = LineIntersection(newAnchor, GetNormalAtPoint(newAnchor));
+                Vector3 FarSideAnchor = (outerQuadric.LineIntersection(newAnchor + 1E-6 * GetNormalAtPoint(newAnchor), GetNormalAtPoint(newAnchor)).MaxBy(x => x.intersection.DistanceSquared(newAnchor))).intersection;
+                newAnchor = newAnchor - Math.Sign(QuadricValue(newAnchor)) * GetNormalAtPoint(newAnchor).Normalize() * newAnchor.Distance(FarSideAnchor) / 2;
+                intersections = LineIntersection(newAnchor, outerQuadric.GetNormalAtPoint(newAnchor));
             }
+            if (QuadricValue(newAnchor).IsNegligible(1e-3)) return newAnchor;
+            if (!intersections.GetEnumerator().MoveNext()) return newAnchor;
             return intersections.MinBy(x => x.intersection.DistanceSquared(anchor)).intersection;
         }
 
@@ -316,7 +318,9 @@ namespace TVGL
         /// <returns></returns>
         public override double DistanceToPoint(Vector3 point)
         {
-            var closestPt = GetPointOnQuadric(point);
+            //if (GetNormalAtPoint(point).Length() == 0) return 0; //scaling the quadric value by the norm of the normal vector to get the approximate distance locally, not working all the time
+            //return QuadricValue(point) / GetNormalAtPoint(point).Length();
+            var closestPt = GetPointNearQuadric(point);
             var closestPt4 = new Vector4(closestPt, 0); // the fourth number "w" here represents the Lagrange multiplier
             var delta = Vector4.Zero;
             int iterations = 0;
@@ -329,14 +333,20 @@ namespace TVGL
                     2 * XSqdCoeff * closestPt4.X + XYCoeff * closestPt4.Y + XZCoeff * closestPt4.Z + XCoeff, 2 * YSqdCoeff * closestPt4.Y + XYCoeff * closestPt4.X + YZCoeff * closestPt4.Z + YCoeff, 2 * YSqdCoeff * closestPt4.Z + XZCoeff * closestPt4.X + YZCoeff * closestPt4.Y + ZCoeff, 0);
                 var rhs = new Vector4(
                     2 * (closestPt4.X - point.X) + closestPt4.W * (2 * XSqdCoeff * closestPt4.X + XYCoeff * closestPt4.Y + XZCoeff * closestPt4.Z + XCoeff),
-                    2 * (closestPt4.Y - point.Y) + 2 * YSqdCoeff * closestPt4.Y + XYCoeff * closestPt4.X + YZCoeff * closestPt4.Z + YCoeff,
-                    2 * (closestPt4.Z - point.Z) + 2 * YSqdCoeff * closestPt4.Z + XZCoeff * closestPt4.X + YZCoeff * closestPt4.Y + ZCoeff,
-                    QuadricValue(closestPt));
+                    2 * (closestPt4.Y - point.Y) + closestPt4.W * (2 * YSqdCoeff * closestPt4.Y + XYCoeff * closestPt4.X + YZCoeff * closestPt4.Z + YCoeff),
+                    2 * (closestPt4.Z - point.Z) + closestPt4.W * (2 * YSqdCoeff * closestPt4.Z + XZCoeff * closestPt4.X + YZCoeff * closestPt4.Y + ZCoeff),
+                    QuadricValue(closestPt4.ToVector3(false)));
                 delta = hessian.Solve(rhs);
+                if (hessian.FrobeniusNorm() > 1E20)
+                {
+                    closestPt4 = new Vector4(closestPt, -1 * Math.Sign(closestPt4.W));
+                    continue;
+                }
                 // add the negative to the previous point to get an updated point
                 closestPt4 -= delta;
             }
-            while (iterations++ < 1000 && delta.LengthSquared() > 1E-6); // while less than 1000 iterations or the delta is small
+            while (iterations++ < 1000 && delta.ToVector3(false).LengthSquared() > 1E-4); // while less than 1000 iterations or the delta is large
+            if (iterations >= 1000 && GetNormalAtPoint(point).Length() != 0) return QuadricValue(point) / GetNormalAtPoint(point).Length(); //scaling the quadric value by the norm of the normal vector to get the approximate distance locally
             closestPt = closestPt4.ToVector3(false);
             return Math.Sign(QuadricValue(point)) * point.Distance(closestPt);
         }
@@ -689,7 +699,10 @@ namespace TVGL
         public static GeneralQuadric FromPrimitiveSurface(PrimitiveSurface primitive)
         {
             if (primitive is GeneralQuadric quadric) return quadric;
-            else if (primitive is Plane plane) return new GeneralQuadric(0, 0, 0, 0, 0, 0, plane.Normal.X, plane.Normal.Y, plane.Normal.Z, -plane.DistanceToOrigin);
+            else if (primitive is Plane plane)
+            {
+                return new GeneralQuadric(0, 0, 0, 0, 0, 0, plane.Normal.X, plane.Normal.Y, plane.Normal.Z, -plane.DistanceToOrigin);
+            }
             else if (primitive is Sphere sphere) return new GeneralQuadric(1, 1, 1, 0, 0, 0, -2 * sphere.Center.X, -2 * sphere.Center.Y, -2 * sphere.Center.Z,
                 sphere.Center.X * sphere.Center.X + sphere.Center.Y * sphere.Center.Y + sphere.Center.Z + sphere.Center.Z - sphere.Radius * sphere.Radius);
             else if (primitive is Cylinder cylinder)
