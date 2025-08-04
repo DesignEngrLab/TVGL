@@ -399,10 +399,10 @@ namespace TVGL
                         solidAssembly = new SolidAssembly([PLYFileData.OpenSolid(s, filename, tsBuildOptions)]);
                         break;
                     case FileType.TVGL:
-                        TVGLFileData.OpenTVGL(s, out solidAssembly);
+                        TVGLFileData.OpenTVGL(s, out solidAssembly, tsBuildOptions);
                         break;
                     case FileType.TVGLz:
-                        TVGLFileData.OpenTVGLz(s, out solidAssembly);
+                        TVGLFileData.OpenTVGLz(s, out solidAssembly, tsBuildOptions);
                         break;
                     default:
                         Message.output(filename + " is not a recognized 3D format.");

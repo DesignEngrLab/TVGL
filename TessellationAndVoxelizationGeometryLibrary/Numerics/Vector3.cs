@@ -676,7 +676,17 @@ namespace TVGL  // COMMENTEDCHANGE namespace System.Numerics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector3 Normalize(Vector3 value)
         {
-            double ls = value.X * value.X + value.Y * value.Y + value.Z * value.Z;
+            double ls = value.X * value.X + value.Y * value.Y + value.Z * value.Z; 
+            if (ls == 0.0)
+            {
+                Message.output("Error: Cannot normalize a vector of zero length. Check your implementation.");
+                return value;//just return the given value (should be zero, zero, zero)
+            }
+            //Leaving this seperate than exactly equals zero, because ConvexHull3D currently has some very, very small normal directions for faces.
+            if (ls.IsNegligible())
+            {
+                Message.output("Warning: Normalizing a vector of negligible length. Confirm implementation.");
+            }
             if (ls.IsPracticallySame(1.0)) return value;
             double lengthfactor = 1 / Math.Sqrt(ls);
             return new Vector3(value.X * lengthfactor, value.Y * lengthfactor, value.Z * lengthfactor);

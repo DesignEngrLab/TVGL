@@ -514,9 +514,13 @@ namespace TVGL
                     }
                 }
             }
+
             //Lastly, define the border segments and border loops for each primitive.
-            TessellationInspectAndRepair.DefineBorders(ts);
-            TessellationInspectAndRepair.CharacterizeBorders(ts);
+            if (tsBuildOptions.CheckModelIntegrity)
+            {
+                TessellationInspectAndRepair.DefineBorders(ts);
+                TessellationInspectAndRepair.CharacterizeBorders(ts);
+            }
             return ts;
         }
 

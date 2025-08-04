@@ -228,7 +228,7 @@ namespace TVGL
                 // triangles within the cone to avoid cycling or redundant search.
                 if ((peakCoord - current.A.Coordinates).Dot(current.Normal) < 0)
                 {   // the vector from this current face to the peakCoord is below the current normal. Therefore
-                    // current is is beyond the horizon and is not to be replaced.
+                    // current is beyond the horizon and is not to be replaced.
                     // so we stop here but before we move down the stack we need to create a new face
                     // this border face is stored in the borderFaces list so that at the end we can clear the Visited flags
                     ConvexHullFace newFace;
@@ -426,7 +426,8 @@ namespace TVGL
         {
             Plane.DefineNormalAndDistanceFromVertices(vertices, out var distance, out var planeNormal);
             var plane = new Plane(distance, planeNormal);
-            if (plane.Normal.IsNull() || plane.CalculateMaxError(vertices.Select(v => v.Coordinates)) > tolerance)
+            if (plane.Normal.IsNull() || plane.Normal.Length().IsNegligible() ||
+                plane.CalculateMaxError(vertices.Select(v => v.Coordinates)) > tolerance)
             {
                 convexHull = null;
                 return false;

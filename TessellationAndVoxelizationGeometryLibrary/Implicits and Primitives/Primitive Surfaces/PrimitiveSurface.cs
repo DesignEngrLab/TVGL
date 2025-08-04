@@ -27,6 +27,10 @@ namespace TVGL
         [JsonIgnore]
         public SurfaceGroup BelongsToGroup { get; set; }
 
+        //Do NOT modify the original color, once it has been read in. I would restrict this more with readonly, 
+        //except that it should be included in the JSON (in place of triangle colors).
+        public Color OriginalColor { get; set; }
+
         /// <summary>
         /// Sets the faces and vertices.
         /// </summary>

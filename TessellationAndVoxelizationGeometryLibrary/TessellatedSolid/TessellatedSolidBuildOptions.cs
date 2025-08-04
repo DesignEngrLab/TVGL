@@ -27,6 +27,8 @@
                 DefineConvexHull = false,
                 FindNonsmoothEdges = false,
                 PredefineAllEdges = false,
+                DefineAndCharacterizeBorders = false,
+                FixEdgeDisassociations = false,
             };
 
         /// <summary>Gets or sets whether the model is check for connectivity and water-tightness.
@@ -78,6 +80,13 @@
         /// When false, edges will only be defined when the model has less 10000 edges.
         /// </summary>
         public bool PredefineAllEdges { get; set; } = true;
+
+        /// <summary>
+        /// gets or sets whether to define and characterize the borders between primitives. Characterizing borders
+        /// can take some time, so you may want to avoid it if you don't plan on using any functions that use borders.
+        /// </summary>
+        public bool DefineAndCharacterizeBorders { get; set; } = true;
+
         /// <summary>
         /// Gets a value indicating whether or not to fix edge disassociations. These are when an edge in a tessellated model
         /// appears to have the wrong number of neighbors (anything other than 1). To fix this, a repair function attempts to 
