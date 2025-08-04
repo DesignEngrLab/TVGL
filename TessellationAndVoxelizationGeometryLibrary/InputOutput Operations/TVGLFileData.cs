@@ -12,13 +12,9 @@
 // <summary></summary>
 // ***********************************************************************
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using System;
 using System.IO;
 using System.IO.Compression;
-using System.IO.Pipes;
 using System.Linq;
-using System.Reflection;
 
 namespace TVGL
 {
@@ -52,6 +48,20 @@ namespace TVGL
         {
             using var archive = new ZipArchive(s, ZipArchiveMode.Read, true);
             var file = archive.GetEntry("TVGL");
+            if (file == null)
+            {
+                Log.Information("No TVGL file found within TVGLZ.");
+                if (archive.Entries.Count > 0)
+                {
+                    Log.Information("Attempting to read deprecicated TVGLZ format.");
+                    file = archive.Entries.First();
+                }
+                if (file == null)
+                {
+                    solid = null;
+                    return false;
+                }
+            }
             var stream = file.Open();
             return OpenTVGL(stream, out solid, tsBuildOptions);
         }
@@ -64,6 +74,20 @@ namespace TVGL
         {
             using var archive = new ZipArchive(s, ZipArchiveMode.Read, true);
             var file = archive.GetEntry("TVGL");
+            if (file == null)
+            {
+                Log.Information("No TVGL file found within TVGLZ.");
+                if (archive.Entries.Count > 0)
+                {
+                    Log.Information("Attempting to read deprecicated TVGLZ format.");
+                    file = archive.Entries.First();
+                }
+                if (file == null)
+                {
+                    solid = null;
+                    return false;
+                }
+            }
             var stream = file.Open();
             return OpenTVGL(stream, out solid, tsBuildOptions);
         }
