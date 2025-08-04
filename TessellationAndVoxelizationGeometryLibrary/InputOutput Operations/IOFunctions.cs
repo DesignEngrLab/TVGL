@@ -176,11 +176,25 @@ namespace TVGL
         /// <returns></returns>
         public static TessellatedSolid GetMostSignificantSolid(IEnumerable<TessellatedSolid> solids, out IEnumerable<TessellatedSolid> significantSolids)
         {
-            var maxVolume = solids.Max(p => p.ConvexHull.Volume);
-            var maxNumFaces = solids.Max(p => p.NumberOfFaces);
+            //Handle the case where the solid may not have a valid volume (and hence no convex hull)
+            significantSolids = solids.Where(p => p.Volume > 0.0 && p.ConvexHull != null);
+            if(!significantSolids.Any())
+            {
+                Debug.WriteLine("No solids with volume OR convex hull must be set.");
+                return null;
+            }
+            //If only one solid, just return it.
+            if(significantSolids.Count() == 1)
+            {
+                //no need to report anything.
+                return significantSolids.First();
+            }
+
+            var maxVolume = significantSolids.Max(p => p.ConvexHull.Volume);
+            var maxNumFaces = significantSolids.Max(p => p.NumberOfFaces);
             //Minimum number of primitives is either 4 OR if no solids have 4 primitives, it is the max number of primitives
-            var minPrimitivesRequired = Math.Min(solids.Max(p => p.NumberOfPrimitives), 4);
-            significantSolids = solids.Where(p => (p.ConvexHull.Volume > maxVolume * .1 || p.NumberOfFaces > maxNumFaces * .3) && p.NumberOfPrimitives >= minPrimitivesRequired);
+            var minPrimitivesRequired = Math.Min(significantSolids.Max(p => p.NumberOfPrimitives), 4);
+            significantSolids = significantSolids.Where(p => (p.ConvexHull.Volume > maxVolume * .1 || p.NumberOfFaces > maxNumFaces * .3) && p.NumberOfPrimitives >= minPrimitivesRequired);
             if (significantSolids.Count() > 1)
                 Debug.WriteLine("Model contains " + significantSolids.Count() + " significant solid bodies. Attempting analysis on largest part in assembly.");
             else
@@ -272,55 +286,55 @@ namespace TVGL
         public static bool Open(Stream s, string filename, out TessellatedSolid[] tessellatedSolids,
             TessellatedSolidBuildOptions tsBuildOptions = null)
         {
-            //try
-            //{
-            var extension = GetFileTypeFromExtension(Path.GetExtension(filename));
-            switch (extension)
+            tessellatedSolids = null;
+            try
             {
-                case FileType.STL_ASCII:
-                case FileType.STL_Binary:
-                    tessellatedSolids = STLFileData.OpenSolids(s, filename, tsBuildOptions); // Standard Tessellation or StereoLithography
-                    break;
-
-                case FileType.ThreeMF:
-                    tessellatedSolids = ThreeMFFileData.OpenSolids(s, filename, tsBuildOptions);
-                    break;
-
-                case FileType.Model3MF:
-                    tessellatedSolids = ThreeMFFileData.OpenModelFile(s, filename, tsBuildOptions);
-                    break;
-
-                case FileType.AMF:
-                    tessellatedSolids = AMFFileData.OpenSolids(s, filename, tsBuildOptions);
-                    break;
-
-                case FileType.OBJ:
-                    tessellatedSolids = OBJFileData.OpenSolids(s, filename, tsBuildOptions);
-                    break;
-
-                case FileType.OFF:
-                case FileType.PLY_ASCII:
-                case FileType.PLY_Binary:
-                    tessellatedSolids = new[] { PLYFileData.OpenSolid(s, filename, tsBuildOptions) };
-                    break;
-                case FileType.TVGL:
-                    TVGLFileData.OpenTVGL(s, out SolidAssembly solidAssembly);
-                    tessellatedSolids = solidAssembly.RootAssembly.AllTessellatedSolidsInGlobalCoordinateSystem();
-                    break;
-                case FileType.TVGLz:
-                    TVGLFileData.OpenTVGLz(s, out solidAssembly);
-                    tessellatedSolids = solidAssembly.RootAssembly.AllTessellatedSolidsInGlobalCoordinateSystem();
-                    break;
-                default:
-                    Log.Error(filename + " is not a recognized 3D format.");
-                    tessellatedSolids = Array.Empty<TessellatedSolid>();
-                    break;
+                var extension = GetFileTypeFromExtension(Path.GetExtension(filename));
+                switch (extension)
+                {
+                    case FileType.STL_ASCII:
+                    case FileType.STL_Binary:
+                        tessellatedSolids = STLFileData.OpenSolids(s, filename, tsBuildOptions); // Standard Tessellation or StereoLithography
+                        break;
+                    case FileType.ThreeMF:
+                        tessellatedSolids = ThreeMFFileData.OpenSolids(s, filename, tsBuildOptions);
+                        break;
+                    case FileType.Model3MF:
+                        tessellatedSolids = ThreeMFFileData.OpenModelFile(s, filename, tsBuildOptions);
+                        break;
+                    case FileType.AMF:
+                        tessellatedSolids = AMFFileData.OpenSolids(s, filename, tsBuildOptions);
+                        break;
+                    case FileType.OBJ:
+                        tessellatedSolids = OBJFileData.OpenSolids(s, filename, tsBuildOptions);
+                        break;
+                    case FileType.OFF:
+                    case FileType.PLY_ASCII:
+                    case FileType.PLY_Binary:
+                        tessellatedSolids = new[] { PLYFileData.OpenSolid(s, filename, tsBuildOptions) };
+                        break;
+                    case FileType.TVGL:
+                        TVGLFileData.OpenTVGL(s, out SolidAssembly solidAssembly, tsBuildOptions);
+                        if (solidAssembly != null)
+                            tessellatedSolids = solidAssembly.RootAssembly.AllTessellatedSolidsInGlobalCoordinateSystem();
+                        break;
+                    case FileType.TVGLz:
+                        TVGLFileData.OpenTVGLz(s, out solidAssembly, tsBuildOptions);
+                        if (solidAssembly != null)
+                            tessellatedSolids = solidAssembly.RootAssembly.AllTessellatedSolidsInGlobalCoordinateSystem();
+                        break;
+                    default:
+                        Log.Error(filename + " is not a recognized 3D format.");
+                        tessellatedSolids = Array.Empty<TessellatedSolid>();
+                        break;
+                }
             }
-            //}
-            //catch (Exception exc)
-            //{
-            //    throw new Exception("Cannot open file. Message: " + exc.Message);
-            //}
+            catch (Exception exc)
+            {
+                //Report error and return false, rather than throwing an exception.
+                Log.Information("Cannot open file. Message: " + exc.Message);
+                return false;
+            }
             return tessellatedSolids != null;
         }
 
@@ -400,10 +414,10 @@ namespace TVGL
                         solidAssembly = new SolidAssembly([PLYFileData.OpenSolid(s, filename, tsBuildOptions)]);
                         break;
                     case FileType.TVGL:
-                        TVGLFileData.OpenTVGL(s, out solidAssembly);
+                        TVGLFileData.OpenTVGL(s, out solidAssembly, tsBuildOptions);
                         break;
                     case FileType.TVGLz:
-                        TVGLFileData.OpenTVGLz(s, out solidAssembly);
+                        TVGLFileData.OpenTVGLz(s, out solidAssembly, tsBuildOptions);
                         break;
                     default:
                         Log.Information(filename + " is not a recognized 3D format.");
