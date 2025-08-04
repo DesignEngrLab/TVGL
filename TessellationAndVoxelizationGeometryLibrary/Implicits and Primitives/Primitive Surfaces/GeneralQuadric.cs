@@ -29,43 +29,43 @@ namespace TVGL
         /// <summary>
         /// Gets the coefficent multiplying the x^2 term. This is often list as "A".
         /// </summary>
-        public double XSqdCoeff { get; }
+        public double XSqdCoeff { get; init; }
         /// <summary>
         /// Gets the coefficent multiplying the y^2 term. This is often list as "B" (or "D").
         /// </summary>
-        public double YSqdCoeff { get; }
+        public double YSqdCoeff { get; init; }
         /// <summary>        
         /// Gets the coefficent multiplying the z^2 term. This is often list as "C" (or "F").
         /// </summary>
-        public double ZSqdCoeff { get; }
+        public double ZSqdCoeff { get; init; }
         /// <summary>       
         /// Gets the coefficent multiplying the xy term. This is often list as "D" (or "2B").
         /// </summary>
-        public double XYCoeff { get; }
+        public double XYCoeff { get; init; }
         /// <summary>
         /// Gets the coefficent multiplying the xz term. This is often list as "E" (or "2C").
         /// </summary>
-        public double XZCoeff { get; }
+        public double XZCoeff { get; init; }
         /// <summary>
         /// Gets the coefficent multiplying the yz term. This is often list as "F" (or "2E").
         /// </summary>
-        public double YZCoeff { get; }
+        public double YZCoeff { get; init; }
         /// <summary>
         /// Gets the coefficent multiplying the x-term. This is often list as "G" (or "P").
         /// </summary>
-        public double XCoeff { get; }
+        public double XCoeff { get; init; }
         /// <summary>
         /// Gets the coefficent multiplying the y-term. This is often list as "H" (or "Q").
         /// </summary>
-        public double YCoeff { get; }
+        public double YCoeff { get; init; }
         /// <summary>
         /// Gets the coefficent multiplying the z-term. This is often list as "I" (or "R").
         /// </summary>
-        public double ZCoeff { get; }
+        public double ZCoeff { get; init; }
         /// <summary>
         /// W is the constant term. like weight in homogeneous coordinate systems.
         /// </summary>
-        public double W { get; }
+        public double W { get; init; }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="GeneralQuadric"/> class.
