@@ -106,16 +106,36 @@ namespace TVGL
         internal static void CompleteBuildOptions(TessellatedSolid ts, TessellatedSolidBuildOptions buildOptions,
             out List<TriangleFace> removedFaces, out List<Edge> removedEdges, out List<Vertex> removedVertices)
         {
+            removedFaces = new List<TriangleFace>();
+            removedEdges = new List<Edge>();
+            removedVertices = new List<Vertex>();
             if (buildOptions == null) buildOptions = TessellatedSolidBuildOptions.Default;
-            if (!buildOptions.CheckModelIntegrity)
+
+            //Handle a likely case where the user wants to predefine all the edges, but perhaps, not check integrity.
+            if (buildOptions.PredefineAllEdges && !buildOptions.CheckModelIntegrity)
             {
-                removedFaces = new List<TriangleFace>();
-                removedEdges = new List<Edge>();
-                removedVertices = new List<Vertex>();
-                return;
+                Log.Information("TessellatedSolidBuildOptions PredefineAllEdges requires CheckModelIntegrity. Automatically turning on.");
+                buildOptions.CheckModelIntegrity = true;
             }
-            var buildAndErrorInfo = new TessellationInspectAndRepair(ts);
-            buildAndErrorInfo.CompleteBuildOptions(buildOptions, out removedFaces, out removedEdges, out removedVertices);
+            if (buildOptions.CheckModelIntegrity)
+            {
+                var buildAndErrorInfo = new TessellationInspectAndRepair(ts);
+                buildAndErrorInfo.CompleteBuildOptionsToDoWithRepair(buildOptions, out removedFaces, out removedEdges, out removedVertices);
+            }
+
+            //The ConvexHull3D does not have to do with repair and does not require CheckModelIntegrity. Keep it out here.
+            //If the volume is zero, creating the convex hull may cause a null exception
+            if (buildOptions.DefineConvexHull && !ts.Volume.IsNegligible())
+            { 
+                try
+                {
+                    ConvexHull3D.Create(ts, true);
+                }
+                catch
+                {
+                    Log.Information("Unable to create convex hull.", 1);
+                }
+            }
         }
 
         /// <summary>
@@ -123,7 +143,7 @@ namespace TVGL
         /// with the exception of CopyElementsPassedToConstructor. These are actually handled in the main constructor
         /// body - but only one constructor uses it: the one accepting faces and vertices.
         /// </summary>
-        void CompleteBuildOptions(TessellatedSolidBuildOptions buildOptions,
+        void CompleteBuildOptionsToDoWithRepair(TessellatedSolidBuildOptions buildOptions,
             out List<TriangleFace> removedFaces, out List<Edge> removedEdges, out List<Vertex> removedVertices)
         {
             CheckModelIntegrityPreBuild();
@@ -144,6 +164,7 @@ namespace TVGL
                 }
             }
             if (buildOptions.AutomaticallyRepairNegligibleFaces && InconsistentMatingFacePairs.Any())
+            {
                 try
                 {
                     if (!FlipFacesBasedOnInconsistentEdges())
@@ -153,18 +174,21 @@ namespace TVGL
                 {
                     //Continue
                 }
+            }
             if (buildOptions.AutomaticallyInvertNegativeSolids && ModelHasNegativeVolume)
                 ts.TurnModelInsideOut();
             // the remaining items will need edges so we need to build these here
             if (buildOptions.PredefineAllEdges)
+            {
                 try
                 {
-                    MakeEdges();
+                    MakeEdges();//Requires CheckModelIntegrity
                 }
                 catch
                 {
                     Log.Information("Unable to construct edges.", 1);
                 }
+            }
             if (buildOptions.AutomaticallyRepairNegligibleFaces && buildOptions.PredefineAllEdges)
             {
                 try
@@ -183,6 +207,7 @@ namespace TVGL
                 if (!buildOptions.PredefineAllEdges)
                     throw new ArgumentException("AutomaticallyRepairHoles requires PredefineAllEdges to be true.");
                 if (SingleSidedEdges != null && SingleSidedEdges.Count > 0)
+                {
                     try
                     {
                         this.RepairHoles();
@@ -191,18 +216,8 @@ namespace TVGL
                     {
                         Log.Information("Unable to repair all holes in the model.", 1);
                     }
+                }
             }
-            //If the volume is zero, creating the convex hull may cause a null exception
-            if (buildOptions.DefineConvexHull && !ts.Volume.IsNegligible())
-                try
-                {
-                    ConvexHull3D.Create(ts, true);
-                }
-                catch
-                {
-                    Log.Information("Unable to create convex hull.", 1);
-
-                }
             if (buildOptions.FindNonsmoothEdges)
             {
                 if (!buildOptions.PredefineAllEdges)
