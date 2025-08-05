@@ -27,6 +27,13 @@ namespace TVGL
         [JsonIgnore]
         public SurfaceGroup BelongsToGroup { get; set; }
 
+        /// <summary>  
+        /// The original color of the primitive, used for rendering. It is 
+        /// not changed by the SetColor method and SetColor can be used to "temporarily" change the color.
+        /// We can always use the OriginalColor to restore the color.
+        /// </summary>   
+        public Color OriginalColor { get; init; }
+
         /// <summary>
         /// Sets the faces and vertices.
         /// </summary>

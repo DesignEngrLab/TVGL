@@ -269,7 +269,15 @@ namespace TVGL
             var rhs = new[] { xSum, ySum, zSum };
             if (matrix.solve(rhs, out var normalArray, true))
             {
-                normal = (new Vector3(normalArray)).Normalize();
+                normal = new Vector3(normalArray);
+                //Check for negligible normal before trying to normalize.
+                if (normal.IsNegligible())
+                {
+                    normal = Vector3.Null;
+                    distanceToPlane = double.NaN;
+                    return false;
+                }
+                normal = normal.Normalize();
                 distanceToPlane = normal.Dot(new Vector3(xSum / numVertices, ySum / numVertices, zSum / numVertices));
                 if (distanceToPlane < 0)
                 {
