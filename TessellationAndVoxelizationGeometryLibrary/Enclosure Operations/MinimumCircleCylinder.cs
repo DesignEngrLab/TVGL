@@ -69,22 +69,14 @@ namespace TVGL
                 for (int i = startIndex; i < numPoints; i++)
                 {
                     var dist = (points[i] - circle.Center).LengthSquared();
-
                     if (dist > maxDistSqared)
                     {
-                        maxDistSqared = dist;
                         if (indexOfMaxDist == i) stallCounter++;
-                        //To handle rounding error, make sure ONLY to update IF the distance 
-                        //is greater than non-negligible.
-                        //if (dist.IsGreaterThanNonNegligible(maxDistSqared))
-                    //{
-                        //Stall count if the index is less than six, in case it keeps bouncing between the same points.
-                        //if (indexOfMaxDist == i || indexOfMaxDist < 6) stallCounter++;
                         //Only set the stall counter back to zero if there was a significant change.
                         else if (dist * requiredImprovementPercent > maxDistSqared)
                             stallCounter = 0;
                         //Set max distance ONLY AFTER handling the stall counter logic.
-                        //maxDistSqared = dist;
+                        maxDistSqared = dist;
                         indexOfMaxDist = i;
                         newPointFoundOutsideCircle = true;
                     }

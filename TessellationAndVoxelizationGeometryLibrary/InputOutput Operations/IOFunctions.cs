@@ -178,13 +178,13 @@ namespace TVGL
         {
             //Handle the case where the solid may not have a valid volume (and hence no convex hull)
             significantSolids = solids.Where(p => p.Volume > 0.0 && p.ConvexHull != null);
-            if(!significantSolids.Any())
+            if (!significantSolids.Any())
             {
                 Debug.WriteLine("No solids with volume OR convex hull must be set.");
                 return null;
             }
             //If only one solid, just return it.
-            if(significantSolids.Count() == 1)
+            if (significantSolids.Count() == 1)
             {
                 //no need to report anything.
                 return significantSolids.First();
@@ -465,6 +465,26 @@ namespace TVGL
             if (!File.Exists(filename)) throw new FileNotFoundException("The file was not found at: " + filename);
             using var fileStream = File.OpenRead(filename);
             using var sr = new StreamReader(fileStream);
+            int firstChar = sr.Peek();
+            if (firstChar != -1 && // -1 means end of stream or can't search
+            (char.IsDigit((char)firstChar)|| (char)firstChar=='-')) // then we assume it's a CSV or coordinates
+            {
+                var coordinates = new List<Vector2>();
+                while (!sr.EndOfStream)
+                {
+                    var line = ReadLine(sr);
+                    if (string.IsNullOrEmpty(line)) continue;
+                    var parts = line.Split(new[] { ' ', ',', '\t' }, StringSplitOptions.RemoveEmptyEntries);
+                    if (parts.Length < 2) continue; // Not enough data for a point
+                    if (double.TryParse(parts[0], NumberStyles.Float, CultureInfo.InvariantCulture, out double x) &&
+                        double.TryParse(parts[1], NumberStyles.Float, CultureInfo.InvariantCulture, out double y))
+                    {
+                        coordinates.Add(new Vector2(x, y));
+                    }
+                }
+                polygon = new Polygon(coordinates);
+                return true;
+            }
             using var reader = new JsonTextReader(sr);
             var serializer = new JsonSerializer();
             polygon = serializer.Deserialize<Polygon>(reader);
