@@ -289,12 +289,11 @@ namespace TVGL
 
         protected override void CalculateIsPositive()
         {
-            if (Faces == null || !Faces.Any()) return;
-            var firstFace = Faces.First();
-            if ((firstFace.Center - Apex).Dot(Axis) < 0)
+            if (Faces == null || !Faces.Any() || Area.IsNegligible()) return;
+            if ((LargestFace.Center - Apex).Dot(Axis) < 0)
                 Axis *= -1;
-            var innerRefPoint = Apex + (firstFace.Center - Apex).Dot(Axis) * Axis;
-            isPositive = (firstFace.Center - innerRefPoint).Dot(firstFace.Normal) > 0;
+            var innerRefPoint = Apex + (LargestFace.Center - Apex).Dot(Axis) * Axis;
+            isPositive = (LargestFace.Center - innerRefPoint).Dot(LargestFace.Normal) > 0;
         }
 
         protected override void SetPrimitiveLimits()
