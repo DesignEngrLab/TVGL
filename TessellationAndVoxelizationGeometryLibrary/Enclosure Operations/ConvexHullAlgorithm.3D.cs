@@ -424,38 +424,28 @@ namespace TVGL
         /// <returns></returns>
         private static bool SolveAs2D(IList<Vertex> vertices, out ConvexHull3D convexHull, double tolerance = double.NaN)
         {
-            Plane.DefineNormalAndDistanceFromVertices(vertices, out var distance, out var planeNormal);
-            var plane = new Plane(distance, planeNormal);
-            if (plane.Normal.IsNull() || plane.Normal.Length().IsNegligible() ||
-                plane.CalculateMaxError(vertices.Select(v => v.Coordinates)) > tolerance)
+            tolerance = double.IsNaN(tolerance) ? Constants.DefaultEqualityTolerance : tolerance;
+            if (Plane.DefineNormalAndDistanceFromVertices(vertices, out var distance, out var planeNormal))
             {
-                convexHull = null;
-                return false;
+                var plane = new Plane(distance, planeNormal);
+                if (plane.CalculateMaxError(vertices.Select(v => v.Coordinates)) > tolerance)
+                {
+                    convexHull = null;
+                    return false;
+                }
             }
             var coords2D = vertices.ProjectTo2DCoordinates(planeNormal, out var backTransform).ToList();
-            if (coords2D.Area() < 0)
-            {
-                planeNormal *= -1;
-                distance *= -1;
-                coords2D = vertices.ProjectTo2DCoordinates(planeNormal, out backTransform).ToList();
-            }
             var cvxHull2D = ConvexHull2D.Create(coords2D, out var vertexIndices);
-            var indexHash = vertexIndices.ToHashSet();
             convexHull = new ConvexHull3D { tolerance = tolerance };
-            var interiorVertices = new List<Vertex>();
-            for (var i = 0; i < vertices.Count; i++)
+            convexHull.Vertices.AddRange(vertexIndices.Select(i => vertices[i]));
+            for (int i = 2, j = 1; i < convexHull.Vertices.Count; j = i++) //clever loop to have j always one step behind i
             {
-                if (indexHash.Contains(i))
-                {
-                    convexHull.Vertices.Add(vertices[i]);
-                    if (convexHull.Vertices.Count < 3) continue;
-                    convexHull.Faces.Add(new ConvexHullFace(convexHull.Vertices[0], convexHull.Vertices[convexHull.Vertices.Count - 2],
-                        convexHull.Vertices[convexHull.Vertices.Count - 1], planeNormal));
-                    convexHull.Faces.Add(new ConvexHullFace(convexHull.Vertices[convexHull.Vertices.Count - 1],
-                        convexHull.Vertices[convexHull.Vertices.Count - 2], convexHull.Vertices[0], -planeNormal));
-                }
-                else interiorVertices.Add(vertices[i]);
+                convexHull.Faces.Add(new ConvexHullFace(convexHull.Vertices[0], convexHull.Vertices[i], convexHull.Vertices[j]));
+                convexHull.Faces.Add(new ConvexHullFace(convexHull.Vertices[0], convexHull.Vertices[j], convexHull.Vertices[i]));
             }
+            var indexHash = vertexIndices.ToHashSet();
+            var interiorVertices = Enumerable.Range(0, vertices.Count).Where(i => !indexHash.Contains(i))
+                                                                      .Select(i => vertices[i]).ToList();
             foreach (var v in interiorVertices)
             {
                 for (var i = 0; i < convexHull.Faces.Count; i += 2)

@@ -121,36 +121,6 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="Plane"/> class.
-        /// </summary>
-        /// <param name="vertices">The vertices.</param>
-        /// <param name="normalGuess">The normal guess.</param>
-        //public Plane(IEnumerable<Vector3> vertices, Vector3 normalGuess)
-        //{
-        //    DefineNormalAndDistanceFromVertices(vertices, out var dto, out var normal);
-        //    if (normal.Dot(normalGuess) < 0)
-        //    {
-        //        normal *= -1;
-        //        dto *= -1;
-        //    }
-        //    DistanceToOrigin = dto;
-        //    Normal = normal;
-        //}
-
-
-        /// <summary>
-        /// Defines the normal and distance from vertices.
-        /// </summary>
-        /// <param name="vertices">The vertices.</param>
-        /// <param name="distanceToPlane">The distance to plane.</param>
-        /// <param name="normal">The normal.</param>
-        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
-        public static bool DefineNormalAndDistanceFromVertices(IEnumerable<Vertex> vertices, out double distanceToPlane, out Vector3 normal)
-        {
-            return DefineNormalAndDistanceFromVertices(vertices.Select(v => v.Coordinates), out distanceToPlane, out normal);
-        }
-
-        /// <summary>
         /// Defines the normal and distance from vertices.
         /// </summary>
         /// <param name="vertices">The vertices.</param>
@@ -158,10 +128,11 @@ namespace TVGL
         /// <param name="normal">The normal.</param>
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool DefineNormalAndDistanceFromVertices(IEnumerable<Vector3> vertices, out double distanceToPlane,
+        public static bool DefineNormalAndDistanceFromVertices<T>(IEnumerable<T> vertices, out double distanceToPlane,
             out Vector3 normal)
+            where T : IVector3D
         {
-            var pointList = vertices as IList<Vector3> ?? vertices.ToList();
+            var pointList = vertices as IList<T> ?? vertices.ToList();
             var numVertices = pointList.Count;
             if (numVertices < 3)
             {
@@ -171,7 +142,9 @@ namespace TVGL
             }
             if (numVertices == 3)
             {
-                var cross = (pointList[1] - pointList[0]).Cross(pointList[2] - pointList[1]);
+                var v10 = new Vector3(pointList[1].X - pointList[0].X, pointList[1].Y - pointList[0].Y, pointList[1].Z - pointList[0].Z);
+                var v21 = new Vector3(pointList[2].X - pointList[1].X, pointList[2].Y - pointList[1].Y, pointList[2].Z - pointList[1].Z);
+                var cross = v10.Cross(v21);
                 var crossLength = cross.Length();
                 if (crossLength.IsNegligible())
                 {
@@ -180,7 +153,11 @@ namespace TVGL
                     return false;
                 }
                 normal = cross / crossLength;
-                distanceToPlane = normal.Dot((pointList[0] + pointList[1] + pointList[2]) / 3);
+                var avg = new Vector3(Constants.oneThird * (pointList[0].X + pointList[1].X + pointList[2].X),
+                                      Constants.oneThird * (pointList[0].Y + pointList[1].Y + pointList[2].Y),
+                                      Constants.oneThird * (pointList[0].Z + pointList[1].Z + pointList[2].Z));
+
+                distanceToPlane = normal.Dot(avg);
                 if (distanceToPlane < 0)
                 {
                     distanceToPlane = -distanceToPlane;
@@ -435,7 +412,7 @@ namespace TVGL
         /// </summary>
         /// <param name="rotation">The rotation.</param>
         /// <returns>Plane.</returns>
-        public Plane TransformToNewPlane(Quaternion rotation,bool transformFacesAndVertices)
+        public Plane TransformToNewPlane(Quaternion rotation, bool transformFacesAndVertices)
         {
             var copy = (Plane)this.Clone();
             copy.Transform(rotation, transformFacesAndVertices);

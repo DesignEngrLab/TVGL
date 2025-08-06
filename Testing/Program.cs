@@ -23,6 +23,21 @@ namespace TVGLUnitTestsAndBenchmarking
             Global.Presenter2D = new Presenter2D();
             Global.Presenter3D = new Presenter3D();
 
+            var points = new Vector3[20];
+            var center = new Vector3(10,11,12);
+            var thisRadius = 5.0;
+            var m = 0;
+            for (int i = 0; i < 20; i++)
+            {
+                    var angle = i * 2 * Math.PI / 20.0;
+                    points[i] = center + new Vector3(thisRadius * Math.Cos(angle), thisRadius * Math.Sin(angle),0);
+            }
+            points.Shuffle();
+            ConvexHull3D.Create(points, out var convexHull, out _);
+            //Presenter.ShowAndHang(convexHull.Faces);
+            convexHull.Faces.CalculateVolumeAndCenter(1e-5, out var volume, out var center1);
+            var obb = MinimumEnclosure.FindMinimumBoundingBox(convexHull.Vertices);
+
             var A = new Polygon(new List<Vector2> {
             new Vector2(0, 3), new Vector2(9,0),new Vector2(12, 0),
             new Vector2(3,3),
@@ -231,5 +246,20 @@ namespace TVGLUnitTestsAndBenchmarking
             }
         }
 
+    }
+    // Add this extension method to enable shuffling of Vector3[] arrays.
+    public static class ArrayExtensions
+    {
+        private static Random rng = new Random();
+
+        public static void Shuffle<T>(this T[] array)
+        {
+            int n = array.Length;
+            while (n > 1)
+            {
+                int k = rng.Next(n--);
+                (array[n], array[k]) = (array[k], array[n]);
+            }
+        }
     }
 }

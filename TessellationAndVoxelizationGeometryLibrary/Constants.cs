@@ -42,6 +42,7 @@ namespace TVGL
         public const long VertexCheckSumMultiplier = SquareRootOfLongMaxValue;
 #endif
 
+        internal const double oneThird = 0.3333333333333333;
 
         /// <summary>
         /// The default tessellation error
