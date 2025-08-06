@@ -1467,15 +1467,13 @@ namespace TVGL
             {
                 var ownedFace = segment.DirectionList[0] ? segment.EdgeList[0].OwnedFace : segment.EdgeList[0].OtherFace;
                 var otherFace = segment.DirectionList[0] ? segment.EdgeList[0].OtherFace : segment.EdgeList[0].OwnedFace;
-                var ownedPrimitive = solid.Primitives.FirstOrDefault(p => p.Faces.Contains(ownedFace));
-                var otherPrimitive = solid.Primitives.FirstOrDefault(p => p.Faces.Contains(otherFace));
-                if (ownedPrimitive == otherPrimitive)
+                segment.OwnedPrimitive = ownedFace.BelongsToPrimitive;
+                segment.OtherPrimitive = otherFace.BelongsToPrimitive;
+                if (segment.OwnedPrimitive == segment.OtherPrimitive)
                     continue;
-                segment.OwnedPrimitive = ownedPrimitive;
-                segment.OtherPrimitive = otherPrimitive;
-                ownedPrimitive.BorderSegments.Add(segment);
+                segment.OwnedPrimitive.BorderSegments.Add(segment);
                 if (segment.OtherPrimitive != null)
-                    otherPrimitive.BorderSegments.Add(segment);
+                    segment.OtherPrimitive.BorderSegments.Add(segment);
                 segment.SetCurve();
             }
         }
