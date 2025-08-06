@@ -35,6 +35,18 @@ namespace TVGL
         public bool PrimitivesDetermined { get; set; } = false;
 
         /// <summary>
+        /// Used to avoid unnecessary duplication of border creation
+        /// </summary>
+        [JsonIgnore]
+        public bool BordersDefined { get; set; } = false;
+
+        /// <summary>
+        /// Used to avoid unnecessary duplication of border characterization
+        /// </summary>
+        [JsonIgnore]
+        public bool BordersCharacterized { get; set; } = false;
+
+        /// <summary>
         /// Gets the faces.
         /// </summary>
         /// <value>The faces.</value>
@@ -504,7 +516,7 @@ namespace TVGL
             }
 
             //Lastly, define the border segments and border loops for each primitive.
-            if (tsBuildOptions.CheckModelIntegrity)
+            if (tsBuildOptions.CheckModelIntegrity && tsBuildOptions.DefineAndCharacterizeBorders)
             {
                 TessellationInspectAndRepair.DefineBorders(ts);
                 TessellationInspectAndRepair.CharacterizeBorders(ts);
@@ -1297,6 +1309,7 @@ namespace TVGL
                 DefineConvexHull = ConvexHull != null,
                 PredefineAllEdges = false,
                 FindNonsmoothEdges = false,
+                DefineAndCharacterizeBorders = false,
             }, Faces.Select(p => p.Color).ToList(), Units, Name + "_Copy",
                 FileName, Comments, Language);
             copy.TessellationError = TessellationError;
