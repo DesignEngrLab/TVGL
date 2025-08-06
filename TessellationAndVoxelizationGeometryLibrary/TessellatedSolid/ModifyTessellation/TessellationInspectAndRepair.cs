@@ -1358,9 +1358,13 @@ namespace TVGL
         /// <exception cref="Exception"></exception>
         public static void DefineBorders(TessellatedSolid solid)
         {
+            //Already defined. Probably didn't mean to call this again.
+            if (solid.BordersDefined) return;
+
             DefineBorderSegments(solid);
             foreach (var prim in solid.Primitives)
                 DefineBorders(prim);
+            solid.BordersDefined = true;
         }
 
 
@@ -1374,6 +1378,7 @@ namespace TVGL
             primitive.Borders = DefineBorders(primitive.BorderSegments, primitive).ToList();
             return primitive.Borders;
         }
+
         public static IEnumerable<BorderLoop> DefineBorders(List<BorderSegment> inputBorderSegments, PrimitiveSurface primitive)
         {
             var borderSegments = new List<BorderSegment>();
@@ -1592,9 +1597,13 @@ namespace TVGL
 
         public static void CharacterizeBorders(TessellatedSolid solid)
         {
+            //Already characterized. Probably didn't mean to call this again.
+            if (solid.BordersCharacterized) return;
+
             foreach (var primitive in solid.Primitives)
                 foreach (var border in primitive.Borders)
                     CharacterizeBorder(border);
+            solid.BordersCharacterized = true;
         }
 
         public static void CharacterizeBorder(BorderLoop border)

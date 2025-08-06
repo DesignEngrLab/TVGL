@@ -109,7 +109,9 @@ namespace TVGL
         {
             Vertices = new HashSet<Vertex>(faces.SelectMany(f => f.Vertices).Distinct());
             DefineNormalAndDistanceFromVertices(Vertices, out var dto, out var normal);
-            if (normal.Dot(faces.First().Normal) < 0)
+
+            LargestFace = faces.MaxBy(f => f.Area);
+            if (normal.Dot(LargestFace.Normal) < 0)
             {
                 normal *= -1;
                 dto *= -1;
@@ -567,11 +569,8 @@ namespace TVGL
         }
         protected override void CalculateIsPositive()
         {
-            if (Faces != null && Faces.Any())
-            {
-                var firstFace = Faces.First();
-                isPositive = firstFace.Normal.Dot(Normal) > 0;
-            }
+            if (Faces == null || !Faces.Any() || Area.IsNegligible()) return;
+            isPositive = LargestFace.Normal.Dot(Normal) > 0;
         }
 
         protected override void SetPrimitiveLimits()

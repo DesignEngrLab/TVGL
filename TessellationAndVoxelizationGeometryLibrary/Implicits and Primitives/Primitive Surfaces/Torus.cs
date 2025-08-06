@@ -309,10 +309,9 @@ namespace TVGL
 
         protected override void CalculateIsPositive()
         {
-            if (Faces == null || !Faces.Any()) return;
-            var firstFace = Faces.First();
-            var anchor = ClosestPointOnCenterRingToPoint(Axis, Center, MajorRadius, firstFace.Center);
-            isPositive = (firstFace.Center - anchor).Dot(firstFace.Normal) > 0;
+            if (Faces == null || !Faces.Any() || Area.IsNegligible()) return;
+            var anchor = ClosestPointOnCenterRingToPoint(Axis, Center, MajorRadius, LargestFace.Center);
+            isPositive = (LargestFace.Center - anchor).Dot(LargestFace.Normal) > 0;
         }
 
         public double FindLargestEncompassingAnglesInTubeCrossSection()
@@ -358,7 +357,7 @@ namespace TVGL
                         globalMaxAngle -= Math.Tau;
 
                     }
-                    var c = Faces.First().Center;
+                    var c = LargestFace.Center;
                     FindWindingAroundTubeCrossSection([c], true, out var angle, out _);
                     if (angle < globalMinAngle || angle > globalMaxAngle)
                     {

@@ -676,15 +676,10 @@ namespace TVGL  // COMMENTEDCHANGE namespace System.Numerics
         public static Vector3 Normalize(Vector3 value)
         {
             double ls = value.X * value.X + value.Y * value.Y + value.Z * value.Z; 
-            if (ls == 0.0)
-            {
-                Log.Error("Cannot normalize a vector of zero length. Check your implementation.");
-                //return value;//just return the given value (should be zero, zero, zero)
-            }
             //Leaving this seperate than exactly equals zero, because ConvexHull3D currently has some very, very small normal directions for faces.
-            if (ls.IsNegligible())
+            if (ls == 0)
             {
-                Log.Error("Warning: Normalizing a vector of negligible length. Confirm implementation.");
+                Log.Warning("Normalizing a vector of zero length.");
             }
             if (ls.IsPracticallySame(1.0)) return value;
             double lengthfactor = 1 / Math.Sqrt(ls);
