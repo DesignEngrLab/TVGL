@@ -591,6 +591,7 @@ namespace TVGL
             if (coordinates.Count > 0)
             {
                 polygon = new Polygon(coordinates);
+                if (!polygon.IsPositive) polygon.Reverse();
                 return true;
             }
             return false;
