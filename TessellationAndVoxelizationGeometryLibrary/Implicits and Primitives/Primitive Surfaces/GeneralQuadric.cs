@@ -329,12 +329,12 @@ namespace TVGL
                 var hessian = new Matrix4x4(
                     2 + 2 * XSqdCoeff * closestPt4.W, XYCoeff * closestPt4.W, XZCoeff * closestPt4.W, 2 * XSqdCoeff * closestPt4.X + XYCoeff * closestPt4.Y + XZCoeff * closestPt4.Z + XCoeff,
                     XYCoeff * closestPt4.W, 2 + 2 * YSqdCoeff * closestPt4.W, YZCoeff * closestPt4.W, 2 * YSqdCoeff * closestPt4.Y + XYCoeff * closestPt4.X + YZCoeff * closestPt4.Z + YCoeff,
-                    XZCoeff * closestPt4.W, YZCoeff * closestPt4.W, 2 + 2 * ZSqdCoeff * closestPt4.W, 2 * YSqdCoeff * closestPt4.Z + XZCoeff * closestPt4.X + YZCoeff * closestPt4.Y + ZCoeff,
-                    2 * XSqdCoeff * closestPt4.X + XYCoeff * closestPt4.Y + XZCoeff * closestPt4.Z + XCoeff, 2 * YSqdCoeff * closestPt4.Y + XYCoeff * closestPt4.X + YZCoeff * closestPt4.Z + YCoeff, 2 * YSqdCoeff * closestPt4.Z + XZCoeff * closestPt4.X + YZCoeff * closestPt4.Y + ZCoeff, 0);
+                    XZCoeff * closestPt4.W, YZCoeff * closestPt4.W, 2 + 2 * ZSqdCoeff * closestPt4.W, 2 * ZSqdCoeff * closestPt4.Z + XZCoeff * closestPt4.X + YZCoeff * closestPt4.Y + ZCoeff,
+                    2 * XSqdCoeff * closestPt4.X + XYCoeff * closestPt4.Y + XZCoeff * closestPt4.Z + XCoeff, 2 * YSqdCoeff * closestPt4.Y + XYCoeff * closestPt4.X + YZCoeff * closestPt4.Z + YCoeff, 2 * ZSqdCoeff * closestPt4.Z + XZCoeff * closestPt4.X + YZCoeff * closestPt4.Y + ZCoeff, 0);
                 var rhs = new Vector4(
                     2 * (closestPt4.X - point.X) + closestPt4.W * (2 * XSqdCoeff * closestPt4.X + XYCoeff * closestPt4.Y + XZCoeff * closestPt4.Z + XCoeff),
                     2 * (closestPt4.Y - point.Y) + closestPt4.W * (2 * YSqdCoeff * closestPt4.Y + XYCoeff * closestPt4.X + YZCoeff * closestPt4.Z + YCoeff),
-                    2 * (closestPt4.Z - point.Z) + closestPt4.W * (2 * YSqdCoeff * closestPt4.Z + XZCoeff * closestPt4.X + YZCoeff * closestPt4.Y + ZCoeff),
+                    2 * (closestPt4.Z - point.Z) + closestPt4.W * (2 * ZSqdCoeff * closestPt4.Z + XZCoeff * closestPt4.X + YZCoeff * closestPt4.Y + ZCoeff),
                     QuadricValue(closestPt4.ToVector3(false)));
                 delta = hessian.Solve(rhs);
                 if (hessian.FrobeniusNorm() > 1E20)
