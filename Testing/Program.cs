@@ -22,8 +22,22 @@ namespace TVGLUnitTestsAndBenchmarking
         {
             Global.Presenter2D = new Presenter2D();
             Global.Presenter3D = new Presenter3D();
+            var dirInfo = IO.BackoutToFolder("Input\\Drawings");
+            foreach (var fileName in dirInfo.GetFiles("*.dxf"))
+            {
+                Console.WriteLine("Attempting to open: " + fileName.Name);
+                if (IO.Open(fileName.FullName, out Polygon p))
+                {
+                    Presenter.ShowAndHang(p);
+                }
+                else
+                {
+                    Console.WriteLine("Failed to open: " + fileName.Name);
+                }
+            }
 
-            var A = new Polygon(new List<Vector2> {
+
+                var A = new Polygon(new List<Vector2> {
             new Vector2(0, 3), new Vector2(9,0),new Vector2(12, 0),
             new Vector2(3,3),
             new Vector2(3,12), new Vector2(13,15),

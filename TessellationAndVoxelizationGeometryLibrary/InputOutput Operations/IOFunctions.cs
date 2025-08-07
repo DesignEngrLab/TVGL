@@ -491,7 +491,7 @@ namespace TVGL
             var doc = System.Xml.Linq.XDocument.Load(sr);
             XNamespace svgNs = "http://www.w3.org/2000/svg";
             // Handle <polygon> and <polyline>
-            var polygons = doc.Descendants().Where(e => e.Name.LocalName == "polygon" || e.Name.LocalName == "polyline");
+            var polygons = doc.Descendants().Where(e => e.Name.LocalName == "path" || e.Name.LocalName == "polygon" || e.Name.LocalName == "polyline");
             foreach (var poly in polygons)
             {
                 var pointsAttr = poly.Attribute("points")?.Value;
@@ -646,6 +646,7 @@ namespace TVGL
                 case "json": return FileType.TVGL;
                 case "tvglz": return FileType.TVGLz;
                 case "csv": return FileType.CSV;
+                case "svg": return FileType.SVG;
                 case "dxf": return FileType.DXF_ASCII;
                 case "dwg": return FileType.DWG_ASCII;
                 default: return FileType.unspecified;
