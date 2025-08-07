@@ -262,6 +262,10 @@ namespace TVGL
             /// <returns>System.Double.</returns>
             internal override double Run(Vector3 point)
             {
+                if (surface is GeneralQuadric generalQuadric)
+                {
+                    return generalQuadric.QuadricValue(point);
+                }
                 return surface.DistanceToPoint(point);
             }
         }
