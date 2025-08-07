@@ -463,31 +463,52 @@ namespace TVGL
         public static bool Open(string filename, out Polygon polygon)
         {
             if (!File.Exists(filename)) throw new FileNotFoundException("The file was not found at: " + filename);
+
+            var extension = GetFileTypeFromExtension(Path.GetExtension(filename));
             using var fileStream = File.OpenRead(filename);
             using var sr = new StreamReader(fileStream);
-            int firstChar = sr.Peek();
-            if (firstChar != -1 && // -1 means end of stream or can't search
-            (char.IsDigit((char)firstChar)|| (char)firstChar=='-')) // then we assume it's a CSV or coordinates
+
+            switch (extension)
             {
-                var coordinates = new List<Vector2>();
-                while (!sr.EndOfStream)
-                {
-                    var line = ReadLine(sr);
-                    if (string.IsNullOrEmpty(line)) continue;
-                    var parts = line.Split(new[] { ' ', ',', '\t' }, StringSplitOptions.RemoveEmptyEntries);
-                    if (parts.Length < 2) continue; // Not enough data for a point
-                    if (double.TryParse(parts[0], NumberStyles.Float, CultureInfo.InvariantCulture, out double x) &&
-                        double.TryParse(parts[1], NumberStyles.Float, CultureInfo.InvariantCulture, out double y))
-                    {
-                        coordinates.Add(new Vector2(x, y));
-                    }
-                }
-                polygon = new Polygon(coordinates);
-                return true;
+                case FileType.CSV:
+                    return OpenPolygonFromCSV(out polygon, sr);
+                case FileType.TVGL:
+                    return OpenPolygonFromJson(out polygon, sr);
+                case FileType.SVG:
+                    return OpenPolygonFromSVG(out polygon, sr);
             }
+            polygon = null;
+            return false;
+        }
+
+        private static bool OpenPolygonFromSVG(out Polygon polygon, StreamReader sr)
+        {
+            throw new NotImplementedException();
+        }
+        private static bool OpenPolygonFromJson(out Polygon polygon, StreamReader sr)
+        {
             using var reader = new JsonTextReader(sr);
             var serializer = new JsonSerializer();
             polygon = serializer.Deserialize<Polygon>(reader);
+            return true;
+        }
+
+        private static bool OpenPolygonFromCSV(out Polygon polygon, StreamReader sr)
+        {
+            var coordinates = new List<Vector2>();
+            while (!sr.EndOfStream)
+            {
+                var line = ReadLine(sr);
+                if (string.IsNullOrEmpty(line)) continue;
+                var parts = line.Split(new[] { ' ', ',', '\t' }, StringSplitOptions.RemoveEmptyEntries);
+                if (parts.Length < 2) continue; // Not enough data for a point
+                if (double.TryParse(parts[0], NumberStyles.Float, CultureInfo.InvariantCulture, out double x) &&
+                    double.TryParse(parts[1], NumberStyles.Float, CultureInfo.InvariantCulture, out double y))
+                {
+                    coordinates.Add(new Vector2(x, y));
+                }
+            }
+            polygon = new Polygon(coordinates);
             return true;
         }
         #endregion
@@ -513,6 +534,9 @@ namespace TVGL
                 case "tvgl":
                 case "json": return FileType.TVGL;
                 case "tvglz": return FileType.TVGLz;
+                case "csv": return FileType.CSV;
+                case "dxf": return FileType.DXF_ASCII;
+                case "dwg": return FileType.DWG_ASCII;
                 default: return FileType.unspecified;
             }
         }

@@ -380,7 +380,36 @@ namespace TVGL
         /// <summary>
         /// A compressed version of TVGL Solid objects. About 4X smaller than TVGL.
         /// </summary>
-        TVGLz
+        TVGLz,
+
+        // now the 2D formats
+        /// <summary>
+        /// Simply a set of 2D coordinates, no additional information
+        /// </summary>
+        CSV,
+
+        /// <summary>
+        /// S Vector Graphics
+        /// </summary>
+        SVG,
+        /// <summary>
+        /// Drawing Exchange Format in ASCII
+        /// </summary>
+        DXF_ASCII,
+
+        /// <summary>        
+        /// Drawing Exchange Format in Binary
+        /// </summary>
+        DXF_Binary,
+        /// <summary>
+        /// Autodesk Drawing Format in ASCII
+        /// </summary>
+        DWG_ASCII,
+
+        /// <summary>        
+        /// Autodesk Drawing Format in Binary
+        /// </summary>
+        DWG_Binary,
     }
 
     /// <summary>
