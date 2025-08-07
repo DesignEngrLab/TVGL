@@ -11,40 +11,9 @@ using MarkerType = TVGL.MarkerType;
 
 namespace WindowsDesktopPresenter
 {
-    internal class Held2DViewModel : INotifyPropertyChanged, IDisposable
+    internal class Held2DViewModel : HeldViewModel
     {
-        public string Title
-        {
-            get => title;
-            set
-            {
-                if (title == value) return;
-                title = value;
-                this.RaisePropertyChanged("Title");
-            }
-        }
-        public bool HasClosed
-        {
-            get => hasClosed;
-            set
-            {
-                if (hasClosed == value) return;
-                hasClosed = value;
-                this.RaisePropertyChanged("HasClosed");
-            }
-        }
         public PlotModel PlotModel { get; set; }
-        public int UpdateInterval
-        {
-            get => updateInterval;
-            set
-            {
-                if (updateInterval == value) return;
-                updateInterval = value;
-                this.RaisePropertyChanged("UpdateInterval");
-                this.timer.Change(updateInterval, updateInterval);
-            }
-        }
         private Queue<ICollection<LineSeries>> SeriesQueue;
         internal void AddNewSeries(IEnumerable<IEnumerable<Vector2>> paths, Plot2DType plot2DType, IEnumerable<bool> closePaths, 
             MarkerType marker)
@@ -80,11 +49,6 @@ namespace WindowsDesktopPresenter
         }
 
 
-        private bool disposed;
-        private string title;
-        private int updateInterval = 15;
-        private bool hasClosed;
-        private readonly Timer timer;
 
         public Held2DViewModel()
         {
@@ -106,7 +70,18 @@ namespace WindowsDesktopPresenter
 
             this.timer.Change(100, UpdateInterval);
         }
+        protected override void Dispose(bool disposing)
+        {
+            if (!this.disposed)
+            {
+                if (disposing)
+                {
+                    this.timer.Dispose();
+                }
+            }
 
+            this.disposed = true;
+        }
 
         private void OnTimerElapsed(object state)
         {
@@ -136,39 +111,7 @@ namespace WindowsDesktopPresenter
             return true;
         }
 
-        public event PropertyChangedEventHandler PropertyChanged;
 
-        protected void RaisePropertyChanged(string property)
-        {
-            var handler = this.PropertyChanged;
-            if (handler != null)
-            {
-                handler(this, new PropertyChangedEventArgs(property));
-            }
-        }
 
-        internal void OnClosing(object sender, System.ComponentModel.CancelEventArgs e)
-        {
-            HasClosed = true;
-        }
-
-        public void Dispose()
-        {
-            this.Dispose(true);
-            GC.SuppressFinalize(this);
-        }
-
-        private void Dispose(bool disposing)
-        {
-            if (!this.disposed)
-            {
-                if (disposing)
-                {
-                    this.timer.Dispose();
-                }
-            }
-
-            this.disposed = true;
-        }
     }
 }

@@ -28,7 +28,7 @@ namespace WindowsDesktopPresenter
                 else
                 {
                     bool hasClosed = true;
-                    window.Dispatcher.Invoke(() => hasClosed = ((Held3DViewModel)window.DataContext).HasClosed);
+                    window.Dispatcher.Invoke(() => hasClosed = ((HeldViewModel)window.DataContext).HasClosed);
                     if (hasClosed)
                     {
                         plotWindows[id] = null;

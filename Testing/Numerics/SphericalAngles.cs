@@ -9,6 +9,7 @@ namespace TVGLUnitTestsAndBenchmarking
     {
         static double r1 => 2.0 * r.NextDouble() - 1.0;
 
+        [Fact]
         public static void SphericalAngleTest1()
         {
             for (int i = 0; i < 1000; i++)

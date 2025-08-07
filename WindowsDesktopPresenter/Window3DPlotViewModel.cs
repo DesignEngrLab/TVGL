@@ -59,13 +59,12 @@ namespace WindowsDesktopPresenter
             }
         }
 
-        private string heading;
 
         public string Heading
         {
             get
             {
-                return heading;
+                return title;
             }
             set
             {
