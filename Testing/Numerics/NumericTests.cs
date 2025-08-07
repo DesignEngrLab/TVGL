@@ -36,7 +36,7 @@ namespace TVGLUnitTestsAndBenchmarking
         {
             var v1 = new Vector2(r100, r100);
             var v2 = v1.Normalize();
-            Assert.Equal(v2.Length(), 1.0, 10);
+            Assert.Equal(1.0, v2.Length(), 10);
         }
 
 
@@ -128,6 +128,7 @@ namespace TVGLUnitTestsAndBenchmarking
             }
         }
 
+        [Fact]
         public static void UniqueLineTesting()
         {
             for (int i = 0; i < 100; i++)

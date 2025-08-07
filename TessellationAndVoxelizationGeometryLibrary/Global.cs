@@ -137,15 +137,22 @@ namespace TVGL
             set { logger = value; }
             get
             {
-                if (logger == null)
-                {
-                    using ILoggerFactory factory = LoggerFactory.Create(builder => builder.AddConsole());
-                    logger = factory.CreateLogger("TVGL");
-                }
+                if (logger == null) SetLogger(LogLevel.Trace);
                 return logger;
             }
         }
         private static ILogger logger;
+
+        public static void SetLogger(LogLevel minimumLevelToReport)
+        {
+            using ILoggerFactory factory = LoggerFactory.Create(builder =>
+            {
+                builder
+                    .AddConsole()
+                    .SetMinimumLevel(minimumLevelToReport);
+            });
+            logger = factory.CreateLogger("TVGL");
+        }
 
         public static IPresenter3D Presenter3D
         {

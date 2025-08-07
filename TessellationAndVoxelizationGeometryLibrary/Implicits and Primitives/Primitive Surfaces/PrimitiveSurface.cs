@@ -27,6 +27,13 @@ namespace TVGL
         [JsonIgnore]
         public SurfaceGroup BelongsToGroup { get; set; }
 
+        /// <summary>  
+        /// The original color of the primitive, used for rendering. It is 
+        /// not changed by the SetColor method and SetColor can be used to "temporarily" change the color.
+        /// We can always use the OriginalColor to restore the color.
+        /// </summary>   
+        public Color OriginalColor { get; init; }
+
         /// <summary>
         /// Sets the faces and vertices.
         /// </summary>
@@ -45,23 +52,27 @@ namespace TVGL
                 foreach (var face in Faces)
                     face.BelongsToPrimitive = this;
             if (faces == null) return;
-            var firstFace = Faces.First();
-            var faceNormal = firstFace.Normal;
-            if (this is Plane plane)
+
+            //Check the normal alignment ONLY if the face area is not zero.
+            if (!LargestFace.Area.IsNegligible())
             {
-                if (faceNormal.Dot(plane.Normal) < 0)
+                var faceNormal = LargestFace.Normal;
+                if (this is Plane plane)
                 {
-                    plane.Normal = -plane.Normal;
-                    plane.DistanceToOrigin = -plane.DistanceToOrigin;
+                    if (faceNormal.Dot(plane.Normal) < 0)
+                    {
+                        plane.Normal = -plane.Normal;
+                        plane.DistanceToOrigin = -plane.DistanceToOrigin;
+                    }
                 }
-            }
-            else if (this is not UnknownRegion && this is not Prismatic)
-            {   // can't check unknown or prismatic since these RELY on faces for determining normal
-                var primNormalAtFirst = GetNormalAtPoint(firstFace.Center);
-                if (faceNormal.Dot(primNormalAtFirst) < 0)
-                {
-                    if (IsPositive.HasValue) IsPositive = !IsPositive;
-                    else IsPositive = false;
+                else if (this is not UnknownRegion && this is not Prismatic)
+                {   // can't check unknown or prismatic since these RELY on faces for determining normal
+                    var primNormalAtFirst = GetNormalAtPoint(LargestFace.Center);
+                    if (faceNormal.Dot(primNormalAtFirst) < 0)
+                    {
+                        if (IsPositive.HasValue) IsPositive = !IsPositive;
+                        else IsPositive = false;
+                    }
                 }
             }
             SetVerticesFromFaces();
@@ -329,6 +340,26 @@ namespace TVGL
         /// The maximum error
         /// </summary>
         internal protected double _maxError = double.NaN;
+
+        private TriangleFace _largestFace;
+
+        //Largest face can be used in cases where you need one face to represent the primitive
+        //Or to check the normal alignment. Also, if this face area is negligible, the primitive area will be negligible.
+        [JsonIgnore]
+        public TriangleFace LargestFace 
+        {
+            get 
+            {
+                _largestFace ??= Faces.MaxBy(f => f.Area);       
+                return _largestFace;
+            }
+            //Set can be useful if we need the largest face before creating the primitive, but so that we 
+            //can avoid doing MaxBy 2x.
+            set
+            {
+                _largestFace = value;
+            }
+        }
 
         /// <summary>
         /// Gets or sets the triangle faces.

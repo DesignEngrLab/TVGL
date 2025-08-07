@@ -29,9 +29,8 @@ namespace TVGL
         public readonly double Area;
 
         /// <summary>
-        /// The point pairs that define the bounding rectangle limits. Unlike bounding box
-        /// these go: dir1-min, dir2-max, dir1-max, dir2-min this is because you are going
-        /// around ccw
+        /// The point pairs that define the bounding rectangle limits. 
+        /// These are ordered Direction1 Mins, Direction1 Maxs, Direction2 Mins, Direction2 Maxs, 
         /// </summary>
         public readonly List<Vector2>[] PointsOnSides;
 
@@ -88,7 +87,7 @@ namespace TVGL
         /// <param name="length1">The length1.</param>
         /// <param name="length2">The length2.</param>
         /// <param name="area">The area.</param>
-        /// <param name="sidePoints">The side points.</param>
+        /// <param name="sidePoints">The side points (D1 mins, D1 maxes, D2 mins, D2 maxes).</param>
         public BoundingRectangle(Vector2 unitVectorAlongSide, Vector2 unitVectorPointInto, double d1Min, double d1Max, double d2Min,
             double d2Max, double length1 = double.NaN, double length2 = double.NaN, double area = double.NaN,
             List<Vector2>[] sidePoints = null)

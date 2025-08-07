@@ -27,8 +27,8 @@
                 DefineConvexHull = false,
                 FindNonsmoothEdges = false,
                 PredefineAllEdges = false,
-                FixEdgeDisassociations = false,
                 DefineAndCharacterizeBorders = false,
+                FixEdgeDisassociations = false,
             };
 
         /// <summary>Gets or sets whether the model is check for connectivity and water-tightness.

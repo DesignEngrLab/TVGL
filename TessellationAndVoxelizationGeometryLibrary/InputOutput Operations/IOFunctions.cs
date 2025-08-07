@@ -23,6 +23,7 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
+using System.Xml.Linq;
 using System.Xml.Serialization;
 
 namespace TVGL
@@ -178,13 +179,13 @@ namespace TVGL
         {
             //Handle the case where the solid may not have a valid volume (and hence no convex hull)
             significantSolids = solids.Where(p => p.Volume > 0.0 && p.ConvexHull != null);
-            if(!significantSolids.Any())
+            if (!significantSolids.Any())
             {
                 Debug.WriteLine("No solids with volume OR convex hull must be set.");
                 return null;
             }
             //If only one solid, just return it.
-            if(significantSolids.Count() == 1)
+            if (significantSolids.Count() == 1)
             {
                 //no need to report anything.
                 return significantSolids.First();
@@ -463,11 +464,162 @@ namespace TVGL
         public static bool Open(string filename, out Polygon polygon)
         {
             if (!File.Exists(filename)) throw new FileNotFoundException("The file was not found at: " + filename);
+
+            var extension = GetFileTypeFromExtension(Path.GetExtension(filename));
             using var fileStream = File.OpenRead(filename);
             using var sr = new StreamReader(fileStream);
+
+            switch (extension)
+            {
+                case FileType.CSV:
+                    return OpenPolygonFromCSV(out polygon, sr);
+                case FileType.TVGL:
+                    return OpenPolygonFromJson(out polygon, sr);
+                case FileType.SVG:
+                    return OpenPolygonFromSVG(out polygon, sr);
+                case FileType.DXF_ASCII:
+                    return OpenPolygonFromDXF(out polygon, sr);
+            }
+            polygon = null;
+            return false;
+        }
+
+        private static bool OpenPolygonFromSVG(out Polygon polygon, StreamReader sr)
+        {
+            polygon = null;
+            var coordinates = new List<Vector2>();
+            var doc = System.Xml.Linq.XDocument.Load(sr);
+            XNamespace svgNs = "http://www.w3.org/2000/svg";
+            // Handle <polygon> and <polyline>
+            var polygons = doc.Descendants().Where(e => e.Name.LocalName == "path" || e.Name.LocalName == "polygon" || e.Name.LocalName == "polyline");
+            foreach (var poly in polygons)
+            {
+                var pointsAttr = poly.Attribute("points")?.Value;
+                if (string.IsNullOrWhiteSpace(pointsAttr)) continue;
+                var points = pointsAttr.Split(new[] { ' ', ',' }, StringSplitOptions.RemoveEmptyEntries);
+                for (int i = 0; i < points.Length - 1; i += 2)
+                {
+                    if (double.TryParse(points[i], NumberStyles.Float, CultureInfo.InvariantCulture, out double x) &&
+                        double.TryParse(points[i + 1], NumberStyles.Float, CultureInfo.InvariantCulture, out double y))
+                    {
+                        coordinates.Add(new Vector2(x, y));
+                    }
+                }
+                // Only use the first polygon/polyline found
+                break;
+            }
+            // Optionally, handle <rect>, <circle>, <ellipse>, <line>, <path> here for more SVG support
+            if (coordinates.Count > 0)
+            {
+                polygon = new Polygon(coordinates);
+                return true;
+            }
+            return false;
+        }
+
+        private static bool OpenPolygonFromDXF(out Polygon polygon, StreamReader sr)
+        {
+            polygon = null;
+            var coordinates = new List<Vector2>();
+            string line;
+            bool inPolyline = false;
+            var currentPoints = new List<Vector2>();
+            double? x = null, y = null;
+            while ((line = sr.ReadLine()) != null)
+            {
+                line = line.Trim();
+                if (line == "LWPOLYLINE" || line == "POLYLINE")
+                {
+                    inPolyline = true;
+                    currentPoints = new List<Vector2>();
+                    x = null; y = null;
+                }
+                else if (inPolyline && line == "VERTEX")
+                {
+                    x = null; y = null;
+                }
+                else if (inPolyline && (line == "SEQEND" || line == "ENDSEC"))
+                {
+                    if (currentPoints.Count > 0)
+                    {
+                        coordinates.AddRange(currentPoints);
+                        break; // Only use the first polyline found
+                    }
+                    inPolyline = false;
+                }
+                else if (inPolyline)
+                {
+                    if (line == "10") // X coordinate code
+                    {
+                        if (double.TryParse(sr.ReadLine()?.Trim(), NumberStyles.Float, CultureInfo.InvariantCulture, out double xVal))
+                            x = xVal;
+                    }
+                    else if (line == "20") // Y coordinate code
+                    {
+                        if (double.TryParse(sr.ReadLine()?.Trim(), NumberStyles.Float, CultureInfo.InvariantCulture, out double yVal))
+                            y = yVal;
+                    }
+                    if (x.HasValue && y.HasValue)
+                    {
+                        currentPoints.Add(new Vector2(x.Value, y.Value));
+                        x = null; y = null;
+                    }
+                }
+                else if (line == "LINE")
+                {
+                    double? x1 = null, y1 = null, x2 = null, y2 = null;
+                    while ((line = sr.ReadLine()) != null)
+                    {
+                        line = line.Trim();
+                        if (line == "10" && double.TryParse(sr.ReadLine()?.Trim(), NumberStyles.Float, CultureInfo.InvariantCulture, out var x1Val))
+                            x1 = x1Val;
+                        else if (line == "20" && double.TryParse(sr.ReadLine()?.Trim(), NumberStyles.Float, CultureInfo.InvariantCulture, out var y1Val))
+                            y1 = y1Val;
+                        else if (line == "11" && double.TryParse(sr.ReadLine()?.Trim(), NumberStyles.Float, CultureInfo.InvariantCulture, out var x2Val))
+                            x2 = x2Val;
+                        else if (line == "21" && double.TryParse(sr.ReadLine()?.Trim(), NumberStyles.Float, CultureInfo.InvariantCulture, out var y2Val))
+                            y2 = y2Val;
+                        if (x1.HasValue && y1.HasValue && x2.HasValue && y2.HasValue)
+                        {
+                            coordinates.Add(new Vector2(x1.Value, y1.Value));
+                            coordinates.Add(new Vector2(x2.Value, y2.Value));
+                            break;
+                        }
+                    }
+                }
+            }
+            if (coordinates.Count > 0)
+            {
+                polygon = new Polygon(coordinates);
+                return true;
+            }
+            return false;
+        }
+
+        private static bool OpenPolygonFromJson(out Polygon polygon, StreamReader sr)
+        {
             using var reader = new JsonTextReader(sr);
             var serializer = new JsonSerializer();
             polygon = serializer.Deserialize<Polygon>(reader);
+            return true;
+        }
+
+        private static bool OpenPolygonFromCSV(out Polygon polygon, StreamReader sr)
+        {
+            var coordinates = new List<Vector2>();
+            while (!sr.EndOfStream)
+            {
+                var line = ReadLine(sr);
+                if (string.IsNullOrEmpty(line)) continue;
+                var parts = line.Split(new[] { ' ', ',', '\t' }, StringSplitOptions.RemoveEmptyEntries);
+                if (parts.Length < 2) continue; // Not enough data for a point
+                if (double.TryParse(parts[0], NumberStyles.Float, CultureInfo.InvariantCulture, out double x) &&
+                    double.TryParse(parts[1], NumberStyles.Float, CultureInfo.InvariantCulture, out double y))
+                {
+                    coordinates.Add(new Vector2(x, y));
+                }
+            }
+            polygon = new Polygon(coordinates);
             return true;
         }
         #endregion
@@ -493,6 +645,10 @@ namespace TVGL
                 case "tvgl":
                 case "json": return FileType.TVGL;
                 case "tvglz": return FileType.TVGLz;
+                case "csv": return FileType.CSV;
+                case "svg": return FileType.SVG;
+                case "dxf": return FileType.DXF_ASCII;
+                case "dwg": return FileType.DWG_ASCII;
                 default: return FileType.unspecified;
             }
         }
@@ -1291,10 +1447,12 @@ namespace TVGL
         /// <exception cref="System.NotImplementedException">Need to provide filepath instread of stream.</exception>
         public static bool Save(Stream stream, SolidAssembly solidAssembly, FileType fileType = FileType.TVGL)
         {
-            if (solidAssembly.NumberOfSolidBodies == 0) return false;
+            //Return TVGL if from either solid bodies, or sheet bodies, or both. Note that "sheet body"
+            //in this case, refers to the original format. It may in fact be a closed solid body.
+            if (solidAssembly.IsEmpty()) return false;
             if (fileType != FileType.TVGL && fileType != FileType.TVGLz)
             {
-                if (solidAssembly.NumberOfSolidBodies == 1)
+                if (solidAssembly.NumberOfSolidBodies == 1 || solidAssembly.NumberOfSheetBodies == 1)
                     return Save(stream, solidAssembly.Solids[0], fileType);
                 else
                 {

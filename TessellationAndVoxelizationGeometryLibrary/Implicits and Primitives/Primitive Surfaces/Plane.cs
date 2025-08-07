@@ -109,7 +109,9 @@ namespace TVGL
         {
             Vertices = new HashSet<Vertex>(faces.SelectMany(f => f.Vertices).Distinct());
             DefineNormalAndDistanceFromVertices(Vertices, out var dto, out var normal);
-            if (normal.Dot(faces.First().Normal) < 0)
+
+            LargestFace = faces.MaxBy(f => f.Area);
+            if (normal.Dot(LargestFace.Normal) < 0)
             {
                 normal *= -1;
                 dto *= -1;
@@ -121,36 +123,6 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="Plane"/> class.
-        /// </summary>
-        /// <param name="vertices">The vertices.</param>
-        /// <param name="normalGuess">The normal guess.</param>
-        //public Plane(IEnumerable<Vector3> vertices, Vector3 normalGuess)
-        //{
-        //    DefineNormalAndDistanceFromVertices(vertices, out var dto, out var normal);
-        //    if (normal.Dot(normalGuess) < 0)
-        //    {
-        //        normal *= -1;
-        //        dto *= -1;
-        //    }
-        //    DistanceToOrigin = dto;
-        //    Normal = normal;
-        //}
-
-
-        /// <summary>
-        /// Defines the normal and distance from vertices.
-        /// </summary>
-        /// <param name="vertices">The vertices.</param>
-        /// <param name="distanceToPlane">The distance to plane.</param>
-        /// <param name="normal">The normal.</param>
-        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
-        public static bool DefineNormalAndDistanceFromVertices(IEnumerable<Vertex> vertices, out double distanceToPlane, out Vector3 normal)
-        {
-            return DefineNormalAndDistanceFromVertices(vertices.Select(v => v.Coordinates), out distanceToPlane, out normal);
-        }
-
-        /// <summary>
         /// Defines the normal and distance from vertices.
         /// </summary>
         /// <param name="vertices">The vertices.</param>
@@ -158,10 +130,11 @@ namespace TVGL
         /// <param name="normal">The normal.</param>
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool DefineNormalAndDistanceFromVertices(IEnumerable<Vector3> vertices, out double distanceToPlane,
+        public static bool DefineNormalAndDistanceFromVertices<T>(IEnumerable<T> vertices, out double distanceToPlane,
             out Vector3 normal)
+            where T : IVector3D
         {
-            var pointList = vertices as IList<Vector3> ?? vertices.ToList();
+            var pointList = vertices as IList<T> ?? vertices.ToList();
             var numVertices = pointList.Count;
             if (numVertices < 3)
             {
@@ -171,7 +144,9 @@ namespace TVGL
             }
             if (numVertices == 3)
             {
-                var cross = (pointList[1] - pointList[0]).Cross(pointList[2] - pointList[1]);
+                var v10 = new Vector3(pointList[1].X - pointList[0].X, pointList[1].Y - pointList[0].Y, pointList[1].Z - pointList[0].Z);
+                var v21 = new Vector3(pointList[2].X - pointList[1].X, pointList[2].Y - pointList[1].Y, pointList[2].Z - pointList[1].Z);
+                var cross = v10.Cross(v21);
                 var crossLength = cross.Length();
                 if (crossLength.IsNegligible())
                 {
@@ -180,7 +155,11 @@ namespace TVGL
                     return false;
                 }
                 normal = cross / crossLength;
-                distanceToPlane = normal.Dot((pointList[0] + pointList[1] + pointList[2]) / 3);
+                var avg = new Vector3(Constants.oneThird * (pointList[0].X + pointList[1].X + pointList[2].X),
+                                      Constants.oneThird * (pointList[0].Y + pointList[1].Y + pointList[2].Y),
+                                      Constants.oneThird * (pointList[0].Z + pointList[1].Z + pointList[2].Z));
+
+                distanceToPlane = normal.Dot(avg);
                 if (distanceToPlane < 0)
                 {
                     distanceToPlane = -distanceToPlane;
@@ -269,7 +248,15 @@ namespace TVGL
             var rhs = new[] { xSum, ySum, zSum };
             if (matrix.solve(rhs, out var normalArray, true))
             {
-                normal = (new Vector3(normalArray)).Normalize();
+                normal = new Vector3(normalArray);
+                //Check for negligible normal before trying to normalize.
+                if (normal.IsNegligible())
+                {
+                    normal = Vector3.Null;
+                    distanceToPlane = double.NaN;
+                    return false;
+                }
+                normal = normal.Normalize();
                 distanceToPlane = normal.Dot(new Vector3(xSum / numVertices, ySum / numVertices, zSum / numVertices));
                 if (distanceToPlane < 0)
                 {
@@ -427,7 +414,7 @@ namespace TVGL
         /// </summary>
         /// <param name="rotation">The rotation.</param>
         /// <returns>Plane.</returns>
-        public Plane TransformToNewPlane(Quaternion rotation,bool transformFacesAndVertices)
+        public Plane TransformToNewPlane(Quaternion rotation, bool transformFacesAndVertices)
         {
             var copy = (Plane)this.Clone();
             copy.Transform(rotation, transformFacesAndVertices);
@@ -582,11 +569,8 @@ namespace TVGL
         }
         protected override void CalculateIsPositive()
         {
-            if (Faces != null && Faces.Any())
-            {
-                var firstFace = Faces.First();
-                isPositive = firstFace.Normal.Dot(Normal) > 0;
-            }
+            if (Faces == null || !Faces.Any() || Area.IsNegligible()) return;
+            isPositive = LargestFace.Normal.Dot(Normal) > 0;
         }
 
         protected override void SetPrimitiveLimits()

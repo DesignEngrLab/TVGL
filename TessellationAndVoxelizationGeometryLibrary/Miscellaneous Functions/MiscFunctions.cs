@@ -781,7 +781,7 @@ namespace TVGL
                 {
                     foreach (var primitive in ts.Primitives)
                     {
-                        if (faceGroup.Contains(primitive.Faces.First()))
+                        if (faceGroup.Contains(primitive.LargestFace))
                         {
                             var faceIndices = primitive.Faces.Select(f => faceGroup.IndexOf(f)).ToList();
                             var primCopy = primitive.Copy(faceIndices.Select(idx => newSolid.Faces[idx]));

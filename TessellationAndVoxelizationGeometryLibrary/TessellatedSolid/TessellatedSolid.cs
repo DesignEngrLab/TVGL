@@ -35,6 +35,18 @@ namespace TVGL
         public bool PrimitivesDetermined { get; set; } = false;
 
         /// <summary>
+        /// Used to avoid unnecessary duplication of border creation
+        /// </summary>
+        [JsonIgnore]
+        public bool BordersDefined { get; set; } = false;
+
+        /// <summary>
+        /// Used to avoid unnecessary duplication of border characterization
+        /// </summary>
+        [JsonIgnore]
+        public bool BordersCharacterized { get; set; } = false;
+
+        /// <summary>
         /// Gets the faces.
         /// </summary>
         /// <value>The faces.</value>
@@ -503,9 +515,9 @@ namespace TVGL
                 }
             }
 
-            if (tsBuildOptions.DefineAndCharacterizeBorders)
+            //Lastly, define the border segments and border loops for each primitive.
+            if (tsBuildOptions.CheckModelIntegrity && tsBuildOptions.DefineAndCharacterizeBorders)
             {
-                //Lastly, define the border segments and border loops for each primitive.
                 TessellationInspectAndRepair.DefineBorders(ts);
                 TessellationInspectAndRepair.CharacterizeBorders(ts);
             }
@@ -656,7 +668,7 @@ namespace TVGL
                 if (zMax < v.Z) zMax = v.Z;
             }
             Bounds = new[] { new Vector3(xMin, yMin, zMin), new Vector3(xMax, yMax, zMax) };
-            var averageDimension = 0.333 * ((XMax - XMin) + (YMax - YMin) + (ZMax - ZMin));
+            var averageDimension = Constants.oneThird * ((XMax - XMin) + (YMax - YMin) + (ZMax - ZMin));
             SameTolerance = averageDimension * Constants.BaseTolerance;
         }
 
@@ -1297,6 +1309,7 @@ namespace TVGL
                 DefineConvexHull = ConvexHull != null,
                 PredefineAllEdges = false,
                 FindNonsmoothEdges = false,
+                DefineAndCharacterizeBorders = false,
             }, Faces.Select(p => p.Color).ToList(), Units, Name + "_Copy",
                 FileName, Comments, Language);
             copy.TessellationError = TessellationError;

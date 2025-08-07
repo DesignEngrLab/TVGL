@@ -1358,9 +1358,13 @@ namespace TVGL
         /// <exception cref="Exception"></exception>
         public static void DefineBorders(TessellatedSolid solid)
         {
+            //Already defined. Probably didn't mean to call this again.
+            if (solid.BordersDefined) return;
+
             DefineBorderSegments(solid);
             foreach (var prim in solid.Primitives)
                 DefineBorders(prim);
+            solid.BordersDefined = true;
         }
 
 
@@ -1374,6 +1378,7 @@ namespace TVGL
             primitive.Borders = DefineBorders(primitive.BorderSegments, primitive).ToList();
             return primitive.Borders;
         }
+
         public static IEnumerable<BorderLoop> DefineBorders(List<BorderSegment> inputBorderSegments, PrimitiveSurface primitive)
         {
             var borderSegments = new List<BorderSegment>();
@@ -1454,21 +1459,26 @@ namespace TVGL
             foreach (var prim in solid.Primitives)
                 if (prim.BorderSegments != null) prim.BorderSegments.Clear();
                 else prim.BorderSegments = new List<BorderSegment>();
-            var borderSegments = GatherEdgesIntoSegments(solid.Primitives.SelectMany(prim => prim.OuterEdges)
-                .Concat(solid.NonsmoothEdges));
+
+            //Gather the edges into border segments. Only use solid.NonsmoothEdges if it has been set and is not null or empty.
+            IEnumerable<BorderSegment> borderSegments;
+            if (solid.NonsmoothEdges != null && solid.NonsmoothEdges.Count > 0)
+                borderSegments = GatherEdgesIntoSegments(solid.Primitives.SelectMany(prim => prim.OuterEdges).Concat(solid.NonsmoothEdges));
+            else
+                borderSegments = GatherEdgesIntoSegments(solid.Primitives.SelectMany(prim => prim.OuterEdges));
+
+            //Set Owned/Other Connection to Primitive and set the curve details for the border segment.
             foreach (var segment in borderSegments)
             {
                 var ownedFace = segment.DirectionList[0] ? segment.EdgeList[0].OwnedFace : segment.EdgeList[0].OtherFace;
                 var otherFace = segment.DirectionList[0] ? segment.EdgeList[0].OtherFace : segment.EdgeList[0].OwnedFace;
-                var ownedPrimitive = solid.Primitives.FirstOrDefault(p => p.Faces.Contains(ownedFace));
-                var otherPrimitive = solid.Primitives.FirstOrDefault(p => p.Faces.Contains(otherFace));
-                if (ownedPrimitive == otherPrimitive)
+                segment.OwnedPrimitive = ownedFace.BelongsToPrimitive;
+                segment.OtherPrimitive = otherFace.BelongsToPrimitive;
+                if (segment.OwnedPrimitive == segment.OtherPrimitive)
                     continue;
-                segment.OwnedPrimitive = ownedPrimitive;
-                segment.OtherPrimitive = otherPrimitive;
-                ownedPrimitive.BorderSegments.Add(segment);
+                segment.OwnedPrimitive.BorderSegments.Add(segment);
                 if (segment.OtherPrimitive != null)
-                    otherPrimitive.BorderSegments.Add(segment);
+                    segment.OtherPrimitive.BorderSegments.Add(segment);
                 segment.SetCurve();
             }
         }
@@ -1587,9 +1597,13 @@ namespace TVGL
 
         public static void CharacterizeBorders(TessellatedSolid solid)
         {
+            //Already characterized. Probably didn't mean to call this again.
+            if (solid.BordersCharacterized) return;
+
             foreach (var primitive in solid.Primitives)
                 foreach (var border in primitive.Borders)
                     CharacterizeBorder(border);
+            solid.BordersCharacterized = true;
         }
 
         public static void CharacterizeBorder(BorderLoop border)

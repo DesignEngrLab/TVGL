@@ -99,6 +99,7 @@ namespace TVGL
         /// <param name="solid">The solid.</param>
         internal static bool OpenTVGL(Stream s, out SolidAssembly solidAssembly, TessellatedSolidBuildOptions tsBuildOptions = null)
         {
+            if (tsBuildOptions == null) tsBuildOptions = TessellatedSolidBuildOptions.Default;
             using var reader = new JsonTextReader(new StreamReader(s));
             SolidAssembly.StreamRead(reader, out solidAssembly, tsBuildOptions);
             return true;

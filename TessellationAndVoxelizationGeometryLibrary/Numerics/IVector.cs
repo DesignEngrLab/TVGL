@@ -30,7 +30,6 @@
         /// Gets the z.
         /// </summary>
         /// <value>The z.</value>
-        //double Z { get; init; }
         double Z { get; init; }
     }
 

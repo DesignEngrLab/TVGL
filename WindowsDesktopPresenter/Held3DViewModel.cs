@@ -15,38 +15,8 @@ using Vector3D = System.Windows.Media.Media3D.Vector3D;
 
 namespace WindowsDesktopPresenter
 {
-    internal class Held3DViewModel : INotifyPropertyChanged, IDisposable
+    internal class Held3DViewModel : HeldViewModel
     {
-        public string Title
-        {
-            get => title;
-            set
-            {
-                if (title == value) return;
-                title = value;
-                this.OnPropertyChanged("Title");
-            }
-        }
-        public bool HasClosed
-        {
-            get => hasClosed;
-            set
-            {
-                if (hasClosed == value) return;
-                hasClosed = value;
-                this.OnPropertyChanged("HasClosed");
-            }
-        }
-        public int UpdateInterval
-        {
-            get => updateInterval;
-            set
-            {
-                if (updateInterval == value) return;
-                updateInterval = value;
-                this.timer.Change(startupTimerInterval, updateInterval);
-            }
-        }
         private Queue<IList<GeometryModel3D>> SeriesQueue;
         internal void AddNewSeries(IEnumerable<GeometryModel3D> solids)
         {
@@ -60,14 +30,10 @@ namespace WindowsDesktopPresenter
         }
 
 
-        private string title;
-        private int updateInterval = 15;
         private const int startupTimerInterval = 0;
-        private bool hasClosed;
 
         public Window OwnedWindow { get; }
 
-        private readonly Timer timer;
 
         public Held3DViewModel(Window window)
         {
@@ -95,7 +61,7 @@ namespace WindowsDesktopPresenter
             lock (this.Solids)
                 newDataToShow = Update();
             if (newDataToShow)
-                OnPropertyChanged("Solids");
+                RaisePropertyChanged("Solids");
         }
 
         private bool Update()
@@ -118,54 +84,6 @@ namespace WindowsDesktopPresenter
             return true;
         }
         int lastNumberItems = 0;
-        public event PropertyChangedEventHandler PropertyChanged;
-
-        protected void OnPropertyChanged(string property)
-        {
-            var handler = this.PropertyChanged;
-            if (handler != null)
-            {
-                handler(this, new PropertyChangedEventArgs(property));
-            }
-        }
-
-        #region IDisposable Support
-        internal void OnClosing(object sender, System.ComponentModel.CancelEventArgs e)
-        {
-            HasClosed = true;
-        }
-
-        public void Dispose()
-        {
-            this.Dispose(true);
-            GC.SuppressFinalize(this);
-        }
-
-        private bool disposedValue = false; // To detect redundant calls
-
-        protected virtual void Dispose(bool disposing)
-        {
-            if (!disposedValue)
-            {
-                if (disposing)
-                {
-                    // TODO: dispose managed state (managed objects).
-                    this.timer.Dispose();
-                }
-
-                // TODO: free unmanaged resources (unmanaged objects) and override a finalizer below.
-                // TODO: set large fields to null.
-                if (EffectsManager != null)
-                {
-                    var effectManager = EffectsManager as IDisposable;
-                    Disposer.RemoveAndDispose(ref effectManager);
-                }
-                disposedValue = true;
-                GC.SuppressFinalize(this);
-            }
-        }
-
-        #endregion
 
 
 
@@ -178,7 +96,7 @@ namespace WindowsDesktopPresenter
             }
 
             backingField = value;
-            this.OnPropertyChanged(propertyName);
+            this.RaisePropertyChanged(propertyName);
             return true;
         }
         public const string Orthographic = "Orthographic Camera";
@@ -266,6 +184,27 @@ namespace WindowsDesktopPresenter
             }
         }
 
+        protected override void Dispose(bool disposing)
+        {
+            if (!disposedValue)
+            {
+                if (disposing)
+                {
+                    // TODO: dispose managed state (managed objects).
+                    this.timer.Dispose();
+                }
+
+                // TODO: free unmanaged resources (unmanaged objects) and override a finalizer below.
+                // TODO: set large fields to null.
+                if (EffectsManager != null)
+                {
+                    var effectManager = EffectsManager as IDisposable;
+                    Disposer.RemoveAndDispose(ref effectManager);
+                }
+                disposedValue = true;
+                GC.SuppressFinalize(this);
+            }
+        }
         protected OrthographicCamera defaultOrthographicCamera;
         protected PerspectiveCamera defaultPerspectiveCamera;
         public event EventHandler CameraModelChanged;

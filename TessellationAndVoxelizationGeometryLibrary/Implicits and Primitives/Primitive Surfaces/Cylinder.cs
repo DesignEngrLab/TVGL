@@ -298,10 +298,9 @@ namespace TVGL
 
         protected override void CalculateIsPositive()
         {
-            if (Faces == null || !Faces.Any()) return;
-            var firstFace = Faces.First();
-            var axisPointUnderFace = Anchor + (firstFace.Center - Anchor).Dot(Axis) * Axis;
-            isPositive = (firstFace.Center - axisPointUnderFace).Dot(firstFace.Normal) > 0;
+            if (Faces == null || !Faces.Any() || Area.IsNegligible()) return;
+            var axisPointUnderFace = Anchor + (LargestFace.Center - Anchor).Dot(Axis) * Axis;
+            isPositive = (LargestFace.Center - axisPointUnderFace).Dot(LargestFace.Normal) > 0;
         }
 
         protected override void SetPrimitiveLimits()
