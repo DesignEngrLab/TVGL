@@ -20,7 +20,7 @@ namespace TVGL
         /// <summary>
         /// The has color specified
         /// </summary>
-        private bool hasColorSpecified;
+        //private bool hasColorSpecified;
 
         /// <summary>
         /// The uniform color descriptor
