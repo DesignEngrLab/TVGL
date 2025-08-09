@@ -118,31 +118,18 @@ namespace TVGL
             {
                 foreach (var primitiveSurface in primitives)
                 {
-                    if (primitiveSurface is Cylinder)
-                        foreach (var f in primitiveSurface.Faces)
-                            f.Color = new Color(KnownColors.Red);
-
-                    if (primitiveSurface is Cone)
-                        foreach (var f in primitiveSurface.Faces)
-                            f.Color = new Color(KnownColors.DarkOrange);
-                    else if (primitiveSurface is Sphere)
-                        foreach (var f in primitiveSurface.Faces)
-                            f.Color = new Color(KnownColors.Yellow);
-                    else if (primitiveSurface is Plane)
-                        foreach (var f in primitiveSurface.Faces)
-                            f.Color = new Color(KnownColors.Green);
-                    else if (primitiveSurface is Torus)
-                        foreach (var f in primitiveSurface.Faces)
-                            f.Color = new Color(KnownColors.HotPink);
-                    else if (primitiveSurface is Prismatic)
-                        foreach (var f in primitiveSurface.Faces)
-                            f.Color = new Color(KnownColors.Purple);
-                    else if (primitiveSurface is UnknownRegion)
-                        foreach (var f in primitiveSurface.Faces)
-                            f.Color = new Color(KnownColors.Brown);
-                    else
-                        foreach (var f in primitiveSurface.Faces)
-                            f.Color = new Color(KnownColors.Blue);
+                    KnownColors primitiveColor = primitiveSurface switch
+                    {
+                        Cylinder => KnownColors.Red,  //like a coke can
+                        Cone => KnownColors.DarkOrange, // like an ice cream cone
+                        Sphere => KnownColors.Yellow, // like the sun
+                        Plane => KnownColors.Green, // like a field (see Minecraft)
+                        Torus => KnownColors.HotPink, // like a donut (see Homer Simpson)
+                        Prismatic => KnownColors.Indigo, // last color in a rainbow (think prism)
+                        UnknownRegion => KnownColors.LightGray,
+                        _ => KnownColors.Gray
+                    };                    
+                    primitiveSurface.SetColor(new Color(primitiveColor));
                 }
             }
         }

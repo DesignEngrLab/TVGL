@@ -821,5 +821,44 @@ namespace TVGL
         #endregion
 
 
+        public static BoundingBox<Vertex> FindMinimumCanonicalBoundingBox(ICollection<TriangleFace> faces, ConvexHull3D convexHull)
+        {
+            var bb = FindMinimumBoundingBox(convexHull.Vertices);
+            // now move the longest dimension to the x-axis, the second longest to the y-axis, and the shortest to the z-axis
+            var matrix = bb.TransformToOrigin;
+            var swapYAndZAxes = false;
+            if (bb.SortedDirectionIndicesLongToShort[0] == 1)
+            {
+                matrix *= Matrix4x4.CreateRotationZ(Math.PI / 2) * Matrix4x4.CreateTranslation(bb.Bounds[1].Y, 0, 0);
+                swapYAndZAxes = (bb.SortedDirectionIndicesLongToShort[1] == 2);
+            }
+            else if (bb.SortedDirectionIndicesLongToShort[0] == 2)
+            {
+                matrix *= Matrix4x4.CreateRotationY(Math.PI / 2) * Matrix4x4.CreateTranslation(0, 0, bb.Bounds[1].X);
+                swapYAndZAxes = (bb.SortedDirectionIndicesLongToShort[1] == 2);
+            }
+            else swapYAndZAxes = (bb.SortedDirectionIndicesLongToShort[1] == 2);
+            if (swapYAndZAxes)
+                matrix *= Matrix4x4.CreateRotationX(Math.PI / 2) * Matrix4x4.CreateTranslation(0, bb.Bounds[1].Z, 0);
+            // now that we have them in the order (x longest, then Y, then Z is shortest), 
+            // we need to check if the box should be mirroed (rotated about 180) so that 
+            // the COM of the faces is closest to origin. Here we will use the center of the bb
+            // to decide whether to flip or not
+            var boxCOM = bb.SortedDimensionsLongToShort.Select(x => x / 2).ToArray();
+            var facesCOM = Vector3.Zero;
+            foreach (var face in faces)
+                facesCOM += face.Area * face.Center;
+            facesCOM /= faces.Sum(x => x.Area);
+            if (facesCOM.X > boxCOM[0])
+                matrix *= Matrix4x4.CreateScale(-1, 1, 1) * Matrix4x4.CreateTranslation(bb.SortedDimensionsLongToShort[0], 0, 0);
+            if (facesCOM.Y > boxCOM[1])
+                matrix *= Matrix4x4.CreateScale(1, -1, 1) * Matrix4x4.CreateTranslation(0, bb.SortedDimensionsLongToShort[1], 0);
+            if (facesCOM.Z > boxCOM[2])
+                matrix *= Matrix4x4.CreateScale(1, 1, -1) * Matrix4x4.CreateTranslation(0, 0, bb.SortedDimensionsLongToShort[2]);
+
+
+            return new BoundingBox<Vertex>([matrix.XBasisVector, matrix.YBasisVector, matrix.ZBasisVector], matrix.TranslationAsVector);
+
+        }
     }
 }
