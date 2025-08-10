@@ -684,6 +684,19 @@ namespace TVGL
                 return result;
             else return Matrix4x4.Null;
         }
+        /// <summary>
+        /// Get the inverse of the matrix, but this is simple and fast and 
+        /// only works if the matrix is orthonormal (comprised only of rotations
+        /// although, translations work here too)
+        /// </summary>
+        /// <param name="matrix">The matrix.</param>
+        /// <returns>A Matrix4x4.</returns>
+        public static Matrix4x4 OrthoNormalInverse(this Matrix4x4 m)
+        {
+            var n = new Matrix3x3(m.M11, m.M21, m.M31, m.M12, m.M22, m.M32, m.M13, m.M23, m.M33);
+            var t = m.TranslationAsVector.Multiply(n);
+            return new Matrix4x4(n.M11,n.M12,n.M13,n.M21,n.M22,n.M23,n.M31,n.M32,n.M33,-t.X,-t.Y,-t.Z);
+        }
 
         #region Solve Ax=b
         /// <summary>

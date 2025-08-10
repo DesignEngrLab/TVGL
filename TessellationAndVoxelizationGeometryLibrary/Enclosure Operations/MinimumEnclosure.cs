@@ -820,45 +820,69 @@ namespace TVGL
 
         #endregion
 
-
-        public static BoundingBox<Vertex> FindMinimumCanonicalBoundingBox(ICollection<TriangleFace> faces, ConvexHull3D convexHull)
+        /// <summary>
+        /// The minimum canonical bounding box is basically an addition to the minimum bounding box. 
+        /// Where extra rotations are commiteed so that the longest dimension along the x-axis, the second along Y,
+        /// and the shortest along Z. Furthermore, if faces are provided, the box is flipped so that the center of 
+        /// mass of the faces is closest to the origin. 
+        /// </summary>
+        /// <param name="convexHull"></param>
+        /// <param name="facesCOM"></param>
+        /// <param name="faces"></param>
+        /// <returns></returns>
+        public static BoundingBox<Vertex> FindMinimumCanonicalBoundingBox(ConvexHull3D convexHull, out Vector3 facesCOM,
+            ICollection<TriangleFace> faces = null)
         {
             var bb = FindMinimumBoundingBox(convexHull.Vertices);
             // now move the longest dimension to the x-axis, the second longest to the y-axis, and the shortest to the z-axis
             var matrix = bb.TransformToOrigin;
             var swapYAndZAxes = false;
-            if (bb.SortedDirectionIndicesLongToShort[0] == 1)
+            var boxDims = bb.SortedDimensionsLongToShort;
+            var sortedIndices = bb.SortedDirectionIndicesLongToShort;
+            if (sortedIndices[0] == 1)
             {
-                matrix *= Matrix4x4.CreateRotationZ(Math.PI / 2) * Matrix4x4.CreateTranslation(bb.Bounds[1].Y, 0, 0);
-                swapYAndZAxes = (bb.SortedDirectionIndicesLongToShort[1] == 2);
+                matrix = Matrix4x4.CreateRotationZ(Math.PI / 2) * Matrix4x4.CreateTranslation(bb.Bounds[1].Y, 0, 0) * matrix;
+                swapYAndZAxes = (sortedIndices[1] == 2);
             }
-            else if (bb.SortedDirectionIndicesLongToShort[0] == 2)
+            else if (sortedIndices[0] == 2)
             {
-                matrix *= Matrix4x4.CreateRotationY(Math.PI / 2) * Matrix4x4.CreateTranslation(0, 0, bb.Bounds[1].X);
-                swapYAndZAxes = (bb.SortedDirectionIndicesLongToShort[1] == 2);
+                matrix = Matrix4x4.CreateRotationY(Math.PI / 2) * Matrix4x4.CreateTranslation(0, 0, bb.Bounds[1].X) * matrix;
+                swapYAndZAxes = (sortedIndices[1] == 2);
             }
-            else swapYAndZAxes = (bb.SortedDirectionIndicesLongToShort[1] == 2);
+            else swapYAndZAxes = (sortedIndices[1] == 2);
             if (swapYAndZAxes)
-                matrix *= Matrix4x4.CreateRotationX(Math.PI / 2) * Matrix4x4.CreateTranslation(0, bb.Bounds[1].Z, 0);
-            // now that we have them in the order (x longest, then Y, then Z is shortest), 
-            // we need to check if the box should be mirroed (rotated about 180) so that 
-            // the COM of the faces is closest to origin. Here we will use the center of the bb
-            // to decide whether to flip or not
-            var boxCOM = bb.SortedDimensionsLongToShort.Select(x => x / 2).ToArray();
-            var facesCOM = Vector3.Zero;
-            foreach (var face in faces)
-                facesCOM += face.Area * face.Center;
-            facesCOM /= faces.Sum(x => x.Area);
-            if (facesCOM.X > boxCOM[0])
-                matrix *= Matrix4x4.CreateScale(-1, 1, 1) * Matrix4x4.CreateTranslation(bb.SortedDimensionsLongToShort[0], 0, 0);
-            if (facesCOM.Y > boxCOM[1])
-                matrix *= Matrix4x4.CreateScale(1, -1, 1) * Matrix4x4.CreateTranslation(0, bb.SortedDimensionsLongToShort[1], 0);
-            if (facesCOM.Z > boxCOM[2])
-                matrix *= Matrix4x4.CreateScale(1, 1, -1) * Matrix4x4.CreateTranslation(0, 0, bb.SortedDimensionsLongToShort[2]);
+                matrix = Matrix4x4.CreateRotationX(Math.PI / 2) * Matrix4x4.CreateTranslation(0, bb.Bounds[1].Z, 0) * matrix;
 
-
-            return new BoundingBox<Vertex>([matrix.XBasisVector, matrix.YBasisVector, matrix.ZBasisVector], matrix.TranslationAsVector);
-
+            if (faces == null || faces.Count == 0)
+            {
+                // if no faces are provided, we can just return the bounding box
+                facesCOM = Vector3.Null;
+            }
+            else
+            {
+                // now that we have them in the order (x longest, then Y, then Z is shortest), 
+                // we need to check if the box should be mirrored (rotated about 180) so that 
+                // the COM of the faces is closest to origin. Here we will use the center of the bb
+                // to decide whether to flip or not
+                facesCOM = Vector3.Zero;
+                foreach (var face in faces)
+                    facesCOM += face.Area * face.Center;
+                facesCOM /= faces.Sum(x => x.Area);
+                facesCOM = facesCOM.Transform(matrix.OrthoNormalInverse());
+                var flipX = (2 * facesCOM.X > boxDims[0]);
+                var flipY = (2 * facesCOM.Y > boxDims[1]);
+                var flipZ = (2 * facesCOM.Z > boxDims[2]);
+                matrix = Matrix4x4.CreateScale(flipX ? -1 : 1, flipY ? -1 : 1, flipZ ? -1 : 1)
+                       * Matrix4x4.CreateTranslation(flipX ? boxDims[0] : 0,
+                                                     flipY ? boxDims[1] : 0,
+                                                     flipZ ? boxDims[2] : 0)
+                       * matrix;
+                facesCOM = new Vector3(flipX ? boxDims[0] - facesCOM.X : facesCOM.X,
+                                       flipY ? boxDims[1] - facesCOM.Y : facesCOM.Y, 
+                                       flipZ ? boxDims[2] - facesCOM.Z : facesCOM.Z);
+            }
+            return new BoundingBox<Vertex>([boxDims[0]*matrix.XBasisVector, boxDims[1]*matrix.YBasisVector,
+                boxDims[2]*matrix.ZBasisVector], matrix.TranslationAsVector);
         }
     }
 }

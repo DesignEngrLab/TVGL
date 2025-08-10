@@ -128,7 +128,7 @@ namespace TVGL
                         Prismatic => KnownColors.Indigo, // last color in a rainbow (think prism)
                         UnknownRegion => KnownColors.LightGray,
                         _ => KnownColors.Gray
-                    };                    
+                    };
                     primitiveSurface.SetColor(new Color(primitiveColor));
                 }
             }
@@ -280,6 +280,27 @@ namespace TVGL
                 return new Color(255, t, p, v);
             else
                 return new Color(255, v, p, q);
+        }
+
+        /// <summary>
+        /// Draws the 12 edges of the bounding box
+        /// </summary>
+        /// <param name="boundingBox"></param>
+        /// <returns></returns>
+        public static Vector3[] GetPlotEdges(this BoundingBox boundingBox)
+        {
+            var corners = boundingBox.Corners;
+            //[0] = ---, [1] = +-- , [2] = ++- , [3] = -+-, [4] = --+ , [5] = +-+, [6] = +++, [7] = -++
+
+            return [ corners[0], corners[1], corners[2] , corners[3] , corners[0],
+                     // first draw the bottom face edges (z = min), then go up to the top ones (the transition from
+                     //0 to 4. This completes 9 of the 12 edges on the box
+                     corners[4],corners[5], corners[6],corners[7],corners[4],
+                     // now cut back/double-over to finish making the "stilts" between the z planes
+                     corners[5], corners[1],
+                     corners[2], corners[6],
+                     corners[7], corners[3]
+                   ];
         }
     }
 }

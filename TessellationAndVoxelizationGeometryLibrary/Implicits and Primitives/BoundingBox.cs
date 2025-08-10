@@ -111,9 +111,9 @@ namespace TVGL
         {
             Vectors = vectors;
             TranslationFromOrigin = translation;
-            IsAxisAligned = vectors[0].IsAligned(Vector3.UnitX, dotAligned) &&
-                    vectors[1].IsAligned(Vector3.UnitY, dotAligned) &&
-                    vectors[2].IsAligned(Vector3.UnitZ, dotAligned);
+            IsAxisAligned = vectors[0].IsAlignedOrReverse(Vector3.UnitX, dotAligned) &&
+                    vectors[1].IsAlignedOrReverse(Vector3.UnitY, dotAligned) &&
+                    vectors[2].IsAlignedOrReverse(Vector3.UnitZ, dotAligned);
         }
         private const double dotAligned = 0.999; // about 2.5 degrees
 
@@ -197,7 +197,12 @@ namespace TVGL
             get
             {
                 if (_transformFromOrigin.IsNull())
-                    _transformFromOrigin = new Matrix4x4(Directions[0], Directions[1], Directions[2], TranslationFromOrigin);
+                    _transformFromOrigin = new Matrix4x4(Directions[0].X, Directions[1].X, Directions[2].X,
+                        Directions[0].Y, Directions[1].Y, Directions[2].Y,
+                        Directions[0].Z, Directions[1].Z, Directions[2].Z,
+                        -TranslationFromOrigin.Dot(Directions[0]),
+                        -TranslationFromOrigin.Dot(Directions[1]),
+                        -TranslationFromOrigin.Dot(Directions[2]));
                 return _transformFromOrigin;
             }
         }
@@ -211,21 +216,16 @@ namespace TVGL
         {
             get
             {
-                if (_transformToOrign.IsNull())
-                    _transformToOrign = new Matrix4x4(Directions[0].X, Directions[1].X, Directions[2].X,
-                        Directions[0].Y, Directions[1].Y, Directions[2].Y,
-                        Directions[0].Z, Directions[1].Z, Directions[2].Z,
-                        -TranslationFromOrigin.Dot(Directions[0]),
-                        -TranslationFromOrigin.Dot(Directions[1]),
-                        -TranslationFromOrigin.Dot(Directions[2]));
-                return _transformToOrign;
+                if (_transformToOrigin.IsNull())
+                    _transformToOrigin = new Matrix4x4(Directions[0], Directions[1], Directions[2], TranslationFromOrigin);
+                return _transformToOrigin;
             }
         }
-        private Matrix4x4 _transformToOrign = Matrix4x4.Null;
+        private Matrix4x4 _transformToOrigin = Matrix4x4.Null;
 
         /// <summary>
-        /// Gets the transformation from the global frame to this box. This is only a rotate and translate. Along
-        /// with the Dimensions, it fully defines the box
+        /// Gets the transformation that transforms the part/solid/etc from the unit box 
+        /// back to its original position, orientation, and size.
         /// </summary>
         /// <value>The transform.</value>
         public Matrix4x4 TransformFromUnitBox
@@ -233,7 +233,14 @@ namespace TVGL
             get
             {
                 if (_transformFromUnitBox.IsNull())
-                    _transformFromUnitBox = new Matrix4x4(Vectors[0], Vectors[1], Vectors[2], TranslationFromOrigin);
+                {
+                    _transformFromUnitBox =  new Matrix4x4(Vectors[0].X, Vectors[1].X, Vectors[2].X,
+                        Vectors[0].Y, Vectors[1].Y, Vectors[2].Y,
+                        Vectors[0].Z, Vectors[1].Z, Vectors[2].Z,
+                        -TranslationFromOrigin.Dot(Directions[0]),
+                        -TranslationFromOrigin.Dot(Directions[1]),
+                        -TranslationFromOrigin.Dot(Directions[2]));
+                }
                 return _transformFromUnitBox;
             }
         }
@@ -241,8 +248,8 @@ namespace TVGL
 
 
         /// <summary>
-        /// Gets the transformation from the global frame to this box. This is only a rotate and translate. Along
-        /// with the Dimensions, it fully defines the box
+        /// Gets the transformation that transforms the part/solid/etc to a unit box 
+        /// at the origin.
         /// </summary>
         /// <value>The transform.</value>
         public Matrix4x4 TransformToUnitBox
@@ -254,12 +261,8 @@ namespace TVGL
                     var sX = 1 / Dimensions.X;
                     var sY = 1 / Dimensions.Y;
                     var sZ = 1 / Dimensions.Z;
-                    _transformToUnitBox = new Matrix4x4(sX * Directions[0].X, sY * Directions[1].X, sZ * Directions[2].X,
-                        sX * Directions[0].Y, sY * Directions[1].Y, sZ * Directions[2].Y,
-                        sX * Directions[0].Z, sY * Directions[1].Z, sZ * Directions[2].Z,
-                        -sX * TranslationFromOrigin.Dot(Directions[0]),
-                        -sY * TranslationFromOrigin.Dot(Directions[1]),
-                        -sZ * TranslationFromOrigin.Dot(Directions[2]));
+                    _transformToUnitBox = new Matrix4x4(sX*Directions[0], sY*Directions[1], sZ*Directions[2], 
+                        TranslationFromOrigin);
                 }
                 return _transformToUnitBox;
             }
