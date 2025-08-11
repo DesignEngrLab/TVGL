@@ -839,19 +839,20 @@ namespace TVGL
             var swapYAndZAxes = false;
             var boxDims = bb.SortedDimensionsLongToShort;
             var sortedIndices = bb.SortedDirectionIndicesLongToShort;
+            Vector3 facesSum = Vector3.Zero;
             if (sortedIndices[0] == 1)
             {
-                matrix = Matrix4x4.CreateRotationZ(Math.PI / 2) * Matrix4x4.CreateTranslation(bb.Bounds[1].Y, 0, 0) * matrix;
+                matrix *= Matrix4x4.CreateRotationZ(Math.PI / 2) * Matrix4x4.CreateTranslation(bb.Bounds[1].Y, 0, 0);
                 swapYAndZAxes = (sortedIndices[1] == 2);
             }
             else if (sortedIndices[0] == 2)
             {
-                matrix = Matrix4x4.CreateRotationY(Math.PI / 2) * Matrix4x4.CreateTranslation(0, 0, bb.Bounds[1].X) * matrix;
+                matrix *= Matrix4x4.CreateRotationY(Math.PI / 2) * Matrix4x4.CreateTranslation(0, 0, bb.Bounds[1].X);
                 swapYAndZAxes = (sortedIndices[1] == 2);
             }
             else swapYAndZAxes = (sortedIndices[1] == 2);
             if (swapYAndZAxes)
-                matrix = Matrix4x4.CreateRotationX(Math.PI / 2) * Matrix4x4.CreateTranslation(0, bb.Bounds[1].Z, 0) * matrix;
+                matrix *= Matrix4x4.CreateRotationX(Math.PI / 2) * Matrix4x4.CreateTranslation(0, bb.Bounds[1].Z, 0);
 
             if (faces == null || faces.Count == 0)
             {
@@ -864,23 +865,24 @@ namespace TVGL
                 // we need to check if the box should be mirrored (rotated about 180) so that 
                 // the COM of the faces is closest to origin. Here we will use the center of the bb
                 // to decide whether to flip or not
-                facesCOM = Vector3.Zero;
                 foreach (var face in faces)
-                    facesCOM += face.Area * face.Center;
-                facesCOM /= faces.Sum(x => x.Area);
-                facesCOM = facesCOM.Transform(matrix.OrthoNormalInverse());
+                    facesSum += face.Area * face.Center;
+                facesSum /= faces.Sum(x => x.Area);
+                facesCOM = facesSum.Transform(matrix);
                 var flipX = (2 * facesCOM.X > boxDims[0]);
                 var flipY = (2 * facesCOM.Y > boxDims[1]);
                 var flipZ = (2 * facesCOM.Z > boxDims[2]);
-                matrix = Matrix4x4.CreateScale(flipX ? -1 : 1, flipY ? -1 : 1, flipZ ? -1 : 1)
-                       * Matrix4x4.CreateTranslation(flipX ? boxDims[0] : 0,
-                                                     flipY ? boxDims[1] : 0,
-                                                     flipZ ? boxDims[2] : 0)
-                       * matrix;
                 facesCOM = new Vector3(flipX ? boxDims[0] - facesCOM.X : facesCOM.X,
-                                       flipY ? boxDims[1] - facesCOM.Y : facesCOM.Y, 
+                                       flipY ? boxDims[1] - facesCOM.Y : facesCOM.Y,
                                        flipZ ? boxDims[2] - facesCOM.Z : facesCOM.Z);
+                matrix *= Matrix4x4.CreateScale(flipX ? -1 : 1, flipY ? -1 : 1, flipZ ? -1 : 1)
+                    * Matrix4x4.CreateTranslation(flipX ? boxDims[0] : 0,
+                                                     flipY ? boxDims[1] : 0,
+                                                     flipZ ? boxDims[2] : 0);
             }
+            //facesSum = facesSum.Transform(matrix);
+            matrix = matrix.OrthoNormalInverse();
+
             return new BoundingBox<Vertex>([boxDims[0]*matrix.XBasisVector, boxDims[1]*matrix.YBasisVector,
                 boxDims[2]*matrix.ZBasisVector], matrix.TranslationAsVector);
         }

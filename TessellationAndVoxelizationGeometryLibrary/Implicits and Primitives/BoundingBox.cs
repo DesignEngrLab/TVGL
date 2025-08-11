@@ -186,7 +186,6 @@ namespace TVGL
         }
 
 
-
         /// <summary>
         /// Gets the transformation from the global frame to this box. This is only a rotates and translates.
         /// "From Origin" means from an axis algined box in the first octant with a corner at the origin
@@ -197,12 +196,7 @@ namespace TVGL
             get
             {
                 if (_transformFromOrigin.IsNull())
-                    _transformFromOrigin = new Matrix4x4(Directions[0].X, Directions[1].X, Directions[2].X,
-                        Directions[0].Y, Directions[1].Y, Directions[2].Y,
-                        Directions[0].Z, Directions[1].Z, Directions[2].Z,
-                        -TranslationFromOrigin.Dot(Directions[0]),
-                        -TranslationFromOrigin.Dot(Directions[1]),
-                        -TranslationFromOrigin.Dot(Directions[2]));
+                    _transformFromOrigin = new Matrix4x4(Directions[0], Directions[1], Directions[2], TranslationFromOrigin);
                 return _transformFromOrigin;
             }
         }
@@ -216,16 +210,16 @@ namespace TVGL
         {
             get
             {
-                if (_transformToOrigin.IsNull())
-                    _transformToOrigin = new Matrix4x4(Directions[0], Directions[1], Directions[2], TranslationFromOrigin);
-                return _transformToOrigin;
+                if (_transformToOrign.IsNull())
+                    _transformToOrign = TransformFromOrigin.OrthoNormalInverse();
+                return _transformToOrign;
             }
         }
-        private Matrix4x4 _transformToOrigin = Matrix4x4.Null;
+        private Matrix4x4 _transformToOrign = Matrix4x4.Null;
 
         /// <summary>
-        /// Gets the transformation that transforms the part/solid/etc from the unit box 
-        /// back to its original position, orientation, and size.
+        /// Gets the transformation from the global frame to this box. This is only a rotate and translate. Along
+        /// with the Dimensions, it fully defines the box
         /// </summary>
         /// <value>The transform.</value>
         public Matrix4x4 TransformFromUnitBox
@@ -233,14 +227,7 @@ namespace TVGL
             get
             {
                 if (_transformFromUnitBox.IsNull())
-                {
-                    _transformFromUnitBox =  new Matrix4x4(Vectors[0].X, Vectors[1].X, Vectors[2].X,
-                        Vectors[0].Y, Vectors[1].Y, Vectors[2].Y,
-                        Vectors[0].Z, Vectors[1].Z, Vectors[2].Z,
-                        -TranslationFromOrigin.Dot(Directions[0]),
-                        -TranslationFromOrigin.Dot(Directions[1]),
-                        -TranslationFromOrigin.Dot(Directions[2]));
-                }
+                    _transformFromUnitBox = new Matrix4x4(Vectors[0], Vectors[1], Vectors[2], TranslationFromOrigin);
                 return _transformFromUnitBox;
             }
         }
@@ -248,8 +235,8 @@ namespace TVGL
 
 
         /// <summary>
-        /// Gets the transformation that transforms the part/solid/etc to a unit box 
-        /// at the origin.
+        /// Gets the transformation from the global frame to this box. This is only a rotate and translate. Along
+        /// with the Dimensions, it fully defines the box
         /// </summary>
         /// <value>The transform.</value>
         public Matrix4x4 TransformToUnitBox
@@ -257,17 +244,15 @@ namespace TVGL
             get
             {
                 if (_transformToUnitBox.IsNull())
-                {
-                    var sX = 1 / Dimensions.X;
-                    var sY = 1 / Dimensions.Y;
-                    var sZ = 1 / Dimensions.Z;
-                    _transformToUnitBox = new Matrix4x4(sX*Directions[0], sY*Directions[1], sZ*Directions[2], 
-                        TranslationFromOrigin);
-                }
+                    _transformToUnitBox = Matrix4x4.CreateScale(1 / Dimensions.X, 1 / Dimensions.Y, 1 / Dimensions.Z) *
+                        TransformToOrigin;
                 return _transformToUnitBox;
             }
         }
         private Matrix4x4 _transformToUnitBox = Matrix4x4.Null;
+
+
+
 
 
         //the following properties are set with a lazy private fields
@@ -379,7 +364,7 @@ namespace TVGL
         public double Volume => Dimensions[0] * Dimensions[1] * Dimensions[2];
 
         [JsonIgnore]
-        public double DiagonalLength => Math.Sqrt(Dimensions[0] * Dimensions[0] + 
+        public double DiagonalLength => Math.Sqrt(Dimensions[0] * Dimensions[0] +
             Dimensions[1] * Dimensions[1] + Dimensions[2] * Dimensions[2]);
 
         /// <summary>

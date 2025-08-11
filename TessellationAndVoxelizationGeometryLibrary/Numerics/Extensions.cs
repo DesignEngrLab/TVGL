@@ -691,11 +691,15 @@ namespace TVGL
         /// </summary>
         /// <param name="matrix">The matrix.</param>
         /// <returns>A Matrix4x4.</returns>
-        public static Matrix4x4 OrthoNormalInverse(this Matrix4x4 m)
+        public static Matrix4x4 OrthoNormalInverse(this Matrix4x4 matrix)
         {
-            var n = new Matrix3x3(m.M11, m.M21, m.M31, m.M12, m.M22, m.M32, m.M13, m.M23, m.M33);
-            var t = m.TranslationAsVector.Multiply(n);
-            return new Matrix4x4(n.M11,n.M12,n.M13,n.M21,n.M22,n.M23,n.M31,n.M32,n.M33,-t.X,-t.Y,-t.Z);
+            var rotMatrix = new Matrix3x3(matrix.M11, matrix.M21, matrix.M31, matrix.M12, matrix.M22,
+                                          matrix.M32, matrix.M13, matrix.M23, matrix.M33);
+            var t = matrix.TranslationAsVector.Multiply(rotMatrix);
+            return new Matrix4x4(rotMatrix.M11, rotMatrix.M12, rotMatrix.M13,
+                                 rotMatrix.M21, rotMatrix.M22, rotMatrix.M23,
+                                 rotMatrix.M31, rotMatrix.M32, rotMatrix.M33,
+                                 -t.X, -t.Y, -t.Z);
         }
 
         #region Solve Ax=b
@@ -860,7 +864,7 @@ namespace TVGL
         public static ComplexNumber[] GetEigenValuesAndVectors(this Matrix4x4 A,
             out ComplexNumber[][] eigenVectors)
         {
-            return StarMath.GetEigenValuesAndVectors4(A.M11, A.M12, A.M13,A.M14,
+            return StarMath.GetEigenValuesAndVectors4(A.M11, A.M12, A.M13, A.M14,
                 A.M21, A.M22, A.M23, A.M24,
                 A.M31, A.M32, A.M33, A.M34,
                 A.M41, A.M42, A.M43, A.M44, out eigenVectors);
