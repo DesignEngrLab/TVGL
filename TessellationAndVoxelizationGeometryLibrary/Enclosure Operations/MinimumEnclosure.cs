@@ -142,7 +142,7 @@ namespace TVGL
                 var plane = new Plane(distance, planeNormal);
                 var planeError = vertices[0] is Vector3 ? plane.CalculateMaxError((IList<Vector3>)vertices)
                    : plane.CalculateMaxError(vertices.Select(v => new Vector3(v.X, v.Y, v.Z)));
-                if (planeError <= Constants.DefaultEqualityTolerance)
+                if (planeError <= 0.0001)
                     return FindOBBAlongDirection(vertices, planeNormal);
             }
             var minVolume = double.PositiveInfinity;
