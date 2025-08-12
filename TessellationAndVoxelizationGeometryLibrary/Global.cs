@@ -147,9 +147,12 @@ namespace TVGL
         {
             using ILoggerFactory factory = LoggerFactory.Create(builder =>
             {
-                builder
-                    .AddConsole()
-                    .SetMinimumLevel(minimumLevelToReport);
+                builder.AddSimpleConsole(options =>
+                {
+                    options.SingleLine = true;
+                    options.IncludeScopes = false;
+                })
+                .SetMinimumLevel(minimumLevelToReport);
             });
             logger = factory.CreateLogger("TVGL");
         }
