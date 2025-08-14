@@ -1,11 +1,13 @@
-﻿namespace TVGL
+﻿using System.Collections;
+using System.Collections.Generic;
+
+namespace TVGL
 {
     /// <summary>
     /// An interface for a structure with nD position.
     /// </summary>
-    public interface IVector
+    public interface IVector : System.Collections.Generic.IReadOnlyList<double>
     {
-        double this[int i] { get; }
         bool IsNull();
         static IVector Null { get; }
     }
@@ -54,7 +56,19 @@
             return Coordinates == null;
         }
 
+        public IEnumerator<double> GetEnumerator()
+        {
+            for (int i = 0; i < Count; i++)
+                yield return Coordinates[i];
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return GetEnumerator();
+        }
+
         static DefaultPoint Null => new DefaultPoint { Coordinates = null };
 
+        public int Count => Coordinates.Length;
     }
 }

@@ -14,6 +14,8 @@
 
 using Newtonsoft.Json;
 using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -962,6 +964,20 @@ namespace TVGL  // COMMENTEDCHANGE namespace System.Numerics
         public static Vector3 Negate(Vector3 value)
         {
             return -value;
+        }
+
+
+        public int Count => 3;
+        public IEnumerator<double> GetEnumerator()
+        {
+            yield return X;
+            yield return Y;
+            yield return Z;
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return GetEnumerator();
         }
         #endregion
     }

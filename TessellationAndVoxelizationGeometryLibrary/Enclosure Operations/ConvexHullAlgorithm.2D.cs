@@ -1,9 +1,9 @@
-﻿using System;
+﻿using SuperClusterKDTree;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
-using TVGL.PointCloud;
 
 namespace TVGL
 {
@@ -49,7 +49,7 @@ namespace TVGL
             double tolerance = Constants.DefaultEqualityTolerance)
             where T : IVector2D
         {
-            var kdTree = KDTree.Create(points, Enumerable.Range(0, points.Count).ToArray());
+            var kdTree = KDTree.Create((IList<IReadOnlyList<double>>)points, Enumerable.Range(0, points.Count).ToArray(), DistanceMetrics.EuclideanDistance);
             var convexHull = Create(points, out convexHullIndices);
             var usedIndices = new HashSet<int>(convexHullIndices);
             var nextEndPoint = points[^1];
@@ -67,10 +67,10 @@ namespace TVGL
                 var radius = Math.Sqrt(vLengthSqd) * 0.5;
                 var sortedPoints = new List<(T point, double distance, int index)>
                 { (currentEndPoint, 0, convexHullIndices[i]) };
-                foreach (var pointData in kdTree.FindNearest(midPoint, radius))
+                foreach (var pointData in kdTree.RadialSearch(midPoint, radius))
                 {
                     if (usedIndices.Contains(pointData.Item2)) continue;
-                    if (AddToListAlongMaximal(sortedPoints, pointData.Item1, pointData.Item2,
+                    if (AddToListAlongMaximal(sortedPoints, (T)pointData.Item1, pointData.Item2,
                         currentEndPoint.X, currentEndPoint.Y, vX, vY, vLengthSqd, tolerance))
                         usedIndices.Add(pointData.Item2);
                 }

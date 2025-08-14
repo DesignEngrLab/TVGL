@@ -11,6 +11,8 @@
 
 	<ItemGroup>
 	  <Compile Remove="Minkowski.cs" />
+	  <Compile Remove="PointCloud\ICPTesting.cs" />
+	  <Compile Remove="PointCloud\KDTreeTesting.cs" />
 	  <Compile Remove="ThreeD_Methods\Voxels.cs" />
 	</ItemGroup>
 

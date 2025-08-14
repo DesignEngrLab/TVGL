@@ -12,6 +12,8 @@
 // <summary></summary>
 // ***********************************************************************
 using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -82,6 +84,8 @@ namespace TVGL  // COMMENTEDCHANGE namespace System.Numerics
         /// </summary>
         /// <value>The y.</value>
         public double Y { get; init; }
+
+        public int Count => 2;
 
 
         #endregion
@@ -843,6 +847,17 @@ namespace TVGL  // COMMENTEDCHANGE namespace System.Numerics
         public static Vector2 Negate(Vector2 value)
         {
             return -value;
+        }
+
+        public IEnumerator<double> GetEnumerator()
+        {
+            yield return X;
+            yield return Y;
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return GetEnumerator();
         }
         #endregion Public operator methods
     }

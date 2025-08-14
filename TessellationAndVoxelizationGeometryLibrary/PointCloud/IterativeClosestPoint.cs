@@ -1,8 +1,10 @@
 ﻿using Microsoft.Extensions.Logging;
 using StarMathLib;
+using SuperClusterKDTree;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Numerics;
 
 namespace TVGL.PointCloud
 {
@@ -13,9 +15,11 @@ namespace TVGL.PointCloud
         public static Matrix4x4 Run(IList<Vector3> targetPoints, IList<Vector3> originalData, double minError = 1e-7,
             int stepsSinceImprovement = 50, int maxIterations = 500)
         {
-            return Run(KDTree.Create(targetPoints, Enumerable.Range(0, targetPoints.Count).ToList()),
-                KDTree.Create(originalData, Enumerable.Range(0, originalData.Count).ToList()), minError, stepsSinceImprovement, maxIterations);
+            return Run(KDTree.Create(targetPoints, Enumerable.Range(0, targetPoints.Count).ToList(), DistanceMetrics.EuclideanDistance),
+                KDTree.Create(originalData, Enumerable.Range(0, originalData.Count).ToList(), DistanceMetrics.EuclideanDistance),
+                minError, stepsSinceImprovement, maxIterations);
         }
+
         public static Matrix4x4 Run(IList<Vector3> targetPoints, IList<Vector3> originalPoints, IList<Vector3> targetNormals,
             IList<Vector3> originalNormals, double minError = 1e-7, int stepsSinceImprovement = 50, int maxIterations = 500)
         {
@@ -23,17 +27,20 @@ namespace TVGL.PointCloud
                 KDTree.Create(originalPoints, Enumerable.Range(0, originalPoints.Count).ToList()),
                 CalculateNormalInfo(originalNormals), minError, stepsSinceImprovement, maxIterations);
         }
-
-        private static Matrix4x4 Run(KDTree<Vector3, int> targetCloud, KDTree<Vector3, int> origCloud, double minError = 1e-7,
+        private static Matrix4x4 Run<TDimension, TNode>(KDTree<TDimension, TDimension, TNode> targetCloud, 
+            KDTree<TDimension, TDimension, TNode> origCloud, double minError = 1e-7,
             int stepsSinceImprovement = 50, int maxIterations = 500)
+            where TDimension : INumber<TDimension>, IMinMaxValue<TDimension>
         {
             return Run(targetCloud, CalculateNormalInfo(targetCloud),
                 origCloud, CalculateNormalInfo(origCloud), minError, stepsSinceImprovement, maxIterations);
         }
 
-        private static Matrix4x4 Run(KDTree<Vector3, int> targetCloud, NormalInfo[] targetNormalInfo, KDTree<Vector3, int> startingCloud,
-            NormalInfo[] startingNormalInfo, double minError, int maxStepsSinceImprovement, int maxIterations)
-        {
+        private static Matrix4x4 Run<TDimension, TNode>(KDTree<TDimension, TDimension, TNode> kDTree1, 
+            NormalInfo[] normalInfos1, KDTree<TDimension, TDimension, TNode> kDTree2, 
+            NormalInfo[] normalInfos2, double minError, int stepsSinceImprovement, int maxIterations)
+            where TDimension : INumber<TDimension>, IMinMaxValue<TDimension>
+                {
             double DistThr = GetDistanceThreshold(targetCloud.OriginalPoints);
             var forwardTransform = GetTranslationMatrix(targetCloud.OriginalPoints, startingCloud.OriginalPoints);
             var bestTransform = forwardTransform;
@@ -153,7 +160,12 @@ namespace TVGL.PointCloud
             return bestTransform;
         }
 
-        private static double GetDistanceThreshold(Vector3[] originalPoints)
+        private static double GetDistanceThreshold(object originalPoints)
+        {
+            throw new NotImplementedException();
+        }
+
+        private static double GetDistanceThreshold1(Vector3[] originalPoints)
         {
             var xMin = double.MaxValue;
             var yMin = double.MaxValue;
@@ -507,8 +519,8 @@ namespace TVGL.PointCloud
 
 
 
-
-        static NormalInfo[] CalculateNormalInfo(KDTree<Vector3> data)
+        private static NormalInfo[] CalculateNormalInfo<TDimension, TNode>(KDTree<TDimension, TDimension, TNode> data) 
+            where TDimension : INumber<TDimension>, IMinMaxValue<TDimension>
         {
             var numPoints = data.Count;
             var normals = new NormalInfo[numPoints];

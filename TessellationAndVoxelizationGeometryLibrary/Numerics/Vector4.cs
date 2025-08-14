@@ -14,6 +14,8 @@
 
 using Newtonsoft.Json;
 using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -1015,5 +1017,20 @@ namespace TVGL  // COMMENTEDCHANGE namespace System.Numerics
             return invert * b;
         }
         #endregion
+
+
+        public int Count => 4;
+        public IEnumerator<double> GetEnumerator()
+        {
+            yield return X;
+            yield return Y;
+            yield return Z;
+            yield return W;
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return GetEnumerator();
+        }
     }
 }

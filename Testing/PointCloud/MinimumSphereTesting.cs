@@ -5,7 +5,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using TVGL;
-using TVGL.PointCloud;
 
 namespace TVGLUnitTestsAndBenchmarking
 {

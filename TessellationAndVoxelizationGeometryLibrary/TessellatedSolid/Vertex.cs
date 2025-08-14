@@ -13,6 +13,7 @@
 // ***********************************************************************
 using Newtonsoft.Json;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -191,5 +192,19 @@ namespace TVGL
 
         public bool IsNull() => double.IsNaN(X) || double.IsNaN(Y) || double.IsNaN(Z);
         #endregion Properties
+
+
+        public int Count => 3;
+        public IEnumerator<double> GetEnumerator()
+        {
+            yield return X;
+            yield return Y;
+            yield return Z;
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return GetEnumerator();
+        }
     }
 }

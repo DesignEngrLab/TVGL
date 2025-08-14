@@ -13,6 +13,9 @@
 // ***********************************************************************
 
 using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Threading;
 
 namespace TVGL
 {
@@ -173,5 +176,17 @@ namespace TVGL
             return Math.PI - Math.Atan2(vector1.Cross(vector2), vector1.Dot(vector2));
         }
         #endregion Constructor
+
+        public int Count => 2; 
+        public IEnumerator<double> GetEnumerator()
+        {
+            yield return X;
+            yield return Y;
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return GetEnumerator();
+        }
     }
 }
