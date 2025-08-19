@@ -1,7 +1,5 @@
-﻿using SuperClusterKDTree;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
 
@@ -49,7 +47,7 @@ namespace TVGL
             double tolerance = Constants.DefaultEqualityTolerance)
             where T : IVector2D
         {
-            var kdTree = points.ToKDTree(Enumerable.Range(0, points.Count).ToArray(), DistanceMetrics.EuclideanDistance);
+            var kdTree = points.ToKDTree(Enumerable.Range(0, points.Count).ToArray());
             var convexHull = Create(points, out convexHullIndices);
             var usedIndices = new HashSet<int>(convexHullIndices);
             var nextEndPoint = points[^1];

@@ -1,9 +1,34 @@
-﻿using System.Collections.Generic;
+﻿using SuperClusterKDTree;
+using System.Collections.Generic;
 using System.Linq;
-using SuperClusterKDTree;
 
 namespace TVGL
 {
+    /// <summary>
+    /// A KDTree for points that are of type IVector, which includes Vector3, Vertex, Vector2, and Vertex2D.
+    /// </summary>
+    /// <typeparam name="TCoord"></typeparam>
+    /// <param name="points"></param>
+    public class KDTree<TCoord>(IList<TCoord> points)
+        : KDTree<double, double, TCoord>(points.First().Count, (IList<IReadOnlyList<double>>)points,
+            points, (x, y) => KDTree.EuclideanDistance(x, y), double.MinValue, double.MaxValue)
+        where TCoord : IVector
+    { }
+
+    /// <summary>
+    /// A KDTree for the list of points common in TVGL (Vector3, Vertex, Vector2, or Vertex2D) and some associated objects.
+    /// 
+    /// </summary>
+    /// <typeparam name="TCoord"></typeparam>
+    /// <typeparam name="TAccObject"></typeparam>
+    /// <param name="points"></param>
+    /// <param name="accObjects"></param>
+    public class KDTree<TCoord, TAccObject>(IList<TCoord> points, IList<TAccObject> accObjects) 
+        : KDTree<double, double, TAccObject>(points.First().Count, (IList<IReadOnlyList<double>>)points, 
+            accObjects, (x, y) => KDTree.EuclideanDistance(x, y), double.MinValue, double.MaxValue)
+        where TCoord : IVector
+    { }
+    
     public static class KDTreeExtensions
     {
         /// <summary>
@@ -13,11 +38,11 @@ namespace TVGL
         /// <param name="points"></param>
         /// <param name="distanceMetric"></param>
         /// <returns></returns>
-        public static KDTree<double, double, TCoord> ToKDTree<TCoord>(this IEnumerable<TCoord> points, DistanceMetrics distanceMetric = DistanceMetrics.EuclideanDistance)
+        public static KDTree<TCoord> ToKDTree<TCoord>(this IEnumerable<TCoord> points)
             where TCoord : IVector
         {
             var pointsList = points as IList<TCoord> ?? points.ToList();
-            return KDTree.Create((IList<IReadOnlyList<double>>)pointsList, pointsList, distanceMetric);
+            return new KDTree<TCoord>(pointsList);
         }
         /// <summary>
         /// Creates the KDTree for the list of points common in TVGL (Vector3, Vertex, Vector2, or Vertex2D) and some associated objects.
@@ -28,13 +53,13 @@ namespace TVGL
         /// <param name="accObjects"></param>
         /// <param name="distanceMetric"></param>
         /// <returns></returns>
-        public static KDTree<double, double, TAccObject> ToKDTree<TCoord, TAccObject>(this IEnumerable<TCoord> points, IEnumerable<TAccObject> accObjects,
-            DistanceMetrics distanceMetric = DistanceMetrics.EuclideanDistance)
+        public static KDTree<TCoord, TAccObject> ToKDTree<TCoord, TAccObject>(this IEnumerable<TCoord> points,
+            IEnumerable<TAccObject> accObjects)
             where TCoord : IVector
         {
             var pointsList = points as IList<TCoord> ?? points.ToList();
             var accObjectsList = accObjects as IList<TAccObject> ?? accObjects.ToList();
-            return KDTree.Create((IList<IReadOnlyList<double>>)pointsList, accObjectsList, DistanceMetrics.EuclideanDistance);
+            return new KDTree<TCoord, TAccObject>(pointsList, accObjectsList);
         }
 
         /// <summary>
@@ -45,7 +70,7 @@ namespace TVGL
         /// <param name="target"></param>
         /// <param name="numberToFind"></param>
         /// <returns></returns>
-        public static IEnumerable<TCoord> FindNearestPoints<TCoord>(this KDTree<double, double, TCoord> tree, TCoord target, int numberToFind)
+        public static IEnumerable<TCoord> FindNearest<TCoord>(this KDTree<TCoord> tree, TCoord target, int numberToFind)
             where TCoord : IVector
         => tree.NearestNeighbors(target, numberToFind).Select(t => t.Item2);
 
@@ -58,7 +83,7 @@ namespace TVGL
         /// <param name="radius"></param>
         /// <param name="numberToFind"></param>
         /// <returns></returns>
-        public static IEnumerable<TCoord> FindNearestPoints<TCoord>(this KDTree<double, double, TCoord> tree, TCoord target, double radius, int numberToFind = -1)
+        public static IEnumerable<TCoord> FindNearest<TCoord>(this KDTree<TCoord> tree, TCoord target, double radius, int numberToFind = -1)
             where TCoord : IVector
         => tree.RadialSearch(target, radius, numberToFind).Select(t => t.Item2);
 
@@ -72,7 +97,8 @@ namespace TVGL
         /// <param name="target"></param>
         /// <param name="numberToFind"></param>
         /// <returns></returns>
-        public static IEnumerable<(TCoord, TAccObject)> FindNearest<TCoord, TAccObject>(this KDTree<double, double, TAccObject> tree, TCoord target, int numberToFind)
+        public static IEnumerable<(TCoord, TAccObject)> FindNearest<TCoord, TAccObject>(this KDTree<TCoord, TAccObject> tree,
+            TCoord target, int numberToFind)
             where TCoord : IVector
         => tree.NearestNeighbors(target, numberToFind).Cast<(TCoord, TAccObject)>();
 
@@ -86,7 +112,8 @@ namespace TVGL
         /// <param name="radius"></param>
         /// <param name="numberToFind"></param>
         /// <returns></returns>
-        public static IEnumerable<(TCoord, TAccObject)> FindNearest<TCoord, TAccObject>(this KDTree<double, double, TAccObject> tree, TCoord target, double radius, int numberToFind = -1)
+        public static IEnumerable<(TCoord, TAccObject)> FindNearest<TCoord, TAccObject>(this KDTree<TCoord, TAccObject> tree, 
+            TCoord target, double radius, int numberToFind = -1)
             where TCoord : IVector
         => tree.RadialSearch(target, radius, numberToFind).Cast<(TCoord, TAccObject)>();
     }
