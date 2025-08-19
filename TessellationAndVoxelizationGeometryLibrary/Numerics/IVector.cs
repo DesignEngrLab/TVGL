@@ -6,7 +6,7 @@ namespace TVGL
     /// <summary>
     /// An interface for a structure with nD position.
     /// </summary>
-    public interface IVector : System.Collections.Generic.IReadOnlyList<double>
+    public interface IVector : IReadOnlyList<double>
     {
         bool IsNull();
         static IVector Null { get; }

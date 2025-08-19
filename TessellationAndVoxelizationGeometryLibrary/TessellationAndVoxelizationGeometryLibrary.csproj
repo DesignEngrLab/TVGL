@@ -33,12 +33,6 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-	  <Compile Remove="PointCloud\**" />
-	  <EmbeddedResource Remove="PointCloud\**" />
-	  <None Remove="PointCloud\**" />
-	</ItemGroup>
-
-	<ItemGroup>
 		<Compile Remove="Enclosure Operations\MinimumEnclosure - OBBTest.cs" />
 	</ItemGroup>
 

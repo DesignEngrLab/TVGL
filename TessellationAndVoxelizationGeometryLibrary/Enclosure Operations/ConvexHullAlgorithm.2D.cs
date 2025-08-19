@@ -49,7 +49,7 @@ namespace TVGL
             double tolerance = Constants.DefaultEqualityTolerance)
             where T : IVector2D
         {
-            var kdTree = KDTree.Create((IList<IReadOnlyList<double>>)points, Enumerable.Range(0, points.Count).ToArray(), DistanceMetrics.EuclideanDistance);
+            var kdTree = points.ToKDTree(Enumerable.Range(0, points.Count).ToArray(), DistanceMetrics.EuclideanDistance);
             var convexHull = Create(points, out convexHullIndices);
             var usedIndices = new HashSet<int>(convexHullIndices);
             var nextEndPoint = points[^1];
