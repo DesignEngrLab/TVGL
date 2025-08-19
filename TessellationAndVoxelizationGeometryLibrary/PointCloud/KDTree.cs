@@ -45,7 +45,7 @@ namespace TVGL
         /// <param name="target"></param>
         /// <param name="numberToFind"></param>
         /// <returns></returns>
-        public static IEnumerable<TCoord> FindNearestPoint<TCoord>(this KDTree<double, double, TCoord> tree, TCoord target, int numberToFind)
+        public static IEnumerable<TCoord> FindNearestPoints<TCoord>(this KDTree<double, double, TCoord> tree, TCoord target, int numberToFind)
             where TCoord : IVector
         => tree.NearestNeighbors(target, numberToFind).Select(t => t.Item2);
 
@@ -58,7 +58,7 @@ namespace TVGL
         /// <param name="radius"></param>
         /// <param name="numberToFind"></param>
         /// <returns></returns>
-        public static IEnumerable<TCoord> FindNearestPoint<TCoord>(this KDTree<double, double, TCoord> tree, TCoord target, double radius, int numberToFind = -1)
+        public static IEnumerable<TCoord> FindNearestPoints<TCoord>(this KDTree<double, double, TCoord> tree, TCoord target, double radius, int numberToFind = -1)
             where TCoord : IVector
         => tree.RadialSearch(target, radius, numberToFind).Select(t => t.Item2);
 
