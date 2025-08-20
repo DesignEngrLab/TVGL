@@ -132,6 +132,7 @@ namespace TVGL
         /// column has non-trivia values MX4 are nonzero or M44 is not unity (1).
         /// </summary>
         /// <value><c>true</c> if this instance is projective transform; otherwise, <c>false</c>.</value>
+        [JsonIgnore]
         public bool IsProjectiveTransform { get; }
 
         #endregion Public Fields
@@ -201,6 +202,7 @@ namespace TVGL
         /// Gets  the translation component of this matrix.
         /// </summary>
         /// <value>The translation as vector.</value>
+        [JsonIgnore]
         public Vector3 TranslationAsVector => new Vector3(M41, M42, M43);
         /// <summary>
         /// Gets the x basis vector. This is the first column not including the

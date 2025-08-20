@@ -47,7 +47,7 @@ namespace TVGL
             double tolerance = Constants.DefaultEqualityTolerance)
             where T : IVector2D
         {
-            var kdTree = points.ToKDTree(Enumerable.Range(0, points.Count).ToArray());
+            var kdTree = points.ToKDTree(Enumerable.Range(0, points.Count));
             var convexHull = Create(points, out convexHullIndices);
             var usedIndices = new HashSet<int>(convexHullIndices);
             var nextEndPoint = points[^1];
@@ -65,12 +65,12 @@ namespace TVGL
                 var radius = Math.Sqrt(vLengthSqd) * 0.5;
                 var sortedPoints = new List<(T point, double distance, int index)>
                 { (currentEndPoint, 0, convexHullIndices[i]) };
-                foreach (var pointData in kdTree.RadialSearch(midPoint, radius))
+                foreach ((var pointData, var ptIndex) in kdTree.RadialSearch(midPoint, radius))
                 {
-                    if (usedIndices.Contains(pointData.Item2)) continue;
-                    if (AddToListAlongMaximal(sortedPoints, (T)pointData.Item1, pointData.Item2,
+                    if (usedIndices.Contains(ptIndex)) continue;
+                    if (AddToListAlongMaximal(sortedPoints, (T)pointData, ptIndex,
                         currentEndPoint.X, currentEndPoint.Y, vX, vY, vLengthSqd, tolerance))
-                        usedIndices.Add(pointData.Item2);
+                        usedIndices.Add(ptIndex);
                 }
                 for (int j = 1; j < sortedPoints.Count; j++)
                 {

@@ -11,6 +11,8 @@
 // </copyright>
 // <summary></summary>
 // ***********************************************************************
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -20,10 +22,36 @@ using System.Text;
 
 namespace TVGL  // COMMENTEDCHANGE namespace System.Numerics
 {
+    public class Vector2Converter : JsonConverter<Vector2>
+    {
+        public override Vector2 ReadJson(JsonReader reader, Type objectType, Vector2 existingValue, bool hasExistingValue, JsonSerializer serializer)
+        {
+            if (reader.TokenType == JsonToken.StartArray)
+            {
+                // Read as array: [x, y, z]
+                var arr = JArray.Load(reader);
+                return new Vector2((double)arr[0], (double)arr[1]);
+            }
+            else if (reader.TokenType == JsonToken.StartObject)
+            {
+                // Read as object: { "X": x, "Y": y, "Z": z }
+                var obj = JObject.Load(reader);
+                return new Vector2((double)obj["X"], (double)obj["Y"]);
+            }
+            throw new JsonSerializationException("Unexpected token type for Vector2");
+        }
+
+        public override void WriteJson(JsonWriter writer, Vector2 value, JsonSerializer serializer)
+        {
+            serializer.Serialize(writer, new[] { value.X, value.Y });
+        }
+    }
+
     /// <summary>
     /// A structure encapsulating two single precision floating point values and provides hardware accelerated methods.
     /// </summary>
-    public readonly partial struct Vector2 : IEquatable<Vector2>, IFormattable, IVector2D
+    [JsonConverter(typeof(Vector2Converter))]
+    public readonly  struct Vector2 : IEquatable<Vector2>, IFormattable, IVector2D
     {
         #region Public Static Properties
         /// <summary>

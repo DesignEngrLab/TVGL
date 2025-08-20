@@ -95,7 +95,7 @@ namespace TVGL
         /// <value>The closest point to origin.</value>
         [JsonIgnore]
         public Vector3 ClosestPointToOrigin => Normal * DistanceToOrigin;
-
+        [JsonIgnore]
         public Vector4 AsVector4 => new Vector4(Normal.X, Normal.Y, Normal.Z, -DistanceToOrigin);
 
 

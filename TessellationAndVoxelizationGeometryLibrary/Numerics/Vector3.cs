@@ -13,6 +13,7 @@
 // ***********************************************************************
 
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -22,10 +23,37 @@ using System.Text;
 
 namespace TVGL  // COMMENTEDCHANGE namespace System.Numerics
 {
+
+    public class Vector3Converter : JsonConverter<Vector3>
+    {
+        public override Vector3 ReadJson(JsonReader reader, Type objectType, Vector3 existingValue, bool hasExistingValue, JsonSerializer serializer)
+        {
+            if (reader.TokenType == JsonToken.StartArray)
+            {
+                // Read as array: [x, y, z]
+                var arr = JArray.Load(reader);
+                return new Vector3((double)arr[0], (double)arr[1], (double)arr[2]);
+            }
+            else if (reader.TokenType == JsonToken.StartObject)
+            {
+                // Read as object: { "X": x, "Y": y, "Z": z }
+                var obj = JObject.Load(reader);
+                return new Vector3((double)obj["X"], (double)obj["Y"], (double)obj["Z"]);
+            }
+            throw new JsonSerializationException("Unexpected token type for Vector3");
+        }
+
+        public override void WriteJson(JsonWriter writer, Vector3 value, JsonSerializer serializer)
+        {
+            serializer.Serialize(writer, new[] { value.X, value.Y, value.Z });
+        }
+    }
+
     /// <summary>
     /// A structure encapsulating three single precision floating point values and provides hardware accelerated methods.
     /// </summary>
-    public readonly partial struct Vector3 : IEquatable<Vector3>, IFormattable, IVector3D, IVector2D, IVector
+    [JsonConverter(typeof(Vector3Converter))]
+    public readonly struct Vector3 : IEquatable<Vector3>, IFormattable, IVector3D, IVector2D, IVector
     {
 
         /// <summary>
@@ -70,7 +98,6 @@ namespace TVGL  // COMMENTEDCHANGE namespace System.Numerics
         /// <param name="x">The X component.</param>
         /// <param name="y">The Y component.</param>
         /// <param name="z">The Z component.</param>
-        [JsonConstructor]
         public Vector3(double x, double y, double z)
         {
             X = x;
@@ -82,11 +109,15 @@ namespace TVGL  // COMMENTEDCHANGE namespace System.Numerics
         /// Initializes a new instance of the <see cref="Vector3"/> struct.
         /// </summary>
         /// <param name="d">The d.</param>
-        public Vector3(double[] d) : this()
+        public Vector3(IEnumerable<double> d) : this()
         {
-            X = d[0];
-            Y = d[1];
-            Z = d[2];
+            var argEnumerator = d.GetEnumerator();
+            if (argEnumerator.MoveNext())
+                X = argEnumerator.Current;
+            if (argEnumerator.MoveNext())
+                Y = argEnumerator.Current;
+            if (argEnumerator.MoveNext())
+                Z = argEnumerator.Current;
         }
         //public Vector3(Vector4 vector4) : this()
         //{
@@ -677,7 +708,7 @@ namespace TVGL  // COMMENTEDCHANGE namespace System.Numerics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector3 Normalize(Vector3 value)
         {
-            double ls = value.X * value.X + value.Y * value.Y + value.Z * value.Z; 
+            double ls = value.X * value.X + value.Y * value.Y + value.Z * value.Z;
             //Leaving this seperate than exactly equals zero, because ConvexHull3D currently has some very, very small normal directions for faces.
             if (ls == 0)
             {
@@ -772,7 +803,7 @@ namespace TVGL  // COMMENTEDCHANGE namespace System.Numerics
             // precision can be a fickle mistress.
             dot = Math.Clamp(dot, -1.0, 1.0);
             var omega = Math.Acos(dot);
-            var sinOmega =Math.Sqrt(1-dot*dot);
+            var sinOmega = Math.Sqrt(1 - dot * dot);
             var oneOverSinOmega = 1 / sinOmega;
             return start * oneOverSinOmega * Math.Sin((1 - percent) * omega) + end * oneOverSinOmega * Math.Sin(percent * omega);
 
