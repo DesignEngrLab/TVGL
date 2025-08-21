@@ -66,8 +66,8 @@ namespace TVGL
         /// <param name="target"></param>
         /// <param name="numberToFind"></param>
         /// <returns></returns>
-        public IEnumerable<(TCoord, TAccObject)> FindNearest(TCoord target, int numberToFind)
-        => NearestNeighbors(target, numberToFind).Cast<(TCoord, TAccObject)>();
+        public IEnumerable<(IVector, TAccObject)> FindNearest(TCoord target, int numberToFind)
+        => NearestNeighbors(target, numberToFind).Select(t => ((IVector)t.Item1, t.Item2));
 
         /// <summary>
         /// Finds the nearest points in the KDTree within the given radius, you can also limit this to the 
@@ -79,10 +79,10 @@ namespace TVGL
         /// <param name="radius"></param>
         /// <param name="numberToFind"></param>
         /// <returns></returns>
-        public IEnumerable<(TCoord, TAccObject)> FindNearest(TCoord target, double radius, int numberToFind = -1)
-        => RadialSearch(target, radius, numberToFind).Cast<(TCoord, TAccObject)>();
+        public IEnumerable<(IVector, TAccObject)> FindNearest(TCoord target, double radius, int numberToFind = -1)
+        => RadialSearch(target, radius, numberToFind).Select(t => ((IVector)t.Item1, t.Item2));
     }
-    
+
     public static class KDTreeExtensions
     {
         /// <summary>
@@ -118,5 +118,5 @@ namespace TVGL
             return new TVGL.KDTree<TCoord, TAccObject>(points, pointsCount, accObjects);
         }
     }
-        
+
 }

@@ -47,6 +47,7 @@
 		<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.8" />
 		<PackageReference Include="Microsoft.Extensions.Logging.Console" Version="9.0.8" />
 		<PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+		<PackageReference Include="Supercluster.KDTree.Net" Version="1.0.22" />
 	</ItemGroup>
 
 	<ItemGroup>
@@ -55,9 +56,5 @@
 
 	<ItemGroup>
 	  <Folder Include="Polygon Operations\Clipper\github.com.AngusJohnson.Clipper2\" />
-	</ItemGroup>
-
-	<ItemGroup>
-	  <ProjectReference Include="..\..\Supercluster.KDTree\KDTree\KDTree.csproj" />
 	</ItemGroup>
 </Project>
