@@ -629,5 +629,25 @@ namespace TVGL
             maxError = primitiveSurface.CalculateMaxError(points);
             return primitiveSurface;
         }
+        public static (Vector3, Vector3) IntersectionOfPlanes(Plane plane1, Plane plane2)
+        {
+            var direction = plane1.Normal.Cross(plane2.Normal);
+            if (direction.IsNegligible()) return (Vector3.Null, Vector3.Null); // planes are parallel
+            // find a point on the line of intersection
+            // solve the system of equations:
+            // plane1.Normal.X * x + plane1.Normal.Y * y + plane1.Normal.Z * z = plane1.DistanceToOrigin
+            // plane2.Normal.X * x + plane2.Normal.Y * y + plane2.Normal.Z * z = plane2.DistanceToOrigin
+            // direction.X * x + direction.Y * y + direction.Z * z = 0  (since direction is perpendicular to both normals)
+            var a = new double[,] {
+                { plane1.Normal.X, plane1.Normal.Y, plane1.Normal.Z },
+                { plane2.Normal.X, plane2.Normal.Y, plane2.Normal.Z },
+                { direction.X, direction.Y, direction.Z }
+            };
+            var b = new double[] { plane1.DistanceToOrigin, plane2.DistanceToOrigin, 0 };
+            if (!a.solve(b, out var solution))
+                return (Vector3.Null, Vector3.Null); // should not happen since we already checked for parallelism
+            var pointOnLine = new Vector3(solution);
+            return (pointOnLine, direction.Normalize());
+        }
     }
 }

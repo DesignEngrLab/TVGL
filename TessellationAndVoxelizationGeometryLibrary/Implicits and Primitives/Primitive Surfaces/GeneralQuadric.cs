@@ -296,7 +296,9 @@ namespace TVGL
 
         public Vector3 GetPointNearQuadric(Vector3 anchor)
         {
-            var intersections = LineIntersection(anchor, GetNormalAtPoint(anchor));
+            var normalAtPoint = GetNormalAtPoint(anchor);
+            if (normalAtPoint.Length() == 0) normalAtPoint = new Vector3(1, 0, 0);
+            var intersections = LineIntersection(anchor, normalAtPoint);
             Vector3 newAnchor = anchor;
             int iters = 0;
             while (!intersections.GetEnumerator().MoveNext() && iters++ < 100)

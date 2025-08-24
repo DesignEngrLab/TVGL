@@ -476,6 +476,34 @@ namespace TVGL
             Update();
         }
 
+        public static bool DoLineAndTriangleIntersect(Vector3 pointOnLine, Vector3 direction, TriangleFace face)
+        {
+            // The triangle is extruded along the line direction to form a triangular prism.
+            // The line intersects the triangle if the point on the line is inside this prism.
+            for (int i = 0; i < 3; i++)
+            {
+                // Define the position of the triangle vertices A, C, D
+                Vector3 A = face.Vertices.ElementAt(i).Coordinates;
+                Vector3 C = face.Vertices.ElementAt((i + 1) % 3).Coordinates;
+                Vector3 D = face.Vertices.ElementAt((i + 2) % 3).Coordinates;
+
+                // Define a point B which is one unit along the line direction from A
+                Vector3 B = A + direction.Normalize();
+
+                // Ensure that the plane formed by A, B, C has the triangle on the positive side
+                if ((B - A).Cross(C - A).Dot(D - A) < 0) B = A - direction.Normalize();
+
+                // Create the plane from points A, B, C
+                Plane edgePlane = Plane.CreateFromVertices(A, B, C);
+
+                // Check if the point on the line is on the positive side of the plane
+                if (edgePlane.DistanceToPoint(pointOnLine) < 0) return false;
+            }
+            // If the point is on the positive side of all three planes, i.e. in the triangular prism
+            // formed by the planes, the line intersects the triangle.
+            return true;
+        }
+
         #endregion Properties
     }
 }
