@@ -1,4 +1,4 @@
-﻿using SuperClusterKDTree;
+﻿using NearestNeighborSearch;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,9 +10,10 @@ namespace TVGL
     /// </summary>
     /// <typeparam name="TCoord"></typeparam>
     /// <param name="points"></param>
-    public class KDTree<TCoord>(IEnumerable<TCoord> points, int pointsCount) : KDTree<double, double, TCoord>
-        (points.First().Count, points.Cast<IReadOnlyList<double>>(), pointsCount, points,
-         (x, y) => KDTree.ManhattanDistance(x, y), double.MinValue, double.MaxValue)
+    public class KDTree<TCoord>(ICollection<TCoord> points, int pointsCount)
+        //: VoxelSearch<double, TCoord>(points.Cast<IReadOnlyList<double>>().ToList(), points, DistanceMetrics.EuclideanDistance)
+        : LinearSearch<double, double, TCoord>(points.Cast<IReadOnlyList<double>>().ToList(), points,
+         (x, y) => CommonDistanceMetrics.ManhattanDistance(x, y), double.MinValue, double.MaxValue)
         where TCoord : IVector
     {
         public KDTree(ICollection<TCoord> points) : this(points, points.Count) { }
@@ -26,7 +27,7 @@ namespace TVGL
         /// <param name="numberToFind"></param>
         /// <returns></returns>
         public IEnumerable<TCoord> FindNearest(TCoord target, int numberToFind)
-        => NearestNeighbors(target, numberToFind).Select(t => t.Item2);
+        => GetNearestNeighbors(target, numberToFind).Select(t => t.Item2);
 
         /// <summary>
         /// Finds the nearest points in the KDTree within the given radius, you can also limit this to the a maximum number, numberToFind.
@@ -38,7 +39,7 @@ namespace TVGL
         /// <param name="numberToFind"></param>
         /// <returns></returns>
         public IEnumerable<TCoord> FindNearest(TCoord target, double radius, int numberToFind = -1)
-        => RadialSearch(target, radius, numberToFind).Select(t => t.Item2);
+        => GetNeighborsInRadius(target, radius, numberToFind).Select(t => t.Item2);
     }
 
     /// <summary>
@@ -49,9 +50,10 @@ namespace TVGL
     /// <typeparam name="TAccObject"></typeparam>
     /// <param name="points"></param>
     /// <param name="accObjects"></param>
-    public class KDTree<TCoord, TAccObject>(IEnumerable<TCoord> points, int pointsCount, IEnumerable<TAccObject> accObjects) : KDTree<double, double, TAccObject>
-        (points.First().Count, points.Cast<IReadOnlyList<double>>(), pointsCount, accObjects,
-         (x, y) => KDTree.ManhattanDistance(x, y), double.MinValue, double.MaxValue)
+    public class KDTree<TCoord, TAccObject>(IEnumerable<TCoord> points, int pointsCount, IEnumerable<TAccObject> accObjects)
+        //: VoxelSearch<double,  TAccObject>(points.Cast<IReadOnlyList<double>>().ToList(), accObjects,DistanceMetrics.EuclideanDistance)
+        : LinearSearch<double, double, TAccObject>(points.Cast<IReadOnlyList<double>>().ToList(), accObjects,
+         (x, y) => CommonDistanceMetrics.ManhattanDistance(x, y), double.MinValue, double.MaxValue)
         where TCoord : IVector
     {
         public KDTree(ICollection<TCoord> points, IEnumerable<TAccObject> accObjects) : this(points, points.Count, accObjects) { }
@@ -67,7 +69,7 @@ namespace TVGL
         /// <param name="numberToFind"></param>
         /// <returns></returns>
         public IEnumerable<(IVector, TAccObject)> FindNearest(TCoord target, int numberToFind)
-        => NearestNeighbors(target, numberToFind).Select(t => ((IVector)t.Item1, t.Item2));
+        => GetNearestNeighbors(target, numberToFind).Select(t => ((IVector)t.Item1, t.Item2));
 
         /// <summary>
         /// Finds the nearest points in the KDTree within the given radius, you can also limit this to the 
@@ -80,7 +82,7 @@ namespace TVGL
         /// <param name="numberToFind"></param>
         /// <returns></returns>
         public IEnumerable<(IVector, TAccObject)> FindNearest(TCoord target, double radius, int numberToFind = -1)
-        => RadialSearch(target, radius, numberToFind).Select(t => ((IVector)t.Item1, t.Item2));
+        => GetNeighborsInRadius(target, radius, numberToFind).Select(t => ((IVector)t.Item1, t.Item2));
     }
 
     public static class KDTreeExtensions
@@ -97,7 +99,7 @@ namespace TVGL
         {
             if (pointsCount < 0)
                 pointsCount = points.Count();
-            return new TVGL.KDTree<TCoord>(points, pointsCount);
+            return new TVGL.KDTree<TCoord>(points.ToList(), pointsCount);
         }
         /// <summary>
         /// Creates the KDTree for the list of points common in TVGL (Vector3, Vertex, Vector2, or Vertex2D) and some associated objects.

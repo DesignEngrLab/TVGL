@@ -65,7 +65,7 @@ namespace TVGL
                 var radius = Math.Sqrt(vLengthSqd) * 0.5;
                 var sortedPoints = new List<(T point, double distance, int index)>
                 { (currentEndPoint, 0, convexHullIndices[i]) };
-                foreach ((var pointData, var ptIndex) in kdTree.RadialSearch(midPoint, radius))
+                foreach ((var pointData, var ptIndex) in kdTree.GetNeighborsInRadius(midPoint, radius))
                 {
                     if (usedIndices.Contains(ptIndex)) continue;
                     if (AddToListAlongMaximal(sortedPoints, (T)pointData, ptIndex,

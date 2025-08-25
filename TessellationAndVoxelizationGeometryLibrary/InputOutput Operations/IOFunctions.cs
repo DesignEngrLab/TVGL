@@ -495,23 +495,32 @@ namespace TVGL
             foreach (var poly in polygons)
             {
                 var pointsAttr = poly.Attribute("points")?.Value;
-                if (string.IsNullOrWhiteSpace(pointsAttr)) continue;
-                var points = pointsAttr.Split(new[] { ' ', ',' }, StringSplitOptions.RemoveEmptyEntries);
-                for (int i = 0; i < points.Length - 1; i += 2)
+                if (!string.IsNullOrWhiteSpace(pointsAttr))
                 {
-                    if (double.TryParse(points[i], NumberStyles.Float, CultureInfo.InvariantCulture, out double x) &&
-                        double.TryParse(points[i + 1], NumberStyles.Float, CultureInfo.InvariantCulture, out double y))
+                    var points = pointsAttr.Split(new[] { ' ', ',' }, StringSplitOptions.RemoveEmptyEntries);
+                    for (int i = 0; i < points.Length - 1; i += 2)
                     {
-                        coordinates.Add(new Vector2(x, y));
+                        if (double.TryParse(points[i], NumberStyles.Float, CultureInfo.InvariantCulture, out double x) &&
+                            double.TryParse(points[i + 1], NumberStyles.Float, CultureInfo.InvariantCulture, out double y))
+                        {
+                            coordinates.Add(new Vector2(x, y));
+                        }
+                    }
+                    // Only use the first polygon/polyline found
+                }
+                else
+                {
+                    pointsAttr = poly.Attribute("d")?.Value;
+                    if (!string.IsNullOrWhiteSpace(pointsAttr))
+                    { // Optionally, parse path data for streamed turtle graphics shapes
                     }
                 }
-                // Only use the first polygon/polyline found
-                break;
             }
             // Optionally, handle <rect>, <circle>, <ellipse>, <line>, <path> here for more SVG support
             if (coordinates.Count > 0)
             {
                 polygon = new Polygon(coordinates);
+                if (!polygon.IsPositive) polygon.Reverse();
                 return true;
             }
             return false;

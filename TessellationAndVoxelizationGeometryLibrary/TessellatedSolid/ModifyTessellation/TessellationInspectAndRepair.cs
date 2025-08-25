@@ -126,7 +126,7 @@ namespace TVGL
             //The ConvexHull3D does not have to do with repair and does not require CheckModelIntegrity. Keep it out here.
             //If the volume is zero, creating the convex hull may cause a null exception
             if (buildOptions.DefineConvexHull && !ts.Volume.IsNegligible())
-            { 
+            {
                 try
                 {
                     ConvexHull3D.Create(ts, true);
@@ -1356,10 +1356,10 @@ namespace TVGL
         /// </summary>
         /// <param name="solid"></param>
         /// <exception cref="Exception"></exception>
-        public static void DefineBorders(TessellatedSolid solid)
+        public static void DefineBorders(TessellatedSolid solid, bool forceRerun = false)
         {
             //Already defined. Probably didn't mean to call this again.
-            if (solid.BordersDefined) return;
+            if (!forceRerun && solid.BordersDefined) return;
 
             DefineBorderSegments(solid);
             foreach (var prim in solid.Primitives)
@@ -1595,10 +1595,10 @@ namespace TVGL
             else deadEnds.Add(v, edge);
         }
 
-        public static void CharacterizeBorders(TessellatedSolid solid)
+        public static void CharacterizeBorders(TessellatedSolid solid, bool forceRerun = false)
         {
             //Already characterized. Probably didn't mean to call this again.
-            if (solid.BordersCharacterized) return;
+            if (!forceRerun && solid.BordersCharacterized) return;
 
             foreach (var primitive in solid.Primitives)
                 foreach (var border in primitive.Borders)
