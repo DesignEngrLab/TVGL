@@ -37,6 +37,12 @@ namespace TVGL
         public Color OriginalColor { get; set; }
 
         /// <summary>
+        /// Set the imported surface type, since unknown region may be able to more specific for surface types we don't handle
+        /// Intended to be used fo the CombineSimilarSurfacesOfSameType function 
+        /// </summary>
+        public string ImportedSurfaceType { get; set; }
+
+        /// <summary>
         /// Sets the faces and vertices.
         /// </summary>
         /// <param name="faces">The faces.</param>
