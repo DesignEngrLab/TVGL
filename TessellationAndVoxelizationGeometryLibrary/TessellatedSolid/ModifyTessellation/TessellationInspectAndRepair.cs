@@ -1356,10 +1356,10 @@ namespace TVGL
         /// </summary>
         /// <param name="solid"></param>
         /// <exception cref="Exception"></exception>
-        public static void DefineBorders(TessellatedSolid solid)
+        public static void DefineBorders(TessellatedSolid solid, bool forceRerun=false)
         {
             //Already defined. Probably didn't mean to call this again.
-            if (solid.BordersDefined) return;
+            if (!forceRerun && solid.BordersDefined) return;
 
             DefineBorderSegments(solid);
             foreach (var prim in solid.Primitives)
@@ -1595,10 +1595,10 @@ namespace TVGL
             else deadEnds.Add(v, edge);
         }
 
-        public static void CharacterizeBorders(TessellatedSolid solid)
+        public static void CharacterizeBorders(TessellatedSolid solid, bool forceRerun = false)
         {
-            //Already characterized. Probably didn't mean to call this again.
-            if (solid.BordersCharacterized) return;
+            //Already defined. Probably didn't mean to call this again.
+            if (!forceRerun && solid.BordersDefined) return;
 
             foreach (var primitive in solid.Primitives)
                 foreach (var border in primitive.Borders)
