@@ -27,7 +27,7 @@ namespace TVGL
     {
         private readonly TessellatedSolid ts;
 
-        private TessellationInspectAndRepair(TessellatedSolid ts)
+        public TessellationInspectAndRepair(TessellatedSolid ts)
         {
             this.ts = ts;
             ContainsErrors = false;
@@ -345,7 +345,7 @@ namespace TVGL
         /// <param name="ts">The ts.</param>
         /// <param name="repairAutomatically">The repair automatically.</param>
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
-        void CheckModelIntegrityPreBuild()
+        public void CheckModelIntegrityPreBuild()
         {
             Log.Information("Model Integrity Check...", 3);
 
