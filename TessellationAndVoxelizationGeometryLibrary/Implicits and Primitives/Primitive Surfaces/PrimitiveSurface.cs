@@ -31,8 +31,16 @@ namespace TVGL
         /// The original color of the primitive, used for rendering. It is 
         /// not changed by the SetColor method and SetColor can be used to "temporarily" change the color.
         /// We can always use the OriginalColor to restore the color.
+        /// Since new surfaces may be created from original surfaces (as from surface combining or fixing), 
+        /// this cannot use init. Be careful not to change it.
         /// </summary>   
-        public Color OriginalColor { get; init; }
+        public Color OriginalColor { get; set; }
+
+        /// <summary>
+        /// Set the imported surface type, since unknown region may be able to more specific for surface types we don't handle
+        /// Intended to be used fo the CombineSimilarSurfacesOfSameType function 
+        /// </summary>
+        public string ImportedSurfaceType { get; set; }
 
         /// <summary>
         /// Sets the faces and vertices.
