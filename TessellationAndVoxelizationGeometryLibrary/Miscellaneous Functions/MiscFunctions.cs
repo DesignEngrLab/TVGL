@@ -2478,7 +2478,8 @@ namespace TVGL
             if (direction.X.IsNegligible() && direction.Y.IsNegligible())
             {
                 if (direction.Z > 0) return new Vector4(anchor.X, anchor.Y, 0, 0);
-                else return new Vector4(-anchor.X, anchor.Y, Math.PI, 0);
+                else return new Vector4(-anchor.X, anchor.Y, Math.PI, 0); // when azimuth is 0 then we are pointing in the x-z plane (not the y-z plane)
+                                                                          // this means that we are effectively rotating about the y axis
             }
             else
             {
