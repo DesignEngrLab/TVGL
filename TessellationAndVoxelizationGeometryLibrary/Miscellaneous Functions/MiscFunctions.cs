@@ -2572,5 +2572,77 @@ namespace TVGL
                 yield return type;
         }
 
+
+        public static double FindLargestEncompassingAngleForAxis(IEnumerable<BorderLoop> borders, Vector3 axis, Vector3 anchor, out Vector3 vectorAtMinAngle, out Vector3 vectorAtMaxAngle, out double minAngle, out double maxAngle)
+        {
+            var transform = axis.TransformToXYPlane(out var backTransform);
+            minAngle = double.PositiveInfinity;
+            maxAngle = double.NegativeInfinity;
+            foreach (var path in borders)
+            {
+                FindWindingAroundAxis(path.GetCoordinates(), transform, anchor, out var minAngleIn, out var maxAngleIn);
+                if (maxAngle < minAngleIn)
+                {
+                    minAngleIn += Math.Tau;
+                    maxAngleIn += Math.Tau;
+                }
+                if (minAngle > maxAngleIn)
+                {
+                    minAngleIn -= Math.Tau;
+                    maxAngleIn -= Math.Tau;
+                }
+                if (minAngle > minAngleIn) minAngle = minAngleIn;
+                if (maxAngle < maxAngleIn) maxAngle = maxAngleIn;
+
+                if (Math.Abs(maxAngle - minAngle) > Math.Tau)
+                {
+                    minAngle = -Math.PI;
+                    maxAngle = Math.PI;
+                    break;
+                }
+            }
+            vectorAtMinAngle = new Vector3(Math.Cos(minAngle), Math.Sin(minAngle), 0).TransformNoTranslate(backTransform);
+            vectorAtMaxAngle = new Vector3(Math.Cos(maxAngle), Math.Sin(maxAngle), 0).TransformNoTranslate(backTransform);
+            return maxAngle - minAngle;
+        }
+
+
+        /// <summary>
+        /// Finds the total winding angle around the axis and provides the minimum and maximum angle.
+        /// T
+        /// </summary>
+        /// <param name="path">The path.</param>
+        /// <param name="transform">The transform.</param>
+        /// <param name="anchor">The anchor.</param>
+        /// <param name="minAngle">The min angle.</param>
+        /// <param name="maxAngle">The max angle.</param>
+        /// <returns>A magnitude of the angle.</returns>
+        public static double FindWindingAroundAxis(this IEnumerable<Vector3> path, Matrix4x4 transform,
+            Vector3 anchor, out double minAngle, out double maxAngle)
+        {
+            var center = anchor.ConvertTo2DCoordinates(transform);
+            var coords = path.Select(v => v.ConvertTo2DCoordinates(transform)).ToList();
+            // filter out any points that are too close to the center
+            var avgRadiusSqd = coords.Average(v => (v - center).LengthSquared());
+            coords.RemoveAll(v=>v.IsPracticallySame(center,avgRadiusSqd * 0.01));
+            //Global.Presenter2D.ShowAndHang([coords, [center]]);
+            return coords.GetWindingAngles(center, true, out minAngle, out maxAngle);
+        }
+
+        /// <summary>
+        /// Finds the total winding angle around the axis and provides the minimum and maximum angle.
+        /// </summary>
+        /// <param name="path">The path.</param>
+        /// <param name="axis">The axis.</param>
+        /// <param name="anchor">The anchor.</param>
+        /// <param name="startingAngle">The starting angle.</param>
+        /// <returns>A double.</returns>
+        public static double FindWindingAroundAxis(this IEnumerable<Vector3> path, Vector3 axis, Vector3 anchor,
+            out double minAngle, out double maxAngle)
+        {
+            var transform = axis.TransformToXYPlane(out _);
+            return FindWindingAroundAxis(path, transform, anchor, out minAngle, out maxAngle);
+        }
+
     }
 }

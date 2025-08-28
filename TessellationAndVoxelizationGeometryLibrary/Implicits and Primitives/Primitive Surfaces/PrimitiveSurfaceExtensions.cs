@@ -104,7 +104,7 @@ namespace TVGL
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         public static bool BorderEncirclesAxis(this IEnumerable<Vector3> path, Vector3 axis, Vector3 anchor)
         {
-            var angle = Math.Abs(FindWindingAroundAxis(path, axis, anchor, out _, out _));
+            var angle = Math.Abs(MiscFunctions.FindWindingAroundAxis(path, axis, anchor, out _, out _));
             return angle > 1.67 * Math.PI;
             // 1.67 is 5/3, which is 5/6 the way around. so the border would be at least a hexagon.
         }
@@ -118,7 +118,7 @@ namespace TVGL
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         public static bool BorderEncirclesAxis(this IEnumerable<Vector3> path, Matrix4x4 transform, Vector3 anchor)
         {
-            var angle = Math.Abs(FindWindingAroundAxis(path, transform, anchor, out _, out _));
+            var angle = Math.Abs(MiscFunctions.FindWindingAroundAxis(path, transform, anchor, out _, out _));
             return angle > 1.67 * Math.PI;
             // 1.67 is 5/3, which is 5/6 the way around. so the border would be at least a hexagon.
         }
@@ -136,74 +136,8 @@ namespace TVGL
         /// <returns>A double.</returns>
         public static double FindLargestEncompassingAngleForAxis(this PrimitiveSurface surface, out Vector3 vectorAtMinAngle,
             out Vector3 vectorAtMaxAngle, out double minAngle, out double maxAngle)
-        {
-            var axis = surface.GetAxis();
-            var transform = axis.TransformToXYPlane(out var backTransform);
-            minAngle = double.PositiveInfinity;
-            maxAngle = double.NegativeInfinity;
-
-            foreach (var path in surface.Borders)
-            {
-                FindWindingAroundAxis(path.GetCoordinates(), transform, surface.GetAnchor(), out var minAngleIn, out var maxAngleIn);
-                if (maxAngle < minAngleIn)
-                {
-                    minAngleIn += Math.Tau;
-                    maxAngleIn += Math.Tau;
-                }
-                if (minAngle > maxAngleIn)
-                {
-                    minAngleIn -= Math.Tau;
-                    maxAngleIn -= Math.Tau;
-                }
-                if (minAngle > minAngleIn) minAngle = minAngleIn;
-                if (maxAngle < maxAngleIn) maxAngle = maxAngleIn;
-
-                if (Math.Abs(maxAngle - minAngle) > Math.Tau)
-                {
-                    minAngle = -Math.PI;
-                    maxAngle = Math.PI;
-                    break;
-                }
-            }
-            vectorAtMinAngle = new Vector3(Math.Cos(minAngle), Math.Sin(minAngle), 0).TransformNoTranslate(backTransform);
-            vectorAtMaxAngle = new Vector3(Math.Cos(maxAngle), Math.Sin(maxAngle), 0).TransformNoTranslate(backTransform);
-            return maxAngle - minAngle;
-        }
-
-
-        /// <summary>
-        /// Finds the total winding angle around the axis and provides the minimum and maximum angle.
-        /// T
-        /// </summary>
-        /// <param name="path">The path.</param>
-        /// <param name="transform">The transform.</param>
-        /// <param name="anchor">The anchor.</param>
-        /// <param name="minAngle">The min angle.</param>
-        /// <param name="maxAngle">The max angle.</param>
-        /// <returns>A magnitude of the angle.</returns>
-        public static double FindWindingAroundAxis(this IEnumerable<Vector3> path, Matrix4x4 transform,
-            Vector3 anchor, out double minAngle, out double maxAngle)
-        {
-            var coords = path.Select(v => v.ConvertTo2DCoordinates(transform));
-            var center = anchor.ConvertTo2DCoordinates(transform);
-            return coords.GetWindingAngles(center, true, out minAngle, out maxAngle);
-        }
-
-        /// <summary>
-        /// Finds the total winding angle around the axis and provides the minimum and maximum angle.
-        /// </summary>
-        /// <param name="path">The path.</param>
-        /// <param name="axis">The axis.</param>
-        /// <param name="anchor">The anchor.</param>
-        /// <param name="startingAngle">The starting angle.</param>
-        /// <returns>A double.</returns>
-        public static double FindWindingAroundAxis(this IEnumerable<Vector3> path, Vector3 axis, Vector3 anchor,
-            out double minAngle, out double maxAngle)
-        {
-            var transform = axis.TransformToXYPlane(out _);
-            return FindWindingAroundAxis(path, transform, anchor, out minAngle, out maxAngle);
-        }
-
+        => MiscFunctions.FindLargestEncompassingAngleForAxis(surface.Borders,surface.GetAxis(),surface.GetAnchor(), out vectorAtMinAngle, out vectorAtMaxAngle, out minAngle, out maxAngle);
+        
 
         /// <summary>
         /// Gets the center of mass for primitive surface. This is a weighted sum using the face area,
