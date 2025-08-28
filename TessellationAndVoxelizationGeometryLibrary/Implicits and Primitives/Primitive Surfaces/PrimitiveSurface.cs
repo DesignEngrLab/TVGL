@@ -718,6 +718,8 @@ namespace TVGL
                     if (z < MinZ) MinZ = z;
                 }
             }
+            var diagonalLength = Math.Sqrt(Math.Pow(MaxX - MinX, 2) + Math.Pow(MaxY - MinY, 2) + Math.Pow(MaxZ - MinZ, 2));
+            AABB_HalfDiagonalSquared =  Math.Pow(diagonalLength / 2, 2);
         }
 
         protected abstract void SetPrimitiveLimits();
@@ -756,6 +758,12 @@ namespace TVGL
                 return new Vector3(MaxX + MinX, MaxY + MinY, MaxZ + MinZ) / 2;
             }
         }
+
+        /// <summary>
+        /// Can be used to check if within the bounding sphere, centered at the center of the axis aligned bounding box.
+        /// </summary>
+        [JsonIgnore]
+        public double AABB_HalfDiagonalSquared { get; set; }
 
         /// <summary>
         /// Sets the color.
