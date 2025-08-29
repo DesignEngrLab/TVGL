@@ -1600,6 +1600,36 @@ namespace TVGL
                 plane2.Normal, plane2.DistanceToOrigin,
                 plane3.Normal, plane3.DistanceToOrigin);
         }
+        /// <summary>
+        /// Find the line common to two planes.
+        /// </summary>
+        /// <param name="plane1"></param>
+        /// <param name="plane2"></param>
+        /// <returns></returns>
+        public static (Vector3, Vector3) PlanePlaneIntersection(Plane plane1, Plane plane2)
+        {
+            var direction = plane1.Normal.Cross(plane2.Normal);
+            if (direction.IsNegligible())
+                return (Vector3.Null, Vector3.Null);
+            var pointOnLine = PointCommonToThreePlanes(plane1, plane2, new Plane(0, direction));
+            return (pointOnLine, direction);
+        }
+        /// <summary>
+        /// Find the line common to two planes.
+        /// </summary>
+        /// <param name="normal1"></param>
+        /// <param name="d1"></param>
+        /// <param name="normal2"></param>
+        /// <param name="d2"></param>
+        /// <returns></returns>
+        public static (Vector3, Vector3) PlanePlaneIntersection(Vector3 normal1, double d1, Vector3 normal2, double d2)
+        {
+            var direction = normal1.Cross(normal2);
+            if (direction.IsNegligible())
+                return (Vector3.Null, Vector3.Null);
+            var pointOnLine = PointCommonToThreePlanes(normal1, d1, normal2, d2, direction, 0);
+            return (pointOnLine, direction);
+        }
 
         /// <summary>
         /// Gets the plane from three points.

@@ -66,6 +66,24 @@ namespace TVGL
         /// W is the constant term. like weight in homogeneous coordinate systems.
         /// </summary>
         public double W { get; init; }
+        /// <summary>
+        /// Gets all the coefficients as an enumerable in the order listed above.
+        public IEnumerable<double> Coefficients
+        {
+            get
+            {
+                yield return XSqdCoeff;
+                yield return YSqdCoeff;
+                yield return ZSqdCoeff;
+                yield return XYCoeff;
+                yield return XZCoeff;
+                yield return YZCoeff;
+                yield return XCoeff;
+                yield return YCoeff;
+                yield return ZCoeff;
+                yield return W;
+            }
+        }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="GeneralQuadric"/> class.
@@ -316,7 +334,7 @@ namespace TVGL
         /// </summary>
         /// <param name="point"></param>
         /// <returns></returns>
-        public override double DistanceToPoint(Vector3 point)
+        public Vector3 ClosestPointOnSurfaceToPoint(Vector3 point)
         {
             //if (GetNormalAtPoint(point).Length() == 0) return 0; //scaling the quadric value by the norm of the normal vector to get the approximate distance locally, not working all the time
             //return QuadricValue(point) / GetNormalAtPoint(point).Length();
@@ -346,8 +364,18 @@ namespace TVGL
                 closestPt4 -= delta;
             }
             while (iterations++ < 1000 && delta.ToVector3(false).LengthSquared() > 1E-4); // while less than 1000 iterations or the delta is large
-            if (iterations >= 1000 && GetNormalAtPoint(point).Length() != 0) return QuadricValue(point) / GetNormalAtPoint(point).Length(); //scaling the quadric value by the norm of the normal vector to get the approximate distance locally
+            if (iterations >= 1000 && GetNormalAtPoint(point).Length() != 0) return Vector3.Null; 
             closestPt = closestPt4.ToVector3(false);
+            return closestPt;
+        }
+
+        public override double DistanceToPoint(Vector3 point)
+        {
+            Vector3 closestPt = ClosestPointOnSurfaceToPoint(point);
+
+            //scaling the quadric value by the norm of the normal vector to get the approximate distance locally
+            if (closestPt == Vector3.Null) return QuadricValue(point) / GetNormalAtPoint(point).Length();
+
             return Math.Sign(QuadricValue(point)) * point.Distance(closestPt);
         }
         protected override void CalculateIsPositive()
