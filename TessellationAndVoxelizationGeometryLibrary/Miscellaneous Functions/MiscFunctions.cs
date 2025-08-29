@@ -2479,7 +2479,8 @@ namespace TVGL
             {
                 if (direction.Z > 0) return new Vector4(anchor.X, anchor.Y, 0, 0);
                 else return new Vector4(-anchor.X, anchor.Y, Math.PI, 0); // when azimuth is 0 then we are pointing in the x-z plane (not the y-z plane)
-                                                                          // this means that we are effectively rotating about the y axis
+                                                                          // this means that we are effectively rotating about the y axis, which means that the
+                                                                          // x-coord will be reversed
             }
             else
             {
@@ -2623,9 +2624,13 @@ namespace TVGL
             var center = anchor.ConvertTo2DCoordinates(transform);
             var coords = path.Select(v => v.ConvertTo2DCoordinates(transform)).ToList();
             // filter out any points that are too close to the center
-            var avgRadiusSqd = coords.Average(v => (v - center).LengthSquared());
-            coords.RemoveAll(v=>v.IsPracticallySame(center,avgRadiusSqd * 0.01));
-            //Global.Presenter2D.ShowAndHang([coords, [center]]);
+            var radiiSqd = coords.Select(c => Vector2.DistanceSquared(center, c)).ToList();
+            var avgRadiusSqd = radiiSqd.Average();
+            var tooSmallRadii = 0.005 * avgRadiusSqd;
+            for (int i = coords.Count - 1; i >= 0; i--)
+                if (radiiSqd[i] < tooSmallRadii)
+                    coords.RemoveAt(i);
+
             return coords.GetWindingAngles(center, true, out minAngle, out maxAngle);
         }
 
