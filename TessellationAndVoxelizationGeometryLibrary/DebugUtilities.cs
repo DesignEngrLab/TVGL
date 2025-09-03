@@ -125,8 +125,8 @@ namespace TVGL
                         Sphere => KnownColors.Yellow, // like the sun
                         Plane => KnownColors.Green, // like a field (see Minecraft)
                         Torus => KnownColors.HotPink, // like a donut (see Homer Simpson)
-                        Prismatic => KnownColors.Indigo, // last color in a rainbow (think prism)
-                        UnknownRegion => KnownColors.LightGray,
+                        Prismatic => KnownColors.Indigo, // last color in a rainbow (prismatic -> think prism)
+                        UnknownRegion => KnownColors.SlateGray,
                         _ => KnownColors.Gray
                     };
                     primitiveSurface.SetColor(new Color(primitiveColor));

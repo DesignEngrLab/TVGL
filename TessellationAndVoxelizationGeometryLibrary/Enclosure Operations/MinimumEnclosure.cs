@@ -137,6 +137,19 @@ namespace TVGL
             where T : IVector3D
         {
             var vertices = points as IList<T> ?? points.ToList();
+            if (vertices.Count == 0)
+                return new BoundingBox<T>(0, 0, 0, 0, 0, 0, Array.Empty<List<T>>());
+            if (vertices.Count == 1)
+                return new BoundingBox<T>(vertices[0].X, vertices[0].Y, vertices[0].Z,
+                    vertices[0].X, vertices[0].Y, vertices[0].Z, Enumerable.Repeat(vertices.ToList(), 6).ToArray());
+            if (vertices.Count == 2)
+            {
+                var vector = new Vector3(vertices[1].X - vertices[0].X, vertices[1].Y - vertices[0].Y, vertices[1].Z - vertices[0].Z);
+                var d1 = vector.Normalize();
+                var d2 = d1.GetPerpendicularDirection();
+                var d3 = d1.Cross(d2);
+                return new BoundingBox<T>([d1, d2, d3], vertices[0], vertices[0], vertices[0], vector.Length(), 0, 0);
+            }
             if (Plane.DefineNormalAndDistanceFromVertices(vertices, out var distance, out var planeNormal))
             {
                 var plane = new Plane(distance, planeNormal);
@@ -188,11 +201,11 @@ namespace TVGL
                 maxPointsSmallDir = temp;
             }
             return new BoundingBox<T>(
-                [ minBox.SortedDimensionsLongToShort[0]* largestDirection,
-                    minBox.SortedDimensionsLongToShort[1]* midDirection,
-                    minBox.SortedDimensionsLongToShort[2]* smallestDirection ],
+                [largestDirection, midDirection, smallestDirection],
                 [ minPointsLargestDir, maxPointsLargestDir, minPointsMediumDir, maxPointsMediumDir,
-                    minPointsSmallDir,maxPointsSmallDir ]);
+                minPointsSmallDir,maxPointsSmallDir ], minBox.SortedDimensionsLongToShort[0],
+                minBox.SortedDimensionsLongToShort[1],
+                minBox.SortedDimensionsLongToShort[2]);
         }
 
         #region ChanTan AABB Approach
@@ -814,8 +827,8 @@ namespace TVGL
                 boundingRectangle.PointsOnSides[2].SelectMany(p => pointsDict[p]),
                 boundingRectangle.PointsOnSides[3].SelectMany(p => pointsDict[p]),
             ];
-            return new BoundingBox<T>([ depth*direction1, boundingRectangle.Length1*direction2,
-                boundingRectangle.Length2*direction3 ], verticesOnFaces);
+            return new BoundingBox<T>([direction1, direction2, direction3],
+                verticesOnFaces, depth, boundingRectangle.Length1, boundingRectangle.Length2);
         }
 
         #endregion
@@ -883,8 +896,8 @@ namespace TVGL
             //facesSum = facesSum.Transform(matrix);
             matrix = matrix.OrthoNormalInverse();
 
-            return new BoundingBox<Vertex>([boxDims[0]*matrix.XBasisVector, boxDims[1]*matrix.YBasisVector,
-                boxDims[2]*matrix.ZBasisVector], matrix.TranslationAsVector);
+            return new BoundingBox<Vertex>([matrix.XBasisVector, matrix.YBasisVector, matrix.ZBasisVector],
+                matrix.TranslationAsVector, boxDims[0], boxDims[1], boxDims[2]);
         }
     }
 }

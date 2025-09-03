@@ -14,6 +14,7 @@
 
 using Newtonsoft.Json;
 using System;
+using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -676,14 +677,16 @@ namespace TVGL  // COMMENTEDCHANGE namespace System.Numerics
         public static Vector3 Normalize(Vector3 value)
         {
             double ls = value.X * value.X + value.Y * value.Y + value.Z * value.Z; 
-            //Leaving this seperate than exactly equals zero, because ConvexHull3D currently has some very, very small normal directions for faces.
             if (ls == 0)
             {
-                Log.Warning("Normalizing a vector of zero length.");
+                //StackTrace stackTrace = new StackTrace();
+                //string callerName = stackTrace.GetFrame(4).GetMethod().Name;
+                Log.Error("Normalizing a vector of zero length. Returning null vector");
+                return Vector3.Null;
             }
             if (ls.IsPracticallySame(1.0)) return value;
-            double lengthfactor = 1 / Math.Sqrt(ls);
-            return new Vector3(value.X * lengthfactor, value.Y * lengthfactor, value.Z * lengthfactor);
+            double lengthFactor = 1 / Math.Sqrt(ls);
+            return new Vector3(value.X * lengthFactor, value.Y * lengthFactor, value.Z * lengthFactor);
         }
 
         /// <summary>
