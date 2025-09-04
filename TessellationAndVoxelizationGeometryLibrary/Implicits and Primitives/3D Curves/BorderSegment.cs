@@ -185,7 +185,8 @@ namespace TVGL
                 {
                     if (circleError < Constants.DefaultTessellationError && circleError < CurveError)
                     {
-                        CircleCenter = Vector3.Multiply(new Vector3(((Circle)circle).Center, 0), backTransform);
+                        CircleCenter = plane.TransformFrom2DTo3D(((Circle)circle).Center);
+                        //MiscFunctions.PointOnPlaneFromLine(PlaneNormal, PlaneDistance, )
                         _curve = circle;
                         CurveError = circleError;
                     }
