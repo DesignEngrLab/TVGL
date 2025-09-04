@@ -25,6 +25,8 @@ namespace TVGL
     [JsonObject]
     public class BorderSegment : EdgePath
     {
+        public int IndexInSolid { get; set; }//index in solid.BorderSegments - NOT primitive.BorderSegments
+
         /// <summary>
         /// Initializes a new instance of the <see cref="BorderSegment"/> class.
         /// </summary>
@@ -112,6 +114,19 @@ namespace TVGL
             {
                 if (Curve == null) return false;
                 return Curve is StraightLine3D;
+            }
+        }
+
+        [JsonIgnore]
+        public Vector3 StraightLineDirection
+        {
+            get
+            {
+                if (Curve == null) return Vector3.Null;
+                if (Curve is StraightLine3D line3D) return line3D.Direction;
+                //2D curves are not used for border segments.
+                //if (Curve is StraightLine2D line2D) return line2D.Direction;
+                return Vector3.Null;
             }
         }
 
