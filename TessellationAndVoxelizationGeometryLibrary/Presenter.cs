@@ -143,6 +143,11 @@ namespace TVGL
 
     internal class EmptyPresenter2D : IPresenter2D
     {
+        public void SaveToPng(IEnumerable<Polygon> polygon, string fileName, int width, int height, string title = "", MarkerType markerType = MarkerType.None)
+        {
+            throw new NotImplementedException();
+        }
+
         public void Show(IEnumerable<Vector2> path, string title = "", Plot2DType plot2DType = Plot2DType.Line, bool closeShape = true, MarkerType marker = MarkerType.Circle, HoldType holdType = HoldType.Immediate, int timetoShow = -1, int id = -1)
         {
             // do nothing

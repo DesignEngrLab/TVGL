@@ -1,6 +1,7 @@
 ﻿using OxyPlot;
 using OxyPlot.Axes;
 using OxyPlot.Series;
+using OxyPlot.Wpf;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -18,6 +19,31 @@ namespace WindowsDesktopPresenter
     public class Presenter2D : IPresenter2D
     {
         List<Window2DHeldPlot> plot2DHeldWindows = new List<Window2DHeldPlot>();
+
+
+        /// <summary>
+        /// Saves the polygons to a PNG of the given width and height.
+        /// </summary>
+        /// <param name="polygon"></param>
+        /// <param name="fileName"></param>
+        /// <param name="width"></param>
+        /// <param name="height"></param>
+        /// <param name="title"></param>
+        /// <param name="polyMarker"></param>
+        public void SaveToPng(IEnumerable<Polygon> polygon, string fileName, int width, int height,
+            string title = "", MarkerType markerType = MarkerType.None)
+        {
+            var vectors = polygon.SelectMany(poly => poly.AllPaths);
+            var black = new Color(KnownColors.Black);
+            var colors = new List<Color>();
+            foreach (var vector in vectors)
+                colors.Add(black);
+            var window = new Window2DPlot(vectors, title, Plot2DType.Line, [true], markerType);
+            var pngExporter = new PngExporter { Width = width, Height = height, Resolution = 96 };
+            pngExporter.ExportToFile(window.Model, fileName);
+        }
+
+
         #region 2D Plots via OxyPlot
 
         #region Plotting 2D coordinates both scatter and polygons

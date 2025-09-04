@@ -16,6 +16,7 @@ using Newtonsoft.Json;
 using System;
 using System.Diagnostics;
 using System.Globalization;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
 
@@ -596,13 +597,16 @@ namespace TVGL  // COMMENTEDCHANGE namespace System.Numerics
             StringBuilder sb = new StringBuilder();
             string separator = NumberFormatInfo.GetInstance(formatProvider).NumberGroupSeparator;
             //sb.Append('<');
-            sb.Append(((IFormattable)this.X).ToString(format, formatProvider));
+            var numString = X.ToString(format, formatProvider);
+            if (numString.StartsWith("-0.") && numString.EndsWith(string.Join(string.Empty, Enumerable.Repeat('0', numString.Length - 3))))
+                numString = numString.Replace("-0.", "0.");
+            sb.Append();
             sb.Append(separator);
             sb.Append(' ');
-            sb.Append(((IFormattable)this.Y).ToString(format, formatProvider));
+            sb.Append(Y.ToString(format, formatProvider));
             sb.Append(separator);
             sb.Append(' ');
-            sb.Append(((IFormattable)this.Z).ToString(format, formatProvider));
+            sb.Append(Z.ToString(format, formatProvider));
             //sb.Append('>');
             return sb.ToString();
         }
@@ -676,7 +680,7 @@ namespace TVGL  // COMMENTEDCHANGE namespace System.Numerics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector3 Normalize(Vector3 value)
         {
-            double ls = value.X * value.X + value.Y * value.Y + value.Z * value.Z; 
+            double ls = value.X * value.X + value.Y * value.Y + value.Z * value.Z;
             if (ls == 0)
             {
                 //StackTrace stackTrace = new StackTrace();
@@ -773,7 +777,7 @@ namespace TVGL  // COMMENTEDCHANGE namespace System.Numerics
             // precision can be a fickle mistress.
             dot = Math.Clamp(dot, -1.0, 1.0);
             var omega = Math.Acos(dot);
-            var sinOmega =Math.Sqrt(1-dot*dot);
+            var sinOmega = Math.Sqrt(1 - dot * dot);
             var oneOverSinOmega = 1 / sinOmega;
             return start * oneOverSinOmega * Math.Sin((1 - percent) * omega) + end * oneOverSinOmega * Math.Sin(percent * omega);
 

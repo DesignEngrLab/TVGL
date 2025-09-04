@@ -913,9 +913,9 @@ namespace TVGL
                 else key += "N";
             }
             if (Faces != null && Faces.Any())
-                key += "|" + Area.ToString("F5");
+                key += "|" + Area.ToString("F3");
             if (OuterEdges != null && OuterEdges.Any())
-                key += "|" + OuterEdges.Sum(f => f.Length).ToString("F5");
+                key += "|" + OuterEdges.Sum(f => f.Length).ToString("F3");
             return key;
         }
 

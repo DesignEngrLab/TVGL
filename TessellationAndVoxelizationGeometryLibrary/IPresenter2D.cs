@@ -70,6 +70,10 @@ namespace TVGL
     /// </summary>
     public interface IPresenter2D
     {
+
+        void SaveToPng(IEnumerable<Polygon> polygon, string fileName, int width, int height,
+           string title = "", MarkerType markerType = MarkerType.None);
+
         /// <summary>
         /// Show the matrix of data as a 2D plot (heatmap)
         /// </summary>
