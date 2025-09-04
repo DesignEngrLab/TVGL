@@ -600,7 +600,7 @@ namespace TVGL  // COMMENTEDCHANGE namespace System.Numerics
             var numString = X.ToString(format, formatProvider);
             if (numString.StartsWith("-0.") && numString.EndsWith(string.Join(string.Empty, Enumerable.Repeat('0', numString.Length - 3))))
                 numString = numString.Replace("-0.", "0.");
-            sb.Append();
+            sb.Append(numString);
             sb.Append(separator);
             sb.Append(' ');
             sb.Append(Y.ToString(format, formatProvider));
