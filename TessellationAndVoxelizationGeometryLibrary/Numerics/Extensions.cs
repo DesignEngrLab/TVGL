@@ -13,6 +13,7 @@
 // ***********************************************************************
 using StarMathLib;
 using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.CompilerServices;
 
 
@@ -23,6 +24,23 @@ namespace TVGL
     /// </summary>
     public static class VectorExtensions
     {
+
+        /// <summary>
+        /// Removes the "-" if string is -0.000...
+        /// </summary>
+        /// <param name="numString"></param>
+        /// <returns></returns>
+        public static string RemoveLeadingNegIfZero(this string numString)
+        {
+            if (numString.StartsWith("-0.") && numString.EndsWith(string.Join(string.Empty, Enumerable.Repeat('0', numString.Length - 3))))
+            {
+                numString = numString.Replace("-0.", "0.");
+                numString += "0";
+            }
+
+            return numString;
+        }
+
         #region for Vector2
         /// <summary>
         /// Returns the Euclidean distance between the two given points. Note that for fast applications where the

@@ -771,6 +771,7 @@ namespace TVGL
         /// <param name="color">The color.</param>
         public void SetColor(Color color)
         {
+            if (Faces == null) return;
             foreach (var face in Faces) face.Color = color;
         }
 
@@ -862,6 +863,12 @@ namespace TVGL
             return this.MemberwiseClone();
         }
 
+        /// <summary>
+        /// Copies the surface to a new one with the included triangles
+        /// </summary>
+        /// <param name="faces"></param>
+        /// <param name="doNotResetFaceDependentValues">if true, then the borders and bounds will not be reset</param>
+        /// <returns></returns>
         public PrimitiveSurface Copy(IEnumerable<TriangleFace> faces, bool doNotResetFaceDependentValues = false)
         {
             var copy = (PrimitiveSurface)this.Clone();
@@ -869,6 +876,10 @@ namespace TVGL
             return copy;
         }
 
+        /// <summary>
+        /// Copies the primitive surface including the faces and vertices (edges are not defined in the copy)
+        /// </summary>
+        /// <returns></returns>
         public PrimitiveSurface Copy()
         {
             var copy = (PrimitiveSurface)this.Clone();

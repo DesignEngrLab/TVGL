@@ -597,16 +597,13 @@ namespace TVGL  // COMMENTEDCHANGE namespace System.Numerics
             StringBuilder sb = new StringBuilder();
             string separator = NumberFormatInfo.GetInstance(formatProvider).NumberGroupSeparator;
             //sb.Append('<');
-            var numString = X.ToString(format, formatProvider);
-            if (numString.StartsWith("-0.") && numString.EndsWith(string.Join(string.Empty, Enumerable.Repeat('0', numString.Length - 3))))
-                numString = numString.Replace("-0.", "0.");
-            sb.Append(numString);
+            sb.Append(X.ToString(format, formatProvider).RemoveLeadingNegIfZero());
             sb.Append(separator);
             sb.Append(' ');
-            sb.Append(Y.ToString(format, formatProvider));
+            sb.Append(Y.ToString(format, formatProvider).RemoveLeadingNegIfZero());
             sb.Append(separator);
             sb.Append(' ');
-            sb.Append(Z.ToString(format, formatProvider));
+            sb.Append(Z.ToString(format, formatProvider).RemoveLeadingNegIfZero());
             //sb.Append('>');
             return sb.ToString();
         }

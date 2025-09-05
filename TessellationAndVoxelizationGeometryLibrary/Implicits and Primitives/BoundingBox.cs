@@ -42,7 +42,7 @@ namespace TVGL
         public BoundingBox(Vector3[] directions, IList<IEnumerable<T>> pointsOnFaces, double xLength = double.NaN,
             double yLength = double.NaN, double zLength = double.NaN)
     : this(directions, pointsOnFaces[0].First(), pointsOnFaces[2].First(),
-         pointsOnFaces[4].First())
+         pointsOnFaces[4].First(), xLength, yLength, zLength)
         {
             PointsOnFaces = pointsOnFaces.Select(pof => pof.ToArray()).ToArray();
         }
