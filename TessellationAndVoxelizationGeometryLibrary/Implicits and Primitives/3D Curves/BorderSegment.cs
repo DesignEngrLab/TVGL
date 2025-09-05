@@ -25,6 +25,8 @@ namespace TVGL
     [JsonObject]
     public class BorderSegment : EdgePath
     {
+        public int IndexInSolid { get; set; }//index in solid.BorderSegments - NOT primitive.BorderSegments
+
         /// <summary>
         /// Initializes a new instance of the <see cref="BorderSegment"/> class.
         /// </summary>
@@ -115,6 +117,19 @@ namespace TVGL
             }
         }
 
+        [JsonIgnore]
+        public Vector3 StraightLineDirection
+        {
+            get
+            {
+                if (Curve == null) return Vector3.Null;
+                if (Curve is StraightLine3D line3D) return line3D.Direction;
+                //2D curves are not used for border segments.
+                //if (Curve is StraightLine2D line2D) return line2D.Direction;
+                return Vector3.Null;
+            }
+        }
+
         /// <summary>
         /// Gets whether the [edge path is circular].
         /// </summary>
@@ -185,7 +200,8 @@ namespace TVGL
                 {
                     if (circleError < Constants.DefaultTessellationError && circleError < CurveError)
                     {
-                        CircleCenter = Vector3.Multiply(new Vector3(((Circle)circle).Center, 0), backTransform);
+                        CircleCenter = plane.TransformFrom2DTo3D(((Circle)circle).Center);
+                        //MiscFunctions.PointOnPlaneFromLine(PlaneNormal, PlaneDistance, )
                         _curve = circle;
                         CurveError = circleError;
                     }
