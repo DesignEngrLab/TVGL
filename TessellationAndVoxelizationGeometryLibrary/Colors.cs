@@ -15,6 +15,7 @@ using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Numerics;
 
 namespace TVGL
 {
@@ -727,7 +728,7 @@ namespace TVGL
     /// <summary>
     /// Struct Color
     /// </summary>
-    public class Color
+    public class Color : IEquatable<Color>
     {
         /// <summary>
         /// Converts the specified value.
@@ -760,10 +761,30 @@ namespace TVGL
         /// <returns><c>true</c> if the specified <see cref="System.Object" /> is equal to this instance; otherwise, <c>false</c>.</returns>
         public override bool Equals(object obj)
         {
+            if (obj is null) return false;
             if (!(obj is Color)) return false;
-            var otherColor = (Color)obj;
-            return A == otherColor.A && B == otherColor.B
-                   && G == otherColor.G && R == otherColor.R;
+            return Equals((Color)obj);
+        }
+
+        public bool Equals(Color other)
+        {
+            if (other is null) return false;
+            return A == other.A && B == other.B
+                   && G == other.G && R == other.R;
+        }
+
+        public static bool operator ==(Color a, Color b)
+        {
+            if (a is null && b is null) return true;
+            if (a is null) return false;
+            return a.Equals(b);
+        }
+
+        public static bool operator !=(Color a, Color b)
+        {
+            if (a is null && b is null) return false;
+            if (a is null) return true;
+            return !a.Equals(b);
         }
 
         /// <summary>
@@ -772,7 +793,9 @@ namespace TVGL
         /// <returns>System.Int.</returns>
         public override int GetHashCode()
         {
-            return base.GetHashCode();
+            // Pack A,R,G,B into a single Int32 in ARGB order
+            // (same layout as KnownColors uint values).
+            return (A << 24) | (R << 16) | (G << 8) | B;
         }
 
         #region Constructors
