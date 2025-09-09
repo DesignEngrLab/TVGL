@@ -107,7 +107,7 @@ namespace TVGL
         /// </summary>
         /// <value>The nonsmooth edges.</value>
         [JsonIgnore]
-        public List<Edge> NonsmoothEdges { get; set; }
+        public List<Edge>? NonsmoothEdges { get; set; }
         #endregion
 
         #region Constructors
