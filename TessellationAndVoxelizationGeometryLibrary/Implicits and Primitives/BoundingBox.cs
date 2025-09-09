@@ -313,7 +313,7 @@ namespace TVGL
         {
             get
             {
-                return _corners ??= MakeCornerPoints(Directions, TranslationFromOrigin);
+                return _corners ??= MakeCornerPoints(Directions, Dimensions, TranslationFromOrigin);
             }
         }
 
@@ -327,7 +327,7 @@ namespace TVGL
         /// The dimensions are also updated, in the event that the points of faces were altered (replaced or shifted).
         /// </summary>
         /// <returns>BoundingBox.</returns>
-        public static Vector3[] MakeCornerPoints(Vector3[] vectors, Vector3 origin)
+        public static Vector3[] MakeCornerPoints(Vector3[] direction, Vector3 dimensions, Vector3 origin)
         {
             ///     Corner vertices are ordered as follows, where - = low and + = high along directions 0, 1, and 2 respectively.
             ///     [0] = ---, [1] = +-- , [2] = ++- , [3] = -+-, [4] = --+ , [5] = +-+, [6] = +++, [7] = -++
@@ -335,19 +335,19 @@ namespace TVGL
             // ---
             corners[0] = origin;
             // +--
-            corners[1] = corners[0] + vectors[0];
+            corners[1] = corners[0] + direction[0] * dimensions[0];
             // ++-
-            corners[2] = corners[1] + vectors[1];
+            corners[2] = corners[1] + direction[1] * dimensions[1];
             // -+-
-            corners[3] = corners[0] + vectors[1];
+            corners[3] = corners[0] + direction[1] * dimensions[1]; 
             // --+
-            corners[4] = corners[0] + vectors[2];
+            corners[4] = corners[0] + direction[2] * dimensions[2];
             // +-+
-            corners[5] = corners[1] + vectors[2];
+            corners[5] = corners[1] + direction[2] * dimensions[2];
             // +++
-            corners[6] = corners[2] + vectors[2];
+            corners[6] = corners[2] + direction[2] * dimensions[2];
             // -++
-            corners[7] = corners[3] + vectors[2];
+            corners[7] = corners[3] + direction[2] * dimensions[2];
             return corners;
         }
 
