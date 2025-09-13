@@ -125,10 +125,17 @@ namespace TVGL
             return new Polygon(result);
         }
 
+        /// <summary>
+        /// Finds the vertex2D with the minimum y-value. If there is a tie in y-values, 
+        /// this method returns the minimum x-value.
+        /// </summary>
+        /// <param name="vertices"></param>
+        /// <returns></returns>
         private static Vertex2D FindMinY(List<Vertex2D> vertices)
         {
             Vertex2D minVertex = null;
-            var minX = double.MaxValue;
+            var minX = double.MaxValue; // we will keep track of the minX when there
+                                        // are multile vertices at the min y value.
             var minY = double.MaxValue;
             foreach (var v in vertices)
             {

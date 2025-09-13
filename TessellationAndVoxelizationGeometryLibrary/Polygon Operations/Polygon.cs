@@ -545,6 +545,7 @@ namespace TVGL
         /// Gets the centroid.
         /// </summary>
         /// <value>The centroid.</value>
+        [JsonIgnore]
         public Vector2 Centroid
         {
             get

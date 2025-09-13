@@ -591,6 +591,24 @@ namespace TVGL
             if (coordinates.Count > 0)
             {
                 polygon = new Polygon(coordinates);
+                var avgEdgeLength = polygon.Perimeter / polygon.Vertices.Count;
+                for (int i = 0; i < polygon.Vertices.Count; i++)
+                {
+                    if (polygon.Vertices[i].Coordinates.IsNegligible(1e-5))
+                    {
+                        var zeroVertex = polygon.Vertices[0];
+                        var prevVertex = i > 0 ? polygon.Vertices[i - 1] : polygon.Vertices[^1];
+                        var nextVertex = i == polygon.Vertices.Count - 1 ? polygon.Vertices[0] : polygon.Vertices[i + 1];
+                        var skipLength = (prevVertex.Coordinates - nextVertex.Coordinates).LengthSquared();
+                        if ((prevVertex.Coordinates - zeroVertex.Coordinates).LengthSquared() > skipLength && 
+                            (nextVertex.Coordinates - zeroVertex.Coordinates).LengthSquared() > skipLength)
+                        { 
+                            polygon.Vertices.RemoveAt(i);
+                            polygon.Reset();
+                        }
+                        break;
+                    }
+                }
                 if (!polygon.IsPositive) polygon.Reverse();
                 return true;
             }

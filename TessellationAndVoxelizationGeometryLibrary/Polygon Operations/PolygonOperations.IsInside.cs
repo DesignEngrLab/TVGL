@@ -14,6 +14,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Numerics;
 
 
 namespace TVGL
@@ -101,18 +102,21 @@ namespace TVGL
                 return false;
             }
             onBoundary = false;
-            foreach (var subPolygon in inner.AllPolygons)
-            {
-                foreach (var vector2 in subPolygon.Path)
-                {
-                    if (!outer.IsPointInsidePolygon(onlyTopOuterPolygon, vector2, out var thisPointOnBoundary, boundaryTolerance))
-                        // negative has a point outside of positive. no point in checking other points
-                        return false;
-                    if (thisPointOnBoundary) onBoundary = true;
-                    else return true;
-                }
-            }
-            return null; //all points are on boundary, so it is unclear if it is inside
+            return outer.IsPointInsidePolygon(onlyTopOuterPolygon, inner.Centroid,
+                out var thisPointOnBoundary, boundaryTolerance);
+
+            //    foreach (var subPolygon in inner.AllPolygons)
+            //{
+            //    foreach (var vector2 in subPolygon.Path)
+            //    {
+            //        if (!outer.IsPointInsidePolygon(onlyTopOuterPolygon, vector2, out var thisPointOnBoundary, boundaryTolerance))
+            //            // negative has a point outside of positive. no point in checking other points
+            //            return false;
+            //        if (thisPointOnBoundary) onBoundary = true;
+            //        else return true;
+            //    }
+            //}
+            //return null; //all points are on boundary, so it is unclear if it is inside
         }
 
         /// <summary>
