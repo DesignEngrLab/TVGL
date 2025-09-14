@@ -55,7 +55,7 @@ namespace TVGLUnitTestsAndBenchmarking
             C.Transform(Matrix3x3.CreateScale(5, -5, new Vector2(0, 7)));
             var box = new Polygon([new Vector2(-1, -32), new Vector2(62, -32), new Vector2(62, 43), new Vector2(-1, 43),]);
             C = box.Subtract(C).LargestPolygon();
-            Presenter.ShowAndHang([C, B]);
+            Presenter.ShowAndHang([A, B,C]);
             //var B = new Polygon(new List<Vector2> { new Vector2(10,10), new Vector2(16, 10),
             //    new Vector2(16, 6),
             //    new Vector2(17,9),
@@ -64,12 +64,12 @@ namespace TVGLUnitTestsAndBenchmarking
             //});
             //A.Transform(Matrix3x3.CreateTranslation(5, 11));
             //A.Reverse();
-            A = C;
+            //A = C;
             var negB = new Polygon(B.Path.Select(p => -p));
             // var ASumB = A.MinkowskiSumNew(B).LargestPolygon();
             var ASumNegB = A.MinkowskiSum(negB);
             var ASumNegB0 = ASumNegB[0];
-            var ASumNegB1 = ASumNegB[1];
+            var ASumNegB1 = ASumNegB[0];
             //var ASumNegB0 = A.MinkowskiSum(negB)[0];
             //var ASumNegB1 = A.MinkowskiSum(negB)[1];
             //Presenter.ShowAndHang([A, B,negB]);
