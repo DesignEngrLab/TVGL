@@ -16,6 +16,7 @@ using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using System.Linq;
 
 namespace TVGL
@@ -285,10 +286,10 @@ namespace TVGL
         {
             bool belongsToConvolution;
             if (advancingP1)
-                belongsToConvolution = IsCCWInBetween(p1Angles[i1], p2Angles[prev_i2], p2Angles[i2]) 
+                belongsToConvolution = IsCCWInBetween(p1Angles[i1], p2Angles[prev_i2], p2Angles[i2])
                     || DirectionsEqual(p1Angles[i1], p2Angles[i2]);
             else
-                belongsToConvolution = IsCCWInBetween(p2Angles[i2], p1Angles[prev_i1], p1Angles[i1]) 
+                belongsToConvolution = IsCCWInBetween(p2Angles[i2], p1Angles[prev_i1], p1Angles[i1])
                     || DirectionsEqual(p2Angles[i2], p1Angles[prev_i1]);
 
             if (!belongsToConvolution) return false;
@@ -353,13 +354,12 @@ namespace TVGL
 
             var used = new HashSet<(Vector2 from, Vector2 to)>();
 
-            foreach (var kvp in buckets.ToList())
+            foreach ((var startKey, var segs) in buckets)
             {
-                foreach (var seg in kvp.Value)
+                foreach (var seg in segs)
                 {
                     if (!used.Add(seg)) continue;
                     var loop = new List<Vector2> { seg.from, seg.to };
-                    var startKey = new PointKey(seg.from);
                     var current = seg.to;
                     var prevDir = new Vector2(seg.to.X - seg.from.X, seg.to.Y - seg.from.Y);
 
@@ -376,8 +376,7 @@ namespace TVGL
                         {
                             if (used.Contains(cand)) continue;
                             var dir = new Vector2(cand.to.X - cand.from.X, cand.to.Y - cand.from.Y);
-                            var angle = SignedCCWAngle(prevDir, dir);
-                            if (angle < 0) angle += 2 * Math.PI; // normalize
+                            var angle = dir.AngleCCWBetweenVectorAAndDatum(prevDir);
                             if (angle < bestAngle)
                             {
                                 bestAngle = angle;
@@ -403,12 +402,6 @@ namespace TVGL
             }
         }
 
-        private static double SignedCCWAngle(Vector2 from, Vector2 to)
-        {
-            var cross = Vector2.Cross(from, to);
-            var dot = Vector2.Dot(from, to);
-            return Math.Atan2(cross, dot);
-        }
 
         private readonly struct PointKey : IEquatable<PointKey>
         {
