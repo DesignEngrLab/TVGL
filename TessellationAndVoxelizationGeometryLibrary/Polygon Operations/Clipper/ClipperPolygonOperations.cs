@@ -158,16 +158,17 @@ namespace TVGL
                     else c.AddOpenSubject(path);
                 }
             }
-            foreach (var polygon in clips)
-            {
-                foreach (var polygonElement in polygon.AllPolygons.Where(p => !p.PathArea.IsNegligible(Constants.BaseTolerance)))
+            if (clips != null)
+                foreach (var polygon in clips)
                 {
-                    var path = new Path64(polygonElement.Path.Select(p => new Point64(p.X * scale, p.Y * scale)));
-                    if (polygonElement.IsClosed)
-                        c.AddClip(path);
-                    //else //c.AddOpenClip(path);
+                    foreach (var polygonElement in polygon.AllPolygons.Where(p => !p.PathArea.IsNegligible(Constants.BaseTolerance)))
+                    {
+                        var path = new Path64(polygonElement.Path.Select(p => new Point64(p.X * scale, p.Y * scale)));
+                        if (polygonElement.IsClosed)
+                            c.AddClip(path);
+                        //else //c.AddOpenClip(path);
+                    }
                 }
-            }
             var solutionClosed = new Paths64();
             var solutionOpen = new Paths64();
             c.Execute(clipType, fillMethod, solutionClosed, solutionOpen);
@@ -176,7 +177,7 @@ namespace TVGL
             var baseClosedPolygons = solutionClosed.Select(clipperPath
                 => new Polygon(clipperPath.Select(point => new Vector2(point.X / scale, point.Y / scale))));
             var openPolygons = solutionOpen.Select(clipperPath
-                => new Polygon(clipperPath.Select(point => new Vector2(point.X / scale, point.Y / scale)),isClosed:false));
+                => new Polygon(clipperPath.Select(point => new Vector2(point.X / scale, point.Y / scale)), isClosed: false));
             if (outputAsCollectionType == PolygonCollection.PolygonWithHoles)
                 return baseClosedPolygons.CreateShallowPolygonTrees(true);
             if (outputAsCollectionType == PolygonCollection.PolygonTrees)
