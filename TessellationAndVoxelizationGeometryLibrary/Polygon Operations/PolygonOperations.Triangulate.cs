@@ -172,7 +172,7 @@ namespace TVGL
             {
                 polygon.MakePolygonEdgesIfNonExistent();
                 IList<Vertex2D> verts = polygon.Vertices;
-                var concaveEdge = polygon.Vertices.FirstOrDefault(v => v.EndLine.Vector.CrossSign(v.StartLine.Vector) < 0);
+                var concaveEdge = polygon.Vertices.FirstOrDefault(v => v.EndLine.Vector3D.CrossSign(v.StartLine.Vector3D) < 0);
                 if (concaveEdge != null)
                 {
                     while (verts[0].IndexInList != concaveEdge.IndexInList)
@@ -334,12 +334,12 @@ namespace TVGL
             foreach (var vertex in sortedVertices)
             {
                 var monoChange = GetMonotonicityChange(vertex);
-                var cornerCross = vertex.EndLine.Vector.CrossSign(vertex.StartLine.Vector);
+                var cornerCross = vertex.EndLine.Vector3D.CrossSign(vertex.StartLine.Vector3D);
                 if (monoChange == MonotonicityChange.SameAsPrevious || monoChange == MonotonicityChange.Neither || monoChange == MonotonicityChange.Y)
                 // then it's regular
                 {
-                    if (vertex.StartLine.Vector.X > 0 || vertex.EndLine.Vector.X > 0 ||  //headed in the positive x direction (enclosing along the bottom)
-                        (vertex.StartLine.Vector.X == 0 && vertex.EndLine.Vector.X == 0 && vertex.StartLine.Vector.Y > 0))
+                    if (Int128.IsPositive(vertex.StartLine.Vector3D.X) || Int128.IsPositive(vertex.EndLine.Vector3D.X) ||  //headed in the positive x direction (enclosing along the bottom)
+                        (vertex.StartLine.Vector3D.X == 0 && vertex.EndLine.Vector3D.X == 0 && Int128.IsPositive(vertex.StartLine.Vector3D.Y)))
                     {   // in the CCW direction or along the bottom
                         MakeNewDiagonalEdgeIfMerge(connections, edgeDatums, vertex.EndLine, vertex);
                         edgeDatums.Remove(vertex.EndLine);
@@ -354,8 +354,8 @@ namespace TVGL
                 }
                 else if (cornerCross >= 0) //then either start or end
                 {
-                    if (vertex.StartLine.Vector.X > 0 && vertex.EndLine.Vector.X < 0 || // then start
-                        (vertex.StartLine.Vector.X > 0 && vertex.EndLine.Vector.X == 0 && vertex.EndLine.Vector.Y < 0))
+                    if (Int128.IsPositive( vertex.StartLine.Vector3D.X) && Int128.IsNegative( vertex.EndLine.Vector3D.X) || // then start
+                        (Int128.IsPositive(vertex.StartLine.Vector3D.X) && vertex.EndLine.Vector3D.X == 0 && Int128.IsNegative(vertex.EndLine.Vector3D.Y)))
                         edgeDatums.Add(vertex.StartLine, (vertex, false));
                     else // then it's an end
                     {
@@ -365,8 +365,8 @@ namespace TVGL
                 }
                 else //then either split or merge
                 {
-                    if (vertex.StartLine.Vector.X > 0 && vertex.EndLine.Vector.X < 0 || // then split
-                       (vertex.StartLine.Vector.Y > 0 && vertex.EndLine.Vector.Y > 0))
+                    if (Int128.IsPositive(vertex.StartLine.Vector3D.X) && Int128.IsNegative(vertex.EndLine.Vector3D.X) || // then split
+                       (Int128.IsPositive(vertex.StartLine.Vector3D.Y) && Int128.IsPositive(vertex.EndLine.Vector3D.Y)))
                     {   // it's a split
                         var closestDatumEdge = FindClosestLowerDatum(edgeDatums.Keys, vertex.Coordinates);
                         var helperVertex = edgeDatums[closestDatumEdge].Item1;
@@ -464,7 +464,7 @@ namespace TVGL
                 numEdges++;
                 var intersectionYValue = PGA2D.YValueGivenXOnEdge(point.X, point.W, edge, out var betweenPoints);
                 if (!betweenPoints) continue;
-                var delta =new RationalIP(point.Y,point.W) - intersectionYValue;
+                var delta = new RationalIP(point.Y, point.W) - intersectionYValue;
                 if (delta < closestDistance)
                 {
                     closestDistance = delta;

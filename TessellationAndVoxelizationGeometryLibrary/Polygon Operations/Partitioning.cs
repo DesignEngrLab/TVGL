@@ -109,16 +109,16 @@ namespace TVGL
         {
             if (vertex.EndLine == null|| vertex.StartLine == null) throw new ArgumentException("vertex does not connect to polygon edges. Be sure to invoke" +
              " MakePolygonEdgesIfNonExistent on parent polygon before this calling this method.", nameof(vertex));
-            var xPrev = vertex.EndLine.Vector.X;
-            var yPrev = vertex.EndLine.Vector.Y;
+            var xPrev = vertex.EndLine.Vector3D.X;
+            var yPrev = vertex.EndLine.Vector3D.Y;
             if (xPrev == 0 && yPrev == 0) return MonotonicityChange.SameAsPrevious;
             Int128 xNext, yNext;
             var neighborVertex = vertex;
             do  // this loop simply seem to advance to the first vertex that has a non-zero length vector
             {
                 neighborVertex = neighborVertex.StartLine.ToPoint;
-                xNext = neighborVertex.EndLine.Vector.X;
-                yNext = neighborVertex.EndLine.Vector.Y;
+                xNext = neighborVertex.EndLine.Vector3D.X;
+                yNext = neighborVertex.EndLine.Vector3D.Y;
             }
             while (xNext == Int128.Zero && yNext == Int128.Zero);
 
@@ -153,7 +153,7 @@ namespace TVGL
                 do
                 {
                     neighborVertex = neighborVertex.EndLine.FromPoint;
-                    xPrev = neighborVertex.EndLine.Vector.X;
+                    xPrev = neighborVertex.EndLine.Vector3D.X;
                 } while (xPrev == Int128.Zero);
                 xChangesDir = Int128.Sign(xPrev) != Int128.Sign(xNext);
             }
@@ -162,7 +162,7 @@ namespace TVGL
                 do
                 {
                     neighborVertex = neighborVertex.StartLine.ToPoint;
-                    xNext = neighborVertex.EndLine.Vector.X;
+                    xNext = neighborVertex.EndLine.Vector3D.X;
                 } while (xNext == Int128.Zero);
                 xChangesDir = Int128.Sign(xPrev) != Int128.Sign(xNext);
             }
@@ -172,7 +172,7 @@ namespace TVGL
                 do
                 {
                     neighborVertex = neighborVertex.EndLine.FromPoint;
-                    yPrev = neighborVertex.EndLine.Vector.Y;
+                    yPrev = neighborVertex.EndLine.Vector3D.Y;
                 } while (yPrev == Int128.Zero);
                 yChangesDir = (Int128.Sign(yPrev) != Int128.Sign(yNext));
             }
@@ -181,7 +181,7 @@ namespace TVGL
                 do
                 {
                     neighborVertex = neighborVertex.StartLine.ToPoint;
-                    yNext = neighborVertex.EndLine.Vector.Y;
+                    yNext = neighborVertex.EndLine.Vector3D.Y;
                 } while (yNext == Int128.Zero);
                 yChangesDir = Int128.Sign(yPrev) != Int128.Sign(yNext);
             }

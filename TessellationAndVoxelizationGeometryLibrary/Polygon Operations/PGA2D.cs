@@ -68,6 +68,7 @@ namespace TVGL
             out RationalIP t1, out bool onSegment1, out RationalIP t2, out bool onSegment2)
         {
             var point = polyEdge1.Normal.Cross3D(polyEdge2.Normal);
+            point = point.Reduce();
             t1 = FractionOnLineSegment(polyEdge1, point, out onSegment1);
             t2 = FractionOnLineSegment(polyEdge2, point, out onSegment2);
             return point;
@@ -118,24 +119,34 @@ namespace TVGL
         }
 
         internal static RationalIP FractionOnLineSegment(PolygonEdge polygonEdge, Vector2IP point, out bool onSegment)
+        => FractionOnLineSegment(polygonEdge.FromPoint.Coordinates, polygonEdge.ToPoint.Coordinates, point, out onSegment);
+        internal static RationalIP FractionOnLineSegment(Vector2IP fromPoint, Vector2IP toPoint, Vector2IP point, out bool onSegment)
         {
-            if (polygonEdge.ToPoint.Coordinates == point)
+            var uVector = fromPoint.Cross3D(point);
+            var vVector = point.Cross3D(toPoint);
+
+            if (vVector.Equals(Vector2IP.Zero))
             {
                 onSegment = false; // like indexing, we follow the rule inclusive of the first, exclusive of the last
                 return RationalIP.One;
             }
-            else if (polygonEdge.FromPoint.Coordinates == point)
+            else if (uVector.Equals(Vector2IP.Zero))
             {
                 onSegment = true;
                 return RationalIP.Zero;
             }
-            var v = polygonEdge.Vector;
-            var vDotV = v.Dot3D(v);
-            if (Int128.IsNegative(vDotV)) throw new OverflowException();
-            var u = Vector2IP.Minus3D(point, polygonEdge.FromPoint.Coordinates);
-            var uDotV = u.Dot3D(v);
-            onSegment = uDotV >= 0 && uDotV < vDotV;
-            return new RationalIP(uDotV, vDotV);
+            var dot = uVector.Dot3D(vVector);
+            if (Int128.IsNegative(dot))
+            {
+                onSegment = false;
+                var segmentArea = fromPoint.Cross3D(toPoint);
+                return (Int128.IsNegative(uVector.Dot3D(segmentArea))) ? RationalIP.NegativeInfinity : RationalIP.PositiveInfinity;
+            }
+            onSegment = true;
+            var uVectorLength = uVector.Length3D();
+            var vVectorLength = vVector.Length3D();
+
+            return new RationalIP(uVectorLength, uVectorLength + vVectorLength);
         }
 
         internal static Vector2IP LineJoiningTwoPoints(Vector2IP from, Vector2IP to)

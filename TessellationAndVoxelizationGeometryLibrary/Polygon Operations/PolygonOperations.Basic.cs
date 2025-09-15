@@ -336,7 +336,7 @@ namespace TVGL
             var n = polygon.Edges.Count - 1;
             for (int i = 0; i <= n; i++)
             {
-                length = polygon.Edges[i].Vector.LengthSquared2D().AsDouble;
+                length = polygon.Edges[i].Vector2D.LengthSquared2D().AsDouble;
                 if (!length.IsGreaterThanNonNegligible(smallEdgeLengthSqd))
                     unitLengthEdges.Push(i);
                 else if (!length.IsLessThanNonNegligible(longEdgeLengthSqd))
@@ -344,19 +344,19 @@ namespace TVGL
                 else
                     medEdges.Push(i);
             }
-            length = polygon.Edges[0].Vector.LengthSquared2D().AsDouble;
+            length = polygon.Edges[0].Vector2D.LengthSquared2D().AsDouble;
             var nextEdgeIs = !length.IsGreaterThanNonNegligible(smallEdgeLengthSqd)
                 ? PixelEdgeLength.Unit : !length.IsLessThanNonNegligible(longEdgeLengthSqd) ?
                 PixelEdgeLength.Long : PixelEdgeLength.Med;
-            length = polygon.Edges[^1].Vector.LengthSquared2D().AsDouble;
+            length = polygon.Edges[^1].Vector2D.LengthSquared2D().AsDouble;
             var lastEdgeIs = pixelEdgeType(n, unitLengthEdges, medEdges, longEdges);
             var currentEdgeIs = lastEdgeIs;
-            var nextVector = polygon.Edges[0].Vector.AsNormalizedVector2();
+            var nextVector = polygon.Edges[0].Vector2D.AsNormalizedVector2();
             for (int i = n; i >= 0; i--)
             {
                 if (!polygon.IsClosed && i == 0) break;
                 var currentEdge = polygon.Edges[i];
-                var currVector = currentEdge.Vector.AsNormalizedVector2();
+                var currVector = currentEdge.Vector2D.AsNormalizedVector2();
                 var prevEdgeIs = i == 0 ? lastEdgeIs : pixelEdgeType(i - 1, unitLengthEdges, medEdges, longEdges);
                 // four possibilities
                 // 4. unit length edges that are followed by a long length edge, then the long edge is rounded off

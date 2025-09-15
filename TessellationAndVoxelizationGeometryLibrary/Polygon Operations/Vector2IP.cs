@@ -13,6 +13,7 @@
 // ***********************************************************************
 using System;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 namespace TVGL
 {
@@ -321,6 +322,18 @@ namespace TVGL
         {
             return new Vector2IP(left.X * right.W + right.X * left.W,
                 left.Y * right.W + right.Y * left.W, 2 * left.W * right.W);
+        }
+
+        internal Vector2IP Reduce()
+        {
+            var lastFactor = Int128.One;
+            var factor = (Int128)RationalIP.MaxToIntFactor;
+            while (factor < W)
+            {
+                lastFactor = factor;
+                factor *= RationalIP.MaxToIntFactor;
+            }
+            return new Vector2IP(X / lastFactor, Y / lastFactor, W / lastFactor);
         }
         #endregion Public Static Operators
     }

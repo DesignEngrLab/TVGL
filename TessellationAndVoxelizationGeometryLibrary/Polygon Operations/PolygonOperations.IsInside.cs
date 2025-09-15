@@ -221,7 +221,7 @@ namespace TVGL
         {
             if (point == line.FromPoint.Coordinates)
             {
-                var signOfOverallDirection = line.Vector.X * line.FromPoint.EndLine.Vector.X;
+                var signOfOverallDirection = line.Vector3D.X * line.FromPoint.EndLine.Vector3D.X;
                 // this is a cusp - where the polygon line turns around at this point
                 if (signOfOverallDirection < 0) return VerticalLineReferenceType.NotIntersecting;
                 return VerticalLineReferenceType.On;
@@ -980,8 +980,8 @@ namespace TVGL
             // okay, so bounding boxes DO overlap
             if (lineA.FromPoint.Coordinates == lineB.FromPoint.Coordinates)
             {
-                var segmentRelationship = GetSegmentRelationship(lineA.Vector, -lineA.FromPoint.EndLine.Vector,
-                    lineB.Vector, -lineB.FromPoint.EndLine.Vector);
+                var segmentRelationship = GetSegmentRelationship(lineA.Vector3D, -lineA.FromPoint.EndLine.Vector3D,
+                    lineB.Vector3D, -lineB.FromPoint.EndLine.Vector3D);
                 intersections.Add(new SegmentIntersection(lineA, lineB, lineA.FromPoint.Coordinates,
                     segmentRelationship, WhereIsIntersection.BothStarts));
                 return true;
@@ -1015,10 +1015,10 @@ namespace TVGL
             {
                 SegmentRelationship segmentRelationship =
                     where == WhereIsIntersection.AtStartOfA
-                    ? GetSegmentRelationship(lineA.Vector, -lineA.FromPoint.EndLine.Vector,
-                    lineB.Vector, -lineB.Vector)
-                    : GetSegmentRelationship(lineA.Vector, -lineA.Vector,
-                    lineB.Vector, -lineB.FromPoint.EndLine.Vector);
+                    ? GetSegmentRelationship(lineA.Vector3D, -lineA.FromPoint.EndLine.Vector3D,
+                    lineB.Vector3D, -lineB.Vector3D)
+                    : GetSegmentRelationship(lineA.Vector3D, -lineA.Vector3D,
+                    lineB.Vector3D, -lineB.FromPoint.EndLine.Vector3D);
                 intersections.Add(new SegmentIntersection(lineA, lineB, lineA.FromPoint.Coordinates,
                     segmentRelationship, where));
             }
@@ -1088,15 +1088,15 @@ namespace TVGL
                 var aXIsBetweenBXs = lineB.XMin < lineAFromX && lineAFromX < lineB.XMax;
                 if (aXIsBetweenBXs)
                 {
-                    var segmentRelationship = GetSegmentRelationship(lineA.Vector, -lineA.FromPoint.EndLine.Vector,
-                        lineB.Vector, -lineB.Vector);
+                    var segmentRelationship = GetSegmentRelationship(lineA.Vector3D, -lineA.FromPoint.EndLine.Vector3D,
+                        lineB.Vector3D, -lineB.Vector3D);
                     intersections.Add(new SegmentIntersection(lineA, lineB, lineA.FromPoint.Coordinates,
                         segmentRelationship, WhereIsIntersection.AtStartOfA));
                 }
                 if (!aXIsBetweenBXs || (!sameDir && lineA.XMin < lineBFromX && lineBFromX < lineA.XMax))
                 {
-                    var segmentRelationship = GetSegmentRelationship(lineA.Vector, -lineA.Vector,
-                    lineB.Vector, -lineB.FromPoint.EndLine.Vector);
+                    var segmentRelationship = GetSegmentRelationship(lineA.Vector3D, -lineA.Vector3D,
+                    lineB.Vector3D, -lineB.FromPoint.EndLine.Vector3D);
                     intersections.Add(new SegmentIntersection(lineA, lineB, lineB.FromPoint.Coordinates, segmentRelationship,
                         WhereIsIntersection.AtStartOfB));
                 }
@@ -1109,15 +1109,15 @@ namespace TVGL
                 var aYIsBetweenBYs = lineB.YMin < lineAFromY && lineAFromY < lineB.YMax;
                 if (aYIsBetweenBYs)
                 {
-                    var segmentRelationship = GetSegmentRelationship(lineA.Vector, -lineA.FromPoint.EndLine.Vector,
-                        lineB.Vector, -lineB.Vector);
+                    var segmentRelationship = GetSegmentRelationship(lineA.Vector3D, -lineA.FromPoint.EndLine.Vector3D,
+                        lineB.Vector3D, -lineB.Vector3D);
                     intersections.Add(new SegmentIntersection(lineA, lineB, lineA.FromPoint.Coordinates,
                         segmentRelationship, WhereIsIntersection.AtStartOfA));
                 }
                 if (!aYIsBetweenBYs || (!sameDir && lineA.YMin < lineBFromY && lineBFromY < lineA.YMax))
                 {
-                    var segmentRelationship = GetSegmentRelationship(lineA.Vector, -lineA.Vector,
-                    lineB.Vector, -lineB.FromPoint.EndLine.Vector);
+                    var segmentRelationship = GetSegmentRelationship(lineA.Vector3D, -lineA.Vector3D,
+                    lineB.Vector3D, -lineB.FromPoint.EndLine.Vector3D);
                     intersections.Add(new SegmentIntersection(lineA, lineB, lineB.FromPoint.Coordinates, segmentRelationship,
                         WhereIsIntersection.AtStartOfB));
                 }

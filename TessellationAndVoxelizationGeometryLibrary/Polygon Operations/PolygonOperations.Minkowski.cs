@@ -110,7 +110,7 @@ namespace TVGL
             do
             {
                 result.Add(new Vertex2D(Vector2IP.Add2D(aVertex.Coordinates, bVertex.Coordinates), vertNum++, 0));
-                var cross = aVertex.StartLine.Vector.CrossSign(bVertex.StartLine.Vector);
+                var cross = aVertex.StartLine.Vector3D.CrossSign(bVertex.StartLine.Vector3D);
                 // will this always be correct? I'm worried that angle could be greater than 180, and then a
                 // false result would be returned. ...although, I tried to come up with a case to break it
                 // and couldn't I guess because you can't have an angle greater than 180 on convex shapes
@@ -151,8 +151,8 @@ namespace TVGL
             var aStartEdge = FindMinY(a.Vertices).EndLine;
             var bStartEdge = FindMinY(b.Vertices).EndLine;
             var flipResult = a.IsPositive != b.IsPositive;
-            var aEdgeAngles = a.Edges.ToDictionary(e => e, e => Global.Pseudoangle(e.Vector.X, e.Vector.Y));
-            var bEdgeAngles = b.Edges.ToDictionary(e => e, e => Global.Pseudoangle(e.Vector.X, e.Vector.Y));
+            var aEdgeAngles = a.Edges.ToDictionary(e => e, e => Global.Pseudoangle(e.Vector3D.X, e.Vector3D.Y));
+            var bEdgeAngles = b.Edges.ToDictionary(e => e, e => Global.Pseudoangle(e.Vector3D.X, e.Vector3D.Y));
 
             var prevAEdge = aStartEdge;
             var prevBEdge = bStartEdge;
@@ -169,7 +169,7 @@ namespace TVGL
                 if (firstAngleIsBetweenOthersCCW(aAngle, bPrevAngle, bAngle))
                 {
                     result.Add(Vector2IP.Add2D(nextAEdge.ToPoint.Coordinates, prevBEdge.ToPoint.Coordinates));
-                    var prevBCrossNextB = prevBEdge.Vector.CrossSign(nextBEdge.Vector);
+                    var prevBCrossNextB = prevBEdge.Vector3D.CrossSign(nextBEdge.Vector3D);
                     knownWrongPoints.Add(prevBCrossNextB < 0);
                     prevAEdge = nextAEdge;
                     nextAEdge = nextAEdge.ToPoint.StartLine;
@@ -177,7 +177,7 @@ namespace TVGL
                 if (firstAngleIsBetweenOthersCCW(bAngle, aPrevAngle, aAngle))
                 {
                     result.Add(Vector2IP.Add2D(nextBEdge.ToPoint.Coordinates, prevAEdge.ToPoint.Coordinates));
-                    var prevACrossNextA = prevAEdge.Vector.CrossSign(nextAEdge.Vector);
+                    var prevACrossNextA = prevAEdge.Vector3D.CrossSign(nextAEdge.Vector3D);
                     knownWrongPoints.Add(prevACrossNextA < 0);
                     prevBEdge = nextBEdge;
                     nextBEdge = nextBEdge.ToPoint.StartLine;
@@ -207,8 +207,8 @@ namespace TVGL
             var polygons = new List<Polygon>();
             var flipResult = a.IsPositive != b.IsPositive;
             var visitedHash = new Dictionary<(Vertex2D, Vertex2D, bool), Vertex2D>(new EdgePairToIntComparator(a, b));
-            var aEdgeAngles = a.Edges.ToDictionary(e => e, e => Global.Pseudoangle(e.Vector.X, e.Vector.Y));
-            var bEdgeAngles = b.Edges.ToDictionary(e => e, e => Global.Pseudoangle(e.Vector.X, e.Vector.Y));
+            var aEdgeAngles = a.Edges.ToDictionary(e => e, e => Global.Pseudoangle(e.Vector3D.X, e.Vector3D.Y));
+            var bEdgeAngles = b.Edges.ToDictionary(e => e, e => Global.Pseudoangle(e.Vector3D.X, e.Vector3D.Y));
             var startsQueue = new Stack<(Vertex2D, Vertex2D)>();
             startsQueue.Push((FindMinY(a.Vertices), FindMinY(b.Vertices)));
             foreach (var aConcavity in aConcaveVertices)
@@ -309,13 +309,13 @@ namespace TVGL
                         visitedHash.Add((aVertex, bVertex, false), newVertex);
                         visitedHash.Add((aVertex, bVertex, true), newVertex);
                         result.Add(newVertex);
-                        var prevACrossNextA = aVertex.EndLine.Vector.CrossSign(nextAEdge.Vector);
+                        var prevACrossNextA = aVertex.EndLine.Vector3D.CrossSign(nextAEdge.Vector3D);
                         knownWrongPoints.Add(prevACrossNextA < 0);
                         bVertex = nextBEdge.ToPoint;
                         newVertex = new Vertex2D(Vector2IP.Add2D(nextAEdge.ToPoint.Coordinates, bVertex.Coordinates), visitedHash.Count, currentLoopIndex);
                         //visitedHash.Add((aVertex, bVertex, true), newVertex);
                         result.Add(newVertex);
-                        var prevBCrossNextB = bVertex.EndLine.Vector.CrossSign(nextBEdge.Vector);
+                        var prevBCrossNextB = bVertex.EndLine.Vector3D.CrossSign(nextBEdge.Vector3D);
                         knownWrongPoints.Add(prevBCrossNextB < 0);
                         aVertex = nextAEdge.ToPoint;
                         break;
@@ -326,7 +326,7 @@ namespace TVGL
                         newVertex = new Vertex2D(Vector2IP.Add2D(nextAEdge.ToPoint.Coordinates, bVertex.Coordinates), visitedHash.Count, currentLoopIndex);
                         visitedHash.Add((aVertex, bVertex, true), newVertex);
                         result.Add(newVertex);
-                        prevBCrossNextB = bVertex.EndLine.Vector.CrossSign(nextBEdge.Vector);
+                        prevBCrossNextB = bVertex.EndLine.Vector3D.CrossSign(nextBEdge.Vector3D);
                         knownWrongPoints.Add(prevBCrossNextB < 0);
                         aVertex = nextAEdge.ToPoint;
                         break;
@@ -334,7 +334,7 @@ namespace TVGL
                         newVertex = new Vertex2D(Vector2IP.Add2D(aVertex.Coordinates, nextBEdge.ToPoint.Coordinates), visitedHash.Count, currentLoopIndex);
                         visitedHash.Add((aVertex, bVertex, false), newVertex);
                         result.Add(newVertex);
-                        prevACrossNextA = aVertex.EndLine.Vector.CrossSign(nextAEdge.Vector);
+                        prevACrossNextA = aVertex.EndLine.Vector3D.CrossSign(nextAEdge.Vector3D);
                         knownWrongPoints.Add(prevACrossNextA < 0);
                         bVertex = nextBEdge.ToPoint;
                         break;

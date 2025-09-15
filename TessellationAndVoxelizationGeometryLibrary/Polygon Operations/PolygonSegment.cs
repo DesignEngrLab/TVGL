@@ -62,16 +62,31 @@ namespace TVGL
         /// Gets the length of the line.
         /// </summary>
         /// <value>The length.</value>
-        internal Vector2IP Vector
+        internal Vector2IP Vector3D
         {
             get
             {
-                if (_vector.IsNull())
-                    _vector = Vector2IP.Minus3D(ToPoint.Coordinates, FromPoint.Coordinates);
-                return _vector;
+                if (_vector3D.IsNull())
+                    _vector3D = Vector2IP.Minus3D(ToPoint.Coordinates, FromPoint.Coordinates);
+                return _vector3D;
             }
         }
-        private Vector2IP _vector = Vector2IP.Zero;
+        private Vector2IP _vector3D = Vector2IP.Zero;
+
+        /// <summary>
+        /// Gets the length of the line.
+        /// </summary>
+        /// <value>The length.</value>
+        internal Vector2IP Vector2D
+        {
+            get
+            {
+                if (_vector2D.IsNull())
+                    _vector2D = Vector2IP.Minus2D(ToPoint.Coordinates, FromPoint.Coordinates);
+                return _vector2D;
+            }
+        }
+        private Vector2IP _vector2D = Vector2IP.Zero;
 
 
         internal Vector2IP Normal
@@ -276,7 +291,8 @@ namespace TVGL
         {
             _center = default;
             _length = double.NaN;
-            _vector = default;
+            _vector2D = default;
+            _vector3D = default;
             xMax = default;
             xMin = default;
             yMax = default;

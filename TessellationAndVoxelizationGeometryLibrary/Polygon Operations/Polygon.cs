@@ -709,7 +709,7 @@ namespace TVGL
                 }
                 else
                 {
-                    v.IsConvex = v.EndLine.Vector.CrossSign(v.StartLine.Vector) >= 0;
+                    v.IsConvex = v.EndLine.Vector3D.CrossSign(v.StartLine.Vector3D) >= 0;
                     if (!v.IsConvex.Value)
                         _isConvex = false;
                 }

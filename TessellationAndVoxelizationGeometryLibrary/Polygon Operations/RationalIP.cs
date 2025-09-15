@@ -105,6 +105,7 @@ namespace TVGL
 
         internal static double AsDoubleValue(Int128 num, Int128 den)
         {
+            if (num == Int128.Zero) return 0.0;
             (Int128 quotient, Int128 remainder) = Int128.DivRem(num, den);
             // to increase precision, we add the remainder divided by the denominator
             if (remainder == 0) return (double)quotient;

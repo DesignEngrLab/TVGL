@@ -367,9 +367,9 @@ namespace TVGL
                         // the nominal points are at the intersection of the offset lines (thisOffsetNormal and prevOffsetNormal) and the
                         // plane perpendicular to the line representing the point and the W-axis [0,0,1]...actually, this is the edge vector
                         // with the w component removed.
-                        var firstPoint = PGA2D.PointAtLineIntersection(prevOffsetNormal, new Vector2IP(prevLine.Vector.X, prevLine.Vector.Y, 0));
+                        var firstPoint = PGA2D.PointAtLineIntersection(prevOffsetNormal, new Vector2IP(prevLine.Vector3D.X, prevLine.Vector3D.Y, 0));
                         pointsList.Add(firstPoint);
-                        var lastPoint = PGA2D.PointAtLineIntersection(prevOffsetNormal, new Vector2IP(thisLine.Vector.X, thisLine.Vector.Y, 0));
+                        var lastPoint = PGA2D.PointAtLineIntersection(prevOffsetNormal, new Vector2IP(thisLine.Vector3D.X, thisLine.Vector3D.Y, 0));
                         
                         /*
                         var firstToLastVector = lastPoint - firstPoint;
@@ -396,9 +396,9 @@ namespace TVGL
                         pointsList.Add(PGA2D.PointAtLineIntersection(prevOffsetNormal, thisOffsetNormal));
                     else
                     {
-                        var firstPoint = PGA2D.PointAtLineIntersection(prevOffsetNormal, new Vector2IP(prevLine.Vector.X, prevLine.Vector.Y, 0));
+                        var firstPoint = PGA2D.PointAtLineIntersection(prevOffsetNormal, new Vector2IP(prevLine.Vector3D.X, prevLine.Vector3D.Y, 0));
                         pointsList.Add(firstPoint);
-                        var lastPoint = PGA2D.PointAtLineIntersection(prevOffsetNormal, new Vector2IP(thisLine.Vector.X, thisLine.Vector.Y, 0));
+                        var lastPoint = PGA2D.PointAtLineIntersection(prevOffsetNormal, new Vector2IP(thisLine.Vector3D.X, thisLine.Vector3D.Y, 0));
                         pointsList.Add(lastPoint);
                     }
                 }

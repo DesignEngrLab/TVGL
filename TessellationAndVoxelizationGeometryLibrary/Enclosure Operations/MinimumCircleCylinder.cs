@@ -306,10 +306,9 @@ namespace TVGL
             //   Skip if min distance to line (perpendicular) forms a point not on the line.
             foreach (var line in polygon.Edges)
             {
-                var v1 =Vector2IP.Minus2D(line.ToPoint.Coordinates,line.FromPoint.Coordinates);
                 //Correctly ordering the points should yield a negative area if the circle is inside a hole or outside a positive polygon.
                 //Note also that zero area will occur when the points line up, which we want to ignore (the line ends will be checked anyways)
-                if (line.Vector.Cross3D(Vector2IP.Minus2D(centerPtPGA, line.ToPoint.Coordinates)).W < 0)
+                if (line.Vector3D.CrossSign(Vector2IP.Minus3D(centerPtPGA, line.ToPoint.Coordinates)) < 0)
                 {
                     //Figure out how far the center point is away from the line
                     var d = PGA2D.ShortestDistancePointToLineSegment(line, centerPtPGA, out var distanceIsAtEndPoint);

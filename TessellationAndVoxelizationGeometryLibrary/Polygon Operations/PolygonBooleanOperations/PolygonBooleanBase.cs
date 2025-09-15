@@ -266,12 +266,13 @@ namespace TVGL
                 var currentEdgeIsFromPolygonA = candidateIntersect.EdgeA == currentEdge;
                 if (formerIntersectCoords.Equals(candidateIntersect.IntersectCoordinates)) continue;
                 var distance = RationalIP.Zero;
+                var onSegment = false;
                 if (!(formerIntersectCoords.IsNull() && (candidateIntersect.WhereIntersection == WhereIsIntersection.BothStarts ||
                     (candidateIntersect.WhereIntersection == WhereIsIntersection.AtStartOfA && currentEdgeIsFromPolygonA) ||
                     (candidateIntersect.WhereIntersection == WhereIsIntersection.AtStartOfB && !currentEdgeIsFromPolygonA))))
                     // todo: review and improve vector2ip math here
-                    distance = currentEdge.Vector.Dot2D(Vector2IP.Minus2D(candidateIntersect.IntersectCoordinates, datum));
-                if (distance.Sign() < 0) continue; //if the distance is negative, then the intersection is behind the current edge
+                    distance = PGA2D.FractionOnLineSegment(datum, currentEdge.ToPoint.Coordinates, candidateIntersect.IntersectCoordinates, out onSegment);
+                if (!onSegment) continue; //if the distance is negative, then the intersection is behind the current edge
                 if (minDistanceToIntersection > distance)
                 {
                     minDistanceToIntersection = distance;

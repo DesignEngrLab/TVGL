@@ -186,8 +186,8 @@ namespace TVGL
         {
             if (StartLine == null || EndLine == null)
                 return double.NaN;
-            var vector1 = EndLine.Vector;
-            var vector2 = StartLine.Vector;
+            var vector1 = EndLine.Vector2D;  // perhaps there's a better way to do this by staying in 3D?
+            var vector2 = StartLine.Vector2D;
             return Math.PI - Math.Atan2(vector1.Cross2D(vector2).AsDouble, vector1.Dot2D(vector2).AsDouble);
         }
         #endregion Constructor
