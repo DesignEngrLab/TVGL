@@ -64,7 +64,7 @@ namespace TVGLUnitTestsAndBenchmarking
             //});
             //A.Transform(Matrix3x3.CreateTranslation(5, 11));
             //A.Reverse();
-            //A = C;
+            A = C;
             var negB = new Polygon(B.Path.Select(p => -p));
             // var ASumB = A.MinkowskiSumNew(B).LargestPolygon();
             var ASumNegB = A.MinkowskiSum(negB);

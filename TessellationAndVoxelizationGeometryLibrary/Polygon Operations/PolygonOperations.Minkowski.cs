@@ -56,6 +56,8 @@ namespace TVGL
             {
                 var segments = BuildReducedConvolutionSegments(a, b);
                 Global.Presenter2D.ShowAndHang(segments.Select(s => new[] { s.from, s.to }));
+                var union = segments.Select(s => new Polygon([s.from, s.to], isClosed: false)).UnionPolygons();
+                Global.Presenter2D.ShowAndHang(union);
                 result.AddRange(BuildCyclesFromDirectedSegments(segments));
             }
             if (aCanBeInB)
