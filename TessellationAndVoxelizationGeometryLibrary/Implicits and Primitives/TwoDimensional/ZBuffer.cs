@@ -111,28 +111,16 @@ namespace TVGL
             //Finish initializing the grid now that we have the bounds.
             zBuff.Initialize(MinX, MaxX, MinY, MaxY, pixelsPerRow: pixelsPerRow, pixelBorder: pixelBorder);
             var faces = subsetFaces != null ? subsetFaces : zBuff.solidFaces;
-            if (subsetFaces != null)
+            if (faces != null)
             {
                 foreach (TriangleFace face in faces)
-                {
-                    //if (face.IndexInList == 376)
-                    //if (face.Center.X < -27 && face.Center.Z > 3.5 && face.Normal.Dot(Vector3.UnitY) > 0.98)
-                    //{
-                    //    solid.HasUniformColor = false;
-                    //    solid.ResetDefaultColor();
-                    //    face.Color = new Color(KnownColors.Red);
-                    //    Presenter.ShowAndHang(solid);
-                    //}
                     zBuff.UpdateZBufferWithFace(face);
-                }
             }
             else
             {
                 zBuff.PrimitiveZmins = [];
                 foreach (var surface in solid.Primitives)
-                {
                     zBuff.UpdateZBufferWithSurface(surface);
-                }
             }
 
             return zBuff;
