@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using TVGL;
+using TVGLUnitTestsAndBenchmarking.Misc_Tests;
 using WindowsDesktopPresenter;
 
 namespace TVGLUnitTestsAndBenchmarking
@@ -22,6 +23,7 @@ namespace TVGLUnitTestsAndBenchmarking
         {
             Global.Presenter2D = new Presenter2D();
             Global.Presenter3D = new Presenter3D();
+            ZbufferTesting.Test1();
             var dirInfo = IO.BackoutToFolder("Input\\Drawings");
             //foreach (var fileName in dirInfo.GetFiles("*.dxf"))
             //{

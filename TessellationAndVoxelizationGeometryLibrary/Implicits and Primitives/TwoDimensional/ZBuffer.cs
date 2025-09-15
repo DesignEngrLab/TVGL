@@ -111,7 +111,7 @@ namespace TVGL
             //Finish initializing the grid now that we have the bounds.
             zBuff.Initialize(MinX, MaxX, MinY, MaxY, pixelsPerRow: pixelsPerRow, pixelBorder: pixelBorder);
             var faces = subsetFaces != null ? subsetFaces : zBuff.solidFaces;
-            if (subsetFaces != null)
+            if (faces != null)
             {
                 foreach (TriangleFace face in faces)
                 {

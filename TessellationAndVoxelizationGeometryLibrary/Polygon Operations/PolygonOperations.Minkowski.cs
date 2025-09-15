@@ -58,7 +58,7 @@ namespace TVGL
                 Global.Presenter2D.ShowAndHang(segments.Select(s => new[] { s.from, s.to }));
                 var union = segments.Select(s => new Polygon([s.from, s.to], isClosed: false)).UnionPolygons();
                 Global.Presenter2D.ShowAndHang(union);
-                result.AddRange(BuildCyclesFromDirectedSegments(segments));
+                //result.AddRange(BuildCyclesFromDirectedSegments(segments));
             }
             if (aCanBeInB)
                 PutHolesInProperOuter(a, b, result);
@@ -70,6 +70,7 @@ namespace TVGL
 
         private static void PutHolesInProperOuter(Polygon a, Polygon b, List<Polygon> result)
         {
+            /*
             foreach (var hole in b.InnerPolygons)
             {
                 if ((a.MaxX - a.MinX) < (hole.MaxX - hole.MinX) &&
@@ -91,6 +92,7 @@ namespace TVGL
                     }
                 }
             }
+            */
         }
 
         private static Polygon MinkowskiSumConvex(Polygon a, Polygon b)
@@ -233,9 +235,7 @@ namespace TVGL
         ///    the final union establishes correct hole orientation.
         /// </summary>
 
-        #region Reduced Convolution Core
-
-
+  
         /// <summary>
         /// Builds reduced convolution directed segments for a pair of simple loops (both assumed CCW).
         /// </summary>
@@ -334,92 +334,6 @@ namespace TVGL
                     || !query.IsGreaterThanNonNegligible(to);
             //return query >= from - 1e-14 || query <= to + 1e-14; // wrapped interval
         }
-
-        #endregion
-
-        #region Segment Cycle Stitching
-
-        private static IEnumerable<Polygon> BuildCyclesFromDirectedSegments(List<(Vector2 from, Vector2 to)> segments)
-        {
-            // Bucket outgoing edges by start point key (tolerance-based).
-            var buckets = new Dictionary<PointKey, List<(Vector2 from, Vector2 to)>>();
-            foreach (var s in segments)
-            {
-                var key = new PointKey(s.from);
-                if (!buckets.TryGetValue(key, out var list))
-                {
-                    list = new List<(Vector2 from, Vector2 to)>();
-                    buckets.Add(key, list);
-                }
-                list.Add(s);
-            }
-
-            var used = new HashSet<(Vector2 from, Vector2 to)>();
-
-            foreach ((var startKey, var segs) in buckets)
-            {
-                foreach (var seg in segs)
-                {
-                    if (!used.Add(seg)) continue;
-                    var loop = new List<Vector2> { seg.from, seg.to };
-                    var current = seg.to;
-                    var prevDir = new Vector2(seg.to.X - seg.from.X, seg.to.Y - seg.from.Y);
-
-                    while (true)
-                    {
-                        var currentKey = new PointKey(current);
-                        if (!buckets.TryGetValue(currentKey, out var outgoing) || outgoing.Count == 0)
-                            break; // dead end – open chain discarded
-
-                        // Choose next segment by smallest left turn (angle) from prevDir
-                        (Vector2 from, Vector2 to)? best = null;
-                        double bestAngle = double.MaxValue;
-                        foreach (var cand in outgoing)
-                        {
-                            if (used.Contains(cand)) continue;
-                            var dir = new Vector2(cand.to.X - cand.from.X, cand.to.Y - cand.from.Y);
-                            var angle = dir.AngleCCWBetweenVectorAAndDatum(prevDir);
-                            if (angle < bestAngle)
-                            {
-                                bestAngle = angle;
-                                best = cand;
-                            }
-                        }
-                        if (best == null) break;
-                        var nextSeg = best.Value;
-                        used.Add(nextSeg);
-                        if (startKey.Equals(new PointKey(nextSeg.to)))
-                        {
-                            loop.Add(nextSeg.to);
-                            yield return new Polygon(loop);
-                            break;
-                        }
-                        loop.Add(nextSeg.to);
-                        prevDir = new Vector2(nextSeg.to.X - nextSeg.from.X, nextSeg.to.Y - nextSeg.from.Y);
-                        current = nextSeg.to;
-                        if (loop.Count > segments.Count + 5) // safety – prevent infinite loop
-                            break;
-                    }
-                }
-            }
-        }
-
-
-        private readonly struct PointKey : IEquatable<PointKey>
-        {
-            private readonly long x; private readonly long y;
-            private const double Scale = 1e9; // quantization for hashing
-            public PointKey(Vector2 v)
-            {
-                x = (long)Math.Round(v.X * Scale);
-                y = (long)Math.Round(v.Y * Scale);
-            }
-            public bool Equals(PointKey other) => x == other.x && y == other.y;
-            public override bool Equals(object obj) => obj is PointKey pk && Equals(pk);
-            public override int GetHashCode() => System.HashCode.Combine(x, y);
-        }
-
-        #endregion
 
     }
 }
