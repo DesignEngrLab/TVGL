@@ -78,9 +78,9 @@ namespace TVGLUnitTestsAndBenchmarking
             //Presenter.ShowAndHang([A, B, negB, ASumNegB0, ASumNegB1]);
             ASumNegB1.Complexify(0.5);
             for (int k = 0; k < 3; k++)
-                for (int i = 0; i < ASumNegB1.Vertices.Count; i++)
+                for (int i = 0; i < ASumNegB1.InnerPolygons[0].Vertices.Count; i++)
                 {
-                    var translate = ASumNegB1.Path[i];
+                    var translate = ASumNegB1.InnerPolygons[0].Path[i];
                     var bmov = B.Copy(true, true);
                     bmov.Transform(Matrix3x3.CreateTranslation(translate));
                     Presenter.Show([A, B, ASumNegB1, bmov], holdType: HoldType.AddToQueue, timetoShow: 25);
