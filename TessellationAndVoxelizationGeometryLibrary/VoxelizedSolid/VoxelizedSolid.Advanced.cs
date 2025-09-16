@@ -14,6 +14,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 
 namespace TVGL
@@ -191,7 +192,7 @@ namespace TVGL
                 }
             }
 
-            Parallel.For(totalMinK, totalMaxK+1, k =>
+            Parallel.For(totalMinK, totalMaxK + 1, k =>
             //for (var k = totalMinK; k <= totalMaxK; k++)
             {
                 var zCoord = ConvertZIndexToCoord(k);
@@ -228,7 +229,7 @@ namespace TVGL
                             var normalX = surface.GetNormalAtPoint(q.intersection).X;
                             //if (normalX.IsNegligible(Constants.DotToleranceOrthogonal)) continue;
                             var entering = normalX < 0;
-                            var index = crossingTValues.IncreasingDoublesBinarySearch(q.lineT);
+                            var index = IncreasingDoublesBinarySearch(crossingTValues, q.lineT);
 
                             if (entering)
                             {
@@ -274,7 +275,7 @@ namespace TVGL
                     {
                         var start = ConvertXCoordToIndex(crossingTValues[i] + XMin);
                         // for the end - it could be that the list has an odd number of crossings, in which case the last one is the end
-                        var end = i + 1 == crossingTValues.Count ? numVoxelsX : ConvertXCoordToIndex(crossingTValues[i + 1]+XMin);
+                        var end = i + 1 == crossingTValues.Count ? numVoxelsX : ConvertXCoordToIndex(crossingTValues[i + 1] + XMin);
                         var lastOne = end >= numVoxelsX;
                         if (lastOne) end = numVoxelsX;
 
@@ -284,7 +285,33 @@ namespace TVGL
                     }
                     //Presenter.ShowAndHang(this.ConvertToTessellatedSolidRectilinear());
                 }
-            } );
+            });
+        }
+
+        /// <summary>
+        /// redundant with List.BinarySearch, replace and verify
+        /// </summary>
+        /// <param name="array"></param>
+        /// <param name="queryValue"></param>
+        /// <returns></returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        static int IncreasingDoublesBinarySearch(IList<double> array, double queryValue)
+        {
+            int inclusiveLowIndex = 0;
+            int inclusiveHighIndex = array.Count - 1;
+            // This binary search is modified/simplified from Array.BinarySearch
+            // (https://referencesource.microsoft.com/mscorlib/a.html#b92d187c91d4c9a9)
+            // here we are simply trying to order the doubles in increasing order
+            while (inclusiveLowIndex <= inclusiveHighIndex)
+            {
+                // try the point in the middle of the range. note the >> 1 is a bit shift to quickly divide by 2
+                int i = inclusiveLowIndex + ((inclusiveHighIndex - inclusiveLowIndex) >> 1);
+                var valueAtIndex = array[i];
+                if (queryValue == valueAtIndex) return i; //equal values could be in any order
+                if (queryValue > valueAtIndex) inclusiveLowIndex = i + 1;
+                else inclusiveHighIndex = i - 1;
+            }
+            return inclusiveLowIndex;
         }
     }
 }

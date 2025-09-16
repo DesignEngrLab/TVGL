@@ -55,8 +55,7 @@ namespace TVGL
             else
             {
                 var segments = BuildReducedConvolutionSegments(a, b);
-                Global.Presenter2D.ShowAndHang(segments.Select(s => new[] { s.from, s.to }));
-                var union = segments.ArrangementUnion();
+                result.AddRange(segments.ArrangementUnion());
             }
             if (aCanBeInB)
                 PutHolesInProperOuter(a, b, result);
