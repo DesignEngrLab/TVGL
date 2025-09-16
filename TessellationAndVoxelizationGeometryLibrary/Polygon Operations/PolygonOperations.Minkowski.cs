@@ -56,9 +56,7 @@ namespace TVGL
             {
                 var segments = BuildReducedConvolutionSegments(a, b);
                 Global.Presenter2D.ShowAndHang(segments.Select(s => new[] { s.from, s.to }));
-                var union = segments.Select(s => new Polygon([s.from, s.to], isClosed: false)).UnionPolygons();
-                Global.Presenter2D.ShowAndHang(union);
-                //result.AddRange(BuildCyclesFromDirectedSegments(segments));
+                var union = segments.ArrangementUnion();
             }
             if (aCanBeInB)
                 PutHolesInProperOuter(a, b, result);
@@ -70,7 +68,6 @@ namespace TVGL
 
         private static void PutHolesInProperOuter(Polygon a, Polygon b, List<Polygon> result)
         {
-            /*
             foreach (var hole in b.InnerPolygons)
             {
                 if ((a.MaxX - a.MinX) < (hole.MaxX - hole.MinX) &&
@@ -82,7 +79,7 @@ namespace TVGL
                     {
                         var segments = BuildReducedConvolutionSegments(a, hole);
                         Polygon outer = null;
-                        foreach (var loopFromHole in BuildCyclesFromDirectedSegments(segments))
+                        foreach (var loopFromHole in segments.ArrangementUnion())
 
                         {
                             if (outer == null)
@@ -92,7 +89,6 @@ namespace TVGL
                     }
                 }
             }
-            */
         }
 
         private static Polygon MinkowskiSumConvex(Polygon a, Polygon b)

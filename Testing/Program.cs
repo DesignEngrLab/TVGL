@@ -23,7 +23,7 @@ namespace TVGLUnitTestsAndBenchmarking
         {
             Global.Presenter2D = new Presenter2D();
             Global.Presenter3D = new Presenter3D();
-            ZbufferTesting.Test1();
+            //ZbufferTesting.Test1();
             var dirInfo = IO.BackoutToFolder("Input\\Drawings");
             //foreach (var fileName in dirInfo.GetFiles("*.dxf"))
             //{

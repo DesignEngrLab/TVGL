@@ -39,13 +39,16 @@ namespace TVGL
                 }
                 if (!initNodeDict.TryGetValue(toKey, out var toNode))
                 {
-                    toNode = new ArrangementNode(toKey, from);
+                    toNode = new ArrangementNode(toKey, to);
                     initNodeDict.Add(toKey, toNode);
                 }
                 var edge = new PolygonEdge(fromNode, toNode);
                 fromNode.StartingEdges.Add(edge);
                 toNode.EndingEdges.Add(edge);
             }
+            Global.Presenter2D.ShowAndHang(initNodeDict.Values.SelectMany(n => n.StartingEdges)
+                .Select(s => new[] { s.FromPoint.Coordinates, s.ToPoint.Coordinates }));
+
             var verticesOrderByX = initNodeDict.Values.ToArray();
             Array.Sort(verticesOrderByX, new TwoDSortXFirst());
             var edgesOrderedByX = GetOrderedLinesArrangement(verticesOrderByX, numEdges);
@@ -76,36 +79,80 @@ namespace TVGL
                     var aFromNode = (ArrangementNode)intersection.EdgeA.FromPoint;
                     var newEdgeA = new PolygonEdge(aFromNode, intersectNode);
                     aFromNode.StartingEdges.Remove(intersection.EdgeA);
-                    aFromNode.StartingEdges.Add(newEdgeA);
-                    intersectNode.EndingEdges.Add(newEdgeA);
+                    // often - due to collinearity, we end up added a new edge that already exists
+                    if (!aFromNode.StartingEdges.Any(e => e.ToPoint == intersectNode))
+                    {
+                        aFromNode.StartingEdges.Add(newEdgeA);
+                        intersectNode.EndingEdges.Add(newEdgeA);
+                    }
                     var aToNode = (ArrangementNode)intersection.EdgeA.ToPoint;
                     newEdgeA = new PolygonEdge(intersectNode, aToNode);
                     aToNode.EndingEdges.Remove(intersection.EdgeA);
-                    aToNode.EndingEdges.Add(newEdgeA);
-                    intersectNode.StartingEdges.Add(newEdgeA);
+                    if (!aToNode.EndingEdges.Any(e => e.FromPoint == intersectNode))
+                    {
+                        aToNode.EndingEdges.Add(newEdgeA);
+                        intersectNode.StartingEdges.Add(newEdgeA);
+                    }
                 }
                 if (intersection.WhereIntersection != WhereIsIntersection.AtStartOfB)
                 {   // split edge B
                     var bFromNode = (ArrangementNode)intersection.EdgeB.FromPoint;
                     var newEdgeB = new PolygonEdge(bFromNode, intersectNode);
                     bFromNode.StartingEdges.Remove(intersection.EdgeB);
-                    bFromNode.StartingEdges.Add(newEdgeB);
-                    intersectNode.EndingEdges.Add(newEdgeB);
+                    if (!bFromNode.StartingEdges.Any(e => e.ToPoint == intersectNode))
+                    {
+                        bFromNode.StartingEdges.Add(newEdgeB);
+                        intersectNode.EndingEdges.Add(newEdgeB);
+                    }
                     var bToNode = (ArrangementNode)intersection.EdgeB.ToPoint;
                     newEdgeB = new PolygonEdge(intersectNode, bToNode);
                     bToNode.EndingEdges.Remove(intersection.EdgeB);
-                    bToNode.EndingEdges.Add(newEdgeB);
-                    intersectNode.StartingEdges.Add(newEdgeB);
+                    if (!bToNode.EndingEdges.Any(e => e.FromPoint == intersectNode))
+                    {
+                        bToNode.EndingEdges.Add(newEdgeB);
+                        intersectNode.StartingEdges.Add(newEdgeB);
+                    }
                 }
             }
-            var nodeList = new List<ArrangementNode>(initNodeDict.Count);
+            Global.Presenter2D.ShowAndHang(initNodeDict.Values.SelectMany(n => n.StartingEdges)
+                .Select(s => new[] { s.FromPoint.Coordinates, s.ToPoint.Coordinates }));
+
+            #region remove edges that are dominated by others - in the case of union - these are the ones that are inside other polygons
+            var edgesToRemove = new HashSet<PolygonEdge>();
             foreach (var node in initNodeDict.Values)
             {
-                if (node.StartingEdges.Count == 0 || node.EndingEdges.Count == 0)
-                    continue; // don't include dead ends
-                nodeList.Add(node);
+                if (node.StartingEdges.Count <= 1 && node.EndingEdges.Count <= 1)
+                    continue;
+                // so, now we know that at least 3 edges come into this node
+                var sortedEdges = new SortedList<double, (PolygonEdge, bool)>();
+                foreach (var edge in node.StartingEdges)
+                    sortedEdges.Add(Global.Pseudoangle(edge.Vector.X, edge.Vector.Y), (edge, true));
+                foreach (var edge in node.EndingEdges)
+                    sortedEdges.Add(Global.Pseudoangle(-edge.Vector.X, -edge.Vector.Y), (edge, false));
+                for (int i = sortedEdges.Count - 1, j = 0; i >= 0; j = i--) // 'i' is the current index, 'j' is the next index
+                {
+                    var (thisEdge, isStarting) = sortedEdges.Values[i];
+                    var (nextEdge, nextIsStarting) = sortedEdges.Values[j];
+                    if (isStarting != nextIsStarting) // if they are not the same direction then they are not nested
+                        continue;
+                    if (isStarting) // then we keep the one with the smaller angle, the next one is inside
+                        edgesToRemove.Add(nextEdge);
+                    else // then we keep the one with the larger angle, the next one is inside
+                        edgesToRemove.Add(thisEdge);
+                }
             }
+            foreach (var edge in edgesToRemove)
+            {
+                var fromNode = (ArrangementNode)edge.FromPoint;
+                fromNode.StartingEdges.Remove(edge);
+                var toNode = (ArrangementNode)edge.ToPoint;
+                toNode.EndingEdges.Remove(edge);
+            }
+            Global.Presenter2D.ShowAndHang(initNodeDict.Values.SelectMany(n => n.StartingEdges)
+                .Select(s => new[] { s.FromPoint.Coordinates, s.ToPoint.Coordinates }));
 
+            #endregion
+            var nodeList = initNodeDict.Values.Where(node => node.StartingEdges.Count > 0 && node.EndingEdges.Count > 0).ToList();
             return null;
 
 
@@ -114,7 +161,8 @@ namespace TVGL
 
         public static bool IsAdjacentTo(PolygonEdge a, PolygonEdge b)
         {   // because edges are going all over the place, just check if they share a point
-            return a.IsAdjacentTo(b) || a.FromPoint == b.FromPoint || a.ToPoint == b.ToPoint;
+            return false;
+            return a.IsAdjacentTo(b); // || a.FromPoint == b.FromPoint || a.ToPoint == b.ToPoint;
         }
 
         /// <summary>

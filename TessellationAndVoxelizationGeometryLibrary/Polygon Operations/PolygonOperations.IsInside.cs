@@ -1237,7 +1237,7 @@ namespace TVGL
                         Math.Round(previousALine.ToPoint.Y, numSigDigs) - Math.Round(previousALine.FromPoint.Y, numSigDigs)
                         );
                 }
-                else previousAVector = previousALine.Vector;
+                else previousAVector = previousALine?.Vector ?? Vector2.Null;
                 previousBVector = bVector;
                 lineACrossPrevB = lineACrossLineB;
                 prevACrossLineB = prevACrossPrevB = previousAVector.Cross(previousBVector);
@@ -1253,7 +1253,7 @@ namespace TVGL
                         Math.Round(previousBLine.ToPoint.Y - previousBLine.FromPoint.Y, numSigDigs)
                         );
                 }
-                else previousBVector = previousBLine.Vector;
+                else previousBVector = previousBLine?.Vector ?? Vector2.Null;
                 prevACrossLineB = lineACrossLineB;
                 lineACrossPrevB = prevACrossPrevB = previousAVector.Cross(previousBVector);
             }
@@ -1267,7 +1267,7 @@ namespace TVGL
                         Math.Round(previousALine.ToPoint.Y - previousALine.FromPoint.Y, numSigDigs)
                         );
                 }
-                else previousAVector = previousALine.Vector;
+                else previousAVector = previousALine?.Vector?? Vector2.Null;
                 var previousBLine = edgeB.FromPoint.EndLine;
                 if (needToRoundB)
                 {
@@ -1275,12 +1275,8 @@ namespace TVGL
                         Math.Round(previousBLine.ToPoint.X - previousBLine.FromPoint.X, numSigDigs),
                         Math.Round(previousBLine.ToPoint.Y - previousBLine.FromPoint.Y, numSigDigs)
                         );
-                    //previousBVector = new Vector2(
-                    //    Math.Round(previousBLine.ToPoint.X, numSigDigs) - Math.Round(previousBLine.FromPoint.X, numSigDigs),
-                    //    Math.Round(previousBLine.ToPoint.Y, numSigDigs) - Math.Round(previousBLine.FromPoint.Y, numSigDigs)
-                    //    );
                 }
-                else previousBVector = previousBLine.Vector;
+                else previousBVector = previousBLine?.Vector ?? Vector2.Null;
                 prevACrossLineB = previousAVector.Cross(bVector);
                 lineACrossPrevB = aVector.Cross(previousBVector);
                 prevACrossPrevB = previousAVector.Cross(previousBVector);
