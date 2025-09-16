@@ -161,8 +161,11 @@ namespace TVGL
 
         public static bool IsAdjacentTo(PolygonEdge a, PolygonEdge b)
         {   // because edges are going all over the place, just check if they share a point
-            return false;
-            return a.IsAdjacentTo(b); // || a.FromPoint == b.FromPoint || a.ToPoint == b.ToPoint;
+            return a.IsAdjacentTo(b) || a.FromPoint == b.FromPoint;
+            // adding a check with FromPoint to FromPoint since - now - nodes can have multiple
+            // edges starting from them
+            //|| a.ToPoint == b.ToPoint;...actually, we don't check if they end at the same node
+            //                             because 2 lines may intersect in an important way at their start.
         }
 
         /// <summary>
