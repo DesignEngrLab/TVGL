@@ -53,11 +53,11 @@ namespace TVGL
                     initNodeDict.Add(toKey, toNode);
                 }
                 var edge = new PolygonEdge(fromNode, toNode);
-                edges.Add(edge);
-                fromNode.StartingEdges.Add(edge);
-                toNode.EndingEdges.Add(edge);
+                    edges.Add(edge);
+                    fromNode.StartingEdges.Add(edge);
+                    toNode.EndingEdges.Add(edge);
+                }
             }
-        }
 
         // Tricky function to split arrangement edges at their intersections.
         private static void SplitArrangementEdgesAtIntersections(Dictionary<PointKey, ArrangementNode> initNodeDict, List<PolygonEdge> edges)
@@ -155,10 +155,20 @@ namespace TVGL
                     continue;
                 // so, now we know that at least 3 edges come into this node
                 var sortedEdges = new SortedList<double, (PolygonEdge, bool)>();
-                foreach (var edge in node.StartingEdges)
-                    sortedEdges.Add(Global.Pseudoangle(edge.Vector.X, edge.Vector.Y), (edge, true));
-                foreach (var edge in node.EndingEdges)
+                for (int i = node.StartingEdges.Count - 1; i >= 0; i--)
+                {
+                    PolygonEdge edge = node.StartingEdges[i];
+                    if (edge.ToPoint == edge.FromPoint) node.StartingEdges.RemoveAt(i); // remove self-referencing edges
+                    else sortedEdges.Add(Global.Pseudoangle(edge.Vector.X, edge.Vector.Y), (edge, true));
+                }
+
+                for (int i = node.EndingEdges.Count - 1; i >= 0; i--)
+                {
+                    PolygonEdge edge = node.EndingEdges[i];
+                    if (edge.ToPoint == edge.FromPoint) node.EndingEdges.RemoveAt(i); // remove self-referencing edges
                     sortedEdges.Add(Global.Pseudoangle(-edge.Vector.X, -edge.Vector.Y), (edge, false));
+                }
+
                 for (int i = sortedEdges.Count - 1, j = 0; i >= 0; j = i--) // 'i' is the current index, 'j' is the next index
                 {
                     var (thisEdge, isStarting) = sortedEdges.Values[i];

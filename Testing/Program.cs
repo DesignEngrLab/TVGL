@@ -38,26 +38,30 @@ namespace TVGLUnitTestsAndBenchmarking
             //    }
             //}
 
+            var workingDir = IO.BackoutToFolder("Input\\Drawings");
 
-                var A = new Polygon(new List<Vector2> {
-            new Vector2(0, 3), new Vector2(9,0),new Vector2(12, 0),
-            new Vector2(3,3),
-            new Vector2(3,12), new Vector2(13,15),
-            new Vector2(0,12),
-            //new Vector2(0, 5)
-            //new Vector2(3,2.2), new Vector2(4, 2),
-            //new Vector2(4, 0.5), new Vector2(5, 2),
-            //new Vector2(3, 2.5),
-            //new Vector2(2, .7), new Vector2(1, 3),new Vector2(1, 3),
-            //new Vector2(3, 2.75), new Vector2(3, 3.5),
-            //new Vector2(00, 3.5),
-        });
-            var B = A.Copy(true, false);
-            var C = A.Copy(true, true);
-            C.Transform(Matrix3x3.CreateScale(5, -5, new Vector2(0, 7)));
-            var box = new Polygon([new Vector2(-1, -32), new Vector2(62, -32), new Vector2(62, 43), new Vector2(-1, 43),]);
-            C = box.Subtract(C).LargestPolygon();
-            Presenter.ShowAndHang([A, B,C]);
+            IO.Open(Path.Combine(workingDir.FullName, "unicorn.dxf"), out Polygon A);
+            IO.Open(Path.Combine(workingDir.FullName, "airplane.dxf"), out Polygon B);
+
+            //    var A = new Polygon(new List<Vector2> {
+            //    new Vector2(0, 3), new Vector2(9,0),new Vector2(12, 0),
+            //    new Vector2(3,3),
+            //    new Vector2(3,12), new Vector2(13,15),
+            //    new Vector2(0,12),
+            //    //new Vector2(0, 5)
+            //    //new Vector2(3,2.2), new Vector2(4, 2),
+            //    //new Vector2(4, 0.5), new Vector2(5, 2),
+            //    //new Vector2(3, 2.5),
+            //    //new Vector2(2, .7), new Vector2(1, 3),new Vector2(1, 3),
+            //    //new Vector2(3, 2.75), new Vector2(3, 3.5),
+            //    //new Vector2(00, 3.5),
+            //});
+            //    var B = A.Copy(true, false);
+            //    var C = A.Copy(true, true);
+            //    C.Transform(Matrix3x3.CreateScale(5, -5, new Vector2(0, 7)));
+            //    var box = new Polygon([new Vector2(-1, -32), new Vector2(62, -32), new Vector2(62, 43), new Vector2(-1, 43),]);
+            //    C = box.Subtract(C).LargestPolygon();
+            //    Presenter.ShowAndHang([A, B,C]);
             //var B = new Polygon(new List<Vector2> { new Vector2(10,10), new Vector2(16, 10),
             //    new Vector2(16, 6),
             //    new Vector2(17,9),
@@ -66,10 +70,15 @@ namespace TVGLUnitTestsAndBenchmarking
             //});
             //A.Transform(Matrix3x3.CreateTranslation(5, 11));
             //A.Reverse();
-            A = C;
-            var negB = new Polygon(B.Path.Select(p => -p));
+            //A = C;
+            A = A.OffsetRound(10).LargestPolygon();
+            A.SimplifyMinLength(100);
+            Presenter.ShowAndHang([A,B]);
+
+            var negB = B; // new Polygon(B.Path.Select(p => -p));
             // var ASumB = A.MinkowskiSumNew(B).LargestPolygon();
             var ASumNegB = A.MinkowskiSum(negB);
+            Presenter.ShowAndHang(ASumNegB);
             var ASumNegB0 = ASumNegB[0];
             var ASumNegB1 = ASumNegB[0];
             //var ASumNegB0 = A.MinkowskiSum(negB)[0];
@@ -78,9 +87,9 @@ namespace TVGLUnitTestsAndBenchmarking
             //Presenter.ShowAndHang([A, B, negB, ASumNegB0, ASumNegB1]);
             ASumNegB1.Complexify(0.5);
             for (int k = 0; k < 3; k++)
-                for (int i = 0; i < ASumNegB1.InnerPolygons[0].Vertices.Count; i++)
+                for (int i = 0; i < ASumNegB1.Vertices.Count; i++)
                 {
-                    var translate = ASumNegB1.InnerPolygons[0].Path[i];
+                    var translate = ASumNegB1.Path[i];
                     var bmov = B.Copy(true, true);
                     bmov.Transform(Matrix3x3.CreateTranslation(translate));
                     Presenter.Show([A, B, ASumNegB1, bmov], holdType: HoldType.AddToQueue, timetoShow: 25);

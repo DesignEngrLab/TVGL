@@ -48,13 +48,14 @@ namespace TVGL
             // first work on outer sums (not holes)
             if (a.IsConvex && b.IsConvex)
                 result.Add(MinkowskiSumConvex(a, b));
-            if (a.IsConvex)
-                result.AddRange(MinkowskiSumConcaveConvex(a, b));
-            else if (b.IsConvex)
-                result.AddRange(MinkowskiSumConcaveConvex(b, a));
+            //if (a.IsConvex)
+            //    result.AddRange(MinkowskiSumConcaveConvex(a, b));
+            //else if (b.IsConvex)
+            //    result.AddRange(MinkowskiSumConcaveConvex(b, a));
             else
             {
                 var segments = BuildReducedConvolutionSegments(a, b);
+                Global.Presenter2D.ShowAndHang(segments.Select(s => new[] { s.from, s.to }));
                 result.AddRange(segments.ArrangementUnion());
             }
             if (aCanBeInB)

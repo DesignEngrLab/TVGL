@@ -1020,7 +1020,7 @@ namespace TVGL
         /// <exception cref="NotImplementedException"></exception>
         public static IEnumerable<Polygon> ComplexifyToNewPolygons(this IEnumerable<Polygon> polygons, double maxAllowableLength)
         {
-            var copiedPolygons = polygons.Select(p => p.Copy(true, false));
+            var copiedPolygons = polygons.Select(p => p.Copy(true, false)).ToList();
             Complexify(copiedPolygons, maxAllowableLength);
             return copiedPolygons;
         }
