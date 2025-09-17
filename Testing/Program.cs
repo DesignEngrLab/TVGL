@@ -71,11 +71,11 @@ namespace TVGLUnitTestsAndBenchmarking
             //A.Transform(Matrix3x3.CreateTranslation(5, 11));
             //A.Reverse();
             //A = C;
-            A = A.OffsetRound(10).LargestPolygon();
-            A.SimplifyMinLength(100);
+            //A = A.OffsetRound(10).LargestPolygon();
+            //A.SimplifyMinLength(100);
             Presenter.ShowAndHang([A,B]);
 
-            var negB = B; // new Polygon(B.Path.Select(p => -p));
+            var negB = new Polygon(B.Path.Select(p => -p));
             // var ASumB = A.MinkowskiSumNew(B).LargestPolygon();
             var ASumNegB = A.MinkowskiSum(negB);
             Presenter.ShowAndHang(ASumNegB);

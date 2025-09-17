@@ -234,6 +234,7 @@ namespace TVGL
   
         /// <summary>
         /// Builds reduced convolution directed segments for a pair of simple loops (both assumed CCW).
+        /// Based on CGAL reduced convolution algorithm (E. Behar & J-M. Lien, IROS 2011; A. Baram 2013).
         /// </summary>
         private static List<(Vector2 from, Vector2 to)> BuildReducedConvolutionSegments(Polygon p1, Polygon p2)
         {
@@ -242,19 +243,17 @@ namespace TVGL
             var v2 = p2.Path;
             var n1 = p1.Vertices.Count;
             var n2 = p2.Vertices.Count;
-            // Directions (edge vectors) for each vertex: edge starting at vertex i
-            var p1Angles = p1.Edges.Select(e => Global.Pseudoangle(e.Vector.X, e.Vector.Y)).ToList();
-            // unfortunately need to do this shift because edge i ends at vertex i, but the angle at the vertex
-            // is with the next edge, so we need to shift the directions list down a spot and wrap around
-            p1Angles.Add(p1Angles[0]);
-            p1Angles.RemoveAt(0);
-            var dir2 = p2.Edges.Select(e => Global.Pseudoangle(e.Vector.X, e.Vector.Y)).ToList();
-            dir2.Add(dir2[0]);
-            dir2.RemoveAt(0);
-            //var dir2 = GetEdgeDirections(v2);
+            
+            if (n1 == 0 || n2 == 0) return outSegments;
+
+            // Get edge directions for each polygon - direction of edge FROM vertex i
+            var p1Directions = GetEdgeDirections(p1);
+            var p2Directions = GetEdgeDirections(p2);
 
             var visited = new HashSet<(int i, int j)>();
             var queue = new Queue<(int i, int j)>();
+            
+            // Initialize queue with states from first column (i, 0) where i goes from n1-1 down to 0
             for (int i = n1 - 1; i >= 0; i--)
                 queue.Enqueue((i, 0));
 
@@ -268,42 +267,84 @@ namespace TVGL
                 int next_i2 = (i2 + 1) % n2;
                 int prev_i2 = (i2 - 1 + n2) % n2;
 
-                // Two possible steps: advance in polygon 1 OR in polygon 2
-                var advancedP2 = TryAddReducedConvolutionSegment(p1, p2, outSegments, p1Angles, dir2, queue,
-                          i1, i2, next_i1, prev_i1, next_i2, prev_i2, false);
-                var advancedP1 = TryAddReducedConvolutionSegment(p1, p2, outSegments, p1Angles, dir2, queue,
-                     i1, i2, next_i1, prev_i1, next_i2, prev_i2, true);
+                // Try two transitions: From (i1,i2) to (i1+1,i2) and to (i1,i2+1)
+                // Step in polygon 1 (advance i1)
+                TryAddReducedConvolutionSegmentCorrected(p1, p2, outSegments, p1Directions, p2Directions, queue,
+                    i1, i2, next_i1, prev_i1, next_i2, prev_i2, true);
 
+                // Step in polygon 2 (advance i2)  
+                TryAddReducedConvolutionSegmentCorrected(p1, p2, outSegments, p1Directions, p2Directions, queue,
+                    i1, i2, next_i1, prev_i1, next_i2, prev_i2, false);
             }
             return outSegments;
         }
 
-        private static bool TryAddReducedConvolutionSegment(Polygon p1, Polygon p2, List<(Vector2 from, Vector2 to)> outSegments,
-             List<double> p1Angles, List<double> p2Angles, Queue<(int i, int j)> queue, int i1,
-            int i2, int next_i1, int prev_i1, int next_i2, int prev_i2, bool advancingP1)
+        /// <summary>
+        /// Get edge directions for a polygon - each direction corresponds to the edge FROM vertex i
+        /// </summary>
+        private static List<double> GetEdgeDirections(Polygon polygon)
         {
+            var directions = new List<double>();
+            var vertices = polygon.Path;
+            int n = vertices.Count;
+            
+            for (int i = 0; i < n; i++)
+            {
+                int next_i = (i + 1) % n;
+                var edgeVector = vertices[next_i] - vertices[i];
+                directions.Add(Global.Pseudoangle(edgeVector.X, edgeVector.Y));
+            }
+            return directions;
+        }
+
+        private static bool TryAddReducedConvolutionSegmentCorrected(Polygon p1, Polygon p2, List<(Vector2 from, Vector2 to)> outSegments,
+             List<double> p1Directions, List<double> p2Directions, Queue<(int i, int j)> queue, int i1,
+            int i2, int next_i1, int prev_i1, int next_i2, int prev_i2, bool stepInP1)
+        {
+            int new_i1, new_i2;
+            if (stepInP1) 
+            { 
+                new_i1 = next_i1; 
+                new_i2 = i2; 
+            }
+            else 
+            { 
+                new_i1 = i1; 
+                new_i2 = next_i2; 
+            }
+
+            // Check if segment direction lies counterclockwise between the vertex directions
             bool belongsToConvolution;
-            if (advancingP1)
-                belongsToConvolution = IsCCWInBetween(p1Angles[i1], p2Angles[prev_i2], p2Angles[i2])
-                    || DirectionsEqual(p1Angles[i1], p2Angles[i2]);
+            if (stepInP1)
+            {
+                // Direction of edge from i1 should be CCW between prev and current directions at vertex i2
+                belongsToConvolution = IsAngleCCWInBetween(p1Directions[i1], p2Directions[prev_i2], p2Directions[i2])
+                    || DirectionsEqualCorrected(p1Directions[i1], p2Directions[i2]);
+            }
             else
-                belongsToConvolution = IsCCWInBetween(p2Angles[i2], p1Angles[prev_i1], p1Angles[i1])
-                    || DirectionsEqual(p2Angles[i2], p1Angles[prev_i1]);
+            {
+                // Direction of edge from i2 should be CCW between prev and current directions at vertex i1  
+                belongsToConvolution = IsAngleCCWInBetween(p2Directions[i2], p1Directions[prev_i1], p1Directions[i1])
+                    || DirectionsEqualCorrected(p2Directions[i2], p1Directions[prev_i1]);
+            }
 
             if (!belongsToConvolution) return false;
 
-            int new_i1, new_i2;
-            if (advancingP1) { new_i1 = next_i1; new_i2 = i2; }
-            else { new_i1 = i1; new_i2 = next_i2; }
-
             queue.Enqueue((new_i1, new_i2));
 
-            // Reduced convolution keeps segments incident to convex vertices only (with respect to CCW orientation)
+            // For reduced convolution: only keep segments incident to convex vertices
             bool convex;
-            if (advancingP1)
-                convex = p2.Vertices[i2].IsConvex.GetValueOrDefault(false); //IsConvex(  v2[prev_i2], v2[i2], v2[next_i2]);
+            if (stepInP1)
+            {
+                // Check convexity at vertex i2 in polygon p2
+                convex = IsConvexVertex(p2.Path[prev_i2], p2.Path[i2], p2.Path[next_i2]);
+            }
             else
-                convex = p1.Vertices[i1].IsConvex.GetValueOrDefault(false);  // IsConvex(v1[prev_i1], v1[i1], v1[next_i1]);
+            {
+                // Check convexity at vertex i1 in polygon p1
+                convex = IsConvexVertex(p1.Path[prev_i1], p1.Path[i1], p1.Path[next_i1]);
+            }
+
             if (!convex) return false;
 
             var start = p1.Path[i1] + p2.Path[i2];
@@ -312,24 +353,42 @@ namespace TVGL
             return true;
         }
 
-        private static bool DirectionsEqual(double d1, double d2)
+        /// <summary>
+        /// Check if angle a is between angles b and c in counter-clockwise order
+        /// </summary>
+        private static bool IsAngleCCWInBetween(double a, double b, double c)
         {
-            if (d1.IsPracticallySame(d2)) return true;
-            return Math.Abs(d1 - d2).IsPracticallySame(4);
+            // Normalize angles to [0, 4) range (since pseudoangle range is [0, 4))
+            var tolerance = 1e-10;
+            if (DirectionsEqualCorrected(b, c)) return DirectionsEqualCorrected(a, b);
+            
+            // Check if a is between b and c in CCW order
+            if (c > b)
+            {
+                return a >= b && a <= c;
+            }
+            else // c < b (wrapping around)
+            {
+                return a >= b || a <= c;
+            }
         }
 
-        //private static bool IsCCWInBetween(Vector2 test, Vector2 from, Vector2 to)
-        private static bool IsCCWInBetween(double query, double from, double to)
+        /// <summary>
+        /// Check if a vertex is convex (makes a left turn) assuming CCW orientation
+        /// </summary>
+        private static bool IsConvexVertex(Vector2 prev, Vector2 curr, Vector2 next)
         {
-            if (from <= to)
-                return !query.IsLessThanNonNegligible(from)
-                    && !query.IsGreaterThanNonNegligible(to);
-            //from - 1e-14 <= query && query <= to + 1e-14;
-            // wrapped interval
-            return !query.IsLessThanNonNegligible(from)
-                    || !query.IsGreaterThanNonNegligible(to);
-            //return query >= from - 1e-14 || query <= to + 1e-14; // wrapped interval
+            var v1 = curr - prev;
+            var v2 = next - curr;
+            return v1.Cross(v2) > 0; // Left turn = convex for CCW polygon
         }
 
+        private static bool DirectionsEqualCorrected(double d1, double d2)
+        {
+            const double tolerance = 1e-10;
+            if (Math.Abs(d1 - d2) < tolerance) return true;
+            // Handle wrap-around at 4.0 (since pseudoangle range is [0, 4))
+            return Math.Abs(Math.Abs(d1 - d2) - 4.0) < tolerance;
+        }
     }
 }
