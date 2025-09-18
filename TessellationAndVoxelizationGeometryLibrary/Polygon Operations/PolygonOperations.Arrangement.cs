@@ -31,8 +31,11 @@ namespace TVGL
             PruneIsolatedArrangementNodes(nodeList);
             //Global.Presenter2D.ShowAndHang(nodeList.SelectMany(f => f.StartingEdges).Select(s => new[] { s.FromPoint.Coordinates, s.ToPoint.Coordinates }));
             RemoveDominatedArrangementEdges(nodeList);
+            //Global.Presenter2D.ShowAndHang(nodeList.SelectMany(f => f.StartingEdges).Select(s => new[] { s.FromPoint.Coordinates, s.ToPoint.Coordinates }));
             PruneIsolatedArrangementNodes(nodeList);
+            //Global.Presenter2D.ShowAndHang(nodeList.SelectMany(f => f.StartingEdges).Select(s => new[] { s.FromPoint.Coordinates, s.ToPoint.Coordinates }));
             var polygons = ExtractPolygonsFromArrangementNodes(nodeList);
+            //Global.Presenter2D.ShowAndHang(polygons);
 
             return polygons.CreateShallowPolygonTrees(true);
         }
@@ -243,20 +246,24 @@ namespace TVGL
             while (nodeHash.Any())
             {
                 var loopCoords = new List<Vector2>();
+                var validLoop = true;
                 var startNode = nodeHash.First();
                 var current = startNode;
                 do
                 {
                     nodeHash.Remove(current);
                     loopCoords.Add(current.Coordinates);
+                    if (current.StartingEdges.Count != 1 || current.EndingEdges.Count != 1)
+                        validLoop = false;
                     current = (ArrangementNode)current.StartingEdges[0].ToPoint;
+                } while (current != startNode);
+                if (validLoop)
+                {
+                    var polygon = new Polygon(loopCoords);
+                    if (!polygon.Area.IsNegligible())
+                        polygons.Add(polygon);
                 }
-                while (current != startNode);
-                var polygon = new Polygon(loopCoords);
-                if (!polygon.Area.IsNegligible())
-                    polygons.Add(polygon);
             }
-
             return polygons;
         }
 
