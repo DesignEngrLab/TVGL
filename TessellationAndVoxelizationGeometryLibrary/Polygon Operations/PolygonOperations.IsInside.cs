@@ -94,6 +94,7 @@ namespace TVGL
         /// <returns>Polygon.</returns>
         public static bool IsNonIntersectingPolygonInside(this Polygon outer, bool onlyTopOuterPolygon, Polygon inner)
         {
+            //Presenter.ShowAndHang([outer, inner]);
             if (Math.Abs(inner.PathArea) > Math.Abs(outer.PathArea)
                 || (!onlyTopOuterPolygon && Math.Abs(inner.PathArea) > Math.Abs(outer.Area)))
                 return false;
@@ -101,7 +102,8 @@ namespace TVGL
             if (!inner.IsPointInsidePolygon(centroid))
             {   // why? if inner is an exaggerated L shape, it is possible that the centroid is outside of the inner polygon
                 // so, we triangulate it and take the center of the triangle closest to the original centroid.
-                var triangles = inner.Triangulate();
+                var innerToTriangulate = inner.Copy(false, !inner.IsPositive);
+                var triangles = innerToTriangulate.Triangulate();
                 var minCenter = Vector2.Null;
                 var minDistance = double.MaxValue;
                 foreach (var triangle in triangles)
@@ -227,28 +229,22 @@ namespace TVGL
             //If the point is inside the bounding box, continue to check with more detailed methods, 
             //Else, retrun false.
             var p = pointInQuestion;
-            var path = polygon.Path;
-            var xMax = double.NegativeInfinity;
-            var yMax = double.NegativeInfinity;
-            var xMin = double.PositiveInfinity;
-            var yMin = double.PositiveInfinity;
-            foreach (var point in path)
-            {
-                if (point.X < xMin) xMin = point.X;
-                if (point.X > xMax) xMax = point.X;
-                if (point.Y < yMin) yMin = point.Y;
-                if (point.Y > yMax) yMax = point.Y;
-            }
-            if (p.Y < yMin || p.Y > yMax || p.X < xMin || p.X > xMax) return false;
+            if (p.Y < polygon.MinY || p.Y > polygon.MaxY || p.X < polygon.MinX || p.X > polygon.MaxX) 
+                return false;
 
             //2) Next, see how many lines are to the left of the point, using a fixed y value.
             //This compact, effecient 7 lines of code is from W. Randolph Franklin
             //<https://wrf.ecse.rpi.edu//Research/Short_Notes/pnpoly.html>
             var inside = false;
-            for (int i = 0, j = path.Count - 1; i < path.Count; j = i++)
+            var verts = polygon.Vertices;
+            var vertCount = verts.Count;
+            for (int i = 0, j = vertCount - 1; i < vertCount; j = i++)
             {
-                if ((path[i].Y > p.Y) != (path[j].Y > p.Y) &&
-                    p.X < (path[j].X - path[i].X) * (p.Y - path[i].Y) / (path[j].Y - path[i].Y) + path[i].X)
+                var d1 = (p.X - verts[i].X) * (verts[j].Y - verts[i].Y) < (verts[j].X - verts[i].X) * (p.Y - verts[i].Y);
+                var d2 = p.X < (verts[j].X - verts[i].X) * (p.Y - verts[i].Y) / (verts[j].Y - verts[i].Y) + verts[i].X;
+                if ((verts[i].Y > p.Y) != (verts[j].Y > p.Y) &&
+                   // (p.X - verts[i].X) * (verts[j].Y - verts[i].Y) < (verts[j].X - verts[i].X) * (p.Y - verts[i].Y))
+                       p.X < (verts[j].X - verts[i].X) * (p.Y - verts[i].Y) / (verts[j].Y - verts[i].Y) + verts[i].X)
                 {
                     inside = !inside;
                 }

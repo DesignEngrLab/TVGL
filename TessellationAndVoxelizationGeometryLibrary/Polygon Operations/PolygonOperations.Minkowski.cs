@@ -72,19 +72,14 @@ namespace TVGL
                 if ((a.MaxX - a.MinX) < (hole.MaxX - hole.MinX) &&
                     (a.MaxY - a.MinY) < (hole.MaxY - hole.MinY))
                 {
-                    if (a.IsConvex)
-                        result.AddRange(MinkowskiSumConcaveConvex(a, hole));
-                    else
+                    var segments = BuildReducedConvolutionSegments(a, hole);
+                    Polygon outer = null;
+                    foreach (var loopFromHole in segments.ArrangementUnion())
                     {
-                        var segments = BuildReducedConvolutionSegments(a, hole);
-                        Polygon outer = null;
-                        foreach (var loopFromHole in segments.ArrangementUnion())
-
-                        {
-                            if (outer == null)
-                                outer = result.First(o => o.IsNonIntersectingPolygonInside(true, loopFromHole));
+                    //    if (outer == null)
+                            outer = result.FirstOrDefault(o => o.IsNonIntersectingPolygonInside(true, loopFromHole));
+                        if (outer != null)
                             outer.AddInnerPolygon(loopFromHole);
-                        }
                     }
                 }
             }
@@ -230,7 +225,7 @@ namespace TVGL
         ///    the final union establishes correct hole orientation.
         /// </summary>
 
-  
+
         /// <summary>
         /// Builds reduced convolution directed segments for a pair of simple loops (both assumed CCW).
         /// Based on CGAL reduced convolution algorithm (E. Behar & J-M. Lien, IROS 2011; A. Baram 2013).
@@ -242,7 +237,7 @@ namespace TVGL
             var v2 = p2.Path;
             var n1 = p1.Vertices.Count;
             var n2 = p2.Vertices.Count;
-            
+
             if (n1 == 0 || n2 == 0) return outSegments;
 
             // Get edge directions for each polygon - direction of edge FROM vertex i
@@ -251,7 +246,7 @@ namespace TVGL
 
             var visited = new HashSet<(int i, int j)>();
             var queue = new Queue<(int i, int j)>();
-            
+
             // Initialize queue with states from first column (i, 0) where i goes from n1-1 down to 0
             for (int i = n1 - 1; i >= 0; i--)
                 queue.Enqueue((i, 0));
@@ -286,7 +281,7 @@ namespace TVGL
             var directions = new List<double>();
             var vertices = polygon.Path;
             int n = vertices.Count;
-            
+
             for (int i = 0; i < n; i++)
             {
                 int next_i = (i + 1) % n;
@@ -301,15 +296,15 @@ namespace TVGL
             int i2, int next_i1, int prev_i1, int next_i2, int prev_i2, bool stepInP1)
         {
             int new_i1, new_i2;
-            if (stepInP1) 
-            { 
-                new_i1 = next_i1; 
-                new_i2 = i2; 
+            if (stepInP1)
+            {
+                new_i1 = next_i1;
+                new_i2 = i2;
             }
-            else 
-            { 
-                new_i1 = i1; 
-                new_i2 = next_i2; 
+            else
+            {
+                new_i1 = i1;
+                new_i2 = next_i2;
             }
 
             // Check if segment direction lies counterclockwise between the vertex directions
@@ -318,13 +313,13 @@ namespace TVGL
             {
                 // Direction of edge from i1 should be CCW between prev and current directions at vertex i2
                 belongsToConvolution = IsAngleCCWInBetween(p1Directions[i1], p2Directions[prev_i2], p2Directions[i2])
-                    || DirectionsEqualCorrected(p1Directions[i1], p2Directions[i2]);
+                    || DirectionsEqual(p1Directions[i1], p2Directions[i2]);
             }
             else
             {
                 // Direction of edge from i2 should be CCW between prev and current directions at vertex i1  
                 belongsToConvolution = IsAngleCCWInBetween(p2Directions[i2], p1Directions[prev_i1], p1Directions[i1])
-                    || DirectionsEqualCorrected(p2Directions[i2], p1Directions[prev_i1]);
+                    || DirectionsEqual(p2Directions[i2], p1Directions[prev_i1]);
             }
 
             if (!belongsToConvolution) return false;
@@ -359,8 +354,8 @@ namespace TVGL
         {
             // Normalize angles to [0, 4) range (since pseudoangle range is [0, 4))
             var tolerance = 1e-10;
-            if (DirectionsEqualCorrected(b, c)) return DirectionsEqualCorrected(a, b);
-            
+            if (DirectionsEqual(b, c)) return DirectionsEqual(a, b);
+
             // Check if a is between b and c in CCW order
             if (c > b)
             {
@@ -382,12 +377,11 @@ namespace TVGL
             return v1.Cross(v2) > 0; // Left turn = convex for CCW polygon
         }
 
-        private static bool DirectionsEqualCorrected(double d1, double d2)
+        private static bool DirectionsEqual(double d1, double d2)
         {
-            const double tolerance = 1e-10;
-            if (Math.Abs(d1 - d2) < tolerance) return true;
+            if (d1.IsPracticallySame(d2, Constants.BaseTolerance)) return true;
             // Handle wrap-around at 4.0 (since pseudoangle range is [0, 4))
-            return Math.Abs(Math.Abs(d1 - d2) - 4.0) < tolerance;
+            return (Math.Abs(d1 - d2)).IsPracticallySame(4, Constants.BaseTolerance);
         }
     }
 }

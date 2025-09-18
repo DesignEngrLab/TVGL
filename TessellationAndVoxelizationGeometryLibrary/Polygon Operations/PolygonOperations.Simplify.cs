@@ -476,10 +476,11 @@ namespace TVGL
         /// <param name="polygon">The polygon.</param>
         /// <param name="allowableChangeInAreaFraction">The allowable change in area fraction.</param>
         /// <returns>Polygon.</returns>
-        public static Polygon SimplifyByAreaChangeToNewPolygon(this Polygon polygon, double allowableChangeInAreaFraction)
+        public static Polygon SimplifyByAreaChangeToNewPolygon(this Polygon polygon, double allowableChangeInAreaFraction,
+            double allowableConcaveIncreaseInAreaFraction = double.NaN)
         {
             var copiedPolygon = polygon.Copy(true, false);
-            SimplifyByAreaChange(copiedPolygon, allowableChangeInAreaFraction);
+            SimplifyByAreaChange(copiedPolygon, allowableChangeInAreaFraction, allowableConcaveIncreaseInAreaFraction);
             return copiedPolygon;
         }
 
@@ -489,12 +490,13 @@ namespace TVGL
         /// <param name="polygons">The polygons.</param>
         /// <param name="allowableChangeInAreaFraction">The allowable change in area fraction.</param>
         /// <returns>IEnumerable&lt;Polygon&gt;.</returns>
-        public static IEnumerable<Polygon> SimplifyByAreaChangeToNewPolygons(this IEnumerable<Polygon> polygons, double allowableChangeInAreaFraction)
+        public static IEnumerable<Polygon> SimplifyByAreaChangeToNewPolygons(this IEnumerable<Polygon> polygons, double allowableChangeInAreaFraction,
+            double allowableConcaveIncreaseInAreaFraction = double.NaN)
         {
             foreach (var polygon in polygons)
             {
                 var copiedPolygon = polygon.Copy(true, false);
-                SimplifyByAreaChange(copiedPolygon, allowableChangeInAreaFraction);
+                SimplifyByAreaChange(copiedPolygon, allowableChangeInAreaFraction, allowableConcaveIncreaseInAreaFraction);
                 yield return copiedPolygon;
             }
         }
@@ -505,10 +507,11 @@ namespace TVGL
         /// <param name="polygons">The polygons.</param>
         /// <param name="allowableChangeInAreaFraction">The allowable change in area fraction.</param>
         /// <returns>IEnumerable&lt;Polygon&gt;.</returns>
-        public static void SimplifyByAreaChange(this IEnumerable<Polygon> polygons, double allowableChangeInAreaFraction)
+        public static void SimplifyByAreaChange(this IEnumerable<Polygon> polygons, double allowableChangeInAreaFraction,
+            double allowableConcaveIncreaseInAreaFraction = double.NaN)
         {
             foreach (var polygon in polygons)
-                polygon.SimplifyByAreaChange(allowableChangeInAreaFraction);
+                polygon.SimplifyByAreaChange(allowableChangeInAreaFraction, allowableConcaveIncreaseInAreaFraction);
         }
 
         /// <summary>
@@ -520,12 +523,9 @@ namespace TVGL
         public static void SimplifyByAreaChange(this Polygon polygon, double allowableConvexReductionInAreaFraction,
             double allowableConcaveIncreaseInAreaFraction = double.NaN)
         {
+            polygon.MakePolygonEdgesIfNonExistent();
             if (double.IsNaN(allowableConcaveIncreaseInAreaFraction))
                 allowableConcaveIncreaseInAreaFraction = allowableConvexReductionInAreaFraction;
-            var convexArea = 2 * polygon.Area * allowableConvexReductionInAreaFraction;
-            var concaveArea = 2 * polygon.Area * allowableConcaveIncreaseInAreaFraction;
-            //multiplied by 2 in order to reduce all the divide by 2 that happens when we
-            //change cross-product to area of a triangle
 
             polygon.RemoveCollinearEdges();
             var origArea = Math.Abs(polygon.Area);
@@ -544,6 +544,10 @@ namespace TVGL
             // after much thought, the idea to split up into positive and negative sorted lists is so that we don't over remove vertices
             // by bouncing back and forth between convex and concave while staying with the target deltaArea. So, we do as many convex corners
             // before reaching a reduction of deltaArea - followed by a reduction of concave edges so that no more than deltaArea is re-added
+            var convexArea = 2 * polygon.Area * allowableConvexReductionInAreaFraction;
+            var concaveArea = 2 * polygon.Area * allowableConcaveIncreaseInAreaFraction;
+            //multiplied by 2 in order to reduce all the divide by 2 that happens when we
+            //change cross-product to area of a triangle
             for (int sign = 1; sign >= -1; sign -= 2)
             {
                 var totalArea = (sign == 1) ? convexArea : concaveArea;

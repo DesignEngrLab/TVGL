@@ -49,16 +49,21 @@ namespace TVGL
             {
                 var fromKey = new PointKey(from);
                 var toKey = new PointKey(to);
+                var newNodeFound = false;
                 if (!initNodeDict.TryGetValue(fromKey, out var fromNode))
                 {   // then we haven't seen this node before, it is created here
                     fromNode = new ArrangementNode(fromKey, from);
                     initNodeDict.Add(fromKey, fromNode);
+                    newNodeFound = true;
                 }
                 if (!initNodeDict.TryGetValue(toKey, out var toNode))
                 {   // repeat for toNode
                     toNode = new ArrangementNode(toKey, to);
                     initNodeDict.Add(toKey, toNode);
+                    newNodeFound = true;
                 }
+                if (!newNodeFound && fromNode.StartingEdges.Any(e => e.ToPoint == toNode))
+                    continue; // then we have already added this edge
                 var edge = new PolygonEdge(fromNode, toNode);
                 edges.Add(edge);
                 fromNode.StartingEdges.Add(edge);
