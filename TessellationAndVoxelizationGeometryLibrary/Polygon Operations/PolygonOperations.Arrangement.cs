@@ -25,9 +25,13 @@ namespace TVGL
         public static List<Polygon> ArrangementUnion(this IEnumerable<(Vector2, Vector2)> arrangement)
         {
             BuildArrangementGraph(arrangement, out var initNodeDict, out var edges);
+            //Global.Presenter2D.ShowAndHang(edges.Select(s => new[] { s.FromPoint.Coordinates, s.ToPoint.Coordinates }));
             SplitArrangementEdgesAtIntersections(initNodeDict, edges);
-            RemoveDominatedArrangementEdges(initNodeDict);
-            var nodeList = PruneIsolatedArrangementNodes(initNodeDict);
+            var nodeList = initNodeDict.Values.ToList();
+            PruneIsolatedArrangementNodes(nodeList);
+            //Global.Presenter2D.ShowAndHang(nodeList.SelectMany(f => f.StartingEdges).Select(s => new[] { s.FromPoint.Coordinates, s.ToPoint.Coordinates }));
+            RemoveDominatedArrangementEdges(nodeList);
+            PruneIsolatedArrangementNodes(nodeList);
             var polygons = ExtractPolygonsFromArrangementNodes(nodeList);
 
             return polygons.CreateShallowPolygonTrees(true);
@@ -53,11 +57,11 @@ namespace TVGL
                     initNodeDict.Add(toKey, toNode);
                 }
                 var edge = new PolygonEdge(fromNode, toNode);
-                    edges.Add(edge);
-                    fromNode.StartingEdges.Add(edge);
-                    toNode.EndingEdges.Add(edge);
-                }
+                edges.Add(edge);
+                fromNode.StartingEdges.Add(edge);
+                toNode.EndingEdges.Add(edge);
             }
+        }
 
         // Tricky function to split arrangement edges at their intersections.
         private static void SplitArrangementEdgesAtIntersections(Dictionary<PointKey, ArrangementNode> initNodeDict, List<PolygonEdge> edges)
@@ -67,11 +71,15 @@ namespace TVGL
             var intersections = new List<SegmentIntersection>(1);                    // only one intersection found at a time, but in order to use
             var possibleDuplicates = new List<(int, PolygonEdge, PolygonEdge)>(1);   // old function, AddIntersectionBetweenLines, we need to make lists
                                                                                      // as input. These are cleared and re-used each time.
+            var othersToRemove = new List<PolygonEdge>();
+            var newEdgesToAdd = new List<PolygonEdge>();
             while (edges.Count > 0)
             {
                 var current = edges[0];  // hmm, why not use a priority queue? Because of the following foreach which looks at the
                 edges.RemoveAt(0);       // others edges ahead in the queue.
-                PolygonEdge otherToRemove = null;
+                othersToRemove.Clear();
+                newEdgesToAdd.Clear();
+                var keepCheckingCurrentNotDeleted = false;
                 foreach (var other in edges)
                 {
                     if (current.XMax < other.XMin) break;
@@ -92,17 +100,22 @@ namespace TVGL
                         initNodeDict.Add(intersectionPointKey, intersectNode);
                     }
                     // shouldn't have any WhereIntersections set to WhereIsIntersection.BothStarts
-                    if (intersection.WhereIntersection != WhereIsIntersection.AtStartOfA)
+                    if (intersection.WhereIntersection == WhereIsIntersection.AtStartOfA)
+                    {
+                        if (current == intersection.EdgeA)
+                            keepCheckingCurrentNotDeleted = true;
+                    }
+                    else
                     {   // split edge A
                         var oldEdgeA = intersection.EdgeA;
-                        if (oldEdgeA == other) otherToRemove = other;
+                        if (oldEdgeA == other) othersToRemove.Add(other);
                         var aFromNode = (ArrangementNode)oldEdgeA.FromPoint;
                         var newEdgeA = new PolygonEdge(aFromNode, intersectNode);
                         aFromNode.StartingEdges.Remove(oldEdgeA);
                         // often - due to collinearity, we end up added a new edge that already exists
                         if (!aFromNode.StartingEdges.Any(e => e.ToPoint == intersectNode))
                         {
-                            AddToSorted(edges, newEdgeA, edgeComparer);
+                            newEdgesToAdd.Add(newEdgeA);
                             aFromNode.StartingEdges.Add(newEdgeA);
                             intersectNode.EndingEdges.Add(newEdgeA);
                         }
@@ -111,21 +124,26 @@ namespace TVGL
                         aToNode.EndingEdges.Remove(oldEdgeA);
                         if (!aToNode.EndingEdges.Any(e => e.FromPoint == intersectNode))
                         {
-                            AddToSorted(edges, newEdgeA, edgeComparer);
+                            newEdgesToAdd.Add(newEdgeA);
                             aToNode.EndingEdges.Add(newEdgeA);
                             intersectNode.StartingEdges.Add(newEdgeA);
                         }
                     }
-                    if (intersection.WhereIntersection != WhereIsIntersection.AtStartOfB)
+                    if (intersection.WhereIntersection == WhereIsIntersection.AtStartOfB)
+                    {
+                        if (current == intersection.EdgeB)
+                            keepCheckingCurrentNotDeleted = true;
+                    }
+                    else
                     {   // split edge B
                         var oldEdgeB = intersection.EdgeB;
-                        if (oldEdgeB == other) otherToRemove = other;
+                        if (oldEdgeB == other) othersToRemove.Add(other);
                         var bFromNode = (ArrangementNode)oldEdgeB.FromPoint;
                         var newEdgeB = new PolygonEdge(bFromNode, intersectNode);
                         bFromNode.StartingEdges.Remove(oldEdgeB);
                         if (!bFromNode.StartingEdges.Any(e => e.ToPoint == intersectNode))
                         {
-                            AddToSorted(edges, newEdgeB, edgeComparer);
+                            newEdgesToAdd.Add(newEdgeB);
                             bFromNode.StartingEdges.Add(newEdgeB);
                             intersectNode.EndingEdges.Add(newEdgeB);
                         }
@@ -134,22 +152,27 @@ namespace TVGL
                         bToNode.EndingEdges.Remove(oldEdgeB);
                         if (!bToNode.EndingEdges.Any(e => e.FromPoint == intersectNode))
                         {
-                            AddToSorted(edges, newEdgeB, edgeComparer);
+                            newEdgesToAdd.Add(newEdgeB);
                             bToNode.EndingEdges.Add(newEdgeB);
                             intersectNode.StartingEdges.Add(newEdgeB);
                         }
                     }
-                    break; // only handle one intersection at a time
+                    if (!keepCheckingCurrentNotDeleted)
+                        break; // only handle one intersection at a time
                 }
-                if (otherToRemove != null) edges.Remove(otherToRemove);
+                foreach (var otherToRemove in othersToRemove)
+                    edges.Remove(otherToRemove);
+                foreach (var newEdge in newEdgesToAdd)
+                    AddToSorted(edges, newEdge, edgeComparer);
+
             }
         }
 
-        private static void RemoveDominatedArrangementEdges(Dictionary<PointKey, ArrangementNode> initNodeDict)
+        private static void RemoveDominatedArrangementEdges(List<ArrangementNode> nodes)
         {
             // remove edges that are dominated by others - in the case of union - these are the ones that are inside other polygons
             var edgesToRemove = new HashSet<PolygonEdge>();
-            foreach (var node in initNodeDict.Values)
+            foreach (var node in nodes)
             {
                 if (node.StartingEdges.Count <= 1 && node.EndingEdges.Count <= 1)
                     continue;
@@ -189,9 +212,8 @@ namespace TVGL
                 toNode.EndingEdges.Remove(edge);
             }
         }
-        private static List<ArrangementNode> PruneIsolatedArrangementNodes(Dictionary<PointKey, ArrangementNode> initNodeDict)
+        private static void PruneIsolatedArrangementNodes(List<ArrangementNode> nodeList)
         {   // any nodes that have no starting or ending edges are removed.
-            var nodeList = initNodeDict.Values.ToList();
             bool removalsFound;
             do // note that there may be a chain of nodes that are isolated, so we keep looking until no more are found
                // as member inside the chain would look not be prune on the first pass, but as the ends are pruned, it becomes isolated
@@ -210,7 +232,6 @@ namespace TVGL
                         ((ArrangementNode)edge.ToPoint).EndingEdges.Remove(edge);
                 }
             } while (removalsFound);
-            return nodeList;
         }
 
         private static List<Polygon> ExtractPolygonsFromArrangementNodes(List<ArrangementNode> nodeList)

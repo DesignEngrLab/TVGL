@@ -55,7 +55,6 @@ namespace TVGL
             else
             {
                 var segments = BuildReducedConvolutionSegments(a, b);
-                Global.Presenter2D.ShowAndHang(segments.Select(s => new[] { s.from, s.to }));
                 result.AddRange(segments.ArrangementUnion());
             }
             if (aCanBeInB)
@@ -83,7 +82,7 @@ namespace TVGL
 
                         {
                             if (outer == null)
-                                outer = result.First(o => o.IsNonIntersectingPolygonInside(true, loopFromHole, out _, 1e-5).GetValueOrDefault(false));
+                                outer = result.First(o => o.IsNonIntersectingPolygonInside(true, loopFromHole));
                             outer.AddInnerPolygon(loopFromHole);
                         }
                     }

@@ -92,31 +92,32 @@ namespace TVGL
         /// <param name="onlyTopInnerPolygon">if set to <c>true</c> [only top inner polygon].</param>
         /// <param name="onBoundary">if set to <c>true</c> [on boundary].</param>
         /// <returns>Polygon.</returns>
-        public static bool? IsNonIntersectingPolygonInside(this Polygon outer, bool onlyTopOuterPolygon, Polygon inner,
-            out bool onBoundary, double boundaryTolerance = Constants.DefaultEqualityTolerance)
+        public static bool IsNonIntersectingPolygonInside(this Polygon outer, bool onlyTopOuterPolygon, Polygon inner)
         {
             if (Math.Abs(inner.PathArea) > Math.Abs(outer.PathArea)
                 || (!onlyTopOuterPolygon && Math.Abs(inner.PathArea) > Math.Abs(outer.Area)))
-            {
-                onBoundary = false;
                 return false;
+            var centroid = inner.Centroid;
+            if (!inner.IsPointInsidePolygon(centroid))
+            {   // why? if inner is an exaggerated L shape, it is possible that the centroid is outside of the inner polygon
+                // so, we triangulate it and take the center of the triangle closest to the original centroid.
+                var triangles = inner.Triangulate();
+                var minCenter = Vector2.Null;
+                var minDistance = double.MaxValue;
+                foreach (var triangle in triangles)
+                {
+                    var triangleCenter = Constants.oneThird * (triangle[0].Coordinates + triangle[1].Coordinates + triangle[2].Coordinates);
+                    var d = centroid.DistanceSquared(triangleCenter);
+                    if (d < minDistance)
+                    {
+                        d = minDistance;
+                        minCenter = triangleCenter;
+                    }
+                }
+                centroid = minCenter;
             }
-            onBoundary = false;
             return outer.IsPointInsidePolygon(onlyTopOuterPolygon, inner.Centroid,
-                out var thisPointOnBoundary, boundaryTolerance);
-
-            //    foreach (var subPolygon in inner.AllPolygons)
-            //{
-            //    foreach (var vector2 in subPolygon.Path)
-            //    {
-            //        if (!outer.IsPointInsidePolygon(onlyTopOuterPolygon, vector2, out var thisPointOnBoundary, boundaryTolerance))
-            //            // negative has a point outside of positive. no point in checking other points
-            //            return false;
-            //        if (thisPointOnBoundary) onBoundary = true;
-            //        else return true;
-            //    }
-            //}
-            //return null; //all points are on boundary, so it is unclear if it is inside
+                out var thisPointOnBoundary, Constants.BaseTolerance);
         }
 
         /// <summary>
@@ -1267,7 +1268,7 @@ namespace TVGL
                         Math.Round(previousALine.ToPoint.Y - previousALine.FromPoint.Y, numSigDigs)
                         );
                 }
-                else previousAVector = previousALine?.Vector?? Vector2.Null;
+                else previousAVector = previousALine?.Vector ?? Vector2.Null;
                 var previousBLine = edgeB.FromPoint.EndLine;
                 if (needToRoundB)
                 {
