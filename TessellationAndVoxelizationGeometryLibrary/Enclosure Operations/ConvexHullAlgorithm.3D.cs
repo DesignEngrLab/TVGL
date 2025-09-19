@@ -439,6 +439,11 @@ namespace TVGL
                 convexHull = null;
                 return false;
             }
+            if (planeNormal.X is double.NaN)
+            {
+                convexHull = null;
+                return false;
+            }
             var coords2D = vertices.ProjectTo2DCoordinates(planeNormal, out var backTransform).ToList();
             var cvxHull2D = ConvexHull2D.Create(coords2D, out var vertexIndices);
             convexHull = new ConvexHull3D { tolerance = tolerance };
