@@ -12,11 +12,8 @@
 // <summary></summary>
 // ***********************************************************************
 using Clipper2Lib;
-using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
-using System.Globalization;
 using System.Linq;
 
 namespace TVGL
@@ -36,6 +33,7 @@ namespace TVGL
         /// <returns></returns>
         public static List<Polygon> MinkowskiSum(this Polygon a, Polygon b)
         {
+            //Presenter.ShowAndHang(new List<Polygon> { a, b });
             var aHasHoles = a.InnerPolygons != null && a.InnerPolygons.Length > 0;
             var bHasHoles = b.InnerPolygons != null && b.InnerPolygons.Length > 0;
             var aCanBeInB = bHasHoles && ((a.MaxX - a.MinX) < (b.MaxX - b.MinX) &&

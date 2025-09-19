@@ -229,7 +229,7 @@ namespace TVGL
             //If the point is inside the bounding box, continue to check with more detailed methods, 
             //Else, retrun false.
             var p = pointInQuestion;
-            if (p.Y < polygon.MinY || p.Y > polygon.MaxY || p.X < polygon.MinX || p.X > polygon.MaxX) 
+            if (p.Y < polygon.MinY || p.Y > polygon.MaxY || p.X < polygon.MinX || p.X > polygon.MaxX)
                 return false;
 
             //2) Next, see how many lines are to the left of the point, using a fixed y value.
@@ -240,13 +240,16 @@ namespace TVGL
             var vertCount = verts.Count;
             for (int i = 0, j = vertCount - 1; i < vertCount; j = i++)
             {
-                var d1 = (p.X - verts[i].X) * (verts[j].Y - verts[i].Y) < (verts[j].X - verts[i].X) * (p.Y - verts[i].Y);
-                var d2 = p.X < (verts[j].X - verts[i].X) * (p.Y - verts[i].Y) / (verts[j].Y - verts[i].Y) + verts[i].X;
-                if ((verts[i].Y > p.Y) != (verts[j].Y > p.Y) &&
-                   // (p.X - verts[i].X) * (verts[j].Y - verts[i].Y) < (verts[j].X - verts[i].X) * (p.Y - verts[i].Y))
-                       p.X < (verts[j].X - verts[i].X) * (p.Y - verts[i].Y) / (verts[j].Y - verts[i].Y) + verts[i].X)
+                //if ((verts[i].Y > p.Y) != (verts[j].Y > p.Y) &&
+                //       p.X < (verts[j].X - verts[i].X) * (p.Y - verts[i].Y) / (verts[j].Y - verts[i].Y) + verts[i].X)
+                // since this is called a lot, we can save a few cycles by avoiding division. Unforunately, if the 
+                // denominator is negative then we must flip the inequality. This makes the condition a bit unreadable. 
+                // See the commented code above for the orginial.
+                if ((verts[i].Y<= p.Y) == (verts[j].Y > p.Y))
                 {
-                    inside = !inside;
+                    var denom = verts[j].Y - verts[i].Y;
+                    if ((denom < 0) == ((p.X - verts[i].X) * denom > (verts[j].X - verts[i].X) * (p.Y - verts[i].Y)))
+                        inside = !inside;
                 }
             }
             return inside;
