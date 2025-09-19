@@ -428,12 +428,14 @@ namespace TVGL
             convexHull = null;
             if (Plane.DefineNormalAndDistanceFromVertices(vertices, out var distance, out var planeNormal))
             {
+                //For whatever reason (maybe if given a line?), the matrix.solve function in DefineNormalAndDistanceFromVertices
+                //can return true, with an invalid normal.
+                if (planeNormal.X is double.NaN) return false;
                 var plane = new Plane(distance, planeNormal);
                 if (plane.CalculateMaxError(vertices.Select(v => v.Coordinates)) > tolerance)
                     return false;
             }
             else return false;
-            if (planeNormal.X is double.NaN) return false;
 
             var coords2D = vertices.ProjectTo2DCoordinates(planeNormal, out var backTransform).ToList();
             var cvxHull2D = ConvexHull2D.Create(coords2D, out var vertexIndices);
