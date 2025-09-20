@@ -94,7 +94,7 @@ namespace TVGL
         /// <returns>IList&lt;Vector2&gt;.</returns>
         public static IList<Vector2> RemoveCollinearEdgesToNewList(this IEnumerable<Vector2> path)
         {
-            var polygon = path as IList<Vector2> ?? path.ToList();
+            var polygon = path.ToList();
             var forwardPoint = polygon[0];
             var currentPoint = polygon[^1];
             for (int i = polygon.Count - 1; i >= 0; i--)
@@ -229,7 +229,7 @@ namespace TVGL
             bool removeCollinearPoints = true)
         {
             // first remove collinear points             
-            var polygon = removeCollinearPoints ? path.RemoveCollinearEdgesToNewList() : path as IList<Vector2> ?? path.ToList();
+            var polygon = removeCollinearPoints ? path.RemoveCollinearEdgesToNewList() :  path.ToList();
             var numPoints = polygon.Count;
 
             #region build initial list of edge lengths
