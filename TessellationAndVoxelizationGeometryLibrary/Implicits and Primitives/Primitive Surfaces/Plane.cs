@@ -400,6 +400,9 @@ namespace TVGL
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public override void Transform(Matrix4x4 matrix, bool transformFacesAndVertices)
         {
+            //Set these transform matrices to zero and recalculate when needed.
+            _asTransformToXYPlane = Matrix4x4.Null;
+            _asTransformFromXYPlane = Matrix4x4.Null;
             base.Transform(matrix, transformFacesAndVertices);
             var pointOnPlane = DistanceToOrigin * Normal;
             pointOnPlane = pointOnPlane.Transform(matrix);
