@@ -682,7 +682,7 @@ namespace TVGL  // COMMENTEDCHANGE namespace System.Numerics
             {
                 //StackTrace stackTrace = new StackTrace();
                 //string callerName = stackTrace.GetFrame(4).GetMethod().Name;
-                Log.Error("Normalizing a vector of zero length. Returning null vector");
+                Log.Warning("Normalizing a vector of zero length. Returning null vector");
                 return Vector3.Null;
             }
             if (ls.IsPracticallySame(1.0)) return value;
