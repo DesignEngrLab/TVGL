@@ -332,6 +332,7 @@ namespace TVGL
             var intersections = LineIntersection(anchor, normal);
             Vector3 newAnchor = anchor;
             int iters = 0;
+            double t = 0;
             while (!intersections.GetEnumerator().MoveNext() && iters++ < 100)
             {
                 t = -normal.Dot(normal) / GetNormalAtPoint(normal).Dot(normal); //Yes, this is intentional. It is just a shorthand for the equation.

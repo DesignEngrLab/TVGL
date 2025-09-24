@@ -218,8 +218,10 @@ namespace TVGL
             var Q3 = Q * Q * Q;
             var R2 = R * R;
             a /= 3.0;
-            if (R2.IsPracticallySame(Q3) || R2 < Q3) // R^2 - Q^3 is the discriminant of the polynomial
+            if (R2 < Q3) // R^2 - Q^3 is the discriminant of the polynomial
             {  //for q-cubed to be greater than R-squared, then Q is guaranteed to be a positive real
+                // There was an additional R2.IsPracticallySame(Q3) condition here as well joined by "or"
+                // which should be covered by the alternate block
                 var theta = Math.Acos(R / Math.Sqrt(Q3)) / 3;
                 var sqrtQ = Math.Sqrt(Q);
                 yield return new ComplexNumber(-2 * sqrtQ * Math.Cos(theta) - a);
