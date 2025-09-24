@@ -311,20 +311,38 @@ namespace TVGL
             }
             return currentPoint;
         }
-
-        public Vector3 GetPointNearQuadric(Vector3 anchor)
+        public Vector3 GetNormalAtUmbilicPoint(Vector3 point)
         {
-            var intersections = LineIntersection(anchor, GetNormalAtPoint(anchor));
+            // at an umbilic point, the normal is zero, so we need to find the direction of maximum increase
+            // we assume that the quadric field is not flat everywhere
+            if (GetNormalAtPoint(point).Length() != 0) return GetNormalAtPoint(point);
+            var eigVectors = new ComplexNumber[3][];
+            var eigVals = StarMath.GetEigenValuesAndVectors3(2 * XSqdCoeff, XYCoeff, XZCoeff, XYCoeff, 2 * YSqdCoeff, YZCoeff, XZCoeff, YZCoeff, 2 * ZSqdCoeff, out eigVectors);
+            var maxIncreaseNormal = eigVectors[Array.IndexOf(eigVals, eigVals.MaxBy(x => x.Real))];
+            if (maxIncreaseNormal== null) return Vector3.UnitX; //This means there are infinitely many eigenvectors, and we choose one at random.
+            return new Vector3(maxIncreaseNormal[0].Real, maxIncreaseNormal[1].Real, maxIncreaseNormal[2].Real);
+        }
+        public Vector3 GetNearbyPointOnQuadric(Vector3 anchor)
+        {
+            Vector3 normal = GetNormalAtPoint(anchor);
+            if (normal.Length() == 0)
+            {
+                normal = GetNormalAtUmbilicPoint(anchor);
+            }
+            var intersections = LineIntersection(anchor, normal);
             Vector3 newAnchor = anchor;
             int iters = 0;
             while (!intersections.GetEnumerator().MoveNext() && iters++ < 100)
             {
-                GeneralQuadric outerQuadric = new GeneralQuadric(XSqdCoeff, YSqdCoeff, ZSqdCoeff, XYCoeff, XZCoeff, YZCoeff, XCoeff, YCoeff, ZCoeff, W - QuadricValue(newAnchor));
-                Vector3 FarSideAnchor = (outerQuadric.LineIntersection(newAnchor + 1E-6 * GetNormalAtPoint(newAnchor), GetNormalAtPoint(newAnchor)).MaxBy(x => x.intersection.DistanceSquared(newAnchor))).intersection;
-                newAnchor = newAnchor - Math.Sign(QuadricValue(newAnchor)) * GetNormalAtPoint(newAnchor).Normalize() * newAnchor.Distance(FarSideAnchor) / 2;
-                intersections = LineIntersection(newAnchor, outerQuadric.GetNormalAtPoint(newAnchor));
+                t = -normal.Dot(normal) / GetNormalAtPoint(normal).Dot(normal); //Yes, this is intentional. It is just a shorthand for the equation.
+                newAnchor = newAnchor + t * normal;
+                normal = GetNormalAtPoint(newAnchor);
+                if (normal.Length() == 0)
+                {
+                    normal = GetNormalAtUmbilicPoint(newAnchor);
+                }
+                intersections = LineIntersection(newAnchor, normal);
             }
-            if (QuadricValue(newAnchor).IsNegligible(1e-3)) return newAnchor;
             if (!intersections.GetEnumerator().MoveNext()) return newAnchor;
             return intersections.MinBy(x => x.intersection.DistanceSquared(anchor)).intersection;
         }
@@ -338,7 +356,7 @@ namespace TVGL
         {
             //if (GetNormalAtPoint(point).Length() == 0) return 0; //scaling the quadric value by the norm of the normal vector to get the approximate distance locally, not working all the time
             //return QuadricValue(point) / GetNormalAtPoint(point).Length();
-            var closestPt = GetPointNearQuadric(point);
+            var closestPt = GetNearbyPointOnQuadric(point);
             var closestPt4 = new Vector4(closestPt, 0); // the fourth number "w" here represents the Lagrange multiplier
             var delta = Vector4.Zero;
             int iterations = 0;
