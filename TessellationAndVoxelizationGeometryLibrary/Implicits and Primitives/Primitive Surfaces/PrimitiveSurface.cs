@@ -447,6 +447,20 @@ namespace TVGL
             }
         }
 
+        public void RemoveNegligibleFaceReferences(IEnumerable<TriangleFace> faces, IEnumerable<Edge> edges, IEnumerable<Vertex> vertices)
+        {
+            if (Faces == null) return;
+            foreach (var face in faces)
+                Faces.Remove(face);
+            foreach (var edge in edges)
+            {
+                InnerEdges.Remove(edge);
+                OuterEdges.Remove(edge);
+            }
+            foreach (var vertex in vertices)
+                Vertices.Remove(vertex);    
+        }
+
         /// <summary>
         /// Updates surface by adding face
         /// </summary>
