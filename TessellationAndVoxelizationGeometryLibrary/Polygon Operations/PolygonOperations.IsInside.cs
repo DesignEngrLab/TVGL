@@ -92,31 +92,34 @@ namespace TVGL
         /// <param name="onlyTopInnerPolygon">if set to <c>true</c> [only top inner polygon].</param>
         /// <param name="onBoundary">if set to <c>true</c> [on boundary].</param>
         /// <returns>Polygon.</returns>
-        public static bool? IsNonIntersectingPolygonInside(this Polygon outer, bool onlyTopOuterPolygon, Polygon inner,
-            out bool onBoundary, double boundaryTolerance = Constants.DefaultEqualityTolerance)
+        public static bool IsNonIntersectingPolygonInside(this Polygon outer, bool onlyTopOuterPolygon, Polygon inner)
         {
+            //Presenter.ShowAndHang([outer, inner]);
             if (Math.Abs(inner.PathArea) > Math.Abs(outer.PathArea)
                 || (!onlyTopOuterPolygon && Math.Abs(inner.PathArea) > Math.Abs(outer.Area)))
-            {
-                onBoundary = false;
                 return false;
+            var centroid = inner.Centroid;
+            if (!inner.IsPointInsidePolygon(centroid))
+            {   // why? if inner is an exaggerated L shape, it is possible that the centroid is outside of the inner polygon
+                // so, we triangulate it and take the center of the triangle closest to the original centroid.
+                var innerToTriangulate = inner.Copy(false, !inner.IsPositive);
+                var triangles = innerToTriangulate.Triangulate();
+                var minCenter = Vector2.Null;
+                var minDistance = double.MaxValue;
+                foreach (var triangle in triangles)
+                {
+                    var triangleCenter = Constants.oneThird * (triangle[0].Coordinates + triangle[1].Coordinates + triangle[2].Coordinates);
+                    var d = centroid.DistanceSquared(triangleCenter);
+                    if (d < minDistance)
+                    {
+                        d = minDistance;
+                        minCenter = triangleCenter;
+                    }
+                }
+                centroid = minCenter;
             }
-            onBoundary = false;
             return outer.IsPointInsidePolygon(onlyTopOuterPolygon, inner.Centroid,
-                out var thisPointOnBoundary, boundaryTolerance);
-
-            //    foreach (var subPolygon in inner.AllPolygons)
-            //{
-            //    foreach (var vector2 in subPolygon.Path)
-            //    {
-            //        if (!outer.IsPointInsidePolygon(onlyTopOuterPolygon, vector2, out var thisPointOnBoundary, boundaryTolerance))
-            //            // negative has a point outside of positive. no point in checking other points
-            //            return false;
-            //        if (thisPointOnBoundary) onBoundary = true;
-            //        else return true;
-            //    }
-            //}
-            //return null; //all points are on boundary, so it is unclear if it is inside
+                out var thisPointOnBoundary, Constants.BaseTolerance);
         }
 
         /// <summary>
@@ -226,30 +229,27 @@ namespace TVGL
             //If the point is inside the bounding box, continue to check with more detailed methods, 
             //Else, retrun false.
             var p = pointInQuestion;
-            var path = polygon.Path;
-            var xMax = double.NegativeInfinity;
-            var yMax = double.NegativeInfinity;
-            var xMin = double.PositiveInfinity;
-            var yMin = double.PositiveInfinity;
-            foreach (var point in path)
-            {
-                if (point.X < xMin) xMin = point.X;
-                if (point.X > xMax) xMax = point.X;
-                if (point.Y < yMin) yMin = point.Y;
-                if (point.Y > yMax) yMax = point.Y;
-            }
-            if (p.Y < yMin || p.Y > yMax || p.X < xMin || p.X > xMax) return false;
+            if (p.Y < polygon.MinY || p.Y > polygon.MaxY || p.X < polygon.MinX || p.X > polygon.MaxX)
+                return false;
 
             //2) Next, see how many lines are to the left of the point, using a fixed y value.
             //This compact, effecient 7 lines of code is from W. Randolph Franklin
             //<https://wrf.ecse.rpi.edu//Research/Short_Notes/pnpoly.html>
             var inside = false;
-            for (int i = 0, j = path.Count - 1; i < path.Count; j = i++)
+            var verts = polygon.Vertices;
+            var vertCount = verts.Count;
+            for (int i = 0, j = vertCount - 1; i < vertCount; j = i++)
             {
-                if ((path[i].Y > p.Y) != (path[j].Y > p.Y) &&
-                    p.X < (path[j].X - path[i].X) * (p.Y - path[i].Y) / (path[j].Y - path[i].Y) + path[i].X)
+                //if ((verts[i].Y > p.Y) != (verts[j].Y > p.Y) &&
+                //       p.X < (verts[j].X - verts[i].X) * (p.Y - verts[i].Y) / (verts[j].Y - verts[i].Y) + verts[i].X)
+                // since this is called a lot, we can save a few cycles by avoiding division. Unforunately, if the 
+                // denominator is negative then we must flip the inequality. This makes the condition a bit unreadable. 
+                // See the commented code above for the orginial.
+                if ((verts[i].Y<= p.Y) == (verts[j].Y > p.Y))
                 {
-                    inside = !inside;
+                    var denom = verts[j].Y - verts[i].Y;
+                    if ((denom < 0) == ((p.X - verts[i].X) * denom > (verts[j].X - verts[i].X) * (p.Y - verts[i].Y)))
+                        inside = !inside;
                 }
             }
             return inside;
@@ -1237,7 +1237,7 @@ namespace TVGL
                         Math.Round(previousALine.ToPoint.Y, numSigDigs) - Math.Round(previousALine.FromPoint.Y, numSigDigs)
                         );
                 }
-                else previousAVector = previousALine.Vector;
+                else previousAVector = previousALine?.Vector ?? Vector2.Null;
                 previousBVector = bVector;
                 lineACrossPrevB = lineACrossLineB;
                 prevACrossLineB = prevACrossPrevB = previousAVector.Cross(previousBVector);
@@ -1253,7 +1253,7 @@ namespace TVGL
                         Math.Round(previousBLine.ToPoint.Y - previousBLine.FromPoint.Y, numSigDigs)
                         );
                 }
-                else previousBVector = previousBLine.Vector;
+                else previousBVector = previousBLine?.Vector ?? Vector2.Null;
                 prevACrossLineB = lineACrossLineB;
                 lineACrossPrevB = prevACrossPrevB = previousAVector.Cross(previousBVector);
             }
@@ -1267,7 +1267,7 @@ namespace TVGL
                         Math.Round(previousALine.ToPoint.Y - previousALine.FromPoint.Y, numSigDigs)
                         );
                 }
-                else previousAVector = previousALine.Vector;
+                else previousAVector = previousALine?.Vector ?? Vector2.Null;
                 var previousBLine = edgeB.FromPoint.EndLine;
                 if (needToRoundB)
                 {
@@ -1275,12 +1275,8 @@ namespace TVGL
                         Math.Round(previousBLine.ToPoint.X - previousBLine.FromPoint.X, numSigDigs),
                         Math.Round(previousBLine.ToPoint.Y - previousBLine.FromPoint.Y, numSigDigs)
                         );
-                    //previousBVector = new Vector2(
-                    //    Math.Round(previousBLine.ToPoint.X, numSigDigs) - Math.Round(previousBLine.FromPoint.X, numSigDigs),
-                    //    Math.Round(previousBLine.ToPoint.Y, numSigDigs) - Math.Round(previousBLine.FromPoint.Y, numSigDigs)
-                    //    );
                 }
-                else previousBVector = previousBLine.Vector;
+                else previousBVector = previousBLine?.Vector ?? Vector2.Null;
                 prevACrossLineB = previousAVector.Cross(bVector);
                 lineACrossPrevB = aVector.Cross(previousBVector);
                 prevACrossPrevB = previousAVector.Cross(previousBVector);

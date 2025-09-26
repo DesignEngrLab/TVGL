@@ -33,10 +33,6 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<Compile Remove="Enclosure Operations\MinimumEnclosure - OBBTest.cs" />
-	</ItemGroup>
-
-	<ItemGroup>
 		<None Remove="Numerics\README.txt" />
 		<None Remove="Polygon Operations\Clipper\License.txt" />
 		<None Remove="Polygon Operations\Clipper\README" />
