@@ -133,7 +133,7 @@ namespace TVGL
                 }
                 catch
                 {
-                    Log.Information("Unable to create convex hull.", 1);
+                    Log.Error("Unable to create convex hull.", 1);
                 }
             }
 
