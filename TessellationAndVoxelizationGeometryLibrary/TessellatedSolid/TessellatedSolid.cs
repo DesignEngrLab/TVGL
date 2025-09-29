@@ -396,8 +396,6 @@ namespace TVGL
                             reader.Read();
                             ts.Primitives.Add((PrimitiveSurface)jsonSerializer.Deserialize(reader, primitiveType));
                         }
-                        //update the number of primitives if any were null
-                        ts.NumberOfPrimitives = ts.Primitives.Count;
                         reader.Read();//end of array },
                         break;
                     case "FaceIndices":
@@ -469,6 +467,10 @@ namespace TVGL
 
                 reader.Read();//go to next
             }
+
+            //update the number of primitives if any were null
+            ts.NumberOfPrimitives = ts.Primitives.Count;
+
             //Lastly, assign faces and vertices to the primitives
             foreach (var prim in ts.Primitives)
                 prim.CompletePostSerialization(ts);
