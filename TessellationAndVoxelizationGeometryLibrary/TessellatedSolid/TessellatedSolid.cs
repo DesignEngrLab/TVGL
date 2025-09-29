@@ -386,6 +386,8 @@ namespace TVGL
                         {
                             //Get the property name, which in this case, is the name of the primitive plus an index.
                             reader.Read();
+                            //If the reader value is null, it is potential that NumberOfPrimitives != Primitives.Count. Just ignore and continue.
+                            if (reader.Value == null) continue;
                             var primitiveString = reader.Value.ToString().Split('_')[0];
                             var primitiveInd = int.Parse(reader.Value.ToString().Split('_')[1]);
                             var primitiveType = Type.GetType("TVGL." + primitiveString);
@@ -394,6 +396,8 @@ namespace TVGL
                             reader.Read();
                             ts.Primitives.Add((PrimitiveSurface)jsonSerializer.Deserialize(reader, primitiveType));
                         }
+                        //update the number of primitives if any were null
+                        ts.NumberOfPrimitives = ts.Primitives.Count;
                         reader.Read();//end of array },
                         break;
                     case "FaceIndices":
