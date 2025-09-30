@@ -14,18 +14,13 @@ using Vector3D = System.Windows.Media.Media3D.Vector3D;
 
 namespace WindowsDesktopPresenter
 {
-    internal class Held3DViewModel : HeldViewModel
+    internal class Stepped3DViewModel : HeldViewModel
     {
-        private Queue<IList<GeometryModel3D>> SeriesQueue;
-        internal void AddNewSeries(IEnumerable<GeometryModel3D> solids)
-        {
-            SeriesQueue.Clear();
-            EnqueueNewSeries(solids);
-        }
+        private List<IList<GeometryModel3D>> SeriesQueue;
 
         internal void EnqueueNewSeries(IEnumerable<GeometryModel3D> solids)
         {
-            SeriesQueue.Enqueue(solids as IList<GeometryModel3D> ?? solids.ToList());
+            SeriesQueue.Add(solids as IList<GeometryModel3D> ?? solids.ToList());
         }
 
 
@@ -34,11 +29,11 @@ namespace WindowsDesktopPresenter
         public Window OwnedWindow { get; }
 
 
-        public Held3DViewModel(Window window)
+        public Stepped3DViewModel(Window window)
         {
             this.OwnedWindow = window;
             this.timer = new Timer(OnTimerElapsed, null, startupTimerInterval, UpdateInterval);
-            SeriesQueue = new Queue<IList<GeometryModel3D>>();
+            SeriesQueue = new List<IList<GeometryModel3D>>();
 
             EffectsManager = new DefaultEffectsManager();
 
@@ -66,7 +61,8 @@ namespace WindowsDesktopPresenter
         private bool Update()
         {
             if (SeriesQueue.Count == 0) return false;
-            var series = SeriesQueue.Dequeue();
+            var series = SeriesQueue[0]; // ();
+            SeriesQueue.RemoveAt(0);    
             var newNumberItems = series.Count;
             for (int i = 0; i < newNumberItems; i++)
                 OwnedWindow.Dispatcher.Invoke(() =>

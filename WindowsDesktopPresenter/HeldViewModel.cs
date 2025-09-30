@@ -1,14 +1,6 @@
-﻿using HelixToolkit.SharpDX.Core;
-using OxyPlot;
-using OxyPlot.Series;
-using System;
-using System.Collections.Generic;
+﻿using System;
 using System.ComponentModel;
-using System.Linq;
 using System.Threading;
-using System.Windows;
-using TVGL;
-using MarkerType = TVGL.MarkerType;
 
 namespace WindowsDesktopPresenter
 {

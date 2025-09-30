@@ -137,12 +137,6 @@ namespace WindowsDesktopPresenter
             };
         }
 
-
-
-        #endregion
-
-
-        #region ShowPaths with or without Solid(s)
         public void ShowAndHang(IEnumerable<IEnumerable<IEnumerable<Vector3>>> paths, IEnumerable<bool> closePaths = null,
             IEnumerable<double> lineThicknesses = null, IEnumerable<Color> colors = null, params Solid[] solids)
         {
@@ -187,6 +181,11 @@ namespace WindowsDesktopPresenter
         public void ShowAndHang(IEnumerable<Vector3> path, bool closePaths = false, double lineThickness = -1, Color color = null, params Solid[] solids)
             => ShowAndHang([path], [closePaths], [lineThickness == -1 ? 1 : lineThickness], [color == null ? new Color(KnownColors.Black) : color], solids);
 
+        public void ShowStepsAndHang(IEnumerable<IEnumerable<IEnumerable<Vector3>>> paths, IList<Solid> solids,
+            IEnumerable<IList<Matrix4x4>> transforms)
+        {
+
+        }
 
         private List<LineGeometryModel3D> ConvertPathsToLineModels(IEnumerable<IEnumerable<Vector3>> paths,
             IEnumerable<bool> closePaths, IEnumerable<double> lineThicknesses, IEnumerable<TVGLColor> colors)
