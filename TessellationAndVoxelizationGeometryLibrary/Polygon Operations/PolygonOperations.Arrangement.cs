@@ -83,8 +83,8 @@ namespace TVGL
             var newEdgesToAdd = new List<PolygonEdge>();
             while (edges.Count > 0)
             {
-                var current = edges[0];  // hmm, why not use a priority queue? Because of the following foreach which looks at the
-                edges.RemoveAt(0);       // others edges ahead in the queue.
+                var current = edges[0];  // hmm, why not use a priority queue? Because of the following 
+                edges.RemoveAt(0);       // foreach which looks at the others edges ahead in the queue.
                 othersToRemove.Clear();
                 newEdgesToAdd.Clear();
                 var keepCheckingCurrentNotDeleted = false;
@@ -121,7 +121,8 @@ namespace TVGL
                         var newEdgeA = new PolygonEdge(aFromNode, intersectNode);
                         aFromNode.StartingEdges.Remove(oldEdgeA);
                         // often - due to collinearity, we end up added a new edge that already exists
-                        if (!aFromNode.StartingEdges.Any(e => e.ToPoint == intersectNode))
+                        if (!aFromNode.StartingEdges.Any(e => e.ToPoint == intersectNode) &&
+                            !aFromNode.EndingEdges.Any(e => e.FromPoint == intersectNode))
                         {
                             newEdgesToAdd.Add(newEdgeA);
                             aFromNode.StartingEdges.Add(newEdgeA);
@@ -130,7 +131,8 @@ namespace TVGL
                         var aToNode = (ArrangementNode)oldEdgeA.ToPoint;
                         newEdgeA = new PolygonEdge(intersectNode, aToNode);
                         aToNode.EndingEdges.Remove(oldEdgeA);
-                        if (!aToNode.EndingEdges.Any(e => e.FromPoint == intersectNode))
+                        if (!aToNode.EndingEdges.Any(e => e.FromPoint == intersectNode) &&
+                            !aToNode.StartingEdges.Any(e => e.ToPoint == intersectNode))
                         {
                             newEdgesToAdd.Add(newEdgeA);
                             aToNode.EndingEdges.Add(newEdgeA);
@@ -149,7 +151,8 @@ namespace TVGL
                         var bFromNode = (ArrangementNode)oldEdgeB.FromPoint;
                         var newEdgeB = new PolygonEdge(bFromNode, intersectNode);
                         bFromNode.StartingEdges.Remove(oldEdgeB);
-                        if (!bFromNode.StartingEdges.Any(e => e.ToPoint == intersectNode))
+                        if (!bFromNode.StartingEdges.Any(e => e.ToPoint == intersectNode) && 
+                            !bFromNode.EndingEdges.Any(e => e.FromPoint == intersectNode))
                         {
                             newEdgesToAdd.Add(newEdgeB);
                             bFromNode.StartingEdges.Add(newEdgeB);
@@ -158,7 +161,8 @@ namespace TVGL
                         var bToNode = (ArrangementNode)oldEdgeB.ToPoint;
                         newEdgeB = new PolygonEdge(intersectNode, bToNode);
                         bToNode.EndingEdges.Remove(oldEdgeB);
-                        if (!bToNode.EndingEdges.Any(e => e.FromPoint == intersectNode))
+                        if (!bToNode.EndingEdges.Any(e => e.FromPoint == intersectNode) &&
+                            !bToNode.StartingEdges.Any(e=>e.ToPoint == intersectNode))
                         {
                             newEdgesToAdd.Add(newEdgeB);
                             bToNode.EndingEdges.Add(newEdgeB);
