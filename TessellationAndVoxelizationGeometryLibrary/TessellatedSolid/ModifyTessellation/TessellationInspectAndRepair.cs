@@ -1366,6 +1366,8 @@ namespace TVGL
         public static void DefineBorders(TessellatedSolid solid, bool forceRerun=false)
         {
             //Already defined. Probably didn't mean to call this again.
+            //In case BordersDefined is incorrect due to writing/reading TVGLZ errors, just force rerun.
+            if (solid.Primitives.First().Borders == null) forceRerun = true;
             if (!forceRerun && solid.BordersDefined) return;
 
             DefineBorderSegments(solid);
