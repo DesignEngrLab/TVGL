@@ -3,6 +3,7 @@
 	<PropertyGroup>
 		<TargetFramework>net8.0-windows</TargetFramework>
 		<UseWPF>true</UseWPF>
+		<Configurations>Debug;Release;Series</Configurations>
 	</PropertyGroup>
 
 	<ItemGroup>
