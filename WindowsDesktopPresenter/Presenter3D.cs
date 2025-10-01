@@ -201,7 +201,7 @@ namespace WindowsDesktopPresenter
         /// <param name="lineThicknesses"></param>
         /// <param name="colors"></param>
         public void ShowStepsAndHang(IEnumerable<IEnumerable<IEnumerable<Vector3>>> paths, IList<Solid> solids,
-            IList<IEnumerable<Matrix4x4>> transforms, IEnumerable<bool> keepEarlierPaths, IEnumerable<bool> closePaths = null,
+            IList<IEnumerable<Matrix4x4>> transforms, IEnumerable<bool> keepEarlierPaths = null, IEnumerable<bool> closePaths = null,
             IEnumerable<double> lineThicknesses = null, IEnumerable<Color> colors = null)
         {
             var vm = new Stepped3DViewModel();
@@ -215,13 +215,14 @@ namespace WindowsDesktopPresenter
             var previousPaths = keepPathList.Select(k => k ? new List<LineGeometryModel3D>() : null).ToArray();
 
             var numSolids = solids.Count;
-            // multiple mesh geometries per solid!  use ConvertTessellatedSolidToMGM3D((TessellatedSolid)ts)
-            var helixSolids = numSolids == 0 ? null : ConvertSolidsToModel3D(solids).ToArray();
+
+            var helixSolids = numSolids == 0 ? null : solids.Select(ts => ConvertTessellatedSolidToMGM3D((TessellatedSolid)ts)
+            .Cast<MeshGeometryModel3D>().ToArray()).ToArray();
             var transformEnumerators = (numSolids == 0 || transforms == null) ? null : transforms.Select(tf => tf?.GetEnumerator()).ToArray();
             var timeStep = 0;
-            var newStepFound = false;
+            bool newStepFound;
 
-            while (newStepFound)
+            do
             {
                 var newPaths = new IEnumerable<Vector3>[numPaths];
                 newStepFound = false;
@@ -243,19 +244,37 @@ namespace WindowsDesktopPresenter
                     if (transformEnumerators == null || transformEnumerators[i] == null)
                         transform = new System.Windows.Media.Media3D.TranslateTransform3D(0, 0, 0);  // static solid 
                     else if (transformEnumerators[i].MoveNext() && !transformEnumerators[i].Current.IsNull())
-                        transform = ConvertToWindowsTransform3D(transformEnumerators[i].Current);                                                  //? Matrix4x4.Identity :
+                        transform = ConvertToWindowsTransform3D(transformEnumerators[i].Current);   //? Matrix4x4.Identity :
                     if (transform != null) // if transform is null, then the solid is not shown at this time step
                     {
-                        var vizSolid = helixSolids[i].CloneCurrentValue();
-                        vizSolid.Transform = transform;
-                        vm.AddRange(timeStep, vizSolid);
+                        foreach (var vizSolid in helixSolids[i])
+                        {
+                            var copy = CopyVizMesh(vizSolid);
+                            copy.Transform = transform;
+                            vm.Add(timeStep, copy);
+                        }
                         newStepFound = true;
                     }
                 }
                 timeStep++;
-            }
+            } while (newStepFound) ;
             var window = new Window3DSteppedPlot(vm);
             window.ShowDialog();
+        }
+
+        private MeshGeometryModel3D CopyVizMesh(MeshGeometryModel3D origGeom)
+        {
+            var origMesh = (MeshGeometry3D)origGeom.Geometry;
+            return new MeshGeometryModel3D
+            {
+                Geometry = new MeshGeometry3D
+                {
+                    Positions = new Vector3Collection(origMesh.Positions),
+                    TriangleIndices = new IntCollection(origMesh.TriangleIndices),
+                    Normals = new Vector3Collection(origMesh.Normals),
+                },
+                Material = new PhongMaterial() { DiffuseColor = ((PhongMaterial)origGeom.Material).DiffuseColor }
+            };
         }
 
         private System.Windows.Media.Media3D.Transform3D ConvertToWindowsTransform3D(Matrix4x4 m)

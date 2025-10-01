@@ -38,7 +38,7 @@ namespace WindowsDesktopPresenter
             SelectedIndex = selectedIndex;
 
             // Update the PlotView by setting the Model property to the selected PlotModel
-            if (SelectedIndex >= 0 && SelectedIndex < Models.Count)
+            //if (SelectedIndex >= 0 && SelectedIndex < Models.Count)
             {
                 bool newDataToShow;
                 lock (stepViewModel.Solids)
