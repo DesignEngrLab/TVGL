@@ -3,9 +3,9 @@ using HelixToolkit.Wpf.SharpDX;
 using SharpDX.Direct3D11;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Runtime.CompilerServices;
-using System.Threading;
 using System.Windows;
 using Media3D = System.Windows.Media.Media3D;
 using Point3D = System.Windows.Media.Media3D.Point3D;
@@ -14,26 +14,44 @@ using Vector3D = System.Windows.Media.Media3D.Vector3D;
 
 namespace WindowsDesktopPresenter
 {
-    internal class Stepped3DViewModel : HeldViewModel
+    internal class Stepped3DViewModel : INotifyPropertyChanged
     {
-        private List<IList<GeometryModel3D>> SeriesQueue;
+        private List<List<GeometryModel3D>> ModelSeries;
 
-        internal void EnqueueNewSeries(IEnumerable<GeometryModel3D> solids)
+        public void AddRange(int index, IEnumerable<GeometryModel3D> models)
         {
-            SeriesQueue.Add(solids as IList<GeometryModel3D> ?? solids.ToList());
+            foreach (var model in models)
+                Add(index, model);
+        }
+        public void Add(int index, GeometryModel3D model)
+        {
+            while (ModelSeries.Count <= index)
+                ModelSeries.Add(new List<GeometryModel3D>());
+            ModelSeries[index].Add(model);
         }
 
-
-        private const int startupTimerInterval = 0;
-
-        public Window OwnedWindow { get; }
-
-
-        public Stepped3DViewModel(Window window)
+        /// <summary>
+        /// Gets the maximum step index for the scroll bar (ModelSeries count - 1)
+        /// </summary>
+        public int MaxStepIndex
         {
-            this.OwnedWindow = window;
-            this.timer = new Timer(OnTimerElapsed, null, startupTimerInterval, UpdateInterval);
-            SeriesQueue = new List<IList<GeometryModel3D>>();
+            get { return Math.Max(0, ModelSeries.Count - 1); }
+        }
+
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        protected void RaisePropertyChanged(string property)
+        {
+            var handler = this.PropertyChanged;
+            if (handler != null)
+            {
+                handler(this, new PropertyChangedEventArgs(property));
+            }
+        }
+
+        public Stepped3DViewModel()
+        {
+            ModelSeries = new List<List<GeometryModel3D>>();
 
             EffectsManager = new DefaultEffectsManager();
 
@@ -46,36 +64,26 @@ namespace WindowsDesktopPresenter
             this.DirectionalLightDirection4 = new Vector3D(-20, 10, -10);
             this.DirectionalLightDirection5 = new Vector3D(-10, 10, 20);
             this.DirectionalLightDirection6 = new Vector3D(10, -10, -20);
-
         }
 
-        private void OnTimerElapsed(object state)
+        internal bool Update(int stepIndex)
         {
-            bool newDataToShow;
-            lock (this.Solids)
-                newDataToShow = Update();
-            if (newDataToShow)
-                RaisePropertyChanged("Solids");
-        }
-
-        private bool Update()
-        {
-            if (SeriesQueue.Count == 0) return false;
-            var series = SeriesQueue[0]; // ();
-            SeriesQueue.RemoveAt(0);    
+            if (ModelSeries.Count == 0) return false;
+            var series = ModelSeries[stepIndex];
             var newNumberItems = series.Count;
             for (int i = 0; i < newNumberItems; i++)
-                OwnedWindow.Dispatcher.Invoke(() =>
-                {
-                    if (lastNumberItems > i)
-                        Solids[i] = series[i];
-                    else Solids.Add(series[i]);
-                });
+            {
+                if (lastNumberItems > i)
+                    Solids[i] = series[i];
+                else Solids.Add(series[i]);
+            }
+            ;
             for (int i = lastNumberItems - 1; i >= newNumberItems; i--)
-                OwnedWindow.Dispatcher.Invoke(() => Solids.RemoveAt(i));
+                Solids.RemoveAt(i);
             if (lastNumberItems == 0)
-                OwnedWindow.Dispatcher.Invoke(ResetCameraCommand);
+                ResetCameraCommand();
             lastNumberItems = newNumberItems;
+            RaisePropertyChanged("Solids");
             return true;
         }
         int lastNumberItems = 0;
@@ -179,27 +187,6 @@ namespace WindowsDesktopPresenter
             }
         }
 
-        protected override void Dispose(bool disposing)
-        {
-            if (!disposedValue)
-            {
-                if (disposing)
-                {
-                    // TODO: dispose managed state (managed objects).
-                    this.timer.Dispose();
-                }
-
-                // TODO: free unmanaged resources (unmanaged objects) and override a finalizer below.
-                // TODO: set large fields to null.
-                if (EffectsManager != null)
-                {
-                    var effectManager = EffectsManager as IDisposable;
-                    Disposer.RemoveAndDispose(ref effectManager);
-                }
-                disposedValue = true;
-                GC.SuppressFinalize(this);
-            }
-        }
         protected OrthographicCamera defaultOrthographicCamera;
         protected PerspectiveCamera defaultPerspectiveCamera;
         public event EventHandler CameraModelChanged;

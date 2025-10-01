@@ -14,9 +14,10 @@ namespace WindowsDesktopPresenter
         ObservableCollection<PlotModel> Models = new ObservableCollection<PlotModel>();
         public PlotModel SelectedModel { get; set; }
         public int SelectedIndex { get; private set; }
-        public Window3DSteppedPlot()
+        internal Window3DSteppedPlot(Stepped3DViewModel stepViewModel)
         {
-            DataContext = stepViewModel = new Stepped3DViewModel(this);
+            this.stepViewModel = stepViewModel;
+            DataContext = stepViewModel;
             InitializeComponent();
             Closed += (s, e) =>
             {
@@ -39,15 +40,18 @@ namespace WindowsDesktopPresenter
             // Update the PlotView by setting the Model property to the selected PlotModel
             if (SelectedIndex >= 0 && SelectedIndex < Models.Count)
             {
-                SelectedModel = Models[SelectedIndex];
-                group1. = SelectedModel;
-                view.Model.InvalidatePlot(true);
+                bool newDataToShow;
+                lock (stepViewModel.Solids)
+                    newDataToShow = stepViewModel.Update(selectedIndex);
+                if (newDataToShow)
+                {
+                    view.InvalidateVisual();
+                }
             }
         }
 
 
         private void ResetCameraButtonClick(object sender, RoutedEventArgs e) => stepViewModel.ResetCameraCommand();
 
-        private void OnClosing(object sender, System.ComponentModel.CancelEventArgs e) => stepViewModel.OnClosing(sender, e);
     }
 }

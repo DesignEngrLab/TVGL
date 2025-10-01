@@ -50,7 +50,7 @@
             <hx:AxisPlaneGridModel3D x:Name="CheckerFloor" GridColor="AliceBlue" PlaneColor="#66aacaff" UpAxis="Z"
                                      Visibility="{Binding GroundPlaneVisible,Converter={StaticResource BooleanToVisibilityConverter}}" />
         </hx:Viewport3DX>
-        <ScrollBar Name="scrollBar" Grid.Row="2" Orientation="Horizontal" Maximum="100" Minimum="0" Value="0" SmallChange="1" LargeChange="10" ValueChanged="ScrollBar_ValueChanged" />
+        <ScrollBar Name="scrollBar" Grid.Row="2" Orientation="Horizontal" Maximum="{Binding MaxStepIndex}" Minimum="0" Value="0" SmallChange="1" LargeChange="10" ValueChanged="ScrollBar_ValueChanged" />
 
         <StackPanel Grid.Row="1">
             <Expander
