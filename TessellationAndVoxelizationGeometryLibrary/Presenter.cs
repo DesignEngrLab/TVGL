@@ -64,6 +64,11 @@ namespace TVGL
         => Global.Presenter3D.ShowPointsAndHang(points, radius, color);
         public static void ShowPointsAndHang(IEnumerable<IEnumerable<Vector3>> pointSets, double radius = 0, IEnumerable<Color> colors = null)
         => Global.Presenter3D.ShowPointsAndHang(pointSets, radius, colors);
+
+        public static void ShowStepsAndHang(IEnumerable<IEnumerable<IEnumerable<Vector3>>> paths, IList<Solid> solids,
+           IList<IEnumerable<Matrix4x4>> transforms, IEnumerable<bool> keepEarlierPaths = null, IEnumerable<bool> closePaths = null,
+           IEnumerable<double> lineThicknesses = null, IEnumerable<Color> colors = null)
+            => Global.Presenter3D.ShowStepsAndHang(paths, solids, transforms, keepEarlierPaths, closePaths, lineThicknesses, colors);
     }
 
 
@@ -136,6 +141,12 @@ namespace TVGL
         }
 
         public void ShowPointsAndHang(IEnumerable<IEnumerable<Vector3>> pointSets, double radius = 0, IEnumerable<Color> colors = null)
+        {
+            // do nothing
+        }
+        public void ShowStepsAndHang(IEnumerable<IEnumerable<IEnumerable<Vector3>>> paths, IList<Solid> solids,
+            IList<IEnumerable<Matrix4x4>> transforms, IEnumerable<bool> keepEarlierPaths = null, IEnumerable<bool> closePaths = null,
+            IEnumerable<double> lineThicknesses = null, IEnumerable<Color> colors = null)
         {
             // do nothing
         }
