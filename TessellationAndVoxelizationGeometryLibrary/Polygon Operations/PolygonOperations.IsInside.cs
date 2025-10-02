@@ -194,6 +194,7 @@ namespace TVGL
         /// <returns><c>true</c> if [is point inside polygon] [the specified point in question]; otherwise, <c>false</c>.</returns>
         public static bool IsPointInsidePolygon(this Polygon polygon, bool onlyTopPolygon, Vector2 pointInQuestion)
         {
+            if (!polygon.IsClosed) return false;
             var insideTopPolygon = IsPointInsidePolygon(polygon, pointInQuestion);
             if (onlyTopPolygon || !insideTopPolygon) return insideTopPolygon;
 
