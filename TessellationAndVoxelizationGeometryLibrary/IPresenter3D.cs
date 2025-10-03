@@ -46,15 +46,19 @@ namespace TVGL
         /// <param name="solid">The ts.</param>
         void ShowGaussSphereWithIntensity(IEnumerable<Vertex> vertices, IList<Color> colors, Solid solid);
 
+        void Show(Solid solid, string title = "",
+           HoldType holdType = HoldType.Immediate, int timetoShow = -1, int id = -1);
+
+        void Show(ICollection<Solid> solids, string title = "",
+           HoldType holdType = HoldType.Immediate, int timetoShow = -1, int id = -1);
+        void Show(IEnumerable<IEnumerable<Vector3>> paths, IEnumerable<bool> closePaths = null,
+           IEnumerable<double> lineThicknesses = null, IEnumerable<Color> colors = null, string title = "",
+           HoldType holdType = HoldType.Immediate, int timetoShow = -1, int id = -1, params Solid[] solids);
+
+        void ShowStepsAndHang(IEnumerable<IEnumerable<IEnumerable<Vector3>>> paths, IList<Solid> solids,
+           IList<IEnumerable<Matrix4x4>> transforms, IEnumerable<bool> keepEarlierPaths = null, IEnumerable<bool> closePaths = null,
+           IEnumerable<double> lineThicknesses = null, IEnumerable<Color> colors = null);
+
         #endregion
-
-        public void Show(Solid solid, string title = "",
-            HoldType holdType = HoldType.Immediate, int timetoShow = -1, int id = -1);
-
-        public void Show(ICollection<Solid> solids, string title = "",
-            HoldType holdType = HoldType.Immediate, int timetoShow = -1, int id = -1);
-        public void Show(IEnumerable<IEnumerable<Vector3>> paths, IEnumerable<bool> closePaths = null,
-            IEnumerable<double> lineThicknesses = null, IEnumerable<Color> colors = null, string title = "",
-            HoldType holdType = HoldType.Immediate, int timetoShow = -1, int id = -1, params Solid[] solids);
     }
 }

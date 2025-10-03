@@ -22,19 +22,20 @@
 		<RepositoryType>git</RepositoryType>
 		<PackageTags>3d, solid modeling, computational geometry, geometric modeling, mesh, tessellation, voxelization</PackageTags>
 		<NeutralLanguage />
+		<Configurations>Debug;Release;Series</Configurations>
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
 		<DefineConstants>TRACE;CLIPPER</DefineConstants>
 	</PropertyGroup>
 
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Series|AnyCPU'">
+	  <DefineConstants>TRACE;CLIPPER</DefineConstants>
+	</PropertyGroup>
+
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
 		<DefineConstants>TRACE;CLIPPER</DefineConstants>
 	</PropertyGroup>
-
-	<ItemGroup>
-		<Compile Remove="Enclosure Operations\MinimumEnclosure - OBBTest.cs" />
-	</ItemGroup>
 
 	<ItemGroup>
 		<None Remove="Numerics\README.txt" />

@@ -447,6 +447,20 @@ namespace TVGL
             }
         }
 
+        public void RemoveNegligibleFaceReferences(IEnumerable<TriangleFace> faces, IEnumerable<Edge> edges, IEnumerable<Vertex> vertices)
+        {
+            if (Faces == null) return;
+            foreach (var face in faces)
+                Faces.Remove(face);
+            foreach (var edge in edges)
+            {
+                InnerEdges.Remove(edge);
+                OuterEdges.Remove(edge);
+            }
+            foreach (var vertex in vertices)
+                Vertices.Remove(vertex);    
+        }
+
         /// <summary>
         /// Updates surface by adding face
         /// </summary>
@@ -718,6 +732,8 @@ namespace TVGL
                     if (z < MinZ) MinZ = z;
                 }
             }
+            var diagonalLength = Math.Sqrt(Math.Pow(MaxX - MinX, 2) + Math.Pow(MaxY - MinY, 2) + Math.Pow(MaxZ - MinZ, 2));
+            AABB_HalfDiagonalSquared =  Math.Pow(diagonalLength / 2, 2);
         }
 
         protected abstract void SetPrimitiveLimits();
@@ -758,11 +774,18 @@ namespace TVGL
         }
 
         /// <summary>
+        /// Can be used to check if within the bounding sphere, centered at the center of the axis aligned bounding box.
+        /// </summary>
+        [JsonIgnore]
+        public double AABB_HalfDiagonalSquared { get; set; }
+
+        /// <summary>
         /// Sets the color.
         /// </summary>
         /// <param name="color">The color.</param>
         public void SetColor(Color color)
         {
+            if (Faces == null) return;
             foreach (var face in Faces) face.Color = color;
         }
 
@@ -854,6 +877,12 @@ namespace TVGL
             return this.MemberwiseClone();
         }
 
+        /// <summary>
+        /// Copies the surface to a new one with the included triangles
+        /// </summary>
+        /// <param name="faces"></param>
+        /// <param name="doNotResetFaceDependentValues">if true, then the borders and bounds will not be reset</param>
+        /// <returns></returns>
         public PrimitiveSurface Copy(IEnumerable<TriangleFace> faces, bool doNotResetFaceDependentValues = false)
         {
             var copy = (PrimitiveSurface)this.Clone();
@@ -861,6 +890,10 @@ namespace TVGL
             return copy;
         }
 
+        /// <summary>
+        /// Copies the primitive surface including the faces and vertices (edges are not defined in the copy)
+        /// </summary>
+        /// <returns></returns>
         public PrimitiveSurface Copy()
         {
             var copy = (PrimitiveSurface)this.Clone();
@@ -905,9 +938,9 @@ namespace TVGL
                 else key += "N";
             }
             if (Faces != null && Faces.Any())
-                key += "|" + Area.ToString("F5");
+                key += "|" + Area.ToString("F3");
             if (OuterEdges != null && OuterEdges.Any())
-                key += "|" + OuterEdges.Sum(f => f.Length).ToString("F5");
+                key += "|" + OuterEdges.Sum(f => f.Length).ToString("F3");
             return key;
         }
 

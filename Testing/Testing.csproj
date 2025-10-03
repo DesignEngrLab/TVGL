@@ -10,7 +10,6 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-	  <Compile Remove="Minkowski.cs" />
 	  <Compile Remove="ThreeD_Methods\Voxels.cs" />
 	</ItemGroup>
 

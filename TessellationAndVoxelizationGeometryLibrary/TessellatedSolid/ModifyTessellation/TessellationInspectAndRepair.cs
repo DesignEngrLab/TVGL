@@ -103,7 +103,7 @@ namespace TVGL
         /// body - but only one constructor uses it: the one accepting faces and vertices.
         /// </summary>
         /// <param name="fromSTL">if set to <c>true</c> [from STL].</param>
-        internal static void CompleteBuildOptions(TessellatedSolid ts, TessellatedSolidBuildOptions buildOptions,
+        public static void CompleteBuildOptions(TessellatedSolid ts, TessellatedSolidBuildOptions buildOptions,
             out List<TriangleFace> removedFaces, out List<Edge> removedEdges, out List<Vertex> removedVertices)
         {
             removedFaces = new List<TriangleFace>();
@@ -135,6 +135,13 @@ namespace TVGL
                 {
                     Log.Information("Unable to create convex hull.", 1);
                 }
+            }
+
+            //Remove references on primitives
+            if (ts.Primitives != null)
+            {
+                foreach (var primitive in ts.Primitives)
+                    primitive.RemoveNegligibleFaceReferences(removedFaces, removedEdges, removedVertices);
             }
         }
 

@@ -428,10 +428,10 @@ namespace TVGL  // COMMENTEDCHANGE namespace System.Numerics
             StringBuilder sb = new StringBuilder();
             string separator = NumberFormatInfo.GetInstance(formatProvider).NumberGroupSeparator;
             sb.Append('<');
-            sb.Append(this.X.ToString(format, formatProvider));
+            sb.Append(this.X.ToString(format, formatProvider).RemoveLeadingNegIfZero());
             sb.Append(separator);
             sb.Append(' ');
-            sb.Append(this.Y.ToString(format, formatProvider));
+            sb.Append(this.Y.ToString(format, formatProvider).RemoveLeadingNegIfZero());
             sb.Append('>');
             return sb.ToString();
         }

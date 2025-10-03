@@ -107,7 +107,7 @@ namespace TVGL
         /// </summary>
         /// <value>The nonsmooth edges.</value>
         [JsonIgnore]
-        public List<Edge> NonsmoothEdges { get; set; }
+        public List<Edge>? NonsmoothEdges { get; set; }
         #endregion
 
         #region Constructors
@@ -1503,6 +1503,26 @@ namespace TVGL
         protected override void CalculateInertiaTensor() => _inertiaTensor = Faces.CalculateInertiaTensor(Center);
 
         #endregion
+
+
+        public IEnumerable<BorderSegment> GetBorderSegments()
+        {
+            if (!BordersDefined)
+                throw new Exception("Must define borders before calling GetBorderSegments.");
+            var borderSegments = new HashSet<BorderSegment>();
+            var i = 0;
+            foreach (var primitive in Primitives)
+            {
+                foreach (var border in primitive.BorderSegments)
+                {
+                    if (borderSegments.Contains(border)) continue;
+                    //set the index, in case it was not already set.
+                    border.IndexInSolid = i++;
+                    borderSegments.Add(border);
+                    yield return border;
+                }
+            }
+        }
 
         /// <summary>
         /// Determines whether [contains duplicate indices] [the specified ordered indices].

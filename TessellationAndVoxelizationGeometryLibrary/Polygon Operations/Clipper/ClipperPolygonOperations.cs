@@ -144,23 +144,46 @@ namespace TVGL
         /// <param name="clipIsClosed">if set to <c>true</c> [clip is closed].</param>
         /// <returns>List&lt;Polygon&gt;.</returns>
         /// <exception cref="System.Exception">Clipper Union Failed</exception>
-        private static List<Polygon> BooleanViaClipper(FillRule fillMethod, ClipType clipType, IEnumerable<Polygon> subject,
-            IEnumerable<Polygon> clip, PolygonCollection outputAsCollectionType)
+        private static List<Polygon> BooleanViaClipper(FillRule fillMethod, ClipType clipType, IEnumerable<Polygon> subjects,
+            IEnumerable<Polygon> clips, PolygonCollection outputAsCollectionType)
         {
-            //Convert to int points and remove collinear edges
-            Paths64 clipperSubject = subject != null ? ConvertToClipperPaths(subject) : null;
-            Paths64 clipperClip = clip != null ? ConvertToClipperPaths(clip):null;
+            Clipper64 c = new Clipper64();
+            foreach (var polygon in subjects)
+            {
+                foreach (var polygonElement in polygon.AllPolygons.Where(p => !p.IsClosed
+                ||!p.PathArea.IsNegligible(Constants.BaseTolerance)))
+                {
+                    var path = new Path64(polygonElement.Path.Select(p => new Point64(p.X * scale, p.Y * scale)));
+                    if (polygonElement.IsClosed)
+                        c.AddSubject(path);
+                    else c.AddOpenSubject(path);
+                }
+            }
+            if (clips != null)
+                foreach (var polygon in clips)
+                {
+                    foreach (var polygonElement in polygon.AllPolygons.Where(p => !p.PathArea.IsNegligible(Constants.BaseTolerance)))
+                    {
+                        var path = new Path64(polygonElement.Path.Select(p => new Point64(p.X * scale, p.Y * scale)));
+                        if (polygonElement.IsClosed)
+                            c.AddClip(path);
+                        //else //c.AddOpenClip(path);
+                    }
+                }
+            var solutionClosed = new Paths64();
+            var solutionOpen = new Paths64();
+            c.Execute(clipType, fillMethod, solutionClosed, solutionOpen);
 
-            var clipperSolution = Clipper.BooleanOp(clipType, clipperSubject, clipperClip, fillMethod);
             //Convert back to points and return solution
-            var solution = clipperSolution.Select(clipperPath
+            var baseClosedPolygons = solutionClosed.Select(clipperPath
                 => new Polygon(clipperPath.Select(point => new Vector2(point.X / scale, point.Y / scale))));
-
+            var openPolygons = solutionOpen.Select(clipperPath
+                => new Polygon(clipperPath.Select(point => new Vector2(point.X / scale, point.Y / scale)), isClosed: false));
             if (outputAsCollectionType == PolygonCollection.PolygonWithHoles)
-                return solution.CreateShallowPolygonTrees(true);
+                return baseClosedPolygons.CreateShallowPolygonTrees(true);
             if (outputAsCollectionType == PolygonCollection.PolygonTrees)
-                return solution.CreatePolygonTree(true);
-            return solution.ToList();
+                return baseClosedPolygons.CreatePolygonTree(true);
+            return (baseClosedPolygons.Concat(openPolygons)).ToList();
         }
 
         internal static Paths64 ConvertToClipperPaths(IEnumerable<Polygon> subject)

@@ -484,11 +484,14 @@ namespace TVGL
                     }
                 } while (x != startX || y != startY);
                 var polygon = new Polygon(loop);
+                //Check if null before trying to simplify.
+                if (polygon.Vertices.Count <= 2 || polygon.Area.IsNegligible()) continue;
                 //Global.Plotter.ShowAndHang(polygon);
                 polygon.SimplifyAndSmoothRectilinearPolygon(1, true);
                 //Global.Plotter.ShowAndHang(polygon);
                 polygon.SimplifyByAreaChange(0.001);
                 polygon.Transform(transform);
+                //Check if line or null after simplification.
                 if (polygon.Vertices.Count <= 2 || polygon.Area.IsNegligible()) continue;
                 yield return polygon;
             }

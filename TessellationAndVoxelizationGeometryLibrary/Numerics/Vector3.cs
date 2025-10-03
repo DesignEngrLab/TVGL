@@ -14,7 +14,9 @@
 
 using Newtonsoft.Json;
 using System;
+using System.Diagnostics;
 using System.Globalization;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
 
@@ -595,13 +597,13 @@ namespace TVGL  // COMMENTEDCHANGE namespace System.Numerics
             StringBuilder sb = new StringBuilder();
             string separator = NumberFormatInfo.GetInstance(formatProvider).NumberGroupSeparator;
             //sb.Append('<');
-            sb.Append(((IFormattable)this.X).ToString(format, formatProvider));
+            sb.Append(X.ToString(format, formatProvider).RemoveLeadingNegIfZero());
             sb.Append(separator);
             sb.Append(' ');
-            sb.Append(((IFormattable)this.Y).ToString(format, formatProvider));
+            sb.Append(Y.ToString(format, formatProvider).RemoveLeadingNegIfZero());
             sb.Append(separator);
             sb.Append(' ');
-            sb.Append(((IFormattable)this.Z).ToString(format, formatProvider));
+            sb.Append(Z.ToString(format, formatProvider).RemoveLeadingNegIfZero());
             //sb.Append('>');
             return sb.ToString();
         }
@@ -675,15 +677,17 @@ namespace TVGL  // COMMENTEDCHANGE namespace System.Numerics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector3 Normalize(Vector3 value)
         {
-            double ls = value.X * value.X + value.Y * value.Y + value.Z * value.Z; 
-            //Leaving this seperate than exactly equals zero, because ConvexHull3D currently has some very, very small normal directions for faces.
+            double ls = value.X * value.X + value.Y * value.Y + value.Z * value.Z;
             if (ls == 0)
             {
-                Log.Warning("Normalizing a vector of zero length.");
+                //StackTrace stackTrace = new StackTrace();
+                //string callerName = stackTrace.GetFrame(4).GetMethod().Name;
+                Log.Warning("Normalizing a vector of zero length. Returning null vector");
+                return Vector3.Null;
             }
             if (ls.IsPracticallySame(1.0)) return value;
-            double lengthfactor = 1 / Math.Sqrt(ls);
-            return new Vector3(value.X * lengthfactor, value.Y * lengthfactor, value.Z * lengthfactor);
+            double lengthFactor = 1 / Math.Sqrt(ls);
+            return new Vector3(value.X * lengthFactor, value.Y * lengthFactor, value.Z * lengthFactor);
         }
 
         /// <summary>
@@ -770,7 +774,7 @@ namespace TVGL  // COMMENTEDCHANGE namespace System.Numerics
             // precision can be a fickle mistress.
             dot = Math.Clamp(dot, -1.0, 1.0);
             var omega = Math.Acos(dot);
-            var sinOmega =Math.Sqrt(1-dot*dot);
+            var sinOmega = Math.Sqrt(1 - dot * dot);
             var oneOverSinOmega = 1 / sinOmega;
             return start * oneOverSinOmega * Math.Sin((1 - percent) * omega) + end * oneOverSinOmega * Math.Sin(percent * omega);
 

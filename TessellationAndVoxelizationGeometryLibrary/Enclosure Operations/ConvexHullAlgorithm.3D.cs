@@ -425,20 +425,18 @@ namespace TVGL
         private static bool SolveAs2D(IList<Vertex> vertices, out ConvexHull3D convexHull, double tolerance = double.NaN)
         {
             tolerance = double.IsNaN(tolerance) ? Constants.DefaultEqualityTolerance : tolerance;
+            convexHull = null;
             if (Plane.DefineNormalAndDistanceFromVertices(vertices, out var distance, out var planeNormal))
             {
+                //For whatever reason (maybe if given a line?), the matrix.solve function in DefineNormalAndDistanceFromVertices
+                //can return true, with an invalid normal.
+                if (planeNormal.X is double.NaN) return false;
                 var plane = new Plane(distance, planeNormal);
                 if (plane.CalculateMaxError(vertices.Select(v => v.Coordinates)) > tolerance)
-                {
-                    convexHull = null;
                     return false;
-                }
             }
-            else
-            {
-                convexHull = null;
-                return false;
-            }
+            else return false;
+
             var coords2D = vertices.ProjectTo2DCoordinates(planeNormal, out var backTransform).ToList();
             var cvxHull2D = ConvexHull2D.Create(coords2D, out var vertexIndices);
             convexHull = new ConvexHull3D { tolerance = tolerance };
