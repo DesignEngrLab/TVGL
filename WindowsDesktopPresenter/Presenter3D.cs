@@ -221,30 +221,36 @@ namespace WindowsDesktopPresenter
             var transformEnumerators = (numSolids == 0 || transforms == null) ? null : transforms.Select(tf => tf?.GetEnumerator()).ToArray();
             var timeStep = 0;
             bool newStepFound;
-
             do
             {
                 var newPaths = new IEnumerable<Vector3>[numPaths];
                 newStepFound = false;
                 for (int i = 0; i < numPaths; i++)
                 {
+                    LineGeometryModel3D vizPath = null;
                     if (pathEnumerators[i].MoveNext())
                     {
-                        var vizPath = GetVertexPath(pathEnumerators[i].Current, lineThicknessList[i], colorList[i], closePathList[i]);
+                        vizPath = GetVertexPath(pathEnumerators[i].Current, lineThicknessList[i], colorList[i], closePathList[i]);
                         vm.Add(timeStep, vizPath);
-                        vm.AddRange(timeStep, previousPaths[i]);
-                        if (keepPathList[i])
-                            previousPaths[i].Add(vizPath);
                         newStepFound = true;
+                    }
+                    if (keepPathList[i])
+                    {
+                        vm.AddRange(timeStep, previousPaths[i]);
+                        if (vizPath != null)
+                            previousPaths[i].Add(vizPath);
                     }
                 }
                 for (int i = 0; i < numSolids; i++)
                 {
                     System.Windows.Media.Media3D.Transform3D transform = null;
                     if (transformEnumerators == null || transformEnumerators[i] == null)
-                        transform = new System.Windows.Media.Media3D.TranslateTransform3D(0, 0, 0);  // static solid 
+                        transform = System.Windows.Media.Media3D.Transform3D.Identity;  // static solid 
                     else if (transformEnumerators[i].MoveNext() && !transformEnumerators[i].Current.IsNull())
-                        transform = ConvertToWindowsTransform3D(transformEnumerators[i].Current);   //? Matrix4x4.Identity :
+                    {
+                        transform = ConvertToWindowsTransform3D(transformEnumerators[i].Current);
+                        newStepFound = true;
+                    }
                     if (transform != null) // if transform is null, then the solid is not shown at this time step
                     {
                         foreach (var vizSolid in helixSolids[i])
@@ -253,11 +259,10 @@ namespace WindowsDesktopPresenter
                             copy.Transform = transform;
                             vm.Add(timeStep, copy);
                         }
-                        newStepFound = true;
                     }
                 }
                 timeStep++;
-            } while (newStepFound) ;
+            } while (newStepFound);
             var window = new Window3DSteppedPlot(vm);
             window.ShowDialog();
         }

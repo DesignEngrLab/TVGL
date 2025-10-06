@@ -109,9 +109,7 @@ namespace TVGL
                 faces[i].IndexInList = i;
             if (faces.Count == 0)
                 return new TessellatedSolid();
-            return new TessellatedSolid(faces);
-            // vertexDictionaries.SelectMany(d => d.Values), false,
-            //new[] { solid.SolidColor }, solid.Units, solid.Name + "TS", solid.FileName, comments, solid.Language);
+            return new TessellatedSolid(faces, buildOptions:TessellatedSolidBuildOptions.Minimal);
         }
 
 
@@ -203,6 +201,7 @@ namespace TVGL
                     var intersectionEnumerator = surface.LineIntersection(anchor, Vector3.UnitZ).GetEnumerator();
                     if (!intersectionEnumerator.MoveNext()) continue;
                     (Vector3 p1, _) = intersectionEnumerator.Current;
+                    if (p1.IsNull()) continue;
                     if (p1.Z < _zMin || p1.Z > _zMax)
                     {
                         if (!intersectionEnumerator.MoveNext()) continue;
@@ -315,6 +314,7 @@ namespace TVGL
                     var intersectionEnumerator = surface.LineIntersection(anchor, Vector3.UnitY).GetEnumerator();
                     if (!intersectionEnumerator.MoveNext()) continue;
                     (Vector3 p1, _) = intersectionEnumerator.Current;
+                    if (p1.IsNull()) continue;
                     if (p1.Y < _yMin || p1.Y > _yMax)
                     {
                         if (!intersectionEnumerator.MoveNext()) continue;
@@ -427,6 +427,7 @@ namespace TVGL
                     var intersectionEnumerator = surface.LineIntersection(anchor, Vector3.UnitX).GetEnumerator();
                     if (!intersectionEnumerator.MoveNext()) continue;
                     (Vector3 p1, _) = intersectionEnumerator.Current;
+                    if (p1.IsNull()) continue;
                     if (p1.X < _xMin || p1.X > _xMax)
                     {
                         if (!intersectionEnumerator.MoveNext()) continue;
