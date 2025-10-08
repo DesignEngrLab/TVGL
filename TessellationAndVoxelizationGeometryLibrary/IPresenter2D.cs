@@ -182,6 +182,11 @@ namespace TVGL
             MarkerType marker = MarkerType.None, HoldType holdType = HoldType.Immediate,
             int timetoShow = -1, int id = -1);
 
+        void ShowStepsAndHang(ICollection<double[,]> data, string title = "");
+        void ShowStepsAndHang(ICollection<double[,]> data, IEnumerable<IEnumerable<Vector2>> points,
+            bool connectPointsInLine, string title = "");
+        void ShowStepsAndHang(ICollection<double[,]> data, IEnumerable<IEnumerable<IEnumerable<Vector2>>> points,
+           IEnumerable<bool> connectPointsInLine, string title = "");
 
     }
 }

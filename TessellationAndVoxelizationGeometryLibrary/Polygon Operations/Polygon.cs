@@ -866,7 +866,7 @@ namespace TVGL
             perimeter = double.NaN;
             _centroid = Vector2.Null;
             foreach (var edge in Edges)
-                edge.Reset();
+                edge?.Reset();
         }
 
         public void ReIndexPolygon()

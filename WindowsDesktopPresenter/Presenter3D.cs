@@ -206,8 +206,8 @@ namespace WindowsDesktopPresenter
         {
             var vm = new Stepped3DViewModel();
             // to avoid re-enumeration and to handle optional arguments, we make lists of the latter half of the arguments
-            var numPaths = paths.Count();
-            var pathEnumerators = paths.Select(p => p.GetEnumerator()).ToArray();
+            var numPaths = paths?.Count() ?? 0;
+            var pathEnumerators = paths?.Select(p => p.GetEnumerator()).ToArray();
             var colorList = colors?.ToArray() ?? Color.Distinct64Colors.Take(numPaths).ToArray();
             var lineThicknessList = lineThicknesses?.ToArray() ?? Enumerable.Repeat(1.0, numPaths).ToArray();
             var closePathList = closePaths?.ToArray() ?? Enumerable.Repeat(false, numPaths).ToArray();

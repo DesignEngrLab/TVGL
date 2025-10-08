@@ -54,6 +54,15 @@ namespace TVGL
         => Global.Presenter2D.ShowAndHang(vertices, direction, title, plot2DType, closeShape, marker);
         public static void ShowAndHang(IEnumerable<IEnumerable<Vertex>> vertices, Vector3 direction, string title = "", Plot2DType plot2DType = Plot2DType.Line, bool closeShape = true, MarkerType marker = MarkerType.Circle)
        => Global.Presenter2D.ShowAndHang(vertices, direction, title, plot2DType, closeShape, marker);
+        public static void ShowStepsAndHang(ICollection<double[,]> data, string title = "")
+            =>Global.Presenter2D.ShowStepsAndHang(data, title);
+        public static void ShowStepsAndHang(ICollection<double[,]> data, IEnumerable<IEnumerable<Vector2>> points,
+            bool connectPointsInLine, string title = "")
+             => Global.Presenter2D.ShowStepsAndHang(data, points, connectPointsInLine, title);
+        public static void ShowStepsAndHang(ICollection<double[,]> data, IEnumerable<IEnumerable<IEnumerable<Vector2>>> points,
+           IEnumerable<bool> connectPointsInLine, string title = "") 
+            => Global.Presenter2D.ShowStepsAndHang(data, points, connectPointsInLine, title);
+
         public static void ShowAndHangTransparentsAndSolids(IEnumerable<TessellatedSolid> transparentSolids, IEnumerable<TessellatedSolid> solids)
        => Global.Presenter3D.ShowAndHangTransparentsAndSolids(transparentSolids, solids);
         public static void ShowGaussSphereWithIntensity(IEnumerable<Vertex> vertices, IList<Color> colors, Solid solid)
@@ -232,6 +241,21 @@ namespace TVGL
         public void ShowHeatmap(double[,] values, bool normalizeValues = false)
         {
             // do nothing
+        }
+
+        public void ShowStepsAndHang(ICollection<double[,]> data, string title = "")
+        {
+            throw new NotImplementedException();
+        }
+
+        public void ShowStepsAndHang(ICollection<double[,]> data, IEnumerable<IEnumerable<Vector2>> points, bool connectPointsInLine, string title = "")
+        {
+            throw new NotImplementedException();
+        }
+
+        public void ShowStepsAndHang(ICollection<double[,]> data, IEnumerable<IEnumerable<IEnumerable<Vector2>>> points, IEnumerable<bool> connectPointsInLine, string title = "")
+        {
+            throw new NotImplementedException();
         }
     }
 

@@ -293,7 +293,7 @@ namespace WindowsDesktopPresenter
         /// </summary>
         /// <param name="data"></param>
         /// <param name="title"></param>
-        public void ShowAndHang(ICollection<double[,]> data, string title = "")
+        public void ShowStepsAndHang(ICollection<double[,]> data, string title = "")
         {
             var window = new Window2DFlipPlot(data, title);
             window.ShowDialog();
@@ -303,12 +303,12 @@ namespace WindowsDesktopPresenter
         /// </summary>
         /// <param name="data"></param>
         /// <param name="title"></param>
-        public void ShowAndHang(ICollection<double[,]> data, IEnumerable<IEnumerable<Vector2>> points, bool connectPointsInLine, string title = "")
+        public void ShowStepsAndHang(ICollection<double[,]> data, IEnumerable<IEnumerable<Vector2>> points, bool connectPointsInLine, string title = "")
         {
             var window = new Window2DFlipPlot(data, points, connectPointsInLine, title);
             window.ShowDialog();
         }
-        public void ShowAndHang(ICollection<double[,]> data, IEnumerable<IEnumerable<IEnumerable<Vector2>>> points, IEnumerable<bool> connectPointsInLine, string title = "")
+        public void ShowStepsAndHang(ICollection<double[,]> data, IEnumerable<IEnumerable<IEnumerable<Vector2>>> points, IEnumerable<bool> connectPointsInLine, string title = "")
         {
             var window = new Window2DFlipPlot(data, points, connectPointsInLine, title);
             window.ShowDialog();

@@ -204,8 +204,8 @@ namespace TVGL
             var y = 2 * YSqdCoeff * point.Y + XYCoeff * point.X + YZCoeff * point.Z + YCoeff;
             var z = 2 * ZSqdCoeff * point.Z + XZCoeff * point.X + YZCoeff * point.Y + ZCoeff;
             if (IsPositive.GetValueOrDefault(true))
-                return new Vector3(x, y, z);
-            else return new Vector3(-x, -y, -z);
+                return new Vector3(x, y, z).Normalize();
+            else return new Vector3(-x, -y, -z).Normalize();
         }
 
         /// <summary>
