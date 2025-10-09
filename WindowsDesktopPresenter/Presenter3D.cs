@@ -4,10 +4,9 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Windows.Media;
 using TVGL;
-using MediaColor = System.Windows.Media.Color;
 using Color = TVGL.Color;
+using MediaColor = System.Windows.Media.Color;
 
 namespace WindowsDesktopPresenter
 {
@@ -216,9 +215,17 @@ namespace WindowsDesktopPresenter
 
             var numSolids = solids.Count;
 
-            var helixSolids = numSolids == 0 ? null : solids.Select(ts => ConvertTessellatedSolidToMGM3D((TessellatedSolid)ts)
-            .Cast<MeshGeometryModel3D>().ToArray()).ToArray();
+            foreach (var helixSolids in solids.Select(ts => ConvertTessellatedSolidToMGM3D((TessellatedSolid)ts)
+            .Cast<MeshGeometryModel3D>()))
+            {
+                vm.SolidGroups.Add(helixSolids.ToArray()); //each solid group is a collection of meshes that make up the solid
+                foreach (var helixSolid in helixSolids)
+                    vm.Solids.Add(helixSolid);
+            }
             var transformEnumerators = (numSolids == 0 || transforms == null) ? null : transforms.Select(tf => tf?.GetEnumerator()).ToArray();
+            for (int i = 0; i < numSolids; i++)
+                vm.Transforms.Add(new List<System.Windows.Media.Media3D.Transform3D>());
+            
             var timeStep = 0;
             bool newStepFound;
             do
@@ -227,6 +234,7 @@ namespace WindowsDesktopPresenter
                 newStepFound = false;
                 for (int i = 0; i < numPaths; i++)
                 {
+                    /*
                     LineGeometryModel3D vizPath = null;
                     if (pathEnumerators[i].MoveNext())
                     {
@@ -240,24 +248,20 @@ namespace WindowsDesktopPresenter
                         if (vizPath != null)
                             previousPaths[i].Add(vizPath);
                     }
+                    */
                 }
                 for (int i = 0; i < numSolids; i++)
                 {
-                    System.Windows.Media.Media3D.Transform3D transform = null;
                     if (transformEnumerators == null || transformEnumerators[i] == null)
-                        transform = System.Windows.Media.Media3D.Transform3D.Identity;  // static solid 
-                    else if (transformEnumerators[i].MoveNext() && !transformEnumerators[i].Current.IsNull())
+                        vm.Transforms[i].Add(System.Windows.Media.Media3D.Transform3D.Identity);
+                    else if (transformEnumerators[i].MoveNext()) // && !transformEnumerators[i].Current.IsNull())
                     {
-                        transform = ConvertToWindowsTransform3D(transformEnumerators[i].Current);
-                        newStepFound = true;
-                    }
-                    if (transform != null) // if transform is null, then the solid is not shown at this time step
-                    {
-                        foreach (var vizSolid in helixSolids[i])
+                        if (transformEnumerators[i].Current.IsNull())
+                            vm.Transforms[i].Add(null);
+                        else
                         {
-                            var copy = CopyVizMesh(vizSolid);
-                            copy.Transform = transform;
-                            vm.Add(timeStep, copy);
+                            vm.Transforms[i].Add(ConvertToWindowsTransform3D(transformEnumerators[i].Current));
+                            newStepFound = true;
                         }
                     }
                 }

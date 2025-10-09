@@ -1,12 +1,13 @@
 ﻿using HelixToolkit.SharpDX.Core;
 using HelixToolkit.Wpf.SharpDX;
+using HelixToolkit.Wpf.SharpDX.Model;
 using SharpDX.Direct3D11;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using System.Runtime.CompilerServices;
-using System.Windows;
+using TVGL;
 using Media3D = System.Windows.Media.Media3D;
 using Point3D = System.Windows.Media.Media3D.Point3D;
 using Vector3D = System.Windows.Media.Media3D.Vector3D;
@@ -16,26 +17,12 @@ namespace WindowsDesktopPresenter
 {
     internal class Stepped3DViewModel : INotifyPropertyChanged
     {
-        private List<List<GeometryModel3D>> ModelSeries;
-
-        public void AddRange(int index, IEnumerable<GeometryModel3D> models)
-        {
-            foreach (var model in models)
-                Add(index, model);
-        }
-        public void Add(int index, GeometryModel3D model)
-        {
-            while (ModelSeries.Count <= index)
-                ModelSeries.Add(new List<GeometryModel3D>());
-            ModelSeries[index].Add(model);
-        }
-
         /// <summary>
         /// Gets the maximum step index for the scroll bar (ModelSeries count - 1)
         /// </summary>
         public int MaxStepIndex
         {
-            get { return Math.Max(0, ModelSeries.Count - 1); }
+            get { return Math.Max(0, Transforms[0].Count - 1); }
         }
 
         public event PropertyChangedEventHandler PropertyChanged;
@@ -51,8 +38,6 @@ namespace WindowsDesktopPresenter
 
         public Stepped3DViewModel()
         {
-            ModelSeries = new List<List<GeometryModel3D>>();
-
             EffectsManager = new DefaultEffectsManager();
 
             // setup lighting            
@@ -65,31 +50,28 @@ namespace WindowsDesktopPresenter
             this.DirectionalLightDirection5 = new Vector3D(-10, 10, 20);
             this.DirectionalLightDirection6 = new Vector3D(10, -10, -20);
         }
-
         internal bool Update(int stepIndex)
         {
-            if (ModelSeries.Count == 0) return false;
-            var series = ModelSeries[stepIndex];
-            var newNumberItems = series.Count;
-            for (int i = 0; i < newNumberItems; i++)
+            if (Transforms.Count == 0) return false;
+
+            // Create a new collection with updated transforms
+            var newSolids = new ObservableElement3DCollection();
+
+            for (int i = 0; i < SolidGroups.Count; i++)
             {
-                if (lastNumberItems > i)
-                    Solids[i] = series[i];
-                else Solids.Add(series[i]);
+                var transform = Transforms[i][stepIndex];
+                if (transform == null) continue;
+                foreach (var solid in SolidGroups[i])
+                {
+                    solid.Transform = transform;
+                    newSolids.Add(solid);
+                }
             }
-            ;
-            for (int i = lastNumberItems - 1; i >= newNumberItems; i--)
-                Solids.RemoveAt(i);
-            if (lastNumberItems == 0)
-                ResetCameraCommand();
-            lastNumberItems = newNumberItems;
+
+            Solids = newSolids;
             RaisePropertyChanged("Solids");
             return true;
         }
-        int lastNumberItems = 0;
-
-
-
 
         protected bool SetValue<T>(ref T backingField, T value, [CallerMemberName] string propertyName = "")
         {
@@ -204,7 +186,10 @@ namespace WindowsDesktopPresenter
 
 
         public Material SelectedMaterial { get; } = new PhongMaterial() { EmissiveColor = SharpDX.Color.LightYellow };
-        public ObservableElement3DCollection Solids { private set; get; } = new ObservableElement3DCollection();
+        public List<List<System.Windows.Media.Media3D.Transform3D>> Transforms { get; private set; } = [];
+
+        public ObservableElement3DCollection Solids { private set; get; } = [];
+        public List<IList<GeometryModel3D>> SolidGroups { get; private set; } = [];
         public Vector3D DirectionalLightDirection1 { get; private set; }
         public Vector3D DirectionalLightDirection2 { get; private set; }
         public Vector3D DirectionalLightDirection3 { get; private set; }
