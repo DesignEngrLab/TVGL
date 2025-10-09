@@ -1,6 +1,7 @@
 ﻿using HelixToolkit.SharpDX.Core;
 using HelixToolkit.Wpf.SharpDX;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -103,12 +104,13 @@ namespace WindowsDesktopPresenter
             window.ShowDialog();
         }
 
-        public void ShowPointsAndHang(IEnumerable<IEnumerable<Vector3>> pointSets, double radius = 0, IEnumerable<Color> colors = null)
+        public void ShowPointsAndHang(IEnumerable<IEnumerable<Vector3>> pointSets, double radius = 0, IEnumerable<Color> colors = null) //, bool randomColors = false)
         {
+            var randomColors = true;
             if (radius == 0) radius = 1;
             //set the default color to be the first color in the list. If none was provided, use black.
-            colors = colors ?? Color.GetRandomColors();
-            var colorEnumerator = colors.GetEnumerator();
+            var colorEnumerator = colors != null ? colors.GetEnumerator() : randomColors ? Color.GetRandomColors().GetEnumerator()
+                : new Repeater<Color>(new Color(KnownColors.Black));
 
             var vm = new Window3DPlotViewModel();
             foreach (var points in pointSets)
@@ -152,10 +154,10 @@ namespace WindowsDesktopPresenter
         }
 
         public void ShowAndHang(IEnumerable<IEnumerable<Vector3>> paths, IEnumerable<bool> closePaths = null,
-            IEnumerable<double> lineThicknesses = null, IEnumerable<Color> colors = null, params Solid[] solids)
+            IEnumerable<double> lineThicknesses = null, IEnumerable<Color> colors = null, bool otherwiseRandomPathColors = false, params Solid[] solids)
         {
             var vm = new Window3DPlotViewModel();
-            vm.Add(ConvertPathsToLineModels(paths, closePaths, lineThicknesses, colors));
+            vm.Add(ConvertPathsToLineModels(paths, closePaths, lineThicknesses, colors, otherwiseRandomPathColors));
             if (solids != null)
             {
                 vm.Add(solids.Where(s => s != null).SelectMany(s => ConvertTessellatedSolidToMGM3D((TessellatedSolid)s)));
@@ -169,7 +171,7 @@ namespace WindowsDesktopPresenter
             IEnumerable<double> lineThicknesses = null, IEnumerable<Color> colors = null, IEnumerable<TriangleFace> faces = null)
         {
             var vm = new Window3DPlotViewModel();
-            vm.Add(ConvertPathsToLineModels(paths, closePaths, lineThicknesses, colors));
+            vm.Add(ConvertPathsToLineModels(paths, closePaths, lineThicknesses, colors,true));
             if (faces != null)
                 vm.Add(ConvertTessellatedSolidToMGM3D(faces, new Color(KnownColors.LightGray), false));
 
@@ -179,7 +181,7 @@ namespace WindowsDesktopPresenter
         }
 
         public void ShowAndHang(IEnumerable<Vector3> path, bool closePaths = false, double lineThickness = -1, Color color = null, params Solid[] solids)
-            => ShowAndHang([path], [closePaths], [lineThickness == -1 ? 1 : lineThickness], [color == null ? new Color(KnownColors.Black) : color], solids);
+            => ShowAndHang([path], [closePaths], [lineThickness == -1 ? 1 : lineThickness], [color == null ? new Color(KnownColors.Black) : color],false, solids);
 
         /// <summary>
         /// Show and hang a series of paths and solids at each step. Here, the outermost collection is the unique object, and the second
@@ -194,27 +196,24 @@ namespace WindowsDesktopPresenter
         /// </summary>
         /// <param name="paths"></param>
         /// <param name="solids"></param>
-        /// <param name="transforms"></param>
+        /// <param name="solidTransforms"></param>
         /// <param name="keepEarlierPaths"></param>
         /// <param name="closePaths"></param>
         /// <param name="lineThicknesses"></param>
         /// <param name="colors"></param>
-        public void ShowStepsAndHang(IEnumerable<IEnumerable<IEnumerable<Vector3>>> paths, IList<Solid> solids,
-            IList<IEnumerable<Matrix4x4>> transforms, IEnumerable<bool> keepEarlierPaths = null, IEnumerable<bool> closePaths = null,
+        public void ShowStepsAndHang(IEnumerable<IEnumerable<Vector3>> paths,
+            IList<IEnumerable<Matrix4x4>> pathTransforms, IList<Solid> solids,
+            IList<IEnumerable<Matrix4x4>> solidTransforms, IEnumerable<bool> closePaths = null,
             IEnumerable<double> lineThicknesses = null, IEnumerable<Color> colors = null)
         {
             var vm = new Stepped3DViewModel();
-            // to avoid re-enumeration and to handle optional arguments, we make lists of the latter half of the arguments
-            var numPaths = paths?.Count() ?? 0;
-            var pathEnumerators = paths?.Select(p => p.GetEnumerator()).ToArray();
-            var colorList = colors?.ToArray() ?? Color.Distinct64Colors.Take(numPaths).ToArray();
-            var lineThicknessList = lineThicknesses?.ToArray() ?? Enumerable.Repeat(1.0, numPaths).ToArray();
-            var closePathList = closePaths?.ToArray() ?? Enumerable.Repeat(false, numPaths).ToArray();
-            var keepPathList = keepEarlierPaths?.ToArray() ?? Enumerable.Repeat(true, numPaths).ToArray();
-            var previousPaths = keepPathList.Select(k => k ? new List<LineGeometryModel3D>() : null).ToArray();
+            vm.Lines.AddRange(ConvertPathsToLineModels(paths, closePaths, lineThicknesses, colors, false));
+            var numPaths = vm.Lines.Count;
+            var pathTransformEnumerators = (numPaths == 0 || pathTransforms == null) ? null : pathTransforms.Select(tf => tf?.GetEnumerator()).ToArray();
+            for (int i = 0; i < numPaths; i++)
+                vm.LineTransforms.Add(new List<System.Windows.Media.Media3D.Transform3D>());
 
             var numSolids = solids.Count;
-
             foreach (var helixSolids in solids.Select(ts => ConvertTessellatedSolidToMGM3D((TessellatedSolid)ts)
             .Cast<MeshGeometryModel3D>()))
             {
@@ -222,10 +221,10 @@ namespace WindowsDesktopPresenter
                 foreach (var helixSolid in helixSolids)
                     vm.Solids.Add(helixSolid);
             }
-            var transformEnumerators = (numSolids == 0 || transforms == null) ? null : transforms.Select(tf => tf?.GetEnumerator()).ToArray();
+            var solidTransformEnumerators = (numSolids == 0 || solidTransforms == null) ? null : solidTransforms.Select(tf => tf?.GetEnumerator()).ToArray();
             for (int i = 0; i < numSolids; i++)
-                vm.Transforms.Add(new List<System.Windows.Media.Media3D.Transform3D>());
-            
+                vm.SolidTransforms.Add(new List<System.Windows.Media.Media3D.Transform3D>());
+
             var timeStep = 0;
             bool newStepFound;
             do
@@ -234,33 +233,30 @@ namespace WindowsDesktopPresenter
                 newStepFound = false;
                 for (int i = 0; i < numPaths; i++)
                 {
-                    /*
-                    LineGeometryModel3D vizPath = null;
-                    if (pathEnumerators[i].MoveNext())
+                    if (pathTransformEnumerators == null || pathTransformEnumerators[i] == null)
+                        vm.LineTransforms[i].Add(System.Windows.Media.Media3D.Transform3D.Identity);
+                    else if (pathTransformEnumerators[i].MoveNext()) // && !transformEnumerators[i].Current.IsNull())
                     {
-                        vizPath = GetVertexPath(pathEnumerators[i].Current, lineThicknessList[i], colorList[i], closePathList[i]);
-                        vm.Add(timeStep, vizPath);
-                        newStepFound = true;
+                        if (pathTransformEnumerators[i].Current.IsNull())
+                            vm.LineTransforms[i].Add(null);
+                        else
+                        {
+                            vm.LineTransforms[i].Add(ConvertToWindowsTransform3D(pathTransformEnumerators[i].Current));
+                            newStepFound = true;
+                        }
                     }
-                    if (keepPathList[i])
-                    {
-                        vm.AddRange(timeStep, previousPaths[i]);
-                        if (vizPath != null)
-                            previousPaths[i].Add(vizPath);
-                    }
-                    */
                 }
                 for (int i = 0; i < numSolids; i++)
                 {
-                    if (transformEnumerators == null || transformEnumerators[i] == null)
-                        vm.Transforms[i].Add(System.Windows.Media.Media3D.Transform3D.Identity);
-                    else if (transformEnumerators[i].MoveNext()) // && !transformEnumerators[i].Current.IsNull())
+                    if (solidTransformEnumerators == null || solidTransformEnumerators[i] == null)
+                        vm.SolidTransforms[i].Add(System.Windows.Media.Media3D.Transform3D.Identity);
+                    else if (solidTransformEnumerators[i].MoveNext()) // && !transformEnumerators[i].Current.IsNull())
                     {
-                        if (transformEnumerators[i].Current.IsNull())
-                            vm.Transforms[i].Add(null);
+                        if (solidTransformEnumerators[i].Current.IsNull())
+                            vm.SolidTransforms[i].Add(null);
                         else
                         {
-                            vm.Transforms[i].Add(ConvertToWindowsTransform3D(transformEnumerators[i].Current));
+                            vm.SolidTransforms[i].Add(ConvertToWindowsTransform3D(solidTransformEnumerators[i].Current));
                             newStepFound = true;
                         }
                     }
@@ -288,6 +284,7 @@ namespace WindowsDesktopPresenter
 
         private System.Windows.Media.Media3D.Transform3D ConvertToWindowsTransform3D(Matrix4x4 m)
         {
+            if (m.IsNull()) return null;
             return new System.Windows.Media.Media3D.MatrixTransform3D(new System.Windows.Media.Media3D.Matrix3D(
                   m.M11, m.M12, m.M13, m.M14,
                   m.M21, m.M22, m.M23, m.M24,
@@ -296,35 +293,27 @@ namespace WindowsDesktopPresenter
               ));
         }
 
-        private List<LineGeometryModel3D> ConvertPathsToLineModels(IEnumerable<IEnumerable<Vector3>> paths,
-            IEnumerable<bool> closePaths, IEnumerable<double> lineThicknesses, IEnumerable<Color> colors)
+        private IEnumerable<LineGeometryModel3D> ConvertPathsToLineModels(IEnumerable<IEnumerable<Vector3>> paths,
+            IEnumerable<bool> closePaths, IEnumerable<double> lineThicknesses, IEnumerable<Color> colors, bool randomColors)
         {
-            var lineVisuals = new List<LineGeometryModel3D>();
-            closePaths = closePaths ?? paths.Select(x => true);
-            var closedEnumerator = closePaths.GetEnumerator();
-            lineThicknesses = lineThicknesses ?? paths.Select(x => 1.0);
-            var lineThickEnumerator = lineThicknesses.GetEnumerator();
-            //set the default mediaColor to be the first mediaColor in the list. If none was provided, use black.
-            colors = colors ?? Color.GetRandomColors();
-            var colorEnumerator = colors.GetEnumerator();
+            var closedEnumerator = closePaths != null ? closePaths.GetEnumerator() : new Repeater<bool>(false);
+            var lineThickEnumerator = lineThicknesses != null ? lineThicknesses.GetEnumerator() : new Repeater<double>(1);
+            var colorEnumerator = colors != null ? colors.GetEnumerator() : randomColors ? Color.GetRandomColors().GetEnumerator() :
+                new Repeater<Color>(new Color(KnownColors.Black));
 
             var linesVisual = new List<LineGeometryModel3D>();
             foreach (var path in paths)
             {
-                while (!closedEnumerator.MoveNext())
-                    closedEnumerator = closePaths.GetEnumerator();
+                closedEnumerator.MoveNext();
                 var isClosed = closedEnumerator.Current;
-                while (!lineThickEnumerator.MoveNext())
-                    lineThickEnumerator = lineThicknesses.GetEnumerator();
+                lineThickEnumerator.MoveNext();
                 var lineThick = lineThickEnumerator.Current;
-                while (!colorEnumerator.MoveNext())
-                    colorEnumerator = colors.GetEnumerator();
+                colorEnumerator.MoveNext();
                 var color = colorEnumerator.Current;
 
-                if (path == null || !path.Any() || path.Any(p => p.IsNull())) continue;
-                lineVisuals.Add(GetVertexPath(path, lineThick, color, isClosed));
+                if (path != null && path.Any() && !path.Any(p => p.IsNull()))
+                    yield return GetVertexPath(path, lineThick, color, isClosed);
             }
-            return lineVisuals;
         }
 
         private List<LineGeometryModel3D> ConvertPathsToLineModels(IEnumerable<IEnumerable<IEnumerable<Vector3>>> paths,
@@ -554,8 +543,8 @@ namespace WindowsDesktopPresenter
                 if (timetoShow > 0)
                     vm.UpdateInterval = timetoShow;
                 if (holdType == HoldType.Immediate)
-                    vm.AddNewSeries(ConvertSolidsToModel3D(solids).Concat(ConvertPathsToLineModels(paths, closePaths, lineThicknesses, colors)));
-                else vm.EnqueueNewSeries(ConvertSolidsToModel3D(solids).Concat(ConvertPathsToLineModels(paths, closePaths, lineThicknesses, colors)));
+                    vm.AddNewSeries(ConvertSolidsToModel3D(solids).Concat(ConvertPathsToLineModels(paths, closePaths, lineThicknesses, colors,true)));
+                else vm.EnqueueNewSeries(ConvertSolidsToModel3D(solids).Concat(ConvertPathsToLineModels(paths, closePaths, lineThicknesses, colors,true)));
                 if (!window.IsVisible && !vm.HasClosed)
                     window.Show();
             });
@@ -596,5 +585,28 @@ namespace WindowsDesktopPresenter
 
         [System.Runtime.InteropServices.DllImport("nvapi.dll", EntryPoint = "fake")]
         internal static extern int LoadNvApi32();
+    }
+
+    internal class Repeater<T> : IEnumerator<T>
+    {
+        private readonly T item;
+
+        internal Repeater(T item)
+        {
+            this.item = item;
+        }
+        public T Current => item;
+
+        object IEnumerator.Current => Current;
+
+        public void Dispose()
+        => throw new NotImplementedException();
+
+        public bool MoveNext()
+        { return true; }
+        //=> throw new NotImplementedException();
+
+        public void Reset()
+        => throw new NotImplementedException();
     }
 }

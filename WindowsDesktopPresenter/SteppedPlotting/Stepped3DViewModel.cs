@@ -1,13 +1,11 @@
 ﻿using HelixToolkit.SharpDX.Core;
 using HelixToolkit.Wpf.SharpDX;
-using HelixToolkit.Wpf.SharpDX.Model;
 using SharpDX.Direct3D11;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using System.Runtime.CompilerServices;
-using TVGL;
 using Media3D = System.Windows.Media.Media3D;
 using Point3D = System.Windows.Media.Media3D.Point3D;
 using Vector3D = System.Windows.Media.Media3D.Vector3D;
@@ -22,7 +20,7 @@ namespace WindowsDesktopPresenter
         /// </summary>
         public int MaxStepIndex
         {
-            get { return Math.Max(0, Transforms[0].Count - 1); }
+            get { return Math.Max(0, SolidTransforms[0].Count - 1); }
         }
 
         public event PropertyChangedEventHandler PropertyChanged;
@@ -52,14 +50,21 @@ namespace WindowsDesktopPresenter
         }
         internal bool Update(int stepIndex)
         {
-            if (Transforms.Count == 0) return false;
+            if (SolidTransforms.Count == 0) return false;
 
             // Create a new collection with updated transforms
             var newSolids = new ObservableElement3DCollection();
 
+            for (int i = 0; i < Lines.Count; i++)
+            {
+                var transform = LineTransforms[i][stepIndex];
+                if (transform == null) continue;
+                Lines[i].Transform = transform;
+                newSolids.Add(Lines[i]);
+            }
             for (int i = 0; i < SolidGroups.Count; i++)
             {
-                var transform = Transforms[i][stepIndex];
+                var transform = SolidTransforms[i][stepIndex];
                 if (transform == null) continue;
                 foreach (var solid in SolidGroups[i])
                 {
@@ -67,7 +72,6 @@ namespace WindowsDesktopPresenter
                     newSolids.Add(solid);
                 }
             }
-
             Solids = newSolids;
             RaisePropertyChanged("Solids");
             return true;
@@ -186,10 +190,12 @@ namespace WindowsDesktopPresenter
 
 
         public Material SelectedMaterial { get; } = new PhongMaterial() { EmissiveColor = SharpDX.Color.LightYellow };
-        public List<List<System.Windows.Media.Media3D.Transform3D>> Transforms { get; private set; } = [];
+        public List<List<System.Windows.Media.Media3D.Transform3D>> SolidTransforms { get; private set; } = [];
 
         public ObservableElement3DCollection Solids { private set; get; } = [];
         public List<IList<GeometryModel3D>> SolidGroups { get; private set; } = [];
+        public List<LineGeometryModel3D> Lines { get; private set; } = [];
+        public List<List<System.Windows.Media.Media3D.Transform3D>> LineTransforms { get; private set; } = [];
         public Vector3D DirectionalLightDirection1 { get; private set; }
         public Vector3D DirectionalLightDirection2 { get; private set; }
         public Vector3D DirectionalLightDirection3 { get; private set; }
