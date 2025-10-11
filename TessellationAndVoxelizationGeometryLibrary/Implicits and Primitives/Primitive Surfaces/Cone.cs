@@ -23,6 +23,9 @@ namespace TVGL
     /// </summary>
     public class Cone : PrimitiveSurface
     {
+        public const double PracticalMinAperture = 0.001; // 0.06 degrees
+        public const double PracticalMaxAperture = 1000; // 89.94 degrees
+
         /// <summary>
         /// Initializes a new instance of the <see cref="Cone"/> class.
         /// </summary>

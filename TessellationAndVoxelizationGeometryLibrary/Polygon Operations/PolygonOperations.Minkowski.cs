@@ -33,7 +33,8 @@ namespace TVGL
         /// <returns></returns>
         public static List<Polygon> MinkowskiSum(this Polygon a, Polygon b)
         {
-            //Presenter.ShowAndHang(new List<Polygon> { a, b });
+            //IO.Save(a, "a.json");
+            //IO.Save(b, "b.json");
             var aHasHoles = a.InnerPolygons != null && a.InnerPolygons.Length > 0;
             var bHasHoles = b.InnerPolygons != null && b.InnerPolygons.Length > 0;
             var aCanBeInB = bHasHoles && ((a.MaxX - a.MinX) < (b.MaxX - b.MinX) &&
@@ -46,10 +47,6 @@ namespace TVGL
             // first work on outer sums (not holes)
             if (a.IsConvex && b.IsConvex)
                 result.Add(MinkowskiSumConvex(a, b));
-            //if (a.IsConvex)
-            //    result.AddRange(MinkowskiSumConcaveConvex(a, b));
-            //else if (b.IsConvex)
-            //    result.AddRange(MinkowskiSumConcaveConvex(b, a));
             else
             {
                 var segments = BuildReducedConvolutionSegments(a, b);
@@ -139,61 +136,6 @@ namespace TVGL
             }
             return minVertex;
         }
-
-        private static List<Polygon> MinkowskiSumConcaveConvex(Polygon a, Polygon b)
-        {
-            var aStartEdge = FindMinY(a.Vertices).EndLine;
-            var bStartEdge = FindMinY(b.Vertices).EndLine;
-            var flipResult = a.IsPositive != b.IsPositive;
-            var aEdgeAngles = a.Edges.ToDictionary(e => e, e => Global.Pseudoangle(e.Vector.X, e.Vector.Y));
-            var bEdgeAngles = b.Edges.ToDictionary(e => e, e => Global.Pseudoangle(e.Vector.X, e.Vector.Y));
-
-            var prevAEdge = aStartEdge;
-            var prevBEdge = bStartEdge;
-            var result = new List<Vector2> { prevAEdge.ToPoint.Coordinates + prevBEdge.ToPoint.Coordinates };
-            var knownWrongPoints = new List<bool> { false };
-            var nextAEdge = prevAEdge.ToPoint.StartLine;
-            var nextBEdge = prevBEdge.ToPoint.StartLine;
-            do
-            {
-                var aAngle = aEdgeAngles[nextAEdge];
-                var aPrevAngle = aEdgeAngles[prevAEdge];
-                var bAngle = bEdgeAngles[nextBEdge];
-                var bPrevAngle = bEdgeAngles[prevBEdge];
-                if (firstAngleIsBetweenOthersCCW(aAngle, bPrevAngle, bAngle))
-                {
-                    result.Add(nextAEdge.ToPoint.Coordinates + prevBEdge.ToPoint.Coordinates);
-                    var prevBCrossNextB = prevBEdge.Vector.Cross(nextBEdge.Vector);
-                    knownWrongPoints.Add(prevBCrossNextB < 0);
-                    prevAEdge = nextAEdge;
-                    nextAEdge = nextAEdge.ToPoint.StartLine;
-                }
-                if (firstAngleIsBetweenOthersCCW(bAngle, aPrevAngle, aAngle))
-                {
-                    result.Add(nextBEdge.ToPoint.Coordinates + prevAEdge.ToPoint.Coordinates);
-                    var prevACrossNextA = prevAEdge.Vector.Cross(nextAEdge.Vector);
-                    knownWrongPoints.Add(prevACrossNextA < 0);
-                    prevBEdge = nextBEdge;
-                    nextBEdge = nextBEdge.ToPoint.StartLine;
-                }
-            } while (prevAEdge != aStartEdge || prevBEdge != bStartEdge);
-
-            var clipperPaths = PolygonOperations.ConvertToClipperPaths([new Polygon(result)]);
-            if (flipResult)
-            {
-                //foreach (var c in clipperPaths)
-                //    Clipper.ReversePath(c);
-                clipperPaths = Clipper.Union(clipperPaths, FillRule.Negative);
-            }
-            //else
-            clipperPaths = Clipper.Union(clipperPaths, FillRule.Positive);
-
-            var polygons = clipperPaths.Select(clipperPath
-              => new Polygon(clipperPath.Select(point => new Vector2(point.X / scale, point.Y / scale)))).ToList();
-            //Presenter.ShowAndHang(polygons);
-            return polygons;
-        }
-
 
         private static bool firstAngleIsBetweenOthersCCW(double aAngle, double bPrevAngle, double bAngle)
         {

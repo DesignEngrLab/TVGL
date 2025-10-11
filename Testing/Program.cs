@@ -11,7 +11,7 @@ namespace TVGLUnitTestsAndBenchmarking
 {
     internal class Program
     {
-        public static string inputFolder = "TestFiles";
+        public static string inputFolder = "Input\\Drawings";
 
         static Random r = new Random();
         static double r1 => 2.0 * r.NextDouble() - 1.0;
@@ -24,6 +24,10 @@ namespace TVGLUnitTestsAndBenchmarking
             Global.Presenter2D = new Presenter2D();
             Global.Presenter3D = new Presenter3D();
             var dirInfo = IO.BackoutToFolder(inputFolder);
+            IO.Open(Path.Combine(dirInfo.FullName, "a.json"), out Polygon A);
+            IO.Open(Path.Combine(dirInfo.FullName, "b.json"), out Polygon B);
+            Presenter.ShowAndHang(new[] { A, B });
+            var union = A.MinkowskiSum(B);
             foreach (var fileName in dirInfo.GetFiles("*"))
             {
                 Console.WriteLine("Attempting to open: " + fileName.Name);

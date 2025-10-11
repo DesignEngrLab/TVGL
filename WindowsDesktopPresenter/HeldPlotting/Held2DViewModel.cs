@@ -15,23 +15,21 @@ namespace WindowsDesktopPresenter
     {
         public PlotModel PlotModel { get; set; }
         private Queue<ICollection<LineSeries>> SeriesQueue;
-        internal void AddNewSeries(IEnumerable<IEnumerable<Vector2>> paths, Plot2DType plot2DType, IEnumerable<bool> closePaths, 
+        internal void AddNewSeries(IEnumerable<IEnumerable<Vector2>> paths, Plot2DType plot2DType, IEnumerable<bool> closePaths,
             MarkerType marker)
         {
             SeriesQueue.Clear();
             EnqueueNewSeries(paths, plot2DType, closePaths, marker);
         }
 
-        internal void EnqueueNewSeries(IEnumerable<IEnumerable<Vector2>> paths, Plot2DType plot2DType, IEnumerable<bool> closePaths, 
+        internal void EnqueueNewSeries(IEnumerable<IEnumerable<Vector2>> paths, Plot2DType plot2DType, IEnumerable<bool> closePaths,
             MarkerType marker)
         {
             var listOfPlots = new List<LineSeries>();
-            if (closePaths == null) closePaths = [true];
-            var closedEnumerator = closePaths.GetEnumerator();
+            var closedEnumerator = closePaths != null ? closePaths.GetEnumerator() : new Repeater<bool>(true);
             foreach (var path in paths)
             {
-                while (!closedEnumerator.MoveNext())
-                    closedEnumerator = closePaths.GetEnumerator();
+                closedEnumerator.MoveNext();
                 var isClosed = closedEnumerator.Current;
                 var series = new LineSeries();
                 foreach (var vertex in path)
