@@ -20,7 +20,13 @@ namespace WindowsDesktopPresenter
         /// </summary>
         public int MaxStepIndex
         {
-            get { return Math.Max(0, SolidTransforms[0].Count - 1); }
+            get
+            {
+                return Math.Max(SolidGroups.Max(g => g?.Count ?? 0),
+                Math.Max(SolidTransforms.Max(t => t?.Count ?? 0),
+                Math.Max(PathGroups.Max(g => g?.Count ?? 0),
+                         PathTransforms.Max(t => t?.Count ?? 0))));
+            }
         }
 
         public event PropertyChangedEventHandler PropertyChanged;

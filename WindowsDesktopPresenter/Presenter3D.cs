@@ -238,7 +238,7 @@ namespace WindowsDesktopPresenter
                 var closed = closedEnumerator.MoveNext() ? closedEnumerator.Current : false;
                 var lineThickness = thickEnumerator.MoveNext() ? thickEnumerator.Current : 1;
                 var pathColor = colorEnumerator.MoveNext() ? colorEnumerator.Current : new Color(KnownColors.Black);
-                var innerTransformSteps = outerTransformEnumerator.MoveNext() ? outerTransformEnumerator.Current.GetEnumerator() : null;
+                var innerTransformSteps = outerTransformEnumerator.MoveNext() ? outerTransformEnumerator.Current?.GetEnumerator() : null;
                 var helixPathSteps = new List<GeometryModel3D>();
                 var transformSteps = innerTransformSteps == null ? null : new List<System.Windows.Media.Media3D.Transform3D>();
                 foreach (var pathStep in pathGroup)
