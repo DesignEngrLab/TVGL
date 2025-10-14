@@ -50,30 +50,36 @@ namespace WindowsDesktopPresenter
         }
         internal bool Update(int stepIndex)
         {
-            if (SolidTransforms.Count == 0) return false;
-
             // Create a new collection with updated transforms
             var newSolids = new ObservableElement3DCollection();
-
-            for (int i = 0; i < Lines.Count; i++)
+            var allTransforms = new[] { PathTransforms, SolidTransforms };
+            var k = 0;
+            foreach (var groups in new List<IList<GeometryModel3D>>[] { PathGroups,SolidGroups  })
             {
-                var transform = LineTransforms[i][stepIndex];
-                if (transform == null) continue;
-                Lines[i].Transform = transform;
-                newSolids.Add(Lines[i]);
-            }
-            for (int i = 0; i < SolidGroups.Count; i++)
-            {
-                var transform = SolidTransforms[i][stepIndex];
-                if (transform == null) continue;
-                foreach (var solid in SolidGroups[i])
+                var transforms = allTransforms[k++];
+                for (int i = 0; i < transforms.Count; i++)
                 {
-                    solid.Transform = transform;
-                    newSolids.Add(solid);
+                    var elements = groups[i];
+                    var transformForGroupI = transforms[i];
+                    if (transformForGroupI == null)
+                    { // only show the group's solids at this current timestep
+                        if (stepIndex < elements.Count)
+                            newSolids.Add(elements[stepIndex]);
+                    }
+                    else if (stepIndex < transformForGroupI.Count && transformForGroupI[stepIndex] != null)
+                    {
+                        var lastIndex = Math.Min(elements.Count, stepIndex) - 1;
+                        var start = Math.Max(0, lastIndex-1000);
+                        for (int j = start; j <= lastIndex; j++)
+                        {
+                            elements[j].Transform = transformForGroupI[stepIndex];
+                            newSolids.Add(elements[j]);
+                        }
+                    }
                 }
             }
-            Solids = newSolids;
-            RaisePropertyChanged("Solids");
+            Elements = newSolids;
+            RaisePropertyChanged("Elements");
             return true;
         }
 
@@ -189,13 +195,14 @@ namespace WindowsDesktopPresenter
 
 
 
+        public ObservableElement3DCollection Elements { private set; get; } = [];
         public Material SelectedMaterial { get; } = new PhongMaterial() { EmissiveColor = SharpDX.Color.LightYellow };
-        public List<List<System.Windows.Media.Media3D.Transform3D>> SolidTransforms { get; private set; } = [];
+        public List<IList<System.Windows.Media.Media3D.Transform3D>> SolidTransforms { get; private set; } = [];
 
-        public ObservableElement3DCollection Solids { private set; get; } = [];
         public List<IList<GeometryModel3D>> SolidGroups { get; private set; } = [];
-        public List<LineGeometryModel3D> Lines { get; private set; } = [];
-        public List<List<System.Windows.Media.Media3D.Transform3D>> LineTransforms { get; private set; } = [];
+        public List<IList<System.Windows.Media.Media3D.Transform3D>> PathTransforms { get; internal set; } = [];
+
+        public List<IList<GeometryModel3D>> PathGroups { get; private set; } = [];
         public Vector3D DirectionalLightDirection1 { get; private set; }
         public Vector3D DirectionalLightDirection2 { get; private set; }
         public Vector3D DirectionalLightDirection3 { get; private set; }
@@ -244,7 +251,7 @@ namespace WindowsDesktopPresenter
 
         private void UpdateSolidsWithFill()
         {
-            foreach (var solid in Solids)
+            foreach (var solid in Elements)
                 ((GeometryModel3D)solid).FillMode = FillMode;
         }
 
@@ -255,7 +262,7 @@ namespace WindowsDesktopPresenter
             {
                 if (SetValue(ref selectedGeometry, value))
                 {
-                    SelectedTransform = Solids.Where(x => ((GeometryModel3D)x).Geometry == value)
+                    SelectedTransform = Elements.Where(x => ((GeometryModel3D)x).Geometry == value)
                         .Select(x => x.Transform).First();
                 }
             }
