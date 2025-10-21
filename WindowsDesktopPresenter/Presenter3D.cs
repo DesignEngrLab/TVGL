@@ -245,7 +245,7 @@ namespace WindowsDesktopPresenter
                 {
                     if (innerTransformSteps != null)
                         transformSteps.Add(innerTransformSteps.MoveNext() ? ConvertToWindowsTransform3D(innerTransformSteps.Current) : null);
-                    helixPathSteps.Add(ConvertPathToLineModel(pathStep, lineThickness, pathColor, closed));
+                    helixPathSteps.Add(pathStep == null ? null : ConvertPathToLineModel(pathStep, lineThickness, pathColor, closed));
                 }
                 numPathTimeSteps = Math.Max(numPathTimeSteps, helixPathSteps.Count);
                 vm.PathGroups.Add(helixPathSteps);
@@ -282,7 +282,7 @@ namespace WindowsDesktopPresenter
                         helixsolidSteps.RemoveAt(helixsolidSteps.Count - 1);
                     vm.SolidGroups.Add(helixsolidSteps);
                     //if (innerTransformSteps.Length == helixsolidSteps.Count)
-                        vm.SolidTransforms.Add(innerTransformSteps);
+                    vm.SolidTransforms.Add(innerTransformSteps);
                     //else
                     //    vm.SolidTransforms.Add(innerTransformSteps.Take(helixsolidSteps.Count).ToArray());
                 }

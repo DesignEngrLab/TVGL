@@ -60,7 +60,7 @@ namespace WindowsDesktopPresenter
             var newSolids = new ObservableElement3DCollection();
             var allTransforms = new[] { PathTransforms, SolidTransforms };
             var k = 0;
-            foreach (var groups in new List<IList<GeometryModel3D>>[] { PathGroups,SolidGroups  })
+            foreach (var groups in new List<IList<GeometryModel3D>>[] { PathGroups, SolidGroups })
             {
                 var transforms = allTransforms[k++];
                 for (int i = 0; i < transforms.Count; i++)
@@ -69,15 +69,16 @@ namespace WindowsDesktopPresenter
                     var transformForGroupI = transforms[i];
                     if (transformForGroupI == null)
                     { // only show the group's solids at this current timestep
-                        if (stepIndex < elements.Count)
+                        if (stepIndex < elements.Count && elements[stepIndex] != null)
                             newSolids.Add(elements[stepIndex]);
                     }
                     else if (stepIndex < transformForGroupI.Count && transformForGroupI[stepIndex] != null)
                     {
                         var lastIndex = Math.Min(elements.Count, stepIndex) - 1;
-                        var start = Math.Max(0, lastIndex-1000);
+                        var start = Math.Max(0, lastIndex - 1000);
                         for (int j = start; j <= lastIndex; j++)
                         {
+                            if (elements[j] == null) continue;
                             elements[j].Transform = transformForGroupI[stepIndex];
                             newSolids.Add(elements[j]);
                         }

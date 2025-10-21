@@ -230,35 +230,54 @@ namespace WindowsDesktopPresenter
         public Window2DFlipPlot(ICollection<double[,]> allData, IEnumerable<IEnumerable<Vector2>> allPoints, bool connectPointsInLine, string title) : this(title)
         {
             Models.Clear();
-            var pointEnumerator = allPoints.GetEnumerator();
-            foreach (var data in allData)
+            var dataEnumerator = allData.GetEnumerator();
+            var pointsEnumerator = allPoints.GetEnumerator();
+            int dataIndex = 0, pointsIndex = 0;
+            bool hasData = dataEnumerator.MoveNext();
+            bool hasPoints = pointsEnumerator.MoveNext();
+
+            while (hasData || hasPoints)
             {
-                var model = new PlotModel();
-                var heatMapSeries = new HeatMapSeries
+                PlotModel model = null;
+                if (hasData)
                 {
-                    X0 = 0,
-                    X1 = data.GetLength(0),
-                    Y0 = 0,
-                    Y1 = data.GetLength(1),
-                    Interpolate = false,
-                    RenderMethod = HeatMapRenderMethod.Bitmap,
-                    Data = data
-                };
-                // Color axis (the X and Y axes are generated automatically)
-                model.Axes.Add(new OxyPlot.Axes.LinearColorAxis
+                    model = new PlotModel();
+                    var data = dataEnumerator.Current;
+                    var heatMapSeries = new HeatMapSeries
+                    {
+                        X0 = 0,
+                        X1 = data.GetLength(0),
+                        Y0 = 0,
+                        Y1 = data.GetLength(1),
+                        Interpolate = false,
+                        RenderMethod = HeatMapRenderMethod.Bitmap,
+                        Data = data
+                    };
+                    // Color axis (the X and Y axes are generated automatically)
+                    model.Axes.Add(new OxyPlot.Axes.LinearColorAxis
+                    {
+                        Palette = OxyPalettes.Rainbow(32)
+                    });
+                    model.Series.Add(heatMapSeries);
+                    Models.Add(model);
+                    hasData = dataEnumerator.MoveNext();
+                    dataIndex++;
+                }
+
+                if (hasPoints)
                 {
-                    Palette = OxyPalettes.Rainbow(32)
-                });
-                model.Series.Add(heatMapSeries);
-                if (pointEnumerator.MoveNext())
-                {
-                    var points = pointEnumerator.Current;
+                    var points = pointsEnumerator.Current;
+                    // If model is null (no data for this index), create a new PlotModel
+                    if (model == null)
+                    {
+                        model = new PlotModel();
+                        Models.Add(model);
+                    }
                     if (connectPointsInLine)
                     {
                         var lineSeries = new LineSeries { MarkerType = OxyPlot.MarkerType.None, Color = OxyColors.Black };
                         foreach (var point in points)
                             lineSeries.Points.Add(new DataPoint(point.X, point.Y));
-
                         model.Series.Add(lineSeries);
                     }
                     else
@@ -266,11 +285,16 @@ namespace WindowsDesktopPresenter
                         var scatterSeries = new ScatterSeries { MarkerType = OxyPlot.MarkerType.Circle };
                         foreach (var point in points)
                             scatterSeries.Points.Add(new ScatterPoint(point.X, point.Y, 5, 0.1));
-
                         model.Series.Add(scatterSeries);
                     }
+                    model.InvalidatePlot(false);
+                    hasPoints = pointsEnumerator.MoveNext();
+                    pointsIndex++;
                 }
-                model.InvalidatePlot(false);
+                else if (model != null)
+                {
+                    model.InvalidatePlot(false);
+                }
             }
             ReduceModels();
             InitializeComponent();
@@ -280,52 +304,80 @@ namespace WindowsDesktopPresenter
             IEnumerable<bool> allConnects, string title) : this(title)
         {
             Models.Clear();
-            var pointEnumerator = allPoints.GetEnumerator();
-            foreach (var data in allData)
+
+            // Get enumerators for both collections
+            var dataEnumerator = allData.GetEnumerator();
+            var pointsEnumerator = allPoints.GetEnumerator();
+            var connectsEnumerator = allConnects.GetEnumerator();
+            int dataIndex = 0, pointsIndex = 0;
+            bool hasData = dataEnumerator.MoveNext();
+            bool hasPoints = pointsEnumerator.MoveNext();
+
+            while (hasData || hasPoints)
             {
-                var model = new PlotModel();
-                Models.Add(model);
-                var heatMapSeries = new HeatMapSeries
+                PlotModel model = null;
+                if (hasData)
                 {
-                    X0 = 0,
-                    X1 = data.GetLength(0),
-                    Y0 = 0,
-                    Y1 = data.GetLength(1),
-                    Interpolate = false,
-                    RenderMethod = HeatMapRenderMethod.Bitmap,
-                    Data = data
-                };
-                // Color axis (the X and Y axes are generated automatically)
-                model.Axes.Add(new OxyPlot.Axes.LinearColorAxis
-                {
-                    Palette = OxyPalettes.Rainbow(32)
-                });
-                model.Series.Add(heatMapSeries);
-                if (pointEnumerator.MoveNext())
-                {
-                    var points = pointEnumerator.Current;
-                    var lineEnumerator = allConnects.GetEnumerator();
-                    foreach (var pointSet in points)
+                    model = new PlotModel();
+                    var data = dataEnumerator.Current;
+                    var heatMapSeries = new HeatMapSeries
                     {
-                        if (lineEnumerator.MoveNext() && lineEnumerator.Current)
+                        X0 = 0,
+                        X1 = data.GetLength(0),
+                        Y0 = 0,
+                        Y1 = data.GetLength(1),
+                        Interpolate = false,
+                        RenderMethod = HeatMapRenderMethod.Bitmap,
+                        Data = data
+                    };
+                    // Color axis (the X and Y axes are generated automatically)
+                    model.Axes.Add(new OxyPlot.Axes.LinearColorAxis
+                    {
+                        Palette = OxyPalettes.Rainbow(32)
+                    });
+                    model.Series.Add(heatMapSeries);
+                    Models.Add(model);
+                    hasData = dataEnumerator.MoveNext();
+                    dataIndex++;
+                }
+
+                if (hasPoints)
+                {
+                    var points = pointsEnumerator.Current;
+                    // If model is null (no data for this index), create a new PlotModel
+                    if (model == null)
+                    {
+                        model = new PlotModel();
+                        Models.Add(model);
+                    }
+                    if (connectsEnumerator.MoveNext() && connectsEnumerator.Current)
+                    {
+                        foreach (var pointSet in points)
                         {
-                            var lineSeries = new LineSeries { MarkerType = OxyPlot.MarkerType.None };
+                            var lineSeries = new LineSeries { MarkerType = OxyPlot.MarkerType.None, Color = OxyColors.Black };
                             foreach (var point in pointSet)
                                 lineSeries.Points.Add(new DataPoint(point.X, point.Y));
-
                             model.Series.Add(lineSeries);
                         }
-                        else
+                    }
+                    else
+                    {
+                        foreach (var pointSet in points)
                         {
                             var scatterSeries = new ScatterSeries { MarkerType = OxyPlot.MarkerType.Circle };
                             foreach (var point in pointSet)
                                 scatterSeries.Points.Add(new ScatterPoint(point.X, point.Y, 5, 0.1));
-
                             model.Series.Add(scatterSeries);
                         }
                     }
+                    model.InvalidatePlot(false);
+                    hasPoints = pointsEnumerator.MoveNext();
+                    pointsIndex++;
                 }
-                model.InvalidatePlot(false);
+                else if (model != null)
+                {
+                    model.InvalidatePlot(false);
+                }
             }
             ReduceModels();
             InitializeComponent();
