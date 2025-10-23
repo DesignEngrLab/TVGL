@@ -75,7 +75,7 @@ namespace WindowsDesktopPresenter
                     else if (stepIndex < transformForGroupI.Count && transformForGroupI[stepIndex] != null)
                     {
                         var lastIndex = Math.Min(elements.Count, stepIndex) - 1;
-                        var start = Math.Max(0, lastIndex - 1000);
+                        var start = Math.Max(0, lastIndex - 2000);
                         for (int j = start; j <= lastIndex; j++)
                         {
                             if (elements[j] == null) continue;
