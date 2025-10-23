@@ -163,7 +163,7 @@ namespace TVGL
         public override void Transform(Matrix4x4 transformMatrix, bool transformFacesAndVertices)
         {
             base.Transform(transformMatrix, transformFacesAndVertices);
-            throw new NotImplementedException();
+            //throw new NotImplementedException();
         }
 
         /// <summary>

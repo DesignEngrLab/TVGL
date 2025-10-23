@@ -11,7 +11,6 @@ namespace WindowsDesktopPresenter
     public partial class Window3DSteppedPlot : Window
     {
         Stepped3DViewModel stepViewModel;
-        ObservableCollection<PlotModel> Models = new ObservableCollection<PlotModel>();
         public PlotModel SelectedModel { get; set; }
         public int SelectedIndex { get; private set; }
         internal Window3DSteppedPlot(Stepped3DViewModel stepViewModel)
@@ -41,7 +40,7 @@ namespace WindowsDesktopPresenter
             //if (SelectedIndex >= 0 && SelectedIndex < Models.Count)
             {
                 bool newDataToShow;
-                lock (stepViewModel.Solids)
+                lock (stepViewModel.Elements)
                     newDataToShow = stepViewModel.Update(selectedIndex);
                 if (newDataToShow)
                 {

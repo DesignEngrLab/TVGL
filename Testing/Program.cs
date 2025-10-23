@@ -24,9 +24,20 @@ namespace TVGLUnitTestsAndBenchmarking
             Global.Presenter2D = new Presenter2D();
             Global.Presenter3D = new Presenter3D();
             var dirInfo = IO.BackoutToFolder(inputFolder);
-            IO.Open(Path.Combine(dirInfo.FullName, "a.json"), out Polygon A);
-            IO.Open(Path.Combine(dirInfo.FullName, "b.json"), out Polygon B);
-            Presenter.ShowAndHang(new[] { A, B });
+
+
+
+            IO.Open(Path.Combine(dirInfo.FullName, "M.json"), out Polygon A);
+            IO.Open(Path.Combine(dirInfo.FullName, "I.json"), out Polygon B);
+            B.Transform(new Matrix3x3(1, .2, .2, 1, 0, 0)); // rotate 90 degrees
+            IO.Open(Path.Combine(dirInfo.FullName, "C.json"), out Polygon C);
+            Console.WriteLine("poly1 = [");
+            consolePrint(A);
+            Console.WriteLine("]\npoly2 = [");
+            consolePrint(B);
+            Console.WriteLine("]\npoly3 = [");
+            consolePrint(C);
+            Presenter.ShowAndHang(new[] { A, B,C});
             var union = A.MinkowskiSum(B);
             foreach (var fileName in dirInfo.GetFiles("*"))
             {
@@ -40,11 +51,19 @@ namespace TVGLUnitTestsAndBenchmarking
                     circlePath.Add(new Vector3(10 * Math.Cos(i * Math.PI / 12), 10 * Math.Sin(i * Math.PI / 12), 0));
                     transforms.Add(Matrix4x4.CreateRotationZ(i * Math.PI / 12));
                 }
-                var paths = new List<List<Vector3>>();
-                for (int i = 1; i < 12; i++)
-                    paths.Add([circlePath[i - 1], circlePath[i]]);
+                //var paths = new List<List<Vector3>>();
+                //for (int i = 1; i < 12; i++)
+                //    paths.Add([circlePath[i - 1], circlePath[i]]);
 
-                Presenter.ShowStepsAndHang([paths], [solid], [transforms]);
+                //Presenter.ShowStepsAndHang([paths], [solid], [transforms]);
+            }
+        }
+
+        private static void consolePrint(Polygon a)
+        {
+           foreach (var v in System.Linq.Enumerable.Reverse(a.Vertices))
+            {
+                Console.WriteLine(v.X+", "+v.Y);
             }
         }
 

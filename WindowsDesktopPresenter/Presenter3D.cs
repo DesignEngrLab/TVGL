@@ -171,7 +171,7 @@ namespace WindowsDesktopPresenter
             IEnumerable<double> lineThicknesses = null, IEnumerable<Color> colors = null, IEnumerable<TriangleFace> faces = null)
         {
             var vm = new Window3DPlotViewModel();
-            vm.Add(ConvertPathsToLineModels(paths, closePaths, lineThicknesses, colors,true));
+            vm.Add(ConvertPathsToLineModels(paths, closePaths, lineThicknesses, colors, true));
             if (faces != null)
                 vm.Add(ConvertTessellatedSolidToMGM3D(faces, new Color(KnownColors.LightGray), false));
 
@@ -181,7 +181,7 @@ namespace WindowsDesktopPresenter
         }
 
         public void ShowAndHang(IEnumerable<Vector3> path, bool closePaths = false, double lineThickness = -1, Color color = null, params Solid[] solids)
-            => ShowAndHang([path], [closePaths], [lineThickness == -1 ? 1 : lineThickness], [color == null ? new Color(KnownColors.Black) : color],false, solids);
+            => ShowAndHang([path], [closePaths], [lineThickness == -1 ? 1 : lineThickness], [color == null ? new Color(KnownColors.Black) : color], false, solids);
 
         /// <summary>
         /// Show and hang a series of paths and solids at each step. Here, the outermost collection is the unique object, and the second
@@ -201,68 +201,92 @@ namespace WindowsDesktopPresenter
         /// <param name="closePaths"></param>
         /// <param name="lineThicknesses"></param>
         /// <param name="colors"></param>
-        public void ShowStepsAndHang(IEnumerable<IEnumerable<Vector3>> paths,
-            IList<IEnumerable<Matrix4x4>> pathTransforms, IList<Solid> solids,
-            IList<IEnumerable<Matrix4x4>> solidTransforms, IEnumerable<bool> closePaths = null,
+        public void ShowStepsAndHang(IEnumerable<IEnumerable<IEnumerable<Vector3>>> paths, IEnumerable<IEnumerable<Matrix4x4>> pathTransforms,
+            IEnumerable<IEnumerable<Solid>> solids, IEnumerable<IEnumerable<Matrix4x4>> solidTransforms, IEnumerable<bool> closePaths = null,
             IEnumerable<double> lineThicknesses = null, IEnumerable<Color> colors = null)
+        => ShowStepsAndHang(paths, pathTransforms, solids?.Select(sgroup => sgroup.Select(sTimeStep => (sTimeStep is TessellatedSolid ts) ? ts.Faces :
+        (sTimeStep is ImplicitSolid imp) ? imp.ConvertToTessellatedSolid(1).Faces : sTimeStep is VoxelizedSolid vs ?
+        vs.ConvertToTessellatedSolidRectilinear().Faces : null)), solidTransforms, closePaths, lineThicknesses, colors);
+
+        /// <summary>
+        /// Steps through the various paths and face groups, applying transforms as provided. The outermost collection for both paths and solids 
+        /// is a group of objects that have the same behavior. the second collection is the object at a particular timestep. Now, the transforms
+        /// are aligned one-to-one with the groups. If they are null, then the shapes only appear in the one time step that they have been provided.
+        /// Otherwise, the previous object groups survive and are transformed accordingly.
+        /// </summary>
+        /// <param name="paths"></param>
+        /// <param name="pathTransforms"></param>
+        /// <param name="faceGroups"></param>
+        /// <param name="fGTransforms"></param>
+        /// <param name="closePaths"></param>
+        /// <param name="lineThicknesses"></param>
+        /// <param name="pathColors"></param>
+        /// <param name="faceGroupColors"></param>
+        public void ShowStepsAndHang(IEnumerable<IEnumerable<IEnumerable<Vector3>>> paths, IEnumerable<IEnumerable<Matrix4x4>> pathTransforms,
+            IEnumerable<IEnumerable<IEnumerable<TriangleFace>>> faceGroups, IEnumerable<IEnumerable<Matrix4x4>> fGTransforms, IEnumerable<bool> closePaths = null,
+            IEnumerable<double> lineThicknesses = null, IEnumerable<Color> pathColors = null)
         {
             var vm = new Stepped3DViewModel();
-            vm.Lines.AddRange(ConvertPathsToLineModels(paths, closePaths, lineThicknesses, colors, false));
-            var numPaths = vm.Lines.Count;
-            var pathTransformEnumerators = (numPaths == 0 || pathTransforms == null) ? null : pathTransforms.Select(tf => tf?.GetEnumerator()).ToArray();
-            for (int i = 0; i < numPaths; i++)
-                vm.LineTransforms.Add(new List<System.Windows.Media.Media3D.Transform3D>());
+            var closedEnumerator = closePaths != null ? closePaths.GetEnumerator() : new Repeater<bool>(false);
+            var thickEnumerator = lineThicknesses != null ? lineThicknesses.GetEnumerator() : new Repeater<double>(1);
+            var colorEnumerator = pathColors != null ? pathColors.GetEnumerator() : new Repeater<Color>(new Color(KnownColors.Black));
+            var outerTransformEnumerator = pathTransforms != null ? pathTransforms.GetEnumerator() : new Repeater<IEnumerable<Matrix4x4>>(null);
 
-            var numSolids = solids.Count;
-            foreach (var helixSolids in solids.Select(ts => ConvertTessellatedSolidToMGM3D((TessellatedSolid)ts)
-            .Cast<MeshGeometryModel3D>()))
+            var numPathTimeSteps = 0;
+            foreach (var pathGroup in paths)
             {
-                vm.SolidGroups.Add(helixSolids.ToArray()); //each solid group is a collection of meshes that make up the solid
-                foreach (var helixSolid in helixSolids)
-                    vm.Solids.Add(helixSolid);
+                var closed = closedEnumerator.MoveNext() ? closedEnumerator.Current : false;
+                var lineThickness = thickEnumerator.MoveNext() ? thickEnumerator.Current : 1;
+                var pathColor = colorEnumerator.MoveNext() ? colorEnumerator.Current : new Color(KnownColors.Black);
+                var innerTransformSteps = outerTransformEnumerator.MoveNext() ? outerTransformEnumerator.Current?.GetEnumerator() : null;
+                var helixPathSteps = new List<GeometryModel3D>();
+                var transformSteps = innerTransformSteps == null ? null : new List<System.Windows.Media.Media3D.Transform3D>();
+                foreach (var pathStep in pathGroup)
+                {
+                    if (innerTransformSteps != null)
+                        transformSteps.Add(innerTransformSteps.MoveNext() ? ConvertToWindowsTransform3D(innerTransformSteps.Current) : null);
+                    helixPathSteps.Add(pathStep == null ? null : ConvertPathToLineModel(pathStep, lineThickness, pathColor, closed));
+                }
+                numPathTimeSteps = Math.Max(numPathTimeSteps, helixPathSteps.Count);
+                vm.PathGroups.Add(helixPathSteps);
+                vm.PathTransforms.Add(transformSteps);
             }
-            var solidTransformEnumerators = (numSolids == 0 || solidTransforms == null) ? null : solidTransforms.Select(tf => tf?.GetEnumerator()).ToArray();
-            for (int i = 0; i < numSolids; i++)
-                vm.SolidTransforms.Add(new List<System.Windows.Media.Media3D.Transform3D>());
 
-            var timeStep = 0;
-            bool newStepFound;
-            do
+            var defColor = new Color(TVGL.Constants.DefaultColor);
+            outerTransformEnumerator = fGTransforms != null ? fGTransforms.GetEnumerator() : new Repeater<IEnumerable<Matrix4x4>>(null);
+            //var numSolidTimeSteps = 0;
+            foreach (var solidGroup in faceGroups)
             {
-                var newPaths = new IEnumerable<Vector3>[numPaths];
-                newStepFound = false;
-                for (int i = 0; i < numPaths; i++)
+                var numInGroup = 1;
+                var subGroupSteps = new List<GeometryModel3D[]>();
+                foreach (var solidStep in solidGroup)
                 {
-                    if (pathTransformEnumerators == null || pathTransformEnumerators[i] == null)
-                        vm.LineTransforms[i].Add(System.Windows.Media.Media3D.Transform3D.Identity);
-                    else if (pathTransformEnumerators[i].MoveNext()) // && !transformEnumerators[i].Current.IsNull())
-                    {
-                        if (pathTransformEnumerators[i].Current.IsNull())
-                            vm.LineTransforms[i].Add(null);
-                        else
-                        {
-                            vm.LineTransforms[i].Add(ConvertToWindowsTransform3D(pathTransformEnumerators[i].Current));
-                            newStepFound = true;
-                        }
-                    }
+                    var geom3Ds = ConvertTessellatedSolidToMGM3D(solidStep, defColor, false).ToArray();
+                    subGroupSteps.Add(geom3Ds);
+                    numInGroup = Math.Max(numInGroup, geom3Ds.Length);
                 }
-                for (int i = 0; i < numSolids; i++)
+                var innerMatrixSteps = outerTransformEnumerator.MoveNext() ? outerTransformEnumerator.Current : null;
+                var innerTransformSteps = innerMatrixSteps == null ? null
+                    : innerMatrixSteps.Select(ConvertToWindowsTransform3D).ToArray();
+                for (int i = 0; i < numInGroup; i++)
                 {
-                    if (solidTransformEnumerators == null || solidTransformEnumerators[i] == null)
-                        vm.SolidTransforms[i].Add(System.Windows.Media.Media3D.Transform3D.Identity);
-                    else if (solidTransformEnumerators[i].MoveNext()) // && !transformEnumerators[i].Current.IsNull())
+                    var helixsolidSteps = new List<GeometryModel3D>();
+                    for (int j = 0; j < subGroupSteps.Count; j++)
                     {
-                        if (solidTransformEnumerators[i].Current.IsNull())
-                            vm.SolidTransforms[i].Add(null);
-                        else
-                        {
-                            vm.SolidTransforms[i].Add(ConvertToWindowsTransform3D(solidTransformEnumerators[i].Current));
-                            newStepFound = true;
-                        }
+                        if (i < subGroupSteps[j].Length)
+                            helixsolidSteps.Add(subGroupSteps[j][i]);
+                        else helixsolidSteps.Add(null);
                     }
+                    //numSolidTimeSteps = Math.Max(numSolidTimeSteps, helixsolidSteps.Count);
+                    while (helixsolidSteps.Count > 1 && helixsolidSteps[^1] == null)
+                        helixsolidSteps.RemoveAt(helixsolidSteps.Count - 1);
+                    vm.SolidGroups.Add(helixsolidSteps);
+                    //if (innerTransformSteps.Length == helixsolidSteps.Count)
+                    vm.SolidTransforms.Add(innerTransformSteps);
+                    //else
+                    //    vm.SolidTransforms.Add(innerTransformSteps.Take(helixsolidSteps.Count).ToArray());
                 }
-                timeStep++;
-            } while (newStepFound);
+            }
             var window = new Window3DSteppedPlot(vm);
             window.ShowDialog();
         }
@@ -312,7 +336,7 @@ namespace WindowsDesktopPresenter
                 var color = colorEnumerator.Current;
 
                 if (path != null && path.Any() && !path.Any(p => p.IsNull()))
-                    yield return GetVertexPath(path, lineThick, color, isClosed);
+                    yield return ConvertPathToLineModel(path, lineThick, color, isClosed);
             }
         }
 
@@ -343,23 +367,17 @@ namespace WindowsDesktopPresenter
 
                 if (path == null || !path.Any()) continue;
                 foreach (var p in path)
-                    lineVisuals.Add(GetVertexPath(p, lineThick, color, isClosed));
+                    lineVisuals.Add(ConvertPathToLineModel(p, lineThick, color, isClosed));
             }
 
             return lineVisuals;
         }
 
-        private static LineGeometryModel3D GetVertexPath(IEnumerable<Vector3> path, double thickness, Color color, bool closePath)
+        private static LineGeometryModel3D ConvertPathToLineModel(IEnumerable<Vector3> path, double thickness, Color color, bool closePath)
         {
             var contour = path.Select(point => new SharpDX.Vector3((float)point[0], (float)point[1], (float)point[2]));
-
-            MediaColor mediaColor = new MediaColor { R = color.R, G = color.G, B = color.B, A = color.A };
-            if (color == null)
-            {
-                color = Color.GetRandomColors().First();
-                mediaColor = new MediaColor { R = color.R, G = color.G, B = color.B, A = color.A };
-            }
-            else mediaColor = new MediaColor { R = color.R, G = color.G, B = color.B, A = color.A };
+            if (color == null) color = new Color();
+            var mediaColor = new MediaColor { R = color.R, G = color.G, B = color.B, A = color.A };
             var positions = new Vector3Collection(contour);
             var lineIndices = new IntCollection();
             for (var i = 1; i < positions.Count; i++)
@@ -412,7 +430,7 @@ namespace WindowsDesktopPresenter
                     yield return m3d;
             foreach (var css in solids.Where(cs => cs is CrossSectionSolid))
                 foreach (var layer in ((CrossSectionSolid)css).GetCrossSectionsAs3DLoops().SelectMany(v => v))
-                    yield return GetVertexPath(layer, 1, null, true);
+                    yield return ConvertPathToLineModel(layer, 1, null, true);
         }
 
         private static IEnumerable<GeometryModel3D> ConvertTessellatedSolidToMGM3D(TessellatedSolid ts)
@@ -543,8 +561,8 @@ namespace WindowsDesktopPresenter
                 if (timetoShow > 0)
                     vm.UpdateInterval = timetoShow;
                 if (holdType == HoldType.Immediate)
-                    vm.AddNewSeries(ConvertSolidsToModel3D(solids).Concat(ConvertPathsToLineModels(paths, closePaths, lineThicknesses, colors,true)));
-                else vm.EnqueueNewSeries(ConvertSolidsToModel3D(solids).Concat(ConvertPathsToLineModels(paths, closePaths, lineThicknesses, colors,true)));
+                    vm.AddNewSeries(ConvertSolidsToModel3D(solids).Concat(ConvertPathsToLineModels(paths, closePaths, lineThicknesses, colors, true)));
+                else vm.EnqueueNewSeries(ConvertSolidsToModel3D(solids).Concat(ConvertPathsToLineModels(paths, closePaths, lineThicknesses, colors, true)));
                 if (!window.IsVisible && !vm.HasClosed)
                     window.Show();
             });
