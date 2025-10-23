@@ -56,11 +56,13 @@ namespace TVGL
            IEnumerable<double> lineThicknesses = null, IEnumerable<Color> colors = null, string title = "",
            HoldType holdType = HoldType.Immediate, int timetoShow = -1, int id = -1, params Solid[] solids);
 
-        public void ShowStepsAndHang(IEnumerable<IEnumerable<Vector3>> paths,
-    IList<IEnumerable<Matrix4x4>> pathTransforms, IList<Solid> solids,
-    IList<IEnumerable<Matrix4x4>> solidTransforms, IEnumerable<bool> closePaths = null,
-    IEnumerable<double> lineThicknesses = null, IEnumerable<Color> colors = null);
+        void ShowStepsAndHang(IEnumerable<IEnumerable<IEnumerable<Vector3>>> paths, IEnumerable<IEnumerable<Matrix4x4>> pathTransforms,
+            IEnumerable<IEnumerable<Solid>> solids, IEnumerable<IEnumerable<Matrix4x4>> solidTransforms, IEnumerable<bool> closePaths = null,
+            IEnumerable<double> lineThicknesses = null, IEnumerable<Color> colors = null);
 
+        void ShowStepsAndHang(IEnumerable<IEnumerable<IEnumerable<Vector3>>> paths, IEnumerable<IEnumerable<Matrix4x4>> pathTransforms,
+            IEnumerable<IEnumerable<IEnumerable<TriangleFace>>> faceGroups, IEnumerable<IEnumerable<Matrix4x4>> fGTransforms, IEnumerable<bool> closePaths = null,
+            IEnumerable<double> lineThicknesses = null, IEnumerable<Color> pathColors = null);
         #endregion
     }
 }

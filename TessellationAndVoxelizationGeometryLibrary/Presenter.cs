@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace TVGL
 {
@@ -73,12 +74,16 @@ namespace TVGL
         => Global.Presenter3D.ShowPointsAndHang(points, radius, color);
         public static void ShowPointsAndHang(IEnumerable<IEnumerable<Vector3>> pointSets, double radius = 0, IEnumerable<Color> colors = null)
         => Global.Presenter3D.ShowPointsAndHang(pointSets, radius, colors);
-        public static void ShowStepsAndHang(IEnumerable<IEnumerable<Vector3>> paths,
-    IList<IEnumerable<Matrix4x4>> pathTransforms, IList<Solid> solids,
-    IList<IEnumerable<Matrix4x4>> solidTransforms, IEnumerable<bool> closePaths = null,
-    IEnumerable<double> lineThicknesses = null, IEnumerable<Color> colors = null)
-   => Global.Presenter3D.ShowStepsAndHang(paths, pathTransforms, solids, solidTransforms, closePaths,
-       lineThicknesses, colors);
+        public static void ShowStepsAndHang(IList<IEnumerable<IEnumerable<Vector3>>> paths, IEnumerable<IEnumerable<Matrix4x4>> pathTransforms,
+            IList<IEnumerable<Solid>> solids, IEnumerable<IEnumerable<Matrix4x4>> solidTransforms, IEnumerable<bool> closePaths = null,
+            IEnumerable<double> lineThicknesses = null, IEnumerable<Color> colors = null)
+            => Global.Presenter3D.ShowStepsAndHang(paths, pathTransforms, solids, solidTransforms, closePaths,
+                lineThicknesses, colors);
+        public static void ShowStepsAndHang(IList<IEnumerable<IEnumerable<Vector3>>> paths, IEnumerable<IEnumerable<Matrix4x4>> pathTransforms,
+       IList<IEnumerable<IEnumerable<TriangleFace>>> faceGroups, IEnumerable<IEnumerable<Matrix4x4>> fGTransforms, IEnumerable<bool> closePaths = null,
+       IEnumerable<double> lineThicknesses = null, IEnumerable<Color> pathColors = null)
+                => Global.Presenter3D.ShowStepsAndHang(paths, pathTransforms, faceGroups, fGTransforms, closePaths,
+                    lineThicknesses, pathColors);
     }
 
 
@@ -137,7 +142,7 @@ namespace TVGL
 
         public void ShowAndHang(IEnumerable<IEnumerable<Vector3>> paths, IEnumerable<bool> closePaths = null, IEnumerable<double> lineThicknesses = null, IEnumerable<Color> colors = null, bool otherwiseRandomPathColors = false, params Solid[] solids)
         {
-            throw new NotImplementedException();
+            // do nothing
         }
 
         public void ShowAndHangTransparentsAndSolids(IEnumerable<TessellatedSolid> transparentSolids, IEnumerable<TessellatedSolid> solids)
@@ -160,12 +165,17 @@ namespace TVGL
             // do nothing
         }
 
-        public void ShowStepsAndHang(IEnumerable<IEnumerable<Vector3>> paths, IList<IEnumerable<Matrix4x4>> pathTransforms, IList<Solid> solids,
-            IList<IEnumerable<Matrix4x4>> solidTransforms, IEnumerable<bool> closePaths = null, IEnumerable<double> lineThicknesses = null, IEnumerable<Color> colors = null)
+        public void ShowStepsAndHang(IEnumerable<IEnumerable<IEnumerable<Vector3>>> paths, IEnumerable<IEnumerable<Matrix4x4>> pathTransforms, IEnumerable<IEnumerable<Solid>> solids, IEnumerable<IEnumerable<Matrix4x4>> solidTransforms, IEnumerable<bool> closePaths = null, IEnumerable<double> lineThicknesses = null, IEnumerable<Color> colors = null)
+        {
+            // do nothing
+        }
+
+        public void ShowStepsAndHang(IEnumerable<IEnumerable<IEnumerable<Vector3>>> paths, IEnumerable<IEnumerable<Matrix4x4>> pathTransforms, IEnumerable<IEnumerable<IEnumerable<TriangleFace>>> faceGroups, IEnumerable<IEnumerable<Matrix4x4>> fGTransforms, IEnumerable<bool> closePaths = null, IEnumerable<double> lineThicknesses = null, IEnumerable<Color> pathColors = null)
         {
             // do nothing
         }
     }
+
 
     internal class EmptyPresenter2D : IPresenter2D
     {
@@ -264,5 +274,4 @@ namespace TVGL
             throw new NotImplementedException();
         }
     }
-
 }

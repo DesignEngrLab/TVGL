@@ -46,7 +46,7 @@
             <hx:DirectionalLight3D Direction="{Binding DirectionalLightDirection4}" Color="{Binding DirectionalLightColor}" />
             <hx:DirectionalLight3D Direction="{Binding DirectionalLightDirection5}" Color="{Binding DirectionalLightColor}" />
             <hx:DirectionalLight3D Direction="{Binding DirectionalLightDirection6}" Color="{Binding DirectionalLightColor}" />
-            <hx:GroupModel3D x:Name="group1" ItemsSource="{Binding Solids}" />
+            <hx:GroupModel3D x:Name="group1" ItemsSource="{Binding Elements}" />
             <hx:AxisPlaneGridModel3D x:Name="CheckerFloor" GridColor="AliceBlue" PlaneColor="#66aacaff" UpAxis="Z"
                                      Visibility="{Binding GroundPlaneVisible,Converter={StaticResource BooleanToVisibilityConverter}}" />
         </hx:Viewport3DX>
