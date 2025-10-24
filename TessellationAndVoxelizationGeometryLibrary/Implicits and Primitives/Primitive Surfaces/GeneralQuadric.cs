@@ -169,7 +169,7 @@ namespace TVGL
                 { 0.5 * XZCoeff, 0.5 * YZCoeff, ZSqdCoeff, 0.5 * ZCoeff },
                 { 0.5 * XCoeff, 0.5 * YCoeff, 0.5 * ZCoeff, W }
             });
-            Matrix4x4 newQuadricMatrix = transformMatrix.Transpose() * quadricMatrix * transformMatrix;
+            Matrix4x4 newQuadricMatrix = transformMatrix * quadricMatrix * transformMatrix.Transpose();
             XSqdCoeff = newQuadricMatrix[0, 0];
             YSqdCoeff = newQuadricMatrix[1, 1];
             ZSqdCoeff = newQuadricMatrix[2, 2];
