@@ -242,24 +242,24 @@ namespace TVGL
         public static DirectoryInfo BackoutToFolder(string folderName)
         {
             var dir = new DirectoryInfo(".");
-            while (!Directory.Exists(Path.Combine(dir.FullName, folderName)))
+            while (!Directory.Exists(Path.Join(dir.FullName, folderName)))
             {
                 if (dir == null) throw new FileNotFoundException("Folder not found", folderName);
                 dir = dir.Parent;
             }
-            return new DirectoryInfo(Path.Combine(dir.FullName, folderName));
+            return new DirectoryInfo(Path.Join(dir.FullName, folderName));
         }
 
 
         public static FileInfo BackoutToFile(string fileName)
         {
             var dir = new DirectoryInfo(".");
-            while (!File.Exists(Path.Combine(dir.FullName, fileName)))
+            while (!File.Exists(Path.Join(dir.FullName, fileName)))
             {
                 if (dir == null) throw new FileNotFoundException("File not found", fileName);
                 dir = dir.Parent;
             }
-            return new FileInfo(Path.Combine(dir.FullName, fileName));
+            return new FileInfo(Path.Join(dir.FullName, fileName));
         }
 
         #endregion
@@ -1265,7 +1265,7 @@ namespace TVGL
                 fileType = GetFileTypeFromExtension(Path.GetExtension(filename));
             var dir = Path.GetDirectoryName(filename);
             filename = Path.GetFileName(Path.ChangeExtension(filename, GetExtensionFromFileType(fileType)));
-            if (!string.IsNullOrWhiteSpace(dir)) filename = Path.Combine(dir, filename);
+            if (!string.IsNullOrWhiteSpace(dir)) filename = Path.Join(dir, filename);
             using var fileStream = File.OpenWrite(filename);
             return Save(fileStream, solid, fileType);
         }
