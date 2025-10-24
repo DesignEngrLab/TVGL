@@ -162,8 +162,25 @@ namespace TVGL
         /// <param name="transformMatrix">The transform matrix.</param>
         public override void Transform(Matrix4x4 transformMatrix, bool transformFacesAndVertices)
         {
-            base.Transform(transformMatrix, transformFacesAndVertices);
-            //throw new NotImplementedException();
+            //base.Transform(transformMatrix, transformFacesAndVertices);
+            Matrix4x4 quadricMatrix = new Matrix4x4({
+                { XSqdCoeff, 0.5 * XYCoeff, 0.5 * XZCoeff, 0.5 * XCoeff },
+                { 0.5 * XYCoeff, YSqdCoeff, 0.5 * YZCoeff, 0.5 * YCoeff },
+                { 0.5 * XZCoeff, 0.5 * YZCoeff, ZSqdCoeff, 0.5 * ZCoeff },
+                { 0.5 * XCoeff, 0.5 * YCoeff, 0.5 * ZCoeff, W }
+            });
+            Matrix4x4 newQuadricMatrix = transformMatrix.Transpose() * quadricMatrix * transformMatrix;
+            XSqdCoeff = newQuadricMatrix[0, 0];
+            YSqdCoeff = newQuadricMatrix[1, 1];
+            ZSqdCoeff = newQuadricMatrix[2, 2];
+            XYCoeff = 2 * newQuadricMatrix[0, 1];
+            XZCoeff = 2 * newQuadricMatrix[0, 2];
+            YZCoeff = 2 * newQuadricMatrix[1, 2];
+            XCoeff = 2 * newQuadricMatrix[0, 3];
+            YCoeff = 2 * newQuadricMatrix[1, 3];
+            ZCoeff = 2 * newQuadricMatrix[2, 3];
+            W = newQuadricMatrix[3, 3];
+
         }
 
         /// <summary>
