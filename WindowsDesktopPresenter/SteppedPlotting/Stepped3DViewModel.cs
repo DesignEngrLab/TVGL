@@ -6,7 +6,6 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using System.Runtime.CompilerServices;
-using System.Windows;
 using Media3D = System.Windows.Media.Media3D;
 using Point3D = System.Windows.Media.Media3D.Point3D;
 using Vector3D = System.Windows.Media.Media3D.Vector3D;
@@ -16,26 +15,18 @@ namespace WindowsDesktopPresenter
 {
     internal class Stepped3DViewModel : INotifyPropertyChanged
     {
-        private List<List<GeometryModel3D>> ModelSeries;
-
-        public void AddRange(int index, IEnumerable<GeometryModel3D> models)
-        {
-            foreach (var model in models)
-                Add(index, model);
-        }
-        public void Add(int index, GeometryModel3D model)
-        {
-            while (ModelSeries.Count <= index)
-                ModelSeries.Add(new List<GeometryModel3D>());
-            ModelSeries[index].Add(model);
-        }
-
         /// <summary>
         /// Gets the maximum step index for the scroll bar (ModelSeries count - 1)
         /// </summary>
         public int MaxStepIndex
         {
-            get { return Math.Max(0, ModelSeries.Count - 1); }
+            get
+            {
+                return Math.Max(SolidGroups.Max(g => g?.Count ?? 0),
+                Math.Max(SolidTransforms.Max(t => t?.Count ?? 0),
+                Math.Max(PathGroups.Max(g => g?.Count ?? 0),
+                         PathTransforms.Max(t => t?.Count ?? 0))));
+            }
         }
 
         public event PropertyChangedEventHandler PropertyChanged;
@@ -51,8 +42,6 @@ namespace WindowsDesktopPresenter
 
         public Stepped3DViewModel()
         {
-            ModelSeries = new List<List<GeometryModel3D>>();
-
             EffectsManager = new DefaultEffectsManager();
 
             // setup lighting            
@@ -65,31 +54,41 @@ namespace WindowsDesktopPresenter
             this.DirectionalLightDirection5 = new Vector3D(-10, 10, 20);
             this.DirectionalLightDirection6 = new Vector3D(10, -10, -20);
         }
-
         internal bool Update(int stepIndex)
         {
-            if (ModelSeries.Count == 0) return false;
-            var series = ModelSeries[stepIndex];
-            var newNumberItems = series.Count;
-            for (int i = 0; i < newNumberItems; i++)
+            // Create a new collection with updated transforms
+            var newSolids = new ObservableElement3DCollection();
+            var allTransforms = new[] { PathTransforms, SolidTransforms };
+            var k = 0;
+            foreach (var groups in new List<IList<GeometryModel3D>>[] { PathGroups, SolidGroups })
             {
-                if (lastNumberItems > i)
-                    Solids[i] = series[i];
-                else Solids.Add(series[i]);
+                var transforms = allTransforms[k++];
+                for (int i = 0; i < transforms.Count; i++)
+                {
+                    var elements = groups[i];
+                    var transformForGroupI = transforms[i];
+                    if (transformForGroupI == null)
+                    { // only show the group's solids at this current timestep
+                        if (stepIndex < elements.Count && elements[stepIndex] != null)
+                            newSolids.Add(elements[stepIndex]);
+                    }
+                    else if (stepIndex < transformForGroupI.Count && transformForGroupI[stepIndex] != null)
+                    {
+                        var lastIndex = Math.Min(elements.Count, stepIndex) - 1;
+                        var start = Math.Max(0, lastIndex - 2000);
+                        for (int j = start; j <= lastIndex; j++)
+                        {
+                            if (elements[j] == null) continue;
+                            elements[j].Transform = transformForGroupI[stepIndex];
+                            newSolids.Add(elements[j]);
+                        }
+                    }
+                }
             }
-            ;
-            for (int i = lastNumberItems - 1; i >= newNumberItems; i--)
-                Solids.RemoveAt(i);
-            if (lastNumberItems == 0)
-                ResetCameraCommand();
-            lastNumberItems = newNumberItems;
-            RaisePropertyChanged("Solids");
+            Elements = newSolids;
+            RaisePropertyChanged("Elements");
             return true;
         }
-        int lastNumberItems = 0;
-
-
-
 
         protected bool SetValue<T>(ref T backingField, T value, [CallerMemberName] string propertyName = "")
         {
@@ -203,8 +202,14 @@ namespace WindowsDesktopPresenter
 
 
 
+        public ObservableElement3DCollection Elements { private set; get; } = [];
         public Material SelectedMaterial { get; } = new PhongMaterial() { EmissiveColor = SharpDX.Color.LightYellow };
-        public ObservableElement3DCollection Solids { private set; get; } = new ObservableElement3DCollection();
+        public List<IList<System.Windows.Media.Media3D.Transform3D>> SolidTransforms { get; private set; } = [];
+
+        public List<IList<GeometryModel3D>> SolidGroups { get; private set; } = [];
+        public List<IList<System.Windows.Media.Media3D.Transform3D>> PathTransforms { get; internal set; } = [];
+
+        public List<IList<GeometryModel3D>> PathGroups { get; private set; } = [];
         public Vector3D DirectionalLightDirection1 { get; private set; }
         public Vector3D DirectionalLightDirection2 { get; private set; }
         public Vector3D DirectionalLightDirection3 { get; private set; }
@@ -253,7 +258,7 @@ namespace WindowsDesktopPresenter
 
         private void UpdateSolidsWithFill()
         {
-            foreach (var solid in Solids)
+            foreach (var solid in Elements)
                 ((GeometryModel3D)solid).FillMode = FillMode;
         }
 
@@ -264,7 +269,7 @@ namespace WindowsDesktopPresenter
             {
                 if (SetValue(ref selectedGeometry, value))
                 {
-                    SelectedTransform = Solids.Where(x => ((GeometryModel3D)x).Geometry == value)
+                    SelectedTransform = Elements.Where(x => ((GeometryModel3D)x).Geometry == value)
                         .Select(x => x.Transform).First();
                 }
             }

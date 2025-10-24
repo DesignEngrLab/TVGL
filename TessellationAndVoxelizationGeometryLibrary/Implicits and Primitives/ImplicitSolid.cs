@@ -173,7 +173,7 @@ namespace TVGL
         /// <param name="y">The y.</param>
         /// <param name="z">The z.</param>
         /// <returns>System.Double.</returns>
-        public double this[double x, double y, double z] => operationTree.Run(new Vector3(x, y, z));
+        public double this[double x, double y, double z] => operationTree.ValueAtPoint(new Vector3(x, y, z));
 
 
         /// <summary>
@@ -233,8 +233,26 @@ namespace TVGL
             /// </summary>
             /// <param name="point">The point.</param>
             /// <returns>System.Double.</returns>
-            internal abstract double Run(Vector3 point);
+            internal abstract double ValueAtPoint(Vector3 point);
 
+            /// <summary>
+            /// Returns whether the given point is inside the primitive.
+            /// </summary>
+            /// <param name="x">The x.</param>
+            /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
+            public virtual bool PointIsInside(Vector3 x)
+            {
+                return ValueAtPoint(x) < 0;
+            }
+
+
+            /// <summary>
+            /// Returns all intersection of the given line with the primitive surface (which could be zero to four points).
+            /// </summary>
+            /// <param name="anchor"></param>
+            /// <param name="direction"></param>
+            /// <returns></returns>
+            public abstract IEnumerable<(Vector3 intersection, double lineT)> LineIntersection(Vector3 anchor, Vector3 direction);
         }
         /// <summary>
         /// Class LeafSurface.
@@ -255,12 +273,16 @@ namespace TVGL
             {
                 this.surface = surface;
             }
+
+            public override IEnumerable<(Vector3 intersection, double lineT)> LineIntersection(Vector3 anchor, Vector3 direction)
+            =>surface.LineIntersection(anchor, direction);
+
             /// <summary>
             /// Runs the specified point.
             /// </summary>
             /// <param name="point">The point.</param>
             /// <returns>System.Double.</returns>
-            internal override double Run(Vector3 point)
+            internal override double ValueAtPoint(Vector3 point)
             {
                 if (surface is GeneralQuadric generalQuadric)
                 {
@@ -295,14 +317,20 @@ namespace TVGL
                 this.surface1 = surface1;
                 this.surface2 = surface2;
             }
+
+            public override IEnumerable<(Vector3 intersection, double lineT)> LineIntersection(Vector3 anchor, Vector3 direction)
+            {
+                throw new NotImplementedException();
+            }
+
             /// <summary>
             /// Runs the specified point.
             /// </summary>
             /// <param name="point">The point.</param>
             /// <returns>System.Double.</returns>
-            internal override double Run(Vector3 point)
+            internal override double ValueAtPoint(Vector3 point)
             {
-                return Math.Min(surface1.Run(point), surface2.Run(point));
+                return Math.Min(surface1.ValueAtPoint(point), surface2.ValueAtPoint(point));
             }
         }
         /// <summary>
@@ -331,14 +359,20 @@ namespace TVGL
                 this.surface1 = surface1;
                 this.surface2 = surface2;
             }
+
+            public override IEnumerable<(Vector3 intersection, double lineT)> LineIntersection(Vector3 anchor, Vector3 direction)
+            {
+                throw new NotImplementedException();
+            }
+
             /// <summary>
             /// Runs the specified point.
             /// </summary>
             /// <param name="point">The point.</param>
             /// <returns>System.Double.</returns>
-            internal override double Run(Vector3 point)
+            internal override double ValueAtPoint(Vector3 point)
             {
-                return Math.Max(surface1.Run(point), surface2.Run(point));
+                return Math.Max(surface1.ValueAtPoint(point), surface2.ValueAtPoint(point));
             }
         }
         /// <summary>
@@ -367,14 +401,20 @@ namespace TVGL
                 this.surfaceA = surfaceA;
                 this.surfaceB = surfaceB;
             }
+
+            public override IEnumerable<(Vector3 intersection, double lineT)> LineIntersection(Vector3 anchor, Vector3 direction)
+            {
+                throw new NotImplementedException();
+            }
+
             /// <summary>
             /// Runs the specified point.
             /// </summary>
             /// <param name="point">The point.</param>
             /// <returns>System.Double.</returns>
-            internal override double Run(Vector3 point)
+            internal override double ValueAtPoint(Vector3 point)
             {
-                return Math.Max(surfaceA.Run(point), -surfaceB.Run(point));
+                return Math.Max(surfaceA.ValueAtPoint(point), -surfaceB.ValueAtPoint(point));
             }
         }
         /// <summary>
@@ -403,15 +443,21 @@ namespace TVGL
                 this.surfaceA = surfaceA;
                 this.surfaceB = surfaceB;
             }
+
+            public override IEnumerable<(Vector3 intersection, double lineT)> LineIntersection(Vector3 anchor, Vector3 direction)
+            {
+                throw new NotImplementedException();
+            }
+
             /// <summary>
             /// Runs the specified point.
             /// </summary>
             /// <param name="point">The point.</param>
             /// <returns>System.Double.</returns>
-            internal override double Run(Vector3 point)
+            internal override double ValueAtPoint(Vector3 point)
             {
-                var pmcA = surfaceA.Run(point);
-                var pmcB = surfaceB.Run(point);
+                var pmcA = surfaceA.ValueAtPoint(point);
+                var pmcB = surfaceB.ValueAtPoint(point);
                 if (pmcA < 0 && pmcB < 0)
                     return -Math.Min(pmcA, pmcB);
                 if (pmcA > 0 && pmcB > 0)
