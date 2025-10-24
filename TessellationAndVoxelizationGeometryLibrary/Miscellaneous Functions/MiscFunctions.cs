@@ -1655,11 +1655,7 @@ namespace TVGL
             /* to find the point on the line...well a point on the line, it turns out that one has three unknowns (px, py, pz)
              * and only two equations. Let's put the point on the plane going through the origin. So this plane would have a normal
              * of v (or DirectionOfLine). */
-            var a = new[,] { { n1.X, n1.Y, n1.Z }, { n2.X, n2.Y, n2.Z }, { directionOfLine.X, directionOfLine.Y, directionOfLine.Z } };
-            var b = new[] { d1, d2, 0 };
-            if (!a.solve(b, out var aInv))
-                pointOnLine = Vector3.Null;
-            else pointOnLine = new Vector3(aInv);
+            pointOnLine = PointCommonToThreePlanes(n1,d1,n2,d2,directionOfLine, 0);
         }
 
         /// <summary>

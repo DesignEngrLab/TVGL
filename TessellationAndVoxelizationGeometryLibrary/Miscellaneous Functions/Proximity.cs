@@ -809,7 +809,6 @@ namespace TVGL
             }
         }
 
-
         /// <summary>
         /// Returns lines (an anchor and a direction) that are the best guesses for the axes of rotation for the part.
         /// It is possible that it will return as many lines as primitives, so it is up to the calling to decide how
