@@ -1508,6 +1508,7 @@ namespace TVGL
             {
                 try
                 {
+                    File.Delete(filename);//Delete before writing, so that we don't have a malformed JSON.
                     using var fileStream = File.OpenWrite(filename);
                     using var sw = new StreamWriter(fileStream);
                     using var writer = new JsonTextWriter(sw);
