@@ -123,11 +123,11 @@ namespace TVGL
                 var connectedEdges = new Queue<PolygonEdge>(currentNode.StartingEdges.Concat(currentNode.EndingEdges));
                 while (connectedEdges.TryDequeue(out var edge))
                 {
-                    //if (currentNode.X > edge.XMin) continue;
+                    var adjacentNode = edge.FromPoint == currentNode ? edge.ToPoint : edge.FromPoint;
                     for (int j = i + 1; j < nodes.Count; j++)
                     {
                         var otherNode = nodes[j];
-                        if (edge.FromPoint == otherNode || edge.ToPoint == otherNode)
+                        if (adjacentNode == otherNode )
                             continue;
                         if (otherNode.X.IsGreaterThanNonNegligible(edge.XMax)) break;
                         if (NodeIsOnEdge(otherNode, edge))
@@ -152,7 +152,7 @@ namespace TVGL
             var edgeNormal = new Vector2(-edge.Vector.Y, edge.Vector.X);
             var edgeOffset = edgeNormal.Dot(edge.FromPoint.Coordinates);
             var testOffset = edgeNormal.Dot(otherNode.Coordinates);
-            return edgeOffset.IsPracticallySame(testOffset);
+            return edgeOffset.IsPracticallySame(testOffset,Constants.BaseTolerance);
         }
 
         private static IEnumerable<PolygonEdge> SplitReplaceOldEdge(PolygonEdge oldEdge, ArrangementNode intersectNode)

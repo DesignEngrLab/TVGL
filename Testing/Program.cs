@@ -11,7 +11,7 @@ namespace TVGLUnitTestsAndBenchmarking
 {
     internal class Program
     {
-        public static string inputFolder = "Input\\Drawings";
+        public static string inputFolder = "TVGL";
 
         static Random r = new Random();
         static double r1 => 2.0 * r.NextDouble() - 1.0;
@@ -27,17 +27,8 @@ namespace TVGLUnitTestsAndBenchmarking
 
 
 
-            IO.Open(Path.Combine(dirInfo.FullName, "M.json"), out Polygon A);
-            IO.Open(Path.Combine(dirInfo.FullName, "I.json"), out Polygon B);
-            B.Transform(new Matrix3x3(1, .2, .2, 1, 0, 0)); // rotate 90 degrees
-            IO.Open(Path.Combine(dirInfo.FullName, "C.json"), out Polygon C);
-            Console.WriteLine("poly1 = [");
-            consolePrint(A);
-            Console.WriteLine("]\npoly2 = [");
-            consolePrint(B);
-            Console.WriteLine("]\npoly3 = [");
-            consolePrint(C);
-            Presenter.ShowAndHang(new[] { A, B,C});
+            IO.Open(Path.Combine(dirInfo.FullName, "a.json"), out Polygon A);
+            IO.Open(Path.Combine(dirInfo.FullName, "b.json"), out Polygon B);
             var union = A.MinkowskiSum(B);
             foreach (var fileName in dirInfo.GetFiles("*"))
             {
