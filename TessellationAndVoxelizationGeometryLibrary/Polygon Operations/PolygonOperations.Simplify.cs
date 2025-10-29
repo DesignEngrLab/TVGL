@@ -1079,6 +1079,7 @@ namespace TVGL
                     }
                 }
             }
+            polygon.ReIndexPolygon();
             polygon.Reset();
             foreach (var polygonHole in polygon.InnerPolygons)
                 polygonHole.Complexify(maxAllowableLength);
