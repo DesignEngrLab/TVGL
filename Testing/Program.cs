@@ -25,7 +25,8 @@ namespace TVGLUnitTestsAndBenchmarking
             Global.Presenter3D = new Presenter3D();
             var dirInfo = IO.BackoutToFolder(inputFolder);
 
-
+            var paraboloid = new GeneralQuadric(.1,1,0,0,0,0,0,0,1,-10);
+            Presenter.ShowAndHang(paraboloid.Tessellate(-10,10, -10, 10, -10, 10, 2.5));
 
             IO.Open(Path.Combine(dirInfo.FullName, "a.json"), out Polygon A);
             IO.Open(Path.Combine(dirInfo.FullName, "b.json"), out Polygon B);

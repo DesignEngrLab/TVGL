@@ -31,6 +31,7 @@ namespace TVGL
         /// </summary>
         private readonly double surfaceLevel;
 
+        private readonly HashSet<long> cellIDsToCheck = new HashSet<long>();
         /// <summary>
         /// Initializes a new instance of the <see cref="MarchingCubesImplicit"/> class.
         /// </summary>
@@ -96,8 +97,7 @@ namespace TVGL
             FindZPointFromXandY();
             FindXPointFromYandZ();
             FindYPointFromXandZ();
-            var ids = new HashSet<long>(vertexDictionaries.SelectMany(vertexDictionary => vertexDictionary.Keys));
-            foreach (var id in ids)
+            foreach (var id in cellIDsToCheck)
             {
                 var (xIndex, yIndex, zIndex) = getIndicesFromIdentifier(id);
                 if (xIndex + 1 != numGridX && yIndex + 1 != numGridY && zIndex + 1 != numGridZ)
@@ -109,7 +109,7 @@ namespace TVGL
                 faces[i].IndexInList = i;
             if (faces.Count == 0)
                 return new TessellatedSolid();
-            return new TessellatedSolid(faces, buildOptions:TessellatedSolidBuildOptions.Minimal);
+            return new TessellatedSolid(faces, buildOptions: TessellatedSolidBuildOptions.Minimal);
         }
 
 
@@ -231,6 +231,10 @@ namespace TVGL
                             NumTimesCalled = 0,
                             ID = hashID
                         });
+                        cellIDsToCheck.Add(hashID);
+                        if (i > 0) cellIDsToCheck.Add(hashID - 1);
+                        if (j > 0) cellIDsToCheck.Add(hashID - yMultiplier);
+                        if (i > 0 && j > 0) cellIDsToCheck.Add(hashID - yMultiplier - 1);
                         if (zLowIndex1 != numGridZ - 1)
                         {
                             hashID += zMultiplier;
@@ -263,6 +267,10 @@ namespace TVGL
                             NumTimesCalled = 0,
                             ID = hashID
                         });
+                        cellIDsToCheck.Add(hashID);
+                        if (i > 0) cellIDsToCheck.Add(hashID - 1);
+                        if (j > 0) cellIDsToCheck.Add(hashID - yMultiplier);
+                        if (i > 0 && j > 0) cellIDsToCheck.Add(hashID - yMultiplier - 1);
                         if (zLowIndex1 != numGridZ - 1)
                         {
                             hashID += zMultiplier;
@@ -287,6 +295,10 @@ namespace TVGL
                             NumTimesCalled = 0,
                             ID = hashID
                         });
+                        cellIDsToCheck.Add(hashID);
+                        if (i > 0) cellIDsToCheck.Add(hashID - 1);
+                        if (j > 0) cellIDsToCheck.Add(hashID - yMultiplier);
+                        if (i > 0 && j > 0) cellIDsToCheck.Add(hashID - yMultiplier - 1);
                         if (zLowIndex2 != numGridZ - 1)
                         {
                             hashID += zMultiplier;
@@ -344,6 +356,10 @@ namespace TVGL
                             NumTimesCalled = 0,
                             ID = hashID
                         });
+                        cellIDsToCheck.Add(hashID);
+                        if (i > 0) cellIDsToCheck.Add(hashID - 1);
+                        if (k > 0) cellIDsToCheck.Add(hashID - zMultiplier);
+                        if (i > 0 && k > 0) cellIDsToCheck.Add(hashID - zMultiplier - 1);
                         if (yLowIndex1 != numGridY - 1)
                         {
                             hashID += yMultiplier;
@@ -376,6 +392,9 @@ namespace TVGL
                             NumTimesCalled = 0,
                             ID = hashID
                         });
+                        if (i > 0) cellIDsToCheck.Add(hashID - 1);
+                        if (k > 0) cellIDsToCheck.Add(hashID - zMultiplier);
+                        if (i > 0 && k > 0) cellIDsToCheck.Add(hashID - zMultiplier - 1);
                         if (yLowIndex1 != numGridY - 1)
                         {
                             hashID += yMultiplier;
@@ -400,6 +419,9 @@ namespace TVGL
                             NumTimesCalled = 0,
                             ID = hashID
                         });
+                        if (i > 0) cellIDsToCheck.Add(hashID - 1);
+                        if (k > 0) cellIDsToCheck.Add(hashID - zMultiplier);
+                        if (i > 0 && k > 0) cellIDsToCheck.Add(hashID - zMultiplier - 1);
                         if (yLowIndex2 != numGridY - 1)
                         {
                             hashID += yMultiplier;
@@ -457,6 +479,9 @@ namespace TVGL
                             NumTimesCalled = 0,
                             ID = hashID
                         });
+                        if (j > 0) cellIDsToCheck.Add(hashID - yMultiplier);
+                        if (k > 0) cellIDsToCheck.Add(hashID - zMultiplier);
+                        if (j > 0 && k > 0) cellIDsToCheck.Add(hashID - zMultiplier - yMultiplier);
                         if (xLowIndex1 != numGridX - 1)
                         {
                             hashID += 1; // x multiplier is 1
@@ -489,6 +514,9 @@ namespace TVGL
                             NumTimesCalled = 0,
                             ID = hashID
                         });
+                        if (j > 0) cellIDsToCheck.Add(hashID - yMultiplier);
+                        if (k > 0) cellIDsToCheck.Add(hashID - zMultiplier);
+                        if (j > 0 && k > 0) cellIDsToCheck.Add(hashID - zMultiplier - yMultiplier);
                         if (xLowIndex1 != numGridX - 1)
                         {
                             hashID += 1; // x multiplier is 1
@@ -513,6 +541,9 @@ namespace TVGL
                             NumTimesCalled = 0,
                             ID = hashID
                         });
+                        if (j > 0) cellIDsToCheck.Add(hashID - yMultiplier);
+                        if (k > 0) cellIDsToCheck.Add(hashID - zMultiplier);
+                        if (j > 0 && k > 0) cellIDsToCheck.Add(hashID - zMultiplier - yMultiplier);
                         if (xLowIndex2 != numGridX - 1)
                         {
                             hashID += 1; // x multiplier is 1
