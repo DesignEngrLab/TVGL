@@ -354,11 +354,11 @@ namespace TVGL
         //Largest face can be used in cases where you need one face to represent the primitive
         //Or to check the normal alignment. Also, if this face area is negligible, the primitive area will be negligible.
         [JsonIgnore]
-        public TriangleFace LargestFace 
+        public TriangleFace LargestFace
         {
-            get 
+            get
             {
-                _largestFace ??= Faces.MaxBy(f => f.Area);       
+                _largestFace ??= Faces.MaxBy(f => f.Area);
                 return _largestFace;
             }
             //Set can be useful if we need the largest face before creating the primitive, but so that we 
@@ -458,7 +458,7 @@ namespace TVGL
                 OuterEdges.Remove(edge);
             }
             foreach (var vertex in vertices)
-                Vertices.Remove(vertex);    
+                Vertices.Remove(vertex);
         }
 
         /// <summary>
@@ -523,6 +523,37 @@ namespace TVGL
             }
             Faces.Add(face);
             face.BelongsToPrimitive = this;
+        }
+
+        /// <summary>
+        /// Removes the face from the surface and updates related surface properties
+        /// </summary>
+        /// <param name="face">The face.</param>
+        public void RemoveFace(TriangleFace face)
+        {
+            _meanSquaredError = double.NaN;
+            _maxError = double.NaN;
+            if (Faces == null) Faces = new HashSet<TriangleFace>();
+            if (!Faces.Contains(face)) return;
+            Faces.Remove(face);
+            _area = Area - face.Area;
+            if (Vertices == null) Vertices = new HashSet<Vertex>();
+            foreach (var v in face.Vertices.Where(v => !Vertices.Contains(v)))
+            {
+                if (!Faces.Any(f => f.A == v || f.B == v || f.C == v))
+                    Vertices.Remove(v);
+            }
+            if (face.AB != null && face.BC != null && face.CA != null)
+                foreach (var e in face.Edges)
+                {
+                    if (InnerEdges.Contains(e))
+                    {
+                        OuterEdges.Add(e);
+                        InnerEdges.Remove(e);
+                    }
+                    else OuterEdges.Remove(e);
+                }
+            face.BelongsToPrimitive = null;
         }
 
         /// <summary>
@@ -733,7 +764,7 @@ namespace TVGL
                 }
             }
             var diagonalLength = Math.Sqrt(Math.Pow(MaxX - MinX, 2) + Math.Pow(MaxY - MinY, 2) + Math.Pow(MaxZ - MinZ, 2));
-            AABB_HalfDiagonalSquared =  Math.Pow(diagonalLength / 2, 2);
+            AABB_HalfDiagonalSquared = Math.Pow(diagonalLength / 2, 2);
         }
 
         protected abstract void SetPrimitiveLimits();
@@ -927,7 +958,7 @@ namespace TVGL
 
         //Follows the format:
         //"Plane|" + Normal.ToString() + "|" + DistanceToOrigin.ToString("F5") + GetCommonKeyDetails();
-        public abstract string KeyString { get; } 
+        public abstract string KeyString { get; }
 
         private protected string GetCommonKeyDetails()
         {
