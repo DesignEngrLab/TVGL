@@ -11,7 +11,7 @@
         </Grid.RowDefinitions>
         <!-- The OxyPlot control is binding to a PlotModel in the MainViewModel -->
         <oxy:PlotView x:Name="mainView" />
-        <ScrollBar Name="scrollBar" Grid.Row="1" Orientation="Horizontal" Maximum="100" Minimum="0" Value="0" SmallChange="1" LargeChange="10" ValueChanged="ScrollBar_ValueChanged" />
+        <ScrollBar Name="scrollBar" Grid.Row="1" Orientation="Horizontal" Maximum="{Binding MaximumIndex}" Minimum="0" Value="0" SmallChange="1" LargeChange="10" ValueChanged="ScrollBar_ValueChanged" />
     </Grid>
 </Window>
 

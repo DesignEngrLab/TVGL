@@ -56,8 +56,10 @@ namespace WindowsDesktopPresenter
         }
         internal bool Update(int stepIndex)
         {
+            var newSolids = Elements;
+            newSolids.Clear();
             // Create a new collection with updated transforms
-            var newSolids = new ObservableElement3DCollection();
+            //newSolids = new ObservableElement3DCollection();
             var allTransforms = new[] { PathTransforms, SolidTransforms };
             var k = 0;
             foreach (var groups in new List<IList<GeometryModel3D>>[] { PathGroups, SolidGroups })
@@ -75,7 +77,7 @@ namespace WindowsDesktopPresenter
                     else if (stepIndex < transformForGroupI.Count && transformForGroupI[stepIndex] != null)
                     {
                         var lastIndex = Math.Min(elements.Count, stepIndex) - 1;
-                        var start = Math.Max(0, lastIndex - 2000);
+                        var start = Math.Max(0, lastIndex - 500);
                         for (int j = start; j <= lastIndex; j++)
                         {
                             if (elements[j] == null) continue;
@@ -85,7 +87,7 @@ namespace WindowsDesktopPresenter
                     }
                 }
             }
-            Elements = newSolids;
+            //Elements = newSolids;
             RaisePropertyChanged("Elements");
             return true;
         }

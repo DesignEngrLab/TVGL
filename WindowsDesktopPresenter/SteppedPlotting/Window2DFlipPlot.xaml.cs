@@ -15,11 +15,19 @@ namespace WindowsDesktopPresenter
     /// </summary>
     public partial class Window2DFlipPlot : Window
     {
-        const int MaxNumberOfPlots = 100;
+        const int MaxNumberOfPlots = 5000;
         
         ObservableCollection<PlotModel> Models = new ObservableCollection<PlotModel>();
         public PlotModel SelectedModel { get; set; }
         public int SelectedIndex { get; private set; }
+
+        public static readonly DependencyProperty MaximumIndexProperty = DependencyProperty.Register("MaximumIndex", typeof(int), typeof(Window2DFlipPlot), new PropertyMetadata(0));
+
+        public int MaximumIndex
+        {
+            get { return (int)GetValue(MaximumIndexProperty); }
+            set { SetValue(MaximumIndexProperty, value); }
+        }
 
         private void ScrollBar_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
@@ -184,6 +192,8 @@ namespace WindowsDesktopPresenter
             }
             ReduceModels();
             InitializeComponent();
+            DataContext = this;
+            MaximumIndex = Models.Count - 1;
         }
 
         private void ReduceModels()
@@ -198,6 +208,7 @@ namespace WindowsDesktopPresenter
                 reducedModels[^1] = Models[^1];
                 Models = reducedModels;
             }
+            MaximumIndex = Models.Count - 1;
         }
 
         public Window2DFlipPlot(ICollection<double[,]> allData, string title) : this(title)
@@ -226,6 +237,8 @@ namespace WindowsDesktopPresenter
             }
             ReduceModels();
             InitializeComponent();
+            DataContext = this;
+            MaximumIndex = Models.Count - 1;
         }
         public Window2DFlipPlot(ICollection<double[,]> allData, IEnumerable<IEnumerable<Vector2>> allPoints, bool connectPointsInLine, string title) : this(title)
         {
@@ -298,6 +311,8 @@ namespace WindowsDesktopPresenter
             }
             ReduceModels();
             InitializeComponent();
+            DataContext = this;
+            MaximumIndex = Models.Count - 1;
         }
 
         public Window2DFlipPlot(ICollection<double[,]> allData, IEnumerable<IEnumerable<IEnumerable<Vector2>>> allPoints,
@@ -381,6 +396,7 @@ namespace WindowsDesktopPresenter
             }
             ReduceModels();
             InitializeComponent();
+            DataContext = this;
         }
 
         /// <summary>
