@@ -339,7 +339,8 @@ namespace TVGL
 
             var jsonSerializer = new Newtonsoft.Json.JsonSerializer();
             reader.Read();
-            while (reader.TokenType != JsonToken.EndObject)
+            //When the reader TokenType is None, then the reader has finished.
+            while (reader.TokenType != JsonToken.None)
             {
                 if (reader.TokenType != JsonToken.PropertyName)
                 {
@@ -380,23 +381,74 @@ namespace TVGL
                         ts.Primitives = new List<PrimitiveSurface>(ts.NumberOfPrimitives);
                         break;
                     case "Primitives":
-                        //Start reading primitives                          
-                        reader.Read();//skip object container "{"
-                        for (var primitiveIndex = 0; primitiveIndex < ts.NumberOfPrimitives; primitiveIndex++)
+                        //Start reading primitives
+                        //Primitives are written as one large object with sub-objects (not an array).
+                        //This is easier read in than an array, because the primitives
+                        //don't serialize a type automatically and so we know how to cast it when reading
+                        //before actually reading it.
+                        reader.Read();//get the object container "{" or array start.
+                        if (reader.TokenType == JsonToken.StartObject)
                         {
-                            //Get the property name, which in this case, is the name of the primitive plus an index.
-                            reader.Read();
-                            //If the reader value is null, it is potential that NumberOfPrimitives != Primitives.Count. Just ignore and continue.
-                            if (reader.Value == null) continue;
-                            var primitiveString = reader.Value.ToString().Split('_')[0];
-                            var primitiveInd = int.Parse(reader.Value.ToString().Split('_')[1]);
-                            var primitiveType = Type.GetType("TVGL." + primitiveString);
+                            //I see the above comment, but I am not really sure why this could not be an array and then use
+                            //while (reader.TokenType != JsonToken.EndArray) instead of a foreach.
+                            var endedEarly = false;
+                            for (var primitiveIndex = 0; primitiveIndex < ts.NumberOfPrimitives; primitiveIndex++)
+                            {
+                                //Get the property name, which in this case is the name of the primitive plus an index.
+                                reader.Read();
+                                if (reader.TokenType != JsonToken.PropertyName)
+                                {
+                                    endedEarly = true;
+                                    break;//We are expecting a Property
+                                }
+                                var primitiveString = reader.Value.ToString().Split('_')[0];
+                                var primitiveInd = int.Parse(reader.Value.ToString().Split('_')[1]);
+                                var primitiveType = Type.GetType("TVGL." + primitiveString);
 
-                            //Get the next object, which is a primitive. Cast it to the appropriate primitive type.
-                            reader.Read();
-                            ts.Primitives.Add((PrimitiveSurface)jsonSerializer.Deserialize(reader, primitiveType));
+                                //Get the next object, which is a primitive. Cast it to the appropriate primitive type.
+                                reader.Read();
+                                if (reader.TokenType != JsonToken.StartObject)
+                                {
+                                    endedEarly = true;
+                                    break;//We are expecting the start of a primitive object.
+                                }
+                                ts.Primitives.Add((PrimitiveSurface)jsonSerializer.Deserialize(reader, primitiveType));
+                            }
+                            if (endedEarly) break;
                         }
-                        reader.Read();//end of array },
+                        //else if(reader.TokenType  == JsonToken.StartArray)
+                        //{
+                        //    var endedEarly = false;
+                        //    while (reader.TokenType != JsonToken.EndArray && reader.TokenType != JsonToken.None)
+                        //    {
+                        //        //Get the property name, which in this case is the name of the primitive plus an index.
+                        //        reader.Read();
+                        //        if (reader.TokenType != JsonToken.PropertyName)
+                        //        {
+                        //            endedEarly = true;
+                        //            break;//We are expecting a Property
+                        //        }
+                        //        var primitiveString = reader.Value.ToString().Split('_')[0];
+                        //        var primitiveInd = int.Parse(reader.Value.ToString().Split('_')[1]);
+                        //        var primitiveType = Type.GetType("TVGL." + primitiveString);
+
+                        //        //Get the next object, which is a primitive. Cast it to the appropriate primitive type.
+                        //        reader.Read();
+                        //        if (reader.TokenType != JsonToken.StartObject)
+                        //        {
+                        //            endedEarly = true;
+                        //            break;//We are expecting the start of a primitive object.
+                        //        }
+                        //        ts.Primitives.Add((PrimitiveSurface)jsonSerializer.Deserialize(reader, primitiveType));
+                        //    }
+                        //    if (endedEarly) break;
+                        //}
+                        else
+                        {
+                            Console.WriteLine("Invalid or no primitives defined.");
+                            break;
+                        }
+                        reader.Read();//end of large Primitives object },
                         break;
                     case "FaceIndices":
                         reader.Read();//start array [
