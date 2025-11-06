@@ -953,6 +953,15 @@ namespace TVGL
                 }
                 copy.SetFacesAndVertices(newFaces, true);
             }
+            if (Faces.SelectMany(f => f.Edges).Any())
+            {
+                var tempSolid = new TessellatedSolid(copy.Faces, copy.Vertices,
+                    TessellatedSolidBuildOptions.Minimal);
+                //Edges are defined, so we need to makes these. This is like the MakeEdgesIfNonExistent
+                var repair = new TessellationInspectAndRepair(tempSolid);
+                repair.CheckModelIntegrityPreBuild();
+                repair.MakeEdges();
+            }
             return copy;
         }
 

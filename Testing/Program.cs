@@ -27,7 +27,7 @@ namespace TVGLUnitTestsAndBenchmarking
 
             var paraboloid = new GeneralQuadric(.1,.51,0,0,0,0,0,0,1,-10);
             Presenter.ShowAndHang(paraboloid.Tessellate(-10,10, -10, 10, -10, 10, 0.5));
-
+            paraboloid.Copy();
             IO.Open(Path.Combine(dirInfo.FullName, "a.json"), out Polygon A);
             IO.Open(Path.Combine(dirInfo.FullName, "b.json"), out Polygon B);
             var union = A.MinkowskiSum(B);
