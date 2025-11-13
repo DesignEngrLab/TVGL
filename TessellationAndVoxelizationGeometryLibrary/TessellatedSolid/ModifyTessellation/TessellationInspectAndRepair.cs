@@ -1292,7 +1292,7 @@ namespace TVGL
                             success = false;
                         }
                     }));
-                tasks.Add(Task.Run(() => Thread.Sleep(1000)));
+                tasks.Add(Task.Run(() => Thread.Sleep(1000))); //why?
 
 
                 int winningTask = Task.WaitAny(tasks.ToArray());

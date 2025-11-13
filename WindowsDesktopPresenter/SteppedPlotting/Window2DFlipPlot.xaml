@@ -1,0 +1,17 @@
+﻿<Window x:Name="window" x:Class="WindowsDesktopPresenter.Window2DFlipPlot"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" 
+        xmlns:oxy="http://oxyplot.org/wpf"
+        Height="480" Width="640" Loaded="window_Loaded">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*" />
+            <RowDefinition Height="20" />
+        </Grid.RowDefinitions>
+        <!-- The OxyPlot control is binding to a PlotModel in the MainViewModel -->
+        <oxy:PlotView x:Name="mainView" />
+        <ScrollBar Name="scrollBar" Grid.Row="1" Orientation="Horizontal" Maximum="{Binding MaximumIndex}" Minimum="0" Value="0" SmallChange="1" LargeChange="10" ValueChanged="ScrollBar_ValueChanged" />
+    </Grid>
+</Window>
+

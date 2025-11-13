@@ -11,7 +11,7 @@ namespace TVGLUnitTestsAndBenchmarking
 {
     internal class Program
     {
-        public static string inputFolder = "TestFiles";
+        public static string inputFolder = "TVGL";
 
         static Random r = new Random();
         static double r1 => 2.0 * r.NextDouble() - 1.0;
@@ -23,82 +23,40 @@ namespace TVGLUnitTestsAndBenchmarking
         {
             Global.Presenter2D = new Presenter2D();
             Global.Presenter3D = new Presenter3D();
-            ZbufferTesting.Test1();
-            var dirInfo = IO.BackoutToFolder("Input\\Drawings");
-            //foreach (var fileName in dirInfo.GetFiles("*.dxf"))
-            //{
-            //    Console.WriteLine("Attempting to open: " + fileName.Name);
-            //    if (IO.Open(fileName.FullName, out Polygon p))
-            //    {
-            //        Presenter.ShowAndHang(p);
-            //    }
-            //    else
-            //    {
-            //        Console.WriteLine("Failed to open: " + fileName.Name);
-            //    }
-            //}
+            var dirInfo = IO.BackoutToFolder(inputFolder);
 
-
-                var A = new Polygon(new List<Vector2> {
-            new Vector2(0, 3), new Vector2(9,0),new Vector2(12, 0),
-            new Vector2(3,3),
-            new Vector2(3,12), new Vector2(13,15),
-            new Vector2(0,12),
-            //new Vector2(0, 5)
-            //new Vector2(3,2.2), new Vector2(4, 2),
-            //new Vector2(4, 0.5), new Vector2(5, 2),
-            //new Vector2(3, 2.5),
-            //new Vector2(2, .7), new Vector2(1, 3),new Vector2(1, 3),
-            //new Vector2(3, 2.75), new Vector2(3, 3.5),
-            //new Vector2(00, 3.5),
-        });
-            var B = A.Copy(true, false);
-            var C = A.Copy(true, true);
-            C.Transform(Matrix3x3.CreateScale(5, -5, new Vector2(0, 7)));
-            var box = new Polygon([new Vector2(-1, -32), new Vector2(62, -32), new Vector2(62, 43), new Vector2(-1, 43),]);
-            C = box.Subtract(C).LargestPolygon();
-            Presenter.ShowAndHang([C, B]);
-            //var B = new Polygon(new List<Vector2> { new Vector2(10,10), new Vector2(16, 10),
-            //    new Vector2(16, 6),
-            //    new Vector2(17,9),
-            //    new Vector2(17,11)
-            //    ,new Vector2(10,11)
-            //});
-            //A.Transform(Matrix3x3.CreateTranslation(5, 11));
-            //A.Reverse();
-            A = C;
-            var negB = new Polygon(B.Path.Select(p => -p));
-            // var ASumB = A.MinkowskiSumNew(B).LargestPolygon();
-            var ASumNegB = A.MinkowskiSum(negB);
-            var ASumNegB0 = ASumNegB[0];
-            var ASumNegB1 = ASumNegB[1];
-            //var ASumNegB0 = A.MinkowskiSum(negB)[0];
-            //var ASumNegB1 = A.MinkowskiSum(negB)[1];
-            //Presenter.ShowAndHang([A, B,negB]);
-            //Presenter.ShowAndHang([A, B, negB, ASumNegB0, ASumNegB1]);
-            ASumNegB1.Complexify(0.5);
-            for (int k = 0; k < 3; k++)
-                for (int i = 0; i < ASumNegB1.Vertices.Count; i++)
+            var paraboloid = new GeneralQuadric(.1,.51,0,0,0,0,0,0,1,-10);
+            Presenter.ShowAndHang(paraboloid.Tessellate(-10,10, -10, 10, -10, 10, 0.5));
+            paraboloid.Copy();
+            IO.Open(Path.Combine(dirInfo.FullName, "a.json"), out Polygon A);
+            IO.Open(Path.Combine(dirInfo.FullName, "b.json"), out Polygon B);
+            var union = A.MinkowskiSum(B);
+            foreach (var fileName in dirInfo.GetFiles("*"))
+            {
+                Console.WriteLine("Attempting to open: " + fileName.Name);
+                var solid = IO.Open(fileName.FullName);
+                Presenter.ShowAndHang(solid);
+                var circlePath = new List<Vector3>();
+                var transforms = new List<Matrix4x4>();
+                for (int i = 0; i < 12; i++)
                 {
-                    var translate = ASumNegB1.Path[i];
-                    var bmov = B.Copy(true, true);
-                    bmov.Transform(Matrix3x3.CreateTranslation(translate));
-                    Presenter.Show([A, B, ASumNegB1, bmov], holdType: HoldType.AddToQueue, timetoShow: 25);
+                    circlePath.Add(new Vector3(10 * Math.Cos(i * Math.PI / 12), 10 * Math.Sin(i * Math.PI / 12), 0));
+                    transforms.Add(Matrix4x4.CreateRotationZ(i * Math.PI / 12));
                 }
-            Console.ReadKey();
-            //var nfp1 = nfp0.InnerPolygons[0];
-            //Presenter.ShowAndHang([A, B, nfp1]);
-            //nfp1.Complexify(0.5);
-            //for (int k = 0; k < 3; k++)
-            //    for (int i = 0; i < nfp1.Vertices.Count; i++)
-            //    {
-            //        var translate = nfp1.Path[i];
-            //        var bmov = B.Copy(true, true);
-            //        bmov.Transform(Matrix3x3.CreateTranslation(translate));
-            //        Presenter.Show([A, B, nfp1, bmov], holdType: Presenter.HoldType.AddToQueue, timetoShow: 83);
-            //    }
-            //B.Transform(Matrix3x3.CreateScale(1));
-            //A = new Polygon(A.CreateConvexHull(out _));
+                //var paths = new List<List<Vector3>>();
+                //for (int i = 1; i < 12; i++)
+                //    paths.Add([circlePath[i - 1], circlePath[i]]);
+
+                //Presenter.ShowStepsAndHang([paths], [solid], [transforms]);
+            }
+        }
+
+        private static void consolePrint(Polygon a)
+        {
+           foreach (var v in System.Linq.Enumerable.Reverse(a.Vertices))
+            {
+                Console.WriteLine(v.X+", "+v.Y);
+            }
         }
 
         public static IEnumerable<List<Polygon>> GetRandomPolygonThroughSolids(DirectoryInfo dir)

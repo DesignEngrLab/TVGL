@@ -17,7 +17,7 @@ namespace TVGLUnitTestsAndBenchmarking.Misc_Tests
                 Console.WriteLine("\n\n\nAttempting to open: " + fileName.Name);
                 IO.Open(fileName.FullName, out TessellatedSolid solid);
                 if (solid == null) continue;
-                //Presenter.ShowAndHang(solid);
+                Presenter.ShowAndHang(solid);
                 var direction = Vector3.UnitY;
                 //var direction = new Vector3(1, 1, 1).Normalize();
                 var (minD, maxD) = solid.Vertices.GetDistanceToExtremeVertex(direction, out _, out _);

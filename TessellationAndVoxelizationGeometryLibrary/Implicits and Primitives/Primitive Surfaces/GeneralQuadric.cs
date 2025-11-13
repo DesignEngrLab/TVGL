@@ -14,7 +14,6 @@
 using StarMathLib;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text.Json.Serialization;
@@ -29,43 +28,111 @@ namespace TVGL
         /// <summary>
         /// Gets the coefficent multiplying the x^2 term. This is often list as "A".
         /// </summary>
-        public double XSqdCoeff { get; init; }
+        public double XSqdCoeff
+        {
+            get => xSqdCoeff;
+            init => xSqdCoeff = value; // public init
+        }
+        private double xSqdCoeff;
         /// <summary>
         /// Gets the coefficent multiplying the y^2 term. This is often list as "B" (or "D").
         /// </summary>
-        public double YSqdCoeff { get; init; }
+        public double YSqdCoeff
+        {
+            get => ySqdCoeff;
+            init => ySqdCoeff = value;
+        }
+        private double ySqdCoeff;
         /// <summary>        
         /// Gets the coefficent multiplying the z^2 term. This is often list as "C" (or "F").
         /// </summary>
-        public double ZSqdCoeff { get; init; }
+        public double ZSqdCoeff
+        {
+            get => zSqdCoeff;
+            init => zSqdCoeff = value;
+        }
+        private double zSqdCoeff;
         /// <summary>       
         /// Gets the coefficent multiplying the xy term. This is often list as "D" (or "2B").
         /// </summary>
-        public double XYCoeff { get; init; }
+        public double XYCoeff
+        {
+            get => xyCoeff;
+            init => xyCoeff = value;
+        }
+        private double xyCoeff;
         /// <summary>
         /// Gets the coefficent multiplying the xz term. This is often list as "E" (or "2C").
         /// </summary>
-        public double XZCoeff { get; init; }
+        public double XZCoeff
+        {
+            get => xzCoeff;
+            init => xzCoeff = value;
+        }
+        private double xzCoeff;
         /// <summary>
         /// Gets the coefficent multiplying the yz term. This is often list as "F" (or "2E").
         /// </summary>
-        public double YZCoeff { get; init; }
+        public double YZCoeff
+        {
+            get => yzCoeff;
+            init => yzCoeff = value;
+        }
+        private double yzCoeff;
         /// <summary>
         /// Gets the coefficent multiplying the x-term. This is often list as "G" (or "P").
         /// </summary>
-        public double XCoeff { get; init; }
+        public double XCoeff
+        {
+            get => xCoeff;
+            init => xCoeff = value;
+        }
+        private double xCoeff;
         /// <summary>
         /// Gets the coefficent multiplying the y-term. This is often list as "H" (or "Q").
         /// </summary>
-        public double YCoeff { get; init; }
+        public double YCoeff
+        {
+            get => yCoeff;
+            init => yCoeff = value;
+        }
+        private double yCoeff;
         /// <summary>
         /// Gets the coefficent multiplying the z-term. This is often list as "I" (or "R").
         /// </summary>
-        public double ZCoeff { get; init; }
+        public double ZCoeff
+        {
+            get => zCoeff;
+            init => zCoeff = value;
+        }
+        private double zCoeff;
         /// <summary>
         /// W is the constant term. like weight in homogeneous coordinate systems.
         /// </summary>
-        public double W { get; init; }
+        public double W
+        {
+            get => w;
+            init => w = value;
+        }
+        private double w;
+        /// <summary>
+        /// Gets all the coefficients as an enumerable in the order listed above.
+        public IEnumerable<double> Coefficients
+        {
+            get
+            {
+                yield return XSqdCoeff;
+                yield return YSqdCoeff;
+                yield return ZSqdCoeff;
+                yield return XYCoeff;
+                yield return XZCoeff;
+                yield return YZCoeff;
+                yield return XCoeff;
+                yield return YCoeff;
+                yield return ZCoeff;
+                yield return W;
+            }
+        }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="GeneralQuadric"/> class.
@@ -145,7 +212,24 @@ namespace TVGL
         public override void Transform(Matrix4x4 transformMatrix, bool transformFacesAndVertices)
         {
             base.Transform(transformMatrix, transformFacesAndVertices);
-            throw new NotImplementedException();
+            Matrix4x4 quadricMatrix = new Matrix4x4(
+                 XSqdCoeff, 0.5 * XYCoeff, 0.5 * XZCoeff, 0.5 * XCoeff,
+                 0.5 * XYCoeff, YSqdCoeff, 0.5 * YZCoeff, 0.5 * YCoeff,
+                 0.5 * XZCoeff, 0.5 * YZCoeff, ZSqdCoeff, 0.5 * ZCoeff,
+                 0.5 * XCoeff, 0.5 * YCoeff, 0.5 * ZCoeff, W);
+            Matrix4x4 newQuadricMatrix = transformMatrix * quadricMatrix * transformMatrix.Transpose();
+            // assign to backing fields because properties are init-only externally
+            xSqdCoeff = newQuadricMatrix.M11;
+            ySqdCoeff = newQuadricMatrix.M22;
+            zSqdCoeff = newQuadricMatrix.M33;
+            xyCoeff = 2 * newQuadricMatrix.M12;
+            xzCoeff = 2 * newQuadricMatrix.M13;
+            yzCoeff = 2 * newQuadricMatrix.M23;
+            xCoeff = 2 * newQuadricMatrix.M14;
+            yCoeff = 2 * newQuadricMatrix.M24;
+            zCoeff = 2 * newQuadricMatrix.M34;
+            w = newQuadricMatrix.M44;
+
         }
 
         /// <summary>
@@ -204,8 +288,8 @@ namespace TVGL
             var y = 2 * YSqdCoeff * point.Y + XYCoeff * point.X + YZCoeff * point.Z + YCoeff;
             var z = 2 * ZSqdCoeff * point.Z + XZCoeff * point.X + YZCoeff * point.Y + ZCoeff;
             if (IsPositive.GetValueOrDefault(true))
-                return new Vector3(x, y, z);
-            else return new Vector3(-x, -y, -z);
+                return new Vector3(x, y, z).Normalize();
+            else return new Vector3(-x, -y, -z).Normalize();
         }
 
         /// <summary>
@@ -229,52 +313,7 @@ namespace TVGL
                 + W);
         }
 
-        /// <summary>
-        /// Finds the signed distance from the surface to the point
-        /// </summary>
-        /// <param name="point">The point.</param>
-        /// <returns>System.Double.</returns>
-        /*public override double DistanceToPoint(Vector3 point)
-        {
-            // start with the assumption that the normal is the best direction to go
-            var dir = GetNormalAtPoint(point).Normalize();
-            var dot = double.NaN;
-            var minPointDist = double.PositiveInfinity;
-            var iterLeft = Constants.MaxIterationsNonlinearSolve;
-            while (iterLeft-- > 0)
-            {
-                var minPoint = Vector3.Null;
-                var methodEnumerator = LineIntersection(point, dir).GetEnumerator();
-                if (methodEnumerator.MoveNext())
-                {
-                    minPoint = methodEnumerator.Current.intersection;
-                    minPointDist = Vector3.DistanceSquared(point, minPoint);
-                }
-                else
-                {
-                    return DistanceToPointSQP(point);
-                }
-                if (methodEnumerator.MoveNext())
-                {
-                    var dxToPoint2 = Vector3.DistanceSquared(point, methodEnumerator.Current.intersection);
-                    if (dxToPoint2 < minPointDist)
-                    {
-                        minPoint = methodEnumerator.Current.intersection;
-                        minPointDist = dxToPoint2;
-                    }
-                }
-                if (minPoint.IsNull()) break;
-                // the new direction is the vector from the point to the closest point
-                var newDir = GetNormalAtPoint(minPoint);
-                // it should be the same as the normal, but if not, then we need to iterate
-                dot = Vector3.Dot(dir, newDir);
-                if (Math.Abs(dot) > Constants.DotToleranceForSame) break;
-                dir = newDir;
-            }
-            return Math.Sign(QuadricValue(point)) * Math.Sign(dot) * Math.Sqrt(minPointDist);
-        }*/
-
-        public Vector3 FlowToSurface(Vector3 anchor, double tol)
+        private Vector3 FlowToSurface(Vector3 anchor, double tol)
         {
             GeneralQuadric outerQuadric = new GeneralQuadric(XSqdCoeff, YSqdCoeff, ZSqdCoeff, XYCoeff, XZCoeff, YZCoeff, XCoeff, YCoeff, ZCoeff, W - QuadricValue(anchor));
             Vector3 FarSideAnchor = (outerQuadric.LineIntersection(anchor, GetNormalAtPoint(anchor)).MaxBy(x => x.intersection.DistanceSquared(anchor))).intersection;
@@ -293,20 +332,39 @@ namespace TVGL
             }
             return currentPoint;
         }
-
-        public Vector3 GetPointNearQuadric(Vector3 anchor)
+        private Vector3 GetNormalAtUmbilicPoint(Vector3 point)
         {
-            var intersections = LineIntersection(anchor, GetNormalAtPoint(anchor));
+            // at an umbilic point, the normal is zero, so we need to find the direction of maximum increase
+            // we assume that the quadric field is not flat everywhere
+            if (GetNormalAtPoint(point).Length() != 0) return GetNormalAtPoint(point);
+            var eigVectors = new ComplexNumber[3][];
+            var eigVals = StarMath.GetEigenValuesAndVectors3(2 * XSqdCoeff, XYCoeff, XZCoeff, XYCoeff, 2 * YSqdCoeff, YZCoeff, XZCoeff, YZCoeff, 2 * ZSqdCoeff, out eigVectors);
+            var maxIncreaseNormal = eigVectors[Array.IndexOf(eigVals, eigVals.MaxBy(x => x.Real))];
+            if (maxIncreaseNormal == null) return Vector3.UnitX; //This means there are infinitely many eigenvectors, and we choose one at random.
+            return new Vector3(maxIncreaseNormal[0].Real, maxIncreaseNormal[1].Real, maxIncreaseNormal[2].Real);
+        }
+        private Vector3 GetNearbyPointOnQuadric(Vector3 anchor)
+        {
+            Vector3 normal = GetNormalAtPoint(anchor);
+            if (normal.Length() == 0)
+            {
+                normal = GetNormalAtUmbilicPoint(anchor);
+            }
+            var intersections = LineIntersection(anchor, normal);
             Vector3 newAnchor = anchor;
             int iters = 0;
+            double t = 0;
             while (!intersections.GetEnumerator().MoveNext() && iters++ < 100)
             {
-                GeneralQuadric outerQuadric = new GeneralQuadric(XSqdCoeff, YSqdCoeff, ZSqdCoeff, XYCoeff, XZCoeff, YZCoeff, XCoeff, YCoeff, ZCoeff, W - QuadricValue(newAnchor));
-                Vector3 FarSideAnchor = (outerQuadric.LineIntersection(newAnchor + 1E-6 * GetNormalAtPoint(newAnchor), GetNormalAtPoint(newAnchor)).MaxBy(x => x.intersection.DistanceSquared(newAnchor))).intersection;
-                newAnchor = newAnchor - Math.Sign(QuadricValue(newAnchor)) * GetNormalAtPoint(newAnchor).Normalize() * newAnchor.Distance(FarSideAnchor) / 2;
-                intersections = LineIntersection(newAnchor, outerQuadric.GetNormalAtPoint(newAnchor));
+                t = -normal.Dot(normal) / GetNormalAtPoint(normal).Dot(normal); //Yes, this is intentional. It is just a shorthand for the equation.
+                newAnchor = newAnchor + t * normal;
+                normal = GetNormalAtPoint(newAnchor);
+                if (normal.Length() == 0)
+                {
+                    normal = GetNormalAtUmbilicPoint(newAnchor);
+                }
+                intersections = LineIntersection(newAnchor, normal);
             }
-            if (QuadricValue(newAnchor).IsNegligible(1e-3)) return newAnchor;
             if (!intersections.GetEnumerator().MoveNext()) return newAnchor;
             return intersections.MinBy(x => x.intersection.DistanceSquared(anchor)).intersection;
         }
@@ -316,11 +374,11 @@ namespace TVGL
         /// </summary>
         /// <param name="point"></param>
         /// <returns></returns>
-        public override double DistanceToPoint(Vector3 point)
+        public Vector3 ClosestPointOnSurfaceToPoint(Vector3 point)
         {
             //if (GetNormalAtPoint(point).Length() == 0) return 0; //scaling the quadric value by the norm of the normal vector to get the approximate distance locally, not working all the time
             //return QuadricValue(point) / GetNormalAtPoint(point).Length();
-            var closestPt = GetPointNearQuadric(point);
+            var closestPt = GetNearbyPointOnQuadric(point);
             var closestPt4 = new Vector4(closestPt, 0); // the fourth number "w" here represents the Lagrange multiplier
             var delta = Vector4.Zero;
             int iterations = 0;
@@ -346,9 +404,31 @@ namespace TVGL
                 closestPt4 -= delta;
             }
             while (iterations++ < 1000 && delta.ToVector3(false).LengthSquared() > 1E-4); // while less than 1000 iterations or the delta is large
-            if (iterations >= 1000 && GetNormalAtPoint(point).Length() != 0) return QuadricValue(point) / GetNormalAtPoint(point).Length(); //scaling the quadric value by the norm of the normal vector to get the approximate distance locally
+            if (iterations >= 1000 && GetNormalAtPoint(point).Length() != 0) return Vector3.Null;
             closestPt = closestPt4.ToVector3(false);
+            return closestPt;
+        }
+
+        public override double DistanceToPoint(Vector3 point)
+        {
+            Vector3 closestPt = ClosestPointOnSurfaceToPoint(point);
+
+            //scaling the quadric value by the norm of the normal vector to get the approximate distance locally
+            if (closestPt == Vector3.Null) return DistanceToPointQuick(point);
+
             return Math.Sign(QuadricValue(point)) * point.Distance(closestPt);
+        }
+
+        public double DistanceToPointQuick(Vector3 point)
+        {
+            var qValue = QuadricValue(point);
+
+            var gradX = 2 * XSqdCoeff * point.X + XYCoeff * point.Y + XZCoeff * point.Z + XCoeff;
+            var gradY = 2 * YSqdCoeff * point.Y + XYCoeff * point.X + YZCoeff * point.Z + YCoeff;
+            var gradZ = 2 * ZSqdCoeff * point.Z + XZCoeff * point.X + YZCoeff * point.Y + ZCoeff;
+            var normalMagnitude = Math.Sqrt(gradX * gradX + gradY * gradY + gradZ * gradZ);
+
+            return qValue / normalMagnitude;
         }
         protected override void CalculateIsPositive()
         {

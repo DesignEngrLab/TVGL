@@ -3,14 +3,15 @@
 	<PropertyGroup>
 		<TargetFramework>net8.0-windows</TargetFramework>
 		<UseWPF>true</UseWPF>
+		<Configurations>Debug;Release;Series</Configurations>
 	</PropertyGroup>
 
 	<ItemGroup>
 		<ProjectReference Include="..\TessellationAndVoxelizationGeometryLibrary\TessellationAndVoxelizationGeometryLibrary.csproj" />
-		<PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.0-preview.6.25358.103" />
-		<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.0-preview.6.25358.103" />
+		<PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.0-rc.1.25451.107" />
+		<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.0-rc.1.25451.107" />
 		<PackageReference Include="OxyPlot.Wpf" Version="2.2.0" />
-		<PackageReference Include="HelixToolkit.SharpDX.Core.Wpf" Version="2.27.0" />
+		<PackageReference Include="HelixToolkit.SharpDX.Core.Wpf" Version="2.27.3" />
 	</ItemGroup>
 
 </Project>

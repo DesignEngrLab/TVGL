@@ -548,7 +548,7 @@ namespace TVGL
         public static TessellatedSolid Tessellate(this Cone cone, int numPoints = 30, bool keepOpen = false)
         {
             if (double.IsInfinity(cone.Length))
-                throw new ArgumentException("The cone must have finite a finite length.");
+                throw new ArgumentException("The cone must have a finite length.");
             var axis = cone.Axis.Normalize();
             var baseCircleRadius = cone.Length * cone.Aperture;
             var baseCircleCenter = cone.Apex + cone.Length * axis;

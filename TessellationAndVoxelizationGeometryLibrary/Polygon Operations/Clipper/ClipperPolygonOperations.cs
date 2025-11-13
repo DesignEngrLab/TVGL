@@ -150,7 +150,8 @@ namespace TVGL
             Clipper64 c = new Clipper64();
             foreach (var polygon in subjects)
             {
-                foreach (var polygonElement in polygon.AllPolygons.Where(p => !p.PathArea.IsNegligible(Constants.BaseTolerance)))
+                foreach (var polygonElement in polygon.AllPolygons.Where(p => !p.IsClosed
+                ||!p.PathArea.IsNegligible(Constants.BaseTolerance)))
                 {
                     var path = new Path64(polygonElement.Path.Select(p => new Point64(p.X * scale, p.Y * scale)));
                     if (polygonElement.IsClosed)

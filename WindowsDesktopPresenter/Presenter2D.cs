@@ -286,5 +286,32 @@ namespace WindowsDesktopPresenter
             int timetoShow = -1, int id = -1)
             => Show(polygon.Select(p => p.Path), title, plot2DType, polygon.Select(p => p.IsClosed), marker, holdType, timetoShow, id);
 
+
+
+        /// <summary>
+        /// Show the matrix of data as a 2D plot (heatmap)
+        /// </summary>
+        /// <param name="data"></param>
+        /// <param name="title"></param>
+        public void ShowStepsAndHang(ICollection<double[,]> data, string title = "")
+        {
+            var window = new Window2DFlipPlot(data, title);
+            window.ShowDialog();
+        }
+        /// <summary>
+        /// Show the matrix of data as a 2D plot (heatmap)
+        /// </summary>
+        /// <param name="data"></param>
+        /// <param name="title"></param>
+        public void ShowStepsAndHang(ICollection<double[,]> data, IEnumerable<IEnumerable<Vector2>> points, bool connectPointsInLine, string title = "")
+        {
+            var window = new Window2DFlipPlot(data, points, connectPointsInLine, title);
+            window.ShowDialog();
+        }
+        public void ShowStepsAndHang(ICollection<double[,]> data, IEnumerable<IEnumerable<IEnumerable<Vector2>>> points, IEnumerable<bool> connectPointsInLine, string title = "")
+        {
+            var window = new Window2DFlipPlot(data, points, connectPointsInLine, title);
+            window.ShowDialog();
+        }
     }
 }

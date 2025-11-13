@@ -93,45 +93,6 @@ namespace TVGL
             yield return thruple.Item3;
         }
 
-
-        /// <summary>
-        /// Finds the index where the value should be inserted into the collection to maintain
-        /// increasing order.
-        /// </summary>
-        /// <param name="array">the sorted array of doubles</param>
-        /// <param name="queryValue">the value to insert</param>
-        /// <param name="inclusiveLowIndex">the inclusive starting low index</param>
-        /// <param name="inclusiveHighIndex">the inclusive starting low index (usually one less than the count)</param>
-        /// <returns></returns>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static int IncreasingDoublesBinarySearch(this IList<double> array, double queryValue,
-            int inclusiveLowIndex, int inclusiveHighIndex)
-        {
-            // This binary search is modified/simplified from Array.BinarySearch
-            // (https://referencesource.microsoft.com/mscorlib/a.html#b92d187c91d4c9a9)
-            // here we are simply trying to order the doubles in increasing order
-            while (inclusiveLowIndex <= inclusiveHighIndex)
-            {
-                // try the point in the middle of the range. note the >> 1 is a bit shift to quickly divide by 2
-                int i = inclusiveLowIndex + ((inclusiveHighIndex - inclusiveLowIndex) >> 1);
-                var valueAtIndex = array[i];
-                if (queryValue == valueAtIndex) return i; //equal values could be in any order
-                if (queryValue > valueAtIndex) inclusiveLowIndex = i + 1;
-                else inclusiveHighIndex = i - 1;
-            }
-            return inclusiveLowIndex;
-        }
-
-        /// <summary>
-        /// Finds the index where the value should be inserted into the collection to maintain
-        /// increasing order.
-        /// </summary>
-        /// <param name="array"></param>
-        /// <param name="value"></param>
-        /// <returns></returns>
-        public static int IncreasingDoublesBinarySearch(this IList<double> array, double value)
-        => IncreasingDoublesBinarySearch(array, value, 0, array.Count - 1);
-
         public static ILogger Logger
         {
             set { logger = value; }
