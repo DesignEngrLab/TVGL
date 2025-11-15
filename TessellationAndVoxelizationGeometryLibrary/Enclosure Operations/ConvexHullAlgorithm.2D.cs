@@ -35,6 +35,44 @@ namespace TVGL
             if (isMaximal) return CreateConvexHullMaximal(polygon.SelectMany(p => p.Vertices).ToList(), out convexHullIndices);
             else return Create(polygon.SelectMany(p => p.Vertices).ToList(), out convexHullIndices);
         }
+
+        /// <summary>
+        /// Creates the convex hull for a set of vertices. Any vertices that are on the edge will not be included - thus
+        /// this creates the minimal convex hull.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="points"></param>
+        /// <param name="convexHullIndices"></param>
+        /// <param name="tolerance"></param>
+        /// <returns></returns>
+        public static List<T> CreateConvexHullMinimal<T>(this IList<T> points, out List<int> convexHullIndices,
+            double tolerance = Constants.DefaultEqualityTolerance)
+            where T : IVector2D
+        {
+            var convexHull = Create(points, out convexHullIndices);
+            var exitingVector = new Vector2
+            {
+                X = convexHull[0].X - convexHull[^1].X,
+                Y = convexHull[0].Y - convexHull[^1].Y
+            };
+            for (int i = convexHull.Count - 1; i > 0; i--)
+            {
+                var intoVector = new Vector2
+                {
+                    X = convexHull[i].X - convexHull[i-1].X,
+                    Y = convexHull[i].Y - convexHull[i-1].Y
+                };
+                if (intoVector.IsAligned(exitingVector))
+                {
+                    convexHull.RemoveAt(i);
+                    convexHullIndices.RemoveAt(i);
+                    exitingVector += intoVector;
+                }
+                else exitingVector = intoVector;
+            }
+            return convexHull;
+        }
+
         /// <summary>
         /// Creates the convex hull for a set of vertices and then finds any vertices that are on the boundary
         /// and re-inserts them into the convex hull. This is slower that CreateConvexHull, and it creates a result
@@ -53,7 +91,7 @@ namespace TVGL
             var convexHull = Create(points, out convexHullIndices);
             var usedIndices = new HashSet<int>(convexHullIndices);
             var nextEndPoint = points[^1];
-            for (int i = convexHull.Count - 1; i >= 0; i++)
+            for (int i = convexHull.Count - 1; i >= 0; i--)
             {
                 var currentEndPoint = convexHull[i];
                 var vX = nextEndPoint.X - currentEndPoint.X;

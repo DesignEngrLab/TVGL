@@ -136,8 +136,8 @@ namespace TVGL
         /// <returns>A double.</returns>
         public static double FindLargestEncompassingAngleForAxis(this PrimitiveSurface surface, out Vector3 vectorAtMinAngle,
             out Vector3 vectorAtMaxAngle, out double minAngle, out double maxAngle)
-        => MiscFunctions.FindLargestEncompassingAngleForAxis(surface.Borders,surface.GetAxis(),surface.GetAnchor(), out vectorAtMinAngle, out vectorAtMaxAngle, out minAngle, out maxAngle);
-        
+        => MiscFunctions.FindLargestEncompassingAngleForAxis(surface.Borders, surface.GetAxis(), surface.GetAnchor(), out vectorAtMinAngle, out vectorAtMaxAngle, out minAngle, out maxAngle);
+
 
         /// <summary>
         /// Gets the center of mass for primitive surface. This is a weighted sum using the face area,
@@ -293,15 +293,15 @@ namespace TVGL
                             possibleExtremes.RemoveAt(i);
                             break;
                         }
-                        var iTrapsJ = PointASeesPointB(point, v1, v2, otherPoint);
-                        var jTrapsI = PointASeesPointB(otherPoint, w1, w2, point);
-                        if (iTrapsJ == jTrapsI) continue;
-                        if (jTrapsI)
+                        var iSeesJ = PointASeesPointB(point, v1, v2, otherPoint);
+                        var jSeesI = PointASeesPointB(otherPoint, w1, w2, point);
+                        if (iSeesJ == jSeesI) continue;
+                        if (jSeesI)
                         {
                             possibleExtremes.RemoveAt(i);
                             break;
                         }
-                        else // if (iTrapsJ)
+                        else // if (iSeesJ)
                         {
                             i--;
                             possibleExtremes.RemoveAt(j);
@@ -344,11 +344,29 @@ namespace TVGL
                     else possibleExtremes.RemoveAt(i);
                     if (possibleExtremes.Count <= 2) break;
                 }
-                if (numExtremes == 3 && possibleExtremes.Count == 3)
-                {   // This means that we've tried twice to reduce from 3 but failed. Which, in turn, 
-                    // means the 3 points are arranged in an accute a triangle. So, throw out the one 
-                    // that is closer to the other two
-                    var distanceSqd0 = possibleExtremes[0].Item2.LengthSquared() + possibleExtremes[0].Item3.LengthSquared();
+                if (numExtremes > 2 && numExtremes == possibleExtremes.Count)
+                {   // This means that we've tried twice to reduce from n (some number g.t. 2) but failed.
+                    // As a last ditch effort just remove all points but two which are farthest from the COM.
+                    while (possibleExtremes.Count > 2)
+                    {
+                        var com = Vector2.Zero;
+                        foreach (var (point, _, _) in possibleExtremes)
+                            com += point;
+                        com /= possibleExtremes.Count;
+                        var minDistanceSqd = double.PositiveInfinity;
+                        var indexToRemove = -1;
+                        for (int i = 0; i < possibleExtremes.Count; i++)
+                        {
+                            var distanceSqd = (possibleExtremes[i].Item1 - com).LengthSquared();
+                            if (distanceSqd < minDistanceSqd)
+                            {
+                                minDistanceSqd = distanceSqd;
+                                indexToRemove = i;
+                            }
+                        }
+                        possibleExtremes.RemoveAt(indexToRemove);
+                    }
+                    // var distanceSqd0 = possibleExtremes[0].Item2.LengthSquared() + possibleExtremes[0].Item3.LengthSquared();
                     var distanceSqd1 = possibleExtremes[1].Item2.LengthSquared() + possibleExtremes[1].Item3.LengthSquared();
                     var distanceSqd2 = possibleExtremes[2].Item2.LengthSquared() + possibleExtremes[2].Item3.LengthSquared();
                     if (distanceSqd2 < distanceSqd1 && distanceSqd2 < distanceSqd0)
@@ -369,6 +387,15 @@ namespace TVGL
                        possibleExtremes[1].Item1, (possibleExtremes[1].Item2 + possibleExtremes[1].Item3).Normalize());
         }
 
+        /// <summary>
+        /// small helper function to the above. by "sees" we mean that the point B is within 90-degrees of one of the
+        /// two vector edges leaving A
+        /// </summary>
+        /// <param name="pointA"></param>
+        /// <param name="vA1"></param>
+        /// <param name="vA2"></param>
+        /// <param name="pointB"></param>
+        /// <returns></returns>
         private static bool PointASeesPointB(Vector2 pointA, Vector2 vA1, Vector2 vA2, Vector2 pointB)
         {
             var vNew = pointB - pointA;
@@ -391,7 +418,7 @@ namespace TVGL
         /// <param name="maxEdgeLength"></param>
         public static TessellatedSolid Tessellate(this PrimitiveSurface surface, double xMin, double xMax, double yMin, double yMax, double zMin, double zMax, double maxEdgeLength)
         {
-            var tessellatedSolid = TessellateToNewSolid(surface, xMin, xMax, yMin, yMax, zMin, zMax,maxEdgeLength);
+            var tessellatedSolid = TessellateToNewSolid(surface, xMin, xMax, yMin, yMax, zMin, zMax, maxEdgeLength);
             surface.Faces = tessellatedSolid.Primitives[0].Faces;
             surface.Vertices = tessellatedSolid.Primitives[0].Vertices;
             tessellatedSolid.MakeEdgesIfNonExistent();
