@@ -357,23 +357,15 @@ namespace TVGL
                         var indexToRemove = -1;
                         for (int i = 0; i < possibleExtremes.Count; i++)
                         {
-                            var distanceSqd = (possibleExtremes[i].Item1 - com).LengthSquared();
-                            if (distanceSqd < minDistanceSqd)
+                            var dSqd = (possibleExtremes[i].Item1 - com).LengthSquared();
+                            if (dSqd < minDistanceSqd)
                             {
-                                minDistanceSqd = distanceSqd;
+                                minDistanceSqd = dSqd;
                                 indexToRemove = i;
                             }
                         }
                         possibleExtremes.RemoveAt(indexToRemove);
                     }
-                    // var distanceSqd0 = possibleExtremes[0].Item2.LengthSquared() + possibleExtremes[0].Item3.LengthSquared();
-                    var distanceSqd1 = possibleExtremes[1].Item2.LengthSquared() + possibleExtremes[1].Item3.LengthSquared();
-                    var distanceSqd2 = possibleExtremes[2].Item2.LengthSquared() + possibleExtremes[2].Item3.LengthSquared();
-                    if (distanceSqd2 < distanceSqd1 && distanceSqd2 < distanceSqd0)
-                        possibleExtremes.RemoveAt(2);
-                    else if (distanceSqd1 < distanceSqd2 && distanceSqd1 < distanceSqd0)
-                        possibleExtremes.RemoveAt(1);
-                    else possibleExtremes.RemoveAt(0);
                 }
                 numExtremes = possibleExtremes.Count;
             }
