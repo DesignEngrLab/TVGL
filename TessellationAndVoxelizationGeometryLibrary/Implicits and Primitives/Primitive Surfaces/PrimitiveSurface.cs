@@ -59,7 +59,7 @@ namespace TVGL
             if (connectFacesToPrimitive)
                 foreach (var face in Faces)
                     face.BelongsToPrimitive = this;
-            if (faces == null) return;
+            if (faces == null || faces.Count() == 0) return;
 
             //Check the normal alignment ONLY if the face area is not zero.
             if (!LargestFace.Area.IsNegligible())
