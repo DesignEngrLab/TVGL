@@ -9,7 +9,7 @@ namespace TVGL
     /// <summary>
     /// Class Constants.
     /// </summary>
-    public static class Global
+    internal static class Global
     {
         /// <summary>
         /// Finds the index.
@@ -48,7 +48,7 @@ namespace TVGL
         /// <param name="dy"></param>
         /// <returns></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static double Pseudoangle(double dx, double dy)
+        internal static double Pseudoangle(double dx, double dy)
         {
             var p = dx / (Math.Abs(dx) + Math.Abs(dy)); // -1 .. 1 increasing with x
             if (dy < 0) return 3 + p;  //  2 .. 4 increasing with x
@@ -92,54 +92,5 @@ namespace TVGL
             yield return thruple.Item2;
             yield return thruple.Item3;
         }
-
-        public static ILogger Logger
-        {
-            set { logger = value; }
-            get
-            {
-                if (logger == null) SetLogger(LogLevel.Trace);
-                return logger;
-            }
-        }
-        private static ILogger logger;
-
-        public static void SetLogger(LogLevel minimumLevelToReport)
-        {
-            using ILoggerFactory factory = LoggerFactory.Create(builder =>
-            {
-                builder.AddSimpleConsole(options =>
-                {
-                    options.SingleLine = true;
-                    options.IncludeScopes = false;
-                })
-                .SetMinimumLevel(minimumLevelToReport);
-            });
-            logger = factory.CreateLogger("TVGL");
-        }
-
-        public static IPresenter3D Presenter3D
-        {
-            set { presenter3D = value; }
-            get
-            {
-                if (presenter3D == null)
-                    presenter3D = new EmptyPresenter3D();
-                return presenter3D;
-            }
-        }
-        private static IPresenter3D presenter3D;
-        public static IPresenter2D Presenter2D
-        {
-            set { presenter2D = value; }
-            get
-            {
-                if (presenter2D == null)
-                    presenter2D = new EmptyPresenter2D();
-                return presenter2D;
-            }
-        }
-        private static IPresenter2D presenter2D;
-
     }
 }
