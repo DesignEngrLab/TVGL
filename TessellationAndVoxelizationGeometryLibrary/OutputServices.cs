@@ -2,7 +2,7 @@
 
 namespace TVGL
 {
-    internal static class OutputServices
+    public static class OutputServices
     {
         private static ILogger logger;
         private static IPresenter3D presenter3D;
