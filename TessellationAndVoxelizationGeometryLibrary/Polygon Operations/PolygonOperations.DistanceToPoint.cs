@@ -146,30 +146,31 @@ namespace TVGL
             {
                 /* pointOnLine is found by setting the dot-product of the lineVector and the vector formed by (pointOnLine-p)
                 * set equal to zero. This is really just solving to "t" the distance along the line from the lineRefPt. */
-                var d = SqDistancePointToLineSegment(x, y, edge, out var atEndPoint);
+                var d = SqDistancePointToLineSegment(x, y, edge, out var atBeginPoint, out var atEndPoint);
                 if (d < minDistance)
                 {
-                    if (atEndPoint)
-                    {
-                        var fromDistance = edge.FromPoint.Coordinates.DistanceSquared(queryPoint);
-                        var toDistance = edge.ToPoint.Coordinates.DistanceSquared(queryPoint);
-                        closestVertex = fromDistance < toDistance ? edge.FromPoint : edge.ToPoint;
-                    }
+                    if (atBeginPoint)
+                        closestVertex = edge.FromPoint;
+                    else if (atEndPoint)
+                        closestVertex = edge.ToPoint;
                     else closestVertex = null;
                     closestEdge = edge;
                     minDistance = d;
                 }
             }
-            if (closestVertex!=null)
+            if (closestVertex != null)
             {
+                var v = queryPoint - closestVertex.Coordinates;
                 var startLine = closestVertex.StartLine;
+                var startLineOutVector = new Vector2(startLine.Vector.Y, -startLine.Vector.X);
+                var startDot = v.Dot(startLineOutVector);
                 var endLine = closestVertex.EndLine;
-                var t = 0.01;
-                var startLinePoint = closestVertex.Coordinates + t * startLine.Vector;
-                var endLinePoint = closestVertex.Coordinates - t * endLine.Vector;
-                if (startLinePoint.DistanceSquared(queryPoint)<endLinePoint.DistanceSquared(queryPoint))
+                var endLineOutVector = new Vector2(endLine.Vector.Y, -endLine.Vector.X);
+                var endDot = v.Dot(endLineOutVector);
+                if (Math.Abs(startDot) < Math.Abs(endDot))
                     closestEdge = startLine;
-                else closestEdge = endLine;
+                else
+                    closestEdge = endLine;
             }
             return Math.Sqrt(minDistance);
         }
@@ -183,9 +184,10 @@ namespace TVGL
         /// <param name="y">The y.</param>
         /// <param name="edge">The edge.</param>
         /// <returns>System.Double.</returns>
-        private static double SqDistancePointToLineSegment(double x, double y, PolygonEdge edge, out bool atEndpoint)
+        private static double SqDistancePointToLineSegment(double x, double y, PolygonEdge edge, out bool closestToFromPoint, out bool closestToToPoint)
         {
-            atEndpoint = false;
+            closestToToPoint = false;
+            closestToFromPoint = false;
             var A = x - edge.FromPoint.X;
             var B = y - edge.FromPoint.Y;
             var C = edge.Vector.X;
@@ -197,15 +199,15 @@ namespace TVGL
                 param = dot / (edge.Length * edge.Length);
 
             double xx, yy;
-            if (param < 0)
+            if (param <= 0)
             {
-                atEndpoint = true;
+                closestToFromPoint = true;
                 xx = edge.FromPoint.X;
                 yy = edge.FromPoint.Y;
             }
-            else if (param > 1)
+            else if (param >= 1)
             {
-                atEndpoint = true;
+                closestToToPoint = true;
                 xx = edge.ToPoint.X;
                 yy = edge.ToPoint.Y;
             }
