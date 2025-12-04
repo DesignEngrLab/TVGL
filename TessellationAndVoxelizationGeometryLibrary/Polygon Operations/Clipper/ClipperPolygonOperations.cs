@@ -162,6 +162,7 @@ namespace TVGL
             if (clips != null)
                 foreach (var polygon in clips)
                 {
+                    if (polygon == null) continue;
                     foreach (var polygonElement in polygon.AllPolygons.Where(p => !p.PathArea.IsNegligible(Constants.BaseTolerance)))
                     {
                         var path = new Path64(polygonElement.Path.Select(p => new Point64(p.X * scale, p.Y * scale)));
