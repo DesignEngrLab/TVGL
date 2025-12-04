@@ -59,7 +59,7 @@ namespace TVGL
             if (connectFacesToPrimitive)
                 foreach (var face in Faces)
                     face.BelongsToPrimitive = this;
-            if (faces == null) return;
+            if (faces == null || faces.Count() == 0) return;
 
             //Check the normal alignment ONLY if the face area is not zero.
             if (!LargestFace.Area.IsNegligible())
@@ -952,15 +952,15 @@ namespace TVGL
                     i++;
                 }
                 copy.SetFacesAndVertices(newFaces, true);
-            }
-            if (Faces.SelectMany(f => f.Edges).Any())
-            {
-                var tempSolid = new TessellatedSolid(copy.Faces, copy.Vertices,
-                    TessellatedSolidBuildOptions.Minimal);
-                //Edges are defined, so we need to makes these. This is like the MakeEdgesIfNonExistent
-                var repair = new TessellationInspectAndRepair(tempSolid);
-                repair.CheckModelIntegrityPreBuild();
-                repair.MakeEdges();
+                if (Faces.SelectMany(f => f.Edges).Any())
+                {
+                    var tempSolid = new TessellatedSolid(copy.Faces, copy.Vertices,
+                        TessellatedSolidBuildOptions.Minimal);
+                    //Edges are defined, so we need to makes these. This is like the MakeEdgesIfNonExistent
+                    var repair = new TessellationInspectAndRepair(tempSolid);
+                    repair.CheckModelIntegrityPreBuild();
+                    repair.MakeEdges();
+                }
             }
             return copy;
         }

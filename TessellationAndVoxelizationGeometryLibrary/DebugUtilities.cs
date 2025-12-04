@@ -26,10 +26,10 @@ namespace TVGL
                     foreach (var border in feature.Borders)
                         lines.Add(border.GetCoordinates());
                 color = color ?? white;
-                Global.Presenter3D.ShowAndHang([lines], [false], [lineThickness], [color], ts);
+                OutputServices.Presenter3D.ShowAndHang([lines], [false], [lineThickness], [color], ts);
             }
             else
-                Global.Presenter3D.ShowAndHang(ts);
+                OutputServices.Presenter3D.ShowAndHang(ts);
         }
 
         /// <summary>
@@ -52,7 +52,7 @@ namespace TVGL
             if (showBorders)
                 ts.ShowWireFrame(false, null, primitives, lineThickness, color);
             else
-                Global.Presenter3D.ShowAndHang(ts);
+                OutputServices.Presenter3D.ShowAndHang(ts);
         }
 
         /// <summary>
@@ -72,7 +72,7 @@ namespace TVGL
             }
             var lines = ts.GetWireFrame(borders, primitives);
             var colors = color == null ? new Color[] { white } : new Color[] { color };
-            Global.Presenter3D.ShowAndHang([lines], [false], [lineThickness], colors, ts);
+            OutputServices.Presenter3D.ShowAndHang([lines], [false], [lineThickness], colors, ts);
         }
 
         public static List<IEnumerable<Vector3>> GetWireFrame(this TessellatedSolid ts, IEnumerable<BorderLoop> borders = null,
@@ -147,7 +147,7 @@ namespace TVGL
                 var height = MinimumEnclosure.GetLengthAndExtremeVertex(cylinder.Vertices, cylinder.Axis, out _, out _);
                 var bottom = cylinder.Anchor + cylinder.Axis * ((centerTValue - anchorTValue) - halfheight);
                 var top = cylinder.Anchor + cylinder.Axis * ((centerTValue - anchorTValue) + halfheight);
-                Global.Presenter3D.ShowAndHang(new List<Vector3> { bottom, top }, false, solids: solid);
+                OutputServices.Presenter3D.ShowAndHang(new List<Vector3> { bottom, top }, false, solids: solid);
             }
             else if (bestPrimitiveSurface is Cone cone)
             {
@@ -175,7 +175,7 @@ namespace TVGL
                 var pointsOnPlane = cone.Vertices.ProjectTo2DCoordinates(transfrom).ToArray();
                 var circle = MinimumEnclosure.MinimumCircle(pointsOnPlane);
                 var circlePoints = circle.CreatePath(36);
-                Global.Presenter3D.ShowAndHang([ cone.Apex, bottom, edgePoint ], false, solids: solid);
+                OutputServices.Presenter3D.ShowAndHang([ cone.Apex, bottom, edgePoint ], false, solids: solid);
             }
             else if (bestPrimitiveSurface is Torus torus)
             {
@@ -195,7 +195,7 @@ namespace TVGL
                         torus.Center-d2*(torus.MajorRadius+torus.MinorRadius),
                         torus.Center+d1*(torus.MajorRadius+torus.MinorRadius)
                     };
-                Global.Presenter3D.ShowAndHang(torusPoints, false, solids: solid);
+                OutputServices.Presenter3D.ShowAndHang(torusPoints, false, solids: solid);
             }
             else if (bestPrimitiveSurface is Sphere)
             {
@@ -204,13 +204,13 @@ namespace TVGL
                                 sphere.Center + sphere.Radius * Vector3.UnitX, sphere.Center - sphere.Radius * Vector3.UnitX, sphere.Center,
                                 sphere.Center + sphere.Radius * Vector3.UnitY, sphere.Center - sphere.Radius * Vector3.UnitY, sphere.Center,
                                 sphere.Center + sphere.Radius * Vector3.UnitZ, sphere.Center - sphere.Radius * Vector3.UnitZ};
-                Global.Presenter3D.ShowAndHang(spherePoints, false, solids: solid);
+                OutputServices.Presenter3D.ShowAndHang(spherePoints, false, solids: solid);
 
             }
             //For all other surface types, just show the colored primitive
             else
             {
-                Global.Presenter3D.ShowAndHang(solid);
+                OutputServices.Presenter3D.ShowAndHang(solid);
             }
         }
 
@@ -244,7 +244,7 @@ namespace TVGL
                     }
                 }
             }
-            Global.Presenter2D.ShowAndHang(bitmap, "ZBuffer");
+            OutputServices.Presenter2D.ShowAndHang(bitmap, "ZBuffer");
         }
 
         /// <summary>

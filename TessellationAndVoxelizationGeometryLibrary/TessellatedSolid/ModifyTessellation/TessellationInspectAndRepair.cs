@@ -1482,6 +1482,7 @@ namespace TVGL
                 var ownedFace = segment.DirectionList[0] ? segment.EdgeList[0].OwnedFace : segment.EdgeList[0].OtherFace;
                 var otherFace = segment.DirectionList[0] ? segment.EdgeList[0].OtherFace : segment.EdgeList[0].OwnedFace;
                 segment.OwnedPrimitive = ownedFace.BelongsToPrimitive;
+                if (otherFace == null) continue;
                 segment.OtherPrimitive = otherFace.BelongsToPrimitive;
                 if (segment.OwnedPrimitive == segment.OtherPrimitive)
                     continue;

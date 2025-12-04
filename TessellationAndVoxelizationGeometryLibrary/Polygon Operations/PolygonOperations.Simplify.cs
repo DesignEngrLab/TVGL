@@ -865,6 +865,7 @@ namespace TVGL
         public static Polygon SimplifyFast(this Polygon polygon, double lengthTolerance = Constants.LineLengthMinimum,
            double slopeTolerance = Constants.LineSlopeTolerance)
         {
+            if (polygon == null) return null;
             var simplifiedPositivePolygon = new Polygon(polygon.Path.SimplifyFast(lengthTolerance, slopeTolerance));
             foreach (var polygonHole in polygon.InnerPolygons)
                 simplifiedPositivePolygon.AddInnerPolygon(new Polygon(polygonHole.Path.SimplifyFast(lengthTolerance, slopeTolerance)));
