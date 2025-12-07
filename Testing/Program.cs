@@ -21,8 +21,8 @@ namespace TVGLUnitTestsAndBenchmarking
         [STAThread]
         private static void Main(string[] args)
         {
-            Global.Presenter2D = new Presenter2D();
-            Global.Presenter3D = new Presenter3D();
+            OutputServices.Presenter2D = new Presenter2D();
+            OutputServices.Presenter3D = new Presenter3D();
             var dirInfo = IO.BackoutToFolder(inputFolder);
 
             var paraboloid = new GeneralQuadric(.1,.51,0,0,0,0,0,0,1,-10);
