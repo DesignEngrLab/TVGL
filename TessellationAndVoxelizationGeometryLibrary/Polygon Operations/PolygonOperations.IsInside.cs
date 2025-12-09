@@ -14,7 +14,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Numerics;
 
 
 namespace TVGL
@@ -246,7 +245,9 @@ namespace TVGL
                 // since this is called a lot, we can save a few cycles by avoiding division. Unforunately, if the 
                 // denominator is negative then we must flip the inequality. This makes the condition a bit unreadable. 
                 // See the commented code above for the orginial.
-                if ((verts[i].Y<= p.Y) == (verts[j].Y > p.Y))
+                if (verts[i].Coordinates.IsPracticallySame(pointInQuestion))
+                    return true;
+                if ((verts[i].Y <= p.Y) == (verts[j].Y > p.Y))
                 {
                     var denom = verts[j].Y - verts[i].Y;
                     if ((denom < 0) == ((p.X - verts[i].X) * denom > (verts[j].X - verts[i].X) * (p.Y - verts[i].Y)))
@@ -500,7 +501,7 @@ namespace TVGL
         /// <param name="firstIntersectingIndex">First index of the intersecting.</param>
         /// <returns>List&lt;Vector2&gt;.</returns>
         /// <exception cref="NotImplementedException"></exception>
-        public static List<Vector2[]> AllPolygonIntersectionPointsAlongLine(this IEnumerable<Polygon> polygons, Vector2 sweepLineDirection,
+        public static List<Vector2[]> AllPolygonIntersectionPointsAlongLines(this IEnumerable<Polygon> polygons, Vector2 sweepLineDirection,
             double perpendicularDistanceToLine, int numSteps, double stepSize, out int firstIntersectingIndex)
         {
             sweepLineDirection = sweepLineDirection.Normalize();
@@ -557,6 +558,39 @@ namespace TVGL
             }
             return intersections;
         }
+
+
+        public static SortedList<double, PolygonEdge> AllPolygonIntersectionPointsAlongLine(this IEnumerable<Polygon> polygons,
+            Vector2 sweepLineUnitDir, double perpendicularDistanceToLine)
+        {
+            var result = new SortedList<double, PolygonEdge>(new NoEqualSort());
+            var lineDir = new Vector2(sweepLineUnitDir.Y, -sweepLineUnitDir.X);
+            foreach (var poly in polygons.SelectMany(p => p.AllPolygons))
+            {
+                var startVertex = poly.Vertices[0];
+                var current = startVertex;
+                var currentDot = perpendicularDistanceToLine - current.Coordinates.Dot(sweepLineUnitDir);
+                do
+                {
+                    var line = current.StartLine;
+                    var next = line.ToPoint;
+                    var nextDot = perpendicularDistanceToLine - next.Coordinates.Dot(sweepLineUnitDir);
+                    if (Math.Sign(nextDot) != Math.Sign(currentDot))
+                    {
+                        var lineUnitDir = line.Vector.Normalize();
+                        var lineDotSweep = lineUnitDir.Dot(sweepLineUnitDir);
+                        // t is the distance along the line from the current vertex. it should be positive, but
+                        // not necessarily lte 1
+                        var t = currentDot / lineDotSweep;
+                        result.Add(lineDir.Dot(current.Coordinates + t * lineUnitDir), line);
+                    }
+                    current = next;
+                    currentDot = nextDot;
+                } while (current != startVertex);
+            }
+            return result;
+        }
+
 
         /// <summary>
         /// Find all the polygon intersection points along vertical lines.

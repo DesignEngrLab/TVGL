@@ -28,6 +28,15 @@ namespace TVGL
         /// </summary>
         /// <param name="polygons">The polygons.</param>
         /// <returns>Polygon.</returns>
+        public static Polygon LargestAbsAreaPolygon(this IEnumerable<Polygon> polygons)
+        {
+            return polygons.MaxBy(p => Math.Abs(p.Area));
+        }
+        /// <summary>
+        /// Get the largest polygon by net area from the collections of polygons
+        /// </summary>
+        /// <param name="polygons">The polygons.</param>
+        /// <returns>Polygon.</returns>
         public static Polygon LargestPolygon(this IEnumerable<Polygon> polygons)
         {
             return polygons.MaxBy(p => p.Area);
