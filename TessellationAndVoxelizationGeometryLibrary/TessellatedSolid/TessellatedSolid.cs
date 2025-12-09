@@ -339,8 +339,9 @@ namespace TVGL
 
             var jsonSerializer = new Newtonsoft.Json.JsonSerializer();
             reader.Read();
-            //When the reader TokenType is None, then the reader has finished.
-            while (reader.TokenType != JsonToken.None)
+            //Since we are reading in a SolidAssembly, each call to this StreamRead function
+            //is an object. We need to end on the object. NOT read until NONE.
+            while (reader.TokenType != JsonToken.EndObject)
             {
                 if (reader.TokenType != JsonToken.PropertyName)
                 {

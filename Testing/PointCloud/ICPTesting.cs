@@ -32,8 +32,8 @@ namespace TVGLUnitTestsAndBenchmarking
             var transfrom = Matrix4x4.CreateFromQuaternion(quat) * translate;
             var targetPoints = points.Select(p => p.Transform(transfrom)).ToList();
             var tPredicted = IterativeClosestPoint3D.Run(points, targetPoints);
-            Global.Logger.LogInformation(transfrom.ToString());
-            Global.Logger.LogInformation(tPredicted.ToString());
+            OutputServices.Logger.LogInformation(transfrom.ToString());
+            OutputServices.Logger.LogInformation(tPredicted.ToString());
         }
         public static void TestPoints(DirectoryInfo dir)
         {

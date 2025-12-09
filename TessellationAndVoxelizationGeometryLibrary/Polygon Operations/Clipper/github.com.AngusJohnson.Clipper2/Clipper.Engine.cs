@@ -13,6 +13,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 
 namespace Clipper2Lib
@@ -1837,8 +1838,12 @@ namespace Clipper2Lib
       _cliptype = ct;
       Reset();
       if (!PopScanline(out long y)) return;
+        var stopwatch = new Stopwatch();
+        stopwatch.Start();
       while (_succeeded)
       {
+        if(stopwatch.Elapsed.TotalSeconds > 10)
+            throw new Exception("Infinite loop in clipper. Should never take over 10 seconds.");
         InsertLocalMinimaIntoAEL(y);
         Active? ae;
         while (PopHorz(out ae)) DoHorizontal(ae!);
