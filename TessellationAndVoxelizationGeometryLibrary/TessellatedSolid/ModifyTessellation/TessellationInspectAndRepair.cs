@@ -1468,7 +1468,7 @@ namespace TVGL
             foreach (var prim in solid.Primitives)
                 if (prim.BorderSegments != null) prim.BorderSegments.Clear();
                 else prim.BorderSegments = new List<BorderSegment>();
-
+ 
             //Gather the edges into border segments. Only use solid.NonsmoothEdges if it has been set and is not null or empty.
             IEnumerable<BorderSegment> borderSegments;
             if (solid.NonsmoothEdges != null && solid.NonsmoothEdges.Count > 0)
@@ -1608,7 +1608,7 @@ namespace TVGL
         public static void CharacterizeBorders(TessellatedSolid solid, bool forceRerun = false)
         {
             //Already defined. Probably didn't mean to call this again.
-            if (!forceRerun && solid.BordersDefined) return;
+            if (!forceRerun && solid.BordersCharacterized) return;
 
             foreach (var primitive in solid.Primitives)
                 foreach (var border in primitive.Borders)
