@@ -23,16 +23,12 @@ namespace Benchmarking
                 var radius = 0.1 + 4 * r.NextDouble();
                 var run = radius * Math.Cos(angle);
                 var rise = radius * Math.Sin(angle);
-            }
+        }
 
         [Benchmark]
         public double ATan2() => Math.Atan2(rise, run);
 
-        [Benchmark]
-        public double PseudoAngle() => Global.Pseudoangle(run, rise);
-
-
-
+        //[Benchmark]
+        //public double PseudoAngle() => Global.Pseudoangle(run, rise);
     }
-
 }
