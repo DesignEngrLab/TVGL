@@ -15,9 +15,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
-using System.Reflection;
 using System.Runtime.Serialization;
 
 namespace TVGL
@@ -43,6 +41,7 @@ namespace TVGL
                 return numberOfSolidBodies;
             }
         }
+        private int numberOfSolidBodies = -1;
 
         //If a CAD model was healed, the converter may still list the body as a sheet.
         //Otherwise, if there are a mix of sheet and solid bodies, there may be an issue
@@ -56,6 +55,7 @@ namespace TVGL
                 return numberOfSheetBodies;
             }
         }
+        private int numberOfSheetBodies = -1;
         /// <summary>
         /// Gets or sets the root assembly.
         /// </summary>
@@ -229,6 +229,8 @@ namespace TVGL
                 */
             }
             assembly.Solids = solids.Values.ToArray();
+            foreach (var solid in assembly.Solids)
+                assembly.RootAssembly.Add(solid, Matrix4x4.Identity);
             assembly.RootAssembly.SetGlobalAssembly(assembly);
         }
 
@@ -270,8 +272,6 @@ namespace TVGL
         /// </summary>
         [JsonExtensionData]
         protected IDictionary<string, JToken> serializationData;
-        private int numberOfSolidBodies = -1;
-        private int numberOfSheetBodies = -1;
     }
 
     //A wrapper class for solids that recursively contains subassemblies and solid parts. 

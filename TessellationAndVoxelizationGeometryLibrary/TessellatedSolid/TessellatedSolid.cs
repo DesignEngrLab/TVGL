@@ -236,6 +236,9 @@ namespace TVGL
             writer.WritePropertyName("Volume");
             writer.WriteValue(Volume);
 
+            writer.WritePropertyName("Units");
+            writer.WriteValue(Units.ToString());
+
             writer.WritePropertyName("SurfaceArea");
             writer.WriteValue(SurfaceArea);
 
@@ -368,6 +371,9 @@ namespace TVGL
                         break;
                     case "Volume":
                         ts.Volume = (double)reader.ReadAsDouble();
+                        break;
+                    case "Units":
+                        ts.Units = Enum.Parse<UnitType>(reader.ReadAsString());
                         break;
                     case "NumberOfVertices":
                         ts.NumberOfVertices = (int)reader.ReadAsInt32();
