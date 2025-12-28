@@ -22,45 +22,46 @@ using Microsoft.Extensions.Logging;
 namespace TVGL
 {
     /// <summary>
-    /// Class VoxelizedSparseDense.
+    /// Represents a solid object composed of a grid of voxels.
+    /// This class uses a hybrid sparse/dense representation to efficiently store voxel data.
     /// </summary>
     public partial class VoxelizedSolid : Solid, IEnumerable<(int xIndex, int yIndex, int zIndex)>, IEquatable<VoxelizedSolid>
     {
         #region Properties
 
         /// <summary>
-        /// Gets the voxels.
+        /// Gets the internal array of voxel rows, which can be sparse or dense.
         /// </summary>
-        /// <value>The voxels.</value>
+        /// <value>The array of voxel rows.</value>
         internal VoxelRowBase[] voxels { get; private set; }
 
         /// <summary>
-        /// Gets the count.
+        /// Gets the total number of "on" voxels in the solid.
         /// </summary>
-        /// <value>The count.</value>
+        /// <value>The number of active voxels.</value>
         public long Count { get; private set; }
 
         /// <summary>
-        /// Gets the voxels per side.
+        /// Gets the number of voxels along the X, Y, and Z dimensions.
         /// </summary>
-        /// <value>The voxels per side.</value>
+        /// <value>An array containing the number of voxels per side [X, Y, Z].</value>
         public int[] VoxelsPerSide => new int[] { numVoxelsX, numVoxelsY, numVoxelsZ };
         /// <summary>
-        /// Gets the voxel bounds.
+        /// Gets the integer-based bounds of the voxels [min x, min y, min z] and [max x, max y, max z].
         /// </summary>
-        /// <value>The voxel bounds.</value>
+        /// <value>The voxel index bounds.</value>
         public int[][] VoxelBounds { get; }
         /// <summary>
-        /// Gets the length of the voxel side.
+        /// Gets the side length of a single, cubic voxel.
         /// </summary>
-        /// <value>The length of the voxel side.</value>
+        /// <value>The side length of a voxel.</value>
         public double VoxelSideLength { get; private set; }
 
         private double inverseVoxelSideLength;
         /// <summary>
-        /// Gets the dimensions.
+        /// Gets the total dimensions of the solid's bounding box.
         /// </summary>
-        /// <value>The dimensions.</value>
+        /// <value>The dimensions as a Vector3.</value>
         public Vector3 Dimensions { get; private set; }
         /// <summary>
         /// Gets the offset.
@@ -105,10 +106,13 @@ namespace TVGL
 
 
         /// <summary>
-        /// Copies this instance. Note, that this overrides the base class, Solid. You may need to
-        /// cast it to VoxelizedSolid in your code. E.g., var copyOfVS = (VoxelizedSolid)vs.copy;
+        /// Creates a deep copy of the VoxelizedSolid.
         /// </summary>
-        /// <returns>Solid.</returns>
+        /// <returns>A new VoxelizedSolid instance that is a complete copy of the original.</returns>
+        /// <remarks>
+        /// This method creates a new VoxelizedSolid and copies all voxel data and properties.
+        /// This is the recommended way to duplicate a voxelized solid before performing a destructive operation.
+        /// </remarks>
         public VoxelizedSolid Copy()
         {
             var copy = new VoxelizedSolid
@@ -131,12 +135,18 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Create a voxelized solid from a tessellated solid.
+        /// Creates a VoxelizedSolid from a TessellatedSolid by defining the number of voxels for the longest side of the solid's bounding box.
         /// </summary>
-        /// <param name="ts"></param>
-        /// <param name="voxelsOnLongSide"></param>
-        /// <param name="bounds"></param>
-        /// <returns></returns>
+        /// <param name="ts">The source TessellatedSolid.</param>
+        /// <param name="voxelsOnLongSide">The desired number of voxels along the longest dimension of the solid.</param>
+        /// <param name="bounds">Optional: A custom bounding box to voxelize within. If null, the bounds of the TessellatedSolid are used.</param>
+        /// <returns>A new VoxelizedSolid.</returns>
+        /// <remarks>
+        /// This method automatically calculates the appropriate voxel side length to match the specified resolution.
+        /// It then performs a slicing operation for each Z-layer to determine which voxels are "on" or "off".
+        /// This is the most common and user-friendly way to create a voxel representation from a mesh.
+        /// Common search terms: "mesh to voxels", "voxelize solid", "convert ts to vs".
+        /// </remarks>
         public static VoxelizedSolid CreateFrom(TessellatedSolid ts, int voxelsOnLongSide, IReadOnlyList<Vector3> bounds = null)
         {
             var copy = new VoxelizedSolid();
@@ -161,12 +171,17 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Create a voxelized solid from a tessellated solid.
+        /// Creates a VoxelizedSolid from a TessellatedSolid by defining a specific voxel side length.
         /// </summary>
-        /// <param name="ts"></param>
-        /// <param name="voxelSideLength"></param>
-        /// <param name="bounds"></param>
-        /// <returns></returns>
+        /// <param name="ts">The source TessellatedSolid.</param>
+        /// <param name="voxelSideLength">The desired side length for each cubic voxel.</param>
+        /// <param name="bounds">Optional: A custom bounding box to voxelize within. If null, the bounds of the TessellatedSolid are used.</param>
+        /// <returns>A new VoxelizedSolid.</returns>
+        /// <remarks>
+        /// This method gives you direct control over the size of the voxels. The number of voxels per side will be determined by the solid's dimensions and the provided side length.
+        /// It then performs a slicing operation for each Z-layer to fill in the solid.
+        /// Common search terms: "mesh to voxels", "voxelize with size", "convert ts to vs".
+        /// </remarks>
         public static VoxelizedSolid CreateFrom(TessellatedSolid ts, double voxelSideLength, IReadOnlyList<Vector3> bounds = null)
         {
             var copy = new VoxelizedSolid();

@@ -8,62 +8,65 @@ using System.Linq;
 namespace TVGL
 {
     /// <summary>
-    /// Class TessellatedSolid.
+    /// Represents a solid object defined by a collection of triangular faces (a tessellation).
     /// </summary>
-    /// <tags>help</tags>
-    /// <remarks>This is the currently the <strong>main</strong> class within TVGL all filetypes are read in as a TessellatedSolid,
-    /// and
-    /// all interesting operations work on the TessellatedSolid.</remarks>
+    /// <remarks>
+    /// The TessellatedSolid is the primary representation for 3D objects in TVGL. It stores the geometry as a mesh of vertices, edges, and triangular faces.
+    /// Most file types are imported as a TessellatedSolid, and it's the foundation for most geometric operations like slicing, boolean operations, and analysis.
+    /// </remarks>
     public partial class TessellatedSolid : Solid
     {
         #region Fields and Properties
         /// <summary>
-        /// Gets or sets the tessellation error.
+        /// Gets or sets the allowable error in the tessellation. This can represent the deviation from a perfect, smooth surface.
         /// </summary>
         /// <value>The tessellation error.</value>
         public double TessellationError { get; set; } = Constants.DefaultTessellationError;
 
         /// <summary>
-        /// Generally we don't want to mix solid and sheet bodies when importing CAD files.
+        /// Gets or sets a value indicating whether the source geometry for this solid was a sheet body (an open surface) rather than a closed solid.
         /// </summary>
         [JsonIgnore]
         public bool SourceIsSheetBody { get; set; } = false;
 
         /// <summary>
-        /// Used to avoid unnecessary re-checking of primitives via complex optimization methods.
+        /// Gets or sets a value indicating whether primitive shapes (like planes, cylinders, etc.) have been identified for this solid.
+        /// This is used internally to avoid redundant calculations.
         /// </summary>
         public bool PrimitivesDetermined { get; set; } = false;
 
         /// <summary>
-        /// Used to avoid unnecessary duplication of border creation
+        /// Gets or sets a value indicating whether the borders of primitive surfaces have been defined.
+        /// This is used internally to avoid redundant calculations.
         /// </summary>
         [JsonIgnore]
         public bool BordersDefined { get; set; } = false;
 
         /// <summary>
-        /// Used to avoid unnecessary duplication of border characterization
+        /// Gets or sets a value indicating whether the borders of primitive surfaces have been fully characterized (e.g., as circular, linear).
+        /// This is used internally to avoid redundant calculations.
         /// </summary>
         [JsonIgnore]
         public bool BordersCharacterized { get; set; } = false;
 
         /// <summary>
-        /// Gets the faces.
+        /// Gets the array of triangular faces that make up the solid's surface mesh.
         /// </summary>
-        /// <value>The faces.</value>
+        /// <value>The array of faces.</value>
         [JsonIgnore]
         public TriangleFace[] Faces { get; set; }
 
         /// <summary>
-        /// Gets the edges.
+        /// Gets the array of edges that form the boundaries of the faces.
         /// </summary>
-        /// <value>The edges.</value>
+        /// <value>The array of edges.</value>
         [JsonIgnore]
         public Edge[] Edges { get; internal set; }
 
         /// <summary>
-        /// Gets the vertices.
+        /// Gets the array of vertices that define the corners of the faces.
         /// </summary>
-        /// <value>The vertices.</value>
+        /// <value>The array of vertices.</value>
         [JsonIgnore]
         public Vertex[] Vertices { get; set; }
 
@@ -96,38 +99,40 @@ namespace TVGL
         public int NumberOfPrimitives { get; set; }
 
         /// <summary>
-        /// Errors in the tesselated solid
+        /// Gets the object responsible for inspecting the tessellation for errors and performing repair operations.
         /// </summary>
-        /// <value>The errors.</value>
+        /// <value>The errors object.</value>
         [JsonIgnore]
         public TessellationInspectAndRepair Errors { get; internal set; }
 
         /// <summary>
-        /// Gets or sets the nonsmooth edges, which are the edges that do not exhibit C1 or C2 continuity.
+        /// Gets or sets the list of non-smooth edges. These are edges that represent sharp creases or corners in the model,
+        /// where the surface is not C1 or C2 continuous.
         /// </summary>
-        /// <value>The nonsmooth edges.</value>
+        /// <value>The list of non-smooth edges.</value>
         [JsonIgnore]
         public List<Edge>? NonsmoothEdges { get; set; }
         #endregion
 
         #region Constructors
         /// <summary>
-        /// Initializes a new instance of the <see cref="TessellatedSolid" /> class.
+        /// Initializes a new, empty instance of the <see cref="TessellatedSolid" /> class.
         /// </summary>
         public TessellatedSolid() { }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="TessellatedSolid" /> class. This is the one that
-        /// matches with the STL format.
+        /// Initializes a new instance of the <see cref="TessellatedSolid"/> class from a collection of vertices for each face.
+        /// This constructor is particularly useful for formats like STL where faces are defined by the explicit coordinates of their three vertices.
         /// </summary>
-        /// <param name="vertsPerFace">The verts per face.</param>
-        /// <param name="createFullVersion">if set to <c>true</c> [make edges].</param>
-        /// <param name="colors">The colors.</param>
-        /// <param name="units">The units.</param>
-        /// <param name="name">The name.</param>
-        /// <param name="filename">The filename.</param>
-        /// <param name="comments">The comments.</param>
-        /// <param name="language">The language.</param>
+        /// <param name="vertsPerFace">An enumerable of tuples, where each tuple contains the three vertices of a single face.</param>
+        /// <param name="numOfFaces">The total number of faces. If -1, it will be counted from the enumerable.</param>
+        /// <param name="colors">A list of colors to apply to the faces.</param>
+        /// <param name="buildOptions">Options for building the solid, such as whether to perform automatic repairs.</param>
+        /// <param name="units">The units of the solid's geometry.</param>
+        /// <param name="name">The name of the solid.</param>
+        /// <param name="filename">The original filename of the solid.</param>
+        /// <param name="comments">A list of comments associated with the solid.</param>
+        /// <param name="language">The language of the comments.</param>
         public TessellatedSolid(IEnumerable<(Vector3, Vector3, Vector3)> vertsPerFace, int numOfFaces, IList<Color> colors,
             TessellatedSolidBuildOptions buildOptions = null, UnitType units = UnitType.unspecified,
             string name = "", string filename = "", List<string> comments = null, string language = "")
@@ -159,18 +164,18 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="TessellatedSolid" /> class. This matches with formats
-        /// that use indices to the vertices (almost everything except STL).
+        /// Initializes a new instance of the <see cref="TessellatedSolid"/> class from a list of vertex coordinates and a list of face indices.
+        /// This is the standard constructor for most mesh file formats (e.g., OBJ, 3MF) that define a list of vertices and then refer to them by index to create faces.
         /// </summary>
-        /// <param name="vertices">The vertices.</param>
-        /// <param name="faceToVertexIndices">The face to vertex indices.</param>
-        /// <param name="createFullVersion">if set to <c>true</c> [make edges].</param>
-        /// <param name="colors">The colors.</param>
-        /// <param name="units">The units.</param>
-        /// <param name="name">The name.</param>
-        /// <param name="filename">The filename.</param>
-        /// <param name="comments">The comments.</param>
-        /// <param name="language">The language.</param>
+        /// <param name="vertices">A collection of the unique vertex coordinates.</param>
+        /// <param name="faceToVertexIndices">A collection of tuples, where each tuple contains the three zero-based indices of the vertices that form a single face.</param>
+        /// <param name="colors">A list of colors to apply to the faces.</param>
+        /// <param name="buildOptions">Options for building the solid, such as whether to perform automatic repairs.</param>
+        /// <param name="units">The units of the solid's geometry.</param>
+        /// <param name="name">The name of the solid.</param>
+        /// <param name="filename">The original filename of the solid.</param>
+        /// <param name="comments">A list of comments associated with the solid.</param>
+        /// <param name="language">The language of the comments.</param>
         public TessellatedSolid(ICollection<Vector3> vertices, ICollection<(int, int, int)> faceToVertexIndices,
             IList<Color> colors, TessellatedSolidBuildOptions buildOptions = null, UnitType units = UnitType.unspecified,
             string name = "", string filename = "", List<string> comments = null, string language = "")
@@ -179,19 +184,20 @@ namespace TVGL
         { }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="TessellatedSolid"/> class.
+        /// Initializes a new instance of the <see cref="TessellatedSolid"/> class from enumerables of vertex coordinates and face indices.
+        /// This is a more general-purpose version of the indexed vertex constructor.
         /// </summary>
-        /// <param name="vertices">The vertices.</param>
-        /// <param name="numOfVertices">The number of vertices.</param>
-        /// <param name="faceToVertexIndices">The face to vertex indices.</param>
-        /// <param name="numOfFaces">The number of faces.</param>
-        /// <param name="colors">The colors.</param>
-        /// <param name="buildOptions">The build options.</param>
-        /// <param name="units">The units.</param>
-        /// <param name="name">The name.</param>
-        /// <param name="filename">The filename.</param>
-        /// <param name="comments">The comments.</param>
-        /// <param name="language">The language.</param>
+        /// <param name="vertices">An enumerable of the unique vertex coordinates.</param>
+        /// <param name="numOfVertices">The total number of vertices.</param>
+        /// <param name="faceToVertexIndices">An enumerable of tuples, where each tuple contains the three zero-based indices for a face.</param>
+        /// <param name="numOfFaces">The total number of faces.</param>
+        /// <param name="colors">A list of colors to apply to the faces.</param>
+        /// <param name="buildOptions">Options for building the solid, such as whether to perform automatic repairs.</param>
+        /// <param name="units">The units of the solid's geometry.</param>
+        /// <param name="name">The name of the solid.</param>
+        /// <param name="filename">The original filename of the solid.</param>
+        /// <param name="comments">A list of comments associated with the solid.</param>
+        /// <param name="language">The language of the comments.</param>
         public TessellatedSolid(IEnumerable<Vector3> vertices, int numOfVertices,
             IEnumerable<(int, int, int)> faceToVertexIndices, int numOfFaces,
             IList<Color> colors, TessellatedSolidBuildOptions buildOptions = null, UnitType units = UnitType.unspecified,
@@ -1359,9 +1365,14 @@ namespace TVGL
         #region Copy Function
 
         /// <summary>
-        /// Copies this instance.
+        /// Creates a deep copy of the tessellated solid.
         /// </summary>
-        /// <returns>TessellatedSolid.</returns>
+        /// <returns>A new TessellatedSolid instance that is a complete copy of the original.</returns>
+        /// <remarks>
+        /// This method creates new instances of all faces, vertices, and edges, ensuring that the new solid is entirely independent of the original.
+        /// It also copies properties like primitives, colors, and units. This is the recommended way to duplicate a solid before performing a destructive operation.
+        /// Common search terms: "clone solid", "duplicate mesh", "deep copy 3d model".
+        /// </remarks>
         public TessellatedSolid Copy()
         {
             //Copy the solid. Do not check Edges[], rather use _edges, so that MakeEdges() does not get triggered.
@@ -1443,11 +1454,15 @@ namespace TVGL
 
         #region Transform
         /// <summary>
-        /// Translates and Squares Tessellated Solid based on its oriented bounding box.
-        /// The resulting Solid should be located at the origin, and only in the positive X, Y, Z octant.
+        /// Creates a new, transformed version of the solid that is moved to the origin and aligned with the axes based on its oriented bounding box.
+        /// The resulting solid will be in the positive octant.
         /// </summary>
-        /// <param name="originalBoundingBox">The original bounding box.</param>
-        /// <returns>TessellatedSolid.</returns>
+        /// <param name="originalBoundingBox">The calculated minimum oriented bounding box of the original solid.</param>
+        /// <returns>A new, transformed TessellatedSolid.</returns>
+        /// <remarks>
+        /// This method is useful for normalizing a solid's position and orientation, which can simplify subsequent geometric analysis or comparisons.
+        /// Common search terms: "normalize solid", "align mesh to axes", "move solid to origin".
+        /// </remarks>
         public TessellatedSolid SetToOriginAndSquareToNewSolid(out BoundingBox originalBoundingBox)
         {
             originalBoundingBox = this.FindMinimumBoundingBox();
@@ -1465,9 +1480,14 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Transforms the specified transform matrix.
+        /// Applies a 4x4 transformation matrix to the solid, modifying its vertices in place.
         /// </summary>
-        /// <param name="transformMatrix">The transform matrix.</param>
+        /// <param name="transformMatrix">The transformation matrix to apply. This can represent any combination of translation, rotation, and scaling.</param>
+        /// <remarks>
+        * This is a destructive operation that modifies the current solid. *
+        /// After transforming the vertices, it recalculates the bounding box and updates face normals. Cached properties like volume and surface area are cleared.
+        /// Common search terms: "transform mesh", "move solid", "rotate 3d model", "scale solid".
+        /// </remarks>
         public override void Transform(Matrix4x4 transformMatrix)
         {
             var xMin = double.PositiveInfinity;

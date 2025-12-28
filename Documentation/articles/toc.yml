@@ -1,0 +1,11 @@
+- name: How-To Guides
+  href:
+  items:
+  - name: Basic Vector Operations
+    href: basic-vector-operations.md
+  - name: Working with Tessellated Solids
+    href: working-with-tessellated-solids.md
+  - name: Using Primitive Surfaces
+    href: using-primitive-surfaces.md
+  - name: Understanding Voxelized Solids
+    href: understanding-voxelized-solids.md
