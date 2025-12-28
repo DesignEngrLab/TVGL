@@ -28,19 +28,22 @@ using System.Runtime.CompilerServices;
 namespace TVGL
 {
     /// <summary>
-    /// A structure encapsulating a 3D Plane
+    /// Represents an infinite 3D plane primitive.
+    /// A plane is defined by a normal vector and its distance from the origin.
     /// </summary>
     public class Plane : PrimitiveSurface
     {
         /// <summary>
-        /// The normal vector of the Plane.
+        /// The normal vector of the plane. This vector is always normalized (has a length of 1).
+        /// It points "outward" from the solid by convention if the plane is part of a solid's boundary.
         /// </summary>
-        /// <value>The normal.</value>
+        /// <value>The normal vector.</value>
         public Vector3 Normal { get; set; }
+
         /// <summary>
-        /// The distance of the Plane along its normal from the origin.
+        /// The perpendicular distance of the plane from the origin, measured along the normal vector.
         /// </summary>
-        /// <value>The distance to origin.</value>
+        /// <value>The distance from the origin.</value>
         public double DistanceToOrigin { get; set; }
 
 
@@ -101,10 +104,13 @@ namespace TVGL
 
         #region Constructors
         /// <summary>
-        /// Initializes a new instance of the <see cref="Plane" /> class.
+        /// Initializes a new instance of the <see cref="Plane"/> class by fitting it to a collection of faces.
         /// </summary>
-        /// <param name="faces">The faces.</param>
-        /// <param name="connectFacesToPrimitive">if set to <c>true</c> [connect faces to primitive].</param>
+        /// <param name="faces">The collection of faces to fit the plane to.</param>
+        /// <param name="connectFacesToPrimitive">If set to <c>true</c>, the faces in the collection will be linked to this primitive surface.</param>
+        /// <remarks>
+        /// This constructor calculates the best-fit plane for the vertices of the provided faces. The plane's normal is oriented to match the normal of the largest face in the collection.
+        /// </remarks>
         public Plane(IEnumerable<TriangleFace> faces, bool connectFacesToPrimitive = true)
         {
             Vertices = new HashSet<Vertex>(faces.SelectMany(f => f.Vertices).Distinct());
@@ -274,15 +280,15 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="Plane" /> class.
+        /// Initializes a new, empty instance of the <see cref="Plane"/> class.
         /// </summary>
         public Plane() { }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="Plane" /> class.
+        /// Initializes a new instance of the <see cref="Plane"/> class with a specified distance from the origin and a normal vector.
         /// </summary>
-        /// <param name="distanceToOrigin">The distance to origin.</param>
-        /// <param name="normal">The normal.</param>
+        /// <param name="distanceToOrigin">The perpendicular distance from the origin to the plane.</param>
+        /// <param name="normal">The normal vector of the plane. This will be normalized.</param>
         public Plane(double distanceToOrigin, Vector3 normal) : this()
         {
             Normal = normal.Normalize();
@@ -290,10 +296,13 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="Plane" /> class.
+        /// Initializes a new instance of the <see cref="Plane"/> class defined by a point on the plane and the plane's normal vector.
         /// </summary>
-        /// <param name="pointOnPlane">a point on plane.</param>
-        /// <param name="normal">The normal.</param>
+        /// <param name="pointOnPlane">A 3D point that lies on the plane.</param>
+        /// <param name="normal">The normal vector of the plane. This will be normalized.</param>
+        /// <remarks>
+        /// From the point and normal, the distance from the origin is calculated. The normal is oriented to ensure the distance is positive.
+        /// </remarks>
         public Plane(Vector3 pointOnPlane, Vector3 normal) : this()
         {
             Normal = normal.Normalize();
@@ -331,12 +340,17 @@ namespace TVGL
 
         #endregion
         /// <summary>
-        /// Creates a Plane that contains the three given points.
+        /// Creates a Plane object that passes through three given points.
         /// </summary>
-        /// <param name="point1">The first point defining the Plane.</param>
-        /// <param name="point2">The second point defining the Plane.</param>
-        /// <param name="point3">The third point defining the Plane.</param>
-        /// <returns>The Plane containing the three points.</returns>
+        /// <param name="point1">The first point on the plane.</param>
+        /// <param name="point2">The second point on the plane.</param>
+        /// <param name="point3">The third point on the plane.</param>
+        /// <returns>A new Plane object.</returns>
+        /// <remarks>
+        /// The normal of the plane is determined by the cross product of the vectors (point2 - point1) and (point3 - point1).
+        /// This defines the plane's orientation according to the right-hand rule.
+        /// Common search terms: "plane from three points", "define plane with points".
+        /// </remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Plane CreateFromVertices(Vector3 point1, Vector3 point2, Vector3 point3)
         {
@@ -468,11 +482,11 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Calculates the dot product of a Plane and Vector4.
+        /// Calculates the perpendicular distance from the plane to a given 3D point. This is the same as the `DistanceToPoint` method.
         /// </summary>
-        /// <param name="plane">The Plane.</param>
-        /// <param name="value">The Vector4.</param>
-        /// <returns>The dot product.</returns>
+        /// <param name="plane">The plane.</param>
+        /// <param name="value">The 3D point.</param>
+        /// <returns>The signed distance from the plane to the point.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static double DotCoordinate(Plane plane, Vector3 value)
         {
@@ -483,11 +497,12 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Returns the dot product of a specified Vector3 and the Normal vector of this Plane.
+        /// Calculates the dot product of the plane's normal vector with a given 3D vector.
+        /// This is useful for determining the angle between the vector and the plane.
         /// </summary>
         /// <param name="plane">The plane.</param>
-        /// <param name="value">The Vector3.</param>
-        /// <returns>The resulting dot product.</returns>
+        /// <param name="value">The 3D vector.</param>
+        /// <returns>The dot product of the plane's normal and the vector.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static double DotNormal(Plane plane, Vector3 value)
         {

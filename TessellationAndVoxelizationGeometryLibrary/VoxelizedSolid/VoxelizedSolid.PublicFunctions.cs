@@ -30,10 +30,14 @@ namespace TVGL
         #region Boolean functions
         // NOT A
         /// <summary>
-        /// Inverts to new solid. This is a boolean function when all empty voxels in the bounds
-        /// of the solid are made full, and all full are made empty. It is essentially a negation operation.
+        /// Creates a new solid that is the boolean inversion (NOT operation) of the current solid.
+        /// All "on" voxels become "off", and all "off" voxels within the bounding box become "on".
         /// </summary>
-        /// <returns>VoxelizedSolid.</returns>
+        /// <returns>A new VoxelizedSolid representing the inversion.</returns>
+        /// <remarks>
+        /// This operation is equivalent to taking the bounding box of the solid and subtracting the solid from it.
+        /// Common search terms: "invert solid", "negate voxels", "boolean not".
+        /// </remarks>
         public VoxelizedSolid InvertToNewSolid()
         {
             var vs = Copy();
@@ -42,9 +46,13 @@ namespace TVGL
         }
         // NOT A
         /// <summary>
-        /// Inverts this instance. This is a boolean function when all empty voxels in the bounds
-        /// of the solid are made full, and all full are made empty. It is essentially a negation operation.
+        /// Performs an in-place boolean inversion (NOT operation) of the current solid.
+        /// All "on" voxels become "off", and all "off" voxels within the bounding box become "on".
         /// </summary>
+        /// <remarks>
+        /// This is a destructive operation that modifies the current solid.
+        /// Common search terms: "invert solid", "negate voxels", "boolean not".
+        /// </remarks>
         public void Invert()
         {
             UpdateToAllSparse();
@@ -54,11 +62,15 @@ namespace TVGL
 
         // A OR B
         /// <summary>
-        /// Unions to new solid. This is a boolean function that returns a union or OR operation on all
-        /// the voxels of the presented solids. Note, that solids should have same bounds for correctness.
+        /// Creates a new solid that is the boolean union (OR operation) of this solid and one or more other solids.
+        /// A voxel will be "on" in the new solid if it is "on" in *any* of the input solids.
         /// </summary>
-        /// <param name="solids">The solids.</param>
-        /// <returns>VoxelizedSolid.</returns>
+        /// <param name="solids">An array of VoxelizedSolids to union with this one.</param>
+        /// <returns>A new VoxelizedSolid representing the union.</returns>
+        /// <remarks>
+        /// For a correct union, all solids should have the same voxel side length and be aligned (i.e., have the same transform and bounds).
+        /// Common search terms: "voxel union", "combine solids", "boolean OR".
+        /// </remarks>
         public VoxelizedSolid UnionToNewSolid(params VoxelizedSolid[] solids)
         {
             var vs = Copy();
@@ -85,11 +97,15 @@ namespace TVGL
 
         // A AND B
         /// <summary>
-        /// Intersects to new solid. This is a boolean function that returns an intersection or AND operation on all
-        /// the voxels of the presented solids. Note, that solids should have same bounds for correctness.
+        /// Creates a new solid that is the boolean intersection (AND operation) of this solid and one or more other solids.
+        /// A voxel will be "on" in the new solid only if it is "on" in *all* of the input solids.
         /// </summary>
-        /// <param name="solids">The solids.</param>
-        /// <returns>VoxelizedSolid.</returns>
+        /// <param name="solids">An array of VoxelizedSolids to intersect with this one.</param>
+        /// <returns>A new VoxelizedSolid representing the intersection.</returns>
+        /// <remarks>
+        /// For a correct intersection, all solids should have the same voxel side length and be aligned.
+        /// Common search terms: "voxel intersection", "common volume", "boolean AND".
+        /// </remarks>
         public VoxelizedSolid IntersectToNewSolid(params VoxelizedSolid[] solids)
         {
             var vs = Copy();
@@ -149,19 +165,17 @@ namespace TVGL
         #endregion
 
         #region Slice Voxel Solids
-        // If direction is negative, the negative side solid is in position one of return tuple
-        // If direction is positive, the positive side solid is in position one of return tuple
-        // distance is the zero-based index of voxel-plane to cut before
-        // i.e. distance = 8, would yield one solid with voxels 0 to 7, and one with 8 to end
-        // 0 < distance < VoxelsPerSide[cut direction]
         /// <summary>
-        /// Slices this solid into two voxelized solids given the plane defined as aligning with
-        /// the cartesian axis of the voxelized solid.
+        /// Slices the solid into two new solids along a plane aligned with one of the Cartesian axes.
         /// </summary>
-        /// <param name="vd">The vd.</param>
-        /// <param name="distance">The distance.</param>
-        /// <returns>System.ValueTuple&lt;VoxelizedSolid, VoxelizedSolid&gt;.</returns>
-        /// <exception cref="System.ArgumentOutOfRangeException"></exception>
+        /// <param name="vd">The Cartesian direction indicating the slicing plane's normal (e.g., XPositive for a plane with normal +X).</param>
+        /// <param name="distance">The zero-based index of the voxel plane to cut before. For example, a distance of 8 will split the solid into voxels 0-7 and voxels 8 to the end.</param>
+        /// <returns>A tuple containing two new VoxelizedSolids. The order depends on the direction: for a positive direction, the solid on the positive side of the plane is first.</returns>
+        /// <exception cref="System.ArgumentOutOfRangeException">Thrown if the distance is outside the valid range of voxel indices.</exception>
+        /// <remarks>
+        /// This is a highly efficient way to cut a voxelized solid, as it operates directly on the voxel rows and indices.
+        /// Common search terms: "cut voxel solid", "split solid", "axis-aligned slice".
+        /// </remarks>
         public (VoxelizedSolid, VoxelizedSolid) SliceOnPlane(CartesianDirections vd, int distance)
         {
             if (distance >= VoxelsPerSide[Math.Abs((int)vd) - 1] || distance < 1)
@@ -214,13 +228,16 @@ namespace TVGL
             return (vs1, vs2);
         }
 
-        // Solid on positive side of flat is in position one of return tuple
-        // Voxels exactly on the plane are assigned to the positive side
         /// <summary>
-        /// Slices this solid into two voxelized solids given any provided plane.
+        /// Slices the solid into two new solids along an arbitrary plane.
         /// </summary>
-        /// <param name="plane">The plane.</param>
-        /// <returns>System.ValueTuple&lt;VoxelizedSolid, VoxelizedSolid&gt;.</returns>
+        /// <param name="plane">The plane to slice the solid with.</param>
+        /// <returns>A tuple containing two new VoxelizedSolids. The first solid is on the positive side of the plane (the side the normal points to).</returns>
+        /// <remarks>
+        /// This method iterates through the voxel grid and determines which side of the plane each voxel's center lies on. Voxels lying exactly on the plane are assigned to the positive side.
+        /// This is more computationally intensive than an axis-aligned slice.
+        /// Common search terms: "cut solid with plane", "arbitrary slice", "planar cut".
+        /// </remarks>
         public (VoxelizedSolid, VoxelizedSolid) SliceOnPlane(Plane plane)
         {
             var vs1 = Copy();
@@ -278,12 +295,16 @@ namespace TVGL
 
         #region Draft in VoxelDirection
         /// <summary>
-        /// Drafts or extrudes the solid in specified direction. This means that the side of the
-        /// part opposite the direction will be like the origial and the side facing the direction
-        /// will be flat - as if extrude (playdoh style) in the specified direction.
+        /// Creates a new solid by drafting (extruding) the current solid along a Cartesian direction.
+        /// All voxels are projected onto the plane perpendicular to the draft direction.
         /// </summary>
-        /// <param name="direction">The direction.</param>
-        /// <returns>VoxelizedSolid.</returns>
+        /// <param name="direction">The Cartesian direction to draft along.</param>
+        /// <returns>A new, drafted VoxelizedSolid.</returns>
+        /// <remarks>
+        /// This is like shining a flashlight from the specified direction and filling in all the shadows. The resulting solid will have a flat face on the side it was drafted towards.
+        /// This is useful for creating mold patterns or checking for undercuts in manufacturing.
+        /// Common search terms: "extrude voxels", "draft analysis", "projected volume".
+        /// </remarks>
         public VoxelizedSolid DraftToNewSolid(CartesianDirections direction)
         {
             var vs = Copy();

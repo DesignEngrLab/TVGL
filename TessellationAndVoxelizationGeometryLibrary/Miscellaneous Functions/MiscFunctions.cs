@@ -24,6 +24,24 @@ namespace TVGL
     /// </summary>
     public static partial class MiscFunctions
     {
+        /// <summary>
+        /// Calculates the average normal vector of a collection of triangle faces.
+        /// </summary>
+        /// <param name="faces">The collection of triangle faces.</param>
+        /// <param name="weightedByFaceArea">If set to <c>true</c>, the average is weighted by the area of each face. Larger faces will have a greater influence on the resulting normal.</param>
+        /// <returns>A normalized Vector3 representing the average normal.</returns>
+        /// <remarks>
+        /// This method is useful for determining the general orientation of a surface patch or a set of faces.
+        /// For example, it can be used to approximate the normal of a curved surface at a certain point by averaging the normals of the surrounding faces.
+        /// Common search terms: "average normal", "surface orientation", "mean normal vector".
+        /// </remarks>
+        /// <example>
+        /// <code>
+        /// var faces = new List<TriangleFace> { face1, face2, face3 };
+        /// var averageNormal = faces.AverageFaceNormals();
+        /// var weightedAverageNormal = faces.AverageFaceNormals(true);
+        /// </code>
+        /// </example>
         public static Vector3 AverageFaceNormals(this IEnumerable<TriangleFace> faces, bool weightedByFaceArea = false)
         {
             if (weightedByFaceArea)
@@ -44,11 +62,27 @@ namespace TVGL
         #region Sort Along Direction
 
         /// <summary>
-        /// Returns a list of sorted locations along a set direction.
+        /// Sorts a collection of vertices along a given direction vector.
         /// </summary>
-        /// <param name="vertices">The locations.</param>
-        /// <param name="direction">The directions.</param>
-        /// <param name="sortedVertices">The sorted locations.</param>
+        /// <param name="vertices">The collection of vertices to sort.</param>
+        /// <param name="direction">The direction vector to sort along.</param>
+        /// <param name="sortedVertices">An output list of tuples, where each tuple contains the original vertex and its projected distance along the direction vector. The list is sorted by this distance in ascending order.</param>
+        /// <remarks>
+        /// This method projects each vertex onto the direction vector to get a scalar distance. It then sorts the vertices based on these distances.
+        /// This is useful for tasks like finding the extreme points of a shape in a particular direction or for spatial partitioning algorithms.
+        /// Common search terms: "sort points along vector", "project and sort vertices", "directional sort".
+        /// </remarks>
+        /// <example>
+        /// <code>
+        /// var vertices = new List<Vertex> { v1, v2, v3 };
+        /// var direction = new Vector3(1, 0, 0);
+        /// vertices.SortAlongDirection(direction, out var sortedVertices);
+        /// foreach (var (vertex, distance) in sortedVertices)
+        /// {
+        ///     Console.WriteLine($"Vertex at {vertex.Coordinates} is at distance {distance}");
+        /// }
+        /// </code>
+        /// </example>
         public static void SortAlongDirection(this IEnumerable<Vertex> vertices,
             Vector3 direction,
             out List<(Vertex, double)> sortedVertices)
@@ -65,11 +99,27 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Returns a list of sorted locations along a set direction.
+        /// Sorts a collection of 3D vectors along a given direction vector.
         /// </summary>
-        /// <param name="vertices">The locations.</param>
-        /// <param name="direction">The directions.</param>
-        /// <param name="sortedVertices">The sorted locations.</param>
+        /// <param name="vertices">The collection of vectors to sort.</param>
+        /// <param name="direction">The direction vector to sort along.</param>
+        /// <param name="sortedVertices">An output list of tuples, where each tuple contains the original vector and its projected distance along the direction vector. The list is sorted by this distance in ascending order.</param>
+        /// <remarks>
+        /// This method projects each vector onto the direction vector to get a scalar distance. It then sorts the vectors based on these distances.
+        /// This is useful for tasks like finding the extreme points of a shape in a particular direction or for spatial partitioning algorithms.
+        /// Common search terms: "sort points along vector", "project and sort vectors", "directional sort".
+        /// </remarks>
+        /// <example>
+        /// <code>
+        /// var points = new List<Vector3> { p1, p2, p3 };
+        /// var direction = new Vector3(1, 0, 0);
+        /// points.SortAlongDirection(direction, out var sortedPoints);
+        /// foreach (var (point, distance) in sortedPoints)
+        /// {
+        ///     Console.WriteLine($"Point {point} is at distance {distance}");
+        /// }
+        /// </code>
+        /// </example>
         public static void SortAlongDirection(this IEnumerable<Vector3> vertices,
             Vector3 direction,
             out List<(Vector3, double)> sortedVertices)
@@ -86,12 +136,16 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Gets the vertex distances.
+        /// Calculates the projected distances of a collection of vertices along a given direction vector.
         /// </summary>
-        /// <param name="vertices">The vertices.</param>
-        /// <param name="direction">The direction.</param>
-        /// <param name="sameTolerance">The same tolerance.</param>
-        /// <returns>System.Collections.Generic.IEnumerable&lt;(TVGL.Vertex, double)&gt;.</returns>
+        /// <param name="vertices">The collection of vertices.</param>
+        /// <param name="direction">The direction vector to project onto.</param>
+        /// <param name="sameTolerance">The tolerance used for rounding the distances. This helps group vertices that are very close together.</param>
+        /// <returns>An enumerable of tuples, where each tuple contains a vertex and its calculated distance along the direction.</returns>
+        /// <remarks>
+        /// This method is a helper for sorting and searching operations. It computes the dot product of each vertex's coordinate vector with the direction vector.
+        /// Common search terms: "project vertices onto vector", "get distance along direction", "vertex projection".
+        /// </remarks>
         public static IEnumerable<(Vertex, double)> GetVertexDistances(this IEnumerable<Vertex> vertices,
             Vector3 direction,
             double sameTolerance = Constants.BaseTolerance)
@@ -109,12 +163,16 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Gets the vertex distances.
+        /// Calculates the projected distances of a collection of 3D vectors along a given direction vector.
         /// </summary>
-        /// <param name="vertices">The vertices.</param>
-        /// <param name="direction">The direction.</param>
-        /// <param name="sameTolerance">The same tolerance.</param>
-        /// <returns>System.Collections.Generic.IEnumerable&lt;(TVGL.Vector3, double)&gt;.</returns>
+        /// <param name="vertices">The collection of 3D vectors.</param>
+        /// <param name="direction">The direction vector to project onto.</param>
+        /// <param name="sameTolerance">The tolerance used for rounding the distances. This helps group points that are very close together.</param>
+        /// <returns>An enumerable of tuples, where each tuple contains a vector and its calculated distance along the direction.</returns>
+        /// <remarks>
+        /// This method is a helper for sorting and searching operations. It computes the dot product of each vector with the direction vector.
+        /// Common search terms: "project points onto vector", "get distance along direction", "point projection".
+        /// </remarks>
         public static IEnumerable<(Vector3, double)> GetVertexDistances(this IEnumerable<Vector3> vertices,
             Vector3 direction,
             double sameTolerance = Constants.BaseTolerance)
@@ -132,11 +190,16 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Gets the max vertex distance aloing vector.
+        /// Finds the vertex or point that is furthest along a given direction vector.
         /// </summary>
-        /// <param name="vertices">The vertices.</param>
-        /// <param name="direction">The direction.</param>
-        /// <returns>A (T maxPoint, double dotDistance) .</returns>
+        /// <typeparam name="T">A type that implements the IVector3D interface, such as Vertex or Vector3.</typeparam>
+        /// <param name="vertices">The collection of vertices or points.</param>
+        /// <param name="direction">The direction vector.</param>
+        /// <returns>A tuple containing the point with the maximum distance and the value of that distance.</returns>
+        /// <remarks>
+        /// This is useful for finding the extreme points of a geometric shape. It iterates through the collection and finds the point with the largest dot product with the direction vector.
+        /// Common search terms: "find extreme point", "max point in direction", "furthest vertex".
+        /// </remarks>
         public static (T maxPoint, double dotDistance) GetMaxVertexDistanceAlongVector<T>(this IEnumerable<T> vertices, Vector3 direction)
             where T : IVector3D
         {
@@ -156,11 +219,16 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Gets the min vertex distance along vector.
+        /// Finds the vertex or point that is closest along a given direction vector.
         /// </summary>
-        /// <param name="vertices">The vertices.</param>
-        /// <param name="direction">The direction.</param>
-        /// <returns>A (T minPoint, double dotDistance) .</returns>
+        /// <typeparam name="T">A type that implements the IVector3D interface, such as Vertex or Vector3.</typeparam>
+        /// <param name="vertices">The collection of vertices or points.</param>
+        /// <param name="direction">The direction vector.</param>
+        /// <returns>A tuple containing the point with the minimum distance and the value of that distance.</returns>
+        /// <remarks>
+        /// This is useful for finding the extreme points of a geometric shape. It iterates through the collection and finds the point with the smallest dot product with the direction vector.
+        /// Common search terms: "find extreme point", "min point in direction", "closest vertex".
+        /// </remarks>
         public static (T minPoint, double dotDistance) GetMinVertexDistanceAlongVector<T>(this IEnumerable<T> vertices, Vector3 direction)
             where T : IVector3D
         {
@@ -180,11 +248,16 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Gets the min vertex distance along vector.
+        /// Finds the vertices or points that are closest and furthest along a given direction vector in a single pass.
         /// </summary>
-        /// <param name="vertices">The vertices.</param>
-        /// <param name="direction">The direction.</param>
-        /// <returns>A (T minPoint, double dotDistance) .</returns>
+        /// <typeparam name="T">A type that implements the IVector3D interface, such as Vertex or Vector3.</typeparam>
+        /// <param name="vertices">The collection of vertices or points.</param>
+        /// <param name="direction">The direction vector.</param>
+        /// <returns>A tuple containing the minimum point, minimum distance, maximum point, and maximum distance.</returns>
+        /// <remarks>
+        /// This method is an efficient way to find both extreme points of a shape simultaneously.
+        /// Common search terms: "find extreme points", "min and max points in direction", "bounding points".
+        /// </remarks>
         public static (T minPoint, double minDistance, T maxPoint, double maxDistance)
             GetMinAndMaxAlongVector<T>(this IEnumerable<T> vertices, Vector3 direction)
             where T : IVector3D
@@ -266,11 +339,17 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Defines the inner outer edges.
+        /// From a collection of faces, this method identifies and separates the edges into two sets: "inner" edges and "outer" edges.
         /// </summary>
-        /// <param name="faces">The faces.</param>
-        /// <param name="innerEdgeHash">The inner edge hash.</param>
-        /// <param name="outerEdgeHash">The outer edge hash.</param>
+        /// <param name="faces">The collection of triangle faces.</param>
+        /// <param name="innerEdgeHash">An output hash set containing the inner edges. An edge is considered "inner" if it is shared by two faces in the collection.</param>
+        /// <param name="outerEdgeHash">An output hash set containing the outer edges. An edge is considered "outer" or a "border" edge if it belongs to only one face in the collection.</param>
+        /// <remarks>
+        /// This method is useful for identifying the boundary of a patch of faces on a larger mesh, or for manifold checking.
+        /// It works by iterating through all edges of the provided faces. It uses a hash set to keep track of edges it has already seen.
+        /// If an edge is seen a second time, it's moved to the inner edge set.
+        /// Common search terms: "find boundary edges", "identify border edges", "inner vs outer edges".
+        /// </remarks>
         public static void DefineInnerOuterEdges(IEnumerable<TriangleFace> faces, out HashSet<Edge> innerEdgeHash, out HashSet<Edge> outerEdgeHash)
         {
             innerEdgeHash = new HashSet<Edge>();
@@ -295,10 +374,14 @@ namespace TVGL
         #region Perimeter
 
         /// <summary>
-        /// Gets the Perimeter (length of a locations) of a 3D set of Vertices.
+        /// Calculates the perimeter of a closed 3D polygon defined by a list of vertices.
         /// </summary>
-        /// <param name="polygon3D">The polygon3 d.</param>
-        /// <returns>double.</returns>
+        /// <param name="polygon3D">A list of vertices defining the closed polygon in order.</param>
+        /// <returns>The total length of the polygon's edges.</returns>
+        /// <remarks>
+        /// The perimeter is calculated by summing the distances between consecutive vertices, including the distance between the last and first vertex to close the loop.
+        /// Common search terms: "polygon length", "3d perimeter", "closed loop distance".
+        /// </remarks>
         public static double Perimeter(this IList<Vertex> polygon3D)
         {
             double perimeter = Vector3.Distance(polygon3D.Last().Coordinates, polygon3D[0].Coordinates);
@@ -318,11 +401,15 @@ namespace TVGL
         #region Length of Polyline
 
         /// <summary>
-        /// Gets the Perimeter (length of a locations) of a 3D set of Vertices.
+        /// Calculates the length of a 3D polyline defined by a list of vertices.
         /// </summary>
-        /// <param name="polyline">The polyline.</param>
-        /// <param name="isClosed">The is closed.</param>
-        /// <returns>double.</returns>
+        /// <param name="polyline">A list of vertices defining the polyline in order.</param>
+        /// <param name="isClosed">If set to <c>true</c>, the polyline is treated as a closed loop, and the distance between the last and first vertex is included in the total length.</param>
+        /// <returns>The total length of the polyline segments.</returns>
+        /// <remarks>
+        /// This method sums the distances between consecutive vertices. If `isClosed` is true, it effectively calculates the perimeter.
+        /// Common search terms: "polyline length", "path distance", "3d line segment length".
+        /// </remarks>
         public static double Length(this IList<Vertex> polyline, bool isClosed = true)
         {
             if (polyline == null || !polyline.Any()) return 0.0;
@@ -333,14 +420,15 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Gets the summed length of a locations of a 3D set of Vertices.
-        /// If (IsClosed), then the perimeter will include the length between
-        /// the last vertex and the first vertex.
+        /// Calculates the length of a 3D polyline defined by a list of vectors.
         /// </summary>
-        /// <param name="polyline">The polyline.</param>
-        /// <param name="isClosed">The is closed.</param>
-        /// <returns>double.</returns>
-        /// '
+        /// <param name="polyline">A list of vectors defining the polyline in order.</param>
+        /// <param name="isClosed">If set to <c>true</c>, the polyline is treated as a closed loop, and the distance between the last and first point is included in the total length.</param>
+        /// <returns>The total length of the polyline segments.</returns>
+        /// <remarks>
+        /// This method sums the distances between consecutive points. If `isClosed` is true, it effectively calculates the perimeter.
+        /// Common search terms: "polyline length", "path distance", "vector list length".
+        /// </remarks>
         public static double Length(this IList<Vector3> polyline, bool isClosed = true)
         {
             if (polyline == null || !polyline.Any()) return 0.0;
@@ -357,14 +445,19 @@ namespace TVGL
         #region Dealing with Flat Patches
 
         /// <summary>
-        /// Determines the normal for a 3D vertex polygon.
+        /// Determines the best-fit plane normal for a 3D polygon defined by a sequence of vertices.
         /// </summary>
-        /// <param name="vertices">The vertices.</param>
-        /// <param name="numSides">The number sides.</param>
-        /// <param name="reverseVertexOrder">if set to <c>true</c> [reverse vertex order].</param>
-        /// <param name="suggestedNormal">The suggested normal.</param>
-        /// <param name="distanceToPlane">The distance to plane.</param>
-        /// <returns>Vector3.</returns>
+        /// <param name="vertices">The vertices of the polygon.</param>
+        /// <param name="numSides">The number of sides (and vertices) in the polygon.</param>
+        /// <param name="reverseVertexOrder">An output boolean indicating if the vertex order needs to be reversed to align with the `suggestedNormal`.</param>
+        /// <param name="suggestedNormal">A suggested normal direction to resolve ambiguity. If the calculated normal is opposite to this, it will be flipped.</param>
+        /// <param name="distanceToPlane">The distance from the origin to the best-fit plane.</param>
+        /// <returns>The calculated normal vector of the polygon's plane.</returns>
+        /// <remarks>
+        /// This method first calculates a normal using Newell's method (based on cross products of adjacent edge vectors) and then refines it by finding the best-fit plane through the vertices.
+        /// This is robust for non-planar polygons. The `suggestedNormal` helps ensure consistent orientation (e.g., all normals pointing "out" of a solid).
+        /// Common search terms: "calculate polygon normal", "find normal of 3d points", "best-fit plane".
+        /// </remarks>
         public static Vector3 DetermineNormalForA3DPolygon(this IEnumerable<Vertex> vertices, int numSides,
             out bool reverseVertexOrder, Vector3 suggestedNormal, out double distanceToPlane)
         {
@@ -373,14 +466,19 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Determines the normal for a 3D vertex polygon.
+        /// Determines the best-fit plane normal for a 3D polygon defined by a sequence of vectors.
         /// </summary>
-        /// <param name="vertices">The vertices.</param>
-        /// <param name="numSides">The number sides.</param>
-        /// <param name="reverseVertexOrder">if set to <c>true</c> [reverse vertex order].</param>
-        /// <param name="suggestedNormal">The suggested normal.</param>
-        /// <param name="distanceToPlane">The distance to plane.</param>
-        /// <returns>Vector3.</returns>
+        /// <param name="vertices">The vertex coordinates of the polygon.</param>
+        /// <param name="numSides">The number of sides (and vertices) in the polygon.</param>
+        /// <param name="reverseVertexOrder">An output boolean indicating if the vertex order needs to be reversed to align with the `suggestedNormal`.</param>
+        /// <param name="suggestedNormal">A suggested normal direction to resolve ambiguity. If the calculated normal is opposite to this, it will be flipped.</param>
+        /// <param name="distanceToPlane">The distance from the origin to the best-fit plane.</param>
+        /// <returns>The calculated normal vector of the polygon's plane.</returns>
+        /// <remarks>
+        /// This method first calculates a normal using Newell's method (based on cross products of adjacent edge vectors) and then refines it by finding the best-fit plane through the points.
+        /// This is robust for non-planar polygons. The `suggestedNormal` helps ensure consistent orientation.
+        /// Common search terms: "calculate polygon normal", "find normal of 3d points", "best-fit plane".
+        /// </remarks>
         public static Vector3 DetermineNormalForA3DPolygon(this IEnumerable<Vector3> vertices, int numSides,
             out bool reverseVertexOrder, Vector3 suggestedNormal, out double distanceToPlane)
         {
@@ -502,13 +600,18 @@ namespace TVGL
         #region Area of 3D Polygon
 
         /// <summary>
-        /// Calculate the area of any non-intersecting polygon in 3D space (loops)
-        /// This is faster than projecting to a 2D surface first in a seperate function.
+        /// Calculates the area of a planar, non-self-intersecting 3D polygon.
         /// </summary>
-        /// <param name="loop">The loop.</param>
-        /// <param name="normal">The normal.</param>
-        /// <returns>System.Double.</returns>
-        /// <references>http://geomalgorithms.com/a01-_area.html </references>
+        /// <param name="loop">An enumerable of vertices that define the polygon loop in order.</param>
+        /// <param name="normal">The normal vector of the plane in which the polygon lies. This is crucial for correct projection.</param>
+        /// <returns>The area of the 3D polygon.</returns>
+        /// <remarks>
+        /// This method works by projecting the 3D polygon onto one of the Cartesian planes (XY, YZ, or XZ) based on which component of the normal is the largest.
+        /// It then calculates the area of the resulting 2D polygon using the shoelace formula and scales it back to 3D space.
+        /// It is significantly more efficient than creating a transformation matrix.
+        /// Reference: http://geomalgorithms.com/a01-_area.html
+        /// Common search terms: "3d polygon area", "area of planar loop", "shoelace formula 3d".
+        /// </remarks>
         public static double AreaOf3DPolygon(this IEnumerable<Vertex> loop, Vector3 normal)
         {
             var ax = Math.Abs(normal.X);
@@ -586,13 +689,18 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Calculate the area of any non-intersecting polygon in 3D space (loops)
-        /// This is faster than projecting to a 2D surface first in a seperate function.
+        /// Calculates the area of a planar, non-self-intersecting 3D polygon.
         /// </summary>
-        /// <param name="loop">The loop.</param>
-        /// <param name="normal">The normal.</param>
-        /// <returns>System.Double.</returns>
-        /// <references>http://geomalgorithms.com/a01-_area.html </references>
+        /// <param name="loop">An enumerable of vectors that define the polygon loop in order.</param>
+        /// <param name="normal">The normal vector of the plane in which the polygon lies. This is crucial for correct projection.</param>
+        /// <returns>The area of the 3D polygon.</returns>
+        /// <remarks>
+        /// This method works by projecting the 3D polygon onto one of the Cartesian planes (XY, YZ, or XZ) based on which component of the normal is the largest.
+        /// It then calculates the area of the resulting 2D polygon using the shoelace formula and scales it back to 3D space.
+        /// It is significantly more efficient than creating a transformation matrix.
+        /// Reference: http://geomalgorithms.com/a01-_area.html
+        /// Common search terms: "3d polygon area", "area of planar loop", "shoelace formula 3d".
+        /// </remarks>
         public static double AreaOf3DPolygon(this IEnumerable<Vector3> loop, Vector3 normal)
         {
             var ax = Math.Abs(normal.X);
@@ -673,10 +781,15 @@ namespace TVGL
 
         #region Get Vertices from Objects
         /// <summary>
-        /// This function gets the vertices from a list of faces.
+        /// Collects a unique set of vertices from a list of triangle faces.
         /// </summary>
-        /// <param name="faces">The faces.</param>
-        /// <returns>System.Collections.Generic.HashSet&lt;TVGL.Vertex&gt;.</returns>
+        /// <param name="faces">The list of triangle faces.</param>
+        /// <returns>A hash set containing all unique vertices from the input faces.</returns>
+        /// <remarks>
+        /// This utility method iterates through a collection of faces and adds each of their vertices to a HashSet.
+        /// Using a HashSet automatically handles uniqueness, so the resulting collection contains each vertex only once, even if it's shared by multiple faces.
+        /// Common search terms: "get unique vertices", "extract vertices from faces", "mesh vertices".
+        /// </remarks>
         public static HashSet<Vertex> GetVertices(this List<TriangleFace> faces)
         {
             //Add the face vertices from each vertex to the hashset.
@@ -695,10 +808,15 @@ namespace TVGL
         }
 
         /// <summary>
-        /// This function gets the vertices from a list of edges.
+        /// Collects a unique set of vertices from a list of edges.
         /// </summary>
-        /// <param name="edges">The edges.</param>
-        /// <returns>System.Collections.Generic.HashSet&lt;TVGL.Vertex&gt;.</returns>
+        /// <param name="edges">The list of edges.</param>
+        /// <returns>A hash set containing all unique vertices from the input edges.</returns>
+        /// <remarks>
+        /// This utility method iterates through a collection of edges and adds their 'From' and 'To' vertices to a HashSet.
+        /// Using a HashSet automatically handles uniqueness, ensuring each vertex appears only once in the final set.
+        /// Common search terms: "get unique vertices", "extract vertices from edges", "edge endpoint vertices".
+        /// </remarks>
         public static HashSet<Vertex> GetVertices(this List<Edge> edges)
         {
             //Add the to and from vertices from each vertex to the hashset.
@@ -717,12 +835,17 @@ namespace TVGL
         #region Split Tesselated Solid into multiple solids if faces are disconnected
 
         /// <summary>
-        /// Gets all the individual solids from a tesselated solid.
+        /// Splits a tessellated solid into multiple solids if it contains disconnected groups of faces (i.e., separate shells or bodies).
         /// </summary>
-        /// <param name="ts">The ts.</param>
-        /// <param name="faceGroupsThatAreBodies">The face groups that are bodies.</param>
-        /// <returns>List&lt;TessellatedSolid&gt;.</returns>
-        /// <exception cref="Exception"></exception>
+        /// <param name="ts">The input tessellated solid.</param>
+        /// <param name="faceGroupsThatAreBodies">Optional: A list of predefined face groups (by index) that are already known to be separate bodies. This can speed up the process.</param>
+        /// <returns>An enumerable of tessellated solids, where each solid is a distinct, contiguous group of faces from the original solid.</returns>
+        /// <remarks>
+        /// This method performs a graph traversal (specifically, a breadth-first search style flood-fill) over the faces of the solid.
+        /// It starts with a seed face and finds all connected faces, grouping them into a new solid. It repeats this process until all faces have been assigned to a group.
+        /// If the solid is a single, contiguous mesh, this method will return an enumerable containing only the original solid.
+        /// Common search terms: "split mesh", "separate shells", "find disconnected components", "flood fill mesh".
+        /// </remarks>
         public static IEnumerable<TessellatedSolid> GetMultipleSolids(this TessellatedSolid ts,
             List<int[]> faceGroupsThatAreBodies = null)
         {
@@ -848,18 +971,19 @@ namespace TVGL
         #region change 3D locations into 2D coordinates (e.g. Vector2's)
 
         /// <summary>
-        /// Returns newly created 2D coordinates (of type Vector2) projected using the given transform.
-        /// These coordinates do not contain references back to the original vertices but are lighter and
-        /// quicker. This does not destructively alter the vertices.
+        /// Projects a collection of 3D points onto a 2D plane defined by a normal vector and groups them by their 2D coordinates.
         /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="vertices">The vertices.</param>
-        /// <param name="direction">The direction.</param>
-        /// <param name="backTransform">The back transform.</param>
-        /// <param name="toleranceForCombiningPoints">The tolerance for combining multiple vertices under a single point.
-        /// If not, provided, then one point will be made for each vertex. If zero, then the coordinates will match at
-        /// the 15 decimal place. Use a small positive number like 1e-9 to set a wider toleranceForCombiningPoints.</param>
-        /// <returns>System.Collections.Generic.IEnumerable&lt;TVGL.Vector2&gt;.</returns>
+        /// <typeparam name="T">A type that implements the IVector3D interface, such as Vertex or Vector3.</typeparam>
+        /// <param name="vertices">The collection of 3D points to project.</param>
+        /// <param name="direction">The normal vector of the projection plane. The points will be projected onto a plane perpendicular to this direction.</param>
+        /// <param name="backTransform">An output parameter for the transformation matrix that can be used to project the 2D points back into 3D space.</param>
+        /// <param name="toleranceForCombiningPoints">A tolerance used to group 3D points that project to very close 2D coordinates. Points within this tolerance will be considered the same.</param>
+        /// <returns>A dictionary where keys are the 2D projected coordinates and values are lists of the original 3D points that project to that coordinate.</returns>
+        /// <remarks>
+        /// This is a very useful function for 2D geometric operations on 3D data, such as slicing. It creates a transformation that aligns the given `direction` with the Z-axis, effectively creating a 2D view.
+        /// The dictionary output is useful for quickly finding all 3D points that correspond to a single 2D location.
+        /// Common search terms: "project 3d to 2d", "flatten points to plane", "3d to 2d transformation".
+        /// </remarks>
         public static Dictionary<Vector2, List<T>> ProjectTo2DCoordinatesReturnDictionary<T>(this IEnumerable<T> vertices, Vector3 direction,
                     out Matrix4x4 backTransform, double toleranceForCombiningPoints = Constants.BaseTolerance) where T : IVector3D
         {
@@ -1097,12 +1221,17 @@ namespace TVGL
 
         #region Transform 3D-to-2D and vice versa
         /// <summary>
-        /// Create a transforms from normal direction for 2D xy plane.
+        /// Creates a transformation matrix that rotates a given 3D direction vector to align with the Z-axis (0, 0, 1), effectively creating a 2D projection plane.
         /// </summary>
-        /// <param name="direction">The direction.</param>
-        /// <param name="backTransform">The back transform.</param>
-        /// <param name="tolerance">This tolerance is used to snap to the cartesian direction if the dot product is within this value.</param>
-        /// <returns>System.Vector2.</returns>
+        /// <param name="direction">The 3D vector to be aligned with the Z-axis. This vector represents the normal of the desired 2D plane.</param>
+        /// <param name="backTransform">An output parameter for the inverse transformation matrix, which can rotate the Z-axis back to the original `direction`.</param>
+        /// <param name="tolerance">A tolerance used to determine if the input direction is close enough to a Cartesian axis to use a simpler, predefined transformation.</param>
+        /// <returns>A 4x4 transformation matrix that projects points onto the XY plane.</returns>
+        /// <remarks>
+        /// This is a core function for converting 3D geometry into a 2D representation for slicing, analysis, or visualization. The `backTransform` is essential for converting results from 2D calculations back into the original 3D coordinate system.
+        /// The method includes an optimization to "snap" to major Cartesian axes, which is faster and avoids potential floating-point precision issues.
+        /// Common search terms: "view matrix", "projection matrix", "align vector to axis", "lookat transform".
+        /// </remarks>
         public static Matrix4x4 TransformToXYPlane(this Vector3 direction, out Matrix4x4 backTransform, double tolerance = Constants.DefaultEqualityTolerance)
         {
             var closestCartesianDirection = SnapDirectionToCartesian(direction, out var withinTolerance, tolerance);
@@ -1179,12 +1308,16 @@ namespace TVGL
         #region Angle between Edges/Lines
 
         /// <summary>
-        /// Gets the larger angle between two vectors, assuming vector2 starts that the head of
-        /// vector1. The vectors do not need to be normalized.
+        /// Calculates the larger interior angle (> PI) between two 2D vectors placed end-to-end.
         /// </summary>
-        /// <param name="vector1">The v0.</param>
-        /// <param name="vector2">The v1.</param>
-        /// <returns>System.Double.</returns>
+        /// <param name="vector1">The first vector.</param>
+        /// <param name="vector2">The second vector, conceptually starting at the head of the first vector.</param>
+        /// <returns>The angle in radians, in the range [PI, 2*PI].</returns>
+        /// <remarks>
+        /// This method finds the angle required to turn from the direction of `vector1` to the direction of `vector2` when they form a path.
+        /// The "larger" angle refers to the convex angle, as opposed to the smaller reflex angle.
+        /// Common search terms: "angle between polyline segments", "turn angle", "exterior angle".
+        /// </remarks>
         public static double LargerAngleBetweenVectorsEndToEnd(this Vector2 vector1, Vector2 vector2)
         {
             var angleCos = vector1.Dot(vector2) / (vector1.Length() * vector2.Length());
@@ -1194,12 +1327,15 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Gets the smaller angle between two vectors, assuming vector2 starts that the head of
-        /// vector1. The vectors do not need to be normalized.
+        /// Calculates the smaller interior angle (< PI) between two 2D vectors placed end-to-end.
         /// </summary>
-        /// <param name="vector1">The v0.</param>
-        /// <param name="vector2">The v1.</param>
-        /// <returns>System.Double.</returns>
+        /// <param name="vector1">The first vector.</param>
+        /// <param name="vector2">The second vector, conceptually starting at the head of the first vector.</param>
+        /// <returns>The angle in radians, in the range [0, PI].</returns>
+        /// <remarks>
+        /// This method finds the interior angle at the vertex where two polyline segments meet.
+        /// Common search terms: "angle between polyline segments", "interior angle", "joint angle".
+        /// </remarks>
         public static double SmallerAngleBetweenVectorsEndToEnd(this Vector2 vector1, Vector2 vector2)
         {
             var angleCos = vector1.Dot(vector2) / (vector1.Length() * vector2.Length());
@@ -1373,21 +1509,22 @@ namespace TVGL
         #region Intersection Method (between lines, planes, solids, etc.)
 
         /// <summary>
-        /// Determines if Two Lines intersect. Outputs intersection point if they do.
-        /// If two lines are collinear, they are not considered intersecting.
-        /// This method has been renamed ...Conventional because the Projective Geometric Algebra version (see below)
-        /// proves to be faster. Using BenchmarkDotNet, this version is 23.75 ns while the one below is 15 ns.
+        /// Determines if two 2D line segments intersect and finds the intersection point using a conventional line equation approach.
         /// </summary>
-        /// <param name="aFrom">The starting point on the a-Line.</param>
-        /// <param name="aTo">The end point on the a-Line.</param>
-        /// <param name="bFrom">The starting point on the b-Line.</param>
-        /// <param name="bTo">The end point on the b-Line.</param>
-        /// <param name="intersectionPoint">The intersection point.</param>
-        /// <param name="t_a">The t a.</param>
-        /// <param name="t_b">The t b.</param>
-        /// <param name="considerCollinearOverlapAsIntersect">The consider collinear overlap as intersect.</param>
-        /// <returns>System.Boolean.</returns>
-
+        /// <param name="aFrom">The starting point of the first line segment.</param>
+        ' <param name="aTo">The end point of the first line segment.</param>
+        /// <param name="bFrom">The starting point of the second line segment.</param>
+        /// <param name="bTo">The end point of the second line segment.</param>
+        /// <param name="intersectionPoint">The intersection point, if one exists.</param>
+        /// <param name="t_a">The fractional distance along the first segment where the intersection occurs (0 for aFrom, 1 for aTo).</param>
+        /// <param name="t_b">The fractional distance along the second segment where the intersection occurs.</param>
+        /// <param name="considerCollinearOverlapAsIntersect">If set to <c>true</c>, collinear, overlapping segments are considered to be intersecting.</param>
+        /// <returns><c>true</c> if the segments intersect, <c>false</c> otherwise.</returns>
+        /// <remarks>
+        /// This method solves a system of linear equations to find the intersection. It checks if the intersection point lies within the bounds of both segments (i.e., t_a and t_b are between 0 and 1).
+        /// Note: A faster version using Projective Geometric Algebra (`SegmentSegment2DIntersection`) is also available.
+        /// Common search terms: "line segment intersection", "2d line intersection", "check if lines cross".
+        /// </remarks>
         public static bool SegmentSegment2DIntersectionConventional(Vector2 aFrom, Vector2 aTo, Vector2 bFrom, Vector2 bTo,
             out Vector2 intersectionPoint, out double t_a, out double t_b, bool considerCollinearOverlapAsIntersect = false)
         {
@@ -1757,26 +1894,35 @@ namespace TVGL
         #region Distance Methods (between point, line, and plane)
 
         /// <summary>
-        /// Returns the distance the point on an infinite line.
+        /// Calculates the shortest distance between a 3D point and an infinite line.
         /// </summary>
-        /// <param name="qPoint">The q point that is off of the line.</param>
-        /// <param name="lineRefPt">The line reference point on the line.</param>
-        /// <param name="lineVector">The line direction vector.</param>
-        /// <returns>System.Double.</returns>
+        /// <param name="qPoint">The point off the line.</param>
+        /// <param name="lineRefPt">A reference point on the line.</param>
+        /// <param name="lineVector">The direction vector of the line.</param>
+        /// <param name="returnSquared">If set to <c>true</c>, returns the squared distance, which avoids a computationally expensive square root operation.</param>
+        /// <returns>The perpendicular distance from the point to the line.</returns>
+        /// <remarks>
+        /// This method finds the closest point on the line to the given point by projecting the vector from the line's reference point to the query point onto the line's direction.
+        /// Common search terms: "point to line distance", "closest point on line", "perpendicular distance to line".
+        /// </remarks>
         public static double DistancePointToLine(Vector3 qPoint, Vector3 lineRefPt, Vector3 lineVector, bool returnSquared = false)
         {
             return DistancePointToLine(qPoint, lineRefPt, lineVector, out _, returnSquared);
         }
 
         /// <summary>
-        /// Returns the distance the point on an infinite line. Option to return the squared distance
-        /// to eliminate the use of a square root operation.
+        /// Calculates the shortest distance between a 3D point and an infinite line, and also returns the closest point on the line.
         /// </summary>
-        /// <param name="qPoint">q is the point that is off of the line.</param>
-        /// <param name="lineRefPt">p is a reference point on the line.</param>
-        /// <param name="lineVector">n is the vector of the line direction.</param>
-        /// <param name="pointOnLine">The point on line closest to point, q.</param>
-        /// <returns>System.Double.</returns>
+        /// <param name="qPoint">The point off the line.</param>
+        /// <param name="lineRefPt">A reference point on the line.</param>
+        /// <param name="lineVector">The direction vector of the line.</param>
+        /// <param name="pointOnLine">The point on the line that is closest to qPoint.</param>
+        /// <param name="returnSquared">If set to <c>true</c>, returns the squared distance, which avoids a computationally expensive square root operation.</param>
+        /// <returns>The perpendicular distance from the point to the line.</returns>
+        /// <remarks>
+        /// This method finds the closest point on the line to the given point by projecting the vector from the line's reference point to the query point onto the line's direction.
+        /// Common search terms: "point to line distance", "closest point on line", "perpendicular distance to line".
+        /// </remarks>
         public static double DistancePointToLine(Vector3 qPoint, Vector3 lineRefPt, Vector3 lineVector,
             out Vector3 pointOnLine, bool returnSquared = false)
         {
@@ -1806,12 +1952,16 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Returns the signed distance of the point to the plane.
+        /// Calculates the signed distance from a point to a plane. The plane is defined by its normal and a point on the plane.
         /// </summary>
-        /// <param name="point">The point.</param>
-        /// <param name="normalOfPlane">The normal of plane.</param>
-        /// <param name="positionOnPlane">The position on plane.</param>
-        /// <returns>the distance between the two 3D points.</returns>
+        /// <param name="point">The point to measure the distance from.</param>
+        /// <param name="normalOfPlane">The normal vector of the plane.</param>
+        /// <param name="positionOnPlane">A point that lies on the plane.</param>
+        /// <returns>The signed distance. A positive value means the point is on the same side of the plane as the normal vector; a negative value means it is on the opposite side.</returns>
+        /// <remarks>
+        /// This is equivalent to `normalOfPlane.Dot(point) - normalOfPlane.Dot(positionOnPlane)`.
+        /// Common search terms: "point to plane distance", "signed distance plane", "point relative to plane".
+        /// </remarks>
         public static double DistancePointToPlane(Vector3 point, Vector3 normalOfPlane, Vector3 positionOnPlane)
         {
             return DistancePointToPlane(point, normalOfPlane, positionOnPlane.Dot(normalOfPlane));
@@ -1838,17 +1988,19 @@ namespace TVGL
         #region Point on Face
 
         /// <summary>
-        /// Finds the point on the face made by a line (which is described by connecting point1 and point2) intersecting
-        /// with that face. If not intersection exists, then function returns null. Points must be on either side
-        /// of triangle to return a valid intersection.
+        /// Finds the intersection point of a line segment and a triangle face.
         /// </summary>
-        /// <param name="face">The face.</param>
-        /// <param name="point1">The point1.</param>
-        /// <param name="point2">The point2.</param>
-        /// <param name="relativeDistance">The relative distance.</param>
-        /// <param name="onBoundaryIsInside">The on boundary is inside.</param>
-        /// <returns>Vertex.</returns>
-        /// <exception cref="Exception">This should never occur. Prevent this from happening</exception>
+        /// <param name="face">The triangle face.</param>
+        /// <param name="point1">The starting point of the line segment.</param>
+        /// <param name="point2">The ending point of the line segment.</param>
+        /// <param name="relativeDistance">The fractional distance along the line segment where the intersection with the triangle's plane occurs. A value between 0 and 1 means the intersection is within the segment.</param>
+        /// <param name="onBoundaryIsInside">If set to <c>true</c>, an intersection point lying on the boundary of the triangle is considered a valid intersection.</param>
+        /// <returns>The 3D coordinate of the intersection point if it lies within the triangle's boundaries; otherwise, returns Vector3.Null.</returns>
+        /// <remarks>
+        /// This method first finds the intersection of the line segment with the infinite plane of the triangle.
+        /// Then, it checks if this intersection point is actually inside the triangle's 2D boundaries. For the intersection to be valid, `point1` and `point2` must be on opposite sides of the triangle's plane.
+        /// Common search terms: "line triangle intersection", "segment face intersection", "ray triangle hit".
+        /// </remarks>
         public static Vector3 PointOnTriangleFromLineSegment(this TriangleFace face, Vector3 point1,
             Vector3 point2, out double relativeDistance, bool onBoundaryIsInside = true)
         {
@@ -1857,17 +2009,19 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Finds the point on the face made by a line (which is described by connecting point1 and point2) intersecting
-        /// with that face. If not intersection exists, then function returns a Vector3 with NaN's. Points must
-        /// be on either side of triangle to return a valid intersection.
+        /// Finds the intersection point of a line segment and a triangle defined by a list of vertices and a normal.
         /// </summary>
-        /// <param name="vertices">The vertices.</param>
-        /// <param name="normal">The normal.</param>
-        /// <param name="point1">The point1.</param>
-        /// <param name="point2">The point2.</param>
-        /// <param name="relativeDistance">The relative distance.</param>
-        /// <param name="onBoundaryIsInside">The on boundary is inside.</param>
-        /// <returns>Vertex.</returns>
+        /// <param name="vertices">A list of three Vector3 points defining the triangle's vertices.</param>
+        /// <param name="normal">The normal vector of the triangle's plane.</param>
+        /// <param name="point1">The starting point of the line segment.</param>
+        /// <param name="point2">The ending point of the line segment.</param>
+        /// <param name="relativeDistance">The fractional distance along the line segment where the intersection with the triangle's plane occurs.</param>
+        /// <param name="onBoundaryIsInside">If set to <c>true</c>, an intersection point lying on the boundary of the triangle is considered valid.</param>
+        /// <returns>The 3D coordinate of the intersection point if it lies within the triangle's boundaries; otherwise, returns Vector3.Null.</returns>
+        /// <remarks>
+        /// This method is similar to the TriangleFace overload but allows you to define the triangle directly from points. For the intersection to be valid, `point1` and `point2` must be on opposite sides of the triangle's plane.
+        /// Common search terms: "line triangle intersection", "segment face intersection", "ray triangle hit".
+        /// </remarks>
         public static Vector3 PointOnTriangleFromLineSegment(this List<Vector3> vertices, Vector3 normal, Vector3 point1,
             Vector3 point2, out double relativeDistance, bool onBoundaryIsInside = true)
         {
@@ -1878,17 +2032,18 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Finds the point on the triangle made by a line. If that line is not going to pass through the
-        /// that triangle, then null is returned. The signed distance is positive if the vertex points to
-        /// the triangle along the direction (ray). User can also specify whether the edges of the triangle
-        /// are considered "inside."
+        /// Finds the intersection point of a ray and a triangle face.
         /// </summary>
-        /// <param name="face">The face.</param>
-        /// <param name="point3D">The point3 d.</param>
-        /// <param name="direction">The direction.</param>
-        /// <param name="signedDistance">The signed distance.</param>
-        /// <param name="onBoundaryIsInside">if set to <c>true</c> [on boundary is inside].</param>
-        /// <returns>TVGL.Vector3.</returns>
+        /// <param name="face">The triangle face.</param>
+        /// <param name="point3D">The origin point of the ray.</param>
+        /// <param name="direction">The direction vector of the ray.</param>
+        /// <param name="signedDistance">The distance from the ray's origin to the intersection point. A positive value indicates the intersection is in the direction of the ray.</param>
+        /// <param name="onBoundaryIsInside">If set to <c>true</c>, an intersection on the triangle's boundary is considered valid.</param>
+        /// <returns>The 3D coordinate of the intersection point if the ray hits the triangle; otherwise, returns Vector3.Null.</returns>
+        /// <remarks>
+        /// This method performs a ray-triangle intersection test. It first finds the intersection with the triangle's plane and then checks if the hit point is inside the triangle's boundaries.
+        /// Common search terms: "ray triangle intersection", "raycasting", "ray triangle hit test".
+        /// </remarks>
         public static Vector3 PointOnTriangleFromRay(this TriangleFace face, Vector3 point3D, Vector3 direction,
             out double signedDistance, bool onBoundaryIsInside = true)
         {
@@ -2150,12 +2305,16 @@ namespace TVGL
         #region Create 2D Circle Paths
 
         /// <summary>
-        /// Returns a the path of a circle made up of points. Increment as needed.
+        /// Creates a list of 2D points that form the perimeter of a circle.
         /// </summary>
-        /// <param name="center">The center.</param>
-        /// <param name="radius">The radius.</param>
-        /// <param name="radianIncrement">The radian increment.</param>
-        /// <returns>System.Collections.Generic.List&lt;TVGL.Vector2&gt;.</returns>
+        /// <param name="center">The center of the circle.</param>
+        /// <param name="radius">The radius of the circle.</param>
+        /// <param name="radianIncrement">The angular step in radians between points on the circle's path. A smaller value creates a smoother circle with more points.</param>
+        /// <returns>A list of Vector2 points representing the circle's path.</returns>
+        /// <remarks>
+        /// This method is useful for generating 2D representations of circular or cylindrical features. The default radian increment of PI/50.0 results in 100 points for a full circle.
+        /// Common search terms: "generate circle points", "2d circle path", "discretize circle".
+        /// </remarks>
         public static List<Vector2> CreateCirclePath(Vector2 center, double radius, double radianIncrement = Math.PI / 50.0)
         {
             var path = new List<Vector2>();
@@ -2170,12 +2329,16 @@ namespace TVGL
 
         #region isInside Methods (is 2D point inside polygon, vertex inside solid, ect.)
         /// <summary>
-        /// Determines whether [is vertex inside triangle] [the specified face].
+        /// Determines if a point is inside a triangle face using barycentric coordinates.
         /// </summary>
-        /// <param name="face">The face.</param>
-        /// <param name="vertexInQuestion">The vertex in question.</param>
-        /// <param name="onBoundaryIsInside">The on boundary is inside.</param>
-        /// <returns>bool.</returns
+        /// <param name="face">The triangle face.</param>
+        /// <param name="q">The 3D point to check.</param>
+        /// <returns><c>true</c> if the point is inside the triangle (including boundaries); otherwise, <c>false</c>.</returns>
+        /// <remarks>
+        /// This method checks if the point `q` can be expressed as a convex combination of the triangle's vertices. It assumes the point is coplanar with the triangle.
+        /// It's a robust way to perform a point-in-triangle test.
+        /// Common search terms: "point in triangle test", "barycentric coordinates", "is point on face".
+        /// </remarks>
         public static bool IsVertexInsideTriangle(TriangleFace face, Vector3 q)
         {
             var aToQ = q - face.A.Coordinates;
@@ -2188,14 +2351,16 @@ namespace TVGL
             return bToC.Cross(bToQ).Dot(bToQ.Cross(bToA)) > 0;
         }
         /// <summary>
-        /// Returns whether a vertex lies on a triangle. User can specify whether the edges of the
-        /// triangle are considered "inside." Assumes vertex in question is in the same plane
-        /// as the triangle.
+        /// Determines if a point is inside a triangle defined by a list of vertices.
         /// </summary>
-        /// <param name="triangle">The triangle.</param>
-        /// <param name="vertexInQuestion">The vertex in question.</param>
-        /// <param name="onBoundaryIsInside">The on boundary is inside.</param>
-        /// <returns>bool.</returns>
+        /// <param name="triangle">A list of three vertices defining the triangle.</param>
+        /// <param name="vertexInQuestion">The 3D point to check.</param>
+        /// <param name="onBoundaryIsInside">If set to <c>true</c>, points on the boundary are considered inside.</param>
+        /// <returns><c>true</c> if the point is inside the triangle; otherwise, <c>false</c>.</returns>
+        /// <remarks>
+        /// This method uses the barycentric coordinate technique to determine if the point lies within the triangle's boundaries. It assumes the point is coplanar with the triangle.
+        /// Common search terms: "point in triangle test", "barycentric coordinates", "is point in polygon".
+        /// </remarks>
         public static bool IsVertexInsideTriangle(IList<Vertex> triangle, Vector3 vertexInQuestion,
             bool onBoundaryIsInside = true)
         {
