@@ -1512,7 +1512,7 @@ namespace TVGL
         /// Determines if two 2D line segments intersect and finds the intersection point using a conventional line equation approach.
         /// </summary>
         /// <param name="aFrom">The starting point of the first line segment.</param>
-        ' <param name="aTo">The end point of the first line segment.</param>
+        /// <param name="aTo">The end point of the first line segment.</param>
         /// <param name="bFrom">The starting point of the second line segment.</param>
         /// <param name="bTo">The end point of the second line segment.</param>
         /// <param name="intersectionPoint">The intersection point, if one exists.</param>

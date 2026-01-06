@@ -284,12 +284,11 @@ namespace TVGL
         /// <returns>A Vector3.</returns>
         public override Vector3 GetNormalAtPoint(Vector3 point)
         {
-            var x = 2 * XSqdCoeff * point.X + XYCoeff * point.Y + XZCoeff * point.Z + XCoeff;
-            var y = 2 * YSqdCoeff * point.Y + XYCoeff * point.X + YZCoeff * point.Z + YCoeff;
-            var z = 2 * ZSqdCoeff * point.Z + XZCoeff * point.X + YZCoeff * point.Y + ZCoeff;
+            var gradient = GetGradient(point).Normalize();
+
             if (IsPositive.GetValueOrDefault(true))
-                return new Vector3(x, y, z).Normalize();
-            else return new Vector3(-x, -y, -z).Normalize();
+                return gradient;
+            else return -gradient;
         }
 
         /// <summary>
@@ -490,17 +489,31 @@ namespace TVGL
             {
                 if (center.IsNull())
                 {
+                    Matrix3x3 coeffs = GetHessian();
                     // the center is defined where the gradient is zero for the quadric function
                     // this produces a system of 3 equations with 3 unknowns
-                    var coeffs = new Matrix3x3(2 * XSqdCoeff, XYCoeff, XZCoeff,
-                                               XYCoeff, 2 * YSqdCoeff, YZCoeff,
-                                               XZCoeff, YZCoeff, 2 * ZSqdCoeff);
                     var b = new Vector3(-XCoeff, -YCoeff, -ZCoeff);
                     center = coeffs.Solve(b);
                 }
                 return center;
             }
         }
+
+        private Vector3 GetGradient(Vector3 point)
+        {
+            return new Vector3(
+                2 * XSqdCoeff * point.X + XYCoeff * point.Y + XZCoeff * point.Z + XCoeff,
+                2 * YSqdCoeff * point.Y + XYCoeff * point.X + YZCoeff * point.Z + YCoeff,
+                2 * ZSqdCoeff * point.Z + XZCoeff * point.X + YZCoeff * point.Y + ZCoeff);
+        }
+
+        private Matrix3x3 GetHessian()
+        {
+            return new Matrix3x3(2 * XSqdCoeff, XYCoeff, XZCoeff,
+                                       XYCoeff, 2 * YSqdCoeff, YZCoeff,
+                                       XZCoeff, YZCoeff, 2 * ZSqdCoeff);
+        }
+
         Vector3 center = Vector3.Null;
 
         [JsonIgnore]
@@ -830,6 +843,64 @@ namespace TVGL
                 return new GeneralQuadric(vx2 - cosSqd, vy2 - cosSqd, vz2 - cosSqd, 2 * unitAxis.X * unitAxis.Y, 2 * unitAxis.X * unitAxis.Z, 2 * unitAxis.Y * unitAxis.Z, xCoeff, yCoeff, zCoeff, wConst);
             }
             else throw new NotImplementedException();
+        }
+
+        public IEnumerable<IEnumerable<Vector3>> IntersectCurverWithOtherQuadric(GeneralQuadric other, Vector3 boxMin,
+            Vector3 boxMax, double tolerance = Constants.BaseTolerance)
+        => IntersectTwoQuadrics(this, other, boxMin, boxMax, tolerance);
+
+        public static IEnumerable<IEnumerable<Vector3>> IntersectTwoQuadrics(GeneralQuadric quadric1, GeneralQuadric quadric2, Vector3 boxMin,
+            Vector3 boxMax, double tolerance = Constants.BaseTolerance)
+        {
+            // 1. sample 3 planes at center of box
+            // 2. collect viable intersections and circle fits into a list (this list will only grow)
+            // 3. make priority queue with new possible planes (after initial this, will be 6 new places)
+            //         one on either side of each of first 3 (x, y, z) centered planes)
+            // 4. score each plane by how best score from circle fits in that intersect with plane
+            // 5. while queue not empty and best score > tolerance,
+            //      pop best plane,
+            //      do intersection,
+            //      add new planes to queue
+            throw new NotImplementedException();
+        }
+
+        public static (Vector3 tangent, Vector3 normal, Vector3 center, double radius) GetOsculating(GeneralQuadric q1, GeneralQuadric q2, Vector3 point)
+        {
+            // Gradients
+            var g1 = q1.GetGradient(point);
+            var g2 = q2.GetGradient(point);
+            // Tangent = cross of gradients
+            var tangent = Vector3.Cross(g1, g2).Normalize();
+            // Hessians (constant)
+            var H1 = q1.GetHessian();
+            var H2 = q2.GetHessian();
+
+            // a_f = t^T H_f t
+            var a1 = tangent.Dot(H1.Multiply(tangent));
+            var a2 = tangent.Dot(H2.Multiply(tangent));
+
+            // n1 from g1
+            var n1 = g1;
+            double n1Norm = n1.Length();
+            n1 /= n1Norm;
+            // n2 from g2
+            var alpha = Vector3.Dot(g2, n1);
+            var g2Perp = g2 - alpha * n1;
+            double betaNorm = g2Perp.Length();
+            var n2 = g2Perp / betaNorm;
+
+            // k1
+            var k1 = -a1 / n1Norm;
+            // beta = g2·n2 (same as betaNorm with sign)
+            double beta = Vector3.Dot(g2, n2);
+            // k2
+            double k2 = (-a2 - alpha * k1) / beta;
+
+            var curvatureVector = k1 * n1 + k2 * n2;
+            double radius = 1 / curvatureVector.Length();
+            curvatureVector *= radius;
+            return (tangent, curvatureVector, point + radius * curvatureVector,
+                radius);
         }
     }
 }

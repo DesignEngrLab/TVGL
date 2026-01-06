@@ -25,7 +25,7 @@ namespace WindowsDesktopPresenter
                 return Math.Max(SolidGroups.Max(g => g?.Count ?? 0),
                 Math.Max(SolidTransforms.Max(t => t?.Count ?? 0),
                 Math.Max(PathGroups.Max(g => g?.Count ?? 0),
-                         PathTransforms.Max(t => t?.Count ?? 0))));
+                         PathTransforms.Max(t => t?.Count ?? 0)))) - 1;
             }
         }
 
@@ -56,8 +56,7 @@ namespace WindowsDesktopPresenter
         }
         internal bool Update(int stepIndex)
         {
-            var newSolids = Elements;
-            newSolids.Clear();
+            Elements.Clear();
             // Create a new collection with updated transforms
             //newSolids = new ObservableElement3DCollection();
             var allTransforms = new[] { PathTransforms, SolidTransforms };
@@ -72,17 +71,17 @@ namespace WindowsDesktopPresenter
                     if (transformForGroupI == null)
                     { // only show the group's solids at this current timestep
                         if (stepIndex < elements.Count && elements[stepIndex] != null)
-                            newSolids.Add(elements[stepIndex]);
+                            Elements.Add(elements[stepIndex]);
                     }
                     else if (stepIndex < transformForGroupI.Count && transformForGroupI[stepIndex] != null)
                     {
-                        var lastIndex = Math.Min(elements.Count, stepIndex) - 1;
+                        var lastIndex =Math.Max(0, Math.Min(elements.Count, stepIndex) - 1);
                         var start = Math.Max(0, lastIndex - 500);
                         for (int j = start; j <= lastIndex; j++)
                         {
                             if (elements[j] == null) continue;
                             elements[j].Transform = transformForGroupI[stepIndex];
-                            newSolids.Add(elements[j]);
+                            Elements.Add(elements[j]);
                         }
                     }
                 }

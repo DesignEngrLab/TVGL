@@ -1484,7 +1484,7 @@ namespace TVGL
         /// </summary>
         /// <param name="transformMatrix">The transformation matrix to apply. This can represent any combination of translation, rotation, and scaling.</param>
         /// <remarks>
-        * This is a destructive operation that modifies the current solid. *
+        /// This is a destructive operation that modifies the current solid. *
         /// After transforming the vertices, it recalculates the bounding box and updates face normals. Cached properties like volume and surface area are cleared.
         /// Common search terms: "transform mesh", "move solid", "rotate 3d model", "scale solid".
         /// </remarks>
