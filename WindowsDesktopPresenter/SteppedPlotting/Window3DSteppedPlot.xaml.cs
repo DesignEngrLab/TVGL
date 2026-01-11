@@ -1,6 +1,5 @@
 ﻿using OxyPlot;
 using System;
-using System.Collections.ObjectModel;
 using System.Windows;
 
 namespace WindowsDesktopPresenter
@@ -52,5 +51,9 @@ namespace WindowsDesktopPresenter
 
         private void ResetCameraButtonClick(object sender, RoutedEventArgs e) => stepViewModel.ResetCameraCommand();
 
+        private void Window3DStepped_Loaded(object sender, RoutedEventArgs e)
+        {
+            ScrollBar_ValueChanged(sender, new RoutedPropertyChangedEventArgs<double>(0, 0));
+        }
     }
 }

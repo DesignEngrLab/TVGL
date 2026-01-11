@@ -391,8 +391,13 @@ namespace TVGL
         /// Gets a value indicating whether [just a real number] i.e. the imaginary part is zero.
         /// </summary>
         /// <value><c>true</c> if [just real]; otherwise, <c>false</c>.</value>
-        public bool IsRealNumber => (Imaginary / Real).IsNegligible();
-
+        public bool IsRealNumber
+        {
+            get
+            {
+                return Math.Abs(Imaginary) <= Math.Abs(Real * Constants.BaseTolerance);
+            }
+        }
 
         /// <summary>
         /// Performs an explicit conversion from <see cref="ComplexNumber" /> to <see cref="System.Double" />.

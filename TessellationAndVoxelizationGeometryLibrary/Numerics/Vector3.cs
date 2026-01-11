@@ -514,7 +514,7 @@ namespace TVGL  // COMMENTEDCHANGE namespace System.Numerics
             if (X == -other.X && Y == -other.Y && Z == -other.Z) return true;
             // if the magnitude of the dot product is nearly 1 than the two vectors are aligned
             // here, we take the absolute value of the dot product since reverse is allowed
-            return Math.Abs(this.Dot(other)) >= dotTolerance;
+            return Math.Abs(this.Normalize().Dot(other.Normalize())) >= dotTolerance;
         }
 
         /// <summary>
@@ -537,7 +537,7 @@ namespace TVGL  // COMMENTEDCHANGE namespace System.Numerics
                 isReversed = true;
                 return true;
             }
-            var dot = this.Dot(other);
+            var dot = this.Normalize().Dot(other.Normalize());
             isReversed = dot < 0;
             if (isReversed) dot = -dot;
             return dot >= dotTolerance;
@@ -552,7 +552,7 @@ namespace TVGL  // COMMENTEDCHANGE namespace System.Numerics
         public bool IsAligned(Vector3 other, double dotTolerance = Constants.DotToleranceForSame)
         {
             if (X == other.X && Y == other.Y && Z == other.Z) return true;
-            return this.Dot(other) >= dotTolerance;
+            return this.Normalize().Dot(other.Normalize()) >= dotTolerance;
         }
 
         /// <summary>
@@ -563,7 +563,7 @@ namespace TVGL  // COMMENTEDCHANGE namespace System.Numerics
         /// <returns><c>true</c> if the specified d2 is aligned; otherwise, <c>false</c>.</returns>
         public bool IsPerpendicular(Vector3 other, double dotTolerance = Constants.DotToleranceOrthogonal)
         {
-            return this.Dot(other).IsNegligible(dotTolerance);
+            return this.Normalize().Dot(other.Normalize()).IsNegligible(dotTolerance);
         }
 
         /// <summary>

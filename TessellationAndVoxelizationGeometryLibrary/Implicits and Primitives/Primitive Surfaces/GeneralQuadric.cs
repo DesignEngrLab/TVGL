@@ -312,25 +312,6 @@ namespace TVGL
                 + W);
         }
 
-        private Vector3 FlowToSurface(Vector3 anchor, double tol)
-        {
-            GeneralQuadric outerQuadric = new GeneralQuadric(XSqdCoeff, YSqdCoeff, ZSqdCoeff, XYCoeff, XZCoeff, YZCoeff, XCoeff, YCoeff, ZCoeff, W - QuadricValue(anchor));
-            Vector3 FarSideAnchor = (outerQuadric.LineIntersection(anchor, GetNormalAtPoint(anchor)).MaxBy(x => x.intersection.DistanceSquared(anchor))).intersection;
-            double stepSize = anchor.Distance(FarSideAnchor) / 2;
-            Vector3 previousPoint = anchor;
-            Vector3 currentPoint = previousPoint - (QuadricValue(anchor) / Math.Abs(QuadricValue(anchor))) * GetNormalAtPoint(anchor) * stepSize;
-            while ((currentPoint - previousPoint).Length() > tol)
-            {
-                while (QuadricValue(currentPoint) * QuadricValue(anchor) > 0)
-                {
-                    previousPoint = currentPoint;
-                    currentPoint = currentPoint - (QuadricValue(currentPoint) / Math.Abs(QuadricValue(currentPoint))) * GetNormalAtPoint(currentPoint).Normalize() * stepSize;
-                }
-                stepSize /= 10;
-                anchor = currentPoint;
-            }
-            return currentPoint;
-        }
         private Vector3 GetNormalAtUmbilicPoint(Vector3 point)
         {
             // at an umbilic point, the normal is zero, so we need to find the direction of maximum increase
@@ -864,7 +845,17 @@ namespace TVGL
             throw new NotImplementedException();
         }
 
-        public static (Vector3 tangent, Vector3 normal, Vector3 center, double radius) GetOsculating(GeneralQuadric q1, GeneralQuadric q2, Vector3 point)
+        /// <summary>
+        /// Characterizes the intersection point between two quadrics as a circle in 3D space.
+        /// The tangent direction is along the curve, the normal is curvature direction
+        /// The center and radius define the osculating circle that best fits the curve
+        /// at this point.
+        /// </summary>
+        /// <param name="q1"></param>
+        /// <param name="q2"></param>
+        /// <param name="point"></param>
+        /// <returns></returns>
+        public static (Vector3 tangent, Vector3 normal, Vector3 center, double radius) CharacterizeIntersectingPoint(GeneralQuadric q1, GeneralQuadric q2, Vector3 point)
         {
             // Gradients
             var g1 = q1.GetGradient(point);

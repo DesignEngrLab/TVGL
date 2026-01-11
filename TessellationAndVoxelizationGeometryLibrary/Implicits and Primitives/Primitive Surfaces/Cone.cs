@@ -323,30 +323,52 @@ namespace TVGL
                 MaxX = MaxY = MaxZ = double.PositiveInfinity;
             }
         }
-        public override IEnumerable<(Vector3 intersection, double lineT)> LineIntersection(Vector3 anchor, Vector3 direction)
-        {
-            direction = direction.Normalize();
-            var anchorToApex = Apex - anchor;
-            // handle the special case where the line passes through cone's apex
-            if (anchorToApex.IsAlignedOrReverse(direction))
+        public override IEnumerable<(Vector3 intersection, double lineT)> LineIntersection(Vector3 p, Vector3 d)
+        { 
+            d = d.Normalize();
+
+            //var u = Axis; // expected to be unit length
+            var pDa = p - Apex;
+
+            // Handle the special case where the line passes through the apex.
+            if (pDa.IsAlignedOrReverse(d,1 - Constants.BaseTolerance))
             {
-                yield return (anchor, anchorToApex.Length());
+                yield return (Apex, -pDa.Dot(d));
                 yield break;
             }
-            var a = cosAperture;
-            var b = 2 * anchor.Dot(direction) - 2 * Apex.Dot(direction) * cosAperture - direction.Dot(Axis);
-            var c = anchor.LengthSquared() + Apex.LengthSquared() - 2 * anchor.Dot(Apex) * cosAperture -
-                anchor.Dot(Axis) + Apex.LengthSquared();
+
+            var mSqd = Aperture * Aperture;
+            var onePlusMSqd = 1.0 + mSqd;
+
+            var dDotB = d.Dot(Axis); //using b instead of A (since 'a' is used for Apex)
+            var pDaDotB = pDa.Dot(Axis);
+
+            var a = 1 - onePlusMSqd * dDotB * dDotB;
+            var b = 2.0 * (d.Dot(pDa) - onePlusMSqd * dDotB * pDaDotB);
+            var c = pDa.LengthSquared() - onePlusMSqd * pDaDotB * pDaDotB;
+
             (var root1, var root2) = PolynomialSolve.Quadratic(a, b, c);
-            if (root1.IsRealNumber && !root1.Real.IsPracticallySame(root2.Real))
-            {   // if root1 is real then root2 is also real, and we pierce the cone at two points
-                yield return (anchor + root1.Real * direction, root1.Real);
-                yield return (anchor + root2.Real * direction, root2.Real);
+
+            if (!root1.IsRealNumber)
+                yield break; // no need to check root2 - both are either real or imaginary
+
+            if (!root1.Real.IsPracticallySame(root2.Real))
+            {
+                var iPt = p + root1.Real * d;
+                if ((iPt - Apex).Dot(Axis) >= 0)
+                    yield return (iPt, root1.Real);
+                iPt = p + root2.Real * d;
+                if ((iPt - Apex).Dot(Axis) >= 0)
+                    yield return (iPt, root2.Real);
             }
-            else if (root1.IsRealNumber)
-                // if practically the same, then we only glance the cone at one point
-                yield return (anchor + root1.Real * direction, root1.Real);
-            // otherwise the cone is missed entirely
+            else
+            {
+                var iPt = p + root1.Real * d;
+                if ((iPt - Apex).Dot(Axis) >= 0)
+                    yield return (iPt, root1.Real);
+            }
+
         }
+
     }
 }

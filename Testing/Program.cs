@@ -25,9 +25,14 @@ namespace TVGLUnitTestsAndBenchmarking
             OutputServices.Presenter3D = new Presenter3D();
             var dirInfo = IO.BackoutToFolder(inputFolder);
 
-            var paraboloid = new GeneralQuadric(.1,.51,0,0,0,0,0,0,1,-10);
-            Presenter.ShowAndHang(paraboloid.Tessellate(-10,10, -10, 10, -10, 10, 0.5));
-            paraboloid.Copy();
+            var cone = new Cone(new Vector3(0, 0, 1), new Vector3(0, 0, -1), 1, true);
+            var intersects = cone.LineIntersection(new Vector3(4, 0, 0), new Vector3(1, 1, -10)).ToList();
+            cone.Length = 151;
+            var ts = cone.Tessellate(400);
+            //var ts = cone.(-100,100, -100, 100, -10, 160, 2);
+            Presenter.ShowAndHang(ts);
+            IO.Save(ts, "cone.ply");
+            cone.Copy();
             IO.Open(Path.Combine(dirInfo.FullName, "a.json"), out Polygon A);
             IO.Open(Path.Combine(dirInfo.FullName, "b.json"), out Polygon B);
             var union = A.MinkowskiSum(B);
@@ -53,9 +58,9 @@ namespace TVGLUnitTestsAndBenchmarking
 
         private static void consolePrint(Polygon a)
         {
-           foreach (var v in System.Linq.Enumerable.Reverse(a.Vertices))
+            foreach (var v in System.Linq.Enumerable.Reverse(a.Vertices))
             {
-                Console.WriteLine(v.X+", "+v.Y);
+                Console.WriteLine(v.X + ", " + v.Y);
             }
         }
 
