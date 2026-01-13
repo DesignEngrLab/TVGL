@@ -286,6 +286,8 @@ namespace TVGL
         {
             var gradient = GetGradient(point).Normalize();
 
+            if (!gradient.Length().IsPositiveNonNegligible()) return GetNormalAtUmbilicPoint(point);
+
             if (IsPositive.GetValueOrDefault(true))
                 return gradient;
             else return -gradient;
@@ -314,29 +316,34 @@ namespace TVGL
 
         private Vector3 GetNormalAtUmbilicPoint(Vector3 point)
         {
-            // at an umbilic point, the normal is zero, so we need to find the direction of maximum increase
-            // we assume that the quadric field is not flat everywhere
-            if (GetNormalAtPoint(point).Length() != 0) return GetNormalAtPoint(point);
-            var eigVectors = new ComplexNumber[3][];
-            var eigVals = StarMath.GetEigenValuesAndVectors3(2 * XSqdCoeff, XYCoeff, XZCoeff, XYCoeff, 2 * YSqdCoeff, YZCoeff, XZCoeff, YZCoeff, 2 * ZSqdCoeff, out eigVectors);
-            var maxIncreaseNormal = eigVectors[Array.IndexOf(eigVals, eigVals.MaxBy(x => x.Real))];
-            if (maxIncreaseNormal == null) return Vector3.UnitX; //This means there are infinitely many eigenvectors, and we choose one at random.
-            return new Vector3(maxIncreaseNormal[0].Real, maxIncreaseNormal[1].Real, maxIncreaseNormal[2].Real);
+            // At an umbilic point, the normal is zero, so we need to find the direction of maximum increase.
+            // We assume that the quadric field is not flat everywhere
+
+            // Return a normal at a point slightly offset from the umbilic point
+            Vector3 normal = Vector3.Zero;
+            double delta = 1E-6; // small offset distance
+            int iters = 0;
+            while (!normal.Length().IsPositiveNonNegligible() && iters < 100)
+            {
+                var random = new Random();
+                normal = GetNormalAtPoint(point + delta * new Vector3(random.NextDouble(), random.NextDouble(), random.NextDouble()).Normalize());
+                iters++;
+            }
+            return normal;
         }
         private Vector3 GetNearbyPointOnQuadric(Vector3 anchor)
         {
             Vector3 normal = GetNormalAtPoint(anchor);
-            if (normal.Length() == 0)
-            {
-                normal = GetNormalAtUmbilicPoint(anchor);
-            }
             var intersections = LineIntersection(anchor, normal);
             Vector3 newAnchor = anchor;
             int iters = 0;
             double t = 0;
+            //check for an intersection in the normal direction. If none look for the point along the normal
+            // that is tangent to a quadric surface in the level set.
             while (!intersections.GetEnumerator().MoveNext() && iters++ < 100)
             {
-                t = -normal.Dot(normal) / GetNormalAtPoint(normal).Dot(normal); //Yes, this is intentional. It is just a shorthand for the equation.
+                //This is the distance to the tangent point on the normal to the level set.
+                t = -normal.Dot(normal) / GetNormalAtPoint(normal).Dot(normal);
                 newAnchor = newAnchor + t * normal;
                 normal = GetNormalAtPoint(newAnchor);
                 if (normal.Length() == 0)
