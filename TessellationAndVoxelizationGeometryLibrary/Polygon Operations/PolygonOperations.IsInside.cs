@@ -366,12 +366,12 @@ namespace TVGL
         /// <param name="onBoundary">if set to <c>true</c> [on boundary].</param>
         /// <param name="onBoundaryIsInside">if set to <c>true</c> [on boundary is inside].</param>
         /// <returns><c>true</c> if [is point inside polygon] [the specified point in question]; otherwise, <c>false</c>.</returns>
-        internal static bool ArePointsInsidePolygon(this Polygon polygon, IEnumerable<Vertex2D> pointsInQuestion,
+        public static bool AreAllPointsInsidePolygon(this Polygon polygon, IEnumerable<Vertex2D> pointsInQuestion,
             out bool onBoundary, bool onBoundaryIsInside = true)
         {
             var sortedLines = GetOrderedLines(polygon.OrderedXVertices);
             var sortedPoints = pointsInQuestion.OrderBy(pt => pt.X).ToList();
-            return ArePointsInsidePolygonLines(sortedLines, sortedLines.Length, sortedPoints, out onBoundary, onBoundaryIsInside);
+            return AreAllPointsInsidePolygonLines(sortedLines, sortedLines.Length, sortedPoints, out onBoundary, onBoundaryIsInside);
         }
         /// <summary>
         /// Ares the points inside polygon lines.
@@ -382,7 +382,7 @@ namespace TVGL
         /// <param name="onBoundary">if set to <c>true</c> [on boundary].</param>
         /// <param name="onBoundaryIsInside">if set to <c>true</c> [on boundary is inside].</param>
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
-        internal static bool ArePointsInsidePolygonLines(IList<PolygonEdge> sortedLines, int numSortedLines, List<Vertex2D> sortedPoints,
+        public static bool AreAllPointsInsidePolygonLines(IList<PolygonEdge> sortedLines, int numSortedLines, List<Vertex2D> sortedPoints,
             out bool onBoundary, bool onBoundaryIsInside = true)
         {
             var evenNumberOfCrossings = true; // starting at zero. 
