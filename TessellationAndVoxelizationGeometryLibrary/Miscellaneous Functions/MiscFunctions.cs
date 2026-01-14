@@ -190,7 +190,7 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Finds the vertex or point that is furthest along a given direction vector.
+        /// Finds the vertex or point that is furthest along a given direction vector. 
         /// </summary>
         /// <typeparam name="T">A type that implements the IVector3D interface, such as Vertex or Vector3.</typeparam>
         /// <param name="vertices">The collection of vertices or points.</param>
@@ -200,11 +200,14 @@ namespace TVGL
         /// This is useful for finding the extreme points of a geometric shape. It iterates through the collection and finds the point with the largest dot product with the direction vector.
         /// Common search terms: "find extreme point", "max point in direction", "furthest vertex".
         /// </remarks>
-        public static (T maxPoint, double dotDistance) GetMaxVertexDistanceAlongVector<T>(this IEnumerable<T> vertices, Vector3 direction)
+        public static (T maxPoint, double dotDistance, int index) GetMaxVertexDistanceAlongVector<T>(this IEnumerable<T> vertices, Vector3 direction)
             where T : IVector3D
         {
             var dotDistance = double.NegativeInfinity;
             T maxPoint = default;
+            //Since we want to implement IEnumerable - which does not have get(index) operators - to handle arrays & lists, stick with foreach but count an index as well. 
+            var maxPointIndex = -1;
+            var i = 0;
             foreach (var vertex in vertices)
             {
                 //Get distance along the search direction
@@ -213,9 +216,11 @@ namespace TVGL
                 {
                     dotDistance = d;
                     maxPoint = vertex;
+                    maxPointIndex = i;
                 }
+                i++;
             }
-            return (maxPoint, dotDistance);
+            return (maxPoint, dotDistance, maxPointIndex);
         }
 
         /// <summary>
@@ -229,11 +234,14 @@ namespace TVGL
         /// This is useful for finding the extreme points of a geometric shape. It iterates through the collection and finds the point with the smallest dot product with the direction vector.
         /// Common search terms: "find extreme point", "min point in direction", "closest vertex".
         /// </remarks>
-        public static (T minPoint, double dotDistance) GetMinVertexDistanceAlongVector<T>(this IEnumerable<T> vertices, Vector3 direction)
+        public static (T minPoint, double dotDistance, int index) GetMinVertexDistanceAlongVector<T>(this IEnumerable<T> vertices, Vector3 direction)
             where T : IVector3D
         {
             var dotDistance = double.PositiveInfinity;
             T minPoint = default;
+            //Since we want to implement IEnumerable - which does not have get(index) operators - to handle arrays & lists, stick with foreach but count an index as well. 
+            var minPointIndex = -1;
+            var i = 0;
             foreach (var vertex in vertices)
             {
                 //Get distance along the search direction
@@ -242,10 +250,11 @@ namespace TVGL
                 {
                     dotDistance = d;
                     minPoint = vertex;
+                    minPointIndex = i;
                 }
             }
-            return (minPoint, dotDistance);
-        }
+            return (minPoint, dotDistance, minPointIndex);
+        } 
 
         /// <summary>
         /// Finds the vertices or points that are closest and furthest along a given direction vector in a single pass.
@@ -284,6 +293,92 @@ namespace TVGL
             return (minPoint, minDistance, maxPoint, maxDistance);
         }
 
+        /// <summary>
+        /// Finds the vertex2D point that is furthest along a given direction vector.
+        /// </summary>>
+        /// <param name="vertices"></param>
+        /// <param name="direction"></param>
+        public static (Vector2 minPoint, double dotDistance, int index) GetMaxVector2DistanceAlongVector(this IEnumerable<Vector2> vertices, Vector2 direction)
+        {
+            var dotDistance = double.NegativeInfinity;
+            Vector2 maxPoint = default;
+            //Since we want to implement IEnumerable - which does not have get(index) operators - to handle arrays & lists, stick with foreach but count an index as well. 
+            var maxPointIndex = -1;
+            var i = 0;
+            foreach (var vertex in vertices)
+            {
+                //Get distance along the search direction
+                var d = direction.X * vertex.X + direction.Y * vertex.Y;
+                if (d > dotDistance)
+                {
+                    dotDistance = d;
+                    maxPoint = vertex;
+                    maxPointIndex = i;
+                }
+                i++;
+            }
+            return (maxPoint, dotDistance, maxPointIndex);
+        }
+
+        /// <summary>
+        /// Finds the vertex2D point that is closets along a given direction vector.
+        /// </summary>
+        /// <param name="vertices"></param>
+        /// <param name="direction"></param>
+        /// <returns></returns>
+        public static (Vector2 minPoint, double dotDistance, int index) GetMinVector2DistanceAlongVector(this IEnumerable<Vector2> vertices, Vector2 direction)
+        {
+            var dotDistance = double.PositiveInfinity;
+            Vector2 minPoint = default;
+            //Since we want to implement IEnumerable - which does not have get(index) operators - to handle arrays & lists, stick with foreach but count an index as well. 
+            var minPointIndex = -1;
+            var i = 0;
+            foreach (var vertex in vertices)
+            {
+                //Get distance along the search direction
+                var d = direction.X * vertex.X + direction.Y * vertex.Y;
+                if (d < dotDistance)
+                {
+                    dotDistance = d;
+                    minPoint = vertex;
+                    minPointIndex = i;
+                }
+                i++;
+            }
+            return (minPoint, dotDistance, minPointIndex);
+        }
+
+        /// <summary>
+        /// Finds the vertex2Ds that are closest and furthest along a given direction vector in a single pass.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="vertices"></param>
+        /// <param name="direction"></param>
+        /// <returns></returns>
+        public static (Vector2 minPoint, double minDistance, Vector2 maxPoint, double maxDistance)
+           GetMinAndMaxAlongVector(this IEnumerable<Vector2> vertices, Vector2 direction)
+        {
+            var minDistance = double.PositiveInfinity;
+            var maxDistance = double.NegativeInfinity;
+            Vector2 minPoint = default;
+            Vector2 maxPoint = default;
+            foreach (var vertex in vertices)
+            {
+                //Get distance along the search direction
+                var d = direction.X * vertex.X + direction.Y * vertex.Y;
+                if (d < minDistance)
+                {
+                    minDistance = d;
+                    minPoint = vertex;
+                }
+                if (d > maxDistance)
+                {
+                    maxDistance = d;
+                    maxPoint = vertex;
+                }
+            }
+            return (minPoint, minDistance, maxPoint, maxDistance);
+        }
 
         /// <summary>
         /// Returns a list of sorted Vector2s along a set direction.
