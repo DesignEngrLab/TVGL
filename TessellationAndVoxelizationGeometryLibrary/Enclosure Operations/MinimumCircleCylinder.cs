@@ -11,8 +11,10 @@
 // </copyright>
 // <summary></summary>
 // ***********************************************************************
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 
 namespace TVGL
@@ -41,6 +43,10 @@ namespace TVGL
             //var points = ConvexHull2D.Create(pointsInput.ToArray(), out _).ToArray();
             // I disagree with the above comment, since the convex hull is not faster than this method.
 
+            //Set a max iteration counter, since certain issues for this function have proved to be elusive
+            //Yes, we need to continue to debug, but we do not ever want a while loop that could run endlessly.
+            //DO NOT REMOVE. This function is complex and likely will miss another case.
+            var maxIterations = points.Length * 100;
             var numPoints = points.Length;
             var maxNumStalledIterations = 10; // why 10? it was (int)(1.1 * numPoints);
             // since the circle can be made up of at most 3 points, we can just check for that
@@ -60,11 +66,13 @@ namespace TVGL
             var startIndex = 3;
             var maxDistSqared = circle.RadiusSquared;
             bool newPointFoundOutsideCircle;
+            var totalIterationCounter = 0;//don't ever reset this while in the while loop.
             var stallCounter = 0;
             var indexOfMaxDist = -1;
             var requiredImprovementPercent = Constants.HighConfidence;
             do
             {
+                totalIterationCounter ++;
                 newPointFoundOutsideCircle = false;
                 for (int i = startIndex; i < numPoints; i++)
                 {
@@ -89,7 +97,7 @@ namespace TVGL
                     points[0] = maxPoint;
                     circle = FindCircle(points);
                     maxDistSqared = circle.RadiusSquared;
-                    //Presenter.ShowAndHang(points.Take(6), plot2DType: Plot2DType.Points);
+                    //Presenter.ShowAndHang(points.Take(6), plot2DType: Plot2DType.Scatter);
                     startIndex = 4;
                     // should we start at 3 or 4? initially the circle was defined with the first 2 or 3 points.
                     // (if it were 2 then the third point was inside the circle and was ineffective).
@@ -101,10 +109,18 @@ namespace TVGL
                     //var filePathOut = Path.Join(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "cvxpoints.csv");
                     //System.IO.File.WriteAllLines(filePathOut, pointsInput.Select(p => p.X + "," + p.Y));
                 }
-            } while (newPointFoundOutsideCircle && stallCounter < maxNumStalledIterations);
+            } while (newPointFoundOutsideCircle && stallCounter < maxNumStalledIterations && totalIterationCounter < maxIterations);
+            if (totalIterationCounter == maxIterations)
+            {
+                var filePathOut = Path.Join(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "cvxpoints.csv");
+                OutputServices.Logger.LogError("MinimumCircle function reach max iteration counter: " + maxIterations);
+                OutputServices.Logger.LogInformation("points saved to: " + filePathOut);
+                File.WriteAllLines(filePathOut, pointsInput.Select(p => p.X + "," + p.Y));
+                //Presenter.ShowAndHang(points, plot2DType: Plot2DType.Scatter);
+            }
+
             return circle;
         }
-
         private static Circle FirstCircle(Vector2[] points)
         {
             // during the main loop, the most outside point will be moved to the front
