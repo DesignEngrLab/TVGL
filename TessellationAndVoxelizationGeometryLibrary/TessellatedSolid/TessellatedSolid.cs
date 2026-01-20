@@ -310,7 +310,8 @@ namespace TVGL
                 // See comment in StreamWrite for the trick used here to store colors compactly.
                 writer.WritePropertyName("Colors");
                 var colorList = new List<string>();
-                var lastColor = Faces[0].Color;
+                //Set last color in case of null. Since null will crash the write process.
+                var lastColor = Faces[0].Color == null ? new Color(Constants.DefaultColor) : Faces[0].Color;
                 colorList.Add(lastColor.ToString().Substring(1));
                 var numRepeats = 0;
                 foreach (var f in Faces.Skip(1))

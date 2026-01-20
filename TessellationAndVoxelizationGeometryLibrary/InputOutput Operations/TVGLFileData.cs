@@ -163,6 +163,7 @@ namespace TVGL
                 using (var writer = new JsonTextWriter(streamWriter))
                 {
                     writer.Formatting = Formatting.None;
+                    Log.Trace("Beginning write");
                     solidAssembly.StreamWrite(writer);
                     writer.Close();
                 }
@@ -170,6 +171,7 @@ namespace TVGL
             }
             catch
             {
+                Log.Error("Saving to TVGL/TVGLZ failed");
                 return false;
             }
         }
