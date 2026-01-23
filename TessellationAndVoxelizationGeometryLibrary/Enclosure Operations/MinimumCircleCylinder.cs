@@ -46,7 +46,7 @@ namespace TVGL
             //Set a max iteration counter, since certain issues for this function have proved to be elusive
             //Yes, we need to continue to debug, but we do not ever want a while loop that could run endlessly.
             //DO NOT REMOVE. This function is complex and likely will miss another case.
-            var maxIterations = points.Length * 100;
+            var maxIterations = 1000;
             var numPoints = points.Length;
 
             if (numPoints == 0)
