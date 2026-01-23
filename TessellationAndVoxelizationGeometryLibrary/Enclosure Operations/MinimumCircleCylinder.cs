@@ -48,12 +48,7 @@ namespace TVGL
             //DO NOT REMOVE. This function is complex and likely will miss another case.
             var maxIterations = points.Length * 100;
             var numPoints = points.Length;
-            var maxNumStalledIterations = 10; // why 10? it was (int)(1.1 * numPoints);
-            // since the circle can be made up of at most 3 points, we can just check for that
-            // there is an oscillation between two or more points that would all be a index-4.
-            // worst case scenario there are 5 points that are all on the circle and all "appear"
-            // outside of the circle when they aren't main contributors to it (in positions 0,1,or 2)
-            // so cycling twice through this list or 10 times is more than sufficient
+
             if (numPoints == 0)
                 throw new ArgumentException("No points provided.");
             else if (numPoints == 1)
@@ -67,9 +62,7 @@ namespace TVGL
             var maxDistSqared = circle.RadiusSquared;
             bool newPointFoundOutsideCircle;
             var totalIterationCounter = 0;//don't ever reset this while in the while loop.
-            var stallCounter = 0;
             var indexOfMaxDist = -1;
-            var requiredImprovementPercent = Constants.HighConfidence;
             do
             {
                 totalIterationCounter ++;
@@ -79,10 +72,6 @@ namespace TVGL
                     var dist = (points[i] - circle.Center).LengthSquared();
                     if (dist > maxDistSqared)
                     {
-                        if (indexOfMaxDist == i) stallCounter++;
-                        //Only set the stall counter back to zero if there was a significant change.
-                        else if (dist * requiredImprovementPercent > maxDistSqared)
-                            stallCounter = 0;
                         //Set max distance ONLY AFTER handling the stall counter logic.
                         maxDistSqared = dist;
                         indexOfMaxDist = i;
@@ -94,7 +83,7 @@ namespace TVGL
                     //Console.WriteLine(indexOfMaxDist+", "+maxDistSqared);
                     var maxPoint = points[indexOfMaxDist];
                     Array.Copy(points, 0, points, 1, indexOfMaxDist);
-                    points[0] = maxPoint;
+                    points[0] = maxPoint;        
                     circle = FindCircle(points);
                     maxDistSqared = circle.RadiusSquared;
                     //Presenter.ShowAndHang(points.Take(6), plot2DType: Plot2DType.Scatter);
@@ -109,7 +98,7 @@ namespace TVGL
                     //var filePathOut = Path.Join(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "cvxpoints.csv");
                     //System.IO.File.WriteAllLines(filePathOut, pointsInput.Select(p => p.X + "," + p.Y));
                 }
-            } while (newPointFoundOutsideCircle && stallCounter < maxNumStalledIterations && totalIterationCounter < maxIterations);
+            } while (newPointFoundOutsideCircle && totalIterationCounter < maxIterations);
             if (totalIterationCounter == maxIterations)
             {
                 var filePathOut = Path.Join(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "cvxpoints.csv");
@@ -189,6 +178,7 @@ namespace TVGL
                 return circle;
             }
 
+            circle = default;
             Circle tempCircle;
             // circle 0-1-2
             var minRadiusSqd = double.PositiveInfinity;
@@ -217,6 +207,8 @@ namespace TVGL
                 swap3And1 = true;
                 circle = tempCircle;
             }
+            if (circle.Radius == 0.0)
+                circle = tempCircle;
             if (swap3And1) Global.SwapItemsInList(3, 1, points);
             else if (swap3And2) Global.SwapItemsInList(3, 2, points);
             return circle;
