@@ -423,11 +423,11 @@ namespace TVGL
             foreach (var face in surface.Faces)
             {
                 if (!vertexDistances.TryGetValue(face.A, out var aDist))
-                    aDist = double.MaxValue;
+                    aDist = double.MinValue;
                 if (!vertexDistances.TryGetValue(face.B, out var bDist))
-                    bDist = double.MaxValue;
+                    bDist = double.MinValue;
                 if (!vertexDistances.TryGetValue(face.C, out var cDist))
-                    cDist = double.MaxValue;
+                    cDist = double.MinValue;
                 if (aDist >= 0 && bDist >= 0 && cDist >= 0)
                     continue; // all positive, so keep face as is
                 facesToRemove.Add(face);
