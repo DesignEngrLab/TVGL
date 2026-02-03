@@ -77,7 +77,7 @@ namespace TVGL
             }
         }
         HashSet<TriangleFace> faces;
-       static HashSet<TriangleFace> GetFaces(HashSet<PrimitiveSurface> surfaces)
+        static HashSet<TriangleFace> GetFaces(HashSet<PrimitiveSurface> surfaces)
         {
             var result = new HashSet<TriangleFace>();
             var surfWithMostFaces = surfaces.MaxBy(s => s.Faces.Count);
@@ -103,7 +103,7 @@ namespace TVGL
         HashSet<Vertex> vertices;
         static HashSet<Vertex> GetVertices(HashSet<PrimitiveSurface> surfaces)
         {
-            var result = new HashSet<Vertex>(); 
+            var result = new HashSet<Vertex>();
             var surfWithMostvertices = surfaces.MaxBy(s => s.Vertices.Count);
             // to be slightly efficient we "copy" the hashset from the surface with the most vertices
             result = new HashSet<Vertex>(surfWithMostvertices.Vertices, surfWithMostvertices.Vertices.Comparer);
@@ -192,6 +192,11 @@ namespace TVGL
         public override double DistanceToPoint(Vector3 point)
         {
             return Surfaces.Min(s => s.DistanceToPoint(point));
+        }
+        public override Vector3 ClosestPointOnSurfaceToPoint(Vector3 point)
+        {
+            return Surfaces.Select(s=>s.ClosestPointOnSurfaceToPoint(point))
+                .MinBy(mp => mp.DistanceSquared(point));
         }
 
         public override IEnumerable<(Vector3 intersection, double lineT)> LineIntersection(Vector3 anchor, Vector3 direction)

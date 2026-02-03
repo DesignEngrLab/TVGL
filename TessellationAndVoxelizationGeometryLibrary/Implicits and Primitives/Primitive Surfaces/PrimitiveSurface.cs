@@ -217,6 +217,13 @@ namespace TVGL
         public abstract double DistanceToPoint(Vector3 point);
 
         /// <summary>
+        /// Gets the closest point on the primitive surface to the given point.
+        /// </summary>
+        /// <param name="point">The point.</param>
+        /// <returns>System.Double.</returns>
+        public abstract Vector3 ClosestPointOnSurfaceToPoint(Vector3 point);
+
+        /// <summary>
         /// Returns all intersection of the given line with the primitive surface (which could be zero to four points).
         /// </summary>
         /// <param name="anchor"></param>

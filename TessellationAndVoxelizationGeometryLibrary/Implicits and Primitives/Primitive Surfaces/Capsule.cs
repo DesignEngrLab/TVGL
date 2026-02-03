@@ -275,6 +275,28 @@ namespace TVGL
             return d;
         }
 
+        public override Vector3 ClosestPointOnSurfaceToPoint(Vector3 point)
+        {
+            var dxAlong = (point - coneAnchor1).Dot(directionVector);
+            double d;
+            if (dxAlong < 0)
+                return Anchor1 + Radius1 * (point - Anchor1).Normalize();
+            else if (dxAlong > coneLength)
+                return Anchor2 + Radius2 * (point - Anchor2).Normalize();
+
+            //else // in the cone section
+            throw new NotImplementedException();
+                var t = (dxAlong - conePlaneDistance1) / coneLength;
+                var thisRadius = (1 - t) * coneRadius1 + t * coneRadius2;
+                var distAtCommonDepth = (point - coneAnchor1).Cross(directionVector).Length() - thisRadius;
+                // to be more exact, we need the cosine of the aperture angle to get the closest distance
+                // instead of finding angle, and then its cosine, we just pythagorean it 
+                var cosAngle = directionVectorLength /
+                    Math.Sqrt(directionVectorLength * directionVectorLength +
+                    (coneRadius1 - coneRadius2) * (coneRadius1 - coneRadius2));
+                d = distAtCommonDepth * cosAngle;
+        }
+
         public override Vector3 GetNormalAtPoint(Vector3 point)
         {
             var loc = point - Anchor1;

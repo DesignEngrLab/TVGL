@@ -296,6 +296,20 @@ namespace TVGL
             return d;
         }
 
+        /// <summary>
+        /// Returns the point on the object that is closest to the specified position in 3D space.
+        /// </summary>
+        /// <param name="point">The position in world coordinates for which to find the nearest point on the object.</param>
+        /// <returns>A <see cref="Vector3"/> representing the closest point on the object to the specified position.</returns>
+        /// <exception cref="NotImplementedException">The method is not implemented.</exception>
+        public override Vector3 ClosestPointOnSurfaceToPoint(Vector3 point)
+        {
+            var d = (point - Anchor).Dot(Axis);
+            var axisPoint = Anchor + d * Axis;
+            var radialDir = (point - axisPoint).Normalize();
+            return axisPoint + Radius * radialDir;
+        }
+
         protected override void CalculateIsPositive()
         {
             if (Faces == null || !Faces.Any() || Area.IsNegligible()) return;

@@ -361,7 +361,7 @@ namespace TVGL
         /// </summary>
         /// <param name="point"></param>
         /// <returns></returns>
-        public Vector3 ClosestPointOnSurfaceToPoint(Vector3 point)
+        public override Vector3 ClosestPointOnSurfaceToPoint(Vector3 point)
         {
             //if (GetNormalAtPoint(point).Length() == 0) return 0; //scaling the quadric value by the norm of the normal vector to get the approximate distance locally, not working all the time
             //return QuadricValue(point) / GetNormalAtPoint(point).Length();

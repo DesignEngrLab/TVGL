@@ -324,6 +324,32 @@ namespace TVGL
                 return -Math.Sqrt(minDistance);
             return Math.Sqrt(minDistance);
         }
+
+        public override Vector3 ClosestPointOnSurfaceToPoint(Vector3 point)
+        {
+            var point2D = point.ConvertTo2DCoordinates(transformToXYPlane);
+            var minDistance = double.PositiveInfinity;
+            var closestPoint2D = Vector2.Null;
+            var minI = -1;
+            //Presenter.ShowAndHang(PolyLine);
+            for (var i = 1; i < PolyLine.Count; i++)
+            {
+                var from = PolyLine[i - 1];
+                var to = PolyLine[i];
+                var closest = MiscFunctions.ClosestPointOnLineSegmentToPoint(from, to, point2D);
+                var distance = (closest - point2D).LengthSquared();
+                if (distance < minDistance)
+                {
+                    minDistance = distance;
+                    closestPoint2D = closest;
+                    minI = i;
+                }
+            }
+            if (minI == -1) return Vector3.Null;
+            // this is not exactly correct since we are not considering the height along the axis
+            throw new NotImplementedException();
+            return closestPoint2D.ConvertTo3DLocation(transformBackFromXYPlane);
+        }
         public override Vector3 GetNormalAtPoint(Vector3 point)
         {
             var point2D = point.ConvertTo2DCoordinates(transformToXYPlane);

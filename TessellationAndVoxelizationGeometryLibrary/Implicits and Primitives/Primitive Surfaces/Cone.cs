@@ -63,6 +63,8 @@ namespace TVGL
         /// <summary>
         /// Gets the aperture. This is a slope, like m, not an angle. It is dimensionless and NOT radians.
         /// like y = mx + b. aperture = tan(cone_angle) where cone_angle is measure from the axis to the cone
+        /// if m is zero, then cone is a line(spike).
+        /// if m is infinity, then cone is a plane.
         /// </summary>
         /// <value>The aperture.</value>
         public double Aperture
@@ -290,6 +292,15 @@ namespace TVGL
             return d;
         }
 
+        public override Vector3 ClosestPointOnSurfaceToPoint(Vector3 point)
+        {
+            var v = point - Apex;
+            var outOfPlane = v.Cross(Axis).Normalize();
+            var vertDir = Axis.Cross(outOfPlane).Normalize();
+            var onSurfDir = (Axis + Aperture * vertDir).Normalize();
+            return MiscFunctions.ClosestPointOnLineSegmentToPoint(Apex, Apex + onSurfDir, point, out _);
+        }
+
         protected override void CalculateIsPositive()
         {
             if (Faces == null || !Faces.Any() || Area.IsNegligible()) return;
@@ -324,14 +335,14 @@ namespace TVGL
             }
         }
         public override IEnumerable<(Vector3 intersection, double lineT)> LineIntersection(Vector3 p, Vector3 d)
-        { 
+        {
             d = d.Normalize();
 
             //var u = Axis; // expected to be unit length
             var pDa = p - Apex;
 
             // Handle the special case where the line passes through the apex.
-            if (pDa.IsAlignedOrReverse(d,1 - Constants.BaseTolerance))
+            if (pDa.IsAlignedOrReverse(d, 1 - Constants.BaseTolerance))
             {
                 yield return (Apex, -pDa.Dot(d));
                 yield break;
