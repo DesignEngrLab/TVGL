@@ -154,7 +154,7 @@ namespace TVGL
             {
                 var triangleList = new List<Vertex2D[]>();
                 for (int i = 2; i < polygon.Vertices.Count; i++)
-                    triangleList.Add(new[] { polygon.Vertices[0], polygon.Vertices[i - 1], polygon.Vertices[i] });
+                    triangleList.Add([polygon.Vertices[0], polygon.Vertices[i - 1], polygon.Vertices[i]]);
                 return triangleList;
             }
             if (!polygon.IsPositive)

@@ -497,9 +497,9 @@ namespace TVGL
                         newFace.AddEdge(new Edge(newFace.B, newFace.C, newFace, null, true));
                     if (face.AB != thisPatchRemovedEdges[0])
                         newFace.AddEdge(face.AB);
-                    else if (face.BC != thisPatchRemovedEdges[0])
+                    if (face.BC != thisPatchRemovedEdges[0])
                         newFace.AddEdge(face.BC);
-                    else if (face.CA != thisPatchRemovedEdges[0])
+                    if (face.CA != thisPatchRemovedEdges[0])
                         newFace.AddEdge(face.CA);
                 }
                 else //if (thisPatchRemovedEdges.Count==0)
@@ -536,6 +536,8 @@ namespace TVGL
                     newFace.AddEdge(face.CA);
                     newFace.AddEdge(innerEdge);
                 }
+                foreach (var f in facesToAdd)
+                    if (f.BC == null) ;
             }
             // edgesToRemove ,facesToRemove,facesToAdd
             surface.Faces.ExceptWith(facesToRemove);
