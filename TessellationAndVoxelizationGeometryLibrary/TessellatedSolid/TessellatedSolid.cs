@@ -176,7 +176,7 @@ namespace TVGL
         /// <param name="filename">The original filename of the solid.</param>
         /// <param name="comments">A list of comments associated with the solid.</param>
         /// <param name="language">The language of the comments.</param>
-        public TessellatedSolid(ICollection<Vector3> vertices, ICollection<(int, int, int)> faceToVertexIndices,
+        public TessellatedSolid(IReadOnlyCollection<Vector3> vertices, ICollection<(int, int, int)> faceToVertexIndices,
             IList<Color> colors, TessellatedSolidBuildOptions buildOptions = null, UnitType units = UnitType.unspecified,
             string name = "", string filename = "", List<string> comments = null, string language = "")
             : this(vertices, vertices.Count, faceToVertexIndices, faceToVertexIndices.Count, colors, buildOptions,
@@ -612,7 +612,7 @@ namespace TVGL
         /// <param name="filename">The filename.</param>
         /// <param name="comments">The comments.</param>
         /// <param name="language">The language.</param>
-        public TessellatedSolid(ICollection<TriangleFace> faces, ICollection<Vertex> vertices = null,
+        public TessellatedSolid(IReadOnlyCollection<TriangleFace> faces, ICollection<Vertex> vertices = null,
             TessellatedSolidBuildOptions buildOptions = null, IList<Color> colors = null,
             UnitType units = UnitType.unspecified, string name = "", string filename = "",
             List<string> comments = null, string language = "") : base(units, name, filename, comments, language)
