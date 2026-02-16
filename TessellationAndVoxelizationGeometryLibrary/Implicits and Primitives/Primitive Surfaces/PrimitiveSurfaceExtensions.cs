@@ -602,7 +602,8 @@ namespace TVGL
             var tessellatedSolid = TessellateToNewSolid(surface, xMin, xMax, yMin, yMax, zMin, zMax, maxEdgeLength);
             surface.Faces = tessellatedSolid.Primitives[0].Faces;
             surface.Vertices = tessellatedSolid.Primitives[0].Vertices;
-            tessellatedSolid.MakeEdgesIfNonExistent();
+            if (surface.Faces.Count > 0)
+                tessellatedSolid.MakeEdgesIfNonExistent();
             return tessellatedSolid;
         }
         /// <summary>
