@@ -158,6 +158,7 @@ namespace TVGL
             foreach (var c in points)
             {
                 var d = DistanceToPoint(c);
+                if (double.IsNaN(d)) ;
                 mse += d * d;
                 n++;
             }

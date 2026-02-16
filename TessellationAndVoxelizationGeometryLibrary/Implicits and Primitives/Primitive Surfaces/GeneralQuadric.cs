@@ -284,13 +284,13 @@ namespace TVGL
         /// <returns>A Vector3.</returns>
         public override Vector3 GetNormalAtPoint(Vector3 point)
         {
-            var gradient = GetGradient(point).Normalize();
+            var gradient = GetGradient(point);
 
-            if (!gradient.Length().IsPositiveNonNegligible()) return GetNormalAtUmbilicPoint(point);
+            if (gradient.Length().IsNegligible()) gradient = GetNormalAtUmbilicPoint(point);
 
             if (IsPositive.GetValueOrDefault(true))
-                return gradient;
-            else return -gradient;
+                return gradient.Normalize();
+            else return -gradient.Normalize();
         }
 
         /// <summary>
@@ -343,13 +343,10 @@ namespace TVGL
             while (!intersections.GetEnumerator().MoveNext() && iters++ < 100)
             {
                 //This is the distance to the tangent point on the normal to the level set.
-                t = -normal.Dot(normal) / GetNormalAtPoint(normal).Dot(normal);
+                t = normal.Dot(normal) / (new Vector3(XCoeff, YCoeff, ZCoeff) - GetNormalAtPoint(normal)).Dot(normal);
+                var tangencyCheck = normal.Dot(GetNormalAtPoint(newAnchor + t * normal));
                 newAnchor = newAnchor + t * normal;
                 normal = GetNormalAtPoint(newAnchor);
-                if (normal.Length() == 0)
-                {
-                    normal = GetNormalAtUmbilicPoint(newAnchor);
-                }
                 intersections = LineIntersection(newAnchor, normal);
             }
             if (!intersections.GetEnumerator().MoveNext()) return newAnchor;
