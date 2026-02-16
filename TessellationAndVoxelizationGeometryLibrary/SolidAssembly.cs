@@ -16,6 +16,7 @@ using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Numerics;
 using System.Runtime.Serialization;
 
 namespace TVGL
@@ -162,6 +163,7 @@ namespace TVGL
         {
             writer.WriteStartObject();
             {
+                Log.Trace("Writing SolidAssembly metadata");
                 writer.WritePropertyName("SolidAssembly");
                 useOnSerialization = false;//Don't serialize the TessellatedSolids directly. We are doing to do this with a stream.
                 var jsonString = ((string)JsonConvert.SerializeObject(this, Newtonsoft.Json.Formatting.None));//ignore last character so that the object is not closed
@@ -172,8 +174,10 @@ namespace TVGL
                 //will make it easier to read in, since there is one fewer global levels in the JSON structure. Pointers from the assembly refer 
                 //to the solid index and/or the order of the solids.
                 var i = 0;
+
                 foreach (var solid in Solids.Where(p => p is TessellatedSolid))
                 {
+                    Log.Trace("Writing TessellatedSolid {0}", i);
                     writer.WritePropertyName("TessellatedSolid" + i);
                     var ts = (TessellatedSolid)solid;
                     writer.WriteStartObject();
@@ -373,7 +377,8 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Alls the tessellated solids in global coordinate system.
+        /// All the tessellated solids in global coordinate system.
+        /// Calls AllPartsInGlobalCoordinateSystem and then casts to TessellatedSolids.
         /// </summary>
         /// <returns>TessellatedSolid[].</returns>
         public TessellatedSolid[] AllTessellatedSolidsInGlobalCoordinateSystem()
@@ -382,7 +387,8 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Alls the tessellated solids with global coordinate system transform.
+        /// All the tessellated solids with global coordinate system transform.
+        /// Calls AllPartsInGlobalCoordinateSystem and then casts to TessellatedSolids, but also returns each solid's transform.
         /// </summary>
         /// <returns>IEnumerable&lt;System.ValueTuple&lt;TessellatedSolid, Matrix4x4&gt;&gt;.</returns>
         public IEnumerable<(TessellatedSolid, Matrix4x4)> AllTessellatedSolidsWithGlobalCoordinateSystemTransform()
@@ -445,6 +451,85 @@ namespace TVGL
                 foreach (var (part, backTransform) in assembly.AllParts())
                     allParts.Add((part, backTransform * assemblyBackTransform));
             return allParts;
+        }
+
+        /// <summary>
+        /// Get part vertex transforms. Use a part index instead of the Solid object, since parts can be duplicated.
+        /// Use this when you don't need to transform the entire solid, just the vertices.
+        /// </summary>
+        /// <param name="additionalTransform"></param>
+        /// <returns></returns>
+        public Dictionary<int, Dictionary<int, Vector3>> GetTransformedVertices(Matrix4x4 additionalTransform)
+        {
+            var vertices = new Dictionary<int, Dictionary<int, Vector3>>();
+            var parts = AllParts();
+            for (var i = 0; i < parts.Count; i++)
+            {
+                var solid = (TessellatedSolid)parts[i].Item1;
+                var fullTransform = parts[i].Item2 * additionalTransform;
+                var transformed = new Dictionary<int, Vector3>(solid.NumberOfVertices);
+                foreach (var v in solid.Vertices)
+                    transformed.Add(v.IndexInList, v.Coordinates.Transform(fullTransform));
+                vertices.Add(i, transformed);
+            }
+            return vertices;
+        }
+
+        public BoundingBox FindGlobalBoundingBox()
+        {
+            //Get all the convex hull vertices - after applying transform
+            var convexHullPointTransforms = new List<Vector3>();
+            foreach (var (part, matrix4x4) in AllParts())
+                foreach (var vertex in part.ConvexHull.Vertices)
+                    convexHullPointTransforms.Add(vertex.Coordinates.Transform(matrix4x4));
+
+            //Then use the global bounding box
+            ConvexHull3D.Create(convexHullPointTransforms, out var globalConvexHull, out _);
+            return MinimumEnclosure.FindMinimumBoundingBox(globalConvexHull.Vertices);
+        }
+
+        /// <summary>
+        /// Gets the bounding box for all parts. Allows an additional transform to be applied if necessary.
+        /// Use a part index instead of the Solid object, since parts can be duplicated.
+        /// </summary>
+        /// <param name="additionalTransfrom"></param>
+        /// <param name="globalBoundingBox"></param>
+        /// <returns></returns>
+        public Dictionary<int, (BoundingBox Minimum, BoundingBox Aligned)> FindBoundingBoxForEachPart(Matrix4x4 additionalTransform, out BoundingBox globalBoundingBox, 
+            out ConvexHull3D globalConvexHull)
+        {
+            var boxes = new Dictionary<int, (BoundingBox Minimum, BoundingBox Aligned)>();
+            //Get all the convex hull vertices - after applying transform
+            var globalConvexHullPointTransforms = new List<Vector3>();
+            var parts = AllParts();
+            for (var i = 0; i < parts.Count; i++)
+            {
+                var (part, matrix4x4) = parts[i];
+                var fullTransform = matrix4x4 * additionalTransform;
+                var partConvexHullTransforms = new List<Vector3>();
+                foreach (var vertex in part.ConvexHull.Vertices)
+                {
+                    var tranformedVertex = vertex.Coordinates.Transform(fullTransform);
+                    partConvexHullTransforms.Add(tranformedVertex);
+                    globalConvexHullPointTransforms.Add(tranformedVertex);
+                }
+                ConvexHull3D.Create(partConvexHullTransforms, out var partConvexHull, out _);
+                var obb = MinimumEnclosure.FindMinimumBoundingBox(partConvexHull.Vertices);
+
+                //Get the aligned bounding box in the part's original coordinate system.
+                var alignedBoundingBoxInPartCoordinateSystem = MinimumEnclosure.FindAxisAlignedBoundingBox(part.ConvexHull.Vertices);
+                //Then we have to transform this into the global coordinate system.
+                var alignedCorners = new List<Vector3>();
+                foreach (var corner in alignedBoundingBoxInPartCoordinateSystem.Corners)
+                    alignedCorners.Add(corner.Transform(fullTransform));
+                var aligned = MinimumEnclosure.FindMinimumBoundingBox(alignedCorners);             
+
+                boxes.Add(i, (obb, aligned));
+            }
+            //Then use the global bounding box
+            ConvexHull3D.Create(globalConvexHullPointTransforms, out globalConvexHull, out _);
+            globalBoundingBox = MinimumEnclosure.FindMinimumBoundingBox(globalConvexHull.Vertices);
+            return boxes;
         }
 
         /// <summary>

@@ -11,8 +11,10 @@
 // </copyright>
 // <summary></summary>
 // ***********************************************************************
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 
 namespace TVGL
@@ -41,13 +43,12 @@ namespace TVGL
             //var points = ConvexHull2D.Create(pointsInput.ToArray(), out _).ToArray();
             // I disagree with the above comment, since the convex hull is not faster than this method.
 
+            //Set a max iteration counter, since certain issues for this function have proved to be elusive
+            //Yes, we need to continue to debug, but we do not ever want a while loop that could run endlessly.
+            //DO NOT REMOVE. This function is complex and likely will miss another case.
+            var maxIterations = 1000;
             var numPoints = points.Length;
-            var maxNumStalledIterations = 10; // why 10? it was (int)(1.1 * numPoints);
-            // since the circle can be made up of at most 3 points, we can just check for that
-            // there is an oscillation between two or more points that would all be a index-4.
-            // worst case scenario there are 5 points that are all on the circle and all "appear"
-            // outside of the circle when they aren't main contributors to it (in positions 0,1,or 2)
-            // so cycling twice through this list or 10 times is more than sufficient
+
             if (numPoints == 0)
                 throw new ArgumentException("No points provided.");
             else if (numPoints == 1)
@@ -60,21 +61,17 @@ namespace TVGL
             var startIndex = 3;
             var maxDistSqared = circle.RadiusSquared;
             bool newPointFoundOutsideCircle;
-            var stallCounter = 0;
+            var totalIterationCounter = 0;//don't ever reset this while in the while loop.
             var indexOfMaxDist = -1;
-            var requiredImprovementPercent = Constants.HighConfidence;
             do
             {
+                totalIterationCounter ++;
                 newPointFoundOutsideCircle = false;
                 for (int i = startIndex; i < numPoints; i++)
                 {
                     var dist = (points[i] - circle.Center).LengthSquared();
                     if (dist > maxDistSqared)
                     {
-                        if (indexOfMaxDist == i) stallCounter++;
-                        //Only set the stall counter back to zero if there was a significant change.
-                        else if (dist * requiredImprovementPercent > maxDistSqared)
-                            stallCounter = 0;
                         //Set max distance ONLY AFTER handling the stall counter logic.
                         maxDistSqared = dist;
                         indexOfMaxDist = i;
@@ -86,10 +83,10 @@ namespace TVGL
                     //Console.WriteLine(indexOfMaxDist+", "+maxDistSqared);
                     var maxPoint = points[indexOfMaxDist];
                     Array.Copy(points, 0, points, 1, indexOfMaxDist);
-                    points[0] = maxPoint;
+                    points[0] = maxPoint;        
                     circle = FindCircle(points);
                     maxDistSqared = circle.RadiusSquared;
-                    //Presenter.ShowAndHang(points.Take(6), plot2DType: Plot2DType.Points);
+                    //Presenter.ShowAndHang(points.Take(6), plot2DType: Plot2DType.Scatter);
                     startIndex = 4;
                     // should we start at 3 or 4? initially the circle was defined with the first 2 or 3 points.
                     // (if it were 2 then the third point was inside the circle and was ineffective).
@@ -101,10 +98,18 @@ namespace TVGL
                     //var filePathOut = Path.Join(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "cvxpoints.csv");
                     //System.IO.File.WriteAllLines(filePathOut, pointsInput.Select(p => p.X + "," + p.Y));
                 }
-            } while (newPointFoundOutsideCircle && stallCounter < maxNumStalledIterations);
+            } while (newPointFoundOutsideCircle && totalIterationCounter < maxIterations);
+            if (totalIterationCounter == maxIterations)
+            {
+                var filePathOut = Path.Join(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "cvxpoints.csv");
+                OutputServices.Logger.LogError("MinimumCircle function reach max iteration counter: " + maxIterations);
+                OutputServices.Logger.LogInformation("points saved to: " + filePathOut);
+                File.WriteAllLines(filePathOut, pointsInput.Select(p => p.X + "," + p.Y));
+                //Presenter.ShowAndHang(points, plot2DType: Plot2DType.Scatter);
+            }
+
             return circle;
         }
-
         private static Circle FirstCircle(Vector2[] points)
         {
             // during the main loop, the most outside point will be moved to the front
@@ -173,6 +178,7 @@ namespace TVGL
                 return circle;
             }
 
+            circle = default;
             Circle tempCircle;
             // circle 0-1-2
             var minRadiusSqd = double.PositiveInfinity;
@@ -201,6 +207,8 @@ namespace TVGL
                 swap3And1 = true;
                 circle = tempCircle;
             }
+            if (circle.Radius == 0.0)
+                circle = tempCircle;
             if (swap3And1) Global.SwapItemsInList(3, 1, points);
             else if (swap3And2) Global.SwapItemsInList(3, 2, points);
             return circle;

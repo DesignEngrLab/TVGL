@@ -1468,7 +1468,11 @@ namespace TVGL
         {
             //Return TVGL if from either solid bodies, or sheet bodies, or both. Note that "sheet body"
             //in this case, refers to the original format. It may in fact be a closed solid body.
-            if (solidAssembly.IsEmpty()) return false;
+            if (solidAssembly.IsEmpty())
+            {
+                Log.Error("Solid Assembly is empty");
+                return false;
+            }
             if (fileType != FileType.TVGL && fileType != FileType.TVGLz)
             {
                 if (solidAssembly.NumberOfSolidBodies == 1 || solidAssembly.NumberOfSheetBodies == 1)

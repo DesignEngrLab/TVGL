@@ -280,6 +280,12 @@ namespace TVGL
             return d;
         }
 
+        public override Vector3 ClosestPointOnSurfaceToPoint(Vector3 point)
+        {
+            var ptOnCircle = ClosestPointOnCenterRingToPoint(Axis, Center, MajorRadius, point, distanceFromOriginToBisectingPlane);
+            return ptOnCircle + MinorRadius * (point - ptOnCircle).Normalize();
+        }
+
         public override Vector3 GetNormalAtPoint(Vector3 point)
         {
             Vector3 ptOnCircle = ClosestPointOnCenterRingToPoint(Axis, Center, MajorRadius, point, distanceFromOriginToBisectingPlane);

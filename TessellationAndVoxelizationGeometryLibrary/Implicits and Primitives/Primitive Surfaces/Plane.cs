@@ -394,7 +394,6 @@ namespace TVGL
             DistanceToOrigin *= lengthfactor;
         }
 
-
         /// <summary>
         /// Transforms to new plane.
         /// </summary>
@@ -581,6 +580,15 @@ namespace TVGL
             if (IsPositive.HasValue && !IsPositive.Value) d = -d;
             return d;
         }
+
+
+        public override Vector3 ClosestPointOnSurfaceToPoint(Vector3 point)
+        {
+            var d = point.Dot(Normal) - DistanceToOrigin;
+            return point + Normal * d;
+        }
+
+
         public override Vector3 GetNormalAtPoint(Vector3 point)
         {
             return Normal;

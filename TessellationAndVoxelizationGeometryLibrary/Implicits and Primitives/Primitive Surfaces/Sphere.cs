@@ -256,6 +256,18 @@ namespace TVGL
             if (IsPositive.HasValue && !IsPositive.Value) d = -d;
             return d;
         }
+
+        /// <summary>
+        /// Gets the closest point on the primitive surface to the given point.
+        /// </summary>
+        /// <param name="point"></param>
+        /// <returns></returns>
+        public override Vector3 ClosestPointOnSurfaceToPoint(Vector3 point)
+        {
+            var dir = (point - Center).Normalize();
+            return Center + dir * Radius;
+        }
+
         /// <summary>
         /// Points the membership.
         /// </summary>

@@ -132,6 +132,22 @@ namespace TVGL
             var (distance, _) = GetClosest(point);
             return distance;
         }
+
+        public override Vector3 ClosestPointOnSurfaceToPoint(Vector3 point)
+        {
+            var (_, closestElt) = GetClosest(point);
+            if (closestElt is TriangleFace face)
+                            return
+                MiscFunctions.PointOnTriangleFromRay(face, point, face.Normal, out _);
+            if (closestElt is Edge edge)
+            {
+                var lineVector = edge.Vector.Normalize();
+                MiscFunctions.DistancePointToLine(point, edge.From.Coordinates, lineVector, out var pointOnLine);
+                return pointOnLine;
+            }
+            return ((Vertex)closestElt).Coordinates;
+        }
+
         private (double distance, TessellationBaseClass closestElt) GetClosest(Vector3 point)
         {
             var shortestDistance = double.PositiveInfinity;

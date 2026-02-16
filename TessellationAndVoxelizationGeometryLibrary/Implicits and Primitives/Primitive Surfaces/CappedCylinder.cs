@@ -69,6 +69,32 @@ namespace TVGL
             return d;
         }
 
+        public override Vector3 ClosestPointOnSurfaceToPoint(Vector3 point)
+        {
+            var distFromOrigin = point.Dot(Axis);
+            if (distFromOrigin >= MinDistanceAlongAxis && distFromOrigin <= MaxDistanceAlongAxis)
+            { // then in cylinder body
+                var d = distFromOrigin - Anchor.Dot(Axis);
+                var axisPoint = Anchor + d * Axis;
+                var radialDir = (point - axisPoint).Normalize();
+                return axisPoint + Radius * radialDir;
+            }
+            var distFromAxis = (point - Anchor).Cross(Axis).Length();
+            if (distFromAxis <= Radius)
+            {
+                if (Math.Abs(distFromOrigin - MinDistanceAlongAxis) < Math.Abs(distFromOrigin - MaxDistanceAlongAxis))
+                    return point + (MinDistanceAlongAxis - distFromOrigin) * Axis;
+                return point + (MaxDistanceAlongAxis - distFromOrigin) * Axis;
+            }
+            var offset = Anchor.Dot(Axis);
+            var crossVec = (point - Anchor).Cross(Axis);
+            var outVec = Axis.Cross(crossVec).Normalize();
+            var capCenter =
+             (Math.Abs(distFromOrigin - MinDistanceAlongAxis) < Math.Abs(distFromOrigin - MaxDistanceAlongAxis))
+             ? Anchor + (MinDistanceAlongAxis - offset) * Axis : Anchor + (MaxDistanceAlongAxis - offset) * Axis;
+            return capCenter + Radius * outVec;
+        }
+
         protected override void SetPrimitiveLimits()
         {
             var offset = Anchor.Dot(Axis);
@@ -133,6 +159,6 @@ namespace TVGL
         }
 
 
-        public override string KeyString => "Capped"+base.KeyString;
+        public override string KeyString => "Capped" + base.KeyString;
     }
 }
