@@ -1477,12 +1477,17 @@ namespace TVGL
                 borderSegments = GatherEdgesIntoSegments(solid.Primitives.SelectMany(prim => prim.OuterEdges));
 
             //Set Owned/Other Connection to Primitive and set the curve details for the border segment.
+            var errors = 0;
             foreach (var segment in borderSegments)
             {
                 var ownedFace = segment.DirectionList[0] ? segment.EdgeList[0].OwnedFace : segment.EdgeList[0].OtherFace;
                 var otherFace = segment.DirectionList[0] ? segment.EdgeList[0].OtherFace : segment.EdgeList[0].OwnedFace;
                 segment.OwnedPrimitive = ownedFace.BelongsToPrimitive;
-                if (otherFace == null) continue;
+                if (ownedFace == null || ownedFace.BelongsToPrimitive == null ||  otherFace == null)
+                {
+                    errors++;
+                    continue;//ignore it
+                }
                 segment.OtherPrimitive = otherFace.BelongsToPrimitive;
                 if (segment.OwnedPrimitive == segment.OtherPrimitive)
                     continue;
@@ -1490,6 +1495,11 @@ namespace TVGL
                 if (segment.OtherPrimitive != null)
                     segment.OtherPrimitive.BorderSegments.Add(segment);
                 segment.SetCurve();
+            }
+
+            if(errors != 0)
+            {
+                OutputServices.Logger.LogError(errors + " invalid Edge/Face/Primitive relationships");
             }
         }
         public static void RedefineBorderSegments(TessellatedSolid solid, PrimitiveSurface primitive)
