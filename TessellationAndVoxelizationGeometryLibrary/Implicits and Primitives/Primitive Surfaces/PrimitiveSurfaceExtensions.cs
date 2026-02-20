@@ -549,6 +549,21 @@ namespace TVGL
             foreach (var removeEdge in edgesToRemove)
                 foreach (var v in surface.Vertices)
                     v.Edges.Remove(removeEdge);
+            ReindexVertices(surface);
+        }
+
+        /// <summary>
+        /// Reindexes the vertices of the specified primitive surface, assigning each vertex a unique index based on its
+        /// position in the vertex list.
+        /// </summary>
+        /// <remarks>Call this method after modifying the vertex list to ensure that each vertex has a
+        /// unique and sequential index, which may be required for rendering or further processing.</remarks>
+        /// <param name="surface">The primitive surface whose vertices will be reindexed. This parameter cannot be null.</param>
+        public static void ReindexVertices(this PrimitiveSurface surface)
+        {
+            var i = 0;
+            foreach (var v in surface.Vertices)
+                v.IndexInList = i++;
         }
 
         private static List<Vertex> GetVerticesFromModifyEdges(TriangleFace face, Edge removedEdge, out int oldVertIndex)
