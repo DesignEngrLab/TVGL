@@ -843,10 +843,14 @@ namespace TVGL
         /// <param name="facesCOM"></param>
         /// <param name="faces"></param>
         /// <returns></returns>
-        public static BoundingBox<Vertex> FindMinimumCanonicalBoundingBox(ConvexHull3D convexHull, out Vector3 facesCOM,
-            ICollection<TriangleFace> faces = null)
+        public static BoundingBox<Vertex> FindMinimumCanonicalBoundingBox(IEnumerable<Vertex> vertices, out Vector3 facesCOM,
+            ICollection<TriangleFace> faces = null, Vector3? alongThisDirection = null)
         {
-            var bb = FindMinimumBoundingBox(convexHull.Vertices);
+            BoundingBox<Vertex> bb;
+            if (alongThisDirection == null)
+                bb = FindMinimumBoundingBox(vertices);
+            else
+                bb = FindOBBAlongDirection(vertices, alongThisDirection.Value);
             // now move the longest dimension to the x-axis, the second longest to the y-axis, and the shortest to the z-axis
             var matrix = bb.TransformToOrigin;
             var swapYAndZAxes = false;
