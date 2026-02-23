@@ -148,7 +148,7 @@ namespace TVGL
         /// <returns>List&lt;System.Int32[]&gt;.</returns>
         /// <exception cref="System.ArgumentException">Triangulate Polygon requires a positive polygon. A negative one was provided. - polygon</exception>
         /// <exception cref="System.Exception">Unable to triangulate polygon.</exception>
-        private static List<Vertex2D[]> Triangulate(this Polygon polygon, bool handleSelfIntersects = true)
+        public static List<Vertex2D[]> Triangulate(this Polygon polygon, bool handleSelfIntersects = true)
         {
             if (polygon.Area.IsNegligible() || (polygon.IsConvex && !polygon.InnerPolygons.Any()))
             {
@@ -600,5 +600,4 @@ namespace TVGL
                 }
             }
         }
-    }
 }

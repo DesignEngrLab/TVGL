@@ -118,7 +118,6 @@ namespace TVGL
         public void SetVerticesFromFaces()
         {
             Vertices = new HashSet<Vertex>();
-            //Don't use linq here, so we can avoid unnecessary intermediate lists.
             foreach (var face in Faces)
                 foreach (var v in face.Vertices)
                     Vertices.Add(v);

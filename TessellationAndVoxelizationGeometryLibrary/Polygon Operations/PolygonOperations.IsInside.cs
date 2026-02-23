@@ -97,27 +97,7 @@ namespace TVGL
             if (Math.Abs(inner.PathArea) > Math.Abs(outer.PathArea)
                 || (!onlyTopOuterPolygon && Math.Abs(inner.PathArea) > Math.Abs(outer.Area)))
                 return false;
-            var centroid = inner.Centroid;
-            if (!inner.IsPointInsidePolygon(centroid))
-            {   // why? if inner is an exaggerated L shape, it is possible that the centroid is outside of the inner polygon
-                // so, we triangulate it and take the center of the triangle closest to the original centroid.
-                var innerToTriangulate = inner.Copy(false, !inner.IsPositive);
-                var triangles = innerToTriangulate.Triangulate();
-                var minCenter = Vector2.Null;
-                var minDistance = double.MaxValue;
-                foreach (var triangle in triangles)
-                {
-                    var triangleCenter = Constants.oneThird * (triangle[0].Coordinates + triangle[1].Coordinates + triangle[2].Coordinates);
-                    var d = centroid.DistanceSquared(triangleCenter);
-                    if (d < minDistance)
-                    {
-                        d = minDistance;
-                        minCenter = triangleCenter;
-                    }
-                }
-                centroid = minCenter;
-            }
-            return outer.IsPointInsidePolygon(onlyTopOuterPolygon, inner.Centroid,
+            return outer.IsPointInsidePolygon(onlyTopOuterPolygon, inner.Vertices[0].Coordinates,
                 out var thisPointOnBoundary, Constants.BaseTolerance);
         }
 
