@@ -431,6 +431,38 @@ namespace TVGL
         }
 
         /// <summary>
+        /// Finds the points on the quadric that has a gradient in the same direction as
+        /// the specified gradient vector. This input does not have to be normalized.
+        /// If onlyAlignedDir is true, then only the points where the gradient is in the 
+        /// same direction as the input gradient will be returned. 
+        /// If false, then points where the gradient is in the opposite direction will also be returned.
+        /// </summary>
+        /// <remarks>The method determines the anchor point and direction of the line using the quadric's
+        /// coefficients and the provided gradient vector. Ensure that the gradient vector is non-zero to avoid
+        /// undefined behavior.</remarks>
+        /// <param name="gradient">The gradient vector that defines the direction of the line for which intersection points with the surface
+        /// are calculated. Must not be the zero vector.</param>
+        /// <returns>An enumerable collection of <see cref="Vector3"/> points representing the intersection points of the line
+        /// with the quadric surface. The collection may be empty if there are no intersections.</returns>
+        public IEnumerable<Vector3> PointsWithGradient(Vector3 gradient, bool onlyAlignedDir = false)
+        {
+            var c = new Vector3(-XCoeff, -YCoeff, -ZCoeff);
+            var gradMatrix = new Matrix3x3(
+                2 * XSqdCoeff, XYCoeff, XZCoeff,
+                XYCoeff, 2 * YSqdCoeff, YZCoeff,
+            XZCoeff, YZCoeff, 2 * ZSqdCoeff);
+            Matrix3x3.Invert(gradMatrix, out var invGradMatrix);
+            var anchor = invGradMatrix.Multiply(c);
+            var dir = invGradMatrix.Multiply(gradient).Normalize();
+            if (onlyAlignedDir)
+                return LineIntersection(anchor, dir)
+                    .Where(x => GetGradient(x.intersection).Dot(gradient) > 0)
+                    .Select(x => x.intersection);
+            else
+                return LineIntersection(anchor, dir).Select(x => x.intersection);
+        }
+
+        /// <summary>
         /// Returns the intersection points between this quadric and the given line.
         /// </summary>
         /// <param name="anchor"></param>

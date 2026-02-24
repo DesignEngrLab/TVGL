@@ -29,6 +29,7 @@
                 PredefineAllEdges = false,
                 DefineAndCharacterizeBorders = false,
                 FixEdgeDisassociations = false,
+                CheckModelPostBuild = false
             };
 
         /// <summary>Gets or sets whether the model is check for connectivity and water-tightness.

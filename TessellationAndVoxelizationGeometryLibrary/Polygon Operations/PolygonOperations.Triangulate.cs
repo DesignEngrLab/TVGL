@@ -200,10 +200,10 @@ namespace TVGL
             {
                 if (selfIntersections.All(si => si.WhereIntersection == WhereIsIntersection.BothStarts))
                     return polygon.RemoveSelfIntersections(ResultType.OnlyKeepPositive).SelectMany(p => p.Triangulate(false)).ToList();
-                else 
+                else
                 {
                     //Try to simplify and then re-check to see if it is valid now. This will also fix threading issues.
-                    polygon = SimplifyByAreaChangeToNewPolygon(polygon, areaSimplificationFraction); 
+                    polygon = SimplifyByAreaChangeToNewPolygon(polygon, areaSimplificationFraction);
                     selfIntersections = polygon.GetSelfIntersections().Where(intersect => intersect.Relationship != SegmentRelationship.NoOverlap).ToList();
                     if (selfIntersections.Count > 0)
                     {
@@ -236,7 +236,7 @@ namespace TVGL
                     triangleArea = 0.5 * localTriangleFaceList
                        .Sum(tri => Math.Abs((tri[1].Coordinates - tri[0].Coordinates).Cross(tri[2].Coordinates - tri[0].Coordinates)));
                 }
-                catch 
+                catch
                 {
                     //IO.Save(polygon, "errorPolygon" + DateTime.Now.ToOADate() + ".json");
                     //throw new Exception("Unable to triangulate polygon.");
@@ -280,7 +280,7 @@ namespace TVGL
         /// <returns>IEnumerable&lt;Polygon&gt;.</returns>
         public static IEnumerable<Polygon> CreateXMonotonePolygons(this Polygon polygon)
         {
-            if (polygon.PartitionIntoMonotoneBoxes(MonotonicityChange.X).Count()==1)
+            if (polygon.PartitionIntoMonotoneBoxes(MonotonicityChange.X).Count() == 1)
             {
                 yield return polygon;
                 yield break;
@@ -587,7 +587,7 @@ namespace TVGL
             var rightContinues = rightEnumerator.MoveNext();
             while (leftContinues || rightContinues)
             {
-                if (!rightContinues || 
+                if (!rightContinues ||
                     leftContinues && comparer.Compare(leftEnumerator.Current, rightEnumerator.Current) <= 0)
                 {
                     yield return leftEnumerator.Current;
@@ -600,4 +600,5 @@ namespace TVGL
                 }
             }
         }
+    }
 }

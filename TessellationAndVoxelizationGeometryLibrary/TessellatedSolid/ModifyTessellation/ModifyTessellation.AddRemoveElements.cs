@@ -86,14 +86,15 @@ namespace TVGL
         }
 
 
-        public static bool CollapseEdge(this Edge edge, out List<Edge> removeEdges)
+        public static bool CollapseEdgeAndKill2MoreEdgesAnd2Faces(this Edge edge, out List<Edge> removeEdges,
+            out Edge keepEdge1, out Edge keepEdge2)
         {
             return MergeVertexAndKill3EdgesAnd2Faces(edge.From, edge.To, edge.OwnedFace, edge.OtherFace,
-                out removeEdges);
+                out removeEdges, out keepEdge1, out keepEdge2);
         }
 
         public static bool MergeVertexAndKill3EdgesAnd2Faces(this Vertex removedVertex, Vertex keepVertex,
-            TriangleFace removedFace1, TriangleFace removedFace2, out List<Edge> removeEdges)
+            TriangleFace removedFace1, TriangleFace removedFace2, out List<Edge> removeEdges, out Edge keepEdge1, out Edge keepEdge2)
         {
             var vertexEnumerable = removedFace1.Vertices.Concat(removedFace2.Vertices)
                 .Where(x => x != keepVertex && x != removedVertex).Distinct();
@@ -102,8 +103,9 @@ namespace TVGL
             var otherVertex1 = vertexEnumerator.Current;
             vertexEnumerator.MoveNext();
             var otherVertex2 = vertexEnumerator.Current;
-            Edge keepEdge1 = null;
-            Edge keepEdge2 = null;
+            // Use local variables instead of out parameters
+            Edge localKeepEdge1 = null;
+            Edge localKeepEdge2 = null;
 
             // the next loop assigns the five edges that are effected to the appropriate variables
             // no effect on the solid yet. Just getting the variables ready: removeEdges[0], 
@@ -114,14 +116,14 @@ namespace TVGL
                 if (edge.From == removedVertex || edge.To == removedVertex ||
                     (edge.From != keepVertex && edge.To != keepVertex))
                     removeEdgesLocal.Add(edge);
-                else if (keepEdge1 == null) keepEdge1 = edge;
+                else if (localKeepEdge1 == null) localKeepEdge1 = edge;
                 else keepEdge2 = edge;
             }
             // having established the five edges, we can now check to see if the edge is topologically important
             var otherEdgesOnTheKeepSide = keepVertex.Edges.Where(e => e != removeEdgesLocal[^1] && e != removeEdgesLocal[^2] &&
-            e != removeEdgesLocal[^3] && e != keepEdge1 && e != keepEdge2).ToList();
+            e != removeEdgesLocal[^3] && e != localKeepEdge1 && e != localKeepEdge2).ToList();
             var otherEdgesOnTheRemoveSide = removedVertex.Edges.Where(e => e != removeEdgesLocal[^1] && e != removeEdgesLocal[^2] &&
-            e != removeEdgesLocal[^3] && e != keepEdge1 && e != keepEdge2).ToList();
+            e != removeEdgesLocal[^3] && e != localKeepEdge1 && e != localKeepEdge2).ToList();
             if ( // this is a topologically important check. It ensures that the edge is not deleted if
                  // it serves an important role in ensuring the proper topology of the solid. Essentially, 
                  // if there is a common edge between the vertices that is not accounted for then it will end up being
@@ -131,9 +133,14 @@ namespace TVGL
                     .Any())
             {
                 removeEdges = null;
+                keepEdge1 = null;
+                keepEdge2 = null;
                 return false;
             }
-            else removeEdges = removeEdgesLocal;
+            // Assign local variables to out parameters
+            removeEdges = removeEdgesLocal;
+            keepEdge1 = localKeepEdge1;
+            keepEdge2 = localKeepEdge2;
             // move edges connected to removeVertex to the keepVertex and let keepVertex link back to these edges
             foreach (var e in otherEdgesOnTheRemoveSide)
             {
@@ -169,8 +176,11 @@ namespace TVGL
                     ? remEdge.OtherFace : remEdge.OwnedFace;
                 keepFaceOnRemEdge.ReplaceEdge(remEdge, keepEdge);
             }
-
-            keepVertex.Coordinates = DetermineIntermediateVertexPosition(keepVertex, removedVertex);
+            if (removedFace1.BelongsToPrimitive != null && removedFace2.BelongsToPrimitive != null &&
+                removedFace1.BelongsToPrimitive == removedFace2.BelongsToPrimitive)
+                keepVertex.Coordinates = DetermineIntermediateVertexPosition(keepVertex.Coordinates, removedVertex.Coordinates,
+                    removedFace1.BelongsToPrimitive);
+            keepVertex.Coordinates = DetermineIntermediateVertexPosition(keepVertex.Coordinates, removedVertex.Coordinates);
             foreach (var e in keepVertex.Edges)
                 e.Update();
             foreach (var f in keepVertex.Faces)

@@ -271,7 +271,7 @@ namespace TVGL
                 // if the shortest edge is negligible, then we need to remove the vertex and the face
                 if (shortestEdge.Length <= ts.SameTolerance)
                 {
-                    shortestEdge.CollapseEdge(out var removedEdges);
+                    shortestEdge.CollapseEdgeAndKill2MoreEdgesAnd2Faces(out var removedEdges, out _, out _);
                     ts.RemoveVertex(shortestEdge.From);
                     allRemovedVertices.Add(shortestEdge.From);
                     allRemovedFaces.Add(shortestEdge.OwnedFace);
@@ -291,7 +291,7 @@ namespace TVGL
                         var removedVertex = longestEdge.OwnedFace.OtherVertex(longestEdge);
                         var keepVertex = longestEdge.OtherFace.OtherVertex(longestEdge);
                         ModifyTessellation.MergeVertexAndKill3EdgesAnd2Faces(removedVertex, keepVertex,
-                            longestEdge.OwnedFace, longestEdge.OtherFace, out var removedEdges);
+                            longestEdge.OwnedFace, longestEdge.OtherFace, out var removedEdges,out _, out _);
                         ts.RemoveVertex(removedVertex);
                         allRemovedFaces.Add(longestEdge.OwnedFace);
                         faceHash.Remove(longestEdge.OwnedFace);
