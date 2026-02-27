@@ -227,7 +227,7 @@ namespace TVGL
                 if (angle != 0)
                 {
                     var rotateMatrix = new Matrix3x3(c, s, -s, c, 0, 0);
-                    polygon.Transform(rotateMatrix); //This destructive operation implies that polygon is mutable (i.e., polygons should not be used in multiple locations). 
+                    polygon.Transform(rotateMatrix); //This destructively alters polygon coordinates, but if used - we rotate back in 22 lines
                 }
                 try
                 {

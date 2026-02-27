@@ -85,8 +85,8 @@ namespace TVGL
         /// <param name="addedFaces">When this method returns, contains the list of triangle faces that were added during the operation.</param>
         /// <param name="targetNumberOfFaces">The desired total number of faces in the mesh after the operation. Must be a non-negative integer.</param>
         /// <param name="maxLength">The maximum allowable length for edges to be considered for subdivision. Must be a positive value.</param>
-        public static void Complexify(IEnumerable<Edge> edges, out List<Edge> addedEdges, out List<Vertex> addedVertices, out List<TriangleFace> addedFaces,
-            int targetNumberOfFaces, double maxLength)
+        public static void Complexify(IEnumerable<Edge> edges, out List<Edge> addedEdges, out List<Vertex> addedVertices,
+            out List<TriangleFace> addedFaces, int targetNumberOfFaces, double maxLength)
         {
             var edgeQueue = new PriorityQueue<Edge, double>(edges.Where(e => e.Length >= maxLength).Select(e => (e, e.Length)),
                 new ReverseSort());

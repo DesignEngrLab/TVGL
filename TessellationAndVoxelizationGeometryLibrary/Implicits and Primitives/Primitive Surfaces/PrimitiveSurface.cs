@@ -54,7 +54,7 @@ namespace TVGL
                 ResetFaceDependentValues();
             ResetFaceDependentConnectivity();
             if (faces == null) Faces = new HashSet<TriangleFace>();
-            else Faces = new HashSet<TriangleFace>(faces);
+            else Faces = faces.ToHashSet();
             FaceIndices = Faces.Select(f => f.IndexInList).ToArray();
             if (connectFacesToPrimitive)
                 foreach (var face in Faces)
@@ -429,9 +429,10 @@ namespace TVGL
         private HashSet<Edge> _outerEdges;
 
         /// <summary>
-        /// Defines the inner outer edges.
+        /// Defines the inner and outer edges. This recreates the two hashsets within the PrimitiveSurface
+        /// by going through the faces stored in the primitive.
         /// </summary>
-        internal void DefineInnerOuterEdges()
+        public void DefineInnerOuterEdges()
         {
             MiscFunctions.DefineInnerOuterEdges(Faces, out _innerEdges, out _outerEdges);
         }
@@ -491,42 +492,42 @@ namespace TVGL
                     }
                     else OuterEdges.Add(e);
                 }
-            else  //basically, this is for cases where edges are not yet defined.
-            {
-                var faceVertexIndices = new List<int> { face.A.IndexInList, face.B.IndexInList, face.B.IndexInList, face.C.IndexInList, face.C.IndexInList, face.A.IndexInList };
-                //this is kind of hacky, but the faceVertexIndices don't need to be in order, so we can just add the same vertex twice. The if statement below will catch it.
-                var outerEdgesToRemove = new List<Edge>();
-                foreach (var outerEdge in OuterEdges)
-                {
-                    var vertexIndex1 = outerEdge.From.IndexInList;
-                    var vertexIndex2 = outerEdge.To.IndexInList;
-                    if (faceVertexIndices.Contains(vertexIndex1) && faceVertexIndices.Contains(vertexIndex2))
-                    {
-                        faceVertexIndices.Remove(vertexIndex1);
-                        faceVertexIndices.Remove(vertexIndex2);
-                        outerEdge.UpdateWithNewFace(face);
-                        outerEdgesToRemove.Add(outerEdge);
-                        InnerEdges.Add(outerEdge);
-                        if (faceVertexIndices.Count == 0) break;
-                    }
-                }
-                foreach (var edge in outerEdgesToRemove)
-                    OuterEdges.Remove(edge);
-                while (faceVertexIndices.Count > 0)
-                {
-                    var vIndex1 = faceVertexIndices[0];
-                    faceVertexIndices.RemoveAt(0);
-                    var vIndex2 = faceVertexIndices.First(index => index != vIndex1);
-                    faceVertexIndices.Remove(vIndex2);
-                    var v1 = face.Vertices.FindIndex(v => v.IndexInList == vIndex1);
-                    var v2 = face.Vertices.FindIndex(v => v.IndexInList == vIndex2);
-                    var step = v2 - v1;
-                    if (step < 0) step += 3;
-                    if (step == 1)
-                        OuterEdges.Add(new Edge(face.A, face.B, face, null, false));
-                    else OuterEdges.Add(new Edge(face.B, face.A, face, null, false));
-                }
-            }
+            //else  //basically, this is for cases where edges are not yet defined.
+            //{
+            //    var faceVertexIndices = new List<int> { face.A.IndexInList, face.B.IndexInList, face.B.IndexInList, face.C.IndexInList, face.C.IndexInList, face.A.IndexInList };
+            //    //this is kind of hacky, but the faceVertexIndices don't need to be in order, so we can just add the same vertex twice. The if statement below will catch it.
+            //    var outerEdgesToRemove = new List<Edge>();
+            //    foreach (var outerEdge in OuterEdges)
+            //    {
+            //        var vertexIndex1 = outerEdge.From.IndexInList;
+            //        var vertexIndex2 = outerEdge.To.IndexInList;
+            //        if (faceVertexIndices.Contains(vertexIndex1) && faceVertexIndices.Contains(vertexIndex2))
+            //        {
+            //            faceVertexIndices.Remove(vertexIndex1);
+            //            faceVertexIndices.Remove(vertexIndex2);
+            //            outerEdge.UpdateWithNewFace(face);
+            //            outerEdgesToRemove.Add(outerEdge);
+            //            InnerEdges.Add(outerEdge);
+            //            if (faceVertexIndices.Count == 0) break;
+            //        }
+            //    }
+            //    foreach (var edge in outerEdgesToRemove)
+            //        OuterEdges.Remove(edge);
+            //    while (faceVertexIndices.Count > 0)
+            //    {
+            //        var vIndex1 = faceVertexIndices[0];
+            //        faceVertexIndices.RemoveAt(0);
+            //        var vIndex2 = faceVertexIndices.First(index => index != vIndex1);
+            //        faceVertexIndices.Remove(vIndex2);
+            //        var v1 = face.Vertices.FindIndex(v => v.IndexInList == vIndex1);
+            //        var v2 = face.Vertices.FindIndex(v => v.IndexInList == vIndex2);
+            //        var step = v2 - v1;
+            //        if (step < 0) step += 3;
+            //        if (step == 1)
+            //            OuterEdges.Add(new Edge(face.A, face.B, face, null, false));
+            //        else OuterEdges.Add(new Edge(face.B, face.A, face, null, false));
+            //    }
+            //}
             Faces.Add(face);
             face.BelongsToPrimitive = this;
         }
@@ -931,10 +932,10 @@ namespace TVGL
         /// Copies the primitive surface including the faces and vertices (edges are not defined in the copy)
         /// </summary>
         /// <returns></returns>
-        public PrimitiveSurface Copy()
+        public PrimitiveSurface Copy(bool copyTessellationElements = true)
         {
             var copy = (PrimitiveSurface)this.Clone();
-            if (Faces != null && Faces.Count != 0)
+            if (copyTessellationElements && Faces != null && Faces.Count != 0)
             {
                 var i = 0;
                 //NumberOfVertices = vertices.Count;
@@ -958,15 +959,15 @@ namespace TVGL
                     i++;
                 }
                 copy.SetFacesAndVertices(newFaces, true);
-                if (Faces.SelectMany(f => f.Edges).Any())
-                {
-                    var tempSolid = new TessellatedSolid(copy.Faces, copy.Vertices,
-                        TessellatedSolidBuildOptions.Minimal);
-                    //Edges are defined, so we need to makes these. This is like the MakeEdgesIfNonExistent
-                    var repair = new TessellationInspectAndRepair(tempSolid);
-                    repair.CheckModelIntegrityPreBuild();
-                    repair.MakeEdges();
-                }
+                copy.DefineInnerOuterEdges();
+            }
+            else
+            {
+                copy.Faces.Clear();
+                copy.Vertices.Clear();
+                copy.InnerEdges.Clear();
+                copy.OuterEdges.Clear();
+                copy.ResetFaceDependentValues();
             }
             return copy;
         }

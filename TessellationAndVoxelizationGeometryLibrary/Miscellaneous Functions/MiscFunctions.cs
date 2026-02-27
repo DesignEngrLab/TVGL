@@ -254,7 +254,7 @@ namespace TVGL
                 }
             }
             return (minPoint, dotDistance, minPointIndex);
-        } 
+        }
 
         /// <summary>
         /// Finds the vertices or points that are closest and furthest along a given direction vector in a single pass.
@@ -432,6 +432,7 @@ namespace TVGL
             }
             return distances;
         }
+        #endregion Sort Along Direction
 
         /// <summary>
         /// From a collection of faces, this method identifies and separates the edges into two sets: "inner" edges and "outer" edges.
@@ -445,26 +446,85 @@ namespace TVGL
         /// If an edge is seen a second time, it's moved to the inner edge set.
         /// Common search terms: "find boundary edges", "identify border edges", "inner vs outer edges".
         /// </remarks>
-        public static void DefineInnerOuterEdges(IEnumerable<TriangleFace> faces, out HashSet<Edge> innerEdgeHash, out HashSet<Edge> outerEdgeHash)
+        public static void DefineInnerOuterEdges(IEnumerable<TriangleFace> faces, out HashSet<Edge> innerEdgeHash,
+            out HashSet<Edge> outerEdgeHash) //, out HashSet<Vertex> allVertices)
         {
             innerEdgeHash = new HashSet<Edge>();
             outerEdgeHash = new HashSet<Edge>();
-            if (faces != null && faces.Any())
-                foreach (var face in faces)
+            var allVertices = new HashSet<Vertex>();
+            if (faces == null || !faces.Any())
+                return;
+            Edge[] edges;
+            var vertexIndices = new HashSet<int>();
+            var maxVIndex = int.MinValue;
+            var needToReIndex = false;
+            foreach (var f in faces)
+            {
+                foreach (var v in f.Vertices)
                 {
-                    foreach (var edge in face.Edges)
+                    if (allVertices.Add(v)) //first time seeing this vertex
                     {
-                        if (innerEdgeHash.Contains(edge)) continue;
-                        if (!outerEdgeHash.Contains(edge)) outerEdgeHash.Add(edge);
-                        else
-                        {
-                            innerEdgeHash.Add(edge);
-                            outerEdgeHash.Remove(edge);
-                        }
+                        if (v.IndexInList < 0 || !vertexIndices.Add(v.IndexInList))
+                            needToReIndex = true;
+                        else if (maxVIndex < v.IndexInList)
+                            maxVIndex = v.IndexInList;
                     }
                 }
+            }
+            if (needToReIndex)
+            {
+                var k = 0;
+                foreach (var v in allVertices)
+                    v.IndexInList = k++;
+                maxVIndex = k;
+            }
+            else maxVIndex++;
+            edges = new Edge[maxVIndex * maxVIndex];
+            var allEdgeIndices = new List<int>();
+            var doubleEdgeIndices = new HashSet<int>();
+            foreach (var f in faces)
+            {
+                var prevV = f.C;
+                var edge = f.CA;
+                var edgeEnumerator = f.Edges.GetEnumerator();
+                foreach (var v in f.Vertices)
+                {
+                    var edgeIndex = (v.IndexInList < prevV.IndexInList)
+                        ? prevV.IndexInList * maxVIndex + v.IndexInList
+                        : prevV.IndexInList + maxVIndex * v.IndexInList;
+                    allEdgeIndices.Add(edgeIndex);
+                    if (edge == null)
+                    {
+                        if (edges[edgeIndex] == null)
+                            edges[edgeIndex] = edge = new Edge(prevV, v, f, null, true, edgeIndex);
+                        else
+                        {
+                            doubleEdgeIndices.Add(edgeIndex);
+                            edge = edges[edgeIndex];
+                            edge.OtherFace = f;
+                        }
+                        f.AddEdge(edge);
+                    }
+                    else
+                    {
+                        if (edges[edgeIndex] == null) edges[edgeIndex] = edge;
+                        else doubleEdgeIndices.Add(edgeIndex);
+                    }
+                    prevV = v;
+                    edgeEnumerator.MoveNext();
+                    edge = edgeEnumerator.Current;
+                }
+            }
+            var ei = 0;
+            foreach (var i in allEdgeIndices)
+            {
+                var edge = edges[i];
+                edge.IndexInList = ei++;
+                if (doubleEdgeIndices.Contains(i))
+                    innerEdgeHash.Add(edges[i]);
+                else outerEdgeHash.Add(edges[i]);
+            }
         }
-        #endregion Sort Along Direction
 
         #region Perimeter
 
@@ -2533,7 +2593,7 @@ namespace TVGL
         /// <param name="onBoundaryIsInside">If true, on boundary is inside.</param>
         /// <returns>A bool.</returns>
         public static bool IsPointInsideAABB(this Vector3 pointInQuestion, Solid solid,
-    bool onBoundaryIsInside = true)
+        bool onBoundaryIsInside = true)
             => IsPointInsideAABB(pointInQuestion, solid.Bounds[0], solid.Bounds[1], onBoundaryIsInside);
 
         /// <summary>
@@ -2758,7 +2818,7 @@ namespace TVGL
                 var PolarAngle = Math.Acos(direction.Z * oneOverRadius);  // when z_dir is 1, then angle is zero or pi
                 var AzimuthAngle = Math.Atan2(direction.Y, direction.X);  // regardless of length, we can find azimuth by tangent
                 var inPlaneYDir = new Vector3(-direction.Y, direction.X, 0).Normalize(); // the y-dir will never have a z-component - it is like
-                // the latitude lines on a globe
+                                                                                         // the latitude lines on a globe
                 var inPlaneXDir =  // here, x-dir determined by y cross z where z is the given direction
                                    // cross product is i = (y1z2 - y2z1), j = (x2z1 - x1z2), k = (x1y2 - x2y1)
                                    // x1 = -direction.Y, y1 = direction.X, z1=0
