@@ -113,7 +113,9 @@ namespace TVGL
                 origRightFace?.ReplaceVertex(toVertex, addedVertex);
 
                 var newLeftFace = new TriangleFace(toVertex, addedVertex, leftFarVertex);
+                newLeftFace.BelongsToPrimitive = commonPrimitive;
                 var newRightFace = new TriangleFace(addedVertex, toVertex, rightFarVertex);
+                newRightFace.BelongsToPrimitive = commonPrimitive;
                 toVertex.Faces.Remove(origLeftFace);
                 toVertex.Faces.Remove(origRightFace);
 

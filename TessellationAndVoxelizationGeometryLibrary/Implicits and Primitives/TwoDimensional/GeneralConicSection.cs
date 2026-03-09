@@ -50,27 +50,28 @@ namespace TVGL
     public struct GeneralConicSection : ICurve
     {
         /// <summary>
-        /// a
+        /// the coefficient multiplying x^2
         /// </summary>
         public double A;
         /// <summary>
-        /// The b
+        /// the coefficient multiplying xy
         /// </summary>
         public double B;
         /// <summary>
-        /// The c
+        /// the coefficient multiplying y^2
         /// </summary>
         public double C;
         /// <summary>
         /// The d
+        /// the coefficient multiplying x
         /// </summary>
         public double D;
         /// <summary>
-        /// The e
+        /// the coefficient multiplying y
         /// </summary>
         public double E;
         /// <summary>
-        /// The constant is zero
+        /// The constant is zero, otherwise the constant is 1
         /// </summary>
         public bool ConstantIsZero;
         /// <summary>
@@ -130,6 +131,28 @@ namespace TVGL
             #endregion
         }
 
+        public GeneralConicSection(double a, double b, double c, double d, double e, double w) : this()
+        {
+            if (w.IsNegligible())
+            {
+                A = a;
+                B = b;
+                C = c;
+                D = d;
+                E = e;
+                ConstantIsZero = true;
+            }
+            else
+            {
+                A = a / w;
+                B = b / w;
+                C = c / w;
+                D = d / w;
+                E = e / w;
+                ConstantIsZero = false;
+            }
+        }
+
         /// <summary>
         /// Calculates at point.
         /// </summary>
@@ -139,7 +162,8 @@ namespace TVGL
         {
             double x = point.X;
             double y = point.Y;
-            return A * x * x + B * x * y + C * y * y + D * x + E * y + 1;
+            var constant = ConstantIsZero ? 0.0 : 1.0;
+            return A * x * x + B * x * y + C * y * y + D * x + E * y + constant;
         }
 
 
@@ -273,10 +297,7 @@ namespace TVGL
             var rj = conic.E - conic.B * point[0] + 2 * conic.A * point[1];
             var sj = -conic.D + conic.B * point[1] - 2 * conic.C * point[0];
             var tj = conic.D * point[1] - conic.E * point[0];
-            GeneralConicSection conicJ;
-            if (tj.IsNegligible())
-                conicJ = new GeneralConicSection(aj, bj, cj, rj, sj, true);
-            else conicJ = new GeneralConicSection(aj / tj, bj / tj, cj / tj, rj / tj, sj / tj, false);
+            var conicJ = new GeneralConicSection(aj, bj, cj, rj, sj, tj);
             var minDistance = double.PositiveInfinity;
             pointOnCurve = Vector2.Null;
             foreach (var p in IntersectingConics(conic, conicJ))
@@ -290,7 +311,115 @@ namespace TVGL
             }
             return minDistance;
         }
+        public static GeneralConicSection CreateFromQuadric(GeneralQuadric quadric, Plane plane, out Matrix4x4 transfromFromXYPlaneBackToGivenPlane)
+        {
+            transfromFromXYPlaneBackToGivenPlane = plane.AsTransformFromXYPlane;
+            var mTranspose = transfromFromXYPlaneBackToGivenPlane.Transpose();
+            var qMatrix = quadric.GetCoefficientMatrix();
+            // In TVGL's row-vector convention, a 2D point p maps to 3D as x = p * M.
+            // Substituting into the quadric x * Q * x^T = 0 gives p * (M * Q * M^T) * p^T = 0.
+            var qNew = transfromFromXYPlaneBackToGivenPlane * qMatrix * mTranspose;
+            var a = qNew.M11;
+            var b = 2 * qNew.M12;
+            var c = qNew.M22;
+            var d = 2 * qNew.M14;
+            var e = 2 * qNew.M24;
+            var w = qNew.M44;
 
+            return new GeneralConicSection(a, b, c, d, e, w);
+        }
+
+
+        /// <summary>
+        /// Finds the points on the conic that has a gradient in the same direction as
+        /// the specified gradient vector. This input does not have to be normalized.
+        /// </summary>
+        /// <param name="gradient"></param>
+        /// <param name="point"></param>
+        /// <returns></returns>
+        public bool PointsAtGivenGradient(Vector2 gradient, out Vector2 point)
+        {
+            point = Vector2.Null;
+            // The gradient of f(x,y) = Ax² + Bxy + Cy² + Dx + Ey + const is:
+            //   ∇f = [2Ax + By + D, Bx + 2Cy + E]
+            // For ∇f ∥ gradient, the 2D cross product ∇f × gradient = 0:
+            //   (2Ax + By + D)*gy - (Bx + 2Cy + E)*gx = 0
+            // This defines a line: alpha*x + beta*y + gamma = 0
+            // Intersecting this line with the conic finds the desired points.
+            // Unlike inverting the gradient matrix, this works for all conic types
+            // including parabolas where the matrix is singular.
+            var gx = gradient.X;
+            var gy = gradient.Y;
+            var alpha = 2 * A * gy - B * gx;
+            var beta = B * gy - 2 * C * gx;
+            var gamma = D * gy - E * gx;
+
+            Vector2 anchor, dir;
+            if (Math.Abs(alpha) >= Math.Abs(beta))
+            {
+                if (alpha.IsNegligible()) return false;
+                anchor = new Vector2(-gamma / alpha, 0);
+                dir = new Vector2(-beta / alpha, 1);
+            }
+            else
+            {
+                anchor = new Vector2(0, -gamma / beta);
+                dir = new Vector2(1, -alpha / beta);
+            }
+
+            foreach (var tuple in LineIntersection(anchor, dir))
+            {
+                var intersection = tuple.intersection;
+                if (GetGradient(intersection).Dot(gradient) > 0)
+                {
+                    point = intersection;
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        private Vector2 GetGradient(Vector2 pt)
+        {
+            return new Vector2(2 * A * pt.X + B * pt.Y + D, 2 * C * pt.Y + B * pt.X + E);
+        }
+
+
+        /// <summary>
+        /// Returns the intersection points between this quadric and the given line.
+        /// </summary>
+        /// <param name="anchor"></param>
+        /// <param name="direction"></param>
+        /// <returns></returns>
+        public IEnumerable<(Vector2 intersection, double lineT)> LineIntersection(Vector2 anchor, Vector2 direction)
+        {
+            //put equation for line p = anchor + t * direction into the conic equation,
+            //we get a quadratic equation in terms of t. Solve it and we get the intersection points.
+            // so, here we just find the at^2 + bt + c = 0, where a, b, c are calculated as below
+            // x = anchor.X + t * direction.X
+            // y = anchor.Y + t * direction.Y
+            // A * x^2 + B * x * y + C * y^2 + D * x + E * y + constant = 0
+            // collect t^2, t, and constant terms, we get
+            var constant = ConstantIsZero ? 0.0 : 1.0;
+            var a = A * direction.X * direction.X + B * direction.X * direction.Y + C * direction.Y * direction.Y;
+            var b = 2 * A * anchor.X * direction.X + B * (anchor.X * direction.Y + anchor.Y * direction.X) + 2 * C * anchor.Y * direction.Y
+                    + D * direction.X + E * direction.Y;
+            var c = A * anchor.X * anchor.X + B * anchor.X * anchor.Y + C * anchor.Y * anchor.Y + D * anchor.X + E * anchor.Y + constant;
+            (var root1, var root2) = PolynomialSolve.Quadratic(a, b, c);
+
+            if (!root1.IsRealNumber)
+                yield break;
+            if (root1.Real.IsPracticallySame(root2.Real))
+            {
+                var t = 0.5 * (root1.Real + root2.Real);
+                yield return (anchor + t * direction, root1.Real);
+                yield break;
+            }
+            if (root1.IsRealNumber)
+                yield return (anchor + root1.Real * direction, root1.Real);
+            if (root2.IsRealNumber)
+                yield return (anchor + root2.Real * direction, root2.Real);
+        }
 
         /// <summary>
         /// Finds the zero to four points of two intersectings the conics.

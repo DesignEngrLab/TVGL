@@ -40,7 +40,8 @@ namespace TVGL
         /// <param name="forceToPositive">if set to <c>true</c> [force to positive].</param>
         /// <returns>IEnumerable&lt;Vertex[]&gt; where each represents a triangular polygonal face.</returns>
         /// <exception cref="System.ArgumentException">The vertices must all have a unique IndexInList value - vertexLoop</exception>
-        public static IEnumerable<(Vertex A, Vertex B, Vertex C)> Triangulate(this IEnumerable<Vertex> vertexLoop, Vector3 normal, bool forceToPositive = false)
+        public static IEnumerable<(Vertex A, Vertex B, Vertex C)> Triangulate(this IEnumerable<Vertex> vertexLoop,
+            Vector3 normal, bool forceToPositive = false, bool handleSelfIntersects = true, double suggestedAngle = 0.0)
         {
             var transform = normal.TransformToXYPlane(out _);
             var coords = new List<Vertex2D>();
@@ -54,7 +55,7 @@ namespace TVGL
             }
             var polygon = new Polygon(coords);
             if (forceToPositive && !polygon.IsPositive) polygon.IsPositive = true;
-            foreach (var triangleIndices in polygon.TriangulateToIndices())
+            foreach (var triangleIndices in polygon.TriangulateToIndices(handleSelfIntersects,suggestedAngle))
             {
                 if (indexToVertexDict[triangleIndices.A] != indexToVertexDict[triangleIndices.B]
                     && indexToVertexDict[triangleIndices.B] != indexToVertexDict[triangleIndices.C]
@@ -72,7 +73,8 @@ namespace TVGL
         /// <param name="normal">The normal direction.</param>
         /// <returns>IEnumerable&lt;Vertex[]&gt; where each represents a triangular polygonal face.</returns>
         /// <exception cref="System.ArgumentException">The vertices must all have a unique IndexInList value - vertexLoops</exception>
-        public static IEnumerable<Vertex[]> Triangulate(this IEnumerable<IList<Vertex>> vertexLoops, Vector3 normal)
+        public static IEnumerable<Vertex[]> Triangulate(this IEnumerable<IList<Vertex>> vertexLoops, Vector3 normal,
+            bool handleSelfIntersects = true,            double suggestedAngle = 0.0)
         {
             var transform = normal.TransformToXYPlane(out _);
             var polygons = new List<Polygon>();
@@ -92,7 +94,7 @@ namespace TVGL
             polygons = polygons.CreateShallowPolygonTrees(false);
             foreach (var polygon in polygons)
             {
-                foreach (var triangleIndices in polygon.TriangulateToIndices())
+                foreach (var triangleIndices in polygon.TriangulateToIndices(handleSelfIntersects, suggestedAngle))
                     yield return new[]
                         {indexToVertexDict[triangleIndices.A], indexToVertexDict[triangleIndices.B],
                         indexToVertexDict[triangleIndices.C]};
@@ -105,9 +107,10 @@ namespace TVGL
         /// </summary>
         /// <param name="polygon">The polygon.</param>
         /// <returns>List&lt;System.Int32[]&gt;.</returns>
-        public static IEnumerable<Vector2[]> TriangulateToCoordinates(this Polygon polygon)
+        public static IEnumerable<Vector2[]> TriangulateToCoordinates(this Polygon polygon, bool handleSelfIntersects = true,
+            double suggestedAngle = 0.0)
         {
-            foreach (var triangle in polygon.Triangulate())
+            foreach (var triangle in polygon.Triangulate(handleSelfIntersects, suggestedAngle))
                 yield return new[] { triangle[0].Coordinates, triangle[1].Coordinates, triangle[2].Coordinates };
         }
 
@@ -117,7 +120,8 @@ namespace TVGL
         /// <param name="polygon">The polygon.</param>
         /// <param name="handleSelfIntersects">if set to <c>true</c> [handle self intersects].</param>
         /// <returns>List&lt;System.Int32[]&gt;.</returns>
-        public static IEnumerable<(int A, int B, int C)> TriangulateToIndices(this Polygon polygon, bool handleSelfIntersects = true)
+        public static IEnumerable<(int A, int B, int C)> TriangulateToIndices(this Polygon polygon, bool handleSelfIntersects = true,
+            double suggestedAngle = 0.0)
         {
             var vertexIndices = new HashSet<int>();
             var needToReIndex = false;
@@ -137,7 +141,7 @@ namespace TVGL
                     foreach (var vertex in subPolygon.Vertices)
                         vertex.IndexInList = index++;
             }
-            foreach (var triangle in polygon.Triangulate(handleSelfIntersects))
+            foreach (var triangle in polygon.Triangulate(handleSelfIntersects, suggestedAngle))
                 yield return (triangle[0].IndexInList, triangle[1].IndexInList, triangle[2].IndexInList);
         }
         /// <summary>
@@ -148,7 +152,8 @@ namespace TVGL
         /// <returns>List&lt;System.Int32[]&gt;.</returns>
         /// <exception cref="System.ArgumentException">Triangulate Polygon requires a positive polygon. A negative one was provided. - polygon</exception>
         /// <exception cref="System.Exception">Unable to triangulate polygon.</exception>
-        public static List<Vertex2D[]> Triangulate(this Polygon polygon, bool handleSelfIntersects = true)
+        public static List<Vertex2D[]> Triangulate(this Polygon polygon, bool handleSelfIntersects = true,
+            double suggestedAngle =0.0)
         {
             if (polygon.Area.IsNegligible() || (polygon.IsConvex && !polygon.InnerPolygons.Any()))
             {
@@ -176,7 +181,7 @@ namespace TVGL
                 if (concaveEdge != null)
                 {
                     while (verts[0].IndexInList != concaveEdge.IndexInList)
-                        verts = new[] { verts[1], verts[2], verts[3], verts[0] };
+                        verts = [verts[1], verts[2], verts[3], verts[0]];
                 }
                 return new List<Vertex2D[]> { new[] { verts[0], verts[1], verts[2] }, new[] { verts[0], verts[2], verts[3] } };
             }
@@ -184,7 +189,7 @@ namespace TVGL
             {
                 var triangleList = new List<Vertex2D[]>();
                 for (int i = 2; i < polygon.Vertices.Count; i++)
-                    triangleList.Add(new[] { polygon.Vertices[0], polygon.Vertices[i - 1], polygon.Vertices[i] });
+                    triangleList.Add([polygon.Vertices[0], polygon.Vertices[i - 1], polygon.Vertices[i]]);
                 return triangleList;
             }
             var triangleFaceList = new List<Vertex2D[]>();
@@ -193,7 +198,7 @@ namespace TVGL
             // in case this is a deep polygon tree - recurse down and solve for the inner positive polygons
             foreach (var hole in polygon.InnerPolygons)
                 foreach (var smallInnerPolys in hole.InnerPolygons)
-                    triangleFaceList.AddRange(Triangulate(smallInnerPolys));
+                    triangleFaceList.AddRange(Triangulate(smallInnerPolys,handleSelfIntersects,suggestedAngle));
 
             var selfIntersections = polygon.GetSelfIntersections().Where(intersect => intersect.Relationship != SegmentRelationship.NoOverlap).ToList();
             if (selfIntersections.Count > 0)
@@ -216,7 +221,7 @@ namespace TVGL
             var attempts = 0;
             var random = new Random(1);
             var successful = false;
-            var angle = 0.0;
+            var angle = suggestedAngle;
             var localTriangleFaceList = new List<Vertex2D[]>();
             do
             {

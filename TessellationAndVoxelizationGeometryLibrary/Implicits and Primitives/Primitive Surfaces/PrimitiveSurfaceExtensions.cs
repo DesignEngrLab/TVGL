@@ -544,11 +544,13 @@ namespace TVGL
             surface.SetFacesAndVertices(surface.Faces.Concat(facesToAdd), true);
             surface.DefineInnerOuterEdges();
             foreach (var removeFace in facesToRemove)
-                foreach (var v in surface.Vertices)
+                foreach (var v in removeFace.Vertices)
                     v.Faces.Remove(removeFace);
             foreach (var removeEdge in edgesToRemove)
-                foreach (var v in surface.Vertices)
-                    v.Edges.Remove(removeEdge);
+            {
+                removeEdge.To.Edges.Remove(removeEdge);
+                removeEdge.From.Edges.Remove(removeEdge);
+            }
             ReindexVertices(surface);
         }
 

@@ -284,8 +284,8 @@ namespace TVGL
         /// <returns>A Vector3.</returns>
         public override Vector3 GetNormalAtPoint(Vector3 point)
         {
+            if (point.IsNull()) return Vector3.Null;
             var gradient = GetGradient(point).Normalize();
-
             if (!gradient.Length().IsPositiveNonNegligible()) return GetNormalAtUmbilicPoint(point);
 
             if (IsPositive.GetValueOrDefault(true))
@@ -433,33 +433,28 @@ namespace TVGL
         /// <summary>
         /// Finds the points on the quadric that has a gradient in the same direction as
         /// the specified gradient vector. This input does not have to be normalized.
-        /// If onlyAlignedDir is true, then only the points where the gradient is in the 
-        /// same direction as the input gradient will be returned. 
-        /// If false, then points where the gradient is in the opposite direction will also be returned.
         /// </summary>
-        /// <remarks>The method determines the anchor point and direction of the line using the quadric's
-        /// coefficients and the provided gradient vector. Ensure that the gradient vector is non-zero to avoid
-        /// undefined behavior.</remarks>
-        /// <param name="gradient">The gradient vector that defines the direction of the line for which intersection points with the surface
-        /// are calculated. Must not be the zero vector.</param>
-        /// <returns>An enumerable collection of <see cref="Vector3"/> points representing the intersection points of the line
-        /// with the quadric surface. The collection may be empty if there are no intersections.</returns>
-        public IEnumerable<Vector3> PointsWithGradient(Vector3 gradient, bool onlyAlignedDir = false)
+        /// <param name="gradient"></param>
+        /// <param name="point"></param>
+        /// <returns></returns>
+        public bool PointsAtGivenGradient(Vector3 gradient, out Vector3 point)
         {
             var c = new Vector3(-XCoeff, -YCoeff, -ZCoeff);
             var gradMatrix = new Matrix3x3(
                 2 * XSqdCoeff, XYCoeff, XZCoeff,
                 XYCoeff, 2 * YSqdCoeff, YZCoeff,
             XZCoeff, YZCoeff, 2 * ZSqdCoeff);
-            Matrix3x3.Invert(gradMatrix, out var invGradMatrix);
+            if (!Matrix3x3.Invert(gradMatrix, out var invGradMatrix))
+            {
+                point = Vector3.Null;
+                return false;
+            }
             var anchor = invGradMatrix.Multiply(c);
             var dir = invGradMatrix.Multiply(gradient).Normalize();
-            if (onlyAlignedDir)
-                return LineIntersection(anchor, dir)
-                    .Where(x => GetGradient(x.intersection).Dot(gradient) > 0)
-                    .Select(x => x.intersection);
-            else
-                return LineIntersection(anchor, dir).Select(x => x.intersection);
+            point = LineIntersection(anchor, dir)
+                .Where(x => GetGradient(x.intersection).Dot(gradient) > 0)
+                .Select(x => x.intersection).First();
+            return true;
         }
 
         /// <summary>
@@ -527,7 +522,7 @@ namespace TVGL
                 2 * ZSqdCoeff * point.Z + XZCoeff * point.X + YZCoeff * point.Y + ZCoeff);
         }
 
-        private Matrix3x3 GetHessian()
+        public Matrix3x3 GetHessian()
         {
             return new Matrix3x3(2 * XSqdCoeff, XYCoeff, XZCoeff,
                                        XYCoeff, 2 * YSqdCoeff, YZCoeff,
@@ -931,6 +926,23 @@ namespace TVGL
             curvatureVector *= radius;
             return (tangent, curvatureVector, point + radius * curvatureVector,
                 radius);
+        }
+
+        /// <summary>
+        /// Constructs and returns a transformation matrix representing the coefficients of the quadric surface in 3D
+        /// space.
+        /// </summary>
+        /// <remarks>The returned matrix encodes the coefficients for the X, Y, and Z dimensions as
+        /// currently set in the instance. This matrix can be used for further geometric computations or transformations
+        /// involving the quadric surface.</remarks>
+        /// <returns>A <see cref="Matrix4x4"/> containing the coefficients for the quadric surface transformation.</returns>
+        public Matrix4x4 GetCoefficientMatrix()
+        {
+            return new Matrix4x4(
+                XSqdCoeff, 0.5 * XYCoeff, 0.5 * XZCoeff, 0.5 * XCoeff,
+                0.5 * XYCoeff, YSqdCoeff, 0.5 * YZCoeff, 0.5 * YCoeff,
+                0.5 * XZCoeff, 0.5 * YZCoeff, ZSqdCoeff, 0.5 * ZCoeff,
+                0.5 * XCoeff, 0.5 * YCoeff, 0.5 * ZCoeff, W);
         }
     }
 }

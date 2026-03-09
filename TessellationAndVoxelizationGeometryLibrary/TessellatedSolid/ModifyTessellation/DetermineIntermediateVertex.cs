@@ -78,13 +78,36 @@ namespace TVGL
             {
                 var p1Normal = quadric.GetNormalAtPoint(pt1);
                 var p2Normal = quadric.GetNormalAtPoint(pt2);
-                var pCenter = 0.5 * (pt1 + pt2);
-                var planeNormal = (p1Normal.Cross(p2Normal)).Normalize();
-                var outwardDir = (pt2 - pt1).Cross(planeNormal);
-                // the point we seek is farthest from the line connecting pt1 to pt2
-                // we don't know exactly where it is along the line, but we know its
-                // normal should be inline with the outwardDir.
-                return quadric.PointsWithGradient(outwardDir).MinBy(q => q.DistanceSquared(pCenter));
+                var crossProduct = p1Normal.Cross(p2Normal);
+                // Only use the conic approach when normals are sufficiently non-parallel.
+                // When normals are nearly aligned, the cross product is near-zero and
+                // Normalize() produces garbage, poisoning the plane, conic, and gradient.
+                //if (crossProduct.LengthSquared() > 1e-4)
+                //{
+                    var planeNormal = crossProduct.Normalize();
+                    var plane = new Plane(planeNormal.Dot(pt1), planeNormal);
+                    var outwardDir = (pt2 - pt1).Cross(planeNormal);
+                    var outwardDir2D = outwardDir.ConvertTo2DCoordinates(planeNormal, out _);
+                    var conic = GeneralConicSection.CreateFromQuadric(quadric, plane, out var transformBackFromXY);
+                    if (conic.PointsAtGivenGradient(outwardDir2D, out var planePoint))
+                        return planePoint.ConvertTo3DLocation(transformBackFromXY);
+                //}
+                // Fallback: project the midpoint onto the quadric along the surface normal
+                var midpoint = 0.5 * (pt1 + pt2);
+                var normal = quadric.GetNormalAtPoint(midpoint);
+                var bestT = double.PositiveInfinity;
+                Vector3 result = midpoint;
+                foreach (var (intersection, t) in quadric.LineIntersection(midpoint, normal))
+                {
+                    if (Math.Abs(t) < Math.Abs(bestT))
+                    {
+                        bestT = t;
+                        result = intersection;
+                    }
+                }
+                if (!quadric.QuadricValue(result).IsNegligible())
+                    Console.WriteLine(quadric.QuadricValue(result));
+                return result;
             }
             if (primitive is Torus torus)
             {
