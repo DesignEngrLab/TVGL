@@ -11,6 +11,7 @@
 // </copyright>
 // <summary></summary>
 // ***********************************************************************
+using Microsoft.Extensions.Options;
 using StarMathLib;
 using System;
 using System.Collections.Generic;
@@ -115,6 +116,9 @@ namespace TVGL
             init => w = value;
         }
         private double w;
+
+        public QuadricType Type;
+
         /// <summary>
         /// Gets all the coefficients as an enumerable in the order listed above.
         public IEnumerable<double> Coefficients
@@ -289,8 +293,8 @@ namespace TVGL
             if (gradient.Length().IsNegligible()) gradient = GetNormalAtUmbilicPoint(point);
 
             if (IsPositive.GetValueOrDefault(true))
-                return gradient.Normalize();
-            else return -gradient.Normalize();
+                return gradient;
+            else return -gradient;
         }
 
         /// <summary>
@@ -320,16 +324,18 @@ namespace TVGL
             // We assume that the quadric field is not flat everywhere
 
             // Return a normal at a point slightly offset from the umbilic point
-            Vector3 normal = Vector3.Zero;
             double delta = 1E-6; // small offset distance
             int iters = 0;
-            while (!normal.Length().IsPositiveNonNegligible() && iters < 100)
+            Vector3 gradient = Vector3.Zero;
+            while (!gradient.Length().IsPositiveNonNegligible() && iters < 100)
             {
                 var random = new Random();
-                normal = GetNormalAtPoint(point + delta * new Vector3(random.NextDouble(), random.NextDouble(), random.NextDouble()).Normalize());
+                gradient = GetGradient(point + delta * new Vector3(random.NextDouble(), random.NextDouble(), random.NextDouble()));
                 iters++;
             }
-            return normal;
+            if (IsPositive.GetValueOrDefault(true))
+                return gradient;
+            else return -gradient;
         }
         private Vector3 GetNearbyPointOnQuadric(Vector3 anchor)
         {
@@ -343,7 +349,7 @@ namespace TVGL
             while (!intersections.GetEnumerator().MoveNext() && iters++ < 100)
             {
                 //This is the distance to the tangent point on the normal to the level set.
-                t = normal.Dot(normal) / (new Vector3(XCoeff, YCoeff, ZCoeff) - GetNormalAtPoint(normal)).Dot(normal);
+                t = normal.Dot(normal) / ((new Vector3(XCoeff, YCoeff, ZCoeff) - GetNormalAtPoint(normal)).Dot(normal));
                 var tangencyCheck = normal.Dot(GetNormalAtPoint(newAnchor + t * normal));
                 newAnchor = newAnchor + t * normal;
                 normal = GetNormalAtPoint(newAnchor);
@@ -398,7 +404,7 @@ namespace TVGL
             Vector3 closestPt = ClosestPointOnSurfaceToPoint(point);
 
             //scaling the quadric value by the norm of the normal vector to get the approximate distance locally
-            if (closestPt == Vector3.Null) return DistanceToPointQuick(point);
+            if (closestPt.IsNull()) return DistanceToPointQuick(point);
 
             return Math.Sign(QuadricValue(point)) * point.Distance(closestPt);
         }
@@ -896,6 +902,102 @@ namespace TVGL
             curvatureVector *= radius;
             return (tangent, curvatureVector, point + radius * curvatureVector,
                 radius);
+        }
+
+        public void snapToDegenerate(double tolerance = 1E-3)
+        {
+            this.xSqdCoeff = xSqdCoeff.IsNegligible(tolerance) ? 0 : xSqdCoeff;
+            this.ySqdCoeff = ySqdCoeff.IsNegligible(tolerance) ? 0 : ySqdCoeff;
+            this.zSqdCoeff = zSqdCoeff.IsNegligible(tolerance) ? 0 : zSqdCoeff;
+            this.xyCoeff = xyCoeff.IsNegligible(tolerance) ? 0 : xyCoeff;
+            this.xzCoeff = xzCoeff.IsNegligible(tolerance) ? 0 : xzCoeff;
+            this.yzCoeff = yzCoeff.IsNegligible(tolerance) ? 0 : yzCoeff;
+            this.xCoeff = xCoeff.IsNegligible(tolerance) ? 0 : xCoeff;
+            this.yCoeff = yCoeff.IsNegligible(tolerance) ? 0 : yCoeff;
+            this.zCoeff = zCoeff.IsNegligible(tolerance) ? 0 : zCoeff;
+            this.w = w.IsNegligible(tolerance) ? 0 : w;
+        }
+
+        public enum QuadricType
+        {
+            Unknown,
+            Ellipsoid,
+            ImaginaryEllipsoid,
+            EllipticParaboloid,
+            HyperbolicParaboloid,
+            HyperboloidOneSheet,
+            HyperboloidTwoSheets,
+            EllipticCylinder,
+            HyperbolicCylinder,
+            EllipticCone,
+            TwoPlane,
+            Plane,
+            Sphere,
+            Line,
+            Point,
+            NoPoint,
+            AllPoints,
+            Other
+        }
+
+        public void SetQuadricType()
+        {
+            var A = new Matrix3x3(XSqdCoeff, XYCoeff / 2, XZCoeff / 2, XYCoeff / 2, YSqdCoeff / 2,
+                YZCoeff / 2, XZCoeff / 2, YZCoeff / 2, ZSqdCoeff);
+            var b = new Vector3(XCoeff, YCoeff, ZCoeff);
+            var c = W;
+            var r = 0.25 * b.Dot(A.Solve(b)) - c; // the "radius" term, if positive, then you have a real ellipsoid, if negative, then you have an imaginary ellipsoid
+            var eigvals = A.GetEigenValues().Select(e => e.Real);
+            int numPosEigvals = eigvals.Count(e => e.IsPositiveNonNegligible());
+
+            if (numPosEigvals == 3)
+            {
+                if (r.IsPositiveNonNegligible())
+                {
+                    if (eigvals.All(e => e > 0)) Type = QuadricType.Ellipsoid;
+                    else if (eigvals.All(e => e < 0)) Type = QuadricType.ImaginaryEllipsoid;
+                    else if (eigvals.Count(e => e > 0) == 2) Type = QuadricType.HyperboloidOneSheet;
+                    else Type = QuadricType.HyperboloidTwoSheets;
+                }
+                else if (r.IsNegativeNonNegligible())
+                {
+                    if (eigvals.All(e => e > 0)) Type = QuadricType.ImaginaryEllipsoid;
+                    else if (eigvals.All(e => e < 0)) Type = QuadricType.Ellipsoid;
+                    else if (eigvals.Count(e => e > 0) == 2) Type = QuadricType.HyperboloidTwoSheets;
+                    else Type = QuadricType.HyperboloidOneSheet;
+                }
+                 else
+                {
+                    if (eigvals.All(e => e > 0) || eigvals.All(e => e < 0)) Type = QuadricType.Point;
+                    else if (eigvals.All(e => e < 0)) Type = QuadricType.EllipticCone;
+                    else if (eigvals.Count(e => e > 0) == 2) Type = QuadricType.EllipticCone;
+                    else Type = QuadricType.HyperboloidOneSheet;
+                }
+            }
+
+            else if (numPosEigvals == 2)
+            {
+                if (eigvals.Count(e => e > 0) == 2) Type = QuadricType.EllipticParaboloid;
+                else if (eigvals.Count(e => e < 0) == 2) Type = QuadricType.HyperbolicParaboloid;
+                else if (eigvals.Count(e => e > 0) == 1 && eigvals.Count(e => e < 0) == 1) Type = QuadricType.EllipticCylinder;
+                else Type = QuadricType.HyperbolicCylinder;
+            }
+            else if (numPosEigvals == 1)
+            {
+                if (eigvals.Count(e => e > 0) == 1) Type = QuadricType.EllipticCone;
+                else if (eigvals.Count(e => e < 0) == 1) Type = QuadricType.TwoPlane;
+                else Type = QuadricType.Plane;
+            }
+            else if (numPosEigvals == 0)
+            {
+                //var rank = A.Rank();
+                var rank = 3;
+                if (rank == 3) Type = QuadricType.Sphere;
+                else if (rank == 2) Type = QuadricType.Line;
+                else if (rank == 1) Type = QuadricType.Point;
+                else if (rank == 0 && c.IsNegligible()) Type = QuadricType.AllPoints;
+                else if (rank == 0 && !c.IsNegligible()) Type = QuadricType.NoPoint;
+            }
         }
     }
 }
