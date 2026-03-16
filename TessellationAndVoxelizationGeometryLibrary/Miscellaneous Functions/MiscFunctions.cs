@@ -454,7 +454,6 @@ namespace TVGL
             var allVertices = new HashSet<Vertex>();
             if (faces == null || !faces.Any())
                 return;
-            Edge[] edges;
             var vertexIndices = new HashSet<int>();
             var maxVIndex = int.MinValue;
             var needToReIndex = false;
@@ -479,9 +478,9 @@ namespace TVGL
                 maxVIndex = k;
             }
             else maxVIndex++;
-            edges = new Edge[maxVIndex * maxVIndex];
-            var allEdgeIndices = new List<int>();
-            var doubleEdgeIndices = new HashSet<int>();
+            var edges = new Dictionary<long, Edge>();
+            var allEdgeIndices = new List<long>();
+            var doubleEdgeIndices = new HashSet<long>();
             foreach (var f in faces)
             {
                 var prevV = f.C;
@@ -489,26 +488,26 @@ namespace TVGL
                 var edgeEnumerator = f.Edges.GetEnumerator();
                 foreach (var v in f.Vertices)
                 {
-                    var edgeIndex = (v.IndexInList < prevV.IndexInList)
-                        ? prevV.IndexInList * maxVIndex + v.IndexInList
-                        : prevV.IndexInList + maxVIndex * v.IndexInList;
+                    long edgeIndex = (v.IndexInList < prevV.IndexInList)
+                        ? (long)prevV.IndexInList * (long)maxVIndex + v.IndexInList
+                        : prevV.IndexInList + (long)maxVIndex * (long)v.IndexInList;
                     allEdgeIndices.Add(edgeIndex);
                     if (edge == null)
                     {
-                        if (edges[edgeIndex] == null)
-                            edges[edgeIndex] = edge = new Edge(prevV, v, f, null, true, edgeIndex);
-                        else
+                        if (edges.TryGetValue(edgeIndex, out edge))
                         {
                             doubleEdgeIndices.Add(edgeIndex);
-                            edge = edges[edgeIndex];
                             edge.OtherFace = f;
                         }
+                        else
+                            edges[edgeIndex] = edge = new Edge(prevV, v, f, null, true, edgeIndex);
+
                         f.AddEdge(edge);
                     }
                     else
                     {
-                        if (edges[edgeIndex] == null) edges[edgeIndex] = edge;
-                        else doubleEdgeIndices.Add(edgeIndex);
+                        if (edges.ContainsKey(edgeIndex)) doubleEdgeIndices.Add(edgeIndex);
+                        else edges.Add(edgeIndex, edge);
                     }
                     prevV = v;
                     edgeEnumerator.MoveNext();

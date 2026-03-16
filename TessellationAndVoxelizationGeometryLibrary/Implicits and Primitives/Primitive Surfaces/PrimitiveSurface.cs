@@ -935,6 +935,10 @@ namespace TVGL
         public PrimitiveSurface Copy(bool copyTessellationElements = true)
         {
             var copy = (PrimitiveSurface)this.Clone();
+            copy.Faces = new HashSet<TriangleFace>();
+            copy.Vertices = new HashSet<Vertex>();
+            copy.InnerEdges = new HashSet<Edge>();
+            copy.OuterEdges = new HashSet<Edge>();
             if (copyTessellationElements && Faces != null && Faces.Count != 0)
             {
                 var i = 0;
@@ -959,16 +963,9 @@ namespace TVGL
                     i++;
                 }
                 copy.SetFacesAndVertices(newFaces, true);
-                copy.DefineInnerOuterEdges();
             }
-            else
-            {
-                copy.Faces.Clear();
-                copy.Vertices.Clear();
-                copy.InnerEdges.Clear();
-                copy.OuterEdges.Clear();
-                copy.ResetFaceDependentValues();
-            }
+            copy.ResetFaceDependentValues();
+
             return copy;
         }
 

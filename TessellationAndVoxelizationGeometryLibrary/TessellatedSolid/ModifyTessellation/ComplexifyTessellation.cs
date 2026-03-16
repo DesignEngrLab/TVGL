@@ -94,8 +94,10 @@ namespace TVGL
             addedVertices = new List<Vertex>();
             addedFaces = new List<TriangleFace>();
             var iterations = targetNumberOfFaces > 0 ? (int)Math.Ceiling(targetNumberOfFaces / 2.0) : targetNumberOfFaces;
-            while (iterations-- != 0 && edgeQueue.TryDequeue(out var edge, out var edgeLength))
+            var edgeCounter = edgeQueue.Count;
+            while (iterations-- != 0 && edgeQueue.TryDequeue(out var edge, out var edgeLength) && edgeLength > maxLength)
             {
+                //Presenter.ShowAndHang(addedFaces);
                 var origLeftFace = edge.OtherFace;
                 var origRightFace = edge.OwnedFace;
                 var leftFarVertex = origLeftFace?.OtherVertex(edge);
@@ -112,35 +114,45 @@ namespace TVGL
                 origLeftFace?.ReplaceVertex(toVertex, addedVertex);
                 origRightFace?.ReplaceVertex(toVertex, addedVertex);
 
-                var newLeftFace = new TriangleFace(toVertex, addedVertex, leftFarVertex);
-                newLeftFace.BelongsToPrimitive = commonPrimitive;
-                var newRightFace = new TriangleFace(addedVertex, toVertex, rightFarVertex);
-                newRightFace.BelongsToPrimitive = commonPrimitive;
+                TriangleFace newLeftFace = null, newRightFace = null;
+                if (leftFarVertex != null)
+                    newLeftFace = new TriangleFace(toVertex, addedVertex, leftFarVertex)
+                    { BelongsToPrimitive = commonPrimitive };
+                if (rightFarVertex != null)
+                    newRightFace = new TriangleFace(addedVertex, toVertex, rightFarVertex)
+                    { BelongsToPrimitive = commonPrimitive };
                 toVertex.Faces.Remove(origLeftFace);
                 toVertex.Faces.Remove(origRightFace);
 
-                var inlineEdge = new Edge(addedVertex, toVertex, newRightFace, newLeftFace, true);
+                var inlineEdge = new Edge(addedVertex, toVertex, newRightFace, newLeftFace, true, edgeCounter++);
                 toVertex.Edges.Remove(edge);
                 edge.To = addedVertex;
                 addedVertex.Edges.Add(edge);
                 edge.Update();
-                var newLeftEdge = new Edge(leftFarVertex, addedVertex, origLeftFace, newLeftFace, true);
-                var newRightEdge = new Edge(rightFarVertex, addedVertex, newRightFace, origRightFace, true);
-                origLeftFace.AddEdge(newLeftEdge);
-                origRightFace.AddEdge(newRightEdge);
-                var bottomEdge = toVertex.Edges.First(e => e.OtherVertex(toVertex) == leftFarVertex);
-                if (bottomEdge.OwnedFace == origLeftFace)
-                    bottomEdge.OwnedFace = newLeftFace;
-                else bottomEdge.OtherFace = newLeftFace;
-                newLeftFace.AddEdge(bottomEdge);
-                bottomEdge.Update();
+                Edge newLeftEdge = null, newRightEdge = null;
+                if (leftFarVertex != null)
+                {
+                    newLeftEdge = new Edge(leftFarVertex, addedVertex, origLeftFace, newLeftFace, true, edgeCounter++);
+                    origLeftFace.AddEdge(newLeftEdge);
+                    var bottomEdge = toVertex.Edges.First(e => e.OtherVertex(toVertex) == leftFarVertex);
+                    if (bottomEdge.OwnedFace == origLeftFace)
+                        bottomEdge.OwnedFace = newLeftFace;
+                    else bottomEdge.OtherFace = newLeftFace;
+                    newLeftFace.AddEdge(bottomEdge);
+                    bottomEdge.Update();
+                }
+                if (rightFarVertex != null)
+                {
+                    newRightEdge = new Edge(rightFarVertex, addedVertex, newRightFace, origRightFace, true, edgeCounter++);
+                    origRightFace.AddEdge(newRightEdge);
+                    var bottomEdge = toVertex.Edges.First(e => e.OtherVertex(toVertex) == rightFarVertex);
+                    if (bottomEdge.OwnedFace == origRightFace)
+                        bottomEdge.OwnedFace = newRightFace;
+                    else bottomEdge.OtherFace = newRightFace;
+                    newRightFace.AddEdge(bottomEdge);
+                    bottomEdge.Update();
+                }
 
-                bottomEdge = toVertex.Edges.First(e => e.OtherVertex(toVertex) == rightFarVertex);
-                if (bottomEdge.OwnedFace == origRightFace)
-                    bottomEdge.OwnedFace = newRightFace;
-                else bottomEdge.OtherFace = newRightFace;
-                newRightFace.AddEdge(bottomEdge);
-                bottomEdge.Update();
 
                 // need to re-add the edge. It was modified in the SplitEdge function (now, half the lenght), but
                 // it may still be met by this criteria
@@ -148,17 +160,17 @@ namespace TVGL
                     edgeQueue.Enqueue(edge, edge.Length);
                 if (inlineEdge.Length >= maxLength)
                     edgeQueue.Enqueue(inlineEdge, inlineEdge.Length);
-                if (newLeftEdge.Length >= maxLength)
+                if (newLeftEdge?.Length >= maxLength)
                     edgeQueue.Enqueue(newLeftEdge, newLeftEdge.Length);
-                if (newRightEdge.Length >= maxLength)
+                if (newRightEdge?.Length >= maxLength)
                     edgeQueue.Enqueue(newRightEdge, newRightEdge.Length);
 
-                addedEdges.Add(inlineEdge);
-                addedEdges.Add(newLeftEdge);
-                addedEdges.Add(newRightEdge);
-                addedFaces.Add(newLeftFace);
-                addedFaces.Add(newRightFace);
                 addedVertices.Add(addedVertex);
+                addedEdges.Add(inlineEdge);
+                if (newLeftEdge != null) addedEdges.Add(newLeftEdge);
+                if (newRightEdge != null) addedEdges.Add(newRightEdge);
+                if (newLeftFace != null) addedFaces.Add(newLeftFace);
+                if (newRightFace != null) addedFaces.Add(newRightFace);
             }
         }
     }

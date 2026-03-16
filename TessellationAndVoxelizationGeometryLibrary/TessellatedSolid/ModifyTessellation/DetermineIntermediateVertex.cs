@@ -82,15 +82,20 @@ namespace TVGL
                 // Only use the conic approach when normals are sufficiently non-parallel.
                 // When normals are nearly aligned, the cross product is near-zero and
                 // Normalize() produces garbage, poisoning the plane, conic, and gradient.
-                //if (crossProduct.LengthSquared() > 1e-4)
+                //if (!p1Normal.IsAligned(p2Normal))
                 //{
-                    var planeNormal = crossProduct.Normalize();
-                    var plane = new Plane(planeNormal.Dot(pt1), planeNormal);
-                    var outwardDir = (pt2 - pt1).Cross(planeNormal);
-                    var outwardDir2D = outwardDir.ConvertTo2DCoordinates(planeNormal, out _);
-                    var conic = GeneralConicSection.CreateFromQuadric(quadric, plane, out var transformBackFromXY);
-                    if (conic.PointsAtGivenGradient(outwardDir2D, out var planePoint))
-                        return planePoint.ConvertTo3DLocation(transformBackFromXY);
+                //    var planeNormal = crossProduct.Normalize();
+                //    var plane = new Plane(planeNormal.Dot(pt1), planeNormal);
+                //    var outwardDir = (pt2 - pt1).Cross(planeNormal);
+                //    var outwardDir2D = outwardDir.ConvertTo2DCoordinates(planeNormal, out _);
+                //    var conic = GeneralConicSection.CreateFromQuadric(quadric, plane, out var transformBackFromXY);
+                //    if (conic.PointsAtGivenGradient(outwardDir2D, out var planePoint))
+                //    {
+                //        var resultInner = planePoint.ConvertTo3DLocation(transformBackFromXY);
+                //        //if (!quadric.QuadricValue(resultInner).IsNegligible())
+                //            Console.WriteLine("b" + quadric.QuadricValue(resultInner));
+                //        return resultInner;
+                //    }
                 //}
                 // Fallback: project the midpoint onto the quadric along the surface normal
                 var midpoint = 0.5 * (pt1 + pt2);
@@ -106,7 +111,7 @@ namespace TVGL
                     }
                 }
                 if (!quadric.QuadricValue(result).IsNegligible())
-                    Console.WriteLine(quadric.QuadricValue(result));
+                    Console.WriteLine("f" + quadric.QuadricValue(result));
                 return result;
             }
             if (primitive is Torus torus)
