@@ -988,15 +988,5 @@ namespace TVGL
             return key;
         }
 
-
-        public Polygon GetAsPolygon()
-        {
-            var polygons = new List<Polygon>();
-            var vertexLoops = OuterEdges.MakeEdgePaths(true,
-                new EdgePathLoopsAroundInputFaces(Faces)).Select(ep => ep.GetVertices().ToList());
-            foreach (var loop in vertexLoops)
-                polygons.Add(new Polygon(TransformFrom3DTo2D(loop.Select(v => v.Coordinates), true)));
-            return polygons.CreateShallowPolygonTrees(false).First();
-        }
     }
 }
