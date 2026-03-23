@@ -84,32 +84,29 @@ namespace TVGL
         /// <param name="addedVertices">When this method returns, contains the list of vertices that were added during the operation.</param>
         /// <param name="addedFaces">When this method returns, contains the list of triangle faces that were added during the operation.</param>
         /// <param name="targetNumberOfFaces">The desired total number of faces in the mesh after the operation. Must be a non-negative integer.</param>
-        /// <param name="maxLength">The maximum allowable length for edges to be considered for subdivision. Must be a positive value.</param>
+        /// <param name="maxSurfaceDeviation">The maximum allowable length for edges to be considered for subdivision. Must be a positive value.</param>
         public static void Complexify(IEnumerable<Edge> edges, out List<Edge> addedEdges, out List<Vertex> addedVertices,
-            out List<TriangleFace> addedFaces, int targetNumberOfFaces, double maxLength)
+            out List<TriangleFace> addedFaces, int targetNumberOfFaces, double maxSurfaceDeviation)
         {
-            var edgeQueue = new PriorityQueue<Edge, double>(edges.Where(e => e.Length >= maxLength).Select(e => (e, e.Length)),
-                new ReverseSort());
+            var edgeQueue = new PriorityQueue<(Edge, Vector3), double>(new ReverseSort());
+            foreach (var edge in edges)
+                EnqueueEdgeAndFindNewPoint(edgeQueue, edge, maxSurfaceDeviation);
+
             addedEdges = new List<Edge>();
             addedVertices = new List<Vertex>();
             addedFaces = new List<TriangleFace>();
             var iterations = targetNumberOfFaces > 0 ? (int)Math.Ceiling(targetNumberOfFaces / 2.0) : targetNumberOfFaces;
             var edgeCounter = edgeQueue.Count;
-            while (iterations-- != 0 && edgeQueue.TryDequeue(out var edge, out var edgeLength) && edgeLength > maxLength)
+            while (iterations-- != 0 && edgeQueue.TryDequeue(out (Edge edge, Vector3 mpt) c, out var edgeLength) && edgeLength > maxSurfaceDeviation)
             {
                 //Presenter.ShowAndHang(addedFaces);
-                var origLeftFace = edge.OtherFace;
-                var origRightFace = edge.OwnedFace;
-                var leftFarVertex = origLeftFace?.OtherVertex(edge);
-                var rightFarVertex = origRightFace?.OtherVertex(edge);
-                var fromVertex = edge.From;
-                var toVertex = edge.To;
-                var primitive1 = origLeftFace?.BelongsToPrimitive;
-                var primitive2 = origRightFace == null ? primitive1 : origRightFace.BelongsToPrimitive;
-                if (primitive1 == null) primitive1 = primitive2;
-                var commonPrimitive = (primitive1 == primitive2) ? primitive1 : null;
-                var addedVertex = new Vertex(DetermineIntermediateVertexPosition(fromVertex.Coordinates,
-                    toVertex.Coordinates, commonPrimitive));
+                var origLeftFace = c.edge.OtherFace;
+                var origRightFace = c.edge.OwnedFace;
+                var leftFarVertex = origLeftFace?.OtherVertex(c.edge);
+                var rightFarVertex = origRightFace?.OtherVertex(c.edge);
+                var fromVertex = c.edge.From;
+                var toVertex = c.edge.To;
+                var addedVertex = new Vertex(c.mpt);
                 // modify original faces with new intermediate vertex
                 origLeftFace?.ReplaceVertex(toVertex, addedVertex);
                 origRightFace?.ReplaceVertex(toVertex, addedVertex);
@@ -117,18 +114,18 @@ namespace TVGL
                 TriangleFace newLeftFace = null, newRightFace = null;
                 if (leftFarVertex != null)
                     newLeftFace = new TriangleFace(toVertex, addedVertex, leftFarVertex)
-                    { BelongsToPrimitive = commonPrimitive };
+                    { BelongsToPrimitive = origLeftFace.BelongsToPrimitive };
                 if (rightFarVertex != null)
                     newRightFace = new TriangleFace(addedVertex, toVertex, rightFarVertex)
-                    { BelongsToPrimitive = commonPrimitive };
+                    { BelongsToPrimitive = origRightFace.BelongsToPrimitive };
                 toVertex.Faces.Remove(origLeftFace);
                 toVertex.Faces.Remove(origRightFace);
 
                 var inlineEdge = new Edge(addedVertex, toVertex, newRightFace, newLeftFace, true, edgeCounter++);
-                toVertex.Edges.Remove(edge);
-                edge.To = addedVertex;
-                addedVertex.Edges.Add(edge);
-                edge.Update();
+                toVertex.Edges.Remove(c.edge);
+                c.edge.To = addedVertex;
+                addedVertex.Edges.Add(c.edge);
+                c.edge.Update();
                 Edge newLeftEdge = null, newRightEdge = null;
                 if (leftFarVertex != null)
                 {
@@ -153,17 +150,14 @@ namespace TVGL
                     bottomEdge.Update();
                 }
 
-
                 // need to re-add the edge. It was modified in the SplitEdge function (now, half the lenght), but
                 // it may still be met by this criteria
-                if (edge.Length >= maxLength)
-                    edgeQueue.Enqueue(edge, edge.Length);
-                if (inlineEdge.Length >= maxLength)
-                    edgeQueue.Enqueue(inlineEdge, inlineEdge.Length);
-                if (newLeftEdge?.Length >= maxLength)
-                    edgeQueue.Enqueue(newLeftEdge, newLeftEdge.Length);
-                if (newRightEdge?.Length >= maxLength)
-                    edgeQueue.Enqueue(newRightEdge, newRightEdge.Length);
+                EnqueueEdgeAndFindNewPoint(edgeQueue, c.edge, maxSurfaceDeviation);
+                EnqueueEdgeAndFindNewPoint(edgeQueue, inlineEdge, maxSurfaceDeviation);
+                if (newLeftEdge != null)
+                    EnqueueEdgeAndFindNewPoint(edgeQueue, newLeftEdge, maxSurfaceDeviation);
+                if (newRightEdge != null)
+                    EnqueueEdgeAndFindNewPoint(edgeQueue, newRightEdge, maxSurfaceDeviation);
 
                 addedVertices.Add(addedVertex);
                 addedEdges.Add(inlineEdge);
@@ -172,6 +166,14 @@ namespace TVGL
                 if (newLeftFace != null) addedFaces.Add(newLeftFace);
                 if (newRightFace != null) addedFaces.Add(newRightFace);
             }
+        }
+
+        private static void EnqueueEdgeAndFindNewPoint(PriorityQueue<(Edge, Vector3), double> edgeQueue, Edge edge, double cutOff)
+        {
+            var midPoint = DetermineIntermediateVertexPosition(edge);
+            var distanceToSurf = MiscFunctions.DistancePointToLine(midPoint, edge.From.Coordinates, edge.Vector);
+            if (distanceToSurf > cutOff)
+                edgeQueue.Enqueue((edge, midPoint), distanceToSurf);
         }
     }
 

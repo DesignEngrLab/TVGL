@@ -1015,7 +1015,7 @@ namespace TVGL
                 unusedFaces = new HashSet<TriangleFace>(ts.Faces);
             }
             // now, the bigger job of walking through the faces to find groups
-            faceGroups.AddRange(GetContiguousFaceGroups(unusedFaces));
+            faceGroups.AddRange(GetContiguousFaceGroups(unusedFaces).Select(fg=>fg.ToList()));
 
             if (faceGroups.Count == 1 && faceGroups[0].Count == ts.NumberOfFaces)
             {
@@ -1070,31 +1070,63 @@ namespace TVGL
             }
         }
 
-        public static List<List<TriangleFace>> GetContiguousFaceGroups(this IEnumerable<TriangleFace> facesInput)
+
+        /// <summary>
+        /// Identifies and returns contiguous patches of triangle faces, grouping faces that are connected without
+        /// crossing specified stop edges or stop faces.
+        /// </summary>
+        /// <remarks>This method is useful for segmenting a mesh into regions based on connectivity, with
+        /// the ability to specify custom boundaries. The returned patches are disjoint, and each face from the input is
+        /// included in at most one patch unless it is specified as a stop face.</remarks>
+        /// <param name="faces">The collection of triangle faces to be partitioned into patches.</param>
+        /// <param name="stopEdges">An optional set of edges that act as boundaries; patches will not cross these edges. If null, no edge
+        /// boundaries are applied.</param>
+        /// <param name="stopFaces">An optional set of faces that act as boundaries; patches will not include or cross these faces. If null, no
+        /// face boundaries are applied.</param>
+        /// <returns>An enumerable collection of face patches, where each patch is a set of connected triangle faces. Each patch
+        /// contains faces that are contiguous and do not cross any stop edges or stop faces.</returns>
+        public static IEnumerable<HashSet<TriangleFace>> GetContiguousFaceGroups(this IEnumerable<TriangleFace> faces,
+            HashSet<Edge> stopEdges = null, HashSet<TriangleFace> stopFaces = null)
         {
-            var unusedFaces = facesInput as HashSet<TriangleFace> ?? facesInput.ToHashSet();
-            var faceGroups = new List<List<TriangleFace>>();
-            while (unusedFaces.Any())
+            var remainingFaces = new HashSet<TriangleFace>(faces);
+            if (stopEdges != null)
+                stopEdges = new HashSet<Edge>(stopEdges, stopEdges.Comparer);
+            else stopEdges = new HashSet<Edge>();
+            if (stopFaces != null)
+                stopFaces = new HashSet<TriangleFace>(stopFaces, stopFaces.Comparer);
+            else stopFaces = new HashSet<TriangleFace>();
+            //Pick a start edge, then collect all adjacent faces on one side of the face, without crossing over significant edges.
+            //This collection of faces will be used to create a patch.
+            while (remainingFaces.Any())
             {
-                var groupHash = new HashSet<TriangleFace>();
-                var stack = new Stack<TriangleFace>(new[] { unusedFaces.First() });
+                var startFace = remainingFaces.First();
+                remainingFaces.Remove(startFace);
+                if (stopFaces.Contains(startFace)) continue; // this is redundant with the below check for the same, but
+                // check here says a split second and the creation of the next two collections.
+                var patch = new HashSet<TriangleFace>();
+                var stack = new Stack<TriangleFace>();
+                stack.Push(startFace);
                 while (stack.Any())
                 {
                     var face = stack.Pop();
-                    if (groupHash.Contains(face)) continue;
-                    groupHash.Add(face);
-                    unusedFaces.Remove(face);
-                    foreach (var adjacentFace in face.AdjacentFaces)
+                    if (stopFaces.Contains(face)) continue;
+                    stopFaces.Add(face);
+                    patch.Add(face);
+                    foreach (var edge in face.Edges)
                     {
-                        if (adjacentFace == null) continue; //This is an error. Handle it in the error function.
-                        if (!unusedFaces.Contains(adjacentFace)) continue; //Cannot assign the same face twice
-                        stack.Push(adjacentFace);
+                        if (stopEdges.Contains(edge)) continue;//Don't cross over significant edges
+                        var otherFace = face == edge.OwnedFace ? edge.OtherFace : edge.OwnedFace;
+                        if (remainingFaces.Contains(otherFace))
+                        {
+                            stack.Push(otherFace);
+                            remainingFaces.Remove(otherFace);
+                        }
                     }
                 }
-                faceGroups.Add(groupHash.ToList());
+                yield return patch;
             }
-            return faceGroups;
         }
+
 
         public static List<List<TriangleFace>> GetContiguousFaceGroups(TessellatedSolid ts, List<int[]> faceGroupsThatAreBodies,
             out HashSet<TriangleFace> unusedFaces)

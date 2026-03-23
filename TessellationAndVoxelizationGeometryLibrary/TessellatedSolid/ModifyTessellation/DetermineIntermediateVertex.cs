@@ -24,12 +24,19 @@ namespace TVGL
     /// </summary>
     public static partial class ModifyTessellation
     {
-        /// <summary>
-        /// Adjusts the position of kept vertex.
-        /// </summary>
-        /// <param name="vertexA">The keep vertex.</param>
-        /// <param name="vertexB">The other vertex.</param>
-        /// <returns>Vector3.</returns>
+
+        internal static Vector3 DetermineIntermediateVertexPosition(Edge edge)
+        {
+            var fromVertex = edge.From;
+            var toVertex = edge.To;
+            var primitive1 = edge.OwnedFace?.BelongsToPrimitive;
+            var primitive2 = edge.OtherFace == null ? primitive1 : edge.OtherFace.BelongsToPrimitive;
+            if (primitive1 == null) primitive1 = primitive2;
+            if (primitive1 == primitive2)
+                return DetermineIntermediateVertexPosition(edge.From.Coordinates, edge.To.Coordinates, primitive1);
+            else
+                return DetermineIntermediateVertexPosition(edge.From.Coordinates, edge.To.Coordinates, primitive1, primitive2);
+        }
         internal static Vector3 DetermineIntermediateVertexPosition(Vector3 pt1, Vector3 pt2,
             PrimitiveSurface primitive = null)
         {
@@ -79,26 +86,30 @@ namespace TVGL
                 var p1Normal = quadric.GetNormalAtPoint(pt1);
                 var p2Normal = quadric.GetNormalAtPoint(pt2);
                 var crossProduct = p1Normal.Cross(p2Normal);
+                var midpoint = 0.5 * (pt1 + pt2);
                 // Only use the conic approach when normals are sufficiently non-parallel.
                 // When normals are nearly aligned, the cross product is near-zero and
                 // Normalize() produces garbage, poisoning the plane, conic, and gradient.
-                //if (!p1Normal.IsAligned(p2Normal))
-                //{
-                //    var planeNormal = crossProduct.Normalize();
-                //    var plane = new Plane(planeNormal.Dot(pt1), planeNormal);
-                //    var outwardDir = (pt2 - pt1).Cross(planeNormal);
-                //    var outwardDir2D = outwardDir.ConvertTo2DCoordinates(planeNormal, out _);
-                //    var conic = GeneralConicSection.CreateFromQuadric(quadric, plane, out var transformBackFromXY);
-                //    if (conic.PointsAtGivenGradient(outwardDir2D, out var planePoint))
-                //    {
-                //        var resultInner = planePoint.ConvertTo3DLocation(transformBackFromXY);
-                //        //if (!quadric.QuadricValue(resultInner).IsNegligible())
-                //            Console.WriteLine("b" + quadric.QuadricValue(resultInner));
-                //        return resultInner;
-                //    }
-                //}
+                if (!p1Normal.IsAligned(p2Normal,0.85))
+                {
+                    var planenormal = crossProduct.Normalize();
+                    var plane = new Plane(planenormal.Dot(pt1), planenormal);
+                    var outwarddir = (pt2 - pt1).Cross(planenormal);
+                    //if (outwarddir.Dot(quadric.GetNormalAtPoint(midpoint)) > 0)
+                    //    outwarddir = -outwarddir;
+                    var midPoint2d = midpoint.ConvertTo2DCoordinates(planenormal, out _);
+                    var outwarddir2d = outwarddir.ConvertTo2DCoordinates(planenormal, out _);
+                    var conic = GeneralConicSection.CreateFromQuadric(quadric, plane);
+                    var posSuccess = conic.PointsAtGivenGradient(outwarddir2d, out var posPt);
+                    var negSuccess = conic.PointsAtGivenGradient(-outwarddir2d, out var negPt);
+                if (!posSuccess && !negSuccess) ; // intentionally do nothing, so as to skip to default case below
+                else 
+                        if (!negSuccess || posPt.DistanceSquared(midPoint2d) < negPt.DistanceSquared(midPoint2d))
+                    return posPt.ConvertTo3DLocation(plane.AsTransformFromXYPlane);
+                else
+                    return negPt.ConvertTo3DLocation(plane.AsTransformFromXYPlane);
+                }
                 // Fallback: project the midpoint onto the quadric along the surface normal
-                var midpoint = 0.5 * (pt1 + pt2);
                 var normal = quadric.GetNormalAtPoint(midpoint);
                 var bestT = double.PositiveInfinity;
                 Vector3 result = midpoint;
@@ -110,8 +121,10 @@ namespace TVGL
                         result = intersection;
                     }
                 }
-                if (!quadric.QuadricValue(result).IsNegligible())
-                    Console.WriteLine("f" + quadric.QuadricValue(result));
+                Console.WriteLine("m" );
+                //Console.WriteLine(quadric.GetNormalAtPoint(midpoint).Dot(planenormal));
+
+                //Console.WriteLine("m" + result.X + "," + result.Y + "=" + quadric.QuadricValue(result));
                 return result;
             }
             if (primitive is Torus torus)
@@ -122,6 +135,14 @@ namespace TVGL
                 var ringPt2 = torus.ClosestPointOnSurfaceToPoint(pt2);
                 throw new NotImplementedException();
             }
+            throw new NotImplementedException();
+        }
+
+
+
+
+        private static Vector3 DetermineIntermediateVertexPosition(Vector3 coordinates1, Vector3 coordinates2, PrimitiveSurface primitive1, PrimitiveSurface primitive2)
+        {
             throw new NotImplementedException();
         }
 

@@ -86,26 +86,68 @@ namespace TVGL
         public PrimitiveCurveType CurveType { get; private set; }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="GeneralConicSection"/> struct.
+        /// Initializes a new instance of the GeneralConicSection class using the specified coefficients of the general
+        /// conic equation.
         /// </summary>
-        /// <param name="a">a.</param>
-        /// <param name="b">The b.</param>
-        /// <param name="c">The c.</param>
-        /// <param name="d">The d.</param>
-        /// <param name="e">The e.</param>
+        /// <remarks>The general conic equation is typically represented as: a·x² + b·xy + c·y² + d·x +
+        /// e·y + w = 0. If the constant term w is negligible, the coefficients are used as provided; otherwise, all
+        /// coefficients are normalized by dividing by w.</remarks>
+        /// <param name="a">The coefficient of the x² term in the conic equation.</param>
+        /// <param name="b">The coefficient of the xy term in the conic equation.</param>
+        /// <param name="c">The coefficient of the y² term in the conic equation.</param>
+        /// <param name="d">The coefficient of the x term in the conic equation.</param>
+        /// <param name="e">The coefficient of the y term in the conic equation.</param>
         /// <param name="constantIsZero">if set to <c>true</c> [constant is zero].</param>
         public GeneralConicSection(double a, double b, double c, double d, double e, bool constantIsZero)
         {
-            var max = (new[] { Math.Abs(a), Math.Abs(b), Math.Abs(c), Math.Abs(d), Math.Abs(e) }).Max();
-            A = Math.Abs(a / max) < conicTolerance ? 0 : a;
-            B = Math.Abs(b / max) < conicTolerance ? 0 : b;
-            C = Math.Abs(c / max) < conicTolerance ? 0 : c;
-            D = Math.Abs(d / max) < conicTolerance ? 0 : d;
-            E = Math.Abs(e / max) < conicTolerance ? 0 : e;
+            A = a;
+            B = b;
+            C = c;
+            D = d;
+            E = e;
             ConstantIsZero = constantIsZero;
-            CurveType = PrimitiveCurveType.StraightLine;
+            SetConicType();
+        }
 
-            #region SetConicType
+        /// <summary>
+        /// Initializes a new instance of the GeneralConicSection class using the specified coefficients of the general
+        /// conic equation.
+        /// </summary>
+        /// <remarks>The general conic equation is typically represented as: a·x² + b·xy + c·y² + d·x +
+        /// e·y + w = 0. If the constant term w is negligible, the coefficients are used as provided; otherwise, all
+        /// coefficients are normalized by dividing by w.</remarks>
+        /// <param name="a">The coefficient of the x² term in the conic equation.</param>
+        /// <param name="b">The coefficient of the xy term in the conic equation.</param>
+        /// <param name="c">The coefficient of the y² term in the conic equation.</param>
+        /// <param name="d">The coefficient of the x term in the conic equation.</param>
+        /// <param name="e">The coefficient of the y term in the conic equation.</param>
+        /// <param name="w">The constant term in the conic equation. If negligible, the conic is considered to have a zero constant
+        /// term.</param>
+        public GeneralConicSection(double a, double b, double c, double d, double e, double w) : this()
+        {
+            if (w.IsNegligible())
+            {
+                A = a;
+                B = b;
+                C = c;
+                D = d;
+                E = e;
+                ConstantIsZero = true;
+            }
+            else
+            {
+                A = a / w;
+                B = b / w;
+                C = c / w;
+                D = d / w;
+                E = e / w;
+                ConstantIsZero = false;
+            }
+            SetConicType();
+        }
+
+        private void SetConicType()
+        {
             if (A.IsNegligible() && B.IsNegligible() && C.IsNegligible())
             {
                 A = B = C = 0;
@@ -128,30 +170,8 @@ namespace TVGL
                 if (det > 0) CurveType = PrimitiveCurveType.Ellipse;
                 else CurveType = PrimitiveCurveType.Hyperbola;
             }
-            #endregion
         }
 
-        public GeneralConicSection(double a, double b, double c, double d, double e, double w) : this()
-        {
-            if (w.IsNegligible())
-            {
-                A = a;
-                B = b;
-                C = c;
-                D = d;
-                E = e;
-                ConstantIsZero = true;
-            }
-            else
-            {
-                A = a / w;
-                B = b / w;
-                C = c / w;
-                D = d / w;
-                E = e / w;
-                ConstantIsZero = false;
-            }
-        }
 
         /// <summary>
         /// Calculates at point.
@@ -311,14 +331,13 @@ namespace TVGL
             }
             return minDistance;
         }
-        public static GeneralConicSection CreateFromQuadric(GeneralQuadric quadric, Plane plane, out Matrix4x4 transfromFromXYPlaneBackToGivenPlane)
+        public static GeneralConicSection CreateFromQuadric(GeneralQuadric quadric, Plane plane)
         {
-            transfromFromXYPlaneBackToGivenPlane = plane.AsTransformFromXYPlane;
-            var mTranspose = transfromFromXYPlaneBackToGivenPlane.Transpose();
+            var mTranspose = plane.AsTransformFromXYPlane.Transpose();
             var qMatrix = quadric.GetCoefficientMatrix();
             // In TVGL's row-vector convention, a 2D point p maps to 3D as x = p * M.
             // Substituting into the quadric x * Q * x^T = 0 gives p * (M * Q * M^T) * p^T = 0.
-            var qNew = transfromFromXYPlaneBackToGivenPlane * qMatrix * mTranspose;
+            var qNew = plane.AsTransformFromXYPlane * qMatrix * mTranspose;
             var a = qNew.M11;
             var b = 2 * qNew.M12;
             var c = qNew.M22;
