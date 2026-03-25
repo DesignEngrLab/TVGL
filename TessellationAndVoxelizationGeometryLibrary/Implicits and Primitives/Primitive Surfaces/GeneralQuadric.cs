@@ -17,6 +17,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Security.Principal;
 using System.Text.Json.Serialization;
 
 namespace TVGL
@@ -904,7 +905,7 @@ namespace TVGL
                 radius);
         }
 
-        public void snapToDegenerate(double tolerance = 1E-3)
+        public void RemoveSmallCoefficents(double tolerance = 1E-3)
         {
             this.xSqdCoeff = xSqdCoeff.IsNegligible(tolerance) ? 0 : xSqdCoeff;
             this.ySqdCoeff = ySqdCoeff.IsNegligible(tolerance) ? 0 : ySqdCoeff;
@@ -928,9 +929,15 @@ namespace TVGL
             HyperboloidOneSheet,
             HyperboloidTwoSheets,
             EllipticCylinder,
+            ImaginaryEllipticCylinder,
+            ParabolicCylinder,
             HyperbolicCylinder,
-            EllipticCone,
-            TwoPlane,
+            Cone,
+            ImaginaryCone,
+            IntersectingPlanes,
+            ImaginaryIntersectingPlanes,
+            ParallelPlanes,
+            ImaginaryParallelPlanes,
             Plane,
             Sphere,
             Line,
@@ -940,63 +947,85 @@ namespace TVGL
             Other
         }
 
-        public void SetQuadricType()
+        public void SetQuadricType(double tol = 1E-6)
         {
+            Type = QuadricType.Unknown;
             var A = new Matrix3x3(XSqdCoeff, XYCoeff / 2, XZCoeff / 2, XYCoeff / 2, YSqdCoeff / 2,
                 YZCoeff / 2, XZCoeff / 2, YZCoeff / 2, ZSqdCoeff);
-            var b = new Vector3(XCoeff, YCoeff, ZCoeff);
-            var c = W;
-            var r = 0.25 * b.Dot(A.Solve(b)) - c; // the "radius" term, if positive, then you have a real ellipsoid, if negative, then you have an imaginary ellipsoid
-            var eigvals = A.GetEigenValues().Select(e => e.Real);
-            int numPosEigvals = eigvals.Count(e => e.IsPositiveNonNegligible());
+            var M = new Matrix4x4(XSqdCoeff, XYCoeff / 2, XZCoeff / 2, XCoeff / 2,
+                XYCoeff / 2, YSqdCoeff, YZCoeff / 2, YCoeff / 2,
+                XZCoeff / 2, YZCoeff / 2, ZSqdCoeff, ZCoeff / 2,
+                XCoeff / 2, YCoeff / 2, ZCoeff / 2, W);
 
-            if (numPosEigvals == 3)
+            var AEigvals = A.GetEigenValues().Select(e => e.Real);
+            var MEigvals = M.GetEigenValues().Select(e => e.Real);
+            int numPosAEigvals = AEigvals.Count(e => e.IsPositiveNonNegligible(tol));
+            int Arank = AEigvals.Count(e => !e.IsNegligible(tol));
+            int Mrank = MEigvals.Count(e => !e.IsNegligible(tol));
+            bool MDetSign = (MEigvals.Count(e => e < 0) % 2) == 0;
+            bool ANonZeroEigValsSameSign = AEigvals.Where(e => !e.IsNegligible(tol)).All(e => e > 0) || AEigvals.Where(e => !e.IsNegligible(tol)).All(e => e < 0);
+            bool MNonZeroEigValsSameSign = MEigvals.Where(e => !e.IsNegligible(tol)).All(e => e > 0) || MEigvals.Where(e => !e.IsNegligible(tol)).All(e => e < 0);
+
+            if (Arank == 3)
             {
-                if (r.IsPositiveNonNegligible())
+                if (Mrank == 4)
                 {
-                    if (eigvals.All(e => e > 0)) Type = QuadricType.Ellipsoid;
-                    else if (eigvals.All(e => e < 0)) Type = QuadricType.ImaginaryEllipsoid;
-                    else if (eigvals.Count(e => e > 0) == 2) Type = QuadricType.HyperboloidOneSheet;
-                    else Type = QuadricType.HyperboloidTwoSheets;
+                    if (!MDetSign)
+                    {
+                        if (ANonZeroEigValsSameSign) Type = QuadricType.Ellipsoid;
+                        else Type = QuadricType.HyperboloidTwoSheets;
+                    }
+                    else
+                    {
+                        if (ANonZeroEigValsSameSign) Type = QuadricType.ImaginaryEllipsoid;
+                        else Type = QuadricType.HyperboloidOneSheet;
+                    }
                 }
-                else if (r.IsNegativeNonNegligible())
+
+                else if (Mrank == 3)
                 {
-                    if (eigvals.All(e => e > 0)) Type = QuadricType.ImaginaryEllipsoid;
-                    else if (eigvals.All(e => e < 0)) Type = QuadricType.Ellipsoid;
-                    else if (eigvals.Count(e => e > 0) == 2) Type = QuadricType.HyperboloidTwoSheets;
-                    else Type = QuadricType.HyperboloidOneSheet;
-                }
-                 else
-                {
-                    if (eigvals.All(e => e > 0) || eigvals.All(e => e < 0)) Type = QuadricType.Point;
-                    else if (eigvals.All(e => e < 0)) Type = QuadricType.EllipticCone;
-                    else if (eigvals.Count(e => e > 0) == 2) Type = QuadricType.EllipticCone;
-                    else Type = QuadricType.HyperboloidOneSheet;
+                    if (ANonZeroEigValsSameSign) Type = QuadricType.ImaginaryCone;
+                    else Type = QuadricType.Cone;
                 }
             }
 
-            else if (numPosEigvals == 2)
+            else if (Arank == 2)
             {
-                if (eigvals.Count(e => e > 0) == 2) Type = QuadricType.EllipticParaboloid;
-                else if (eigvals.Count(e => e < 0) == 2) Type = QuadricType.HyperbolicParaboloid;
-                else if (eigvals.Count(e => e > 0) == 1 && eigvals.Count(e => e < 0) == 1) Type = QuadricType.EllipticCylinder;
-                else Type = QuadricType.HyperbolicCylinder;
+                if (Mrank == 4)
+                {
+                    if (ANonZeroEigValsSameSign) Type = QuadricType.EllipticParaboloid;
+                    else Type = QuadricType.HyperbolicParaboloid;
+                }
+                else if (Mrank == 3)
+                {
+                    if (ANonZeroEigValsSameSign)
+                    {
+                        if (MNonZeroEigValsSameSign) Type = QuadricType.ImaginaryEllipticCylinder;
+                        else Type = QuadricType.EllipticCylinder;
+                    }
+                    else Type = QuadricType.HyperbolicCylinder;
+                }
+                else if (Mrank == 2)
+                {
+                    if (ANonZeroEigValsSameSign) Type = QuadricType.ImaginaryIntersectingPlanes;
+                    else Type = QuadricType.IntersectingPlanes;
+                }
             }
-            else if (numPosEigvals == 1)
+
+            else if (Arank == 1)
             {
-                if (eigvals.Count(e => e > 0) == 1) Type = QuadricType.EllipticCone;
-                else if (eigvals.Count(e => e < 0) == 1) Type = QuadricType.TwoPlane;
-                else Type = QuadricType.Plane;
+                if (Mrank == 3) Type = QuadricType.ParabolicCylinder;
+                else if (Mrank == 2)
+                {
+                    if (MNonZeroEigValsSameSign) Type = QuadricType.ImaginaryParallelPlanes;
+                    else Type = QuadricType.ParallelPlanes;
+                }
+                else if (Mrank == 1) Type = QuadricType.Plane;
             }
-            else if (numPosEigvals == 0)
+
+            else
             {
-                //var rank = A.Rank();
-                var rank = 3;
-                if (rank == 3) Type = QuadricType.Sphere;
-                else if (rank == 2) Type = QuadricType.Line;
-                else if (rank == 1) Type = QuadricType.Point;
-                else if (rank == 0 && c.IsNegligible()) Type = QuadricType.AllPoints;
-                else if (rank == 0 && !c.IsNegligible()) Type = QuadricType.NoPoint;
+                if (Mrank == 2) Type = QuadricType.Plane;
             }
         }
     }
