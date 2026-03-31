@@ -472,7 +472,7 @@ namespace TVGL
                 Edge thisPatchRemovedEdge = null;
                 if (aRemoved)
                 {
-                    if (bRemoved) // then edge AB is below and is to be removed
+                    if (bRemoved) // then edge AB is below (both vertices are to be removed), so it is to be removed
                     {
                         edgesToRemove.Add(face.AB);
                         thisPatchRemovedEdge = face.AB;
@@ -481,7 +481,6 @@ namespace TVGL
                     {  // edge AB is crossing, and B is above, so replace
                         if (alreadyModifiedEdges.Add(face.AB))
                             ReplaceNegativeVertexOnEdge(face.AB, face.A, edgeIntersections);
-
                     }
                     if (cRemoved)
                     {
@@ -521,42 +520,37 @@ namespace TVGL
                     if (!bRemoved && alreadyModifiedEdges.Add(face.BC))
                         ReplaceNegativeVertexOnEdge(face.BC, face.C, edgeIntersections);
                 }
-                if (thisPatchRemovedEdge != null)
-                {  // one edge removed, so create one new face
-                    var orderedFaceVerts = GetVerticesFromModifyEdges(face, thisPatchRemovedEdge, out var oldVertIndex);
-                    var newFace = new TriangleFace(orderedFaceVerts.Take(3), true);
-                    facesToAdd.Add(newFace);
-                    if (oldVertIndex == 1)
-                        newFace.AddEdge(new Edge(newFace.C, newFace.A, newFace, null, true));
-                    else
-                        newFace.AddEdge(new Edge(newFace.B, newFace.C, newFace, null, true));
-                    if (face.AB != thisPatchRemovedEdge)
-                        newFace.AddEdge(face.AB);
-                    if (face.BC != thisPatchRemovedEdge)
-                        newFace.AddEdge(face.BC);
-                    if (face.CA != thisPatchRemovedEdge)
-                        newFace.AddEdge(face.CA);
-                }
-                else
+                if (thisPatchRemovedEdge == null)
                 {
-                    // no edges removed, so must be two crossing edges, so create two new faces
-                    // find the one edge that is kept
+                    // no edges removed means that two new faces must be created find the one edge that is kept
                     var orderedFaceVerts = GetVerticesFromModifyEdges(face, null, out var oldVertIndex);
                     var newFace = new TriangleFace(orderedFaceVerts.Take(3), true);
-                    newFace.AddEdge(face.AB);
+
                     facesToAdd.Add(newFace);
+                    newFace.AddEdge(face.AB);  // how do you know that face.AB is part of newFace? because orderedFaceVerts
+                                               // would have started with that
+                    if (face.AB.OwnedFace == face)
+                        face.AB.OwnedFace = newFace;
+                    else face.AB.OtherFace = newFace;
                     var innerEdge = new Edge(newFace.C, newFace.A, newFace, null, true);
                     newFace.AddEdge(innerEdge);
                     if (oldVertIndex == 0)
                     {
-                        newFace.AddEdge(new Edge(newFace.B, newFace.C, newFace, null, true));
+                        newFace.AddEdge(new Edge(newFace.B, newFace.C, newFace, null, true)); // this is the border edge
+                                                                                              // so, no need to do any more here
                         newFace = new TriangleFace(orderedFaceVerts.Skip(2), true);
                         facesToAdd.Add(newFace);
                         newFace.AddEdge(face.BC);
+                        if (face.BC.OwnedFace == face)
+                            face.BC.OwnedFace = newFace;
+                        else face.BC.OtherFace = newFace;
                     }
                     else if (oldVertIndex == 1)
                     {
                         newFace.AddEdge(face.BC);
+                        if (face.BC.OwnedFace == face)
+                            face.BC.OwnedFace = newFace;
+                        else face.BC.OtherFace = newFace;
                         newFace = new TriangleFace(orderedFaceVerts.Skip(2), true);
                         facesToAdd.Add(newFace);
                         newFace.AddEdge(new Edge(newFace.A, newFace.B, newFace, null, true));
@@ -564,12 +558,43 @@ namespace TVGL
                     else // oldVertIndex ==2
                     {
                         newFace.AddEdge(face.BC);
+                        if (face.BC.OwnedFace == face)
+                            face.BC.OwnedFace = newFace;
+                        else face.BC.OtherFace = newFace;
                         newFace = new TriangleFace(orderedFaceVerts.Skip(2).Concat([orderedFaceVerts[0]]), true);
                         facesToAdd.Add(newFace);
                         newFace.AddEdge(new Edge(newFace.B, newFace.C, newFace, null, true));
                     }
                     newFace.AddEdge(face.CA);
+                    if (face.CA.OwnedFace == face)
+                        face.CA.OwnedFace = newFace;
+                    else face.CA.OtherFace = newFace;
                     newFace.AddEdge(innerEdge);
+                    innerEdge.OtherFace = newFace;
+                }
+                else
+                {  // one edge removed, so create one new face
+                    var orderedFaceVerts = GetVerticesFromModifyEdges(face, thisPatchRemovedEdge, out var keptVertex);
+                    var newFace = new TriangleFace(orderedFaceVerts.Take(3), true);
+                    facesToAdd.Add(newFace);
+                    Edge newBorderEdge;
+                    if (keptVertex == 1) // then vertex B (A is 0, C is 2) is the one that is kept, so edges AB and BC are
+                        // clipped above but not delete. Therefore, we need a new CA edge
+                        newBorderEdge = new Edge(newFace.C, newFace.A, newFace, null, true);
+                    else // then keptvertex A or C so edges BC and CA are clipped above but not delete. But, (this is really
+                         // confusing) for the new face, it is alway the second ede (BC) that needs to be recreated
+                        newBorderEdge = new Edge(newFace.B, newFace.C, newFace, null, true);
+                    newFace.AddEdge(newBorderEdge);
+                    foreach (var e in face.Edges)
+                    {
+                        if (e != thisPatchRemovedEdge)
+                        {
+                            newFace.AddEdge(e);
+                            if (e.OwnedFace == face)
+                                e.OwnedFace = newFace;
+                            else e.OtherFace = newFace;
+                        }
+                    }
                 }
             }
             // edgesToRemove ,facesToRemove,facesToAdd
@@ -601,6 +626,14 @@ namespace TVGL
                 v.IndexInList = i++;
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="face"></param>
+        /// <param name="removedEdge"></param>
+        /// <param name="oldVertIndex">the highest vertex index that was not cut. If removedEdge is not null, then 
+        /// this is the only vertex index that is not cut.</param>
+        /// <returns></returns>
         private static List<Vertex> GetVerticesFromModifyEdges(TriangleFace face, Edge removedEdge, out int oldVertIndex)
         {
             var result = new List<Vertex>();
