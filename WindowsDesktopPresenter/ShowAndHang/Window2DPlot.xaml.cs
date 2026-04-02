@@ -270,6 +270,9 @@ namespace WindowsDesktopPresenter
 
         internal void AddAreaSeriesToModel(IList<Vector2> points, MarkerType marker, Color lineColor, Color fillColor)
         {
+            if (lineColor == null) lineColor = new Color(KnownColors.Black);
+            if (fillColor == null) fillColor = new Color(KnownColors.LightGray);
+
             var areaSeries = new AreaSeries
             {
                 Color = OxyColor.FromArgb(lineColor.A, lineColor.R, lineColor.G, lineColor.B), 
