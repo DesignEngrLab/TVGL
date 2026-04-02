@@ -1,5 +1,6 @@
 ﻿using OxyPlot;
 using OxyPlot.Series;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Windows;
@@ -70,9 +71,35 @@ namespace WindowsDesktopPresenter
         public Window2DPlot(IEnumerable<IEnumerable<Vector2>> listOfArrayOfPoints, string title, Plot2DType plot2DType, IEnumerable<bool> closeShape,
             MarkerType marker) : this(title)
         {
+            if (plot2DType == Plot2DType.Area)
+                throw new Exception("This function is not intended for Plot2DType.Area. LineColor and FillColor are required.");
             PlotData(listOfArrayOfPoints, plot2DType, closeShape, marker);
             InitializeComponent();
         }
+
+        public Window2DPlot(IEnumerable<IEnumerable<Vector2>> listOfArrayOfPoints, string title, Plot2DType plot2DType, MarkerType marker, 
+            Color lineColor, Color fillColor, bool fillFirstArray) : this(title)
+        {
+            Model.Series.Clear();
+            if (plot2DType != Plot2DType.Area)
+                throw new Exception("This function is only intended for Plot2DType.Area");
+            if (fillFirstArray)
+                PlotAreaSeries(listOfArrayOfPoints, marker, lineColor, fillColor);
+            else
+            {
+                var allPoints = new List<Vector2>();
+                AddLineSeriesToModel(listOfArrayOfPoints.First(), true, marker);
+                PlotAreaSeries(listOfArrayOfPoints.Skip(1), marker, lineColor, fillColor);
+                foreach (var points in listOfArrayOfPoints)
+                {
+                    if (points == null || !points.Any()) continue;
+                    AddAreaSeriesToModel(PointsToDouble(points), marker, lineColor, fillColor);
+                }
+                SetAxes(allPoints);
+            }
+            InitializeComponent();
+        }
+
         /// <summary>
         ///     Initializes a new instance of the <see cref="Window2DPlot" /> class.
         ///     This version allows different markers to be set for each set of polygons.
@@ -132,7 +159,16 @@ namespace WindowsDesktopPresenter
             SetAxes(allPoints);
         }
 
-
+        internal void PlotAreaSeries(IEnumerable<IEnumerable<Vector2>> listOfArrayOfPoints, MarkerType marker, Color lineColor, Color fillColor)
+        {
+            var allPoints = new List<Vector2>();
+            foreach (var points in listOfArrayOfPoints)
+            {
+                if (points == null || !points.Any()) continue;
+                AddAreaSeriesToModel(PointsToDouble(points), marker, lineColor, fillColor);
+            }
+            SetAxes(allPoints);
+        }
 
 
         internal void PlotData(IEnumerable<IEnumerable<Vector2>> listOfListOfPoints1, IEnumerable<IEnumerable<Vector2>> listOfListOfPoints2, Plot2DType plot2DType, bool closeShape, MarkerType marker1, MarkerType marker2)
@@ -256,6 +292,25 @@ namespace WindowsDesktopPresenter
                 series.Points.Add(new DataPoint(point[0], point[1]));
             if (closeShape) series.Points.Add(new DataPoint(points[0][0], points[0][1]));
             Model.Series.Add(series);
+        }
+
+        private void AddAreaSeriesToModel(IList<double[]> points, MarkerType marker, Color lineColor, Color fillColor)
+        {
+            var areaSeries = new AreaSeries
+            {
+                Color = OxyColor.FromRgb(lineColor.R, lineColor.G, lineColor.B), 
+                Fill = OxyColor.FromRgb(fillColor.R, fillColor.G, fillColor.B),
+                MarkerType = (OxyPlot.MarkerType)(int)marker,
+                LineStyle = LineStyle.Solid,
+            };
+
+            foreach (var point in points)
+                //point[0] == x, point[1] == y
+                areaSeries.Points.Add(new DataPoint(point[0], point[1]));
+
+            //Close shape is required for fill.
+            areaSeries.Points.Add(new DataPoint(points[0][0], points[0][1]));
+            Model.Series.Add(areaSeries);
         }
 
         /// <summary>

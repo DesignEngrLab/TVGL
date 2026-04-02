@@ -30,15 +30,24 @@ namespace WindowsDesktopPresenter
         /// <param name="height"></param>
         /// <param name="title"></param>
         /// <param name="polyMarker"></param>
-        public void SaveToPng(IEnumerable<Polygon> polygon, string fileName, int width, int height,
-            string title = "", MarkerType markerType = MarkerType.None)
+        public void SaveToPng(IEnumerable<Polygon> polygon, string fileName, int width, int height, bool fill,
+            string title = "", MarkerType markerType = MarkerType.None, TVGL.Color lineColor = null, 
+            TVGL.Color fillColor = null)
         {
             var vectors = polygon.SelectMany(poly => poly.AllPaths);
             var black = new Color(KnownColors.Black);
             var colors = new List<Color>();
             foreach (var vector in vectors)
                 colors.Add(black);
-            var window = new Window2DPlot(vectors, title, Plot2DType.Line, [true], markerType);
+            Window2DPlot window;
+            if (fill)
+            {
+                window = new Window2DPlot(vectors, title, Plot2DType.Area, markerType, lineColor, fillColor);
+            }
+            else
+            {
+                window = new Window2DPlot(vectors, title, Plot2DType.Line, [true], markerType);
+            }
             var pngExporter = new PngExporter { Width = width, Height = height, Resolution = 96 };
             pngExporter.ExportToFile(window.Model, fileName);
         }

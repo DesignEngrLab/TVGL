@@ -9,7 +9,8 @@ namespace TVGL
         Line,
         Scatter,
         Bar,
-        Heatmap
+        Heatmap,
+        Area
     }
 
     /// <summary>
