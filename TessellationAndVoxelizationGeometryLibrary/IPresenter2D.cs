@@ -75,6 +75,10 @@ namespace TVGL
         void SaveToPng(IEnumerable<Polygon> polygon, string fileName, int width, int height,
            string title = "", MarkerType markerType = MarkerType.None);
 
+        public void SaveToPng(IEnumerable<Polygon> polygons, string fileName, int width, int height,
+            Color lineColor, Color fillColor, Color backgroundColor, Polygon outerBorder = null, 
+            string title = "", MarkerType markerType = MarkerType.None);
+
         /// <summary>
         /// Show the matrix of data as a 2D plot (heatmap)
         /// </summary>
