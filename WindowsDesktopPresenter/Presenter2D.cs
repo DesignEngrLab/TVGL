@@ -31,7 +31,7 @@ namespace WindowsDesktopPresenter
         /// <param name="height"></param>
         /// <param name="title"></param>
         /// <param name="polyMarker"></param>
-        public void SaveToPng(IEnumerable<Polygon> polygon, string fileName, int width, int height, bool fill,
+        public void SaveToPng(IEnumerable<Polygon> polygon, string fileName, int width, int height,
             string title = "", MarkerType markerType = MarkerType.None, Color lineColor = null)
         {
             var vectors = polygon.SelectMany(poly => poly.AllPaths);

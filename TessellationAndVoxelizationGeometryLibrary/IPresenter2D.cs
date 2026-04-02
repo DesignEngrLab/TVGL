@@ -73,7 +73,7 @@ namespace TVGL
     {
 
         void SaveToPng(IEnumerable<Polygon> polygon, string fileName, int width, int height,
-           string title = "", MarkerType markerType = MarkerType.None);
+           string title = "", MarkerType markerType = MarkerType.None, Color lineColor = null);
 
         public void SaveToPng(IEnumerable<Polygon> polygons, string fileName, int width, int height,
             Color lineColor, Color fillColor, Color backgroundColor, Polygon outerBorder = null, 
