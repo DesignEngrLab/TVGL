@@ -58,8 +58,7 @@ namespace WindowsDesktopPresenter
         /// <param name="title"></param>
         /// <param name="markerType"></param>
         public void SaveToPng(IEnumerable<Polygon> polygons, string fileName, int width, int height,
-            Color lineColor, Color fillColor, Color backgroundColor, Polygon outerBorder = null, Color borderColor = null, 
-            string title = "", string xAxis = "", string yAxis = "", MarkerType markerType = MarkerType.None)
+            Color lineColor, Color fillColor, Color backgroundColor, Polygon outerBorder = null, string title = "", MarkerType markerType = MarkerType.None)
         {
             var window = new Window2DPlot(new PlotModel(), title);
 
@@ -68,7 +67,8 @@ namespace WindowsDesktopPresenter
             //Then plot the inner polygons as areas with the background color to "erase" the inner areas of the holes in the polygons.
             if (outerBorder != null)
             {
-                window.AddAreaSeriesToModel(outerBorder.Path, markerType, borderColor, backgroundColor);
+                window.AddAreaSeriesToModel(outerBorder.Path, markerType, lineColor, backgroundColor);
+                window.SetAxes(outerBorder.Path);
             }
 
             //Plot the polygons from largest to smallest so that the smaller ones will be plotted on top of the larger ones.
@@ -85,12 +85,11 @@ namespace WindowsDesktopPresenter
                     window.AddAreaSeriesToModel(polygon.Path, markerType, lineColor, backgroundColor);
                 }
             }
-
-            //Axis color is black by default.
-            //We only want the left and bottom axis.
-            window.Model.Axes.Clear();
-            window.Model.Axes.Add(new LinearAxis { Position = AxisPosition.Bottom, MinimumPadding = 0, MaximumPadding = 0, Title = xAxis });
-            window.Model.Axes.Add(new LinearAxis { Position = AxisPosition.Left, MinimumPadding = 0, MaximumPadding = 0, Title = yAxis});
+            if (outerBorder == null)
+            {
+                var allOuterPaths = polygons.SelectMany(p => p.Path);
+                window.SetAxes(allOuterPaths);   
+            }
 
             var pngExporter = new PngExporter { Width = width, Height = height, Resolution = 96 };
             pngExporter.ExportToFile(window.Model, fileName);
