@@ -5,6 +5,7 @@ using OxyPlot.Wpf;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Xml.Serialization;
 using TVGL;
 using MarkerType = TVGL.MarkerType;
 
@@ -22,7 +23,7 @@ namespace WindowsDesktopPresenter
 
 
         /// <summary>
-        /// Saves the polygons to a PNG of the given width and height.
+        /// Saves the polygons as lines to a PNG of the given width and height.
         /// </summary>
         /// <param name="polygon"></param>
         /// <param name="fileName"></param>
@@ -31,27 +32,68 @@ namespace WindowsDesktopPresenter
         /// <param name="title"></param>
         /// <param name="polyMarker"></param>
         public void SaveToPng(IEnumerable<Polygon> polygon, string fileName, int width, int height, bool fill,
-            string title = "", MarkerType markerType = MarkerType.None, TVGL.Color lineColor = null, 
-            TVGL.Color fillColor = null)
+            string title = "", MarkerType markerType = MarkerType.None, Color lineColor = null)
         {
             var vectors = polygon.SelectMany(poly => poly.AllPaths);
-            var black = new Color(KnownColors.Black);
-            var colors = new List<Color>();
-            foreach (var vector in vectors)
-                colors.Add(black);
-            Window2DPlot window;
-            if (fill)
-            {
-                window = new Window2DPlot(vectors, title, Plot2DType.Area, markerType, lineColor, fillColor);
-            }
-            else
-            {
-                window = new Window2DPlot(vectors, title, Plot2DType.Line, [true], markerType);
-            }
+            var window = new Window2DPlot(vectors, title, Plot2DType.Line, [true], markerType, lineColor);
             var pngExporter = new PngExporter { Width = width, Height = height, Resolution = 96 };
             pngExporter.ExportToFile(window.Model, fileName);
         }
 
+        /// <summary>
+        /// Saves the polygons as filled areas with an boundary line to a PNG of the given width and height
+        /// An outer border may be provided. It will be assumed contain all other polygons for purposes of filling.
+        /// Polygons are plotted from largest to smallest so that the smaller ones will be plotted on top of the larger ones. 
+        /// This is important for filling the areas correctly when there are nested polygons. The positive polygons will be 
+        /// plotted with the line and fill colors, while the negative polygons will be plotted with the line color and background
+        /// color to "erase" the inner areas of the holes in the polygons. 
+        /// ARGB is supported for the fill color, in case you want the background to be transparent.
+        /// </summary>
+        /// <param name="polygon"></param>
+        /// <param name="fileName"></param>
+        /// <param name="width"></param>
+        /// <param name="height"></param>
+        /// <param name="lineColor"></param>
+        /// <param name="fillColor"></param>
+        /// <param name="title"></param>
+        /// <param name="markerType"></param>
+        public void SaveToPng(IEnumerable<Polygon> polygons, string fileName, int width, int height,
+            Color lineColor, Color fillColor, Color backgroundColor, Polygon outerBorder = null, string title = "", MarkerType markerType = MarkerType.None)
+        {
+            var window = new Window2DPlot(new PlotModel(), title);
+
+            //If there is an outer border polygon, plot it as an area first with the background color.
+            //First, plot the positive polyongs as areas with the line and fill colors.
+            //Then plot the inner polygons as areas with the background color to "erase" the inner areas of the holes in the polygons.
+            if (outerBorder != null)
+            {
+                window.AddAreaSeriesToModel(outerBorder.Path, markerType, lineColor, backgroundColor);
+                window.SetAxes(outerBorder.Path);
+            }
+
+            //Plot the polygons from largest to smallest so that the smaller ones will be plotted on top of the larger ones.
+            //This is important for filling the areas correctly when there are nested polygons.
+            var orderedPolygons = polygons.SelectMany(p => p.AllPolygons).OrderByDescending(p => p.Area);
+            foreach (var polygon in orderedPolygons)
+            {
+                if (polygon.IsPositive)
+                {
+                    window.AddAreaSeriesToModel(polygon.Path, markerType, lineColor, fillColor);
+                }
+                else
+                {
+                    window.AddAreaSeriesToModel(polygon.Path, markerType, lineColor, backgroundColor);
+                }
+            }
+            if (outerBorder == null)
+            {
+                var allOuterPaths = polygons.SelectMany(p => p.Path);
+                window.SetAxes(allOuterPaths);   
+            }
+
+            var pngExporter = new PngExporter { Width = width, Height = height, Resolution = 96 };
+            pngExporter.ExportToFile(window.Model, fileName);
+        }
 
         #region 2D Plots via OxyPlot
 
