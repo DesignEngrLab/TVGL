@@ -242,7 +242,7 @@ namespace WindowsDesktopPresenter
         /// <param name="points">The points.</param>
         /// <param name="closeShape">if set to <c>true</c> [close shape].</param>
         /// <param name="marker">The marker.</param>
-        private void AddLineSeriesToModel(IEnumerable<Vector2> points, bool closeShape, MarkerType marker, TVGL.Color color = null)
+        public void AddLineSeriesToModel(IEnumerable<Vector2> points, bool closeShape, MarkerType marker, TVGL.Color color = null)
         {
             AddLineSeriesToModel(PointsToDouble(points), closeShape, marker, color);
         }
@@ -268,8 +268,19 @@ namespace WindowsDesktopPresenter
             Model.Series.Add(series);
         }
 
-        internal void AddAreaSeriesToModel(IList<Vector2> points, MarkerType marker, Color lineColor, Color fillColor)
+        /// <summary>
+        /// Adds an Area Series to a model. Keep this public.
+        /// </summary>
+        /// <param name="points"></param>
+        /// <param name="marker"></param>
+        /// <param name="lineColor"></param>
+        /// <param name="fillColor"></param>
+        public void AddAreaSeriesToModel(IEnumerable<Vector2> points, MarkerType marker, Color lineColor, Color fillColor)
         {
+            if (points == null || points.Count() < 3) return;
+            if (lineColor == null) lineColor = new Color(KnownColors.Black);
+            if (fillColor == null) fillColor = new Color(KnownColors.LightGray);
+
             var areaSeries = new AreaSeries
             {
                 Color = OxyColor.FromArgb(lineColor.A, lineColor.R, lineColor.G, lineColor.B), 
@@ -283,7 +294,7 @@ namespace WindowsDesktopPresenter
                 areaSeries.Points.Add(new DataPoint(point.X, point.Y));
 
             //Close shape is required for fill.
-            areaSeries.Points.Add(new DataPoint(points[0].X, points[0].Y));
+            areaSeries.Points.Add(new DataPoint(points.First().X, points.First().Y));
             Model.Series.Add(areaSeries);
         }
 
