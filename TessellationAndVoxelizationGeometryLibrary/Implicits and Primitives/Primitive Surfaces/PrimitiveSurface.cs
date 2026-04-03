@@ -34,7 +34,20 @@ namespace TVGL
         /// Since new surfaces may be created from original surfaces (as from surface combining or fixing), 
         /// this cannot use init. Be careful not to change it.
         /// </summary>   
-        public Color OriginalColor { get; set; }
+        [JsonIgnore]
+        public Color OriginalColor 
+        { 
+            get {  return originalColor; }
+            set 
+            {
+                originalColor = value;
+                OriginalColorString = originalColor.ToString();    
+            }
+        }
+        //Private variable just so we can set the color string anytime the OriginalColor is set, while keeping it a get/set property for JSON.
+        private Color originalColor { get; set; }
+        //For colors, we are using strings in the JSON 
+        public string OriginalColorString { get; set; }
 
         /// <summary>
         /// Set the imported surface type, since unknown region may be able to more specific for surface types we don't handle
@@ -592,6 +605,10 @@ namespace TVGL
             if (Borders != null)
                 foreach (var border in Borders)
                     border.CompletePostSerialization(ts);
+
+            //Set the original color if stored on the primitive. 
+            if(OriginalColorString != null &&  OriginalColorString.Length > 0)
+                OriginalColor = new Color(OriginalColorString);
         }
 
         /// <summary>

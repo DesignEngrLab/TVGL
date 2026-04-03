@@ -100,5 +100,10 @@
         /// Turn off duplicate face check if streaming from a CAD file or similar. Better to process the faces again later.
         /// </summary>
         public bool DuplicateFaceCheck { get; set; }
+
+        /// <summary>
+        /// Either load using the last saved TVGL colors on faces OR the original color each primitive was assigned.
+        /// </summary>
+        public bool UsePrimitiveOriginalColorInsteadOfFaceColor { get; set; } = false;
     }
 }
