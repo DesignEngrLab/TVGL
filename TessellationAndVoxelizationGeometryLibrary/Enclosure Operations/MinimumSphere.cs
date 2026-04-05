@@ -117,79 +117,77 @@ namespace TVGL
             // first check diametrically opposing points
             // 0,1 & check 2 & 3
             var sphere = CreateFrom2Points(points[0], points[1]);
-            if ((points[2] - sphere.Center).LengthSquared() <= sphere.RadiusSquared
-                && (points[3] - sphere.Center).LengthSquared() <= sphere.RadiusSquared)
+            if (PointIsInSphere(points[2], sphere) && PointIsInSphere(points[3], sphere))
                 return sphere;
             // 0,2 & check 1 & 3
             sphere = CreateFrom2Points(points[0], points[2]);
-            if ((points[1] - sphere.Center).LengthSquared() <= sphere.RadiusSquared
-                && (points[3] - sphere.Center).LengthSquared() <= sphere.RadiusSquared)
+            if (PointIsInSphere(points[1], sphere) && PointIsInSphere(points[3], sphere))
                 return sphere;
             // 0,3 & check 1 & 2
             sphere = CreateFrom2Points(points[0], points[3]);
-            if ((points[1] - sphere.Center).LengthSquared() <= sphere.RadiusSquared
-                && (points[2] - sphere.Center).LengthSquared() <= sphere.RadiusSquared)
+            if (PointIsInSphere(points[1], sphere) && PointIsInSphere(points[2], sphere))
                 return sphere;
             // 1,2 & check 0 & 3
             sphere = CreateFrom2Points(points[1], points[2]);
-            if ((points[0] - sphere.Center).LengthSquared() <= sphere.RadiusSquared
-                && (points[3] - sphere.Center).LengthSquared() <= sphere.RadiusSquared)
+            if (PointIsInSphere(points[0], sphere) && PointIsInSphere(points[3], sphere))
                 return sphere;
             // 1,3 & check 0 & 2
             sphere = CreateFrom2Points(points[1], points[3]);
-            if ((points[0] - sphere.Center).LengthSquared() <= sphere.RadiusSquared
-                && (points[2] - sphere.Center).LengthSquared() <= sphere.RadiusSquared)
+            if (PointIsInSphere(points[0], sphere) && PointIsInSphere(points[2], sphere))
                 return sphere;
             // 2,3 & check 0 & 1
             sphere = CreateFrom2Points(points[2], points[3]);
-            if ((points[0] - sphere.Center).LengthSquared() <= sphere.RadiusSquared
-                && (points[1] - sphere.Center).LengthSquared() <= sphere.RadiusSquared)
+            if (PointIsInSphere(points[0], sphere) && PointIsInSphere(points[1], sphere))
                 return sphere;
 
+            sphere = default;
             var minRadiusSqd = double.PositiveInfinity;
             // now check 3-point spheres. here we need to find the smallest sphere! this wasn't the
             // case for the above diametrically opposed points (since the two defining points of the sphere
             // are farthest apart, but we need to check this here as 3 nearly collinear points will make
             // a huge sphere
             // 0,1,2 & check 3
-            sphere = CreateFrom3Points(points[0], points[1], points[2]);
-            if ((points[3] - sphere.Center).LengthSquared() <= sphere.RadiusSquared)
+            var tempSphere3 = CreateFrom3Points(points[0], points[1], points[2]);
+            if (PointIsInSphere(points[3], tempSphere3))
+            {
+                sphere = tempSphere3;
                 minRadiusSqd = sphere.RadiusSquared;
+            }
             // 0,1,3 & check 2
             var swap3And2 = false;
-            var tempSphere = CreateFrom3Points(points[0], points[1], points[3]);
-            if ((points[2] - tempSphere.Center).LengthSquared() <= tempSphere.RadiusSquared
-                && tempSphere.RadiusSquared < minRadiusSqd)
+            tempSphere3 = CreateFrom3Points(points[0], points[1], points[3]);
+            if (PointIsInSphere(points[2], tempSphere3)
+                && tempSphere3.RadiusSquared < minRadiusSqd)
             {
-                sphere = tempSphere;
+                sphere = tempSphere3;
                 swap3And2 = true;
                 minRadiusSqd = sphere.RadiusSquared;
             }
             // 0,2,3 & check 1
             var swap3And1 = false;
-            tempSphere = CreateFrom3Points(points[0], points[2], points[3]);
-            if ((points[1] - tempSphere.Center).LengthSquared() <= tempSphere.RadiusSquared
-                && tempSphere.RadiusSquared < minRadiusSqd)
+            tempSphere3 = CreateFrom3Points(points[0], points[2], points[3]);
+            if (PointIsInSphere(points[1], tempSphere3)
+                && tempSphere3.RadiusSquared < minRadiusSqd)
             {
-                sphere = tempSphere;
+                sphere = tempSphere3;
                 swap3And1 = true;
                 minRadiusSqd = sphere.RadiusSquared;
             }
             // 1,2,3 & check 0
             var swap3And0 = false;
-            tempSphere = CreateFrom3Points(points[1], points[2], points[3]);
-            if ((points[0] - tempSphere.Center).LengthSquared() <= tempSphere.RadiusSquared
-                && tempSphere.RadiusSquared < minRadiusSqd)
+            tempSphere3 = CreateFrom3Points(points[1], points[2], points[3]);
+            if (PointIsInSphere(points[0], tempSphere3)
+                && tempSphere3.RadiusSquared < minRadiusSqd)
             {
-                sphere = tempSphere;
+                sphere = tempSphere3;
                 swap3And0 = true;
                 minRadiusSqd = sphere.RadiusSquared;
             }
             var fourPointIsBest = false;
-            tempSphere = CreateFrom4Points(points[0], points[1], points[2], points[3]);
-            if (tempSphere.RadiusSquared < minRadiusSqd)
+            var tempSphere4 = CreateFrom4Points(points[0], points[1], points[2], points[3]);
+            if (tempSphere4.RadiusSquared < minRadiusSqd)
             {
-                sphere = tempSphere;
+                sphere = tempSphere4;
                 fourPointIsBest = true;
             }
             if (!fourPointIsBest)
@@ -198,143 +196,133 @@ namespace TVGL
                 else if (swap3And1) Global.SwapItemsInList(3, 1, points);
                 else if (swap3And2) Global.SwapItemsInList(3, 2, points);
             }
+            if (sphere.RadiusSquared == 0.0)
+                sphere = double.IsNaN(tempSphere3.RadiusSquared) || double.IsInfinity(tempSphere3.RadiusSquared)
+                    ? tempSphere4 : tempSphere3;
             return sphere;
         }
 
+
         private static sphereLight FindSphere(Vector3[] points)
         {
+
             // first check diametrically opposing points: the good news is that the zeroth
             // point must be in the set of points defining the sphere. The bad news is that
             // we need to include cases up to 5 points!
             // 0,1 & check 2, 3 & 4
             var sphere = CreateFrom2Points(points[0], points[1]);
-            if ((points[2] - sphere.Center).LengthSquared() <= sphere.RadiusSquared
-                && (points[3] - sphere.Center).LengthSquared() <= sphere.RadiusSquared
-                && (points[4] - sphere.Center).LengthSquared() <= sphere.RadiusSquared)
+            if (PointIsInSphere(points[2], sphere) && PointIsInSphere(points[3], sphere) && PointIsInSphere(points[4], sphere))
                 return sphere;
             // 0,2 & check 1, 3 & 4
             sphere = CreateFrom2Points(points[0], points[2]);
-            if ((points[1] - sphere.Center).LengthSquared() <= sphere.RadiusSquared
-                && (points[3] - sphere.Center).LengthSquared() <= sphere.RadiusSquared
-                && (points[4] - sphere.Center).LengthSquared() <= sphere.RadiusSquared)
+            if (PointIsInSphere(points[1], sphere) && PointIsInSphere(points[3], sphere) && PointIsInSphere(points[4], sphere))
                 return sphere;
             // 0,3 & check 1, 2 & 4
             sphere = CreateFrom2Points(points[0], points[3]);
-            if ((points[1] - sphere.Center).LengthSquared() <= sphere.RadiusSquared
-                && (points[2] - sphere.Center).LengthSquared() <= sphere.RadiusSquared
-                && (points[4] - sphere.Center).LengthSquared() <= sphere.RadiusSquared)
+            if (PointIsInSphere(points[1], sphere) && PointIsInSphere(points[2], sphere) && PointIsInSphere(points[4], sphere))
                 return sphere;
             // 0,4 & check 1, 2 & 3
             sphere = CreateFrom2Points(points[0], points[4]);
-            if ((points[1] - sphere.Center).LengthSquared() <= sphere.RadiusSquared
-                && (points[2] - sphere.Center).LengthSquared() <= sphere.RadiusSquared
-                && (points[3] - sphere.Center).LengthSquared() <= sphere.RadiusSquared)
+            if (PointIsInSphere(points[1], sphere) && PointIsInSphere(points[2], sphere) && PointIsInSphere(points[3], sphere))
                 return sphere;
 
+            sphere = default;
             var minRadiusSqd = double.PositiveInfinity;
             // now check 3-point spheres. here we need to find the smallest sphere! this wasn't the
             // case for the above diametrically opposed points (since the two defining points of the sphere
             // are farthest apart, but we need to check this here as 3 nearly collinear points will make
             // a huge sphere
             // 0,1,2 & check 3 & 4
-            sphere = CreateFrom3Points(points[0], points[1], points[2]);
-            if ((points[3] - sphere.Center).LengthSquared() <= sphere.RadiusSquared
-                && (points[4] - sphere.Center).LengthSquared() <= sphere.RadiusSquared)
+            var tempSphere3 = CreateFrom3Points(points[0], points[1], points[2]);
+            if (PointIsInSphere(points[3], tempSphere3) && PointIsInSphere(points[4], tempSphere3))
+            {
+                sphere = tempSphere3;
                 minRadiusSqd = sphere.RadiusSquared;
+            }
             // 0,1,3 & check 2 & 4
             var swap3And2 = false;
-            var tempSphere = CreateFrom3Points(points[0], points[1], points[3]);
-            if ((points[2] - tempSphere.Center).LengthSquared() <= tempSphere.RadiusSquared
-                && (points[4] - tempSphere.Center).LengthSquared() <= tempSphere.RadiusSquared
-                && tempSphere.RadiusSquared < minRadiusSqd)
+            tempSphere3 = CreateFrom3Points(points[0], points[1], points[3]);
+            if (PointIsInSphere(points[2], tempSphere3) && PointIsInSphere(points[4], tempSphere3)
+                && tempSphere3.RadiusSquared < minRadiusSqd)
             {
-                sphere = tempSphere;
+                sphere = tempSphere3;
                 swap3And2 = true;
                 minRadiusSqd = sphere.RadiusSquared;
             }
             // 0,1,4 & check 2 & 3
             var swap4And2 = false;
-            tempSphere = CreateFrom3Points(points[0], points[1], points[4]);
-            if ((points[2] - tempSphere.Center).LengthSquared() <= tempSphere.RadiusSquared
-                && (points[3] - tempSphere.Center).LengthSquared() <= tempSphere.RadiusSquared
-                && tempSphere.RadiusSquared < minRadiusSqd)
+            tempSphere3 = CreateFrom3Points(points[0], points[1], points[4]);
+            if (PointIsInSphere(points[2], tempSphere3) && PointIsInSphere(points[3], tempSphere3)
+                && tempSphere3.RadiusSquared < minRadiusSqd)
             {
-                sphere = tempSphere;
+                sphere = tempSphere3;
                 swap4And2 = true;
                 minRadiusSqd = sphere.RadiusSquared;
             }
             // 0,2,3 & check 1 & 4
             var swap3And1 = false;
-            tempSphere = CreateFrom3Points(points[0], points[2], points[3]);
-            if ((points[1] - tempSphere.Center).LengthSquared() <= tempSphere.RadiusSquared
-                && (points[4] - tempSphere.Center).LengthSquared() <= tempSphere.RadiusSquared
-                && tempSphere.RadiusSquared < minRadiusSqd)
+            tempSphere3 = CreateFrom3Points(points[0], points[2], points[3]);
+            if (PointIsInSphere(points[1], tempSphere3) && PointIsInSphere(points[4], tempSphere3)
+                && tempSphere3.RadiusSquared < minRadiusSqd)
             {
-                sphere = tempSphere;
+                sphere = tempSphere3;
                 swap3And1 = true;
                 minRadiusSqd = sphere.RadiusSquared;
             }
             // 0,2,4 & check 1 & 3
             var swap1With4 = false;
-            tempSphere = CreateFrom3Points(points[0], points[2], points[4]);
-            if ((points[1] - tempSphere.Center).LengthSquared() <= tempSphere.RadiusSquared
-                && (points[3] - tempSphere.Center).LengthSquared() <= tempSphere.RadiusSquared
-                && tempSphere.RadiusSquared < minRadiusSqd)
+            tempSphere3 = CreateFrom3Points(points[0], points[2], points[4]);
+            if (PointIsInSphere(points[1], tempSphere3) && PointIsInSphere(points[3], tempSphere3)
+                && tempSphere3.RadiusSquared < minRadiusSqd)
             {
-                sphere = tempSphere;
+                sphere = tempSphere3;
                 swap1With4 = true;
                 minRadiusSqd = sphere.RadiusSquared;
             }
             // 0,3,4 & check 1 & 2
             var swap12With34 = false;
-            tempSphere = CreateFrom3Points(points[0], points[3], points[4]);
-            if ((points[1] - tempSphere.Center).LengthSquared() <= tempSphere.RadiusSquared
-                && (points[2] - tempSphere.Center).LengthSquared() <= tempSphere.RadiusSquared
-                && tempSphere.RadiusSquared < minRadiusSqd)
+            tempSphere3 = CreateFrom3Points(points[0], points[3], points[4]);
+            if (PointIsInSphere(points[1], tempSphere3) && PointIsInSphere(points[2], tempSphere3)
+                && tempSphere3.RadiusSquared < minRadiusSqd)
             {
-                sphere = tempSphere;
+                sphere = tempSphere3;
                 swap12With34 = true;
                 minRadiusSqd = sphere.RadiusSquared;
             }
             // now the 4-point spheres
             var fourPointIsBest = false;
             // 0,1,2,3 & check 4
-            tempSphere = CreateFrom4Points(points[0], points[1], points[2], points[3]);
-            if (!(points[4] - tempSphere.Center).LengthSquared().IsGreaterThanNonNegligible(tempSphere.RadiusSquared)
-                // this one uses IsGreaterThanNonNegligible to prevent infinite cycling when more points are on the sphere
-                && tempSphere.RadiusSquared < minRadiusSqd)
+            var tempSphere4 = CreateFrom4Points(points[0], points[1], points[2], points[3]);
+            if (PointIsInSphere(points[4], tempSphere4) && tempSphere4.RadiusSquared < minRadiusSqd)
             {
-                sphere = tempSphere;
+                sphere = tempSphere4;
                 fourPointIsBest = true;
                 minRadiusSqd = sphere.RadiusSquared;
             }
             // 0,1,2,4 & check 3
             var swap4And3 = false;
-            tempSphere = CreateFrom4Points(points[0], points[1], points[2], points[4]);
-            if ((points[3] - tempSphere.Center).LengthSquared() <= tempSphere.RadiusSquared
-                && tempSphere.RadiusSquared < minRadiusSqd)
+            tempSphere4 = CreateFrom4Points(points[0], points[1], points[2], points[4]);
+            if (PointIsInSphere(points[3], tempSphere4) && tempSphere4.RadiusSquared < minRadiusSqd)
             {
-                sphere = tempSphere;
+                sphere = tempSphere4;
                 swap4And3 = fourPointIsBest = true;
                 minRadiusSqd = sphere.RadiusSquared;
             }
             // 0,1,3,4 & check 2
             var swap4With2 = false;
-            tempSphere = CreateFrom4Points(points[0], points[1], points[3], points[4]);
-            if ((points[2] - tempSphere.Center).LengthSquared() <= tempSphere.RadiusSquared
-                && tempSphere.RadiusSquared < minRadiusSqd)
+            tempSphere4 = CreateFrom4Points(points[0], points[1], points[3], points[4]);
+            if (PointIsInSphere(points[2], tempSphere4) && tempSphere4.RadiusSquared < minRadiusSqd)
             {
-                sphere = tempSphere;
+                sphere = tempSphere4;
                 swap4With2 = fourPointIsBest = true;
                 minRadiusSqd = sphere.RadiusSquared;
             }
             // 0,2,3,4 & check 1
             var swap4With1 = false;
-            tempSphere = CreateFrom4Points(points[0], points[2], points[3], points[4]);
-            if ((points[1] - tempSphere.Center).LengthSquared() <= tempSphere.RadiusSquared
-                && tempSphere.RadiusSquared < minRadiusSqd)
+            tempSphere4 = CreateFrom4Points(points[0], points[2], points[3], points[4]);
+            if (PointIsInSphere(points[1], tempSphere4) && tempSphere4.RadiusSquared < minRadiusSqd)
             {
-                sphere = tempSphere;
+                sphere = tempSphere4;
                 swap4With1 = fourPointIsBest = true;
                 //minRadiusSqd = sphere.RadiusSquared;
                 // don't need this anymore...no more checks
@@ -359,8 +347,14 @@ namespace TVGL
                 else if (swap4And2) Global.SwapItemsInList(4, 2, points);
                 else if (swap3And2) Global.SwapItemsInList(3, 2, points);
             }
+            if (sphere.RadiusSquared == 0.0)
+                sphere = double.IsNaN(tempSphere3.RadiusSquared) || double.IsInfinity(tempSphere3.RadiusSquared)
+                    ? tempSphere4 : tempSphere3;
             return sphere;
         }
+
+        private static bool PointIsInSphere(Vector3 point, sphereLight s)
+            => (point - s.Center).LengthSquared() <= 1.0001 * s.RadiusSquared;
 
 
 

@@ -184,7 +184,7 @@ namespace TVGL
             var minRadiusSqd = double.PositiveInfinity;
             if (Circle.CreateFrom3Points(points[0], points[1], points[2], out tempCircle)
                 && (points[3] - tempCircle.Center).LengthSquared() <= tempCircle.RadiusSquared)
-            { // this one uses IsGreaterThanNonNegligible to prevent infinite cycling when more points are on the circle
+            {
                 circle = tempCircle;
                 minRadiusSqd = circle.RadiusSquared;
             }
