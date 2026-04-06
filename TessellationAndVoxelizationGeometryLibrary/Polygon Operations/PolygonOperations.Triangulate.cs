@@ -124,23 +124,23 @@ namespace TVGL
             double suggestedAngle = 0.0)
         {
             var vertexIndices = new HashSet<int>();
-            var needToReIndex = false;
-            foreach (var v in polygon.AllPolygons.SelectMany(p => p.Vertices))
-            {
-                if (vertexIndices.Contains(v.IndexInList))
-                {
-                    needToReIndex = true;
-                    break;
-                }
-                vertexIndices.Add(v.IndexInList);
-            }
+            //var needToReIndex = false;
+            //foreach (var v in polygon.AllPolygons.SelectMany(p => p.Vertices))
+            //{
+            //    if (vertexIndices.Contains(v.IndexInList))
+            //    {
+            //        needToReIndex = true;
+            //        break;
+            //    }
+            //    vertexIndices.Add(v.IndexInList);
+            //}
             var index = 0;
-            if (needToReIndex)
-            {
+            //if (needToReIndex)
+            //{
                 foreach (var subPolygon in polygon.AllPolygons)
                     foreach (var vertex in subPolygon.Vertices)
                         vertex.IndexInList = index++;
-            }
+            //}
             foreach (var triangle in polygon.Triangulate(handleSelfIntersects, suggestedAngle))
                 yield return (triangle[0].IndexInList, triangle[1].IndexInList, triangle[2].IndexInList);
         }
