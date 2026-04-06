@@ -11,11 +11,13 @@
 // </copyright>
 // <summary></summary>
 // ***********************************************************************
+using Microsoft.Extensions.Options;
 using StarMathLib;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Security.Principal;
 using System.Text.Json.Serialization;
 
 namespace TVGL
@@ -115,6 +117,24 @@ namespace TVGL
             init => w = value;
         }
         private double w;
+
+        /// <summary>
+        /// Specifies the type of quadric represented.
+        /// </summary>
+        public QuadricType Type;
+
+        /// <summary>
+        /// Represent quadric specific coefficients
+        /// For plane, a,b,c are plane normal components and d is the distance from the origin.
+        /// For parallel planes, a,b,c, and d describe the mid-plane while e is the distance between the two planes.
+        /// ...
+        /// </summary>
+        public double a;
+        public double b;
+        public double c;
+        public double d;
+        public double e;
+
         /// <summary>
         /// Gets all the coefficients as an enumerable in the order listed above.
         public IEnumerable<double> Coefficients
@@ -285,8 +305,9 @@ namespace TVGL
         public override Vector3 GetNormalAtPoint(Vector3 point)
         {
             if (point.IsNull()) return Vector3.Null;
-            var gradient = GetGradient(point).Normalize();
-            if (!gradient.Length().IsPositiveNonNegligible()) return GetNormalAtUmbilicPoint(point);
+            var gradient = GetGradient(point);
+
+            if (gradient.Length().IsNegligible()) gradient = GetNormalAtUmbilicPoint(point);
 
             if (IsPositive.GetValueOrDefault(true))
                 return gradient;
@@ -320,16 +341,18 @@ namespace TVGL
             // We assume that the quadric field is not flat everywhere
 
             // Return a normal at a point slightly offset from the umbilic point
-            Vector3 normal = Vector3.Zero;
             double delta = 1E-6; // small offset distance
             int iters = 0;
-            while (!normal.Length().IsPositiveNonNegligible() && iters < 100)
+            Vector3 gradient = Vector3.Zero;
+            while (!gradient.Length().IsPositiveNonNegligible() && iters < 100)
             {
                 var random = new Random();
-                normal = GetNormalAtPoint(point + delta * new Vector3(random.NextDouble(), random.NextDouble(), random.NextDouble()).Normalize());
+                gradient = GetGradient(point + delta * new Vector3(random.NextDouble(), random.NextDouble(), random.NextDouble()));
                 iters++;
             }
-            return normal;
+            if (IsPositive.GetValueOrDefault(true))
+                return gradient;
+            else return -gradient;
         }
         private Vector3 GetNearbyPointOnQuadric(Vector3 anchor)
         {
@@ -343,13 +366,10 @@ namespace TVGL
             while (!intersections.GetEnumerator().MoveNext() && iters++ < 100)
             {
                 //This is the distance to the tangent point on the normal to the level set.
-                t = -normal.Dot(normal) / GetNormalAtPoint(normal).Dot(normal);
+                t = normal.Dot(normal) / ((new Vector3(XCoeff, YCoeff, ZCoeff) - GetNormalAtPoint(normal)).Dot(normal));
+                var tangencyCheck = normal.Dot(GetNormalAtPoint(newAnchor + t * normal));
                 newAnchor = newAnchor + t * normal;
                 normal = GetNormalAtPoint(newAnchor);
-                if (normal.Length() == 0)
-                {
-                    normal = GetNormalAtUmbilicPoint(newAnchor);
-                }
                 intersections = LineIntersection(newAnchor, normal);
             }
             if (!intersections.GetEnumerator().MoveNext()) return newAnchor;
@@ -401,7 +421,7 @@ namespace TVGL
             Vector3 closestPt = ClosestPointOnSurfaceToPoint(point);
 
             //scaling the quadric value by the norm of the normal vector to get the approximate distance locally
-            if (closestPt == Vector3.Null) return DistanceToPointQuick(point);
+            if (closestPt.IsNull()) return DistanceToPointQuick(point);
 
             return Math.Sign(QuadricValue(point)) * point.Distance(closestPt);
         }
@@ -926,6 +946,152 @@ namespace TVGL
             curvatureVector *= radius;
             return (tangent, curvatureVector, point + radius * curvatureVector,
                 radius);
+        }
+
+        public void RemoveSmallCoefficents(double tolerance = 1E-3)
+        {
+            this.xSqdCoeff = xSqdCoeff.IsNegligible(tolerance) ? 0 : xSqdCoeff;
+            this.ySqdCoeff = ySqdCoeff.IsNegligible(tolerance) ? 0 : ySqdCoeff;
+            this.zSqdCoeff = zSqdCoeff.IsNegligible(tolerance) ? 0 : zSqdCoeff;
+            this.xyCoeff = xyCoeff.IsNegligible(tolerance) ? 0 : xyCoeff;
+            this.xzCoeff = xzCoeff.IsNegligible(tolerance) ? 0 : xzCoeff;
+            this.yzCoeff = yzCoeff.IsNegligible(tolerance) ? 0 : yzCoeff;
+            this.xCoeff = xCoeff.IsNegligible(tolerance) ? 0 : xCoeff;
+            this.yCoeff = yCoeff.IsNegligible(tolerance) ? 0 : yCoeff;
+            this.zCoeff = zCoeff.IsNegligible(tolerance) ? 0 : zCoeff;
+            this.w = w.IsNegligible(tolerance) ? 0 : w;
+        }
+
+        public enum QuadricType
+        {
+            Unknown,
+            Ellipsoid,
+            ImaginaryEllipsoid,
+            EllipticParaboloid,
+            HyperbolicParaboloid,
+            HyperboloidOneSheet,
+            HyperboloidTwoSheets,
+            EllipticCylinder,
+            ImaginaryEllipticCylinder,
+            ParabolicCylinder,
+            HyperbolicCylinder,
+            Cone,
+            ImaginaryCone,
+            IntersectingPlanes,
+            ImaginaryIntersectingPlanes,
+            ParallelPlanes,
+            ImaginaryParallelPlanes,
+            Plane,
+            Sphere,
+            Line,
+            Point,
+            NoPoint,
+            AllPoints,
+            Other
+        }
+
+        public void SetQuadricType(double tol = 1E-6)
+        {
+            Type = QuadricType.Unknown;
+            var A = new Matrix3x3(XSqdCoeff, XYCoeff / 2, XZCoeff / 2, XYCoeff / 2, YSqdCoeff / 2,
+                YZCoeff / 2, XZCoeff / 2, YZCoeff / 2, ZSqdCoeff);
+            var M = new Matrix4x4(XSqdCoeff, XYCoeff / 2, XZCoeff / 2, XCoeff / 2,
+                XYCoeff / 2, YSqdCoeff, YZCoeff / 2, YCoeff / 2,
+                XZCoeff / 2, YZCoeff / 2, ZSqdCoeff, ZCoeff / 2,
+                XCoeff / 2, YCoeff / 2, ZCoeff / 2, W);
+
+            var AEigvals = A.GetEigenValues().Select(e => e.Real);
+            var MEigvals = M.GetEigenValues().Select(e => e.Real);
+            int numPosAEigvals = AEigvals.Count(e => e.IsPositiveNonNegligible(tol));
+            int Arank = AEigvals.Count(e => !e.IsNegligible(tol));
+            int Mrank = MEigvals.Count(e => !e.IsNegligible(tol));
+            bool MDetSign = (MEigvals.Count(e => e < 0) % 2) == 0;
+            bool ANonZeroEigValsSameSign = AEigvals.Where(e => !e.IsNegligible(tol)).All(e => e > 0) || AEigvals.Where(e => !e.IsNegligible(tol)).All(e => e < 0);
+            bool MNonZeroEigValsSameSign = MEigvals.Where(e => !e.IsNegligible(tol)).All(e => e > 0) || MEigvals.Where(e => !e.IsNegligible(tol)).All(e => e < 0);
+
+            if (Arank == 3)
+            {
+                if (Mrank == 4)
+                {
+                    if (!MDetSign)
+                    {
+                        if (ANonZeroEigValsSameSign) Type = QuadricType.Ellipsoid;
+                        else Type = QuadricType.HyperboloidTwoSheets;
+                    }
+                    else
+                    {
+                        if (ANonZeroEigValsSameSign) Type = QuadricType.ImaginaryEllipsoid;
+                        else Type = QuadricType.HyperboloidOneSheet;
+                    }
+                }
+
+                else if (Mrank == 3)
+                {
+                    if (ANonZeroEigValsSameSign) Type = QuadricType.ImaginaryCone;
+                    else Type = QuadricType.Cone;
+                }
+            }
+
+            else if (Arank == 2)
+            {
+                if (Mrank == 4)
+                {
+                    if (ANonZeroEigValsSameSign) Type = QuadricType.EllipticParaboloid;
+                    else Type = QuadricType.HyperbolicParaboloid;
+                }
+                else if (Mrank == 3)
+                {
+                    if (ANonZeroEigValsSameSign)
+                    {
+                        if (MNonZeroEigValsSameSign) Type = QuadricType.ImaginaryEllipticCylinder;
+                        else Type = QuadricType.EllipticCylinder;
+                    }
+                    else Type = QuadricType.HyperbolicCylinder;
+                }
+                else if (Mrank == 2)
+                {
+                    if (ANonZeroEigValsSameSign) Type = QuadricType.ImaginaryIntersectingPlanes;
+                    else Type = QuadricType.IntersectingPlanes;
+                }
+            }
+
+            else if (Arank == 1)
+            {
+                if (Mrank == 3) Type = QuadricType.ParabolicCylinder;
+                else if (Mrank == 2)
+                {
+                    if (MNonZeroEigValsSameSign) Type = QuadricType.ImaginaryParallelPlanes;
+                    else Type = QuadricType.ParallelPlanes;
+                }
+                else if (Mrank == 1) Type = QuadricType.Plane;
+            }
+
+            else
+            {
+                if (Mrank == 2) Type = QuadricType.Plane;
+            }
+        }
+
+        public void SetTypeSpecificCoefficients()
+        {
+            if (Type == QuadricType.Plane)
+            {
+                double normalizer = Math.Sqrt(XCoeff * XCoeff + YCoeff * YCoeff + ZCoeff * ZCoeff);
+                a = XCoeff / normalizer;
+                b = YCoeff / normalizer;
+                c = ZCoeff / normalizer;
+                d = W / normalizer;
+            }
+            if (Type == QuadricType.ParallelPlanes)
+            {
+                double normalizer = Math.Sqrt(Math.Abs(XSqdCoeff + YSqdCoeff + ZSqdCoeff));
+                a = Math.Sqrt(Math.Abs(XSqdCoeff)) / normalizer;
+                d = XCoeff / (2 * a);
+                b = YCoeff / (2 * d);
+                c = ZCoeff / (2 * d);
+                e = 2 * Math.Sqrt((XCoeff * XCoeff) / (4 * XSqdCoeff) - W);
+
+            }
         }
 
         /// <summary>
