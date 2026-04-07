@@ -310,8 +310,8 @@ namespace TVGL
             if (gradient.Length().IsNegligible()) gradient = GetNormalAtUmbilicPoint(point);
 
             if (IsPositive.GetValueOrDefault(true))
-                return gradient;
-            else return -gradient;
+                return gradient.Normalize();
+            else return -gradient.Normalize();
         }
 
         /// <summary>
