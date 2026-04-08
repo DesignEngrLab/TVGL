@@ -88,18 +88,23 @@ namespace TVGL
         public static void Complexify(IEnumerable<Edge> edges, out List<Edge> addedEdges, out List<Vertex> addedVertices,
             out List<TriangleFace> addedFaces, int targetNumberOfFaces, double maxSurfaceDeviation)
         {
+            //var initEdgePlot = edges.Select(e => new[] { e.From.Coordinates, e.To.Coordinates }).ToArray();
             var edgeQueue = new PriorityQueue<(Edge, Vector3), double>(new ReverseSort());
             foreach (var edge in edges)
                 EnqueueEdgeAndFindNewPoint(edgeQueue, edge, maxSurfaceDeviation);
-
+            //var edgeLengthList = edges.OrderByDescending(e => e.Length).ToArray();
             addedEdges = new List<Edge>();
             addedVertices = new List<Vertex>();
             addedFaces = new List<TriangleFace>();
             var iterations = targetNumberOfFaces > 0 ? (int)Math.Ceiling(targetNumberOfFaces / 2.0) : targetNumberOfFaces;
             var edgeCounter = edgeQueue.Count;
-            while (iterations-- != 0 && edgeQueue.TryDequeue(out (Edge edge, Vector3 mpt) c, out var edgeLength) && edgeLength > maxSurfaceDeviation)
+            while (iterations-- != 0 && edgeQueue.TryDequeue(out (Edge edge, Vector3 mpt) c, out _))
             {
-                //Presenter.ShowAndHang(addedFaces);
+                //var map = edgeLengthList.IndexOf(c.edge);
+                //Console.WriteLine(map);
+                //if (iterations % 50 == 0)
+                //    Presenter.ShowAndHang([initEdgePlot, addedEdges.Select(e => new[] { e.From.Coordinates, e.To.Coordinates }), [[c.edge.From.Coordinates, c.mpt, c.edge.To.Coordinates]]],
+                //        [false, false, false], colors: [new Color(KnownColors.LightGray), new Color(KnownColors.Blue), new Color(KnownColors.Red)]);
                 var origLeftFace = c.edge.OtherFace;
                 var origRightFace = c.edge.OwnedFace;
                 var leftFarVertex = origLeftFace?.OtherVertex(c.edge);

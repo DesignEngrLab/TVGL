@@ -307,7 +307,8 @@ namespace TVGL
             if (point.IsNull()) return Vector3.Null;
             var gradient = GetGradient(point);
 
-            if (gradient.Length().IsNegligible()) gradient = GetNormalAtUmbilicPoint(point);
+            if (gradient.Length().IsNegligible())
+                gradient = GetNormalAtUmbilicPoint(point);
 
             if (IsPositive.GetValueOrDefault(true))
                 return gradient.Normalize();
@@ -498,16 +499,22 @@ namespace TVGL
                 + XCoeff * anchor.X + YCoeff * anchor.Y + ZCoeff * anchor.Z + W;
             (var root1, var root2) = PolynomialSolve.Quadratic(a, b, c);
 
-            if (root1.IsRealNumber && root1.Real.IsPracticallySame(root2.Real))
-            {
-                var t = 0.5 * (root1.Real + root2.Real);
-                yield return (anchor + t * direction, root1.Real);
+            var t = root1.Real;
+            var pt = anchor + t * direction;
+            if (PracticallyOnSurface(pt))
+                yield return (pt, t);
+            if (root1.Real.IsPracticallySame(root2.Real))
                 yield break;
-            }
-            if (root1.IsRealNumber)
-                yield return (anchor + root1.Real * direction, root1.Real);
-            if (root2.IsRealNumber)
-                yield return (anchor + root2.Real * direction, root2.Real);
+            t = root2.Real;
+            pt = anchor + t * direction;
+            if (PracticallyOnSurface(pt))
+                yield return (pt, t);
+        }
+
+        public bool PracticallyOnSurface(Vector3 point, double tolerance = Constants.BaseTolerance)
+        {
+            var magGradient = GetGradient(point).Length();
+            return QuadricValue(point).IsNegligible(Constants.BaseTolerance * magGradient);
         }
 
         /// <summary>
