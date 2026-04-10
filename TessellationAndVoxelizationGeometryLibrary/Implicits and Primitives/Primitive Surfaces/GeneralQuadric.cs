@@ -514,7 +514,9 @@ namespace TVGL
         public bool PracticallyOnSurface(Vector3 point, double tolerance = Constants.BaseTolerance)
         {
             var magGradient = GetGradient(point).Length();
-            return QuadricValue(point).IsNegligible(Constants.BaseTolerance * magGradient);
+            // Use max(gradient, 1) to prevent the tolerance from collapsing to zero
+            // near vertices/tips where the gradient vanishes (e.g. tip of a hyperboloid)
+            return QuadricValue(point).IsNegligible(tolerance * Math.Max(magGradient, 1.0));
         }
 
         /// <summary>
