@@ -498,17 +498,15 @@ namespace TVGL
                 + XYCoeff * anchor.X * anchor.Y + XZCoeff * anchor.X * anchor.Z + YZCoeff * anchor.Y * anchor.Z
                 + XCoeff * anchor.X + YCoeff * anchor.Y + ZCoeff * anchor.Z + W;
             (var root1, var root2) = PolynomialSolve.Quadratic(a, b, c);
-
-            var t = root1.Real;
-            var pt = anchor + t * direction;
-            if (PracticallyOnSurface(pt))
-                yield return (pt, t);
-            if (root1.Real.IsPracticallySame(root2.Real))
-                yield break;
-            t = root2.Real;
-            pt = anchor + t * direction;
-            if (PracticallyOnSurface(pt))
-                yield return (pt, t);
+            if (root1.IsRealNumber && root1.Real.IsPracticallySame(root2.Real))
+                yield return (anchor + root1.Real * direction, root1.Real);
+            else if (root1.IsRealNumber)
+            {
+                yield return (anchor + root1.Real * direction, root1.Real);
+                yield return (anchor + root2.Real * direction, root2.Real);
+            }
+            //else
+            //    yield return (Vector3.Null, double.PositiveInfinity);
         }
 
         public bool PracticallyOnSurface(Vector3 point, double tolerance = Constants.BaseTolerance)

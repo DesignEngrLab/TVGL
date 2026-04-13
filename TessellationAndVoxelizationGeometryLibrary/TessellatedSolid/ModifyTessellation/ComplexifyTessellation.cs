@@ -14,7 +14,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net.Http.Headers;
 
 namespace TVGL
 {
@@ -86,13 +85,16 @@ namespace TVGL
         /// <param name="targetNumberOfFaces">The desired total number of faces in the mesh after the operation. Must be a non-negative integer.</param>
         /// <param name="maxSurfaceDeviation">The maximum allowable length for edges to be considered for subdivision. Must be a positive value.</param>
         public static void Complexify(IEnumerable<Edge> edges, out List<Edge> addedEdges, out List<Vertex> addedVertices,
-            out List<TriangleFace> addedFaces, int targetNumberOfFaces, double maxSurfaceDeviation)
+            out List<TriangleFace> addedFaces, int targetNumberOfFaces, double maxSurfaceDeviation,
+            Func<Edge, Vector3> determineIntermediateVertexPosition = null)
         {
-            //var initEdgePlot = edges.Select(e => new[] { e.From.Coordinates, e.To.Coordinates }).ToArray();
+            if (determineIntermediateVertexPosition == null)
+                determineIntermediateVertexPosition = DetermineIntermediateVertexPosition;
+            var initEdgePlot = edges.Select(e => new[] { e.From.Coordinates, e.To.Coordinates }).ToArray();
             var edgeQueue = new PriorityQueue<(Edge, Vector3), double>(new ReverseSort());
             foreach (var edge in edges)
-                EnqueueEdgeAndFindNewPoint(edgeQueue, edge, maxSurfaceDeviation);
-            //var edgeLengthList = edges.OrderByDescending(e => e.Length).ToArray();
+                EnqueueEdgeAndFindNewPoint(edgeQueue, edge, maxSurfaceDeviation, determineIntermediateVertexPosition);
+            var edgeLengthList = edges.OrderByDescending(e => e.Length).ToArray();
             addedEdges = new List<Edge>();
             addedVertices = new List<Vertex>();
             addedFaces = new List<TriangleFace>();
@@ -100,9 +102,9 @@ namespace TVGL
             var edgeCounter = edgeQueue.Count;
             while (iterations-- != 0 && edgeQueue.TryDequeue(out (Edge edge, Vector3 mpt) c, out _))
             {
-                //var map = edgeLengthList.IndexOf(c.edge);
-                //Console.WriteLine(map);
-                //if (iterations % 50 == 0)
+                var map = edgeLengthList.IndexOf(c.edge);
+                Console.WriteLine(map);
+                //if (iterations % 250 == 0)
                 //    Presenter.ShowAndHang([initEdgePlot, addedEdges.Select(e => new[] { e.From.Coordinates, e.To.Coordinates }), [[c.edge.From.Coordinates, c.mpt, c.edge.To.Coordinates]]],
                 //        [false, false, false], colors: [new Color(KnownColors.LightGray), new Color(KnownColors.Blue), new Color(KnownColors.Red)]);
                 var origLeftFace = c.edge.OtherFace;
@@ -157,12 +159,12 @@ namespace TVGL
 
                 // need to re-add the edge. It was modified in the SplitEdge function (now, half the lenght), but
                 // it may still be met by this criteria
-                EnqueueEdgeAndFindNewPoint(edgeQueue, c.edge, maxSurfaceDeviation);
-                EnqueueEdgeAndFindNewPoint(edgeQueue, inlineEdge, maxSurfaceDeviation);
+                EnqueueEdgeAndFindNewPoint(edgeQueue, c.edge, maxSurfaceDeviation, determineIntermediateVertexPosition);
+                EnqueueEdgeAndFindNewPoint(edgeQueue, inlineEdge, maxSurfaceDeviation, determineIntermediateVertexPosition);
                 if (newLeftEdge != null)
-                    EnqueueEdgeAndFindNewPoint(edgeQueue, newLeftEdge, maxSurfaceDeviation);
+                    EnqueueEdgeAndFindNewPoint(edgeQueue, newLeftEdge, maxSurfaceDeviation, determineIntermediateVertexPosition);
                 if (newRightEdge != null)
-                    EnqueueEdgeAndFindNewPoint(edgeQueue, newRightEdge, maxSurfaceDeviation);
+                    EnqueueEdgeAndFindNewPoint(edgeQueue, newRightEdge, maxSurfaceDeviation, determineIntermediateVertexPosition);
 
                 addedVertices.Add(addedVertex);
                 addedEdges.Add(inlineEdge);
@@ -173,9 +175,11 @@ namespace TVGL
             }
         }
 
-        private static void EnqueueEdgeAndFindNewPoint(PriorityQueue<(Edge, Vector3), double> edgeQueue, Edge edge, double cutOff)
+
+        private static void EnqueueEdgeAndFindNewPoint(PriorityQueue<(Edge, Vector3), double> edgeQueue, Edge edge,
+            double cutOff, Func<Edge, Vector3> determineIntermediateVertexPosition)
         {
-            var midPoint = DetermineIntermediateVertexPosition(edge);
+            var midPoint = determineIntermediateVertexPosition(edge);
             var distanceToSurf = MiscFunctions.DistancePointToLine(midPoint, edge.From.Coordinates, edge.Vector);
             if (distanceToSurf > cutOff)
                 edgeQueue.Enqueue((edge, midPoint), distanceToSurf);

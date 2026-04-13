@@ -38,17 +38,11 @@ namespace TVGL
                 return DetermineIntermediateVertexPosition(edge.From.Coordinates, edge.To.Coordinates, primitive1, primitive2);
         }
         internal static Vector3 DetermineIntermediateVertexPosition(Vector3 pt1, Vector3 pt2,
-            PrimitiveSurface primitive = null)
+            PrimitiveSurface primitive)
         {
             if (primitive == null || primitive is Plane) // then average positions
                 return 0.5 * (pt1 + pt2);
             //else we're going to project the average position onto the primitive surface
-            if (primitive is Sphere sphere)
-                // the direction from the center to the average of the two points is the direction to
-                // move out to the sphere surface. Note we can cheese the average by the Normalize
-                // function because the direction is all we care about, but we need to find the
-                // relative movements so, the points are each subtracted from the center
-                return sphere.Center + sphere.Radius * (pt1 + pt2 - 2 * sphere.Center).Normalize();
             if (primitive is Cylinder cylinder)
             {
                 var anchorToPt1 = pt1 - cylinder.Anchor;
@@ -103,12 +97,13 @@ namespace TVGL
                     return posPt.ConvertTo3DLocation(plane.AsTransformFromXYPlane);
                 else if (negSuccess)
                     return negPt.ConvertTo3DLocation(plane.AsTransformFromXYPlane);
-                else
+                var midPointProjections = quadric.LineIntersection(midpoint, midPtNormal);
+                if (midPointProjections.Any())
                 {
                     // Fallback: project the midpoint onto the quadric along the surface normal
                     var bestT = double.PositiveInfinity;
                     Vector3 result = midpoint;
-                    foreach (var (intersection, t) in quadric.LineIntersection(midpoint, midPtNormal))
+                    foreach (var (intersection, t) in midPointProjections)
                     {
                         if (Math.Abs(t) < Math.Abs(bestT))
                         {
@@ -118,7 +113,14 @@ namespace TVGL
                     }
                     return result;
                 }
+                // else fall through to Sphere...DO NOT CHANGE ORDER in switch
             }
+            if (primitive is Sphere sphere)
+                // the direction from the center to the average of the two points is the direction to
+                // move out to the sphere surface. Note we can cheese the average by the Normalize
+                // function because the direction is all we care about, but we need to find the
+                // relative movements so, the points are each subtracted from the center
+                return sphere.Center + sphere.Radius * (pt1 + pt2 - 2 * sphere.Center).Normalize();
             if (primitive is Torus torus)
             {
                 var anchorToPt1 = pt1 - torus.Center;
