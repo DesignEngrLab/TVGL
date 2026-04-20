@@ -124,6 +124,11 @@ namespace TVGL
         public QuadricType Type;
 
         /// <summary>
+        /// Gets the stationary point as a nullable Vector3, if available.
+        /// </summary>
+        public Vector3 StationaryPoint => GetStationaryPoint();
+
+        /// <summary>
         /// Represent quadric specific coefficients
         /// For plane, a,b,c are plane normal components and d is the distance from the origin.
         /// For parallel planes, a,b,c, and d describe the mid-plane while e is the distance between the two planes.
@@ -308,7 +313,7 @@ namespace TVGL
             var gradient = GetGradient(point);
 
             if (gradient.Length().IsNegligible())
-                gradient = GetNormalAtUmbilicPoint(point);
+                gradient = GetNormalAtStationaryPoint(point);
 
             if (IsPositive.GetValueOrDefault(true))
                 return gradient.Normalize();
@@ -336,12 +341,12 @@ namespace TVGL
                 + W);
         }
 
-        private Vector3 GetNormalAtUmbilicPoint(Vector3 point)
+        private Vector3 GetNormalAtStationaryPoint(Vector3 point)
         {
-            // At an umbilic point, the normal is zero, so we need to find the direction of maximum increase.
+            // At a stationary point, the normal is zero, so we need to find the direction of maximum increase.
             // We assume that the quadric field is not flat everywhere
 
-            // Return a normal at a point slightly offset from the umbilic point
+            // Return a normal at a point slightly offset from the stationary point
             double delta = 1E-6; // small offset distance
             int iters = 0;
             Vector3 gradient = Vector3.Zero;
@@ -355,6 +360,16 @@ namespace TVGL
                 return gradient;
             else return -gradient;
         }
+
+        private Vector3 GetStationaryPoint()
+        {
+            // The stationary point is where the gradient is zero. This is a system of 3 equations with 3 unknowns.
+            // We can solve it using the Hessian matrix of the quadric function.
+            Matrix3x3 coeffs = GetHessian();
+            var b = new Vector3(-XCoeff, -YCoeff, -ZCoeff);
+            return coeffs.Solve(b);
+        }
+
         private Vector3 GetNearbyPointOnQuadric(Vector3 anchor)
         {
             Vector3 normal = GetNormalAtPoint(anchor);
