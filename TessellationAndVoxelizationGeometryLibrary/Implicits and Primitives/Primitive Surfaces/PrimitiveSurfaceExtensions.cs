@@ -457,6 +457,27 @@ namespace TVGL
                                                              // most are replaced by facesToAdd below (unless they are all negative)
                                                              // we keep track of these to remove their references from the vertices later
             var facesToAdd = new List<TriangleFace>();  // added to the primitive surface with the existing in SetFacesAndVertices
+
+         
+   //         var fGroups = new List<TriangleFace>[4];
+   //         var fcolors = new Color[]{ new Color(KnownColors.LightGreen),new Color(KnownColors.Yellow),
+   //         new Color(KnownColors.Orange),new Color(KnownColors.Red)};
+   //         for (int i = 0; i < 4; i++)
+   //             fGroups[i] = new List<TriangleFace>();
+   //         foreach (var f in surface.Faces)
+   //         {
+   //             var count = f.Vertices.Sum(v => removeVertices.Contains(v) ? 1 : 0);
+   //             fGroups[count].Add(f);
+   //         }
+   //         for (int i = 0; i < 4; i++)
+   //             foreach (var f in fGroups[i])
+   //                 f.Color = fcolors[i];
+   //         //Presenter.ShowAndHang(surface.Faces);
+   //Presenter.ShowAndHang(  //[surface.InnerEdges.Select(e=>new[] { e.From.Coordinates, e.To.Coordinates } ),
+   //         edgeIntersections.Keys.Select(e=>new[] { e.From.Coordinates, e.To.Coordinates } ),lineThicknesses: [3],
+   //             colors: [new Color(KnownColors.Black)],
+   //             faces:surface.Faces
+   //             );
             foreach (var face in surface.Faces)
             {
                 var aRemoved = removeVertices.Contains(face.A);
@@ -519,6 +540,8 @@ namespace TVGL
                         ReplaceNegativeVertexOnEdge(face.CA, face.C, edgeIntersections);
                     if (!bRemoved && alreadyModifiedEdges.Add(face.BC))
                         ReplaceNegativeVertexOnEdge(face.BC, face.C, edgeIntersections);
+                    //face.Color = new Color(KnownColors.DarkOliveGreen);
+                    //Presenter.ShowAndHang(surface.Faces);
                 }
                 if (thisPatchRemovedEdge == null)
                 {

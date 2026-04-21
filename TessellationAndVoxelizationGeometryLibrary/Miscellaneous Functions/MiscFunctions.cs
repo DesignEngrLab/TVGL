@@ -1454,6 +1454,63 @@ namespace TVGL
                 return backTransform.Transpose();
             }
         }
+        /// <summary>
+        /// Creates a transformation matrix that rotates a given 3D direction vector to align with the Z-axis (0, 0, 1), effectively creating a 2D projection plane.
+        /// </summary>
+        /// <param name="direction">The 3D vector to be aligned with the Z-axis. This vector represents the normal of the desired 2D plane.</param>
+        /// <param name="backTransform">An output parameter for the inverse transformation matrix, which can rotate the Z-axis back to the original `direction`.</param>
+        /// <param name="tolerance">A tolerance used to determine if the input direction is close enough to a Cartesian axis to use a simpler, predefined transformation.</param>
+        /// <returns>A 4x4 transformation matrix that projects points onto the XY plane.</returns>
+        /// <remarks>
+        /// This is a core function for converting 3D geometry into a 2D representation for slicing, analysis, or visualization. The `backTransform` is essential for converting results from 2D calculations back into the original 3D coordinate system.
+        /// The method includes an optimization to "snap" to major Cartesian axes, which is faster and avoids potential floating-point precision issues.
+        /// Common search terms: "view matrix", "projection matrix", "align vector to axis", "lookat transform".
+        /// </remarks>
+        public static Matrix4x4 TransformToXYPlaneMaybeBetter(this Vector3 direction, out Matrix4x4 backTransform, double tolerance = Constants.DefaultEqualityTolerance)
+        {
+            var closestCartesianDirection = SnapDirectionToCartesian(direction, out var withinTolerance, tolerance);
+            if (withinTolerance)
+                return TransformToXYPlane(closestCartesianDirection, out backTransform);
+
+            var dirMagSquared = direction.LengthSquared();
+            if (dirMagSquared.IsPracticallySame(0.0))
+                throw new ArgumentException("The direction cannot be the zero vector.");
+            // Normalize the direction. If already unit length, this is a no-op multiplication by ~1.
+            var oneOverH = 1 / Math.Sqrt(dirMagSquared);
+            var dx = direction.X * oneOverH;
+            var dy = direction.Y * oneOverH;
+            var dz = direction.Z * oneOverH;
+
+            // g = length of the projection of the unit direction onto the XZ plane.
+            // When g ≈ 0 the direction is along ±Y and the two-Givens-rotation approach
+            // (rotate in XZ then YZ) is singular. Handle that case with a simple 90° rotation.
+            var g = Math.Sqrt(dx * dx + dz * dz);
+            if (g < 1e-12)
+            {
+                // direction is essentially ±Y. Rotate 90° around the Z-axis so that Y maps to Z.
+                // For +Y: new X = old X, new Y = old Z, new Z = old Y  (right-handed)
+                // For -Y: flip sign on Z row.
+                if (dy > 0)
+                {
+                    backTransform = new Matrix4x4(1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0);
+                    return new Matrix4x4(1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0);
+                }
+                else
+                {
+                    backTransform = new Matrix4x4(1, 0, 0, 0, 0, -1, 0, -1, 0, 0, 0, 0);
+                    return new Matrix4x4(1, 0, 0, 0, 0, -1, 0, -1, 0, 0, 0, 0);
+                }
+            }
+            var oneOverG = 1 / g;
+            var xOverG = dx * oneOverG;
+            var zOverG = dz * oneOverG;
+            // backTransform columns are the new X, Y, Z axes expressed in the original frame.
+            // Row 0 (new X axis): rotate in XZ plane to eliminate X component → (z/g, 0, -x/g)
+            // Row 1 (new Y axis): perpendicular to both → (-x*y/g, g, -z*y/g)
+            // Row 2 (new Z axis): the normalized direction itself → (dx, dy, dz)
+            backTransform = new Matrix4x4(zOverG, 0, -xOverG, -xOverG * dy, g, -zOverG * dy, dx, dy, dz, 0, 0, 0);
+            return backTransform.Transpose();
+        }
 
 
         /// <summary>

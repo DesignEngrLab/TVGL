@@ -88,7 +88,7 @@ namespace TVGL
             out List<TriangleFace> addedFaces, int targetNumberOfFaces, double maxSurfaceDeviation,
             Func<Edge, Vector3> determineIntermediateVertexPosition = null)
         {
-            var edgeLengthList = edges.OrderByDescending(e => e.Length).ToArray();
+            //var edgeLengthList = edges.OrderByDescending(e => e.Length).ToArray();
             if (determineIntermediateVertexPosition == null)
                 determineIntermediateVertexPosition = DetermineIntermediateVertexPosition;
             var initEdgePlot = edges.Select(e => new[] { e.From.Coordinates, e.To.Coordinates }).ToArray();
@@ -104,7 +104,7 @@ namespace TVGL
             {
                 //var map = edgeLengthList.IndexOf(c.edge);
                 //Console.WriteLine(map);
-                //if (iterations % 1000 == 0)
+                //if (iterations % 1000 <= 0)
                 //    Presenter.ShowAndHang([initEdgePlot, addedEdges.Select(e => new[] { e.From.Coordinates, e.To.Coordinates }), [[c.edge.From.Coordinates, c.mpt, c.edge.To.Coordinates]]],
                 //        [false, false, false], colors: [new Color(KnownColors.LightGray), new Color(KnownColors.Blue), new Color(KnownColors.Red)]);
                 var origLeftFace = c.edge.OtherFace;
@@ -181,8 +181,8 @@ namespace TVGL
         {
             var midPoint = determineIntermediateVertexPosition(edge);
             var distanceToSurf = MiscFunctions.DistancePointToLine(midPoint, edge.From.Coordinates, edge.Vector);
-            if (distanceToSurf > cutOff)
-                edgeQueue.Enqueue((edge, midPoint), distanceToSurf);
+            //if (distanceToSurf > cutOff)
+                edgeQueue.Enqueue((edge, midPoint), edge.Length);
         }
     }
 
