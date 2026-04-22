@@ -131,6 +131,7 @@ namespace TVGL
                         XZCoeff, YZCoeff, XCoeff, YCoeff, ZCoeff, W);
                 return type;
             }
+            set { type = value; }
         }
 
 
@@ -982,8 +983,12 @@ namespace TVGL
             this.w = w.IsNegligible(tolerance) ? 0 : w;
         }
 
+        public static QuadricType SetQuadricType(GeneralQuadric q, double tol = 1E-12)
+        => SetQuadricType(q.XSqdCoeff, q.YSqdCoeff, q.ZSqdCoeff, q.XYCoeff,
+            q.XZCoeff, q.YZCoeff, q.XCoeff, q.YCoeff, q.ZCoeff, q.W, tol);
+
         public static QuadricType SetQuadricType(double XSqdCoeff, double YSqdCoeff, double ZSqdCoeff, double XYCoeff,
-            double XZCoeff, double YZCoeff, double XCoeff, double YCoeff, double ZCoeff, double W, double tol = 1E-6)
+            double XZCoeff, double YZCoeff, double XCoeff, double YCoeff, double ZCoeff, double W, double tol = 1E-12)
         {
             var A = new Matrix3x3(XSqdCoeff, XYCoeff / 2, XZCoeff / 2, XYCoeff / 2, YSqdCoeff / 2,
                 YZCoeff / 2, XZCoeff / 2, YZCoeff / 2, ZSqdCoeff);
@@ -1062,7 +1067,7 @@ namespace TVGL
             {
                 if (Mrank == 2) return QuadricType.Plane;
             }
-            return QuadricType.Other;
+            return QuadricType.Unknown;
         }
 
         public void SetTypeSpecificCoefficients()
