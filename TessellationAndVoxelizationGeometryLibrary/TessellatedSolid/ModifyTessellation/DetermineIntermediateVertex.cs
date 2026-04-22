@@ -37,6 +37,7 @@ namespace TVGL
             else
                 return DetermineIntermediateVertexPosition(edge.From.Coordinates, edge.To.Coordinates, primitive1, primitive2);
         }
+
         internal static Vector3 DetermineIntermediateVertexPosition(Vector3 pt1, Vector3 pt2,
             PrimitiveSurface primitive)
         {
@@ -93,11 +94,29 @@ namespace TVGL
                 var conic = GeneralConicSection.CreateFromQuadric(quadric, plane);
                 var posSuccess = conic.PointsAtGivenGradient(outwarddir2d, out var posPt);
                 var negSuccess = conic.PointsAtGivenGradient(-outwarddir2d, out var negPt);
+                var oddAxis = GetOddPrincipalAxis(quadric);
+                var stationaryPt = quadric.StationaryPoint;
+                var returnPt = Vector3.Null;
+                if (oddAxis.Dot(midpoint - stationaryPt) < 0)
+                {
+                    oddAxis = -oddAxis; // make sure the odd axis is pointing in the same direction as the midpoint.
+                }
                 if (posSuccess && (!negSuccess || posPt.DistanceSquared(midPoint2d) < negPt.DistanceSquared(midPoint2d)))
-                    return posPt.ConvertTo3DLocation(plane.AsTransformFromXYPlane);
+                {
+                    var posPt3 = posPt.ConvertTo3DLocation(plane.AsTransformFromXYPlane);
+                    //if (oddAxis.IsNull() || oddAxis.Dot(posPt3 - stationaryPt) > 0)
+                        returnPt = posPt3;
+                }
                 else if (negSuccess)
-                    return negPt.ConvertTo3DLocation(plane.AsTransformFromXYPlane);
-                var midPointProjections = quadric.LineIntersection(midpoint, midPtNormal);
+                {
+                    var negPt3 = negPt.ConvertTo3DLocation(plane.AsTransformFromXYPlane);
+                    //if (oddAxis.IsNull() || oddAxis.Dot(negPt3 - stationaryPt) > 0)
+                        returnPt = negPt3;
+                }
+
+                // fallback plan 1
+                var midPointProjections = quadric.LineIntersection(midpoint, outwarddir);
+
                 if (midPointProjections.Any())
                 {
                     // Fallback: project the midpoint onto the quadric along the surface normal
@@ -111,9 +130,16 @@ namespace TVGL
                             result = intersection;
                         }
                     }
-                    return result;
+                    //if (oddAxis.IsNull() || oddAxis.Dot(result - stationaryPt) > 0)
+                    if (returnPt.IsNull() || returnPt.DistanceSquared(midpoint) > result.DistanceSquared(midpoint))
+                        returnPt = result;
                 }
-                // else fall through to Sphere...DO NOT CHANGE ORDER in switch
+                // fall back plan 2
+                var result2 = new Plane(stationaryPt, oddAxis).LineIntersection(midpoint, outwarddir).First().intersection;
+
+                if (returnPt.IsNull() || returnPt.DistanceSquared(midpoint) > result2.DistanceSquared(midpoint))
+                    returnPt = result2;
+                return returnPt;
             }
             if (primitive is Sphere sphere)
                 // the direction from the center to the average of the two points is the direction to
@@ -132,6 +158,24 @@ namespace TVGL
             throw new NotImplementedException();
         }
 
+
+        internal static Vector3 GetOddPrincipalAxis(GeneralQuadric quadric)
+        {
+            // The principal axes are the axes along which the rate of change of the gradient is maximized or minimized.
+            // This can be found by solving for the eigenvectors of the Hessian matrix of the quadric function.
+            // In particular we want the odd principal axis, which is the one that is different in sign from the others.
+            // This is the same as the cone or hyperboloid axis.
+            Matrix3x3 coeffs = quadric.GetHessian();
+            var eigenVals = coeffs.GetEigenValuesAndVectors(out var eigenVecs);
+
+            for (int i = 0; i < eigenVals.Length; i++)
+            {
+                if (eigenVals[i].Real < 0 && eigenVals.Aggregate(1.0, (a, b) => a * b.Real) < 0 ||
+                    eigenVals[i].Real > 0 && eigenVals.Aggregate(1.0, (a, b) => a * b.Real) > 0)
+                    return new Vector3(eigenVecs[i][0].Real, eigenVecs[i][1].Real, eigenVecs[i][2].Real);
+            }
+            return Vector3.Null;
+        }
 
 
 

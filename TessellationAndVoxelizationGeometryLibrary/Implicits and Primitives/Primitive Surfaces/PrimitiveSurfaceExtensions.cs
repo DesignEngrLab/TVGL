@@ -198,7 +198,7 @@ namespace TVGL
             else if (s is Torus torus) return torus.Center;
             else if (s is Sphere sphere) return sphere.Center;
             else if (s is Capsule capsule) return 0.5 * (capsule.Anchor1 + capsule.Anchor2);
-            else if (s is GeneralQuadric gq) return gq.Center;
+            else if (s is GeneralQuadric gq) return gq.StationaryPoint;
             else return GetCenterOfMass(s.Faces);
         }
 

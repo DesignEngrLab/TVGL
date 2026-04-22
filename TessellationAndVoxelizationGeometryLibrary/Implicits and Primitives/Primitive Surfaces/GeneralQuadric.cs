@@ -121,12 +121,18 @@ namespace TVGL
         /// <summary>
         /// Specifies the type of quadric represented.
         /// </summary>
-        public QuadricType Type;
+        private QuadricType type = QuadricType.Unknown;
+        public QuadricType Type
+        {
+            get
+            {
+                if (type == QuadricType.Unknown)
+                    type = SetQuadricType(XSqdCoeff, YSqdCoeff, ZSqdCoeff, XYCoeff,
+                        XZCoeff, YZCoeff, XCoeff, YCoeff, ZCoeff, W);
+                return type;
+            }
+        }
 
-        /// <summary>
-        /// Gets the stationary point as a nullable Vector3, if available.
-        /// </summary>
-        public Vector3 StationaryPoint => GetStationaryPoint();
 
         /// <summary>
         /// Represent quadric specific coefficients
@@ -361,15 +367,6 @@ namespace TVGL
             else return -gradient;
         }
 
-        private Vector3 GetStationaryPoint()
-        {
-            // The stationary point is where the gradient is zero. This is a system of 3 equations with 3 unknowns.
-            // We can solve it using the Hessian matrix of the quadric function.
-            Matrix3x3 coeffs = GetHessian();
-            var b = new Vector3(-XCoeff, -YCoeff, -ZCoeff);
-            return coeffs.Solve(b);
-        }
-
         private Vector3 GetNearbyPointOnQuadric(Vector3 anchor)
         {
             Vector3 normal = GetNormalAtPoint(anchor);
@@ -456,7 +453,7 @@ namespace TVGL
         protected override void CalculateIsPositive()
         {
             if (Faces == null || !Faces.Any() || Area.IsNegligible()) return;
-            isPositive = LargestFace.Normal.Dot(LargestFace.Center - Center) > 0;
+            isPositive = LargestFace.Normal.Dot(LargestFace.Center - StationaryPoint) > 0;
         }
 
         protected override void SetPrimitiveLimits()
@@ -533,26 +530,27 @@ namespace TVGL
         }
 
         /// <summary>
-        /// The is the mathematical center of the quadric. It is not the centroid of the faces.
-        /// It is the location where the gradient of the quadric function is zero.
+        /// The is the mathematical center of the quadric is referred to as the stationary point.
+        /// It is not the centroid of the faces, but rather the point where the quadric function has
+        /// a zero gradient.
         /// It would be the center of an ellipsoid, but for other quadrics, it is ...?
         /// Desmos it up!
         /// </summary>
         /// 
         [JsonIgnore]
-        public Vector3 Center
+        public Vector3 StationaryPoint
         {
             get
             {
-                if (center.IsNull())
+                if (staionaryPoint.IsNull())
                 {
                     Matrix3x3 coeffs = GetHessian();
                     // the center is defined where the gradient is zero for the quadric function
                     // this produces a system of 3 equations with 3 unknowns
                     var b = new Vector3(-XCoeff, -YCoeff, -ZCoeff);
-                    center = coeffs.Solve(b);
+                    staionaryPoint = coeffs.Solve(b);
                 }
-                return center;
+                return staionaryPoint;
             }
         }
 
@@ -571,7 +569,7 @@ namespace TVGL
                                        XZCoeff, YZCoeff, 2 * ZSqdCoeff);
         }
 
-        Vector3 center = Vector3.Null;
+        Vector3 staionaryPoint = Vector3.Null;
 
         [JsonIgnore]
         public Vector3 Axis1
@@ -984,37 +982,9 @@ namespace TVGL
             this.w = w.IsNegligible(tolerance) ? 0 : w;
         }
 
-        public enum QuadricType
+        public static QuadricType SetQuadricType(double XSqdCoeff, double YSqdCoeff, double ZSqdCoeff, double XYCoeff,
+            double XZCoeff, double YZCoeff, double XCoeff, double YCoeff, double ZCoeff, double W, double tol = 1E-6)
         {
-            Unknown,
-            Ellipsoid,
-            ImaginaryEllipsoid,
-            EllipticParaboloid,
-            HyperbolicParaboloid,
-            HyperboloidOneSheet,
-            HyperboloidTwoSheets,
-            EllipticCylinder,
-            ImaginaryEllipticCylinder,
-            ParabolicCylinder,
-            HyperbolicCylinder,
-            Cone,
-            ImaginaryCone,
-            IntersectingPlanes,
-            ImaginaryIntersectingPlanes,
-            ParallelPlanes,
-            ImaginaryParallelPlanes,
-            Plane,
-            Sphere,
-            Line,
-            Point,
-            NoPoint,
-            AllPoints,
-            Other
-        }
-
-        public void SetQuadricType(double tol = 1E-6)
-        {
-            Type = QuadricType.Unknown;
             var A = new Matrix3x3(XSqdCoeff, XYCoeff / 2, XZCoeff / 2, XYCoeff / 2, YSqdCoeff / 2,
                 YZCoeff / 2, XZCoeff / 2, YZCoeff / 2, ZSqdCoeff);
             var M = new Matrix4x4(XSqdCoeff, XYCoeff / 2, XZCoeff / 2, XCoeff / 2,
@@ -1037,20 +1007,21 @@ namespace TVGL
                 {
                     if (!MDetSign)
                     {
-                        if (ANonZeroEigValsSameSign) Type = QuadricType.Ellipsoid;
-                        else Type = QuadricType.HyperboloidTwoSheets;
+                        if (ANonZeroEigValsSameSign)
+                            return QuadricType.Ellipsoid;
+                        else return QuadricType.HyperboloidTwoSheets;
                     }
                     else
                     {
-                        if (ANonZeroEigValsSameSign) Type = QuadricType.ImaginaryEllipsoid;
-                        else Type = QuadricType.HyperboloidOneSheet;
+                        if (ANonZeroEigValsSameSign) return QuadricType.ImaginaryEllipsoid;
+                        else return QuadricType.HyperboloidOneSheet;
                     }
                 }
 
                 else if (Mrank == 3)
                 {
-                    if (ANonZeroEigValsSameSign) Type = QuadricType.ImaginaryCone;
-                    else Type = QuadricType.Cone;
+                    if (ANonZeroEigValsSameSign) return QuadricType.ImaginaryCone;
+                    else return QuadricType.Cone;
                 }
             }
 
@@ -1058,40 +1029,40 @@ namespace TVGL
             {
                 if (Mrank == 4)
                 {
-                    if (ANonZeroEigValsSameSign) Type = QuadricType.EllipticParaboloid;
-                    else Type = QuadricType.HyperbolicParaboloid;
+                    if (ANonZeroEigValsSameSign) return QuadricType.EllipticParaboloid;
+                    else return QuadricType.HyperbolicParaboloid;
                 }
                 else if (Mrank == 3)
                 {
                     if (ANonZeroEigValsSameSign)
                     {
-                        if (MNonZeroEigValsSameSign) Type = QuadricType.ImaginaryEllipticCylinder;
-                        else Type = QuadricType.EllipticCylinder;
+                        if (MNonZeroEigValsSameSign) return QuadricType.ImaginaryEllipticCylinder;
+                        else return QuadricType.EllipticCylinder;
                     }
-                    else Type = QuadricType.HyperbolicCylinder;
+                    else return QuadricType.HyperbolicCylinder;
                 }
                 else if (Mrank == 2)
                 {
-                    if (ANonZeroEigValsSameSign) Type = QuadricType.ImaginaryIntersectingPlanes;
-                    else Type = QuadricType.IntersectingPlanes;
+                    if (ANonZeroEigValsSameSign) return QuadricType.ImaginaryIntersectingPlanes;
+                    else return QuadricType.IntersectingPlanes;
                 }
             }
 
             else if (Arank == 1)
             {
-                if (Mrank == 3) Type = QuadricType.ParabolicCylinder;
+                if (Mrank == 3) return QuadricType.ParabolicCylinder;
                 else if (Mrank == 2)
                 {
-                    if (MNonZeroEigValsSameSign) Type = QuadricType.ImaginaryParallelPlanes;
-                    else Type = QuadricType.ParallelPlanes;
+                    if (MNonZeroEigValsSameSign) return QuadricType.ImaginaryParallelPlanes;
+                    else return QuadricType.ParallelPlanes;
                 }
-                else if (Mrank == 1) Type = QuadricType.Plane;
+                else if (Mrank == 1) return QuadricType.Plane;
             }
-
             else
             {
-                if (Mrank == 2) Type = QuadricType.Plane;
+                if (Mrank == 2) return QuadricType.Plane;
             }
+            return QuadricType.Other;
         }
 
         public void SetTypeSpecificCoefficients()
