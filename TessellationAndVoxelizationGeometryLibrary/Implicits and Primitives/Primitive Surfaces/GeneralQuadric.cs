@@ -1012,7 +1012,7 @@ namespace TVGL
             Other
         }
 
-        public void SetQuadricType(double tol = 1E-6)
+        public void SetQuadricType(double tol = 1E-12)
         {
             Type = QuadricType.Unknown;
             var A = new Matrix3x3(XSqdCoeff, XYCoeff / 2, XZCoeff / 2, XYCoeff / 2, YSqdCoeff / 2,
