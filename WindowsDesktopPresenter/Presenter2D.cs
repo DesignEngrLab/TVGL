@@ -2,10 +2,10 @@
 using OxyPlot.Axes;
 using OxyPlot.Series;
 using OxyPlot.Wpf;
+using OxyPlot.SkiaSharp;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Xml.Serialization;
 using TVGL;
 using MarkerType = TVGL.MarkerType;
 
@@ -31,13 +31,24 @@ namespace WindowsDesktopPresenter
         /// <param name="height"></param>
         /// <param name="title"></param>
         /// <param name="polyMarker"></param>
-        public void SaveToPng(IEnumerable<Polygon> polygon, string fileName, int width, int height,
+        public void SaveToPng_WindowsDesktop(IEnumerable<Polygon> polygon, string fileName, int width, int height,
             string title = "", MarkerType markerType = MarkerType.None, Color lineColor = null)
         {
             var vectors = polygon.SelectMany(poly => poly.AllPaths);
             var window = new Window2DPlot(vectors, title, Plot2DType.Line, [true], markerType, lineColor);
-            var pngExporter = new PngExporter { Width = width, Height = height, Resolution = 96 };
+            var pngExporter = new OxyPlot.Wpf.PngExporter { Width = width, Height = height, Resolution = 96 };
             pngExporter.ExportToFile(window.Model, fileName);
+        }
+
+        public void SaveToPng(IEnumerable<Polygon> polygon, string fileName, int width, int height,
+            string title = "", MarkerType markerType = MarkerType.None, Color lineColor = null)
+        {
+            var vectors = polygon.SelectMany(poly => poly.AllPaths);
+            var model = new PlotModel { Title = title };
+            model.PlotData(vectors, Plot2DType.Line, [true], markerType, lineColor);
+            using var stream = System.IO.File.OpenWrite(fileName);
+            var writer = new OxyPlot.SkiaSharp.PngExporter { Width = width, Height = height, Dpi = 96};
+            writer.Export(model, stream);
         }
 
         /// <summary>
@@ -67,8 +78,8 @@ namespace WindowsDesktopPresenter
             //Then plot the inner polygons as areas with the background color to "erase" the inner areas of the holes in the polygons.
             if (outerBorder != null)
             {
-                window.AddAreaSeriesToModel(outerBorder.Path, markerType, lineColor, backgroundColor);
-                window.SetAxes(outerBorder.Path);
+                window.Model.AddAreaSeriesToModel(outerBorder.Path, markerType, lineColor, backgroundColor);
+                window.Model.SetAxes(outerBorder.Path);
             }
 
             //Plot the polygons from largest to smallest so that the smaller ones will be plotted on top of the larger ones.
@@ -78,20 +89,20 @@ namespace WindowsDesktopPresenter
             {
                 if (polygon.IsPositive)
                 {
-                    window.AddAreaSeriesToModel(polygon.Path, markerType, lineColor, fillColor);
+                    window.Model.AddAreaSeriesToModel(polygon.Path, markerType, lineColor, fillColor);
                 }
                 else
                 {
-                    window.AddAreaSeriesToModel(polygon.Path, markerType, lineColor, backgroundColor);
+                    window.Model.AddAreaSeriesToModel(polygon.Path, markerType, lineColor, backgroundColor);
                 }
             }
             if (outerBorder == null)
             {
                 var allOuterPaths = polygons.SelectMany(p => p.Path);
-                window.SetAxes(allOuterPaths);   
+                window.Model.SetAxes(allOuterPaths);   
             }
 
-            var pngExporter = new PngExporter { Width = width, Height = height, Resolution = 96 };
+            var pngExporter = new OxyPlot.Wpf.PngExporter { Width = width, Height = height, Resolution = 96 };
             pngExporter.ExportToFile(window.Model, fileName);
         }
 
