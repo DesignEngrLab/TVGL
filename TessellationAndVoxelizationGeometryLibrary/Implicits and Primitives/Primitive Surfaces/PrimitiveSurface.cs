@@ -940,6 +940,7 @@ namespace TVGL
             copy.Vertices = new HashSet<Vertex>();
             copy.InnerEdges = new HashSet<Edge>();
             copy.OuterEdges = new HashSet<Edge>();
+            copy.IsPositive = IsPositive;
             if (copyTessellationElements && Faces != null && Faces.Count != 0)
             {
                 var i = 0;
