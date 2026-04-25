@@ -430,6 +430,7 @@ namespace TVGL
             return closestPt;
         }
 
+
         public override double DistanceToPoint(Vector3 point)
         {
             Vector3 closestPt = ClosestPointOnSurfaceToPoint(point);
@@ -613,6 +614,21 @@ namespace TVGL
         Vector3 axis2 = Vector3.Null;
         Vector3 axis3 = Vector3.Null;
 
+
+
+        public void Negate()
+        {
+            xSqdCoeff = -xSqdCoeff;
+            ySqdCoeff = -ySqdCoeff;
+            zSqdCoeff = -zSqdCoeff;
+            xyCoeff = -xyCoeff;
+            xzCoeff = -xzCoeff;
+            yzCoeff = -yzCoeff;
+            xCoeff = -xCoeff;
+            yCoeff = -yCoeff;
+            zCoeff = -zCoeff;
+            w = -w;
+        }
 
         [JsonIgnore]
         public override string KeyString => "Quadric|" + XSqdCoeff.ToString("F5") + "|" +
