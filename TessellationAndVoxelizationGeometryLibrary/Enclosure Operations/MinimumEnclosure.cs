@@ -64,6 +64,38 @@ namespace TVGL
         }
 
         /// <summary>
+        /// Creates a bounding rectangle along the same directions as the input rectangle and a set of points.
+        /// If you want to "Expand" a rectangle while including its points, consider using 
+        /// BoundingRectangle.ExpandToNewRectangle.
+        /// </summary>
+        /// <param name="rect"></param>
+        /// <param name="points"></param>
+        /// <returns></returns>
+        public static BoundingRectangle BoundingRectangleAlong(BoundingRectangle rect, List<Vector2> points)
+        {
+            return BoundingRectangleAlong(rect.Direction1, rect.Direction2, points);
+        }
+
+        /// <summary>
+        /// Creates a bounding rectangle along the specified directions
+        /// </summary>
+        /// <param name="points"></param>
+        /// <returns></returns>
+        /// <exception cref="NotImplementedException"></exception>
+        public static BoundingRectangle BoundingRectangleAlong(Vector2 direction1, Vector2 direction2, List<Vector2> points)
+        {
+            var (d1Min, d1Max) = GetDistanceToExtremePoints(points, direction1, out var extremeLow1, out var extremeHigh1);
+            var (d2Min, d2Max) = GetDistanceToExtremePoints(points, direction2, out var extremeLow2, out var extremeHigh2);
+            //Points on side are ordered Direction1 Mins, Direction1 Maxs, Direction2 Mins, Direction2 Maxs,
+            var sidePoints = new List<Vector2>[] { extremeLow1, extremeHigh1, extremeLow2, extremeHigh2 };
+            var length1 = d1Max - d1Min;
+            var length2 = d2Max - d2Min;
+            var area = length1 * length2;
+            return new BoundingRectangle(direction1, direction2, d1Min, d1Max, d2Min, d2Max,
+               length1, length2, area, sidePoints);
+        }
+
+        /// <summary>
         /// Finds the minimum bounding box.
         /// </summary>
         /// <param name="solids">The solids.</param>
@@ -406,6 +438,23 @@ namespace TVGL
         /// <param name="topPoints">The top vertices.</param>
         /// <returns>System.Double.</returns>
         public static double GetLengthAndExtremePoints(this IEnumerable<Vector2> points, Vector2 direction2D,
+             out List<Vector2> bottomPoints,
+             out List<Vector2> topPoints)
+        {
+            var (min, max) = GetDistanceToExtremePoints(points, direction2D, out bottomPoints, out topPoints);
+            return max - min;
+        }
+
+        /// <summary>
+        /// Given a Direction, dir, this functions returns the min and max distance along this Direction
+        /// for the provided points as well as the points that represent the extremes.
+        /// </summary>
+        /// <param name="points"></param>
+        /// <param name="direction2D"></param>
+        /// <param name="bottomPoints"></param>
+        /// <param name="topPoints"></param>
+        /// <returns></returns>
+        public static (double min, double max) GetDistanceToExtremePoints(this IEnumerable<Vector2> points, Vector2 direction2D,
             out List<Vector2> bottomPoints,
             out List<Vector2> topPoints)
         {
@@ -433,7 +482,7 @@ namespace TVGL
                     maxD = distance;
                 }
             }
-            return maxD - minD;
+            return (minD, maxD);
         }
         #endregion
 

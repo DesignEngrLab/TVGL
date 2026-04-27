@@ -542,17 +542,30 @@ namespace TVGL
                 prim.CompletePostSerialization(ts);
 
             ts.HasUniformColor = true;
+            var defaultColor = new Color(Constants.DefaultColor);
             if (colors == null || colors.Length == 0)
-                ts.SolidColor = new Color(Constants.DefaultColor);
+                ts.SolidColor = defaultColor;
             else if (colors.Length == 1)
                 ts.SolidColor = colors[0];
             else
             {
                 ts.HasUniformColor = false;
-                for (int i = 0; i < colors.Length; i++)
-                    ts.Faces[i].Color = colors[i];
-                for (int i = colors.Length; i < ts.Faces.Length; i++)
-                    ts.Faces[i].Color = new Color(Constants.DefaultColor);
+                if (!tsBuildOptions.UsePrimitiveOriginalColorInsteadOfFaceColor)
+                {
+                    for (int i = 0; i < colors.Length; i++)
+                        ts.Faces[i].Color = colors[i];
+                    for (int i = colors.Length; i < ts.Faces.Length; i++)
+                        ts.Faces[i].Color = defaultColor;
+                }
+            } 
+
+            if (tsBuildOptions.UsePrimitiveOriginalColorInsteadOfFaceColor)
+            {
+                foreach (var prim in ts.Primitives)
+                {
+                    if (prim.OriginalColor != null) prim.SetColor(prim.OriginalColor);
+                    else prim.SetColor(defaultColor);
+                }
             }
 
             //Get the max min bounds and set tolerance
@@ -1407,11 +1420,23 @@ namespace TVGL
                 for (int i = 0; i < Edges.Length; i++)
                 {
                     Edge edge = Edges[i];
-                    var edgeNew = new Edge(
-                        copy.Vertices[edge.From.IndexInList],
-                        copy.Vertices[edge.To.IndexInList],
-                        copy.Faces[edge.OwnedFace.IndexInList],
-                        copy.Faces[edge.OtherFace.IndexInList], true);
+                    Edge edgeNew;
+                    if(edge.OtherFace == null)
+                    {
+                        edgeNew = new Edge(
+                            copy.Vertices[edge.From.IndexInList],
+                            copy.Vertices[edge.To.IndexInList],
+                            copy.Faces[edge.OwnedFace.IndexInList],
+                            null, true);
+                    }
+                    else
+                    {
+                        edgeNew = new Edge(
+                            copy.Vertices[edge.From.IndexInList],
+                            copy.Vertices[edge.To.IndexInList],
+                            copy.Faces[edge.OwnedFace.IndexInList],
+                            copy.Faces[edge.OtherFace.IndexInList], true);
+                    }
                     edgeNew.IndexInList = i;
                     edgeNew.Curvature = edge.Curvature;
                     edgeNew.PartOfConvexHull = edge.PartOfConvexHull;

@@ -1,5 +1,6 @@
 ﻿using OxyPlot;
 using OxyPlot.Series;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Windows;
@@ -68,11 +69,14 @@ namespace WindowsDesktopPresenter
         /// <param name="closeShape">if set to <c>true</c> [close shape].</param>
         /// <param name="marker">The marker.</param>
         public Window2DPlot(IEnumerable<IEnumerable<Vector2>> listOfArrayOfPoints, string title, Plot2DType plot2DType, IEnumerable<bool> closeShape,
-            MarkerType marker) : this(title)
+            MarkerType marker, Color color = null) : this(title)
         {
-            PlotData(listOfArrayOfPoints, plot2DType, closeShape, marker);
+            if (plot2DType == Plot2DType.Area)
+                throw new Exception("This function is not intended for Plot2DType.Area. LineColor and FillColor are required.");
+            PlotData(listOfArrayOfPoints, plot2DType, closeShape, marker, color);
             InitializeComponent();
         }
+
         /// <summary>
         ///     Initializes a new instance of the <see cref="Window2DPlot" /> class.
         ///     This version allows different markers to be set for each set of polygons.
@@ -110,8 +114,16 @@ namespace WindowsDesktopPresenter
             Model.InvalidatePlot(false);
         }
 
-
-        internal void PlotData(IEnumerable<IEnumerable<Vector2>> listOfArrayOfPoints, Plot2DType plot2DType, IEnumerable<bool> closePaths, MarkerType marker)
+        /// <summary>
+        /// Plots a line. If no line color is provided, it will alternate colors.
+        /// </summary>
+        /// <param name="listOfArrayOfPoints"></param>
+        /// <param name="plot2DType"></param>
+        /// <param name="closePaths"></param>
+        /// <param name="marker"></param>
+        /// <param name="color"></param>
+        internal void PlotData(IEnumerable<IEnumerable<Vector2>> listOfArrayOfPoints, Plot2DType plot2DType, IEnumerable<bool> closePaths,
+            MarkerType marker, Color color = null)
         {
             var allPoints = new List<Vector2>();
             var closedEnumerator = closePaths.GetEnumerator();
@@ -125,14 +137,12 @@ namespace WindowsDesktopPresenter
 
                 allPoints.AddRange(points);
                 if (plot2DType == Plot2DType.Line)
-                    AddLineSeriesToModel(points, isClosed, marker);
+                    AddLineSeriesToModel(points, isClosed, marker, color);
                 else
-                    AddScatterSeriesToModel(points, marker);
+                    AddScatterSeriesToModel(points, marker, color);
             }
             SetAxes(allPoints);
         }
-
-
 
 
         internal void PlotData(IEnumerable<IEnumerable<Vector2>> listOfListOfPoints1, IEnumerable<IEnumerable<Vector2>> listOfListOfPoints2, Plot2DType plot2DType, bool closeShape, MarkerType marker1, MarkerType marker2)
@@ -232,7 +242,7 @@ namespace WindowsDesktopPresenter
         /// <param name="points">The points.</param>
         /// <param name="closeShape">if set to <c>true</c> [close shape].</param>
         /// <param name="marker">The marker.</param>
-        private void AddLineSeriesToModel(IEnumerable<Vector2> points, bool closeShape, MarkerType marker, TVGL.Color color = null)
+        public void AddLineSeriesToModel(IEnumerable<Vector2> points, bool closeShape, MarkerType marker, TVGL.Color color = null)
         {
             AddLineSeriesToModel(PointsToDouble(points), closeShape, marker, color);
         }
@@ -256,6 +266,36 @@ namespace WindowsDesktopPresenter
                 series.Points.Add(new DataPoint(point[0], point[1]));
             if (closeShape) series.Points.Add(new DataPoint(points[0][0], points[0][1]));
             Model.Series.Add(series);
+        }
+
+        /// <summary>
+        /// Adds an Area Series to a model. Keep this public.
+        /// </summary>
+        /// <param name="points"></param>
+        /// <param name="marker"></param>
+        /// <param name="lineColor"></param>
+        /// <param name="fillColor"></param>
+        public void AddAreaSeriesToModel(IEnumerable<Vector2> points, MarkerType marker, Color lineColor, Color fillColor)
+        {
+            if (points == null || points.Count() < 3) return;
+            if (lineColor == null) lineColor = new Color(KnownColors.Black);
+            if (fillColor == null) fillColor = new Color(KnownColors.LightGray);
+
+            var areaSeries = new AreaSeries
+            {
+                Color = OxyColor.FromArgb(lineColor.A, lineColor.R, lineColor.G, lineColor.B), 
+                Fill = OxyColor.FromArgb(fillColor.A, fillColor.R, fillColor.G, fillColor.B),
+                MarkerType = (OxyPlot.MarkerType)(int)marker,
+                LineStyle = LineStyle.Solid,
+            };
+
+            foreach (var point in points)
+                //point[0] == x, point[1] == y
+                areaSeries.Points.Add(new DataPoint(point.X, point.Y));
+
+            //Close shape is required for fill.
+            areaSeries.Points.Add(new DataPoint(points.First().X, points.First().Y));
+            Model.Series.Add(areaSeries);
         }
 
         /// <summary>
@@ -293,7 +333,7 @@ namespace WindowsDesktopPresenter
         }
 
 
-        private void SetAxes(IEnumerable<Vector2> polygons)
+        internal void SetAxes(IEnumerable<Vector2> polygons)
         {
             if (!polygons.Any()) return;
             var minX = polygons.Min(p => p.X);

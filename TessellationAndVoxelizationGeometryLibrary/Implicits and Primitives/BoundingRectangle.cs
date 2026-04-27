@@ -13,6 +13,8 @@
 // ***********************************************************************
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
 
 
 
@@ -171,5 +173,34 @@ namespace TVGL
             return a.Area + b.Area - 2 * OverlappingArea(a, b);
         }
 
+        /// <summary>
+        /// Expands new bounding rectangle along its existing directions, given a set of new points.
+        /// The new rectangle includes the old rectangle points and is gauranteed to be no smaller than
+        /// the old rectangle.
+        /// </summary>
+        /// <param name="rect"></param>
+        /// <param name="points"></param>
+        /// <returns></returns>
+        public BoundingRectangle ExpandToNewRectangle(IEnumerable<Vector2> points)
+        {
+            //Create a new list, so we don't mutate the input.
+            var allPoints = new List<Vector2>(points);
+            //Since PointsOnSide is optional, we will only use it if it exists.
+            //Otherwise, we will use the corner points.
+            if (PointsOnSides != null && PointsOnSides.Length == 4 &&
+                PointsOnSides[0].Count > 0 && PointsOnSides[1].Count > 0 && 
+                PointsOnSides[2].Count > 0 && PointsOnSides[3].Count > 0)
+            {
+                allPoints.AddRange(PointsOnSides[0]);
+                allPoints.AddRange(PointsOnSides[1]);
+                allPoints.AddRange(PointsOnSides[2]);
+                allPoints.AddRange(PointsOnSides[3]);
+            }
+            else
+            {
+                allPoints.AddRange(CornerPoints());
+            }
+            return MinimumEnclosure.BoundingRectangleAlong(this, allPoints);
+        }
     }
 }
