@@ -120,7 +120,7 @@ namespace TVGL
         {
             if (squaredCoeff.IsNegligible())
             {
-                return (new ComplexNumber(-constant / linearCoeff), ComplexNumber.NaN);
+                return (new ComplexNumber(-constant / linearCoeff), new ComplexNumber(-constant / linearCoeff));
             }
             if ((constant / squaredCoeff).IsNegligible())
             {
@@ -128,20 +128,22 @@ namespace TVGL
             }
             var oneOverDenom = 1 / (2 * squaredCoeff);
             var radicalTerm = linearCoeff * linearCoeff - 4 * squaredCoeff * constant;  // more commonly known as b^2 - 4ac
-            if (radicalTerm < 0)  // then imaginary roots
+            if (radicalTerm.IsNegativeNonNegligible())  // then imaginary roots
             {
                 radicalTerm = Math.Sqrt(-radicalTerm);
                 radicalTerm *= oneOverDenom;
                 var negBTerm = -oneOverDenom * linearCoeff;
                 return (new ComplexNumber(negBTerm, -radicalTerm), new ComplexNumber(negBTerm, radicalTerm));
             }
-            else
+            if (radicalTerm.IsPositiveNonNegligible())  // then two distinct real roots
             {
-                radicalTerm = Math.Sqrt(radicalTerm);
+                radicalTerm = radicalTerm > 0 ? Math.Sqrt(radicalTerm) : 0;
                 radicalTerm *= oneOverDenom;
                 var negBTerm = oneOverDenom * linearCoeff;
                 return (new ComplexNumber(radicalTerm - negBTerm), new ComplexNumber(-radicalTerm - negBTerm));
             }
+            var singleRoot = new ComplexNumber(-linearCoeff * oneOverDenom, 0);
+            return (singleRoot, singleRoot);
         }
 
         /// <summary>

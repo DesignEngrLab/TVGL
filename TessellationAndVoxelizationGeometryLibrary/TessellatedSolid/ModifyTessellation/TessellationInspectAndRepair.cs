@@ -672,7 +672,7 @@ namespace TVGL
                 {
                     foreach (var adjFace in facesToCheck[i].AdjacentFaces)
                     {
-                        if (!adjFace._normal.IsNull())
+                        if (!adjFace._normal.IsNegligible())
                         {
                             facesToCheck[i]._normal = adjFace._normal;
                             facesToCheck.RemoveAt(i);

@@ -180,12 +180,20 @@ namespace TVGL
             var faceVertices = new Vertex[3];
             for (var i = 0; i < NumFacesTable[cubeType]; i++)
             {
+                var validFace = true;
                 for (var j = 0; j < 3; j++)
                 {
                     var vertexIndex = FaceVertexIndicesTable[cubeType][3 * i + j];
-                    faceVertices[j] = EdgeVertex[vertexIndex];
+                    var vertex = EdgeVertex[vertexIndex];
+                    if (vertex.Coordinates.IsNull())
+                    {
+                        validFace = false;
+                        break;
+                    }
+                    faceVertices[j] = vertex;
                 }
-                faces.Add(new TriangleFace(faceVertices));
+                if (validFace)
+                    faces.Add(new TriangleFace(faceVertices));
             }
         }
 

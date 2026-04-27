@@ -24,24 +24,26 @@ namespace TVGL
     /// </summary>
     public static partial class ModifyTessellation
     {
-        /// <summary>
-        /// Adjusts the position of kept vertex.
-        /// </summary>
-        /// <param name="vertexA">The keep vertex.</param>
-        /// <param name="vertexB">The other vertex.</param>
-        /// <returns>Vector3.</returns>
+
+        internal static Vector3 DetermineIntermediateVertexPosition(Edge edge)
+        {
+            var fromVertex = edge.From;
+            var toVertex = edge.To;
+            var primitive1 = edge.OwnedFace?.BelongsToPrimitive;
+            var primitive2 = edge.OtherFace == null ? primitive1 : edge.OtherFace.BelongsToPrimitive;
+            if (primitive1 == null) primitive1 = primitive2;
+            if (primitive1 == primitive2)
+                return DetermineIntermediateVertexPosition(edge.From.Coordinates, edge.To.Coordinates, primitive1);
+            else
+                return DetermineIntermediateVertexPosition(edge.From.Coordinates, edge.To.Coordinates, primitive1, primitive2);
+        }
+
         internal static Vector3 DetermineIntermediateVertexPosition(Vector3 pt1, Vector3 pt2,
-            PrimitiveSurface primitive = null)
+            PrimitiveSurface primitive)
         {
             if (primitive == null || primitive is Plane) // then average positions
                 return 0.5 * (pt1 + pt2);
             //else we're going to project the average position onto the primitive surface
-            if (primitive is Sphere sphere)
-                // the direction from the center to the average of the two points is the direction to
-                // move out to the sphere surface. Note we can cheese the average by the Normalize
-                // function because the direction is all we care about, but we need to find the
-                // relative movements so, the points are each subtracted from the center
-                return sphere.Center + sphere.Radius * (pt1 + pt2 - 2 * sphere.Center).Normalize();
             if (primitive is Cylinder cylinder)
             {
                 var anchorToPt1 = pt1 - cylinder.Anchor;
@@ -75,17 +77,76 @@ namespace TVGL
                  axisT1 * (pt2 - pt2DiskCenter)).Normalize();
             }
             if (primitive is GeneralQuadric quadric)
-            {
-                var p1Normal = quadric.GetNormalAtPoint(pt1);
-                var p2Normal = quadric.GetNormalAtPoint(pt2);
-                var pCenter = 0.5 * (pt1 + pt2);
-                var planeNormal = (p1Normal.Cross(p2Normal)).Normalize();
-                var outwardDir = (pt2 - pt1).Cross(planeNormal);
-                // the point we seek is farthest from the line connecting pt1 to pt2
-                // we don't know exactly where it is along the line, but we know its
-                // normal should be inline with the outwardDir.
-                return quadric.PointsWithGradient(outwardDir).MinBy(q => q.DistanceSquared(pCenter));
+            {   // this one is a bit complicated. The obvious solution to divide the line in half and then project 
+                // it to the quadric is not the best, but it is kept here as a fallback at the end. Instead, we first
+                // find the plane made by the normal of the midpoint and the original line segment (it would seem better
+                // to use the endpoints' normals, but this was not the case). From this plane, we slice to find the conic
+                // on that plane made by the quadric, then find the point on the curve between the end points that is farthest
+                // from the original line. This point has the gradient (normal of the conic) defined by the outwardDirc
+                var midpoint = 0.5 * (pt1 + pt2);
+                var prevVector = pt2 - pt1;
+                var midPtNormal = quadric.GetNormalAtPoint(midpoint);
+                var planenormal = midPtNormal.Cross(prevVector).Normalize();
+                var outwarddir = prevVector.Cross(planenormal).Normalize();
+                var plane = new Plane(planenormal.Dot(pt1), planenormal);
+                var midPoint2d = midpoint.ConvertTo2DCoordinates(planenormal, out _);
+                var outwarddir2d = outwarddir.ConvertTo2DCoordinates(planenormal, out _);
+                var conic = GeneralConicSection.CreateFromQuadric(quadric, plane);
+                var posSuccess = conic.PointsAtGivenGradient(outwarddir2d, out var posPt);
+                var negSuccess = conic.PointsAtGivenGradient(-outwarddir2d, out var negPt);
+                var oddAxis = GetOddPrincipalAxis(quadric);
+                var stationaryPt = quadric.StationaryPoint;
+                var returnPt = Vector3.Null;
+                if (oddAxis.Dot(midpoint - stationaryPt) < 0)
+                {
+                    oddAxis = -oddAxis; // make sure the odd axis is pointing in the same direction as the midpoint.
+                }
+                if (posSuccess && (!negSuccess || posPt.DistanceSquared(midPoint2d) < negPt.DistanceSquared(midPoint2d)))
+                {
+                    var posPt3 = posPt.ConvertTo3DLocation(plane.AsTransformFromXYPlane);
+                    //if (oddAxis.IsNull() || oddAxis.Dot(posPt3 - stationaryPt) > 0)
+                        returnPt = posPt3;
+                }
+                else if (negSuccess)
+                {
+                    var negPt3 = negPt.ConvertTo3DLocation(plane.AsTransformFromXYPlane);
+                    //if (oddAxis.IsNull() || oddAxis.Dot(negPt3 - stationaryPt) > 0)
+                        returnPt = negPt3;
+                }
+
+                // fallback plan 1
+                var midPointProjections = quadric.LineIntersection(midpoint, outwarddir);
+
+                if (midPointProjections.Any())
+                {
+                    // Fallback: project the midpoint onto the quadric along the surface normal
+                    var bestT = double.PositiveInfinity;
+                    Vector3 result = midpoint;
+                    foreach (var (intersection, t) in midPointProjections)
+                    {
+                        if (Math.Abs(t) < Math.Abs(bestT))
+                        {
+                            bestT = t;
+                            result = intersection;
+                        }
+                    }
+                    //if (oddAxis.IsNull() || oddAxis.Dot(result - stationaryPt) > 0)
+                    if (returnPt.IsNull() || returnPt.DistanceSquared(midpoint) > result.DistanceSquared(midpoint))
+                        returnPt = result;
+                }
+                // fall back plan 2
+                var result2 = new Plane(stationaryPt, oddAxis).LineIntersection(midpoint, outwarddir).First().intersection;
+
+                if (returnPt.IsNull() || returnPt.DistanceSquared(midpoint) > result2.DistanceSquared(midpoint))
+                    returnPt = result2;
+                return returnPt;
             }
+            if (primitive is Sphere sphere)
+                // the direction from the center to the average of the two points is the direction to
+                // move out to the sphere surface. Note we can cheese the average by the Normalize
+                // function because the direction is all we care about, but we need to find the
+                // relative movements so, the points are each subtracted from the center
+                return sphere.Center + sphere.Radius * (pt1 + pt2 - 2 * sphere.Center).Normalize();
             if (primitive is Torus torus)
             {
                 var anchorToPt1 = pt1 - torus.Center;
@@ -94,6 +155,32 @@ namespace TVGL
                 var ringPt2 = torus.ClosestPointOnSurfaceToPoint(pt2);
                 throw new NotImplementedException();
             }
+            throw new NotImplementedException();
+        }
+
+
+        internal static Vector3 GetOddPrincipalAxis(GeneralQuadric quadric)
+        {
+            // The principal axes are the axes along which the rate of change of the gradient is maximized or minimized.
+            // This can be found by solving for the eigenvectors of the Hessian matrix of the quadric function.
+            // In particular we want the odd principal axis, which is the one that is different in sign from the others.
+            // This is the same as the cone or hyperboloid axis.
+            Matrix3x3 coeffs = quadric.GetHessian();
+            var eigenVals = coeffs.GetEigenValuesAndVectors(out var eigenVecs);
+
+            for (int i = 0; i < eigenVals.Length; i++)
+            {
+                if (eigenVals[i].Real < 0 && eigenVals.Aggregate(1.0, (a, b) => a * b.Real) < 0 ||
+                    eigenVals[i].Real > 0 && eigenVals.Aggregate(1.0, (a, b) => a * b.Real) > 0)
+                    return new Vector3(eigenVecs[i][0].Real, eigenVecs[i][1].Real, eigenVecs[i][2].Real);
+            }
+            return Vector3.Null;
+        }
+
+
+
+        private static Vector3 DetermineIntermediateVertexPosition(Vector3 coordinates1, Vector3 coordinates2, PrimitiveSurface primitive1, PrimitiveSurface primitive2)
+        {
             throw new NotImplementedException();
         }
 

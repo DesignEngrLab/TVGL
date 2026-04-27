@@ -769,4 +769,32 @@ namespace TVGL
         XOR
     }
 
+    public enum QuadricType
+    {
+        Unknown,
+        Ellipsoid,
+        ImaginaryEllipsoid,
+        EllipticParaboloid,
+        HyperbolicParaboloid,
+        HyperboloidOneSheet,
+        HyperboloidTwoSheets,
+        EllipticCylinder,
+        ImaginaryEllipticCylinder,
+        ParabolicCylinder,
+        HyperbolicCylinder,
+        Cone,
+        ImaginaryCone,
+        IntersectingPlanes,
+        ImaginaryIntersectingPlanes,
+        ParallelPlanes,
+        ImaginaryParallelPlanes,
+        Plane,
+        Sphere,
+        Line,
+        Point,
+        NoPoint,
+        AllPoints,
+        Other
+    }
+
 }

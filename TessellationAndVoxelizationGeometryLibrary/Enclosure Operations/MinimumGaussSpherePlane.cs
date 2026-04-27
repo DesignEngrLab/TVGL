@@ -142,7 +142,7 @@ namespace TVGL
         {
             var center = (p1 + p2) / 2;
             var plane = new Plane(center, center);
-            if (plane.Normal.IsNull())
+            if (plane.Normal.IsNegligible())
             {  // the two points midpoint happens to be the origin
                 plane.Normal = orientingVector.Normalize();
                 plane.DistanceToOrigin = 0;
@@ -154,6 +154,5 @@ namespace TVGL
             }
             return plane;
         }
-
     }
 }

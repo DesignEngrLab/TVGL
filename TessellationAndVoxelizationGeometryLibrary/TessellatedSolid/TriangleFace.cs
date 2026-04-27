@@ -239,9 +239,13 @@ namespace TVGL
             get
             {
                 if (_normal.IsNull())
-                    _normal = ((B.Coordinates - A.Coordinates)
-                        .Cross(C.Coordinates - A.Coordinates))
-                        .Normalize();
+                {
+                    _normal = (B.Coordinates - A.Coordinates)
+                        .Cross(C.Coordinates - A.Coordinates);
+                    if (_normal.LengthSquared().IsNegligible())
+                        _normal = Vector3.Zero;
+                    else _normal.Normalize();
+                }
                 return _normal;
             }
         }
@@ -306,12 +310,9 @@ namespace TVGL
         {
             get
             {
-                if (AB != null)
-                    yield return AB;
-                if (BC != null)
-                    yield return BC;
-                if (CA != null)
-                    yield return CA;
+                yield return AB;
+                yield return BC;
+                yield return CA;
             }
         }
 
