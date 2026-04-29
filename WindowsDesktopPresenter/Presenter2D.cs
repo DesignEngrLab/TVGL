@@ -40,6 +40,16 @@ namespace WindowsDesktopPresenter
             pngExporter.ExportToFile(window.Model, fileName);
         }
 
+        /// <summary>
+        /// Saves the polygons as lines to a PNG of the given width and height. 
+        /// Uses SkiaSharp for rendering, which is faster than the WPF renderer and supports more platforms (Linux).
+        /// Since it does not rely on a GPU, it works on Windows Servers.
+        /// <param name="polygon"></param>
+        /// <param name="fileName"></param>
+        /// <param name="width"></param>
+        /// <param name="height"></param>
+        /// <param name="title"></param>
+        /// <param name="polyMarker"></param>
         public void SaveToPng(IEnumerable<Polygon> polygon, string fileName, int width, int height,
             string title = "", MarkerType markerType = MarkerType.None, Color lineColor = null)
         {
