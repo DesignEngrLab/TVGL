@@ -62,27 +62,27 @@ namespace TVGL
             if (faces == null || faces.Count() == 0) return;
 
             //Check the normal alignment ONLY if the face area is not zero.
-            if (!LargestFace.Area.IsNegligible())
-            {
-                var faceNormal = LargestFace.Normal;
-                if (this is Plane plane)
-                {
-                    if (faceNormal.Dot(plane.Normal) < 0)
-                    {
-                        plane.Normal = -plane.Normal;
-                        plane.DistanceToOrigin = -plane.DistanceToOrigin;
-                    }
-                }
-                else if (this is not UnknownRegion && this is not Prismatic)
-                {   // can't check unknown or prismatic since these RELY on faces for determining normal
-                    var primNormalAtFirst = GetNormalAtPoint(LargestFace.Center);
-                    if (faceNormal.Dot(primNormalAtFirst) < 0)
-                    {
-                        if (IsPositive.HasValue) IsPositive = !IsPositive;
-                        else IsPositive = false;
-                    }
-                }
-            }
+            //if (!LargestFace.Area.IsNegligible())
+            //{
+            //    var faceNormal = LargestFace.Normal;
+            //    if (this is Plane plane)
+            //    {
+            //        if (faceNormal.Dot(plane.Normal) < 0)
+            //        {
+            //            plane.Normal = -plane.Normal;
+            //            plane.DistanceToOrigin = -plane.DistanceToOrigin;
+            //        }
+            //    }
+            //    else if (this is not UnknownRegion && this is not Prismatic)
+            //    {   // can't check unknown or prismatic since these RELY on faces for determining normal
+            //        var primNormalAtFirst = GetNormalAtPoint(LargestFace.Center);
+            //        if (faceNormal.Dot(primNormalAtFirst) < 0)
+            //        {
+            //            if (IsPositive.HasValue) IsPositive = !IsPositive;
+            //            else IsPositive = false;
+            //        }
+            //    }
+            //}
             SetVerticesFromFaces();
         }
 
