@@ -276,6 +276,44 @@ namespace TVGL
         /// </summary>
         [JsonExtensionData]
         protected IDictionary<string, JToken> serializationData;
+
+        /// <summary>
+        /// Generates a JSON representation of the assembly tree structure from a SolidAssembly object.
+        /// This function recursively traverses the assembly hierarchy and creates a hierarchical JSON object.
+        /// </summary>
+        /// <param name="assembly">The SolidAssembly object to convert to JSON</param>
+        /// <returns>A JSON string representing the assembly tree</returns>
+        public string GenerateAssemblyTreeJson()
+        {
+            var treeObject = BuildAssemblyTreeNode(RootAssembly);
+            return JsonConvert.SerializeObject(treeObject, Formatting.Indented);
+        }
+
+        /// <summary>
+        /// Recursively builds a JSON-serializable tree node for an assembly and its sub-assemblies.
+        /// </summary>
+        /// <param name="subAssembly">The SubAssembly to process</param>
+        /// <param name="globalAssembly">The global SolidAssembly reference for accessing solids</param>
+        /// <returns>A dictionary representing the assembly node with its hierarchy</returns>
+        public dynamic BuildAssemblyTreeNode(SubAssembly subAssembly)
+        {
+            var node = new
+            {
+                Name = string.IsNullOrEmpty(subAssembly.Name) ? "Root Assembly" : subAssembly.Name,
+                RefID = subAssembly.RefID,
+                Type = "SubAssembly",
+                SubAssemblies = subAssembly.SubAssemblies.Select(sa =>
+                    BuildAssemblyTreeNode(sa.assembly)).ToList(),
+                Solids = subAssembly.Solids.Select((s, index) => new
+                {
+                    Index = index,
+                    SolidIndex = s.solid,
+                    SolidName = Solids[s.solid].Name,
+                    SolidType = Solids[s.solid].GetType().Name
+                }).ToList()
+            };
+            return node;
+        }
     }
 
     //A wrapper class for solids that recursively contains subassemblies and solid parts. 

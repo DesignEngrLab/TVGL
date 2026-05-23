@@ -192,10 +192,11 @@ namespace TVGL
             }
 
             var maxVolume = significantSolids.Max(p => p.ConvexHull.Volume);
-            var maxNumFaces = significantSolids.Max(p => p.NumberOfFaces);
+            //Number of faces can be super high, just because of a single fillet - or threads within a screw. Don't use it as a measure of significance. User primitive count instead.
+            var maxNumPrimitives = significantSolids.Max(p => p.NumberOfPrimitives);
             //Minimum number of primitives is either 4 OR if no solids have 4 primitives, it is the max number of primitives
-            var minPrimitivesRequired = Math.Min(significantSolids.Max(p => p.NumberOfPrimitives), 4);
-            significantSolids = significantSolids.Where(p => (p.ConvexHull.Volume > maxVolume * .1 || p.NumberOfFaces > maxNumFaces * .3) && p.NumberOfPrimitives >= minPrimitivesRequired);
+            var minPrimitivesRequired = Math.Min(maxNumPrimitives, 4);
+            significantSolids = significantSolids.Where(p => (p.ConvexHull.Volume > maxVolume * .1 || p.NumberOfPrimitives > maxNumPrimitives * .3) && p.NumberOfPrimitives >= minPrimitivesRequired);
             if (significantSolids.Count() > 1)
                 Debug.WriteLine("Model contains " + significantSolids.Count() + " significant solid bodies. Attempting analysis on largest part in assembly.");
             else
