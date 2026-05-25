@@ -58,7 +58,7 @@ namespace TVGL
         /// </summary>
         /// <param name="ts">The ts.</param>
         /// <param name="targetNumberOfFaces">The number of new faces to add.</param>
-        /// <param name="maxLength">The maximum length.</param>
+        /// <param name="maxLength">The maximum length of the resulting edges.</param>
         public static void Complexify(TessellatedSolid ts, int targetNumberOfFaces, double maxLength)
         {
             Complexify(ts.Edges, out var addedEdges, out var addedVertices, out var addedFaces, targetNumberOfFaces, maxLength);
@@ -85,8 +85,9 @@ namespace TVGL
         /// <param name="targetNumberOfFaces">The desired total number of faces in the mesh after the operation. Must be a non-negative integer.</param>
         /// <param name="maxSurfaceDeviation">The maximum allowable length for edges to be considered for subdivision. Must be a positive value.</param>
         public static void Complexify(IEnumerable<Edge> edges, out List<Edge> addedEdges, out List<Vertex> addedVertices,
-            out List<TriangleFace> addedFaces, int targetNumberOfFaces, double maxSurfaceDeviation)
+            out List<TriangleFace> addedFaces, int targetNumberOfFaces, double maxEdgeLength)
         {
+            var maxEdgeLengthSquared = maxEdgeLength * maxEdgeLength;
             //var edgeLengthList = edges.OrderByDescending(e => e.Length).ToArray();
             var initEdgePlot = edges.Select(e => new[] { e.From.Coordinates, e.To.Coordinates }).ToArray();
             var edgeQueue = new PriorityQueue<(Edge, Vector3), double>(new ReverseSort());
@@ -97,8 +98,10 @@ namespace TVGL
             addedFaces = new List<TriangleFace>();
             var iterations = targetNumberOfFaces > 0 ? (int)Math.Ceiling(targetNumberOfFaces / 2.0) : targetNumberOfFaces;
             var edgeCounter = edgeQueue.Count;
-            while (iterations-- != 0 && edgeQueue.TryDequeue(out (Edge edge, Vector3 mpt) c, out _))
+            while (iterations-- != 0 && edgeQueue.TryDequeue(out (Edge edge, Vector3 mpt) c, out var edgeLSqd))
             {
+                if (edgeLSqd < maxEdgeLengthSquared)
+                    break;
                 //var map = edgeLengthList.IndexOf(c.edge);
                 //Console.WriteLine(map);
                 //if (iterations % 1000 <= 0)
@@ -176,11 +179,7 @@ namespace TVGL
         private static void EnqueueEdgeAndFindNewPoint(PriorityQueue<(Edge, Vector3), double> edgeQueue, Edge edge)
         {
             var midPoint = DetermineIntermediateVertexPosition(edge);
-            var lineUnitVector = edge.UnitVector;
-            var t = lineUnitVector.Dot(midPoint - edge.From.Coordinates);
-            var pointOnLine = edge.From.Coordinates + t * lineUnitVector;
-            var distanceToSurf = (midPoint - pointOnLine).LengthSquared();
-            var newLength = 2 * distanceToSurf + 2 * t * t + edge.Vector.LengthSquared() - 2 * t * edge.Length;
+            var newLength = Math.Max((edge.From.Coordinates - midPoint).LengthSquared(), (edge.To.Coordinates - midPoint).LengthSquared());
             edgeQueue.Enqueue((edge, midPoint), newLength);
         }
     }
