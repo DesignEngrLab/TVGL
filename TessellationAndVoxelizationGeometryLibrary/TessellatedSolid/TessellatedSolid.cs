@@ -236,6 +236,12 @@ namespace TVGL
                 writer.WritePropertyName("ReferenceIndex");
                 writer.WriteValue(index);
             }
+            if (CADIndex >= 0)
+            {
+                writer.WritePropertyName("CADIndex");
+                writer.WriteValue(CADIndex);
+            }
+
             writer.WritePropertyName("TessellationError");
             writer.WriteValue(TessellationError);
 
@@ -498,6 +504,10 @@ namespace TVGL
                     case "ReferenceIndex":
                         ts.ReferenceIndex = (int)reader.ReadAsInt32();
                         index = ts.ReferenceIndex;
+                        break;
+                    case "CADIndex":
+                        ts.CADIndex = (int)reader.ReadAsInt32();
+                        index = ts.CADIndex;
                         break;
                     case "Colors":
                         // to make saving colors for faces both quick and compact, we use a little trick to 
@@ -1452,6 +1462,7 @@ namespace TVGL
             TessellationInspectAndRepair.DefineBorders(copy);
             TessellationInspectAndRepair.CharacterizeBorders(copy);
             copy.ReferenceIndex = ReferenceIndex;
+            copy.CADIndex = CADIndex;
             return copy;
         }
 

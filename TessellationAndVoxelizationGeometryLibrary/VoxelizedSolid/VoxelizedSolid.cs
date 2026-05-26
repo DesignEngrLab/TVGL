@@ -553,6 +553,7 @@ namespace TVGL
             result.HasUniformColor = HasUniformColor;
             result.Language = Language;
             result.Name = Name;
+            result.CADIndex = CADIndex;
             result.ReferenceIndex = ReferenceIndex;
             result.SameTolerance = SameTolerance;
             result.SolidColor = SolidColor;
@@ -597,6 +598,7 @@ namespace TVGL
             ts.HasUniformColor = HasUniformColor;
             ts.Language = Language;
             ts.Name = Name;
+            ts.CADIndex = CADIndex;
             ts.ReferenceIndex = ReferenceIndex;
             ts.SameTolerance = SameTolerance;
             ts.SolidColor = SolidColor;
