@@ -115,6 +115,7 @@ namespace TVGL
                 origLeftFace?.ReplaceVertex(toVertex, addedVertex);
                 origRightFace?.ReplaceVertex(toVertex, addedVertex);
 
+
                 TriangleFace newLeftFace = null, newRightFace = null;
                 if (leftFarVertex != null)
                     newLeftFace = new TriangleFace(toVertex, addedVertex, leftFarVertex)
@@ -124,6 +125,8 @@ namespace TVGL
                     { BelongsToPrimitive = origRightFace.BelongsToPrimitive };
                 toVertex.Faces.Remove(origLeftFace);
                 toVertex.Faces.Remove(origRightFace);
+
+                if (newLeftFace.Normal.Z < 0 || newRightFace.Normal.Z < 0) ;
 
                 var inlineEdge = new Edge(addedVertex, toVertex, newRightFace, newLeftFace, true, edgeCounter++);
                 toVertex.Edges.Remove(c.edge);
@@ -175,6 +178,7 @@ namespace TVGL
 
         private static void EnqueueEdgeAndFindNewPoint(PriorityQueue<(Edge, Vector3), double> edgeQueue, Edge edge)
         {
+            if (edge.IndexInList == 724) ;
             var midPoint = DetermineIntermediateVertexPosition(edge);
             var lineUnitVector = edge.UnitVector;
             var t = lineUnitVector.Dot(midPoint - edge.From.Coordinates);
