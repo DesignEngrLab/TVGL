@@ -34,6 +34,12 @@ namespace TVGL
         /// <value>The index</value>
         public int ReferenceIndex { get; set; }
 
+        //Reference index from CAD model. For the solid, this should be a part index.
+        //Note that ReferenceIndex above is an internal reference, whereas this is set only from CAD conversions.
+        //If you use both, ReferenceIndex would refer to the body index, whereas CADIndex would be the part.
+        //You can have multiple bodies belonging to one part - especially with sheets.
+        public int CADIndex { get; set; }
+
         /// <summary>
         /// Gets the center.
         /// </summary>

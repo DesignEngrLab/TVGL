@@ -285,7 +285,8 @@ namespace TVGL
         /// <returns>A JSON string representing the assembly tree</returns>
         public string GenerateAssemblyTreeJson()
         {
-            var treeObject = BuildAssemblyTreeNode(RootAssembly);
+            //Zero depth is the assembly root
+            var treeObject = BuildAssemblyTreeNode(RootAssembly, depth: 0, 0);
             return JsonConvert.SerializeObject(treeObject, Formatting.Indented);
         }
 
@@ -295,23 +296,54 @@ namespace TVGL
         /// <param name="subAssembly">The SubAssembly to process</param>
         /// <param name="globalAssembly">The global SolidAssembly reference for accessing solids</param>
         /// <returns>A dictionary representing the assembly node with its hierarchy</returns>
-        public dynamic BuildAssemblyTreeNode(SubAssembly subAssembly)
+        public dynamic BuildAssemblyTreeNode(SubAssembly subAssembly, int depth, int instanceIndex)
         {
+            var debug = false;
+            //The depth at this point is the depth of the parent, so all children here are +1;
+            if (depth == 0 && debug)
+            {
+                //Print the start
+                Console.WriteLine($"Product Structure: {subAssembly.Name}");
+            }
+
+            var solids = new List<object>();
+            foreach (var s in subAssembly.Solids)
+            {
+                var solid = new
+                {
+                    Name = Solids[s.partIndex].Name,
+                    CADIndex = Solids[s.partIndex].CADIndex,
+                    ReferenceIndex = s.partIndex,
+                    InstanceIndex = instanceIndex++,
+                    Depth = depth + 1,
+                    SolidType = Solids[s.partIndex].GetType().Name
+                };
+                solids.Add(solid);
+                if (debug)
+                    Console.WriteLine($"{new string(' ', solid.Depth * 8)}Depth:{solid.Depth} Part: {solid.Name} (RefID: {solid.CADIndex})");
+            }
+
+            var subAssemblies = new List<object>();
+            foreach (var sa in subAssembly.SubAssemblies)
+            {
+                //print the subassembly, before we print the solids within it (from recursive call)
+                if (debug)
+                    Console.WriteLine($"{new string(' ', (depth + 1) * 8)}Depth:{depth + 1} SubAssembly:{sa.assembly.Name} (RefID: {sa.assembly.CADIndex})");
+                
+                var childNode = BuildAssemblyTreeNode(sa.assembly, depth + 1, instanceIndex);
+                subAssemblies.Add(childNode);
+            }
+
             var node = new
             {
-                Name = string.IsNullOrEmpty(subAssembly.Name) ? "Root Assembly" : subAssembly.Name,
-                RefID = subAssembly.RefID,
+                Name = string.IsNullOrEmpty(subAssembly.Name) ? "" : subAssembly.Name,
+                CADIndex = subAssembly.CADIndex,
+                Depth = depth,
                 Type = "SubAssembly",
-                SubAssemblies = subAssembly.SubAssemblies.Select(sa =>
-                    BuildAssemblyTreeNode(sa.assembly)).ToList(),
-                Solids = subAssembly.Solids.Select((s, index) => new
-                {
-                    Index = index,
-                    SolidIndex = s.solid,
-                    SolidName = Solids[s.solid].Name,
-                    SolidType = Solids[s.solid].GetType().Name
-                }).ToList()
+                Solids = solids,
+                SubAssemblies = subAssemblies
             };
+
             return node;
         }
     }
@@ -331,7 +363,7 @@ namespace TVGL
         /// <summary>
         /// Reference ID from CAD conversion. Multiple sub-assemblies may have the same reference ID and/or name if they are duplicates.
         /// </summary>
-        public int RefID { get; set; }
+        public int CADIndex { get; set; }
 
         /// <summary>
         /// Gets or sets the solid assembly global information.
@@ -368,7 +400,7 @@ namespace TVGL
         /// Gets or sets the solids.
         /// </summary>
         /// <value>The solids.</value>
-        public List<(int solid, Matrix4x4 backtransform)> Solids { get; set; }
+        public List<(int partIndex, Matrix4x4 backtransform)> Solids { get; set; }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SubAssembly"/> class.
@@ -376,11 +408,11 @@ namespace TVGL
         /// <param name="globalAssembly">The global assembly.</param>
         public SubAssembly(SolidAssembly globalAssembly, string name = "", int refID = -1 )
         {
-            RefID = refID;
+            CADIndex = refID;
             Name = name;
             SolidAssemblyGlobalInfo = globalAssembly;
-            SubAssemblies = new List<(SubAssembly assembly, Matrix4x4 backtransform)>();
-            Solids = new List<(int solid, Matrix4x4 backtransform)>();
+            SubAssemblies = [];
+            Solids = [];
         }
 
         /// <summary>
@@ -411,7 +443,7 @@ namespace TVGL
         /// <returns><c>true</c> if this instance is empty; otherwise, <c>false</c>.</returns>
         public bool IsEmpty()
         {
-            return !AllParts().Any();
+            return AllParts().Count == 0;
         }
 
         /// <summary>
