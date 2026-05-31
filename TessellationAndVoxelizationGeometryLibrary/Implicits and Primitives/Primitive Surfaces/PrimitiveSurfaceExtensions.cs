@@ -198,7 +198,7 @@ namespace TVGL
             else if (s is Torus torus) return torus.Center;
             else if (s is Sphere sphere) return sphere.Center;
             else if (s is Capsule capsule) return 0.5 * (capsule.Anchor1 + capsule.Anchor2);
-            else if (s is GeneralQuadric gq) return gq.Center;
+            else if (s is GeneralQuadric gq) return gq.StationaryPoint;
             else return GetCenterOfMass(s.Faces);
         }
 
@@ -410,7 +410,44 @@ namespace TVGL
         /// <exception cref="Exception">Thrown if an unexpected case occurs where two edges are removed from a triangle, which indicates an invalid
         /// tessellation state.</exception>
         public static void TrimTessellationToPositiveVertices(this PrimitiveSurface surface,
-            IDictionary<Vertex, double> vertexDistances, IDictionary<Edge, double> edgeIntersections = null)
+            IDictionary<Vertex, double> vertexDistances)
+        {
+            var edgeIntersections = new Dictionary<Edge, double>();
+
+            foreach (var edge in surface.InnerEdges.Concat(surface.OuterEdges))
+            {
+                var fromDist = vertexDistances[edge.From];
+                var toDist = vertexDistances[edge.To];
+                if (fromDist < 0 && toDist < 0)
+                    continue; // both negative, so skip
+                if (fromDist >= 0 && toDist >= 0)
+                    continue; // both non-negative, so skip
+                // edge is crossing, so add the intersection to the dictionary for use in the main function below
+                edgeIntersections.Add(edge, edge.Length * (fromDist / (fromDist - toDist)));
+            }
+            var removeVertices = vertexDistances.Where(kvp => kvp.Value < 0).Select(kvp => kvp.Key).ToHashSet();
+            TrimTessellationToPositiveVertices(surface, edgeIntersections, removeVertices);
+        }
+
+
+        /// <summary>
+        /// Trims the tessellation of the surface by removing faces and edges associated with vertices that have
+        /// negative distance values, retaining only those with positive or zero distances. New vertices, edges,
+        /// and faces are made at the boundarys where edges cross from negative to non-negative distances.
+        /// </summary>
+        /// <remarks>This method modifies the input surface in place. After execution, only the portions
+        /// of the surface associated with non-negative vertex distances remain. The method is typically used to clip or
+        /// trim a mesh based on a scalar field or distance function.</remarks>
+        /// <param name="surface">The primitive surface whose tessellation will be modified to exclude faces and edges with negative vertex
+        /// distances.</param>
+        /// <param name="edgeIntersections">A mapping of edges to their corresponding intersection values. This is used to 
+        /// determine where new vertices should be created along edges that cross from negative to non-negative distances. Distances are
+        /// not normalized (vary from 0 to edge length) and start from the "from" vertex.</param>
+        /// <param name="removeVertices">A set of vertices that have negative distance values and should be removed from the tessellation.</param>
+        /// <exception cref="Exception">Thrown if an unexpected case occurs where two edges are removed from a triangle, which indicates an invalid
+        /// tessellation state.</exception>
+        public static void TrimTessellationToPositiveVertices(this PrimitiveSurface surface,
+            IDictionary<Edge, double> edgeIntersections, HashSet<Vertex> removeVertices)
         {
             var edgesToRemove = new HashSet<Edge>(); // we keep track of edges to remove to remove their
                                                      // reference from the vertices later
@@ -420,108 +457,123 @@ namespace TVGL
                                                              // most are replaced by facesToAdd below (unless they are all negative)
                                                              // we keep track of these to remove their references from the vertices later
             var facesToAdd = new List<TriangleFace>();  // added to the primitive surface with the existing in SetFacesAndVertices
+
+         
+   //         var fGroups = new List<TriangleFace>[4];
+   //         var fcolors = new Color[]{ new Color(KnownColors.LightGreen),new Color(KnownColors.Yellow),
+   //         new Color(KnownColors.Orange),new Color(KnownColors.Red)};
+   //         for (int i = 0; i < 4; i++)
+   //             fGroups[i] = new List<TriangleFace>();
+   //         foreach (var f in surface.Faces)
+   //         {
+   //             var count = f.Vertices.Sum(v => removeVertices.Contains(v) ? 1 : 0);
+   //             fGroups[count].Add(f);
+   //         }
+   //         for (int i = 0; i < 4; i++)
+   //             foreach (var f in fGroups[i])
+   //                 f.Color = fcolors[i];
+   //         //Presenter.ShowAndHang(surface.Faces);
+   //Presenter.ShowAndHang(  //[surface.InnerEdges.Select(e=>new[] { e.From.Coordinates, e.To.Coordinates } ),
+   //         edgeIntersections.Keys.Select(e=>new[] { e.From.Coordinates, e.To.Coordinates } ),lineThicknesses: [3],
+   //             colors: [new Color(KnownColors.Black)],
+   //             faces:surface.Faces
+   //             );
             foreach (var face in surface.Faces)
             {
-                if (!vertexDistances.TryGetValue(face.A, out var aDist))
-                    aDist = double.MinValue;
-                if (!vertexDistances.TryGetValue(face.B, out var bDist))
-                    bDist = double.MinValue;
-                if (!vertexDistances.TryGetValue(face.C, out var cDist))
-                    cDist = double.MinValue;
-                if (aDist >= 0 && bDist >= 0 && cDist >= 0)
-                    continue; // all positive, so keep face as is
+                var aRemoved = removeVertices.Contains(face.A);
+                var bRemoved = removeVertices.Contains(face.B);
+                var cRemoved = removeVertices.Contains(face.C);
+                if (!aRemoved && !bRemoved && !cRemoved)
+                    continue; // all keep vertices, so skip to next
                 facesToRemove.Add(face);
-                var thisPatchRemovedEdges = new List<Edge>();
-                if (aDist < 0)
+                if (aRemoved && bRemoved && cRemoved)
+                    continue; // all remove vertices, so - yes- remove face (as above, but then leave)
+                //face.Color = new Color(KnownColors.Red);
+                //Presenter.ShowAndHang(surface.Faces.Take(40).Concat(new[] { face }));
+                Edge thisPatchRemovedEdge = null;
+                if (aRemoved)
                 {
-                    if (bDist < 0) // then edge AB is below and is to be removed
+                    if (bRemoved) // then edge AB is below (both vertices are to be removed), so it is to be removed
                     {
                         edgesToRemove.Add(face.AB);
-                        thisPatchRemovedEdges.Add(face.AB);
+                        thisPatchRemovedEdge = face.AB;
                     }
                     else
                     {  // edge AB is crossing, and B is above, so replace
                         if (alreadyModifiedEdges.Add(face.AB))
-                            ReplaceNegativeVertexOnEdge(face.AB, face.A, face.B, aDist, bDist, edgeIntersections);
+                            ReplaceNegativeVertexOnEdge(face.AB, face.A, edgeIntersections);
                     }
-                    if (cDist < 0)
+                    if (cRemoved)
                     {
                         edgesToRemove.Add(face.CA);
-                        thisPatchRemovedEdges.Add(face.CA);
+                        thisPatchRemovedEdge = face.CA;
                     }
                     else
                     {  // edge CA is crossing, and C is above, so replace
                         if (alreadyModifiedEdges.Add(face.CA))
-                            ReplaceNegativeVertexOnEdge(face.CA, face.A, face.C, aDist, cDist, edgeIntersections);
+                            ReplaceNegativeVertexOnEdge(face.CA, face.A, edgeIntersections);
                     }
                 }
-                if (bDist < 0)
+                if (bRemoved)
                 {
                     // edge AB already handled above if both are negative, just need to check
                     // if A is positive and the edge is to be modified
-                    if (aDist >= 0 && alreadyModifiedEdges.Add(face.AB))
-                        ReplaceNegativeVertexOnEdge(face.AB, face.B, face.A, bDist, aDist, edgeIntersections);
-                    if (cDist < 0)
+                    if (!aRemoved && alreadyModifiedEdges.Add(face.AB))
+                        ReplaceNegativeVertexOnEdge(face.AB, face.B, edgeIntersections);
+                    if (cRemoved)
                     {
                         edgesToRemove.Add(face.BC);
-                        thisPatchRemovedEdges.Add(face.BC);
+                        thisPatchRemovedEdge = face.BC;
                     }
                     else
                     {  // edge BC is crossing, and C is above, so replace
                         if (alreadyModifiedEdges.Add(face.BC))
-                            ReplaceNegativeVertexOnEdge(face.BC, face.B, face.C, bDist, cDist, edgeIntersections);
+                            ReplaceNegativeVertexOnEdge(face.BC, face.B, edgeIntersections);
                     }
                 }
-                if (cDist < 0)
+                if (cRemoved)
                 {
                     // now the three edge removals would have happened in the above
                     // conditions, so here just need to check if A or B are positive
                     // and the edge is to be modified
-                    if (aDist >= 0 && alreadyModifiedEdges.Add(face.CA))
-                        ReplaceNegativeVertexOnEdge(face.CA, face.C, face.A, cDist, aDist, edgeIntersections);
-                    if (bDist >= 0 && alreadyModifiedEdges.Add(face.BC))
-                        ReplaceNegativeVertexOnEdge(face.BC, face.C, face.B, cDist, bDist, edgeIntersections);
+                    if (!aRemoved && alreadyModifiedEdges.Add(face.CA))
+                        ReplaceNegativeVertexOnEdge(face.CA, face.C, edgeIntersections);
+                    if (!bRemoved && alreadyModifiedEdges.Add(face.BC))
+                        ReplaceNegativeVertexOnEdge(face.BC, face.C, edgeIntersections);
+                    //face.Color = new Color(KnownColors.DarkOliveGreen);
+                    //Presenter.ShowAndHang(surface.Faces);
                 }
-                if (thisPatchRemovedEdges.Count == 3)
-                    continue; // entire face is removed
-                if (thisPatchRemovedEdges.Count == 2)
-                    throw new Exception("This case should not happen - two edges removed from a triangle implies all three vertices are negative.");
-                if (thisPatchRemovedEdges.Count == 1)
-                {  // one edge removed, so create one new face
-                    var orderedFaceVerts = GetVerticesFromModifyEdges(face, thisPatchRemovedEdges[0], out var oldVertIndex);
-                    var newFace = new TriangleFace(orderedFaceVerts.Take(3), true);
-                    facesToAdd.Add(newFace);
-                    if (oldVertIndex == 1)
-                        newFace.AddEdge(new Edge(newFace.C, newFace.A, newFace, null, true));
-                    else
-                        newFace.AddEdge(new Edge(newFace.B, newFace.C, newFace, null, true));
-                    if (face.AB != thisPatchRemovedEdges[0])
-                        newFace.AddEdge(face.AB);
-                    if (face.BC != thisPatchRemovedEdges[0])
-                        newFace.AddEdge(face.BC);
-                    if (face.CA != thisPatchRemovedEdges[0])
-                        newFace.AddEdge(face.CA);
-                }
-                else //if (thisPatchRemovedEdges.Count==0)
+                if (thisPatchRemovedEdge == null)
                 {
-                    // no edges removed, so must be two crossing edges, so create two new faces
-                    // find the one edge that is kept
+                    // no edges removed means that two new faces must be created find the one edge that is kept
                     var orderedFaceVerts = GetVerticesFromModifyEdges(face, null, out var oldVertIndex);
                     var newFace = new TriangleFace(orderedFaceVerts.Take(3), true);
-                    newFace.AddEdge(face.AB);
+
                     facesToAdd.Add(newFace);
+                    newFace.AddEdge(face.AB);  // how do you know that face.AB is part of newFace? because orderedFaceVerts
+                                               // would have started with that
+                    if (face.AB.OwnedFace == face)
+                        face.AB.OwnedFace = newFace;
+                    else face.AB.OtherFace = newFace;
                     var innerEdge = new Edge(newFace.C, newFace.A, newFace, null, true);
                     newFace.AddEdge(innerEdge);
                     if (oldVertIndex == 0)
                     {
-                        newFace.AddEdge(new Edge(newFace.B, newFace.C, newFace, null, true));
+                        newFace.AddEdge(new Edge(newFace.B, newFace.C, newFace, null, true)); // this is the border edge
+                                                                                              // so, no need to do any more here
                         newFace = new TriangleFace(orderedFaceVerts.Skip(2), true);
                         facesToAdd.Add(newFace);
                         newFace.AddEdge(face.BC);
+                        if (face.BC.OwnedFace == face)
+                            face.BC.OwnedFace = newFace;
+                        else face.BC.OtherFace = newFace;
                     }
                     else if (oldVertIndex == 1)
                     {
                         newFace.AddEdge(face.BC);
+                        if (face.BC.OwnedFace == face)
+                            face.BC.OwnedFace = newFace;
+                        else face.BC.OtherFace = newFace;
                         newFace = new TriangleFace(orderedFaceVerts.Skip(2), true);
                         facesToAdd.Add(newFace);
                         newFace.AddEdge(new Edge(newFace.A, newFace.B, newFace, null, true));
@@ -529,26 +581,57 @@ namespace TVGL
                     else // oldVertIndex ==2
                     {
                         newFace.AddEdge(face.BC);
+                        if (face.BC.OwnedFace == face)
+                            face.BC.OwnedFace = newFace;
+                        else face.BC.OtherFace = newFace;
                         newFace = new TriangleFace(orderedFaceVerts.Skip(2).Concat([orderedFaceVerts[0]]), true);
                         facesToAdd.Add(newFace);
                         newFace.AddEdge(new Edge(newFace.B, newFace.C, newFace, null, true));
                     }
                     newFace.AddEdge(face.CA);
+                    if (face.CA.OwnedFace == face)
+                        face.CA.OwnedFace = newFace;
+                    else face.CA.OtherFace = newFace;
                     newFace.AddEdge(innerEdge);
+                    innerEdge.OtherFace = newFace;
                 }
-                foreach (var f in facesToAdd)
-                    if (f.BC == null) ;
+                else
+                {  // one edge removed, so create one new face
+                    var orderedFaceVerts = GetVerticesFromModifyEdges(face, thisPatchRemovedEdge, out var keptVertex);
+                    var newFace = new TriangleFace(orderedFaceVerts.Take(3), true);
+                    facesToAdd.Add(newFace);
+                    Edge newBorderEdge;
+                    if (keptVertex == 1) // then vertex B (A is 0, C is 2) is the one that is kept, so edges AB and BC are
+                        // clipped above but not delete. Therefore, we need a new CA edge
+                        newBorderEdge = new Edge(newFace.C, newFace.A, newFace, null, true);
+                    else // then keptvertex A or C so edges BC and CA are clipped above but not delete. But, (this is really
+                         // confusing) for the new face, it is alway the second ede (BC) that needs to be recreated
+                        newBorderEdge = new Edge(newFace.B, newFace.C, newFace, null, true);
+                    newFace.AddEdge(newBorderEdge);
+                    foreach (var e in face.Edges)
+                    {
+                        if (e != thisPatchRemovedEdge)
+                        {
+                            newFace.AddEdge(e);
+                            if (e.OwnedFace == face)
+                                e.OwnedFace = newFace;
+                            else e.OtherFace = newFace;
+                        }
+                    }
+                }
             }
             // edgesToRemove ,facesToRemove,facesToAdd
             surface.Faces.ExceptWith(facesToRemove);
             surface.SetFacesAndVertices(surface.Faces.Concat(facesToAdd), true);
             surface.DefineInnerOuterEdges();
             foreach (var removeFace in facesToRemove)
-                foreach (var v in surface.Vertices)
+                foreach (var v in removeFace.Vertices)
                     v.Faces.Remove(removeFace);
             foreach (var removeEdge in edgesToRemove)
-                foreach (var v in surface.Vertices)
-                    v.Edges.Remove(removeEdge);
+            {
+                removeEdge.To.Edges.Remove(removeEdge);
+                removeEdge.From.Edges.Remove(removeEdge);
+            }
             ReindexVertices(surface);
         }
 
@@ -566,6 +649,14 @@ namespace TVGL
                 v.IndexInList = i++;
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="face"></param>
+        /// <param name="removedEdge"></param>
+        /// <param name="oldVertIndex">the highest vertex index that was not cut. If removedEdge is not null, then 
+        /// this is the only vertex index that is not cut.</param>
+        /// <returns></returns>
         private static List<Vertex> GetVerticesFromModifyEdges(TriangleFace face, Edge removedEdge, out int oldVertIndex)
         {
             var result = new List<Vertex>();
@@ -591,14 +682,10 @@ namespace TVGL
             return result;
         }
 
-        private static Vertex ReplaceNegativeVertexOnEdge(Edge edge, Vertex negV, Vertex posV, double negDist, double posDist,
-            IDictionary<Edge, double> edgeIntersections)
+
+        private static Vertex ReplaceNegativeVertexOnEdge(Edge edge, Vertex negV, IDictionary<Edge, double> edgeIntersections)
         {
-            Vector3 position;
-            if (edgeIntersections == null)
-                position = posV.Coordinates + (negV.Coordinates - posV.Coordinates) * (posDist / (posDist - negDist));
-            else
-                position = edge.From.Coordinates + edge.Vector * edgeIntersections[edge];
+            var position = edge.From.Coordinates + edge.UnitVector * edgeIntersections[edge];
             var newVertex = new Vertex(position);
             if (edge.To == negV) edge.To = newVertex;
             else edge.From = newVertex;
@@ -1119,6 +1206,18 @@ namespace TVGL
 
 
         #endregion
+
+
+
+        public static Polygon GetAs2DPolygon(this PrimitiveSurface surface)
+        {
+            var polygons = new List<Polygon>();
+            var vertexLoops = surface.OuterEdges.MakeEdgePaths(true,
+                new EdgePathLoopsAroundInputFaces(surface.Faces)).Select(ep => ep.GetVertices().ToList());
+            foreach (var loop in vertexLoops)
+                polygons.Add(new Polygon(surface.TransformFrom3DTo2D(loop.Select(v => v.Coordinates), true)));
+            return polygons.CreateShallowPolygonTrees(false).First();
+        }
 
         private static IEnumerable<(Vector3 intersection, double lineT)> GetPrimitiveAndLineIntersections(PrimitiveSurface surface, double xCoord,
          double yCoord, double zCoord)

@@ -11,11 +11,13 @@
 // </copyright>
 // <summary></summary>
 // ***********************************************************************
+using Microsoft.Extensions.Options;
 using StarMathLib;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Security.Principal;
 using System.Text.Json.Serialization;
 
 namespace TVGL
@@ -115,6 +117,36 @@ namespace TVGL
             init => w = value;
         }
         private double w;
+
+        /// <summary>
+        /// Specifies the type of quadric represented.
+        /// </summary>
+        private QuadricType type = QuadricType.Unknown;
+        public QuadricType Type
+        {
+            get
+            {
+                if (type == QuadricType.Unknown)
+                    type = SetQuadricType(XSqdCoeff, YSqdCoeff, ZSqdCoeff, XYCoeff,
+                        XZCoeff, YZCoeff, XCoeff, YCoeff, ZCoeff, W);
+                return type;
+            }
+            set { type = value; }
+        }
+
+
+        /// <summary>
+        /// Represent quadric specific coefficients
+        /// For plane, a,b,c are plane normal components and d is the distance from the origin.
+        /// For parallel planes, a,b,c, and d describe the mid-plane while e is the distance between the two planes.
+        /// ...
+        /// </summary>
+        public double a;
+        public double b;
+        public double c;
+        public double d;
+        public double e;
+
         /// <summary>
         /// Gets all the coefficients as an enumerable in the order listed above.
         public IEnumerable<double> Coefficients
@@ -284,13 +316,15 @@ namespace TVGL
         /// <returns>A Vector3.</returns>
         public override Vector3 GetNormalAtPoint(Vector3 point)
         {
-            var gradient = GetGradient(point).Normalize();
+            if (point.IsNull()) return Vector3.Null;
+            var gradient = GetGradient(point);
 
-            if (!gradient.Length().IsPositiveNonNegligible()) return GetNormalAtUmbilicPoint(point);
+            if (gradient.Length().IsNegligible())
+                gradient = GetNormalAtStationaryPoint(point);
 
             if (IsPositive.GetValueOrDefault(true))
-                return gradient;
-            else return -gradient;
+                return gradient.Normalize();
+            else return -gradient.Normalize();
         }
 
         /// <summary>
@@ -314,23 +348,26 @@ namespace TVGL
                 + W);
         }
 
-        private Vector3 GetNormalAtUmbilicPoint(Vector3 point)
+        private Vector3 GetNormalAtStationaryPoint(Vector3 point)
         {
-            // At an umbilic point, the normal is zero, so we need to find the direction of maximum increase.
+            // At a stationary point, the normal is zero, so we need to find the direction of maximum increase.
             // We assume that the quadric field is not flat everywhere
 
-            // Return a normal at a point slightly offset from the umbilic point
-            Vector3 normal = Vector3.Zero;
+            // Return a normal at a point slightly offset from the stationary point
             double delta = 1E-6; // small offset distance
             int iters = 0;
-            while (!normal.Length().IsPositiveNonNegligible() && iters < 100)
+            Vector3 gradient = Vector3.Zero;
+            while (!gradient.Length().IsPositiveNonNegligible() && iters < 100)
             {
                 var random = new Random();
-                normal = GetNormalAtPoint(point + delta * new Vector3(random.NextDouble(), random.NextDouble(), random.NextDouble()).Normalize());
+                gradient = GetGradient(point + delta * new Vector3(random.NextDouble(), random.NextDouble(), random.NextDouble()));
                 iters++;
             }
-            return normal;
+            if (IsPositive.GetValueOrDefault(true))
+                return gradient;
+            else return -gradient;
         }
+
         private Vector3 GetNearbyPointOnQuadric(Vector3 anchor)
         {
             Vector3 normal = GetNormalAtPoint(anchor);
@@ -343,13 +380,10 @@ namespace TVGL
             while (!intersections.GetEnumerator().MoveNext() && iters++ < 100)
             {
                 //This is the distance to the tangent point on the normal to the level set.
-                t = -normal.Dot(normal) / GetNormalAtPoint(normal).Dot(normal);
+                t = normal.Dot(normal) / ((new Vector3(XCoeff, YCoeff, ZCoeff) - GetNormalAtPoint(normal)).Dot(normal));
+                var tangencyCheck = normal.Dot(GetNormalAtPoint(newAnchor + t * normal));
                 newAnchor = newAnchor + t * normal;
                 normal = GetNormalAtPoint(newAnchor);
-                if (normal.Length() == 0)
-                {
-                    normal = GetNormalAtUmbilicPoint(newAnchor);
-                }
                 intersections = LineIntersection(newAnchor, normal);
             }
             if (!intersections.GetEnumerator().MoveNext()) return newAnchor;
@@ -396,12 +430,13 @@ namespace TVGL
             return closestPt;
         }
 
+
         public override double DistanceToPoint(Vector3 point)
         {
             Vector3 closestPt = ClosestPointOnSurfaceToPoint(point);
 
             //scaling the quadric value by the norm of the normal vector to get the approximate distance locally
-            if (closestPt == Vector3.Null) return DistanceToPointQuick(point);
+            if (closestPt.IsNull()) return DistanceToPointQuick(point);
 
             return Math.Sign(QuadricValue(point)) * point.Distance(closestPt);
         }
@@ -420,7 +455,7 @@ namespace TVGL
         protected override void CalculateIsPositive()
         {
             if (Faces == null || !Faces.Any() || Area.IsNegligible()) return;
-            isPositive = LargestFace.Normal.Dot(LargestFace.Center - Center) > 0;
+            isPositive = LargestFace.Normal.Dot(LargestFace.Center - StationaryPoint) > 0;
         }
 
         protected override void SetPrimitiveLimits()
@@ -433,33 +468,28 @@ namespace TVGL
         /// <summary>
         /// Finds the points on the quadric that has a gradient in the same direction as
         /// the specified gradient vector. This input does not have to be normalized.
-        /// If onlyAlignedDir is true, then only the points where the gradient is in the 
-        /// same direction as the input gradient will be returned. 
-        /// If false, then points where the gradient is in the opposite direction will also be returned.
         /// </summary>
-        /// <remarks>The method determines the anchor point and direction of the line using the quadric's
-        /// coefficients and the provided gradient vector. Ensure that the gradient vector is non-zero to avoid
-        /// undefined behavior.</remarks>
-        /// <param name="gradient">The gradient vector that defines the direction of the line for which intersection points with the surface
-        /// are calculated. Must not be the zero vector.</param>
-        /// <returns>An enumerable collection of <see cref="Vector3"/> points representing the intersection points of the line
-        /// with the quadric surface. The collection may be empty if there are no intersections.</returns>
-        public IEnumerable<Vector3> PointsWithGradient(Vector3 gradient, bool onlyAlignedDir = false)
+        /// <param name="gradient"></param>
+        /// <param name="point"></param>
+        /// <returns></returns>
+        public bool PointsAtGivenGradient(Vector3 gradient, out Vector3 point)
         {
             var c = new Vector3(-XCoeff, -YCoeff, -ZCoeff);
             var gradMatrix = new Matrix3x3(
                 2 * XSqdCoeff, XYCoeff, XZCoeff,
                 XYCoeff, 2 * YSqdCoeff, YZCoeff,
             XZCoeff, YZCoeff, 2 * ZSqdCoeff);
-            Matrix3x3.Invert(gradMatrix, out var invGradMatrix);
+            if (!Matrix3x3.Invert(gradMatrix, out var invGradMatrix))
+            {
+                point = Vector3.Null;
+                return false;
+            }
             var anchor = invGradMatrix.Multiply(c);
             var dir = invGradMatrix.Multiply(gradient).Normalize();
-            if (onlyAlignedDir)
-                return LineIntersection(anchor, dir)
-                    .Where(x => GetGradient(x.intersection).Dot(gradient) > 0)
-                    .Select(x => x.intersection);
-            else
-                return LineIntersection(anchor, dir).Select(x => x.intersection);
+            point = LineIntersection(anchor, dir)
+                .Where(x => GetGradient(x.intersection).Dot(gradient) > 0)
+                .Select(x => x.intersection).First();
+            return true;
         }
 
         /// <summary>
@@ -482,40 +512,47 @@ namespace TVGL
                 + XYCoeff * anchor.X * anchor.Y + XZCoeff * anchor.X * anchor.Z + YZCoeff * anchor.Y * anchor.Z
                 + XCoeff * anchor.X + YCoeff * anchor.Y + ZCoeff * anchor.Z + W;
             (var root1, var root2) = PolynomialSolve.Quadratic(a, b, c);
-
             if (root1.IsRealNumber && root1.Real.IsPracticallySame(root2.Real))
-            {
-                var t = 0.5 * (root1.Real + root2.Real);
-                yield return (anchor + t * direction, root1.Real);
-                yield break;
-            }
-            if (root1.IsRealNumber)
                 yield return (anchor + root1.Real * direction, root1.Real);
-            if (root2.IsRealNumber)
+            else if (root1.IsRealNumber)
+            {
+                yield return (anchor + root1.Real * direction, root1.Real);
                 yield return (anchor + root2.Real * direction, root2.Real);
+            }
+            //else
+            //    yield return (Vector3.Null, double.PositiveInfinity);
+        }
+
+        public bool PracticallyOnSurface(Vector3 point, double tolerance = Constants.BaseTolerance)
+        {
+            var magGradient = GetGradient(point).Length();
+            // Use max(gradient, 1) to prevent the tolerance from collapsing to zero
+            // near vertices/tips where the gradient vanishes (e.g. tip of a hyperboloid)
+            return QuadricValue(point).IsNegligible(tolerance * Math.Max(magGradient, 1.0));
         }
 
         /// <summary>
-        /// The is the mathematical center of the quadric. It is not the centroid of the faces.
-        /// It is the location where the gradient of the quadric function is zero.
+        /// The is the mathematical center of the quadric is referred to as the stationary point.
+        /// It is not the centroid of the faces, but rather the point where the quadric function has
+        /// a zero gradient.
         /// It would be the center of an ellipsoid, but for other quadrics, it is ...?
         /// Desmos it up!
         /// </summary>
         /// 
         [JsonIgnore]
-        public Vector3 Center
+        public Vector3 StationaryPoint
         {
             get
             {
-                if (center.IsNull())
+                if (staionaryPoint.IsNull())
                 {
                     Matrix3x3 coeffs = GetHessian();
                     // the center is defined where the gradient is zero for the quadric function
                     // this produces a system of 3 equations with 3 unknowns
                     var b = new Vector3(-XCoeff, -YCoeff, -ZCoeff);
-                    center = coeffs.Solve(b);
+                    staionaryPoint = coeffs.Solve(b);
                 }
-                return center;
+                return staionaryPoint;
             }
         }
 
@@ -527,14 +564,14 @@ namespace TVGL
                 2 * ZSqdCoeff * point.Z + XZCoeff * point.X + YZCoeff * point.Y + ZCoeff);
         }
 
-        private Matrix3x3 GetHessian()
+        public Matrix3x3 GetHessian()
         {
             return new Matrix3x3(2 * XSqdCoeff, XYCoeff, XZCoeff,
                                        XYCoeff, 2 * YSqdCoeff, YZCoeff,
                                        XZCoeff, YZCoeff, 2 * ZSqdCoeff);
         }
 
-        Vector3 center = Vector3.Null;
+        Vector3 staionaryPoint = Vector3.Null;
 
         [JsonIgnore]
         public Vector3 Axis1
@@ -577,6 +614,21 @@ namespace TVGL
         Vector3 axis2 = Vector3.Null;
         Vector3 axis3 = Vector3.Null;
 
+
+
+        public void Negate()
+        {
+            xSqdCoeff = -xSqdCoeff;
+            ySqdCoeff = -ySqdCoeff;
+            zSqdCoeff = -zSqdCoeff;
+            xyCoeff = -xyCoeff;
+            xzCoeff = -xzCoeff;
+            yzCoeff = -yzCoeff;
+            xCoeff = -xCoeff;
+            yCoeff = -yCoeff;
+            zCoeff = -zCoeff;
+            w = -w;
+        }
 
         [JsonIgnore]
         public override string KeyString => "Quadric|" + XSqdCoeff.ToString("F5") + "|" +
@@ -931,6 +983,146 @@ namespace TVGL
             curvatureVector *= radius;
             return (tangent, curvatureVector, point + radius * curvatureVector,
                 radius);
+        }
+
+        public void RemoveSmallCoefficents(double tolerance = 1E-3)
+        {
+            this.xSqdCoeff = xSqdCoeff.IsNegligible(tolerance) ? 0 : xSqdCoeff;
+            this.ySqdCoeff = ySqdCoeff.IsNegligible(tolerance) ? 0 : ySqdCoeff;
+            this.zSqdCoeff = zSqdCoeff.IsNegligible(tolerance) ? 0 : zSqdCoeff;
+            this.xyCoeff = xyCoeff.IsNegligible(tolerance) ? 0 : xyCoeff;
+            this.xzCoeff = xzCoeff.IsNegligible(tolerance) ? 0 : xzCoeff;
+            this.yzCoeff = yzCoeff.IsNegligible(tolerance) ? 0 : yzCoeff;
+            this.xCoeff = xCoeff.IsNegligible(tolerance) ? 0 : xCoeff;
+            this.yCoeff = yCoeff.IsNegligible(tolerance) ? 0 : yCoeff;
+            this.zCoeff = zCoeff.IsNegligible(tolerance) ? 0 : zCoeff;
+            this.w = w.IsNegligible(tolerance) ? 0 : w;
+        }
+
+        public static QuadricType SetQuadricType(GeneralQuadric q, double tol = 1E-12)
+        => SetQuadricType(q.XSqdCoeff, q.YSqdCoeff, q.ZSqdCoeff, q.XYCoeff,
+            q.XZCoeff, q.YZCoeff, q.XCoeff, q.YCoeff, q.ZCoeff, q.W, tol);
+
+        public static QuadricType SetQuadricType(double XSqdCoeff, double YSqdCoeff, double ZSqdCoeff, double XYCoeff,
+            double XZCoeff, double YZCoeff, double XCoeff, double YCoeff, double ZCoeff, double W, double tol = 1E-12)
+        {
+            var A = new Matrix3x3(XSqdCoeff, XYCoeff / 2, XZCoeff / 2, XYCoeff / 2, YSqdCoeff / 2,
+                YZCoeff / 2, XZCoeff / 2, YZCoeff / 2, ZSqdCoeff);
+            var M = new Matrix4x4(XSqdCoeff, XYCoeff / 2, XZCoeff / 2, XCoeff / 2,
+                XYCoeff / 2, YSqdCoeff, YZCoeff / 2, YCoeff / 2,
+                XZCoeff / 2, YZCoeff / 2, ZSqdCoeff, ZCoeff / 2,
+                XCoeff / 2, YCoeff / 2, ZCoeff / 2, W);
+
+            var AEigvals = A.GetEigenValues().Select(e => e.Real);
+            var MEigvals = M.GetEigenValues().Select(e => e.Real);
+            int numPosAEigvals = AEigvals.Count(e => e.IsPositiveNonNegligible(tol));
+            int Arank = AEigvals.Count(e => !e.IsNegligible(tol));
+            int Mrank = MEigvals.Count(e => !e.IsNegligible(tol));
+            bool MDetSign = (MEigvals.Count(e => e < 0) % 2) == 0;
+            bool ANonZeroEigValsSameSign = AEigvals.Where(e => !e.IsNegligible(tol)).All(e => e > 0) || AEigvals.Where(e => !e.IsNegligible(tol)).All(e => e < 0);
+            bool MNonZeroEigValsSameSign = MEigvals.Where(e => !e.IsNegligible(tol)).All(e => e > 0) || MEigvals.Where(e => !e.IsNegligible(tol)).All(e => e < 0);
+
+            if (Arank == 3)
+            {
+                if (Mrank == 4)
+                {
+                    if (!MDetSign)
+                    {
+                        if (ANonZeroEigValsSameSign)
+                            return QuadricType.Ellipsoid;
+                        else return QuadricType.HyperboloidTwoSheets;
+                    }
+                    else
+                    {
+                        if (ANonZeroEigValsSameSign) return QuadricType.ImaginaryEllipsoid;
+                        else return QuadricType.HyperboloidOneSheet;
+                    }
+                }
+
+                else if (Mrank == 3)
+                {
+                    if (ANonZeroEigValsSameSign) return QuadricType.ImaginaryCone;
+                    else return QuadricType.Cone;
+                }
+            }
+
+            else if (Arank == 2)
+            {
+                if (Mrank == 4)
+                {
+                    if (ANonZeroEigValsSameSign) return QuadricType.EllipticParaboloid;
+                    else return QuadricType.HyperbolicParaboloid;
+                }
+                else if (Mrank == 3)
+                {
+                    if (ANonZeroEigValsSameSign)
+                    {
+                        if (MNonZeroEigValsSameSign) return QuadricType.ImaginaryEllipticCylinder;
+                        else return QuadricType.EllipticCylinder;
+                    }
+                    else return QuadricType.HyperbolicCylinder;
+                }
+                else if (Mrank == 2)
+                {
+                    if (ANonZeroEigValsSameSign) return QuadricType.ImaginaryIntersectingPlanes;
+                    else return QuadricType.IntersectingPlanes;
+                }
+            }
+
+            else if (Arank == 1)
+            {
+                if (Mrank == 3) return QuadricType.ParabolicCylinder;
+                else if (Mrank == 2)
+                {
+                    if (MNonZeroEigValsSameSign) return QuadricType.ImaginaryParallelPlanes;
+                    else return QuadricType.ParallelPlanes;
+                }
+                else if (Mrank == 1) return QuadricType.Plane;
+            }
+            else
+            {
+                if (Mrank == 2) return QuadricType.Plane;
+            }
+            return QuadricType.Unknown;
+        }
+
+        public void SetTypeSpecificCoefficients()
+        {
+            if (Type == QuadricType.Plane)
+            {
+                double normalizer = Math.Sqrt(XCoeff * XCoeff + YCoeff * YCoeff + ZCoeff * ZCoeff);
+                a = XCoeff / normalizer;
+                b = YCoeff / normalizer;
+                c = ZCoeff / normalizer;
+                d = W / normalizer;
+            }
+            if (Type == QuadricType.ParallelPlanes)
+            {
+                double normalizer = Math.Sqrt(Math.Abs(XSqdCoeff + YSqdCoeff + ZSqdCoeff));
+                a = Math.Sqrt(Math.Abs(XSqdCoeff)) / normalizer;
+                d = XCoeff / (2 * a);
+                b = YCoeff / (2 * d);
+                c = ZCoeff / (2 * d);
+                e = 2 * Math.Sqrt((XCoeff * XCoeff) / (4 * XSqdCoeff) - W);
+
+            }
+        }
+
+        /// <summary>
+        /// Constructs and returns a transformation matrix representing the coefficients of the quadric surface in 3D
+        /// space.
+        /// </summary>
+        /// <remarks>The returned matrix encodes the coefficients for the X, Y, and Z dimensions as
+        /// currently set in the instance. This matrix can be used for further geometric computations or transformations
+        /// involving the quadric surface.</remarks>
+        /// <returns>A <see cref="Matrix4x4"/> containing the coefficients for the quadric surface transformation.</returns>
+        public Matrix4x4 GetCoefficientMatrix()
+        {
+            return new Matrix4x4(
+                XSqdCoeff, 0.5 * XYCoeff, 0.5 * XZCoeff, 0.5 * XCoeff,
+                0.5 * XYCoeff, YSqdCoeff, 0.5 * YZCoeff, 0.5 * YCoeff,
+                0.5 * XZCoeff, 0.5 * YZCoeff, ZSqdCoeff, 0.5 * ZCoeff,
+                0.5 * XCoeff, 0.5 * YCoeff, 0.5 * ZCoeff, W);
         }
     }
 }

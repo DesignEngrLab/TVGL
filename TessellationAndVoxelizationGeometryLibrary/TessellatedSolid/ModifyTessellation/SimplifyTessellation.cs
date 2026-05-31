@@ -56,7 +56,7 @@ namespace TVGL
                 foreach (var triangle in triangulatedList)
                 {
                     var newFace = new TriangleFace(triangle, flat.Normal);
-                    if (newFace.Area.IsNegligible() && newFace.Normal.IsNull()) continue;
+                    if (newFace.Area.IsNegligible() && newFace.Normal.IsNegligible()) continue;
                     newFaces.Add(newFace);
                     foreach (var fromVertex in newFace.Vertices)
                     {
