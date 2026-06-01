@@ -83,62 +83,70 @@ namespace TVGL
                 // to use the endpoints' normals, but this was not the case). From this plane, we slice to find the conic
                 // on that plane made by the quadric, then find the point on the curve between the end points that is farthest
                 // from the original line. This point has the gradient (normal of the conic) defined by the outwardDirc
-                var midpoint = 0.5 * (pt1 + pt2);
-                var prevVector = pt2 - pt1;
-                var midPtNormal = quadric.GetNormalAtPoint(midpoint);
-                var planenormal = midPtNormal.Cross(prevVector).Normalize();
-                var outwarddir = prevVector.Cross(planenormal).Normalize();
-                var plane = new Plane(planenormal.Dot(pt1), planenormal);
-                var midPoint2d = midpoint.ConvertTo2DCoordinates(planenormal, out _);
-                var outwarddir2d = outwarddir.ConvertTo2DCoordinates(planenormal, out _);
-                var conic = GeneralConicSection.CreateFromQuadric(quadric, plane);
-                var posSuccess = conic.PointsAtGivenGradient(outwarddir2d, out var posPt);
-                var negSuccess = conic.PointsAtGivenGradient(-outwarddir2d, out var negPt);
-                var oddAxis = GetOddPrincipalAxis(quadric);
-                var stationaryPt = quadric.StationaryPoint;
                 var returnPt = Vector3.Null;
-                if (oddAxis.Dot(midpoint - stationaryPt) < 0)
+                var midpoint = pt2;
+                var alpha = 0.02; //how much the new point should be at most far from the edge to be split as a fraction of the edge length
+                int maxIters = 50;
+                do
                 {
-                    oddAxis = -oddAxis; // make sure the odd axis is pointing in the same direction as the midpoint.
-                }
-                if (posSuccess && (!negSuccess || posPt.DistanceSquared(midPoint2d) < negPt.DistanceSquared(midPoint2d)))
-                {
-                    var posPt3 = posPt.ConvertTo3DLocation(plane.AsTransformFromXYPlane);
-                    //if (oddAxis.IsNull() || oddAxis.Dot(posPt3 - stationaryPt) > 0)
-                        returnPt = posPt3;
-                }
-                else if (negSuccess)
-                {
-                    var negPt3 = negPt.ConvertTo3DLocation(plane.AsTransformFromXYPlane);
-                    //if (oddAxis.IsNull() || oddAxis.Dot(negPt3 - stationaryPt) > 0)
-                        returnPt = negPt3;
-                }
+                    maxIters--;
+                    midpoint = (midpoint + pt1) / 2;
+                    var prevVector = pt2 - pt1;
+                    var midPtNormal = quadric.GetNormalAtPoint(midpoint);
+                    var planenormal = midPtNormal.Cross(prevVector).Normalize();
+                    var outwarddir = prevVector.Cross(planenormal).Normalize();
+                    var plane = new Plane(planenormal.Dot(pt1), planenormal);
+                    var midPoint2d = midpoint.ConvertTo2DCoordinates(planenormal, out _);
+                    var outwarddir2d = outwarddir.ConvertTo2DCoordinates(planenormal, out _);
+                    var conic = GeneralConicSection.CreateFromQuadric(quadric, plane);
+                    var posSuccess = conic.PointsAtGivenGradient(outwarddir2d, out var posPt);
+                    var negSuccess = conic.PointsAtGivenGradient(-outwarddir2d, out var negPt);
+                    var oddAxis = GetOddPrincipalAxis(quadric);
+                    var stationaryPt = quadric.StationaryPoint;
 
-                // fallback plan 1
-                var midPointProjections = quadric.LineIntersection(midpoint, outwarddir);
-
-                if (midPointProjections.Any())
-                {
-                    // Fallback: project the midpoint onto the quadric along the surface normal
-                    var bestT = double.PositiveInfinity;
-                    Vector3 result = midpoint;
-                    foreach (var (intersection, t) in midPointProjections)
+                    if (oddAxis.Dot(midpoint - stationaryPt) < 0)
                     {
-                        if (Math.Abs(t) < Math.Abs(bestT))
-                        {
-                            bestT = t;
-                            result = intersection;
-                        }
+                        oddAxis = -oddAxis; // make sure the odd axis is pointing in the same direction as the midpoint.
                     }
-                    //if (oddAxis.IsNull() || oddAxis.Dot(result - stationaryPt) > 0)
-                    if (returnPt.IsNull() || returnPt.DistanceSquared(midpoint) > result.DistanceSquared(midpoint))
-                        returnPt = result;
-                }
-                // fall back plan 2
-                var result2 = new Plane(stationaryPt, oddAxis).LineIntersection(midpoint, outwarddir).First().intersection;
+                    if (posSuccess && (!negSuccess || posPt.DistanceSquared(midPoint2d) < negPt.DistanceSquared(midPoint2d)))
+                    {
+                        var posPt3 = posPt.ConvertTo3DLocation(plane.AsTransformFromXYPlane);
+                        //if (oddAxis.IsNull() || oddAxis.Dot(posPt3 - stationaryPt) > 0)
+                        returnPt = posPt3;
+                    }
+                    else if (negSuccess)
+                    {
+                        var negPt3 = negPt.ConvertTo3DLocation(plane.AsTransformFromXYPlane);
+                        //if (oddAxis.IsNull() || oddAxis.Dot(negPt3 - stationaryPt) > 0)
+                        returnPt = negPt3;
+                    }
 
-                if (returnPt.IsNull() || returnPt.DistanceSquared(midpoint) > result2.DistanceSquared(midpoint))
-                    returnPt = result2;
+                    // fallback plan 1
+                    var midPointProjections = quadric.LineIntersection(midpoint, outwarddir);
+
+                    if (midPointProjections.Any())
+                    {
+                        // Fallback: project the midpoint onto the quadric along the surface normal
+                        var bestT = double.PositiveInfinity;
+                        Vector3 result = midpoint;
+                        foreach (var (intersection, t) in midPointProjections)
+                        {
+                            if (Math.Abs(t) < Math.Abs(bestT))
+                            {
+                                bestT = t;
+                                result = intersection;
+                            }
+                        }
+                        //if (oddAxis.IsNull() || oddAxis.Dot(result - stationaryPt) > 0)
+                        if (returnPt.IsNull() || returnPt.DistanceSquared(midpoint) > result.DistanceSquared(midpoint))
+                            returnPt = result;
+                    }
+                    // fall back plan 2
+                    var result2 = new Plane(stationaryPt, oddAxis).LineIntersection(midpoint, outwarddir).First().intersection;
+
+                    if (returnPt.IsNull() || returnPt.DistanceSquared(midpoint) > result2.DistanceSquared(midpoint))
+                        returnPt = result2;
+                } while ((returnPt - pt1 - (returnPt - pt1).Dot(pt2 - pt1) * (pt2 - pt1) / (pt2 - pt1).LengthSquared()).LengthSquared() > alpha * (pt2 - pt1).LengthSquared() && maxIters > 0);
                 return returnPt;
             }
             if (primitive is Sphere sphere)
