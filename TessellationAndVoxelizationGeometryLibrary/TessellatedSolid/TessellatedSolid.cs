@@ -344,14 +344,14 @@ namespace TVGL
         /// Streams the read.
         /// </summary>
         /// <param name="reader">The reader.</param>
-        /// <param name="index">The index.</param>
+        /// <param name="solidReferenceIndex">The index.</param>
         /// <exception cref="System.Exception">Need to add deserialize casting for primitive type: " + primitiveType</exception>
-        internal static TessellatedSolid StreamRead(JsonTextReader reader, out int index, TessellatedSolidBuildOptions tsBuildOptions)
+        internal static TessellatedSolid StreamRead(JsonTextReader reader, out int solidReferenceIndex, TessellatedSolidBuildOptions tsBuildOptions)
         {
             var ts = new TessellatedSolid();
             // todo: resolve this with OnDeserializedMethod. Are both needed?
             Color[] colors = null;
-            index = -1;
+            solidReferenceIndex = -1;
 
             var jsonSerializer = new Newtonsoft.Json.JsonSerializer();
             reader.Read();
@@ -503,11 +503,10 @@ namespace TVGL
                     case "Index":
                     case "ReferenceIndex":
                         ts.ReferenceIndex = (int)reader.ReadAsInt32();
-                        index = ts.ReferenceIndex;
+                        solidReferenceIndex = ts.ReferenceIndex;
                         break;
                     case "CADIndex":
                         ts.CADIndex = (int)reader.ReadAsInt32();
-                        index = ts.CADIndex;
                         break;
                     case "Colors":
                         // to make saving colors for faces both quick and compact, we use a little trick to 
