@@ -15,6 +15,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Numerics;
 using System.Runtime.Serialization;
@@ -33,12 +34,37 @@ namespace TVGL
         /// <value>The name.</value>
         public string Name { get; set; }
 
+        /// <summary>
+        /// Relative file paths to all the missing files that were referenced in the original CAD assembly, 
+        /// but could not be found when loading in the assembly. This is used for error reporting and debugging, 
+        /// and is not expected to be used for anything else. 
+        /// </summary>
+        [JsonIgnore]
+        public List<string> MissingFiles { get; set; }
+
+        public void TrimMissingFilesToRelativePaths()
+        {
+            var parentDirectory = Path.GetDirectoryName(RootAssembly.FilePath);
+            if (MissingFiles != null)
+            {
+                for (var i = 0; i < MissingFiles.Count; i++)
+                    MissingFiles[i] = Path.GetRelativePath(parentDirectory, MissingFiles[i]);
+            }
+        }
+
+        /// <summary>
+        /// The number of PARTS in the assembly. This is not necessarily the same as the number of solids, 
+        /// since some solids may be duplicates (i.e., used in multiple locations within the assembly) and 
+        /// because some PARTS may be made up of multiple sheet bodies.
+        /// </summary>
+        public int NumParts { get; set; }
+
         public int NumberOfSolidBodies
         {
             get
             {
                 if (numberOfSolidBodies < 0)
-                    numberOfSolidBodies = Solids.Count(t => t is TessellatedSolid ts && !ts.SourceIsSheetBody);
+                    numberOfSolidBodies = Solids != null ? Solids.Count(t => t is TessellatedSolid ts && !ts.SourceIsSheetBody) : 0;
                 return numberOfSolidBodies;
             }
         }
@@ -52,7 +78,7 @@ namespace TVGL
             get
             {
                 if (numberOfSheetBodies < 0)
-                    numberOfSheetBodies = Solids.Count(t => t is TessellatedSolid ts && ts.SourceIsSheetBody);
+                    numberOfSheetBodies = Solids != null ? Solids.Count(t => t is TessellatedSolid ts && ts.SourceIsSheetBody) : 0;
                 return numberOfSheetBodies;
             }
         }
@@ -346,6 +372,32 @@ namespace TVGL
 
             return node;
         }
+
+        public HashSet<string> GetAllChildFilePaths(bool ignoreTempFiles = true)
+        {
+            if (RootAssembly == null) return [];
+            return RootAssembly.GetAllChildFilePaths(ignoreTempFiles);
+        }
+
+        public HashSet<string> GetAllChildFileNames(bool ignoreTempFiles = true)
+        {
+            if (RootAssembly == null) return [];
+            return RootAssembly.GetAllChildFileNames(ignoreTempFiles);
+        }
+    }
+
+    //Missing node is for when an assembly references a file that cannot be found. We want to alert the user to this in the tree view. 
+    [JsonObject(MemberSerialization.OptOut)]
+    public class MissingNode
+    {
+        public string Name { get; set; }
+        public string FilePath { get; set; }
+        public bool IsAssembly { get; set; }   // subassembly vs part, for the icon/treatment in the viewer
+        public Matrix4x4 Backtransform { get; set; }
+
+        public MissingNode() { }  // for JSON
+        public MissingNode(string name, string filePath, bool isAssembly, Matrix4x4 backtransform)
+        { Name = name; FilePath = filePath; IsAssembly = isAssembly; Backtransform = backtransform; }
     }
 
     //A wrapper class for solids that recursively contains subassemblies and solid parts. 
@@ -359,6 +411,12 @@ namespace TVGL
         /// Name of the sub-assembly.
         /// </summary>
         public string Name { get; set; }
+
+        /// <summary>
+        /// Used for loading in SolidWorks assemblies, since they have a nested file structure. Not needed in TVGLZ.
+        /// </summary>
+        [JsonIgnore]
+        public string FilePath { get; set; }
 
         /// <summary>
         /// Reference ID from CAD conversion. Multiple sub-assemblies may have the same reference ID and/or name if they are duplicates.
@@ -402,14 +460,25 @@ namespace TVGL
         /// <value>The solids.</value>
         public List<(int partIndex, Matrix4x4 backtransform)> Solids { get; set; }
 
+        // references the assembly couldn't resolve,
+        // recorded in tree position so visualization can show where geometry is absent. ===
+        public List<MissingNode> MissingNodes { get; set; } = [];
+
+        public void AddMissing(string name, string filePath, bool isAssembly, Matrix4x4 backtransform)
+            => MissingNodes.Add(new MissingNode(name, filePath, isAssembly, backtransform));
+
         /// <summary>
         /// Initializes a new instance of the <see cref="SubAssembly"/> class.
         /// </summary>
         /// <param name="globalAssembly">The global assembly.</param>
-        public SubAssembly(SolidAssembly globalAssembly, string name = "", int refID = -1 )
+        /// <param name="name">The name.</param>
+        /// <param name="filepath">The filepath.</param>
+        /// <param name="refID">The reference ID.</param>
+        public SubAssembly(SolidAssembly globalAssembly, string name = "", string filepath = "", int refID = -1 )
         {
             CADIndex = refID;
             Name = name;
+            FilePath = filepath;
             SolidAssemblyGlobalInfo = globalAssembly;
             SubAssemblies = [];
             Solids = [];
@@ -521,6 +590,49 @@ namespace TVGL
                 foreach (var (part, backTransform) in assembly.AllParts())
                     allParts.Add((part, backTransform * assemblyBackTransform));
             return allParts;
+        }
+
+        /// <summary>
+        /// Gets a hashset of all the filespaths in this subassembly. For step files, there are NO child files.
+        /// </summary>
+        /// <returns></returns>
+        public HashSet<string> GetAllChildFilePaths(bool ignoreTempFiles = true)
+        {
+            var allFiles = new HashSet<string>(StringComparer.OrdinalIgnoreCase); 
+            GetAllFilePathsRecursive(allFiles, [], ignoreTempFiles);
+            return allFiles;
+        }
+        public HashSet<string> GetAllChildFileNames(bool ignoreTempFiles = true)
+        {
+            var allFiles = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            GetAllFilePathsRecursive(allFiles, [], ignoreTempFiles);
+            return allFiles.Select(p => Path.GetFileName(p)).ToHashSet();
+        }
+
+        //Defensive prevent circular references by keeping track of visited subassemblies.
+        //This is unlikely to be an issue, since most CAD models don't have circular references, but we want to be safe.
+        private void GetAllFilePathsRecursive(HashSet<string> allFiles, HashSet<SubAssembly> visited, bool skipEmbeddedFiles)
+        {
+            if (!visited.Add(this))
+                return;
+
+            foreach (var (partIndex, _) in Solids)
+            {
+                var filePath = SolidAssemblyGlobalInfo.Solids[partIndex].FilePath;
+                //The embedded files will not have a valid filepath.
+                if (skipEmbeddedFiles && filePath != null && File.Exists(filePath))
+                    continue; // skip temp file
+                allFiles.Add(filePath);
+            }
+
+            foreach (var (assembly, _) in SubAssemblies)
+            {
+                var filePath = assembly.FilePath;
+                if (skipEmbeddedFiles && filePath != null && File.Exists(filePath))
+                    continue; // skip embedded file and everything below it in the hierarchy
+                allFiles.Add(filePath); // add each subassembly's own path
+                assembly.GetAllFilePathsRecursive(allFiles, visited, skipEmbeddedFiles);
+            }
         }
 
         /// <summary>

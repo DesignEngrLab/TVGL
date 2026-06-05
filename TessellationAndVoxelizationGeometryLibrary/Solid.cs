@@ -40,6 +40,11 @@ namespace TVGL
         //You can have multiple bodies belonging to one part - especially with sheets.
         public int CADIndex { get; set; }
 
+        //Filepath may be helpful in processing subassembly files. No need to save for TVGLZ.
+        //Mutliple solids may have the same filepath (as if from Step file), so this is not a unique identifier.
+        [JsonIgnore]
+        public string FilePath { get; set; }
+
         /// <summary>
         /// Gets the center.
         /// </summary>
