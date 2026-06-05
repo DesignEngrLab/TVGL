@@ -180,7 +180,8 @@ namespace TVGL
                 removedFace1.BelongsToPrimitive == removedFace2.BelongsToPrimitive)
                 keepVertex.Coordinates = DetermineIntermediateVertexPosition(keepVertex.Coordinates, removedVertex.Coordinates,
                     removedFace1.BelongsToPrimitive);
-            keepVertex.Coordinates = DetermineIntermediateVertexPosition(keepVertex.Coordinates, removedVertex.Coordinates);
+            keepVertex.Coordinates = DetermineIntermediateVertexPosition(keepVertex.Coordinates, removedVertex.Coordinates, removedFace1.BelongsToPrimitive,
+                removedFace2.BelongsToPrimitive);
             foreach (var e in keepVertex.Edges)
                 e.Update();
             foreach (var f in keepVertex.Faces)

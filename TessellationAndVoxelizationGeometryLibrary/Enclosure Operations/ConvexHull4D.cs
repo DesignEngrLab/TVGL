@@ -119,7 +119,7 @@ namespace TVGL
                 if (face == null) continue;
                 var other = face.OwnedTetra == this ? face.OtherTetra : face.OwnedTetra;
                 if (other == null) continue;
-                if (other.Normal.IsNull()) continue;
+                if (other.Normal.IsNegligible()) continue;
                 normal += other.Normal;
                 validNeighborCount++;
             }

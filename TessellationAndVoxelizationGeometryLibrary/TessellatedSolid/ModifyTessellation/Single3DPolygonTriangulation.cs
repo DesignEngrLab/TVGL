@@ -577,11 +577,11 @@ namespace TVGL
                                             //return area;
                                             //return area * (2 - neighborNormal.Dot(triangle.Normal));
             var dotPenalty = 0.0;
-            if (!neighborNormal1.IsNull())
+            if (!neighborNormal1.IsNegligible())
                 dotPenalty += (1 - neighborNormal1.Dot(triangle.Normal));
-            if (!neighborNormal2.IsNull())
+            if (!neighborNormal2.IsNegligible())
                 dotPenalty += (1 - neighborNormal2.Dot(triangle.Normal));
-            if (!neighborNormal3.IsNull())
+            if (!neighborNormal3.IsNegligible())
                 dotPenalty += (1 - neighborNormal3.Dot(triangle.Normal));
             foreach (var ead in triangle)
             {

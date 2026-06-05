@@ -254,7 +254,7 @@ namespace TVGL
                 }
             }
             return (minPoint, dotDistance, minPointIndex);
-        } 
+        }
 
         /// <summary>
         /// Finds the vertices or points that are closest and furthest along a given direction vector in a single pass.
@@ -432,6 +432,8 @@ namespace TVGL
             }
             return distances;
         }
+        #endregion Sort Along Direction
+
 
         /// <summary>
         /// From a collection of faces, this method identifies and separates the edges into two sets: "inner" edges and "outer" edges.
@@ -449,22 +451,112 @@ namespace TVGL
         {
             innerEdgeHash = new HashSet<Edge>();
             outerEdgeHash = new HashSet<Edge>();
-            if (faces != null && faces.Any())
+            if (faces == null || !faces.Any())
+                return;
+            if (faces.First().Edges.FirstOrDefault() == null)
+                DefineInnerOuterEdgesWithNoEdges(faces, innerEdgeHash, outerEdgeHash);
+            else
+            {
                 foreach (var face in faces)
                 {
                     foreach (var edge in face.Edges)
                     {
                         if (innerEdgeHash.Contains(edge)) continue;
-                        if (!outerEdgeHash.Contains(edge)) outerEdgeHash.Add(edge);
-                        else
+                        if (!outerEdgeHash.Add(edge))
                         {
                             innerEdgeHash.Add(edge);
                             outerEdgeHash.Remove(edge);
                         }
                     }
                 }
+            }
         }
-        #endregion Sort Along Direction
+
+        /// <summary>
+        /// From a collection of faces, this method identifies and separates the edges into two sets: "inner" edges and "outer" edges.
+        /// </summary>
+        /// <param name="faces">The collection of triangle faces.</param>
+        /// <param name="innerEdgeHash">An output hash set containing the inner edges. An edge is considered "inner" if it is shared by two faces in the collection.</param>
+        /// <param name="outerEdgeHash">An output hash set containing the outer edges. An edge is considered "outer" or a "border" edge if it belongs to only one face in the collection.</param>
+        /// <remarks>
+        /// This method is useful for identifying the boundary of a patch of faces on a larger mesh, or for manifold checking.
+        /// It works by iterating through all edges of the provided faces. It uses a hash set to keep track of edges it has already seen.
+        /// If an edge is seen a second time, it's moved to the inner edge set.
+        /// Common search terms: "find boundary edges", "identify border edges", "inner vs outer edges".
+        /// </remarks>
+        private static void DefineInnerOuterEdgesWithNoEdges(IEnumerable<TriangleFace> faces,  HashSet<Edge> innerEdgeHash,
+             HashSet<Edge> outerEdgeHash)
+        {
+            var allVertices = new HashSet<Vertex>();
+            var vertexIndices = new HashSet<int>();
+            var maxVIndex = int.MinValue;
+            var needToReIndex = false;
+            foreach (var f in faces)
+            {
+                foreach (var v in f.Vertices)
+                {
+                    if (allVertices.Add(v)) //first time seeing this vertex
+                    {
+                        if (v.IndexInList < 0 || !vertexIndices.Add(v.IndexInList))
+                            needToReIndex = true;
+                        else if (maxVIndex < v.IndexInList)
+                            maxVIndex = v.IndexInList;
+                    }
+                }
+            }
+            if (needToReIndex)
+            {
+                var k = 0;
+                foreach (var v in allVertices)
+                    v.IndexInList = k++;
+                maxVIndex = k;
+            }
+            else maxVIndex++;
+            var edges = new Dictionary<long, Edge>();
+            var allEdgeIndices = new List<long>();
+            var doubleEdgeIndices = new HashSet<long>();
+            foreach (var f in faces)
+            {
+                var prevV = f.C;
+                var edge = f.CA;
+                var edgeEnumerator = f.Edges.GetEnumerator();
+                foreach (var v in f.Vertices)
+                {
+                    long edgeIndex = (v.IndexInList < prevV.IndexInList)
+                        ? (long)prevV.IndexInList * (long)maxVIndex + v.IndexInList
+                        : prevV.IndexInList + (long)maxVIndex * (long)v.IndexInList;
+                    allEdgeIndices.Add(edgeIndex);
+                    if (edge == null)
+                    {
+                        if (edges.TryGetValue(edgeIndex, out edge))
+                        {
+                            doubleEdgeIndices.Add(edgeIndex);
+                            edge.OtherFace = f;
+                        }
+                        else
+                            edges[edgeIndex] = edge = new Edge(prevV, v, f, null, true, edgeIndex);
+                        f.AddEdge(edge);
+                    }
+                    else
+                    {
+                        if (edges.ContainsKey(edgeIndex)) doubleEdgeIndices.Add(edgeIndex);
+                        else edges.Add(edgeIndex, edge);
+                    }
+                    prevV = v;
+                    edgeEnumerator.MoveNext();
+                    edge = edgeEnumerator.Current;
+                }
+            }
+            var ei = 0;
+            foreach (var i in allEdgeIndices)
+            {
+                var edge = edges[i];
+                edge.IndexInList = ei++;
+                if (doubleEdgeIndices.Contains(i))
+                    innerEdgeHash.Add(edges[i]);
+                else outerEdgeHash.Add(edges[i]);
+            }
+        }
 
         #region Perimeter
 
@@ -956,7 +1048,7 @@ namespace TVGL
                 unusedFaces = new HashSet<TriangleFace>(ts.Faces);
             }
             // now, the bigger job of walking through the faces to find groups
-            faceGroups.AddRange(GetContiguousFaceGroups(unusedFaces));
+            faceGroups.AddRange(GetContiguousFaceGroups(unusedFaces).Select(fg => fg.ToList()));
 
             if (faceGroups.Count == 1 && faceGroups[0].Count == ts.NumberOfFaces)
             {
@@ -1011,31 +1103,63 @@ namespace TVGL
             }
         }
 
-        public static List<List<TriangleFace>> GetContiguousFaceGroups(this IEnumerable<TriangleFace> facesInput)
+
+        /// <summary>
+        /// Identifies and returns contiguous patches of triangle faces, grouping faces that are connected without
+        /// crossing specified stop edges or stop faces.
+        /// </summary>
+        /// <remarks>This method is useful for segmenting a mesh into regions based on connectivity, with
+        /// the ability to specify custom boundaries. The returned patches are disjoint, and each face from the input is
+        /// included in at most one patch unless it is specified as a stop face.</remarks>
+        /// <param name="faces">The collection of triangle faces to be partitioned into patches.</param>
+        /// <param name="stopEdges">An optional set of edges that act as boundaries; patches will not cross these edges. If null, no edge
+        /// boundaries are applied.</param>
+        /// <param name="stopFaces">An optional set of faces that act as boundaries; patches will not include or cross these faces. If null, no
+        /// face boundaries are applied.</param>
+        /// <returns>An enumerable collection of face patches, where each patch is a set of connected triangle faces. Each patch
+        /// contains faces that are contiguous and do not cross any stop edges or stop faces.</returns>
+        public static IEnumerable<HashSet<TriangleFace>> GetContiguousFaceGroups(this IEnumerable<TriangleFace> faces,
+            HashSet<Edge> stopEdges = null, HashSet<TriangleFace> stopFaces = null)
         {
-            var unusedFaces = facesInput as HashSet<TriangleFace> ?? facesInput.ToHashSet();
-            var faceGroups = new List<List<TriangleFace>>();
-            while (unusedFaces.Any())
+            var remainingFaces = new HashSet<TriangleFace>(faces);
+            if (stopEdges != null)
+                stopEdges = new HashSet<Edge>(stopEdges, stopEdges.Comparer);
+            else stopEdges = new HashSet<Edge>();
+            if (stopFaces != null)
+                stopFaces = new HashSet<TriangleFace>(stopFaces, stopFaces.Comparer);
+            else stopFaces = new HashSet<TriangleFace>();
+            //Pick a start edge, then collect all adjacent faces on one side of the face, without crossing over significant edges.
+            //This collection of faces will be used to create a patch.
+            while (remainingFaces.Any())
             {
-                var groupHash = new HashSet<TriangleFace>();
-                var stack = new Stack<TriangleFace>(new[] { unusedFaces.First() });
+                var startFace = remainingFaces.First();
+                remainingFaces.Remove(startFace);
+                if (stopFaces.Contains(startFace)) continue; // this is redundant with the below check for the same, but
+                // check here says a split second and the creation of the next two collections.
+                var patch = new HashSet<TriangleFace>();
+                var stack = new Stack<TriangleFace>();
+                stack.Push(startFace);
                 while (stack.Any())
                 {
                     var face = stack.Pop();
-                    if (groupHash.Contains(face)) continue;
-                    groupHash.Add(face);
-                    unusedFaces.Remove(face);
-                    foreach (var adjacentFace in face.AdjacentFaces)
+                    if (stopFaces.Contains(face)) continue;
+                    stopFaces.Add(face);
+                    patch.Add(face);
+                    foreach (var edge in face.Edges)
                     {
-                        if (adjacentFace == null) continue; //This is an error. Handle it in the error function.
-                        if (!unusedFaces.Contains(adjacentFace)) continue; //Cannot assign the same face twice
-                        stack.Push(adjacentFace);
+                        if (stopEdges.Contains(edge)) continue;//Don't cross over significant edges
+                        var otherFace = face == edge.OwnedFace ? edge.OtherFace : edge.OwnedFace;
+                        if (remainingFaces.Contains(otherFace))
+                        {
+                            stack.Push(otherFace);
+                            remainingFaces.Remove(otherFace);
+                        }
                     }
                 }
-                faceGroups.Add(groupHash.ToList());
+                yield return patch;
             }
-            return faceGroups;
         }
+
 
         public static List<List<TriangleFace>> GetContiguousFaceGroups(TessellatedSolid ts, List<int[]> faceGroupsThatAreBodies,
             out HashSet<TriangleFace> unusedFaces)
@@ -1362,6 +1486,63 @@ namespace TVGL
                 backTransform = new Matrix4x4(zOverG, 0, -xOverG, -xOverG * yOverH, g * oneOverH, -zOverG * yOverH, direction.X * oneOverH, yOverH, direction.Z * oneOverH, 0, 0, 0);
                 return backTransform.Transpose();
             }
+        }
+        /// <summary>
+        /// Creates a transformation matrix that rotates a given 3D direction vector to align with the Z-axis (0, 0, 1), effectively creating a 2D projection plane.
+        /// </summary>
+        /// <param name="direction">The 3D vector to be aligned with the Z-axis. This vector represents the normal of the desired 2D plane.</param>
+        /// <param name="backTransform">An output parameter for the inverse transformation matrix, which can rotate the Z-axis back to the original `direction`.</param>
+        /// <param name="tolerance">A tolerance used to determine if the input direction is close enough to a Cartesian axis to use a simpler, predefined transformation.</param>
+        /// <returns>A 4x4 transformation matrix that projects points onto the XY plane.</returns>
+        /// <remarks>
+        /// This is a core function for converting 3D geometry into a 2D representation for slicing, analysis, or visualization. The `backTransform` is essential for converting results from 2D calculations back into the original 3D coordinate system.
+        /// The method includes an optimization to "snap" to major Cartesian axes, which is faster and avoids potential floating-point precision issues.
+        /// Common search terms: "view matrix", "projection matrix", "align vector to axis", "lookat transform".
+        /// </remarks>
+        public static Matrix4x4 TransformToXYPlaneMaybeBetter(this Vector3 direction, out Matrix4x4 backTransform, double tolerance = Constants.DefaultEqualityTolerance)
+        {
+            var closestCartesianDirection = SnapDirectionToCartesian(direction, out var withinTolerance, tolerance);
+            if (withinTolerance)
+                return TransformToXYPlane(closestCartesianDirection, out backTransform);
+
+            var dirMagSquared = direction.LengthSquared();
+            if (dirMagSquared.IsPracticallySame(0.0))
+                throw new ArgumentException("The direction cannot be the zero vector.");
+            // Normalize the direction. If already unit length, this is a no-op multiplication by ~1.
+            var oneOverH = 1 / Math.Sqrt(dirMagSquared);
+            var dx = direction.X * oneOverH;
+            var dy = direction.Y * oneOverH;
+            var dz = direction.Z * oneOverH;
+
+            // g = length of the projection of the unit direction onto the XZ plane.
+            // When g ≈ 0 the direction is along ±Y and the two-Givens-rotation approach
+            // (rotate in XZ then YZ) is singular. Handle that case with a simple 90° rotation.
+            var g = Math.Sqrt(dx * dx + dz * dz);
+            if (g < 1e-12)
+            {
+                // direction is essentially ±Y. Rotate 90° around the Z-axis so that Y maps to Z.
+                // For +Y: new X = old X, new Y = old Z, new Z = old Y  (right-handed)
+                // For -Y: flip sign on Z row.
+                if (dy > 0)
+                {
+                    backTransform = new Matrix4x4(1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0);
+                    return new Matrix4x4(1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0);
+                }
+                else
+                {
+                    backTransform = new Matrix4x4(1, 0, 0, 0, 0, -1, 0, -1, 0, 0, 0, 0);
+                    return new Matrix4x4(1, 0, 0, 0, 0, -1, 0, -1, 0, 0, 0, 0);
+                }
+            }
+            var oneOverG = 1 / g;
+            var xOverG = dx * oneOverG;
+            var zOverG = dz * oneOverG;
+            // backTransform columns are the new X, Y, Z axes expressed in the original frame.
+            // Row 0 (new X axis): rotate in XZ plane to eliminate X component → (z/g, 0, -x/g)
+            // Row 1 (new Y axis): perpendicular to both → (-x*y/g, g, -z*y/g)
+            // Row 2 (new Z axis): the normalized direction itself → (dx, dy, dz)
+            backTransform = new Matrix4x4(zOverG, 0, -xOverG, -xOverG * dy, g, -zOverG * dy, dx, dy, dz, 0, 0, 0);
+            return backTransform.Transpose();
         }
 
 
@@ -2533,7 +2714,7 @@ namespace TVGL
         /// <param name="onBoundaryIsInside">If true, on boundary is inside.</param>
         /// <returns>A bool.</returns>
         public static bool IsPointInsideAABB(this Vector3 pointInQuestion, Solid solid,
-    bool onBoundaryIsInside = true)
+        bool onBoundaryIsInside = true)
             => IsPointInsideAABB(pointInQuestion, solid.Bounds[0], solid.Bounds[1], onBoundaryIsInside);
 
         /// <summary>
@@ -2758,7 +2939,7 @@ namespace TVGL
                 var PolarAngle = Math.Acos(direction.Z * oneOverRadius);  // when z_dir is 1, then angle is zero or pi
                 var AzimuthAngle = Math.Atan2(direction.Y, direction.X);  // regardless of length, we can find azimuth by tangent
                 var inPlaneYDir = new Vector3(-direction.Y, direction.X, 0).Normalize(); // the y-dir will never have a z-component - it is like
-                // the latitude lines on a globe
+                                                                                         // the latitude lines on a globe
                 var inPlaneXDir =  // here, x-dir determined by y cross z where z is the given direction
                                    // cross product is i = (y1z2 - y2z1), j = (x2z1 - x1z2), k = (x1y2 - x2y1)
                                    // x1 = -direction.Y, y1 = direction.X, z1=0

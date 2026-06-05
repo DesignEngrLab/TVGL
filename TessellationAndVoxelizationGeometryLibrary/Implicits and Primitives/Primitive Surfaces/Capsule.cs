@@ -378,7 +378,7 @@ namespace TVGL
                 pointsFound++;
             }
             if (pointsFound >= 2) yield break;
-            if (sphereIntersects.Count > 1 && (sphereIntersects[1].intersection - Anchor1).Dot(cDir) >= 0)
+            if (sphereIntersects.Count > 1 && (sphereIntersects[1].intersection - Anchor2).Dot(cDir) >= 0)
             {
                 yield return sphereIntersects[1];
                 pointsFound++;

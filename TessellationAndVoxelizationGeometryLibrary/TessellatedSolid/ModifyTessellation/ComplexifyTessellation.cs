@@ -14,7 +14,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net.Http.Headers;
 
 namespace TVGL
 {
@@ -59,7 +58,7 @@ namespace TVGL
         /// </summary>
         /// <param name="ts">The ts.</param>
         /// <param name="targetNumberOfFaces">The number of new faces to add.</param>
-        /// <param name="maxLength">The maximum length.</param>
+        /// <param name="maxLength">The maximum length of the resulting edges.</param>
         public static void Complexify(TessellatedSolid ts, int targetNumberOfFaces, double maxLength)
         {
             Complexify(ts.Edges, out var addedEdges, out var addedVertices, out var addedFaces, targetNumberOfFaces, maxLength);
@@ -84,80 +83,104 @@ namespace TVGL
         /// <param name="addedVertices">When this method returns, contains the list of vertices that were added during the operation.</param>
         /// <param name="addedFaces">When this method returns, contains the list of triangle faces that were added during the operation.</param>
         /// <param name="targetNumberOfFaces">The desired total number of faces in the mesh after the operation. Must be a non-negative integer.</param>
-        /// <param name="maxLength">The maximum allowable length for edges to be considered for subdivision. Must be a positive value.</param>
-        public static void Complexify(IEnumerable<Edge> edges, out List<Edge> addedEdges, out List<Vertex> addedVertices, out List<TriangleFace> addedFaces,
-            int targetNumberOfFaces, double maxLength)
+        /// <param name="maxSurfaceDeviation">The maximum allowable length for edges to be considered for subdivision. Must be a positive value.</param>
+        public static void Complexify(IEnumerable<Edge> edges, out List<Edge> addedEdges, out List<Vertex> addedVertices,
+            out List<TriangleFace> addedFaces, int targetNumberOfFaces, double maxEdgeLength)
         {
-            var edgeQueue = new PriorityQueue<Edge, double>(edges.Where(e => e.Length >= maxLength).Select(e => (e, e.Length)),
-                new ReverseSort());
+            var maxEdgeLengthSquared = maxEdgeLength * maxEdgeLength;
+            //var edgeLengthList = edges.OrderByDescending(e => e.Length).ToArray();
+            var initEdgePlot = edges.Select(e => new[] { e.From.Coordinates, e.To.Coordinates }).ToArray();
+            var edgeQueue = new PriorityQueue<(Edge, Vector3), double>(new ReverseSort());
+            foreach (var edge in edges)
+                EnqueueEdgeAndFindNewPoint(edgeQueue, edge);
             addedEdges = new List<Edge>();
             addedVertices = new List<Vertex>();
             addedFaces = new List<TriangleFace>();
             var iterations = targetNumberOfFaces > 0 ? (int)Math.Ceiling(targetNumberOfFaces / 2.0) : targetNumberOfFaces;
-            while (iterations-- != 0 && edgeQueue.TryDequeue(out var edge, out var edgeLength))
+            var edgeCounter = edgeQueue.Count;
+            while (iterations-- != 0 && edgeQueue.TryDequeue(out (Edge edge, Vector3 mpt) c, out var edgeLSqd))
             {
-                var origLeftFace = edge.OtherFace;
-                var origRightFace = edge.OwnedFace;
-                var leftFarVertex = origLeftFace?.OtherVertex(edge);
-                var rightFarVertex = origRightFace?.OtherVertex(edge);
-                var fromVertex = edge.From;
-                var toVertex = edge.To;
-                var primitive1 = origLeftFace?.BelongsToPrimitive;
-                var primitive2 = origRightFace == null ? primitive1 : origRightFace.BelongsToPrimitive;
-                if (primitive1 == null) primitive1 = primitive2;
-                var commonPrimitive = (primitive1 == primitive2) ? primitive1 : null;
-                var addedVertex = new Vertex(DetermineIntermediateVertexPosition(fromVertex.Coordinates,
-                    toVertex.Coordinates, commonPrimitive));
+                if (edgeLSqd < maxEdgeLengthSquared)
+                    break;
+                //var map = edgeLengthList.IndexOf(c.edge);
+                //Console.WriteLine(map);
+                //if (iterations % 1000 <= 0)
+                //    Presenter.ShowAndHang([initEdgePlot, addedEdges.Select(e => new[] { e.From.Coordinates, e.To.Coordinates }), [[c.edge.From.Coordinates, c.mpt, c.edge.To.Coordinates]]],
+                //        [false, false, false], colors: [new Color(KnownColors.LightGray), new Color(KnownColors.Blue), new Color(KnownColors.Red)]);
+                var origLeftFace = c.edge.OtherFace;
+                var origRightFace = c.edge.OwnedFace;
+                var leftFarVertex = origLeftFace?.OtherVertex(c.edge);
+                var rightFarVertex = origRightFace?.OtherVertex(c.edge);
+                var fromVertex = c.edge.From;
+                var toVertex = c.edge.To;
+                var addedVertex = new Vertex(c.mpt);
                 // modify original faces with new intermediate vertex
                 origLeftFace?.ReplaceVertex(toVertex, addedVertex);
                 origRightFace?.ReplaceVertex(toVertex, addedVertex);
 
-                var newLeftFace = new TriangleFace(toVertex, addedVertex, leftFarVertex);
-                var newRightFace = new TriangleFace(addedVertex, toVertex, rightFarVertex);
+                TriangleFace newLeftFace = null, newRightFace = null;
+                if (leftFarVertex != null)
+                    newLeftFace = new TriangleFace(toVertex, addedVertex, leftFarVertex)
+                    { BelongsToPrimitive = origLeftFace.BelongsToPrimitive };
+                if (rightFarVertex != null)
+                    newRightFace = new TriangleFace(addedVertex, toVertex, rightFarVertex)
+                    { BelongsToPrimitive = origRightFace.BelongsToPrimitive };
                 toVertex.Faces.Remove(origLeftFace);
                 toVertex.Faces.Remove(origRightFace);
 
-                var inlineEdge = new Edge(addedVertex, toVertex, newRightFace, newLeftFace, true);
-                toVertex.Edges.Remove(edge);
-                edge.To = addedVertex;
-                addedVertex.Edges.Add(edge);
-                edge.Update();
-                var newLeftEdge = new Edge(leftFarVertex, addedVertex, origLeftFace, newLeftFace, true);
-                var newRightEdge = new Edge(rightFarVertex, addedVertex, newRightFace, origRightFace, true);
-                origLeftFace.AddEdge(newLeftEdge);
-                origRightFace.AddEdge(newRightEdge);
-                var bottomEdge = toVertex.Edges.First(e => e.OtherVertex(toVertex) == leftFarVertex);
-                if (bottomEdge.OwnedFace == origLeftFace)
-                    bottomEdge.OwnedFace = newLeftFace;
-                else bottomEdge.OtherFace = newLeftFace;
-                newLeftFace.AddEdge(bottomEdge);
-                bottomEdge.Update();
-
-                bottomEdge = toVertex.Edges.First(e => e.OtherVertex(toVertex) == rightFarVertex);
-                if (bottomEdge.OwnedFace == origRightFace)
-                    bottomEdge.OwnedFace = newRightFace;
-                else bottomEdge.OtherFace = newRightFace;
-                newRightFace.AddEdge(bottomEdge);
-                bottomEdge.Update();
+                var inlineEdge = new Edge(addedVertex, toVertex, newRightFace, newLeftFace, true, edgeCounter++);
+                toVertex.Edges.Remove(c.edge);
+                c.edge.To = addedVertex;
+                addedVertex.Edges.Add(c.edge);
+                c.edge.Update();
+                Edge newLeftEdge = null, newRightEdge = null;
+                if (leftFarVertex != null)
+                {
+                    newLeftEdge = new Edge(leftFarVertex, addedVertex, origLeftFace, newLeftFace, true, edgeCounter++);
+                    origLeftFace.AddEdge(newLeftEdge);
+                    var bottomEdge = toVertex.Edges.First(e => e.OtherVertex(toVertex) == leftFarVertex);
+                    if (bottomEdge.OwnedFace == origLeftFace)
+                        bottomEdge.OwnedFace = newLeftFace;
+                    else bottomEdge.OtherFace = newLeftFace;
+                    newLeftFace.AddEdge(bottomEdge);
+                    bottomEdge.Update();
+                }
+                if (rightFarVertex != null)
+                {
+                    newRightEdge = new Edge(rightFarVertex, addedVertex, newRightFace, origRightFace, true, edgeCounter++);
+                    origRightFace.AddEdge(newRightEdge);
+                    var bottomEdge = toVertex.Edges.First(e => e.OtherVertex(toVertex) == rightFarVertex);
+                    if (bottomEdge.OwnedFace == origRightFace)
+                        bottomEdge.OwnedFace = newRightFace;
+                    else bottomEdge.OtherFace = newRightFace;
+                    newRightFace.AddEdge(bottomEdge);
+                    bottomEdge.Update();
+                }
 
                 // need to re-add the edge. It was modified in the SplitEdge function (now, half the lenght), but
                 // it may still be met by this criteria
-                if (edge.Length >= maxLength)
-                    edgeQueue.Enqueue(edge, edge.Length);
-                if (inlineEdge.Length >= maxLength)
-                    edgeQueue.Enqueue(inlineEdge, inlineEdge.Length);
-                if (newLeftEdge.Length >= maxLength)
-                    edgeQueue.Enqueue(newLeftEdge, newLeftEdge.Length);
-                if (newRightEdge.Length >= maxLength)
-                    edgeQueue.Enqueue(newRightEdge, newRightEdge.Length);
+                EnqueueEdgeAndFindNewPoint(edgeQueue, c.edge);
+                EnqueueEdgeAndFindNewPoint(edgeQueue, inlineEdge);
+                if (newLeftEdge != null)
+                    EnqueueEdgeAndFindNewPoint(edgeQueue, newLeftEdge);
+                if (newRightEdge != null)
+                    EnqueueEdgeAndFindNewPoint(edgeQueue, newRightEdge);
 
-                addedEdges.Add(inlineEdge);
-                addedEdges.Add(newLeftEdge);
-                addedEdges.Add(newRightEdge);
-                addedFaces.Add(newLeftFace);
-                addedFaces.Add(newRightFace);
                 addedVertices.Add(addedVertex);
+                addedEdges.Add(inlineEdge);
+                if (newLeftEdge != null) addedEdges.Add(newLeftEdge);
+                if (newRightEdge != null) addedEdges.Add(newRightEdge);
+                if (newLeftFace != null) addedFaces.Add(newLeftFace);
+                if (newRightFace != null) addedFaces.Add(newRightFace);
             }
+        }
+
+
+        private static void EnqueueEdgeAndFindNewPoint(PriorityQueue<(Edge, Vector3), double> edgeQueue, Edge edge)
+        {
+            var midPoint = DetermineIntermediateVertexPosition(edge);
+            var newLength = Math.Max((edge.From.Coordinates - midPoint).LengthSquared(), (edge.To.Coordinates - midPoint).LengthSquared());
+            edgeQueue.Enqueue((edge, midPoint), newLength);
         }
     }
 
