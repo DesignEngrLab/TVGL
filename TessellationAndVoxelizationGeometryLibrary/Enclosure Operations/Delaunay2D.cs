@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using TVGL;
 
 namespace TVGL
@@ -31,16 +32,16 @@ namespace TVGL
         /// <param name="points"></param>
         /// <param name="delaunay3D"></param>
         /// <returns></returns>
-        public static bool Create(List<Vertex> points, out Delaunay2D delaunay2D)
+        public static bool Create<T>(List<T> points, out Delaunay2D delaunay2D) where T: IVector2D
         {
             Console.Write("starting convex hull/Delaunay...");
             var TmpPoints = new List<Vertex>();
-            double[] z_values = new double[points.Count()];
+            //double[] z_values = new double[points.Count()];
 
             for (int i = 0; i < points.Count(); i++)
             {
                 //Saves the vectors as vertices
-                z_values[i] = points[i].Z;
+                //z_values[i] = points[i].Z;
                 TmpPoints.Add(new Vertex(points[i].X, points[i].Y, points[i].X * points[i].X + points[i].Y * points[i].Y, i));
             }
 
@@ -57,7 +58,10 @@ namespace TVGL
                 //Replaces the z values with the actual values
                 for (var i = 0; i < points.Count; i++)
                 {
-                    TmpPoints[i].Coordinates = new Vector3(points[i].X, points[i].Y, z_values[i]);
+                    if (points[i] is IVector3D vector3D)
+                        TmpPoints[i].Coordinates = new Vector3(points[i].X, points[i].Y, vector3D.Z);
+                    else
+                        TmpPoints[i].Coordinates = new Vector3(points[i].X, points[i].Y, 0);
                 }
                 foreach (var face in solid.Faces)
                     face.Update();

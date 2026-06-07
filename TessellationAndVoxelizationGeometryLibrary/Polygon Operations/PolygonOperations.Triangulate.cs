@@ -14,6 +14,7 @@
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 
 
@@ -32,6 +33,7 @@ namespace TVGL
     /// and the algorithm for triangulating the monotone polygons can be found here: https://youtu.be/pfXXgV9u6cw
     public static partial class PolygonOperations
     {
+        #region Triangulation via Sweep Line. This is efficient and robust, but the triangles are not necessarily of good quality.
         /// <summary>
         /// Triangulates the specified loop of 3D vertices using the projection from the provided normal.
         /// </summary>
@@ -40,7 +42,7 @@ namespace TVGL
         /// <param name="forceToPositive">if set to <c>true</c> [force to positive].</param>
         /// <returns>IEnumerable&lt;Vertex[]&gt; where each represents a triangular polygonal face.</returns>
         /// <exception cref="System.ArgumentException">The vertices must all have a unique IndexInList value - vertexLoop</exception>
-        public static IEnumerable<(Vertex A, Vertex B, Vertex C)> Triangulate(this IEnumerable<Vertex> vertexLoop,
+        public static IEnumerable<(Vertex A, Vertex B, Vertex C)> TriangulateSweepLine(this IEnumerable<Vertex> vertexLoop,
             Vector3 normal, bool forceToPositive = false, bool handleSelfIntersects = true, double suggestedAngle = 0.0)
         {
             var transform = normal.TransformToXYPlane(out _);
@@ -55,7 +57,7 @@ namespace TVGL
             }
             var polygon = new Polygon(coords);
             if (forceToPositive && !polygon.IsPositive) polygon.IsPositive = true;
-            foreach (var triangleIndices in polygon.TriangulateToIndices(handleSelfIntersects,suggestedAngle))
+            foreach (var triangleIndices in polygon.TriangulateToIndicesSweepLine(handleSelfIntersects, suggestedAngle))
             {
                 if (indexToVertexDict[triangleIndices.A] != indexToVertexDict[triangleIndices.B]
                     && indexToVertexDict[triangleIndices.B] != indexToVertexDict[triangleIndices.C]
@@ -74,7 +76,7 @@ namespace TVGL
         /// <returns>IEnumerable&lt;Vertex[]&gt; where each represents a triangular polygonal face.</returns>
         /// <exception cref="System.ArgumentException">The vertices must all have a unique IndexInList value - vertexLoops</exception>
         public static IEnumerable<Vertex[]> Triangulate(this IEnumerable<IList<Vertex>> vertexLoops, Vector3 normal,
-            bool handleSelfIntersects = true,            double suggestedAngle = 0.0)
+            bool handleSelfIntersects = true, double suggestedAngle = 0.0)
         {
             var transform = normal.TransformToXYPlane(out _);
             var polygons = new List<Polygon>();
@@ -94,7 +96,7 @@ namespace TVGL
             polygons = polygons.CreateShallowPolygonTrees(false);
             foreach (var polygon in polygons)
             {
-                foreach (var triangleIndices in polygon.TriangulateToIndices(handleSelfIntersects, suggestedAngle))
+                foreach (var triangleIndices in polygon.TriangulateToIndicesSweepLine(handleSelfIntersects, suggestedAngle))
                     yield return new[]
                         {indexToVertexDict[triangleIndices.A], indexToVertexDict[triangleIndices.B],
                         indexToVertexDict[triangleIndices.C]};
@@ -107,10 +109,10 @@ namespace TVGL
         /// </summary>
         /// <param name="polygon">The polygon.</param>
         /// <returns>List&lt;System.Int32[]&gt;.</returns>
-        public static IEnumerable<Vector2[]> TriangulateToCoordinates(this Polygon polygon, bool handleSelfIntersects = true,
+        public static IEnumerable<Vector2[]> TriangulateToCoordinatesSweepLine(this Polygon polygon, bool handleSelfIntersects = true,
             double suggestedAngle = 0.0)
         {
-            foreach (var triangle in polygon.Triangulate(handleSelfIntersects, suggestedAngle))
+            foreach (var triangle in polygon.TriangulateSweepLine(handleSelfIntersects, suggestedAngle))
                 yield return new[] { triangle[0].Coordinates, triangle[1].Coordinates, triangle[2].Coordinates };
         }
 
@@ -120,7 +122,7 @@ namespace TVGL
         /// <param name="polygon">The polygon.</param>
         /// <param name="handleSelfIntersects">if set to <c>true</c> [handle self intersects].</param>
         /// <returns>List&lt;System.Int32[]&gt;.</returns>
-        public static IEnumerable<(int A, int B, int C)> TriangulateToIndices(this Polygon polygon, bool handleSelfIntersects = true,
+        public static IEnumerable<(int A, int B, int C)> TriangulateToIndicesSweepLine(this Polygon polygon, bool handleSelfIntersects = true,
             double suggestedAngle = 0.0)
         {
             var vertexIndices = new HashSet<int>();
@@ -137,11 +139,11 @@ namespace TVGL
             var index = 0;
             //if (needToReIndex)
             //{
-                foreach (var subPolygon in polygon.AllPolygons)
-                    foreach (var vertex in subPolygon.Vertices)
-                        vertex.IndexInList = index++;
+            foreach (var subPolygon in polygon.AllPolygons)
+                foreach (var vertex in subPolygon.Vertices)
+                    vertex.IndexInList = index++;
             //}
-            foreach (var triangle in polygon.Triangulate(handleSelfIntersects, suggestedAngle))
+            foreach (var triangle in polygon.TriangulateSweepLine(handleSelfIntersects, suggestedAngle))
                 yield return (triangle[0].IndexInList, triangle[1].IndexInList, triangle[2].IndexInList);
         }
         /// <summary>
@@ -152,8 +154,8 @@ namespace TVGL
         /// <returns>List&lt;System.Int32[]&gt;.</returns>
         /// <exception cref="System.ArgumentException">Triangulate Polygon requires a positive polygon. A negative one was provided. - polygon</exception>
         /// <exception cref="System.Exception">Unable to triangulate polygon.</exception>
-        public static List<Vertex2D[]> Triangulate(this Polygon polygon, bool handleSelfIntersects = true,
-            double suggestedAngle =0.0)
+        public static List<Vertex2D[]> TriangulateSweepLine(this Polygon polygon, bool handleSelfIntersects = true,
+            double suggestedAngle = 0.0)
         {
             if (polygon.Area.IsNegligible() || (polygon.IsConvex && !polygon.InnerPolygons.Any()))
             {
@@ -198,13 +200,13 @@ namespace TVGL
             // in case this is a deep polygon tree - recurse down and solve for the inner positive polygons
             foreach (var hole in polygon.InnerPolygons)
                 foreach (var smallInnerPolys in hole.InnerPolygons)
-                    triangleFaceList.AddRange(Triangulate(smallInnerPolys,handleSelfIntersects,suggestedAngle));
+                    triangleFaceList.AddRange(TriangulateSweepLine(smallInnerPolys, handleSelfIntersects, suggestedAngle));
 
             var selfIntersections = polygon.GetSelfIntersections().Where(intersect => intersect.Relationship != SegmentRelationship.NoOverlap).ToList();
             if (selfIntersections.Count > 0)
             {
                 if (selfIntersections.All(si => si.WhereIntersection == WhereIsIntersection.BothStarts))
-                    return polygon.RemoveSelfIntersections(ResultType.OnlyKeepPositive).SelectMany(p => p.Triangulate(false)).ToList();
+                    return polygon.RemoveSelfIntersections(ResultType.OnlyKeepPositive).SelectMany(p => p.TriangulateSweepLine(false, suggestedAngle)).ToList();
                 else
                 {
                     //Try to simplify and then re-check to see if it is valid now. This will also fix threading issues.
@@ -260,7 +262,7 @@ namespace TVGL
             if (!successful)
             {
                 if (handleSelfIntersects)
-                    return polygon.RemoveSelfIntersections(ResultType.OnlyKeepPositive).SelectMany(p => p.Triangulate(false)).ToList();
+                    return polygon.RemoveSelfIntersections(ResultType.OnlyKeepPositive).SelectMany(p => p.TriangulateSweepLine(false, suggestedAngle)).ToList();
                 else
                 {
                     //Try to simplify and then re-check to see if it is valid now.
@@ -605,5 +607,272 @@ namespace TVGL
                 }
             }
         }
+        #endregion
+
+        #region Triangulate via Delaunay. This produce better quality triangles, but is slower and more complex.
+
+        /// <summary>
+        /// Triangulates the specified loop of 3D vertices using the projection from the provided normal.
+        /// </summary>
+        /// <param name="vertexLoop">The vertex loop.</param>
+        /// <param name="normal">The normal direction.</param>
+        /// <param name="forceToPositive">if set to <c>true</c> [force to positive].</param>
+        /// <returns>IEnumerable&lt;Vertex[]&gt; where each represents a triangular polygonal face.</returns>
+        /// <exception cref="System.ArgumentException">The vertices must all have a unique IndexInList value - vertexLoop</exception>
+        public static IEnumerable<(Vertex A, Vertex B, Vertex C)> TriangulateDelaunay(this IEnumerable<Vertex> vertexLoop,
+            Vector3 normal, bool forceToPositive = false, bool handleSelfIntersects = true, double suggestedAngle = 0.0)
+        {
+            var transform = normal.TransformToXYPlane(out _);
+            var coords = new List<Vertex2D>();
+            var indexToVertexDict = new Dictionary<int, Vertex>();
+            foreach (var vertex in vertexLoop)
+            {
+                coords.Add(new Vertex2D(vertex.ConvertTo2DCoordinates(transform), vertex.IndexInList, -1));
+                if (indexToVertexDict.ContainsKey(vertex.IndexInList))
+                    throw new ArgumentException("The vertices must all have a unique IndexInList value", nameof(vertexLoop));
+                indexToVertexDict.Add(vertex.IndexInList, vertex);
+            }
+            var polygon = new Polygon(coords);
+            if (forceToPositive && !polygon.IsPositive) polygon.IsPositive = true;
+            foreach (var triangleIndices in polygon.TriangulateToIndicesDelaunay(handleSelfIntersects, suggestedAngle))
+            {
+                if (indexToVertexDict[triangleIndices.A] != indexToVertexDict[triangleIndices.B]
+                    && indexToVertexDict[triangleIndices.B] != indexToVertexDict[triangleIndices.C]
+                    && indexToVertexDict[triangleIndices.C] != indexToVertexDict[triangleIndices.A])
+                    yield return (
+                        indexToVertexDict[triangleIndices.A], indexToVertexDict[triangleIndices.B],
+                        indexToVertexDict[triangleIndices.C]);
+            }
+        }
+
+        /// <summary>
+        /// Triangulates the specified loop of 3D vertices using the projection from the provided normal.
+        /// </summary>
+        /// <param name="vertexLoops">The vertex loops.</param>
+        /// <param name="normal">The normal direction.</param>
+        /// <returns>IEnumerable&lt;Vertex[]&gt; where each represents a triangular polygonal face.</returns>
+        /// <exception cref="System.ArgumentException">The vertices must all have a unique IndexInList value - vertexLoops</exception>
+        public static IEnumerable<Vertex[]> TriangulateDelaunay(this IEnumerable<IList<Vertex>> vertexLoops, Vector3 normal,
+            bool handleSelfIntersects = true, double suggestedAngle = 0.0)
+        {
+            var transform = normal.TransformToXYPlane(out _);
+            var polygons = new List<Polygon>();
+            var indexToVertexDict = new Dictionary<int, Vertex>();
+            foreach (var vertexLoop in vertexLoops)
+            {
+                var coords = new List<Vertex2D>();
+                foreach (var vertex in vertexLoop)
+                {
+                    coords.Add(new Vertex2D(vertex.ConvertTo2DCoordinates(transform), vertex.IndexInList, -1));
+                    if (indexToVertexDict.ContainsKey(vertex.IndexInList))
+                        throw new ArgumentException("The vertices must all have a unique IndexInList value", nameof(vertexLoops));
+                    indexToVertexDict.Add(vertex.IndexInList, vertex);
+                }
+                polygons.Add(new Polygon(coords));
+            }
+            polygons = polygons.CreateShallowPolygonTrees(false);
+            foreach (var polygon in polygons)
+            {
+                foreach (var triangleIndices in polygon.TriangulateToIndicesDelaunay(handleSelfIntersects, suggestedAngle))
+                    yield return new[]
+                        {indexToVertexDict[triangleIndices.A], indexToVertexDict[triangleIndices.B],
+                        indexToVertexDict[triangleIndices.C]};
+            }
+        }
+
+
+        /// <summary>
+        /// Triangulates the specified polygons which may include holes. However, the .
+        /// </summary>
+        /// <param name="polygon">The polygon.</param>
+        /// <returns>List&lt;System.Int32[]&gt;.</returns>
+        public static IEnumerable<Vector2[]> TriangulateToCoordinatesDelaunay(this Polygon polygon, bool handleSelfIntersects = true,
+            double suggestedAngle = 0.0)
+        {
+            foreach (var triangle in polygon.TriangulateDelaunay(out var mapping, false, false).Faces)
+                yield return new[] { new Vector2(triangle.A.X,triangle.A.Y),
+                    new Vector2(triangle.B.X,triangle.B.Y),
+                    new Vector2(triangle.C.X,triangle.C.Y) };
+        }
+
+        /// <summary>
+        /// Triangulates the specified polygons which may include holes. However, the .
+        /// </summary>
+        /// <param name="polygon">The polygon.</param>
+        /// <param name="handleSelfIntersects">if set to <c>true</c> [handle self intersects].</param>
+        /// <returns>List&lt;System.Int32[]&gt;.</returns>
+        public static IEnumerable<(int A, int B, int C)> TriangulateToIndicesDelaunay(this Polygon polygon, bool handleSelfIntersects = true,
+            double suggestedAngle = 0.0)
+        {
+            var vertexIndices = new HashSet<int>();
+            //var needToReIndex = false;
+            //foreach (var v in polygon.AllPolygons.SelectMany(p => p.Vertices))
+            //{
+            //    if (vertexIndices.Contains(v.IndexInList))
+            //    {
+            //        needToReIndex = true;
+            //        break;
+            //    }
+            //    vertexIndices.Add(v.IndexInList);
+            //}
+            var index = 0;
+            //if (needToReIndex)
+            //{
+            foreach (var subPolygon in polygon.AllPolygons)
+                foreach (var vertex in subPolygon.Vertices)
+                    vertex.IndexInList = index++;
+            //}
+            foreach (var triangle in polygon.TriangulateDelaunay(out var mapping, false, false).Faces)
+                yield return (triangle.A.IndexInList, triangle.B.IndexInList, triangle.C.IndexInList);
+        }
+        /// <summary>
+        /// Triangulates the specified polygons which may include holes.
+        /// </summary>
+        /// <param name="polygon">The polygon.</param>
+        /// <param name="handleSelfIntersects">if set to <c>true</c> [handle self intersects].</param>
+        /// <returns>List&lt;System.Int32[]&gt;.</returns>
+        /// <exception cref="System.ArgumentException">Triangulate Polygon requires a positive polygon. A negative one was provided. - polygon</exception>
+        /// <exception cref="System.Exception">Unable to triangulate polygon.</exception>
+        public static Delaunay2D TriangulateDelaunay(this Polygon polygon, out Dictionary<Vertex, Vertex2D> mappingToPolygonVertices,
+            bool allowNewPolygonPoints, bool preservePolygonEdgesInTriangulation, int targetNumTriangles = -1, double targetSideLength = double.NaN)
+        {
+            if (targetNumTriangles > 0 && targetSideLength > 0)
+                throw new ArgumentException("Cannot specify both a target number of triangles and a target side length.");
+            if (targetNumTriangles <= 0 && !(targetSideLength > 0))
+                throw new ArgumentException("Must specify either a target number of triangles or a target side length.");
+            if (targetNumTriangles > 0)
+            {
+                var targetTriangleArea = polygon.Area / targetNumTriangles;
+                // assuming an equilateral triangle, the area is (sqrt(3)/4)*sideLength^2, so sideLength = 2*sqrt(area/sqrt(3))
+                targetSideLength = 2 * Math.Sqrt(targetTriangleArea / Math.Sqrt(3));
+            }
+            if (!polygon.IsPositive)
+                throw new ArgumentException("Triangulate Polygon requires a positive polygon. A negative one was provided.", nameof(polygon));
+            polygon.MakePolygonEdgesIfNonExistent();
+            mappingToPolygonVertices = new Dictionary<Vertex, Vertex2D>();
+            if (allowNewPolygonPoints)
+                polygon.Complexify(targetSideLength);
+            var allVertices = new List<Vertex>();
+            var constraintIndices = new List<(int From, int To)>();
+            polygon.ReIndexPolygon();
+            if (preservePolygonEdgesInTriangulation || allowNewPolygonPoints)
+            {
+                var id = 0;
+                foreach (var v2d in polygon.AllPolygons.SelectMany(p => p.Vertices))
+                {
+                    v2d.IndexInList = id++;
+                    var v3D = new Vertex(v2d.X, v2d.Y, 0, v2d.IndexInList);
+                    allVertices.Add(v3D);
+                    mappingToPolygonVertices.Add(v3D, v2d);
+                }
+                foreach (var edge in polygon.AllPolygons.SelectMany(p => p.Edges))
+                    constraintIndices.Add((edge.FromPoint.IndexInList, edge.ToPoint.IndexInList));
+            }
+            else // then we need to make new points along the polygon, but not alter the original polygon
+            {
+                foreach (var vert2D in polygon.AllPolygons.SelectMany(p => p.Vertices))
+                    mappingToPolygonVertices.Add(new Vertex(vert2D.X, vert2D.Y, 0, vert2D.IndexInList), vert2D);
+                foreach (var p in polygon.ComplexifyNewPoints(targetSideLength))
+                    allVertices.Add(new Vertex(p.X, p.Y, 0));
+            }
+            var prevPolygons = new List<Polygon> { polygon };
+            while (prevPolygons.Count > 0)
+            {
+                prevPolygons = prevPolygons.OffsetSquare(-targetSideLength);
+                foreach (var poly in prevPolygons.SelectMany(p => p.AllPolygons))
+                {
+                    foreach (var vert2D in poly.Vertices)
+                        allVertices.Add(new Vertex(vert2D.X, vert2D.Y, 0));
+                    foreach (var p in polygon.ComplexifyNewPoints(targetSideLength))
+                        allVertices.Add(new Vertex(p.X, p.Y, 0));
+                }
+            }
+            if (!RunConstrainedDelaunay(allVertices, constraintIndices, out var delaunay2D))
+                throw new Exception("There was a problem with the triangulation.");
+            return delaunay2D;
+        }
+
+        private static bool RunConstrainedDelaunay(List<Vertex> allVertices, List<(int From, int To)> constraintIndices,
+            out Delaunay2D delaunay2D)
+        {
+            if (!Delaunay2D.Create(allVertices, out delaunay2D))
+                return false;
+            // 1. Build a quick lookup for existing edges in the Delaunay Triangulation
+            // Using a tuple of (min(idx), max(idx)) to ensure undirected edge comparison
+            var edgeHash = new Dictionary<long, Edge>();
+            foreach (var edge in delaunay2D.Edges)
+                edgeHash.Add(edge.EdgeReference, edge);
+
+            // 2. Iterate through each constraint
+            foreach (var constraint in constraintIndices)
+            {
+                var edge = new Edge(allVertices[constraint.From], allVertices[constraint.To], false);
+                var edgeChecksum = Edge.SetAndGetEdgeChecksum(edge);
+                if (edgeHash.ContainsKey(edgeChecksum))
+                    continue; // This constraint edge already exists in the Delaunay triangulation
+
+
+                var cEdge = (Math.Min(constraint.From, constraint.To), Math.Max(constraint.From, constraint.To));
+
+                // If the constraint is already an edge in the Delaunay mesh, we are good.
+                if (existingEdges.Contains(cEdge))
+                    continue;
+
+                // 3. Find all existing edges that intersect this constraint line segment
+                var startVertex = allVertices[constraint.From];
+                var endVertex = allVertices[constraint.To];
+
+                var intersectingEdges = new List<Edge>();
+                // TODO: Iterate over Delaunay edges and find which ones strictly intersect the segment (startVertex -> endVertex)
+                // Note: TVGL's MiscFunctions or 2D intersection utilities can be used here. 
+                // intersectingEdges = ...
+
+                // 4. Remove intersecting edges to form a polygonal cavity
+                // TODO: Delete the intersecting edges and their associated two triangles from the mesh.
+                // This creates a polygonal hole (or cavity) around the constraint.
+
+                // 5. Insert the constraint edge
+                // The constraint edge perfectly splits the polygonal cavity into two separate simple polygons.
+                existingEdges.Add(cEdge);
+
+                // 6. Re-triangulate the two polygonal cavities
+                // TODO: Triangulate the two sub-polygons on either side of the newly added constraint edge.
+                // You can add the newly formed faces to the Delaunay2D topology.
+
+                // 7. (Optional but recommended) Restore Delaunay property
+                // Iterate over the newly created edges (excluding constraint edges) and flip them 
+                // if the two adjacent triangles don't satisfy the Delaunay circle criterion.
+            }
+
+            // 8. Eventually, remove all triangles that fall entirely outside the original polygon boundaries,
+            // effectively leaving you with the Constrained Delaunay Triangulation of the polygon interior.
+
+            return true;
+        }
+
+        private static IEnumerable<Vertex> ComplexifyNewPoints(this Polygon polygon, double maxAllowableLength)
+        {
+            var loopID = polygon.Index;
+            for (int i = polygon.Edges.Count - 1; i >= 0; i--)
+            {
+                var thisLine = polygon.Edges[i];
+                if (thisLine == null && i == 0 && !polygon.IsClosed)
+                    continue;
+                if (thisLine.Length > maxAllowableLength)
+                {
+                    var numNewPoints = (int)(thisLine.Length / maxAllowableLength);
+                    for (int j = 0; j < numNewPoints; j++)
+                    {
+                        var fraction = j / (double)numNewPoints;
+                        var newCoordinates = fraction * thisLine.FromPoint.Coordinates + ((1 - fraction) * thisLine.ToPoint.Coordinates);
+                        yield return new Vertex(newCoordinates.X, newCoordinates.Y, 0);
+                    }
+                }
+            }
+            foreach (var polygonHole in polygon.InnerPolygons)
+                foreach (var newPt in polygonHole.ComplexifyNewPoints(maxAllowableLength))
+                    yield return newPt;
+        }
+        #endregion
     }
 }
