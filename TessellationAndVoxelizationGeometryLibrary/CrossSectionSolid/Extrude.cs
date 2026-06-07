@@ -130,7 +130,7 @@ namespace TVGL
         public static List<(Vector3 A, Vector3 B, Vector3 C)> ExtrusionFaceVectorsFrom2DPolygons(this Polygon polygon, Vector3 basePlaneNormal,
                double basePlaneDistance, double extrusionHeight)
         {
-            var triangleIndices = polygon.TriangulateToIndices().ToList();
+            var triangleIndices = polygon.TriangulateToIndicesSweepLine().ToList();
             return ExtrusionFaceVectorsFrom2DPolygons(polygon, triangleIndices, basePlaneNormal, basePlaneDistance, extrusionHeight);
         }
 

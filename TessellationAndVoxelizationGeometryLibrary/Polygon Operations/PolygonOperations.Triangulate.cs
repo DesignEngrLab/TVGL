@@ -11,7 +11,6 @@
 // </copyright>
 // <summary></summary>
 // ***********************************************************************
-using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -748,131 +747,145 @@ namespace TVGL
             }
             if (!polygon.IsPositive)
                 throw new ArgumentException("Triangulate Polygon requires a positive polygon. A negative one was provided.", nameof(polygon));
-            polygon.MakePolygonEdgesIfNonExistent();
-            mappingToPolygonVertices = new Dictionary<Vertex, Vertex2D>();
+
             if (allowNewPolygonPoints)
                 polygon.Complexify(targetSideLength);
+            polygon.MakePolygonEdgesIfNonExistent();
+
+            mappingToPolygonVertices = new Dictionary<Vertex, Vertex2D>();
             var allVertices = new List<Vertex>();
             var constraintIndices = new List<(int From, int To)>();
-            polygon.ReIndexPolygon();
+            var vertID = 0;
+            foreach (var v2d in polygon.AllPolygons.SelectMany(p => p.Vertices))
+            {
+                v2d.IndexInList = vertID++;
+                var v3D = new Vertex(v2d.X, v2d.Y, 0, v2d.IndexInList);
+                allVertices.Add(v3D);
+                mappingToPolygonVertices.Add(v3D, v2d);
+            }
             if (preservePolygonEdgesInTriangulation || allowNewPolygonPoints)
             {
-                var id = 0;
-                foreach (var v2d in polygon.AllPolygons.SelectMany(p => p.Vertices))
-                {
-                    v2d.IndexInList = id++;
-                    var v3D = new Vertex(v2d.X, v2d.Y, 0, v2d.IndexInList);
-                    allVertices.Add(v3D);
-                    mappingToPolygonVertices.Add(v3D, v2d);
-                }
                 foreach (var edge in polygon.AllPolygons.SelectMany(p => p.Edges))
                     constraintIndices.Add((edge.FromPoint.IndexInList, edge.ToPoint.IndexInList));
             }
             else // then we need to make new points along the polygon, but not alter the original polygon
             {
-                foreach (var vert2D in polygon.AllPolygons.SelectMany(p => p.Vertices))
-                    mappingToPolygonVertices.Add(new Vertex(vert2D.X, vert2D.Y, 0, vert2D.IndexInList), vert2D);
-                foreach (var p in polygon.ComplexifyNewPoints(targetSideLength))
-                    allVertices.Add(new Vertex(p.X, p.Y, 0));
-            }
-            var prevPolygons = new List<Polygon> { polygon };
-            while (prevPolygons.Count > 0)
-            {
-                prevPolygons = prevPolygons.OffsetSquare(-targetSideLength);
-                foreach (var poly in prevPolygons.SelectMany(p => p.AllPolygons))
+                foreach (var edge in polygon.AllPolygons.SelectMany(p => p.Edges))
                 {
-                    foreach (var vert2D in poly.Vertices)
-                        allVertices.Add(new Vertex(vert2D.X, vert2D.Y, 0));
-                    foreach (var p in polygon.ComplexifyNewPoints(targetSideLength))
-                        allVertices.Add(new Vertex(p.X, p.Y, 0));
+                    var fromIndex = edge.FromPoint.IndexInList;
+                    if (edge.Length > targetSideLength)
+                    {
+                        var numNewPoints = (int)(edge.Length / targetSideLength);
+                        for (int j = 0; j < numNewPoints; j++)
+                        {
+                            var fraction = j / (double)numNewPoints;
+                            var newCoordinates = fraction * edge.FromPoint.Coordinates + ((1 - fraction) * edge.ToPoint.Coordinates);
+                            var newIntermediateVert = new Vertex(newCoordinates.X, newCoordinates.Y, 0, vertID++);
+                            allVertices.Add(newIntermediateVert);
+                            constraintIndices.Add((fromIndex, newIntermediateVert.IndexInList));
+                            fromIndex = newIntermediateVert.IndexInList;
+                        }
+                    }
+                    constraintIndices.Add((fromIndex, edge.ToPoint.IndexInList));
                 }
             }
-            if (!RunConstrainedDelaunay(allVertices, constraintIndices, out var delaunay2D))
+            allVertices.AddRange(polygon.FindInternalPointsOffset(targetSideLength).Select(p => new Vertex(p.X, p.Y, 0, vertID++)));
+            if (!RunConstrainedDelaunay(allVertices, constraintIndices, true, out var delaunay2D))
                 throw new Exception("There was a problem with the triangulation.");
             return delaunay2D;
         }
 
         private static bool RunConstrainedDelaunay(List<Vertex> allVertices, List<(int From, int To)> constraintIndices,
-            out Delaunay2D delaunay2D)
+            bool rebuildOnBothSidesOfConstraints, out Delaunay2D delaunay2D)
         {
             if (!Delaunay2D.Create(allVertices, out delaunay2D))
                 return false;
+            var faces = delaunay2D.Faces.ToList();
             // 1. Build a quick lookup for existing edges in the Delaunay Triangulation
-            // Using a tuple of (min(idx), max(idx)) to ensure undirected edge comparison
             var edgeHash = new Dictionary<long, Edge>();
             foreach (var edge in delaunay2D.Edges)
                 edgeHash.Add(edge.EdgeReference, edge);
 
-            // 2. Iterate through each constraint
+            // terate through each constraint
             foreach (var constraint in constraintIndices)
             {
-                var edge = new Edge(allVertices[constraint.From], allVertices[constraint.To], false);
-                var edgeChecksum = Edge.SetAndGetEdgeChecksum(edge);
+                var edgeChecksum = Edge.GetEdgeChecksum(allVertices[constraint.From], allVertices[constraint.To]);
                 if (edgeHash.ContainsKey(edgeChecksum))
                     continue; // This constraint edge already exists in the Delaunay triangulation
 
-
-                var cEdge = (Math.Min(constraint.From, constraint.To), Math.Max(constraint.From, constraint.To));
-
-                // If the constraint is already an edge in the Delaunay mesh, we are good.
-                if (existingEdges.Contains(cEdge))
-                    continue;
-
-                // 3. Find all existing edges that intersect this constraint line segment
-                var startVertex = allVertices[constraint.From];
-                var endVertex = allVertices[constraint.To];
-
-                var intersectingEdges = new List<Edge>();
-                // TODO: Iterate over Delaunay edges and find which ones strictly intersect the segment (startVertex -> endVertex)
-                // Note: TVGL's MiscFunctions or 2D intersection utilities can be used here. 
-                // intersectingEdges = ...
-
-                // 4. Remove intersecting edges to form a polygonal cavity
-                // TODO: Delete the intersecting edges and their associated two triangles from the mesh.
-                // This creates a polygonal hole (or cavity) around the constraint.
-
-                // 5. Insert the constraint edge
-                // The constraint edge perfectly splits the polygonal cavity into two separate simple polygons.
-                existingEdges.Add(cEdge);
-
-                // 6. Re-triangulate the two polygonal cavities
-                // TODO: Triangulate the two sub-polygons on either side of the newly added constraint edge.
-                // You can add the newly formed faces to the Delaunay2D topology.
-
-                // 7. (Optional but recommended) Restore Delaunay property
-                // Iterate over the newly created edges (excluding constraint edges) and flip them 
-                // if the two adjacent triangles don't satisfy the Delaunay circle criterion.
+                var newConstraintEdge = new Edge(allVertices[constraint.From], allVertices[constraint.To], false)
+                { EdgeReference = edgeChecksum };
+                var cFrom = new Vector2(newConstraintEdge.From.X, newConstraintEdge.From.Y);
+                var cTo = new Vector2(newConstraintEdge.To.X, newConstraintEdge.To.Y);
+                // 3. Find all existing edges that intersect this constraint line segment and remove them
+                var crossingEdges = new List<Edge>();
+                var insideVertices = new List<Vertex>();
+                var outsideVertices = new List<Vertex>();
+                foreach (var edge in edgeHash.Values)
+                {
+                    var eFrom = new Vector2(edge.From.X, edge.From.Y);
+                    var eTo = new Vector2(edge.To.X, edge.To.Y);
+                    if (MiscFunctions.SegmentSegment2DIntersection(cFrom, cTo, eFrom, eTo, out _, out _, out _))
+                    {
+                        crossingEdges.Add(edge);
+                        // Delete the intersecting edges and their associated two triangles from the mesh.
+                        if (edge.OwnedFace != null) faces.Remove(edge.OwnedFace);
+                        if (edge.OtherFace != null) faces.Remove(edge.OtherFace);
+                        if ((cTo - cFrom).Cross(eFrom - cFrom) >= 0)
+                        {
+                            insideVertices.Add(edge.From);
+                            if (rebuildOnBothSidesOfConstraints)
+                                outsideVertices.Add(edge.To);
+                        }
+                        else
+                        {
+                            insideVertices.Add(edge.To);
+                            if (rebuildOnBothSidesOfConstraints)
+                                outsideVertices.Add(edge.From);
+                        }
+                    }
+                }
+                foreach (var crossingEdge in crossingEdges)
+                    edgeHash.Remove(crossingEdge.EdgeReference);
+                edgeHash.Add(edgeChecksum, newConstraintEdge);
+                insideVertices.Add(newConstraintEdge.From);
+                insideVertices.Add(newConstraintEdge.To);
+                RecursiveDelaunay(insideVertices, newConstraintEdge, cFrom, cTo, edgeHash, faces);
+                if (rebuildOnBothSidesOfConstraints)
+                {
+                    outsideVertices.Add(newConstraintEdge.From);
+                    outsideVertices.Add(newConstraintEdge.To);
+                    RecursiveDelaunay(outsideVertices, newConstraintEdge, cFrom, cTo, edgeHash, faces);
+                }
             }
-
-            // 8. Eventually, remove all triangles that fall entirely outside the original polygon boundaries,
-            // effectively leaving you with the Constrained Delaunay Triangulation of the polygon interior.
-
+            delaunay2D = new Delaunay2D
+            {
+                Vertices = delaunay2D.Vertices,
+                Faces = faces.ToArray(),
+                Edges = edgeHash.Values.ToArray()
+            };
             return true;
         }
 
-        private static IEnumerable<Vertex> ComplexifyNewPoints(this Polygon polygon, double maxAllowableLength)
+        private static void RecursiveDelaunay(List<Vertex> vertices, Edge startingEdge, Vector2 edgeFrom, Vector2 edgeTo,
+            Dictionary<long, Edge> edgeHash, List<TriangleFace> faces)
         {
-            var loopID = polygon.Index;
-            for (int i = polygon.Edges.Count - 1; i >= 0; i--)
+            foreach (var vI in vertices)
             {
-                var thisLine = polygon.Edges[i];
-                if (thisLine == null && i == 0 && !polygon.IsClosed)
+                if (vI == startingEdge.From || vI == startingEdge.To)
                     continue;
-                if (thisLine.Length > maxAllowableLength)
+                var v2D = new Vector2(vI.X, vI.Y);
+                if (!Circle.CreateFrom3Points(edgeFrom, edgeTo, v2D, out var circle))
+                    continue;
+                foreach (var vJ in vertices)
                 {
-                    var numNewPoints = (int)(thisLine.Length / maxAllowableLength);
-                    for (int j = 0; j < numNewPoints; j++)
-                    {
-                        var fraction = j / (double)numNewPoints;
-                        var newCoordinates = fraction * thisLine.FromPoint.Coordinates + ((1 - fraction) * thisLine.ToPoint.Coordinates);
-                        yield return new Vertex(newCoordinates.X, newCoordinates.Y, 0);
-                    }
+                    if (vJ == startingEdge.From || vJ == startingEdge.To || vJ == vI)
+                        continue;
+
                 }
             }
-            foreach (var polygonHole in polygon.InnerPolygons)
-                foreach (var newPt in polygonHole.ComplexifyNewPoints(maxAllowableLength))
-                    yield return newPt;
-        }
+
         #endregion
+        }
     }
 }

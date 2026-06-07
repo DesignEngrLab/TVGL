@@ -249,7 +249,7 @@ namespace TVGL
                 foreach (var polygon in layer)
                 {
                     var poly = polygon.Copy(true, false);
-                    faces.TryAdd(polygon, poly.TriangulateToIndices().ToList());
+                    faces.TryAdd(polygon, poly.TriangulateToIndicesSweepLine().ToList());
                 }
             });
             return faces;

@@ -32,7 +32,7 @@ namespace TVGLUnitTestsAndBenchmarking
             if (testcase == null)
                 testcase = new Polygon(TestCases.MakeStarryCircularPolygon(13, 10, 7));
             Presenter.ShowAndHang(testcase);
-            var triangles = testcase.TriangulateToCoordinates();
+            var triangles = testcase.TriangulateToCoordinatesSweepLine();
             Presenter.ShowAndHang(triangles);
         }
 

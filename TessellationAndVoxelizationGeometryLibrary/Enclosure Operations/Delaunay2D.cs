@@ -9,22 +9,19 @@ namespace TVGL
     public class Delaunay2D
     {
         /// <summary>
-        /// Gets the vertices of the Delaunay Tetrahedral Mesh
+        /// Gets the vertices of the Delaunay Triangular Mesh
         /// </summary>
-        public Vertex[] Vertices { get; private set; }
-        /// <summary>
-        /// Gets the tetrahedra of the Delaunay Tetrahedral Mesh
-        /// </summary>
-        public Polygon[] Triangles { get; private set; }
+        public Vertex[] Vertices { get; internal set; }
+
 
         /// <summary>       
-        /// Gets the faces of the Delaunay Tetrahedral Mesh
+        /// Gets the faces of the Delaunay Triangular Mesh
         /// </summary>
-        public TriangleFace[] Faces { get; private set; }
+        public TriangleFace[] Faces { get; internal set; }
         /// <summary>        
-        /// Gets the edges of the Delaunay Tetrahedral Mesh
+        /// Gets the edges of the Delaunay Triangular Mesh
         /// </summary>
-        public Edge[] Edges { get; private set; }
+        public Edge[] Edges { get; internal set; }
 
         /// <summary>
         /// Create the Delaunay 3D mesh of tetrahedra from the points.
@@ -54,7 +51,7 @@ namespace TVGL
                 var solid = new TessellatedSolid(convexHull.Faces.Cast<TriangleFace>().ToArray(),
                     convexHull.Vertices);
                 solid.RemoveFaces(facesToRemove);
-
+                solid.MakeEdgesIfNonExistent();
                 //Replaces the z values with the actual values
                 for (var i = 0; i < points.Count; i++)
                 {
@@ -69,12 +66,13 @@ namespace TVGL
                 delaunay2D = new Delaunay2D()
                 {
                     Vertices = TmpPoints.ToArray(),
-                    Faces = solid.Faces.ToArray(),
+                    Faces = solid.Faces,
+                    Edges = solid.Edges
                 };
 
                 //colorFaces(solid);
-                Console.WriteLine("After delaunay");
-                delaunay2D.colorFaces(solid);
+                //Console.WriteLine("After delaunay");
+                //delaunay2D.colorFaces(solid);
                 return true;
             }
             else
@@ -83,12 +81,13 @@ namespace TVGL
                 delaunay2D = new Delaunay2D()
                 {
                     Vertices = null,
-                    Edges = null,
+                    //Edges = null,
                     Faces = null
                 };
                 return false;
             }
         }
+        /* for debugging 
         void colorFaces(TessellatedSolid solid)
         {
             solid.HasUniformColor = false;
@@ -101,6 +100,7 @@ namespace TVGL
                 face.Color = color;
             }
         }
+        */
     }
 }
 
