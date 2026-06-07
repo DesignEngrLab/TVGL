@@ -15,6 +15,8 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using System.Threading;
+using static System.Net.Mime.MediaTypeNames;
 
 
 namespace TVGL
@@ -704,23 +706,10 @@ namespace TVGL
             double suggestedAngle = 0.0)
         {
             var vertexIndices = new HashSet<int>();
-            //var needToReIndex = false;
-            //foreach (var v in polygon.AllPolygons.SelectMany(p => p.Vertices))
-            //{
-            //    if (vertexIndices.Contains(v.IndexInList))
-            //    {
-            //        needToReIndex = true;
-            //        break;
-            //    }
-            //    vertexIndices.Add(v.IndexInList);
-            //}
             var index = 0;
-            //if (needToReIndex)
-            //{
             foreach (var subPolygon in polygon.AllPolygons)
                 foreach (var vertex in subPolygon.Vertices)
                     vertex.IndexInList = index++;
-            //}
             foreach (var triangle in polygon.TriangulateDelaunay(out var mapping, false, false).Faces)
                 yield return (triangle.A.IndexInList, triangle.B.IndexInList, triangle.C.IndexInList);
         }
@@ -815,47 +804,100 @@ namespace TVGL
 
                 var newConstraintEdge = new Edge(allVertices[constraint.From], allVertices[constraint.To], false)
                 { EdgeReference = edgeChecksum };
+                edgeHash.Add(edgeChecksum, newConstraintEdge);
                 var cFrom = new Vector2(newConstraintEdge.From.X, newConstraintEdge.From.Y);
                 var cTo = new Vector2(newConstraintEdge.To.X, newConstraintEdge.To.Y);
                 // 3. Find all existing edges that intersect this constraint line segment and remove them
                 var crossingEdges = new List<Edge>();
-                var insideVertices = new List<Vertex>();
-                var outsideVertices = new List<Vertex>();
                 foreach (var edge in edgeHash.Values)
                 {
                     var eFrom = new Vector2(edge.From.X, edge.From.Y);
                     var eTo = new Vector2(edge.To.X, edge.To.Y);
-                    if (MiscFunctions.SegmentSegment2DIntersection(cFrom, cTo, eFrom, eTo, out _, out _, out _))
+                    if (newConstraintEdge.From != edge.From && newConstraintEdge.To != edge.To &&
+                        newConstraintEdge.From != edge.To && newConstraintEdge.To != edge.From &&
+                        MiscFunctions.SegmentSegment2DIntersection(cFrom, cTo, eFrom, eTo, out _, out _, out _))
                     {
                         crossingEdges.Add(edge);
                         // Delete the intersecting edges and their associated two triangles from the mesh.
                         if (edge.OwnedFace != null) faces.Remove(edge.OwnedFace);
                         if (edge.OtherFace != null) faces.Remove(edge.OtherFace);
-                        if ((cTo - cFrom).Cross(eFrom - cFrom) >= 0)
-                        {
-                            insideVertices.Add(edge.From);
-                            if (rebuildOnBothSidesOfConstraints)
-                                outsideVertices.Add(edge.To);
-                        }
-                        else
-                        {
-                            insideVertices.Add(edge.To);
-                            if (rebuildOnBothSidesOfConstraints)
-                                outsideVertices.Add(edge.From);
-                        }
                     }
                 }
-                foreach (var crossingEdge in crossingEdges)
-                    edgeHash.Remove(crossingEdge.EdgeReference);
-                edgeHash.Add(edgeChecksum, newConstraintEdge);
-                insideVertices.Add(newConstraintEdge.From);
-                insideVertices.Add(newConstraintEdge.To);
-                RecursiveDelaunay(insideVertices, newConstraintEdge, cFrom, cTo, edgeHash, faces);
-                if (rebuildOnBothSidesOfConstraints)
+                var tempNewFaces = new List<TriangleFace>();
+                var tempNewEdges = new List<Edge>();
+                // from "Fast Segment Insertion and Incremental Construction of Constrained Delaunay Triangulations"
+                // by Jonathan Richard Shewchuk and Bintami C.Brown(2015).
+                // Loop through this list of crossing edges.
+                while (crossingEdges.Count > 0)
+                {  // For each edge, look at the quadrilateral formed by its two adjacent triangles.
+                   // If that quadrilateral is convex, flip the edge. If the flipped edge no longer intersects
+                   // the constraint edge, remove it from your crossing list. If it still intersects, or if the
+                   // quad was concave, leave it and move to the next edge in the list.
+                   // With every successful flip, the total number of edges intersecting your constraint edge strictly decreases.
+                    for (var i = crossingEdges.Count - 1; i >= 0; i--)
+                    {
+                        var crossingEdge = crossingEdges[i];
+                        var pTo = new Vector2(crossingEdge.To.X, crossingEdge.To.Y);
+                        var pFrom = new Vector2(crossingEdge.From.X, crossingEdge.From.Y);
+                        var vOwned = crossingEdge.OwnedFace.OtherVertex(crossingEdge);
+                        var pOwned = new Vector2(vOwned.X, vOwned.Y);
+                        var vOther = crossingEdge.OtherFace.OtherVertex(crossingEdge);
+                        var pOther = new Vector2(vOther.X, vOther.Y);
+                        // first check if new flipped edge would still intersect the constraint edge.
+                        if (newConstraintEdge.From != vOwned && newConstraintEdge.To != vOwned &&
+                            newConstraintEdge.From != vOther && newConstraintEdge.To != vOther &&
+                            MiscFunctions.SegmentSegment2DIntersection(cFrom, cTo, pOwned, pOther, out _, out _, out _))
+                            continue; // then this edge flip won't help so skip it
+                        // new check if convex quadrilateral is formed by the two triangles adjacent to this edge.
+                        // Necessarily, the corner at vOwned or vOther must already be convex.
+                        // so, just need to check at pFrom or pTo, and only need to check if the cross product is negative
+                        // (indicating a right turn and thus a convex corner) 
+                        if ((pFrom - pOwned).Cross(pOther - pFrom) < 0 || (pTo - pOther).Cross(pOwned - pTo) < 0)
+                            continue;
+                        faces.Remove(crossingEdge.OwnedFace);
+                        faces.Remove(crossingEdge.OtherFace);
+                        var newOwnedFace = new TriangleFace(crossingEdge.From, vOther, vOwned, false);
+                        var newOtherFace = new TriangleFace(crossingEdge.To, vOwned, vOther, false);
+                        var newEdge = new Edge(vOther, vOwned, newOwnedFace, newOtherFace, false, Edge.GetEdgeChecksum(vOther, vOwned));
+                        tempNewFaces.Add(newOwnedFace);
+                        tempNewFaces.Add(newOtherFace);
+                        tempNewEdges.Add(newEdge);
+                        // also need to update the 4 quadrilateral edges to point to the new faces
+                        foreach (var borderEdge in crossingEdge.OwnedFace.Edges.Concat(crossingEdge.OtherFace.Edges))
+                        {
+                            if (borderEdge == crossingEdge) continue;
+                            if (borderEdge.From == crossingEdge.From || borderEdge.To == crossingEdge.From)
+                            {
+                                if (borderEdge.OwnedFace == crossingEdge.OwnedFace || borderEdge.OwnedFace == crossingEdge.OtherFace)
+                                    borderEdge.OwnedFace = newOwnedFace;
+                                else borderEdge.OtherFace = newOwnedFace;
+                                newOwnedFace.AddEdge(borderEdge);
+                            }
+                            else //if (borderEdge.From == crossingEdge.To || borderEdge.To == crossingEdge.To)
+                            {
+                                if (borderEdge.OwnedFace == crossingEdge.OwnedFace || borderEdge.OwnedFace == crossingEdge.OtherFace)
+                                    borderEdge.OwnedFace = newOtherFace;
+                                else borderEdge.OtherFace = newOtherFace;
+                                newOtherFace.AddEdge(borderEdge);
+                            }
+                        }
+                        edgeHash.Remove(crossingEdge.EdgeReference);
+                        crossingEdges.RemoveAt(i);
+                    }
+                }
+                var newConstraintOutDir = new Vector3(newConstraintEdge.Vector.Y, -newConstraintEdge.Vector.X, 0);
+                var cFrom3D = newConstraintEdge.From.Coordinates;
+                foreach (var face in tempNewFaces)
                 {
-                    outsideVertices.Add(newConstraintEdge.From);
-                    outsideVertices.Add(newConstraintEdge.To);
-                    RecursiveDelaunay(outsideVertices, newConstraintEdge, cFrom, cTo, edgeHash, faces);
+                    if (rebuildOnBothSidesOfConstraints || face.Vertices.All(v => (v.Coordinates - cFrom3D).Dot(newConstraintOutDir) <= 0))
+                        faces.Add(face);
+                }
+                foreach (var edge in tempNewEdges)
+                {
+                    if (rebuildOnBothSidesOfConstraints ||
+                        ((edge.From.Coordinates - cFrom3D).Dot(newConstraintOutDir) <= 0 &&
+                        (edge.To.Coordinates - cFrom3D).Dot(newConstraintOutDir) <= 0))
+                        edgeHash.Add(edge.EdgeReference, edge);
                 }
             }
             delaunay2D = new Delaunay2D
@@ -870,16 +912,19 @@ namespace TVGL
         private static void RecursiveDelaunay(List<Vertex> vertices, Edge startingEdge, Vector2 edgeFrom, Vector2 edgeTo,
             Dictionary<long, Edge> edgeHash, List<TriangleFace> faces)
         {
-            foreach (var vI in vertices)
+            var bestVertices = vertices.ToList();
+            bestVertices.Remove(startingEdge.From);
+            bestVertices.Remove(startingEdge.To);
+            var candidateVertices = bestVertices.ToArray();
+            for (var i = 0; i < bestVertices.Count; i++)
             {
-                if (vI == startingEdge.From || vI == startingEdge.To)
-                    continue;
+                var vI = bestVertices[i];
                 var v2D = new Vector2(vI.X, vI.Y);
                 if (!Circle.CreateFrom3Points(edgeFrom, edgeTo, v2D, out var circle))
                     continue;
-                foreach (var vJ in vertices)
+                foreach (var vJ in candidateVertices)
                 {
-                    if (vJ == startingEdge.From || vJ == startingEdge.To || vJ == vI)
+                    if (vJ == startingEdge.From)
                         continue;
 
                 }
