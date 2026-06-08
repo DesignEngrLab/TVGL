@@ -779,6 +779,7 @@ namespace TVGL
                 }
             }
             allVertices.AddRange(polygon.FindInternalPointsOffset(targetSideLength).Select(p => new Vertex(p.X, p.Y, 0, vertID++)));
+            Presenter.ShowAndHang(allVertices,Vector3.UnitZ);
             if (!RunConstrainedDelaunay(allVertices, constraintIndices, true, out var delaunay2D))
                 throw new Exception("There was a problem with the triangulation.");
             return delaunay2D;
@@ -789,6 +790,7 @@ namespace TVGL
         {
             if (!Delaunay2D.Create(allVertices, out delaunay2D))
                 return false;
+            Presenter.ShowAndHang(delaunay2D.Edges.Select(e => new[] { new Vector2(e.From.X, e.From.Y), new Vector2(e.To.X, e.To.Y), }));
             var faces = delaunay2D.Faces.ToList();
             // 1. Build a quick lookup for existing edges in the Delaunay Triangulation
             var edgeHash = new Dictionary<long, Edge>();
@@ -804,7 +806,6 @@ namespace TVGL
 
                 var newConstraintEdge = new Edge(allVertices[constraint.From], allVertices[constraint.To], false)
                 { EdgeReference = edgeChecksum };
-                edgeHash.Add(edgeChecksum, newConstraintEdge);
                 var cFrom = new Vector2(newConstraintEdge.From.X, newConstraintEdge.From.Y);
                 var cTo = new Vector2(newConstraintEdge.To.X, newConstraintEdge.To.Y);
                 // 3. Find all existing edges that intersect this constraint line segment and remove them
@@ -823,6 +824,7 @@ namespace TVGL
                         if (edge.OtherFace != null) faces.Remove(edge.OtherFace);
                     }
                 }
+                edgeHash.Add(edgeChecksum, newConstraintEdge);
                 var tempNewFaces = new List<TriangleFace>();
                 var tempNewEdges = new List<Edge>();
                 // from "Fast Segment Insertion and Incremental Construction of Constrained Delaunay Triangulations"

@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 using TVGL;
 
 namespace TVGL
@@ -81,7 +80,7 @@ namespace TVGL
                 delaunay2D = new Delaunay2D()
                 {
                     Vertices = null,
-                    //Edges = null,
+                    Edges = null,
                     Faces = null
                 };
                 return false;
