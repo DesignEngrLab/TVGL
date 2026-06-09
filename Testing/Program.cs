@@ -30,10 +30,13 @@ namespace TVGLUnitTestsAndBenchmarking
             {
                 Console.WriteLine("Attempting to open: " + fileName.Name);
                 var solid = IO.Open(fileName.FullName) as TessellatedSolid;
+                Console.WriteLine(solid.Center);
                 if (solid == null) continue;
                 var polygon = TestCases.GetRandomCrossSection(solid);
                 Presenter.ShowAndHang(polygon);
-                polygon.TriangulateDelaunay(out _, false, false, 100);
+                var delaunay2D = polygon.TriangulateDelaunay(false, true, targetNumTriangles: 500);
+
+                Presenter.ShowAndHang(delaunay2D.Edges.Select(e => new[] { new Vector2(e.From.X, e.From.Y), new Vector2(e.To.X, e.To.Y), }));
             }
         }
 

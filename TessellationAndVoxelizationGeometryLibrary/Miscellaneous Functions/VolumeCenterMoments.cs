@@ -37,25 +37,32 @@ namespace TVGL
         /// <param name="center">The center.</param>
         public static void CalculateVolumeAndCenter(this IEnumerable<TriangleFace> faces, double tolerance, out double volume, out Vector3 center)
         {
-            center = new Vector3();
+            center = Vector3.Null;
             volume = 0.0;
             double currentVolumeTerm;
             double xCenter = 0, yCenter = 0, zCenter = 0;
             if (faces == null) return;
-            foreach (var face in faces)
+            var refinements = 3;
+            var deltaSqd = double.MaxValue;
+            while (refinements-- > 0 && !deltaSqd.IsNegligible())
             {
-                if (face.Area.IsNegligible(tolerance)) continue; //Ignore faces with zero area, since their Normals are not set.
-                                                                 // this is the volume of a tetrahedron from defined by the face and the origin {0,0,0}. The origin would be part of the second term
-                                                                 // in the dotproduct, "face.Normal.Dot(face.A.Coordinates - ORIGIN))", but clearly there is no need to subtract
-                                                                 // {0,0,0}. Note that the volume of the tetrahedron could be negative. This is fine as it ensures that the origin has no influence
-                                                                 // on the volume.
-                var a = face.A; var b = face.B; var c = face.C;// get once, so we don't have as many gets from an array.
-                                                               //The actual tetrehedron volume should be divided by three, but we can just process that at the end.
-                volume += currentVolumeTerm = face.Area * face.Normal.Dot(a.Coordinates);
-                xCenter += (a.X + b.X + c.X) * currentVolumeTerm;
-                yCenter += (a.Y + b.Y + c.Y) * currentVolumeTerm;
-                zCenter += (a.Z + b.Z + c.Z) * currentVolumeTerm;
-                // center is found by a weighted sum of the centers of each tetrahedron. The weighted sum coordinate are collected here.
+                center = new Vector3(xCenter,yCenter,zCenter);
+                foreach (var face in faces)
+                {
+                    if (face.Area.IsNegligible(tolerance)) continue; //Ignore faces with zero area, since their Normals are not set.
+                                                                     // this is the volume of a tetrahedron from defined by the face and the origin {0,0,0}. The origin would be part of the second term
+                                                                     // in the dotproduct, "face.Normal.Dot(face.A.Coordinates - ORIGIN))", but clearly there is no need to subtract
+                                                                     // {0,0,0}. Note that the volume of the tetrahedron could be negative. This is fine as it ensures that the origin has no influence
+                                                                     // on the volume.
+                    var a = face.A; var b = face.B; var c = face.C;// get once, so we don't have as many gets from an array.
+                                                                   //The actual tetrehedron volume should be divided by three, but we can just process that at the end.
+                    volume += currentVolumeTerm = face.Area * face.Normal.Dot(a.Coordinates - center);
+                    xCenter += (a.X + b.X + c.X) * currentVolumeTerm;
+                    yCenter += (a.Y + b.Y + c.Y) * currentVolumeTerm;
+                    zCenter += (a.Z + b.Z + c.Z) * currentVolumeTerm;
+                    // center is found by a weighted sum of the centers of each tetrahedron. The weighted sum coordinate are collected here.
+                }
+                deltaSqd = (xCenter - center.X) * (xCenter - center.X) + (yCenter - center.Y) * (yCenter - center.Y) + (zCenter - center.Z) * (zCenter - center.Z);
             }
             if (volume.IsNegligible())
             {  // then its likely that all triangles are in the same plane

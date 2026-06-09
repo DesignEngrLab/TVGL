@@ -383,8 +383,7 @@ namespace TVGLUnitTestsAndBenchmarking
             List<Polygon> polys1 = null;
             while (true)
             {
-                var offset1 = r1 * 0.5 * minDimension;
-                polys1 = solid.GetCrossSection(new Plane(bCenter + r1 * minDimension, n1), out _).OffsetRound(offset1);
+                polys1 = solid.GetCrossSection(new Plane(bCenter, n1), out _);
                 if (polys1.Count > 0)
                     return polys1.LargestPolygon();
             }

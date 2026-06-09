@@ -1243,7 +1243,7 @@ namespace TVGL
                     else currentEdge = nextEdge;
                 } while (!finishedLoop);
             }
-            polygons = polygons.CreateShallowPolygonTrees(true);
+            polygons = polygons.CreateShallowPolygonTrees(false);
             numCompletedLoops = polygons.Count;
             polygons.AddRange(partialPolygons);
             return polygons;
