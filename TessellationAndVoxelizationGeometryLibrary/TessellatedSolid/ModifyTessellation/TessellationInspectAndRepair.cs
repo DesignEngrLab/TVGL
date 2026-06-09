@@ -1525,6 +1525,7 @@ namespace TVGL
             var distinctBorders = new HashSet<BorderSegment>();
             foreach (var edge in edges)
             {
+                if (edge == null) continue;
                 if (distinctEdges.Add(edge))
                 {
                     AddEdgeToDictionaries(deadEnds, connectingVertices, intesections, edge, edge.From);

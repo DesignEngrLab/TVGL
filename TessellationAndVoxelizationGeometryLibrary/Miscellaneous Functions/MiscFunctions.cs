@@ -461,6 +461,7 @@ namespace TVGL
                 {
                     foreach (var edge in face.Edges)
                     {
+                        if (edge == null) continue;
                         if (innerEdgeHash.Contains(edge)) continue;
                         if (!outerEdgeHash.Add(edge))
                         {
@@ -551,6 +552,7 @@ namespace TVGL
             foreach (var i in allEdgeIndices)
             {
                 var edge = edges[i];
+                if (edge == null) continue;
                 edge.IndexInList = ei++;
                 if (doubleEdgeIndices.Contains(i))
                     innerEdgeHash.Add(edges[i]);
