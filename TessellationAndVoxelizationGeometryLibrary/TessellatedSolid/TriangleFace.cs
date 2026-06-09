@@ -244,7 +244,8 @@ namespace TVGL
                         .Cross(C.Coordinates - A.Coordinates);
                     if (_normal.LengthSquared().IsNegligible())
                         _normal = Vector3.Zero;
-                    else _normal.Normalize();
+                    else
+                        _normal = _normal.Normalize();
                 }
                 return _normal;
             }
