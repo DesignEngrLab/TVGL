@@ -335,14 +335,16 @@ namespace TVGL
             var solids = new List<object>();
             foreach (var s in subAssembly.Solids)
             {
+                var solidModel = Solids[s.partIndex];
                 var solid = new
                 {
-                    Name = Solids[s.partIndex].Name,
-                    CADIndex = Solids[s.partIndex].CADIndex,
+                    Name = solidModel.Name,
+                    CADIndex = solidModel.CADIndex,
+                    BodyIndex = solidModel.BodyIndex,
                     ReferenceIndex = s.partIndex,
                     InstanceIndex = instanceIndex++,
                     Depth = depth + 1,
-                    SolidType = Solids[s.partIndex].GetType().Name
+                    SolidType = solidModel.GetType().Name
                 };
                 solids.Add(solid);
                 if (debug)
