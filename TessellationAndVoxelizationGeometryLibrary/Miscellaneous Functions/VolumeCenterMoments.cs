@@ -35,7 +35,7 @@ namespace TVGL
         /// <param name="tolerance">The tolerance.</param>
         /// <param name="volume">The volume.</param>
         /// <param name="center">The center.</param>
-        public static void CalculateVolumeAndCenter(this IEnumerable<TriangleFace> faces, double tolerance, out double volume, out Vector3 center)
+        public static void CalculateVolumeAndCenterOLD(this IEnumerable<TriangleFace> faces, double tolerance, out double volume, out Vector3 center)
         {
             center = new Vector3();
             volume = 0.0;
@@ -73,6 +73,69 @@ namespace TVGL
             }
             //Divide the volume by 3 and the center by 4. Since center is also mutliplied by the currentVolume, it is actually divided by 3 * 4 = 12;                
             volume *= oneThird;
+            center = new Vector3(xCenter * oneTwelth, yCenter * oneTwelth, zCenter * oneTwelth) / volume;
+        }
+
+        /// <summary>
+        /// Calculates the volume and center. This new version iteratively refines the center, which is used in the volume calculation, until 
+        /// the center converges. This is necessary for some shapes where the origin is far from the actual center, which can cause numerical 
+        /// instability in the volume calculation (esp. if there is any missing triangles)
+        /// </summary>
+        /// <param name="faces"></param>
+        /// <param name="tolerance"></param>
+        /// <param name="volume"></param>
+        /// <param name="center"></param>
+        public static void CalculateVolumeAndCenter(this IEnumerable<TriangleFace> faces, double tolerance, out double volume, out Vector3 center)
+        {
+            center = Vector3.Null;
+            volume = 0.0;
+            double currentVolumeTerm;
+            double xCenter = 0, yCenter = 0, zCenter = 0;
+            if (faces == null) return;
+            var refinements = 10;
+            var deltaSqd = double.MaxValue;
+            while (refinements-- > 0 && !deltaSqd.IsNegligible())
+            {
+                center = new Vector3(xCenter, yCenter, zCenter);
+                volume = 0.0;
+                xCenter = 0; yCenter = 0; zCenter = 0;
+
+                foreach (var face in faces)
+                {
+                    if (face.Area.IsNegligible(tolerance)) continue; //Ignore faces with zero area, since their Normals are not set.
+                                                                     // this is the volume of a tetrahedron from defined by the face and the origin {0,0,0}. The origin would be part of the second term
+                                                                     // in the dotproduct, "face.Normal.Dot(face.A.Coordinates - ORIGIN))", but clearly there is no need to subtract
+                                                                     // {0,0,0}. Note that the volume of the tetrahedron could be negative. This is fine as it ensures that the origin has no influence
+                                                                     // on the volume.
+                    var a = face.A; var b = face.B; var c = face.C;// get once, so we don't have as many gets from an array.
+                                                                   //The actual tetrehedron volume should be divided by three, but we can just process that at the end.
+                    volume += currentVolumeTerm = face.Area * face.Normal.Dot(a.Coordinates - center);
+                    xCenter += (a.X + b.X + c.X) * currentVolumeTerm;
+                    yCenter += (a.Y + b.Y + c.Y) * currentVolumeTerm;
+                    zCenter += (a.Z + b.Z + c.Z) * currentVolumeTerm;
+                    // center is found by a weighted sum of the centers of each tetrahedron. The weighted sum coordinate are collected here.
+                }
+                xCenter /= (12 * volume);
+                yCenter /= (12 * volume);
+                zCenter /= (12 * volume);
+                deltaSqd = (xCenter - center.X) * (xCenter - center.X) + (yCenter - center.Y) * (yCenter - center.Y) + (zCenter - center.Z) * (zCenter - center.Z);
+            }
+            if (volume.IsNegligible())
+            {  // then its likely that all triangles are in the same plane
+                volume = 0;
+                // the best center would be the weighted average of the centers of the triangles (by area)
+                center = Vector3.Zero;
+                foreach (var face in faces)
+                {
+                    center += face.Center * face.Area;
+                    volume += face.Area;
+                }
+                center /= volume;
+                volume = 0;
+                return;
+            }
+            //Divide the volume by 3 and the center by 4. Since center is also mutliplied by the currentVolume, it is actually divided by 3 * 4 = 12;                
+            volume *= oneThird;
             center = new Vector3(xCenter * oneTwelth, yCenter * oneTwelth, zCenter * oneTwelth) / volume;
         }
 

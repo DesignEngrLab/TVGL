@@ -11,7 +11,7 @@ namespace TVGLUnitTestsAndBenchmarking
 {
     internal class Program
     {
-        public static string inputFolder = "TVGL";
+        public static string inputFolder = "TestFiles";
 
         static Random r = new Random();
         static double r1 => 2.0 * r.NextDouble() - 1.0;
@@ -25,21 +25,23 @@ namespace TVGLUnitTestsAndBenchmarking
             OutputServices.Presenter3D = new Presenter3D();
             var dirInfo = IO.BackoutToFolder(inputFolder);
 
-            var cone = new Cone(new Vector3(0, 0, 1), new Vector3(0, 0, -1), 1, true);
-            var intersects = cone.LineIntersection(new Vector3(4, 0, 0), new Vector3(1, 1, -10)).ToList();
-            cone.Length = 151;
-            var ts = cone.Tessellate(400);
-            //var ts = cone.(-100,100, -100, 100, -10, 160, 2);
-            Presenter.ShowAndHang(ts);
-            IO.Save(ts, "cone.ply");
-            cone.Copy();
-            IO.Open(Path.Combine(dirInfo.FullName, "a.json"), out Polygon A);
-            IO.Open(Path.Combine(dirInfo.FullName, "b.json"), out Polygon B);
-            var union = A.MinkowskiSum(B);
+            //var cone = new Cone(new Vector3(0, 0, 1), new Vector3(0, 0, -1), 1, true);
+            //var intersects = cone.LineIntersection(new Vector3(4, 0, 0), new Vector3(1, 1, -10)).ToList();
+            //cone.Length = 151;
+            //var ts = cone.Tessellate(400);
+            ////var ts = cone.(-100,100, -100, 100, -10, 160, 2);
+            //Presenter.ShowAndHang(ts);
+            //IO.Save(ts, "cone.ply");
+            //cone.Copy();
+            //IO.Open(Path.Combine(dirInfo.FullName, "a.json"), out Polygon A);
+            //IO.Open(Path.Combine(dirInfo.FullName, "b.json"), out Polygon B);
+            //var union = A.MinkowskiSum(B);
             foreach (var fileName in dirInfo.GetFiles("*"))
             {
                 Console.WriteLine("Attempting to open: " + fileName.Name);
                 var solid = IO.Open(fileName.FullName);
+                if (solid == null)
+                    continue;
                 Presenter.ShowAndHang(solid);
                 var circlePath = new List<Vector3>();
                 var transforms = new List<Matrix4x4>();
