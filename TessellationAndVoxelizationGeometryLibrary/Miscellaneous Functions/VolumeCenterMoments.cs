@@ -25,10 +25,6 @@ namespace TVGL
         /// </summary>
         const double oneThird = 1.0 / 3.0;
         /// <summary>
-        /// The one twelth
-        /// </summary>
-        const double oneTwelth = 1.0 / 12.0;
-        /// <summary>
         /// Calculates the volume and center.
         /// </summary>
         /// <param name="faces">The faces.</param>
@@ -73,7 +69,7 @@ namespace TVGL
             }
             //Divide the volume by 3 and the center by 4. Since center is also mutliplied by the currentVolume, it is actually divided by 3 * 4 = 12;                
             volume *= oneThird;
-            center = new Vector3(xCenter * oneTwelth, yCenter * oneTwelth, zCenter * oneTwelth) / volume;
+            center = new Vector3(xCenter, yCenter, zCenter) / (12 * volume);
         }
 
         /// <summary>
@@ -134,9 +130,8 @@ namespace TVGL
                 volume = 0;
                 return;
             }
-            //Divide the volume by 3 and the center by 4. Since center is also mutliplied by the currentVolume, it is actually divided by 3 * 4 = 12;                
+            //Divide the volume by 3                 
             volume *= oneThird;
-            center = new Vector3(xCenter * oneTwelth, yCenter * oneTwelth, zCenter * oneTwelth) / volume;
         }
 
         /// <summary>
