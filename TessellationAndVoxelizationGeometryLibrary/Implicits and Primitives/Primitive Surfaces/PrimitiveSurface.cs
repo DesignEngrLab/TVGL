@@ -35,13 +35,13 @@ namespace TVGL
         /// this cannot use init. Be careful not to change it.
         /// </summary>   
         [JsonIgnore]
-        public Color OriginalColor 
-        { 
-            get {  return originalColor; }
-            set 
+        public Color OriginalColor
+        {
+            get { return originalColor; }
+            set
             {
                 originalColor = value;
-                OriginalColorString = originalColor.ToString();    
+                OriginalColorString = originalColor == null ? "" : originalColor.ToString();
             }
         }
         //Private variable just so we can set the color string anytime the OriginalColor is set, while keeping it a get/set property for JSON.
@@ -609,7 +609,7 @@ namespace TVGL
                     border.CompletePostSerialization(ts);
 
             //Set the original color if stored on the primitive. 
-            if(OriginalColorString != null &&  OriginalColorString.Length > 0)
+            if (OriginalColorString != null && OriginalColorString.Length > 0)
                 OriginalColor = new Color(OriginalColorString);
         }
 
