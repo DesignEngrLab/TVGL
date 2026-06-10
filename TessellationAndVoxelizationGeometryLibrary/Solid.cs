@@ -40,6 +40,16 @@ namespace TVGL
         //You can have multiple bodies belonging to one part - especially with sheets.
         public int CADIndex { get; set; }
 
+        //The is the enumeration index of calling GetBodies() on a part.
+        //For parts with multiple bodies, the body index indicates which body they were.
+        //This is only useful for CAD conversions that need a healing operation identified by the user.
+        //Upon a second CAD conversion healing call, the body indices need to be identified by the user.
+        //This is different than the reference index, which cannot be used for this case, because if 
+        //we were healing a part from a step file, we ignore other parts (and possibly multiple bodies)
+        //which would throw off the ReferenceIndex from the first time the bodies were processed.
+        //CADIndex refers to the part, not the body.
+        public int BodyIndex { get; set; }
+
         //Filepath may be helpful in processing subassembly files. No need to save for TVGLZ.
         //Mutliple solids may have the same filepath (as if from Step file), so this is not a unique identifier.
         [JsonIgnore]
