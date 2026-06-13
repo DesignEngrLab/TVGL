@@ -368,7 +368,7 @@ namespace TVGL
             else return -gradient;
         }
 
-        private Vector3 GetNearbyPointOnQuadric(Vector3 anchor)
+        public Vector3 GetNearbyPointOnQuadric(Vector3 anchor)
         {
             Vector3 normal = GetNormalAtPoint(anchor);
             var intersections = LineIntersection(anchor, normal);
