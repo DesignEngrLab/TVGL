@@ -782,30 +782,52 @@ namespace TVGL
             }
             allVertices.AddRange(polygon.FindInternalPointsOffset(targetSideLength).Select(p => new Vertex2D(new Vector2(p.X, p.Y), vertID++, -1)));
             //Presenter.ShowAndHang(allVertices,Vector3.UnitZ);
-            if (!RunConstrainedDelaunay(allVertices, constraintIndices, false, out var delaunay2D))
+            if (!RunConstrainedDelaunay(allVertices, constraintIndices, out var delaunay2D))
                 throw new Exception("There was a problem with the triangulation.");
             var insideFaces = new List<TriangleFace>();
+            var insideEdges = new HashSet<Edge>();
             foreach (var face in delaunay2D.Faces)
-                if (polygon.IsPointInsidePolygon(new Vector2(face.Center.X, face.Center.Y)))
+            {
+                if (polygon.IsPointInsidePolygon(false, new Vector2(face.Center.X, face.Center.Y)))
+                {
                     insideFaces.Add(face);
-
+                    if (face.AB is not null) insideEdges.Add(face.AB);
+                    if (face.BC is not null) insideEdges.Add(face.BC);
+                    if (face.CA is not null) insideEdges.Add(face.CA);
+                }
+                else
+                {
+                    foreach (var v in face.Vertices)
+                        v.Faces.Remove(face);
+                    foreach (var e in face.Edges)
+                    {
+                        if (e.OwnedFace == face) e.OwnedFace = null;
+                        if (e.OtherFace == face) e.OtherFace = null;
+                    }
+                }
+            }
+            foreach (var e in delaunay2D.Edges)
+            {
+                if (!insideEdges.Contains(e))
+                {
+                    e.To.Edges.Remove(e);
+                    e.From.Edges.Remove(e);
+                }
+            }
             return new Delaunay2D
             {
                 Faces = insideFaces.ToArray(),
-                Edges = delaunay2D.Edges,
+                Edges = insideEdges.ToArray(),
                 Vertices = delaunay2D.Vertices
             };
         }
         static List<Vector2> debugPolygon;
 
         private static bool RunConstrainedDelaunay(List<Vertex2D> allVertices, List<(int From, int To)> constraintIndices,
-            bool rebuildOnBothSidesOfConstraints, out Delaunay2D delaunay2D)
+             out Delaunay2D delaunay2D)
         {
             if (!Delaunay2D.Create(allVertices, out delaunay2D))
                 return false;
-            //Presenter.ShowAndHang(delaunay2D.Edges.Select(e => new[] { new Vector2(e.From.X, e.From.Y), new Vector2(e.To.X, e.To.Y), }));
-            //Presenter.ShowAndHang(constraintIndices.Select(c => new[] { allVertices[c.From].Coordinates, allVertices[c.To].Coordinates }));
-            //Presenter.ShowAndHang(faces.Select(f => new[] { new Vector2(f.A.X, f.A.Y), new Vector2(f.B.X, f.B.Y), new Vector2(f.C.X, f.C.Y), new Vector2(f.A.X, f.A.Y) }));
             var faces = delaunay2D.Faces.ToList();
             // 1. Build a quick lookup for existing edges in the Delaunay Triangulation
             var edgeHash = new Dictionary<long, Edge>();
@@ -815,20 +837,7 @@ namespace TVGL
             foreach (var constraint in constraintIndices)
             {
                 var edgeChecksum = Edge.GetEdgeChecksum(delaunay2D.Vertices[constraint.From], delaunay2D.Vertices[constraint.To]);
-                if (edgeHash.TryGetValue(edgeChecksum, out var newConstraintEdge))
-                {  // This constraint edge already exists in the Delaunay triangulation
-                    var storedEdgeAligns = newConstraintEdge.From.IndexInList == constraint.From;
-                    var outerFace = storedEdgeAligns ? newConstraintEdge.OtherFace : newConstraintEdge.OwnedFace;
-
-                    if (!rebuildOnBothSidesOfConstraints && outerFace != null)
-                    {
-                        //Presenter.ShowAndHang([debugPolygon, new[]{new Vector2(outerFace.A.X, outerFace.A.Y),
-                        //    new Vector2(outerFace.B.X, outerFace.B.Y),
-                        //    new Vector2(outerFace.C.X, outerFace.C.Y) }]);
-                        faces.Remove(outerFace);
-                    }
-                }
-                else
+                if (!edgeHash.TryGetValue(edgeChecksum, out var newConstraintEdge))
                 {
                     newConstraintEdge = new Edge(delaunay2D.Vertices[constraint.From], delaunay2D.Vertices[constraint.To], false)
                     { EdgeReference = edgeChecksum };
@@ -838,7 +847,6 @@ namespace TVGL
                     // 3. Find all existing edges that intersect this constraint line segment and remove them
                     var crossingEdges = new List<Edge>();
                     var tempNewFaces = new List<TriangleFace>();
-                    var tempNewEdges = new List<Edge>();
                     foreach (var edge in edgeHash.Values)
                     {
                         var eFrom = new Vector2(edge.From.X, edge.From.Y);
@@ -847,7 +855,11 @@ namespace TVGL
                             newConstraintEdge.From != edge.To && newConstraintEdge.To != edge.From &&
                             MiscFunctions.SegmentSegment2DIntersection(cFrom, cTo, eFrom, eTo, out _, out var ta, out var tb)
                             && !ta.IsNegligible() && !tb.IsNegligible() && ta.IsLessThanNonNegligible(1) && tb.IsLessThanNonNegligible(1))
+                        {
                             crossingEdges.Add(edge);
+                            if (edge.OwnedFace is not null) faces.Remove(edge.OwnedFace);
+                            if (edge.OtherFace is not null) faces.Remove(edge.OtherFace);
+                        }
                     }
                     edgeHash.Add(edgeChecksum, newConstraintEdge);
                     // from "Fast Segment Insertion and Incremental Construction of Constrained Delaunay Triangulations"
@@ -859,6 +871,7 @@ namespace TVGL
                        // the constraint edge, remove it from your crossing list. If it still intersects, or if the
                        // quad was concave, leave it and move to the next edge in the list.
                        // With every successful flip, the total number of edges intersecting your constraint edge strictly decreases.
+                        var numCrossingEdges = crossingEdges.Count;
                         for (var i = crossingEdges.Count - 1; i >= 0; i--)
                         {
                             var crossingEdge = crossingEdges[i];
@@ -866,7 +879,6 @@ namespace TVGL
                             {
                                 if (crossingEdge.OwnedFace is not null)
                                 {
-                                    faces.Remove(crossingEdge.OwnedFace);
                                     foreach (var borderEdge in crossingEdge.OwnedFace.Edges)
                                     {
                                         if (borderEdge.OwnedFace == crossingEdge.OwnedFace)
@@ -877,7 +889,6 @@ namespace TVGL
                                 }
                                 if (crossingEdge.OtherFace is not null)
                                 {
-                                    faces.Remove(crossingEdge.OtherFace);
                                     foreach (var borderEdge in crossingEdge.OtherFace.Edges)
                                     {
                                         if (borderEdge.OwnedFace == crossingEdge.OtherFace)
@@ -890,18 +901,10 @@ namespace TVGL
                                 crossingEdges.RemoveAt(i);
                                 continue;
                             }
-                            //Presenter.ShowAndHang(new[] { debugPolygon, new List<Vector2> { new Vector2(crossingEdge.OwnedFace.A.X,crossingEdge.OwnedFace.A.Y),
-                            //    new Vector2(crossingEdge.OwnedFace.B.X,crossingEdge.OwnedFace.B.Y),
-                            //    new Vector2(crossingEdge.OwnedFace.C.X, crossingEdge.OwnedFace.C.Y) } });
-
-                            //cFrom, cTo, new Vector2(crossingEdge.OwnedFace.OtherVertex(crossingEdge).X, crossingEdge.OwnedFace.OtherVertex(crossingEdge).Y) ,
-                            //new Vector2(crossingEdge.OtherFace.OtherVertex(crossingEdge).X, crossingEdge.OtherFace.OtherVertex(crossingEdge).Y),
-                            //    cFrom                         } });
 
                             var pTo = new Vector2(crossingEdge.To.X, crossingEdge.To.Y);
                             var pFrom = new Vector2(crossingEdge.From.X, crossingEdge.From.Y);
                             var vOwned = crossingEdge.OwnedFace.OtherVertex(crossingEdge);
-                            //Presenter.ShowAndHang(delaunay2D.Edges.Select(e => new[] { new Vector2(e.From.X, e.From.Y), new Vector2(e.To.X, e.To.Y), }));
                             var pOwned = new Vector2(vOwned.X, vOwned.Y);
                             var vOther = crossingEdge.OtherFace.OtherVertex(crossingEdge);
                             var pOther = new Vector2(vOther.X, vOther.Y);
@@ -922,13 +925,18 @@ namespace TVGL
                                           // Necessarily, the corner at vOwned or vOther must already be convex.
                                           // so, just need to check at pFrom or pTo, and only need to check if the cross product is negative
                                           // (indicating a right turn and thus a convex corner) 
-                            faces.Remove(crossingEdge.OwnedFace);
-                            faces.Remove(crossingEdge.OtherFace);
+                            tempNewFaces.Remove(crossingEdge.OwnedFace);
+                            tempNewFaces.Remove(crossingEdge.OtherFace);
 
                             var newOwnedFace = new TriangleFace(crossingEdge.From, vOther, vOwned, false);
+                            tempNewFaces.Add(newOwnedFace);
                             var newOtherFace = new TriangleFace(crossingEdge.To, vOwned, vOther, false);
+                            tempNewFaces.Add(newOtherFace);
                             if (crossingIsSameAsConstraint == 0)
-                                tempNewEdges.Add(new Edge(vOther, vOwned, newOwnedFace, newOtherFace, false, Edge.GetEdgeChecksum(vOther, vOwned)));
+                            {
+                                var crossEdgeRef = Edge.GetEdgeChecksum(vOwned, vOther);
+                                edgeHash.Add(crossEdgeRef, new Edge(vOther, vOwned, newOwnedFace, newOtherFace, false, crossEdgeRef));
+                            }
                             else
                             {
                                 if (crossingIsSameAsConstraint > 0)
@@ -944,8 +952,6 @@ namespace TVGL
                                 newOwnedFace.AddEdge(newConstraintEdge);
                                 newOtherFace.AddEdge(newConstraintEdge);
                             }
-                            tempNewFaces.Add(newOwnedFace);
-                            tempNewFaces.Add(newOtherFace);
                             // also need to update the 4 quadrilateral edges to point to the new faces
                             foreach (var borderEdge in crossingEdge.OwnedFace.Edges.Concat(crossingEdge.OtherFace.Edges))
                             {
@@ -968,13 +974,9 @@ namespace TVGL
                             edgeHash.Remove(crossingEdge.EdgeReference);
                             crossingEdges.RemoveAt(i);
                         }
-                    }
-                    var newConstraintOutDir = new Vector3(newConstraintEdge.Vector.Y, -newConstraintEdge.Vector.X, 0);
-                    var cFrom3D = newConstraintEdge.From.Coordinates;
-                    foreach (var face in tempNewFaces)
-                    {
-                        if (rebuildOnBothSidesOfConstraints || face.Vertices.All(v => (v.Coordinates - cFrom3D).Dot(newConstraintOutDir) <= 0))
-                            faces.Add(face);
+                        if (numCrossingEdges == crossingEdges.Count)
+                            crossingEdges.RemoveAt(crossingEdges.Count - 1);
+                        faces.AddRange(tempNewFaces);
                     }
                 }
             }
@@ -982,7 +984,7 @@ namespace TVGL
             {
                 Vertices = delaunay2D.Vertices,
                 Faces = faces.ToArray(),
-                Edges = faces.SelectMany(f => f.Edges).Distinct().ToArray()
+                Edges = edgeHash.Values.ToArray(),
             };
             return true;
         }
