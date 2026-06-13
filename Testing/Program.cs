@@ -25,8 +25,7 @@ namespace TVGLUnitTestsAndBenchmarking
             OutputServices.Presenter3D = new Presenter3D();
             var dirInfo = IO.BackoutToFolder(inputFolder);
             var files = dirInfo.GetFiles("*");
-            files.Shuffle();
-            foreach (var fileName in files)
+            foreach (var fileName in files.Skip(6))
             {
                 Console.WriteLine("Attempting to open: " + fileName.Name);
                 var solid = IO.Open(fileName.FullName) as TessellatedSolid;
@@ -35,8 +34,8 @@ namespace TVGLUnitTestsAndBenchmarking
                 var polygon = TestCases.GetRandomCrossSection(solid);
                 Presenter.ShowAndHang(polygon);
                 var delaunay2D = polygon.TriangulateDelaunay(false, true, targetNumTriangles: 500);
-
-                Presenter.ShowAndHang(delaunay2D.Edges.Select(e => new[] { new Vector2(e.From.X, e.From.Y), new Vector2(e.To.X, e.To.Y), }));
+                Presenter.ShowAndHang(delaunay2D.Faces.Select(f => new[] { new Vector2(f.A.X, f.A.Y), new Vector2(f.B.X, f.B.Y), new Vector2(f.C.X, f.C.Y) }));
+                Presenter.ShowAndHang(delaunay2D.Edges.Select(e => new List<Vector2> { new Vector2(e.From.X, e.From.Y), new Vector2(e.To.X, e.To.Y) }).Concat(polygon.AllPaths));
             }
         }
 
