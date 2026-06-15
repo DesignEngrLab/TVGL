@@ -793,7 +793,6 @@ namespace TVGL
             // on the back side
             var numNewVertices = 1 + (targetNumTriangles - numPolygonPoints) / 2 - numHoles;
             allVertices.AddRange(polygon.CreateInternalPointsPoissonDisk(targetSideLength, numNewVertices).Select(p => new Vertex2D(new Vector2(p.X, p.Y), vertID++, -1)));
-            Presenter.ShowAndHang(allVertices.Select(v=>v.Coordinates),marker: MarkerType.Circle,plot2DType: Plot2DType.Scatter);
             if (!RunConstrainedDelaunay(allVertices, constraintIndices, out var delaunay2D))
                 throw new Exception("There was a problem with the triangulation.");
             var insideFaces = new List<TriangleFace>();

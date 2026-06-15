@@ -42,11 +42,20 @@ namespace TVGL
             var gridLength = Math.Sqrt(0.5 * rSqd);
             var grid = new Grid<(bool, Vector2)>();
             grid.Initialize(polygon.MinX, polygon.MaxX, polygon.MinY, polygon.MaxY, gridLength);
-            // 2. Select an initial random seed point inside the polygon, place it in queue and the background
+
+            foreach (var v in polygon.AllPaths.SelectMany(x => x))
+                grid.Values[grid.GetIndex(v.X, v.Y)] = (true, v);
+            var queue = new Queue<Vector2>();
+            // 2. Select some initial random seed point inside the polygon, place it in queue and the background
             //    grid.
-            var seedPt = CreateInternalPointsRadial(polygon, 1).First();
-            grid.Values[grid.GetIndex(seedPt.X, seedPt.Y)] = (true, seedPt);
-            var queue = new Queue<Vector2>([seedPt]);
+            foreach (var seedPt in CreateInternalPointsRadial(polygon, 10))
+            {
+                if (!grid.TryGet(seedPt.X, seedPt.Y, out var value) || !value.Item1)
+                {
+                    grid.Values[grid.GetIndex(seedPt.X, seedPt.Y)] = (true, seedPt);
+                    queue.Enqueue(seedPt);
+                }
+            }
             var deltaAngle = 2 * Math.PI / numAngleForInternalPtCreation;
             var indices = Enumerable.Range(0, numAngleForInternalPtCreation).ToArray();
             var angles = indices.Select(i => i * deltaAngle).ToArray();
@@ -56,7 +65,6 @@ namespace TVGL
             //    randomly in a spherical ring between distance r and 2r around P. For each candidate, check if it is
             //    inside the polygon and use the background grid to quickly verify it isn't too close to any existing
             //    points.
-            Console.WriteLine(queue.Count + ", " + grid.Values.Count(c => c.Item1));
             while (queue.TryDequeue(out var parentPt))
             {
                 yield return parentPt;
@@ -82,10 +90,11 @@ namespace TVGL
                     var startY = Math.Max(0, yIndex - 1);
                     var endY = Math.Min(grid.YCount - 1, yIndex + 1);
                     var neighborIsTooClose = false;
-                    for (var i = startX; i <= endX; i += 2)
+                    for (var i = startX; i <= endX; i++)
                     {
-                        for (int j = startY; j <= endY; j += 2)
+                        for (int j = startY; j <= endY; j++)
                         {
+                            if (i == 0 && j == 0) continue; // this is checked earlie
                             var neighbor = grid[i, j];
                             if (neighbor.Item1 || neighbor.Item2.DistanceSquared(childPt) < rSqd)
                             {
@@ -95,11 +104,10 @@ namespace TVGL
                         }
                         if (neighborIsTooClose) break;
                     }
-                    if (!neighborIsTooClose)
-                    {
-                        grid[xIndex, yIndex] = (true, childPt);
-                        queue.Enqueue(childPt);
-                    }
+                    if (neighborIsTooClose) continue;
+
+                    grid[xIndex, yIndex] = (true, childPt);
+                    queue.Enqueue(childPt);
                 }
             }
         }
