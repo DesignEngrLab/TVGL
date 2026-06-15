@@ -736,6 +736,12 @@ namespace TVGL
                 // assuming an equilateral triangle, the area is (sqrt(3)/4)*sideLength^2, so sideLength = 2*sqrt(area/sqrt(3))
                 targetSideLength = 2 * Math.Sqrt(targetTriangleArea / Math.Sqrt(3));
             }
+            else
+            {
+                // reversing equation above (area of equilateral triangle
+                var targetTriangleArea = targetSideLength * targetSideLength * 0.25 * Math.Sqrt(3);
+                targetNumTriangles = (int)(polygon.Area / targetTriangleArea);
+            }
             if (!polygon.IsPositive)
                 throw new ArgumentException("Triangulate Polygon requires a positive polygon. A negative one was provided.", nameof(polygon));
 
@@ -780,8 +786,14 @@ namespace TVGL
                     constraintIndices.Add((fromIndex, edge.ToPoint.IndexInList));
                 }
             }
-            allVertices.AddRange(polygon.FindInternalPointsOffset(targetSideLength).Select(p => new Vertex2D(new Vector2(p.X, p.Y), vertID++, -1)));
-            //Presenter.ShowAndHang(allVertices,Vector3.UnitZ);
+            var numPolygonPoints = polygon.AllPolygons.Sum(p => p.Vertices.Count);
+            var numHoles = polygon.InnerPolygons.Length;
+            // the number of internal vertices to add it determined from Euler–Poincaré characteristic. I know there's a way to do it
+            // for a disc but the following equation is derived by assuming the polygon is made into a 3D solid by replicating the faces 
+            // on the back side
+            var numNewVertices = 1 + (targetNumTriangles - numPolygonPoints) / 2 - numHoles;
+            allVertices.AddRange(polygon.CreateInternalPointsPoissonDisk(targetSideLength, numNewVertices).Select(p => new Vertex2D(new Vector2(p.X, p.Y), vertID++, -1)));
+            Presenter.ShowAndHang(allVertices.Select(v=>v.Coordinates),marker: MarkerType.Circle,plot2DType: Plot2DType.Scatter);
             if (!RunConstrainedDelaunay(allVertices, constraintIndices, out var delaunay2D))
                 throw new Exception("There was a problem with the triangulation.");
             var insideFaces = new List<TriangleFace>();
