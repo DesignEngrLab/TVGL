@@ -23,7 +23,9 @@ namespace TVGL
         public Edge[] Edges { get; internal set; }
 
         /// <summary>
-        /// Create the Delaunay 3D mesh of tetrahedra from the points.
+        /// Create the Delaunay 3D mesh of tetrahedra from the points. This may be quicker than the default below
+        /// (Bowyer-Watson) for large point sets, but it tends to skip points that are too similar to others.
+        /// It is left here for reference, but it is not recommended for general use.
         /// </summary>
         /// <param name="points"></param>
         /// <param name="delaunay3D"></param>
@@ -118,7 +120,7 @@ namespace TVGL
         /// <param name="points"></param>
         /// <param name="delaunay2D"></param>
         /// <returns></returns>
-        public static bool Create<T>(List<T> points, out Delaunay2D delaunay2D) where T : IVector2D
+        public static bool Create<T>(ICollection<T> points, out Delaunay2D delaunay2D) where T : IVector2D
         {
             if (points == null || points.Count < 3)
             {
@@ -126,215 +128,184 @@ namespace TVGL
                 return false;
             }
 
-            var tvglVertices = new List<Vertex>();
-            // Create TVGL vertices and track original Z if applicable
-            if (points[0] is Vertex)
-                for (int i = 0; i < points.Count; i++)
+            var delaunayVertices = new Vertex[points.Count];
+            // Create TVGL vertices and track original Z and IndexInList if applicable
+            var i = 0;
+            if (points.First() is Vertex)
+                foreach (var point in points)
                 {
-                    var vert3D = points[i] as Vertex;
-                    tvglVertices.Add(vert3D);
+                    var vert3D = point as Vertex;
+                    delaunayVertices[i++] = vert3D;
                 }
-            else if (points[0] is Vertex2D)
-                for (int i = 0; i < points.Count; i++)
+            else if (points.First() is Vertex2D)
+                foreach (var point in points)
                 {
-                    var vert2D = points[i] as Vertex2D;
-                    tvglVertices.Add(new Vertex(new Vector3(points[i].X, points[i].Y, 0.0), vert2D.IndexInList));
+                    var vert2D = point as Vertex2D;
+                    delaunayVertices[i++] = new Vertex(new Vector3(point.X, point.Y, 0.0), vert2D.IndexInList);
                 }
-            else if (points[0] is IVector3D)
-                for (int i = 0; i < points.Count; i++)
-                    tvglVertices.Add(new Vertex(new Vector3(points[i].X, points[i].Y, ((IVector3D)points[i]).Z), i));
+            else if (points.First() is IVector3D)
+                foreach (var point in points)
+                    delaunayVertices[i++] = new Vertex(new Vector3(point.X, point.Y, ((IVector3D)point).Z), i);
             else
-                for (int i = 0; i < points.Count; i++)
-                    tvglVertices.Add(new Vertex(new Vector3(points[i].X, points[i].Y, 0.0), i));
+                foreach (var point in points)
+                    delaunayVertices[i++] = new Vertex(new Vector3(point.X, point.Y, 0.0), i);
 
+            var maxIndex = 1 + delaunayVertices.Max(v => v.IndexInList);
             // Find bounds for super triangle
-            double minX = points.Min(p => p.X);
-            double minY = points.Min(p => p.Y);
-            double maxX = points.Max(p => p.X);
-            double maxY = points.Max(p => p.Y);
-            double dx = maxX - minX;
-            double dy = maxY - minY;
-            double deltaMax = Math.Max(dx, dy);
-            double midX = (minX + maxX) / 2.0;
-            double midY = (minY + maxY) / 2.0;
+            var centerX = delaunayVertices.Average(p => p.X);
+            var centerY = delaunayVertices.Average(p => p.Y);
+            var radius = Math.Sqrt(delaunayVertices.Max(p => (p.X - centerX) * (p.X - centerX) + (p.Y - centerY) * (p.Y - centerY)));
+            // so all points are in the circle defined here. The encompassing triangle will have a vertices that are r/cos60
+            // or double the distance away. Then, in order that the super triangle not be too tight (to prevent the edge triangles
+            // from being too extreme, we add a little more
+            radius *= 2.1;
 
             // Super triangle vertices (large enough to encompass all points)
-            var p1 = new Vertex(new Vector3(midX - 20 * deltaMax, midY - deltaMax, 0));
-            var p2 = new Vertex(new Vector3(midX, midY + 20 * deltaMax, 0));
-            var p3 = new Vertex(new Vector3(midX + 20 * deltaMax, midY - deltaMax, 0));
-
-            var superTriangle = new BWTriangle(p1, p2, p3);
-            var triangles = new List<BWTriangle> { superTriangle };
-
-            foreach (var p in tvglVertices)
+            var topSuperV = new Vertex(new Vector3(centerX, centerY + radius, 0), maxIndex++);
+            var leftSuperV = new Vertex(new Vector3(centerX - 0.866 * radius, centerY - 0.5 * radius, 0), maxIndex++);
+            var rightSuperV = new Vertex(new Vector3(centerX + 0.866 * radius, centerY - 0.5 * radius, 0), maxIndex++);
+            var superTriangle = new TriangleFace(topSuperV, leftSuperV, rightSuperV, false);
+            // for now, the vertices won't link to the faces. We'll need to do that at the end
+            var topToLeftEdge = new Edge(topSuperV, leftSuperV, superTriangle, null, false);
+            var leftToRightEdge = new Edge(leftSuperV, rightSuperV, superTriangle, null, false);
+            var rightToTopEdge = new Edge(rightSuperV, topSuperV, superTriangle, null, false);
+            Circle.CreateFrom3Points(topSuperV, leftSuperV, rightSuperV, out var superCircle);
+            var circles = new List<Circle> { superCircle };
+            var triangles = new List<TriangleFace> { superTriangle };
+            var outerEdges = new Dictionary<Edge, bool>();
+            var newInnerEdges = new Dictionary<long, Edge>();
+            // the main loop: for each point, we find the triangles whose circumcircles contain the point,
+            // remove those triangles, and re-triangulate the resulting hole with the new point
+            foreach (var vertex in delaunayVertices)
             {
-                var badTriangles = new List<BWTriangle>();
-                foreach (var t in triangles)
-                    if (t.IsPointInCircumcircle(p.Coordinates.X, p.Coordinates.Y))
-                        badTriangles.Add(t);
-
-                var polygon = new List<(Vertex v1, Vertex v2)>();
-                foreach (var t in badTriangles)
+                var badTriangleIndices = new List<int>();
+                // gather all the triangles that contain the new point, p in their circumcircles.
+                // At the beginning this will be the super
+                // triangle, but as we go on, it will be more and more local
+                for (int j = triangles.Count - 1; j >= 0; j--)
+                // this is reversed so that the order in badTriangleIndices is from the end
+                // of the list to the beginning, which will be important when we remove them
+                // from the triangles list in this next loop
                 {
-                    foreach (var edge in t.Edges)
-                    {
-                        // If this edge is not shared with any other bad triangle, it goes in the polygon
-                        bool isShared = false;
-                        foreach (var otherT in badTriangles)
-                        {
-                            if (otherT != t && otherT.HasEdge(edge.v1, edge.v2))
-                            {
-                                isShared = true;
-                                break;
-                            }
-                        }
-                        if (!isShared)
-                            polygon.Add(edge);
-                    }
+                    if (PointIsInCircle(vertex, circles[j]))
+                        badTriangleIndices.Add(j);
                 }
 
-                foreach (var badT in badTriangles)
-                    triangles.Remove(badT);
-
-                foreach (var edge in polygon)
-                    triangles.Add(new BWTriangle(edge.v1, edge.v2, p));
-            }
-
-            // Remove triangles sharing vertices with super triangle
-            triangles.RemoveAll(t => t.HasVertex(p1) || t.HasVertex(p2) || t.HasVertex(p3));
-
-            // Assemble TVGL Faces and Edges
-            var faces = new List<TriangleFace>();
-            var edgesDict = new Dictionary<long, Edge>();
-
-            long GetEdgeKey(int i1, int i2) => i1 < i2 ? ((long)i1 << 32) | (uint)i2 : ((long)i2 << 32) | (uint)i1;
-
-            foreach (var t in triangles)
-            {
-                var face = new TriangleFace(t.V1, t.V2, t.V3);
-                faces.Add(face);
-
-                // Add faces to vertices
-                t.V1.Faces.Add(face);
-                t.V2.Faces.Add(face);
-                t.V3.Faces.Add(face);
-
-                // Build TVGL edges
-                var vArr = new[] { t.V1, t.V2, t.V3 };
-                for (int i = 0; i < 3; i++)
+                outerEdges.Clear();
+                foreach (var badIndex in badTriangleIndices)
                 {
-                    var from = vArr[i];
-                    var to = vArr[(i + 1) % 3];
-                    var key = GetEdgeKey(from.IndexInList, to.IndexInList);
-
-                    if (!edgesDict.TryGetValue(key, out var edge))
+                    var t = triangles[badIndex];
+                    foreach (var e in t.Edges)
                     {
-                        edge = new Edge(from, to, face, null, false);
-                        edgesDict.Add(key, edge);
+                        if (!outerEdges.ContainsKey(e))
+                        {  //  first time seeing this edge. Store it with a flag indicating
+                           //  whether it was owned by the triangle that is being removed
+                            outerEdges.Add(e, e.OwnedFace == t);
+                        }
+                        else
+                        {   //if already in dictionary then we actually remove from the dictionary
+                            // because this means it's between two bad triangles
+                            outerEdges.Remove(e);
+                            // the inner edges will be forgotten along with the bad triangles,
+                            // so we don't need to unlink them from each other
+                        }
+                    }
+                    triangles.RemoveAt(badIndex);
+                    circles.RemoveAt(badIndex);
+                }
+                foreach (var (edge, isOwned) in outerEdges)
+                {
+                    TriangleFace newTriangle;
+                    if (isOwned)
+                    {
+                        newTriangle = new TriangleFace(edge.From, edge.To, vertex, false);
+                        edge.OwnedFace = newTriangle;
                     }
                     else
                     {
-                        edge.OtherFace = face;
+                        newTriangle = new TriangleFace(edge.To, edge.From, vertex, false);
+                        edge.OtherFace = newTriangle;
                     }
-                    if (i == 0) face.AB = edge;
-                    else if (i == 1) face.BC = edge;
-                    else face.CA = edge;
+                    newTriangle.AddEdge(edge);
+                    var fromSideRef = Edge.GetEdgeChecksum(edge.From.IndexInList, vertex.IndexInList);
+                    if (newInnerEdges.TryGetValue(fromSideRef, out var fromSideEdge))
+                    {
+                        newTriangle.AddEdge(fromSideEdge);
+                        if (isOwned == (fromSideEdge.From == vertex))
+                            fromSideEdge.OwnedFace = newTriangle;
+                        else fromSideEdge.OtherFace = newTriangle;
+                    }
+                    else
+                    {
+                        if (isOwned)
+                            fromSideEdge = new Edge(vertex, edge.From, newTriangle, null, false);
+                        else
+                            fromSideEdge = new Edge(edge.From, vertex, newTriangle, null, false);
+                        newInnerEdges.Add(fromSideRef, fromSideEdge);
+                    }
+                    var toSideRef = Edge.GetEdgeChecksum(edge.To.IndexInList, vertex.IndexInList);
+                    if (newInnerEdges.TryGetValue(toSideRef, out var toSideEdge))
+                    {
+                        newTriangle.AddEdge(toSideEdge);
+                        if (isOwned == (toSideEdge.To == vertex))
+                            toSideEdge.OwnedFace = newTriangle;
+                        else toSideEdge.OtherFace = newTriangle;
+                    }
+                    else
+                    {
+                        if (isOwned)
+                            toSideEdge = new Edge(edge.To, vertex, newTriangle, null, false);
+                        else
+                            toSideEdge = new Edge(vertex, edge.To, newTriangle, null, false);
+                        newInnerEdges.Add(toSideRef, toSideEdge);
+                    }
+                    triangles.Add(newTriangle);
+                    Circle.CreateFrom3Points(newTriangle.A, newTriangle.B, newTriangle.C, out var newCircle);
+                    circles.Add(newCircle);
+                }
+            }
+
+            // Remove triangles sharing vertices with super triangle
+            var edges = new HashSet<Edge>();
+            for (i = triangles.Count - 1; i >= 0; i--)
+            {
+                TriangleFace t = triangles[i];
+                if (t.A == topSuperV || t.B == topSuperV || t.C == topSuperV ||
+                    t.A == leftSuperV || t.B == leftSuperV || t.C == leftSuperV ||
+                    t.A == rightSuperV || t.B == rightSuperV || t.C == rightSuperV)
+                {
+                    triangles.RemoveAt(i);
+                    if (t.AB.OwnedFace == t) t.AB.OwnedFace = null; else t.AB.OtherFace = null;
+                    if (t.BC.OwnedFace == t) t.BC.OwnedFace = null; else t.BC.OtherFace = null;
+                    if (t.CA.OwnedFace == t) t.CA.OwnedFace = null; else t.CA.OtherFace = null;
+                }
+                else // we are keeping the triangle, so finish linking the vertices (and the edges to the vertices)
+                {    // and also add the edges to the edge list if not already there
+                    foreach (var v in t.Vertices)
+                        v.Faces.Add(t);
+                    foreach (var e in t.Edges)
+                    {
+                        if (edges.Add(e)) // first time seeing the edge, so link it to the vertices and add to edge list
+                        {
+                            e.From.Edges.Add(e);
+                            e.To.Edges.Add(e);
+                        }
+                    }
                 }
             }
             delaunay2D = new Delaunay2D()
             {
-                Vertices = tvglVertices.ToArray(),
-                Faces = faces.ToArray(),
-                Edges = edgesDict.Values.ToArray()
+                Vertices = delaunayVertices.ToArray(),
+                Faces = triangles.ToArray(),
+                Edges = edges.ToArray()
             };
             return true;
         }
 
-        private class BWTriangle
+        private static bool PointIsInCircle(Vertex p, Circle c)
         {
-            public Vertex V1 { get; }
-            public Vertex V2 { get; }
-            public Vertex V3 { get; }
-
-            public (Vertex v1, Vertex v2)[] Edges { get; }
-
-            private double circumcenterX;
-            private double circumcenterY;
-            private double circumradiusSq;
-
-            public BWTriangle(Vertex v1, Vertex v2, Vertex v3)
-            {
-                // Ensure counter-clockwise for consistent outwards normals
-                if (CrossProduct2D(v1, v2, v3) < 0)
-                {
-                    V1 = v1; V2 = v3; V3 = v2;
-                }
-                else
-                {
-                    V1 = v1; V2 = v2; V3 = v3;
-                }
-
-                Edges = new[]
-                {
-                    (V1, V2),
-                    (V2, V3),
-                    (V3, V1)
-                };
-
-                CalculateCircumcircle();
-            }
-
-            private double CrossProduct2D(Vertex a, Vertex b, Vertex c)
-            {
-                return (b.Coordinates.X - a.Coordinates.X) * (c.Coordinates.Y - a.Coordinates.Y) -
-                       (b.Coordinates.Y - a.Coordinates.Y) * (c.Coordinates.X - a.Coordinates.X);
-            }
-
-            public bool HasVertex(Vertex v)
-            {
-                return V1 == v || V2 == v || V3 == v;
-            }
-
-            public bool HasEdge(Vertex a, Vertex b)
-            {
-                return (V1 == a && V2 == b) || (V2 == a && V3 == b) || (V3 == a && V1 == b) ||
-                       (V1 == b && V2 == a) || (V2 == b && V3 == a) || (V3 == b && V1 == a);
-            }
-
-            public bool IsPointInCircumcircle(double px, double py)
-            {
-                double dx = px - circumcenterX;
-                double dy = py - circumcenterY;
-                return (dx * dx + dy * dy) <= circumradiusSq;
-            }
-
-            private void CalculateCircumcircle()
-            {
-                double ax = V1.Coordinates.X, ay = V1.Coordinates.Y;
-                double bx = V2.Coordinates.X, by = V2.Coordinates.Y;
-                double cx = V3.Coordinates.X, cy = V3.Coordinates.Y;
-
-                double d = 2 * (ax * (by - cy) + bx * (cy - ay) + cx * (ay - by));
-
-                if (Math.Abs(d) < 1e-12)
-                {
-                    circumcenterX = 0;
-                    circumcenterY = 0;
-                    circumradiusSq = double.PositiveInfinity;
-                    return;
-                }
-
-                double aSq = ax * ax + ay * ay;
-                double bSq = bx * bx + by * by;
-                double cSq = cx * cx + cy * cy;
-
-                circumcenterX = (aSq * (by - cy) + bSq * (cy - ay) + cSq * (ay - by)) / d;
-                circumcenterY = (aSq * (cx - bx) + bSq * (ax - cx) + cSq * (bx - ax)) / d;
-
-                double dx = circumcenterX - ax;
-                double dy = circumcenterY - ay;
-                circumradiusSq = dx * dx + dy * dy;
-            }
+            return (p.X - c.Center.X) * (p.X - c.Center.X) + (p.Y - c.Center.Y) * (p.Y - c.Center.Y)
+                < c.RadiusSquared;
         }
     }
 }
