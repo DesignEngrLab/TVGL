@@ -622,7 +622,8 @@ namespace TVGL
         /// <returns>IEnumerable&lt;Vertex[]&gt; where each represents a triangular polygonal face.</returns>
         /// <exception cref="System.ArgumentException">The vertices must all have a unique IndexInList value - vertexLoop</exception>
         public static IEnumerable<(Vertex A, Vertex B, Vertex C)> TriangulateDelaunay(this IEnumerable<Vertex> vertexLoop,
-            Vector3 normal, bool forceToPositive = false, bool handleSelfIntersects = true, double suggestedAngle = 0.0)
+            Vector3 normal, bool forceToPositive = false, bool allowNewPolygonPoints = false, bool preservePolygonEdgesInTriangulation = false, 
+            int targetNumTriangles = -1, double targetSideLength = double.NaN)
         {
             var transform = normal.TransformToXYPlane(out _);
             var coords = new List<Vertex2D>();
@@ -636,15 +637,17 @@ namespace TVGL
             }
             var polygon = new Polygon(coords);
             if (forceToPositive && !polygon.IsPositive) polygon.IsPositive = true;
-            foreach (var triangleIndices in polygon.TriangulateToIndicesDelaunay(handleSelfIntersects, suggestedAngle))
-            {
-                if (indexToVertexDict[triangleIndices.A] != indexToVertexDict[triangleIndices.B]
-                    && indexToVertexDict[triangleIndices.B] != indexToVertexDict[triangleIndices.C]
-                    && indexToVertexDict[triangleIndices.C] != indexToVertexDict[triangleIndices.A])
-                    yield return (
-                        indexToVertexDict[triangleIndices.A], indexToVertexDict[triangleIndices.B],
-                        indexToVertexDict[triangleIndices.C]);
-            }
+            throw new NotImplementedException();
+            //foreach (var triangleIndices in polygon.TriangulateToIndicesDelaunay(allowNewPolygonPoints, 
+            //    preservePolygonEdgesInTriangulation, targetNumTriangles, targetSideLength))
+            //{
+            //    if (indexToVertexDict[triangleIndices.A] != indexToVertexDict[triangleIndices.B]
+            //        && indexToVertexDict[triangleIndices.B] != indexToVertexDict[triangleIndices.C]
+            //        && indexToVertexDict[triangleIndices.C] != indexToVertexDict[triangleIndices.A])
+            //        yield return (
+            //            indexToVertexDict[triangleIndices.A], indexToVertexDict[triangleIndices.B],
+            //            indexToVertexDict[triangleIndices.C]);
+            //}
         }
 
         /// <summary>
@@ -655,7 +658,8 @@ namespace TVGL
         /// <returns>IEnumerable&lt;Vertex[]&gt; where each represents a triangular polygonal face.</returns>
         /// <exception cref="System.ArgumentException">The vertices must all have a unique IndexInList value - vertexLoops</exception>
         public static IEnumerable<Vertex[]> TriangulateDelaunay(this IEnumerable<IList<Vertex>> vertexLoops, Vector3 normal,
-            bool handleSelfIntersects = true, double suggestedAngle = 0.0)
+            bool allowNewPolygonPoints, bool preservePolygonEdgesInTriangulation, int targetNumTriangles = -1, 
+            double targetSideLength = double.NaN)
         {
             var transform = normal.TransformToXYPlane(out _);
             var polygons = new List<Polygon>();
@@ -673,13 +677,15 @@ namespace TVGL
                 polygons.Add(new Polygon(coords));
             }
             polygons = polygons.CreateShallowPolygonTrees(false);
-            foreach (var polygon in polygons)
-            {
-                foreach (var triangleIndices in polygon.TriangulateToIndicesDelaunay(handleSelfIntersects, suggestedAngle))
-                    yield return new[]
-                        {indexToVertexDict[triangleIndices.A], indexToVertexDict[triangleIndices.B],
-                        indexToVertexDict[triangleIndices.C]};
-            }
+            throw new NotImplementedException();
+            //foreach (var polygon in polygons)
+            //{
+            //    foreach (var triangleIndices in polygon.TriangulateToIndicesDelaunay(allowNewPolygonPoints,
+            //        preservePolygonEdgesInTriangulation, targetNumTriangles, targetSideLength))
+            //        yield return new[]
+            //            {indexToVertexDict[triangleIndices.A], indexToVertexDict[triangleIndices.B],
+            //            indexToVertexDict[triangleIndices.C]};
+            //}
         }
 
 
@@ -688,32 +694,17 @@ namespace TVGL
         /// </summary>
         /// <param name="polygon">The polygon.</param>
         /// <returns>List&lt;System.Int32[]&gt;.</returns>
-        public static IEnumerable<Vector2[]> TriangulateToCoordinatesDelaunay(this Polygon polygon, bool handleSelfIntersects = true,
-            double suggestedAngle = 0.0)
+        public static IEnumerable<Vector2[]> TriangulateToCoordinatesDelaunay(this Polygon polygon,
+            bool allowNewPolygonPoints, bool preservePolygonEdgesInTriangulation, int targetNumTriangles = -1,
+            double targetSideLength = double.NaN)
         {
-            foreach (var triangle in polygon.TriangulateDelaunay(false, false).Faces)
+            foreach (var triangle in polygon.TriangulateDelaunay(allowNewPolygonPoints, 
+                preservePolygonEdgesInTriangulation, targetNumTriangles, targetSideLength).Faces)
                 yield return new[] { new Vector2(triangle.A.X,triangle.A.Y),
                     new Vector2(triangle.B.X,triangle.B.Y),
                     new Vector2(triangle.C.X,triangle.C.Y) };
         }
 
-        /// <summary>
-        /// Triangulates the specified polygons which may include holes. However, the .
-        /// </summary>
-        /// <param name="polygon">The polygon.</param>
-        /// <param name="handleSelfIntersects">if set to <c>true</c> [handle self intersects].</param>
-        /// <returns>List&lt;System.Int32[]&gt;.</returns>
-        public static IEnumerable<(int A, int B, int C)> TriangulateToIndicesDelaunay(this Polygon polygon, bool handleSelfIntersects = true,
-            double suggestedAngle = 0.0)
-        {
-            var vertexIndices = new HashSet<int>();
-            var index = 0;
-            foreach (var subPolygon in polygon.AllPolygons)
-                foreach (var vertex in subPolygon.Vertices)
-                    vertex.IndexInList = index++;
-            foreach (var triangle in polygon.TriangulateDelaunay(false, false).Faces)
-                yield return (triangle.A.IndexInList, triangle.B.IndexInList, triangle.C.IndexInList);
-        }
         /// <summary>
         /// Triangulates the specified polygons which may include holes.
         /// </summary>
@@ -722,7 +713,7 @@ namespace TVGL
         /// <returns>List&lt;System.Int32[]&gt;.</returns>
         /// <exception cref="System.ArgumentException">Triangulate Polygon requires a positive polygon. A negative one was provided. - polygon</exception>
         /// <exception cref="System.Exception">Unable to triangulate polygon.</exception>
-        public static Delaunay2D TriangulateDelaunay(this Polygon polygon, //out Dictionary<Vertex, Vertex2D> mappingToPolygonVertices,
+        public static Delaunay2D TriangulateDelaunay(this Polygon polygon, 
             bool allowNewPolygonPoints, bool preservePolygonEdgesInTriangulation, int targetNumTriangles = -1, double targetSideLength = double.NaN)
         {
             debugPolygon = polygon.Path;
@@ -817,6 +808,7 @@ namespace TVGL
                     }
                 }
             }
+
             foreach (var e in delaunay2D.Edges)
             {
                 if (!insideEdges.Contains(e))
@@ -837,7 +829,7 @@ namespace TVGL
         private static bool RunConstrainedDelaunay(List<Vertex2D> allVertices, List<(int From, int To)> constraintIndices,
              out Delaunay2D delaunay2D)
         {
-            if (!Delaunay2D.Create(allVertices, out delaunay2D))
+            if (!Delaunay2D.CreateViaBowyerWatson(allVertices, out delaunay2D))
                 return false;
             var faces = delaunay2D.Faces.ToList();
             // 1. Build a quick lookup for existing edges in the Delaunay Triangulation
