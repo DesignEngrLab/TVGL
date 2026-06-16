@@ -829,7 +829,7 @@ namespace TVGL
         private static bool RunConstrainedDelaunay(List<Vertex2D> allVertices, List<(int From, int To)> constraintIndices,
              out Delaunay2D delaunay2D)
         {
-            if (!Delaunay2D.CreateViaBowyerWatson(allVertices, out delaunay2D))
+            if (!Delaunay2D.Create(allVertices, out delaunay2D))
                 return false;
             var faces = delaunay2D.Faces.ToList();
             // 1. Build a quick lookup for existing edges in the Delaunay Triangulation

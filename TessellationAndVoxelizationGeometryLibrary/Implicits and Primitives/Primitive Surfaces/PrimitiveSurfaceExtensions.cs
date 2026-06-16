@@ -412,7 +412,7 @@ namespace TVGL
         public static void TrimTessellationToPositiveVertices(this PrimitiveSurface surface,
             IDictionary<Vertex, double> vertexDistances)
         {
-            var edgeIntersections = new Dictionary<Edge, double>();
+            var edgeIntersections = new Dictionary<Edge, (double, double)>();
 
             foreach (var edge in surface.InnerEdges.Concat(surface.OuterEdges))
             {
@@ -422,8 +422,14 @@ namespace TVGL
                     continue; // both negative, so skip
                 if (fromDist >= 0 && toDist >= 0)
                     continue; // both non-negative, so skip
-                // edge is crossing, so add the intersection to the dictionary for use in the main function below
-                edgeIntersections.Add(edge, edge.Length * (fromDist / (fromDist - toDist)));
+                if (fromDist >= 0)
+                    // edge passes into the surface, so the normal is opposite (or negative dot product) with the edge vector
+                    // So, we set tNegative to the value and tPositive is Nan
+                    edgeIntersections.Add(edge, (edge.Length * (fromDist / (fromDist - toDist)), double.NaN));
+                else // edge passes out of the surface, so the normal is in the same direction (or positive dot product) with the edge vector
+                     // So, we set tPositive to the value and tNegative is Nan
+                    edgeIntersections.Add(edge, (double.NaN, edge.Length * (fromDist / (fromDist - toDist))));
+
             }
             var removeVertices = vertexDistances.Where(kvp => kvp.Value < 0).Select(kvp => kvp.Key).ToHashSet();
             TrimTessellationToPositiveVertices(surface, edgeIntersections, removeVertices);
@@ -447,7 +453,7 @@ namespace TVGL
         /// <exception cref="Exception">Thrown if an unexpected case occurs where two edges are removed from a triangle, which indicates an invalid
         /// tessellation state.</exception>
         public static void TrimTessellationToPositiveVertices(this PrimitiveSurface surface,
-            IDictionary<Edge, double> edgeIntersections, HashSet<Vertex> removeVertices)
+            IDictionary<Edge, (double, double)> edgeIntersections, HashSet<Vertex> removeVertices)
         {
             var edgesToRemove = new HashSet<Edge>(); // we keep track of edges to remove to remove their
                                                      // reference from the vertices later
@@ -458,26 +464,25 @@ namespace TVGL
                                                              // we keep track of these to remove their references from the vertices later
             var facesToAdd = new List<TriangleFace>();  // added to the primitive surface with the existing in SetFacesAndVertices
 
-         
-   //         var fGroups = new List<TriangleFace>[4];
-   //         var fcolors = new Color[]{ new Color(KnownColors.LightGreen),new Color(KnownColors.Yellow),
-   //         new Color(KnownColors.Orange),new Color(KnownColors.Red)};
-   //         for (int i = 0; i < 4; i++)
-   //             fGroups[i] = new List<TriangleFace>();
-   //         foreach (var f in surface.Faces)
-   //         {
-   //             var count = f.Vertices.Sum(v => removeVertices.Contains(v) ? 1 : 0);
-   //             fGroups[count].Add(f);
-   //         }
-   //         for (int i = 0; i < 4; i++)
-   //             foreach (var f in fGroups[i])
-   //                 f.Color = fcolors[i];
-   //         //Presenter.ShowAndHang(surface.Faces);
-   //Presenter.ShowAndHang(  //[surface.InnerEdges.Select(e=>new[] { e.From.Coordinates, e.To.Coordinates } ),
-   //         edgeIntersections.Keys.Select(e=>new[] { e.From.Coordinates, e.To.Coordinates } ),lineThicknesses: [3],
-   //             colors: [new Color(KnownColors.Black)],
-   //             faces:surface.Faces
-   //             );
+
+            //var fGroups = new List<TriangleFace>[4];
+            //var fcolors = new Color[]{ new Color(KnownColors.LightGreen),new Color(KnownColors.Yellow),
+            //         new Color(KnownColors.Orange),new Color(KnownColors.Red)};
+            //for (int i = 0; i < 4; i++)
+            //    fGroups[i] = new List<TriangleFace>();
+            //foreach (var f in surface.Faces)
+            //{
+            //    var count = f.Vertices.Sum(v => removeVertices.Contains(v) ? 1 : 0);
+            //    fGroups[count].Add(f);
+            //}
+            //for (int i = 0; i < 4; i++)
+            //    foreach (var f in fGroups[i])
+            //        f.Color = fcolors[i];
+            //Presenter.ShowAndHang( 
+            //         edgeIntersections.Keys.Select(e => new[] { e.From.Coordinates, e.To.Coordinates }), lineThicknesses: [3],
+            //             colors: [new Color(KnownColors.Black)],
+            //             faces: surface.Faces
+            //             );
             foreach (var face in surface.Faces)
             {
                 var aRemoved = removeVertices.Contains(face.A);
@@ -488,8 +493,6 @@ namespace TVGL
                 facesToRemove.Add(face);
                 if (aRemoved && bRemoved && cRemoved)
                     continue; // all remove vertices, so - yes- remove face (as above, but then leave)
-                //face.Color = new Color(KnownColors.Red);
-                //Presenter.ShowAndHang(surface.Faces.Take(40).Concat(new[] { face }));
                 Edge thisPatchRemovedEdge = null;
                 if (aRemoved)
                 {
@@ -683,12 +686,22 @@ namespace TVGL
         }
 
 
-        private static Vertex ReplaceNegativeVertexOnEdge(Edge edge, Vertex negV, IDictionary<Edge, double> edgeIntersections)
+        private static Vertex ReplaceNegativeVertexOnEdge(Edge edge, Vertex negV, IDictionary<Edge, (double, double)> edgeIntersections)
         {
-            var position = edge.From.Coordinates + edge.UnitVector * edgeIntersections[edge];
-            var newVertex = new Vertex(position);
-            if (edge.To == negV) edge.To = newVertex;
-            else edge.From = newVertex;
+            Vertex newVertex;
+            if (negV == edge.From) // then passing from negative to non-negative, so the intersection value is in the
+                                   // second item of the tuple => tPositive.
+            {
+                var position = edge.From.Coordinates + edge.UnitVector * edgeIntersections[edge].Item2;
+                newVertex = new Vertex(position);
+                edge.From = newVertex;
+            }
+            else
+            {
+                var position = edge.From.Coordinates + edge.UnitVector * edgeIntersections[edge].Item1;
+                newVertex = new Vertex(position);
+                edge.To = newVertex;
+            }
             return newVertex;
         }
 
