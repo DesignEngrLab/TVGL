@@ -91,7 +91,7 @@ namespace TVGL
             var initEdgePlot = edges.Select(e => new[] { e.From.Coordinates, e.To.Coordinates }).ToArray();
             var edgeQueue = new PriorityQueue<(Edge, Vector3), double>(new ReverseSort());
             foreach (var edge in edges)
-                EnqueueEdgeAndFindNewPoint(edgeQueue, edge);
+                EnqueueEdgeAndFindNewPoint(edgeQueue, edge, maxSurfaceDeviation);
             addedEdges = new List<Edge>();
             addedVertices = new List<Vertex>();
             addedFaces = new List<TriangleFace>();
@@ -158,12 +158,12 @@ namespace TVGL
 
                 // need to re-add the edge. It was modified in the SplitEdge function (now, half the lenght), but
                 // it may still be met by this criteria
-                EnqueueEdgeAndFindNewPoint(edgeQueue, c.edge);
-                EnqueueEdgeAndFindNewPoint(edgeQueue, inlineEdge);
+                EnqueueEdgeAndFindNewPoint(edgeQueue, c.edge, maxSurfaceDeviation);
+                EnqueueEdgeAndFindNewPoint(edgeQueue, inlineEdge, maxSurfaceDeviation);
                 if (newLeftEdge != null)
-                    EnqueueEdgeAndFindNewPoint(edgeQueue, newLeftEdge);
+                    EnqueueEdgeAndFindNewPoint(edgeQueue, newLeftEdge, maxSurfaceDeviation);
                 if (newRightEdge != null)
-                    EnqueueEdgeAndFindNewPoint(edgeQueue, newRightEdge);
+                    EnqueueEdgeAndFindNewPoint(edgeQueue, newRightEdge, maxSurfaceDeviation);
 
                 addedVertices.Add(addedVertex);
                 addedEdges.Add(inlineEdge);
@@ -175,8 +175,10 @@ namespace TVGL
         }
 
 
-        private static void EnqueueEdgeAndFindNewPoint(PriorityQueue<(Edge, Vector3), double> edgeQueue, Edge edge)
+        private static void EnqueueEdgeAndFindNewPoint(PriorityQueue<(Edge, Vector3), double> edgeQueue, Edge edge, double edgeLengthLimit)
         {
+            if (edge.Length < edgeLengthLimit)
+                return;
             var newPoint = DetermineIntermediateVertexPosition(edge);
             var newLength = MiscFunctions.DistancePointToLine(newPoint, edge.From.Coordinates, edge.Vector, out _);
             //Math.Max((edge.From.Coordinates - newPoint).LengthSquared(), (edge.To.Coordinates - newPoint).LengthSquared());
