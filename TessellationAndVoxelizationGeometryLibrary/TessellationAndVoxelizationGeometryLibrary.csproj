@@ -4,7 +4,7 @@
 		<TargetFramework>net10.0</TargetFramework>
 		<AssemblyName>TessellationAndVoxelizationGeometryLibrary</AssemblyName>
 		<RootNamespace>TVGL</RootNamespace>
-		<Version>1.0.17.1019</Version>
+		<Version>1.0.07.2026</Version>
 		<Product>Tessellation and Voxelization Geometry Library</Product>
 		<PackageId>TVGL</PackageId>
 		<Authors>Matt Campbell, Brandon Massoni</Authors>
