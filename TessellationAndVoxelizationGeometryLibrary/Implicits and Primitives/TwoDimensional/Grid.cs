@@ -11,6 +11,7 @@
 // </copyright>
 // <summary></summary>
 // ***********************************************************************
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -22,10 +23,8 @@ namespace TVGL
     /// Class Grid.
     /// </summary>
     /// <typeparam name="T"></typeparam>
-    public abstract class Grid<T>
+    public  class Grid<T>
     {
-        public abstract bool IsInsideForPolygonCreation(int index);
-
         /// <summary>
         /// Gets the values.
         /// Don't make this a concurrent dictionary. Since the operations are generally very small and quick,
@@ -400,7 +399,7 @@ namespace TVGL
         public double GetSnappedY(int y) => y * PixelSideLength + MinY;
 
 
-
+        #region Convert Grid into a Polygon
         public IEnumerable<Polygon> ConvertGridToPolygons()
         {
             //First, find all the lower left hand corners of potential polygons.
@@ -423,7 +422,7 @@ namespace TVGL
             var tripleNCells = new Dictionary<int, int>();
             for (var i = 0; i <= MaxIndex; i++)
             {
-                if (IsInsideForPolygonCreation(i) && IsTripleN(i, this, out var j))
+                if (IsInsideForPolygonCreation(i) && IsAGoodStartForPolygonCreation(i, this, out var j))
                     tripleNCells.Add(i, j);
             }
 
@@ -499,7 +498,7 @@ namespace TVGL
 
 
         //The pixels that we are looking for to start at have null pixels to their left, below, and left-below diagonal
-        private static bool IsTripleN(int index, Grid<T> grid, out int j)
+        private static bool IsAGoodStartForPolygonCreation(int index, Grid<T> grid, out int j)
         {
             var (x, y) = grid.GetXYIndicesFromPixelIndices(index);
             for (int i = 0; i < 8; i++)
@@ -515,6 +514,19 @@ namespace TVGL
             j = -1;
             return false;
         }
+
+        /// <summary>
+        /// For converting a grid into a polygon, this boolean determines if a given cell in the grid
+        /// is a inside. The default - as programmed here - is that "inside" means that the Value of
+        /// the cell is not the default value
+        /// </summary>
+        /// <param name="index"></param>
+        /// <returns></returns>
+        public virtual bool IsInsideForPolygonCreation(int index)
+        {
+            return !Values[index].Equals(default(T));
+        }
+        #endregion
         private static int[][] deltas =
     [
         [1, -1], // 0, SE

@@ -85,22 +85,21 @@ namespace TVGL
         /// <param name="targetNumberOfFaces">The desired total number of faces in the mesh after the operation. Must be a non-negative integer.</param>
         /// <param name="maxSurfaceDeviation">The maximum allowable length for edges to be considered for subdivision. Must be a positive value.</param>
         public static void Complexify(IEnumerable<Edge> edges, out List<Edge> addedEdges, out List<Vertex> addedVertices,
-            out List<TriangleFace> addedFaces, int targetNumberOfFaces, double maxEdgeLength)
+            out List<TriangleFace> addedFaces, int targetNumberOfFaces, double maxSurfaceDeviation)
         {
-            var maxEdgeLengthSquared = maxEdgeLength * maxEdgeLength;
             //var edgeLengthList = edges.OrderByDescending(e => e.Length).ToArray();
             var initEdgePlot = edges.Select(e => new[] { e.From.Coordinates, e.To.Coordinates }).ToArray();
             var edgeQueue = new PriorityQueue<(Edge, Vector3), double>(new ReverseSort());
             foreach (var edge in edges)
-                EnqueueEdgeAndFindNewPoint(edgeQueue, edge);
+                EnqueueEdgeAndFindNewPoint(edgeQueue, edge, maxSurfaceDeviation);
             addedEdges = new List<Edge>();
             addedVertices = new List<Vertex>();
             addedFaces = new List<TriangleFace>();
             var iterations = targetNumberOfFaces > 0 ? (int)Math.Ceiling(targetNumberOfFaces / 2.0) : targetNumberOfFaces;
             var edgeCounter = edgeQueue.Count;
-            while (iterations-- != 0 && edgeQueue.TryDequeue(out (Edge edge, Vector3 mpt) c, out var edgeLSqd))
+            while (iterations-- != 0 && edgeQueue.TryDequeue(out (Edge edge, Vector3 mpt) c, out var deviation))
             {
-                if (edgeLSqd < maxEdgeLengthSquared)
+                if (deviation < maxSurfaceDeviation)
                     break;
                 //var map = edgeLengthList.IndexOf(c.edge);
                 //Console.WriteLine(map);
@@ -159,12 +158,12 @@ namespace TVGL
 
                 // need to re-add the edge. It was modified in the SplitEdge function (now, half the lenght), but
                 // it may still be met by this criteria
-                EnqueueEdgeAndFindNewPoint(edgeQueue, c.edge);
-                EnqueueEdgeAndFindNewPoint(edgeQueue, inlineEdge);
+                EnqueueEdgeAndFindNewPoint(edgeQueue, c.edge, maxSurfaceDeviation);
+                EnqueueEdgeAndFindNewPoint(edgeQueue, inlineEdge, maxSurfaceDeviation);
                 if (newLeftEdge != null)
-                    EnqueueEdgeAndFindNewPoint(edgeQueue, newLeftEdge);
+                    EnqueueEdgeAndFindNewPoint(edgeQueue, newLeftEdge, maxSurfaceDeviation);
                 if (newRightEdge != null)
-                    EnqueueEdgeAndFindNewPoint(edgeQueue, newRightEdge);
+                    EnqueueEdgeAndFindNewPoint(edgeQueue, newRightEdge, maxSurfaceDeviation);
 
                 addedVertices.Add(addedVertex);
                 addedEdges.Add(inlineEdge);
@@ -176,11 +175,14 @@ namespace TVGL
         }
 
 
-        private static void EnqueueEdgeAndFindNewPoint(PriorityQueue<(Edge, Vector3), double> edgeQueue, Edge edge)
+        private static void EnqueueEdgeAndFindNewPoint(PriorityQueue<(Edge, Vector3), double> edgeQueue, Edge edge, double edgeLengthLimit)
         {
-            var midPoint = DetermineIntermediateVertexPosition(edge);
-            var newLength = Math.Max((edge.From.Coordinates - midPoint).LengthSquared(), (edge.To.Coordinates - midPoint).LengthSquared());
-            edgeQueue.Enqueue((edge, midPoint), newLength);
+            if (edge.Length < edgeLengthLimit)
+                return;
+            var newPoint = DetermineIntermediateVertexPosition(edge);
+            var newLength = MiscFunctions.DistancePointToLine(newPoint, edge.From.Coordinates, edge.Vector, out _);
+            //Math.Max((edge.From.Coordinates - newPoint).LengthSquared(), (edge.To.Coordinates - newPoint).LengthSquared());
+            edgeQueue.Enqueue((edge, newPoint), newLength);
         }
     }
 

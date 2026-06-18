@@ -85,7 +85,7 @@ namespace TVGL
                 // from the original line. This point has the gradient (normal of the conic) defined by the outwardDirc
                 var returnPt = Vector3.Null;
                 var midpoint = pt2;
-                var alpha = 0.02; //how much the new point should be at most far from the edge to be split as a fraction of the edge length
+                var alpha = 0.1; //how much the new point should be at most far from the edge to be split as a fraction of the edge length
                 int maxIters = 50;
                 do
                 {

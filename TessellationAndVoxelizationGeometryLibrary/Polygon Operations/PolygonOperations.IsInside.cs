@@ -160,9 +160,9 @@ namespace TVGL
         /// <summary>
         /// Determines if a point is inside a polygon, where a polygon is an ordered list of 2D points.
         /// And the polygon is not self-intersecting
-        /// This is a newer basically the same as our other method, but is less verbose.
         /// Making use of W. Randolph Franklin's compact algorithm
         /// https://wrf.ecse.rpi.edu//Research/Short_Notes/pnpoly.html
+        /// This is a newer basically the same as our other method, but is less verbose.
         /// Major Assumptions:
         /// 1) The polygon can be convex
         /// 2) The direction of the polygon does not matter

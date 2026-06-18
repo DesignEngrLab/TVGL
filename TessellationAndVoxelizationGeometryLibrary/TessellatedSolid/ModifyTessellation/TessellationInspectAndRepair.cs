@@ -126,7 +126,7 @@ namespace TVGL
             //The ConvexHull3D does not have to do with repair and does not require CheckModelIntegrity. Keep it out here.
             //If the volume is zero, creating the convex hull may cause a null exception
             if (buildOptions.DefineConvexHull && !ts.Volume.IsNegligible())
-            { 
+            {
                 try
                 {
                     ConvexHull3D.Create(ts, true);
@@ -291,7 +291,7 @@ namespace TVGL
                         var removedVertex = longestEdge.OwnedFace.OtherVertex(longestEdge);
                         var keepVertex = longestEdge.OtherFace.OtherVertex(longestEdge);
                         ModifyTessellation.MergeVertexAndKill3EdgesAnd2Faces(removedVertex, keepVertex,
-                            longestEdge.OwnedFace, longestEdge.OtherFace, out var removedEdges,out _, out _);
+                            longestEdge.OwnedFace, longestEdge.OtherFace, out var removedEdges, out _, out _);
                         ts.RemoveVertex(removedVertex);
                         allRemovedFaces.Add(longestEdge.OwnedFace);
                         faceHash.Remove(longestEdge.OwnedFace);
@@ -310,7 +310,7 @@ namespace TVGL
                         allRemovedEdges.Add(removedEdge);
                         allRemovedFaces.Add(removedEdge.OwnedFace);
                         allRemovedFaces.Add(removedEdge.OtherFace);
-                        removedEdge.FlipEdge(ts, out var newEdge);
+                        removedEdge.FlipEdge(ts, out _);
                         faceHash.Remove(face);
                     }
                 }
@@ -1284,7 +1284,7 @@ namespace TVGL
                     {
                         try
                         {
-                            triangleFaceList2 = vertices.Triangulate(planeNormal, true).ToList();
+                            triangleFaceList2 = vertices.TriangulateSweepLine(planeNormal, true).ToList();
                             success = true;
                         }
                         catch
@@ -1363,7 +1363,7 @@ namespace TVGL
         /// </summary>
         /// <param name="solid"></param>
         /// <exception cref="Exception"></exception>
-        public static void DefineBorders(TessellatedSolid solid, bool forceRerun=false)
+        public static void DefineBorders(TessellatedSolid solid, bool forceRerun = false)
         {
             //Already defined. Probably didn't mean to call this again.
             //In case BordersDefined is incorrect due to writing/reading TVGLZ errors, just force rerun.
@@ -1468,7 +1468,7 @@ namespace TVGL
             foreach (var prim in solid.Primitives)
                 if (prim.BorderSegments != null) prim.BorderSegments.Clear();
                 else prim.BorderSegments = new List<BorderSegment>();
- 
+
             //Gather the edges into border segments. Only use solid.NonsmoothEdges if it has been set and is not null or empty.
             IEnumerable<BorderSegment> borderSegments;
             if (solid.NonsmoothEdges != null && solid.NonsmoothEdges.Count > 0)
@@ -1483,7 +1483,7 @@ namespace TVGL
                 var ownedFace = segment.DirectionList[0] ? segment.EdgeList[0].OwnedFace : segment.EdgeList[0].OtherFace;
                 var otherFace = segment.DirectionList[0] ? segment.EdgeList[0].OtherFace : segment.EdgeList[0].OwnedFace;
                 segment.OwnedPrimitive = ownedFace.BelongsToPrimitive;
-                if (ownedFace == null || ownedFace.BelongsToPrimitive == null ||  otherFace == null)
+                if (ownedFace == null || ownedFace.BelongsToPrimitive == null || otherFace == null)
                 {
                     errors++;
                     continue;//ignore it
@@ -1497,7 +1497,7 @@ namespace TVGL
                 segment.SetCurve();
             }
 
-            if(errors != 0)
+            if (errors != 0)
             {
                 OutputServices.Logger.LogError(errors + " invalid Edge/Face/Primitive relationships");
             }

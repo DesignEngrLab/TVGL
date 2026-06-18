@@ -408,10 +408,11 @@ namespace StarMathLib
         /// <exception cref="System.ArithmeticException">Matrix cannot be inverted. Can only invert square matrices.</exception>
         /// <exception cref="ArithmeticException">Matrix cannot be inverted. Can only invert square matrices.</exception>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static bool CholeskyDecomposition(double[,] A, out double[,] LUMatrix, bool NoSeparateDiagonal = false)
+        internal static bool CholeskyDecomposition(double[,] A, IList<double> b, out double[] answer, bool NoSeparateDiagonal = false)
         {
-            LUMatrix = (double[,])A.Clone();
+            var LUMatrix = (double[,])A.Clone();
             var length = A.GetLength(0);
+            answer = new double[length];
             if (length != A.GetLength(1)) return false;
             // throw new ArithmeticException("Cholesky Decomposition can only be determined for square matrices.");
 
@@ -423,8 +424,13 @@ namespace StarMathLib
                     sum = 0.0;
                     for (int k = 0; k < j; k++)
                         sum += LUMatrix[i, k] * LUMatrix[j, k] * LUMatrix[k, k];
-                    if (LUMatrix[j, j] == 0.0) return false;
-                    LUMatrix[i, j] = (LUMatrix[i, j] - sum) / LUMatrix[j, j];
+                    if (LUMatrix[j, j].IsNegligible())
+                    {
+                        if (LUMatrix[i, j].IsPracticallySame(sum, Constants.BaseTolerance)) LUMatrix[i, j] = 0.0;
+                        else return false;
+                    }
+                    else
+                        LUMatrix[i, j] = (LUMatrix[i, j] - sum) / LUMatrix[j, j];
                 }
                 sum = 0.0;
                 for (int k = 0; k < i; k++)
@@ -441,6 +447,32 @@ namespace StarMathLib
                     //throw new ArithmeticException("Cannot complete L-LT Cholesky Decomposition due to indefinite matrix (must be positive semidefinite).");
                     LUMatrix[i, i] = Math.Sqrt(LUMatrix[i, i]);
                 }
+            // forward substitution
+            for (int i = 0; i < length; i++)
+            {
+                var sumFromKnownTerms = 0.0;
+                for (int j = 0; j < i; j++)
+                    sumFromKnownTerms += LUMatrix[i, j] * answer[j];
+                answer[i] = (b[i] - sumFromKnownTerms);
+            }
+
+            for (int i = 0; i < length; i++)
+            {
+                if (LUMatrix[i, i] == 0.0)
+                {
+                    if (!answer[i].IsNegligible())
+                        return false;
+                }
+                else answer[i] /= LUMatrix[i, i];
+            }
+            // backward substitution
+            for (int i = length - 1; i >= 0; i--)
+            {
+                var sumFromKnownTerms = 0.0;
+                for (int j = i + 1; j < length; j++)
+                    sumFromKnownTerms += LUMatrix[j, i] * answer[j];
+                answer[i] -= sumFromKnownTerms;
+            }
             return true;
         }
 

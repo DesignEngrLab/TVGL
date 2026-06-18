@@ -1071,11 +1071,11 @@ namespace TVGL
                     continue;
                 if (thisLine.Length > maxAllowableLength)
                 {
-                    var numNewPoints = (int)(thisLine.Length / maxAllowableLength);
-                    for (int j = 0; j < numNewPoints; j++)
+                    var numNewPoints = 1+ (int)(thisLine.Length / maxAllowableLength);
+                    for (int j = 1; j < numNewPoints; j++)
                     {
                         var fraction = j / (double)numNewPoints;
-                        var newCoordinates = fraction * thisLine.FromPoint.Coordinates + ((1 - fraction) * thisLine.ToPoint.Coordinates);
+                        var newCoordinates = (1 - fraction) * thisLine.FromPoint.Coordinates + fraction * thisLine.ToPoint.Coordinates;
                         polygon.Vertices.Insert(i, new Vertex2D(newCoordinates, 0, loopID));
                     }
                 }

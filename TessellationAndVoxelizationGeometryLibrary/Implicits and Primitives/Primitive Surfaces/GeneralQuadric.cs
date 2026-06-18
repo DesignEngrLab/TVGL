@@ -368,7 +368,7 @@ namespace TVGL
             else return -gradient;
         }
 
-        private Vector3 GetNearbyPointOnQuadric(Vector3 anchor)
+        public Vector3 GetNearbyPointOnQuadric(Vector3 anchor)
         {
             Vector3 normal = GetNormalAtPoint(anchor);
             var intersections = LineIntersection(anchor, normal);
@@ -578,10 +578,7 @@ namespace TVGL
         {
             get
             {
-                if (axis1.IsNull())
-                {
-                    //throw new NotImplementedException();
-                }
+                if (axis1.IsNull()) ComputeAxes();
                 return axis1;
             }
         }
@@ -590,10 +587,7 @@ namespace TVGL
         {
             get
             {
-                if (axis2.IsNull())
-                {
-                    //throw new NotImplementedException();
-                }
+                if (axis2.IsNull()) ComputeAxes();
                 return axis2;
             }
         }
@@ -603,18 +597,35 @@ namespace TVGL
         {
             get
             {
-                if (axis3.IsNull())
-                {
-                    //throw new NotImplementedException();
-                }
+                if (axis3.IsNull()) ComputeAxes();
                 return axis3;
+            }
+        }
+
+        [JsonIgnore]
+        public Vector3 OddAxis
+        {
+            get
+            {
+                if (oddAxis.IsNull()) ComputeAxes();
+                return oddAxis;
             }
         }
         Vector3 axis1 = Vector3.Null;
         Vector3 axis2 = Vector3.Null;
         Vector3 axis3 = Vector3.Null;
-
-
+        Vector3 oddAxis = Vector3.Null;
+        private void ComputeAxes()
+        {
+            var hessian = GetHessian();
+            var eigenVals = hessian.GetEigenValuesAndVectors(out var eigenVectors);
+            axis1 = new Vector3(eigenVectors[0][0].Real, eigenVectors[0][1].Real, eigenVectors[0][2].Real).Normalize();
+            axis2 = new Vector3(eigenVectors[1][0].Real, eigenVectors[1][1].Real, eigenVectors[1][2].Real).Normalize();
+            axis3 = new Vector3(eigenVectors[2][0].Real, eigenVectors[2][1].Real, eigenVectors[2][2].Real).Normalize();
+            if (eigenVals[1].Real * eigenVals[2].Real > 0) oddAxis = axis1;
+            else if (eigenVals[0].Real * eigenVals[2].Real > 0) oddAxis = axis2;
+            else oddAxis = axis3;
+        }
 
         public void Negate()
         {

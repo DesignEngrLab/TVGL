@@ -45,7 +45,6 @@ namespace TVGL
         /// </summary>
         internal void Invert()
         {
-            _normal *= -1;
             var tempVertex = C;
             C = A; A = tempVertex;
             var tempEdge = AB;

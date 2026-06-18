@@ -212,7 +212,7 @@ namespace TVGL
                 }
                 foreach (var polygon in allPolygons.CreateShallowPolygonTrees(false))
                 {
-                    var indicesOfTriangles = polygon.TriangulateToIndices();
+                    var indicesOfTriangles = polygon.TriangulateToIndicesSweepLine();
                     var positiveLoop = loops[polygon.Index];
                     var negativeLoops = polygon.InnerPolygons.Select(p => loops[p.Index]).ToList();
                     var planeFaces = new List<TriangleFace>();
@@ -1243,7 +1243,7 @@ namespace TVGL
                     else currentEdge = nextEdge;
                 } while (!finishedLoop);
             }
-            polygons = polygons.CreateShallowPolygonTrees(true);
+            polygons = polygons.CreateShallowPolygonTrees(false);
             numCompletedLoops = polygons.Count;
             polygons.AddRange(partialPolygons);
             return polygons;

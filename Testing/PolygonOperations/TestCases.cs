@@ -230,7 +230,11 @@ namespace TVGLUnitTestsAndBenchmarking
             for (int k = 0; k < 2; k++)
             {
 
-                var reader = new StreamReader(Path.Combine("../../../../TestFiles", fileNames[k]));
+                var dir = new DirectoryInfo(".");
+                while (!Directory.Exists(dir.FullName + Path.DirectorySeparatorChar + "TestFiles"))
+                    dir = dir.Parent;
+                dir = new DirectoryInfo(dir.FullName + Path.DirectorySeparatorChar + "TestFiles");
+                var reader = new StreamReader(Path.Combine(dir.FullName, fileNames[k]));
                 string line = reader.ReadLine();
 
                 line = reader.ReadLine();
@@ -342,7 +346,7 @@ namespace TVGLUnitTestsAndBenchmarking
                 dir = dir.Parent;
             dir = new DirectoryInfo(dir.FullName + Path.DirectorySeparatorChar + "TestFiles");
             const int numTrialsPerSolid = 50;
-            var fileNames = dir.GetFiles("*").OrderBy(a=>r1).ToArray();
+            var fileNames = dir.GetFiles("*").OrderBy(a => r1).ToArray();
             // for (var i = 0; i < 5; i++)
             for (var i = 100; i < fileNames.Length; i++)
             {
@@ -360,35 +364,28 @@ namespace TVGLUnitTestsAndBenchmarking
                     Console.WriteLine("Error opening " + filename);
                     continue;
                 }//Presenter.ShowAndHang(solid);
-                var center = 0.5 * (solid.Bounds[1] + solid.Bounds[0]);
-                var dimensions = solid.Bounds[1] - solid.Bounds[0];
-                var minDimension = Math.Min(dimensions.X, Math.Min(dimensions.Y, dimensions.Z));
                 for (int k = 0; k < numTrialsPerSolid; k++)
                 {
-                    var n1 = new Vector3(r1, r1, r1).Normalize();
-                    var bCenter = center.Dot(n1);
-                    Polygon poly1 = null;
-                    double offset1 = 0.0;
-                    while (poly1 == null)
-                    {
-                        offset1 = r1 * 0.5 * minDimension;
-                        var polys1 = solid.GetCrossSection(new Plane(bCenter + r1 * minDimension, n1), out _).OffsetRound(offset1);
-                        if (polys1.Count > 0) poly1 = polys1.LargestPolygon();
-                        //var polys1 = solid.GetCrossSection(new Plane(bCenter + r1 * minDimension, n1), out _).OffsetRound(offset1);
-                        //if (polys1.Count > 0) poly1 = polys1.LargestPolygon();
-                    }
-                    Polygon poly2 = null;
-                    while (poly2 == null)
-                    {
-                        var offset2 = r1 * 0.5 * minDimension;
-                        var polys2 = solid.GetCrossSection(new Plane(bCenter + r1 *0.5* minDimension, n1), out _).OffsetRound(offset1);
-                        if (polys2.Count > 0) poly2 = polys2.LargestPolygon();
-                        //var polys2 = solid.GetCrossSection(new Plane(bCenter + r1 *0.5* minDimension, n1)).OffsetRound(offset1);
-                        //if (polys2.Count > 0) poly2 = polys2.LargestPolygonWithHoles();
-                        //if (polys2.Count > 0) poly2 = polys2.LargestPolygon();
-                    }
+                    Polygon poly1 = GetRandomCrossSection(solid);
+                    Polygon poly2 = GetRandomCrossSection(solid);
                     yield return new KeyValuePair<string, (Polygon, Polygon)>(name + k, (poly1, poly2));
                 }
+            }
+        }
+
+        public static Polygon GetRandomCrossSection(TessellatedSolid solid)
+        {
+            var center = 0.5 * (solid.Bounds[1] + solid.Bounds[0]);
+            var dimensions = solid.Bounds[1] - solid.Bounds[0];
+            var minDimension = Math.Min(dimensions.X, Math.Min(dimensions.Y, dimensions.Z));
+            var n1 = new Vector3(r1, r1, r1).Normalize();
+            var bCenter = center.Dot(n1);
+            List<Polygon> polys1 = null;
+            while (true)
+            {
+                polys1 = solid.GetCrossSection(new Plane(bCenter, n1), out _);
+                if (polys1.Count > 0)
+                    return polys1.LargestPolygon();
             }
         }
     }

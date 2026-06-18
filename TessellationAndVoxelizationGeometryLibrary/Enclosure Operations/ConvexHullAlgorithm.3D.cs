@@ -81,8 +81,10 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Creates the convex hull for a set of vertices. This method is used by the TessellatedSolid,
-        /// but it can be used within any set of vertices.
+        /// Creates the convex hull for a set of vertices. The vertices of the convex hull are a subset 
+        /// of the input vertices (unless allPointsOnCvxHull is true). The input list is unchanged, but 
+        /// the vertices themselves may be altered if connectVerticesToCvxHullFaces is true or 
+        /// recordPartOfConvexHull is true, which flips the boolean partOfConvexHull on the elements to true.
         /// </summary>
         /// <param name="vertices"></param>
         /// <param name="convexHull"></param>
@@ -351,11 +353,10 @@ namespace TVGL
             {
                 foreach (var v in f.Vertices)
                 {
-                    cvxVertexHash.Add(v);
-                    if (recordPartOfConvexHull)
-                        v.PartOfConvexHull = true;
                     if (connectVerticesToCvxHullFaces)
                         v.Faces.Add(f);
+                    if (cvxVertexHash.Add(v) && recordPartOfConvexHull)
+                        v.PartOfConvexHull = true;
                 }
                 // vertices that are stored in the interior vertices do not define the edges and faces
                 // of the convex hull but it is useful to know that they are on the boundary of the convex hull

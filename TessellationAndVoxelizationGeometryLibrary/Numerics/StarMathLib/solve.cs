@@ -290,70 +290,38 @@ namespace StarMathLib
         private static bool solveBig(double[,] A, IList<double> b, out double[] answer, bool IsASymmetric = false)
         {
             var length = b.Count;
-            if (IsASymmetric)
-            {
-                if (!CholeskyDecomposition(A, out var L))
-                {
-                    answer = Array.Empty<double>();
-                    return false;
-                }
-                answer = new double[length];
-                // forward substitution
-                for (int i = 0; i < length; i++)
-                {
-                    var sumFromKnownTerms = 0.0;
-                    for (int j = 0; j < i; j++)
-                        sumFromKnownTerms += L[i, j] * answer[j];
-                    answer[i] = (b[i] - sumFromKnownTerms);
-                }
+            if (IsASymmetric && CholeskyDecomposition(A, b, out answer))
+                return true;
 
-                for (int i = 0; i < length; i++)
-                {
-                    if (L[i, i] == 0) return false;
-                    answer[i] /= L[i, i];
-                }
-                // backward substitution
-                for (int i = length - 1; i >= 0; i--)
-                {
-                    var sumFromKnownTerms = 0.0;
-                    for (int j = i + 1; j < length; j++)
-                        sumFromKnownTerms += L[j, i] * answer[j];
-                    answer[i] -= sumFromKnownTerms;
-                }
-                return true;
-            }
-            else
+            double[,] LU = null;
+            int[] permutationVector = null;
+            try
             {
-                double[,] LU = null;
-                int[] permutationVector = null;
-                try
-                {
-                    LU = LUDecomposition(A, out permutationVector, length);
-                }
-                catch
-                {
-                    answer = Array.Empty<double>();
-                    return false;
-                }
-                answer = new double[length];
-                // forward substitution
-                for (int i = 0; i < length; i++)
-                {
-                    var sumFromKnownTerms = 0.0;
-                    for (int j = 0; j < i; j++)
-                        sumFromKnownTerms += LU[permutationVector[i], j] * answer[j];
-                    answer[i] = (b[permutationVector[i]] - sumFromKnownTerms) / LU[permutationVector[i], i];
-                }
-                // backward substitution
-                for (int i = length - 1; i >= 0; i--)
-                {
-                    var sumFromKnownTerms = 0.0;
-                    for (int j = i + 1; j < length; j++)
-                        sumFromKnownTerms += LU[permutationVector[i], j] * answer[j];
-                    answer[i] -= sumFromKnownTerms;
-                }
-                return true;
+                LU = LUDecomposition(A, out permutationVector, length);
             }
+            catch
+            {
+                answer = Array.Empty<double>();
+                return false;
+            }
+            answer = new double[length];
+            // forward substitution
+            for (int i = 0; i < length; i++)
+            {
+                var sumFromKnownTerms = 0.0;
+                for (int j = 0; j < i; j++)
+                    sumFromKnownTerms += LU[permutationVector[i], j] * answer[j];
+                answer[i] = (b[permutationVector[i]] - sumFromKnownTerms) / LU[permutationVector[i], i];
+            }
+            // backward substitution
+            for (int i = length - 1; i >= 0; i--)
+            {
+                var sumFromKnownTerms = 0.0;
+                for (int j = i + 1; j < length; j++)
+                    sumFromKnownTerms += LU[permutationVector[i], j] * answer[j];
+                answer[i] -= sumFromKnownTerms;
+            }
+            return true;
         }
     }
 }

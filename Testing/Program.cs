@@ -24,37 +24,16 @@ namespace TVGLUnitTestsAndBenchmarking
             OutputServices.Presenter2D = new Presenter2D();
             OutputServices.Presenter3D = new Presenter3D();
             var dirInfo = IO.BackoutToFolder(inputFolder);
-
-            //var cone = new Cone(new Vector3(0, 0, 1), new Vector3(0, 0, -1), 1, true);
-            //var intersects = cone.LineIntersection(new Vector3(4, 0, 0), new Vector3(1, 1, -10)).ToList();
-            //cone.Length = 151;
-            //var ts = cone.Tessellate(400);
-            ////var ts = cone.(-100,100, -100, 100, -10, 160, 2);
-            //Presenter.ShowAndHang(ts);
-            //IO.Save(ts, "cone.ply");
-            //cone.Copy();
-            //IO.Open(Path.Combine(dirInfo.FullName, "a.json"), out Polygon A);
-            //IO.Open(Path.Combine(dirInfo.FullName, "b.json"), out Polygon B);
-            //var union = A.MinkowskiSum(B);
-            foreach (var fileName in dirInfo.GetFiles("*"))
+            var files = dirInfo.GetFiles("*");
+            foreach (var fileName in files.Skip(8))
             {
                 Console.WriteLine("Attempting to open: " + fileName.Name);
-                var solid = IO.Open(fileName.FullName);
-                if (solid == null)
-                    continue;
-                Presenter.ShowAndHang(solid);
-                var circlePath = new List<Vector3>();
-                var transforms = new List<Matrix4x4>();
-                for (int i = 0; i < 12; i++)
-                {
-                    circlePath.Add(new Vector3(10 * Math.Cos(i * Math.PI / 12), 10 * Math.Sin(i * Math.PI / 12), 0));
-                    transforms.Add(Matrix4x4.CreateRotationZ(i * Math.PI / 12));
-                }
-                //var paths = new List<List<Vector3>>();
-                //for (int i = 1; i < 12; i++)
-                //    paths.Add([circlePath[i - 1], circlePath[i]]);
-
-                //Presenter.ShowStepsAndHang([paths], [solid], [transforms]);
+                var solid = IO.Open(fileName.FullName) as TessellatedSolid;
+                if (solid == null) continue;
+                var polygon = TestCases.GetRandomCrossSection(solid);
+                Presenter.ShowAndHang(polygon);
+                var delaunay2D = polygon.TriangulateDelaunay(false, true, targetNumTriangles: 500);
+                Presenter.ShowAndHang(delaunay2D.Edges.Select(e => new List<Vector2> { new Vector2(e.From.X, e.From.Y), new Vector2(e.To.X, e.To.Y) }).Concat(polygon.AllPaths));
             }
         }
 

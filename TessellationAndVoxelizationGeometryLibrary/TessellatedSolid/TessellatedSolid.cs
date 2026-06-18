@@ -837,7 +837,7 @@ namespace TVGL
                 else
                 {
                     var normal = MiscFunctions.DetermineNormalForA3DPolygon(faceVertices, faceVertices.Length, out _, Vector3.Null, out _);
-                    var triangulatedList = faceVertices.Triangulate(normal);
+                    var triangulatedList = faceVertices.TriangulateSweepLine(normal);
                     var listOfFlatFaces = new List<TriangleFace>();
                     foreach (var vertexSet in triangulatedList)
                     {
