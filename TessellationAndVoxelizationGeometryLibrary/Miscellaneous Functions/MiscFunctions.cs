@@ -513,6 +513,7 @@ namespace TVGL
                 maxVIndex = k;
             }
             else maxVIndex++;
+            //Presenter.ShowAndHang(faces);
             var edges = new Dictionary<long, Edge>();
             var allEdgeIndices = new List<long>();
             var doubleEdgeIndices = new HashSet<long>();
@@ -523,9 +524,7 @@ namespace TVGL
                 var edgeEnumerator = f.Edges.GetEnumerator();
                 foreach (var v in f.Vertices)
                 {
-                    long edgeIndex = (v.IndexInList < prevV.IndexInList)
-                        ? (long)prevV.IndexInList * (long)maxVIndex + v.IndexInList
-                        : prevV.IndexInList + (long)maxVIndex * (long)v.IndexInList;
+                    long edgeIndex = Edge.GetEdgeChecksum(v.IndexInList, prevV.IndexInList);
                     allEdgeIndices.Add(edgeIndex);
                     if (edge == null)
                     {

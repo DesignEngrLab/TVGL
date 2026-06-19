@@ -310,11 +310,11 @@ namespace TVGL
         {
             get
             {
-                if(AB != null)
+                //if(AB != null)
                     yield return AB;
-                if (BC != null) 
+                //if (BC != null) 
                     yield return BC;
-                if (CA != null)
+                //if (CA != null)
                     yield return CA;
             }
         }
