@@ -1,3 +1,5 @@
+using PolygonImportExport;
+using SharpDxf.Header;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -21,6 +23,8 @@ namespace TVGLUnitTestsAndBenchmarking
         [STAThread]
         private static void Main(string[] args)
         {
+          var polgyons =  PolygonImportExport.DXF.Open("text.dxf", DxfVersion.AutoCad12);
+            DXF.Save("test2.dxf", polgyons, DxfVersion.AutoCad12);
             OutputServices.Presenter2D = new Presenter2D();
             OutputServices.Presenter3D = new Presenter3D();
             var dirInfo = IO.BackoutToFolder(inputFolder);

@@ -8,7 +8,7 @@ namespace PolygonImportExport
     public static class DXF
     {
         /// <param name="curvePrecision">Number of line segments used to approximate each curve entity (arc, circle, ellipse, NURBS).</param>
-        internal static List<Polygon> Open(string filePath, DxfVersion dxfVersion, int curvePrecision = 30)
+        public static List<Polygon> Open(string filePath, DxfVersion dxfVersion, int curvePrecision = 30)
         {
             var dxf = new DxfDocument();
             dxf.Load(filePath);
@@ -97,7 +97,7 @@ namespace PolygonImportExport
             return points;
         }
 
-        internal static bool Save(string filePath, IEnumerable<Polygon> polygons, DxfVersion dxfVersion)
+        public static bool Save(string filePath, IEnumerable<Polygon> polygons, DxfVersion dxfVersion)
         {
             try
             {
