@@ -30,9 +30,8 @@ namespace SharpDxf.Entities
     /// <summary>
     /// Represents an ellipse <see cref="SharpDxf.Entities.IEntityObject">entity</see>.
     /// </summary>
-    public class Ellipse :
-        DxfObject,
-        IEntityObject
+    internal class Ellipse :
+        DxfObject
     {
         #region private fields
 
@@ -62,7 +61,7 @@ namespace SharpDxf.Entities
         /// <param name="majorAxis">Ellipse major axis.</param>
         /// <param name="minorAxis">Ellipse minor axis.</param>
         /// <remarks>The center Z coordinate represents the elevation of the arc along the normal.</remarks>
-        public Ellipse(Vector3 center, double majorAxis, double minorAxis)
+        internal Ellipse(Vector3 center, double majorAxis, double minorAxis)
             : base(DxfObjectCode.Ellipse)
         {
             this.center = center;
@@ -82,7 +81,7 @@ namespace SharpDxf.Entities
         /// <summary>
         /// Initializes a new instance of the <c>ellipse</c> class.
         /// </summary>
-        public Ellipse()
+        internal Ellipse()
             : base(DxfObjectCode.Ellipse)
         {
             this.center = Vector3.Zero;
@@ -102,13 +101,13 @@ namespace SharpDxf.Entities
 
         #endregion
 
-        #region public properties
+        #region internal properties
 
         /// <summary>
         /// Gets or sets the ellipse <see cref="SharpDxf.Vector3">center</see>.
         /// </summary>
         /// <remarks>The center Z coordinate represents the elevation of the arc along the normal.</remarks>
-        public Vector3 Center
+        internal Vector3 Center
         {
             get { return this.center; }
             set { this.center = value; }
@@ -117,7 +116,7 @@ namespace SharpDxf.Entities
         /// <summary>
         /// Gets or sets the ellipse mayor axis.
         /// </summary>
-        public double MajorAxis
+        internal double MajorAxis
         {
             get { return this.majorAxis; }
             set
@@ -131,7 +130,7 @@ namespace SharpDxf.Entities
         /// <summary>
         /// Gets or sets the ellipse minor axis.
         /// </summary>
-        public double MinorAxis
+        internal double MinorAxis
         {
             get { return this.minorAxis; }
             set
@@ -145,7 +144,7 @@ namespace SharpDxf.Entities
         /// <summary>
         /// Gets or sets the ellipse rotation along its normal.
         /// </summary>
-        public double Rotation
+        internal double Rotation
         {
             get { return this.rotation; }
             set { this.rotation = value; }
@@ -155,7 +154,7 @@ namespace SharpDxf.Entities
         /// Gets or sets the ellipse start angle in degrees.
         /// </summary>
         /// <remarks><c>StartAngle</c> equals 0 and <c>EndAngle</c> equals 360 for a full ellipse.</remarks>
-        public double StartAngle
+        internal double StartAngle
         {
             get { return this.startAngle; }
             set { this.startAngle = value; }
@@ -165,7 +164,7 @@ namespace SharpDxf.Entities
         /// Gets or sets the ellipse end angle in degrees.
         /// </summary>
         /// <remarks><c>StartAngle</c> equals 0 and <c>EndAngle</c> equals 360 for a full ellipse.</remarks>
-        public double EndAngle
+        internal double EndAngle
         {
             get { return this.endAngle; }
             set { this.endAngle = value; }
@@ -174,7 +173,7 @@ namespace SharpDxf.Entities
         /// <summary>
         /// Gets or sets the ellipse <see cref="SharpDxf.Vector3">normal</see>.
         /// </summary>
-        public Vector3 Normal
+        internal Vector3 Normal
         {
             get { return this.normal; }
             set
@@ -187,7 +186,7 @@ namespace SharpDxf.Entities
         /// <summary>
         /// Gets or sets the number of points generated along the ellipse during the conversion to a polyline.
         /// </summary>
-        public int CurvePoints
+        internal int CurvePoints
         {
             get { return this.curvePoints; }
             set { this.curvePoints = value; }
@@ -196,7 +195,7 @@ namespace SharpDxf.Entities
         /// <summary>
         /// Gets or sets the ellipse thickness.
         /// </summary>
-        public double Thickness
+        internal double Thickness
         {
             get { return this.thickness; }
             set { this.thickness = value; }
@@ -205,7 +204,7 @@ namespace SharpDxf.Entities
         /// <summary>
         /// Checks if the the actual instance is a full ellipse.
         /// </summary>
-        public bool IsFullEllipse
+        internal bool IsFullEllipse
         {
             get { return (this.startAngle + this.endAngle == 360); }
         }
@@ -217,7 +216,7 @@ namespace SharpDxf.Entities
         /// <summary>
         /// Gets the entity <see cref="SharpDxf.Entities.EntityType">type</see>.
         /// </summary>
-        public EntityType Type
+        internal EntityType Type
         {
             get { return TYPE; }
         }
@@ -225,7 +224,7 @@ namespace SharpDxf.Entities
         /// <summary>
         /// Gets or sets the entity <see cref="SharpDxf.AciColor">color</see>.
         /// </summary>
-        public AciColor Color
+        internal AciColor Color
         {
             get { return this.color; }
             set
@@ -239,7 +238,7 @@ namespace SharpDxf.Entities
         /// <summary>
         /// Gets or sets the entity <see cref="SharpDxf.Tables.Layer">layer</see>.
         /// </summary>
-        public Layer Layer
+        internal Layer Layer
         {
             get { return this.layer; }
             set
@@ -253,7 +252,7 @@ namespace SharpDxf.Entities
         /// <summary>
         /// Gets or sets the entity <see cref="SharpDxf.Tables.LineType">line type</see>.
         /// </summary>
-        public LineType LineType
+        internal LineType LineType
         {
             get { return this.lineType; }
             set
@@ -267,7 +266,7 @@ namespace SharpDxf.Entities
         /// <summary>
         /// Gets or sets the entity <see cref="SharpDxf.XData">extende data</see>.
         /// </summary>
-        public Dictionary<ApplicationRegistry, XData> XData
+        internal Dictionary<ApplicationRegistry, XData> XData
         {
             get { return this.xData; }
             set { this.xData = value; }
@@ -275,14 +274,14 @@ namespace SharpDxf.Entities
 
         #endregion
 
-        #region public methods
+        #region internal methods
 
         /// <summary>
         /// Converts the ellipse in a Polyline.
         /// </summary>
         /// <param name="precision">Number of vertexes generated.</param>
         /// <returns>A new instance of <see cref="Polyline">Polyline</see> that represents the ellipse.</returns>
-        public Polyline ToPolyline(int precision)
+        internal Polyline ToPolyline(int precision)
         {
             List<Vector2> vertexes = this.PolygonalVertexes(precision);
             Vector3 ocsCenter = MathHelper.Transform((Vector3) this.center,
@@ -313,7 +312,7 @@ namespace SharpDxf.Entities
         /// </summary>
         /// <param name="precision">Number of vertexes generated.</param>
         /// <returns>A list vertexes that represents the ellipse expresed in object coordinate system.</returns>
-        public List<Vector2> PolygonalVertexes(int precision)
+        internal List<Vector2> PolygonalVertexes(int precision)
         {
             List<Vector2> points = new List<Vector2>();
             double beta = (double) (this.rotation*MathHelper.DegToRad);

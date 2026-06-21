@@ -28,8 +28,7 @@ namespace SharpDxf.Tables
     /// Represent the record of a block in the tables section.
     /// </summary>
     internal class BlockRecord :
-        DxfObject,
-        ITableObject
+        DxfObject
     {
         #region private fields
 
@@ -43,7 +42,7 @@ namespace SharpDxf.Tables
         /// Initializes a new instance of the <c>BlockRecord</c> class.
         /// </summary>
         /// <param name="name">Block definition name.</param>
-        public BlockRecord(string name)
+        internal BlockRecord(string name)
             : base(DxfObjectCode.BlockRecord)
         {
             if (string.IsNullOrEmpty(name))
@@ -58,7 +57,7 @@ namespace SharpDxf.Tables
         /// <summary>
         /// Gets the block record name.
         /// </summary>
-        public string Name
+        internal string Name
         {
             get { return this.name; }
         }

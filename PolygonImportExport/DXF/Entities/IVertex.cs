@@ -28,7 +28,7 @@ namespace SharpDxf.Entities
     /// Defines the vertex type.
     /// </summary>
     [Flags]
-    public enum VertexTypeFlags
+    internal enum VertexTypeFlags
     {
         /// <summary>
         /// 2d polyline vertex
@@ -72,12 +72,12 @@ namespace SharpDxf.Entities
     /// <summary>
     /// Represents a generic vertex.
     /// </summary>
-    internal interface IVertex :
+    internal abstract class IVertex :
         IEntityObject
     {
         /// <summary>
         /// Gets the Vertex type.
         /// </summary>
-        VertexTypeFlags Flags { get; }
+        internal VertexTypeFlags Flags { get; }
     }
 }

@@ -30,9 +30,8 @@ namespace SharpDxf.Tables
     /// <remarks>
     /// AutoCad12 does not support true type fonts.
     /// </remarks>
-    public class TextStyle :
-        DxfObject,
-        ITableObject
+    internal class TextStyle :
+        DxfObject
     {
         #region private fields
 
@@ -52,7 +51,7 @@ namespace SharpDxf.Tables
         /// <summary>
         /// Gets the default text style.
         /// </summary>
-        public static TextStyle Default
+        internal static TextStyle Default
         {
             get { return new TextStyle("Standard", "simplex"); }
         }
@@ -66,7 +65,7 @@ namespace SharpDxf.Tables
         /// </summary>
         /// <param name="name">Text style name.</param>
         /// <param name="font">Text style font name.</param>
-        public TextStyle(string name, string font)
+        internal TextStyle(string name, string font)
             : base(DxfObjectCode.TextStyle)
         {
             if (string.IsNullOrEmpty(name))
@@ -85,12 +84,12 @@ namespace SharpDxf.Tables
 
         #endregion
 
-        #region public properties
+        #region internal properties
 
         /// <summary>
         /// Gets the text style font name.
         /// </summary>
-        public string Font
+        internal string Font
         {
             get{return this.font;}
         }
@@ -99,7 +98,7 @@ namespace SharpDxf.Tables
         /// Gets or sets the text height.
         /// </summary>
         /// <remarks>Fixed text height; 0 if not fixed.</remarks>
-        public double Height
+        internal double Height
         {
             get { return this.height; }
             set
@@ -113,7 +112,7 @@ namespace SharpDxf.Tables
         /// <summary>
         /// Gets or sets the width factor.
         /// </summary>
-        public double WidthFactor
+        internal double WidthFactor
         {
             get { return this.widthFactor; }
             set
@@ -127,7 +126,7 @@ namespace SharpDxf.Tables
         /// <summary>
         /// Gets or sets the font oblique angle.
         /// </summary>
-        public double ObliqueAngle
+        internal double ObliqueAngle
         {
             get { return this.obliqueAngle; }
             set { this.obliqueAngle = value; }
@@ -136,7 +135,7 @@ namespace SharpDxf.Tables
         /// <summary>
         /// Gets or sets the text is vertical.
         /// </summary>
-        public bool IsVertical
+        internal bool IsVertical
         {
             get { return this.isVertical; }
             set { this.isVertical = value; }
@@ -145,7 +144,7 @@ namespace SharpDxf.Tables
         /// <summary>
         /// Gets or sets if the text is backward (mirrored in X).
         /// </summary>
-        public bool IsBackward
+        internal bool IsBackward
         {
             get { return this.isBackward; }
             set { this.isBackward = value; }
@@ -154,7 +153,7 @@ namespace SharpDxf.Tables
         /// <summary>
         /// Gets or sets if the text is upside down (mirrored in Y).
         /// </summary>
-        public bool IsUpsideDown
+        internal bool IsUpsideDown
         {
             get { return this.isUpsideDown; }
             set { this.isUpsideDown = value; }
@@ -167,7 +166,7 @@ namespace SharpDxf.Tables
         /// <summary>
         /// Gets the table name.
         /// </summary>
-        public string Name
+        internal string Name
         {
             get { return this.name; }
         }

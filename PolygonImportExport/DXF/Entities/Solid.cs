@@ -30,9 +30,8 @@ namespace SharpDxf.Entities
     /// <summary>
     /// Represents a solid <see cref="IEntityObject">entity</see>.
     /// </summary>
-    public class Solid :
-        DxfObject,
-        IEntityObject
+    internal class Solid :
+        DxfObject
     {
         #region private fields
 
@@ -59,7 +58,7 @@ namespace SharpDxf.Entities
         /// <param name="secondVertex">Solid <see cref="Vector3">second vertex</see>.</param>
         /// <param name="thirdVertex">Solid <see cref="Vector3">third vertex</see>.</param>
         /// <param name="fourthVertex">Solid <see cref="Vector3">fourth vertex</see>.</param>
-        public Solid(Vector3 firstVertex, Vector3 secondVertex, Vector3 thirdVertex, Vector3 fourthVertex)
+        internal Solid(Vector3 firstVertex, Vector3 secondVertex, Vector3 thirdVertex, Vector3 fourthVertex)
             : base(DxfObjectCode.Solid)
         {
             this.firstVertex = firstVertex;
@@ -76,7 +75,7 @@ namespace SharpDxf.Entities
         /// <summary>
         /// Initializes a new instance of the <c>Solid</c> class.
         /// </summary>
-        public Solid()
+        internal Solid()
             : base(DxfObjectCode.Solid)
         {
             this.firstVertex = Vector3.Zero;
@@ -92,12 +91,12 @@ namespace SharpDxf.Entities
 
         #endregion
 
-        #region public properties
+        #region internal properties
 
         /// <summary>
         /// Gets or sets the first solid <see cref="SharpDxf.Vector3">vertex</see>.
         /// </summary>
-        public Vector3 FirstVertex
+        internal Vector3 FirstVertex
         {
             get { return this.firstVertex; }
             set { this.firstVertex = value; }
@@ -106,7 +105,7 @@ namespace SharpDxf.Entities
         /// <summary>
         /// Gets or sets the second solid <see cref="SharpDxf.Vector3">vertex</see>.
         /// </summary>
-        public Vector3 SecondVertex
+        internal Vector3 SecondVertex
         {
             get { return this.secondVertex; }
             set { this.secondVertex = value; }
@@ -115,7 +114,7 @@ namespace SharpDxf.Entities
         /// <summary>
         /// Gets or sets the third solid <see cref="SharpDxf.Vector3">vertex</see>.
         /// </summary>
-        public Vector3 ThirdVertex
+        internal Vector3 ThirdVertex
         {
             get { return this.thirdVertex; }
             set { this.thirdVertex = value; }
@@ -124,7 +123,7 @@ namespace SharpDxf.Entities
         /// <summary>
         /// Gets or sets the fourth solid <see cref="SharpDxf.Vector3">vertex</see>.
         /// </summary>
-        public Vector3 FourthVertex
+        internal Vector3 FourthVertex
         {
             get { return this.fourthVertex; }
             set { this.fourthVertex = value; }
@@ -133,7 +132,7 @@ namespace SharpDxf.Entities
         /// <summary>
         /// Gets or sets the thickness of the solid.
         /// </summary>
-        public double Thickness
+        internal double Thickness
         {
             get { return this.thickness; }
             set { this.thickness = value; }
@@ -142,7 +141,7 @@ namespace SharpDxf.Entities
         /// <summary>
         /// Gets or sets the solid <see cref="SharpDxf.Vector3">normal</see>.
         /// </summary>
-        public Vector3 Normal
+        internal Vector3 Normal
         {
             get { return this.normal; }
             set
@@ -161,7 +160,7 @@ namespace SharpDxf.Entities
       /// <summary>
         /// Gets the entity <see cref="SharpDxf.Entities.EntityType">type</see>.
         /// </summary>
-        public EntityType Type
+        internal EntityType Type
         {
             get { return TYPE; }
         }
@@ -169,7 +168,7 @@ namespace SharpDxf.Entities
         /// <summary>
         /// Gets or sets the entity <see cref="SharpDxf.AciColor">color</see>.
         /// </summary>
-        public AciColor Color
+        internal AciColor Color
         {
             get { return this.color; }
             set
@@ -183,7 +182,7 @@ namespace SharpDxf.Entities
         /// <summary>
         /// Gets or sets the entity <see cref="SharpDxf.Tables.Layer">layer</see>.
         /// </summary>
-        public Layer Layer
+        internal Layer Layer
         {
             get { return this.layer; }
             set
@@ -197,7 +196,7 @@ namespace SharpDxf.Entities
         /// <summary>
         /// Gets or sets the entity <see cref="SharpDxf.Tables.LineType">line type</see>.
         /// </summary>
-        public LineType LineType
+        internal LineType LineType
         {
             get { return this.lineType; }
             set
@@ -211,7 +210,7 @@ namespace SharpDxf.Entities
         /// <summary>
         /// Gets or sets the entity <see cref="SharpDxf.XData">extende data</see>.
         /// </summary>
-        public Dictionary<ApplicationRegistry, XData> XData
+        internal Dictionary<ApplicationRegistry, XData> XData
         {
             get { return this.xData; }
             set { this.xData = value; }

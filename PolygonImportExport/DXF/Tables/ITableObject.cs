@@ -25,11 +25,11 @@ namespace SharpDxf.Tables
     /// <summary>
     /// Defines objects that are part of the dxf table section.
     /// </summary>
-    internal interface ITableObject
+    internal abstract class ITableObject
     {
         /// <summary>
         /// Name of the object.
         /// </summary>
-        string Name { get; }
+        internal string Name { get; }
     }
 }

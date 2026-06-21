@@ -77,127 +77,127 @@ namespace SharpDxf
 
         #region constructors
 
-        public DxfReader(string file)
+        internal DxfReader(string file)
         {
             this.file = file;
         }
 
         #endregion
 
-        #region public properties
+        #region internal properties
 
-        public bool IsFileOpen
+        internal bool IsFileOpen
         {
             get { return this.isFileOpen; }
         }
 
-        public List<string> Comments
+        internal List<string> Comments
         {
             get { return this.comments; }
         }
 
         #endregion
 
-        #region public header properties
+        #region internal header properties
 
-        public string HandleSeed
+        internal string HandleSeed
         {
             get { return this.handleSeed; }
         }
 
-        public DxfVersion Version
+        internal DxfVersion Version
         {
             get { return this.version; }
         }
 
         #endregion
 
-        #region public entity properties
+        #region internal entity properties
 
-        public List<Arc> Arcs
+        internal List<Arc> Arcs
         {
             get { return this.arcs; }
         }
 
-        public List<Entities.Circle> Circles
+        internal List<Entities.Circle> Circles
         {
             get { return this.circles; }
         }
 
-        public List<Entities.Ellipse> Ellipses
+        internal List<Entities.Ellipse> Ellipses
         {
             get { return this.ellipses; }
         }
 
-        public List<Entities.Point> Points
+        internal List<Entities.Point> Points
         {
             get { return this.points; }
         }
 
-        public List<Face3d> Faces3d
+        internal List<Face3d> Faces3d
         {
             get { return this.faces3d; }
         }
 
-        public List<Entities.Solid> Solids
+        internal List<Entities.Solid> Solids
         {
             get { return this.solids; }
         }
 
-        public List<Line> Lines
+        internal List<Line> Lines
         {
             get { return this.lines; }
         }
 
-        public List<IPolyline> Polylines
+        internal List<IPolyline> Polylines
         {
             get { return this.polylines; }
         }
 
-        public List<Insert> Inserts
+        internal List<Insert> Inserts
         {
             get { return this.inserts; }
         }
 
-        public List<Text> Texts
+        internal List<Text> Texts
         {
             get { return this.texts; }
         }
 
         #endregion
 
-        #region public table properties
+        #region internal table properties
 
-        public Dictionary<string, ApplicationRegistry> ApplicationRegistrationIds
+        internal Dictionary<string, ApplicationRegistry> ApplicationRegistrationIds
         {
             get { return this.appIds; }
         }
 
-        public Dictionary<string, Layer> Layers
+        internal Dictionary<string, Layer> Layers
         {
             get { return this.layers; }
         }
 
-        public Dictionary<string, LineType> LineTypes
+        internal Dictionary<string, LineType> LineTypes
         {
             get { return this.lineTypes; }
         }
 
-        public Dictionary<string, TextStyle> TextStyles
+        internal Dictionary<string, TextStyle> TextStyles
         {
             get { return this.textStyles; }
         }
 
-        public Dictionary<string, Block> Blocks
+        internal Dictionary<string, Block> Blocks
         {
             get { return this.blocks; }
         }
 
         #endregion
 
-        #region public methods
+        #region internal methods
 
-        public void Open()
+        internal void Open()
         {
             try
             {
@@ -211,7 +211,7 @@ namespace SharpDxf
             }
         }
 
-        public void Close()
+        internal void Close()
         {
             if (this.isFileOpen)
             {
@@ -221,7 +221,7 @@ namespace SharpDxf
             this.isFileOpen = false;
         }
 
-        public void Read()
+        internal void Read()
         {
             this.comments = new List<string>();
             this.appIds = new Dictionary<string, ApplicationRegistry>();

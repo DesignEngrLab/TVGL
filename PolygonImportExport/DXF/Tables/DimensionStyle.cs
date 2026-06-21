@@ -23,8 +23,7 @@
 namespace SharpDxf.Tables
 {
     internal class DimensionStyle :
-        DxfObject,
-        ITableObject
+        DxfObject
     {
         #region private fields
 
@@ -46,7 +45,7 @@ namespace SharpDxf.Tables
         /// <summary>
         /// Initializes a new instance of the <c>DimensionStyle</c> class.
         /// </summary>
-        public DimensionStyle(string name)
+        internal DimensionStyle(string name)
             : base(DxfObjectCode.DimStyle)
         {
             this.name = name;
@@ -54,7 +53,7 @@ namespace SharpDxf.Tables
 
         #endregion
 
-        #region public properties
+        #region internal properties
 
         #endregion
 
@@ -63,7 +62,7 @@ namespace SharpDxf.Tables
         /// <summary>
         /// Gets the table name.
         /// </summary>
-        public string Name
+        internal string Name
         {
             get { return this.name; }
         }

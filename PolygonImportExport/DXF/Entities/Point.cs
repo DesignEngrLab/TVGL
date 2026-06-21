@@ -30,9 +30,8 @@ namespace SharpDxf.Entities
     /// <summary>
     /// Represents a point <see cref="SharpDxf.Entities.IEntityObject">entity</see>.
     /// </summary>
-    public class Point :
-        DxfObject,
-        IEntityObject
+    internal class Point :
+        DxfObject
     {
         #region private fields
 
@@ -53,7 +52,7 @@ namespace SharpDxf.Entities
         /// Initializes a new instance of the <c>Point</c> class.
         /// </summary>
         /// <param name="location">Point <see cref="Vector3">location</see>.</param>
-        public Point(Vector3 location)
+        internal Point(Vector3 location)
             : base(DxfObjectCode.Point)
         {
             this.location = location;
@@ -67,7 +66,7 @@ namespace SharpDxf.Entities
         /// <summary>
         /// Initializes a new instance of the <c>Point</c> class.
         /// </summary>
-        public Point()
+        internal Point()
             : base(DxfObjectCode.Point)
         {
             this.location = Vector3.Zero;
@@ -80,12 +79,12 @@ namespace SharpDxf.Entities
 
         #endregion
 
-        #region public properties
+        #region internal properties
 
         /// <summary>
         /// Gets or sets the point <see cref="SharpDxf.Vector3">location</see>.
         /// </summary>
-        public Vector3 Location
+        internal Vector3 Location
         {
             get { return this.location; }
             set { this.location = value; }
@@ -94,7 +93,7 @@ namespace SharpDxf.Entities
         /// <summary>
         /// Gets or sets the point thickness.
         /// </summary>
-        public double Thickness
+        internal double Thickness
         {
             get { return this.thickness; }
             set { this.thickness = value; }
@@ -103,7 +102,7 @@ namespace SharpDxf.Entities
         /// <summary>
         /// Gets or sets the point <see cref="SharpDxf.Vector3">normal</see>.
         /// </summary>
-        public Vector3 Normal
+        internal Vector3 Normal
         {
             get { return this.normal; }
             set
@@ -120,7 +119,7 @@ namespace SharpDxf.Entities
         /// <summary>
         /// Gets the entity <see cref="SharpDxf.Entities.EntityType">type</see>.
         /// </summary>
-        public EntityType Type
+        internal EntityType Type
         {
             get { return TYPE; }
         }
@@ -128,7 +127,7 @@ namespace SharpDxf.Entities
         /// <summary>
         /// Gets or sets the entity <see cref="SharpDxf.AciColor">color</see>.
         /// </summary>
-        public AciColor Color
+        internal AciColor Color
         {
             get { return this.color; }
             set
@@ -142,7 +141,7 @@ namespace SharpDxf.Entities
         /// <summary>
         /// Gets or sets the entity <see cref="SharpDxf.Tables.Layer">layer</see>.
         /// </summary>
-        public Layer Layer
+        internal Layer Layer
         {
             get { return this.layer; }
             set
@@ -156,7 +155,7 @@ namespace SharpDxf.Entities
         /// <summary>
         /// Gets or sets the entity <see cref="SharpDxf.Tables.LineType">line type</see>.
         /// </summary>
-        public LineType LineType
+        internal LineType LineType
         {
             get { return this.lineType; }
             set
@@ -170,7 +169,7 @@ namespace SharpDxf.Entities
         /// <summary>
         /// Gets or sets the entity <see cref="SharpDxf.XData">extende data</see>.
         /// </summary>
-        public Dictionary<ApplicationRegistry, XData> XData
+        internal Dictionary<ApplicationRegistry, XData> XData
         {
             get { return this.xData; }
             set { this.xData = value; }

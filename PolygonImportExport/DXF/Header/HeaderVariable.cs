@@ -30,13 +30,13 @@ namespace SharpDxf.Header
     /// </summary>
     internal class HeaderVariable
     {
-        public const int NAME_CODE_GROUP = 9;
-        public static readonly Dictionary<string, int> Allowed = InitializeSystemVariables();
+        internal const int NAME_CODE_GROUP = 9;
+        internal static readonly Dictionary<string, int> Allowed = InitializeSystemVariables();
         private readonly string name;
         private readonly int codeGroup;
         private readonly object value;
 
-        public HeaderVariable(string name, object value)
+        internal HeaderVariable(string name, object value)
         {
             if (!Allowed.ContainsKey(name))
                 throw new ArgumentOutOfRangeException("name", name,"Variable name " + name + " not defined.");
@@ -45,17 +45,17 @@ namespace SharpDxf.Header
             this.value = value;
         }
 
-        public string Name
+        internal string Name
         {
             get { return this.name; }
         }
 
-        public int CodeGroup
+        internal int CodeGroup
         {
             get { return this.codeGroup; }
         }
 
-        public object Value
+        internal object Value
         {
             get { return this.value; }
         }

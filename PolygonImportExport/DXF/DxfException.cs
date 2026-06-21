@@ -24,28 +24,28 @@ using System;
 
 namespace SharpDxf
 {
-    public class DxfException : Exception
+    internal class DxfException : Exception
     {
         private readonly string file;
 
-        public DxfException(string file)
+        internal DxfException(string file)
         {
             this.file = file;
         }
 
-        public DxfException(string file, string message)
+        internal DxfException(string file, string message)
             : base(message)
         {
             this.file = file;
         }
 
-        public DxfException(string file, string message, Exception innerException)
+        internal DxfException(string file, string message, Exception innerException)
             : base(message, innerException)
         {
             this.file = file;
         }
 
-        public string File
+        internal string File
         {
             get { return this.file; }
         }
@@ -53,84 +53,84 @@ namespace SharpDxf
 
     #region section exceptions
 
-    public class DxfHeaderVariableException : DxfException
+    internal class DxfHeaderVariableException : DxfException
         {
         private readonly string name;
 
-        public DxfHeaderVariableException(string name, string file)
+        internal DxfHeaderVariableException(string name, string file)
             : base(file)
         {
             this.name = name;
         }
 
-        public DxfHeaderVariableException(string name, string file, string message)
+        internal DxfHeaderVariableException(string name, string file, string message)
             : base(file, message)
         {
             this.name = name;
         }
 
-        public string Name
+        internal string Name
         {
             get { return this.name; }
         }
     }
 
-    public class DxfSectionException : DxfException
+    internal class DxfSectionException : DxfException
     {
         private readonly string section;
 
-        public DxfSectionException(string section, string file)
+        internal DxfSectionException(string section, string file)
             : base(file)
         {
             this.section = section;
         }
 
-        public DxfSectionException(string section, string file, string message)
+        internal DxfSectionException(string section, string file, string message)
             : base(file, message)
         {
             this.section = section;
         }
 
-        public string Section
+        internal string Section
         {
             get { return this.section; }
         }
     }
 
-    public class InvalidDxfSectionException : DxfSectionException
+    internal class InvalidDxfSectionException : DxfSectionException
     {
-        public InvalidDxfSectionException(string section, string file)
+        internal InvalidDxfSectionException(string section, string file)
             : base(section, file)
         {
         }
 
-        public InvalidDxfSectionException(string section, string file, string message)
+        internal InvalidDxfSectionException(string section, string file, string message)
             : base(section, file, message)
         {
         }
     }
 
-    public class OpenDxfSectionException : DxfSectionException
+    internal class OpenDxfSectionException : DxfSectionException
     {
-        public OpenDxfSectionException(string section, string file)
+        internal OpenDxfSectionException(string section, string file)
             : base(section, file)
         {
         }
 
-        public OpenDxfSectionException(string section, string file, string message)
+        internal OpenDxfSectionException(string section, string file, string message)
             : base(section, file, message)
         {
         }
     }
 
-    public class ClosedDxfSectionException : DxfSectionException
+    internal class ClosedDxfSectionException : DxfSectionException
     {
-        public ClosedDxfSectionException(string section, string file)
+        internal ClosedDxfSectionException(string section, string file)
             : base(section, file)
         {
         }
 
-        public ClosedDxfSectionException(string section, string file, string message)
+        internal ClosedDxfSectionException(string section, string file, string message)
             : base(section, file, message)
         {
         }
@@ -140,62 +140,62 @@ namespace SharpDxf
 
     #region table exceptions
 
-    public class DxfTableException : DxfException
+    internal class DxfTableException : DxfException
     {
         private readonly string table;
 
-        public DxfTableException(string table, string file)
+        internal DxfTableException(string table, string file)
             : base(file)
         {
             this.table = table;
         }
 
-        public DxfTableException(string table, string file, string message)
+        internal DxfTableException(string table, string file, string message)
             : base(file, message)
         {
             this.table = table;
         }
 
-        public string Table
+        internal string Table
         {
             get { return this.table; }
         }
     }
 
-    public class InvalidDxfTableException : DxfTableException
+    internal class InvalidDxfTableException : DxfTableException
     {
-        public InvalidDxfTableException(string table, string file)
+        internal InvalidDxfTableException(string table, string file)
             : base(table, file)
         {
         }
 
-        public InvalidDxfTableException(string table, string file, string message)
+        internal InvalidDxfTableException(string table, string file, string message)
             : base(table, file, message)
         {
         }
     }
 
-    public class OpenDxfTableException : DxfTableException
+    internal class OpenDxfTableException : DxfTableException
     {
-        public OpenDxfTableException(string table, string file)
+        internal OpenDxfTableException(string table, string file)
             : base(table, file)
         {
         }
 
-        public OpenDxfTableException(string table, string file, string message)
+        internal OpenDxfTableException(string table, string file, string message)
             : base(table, file, message)
         {
         }
     }
 
-    public class ClosedDxfTableException : DxfTableException
+    internal class ClosedDxfTableException : DxfTableException
     {
-        public ClosedDxfTableException(string table, string file)
+        internal ClosedDxfTableException(string table, string file)
             : base(table, file)
         {
         }
 
-        public ClosedDxfTableException(string table, string file, string message)
+        internal ClosedDxfTableException(string table, string file, string message)
             : base(table, file, message)
         {
         }
@@ -205,40 +205,40 @@ namespace SharpDxf
 
     #region entity exceptions
 
-    public class DxfEntityException : DxfException
+    internal class DxfEntityException : DxfException
     {
         private readonly string name;
 
-        public DxfEntityException(string name, string file, string message)
+        internal DxfEntityException(string name, string file, string message)
             : base(file, message)
         {
             this.name = name;
         }
 
-        public string Name
+        internal string Name
         {
             get { return this.name; }
         }
     }
 
-    public class DxfInvalidCodeValueEntityException : DxfException
+    internal class DxfInvalidCodeValueEntityException : DxfException
     {
         private readonly int code;
         private readonly string value;
 
-        public DxfInvalidCodeValueEntityException(int code, string value, string file, string message)
+        internal DxfInvalidCodeValueEntityException(int code, string value, string file, string message)
             : base(file, message)
         {
             this.code = code;
             this.value = value;
         }
 
-        public int Code
+        internal int Code
         {
             get { return this.code; }
         }
 
-        public string Value
+        internal string Value
         {
             get { return this.value; }
         }

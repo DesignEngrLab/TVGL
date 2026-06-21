@@ -25,7 +25,7 @@ namespace SharpDxf
     /// <summary>
     /// Represents an entry in the extended data of an entity.
     /// </summary>
-    public struct XDataRecord
+    internal struct XDataRecord
     {
         #region private fields
 
@@ -39,7 +39,7 @@ namespace SharpDxf
         /// These braces enable applications to organize their data by subdividing the data into lists.
         /// The left brace begins a list, and the right brace terminates the most recent list. Lists can be nested
         /// </summary>
-        public static XDataRecord OpenControlString
+        internal static XDataRecord OpenControlString
         {
             get { return new XDataRecord(XDataCode.ControlString, "{"); }
         }
@@ -49,7 +49,7 @@ namespace SharpDxf
         /// These braces enable applications to organize their data by subdividing the data into lists.
         /// The left brace begins a list, and the right brace terminates the most recent list. Lists can be nested
         /// </summary>
-        public static XDataRecord CloseControlString
+        internal static XDataRecord CloseControlString
         {
             get { return new XDataRecord(XDataCode.ControlString, "}"); }
         }
@@ -61,7 +61,7 @@ namespace SharpDxf
         /// </summary>
         /// <param name="code">XData code.</param>
         /// <param name="value">XData value.</param>
-        public XDataRecord(int code, object value)
+        internal XDataRecord(int code, object value)
         {
             this.code = code;
             this.value = value;
@@ -69,12 +69,12 @@ namespace SharpDxf
 
         #endregion
 
-        #region public properties
+        #region internal properties
 
         /// <summary>
         /// Gets or set the XData code.
         /// </summary>
-        public int Code
+        internal int Code
         {
             get { return this.code; }
             set { this.code = value; }
@@ -83,7 +83,7 @@ namespace SharpDxf
         /// <summary>
         /// Gets or sets the XData value.
         /// </summary>
-        public object Value
+        internal object Value
         {
             get { return this.value; }
             set { this.value = value; }

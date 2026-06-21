@@ -27,7 +27,7 @@ namespace SharpDxf.Entities
     /// <summary>
     /// Represents a nurbs curve vertex.
     /// </summary>
-    public class NurbsVertex
+    internal class NurbsVertex
     {
         #region private fields
 
@@ -41,7 +41,7 @@ namespace SharpDxf.Entities
         /// <summary>
         /// Initializes a new instance of the <c>NurbsVertex</c> class.
         /// </summary>
-        public NurbsVertex()
+        internal NurbsVertex()
         {
             this.location = Vector2.Zero;
             this.weight = 1;
@@ -52,7 +52,7 @@ namespace SharpDxf.Entities
         /// </summary>
         /// <param name="x">X coordinate.</param>
         /// <param name="y">Y coordinate.</param>
-        public NurbsVertex(double x, double y)
+        internal NurbsVertex(double x, double y)
         {
             this.location = new Vector2(x, y);
             this.weight = 1;
@@ -64,7 +64,7 @@ namespace SharpDxf.Entities
         /// <param name="x">X coordinate.</param>
         /// <param name="y">Y coordinate.</param>
         /// <param name="weight">Nurbs vertex weight.</param>
-        public NurbsVertex(double x, double y, double weight)
+        internal NurbsVertex(double x, double y, double weight)
         {
             this.location = new Vector2(x, y);
             this.weight = weight;
@@ -74,7 +74,7 @@ namespace SharpDxf.Entities
         /// Initializes a new instance of the <c>NurbsVertex</c> class.
         /// </summary>
         /// <param name="location">Nurbs vertex <see cref="Vector2">location</see>.
-        public NurbsVertex(Vector2 location)
+        internal NurbsVertex(Vector2 location)
         {
             this.location = location;
             this.weight = 1;
@@ -85,7 +85,7 @@ namespace SharpDxf.Entities
         /// </summary>
         /// <param name="location">Nurbs vertex <see cref="Vector2">location</see>.
         /// <param name="weight">Nurbs vertex weight.</param>
-        public NurbsVertex(Vector2 location, double weight)
+        internal NurbsVertex(Vector2 location, double weight)
         {
             this.location = location;
             this.weight = weight;
@@ -93,12 +93,12 @@ namespace SharpDxf.Entities
 
         #endregion
 
-        #region public properties
+        #region internal properties
 
         /// <summary>
         /// Gets or sets the vertex <see cref="SharpDxf.Vector2">location</see>.
         /// </summary>
-        public Vector2 Location
+        internal Vector2 Location
         {
             get { return this.location; }
             set { this.location = value; }
@@ -107,7 +107,7 @@ namespace SharpDxf.Entities
         /// <summary>
         /// Gets or sets the vertex weight.
         /// </summary>
-        public double Weight
+        internal double Weight
         {
             get { return this.weight; }
             set { this.weight = value; }

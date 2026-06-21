@@ -29,8 +29,7 @@ namespace SharpDxf.Entities
     /// <summary>
     /// Represents a 3d polyline <see cref="IEntityObject">entity</see>.
     /// </summary>
-    public class Polyline3d :
-        DxfObject,
+    internal class Polyline3d :
         IPolyline
     {
         #region private fields
@@ -53,7 +52,7 @@ namespace SharpDxf.Entities
         /// </summary>
         /// <param name="vertexes">3d polyline <see cref="Polyline3dVertex">vertex</see> list.</param>
         /// <param name="isClosed">Sets if the polyline is closed</param>
-        public Polyline3d(List<Polyline3dVertex> vertexes, bool isClosed) 
+        internal Polyline3d(List<Polyline3dVertex> vertexes, bool isClosed) 
             : base (DxfObjectCode.Polyline)
         {
             this.flags = isClosed ? PolylineTypeFlags.ClosedPolylineOrClosedPolygonMeshInM | PolylineTypeFlags.Polyline3D : PolylineTypeFlags.Polyline3D;
@@ -68,7 +67,7 @@ namespace SharpDxf.Entities
         /// Initializes a new instance of the <c>Polyline3d</c> class.
         /// </summary>
         /// <param name="vertexes">3d polyline <see cref="Polyline3dVertex">vertex</see> list.</param>
-        public Polyline3d(List<Polyline3dVertex> vertexes)
+        internal Polyline3d(List<Polyline3dVertex> vertexes)
             : base(DxfObjectCode.Polyline)
         {
             this.flags = PolylineTypeFlags.Polyline3D;
@@ -82,7 +81,7 @@ namespace SharpDxf.Entities
         /// <summary>
         /// Initializes a new instance of the <c>Polyline3d</c> class.
         /// </summary>
-        public Polyline3d()
+        internal Polyline3d()
             : base(DxfObjectCode.Polyline)
         {
             this.flags = PolylineTypeFlags.Polyline3D;
@@ -95,12 +94,12 @@ namespace SharpDxf.Entities
 
         #endregion
 
-        #region public properties
+        #region internal properties
 
         /// <summary>
         /// Gets or sets the polyline <see cref="SharpDxf.Entities.Polyline3dVertex">vertex</see> list.
         /// </summary>
-        public List<Polyline3dVertex> Vertexes
+        internal List<Polyline3dVertex> Vertexes
         {
             get { return this.vertexes; }
             set
@@ -123,7 +122,7 @@ namespace SharpDxf.Entities
         /// <summary>
         /// Gets the polyline type.
         /// </summary>
-        public PolylineTypeFlags Flags
+        internal PolylineTypeFlags Flags
         {
             get { return this.flags; }
         }
@@ -135,7 +134,7 @@ namespace SharpDxf.Entities
         /// <summary>
         /// Gets the entity <see cref="SharpDxf.Entities.EntityType">type</see>.
         /// </summary>
-        public EntityType Type
+        internal EntityType Type
         {
             get { return TYPE; }
         }
@@ -143,7 +142,7 @@ namespace SharpDxf.Entities
         /// <summary>
         /// Gets or sets the entity <see cref="SharpDxf.AciColor">color</see>.
         /// </summary>
-        public AciColor Color
+        internal AciColor Color
         {
             get { return this.color; }
             set
@@ -157,7 +156,7 @@ namespace SharpDxf.Entities
         /// <summary>
         /// Gets or sets the entity <see cref="SharpDxf.Tables.Layer">layer</see>.
         /// </summary>
-        public Layer Layer
+        internal Layer Layer
         {
             get { return this.layer; }
             set
@@ -171,7 +170,7 @@ namespace SharpDxf.Entities
         /// <summary>
         /// Gets or sets the entity <see cref="SharpDxf.Tables.LineType">line type</see>.
         /// </summary>
-        public LineType LineType
+        internal LineType LineType
         {
             get { return this.lineType; }
             set
@@ -185,7 +184,7 @@ namespace SharpDxf.Entities
         /// <summary>
         /// Gets or sets the entity <see cref="SharpDxf.XData">extende data</see>.
         /// </summary>
-        public Dictionary<ApplicationRegistry, XData> XData
+        internal Dictionary<ApplicationRegistry, XData> XData
         {
             get { return this.xData; }
             set { this.xData = value; }

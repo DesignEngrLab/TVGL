@@ -25,16 +25,16 @@ namespace SharpDxf.Header
     /// <summary>
     /// Strings system variables
     /// </summary>
-    public static class SystemVariable
+    internal static class SystemVariable
     {
         /// <summary>
         /// The AutoCAD drawing database version number.
         /// </summary>
-        public const string DabaseVersion = "$ACADVER";
+        internal const string DabaseVersion = "$ACADVER";
 
         /// <summary>
         /// Next available handle (this variable must be present in the header section)
         /// </summary>
-        public const string HandSeed = "$HANDSEED";
+        internal const string HandSeed = "$HANDSEED";
     }
 }

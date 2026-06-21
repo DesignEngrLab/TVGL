@@ -65,7 +65,7 @@ namespace SharpDxf
 
         #region constructors
 
-        public DxfWriter(string file, DxfVersion version)
+        internal DxfWriter(string file, DxfVersion version)
         {
             Thread.CurrentThread.CurrentCulture = CultureInfo.InvariantCulture;
             this.file = file;
@@ -74,12 +74,12 @@ namespace SharpDxf
 
         #endregion
 
-        #region public properties
+        #region internal properties
 
         /// <summary>
         /// Gets the active section.
         /// </summary>
-        public String ActiveSection
+        internal String ActiveSection
         {
             get { return this.activeSection; }
         }
@@ -87,16 +87,16 @@ namespace SharpDxf
         /// <summary>
         /// Gets if the file is opent.
         /// </summary>
-        public bool IsFileOpen
+        internal bool IsFileOpen
         {
             get { return this.isFileOpen; }
         }
 
         #endregion
 
-        #region public methods
+        #region internal methods
 
-        public void Open()
+        internal void Open()
         {
             if (this.isFileOpen)
             {
@@ -117,7 +117,7 @@ namespace SharpDxf
         /// <summary>
         /// Closes the dxf file.
         /// </summary>
-        public void Close()
+        internal void Close()
         {
             if (this.activeSection != StringCode.Unknown)
             {
@@ -143,7 +143,7 @@ namespace SharpDxf
         /// </summary>
         /// <param name="section">Section type to open.</param>
         /// <remarks>There can be only one type section.</remarks>
-        public void BeginSection(string section)
+        internal void BeginSection(string section)
         {
             if (! this.isFileOpen)
             {
@@ -216,7 +216,7 @@ namespace SharpDxf
         /// <summary>
         /// Closes the active section.
         /// </summary>
-        public void EndSection()
+        internal void EndSection()
         {
             if (this.activeSection == StringCode.Unknown)
             {
@@ -251,7 +251,7 @@ namespace SharpDxf
         /// Opens a new table.
         /// </summary>
         /// <param name="table">Table type to open.</param>
-        public void BeginTable(string table)
+        internal void BeginTable(string table)
         {
             if (! this.isFileOpen)
             {
@@ -274,7 +274,7 @@ namespace SharpDxf
         /// <summary>
         /// Closes the active table.
         /// </summary>
-        public void EndTable()
+        internal void EndTable()
         {
             if (this.activeTable == StringCode.Unknown)
             {
@@ -289,13 +289,13 @@ namespace SharpDxf
 
         #region methods for Header section
 
-        public void WriteComment(string comment)
+        internal void WriteComment(string comment)
         {
             if (!string.IsNullOrEmpty(comment))
                 this.WriteCodePair(999, comment);
         }
 
-        public void WriteSystemVariable(HeaderVariable variable)
+        internal void WriteSystemVariable(HeaderVariable variable)
         {
             if (this.activeSection != StringCode.HeaderSection)
             {
@@ -313,7 +313,7 @@ namespace SharpDxf
         /// Writes a new extended data application registry to the table section.
         /// </summary>
         /// <param name="appReg">Nombre del registro de aplicación.</param>
-        public void RegisterApplication(ApplicationRegistry appReg)
+        internal void RegisterApplication(ApplicationRegistry appReg)
         {
             if (this.activeTable != StringCode.ApplicationIDTable)
             {
@@ -332,7 +332,7 @@ namespace SharpDxf
         /// Writes a new view port to the table section.
         /// </summary>
         /// <param name="vp">Viewport.</param>
-        public void WriteViewPort(ViewPort vp)
+        internal void WriteViewPort(ViewPort vp)
         {
             if (this.activeTable != StringCode.ViewPortTable)
             {
@@ -378,7 +378,7 @@ namespace SharpDxf
         /// Writes a new dimension style to the table section.
         /// </summary>
         /// <param name="dimStyle">DimensionStyle.</param>
-        public void WriteDimensionStyle(DimensionStyle dimStyle)
+        internal void WriteDimensionStyle(DimensionStyle dimStyle)
         {
             if (this.activeTable != StringCode.DimensionStyleTable)
             {
@@ -401,7 +401,7 @@ namespace SharpDxf
         /// Writes a new block record to the table section.
         /// </summary>
         /// <param name="blockRecord">Block.</param>
-        public void WriteBlockRecord(BlockRecord blockRecord)
+        internal void WriteBlockRecord(BlockRecord blockRecord)
         {
             if (this.activeTable != StringCode.BlockRecordTable)
             {
@@ -420,7 +420,7 @@ namespace SharpDxf
         /// Writes a new line type to the table section.
         /// </summary>
         /// <param name="tl">Line type.</param>
-        public void WriteLineType(LineType tl)
+        internal void WriteLineType(LineType tl)
         {
             if (this.version == DxfVersion.AutoCad12)
                 if (tl.Name == "ByLayer" || tl.Name == "ByBlock")
@@ -455,7 +455,7 @@ namespace SharpDxf
         /// Writes a new layer to the table section.
         /// </summary>
         /// <param name="layer">Layer.</param>
-        public void WriteLayer(Layer layer)
+        internal void WriteLayer(Layer layer)
         {
             if (this.activeTable != StringCode.LayerTable)
             {
@@ -489,7 +489,7 @@ namespace SharpDxf
         /// Writes a new text style to the table section.
         /// </summary>
         /// <param name="style">TextStyle.</param>
-        public void WriteTextStyle(TextStyle style)
+        internal void WriteTextStyle(TextStyle style)
         {
             if (this.activeTable != StringCode.TextStyleTable)
             {
@@ -541,7 +541,7 @@ namespace SharpDxf
 
         #region methods for Block section
 
-        public void WriteBlock(Block block, List<IEntityObject> entityObjects)
+        internal void WriteBlock(Block block, List<IEntityObject> entityObjects)
         {
             if (this.version == DxfVersion.AutoCad12)
                 if (block.Name == "*Model_Space" || block.Name == "*Paper_Space")
@@ -593,7 +593,7 @@ namespace SharpDxf
             this.WriteBlockEnd(block.End);
         }
 
-        public void WriteBlockEnd(BlockEnd blockEnd)
+        internal void WriteBlockEnd(BlockEnd blockEnd)
         {
             this.WriteCodePair(0, blockEnd.CodeName);
             this.WriteCodePair(5, blockEnd.Handle);
@@ -607,7 +607,7 @@ namespace SharpDxf
 
         #region methods for Entity section
 
-        public void WriteEntity(IEntityObject entity)
+        internal void WriteEntity(IEntityObject entity)
         {
             switch (entity.Type)
             {
@@ -1369,7 +1369,7 @@ namespace SharpDxf
 
         #region methods for Entity section
 
-        public void WriteDictionary(Dictionary dictionary)
+        internal void WriteDictionary(Dictionary dictionary)
         {
             //if (this.activeTable != StringCode.ObjectsSection)
             //{

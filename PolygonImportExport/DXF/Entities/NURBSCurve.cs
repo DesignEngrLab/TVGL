@@ -31,7 +31,7 @@ namespace SharpDxf.Entities
     /// Represents a nurbs curve <see cref="SharpDxf.Entities.IEntityObject">entity</see>.
     /// </summary>
     /// <remarks>The nurbs curve uses a default open uniform knot vector.</remarks>
-    public class NurbsCurve :
+    internal class NurbsCurve :
         IEntityObject
     {
         #region private fields
@@ -57,7 +57,7 @@ namespace SharpDxf.Entities
         /// <summary>
         /// Initializes a new instance of the <c>NurbsCurve</c> class.
         /// </summary>
-        public NurbsCurve()
+        internal NurbsCurve()
         {
             this.controlPoints = new List<NurbsVertex>();
             this.normal = Vector3.UnitZ;
@@ -76,7 +76,7 @@ namespace SharpDxf.Entities
         /// </summary>
         /// <param name="controlPoints">The nurbs curve <see cref="SharpDxf.Entities.NurbsVertex">control point</see> list.</param>
         /// <param name="order">The nurbs curve order.</param>
-        public NurbsCurve(List<NurbsVertex> controlPoints, int order)
+        internal NurbsCurve(List<NurbsVertex> controlPoints, int order)
         {
             if (controlPoints.Count<order)
                 throw new ArgumentOutOfRangeException("order",order,"The order of the curve must be less or equal the number of control points.");
@@ -95,12 +95,12 @@ namespace SharpDxf.Entities
 
         #endregion
 
-        #region public properties
+        #region internal properties
 
         /// <summary>
         /// Gets the nurbs curve <see cref="NurbsVertex">control point</see> list.
         /// </summary>
-        public List<NurbsVertex> ControlPoints
+        internal List<NurbsVertex> ControlPoints
         {
             get { return this.controlPoints; }
             set 
@@ -114,7 +114,7 @@ namespace SharpDxf.Entities
         /// <summary>
         /// Gets or sets the nurbs curve order.
         /// </summary>
-        public int Order
+        internal int Order
         {
             get { return this.order; }
             set { this.order = value; }
@@ -123,7 +123,7 @@ namespace SharpDxf.Entities
         /// <summary>
         /// Gets or sets the nurbs curve <see cref="SharpDxf.Vector3">normal</see>.
         /// </summary>
-        public Vector3 Normal
+        internal Vector3 Normal
         {
             get { return this.normal; }
             set
@@ -136,7 +136,7 @@ namespace SharpDxf.Entities
         /// <summary>
         /// Gets or sets the number of points generated along the nurbs curve during the conversion to a polyline.
         /// </summary>
-        public int CurvePoints
+        internal int CurvePoints
         {
             get { return this.curvePoints; }
             set { this.curvePoints = value; }
@@ -145,7 +145,7 @@ namespace SharpDxf.Entities
         /// <summary>
         /// Gets or sets the nurbs curve thickness.
         /// </summary>
-        public double Thickness
+        internal double Thickness
         {
             get { return this.thickness; }
             set { this.thickness = value; }
@@ -154,7 +154,7 @@ namespace SharpDxf.Entities
         /// <summary>
         /// Gets or sets the nurbs curve elevation.
         /// </summary>
-        public double Elevation
+        internal double Elevation
         {
             get { return this.elevation; }
             set { this.elevation = value; }
@@ -166,7 +166,7 @@ namespace SharpDxf.Entities
         /// <summary>
         /// Gets the dxf code that represents the entity.
         /// </summary>
-        public string DxfName
+        internal string DxfName
         {
             get { return DXF_NAME; }
         }
@@ -174,7 +174,7 @@ namespace SharpDxf.Entities
         /// <summary>
         /// Gets the entity <see cref="SharpDxf.Entities.EntityType">type</see>.
         /// </summary>
-        public EntityType Type
+        internal EntityType Type
         {
             get { return TYPE; }
         }
@@ -182,7 +182,7 @@ namespace SharpDxf.Entities
         /// <summary>
         /// Gets or sets the entity <see cref="SharpDxf.AciColor">color</see>.
         /// </summary>
-        public AciColor Color
+        internal AciColor Color
         {
             get { return this.color; }
             set
@@ -196,7 +196,7 @@ namespace SharpDxf.Entities
         /// <summary>
         /// Gets or sets the entity <see cref="SharpDxf.Tables.Layer">layer</see>.
         /// </summary>
-        public Layer Layer
+        internal Layer Layer
         {
             get { return this.layer; }
             set
@@ -210,7 +210,7 @@ namespace SharpDxf.Entities
         /// <summary>
         /// Gets or sets the entity <see cref="SharpDxf.Tables.LineType">line type</see>.
         /// </summary>
-        public LineType LineType
+        internal LineType LineType
         {
             get { return this.lineType; }
             set
@@ -224,7 +224,7 @@ namespace SharpDxf.Entities
         /// <summary>
         /// Gets or sets the entity <see cref="SharpDxf.XData">extende data</see>.
         /// </summary>
-        public Dictionary<ApplicationRegistry, XData> XData
+        internal Dictionary<ApplicationRegistry, XData> XData
         {
             get { return this.xData; }
             set { this.xData = value; }
@@ -232,14 +232,14 @@ namespace SharpDxf.Entities
 
         #endregion
 
-        #region public methods
+        #region internal methods
 
         /// <summary>
         /// Obtains a list of vertexes that represent the nurbs curve.
         /// </summary>
         /// <param name="precision">Number of point to approximate the curve to a polyline.</param>
         /// <returns>The vertexes are expresed in object coordinate system.</returns>
-        public List<Vector2> PolygonalVertexes(int precision)
+        internal List<Vector2> PolygonalVertexes(int precision)
         {
             if (this.controlPoints.Count < this.order)
                 throw new ArithmeticException("The order of the curve must be less or equal the number of control points.");
@@ -269,7 +269,7 @@ namespace SharpDxf.Entities
         /// Sets a constant weight for all the nurbs curve <see cref="NurbsVertex">vertex</see> list.
         /// </summary>
         /// <param name="weight">Nurbs vertex weight.</param>
-        public void SetUniformWeights(double weight)
+        internal void SetUniformWeights(double weight)
         {
             foreach (NurbsVertex v in this.controlPoints)
             {

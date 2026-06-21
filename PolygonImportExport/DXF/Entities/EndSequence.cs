@@ -36,7 +36,7 @@ namespace SharpDxf.Entities
         /// <summary>
         /// Initializes a new instance of the <c>EndSequence</c> class.
         /// </summary>
-        public EndSequence() : base(DxfObjectCode.EndSequence)
+        internal EndSequence() : base(DxfObjectCode.EndSequence)
         {
             this.layer = Layer.Default;
         }
@@ -44,7 +44,7 @@ namespace SharpDxf.Entities
         /// <summary>
         /// Gets or sets the end sequence <see cref="SharpDxf.Tables.Layer">layer</see>
         /// </summary>
-        public Layer Layer
+        internal Layer Layer
         {
             get { return this.layer; }
             set { if (value != null) this.layer = value; }

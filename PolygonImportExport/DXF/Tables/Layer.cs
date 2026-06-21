@@ -27,9 +27,8 @@ namespace SharpDxf.Tables
     /// <summary>
     /// Represents a layer.
     /// </summary>
-    public class Layer :
-        DxfObject,
-        ITableObject
+    internal class Layer :
+        DxfObject
     {
         #region private fields
         private static string plotStyleHandle;
@@ -46,7 +45,7 @@ namespace SharpDxf.Tables
         /// Initializes a new instance of the <c>Layer</c> class.
         /// </summary>
         /// <param name="name">Layer name.</param>
-        public Layer(string name)
+        internal Layer(string name)
             : base(DxfObjectCode.Layer)
         {
             if (string.IsNullOrEmpty(name))
@@ -64,14 +63,14 @@ namespace SharpDxf.Tables
         /// <summary>
         /// Gets the default Layer.
         /// </summary>
-        public static Layer Default
+        internal static Layer Default
         {
             get { return new Layer("0"); }
         }
 
         #endregion
 
-        #region public properties
+        #region internal properties
 
         internal static string PlotStyleHandle
         {
@@ -82,7 +81,7 @@ namespace SharpDxf.Tables
         /// <summary>
         /// Gets or sets the layer <see cref="LineType"line type></see>.
         /// </summary>
-        public LineType LineType
+        internal LineType LineType
         {
             get { return this.lineType; }
             set
@@ -96,7 +95,7 @@ namespace SharpDxf.Tables
         /// <summary>
         /// Gets or sets the layer <see cref="AciColor">color</see>.
         /// </summary>
-        public AciColor Color
+        internal AciColor Color
         {
             get { return this.color; }
             set
@@ -110,7 +109,7 @@ namespace SharpDxf.Tables
         /// <summary>
         /// Gets or sets if the layer is visible.
         /// </summary>
-        public bool IsVisible
+        internal bool IsVisible
         {
             get { return this.isVisible; }
             set { this.isVisible = value; }
@@ -123,7 +122,7 @@ namespace SharpDxf.Tables
         /// <summary>
         /// Gets the table name.
         /// </summary>
-        public string Name
+        internal string Name
         {
             get { return this.name; }
         }

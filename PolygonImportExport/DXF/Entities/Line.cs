@@ -30,9 +30,8 @@ namespace SharpDxf.Entities
     /// <summary>
     /// Represents a line <see cref="SharpDxf.Entities.IEntityObject">entity</see>.
     /// </summary>
-    public class Line :
-        DxfObject,
-        IEntityObject
+    internal class Line :
+        DxfObject
     {
         #region private fields
 
@@ -55,7 +54,7 @@ namespace SharpDxf.Entities
         /// </summary>
         /// <param name="startPoint">Line <see cref="Vector3">start point.</see></param>
         /// <param name="endPoint">Line <see cref="Vector3">end point.</see></param>
-        public Line(Vector3 startPoint, Vector3 endPoint) 
+        internal Line(Vector3 startPoint, Vector3 endPoint) 
             : base(DxfObjectCode.Line)
         {
             this.startPoint = startPoint;
@@ -70,7 +69,7 @@ namespace SharpDxf.Entities
         /// <summary>
         /// Initializes a new instance of the <c>Line</c> class.
         /// </summary>
-        public Line()
+        internal Line()
             : base(DxfObjectCode.Line)
         {
             this.startPoint = Vector3.Zero;
@@ -84,12 +83,12 @@ namespace SharpDxf.Entities
 
         #endregion
 
-        #region public properties
+        #region internal properties
 
         /// <summary>
         /// Gets or sets the line <see cref="SharpDxf.Vector3">start point</see>.
         /// </summary>
-        public Vector3 StartPoint
+        internal Vector3 StartPoint
         {
             get { return this.startPoint; }
             set { this.startPoint = value; }
@@ -98,7 +97,7 @@ namespace SharpDxf.Entities
         /// <summary>
         /// Gets or sets the line <see cref="SharpDxf.Vector3">end point</see>.
         /// </summary>
-        public Vector3 EndPoint
+        internal Vector3 EndPoint
         {
             get { return this.endPoint; }
             set { this.endPoint = value; }
@@ -107,7 +106,7 @@ namespace SharpDxf.Entities
         /// <summary>
         /// Gets or sets the line thickness.
         /// </summary>
-        public double Thickness
+        internal double Thickness
         {
             get { return this.thickness ; }
             set { this.thickness = value; }
@@ -116,7 +115,7 @@ namespace SharpDxf.Entities
         /// <summary>
         /// Gets or sets the line <see cref="SharpDxf.Vector3">normal</see>.
         /// </summary>
-        public Vector3 Normal
+        internal Vector3 Normal
         {
             get { return this.normal; }
             set
@@ -135,7 +134,7 @@ namespace SharpDxf.Entities
        /// <summary>
         /// Gets the entity <see cref="SharpDxf.Entities.EntityType">type</see>.
         /// </summary>
-        public EntityType Type
+        internal EntityType Type
         {
             get { return TYPE; }
         }
@@ -143,7 +142,7 @@ namespace SharpDxf.Entities
         /// <summary>
         /// Gets or sets the entity <see cref="SharpDxf.AciColor">color</see>.
         /// </summary>
-        public AciColor Color
+        internal AciColor Color
         {
             get { return this.color; }
             set
@@ -157,7 +156,7 @@ namespace SharpDxf.Entities
         /// <summary>
         /// Gets or sets the entity <see cref="SharpDxf.Tables.Layer">layer</see>.
         /// </summary>
-        public Layer Layer
+        internal Layer Layer
         {
             get { return this.layer; }
             set
@@ -171,7 +170,7 @@ namespace SharpDxf.Entities
         /// <summary>
         /// Gets or sets the entity <see cref="SharpDxf.Tables.LineType">line type</see>.
         /// </summary>
-        public LineType LineType
+        internal LineType LineType
         {
             get { return this.lineType; }
             set
@@ -185,7 +184,7 @@ namespace SharpDxf.Entities
         /// <summary>
         /// Gets or sets the entity <see cref="SharpDxf.XData">extende data</see>.
         /// </summary>
-        public Dictionary<ApplicationRegistry, XData> XData
+        internal Dictionary<ApplicationRegistry, XData> XData
         {
             get { return this.xData; }
             set { this.xData = value; }

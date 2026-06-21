@@ -35,7 +35,7 @@ namespace SharpDxf
         /// </summary>
         /// <param name="code">Dxf code.</param>
         /// <param name="value">Value for the specified code.</param>
-        public CodeValuePair(int code, string value)
+        internal CodeValuePair(int code, string value)
         {
             this.code = code;
             this.value = value;
@@ -44,7 +44,7 @@ namespace SharpDxf
         /// <summary>
         /// Gets the dxf code.
         /// </summary>
-        public int Code
+        internal int Code
         {
             get { return this.code; }
         }
@@ -52,7 +52,7 @@ namespace SharpDxf
         /// <summary>
         /// Gets the value.
         /// </summary>
-        public string Value
+        internal string Value
         {
             get { return this.value; }
         }

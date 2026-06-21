@@ -20,6 +20,7 @@
 
 #endregion
 
+using SharpDxf.Entities;
 using System;
 
 namespace SharpDxf
@@ -27,7 +28,7 @@ namespace SharpDxf
     /// <summary>
     /// Represents the base class for all dxf objects.
     /// </summary>
-    public class DxfObject
+    internal class DxfObject : IEntityObject
     {
         #region private fields
 
@@ -41,19 +42,19 @@ namespace SharpDxf
         /// <summary>
         /// Initializes a new instance of the <c>DxfObject</c> class.
         /// </summary>
-        public DxfObject(string codeName)
+        internal DxfObject(string codeName)
         {
             this.codeName = codeName;
         }
 
         #endregion
 
-        #region public properties
+        #region internal properties
 
         /// <summary>
         /// Gets the dxf entity type string.
         /// </summary>
-        public string CodeName
+        internal string CodeName
         {
             get { return this.codeName; }
         }
@@ -61,16 +62,16 @@ namespace SharpDxf
         /// <summary>
         /// Gets or sets the handle asigned of the dxf object.
         /// </summary>
-        /// <remarks>Only the getter is public.</remarks>
-        public string Handle
+        /// <remarks>Only the getter is internal.</remarks>
+        internal string Handle
         {
             get { return this.handle; }
-            internal set { this.handle = value;}
+            set { this.handle = value;}
         }
 
         #endregion
 
-        #region public methods
+        #region internal methods
 
         /// <summary>
         /// Asigns a handle to the object based in a integer counter.

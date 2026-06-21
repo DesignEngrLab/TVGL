@@ -30,9 +30,8 @@ namespace SharpDxf.Entities
     /// <summary>
     /// Represents a polyline vertex.
     /// </summary>
-    public class PolylineVertex :
-        DxfObject,
-        IVertex
+    internal class PolylineVertex :
+        DxfObject
     {
       
         #region private fields
@@ -55,7 +54,7 @@ namespace SharpDxf.Entities
         /// <summary>
         /// Initializes a new instance of the <c>PolylineVertex</c> class.
         /// </summary>
-        public PolylineVertex()
+        internal PolylineVertex()
             : base(DxfObjectCode.Vertex)
         {
             this.flags = VertexTypeFlags.PolylineVertex;
@@ -72,7 +71,7 @@ namespace SharpDxf.Entities
         /// Initializes a new instance of the <c>PolylineVertex</c> class.
         /// </summary>
         /// <param name="location">Polyline <see cref="Vector2">vertex</see> coordinates.</param>
-        public PolylineVertex(Vector2 location)
+        internal PolylineVertex(Vector2 location)
             : base(DxfObjectCode.Vertex)
         {
             this.flags = VertexTypeFlags.PolylineVertex;
@@ -90,7 +89,7 @@ namespace SharpDxf.Entities
         /// </summary>
         /// <param name="x">X coordinate.</param>
         /// <param name="y">Y coordinate.</param>
-        public PolylineVertex(double x, double y)
+        internal PolylineVertex(double x, double y)
             : base(DxfObjectCode.Vertex)
         {
             this.flags = VertexTypeFlags.PolylineVertex;
@@ -105,12 +104,12 @@ namespace SharpDxf.Entities
 
         #endregion
 
-        #region public properties
+        #region internal properties
 
         /// <summary>
         /// Gets or sets the polyline vertex <see cref="SharpDxf.Vector2">location</see>.
         /// </summary>
-        public Vector2 Location
+        internal Vector2 Location
         {
             get { return this.location; }
             set { this.location = value; }
@@ -119,7 +118,7 @@ namespace SharpDxf.Entities
         /// <summary>
         /// Gets or sets the light weight polyline begin thickness.
         /// </summary>
-        public double BeginThickness
+        internal double BeginThickness
         {
             get { return this.beginThickness; }
             set { this.beginThickness = value; }
@@ -128,7 +127,7 @@ namespace SharpDxf.Entities
         /// <summary>
         /// Gets or sets the light weight polyline end thickness.
         /// </summary>
-        public double EndThickness
+        internal double EndThickness
         {
             get { return this.endThickness; }
             set { this.endThickness = value; }
@@ -142,7 +141,7 @@ namespace SharpDxf.Entities
         /// made negative if the arc goes clockwise from the start point to the endpoint. 
         /// A bulge of 0 indicates a straight segment, and a bulge of 1 is a semicircle.
         /// </remarks>
-        public double Bulge
+        internal double Bulge
         {
             get { return this.bulge; }
             set
@@ -162,7 +161,7 @@ namespace SharpDxf.Entities
         /// <summary>
         /// Gets the entity <see cref="SharpDxf.Entities.EntityType">type</see>.
         /// </summary>
-        public EntityType Type
+        internal EntityType Type
         {
             get { return TYPE; }
         }
@@ -170,7 +169,7 @@ namespace SharpDxf.Entities
         /// <summary>
         /// Gets or sets the entity <see cref="SharpDxf.AciColor">color</see>.
         /// </summary>
-        public AciColor Color
+        internal AciColor Color
         {
             get { return this.color; }
             set
@@ -184,7 +183,7 @@ namespace SharpDxf.Entities
         /// <summary>
         /// Gets or sets the entity <see cref="SharpDxf.Tables.Layer">layer</see>.
         /// </summary>
-        public Layer Layer
+        internal Layer Layer
         {
             get { return this.layer; }
             set
@@ -198,7 +197,7 @@ namespace SharpDxf.Entities
         /// <summary>
         /// Gets or sets the entity <see cref="SharpDxf.Tables.LineType">line type</see>.
         /// </summary>
-        public LineType LineType
+        internal LineType LineType
         {
             get { return this.lineType; }
             set
@@ -212,7 +211,7 @@ namespace SharpDxf.Entities
         /// <summary>
         /// Gets or sets the entity <see cref="SharpDxf.XData">extende data</see>.
         /// </summary>
-        public Dictionary<ApplicationRegistry, XData> XData
+        internal Dictionary<ApplicationRegistry, XData> XData
         {
             get { return this.xData; }
             set { this.xData = value; }
@@ -225,7 +224,7 @@ namespace SharpDxf.Entities
         /// <summary>
         /// Gets the vertex type.
         /// </summary>
-        public VertexTypeFlags Flags
+        internal VertexTypeFlags Flags
         {
             get { return this.flags; }
         }

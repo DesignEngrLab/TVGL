@@ -30,8 +30,7 @@ namespace SharpDxf.Entities
     /// <summary>
     /// Represents a polyface mesh <see cref="SharpDxf.Entities.IEntityObject">entity</see>.
     /// </summary>
-    public class PolyfaceMesh :
-        DxfObject,
+    internal class PolyfaceMesh :
         IPolyline
     {
         #region private fields
@@ -53,7 +52,7 @@ namespace SharpDxf.Entities
         /// </summary>
         /// <param name="vertexes">Polyface mesh <see cref="PolyfaceMeshVertex">vertex</see> list.</param>
         /// <param name="faces">Polyface mesh <see cref="PolyfaceMeshFace">faces</see> list.</param>
-        public PolyfaceMesh(List<PolyfaceMeshVertex> vertexes, List<PolyfaceMeshFace> faces)
+        internal PolyfaceMesh(List<PolyfaceMeshVertex> vertexes, List<PolyfaceMeshFace> faces)
             : base(DxfObjectCode.Polyline)
         {
             this.flags = PolylineTypeFlags.PolyfaceMesh;
@@ -68,7 +67,7 @@ namespace SharpDxf.Entities
         /// <summary>
         /// Initializes a new instance of the <c>PolyfaceMesh</c> class.
         /// </summary>
-        public PolyfaceMesh()
+        internal PolyfaceMesh()
             : base(DxfObjectCode.Polyline)
         {
             this.flags = PolylineTypeFlags.PolyfaceMesh;
@@ -81,12 +80,12 @@ namespace SharpDxf.Entities
 
         #endregion
 
-        #region public properties
+        #region internal properties
 
         /// <summary>
         /// Gets or sets the polyface mesh <see cref="SharpDxf.Entities.PolyfaceMeshVertex">vertexes</see>.
         /// </summary>
-        public List<PolyfaceMeshVertex> Vertexes
+        internal List<PolyfaceMeshVertex> Vertexes
         {
             get { return this.vertexes; }
             set
@@ -100,7 +99,7 @@ namespace SharpDxf.Entities
         /// <summary>
         /// Gets or sets the polyface mesh <see cref="SharpDxf.Entities.PolyfaceMeshFace">faces</see>.
         /// </summary>
-        public List<PolyfaceMeshFace> Faces
+        internal List<PolyfaceMeshFace> Faces
         {
             get { return this.faces; }
             set
@@ -123,7 +122,7 @@ namespace SharpDxf.Entities
         /// <summary>
         /// Gets the polyline type.
         /// </summary>
-        public PolylineTypeFlags Flags
+        internal PolylineTypeFlags Flags
         {
             get { return this.flags; }
         }
@@ -135,7 +134,7 @@ namespace SharpDxf.Entities
       /// <summary>
         /// Gets the entity <see cref="SharpDxf.Entities.EntityType">type</see>.
         /// </summary>
-        public EntityType Type
+        internal EntityType Type
         {
             get { return TYPE; }
         }
@@ -143,7 +142,7 @@ namespace SharpDxf.Entities
         /// <summary>
         /// Gets or sets the entity <see cref="SharpDxf.AciColor">color</see>.
         /// </summary>
-        public AciColor Color
+        internal AciColor Color
         {
             get { return this.color; }
             set
@@ -157,7 +156,7 @@ namespace SharpDxf.Entities
         /// <summary>
         /// Gets or sets the entity <see cref="SharpDxf.Tables.Layer">layer</see>.
         /// </summary>
-        public Layer Layer
+        internal Layer Layer
         {
             get { return this.layer; }
             set
@@ -171,7 +170,7 @@ namespace SharpDxf.Entities
         /// <summary>
         /// Gets or sets the entity <see cref="SharpDxf.Tables.LineType">line type</see>.
         /// </summary>
-        public LineType LineType
+        internal LineType LineType
         {
             get { return this.lineType; }
             set
@@ -185,7 +184,7 @@ namespace SharpDxf.Entities
         /// <summary>
         /// Gets or sets the entity <see cref="SharpDxf.XData">extende data</see>.
         /// </summary>
-        public Dictionary<ApplicationRegistry, XData> XData
+        internal Dictionary<ApplicationRegistry, XData> XData
         {
             get { return this.xData; }
             set { this.xData = value; }

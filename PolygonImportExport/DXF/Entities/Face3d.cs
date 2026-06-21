@@ -31,7 +31,7 @@ namespace SharpDxf.Entities
     /// Defines which edges are hidden.
     /// </summary>
     [Flags]
-    public enum EdgeFlags
+    internal enum EdgeFlags
     {
         /// <summary>
         /// All edges as visibles (default).
@@ -58,9 +58,8 @@ namespace SharpDxf.Entities
     /// <summary>
     /// Represents a 3DFace <see cref="SharpDxf.Entities.IEntityObject">entity</see>.
     /// </summary>
-    public class Face3d :
-        DxfObject,
-        IEntityObject
+    internal class Face3d :
+        DxfObject
     {
         #region private fields
 
@@ -86,7 +85,7 @@ namespace SharpDxf.Entities
         /// <param name="secondVertex">3d face <see cref="Vector3">second vertex</see>.</param>
         /// <param name="thirdVertex">3d face <see cref="Vector3">third vertex</see>.</param>
         /// <param name="fourthVertex">3d face <see cref="Vector3">fourth vertex</see>.</param>
-        public Face3d(Vector3 firstVertex, Vector3 secondVertex, Vector3 thirdVertex, Vector3 fourthVertex)
+        internal Face3d(Vector3 firstVertex, Vector3 secondVertex, Vector3 thirdVertex, Vector3 fourthVertex)
             : base(DxfObjectCode.Face3D)
         {
             this.firstVertex = firstVertex;
@@ -103,7 +102,7 @@ namespace SharpDxf.Entities
         /// <summary>
         /// Initializes a new instance of the <c>Face3D</c> class.
         /// </summary>
-        public Face3d()
+        internal Face3d()
             : base(DxfObjectCode.Face3D)
         {
             this.firstVertex = Vector3.Zero;
@@ -119,12 +118,12 @@ namespace SharpDxf.Entities
 
         #endregion
 
-        #region public properties
+        #region internal properties
 
         /// <summary>
         /// Gets or sets the first 3d face <see cref="SharpDxf.Vector3">vertex</see>.
         /// </summary>
-        public Vector3 FirstVertex
+        internal Vector3 FirstVertex
         {
             get { return this.firstVertex; }
             set { this.firstVertex = value; }
@@ -133,7 +132,7 @@ namespace SharpDxf.Entities
         /// <summary>
         /// Gets or sets the second 3d face <see cref="SharpDxf.Vector3">vertex</see>.
         /// </summary>
-        public Vector3 SecondVertex
+        internal Vector3 SecondVertex
         {
             get { return this.secondVertex; }
             set { this.secondVertex = value; }
@@ -142,7 +141,7 @@ namespace SharpDxf.Entities
         /// <summary>
         /// Gets or sets the third 3d face <see cref="SharpDxf.Vector3">vertex</see>.
         /// </summary>
-        public Vector3 ThirdVertex
+        internal Vector3 ThirdVertex
         {
             get { return this.thirdVertex; }
             set { this.thirdVertex = value; }
@@ -151,7 +150,7 @@ namespace SharpDxf.Entities
         /// <summary>
         /// Gets or sets the fourth 3d face <see cref="SharpDxf.Vector3">vertex</see>.
         /// </summary>
-        public Vector3 FourthVertex
+        internal Vector3 FourthVertex
         {
             get { return this.fourthVertex; }
             set { this.fourthVertex = value; }
@@ -160,7 +159,7 @@ namespace SharpDxf.Entities
         /// <summary>
         /// Gets or set the 3d face edge visibility.
         /// </summary>
-        public EdgeFlags EdgeFlags
+        internal EdgeFlags EdgeFlags
         {
             get { return this.edgeFlags; }
             set { this.edgeFlags = value; }
@@ -173,7 +172,7 @@ namespace SharpDxf.Entities
         /// <summary>
         /// Gets the entity <see cref="SharpDxf.Entities.EntityType">type</see>.
         /// </summary>
-        public EntityType Type
+        internal EntityType Type
         {
             get { return TYPE; }
         }
@@ -181,7 +180,7 @@ namespace SharpDxf.Entities
         /// <summary>
         /// Gets or sets the entity <see cref="SharpDxf.AciColor">color</see>.
         /// </summary>
-        public AciColor Color
+        internal AciColor Color
         {
             get { return this.color; }
             set
@@ -195,7 +194,7 @@ namespace SharpDxf.Entities
         /// <summary>
         /// Gets or sets the entity <see cref="SharpDxf.Tables.Layer">layer</see>.
         /// </summary>
-        public Layer Layer
+        internal Layer Layer
         {
             get { return this.layer; }
             set
@@ -209,7 +208,7 @@ namespace SharpDxf.Entities
         /// <summary>
         /// Gets or sets the entity <see cref="SharpDxf.Tables.LineType">line type</see>.
         /// </summary>
-        public LineType LineType
+        internal LineType LineType
         {
             get { return this.lineType; }
             set
@@ -223,7 +222,7 @@ namespace SharpDxf.Entities
         /// <summary>
         /// Gets or sets the entity <see cref="SharpDxf.XData">extende data</see>.
         /// </summary>
-        public Dictionary<ApplicationRegistry, XData> XData
+        internal Dictionary<ApplicationRegistry, XData> XData
         {
             get { return this.xData; }
             set { this.xData = value; }

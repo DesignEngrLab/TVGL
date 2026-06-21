@@ -30,9 +30,9 @@ namespace SharpDxf.Entities
     /// <summary>
     /// Represents a Text <see cref="IEntityObject">entity</see>.
     /// </summary>
-    public class Text :
-        DxfObject,
-        IEntityObject
+    internal class Text :
+        DxfObject
+        
     {
         #region private fields
 
@@ -58,7 +58,7 @@ namespace SharpDxf.Entities
         /// <summary>
         /// Initializes a new instance of the <c>Text</c> class.
         /// </summary>
-        public Text() 
+        internal Text() 
             : base(DxfObjectCode.Text)
         {
             this.value = string.Empty;
@@ -81,7 +81,7 @@ namespace SharpDxf.Entities
         /// <param name="text">Text string.</param>
         /// <param name="basePoint">Text base <see cref="Vector3">point</see>.</param>
         /// <param name="height">Text height.</param>
-        public Text(string text, Vector3 basePoint, double height)
+        internal Text(string text, Vector3 basePoint, double height)
             : base(DxfObjectCode.Text)
         {
             this.value = text;
@@ -105,7 +105,7 @@ namespace SharpDxf.Entities
         /// <param name="basePoint">Text base <see cref="Vector3">point</see>.</param>
         /// <param name="height">Text height.</param>
         /// <param name="style">Text <see cref="TextStyle">style</see>.</param>
-        public Text(string text, Vector3 basePoint, double height, TextStyle style)
+        internal Text(string text, Vector3 basePoint, double height, TextStyle style)
             : base(DxfObjectCode.Text)
         {
             this.value = text;
@@ -124,12 +124,12 @@ namespace SharpDxf.Entities
 
         #endregion
 
-        #region public properties
+        #region internal properties
 
         /// <summary>
         /// Gets or sets the text rotation.
         /// </summary>
-        public double Rotation
+        internal double Rotation
         {
             get { return this.rotation; }
             set { this.rotation = value; }
@@ -138,7 +138,7 @@ namespace SharpDxf.Entities
         /// <summary>
         /// Gets or sets the text height.
         /// </summary>
-        public double Height
+        internal double Height
         {
             get { return this.height; }
             set
@@ -152,7 +152,7 @@ namespace SharpDxf.Entities
         /// <summary>
         /// Gets or sets the width factor.
         /// </summary>
-        public double WidthFactor
+        internal double WidthFactor
         {
             get { return this.widthFactor; }
             set
@@ -166,7 +166,7 @@ namespace SharpDxf.Entities
         /// <summary>
         /// Gets or sets the font oblique angle.
         /// </summary>
-        public double ObliqueAngle
+        internal double ObliqueAngle
         {
             get { return this.obliqueAngle; }
             set { this.obliqueAngle = value; }
@@ -175,7 +175,7 @@ namespace SharpDxf.Entities
         /// <summary>
         /// Gets or sets the <see cref="SharpDxf.Tables.TextStyle">text style</see>.
         /// </summary>
-        public TextStyle Style
+        internal TextStyle Style
         {
             get { return this.style; }
             set { this.style = value; }
@@ -184,7 +184,7 @@ namespace SharpDxf.Entities
         /// <summary>
         /// Gets or sets the text base <see cref="SharpDxf.Vector3">point</see>.
         /// </summary>
-        public Vector3 BasePoint
+        internal Vector3 BasePoint
         {
             get { return this.basePoint; }
             set { this.basePoint = value; }
@@ -193,7 +193,7 @@ namespace SharpDxf.Entities
         /// <summary>
         /// Gets or sets the text alignment.
         /// </summary>
-        public TextAlignment Alignment
+        internal TextAlignment Alignment
         {
             get { return this.alignment; }
             set { this.alignment = value; }
@@ -202,7 +202,7 @@ namespace SharpDxf.Entities
         /// <summary>
         /// Gets or sets the text <see cref="SharpDxf.Vector3">normal</see>.
         /// </summary>
-        public Vector3 Normal
+        internal Vector3 Normal
         {
             get { return this.normal; }
             set
@@ -215,7 +215,7 @@ namespace SharpDxf.Entities
         /// <summary>
         /// Gets or sets the text string.
         /// </summary>
-        public string Value
+        internal string Value
         {
             get { return this.value; }
             set { this.value = value; }
@@ -228,7 +228,7 @@ namespace SharpDxf.Entities
       /// <summary>
         /// Gets the entity <see cref="SharpDxf.Entities.EntityType">type</see>.
         /// </summary>
-        public EntityType Type
+        internal EntityType Type
         {
             get { return TYPE; }
         }
@@ -236,7 +236,7 @@ namespace SharpDxf.Entities
         /// <summary>
         /// Gets or sets the entity <see cref="SharpDxf.AciColor">color</see>.
         /// </summary>
-        public AciColor Color
+        internal AciColor Color
         {
             get { return this.color; }
             set
@@ -250,7 +250,7 @@ namespace SharpDxf.Entities
         /// <summary>
         /// Gets or sets the entity <see cref="SharpDxf.Tables.Layer">layer</see>.
         /// </summary>
-        public Layer Layer
+        internal Layer Layer
         {
             get { return this.layer; }
             set
@@ -264,7 +264,7 @@ namespace SharpDxf.Entities
         /// <summary>
         /// Gets or sets the entity <see cref="SharpDxf.Tables.LineType">line type</see>.
         /// </summary>
-        public LineType LineType
+        internal LineType LineType
         {
             get { return this.lineType; }
             set
@@ -278,7 +278,7 @@ namespace SharpDxf.Entities
         /// <summary>
         /// Gets or sets the entity <see cref="SharpDxf.XData">extende data</see>.
         /// </summary>
-        public Dictionary<ApplicationRegistry, XData> XData
+        internal Dictionary<ApplicationRegistry, XData> XData
         {
             get { return this.xData; }
             set { this.xData = value; }

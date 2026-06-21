@@ -29,9 +29,8 @@ namespace SharpDxf.Entities
     /// <summary>
     /// Represents a attribute <see cref="SharpDxf.Entities.IEntityObject">entity</see>.
     /// </summary>
-    public class Attribute :
-        DxfObject,
-        IEntityObject
+    internal class Attribute :
+        DxfObject
     {
         #region private fields
 
@@ -51,7 +50,7 @@ namespace SharpDxf.Entities
         /// Intitializes a new instance of the <c>Attribute</c> class.
         /// </summary>
         /// <param name="definition"><see cref="AttributeDefinition">Attribute definition</see>.</param>
-        public Attribute(AttributeDefinition definition)
+        internal Attribute(AttributeDefinition definition)
             : base(DxfObjectCode.Attribute)
         {
             this.definition = definition;
@@ -66,7 +65,7 @@ namespace SharpDxf.Entities
         /// </summary>
         /// <param name="definition"><see cref="AttributeDefinition">Attribute definition</see>.</param>
         /// <param name="value">Attribute value.</param>
-        public Attribute(AttributeDefinition definition, object value)
+        internal Attribute(AttributeDefinition definition, object value)
             : base(DxfObjectCode.Attribute)
         {
             this.definition = definition;
@@ -78,12 +77,12 @@ namespace SharpDxf.Entities
 
         #endregion
 
-        #region public property
+        #region internal property
 
         /// <summary>
         /// Gets the attribute definition.
         /// </summary>
-        public AttributeDefinition Definition
+        internal AttributeDefinition Definition
         {
             get { return this.definition; }
         }
@@ -91,7 +90,7 @@ namespace SharpDxf.Entities
         /// <summary>
         /// Gets or sets the attribute value.
         /// </summary>
-        public object Value
+        internal object Value
         {
             get { return this.value; }
             set { this.value = value; }
@@ -104,7 +103,7 @@ namespace SharpDxf.Entities
        /// <summary>
         /// Gets the entity <see cref="SharpDxf.Entities.EntityType">type</see>.
         /// </summary>
-        public EntityType Type
+        internal EntityType Type
         {
             get { return TYPE; }
         }
@@ -112,7 +111,7 @@ namespace SharpDxf.Entities
         /// <summary>
         /// Gets or sets the entity <see cref="SharpDxf.AciColor">color</see>.
         /// </summary>
-        public AciColor Color
+        internal AciColor Color
         {
             get { return this.color; }
             set
@@ -126,7 +125,7 @@ namespace SharpDxf.Entities
         /// <summary>
         /// Gets or sets the entity <see cref="SharpDxf.Tables.Layer">layer</see>.
         /// </summary>
-        public Layer Layer
+        internal Layer Layer
         {
             get { return this.layer; }
             set
@@ -140,7 +139,7 @@ namespace SharpDxf.Entities
         /// <summary>
         /// Gets or sets the entity <see cref="SharpDxf.Tables.LineType">line type</see>.
         /// </summary>
-        public LineType LineType
+        internal LineType LineType
         {
             get { return this.lineType; }
             set
@@ -154,7 +153,7 @@ namespace SharpDxf.Entities
         /// <summary>
         /// Gets or sets the entity <see cref="SharpDxf.XData">extende data</see>.
         /// </summary>
-        public Dictionary<ApplicationRegistry, XData> XData
+        internal Dictionary<ApplicationRegistry, XData> XData
         {
             get { return this.xData; }
             set

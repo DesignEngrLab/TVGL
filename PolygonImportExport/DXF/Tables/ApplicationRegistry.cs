@@ -28,9 +28,8 @@ namespace SharpDxf.Tables
     /// <summary>
     /// Represents a registered application name to which the <see cref="SharpDxf.XData">extended data</see> is associated.
     /// </summary>
-    public class ApplicationRegistry :
-        DxfObject,
-        ITableObject
+    internal class ApplicationRegistry :
+        DxfObject
     {
         #region private fields
 
@@ -44,7 +43,7 @@ namespace SharpDxf.Tables
         /// Initializes a new instance of the <c>ApplicationRegistry</c> class.
         /// </summary>
         /// <param name="name">Layer name.</param>
-        public ApplicationRegistry(string name)
+        internal ApplicationRegistry(string name)
             : base(DxfObjectCode.AppId)
         {
             if (string.IsNullOrEmpty(name))
@@ -71,7 +70,7 @@ namespace SharpDxf.Tables
         /// <summary>
         /// Gets the application registry name.
         /// </summary>
-        public string Name
+        internal string Name
         {
             get { return this.name; }
         }
@@ -90,7 +89,7 @@ namespace SharpDxf.Tables
         /// <exception cref="T:System.NullReferenceException">
         /// The <paramref name="obj" /> parameter is null.
         /// </exception>
-        public bool Equals(ApplicationRegistry obj)
+        internal bool Equals(ApplicationRegistry obj)
         {
             return obj.name == this.name;
         }

@@ -29,7 +29,7 @@ namespace SharpDxf
     /// <summary>
     /// Represents the extended data information of an entity.
     /// </summary>
-    public class XData
+    internal class XData
     {
         #region private fields
 
@@ -44,7 +44,7 @@ namespace SharpDxf
         /// Initialize a new instance of the <c>XData</c> class .
         /// </summary>
         /// <param name="appReg">Name of the application associated with the list of extended data records.</param>
-        public XData(ApplicationRegistry appReg)
+        internal XData(ApplicationRegistry appReg)
         {
             this.appReg = appReg;
             this.xData = new List<XDataRecord>();
@@ -52,12 +52,12 @@ namespace SharpDxf
 
         #endregion
 
-        #region public propertyes
+        #region internal propertyes
 
         /// <summary>
         /// Gets the name of the application associated with the list of extended data records.
         /// </summary>
-        public ApplicationRegistry ApplicationRegistry
+        internal ApplicationRegistry ApplicationRegistry
         {
             get { return this.appReg; }
         }
@@ -69,7 +69,7 @@ namespace SharpDxf
         /// This list cannot contain a XDataRecord with a XDataCode of AppReg, this code is reserved to register the name of the application.
         /// Any record with this code will be ommited.
         /// </remarks>
-        public List<XDataRecord> XDataRecord
+        internal List<XDataRecord> XDataRecord
         {
             get { return this.xData; }
             set

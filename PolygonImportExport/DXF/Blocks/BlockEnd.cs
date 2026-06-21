@@ -36,7 +36,7 @@ namespace SharpDxf.Blocks
         /// <summary>
         /// Initializes a new instance of the <c>BlockEnd</c> class.
         /// </summary>
-        public BlockEnd(Layer layer) : base(DxfObjectCode.BlockEnd)
+        internal BlockEnd(Layer layer) : base(DxfObjectCode.BlockEnd)
         {
             this.layer = layer;
         }
@@ -44,7 +44,7 @@ namespace SharpDxf.Blocks
         /// <summary>
         /// Gets or sets the block end <see cref="SharpDxf.Tables.Layer">layer</see>
         /// </summary>
-        public Layer Layer
+        internal Layer Layer
         {
             get { return this.layer; }
             set { if (value != null) this.layer = value; }

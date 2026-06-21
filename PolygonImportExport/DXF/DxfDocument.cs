@@ -43,7 +43,7 @@ namespace SharpDxf
     /// The dxf object names (application registries, layers, text styles, blocks, line types,...) for AutoCad12 can not contain spaces,
     /// if this situation happens all spaces will be replaced by an underscore character '_'.
     /// </remarks>
-    public class DxfDocument
+    internal class DxfDocument
     {
         #region private fields
 
@@ -96,7 +96,7 @@ namespace SharpDxf
         /// <summary>
         /// Initalizes a new instance of the <c>DxfDocument</c> class.
         /// </summary>
-        public DxfDocument()
+        internal DxfDocument()
         {
             this.addedObjects = new Hashtable(); // keeps track of the added object to avoid duplicates
             this.version = this.version;
@@ -165,14 +165,14 @@ namespace SharpDxf
 
         #endregion
 
-        #region public properties
+        #region internal properties
 
         #region header
 
         /// <summary>
         /// Gets the dxf file <see cref="DxfVersion">version</see>.
         /// </summary>
-        public DxfVersion Version
+        internal DxfVersion Version
         {
             get { return this.version; }
         }
@@ -180,19 +180,19 @@ namespace SharpDxf
         /// <summary>
         /// Gets the name of the dxf document, once a file is saved or loaded this field is equals the file name without extension.
         /// </summary>
-        public string FileName
+        internal string FileName
         {
             get { return this.fileName; }
         }
 
         #endregion
 
-        #region table public properties
+        #region table internal properties
 
         /// <summary>
         /// Gets the application registered names.
         /// </summary>
-        public ReadOnlyCollection<ApplicationRegistry> AppRegisterNames
+        internal ReadOnlyCollection<ApplicationRegistry> AppRegisterNames
         {
             get
             {
@@ -205,7 +205,7 @@ namespace SharpDxf
         /// <summary>
         /// Gets the <see cref="Layer">layer</see> list.
         /// </summary>
-        public ReadOnlyCollection<Layer> Layers
+        internal ReadOnlyCollection<Layer> Layers
         {
             get
             {
@@ -218,7 +218,7 @@ namespace SharpDxf
         /// <summary>
         /// Gets the <see cref="LineType">linetype</see> list.
         /// </summary>
-        public ReadOnlyCollection<LineType> LineTypes
+        internal ReadOnlyCollection<LineType> LineTypes
         {
             get
             {
@@ -231,7 +231,7 @@ namespace SharpDxf
         /// <summary>
         /// Gets the <see cref="TextStyle">text style</see> list.
         /// </summary>
-        public ReadOnlyCollection<TextStyle> TextStyles
+        internal ReadOnlyCollection<TextStyle> TextStyles
         {
             get
             {
@@ -244,7 +244,7 @@ namespace SharpDxf
         /// <summary>
         /// Gets the <see cref="Block">block</see> list.
         /// </summary>
-        public ReadOnlyCollection<Block> Blocks
+        internal ReadOnlyCollection<Block> Blocks
         {
             get
             {
@@ -256,12 +256,12 @@ namespace SharpDxf
 
         #endregion
 
-        #region entities public properties
+        #region entities internal properties
 
         /// <summary>
         /// Gets the <see cref="SharpDxf.Entities.Arc">arc</see> list.
         /// </summary>
-        public ReadOnlyCollection<Arc> Arcs
+        internal ReadOnlyCollection<Arc> Arcs
         {
             get { return this.arcs.AsReadOnly(); }
         }
@@ -269,7 +269,7 @@ namespace SharpDxf
         /// <summary>
         /// Gets the <see cref="SharpDxf.Entities.Ellipse">ellipse</see> list.
         /// </summary>
-        public ReadOnlyCollection<Ellipse> Ellipses
+        internal ReadOnlyCollection<Ellipse> Ellipses
         {
             get { return this.ellipses.AsReadOnly(); }
         }
@@ -277,7 +277,7 @@ namespace SharpDxf
         /// <summary>
         /// Gets the <see cref="SharpDxf.Entities.NurbsCurve">NURBS Curve</see> list.
         /// </summary>
-        public ReadOnlyCollection<NurbsCurve> NurbsCurves
+        internal ReadOnlyCollection<NurbsCurve> NurbsCurves
         {
             get { return this.nurbsCurves.AsReadOnly(); }
         }
@@ -285,7 +285,7 @@ namespace SharpDxf
         /// <summary>
         /// Gets the <see cref="SharpDxf.Entities.Circle">circle</see> list.
         /// </summary>
-        public ReadOnlyCollection<Circle> Circles
+        internal ReadOnlyCollection<Circle> Circles
         {
             get { return this.circles.AsReadOnly(); }
         }
@@ -293,7 +293,7 @@ namespace SharpDxf
         /// <summary>
         /// Gets the <see cref="SharpDxf.Entities.Face3d">3d face</see> list.
         /// </summary>
-        public ReadOnlyCollection<Face3d> Faces3d
+        internal ReadOnlyCollection<Face3d> Faces3d
         {
             get { return this.faces3d.AsReadOnly(); }
         }
@@ -301,7 +301,7 @@ namespace SharpDxf
         /// <summary>
         /// Gets the <see cref="SharpDxf.Entities.Solid">solid</see> list.
         /// </summary>
-        public ReadOnlyCollection<Solid> Solids
+        internal ReadOnlyCollection<Solid> Solids
         {
             get { return this.solids.AsReadOnly(); }
         }
@@ -309,7 +309,7 @@ namespace SharpDxf
         /// <summary>
         /// Gets the <see cref="SharpDxf.Entities.Insert">insert</see> list.
         /// </summary>
-        public ReadOnlyCollection<Insert> Inserts
+        internal ReadOnlyCollection<Insert> Inserts
         {
             get { return this.inserts.AsReadOnly(); }
         }
@@ -317,7 +317,7 @@ namespace SharpDxf
         /// <summary>
         /// Gets the <see cref="SharpDxf.Entities.Line">line</see> list.
         /// </summary>
-        public ReadOnlyCollection<Line> Lines
+        internal ReadOnlyCollection<Line> Lines
         {
             get { return this.lines.AsReadOnly(); }
         }
@@ -329,7 +329,7 @@ namespace SharpDxf
         /// The polyline list contains all entities that are considered polylines in the dxf, they are:
         /// <see cref="Polyline">polylines</see>, <see cref="Polyline3d">3d polylines</see> and <see cref="PolyfaceMesh">polyface meshes</see>
         /// </remarks>
-        public ReadOnlyCollection<IPolyline> Polylines
+        internal ReadOnlyCollection<IPolyline> Polylines
         {
             get { return this.polylines.AsReadOnly(); }
         }
@@ -337,7 +337,7 @@ namespace SharpDxf
         /// <summary>
         /// Gets the <see cref="SharpDxf.Entities.Point">point</see> list.
         /// </summary>
-        public ReadOnlyCollection<Point> Points
+        internal ReadOnlyCollection<Point> Points
         {
             get { return this.points.AsReadOnly(); }
         }
@@ -345,7 +345,7 @@ namespace SharpDxf
         /// <summary>
         /// Gets the <see cref="SharpDxf.Entities.Text">text</see> list.
         /// </summary>
-        public ReadOnlyCollection<Text> Texts
+        internal ReadOnlyCollection<Text> Texts
         {
             get { return this.texts.AsReadOnly(); }
         }
@@ -354,14 +354,14 @@ namespace SharpDxf
 
         #endregion
 
-        #region public table methods
+        #region internal table methods
 
         /// <summary>
         /// Gets a text style from the the table.
         /// </summary>
         /// <param name="name">TextStyle name</param>
         /// <returns>TextStyle.</returns>
-        public TextStyle GetTextStyle(string name)
+        internal TextStyle GetTextStyle(string name)
         {
             return this.textStyles[name];
         }
@@ -371,7 +371,7 @@ namespace SharpDxf
         /// </summary>
         /// <param name="textStyle">Text style to locate.</param>
         /// <returns>True if the specified text style exists or false in any other case.</returns>
-        public bool ContainsTextStyle(TextStyle textStyle)
+        internal bool ContainsTextStyle(TextStyle textStyle)
         {
             return this.textStyles.ContainsKey(textStyle.Name);
         }
@@ -381,7 +381,7 @@ namespace SharpDxf
         /// </summary>
         /// <param name="name">Block name</param>
         /// <returns>Block.</returns>
-        public Block GetBlock(string name)
+        internal Block GetBlock(string name)
         {
             return this.blocks[name];
         }
@@ -391,7 +391,7 @@ namespace SharpDxf
         /// </summary>
         /// <param name="block">Block to locate.</param>
         /// <returns>True if the specified block exists or false in any other case.</returns>
-        public bool ContainsBlock(Block block)
+        internal bool ContainsBlock(Block block)
         {
             return this.blocks.ContainsKey(block.Name);
         }
@@ -401,7 +401,7 @@ namespace SharpDxf
         /// </summary>
         /// <param name="name">LineType name</param>
         /// <returns>LineType.</returns>
-        public LineType GetLineType(string name)
+        internal LineType GetLineType(string name)
         {
             return this.lineTypes[name];
         }
@@ -411,7 +411,7 @@ namespace SharpDxf
         /// </summary>
         /// <param name="lineType">Line type to locate.</param>
         /// <returns>True if the specified line type exists or false in any other case.</returns>
-        public bool ContainsLineType(LineType lineType)
+        internal bool ContainsLineType(LineType lineType)
         {
             return this.lineTypes.ContainsKey(lineType.Name);
         }
@@ -421,7 +421,7 @@ namespace SharpDxf
         /// </summary>
         /// <param name="name">Layer name</param>
         /// <returns>Layer.</returns>
-        public Layer GetLayer(string name)
+        internal Layer GetLayer(string name)
         {
             return this.layers[name];
         }
@@ -431,20 +431,20 @@ namespace SharpDxf
         /// </summary>
         /// <param name="layer">Layer to locate.</param>
         /// <returns>True if the specified layer exists or false in any other case.</returns>
-        public bool ContainsLayer(Layer layer)
+        internal bool ContainsLayer(Layer layer)
         {
             return this.layers.ContainsKey(layer.Name);
         }
 
         #endregion
 
-        #region public methods
+        #region internal methods
 
         /// <summary>
         /// Adds a new <see cref="IEntityObject">entity</see> to the document.
         /// </summary>
         /// <param name="entity">An <see cref="IEntityObject">entity</see></param>
-        public void AddEntity(IEntityObject entity)
+        internal void AddEntity(IEntityObject entity)
         {
             // check if the entity has not been added to the document
             if (this.addedObjects.ContainsKey(entity))
@@ -616,7 +616,7 @@ namespace SharpDxf
         /// Loads a dxf ASCII file.
         /// </summary>
         /// <param name="file">File name.</param>
-        public void Load(string file)
+        internal void Load(string file)
         {
             if (!File.Exists(file))
                 throw new FileNotFoundException("File " + file + " not found.", file);
@@ -714,7 +714,7 @@ namespace SharpDxf
         /// </summary>
         /// <param name="file">File name.</param>
         /// <param name="dxfVersion">Dxf file <see cref="DxfVersion">version</see>.</param>
-        public void Save(string file, DxfVersion dxfVersion)
+        internal void Save(string file, DxfVersion dxfVersion)
         {
             ReAsignHandlersAndDefaultObjects();
             this.fileName = Path.GetFileNameWithoutExtension(file);
@@ -738,9 +738,9 @@ namespace SharpDxf
                 lwPolys = new List<IPolyline>();
                 foreach (IPolyline lwPoly in this.polylines)
                 {
-                    if (lwPoly is LightWeightPolyline)
+                    if (lwPoly is LightWeightPolyline lwp)
                     {
-                        Polyline poly = ((LightWeightPolyline) lwPoly).ToPolyline();
+                        Polyline poly = lwp.ToPolyline();
                         this.handleCount = poly.AsignHandle(this.handleCount);
                         lwPolys.Add(poly);
                     }

@@ -25,8 +25,7 @@ using SharpDxf.Tables;
 namespace SharpDxf.Objects
 {
     internal class Dictionary :
-        DxfObject,
-        ITableObject
+        DxfObject
     {
         #region private fields
 
@@ -48,7 +47,7 @@ namespace SharpDxf.Objects
         /// <summary>
         /// Initializes a new instance of the <c>View</c> class.
         /// </summary>
-        public Dictionary(string name)
+        internal Dictionary(string name)
             : base(DxfObjectCode.Dictionary)
         {
             this.name = name;
@@ -56,7 +55,7 @@ namespace SharpDxf.Objects
 
         #endregion
 
-        #region public properties
+        #region internal properties
 
         #endregion
 
@@ -65,7 +64,7 @@ namespace SharpDxf.Objects
         /// <summary>
         /// Gets the table name.
         /// </summary>
-        public string Name
+        internal string Name
         {
             get { return this.name; }
         }

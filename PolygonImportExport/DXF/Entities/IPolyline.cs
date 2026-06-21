@@ -29,7 +29,7 @@ namespace SharpDxf.Entities
     /// </summary>
     /// <remarks>Bit flag.</remarks>
     [Flags]
-    public enum PolylineTypeFlags
+    internal enum PolylineTypeFlags
     {
         OpenPolyline = 0,
         ClosedPolylineOrClosedPolygonMeshInM = 1,
@@ -45,7 +45,7 @@ namespace SharpDxf.Entities
     /// <summary>
     /// Defines the curves and smooth surface type.
     /// </summary>
-    public enum SmoothType
+    internal enum SmoothType
     {
         /// <summary>
         /// No smooth surface fitted
@@ -68,12 +68,16 @@ namespace SharpDxf.Entities
     /// <summary>
     /// Represents a generic polyline.
     /// </summary>
-    public interface IPolyline :
-        IEntityObject
+    internal abstract class IPolyline :
+        DxfObject
     {
+        internal IPolyline(string codeName) : base(codeName)
+        {
+        }
+
         /// <summary>
         /// Gets the polyline type.
         /// </summary>
-        PolylineTypeFlags Flags { get; }
+        internal PolylineTypeFlags Flags { get; }
     }
 }

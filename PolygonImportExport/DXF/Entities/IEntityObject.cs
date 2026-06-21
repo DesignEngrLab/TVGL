@@ -28,7 +28,7 @@ namespace SharpDxf.Entities
     /// <summary>
     /// Defines the entity type.
     /// </summary>
-    public enum EntityType
+    internal enum EntityType
     {
         /// <summary>
         /// line.
@@ -154,31 +154,31 @@ namespace SharpDxf.Entities
     /// <summary>
     /// Represents a generic entity.
     /// </summary>
-    public interface IEntityObject
+    internal abstract class IEntityObject
     {
         /// <summary>
         /// Gets the entity <see cref="EntityType">type</see>.
         /// </summary>
-        EntityType Type { get; }
-        
+      internal  EntityType Type { get; }
+
         /// <summary>
         /// Gets or sets the entity <see cref="AciColor">color</see>.
         /// </summary>
-        AciColor Color { get; set; }
+        internal AciColor Color { get; set; }
 
         /// <summary>
         /// Gets or sets the entity <see cref="Layer">layer</see>.
         /// </summary>
-        Layer Layer { get; set; }
+        internal Layer Layer { get; set; }
 
         /// <summary>
         /// Gets or sets the entity <see cref="LineType">line type</see.
         /// </summary>
-        LineType LineType { get; set; }
+        internal LineType LineType { get; set; }
 
         /// <summary>
         /// Gets or sets the entity <see cref="XData">extended data</see.
         /// </summary>
-        Dictionary<ApplicationRegistry, XData> XData { get; set; }
+        internal Dictionary<ApplicationRegistry, XData> XData { get; set; }
     }
 }

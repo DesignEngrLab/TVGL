@@ -14,7 +14,7 @@ namespace SharpDxf
     /// <summary>
     /// Helper class for working with 'extended' enums using <see cref="StringValueAttribute"/> attributes.
     /// </summary>
-    public class StringEnum
+    internal class StringEnum
     {
         #region Instance implementation
 
@@ -25,7 +25,7 @@ namespace SharpDxf
         /// Creates a new <see cref="StringEnum"/> instance.
         /// </summary>
         /// <param name="enumType">Enum type.</param>
-        public StringEnum(Type enumType)
+        internal StringEnum(Type enumType)
         {
             if (!enumType.IsEnum)
                 throw new ArgumentException(String.Format("Supplied type must be an Enum.  Type was {0}", enumType));
@@ -38,7 +38,7 @@ namespace SharpDxf
         /// </summary>
         /// <param name="valueName">Name of the enum value.</param>
         /// <returns>String Value</returns>
-        public string GetStringValue(string valueName)
+        internal string GetStringValue(string valueName)
         {
             string stringValue;
             try
@@ -58,7 +58,7 @@ namespace SharpDxf
         /// Gets the string values associated with the enum.
         /// </summary>
         /// <returns>String value array</returns>
-        public Array GetStringValues()
+        internal Array GetStringValues()
         {
             ArrayList values = new ArrayList();
             //Look for our string value associated with fields in this enum
@@ -78,7 +78,7 @@ namespace SharpDxf
         /// Gets the values as a 'bindable' list datasource.
         /// </summary>
         /// <returns>IList for data binding</returns>
-        public IList GetListValues()
+        internal IList GetListValues()
         {
             Type underlyingType = Enum.GetUnderlyingType(this.enumType);
             ArrayList values = new ArrayList();
@@ -100,7 +100,7 @@ namespace SharpDxf
         /// </summary>
         /// <param name="stringValue">String value.</param>
         /// <returns>Existence of the string value</returns>
-        public bool IsStringDefined(string stringValue)
+        internal bool IsStringDefined(string stringValue)
         {
             return Parse(this.enumType, stringValue) != null;
         }
@@ -111,7 +111,7 @@ namespace SharpDxf
         /// <param name="stringValue">String value.</param>
         /// <param name="ignoreCase">Denotes whether to conduct a case-insensitive match on the supplied string value</param>
         /// <returns>Existence of the string value</returns>
-        public bool IsStringDefined(string stringValue, bool ignoreCase)
+        internal bool IsStringDefined(string stringValue, bool ignoreCase)
         {
             return Parse(this.enumType, stringValue, ignoreCase) != null;
         }
@@ -120,7 +120,7 @@ namespace SharpDxf
         /// Gets the underlying enum type for this instance.
         /// </summary>
         /// <value></value>
-        public Type EnumType
+        internal Type EnumType
         {
             get { return this.enumType; }
         }
@@ -134,7 +134,7 @@ namespace SharpDxf
         /// </summary>
         /// <param name="value">Value.</param>
         /// <returns>String Value associated via a <see cref="StringValueAttribute"/> attribute, or null if not found.</returns>
-        public static string GetStringValue(Enum value)
+        internal static string GetStringValue(Enum value)
         {
             string output = null;
             Type type = value.GetType();
@@ -162,7 +162,7 @@ namespace SharpDxf
         /// <param name="type">Type.</param>
         /// <param name="stringValue">String value.</param>
         /// <returns>Enum value associated with the string value, or null if not found.</returns>
-        public static object Parse(Type type, string stringValue)
+        internal static object Parse(Type type, string stringValue)
         {
             return Parse(type, stringValue, false);
         }
@@ -174,7 +174,7 @@ namespace SharpDxf
         /// <param name="stringValue">String value.</param>
         /// <param name="ignoreCase">Denotes whether to conduct a case-insensitive match on the supplied string value</param>
         /// <returns>Enum value associated with the string value, or null if not found.</returns>
-        public static object Parse(Type type, string stringValue, bool ignoreCase)
+        internal static object Parse(Type type, string stringValue, bool ignoreCase)
         {
             object output = null;
             string enumStringValue = null;
@@ -208,7 +208,7 @@ namespace SharpDxf
         /// <param name="stringValue">String value.</param>
         /// <param name="enumType">Type of enum</param>
         /// <returns>Existence of the string value</returns>
-        public static bool IsStringDefined(Type enumType, string stringValue)
+        internal static bool IsStringDefined(Type enumType, string stringValue)
         {
             return Parse(enumType, stringValue) != null;
         }
@@ -220,7 +220,7 @@ namespace SharpDxf
         /// <param name="enumType">Type of enum</param>
         /// <param name="ignoreCase">Denotes whether to conduct a case-insensitive match on the supplied string value</param>
         /// <returns>Existence of the string value</returns>
-        public static bool IsStringDefined(Type enumType, string stringValue, bool ignoreCase)
+        internal static bool IsStringDefined(Type enumType, string stringValue, bool ignoreCase)
         {
             return Parse(enumType, stringValue, ignoreCase) != null;
         }
@@ -235,7 +235,7 @@ namespace SharpDxf
     /// <summary>
     /// Simple attribute class for storing String Values
     /// </summary>
-    public class StringValueAttribute : Attribute
+    internal class StringValueAttribute : Attribute
     {
         private readonly string value;
 
@@ -243,7 +243,7 @@ namespace SharpDxf
         /// Creates a new <see cref="StringValueAttribute"/> instance.
         /// </summary>
         /// <param name="value">Value.</param>
-        public StringValueAttribute(string value)
+        internal StringValueAttribute(string value)
         {
             this.value = value;
         }
@@ -252,7 +252,7 @@ namespace SharpDxf
         /// Gets the value.
         /// </summary>
         /// <value></value>
-        public string Value
+        internal string Value
         {
             get { return this.value; }
         }

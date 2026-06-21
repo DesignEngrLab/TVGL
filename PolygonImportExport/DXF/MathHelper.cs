@@ -29,14 +29,14 @@ namespace SharpDxf
     /// <summary>
     /// Utility math functions and constants.
     /// </summary>
-    public class MathHelper
+    internal class MathHelper
     {
         #region CoordinateSystem enum
 
         /// <summary>
         /// Defines the coordinate system reference.
         /// </summary>
-        public enum CoordinateSystem
+        internal enum CoordinateSystem
         {
             /// <summary>
             /// World coordinates.
@@ -53,32 +53,32 @@ namespace SharpDxf
         /// <summary>
         /// A doble precision number close to zero.
         /// </summary>
-        public const double EpsilonD = 0.000000001d;
+        internal const double EpsilonD = 0.000000001d;
 
         /// <summary>
         /// A simple precision number close to zero.
         /// </summary>
-        public const double EpsilonF = 0.00001f;
+        internal const double EpsilonF = 0.00001f;
 
         /// <summary>
         /// Constant to transform an angle between degrees and radians.
         /// </summary>
-        public const double DegToRad = Math.PI/180.0;
+        internal const double DegToRad = Math.PI/180.0;
 
         /// <summary>
         /// Constant to transform an angle between degrees and radians.
         /// </summary>
-        public const double RadToDeg = 180.0/Math.PI;
+        internal const double RadToDeg = 180.0/Math.PI;
 
         /// <summary>
         /// PI/2 (90 degrees)
         /// </summary>
-        public const double HalfPI = Math.PI*0.5f;
+        internal const double HalfPI = Math.PI*0.5f;
 
         /// <summary>
         /// 2*PI (360 degrees)
         /// </summary>
-        public const double TwoPI = 2*Math.PI;
+        internal const double TwoPI = 2*Math.PI;
 
         /// <summary>
         /// Checks if a number is close to one.
@@ -86,7 +86,7 @@ namespace SharpDxf
         /// <param name="number">Simple precision number.</param>
         /// <param name="threshold">Tolerance.</param>
         /// <returns>True if its close to one or false in anyother case.</returns>
-        public static bool IsOne(double number, double threshold)
+        internal static bool IsOne(double number, double threshold)
         {
             return IsZero(number - 1, threshold);
         }
@@ -97,7 +97,7 @@ namespace SharpDxf
         /// <param name="number">Simple precision number.</param>
         /// <returns>True if its close to one or false in anyother case.</returns>
         /// <remarks>By default a tolerance of the constant EPSILON_F will be used.</remarks>
-        public static bool IsOne(double number)
+        internal static bool IsOne(double number)
         {
             return IsZero(number - 1);
         }
@@ -108,7 +108,7 @@ namespace SharpDxf
         /// <param name="number">Simple precision number.</param>
         /// <param name="threshold">Tolerance.</param>
         /// <returns>True if its close to one or false in anyother case.</returns>
-        public static bool IsZero(double number, double threshold)
+        internal static bool IsZero(double number, double threshold)
         {
             return (number >= -threshold && number <= threshold);
         }
@@ -119,7 +119,7 @@ namespace SharpDxf
         /// <param name="number">Simple precision number.</param>
         /// <returns>True if its close to one or false in anyother case.</returns>
         /// <remarks>By default a tolerance of the constant EPSILON_F will be used.</remarks>
-        public static bool IsZero(double number)
+        internal static bool IsZero(double number)
         {
             return IsZero(number, EpsilonF);
         }
@@ -132,7 +132,7 @@ namespace SharpDxf
         /// <param name="from">Point coordinate system.</param>
         /// <param name="to">Coordinate system of the transformed point.</param>
         /// <returns>Transormed point.</returns>
-        public static Vector3 Transform(Vector3 point, Vector3 zAxis, CoordinateSystem from, CoordinateSystem to)
+        internal static Vector3 Transform(Vector3 point, Vector3 zAxis, CoordinateSystem from, CoordinateSystem to)
         {
             Matrix3x3 trans = ArbitraryAxis(zAxis);
             if (from == CoordinateSystem.World && to == CoordinateSystem.Object)
@@ -155,7 +155,7 @@ namespace SharpDxf
         /// <param name="from">Points coordinate system.</param>
         /// <param name="to">Coordinate system of the transformed points.</param>
         /// <returns>Transormed point list.</returns>
-        public static IList<Vector3> Transform(IList<Vector3> points, Vector3 zAxis, CoordinateSystem from, CoordinateSystem to)
+        internal static IList<Vector3> Transform(IList<Vector3> points, Vector3 zAxis, CoordinateSystem from, CoordinateSystem to)
         {
             Matrix3x3 trans = ArbitraryAxis(zAxis);
             List<Vector3> transPoints;
@@ -186,7 +186,7 @@ namespace SharpDxf
         /// </summary>
         /// <param name="zAxis">Normal vector.</param>
         /// <returns>Rotation matriz.</returns>
-        public static Matrix3x3 ArbitraryAxis(Vector3 zAxis)
+        internal static Matrix3x3 ArbitraryAxis(Vector3 zAxis)
         {
             zAxis.Normalize();
             Vector3 wY = Vector3.UnitY;

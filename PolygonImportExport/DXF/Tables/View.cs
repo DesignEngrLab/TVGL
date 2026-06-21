@@ -25,8 +25,7 @@ using TVGL;
 namespace SharpDxf.Tables
 {
     internal class View :
-        DxfObject,
-        ITableObject
+        DxfObject
     {
         #region private fields
 
@@ -52,7 +51,7 @@ namespace SharpDxf.Tables
         /// <summary>
         /// Initializes a new instance of the <c>View</c> class.
         /// </summary>
-        public View(string name)
+        internal View(string name)
             : base(DxfObjectCode.View)
         {
             this.name = name;
@@ -60,27 +59,27 @@ namespace SharpDxf.Tables
 
         #endregion
 
-        #region public properties
+        #region internal properties
 
-        public Vector2 LowerLeftCorner
+        internal Vector2 LowerLeftCorner
         {
             get { return this.lowerLeftCorner; }
             set { this.lowerLeftCorner = value; }
         }
 
-        public Vector2 UpperRightCorner
+        internal Vector2 UpperRightCorner
         {
             get { return this.upperRightCorner; }
             set { this.upperRightCorner = value; }
         }
 
-        public Vector3 Target
+        internal Vector3 Target
         {
             get { return this.target; }
             set { this.target = value; }
         }
 
-        public Vector3 Camera
+        internal Vector3 Camera
         {
             get { return this.camera; }
             set { this.camera = value; }
@@ -93,7 +92,7 @@ namespace SharpDxf.Tables
         /// <summary>
         /// Gets the table name.
         /// </summary>
-        public string Name
+        internal string Name
         {
             get { return this.name; }
         }

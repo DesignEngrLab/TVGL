@@ -28,7 +28,7 @@ namespace SharpDxf.Entities
     /// <summary>
     /// Represents a lightweight polyline vertex.
     /// </summary>
-    public class LightWeightPolylineVertex
+    internal class LightWeightPolylineVertex
     {
         #region private fields
 
@@ -45,7 +45,7 @@ namespace SharpDxf.Entities
         /// <summary>
         /// Initializes a new instance of the <c>LightWeightPolylineVertex</c> class.
         /// </summary>
-        public LightWeightPolylineVertex()
+        internal LightWeightPolylineVertex()
         {
             this.location = Vector2.Zero;
             this.bulge = 0.0f;
@@ -57,7 +57,7 @@ namespace SharpDxf.Entities
         /// Initializes a new instance of the <c>LightWeightPolylineVertex</c> class.
         /// </summary>
         /// <param name="location">Lightweight polyline <see cref="SharpDxf.Vector2">vertex</see> coordinates.</param>
-        public LightWeightPolylineVertex(Vector2 location)
+        internal LightWeightPolylineVertex(Vector2 location)
         {
             this.location = location;
             this.bulge = 0.0f;
@@ -70,7 +70,7 @@ namespace SharpDxf.Entities
         /// </summary>
         /// <param name="x">X coordinate.</param>
         /// <param name="y">Y coordinate.</param>
-        public LightWeightPolylineVertex(double x, double y)
+        internal LightWeightPolylineVertex(double x, double y)
         {
             this.location = new Vector2(x, y);
             this.bulge = 0.0f;
@@ -80,12 +80,12 @@ namespace SharpDxf.Entities
 
         #endregion
 
-        #region public properties
+        #region internal properties
 
         /// <summary>
         /// Gets or sets the polyline vertex <see cref="SharpDxf.Vector2">location</see>.
         /// </summary>
-        public Vector2 Location
+        internal Vector2 Location
         {
             get { return this.location; }
             set { this.location = value; }
@@ -94,7 +94,7 @@ namespace SharpDxf.Entities
         /// <summary>
         /// Gets or sets the light weight polyline begin thickness.
         /// </summary>
-        public double BeginThickness
+        internal double BeginThickness
         {
             get { return this.beginThickness; }
             set { this.beginThickness = value; }
@@ -103,7 +103,7 @@ namespace SharpDxf.Entities
         /// <summary>
         /// Gets or sets the light weight polyline end thickness.
         /// </summary>
-        public double EndThickness
+        internal double EndThickness
         {
             get { return this.endThickness; }
             set { this.endThickness = value; }
@@ -117,7 +117,7 @@ namespace SharpDxf.Entities
         /// made negative if the arc goes clockwise from the start point to the endpoint. 
         /// A bulge of 0 indicates a straight segment, and a bulge of 1 is a semicircle.
         /// </remarks>
-        public double Bulge
+        internal double Bulge
         {
             get { return this.bulge; }
             set
@@ -133,7 +133,7 @@ namespace SharpDxf.Entities
         /// <summary>
         /// Gets the entity <see cref="SharpDxf.Entities.EntityType">type</see>.
         /// </summary>
-        public EntityType Type
+        internal EntityType Type
         {
             get { return TYPE; }
         }

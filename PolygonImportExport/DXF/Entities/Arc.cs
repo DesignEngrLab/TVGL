@@ -31,9 +31,8 @@ namespace SharpDxf.Entities
     /// <summary>
     /// Represents a circular arc <see cref="SharpDxf.Entities.IEntityObject">entity</see>.
     /// </summary>
-    public class Arc :
-        DxfObject,
-        IEntityObject 
+    internal class Arc :
+        DxfObject
     {
         #region private fields
 
@@ -61,7 +60,7 @@ namespace SharpDxf.Entities
         /// <param name="startAngle">Arc start angle in degrees.</param>
         /// <param name="endAngle">Arc end angle in degrees.</param>
         /// <remarks>The center Z coordinate represents the elevation of the arc along the normal.</remarks>
-        public Arc(Vector3 center, double radius, double startAngle, double endAngle) : base (DxfObjectCode.Arc)
+        internal Arc(Vector3 center, double radius, double startAngle, double endAngle) : base (DxfObjectCode.Arc)
         {
             this.center = center;
             this.radius = radius;
@@ -77,7 +76,7 @@ namespace SharpDxf.Entities
         /// <summary>
         /// Initializes a new instance of the <c>Arc</c> class.
         /// </summary>
-        public Arc() :
+        internal Arc() :
             base(DxfObjectCode.Arc)
         {
             this.center = Vector3.Zero;
@@ -93,13 +92,13 @@ namespace SharpDxf.Entities
 
         #endregion
 
-        #region public properties
+        #region internal properties
 
         /// <summary>
         /// Gets or sets the arc <see cref="SharpDxf.Vector3">center</see>.
         /// </summary>
         /// <remarks>The center Z coordinate represents the elevation of the arc along the normal.</remarks>
-        public Vector3 Center
+        internal Vector3 Center
         {
             get { return this.center; }
             set { this.center = value; }
@@ -108,7 +107,7 @@ namespace SharpDxf.Entities
         /// <summary>
         /// Gets or sets the arc radius.
         /// </summary>
-        public double Radius
+        internal double Radius
         {
             get { return this.radius; }
             set
@@ -122,7 +121,7 @@ namespace SharpDxf.Entities
         /// <summary>
         /// Gets or sets the arc start angle in degrees.
         /// </summary>
-        public double StartAngle
+        internal double StartAngle
         {
             get { return this.startAngle; }
             set { this.startAngle = value; }
@@ -131,7 +130,7 @@ namespace SharpDxf.Entities
         /// <summary>
         /// Gets or sets the arc end angle in degrees.
         /// </summary>
-        public double EndAngle
+        internal double EndAngle
         {
             get { return this.endAngle; }
             set { this.endAngle = value; }
@@ -140,7 +139,7 @@ namespace SharpDxf.Entities
         /// <summary>
         /// Gets or sets the arc thickness.
         /// </summary>
-        public double Thickness
+        internal double Thickness
         {
             get { return this.thickness; }
             set { this.thickness = value; }
@@ -149,7 +148,7 @@ namespace SharpDxf.Entities
         /// <summary>
         /// Gets or sets the arc <see cref="SharpDxf.Vector3">normal</see>.
         /// </summary>
-        public Vector3 Normal
+        internal Vector3 Normal
         {
             get { return this.normal; }
             set
@@ -168,7 +167,7 @@ namespace SharpDxf.Entities
        /// <summary>
         /// Gets the entity <see cref="SharpDxf.Entities.EntityType">type</see>.
         /// </summary>
-        public EntityType Type
+        internal EntityType Type
         {
             get { return TYPE; }
         }
@@ -176,7 +175,7 @@ namespace SharpDxf.Entities
         /// <summary>
         /// Gets or sets the entity <see cref="SharpDxf.AciColor">color</see>.
         /// </summary>
-        public AciColor Color
+        internal AciColor Color
         {
             get { return this.color; }
             set
@@ -190,7 +189,7 @@ namespace SharpDxf.Entities
         /// <summary>
         /// Gets or sets the entity <see cref="SharpDxf.Tables.Layer">layer</see>.
         /// </summary>
-        public Layer Layer
+        internal Layer Layer
         {
             get { return this.layer; }
             set
@@ -204,7 +203,7 @@ namespace SharpDxf.Entities
         /// <summary>
         /// Gets or sets the entity <see cref="SharpDxf.Tables.LineType">line type</see>.
         /// </summary>
-        public LineType LineType
+        internal LineType LineType
         {
             get { return this.lineType; }
             set
@@ -218,7 +217,7 @@ namespace SharpDxf.Entities
         /// <summary>
         /// Gets or sets the entity <see cref="SharpDxf.XData">extende data</see>.
         /// </summary>
-        public Dictionary<ApplicationRegistry, XData> XData
+        internal Dictionary<ApplicationRegistry, XData> XData
         {
             get { return this.xData; }
             set{ this.xData = value;}
@@ -226,14 +225,14 @@ namespace SharpDxf.Entities
 
         #endregion
 
-        #region public methods
+        #region internal methods
 
         /// <summary>
         /// Converts the arc in a list of vertexes.
         /// </summary>
         /// <param name="precision">Number of vertexes generated.</param>
         /// <returns>A list vertexes that represents the arc expresed in object coordinate system.</returns>
-        public List<Vector2> PoligonalVertexes(int precision)
+        internal List<Vector2> PoligonalVertexes(int precision)
         {
             if (precision < 2)
                 throw new ArgumentOutOfRangeException("precision", precision, "The arc precision must be greater or equal to two");
@@ -259,7 +258,7 @@ namespace SharpDxf.Entities
         /// <param name="precision">Number of vertexes generated.</param>
         /// <param name="weldThreshold">Tolerance to consider if two new generated vertexes are equal.</param>
         /// <returns>A list vertexes that represents the arc expresed in object coordinate system.</returns>
-        public List<Vector2> PoligonalVertexes(int precision, double weldThreshold)
+        internal List<Vector2> PoligonalVertexes(int precision, double weldThreshold)
         {
             if (precision < 2)
                 throw new ArgumentOutOfRangeException("precision", precision, "The arc precision must be greater or equal to two");

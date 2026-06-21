@@ -25,7 +25,7 @@ namespace SharpDxf
     /// <summary>
     /// Defines the text alignment.
     /// </summary>
-    public enum TextAlignment
+    internal enum TextAlignment
     {
         /// <summary>
         /// Top left.

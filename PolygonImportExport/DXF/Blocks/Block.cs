@@ -32,7 +32,7 @@ namespace SharpDxf.Blocks
     /// <summary>
     /// Represents a block definition.
     /// </summary>
-    public class Block :
+    internal class Block :
         DxfObject 
     {
         #region private fields
@@ -67,7 +67,7 @@ namespace SharpDxf.Blocks
         /// Initializes a new instance of the <c>Block</c> class.
         /// </summary>
         /// <param name="name">Block name.</param>
-        public Block(string name) : base (DxfObjectCode.Block)
+        internal Block(string name) : base (DxfObjectCode.Block)
         {
             if (string.IsNullOrEmpty(name))
                 throw (new ArgumentNullException("name"));
@@ -83,12 +83,12 @@ namespace SharpDxf.Blocks
 
         #endregion
 
-        #region public properties
+        #region internal properties
 
         /// <summary>
         /// Gets the block name.
         /// </summary>
-        public string Name
+        internal string Name
         {
             get { return this.name; }
         }
@@ -96,7 +96,7 @@ namespace SharpDxf.Blocks
         /// <summary>
         /// Gets or sets the block base point.
         /// </summary>
-        public Vector3 BasePoint
+        internal Vector3 BasePoint
         {
             get { return this.basePoint; }
             set { this.basePoint = value; }
@@ -105,7 +105,7 @@ namespace SharpDxf.Blocks
         /// <summary>
         /// Gets or sets the block <see cref="Layer">layer</see>.
         /// </summary>
-        public Layer Layer
+        internal Layer Layer
         {
             get { return this.layer; }
             set
@@ -120,7 +120,7 @@ namespace SharpDxf.Blocks
         /// <summary>
         /// Gets or sets the block <see cref="AttributeDefinition">attribute definition</see> list.
         /// </summary>
-        public Dictionary<string, AttributeDefinition> Attributes
+        internal Dictionary<string, AttributeDefinition> Attributes
         {
             get { return this.attributes; }
             set
@@ -134,7 +134,7 @@ namespace SharpDxf.Blocks
         /// <summary>
         /// Gets or sets the <see cref="IEntityObject">entity</see> list that makes the block.
         /// </summary>
-        public List<IEntityObject> Entities
+        internal List<IEntityObject> Entities
         {
             get { return this.entities; }
             set

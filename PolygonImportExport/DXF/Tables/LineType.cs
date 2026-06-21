@@ -28,9 +28,8 @@ namespace SharpDxf.Tables
     /// <summary>
     /// Represents a line type.
     /// </summary>
-    public class LineType :
-        DxfObject,
-        ITableObject
+    internal class LineType :
+        DxfObject
     {
         #region private fields
 
@@ -45,7 +44,7 @@ namespace SharpDxf.Tables
         /// <summary>
         /// Gets the ByLayer line type.
         /// </summary>
-        public static LineType ByLayer
+        internal static LineType ByLayer
         {
             get { return new LineType("ByLayer"); }
         }
@@ -53,7 +52,7 @@ namespace SharpDxf.Tables
         /// <summary>
         /// Gets the ByBlock line type.
         /// </summary>
-        public static LineType ByBlock
+        internal static LineType ByBlock
         {
             get { return new LineType("ByBlock"); }
         }
@@ -61,7 +60,7 @@ namespace SharpDxf.Tables
         /// <summary>
         /// Gets a predefined continuous line.
         /// </summary>
-        public static LineType Continuous
+        internal static LineType Continuous
         {
             get
             {
@@ -76,7 +75,7 @@ namespace SharpDxf.Tables
         /// <summary>
         /// Gets a predefined center line.
         /// </summary>
-        public static LineType Center
+        internal static LineType Center
         {
             get
             {
@@ -92,7 +91,7 @@ namespace SharpDxf.Tables
         /// <summary>
         /// Gets a predefined dash dot line.
         /// </summary>
-        public static LineType DashDot
+        internal static LineType DashDot
         {
             get
             {
@@ -108,7 +107,7 @@ namespace SharpDxf.Tables
         /// <summary>
         /// Gets a predefined dashed line
         /// </summary>
-        public static LineType Dashed
+        internal static LineType Dashed
         {
             get
             {
@@ -124,7 +123,7 @@ namespace SharpDxf.Tables
         /// <summary>
         /// Gets a predefined dot line
         /// </summary>
-        public static LineType Dot
+        internal static LineType Dot
         {
             get
             {
@@ -145,7 +144,7 @@ namespace SharpDxf.Tables
         /// Initializes a new instance of the <c>LineType</c> class.
         /// </summary>
         /// <param name="name">Line type name.</param>
-        public LineType(string name)
+        internal LineType(string name)
             : base(DxfObjectCode.LineType)
         {
             if (string.IsNullOrEmpty(name))
@@ -157,12 +156,12 @@ namespace SharpDxf.Tables
 
         #endregion
 
-        #region public properties
+        #region internal properties
 
         /// <summary>
         /// Gets or sets the line type description.
         /// </summary>
-        public string Description
+        internal string Description
         {
             get { return this.description; }
             set { this.description = value; }
@@ -174,7 +173,7 @@ namespace SharpDxf.Tables
         /// <remarks>
         /// Positive values means solid segments and negative values means spaces (one entry per element)
         /// </remarks>
-        public List<double> Segments
+        internal List<double> Segments
         {
             get { return this.segments; }
             set
@@ -187,12 +186,12 @@ namespace SharpDxf.Tables
 
         #endregion
 
-        #region public methods
+        #region internal methods
 
         /// <summary>
         /// Gets the total length of the line type.
         /// </summary>
-        public double Legth()
+        internal double Legth()
         {
             double result = 0;
             foreach (double s in this.segments)
@@ -209,7 +208,7 @@ namespace SharpDxf.Tables
         /// <summary>
         /// Gets the table name.
         /// </summary>
-        public string Name
+        internal string Name
         {
             get { return this.name; }
         }

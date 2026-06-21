@@ -29,7 +29,7 @@ namespace SharpDxf
     /// <summary>
     /// Represents an indexed color.
     /// </summary>
-    public class AciColor
+    internal class AciColor
     {
         #region private fields
 
@@ -43,7 +43,7 @@ namespace SharpDxf
         /// <summary>
         /// Gets the ByLayer color.
         /// </summary>
-        public static AciColor ByLayer
+        internal static AciColor ByLayer
         {
             get { return new AciColor(256); }
         }
@@ -51,7 +51,7 @@ namespace SharpDxf
         /// <summary>
         /// Gets the ByBlock color.
         /// </summary>
-        public static AciColor ByBlock
+        internal static AciColor ByBlock
         {
             get { return new AciColor(0); }
         }
@@ -59,7 +59,7 @@ namespace SharpDxf
         /// <summary>
         /// Defines a default red color.
         /// </summary>
-        public static AciColor Red
+        internal static AciColor Red
         {
             get { return new AciColor(1); }
         }
@@ -67,7 +67,7 @@ namespace SharpDxf
         /// <summary>
         /// Defines a default yellow color.
         /// </summary>
-        public static AciColor Yellow
+        internal static AciColor Yellow
         {
             get { return new AciColor(2); }
         }
@@ -75,7 +75,7 @@ namespace SharpDxf
         /// <summary>
         /// Defines a default green color.
         /// </summary>
-        public static AciColor Green
+        internal static AciColor Green
         {
             get { return new AciColor(3); }
         }
@@ -83,7 +83,7 @@ namespace SharpDxf
         /// <summary>
         /// Defines a default cyan color.
         /// </summary>
-        public static AciColor Cyan
+        internal static AciColor Cyan
         {
             get { return new AciColor(4); }
         }
@@ -91,7 +91,7 @@ namespace SharpDxf
         /// <summary>
         /// Defines a default blue color.
         /// </summary>
-        public static AciColor Blue
+        internal static AciColor Blue
         {
             get { return new AciColor(5); }
         }
@@ -99,7 +99,7 @@ namespace SharpDxf
         /// <summary>
         /// Defines a default magenta color.
         /// </summary>
-        public static AciColor Magenta
+        internal static AciColor Magenta
         {
             get { return new AciColor(6); }
         }
@@ -107,7 +107,7 @@ namespace SharpDxf
         /// <summary>
         /// Defines a default white/black color.
         /// </summary>
-        public static AciColor Default
+        internal static AciColor Default
         {
             get { return new AciColor(7); }
         }
@@ -115,7 +115,7 @@ namespace SharpDxf
         /// <summary>
         /// Defines a default dark grey color.
         /// </summary>
-        public static AciColor DarkGrey
+        internal static AciColor DarkGrey
         {
             get { return new AciColor(8); }
         }
@@ -123,7 +123,7 @@ namespace SharpDxf
         /// <summary>
         /// Defines a default light grey color.
         /// </summary>
-        public static AciColor LightGrey
+        internal static AciColor LightGrey
         {
             get { return new AciColor(9); }
         }
@@ -139,7 +139,7 @@ namespace SharpDxf
         ///<param name="g">Green component.</param>
         ///<param name="b">Blue component.</param>
         /// <remarks>Since only 255 indexed colors are posible the conversion won't be exact.</remarks>
-        public AciColor(byte r, byte g, byte b)
+        internal AciColor(byte r, byte g, byte b)
         {
             this.index = RGBtoACI(r, g, b);
         }
@@ -151,7 +151,7 @@ namespace SharpDxf
         ///<param name="g">Green component.</param>
         ///<param name="b">Blue component.</param>
         /// <remarks>Since only 255 indexed are posible the conversion won't be exact.</remarks>
-        public AciColor(double r, double g, double b)
+        internal AciColor(double r, double g, double b)
         {
             this.index = RGBtoACI((byte) (r*255), (byte) (g*255), (byte) (b*255));
         }
@@ -160,7 +160,7 @@ namespace SharpDxf
         /// Initializes a new instance of the <c>AciColor</c> class.
         /// </summary>
         ///<param name="color">A <see cref="Color">color</see>.</param>
-        public AciColor(Color color)
+        internal AciColor(Color color)
         {
             this.index = RGBtoACI(color.R, color.G, color.B);
         }
@@ -173,7 +173,7 @@ namespace SharpDxf
         /// Accepted color index values range from 0 to 256.
         /// Indexes from 1 to 255 represents a color, the index 256 is reserved to define a color bylayer and the index 0 represents byblock.
         /// </remarks>
-        public AciColor(short index)
+        internal AciColor(short index)
         {
             if (index < 0 || index > 256)
             {
@@ -184,7 +184,7 @@ namespace SharpDxf
 
         #endregion
 
-        #region public properties
+        #region internal properties
 
         /// <summary>
         /// Gets or sets the color index.
@@ -193,7 +193,7 @@ namespace SharpDxf
         /// Accepted color index values range from 0 to 256.
         /// Indexes from 1 to 255 represents a color, the index 256 is reserved to define a color bylayer and the index 0 represents byblock.
         /// </remarks>
-        public short Index
+        internal short Index
         {
             get { return this.index; }
             set
@@ -225,13 +225,13 @@ namespace SharpDxf
 
         #endregion
 
-        #region public methods
+        #region internal methods
 
         /// <summary>
         /// Converts the AciColor to a <see cref="Color">color</see>.
         /// </summary>
         /// <returns>A default color white will be used for byblock and bylayer colors.</returns>
-        public Color ToColor()
+        internal Color ToColor()
         {
             if (this.index < 1 || this.index > 255) //default color definition for byblock and bylayer colors
                 return Color.White;

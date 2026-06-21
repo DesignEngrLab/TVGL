@@ -36,8 +36,7 @@ namespace SharpDxf.Entities
     /// When a AutoCad12 file is saved all lightweight polylines will be converted to polylines, while for AutoCad2000 and later versions all
     /// polylines will be converted to lightweight polylines.
     /// </remarks>
-    public class Polyline :
-        DxfObject,
+    internal class Polyline :
         IPolyline
     {
         #region private fields
@@ -64,7 +63,7 @@ namespace SharpDxf.Entities
         /// </summary>
         /// <param name="vertexes">Polyline vertex list in object coordinates.</param>
         /// <param name="isClosed">Sets if the polyline is closed</param>
-        public Polyline(List<PolylineVertex> vertexes, bool isClosed)
+        internal Polyline(List<PolylineVertex> vertexes, bool isClosed)
             : base(DxfObjectCode.Polyline)
         {
             this.vertexes = vertexes;
@@ -83,7 +82,7 @@ namespace SharpDxf.Entities
         /// Initializes a new instance of the <c>Polyline</c> class.
         /// </summary>
         /// <param name="vertexes">Polyline <see cref="PolylineVertex">vertex</see> list in object coordinates.</param>
-        public Polyline(List<PolylineVertex> vertexes)
+        internal Polyline(List<PolylineVertex> vertexes)
             : base(DxfObjectCode.Polyline)
         {
             this.vertexes = vertexes;
@@ -101,7 +100,7 @@ namespace SharpDxf.Entities
         /// <summary>
         /// Initializes a new instance of the <c>Polyline</c> class.
         /// </summary>
-        public Polyline()
+        internal Polyline()
             : base(DxfObjectCode.Polyline)
         {
             this.vertexes = new List<PolylineVertex>();
@@ -117,12 +116,12 @@ namespace SharpDxf.Entities
 
         #endregion
 
-        #region public properties
+        #region internal properties
 
         /// <summary>
         /// Gets or sets the polyline <see cref="SharpDxf.Entities.PolylineVertex">vertex</see> list.
         /// </summary>
-        public List<PolylineVertex> Vertexes
+        internal List<PolylineVertex> Vertexes
         {
             get { return this.vertexes; }
             set
@@ -136,7 +135,7 @@ namespace SharpDxf.Entities
         /// <summary>
         /// Gets or sets if the polyline is closed.
         /// </summary>
-        public virtual bool IsClosed
+        internal virtual bool IsClosed
         {
             get { return this.isClosed; }
             set
@@ -149,7 +148,7 @@ namespace SharpDxf.Entities
         /// <summary>
         /// Gets or sets the polyline <see cref="SharpDxf.Vector3">normal</see>.
         /// </summary>
-        public Vector3 Normal
+        internal Vector3 Normal
         {
             get { return this.normal; }
             set
@@ -164,7 +163,7 @@ namespace SharpDxf.Entities
         /// <summary>
         /// Gets or sets the polyline thickness.
         /// </summary>
-        public double Thickness
+        internal double Thickness
         {
             get { return this.thickness; }
             set { this.thickness = value; }
@@ -173,7 +172,7 @@ namespace SharpDxf.Entities
         /// <summary>
         /// Gets or sets the polyline elevation.
         /// </summary>
-        public double Elevation
+        internal double Elevation
         {
             get { return this.elevation; }
             set { this.elevation = value; }
@@ -191,7 +190,7 @@ namespace SharpDxf.Entities
         /// <summary>
         /// Gets the polyline type.
         /// </summary>
-        public PolylineTypeFlags Flags
+        internal PolylineTypeFlags Flags
         {
             get { return this.flags; }
         }
@@ -203,7 +202,7 @@ namespace SharpDxf.Entities
         /// <summary>
         /// Gets the entity <see cref="SharpDxf.Entities.EntityType">type</see>.
         /// </summary>
-        public EntityType Type
+        internal EntityType Type
         {
             get { return TYPE; }
         }
@@ -211,7 +210,7 @@ namespace SharpDxf.Entities
         /// <summary>
         /// Gets or sets the entity <see cref="SharpDxf.AciColor">color</see>.
         /// </summary>
-        public AciColor Color
+        internal AciColor Color
         {
             get { return this.color; }
             set
@@ -225,7 +224,7 @@ namespace SharpDxf.Entities
         /// <summary>
         /// Gets or sets the entity <see cref="SharpDxf.Tables.Layer">layer</see>.
         /// </summary>
-        public Layer Layer
+        internal Layer Layer
         {
             get { return this.layer; }
             set
@@ -239,7 +238,7 @@ namespace SharpDxf.Entities
         /// <summary>
         /// Gets or sets the entity <see cref="SharpDxf.Tables.LineType">line type</see>.
         /// </summary>
-        public LineType LineType
+        internal LineType LineType
         {
             get { return this.lineType; }
             set
@@ -253,7 +252,7 @@ namespace SharpDxf.Entities
         /// <summary>
         /// Gets or sets the entity <see cref="SharpDxf.XData">extende data</see>.
         /// </summary>
-        public Dictionary<ApplicationRegistry, XData> XData
+        internal Dictionary<ApplicationRegistry, XData> XData
         {
             get { return this.xData; }
             set { this.xData = value; }
@@ -261,13 +260,13 @@ namespace SharpDxf.Entities
 
         #endregion
 
-        #region public methods
+        #region internal methods
 
         /// <summary>
         /// Sets a constant width for all the polyline segments.
         /// </summary>
         /// <param name="width">Polyline width.</param>
-        public void SetConstantWidth(double width)
+        internal void SetConstantWidth(double width)
         {
             foreach (PolylineVertex v in this.vertexes)
             {
@@ -280,7 +279,7 @@ namespace SharpDxf.Entities
         /// Converts the polyline in a <see cref="SharpDxf.Entities.LightWeightPolyline">LightWeightPolyline</see>.
         /// </summary>
         /// <returns>A new instance of <see cref="LightWeightPolyline">LightWeightPolyline</see> that represents the lightweight polyline.</returns>
-        public LightWeightPolyline ToLightWeightPolyline()
+        internal LightWeightPolyline ToLightWeightPolyline()
         {
             List<LightWeightPolylineVertex> polyVertexes = new List<LightWeightPolylineVertex>();
             foreach (PolylineVertex v in this.vertexes)
@@ -313,7 +312,7 @@ namespace SharpDxf.Entities
         /// <param name="weldThreshold">Tolerance to consider if two new generated vertexes are equal.</param>
         /// <param name="bulgeThreshold">Minimun distance from which approximate curved segments of the polyline.</param>
         /// <returns>The return vertexes are expresed in object coordinate system.</returns>
-        public List<Vector2> PoligonalVertexes(int bulgePrecision, double weldThreshold, double bulgeThreshold)
+        internal List<Vector2> PoligonalVertexes(int bulgePrecision, double weldThreshold, double bulgeThreshold)
         {
             List<Vector2> ocsVertexes = new List<Vector2>();
 

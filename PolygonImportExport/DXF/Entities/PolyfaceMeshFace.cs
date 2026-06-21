@@ -37,9 +37,8 @@ namespace SharpDxf.Entities
     /// if the edge between the vertexes 0 and 1 is hidden the vertex index for the face will be -1.
     /// The maximum number of vertex indexes in a face is 4.
     /// </remarks>
-    public class PolyfaceMeshFace :
-        DxfObject,
-        IVertex
+    internal class PolyfaceMeshFace :
+        DxfObject
     {
         #region private fields
         protected const EntityType TYPE = EntityType.PolylineVertex;
@@ -60,7 +59,7 @@ namespace SharpDxf.Entities
         /// <remarks>
         /// By default the face is made up of three vertexes.
         /// </remarks>
-        public PolyfaceMeshFace()
+        internal PolyfaceMeshFace()
             : base(DxfObjectCode.Vertex)
         {
             this.flags = VertexTypeFlags.PolyfaceMeshVertex;
@@ -74,7 +73,7 @@ namespace SharpDxf.Entities
         /// Initializes a new instance of the <c>PolyfaceMeshFace</c> class.
         /// </summary>
         /// <param name="vertexIndexes">Array of indexes to the vertex list of a polyface mesh that makes up the face.</param>
-        public PolyfaceMeshFace(int[] vertexIndexes)
+        internal PolyfaceMeshFace(int[] vertexIndexes)
             : base(DxfObjectCode.Vertex)
         {
             if (vertexIndexes == null)
@@ -91,12 +90,12 @@ namespace SharpDxf.Entities
 
         #endregion
 
-        #region public properties
+        #region internal properties
 
         /// <summary>
         /// Gets or sets the array of indexes to the vertex list of a polyface mesh that makes up the face.
         /// </summary>
-        public int[] VertexIndexes
+        internal int[] VertexIndexes
         {
             get { return this.vertexIndexes; }
             set
@@ -117,7 +116,7 @@ namespace SharpDxf.Entities
         /// <summary>
         /// Gets the vertex type.
         /// </summary>
-        public VertexTypeFlags Flags
+        internal VertexTypeFlags Flags
         {
             get { return this.flags; }
         }
@@ -129,7 +128,7 @@ namespace SharpDxf.Entities
         /// <summary>
         /// Gets the entity <see cref="SharpDxf.Entities.EntityType">type</see>.
         /// </summary>
-        public EntityType Type
+        internal EntityType Type
         {
             get { return TYPE; }
         }
@@ -137,7 +136,7 @@ namespace SharpDxf.Entities
         /// <summary>
         /// Gets or sets the entity <see cref="SharpDxf.AciColor">color</see>.
         /// </summary>
-        public AciColor Color
+        internal AciColor Color
         {
             get { return this.color; }
             set
@@ -151,7 +150,7 @@ namespace SharpDxf.Entities
         /// <summary>
         /// Gets or sets the entity <see cref="SharpDxf.Tables.Layer">layer</see>.
         /// </summary>
-        public Layer Layer
+        internal Layer Layer
         {
             get { return this.layer; }
             set
@@ -165,7 +164,7 @@ namespace SharpDxf.Entities
         /// <summary>
         /// Gets or sets the entity <see cref="SharpDxf.Tables.LineType">line type</see>.
         /// </summary>
-        public LineType LineType
+        internal LineType LineType
         {
             get { return this.lineType; }
             set
@@ -179,7 +178,7 @@ namespace SharpDxf.Entities
         /// <summary>
         /// Gets or sets the entity <see cref="SharpDxf.XData">extende data</see>.
         /// </summary>
-        public Dictionary<ApplicationRegistry, XData> XData
+        internal Dictionary<ApplicationRegistry, XData> XData
         {
             get { return this.xData; }
             set { this.xData = value; }
