@@ -421,7 +421,7 @@ namespace TVGL
                 mirroredSignature[2 * (numVerts - i) - 1] = internalAngle;
 
             }
-            // Step 2: The Linear-Time Test
+            // Step 2: Test
             // A polygon is achiral if its mirrored signature is a cyclic permutation
             // of its forward signature. 
             var angleEpsilon = 0.001 * maxAngle; // Epsilon for angle comparison
