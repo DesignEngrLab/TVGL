@@ -13,7 +13,7 @@ namespace TVGLUnitTestsAndBenchmarking
 {
     internal class Program
     {
-        public static string inputFolder = "TestFiles";
+        public static string inputFolder = "Input\\Drawings";
 
         static Random r = new Random();
         static double r1 => 2.0 * r.NextDouble() - 1.0;
@@ -22,13 +22,16 @@ namespace TVGLUnitTestsAndBenchmarking
 
         [STAThread]
         private static void Main(string[] args)
-        {
-          var polgyons =  PolygonImportExport.DXF.Open("text.dxf", DxfVersion.AutoCad12);
-            DXF.Save("test2.dxf", polgyons, DxfVersion.AutoCad12);
+        { 
             OutputServices.Presenter2D = new Presenter2D();
             OutputServices.Presenter3D = new Presenter3D();
             var dirInfo = IO.BackoutToFolder(inputFolder);
-            var files = dirInfo.GetFiles("*");
+          
+          var polgyons =  PolygonImportExport.DXF.Open(Path.Combine(dirInfo.FullName, "unicorn.dxf"), DxfVersion.AutoCad12, curvePrecision: 30   );
+           Presenter.ShowAndHang(polgyons);
+           
+           
+             var files = dirInfo.GetFiles("*");
             foreach (var fileName in files.Skip(8))
             {
                 Console.WriteLine("Attempting to open: " + fileName.Name);

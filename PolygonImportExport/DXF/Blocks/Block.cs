@@ -42,7 +42,6 @@ namespace SharpDxf.Blocks
         private readonly string name;
         private Layer layer;
         private Vector3 basePoint;
-        private Dictionary<string, AttributeDefinition> attributes;
         private List<IEntityObject> entities;
 
         #endregion
@@ -75,7 +74,6 @@ namespace SharpDxf.Blocks
             this.name = name;
             this.basePoint = Vector3.Zero;
             this.layer = Layer.Default;
-            this.attributes = new Dictionary<string, AttributeDefinition>();
             this.entities = new List<IEntityObject>();
             this.record=new BlockRecord(name);
             this.end = new BlockEnd(this.layer);          
@@ -114,20 +112,6 @@ namespace SharpDxf.Blocks
                     throw new ArgumentNullException("value"); 
                 this.layer = value;
                 this.end.Layer = value;
-            }
-        }
-
-        /// <summary>
-        /// Gets or sets the block <see cref="AttributeDefinition">attribute definition</see> list.
-        /// </summary>
-        internal Dictionary<string, AttributeDefinition> Attributes
-        {
-            get { return this.attributes; }
-            set
-            {
-                if (value == null)
-                    throw new NullReferenceException("value");
-                this.attributes = value;
             }
         }
 
@@ -173,10 +157,6 @@ namespace SharpDxf.Blocks
         {
             entityNumber = this.record.AsignHandle(entityNumber);
             entityNumber = this.end.AsignHandle(entityNumber);
-            foreach(AttributeDefinition attDef in this.attributes.Values )
-            {
-                entityNumber = attDef.AsignHandle(entityNumber);
-            }
             foreach (IEntityObject entity in this.entities )
             {
                 entityNumber = ((DxfObject) entity).AsignHandle(entityNumber);

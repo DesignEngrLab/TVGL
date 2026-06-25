@@ -43,29 +43,6 @@ namespace SharpDxf.Entities
     }
 
     /// <summary>
-    /// Defines the curves and smooth surface type.
-    /// </summary>
-    internal enum SmoothType
-    {
-        /// <summary>
-        /// No smooth surface fitted
-        /// </summary>
-        NoSmooth=0,
-        /// <summary>
-        /// Quadratic B-spline surface
-        /// </summary>
-        Quadratic=5,
-        /// <summary>
-        /// Cubic B-spline surface
-        /// </summary>
-        Cubic=6,
-        /// <summary>
-        /// Bezier surface
-        /// </summary>
-        Bezier=8
-    }
-  
-    /// <summary>
     /// Represents a generic polyline.
     /// </summary>
     internal abstract class IPolyline :

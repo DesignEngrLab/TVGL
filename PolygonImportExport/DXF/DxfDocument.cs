@@ -32,7 +32,6 @@ using SharpDxf.Entities;
 using SharpDxf.Header;
 using SharpDxf.Objects;
 using SharpDxf.Tables;
-using Attribute=SharpDxf.Entities.Attribute;
 
 namespace SharpDxf
 {
@@ -79,13 +78,7 @@ namespace SharpDxf
         private List<Circle> circles;
         private List<Ellipse> ellipses;
         private List<NurbsCurve> nurbsCurves;
-        private List<Solid> solids;
-        private List<Face3d> faces3d;
-        private List<Insert> inserts;
-        private List<Line> lines;
-        private List<Point> points;
         private List<IPolyline> polylines;
-        private List<Text> texts;
 
         #endregion
 
@@ -153,14 +146,8 @@ namespace SharpDxf
             this.arcs = new List<Arc>();
             this.ellipses = new List<Ellipse>();
             this.nurbsCurves = new List<NurbsCurve>();
-            this.faces3d = new List<Face3d>();
-            this.solids = new List<Solid>();
-            this.inserts = new List<Insert>();
             this.polylines = new List<IPolyline>();
-            this.lines = new List<Line>();
             this.circles = new List<Circle>();
-            this.points = new List<Point>();
-            this.texts = new List<Text>();
         }
 
         #endregion
@@ -291,38 +278,6 @@ namespace SharpDxf
         }
 
         /// <summary>
-        /// Gets the <see cref="SharpDxf.Entities.Face3d">3d face</see> list.
-        /// </summary>
-        internal ReadOnlyCollection<Face3d> Faces3d
-        {
-            get { return this.faces3d.AsReadOnly(); }
-        }
-
-        /// <summary>
-        /// Gets the <see cref="SharpDxf.Entities.Solid">solid</see> list.
-        /// </summary>
-        internal ReadOnlyCollection<Solid> Solids
-        {
-            get { return this.solids.AsReadOnly(); }
-        }
-
-        /// <summary>
-        /// Gets the <see cref="SharpDxf.Entities.Insert">insert</see> list.
-        /// </summary>
-        internal ReadOnlyCollection<Insert> Inserts
-        {
-            get { return this.inserts.AsReadOnly(); }
-        }
-
-        /// <summary>
-        /// Gets the <see cref="SharpDxf.Entities.Line">line</see> list.
-        /// </summary>
-        internal ReadOnlyCollection<Line> Lines
-        {
-            get { return this.lines.AsReadOnly(); }
-        }
-
-        /// <summary>
         /// Gets the <see cref="SharpDxf.Entities.IPolyline">polyline</see> list.
         /// </summary>
         /// <remarks>
@@ -332,22 +287,6 @@ namespace SharpDxf
         internal ReadOnlyCollection<IPolyline> Polylines
         {
             get { return this.polylines.AsReadOnly(); }
-        }
-
-        /// <summary>
-        /// Gets the <see cref="SharpDxf.Entities.Point">point</see> list.
-        /// </summary>
-        internal ReadOnlyCollection<Point> Points
-        {
-            get { return this.points.AsReadOnly(); }
-        }
-
-        /// <summary>
-        /// Gets the <see cref="SharpDxf.Entities.Text">text</see> list.
-        /// </summary>
-        internal ReadOnlyCollection<Text> Texts
-        {
-            get { return this.texts.AsReadOnly(); }
         }
 
         #endregion
@@ -492,98 +431,11 @@ namespace SharpDxf
                     throw new NotImplementedException("Nurbs curves not avaliable at the moment.");
                     this.nurbsCurves.Add((NurbsCurve) entity);
                     break;
-                case EntityType.Point:
-                    this.points.Add((Point) entity);
-                    break;
-                case EntityType.Face3D:
-                    this.faces3d.Add((Face3d) entity);
-                    break;
-                case EntityType.Solid:
-                    this.solids.Add((Solid) entity);
-                    break;
-                case EntityType.Insert:
-                    // if the block definition has already been added, we do not need to do anything else
-                    if (!this.blocks.ContainsKey(((Insert) entity).Block.Name))
-                    {
-                        this.blocks.Add(((Insert) entity).Block.Name, ((Insert) entity).Block);
-
-                        if (!this.layers.ContainsKey(((Insert)entity).Block.Layer.Name))
-                        {
-                            this.layers.Add(((Insert)entity).Block.Layer.Name, ((Insert)entity).Block.Layer);
-                        }
-
-                        //for new block definitions configure its entities
-                        foreach (IEntityObject blockEntity in ((Insert) entity).Block.Entities)
-                        {
-                            // check if the entity has not been added to the document
-                            if (this.addedObjects.ContainsKey(blockEntity))
-                                throw new ArgumentException("The entity " + blockEntity.Type +
-                                                            " object of the block " + ((Insert) entity).Block.Name +
-                                                            " has already been added to the document.", "entity");
-                            this.addedObjects.Add(blockEntity, blockEntity);
-
-                            if (!this.layers.ContainsKey(blockEntity.Layer.Name))
-                            {
-                                this.layers.Add(blockEntity.Layer.Name, blockEntity.Layer);
-                            }
-                            if (!this.lineTypes.ContainsKey(blockEntity.LineType.Name))
-                            {
-                                this.lineTypes.Add(blockEntity.LineType.Name, blockEntity.LineType);
-                            }
-                        }
-                        //for new block definitions configure its attributes
-                        foreach (Attribute attribute in ((Insert) entity).Attributes)
-                        {
-                            if (!this.layers.ContainsKey(attribute.Layer.Name))
-                            {
-                                this.layers.Add(attribute.Layer.Name, attribute.Layer);
-                            }
-                            if (!this.lineTypes.ContainsKey(attribute.LineType.Name))
-                            {
-                                this.lineTypes.Add(attribute.LineType.Name, attribute.LineType);
-                            }
-
-                            AttributeDefinition attDef = attribute.Definition;
-                            if (!this.layers.ContainsKey(attDef.Layer.Name))
-                            {
-                                this.layers.Add(attDef.Layer.Name, attDef.Layer);
-                            }
-
-                            if (!this.lineTypes.ContainsKey(attDef.LineType.Name))
-                            {
-                                this.lineTypes.Add(attDef.LineType.Name, attDef.LineType);
-                            }
-
-                            if (!this.textStyles.ContainsKey(attDef.Style.Name))
-                            {
-                                this.textStyles.Add(attDef.Style.Name, attDef.Style);
-                            }
-                        }
-                    }
-
-                    this.inserts.Add((Insert) entity);
-                    break;
-                case EntityType.Line:
-                    this.lines.Add((Line) entity);
-                    break;
                 case EntityType.LightWeightPolyline:
                     this.polylines.Add((IPolyline) entity);
                     break;
                 case EntityType.Polyline:
                     this.polylines.Add((IPolyline) entity);
-                    break;
-                case EntityType.Polyline3d:
-                    this.polylines.Add((IPolyline) entity);
-                    break;
-                case EntityType.PolyfaceMesh:
-                    this.polylines.Add((IPolyline) entity);
-                    break;
-                case EntityType.Text:
-                    if (!this.textStyles.ContainsKey(((Text) entity).Style.Name))
-                    {
-                        this.textStyles.Add(((Text) entity).Style.Name, ((Text) entity).Style);
-                    }
-                    this.texts.Add((Text) entity);
                     break;
                 case EntityType.Vertex:
                     throw new ArgumentException("The entity " + entity.Type + " is only allowed as part of another entity", "entity");
@@ -646,13 +498,7 @@ namespace SharpDxf
             this.arcs = dxfReader.Arcs;
             this.circles = dxfReader.Circles;
             this.ellipses = dxfReader.Ellipses;
-            this.points = dxfReader.Points;
-            this.faces3d = dxfReader.Faces3d;
-            this.solids = dxfReader.Solids;
             this.polylines = dxfReader.Polylines;
-            this.lines = dxfReader.Lines;
-            this.inserts = dxfReader.Inserts;
-            this.texts = dxfReader.Texts;
 
             Thread.CurrentThread.CurrentCulture = cultureInfo;
 
@@ -947,26 +793,6 @@ namespace SharpDxf
             {
                 dxfWriter.WriteEntity(nurbsCurve);
             }
-            foreach (Point point in this.points)
-            {
-                dxfWriter.WriteEntity(point);
-            }
-            foreach (Face3d face in this.faces3d)
-            {
-                dxfWriter.WriteEntity(face);
-            }
-            foreach (Solid solid in this.solids)
-            {
-                dxfWriter.WriteEntity(solid);
-            }
-            foreach (Insert insert in this.inserts)
-            {
-                dxfWriter.WriteEntity(insert);
-            }
-            foreach (Line line in this.lines)
-            {
-                dxfWriter.WriteEntity(line);
-            }
 
             // lwpolyline in Acad12 are written as polylines
             
@@ -983,11 +809,6 @@ namespace SharpDxf
             //        dxfWriter.WriteEntity(polyline);
             //    }
             //}
-
-            foreach (Text text in this.texts)
-            {
-                dxfWriter.WriteEntity(text);
-            }
             #endregion
 
             dxfWriter.EndSection(); //End section entities
@@ -1084,35 +905,11 @@ namespace SharpDxf
             {
                 this.handleCount = entity.AsignHandle(this.handleCount);
             }
-            foreach (Face3d entity in this.faces3d)
-            {
-                this.handleCount = entity.AsignHandle(this.handleCount);
-            }
-            foreach (Solid entity in this.solids )
-            {
-                this.handleCount = entity.AsignHandle(this.handleCount);
-            }
-            foreach (Insert entity in this.inserts )
-            {
-                this.handleCount = entity.AsignHandle(this.handleCount);
-            }
             foreach (IPolyline entity in this.polylines)
             {
                 this.handleCount = ((DxfObject)entity).AsignHandle(this.handleCount);
             }
-            foreach (Line entity in this.lines)
-            {
-                this.handleCount = entity.AsignHandle(this.handleCount);
-            }
             foreach (Circle entity in this.circles)
-            {
-                this.handleCount = entity.AsignHandle(this.handleCount);
-            }
-            foreach (Point  entity in this.points)
-            {
-                this.handleCount = entity.AsignHandle(this.handleCount);
-            }
-            foreach (Text entity in this.texts)
             {
                 this.handleCount = entity.AsignHandle(this.handleCount);
             }

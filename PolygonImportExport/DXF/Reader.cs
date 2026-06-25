@@ -1,4 +1,4 @@
-﻿#region SharpDxf, Copyright(C) 2012 Lomatus, Licensed under LGPL.
+#region SharpDxf, Copyright(C) 2012 Lomatus, Licensed under LGPL.
 
 //                        SharpDxf library( Base on netDxf by Daniel Carvajal )
 // Copyright (C) 2012 Lomatus (tourszhou@gmail.com)
@@ -30,7 +30,6 @@ using SharpDxf.Entities;
 using SharpDxf.Header;
 using SharpDxf.Tables;
 using TVGL;
-using Attribute = SharpDxf.Entities.Attribute;
 
 namespace SharpDxf
 {
@@ -55,14 +54,8 @@ namespace SharpDxf
         //entities
         private List<Arc> arcs;
         private List<Entities.Circle> circles;
-        private List<Point> points;
         private List<Ellipse> ellipses;
-        private List<Face3d> faces3d;
-        private List<Entities.Solid> solids;
-        private List<Insert> inserts;
-        private List<Line> lines;
         private List<IPolyline> polylines;
-        private List<Text> texts;
 
         //tables
         private Dictionary<string, ApplicationRegistry> appIds;
@@ -129,39 +122,9 @@ namespace SharpDxf
             get { return this.ellipses; }
         }
 
-        internal List<Entities.Point> Points
-        {
-            get { return this.points; }
-        }
-
-        internal List<Face3d> Faces3d
-        {
-            get { return this.faces3d; }
-        }
-
-        internal List<Entities.Solid> Solids
-        {
-            get { return this.solids; }
-        }
-
-        internal List<Line> Lines
-        {
-            get { return this.lines; }
-        }
-
         internal List<IPolyline> Polylines
         {
             get { return this.polylines; }
-        }
-
-        internal List<Insert> Inserts
-        {
-            get { return this.inserts; }
-        }
-
-        internal List<Text> Texts
-        {
-            get { return this.texts; }
         }
 
         #endregion
@@ -232,14 +195,8 @@ namespace SharpDxf
 
             this.arcs = new List<Arc>();
             this.circles = new List<Entities.Circle>();
-            this.faces3d = new List<Face3d>();
             this.ellipses = new List<Entities.Ellipse>();
-            this.solids = new List<Entities.Solid>();
-            this.inserts = new List<Insert>();
-            this.lines = new List<Line>();
             this.polylines = new List<IPolyline>();
-            this.points = new List<Entities.Point>();
-            this.texts = new List<Text>();
             this.fileLine = -1;
 
             CodeValuePair code = this.ReadCodePair();
@@ -418,7 +375,6 @@ namespace SharpDxf
             string handle = string.Empty;
             double basePointX = 0;
             List<IEntityObject> entities = new List<IEntityObject>();
-            Dictionary<string, AttributeDefinition> attdefs = new Dictionary<string, AttributeDefinition>();
 
             code = this.ReadCodePair();
             while (code.Value != StringCode.EndBlock)
@@ -457,10 +413,7 @@ namespace SharpDxf
                         IEntityObject entity;
                         entity = this.ReadBlockEntity(ref code);
                         if (entity != null)
-                            if (entity.Type == EntityType.AttributeDefinition)
-                                attdefs.Add(((AttributeDefinition)entity).Id, (AttributeDefinition)entity);
-                            else
-                                entities.Add(entity);
+                            entities.Add(entity);
                         break;
                     default:
                         code = this.ReadCodePair();
@@ -495,7 +448,6 @@ namespace SharpDxf
                 BasePoint = basePoint,
                 Layer = layer,
                 Entities = entities,
-                Attributes = attdefs,
                 Handle = handle,
             };
             block.End.Handle = endBlockHandle;
@@ -516,29 +468,11 @@ namespace SharpDxf
                 case DxfObjectCode.Circle:
                     entity = this.ReadCircle(ref code);
                     break;
-                case DxfObjectCode.Face3D:
-                    entity = this.ReadFace3D(ref code);
-                    break;
-                case DxfObjectCode.Solid:
-                    entity = this.ReadSolid(ref code);
-                    break;
-                case DxfObjectCode.Insert:
-                    code = this.ReadCodePair();
-                    break;
-                case DxfObjectCode.Line:
-                    entity = this.ReadLine(ref code);
-                    break;
                 case DxfObjectCode.LightWeightPolyline:
                     entity = this.ReadLightWeightPolyline(ref code);
                     break;
                 case DxfObjectCode.Polyline:
                     entity = this.ReadPolyline(ref code);
-                    break;
-                case DxfObjectCode.Text:
-                    entity = this.ReadText(ref code);
-                    break;
-                case DxfObjectCode.AttributeDefinition:
-                    entity = this.ReadAttributeDefinition(ref code);
                     break;
                 default:
                     ReadUnknowEntity(ref code);
@@ -547,174 +481,6 @@ namespace SharpDxf
             }
 
             return entity;
-        }
-
-        private AttributeDefinition ReadAttributeDefinition(ref CodeValuePair code)
-        {
-            string handle = string.Empty;
-            string id = string.Empty;
-            string text = string.Empty;
-            object value = null;
-            AttributeFlags flags = AttributeFlags.Visible;
-            double firstAlignmentPointX = 0, firstAlignmentPointY = 0, firstAlignmentPointZ = 0;
-            double secondAlignmentPointX = 0, secondAlignmentPointY = 0, secondAlignmentPointZ = 0;
-            double normalX = 0, normalY = 0, normalZ = 1;
-            Layer layer = Layer.Default;
-            AciColor color = AciColor.ByLayer;
-            LineType lineType = LineType.ByLayer;
-            TextStyle style = TextStyle.Default;
-            double height = 0;
-            double widthFactor = 0;
-            int horizontalAlignment = 0;
-            int verticalAlignment = 0;
-            double rotation = 0;
-            Vector3 normal = Vector3.UnitZ;
-
-            code = this.ReadCodePair();
-            while (code.Code != 0)
-            {
-                switch (code.Code)
-                {
-                    case 5:
-                        handle = code.Value;
-                        break;
-                    case 2:
-                        id = code.Value;
-                        break;
-                    case 3:
-                        text = code.Value;
-                        break;
-                    case 1:
-                        value = code.Value;
-                        break;
-                    case 8: //layer code
-                        layer = this.GetLayer(code.Value);
-                        break;
-                    case 62: //aci color code
-                        color = new AciColor(short.Parse(code.Value));
-                        break;
-                    case 6: //type line code
-                        lineType = this.GetLineType(code.Value);
-                        break;
-                    case 70:
-                        flags = (AttributeFlags)int.Parse(code.Value);
-                        break;
-                    case 10:
-                        firstAlignmentPointX = double.Parse(code.Value);
-                        break;
-                    case 20:
-                        firstAlignmentPointY = double.Parse(code.Value);
-                        break;
-                    case 30:
-                        firstAlignmentPointZ = double.Parse(code.Value);
-                        break;
-                    case 11:
-                        secondAlignmentPointX = double.Parse(code.Value);
-                        break;
-                    case 21:
-                        secondAlignmentPointY = double.Parse(code.Value);
-                        break;
-                    case 31:
-                        secondAlignmentPointZ = double.Parse(code.Value);
-                        break;
-                    case 7:
-                        style = this.GetTextStyle(code.Value);
-                        break;
-                    case 40:
-                        height = double.Parse(code.Value);
-                        break;
-                    case 41:
-                        widthFactor = double.Parse(code.Value);
-                        break;
-                    case 50:
-                        rotation = double.Parse(code.Value);
-                        break;
-                    case 72:
-                        horizontalAlignment = int.Parse(code.Value);
-                        break;
-                    case 74:
-                        verticalAlignment = int.Parse(code.Value);
-                        break;
-                    case 210:
-                        normalX = double.Parse(code.Value);
-                        break;
-                    case 220:
-                        normalY = double.Parse(code.Value);
-                        break;
-                    case 230:
-                        normalZ = double.Parse(code.Value);
-                        break;
-                }
-
-                code = this.ReadCodePair();
-            }
-
-            TextAlignment alignment = ObtainAlignment(horizontalAlignment, verticalAlignment);
-
-            return new AttributeDefinition(id)
-            {
-                BasePoint = (alignment == TextAlignment.BaselineLeft ?
-                new Vector3(firstAlignmentPointX, firstAlignmentPointY, firstAlignmentPointZ)
-                : new Vector3(secondAlignmentPointX, secondAlignmentPointY, secondAlignmentPointZ)),
-                Normal = new Vector3(normalX, normalY, normalZ),
-                Alignment = alignment,
-                Text = text,
-                Value = value,
-                Flags = flags,
-                Layer = layer,
-                Color = color,
-                LineType = lineType,
-                Style = style,
-                Height = height,
-                WidthFactor = widthFactor,
-                Rotation = rotation,
-                Handle = handle
-            };
-        }
-
-        private Attribute ReadAttribute(Block block, ref CodeValuePair code)
-        {
-            string handle = string.Empty;
-            AttributeDefinition attdef = null;
-            Layer layer = Layer.Default;
-            AciColor color = AciColor.ByLayer;
-            LineType lineType = LineType.ByLayer;
-            Object value = null;
-            code = this.ReadCodePair();
-            while (code.Code != 0)
-            {
-                switch (code.Code)
-                {
-                    case 5:
-                        handle = code.Value;
-                        break;
-                    case 2:
-                        attdef = block.Attributes[code.Value];
-                        break;
-                    case 1:
-                        value = code.Value;
-                        break;
-                    case 8: //layer code
-                        layer = this.GetLayer(code.Value);
-                        break;
-                    case 62: //aci color code
-                        color = new AciColor(short.Parse(code.Value));
-                        break;
-                    case 6: //type line code
-                        lineType = this.GetLineType(code.Value);
-                        break;
-                }
-                code = this.ReadCodePair();
-            }
-
-            return new Attribute(attdef)
-            {
-                Color = color,
-                Layer = layer,
-                LineType = lineType,
-                Value = value,
-                Handle = handle
-            };
         }
 
         private void ReadEntities()
@@ -733,29 +499,9 @@ namespace SharpDxf
                         entity = this.ReadCircle(ref code);
                         this.circles.Add((Entities.Circle)entity);
                         break;
-                    case DxfObjectCode.Point:
-                        entity = this.ReadPoint(ref code);
-                        this.points.Add((Entities.Point)entity);
-                        break;
                     case DxfObjectCode.Ellipse:
                         entity = this.ReadEllipse(ref code);
                         this.ellipses.Add((Ellipse)entity);
-                        break;
-                    case DxfObjectCode.Face3D:
-                        entity = this.ReadFace3D(ref code);
-                        this.faces3d.Add((Face3d)entity);
-                        break;
-                    case DxfObjectCode.Solid:
-                        entity = this.ReadSolid(ref code);
-                        this.solids.Add((Entities.Solid)entity);
-                        break;
-                    case DxfObjectCode.Insert:
-                        entity = this.ReadInsert(ref code);
-                        this.inserts.Add((Insert)entity);
-                        break;
-                    case DxfObjectCode.Line:
-                        entity = this.ReadLine(ref code);
-                        this.lines.Add((Line)entity);
                         break;
                     case DxfObjectCode.LightWeightPolyline:
                         entity = this.ReadLightWeightPolyline(ref code);
@@ -764,10 +510,6 @@ namespace SharpDxf
                     case DxfObjectCode.Polyline:
                         entity = this.ReadPolyline(ref code);
                         this.polylines.Add((IPolyline)entity);
-                        break;
-                    case DxfObjectCode.Text:
-                        entity = this.ReadText(ref code);
-                        this.texts.Add((Text)entity);
                         break;
                     default:
                         ReadUnknowEntity(ref code);
@@ -1336,545 +1078,6 @@ namespace SharpDxf
             return ellipse;
         }
 
-        private Point ReadPoint(ref CodeValuePair code)
-        {
-            var point = new Point();
-            double locationX = 0, locationY = 0, locationZ = 0;
-            double normalX = 0, normalY = 0, normalZ = 1;
-            Dictionary<ApplicationRegistry, XData> xData = new Dictionary<ApplicationRegistry, XData>();
-
-            code = this.ReadCodePair();
-            while (code.Code != 0)
-            {
-                switch (code.Code)
-                {
-                    case 5:
-                        point.Handle = code.Value;
-                        code = this.ReadCodePair();
-                        break;
-                    case 8: //layer code
-                        point.Layer = this.GetLayer(code.Value);
-                        code = this.ReadCodePair();
-                        break;
-                    case 62: //aci color code
-                        point.Color = new AciColor(short.Parse(code.Value));
-                        code = this.ReadCodePair();
-                        break;
-                    case 6: //type line code
-                        point.LineType = this.GetLineType(code.Value);
-                        code = this.ReadCodePair();
-                        break;
-                    case 10:
-                        locationX = double.Parse(code.Value);
-                        code = this.ReadCodePair();
-                        break;
-                    case 20:
-                        locationY = double.Parse(code.Value);
-                        code = this.ReadCodePair();
-                        break;
-                    case 30:
-                        locationZ = double.Parse(code.Value);
-                        code = this.ReadCodePair();
-                        break;
-                    case 39:
-                        point.Thickness = double.Parse(code.Value);
-                        code = this.ReadCodePair();
-                        break;
-                    case 210:
-                        normalX = double.Parse(code.Value);
-                        code = this.ReadCodePair();
-                        break;
-                    case 220:
-                        normalY = double.Parse(code.Value);
-                        code = this.ReadCodePair();
-                        break;
-                    case 230:
-                        normalZ = double.Parse(code.Value);
-                        code = this.ReadCodePair();
-                        break;
-                    case 1001:
-                        XData xDataItem = this.ReadXDataRecord(code.Value, ref code);
-                        xData.Add(xDataItem.ApplicationRegistry, xDataItem);
-                        break;
-                    default:
-                        if (code.Code >= 1000 && code.Code <= 1071)
-                            throw new DxfInvalidCodeValueEntityException(code.Code, code.Value, this.file,
-                                                                         "The extended data of an entity must start with the application registry code " + this.fileLine);
-                        code = this.ReadCodePair();
-                        break;
-                }
-            }
-
-            point.XData = xData;
-            point.Location = new Vector3(locationX, locationY, locationZ);
-            point.Normal = new Vector3(normalX, normalY, normalZ);
-            return point;
-        }
-
-        private Face3d ReadFace3D(ref CodeValuePair code)
-        {
-            var face = new Face3d();
-            double v0X = 0, v0Y = 0, v0Z = 0;
-            double v1X = 0, v1Y = 0, v1Z = 0;
-            double v2X = 0, v2Y = 0, v2Z = 0;
-            double v3X = 0, v3Y = 0, v3Z = 0;
-            Dictionary<ApplicationRegistry, XData> xData = new Dictionary<ApplicationRegistry, XData>();
-
-            code = this.ReadCodePair();
-            while (code.Code != 0)
-            {
-                switch (code.Code)
-                {
-                    case 5:
-                        face.Handle = code.Value;
-                        code = this.ReadCodePair();
-                        break;
-                    case 8: //layer code
-                        face.Layer = this.GetLayer(code.Value);
-                        code = this.ReadCodePair();
-                        break;
-                    case 62: //aci color code
-                        face.Color = new AciColor(short.Parse(code.Value));
-                        code = this.ReadCodePair();
-                        break;
-                    case 6: //type line code
-                        face.LineType = this.GetLineType(code.Value);
-                        code = this.ReadCodePair();
-                        break;
-                    case 10:
-                        v0X = double.Parse(code.Value);
-                        code = this.ReadCodePair();
-                        break;
-                    case 20:
-                        v0Y = double.Parse(code.Value);
-                        code = this.ReadCodePair();
-                        break;
-                    case 30:
-                        v0Z = double.Parse(code.Value);
-                        code = this.ReadCodePair();
-                        break;
-                    case 11:
-                        v1X = double.Parse(code.Value);
-                        code = this.ReadCodePair();
-                        break;
-                    case 21:
-                        v1Y = double.Parse(code.Value);
-                        code = this.ReadCodePair();
-                        break;
-                    case 31:
-                        v1Z = double.Parse(code.Value);
-                        code = this.ReadCodePair();
-                        break;
-                    case 12:
-                        v2X = double.Parse(code.Value);
-                        code = this.ReadCodePair();
-                        break;
-                    case 22:
-                        v2Y = double.Parse(code.Value);
-                        code = this.ReadCodePair();
-                        break;
-                    case 32:
-                        v2Z = double.Parse(code.Value);
-                        code = this.ReadCodePair();
-                        break;
-                    case 13:
-                        v3X = double.Parse(code.Value);
-                        code = this.ReadCodePair();
-                        break;
-                    case 23:
-                        v3Y = double.Parse(code.Value);
-                        code = this.ReadCodePair();
-                        break;
-                    case 33:
-                        v3Z = double.Parse(code.Value);
-                        code = this.ReadCodePair();
-                        break;
-                    case 70:
-                        face.EdgeFlags = (EdgeFlags)(int.Parse(code.Value));
-                        code = this.ReadCodePair();
-                        break;
-                    case 1001:
-                        XData xDataItem = this.ReadXDataRecord(code.Value, ref code);
-                        xData.Add(xDataItem.ApplicationRegistry, xDataItem);
-                        break;
-                    default:
-                        if (code.Code >= 1000 && code.Code <= 1071)
-                            throw new DxfInvalidCodeValueEntityException(code.Code, code.Value, this.file,
-                                                                         "The extended data of an entity must start with the application registry code " + this.fileLine);
-
-                        code = this.ReadCodePair();
-                        break;
-                }
-            }
-
-            face.FirstVertex = new Vector3(v0X, v0Y, v0Z);
-            face.SecondVertex = new Vector3(v1X, v1Y, v1Z);
-            face.ThirdVertex = new Vector3(v2X, v2Y, v2Z);
-            face.FourthVertex = new Vector3(v3X, v3Y, v3Z);
-            face.XData = xData;
-            return face;
-        }
-
-        private Entities.Solid ReadSolid(ref CodeValuePair code)
-        {
-            var solid = new Entities.Solid();
-            double v0X = 0, v0Y = 0, v0Z = 0;
-            double v1X = 0, v1Y = 0, v1Z = 0;
-            double v2X = 0, v2Y = 0, v2Z = 0;
-            double v3X = 0, v3Y = 0, v3Z = 0;
-            double normalX = 0, normalY = 0, normalZ = 1;
-            Dictionary<ApplicationRegistry, XData> xData = new Dictionary<ApplicationRegistry, XData>();
-
-            code = this.ReadCodePair();
-            while (code.Code != 0)
-            {
-                switch (code.Code)
-                {
-                    case 5:
-                        solid.Handle = code.Value;
-                        code = this.ReadCodePair();
-                        break;
-                    case 8: //layer code
-                        solid.Layer = this.GetLayer(code.Value);
-                        code = this.ReadCodePair();
-                        break;
-                    case 62: //aci color code
-                        solid.Color = new AciColor(short.Parse(code.Value));
-                        code = this.ReadCodePair();
-                        break;
-                    case 6: //type line code
-                        solid.LineType = this.GetLineType(code.Value);
-                        code = this.ReadCodePair();
-                        break;
-                    case 10:
-                        v0X = double.Parse(code.Value);
-                        code = this.ReadCodePair();
-                        break;
-                    case 20:
-                        v0Y = double.Parse(code.Value);
-                        code = this.ReadCodePair();
-                        break;
-                    case 30:
-                        v0Z = double.Parse(code.Value);
-                        code = this.ReadCodePair();
-                        break;
-                    case 11:
-                        v1X = double.Parse(code.Value);
-                        code = this.ReadCodePair();
-                        break;
-                    case 21:
-                        v1Y = double.Parse(code.Value);
-                        code = this.ReadCodePair();
-                        break;
-                    case 31:
-                        v1Z = double.Parse(code.Value);
-                        code = this.ReadCodePair();
-                        break;
-                    case 12:
-                        v2X = double.Parse(code.Value);
-                        code = this.ReadCodePair();
-                        break;
-                    case 22:
-                        v2Y = double.Parse(code.Value);
-                        code = this.ReadCodePair();
-                        break;
-                    case 32:
-                        v2Z = double.Parse(code.Value);
-                        code = this.ReadCodePair();
-                        break;
-                    case 13:
-                        v3X = double.Parse(code.Value);
-                        code = this.ReadCodePair();
-                        break;
-                    case 23:
-                        v3Y = double.Parse(code.Value);
-                        code = this.ReadCodePair();
-                        break;
-                    case 33:
-                        v3Z = double.Parse(code.Value);
-                        code = this.ReadCodePair();
-                        break;
-                    case 70:
-                        solid.Thickness = double.Parse(code.Value);
-                        code = this.ReadCodePair();
-                        break;
-                    case 210:
-                        normalX = double.Parse(code.Value);
-                        code = this.ReadCodePair();
-                        break;
-                    case 220:
-                        normalY = double.Parse(code.Value);
-                        code = this.ReadCodePair();
-                        break;
-                    case 230:
-                        normalZ = double.Parse(code.Value);
-                        code = this.ReadCodePair();
-                        break;
-                    case 1001:
-                        XData xDataItem = this.ReadXDataRecord(code.Value, ref code);
-                        xData.Add(xDataItem.ApplicationRegistry, xDataItem);
-                        break;
-                    default:
-                        if (code.Code >= 1000 && code.Code <= 1071)
-                            throw new DxfInvalidCodeValueEntityException(code.Code, code.Value, this.file,
-                                                                         "The extended data of an entity must start with the application registry code " + this.fileLine);
-
-                        code = this.ReadCodePair();
-                        break;
-                }
-            }
-
-            solid.FirstVertex = new Vector3(v0X, v0Y, v0Z);
-            solid.SecondVertex = new Vector3(v1X, v1Y, v1Z);
-            solid.ThirdVertex = new Vector3(v2X, v2Y, v2Z);
-            solid.FourthVertex = new Vector3(v3X, v3Y, v3Z);
-            solid.Normal = new Vector3(normalX, normalY, normalZ);
-            solid.XData = xData;
-            return solid;
-        }
-
-        private Insert ReadInsert(ref CodeValuePair code)
-        {
-            string handle = string.Empty;
-            double basePointX = 0, basePointY = 0, basePointZ = 0;
-            double normalX = 0, normalY = 0, normalZ = 1;
-            double scaleX = 1, scaleY = 1, scaleZ = 1;
-            double rotation = 0.0f;
-            Block block = null;
-            Layer layer = Layer.Default;
-            AciColor color = AciColor.ByLayer;
-            LineType lineType = LineType.ByLayer;
-            List<Attribute> attributes = new List<Attribute>();
-            Dictionary<ApplicationRegistry, XData> xData = new Dictionary<ApplicationRegistry, XData>();
-
-            code = this.ReadCodePair();
-            while (code.Code != 0)
-            {
-                switch (code.Code)
-                {
-                    case 5:
-                        handle = code.Value;
-                        code = this.ReadCodePair();
-                        break;
-                    case 2:
-                        block = this.GetBlock(code.Value);
-                        if (block == null)
-                            throw new DxfEntityException(DxfObjectCode.Insert, this.file, "Block " + code.Value + " not defined line " + this.fileLine);
-                        code = this.ReadCodePair();
-                        break;
-                    case 8: //layer code
-                        layer = this.GetLayer(code.Value);
-                        code = this.ReadCodePair();
-                        break;
-                    case 62: //aci color code
-                        color = new AciColor(short.Parse(code.Value));
-                        code = this.ReadCodePair();
-                        break;
-                    case 6: //type line code
-                        lineType = this.GetLineType(code.Value);
-                        code = this.ReadCodePair();
-                        break;
-                    case 10:
-                        basePointX = double.Parse(code.Value);
-                        code = this.ReadCodePair();
-                        break;
-                    case 20:
-                        basePointY = double.Parse(code.Value);
-                        code = this.ReadCodePair();
-                        break;
-                    case 30:
-                        basePointZ = double.Parse(code.Value);
-                        code = this.ReadCodePair();
-                        break;
-                    case 41:
-                        scaleX = double.Parse(code.Value);
-                        code = this.ReadCodePair();
-                        break;
-                    case 42:
-                        scaleY = double.Parse(code.Value);
-                        code = this.ReadCodePair();
-                        break;
-                    case 43:
-                        scaleZ = double.Parse(code.Value);
-                        code = this.ReadCodePair();
-                        break;
-                    case 50:
-                        rotation = double.Parse(code.Value);
-                        code = this.ReadCodePair();
-                        break;
-                    case 210:
-                        normalX = double.Parse(code.Value);
-                        code = this.ReadCodePair();
-                        break;
-                    case 220:
-                        normalY = double.Parse(code.Value);
-                        code = this.ReadCodePair();
-                        break;
-                    case 230:
-                        normalZ = double.Parse(code.Value);
-                        code = this.ReadCodePair();
-                        break;
-                    case 1001:
-                        XData xDataItem = this.ReadXDataRecord(code.Value, ref code);
-                        xData.Add(xDataItem.ApplicationRegistry, xDataItem);
-                        break;
-                    default:
-                        if (code.Code >= 1000 && code.Code <= 1071)
-                            throw new DxfInvalidCodeValueEntityException(code.Code, code.Value, this.file,
-                                                                         "The extended data of an entity must start with the application registry code " + this.fileLine);
-
-                        code = this.ReadCodePair();
-                        break;
-                }
-            }
-
-            // if there are attributes
-            string endSequenceHandle = string.Empty;
-            Layer endSequenceLayer = Layer.Default;
-            if (code.Value == DxfObjectCode.Attribute)
-            {
-                while (code.Value != StringCode.EndSequence)
-                {
-                    if (code.Value == DxfObjectCode.Attribute)
-                    {
-                        Debug.Assert(code.Code == 0);
-                        Attribute attribute = this.ReadAttribute(block, ref code);
-                        attributes.Add(attribute);
-                    }
-                }
-                // read the end end sequence object until a new element is found
-                code = this.ReadCodePair();
-                while (code.Code != 0)
-                {
-                    switch (code.Code)
-                    {
-                        case 5:
-                            endSequenceHandle = code.Value;
-                            code = this.ReadCodePair();
-                            break;
-                        case 8:
-                            endSequenceLayer = this.GetLayer(code.Value);
-                            code = this.ReadCodePair();
-                            break;
-                        default:
-                            code = this.ReadCodePair();
-                            break;
-                    }
-                }
-            }
-
-            Insert insert = new Insert(block)
-            {
-                Color = color,
-                Layer = layer,
-                LineType = lineType,
-                InsertionPoint = new Vector3(basePointX, basePointY, basePointZ),
-                Rotation = rotation,
-                Scale = new Vector3(scaleX, scaleY, scaleZ),
-                Normal = new Vector3(normalX, normalY, normalZ),
-                Handle = handle
-            };
-
-            insert.EndSequence.Handle = endSequenceHandle;
-            insert.EndSequence.Layer = endSequenceLayer;
-            insert.Attributes.Clear();
-            insert.Attributes.AddRange(attributes);
-            insert.XData = xData;
-
-            return insert;
-        }
-
-        private Line ReadLine(ref CodeValuePair code)
-        {
-            var line = new Line();
-            double startX = 0, startY = 0, startZ = 0;
-            double endX = 0, endY = 0, endZ = 0;
-            double normalX = 0, normalY = 0, normalZ = 1;
-            Dictionary<ApplicationRegistry, XData> xData = new Dictionary<ApplicationRegistry, XData>();
-
-            code = this.ReadCodePair();
-            while (code.Code != 0)
-            {
-                switch (code.Code)
-                {
-                    case 5:
-                        line.Handle = code.Value;
-                        code = this.ReadCodePair();
-                        break;
-                    case 8: //layer code
-                        line.Layer = this.GetLayer(code.Value);
-                        code = this.ReadCodePair();
-                        break;
-                    case 62: //aci color code
-                        line.Color = new AciColor(short.Parse(code.Value));
-                        code = this.ReadCodePair();
-                        break;
-                    case 6: //type line code
-                        line.LineType = this.GetLineType(code.Value);
-                        code = this.ReadCodePair();
-                        break;
-                    case 10:
-                        startX = double.Parse(code.Value);
-                        code = this.ReadCodePair();
-                        break;
-                    case 20:
-                        startY = double.Parse(code.Value);
-                        code = this.ReadCodePair();
-                        break;
-                    case 30:
-                        startZ = double.Parse(code.Value);
-                        code = this.ReadCodePair();
-                        break;
-                    case 11:
-                        endX = double.Parse(code.Value);
-                        code = this.ReadCodePair();
-                        break;
-                    case 21:
-                        endY = double.Parse(code.Value);
-                        code = this.ReadCodePair();
-                        break;
-                    case 31:
-                        endZ = double.Parse(code.Value);
-                        code = this.ReadCodePair();
-                        break;
-                    case 39:
-                        line.Thickness = double.Parse(code.Value);
-                        code = this.ReadCodePair();
-                        break;
-                    case 210:
-                        normalX = double.Parse(code.Value);
-                        code = this.ReadCodePair();
-                        break;
-                    case 220:
-                        normalY = double.Parse(code.Value);
-                        code = this.ReadCodePair();
-                        break;
-                    case 230:
-                        normalZ = double.Parse(code.Value);
-                        code = this.ReadCodePair();
-                        break;
-                    case 1001:
-                        XData xDataItem = this.ReadXDataRecord(code.Value, ref code);
-                        xData.Add(xDataItem.ApplicationRegistry, xDataItem);
-                        break;
-                    default:
-                        if (code.Code >= 1000 && code.Code <= 1071)
-                            throw new DxfInvalidCodeValueEntityException(code.Code, code.Value, this.file,
-                                                                         "The extended data of an entity must start with the application registry code " + this.fileLine);
-
-                        code = this.ReadCodePair();
-                        break;
-                }
-            }
-
-            line.StartPoint = new Vector3(startX, startY, startZ);
-            line.EndPoint = new Vector3(endX, endY, endZ);
-            line.Normal = new Vector3(normalX, normalY, normalZ);
-            line.XData = xData;
-
-            return line;
-        }
-
         private LightWeightPolyline ReadLightWeightPolyline(ref CodeValuePair code)
         {
             var pol = new LightWeightPolyline();
@@ -2123,98 +1326,7 @@ namespace SharpDxf
                 isClosed = true;
             }
 
-            //to avoid possible error between the vertex type and the polyline type
-            //the polyline type will decide which information to use from the read vertex
-            if ((flags & PolylineTypeFlags.Polyline3D) == PolylineTypeFlags.Polyline3D)
-            {
-                List<Entities.Polyline3dVertex> polyline3dVertexes = new List<Entities.Polyline3dVertex>();
-                foreach (Entities.Vertex v in vertexes)
-                {
-                    Polyline3dVertex vertex = new Polyline3dVertex
-                    {
-                        Color = v.Color,
-                        Layer = v.Layer,
-                        LineType = v.LineType,
-                        Location = v.Location,
-                        Handle = v.Handle
-                    };
-                    vertex.XData = v.XData;
-                    polyline3dVertexes.Add(vertex);
-                }
-
-                ////posible error avoidance, the polyline is marked as polyline3d code:(70,8) but the vertex is marked as PolylineVertex code:(70,0)
-                //if (v.Type == EntityType.PolylineVertex)
-                //{
-                //    Polyline3dVertex polyline3dVertex = new Polyline3dVertex(((PolylineVertex)v).Location.X, ((PolylineVertex)v).Location.Y,0);
-                //    polyline3dVertexes.Add(polyline3dVertex);
-                //}
-                //else
-                //{
-                //    polyline3dVertexes.Add((Polyline3dVertex)v);
-                //}
-                //}
-                pol = new Polyline3d(polyline3dVertexes, isClosed)
-                {
-                    Handle = handle
-                };
-                ((Polyline3d)pol).EndSequence.Handle = endSequenceHandle;
-                ((Polyline3d)pol).EndSequence.Layer = endSequenceLayer;
-            }
-            else if ((flags & PolylineTypeFlags.PolyfaceMesh) == PolylineTypeFlags.PolyfaceMesh)
-            {
-                //the vertex list created contains vertex and face information
-                List<PolyfaceMeshVertex> polyfaceVertexes = new List<PolyfaceMeshVertex>();
-                List<PolyfaceMeshFace> polyfaceFaces = new List<PolyfaceMeshFace>();
-                foreach (var v in vertexes)
-                {
-                    if ((v.Flags & (VertexTypeFlags.PolyfaceMeshVertex | VertexTypeFlags.Polygon3dMesh)) == (VertexTypeFlags.PolyfaceMeshVertex | VertexTypeFlags.Polygon3dMesh))
-                    {
-                        PolyfaceMeshVertex vertex = new PolyfaceMeshVertex
-                        {
-                            Color = v.Color,
-                            Layer = v.Layer,
-                            LineType = v.LineType,
-                            Location = v.Location,
-                            Handle = v.Handle
-                        };
-                        vertex.XData = xData;
-                        polyfaceVertexes.Add(vertex);
-                    }
-                    else if ((v.Flags & (VertexTypeFlags.PolyfaceMeshVertex)) == (VertexTypeFlags.PolyfaceMeshVertex))
-                    {
-                        PolyfaceMeshFace vertex = new PolyfaceMeshFace
-                        {
-                            Color = v.Color,
-                            Layer = v.Layer,
-                            LineType = v.LineType,
-                            VertexIndexes = v.VertexIndexes,
-                            Handle = v.Handle
-                        };
-                        vertex.XData = xData;
-                        polyfaceFaces.Add(vertex);
-                    }
-
-                    //if (v.Type == EntityType.PolyfaceMeshVertex)
-                    //{
-                    //    polyfaceVertexes.Add((PolyfaceMeshVertex) v);
-                    //}
-                    //else if (v.Type == EntityType.PolyfaceMeshFace)
-                    //{
-                    //    polyfaceFaces.Add((PolyfaceMeshFace) v);
-                    //}
-                    //else
-                    //{
-                    //    throw new EntityDxfException(v.Type.ToString(), this.file, "Error in vertex type.");
-                    //}
-                }
-                pol = new PolyfaceMesh(polyfaceVertexes, polyfaceFaces)
-                {
-                    Handle = handle
-                };
-                ((PolyfaceMesh)pol).EndSequence.Handle = endSequenceHandle;
-                ((PolyfaceMesh)pol).EndSequence.Layer = endSequenceLayer;
-            }
-            else
+            // only 2D polylines are supported; 3D polylines and polyface meshes are not read
             {
                 List<PolylineVertex> polylineVertexes = new List<PolylineVertex>();
                 foreach (var v in vertexes)
@@ -2231,17 +1343,6 @@ namespace SharpDxf
                         Handle = v.Handle
                     };
                     vertex.XData = xData;
-
-                    ////posible error avoidance, the polyline is marked as polyline code:(70,0) but the vertex is marked as Polyline3dVertex code:(70,32)
-                    //if (v.Type==EntityType.Polyline3dVertex)
-                    //{
-                    //    PolylineVertex polylineVertex = new PolylineVertex(((Polyline3dVertex)v).Location.X, ((Polyline3dVertex)v).Location.Y);
-                    //    polylineVertexes.Add(polylineVertex);
-                    //}
-                    //else
-                    //{
-                    //    polylineVertexes.Add((PolylineVertex) v);
-                    //}
                     polylineVertexes.Add(vertex);
                 }
 
@@ -2262,132 +1363,6 @@ namespace SharpDxf
             pol.XData = xData;
 
             return pol;
-        }
-
-        private Text ReadText(ref CodeValuePair code)
-        {
-            var text = new Text();
-
-            double firstAlignmentPointX = 0.0, firstAlignmentPointY = 0.0, firstAlignmentPointZ = 0.0;
-            double secondAlignmentPointX = 0.0, secondAlignmentPointY = 0.0, secondAlignmentPointZ = 0.0;
-            double normalX = 0.0, normalY = 0.0, normalZ = 1.0;
-            int horizontalAlignment = 0;
-            int verticalAlignment = 0;
-            Dictionary<ApplicationRegistry, XData> xData = new Dictionary<ApplicationRegistry, XData>();
-
-            code = this.ReadCodePair();
-            while (code.Code != 0)
-            {
-                switch (code.Code)
-                {
-                    case 5:
-                        text.Handle = code.Value;
-                        code = this.ReadCodePair();
-                        break;
-                    case 1:
-                        text.Value = code.Value;
-                        code = this.ReadCodePair();
-                        break;
-                    case 8: //layer code
-                        text.Layer = this.GetLayer(code.Value);
-                        code = this.ReadCodePair();
-                        break;
-                    case 62: //aci color code
-                        text.Color = new AciColor(short.Parse(code.Value));
-                        code = this.ReadCodePair();
-                        break;
-                    case 6: //type line code
-                        text.LineType = this.GetLineType(code.Value);
-                        code = this.ReadCodePair();
-                        break;
-                    case 10:
-                        firstAlignmentPointX = double.Parse(code.Value);
-                        code = this.ReadCodePair();
-                        break;
-                    case 20:
-                        firstAlignmentPointY = double.Parse(code.Value);
-                        code = this.ReadCodePair();
-                        break;
-                    case 30:
-                        firstAlignmentPointZ = double.Parse(code.Value);
-                        code = this.ReadCodePair();
-                        break;
-                    case 11:
-                        secondAlignmentPointX = double.Parse(code.Value);
-                        code = this.ReadCodePair();
-                        break;
-                    case 21:
-                        secondAlignmentPointY = double.Parse(code.Value);
-                        code = this.ReadCodePair();
-                        break;
-                    case 31:
-                        secondAlignmentPointZ = double.Parse(code.Value);
-                        code = this.ReadCodePair();
-                        break;
-                    case 40:
-                        text.Height = double.Parse(code.Value);
-                        code = this.ReadCodePair();
-                        break;
-                    case 41:
-                        text.WidthFactor = double.Parse(code.Value);
-                        code = this.ReadCodePair();
-                        break;
-                    case 50:
-                        text.Rotation = double.Parse(code.Value);
-                        code = this.ReadCodePair();
-                        break;
-                    case 51:
-                        text.ObliqueAngle = double.Parse(code.Value);
-                        code = this.ReadCodePair();
-                        break;
-                    case 7:
-                        text.Style = this.GetTextStyle(code.Value);
-                        code = this.ReadCodePair();
-                        break;
-                    case 72:
-                        horizontalAlignment = int.Parse(code.Value);
-                        code = this.ReadCodePair();
-                        break;
-                    case 73:
-                        verticalAlignment = int.Parse(code.Value);
-                        code = this.ReadCodePair();
-                        break;
-                    case 210:
-                        normalX = double.Parse(code.Value);
-                        code = this.ReadCodePair();
-                        break;
-                    case 220:
-                        normalY = double.Parse(code.Value);
-                        code = this.ReadCodePair();
-                        break;
-                    case 230:
-                        normalZ = double.Parse(code.Value);
-                        code = this.ReadCodePair();
-                        break;
-                    case 1001:
-                        XData xDataItem = this.ReadXDataRecord(code.Value, ref code);
-                        xData.Add(xDataItem.ApplicationRegistry, xDataItem);
-                        break;
-                    default:
-                        if (code.Code >= 1000 && code.Code <= 1071)
-                            throw new DxfInvalidCodeValueEntityException(code.Code, code.Value, this.file,
-                                                                         "The extended data of an entity must start with the application registry code " + this.fileLine);
-
-                        code = this.ReadCodePair();
-                        break;
-                }
-            }
-
-            TextAlignment alignment = ObtainAlignment(horizontalAlignment, verticalAlignment);
-
-            text.BasePoint = alignment == TextAlignment.BaselineLeft 
-                ? new Vector3(firstAlignmentPointX, firstAlignmentPointY, firstAlignmentPointZ) 
-                : new Vector3(secondAlignmentPointX, secondAlignmentPointY, secondAlignmentPointZ);
-            text.Normal = new Vector3(normalX, normalY, normalZ);
-            text.Alignment = alignment;
-            text.XData = xData;
-
-            return text;
         }
 
         private Entities.Vertex ReadVertex(ref CodeValuePair code)
@@ -2550,58 +1525,6 @@ namespace SharpDxf
 
         #region private methods
 
-        private static TextAlignment ObtainAlignment(int horizontal, int vertical)
-        {
-            TextAlignment alignment = TextAlignment.BaselineLeft;
-
-            if (horizontal == 0 && vertical == 3)
-                alignment = TextAlignment.TopLeft;
-
-            else if (horizontal == 1 && vertical == 3)
-                alignment = TextAlignment.TopCenter;
-
-            else if (horizontal == 2 && vertical == 3)
-                alignment = TextAlignment.TopRight;
-
-            else if (horizontal == 0 && vertical == 2)
-                alignment = TextAlignment.MiddleLeft;
-
-            else if (horizontal == 1 && vertical == 2)
-                alignment = TextAlignment.MiddleCenter;
-
-            else if (horizontal == 2 && vertical == 2)
-                alignment = TextAlignment.MiddleRight;
-
-            else if (horizontal == 0 && vertical == 1)
-                alignment = TextAlignment.BottomLeft;
-
-            else if (horizontal == 1 && vertical == 1)
-                alignment = TextAlignment.BottomCenter;
-
-            else if (horizontal == 2 && vertical == 1)
-                alignment = TextAlignment.BottomRight;
-
-            else if (horizontal == 0 && vertical == 0)
-                alignment = TextAlignment.BaselineLeft;
-
-            if (horizontal == 1 && vertical == 0)
-                alignment = TextAlignment.BaselineCenter;
-
-            else if (horizontal == 2 && vertical == 0)
-                alignment = TextAlignment.BaselineRight;
-
-            return alignment;
-        }
-
-        private Block GetBlock(string name)
-        {
-            if (this.blocks.ContainsKey(name))
-            {
-                return this.blocks[name];
-            }
-            return null;
-        }
-
         private Layer GetLayer(string name)
         {
             if (this.layers.ContainsKey(name))
@@ -2626,19 +1549,6 @@ namespace SharpDxf
             var lineType = new LineType(name);
             this.lineTypes.Add(lineType.Name, lineType);
             return lineType;
-        }
-
-        private TextStyle GetTextStyle(string name)
-        {
-            if (this.textStyles.ContainsKey(name))
-            {
-                return this.textStyles[name];
-            }
-
-            //just in case the text style has not been defined in the table section
-            var textStyle = new TextStyle(name, "Arial");
-            this.textStyles.Add(textStyle.Name, textStyle);
-            return textStyle;
         }
 
         private CodeValuePair ReadCodePair()
