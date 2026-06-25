@@ -27,20 +27,12 @@ namespace TVGLUnitTestsAndBenchmarking
             OutputServices.Presenter3D = new Presenter3D();
             var dirInfo = IO.BackoutToFolder(inputFolder);
           
-          var polgyons =  PolygonImportExport.DXF.Open(Path.Combine(dirInfo.FullName, "unicorn.dxf"), DxfVersion.AutoCad12, curvePrecision: 30   );
-           Presenter.ShowAndHang(polgyons);
-           
-           
-             var files = dirInfo.GetFiles("*");
-            foreach (var fileName in files.Skip(8))
+             var files = dirInfo.GetFiles("*.svg");
+            foreach (var fileName in files.Skip(0))
             {
                 Console.WriteLine("Attempting to open: " + fileName.Name);
-                var solid = IO.Open(fileName.FullName) as TessellatedSolid;
-                if (solid == null) continue;
-                var polygon = TestCases.GetRandomCrossSection(solid);
-                Presenter.ShowAndHang(polygon);
-                var delaunay2D = polygon.TriangulateDelaunay(false, true, targetNumTriangles: 500);
-                Presenter.ShowAndHang(delaunay2D.Edges.Select(e => new List<Vector2> { new Vector2(e.From.X, e.From.Y), new Vector2(e.To.X, e.To.Y) }).Concat(polygon.AllPaths));
+                var polygons = SVG.Open(fileName.FullName);
+                Presenter.ShowAndHang(polygons);
             }
         }
 

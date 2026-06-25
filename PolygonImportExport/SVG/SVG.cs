@@ -15,7 +15,9 @@ namespace PolygonImportExport
         private const string SvgNs = "http://www.w3.org/2000/svg";
 
         /// <param name="curvePrecision">Number of line segments used to approximate each curve entity (arc, circle, ellipse).</param>
-        public static List<Polygon> Open(string filePath, int curvePrecision = 30)
+        /// <param name="positiveYIsUp">When true (default), negates all Y values to convert from SVG's Y-down
+        /// coordinate frame into a standard right-handed frame where positive Y points up.</param>
+        public static List<Polygon> Open(string filePath, int curvePrecision = 30, bool positiveYIsUp = true)
         {
             var result = new List<Polygon>();
             var doc = XDocument.Load(filePath);
@@ -84,21 +86,34 @@ namespace PolygonImportExport
                 result.Add(new Polygon(pts));
             }
 
-            return result;
+            if (positiveYIsUp)
+            {
+                for (int idx = 0; idx < result.Count; idx++)
+                {
+                    var p = result[idx];
+                    var flipped = p.Path.Select(v => new Vector2(v.X, -v.Y)).ToList();
+                    result[idx] = new Polygon(flipped.AsEnumerable().Reverse(), isClosed: p.IsClosed);
+                }
+            }
+
+            return result.CreateShallowPolygonTrees(true);
         }
 
-        public static bool Save(string filePath, IEnumerable<Polygon> polygons)
+        /// <param name="positiveYIsUp">When true (default), negates all Y values to convert from a standard
+        /// right-handed frame (positive Y up) into SVG's Y-down coordinate frame.</param>
+        public static bool Save(string filePath, IEnumerable<Polygon> polygons, bool positiveYIsUp = true)
         {
             try
             {
+                double ySign = positiveYIsUp ? -1.0 : 1.0;
                 var allPolys = polygons.SelectMany(p => p.AllPolygons).ToList();
 
-                // Compute viewBox from bounding box of all vertices
+                // Compute viewBox from bounding box of all vertices (in SVG-space Y)
                 var allPts = allPolys.SelectMany(p => p.Path).ToList();
                 double minX = allPts.Min(p => p.X);
-                double minY = allPts.Min(p => p.Y);
+                double minY = allPts.Min(p => ySign * p.Y);
                 double maxX = allPts.Max(p => p.X);
-                double maxY = allPts.Max(p => p.Y);
+                double maxY = allPts.Max(p => ySign * p.Y);
                 double w = maxX - minX;
                 double h = maxY - minY;
 
@@ -110,7 +125,8 @@ namespace PolygonImportExport
 
                 foreach (var poly in allPolys)
                 {
-                    var d = BuildPathData(poly.Path, poly.IsClosed);
+                    if (positiveYIsUp) poly.Path.Reverse();
+                    var d = BuildPathData(poly.Path, poly.IsClosed, ySign);
                     svgEl.Add(new XElement(XName.Get("path", SvgNs),
                         new XAttribute("d", d),
                         new XAttribute("fill", poly.IsClosed ? "none" : "none"),
@@ -129,7 +145,7 @@ namespace PolygonImportExport
 
         // ── Save helpers ─────────────────────────────────────────────────────────
 
-        private static string BuildPathData(IEnumerable<Vector2> pts, bool closed)
+        private static string BuildPathData(IEnumerable<Vector2> pts, bool closed, double ySign)
         {
             var sb = new StringBuilder();
             bool first = true;
@@ -138,7 +154,7 @@ namespace PolygonImportExport
                 sb.Append(first ? 'M' : 'L');
                 sb.Append(F(p.X));
                 sb.Append(',');
-                sb.Append(F(p.Y));
+                sb.Append(F(ySign * p.Y));
                 sb.Append(' ');
                 first = false;
             }
@@ -168,126 +184,127 @@ namespace PolygonImportExport
                 {
                     cmd = t[0];
                     i++;
-                    continue;
+                    if (cmd != 'z' && cmd != 'Z')
+                        continue;
                 }
 
                 switch (cmd)
                 {
                     case 'M':
-                    {
-                        if (current.Count >= 2) result.Add(new Polygon(ApplyTransform(current, transform), isClosed: false));
-                        current = new List<Vector2>();
-                        if (!TryParseCoordPair(tokens, ref i, out double x, out double y)) break;
-                        cx = mx = x; cy = my = y;
-                        current.Add(new Vector2(cx, cy));
-                        cmd = 'L'; // implicit lineto after first M
-                        break;
-                    }
+                        {
+                            if (current.Count >= 2) result.Add(new Polygon(ApplyTransform(current, transform), isClosed: false));
+                            current = new List<Vector2>();
+                            if (!TryParseCoordPair(tokens, ref i, out double x, out double y)) break;
+                            cx = mx = x; cy = my = y;
+                            current.Add(new Vector2(cx, cy));
+                            cmd = 'L'; // implicit lineto after first M
+                            break;
+                        }
                     case 'm':
-                    {
-                        if (current.Count >= 2) result.Add(new Polygon(ApplyTransform(current, transform), isClosed: false));
-                        current = new List<Vector2>();
-                        if (!TryParseCoordPair(tokens, ref i, out double dx, out double dy)) break;
-                        cx = mx = cx + dx; cy = my = cy + dy;
-                        current.Add(new Vector2(cx, cy));
-                        cmd = 'l';
-                        break;
-                    }
+                        {
+                            if (current.Count >= 2) result.Add(new Polygon(ApplyTransform(current, transform), isClosed: false));
+                            current = new List<Vector2>();
+                            if (!TryParseCoordPair(tokens, ref i, out double dx, out double dy)) break;
+                            cx = mx = cx + dx; cy = my = cy + dy;
+                            current.Add(new Vector2(cx, cy));
+                            cmd = 'l';
+                            break;
+                        }
                     case 'L':
-                    {
-                        if (!TryParseCoordPair(tokens, ref i, out double x, out double y)) break;
-                        cx = x; cy = y;
-                        current.Add(new Vector2(cx, cy));
-                        break;
-                    }
+                        {
+                            if (!TryParseCoordPair(tokens, ref i, out double x, out double y)) break;
+                            cx = x; cy = y;
+                            current.Add(new Vector2(cx, cy));
+                            break;
+                        }
                     case 'l':
-                    {
-                        if (!TryParseCoordPair(tokens, ref i, out double dx, out double dy)) break;
-                        cx += dx; cy += dy;
-                        current.Add(new Vector2(cx, cy));
-                        break;
-                    }
+                        {
+                            if (!TryParseCoordPair(tokens, ref i, out double dx, out double dy)) break;
+                            cx += dx; cy += dy;
+                            current.Add(new Vector2(cx, cy));
+                            break;
+                        }
                     case 'H':
-                    {
-                        if (!TryParseDouble(tokens[i++], out double x)) break;
-                        cx = x;
-                        current.Add(new Vector2(cx, cy));
-                        break;
-                    }
+                        {
+                            if (!TryParseDouble(tokens[i++], out double x)) break;
+                            cx = x;
+                            current.Add(new Vector2(cx, cy));
+                            break;
+                        }
                     case 'h':
-                    {
-                        if (!TryParseDouble(tokens[i++], out double dx)) break;
-                        cx += dx;
-                        current.Add(new Vector2(cx, cy));
-                        break;
-                    }
+                        {
+                            if (!TryParseDouble(tokens[i++], out double dx)) break;
+                            cx += dx;
+                            current.Add(new Vector2(cx, cy));
+                            break;
+                        }
                     case 'V':
-                    {
-                        if (!TryParseDouble(tokens[i++], out double y)) break;
-                        cy = y;
-                        current.Add(new Vector2(cx, cy));
-                        break;
-                    }
+                        {
+                            if (!TryParseDouble(tokens[i++], out double y)) break;
+                            cy = y;
+                            current.Add(new Vector2(cx, cy));
+                            break;
+                        }
                     case 'v':
-                    {
-                        if (!TryParseDouble(tokens[i++], out double dy)) break;
-                        cy += dy;
-                        current.Add(new Vector2(cx, cy));
-                        break;
-                    }
+                        {
+                            if (!TryParseDouble(tokens[i++], out double dy)) break;
+                            cy += dy;
+                            current.Add(new Vector2(cx, cy));
+                            break;
+                        }
                     case 'A':
                     case 'a':
-                    {
-                        // Arc: rx ry x-rotation large-arc-flag sweep-flag x y
-                        if (i + 6 >= tokens.Count) { i = tokens.Count; break; }
-                        if (!TryParseDouble(tokens[i++], out double rx)) break;
-                        if (!TryParseDouble(tokens[i++], out double ry)) break;
-                        if (!TryParseDouble(tokens[i++], out double xrot)) break;
-                        if (!TryParseDouble(tokens[i++], out double largeArcFlag)) break;
-                        if (!TryParseDouble(tokens[i++], out double sweepFlag)) break;
-                        if (!TryParseCoordPair(tokens, ref i, out double ex, out double ey)) break;
-                        if (cmd == 'a') { ex += cx; ey += cy; }
-                        var arcPts = TessellateArc(cx, cy, rx, ry, xrot * Math.PI / 180.0,
-                            largeArcFlag != 0, sweepFlag != 0, ex, ey, precision);
-                        current.AddRange(arcPts);
-                        cx = ex; cy = ey;
-                        break;
-                    }
+                        {
+                            // Arc: rx ry x-rotation large-arc-flag sweep-flag x y
+                            if (i + 6 >= tokens.Count) { i = tokens.Count; break; }
+                            if (!TryParseDouble(tokens[i++], out double rx)) break;
+                            if (!TryParseDouble(tokens[i++], out double ry)) break;
+                            if (!TryParseDouble(tokens[i++], out double xrot)) break;
+                            if (!TryParseDouble(tokens[i++], out double largeArcFlag)) break;
+                            if (!TryParseDouble(tokens[i++], out double sweepFlag)) break;
+                            if (!TryParseCoordPair(tokens, ref i, out double ex, out double ey)) break;
+                            if (cmd == 'a') { ex += cx; ey += cy; }
+                            var arcPts = TessellateArc(cx, cy, rx, ry, xrot * Math.PI / 180.0,
+                                largeArcFlag != 0, sweepFlag != 0, ex, ey, precision);
+                            current.AddRange(arcPts);
+                            cx = ex; cy = ey;
+                            break;
+                        }
                     case 'C':
                     case 'c':
-                    {
-                        // Cubic Bezier: x1 y1 x2 y2 x y
-                        if (i + 5 >= tokens.Count) { i = tokens.Count; break; }
-                        if (!TryParseCoordPair(tokens, ref i, out double x1, out double y1)) break;
-                        if (!TryParseCoordPair(tokens, ref i, out double x2, out double y2)) break;
-                        if (!TryParseCoordPair(tokens, ref i, out double ex, out double ey)) break;
-                        if (cmd == 'c') { x1 += cx; y1 += cy; x2 += cx; y2 += cy; ex += cx; ey += cy; }
-                        var bezPts = TessellateCubicBezier(cx, cy, x1, y1, x2, y2, ex, ey, precision);
-                        current.AddRange(bezPts);
-                        cx = ex; cy = ey;
-                        break;
-                    }
+                        {
+                            // Cubic Bezier: x1 y1 x2 y2 x y
+                            if (i + 5 >= tokens.Count) { i = tokens.Count; break; }
+                            if (!TryParseCoordPair(tokens, ref i, out double x1, out double y1)) break;
+                            if (!TryParseCoordPair(tokens, ref i, out double x2, out double y2)) break;
+                            if (!TryParseCoordPair(tokens, ref i, out double ex, out double ey)) break;
+                            if (cmd == 'c') { x1 += cx; y1 += cy; x2 += cx; y2 += cy; ex += cx; ey += cy; }
+                            var bezPts = TessellateCubicBezier(cx, cy, x1, y1, x2, y2, ex, ey, precision);
+                            current.AddRange(bezPts);
+                            cx = ex; cy = ey;
+                            break;
+                        }
                     case 'Q':
                     case 'q':
-                    {
-                        // Quadratic Bezier: x1 y1 x y
-                        if (i + 3 >= tokens.Count) { i = tokens.Count; break; }
-                        if (!TryParseCoordPair(tokens, ref i, out double x1, out double y1)) break;
-                        if (!TryParseCoordPair(tokens, ref i, out double ex, out double ey)) break;
-                        if (cmd == 'q') { x1 += cx; y1 += cy; ex += cx; ey += cy; }
-                        var qPts = TessellateQuadBezier(cx, cy, x1, y1, ex, ey, precision);
-                        current.AddRange(qPts);
-                        cx = ex; cy = ey;
-                        break;
-                    }
+                        {
+                            // Quadratic Bezier: x1 y1 x y
+                            if (i + 3 >= tokens.Count) { i = tokens.Count; break; }
+                            if (!TryParseCoordPair(tokens, ref i, out double x1, out double y1)) break;
+                            if (!TryParseCoordPair(tokens, ref i, out double ex, out double ey)) break;
+                            if (cmd == 'q') { x1 += cx; y1 += cy; ex += cx; ey += cy; }
+                            var qPts = TessellateQuadBezier(cx, cy, x1, y1, ex, ey, precision);
+                            current.AddRange(qPts);
+                            cx = ex; cy = ey;
+                            break;
+                        }
                     case 'Z':
                     case 'z':
-                    {
-                        if (current.Count >= 3) result.Add(new Polygon(ApplyTransform(current, transform), isClosed: true));
-                        current = new List<Vector2>();
-                        cx = mx; cy = my;
-                        break;
-                    }
+                        {
+                            if (current.Count >= 3) result.Add(new Polygon(ApplyTransform(current, transform), isClosed: true));
+                            current = new List<Vector2>();
+                            cx = mx; cy = my;
+                            break;
+                        }
                     default:
                         i++;
                         break;
@@ -302,27 +319,45 @@ namespace PolygonImportExport
         {
             var tokens = new List<string>();
             var sb = new StringBuilder();
+            var sawDecimal = false;
             foreach (char c in d)
             {
                 if (char.IsLetter(c))
                 {
-                    if (sb.Length > 0) { tokens.Add(sb.ToString()); sb.Clear(); }
+                    if (sb.Length > 0)
+                    {
+                        tokens.Add(sb.ToString()); sb.Clear();
+                        sawDecimal = false;
+                    }
                     tokens.Add(c.ToString());
                 }
                 else if (c == ',' || c == ' ' || c == '\t' || c == '\r' || c == '\n')
                 {
-                    if (sb.Length > 0) { tokens.Add(sb.ToString()); sb.Clear(); }
+                    if (sb.Length > 0)
+                    {
+                        tokens.Add(sb.ToString()); sb.Clear();
+                        sawDecimal = false;
+                    }
                 }
-                else if (c == '-' && sb.Length > 0 && sb[^1] != 'e' && sb[^1] != 'E')
+                else if ((c == '-' || c == '+') && sb.Length > 0 && sb[^1] != 'e' && sb[^1] != 'E')
                 {
-                    if (sb.Length > 0) { tokens.Add(sb.ToString()); sb.Clear(); }
+
+                    tokens.Add(sb.ToString()); sb.Clear(); sawDecimal = false;
                     sb.Append(c);
+                }
+                else if (c == '.' && sawDecimal)
+                {
+                    // SVG compact notation: "13.04.4" means "13.04" then ".4"
+                    tokens.Add(sb.ToString()); sb.Clear();
+                    sb.Append(c); // sawDecimal stays true — new number starts with '.'
                 }
                 else
                 {
+                    if (c == '.') sawDecimal = true;
                     sb.Append(c);
                 }
             }
+
             if (sb.Length > 0) tokens.Add(sb.ToString());
             return tokens;
         }
