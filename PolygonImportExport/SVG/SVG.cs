@@ -173,6 +173,14 @@ namespace PolygonImportExport
             var current = new List<Vector2>();
             double cx = 0, cy = 0; // current pen position
             double mx = 0, my = 0; // last move-to
+            // Track previous bezier control points for the smooth (S/s/T/t) variants.
+            // Per SVG spec: the implied first control of a smooth bezier is the reflection
+            // of the previous bezier's last control through the current point — but only if
+            // the previous command was the matching bezier family; otherwise use current point.
+            double prevC2x = 0, prevC2y = 0;
+            double prevQ1x = 0, prevQ1y = 0;
+            bool hasPrevCubicCtrl = false;
+            bool hasPrevQuadCtrl = false;
 
             var tokens = TokenizePathData(d);
             int i = 0;
@@ -282,6 +290,23 @@ namespace PolygonImportExport
                             var bezPts = TessellateCubicBezier(cx, cy, x1, y1, x2, y2, ex, ey, precision);
                             current.AddRange(bezPts);
                             cx = ex; cy = ey;
+                            prevC2x = x2; prevC2y = y2;
+                            break;
+                        }
+                    case 'S':
+                    case 's':
+                        {
+                            // Smooth cubic Bezier: x2 y2 x y — first control mirrored from prev cubic's x2/y2.
+                            if (i + 3 >= tokens.Count) { i = tokens.Count; break; }
+                            if (!TryParseCoordPair(tokens, ref i, out double x2, out double y2)) break;
+                            if (!TryParseCoordPair(tokens, ref i, out double ex, out double ey)) break;
+                            if (cmd == 's') { x2 += cx; y2 += cy; ex += cx; ey += cy; }
+                            double x1 = hasPrevCubicCtrl ? 2 * cx - prevC2x : cx;
+                            double y1 = hasPrevCubicCtrl ? 2 * cy - prevC2y : cy;
+                            var bezPts = TessellateCubicBezier(cx, cy, x1, y1, x2, y2, ex, ey, precision);
+                            current.AddRange(bezPts);
+                            cx = ex; cy = ey;
+                            prevC2x = x2; prevC2y = y2;
                             break;
                         }
                     case 'Q':
@@ -295,6 +320,22 @@ namespace PolygonImportExport
                             var qPts = TessellateQuadBezier(cx, cy, x1, y1, ex, ey, precision);
                             current.AddRange(qPts);
                             cx = ex; cy = ey;
+                            prevQ1x = x1; prevQ1y = y1;
+                            break;
+                        }
+                    case 'T':
+                    case 't':
+                        {
+                            // Smooth quadratic Bezier: x y — control mirrored from prev quad's x1/y1.
+                            if (i + 1 >= tokens.Count) { i = tokens.Count; break; }
+                            if (!TryParseCoordPair(tokens, ref i, out double ex, out double ey)) break;
+                            if (cmd == 't') { ex += cx; ey += cy; }
+                            double x1 = hasPrevQuadCtrl ? 2 * cx - prevQ1x : cx;
+                            double y1 = hasPrevQuadCtrl ? 2 * cy - prevQ1y : cy;
+                            var qPts = TessellateQuadBezier(cx, cy, x1, y1, ex, ey, precision);
+                            current.AddRange(qPts);
+                            cx = ex; cy = ey;
+                            prevQ1x = x1; prevQ1y = y1;
                             break;
                         }
                     case 'Z':
@@ -309,6 +350,11 @@ namespace PolygonImportExport
                         i++;
                         break;
                 }
+
+                // Smooth-bezier reflection is only valid when the previous command was the
+                // matching family (C/c/S/s for cubic, Q/q/T/t for quad).
+                hasPrevCubicCtrl = cmd is 'C' or 'c' or 'S' or 's';
+                hasPrevQuadCtrl = cmd is 'Q' or 'q' or 'T' or 't';
             }
             if (current.Count >= 2)
                 result.Add(new Polygon(ApplyTransform(current, transform), isClosed: false));
