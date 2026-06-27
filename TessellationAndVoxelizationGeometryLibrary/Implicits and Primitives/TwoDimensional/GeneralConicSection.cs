@@ -148,18 +148,18 @@ namespace TVGL
 
         private void SetConicType()
         {
-            if (A.IsNegligible() && B.IsNegligible() && C.IsNegligible())
+            if (A.IsNegligible(Constants.BaseTolerance) && B.IsNegligible(Constants.BaseTolerance) && C.IsNegligible(Constants.BaseTolerance))
             {
                 A = B = C = 0;
                 CurveType = PrimitiveCurveType.StraightLine;
             }
-            else if (B.IsNegligible() && A.IsPracticallySame(C))
+            else if (B.IsNegligible(Constants.BaseTolerance) && A.IsPracticallySame(C, Constants.BaseTolerance))
             {
                 B = 0;
                 A = C = 0.5 * (A + C);
                 CurveType = PrimitiveCurveType.Circle;
             }
-            else if ((B * B).IsPracticallySame(A * C))
+            else if ((B * B).IsPracticallySame(A * C, Constants.BaseTolerance))
             {
                 B = Math.Sqrt(A * C);
                 CurveType = PrimitiveCurveType.Parabola;
