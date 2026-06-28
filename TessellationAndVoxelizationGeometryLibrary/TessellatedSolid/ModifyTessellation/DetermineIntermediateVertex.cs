@@ -119,7 +119,7 @@ namespace TVGL
                     else if (negSuccess)
                         newPoint = negPt.ConvertTo3DLocation(plane.AsTransformFromXYPlane);
                 }
-                else
+                else if (quadric.Type == QuadricType.HyperboloidOneSheet)
                 {
                     // if the points are on different branches of a hyperbola,
                     // then we can't use this method since there is no point between them
@@ -130,6 +130,8 @@ namespace TVGL
                     newPoint = MiscFunctions.PointOnPlaneFromLine(oddAxis, oddAxis.Dot(stationaryPt), midPoint,
                         oddAxis, out _);
                 }
+                else return 0.5 * (pt1 + pt2);
+
                 if (!(newPoint.DistanceSquared(midPoint) < pt1.DistanceSquared(pt2)))
                     // this is written as negative to catch when newPoint is null as well
                     newPoint = midPoint;

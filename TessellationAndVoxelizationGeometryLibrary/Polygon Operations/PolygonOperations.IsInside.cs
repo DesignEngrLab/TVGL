@@ -293,6 +293,8 @@ namespace TVGL
             var numberBelow = 0;
             foreach (var subPolygon in polygon.AllPolygons)
             {
+                if (!subPolygon.IsClosed) continue;
+
                 foreach (var line in subPolygon.Edges)
                 {
                     switch (DetermineLineToPointVerticalReferenceType(pointInQuestion, line, boundaryTolerance))
