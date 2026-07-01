@@ -437,6 +437,7 @@ namespace WindowsDesktopPresenter
         { return ConvertTessellatedSolidToMGM3D(ts.Faces, ts.SolidColor, ts.HasUniformColor); }
         private static IEnumerable<GeometryModel3D> ConvertTessellatedSolidToMGM3D(IEnumerable<TriangleFace> faces, Color defaultColor, bool hasUniformColor)
         {
+            if (faces is null) yield break;
             var faceList = faces as IList<TriangleFace> ?? faces.ToList();
             var numFaces = faceList.Count;
             var defaultSharpDXColor = new SharpDX.Color4(defaultColor.Rf, defaultColor.Gf, defaultColor.Bf, defaultColor.Af);
