@@ -716,7 +716,7 @@ namespace TVGL
         public static Delaunay2D TriangulateDelaunay(this Polygon polygon, 
             bool allowNewPolygonPoints, bool preservePolygonEdgesInTriangulation, int targetNumTriangles = -1, double targetSideLength = double.NaN)
         {
-            debugPolygon = polygon.Path;
+            //debugPolygon = polygon.Path;
             if (targetNumTriangles > 0 && targetSideLength > 0)
                 throw new ArgumentException("Cannot specify both a target number of triangles and a target side length.");
             if (targetNumTriangles <= 0 && !(targetSideLength > 0))

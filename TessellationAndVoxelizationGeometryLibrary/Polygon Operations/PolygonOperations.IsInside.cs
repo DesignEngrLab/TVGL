@@ -171,10 +171,11 @@ namespace TVGL
         /// <param name="onlyTopPolygon">if set to <c>true</c> [only top polygon].</param>
         /// <param name="pointInQuestion">The point in question.</param>
         /// <returns><c>true</c> if [is point inside polygon] [the specified point in question]; otherwise, <c>false</c>.</returns>
-        public static bool IsPointInsidePolygon(this Polygon polygon, bool onlyTopPolygon, Vector2 pointInQuestion)
+        public static bool IsPointInsidePolygon(this Polygon polygon, bool onlyTopPolygon, Vector2 pointInQuestion,
+            double tolerance = Constants.DefaultEqualityTolerance)
         {
             if (!polygon.IsClosed) return false;
-            var insideTopPolygon = IsPointInsidePolygon(polygon, pointInQuestion);
+            var insideTopPolygon = IsPointInsidePolygon(polygon, pointInQuestion, tolerance);
             if (onlyTopPolygon || !insideTopPolygon) return insideTopPolygon;
 
             //Else, it is inside the top polygon and we need to check the inner polygons
@@ -182,7 +183,7 @@ namespace TVGL
             var smallestEnclosingPolygon = polygon;
             foreach (var subPolygon in polygon.AllPolygons.Skip(1))
             {
-                if (IsPointInsidePolygon(subPolygon, pointInQuestion))
+                if (IsPointInsidePolygon(subPolygon, pointInQuestion, tolerance))
                 {
                     var absArea = Math.Abs(subPolygon.PathArea);
                     if (absArea < smallestArea)
@@ -203,13 +204,14 @@ namespace TVGL
         /// <param name="polygon">The polygon.</param>
         /// <param name="pointInQuestion">The point in question.</param>
         /// <returns><c>true</c> if [is point inside polygon] [the specified point in question]; otherwise, <c>false</c>.</returns>
-        private static bool IsPointInsidePolygon(this Polygon polygon, Vector2 pointInQuestion)
+        private static bool IsPointInsidePolygon(this Polygon polygon, Vector2 pointInQuestion, double tolerance)
         {
             //1) Get the axis aligned bounding box of the path. This is super fast.
             //If the point is inside the bounding box, continue to check with more detailed methods, 
             //Else, retrun false.
             var p = pointInQuestion;
-            if (p.Y < polygon.MinY || p.Y > polygon.MaxY || p.X < polygon.MinX || p.X > polygon.MaxX)
+            if (p.Y.IsLessThanNonNegligible(polygon.MinY,tolerance) || p.Y.IsGreaterThanNonNegligible(polygon.MaxY, tolerance)
+                || p.X.IsLessThanNonNegligible(polygon.MinX, tolerance) || p.X.IsGreaterThanNonNegligible(polygon.MaxX, tolerance))
                 return false;
 
             //2) Next, see how many lines are to the left of the point, using a fixed y value.
@@ -220,17 +222,34 @@ namespace TVGL
             var vertCount = verts.Count;
             for (int i = 0, j = vertCount - 1; i < vertCount; j = i++)
             {
-                //if ((verts[i].Y > p.Y) != (verts[j].Y > p.Y) &&
-                //       p.X < (verts[j].X - verts[i].X) * (p.Y - verts[i].Y) / (verts[j].Y - verts[i].Y) + verts[i].X)
-                // since this is called a lot, we can save a few cycles by avoiding division. Unforunately, if the 
-                // denominator is negative then we must flip the inequality. This makes the condition a bit unreadable. 
-                // See the commented code above for the orginial.
-                if (verts[i].Coordinates.IsPracticallySame(pointInQuestion))
+                if (verts[i].Coordinates.IsPracticallySame(pointInQuestion, tolerance))
                     return true;
-                if ((verts[i].Y <= p.Y) == (verts[j].Y > p.Y))
-                {
+                if (verts[i].Y.IsPracticallySame(verts[j].Y, tolerance))
+                {   // then line is horizontal
+                    // if the point doesn't have the same y-value then skip
+                    if (!verts[i].Y.IsPracticallySame(p.Y, tolerance))
+                        continue;
+                    // point has same y-value..
+                    if ((verts[i].X <= p.X) == (p.X < verts[j].X))
+                        return true; //point is on the horizontal line
+                }
+                // find if the edge passes on the left or the right of the point
+                if ((verts[i].Y <= p.Y) == (p.Y < verts[j].Y)) // otherwise not relevant, so skip
+                {   // Here a simple interpolation equation is used.
+                    // p.X < (verts[j].X - verts[i].X) * (p.Y - verts[i].Y) / (verts[j].Y - verts[i].Y) + verts[i].X)
+                    //
+                    // but, since this is called a lot, we can save a few cycles by avoiding division. Unfortunately, if the 
+                    // denominator is negative then we must flip the inequality. This makes the condition a bit unreadable. 
+                    // See the commented code above for the orginial.
                     var denom = verts[j].Y - verts[i].Y;
-                    if ((denom < 0) == ((p.X - verts[i].X) * denom > (verts[j].X - verts[i].X) * (p.Y - verts[i].Y)))
+                    var lhs = (p.X - verts[i].X) * denom;
+                    var rhs = (verts[j].X - verts[i].X) * (p.Y - verts[i].Y);
+                    if (lhs.IsPracticallySame(rhs, tolerance)) 
+                        // point is on the line
+                        return true;
+                    if ((denom < 0) == (lhs > rhs))
+                        // flip sign for every edge passing on the right side only
+                        // odd numbers are inside, even numbers are outside
                         inside = !inside;
                 }
             }
@@ -274,6 +293,8 @@ namespace TVGL
             var numberBelow = 0;
             foreach (var subPolygon in polygon.AllPolygons)
             {
+                if (!subPolygon.IsClosed) continue;
+
                 foreach (var line in subPolygon.Edges)
                 {
                     switch (DetermineLineToPointVerticalReferenceType(pointInQuestion, line, boundaryTolerance))

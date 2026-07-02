@@ -83,71 +83,59 @@ namespace TVGL
                 // to use the endpoints' normals, but this was not the case). From this plane, we slice to find the conic
                 // on that plane made by the quadric, then find the point on the curve between the end points that is farthest
                 // from the original line. This point has the gradient (normal of the conic) defined by the outwardDirc
-                var returnPt = Vector3.Null;
-                var midpoint = pt2;
-                var alpha = 0.1; //how much the new point should be at most far from the edge to be split as a fraction of the edge length
-                int maxIters = 50;
-                do
+                var midPoint = 0.5 * (pt1 + pt2);
+                if (!quadric.QuadricValue(pt1).IsNegligible() || !quadric.QuadricValue(pt2).IsNegligible())
+                    return midPoint;
+                var prevVector = pt2 - pt1; //line from-to of orig edge
+                //var midPtNormal = quadric.GetNormalAtPoint(midPoint);
+                var outwardNormal = (quadric.GetNormalAtPoint(pt1)
+                    + quadric.GetNormalAtPoint(pt2)).Normalize();
+                var planenormal = outwardNormal.Cross(prevVector).Normalize();
+                outwardNormal = prevVector.Cross(planenormal);
+                var plane = new Plane(planenormal.Dot(pt1), planenormal);
+                // this is the plane in which both pt1 and pt2 reside
+                // switch to the conic produced on this plane
+                var conic = GeneralConicSection.CreateFromQuadric(quadric, plane);
+                if (conic.CurveType == PrimitiveCurveType.StraightLine)
+                    return midPoint;
+                var p12D = pt1.ConvertTo2DCoordinates(planenormal, out _);
+                var p22D = pt2.ConvertTo2DCoordinates(planenormal, out _);
+
+                var idealCaseSuccess = conic.CurveType != PrimitiveCurveType.Hyperbola
+                    || conic.PointsOnSameHyperbolaBranch(p12D, p22D);
+                var newPoint = Vector3.Null;
+                if (idealCaseSuccess)
                 {
-                    maxIters--;
-                    midpoint = (midpoint + pt1) / 2;
-                    var prevVector = pt2 - pt1;
-                    var midPtNormal = quadric.GetNormalAtPoint(midpoint);
-                    var planenormal = midPtNormal.Cross(prevVector).Normalize();
-                    var outwarddir = prevVector.Cross(planenormal).Normalize();
-                    var plane = new Plane(planenormal.Dot(pt1), planenormal);
-                    var midPoint2d = midpoint.ConvertTo2DCoordinates(planenormal, out _);
-                    var outwarddir2d = outwarddir.ConvertTo2DCoordinates(planenormal, out _);
-                    var conic = GeneralConicSection.CreateFromQuadric(quadric, plane);
+                    var outwarddir2d = outwardNormal.ConvertTo2DCoordinates(planenormal, out _);
+                    var lineDir2D = (p22D - p12D).Normalize();
+                    // we want the point that is farthest from the line, and the outwardDir is
+                    // perpendicular to the line so the point has the gradient in this same dir
+                    // but we're actually going to convert to 2D and solve for it there
                     var posSuccess = conic.PointsAtGivenGradient(outwarddir2d, out var posPt);
                     var negSuccess = conic.PointsAtGivenGradient(-outwarddir2d, out var negPt);
-                    var oddAxis = GetOddPrincipalAxis(quadric);
-                    var stationaryPt = quadric.StationaryPoint;
-
-                    if (oddAxis.Dot(midpoint - stationaryPt) < 0)
-                    {
-                        oddAxis = -oddAxis; // make sure the odd axis is pointing in the same direction as the midpoint.
-                    }
-                    if (posSuccess && (!negSuccess || posPt.DistanceSquared(midPoint2d) < negPt.DistanceSquared(midPoint2d)))
-                    {
-                        var posPt3 = posPt.ConvertTo3DLocation(plane.AsTransformFromXYPlane);
-                        //if (oddAxis.IsNull() || oddAxis.Dot(posPt3 - stationaryPt) > 0)
-                        returnPt = posPt3;
-                    }
+                    if (posSuccess && (!negSuccess || MiscFunctions.DistancePointToLine(posPt, p12D, lineDir2D, out _)
+                        <= MiscFunctions.DistancePointToLine(negPt, p12D, lineDir2D, out _)))
+                        newPoint = posPt.ConvertTo3DLocation(plane.AsTransformFromXYPlane);
                     else if (negSuccess)
-                    {
-                        var negPt3 = negPt.ConvertTo3DLocation(plane.AsTransformFromXYPlane);
-                        //if (oddAxis.IsNull() || oddAxis.Dot(negPt3 - stationaryPt) > 0)
-                        returnPt = negPt3;
-                    }
+                        newPoint = negPt.ConvertTo3DLocation(plane.AsTransformFromXYPlane);
+                }
+                else if (quadric.Type == QuadricType.HyperboloidOneSheet)
+                {
+                    // if the points are on different branches of a hyperbola,
+                    // then we can't use this method since there is no point between them
+                    // on the conic. Instead, we project to the plane that would slice the
+                    // hyperboloid in halves
+                    var oddAxis = quadric.OddAxis;
+                    var stationaryPt = quadric.StationaryPoint;
+                    newPoint = MiscFunctions.PointOnPlaneFromLine(oddAxis, oddAxis.Dot(stationaryPt), midPoint,
+                        oddAxis, out _);
+                }
+                else return 0.5 * (pt1 + pt2);
 
-                    // fallback plan 1
-                    var midPointProjections = quadric.LineIntersection(midpoint, outwarddir);
-
-                    if (midPointProjections.Any())
-                    {
-                        // Fallback: project the midpoint onto the quadric along the surface normal
-                        var bestT = double.PositiveInfinity;
-                        Vector3 result = midpoint;
-                        foreach (var (intersection, t) in midPointProjections)
-                        {
-                            if (Math.Abs(t) < Math.Abs(bestT))
-                            {
-                                bestT = t;
-                                result = intersection;
-                            }
-                        }
-                        //if (oddAxis.IsNull() || oddAxis.Dot(result - stationaryPt) > 0)
-                        if (returnPt.IsNull() || returnPt.DistanceSquared(midpoint) > result.DistanceSquared(midpoint))
-                            returnPt = result;
-                    }
-                    // fall back plan 2
-                    var result2 = new Plane(stationaryPt, oddAxis).LineIntersection(midpoint, outwarddir).First().intersection;
-
-                    if (returnPt.IsNull() || returnPt.DistanceSquared(midpoint) > result2.DistanceSquared(midpoint))
-                        returnPt = result2;
-                } while ((returnPt - pt1 - (returnPt - pt1).Dot(pt2 - pt1) * (pt2 - pt1) / (pt2 - pt1).LengthSquared()).LengthSquared() > alpha * (pt2 - pt1).LengthSquared() && maxIters > 0);
-                return returnPt;
+                if (!(newPoint.DistanceSquared(midPoint) < pt1.DistanceSquared(pt2)))
+                    // this is written as negative to catch when newPoint is null as well
+                    newPoint = midPoint;
+                return newPoint;
             }
             if (primitive is Sphere sphere)
                 // the direction from the center to the average of the two points is the direction to
@@ -167,29 +155,11 @@ namespace TVGL
         }
 
 
-        internal static Vector3 GetOddPrincipalAxis(GeneralQuadric quadric)
-        {
-            // The principal axes are the axes along which the rate of change of the gradient is maximized or minimized.
-            // This can be found by solving for the eigenvectors of the Hessian matrix of the quadric function.
-            // In particular we want the odd principal axis, which is the one that is different in sign from the others.
-            // This is the same as the cone or hyperboloid axis.
-            Matrix3x3 coeffs = quadric.GetHessian();
-            var eigenVals = coeffs.GetEigenValuesAndVectors(out var eigenVecs);
-
-            for (int i = 0; i < eigenVals.Length; i++)
-            {
-                if (eigenVals[i].Real < 0 && eigenVals.Aggregate(1.0, (a, b) => a * b.Real) < 0 ||
-                    eigenVals[i].Real > 0 && eigenVals.Aggregate(1.0, (a, b) => a * b.Real) > 0)
-                    return new Vector3(eigenVecs[i][0].Real, eigenVecs[i][1].Real, eigenVecs[i][2].Real);
-            }
-            return Vector3.Null;
-        }
-
-
 
         private static Vector3 DetermineIntermediateVertexPosition(Vector3 coordinates1, Vector3 coordinates2, PrimitiveSurface primitive1, PrimitiveSurface primitive2)
         {
-            throw new NotImplementedException();
+            return Vector3.Null;
+            //throw new NotImplementedException();
         }
 
         /// <summary>

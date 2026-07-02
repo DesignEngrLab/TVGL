@@ -103,7 +103,7 @@ namespace TVGL
                     break;
                 //var map = edgeLengthList.IndexOf(c.edge);
                 //Console.WriteLine(map);
-                //if (iterations % 1000 <= 0)
+                //if (iterations % 1 <= 0)
                 //    Presenter.ShowAndHang([initEdgePlot, addedEdges.Select(e => new[] { e.From.Coordinates, e.To.Coordinates }), [[c.edge.From.Coordinates, c.mpt, c.edge.To.Coordinates]]],
                 //        [false, false, false], colors: [new Color(KnownColors.LightGray), new Color(KnownColors.Blue), new Color(KnownColors.Red)]);
                 var origLeftFace = c.edge.OtherFace;

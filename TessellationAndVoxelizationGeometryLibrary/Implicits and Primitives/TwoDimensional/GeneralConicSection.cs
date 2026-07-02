@@ -148,18 +148,18 @@ namespace TVGL
 
         private void SetConicType()
         {
-            if (A.IsNegligible() && B.IsNegligible() && C.IsNegligible())
+            if (A.IsNegligible(Constants.BaseTolerance) && B.IsNegligible(Constants.BaseTolerance) && C.IsNegligible(Constants.BaseTolerance))
             {
                 A = B = C = 0;
                 CurveType = PrimitiveCurveType.StraightLine;
             }
-            else if (B.IsNegligible() && A.IsPracticallySame(C))
+            else if (B.IsNegligible(Constants.BaseTolerance) && A.IsPracticallySame(C, Constants.BaseTolerance))
             {
                 B = 0;
                 A = C = 0.5 * (A + C);
                 CurveType = PrimitiveCurveType.Circle;
             }
-            else if ((B * B).IsPracticallySame(A * C))
+            else if ((B * B).IsPracticallySame(A * C, Constants.BaseTolerance))
             {
                 B = Math.Sqrt(A * C);
                 CurveType = PrimitiveCurveType.Parabola;
@@ -172,6 +172,20 @@ namespace TVGL
             }
         }
 
+        /// <summary>
+        /// Simply negates the conic, which is equivalent to multiplying all 
+        /// coefficients by -1. This does not change the curve but it does reverse
+        /// the direction of the gradient.
+        /// </summary>
+        public void Negate()
+        {
+            A = -A;
+            B = -B;
+            C = -C;
+            D = -D;
+            E = -E;
+            SetConicType();
+        }
 
         /// <summary>
         /// Calculates at point.
@@ -398,9 +412,48 @@ namespace TVGL
             return false;
         }
 
-        private Vector2 GetGradient(Vector2 pt)
+        /// <summary>
+        /// Gets the gradient of the point in the conic field, the point does not have to be on the
+        /// curve.
+        /// </summary>
+        /// <param name="pt"></param>
+        /// <returns></returns>
+        public Vector2 GetGradient(Vector2 pt)
         {
             return new Vector2(2 * A * pt.X + B * pt.Y + D, 2 * C * pt.Y + B * pt.X + E);
+        }
+
+
+        public Vector2 StationaryPoint()
+        {
+            // For a conic section Ax² + Bxy + Cy² + Dx + Ey + F = 0, the stationary point is found by setting the partial derivatives to zero:
+            // ∂f/∂x = 2Ax + By + D = 0
+            // ∂f/∂y = Bx + 2Cy + E = 0
+            // Solving this system of linear equations gives the stationary point.        
+            var det = 4 * A * C - B * B;
+            if (det.IsNegligible()) return Vector2.Null; // No unique stationary point
+            // applying Cramer's rule to solve for x and y
+            var x = (B * E - 2 * C * D) / det;
+            var y = (B * D - 2 * A * E) / det;
+            return new Vector2(x, y);
+        }
+
+
+        public bool PointsOnSameHyperbolaBranch(Vector2 p1, Vector2 p2)
+        {
+            Vector2 center = StationaryPoint();
+            var eigenValues = StarMath.GetEigenValuesAndVectors2(2 * A, B, B, 2 * C, out var eigenVectors);
+            // need the eigenvector corresponding to the positive eigenvalue, which is the direction of the
+            // hyperbola branches. The other eigenvector is the direction of the asymptotes.
+            var posEigenVectorComplex = eigenValues[0].Real > 0 ? eigenVectors[0] : eigenVectors[1];
+            var posEigenVector = new Vector2(posEigenVectorComplex[0].Real, posEigenVectorComplex[1].Real);
+
+            //  Compute signed projections
+            var u1 = Vector2.Dot(p1 - center, posEigenVector);
+            var u2 = Vector2.Dot(p2 - center, posEigenVector);
+
+            // Same branch if signs match
+            return u1 * u2 > 0;
         }
 
 

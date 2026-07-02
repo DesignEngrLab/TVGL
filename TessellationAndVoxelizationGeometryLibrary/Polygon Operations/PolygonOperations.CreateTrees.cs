@@ -84,9 +84,11 @@ namespace TVGL
             bool alreadyOrderedInIncreasingArea = false)
         {
             var branches = new List<Polygon>();
-            var orderedPolygons = alreadyOrderedInIncreasingArea ? polygons : polygons.OrderBy(p => Math.Abs(p.Area));
+            var orderedPolygons = alreadyOrderedInIncreasingArea ? polygons
+                : polygonSignIsCorrect ? polygons.OrderBy(p => p.Area) : polygons.OrderBy(p => Math.Abs(p.Area));
             foreach (var polygon in orderedPolygons)
             {
+                polygon.MakePolygonEdgesIfNonExistent();
                 if (polygon.Vertices.Count < 3 || polygon.Area.IsNegligible()) continue;
                 for (int i = branches.Count - 1; i >= 0; i--)
                 {
