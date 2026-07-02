@@ -50,6 +50,9 @@ namespace TVGL
         //CADIndex refers to the part, not the body.
         public int BodyIndex { get; set; }
 
+        //Returns whether the Solid was embedded within another file during laoding (such as a part within a STEP assembly)
+        public bool IsEmbedded { get; set; } = false;
+
         //Filepath may be helpful in processing subassembly files. No need to save for TVGLZ.
         //Mutliple solids may have the same filepath (as if from Step file), so this is not a unique identifier.
         [JsonIgnore]

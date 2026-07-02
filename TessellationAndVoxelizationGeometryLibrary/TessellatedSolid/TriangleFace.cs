@@ -272,6 +272,24 @@ namespace TVGL
                 yield return C;
             }
         }
+
+        /// <summary>
+        /// Gets the Non-Null Vertices.  Used in case of robustness issues where some vertuces may be null. 
+        /// </summary>
+        /// <value>The vertices.</value>
+        public IEnumerable<Vertex> NonNullVertices
+        {
+            get
+            { 
+                if (A != null)
+                    yield return A;
+                if (B != null)
+                    yield return B;
+                if (C != null)
+                    yield return C;
+            }
+        }
+
         /// <summary>
         /// Gets the first vertex
         /// </summary>
@@ -310,11 +328,23 @@ namespace TVGL
         {
             get
             {
-                //if(AB != null)
+                yield return AB;
+                yield return BC;
+                yield return CA;
+            }
+        }
+        /// <summary>
+        /// Gets the Non-Null edges. Used in case of robustness issues where some edges may be null. 
+        /// </summary>
+        public IEnumerable<Edge> NonNullEdges
+        {
+            get
+            {
+                if (AB != null)
                     yield return AB;
-                //if (BC != null) 
+                if (BC != null)
                     yield return BC;
-                //if (CA != null)
+                if (CA != null)
                     yield return CA;
             }
         }

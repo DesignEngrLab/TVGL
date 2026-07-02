@@ -312,7 +312,8 @@ namespace TVGL
         public string GenerateAssemblyTreeJson()
         {
             //Zero depth is the assembly root
-            var treeObject = BuildAssemblyTreeNode(RootAssembly, depth: 0, 0);
+            var instanceIndex = 0;
+            var treeObject = BuildAssemblyTreeNode(RootAssembly, depth: 0, ref instanceIndex);
             return JsonConvert.SerializeObject(treeObject, Formatting.Indented);
         }
 
@@ -322,7 +323,7 @@ namespace TVGL
         /// <param name="subAssembly">The SubAssembly to process</param>
         /// <param name="globalAssembly">The global SolidAssembly reference for accessing solids</param>
         /// <returns>A dictionary representing the assembly node with its hierarchy</returns>
-        public dynamic BuildAssemblyTreeNode(SubAssembly subAssembly, int depth, int instanceIndex)
+        public dynamic BuildAssemblyTreeNode(SubAssembly subAssembly, int depth,  ref int instanceIndex)
         {
             var debug = false;
             //The depth at this point is the depth of the parent, so all children here are +1;
@@ -341,8 +342,9 @@ namespace TVGL
                     Name = solidModel.Name,
                     CADIndex = solidModel.CADIndex,
                     BodyIndex = solidModel.BodyIndex,
+                    IsEmbedded = solidModel.IsEmbedded,
                     ReferenceIndex = s.partIndex,
-                    InstanceIndex = instanceIndex++,
+                    InstanceIndex = instanceIndex++, // reads, then advances the shared counter
                     Depth = depth + 1,
                     SolidType = solidModel.GetType().Name
                 };
@@ -358,7 +360,7 @@ namespace TVGL
                 if (debug)
                     Console.WriteLine($"{new string(' ', (depth + 1) * 8)}Depth:{depth + 1} SubAssembly:{sa.assembly.Name} (RefID: {sa.assembly.CADIndex})");
                 
-                var childNode = BuildAssemblyTreeNode(sa.assembly, depth + 1, instanceIndex);
+                var childNode = BuildAssemblyTreeNode(sa.assembly, depth + 1, ref instanceIndex);
                 subAssemblies.Add(childNode);
             }
 
