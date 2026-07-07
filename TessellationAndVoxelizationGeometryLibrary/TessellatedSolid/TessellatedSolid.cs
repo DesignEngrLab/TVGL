@@ -246,6 +246,8 @@ namespace TVGL
                 writer.WritePropertyName("BodyIndex");
                 writer.WriteValue(BodyIndex);
             }
+            writer.WritePropertyName("IsEmbedded");
+            writer.WriteValue(IsEmbedded);
 
             writer.WritePropertyName("TessellationError");
             writer.WriteValue(TessellationError);
@@ -515,6 +517,9 @@ namespace TVGL
                         break;
                     case "BodyIndex":
                         ts.BodyIndex = (int)reader.ReadAsInt32();
+                        break;
+                    case "IsEmbedded":
+                        ts.IsEmbedded = (bool)reader.ReadAsBoolean();
                         break;
                     case "Colors":
                         // to make saving colors for faces both quick and compact, we use a little trick to 
@@ -1471,6 +1476,7 @@ namespace TVGL
             copy.ReferenceIndex = ReferenceIndex;
             copy.CADIndex = CADIndex;
             copy.BodyIndex = BodyIndex;
+            copy.IsEmbedded = IsEmbedded;
             return copy;
         }
 

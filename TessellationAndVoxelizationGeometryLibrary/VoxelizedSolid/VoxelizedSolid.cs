@@ -556,6 +556,7 @@ namespace TVGL
             result.CADIndex = CADIndex;
             result.BodyIndex = BodyIndex;
             result.ReferenceIndex = ReferenceIndex;
+            result.IsEmbedded = IsEmbedded;
             result.SameTolerance = SameTolerance;
             result.SolidColor = SolidColor;
             result.Units = Units;
@@ -602,6 +603,7 @@ namespace TVGL
             ts.BodyIndex = BodyIndex;
             ts.CADIndex = CADIndex;
             ts.ReferenceIndex = ReferenceIndex;
+            ts.IsEmbedded = IsEmbedded;
             ts.SameTolerance = SameTolerance;
             ts.SolidColor = SolidColor;
             ts.Units = Units;
