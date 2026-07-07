@@ -84,6 +84,11 @@ namespace TVGL
                 // on that plane made by the quadric, then find the point on the curve between the end points that is farthest
                 // from the original line. This point has the gradient (normal of the conic) defined by the outwardDirc
                 var midPoint = 0.5 * (pt1 + pt2);
+                var newPoint = quadric.ClosestPointOnSurfaceToPoint(midPoint);
+                if (!newPoint.IsNull())
+                    return newPoint;
+                else return midPoint;
+                /*
                 if (!quadric.QuadricValue(pt1).IsNegligible() || !quadric.QuadricValue(pt2).IsNegligible())
                     return midPoint;
                 var prevVector = pt2 - pt1; //line from-to of orig edge
@@ -91,7 +96,7 @@ namespace TVGL
                 var outwardNormal = (quadric.GetNormalAtPoint(pt1)
                     + quadric.GetNormalAtPoint(pt2)).Normalize();
                 var planenormal = outwardNormal.Cross(prevVector).Normalize();
-                outwardNormal = prevVector.Cross(planenormal);
+                outwardNormal = prevVector.Cross(planenormal).Normalize();
                 var plane = new Plane(planenormal.Dot(pt1), planenormal);
                 // this is the plane in which both pt1 and pt2 reside
                 // switch to the conic produced on this plane
@@ -130,12 +135,13 @@ namespace TVGL
                     newPoint = MiscFunctions.PointOnPlaneFromLine(oddAxis, oddAxis.Dot(stationaryPt), midPoint,
                         oddAxis, out _);
                 }
-                else return 0.5 * (pt1 + pt2);
+                //else return 0.5 * (pt1 + pt2);
 
-                if (!(newPoint.DistanceSquared(midPoint) < pt1.DistanceSquared(pt2)))
+                if (!(newPoint.DistanceSquared(midPoint) < 0.5*pt1.DistanceSquared(pt2)))
                     // this is written as negative to catch when newPoint is null as well
                     newPoint = midPoint;
                 return newPoint;
+                */
             }
             if (primitive is Sphere sphere)
                 // the direction from the center to the average of the two points is the direction to
