@@ -187,6 +187,9 @@ namespace TVGL
                 var plane = new Plane(distance, planeNormal);
                 var planeError = vertices[0] is Vector3 ? plane.CalculateMaxError((IList<Vector3>)vertices)
                    : plane.CalculateMaxError(vertices.Select(v => new Vector3(v.X, v.Y, v.Z)));
+                //If there is an invalid plane normal, we do not want to call FindOBBAlongDirection
+                if (planeNormal.IsNull())
+                    return null;
                 if (planeError <= 0.0001)
                     return FindOBBAlongDirection(vertices, planeNormal);
             }
@@ -855,6 +858,8 @@ namespace TVGL
         /// <exception cref="System.Exception">Volume should never be negligible, unless the input data is bad</exception>
         public static BoundingBox<T> FindOBBAlongDirection<T>(this IEnumerable<T> vertices, Vector3 direction) where T : IVector3D
         {
+            if (direction.IsNull())
+                throw new Exception("Null Direction given for FindOBBAlongDirection.");
             var direction1 = direction.Normalize();
             var vertexList = vertices as IList<T> ?? vertices.ToList();
             var depth = GetLengthAndExtremeVertices(vertexList, direction1, out var bottomVertices, out var topVertices);
