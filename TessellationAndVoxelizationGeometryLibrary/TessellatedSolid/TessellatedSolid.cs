@@ -1244,9 +1244,8 @@ namespace TVGL
             var face = Faces[removeFaceIndex];
             foreach (var vertex in face.Vertices)
                 vertex?.Faces.Remove(face);
-            foreach (var edge in face.Edges)
+            foreach (var edge in face.NonNullEdges)
             {
-                if (edge == null) continue;
                 if (face == edge.OwnedFace) edge.OwnedFace = null;
                 if (face == edge.OtherFace) edge.OtherFace = null;
             }

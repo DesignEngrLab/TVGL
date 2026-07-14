@@ -424,11 +424,8 @@ namespace TVGL
         {
             get
             {
-                foreach (var e in Edges)
-                {
-                    if (e != null)
-                        yield return e.GetMatingFace(this);
-                }
+                foreach (var e in NonNullEdges)
+                    yield return e.GetMatingFace(this);
             }
         }
 

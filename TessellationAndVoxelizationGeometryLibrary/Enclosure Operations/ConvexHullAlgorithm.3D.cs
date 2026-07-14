@@ -69,8 +69,8 @@ namespace TVGL
                 foreach (var face in ts.Faces.Where(face => face.Vertices.All(v => v.PartOfConvexHull)))
                 {
                     face.PartOfConvexHull = true;
-                    foreach (var e in face.Edges)
-                        if (e != null) e.PartOfConvexHull = true;
+                    foreach (var e in face.NonNullEdges)
+                        e.PartOfConvexHull = true;
                 }
                 return true;
             }
