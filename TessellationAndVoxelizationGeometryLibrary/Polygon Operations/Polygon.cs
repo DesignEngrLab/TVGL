@@ -691,6 +691,19 @@ namespace TVGL
             }
         }
 
+        public Polygon ScaleToNew(double scale)
+        {
+            var thisPath = new List<Vector2>();
+            foreach(var vertex in Path)
+                thisPath.Add(new Vector2(vertex.X * scale, vertex.Y * scale));
+
+            var innerPolygons = new List<Polygon>();
+            foreach (var inner in InnerPolygons)
+                innerPolygons.Add(inner.ScaleToNew(scale));
+
+            return new Polygon(thisPath, Index, false, IsClosed) { _innerPolygons = innerPolygons };
+        }
+
         /// <summary>
         /// Copies the specified copy inner polygons.
         /// </summary>
