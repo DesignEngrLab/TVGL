@@ -166,7 +166,7 @@ namespace TVGL
             foreach (var v in Vertices)
             {
                 var distance = v.Coordinates.Distance(point);
-                if (Math.Abs(distance) < shortestDistance)
+                if (Math.Abs(distance) <= shortestDistance)
                 {
                     shortestDistance = Math.Abs(distance);
                     closestElt = v;
@@ -178,7 +178,7 @@ namespace TVGL
                 var distance = MiscFunctions.DistancePointToLine(point, edge.From.Coordinates, lineVector, out var pointOnLine);
                 var t = (pointOnLine - edge.From.Coordinates).Dot(lineVector);
                 if (t < 0 || t > edge.Length) continue;
-                if (Math.Abs(distance) < shortestDistance)
+                if (Math.Abs(distance) <= shortestDistance)
                 {
                     shortestDistance = Math.Abs(distance);
                     closestElt = edge;
@@ -195,12 +195,12 @@ namespace TVGL
             if (closestElt is Edge edge)
             {
                 var vecToEdgeCenter = (edge.Center() - point).Normalize();
-                var ownDot = Faces.Contains(edge.OwnedFace) ?
+                var ownDot = edge.OwnedFace!=null && Faces.Contains(edge.OwnedFace) ?
                     Math.Abs(vecToEdgeCenter.Dot(edge.OwnedFace.Normal))
-                    : double.PositiveInfinity;
-                var othDot = Faces.Contains(edge.OtherFace)
+                    : 0.0;
+                var othDot = edge.OtherFace!=null && Faces.Contains(edge.OtherFace)
                     ? Math.Abs(vecToEdgeCenter.Dot(edge.OtherFace.Normal))
-                    : double.PositiveInfinity;
+                    : 0.0;
                 return ownDot > othDot ? edge.OwnedFace.Normal : edge.OtherFace.Normal;
             }
             var vertex = (Vertex)closestElt;
