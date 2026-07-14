@@ -42,16 +42,6 @@ namespace TVGL
         [JsonIgnore]
         public List<string> MissingFiles { get; set; }
 
-        public void TrimMissingFilesToRelativePaths()
-        {
-            var parentDirectory = Path.GetDirectoryName(RootAssembly.FilePath);
-            if (MissingFiles != null)
-            {
-                for (var i = 0; i < MissingFiles.Count; i++)
-                    MissingFiles[i] = Path.GetRelativePath(parentDirectory, MissingFiles[i]);
-            }
-        }
-
         /// <summary>
         /// The number of PARTS in the assembly. This is not necessarily the same as the number of solids, 
         /// since some solids may be duplicates (i.e., used in multiple locations within the assembly) and 
