@@ -9,10 +9,13 @@ namespace PolygonImportExport
     {
         internal static void AddEntity(Entity entity, List<Polygon> result, int curvePrecision)
         {
+            if (entity.IsInvisible) return;
             switch (entity)
             {
                 case IPolyline polyline: // LwPolyline, Polyline2D, Polyline3D
-                    AddPolygon(result, PolylineToPoints(polyline, curvePrecision), polyline.IsClosed);
+                    var isClosed = polyline.IsClosed;
+                    var points = PolylineToPoints(polyline, curvePrecision, ref isClosed);
+                    AddPolygon(result, points, isClosed);
                     break;
 
                 case Line line:
@@ -53,14 +56,13 @@ namespace PolygonImportExport
         /// Converts a polyline's vertices to points, tessellating bulge-encoded arc
         /// segments. For closed polylines the first point is not repeated at the end.
         /// </summary>
-        private static List<Vector2> PolylineToPoints(IPolyline polyline, int curvePrecision)
+        private static List<Vector2> PolylineToPoints(IPolyline polyline, int curvePrecision, ref bool isClosed)
         {
             var vertices = polyline.Vertices.ToList();
             var points = new List<Vector2>();
             if (vertices.Count == 0) return points;
-
             points.Add(ToVector2(vertices[0].Location));
-            var numSegments = polyline.IsClosed ? vertices.Count : vertices.Count - 1;
+            var numSegments = isClosed ? vertices.Count : vertices.Count - 1;
             for (int i = 0; i < numSegments; i++)
             {
                 var start = ToVector2(vertices[i].Location);
@@ -72,6 +74,16 @@ namespace PolygonImportExport
                     AddBulgeArcPoints(points, start, end, bulge, chord, curvePrecision, includeEnd: !isClosingSegment);
                 else if (!isClosingSegment)
                     points.Add(end);
+            }
+            if (!isClosed)
+            {
+                var xMin = points.Min(p => p.X);
+                var yMin = points.Min(p => p.Y);
+                var xMax = points.Max(p => p.X);
+                var yMax = points.Max(p => p.Y);
+                var error = 1e-9 * Math.Max(xMax - xMin, yMax - yMin);
+                isClosed = points[0].IsPracticallySame(points[^1], error);
+                if (isClosed) points.RemoveAt(0);
             }
             return points;
         }
@@ -99,5 +111,21 @@ namespace PolygonImportExport
 
         private static Vector2 ToVector2(XYZ point) => new Vector2(point.X, point.Y);
         private static Vector2 ToVector2(CSMath.IVector point) => new Vector2(point[0], point[1]);
+
+        internal static List<Polygon> OrganizeIntoShallowTree(List<Polygon> rawPolygons)
+        {
+            var openPolylines = new List<Polygon>();
+            for (int i = rawPolygons.Count - 1; i >= 0; i--)
+            {
+                if (!rawPolygons[i].IsClosed)
+                {
+                    openPolylines.Add(rawPolygons[i]);
+                    rawPolygons.RemoveAt(i);
+                }
+            }
+            var result = rawPolygons.CreateShallowPolygonTrees(false);
+            result.AddRange(openPolylines);
+            return result;
+        }
     }
 }

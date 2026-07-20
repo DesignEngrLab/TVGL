@@ -90,8 +90,7 @@ namespace PolygonImportExport
                     result[idx] = new Polygon(flipped.AsEnumerable().Reverse(), isClosed: p.IsClosed);
                 }
             }
-
-            return result.CreateShallowPolygonTrees(true);
+            return ACadSharpConnector.OrganizeIntoShallowTree(result);
         }
 
         /// <param name="positiveYIsUp">When true (default), negates all Y values to convert from a standard

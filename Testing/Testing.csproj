@@ -25,6 +25,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
+	  <ProjectReference Include="..\PolygonImportExport\PolygonImportExport.csproj" />
 	  <ProjectReference Include="..\TessellationAndVoxelizationGeometryLibrary\TessellationAndVoxelizationGeometryLibrary.csproj" />
 	  <ProjectReference Include="..\WindowsDesktopPresenter\WindowsDesktopPresenter.csproj" />
 	</ItemGroup>

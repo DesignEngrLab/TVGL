@@ -8,6 +8,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="SVG\SVGSchema.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="ACadSharp" Version="3.6.35" />
   </ItemGroup>
 
