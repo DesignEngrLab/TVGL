@@ -7,7 +7,7 @@ using Circle = ACadSharp.Entities.Circle;
 
 namespace PolygonImportExport
 {
-    public static class DXF
+    public static class DWG
     {
         /// <summary>
         /// Reads a DXF or DWG file and converts its 2D entities (polylines, lines, arcs,
@@ -16,12 +16,13 @@ namespace PolygonImportExport
         /// <param name="curvePrecision">Number of line segments used to approximate each curve entity (arc, circle, ellipse, spline, bulge).</param>
         public static List<Polygon> Open(string filePath, int curvePrecision = 30)
         {
-            var cad2DData = DxfReader.Read(filePath);
+            var cad2DData = DwgReader.Read(filePath);
             var result = new List<Polygon>();
             foreach (var entity in cad2DData.Entities)
                 ACadSharpConnector.AddEntity(entity, result, curvePrecision);
             return result;
         }
+
 
         public static bool Save(string filePath, IEnumerable<Polygon> polygons, ACadVersion version = ACadVersion.AC1018)
         {
@@ -38,7 +39,7 @@ namespace PolygonImportExport
                         doc.Entities.Add(polyline);
                     }
                 }
-                DxfWriter.Write(filePath, doc, binary: false);
+                DwgWriter.Write(filePath, doc);
                 return true;
             }
             catch
