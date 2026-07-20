@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 18
-VisualStudioVersion = 18.6.11822.322 stable
+VisualStudioVersion = 18.6.11822.322
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TessellationAndVoxelizationGeometryLibrary", "TessellationAndVoxelizationGeometryLibrary\TessellationAndVoxelizationGeometryLibrary.csproj", "{859A90C2-4B36-4486-9279-EF9DF02C0C9B}"
 EndProject
@@ -12,6 +12,8 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Testing", "Testing\Testing.csproj", "{9D6DB429-32EE-46EF-BB91-5C1344856962}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WindowsDesktopPresenter", "WindowsDesktopPresenter\WindowsDesktopPresenter.csproj", "{1066E96A-41E9-444A-8A90-E5C847B2AD90}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PolygonImportExport", "PolygonImportExport\PolygonImportExport.csproj", "{B8556EF5-E434-7321-A11C-9808267C793B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -35,6 +37,10 @@ Global
 		{1066E96A-41E9-444A-8A90-E5C847B2AD90}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1066E96A-41E9-444A-8A90-E5C847B2AD90}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1066E96A-41E9-444A-8A90-E5C847B2AD90}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B8556EF5-E434-7321-A11C-9808267C793B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B8556EF5-E434-7321-A11C-9808267C793B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B8556EF5-E434-7321-A11C-9808267C793B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B8556EF5-E434-7321-A11C-9808267C793B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

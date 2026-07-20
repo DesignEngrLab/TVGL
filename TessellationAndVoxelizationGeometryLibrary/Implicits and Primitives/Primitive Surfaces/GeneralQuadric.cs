@@ -619,9 +619,15 @@ namespace TVGL
         {
             var hessian = GetHessian();
             var eigenVals = hessian.GetEigenValuesAndVectors(out var eigenVectors);
-            axis1 = new Vector3(eigenVectors[0][0].Real, eigenVectors[0][1].Real, eigenVectors[0][2].Real).Normalize();
-            axis2 = new Vector3(eigenVectors[1][0].Real, eigenVectors[1][1].Real, eigenVectors[1][2].Real).Normalize();
-            axis3 = new Vector3(eigenVectors[2][0].Real, eigenVectors[2][1].Real, eigenVectors[2][2].Real).Normalize();
+            if (eigenVectors[0] == null)
+                axis1 = Vector3.Null;
+            else axis1 = new Vector3(eigenVectors[0][0].Real, eigenVectors[0][1].Real, eigenVectors[0][2].Real).Normalize();
+            if (eigenVectors[1] == null)
+                axis2 = Vector3.Null;
+            else axis2 = new Vector3(eigenVectors[1][0].Real, eigenVectors[1][1].Real, eigenVectors[1][2].Real).Normalize();
+            if (eigenVectors[2] == null)
+                axis3 = Vector3.Null;
+            else axis3 = new Vector3(eigenVectors[2][0].Real, eigenVectors[2][1].Real, eigenVectors[2][2].Real).Normalize();
             if (eigenVals[1].Real * eigenVals[2].Real > 0) oddAxis = axis1;
             else if (eigenVals[0].Real * eigenVals[2].Real > 0) oddAxis = axis2;
             else oddAxis = axis3;

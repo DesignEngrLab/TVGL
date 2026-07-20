@@ -34,7 +34,7 @@ namespace TVGL
 
         public static IEnumerable<Vector2> CreateInternalPointsPoissonDisk(this Polygon polygon, double targetRadius, int maxPointsToReturn = -1)
         {
-            var random = new Random();
+            var random = new Random(0);
             var rSqd = targetRadius * targetRadius;
             //Bridson’s Algorithm runs in linear time.
             // 1. Initialize a background grid where each cell size is sqrt(r) / 2 (guaranteeing that each cell can hold

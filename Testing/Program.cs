@@ -11,7 +11,7 @@ namespace TVGLUnitTestsAndBenchmarking
 {
     internal class Program
     {
-        public static string inputFolder = "TestFiles";
+        public static string inputFolder = "Input\\Drawings";
 
         static Random r = new Random();
         static double r1 => 2.0 * r.NextDouble() - 1.0;
@@ -25,7 +25,7 @@ namespace TVGLUnitTestsAndBenchmarking
             OutputServices.Presenter3D = new Presenter3D();
             var dirInfo = IO.BackoutToFolder(inputFolder);
             var files = dirInfo.GetFiles("*");
-            foreach (var fileName in files.Skip(8))
+            foreach (var fileName in files.Skip(0))
             {
                 Console.WriteLine("Attempting to open: " + fileName.Name);
                 var solid = IO.Open(fileName.FullName) as TessellatedSolid;
