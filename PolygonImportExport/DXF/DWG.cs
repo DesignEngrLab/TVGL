@@ -1,16 +1,14 @@
 using ACadSharp;
 using ACadSharp.Entities;
 using ACadSharp.IO;
-using CSMath;
 using TVGL;
-using Circle = ACadSharp.Entities.Circle;
 
 namespace PolygonImportExport
 {
     public static class DWG
     {
         /// <summary>
-        /// Reads a DXF or DWG file and converts its 2D entities (polylines, lines, arcs,
+        /// Reads a DWG file and converts its 2D entities (polylines, lines, arcs,
         /// circles, ellipses, splines, and block inserts) to a list of TVGL Polygons.
         /// </summary>
         /// <param name="curvePrecision">Number of line segments used to approximate each curve entity (arc, circle, ellipse, spline, bulge).</param>

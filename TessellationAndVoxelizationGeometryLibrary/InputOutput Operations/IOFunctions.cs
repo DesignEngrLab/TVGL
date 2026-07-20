@@ -480,11 +480,14 @@ namespace TVGL
                     return OpenPolygonFromSVG(out polygon, sr);
                 case FileType.DXF_ASCII:
                     return OpenPolygonFromDXF(out polygon, sr);
+                case FileType.DWG_ASCII:
+                    throw new Exception("Use the separate project PolygonImportExport in TVGL to open svg, dxf and dwg files.");
             }
             polygon = null;
             return false;
         }
 
+        [Obsolete("This method is obsolete. Use the separate project PolygonImportExport in TVGL to open svg, dxf and dwg files.")]
         private static bool OpenPolygonFromSVG(out Polygon polygon, StreamReader sr)
         {
             polygon = null;
@@ -518,6 +521,7 @@ namespace TVGL
             return false;
         }
 
+        [Obsolete("This method is obsolete. Use the separate project PolygonImportExport in TVGL to open svg, dxf and dwg files.")]
         private static bool OpenPolygonFromDXF(out Polygon polygon, StreamReader sr)
         {
             polygon = null;
