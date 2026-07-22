@@ -24,14 +24,19 @@ namespace TVGL
     public static partial class PolygonOperations
     {
         /// <summary>
-        /// The Minkowski sum of the two polygons. This only functions on the outermost polygon (no holes).
-        /// However, the operation does work on negative polygons, so the result can be fused totheger but this
-        /// is left for the user's code due to ambiguities that may arise.
         /// </summary>
-        /// <param name="a"></param>
-        /// <param name="b"></param>
-        /// <returns></returns>
-        public static List<Polygon> MinkowskiSum(this Polygon a, Polygon b)
+        /// <summary>
+        /// The Minkowski sum of the two polygons produces one of more polygons that results when you
+        /// slide one polygon along the other. This only functions on the outermost polygon (no holes).
+        /// However, the operation does work on negative polygons, so the result can be fused totheger but this
+        /// is left for the caller's code due to ambiguities that may arise. Another ambiguity is when
+        /// the two polygons temporarily slot into one another perfectly. This creates a degenerate 
+        /// seam - back-to-back edges that create a zero-width region. This is a special case is kept out of the
+        /// polygon result (these will properly have such internal seams missing) but they are saved and
+        /// return to user if these are needed as out parameter, <paramref name="degenerateSeams"/>.
+        /// </summary>
+        public static List<Polygon> MinkowskiSum(this Polygon a, Polygon b,
+            out List<(Vector2, Vector2)> degenerateSeams)
         {
             //IO.Save(a, "a.json");
             //IO.Save(b, "b.json");
@@ -43,6 +48,7 @@ namespace TVGL
                 (a.MaxY - a.MinY) > (b.MaxY - b.MinY));
 
             var result = new List<Polygon>();
+            degenerateSeams = new List<(Vector2, Vector2)>();
 
             // first work on outer sums (not holes)
             if (a.IsConvex && b.IsConvex)
@@ -50,17 +56,18 @@ namespace TVGL
             else
             {
                 var segments = BuildReducedConvolutionSegments(a, b);
-                result.AddRange(segments.ArrangementUnion());
+                result.AddRange(segments.ArrangementUnion(out degenerateSeams));
             }
             if (aCanBeInB)
-                PutHolesInProperOuter(a, b, result);
+                PutHolesInProperOuter(a, b, result, degenerateSeams);
             else if (bCanBeInA)
-                PutHolesInProperOuter(b, a, result);
+                PutHolesInProperOuter(b, a, result, degenerateSeams);
 
             return result;
         }
 
-        private static void PutHolesInProperOuter(Polygon a, Polygon b, List<Polygon> result)
+        private static void PutHolesInProperOuter(Polygon a, Polygon b, List<Polygon> result,
+            List<(Vector2, Vector2)> degenerateSeams)
         {
             foreach (var hole in b.InnerPolygons)
             {
@@ -69,10 +76,11 @@ namespace TVGL
                 {
                     var segments = BuildReducedConvolutionSegments(a, hole);
                     Polygon outer = null;
-                    foreach (var loopFromHole in segments.ArrangementUnion())
+                    var loops = segments.ArrangementUnion(out var holeSeams);
+                    degenerateSeams.AddRange(holeSeams);
+                    foreach (var loopFromHole in loops)
                     {
-                    //    if (outer == null)
-                            outer = result.FirstOrDefault(o => o.IsNonIntersectingPolygonInside(true, loopFromHole));
+                        outer = result.FirstOrDefault(o => o.IsNonIntersectingPolygonInside(true, loopFromHole));
                         if (outer != null)
                             outer.AddInnerPolygon(loopFromHole);
                     }

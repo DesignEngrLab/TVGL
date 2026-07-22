@@ -23,7 +23,18 @@ namespace TVGL
     /// </summary>
     public static partial class PolygonOperations
     {
-        public static List<Polygon> ArrangementUnion(this IEnumerable<(Vector2, Vector2)> arrangement)
+        /// <summary>
+        /// Builds polygons from an arbitrary collection of line segments (aka an arrangement
+        /// https://en.wikipedia.org/wiki/Arrangement_of_lines). This is called a
+        /// union since we define a polygon that bounds all pockets
+        /// of the 2D that are contained by the segments (not the pocket that all segments
+        /// agree is "contained" (e.g. the intersection). One wrinkle in this approach is the creation
+        /// of degenerate "seams" - these are lines in the polygon where two edges are back-to-back.
+        /// These are returned as <paramref name="degenerateSeams"/> in many cases they can be
+        /// safely ignored but they are useful for no-fit-polygon applications.
+        /// </summary>
+        public static List<Polygon> ArrangementUnion(this IEnumerable<(Vector2, Vector2)> arrangement,
+            out List<(Vector2, Vector2)> degenerateSeams)
         {
             var initNodeDict = BuildArrangementGraph(arrangement, out var edges);
             //Presenter.ShowAndHang(edges.Select(s => new[] { s.FromPoint.Coordinates, s.ToPoint.Coordinates }));
@@ -31,6 +42,7 @@ namespace TVGL
             //Presenter.ShowAndHang(nodeList.SelectMany(f => f.StartingEdges).Select(s => new[] { s.FromPoint.Coordinates, s.ToPoint.Coordinates }));
             PruneIsolatedArrangementNodes(nodeList);
             //Presenter.ShowAndHang(nodeList.SelectMany(f => f.StartingEdges).Select(s => new[] { s.FromPoint.Coordinates, s.ToPoint.Coordinates }));
+            degenerateSeams = FindDegenerateSeams(nodeList);
             RemoveDominatedArrangementEdges(nodeList);
             //Presenter.ShowAndHang(nodeList.SelectMany(f => f.StartingEdges).Select(s => new[] { s.FromPoint.Coordinates, s.ToPoint.Coordinates }));
             PruneIsolatedArrangementNodes(nodeList);
@@ -40,6 +52,7 @@ namespace TVGL
 
             return polygons.CreateShallowPolygonTrees(true);
         }
+
         private static Dictionary<PointKey, ArrangementNode> BuildArrangementGraph(IEnumerable<(Vector2, Vector2)> arrangement, out List<PolygonEdge> edges)
         {
             var initNodeDict = new Dictionary<PointKey, ArrangementNode>(); // store the nodes by their point key. We will keep finding new nodes later 
@@ -127,7 +140,7 @@ namespace TVGL
                     for (int j = i + 1; j < nodes.Count; j++)
                     {
                         var otherNode = nodes[j];
-                        if (adjacentNode == otherNode )
+                        if (adjacentNode == otherNode)
                             continue;
                         if (otherNode.X.IsGreaterThanNonNegligible(edge.XMax)) break;
                         if (NodeIsOnEdge(otherNode, edge))
@@ -152,7 +165,7 @@ namespace TVGL
             var edgeNormal = new Vector2(-edge.Vector.Y, edge.Vector.X);
             var edgeOffset = edgeNormal.Dot(edge.FromPoint.Coordinates);
             var testOffset = edgeNormal.Dot(otherNode.Coordinates);
-            return edgeOffset.IsPracticallySame(testOffset,Constants.BaseTolerance);
+            return edgeOffset.IsPracticallySame(testOffset, Constants.BaseTolerance);
         }
 
         private static IEnumerable<PolygonEdge> SplitReplaceOldEdge(PolygonEdge oldEdge, ArrangementNode intersectNode)
@@ -180,26 +193,25 @@ namespace TVGL
                 yield return newEdge2;
             }
         }
-        private static void RemoveDominatedArrangementEdges(List<ArrangementNode> nodes)
+        private static List<(Vector2, Vector2)> FindDegenerateSeams(List<ArrangementNode> nodes)
         {
+            var degenerateSeams = new List<(Vector2, Vector2)>();
             // remove edges that are dominated by others - in the case of union - these are the ones that are inside other polygons
-
             foreach (var node in nodes)
             {
-                //actually, before we get to the main purpose, let's remove any pair of edges that are equal and opposite. This is not 
-                // exactly wrong, as it is possible that the resulting union is a line in some sections
                 for (int i = node.StartingEdges.Count - 1; i >= 0; i--)
                 {
                     var startEdge = node.StartingEdges[i];
                     var otherNode = startEdge.ToPoint;
                     var equalAndOppositeEdgeIndex = node.EndingEdges.FindIndex(ee => ee.FromPoint == otherNode);
-                    if (equalAndOppositeEdgeIndex >= 0)
+                    if (equalAndOppositeEdgeIndex >= 0) // you've detected a degenerate seam - two edges that are back-to-back.
                     {
                         var otherEdge = node.EndingEdges[equalAndOppositeEdgeIndex];
                         node.StartingEdges.RemoveAt(i);
                         node.EndingEdges.RemoveAt(equalAndOppositeEdgeIndex);
                         ((ArrangementNode)otherNode).EndingEdges.Remove(startEdge);
                         ((ArrangementNode)otherNode).StartingEdges.Remove(otherEdge);
+                        degenerateSeams.Add((node.Coordinates, otherNode.Coordinates));
                     }
                 }
                 for (int i = node.EndingEdges.Count - 1; i >= 0; i--)
@@ -214,8 +226,17 @@ namespace TVGL
                         node.StartingEdges.RemoveAt(equalAndOppositeEdgeIndex);
                         ((ArrangementNode)otherNode).StartingEdges.Remove(startEdge);
                         ((ArrangementNode)otherNode).EndingEdges.Remove(otherEdge);
+                        degenerateSeams.Add((node.Coordinates, otherNode.Coordinates));
                     }
                 }
+            }
+            return degenerateSeams;
+        }
+        private static void RemoveDominatedArrangementEdges(List<ArrangementNode> nodes)
+        {
+            // remove edges that are dominated by others - in the case of union - these are the ones that are inside other polygons
+            foreach (var node in nodes)
+            {
                 if (node.StartingEdges.Count <= 1 && node.EndingEdges.Count <= 1)
                     continue;
                 // so, now we know that at least 3 edges come into this node
@@ -279,33 +300,77 @@ namespace TVGL
         }
 
         private static List<Polygon> ExtractPolygonsFromArrangementNodes(List<ArrangementNode> nodeList)
-        {   // at this point we essentially have reduced the graph to a set of loops
-            // Since there could be multiple loops, and we need to find them all - there is a while loop
-            // that starts a new loop each time until no nodes are left.
-            var nodeHash = nodeList.ToHashSet();
+        {
+            // Trace loops by following each directed edge to the success making the most right turn.
+            // Because the successor of a directed edge is unique, we eventually end up where we started.
             var polygons = new List<Polygon>();
-            while (nodeHash.Any())
+            var globallyVisited = new HashSet<PolygonEdge>();
+            foreach (var node in nodeList)
             {
-                var loopCoords = new List<Vector2>();
-                var validLoop = true;
-                var startNode = nodeHash.First();
-                var current = startNode;
-                do
+                foreach (var startEdge in node.StartingEdges)
                 {
-                    nodeHash.Remove(current);
-                    loopCoords.Add(current.Coordinates);
-                    if (current.StartingEdges.Count != 1 || current.EndingEdges.Count != 1)
-                        validLoop = false;
-                    current = (ArrangementNode)current.StartingEdges[0].ToPoint;
-                } while (current != startNode);
-                if (validLoop)
-                {
-                    var polygon = new Polygon(loopCoords);
-                    if (!polygon.Area.IsNegligible())
-                        polygons.Add(polygon);
+                    if (globallyVisited.Contains(startEdge)) continue;
+                    var trail = new List<PolygonEdge>();
+                    var indexInTrail = new Dictionary<PolygonEdge, int>();
+                    var current = startEdge;
+                    while (true)
+                    {
+                        if (indexInTrail.TryGetValue(current, out var cycleStart))
+                        {   // we've re-entered our own trail: edges [cycleStart..] form the cycle;
+                            // edges before it are an open tail leading into the cycle - discarded
+                            var loopCoords = new List<Vector2>();
+                            for (int i = cycleStart; i < trail.Count; i++)
+                                loopCoords.Add(trail[i].FromPoint.Coordinates);
+                            if (loopCoords.Count >= 3)
+                            {
+                                var polygon = new Polygon(loopCoords);
+                                if (!polygon.Area.IsNegligible())
+                                    polygons.Add(polygon);
+                            }
+                            break;
+                        }
+                        if (globallyVisited.Contains(current))
+                            break; // flowed into a previously handled cycle; this tail is discarded
+                        indexInTrail.Add(current, trail.Count);
+                        trail.Add(current);
+                        globallyVisited.Add(current);
+                        var next = NextEdgeByAngularSuccessor(current);
+                        if (next == null) break; // dead end; open chain discarded
+                        current = next;
+                    }
                 }
             }
             return polygons;
+        }
+
+        /// <summary>
+        /// Returns the outgoing edge at the incoming edge's ToPoint that makes the sharpest
+        /// clockwise turn from the reversed incoming direction. An exact u-turn (retracing the
+        /// incoming edge backwards) is treated as a full turn, i.e. the last resort - which is
+        /// exactly what lets a zero-width seam be walked down-and-back correctly.
+        /// </summary>
+        private static PolygonEdge NextEdgeByAngularSuccessor(PolygonEdge incoming)
+        {
+            var node = (ArrangementNode)incoming.ToPoint;
+            if (node.StartingEdges.Count == 0) return null;
+            if (node.StartingEdges.Count == 1) return node.StartingEdges[0];
+            var reverseAngle = Global.Pseudoangle(-incoming.Vector.Y, -incoming.Vector.X);
+            // find the candidate direction with a minimum CCW angle from the (reversed)
+            // incoming direction 
+            PolygonEdge best = null;
+            var bestAngle = double.MaxValue;
+            foreach (var candidate in node.StartingEdges)
+            {
+                // clockwise angle from the reversed incoming direction to the candidate, in (0, 2*pi]
+                var angle = Global.Pseudoangle(candidate.Vector.X, candidate.Vector.Y) - reverseAngle;
+                if (angle < 0) angle += 4;      // normalize to [0, 2*pi)
+                if (angle < bestAngle)
+                {
+                    bestAngle = angle;
+                    best = candidate;
+                }
+            }
+            return best;
         }
 
         private static void AddToSorted(List<PolygonEdge> sortedEdges, PolygonEdge newEdge, EdgeComparer edgeComparer)

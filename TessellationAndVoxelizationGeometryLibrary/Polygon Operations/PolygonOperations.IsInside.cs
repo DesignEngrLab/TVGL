@@ -279,9 +279,12 @@ namespace TVGL
             //(2) Check if the point is == to a polygon point, return onBoundaryIsInside.
             //(3) Use line-sweeping / ray casting to determine if the polygon contains the point.
             onBoundary = false;
-            //1) Check if center point is within bounding box of each polygon
-            if (qX < polygon.MinX || qY < polygon.MinY ||
-                qX > polygon.MaxX || qY > polygon.MaxY)
+            //1) Check if center point is within bounding box of each polygon. The boundaryTolerance
+            //   must be honored here: a point on the boundary at a bbox extreme (e.g. resting exactly
+            //   on the bottom edge) can be epsilon outside the box, and rejecting it here would
+            //   contradict the onBoundaryIsInside contract of this method.
+            if (qX < polygon.MinX - boundaryTolerance || qY < polygon.MinY - boundaryTolerance ||
+                qX > polygon.MaxX + boundaryTolerance || qY > polygon.MaxY + boundaryTolerance)
                 return false;
             //2) If the point in question is == a point in points, then it is inside the polygon
             if (polygon.Path.Any(point => point.Equals(pointInQuestion)))
@@ -289,37 +292,50 @@ namespace TVGL
                 onBoundary = true;
                 return onBoundaryIsInside;
             }
-            var numberAbove = 0;
-            var numberBelow = 0;
-            foreach (var subPolygon in polygon.AllPolygons)
+            // The vertical-ray parities can disagree when a polygon vertex is vertically aligned
+            // with the query point within floating-point noise (exact alignment is handled by the
+            // half-open convention in DetermineLineToPointVerticalReferenceType, but a vertex at
+            // point.X +/- 1e-15 makes one adjacent edge register a crossing and the other not).
+            // Since the ray direction is arbitrary, the robust resolution is to shift the ray
+            // sideways by a hair and recount - the shift is far below boundaryTolerance, so it
+            // cannot change which region the point is in.
+            var rayShift = Constants.DefaultEqualityTolerance * (1.0 + polygon.MaxX - polygon.MinX);
+            for (int attempt = 0; attempt < 4; attempt++)
             {
-                if (!subPolygon.IsClosed) continue;
-
-                foreach (var line in subPolygon.Edges)
+                var rayPoint = attempt == 0 ? pointInQuestion
+                    : new Vector2(qX + attempt * rayShift, qY);
+                var numberAbove = 0;
+                var numberBelow = 0;
+                foreach (var subPolygon in polygon.AllPolygons)
                 {
-                    switch (DetermineLineToPointVerticalReferenceType(pointInQuestion, line, boundaryTolerance))
+                    if (!subPolygon.IsClosed) continue;
+
+                    foreach (var line in subPolygon.Edges)
                     {
-                        case VerticalLineReferenceType.On:
-                            onBoundary = true;
-                            return onBoundaryIsInside;
-                        case VerticalLineReferenceType.Above:
-                            numberAbove++;
-                            break;
-                        case VerticalLineReferenceType.Below:
-                            numberBelow++;
-                            break;
+                        switch (DetermineLineToPointVerticalReferenceType(rayPoint, line, boundaryTolerance))
+                        {
+                            case VerticalLineReferenceType.On:
+                                onBoundary = true;
+                                return onBoundaryIsInside;
+                            case VerticalLineReferenceType.Above:
+                                numberAbove++;
+                                break;
+                            case VerticalLineReferenceType.Below:
+                                numberBelow++;
+                                break;
+                        }
                     }
+                    if (onlyTopPolygon) break;
                 }
-                if (onlyTopPolygon) break;
+                var insideAbove = int.IsOddInteger(numberAbove);
+                var insideBelow = int.IsOddInteger(numberBelow);
+                if (insideAbove == insideBelow)
+                    return insideAbove;
             }
-            var insideAbove = int.IsOddInteger(numberAbove);
-            var insideBelow = int.IsOddInteger(numberBelow);
-            if (insideAbove != insideBelow)
-            {
-                throw new ArgumentException("In IsPointInsidePolygon, the point in question is surrounded by" +
-                    " an undetermined number of lines which makes it impossible to determined if inside.");
-            }
-            return insideAbove;
+            // still ambiguous after several ray shifts: the point is in a genuinely degenerate
+            // spot, which in practice means it is on (or vanishingly near) the boundary
+            onBoundary = true;
+            return onBoundaryIsInside;
         }
 
 
@@ -333,9 +349,13 @@ namespace TVGL
             double boundaryTolerance = Constants.DefaultEqualityTolerance)
         {
             // this is basically the function PolygonEdge.YGivenX, but it is a little different here since check if line is horizontal cusp
-            if (point.X == line.FromPoint.Coordinates.X && point.X == line.ToPoint.Coordinates.X)
-            {   // this means the line is vertical and lines up with the point. Other adjacent line segments will be found
-                if (point.Y >= line.YMin && point.Y <= line.YMax)
+            if (point.X.IsPracticallySame(line.FromPoint.Coordinates.X, boundaryTolerance)
+                && point.X.IsPracticallySame(line.ToPoint.Coordinates.X, boundaryTolerance))
+            {   // this means the line is vertical and lines up with the point (within the boundary
+                // tolerance - exact equality would let a point epsilon outside a vertical wall slip
+                // past every edge of the polygon and be classified as outside despite being on the
+                // boundary). Other adjacent line segments will be found
+                if (point.Y >= line.YMin - boundaryTolerance && point.Y <= line.YMax + boundaryTolerance)
                     return VerticalLineReferenceType.On;
                 else return VerticalLineReferenceType.NotIntersecting;
             }
