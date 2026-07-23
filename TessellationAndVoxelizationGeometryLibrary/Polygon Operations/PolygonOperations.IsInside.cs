@@ -98,7 +98,7 @@ namespace TVGL
                 || (!onlyTopOuterPolygon && Math.Abs(inner.PathArea) > Math.Abs(outer.Area)))
                 return false;
             return outer.IsPointInsidePolygon(onlyTopOuterPolygon, inner.Vertices[0].Coordinates,
-                out var thisPointOnBoundary, Constants.BaseTolerance);
+                out var thisPointOnBoundary, Constants.BaseTolerance, false);
         }
 
         /// <summary>
@@ -210,7 +210,7 @@ namespace TVGL
             //If the point is inside the bounding box, continue to check with more detailed methods, 
             //Else, retrun false.
             var p = pointInQuestion;
-            if (p.Y.IsLessThanNonNegligible(polygon.MinY,tolerance) || p.Y.IsGreaterThanNonNegligible(polygon.MaxY, tolerance)
+            if (p.Y.IsLessThanNonNegligible(polygon.MinY, tolerance) || p.Y.IsGreaterThanNonNegligible(polygon.MaxY, tolerance)
                 || p.X.IsLessThanNonNegligible(polygon.MinX, tolerance) || p.X.IsGreaterThanNonNegligible(polygon.MaxX, tolerance))
                 return false;
 
@@ -244,7 +244,7 @@ namespace TVGL
                     var denom = verts[j].Y - verts[i].Y;
                     var lhs = (p.X - verts[i].X) * denom;
                     var rhs = (verts[j].X - verts[i].X) * (p.Y - verts[i].Y);
-                    if (lhs.IsPracticallySame(rhs, tolerance)) 
+                    if (lhs.IsPracticallySame(rhs, tolerance))
                         // point is on the line
                         return true;
                     if ((denom < 0) == (lhs > rhs))
@@ -272,70 +272,50 @@ namespace TVGL
         public static bool IsPointInsidePolygon(this Polygon polygon, bool onlyTopPolygon, Vector2 pointInQuestion,
              out bool onBoundary, double boundaryTolerance = Constants.DefaultEqualityTolerance, bool onBoundaryIsInside = true)
         {
+            onBoundary = false;
             var qX = pointInQuestion.X;  // for conciseness and the smallest bit of additional speed,
             var qY = pointInQuestion.Y;  // we declare these local variables.
-            //This function has three layers of checks. 
-            //(1) Check if the point is inside the axis aligned bounding box. If it is not, then return false.
-            //(2) Check if the point is == to a polygon point, return onBoundaryIsInside.
-            //(3) Use line-sweeping / ray casting to determine if the polygon contains the point.
-            onBoundary = false;
-            //1) Check if center point is within bounding box of each polygon. The boundaryTolerance
-            //   must be honored here: a point on the boundary at a bbox extreme (e.g. resting exactly
-            //   on the bottom edge) can be epsilon outside the box, and rejecting it here would
-            //   contradict the onBoundaryIsInside contract of this method.
+            //First simple check if the point is inside the axis aligned bounding box. If it is not, then return false.
             if (qX < polygon.MinX - boundaryTolerance || qY < polygon.MinY - boundaryTolerance ||
                 qX > polygon.MaxX + boundaryTolerance || qY > polygon.MaxY + boundaryTolerance)
                 return false;
-            //2) If the point in question is == a point in points, then it is inside the polygon
-            if (polygon.Path.Any(point => point.Equals(pointInQuestion)))
-            {
-                onBoundary = true;
-                return onBoundaryIsInside;
-            }
-            // The vertical-ray parities can disagree when a polygon vertex is vertically aligned
-            // with the query point within floating-point noise (exact alignment is handled by the
-            // half-open convention in DetermineLineToPointVerticalReferenceType, but a vertex at
-            // point.X +/- 1e-15 makes one adjacent edge register a crossing and the other not).
-            // Since the ray direction is arbitrary, the robust resolution is to shift the ray
-            // sideways by a hair and recount - the shift is far below boundaryTolerance, so it
-            // cannot change which region the point is in.
-            var rayShift = Constants.DefaultEqualityTolerance * (1.0 + polygon.MaxX - polygon.MinX);
-            for (int attempt = 0; attempt < 4; attempt++)
-            {
-                var rayPoint = attempt == 0 ? pointInQuestion
-                    : new Vector2(qX + attempt * rayShift, qY);
-                var numberAbove = 0;
-                var numberBelow = 0;
-                foreach (var subPolygon in polygon.AllPolygons)
-                {
-                    if (!subPolygon.IsClosed) continue;
 
-                    foreach (var line in subPolygon.Edges)
+            var toleranceSquared = boundaryTolerance * boundaryTolerance;
+            var inside = false;
+
+            foreach (var subPolygon in polygon.AllPolygons)
+            {
+                if (!subPolygon.IsClosed) continue;
+                foreach (var edge in subPolygon.Edges)
+                {
+                    var from = edge.FromPoint.Coordinates;
+                    var to = edge.ToPoint.Coordinates;
+                    if (MiscFunctions.IsPointOnSegment(pointInQuestion, from, to, toleranceSquared, true))
                     {
-                        switch (DetermineLineToPointVerticalReferenceType(rayPoint, line, boundaryTolerance))
-                        {
-                            case VerticalLineReferenceType.On:
-                                onBoundary = true;
-                                return onBoundaryIsInside;
-                            case VerticalLineReferenceType.Above:
-                                numberAbove++;
-                                break;
-                            case VerticalLineReferenceType.Below:
-                                numberBelow++;
-                                break;
-                        }
+                        onBoundary = true;
+                        return onBoundaryIsInside;
                     }
-                    if (onlyTopPolygon) break;
+
+                    //For a horizontal ray, the test uses a half - open convention: an edge
+                    //contributes a crossing only when its endpoints straddle the query point's
+                    // Y level.If the ray passes exactly through a polygon vertex, one adjacent
+                    //edge is treated as meeting the ray and the other as not meeting it. That prevents
+                    //the shared vertex from being counted twice.
+                    if ((from.Y > qY) == (to.Y > qY))
+                        continue;
+
+                    // Determine whether the horizontal ray crosses to the right.
+                    // Written without division for speed.
+                    var dx = to.X - from.X;
+                    var dy = to.Y - from.Y;
+                    var lhs = (qX - from.X) * dy;
+                    var rhs = (qY - from.Y) * dx;
+
+                    if ((dy > 0) == (lhs < rhs))
+                        inside = !inside;
                 }
-                var insideAbove = int.IsOddInteger(numberAbove);
-                var insideBelow = int.IsOddInteger(numberBelow);
-                if (insideAbove == insideBelow)
-                    return insideAbove;
             }
-            // still ambiguous after several ray shifts: the point is in a genuinely degenerate
-            // spot, which in practice means it is on (or vanishingly near) the boundary
-            onBoundary = true;
-            return onBoundaryIsInside;
+            return inside;
         }
 
 

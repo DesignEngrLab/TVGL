@@ -485,7 +485,7 @@ namespace TVGL
         /// If an edge is seen a second time, it's moved to the inner edge set.
         /// Common search terms: "find boundary edges", "identify border edges", "inner vs outer edges".
         /// </remarks>
-        private static void DefineInnerOuterEdgesWithNoEdges(IEnumerable<TriangleFace> faces,  HashSet<Edge> innerEdgeHash,
+        private static void DefineInnerOuterEdgesWithNoEdges(IEnumerable<TriangleFace> faces, HashSet<Edge> innerEdgeHash,
              HashSet<Edge> outerEdgeHash)
         {
             var allVertices = new HashSet<Vertex>();
@@ -2208,6 +2208,42 @@ namespace TVGL
             var t = lineVector.Dot(qPoint - lineRefPt) / lineVector.LengthSquared();
             pointOnLine = lineRefPt + t * lineVector;
             return returnSquared ? qPoint.DistanceSquared(pointOnLine) : qPoint.Distance(pointOnLine);
+        }
+
+
+        /// <summary>
+        /// Determines if a 2D point lies on a line segment within a specified tolerance.
+        /// </summary>
+        /// <param name="qPoint"></param>
+        /// <param name="fromPt"></param>
+        /// <param name="toPt"></param>
+        /// <param name="tolerance"></param>
+        /// <param name="tolIsAlreadySquared"></param>
+        /// <returns></returns>
+        public static bool IsPointOnSegment(Vector2 qPoint, Vector2 fromPt, Vector2 toPt, double tolerance, bool tolIsAlreadySquared = false)
+        {
+            if (!tolIsAlreadySquared)
+                tolerance *= tolerance;
+            var pointOnLine = ClosestPointOnLineSegmentToPoint(fromPt, toPt, qPoint);
+            return qPoint.DistanceSquared(pointOnLine) < tolerance;
+        }
+
+
+        /// <summary>
+        /// Determines if a 2D point lies on a line segment within a specified tolerance.
+        /// </summary>
+        /// <param name="qPoint"></param>
+        /// <param name="fromPt"></param>
+        /// <param name="toPt"></param>
+        /// <param name="tolerance"></param>
+        /// <param name="tolIsAlreadySquared"></param>
+        /// <returns></returns>
+        public static bool IsPointOnSegment(Vector3 qPoint, Vector3 fromPt, Vector3 toPt, double tolerance, bool tolIsAlreadySquared = false)
+        {
+            if (!tolIsAlreadySquared)
+                tolerance *= tolerance;
+            var pointOnLine = ClosestPointOnLineSegmentToPoint(fromPt, toPt, qPoint);
+            return qPoint.DistanceSquared(pointOnLine) < tolerance;
         }
 
         /// <summary>
