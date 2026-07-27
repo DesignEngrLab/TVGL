@@ -1072,7 +1072,7 @@ namespace TVGL
                 if (thisLine.Length > maxAllowableLength)
                 {
                     var numNewPoints = 1+ (int)(thisLine.Length / maxAllowableLength);
-                    for (int j = 1; j < numNewPoints; j++)
+                    for (int j = numNewPoints - 1; j >= 1; j--)
                     {
                         var fraction = j / (double)numNewPoints;
                         var newCoordinates = (1 - fraction) * thisLine.FromPoint.Coordinates + fraction * thisLine.ToPoint.Coordinates;
