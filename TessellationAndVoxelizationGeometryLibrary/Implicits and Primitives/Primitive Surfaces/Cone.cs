@@ -298,7 +298,7 @@ namespace TVGL
             var outOfPlane = v.Cross(Axis).Normalize();
             var vertDir = Axis.Cross(outOfPlane).Normalize();
             var onSurfDir = (Axis + Aperture * vertDir).Normalize();
-            return MiscFunctions.ClosestPointOnLineSegmentToPoint(Apex, Apex + onSurfDir, point, out _);
+            return MiscFunctions.ClosestPointOnLineSegmentToPoint(Apex, Apex + onSurfDir, point);
         }
 
         protected override void CalculateIsPositive()

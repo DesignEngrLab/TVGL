@@ -27,13 +27,11 @@ namespace TVGL
         /// </summary>
         /// <summary>
         /// The Minkowski sum of the two polygons produces one of more polygons that results when you
-        /// slide one polygon along the other. This only functions on the outermost polygon (no holes).
-        /// However, the operation does work on negative polygons, so the result can be fused totheger but this
-        /// is left for the caller's code due to ambiguities that may arise. Another ambiguity is when
-        /// the two polygons temporarily slot into one another perfectly. This creates a degenerate 
-        /// seam - back-to-back edges that create a zero-width region. This is a special case is kept out of the
-        /// polygon result (these will properly have such internal seams missing) but they are saved and
-        /// return to user if these are needed as out parameter, <paramref name="degenerateSeams"/>.
+        /// slide one polygon along the other. When the two polygons temporarily slot into one another 
+        /// perfectly. This creates a degenerate seam - back-to-back edges that create a zero-width region.
+        /// This is a special case is kept out of the polygon result (these will properly have such 
+        /// internal seams missing) but they are saved and return to user if these are needed as 
+        /// out parameter, <paramref name="degenerateSeams"/>.
         /// </summary>
         public static List<Polygon> MinkowskiSum(this Polygon a, Polygon b,
             out List<(Vector2, Vector2)> degenerateSeams)
@@ -96,8 +94,8 @@ namespace TVGL
             var bVertex = bStartVertex;
             var result = new List<Vertex2D>();
             var vertNum = 0;
-            var aCompleted = false;
-            var bCompleted = false;
+            bool? aCompleted = null;
+            bool? bCompleted = null;
             do
             {
                 result.Add(new Vertex2D(aVertex.Coordinates + bVertex.Coordinates, vertNum++, 0));
@@ -106,13 +104,25 @@ namespace TVGL
                     // false result would be returned. ...although, I tried to come up with a case to break it
                     // and couldn't I guess because you can't have an angle greater than 180 on convex shapes
                     .Cross(bVertex.StartLine.Vector);
-                if (cross >= 0 && !aCompleted)
+                if (cross >= 0 && !aCompleted.GetValueOrDefault(false))
                     aVertex = aVertex.StartLine.ToPoint;
-                if (cross <= 0 && !bCompleted)
+                if (cross <= 0 && !bCompleted.GetValueOrDefault(false))
                     bVertex = bVertex.StartLine.ToPoint;
-                aCompleted = aVertex == aStartVertex;
-                bCompleted = bVertex == bStartVertex;
-            } while (!aCompleted || !bCompleted);
+
+                // here's something confusing: aCompleted = aVertex == aStartVertex; 
+                // (and same with b) doesn't work here because if the loop starts advancing
+                // b then that would set aCompleted to TRUE since its still at the start
+                // fixed by moving to a three-state boxed boolean
+                if (aVertex != aStartVertex) // once you leave the start, we assign aCompleted
+                    aCompleted = false;      // to an actual value (no longer null)
+                else if (!aCompleted.GetValueOrDefault(true)) //if null or already true don't go 
+                    aCompleted = true;               //into here otherwise we flip from false to true 
+                                                     //when the previous condition fails
+                if (bVertex != bStartVertex)
+                    bCompleted = false;
+                else if (!bCompleted.GetValueOrDefault(true))
+                    bCompleted = true;
+            } while (!aCompleted.GetValueOrDefault(false) || !bCompleted.GetValueOrDefault(false));
             return new Polygon(result);
         }
 

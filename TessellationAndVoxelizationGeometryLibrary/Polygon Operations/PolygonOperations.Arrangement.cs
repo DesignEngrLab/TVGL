@@ -156,24 +156,36 @@ namespace TVGL
             return nodes;
         }
 
-        private static bool NodeIsOnEdge(ArrangementNode otherNode, PolygonEdge edge)
+        private static bool NodeIsOnEdge(ArrangementNode node, PolygonEdge edge)
         {
-            if (otherNode.Y.IsLessThanNonNegligible(edge.YMin)
-                || otherNode.Y.IsGreaterThanNonNegligible(edge.YMax))
+            var from = edge.FromPoint.Coordinates;
+            var to = edge.ToPoint.Coordinates;
+            var segment = to - from;
+            var lengthSquared = segment.LengthSquared();
+
+            // Require the node's projection to be strictly inside the segment.
+            // This also rejects zero-length edges.
+            var projection = (node.Coordinates - from).Dot(segment);
+            if (projection <= 0.0 || projection >= lengthSquared)
                 return false;
-            // so, we now know that the node is within the bounding box of the edge
-            var edgeNormal = new Vector2(-edge.Vector.Y, edge.Vector.X);
-            var edgeOffset = edgeNormal.Dot(edge.FromPoint.Coordinates);
-            var testOffset = edgeNormal.Dot(otherNode.Coordinates);
-            return edgeOffset.IsPracticallySame(testOffset, Constants.BaseTolerance);
+
+            return MiscFunctions.IsPointOnSegment(
+                node.Coordinates,
+                from,
+                to,
+                Constants.BaseTolerance);
         }
 
         private static IEnumerable<PolygonEdge> SplitReplaceOldEdge(PolygonEdge oldEdge, ArrangementNode intersectNode)
         {
             // split current edge
             var fromNode = (ArrangementNode)oldEdge.FromPoint;
+            var toNode = (ArrangementNode)oldEdge.ToPoint;
+            if (ReferenceEquals(intersectNode, fromNode) ||
+                ReferenceEquals(intersectNode, toNode))
+                yield break;
             fromNode.StartingEdges.Remove(oldEdge);
-            if (fromNode == intersectNode) ;
+            toNode.EndingEdges.Remove(oldEdge);
             if (!fromNode.StartingEdges.Intersect(intersectNode.EndingEdges).Any())
             {  // only add if this edge does not already exist
                 var newEdge1 = new PolygonEdge(fromNode, intersectNode);
@@ -182,9 +194,6 @@ namespace TVGL
                 yield return newEdge1;
             }
             // now the second half
-            var toNode = (ArrangementNode)oldEdge.ToPoint;
-            if (toNode == intersectNode) ;
-            toNode.EndingEdges.Remove(oldEdge);
             if (!toNode.EndingEdges.Intersect(intersectNode.StartingEdges).Any())
             {  // only add if this edge does not already exist
                 var newEdge2 = new PolygonEdge(intersectNode, toNode);

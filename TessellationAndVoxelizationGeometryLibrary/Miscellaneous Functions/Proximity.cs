@@ -166,7 +166,7 @@ namespace TVGL
             tParameter = tParameter / denom;
             return a + (ab * tParameter); // a + (ab * t);
         }
-        
+
         /// <summary>
         /// Gets the closest 3D Point on line segment (defined by fromPt-toPt) from the given point (vertex).
         /// It also returns the distance to the line segment.
@@ -178,24 +178,22 @@ namespace TVGL
         /// <returns>Vector3.</returns>
         /// <source> This is based on the above method, but 
         /// rewritten for general use by MICampbell on 03.21.2025 </source>
-        public static Vector3 ClosestPointOnLineSegmentToPoint(Vector3 fromPt, Vector3 toPoint, Vector3 vertex, out double distanceToSegment)
+        public static Vector3 ClosestPointOnLineSegmentToPoint(Vector3 fromPt, Vector3 toPoint, Vector3 vertex)
         {
             var v = toPoint - fromPt;
-            var vLengthSqd = v.LengthSquared();
             //var vUnit = v / vLength;  // this would be the "costly" inverse square root, but let's put it off until we need it
 
             var distanceAlong = (vertex - fromPt).Dot(v); //really would need to divide by v so that unit length along vector
 
             if (distanceAlong <= 0.0)
             {   // point is "behind" the fromPt end of the segment, so the closest point is fromPt
-                distanceToSegment = (vertex - fromPt).Length();
                 return fromPt;
             }
+            var vLengthSqd = v.LengthSquared();
             if (distanceAlong >= vLengthSqd)
             {   // algebraically, we think that the point is "beyond" the toPoint if the result of distanceAlong
                 // is greater than the length of the segment. To avoid a square root, we multiple both sides by the
                 // length of v, which makes the LHS what was found above and the RHS as simply vLengthSqd
-                distanceToSegment = (vertex - toPoint).Length();
                 return toPoint;
             }
             else
@@ -203,9 +201,7 @@ namespace TVGL
                 // this point is q = fromPt + t * v/||v||
                 // note that distance along is t*||v||
                 // so the second term in this RHS for q ("t * v/||v||") is the same as distanceAlong*v/vLengthSqd
-                var q = fromPt + v * distanceAlong / vLengthSqd;
-                distanceToSegment = (vertex - q).Length();
-                return q;
+                return fromPt + v * distanceAlong / vLengthSqd;
             }
         }
 
@@ -226,17 +222,18 @@ namespace TVGL
             //(2) If the distance is >= the line.Length, the infinite line intersection is outside the line segment interval, on the ToPoint side.
             //(3) Otherwise, the infinite line intersection is inside the line segment interval.
             var lineVector = toPoint - fromPoint;
-            var lSqd = lineVector.LengthSquared();
-            var t = (p - fromPoint).Dot(lineVector) / lSqd;
+            var t = (p - fromPoint).Dot(lineVector);
 
             if (t <= 0.0)
             {
                 return fromPoint;
             }
-            if (t >= 1)
+            var lSqd = lineVector.LengthSquared();
+            if (t >= lSqd)
             {
                 return toPoint;
             }
+            t /= lSqd;
             return new Vector2(fromPoint.X + lineVector.X * t,
                 fromPoint.Y + lineVector.Y * t);
         }
