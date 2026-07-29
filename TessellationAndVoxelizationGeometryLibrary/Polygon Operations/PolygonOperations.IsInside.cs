@@ -314,6 +314,8 @@ namespace TVGL
                     if ((dy > 0) == (lhs < rhs))
                         inside = !inside;
                 }
+                if (onlyTopPolygon)
+                    break;
             }
             return inside;
         }
