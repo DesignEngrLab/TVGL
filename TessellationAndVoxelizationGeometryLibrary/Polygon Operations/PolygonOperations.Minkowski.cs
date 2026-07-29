@@ -38,6 +38,7 @@ namespace TVGL
         {
             //IO.Save(a, "a.json");
             //IO.Save(b, "b.json");
+            //Presenter.ShowAndHang([a, b]);
             var aHasHoles = a.InnerPolygons != null && a.InnerPolygons.Length > 0;
             var bHasHoles = b.InnerPolygons != null && b.InnerPolygons.Length > 0;
             var aCanBeInB = bHasHoles && ((a.MaxX - a.MinX) < (b.MaxX - b.MinX) &&
@@ -60,7 +61,6 @@ namespace TVGL
                 PutHolesInProperOuter(a, b, result, degenerateSeams);
             else if (bCanBeInA)
                 PutHolesInProperOuter(b, a, result, degenerateSeams);
-
             return result;
         }
 

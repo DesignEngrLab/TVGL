@@ -15,6 +15,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection.Metadata.Ecma335;
 
 namespace TVGL
 {
@@ -444,6 +445,79 @@ namespace TVGL
             }
             return false;
         }
+
+
+        /// <summary>
+        /// Returns an integer indicating the top polygon's rotational symmetry. for asymmetric, the
+        /// result is 1. For a 5-pointed star (stellated pentagon), the result is 5.
+        /// </summary>
+        /// <param name="polygon"></param>
+        /// <returns></returns>
+        public static int RotationalSymmetry(this Polygon polygon)
+        {
+            // Steps
+            // 1. find center and make a list of all triangle areas (really cross-products) from center as an array
+            var crosses = new double[polygon.Vertices.Count];
+            var prevVector = polygon.Vertices[^1].Coordinates - polygon.Centroid;
+            for (int i = 0; i < crosses.Length; i++)
+            {
+                var vector = polygon.Vertices[i].Coordinates - polygon.Centroid;
+                crosses[i] = prevVector.Cross(vector);
+                prevVector = vector;
+            }
+            // 2. find the answer as a product of prime factors recursively
+            return RotationalSymmetryRecurse(crosses, crosses.Length);
+        }
+
+        private static int RotationalSymmetryRecurse(double[] crosses, double length)
+        {
+            int intLength = (int)Math.Round(length);
+            if (intLength < 2) return 1; // Base case: no further factorization possible
+
+            foreach (var prime in PrimesTo101)
+            {
+                if (prime > intLength) break; // Can't divide by a prime larger than length
+                if (intLength % prime != 0) continue; // Prime must divide evenly
+
+                int delta = intLength / prime;
+                bool matches = true;
+
+                // Check if the pattern repeats every delta elements
+                // Compare section 0 with sections 1, 2, ..., prime-1
+                for (int i = 0; i < delta && matches; i++)
+                {
+                    for (int n = 1; n < prime && n * delta + i < crosses.Length && matches; n++)
+                    {
+                        int index = n * delta + i;
+
+                        // Compare with tolerance, being lenient with small values
+                        double val1 = crosses[i];
+                        double val2 = crosses[index];
+
+                        // If both values are very small (near zero), consider them equal
+                        if (Math.Abs(val1) < 1e-10 && Math.Abs(val2) < 1e-10)
+                            continue;
+
+                        // Otherwise use relative tolerance
+                        double maxAbs = Math.Max(Math.Abs(val1), Math.Abs(val2));
+                        if (Math.Abs(val1 - val2) > 1e-6 * maxAbs)
+                        {
+                            matches = false;
+                        }
+                    }
+                }
+
+                if (matches)
+                {
+                    // Found a valid factor, recurse with reduced length
+                    return prime * RotationalSymmetryRecurse(crosses, delta);
+                }
+            }
+
+            return 1; // No prime factors found, symmetry is 1
+        }
+        static int[] PrimesTo101 = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31,
+            37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97, 101];
 
         private enum PixelEdgeLength
         {

@@ -55,29 +55,27 @@ namespace TVGL
 
         private static Dictionary<PointKey, ArrangementNode> BuildArrangementGraph(IEnumerable<(Vector2, Vector2)> arrangement, out List<PolygonEdge> edges)
         {
-            var initNodeDict = new Dictionary<PointKey, ArrangementNode>(); // store the nodes by their point key. We will keep finding new nodes later 
-                                                                            // when we look for intersections so, this entire dictionary is returned
-            edges = new List<PolygonEdge>();   // these could be re-created by examining the nodes, but it is easier to keep track of them here
+            var initialCapacity = arrangement.TryGetNonEnumeratedCount(out var segmentCount) ? segmentCount : 0;
+            var initNodeDict = new Dictionary<PointKey, ArrangementNode>(initialCapacity);
+            var directedEdges = new HashSet<(PointKey From, PointKey To)>();
+            edges = new List<PolygonEdge>(initialCapacity);
 
             foreach (var (from, to) in arrangement)
             {
                 var fromKey = new PointKey(from);
                 var toKey = new PointKey(to);
-                var newNodeFound = false;
                 if (!initNodeDict.TryGetValue(fromKey, out var fromNode))
-                {   // then we haven't seen this node before, it is created here
+                {
                     fromNode = new ArrangementNode(fromKey, from);
                     initNodeDict.Add(fromKey, fromNode);
-                    newNodeFound = true;
                 }
                 if (!initNodeDict.TryGetValue(toKey, out var toNode))
-                {   // repeat for toNode
+                {
                     toNode = new ArrangementNode(toKey, to);
                     initNodeDict.Add(toKey, toNode);
-                    newNodeFound = true;
                 }
-                if (!newNodeFound && fromNode.StartingEdges.Any(e => e.ToPoint == toNode))
-                    continue; // then we have already added this edge
+                if (!directedEdges.Add((fromKey, toKey)))
+                    continue;
                 var edge = new PolygonEdge(fromNode, toNode);
                 edges.Add(edge);
                 fromNode.StartingEdges.Add(edge);
@@ -90,70 +88,148 @@ namespace TVGL
         private static List<ArrangementNode> SplitArrangementEdgesAtIntersections(Dictionary<PointKey, ArrangementNode> initNodeDict,
             List<PolygonEdge> edges)
         {
-            var edgeComparer = new EdgeComparer();  // sort by XMin, then YMin
-            edges.Sort(edgeComparer);
-            while (edges.Count > 0)
+            edges.Sort(new EdgeComparer());
+            var splitNodesByEdge = new Dictionary<PolygonEdge, HashSet<ArrangementNode>>();
+
+            // Find intersections on the original segments. Splitting a straight segment does not
+            // create geometrically new intersections, so each original edge can be rebuilt once
+            // after all of its split points have been collected.
+            for (var i = 0; i < edges.Count - 1; i++)
             {
-                var current = edges[0];  // hmm, why not use a priority queue? Because of the following 
-                edges.RemoveAt(0);       // foreach which looks at the others edges ahead in the queue.
-                foreach (var other in edges)
+                var current = edges[i];
+                for (var j = i + 1; j < edges.Count; j++)
                 {
+                    var other = edges[j];
                     if (current.XMax.IsLessThanNonNegligible(other.XMin)) break;
                     if (!FindIfIntersectionBetweenEdges(current, other, out var intersection))
                         continue;
-                    var splitCurrent = false;
-                    var splitOther = false;
                     var intersectionPointKey = new PointKey(intersection);
-                    if (initNodeDict.TryGetValue(intersectionPointKey, out var intersectNode))
+                    if (!initNodeDict.TryGetValue(intersectionPointKey, out var intersectNode))
                     {
-                        splitCurrent = intersectNode != current.FromPoint && intersectNode != current.ToPoint;
-                        splitOther = intersectNode != other.FromPoint && intersectNode != other.ToPoint;
-                    }
-                    else
-                    {
-                        splitCurrent = splitOther = true;
                         intersectNode = new ArrangementNode(intersectionPointKey, intersection);
                         initNodeDict.Add(intersectionPointKey, intersectNode);
                     }
-                    if (splitCurrent)
-                        foreach (var newEdge in SplitReplaceOldEdge(current, intersectNode))
-                            AddToSorted(edges, newEdge, edgeComparer);
-                    if (splitOther)
-                    {
-                        foreach (var newEdge in SplitReplaceOldEdge(other, intersectNode))
-                            AddToSorted(edges, newEdge, edgeComparer);
-                        edges.Remove(other);
-                    }
-                    break; // we break because the current edge has been split, and is no longer valid
+                    AddSplitNode(splitNodesByEdge, current, intersectNode);
+                    AddSplitNode(splitNodesByEdge, other, intersectNode);
                 }
             }
+
             var nodeComparer = new NodeComparer();
             var nodes = initNodeDict.Values.ToList();
             nodes.Sort(nodeComparer);
-            for (int i = 0; i < nodes.Count - 1; i++)
+
+            // Handle T-junctions and collinear overlaps. The crossing pass above creates every
+            // non-parallel intersection node; this pass also places any existing node that lies
+            // strictly inside an original edge onto that edge's split list.
+            foreach (var edge in edges)
             {
-                var currentNode = nodes[i];
-                var connectedEdges = new Queue<PolygonEdge>(currentNode.StartingEdges.Concat(currentNode.EndingEdges));
-                while (connectedEdges.TryDequeue(out var edge))
+                var firstCandidate = FindFirstNodeAtOrAfterX(nodes, edge.XMin);
+                for (var i = firstCandidate; i < nodes.Count; i++)
                 {
-                    var adjacentNode = edge.FromPoint == currentNode ? edge.ToPoint : edge.FromPoint;
-                    for (int j = i + 1; j < nodes.Count; j++)
-                    {
-                        var otherNode = nodes[j];
-                        if (adjacentNode == otherNode)
-                            continue;
-                        if (otherNode.X.IsGreaterThanNonNegligible(edge.XMax)) break;
-                        if (NodeIsOnEdge(otherNode, edge))
-                        {
-                            foreach (var newEdge in SplitReplaceOldEdge(edge, otherNode))
-                                if (newEdge.FromPoint == currentNode || newEdge.ToPoint == currentNode)
-                                    connectedEdges.Enqueue(newEdge);
-                            break; // we break because the current edge has been split, and is no longer valid
-                        }
-                    }
+                    var node = nodes[i];
+                    if (node.X.IsGreaterThanNonNegligible(edge.XMax))
+                        break;
+                    if (ReferenceEquals(node, edge.FromPoint) || ReferenceEquals(node, edge.ToPoint))
+                        continue;
+                    if (node.Y.IsLessThanNonNegligible(edge.YMin)
+                        || node.Y.IsGreaterThanNonNegligible(edge.YMax))
+                        continue;
+                    if (NodeIsOnEdge(node, edge))
+                        AddSplitNode(splitNodesByEdge, edge, node);
                 }
             }
+
+            RebuildArrangementEdges(edges, nodes, splitNodesByEdge, nodeComparer);
             return nodes;
+        }
+
+        private static void AddSplitNode(
+            Dictionary<PolygonEdge, HashSet<ArrangementNode>> splitNodesByEdge,
+            PolygonEdge edge,
+            ArrangementNode node)
+        {
+            if (ReferenceEquals(node, edge.FromPoint) || ReferenceEquals(node, edge.ToPoint))
+                return;
+            if (!splitNodesByEdge.TryGetValue(edge, out var splitNodes))
+            {
+                splitNodes = new HashSet<ArrangementNode>();
+                splitNodesByEdge.Add(edge, splitNodes);
+            }
+            splitNodes.Add(node);
+        }
+
+        private static int FindFirstNodeAtOrAfterX(List<ArrangementNode> nodes, double x)
+        {
+            var lower = 0;
+            var upper = nodes.Count;
+            while (lower < upper)
+            {
+                var middle = lower + ((upper - lower) >> 1);
+                if (nodes[middle].X < x)
+                    lower = middle + 1;
+                else
+                    upper = middle;
+            }
+            return lower;
+        }
+
+        private static void RebuildArrangementEdges(
+            List<PolygonEdge> originalEdges,
+            List<ArrangementNode> nodes,
+            Dictionary<PolygonEdge, HashSet<ArrangementNode>> splitNodesByEdge,
+            NodeComparer nodeComparer)
+        {
+            foreach (var node in nodes)
+            {
+                node.StartingEdges.Clear();
+                node.EndingEdges.Clear();
+            }
+
+            var directedEdges = new HashSet<(ArrangementNode From, ArrangementNode To)>();
+            foreach (var edge in originalEdges)
+            {
+                var fromNode = (ArrangementNode)edge.FromPoint;
+                var toNode = (ArrangementNode)edge.ToPoint;
+                if (!splitNodesByEdge.TryGetValue(edge, out var splitNodeSet)
+                    || splitNodeSet.Count == 0)
+                {
+                    AddArrangementEdge(fromNode, toNode, directedEdges);
+                    continue;
+                }
+
+                var direction = edge.Vector;
+                var splitNodes = splitNodeSet.ToList();
+                splitNodes.Sort((a, b) =>
+                {
+                    var aProjection = (a.Coordinates - fromNode.Coordinates).Dot(direction);
+                    var bProjection = (b.Coordinates - fromNode.Coordinates).Dot(direction);
+                    var comparison = aProjection.CompareTo(bProjection);
+                    return comparison != 0 ? comparison : nodeComparer.Compare(a, b);
+                });
+
+                var previousNode = fromNode;
+                foreach (var splitNode in splitNodes)
+                {
+                    if (previousNode.Equals(splitNode))
+                        continue;
+                    AddArrangementEdge(previousNode, splitNode, directedEdges);
+                    previousNode = splitNode;
+                }
+                if (!previousNode.Equals(toNode))
+                    AddArrangementEdge(previousNode, toNode, directedEdges);
+            }
+        }
+
+        private static void AddArrangementEdge(
+            ArrangementNode fromNode,
+            ArrangementNode toNode,
+            HashSet<(ArrangementNode From, ArrangementNode To)> directedEdges)
+        {
+            if (!directedEdges.Add((fromNode, toNode)))
+                return;
+            var edge = new PolygonEdge(fromNode, toNode);
+            fromNode.StartingEdges.Add(edge);
+            toNode.EndingEdges.Add(edge);
         }
 
         private static bool NodeIsOnEdge(ArrangementNode node, PolygonEdge edge)
@@ -174,33 +250,6 @@ namespace TVGL
                 from,
                 to,
                 Constants.BaseTolerance);
-        }
-
-        private static IEnumerable<PolygonEdge> SplitReplaceOldEdge(PolygonEdge oldEdge, ArrangementNode intersectNode)
-        {
-            // split current edge
-            var fromNode = (ArrangementNode)oldEdge.FromPoint;
-            var toNode = (ArrangementNode)oldEdge.ToPoint;
-            if (ReferenceEquals(intersectNode, fromNode) ||
-                ReferenceEquals(intersectNode, toNode))
-                yield break;
-            fromNode.StartingEdges.Remove(oldEdge);
-            toNode.EndingEdges.Remove(oldEdge);
-            if (!fromNode.StartingEdges.Intersect(intersectNode.EndingEdges).Any())
-            {  // only add if this edge does not already exist
-                var newEdge1 = new PolygonEdge(fromNode, intersectNode);
-                fromNode.StartingEdges.Add(newEdge1);
-                intersectNode.EndingEdges.Add(newEdge1);
-                yield return newEdge1;
-            }
-            // now the second half
-            if (!toNode.EndingEdges.Intersect(intersectNode.StartingEdges).Any())
-            {  // only add if this edge does not already exist
-                var newEdge2 = new PolygonEdge(intersectNode, toNode);
-                toNode.EndingEdges.Add(newEdge2);
-                intersectNode.StartingEdges.Add(newEdge2);
-                yield return newEdge2;
-            }
         }
         private static List<(Vector2, Vector2)> FindDegenerateSeams(List<ArrangementNode> nodes)
         {
@@ -287,25 +336,49 @@ namespace TVGL
         }
 
         private static void PruneIsolatedArrangementNodes(List<ArrangementNode> nodeList)
-        {   // any nodes that have no starting or ending edges are removed.
-            bool removalsFound;
-            do // note that there may be a chain of nodes that are isolated, so we keep looking until no more are found
-               // as member inside the chain would look not be prune on the first pass, but as the ends are pruned, it becomes isolated
+        {
+            var nodesToPrune = new Queue<ArrangementNode>();
+            var queuedNodes = new HashSet<ArrangementNode>();
+            var removedNodes = new HashSet<ArrangementNode>();
+
+            foreach (var node in nodeList)
             {
-                removalsFound = false;
-                for (int i = nodeList.Count - 1; i >= 0; i--)
+                if ((node.StartingEdges.Count == 0 || node.EndingEdges.Count == 0)
+                    && queuedNodes.Add(node))
+                    nodesToPrune.Enqueue(node);
+            }
+
+            while (nodesToPrune.TryDequeue(out var node))
+            {
+                if (removedNodes.Contains(node)
+                    || (node.StartingEdges.Count > 0 && node.EndingEdges.Count > 0))
+                    continue;
+                removedNodes.Add(node);
+
+                foreach (var edge in node.EndingEdges)
                 {
-                    var node = nodeList[i];
-                    if (node.StartingEdges.Count > 0 && node.EndingEdges.Count > 0)
-                        continue;
-                    nodeList.RemoveAt(i);
-                    removalsFound = true;
-                    foreach (var edge in node.EndingEdges)
-                        ((ArrangementNode)edge.FromPoint).StartingEdges.Remove(edge);
-                    foreach (var edge in node.StartingEdges)
-                        ((ArrangementNode)edge.ToPoint).EndingEdges.Remove(edge);
+                    var neighbor = (ArrangementNode)edge.FromPoint;
+                    neighbor.StartingEdges.Remove(edge);
+                    if (!removedNodes.Contains(neighbor)
+                        && (neighbor.StartingEdges.Count == 0 || neighbor.EndingEdges.Count == 0)
+                        && queuedNodes.Add(neighbor))
+                        nodesToPrune.Enqueue(neighbor);
                 }
-            } while (removalsFound);
+                foreach (var edge in node.StartingEdges)
+                {
+                    var neighbor = (ArrangementNode)edge.ToPoint;
+                    neighbor.EndingEdges.Remove(edge);
+                    if (!removedNodes.Contains(neighbor)
+                        && (neighbor.StartingEdges.Count == 0 || neighbor.EndingEdges.Count == 0)
+                        && queuedNodes.Add(neighbor))
+                        nodesToPrune.Enqueue(neighbor);
+                }
+                node.StartingEdges.Clear();
+                node.EndingEdges.Clear();
+            }
+
+            if (removedNodes.Count > 0)
+                nodeList.RemoveAll(removedNodes.Contains);
         }
 
         private static List<Polygon> ExtractPolygonsFromArrangementNodes(List<ArrangementNode> nodeList)
@@ -380,13 +453,6 @@ namespace TVGL
                 }
             }
             return best;
-        }
-
-        private static void AddToSorted(List<PolygonEdge> sortedEdges, PolygonEdge newEdge, EdgeComparer edgeComparer)
-        {   // binary search to find the right place to insert. 
-            var index = sortedEdges.BinarySearch(newEdge, edgeComparer);
-            index = index >= 0 ? index : ~index;
-            sortedEdges.Insert(index, newEdge);
         }
 
         /// <summary>
@@ -495,29 +561,30 @@ namespace TVGL
         {
             public int Compare(PolygonEdge a, PolygonEdge b)
             {
-                //if (a.XMin < b.XMin) return -1;
-                //if (a.XMin > b.XMin) return 1;
-                //if (a.YMin < b.YMin) return -1;
-                if (a.XMin.IsLessThanNonNegligible(b.XMin)) return -1;
-                if (b.XMin.IsLessThanNonNegligible(a.XMin)) return 1;
-                if (a.YMin.IsLessThanNonNegligible(b.YMin)) return -1;
-                if (b.YMin.IsLessThanNonNegligible(a.YMin)) return 1;
-                if (a.XMax.IsLessThanNonNegligible(b.XMax)) return -1;
-                if (b.XMax.IsLessThanNonNegligible(a.XMax)) return 1;
-                if (a.YMax.IsLessThanNonNegligible(b.YMax)) return -1;
-                //if (b.YMax.IsLessThanNonNegligible(a.YMax)) return 1; // not needed since same as default return
-                return 1;
+                if (ReferenceEquals(a, b)) return 0;
+                var comparison = a.XMin.CompareTo(b.XMin);
+                if (comparison != 0) return comparison;
+                comparison = a.YMin.CompareTo(b.YMin);
+                if (comparison != 0) return comparison;
+                comparison = a.XMax.CompareTo(b.XMax);
+                if (comparison != 0) return comparison;
+                comparison = a.YMax.CompareTo(b.YMax);
+                if (comparison != 0) return comparison;
+                comparison = a.FromPoint.X.CompareTo(b.FromPoint.X);
+                if (comparison != 0) return comparison;
+                comparison = a.FromPoint.Y.CompareTo(b.FromPoint.Y);
+                if (comparison != 0) return comparison;
+                comparison = a.ToPoint.X.CompareTo(b.ToPoint.X);
+                return comparison != 0 ? comparison : a.ToPoint.Y.CompareTo(b.ToPoint.Y);
             }
         }
         internal class NodeComparer : IComparer<ArrangementNode>
         {
             public int Compare(ArrangementNode a, ArrangementNode b)
             {
-                if (a.X.IsLessThanNonNegligible(b.X)) return -1;
-                if (b.X.IsLessThanNonNegligible(a.X)) return 1;
-                if (a.Y.IsLessThanNonNegligible(b.Y)) return -1;
-                //if (b.Y.IsLessThanNonNegligible(a.Y)) return 1; // not needed since same as default return
-                return 1;
+                if (ReferenceEquals(a, b)) return 0;
+                var comparison = a.X.CompareTo(b.X);
+                return comparison != 0 ? comparison : a.Y.CompareTo(b.Y);
             }
         }
     }
