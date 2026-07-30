@@ -527,25 +527,27 @@ namespace TVGL
             if (double.IsNaN(allowableConcaveIncreaseInAreaFraction))
                 allowableConcaveIncreaseInAreaFraction = allowableConvexReductionInAreaFraction;
 
-            polygon.RemoveCollinearEdges();
             var origArea = Math.Abs(polygon.Area);
-            if (origArea.IsNegligible()) return;
+            if (origArea <= 0.0 || !double.IsFinite(origArea)) return;
 
             // build initial list of cross products
             var convexCornerQueue = new UpdatablePriorityQueue<Vertex2D, double>(new ForwardSort());
             var concaveCornerQueue = new UpdatablePriorityQueue<Vertex2D, double>(new ReverseSort());
+            var orientationSign = polygon.IsPositive ? 1.0 : -1.0;
             foreach (var vertex in polygon.Vertices)
             {
-                var cross = vertex.EndLine.Vector.Cross(vertex.StartLine.Vector);
-                if (cross > 0) convexCornerQueue.Enqueue(vertex, cross);
+                var cross = orientationSign * vertex.EndLine.Vector.Cross(vertex.StartLine.Vector);
+                // Keep this test exact. A tolerance on this cross product would scale
+                // with length squared and make the simplification unit-dependent.
+                if (cross >= 0) convexCornerQueue.Enqueue(vertex, cross);
                 else concaveCornerQueue.Enqueue(vertex, cross);
             }
 
             // after much thought, the idea to split up into positive and negative sorted lists is so that we don't over remove vertices
             // by bouncing back and forth between convex and concave while staying with the target deltaArea. So, we do as many convex corners
             // before reaching a reduction of deltaArea - followed by a reduction of concave edges so that no more than deltaArea is re-added
-            var convexArea = 2 * polygon.Area * allowableConvexReductionInAreaFraction;
-            var concaveArea = 2 * polygon.Area * allowableConcaveIncreaseInAreaFraction;
+            var convexArea = 2 * origArea * allowableConvexReductionInAreaFraction;
+            var concaveArea = 2 * origArea * allowableConcaveIncreaseInAreaFraction;
             //multiplied by 2 in order to reduce all the divide by 2 that happens when we
             //change cross-product to area of a triangle
             for (int sign = 1; sign >= -1; sign -= 2)
@@ -563,8 +565,8 @@ namespace TVGL
                     var nextVertex = vertex.StartLine.ToPoint;
                     var prevVertex = vertex.EndLine.FromPoint;
                     vertex.DeleteVertex();
-                    UpdateCrossProductInQueues(prevVertex, convexCornerQueue, concaveCornerQueue);
-                    UpdateCrossProductInQueues(nextVertex, convexCornerQueue, concaveCornerQueue);
+                    UpdateCrossProductInQueues(prevVertex, orientationSign, convexCornerQueue, concaveCornerQueue);
+                    UpdateCrossProductInQueues(nextVertex, orientationSign, convexCornerQueue, concaveCornerQueue);
                 }
             }
             RecreateVertices(polygon);
@@ -1258,10 +1260,11 @@ namespace TVGL
         /// <param name="vertex">The vertex.</param>
         /// <param name="convexCornerQueue">The convex corner queue.</param>
         /// <param name="concaveCornerQueue">The concave corner queue.</param>
-        private static void UpdateCrossProductInQueues(Vertex2D vertex, UpdatablePriorityQueue<Vertex2D, double> convexCornerQueue,
+        private static void UpdateCrossProductInQueues(Vertex2D vertex, double orientationSign,
+            UpdatablePriorityQueue<Vertex2D, double> convexCornerQueue,
             UpdatablePriorityQueue<Vertex2D, double> concaveCornerQueue)
         {
-            var newCross = vertex.EndLine.Vector.Cross(vertex.StartLine.Vector);
+            var newCross = orientationSign * vertex.EndLine.Vector.Cross(vertex.StartLine.Vector);
             var wasInConvex = convexCornerQueue.Contains(vertex);
             if (newCross < 0)
             {
