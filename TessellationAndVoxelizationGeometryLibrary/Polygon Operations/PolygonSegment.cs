@@ -256,32 +256,8 @@ namespace TVGL
         /// <returns>System.Double.</returns>
         public double FindYGivenX(double xval, out bool isBetweenEndPoints)
         {
-            if (xval.IsPracticallySame(FromPoint.X))
-            {
-                isBetweenEndPoints = true;
-                return FromPoint.Y;
-            }
-            if (xval.IsPracticallySame(ToPoint.X))
-            {
-                isBetweenEndPoints = true;
-                return ToPoint.Y;
-            }
-            isBetweenEndPoints = (FromPoint.X < xval) != (ToPoint.X < xval);
-            // if both true or both false then endpoints are on same side of point
-            if (FromPoint.Y.IsPracticallySame(ToPoint.Y))
-            {
-                //Any y value on the line will do
-                return FromPoint.Y;
-            }
-            if (FromPoint.X.IsPracticallySame(ToPoint.X))
-            {
-                isBetweenEndPoints = (xval.IsPracticallySame(FromPoint.X));
-                //return either positive or negative infinity depending on the direction of the line.
-                if (ToPoint.Y - FromPoint.Y > 0)
-                    return double.MaxValue;
-                return double.MinValue;
-            }
-            return VerticalSlope * (xval - FromPoint.X) + FromPoint.Y;
+            return PolygonOperations.FindYOnSegmentAtGivenX(FromPoint.Coordinates, ToPoint.Coordinates,
+                xval, out isBetweenEndPoints);
         }
 
         /// <summary>
@@ -292,33 +268,8 @@ namespace TVGL
         /// <returns>System.Double.</returns>
         public double FindXGivenY(double yval, out bool isBetweenEndPoints)
         {
-            if (yval.IsPracticallySame(FromPoint.Y))
-            {
-                isBetweenEndPoints = true;
-                return FromPoint.X;
-            }
-            if (yval.IsPracticallySame(ToPoint.Y))
-            {
-                isBetweenEndPoints = true;
-                return ToPoint.X;
-            }
-            isBetweenEndPoints = (FromPoint.Y < yval) != (ToPoint.Y < yval);
-            // if both true or both false then endpoints are on same side of point
-            //If a vertical line, return an x value on that line (e.g., ToNode.X)
-            if (FromPoint.X.IsPracticallySame(ToPoint.X))
-            {
-                return FromPoint.X;
-            }
-
-            //If a flat line give either positive or negative infinity depending on the direction of the line.
-            if (FromPoint.Y.IsPracticallySame(ToPoint.Y))
-            {
-                isBetweenEndPoints = (yval.IsPracticallySame(FromPoint.Y));
-                if (ToPoint.X - FromPoint.X > 0)
-                    return double.MaxValue;
-                return double.MinValue;
-            }
-            return HorizontalSlope * (yval - FromPoint.Y) + FromPoint.X;
+            return PolygonOperations.FindXOnSegmentAtGivenY(FromPoint.Coordinates, ToPoint.Coordinates,
+                yval, out isBetweenEndPoints);
         }
 
         /// <summary>

@@ -124,6 +124,60 @@ namespace TVGL
         }
 
         /// <summary>
+        /// Finds the y-coordinate on a segment at the specified x-coordinate.
+        /// </summary>
+        internal static double FindYOnSegmentAtGivenX(Vector2 from, Vector2 to, double x,
+            out bool isBetweenEndPoints)
+        {
+            if (x.IsPracticallySame(from.X))
+            {
+                isBetweenEndPoints = true;
+                return from.Y;
+            }
+            if (x.IsPracticallySame(to.X))
+            {
+                isBetweenEndPoints = true;
+                return to.Y;
+            }
+            isBetweenEndPoints = (from.X < x) != (to.X < x);
+            if (from.Y.IsPracticallySame(to.Y))
+                return from.Y;
+            if (from.X.IsPracticallySame(to.X))
+            {
+                isBetweenEndPoints = x.IsPracticallySame(from.X);
+                return to.Y - from.Y > 0 ? double.MaxValue : double.MinValue;
+            }
+            return (to.Y - from.Y) / (to.X - from.X) * (x - from.X) + from.Y;
+        }
+
+        /// <summary>
+        /// Finds the x-coordinate on a segment at the specified y-coordinate.
+        /// </summary>
+        internal static double FindXOnSegmentAtGivenY(Vector2 from, Vector2 to, double y,
+            out bool isBetweenEndPoints)
+        {
+            if (y.IsPracticallySame(from.Y))
+            {
+                isBetweenEndPoints = true;
+                return from.X;
+            }
+            if (y.IsPracticallySame(to.Y))
+            {
+                isBetweenEndPoints = true;
+                return to.X;
+            }
+            isBetweenEndPoints = (from.Y < y) != (to.Y < y);
+            if (from.X.IsPracticallySame(to.X))
+                return from.X;
+            if (from.Y.IsPracticallySame(to.Y))
+            {
+                isBetweenEndPoints = y.IsPracticallySame(from.Y);
+                return to.X - from.X > 0 ? double.MaxValue : double.MinValue;
+            }
+            return (to.X - from.X) / (to.Y - from.Y) * (y - from.Y) + from.X;
+        }
+
+        /// <summary>
         /// Converts the 2D coordinates into a 1D collection of doubles. e.g. { X1, Y1, X2, Y2, ... }
         /// </summary>
         /// <param name="coordinates">The coordinates.</param>

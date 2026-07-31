@@ -768,19 +768,17 @@ namespace TVGL
             SortedList<double, Vertex2D> result = new SortedList<double, Vertex2D>(new NoEqualSort());
             foreach (var poly in polygon.AllPolygons)
             {
-                var startVertex = poly.Vertices[0];
-                var current = startVertex;
-                var currentIsAbove = startVertex.Y >= YValue;
-                do
+                var vertices = poly.Vertices;
+                for (var i = 0; i < vertices.Count; i++)
                 {
-                    var line = current.StartLine;
-                    var next = line.ToPoint;
+                    var current = vertices[i];
+                    var next = vertices[(i + 1) % vertices.Count];
+                    var currentIsAbove = current.Y >= YValue;
                     var nextIsAbove = next.Y >= YValue;
                     if (nextIsAbove != currentIsAbove)
-                        result.Add(line.FindXGivenY(YValue, out _), current);
-                    current = next;
-                    currentIsAbove = nextIsAbove;
-                } while (current != startVertex);
+                        result.Add(FindXOnSegmentAtGivenY(current.Coordinates, next.Coordinates,
+                            YValue, out _), current);
+                }
             }
             return result;
         }
@@ -796,19 +794,17 @@ namespace TVGL
             SortedList<double, Vertex2D> result = new SortedList<double, Vertex2D>(new NoEqualSort());
             foreach (var poly in polygon.AllPolygons)
             {
-                var startVertex = poly.Vertices[0];
-                var current = startVertex;
-                var currentIsToTheRight = startVertex.X >= XValue;
-                do
+                var vertices = poly.Vertices;
+                for (var i = 0; i < vertices.Count; i++)
                 {
-                    var line = current.StartLine;
-                    var next = line.ToPoint;
+                    var current = vertices[i];
+                    var next = vertices[(i + 1) % vertices.Count];
+                    var currentIsToTheRight = current.X >= XValue;
                     var nextIsToTheRight = next.X >= XValue;
                     if (nextIsToTheRight != currentIsToTheRight)
-                        result.Add(line.FindYGivenX(XValue, out _), current);
-                    current = next;
-                    currentIsToTheRight = nextIsToTheRight;
-                } while (current != startVertex);
+                        result.Add(FindYOnSegmentAtGivenX(current.Coordinates, next.Coordinates,
+                            XValue, out _), current);
+                }
             }
             return result;
         }
