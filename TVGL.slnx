@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/Solution Items/" />
+  <Project Path="Benchmarking/Benchmarking.csproj" />
+  <Project Path="PolygonImportExport/PolygonImportExport.csproj" />
+  <Project Path="TessellationAndVoxelizationGeometryLibrary/TessellationAndVoxelizationGeometryLibrary.csproj" />
+  <Project Path="Testing/Testing.csproj" />
+  <Project Path="WindowsDesktopPresenter/WindowsDesktopPresenter.csproj" />
+</Solution>
