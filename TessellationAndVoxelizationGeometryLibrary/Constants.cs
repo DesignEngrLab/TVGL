@@ -210,32 +210,32 @@ namespace TVGL
         /// <summary>
         /// The millimeter
         /// </summary>
-        millimeter = 11,
+        millimeter = 26,
 
         /// <summary>
         /// The micron
         /// </summary>
-        micron = 8,
+        micron = 23,
 
         /// <summary>
         /// The centimeter
         /// </summary>
-        centimeter = 1,
+        centimeter = 3,
 
         /// <summary>
         /// The inch
         /// </summary>
-        inch = 4,
+        inch = 14,
 
         /// <summary>
         /// The foot
         /// </summary>
-        foot = 3,
+        foot = 11,
 
         /// <summary>
         /// The meter
         /// </summary>
-        meter = 6
+        meter = 21
     }
 
     /// <summary>
