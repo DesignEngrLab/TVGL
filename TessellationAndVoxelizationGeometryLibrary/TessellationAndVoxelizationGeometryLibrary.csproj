@@ -15,13 +15,12 @@
 			voxelization, polygon operations, solid modeling, and related geometry tools.
 		</Description>
 		<Copyright>2026</Copyright>
-		<PackageLicenseUrl>https://github.com/DesignEngrLab/TVGL/blob/master/LICENSE</PackageLicenseUrl>
 		<PackageLicenseFile>LICENSE</PackageLicenseFile>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
 		<PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
 		<IncludeSymbols>true</IncludeSymbols>
 		<SymbolPackageFormat>snupkg</SymbolPackageFormat>
-
+		<EnablePackageValidation>true</EnablePackageValidation>
 		<PackageProjectUrl>http://designengrlab.github.io/TVGL/</PackageProjectUrl>
 		<RepositoryUrl>https://github.com/DesignEngrLab/TVGL.git</RepositoryUrl>
 		<RepositoryType>git</RepositoryType>
@@ -62,16 +61,6 @@
 		<Folder Include="Polygon Operations\Clipper\github.com.AngusJohnson.Clipper2\" />
 	</ItemGroup>
 
-	<ItemGroup>
-		<None Include="..\README.md"
-			  Pack="true"
-			  PackagePath="\"
-			  Link="README.md" />
-		<None Include="..\LICENSE"
-			  Pack="true"
-			  PackagePath="\"
-			  Link="LICENSE" />
-	</ItemGroup>
 	<ItemGroup>
 		<None Include="..\README.md"
 			  Pack="true"

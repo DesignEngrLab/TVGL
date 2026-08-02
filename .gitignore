@@ -138,6 +138,7 @@ publish/
 *.publishproj
 
 # NuGet Packages
+*.snupkg
 *.nupkg
 # The packages folder can be ignored because of Package Restore
 **/packages/*
@@ -199,3 +200,5 @@ FakesAssemblies/
 *.opt
 TestFiles/Mc Cormik-D326 - FrontTire-1.STL
 /ConsoleApp1
+
+/artifacts/
