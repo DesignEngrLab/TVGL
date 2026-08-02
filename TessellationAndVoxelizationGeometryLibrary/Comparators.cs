@@ -17,10 +17,8 @@ using System.Collections.Generic;
 namespace TVGL
 {
     /// <summary>
-    /// Class SortByIndexInList.
-    /// Implements the <see cref="System.Collections.Generic.IComparer{TVGL.TessellationBaseClass}" />
+    /// Compares tessellation objects by their index in the containing list.
     /// </summary>
-    /// <seealso cref="System.Collections.Generic.IComparer{TVGL.TessellationBaseClass}" />
     internal class SortByIndexInList : IComparer<TessellationBaseClass>
     {
         /// <summary>
@@ -40,9 +38,8 @@ namespace TVGL
 
     /// <summary>
     /// Class ReverseSort.
-    /// Implements the <see cref="System.Collections.Generic.IComparer{System.Double}" />
+    /// Implements <c>IComparer&lt;double&gt;</c>.
     /// </summary>
-    /// <seealso cref="System.Collections.Generic.IComparer{System.Double}" />
     internal class ReverseSort : IComparer<double>
     {
         /// <summary>
@@ -62,9 +59,8 @@ namespace TVGL
 
     /// <summary>
     /// Class ForwardSort.
-    /// Implements the <see cref="System.Collections.Generic.IComparer{System.Double}" />
+    /// Implements <c>IComparer&lt;double&gt;</c>.
     /// </summary>
-    /// <seealso cref="System.Collections.Generic.IComparer{System.Double}" />
     internal class ForwardSort : IComparer<double>
     {
         /// <summary>
@@ -84,9 +80,8 @@ namespace TVGL
 
     /// <summary>
     /// Class AbsoluteValueSort.
-    /// Implements the <see cref="System.Collections.Generic.IComparer{System.Double}" />
+    /// Implements <c>IComparer&lt;double&gt;</c>.
     /// </summary>
-    /// <seealso cref="System.Collections.Generic.IComparer{System.Double}" />
     internal class AbsoluteValueSort : IComparer<double>
     {
         /// <summary>
@@ -147,9 +142,8 @@ namespace TVGL
 
     /// <summary>
     /// Class TwoDSortXFirst.
-    /// Implements the <see cref="System.Collections.Generic.IComparer{IPoint2D}" />
+    /// Implements <c>IComparer&lt;IVector2D&gt;</c>.
     /// </summary>
-    /// <seealso cref="System.Collections.Generic.IComparer{IPoint2D}" />
     internal class TwoDSortXFirst : IComparer<IVector2D>
     {
 
@@ -169,9 +163,8 @@ namespace TVGL
 
     /// <summary>
     /// Class TwoDSortYFirst.
-    /// Implements the <see cref="System.Collections.Generic.IComparer{IPoint2D}" />
+    /// Implements <c>IComparer&lt;IVector2D&gt;</c>.
     /// </summary>
-    /// <seealso cref="System.Collections.Generic.IComparer{IPoint2D}" />
     internal class TwoDSortYFirst : IComparer<IVector2D>
     {
 
@@ -191,9 +184,8 @@ namespace TVGL
 
     /// <summary>
     /// Class VertexSortedByDirection.
-    /// Implements the <see cref="System.Collections.Generic.IComparer{TVGL.Vertex2D}" />
+    /// Implements <c>IComparer&lt;Vertex2D&gt;</c>.
     /// </summary>
-    /// <seealso cref="System.Collections.Generic.IComparer{TVGL.Vertex2D}" />
     internal class VertexSortedByDirection : IComparer<Vertex2D>
     {
         /// <summary>

@@ -4,81 +4,117 @@ using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace TVGL
 {
+    /// <summary>Provides convenience methods for displaying TVGL geometry and numeric data.</summary>
     public static class Presenter
     {
+        /// <summary>Displays a solid without blocking the calling code.</summary>
         public static void Show(Solid solid, string title = "", HoldType holdType = HoldType.Immediate, int timetoShow = -1, int id = -1)
   => OutputServices.Presenter3D.Show(solid, title, holdType, timetoShow, id);
+        /// <summary>Displays multiple solids without blocking the calling code.</summary>
         public static void Show(ICollection<Solid> solids, string title = "", HoldType holdType = HoldType.Immediate, int timetoShow = -1, int id = -1)
        => OutputServices.Presenter3D.Show(solids, title, holdType, timetoShow, id);
+        /// <summary>Displays three-dimensional paths and optional solids.</summary>
         public static void Show(IEnumerable<IEnumerable<Vector3>> paths, IEnumerable<bool> closePaths = null, IEnumerable<double> lineThicknesses = null, IEnumerable<Color> colors = null, string title = "", HoldType holdType = HoldType.Immediate, int timetoShow = -1, int id = -1, params Solid[] solids)
           => OutputServices.Presenter3D.Show(paths, closePaths, lineThicknesses, colors, title, holdType, timetoShow, id, solids);
 
+        /// <summary>Displays a two-dimensional path.</summary>
         public static void Show(IEnumerable<Vector2> path, string title = "", Plot2DType plot2DType = Plot2DType.Line, bool closeShape = true, MarkerType marker = MarkerType.Circle, HoldType holdType = HoldType.Immediate, int timetoShow = -1, int id = -1)
 => OutputServices.Presenter2D.Show(path, title, plot2DType, closeShape, marker, holdType, timetoShow, id);
+        /// <summary>Displays multiple two-dimensional paths.</summary>
         public static void Show(IEnumerable<IEnumerable<Vector2>> paths, string title = "", Plot2DType plot2DType = Plot2DType.Line, IEnumerable<bool> closePaths = null, MarkerType marker = MarkerType.Circle, HoldType holdType = HoldType.Immediate, int timetoShow = -1, int id = -1)
        => OutputServices.Presenter2D.Show(paths, title, plot2DType, closePaths, marker, holdType, timetoShow, id);
+        /// <summary>Displays one polygon without blocking the calling code.</summary>
         public static void Show(Polygon polygon, string title = "", Plot2DType plot2DType = Plot2DType.Line, MarkerType marker = MarkerType.None, HoldType holdType = HoldType.Immediate, int timetoShow = -1, int id = -1)
        => OutputServices.Presenter2D.Show(polygon, title, plot2DType, marker, holdType, timetoShow, id);
+        /// <summary>Displays multiple polygons without blocking the calling code.</summary>
         public static void Show(IEnumerable<Polygon> polygon, string title = "", Plot2DType plot2DType = Plot2DType.Line, MarkerType marker = MarkerType.None, HoldType holdType = HoldType.Immediate, int timetoShow = -1, int id = -1)
        => OutputServices.Presenter2D.Show(polygon, title, plot2DType, marker, holdType, timetoShow, id);
+        /// <summary>Displays a solid and waits until the presentation is closed.</summary>
         public static void ShowAndHang(Solid solid, string heading = "", string title = "", string subtitle = "")
         => OutputServices.Presenter3D.ShowAndHang(solid, heading, title, subtitle);
+        /// <summary>Displays multiple solids and waits until the presentation is closed.</summary>
         public static void ShowAndHang(IEnumerable<Solid> solids, string heading = "", string title = "", string subtitle = "")
         => OutputServices.Presenter3D.ShowAndHang(solids, heading, title, subtitle);
+        /// <summary>Displays three-dimensional path groups with optional solids.</summary>
         public static void ShowAndHang(IEnumerable<IEnumerable<IEnumerable<Vector3>>> paths, IEnumerable<bool> closePaths = null, IEnumerable<double> lineThicknesses = null, IEnumerable<Color> colors = null, params Solid[] solids)
         => OutputServices.Presenter3D.ShowAndHang(paths, closePaths, lineThicknesses, colors, solids);
+        /// <summary>Displays three-dimensional paths and optional solids, optionally choosing random path colors.</summary>
         public static void ShowAndHang(IEnumerable<IEnumerable<Vector3>> paths, IEnumerable<bool> closePaths = null, IEnumerable<double> lineThicknesses = null, IEnumerable<Color> colors = null, bool otherwiseRandomColors = false, params Solid[] solids)
        => OutputServices.Presenter3D.ShowAndHang(paths, closePaths, lineThicknesses, colors, otherwiseRandomColors, solids);
+        /// <summary>Displays three-dimensional paths together with optional triangle faces.</summary>
         public static void ShowAndHang(IEnumerable<IEnumerable<Vector3>> paths, IEnumerable<bool> closePaths = null, IEnumerable<double> lineThicknesses = null, IEnumerable<Color> colors = null, IEnumerable<TriangleFace> faces = null)
         => OutputServices.Presenter3D.ShowAndHang(paths, closePaths, lineThicknesses, colors, faces);
+        /// <summary>Displays one three-dimensional path with optional solids.</summary>
         public static void ShowAndHang(IEnumerable<Vector3> path, bool closePaths = false, double lineThickness = -1, Color color = null, params Solid[] solids)
         => OutputServices.Presenter3D.ShowAndHang(path, closePaths, lineThickness, color, solids);
+        /// <summary>Displays triangle faces and waits until the presentation is closed.</summary>
         public static void ShowAndHang(IEnumerable<TriangleFace> faces, string heading = "", string title = "", string subtitle = "")
        => OutputServices.Presenter3D.ShowAndHang(faces, heading, title, subtitle);
+        /// <summary>Displays a matrix as a heatmap and waits until the presentation is closed.</summary>
         public static void ShowAndHang(double[,] data, string title = "")
     => OutputServices.Presenter2D.ShowAndHang(data, title);
+        /// <summary>Displays a grid as a heatmap and waits until the presentation is closed.</summary>
+        /// <typeparam name="T">The type stored in the grid.</typeparam>
         public static void ShowAndHang<T>(Grid<T> grid, Func<T, double> converter, bool normalizeValues = false)
         => OutputServices.Presenter2D.ShowAndHang(grid, converter, normalizeValues);
+        /// <summary>Displays two-dimensional points and waits until the presentation is closed.</summary>
         public static void ShowAndHang(IEnumerable<Vector2> points, string title = "", Plot2DType plot2DType = Plot2DType.Line, bool closeShape = true, MarkerType marker = MarkerType.Circle)
         => OutputServices.Presenter2D.ShowAndHang(points, title, plot2DType, closeShape, marker);
+        /// <summary>Displays multiple two-dimensional point collections.</summary>
         public static void ShowAndHang(IEnumerable<IEnumerable<Vector2>> pointsList, string title = "", Plot2DType plot2DType = Plot2DType.Line, bool closeShape = true, MarkerType marker = MarkerType.Circle)
        => OutputServices.Presenter2D.ShowAndHang(pointsList, title, plot2DType, closeShape, marker);
+        /// <summary>Displays grouped two-dimensional point collections.</summary>
         public static void ShowAndHang(IEnumerable<IEnumerable<IEnumerable<Vector2>>> pointsLists, string title = "", Plot2DType plot2DType = Plot2DType.Line, bool closeShape = true, MarkerType marker = MarkerType.Circle)
         => OutputServices.Presenter2D.ShowAndHang(pointsLists, title, plot2DType, closeShape, marker);
+        /// <summary>Displays multiple polygons and waits until the presentation is closed.</summary>
         public static void ShowAndHang(IEnumerable<Polygon> polygons, string title = "", Plot2DType plot2DType = Plot2DType.Line, MarkerType marker = MarkerType.Circle)
        => OutputServices.Presenter2D.ShowAndHang(polygons, title, plot2DType, marker);
+        /// <summary>Displays a polygon and waits until the presentation is closed.</summary>
         public static void ShowAndHang(Polygon polygon, string title = "", Plot2DType plot2DType = Plot2DType.Line, MarkerType marker = MarkerType.Circle)
         => OutputServices.Presenter2D.ShowAndHang(polygon, title, plot2DType, marker);
+        /// <summary>Displays two groups of two-dimensional paths with separate marker styles.</summary>
         public static void ShowAndHang(IEnumerable<IEnumerable<Vector2>> points1, IEnumerable<IEnumerable<Vector2>> points2, string title = "", Plot2DType plot2DType = Plot2DType.Line, bool closeShape = true, MarkerType marker1 = MarkerType.Circle, MarkerType marker2 = MarkerType.Cross)
        => OutputServices.Presenter2D.ShowAndHang(points1, points2, title, plot2DType, closeShape, marker1, marker2);
+        /// <summary>Projects vertices along a direction and displays the resulting two-dimensional plot.</summary>
         public static void ShowAndHang(IEnumerable<Vertex> vertices, Vector3 direction, string title = "", Plot2DType plot2DType = Plot2DType.Line, bool closeShape = true, MarkerType marker = MarkerType.Circle)
         => OutputServices.Presenter2D.ShowAndHang(vertices, direction, title, plot2DType, closeShape, marker);
+        /// <summary>Projects multiple vertex collections along a direction and displays them.</summary>
         public static void ShowAndHang(IEnumerable<IEnumerable<Vertex>> vertices, Vector3 direction, string title = "", Plot2DType plot2DType = Plot2DType.Line, bool closeShape = true, MarkerType marker = MarkerType.Circle)
        => OutputServices.Presenter2D.ShowAndHang(vertices, direction, title, plot2DType, closeShape, marker);
+        /// <summary>Displays a sequence of matrix states and waits for the presentation to close.</summary>
         public static void ShowStepsAndHang(ICollection<double[,]> data, string title = "")
             => OutputServices.Presenter2D.ShowStepsAndHang(data, title);
+        /// <summary>Displays matrix states with associated two-dimensional points.</summary>
         public static void ShowStepsAndHang(ICollection<double[,]> data, IEnumerable<IEnumerable<Vector2>> points,
             bool connectPointsInLine, string title = "")
              => OutputServices.Presenter2D.ShowStepsAndHang(data, points, connectPointsInLine, title);
+        /// <summary>Displays matrix states with multiple associated point collections.</summary>
         public static void ShowStepsAndHang(ICollection<double[,]> data, IEnumerable<IEnumerable<IEnumerable<Vector2>>> points,
            IEnumerable<bool> connectPointsInLine, string title = "")
             => OutputServices.Presenter2D.ShowStepsAndHang(data, points, connectPointsInLine, title);
 
+        /// <summary>Displays transparent solids together with opaque solids.</summary>
         public static void ShowAndHangTransparentsAndSolids(IEnumerable<TessellatedSolid> transparentSolids, IEnumerable<TessellatedSolid> solids)
        => OutputServices.Presenter3D.ShowAndHangTransparentsAndSolids(transparentSolids, solids);
+        /// <summary>Displays a solid with vertex colors representing Gaussian-sphere intensity.</summary>
         public static void ShowGaussSphereWithIntensity(IEnumerable<Vertex> vertices, IList<Color> colors, Solid solid)
         => OutputServices.Presenter3D.ShowGaussSphereWithIntensity(vertices, colors, solid);
+        /// <summary>Displays a matrix as a heatmap.</summary>
         public static void ShowHeatmap(double[,] values, bool normalizeValues = false)
       => OutputServices.Presenter2D.ShowHeatmap(values, normalizeValues);
+        /// <summary>Displays three-dimensional points and waits until the presentation is closed.</summary>
         public static void ShowPointsAndHang(IEnumerable<Vector3> points, double radius = 0, Color color = null)
         => OutputServices.Presenter3D.ShowPointsAndHang(points, radius, color);
+        /// <summary>Displays multiple three-dimensional point sets.</summary>
         public static void ShowPointsAndHang(IEnumerable<IEnumerable<Vector3>> pointSets, double radius = 0, IEnumerable<Color> colors = null)
         => OutputServices.Presenter3D.ShowPointsAndHang(pointSets, radius, colors);
+        /// <summary>Displays a sequence of transformed paths and solids.</summary>
         public static void ShowStepsAndHang(IList<IEnumerable<IEnumerable<Vector3>>> paths, IEnumerable<IEnumerable<Matrix4x4>> pathTransforms,
             IList<IEnumerable<Solid>> solids, IEnumerable<IEnumerable<Matrix4x4>> solidTransforms, IEnumerable<bool> closePaths = null,
             IEnumerable<double> lineThicknesses = null, IEnumerable<Color> colors = null)
             => OutputServices.Presenter3D.ShowStepsAndHang(paths, pathTransforms, solids, solidTransforms, closePaths,
                 lineThicknesses, colors);
+        /// <summary>Displays a sequence of transformed paths and triangle-face groups.</summary>
         public static void ShowStepsAndHang(IList<IEnumerable<IEnumerable<Vector3>>> paths, IEnumerable<IEnumerable<Matrix4x4>> pathTransforms,
        IList<IEnumerable<IEnumerable<TriangleFace>>> faceGroups, IEnumerable<IEnumerable<Matrix4x4>> fGTransforms, IEnumerable<bool> closePaths = null,
        IEnumerable<double> lineThicknesses = null, IEnumerable<Color> pathColors = null)

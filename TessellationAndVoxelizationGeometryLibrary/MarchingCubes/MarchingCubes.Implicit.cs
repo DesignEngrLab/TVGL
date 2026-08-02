@@ -18,10 +18,8 @@ using System.Linq;
 namespace TVGL
 {
     /// <summary>
-    /// Class MarchingCubesImplicit.
-    /// Implements the <see cref="TVGL.MarchingCubes{TVGL.ImplicitSolid, System.Double}" />
+    /// Extracts a tessellated surface from an implicit solid.
     /// </summary>
-    /// <seealso cref="TVGL.MarchingCubes{TVGL.ImplicitSolid, System.Double}" />
     internal class MarchingCubesImplicit : MarchingCubes<ImplicitSolid, double>
     {
         private readonly PrimitiveSurface surface;

@@ -329,8 +329,8 @@ namespace TVGL
         /// <returns>BoundingBox.</returns>
         public static Vector3[] MakeCornerPoints(Vector3[] direction, Vector3 dimensions, Vector3 origin)
         {
-            ///     Corner vertices are ordered as follows, where - = low and + = high along directions 0, 1, and 2 respectively.
-            ///     [0] = ---, [1] = +-- , [2] = ++- , [3] = -+-, [4] = --+ , [5] = +-+, [6] = +++, [7] = -++
+            // Corner vertices are ordered as follows, where - = low and + = high along directions 0, 1, and 2 respectively.
+            // [0] = ---, [1] = +-- , [2] = ++- , [3] = -+-, [4] = --+ , [5] = +-+, [6] = +++, [7] = -++
             var corners = new Vector3[8];
             // ---
             corners[0] = origin;

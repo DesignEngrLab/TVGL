@@ -166,7 +166,7 @@ namespace TVGL
 
         /// <summary>
         /// Computes the Minkowski sum of two polygons (each may have holes) using a C# port of the
-        /// CGAL reduced convolution method (E. Behar & J-M. Lien, IROS 2011; A. Baram 2013).
+        /// CGAL reduced convolution method (E. Behar and J-M. Lien, IROS 2011; A. Baram 2013).
         /// Notes / Simplifications:
         /// 1. The original CGAL implementation constructs an arrangement-with-history of the reduced
         ///    convolution segments to robustly extract outer boundary and holes. Here we:
@@ -186,7 +186,7 @@ namespace TVGL
 
         /// <summary>
         /// Builds reduced convolution directed segments for a pair of simple loops (both assumed CCW).
-        /// Based on CGAL reduced convolution algorithm (E. Behar & J-M. Lien, IROS 2011; A. Baram 2013).
+        /// Based on CGAL reduced convolution algorithm (E. Behar and J-M. Lien, IROS 2011; A. Baram 2013).
         /// </summary>
         private static List<(Vector2 from, Vector2 to)> BuildReducedConvolutionSegments(Polygon p1, Polygon p2)
         {

@@ -37,7 +37,7 @@ namespace TVGL
         /// </remarks>
         /// <example>
         /// <code>
-        /// var faces = new List<TriangleFace> { face1, face2, face3 };
+        /// var faces = new List&lt;TriangleFace&gt; { face1, face2, face3 };
         /// var averageNormal = faces.AverageFaceNormals();
         /// var weightedAverageNormal = faces.AverageFaceNormals(true);
         /// </code>
@@ -74,7 +74,7 @@ namespace TVGL
         /// </remarks>
         /// <example>
         /// <code>
-        /// var vertices = new List<Vertex> { v1, v2, v3 };
+        /// var vertices = new List&lt;Vertex&gt; { v1, v2, v3 };
         /// var direction = new Vector3(1, 0, 0);
         /// vertices.SortAlongDirection(direction, out var sortedVertices);
         /// foreach (var (vertex, distance) in sortedVertices)
@@ -111,7 +111,7 @@ namespace TVGL
         /// </remarks>
         /// <example>
         /// <code>
-        /// var points = new List<Vector3> { p1, p2, p3 };
+        /// var points = new List&lt;Vector3&gt; { p1, p2, p3 };
         /// var direction = new Vector3(1, 0, 0);
         /// points.SortAlongDirection(direction, out var sortedPoints);
         /// foreach (var (point, distance) in sortedPoints)

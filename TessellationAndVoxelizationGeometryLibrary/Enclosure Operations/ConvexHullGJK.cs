@@ -26,10 +26,10 @@ namespace TVGL
             where T1 : IVector3D
             where T2 : IVector3D
         {
-            int k = 0;                /**< Iteration counter                 */
-            const int mk = 25;                 /**< Maximum number of GJK iterations  */
-            const double eps_rel = Constants.BaseTolerance; /**< Tolerance on relative             */
-            const double eps_tot = Constants.BaseTolerance / 100; /**< Tolerance on absolute distance    */
+            int k = 0;                // Iteration counter.
+            const int mk = 25;                 // Maximum number of GJK iterations.
+            const double eps_rel = Constants.BaseTolerance; // Tolerance on relative error.
+            const double eps_tot = Constants.BaseTolerance / 100; // Tolerance on absolute distance.
 
             const double eps_rel2 = eps_rel * eps_rel;
             double norm2Wmax = 0;

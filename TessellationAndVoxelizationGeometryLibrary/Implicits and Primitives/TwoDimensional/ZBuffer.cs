@@ -18,7 +18,7 @@ using System.Runtime.CompilerServices;
 namespace TVGL
 {
     /// <summary>
-    /// Class ZBuffer. This class cannot be inherited.
+    /// Rasterizes a tessellated solid onto a two-dimensional grid while retaining depth information.
     /// </summary>
     public class ZBuffer : Grid<(TriangleFace, double)>
     {
@@ -71,8 +71,10 @@ namespace TVGL
         /// </summary>
         protected TriangleFace[] solidFaces;
 
+        /// <summary>Gets the projection direction used to construct the buffer.</summary>
         public Vector3 Direction;
 
+        /// <summary>Gets the minimum z-height found for each primitive and grid index.</summary>
         public Dictionary<PrimitiveSurface, Dictionary<int, double>> PrimitiveZmins;
 
         /// <summary>
@@ -81,7 +83,9 @@ namespace TVGL
         /// <param name="solid">The solid.</param>
         /// <param name="direction">The direction.</param>
         /// <param name="pixelsPerRow">The pixels per row.</param>
-        /// <param name="pixelBorder">The pixel border.</param>
+        /// <param name="pixelBorder">The number of empty grid cells used as a border.</param>
+        /// <param name="subsetFaces">An optional subset of faces to rasterize.</param>
+        /// <returns>A z-buffer initialized from the supplied solid.</returns>
         public static ZBuffer Run(TessellatedSolid solid, Vector3 direction, int pixelsPerRow,
             int pixelBorder = 2, IEnumerable<TriangleFace> subsetFaces = null)
         {
@@ -133,6 +137,9 @@ namespace TVGL
             solidFaces = solid.Faces;
         }
 
+        /// <summary>Projects a three-dimensional point into the buffer grid.</summary>
+        /// <param name="vertex">The point to project.</param>
+        /// <returns>The flattened grid index and projected z-height.</returns>
         public virtual (int, double) ProjectOnGrid(Vector3 vertex)
         {
             var p = vertex.Transform(transform);
@@ -140,6 +147,8 @@ namespace TVGL
             return (index, p.Z);
         }
 
+        /// <summary>Rasterizes all faces of a primitive surface into the z-buffer.</summary>
+        /// <param name="prim">The primitive surface to rasterize.</param>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public virtual void UpdateZBufferWithSurface(PrimitiveSurface prim)
         {
@@ -168,9 +177,10 @@ namespace TVGL
             PrimitiveZmins.Add(prim, lowestZValues);
         }
 
+        /// <summary>
+        /// Updates the z-buffer with the samples covered by a triangular face.
         /// </summary>
-        /// <param name="face">The face.</param>
-        /// <returns>System.Double.</returns>
+        /// <param name="face">The face to rasterize into the buffer.</param>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public virtual void UpdateZBufferWithFace(TriangleFace face)
         {
@@ -184,6 +194,10 @@ namespace TVGL
             }
         }
 
+        /// <summary>Counts the covered grid samples that are visible for a triangular face.</summary>
+        /// <param name="face">The face to test.</param>
+        /// <param name="visibleGridPoints">Receives the number of visible covered samples.</param>
+        /// <param name="totalGridPointsCovered">Receives the total number of samples covered by the face.</param>
         public virtual void CheckZBufferWithFace(TriangleFace face, out int visibleGridPoints, out int totalGridPointsCovered)
         {
             var tolerance = 0.5 * PixelSideLength;
@@ -471,6 +485,11 @@ namespace TVGL
             }
         }
 
+        /// <summary>Returns grid coordinates touched by the projected outline of a triangle.</summary>
+        /// <param name="vA">The first projected vertex.</param>
+        /// <param name="vB">The second projected vertex.</param>
+        /// <param name="vC">The third projected vertex.</param>
+        /// <returns>The grid coordinates along the triangle boundary.</returns>
         public virtual IEnumerable<(int xIndex, int yIndex)> GetIndicesCoveredOutOfPlaneFace(Vector2 vA, Vector2 vB,
             Vector2 vC)
         {
@@ -547,9 +566,9 @@ namespace TVGL
         /// <summary>
         /// Gets the 2D point of pixel i,j.
         /// </summary>
-        /// <param name="i">The i.</param>
-        /// <param name="j">The j.</param>
-        /// <returns>Vector2.</returns>
+        /// <param name="i">The zero-based horizontal grid index.</param>
+        /// <param name="j">The zero-based vertical grid index.</param>
+        /// <returns>The projected two-dimensional coordinate at the grid cell.</returns>
         public Vector2 Get2DPoint(int i, int j)
         {
             return new Vector2(MinX + i * PixelSideLength, MinY + j * PixelSideLength);
@@ -557,9 +576,10 @@ namespace TVGL
         /// <summary>
         /// Gets the 3D transformed point of pixel i,j to the x-y plane, with z being the z-buffer height.
         /// </summary>
-        /// <param name="i">The i.</param>
-        /// <param name="j">The j.</param>
-        /// <returns>Vector3.</returns>
+        /// <param name="i">The zero-based horizontal grid index.</param>
+        /// <param name="j">The zero-based vertical grid index.</param>
+        /// <param name="defaultZHeight">The z-height used when the cell has no face.</param>
+        /// <returns>The projected three-dimensional coordinate at the grid cell.</returns>
         public virtual Vector3 Get3DPointTransformed(int i, int j, double defaultZHeight = 0.0)
         {
             var zHeight = Values[YCount * i + j].Item1 == null ? defaultZHeight : Values[YCount * i + j].Item2;
@@ -568,15 +588,20 @@ namespace TVGL
         /// <summary>
         /// Gets the 3D point on the solid corresponding to pixel i, j.
         /// </summary>
-        /// <param name="i">The i.</param>
-        /// <param name="j">The j.</param>
-        /// <returns>Vector3.</returns>
+        /// <param name="i">The zero-based horizontal grid index.</param>
+        /// <param name="j">The zero-based vertical grid index.</param>
+        /// <param name="defaultZHeight">The z-height used when the cell has no face.</param>
+        /// <returns>The three-dimensional coordinate corresponding to the grid cell.</returns>
         public virtual Vector3 Get3DPoint(int i, int j, double defaultZHeight = 0.0)
         {
             return Get3DPointTransformed(i, j, defaultZHeight).Transform(backTransform);
         }
 
 
+        /// <summary>Gets the grid indices whose centers lie on a circle.</summary>
+        /// <param name="center">The circle center in projected coordinates.</param>
+        /// <param name="radius">The circle radius.</param>
+        /// <returns>The matching flattened grid indices.</returns>
         public HashSet<int> GetCircleIndices(Vector2 center, double radius)
         {
             var outline = new HashSet<int>();
@@ -603,6 +628,9 @@ namespace TVGL
             return outline;
         }
 
+        /// <summary>Determines whether a grid cell contains a rasterized face.</summary>
+        /// <param name="index">The flattened grid index.</param>
+        /// <returns><see langword="true"/> when the cell contains a face; otherwise, <see langword="false"/>.</returns>
         public override bool IsInsideForPolygonCreation(int index)
         {
             return Values[index].Item1 != null;

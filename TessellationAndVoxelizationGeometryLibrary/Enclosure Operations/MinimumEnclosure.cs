@@ -141,8 +141,8 @@ namespace TVGL
         /// <summary>
         /// Here we create 13 directions. Why 13? basically it is all ternary (-1,0,+1) combinations of x,y,and z,
         /// which is 27 and skipping symmetric and 0,0,0. Another way to think of it is to make a cube with
-        // vectors emanating from every vertex, edge, and face. that would be 8+12+6 = 26. And since there
-        // is no need to do mirror image directions this is 26/2 or 13.
+        /// vectors emanating from every vertex, edge, and face. That would be 8+12+6 = 26. And since there
+        /// is no need to do mirror image directions this is 26/2 or 13.
         /// </summary>
         static Vector3[] ChanTanDirections =
             {

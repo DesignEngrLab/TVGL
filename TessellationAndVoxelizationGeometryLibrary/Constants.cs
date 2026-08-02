@@ -114,6 +114,7 @@ namespace TVGL
         /// This is based on the DefaultMinAngleInPlaneDegrees. It is a value just below 1.0 (which is the cosine of 0-degrees)
         /// which signifies if two vectors have a dot product greater than this, then they are within the DefaultMinAngleInPlaneDegrees
         /// (and often effectively the same).
+        /// </summary>
         public const double DotToleranceForSame = 0.99984769515639123915701155881391;
         // this is cos(DefaultSameAngleRadians);
 
@@ -122,6 +123,7 @@ namespace TVGL
         /// This is based on the DefaultMinAngleInPlaneDegrees. It is a value close to 0 (which is the cosine of 90-degrees)
         /// which signifies if two vectors have a dot product less than this, then they are within the 90 - DefaultMinAngleInPlaneDegrees - 
         /// they are effectively orthogonal.
+        /// </summary>
         public const double DotToleranceOrthogonal = 0.01745240643728351281941897851632;
         // this is  cos(90-DefaultSameAngleRadians) or sin(DefaultMinAngleInPlaneDegrees);
 

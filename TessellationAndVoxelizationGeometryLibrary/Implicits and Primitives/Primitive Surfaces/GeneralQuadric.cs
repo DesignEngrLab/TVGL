@@ -149,6 +149,7 @@ namespace TVGL
 
         /// <summary>
         /// Gets all the coefficients as an enumerable in the order listed above.
+        /// </summary>
         public IEnumerable<double> Coefficients
         {
             get
@@ -170,9 +171,17 @@ namespace TVGL
         /// Initializes a new instance of the <see cref="GeneralQuadric"/> class.
         /// </summary>
         public GeneralQuadric() { }
-        /// <summary>
-        /// GeneralQuadric
-        /// </summary>
+        /// <summary>Initializes a quadric from its ten polynomial coefficients.</summary>
+        /// <param name="xSqdCoeff">The coefficient of x².</param>
+        /// <param name="ySqdCoeff">The coefficient of y².</param>
+        /// <param name="zSqdCoeff">The coefficient of z².</param>
+        /// <param name="xyCoeff">The coefficient of xy.</param>
+        /// <param name="xzCoeff">The coefficient of xz.</param>
+        /// <param name="yzCoeff">The coefficient of yz.</param>
+        /// <param name="xCoeff">The coefficient of x.</param>
+        /// <param name="yCoeff">The coefficient of y.</param>
+        /// <param name="zCoeff">The coefficient of z.</param>
+        /// <param name="w">The constant coefficient.</param>
         public GeneralQuadric(double xSqdCoeff, double ySqdCoeff, double zSqdCoeff, double xyCoeff,
             double xzCoeff, double yzCoeff, double xCoeff, double yCoeff, double zCoeff, double w)
         {
@@ -187,6 +196,8 @@ namespace TVGL
             this.ZCoeff = zCoeff;
             this.W = w;
         }
+        /// <summary>Initializes a quadric from ten coefficients in polynomial order.</summary>
+        /// <param name="coefficients">The coefficients in the order exposed by <see cref="Coefficients"/>.</param>
         public GeneralQuadric(IEnumerable<double> coefficients)
         {
             var enumerator = coefficients.GetEnumerator();
@@ -212,14 +223,18 @@ namespace TVGL
             this.W = enumerator.Current;
         }
 
-        /// <summary>
-        /// GeneralQuadric
-        /// </summary>
-        /// <param name="apex">The apex.</param>
-        /// <param name="axis">The axis.</param>
-        /// <param name="aperture">The aperture.</param>
-        /// <param name="isPositive">if set to <c>true</c> [is positive].</param>
-        /// <param name="faces">The faces all.</param>
+        /// <summary>Initializes a quadric from its coefficients and optional tessellated faces.</summary>
+        /// <param name="xSqdCoeff">The coefficient of x².</param>
+        /// <param name="ySqdCoeff">The coefficient of y².</param>
+        /// <param name="zSqdCoeff">The coefficient of z².</param>
+        /// <param name="xyCoeff">The coefficient of xy.</param>
+        /// <param name="xzCoeff">The coefficient of xz.</param>
+        /// <param name="yzCoeff">The coefficient of yz.</param>
+        /// <param name="xCoeff">The coefficient of x.</param>
+        /// <param name="yCoeff">The coefficient of y.</param>
+        /// <param name="zCoeff">The coefficient of z.</param>
+        /// <param name="w">The constant coefficient.</param>
+        /// <param name="faces">The optional faces associated with the surface.</param>
         public GeneralQuadric(double xSqdCoeff, double ySqdCoeff, double zSqdCoeff, double xyCoeff,
              double xzCoeff, double yzCoeff, double xCoeff, double yCoeff, double zCoeff, double w,
              IEnumerable<TriangleFace> faces)
@@ -368,6 +383,9 @@ namespace TVGL
             else return -gradient;
         }
 
+        /// <summary>Finds a point on the quadric near the supplied anchor point.</summary>
+        /// <param name="anchor">The point from which the search begins.</param>
+        /// <returns>A nearby point on the quadric, or the best point found during the search.</returns>
         public Vector3 GetNearbyPointOnQuadric(Vector3 anchor)
         {
             Vector3 normal = GetNormalAtPoint(anchor);
@@ -393,8 +411,8 @@ namespace TVGL
         /// <summary>
         /// Finds the closest signed distance between the given point and the quadric.
         /// </summary>
-        /// <param name="point"></param>
-        /// <returns></returns>
+        /// <param name="point">The point from which the closest surface point is sought.</param>
+        /// <returns>The closest point found on the quadric surface.</returns>
         public override Vector3 ClosestPointOnSurfaceToPoint(Vector3 point)
         {
             //if (GetNormalAtPoint(point).Length() == 0) return 0; //scaling the quadric value by the norm of the normal vector to get the approximate distance locally, not working all the time
@@ -431,6 +449,9 @@ namespace TVGL
         }
 
 
+        /// <summary>Calculates the signed distance from a point to the quadric surface.</summary>
+        /// <param name="point">The point whose distance is required.</param>
+        /// <returns>The signed distance; the sign follows the quadric's inside/outside convention.</returns>
         public override double DistanceToPoint(Vector3 point)
         {
             Vector3 closestPt = ClosestPointOnSurfaceToPoint(point);
@@ -441,6 +462,9 @@ namespace TVGL
             return Math.Sign(QuadricValue(point)) * point.Distance(closestPt);
         }
 
+        /// <summary>Calculates a fast first-order approximation of the signed point-to-surface distance.</summary>
+        /// <param name="point">The point whose approximate distance is required.</param>
+        /// <returns>An approximate signed distance.</returns>
         public double DistanceToPointQuick(Vector3 point)
         {
             var qValue = QuadricValue(point);
@@ -633,6 +657,7 @@ namespace TVGL
             else oddAxis = axis3;
         }
 
+        /// <summary>Multiplies every quadric coefficient by -1.</summary>
         public void Negate()
         {
             xSqdCoeff = -xSqdCoeff;
@@ -647,6 +672,7 @@ namespace TVGL
             w = -w;
         }
 
+        /// <summary>Gets a stable string representation used to identify this quadric.</summary>
         [JsonIgnore]
         public override string KeyString => "Quadric|" + XSqdCoeff.ToString("F5") + "|" +
             YSqdCoeff.ToString("F5") + "|" + ZSqdCoeff.ToString("F5") + "|" +
@@ -658,9 +684,9 @@ namespace TVGL
         /// <summary>
         /// Defines the quadric from points using minimum least squares.
         /// </summary>
-        /// <param name="verts"></param>
-        /// <param name="errSqd"></param>
-        /// <returns></returns>
+        /// <param name="samples">The sample points used to fit the quadric.</param>
+        /// <param name="errSqd">When this method returns, receives the squared fitting error.</param>
+        /// <returns>The fitted quadric, or <see langword="null"/> when fitting fails.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static GeneralQuadric DefineFromPoints(IEnumerable<Vector3> samples, out double errSqd)
         {
@@ -756,9 +782,8 @@ namespace TVGL
         /// <summary>
         /// Defines the quadric as a cylinder. The error in terms should be close to zero for a perfect cylinder.
         /// </summary>
-        /// <param name="errorInTerms"></param>
-        /// <returns></returns>
-        /// <exception cref="NotImplementedException"></exception>
+        /// <param name="cylinder">When this method returns, receives the fitted cylinder.</param>
+        /// <returns><see langword="true"/> when the quadric can be represented as a cylinder; otherwise, <see langword="false"/>.</returns>
         public bool DefineAsCylinder(out Cylinder cylinder)
         {
             var K = 2 / (XSqdCoeff + YSqdCoeff + ZSqdCoeff);
@@ -828,9 +853,8 @@ namespace TVGL
         /// <summary>
         /// Defines the quadric as a cone. The error in terms should be close to zero for a perfect cone.
         /// </summary>
-        /// <param name="errorInTerms"></param>
-        /// <returns></returns>
-        /// <exception cref="NotImplementedException"></exception>
+        /// <param name="cone">When this method returns, receives the fitted cone.</param>
+        /// <returns><see langword="true"/> when the quadric can be represented as a cone; otherwise, <see langword="false"/>.</returns>
         public bool DefineAsCone(out Cone cone)
         {
             Vector3 apex, axis;
@@ -877,6 +901,10 @@ namespace TVGL
             return true;
         }
 
+        /// <summary>Converts a supported primitive surface to its general-quadric representation.</summary>
+        /// <param name="primitive">The primitive surface to convert.</param>
+        /// <returns>The equivalent general quadric.</returns>
+        /// <exception cref="NotImplementedException">The primitive surface type is not supported.</exception>
         public static GeneralQuadric FromPrimitiveSurface(PrimitiveSurface primitive)
         {
             if (primitive is GeneralQuadric quadric) return quadric;
@@ -934,10 +962,23 @@ namespace TVGL
             else throw new NotImplementedException();
         }
 
+        /// <summary>Finds an approximation of the intersection curves with another quadric inside a bounding box.</summary>
+        /// <param name="other">The other quadric.</param>
+        /// <param name="boxMin">The minimum corner of the search box.</param>
+        /// <param name="boxMax">The maximum corner of the search box.</param>
+        /// <param name="tolerance">The fitting tolerance.</param>
+        /// <returns>The intersection curve point collections.</returns>
         public IEnumerable<IEnumerable<Vector3>> IntersectCurverWithOtherQuadric(GeneralQuadric other, Vector3 boxMin,
             Vector3 boxMax, double tolerance = Constants.BaseTolerance)
         => IntersectTwoQuadrics(this, other, boxMin, boxMax, tolerance);
 
+        /// <summary>Finds the intersection curves of two quadrics inside a bounding box.</summary>
+        /// <param name="quadric1">The first quadric.</param>
+        /// <param name="quadric2">The second quadric.</param>
+        /// <param name="boxMin">The minimum corner of the search box.</param>
+        /// <param name="boxMax">The maximum corner of the search box.</param>
+        /// <param name="tolerance">The fitting tolerance.</param>
+        /// <returns>The intersection curve point collections.</returns>
         public static IEnumerable<IEnumerable<Vector3>> IntersectTwoQuadrics(GeneralQuadric quadric1, GeneralQuadric quadric2, Vector3 boxMin,
             Vector3 boxMax, double tolerance = Constants.BaseTolerance)
         {
@@ -959,10 +1000,10 @@ namespace TVGL
         /// The center and radius define the osculating circle that best fits the curve
         /// at this point.
         /// </summary>
-        /// <param name="q1"></param>
-        /// <param name="q2"></param>
-        /// <param name="point"></param>
-        /// <returns></returns>
+        /// <param name="q1">The first quadric.</param>
+        /// <param name="q2">The second quadric.</param>
+        /// <param name="point">The point on the intersection curve.</param>
+        /// <returns>The tangent, normal, osculating-circle center, and radius.</returns>
         public static (Vector3 tangent, Vector3 normal, Vector3 center, double radius) CharacterizeIntersectingPoint(GeneralQuadric q1, GeneralQuadric q2, Vector3 point)
         {
             // Gradients
@@ -1002,6 +1043,8 @@ namespace TVGL
                 radius);
         }
 
+        /// <summary>Sets coefficients whose magnitude is below a threshold to zero.</summary>
+        /// <param name="tolerance">The threshold below which a coefficient is treated as zero.</param>
         public void RemoveSmallCoefficents(double tolerance = 1E-3)
         {
             this.xSqdCoeff = xSqdCoeff.IsNegligible(tolerance) ? 0 : xSqdCoeff;
@@ -1016,10 +1059,27 @@ namespace TVGL
             this.w = w.IsNegligible(tolerance) ? 0 : w;
         }
 
+        /// <summary>Classifies a quadric using the coefficients of an existing instance.</summary>
+        /// <param name="q">The quadric to classify.</param>
+        /// <param name="tol">The numerical tolerance used during classification.</param>
+        /// <returns>The detected quadric type.</returns>
         public static QuadricType SetQuadricType(GeneralQuadric q, double tol = 1E-12)
         => SetQuadricType(q.XSqdCoeff, q.YSqdCoeff, q.ZSqdCoeff, q.XYCoeff,
             q.XZCoeff, q.YZCoeff, q.XCoeff, q.YCoeff, q.ZCoeff, q.W, tol);
 
+        /// <summary>Classifies a quadric from its polynomial coefficients.</summary>
+        /// <param name="XSqdCoeff">The coefficient of x².</param>
+        /// <param name="YSqdCoeff">The coefficient of y².</param>
+        /// <param name="ZSqdCoeff">The coefficient of z².</param>
+        /// <param name="XYCoeff">The coefficient of xy.</param>
+        /// <param name="XZCoeff">The coefficient of xz.</param>
+        /// <param name="YZCoeff">The coefficient of yz.</param>
+        /// <param name="XCoeff">The coefficient of x.</param>
+        /// <param name="YCoeff">The coefficient of y.</param>
+        /// <param name="ZCoeff">The coefficient of z.</param>
+        /// <param name="W">The constant coefficient.</param>
+        /// <param name="tol">The numerical tolerance used during classification.</param>
+        /// <returns>The detected quadric type.</returns>
         public static QuadricType SetQuadricType(double XSqdCoeff, double YSqdCoeff, double ZSqdCoeff, double XYCoeff,
             double XZCoeff, double YZCoeff, double XCoeff, double YCoeff, double ZCoeff, double W, double tol = 1E-12)
         {
@@ -1103,6 +1163,7 @@ namespace TVGL
             return QuadricType.Unknown;
         }
 
+        /// <summary>Populates the type-specific coefficient fields for planes and parallel planes.</summary>
         public void SetTypeSpecificCoefficients()
         {
             if (Type == QuadricType.Plane)

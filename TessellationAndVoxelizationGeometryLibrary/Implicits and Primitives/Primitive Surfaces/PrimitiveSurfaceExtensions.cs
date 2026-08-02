@@ -127,7 +127,7 @@ namespace TVGL
 
         /// <summary>
         /// Finds the largest encompassing angle for primitive about its axis. The resulting vectors
-        /// (<paramref name="vectorAtMinAngle"/> & <paramref name="vectorAtMaxAngle"/>) emanate from the axis outward
+        /// (<paramref name="vectorAtMinAngle"/> and <paramref name="vectorAtMaxAngle"/>) emanate from the axis outward
         /// (they are orthogonal to the axis).
         /// </summary>
         /// <param name="surface">The surface.</param>
@@ -203,7 +203,7 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Gets the radius for the primitive surface. This is straightforward for cylinders, & spheres.
+        /// Gets the radius for the primitive surface. This is straightforward for cylinders and spheres.
         /// For tori, it returns the major radius unless max is true. In which case it returns the larger
         /// of the minor and major radii. For all others, it returns the average radius of borders that
         /// are circle shaped. Unless max is true. In which case it returns the max of the radii of circles.

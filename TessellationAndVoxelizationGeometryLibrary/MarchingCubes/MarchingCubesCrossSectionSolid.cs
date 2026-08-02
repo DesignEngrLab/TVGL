@@ -21,10 +21,8 @@ using System.Threading.Tasks;
 namespace TVGL
 {
     /// <summary>
-    /// Class MarchingCubesCrossSectionSolid.
-    /// Implements the <see cref="TVGL.MarchingCubes{TVGL.CrossSectionSolid, System.Double}" />
+    /// Extracts a tessellated surface from a cross-section solid.
     /// </summary>
-    /// <seealso cref="TVGL.MarchingCubes{TVGL.CrossSectionSolid, System.Double}" />
     internal class MarchingCubesCrossSectionSolid : MarchingCubes<CrossSectionSolid, double>
     {
         /// <summary>

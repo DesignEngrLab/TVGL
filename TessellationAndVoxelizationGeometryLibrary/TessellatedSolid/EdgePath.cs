@@ -162,21 +162,21 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Gets the number of elements contained in the <see cref="TVertex:System.Collections.Generic.ICollection`1" />.
+        /// Gets the number of elements contained in the <c>ICollection&lt;TVertex&gt;</c>.
         /// </summary>
         /// <value>The count.</value>
         [JsonIgnore]
         public int Count => EdgeList.Count;
 
         /// <summary>
-        /// Gets a value indicating whether the <see cref="TVertex:System.Collections.Generic.ICollection`1" /> is read-only.
+        /// Gets a value indicating whether the <c>ICollection&lt;TVertex&gt;</c> is read-only.
         /// </summary>
         /// <value><c>true</c> if this instance is read only; otherwise, <c>false</c>.</value>
         [JsonIgnore]
         public bool IsReadOnly => true;
 
         /// <summary>
-        /// Gets or sets the <see cref="System.ValueTuple{Edge, System.Boolean}"/> at the specified index.
+        /// Gets or sets the edge and direction tuple at the specified index.
         /// </summary>
         /// <param name="index">The index.</param>
         /// <returns>System.ValueTuple&lt;Edge, System.Boolean&gt;.</returns>

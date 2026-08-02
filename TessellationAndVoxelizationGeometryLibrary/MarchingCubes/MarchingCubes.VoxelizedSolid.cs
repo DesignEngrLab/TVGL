@@ -16,10 +16,8 @@
 namespace TVGL
 {
     /// <summary>
-    /// Class MarchingCubesDenseVoxels.
-    /// Implements the <see cref="TVGL.MarchingCubes{TVGL.VoxelizedSolid, System.Boolean}" />
+    /// Extracts a tessellated surface from a dense voxelized solid.
     /// </summary>
-    /// <seealso cref="TVGL.MarchingCubes{TVGL.VoxelizedSolid, System.Boolean}" />
     internal class MarchingCubesDenseVoxels : MarchingCubes<VoxelizedSolid, bool>
     {
         /// <summary>
