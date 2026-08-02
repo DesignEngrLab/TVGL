@@ -17,9 +17,7 @@ namespace TVGL
 
         #region Color Related
 
-        /// <summary>
-        /// The has color specified
-        /// </summary>
+        // The has-color-specified field was removed; the old declaration is retained below for reference.
         //private bool hasColorSpecified;
 
         /// <summary>

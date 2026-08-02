@@ -16,10 +16,8 @@ using System.Collections.Generic;
 namespace TVGL
 {
     /// <summary>
-    /// Class VoxelEnumerator.
-    /// Implements the <see cref="System.Collections.Generic.IEnumerator{System.Int32[]}" />
+    /// Enumerates the active voxel indices in a <see cref="VoxelizedSolid" />.
     /// </summary>
-    /// <seealso cref="System.Collections.Generic.IEnumerator{System.Int32[]}" />
     internal class VoxelEnumerator : IEnumerator<(int xIndex, int yIndex, int zIndex)>
     {
         /// <summary>

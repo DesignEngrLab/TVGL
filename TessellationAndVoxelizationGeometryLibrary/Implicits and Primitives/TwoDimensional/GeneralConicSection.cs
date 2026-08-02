@@ -19,7 +19,7 @@ using System.Linq;
 namespace TVGL
 {
     /// <summary>
-    /// Enum PrimitiveCurveType
+    /// Identifies the primitive type represented by a conic section.
     /// </summary>
     public enum PrimitiveCurveType
     {
@@ -45,33 +45,32 @@ namespace TVGL
         Hyperbola
     }
     /// <summary>
-    /// Public circle structure, given a center point and radius
+    /// Represents a planar conic section in general quadratic form.
     /// </summary>
     public struct GeneralConicSection : ICurve
     {
         /// <summary>
-        /// the coefficient multiplying x^2
+        /// The coefficient multiplying x².
         /// </summary>
         public double A;
         /// <summary>
-        /// the coefficient multiplying xy
+        /// The coefficient multiplying xy.
         /// </summary>
         public double B;
         /// <summary>
-        /// the coefficient multiplying y^2
+        /// The coefficient multiplying y².
         /// </summary>
         public double C;
         /// <summary>
-        /// The d
-        /// the coefficient multiplying x
+        /// The coefficient multiplying x.
         /// </summary>
         public double D;
         /// <summary>
-        /// the coefficient multiplying y
+        /// The coefficient multiplying y.
         /// </summary>
         public double E;
         /// <summary>
-        /// The constant is zero, otherwise the constant is 1
+        /// Indicates whether the constant term is zero; otherwise the normalized constant term is one.
         /// </summary>
         public bool ConstantIsZero;
         /// <summary>
@@ -173,7 +172,7 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Simply negates the conic, which is equivalent to multiplying all 
+        /// Negates the conic, which is equivalent to multiplying all
         /// coefficients by -1. This does not change the curve but it does reverse
         /// the direction of the gradient.
         /// </summary>
@@ -188,10 +187,10 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Calculates at point.
+        /// Evaluates the conic equation at a point.
         /// </summary>
-        /// <param name="point">The point.</param>
-        /// <returns>System.Double.</returns>
+        /// <param name="point">The point to evaluate.</param>
+        /// <returns>The value of the conic equation at <paramref name="point"/>.</returns>
         public double CalculateAtPoint(Vector2 point)
         {
             double x = point.X;
@@ -207,9 +206,9 @@ namespace TVGL
         /// would be minimum least squares, 2) saves from doing square root operation
         /// which is an undue computational expense
         /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="point">The point.</param>
-        /// <returns>System.Double.</returns>
+        /// <typeparam name="T">The point type.</typeparam>
+        /// <param name="point">The point to evaluate.</param>
+        /// <returns>The squared distance from the point to the conic.</returns>
         public double SquaredErrorOfNewPoint<T>(T point) where T : IVector
         {
             return DistancePointToConic(this, point, out _);
@@ -218,11 +217,11 @@ namespace TVGL
         /// <summary>
         /// Defines the best fit of the curve for the given points.
         /// </summary>
-        /// <typeparam name="T"></typeparam>
+        /// <typeparam name="T">The point type.</typeparam>
         /// <param name="points">The points.</param>
         /// <param name="curve">The curve.</param>
         /// <param name="error">The error.</param>
-        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
+        /// <returns><see langword="true"/> when a conic is fitted successfully; otherwise, <see langword="false"/>.</returns>
         public static bool CreateFromPoints<T>(IEnumerable<T> points, out ICurve curve, out double error) where T : IVector2D
         {
             // this is maybe not sufficient. It assumes the error is the amount the function is off as opposed to the
@@ -345,6 +344,10 @@ namespace TVGL
             }
             return minDistance;
         }
+        /// <summary>Intersects a quadric with a plane and expresses the result as a two-dimensional conic.</summary>
+        /// <param name="quadric">The three-dimensional quadric.</param>
+        /// <param name="plane">The plane in which the conic is expressed.</param>
+        /// <returns>The conic section produced by the intersection.</returns>
         public static GeneralConicSection CreateFromQuadric(GeneralQuadric quadric, Plane plane)
         {
             var mTranspose = plane.AsTransformFromXYPlane.Transpose();
@@ -367,9 +370,9 @@ namespace TVGL
         /// Finds the points on the conic that has a gradient in the same direction as
         /// the specified gradient vector. This input does not have to be normalized.
         /// </summary>
-        /// <param name="gradient"></param>
-        /// <param name="point"></param>
-        /// <returns></returns>
+        /// <param name="gradient">The desired gradient direction.</param>
+        /// <param name="point">When this method returns, receives a point on the conic with that gradient direction.</param>
+        /// <returns><see langword="true"/> when such a point is found; otherwise, <see langword="false"/>.</returns>
         public bool PointsAtGivenGradient(Vector2 gradient, out Vector2 point)
         {
             point = Vector2.Null;
@@ -416,14 +419,16 @@ namespace TVGL
         /// Gets the gradient of the point in the conic field, the point does not have to be on the
         /// curve.
         /// </summary>
-        /// <param name="pt"></param>
-        /// <returns></returns>
+        /// <param name="pt">The point at which to evaluate the gradient.</param>
+        /// <returns>The gradient of the conic equation at <paramref name="pt"/>.</returns>
         public Vector2 GetGradient(Vector2 pt)
         {
             return new Vector2(2 * A * pt.X + B * pt.Y + D, 2 * C * pt.Y + B * pt.X + E);
         }
 
 
+        /// <summary>Finds the stationary point of the conic, when it has a unique one.</summary>
+        /// <returns>The stationary point, or <see cref="Vector2.Null"/> when no unique point exists.</returns>
         public Vector2 StationaryPoint()
         {
             // For a conic section Ax² + Bxy + Cy² + Dx + Ey + F = 0, the stationary point is found by setting the partial derivatives to zero:
@@ -439,6 +444,10 @@ namespace TVGL
         }
 
 
+        /// <summary>Determines whether two points lie on the same branch of a hyperbola.</summary>
+        /// <param name="p1">The first point.</param>
+        /// <param name="p2">The second point.</param>
+        /// <returns><see langword="true"/> when both points project to the same hyperbola branch; otherwise, <see langword="false"/>.</returns>
         public bool PointsOnSameHyperbolaBranch(Vector2 p1, Vector2 p2)
         {
             Vector2 center = StationaryPoint();
@@ -460,9 +469,9 @@ namespace TVGL
         /// <summary>
         /// Returns the intersection points between this quadric and the given line.
         /// </summary>
-        /// <param name="anchor"></param>
-        /// <param name="direction"></param>
-        /// <returns></returns>
+        /// <param name="anchor">A point on the line.</param>
+        /// <param name="direction">The line direction.</param>
+        /// <returns>The intersection points and their corresponding line parameters.</returns>
         public IEnumerable<(Vector2 intersection, double lineT)> LineIntersection(Vector2 anchor, Vector2 direction)
         {
             //put equation for line p = anchor + t * direction into the conic equation,
@@ -494,11 +503,11 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Finds the zero to four points of two intersectings the conics.
+        /// Finds the zero to four intersection points of two conics.
         /// </summary>
-        /// <param name="conicH">The conic, H</param>
-        /// <param name="conicJ">The conic, J.</param>
-        /// <returns>IEnumerable&lt;Vector2&gt;.</returns>
+        /// <param name="conicH">The first conic.</param>
+        /// <param name="conicJ">The second conic.</param>
+        /// <returns>The intersection points.</returns>
         public static IEnumerable<Vector2> IntersectingConics(GeneralConicSection conicH, GeneralConicSection conicJ)
         {
             // this is hard to understand. Please refer to the document call SolvingConics.docx

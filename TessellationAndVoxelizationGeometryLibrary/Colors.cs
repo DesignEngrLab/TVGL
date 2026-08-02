@@ -31,7 +31,6 @@ namespace TVGL
         AntiqueWhite = 4294634455U,
         AppleGreen = 4287477248U,
         Apricot = 4294692529U,
-        Aqua = 4278255615U,
         Aquamarine = 4286578644U,
         ArmyGreen = 4283126560U,
         ArylideYellow = 4293514859U,
@@ -72,7 +71,6 @@ namespace TVGL
         Buff = 4293975170U,
         Burgundy = 4286578720U,
         Burlywood = 4292786311U,
-        BurlyWood = 4292786311U,
         BurntOrange = 4291581184U,
         BurntSienna = 4293489745U,
         BurntUmber = 4287247140U,
@@ -245,7 +243,6 @@ namespace TVGL
         Moccasin = 4294960309U,
         Mustard = 4294957912U,
         NavajoWhite = 4294958765U,
-        Navy = 4278190208U,
         NavyBlue = 4278190208U,
         Ochre = 4291589922U,
         OldLace = 4294833638U,
@@ -308,7 +305,6 @@ namespace TVGL
         SeaGreen = 4281240407U,
         SealBrown = 4281472020U,
         Seashell = 4294964718U,
-        SeaShell = 4294964718U,
         Sepia = 4285547028U,
         Shadow = 4287265117U,
         Sienna = 4288696877U,
@@ -381,8 +377,9 @@ namespace TVGL
         public override bool Equals(object obj)
         {
             if (obj is null) return false;
-            if (!(obj is Color)) return false;
-            return Equals((Color)obj);
+            if (obj is Color color) 
+                return Equals(color);
+            return false;
         }
 
         public bool Equals(Color other)

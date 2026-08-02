@@ -8,6 +8,9 @@ namespace TVGL
     public class Delaunay2D
     {
         /// <summary>
+        /// Represents a two-dimensional Delaunay triangulation, including its vertices, faces, and edges.
+        /// </summary>
+        /// <summary>
         /// Gets the vertices of the Delaunay Triangular Mesh
         /// </summary>
         public Vertex[] Vertices { get; internal set; }
@@ -23,13 +26,14 @@ namespace TVGL
         public Edge[] Edges { get; internal set; }
 
         /// <summary>
-        /// Create the Delaunay 3D mesh of tetrahedra from the points. This may be quicker than the default below
+        /// Creates a Delaunay 2D mesh from the points by projecting them onto a paraboloid and constructing a
+        /// three-dimensional convex hull. This may be quicker than the default below
         /// (Bowyer-Watson) for large point sets, but it tends to skip points that are too similar to others.
         /// It is left here for reference, but it is not recommended for general use.
         /// </summary>
-        /// <param name="points"></param>
-        /// <param name="delaunay3D"></param>
-        /// <returns></returns>
+        /// <param name="points">The input points.</param>
+        /// <param name="delaunay2D">When this method returns, the generated Delaunay triangulation, if successful.</param>
+        /// <returns><see langword="true" /> if the triangulation was created; otherwise, <see langword="false" />.</returns>
         public static bool CreateViaConvexHull<T>(List<T> points, out Delaunay2D delaunay2D) where T : IVector2D
         {
             var random = new Random();
@@ -117,9 +121,9 @@ namespace TVGL
         /// <summary>
         /// Create the Delaunay 2D mesh of triangles from the points using the Bowyer-Watson algorithm.
         /// </summary>
-        /// <param name="points"></param>
-        /// <param name="delaunay2D"></param>
-        /// <returns></returns>
+        /// <param name="points">The input points.</param>
+        /// <param name="delaunay2D">When this method returns, the generated Delaunay triangulation, if successful.</param>
+        /// <returns><see langword="true" /> if the triangulation was created; otherwise, <see langword="false" />.</returns>
         public static bool Create<T>(ICollection<T> points, out Delaunay2D delaunay2D) where T : IVector2D
         {
             if (points == null || points.Count < 3)

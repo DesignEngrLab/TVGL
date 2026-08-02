@@ -6,16 +6,12 @@ namespace TVGL
 {
     public static class DebugUtilities
     {
-        /// <summary>
-        /// Shows and colors the machining primitives of a solid or the given machining primitives.
-        /// </summary>
-        /// <param name="ts"></param>
-        /// <param name="resetColor"></param>
-        /// <param name="showBorders"></param>
-        /// <param name="randomColors"></param>
-        /// <param name="primitives"></param>
-        /// <param name="lineThickness"></param>
-        /// <param name="color"></param>
+        /// <summary>Displays surface groups and, optionally, their borders.</summary>
+        /// <param name="ts">The solid to display.</param>
+        /// <param name="features">The surface groups to display.</param>
+        /// <param name="showBorders">Whether to display group borders.</param>
+        /// <param name="lineThickness">The border line thickness.</param>
+        /// <param name="color">The optional border color.</param>
         public static void ShowSurfaceGroups(this TessellatedSolid ts, IEnumerable<SurfaceGroup> features,
             bool showBorders = true, double lineThickness = 1, Color color = null)
         {
@@ -32,18 +28,13 @@ namespace TVGL
                 OutputServices.Presenter3D.ShowAndHang(ts);
         }
 
-        /// <summary>
-        /// Shows and colors the primitives of a solid or the given primitives. For each primitive, 
-        /// it sets the colors to match the primitive types or sets random colors. If showBorders = true, 
-        /// it will show the border loops of the given primitives.
-        /// </summary>
-        /// <param name="ts"></param>
-        /// <param name="resetColor"></param>
-        /// <param name="showBorders"></param>
-        /// <param name="randomColors"></param>
-        /// <param name="primitives"></param>
-        /// <param name="lineThickness"></param>
-        /// <param name="color"></param>
+        /// <summary>Displays primitives, assigning colors by type or from a random palette.</summary>
+        /// <param name="ts">The solid to display.</param>
+        /// <param name="showBorders">Whether to display primitive borders.</param>
+        /// <param name="randomColors">Whether to assign random colors to primitives.</param>
+        /// <param name="primitives">The primitives to display, or the solid's primitives when omitted.</param>
+        /// <param name="lineThickness">The border line thickness.</param>
+        /// <param name="color">The optional border color.</param>
         public static void ShowPrimitives(this TessellatedSolid ts, bool showBorders = true,
             bool randomColors = false, IEnumerable<PrimitiveSurface> primitives = null, double lineThickness = 1,
             Color color = null)
@@ -55,12 +46,14 @@ namespace TVGL
                 OutputServices.Presenter3D.ShowAndHang(ts);
         }
 
-        /// <summary>
-        /// Shows the solid and borders. If primitives are given, it will only show the borders for those.
-        /// This function can be used instead of ShowPrimitives if you don't want to change the color
-        /// of the primitives OR you want the solid to be the default color.
-        /// </summary>
         private static readonly Color white = new Color(KnownColors.White);
+        /// <summary>Displays the solid and selected wire-frame borders without recoloring its primitives.</summary>
+        /// <param name="ts">The solid to display.</param>
+        /// <param name="resetColor">Whether to reset the solid's colors before displaying it.</param>
+        /// <param name="borders">The borders to display, or the available borders when omitted.</param>
+        /// <param name="primitives">The primitives whose borders should be displayed.</param>
+        /// <param name="lineThickness">The wire-frame line thickness.</param>
+        /// <param name="color">The optional wire-frame color.</param>
         public static void ShowWireFrame(this TessellatedSolid ts, bool resetColor,
             IEnumerable<BorderLoop> borders = null, IEnumerable<PrimitiveSurface> primitives = null,
             double lineThickness = 1, Color color = null)
@@ -75,6 +68,11 @@ namespace TVGL
             OutputServices.Presenter3D.ShowAndHang([lines], [false], [lineThickness], colors, ts);
         }
 
+        /// <summary>Builds line paths representing the selected solid wire frame.</summary>
+        /// <param name="ts">The solid whose wire frame is requested.</param>
+        /// <param name="borders">The borders to use, or available primitive borders when omitted.</param>
+        /// <param name="primitives">The primitives whose outer edges should be used.</param>
+        /// <returns>The wire-frame line paths.</returns>
         public static List<IEnumerable<Vector3>> GetWireFrame(this TessellatedSolid ts, IEnumerable<BorderLoop> borders = null,
             IEnumerable<PrimitiveSurface> primitives = null)
         {
@@ -97,6 +95,10 @@ namespace TVGL
             return lines;
         }
 
+        /// <summary>Assigns colors to primitive surfaces based on type or a random palette.</summary>
+        /// <param name="ts">The solid whose primitives are colored.</param>
+        /// <param name="primitives">The primitives to color, or the solid's primitives when omitted.</param>
+        /// <param name="randomColors">Whether to assign colors from a random palette.</param>
         public static void PaintSurfaces(this TessellatedSolid ts, IEnumerable<PrimitiveSurface> primitives = null, bool randomColors = false)
         {
             ts.HasUniformColor = false;
@@ -134,6 +136,9 @@ namespace TVGL
             }
         }
 
+        /// <summary>Displays a primitive surface with illustrative dimensions and axes.</summary>
+        /// <param name="solid">The solid containing the primitive.</param>
+        /// <param name="bestPrimitiveSurface">The primitive surface to illustrate.</param>
         public static void ShowPrimitiveWithIllustrativeParameters(this TessellatedSolid solid, PrimitiveSurface bestPrimitiveSurface)
         {
             solid.PaintSurfaces(new List<PrimitiveSurface> { bestPrimitiveSurface });
@@ -217,13 +222,8 @@ namespace TVGL
         /// <summary>
         /// Get the bitmap of a region of the grid. Start coordinates must be lower than stop coordinates.
         /// </summary>
-        /// <param name="grid"></param>
-        /// <param name="startX"></param>
-        /// <param name="startY"></param>
-        /// <param name="stopX"></param>
-        /// <param name="stopY"></param>
-        /// <param name="black"></param>
-        /// <param name=""></param>
+        /// <param name="grid">The voxelized height grid to render.</param>
+        /// <param name="blackPixels">Optional grid indices to render as black pixels.</param>
         public static void SaveBitmap(ZBuffer grid, HashSet<int> blackPixels = null)
         {
             var ZRange = grid.VertexZHeights.Max() - grid.VertexZHeights.Min();

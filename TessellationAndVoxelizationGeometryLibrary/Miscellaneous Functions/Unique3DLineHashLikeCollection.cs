@@ -345,7 +345,7 @@ namespace TVGL
             // however, vectors near the xy plane will have a polar angle near pi/2 and the dot product is not a complete
             // comparison since reflections would yield a negative dot product.
             // this is only true when the two would be reflections would be less than the angle tolerance apart in the polar angles
-            /// (pi/2 - s1.AzimuthAngle) + (pi/2 - s2.AzimuthAngle) < angleTolerance
+            // (pi/2 - s1.AzimuthAngle) + (pi/2 - s2.AzimuthAngle) < angleTolerance
             //query = treatReflectionsAsSame ? Reflect(query) : query;
 
             // the following binary search is modified/simplified from Array.BinarySearch

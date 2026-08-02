@@ -6,11 +6,13 @@ namespace TVGL
 {
     public static partial class ConvexHullGJK
     {
-        /// Finds the shortest distance between two convex hulls this is an adaption of the
-        /// GJK algorithm - specifically, the c version defined as OpenGJK:
-        /// https://github.com/MattiaMontanari/openGJK/
-
-
+        /// <summary>
+        /// Provides distance calculations between convex hulls using the Gilbert-Johnson-Keerthi algorithm.
+        /// </summary>
+        /// <remarks>
+        /// This implementation is adapted from the C implementation OpenGJK by Mattia Montanari:
+        /// <see href="https://github.com/MattiaMontanari/openGJK/" />.
+        /// </remarks>
         /// <summary>
         /// Finds the distance between two convex hulls. A positive value is the shortest distance
         /// between the solids, a negative value means the solids overlap. This implementation is
@@ -18,7 +20,6 @@ namespace TVGL
         /// </summary>
         /// <param name="cvxHullPoints1">The convex hull points for 1.</param>
         /// <param name="cvxHullPoints2">The  convex hull points 2.</param>
-        /// <param name="other">The other convex hull points.</param>        
         /// <param name="v">The vector,v, from the subject object to the other object.</param>
         /// <returns>The signed distance between the two convex hulls. This implementation is
         /// not accurate for negative values.</returns>

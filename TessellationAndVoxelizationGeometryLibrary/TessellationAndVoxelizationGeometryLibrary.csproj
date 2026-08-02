@@ -10,24 +10,22 @@
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 		<Authors>Matt Campbell, Brandon Massoni</Authors>
 		<Company>Design Engineering Lab</Company>
-<Description>
-  Computational geometry library for .NET, covering tessellation,
-  voxelization, polygon operations, solid modeling, and related geometry tools.
-</Description>		<Description>
+		<Description>
 			Computational geometry library for .NET, covering tessellation,
 			voxelization, polygon operations, solid modeling, and related geometry tools.
-		
+		</Description>
 		<Copyright>2026</Copyright>
-		<PackageLicenseUrl>https://github.com/DesignEngrLab/TVGL/blob/master/LICENSE</PackageLicenseUrl><PackageLicenseFile>LICENSE</PackageLicenseFile>
-<PackageReadmeFile>README.md</PackageReadmeFile>
-<PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
-<IncludeSymbols>true</IncludeSymbols>
-<SymbolPackageFormat>snupkg</SymbolPackageFormat>
+		<PackageLicenseUrl>https://github.com/DesignEngrLab/TVGL/blob/master/LICENSE</PackageLicenseUrl>
 		<PackageLicenseFile>LICENSE</PackageLicenseFile>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
 		<PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
 		<IncludeSymbols>true</IncludeSymbols>
-		
+		<SymbolPackageFormat>snupkg</SymbolPackageFormat>
+		<PackageLicenseFile>LICENSE</PackageLicenseFile>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
+		<PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+		<IncludeSymbols>true</IncludeSymbols>
+
 		<PackageProjectUrl>http://designengrlab.github.io/TVGL/</PackageProjectUrl>
 		<RepositoryUrl>https://github.com/DesignEngrLab/TVGL.git</RepositoryUrl>
 		<RepositoryType>git</RepositoryType>
@@ -41,7 +39,7 @@
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Series|AnyCPU'">
-	  <DefineConstants>TRACE;CLIPPER</DefineConstants>
+		<DefineConstants>TRACE;CLIPPER</DefineConstants>
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
@@ -55,7 +53,6 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.9" />
 		<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.9" />
 		<PackageReference Include="Microsoft.Extensions.Logging.Console" Version="10.0.9" />
 		<PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
@@ -66,19 +63,9 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <Folder Include="Polygon Operations\Clipper\github.com.AngusJohnson.Clipper2\" />
+		<Folder Include="Polygon Operations\Clipper\github.com.AngusJohnson.Clipper2\" />
 	</ItemGroup>
-	
-	<ItemGroup>
-  <None Include="..\README.md"
-        Pack="true"
-        PackagePath="\"
-        Link="README.md" />
-  <None Include="..\LICENSE"
-        Pack="true"
-        PackagePath="\"
-        Link="LICENSE" />
-</ItemGroup>
+
 	<ItemGroup>
 		<None Include="..\README.md"
 			  Pack="true"
@@ -88,5 +75,15 @@
 			  Pack="true"
 			  PackagePath="\"
 			  Link="LICENSE" />
-	
+	</ItemGroup>
+	<ItemGroup>
+		<None Include="..\README.md"
+			  Pack="true"
+			  PackagePath="\"
+			  Link="README.md" />
+		<None Include="..\LICENSE"
+			  Pack="true"
+			  PackagePath="\"
+			  Link="LICENSE" />
+	</ItemGroup>
 </Project>

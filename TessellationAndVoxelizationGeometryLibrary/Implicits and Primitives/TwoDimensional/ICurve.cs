@@ -17,29 +17,27 @@ using System.Collections.Generic;
 namespace TVGL
 {
     /// <summary>
-    /// Interface ICurve
+    /// Represents a planar curve that can evaluate fitting error and construct a fit from points.
     /// </summary>
     public interface ICurve
     {
         /// <summary>
-        /// Returns the squared error of new point. This should be the square of the
-        /// actual distance to the curve. Squared is canonical since 1) usually fits
-        /// would be minimum least squares, 2) saves from doing square root operation
-        /// which is an undue computational expense
+        /// Returns the squared distance from a point to the curve. Squared distance is
+        /// useful for least-squares fitting because it avoids a square-root operation.
         /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="point">The point.</param>
-        /// <returns>System.Double.</returns>
+        /// <typeparam name="T">The point type.</typeparam>
+        /// <param name="point">The point to evaluate.</param>
+        /// <returns>The squared distance from <paramref name="point"/> to the curve.</returns>
         public double SquaredErrorOfNewPoint<T>(T point) where T : IVector;
 
         /// <summary>
-        /// Creates from points.
+        /// Fits a curve to a collection of planar points.
         /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="points">The points.</param>
-        /// <param name="curve">The curve.</param>
-        /// <param name="error">The error.</param>
-        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
+        /// <typeparam name="T">The point type.</typeparam>
+        /// <param name="points">The points used for fitting.</param>
+        /// <param name="curve">When this method returns, receives the fitted curve when fitting succeeds.</param>
+        /// <param name="error">When this method returns, receives the fitting error.</param>
+        /// <returns><see langword="true"/> when a curve is fitted successfully; otherwise, <see langword="false"/>.</returns>
         public static abstract bool CreateFromPoints<T>(IEnumerable<T> points, out ICurve curve, out double error)
             where T : IVector2D;
     }

@@ -1,4 +1,4 @@
-﻿/// modified from original source:  
+// Modified from the original source.
 namespace TVGL.PointCloud
 {
     using System;

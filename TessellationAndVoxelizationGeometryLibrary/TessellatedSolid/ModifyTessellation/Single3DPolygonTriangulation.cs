@@ -78,10 +78,8 @@ namespace TVGL
     }
 
     /// <summary>
-    /// Class LoopOfIntsComparer.
-    /// Implements the <see cref="System.Collections.Generic.IEqualityComparer{System.Int32[]}" />
+    /// Compares integer arrays by their elements.
     /// </summary>
-    /// <seealso cref="System.Collections.Generic.IEqualityComparer{System.Int32[]}" />
     public class LoopOfIntsComparer : IEqualityComparer<int[]>
     {
         /// <summary>
@@ -119,7 +117,7 @@ namespace TVGL
         /// <summary>
         /// Returns a hash code for this instance.
         /// </summary>
-        /// <param name="obj">The <see cref="TVertex:System.Object" /> for which a hash code is to be returned.</param>
+        /// <param name="obj">The integer array for which a hash code is to be returned.</param>
         /// <returns>A hash code for this instance, suitable for use in hashing algorithms and data structures like a hash table.</returns>
         public int GetHashCode(int[] obj)
         {

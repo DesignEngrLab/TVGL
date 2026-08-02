@@ -23,7 +23,6 @@ namespace TVGL
     /// </summary>
     public static partial class PolygonOperations
     {
-        [Obsolete("Use Polygons as this functions constructs them anyway.")]
         /// <summary>
         /// Slices the polygons at the provided line. Note that the line is represented as 4 numbers. Think of it as a
         /// plane cutting through this 2D plane. Instead of the line direction, we receive the normal to the line, the lineNormalDirection.
@@ -37,6 +36,7 @@ namespace TVGL
         /// <param name="offsetAtLineForNegativeSide">The offset at line for negative side.</param>
         /// <param name="offsetAtLineForPositiveSide">The offset at line for positive side.</param>
         /// <returns>Vector2[].</returns>
+        [Obsolete("Use Polygons as this function constructs them anyway.")]
         public static Vector2[] SliceAtLine(this IEnumerable<IEnumerable<Vector2>> shape, Vector2 lineNormalDirection, double perpendicularDistanceToLine,
             out List<Polygon> negativeSidePolygons, out List<Polygon> positiveSidePolygons, double offsetAtLineForNegativeSide = 0.0,
             double offsetAtLineForPositiveSide = 0.0)

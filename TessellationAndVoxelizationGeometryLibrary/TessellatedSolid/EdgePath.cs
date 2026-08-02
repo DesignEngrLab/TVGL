@@ -295,9 +295,9 @@ namespace TVGL
             else throw new ArgumentException("The two edge paths do not share a common vertex");
         }
         /// <summary>
-        /// Determines the index of a specific item in the <see cref="TVertex:System.Collections.Generic.IList`1" />.
+        /// Determines the index of a specific edge-and-direction item in the path.
         /// </summary>
-        /// <param name="item">The object to locate in the <see cref="TVertex:System.Collections.Generic.IList`1" />.</param>
+        /// <param name="item">The edge-and-direction item to locate.</param>
         /// <returns>The index of <paramref name="item" /> if found in the list; otherwise, -1.</returns>
         public int IndexOf((Edge edge, bool dir) item)
         {
@@ -316,10 +316,10 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Inserts an item to the <see cref="TVertex:System.Collections.Generic.IList`1" /> at the specified index.
+        /// Inserts an item at the specified index. Arbitrary insertion is not supported for an edge path.
         /// </summary>
         /// <param name="index">The zero-based index at which <paramref name="item" /> should be inserted.</param>
-        /// <param name="item">The object to insert into the <see cref="TVertex:System.Collections.Generic.IList`1" />.</param>
+        /// <param name="item">The edge-and-direction item to insert.</param>
         /// <exception cref="System.NotSupportedException">Inserting into arbitrary positions in not allowed. Use either AddBegin or AddEnd</exception>
         public void Insert(int index, (Edge edge, bool dir) item)
         {
@@ -329,7 +329,7 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Removes the <see cref="TVertex:System.Collections.Generic.IList`1" /> item at the specified index.
+        /// Removes the edge-and-direction item at the specified index.
         /// </summary>
         /// <param name="index">The zero-based index of the item to remove.</param>
         public void RemoveAt(int index)
@@ -339,9 +339,9 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Adds an item to the <see cref="TVertex:System.Collections.Generic.ICollection`1" />.
+        /// Adds an item to the path. Use <see cref="AddBegin(Edge, bool)" /> or <see cref="AddEnd(Edge, bool)" /> to specify its position.
         /// </summary>
-        /// <param name="item">The object to add to the <see cref="TVertex:System.Collections.Generic.ICollection`1" />.</param>
+        /// <param name="item">The edge-and-direction item to add.</param>
         /// <exception cref="System.NotSupportedException">Add is ambiguous. Use either AddBegin or AddEnd</exception>
         public void Add((Edge edge, bool dir) item)
         {
@@ -351,7 +351,7 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Removes all items from the <see cref="TVertex:System.Collections.Generic.ICollection`1" />.
+        /// Removes all edges and directions from the path.
         /// </summary>
         public void Clear()
         {
@@ -360,10 +360,10 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Determines whether the <see cref="TVertex:System.Collections.Generic.ICollection`1" /> contains a specific value.
+        /// Determines whether the path contains a specific edge-and-direction item.
         /// </summary>
-        /// <param name="item">The object to locate in the <see cref="TVertex:System.Collections.Generic.ICollection`1" />.</param>
-        /// <returns><see langword="true" /> if <paramref name="item" /> is found in the <see cref="TVertex:System.Collections.Generic.ICollection`1" />; otherwise, <see langword="false" />.</returns>
+        /// <param name="item">The edge-and-direction item to locate.</param>
+        /// <returns><see langword="true" /> if <paramref name="item" /> is found in the path; otherwise, <see langword="false" />.</returns>
         public bool Contains((Edge edge, bool dir) item)
         {
             return IndexOf(item) != -1;
@@ -380,9 +380,9 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Copies the elements of the <see cref="TVertex:System.Collections.Generic.ICollection`1" /> to an <see cref="TVertex:System.Array" />, starting at a particular <see cref="TVertex:System.Array" /> index.
+        /// Copies the elements of the path to an array, starting at a particular array index.
         /// </summary>
-        /// <param name="array">The one-dimensional <see cref="TVertex:System.Array" /> that is the destination of the elements copied from <see cref="TVertex:System.Collections.Generic.ICollection`1" />. The <see cref="TVertex:System.Array" /> must have zero-based indexing.</param>
+        /// <param name="array">The one-dimensional array that receives the copied elements. The array must have zero-based indexing.</param>
         /// <param name="arrayIndex">The zero-based index in <paramref name="array" /> at which copying begins.</param>
         public void CopyTo((Edge edge, bool dir)[] array, int arrayIndex)
         {
@@ -391,10 +391,10 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Removes the first occurrence of a specific object from the <see cref="TVertex:System.Collections.Generic.ICollection`1" />.
+        /// Removes the first occurrence of a specific edge-and-direction item from the path.
         /// </summary>
-        /// <param name="item">The object to remove from the <see cref="TVertex:System.Collections.Generic.ICollection`1" />.</param>
-        /// <returns><see langword="true" /> if <paramref name="item" /> was successfully removed from the <see cref="TVertex:System.Collections.Generic.ICollection`1" />; otherwise, <see langword="false" />. This method also returns <see langword="false" /> if <paramref name="item" /> is not found in the original <see cref="TVertex:System.Collections.Generic.ICollection`1" />.</returns>
+        /// <param name="item">The edge-and-direction item to remove.</param>
+        /// <returns><see langword="true" /> if <paramref name="item" /> was successfully removed from the path; otherwise, <see langword="false" />.</returns>
         public bool Remove((Edge edge, bool dir) item)
         {
             var i = IndexOf(item);

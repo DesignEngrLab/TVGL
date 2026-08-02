@@ -22,7 +22,7 @@ namespace TVGL
     public partial class ConvexHull3D : Solid
     {
         /// <summary>
-        /// The volume of the Convex Hull.
+        /// The numerical tolerance used when constructing the convex hull.
         /// </summary>
         public double tolerance { get; internal init; }
 
@@ -66,6 +66,8 @@ namespace TVGL
         /// <exception cref="System.NotImplementedException"></exception>
         protected override void CalculateInertiaTensor() => _inertiaTensor = Faces.CalculateInertiaTensor(Center);
 
+        /// <summary>Transforms the convex hull in place.</summary>
+        /// <param name="transformMatrix">The transformation applied to the vertices.</param>
         public override void Transform(Matrix4x4 transformMatrix)
         {
             var xMin = double.PositiveInfinity;
@@ -104,11 +106,19 @@ namespace TVGL
             _inertiaTensor *= rotMatrix;
         }
 
+        /// <summary>Creates a transformed copy of the convex hull.</summary>
+        /// <param name="transformationMatrix">The transformation applied to the copy.</param>
+        /// <returns>The transformed solid.</returns>
+        /// <exception cref="System.NotImplementedException">This operation is not implemented.</exception>
         public override Solid TransformToNewSolid(Matrix4x4 transformationMatrix)
         {
             throw new System.NotImplementedException();
         }
 
+        /// <summary>Determines whether a point lies inside or on the convex hull.</summary>
+        /// <param name="point">The point to test.</param>
+        /// <param name="offset">The tolerance offset applied to each face plane.</param>
+        /// <returns><see langword="true"/> when the point is inside the hull; otherwise, <see langword="false"/>.</returns>
         public bool IsInside(Vector3 point, double offset = 0)
         {
             foreach (var face in Faces)
@@ -121,9 +131,9 @@ namespace TVGL
         /// Finds the intersection points between the line and the convex hull. The first point is with a face that has 
         /// nearly the same direction as the line. The second one is opposite.
         /// </summary>
-        /// <param name="anchor"></param>
-        /// <param name="direction"></param>
-        /// <returns></returns>
+        /// <param name="anchor">A point on the line.</param>
+        /// <param name="direction">The line direction.</param>
+        /// <returns>The intersections and their signed line parameters.</returns>
         public IEnumerable<(Vector3 intersection, double lineT)> LineIntersection(Vector3 anchor, Vector3 direction)
         {
             var orderedFaces = Faces.OrderByDescending(f => f.Normal.Dot(direction));
@@ -148,6 +158,7 @@ namespace TVGL
         }
 
     }
+    /// <summary>Represents a triangular face belonging to a three-dimensional convex hull.</summary>
     public class ConvexHullFace : TriangleFace
     {
         internal ConvexHullFace(Vertex vertex1, Vertex vertex2, Vertex vertex3, Vector3 planeNormal) : this(vertex1, vertex2, vertex3)

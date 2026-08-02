@@ -26,11 +26,8 @@ namespace TVGL
     public class TVGLFileData : IO
     {
         #region Open/Load/Read
-        /// <summary>
-        /// Opens the TVGLz.
-        /// </summary>
-        /// <param name="s">The s.</param>
-        /// <param name="solidAssembly">The solid assembly.</param>
+        // Opens the TVGLz. This legacy implementation is currently commented out.
+        // Parameters: s is the source stream; solidAssembly receives the loaded assembly.
         //internal static void OpenTVGLz(Stream s, out SolidAssembly solidAssembly, TessellatedSolidBuildOptions tsBuildOptions = null)
         //{
         //    using var archive = new ZipArchive(s, ZipArchiveMode.Read, true);

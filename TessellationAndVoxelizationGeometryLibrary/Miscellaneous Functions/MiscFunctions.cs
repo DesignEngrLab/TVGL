@@ -1604,7 +1604,7 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Calculates the smaller interior angle (< PI) between two 2D vectors placed end-to-end.
+        /// Calculates the smaller interior angle (less than PI) between two 2D vectors placed end-to-end.
         /// </summary>
         /// <param name="vector1">The first vector.</param>
         /// <param name="vector2">The second vector, conceptually starting at the head of the first vector.</param>
@@ -1754,7 +1754,7 @@ namespace TVGL
         /// <summary>
         /// Returns the angle from 0 to 2 pi of vector-A from the datum, where the unit plane normal is 
         /// as if the surface was facing you. If unitPlaneNormal is not provided, then the angle is always 
-        /// <= pi.
+        /// less than or equal to pi.
         /// </summary>
         /// <param name="vectorA">The vector a.</param>
         /// <param name="datum">The datum.</param>
@@ -1770,7 +1770,7 @@ namespace TVGL
         /// <summary>
         /// Returns the angle from 0 to 2 pi of vector-A from the datum, where the unit plane normal is 
         /// as if the surface was facing you. If unitPlaneNormal is not provided, then the angle is always 
-        /// <= pi.
+        /// less than or equal to pi.
         /// </summary>
         /// <param name="vectorA">The vector a.</param>
         /// <param name="datum">The datum.</param>
@@ -2953,7 +2953,7 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Store the data for a line as the four variables of Vector4. The x & y value of the output are the x & y 
+        /// Store the data for a line as the four variables of Vector4. The x and y values of the output are the x and y
         /// values of where the line passes through the plane through zero. The z value is the polar angle (makes
         /// sense since measured from z-axis) and the w is the azimuthal angle.
         /// </summary>
@@ -2997,7 +2997,7 @@ namespace TVGL
         /// <summary>
         /// Decodes the Vector4 into an anchor and a unit vector direction. 
         /// </summary>
-        /// <param name="unique3DLine">A vector4 where the x & y are values where the line passes through 
+        /// <param name="unique3DLine">A vector4 where the x and y are values where the line passes through
         /// the plane through zero, the z value is the polar angle, and the w is the azimuthal angle. </param>
         /// <returns></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

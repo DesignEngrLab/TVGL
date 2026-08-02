@@ -771,31 +771,56 @@ namespace TVGL
         XOR
     }
 
+    /// <summary>Classifies the geometric surface represented by a general quadric.</summary>
     public enum QuadricType
     {
+        /// <summary>The coefficients do not identify a supported type.</summary>
         Unknown,
+        /// <summary>An ellipsoid.</summary>
         Ellipsoid,
+        /// <summary>An ellipsoid with no real points.</summary>
         ImaginaryEllipsoid,
+        /// <summary>An elliptic paraboloid.</summary>
         EllipticParaboloid,
+        /// <summary>A hyperbolic paraboloid.</summary>
         HyperbolicParaboloid,
+        /// <summary>A one-sheet hyperboloid.</summary>
         HyperboloidOneSheet,
+        /// <summary>A two-sheet hyperboloid.</summary>
         HyperboloidTwoSheets,
+        /// <summary>An elliptic cylinder.</summary>
         EllipticCylinder,
+        /// <summary>An elliptic cylinder with no real points.</summary>
         ImaginaryEllipticCylinder,
+        /// <summary>A parabolic cylinder.</summary>
         ParabolicCylinder,
+        /// <summary>A hyperbolic cylinder.</summary>
         HyperbolicCylinder,
+        /// <summary>A cone.</summary>
         Cone,
+        /// <summary>A cone with no real points.</summary>
         ImaginaryCone,
+        /// <summary>Two intersecting planes.</summary>
         IntersectingPlanes,
+        /// <summary>Intersecting planes with no real points.</summary>
         ImaginaryIntersectingPlanes,
+        /// <summary>Two parallel planes.</summary>
         ParallelPlanes,
+        /// <summary>Parallel planes with no real points.</summary>
         ImaginaryParallelPlanes,
+        /// <summary>A plane.</summary>
         Plane,
+        /// <summary>A sphere.</summary>
         Sphere,
+        /// <summary>A line.</summary>
         Line,
+        /// <summary>A single point.</summary>
         Point,
+        /// <summary>No real points.</summary>
         NoPoint,
+        /// <summary>Every point satisfies the equation.</summary>
         AllPoints,
+        /// <summary>A supported classification not represented by another value.</summary>
         Other
     }
 

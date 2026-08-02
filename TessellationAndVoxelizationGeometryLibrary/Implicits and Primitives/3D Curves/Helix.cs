@@ -92,7 +92,7 @@ namespace TVGL
         {
             var start = path.First();
             var end = path.Last();
-            /// because we already know it to be a straightline, we can just look at the ends
+            // Because we already know it to be a straight line, we can just look at the ends.
             return Math.Abs(start.X - end.X) / (Constants.TwoPi * cyl.Radius);
         }
 
