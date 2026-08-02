@@ -21,10 +21,6 @@
 		<PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
 		<IncludeSymbols>true</IncludeSymbols>
 		<SymbolPackageFormat>snupkg</SymbolPackageFormat>
-		<PackageLicenseFile>LICENSE</PackageLicenseFile>
-		<PackageReadmeFile>README.md</PackageReadmeFile>
-		<PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
-		<IncludeSymbols>true</IncludeSymbols>
 
 		<PackageProjectUrl>http://designengrlab.github.io/TVGL/</PackageProjectUrl>
 		<RepositoryUrl>https://github.com/DesignEngrLab/TVGL.git</RepositoryUrl>
