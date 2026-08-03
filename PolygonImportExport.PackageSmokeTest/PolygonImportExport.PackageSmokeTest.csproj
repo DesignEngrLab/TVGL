@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <PolygonImportExportPackageVersion Condition="'$(PolygonImportExportPackageVersion)' == ''">2.0.0</PolygonImportExportPackageVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- This must remain a PackageReference: the test verifies the packed artifact. -->
+    <PackageReference Include="TVGL.PolygonImportExport" Version="$(PolygonImportExportPackageVersion)" />
+  </ItemGroup>
+
+</Project>

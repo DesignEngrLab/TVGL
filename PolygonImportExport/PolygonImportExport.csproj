@@ -4,7 +4,26 @@
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <AssemblyName>PolygonImportExport</AssemblyName>
+    <RootNamespace>PolygonImportExport</RootNamespace>
+    <Version>2.0.0</Version>
+    <Product>TVGL Polygon Import and Export</Product>
+    <PackageId>TVGL.PolygonImportExport</PackageId>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <Authors>Matt Campbell, Brandon Massoni</Authors>
+    <Company>Design Engineering Lab</Company>
+    <Description>Import and export two-dimensional TVGL polygons in SVG, DXF, and DWG formats.</Description>
+    <Copyright>2026</Copyright>
+    <PackageLicenseFile>LICENSE</PackageLicenseFile>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <EnablePackageValidation>true</EnablePackageValidation>
+    <PackageProjectUrl>https://designengrlab.github.io/TVGL/</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/DesignEngrLab/TVGL.git</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>2d;polygon;svg;dxf;dwg;cad;computational-geometry</PackageTags>
   </PropertyGroup>
 
   <ItemGroup>
@@ -17,6 +36,16 @@
 
   <ItemGroup>
     <ProjectReference Include="..\TessellationAndVoxelizationGeometryLibrary\TessellationAndVoxelizationGeometryLibrary.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="README.md"
+          Pack="true"
+          PackagePath="\" />
+    <None Include="..\LICENSE"
+          Pack="true"
+          PackagePath="\"
+          Link="LICENSE" />
   </ItemGroup>
 
 </Project>

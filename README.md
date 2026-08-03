@@ -111,7 +111,13 @@ using TVGL;
 Solid solid = IO.Open("part.stl");
 ```
 
-For two-dimensional SVG, DXF, and DWG workflows, see the separate `PolygonImportExport` project in this repository. Format support varies between reading and writing; consult the relevant APIs before depending on round-trip conversion.
+For two-dimensional SVG, DXF, and DWG workflows, install the companion package:
+
+```powershell
+dotnet add package TVGL.PolygonImportExport --version 2.0.0
+```
+
+The package exposes `PolygonImportExport.SVG`, `PolygonImportExport.DXF`, and `PolygonImportExport.DWG`. Format support varies between reading and writing; consult the relevant APIs before depending on round-trip conversion.
 
 ## Documentation
 

@@ -2,6 +2,14 @@ name: Publish TVGL to NuGet.org
 
 on:
   workflow_dispatch:
+    inputs:
+      package:
+        description: Package to publish
+        required: true
+        type: choice
+        options:
+          - TVGL
+          - TVGL.PolygonImportExport
 
 permissions:
   contents: read
@@ -31,7 +39,21 @@ jobs:
         id: package
         shell: pwsh
         run: |
-          $project = 'TessellationAndVoxelizationGeometryLibrary/TessellationAndVoxelizationGeometryLibrary.csproj'
+          $selection = '${{ inputs.package }}'
+          switch ($selection) {
+              'TVGL' {
+                  $project = 'TessellationAndVoxelizationGeometryLibrary/TessellationAndVoxelizationGeometryLibrary.csproj'
+                  $smokeScript = './PackageSmokeTest/Run-PackageSmokeTest.ps1'
+              }
+              'TVGL.PolygonImportExport' {
+                  $project = 'PolygonImportExport/PolygonImportExport.csproj'
+                  $smokeScript = './PolygonImportExport.PackageSmokeTest/Run-PackageSmokeTest.ps1'
+              }
+              default {
+                  throw "Unknown package selection '$selection'."
+              }
+          }
+
           $packageId = (dotnet msbuild $project -getProperty:PackageId).Trim()
           if ($LASTEXITCODE -ne 0) {
               throw 'Unable to read the project PackageId property.'
@@ -42,8 +64,8 @@ jobs:
               throw 'Unable to read the project Version property.'
           }
 
-          if ($packageId -ne 'TVGL') {
-              throw "Expected package ID TVGL, but found '$packageId'."
+          if ($packageId -ne $selection) {
+              throw "Expected package ID '$selection', but found '$packageId'."
           }
           if ([string]::IsNullOrWhiteSpace($version)) {
               throw 'The project Version property is empty.'
@@ -51,13 +73,15 @@ jobs:
 
           "id=$packageId" >> $env:GITHUB_OUTPUT
           "version=$version" >> $env:GITHUB_OUTPUT
-          "artifact-directory=artifacts/nuget/$version" >> $env:GITHUB_OUTPUT
+          "project=$project" >> $env:GITHUB_OUTPUT
+          "smoke-script=$smokeScript" >> $env:GITHUB_OUTPUT
+          "artifact-directory=artifacts/nuget/$packageId/$version" >> $env:GITHUB_OUTPUT
 
       - name: Pack release artifacts
         shell: pwsh
         run: |
           dotnet pack `
-            'TessellationAndVoxelizationGeometryLibrary/TessellationAndVoxelizationGeometryLibrary.csproj' `
+            '${{ steps.package.outputs.project }}' `
             --configuration Release `
             --output '${{ steps.package.outputs.artifact-directory }}' `
             -p:ContinuousIntegrationBuild=true
@@ -80,7 +104,7 @@ jobs:
       - name: Smoke test packed package
         shell: pwsh
         run: |
-          ./PackageSmokeTest/Run-PackageSmokeTest.ps1 `
+          & '${{ steps.package.outputs.smoke-script }}' `
             -PackageVersion '${{ steps.package.outputs.version }}' `
             -ArtifactDirectory '${{ steps.package.outputs.artifact-directory }}'
 

@@ -5,13 +5,21 @@ using TVGL;
 
 namespace PolygonImportExport
 {
+    /// <summary>
+    /// Imports and exports two-dimensional polygon geometry in Scalable Vector Graphics (SVG) files.
+    /// </summary>
     public static class SVG
     {
         private const string SvgNs = "http://www.w3.org/2000/svg";
 
-        /// <param name="curvePrecision">Number of line segments used to approximate each curve entity (arc, circle, ellipse).</param>
+        /// <summary>
+        /// Reads supported SVG paths and shape elements and converts them to TVGL polygons.
+        /// </summary>
+        /// <param name="filePath">The path of the SVG file to read.</param>
+        /// <param name="curvePrecision">The number of line segments used to approximate each curve entity.</param>
         /// <param name="positiveYIsUp">When true (default), negates all Y values to convert from SVG's Y-down
         /// coordinate frame into a standard right-handed frame where positive Y points up.</param>
+        /// <returns>The imported closed polygons and open polylines.</returns>
         public static List<Polygon> Open(string filePath, int curvePrecision = 30, bool positiveYIsUp = true)
         {
             var result = new List<Polygon>();
@@ -24,7 +32,7 @@ namespace PolygonImportExport
             // path elements — primary shape carrier in SVG
             foreach (var el in allElements.Where(e => e.Name.LocalName == "path"))
             {
-                var d = (string)el.Attribute("d");
+                var d = (string?)el.Attribute("d");
                 if (string.IsNullOrWhiteSpace(d)) continue;
                 var transform = ParseTransform(el);
                 foreach (var poly in ParsePathData(d, transform, curvePrecision))
@@ -34,7 +42,7 @@ namespace PolygonImportExport
             // polygon / polyline elements
             foreach (var el in allElements.Where(e => e.Name.LocalName is "polygon" or "polyline"))
             {
-                var points = ParsePointsList((string)el.Attribute("points"));
+                var points = ParsePointsList((string?)el.Attribute("points"));
                 if (points.Count < 2) continue;
                 var transform = ParseTransform(el);
                 points = ApplyTransform(points, transform);
@@ -56,9 +64,9 @@ namespace PolygonImportExport
             // circle elements
             foreach (var el in allElements.Where(e => e.Name.LocalName == "circle"))
             {
-                if (!TryParseDouble((string)el.Attribute("cx"), out double cx) ||
-                    !TryParseDouble((string)el.Attribute("cy"), out double cy) ||
-                    !TryParseDouble((string)el.Attribute("r"), out double r) || r <= 0) continue;
+                if (!TryParseDouble((string?)el.Attribute("cx"), out double cx) ||
+                    !TryParseDouble((string?)el.Attribute("cy"), out double cy) ||
+                    !TryParseDouble((string?)el.Attribute("r"), out double r) || r <= 0) continue;
                 var pts = GenerateCirclePoints(cx, cy, r, curvePrecision);
                 var transform = ParseTransform(el);
                 pts = ApplyTransform(pts, transform);
@@ -68,12 +76,12 @@ namespace PolygonImportExport
             // ellipse elements
             foreach (var el in allElements.Where(e => e.Name.LocalName == "ellipse"))
             {
-                if (!TryParseDouble((string)(el.Attribute("cx") ?? el.Attribute("cx")), out double cx))
+                if (!TryParseDouble((string?)el.Attribute("cx"), out double cx))
                     cx = 0;
-                if (!TryParseDouble((string)(el.Attribute("cy") ?? el.Attribute("cy")), out double cy))
+                if (!TryParseDouble((string?)el.Attribute("cy"), out double cy))
                     cy = 0;
-                if (!TryParseDouble((string)el.Attribute("rx"), out double rx) ||
-                    !TryParseDouble((string)el.Attribute("ry"), out double ry) ||
+                if (!TryParseDouble((string?)el.Attribute("rx"), out double rx) ||
+                    !TryParseDouble((string?)el.Attribute("ry"), out double ry) ||
                     rx <= 0 || ry <= 0) continue;
                 var pts = GenerateEllipsePoints(cx, cy, rx, ry, curvePrecision);
                 var transform = ParseTransform(el);
@@ -93,8 +101,18 @@ namespace PolygonImportExport
             return ACadSharpConnector.OrganizeIntoShallowTree(result);
         }
 
+        // <param name="positiveYIsUp">When true (default), negates all Y values to convert from a standard
+        // right-handed frame (positive Y up) into SVG's Y-down coordinate frame.</param>
+
+
+        /// <summary>
+        /// Writes TVGL polygons to an SVG file.
+        /// </summary>
+        /// <param name="filePath">The path of the SVG file to create.</param>
+        /// <param name="polygons">The polygons and open polylines to write.</param>
         /// <param name="positiveYIsUp">When true (default), negates all Y values to convert from a standard
         /// right-handed frame (positive Y up) into SVG's Y-down coordinate frame.</param>
+        /// <returns><see langword="true"/> when the file is written successfully; otherwise, <see langword="false"/>.</returns>
         public static bool Save(string filePath, IEnumerable<Polygon> polygons, bool positiveYIsUp = true)
         {
             try
@@ -412,10 +430,10 @@ namespace PolygonImportExport
             return true;
         }
 
-        private static bool TryParseDouble(string s, out double v) =>
+        private static bool TryParseDouble(string? s, out double v) =>
             double.TryParse(s, NumberStyles.Float, CultureInfo.InvariantCulture, out v);
 
-        private static List<Vector2> ParsePointsList(string points)
+        private static List<Vector2> ParsePointsList(string? points)
         {
             var result = new List<Vector2>();
             if (string.IsNullOrWhiteSpace(points)) return result;
@@ -429,12 +447,12 @@ namespace PolygonImportExport
             return result;
         }
 
-        private static List<Vector2> RectToPoints(XElement el)
+        private static List<Vector2>? RectToPoints(XElement el)
         {
-            if (!TryParseDouble((string)el.Attribute("x") ?? "0", out double x)) x = 0;
-            if (!TryParseDouble((string)el.Attribute("y") ?? "0", out double y)) y = 0;
-            if (!TryParseDouble((string)el.Attribute("width"), out double w) || w <= 0) return null;
-            if (!TryParseDouble((string)el.Attribute("height"), out double h) || h <= 0) return null;
+            if (!TryParseDouble((string?)el.Attribute("x") ?? "0", out double x)) x = 0;
+            if (!TryParseDouble((string?)el.Attribute("y") ?? "0", out double y)) y = 0;
+            if (!TryParseDouble((string?)el.Attribute("width"), out double w) || w <= 0) return null;
+            if (!TryParseDouble((string?)el.Attribute("height"), out double h) || h <= 0) return null;
             return [new Vector2(x, y), new Vector2(x + w, y), new Vector2(x + w, y + h), new Vector2(x, y + h)];
         }
 
@@ -566,7 +584,7 @@ namespace PolygonImportExport
             var chain = new List<double[,]>();
             for (var node = el; node != null; node = node.Parent)
             {
-                var attr = (string)node.Attribute("transform");
+                var attr = (string?)node.Attribute("transform");
                 if (!string.IsNullOrWhiteSpace(attr))
                     chain.Add(ParseSingleTransform(attr));
             }

@@ -5,13 +5,18 @@ using TVGL;
 
 namespace PolygonImportExport
 {
+    /// <summary>
+    /// Imports and exports two-dimensional polygon geometry in Drawing Exchange Format (DXF) files.
+    /// </summary>
     public static class DXF
     {
         /// <summary>
         /// Reads a DXF file and converts its 2D entities (polylines, lines, arcs,
         /// circles, ellipses, splines, and block inserts) to a list of TVGL Polygons.
         /// </summary>
-        /// <param name="curvePrecision">Number of line segments used to approximate each curve entity (arc, circle, ellipse, spline, bulge).</param>
+        /// <param name="filePath">The path of the DXF file to read.</param>
+        /// <param name="curvePrecision">The number of line segments used to approximate each curve entity.</param>
+        /// <returns>The imported closed polygons and open polylines.</returns>
         public static List<Polygon> Open(string filePath, int curvePrecision = 30)
         {
             var cad2DData = DxfReader.Read(filePath);
@@ -21,6 +26,13 @@ namespace PolygonImportExport
             return ACadSharpConnector.OrganizeIntoShallowTree(result);
         }
 
+        /// <summary>
+        /// Writes TVGL polygons to a DXF file as lightweight polylines.
+        /// </summary>
+        /// <param name="filePath">The path of the DXF file to create.</param>
+        /// <param name="polygons">The polygons and open polylines to write.</param>
+        /// <param name="version">The AutoCAD file-format version to use.</param>
+        /// <returns><see langword="true"/> when the file is written successfully; otherwise, <see langword="false"/>.</returns>
         public static bool Save(string filePath, IEnumerable<Polygon> polygons,
             ACadVersion version = ACadVersion.AC1018)
         {
