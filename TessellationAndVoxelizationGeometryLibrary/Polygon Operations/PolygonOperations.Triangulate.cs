@@ -622,7 +622,7 @@ namespace TVGL
         /// <returns>IEnumerable&lt;Vertex[]&gt; where each represents a triangular polygonal face.</returns>
         /// <exception cref="System.ArgumentException">The vertices must all have a unique IndexInList value - vertexLoop</exception>
         public static IEnumerable<(Vertex A, Vertex B, Vertex C)> TriangulateDelaunay(this IEnumerable<Vertex> vertexLoop,
-            Vector3 normal, bool forceToPositive = false, bool allowNewPolygonPoints = false, bool preservePolygonEdgesInTriangulation = false, 
+            Vector3 normal, bool forceToPositive = false, bool allowNewPolygonPoints = false, bool preservePolygonEdgesInTriangulation = false,
             int targetNumTriangles = -1, double targetSideLength = double.NaN)
         {
             var transform = normal.TransformToXYPlane(out _);
@@ -658,7 +658,7 @@ namespace TVGL
         /// <returns>IEnumerable&lt;Vertex[]&gt; where each represents a triangular polygonal face.</returns>
         /// <exception cref="System.ArgumentException">The vertices must all have a unique IndexInList value - vertexLoops</exception>
         public static IEnumerable<Vertex[]> TriangulateDelaunay(this IEnumerable<IList<Vertex>> vertexLoops, Vector3 normal,
-            bool allowNewPolygonPoints, bool preservePolygonEdgesInTriangulation, int targetNumTriangles = -1, 
+            bool allowNewPolygonPoints, bool preservePolygonEdgesInTriangulation, int targetNumTriangles = -1,
             double targetSideLength = double.NaN)
         {
             var transform = normal.TransformToXYPlane(out _);
@@ -698,7 +698,7 @@ namespace TVGL
             bool allowNewPolygonPoints, bool preservePolygonEdgesInTriangulation, int targetNumTriangles = -1,
             double targetSideLength = double.NaN)
         {
-            foreach (var triangle in polygon.TriangulateDelaunay(allowNewPolygonPoints, 
+            foreach (var triangle in polygon.TriangulateDelaunay(allowNewPolygonPoints,
                 preservePolygonEdgesInTriangulation, targetNumTriangles, targetSideLength).Faces)
                 yield return new[] { new Vector2(triangle.A.X,triangle.A.Y),
                     new Vector2(triangle.B.X,triangle.B.Y),
@@ -713,7 +713,7 @@ namespace TVGL
         /// <returns>List&lt;System.Int32[]&gt;.</returns>
         /// <exception cref="System.ArgumentException">Triangulate Polygon requires a positive polygon. A negative one was provided. - polygon</exception>
         /// <exception cref="System.Exception">Unable to triangulate polygon.</exception>
-        public static Delaunay2D TriangulateDelaunay(this Polygon polygon, 
+        public static Delaunay2D TriangulateDelaunay(this Polygon polygon,
             bool allowNewPolygonPoints, bool preservePolygonEdgesInTriangulation, int targetNumTriangles = -1, double targetSideLength = double.NaN)
         {
             //debugPolygon = polygon.Path;
@@ -982,6 +982,22 @@ namespace TVGL
                         faces.AddRange(tempNewFaces);
                     }
                 }
+            }
+            foreach (var v in delaunay2D.Vertices)
+            {
+                v.Edges.Clear();
+                v.Faces.Clear();
+            }
+            foreach (var e in edgeHash.Values)
+            {
+                e.From.Edges.Add(e);
+                e.To.Edges.Add(e);
+            }
+            foreach (var f in faces)
+            {
+                f.A.Faces.Add(f);
+                f.B.Faces.Add(f);
+                f.C.Faces.Add(f);
             }
             delaunay2D = new Delaunay2D
             {
