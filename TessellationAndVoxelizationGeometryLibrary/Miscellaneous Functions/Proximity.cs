@@ -174,7 +174,6 @@ namespace TVGL
         /// <param name="fromPt">fromPt.</param>
         /// <param name="toPoint">The toPoint.</param>
         /// <param name="vertex">The vertex.</param>
-        /// <param name="distanceToSegment">The distance to segment.</param>
         /// <returns>Vector3.</returns>
         /// <source> This is based on the above method, but 
         /// rewritten for general use by MICampbell on 03.21.2025 </source>
