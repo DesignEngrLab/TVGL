@@ -297,20 +297,31 @@ namespace TVGL
             {
                 if (node.StartingEdges.Count <= 1 && node.EndingEdges.Count <= 1)
                     continue;
+
+                //Sorted edges needs to allow for duplicate angles.
+                var sortedEdges = new SortedList<(double Angle, int Id), (PolygonEdge Edge, bool IsStarting)>();
+                int id = 0;
                 // so, now we know that at least 3 edges come into this node
-                var sortedEdges = new SortedList<double, (PolygonEdge, bool)>();
                 for (int i = node.StartingEdges.Count - 1; i >= 0; i--)
                 {
                     PolygonEdge edge = node.StartingEdges[i];
                     if (edge.ToPoint == edge.FromPoint) node.StartingEdges.RemoveAt(i); // remove self-referencing edges
-                    else sortedEdges.Add(Global.Pseudoangle(edge.Vector.X, edge.Vector.Y), (edge, true));
+                    else 
+                    {
+                        double angle = Global.Pseudoangle(edge.Vector.X, edge.Vector.Y);
+                        sortedEdges.Add((angle, id++), (edge, true));
+                    }
                 }
 
                 for (int i = node.EndingEdges.Count - 1; i >= 0; i--)
                 {
                     PolygonEdge edge = node.EndingEdges[i];
                     if (edge.ToPoint == edge.FromPoint) node.EndingEdges.RemoveAt(i); // remove self-referencing edges
-                    else sortedEdges.Add(Global.Pseudoangle(-edge.Vector.X, -edge.Vector.Y), (edge, false));
+                    else
+                    {
+                        double angle = Global.Pseudoangle(-edge.Vector.X, -edge.Vector.Y);
+                        sortedEdges.Add((angle, id++), (edge, false));
+                    }
                 }
 
                 for (int i = sortedEdges.Count - 1, j = 0; i >= 0; j = i--) // 'i' is the current index, 'j' is the next index
