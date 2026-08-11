@@ -990,11 +990,13 @@ namespace TVGL
             }
             foreach (var e in edgeHash.Values)
             {
+                e.Update();
                 e.From.Edges.Add(e);
                 e.To.Edges.Add(e);
             }
             foreach (var f in faces)
             {
+                f.Update();
                 f.A.Faces.Add(f);
                 f.B.Faces.Add(f);
                 f.C.Faces.Add(f);
