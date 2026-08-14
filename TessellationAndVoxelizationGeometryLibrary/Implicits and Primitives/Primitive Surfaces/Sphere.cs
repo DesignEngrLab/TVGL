@@ -241,8 +241,8 @@ namespace TVGL
         public override Vector3 GetNormalAtPoint(Vector3 point)
         {
             var d = (point - Center).Normalize();
-            if (IsPositive.HasValue && !IsPositive.Value) d = -d;
-            return d;
+            if (IsPositive.GetValueOrDefault(true)) return d;
+            else return -d;
         }
 
         /// <summary>
@@ -253,8 +253,8 @@ namespace TVGL
         public override double DistanceToPoint(Vector3 point)
         {
             var d = (point - Center).Length() - Radius;
-            if (IsPositive.HasValue && !IsPositive.Value) d = -d;
-            return d;
+            if (IsPositive.GetValueOrDefault(true)) return d;
+            else return -d;
         }
 
         /// <summary>

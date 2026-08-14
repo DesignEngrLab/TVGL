@@ -271,8 +271,8 @@ namespace TVGL
                     (coneRadius1 - coneRadius2) * (coneRadius1 - coneRadius2));
                 d = distAtCommonDepth * cosAngle;
             }
-            if (IsPositive.HasValue && !IsPositive.Value) d = -d;
-            return d;
+            if (IsPositive.GetValueOrDefault(true)) return d;
+            else return -d;
         }
 
         public override Vector3 ClosestPointOnSurfaceToPoint(Vector3 point)
@@ -286,15 +286,15 @@ namespace TVGL
 
             //else // in the cone section
             throw new NotImplementedException();
-                var t = (dxAlong - conePlaneDistance1) / coneLength;
-                var thisRadius = (1 - t) * coneRadius1 + t * coneRadius2;
-                var distAtCommonDepth = (point - coneAnchor1).Cross(directionVector).Length() - thisRadius;
-                // to be more exact, we need the cosine of the aperture angle to get the closest distance
-                // instead of finding angle, and then its cosine, we just pythagorean it 
-                var cosAngle = directionVectorLength /
-                    Math.Sqrt(directionVectorLength * directionVectorLength +
-                    (coneRadius1 - coneRadius2) * (coneRadius1 - coneRadius2));
-                d = distAtCommonDepth * cosAngle;
+            var t = (dxAlong - conePlaneDistance1) / coneLength;
+            var thisRadius = (1 - t) * coneRadius1 + t * coneRadius2;
+            var distAtCommonDepth = (point - coneAnchor1).Cross(directionVector).Length() - thisRadius;
+            // to be more exact, we need the cosine of the aperture angle to get the closest distance
+            // instead of finding angle, and then its cosine, we just pythagorean it
+            var cosAngle = directionVectorLength /
+                Math.Sqrt(directionVectorLength * directionVectorLength +
+                (coneRadius1 - coneRadius2) * (coneRadius1 - coneRadius2));
+            d = distAtCommonDepth * cosAngle;
         }
 
         public override Vector3 GetNormalAtPoint(Vector3 point)
@@ -315,8 +315,8 @@ namespace TVGL
                 if (coneRadius1 < coneRadius2) sinAngle = -sinAngle;
                 d = (c * cosAngle + directionVector * sinAngle).Normalize();
             }
-            if (IsPositive.HasValue && !IsPositive.Value) d *= -1;
-            return d;
+            if (IsPositive.GetValueOrDefault(true)) return d;
+            else return -d;
         }
 
         public double DistanceFromSphere2(Vector3 point)

@@ -38,8 +38,8 @@ namespace TVGL
             else if (Math.Abs(pointDot - MaxDistanceAlongAxis) < Math.Abs(b.Length() - Radius))
                 outwardVector = Axis;
             else outwardVector = b.Cross(Axis).Normalize();
-            if (IsPositive.HasValue && !IsPositive.Value) outwardVector *= -1;
-            return outwardVector;
+            if (IsPositive.GetValueOrDefault(true)) return outwardVector;
+            else return -outwardVector;
         }
 
         /// <summary>
@@ -65,8 +65,8 @@ namespace TVGL
             var d = (point - Anchor).Cross(Axis).Length() - Radius;
             // if d is positive, then the point is outside the CappedCylinder
             // if d is negative, then the point is inside the CappedCylinder
-            if (IsPositive.HasValue && !IsPositive.Value) d = -d;
-            return d;
+            if (IsPositive.GetValueOrDefault(true)) return d;
+            else return -d;
         }
 
         public override Vector3 ClosestPointOnSurfaceToPoint(Vector3 point)
