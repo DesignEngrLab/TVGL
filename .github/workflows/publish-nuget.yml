@@ -1,10 +1,13 @@
 name: Publish TVGL to NuGet.org
 
 on:
+  push:
+    branches:
+      - master
   workflow_dispatch:
     inputs:
       package:
-        description: Package to publish
+        description: Package to evaluate for publication
         required: true
         type: choice
         options:
@@ -20,9 +23,101 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  publish:
-    name: Pack, test, and publish
+  check-release-versions:
+    name: Check published package versions
     if: github.ref == 'refs/heads/master'
+    runs-on: windows-latest
+    outputs:
+      publish-tvgl: ${{ steps.tvgl.outputs.should-publish }}
+      publish-polygon-import-export: ${{ steps.polygon-import-export.outputs.should-publish }}
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Install .NET 10 SDK
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Check TVGL release version
+        id: tvgl
+        if: github.event_name == 'push' || inputs.package == 'TVGL'
+        shell: pwsh
+        run: |
+          $project = 'TessellationAndVoxelizationGeometryLibrary/TessellationAndVoxelizationGeometryLibrary.csproj'
+          $packageId = (dotnet msbuild $project -getProperty:PackageId).Trim()
+          if ($LASTEXITCODE -ne 0) {
+              throw 'Unable to read the TVGL PackageId property.'
+          }
+
+          $localVersionText = (dotnet msbuild $project -getProperty:Version).Trim()
+          if ($LASTEXITCODE -ne 0) {
+              throw 'Unable to read the TVGL Version property.'
+          }
+
+          try {
+              $localVersion = [version]$localVersionText
+          }
+          catch {
+              throw "TVGL version '$localVersionText' must be numeric (for example, 2.0.1)."
+          }
+
+          $packageIndexUri = "https://api.nuget.org/v3-flatcontainer/$($packageId.ToLowerInvariant())/index.json"
+          $publishedVersions = (Invoke-RestMethod -Uri $packageIndexUri).versions |
+              Where-Object { $_ -notmatch '-' } |
+              ForEach-Object { [version]$_ }
+
+          $latestPublishedVersion = $publishedVersions | Sort-Object -Descending | Select-Object -First 1
+          if ($null -eq $latestPublishedVersion) {
+              throw "NuGet.org returned no stable versions for '$packageId'."
+          }
+
+          $shouldPublish = $localVersion -gt $latestPublishedVersion
+          Write-Host "TVGL: local $localVersion; latest published $latestPublishedVersion; publish $shouldPublish"
+          "should-publish=$($shouldPublish.ToString().ToLowerInvariant())" >> $env:GITHUB_OUTPUT
+
+      - name: Check TVGL.PolygonImportExport release version
+        id: polygon-import-export
+        if: github.event_name == 'push' || inputs.package == 'TVGL.PolygonImportExport'
+        shell: pwsh
+        run: |
+          $project = 'PolygonImportExport/PolygonImportExport.csproj'
+          $packageId = (dotnet msbuild $project -getProperty:PackageId).Trim()
+          if ($LASTEXITCODE -ne 0) {
+              throw 'Unable to read the TVGL.PolygonImportExport PackageId property.'
+          }
+
+          $localVersionText = (dotnet msbuild $project -getProperty:Version).Trim()
+          if ($LASTEXITCODE -ne 0) {
+              throw 'Unable to read the TVGL.PolygonImportExport Version property.'
+          }
+
+          try {
+              $localVersion = [version]$localVersionText
+          }
+          catch {
+              throw "TVGL.PolygonImportExport version '$localVersionText' must be numeric (for example, 2.0.1)."
+          }
+
+          $packageIndexUri = "https://api.nuget.org/v3-flatcontainer/$($packageId.ToLowerInvariant())/index.json"
+          $publishedVersions = (Invoke-RestMethod -Uri $packageIndexUri).versions |
+              Where-Object { $_ -notmatch '-' } |
+              ForEach-Object { [version]$_ }
+
+          $latestPublishedVersion = $publishedVersions | Sort-Object -Descending | Select-Object -First 1
+          if ($null -eq $latestPublishedVersion) {
+              throw "NuGet.org returned no stable versions for '$packageId'."
+          }
+
+          $shouldPublish = $localVersion -gt $latestPublishedVersion
+          Write-Host "TVGL.PolygonImportExport: local $localVersion; latest published $latestPublishedVersion; publish $shouldPublish"
+          "should-publish=$($shouldPublish.ToString().ToLowerInvariant())" >> $env:GITHUB_OUTPUT
+
+  publish-tvgl:
+    name: Pack, test, and publish TVGL
+    needs: check-release-versions
+    if: needs.check-release-versions.outputs.publish-tvgl == 'true'
     runs-on: windows-latest
     environment: nuget-release
 
@@ -35,65 +130,20 @@ jobs:
         with:
           dotnet-version: 10.0.x
 
-      - name: Read package identity
-        id: package
-        shell: pwsh
-        run: |
-          $selection = '${{ inputs.package }}'
-          switch ($selection) {
-              'TVGL' {
-                  $project = 'TessellationAndVoxelizationGeometryLibrary/TessellationAndVoxelizationGeometryLibrary.csproj'
-                  $smokeScript = './PackageSmokeTest/Run-PackageSmokeTest.ps1'
-              }
-              'TVGL.PolygonImportExport' {
-                  $project = 'PolygonImportExport/PolygonImportExport.csproj'
-                  $smokeScript = './PolygonImportExport.PackageSmokeTest/Run-PackageSmokeTest.ps1'
-              }
-              default {
-                  throw "Unknown package selection '$selection'."
-              }
-          }
-
-          $packageId = (dotnet msbuild $project -getProperty:PackageId).Trim()
-          if ($LASTEXITCODE -ne 0) {
-              throw 'Unable to read the project PackageId property.'
-          }
-
-          $version = (dotnet msbuild $project -getProperty:Version).Trim()
-          if ($LASTEXITCODE -ne 0) {
-              throw 'Unable to read the project Version property.'
-          }
-
-          if ($packageId -ne $selection) {
-              throw "Expected package ID '$selection', but found '$packageId'."
-          }
-          if ([string]::IsNullOrWhiteSpace($version)) {
-              throw 'The project Version property is empty.'
-          }
-
-          "id=$packageId" >> $env:GITHUB_OUTPUT
-          "version=$version" >> $env:GITHUB_OUTPUT
-          "project=$project" >> $env:GITHUB_OUTPUT
-          "smoke-script=$smokeScript" >> $env:GITHUB_OUTPUT
-          "artifact-directory=artifacts/nuget/$packageId/$version" >> $env:GITHUB_OUTPUT
-
       - name: Pack release artifacts
         shell: pwsh
         run: |
-          dotnet pack `
-            '${{ steps.package.outputs.project }}' `
+          dotnet pack TessellationAndVoxelizationGeometryLibrary/TessellationAndVoxelizationGeometryLibrary.csproj `
             --configuration Release `
-            --output '${{ steps.package.outputs.artifact-directory }}' `
+            --output artifacts/nuget/TVGL `
             -p:ContinuousIntegrationBuild=true
 
       - name: Verify package files
         shell: pwsh
         run: |
-          $artifactDirectory = '${{ steps.package.outputs.artifact-directory }}'
-          $packageBaseName = '${{ steps.package.outputs.id }}.${{ steps.package.outputs.version }}'
-          $packagePath = Join-Path $artifactDirectory "$packageBaseName.nupkg"
-          $symbolsPath = Join-Path $artifactDirectory "$packageBaseName.snupkg"
-
+          $version = (dotnet msbuild TessellationAndVoxelizationGeometryLibrary/TessellationAndVoxelizationGeometryLibrary.csproj -getProperty:Version).Trim()
+          $packagePath = "artifacts/nuget/TVGL/TVGL.$version.nupkg"
+          $symbolsPath = "artifacts/nuget/TVGL/TVGL.$version.snupkg"
           if (-not (Test-Path -LiteralPath $packagePath -PathType Leaf)) {
               throw "Package not found: $packagePath"
           }
@@ -104,9 +154,10 @@ jobs:
       - name: Smoke test packed package
         shell: pwsh
         run: |
-          & '${{ steps.package.outputs.smoke-script }}' `
-            -PackageVersion '${{ steps.package.outputs.version }}' `
-            -ArtifactDirectory '${{ steps.package.outputs.artifact-directory }}'
+          $version = (dotnet msbuild TessellationAndVoxelizationGeometryLibrary/TessellationAndVoxelizationGeometryLibrary.csproj -getProperty:Version).Trim()
+          & ./PackageSmokeTest/Run-PackageSmokeTest.ps1 `
+            -PackageVersion $version `
+            -ArtifactDirectory artifacts/nuget/TVGL
 
       - name: Authenticate to NuGet.org
         id: login
@@ -119,10 +170,68 @@ jobs:
         env:
           NUGET_API_KEY: ${{ steps.login.outputs.NUGET_API_KEY }}
         run: |
-          $packagePath = Join-Path `
-            '${{ steps.package.outputs.artifact-directory }}' `
-            '${{ steps.package.outputs.id }}.${{ steps.package.outputs.version }}.nupkg'
+          $version = (dotnet msbuild TessellationAndVoxelizationGeometryLibrary/TessellationAndVoxelizationGeometryLibrary.csproj -getProperty:Version).Trim()
+          dotnet nuget push "artifacts/nuget/TVGL/TVGL.$version.nupkg" `
+            --api-key $env:NUGET_API_KEY `
+            --source https://api.nuget.org/v3/index.json
 
-          dotnet nuget push $packagePath `
+  publish-polygon-import-export:
+    name: Pack, test, and publish TVGL.PolygonImportExport
+    needs: check-release-versions
+    if: needs.check-release-versions.outputs.publish-polygon-import-export == 'true'
+    runs-on: windows-latest
+    environment: nuget-release
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Install .NET 10 SDK
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Pack release artifacts
+        shell: pwsh
+        run: |
+          dotnet pack PolygonImportExport/PolygonImportExport.csproj `
+            --configuration Release `
+            --output artifacts/nuget/TVGL.PolygonImportExport `
+            -p:ContinuousIntegrationBuild=true
+
+      - name: Verify package files
+        shell: pwsh
+        run: |
+          $version = (dotnet msbuild PolygonImportExport/PolygonImportExport.csproj -getProperty:Version).Trim()
+          $packagePath = "artifacts/nuget/TVGL.PolygonImportExport/TVGL.PolygonImportExport.$version.nupkg"
+          $symbolsPath = "artifacts/nuget/TVGL.PolygonImportExport/TVGL.PolygonImportExport.$version.snupkg"
+          if (-not (Test-Path -LiteralPath $packagePath -PathType Leaf)) {
+              throw "Package not found: $packagePath"
+          }
+          if (-not (Test-Path -LiteralPath $symbolsPath -PathType Leaf)) {
+              throw "Symbol package not found: $symbolsPath"
+          }
+
+      - name: Smoke test packed package
+        shell: pwsh
+        run: |
+          $version = (dotnet msbuild PolygonImportExport/PolygonImportExport.csproj -getProperty:Version).Trim()
+          & ./PolygonImportExport.PackageSmokeTest/Run-PackageSmokeTest.ps1 `
+            -PackageVersion $version `
+            -ArtifactDirectory artifacts/nuget/TVGL.PolygonImportExport
+
+      - name: Authenticate to NuGet.org
+        id: login
+        uses: NuGet/login@v1
+        with:
+          user: MattCampbell
+
+      - name: Publish package and symbols
+        shell: pwsh
+        env:
+          NUGET_API_KEY: ${{ steps.login.outputs.NUGET_API_KEY }}
+        run: |
+          $version = (dotnet msbuild PolygonImportExport/PolygonImportExport.csproj -getProperty:Version).Trim()
+          dotnet nuget push "artifacts/nuget/TVGL.PolygonImportExport/TVGL.PolygonImportExport.$version.nupkg" `
             --api-key $env:NUGET_API_KEY `
             --source https://api.nuget.org/v3/index.json

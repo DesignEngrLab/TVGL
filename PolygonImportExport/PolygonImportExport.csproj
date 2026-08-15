@@ -31,7 +31,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="ACadSharp" Version="3.6.35" />
+    <PackageReference Include="ACadSharp" Version="3.6.51" />
   </ItemGroup>
 
   <ItemGroup>
@@ -39,13 +39,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="README.md"
-          Pack="true"
-          PackagePath="\" />
-    <None Include="..\LICENSE"
-          Pack="true"
-          PackagePath="\"
-          Link="LICENSE" />
+    <None Include="README.md" Pack="true" PackagePath="\" />
+    <None Include="..\LICENSE" Pack="true" PackagePath="\" Link="LICENSE" />
   </ItemGroup>
 
 </Project>
