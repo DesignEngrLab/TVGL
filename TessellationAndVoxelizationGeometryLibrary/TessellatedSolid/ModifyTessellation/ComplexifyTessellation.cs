@@ -91,7 +91,10 @@ namespace TVGL
             var initEdgePlot = edges.Select(e => new[] { e.From.Coordinates, e.To.Coordinates }).ToArray();
             var edgeQueue = new PriorityQueue<(Edge, Vector3), double>(new ReverseSort());
             foreach (var edge in edges)
+            {
+                edge.Update(); // ensure that edge properties are updated below by calling Update here on the incoming set
                 EnqueueEdgeAndFindNewPoint(edgeQueue, edge, maxSurfaceDeviation);
+            }
             addedEdges = new List<Edge>();
             addedVertices = new List<Vertex>();
             addedFaces = new List<TriangleFace>();

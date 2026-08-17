@@ -280,11 +280,7 @@ namespace TVGL
         public void Update(bool lengthAndAngleUnchanged = false)
         {
             //Reset the vector, since vertices may have been moved.
-            _vector = new Vector3(To.Coordinates[0] - From.Coordinates[0],
-                To.Coordinates[1] - From.Coordinates[1],
-                To.Coordinates[2] - From.Coordinates[2]
-            );
-
+            _vector = Vector3.Null;
             if (lengthAndAngleUnchanged) return; //Done. No need to update the length or the internal edge angle
             _length = double.NaN;
             _internalAngle = double.NaN;

@@ -150,6 +150,7 @@ namespace TVGL
         /// <summary>
         /// Gets all the coefficients as an enumerable in the order listed above.
         /// </summary>
+        [JsonIgnore]
         public IEnumerable<double> Coefficients
         {
             get

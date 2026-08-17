@@ -22,7 +22,7 @@ dotnet add package TVGL --version 2.0.0
 Or add the package reference directly to your project file:
 
 ```xml
-<PackageReference Include="TVGL" Version="2.0.0" />
+<PackageReference Include="TVGL" Version="2.0.1" />
 ```
 
 ## Quick start
