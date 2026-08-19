@@ -134,19 +134,6 @@ namespace TVGL
             set { type = value; }
         }
 
-
-        /// <summary>
-        /// Represent quadric specific coefficients
-        /// For plane, a,b,c are plane normal components and d is the distance from the origin.
-        /// For parallel planes, a,b,c, and d describe the mid-plane while e is the distance between the two planes.
-        /// ...
-        /// </summary>
-        public double a;
-        public double b;
-        public double c;
-        public double d;
-        public double e;
-
         /// <summary>
         /// Gets all the coefficients as an enumerable in the order listed above.
         /// </summary>
@@ -1162,29 +1149,6 @@ namespace TVGL
                 if (Mrank == 2) return QuadricType.Plane;
             }
             return QuadricType.Unknown;
-        }
-
-        /// <summary>Populates the type-specific coefficient fields for planes and parallel planes.</summary>
-        public void SetTypeSpecificCoefficients()
-        {
-            if (Type == QuadricType.Plane)
-            {
-                double normalizer = Math.Sqrt(XCoeff * XCoeff + YCoeff * YCoeff + ZCoeff * ZCoeff);
-                a = XCoeff / normalizer;
-                b = YCoeff / normalizer;
-                c = ZCoeff / normalizer;
-                d = W / normalizer;
-            }
-            if (Type == QuadricType.ParallelPlanes)
-            {
-                double normalizer = Math.Sqrt(Math.Abs(XSqdCoeff + YSqdCoeff + ZSqdCoeff));
-                a = Math.Sqrt(Math.Abs(XSqdCoeff)) / normalizer;
-                d = XCoeff / (2 * a);
-                b = YCoeff / (2 * d);
-                c = ZCoeff / (2 * d);
-                e = 2 * Math.Sqrt((XCoeff * XCoeff) / (4 * XSqdCoeff) - W);
-
-            }
         }
 
         /// <summary>

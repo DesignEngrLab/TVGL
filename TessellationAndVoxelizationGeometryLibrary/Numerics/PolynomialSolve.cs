@@ -120,6 +120,11 @@ namespace TVGL
         {
             if (squaredCoeff.IsNegligible())
             {
+                // The polynomial has reduced to a line. If the linear coefficient is also
+                // zero, it has either no roots or infinitely many roots; neither case can
+                // be represented by this two-root API, so return non-real sentinels.
+                if (linearCoeff.IsNegligible())
+                    return (ComplexNumber.NaN, ComplexNumber.NaN);
                 return (new ComplexNumber(-constant / linearCoeff), new ComplexNumber(-constant / linearCoeff));
             }
             if ((constant / squaredCoeff).IsNegligible())
@@ -204,6 +209,15 @@ namespace TVGL
             /* solve the cubic cubedCoeff * x^3 + squaredCoeff * x^2 +  linearCoeff * x + offset = 0
              * following the equations from the Numerical Recipe book
              * http://phys.uri.edu/nigh/NumRec/bookfpdf/f5-6.pdf */
+            if (cubedCoeff.IsNegligible())
+            {
+                // Elimination problems can legitimately lose their highest-order term.
+                // Reduce the degree instead of normalizing by a zero cubic coefficient.
+                foreach (var root in QuadraticAsEnumeration(squaredCoeff, linearCoeff, offset))
+                    if (!onlyReturnRealRoots || root.IsRealNumber)
+                        yield return root;
+                yield break;
+            }
             var a = squaredCoeff / cubedCoeff;
             var b = linearCoeff / cubedCoeff;
             var c = offset / cubedCoeff;
@@ -257,6 +271,20 @@ namespace TVGL
             /* solve the cubic cubedCoeff * x^3 + squaredCoeff * x^2 +  linearCoeff * x + offset = 0
              * following the equations from the Numerical Recipe book
              * http://phys.uri.edu/nigh/NumRec/bookfpdf/f5-6.pdf */
+            if (cubedCoeff.IsNegligible())
+            {
+                // Reduce a degenerate cubic before making the polynomial monic.
+                if (squaredCoeff.IsNegligible())
+                {
+                    if (!linearCoeff.IsNegligible())
+                        yield return -offset / linearCoeff;
+                    yield break;
+                }
+                var roots = Quadratic(linearCoeff / squaredCoeff, offset / squaredCoeff);
+                yield return roots.Item1;
+                yield return roots.Item2;
+                yield break;
+            }
             var a = squaredCoeff / cubedCoeff;
             var b = linearCoeff / cubedCoeff;
             var c = offset / cubedCoeff;
@@ -331,6 +359,14 @@ namespace TVGL
         public static IEnumerable<ComplexNumber> Quartic(ComplexNumber fourthOrderCoeff,
             ComplexNumber cubedCoeff, ComplexNumber squaredCoeff, ComplexNumber linearCoeff, ComplexNumber offset)
         {
+            if (fourthOrderCoeff.IsNegligible())
+            {
+                // A resultant advertised as quartic may be cubic or lower for special
+                // geometry. Dispatch by its actual degree before normalization.
+                foreach (var root in Cubic(cubedCoeff, squaredCoeff, linearCoeff, offset))
+                    yield return root;
+                yield break;
+            }
             var b = cubedCoeff / fourthOrderCoeff;
             var c = squaredCoeff / fourthOrderCoeff;
             var d = linearCoeff / fourthOrderCoeff;
@@ -378,6 +414,14 @@ namespace TVGL
         public static IEnumerable<ComplexNumber> Quartic(double fourthOrderCoeff,
             double cubedCoeff, double squaredCoeff, double linearCoeff, double offset)
         {
+            if (fourthOrderCoeff.IsNegligible())
+            {
+                // A resultant advertised as quartic may be cubic or lower for special
+                // geometry. Dispatch by its actual degree before normalization.
+                foreach (var root in Cubic(cubedCoeff, squaredCoeff, linearCoeff, offset))
+                    yield return root;
+                yield break;
+            }
             var b = cubedCoeff / fourthOrderCoeff;
             var c = squaredCoeff / fourthOrderCoeff;
             var d = linearCoeff / fourthOrderCoeff;

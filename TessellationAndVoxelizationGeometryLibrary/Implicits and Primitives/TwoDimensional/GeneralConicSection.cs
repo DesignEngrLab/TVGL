@@ -551,5 +551,68 @@ namespace TVGL
                 }
             }
         }
+
+        public IEnumerable<Vector2> IntersectWithCircle(Circle c1)
+        {
+            // As a simplification of the above, we work in coordinates
+            // centered on the circle, which maximizes the zero coefficients and
+            // we're left with simply: X^2 + Y^2 - R^2 = 0.
+            var centerX = c1.Center.X;
+            var centerY = c1.Center.Y;
+            var a = A;
+            var b = B;
+            var c = C;
+            var originalT = ConstantIsZero ? 0.0 : 1.0;
+            var r = 2 * a * centerX + b * centerY + D;
+            var s = b * centerX + 2 * c * centerY + E;
+            var t = a * centerX * centerX + b * centerX * centerY + c * centerY * centerY
+                + D * centerX + E * centerY + originalT;
+
+            // Subtract c times the raw circle equation from the translated conic.
+            // This eliminates Y^2 without normalizing the circle, avoiding both an
+            // unnecessary reciprocal and the zero-constant case for circles through
+            // the original coordinate-system origin.
+            var ak = a - c;
+            var bk = b;
+            var rk = r;
+            var sk = s;
+            var tk = t + c * c1.RadiusSquared;
+
+            // The subtraction above leaves P(X) + Q(X)Y = 0, where P is
+            // quadratic and Q is linear. Substituting Y = -P/Q into the circle
+            // gives (X^2 - R^2)Q^2 + P^2 = 0. Expanding that expression directly
+            // is shorter than the general conic resultant and remains valid when
+            // this conic already has c == 0 (for example, a straight line).
+            var radiusSquared = c1.RadiusSquared;
+            var xValues = PolynomialSolve.Quartic(
+                bk * bk + ak * ak,
+                2 * (bk * sk + ak * rk),
+                sk * sk - radiusSquared * bk * bk + rk * rk + 2 * ak * tk,
+                2 * (rk * tk - radiusSquared * bk * sk),
+                tk * tk - radiusSquared * sk * sk);
+            foreach (var x in xValues)
+            {
+                if (!x.IsRealNumber) continue;
+                var localX = x.Real;
+                var localYSquared = c1.RadiusSquared - localX * localX;
+
+                // A slightly negative radicand can be roundoff from a root lying at
+                // the left or right tangent point. Reject only materially negative
+                // values and clamp the numerical residue to zero.
+                if (localYSquared < -conicTolerance) continue;
+                var localY = Math.Sqrt(Math.Max(0.0, localYSquared));
+
+                var point = new Vector2(centerX + localX, centerY + localY);
+                if (CalculateAtPoint(point).IsNegligible(conicTolerance))
+                    yield return point;
+
+                // At a horizontal tangent the two circle solutions coincide, so do
+                // not return the same intersection twice.
+                if (localY.IsNegligible(conicTolerance)) continue;
+                point = new Vector2(centerX + localX, centerY - localY);
+                if (CalculateAtPoint(point).IsNegligible(conicTolerance))
+                    yield return point;
+            }
+        }
     }
 }
