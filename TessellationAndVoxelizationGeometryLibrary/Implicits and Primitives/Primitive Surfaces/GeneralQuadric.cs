@@ -11,14 +11,12 @@
 // </copyright>
 // <summary></summary>
 // ***********************************************************************
-using Microsoft.Extensions.Options;
+using Newtonsoft.Json;
 using StarMathLib;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
-using System.Security.Principal;
-using System.Text.Json.Serialization;
 
 namespace TVGL
 {
