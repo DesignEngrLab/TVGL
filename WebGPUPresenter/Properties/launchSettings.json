@@ -1,0 +1,12 @@
+{
+  "profiles": {
+    "WebGPUPresenter": {
+      "commandName": "Project",
+      "launchBrowser": true,
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "applicationUrl": "https://localhost:64459;http://localhost:64460"
+    }
+  }
+}

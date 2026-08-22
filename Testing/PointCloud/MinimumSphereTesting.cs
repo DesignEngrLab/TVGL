@@ -1,5 +1,4 @@
 ﻿using BenchmarkDotNet.Attributes;
-using SharpDX.Direct2D1.Effects;
 using System;
 using System.Collections.Generic;
 using System.IO;

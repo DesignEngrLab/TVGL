@@ -6,13 +6,13 @@ using System.IO;
 using System.Linq;
 using TVGL;
 using TVGLUnitTestsAndBenchmarking.Misc_Tests;
-using WindowsDesktopPresenter;
+using WebGPUPresenter;
 
 namespace TVGLUnitTestsAndBenchmarking
 {
     internal class Program
     {
-        public static string inputFolder = "Input\\Drawings";
+        public static string inputFolder = "Input";
 
         static Random r = new Random();
         static double r1 => 2.0 * r.NextDouble() - 1.0;
@@ -25,49 +25,15 @@ namespace TVGLUnitTestsAndBenchmarking
             OutputServices.Presenter2D = new Presenter2D();
             OutputServices.Presenter3D = new Presenter3D();
             var dirInfo = IO.BackoutToFolder(inputFolder);
-            var files = dirInfo.GetFiles("svgnest25.*");
-            var filesToDelete = new List<FileInfo>();
-            var allPolys = new List<Polygon>();
-            foreach (var fileName in files.Skip(0))
+            var files = dirInfo.GetFiles("*");
+            foreach (var fileName in files.Skip(5))
             {
                 Console.WriteLine("Attempting to open: " + fileName.Name);
-                List<Polygon> polygons = null;
-                if (Path.GetExtension(fileName.FullName).ToLower() == ".dxf")
-                    polygons = PolygonImportExport.DXF.Open(fileName.FullName);
-                else if (Path.GetExtension(fileName.FullName).ToLower() == ".dwg")
-                    polygons = PolygonImportExport.DWG.Open(fileName.FullName);
-                else if (Path.GetExtension(fileName.FullName).ToLower() == ".svg")
-                    polygons = PolygonImportExport.SVG.Open(fileName.FullName);
-                if (polygons.Count > 1) ;
-                //allPolys.Add(polygons[0]);
-                //continue;
-                //if (polygons == null || polygons.Count == 0)
-                //{
-                //    filesToDelete.Add(fileName);
-                //    continue;
-                //}
-                //Presenter.ShowAndHang(polygons.LargestPolygon());
-                var dfd = 1;
-                foreach (var p in polygons.SelectMany(p => p.AllPolygons))
-                {
-                    var newFileName = Path.GetDirectoryName(fileName.FullName) +
-                            Path.DirectorySeparatorChar + Path.GetFileNameWithoutExtension(fileName.FullName) + (dfd++).ToString()
-                            + Path.GetExtension(fileName.FullName);
-                    if (Path.GetExtension(fileName.FullName).ToLower() == ".dxf")
-                        PolygonImportExport.DXF.Save(newFileName, [polygons.LargestPolygon()]);
-                    else if (Path.GetExtension(fileName.FullName).ToLower() == ".dwg")
-                        PolygonImportExport.DWG.Save(newFileName, [polygons.LargestPolygon()]);
-                    else if (Path.GetExtension(fileName.FullName).ToLower() == ".svg")
-                        PolygonImportExport.SVG.Save(newFileName, [p]);
-                }
+                var solids = IO.Open(fileName.FullName);
+                if (solids is TessellatedSolid ts)
+                    Presenter.ShowAndHang(ts);
 
-                var delaunay2D = polygons[0].TriangulateDelaunay(false, true, targetNumTriangles: 500);
-                Presenter.ShowAndHang(delaunay2D.Edges.Select(e => new List<Vector2> { new Vector2(e.From.X, e.From.Y), new Vector2(e.To.X, e.To.Y) }).Concat(polygons[0].AllPaths));
             }
-            Presenter.ShowAndHang(allPolys);
-
-            foreach (var file in filesToDelete)
-                Console.WriteLine(file.FullName);
         }
 
         private static void consolePrint(Polygon a)

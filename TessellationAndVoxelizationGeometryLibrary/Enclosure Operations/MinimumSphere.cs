@@ -34,9 +34,9 @@ namespace TVGL
                 RadiusSquared = radiusSquared;
             }
         }
+        const double sphereRadiusError = 1.0001;
         public static Sphere MinimumSphere(this IEnumerable<Vector3> pointsInput)
         {
-            //throw new NotImplementedException();
             var points = pointsInput.ToArray();
             var numPoints = points.Length;
             var maxNumStalledIterations = 16;
@@ -78,7 +78,7 @@ namespace TVGL
                     Array.Copy(points, 0, points, 1, indexOfMaxDist);
                     points[0] = maxPoint;
                     sphere = FindSphere(points);
-                    maxDistSqared = sphere.RadiusSquared;
+                    maxDistSqared = sphereRadiusError * sphere.RadiusSquared;
                     startIndex = 5;
                     lastIndex = indexOfMaxDist;
                 }
@@ -90,15 +90,15 @@ namespace TVGL
         {
             // 0,1 & check 2
             var sphere = Sphere.CreateFrom2Points(p0, p1);
-            if ((p2 - sphere.Center).Length() <= sphere.Radius)
+            if ((p2 - sphere.Center).Length() <= sphereRadiusError * sphere.Radius)
                 return sphere;
             // 0,2 & check 1 
             sphere = Sphere.CreateFrom2Points(p0, p2);
-            if ((p1 - sphere.Center).Length() <= sphere.Radius)
+            if ((p1 - sphere.Center).Length() <= sphereRadiusError * sphere.Radius)
                 return sphere;
             // 1,2 & check 0 
             sphere = Sphere.CreateFrom2Points(p1, p2);
-            if ((p0 - sphere.Center).Length() <= sphere.Radius)
+            if ((p0 - sphere.Center).Length() <= sphereRadiusError * sphere.Radius)
                 return sphere;
             return Sphere.CreateFrom3Points(p0, p1, p2);
         }
@@ -354,7 +354,7 @@ namespace TVGL
         }
 
         private static bool PointIsInSphere(Vector3 point, sphereLight s)
-            => (point - s.Center).LengthSquared() <= 1.0001 * s.RadiusSquared;
+            => (point - s.Center).LengthSquared() <= sphereRadiusError * s.RadiusSquared;
 
 
 

@@ -1,0 +1,11 @@
+@namespace WebGPUPresenter.Components
+
+<Router AppAssembly="typeof(App).Assembly">
+    <Found Context="routeData">
+        <RouteView RouteData="routeData" />
+    </Found>
+    <NotFound>
+        <PageTitle>Not found</PageTitle>
+        <p>There is nothing at this address.</p>
+    </NotFound>
+</Router>

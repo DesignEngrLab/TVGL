@@ -1,11 +1,7 @@
-﻿using BenchmarkDotNet.Attributes;
-using SharpDX.Direct2D1.Effects;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using TVGL;
-using TVGL.PointCloud;
 
 namespace TVGLUnitTestsAndBenchmarking
 {

@@ -1,0 +1,78 @@
+@using System.Numerics
+@using BugViewer
+@namespace WebGPUPresenter.Components
+
+<section class="scene-viewer">
+    <header class="scene-viewer-header">
+        <div>
+            <span class="scene-id">Viewer #@ViewerId</span>
+            @if (IsActive) { <span class="active-badge">Active</span> }
+            <h2>@Title</h2>
+            @if (!string.IsNullOrWhiteSpace(Heading)) { <p>@Heading</p> }
+            @if (!string.IsNullOrWhiteSpace(Subtitle)) { <p>@Subtitle</p> }
+        </div>
+        <button class="close-viewer" @onclick="CloseAsync">Close</button>
+    </header>
+    <BugViewer @ref="viewer" Height="600px" Width="100%" OnReady="OnViewerReadyAsync" />
+</section>
+
+@code {
+    [Parameter] public int ViewerId { get; set; }
+    [Parameter] public bool IsActive { get; set; }
+    [Parameter] public IReadOnlyList<SceneRequest> Scenes { get; set; } = [];
+    [Parameter] public EventCallback<int> OnClose { get; set; }
+    [Parameter] public EventCallback OnReady { get; set; }
+
+    private global::BugViewer.BugViewer? viewer;
+    private int appliedSceneCount;
+    private string Heading => Scenes.LastOrDefault()?.Heading ?? "";
+    private string Title => Scenes.LastOrDefault()?.Title ?? "TVGL 3D Presenter";
+    private string Subtitle => Scenes.LastOrDefault()?.Subtitle ?? "";
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (viewer is null || appliedSceneCount == Scenes.Count) return;
+        if (appliedSceneCount == 0 && Scenes.Count > 0)
+        {
+            await viewer.ClearAllMeshesAsync();
+            await viewer.ClearAllLinesAsync();
+        }
+        foreach (var scene in Scenes.Skip(appliedSceneCount))
+        {
+            await viewer.AddMeshesAsync(scene.Meshes.Select(ToMeshData));
+            foreach (var path in scene.Paths) await viewer.AddLinesAsync(ToLineData(path));
+        }
+        appliedSceneCount = Scenes.Count;
+    }
+
+    private async Task OnViewerReadyAsync()
+    {
+        await OnParametersSetAsync();
+        await OnReady.InvokeAsync();
+    }
+
+    private Task CloseAsync() => OnClose.InvokeAsync(ViewerId);
+
+    private static MeshData ToMeshData(SceneMesh mesh) => new()
+    {
+        Id = mesh.Id,
+        Vertices = mesh.Vertices.Select(v => new Vector3(v[0], v[1], v[2])).ToList(),
+        Indices = mesh.Triangles.Select(t => (t[0], t[1], t[2])).ToList(),
+        Colors = mesh.Colors.Select(c => new ColorRgba(c.R, c.G, c.B, c.A)).ToList(),
+        ColorMode = mesh.HasUniformColor ? MeshColoring.UniformColor : MeshColoring.PerTriangle
+    };
+
+    private static LineData ToLineData(ScenePath path)
+    {
+        var segmentCount = Math.Max(0, path.Vertices.Count - 1);
+        var color = new ColorRgba(path.Color.R, path.Color.G, path.Color.B, path.Color.A);
+        return new LineData
+        {
+            Id = path.Id,
+            Vertices = path.Vertices.Select(v => new Vector3(v[0], v[1], v[2])).ToList(),
+            Thicknesses = Enumerable.Repeat(path.Thickness, segmentCount).ToList(),
+            Colors = Enumerable.Repeat(color, segmentCount).ToList(),
+            FadeFactors = Enumerable.Repeat(0.0, segmentCount).ToList()
+        };
+    }
+}

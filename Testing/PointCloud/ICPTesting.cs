@@ -6,7 +6,6 @@ using System.IO;
 using System.Linq;
 using TVGL;
 using TVGL.PointCloud;
-using WindowsDesktopPresenter;
 
 namespace TVGLUnitTestsAndBenchmarking
 {

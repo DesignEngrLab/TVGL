@@ -1,0 +1,91 @@
+@page "/"
+@implements IDisposable
+@inject LocalPresenterHost Host
+
+<PageTitle>TVGL 3D Presenter</PageTitle>
+<main class="presenter-page">
+    @foreach (var scene in viewerStack)
+    {
+        <SceneViewer @key="scene.Id" ViewerId="scene.Id" IsActive="scene.Id == activeViewerId" Scenes="scene.Scenes" OnClose="CloseViewerAsync" OnReady="ViewerReadyAsync" />
+    }
+</main>
+<footer class="presenter-controls">
+    <label><input type="radio" checked="@(nextScenePolicy == ScenePolicy.Clear)" @onchange="@(() => nextScenePolicy = ScenePolicy.Clear)" /> Clear</label>
+    <label><input type="radio" checked="@(nextScenePolicy == ScenePolicy.Save)" @onchange="@(() => nextScenePolicy = ScenePolicy.Save)" /> Save Scene</label>
+    <label><input type="radio" checked="@(nextScenePolicy == ScenePolicy.Hold)" @onchange="@(() => nextScenePolicy = ScenePolicy.Hold)" /> Hold</label>
+    <button @onclick="ContinueAsync">Continue</button>
+</footer>
+
+@code {
+    private readonly List<ViewerScene> viewerStack = [new(1)];
+    private ScenePolicy nextScenePolicy = ScenePolicy.Clear;
+    private int activeViewerId = 1;
+    private int nextViewerId = 2;
+    private bool viewerReady;
+
+    protected override void OnInitialized()
+    {
+        Host.SceneRequested += ReceiveSceneAsync;
+    }
+
+    private async Task ViewerReadyAsync()
+    {
+        if (!viewerReady)
+        {
+            viewerReady = true;
+            await Host.Ready();
+        }
+    }
+
+    private async Task ReceiveSceneAsync(SceneRequest request)
+    {
+        await InvokeAsync(() =>
+        {
+            var active = viewerStack.LastOrDefault(v => v.Id == activeViewerId);
+            if (nextScenePolicy == ScenePolicy.Save || active is null)
+            {
+                active = new ViewerScene(nextViewerId++);
+                viewerStack.Add(active);
+                activeViewerId = active.Id;
+            }
+            else if (nextScenePolicy == ScenePolicy.Clear) active.Scenes.Clear();
+            active.Scenes.Add(request);
+            StateHasChanged();
+        });
+    }
+
+    private async Task ContinueAsync()
+    {
+        // Clear means discard the active BugViewer as well as releasing the TVGL call,
+        // exactly like its Close button. The next scene will therefore create a new viewer.
+        if (nextScenePolicy == ScenePolicy.Clear)
+        {
+            var active = viewerStack.LastOrDefault(v => v.Id == activeViewerId);
+            if (active is not null)
+            {
+                viewerStack.Remove(active);
+                activeViewerId = viewerStack.LastOrDefault()?.Id ?? 0;
+            }
+        }
+
+        await Host.Release();
+    }
+
+    private async Task CloseViewerAsync(int viewerId)
+    {
+        viewerStack.RemoveAll(v => v.Id == viewerId);
+        if (viewerId == activeViewerId)
+        {
+            activeViewerId = viewerStack.LastOrDefault()?.Id ?? 0;
+            await Host.Release();
+        }
+    }
+
+    public void Dispose()
+    {
+        Host.SceneRequested -= ReceiveSceneAsync;
+        Host.BrowserDisconnected();
+    }
+    private sealed class ViewerScene(int id) { public int Id { get; } = id; public List<SceneRequest> Scenes { get; } = []; }
+    private enum ScenePolicy { Clear, Save, Hold }
+}
