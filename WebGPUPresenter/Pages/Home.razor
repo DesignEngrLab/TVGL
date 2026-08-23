@@ -19,9 +19,9 @@
     }
 </main>
 <footer class="presenter-controls">
-    <label><input type="radio" checked="@(nextScenePolicy == ScenePolicy.Clear)" @onchange="@(() => nextScenePolicy = ScenePolicy.Clear)" /> Clear</label>
-    <label><input type="radio" checked="@(nextScenePolicy == ScenePolicy.Save)" @onchange="@(() => nextScenePolicy = ScenePolicy.Save)" /> Save Scene</label>
-    <label><input type="radio" checked="@(nextScenePolicy == ScenePolicy.Hold)" @onchange="@(() => nextScenePolicy = ScenePolicy.Hold)" /> Hold</label>
+    <label><input type="radio" checked="@(nextScenePolicy == ScenePolicy.Clear)" @onchange="@(() => nextScenePolicy = ScenePolicy.Clear)" /> Clear (C)</label>
+    <label><input type="radio" checked="@(nextScenePolicy == ScenePolicy.Save)" @onchange="@(() => nextScenePolicy = ScenePolicy.Save)" /> Save Scene (S)</label>
+    <label><input type="radio" checked="@(nextScenePolicy == ScenePolicy.Hold)" @onchange="@(() => nextScenePolicy = ScenePolicy.Hold)" /> Hold (H)</label>
     <button @onclick="ContinueAsync">Continue</button>
 </footer>
 
@@ -33,6 +33,7 @@
     private bool viewerReady;
     private bool scrollToNewestViewer;
     private PresentationPageInterop? pageInterop;
+    private DotNetObjectReference<Home>? keyboardReference;
 
     protected override void OnInitialized()
     {
@@ -81,11 +82,30 @@
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         pageInterop ??= new PresentationPageInterop(JS);
+        if (firstRender)
+        {
+            keyboardReference = DotNetObjectReference.Create(this);
+            await pageInterop.RegisterKeyboardShortcutsAsync(keyboardReference);
+        }
+
         if (!scrollToNewestViewer)
             return;
 
         scrollToNewestViewer = false;
         await pageInterop.ScrollToNewestViewerAsync();
+    }
+
+    [JSInvokable]
+    public async Task ContinueWithPolicy(string policy)
+    {
+        if (!Enum.TryParse<ScenePolicy>(policy, ignoreCase: true, out var selectedPolicy))
+            return;
+
+        await InvokeAsync(async () =>
+        {
+            nextScenePolicy = selectedPolicy;
+            await ContinueAsync();
+        });
     }
 
     private async Task ContinueAsync()
@@ -121,6 +141,7 @@
         Host.BrowserDisconnected();
         if (pageInterop is not null)
             await pageInterop.DisposeAsync();
+        keyboardReference?.Dispose();
     }
     private sealed class ViewerScene(int id, PresentationKind kind = PresentationKind.ThreeDimensional, int persistentId = -1)
     {

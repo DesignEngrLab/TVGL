@@ -13,6 +13,21 @@ internal sealed class PresentationPageInterop(IJSRuntime js) : IAsyncDisposable
         await module.InvokeVoidAsync("scrollToNewestViewer");
     }
 
+    public async ValueTask RegisterKeyboardShortcutsAsync(object dotNetReference)
+    {
+        var module = await _module.Value;
+        await module.InvokeVoidAsync("registerKeyboardShortcuts", dotNetReference);
+    }
+
+    public async ValueTask UnregisterKeyboardShortcutsAsync()
+    {
+        if (!_module.IsValueCreated)
+            return;
+
+        var module = await _module.Value;
+        await module.InvokeVoidAsync("unregisterKeyboardShortcuts");
+    }
+
     public async ValueTask DisposeAsync()
     {
         if (!_module.IsValueCreated)
@@ -21,6 +36,7 @@ internal sealed class PresentationPageInterop(IJSRuntime js) : IAsyncDisposable
         try
         {
             var module = await _module.Value;
+            await module.InvokeVoidAsync("unregisterKeyboardShortcuts");
             await module.DisposeAsync();
         }
         catch (JSDisconnectedException)
