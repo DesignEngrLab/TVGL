@@ -12,7 +12,7 @@ namespace TVGLUnitTestsAndBenchmarking
 {
     internal class Program
     {
-        public static string inputFolder = "Input";
+        public static string inputFolder = "TestFiles";
 
         static Random r = new Random();
         static double r1 => 2.0 * r.NextDouble() - 1.0;
@@ -26,13 +26,14 @@ namespace TVGLUnitTestsAndBenchmarking
             OutputServices.Presenter3D = new Presenter3D();
             var dirInfo = IO.BackoutToFolder(inputFolder);
             var files = dirInfo.GetFiles("*");
-            foreach (var fileName in files.Skip(5))
+            foreach (var fileName in files.Skip(1))
             {
                 Console.WriteLine("Attempting to open: " + fileName.Name);
                 var solids = IO.Open(fileName.FullName);
-                if (solids is TessellatedSolid ts)
-                    Presenter.ShowAndHang(ts);
-
+                if (solids is not TessellatedSolid ts)
+                    continue;
+                Presenter.ShowAndHang(ts);
+                Presenter.ShowAndHang(GetRandomPolygonThroughSolids(ts));
             }
         }
 
@@ -44,31 +45,13 @@ namespace TVGLUnitTestsAndBenchmarking
             }
         }
 
-        public static IEnumerable<List<Polygon>> GetRandomPolygonThroughSolids(DirectoryInfo dir)
+        public static List<Polygon> GetRandomPolygonThroughSolids(TessellatedSolid solid)
         {
-            var index = 0;
-            var valid3DFileExtensions = new HashSet<string> { ".stl", ".ply", ".obj", ".3mf", ".tvglz" };
-            var allFiles = dir.GetFiles("*", SearchOption.AllDirectories)
-                .Where(f => valid3DFileExtensions.Contains(f.Extension.ToLower()))
-                .OrderBy(x => Guid.NewGuid());
-            foreach (var fileName in allFiles.Skip(index))
-            {
-                Console.Write(index + ": Attempting to open: " + fileName.Name);
-                TessellatedSolid[] solids = null;
-                var sw = Stopwatch.StartNew();
-
-                //IO.Open(fileName.FullName, out  solids, TessellatedSolidBuildOptions.Minimal);
-                IO.Open(fileName.FullName, out solids);
-                if (solids.Length == 0) continue;
-                var solid = solids.MaxBy(s => s.Volume);
-                var normal = (new Vector3(r1, r1, r1)).Normalize();
-                var distanceAlong = solid.Vertices.GetLengthAndExtremeVertex(normal, out var loVertex, out _);
-                var planeDistance = distanceAlong * r.NextDouble();
-                var plane = new Plane(planeDistance, normal);
-                var polygons = solid.GetCrossSection(plane, out _);
-                if (polygons.Count > 0) yield return polygons;
-                index++;
-            }
+            var normal = (new Vector3(r1, r1, r1)).Normalize();
+            var distanceAlong = solid.Vertices.GetLengthAndExtremeVertex(normal, out var loVertex, out _);
+            var planeDistance = distanceAlong * r.NextDouble();
+            var plane = new Plane(planeDistance, normal);
+            return solid.GetCrossSection(plane, out _);
         }
 
         public static void DebugOffsetCases(DirectoryInfo dir)

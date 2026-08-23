@@ -13,6 +13,7 @@ body { margin: 0; background: #f4f4f8; }
 .close-viewer { padding: .35rem .6rem; }
 .presenter-controls { position: fixed; bottom: 0; left: 0; right: 0; display: flex; gap: 1rem; align-items: center; padding: .75rem 1rem; background: #20242d; color: white; box-shadow: 0 -2px 8px #0004; }
 .presenter-controls button { padding: .35rem .8rem; font-weight: 600; }
+.plot-viewer { width: 100%; height: auto; aspect-ratio: 1 / 1; max-height: 600px; }.step-controls { display: flex; gap: .5rem; align-items: center; margin: .5rem 0; }.step-controls input { flex: 1; }
 
 h1:focus {
     outline: none;

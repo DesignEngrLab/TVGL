@@ -61,7 +61,8 @@ namespace TVGL
         public static void ShowAndHang(IEnumerable<Vector2> points, string title = "", Plot2DType plot2DType = Plot2DType.Line, bool closeShape = true, MarkerType marker = MarkerType.Circle)
         => OutputServices.Presenter2D.ShowAndHang(points, title, plot2DType, closeShape, marker);
         /// <summary>Displays multiple two-dimensional point collections.</summary>
-        public static void ShowAndHang(IEnumerable<IEnumerable<Vector2>> pointsList, string title = "", Plot2DType plot2DType = Plot2DType.Line, bool closeShape = true, MarkerType marker = MarkerType.Circle)
+        public static void ShowAndHang(IEnumerable<IEnumerable<Vector2>> pointsList, string title = "", 
+            Plot2DType plot2DType = Plot2DType.Line, bool closeShape = true, MarkerType marker = MarkerType.Circle)
        => OutputServices.Presenter2D.ShowAndHang(pointsList, title, plot2DType, closeShape, marker);
         /// <summary>Displays grouped two-dimensional point collections.</summary>
         public static void ShowAndHang(IEnumerable<IEnumerable<IEnumerable<Vector2>>> pointsLists, string title = "", Plot2DType plot2DType = Plot2DType.Line, bool closeShape = true, MarkerType marker = MarkerType.Circle)

@@ -1,0 +1,51 @@
+@namespace WebGPUPresenter.Components
+@implements IAsyncDisposable
+@inject IJSRuntime JS
+
+<section class="scene-viewer">
+    <header class="scene-viewer-header">
+        <div>
+            <span class="scene-id">Viewer #@ViewerId</span>
+            @if (IsActive) { <span class="active-badge">Active</span> }
+            <h2>@Title</h2>
+            @if (!string.IsNullOrWhiteSpace(Heading)) { <p>@Heading</p> }
+        </div>
+        <button class="close-viewer" @onclick="CloseAsync">Close</button>
+    </header>
+    @if (StepCount > 1)
+    {
+        <div class="step-controls"><button @onclick="PreviousStep">Prev</button><input type="range" min="0" max="@(StepCount - 1)" @bind="step" @bind:after="RenderCurrentAsync" /><span>@(step + 1) / @StepCount</span><button @onclick="NextStep">Next</button></div>
+    }
+    <div class="plot-viewer" @ref="plotElement"></div>
+</section>
+
+@code {
+    [Parameter] public int ViewerId { get; set; }
+    [Parameter] public bool IsActive { get; set; }
+    [Parameter] public IReadOnlyList<SceneRequest> Scenes { get; set; } = [];
+    [Parameter] public EventCallback<int> OnClose { get; set; }
+    [Parameter] public EventCallback OnReady { get; set; }
+    private ElementReference plotElement;
+    private PlotlyInterop? plotly;
+    private bool dataChanged = true;
+    private int step;
+    private SceneRequest Current => Scenes.LastOrDefault() is { Steps.Count: > 0 } stepped ? stepped.Steps[Math.Clamp(step, 0, stepped.Steps.Count - 1)] : Scenes.LastOrDefault() ?? new SceneRequest { RequestId = Guid.Empty, Kind = PresentationKind.TwoDimensional };
+    private int StepCount => Scenes.LastOrDefault()?.Steps.Count ?? 0;
+    private string Title => Current.Title.Length == 0 ? "TVGL 2D Presenter" : Current.Title;
+    private string Heading => Current.Heading;
+    protected override void OnParametersSet() { dataChanged = true; if (step >= StepCount) step = Math.Max(0, StepCount - 1); }
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender) { plotly = new PlotlyInterop(JS); await OnReady.InvokeAsync(); }
+        if (dataChanged) await RenderCurrentAsync();
+    }
+    private async Task RenderCurrentAsync()
+    {
+        dataChanged = false;
+        if (plotly is not null && Current.Plot is not null) await plotly.RenderAsync(plotElement, Current.Plot, Title);
+    }
+    private async Task PreviousStep() { step = Math.Max(0, step - 1); await RenderCurrentAsync(); }
+    private async Task NextStep() { step = Math.Min(StepCount - 1, step + 1); await RenderCurrentAsync(); }
+    private Task CloseAsync() => OnClose.InvokeAsync(ViewerId);
+    public async ValueTask DisposeAsync() { if (plotly is not null) await plotly.DisposeAsync(); }
+}

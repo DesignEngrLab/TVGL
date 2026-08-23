@@ -41,6 +41,7 @@
         {
             await viewer.AddMeshesAsync(scene.Meshes.Select(ToMeshData));
             foreach (var path in scene.Paths) await viewer.AddLinesAsync(ToLineData(path));
+            foreach (var points in scene.PointSets) await viewer.AddLinesAsync(ToPointGlyphs(points));
         }
         appliedSceneCount = Scenes.Count;
     }
@@ -74,5 +75,22 @@
             Colors = Enumerable.Repeat(color, segmentCount).ToList(),
             FadeFactors = Enumerable.Repeat(0.0, segmentCount).ToList()
         };
+    }
+
+    // BugViewer currently exposes meshes and lines. Three crossed line segments provide a compact,
+    // camera-readable diagnostic point glyph until its WebGPU point primitive is available.
+    private static LineData ToPointGlyphs(ScenePointSet points)
+    {
+        var d = (float)Math.Max(.001, points.Radius) * .5f;
+        var vertices = new List<Vector3>();
+        foreach (var p in points.Points)
+        {
+            vertices.Add(new Vector3(p[0] - d, p[1], p[2])); vertices.Add(new Vector3(p[0] + d, p[1], p[2]));
+            vertices.Add(new Vector3(p[0], p[1] - d, p[2])); vertices.Add(new Vector3(p[0], p[1] + d, p[2]));
+            vertices.Add(new Vector3(p[0], p[1], p[2] - d)); vertices.Add(new Vector3(p[0], p[1], p[2] + d));
+        }
+        var count = Math.Max(0, vertices.Count - 1);
+        var color = new ColorRgba(points.Color.R, points.Color.G, points.Color.B, points.Color.A);
+        return new LineData { Id = points.Id, Vertices = vertices, Thicknesses = Enumerable.Repeat(Math.Max(1.0, points.Radius), count).ToList(), Colors = Enumerable.Repeat(color, count).ToList(), FadeFactors = Enumerable.Repeat(0.0, count).ToList() };
     }
 }

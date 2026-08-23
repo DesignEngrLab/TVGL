@@ -1,12 +1,21 @@
 @page "/"
-@implements IDisposable
+@implements IAsyncDisposable
+@using TVGL
 @inject LocalPresenterHost Host
+@inject IJSRuntime JS
 
 <PageTitle>TVGL 3D Presenter</PageTitle>
 <main class="presenter-page">
     @foreach (var scene in viewerStack)
     {
-        <SceneViewer @key="scene.Id" ViewerId="scene.Id" IsActive="scene.Id == activeViewerId" Scenes="scene.Scenes" OnClose="CloseViewerAsync" OnReady="ViewerReadyAsync" />
+        @if (scene.Kind == PresentationKind.ThreeDimensional)
+        {
+            <SceneViewer @key="scene.Id" ViewerId="scene.Id" IsActive="scene.Id == activeViewerId" Scenes="scene.Scenes" OnClose="CloseViewerAsync" OnReady="ViewerReadyAsync" />
+        }
+        else
+        {
+            <PlotViewer @key="scene.Id" ViewerId="scene.Id" IsActive="scene.Id == activeViewerId" Scenes="scene.Scenes" OnClose="CloseViewerAsync" OnReady="ViewerReadyAsync" />
+        }
     }
 </main>
 <footer class="presenter-controls">
@@ -22,6 +31,8 @@
     private int activeViewerId = 1;
     private int nextViewerId = 2;
     private bool viewerReady;
+    private bool scrollToNewestViewer;
+    private PresentationPageInterop? pageInterop;
 
     protected override void OnInitialized()
     {
@@ -41,17 +52,40 @@
     {
         await InvokeAsync(() =>
         {
-            var active = viewerStack.LastOrDefault(v => v.Id == activeViewerId);
-            if (nextScenePolicy == ScenePolicy.Save || active is null)
+            ViewerScene? active;
+            if (!request.IsBlocking && request.PersistentId >= 0)
+                active = viewerStack.LastOrDefault(v => v.PersistentId == request.PersistentId && v.Kind == request.Kind);
+            else
+                active = viewerStack.LastOrDefault(v => v.Id == activeViewerId);
+            if (active is not null && active.Kind != request.Kind)
             {
-                active = new ViewerScene(nextViewerId++);
+                if (request.IsBlocking && nextScenePolicy == ScenePolicy.Clear)
+                    viewerStack.Remove(active);
+                active = null;
+            }
+            if (request.IsBlocking && (nextScenePolicy == ScenePolicy.Save || active is null) ||
+                !request.IsBlocking && active is null)
+            {
+                active = new ViewerScene(nextViewerId++, request.Kind, request.PersistentId);
                 viewerStack.Add(active);
                 activeViewerId = active.Id;
             }
-            else if (nextScenePolicy == ScenePolicy.Clear) active.Scenes.Clear();
+            else if ((request.IsBlocking && nextScenePolicy == ScenePolicy.Clear) ||
+                     (!request.IsBlocking && request.HoldType == HoldType.Immediate)) active.Scenes.Clear();
             active.Scenes.Add(request);
+            scrollToNewestViewer = true;
             StateHasChanged();
         });
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        pageInterop ??= new PresentationPageInterop(JS);
+        if (!scrollToNewestViewer)
+            return;
+
+        scrollToNewestViewer = false;
+        await pageInterop.ScrollToNewestViewerAsync();
     }
 
     private async Task ContinueAsync()
@@ -81,11 +115,19 @@
         }
     }
 
-    public void Dispose()
+    public async ValueTask DisposeAsync()
     {
         Host.SceneRequested -= ReceiveSceneAsync;
         Host.BrowserDisconnected();
+        if (pageInterop is not null)
+            await pageInterop.DisposeAsync();
     }
-    private sealed class ViewerScene(int id) { public int Id { get; } = id; public List<SceneRequest> Scenes { get; } = []; }
+    private sealed class ViewerScene(int id, PresentationKind kind = PresentationKind.ThreeDimensional, int persistentId = -1)
+    {
+        public int Id { get; } = id;
+        public PresentationKind Kind { get; } = kind;
+        public int PersistentId { get; } = persistentId;
+        public List<SceneRequest> Scenes { get; } = [];
+    }
     private enum ScenePolicy { Clear, Save, Hold }
 }

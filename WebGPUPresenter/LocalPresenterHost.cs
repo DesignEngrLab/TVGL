@@ -57,6 +57,12 @@ public sealed class LocalPresenterHost
         deliver(scene).GetAwaiter().GetResult();
         completion.Task.GetAwaiter().GetResult();
     }
+    public void Publish(SceneRequest scene)
+    {
+        WaitReady();
+        var deliver = SceneRequested ?? throw new InvalidOperationException("The browser presenter is not connected.");
+        deliver(scene).GetAwaiter().GetResult();
+    }
     internal Task Ready()
     {
         SceneRequest? replay;
