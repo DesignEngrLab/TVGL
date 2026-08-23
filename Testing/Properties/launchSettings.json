@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "Testing": {
+      "commandName": "Project",
+      "commandLineArgs": "presenters"
+    }
+  }
+}

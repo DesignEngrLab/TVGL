@@ -1367,6 +1367,8 @@ namespace TVGL
         {
             //Already defined. Probably didn't mean to call this again.
             //In case BordersDefined is incorrect due to writing/reading TVGLZ errors, just force rerun.
+            if (solid.Primitives is null)
+                return;
             if (solid.Primitives.First().Borders == null) forceRerun = true;
             if (!forceRerun && solid.BordersDefined) return;
 
@@ -1619,7 +1621,8 @@ namespace TVGL
         public static void CharacterizeBorders(TessellatedSolid solid, bool forceRerun = false)
         {
             //Already defined. Probably didn't mean to call this again.
-            if (!forceRerun && solid.BordersCharacterized) return;
+            if (!forceRerun && solid.BordersCharacterized || solid.Primitives is null) 
+                return;
 
             foreach (var primitive in solid.Primitives)
                 foreach (var border in primitive.Borders)

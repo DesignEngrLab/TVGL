@@ -1,11 +1,8 @@
-using BenchmarkDotNet.ConsoleArguments.ListBenchmarks;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using TVGL;
-using TVGLUnitTestsAndBenchmarking.Misc_Tests;
 using WebGPUPresenter;
 
 namespace TVGLUnitTestsAndBenchmarking
@@ -25,6 +22,9 @@ namespace TVGLUnitTestsAndBenchmarking
             OutputServices.Presenter2D = new Presenter2D();
             OutputServices.Presenter3D = new Presenter3D();
             var dirInfo = IO.BackoutToFolder(inputFolder);
+            if (RunPresenterOverrideTests(args, dirInfo))
+                return;
+
             var files = dirInfo.GetFiles("*");
             foreach (var fileName in files.Skip(1))
             {
@@ -34,6 +34,172 @@ namespace TVGLUnitTestsAndBenchmarking
                     continue;
                 Presenter.ShowAndHang(ts);
                 Presenter.ShowAndHang(GetRandomPolygonThroughSolids(ts));
+            }
+        }
+
+        /// <summary>
+        /// Runs the browser-presenter checks without changing the historical default
+        /// STL/cross-section loop. Use <c>presenter2d</c>, <c>presenter3d</c>, or
+        /// <c>presenters</c> as the first command-line argument.
+        /// </summary>
+        private static bool RunPresenterOverrideTests(string[] args, DirectoryInfo testFiles)
+        {
+            var mode = args.FirstOrDefault()?.Trim().ToLowerInvariant();
+            if (mode is not ("presenter2d" or "presenter3d" or "presenters"))
+                return false;
+
+            var sample = LoadPresenterSample(testFiles);
+            if (mode is "presenter2d" or "presenters")
+                TestPresenter2DOverrides(sample);
+            if (mode is "presenter3d" or "presenters")
+                TestPresenter3DOverrides(sample);
+            return true;
+        }
+
+        private static TessellatedSolid LoadPresenterSample(DirectoryInfo testFiles)
+        {
+            foreach (var file in testFiles.EnumerateFiles("*", SearchOption.TopDirectoryOnly)
+                         .Where(f => string.Equals(f.Extension, ".stl", StringComparison.OrdinalIgnoreCase)))
+            {
+                Console.WriteLine("Presenter sample: " + file.Name);
+                if (IO.Open(file.FullName) is TessellatedSolid solid)
+                    return solid;
+            }
+
+            throw new FileNotFoundException("No top-level STL file in the TestFiles directory could be opened as a TessellatedSolid.");
+        }
+
+        /// <summary>
+        /// Visual test coverage for every implemented interactive IPresenter2D overload.
+        /// Each ShowAndHang call requires Continue (or Close) in the browser.
+        /// </summary>
+        private static void TestPresenter2DOverrides(TessellatedSolid sample)
+        {
+            var presenter = OutputServices.Presenter2D;
+            var outer = new[] { new Vector2(-8, -5), new Vector2(8, -5), new Vector2(8, 5), new Vector2(-8, 5) };
+            var hole = new[] { new Vector2(-3, -2), new Vector2(-3, 2), new Vector2(3, 2), new Vector2(3, -2) };
+            var polygonWithHole = new Polygon([outer, hole]);
+            var triangle = new[] { new Vector2(-6, -4), new Vector2(0, 7), new Vector2(6, -4) };
+            var wave = Enumerable.Range(0, 41).Select(i => new Vector2(i - 20, 4 * Math.Sin(i * Math.PI / 10))).ToArray();
+            var scatter = Enumerable.Range(0, 17).Select(i => new Vector2(i - 8, ((i * i) % 11) - 5)).ToArray();
+            var matrices = new[] { MakeHeatmap(0), MakeHeatmap(0.7), MakeHeatmap(1.4) };
+
+            presenter.ShowAndHang(wave, "2D: one path / line / markers", Plot2DType.Line, false, MarkerType.Circle);
+            presenter.ShowAndHang(new[] { outer, triangle }, "2D: multiple paths / area", Plot2DType.Area, true, MarkerType.Diamond);
+            presenter.ShowAndHang(new[] { new[] { outer }, new[] { triangle, wave } }, "2D: stepped path groups", Plot2DType.Line, false, MarkerType.Plus);
+            presenter.ShowAndHang(polygonWithHole, "2D: polygon with a hole", Plot2DType.Line, MarkerType.Square);
+            presenter.ShowAndHang(new[] { polygonWithHole, new Polygon(triangle) }, "2D: polygon collection", Plot2DType.Line, MarkerType.None);
+            presenter.ShowAndHang(new[] { outer }, new[] { triangle }, "2D: paired path collections", Plot2DType.Scatter, true, MarkerType.Circle, MarkerType.Cross);
+            presenter.ShowAndHang(sample.Vertices.Take(40), Vector3.UnitZ, "2D: projected STL vertices", Plot2DType.Scatter, false, MarkerType.Star);
+            presenter.ShowAndHang(new[] { sample.Vertices.Take(20), sample.Vertices.Skip(20).Take(20) }, Vector3.UnitY,
+                "2D: projected STL vertex groups", Plot2DType.Line, false, MarkerType.Triangle);
+            presenter.ShowAndHang(matrices[0], "2D: matrix heatmap");
+
+            var grid = new Grid<double>();
+            grid.Initialize(-5, 5, -5, 5, pixelsPerRow: 18);
+            for (var x = 0; x < grid.XCount; x++)
+            for (var y = 0; y < grid.YCount; y++)
+                grid[x, y] = Math.Sin(x * 0.4) * Math.Cos(y * 0.35);
+            presenter.ShowAndHang(grid, value => value, normalizeValues: true);
+            presenter.ShowHeatmap(matrices[1], normalizeValues: true);
+            presenter.ShowStepsAndHang(matrices, "2D: stepped heatmaps");
+            presenter.ShowStepsAndHang(matrices, new[] { outer, triangle, scatter }, connectPointsInLine: true,
+                title: "2D: heatmaps with one overlay per step");
+            presenter.ShowStepsAndHang(matrices,
+                new[] { new[] { outer, scatter }, new[] { triangle }, new[] { outer, triangle } },
+                new[] { true, false }, "2D: heatmaps with mixed overlays");
+
+            // Persistent panels are non-blocking; inspect them while the final blocking
+            // panel is open. Immediate replaces ID 200, while AddToQueue uses ID 201.
+            presenter.Show(outer, "2D live panel: immediate", Plot2DType.Line, true, MarkerType.Circle, HoldType.Immediate, id: 200);
+            presenter.Show(triangle, "2D live panel: replacement", Plot2DType.Area, true, MarkerType.Diamond, HoldType.Immediate, id: 200);
+            presenter.Show(new[] { wave, scatter }, "2D live panel: queued", Plot2DType.Line, new[] { false, false }, MarkerType.Star,
+                HoldType.AddToQueue, timetoShow: 1200, id: 201);
+            presenter.ShowAndHang(scatter, "2D: inspect persistent live panels", Plot2DType.Scatter, false, MarkerType.Cross);
+
+            VerifyPngExportIsDeferred(presenter, polygonWithHole);
+        }
+
+        /// <summary>
+        /// Visual test coverage for each implemented IPresenter3D overload using an
+        /// actual TestFiles STL wherever a tessellated solid is required.
+        /// </summary>
+        private static void TestPresenter3DOverrides(TessellatedSolid sample)
+        {
+            var presenter = OutputServices.Presenter3D;
+            var shifted = (TessellatedSolid)sample.TransformToNewSolid(Matrix4x4.CreateTranslation(sample.XMax - sample.XMin, 0, 0));
+            shifted.SolidColor = new Color(KnownColors.CornflowerBlue);
+            var transparent = sample.Copy();
+            transparent.SolidColor = new Color(90, 255, 140, 30);
+            var vertices = sample.Vertices.Take(48).ToList();
+            var loop = new[]
+            {
+                new Vector3(sample.XMin, sample.YMin, sample.ZMin), new Vector3(sample.XMax, sample.YMin, sample.ZMin),
+                new Vector3(sample.XMax, sample.YMax, sample.ZMin), new Vector3(sample.XMin, sample.YMax, sample.ZMin)
+            };
+            var diagonal = new[]
+            {
+                new Vector3(sample.XMin, sample.YMin, sample.ZMin), new Vector3(sample.XMax, sample.YMax, sample.ZMax)
+            };
+
+            presenter.ShowAndHang(sample, "3D presenter contract", "one STL solid", "uniform/per-face color conversion");
+            presenter.ShowAndHang(new Solid[] { sample, shifted }, "3D presenter contract", "multiple STL solids", "separate mesh entries");
+            presenter.ShowAndHang(sample.Faces.Take(120), "3D presenter contract", "triangle-face subset", "faces overload");
+            presenter.ShowAndHang(loop, closePaths: true, lineThickness: 3, color: new Color(KnownColors.Orange), sample);
+            presenter.ShowAndHang(new[] { loop, diagonal }, new[] { true, false }, new[] { 2.0, 5.0 },
+                new[] { new Color(KnownColors.Red), new Color(KnownColors.Cyan) }, true, sample);
+            presenter.ShowAndHang(new[] { new[] { loop }, new[] { diagonal } }, new[] { true, false }, new[] { 2.0, 5.0 },
+                new[] { new Color(KnownColors.Green), new Color(KnownColors.Blue) }, sample);
+            presenter.ShowAndHang(new[] { loop }, new[] { true }, new[] { 4.0 }, new[] { new Color(KnownColors.Magenta) }, sample.Faces.Take(80));
+            presenter.ShowPointsAndHang(vertices.Select(v => v.Coordinates), radius: Math.Max(1, (sample.XMax - sample.XMin) / 100), color: new Color(KnownColors.Red));
+            presenter.ShowPointsAndHang(new[] { vertices.Take(24).Select(v => v.Coordinates), vertices.Skip(24).Select(v => v.Coordinates) },
+                radius: Math.Max(1, (sample.XMax - sample.XMin) / 140), colors: new[] { new Color(KnownColors.Yellow), new Color(KnownColors.Cyan) });
+            presenter.ShowAndHangTransparentsAndSolids(new[] { transparent }, new[] { shifted });
+            presenter.ShowGaussSphereWithIntensity(vertices.Take(16),
+                Enumerable.Range(0, 16).Select(i => new Color((byte)255, (byte)(i * 15), (byte)(255 - i * 15), (byte)80)).ToList(), sample);
+
+            presenter.Show(sample, "3D live panel: immediate", HoldType.Immediate, id: 300);
+            presenter.Show(shifted, "3D live panel: replacement", HoldType.Immediate, id: 300);
+            presenter.Show(new[] { loop, diagonal }, new[] { true, false }, new[] { 2.0, 5.0 },
+                new[] { new Color(KnownColors.Orange), new Color(KnownColors.Purple) }, "3D live panel: queued", HoldType.AddToQueue, 1200, 301, sample);
+
+            var pathSteps = new[] { new[] { loop, diagonal } };
+            var pathTransforms = new[] { new[] { Matrix4x4.Identity, Matrix4x4.CreateTranslation(0, 0, sample.ZMax - sample.ZMin) } };
+            var solidSteps = new[] { new Solid[] { sample, shifted } };
+            var solidTransforms = new[] { new[] { Matrix4x4.Identity, Matrix4x4.Null } };
+            presenter.ShowStepsAndHang(pathSteps, pathTransforms, solidSteps, solidTransforms,
+                new[] { true, false }, new[] { 2.0, 5.0 }, new[] { new Color(KnownColors.Green), new Color(KnownColors.Red) });
+
+            var faceSteps = new[] { new IEnumerable<TriangleFace>[] { sample.Faces.Take(60), sample.Faces.Skip(60).Take(60) } };
+            var faceTransforms = new[] { new[] { Matrix4x4.Identity, Matrix4x4.CreateTranslation(sample.XMax - sample.XMin, 0, 0) } };
+            presenter.ShowStepsAndHang(pathSteps, pathTransforms, faceSteps, faceTransforms,
+                new[] { true, false }, new[] { 2.0, 5.0 }, new[] { new Color(KnownColors.Blue), new Color(KnownColors.Orange) });
+        }
+
+        private static double[,] MakeHeatmap(double phase)
+        {
+            const int size = 25;
+            var values = new double[size, size];
+            for (var x = 0; x < size; x++)
+            for (var y = 0; y < size; y++)
+            {
+                var dx = x - (size - 1) / 2.0;
+                var dy = y - (size - 1) / 2.0;
+                values[x, y] = Math.Sin(Math.Sqrt(dx * dx + dy * dy) + phase);
+            }
+            return values;
+        }
+
+        private static void VerifyPngExportIsDeferred(IPresenter2D presenter, Polygon polygon)
+        {
+            try
+            {
+                presenter.SaveToPng(new[] { polygon }, "not-created.png", 100, 100);
+                throw new InvalidOperationException("The browser presenter unexpectedly implemented PNG export.");
+            }
+            catch (NotSupportedException)
+            {
+                Console.WriteLine("Presenter2D SaveToPng correctly reports that browser PNG export is deferred.");
             }
         }
 

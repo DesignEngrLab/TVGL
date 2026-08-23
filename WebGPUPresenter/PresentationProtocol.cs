@@ -50,7 +50,7 @@ public sealed class ScenePointSet
 public sealed class PlotRequest
 {
     public List<PlotTrace> Traces { get; init; } = [];
-    public double[,]? Heatmap { get; init; }
+    public double[][]? Heatmap { get; init; }
     public bool NormalizeHeatmap { get; init; }
 }
 

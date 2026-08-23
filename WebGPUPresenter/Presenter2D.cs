@@ -51,7 +51,7 @@ public sealed class Presenter2D : IPresenter2D
 
     private void Block(SceneRequest request) => host.Show(request);
     private void Publish(SceneRequest request) => host.Publish(request);
-    private static SceneRequest Heatmap(double[,] data, bool normalize, string title) => new() { RequestId = Guid.NewGuid(), Kind = PresentationKind.TwoDimensional, Title = title, Plot = new PlotRequest { Heatmap = Normalize(data, normalize), NormalizeHeatmap = normalize } };
+    private static SceneRequest Heatmap(double[,] data, bool normalize, string title) => new() { RequestId = Guid.NewGuid(), Kind = PresentationKind.TwoDimensional, Title = title, Plot = new PlotRequest { Heatmap = ToJagged(Normalize(data, normalize)), NormalizeHeatmap = normalize } };
     private static SceneRequest Plot(IEnumerable<IEnumerable<Vector2>> paths, string title, Plot2DType type,
         IEnumerable<bool> closed, IEnumerable<MarkerType> markers, bool blocking = true, int id = -1,
         HoldType hold = HoldType.Immediate, int time = -1)
@@ -91,8 +91,35 @@ public sealed class Presenter2D : IPresenter2D
     }
     private static SceneRequest Steps(ICollection<double[,]> data, IEnumerable<IEnumerable<IEnumerable<Vector2>>>? overlays, IEnumerable<bool>? closed, string title)
     {
-        var overlayList = overlays?.ToList(); var closedList = closed?.ToList() ?? [];
-        return new SceneRequest { RequestId = Guid.NewGuid(), Kind = PresentationKind.TwoDimensional, Title = title, Steps = data.Select((d, i) => new SceneRequest { RequestId = Guid.NewGuid(), Kind = PresentationKind.TwoDimensional, Title = title, Plot = new PlotRequest { Heatmap = d, Traces = overlayList is not null && i < overlayList.Count ? Plot(overlayList[i], title, Plot2DType.Line, closedList, Repeat(MarkerType.None)).Plot!.Traces : [] } }).ToList() };
+        var overlayList = overlays?.ToList();
+        var closedPaths = closed ?? Repeat(false);
+        return new SceneRequest {
+            RequestId = Guid.NewGuid(),
+            Kind = PresentationKind.TwoDimensional,
+            Title = title, 
+            Steps = data.Select((d, i) => new SceneRequest {
+                RequestId = Guid.NewGuid(), 
+                Kind = PresentationKind.TwoDimensional,
+                Title = title,
+                Plot = new PlotRequest {
+                    Heatmap = ToJagged(d),
+                    Traces = overlayList is not null && i < overlayList.Count 
+                    ? Plot(overlayList[i], title, Plot2DType.Line, closedPaths, Repeat(MarkerType.None)).Plot!.Traces : [] 
+                }
+            }).ToList() };
+    }
+    private static double[][] ToJagged(double[,] data)
+    {
+        var rows = data.GetLength(0);
+        var columns = data.GetLength(1);
+        var result = new double[rows][];
+        for (var row = 0; row < rows; row++)
+        {
+            result[row] = new double[columns];
+            for (var column = 0; column < columns; column++)
+                result[row][column] = data[row, column];
+        }
+        return result;
     }
     private static double[,] Normalize(double[,] values, bool enabled)
     {
