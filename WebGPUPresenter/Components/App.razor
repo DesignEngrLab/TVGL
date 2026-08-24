@@ -1,5 +1,6 @@
 @namespace WebGPUPresenter.Components
 @using Microsoft.AspNetCore.Components.Web
+@using Microsoft.FluentUI.AspNetCore.Components
 
 <!DOCTYPE html>
 <html lang="en">
@@ -8,11 +9,23 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <base href="/" />
     <link rel="stylesheet" href="css/app.css" />
+    <link rel="stylesheet" href="WebGPUPresenter.styles.css" />
     <script src="lib/plotly/plotly.min.js"></script>
     <HeadOutlet @rendermode="new InteractiveServerRenderMode(prerender: false)" />
 </head>
 <body>
     <Routes @rendermode="new InteractiveServerRenderMode(prerender: false)" />
-    <script src="_framework/blazor.web.js"></script>
+    @* WebGPUPresenter is a library hosted by Testing.exe, so Fluent UI's module is not
+       discovered through the executable's normal Blazor initializer manifest. Reproduce
+       its initializer lifecycle explicitly around Blazor startup. *@
+    <script src="_framework/blazor.web.js" autostart="false"></script>
+    <script type="module">
+        import { beforeWebStart, afterWebStarted } from
+            './_content/Microsoft.FluentUI.AspNetCore.Components/Microsoft.FluentUI.AspNetCore.Components.lib.module.js';
+
+        beforeWebStart(Blazor);
+        await Blazor.start();
+        afterWebStarted(Blazor);
+    </script>
 </body>
 </html>

@@ -20,6 +20,7 @@ public sealed class SceneRequest
     public List<ScenePointSet> PointSets { get; init; } = [];
     public PlotRequest? Plot { get; init; }
     public List<SceneRequest> Steps { get; init; } = [];
+    internal Action<(TriangleFace face, Vector3 point)>? OnSelection { get; init; }
 }
 
 public sealed class SceneMesh
@@ -29,7 +30,11 @@ public sealed class SceneMesh
     public List<int[]> Triangles { get; init; } = [];
     public List<Rgba32> Colors { get; init; } = [];
     public bool HasUniformColor { get; init; }
+    // This stays in-process only; vertices/indices are sent to BugViewer, while this preserves the reverse pick map.
+    internal IReadOnlyList<TriangleFace> SourceFaces { get; init; } = [];
 }
+
+public readonly record struct SceneTriangleSelection(Guid RequestId, string MeshId, int TriangleIndex, System.Numerics.Vector3 Point);
 
 public sealed class ScenePath
 {

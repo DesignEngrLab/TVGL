@@ -18,6 +18,14 @@ public sealed class Presenter3D : IPresenter3D
     public void ShowAndHang(Solid solid, string heading = "", string title = "", string subtitle = "")
         => ShowAndHang([solid], heading, title, subtitle);
 
+    public void ShowAndHang(Solid solid, Action<(TriangleFace face, Vector3 point)> onSelection, string heading = "", string title = "", string subtitle = "")
+    {
+        ArgumentNullException.ThrowIfNull(onSelection);
+        var scene = Scene(heading, title, subtitle, onSelection);
+        AddSolid(scene, solid);
+        host.Show(scene);
+    }
+
     public void ShowAndHang(IEnumerable<Solid> solids, string heading = "", string title = "", string subtitle = "")
     {
         var s = Scene(heading, title, subtitle);
@@ -244,13 +252,15 @@ public sealed class Presenter3D : IPresenter3D
         host.Show(request);
     }
 
-    private static SceneRequest Scene(string h = "", string t = "", string st = "")
+    private static SceneRequest Scene(string h = "", string t = "", string st = "",
+        Action<(TriangleFace face, Vector3 point)>? onSelection = null)
         => new()
         {
             RequestId = Guid.NewGuid(),
             Heading = h,
             Title = t,
-            Subtitle = st
+            Subtitle = st,
+            OnSelection = onSelection
         };
 
     private static void AddSolid(SceneRequest s, Solid x)
@@ -294,7 +304,8 @@ public sealed class Presenter3D : IPresenter3D
                 .Select(i => new[] { 3 * i, 3 * i + 1, 3 * i + 2 })
                 .ToList(),
             Colors = uniform ? [def] : f.Select(x => Rgba(x.Color)).ToList(),
-            HasUniformColor = uniform
+            HasUniformColor = uniform,
+            SourceFaces = f
         };
     }
 

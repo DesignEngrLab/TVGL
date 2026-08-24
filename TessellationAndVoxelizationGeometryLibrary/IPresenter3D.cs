@@ -15,6 +15,15 @@ namespace TVGL
         /// <param name="subtitle">The optional subtitle.</param>
         void ShowAndHang(Solid solid, string heading = "", string title = "", string subtitle = "");
 
+        /// <summary>
+        /// Displays a solid and invokes <paramref name="onSelection"/> for every viewer triangle selection.
+        /// </summary>
+        /// <remarks>
+        /// Backends that do not support interactive picking throw <see cref="NotSupportedException"/>.
+        /// </remarks>
+        void ShowAndHang(Solid solid, Action<(TriangleFace face, Vector3 point)> onSelection, string heading = "", string title = "", string subtitle = "")
+            => throw new NotSupportedException("This presenter does not support interactive triangle selection.");
+
         /// <summary>Displays multiple solids and waits until the presentation is closed.</summary>
         /// <param name="solids">The solids to render.</param>
         /// <param name="heading">The optional heading shown above the presentation.</param>

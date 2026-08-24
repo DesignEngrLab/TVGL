@@ -22,8 +22,8 @@ namespace TVGLUnitTestsAndBenchmarking
             OutputServices.Presenter2D = new Presenter2D();
             OutputServices.Presenter3D = new Presenter3D();
             var dirInfo = IO.BackoutToFolder(inputFolder);
-            if (RunPresenterOverrideTests(args, dirInfo))
-                return;
+            //if (RunPresenterOverrideTests(args, dirInfo))
+            //    return;
 
             var files = dirInfo.GetFiles("*");
             foreach (var fileName in files.Skip(1))
@@ -32,7 +32,15 @@ namespace TVGLUnitTestsAndBenchmarking
                 var solids = IO.Open(fileName.FullName);
                 if (solids is not TessellatedSolid ts)
                     continue;
-                Presenter.ShowAndHang(ts);
+                Presenter.ShowAndHang(ts, selection =>
+                {
+                    var (face, point) = selection;
+                    var primitive = face.BelongsToPrimitive;
+
+                    Console.WriteLine($"Face: {face}");
+                    Console.WriteLine($"Primitive: {primitive?.GetType().Name}");
+                    Console.WriteLine($"Hit point: {point}");
+                });
                 Presenter.ShowAndHang(GetRandomPolygonThroughSolids(ts));
             }
         }

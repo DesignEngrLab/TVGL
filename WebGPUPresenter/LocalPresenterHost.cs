@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.FluentUI.AspNetCore.Components;
+using TVGL;
 namespace WebGPUPresenter;
 
 /// <summary>Owns the loopback web server and synchronizes TVGL's blocking debugger calls with its one browser UI.</summary>
@@ -70,6 +71,21 @@ public sealed class LocalPresenterHost
         return replay is null || SceneRequested is null ? Task.CompletedTask : SceneRequested(replay);
     }
     internal Task Release() { lock (gate) { active = null; pending?.TrySetResult(true); pending = null; } return Task.CompletedTask; }
+    internal void Selected(SceneTriangleSelection selection)
+    {
+        Action<(TriangleFace face, Vector3 point)>? callback;
+        TriangleFace? face;
+        lock (gate)
+        {
+            if (active?.RequestId != selection.RequestId)
+                return;
+            callback = active.OnSelection;
+            face = active.Meshes.FirstOrDefault(m => m.Id == selection.MeshId)?
+                .SourceFaces.ElementAtOrDefault(selection.TriangleIndex);
+        }
+        if (callback is not null && face is not null)
+            callback((face, new Vector3(selection.Point.X, selection.Point.Y, selection.Point.Z)));
+    }
     internal void BrowserDisconnected() { lock (gate) ready = NewTcs(); LaunchBrowser(); }
     private void LaunchBrowser() { Console.WriteLine($"TVGL browser presenter: {Url}"); try { Process.Start(new ProcessStartInfo(Url) { UseShellExecute = true }); } catch { Console.WriteLine($"Open {Url} in a browser."); } }
     private static int FindPort() { if (int.TryParse(Environment.GetEnvironmentVariable("TVGL_PRESENTER_PORT"), out var p) && p > 0 && Free(p)) return p; using var l = new TcpListener(IPAddress.Loopback, 0); l.Start(); return ((IPEndPoint)l.LocalEndpoint).Port; }

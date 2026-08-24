@@ -32,6 +32,9 @@ namespace TVGL
         /// <summary>Displays a solid and waits until the presentation is closed.</summary>
         public static void ShowAndHang(Solid solid, string heading = "", string title = "", string subtitle = "")
         => OutputServices.Presenter3D.ShowAndHang(solid, heading, title, subtitle);
+        /// <summary>Displays a solid and reports each selected triangle to the supplied callback.</summary>
+        public static void ShowAndHang(Solid solid, Action<(TriangleFace face, Vector3 point)> onSelection, string heading = "", string title = "", string subtitle = "")
+        => OutputServices.Presenter3D.ShowAndHang(solid, onSelection, heading, title, subtitle);
         /// <summary>Displays multiple solids and waits until the presentation is closed.</summary>
         public static void ShowAndHang(IEnumerable<Solid> solids, string heading = "", string title = "", string subtitle = "")
         => OutputServices.Presenter3D.ShowAndHang(solids, heading, title, subtitle);

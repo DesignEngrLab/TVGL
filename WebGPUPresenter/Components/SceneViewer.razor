@@ -13,7 +13,7 @@
         </div>
         <button class="close-viewer" @onclick="CloseAsync">Close</button>
     </header>
-    <BugViewer @ref="viewer" Height="600px" Width="100%" OnReady="OnViewerReadyAsync" />
+    <BugViewer @ref="viewer" Height="600px" Width="100%" OnReady="OnViewerReadyAsync" OnTriangleSelected="TriangleSelectedAsync" />
 </section>
 
 @code {
@@ -22,6 +22,7 @@
     [Parameter] public IReadOnlyList<SceneRequest> Scenes { get; set; } = [];
     [Parameter] public EventCallback<int> OnClose { get; set; }
     [Parameter] public EventCallback OnReady { get; set; }
+    [Parameter] public EventCallback<SceneTriangleSelection> OnTriangleSelected { get; set; }
 
     private global::BugViewer.BugViewer? viewer;
     private int appliedSceneCount;
@@ -53,6 +54,18 @@
     }
 
     private Task CloseAsync() => OnClose.InvokeAsync(ViewerId);
+
+    private Task TriangleSelectedAsync()
+    {
+        if (viewer?.SelectedMeshName is not { Length: > 0 } meshId || viewer.SelectedTriangleInMeshIndex < 0)
+            return Task.CompletedTask;
+
+        var scene = Scenes.LastOrDefault(s => s.Meshes.Any(m => m.Id == meshId));
+        return scene is null
+            ? Task.CompletedTask
+            : OnTriangleSelected.InvokeAsync(new SceneTriangleSelection(scene.RequestId, meshId,
+                viewer.SelectedTriangleInMeshIndex, viewer.SelectedPoint));
+    }
 
     private static MeshData ToMeshData(SceneMesh mesh) => new()
     {

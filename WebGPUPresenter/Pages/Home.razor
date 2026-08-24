@@ -10,7 +10,7 @@
     {
         @if (scene.Kind == PresentationKind.ThreeDimensional)
         {
-            <SceneViewer @key="scene.Id" ViewerId="scene.Id" IsActive="scene.Id == activeViewerId" Scenes="scene.Scenes" OnClose="CloseViewerAsync" OnReady="ViewerReadyAsync" />
+            <SceneViewer @key="scene.Id" ViewerId="scene.Id" IsActive="scene.Id == activeViewerId" Scenes="scene.Scenes" OnClose="CloseViewerAsync" OnReady="ViewerReadyAsync" OnTriangleSelected="TriangleSelectedAsync" />
         }
         else
         {
@@ -123,6 +123,12 @@
         }
 
         await Host.Release();
+    }
+
+    private Task TriangleSelectedAsync(SceneTriangleSelection selection)
+    {
+        Host.Selected(selection);
+        return Task.CompletedTask;
     }
 
     private async Task CloseViewerAsync(int viewerId)

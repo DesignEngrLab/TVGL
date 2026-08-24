@@ -2,7 +2,7 @@
   "profiles": {
     "Testing": {
       "commandName": "Project",
-      "commandLineArgs": "presenters"
+      "commandLineArgs": "presenter3d"
     }
   }
 }
