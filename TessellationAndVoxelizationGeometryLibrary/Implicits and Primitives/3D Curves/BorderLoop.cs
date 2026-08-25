@@ -15,6 +15,7 @@ using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.Serialization;
 
 namespace TVGL
 {
@@ -32,11 +33,77 @@ namespace TVGL
             Segments = new List<BorderSegment>();
             SegmentDirections = new List<bool>();
         }
+
         /// <summary>
         /// The list of BorderSegments that make up this BorderLoop. Note that a
-        /// BorderLoop is unique to a primitive but the BorderSegments are defined between them.
+        /// BorderLoop is unique to a primitive but the BorderSegments are defined
+        /// between them, so the segments themselves are written once on the solid and
+        /// referenced here by <see cref="BorderSegment.IndexInSolid"/>.
         /// </summary>
+        [JsonIgnore]
         public List<BorderSegment> Segments { get; set; }
+
+        /// <summary>Indices into the solid's BorderSegments list, in loop order.</summary>
+        [JsonProperty]
+        public int[] SegmentIndices
+        {
+            get => Segments?.Select(segment => segment.IndexInSolid).ToArray();
+            set => deserializedSegmentIndices = value;
+        }
+        private int[] deserializedSegmentIndices;
+
+        /// <summary>Directions in which this loop traverses its segments.</summary>
+        [JsonProperty]
+        public string SegmentDirs
+        {
+            get => SegmentDirections == null
+                ? null
+                : string.Join(null, SegmentDirections.Select(direction => direction ? "1" : "0"));
+            set => deserializedSegmentDirs = value;
+        }
+        private string deserializedSegmentDirs;
+
+        /// <summary>
+        /// Rebinds the loop to the solid's segments and rebuilds its edge path by
+        /// replaying those segments. Called after the solid has read and restored its
+        /// own BorderSegments list, which is why this cannot live in the loop's own
+        /// CompletePostSerialization.
+        /// </summary>
+        public void RebindSegments(IList<BorderSegment> solidBorderSegments)
+        {
+            Segments = new List<BorderSegment>();
+            SegmentDirections = new List<bool>();
+            EdgeList.Clear();
+            DirectionList.Clear();
+            if (deserializedSegmentIndices == null) return;
+
+            for (var i = 0; i < deserializedSegmentIndices.Length; i++)
+            {
+                var index = deserializedSegmentIndices[i];
+                if (index >= 0 && index < solidBorderSegments.Count)
+                {
+                    var direction = deserializedSegmentDirs == null
+                        || i >= deserializedSegmentDirs.Length
+                        || deserializedSegmentDirs[i] == '1';
+                    AddEnd(solidBorderSegments[index], direction);
+                }
+            }
+        }
+
+        /// <summary>
+        /// A loop's edge path is the concatenation of its segments, so writing the
+        /// base EdgeIndices and Dirs would duplicate the segment payload.
+        /// </summary>
+        protected override void AddSerializationData(StreamingContext context)
+        {
+        }
+
+        /// <summary>
+        /// Loop edges are rebuilt after the solid-level segments have been restored.
+        /// </summary>
+        internal override void CompletePostSerialization(TessellatedSolid ts)
+        {
+        }
 
         /// <summary>
         /// Gets the edges and direction.
@@ -175,6 +242,7 @@ namespace TVGL
         /// Gets or sets the curve.
         /// </summary>
         /// <value>The curve.</value>
+        [JsonIgnore]
         public ICurve Curve { get; set; }
 
         /// <summary>

@@ -1480,8 +1480,10 @@ namespace TVGL
 
             //Set Owned/Other Connection to Primitive and set the curve details for the border segment.
             var errors = 0;
+            var i = 0;
             foreach (var segment in borderSegments)
             {
+                segment.IndexInSolid = i++;
                 var ownedFace = segment.DirectionList[0] ? segment.EdgeList[0].OwnedFace : segment.EdgeList[0].OtherFace;
                 var otherFace = segment.DirectionList[0] ? segment.EdgeList[0].OtherFace : segment.EdgeList[0].OwnedFace;
                 segment.OwnedPrimitive = ownedFace.BelongsToPrimitive;
