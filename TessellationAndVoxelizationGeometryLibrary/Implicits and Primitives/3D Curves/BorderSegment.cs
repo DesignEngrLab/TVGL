@@ -27,6 +27,53 @@ namespace TVGL
     {
         public int IndexInSolid { get; set; }//index in solid.BorderSegments - NOT primitive.BorderSegments
 
+        #region JSON Properties added to avoid serializing Curve and circular references.
+        /// <summary>
+        /// The segment vertices in path order. Unlike EdgeIndices, these indices
+        /// resolve directly against the VertexCoords stored in a TVGL file.
+        /// </summary>
+        [JsonProperty(ObjectCreationHandling = ObjectCreationHandling.Replace)]
+        public int[] VertexIndices
+        {
+            get => GetVertices().Select(vertex => vertex.IndexInList).ToArray();
+            set { }
+        }
+        [JsonProperty("Index")]
+        public int SerializedIndex
+        {
+            get => IndexInSolid;
+            set => IndexInSolid = value;
+        }
+        [JsonProperty]
+        public int OwnedPrimitiveIndex { get; set; } = -1;
+        [JsonProperty]
+        public int OtherPrimitiveIndex { get; set; } = -1;
+        [JsonProperty]
+        public string CurveType
+        {
+            get => IsStraight ? "Straight" : IsCircular ? "Circular" : "Complex";
+            set { }
+        }
+        [JsonProperty("Radius")]
+        public double? CircularRadius
+        {
+            get => IsCircular ? ((Circle)Curve).Radius : null;
+            set { }
+        }
+        [JsonProperty(ObjectCreationHandling = ObjectCreationHandling.Replace)]
+        public Vector3 CircleCenter3D
+        {
+            get => IsCircular && !CircleCenter.IsNull() ? CircleCenter : Vector3.Null;
+            set { }
+        }
+        [JsonProperty("Length")]
+        public double PathLength
+        {
+            get => Length;
+            set { }
+        }
+        #endregion
+
         /// <summary>
         /// Initializes a new instance of the <see cref="BorderSegment"/> class.
         /// </summary>
@@ -45,6 +92,7 @@ namespace TVGL
         /// Gets or sets the owned primitive.
         /// </summary>
         /// <value>The owned primitive.</value>
+        [JsonIgnore]
         public PrimitiveSurface OwnedPrimitive { get; set; }
 
         //Second primitive connected to this border segment. There is no logic to determine owned/other; it is arbitrary (currently).
@@ -52,6 +100,7 @@ namespace TVGL
         /// Gets or sets the other primitive.
         /// </summary>
         /// <value>The other primitive.</value>
+        [JsonIgnore]
         public PrimitiveSurface OtherPrimitive { get; set; }
 
         /// <summary>
@@ -78,6 +127,7 @@ namespace TVGL
         /// Gets or sets the curve.
         /// </summary>
         /// <value>The curve.</value>
+        [JsonIgnore]
         public ICurve Curve
         {
             get
@@ -87,6 +137,7 @@ namespace TVGL
             }
         }
 
+        [JsonIgnore]
         public double Radius
         {
             get

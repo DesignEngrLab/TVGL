@@ -291,6 +291,25 @@ namespace TVGL
             }
             writer.WriteEndArray();//]
 
+            List<BorderSegment> borderSegments = null;
+            if (BordersDefined)
+            {
+                borderSegments = GetBorderSegments().ToList();
+                var primitiveIndices = new Dictionary<PrimitiveSurface, int>();
+                for (var primitiveIndex = 0; primitiveIndex < Primitives.Count; primitiveIndex++)
+                    primitiveIndices[Primitives[primitiveIndex]] = primitiveIndex;
+
+                foreach (var segment in borderSegments)
+                {
+                    segment.OwnedPrimitiveIndex = segment.OwnedPrimitive != null
+                        && primitiveIndices.TryGetValue(segment.OwnedPrimitive, out var ownedIndex)
+                        ? ownedIndex : -1;
+                    segment.OtherPrimitiveIndex = segment.OtherPrimitive != null
+                        && primitiveIndices.TryGetValue(segment.OtherPrimitive, out var otherIndex)
+                        ? otherIndex : -1;
+                }
+            }
+
             var i = 0;
             writer.WritePropertyName("Primitives");
             //Write the primitives as one large object with sub-objects.
@@ -309,6 +328,15 @@ namespace TVGL
                 }
             }
             writer.WriteEndObject();//}
+
+            if (borderSegments != null)
+            {
+                writer.WritePropertyName("BorderSegments");
+                writer.WriteStartArray();
+                foreach (var segment in borderSegments)
+                    writer.WriteRawValue(JsonConvert.SerializeObject(segment, Formatting.None));
+                writer.WriteEndArray();
+            }
 
             if (HasUniformColor || Faces.All(f => f.Color == null || f.Color.Equals(Faces[0].Color)))
             {
@@ -358,6 +386,7 @@ namespace TVGL
             var ts = new TessellatedSolid();
             // todo: resolve this with OnDeserializedMethod. Are both needed?
             Color[] colors = null;
+            List<BorderSegment> deserializedBorderSegments = null;
             solidReferenceIndex = -1;
 
             var jsonSerializer = new Newtonsoft.Json.JsonSerializer();
@@ -476,6 +505,10 @@ namespace TVGL
                             break;
                         }
                         reader.Read();//end of large Primitives object },
+                        break;
+                    case "BorderSegments":
+                        reader.Read();
+                        deserializedBorderSegments = jsonSerializer.Deserialize<List<BorderSegment>>(reader);
                         break;
                     case "FaceIndices":
                         reader.Read();//start array [
@@ -622,8 +655,44 @@ namespace TVGL
                 }
             }
 
+            var restoredSerializedBorders = false;
+            if (deserializedBorderSegments != null && ts.Edges != null
+                && removedFaces.Count == 0 && removedEdges.Count == 0 && removedVertices.Count == 0)
+            {
+                for (var segmentIndex = 0; segmentIndex < deserializedBorderSegments.Count; segmentIndex++)
+                {
+                    var segment = deserializedBorderSegments[segmentIndex];
+                    segment.IndexInSolid = segmentIndex;
+                    segment.CompletePostSerialization(ts);
+                    segment.OwnedPrimitive = segment.OwnedPrimitiveIndex >= 0
+                        && segment.OwnedPrimitiveIndex < ts.Primitives.Count
+                        ? ts.Primitives[segment.OwnedPrimitiveIndex] : null;
+                    segment.OtherPrimitive = segment.OtherPrimitiveIndex >= 0
+                        && segment.OtherPrimitiveIndex < ts.Primitives.Count
+                        ? ts.Primitives[segment.OtherPrimitiveIndex] : null;
+                }
+
+                foreach (var primitive in ts.Primitives)
+                {
+                    if (primitive.Borders == null) continue;
+                    foreach (var border in primitive.Borders)
+                    {
+                        border.CompletePostSerialization(ts);
+                        border.RebindSegments(deserializedBorderSegments);
+                        border.OwnedPrimitive = primitive;
+                    }
+                    primitive.BorderSegments = primitive.Borders
+                        .SelectMany(border => border.Segments)
+                        .Distinct().ToList();
+                }
+                ts.BordersDefined = true;
+                ts.BordersCharacterized = true;
+                restoredSerializedBorders = true;
+            }
+
             //Lastly, define the border segments and border loops for each primitive.
-            if (tsBuildOptions.CheckModelIntegrity && tsBuildOptions.DefineAndCharacterizeBorders)
+            if (!restoredSerializedBorders && tsBuildOptions.CheckModelIntegrity
+                && tsBuildOptions.DefineAndCharacterizeBorders)
             {
                 TessellationInspectAndRepair.DefineBorders(ts);
                 TessellationInspectAndRepair.CharacterizeBorders(ts);

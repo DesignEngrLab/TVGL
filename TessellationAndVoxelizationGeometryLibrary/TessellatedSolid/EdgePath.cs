@@ -467,6 +467,17 @@ namespace TVGL
         protected void OnSerializingMethod(StreamingContext context)
         {
             serializationData = new Dictionary<string, JToken>();
+            AddSerializationData(context);
+        }
+
+        /// <summary>
+        /// Adds the serialized representation of this edge path. Subclasses can
+        /// omit redundant path data while retaining the non-virtual callback that
+        /// Newtonsoft requires.
+        /// </summary>
+        /// <param name="context">The serialization context.</param>
+        protected virtual void AddSerializationData(StreamingContext context)
+        {
             serializationData.Add("EdgeIndices", JToken.FromObject(EdgeList.Select(e => e.IndexInList)));
             serializationData.Add("Dirs", string.Join(null, DirectionList.Select(dir => dir ? "1" : "0")));
         }
@@ -475,7 +486,7 @@ namespace TVGL
         /// Completes the post serialization.
         /// </summary>
         /// <param name="ts">The ts.</param>
-        internal void CompletePostSerialization(TessellatedSolid ts)
+        internal virtual void CompletePostSerialization(TessellatedSolid ts)
         {
             foreach (var edgeIndex in serializationData["EdgeIndices"].ToObject<IEnumerable<int>>())
                 EdgeList.Add(ts.Edges[edgeIndex]);

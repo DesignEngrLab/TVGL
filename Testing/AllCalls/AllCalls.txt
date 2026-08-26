@@ -77,7 +77,8 @@
         public static double ProjectedInteriorAngleBetweenVerticesCCW(Vertex a, Vertex b, Vertex c, Vector3 positiveNormal)
         public static double ExteriorAngleBetweenEdgesInCCWList(Vector2 v0, Vector2 v1)
         public static double InteriorAngleBetweenEdgesInCCWList(Vector2 v0, Vector2 v1)
-        public static bool SegmentSegment2DIntersection(Vector2 p1, Vector2 p2, Vector2 q1, Vector2 q2,
+        public static bool 
+        Segment2DIntersection(Vector2 p1, Vector2 p2, Vector2 q1, Vector2 q2,
         public static bool SegmentLine2DIntersection(Vector2 p1, Vector2 p2, Vector2 qAnchor, Vector2 qDirection,
         public static Vector3 PointCommonToThreePlanes(Vector3 n1, double d1, Vector3 n2, double d2, Vector3 n3,
         public static Flat GetPlaneFromThreePoints(Vector3 p1, Vector3 p2, Vector3 p3)

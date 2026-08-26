@@ -604,10 +604,6 @@ namespace TVGL
             }
             _outerEdges = null;
             _innerEdges = null;
-            if (Borders != null)
-                foreach (var border in Borders)
-                    border.CompletePostSerialization(ts);
-
             //Set the original color if stored on the primitive. 
             if (OriginalColorString != null && OriginalColorString.Length > 0)
                 OriginalColor = new Color(OriginalColorString);
@@ -650,7 +646,8 @@ namespace TVGL
         /// many border segments in the border. 
         /// </summary>
         /// <value>The borders.</value>
-        [JsonIgnore]
+        /// Border loops contains border segments, so only allow serialization of one.
+        /// Extra guards in place already prevent circular references.
         public List<BorderLoop> Borders { get; set; }
 
         /// <summary>
