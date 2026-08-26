@@ -84,33 +84,6 @@ namespace TVGL
     /// </summary>
     public interface IPresenter2D
     {
-
-        /// <summary>Saves one or more polygons as a PNG image.</summary>
-        /// <param name="polygon">The polygons to render.</param>
-        /// <param name="fileName">The output file path.</param>
-        /// <param name="width">The image width in pixels.</param>
-        /// <param name="height">The image height in pixels.</param>
-        /// <param name="title">The optional plot title.</param>
-        /// <param name="markerType">The marker style used for polygon vertices.</param>
-        /// <param name="lineColor">The optional polygon line color.</param>
-        void SaveToPng(IEnumerable<Polygon> polygon, string fileName, int width, int height,
-           string title = "", MarkerType markerType = MarkerType.None, Color lineColor = null);
-
-        /// <summary>Saves polygons with explicit line, fill, and background colors as a PNG image.</summary>
-        /// <param name="polygons">The polygons to render.</param>
-        /// <param name="fileName">The output file path.</param>
-        /// <param name="width">The image width in pixels.</param>
-        /// <param name="height">The image height in pixels.</param>
-        /// <param name="lineColor">The polygon outline color.</param>
-        /// <param name="fillColor">The polygon fill color.</param>
-        /// <param name="backgroundColor">The image background color.</param>
-        /// <param name="outerBorder">An optional polygon to render as an outer border.</param>
-        /// <param name="title">The optional plot title.</param>
-        /// <param name="markerType">The marker style used for polygon vertices.</param>
-        public void SaveToPng(IEnumerable<Polygon> polygons, string fileName, int width, int height,
-            Color lineColor, Color fillColor, Color backgroundColor, Polygon outerBorder = null, 
-            string title = "", MarkerType markerType = MarkerType.None);
-
         /// <summary>
         /// Show the matrix of data as a 2D plot (heatmap)
         /// </summary>

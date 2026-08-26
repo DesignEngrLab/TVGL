@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using TVGL;
 using WebGPUPresenter;
+//using WindowsDesktopPresenter;
 
 namespace TVGLUnitTestsAndBenchmarking
 {
@@ -22,25 +23,15 @@ namespace TVGLUnitTestsAndBenchmarking
             OutputServices.Presenter2D = new Presenter2D();
             OutputServices.Presenter3D = new Presenter3D();
             var dirInfo = IO.BackoutToFolder(inputFolder);
-            //if (RunPresenterOverrideTests(args, dirInfo))
-            //    return;
 
-            var files = dirInfo.GetFiles("*");
+            var files = dirInfo.GetFiles("*.tvgl*");
             foreach (var fileName in files.Skip(1))
             {
                 Console.WriteLine("Attempting to open: " + fileName.Name);
                 var solids = IO.Open(fileName.FullName);
                 if (solids is not TessellatedSolid ts)
                     continue;
-                Presenter.ShowAndHang(ts, selection =>
-                {
-                    var (face, point) = selection;
-                    var primitive = face.BelongsToPrimitive;
-
-                    Console.WriteLine($"Face: {face}");
-                    Console.WriteLine($"Primitive: {primitive?.GetType().Name}");
-                    Console.WriteLine($"Hit point: {point}");
-                });
+                Presenter.ShowAndHang(ts);
                 Presenter.ShowAndHang(GetRandomPolygonThroughSolids(ts));
             }
         }
@@ -124,8 +115,6 @@ namespace TVGLUnitTestsAndBenchmarking
             presenter.Show(new[] { wave, scatter }, "2D live panel: queued", Plot2DType.Line, new[] { false, false }, MarkerType.Star,
                 HoldType.AddToQueue, timetoShow: 1200, id: 201);
             presenter.ShowAndHang(scatter, "2D: inspect persistent live panels", Plot2DType.Scatter, false, MarkerType.Cross);
-
-            VerifyPngExportIsDeferred(presenter, polygonWithHole);
         }
 
         /// <summary>
@@ -198,18 +187,6 @@ namespace TVGLUnitTestsAndBenchmarking
             return values;
         }
 
-        private static void VerifyPngExportIsDeferred(IPresenter2D presenter, Polygon polygon)
-        {
-            try
-            {
-                presenter.SaveToPng(new[] { polygon }, "not-created.png", 100, 100);
-                throw new InvalidOperationException("The browser presenter unexpectedly implemented PNG export.");
-            }
-            catch (NotSupportedException)
-            {
-                Console.WriteLine("Presenter2D SaveToPng correctly reports that browser PNG export is deferred.");
-            }
-        }
 
         private static void consolePrint(Polygon a)
         {
@@ -221,11 +198,15 @@ namespace TVGLUnitTestsAndBenchmarking
 
         public static List<Polygon> GetRandomPolygonThroughSolids(TessellatedSolid solid)
         {
-            var normal = (new Vector3(r1, r1, r1)).Normalize();
-            var distanceAlong = solid.Vertices.GetLengthAndExtremeVertex(normal, out var loVertex, out _);
-            var planeDistance = distanceAlong * r.NextDouble();
-            var plane = new Plane(planeDistance, normal);
-            return solid.GetCrossSection(plane, out _);
+            List<Polygon> polygons = null;
+            do
+            {
+                var normal = (new Vector3(r1, r1, r1)).Normalize();
+                var plane = new Plane(solid.Center.Dot(normal), normal);
+
+                polygons = solid.GetCrossSection(plane, out _);
+            } while (polygons == null);
+            return polygons;
         }
 
         public static void DebugOffsetCases(DirectoryInfo dir)

@@ -8,11 +8,6 @@ public sealed class Presenter2D : IPresenter2D
     private readonly LocalPresenterHost host;
     public Presenter2D() { host = Presenter3D.SharedHost; host.WaitReady(); }
 
-    public void SaveToPng(IEnumerable<Polygon> polygon, string fileName, int width, int height, string title = "", MarkerType markerType = MarkerType.None, Color lineColor = null)
-        => throw new NotSupportedException("PNG export is deferred for the browser presenter.");
-    public void SaveToPng(IEnumerable<Polygon> polygons, string fileName, int width, int height, Color lineColor, Color fillColor, Color backgroundColor, Polygon outerBorder = null, string title = "", MarkerType markerType = MarkerType.None)
-        => throw new NotSupportedException("PNG export is deferred for the browser presenter.");
-
     public void ShowAndHang(double[,] data, string title = "") => Block(Heatmap(data, false, title));
     public void ShowAndHang<T>(Grid<T> grid, Func<T, double> converter, bool normalizeValues = false)
     {

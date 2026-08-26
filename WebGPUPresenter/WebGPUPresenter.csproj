@@ -11,6 +11,7 @@
 	</ItemGroup>
 	<ItemGroup>
 		<PackageReference Include="Microsoft.FluentUI.AspNetCore.Components" Version="4.14.2" />
+		<PackageReference Include="Microsoft.FluentUI.AspNetCore.Components.Icons" Version="4.14.2" />
 	</ItemGroup>
 	<!-- This project is a library hosted by a console application. The Web SDK only adds Blazor's
 	     framework script automatically for executable projects, so embed that one required asset here. -->

@@ -21,7 +21,7 @@ export function registerKeyboardShortcuts(dotNetReference) {
             (target.isContentEditable || ["INPUT", "SELECT", "TEXTAREA"].includes(target.tagName)))
             return;
 
-        const policies = { c: "Clear", s: "Save", h: "Hold" };
+        const policies = { c: "Clear", n: "Save", h: "Hold" };
         const policy = policies[event.key.toLowerCase()];
         if (policy === undefined)
             return;

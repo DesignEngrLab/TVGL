@@ -20,7 +20,7 @@
 </main>
 <footer class="presenter-controls">
     <label><input type="radio" checked="@(nextScenePolicy == ScenePolicy.Clear)" @onchange="@(() => nextScenePolicy = ScenePolicy.Clear)" /> Clear (C)</label>
-    <label><input type="radio" checked="@(nextScenePolicy == ScenePolicy.Save)" @onchange="@(() => nextScenePolicy = ScenePolicy.Save)" /> Save Scene (S)</label>
+    <label><input type="radio" checked="@(nextScenePolicy == ScenePolicy.Save)" @onchange="@(() => nextScenePolicy = ScenePolicy.Save)" /> Save Scene (N)</label>
     <label><input type="radio" checked="@(nextScenePolicy == ScenePolicy.Hold)" @onchange="@(() => nextScenePolicy = ScenePolicy.Hold)" /> Hold (H)</label>
     <button @onclick="ContinueAsync">Continue</button>
 </footer>

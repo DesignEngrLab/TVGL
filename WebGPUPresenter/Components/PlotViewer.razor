@@ -1,16 +1,18 @@
 @namespace WebGPUPresenter.Components
+@using Microsoft.FluentUI.AspNetCore.Components
+@using Icons = Microsoft.FluentUI.AspNetCore.Components.Icons
 @implements IAsyncDisposable
 @inject IJSRuntime JS
 
 <section class="scene-viewer">
     <header class="scene-viewer-header">
         <div>
-            <span class="scene-id">Viewer #@ViewerId</span>
+            <span class="scene-id">#@ViewerId</span>
             @if (IsActive) { <span class="active-badge">Active</span> }
             <h2>@Title</h2>
             @if (!string.IsNullOrWhiteSpace(Heading)) { <p>@Heading</p> }
         </div>
-        <button class="close-viewer" @onclick="CloseAsync">Close</button>
+        <FluentButton Class="rotated-icon-button" @onclick="CloseAsync" IconStart="@(new Icons.Regular.Size20.Add())" />
     </header>
     @if (StepCount > 1)
     {
