@@ -1,3 +1,4 @@
+using BugViewer;
 using TVGL;
 using Color = TVGL.Color;
 
@@ -122,5 +123,5 @@ public sealed class Presenter2D : IPresenter2D
         for (var x = 0; x < values.GetLength(0); x++) for (var y = 0; y < values.GetLength(1); y++) result[x, y] = max == min ? 0 : (values[x, y] - min) / (max - min); return result;
     }
     private static IEnumerable<T> Repeat<T>(T value) { while (true) yield return value; }
-    private static Rgba32 ColorAt(int index) => new((byte)((index * 97 + 40) % 220), (byte)((index * 57 + 90) % 220), (byte)((index * 131 + 20) % 220));
+    private static ColorRgba ColorAt(int index) => new((byte)((index * 97 + 40) % 220), (byte)((index * 57 + 90) % 220), (byte)((index * 131 + 20) % 220));
 }

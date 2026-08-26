@@ -10,7 +10,7 @@ namespace TVGLUnitTestsAndBenchmarking
 {
     internal class Program
     {
-        public static string inputFolder = "TestFiles";
+        public static string inputFolder = "Input";
 
         static Random r = new Random();
         static double r1 => 2.0 * r.NextDouble() - 1.0;

@@ -1,3 +1,4 @@
+using BugViewer;
 using TVGL;
 
 namespace WebGPUPresenter;
@@ -28,7 +29,7 @@ public sealed class SceneMesh
     public required string Id { get; init; }
     public List<float[]> Vertices { get; init; } = [];
     public List<int[]> Triangles { get; init; } = [];
-    public List<Rgba32> Colors { get; init; } = [];
+    public List<ColorRgba> Colors { get; init; } = [];
     public bool HasUniformColor { get; init; }
     // This stays in-process only; vertices/indices are sent to BugViewer, while this preserves the reverse pick map.
     internal IReadOnlyList<TriangleFace> SourceFaces { get; init; } = [];
@@ -40,8 +41,8 @@ public sealed class ScenePath
 {
     public required string Id { get; init; }
     public List<float[]> Vertices { get; init; } = [];
-    public double Thickness { get; init; } = 1;
-    public Rgba32 Color { get; init; } = Rgba32.Black;
+    public double Thickness { get; init; } = -1;
+    public ColorRgba Color { get; init; } = ColorRgba.Black;
 }
 
 public sealed class ScenePointSet
@@ -49,7 +50,7 @@ public sealed class ScenePointSet
     public required string Id { get; init; }
     public List<float[]> Points { get; init; } = [];
     public double Radius { get; init; } = 1;
-    public Rgba32 Color { get; init; } = Rgba32.Red;
+    public ColorRgba Color { get; init; } = ColorRgba.Red;
 }
 
 public sealed class PlotRequest
@@ -67,12 +68,6 @@ public sealed class PlotTrace
     public Plot2DType Type { get; init; } = Plot2DType.Line;
     public bool Closed { get; init; }
     public MarkerType Marker { get; init; } = MarkerType.Circle;
-    public Rgba32 Color { get; init; } = Rgba32.Black;
+    public ColorRgba Color { get; init; } = ColorRgba.Black;
 }
 
-public readonly record struct Rgba32(byte R, byte G, byte B, byte A = byte.MaxValue)
-{
-    public static readonly Rgba32 Black = new(0, 0, 0);
-    public static readonly Rgba32 Red = new(220, 50, 47);
-    public static readonly Rgba32 LightGray = new(211, 211, 211);
-}

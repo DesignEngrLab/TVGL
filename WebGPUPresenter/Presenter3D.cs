@@ -1,3 +1,4 @@
+using BugViewer;
 using TVGL;
 using Color = TVGL.Color;
 
@@ -37,7 +38,7 @@ public sealed class Presenter3D : IPresenter3D
     public void ShowAndHang(IEnumerable<TriangleFace> faces, string heading = "", string title = "", string subtitle = "")
     {
         var s = Scene(heading, title, subtitle);
-        s.Meshes.Add(Mesh(faces, Rgba32.LightGray, false, "faces"));
+        s.Meshes.Add(Mesh(faces, ColorRgba.LightGray, false, "faces"));
         host.Show(s);
     }
 
@@ -92,7 +93,7 @@ public sealed class Presenter3D : IPresenter3D
         var s = Scene();
         Paths(s, paths, closePaths, lineThicknesses, colors);
         if (faces is not null)
-            s.Meshes.Add(Mesh(faces, Rgba32.LightGray, false, "faces"));
+            s.Meshes.Add(Mesh(faces, ColorRgba.LightGray, false, "faces"));
         host.Show(s);
     }
 
@@ -130,7 +131,7 @@ public sealed class Presenter3D : IPresenter3D
         {
             scene.Meshes.Add(Mesh(
                 solid.Faces,
-                Transparent(Rgba(solid.SolidColor)),
+                new ColorRgba(solid.SolidColor.R, solid.SolidColor.G, solid.SolidColor.B, 89),
                 solid.HasUniformColor,
                 "transparent"));
         }
@@ -242,7 +243,7 @@ public sealed class Presenter3D : IPresenter3D
                 {
                     step.Meshes.Add(Mesh(
                         group.ElementAt(index),
-                        Rgba32.LightGray,
+                        ColorRgba.LightGray,
                         false,
                         "step"));
                 }
@@ -267,7 +268,26 @@ public sealed class Presenter3D : IPresenter3D
     {
         if (x is TessellatedSolid ts)
         {
-            s.Meshes.Add(Mesh(ts.Faces, Rgba(ts.SolidColor), ts.HasUniformColor, "solid"));
+            var primitives = ts.Primitives?.Where(primitive => primitive.Faces?.Count > 0).ToList() ?? [];
+            if (primitives.Count == 0)
+            {
+                s.Meshes.Add(Mesh(ts.Faces,
+                    new ColorRgba(ts.SolidColor.R, ts.SolidColor.G, ts.SolidColor.B, ts.SolidColor.A),
+                    ts.HasUniformColor, "solid"));
+                return;
+            }
+
+            var primitiveFaces = primitives.SelectMany(primitive => primitive.Faces).ToHashSet();
+            foreach (var primitive in primitives)
+                s.Meshes.Add(Mesh(primitive.Faces,
+                    new ColorRgba(ts.SolidColor.R, ts.SolidColor.G, ts.SolidColor.B, ts.SolidColor.A),
+                    ts.HasUniformColor, "primitive"));
+
+            var unassignedFaces = ts.Faces.Where(face => !primitiveFaces.Contains(face)).ToList();
+            if (unassignedFaces.Count > 0)
+                s.Meshes.Add(Mesh(unassignedFaces,
+                    new ColorRgba(ts.SolidColor.R, ts.SolidColor.G, ts.SolidColor.B, ts.SolidColor.A),
+                    ts.HasUniformColor, "unclassified"));
         }
         else if (x is CrossSectionSolid cs)
         {
@@ -285,25 +305,28 @@ public sealed class Presenter3D : IPresenter3D
             {
                 Id = $"voxels-{Guid.NewGuid():N}",
                 Radius = Math.Max(1, vs.VoxelSideLength),
-                Color = Rgba(vs.SolidColor),
+                Color = new ColorRgba(vs.SolidColor.R, vs.SolidColor.G, vs.SolidColor.B, vs.SolidColor.A),
                 Points = points
             });
         }
     }
 
-    private static SceneMesh Mesh(IEnumerable<TriangleFace> faces, Rgba32 def, bool uniform, string prefix)
+    private static SceneMesh Mesh(IEnumerable<TriangleFace> faces, ColorRgba def, bool uniform, string prefix)
     {
         var f = faces.ToList();
+        var vertices = f.SelectMany(face => face.Vertices).Distinct().ToList();
+        var indicesByVertex = vertices.Select((vertex, index) => (vertex, index))
+            .ToDictionary(item => item.vertex, item => item.index);
         return new SceneMesh
         {
             Id = $"{prefix}-{Guid.NewGuid():N}",
-            Vertices = f.SelectMany(x => x.Vertices)
+            Vertices = vertices
                 .Select(v => new[] { (float)v.X, (float)v.Y, (float)v.Z })
                 .ToList(),
-            Triangles = Enumerable.Range(0, f.Count)
-                .Select(i => new[] { 3 * i, 3 * i + 1, 3 * i + 2 })
+            Triangles = f.Select(face => face.Vertices
+                .Select(vertex => indicesByVertex[vertex]).ToArray())
                 .ToList(),
-            Colors = uniform ? [def] : f.Select(x => Rgba(x.Color)).ToList(),
+            Colors = uniform ? [def] : f.Select(x => new ColorRgba(x.Color.R, x.Color.G, x.Color.B, x.Color.A)).ToList(),
             HasUniformColor = uniform,
             SourceFaces = f
         };
@@ -334,23 +357,21 @@ public sealed class Presenter3D : IPresenter3D
                 {
                     Id = $"path-{Guid.NewGuid():N}",
                     Vertices = v,
-                    Thickness = i < t.Count ? t[i] : 1,
-                    Color = i < co.Count ? Rgba(co[i]) : Rgba32.Black
+                    Thickness = i < t.Count ? t[i] : -1,
+                    Color = i < co.Count ? new ColorRgba(co[i].R, co[i].G, co[i].B, co[i].A)
+                    : ColorRgba.Black
                 });
             }
             i++;
         }
     }
 
-    private static Rgba32 Rgba(Color? c)
-        => c is null ? Rgba32.LightGray : new(c.R, c.G, c.B, c.A);
-
     private static ScenePointSet Points(IEnumerable<Vector3> points, double radius, Color color)
         => new()
         {
             Id = $"points-{Guid.NewGuid():N}",
-            Radius = radius <= 0 ? 1 : radius,
-            Color = Rgba(color),
+            Radius = radius <= 0 ? -1 : radius,
+            Color = new ColorRgba(color.R, color.G, color.B, color.A),
             Points = points.Select(p => new[] { (float)p.X, (float)p.Y, (float)p.Z }).ToList()
         };
 
@@ -369,9 +390,6 @@ public sealed class Presenter3D : IPresenter3D
             DisplayIntervalMilliseconds = time
         });
     }
-
-    private static Rgba32 Transparent(Rgba32 color)
-        => color.A == byte.MaxValue ? color with { A = 89 } : color;
 
     private static Color RandomColor(int i)
         => new(

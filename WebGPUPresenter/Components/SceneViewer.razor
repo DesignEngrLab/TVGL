@@ -23,22 +23,10 @@
                 <p>@Subtitle</p>
             }
         </div>
-        <div class="scene-policy-controls">
-            <FluentButton Appearance="Appearance.Outline" Class="@PolicyButtonClass(showAxes)" aria-pressed="@showAxes"
-                          IconStart="@(new Icons.Regular.Size20.Space3d())" @onclick="ToggleAxesAsync">Axes</FluentButton>
-            <FluentButton Appearance="Appearance.Outline" Class="@PolicyButtonClass(showEdges)" aria-pressed="@showEdges"
-                          IconStart="@(new Icons.Regular.Size20.DataLine())" @onclick="ToggleEdgesAsync">Edges</FluentButton>
-            <FluentButton Appearance="Appearance.Outline" Class="@PolicyButtonClass(showFaces)" aria-pressed="@showFaces"
-                          IconStart="@(new Icons.Regular.Size20.Triangle())" @onclick="ToggleFacesAsync">Faces</FluentButton>
-            <FluentButton Appearance="Appearance.Outline" Class="@PolicyButtonClass(showBorders)" aria-pressed="@showBorders"
-                          IconStart="@(new Icons.Regular.Size20.DocumentBorder())" @onclick="ToggleBordersAsync">Borders</FluentButton>
-        </div>
         <FluentButton Class="rotated-icon-button" @onclick="CloseAsync" IconStart="@(new Icons.Regular.Size20.Add())" />
     </header>
     <BugViewer @ref="viewer" Height="600px" Width="100%" OnReady="OnViewerReadyAsync"
-               CoordinateThickness="@(showAxes ? VisibleCoordinateThickness : 0)"
-               LineWidthX="@(showAxes ? VisibleGridLineWidth : 0)"
-               LineWidthY="@(showAxes ? VisibleGridLineWidth : 0)"
+               CoordinateThickness="1.0" LineWidthX="0.1" LineWidthY="0.1"
                HoverSelectionKeys="inspectionKeys" OnHoverSelectionKeyChanged="InspectionKeyChangedAsync"
                OnTriangleSelected="TriangleSelectedAsync" />
 </section>
@@ -51,21 +39,18 @@
     [Parameter] public EventCallback OnReady { get; set; }
     [Parameter] public EventCallback<SceneTriangleSelection> OnTriangleSelected { get; set; }
 
+    private string Heading => Scenes.LastOrDefault()?.Heading ?? "";
+    private string Title => Scenes.LastOrDefault()?.Title ?? "TVGL 3D Presenter";
+    private string Subtitle => Scenes.LastOrDefault()?.Subtitle ?? "";
     private global::BugViewer.BugViewer? viewer;
-    private readonly IReadOnlyList<string> inspectionKeys = ["g", "v", "f", "p", "b"];
+
     private string? activeInspectionKey;
     private string? coloredMeshId;
     private LineData? inspectionLine;
     private int appliedSceneCount;
-    private string Heading => Scenes.LastOrDefault()?.Heading ?? "";
-    private string Title => Scenes.LastOrDefault()?.Title ?? "TVGL 3D Presenter";
-    private string Subtitle => Scenes.LastOrDefault()?.Subtitle ?? "";
-    private bool showEdges = false;
-    private bool showFaces = true;
-    private bool showBorders = true;
-    private bool showAxes = true;
-    private const double VisibleCoordinateThickness = 1.0;
-    private const double VisibleGridLineWidth = 0.1;
+    private readonly Dictionary<string, MeshData> renderedMeshes = [];
+    private readonly Dictionary<string, LineData> renderedLines = [];
+    private readonly IReadOnlyList<string> inspectionKeys = ["g", "v", "f", "p", "b"];
 
     protected override async Task OnParametersSetAsync()
     {
@@ -82,39 +67,56 @@
     }
 
     private Task CloseAsync() => OnClose.InvokeAsync(ViewerId);
-    private static string PolicyButtonClass(bool enabled) => enabled ? "scene-policy-button is-active" : "scene-policy-button";
-    private Task ToggleAxesAsync() { showAxes = !showAxes; return Task.CompletedTask; }
-    private async Task ToggleEdgesAsync() { showEdges = !showEdges; await RenderSceneAsync(); }
-    private async Task ToggleFacesAsync() { showFaces = !showFaces; await RenderSceneAsync(); }
-    private async Task ToggleBordersAsync() { showBorders = !showBorders; await RenderSceneAsync(); }
 
     private async Task RenderSceneAsync()
     {
         if (viewer is null)
             return;
 
-        await viewer.ClearAllTextBillboardsAsync();
-        inspectionLine = null;
-        coloredMeshId = null;
-        await viewer.ClearAllMeshesAsync();
-        await viewer.ClearAllLinesAsync();
-
+        var desiredMeshes = new List<MeshData>();
+        var desiredLines = new List<LineData>();
         foreach (var scene in Scenes)
         {
-            if (showFaces)
-                await viewer.AddMeshesAsync(scene.Meshes.Select(ToMeshData));
-            foreach (var path in scene.Paths)
-                await viewer.AddLinesAsync(ToLineData(path));
-            foreach (var points in scene.PointSets)
-                await viewer.AddLinesAsync(ToPointGlyphs(points));
-            if (showEdges)
-                foreach (var edgeLine in CreateEdgeLines(scene.Meshes))
-                    await viewer.AddLinesAsync(edgeLine);
-            if (showBorders)
-                foreach (var borderLine in CreateBorderLines(scene.Meshes))
-                    await viewer.AddLinesAsync(borderLine);
+            desiredMeshes.AddRange(scene.Meshes.Select(ToMeshData));
+            desiredLines.AddRange(scene.Paths.Select(ToLineData));
+            desiredLines.AddRange(scene.PointSets.Select(ToPointGlyphs));
         }
 
+        var desiredMeshIds = desiredMeshes.Select(mesh => mesh.Id).ToHashSet();
+        var desiredLineIds = desiredLines.Select(line => line.Id).ToHashSet();
+        var meshesToRemove = renderedMeshes.Values
+            .Where(mesh => !desiredMeshIds.Contains(mesh.Id)).ToList();
+        var linesToRemove = renderedLines.Values
+            .Where(line => !desiredLineIds.Contains(line.Id)).ToList();
+        var meshesToAdd = desiredMeshes
+            .Where(mesh => !renderedMeshes.ContainsKey(mesh.Id)).ToList();
+        var linesToAdd = desiredLines
+            .Where(line => !renderedLines.ContainsKey(line.Id)).ToList();
+
+        await viewer.PauseRenderingAsync();
+        try
+        {
+            await ClearInspectionVisualsAsync();
+            if (meshesToRemove.Count > 0)
+                await viewer.RemoveMeshesAsync(meshesToRemove);
+            if (linesToRemove.Count > 0)
+                await viewer.RemoveLinesAsync(linesToRemove);
+            if (meshesToAdd.Count > 0)
+                await viewer.AddMeshesAsync(meshesToAdd);
+            if (linesToAdd.Count > 0)
+                await viewer.AddLinesAsync(linesToAdd);
+        }
+        finally
+        {
+            await viewer.ResumeRenderingAsync();
+        }
+
+        renderedMeshes.Clear();
+        foreach (var mesh in desiredMeshes)
+            renderedMeshes.Add(mesh.Id, mesh);
+        renderedLines.Clear();
+        foreach (var line in desiredLines)
+            renderedLines.Add(line.Id, line);
         appliedSceneCount = Scenes.Count;
     }
 
@@ -203,10 +205,6 @@
             .ToList();
             await ApplyMeshColorsAsync(mesh, colors);
         }
-        else if (activeInspectionKey == "b")
-        {
-            await HighlightBordersAsync(face.BelongsToPrimitive);
-        }
     }
 
     private static readonly ColorRgba InspectionHighlightColor = new(255, 255, 0, 160);
@@ -270,7 +268,7 @@
         inspectionLine = line;
     }
 
-    private static LineData CreateEdgeHighlight(Edge edge, TVGL.Vector3 normal, double outset) => new()
+    private LineData CreateEdgeHighlight(Edge edge, TVGL.Vector3 normal, double outset) => new()
     {
         Id = "InspectionHighlight",
         Vertices =
@@ -278,13 +276,13 @@
             ToNumerics(edge.To.Coordinates + normal * outset)
         ],
         Colors = [InspectionHighlightColor, TransparentColor],
-        Thicknesses = [1.0, 0.0],
-        FadeFactors = [0.0, 0.0]
+        Thicknesses = [2 * viewer.PathThickness, 0f],
+        FadeFactors = [0f, 0f]
     };
 
     private LineData CreateVertexHighlight(TVGL.Vector3 coordinate)
     {
-        var radius = Math.Max(1e-6, viewer?.SphereRadius * 0.001 ?? 0.001);
+        var radius = viewer.PathThickness;
         var vertices = new List<NumericsVector3>
         {
             ToNumerics(coordinate + new TVGL.Vector3(-radius, 0, 0)),
@@ -294,6 +292,7 @@
             ToNumerics(coordinate + new TVGL.Vector3(0, 0, -radius)),
             ToNumerics(coordinate + new TVGL.Vector3(0, 0, radius))
         };
+        radius *= 2;
         return new LineData
         {
             Id = "InspectionHighlight",
@@ -301,8 +300,8 @@
             Colors = [InspectionHighlightColor, TransparentColor,
                 InspectionHighlightColor, TransparentColor,
                 InspectionHighlightColor, TransparentColor],
-            Thicknesses = [1.0, 0.0, 1.0, 0.0, 1.0, 0.0],
-            FadeFactors = Enumerable.Repeat(0.0, vertices.Count)
+            Thicknesses = [radius, 0f, radius, 0f, radius, 0f],
+            FadeFactors = Enumerable.Repeat(0f, vertices.Count)
         };
     }
 
@@ -320,83 +319,30 @@
               Math.Max(1e-6f, viewer.SphereRadius * 0.025f));
     }
 
-    private async Task HighlightBordersAsync(PrimitiveSurface? primitive)
-    {
-        if (viewer is null || primitive is null)
-            return;
 
-        var borderSegments = primitive.BorderSegments.Count > 0
-        ? primitive.BorderSegments
-        : primitive.Borders?.SelectMany(border => border.Segments).Distinct().ToList() ?? [];
-        if (borderSegments.Count == 0)
-            return;
-
-        var outset = Math.Max(1e-6, viewer.SphereRadius * 0.0025);
-        const double thickness = 1.0;
-        var vertices = new List<NumericsVector3>
-        ();
-        var colors = new List<ColorRgba>
-        ();
-        var thicknesses = new List<double>
-        ();
-
-        foreach (var border in borderSegments)
-        {
-            var start = vertices.Count;
-            foreach (var coordinate in border.GetCoordinates())
-            {
-                var normal = border.OwnedPrimitive.GetNormalAtPoint(coordinate);
-                if (border.OtherPrimitive is not null)
-                    normal += border.OtherPrimitive.GetNormalAtPoint(coordinate);
-                normal = normal.Normalize();
-                var position = coordinate + normal * outset;
-                vertices.Add(new NumericsVector3((float)position.X, (float)position.Y, (float)position.Z));
-                colors.Add(new ColorRgba(255, 255, 0));
-                thicknesses.Add(thickness);
-            }
-            if (vertices.Count > start)
-            {
-                colors[^1] = new ColorRgba(0, 0, 0, 0);
-                thicknesses[^1] = 0;
-            }
-        }
-
-        if (vertices.Count < 2)
-            return;
-
-        await ShowInspectionLineAsync(new LineData
-        {
-            Colors = colors,
-            FadeFactors = Enumerable.Repeat(0.0, vertices.Count),
-            Id = "InspectionHighlight",
-            Thicknesses = thicknesses,
-            Vertices = vertices
-        });
-    }
-
-    private static List<ColorRgba>
-    ExpandedColors(SceneMesh mesh)
+    private static List<ColorRgba> ExpandedColors(SceneMesh mesh)
     {
         if (mesh.HasUniformColor)
         {
-            var color = mesh.Colors.Count > 0 ? mesh.Colors[0] : Rgba32.LightGray;
-            return Enumerable.Repeat(ToColorRgba(color), mesh.Triangles.Count).ToList();
+            var color = mesh.Colors.Count > 0 ? mesh.Colors[0] : ColorRgba.LightGray;
+            return Enumerable.Repeat(color, mesh.Triangles.Count).ToList();
         }
-        return mesh.Colors.Select(ToColorRgba).ToList();
+        return mesh.Colors;
     }
 
-    private static ColorRgba ToColorRgba(Rgba32 color) => new(color.R, color.G, color.B, color.A);
 
-    private static MeshData ToMeshData(SceneMesh mesh) => new()
+    private MeshData ToMeshData(SceneMesh mesh)
     {
-        Id = mesh.Id,
-        Vertices = mesh.Vertices.Select(v => new NumericsVector3(v[0], v[1], v[2])).ToList(),
-        Indices = mesh.Triangles.Select(t => (t[0], t[1], t[2])).ToList(),
-        Colors = ExpandedColors(mesh),
-        ColorMode = MeshColoring.PerTriangle
-    };
-
-    private static LineData ToLineData(ScenePath path)
+        return new MeshData
+        {
+            Id = mesh.Id,
+            Vertices = mesh.Vertices.Select(v => new NumericsVector3(v[0], v[1], v[2])).ToList(),
+            Indices = mesh.Triangles.Select(t => (t[0], t[1], t[2])).ToList(),
+            Colors = ExpandedColors(mesh),
+            ColorMode = MeshColoring.PerTriangle
+        };
+    }
+    private LineData ToLineData(ScenePath path)
     {
         var segmentCount = Math.Max(0, path.Vertices.Count - 1);
         var color = new ColorRgba(path.Color.R, path.Color.G, path.Color.B, path.Color.A);
@@ -404,82 +350,19 @@
         {
             Id = path.Id,
             Vertices = path.Vertices.Select(v => new NumericsVector3(v[0], v[1], v[2])).ToList(),
-            Thicknesses = Enumerable.Repeat(path.Thickness, segmentCount).ToList(),
+            Thicknesses = Enumerable.Repeat(path.Thickness > 0 ? (float)path.Thickness :
+                                            viewer.PathThickness, segmentCount).ToList(),
             Colors = Enumerable.Repeat(color, segmentCount).ToList(),
-            FadeFactors = Enumerable.Repeat(0.0, segmentCount).ToList()
+            FadeFactors = Enumerable.Repeat(0f, segmentCount).ToList()
         };
-    }
-
-    private static IEnumerable<LineData> CreateEdgeLines(IEnumerable<SceneMesh> meshes)
-    {
-        foreach (var mesh in meshes)
-        {
-            var edges = mesh.SourceFaces.SelectMany(face => face.NonNullEdges).Distinct().ToList();
-            if (edges.Count == 0)
-                continue;
-
-            var vertices = new List<NumericsVector3>(edges.Count * 2);
-            var thicknesses = new List<double>(edges.Count * 2);
-            foreach (var edge in edges)
-            {
-                vertices.Add(ToNumerics(edge.From.Coordinates));
-                vertices.Add(ToNumerics(edge.To.Coordinates));
-                thicknesses.Add(1.0);
-                thicknesses.Add(0.0); // Prevent the next edge from being joined to this one.
-            }
-
-            yield return new LineData
-            {
-                Id = $"scene-edges-{mesh.Id}",
-                Vertices = vertices,
-                Colors = Enumerable.Repeat(new ColorRgba(0, 0, 0), vertices.Count),
-                Thicknesses = thicknesses,
-                FadeFactors = Enumerable.Repeat(0.0, vertices.Count)
-            };
-        }
-    }
-
-    private IEnumerable<LineData> CreateBorderLines(IEnumerable<SceneMesh> meshes)
-    {
-        var outset = Math.Max(1e-6, viewer?.SphereRadius * 0.0025 ?? 1e-6);
-        var borderSegments = meshes.SelectMany(mesh => mesh.SourceFaces)
-            .Select(face => face.BelongsToPrimitive)
-            .Where(primitive => primitive is not null)
-            .SelectMany(primitive => primitive!.BorderSegments)
-            .Distinct()
-            .ToList();
-
-        foreach (var (border, index) in borderSegments.Select((border, index) => (border, index)))
-        {
-            var vertices = border.GetCoordinates().Select(coordinate =>
-            {
-                var normal = border.OwnedPrimitive.GetNormalAtPoint(coordinate);
-                if (border.OtherPrimitive is not null)
-                    normal += border.OtherPrimitive.GetNormalAtPoint(coordinate);
-                var position = normal.IsNull() ? coordinate : coordinate + normal.Normalize() * outset;
-                return ToNumerics(position);
-            }).ToList();
-            if (vertices.Count < 2)
-                continue;
-
-            yield return new LineData
-            {
-                Id = $"scene-border-{index}",
-                Vertices = vertices,
-                Colors = Enumerable.Repeat(new ColorRgba(0, 0, 0), vertices.Count),
-                Thicknesses = Enumerable.Repeat(1.0, vertices.Count),
-                FadeFactors = Enumerable.Repeat(0.0, vertices.Count)
-            };
-        }
     }
 
     // BugViewer currently exposes meshes and lines. Three crossed line segments provide a compact,
     // camera-readable diagnostic point glyph until its WebGPU point primitive is available.
-    private static LineData ToPointGlyphs(ScenePointSet points)
+    private LineData ToPointGlyphs(ScenePointSet points)
     {
-        var d = (float)Math.Max(.001, points.Radius) * .5f;
-        var vertices = new List<NumericsVector3>
-        ();
+        var d = viewer.PathThickness / 2;
+        var vertices = new List<NumericsVector3>();
         foreach (var p in points.Points)
         {
             vertices.Add(new NumericsVector3(p[0] - d, p[1], p[2])); vertices.Add(new NumericsVector3(p[0] + d, p[1], p[2]));
@@ -488,6 +371,13 @@
         }
         var count = Math.Max(0, vertices.Count - 1);
         var color = new ColorRgba(points.Color.R, points.Color.G, points.Color.B, points.Color.A);
-        return new LineData { Id = points.Id, Vertices = vertices, Thicknesses = Enumerable.Repeat(Math.Max(1.0, points.Radius), count).ToList(), Colors = Enumerable.Repeat(color, count).ToList(), FadeFactors = Enumerable.Repeat(0.0, count).ToList() };
+        return new LineData
+        {
+            Id = points.Id,
+            Vertices = vertices,
+            Thicknesses = Enumerable.Repeat(viewer.PathThickness, count).ToList(),
+            Colors = Enumerable.Repeat(color, count).ToList(),
+            FadeFactors = Enumerable.Repeat(0f, count).ToList()
+        };
     }
 }
