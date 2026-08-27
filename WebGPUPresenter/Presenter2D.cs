@@ -23,9 +23,9 @@ public sealed class Presenter2D : IPresenter2D
         => Block(Plot(pointsList, title, plot2DType, Repeat(closeShape), Repeat(marker)));
     public void ShowAndHang(IEnumerable<IEnumerable<IEnumerable<Vector2>>> pointsLists, string title = "", Plot2DType plot2DType = Plot2DType.Line, bool closeShape = true, MarkerType marker = MarkerType.Circle)
         => Block(new SceneRequest { RequestId = Guid.NewGuid(), Kind = PresentationKind.TwoDimensional, Title = title, Steps = pointsLists.Select(p => Plot(p, title, plot2DType, Repeat(closeShape), Repeat(marker))).ToList() });
-    public void ShowAndHang(IEnumerable<Polygon> polygons, string title = "", Plot2DType plot2DType = Plot2DType.Line, MarkerType marker = MarkerType.Circle)
+    public void ShowAndHang(IEnumerable<Polygon> polygons, string title = "", Plot2DType plot2DType = Plot2DType.Area, MarkerType marker = MarkerType.None)
         => Block(Plot(polygons.SelectMany(p => p.AllPolygons).Select(p => p.Path), title, plot2DType, polygons.SelectMany(p => p.AllPolygons).Select(p => p.IsClosed), Repeat(marker)));
-    public void ShowAndHang(Polygon polygon, string title = "", Plot2DType plot2DType = Plot2DType.Line, MarkerType marker = MarkerType.Circle) => ShowAndHang([polygon], title, plot2DType, marker);
+    public void ShowAndHang(Polygon polygon, string title = "", Plot2DType plot2DType = Plot2DType.Area, MarkerType marker = MarkerType.None) => ShowAndHang([polygon], title, plot2DType, marker);
     public void ShowAndHang(IEnumerable<IEnumerable<Vector2>> points1, IEnumerable<IEnumerable<Vector2>> points2, string title = "", Plot2DType plot2DType = Plot2DType.Line, bool closeShape = true, MarkerType marker1 = MarkerType.Circle, MarkerType marker2 = MarkerType.Cross)
         => Block(Plot(points1.Concat(points2), title, plot2DType, Repeat(closeShape), Repeat(marker1).Concat(Repeat(marker2))));
     public void ShowAndHang(IEnumerable<Vertex> vertices, Vector3 direction, string title = "", Plot2DType plot2DType = Plot2DType.Line, bool closeShape = true, MarkerType marker = MarkerType.Circle)
@@ -37,8 +37,8 @@ public sealed class Presenter2D : IPresenter2D
         => Show([path], title, plot2DType, [closeShape], marker, holdType, timetoShow, id);
     public void Show(IEnumerable<IEnumerable<Vector2>> paths, string title = "", Plot2DType plot2DType = Plot2DType.Line, IEnumerable<bool> closePaths = null, MarkerType marker = MarkerType.Circle, HoldType holdType = HoldType.Immediate, int timetoShow = -1, int id = -1)
         => Publish(Plot(paths, title, plot2DType, closePaths ?? Repeat(true), Repeat(marker), false, id, holdType, timetoShow));
-    public void Show(Polygon polygon, string title = "", Plot2DType plot2DType = Plot2DType.Line, MarkerType marker = MarkerType.None, HoldType holdType = HoldType.Immediate, int timetoShow = -1, int id = -1) => Show([polygon], title, plot2DType, marker, holdType, timetoShow, id);
-    public void Show(IEnumerable<Polygon> polygons, string title = "", Plot2DType plot2DType = Plot2DType.Line, MarkerType marker = MarkerType.None, HoldType holdType = HoldType.Immediate, int timetoShow = -1, int id = -1)
+    public void Show(Polygon polygon, string title = "", Plot2DType plot2DType = Plot2DType.Area, MarkerType marker = MarkerType.None, HoldType holdType = HoldType.Immediate, int timetoShow = -1, int id = -1) => Show([polygon], title, plot2DType, marker, holdType, timetoShow, id);
+    public void Show(IEnumerable<Polygon> polygons, string title = "", Plot2DType plot2DType = Plot2DType.Area, MarkerType marker = MarkerType.None, HoldType holdType = HoldType.Immediate, int timetoShow = -1, int id = -1)
         => Show(polygons.Select(p => p.Path), title, plot2DType, polygons.Select(p => p.IsClosed), marker, holdType, timetoShow, id);
 
     public void ShowStepsAndHang(ICollection<double[,]> data, string title = "") => Block(Steps(data, null, null, title));

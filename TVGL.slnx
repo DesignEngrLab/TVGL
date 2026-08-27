@@ -1,6 +1,5 @@
 <Solution>
   <Folder Name="/Solution Items/" />
-  <Project Path="../BugViewer/BugViewer/BugViewer.csproj" />
   <Project Path="Benchmarking/Benchmarking.csproj" />
   <Project Path="PolygonImportExport/PolygonImportExport.csproj" />
   <Project Path="TessellationAndVoxelizationGeometryLibrary/TessellationAndVoxelizationGeometryLibrary.csproj" />

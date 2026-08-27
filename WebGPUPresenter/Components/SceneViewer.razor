@@ -25,10 +25,12 @@
         </div>
         <FluentButton Class="rotated-icon-button" @onclick="CloseAsync" IconStart="@(new Icons.Regular.Size20.Add())" />
     </header>
-    <BugViewer @ref="viewer" Height="600px" Width="100%" OnReady="OnViewerReadyAsync"
-               CoordinateThickness="1.0" LineWidthX="0.1" LineWidthY="0.1"
-               HoverSelectionKeys="inspectionKeys" OnHoverSelectionKeyChanged="InspectionKeyChangedAsync"
-               OnTriangleSelected="TriangleSelectedAsync" />
+    <div class="scene-viewer-canvas">
+        <BugViewer @ref="viewer" Height="100%" Width="100%" OnReady="OnViewerReadyAsync"
+                   CoordinateThickness="1.0" LineWidthX="0.1" LineWidthY="0.1"
+                   HoverSelectionKeys="inspectionKeys" OnHoverSelectionKeyChanged="InspectionKeyChangedAsync"
+                   OnTriangleSelected="TriangleSelectedAsync" />
+    </div>
 </section>
 
 @code {
@@ -50,7 +52,7 @@
     private int appliedSceneCount;
     private readonly Dictionary<string, MeshData> renderedMeshes = [];
     private readonly Dictionary<string, LineData> renderedLines = [];
-    private readonly IReadOnlyList<string> inspectionKeys = ["g", "v", "f", "p", "b"];
+    private readonly IReadOnlyList<string> inspectionKeys = ["g", "v", "f", "p"];
 
     protected override async Task OnParametersSetAsync()
     {
@@ -150,10 +152,10 @@
             .DistanceSquared(point));
             if (edge is not null)
             {
-                Console.WriteLine($"Edge: IndexInList={edge.IndexInList}, Vector={edge.Vector}, Length={edge.Length}");
                 await ShowInspectionBillboardAsync(
-                $"Edge {edge.IndexInList}; Vector: {edge.Vector}; Length: {edge.Length:G6}", edge.Center());
-                await ShowInspectionLineAsync(CreateEdgeHighlight(edge, face.Normal, InspectionOutset));
+                $"Edge {edge.IndexInList}; Vector: {edge.Vector}; Length: {edge.Length:G6}",
+                edge.Center() + 2 * edge.Normal * viewer.PathThickness);
+                await ShowInspectionLineAsync(CreateEdgeHighlight(edge, edge.Normal, viewer.PathThickness));
             }
         }
         else if (activeInspectionKey == "v")
@@ -161,18 +163,17 @@
             var vertex = face.Vertices.MinBy(vertex => vertex.Coordinates.DistanceSquared(point));
             if (vertex is not null)
             {
-                Console.WriteLine($"Vertex: IndexInList={vertex.IndexInList}, Coordinates={vertex.Coordinates}");
-                await ShowInspectionBillboardAsync(
-                $"Vertex {vertex.IndexInList}; {vertex.Coordinates}", vertex.Coordinates);
+                await ShowInspectionBillboardAsync($"Vertex {vertex.IndexInList}; {vertex.Coordinates}",
+                vertex.Coordinates + vertex.Normal * viewer.PathThickness);
                 await ShowInspectionLineAsync(
-                CreateVertexHighlight(vertex.Coordinates + face.Normal * InspectionOutset));
+                CreateVertexHighlight(vertex.Coordinates + vertex.Normal * viewer.PathThickness));
             }
         }
         else if (activeInspectionKey == "f")
         {
-            Console.WriteLine($"Face: IndexInList={face.IndexInList}, Normal={face.Normal}");
             await ShowInspectionBillboardAsync(
-            $"Face {face.IndexInList}; Normal: {face.Normal}", point);
+            $"Face {face.IndexInList}; Normal: {face.Normal}", 
+            face.Center + 2 * face.Normal * viewer.PathThickness);
             var colors = ExpandedColors(mesh);
             colors[triangleIndex] = FaceHighlightColor;
             await ApplyMeshColorsAsync(mesh, colors);
@@ -183,8 +184,8 @@
             if (primitive is null)
                 return;
 
-            Console.WriteLine($"Primitive: {primitive.KeyString}");
-            await ShowInspectionBillboardAsync(primitive.KeyString, primitive.CenterOfBoundingBox);
+            await ShowInspectionBillboardAsync(primitive.KeyString, primitive.CenterOfBoundingBox
+            + 2 * face.Normal * viewer.PathThickness);
             var highlight = primitive switch
             {
                 Plane => new ColorRgba(0, 255, 0),
@@ -210,7 +211,6 @@
     private static readonly ColorRgba InspectionHighlightColor = new(255, 255, 0, 160);
     private static readonly ColorRgba FaceHighlightColor = new(255, 255, 0, 255);
     private static readonly ColorRgba TransparentColor = new(0, 0, 0, 0);
-    private double InspectionOutset => Math.Max(1e-6, viewer?.SphereRadius * 0.0025 ?? 1e-6);
 
     private async Task InspectionKeyChangedAsync(string? key)
     {
@@ -315,8 +315,7 @@
 
         await viewer.ClearAllTextBillboardsAsync();
         await viewer.AddTextBillboardAsync("InspectionInfo", text, ToNumerics(position),
-              new ColorRgba(255, 255, 224, 230), new ColorRgba(0, 0, 0),
-              Math.Max(1e-6f, viewer.SphereRadius * 0.025f));
+              new ColorRgba(255, 255, 224, 230), new ColorRgba(0, 0, 0), 10 * viewer.PathThickness, 0f, 1f);
     }
 
 

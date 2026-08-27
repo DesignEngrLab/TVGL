@@ -4,8 +4,9 @@ html, body {
 
 body { margin: 0; background: #f4f4f8; }
 .presenter-page { padding: 1rem 1rem 5rem; }
-.scene-viewer { margin: 0 0 1rem; padding: 1rem; background: white; border: 1px solid #d5d5dd; border-radius: .4rem; }
+.scene-viewer { min-height: calc(100dvh - 6rem); box-sizing: border-box; display: flex; flex-direction: column; margin: 0 0 1rem; padding: 1rem; background: white; border: 1px solid #d5d5dd; border-radius: .4rem; }
 .scene-viewer-header { display: flex; justify-content: space-between; gap: 1rem; align-items: start; }
+.scene-viewer-canvas { flex: 1 1 auto; min-height: 0; }
 .scene-policy-controls { display: flex; flex-wrap: wrap; gap: .35rem; align-items: center; }
 .scene-policy-button.is-active { --accent-fill-rest: #1769aa; --accent-foreground-rest: white; }
 .scene-viewer-header h2 { margin: .35rem 0; font-size: 1.1rem; }
@@ -16,7 +17,7 @@ body { margin: 0; background: #f4f4f8; }
 .rotated-icon-button svg { transform: rotate(45deg); }
 .presenter-controls { position: fixed; bottom: 0; left: 0; right: 0; display: flex; gap: 1rem; align-items: center; padding: .75rem 1rem; background: #20242d; color: white; box-shadow: 0 -2px 8px #0004; }
 .presenter-controls button { padding: .35rem .8rem; font-weight: 600; }
-.plot-viewer { width: 100%; height: auto; aspect-ratio: 1 / 1; max-height: 600px; }.step-controls { display: flex; gap: .5rem; align-items: center; margin: .5rem 0; }.step-controls input { flex: 1; }
+.plot-viewer { flex: 1 1 auto; width: 100%; min-height: 18rem; }.step-controls { display: flex; gap: .5rem; align-items: center; margin: .5rem 0; }.step-controls input { flex: 1; }
 
 h1:focus {
     outline: none;

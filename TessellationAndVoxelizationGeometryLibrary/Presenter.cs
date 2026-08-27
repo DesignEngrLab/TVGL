@@ -24,10 +24,10 @@ namespace TVGL
         public static void Show(IEnumerable<IEnumerable<Vector2>> paths, string title = "", Plot2DType plot2DType = Plot2DType.Line, IEnumerable<bool> closePaths = null, MarkerType marker = MarkerType.Circle, HoldType holdType = HoldType.Immediate, int timetoShow = -1, int id = -1)
        => OutputServices.Presenter2D.Show(paths, title, plot2DType, closePaths, marker, holdType, timetoShow, id);
         /// <summary>Displays one polygon without blocking the calling code.</summary>
-        public static void Show(Polygon polygon, string title = "", Plot2DType plot2DType = Plot2DType.Line, MarkerType marker = MarkerType.None, HoldType holdType = HoldType.Immediate, int timetoShow = -1, int id = -1)
+        public static void Show(Polygon polygon, string title = "", Plot2DType plot2DType = Plot2DType.Area, MarkerType marker = MarkerType.None, HoldType holdType = HoldType.Immediate, int timetoShow = -1, int id = -1)
        => OutputServices.Presenter2D.Show(polygon, title, plot2DType, marker, holdType, timetoShow, id);
         /// <summary>Displays multiple polygons without blocking the calling code.</summary>
-        public static void Show(IEnumerable<Polygon> polygon, string title = "", Plot2DType plot2DType = Plot2DType.Line, MarkerType marker = MarkerType.None, HoldType holdType = HoldType.Immediate, int timetoShow = -1, int id = -1)
+        public static void Show(IEnumerable<Polygon> polygon, string title = "", Plot2DType plot2DType = Plot2DType.Area, MarkerType marker = MarkerType.None, HoldType holdType = HoldType.Immediate, int timetoShow = -1, int id = -1)
        => OutputServices.Presenter2D.Show(polygon, title, plot2DType, marker, holdType, timetoShow, id);
         /// <summary>Displays a solid and waits until the presentation is closed.</summary>
         public static void ShowAndHang(Solid solid, string heading = "", string title = "", string subtitle = "")
@@ -71,10 +71,10 @@ namespace TVGL
         public static void ShowAndHang(IEnumerable<IEnumerable<IEnumerable<Vector2>>> pointsLists, string title = "", Plot2DType plot2DType = Plot2DType.Line, bool closeShape = true, MarkerType marker = MarkerType.Circle)
         => OutputServices.Presenter2D.ShowAndHang(pointsLists, title, plot2DType, closeShape, marker);
         /// <summary>Displays multiple polygons and waits until the presentation is closed.</summary>
-        public static void ShowAndHang(IEnumerable<Polygon> polygons, string title = "", Plot2DType plot2DType = Plot2DType.Line, MarkerType marker = MarkerType.Circle)
+        public static void ShowAndHang(IEnumerable<Polygon> polygons, string title = "", Plot2DType plot2DType = Plot2DType.Area, MarkerType marker = MarkerType.None)
        => OutputServices.Presenter2D.ShowAndHang(polygons, title, plot2DType, marker);
         /// <summary>Displays a polygon and waits until the presentation is closed.</summary>
-        public static void ShowAndHang(Polygon polygon, string title = "", Plot2DType plot2DType = Plot2DType.Line, MarkerType marker = MarkerType.Circle)
+        public static void ShowAndHang(Polygon polygon, string title = "", Plot2DType plot2DType = Plot2DType.Area, MarkerType marker = MarkerType.None)
         => OutputServices.Presenter2D.ShowAndHang(polygon, title, plot2DType, marker);
         /// <summary>Displays two groups of two-dimensional paths with separate marker styles.</summary>
         public static void ShowAndHang(IEnumerable<IEnumerable<Vector2>> points1, IEnumerable<IEnumerable<Vector2>> points2, string title = "", Plot2DType plot2DType = Plot2DType.Line, bool closeShape = true, MarkerType marker1 = MarkerType.Circle, MarkerType marker2 = MarkerType.Cross)

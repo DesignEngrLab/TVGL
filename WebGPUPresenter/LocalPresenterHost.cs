@@ -84,7 +84,7 @@ public sealed class LocalPresenterHost
             callback((face, new Vector3(selection.Point.X, selection.Point.Y, selection.Point.Z)));
     }
     internal void BrowserDisconnected() { lock (gate) ready = NewTcs(); LaunchBrowser(); }
-    private void LaunchBrowser() { Console.WriteLine($"TVGL browser presenter: {Url}"); try { Process.Start(new ProcessStartInfo(Url) { UseShellExecute = true }); } catch { Console.WriteLine($"Open {Url} in a browser."); } }
+    private void LaunchBrowser() { try { Process.Start(new ProcessStartInfo(Url) { UseShellExecute = true }); } catch { Console.Error.WriteLine($"Unable to open the TVGL browser presenter at {Url}."); } }
     private static int FindPort() { if (int.TryParse(Environment.GetEnvironmentVariable("TVGL_PRESENTER_PORT"), out var p) && p > 0 && Free(p)) return p; using var l = new TcpListener(IPAddress.Loopback, 0); l.Start(); return ((IPEndPoint)l.LocalEndpoint).Port; }
     private static bool Free(int p) { try { using var l = new TcpListener(IPAddress.Loopback, p); l.Start(); return true; } catch (SocketException) { return false; } }
     private static TaskCompletionSource<bool> NewTcs() => new(TaskCreationOptions.RunContinuationsAsynchronously);
