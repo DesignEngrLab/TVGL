@@ -225,7 +225,7 @@ namespace TVGL
                     var r = (float)numbers[1 + numVerts];
                     var g = (float)numbers[2 + numVerts];
                     var b = (float)numbers[3 + numVerts];
-                    var currentColor = new Color(1f, r, g, b);
+                    var currentColor = new Color(r, g, b, 1f);
                     offData.HasColorSpecified = true;
                     if (offData._lastColor == null || !offData._lastColor.Equals(currentColor))
                         offData._lastColor = currentColor;

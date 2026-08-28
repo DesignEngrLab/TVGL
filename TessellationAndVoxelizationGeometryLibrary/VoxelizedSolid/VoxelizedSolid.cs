@@ -119,7 +119,7 @@ namespace TVGL
             {
                 Bounds = new[] { this.Bounds[0], this.Bounds[1] },
                 Dimensions = Bounds[1].Subtract(Bounds[0]),
-                SolidColor = new Color(this.SolidColor.A, this.SolidColor.R, this.SolidColor.G, this.SolidColor.B),
+                SolidColor = new Color(this.SolidColor.R, this.SolidColor.G, this.SolidColor.B, this.SolidColor.A),
                 VoxelSideLength = this.VoxelSideLength,
                 numVoxelsX = this.numVoxelsX,
                 numVoxelsY = this.numVoxelsY,
@@ -155,7 +155,7 @@ namespace TVGL
             else
                 copy.Bounds = new[] { ts.Bounds[0], ts.Bounds[1] };
             copy.Dimensions = copy.Bounds[1].Subtract(copy.Bounds[0]);
-            copy.SolidColor = new Color(ts.SolidColor.A, ts.SolidColor.R, ts.SolidColor.G, ts.SolidColor.B);
+            copy.SolidColor = new Color(ts.SolidColor.R, ts.SolidColor.G, ts.SolidColor.B, ts.SolidColor.A);
             copy.VoxelSideLength = Math.Max(copy.Dimensions.X, Math.Max(copy.Dimensions.Y, copy.Dimensions.Z)) / voxelsOnLongSide;
             copy.inverseVoxelSideLength = 1 / copy.VoxelSideLength; // since its quicker to multiply then to divide, maybe doing this once at the top will save some time
             copy.numVoxelsX = GetMaxNumberOfVoxels(copy.Dimensions.X, copy.VoxelSideLength, "X");

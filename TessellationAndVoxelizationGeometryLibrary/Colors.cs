@@ -377,7 +377,7 @@ namespace TVGL
         public override bool Equals(object obj)
         {
             if (obj is null) return false;
-            if (obj is Color color) 
+            if (obj is Color color)
                 return Equals(color);
             return false;
         }
@@ -430,7 +430,7 @@ namespace TVGL
         /// </summary>
         /// <param name="amfColor">Color of the amf.</param>
         internal Color(amfclasses.AMF_Color amfColor)
-            : this(amfColor.a, amfColor.r, amfColor.g, amfColor.b)
+            : this(amfColor.r, amfColor.g, amfColor.b, amfColor.a)
         {
         }
 
@@ -449,11 +449,11 @@ namespace TVGL
         /// <summary>
         /// Initializes a new instance of the <see cref="Color" /> struct.
         /// </summary>
-        /// <param name="a">a.</param>
         /// <param name="r">The r.</param>
         /// <param name="g">The g.</param>
         /// <param name="b">The b.</param>
-        public Color(float a, float r, float g, float b)
+        /// <param name="a">a.</param>
+        public Color(float r, float g, float b, float a = 1f)
         {
             A = Convert(a);
             R = Convert(r);
@@ -478,11 +478,11 @@ namespace TVGL
         /// <summary>
         /// Initializes a new instance of the <see cref="Color" /> struct.
         /// </summary>
-        /// <param name="a">a.</param>
         /// <param name="r">The r.</param>
         /// <param name="g">The g.</param>
         /// <param name="b">The b.</param>
-        public Color(byte a, byte r, byte g, byte b)
+        /// <param name="a">a.</param>
+        public Color(byte r, byte g, byte b, byte a = byte.MaxValue)
         {
             R = r;
             G = g;
@@ -497,7 +497,7 @@ namespace TVGL
         /// <param name="g">The g.</param>
         /// <param name="b">The b.</param>
         public Color(byte r, byte g, byte b)
-            : this(0xff, r, g, b)
+            : this(r, g, b, 0xff)
         {
         }
 
@@ -600,7 +600,7 @@ namespace TVGL
             green += m;
             blue += m;
 
-            return new Color((float)alpha, (float)red, (float)green, (float)blue);
+            return new Color((float)red, (float)green, (float)blue, (float)alpha);
         }
 
         #endregion Constructors

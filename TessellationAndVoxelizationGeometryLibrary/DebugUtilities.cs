@@ -267,17 +267,17 @@ namespace TVGL
             int t = Convert.ToInt32(value * (1 - (1 - f) * saturation));
 
             if (hi == 0)
-                return new Color(255, v, t, p);
+                return new Color(v, t, p);
             else if (hi == 1)
-                return new Color(255, q, v, p);
+                return new Color(q, v, p);
             else if (hi == 2)
-                return new Color(255, p, v, t);
+                return new Color(p, v, t);
             else if (hi == 3)
-                return new Color(255, p, q, v);
+                return new Color(p, q, v);
             else if (hi == 4)
-                return new Color(255, t, p, v);
+                return new Color(t, p, v);
             else
-                return new Color(255, v, p, q);
+                return new Color(v, p, q);
         }
 
         /// <summary>

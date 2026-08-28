@@ -345,12 +345,14 @@
     {
         var segmentCount = Math.Max(0, path.Vertices.Count - 1);
         var color = new ColorRgba(path.Color.R, path.Color.G, path.Color.B, path.Color.A);
+        // Preserve automatic thickness until BugViewer has added every object in this scene to its bounds.
         return new LineData
         {
             Id = path.Id,
             Vertices = path.Vertices.Select(v => new NumericsVector3(v[0], v[1], v[2])).ToList(),
-            Thicknesses = Enumerable.Repeat(path.Thickness > 0 ? (float)path.Thickness :
-                                            viewer.PathThickness, segmentCount).ToList(),
+            Thicknesses = Enumerable.Repeat(path.Thickness < 0
+                ? LineData.AutomaticThickness
+                : (float)path.Thickness, segmentCount).ToList(),
             Colors = Enumerable.Repeat(color, segmentCount).ToList(),
             FadeFactors = Enumerable.Repeat(0f, segmentCount).ToList()
         };

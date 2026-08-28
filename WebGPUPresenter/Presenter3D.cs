@@ -51,7 +51,9 @@ public sealed class Presenter3D : IPresenter3D
         params Solid[] solids)
     {
         var s = Scene();
-        Paths(s, paths, closePaths, lineThicknesses, colors);
+        var pathGroups = paths.Select(path => path.ToList()).ToList();
+        Paths(s, pathGroups, closePaths, lineThicknesses,
+            ExpandPathColors(pathGroups.Count, colors));
         foreach (var x in solids)
             AddSolid(s, x);
         host.Show(s);
@@ -67,7 +69,7 @@ public sealed class Presenter3D : IPresenter3D
         ShowAndHang(
             [path],
             [closePaths],
-            [lineThickness < 0 ? 1 : lineThickness],
+            [lineThickness],
             [color ?? new Color(KnownColors.Black)],
             false,
             solids);
@@ -80,7 +82,20 @@ public sealed class Presenter3D : IPresenter3D
         IEnumerable<Color>? colors = null,
         params Solid[] solids)
     {
-        ShowAndHang(paths.SelectMany(x => x), closePaths, lineThicknesses, colors, true, solids);
+        var pathGroups = paths.Select(pathSet => pathSet.ToList()).ToList();
+        var flattenedPaths = pathGroups.SelectMany(pathSet => pathSet).ToList();
+        IList<Color> colorList = colors?.ToList();
+        if (colorList is null)
+            colorList = Color.Distinct64Colors;
+        var expandedColors = 
+             pathGroups.SelectMany((pathSet, setIndex) =>
+                Enumerable.Repeat(
+                    setIndex < colorList.Count ? colorList[setIndex]
+                    : Color.GetRandomColors().First(),  // new Color(KnownColors.Black),
+                    pathSet.Count))
+                .ToList();
+
+        ShowAndHang(flattenedPaths, closePaths, lineThicknesses, expandedColors, true, solids);
     }
 
     public void ShowAndHang(
@@ -191,7 +206,8 @@ public sealed class Presenter3D : IPresenter3D
         params Solid[] s)
     {
         var scene = Scene(t: title);
-        Paths(scene, p, c, t, co);
+        var pathGroups = p.Select(path => path.ToList()).ToList();
+        Paths(scene, pathGroups, c, t, ExpandPathColors(pathGroups.Count, co));
         foreach (var solid in s)
             AddSolid(scene, solid);
         Publish(scene, h, time, id);
@@ -224,6 +240,7 @@ public sealed class Presenter3D : IPresenter3D
     {
         var pathGroups = p?.ToList() ?? [];
         var faceGroups = f?.ToList() ?? [];
+        var pathColors = co?.ToList() ?? Color.Distinct64Colors.ToList();
         var count = Math.Max(
             pathGroups.SelectMany(g => g).Count(),
             faceGroups.SelectMany(g => g).Count());
@@ -232,10 +249,12 @@ public sealed class Presenter3D : IPresenter3D
         for (var index = 0; index < count; index++)
         {
             var step = Scene();
-            foreach (var group in pathGroups)
+            for (var groupIndex = 0; groupIndex < pathGroups.Count; groupIndex++)
             {
+                var group = pathGroups[groupIndex];
                 if (index < group.Count())
-                    Paths(step, [group.ElementAt(index)], c, t, co);
+                    Paths(step, [group.ElementAt(index)], c, t,
+                        [groupIndex < pathColors.Count ? pathColors[groupIndex] : Color.GetRandomColors().First()]);
             }
             foreach (var group in faceGroups)
             {
@@ -396,4 +415,14 @@ public sealed class Presenter3D : IPresenter3D
             (byte)((i * 97 + 40) % 220),
             (byte)((i * 57 + 90) % 220),
             (byte)((i * 131 + 20) % 220));
+
+    private static IList<Color> ExpandPathColors(int pathCount, IEnumerable<Color>? colors)
+    {
+        var colorList = colors?.ToList() ?? Color.Distinct64Colors.ToList();
+        return Enumerable.Range(0, pathCount)
+            .Select(index => index < colorList.Count
+                ? colorList[index]
+                : Color.GetRandomColors().First())
+            .ToList();
+    }
 }

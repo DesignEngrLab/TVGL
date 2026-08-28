@@ -177,7 +177,7 @@ namespace TVGL
                         g += vertexColors[vertIndex].Gf;
                         b += vertexColors[vertIndex].Bf;
                     }
-                    faceColors[i] = new Color(a / 4f, r / 4f, g / 4f, b / 4f);
+                    faceColors[i] = new Color(r / 4f, g / 4f, b / 4f, a / 4f);
                 }
             }
             else
@@ -520,7 +520,7 @@ namespace TVGL
                     case ColorElements.Opacity: a = value; break;
                 }
             }
-            uniformColor = new Color(a, r, g, b);
+            uniformColor = new Color(r, g, b, a);
             return true;
         }
 
@@ -589,7 +589,7 @@ namespace TVGL
                                     break;
                             }
                         }
-                        faceColors.Add(new Color(a, r, g, b));
+                        faceColors.Add(new Color(r, g, b, a));
                     }
                     else faceColors.Add(null);
                 }
@@ -641,7 +641,7 @@ namespace TVGL
                                 a = value;
                                 break;
                         }
-                        vertexColors.Add(new Color(a, r, g, b));
+                        vertexColors.Add(new Color(r, g, b, a));
                         colorIndexer++;
                     }
                 }
@@ -691,7 +691,7 @@ namespace TVGL
                     case ColorElements.Opacity: a = value; break;
                 }
             }
-            uniformColor = new Color(a, r, g, b);
+            uniformColor = new Color(r, g, b, a);
             return true;
         }
 
@@ -730,7 +730,7 @@ namespace TVGL
                             case ColorElements.Opacity: a = value; break;
                         }
                     }
-                    faceColors.Add(new Color(a, r, g, b));
+                    faceColors.Add(new Color(r, g, b, a));
                 }
             }
             return true;
@@ -778,7 +778,7 @@ namespace TVGL
                                 a = value;
                                 break;
                         }
-                        vertexColors.Add(new Color(a, r, g, b));
+                        vertexColors.Add(new Color(r, g, b, a));
                         colorIndexer++;
                     }
                     else vertexColors.Add(null);
