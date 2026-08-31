@@ -22,10 +22,9 @@ namespace WindowsDesktopPresenter
         {
             get
             {
-                return Math.Max(SolidGroups.Max(g => g?.Count ?? 0),
-                Math.Max(SolidTransforms.Max(t => t?.Count ?? 0),
-                Math.Max(PathGroups.Max(g => g?.Count ?? 0),
-                         PathTransforms.Max(t => t?.Count ?? 0)))) - 1;
+                return 
+                Math.Max(GeometryGroups.Max(g => g?.Count ?? 0),
+                         Transforms.Max(t => t?.Count ?? 0)) - 1;
             }
         }
 
@@ -57,32 +56,32 @@ namespace WindowsDesktopPresenter
         internal bool Update(int stepIndex)
         {
             Elements.Clear();
-            // Create a new collection with updated transforms
-            //newSolids = new ObservableElement3DCollection();
-            var allTransforms = new[] { PathTransforms, SolidTransforms };
             var k = 0;
-            foreach (var groups in new List<IList<GeometryModel3D>>[] { PathGroups, SolidGroups })
+            foreach (var timeGroup in GeometryGroups)
             {
-                var transforms = allTransforms[k++];
-                for (int i = 0; i < transforms.Count; i++)
+                var transforms = Transforms[k++];
+                if (transforms is null)
+                    foreach (var element in timeGroup)
+                        Elements.Add(element);
+                else if (stepIndex >= transforms.Count || transforms[stepIndex] == null)
                 {
-                    var elements = groups[i];
-                    var transformForGroupI = transforms[i];
-                    if (transformForGroupI == null)
-                    { // only show the group's solids at this current timestep
-                        if (stepIndex < elements.Count && elements[stepIndex] != null)
-                            Elements.Add(elements[stepIndex]);
-                    }
-                    else if (stepIndex < transformForGroupI.Count && transformForGroupI[stepIndex] != null)
+                    if (stepIndex < timeGroup.Count && timeGroup[stepIndex] != null)
+                        Elements.Add(timeGroup[stepIndex]);
+                }
+                else
+                {
+                    var t = transforms[stepIndex];
+                    var timeIndex = stepIndex;
+                    while (timeIndex >= 0)
                     {
-                        var lastIndex =Math.Max(0, Math.Min(elements.Count, stepIndex) - 1);
-                        var start = Math.Max(0, lastIndex - 500);
-                        for (int j = start; j <= lastIndex; j++)
+                        if (transforms[timeIndex] is null)
+                            break;
+                        if (timeIndex < timeGroup.Count && timeGroup[timeIndex] != null)
                         {
-                            if (elements[j] == null) continue;
-                            elements[j].Transform = transformForGroupI[stepIndex];
-                            Elements.Add(elements[j]);
+                            timeGroup[timeIndex].Transform = t;
+                            Elements.Add(timeGroup[timeIndex]);
                         }
+                        timeIndex--;
                     }
                 }
             }
@@ -205,12 +204,9 @@ namespace WindowsDesktopPresenter
 
         public ObservableElement3DCollection Elements { private set; get; } = [];
         public Material SelectedMaterial { get; } = new PhongMaterial() { EmissiveColor = SharpDX.Color.LightYellow };
-        public List<IList<System.Windows.Media.Media3D.Transform3D>> SolidTransforms { get; private set; } = [];
+        public List<IList<System.Windows.Media.Media3D.Transform3D>> Transforms { get; internal set; } = [];
 
-        public List<IList<GeometryModel3D>> SolidGroups { get; private set; } = [];
-        public List<IList<System.Windows.Media.Media3D.Transform3D>> PathTransforms { get; internal set; } = [];
-
-        public List<IList<GeometryModel3D>> PathGroups { get; private set; } = [];
+        public List<IList<GeometryModel3D>> GeometryGroups { get; private set; } = [];
         public Vector3D DirectionalLightDirection1 { get; private set; }
         public Vector3D DirectionalLightDirection2 { get; private set; }
         public Vector3D DirectionalLightDirection3 { get; private set; }

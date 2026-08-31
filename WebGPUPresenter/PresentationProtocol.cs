@@ -21,7 +21,19 @@ public sealed class SceneRequest
     public List<ScenePointSet> PointSets { get; init; } = [];
     public PlotRequest? Plot { get; init; }
     public List<SceneRequest> Steps { get; init; } = [];
+    internal List<SceneStepGroup> StepGroups { get; init; } = [];
     internal Action<(TriangleFace face, Vector3 point)>? OnSelection { get; init; }
+    public UpdateTypes AutoResetCamera { get; init; } = UpdateTypes.SphereChange;
+    public bool ShowMeshBorders { get; init; } = true;
+    public MeshFaceDisplay ShowSurfacesAs { get; init; } = MeshFaceDisplay.Surfaces;
+}
+
+internal sealed class SceneStepGroup
+{
+    public List<SceneMesh?> Meshes { get; init; } = [];
+    public List<ScenePath?> Paths { get; init; } = [];
+    public List<Matrix4x4?>? Transforms { get; init; }
+    public int Count => Math.Max(Math.Max(Meshes.Count, Paths.Count), Transforms?.Count ?? 0);
 }
 
 public sealed class SceneMesh
@@ -29,6 +41,8 @@ public sealed class SceneMesh
     public required string Id { get; init; }
     public List<float[]> Vertices { get; init; } = [];
     public List<int[]> Triangles { get; init; } = [];
+    public List<float[]> PrimitiveSurfaceNormals { get; init; } = [];
+    public bool HasPrimitiveSurfaces { get; init; }
     public List<ColorRgba> Colors { get; init; } = [];
     public bool HasUniformColor { get; init; }
     // This stays in-process only; vertices/indices are sent to BugViewer, while this preserves the reverse pick map.
@@ -70,4 +84,3 @@ public sealed class PlotTrace
     public MarkerType Marker { get; init; } = MarkerType.Circle;
     public ColorRgba Color { get; init; } = ColorRgba.Black;
 }
-

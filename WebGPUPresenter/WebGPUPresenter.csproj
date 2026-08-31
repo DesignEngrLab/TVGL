@@ -6,10 +6,10 @@
 		<ImplicitUsings>enable</ImplicitUsings>
 	</PropertyGroup>
 	<ItemGroup>
-		<ProjectReference Include="..\..\BugViewer\BugViewer\BugViewer.csproj" />
 		<ProjectReference Include="..\TessellationAndVoxelizationGeometryLibrary\TessellationAndVoxelizationGeometryLibrary.csproj" />
 	</ItemGroup>
 	<ItemGroup>
+		<PackageReference Include="BugViewer" Version="0.6.4" />
 		<PackageReference Include="Microsoft.FluentUI.AspNetCore.Components" Version="4.14.2" />
 		<PackageReference Include="Microsoft.FluentUI.AspNetCore.Components.Icons" Version="4.14.2" />
 	</ItemGroup>

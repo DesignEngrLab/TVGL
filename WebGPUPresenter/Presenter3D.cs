@@ -4,42 +4,82 @@ using Color = TVGL.Color;
 
 namespace WebGPUPresenter;
 
+/// <summary>Displays TVGL three-dimensional geometry in the WebGPU presenter.</summary>
 public sealed class Presenter3D : IPresenter3D
 {
-    private static readonly Lazy<LocalPresenterHost> Shared = new(() => new LocalPresenterHost());
-    internal static LocalPresenterHost SharedHost => Shared.Value;
-    private readonly LocalPresenterHost host;
+    private static readonly Lazy<LocalPresenterHost> SharedHostInstance = new(() => new LocalPresenterHost());
+    internal static LocalPresenterHost SharedHost => SharedHostInstance.Value;
+    private readonly LocalPresenterHost presenterHost;
 
     public Presenter3D()
     {
-        host = Shared.Value;
-        host.WaitReady();
+        presenterHost = SharedHostInstance.Value;
+        presenterHost.WaitReady();
     }
 
+    #region Show and Hang
+
+    /// <summary>Displays a solid and waits until the browser presenter releases it.</summary>
     public void ShowAndHang(Solid solid, string heading = "", string title = "", string subtitle = "")
         => ShowAndHang([solid], heading, title, subtitle);
 
     public void ShowAndHang(Solid solid, Action<(TriangleFace face, Vector3 point)> onSelection, string heading = "", string title = "", string subtitle = "")
     {
         ArgumentNullException.ThrowIfNull(onSelection);
-        var scene = Scene(heading, title, subtitle, onSelection);
+        var scene = new SceneRequest
+        {
+            RequestId = Guid.NewGuid(),
+            Heading = heading,
+            Title = title,
+            Subtitle = subtitle,
+            OnSelection = onSelection,
+            ShowSurfacesAs = MeshFaceDisplay.Triangles
+        };
         AddSolid(scene, solid);
-        host.Show(scene);
+        presenterHost.Show(scene);
     }
 
     public void ShowAndHang(IEnumerable<Solid> solids, string heading = "", string title = "", string subtitle = "")
     {
-        var s = Scene(heading, title, subtitle);
-        foreach (var x in solids)
-            AddSolid(s, x);
-        host.Show(s);
+        var scene = new SceneRequest
+        {
+            RequestId = Guid.NewGuid(),
+            Heading = heading,
+            Title = title,
+            Subtitle = subtitle,
+        };
+        var primitivesExist = true;
+        foreach (var solid in solids)
+        {
+            AddSolid(scene, solid);
+            if (solid.Primitives is null || solid.Primitives.Count == 0)
+                primitivesExist = false;
+        }
+        if (!primitivesExist)
+            scene = new SceneRequest
+            {
+                RequestId = Guid.NewGuid(),
+                Heading = heading,
+                Title = title,
+                Subtitle = subtitle,
+                ShowSurfacesAs = MeshFaceDisplay.Triangles
+            };
+        presenterHost.Show(scene);
     }
 
     public void ShowAndHang(IEnumerable<TriangleFace> faces, string heading = "", string title = "", string subtitle = "")
     {
-        var s = Scene(heading, title, subtitle);
-        s.Meshes.Add(Mesh(faces, ColorRgba.LightGray, false, "faces"));
-        host.Show(s);
+        var scene = new SceneRequest
+        {
+            RequestId = Guid.NewGuid(),
+            Heading = heading,
+            Title = title,
+            Subtitle = subtitle,
+            ShowMeshBorders = false,
+            ShowSurfacesAs = MeshFaceDisplay.Triangles
+        };
+        scene.Meshes.Add(CreateMesh(faces, ColorRgba.LightGray, false, "faces"));
+        presenterHost.Show(scene);
     }
 
     public void ShowAndHang(
@@ -50,13 +90,28 @@ public sealed class Presenter3D : IPresenter3D
         bool otherwiseRandomPathColors = false,
         params Solid[] solids)
     {
-        var s = Scene();
+        var scene = new SceneRequest
+        {
+            RequestId = Guid.NewGuid(),
+        };
         var pathGroups = paths.Select(path => path.ToList()).ToList();
-        Paths(s, pathGroups, closePaths, lineThicknesses,
+        AddPaths(scene, pathGroups, closePaths, lineThicknesses,
             ExpandPathColors(pathGroups.Count, colors));
-        foreach (var x in solids)
-            AddSolid(s, x);
-        host.Show(s);
+
+        var primitivesExist = true;
+        foreach (var solid in solids)
+        {
+            AddSolid(scene, solid);
+            if (solid.Primitives is null || solid.Primitives.Count == 0)
+                primitivesExist = false;
+        }
+        if (!primitivesExist)
+            scene = new SceneRequest
+            {
+                RequestId = scene.RequestId,
+                ShowSurfacesAs = MeshFaceDisplay.Triangles
+            };
+        presenterHost.Show(scene);
     }
 
     public void ShowAndHang(
@@ -87,7 +142,7 @@ public sealed class Presenter3D : IPresenter3D
         IList<Color> colorList = colors?.ToList();
         if (colorList is null)
             colorList = Color.Distinct64Colors;
-        var expandedColors = 
+        var expandedColors =
              pathGroups.SelectMany((pathSet, setIndex) =>
                 Enumerable.Repeat(
                     setIndex < colorList.Count ? colorList[setIndex]
@@ -105,18 +160,26 @@ public sealed class Presenter3D : IPresenter3D
         IEnumerable<Color>? colors,
         IEnumerable<TriangleFace>? faces)
     {
-        var s = Scene();
-        Paths(s, paths, closePaths, lineThicknesses, colors);
+        var scene = new SceneRequest
+        {
+            RequestId = Guid.NewGuid(),
+            ShowMeshBorders = false,
+            ShowSurfacesAs = MeshFaceDisplay.Triangles
+        };
+        AddPaths(scene, paths, closePaths, lineThicknesses, colors);
         if (faces is not null)
-            s.Meshes.Add(Mesh(faces, ColorRgba.LightGray, false, "faces"));
-        host.Show(s);
+            scene.Meshes.Add(CreateMesh(faces, ColorRgba.LightGray, false, "faces"));
+        presenterHost.Show(scene);
     }
 
     public void ShowPointsAndHang(IEnumerable<Vector3> points, double radius = 0, Color? color = null)
     {
-        var scene = Scene();
-        scene.PointSets.Add(Points(points, radius, color ?? new Color(KnownColors.Red)));
-        host.Show(scene);
+        var scene = new SceneRequest
+        {
+            RequestId = Guid.NewGuid(),
+        };
+        scene.PointSets.Add(CreatePoints(points, radius, color ?? new Color(KnownColors.Red)));
+        presenterHost.Show(scene);
     }
 
     public void ShowPointsAndHang(
@@ -124,268 +187,387 @@ public sealed class Presenter3D : IPresenter3D
         double radius = 0,
         IEnumerable<Color>? colors = null)
     {
-        var scene = Scene();
-        var palette = colors?.ToList() ?? [];
-        var i = 0;
-        foreach (var set in pointSets)
+        var scene = new SceneRequest
         {
-            var color = i < palette.Count ? palette[i] : RandomColor(i++);
-            scene.PointSets.Add(Points(set, radius, color));
+            RequestId = Guid.NewGuid(),
+        };
+        var palette = colors?.ToList() ?? [];
+        var setIndex = 0;
+        foreach (var pointSet in pointSets)
+        {
+            var color = setIndex < palette.Count ? palette[setIndex] : RandomColor(setIndex);
+            scene.PointSets.Add(CreatePoints(pointSet, radius, color));
+            setIndex++;
         }
-        host.Show(scene);
+        presenterHost.Show(scene);
     }
 
     public void ShowAndHangTransparentsAndSolids(
         IEnumerable<TessellatedSolid> a,
         IEnumerable<TessellatedSolid> b)
     {
-        var scene = Scene();
+        var scene = new SceneRequest
+        {
+            RequestId = Guid.NewGuid(),
+        };
         foreach (var solid in b)
             AddSolid(scene, solid);
         foreach (var solid in a)
         {
-            scene.Meshes.Add(Mesh(
+            scene.Meshes.Add(CreateMesh(
                 solid.Faces,
                 new ColorRgba(solid.SolidColor.R, solid.SolidColor.G, solid.SolidColor.B, 89),
                 solid.HasUniformColor,
                 "transparent"));
         }
-        host.Show(scene);
+        presenterHost.Show(scene);
     }
 
-    public void ShowGaussSphereWithIntensity(IEnumerable<Vertex> v, IList<Color> c, Solid s)
+    public void ShowGaussSphereWithIntensity(IEnumerable<Vertex> vertices, IList<Color> colors, Solid solid)
     {
-        var scene = Scene();
-        AddSolid(scene, s);
-        var radius = Math.Max(
-            s.XMax - s.XMin,
-            Math.Max(s.YMax - s.YMin, s.ZMax - s.ZMin)) / 2;
-        var center = s.Center;
-        var verts = v.ToList();
-        for (var i = 0; i < verts.Count; i++)
-        {
-            var path = new[] { center, center + verts[i].Coordinates * radius };
-            var color = i < c.Count ? c[i] : new Color(KnownColors.Red);
-            Paths(scene, [path], [false], [5.0], [color]);
-        }
-        host.Show(scene);
-    }
-
-    public void Show(
-        Solid s,
-        string title = "",
-        HoldType h = HoldType.Immediate,
-        int t = -1,
-        int id = -1)
-    {
-        Show([s], title, h, t, id);
-    }
-
-    public void Show(
-        ICollection<Solid> s,
-        string title = "",
-        HoldType h = HoldType.Immediate,
-        int t = -1,
-        int id = -1)
-    {
-        var scene = Scene(t: title);
-        foreach (var solid in s)
-            AddSolid(scene, solid);
-        Publish(scene, h, t, id);
-    }
-
-    public void Show(
-        IEnumerable<IEnumerable<Vector3>> p,
-        IEnumerable<bool>? c = null,
-        IEnumerable<double>? t = null,
-        IEnumerable<Color>? co = null,
-        string title = "",
-        HoldType h = HoldType.Immediate,
-        int time = -1,
-        int id = -1,
-        params Solid[] s)
-    {
-        var scene = Scene(t: title);
-        var pathGroups = p.Select(path => path.ToList()).ToList();
-        Paths(scene, pathGroups, c, t, ExpandPathColors(pathGroups.Count, co));
-        foreach (var solid in s)
-            AddSolid(scene, solid);
-        Publish(scene, h, time, id);
-    }
-
-    public void ShowStepsAndHang(
-        IEnumerable<IEnumerable<IEnumerable<Vector3>>> p,
-        IEnumerable<IEnumerable<Matrix4x4>> pt,
-        IEnumerable<IEnumerable<Solid>> s,
-        IEnumerable<IEnumerable<Matrix4x4>> st,
-        IEnumerable<bool>? c = null,
-        IEnumerable<double>? t = null,
-        IEnumerable<Color>? co = null)
-    {
-        var faceGroups = s?.Select(g => g.Select(x =>
-            x is TessellatedSolid ts
-                ? ts.Faces
-                : Enumerable.Empty<TriangleFace>()));
-        ShowStepsAndHang(p, pt, faceGroups, st, c, t, co);
-    }
-
-    public void ShowStepsAndHang(
-        IEnumerable<IEnumerable<IEnumerable<Vector3>>> p,
-        IEnumerable<IEnumerable<Matrix4x4>> pt,
-        IEnumerable<IEnumerable<IEnumerable<TriangleFace>>> f,
-        IEnumerable<IEnumerable<Matrix4x4>> ft,
-        IEnumerable<bool>? c = null,
-        IEnumerable<double>? t = null,
-        IEnumerable<Color>? co = null)
-    {
-        var pathGroups = p?.ToList() ?? [];
-        var faceGroups = f?.ToList() ?? [];
-        var pathColors = co?.ToList() ?? Color.Distinct64Colors.ToList();
-        var count = Math.Max(
-            pathGroups.SelectMany(g => g).Count(),
-            faceGroups.SelectMany(g => g).Count());
-        var request = Scene();
-
-        for (var index = 0; index < count; index++)
-        {
-            var step = Scene();
-            for (var groupIndex = 0; groupIndex < pathGroups.Count; groupIndex++)
-            {
-                var group = pathGroups[groupIndex];
-                if (index < group.Count())
-                    Paths(step, [group.ElementAt(index)], c, t,
-                        [groupIndex < pathColors.Count ? pathColors[groupIndex] : Color.GetRandomColors().First()]);
-            }
-            foreach (var group in faceGroups)
-            {
-                if (index < group.Count())
-                {
-                    step.Meshes.Add(Mesh(
-                        group.ElementAt(index),
-                        ColorRgba.LightGray,
-                        false,
-                        "step"));
-                }
-            }
-            request.Steps.Add(step);
-        }
-        host.Show(request);
-    }
-
-    private static SceneRequest Scene(string h = "", string t = "", string st = "",
-        Action<(TriangleFace face, Vector3 point)>? onSelection = null)
-        => new()
+        var scene = new SceneRequest
         {
             RequestId = Guid.NewGuid(),
-            Heading = h,
-            Title = t,
-            Subtitle = st,
-            OnSelection = onSelection
         };
-
-    private static void AddSolid(SceneRequest s, Solid x)
-    {
-        if (x is TessellatedSolid ts)
+        AddSolid(scene, solid);
+        var radius = Math.Max(
+            solid.XMax - solid.XMin,
+            Math.Max(solid.YMax - solid.YMin, solid.ZMax - solid.ZMin)) / 2;
+        var center = solid.Center;
+        var vertexList = vertices.ToList();
+        for (var index = 0; index < vertexList.Count; index++)
         {
-            var primitives = ts.Primitives?.Where(primitive => primitive.Faces?.Count > 0).ToList() ?? [];
+            var path = new[] { center, center + vertexList[index].Coordinates * radius };
+            var color = index < colors.Count ? colors[index] : new Color(KnownColors.Red);
+            AddPaths(scene, [path], [false], [5.0], [color]);
+        }
+        presenterHost.Show(scene);
+    }
+
+    #endregion
+
+    #region Publish
+
+    /// <summary>Publishes a solid without blocking the calling thread.</summary>
+    public void Show(
+        Solid solid,
+        string title = "",
+        HoldType holdType = HoldType.Immediate,
+        int timeToShow = -1,
+        int id = -1)
+    {
+        Show([solid], title, holdType, timeToShow, id);
+    }
+
+    public void Show(
+        ICollection<Solid> solids,
+        string title = "",
+        HoldType holdType = HoldType.Immediate,
+        int timeToShow = -1,
+        int id = -1)
+    {
+        var scene = new SceneRequest
+        {
+            RequestId = Guid.NewGuid(),
+            Title = title,
+
+            IsBlocking = false,
+            PersistentId = id,
+            HoldType = holdType,
+            DisplayIntervalMilliseconds = timeToShow
+        };
+        foreach (var solid in solids)
+            AddSolid(scene, solid);
+        presenterHost.Publish(scene);
+    }
+
+    public void Show(
+        IEnumerable<IEnumerable<Vector3>> paths,
+        IEnumerable<bool>? closePaths = null,
+        IEnumerable<double>? lineThicknesses = null,
+        IEnumerable<Color>? colors = null,
+        string title = "",
+        HoldType holdType = HoldType.Immediate,
+        int timeToShow = -1,
+        int id = -1,
+        params Solid[] solids)
+    {
+        var scene = new SceneRequest
+        {
+            RequestId = Guid.NewGuid(),
+            Title = title,
+            IsBlocking = false,
+            PersistentId = id,
+            HoldType = holdType,
+            DisplayIntervalMilliseconds = timeToShow
+        };
+        var pathGroups = paths.Select(path => path.ToList()).ToList();
+        AddPaths(scene, pathGroups, closePaths, lineThicknesses, ExpandPathColors(pathGroups.Count, colors));
+        foreach (var solid in solids)
+            AddSolid(scene, solid);
+
+        presenterHost.Publish(scene);
+    }
+
+    public void ShowStepsAndHang(
+        IEnumerable<IEnumerable<IEnumerable<Vector3>>> paths,
+        IEnumerable<IEnumerable<Matrix4x4>> pathTransforms,
+        IEnumerable<IEnumerable<Solid>> solids,
+        IEnumerable<IEnumerable<Matrix4x4>> solidTransforms,
+        IEnumerable<bool>? closePaths = null,
+        IEnumerable<double>? lineThicknesses = null,
+        IEnumerable<Color>? colors = null)
+    {
+        var faceGroups = (solids ?? []).Select(solidGroup => solidGroup.Select(solid =>
+            solid switch
+            {
+                TessellatedSolid tessellatedSolid => tessellatedSolid.Faces,
+                ImplicitSolid implicitSolid => implicitSolid.ConvertToTessellatedSolid(1).Faces,
+                VoxelizedSolid voxelizedSolid => voxelizedSolid.ConvertToTessellatedSolidRectilinear().Faces,
+                _ => []
+            }));
+        ShowStepsAndHang(paths, pathTransforms, faceGroups, solidTransforms, closePaths, lineThicknesses, colors);
+    }
+
+    public void ShowStepsAndHang(
+        IEnumerable<IEnumerable<IEnumerable<Vector3>>> paths,
+        IEnumerable<IEnumerable<Matrix4x4>> pathTransforms,
+        IEnumerable<IEnumerable<IEnumerable<TriangleFace>>> faceGroups,
+        IEnumerable<IEnumerable<Matrix4x4>> faceTransforms,
+        IEnumerable<bool>? closePaths = null,
+        IEnumerable<double>? lineThicknesses = null,
+        IEnumerable<Color>? colors = null)
+    {
+        var request = new SceneRequest
+        {
+            RequestId = Guid.NewGuid(),
+            AutoResetCamera = UpdateTypes.Never,
+            ShowMeshBorders = false
+        };
+        var closePathList = closePaths?.ToList() ?? [];
+        var thicknessList = lineThicknesses?.ToList() ?? [];
+        var colorList = colors?.ToList() ?? [];
+        var pathTransformGroups = pathTransforms?.ToList() ?? [];
+        var pathGroupIndex = 0;
+        foreach (var pathGroup in paths ?? [])
+        {
+            var closePath = pathGroupIndex < closePathList.Count && closePathList[pathGroupIndex];
+            var thickness = pathGroupIndex < thicknessList.Count ? thicknessList[pathGroupIndex] : -1;
+            var color = pathGroupIndex < colorList.Count ? colorList[pathGroupIndex] : Color.GetRandomColors().First();
+            var group = new SceneStepGroup
+            {
+                Paths = pathGroup.Select(path => CreatePath(path, closePath, thickness, color)).ToList(),
+                Transforms = pathGroupIndex < pathTransformGroups.Count
+                    ? CreateStepTransforms(pathTransformGroups[pathGroupIndex])
+                    : null
+            };
+            request.StepGroups.Add(group);
+            pathGroupIndex++;
+        }
+
+        var faceTransformGroups = faceTransforms?.ToList() ?? [];
+        var faceGroupIndex = 0;
+        foreach (var faceGroup in faceGroups ?? [])
+        {
+            var group = new SceneStepGroup
+            {
+                Meshes = faceGroup.Select(CreateStepMesh).ToList(),
+                Transforms = faceGroupIndex < faceTransformGroups.Count
+                    ? CreateStepTransforms(faceTransformGroups[faceGroupIndex])
+                    : null
+            };
+            request.StepGroups.Add(group);
+            faceGroupIndex++;
+        }
+        presenterHost.Show(request);
+    }
+
+    #endregion
+
+    private static void AddSolid(SceneRequest scene, Solid solid)
+    {
+        if (solid is TessellatedSolid tessellatedSolid)
+        {
+            var primitives = tessellatedSolid.Primitives?.Where(primitive => primitive.Faces?.Count > 0).ToList() ?? [];
             if (primitives.Count == 0)
             {
-                s.Meshes.Add(Mesh(ts.Faces,
-                    new ColorRgba(ts.SolidColor.R, ts.SolidColor.G, ts.SolidColor.B, ts.SolidColor.A),
-                    ts.HasUniformColor, "solid"));
+                scene.Meshes.Add(CreateMesh(tessellatedSolid.Faces,
+                    new ColorRgba(tessellatedSolid.SolidColor.R, tessellatedSolid.SolidColor.G,
+                        tessellatedSolid.SolidColor.B, tessellatedSolid.SolidColor.A),
+                    tessellatedSolid.HasUniformColor, "solid"));
                 return;
             }
 
             var primitiveFaces = primitives.SelectMany(primitive => primitive.Faces).ToHashSet();
             foreach (var primitive in primitives)
-                s.Meshes.Add(Mesh(primitive.Faces,
-                    new ColorRgba(ts.SolidColor.R, ts.SolidColor.G, ts.SolidColor.B, ts.SolidColor.A),
-                    ts.HasUniformColor, "primitive"));
+                scene.Meshes.Add(CreateMesh(primitive.Faces,
+                    new ColorRgba(tessellatedSolid.SolidColor.R, tessellatedSolid.SolidColor.G,
+                        tessellatedSolid.SolidColor.B, tessellatedSolid.SolidColor.A),
+                    tessellatedSolid.HasUniformColor, "primitive", primitive));
 
-            var unassignedFaces = ts.Faces.Where(face => !primitiveFaces.Contains(face)).ToList();
+            var unassignedFaces = tessellatedSolid.Faces.Where(face => !primitiveFaces.Contains(face)).ToList();
             if (unassignedFaces.Count > 0)
-                s.Meshes.Add(Mesh(unassignedFaces,
-                    new ColorRgba(ts.SolidColor.R, ts.SolidColor.G, ts.SolidColor.B, ts.SolidColor.A),
-                    ts.HasUniformColor, "unclassified"));
+                scene.Meshes.Add(CreateMesh(unassignedFaces,
+                    new ColorRgba(tessellatedSolid.SolidColor.R, tessellatedSolid.SolidColor.G,
+                        tessellatedSolid.SolidColor.B, tessellatedSolid.SolidColor.A),
+                    tessellatedSolid.HasUniformColor, "unclassified"));
         }
-        else if (x is CrossSectionSolid cs)
+        else if (solid is CrossSectionSolid crossSectionSolid)
         {
-            Paths(s, cs.GetCrossSectionsAs3DLoops().SelectMany(v => v), null, null, null);
+            AddPaths(scene, crossSectionSolid.GetCrossSectionsAs3DLoops().SelectMany(loop => loop), null, null, null);
         }
-        else if (x is VoxelizedSolid vs)
+        else if (solid is VoxelizedSolid voxelizedSolid)
         {
-            var points = vs.GetExposedVoxels().Select(v => new[]
+            var points = voxelizedSolid.GetExposedVoxels().Select(voxel => new[]
             {
-                (float)(v.xIndex * vs.VoxelSideLength + vs.Offset.X),
-                (float)(v.yIndex * vs.VoxelSideLength + vs.Offset.Y),
-                (float)(v.zIndex * vs.VoxelSideLength + vs.Offset.Z)
+                (float)(voxel.xIndex * voxelizedSolid.VoxelSideLength + voxelizedSolid.Offset.X),
+                (float)(voxel.yIndex * voxelizedSolid.VoxelSideLength + voxelizedSolid.Offset.Y),
+                (float)(voxel.zIndex * voxelizedSolid.VoxelSideLength + voxelizedSolid.Offset.Z)
             }).ToList();
-            s.PointSets.Add(new ScenePointSet
+            scene.PointSets.Add(new ScenePointSet
             {
                 Id = $"voxels-{Guid.NewGuid():N}",
-                Radius = Math.Max(1, vs.VoxelSideLength),
-                Color = new ColorRgba(vs.SolidColor.R, vs.SolidColor.G, vs.SolidColor.B, vs.SolidColor.A),
+                Radius = Math.Max(1, voxelizedSolid.VoxelSideLength),
+                Color = new ColorRgba(voxelizedSolid.SolidColor.R, voxelizedSolid.SolidColor.G,
+                    voxelizedSolid.SolidColor.B, voxelizedSolid.SolidColor.A),
                 Points = points
             });
         }
     }
 
-    private static SceneMesh Mesh(IEnumerable<TriangleFace> faces, ColorRgba def, bool uniform, string prefix)
+    private static SceneMesh CreateMesh(IEnumerable<TriangleFace> faces, ColorRgba defaultColor,
+        bool hasUniformColor, string idPrefix, PrimitiveSurface? primitiveOverride = null)
     {
-        var f = faces.ToList();
-        var vertices = f.SelectMany(face => face.Vertices).Distinct().ToList();
-        var indicesByVertex = vertices.Select((vertex, index) => (vertex, index))
-            .ToDictionary(item => item.vertex, item => item.index);
+        var faceList = faces.ToList();
+        var vertices = new List<Vertex>();
+        var primitiveSurfaceNormals = new List<float[]>();
+        var triangles = new List<int[]>(faceList.Count);
+        var indicesByVertexAndPrimitive = new Dictionary<(Vertex Vertex, PrimitiveSurface? Primitive), int>();
+        var hasPrimitiveSurfaces = false;
+
+        foreach (var face in faceList)
+        {
+            var primitive = primitiveOverride ?? face.BelongsToPrimitive;
+            hasPrimitiveSurfaces |= primitive is not null;
+            var faceVertices = face.Vertices.ToList();
+            var triangle = new int[faceVertices.Count];
+            for (var vertexIndex = 0; vertexIndex < faceVertices.Count; vertexIndex++)
+            {
+                var vertex = faceVertices[vertexIndex];
+                var key = (vertex, primitive);
+                if (!indicesByVertexAndPrimitive.TryGetValue(key, out var index))
+                {
+                    index = vertices.Count;
+                    indicesByVertexAndPrimitive.Add(key, index);
+                    vertices.Add(vertex);
+                    primitiveSurfaceNormals.Add(GetPrimitiveSurfaceNormal(primitive, vertex.Coordinates));
+                }
+                triangle[vertexIndex] = index;
+            }
+            triangles.Add(triangle);
+        }
+
         return new SceneMesh
         {
-            Id = $"{prefix}-{Guid.NewGuid():N}",
+            Id = $"{idPrefix}-{Guid.NewGuid():N}",
             Vertices = vertices
                 .Select(v => new[] { (float)v.X, (float)v.Y, (float)v.Z })
                 .ToList(),
-            Triangles = f.Select(face => face.Vertices
-                .Select(vertex => indicesByVertex[vertex]).ToArray())
-                .ToList(),
-            Colors = uniform ? [def] : f.Select(x => new ColorRgba(x.Color.R, x.Color.G, x.Color.B, x.Color.A)).ToList(),
-            HasUniformColor = uniform,
-            SourceFaces = f
+            Triangles = triangles,
+            PrimitiveSurfaceNormals = primitiveSurfaceNormals,
+            HasPrimitiveSurfaces = hasPrimitiveSurfaces,
+            Colors = hasUniformColor
+                ? [defaultColor]
+                : faceList.Select(face => new ColorRgba(face.Color.R, face.Color.G, face.Color.B, face.Color.A)).ToList(),
+            HasUniformColor = hasUniformColor,
+            SourceFaces = faceList
         };
     }
 
-    private static void Paths(
-        SceneRequest s,
+    private static float[] GetPrimitiveSurfaceNormal(PrimitiveSurface? primitive, Vector3 point)
+    {
+        if (primitive is null)
+            return [0f, 0f, 0f];
+
+        var normal = primitive.GetNormalAtPoint(point);
+        if (normal.IsNull() || normal.LengthSquared() <= 1e-20)
+            return [0f, 0f, 0f];
+
+        normal = normal.Normalize();
+        return [(float)normal.X, (float)normal.Y, (float)normal.Z];
+    }
+
+    private static void AddPaths(
+        SceneRequest scene,
         IEnumerable<IEnumerable<Vector3>> paths,
-        IEnumerable<bool>? closed,
-        IEnumerable<double>? thick,
+        IEnumerable<bool>? closePaths,
+        IEnumerable<double>? lineThicknesses,
         IEnumerable<Color>? colors)
     {
-        var c = closed?.ToList() ?? [];
-        var t = thick?.ToList() ?? [];
-        var co = colors?.ToList() ?? [];
-        var i = 0;
+        var closePathList = closePaths?.ToList() ?? [];
+        var lineThicknessList = lineThicknesses?.ToList() ?? [];
+        var colorList = colors?.ToList() ?? [];
+        var pathIndex = 0;
 
-        foreach (var p in paths)
+        foreach (var path in paths)
         {
-            var v = p.Where(x => !x.IsNull())
-                .Select(x => new[] { (float)x.X, (float)x.Y, (float)x.Z })
+            var vertices = path.Where(vertex => !vertex.IsNull())
+                .Select(vertex => new[] { (float)vertex.X, (float)vertex.Y, (float)vertex.Z })
                 .ToList();
-            if (v.Count >= 2)
+            if (vertices.Count >= 2)
             {
-                if (i < c.Count && c[i])
-                    v.Add(v[0]);
-                s.Paths.Add(new ScenePath
+                if (pathIndex < closePathList.Count && closePathList[pathIndex])
+                    vertices.Add(vertices[0]);
+                scene.Paths.Add(new ScenePath
                 {
                     Id = $"path-{Guid.NewGuid():N}",
-                    Vertices = v,
-                    Thickness = i < t.Count ? t[i] : -1,
-                    Color = i < co.Count ? new ColorRgba(co[i].R, co[i].G, co[i].B, co[i].A)
+                    Vertices = vertices,
+                    Thickness = pathIndex < lineThicknessList.Count ? lineThicknessList[pathIndex] : -1,
+                    Color = pathIndex < colorList.Count ? new ColorRgba(colorList[pathIndex].R, colorList[pathIndex].G,
+                        colorList[pathIndex].B, colorList[pathIndex].A)
                     : ColorRgba.Black
                 });
             }
-            i++;
+            pathIndex++;
         }
     }
 
-    private static ScenePointSet Points(IEnumerable<Vector3> points, double radius, Color color)
+    private static ScenePath? CreatePath(
+        IEnumerable<Vector3>? path, bool closePath, double thickness, Color color)
+    {
+        if (path is null)
+            return null;
+
+        var vertices = path.Where(vertex => !vertex.IsNull())
+            .Select(vertex => new[] { (float)vertex.X, (float)vertex.Y, (float)vertex.Z })
+            .ToList();
+        if (vertices.Count < 2)
+            return null;
+        if (closePath)
+            vertices.Add(vertices[0]);
+        return new ScenePath
+        {
+            Id = $"path-{Guid.NewGuid():N}",
+            Vertices = vertices,
+            Thickness = thickness,
+            Color = new ColorRgba(color.R, color.G, color.B, color.A)
+        };
+    }
+
+    private static List<Matrix4x4?>? CreateStepTransforms(IEnumerable<Matrix4x4>? transforms)
+        => transforms?.Select(transform => transform.IsNull() ? (Matrix4x4?)null : transform).ToList();
+
+    private static SceneMesh? CreateStepMesh(IEnumerable<TriangleFace>? faces)
+    {
+        if (faces is null)
+            return null;
+        var faceList = faces.ToList();
+        return faceList.Count == 0
+            ? null
+            : CreateMesh(faceList, ColorRgba.LightGray, false, "step");
+    }
+
+    private static ScenePointSet CreatePoints(IEnumerable<Vector3> points, double radius, Color color)
         => new()
         {
             Id = $"points-{Guid.NewGuid():N}",
@@ -393,22 +575,6 @@ public sealed class Presenter3D : IPresenter3D
             Color = new ColorRgba(color.R, color.G, color.B, color.A),
             Points = points.Select(p => new[] { (float)p.X, (float)p.Y, (float)p.Z }).ToList()
         };
-
-    private void Publish(SceneRequest scene, HoldType hold, int time, int id)
-    {
-        host.Publish(new SceneRequest
-        {
-            RequestId = scene.RequestId,
-            Title = scene.Title,
-            Meshes = scene.Meshes,
-            Paths = scene.Paths,
-            PointSets = scene.PointSets,
-            IsBlocking = false,
-            PersistentId = id,
-            HoldType = hold,
-            DisplayIntervalMilliseconds = time
-        });
-    }
 
     private static Color RandomColor(int i)
         => new(

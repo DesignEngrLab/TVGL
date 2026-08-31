@@ -4,6 +4,7 @@
 @using Microsoft.FluentUI.AspNetCore.Components
 @using Icons = Microsoft.FluentUI.AspNetCore.Components.Icons
 @namespace WebGPUPresenter.Components
+@implements IAsyncDisposable
 
 <section class="scene-viewer">
     <header class="scene-viewer-header">
@@ -25,11 +26,32 @@
         </div>
         <FluentButton Class="rotated-icon-button" @onclick="CloseAsync" IconStart="@(new Icons.Regular.Size20.Add())" />
     </header>
+    @if (StepCount > 1)
+    {
+        <div class="step-controls">
+            <button @onclick="PreviousStepAsync">Prev</button>
+            <input type="range" min="0" max="@(StepCount - 1)" @bind="step"
+                   @bind:event="oninput" @bind:after="RenderSceneAsync" />
+            <span>@(step + 1) / @StepCount</span>
+            <button @onclick="NextStepAsync">Next</button>
+            <button @onclick="ToggleAutoplayAsync">@(IsAutoplaying ? "Pause" : "Play")</button>
+            <label class="step-speed-control">
+                Speed
+                <select @bind="autoplayDelayMilliseconds">
+                    <option value="33">30 fps</option>
+                    <option value="100">10 fps</option>
+                    <option value="333">3 fps</option>
+                    <option value="1000">1 fps</option>
+                    <option value="3000">1 frame / 3 sec</option>
+                </select>
+            </label>
+        </div>
+    }
     <div class="scene-viewer-canvas">
         <BugViewer @ref="viewer" Height="100%" Width="100%" OnReady="OnViewerReadyAsync"
                    CoordinateThickness="1.0" LineWidthX="0.1" LineWidthY="0.1"
                    HoverSelectionKeys="inspectionKeys" OnHoverSelectionKeyChanged="InspectionKeyChangedAsync"
-                   OnTriangleSelected="TriangleSelectedAsync" />
+                   OnTriangleSelected="TriangleSelectedAsync" AutoResetCamera="Current.AutoResetCamera" ShowMeshBorders="Current.ShowMeshBorders" />
     </div>
 </section>
 
@@ -41,21 +63,40 @@
     [Parameter] public EventCallback OnReady { get; set; }
     [Parameter] public EventCallback<SceneTriangleSelection> OnTriangleSelected { get; set; }
 
-    private string Heading => Scenes.LastOrDefault()?.Heading ?? "";
-    private string Title => Scenes.LastOrDefault()?.Title ?? "TVGL 3D Presenter";
-    private string Subtitle => Scenes.LastOrDefault()?.Subtitle ?? "";
+    private int step;
+    private int autoplayDelayMilliseconds = 333;
+    private CancellationTokenSource? autoplayCancellation;
+    private Task? autoplayTask;
+    private bool IsAutoplaying => autoplayCancellation is not null;
+    private SceneRequest CurrentRequest => Scenes.LastOrDefault()
+        ?? new SceneRequest { RequestId = Guid.Empty };
+    private SceneRequest Current => CurrentRequest is { Steps.Count: > 0 } stepped
+        ? stepped.Steps[Math.Clamp(step, 0, stepped.Steps.Count - 1)]
+        : CurrentRequest;
+    private int StepCount => CurrentRequest.StepGroups.Count > 0
+        ? CurrentRequest.StepGroups.Max(group => group.Count)
+        : CurrentRequest.Steps.Count;
+    private string Heading => Current.Heading;
+    private string Title => Current.Title.Length == 0 ? "TVGL 3D Presenter" : Current.Title;
+    private string Subtitle => Current.Subtitle;
     private global::BugViewer.BugViewer? viewer;
 
     private string? activeInspectionKey;
     private string? coloredMeshId;
     private LineData? inspectionLine;
     private int appliedSceneCount;
+    private Guid? appliedFaceDisplayRequestId;
     private readonly Dictionary<string, MeshData> renderedMeshes = [];
     private readonly Dictionary<string, LineData> renderedLines = [];
+    private readonly Dictionary<string, RenderSignature> renderedMeshSignatures = [];
+    private readonly Dictionary<string, RenderSignature> renderedLineSignatures = [];
+    private readonly SemaphoreSlim renderLock = new(1, 1);
     private readonly IReadOnlyList<string> inspectionKeys = ["g", "v", "f", "p"];
 
     protected override async Task OnParametersSetAsync()
     {
+        if (step >= StepCount)
+            step = Math.Max(0, StepCount - 1);
         if (viewer is null || appliedSceneCount == Scenes.Count)
             return;
 
@@ -70,30 +111,174 @@
 
     private Task CloseAsync() => OnClose.InvokeAsync(ViewerId);
 
+    private async Task PreviousStepAsync()
+    {
+        step = Math.Max(0, step - 1);
+        await RenderSceneAsync();
+    }
+
+    private async Task NextStepAsync()
+    {
+        step = Math.Min(StepCount - 1, step + 1);
+        await RenderSceneAsync();
+    }
+
+    private async Task ToggleAutoplayAsync()
+    {
+        if (autoplayCancellation is not null)
+        {
+            await StopAutoplayAsync();
+            return;
+        }
+
+        autoplayCancellation = new CancellationTokenSource();
+        autoplayTask = AutoplayAsync(autoplayCancellation.Token);
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task AutoplayAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            while (!cancellationToken.IsCancellationRequested && StepCount > 1)
+            {
+                await Task.Delay(autoplayDelayMilliseconds, cancellationToken);
+                step = (step + 1) % StepCount;
+                await RenderSceneAsync();
+                if (!cancellationToken.IsCancellationRequested)
+                    await InvokeAsync(StateHasChanged);
+            }
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+        }
+    }
+
+    private async Task StopAutoplayAsync()
+    {
+        var cancellation = autoplayCancellation;
+        var task = autoplayTask;
+        autoplayCancellation = null;
+        autoplayTask = null;
+        if (cancellation is null)
+            return;
+
+        cancellation.Cancel();
+        if (task is not null)
+            await task;
+        cancellation.Dispose();
+    }
+
+    private IEnumerable<SceneRequest> VisibleScenes()
+    {
+        for (var index = 0; index < Scenes.Count - 1; index++)
+            yield return Scenes[index];
+        if (Scenes.Count > 0)
+            yield return Current;
+    }
+
+    private static IEnumerable<(T Element, Matrix4x4? Transform)> ResolveStepElements<T>(
+        IReadOnlyList<T?> elements, IReadOnlyList<Matrix4x4?>? transforms, int stepIndex)
+        where T : class
+    {
+        if (transforms is null)
+        {
+            foreach (var element in elements)
+                if (element is not null)
+                    yield return (element, null);
+            yield break;
+        }
+
+        if (stepIndex >= transforms.Count || transforms[stepIndex] is null)
+        {
+            if (stepIndex < elements.Count && elements[stepIndex] is { } element)
+                yield return (element, null);
+            yield break;
+        }
+
+        var transform = transforms[stepIndex];
+        for (var timeIndex = stepIndex; timeIndex >= 0; timeIndex--)
+        {
+            if (transforms[timeIndex] is null)
+                yield break;
+            if (timeIndex < elements.Count && elements[timeIndex] is { } element)
+                yield return (element, transform);
+        }
+    }
+
     private async Task RenderSceneAsync()
+    {
+        await renderLock.WaitAsync();
+        try
+        {
+            await RenderSceneCoreAsync(step);
+        }
+        finally
+        {
+            renderLock.Release();
+        }
+    }
+
+    private async Task RenderSceneCoreAsync(int stepIndex)
     {
         if (viewer is null)
             return;
 
         var desiredMeshes = new List<MeshData>();
         var desiredLines = new List<LineData>();
-        foreach (var scene in Scenes)
+        var desiredMeshSignatures = new Dictionary<string, RenderSignature>();
+        var desiredLineSignatures = new Dictionary<string, RenderSignature>();
+        foreach (var scene in VisibleScenes())
         {
-            desiredMeshes.AddRange(scene.Meshes.Select(ToMeshData));
-            desiredLines.AddRange(scene.Paths.Select(ToLineData));
-            desiredLines.AddRange(scene.PointSets.Select(ToPointGlyphs));
+            foreach (var mesh in scene.Meshes)
+            {
+                desiredMeshes.Add(ToMeshData(mesh));
+                desiredMeshSignatures.Add(mesh.Id, new RenderSignature(mesh, null));
+            }
+            foreach (var path in scene.Paths)
+            {
+                desiredLines.Add(ToLineData(path));
+                desiredLineSignatures.Add(path.Id, new RenderSignature(path, null));
+            }
+            foreach (var points in scene.PointSets)
+            {
+                var line = ToPointGlyphs(points);
+                desiredLines.Add(line);
+                desiredLineSignatures.Add(line.Id, new RenderSignature(points, null));
+            }
+            foreach (var group in scene.StepGroups)
+            {
+                foreach (var (mesh, transform) in ResolveStepElements(group.Meshes, group.Transforms, stepIndex))
+                {
+                    desiredMeshes.Add(ToMeshData(mesh, transform));
+                    desiredMeshSignatures.Add(mesh.Id, new RenderSignature(mesh, transform));
+                }
+                foreach (var (path, transform) in ResolveStepElements(group.Paths, group.Transforms, stepIndex))
+                {
+                    desiredLines.Add(ToLineData(path, transform));
+                    desiredLineSignatures.Add(path.Id, new RenderSignature(path, transform));
+                }
+            }
         }
 
         var desiredMeshIds = desiredMeshes.Select(mesh => mesh.Id).ToHashSet();
         var desiredLineIds = desiredLines.Select(line => line.Id).ToHashSet();
+        var changedMeshIds = desiredMeshSignatures
+            .Where(item => renderedMeshSignatures.TryGetValue(item.Key, out var rendered)
+                && rendered != item.Value)
+            .Select(item => item.Key).ToHashSet();
+        var changedLineIds = desiredLineSignatures
+            .Where(item => renderedLineSignatures.TryGetValue(item.Key, out var rendered)
+                && rendered != item.Value)
+            .Select(item => item.Key).ToHashSet();
         var meshesToRemove = renderedMeshes.Values
-            .Where(mesh => !desiredMeshIds.Contains(mesh.Id)).ToList();
+            .Where(mesh => !desiredMeshIds.Contains(mesh.Id) || changedMeshIds.Contains(mesh.Id)).ToList();
         var linesToRemove = renderedLines.Values
-            .Where(line => !desiredLineIds.Contains(line.Id)).ToList();
+            .Where(line => !desiredLineIds.Contains(line.Id) || changedLineIds.Contains(line.Id)).ToList();
         var meshesToAdd = desiredMeshes
-            .Where(mesh => !renderedMeshes.ContainsKey(mesh.Id)).ToList();
+            .Where(mesh => !renderedMeshes.ContainsKey(mesh.Id) || changedMeshIds.Contains(mesh.Id)).ToList();
         var linesToAdd = desiredLines
-            .Where(line => !renderedLines.ContainsKey(line.Id)).ToList();
+            .Where(line => !renderedLines.ContainsKey(line.Id) || changedLineIds.Contains(line.Id)).ToList();
 
         await viewer.PauseRenderingAsync();
         try
@@ -107,6 +292,14 @@
                 await viewer.AddMeshesAsync(meshesToAdd);
             if (linesToAdd.Count > 0)
                 await viewer.AddLinesAsync(linesToAdd);
+            if (appliedFaceDisplayRequestId != Current.RequestId)
+            {
+                // Apply this only after the new meshes are present. BugViewer cannot use
+                // primitive-surface normals while its scene is still empty and otherwise
+                // correctly falls back to triangle normals.
+                viewer.Options.ShowSurfacesAs = Current.ShowSurfacesAs;
+                appliedFaceDisplayRequestId = Current.RequestId;
+            }
         }
         finally
         {
@@ -119,6 +312,12 @@
         renderedLines.Clear();
         foreach (var line in desiredLines)
             renderedLines.Add(line.Id, line);
+        renderedMeshSignatures.Clear();
+        foreach (var item in desiredMeshSignatures)
+            renderedMeshSignatures.Add(item.Key, item.Value);
+        renderedLineSignatures.Clear();
+        foreach (var item in desiredLineSignatures)
+            renderedLineSignatures.Add(item.Key, item.Value);
         appliedSceneCount = Scenes.Count;
     }
 
@@ -127,8 +326,9 @@
         if (viewer?.SelectedMeshName is not { Length: > 0 } meshId || viewer.SelectedTriangleInMeshIndex < 0)
             return;
 
-        var scene = Scenes.LastOrDefault(s => s.Meshes.Any(m => m.Id == meshId));
-        var mesh = scene?.Meshes.FirstOrDefault(m => m.Id == meshId);
+        var selected = VisibleSceneMeshes().LastOrDefault(item => item.Mesh.Id == meshId);
+        var scene = selected.Scene;
+        var mesh = selected.Mesh;
         var face = mesh?.SourceFaces.ElementAtOrDefault(viewer.SelectedTriangleInMeshIndex);
         if (scene is null || mesh is null || face is null)
             return;
@@ -251,8 +451,8 @@
 
         var meshId = coloredMeshId;
         coloredMeshId = null;
-        var mesh = Scenes.SelectMany(scene => scene.Meshes)
-        .LastOrDefault(candidate => candidate.Id == meshId);
+        var mesh = VisibleSceneMeshes().Select(item => item.Mesh)
+            .LastOrDefault(candidate => candidate.Id == meshId);
         if (mesh is not null)
             await viewer.ChangeMeshColorsAsync(mesh.Id, ExpandedColors(mesh));
     }
@@ -326,22 +526,71 @@
             var color = mesh.Colors.Count > 0 ? mesh.Colors[0] : ColorRgba.LightGray;
             return Enumerable.Repeat(color, mesh.Triangles.Count).ToList();
         }
-        return mesh.Colors;
+        return mesh.Colors.ToList();
     }
 
 
-    private MeshData ToMeshData(SceneMesh mesh)
+    private IEnumerable<(SceneRequest Scene, SceneMesh Mesh)> VisibleSceneMeshes()
     {
+        foreach (var scene in VisibleScenes())
+        {
+            foreach (var mesh in scene.Meshes)
+                yield return (scene, mesh);
+            foreach (var group in scene.StepGroups)
+                foreach (var (mesh, _) in ResolveStepElements(group.Meshes, group.Transforms, step))
+                    yield return (scene, mesh);
+        }
+    }
+
+    private static NumericsVector3 TransformVertex(float[] vertex, Matrix4x4? transform)
+    {
+        if (transform is null)
+            return new NumericsVector3(vertex[0], vertex[1], vertex[2]);
+
+        var transformed = new TVGL.Vector3(vertex[0], vertex[1], vertex[2]).Transform(transform.Value);
+        return ToNumerics(transformed);
+    }
+
+    private static NumericsVector3 TransformNormal(float[] normal, Matrix4x4? normalTransform,
+        bool transformIsValid)
+    {
+        if (!transformIsValid)
+            return NumericsVector3.Zero;
+
+        var transformed = new TVGL.Vector3(normal[0], normal[1], normal[2]);
+        if (transformed.IsNull() || transformed.LengthSquared() <= 1e-20)
+            return NumericsVector3.Zero;
+        if (normalTransform is not null)
+            transformed = transformed.TransformNoTranslate(normalTransform.Value);
+        if (transformed.IsNull() || transformed.LengthSquared() <= 1e-20)
+            return NumericsVector3.Zero;
+        return ToNumerics(transformed.Normalize());
+    }
+
+    private MeshData ToMeshData(SceneMesh mesh, Matrix4x4? transform = null)
+    {
+        Matrix4x4? normalTransform = null;
+        var transformIsValid = true;
+        if (transform is not null)
+        {
+            transformIsValid = Matrix4x4.Invert(transform.Value, out var inverse);
+            if (transformIsValid)
+                normalTransform = Matrix4x4.Transpose(inverse);
+        }
+
         return new MeshData
         {
             Id = mesh.Id,
-            Vertices = mesh.Vertices.Select(v => new NumericsVector3(v[0], v[1], v[2])).ToList(),
+            Vertices = mesh.Vertices.Select(vertex => TransformVertex(vertex, transform)).ToList(),
             Indices = mesh.Triangles.Select(t => (t[0], t[1], t[2])).ToList(),
+            PrimitiveSurfaceNormals = mesh.PrimitiveSurfaceNormals
+                .Select(normal => TransformNormal(normal, normalTransform, transformIsValid)).ToList(),
+            HasPrimitiveSurfaces = mesh.HasPrimitiveSurfaces,
             Colors = ExpandedColors(mesh),
             ColorMode = MeshColoring.PerTriangle
         };
     }
-    private LineData ToLineData(ScenePath path)
+    private LineData ToLineData(ScenePath path, Matrix4x4? transform = null)
     {
         var segmentCount = Math.Max(0, path.Vertices.Count - 1);
         var color = new ColorRgba(path.Color.R, path.Color.G, path.Color.B, path.Color.A);
@@ -349,7 +598,7 @@
         return new LineData
         {
             Id = path.Id,
-            Vertices = path.Vertices.Select(v => new NumericsVector3(v[0], v[1], v[2])).ToList(),
+            Vertices = path.Vertices.Select(vertex => TransformVertex(vertex, transform)).ToList(),
             Thicknesses = Enumerable.Repeat(path.Thickness < 0
                 ? LineData.AutomaticThickness
                 : (float)path.Thickness, segmentCount).ToList(),
@@ -381,4 +630,14 @@
             FadeFactors = Enumerable.Repeat(0f, count).ToList()
         };
     }
+
+    public async ValueTask DisposeAsync()
+    {
+        await StopAutoplayAsync();
+        await renderLock.WaitAsync();
+        renderLock.Release();
+        renderLock.Dispose();
+    }
+
+    private readonly record struct RenderSignature(object Source, Matrix4x4? Transform);
 }

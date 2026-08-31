@@ -187,8 +187,7 @@ namespace WindowsDesktopPresenter
         /// Show and hang a series of paths and solids at each step. Here, the outermost collection is the unique object, and the second
         /// is the time step. So if you have 3 paths and 5 time steps, you will have 3 collections each with 5 paths and each of which 
         /// is comprised of a certain number of points. These paths (3 in the example) can each be closed or not (the default is not closed), 
-        /// and can have a certain thickness and color. So, in the example, these would be expected to be of length 3. Also keptEarlierPaths
-        /// would be of length 3, indicating for each path whether to keep the earlier paths on the screen or not (the default is true). 
+        /// and can have a certain thickness and color. So, in the example, these would be expected to be of length 3. 
         /// If solids are provided, then they are kept on the screen, and at each time step, the transforms are applied to them. If a 
         /// transform collection is null, then the solid is assumed to be static and is kept in all time steps. If the transforms 
         /// collection is provided, then a Matrix4x4.Identity would keep it in the default position and a Matrix4x4.Null would remove 
@@ -232,7 +231,6 @@ namespace WindowsDesktopPresenter
             var colorEnumerator = pathColors != null ? pathColors.GetEnumerator() : new Repeater<Color>(new Color(KnownColors.Black));
             var outerTransformEnumerator = pathTransforms != null ? pathTransforms.GetEnumerator() : new Repeater<IEnumerable<Matrix4x4>>(null);
 
-            var numPathTimeSteps = 0;
             foreach (var pathGroup in paths)
             {
                 var closed = closedEnumerator.MoveNext() ? closedEnumerator.Current : false;
@@ -247,14 +245,12 @@ namespace WindowsDesktopPresenter
                         transformSteps.Add(innerTransformSteps.MoveNext() ? ConvertToWindowsTransform3D(innerTransformSteps.Current) : null);
                     helixPathSteps.Add(pathStep == null ? null : ConvertPathToLineModel(pathStep, lineThickness, pathColor, closed));
                 }
-                numPathTimeSteps = Math.Max(numPathTimeSteps, helixPathSteps.Count);
-                vm.PathGroups.Add(helixPathSteps);
-                vm.PathTransforms.Add(transformSteps);
+                vm.GeometryGroups.Add(helixPathSteps);
+                vm.Transforms.Add(transformSteps);
             }
 
             var defColor = new Color(TVGL.Constants.DefaultColor);
             outerTransformEnumerator = fGTransforms != null ? fGTransforms.GetEnumerator() : new Repeater<IEnumerable<Matrix4x4>>(null);
-            //var numSolidTimeSteps = 0;
             foreach (var solidGroup in faceGroups)
             {
                 var numInGroup = 1;
@@ -265,11 +261,12 @@ namespace WindowsDesktopPresenter
                     subGroupSteps.Add(geom3Ds);
                     numInGroup = Math.Max(numInGroup, geom3Ds.Length);
                 }
-                var innerMatrixSteps = outerTransformEnumerator.MoveNext() ? outerTransformEnumerator.Current : null;
-                var innerTransformSteps = innerMatrixSteps == null ? null
-                    : innerMatrixSteps.Select(ConvertToWindowsTransform3D).ToArray();
+                var innerTransformSteps = outerTransformEnumerator.MoveNext() ? outerTransformEnumerator.Current?.GetEnumerator() : null;
+                var transformSteps = innerTransformSteps == null ? null : new List<System.Windows.Media.Media3D.Transform3D>();
                 for (int i = 0; i < numInGroup; i++)
                 {
+                    if (innerTransformSteps != null)
+                        transformSteps.Add(innerTransformSteps.MoveNext() ? ConvertToWindowsTransform3D(innerTransformSteps.Current) : null);
                     var helixsolidSteps = new List<GeometryModel3D>();
                     for (int j = 0; j < subGroupSteps.Count; j++)
                     {
@@ -280,9 +277,9 @@ namespace WindowsDesktopPresenter
                     //numSolidTimeSteps = Math.Max(numSolidTimeSteps, helixsolidSteps.Count);
                     while (helixsolidSteps.Count > 1 && helixsolidSteps[^1] == null)
                         helixsolidSteps.RemoveAt(helixsolidSteps.Count - 1);
-                    vm.SolidGroups.Add(helixsolidSteps);
+                    vm.GeometryGroups.Add(helixsolidSteps);
                     //if (innerTransformSteps.Length == helixsolidSteps.Count)
-                    vm.SolidTransforms.Add(innerTransformSteps);
+                    vm.Transforms.Add(transformSteps);
                     //else
                     //    vm.SolidTransforms.Add(innerTransformSteps.Take(helixsolidSteps.Count).ToArray());
                 }

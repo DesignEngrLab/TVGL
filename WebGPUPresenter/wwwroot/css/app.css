@@ -17,7 +17,10 @@ body { margin: 0; background: #f4f4f8; }
 .rotated-icon-button svg { transform: rotate(45deg); }
 .presenter-controls { position: fixed; bottom: 0; left: 0; right: 0; display: flex; gap: 1rem; align-items: center; padding: .75rem 1rem; background: #20242d; color: white; box-shadow: 0 -2px 8px #0004; }
 .presenter-controls button { padding: .35rem .8rem; font-weight: 600; }
-.plot-viewer { flex: 1 1 auto; width: 100%; min-height: 18rem; }.step-controls { display: flex; gap: .5rem; align-items: center; margin: .5rem 0; }.step-controls input { flex: 1; }
+.plot-viewer { flex: 1 1 auto; width: 100%; min-height: 18rem; }
+.step-controls { display: flex; gap: .5rem; align-items: center; margin: .5rem 0; }
+.step-controls input { flex: 1; }
+.step-speed-control { display: flex; gap: .35rem; align-items: center; white-space: nowrap; }
 
 h1:focus {
     outline: none;
