@@ -72,7 +72,8 @@ namespace WindowsDesktopPresenter
             MarkerType marker, Color color = null) : this(title)
         {
             if (plot2DType == Plot2DType.Area)
-                throw new Exception("This function is not intended for Plot2DType.Area. LineColor and FillColor are required.");
+                plot2DType = Plot2DType.Line;
+                //throw new Exception("This function is not intended for Plot2DType.Area. LineColor and FillColor are required.");
             PlotData(listOfArrayOfPoints, plot2DType, closeShape, marker, color);
             InitializeComponent();
         }
