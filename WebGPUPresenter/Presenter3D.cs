@@ -59,6 +59,9 @@ public sealed class Presenter3D : IPresenter3D
             scene = new SceneRequest
             {
                 RequestId = Guid.NewGuid(),
+                Meshes = scene.Meshes,
+                Paths = scene.Paths,
+                PointSets = scene.PointSets,
                 Heading = heading,
                 Title = title,
                 Subtitle = subtitle,
@@ -108,6 +111,9 @@ public sealed class Presenter3D : IPresenter3D
         if (!primitivesExist)
             scene = new SceneRequest
             {
+                Meshes = scene.Meshes,
+                Paths = scene.Paths,
+                PointSets = scene.PointSets,
                 RequestId = scene.RequestId,
                 ShowSurfacesAs = MeshFaceDisplay.Triangles
             };
