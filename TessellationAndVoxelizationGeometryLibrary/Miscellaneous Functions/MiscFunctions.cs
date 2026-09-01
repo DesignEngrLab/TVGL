@@ -2162,7 +2162,7 @@ namespace TVGL
             t2 = (-a21 * b1 + a11 * b2) * aDetInverse;
             intersect1 = anchor1 + t1 * direction1;
             intersect2 = anchor2 + t2 * direction2;
-            center = intersect1 + intersect2 / 2;
+            center = (intersect1 + intersect2) / 2;
             return intersect1.Distance(intersect2);
         }
 
