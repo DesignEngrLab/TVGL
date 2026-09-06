@@ -54,9 +54,8 @@
     }
     <div class="scene-viewer-canvas">
         <BugViewer @ref="viewer" Height="100%" Width="100%" OnReady="OnViewerReadyAsync"
-                   CoordinateThickness="1.0" LineWidthX="0.1" LineWidthY="0.1"
                    HoverSelectionKeys="inspectionKeys" OnHoverSelectionKeyChanged="InspectionKeyChangedAsync"
-                   OnTriangleSelected="TriangleSelectedAsync" AutoResetCamera="Current.AutoResetCamera" ShowMeshBorders="Current.ShowMeshBorders" />
+                   OnTriangleSelected="TriangleSelectedAsync" AutoResetCamera="Current.AutoResetCamera" />
     </div>
 </section>
 
@@ -91,7 +90,7 @@
     private string? coloredMeshId;
     private LineData? inspectionLine;
     private int appliedSceneCount;
-    private Guid? appliedFaceDisplayRequestId;
+    private bool displayPreferencesInitialized;
     private readonly Dictionary<string, MeshData> renderedMeshes = [];
     private readonly Dictionary<string, LineData> renderedLines = [];
     private readonly Dictionary<string, RenderSignature> renderedMeshSignatures = [];
@@ -351,13 +350,15 @@
             if (linesToAdd.Count > 0)
                 await viewer.AddLinesAsync(linesToAdd);
             var currentScene = CurrentAtStep(stepIndex);
-            if (appliedFaceDisplayRequestId != currentScene.RequestId)
+            if (!displayPreferencesInitialized)
             {
-                // Apply this only after the new meshes are present. BugViewer cannot use
-                // primitive-surface normals while its scene is still empty and otherwise
-                // correctly falls back to triangle normals.
+                // Scene requests provide the first view's defaults. After that, the user owns these
+                // settings for this viewer: changing frame or scene must not overwrite their choices.
+                // Apply the face mode only after meshes are present, because BugViewer otherwise cannot
+                // determine whether primitive-surface normals are available.
+                displayPreferencesInitialized = true;
                 viewer.Options.ShowSurfacesAs = currentScene.ShowSurfacesAs;
-                appliedFaceDisplayRequestId = currentScene.RequestId;
+                viewer.Options.ShowMeshBorders = currentScene.ShowMeshBorders;
             }
         }
         finally
