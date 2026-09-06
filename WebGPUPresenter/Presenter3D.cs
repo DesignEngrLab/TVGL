@@ -1,4 +1,6 @@
 using BugViewer;
+using System.ComponentModel.Design.Serialization;
+using System.Transactions;
 using TVGL;
 using Color = TVGL.Color;
 
@@ -315,34 +317,34 @@ public sealed class Presenter3D : IPresenter3D
         presenterHost.Publish(scene);
     }
 
-    public void ShowStepsAndHang(
-        IEnumerable<IEnumerable<IEnumerable<Vector3>>> paths,
-        IEnumerable<IEnumerable<Matrix4x4>> pathTransforms,
-        IEnumerable<IEnumerable<Solid>> solids,
-        IEnumerable<IEnumerable<Matrix4x4>> solidTransforms,
-        IEnumerable<bool>? closePaths = null,
-        IEnumerable<double>? lineThicknesses = null,
-        IEnumerable<Color>? colors = null)
+
+    public void ShowStepsAndHang(IList<IEnumerable<IEnumerable<Vector3>>> paths,
+        IList<IEnumerable<Matrix4x4>> pathTransforms, IList<IEnumerable<Solid>> solids, IList<IEnumerable<Matrix4x4>> solidTransforms, IList<IEnumerable<bool>> closePaths = null, IList<IEnumerable<double>> lineThicknesses = null, IList<IEnumerable<Color>> colors = null)
     {
-        var faceGroups = (solids ?? []).Select(solidGroup => solidGroup.Select(solid =>
-            solid switch
+        var faceGroups = new IEnumerable<IEnumerable<TriangleFace>>[solids.Count];
+        for (var groupIndex = 0; groupIndex < solids.Count; groupIndex++)
+        {
+            var facesInGroup = new List<IEnumerable<TriangleFace>>();
+            foreach (var solid in solids[groupIndex])
             {
-                TessellatedSolid tessellatedSolid => tessellatedSolid.Faces,
-                ImplicitSolid implicitSolid => implicitSolid.ConvertToTessellatedSolid(1).Faces,
-                VoxelizedSolid voxelizedSolid => voxelizedSolid.ConvertToTessellatedSolidRectilinear().Faces,
-                _ => []
-            }));
+                IEnumerable<TriangleFace> faces = solid switch
+                {
+                    TessellatedSolid tessellatedSolid => tessellatedSolid.Faces,
+                    ImplicitSolid implicitSolid => implicitSolid.ConvertToTessellatedSolid(1).Faces,
+                    VoxelizedSolid voxelizedSolid => voxelizedSolid.ConvertToTessellatedSolidRectilinear().Faces,
+                    _ => []
+                };
+                facesInGroup.Add(faces);
+            }
+            faceGroups[groupIndex] = facesInGroup;
+        }
         ShowStepsAndHang(paths, pathTransforms, faceGroups, solidTransforms, closePaths, lineThicknesses, colors);
     }
 
-    public void ShowStepsAndHang(
-        IEnumerable<IEnumerable<IEnumerable<Vector3>>> paths,
-        IEnumerable<IEnumerable<Matrix4x4>> pathTransforms,
-        IEnumerable<IEnumerable<IEnumerable<TriangleFace>>> faceGroups,
-        IEnumerable<IEnumerable<Matrix4x4>> faceTransforms,
-        IEnumerable<bool>? closePaths = null,
-        IEnumerable<double>? lineThicknesses = null,
-        IEnumerable<Color>? colors = null)
+    public void ShowStepsAndHang(IList<IEnumerable<IEnumerable<Vector3>>> paths, IList<IEnumerable<Matrix4x4>> pathTransformGroups,
+        IList<IEnumerable<IEnumerable<TriangleFace>>> faceGroups, IList<IEnumerable<Matrix4x4>> fGTransforms,
+        IList<IEnumerable<bool>> closePaths = null, IList<IEnumerable<double>> lineThicknesses = null,
+        IList<IEnumerable<Color>> pathColors = null)
     {
         var request = new SceneRequest
         {
@@ -350,36 +352,49 @@ public sealed class Presenter3D : IPresenter3D
             AutoResetCamera = UpdateTypes.Never,
             ShowMeshBorders = false
         };
-        var closePathList = closePaths?.ToList() ?? [];
-        var thicknessList = lineThicknesses?.ToList() ?? [];
-        var colorList = colors?.ToList() ?? [];
-        var pathTransformGroups = pathTransforms?.ToList() ?? [];
-        var pathGroupIndex = 0;
-        foreach (var pathGroup in paths ?? [])
+        for (var i = 0; i < paths.Count; i++)
         {
-            var closePath = pathGroupIndex < closePathList.Count && closePathList[pathGroupIndex];
-            var thickness = pathGroupIndex < thicknessList.Count ? thicknessList[pathGroupIndex] : -1;
-            var color = pathGroupIndex < colorList.Count ? colorList[pathGroupIndex] : Color.GetRandomColors().First();
+            var closePath = i < closePaths?.Count ? closePaths[i] : [];
+            var thickness = i < lineThicknesses?.Count ? lineThicknesses[i] : [];
+            var color = i < pathColors?.Count ? pathColors[i] : [];
+            var pathI = paths[i];
+            var plotPaths = new List<ScenePath>();
+            using var closeEnumerator = closePath.GetEnumerator();
+            using var thicknessEnumerator = thickness.GetEnumerator();
+            using var colorEnumerator = color.GetEnumerator();
+            var lastClose = false;
+            var lastThick = -1.0;
+            var lastCol = Color.GetRandomColors().First();
+            foreach (var path in pathI)
+            {
+                var close = closeEnumerator.MoveNext() ? closeEnumerator.Current : lastClose;
+                var thick = thicknessEnumerator.MoveNext() ? thicknessEnumerator.Current : lastThick;
+                var col = colorEnumerator.MoveNext() ? colorEnumerator.Current : lastCol;
+                plotPaths.Add(CreatePath(path, close, thick, col));
+                lastClose = close;
+                lastThick = thick;
+                lastCol = col;
+            }
             var group = new SceneStepGroup
             {
-                Paths = pathGroup.Select(path => CreatePath(path, closePath, thickness, color)).ToList(),
-                Transforms = pathGroupIndex < pathTransformGroups.Count
-                    ? CreateStepTransforms(pathTransformGroups[pathGroupIndex])
+                Paths = plotPaths,
+                Transforms = i < pathTransformGroups.Count
+                    ? CreateStepTransforms(pathTransformGroups[i])
                     : null
             };
+
+
             request.StepGroups.Add(group);
-            pathGroupIndex++;
         }
 
-        var faceTransformGroups = faceTransforms?.ToList() ?? [];
         var faceGroupIndex = 0;
         foreach (var faceGroup in faceGroups ?? [])
         {
             var group = new SceneStepGroup
             {
                 Meshes = faceGroup.Select(CreateStepMesh).ToList(),
-                Transforms = faceGroupIndex < faceTransformGroups.Count
-                    ? CreateStepTransforms(faceTransformGroups[faceGroupIndex])
+                Transforms = faceGroupIndex < fGTransforms.Count
+                    ? CreateStepTransforms(fGTransforms[faceGroupIndex])
                     : null
             };
             request.StepGroups.Add(group);
@@ -450,11 +465,14 @@ public sealed class Presenter3D : IPresenter3D
         var triangles = new List<int[]>(faceList.Count);
         var indicesByVertexAndPrimitive = new Dictionary<(Vertex Vertex, PrimitiveSurface? Primitive), int>();
         var hasPrimitiveSurfaces = false;
+        var hasColorsDefined = false;
 
         foreach (var face in faceList)
         {
             var primitive = primitiveOverride ?? face.BelongsToPrimitive;
             hasPrimitiveSurfaces |= primitive is not null;
+            if (face.Color is not null)
+                hasColorsDefined = true;
             var faceVertices = face.Vertices.ToList();
             var triangle = new int[faceVertices.Count];
             for (var vertexIndex = 0; vertexIndex < faceVertices.Count; vertexIndex++)
@@ -484,7 +502,8 @@ public sealed class Presenter3D : IPresenter3D
             HasPrimitiveSurfaces = hasPrimitiveSurfaces,
             Colors = hasUniformColor
                 ? [defaultColor]
-                : faceList.Select(face => new ColorRgba(face.Color.R, face.Color.G, face.Color.B, face.Color.A)).ToList(),
+                : faceList.Select(face => face.Color is null ? defaultColor
+                : new ColorRgba(face.Color.R, face.Color.G, face.Color.B, face.Color.A)).ToList(),
             HasUniformColor = hasUniformColor,
             SourceFaces = faceList
         };

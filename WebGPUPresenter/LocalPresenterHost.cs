@@ -17,7 +17,8 @@ public sealed class LocalPresenterHost
     public LocalPresenterHost()
     {
         var port = FindPort(); Url = $"http://127.0.0.1:{port}";
-        var builder = WebApplication.CreateSlimBuilder();
+        var builder = WebApplication.CreateSlimBuilder(); 
+        builder.Logging.AddFilter("Microsoft.AspNetCore", LogLevel.Warning);
         builder.WebHost.UseUrls(Url);
         // Testing.exe is the entry assembly, but WebGPUPresenter owns the browser assets. Load its
         // runtime manifest so UseStaticFiles receives the browser project's composite file provider.

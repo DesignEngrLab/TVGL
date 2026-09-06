@@ -1975,7 +1975,7 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Lines the line2 d intersection.
+        /// Lines the line2D intersection.
         /// </summary>
         /// <param name="aAnchor">Some known point on a-line.</param>
         /// <param name="aDirection">The direction of the a-line.</param>
@@ -1983,16 +1983,48 @@ namespace TVGL
         /// <param name="bDirection">The direction of the b-line.</param>
         /// <returns>TVGL.Vector2.</returns>
         public static Vector2 LineLine2DIntersection(Vector2 aAnchor, Vector2 aDirection, Vector2 bAnchor, Vector2 bDirection)
-        {
-            if (aAnchor.IsPracticallySame(bAnchor, Constants.BaseTolerance)) return aAnchor;
-            var vCross = aDirection.Cross(bDirection); //2D cross product, determines if parallel
+        => LineLine2DIntersection(aAnchor, aDirection, bAnchor, bDirection, out _, out _);
 
-            if (vCross.IsNegligible(Constants.BaseTolerance))
+        /// <summary>
+        /// Lines the line2D intersection.
+        /// </summary>
+        /// <param name="aAnchor">Some known point on a-line.</param>
+        /// <param name="aDirection">The direction of the a-line.</param>
+        /// <param name="bAnchor">Some known point on b-line.</param>
+        /// <param name="bDirection">The direction of the b-line.</param>
+        /// <param name="tA">The parameter for the a-line.</param>
+        /// <param name="tB">The parameter for the b-line.</param>
+        /// <param name="parallelSinTolerance">The tolerance for parallel lines.</param>
+        /// <returns>TVGL.Vector2.</returns>
+        public static Vector2 LineLine2DIntersection(Vector2 aAnchor, Vector2 aDirection, Vector2 bAnchor, Vector2 bDirection,
+        out double tA, out double tB, double parallelSinTolerance = Constants.BaseTolerance)
+        {
+            var intersectionPoint = Vector2.Null;
+            tA = double.NaN;
+            tB = double.NaN;
+
+            var aLengthSquared = aDirection.LengthSquared();
+            var bLengthSquared = bDirection.LengthSquared();
+
+            // Reject zero directions and NaN inputs.
+            if (!(aLengthSquared > 0.0) || !(bLengthSquared > 0.0))
                 return Vector2.Null;
 
-            var oneOverdeterminnant = 1.0 / aDirection.Cross(bDirection); //2D cross product, determines if parallel
-            var t_a = oneOverdeterminnant * (bDirection.Y * (bAnchor.X - aAnchor.X) - bDirection.X * (bAnchor.Y - aAnchor.Y));
-            return aAnchor + t_a * aDirection;
+            var denominator = aDirection.Cross(bDirection);
+
+            // Scale-invariant test:
+            // cross² / (|a|² |b|²) = sin²(theta).
+            var toleranceSquared = parallelSinTolerance * parallelSinTolerance;
+            if (denominator * denominator
+                <= toleranceSquared * aLengthSquared * bLengthSquared)
+                return Vector2.Null;
+
+            var delta = bAnchor - aAnchor;
+
+            tA = delta.Cross(bDirection) / denominator;
+            tB = delta.Cross(aDirection) / denominator;
+
+            return aAnchor + tA * aDirection;
         }
 
         /// <summary>

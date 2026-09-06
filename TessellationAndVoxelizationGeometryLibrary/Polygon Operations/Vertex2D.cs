@@ -70,13 +70,13 @@ namespace TVGL
         /// Gets the line that starts at this node.
         /// </summary>
         /// <value>The start line.</value>
-        public PolygonEdge StartLine { get; internal set; }
+        public PolygonEdge StartLine { get; set; }
 
         /// <summary>
         /// Gets the line that ends at this node.
         /// </summary>
         /// <value>The end line.</value>
-        public PolygonEdge EndLine { get; internal set; }
+        public PolygonEdge EndLine { get; set; }
 
         /// <summary>
         /// Gets the base class, Point of this node.

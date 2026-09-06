@@ -137,9 +137,9 @@ namespace TVGL
         /// <param name="closePaths">Whether paths should be closed.</param>
         /// <param name="lineThicknesses">Optional path line thicknesses.</param>
         /// <param name="colors">Optional path colors.</param>
-        void ShowStepsAndHang(IEnumerable<IEnumerable<IEnumerable<Vector3>>> paths, IEnumerable<IEnumerable<Matrix4x4>> pathTransforms,
-            IEnumerable<IEnumerable<Solid>> solids, IEnumerable<IEnumerable<Matrix4x4>> solidTransforms, IEnumerable<bool> closePaths = null,
-            IEnumerable<double> lineThicknesses = null, IEnumerable<Color> colors = null);
+        void ShowStepsAndHang(IList<IEnumerable<IEnumerable<Vector3>>> paths, IList<IEnumerable<Matrix4x4>> pathTransforms,
+           IList<IEnumerable<Solid>> solids, IList<IEnumerable<Matrix4x4>> solidTransforms, IList<IEnumerable<bool>> closePaths = null,
+           IList<IEnumerable<double>> lineThicknesses = null, IList<IEnumerable<Color>> colors = null);
 
         /// <summary>Displays a sequence of transformed paths and triangle-face groups as an interactive progression.</summary>
         /// <param name="paths">The path groups for each step.</param>
@@ -149,9 +149,9 @@ namespace TVGL
         /// <param name="closePaths">Whether paths should be closed.</param>
         /// <param name="lineThicknesses">Optional path line thicknesses.</param>
         /// <param name="pathColors">Optional path colors.</param>
-        void ShowStepsAndHang(IEnumerable<IEnumerable<IEnumerable<Vector3>>> paths, IEnumerable<IEnumerable<Matrix4x4>> pathTransforms,
-            IEnumerable<IEnumerable<IEnumerable<TriangleFace>>> faceGroups, IEnumerable<IEnumerable<Matrix4x4>> fGTransforms, IEnumerable<bool> closePaths = null,
-            IEnumerable<double> lineThicknesses = null, IEnumerable<Color> pathColors = null);
+        void ShowStepsAndHang(IList<IEnumerable<IEnumerable<Vector3>>> paths, IList<IEnumerable<Matrix4x4>> pathTransforms,
+      IList<IEnumerable<IEnumerable<TriangleFace>>> faceGroups, IList<IEnumerable<Matrix4x4>> fGTransforms, IList<IEnumerable<bool>> closePaths = null,
+      IList<IEnumerable<double>> lineThicknesses = null, IList<IEnumerable<Color>> pathColors = null);
         #endregion
     }
 }

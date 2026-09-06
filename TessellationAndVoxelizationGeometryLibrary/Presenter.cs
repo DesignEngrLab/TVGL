@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 
@@ -62,7 +63,7 @@ namespace TVGL
         public static void ShowAndHang(IEnumerable<Vector2> points, string title = "", Plot2DType plot2DType = Plot2DType.Line, bool closeShape = true, MarkerType marker = MarkerType.Circle)
         => OutputServices.Presenter2D.ShowAndHang(points, title, plot2DType, closeShape, marker);
         /// <summary>Displays multiple two-dimensional point collections.</summary>
-        public static void ShowAndHang(IEnumerable<IEnumerable<Vector2>> pointsList, string title = "", 
+        public static void ShowAndHang(IEnumerable<IEnumerable<Vector2>> pointsList, string title = "",
             Plot2DType plot2DType = Plot2DType.Line, bool closeShape = true, MarkerType marker = MarkerType.Circle)
        => OutputServices.Presenter2D.ShowAndHang(pointsList, title, plot2DType, closeShape, marker);
         /// <summary>Displays grouped two-dimensional point collections.</summary>
@@ -111,15 +112,15 @@ namespace TVGL
         public static void ShowPointsAndHang(IEnumerable<IEnumerable<Vector3>> pointSets, double radius = 0, IEnumerable<Color> colors = null)
         => OutputServices.Presenter3D.ShowPointsAndHang(pointSets, radius, colors);
         /// <summary>Displays a sequence of transformed paths and solids.</summary>
-        public static void ShowStepsAndHang(IList<IEnumerable<IEnumerable<Vector3>>> paths, IEnumerable<IEnumerable<Matrix4x4>> pathTransforms,
-            IList<IEnumerable<Solid>> solids, IEnumerable<IEnumerable<Matrix4x4>> solidTransforms, IEnumerable<bool> closePaths = null,
-            IEnumerable<double> lineThicknesses = null, IEnumerable<Color> colors = null)
+        public static void ShowStepsAndHang(IList<IEnumerable<IEnumerable<Vector3>>> paths, IList<IEnumerable<Matrix4x4>> pathTransforms,
+            IList<IEnumerable<Solid>> solids, IList<IEnumerable<Matrix4x4>> solidTransforms, IList<IEnumerable<bool>> closePaths = null,
+            IList<IEnumerable<double>> lineThicknesses = null, IList<IEnumerable<Color>> colors = null)
             => OutputServices.Presenter3D.ShowStepsAndHang(paths, pathTransforms, solids, solidTransforms, closePaths,
                 lineThicknesses, colors);
         /// <summary>Displays a sequence of transformed paths and triangle-face groups.</summary>
-        public static void ShowStepsAndHang(IList<IEnumerable<IEnumerable<Vector3>>> paths, IEnumerable<IEnumerable<Matrix4x4>> pathTransforms,
-       IList<IEnumerable<IEnumerable<TriangleFace>>> faceGroups, IEnumerable<IEnumerable<Matrix4x4>> fGTransforms, IEnumerable<bool> closePaths = null,
-       IEnumerable<double> lineThicknesses = null, IEnumerable<Color> pathColors = null)
+        public static void ShowStepsAndHang(IList<IEnumerable<IEnumerable<Vector3>>> paths, IList<IEnumerable<Matrix4x4>> pathTransforms,
+       IList<IEnumerable<IEnumerable<TriangleFace>>> faceGroups, IList<IEnumerable<Matrix4x4>> fGTransforms, IList<IEnumerable<bool>> closePaths = null,
+       IList<IEnumerable<double>> lineThicknesses = null, IList<IEnumerable<Color>> pathColors = null)
                 => OutputServices.Presenter3D.ShowStepsAndHang(paths, pathTransforms, faceGroups, fGTransforms, closePaths,
                     lineThicknesses, pathColors);
     }
@@ -203,15 +204,16 @@ namespace TVGL
             // do nothing
         }
 
-        public void ShowStepsAndHang(IEnumerable<IEnumerable<IEnumerable<Vector3>>> paths, IEnumerable<IEnumerable<Matrix4x4>> pathTransforms, IEnumerable<IEnumerable<Solid>> solids, IEnumerable<IEnumerable<Matrix4x4>> solidTransforms, IEnumerable<bool> closePaths = null, IEnumerable<double> lineThicknesses = null, IEnumerable<Color> colors = null)
-        {
-            // do nothing
-        }
+        public void ShowStepsAndHang(IList<IEnumerable<IEnumerable<Vector3>>> paths, IList<IEnumerable<Matrix4x4>> pathTransforms,
+             IList<IEnumerable<Solid>> solids, IList<IEnumerable<Matrix4x4>> solidTransforms, IList<IEnumerable<bool>> closePaths = null,
+             IList<IEnumerable<double>> lineThicknesses = null, IList<IEnumerable<Color>> colors = null)
+        { }
 
-        public void ShowStepsAndHang(IEnumerable<IEnumerable<IEnumerable<Vector3>>> paths, IEnumerable<IEnumerable<Matrix4x4>> pathTransforms, IEnumerable<IEnumerable<IEnumerable<TriangleFace>>> faceGroups, IEnumerable<IEnumerable<Matrix4x4>> fGTransforms, IEnumerable<bool> closePaths = null, IEnumerable<double> lineThicknesses = null, IEnumerable<Color> pathColors = null)
-        {
-            // do nothing
-        }
+
+        public void ShowStepsAndHang(IList<IEnumerable<IEnumerable<Vector3>>> paths, IList<IEnumerable<Matrix4x4>> pathTransforms,
+           IList<IEnumerable<IEnumerable<TriangleFace>>> faceGroups, IList<IEnumerable<Matrix4x4>> fGTransforms, IList<IEnumerable<bool>> closePaths = null,
+           IList<IEnumerable<double>> lineThicknesses = null, IList<IEnumerable<Color>> pathColors = null)
+        { }
     }
 
 

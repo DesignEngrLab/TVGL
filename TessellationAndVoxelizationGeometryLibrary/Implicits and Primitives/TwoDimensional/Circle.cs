@@ -260,47 +260,74 @@ namespace TVGL
             return true;
         }
 
+        /// <summary>
+        /// Determines whether the specified line segment intersects with this circle.
+        /// </summary>
+        /// <param name="from"></param>
+        /// <param name="to"></param>
+        /// <param name="point1"></param>
+        /// <param name="point2"></param>
+        /// <returns></returns>
         public bool IntersectWithLineSegment(Vector2 from, Vector2 to, out Vector2 point1, out Vector2 point2)
         {
-            var lineVector = to - from;
-            var lineLength = lineVector.Length();
-            var lineUnitVector = lineVector / lineLength;
-            var perpVector = new Vector2(-lineUnitVector.Y, lineUnitVector.X);
-            var bLine = perpVector.Dot(from);
-            var bCircle = perpVector.Dot(Center);
-            var signedDistToChord = bLine-bCircle;
-            var distToChordSqd = signedDistToChord*signedDistToChord;
-            if (distToChordSqd > RadiusSquared)
+            var dir = to - from;
+            var lSqd = dir.LengthSquared();
+            if (lSqd.IsNegligible())
             {
                 point1 = Vector2.Null;
                 point2 = Vector2.Null;
                 return false;
             }
-            var chordCenter = Center + signedDistToChord * perpVector;
-            var halfChord = Math.Sqrt(RadiusSquared - distToChordSqd);
-            point1 = chordCenter + halfChord * lineUnitVector;
-            point2 = chordCenter - halfChord * lineUnitVector;
-            // p1 is outside if it's located to on the wrong side of from or on the other side of to
-            var p1Outside = (point1 - from).Dot(lineUnitVector) < 0 || (point1 - to).Dot(lineUnitVector) > 0;
-            // p2 is outside if it's located to on the wrong side of from or on the other side of to
-            var p2Outside = (point2 - from).Dot(lineUnitVector) < 0 || (point2 - to).Dot(lineUnitVector) > 0; //if point2 is not on the line segment (from, to)
-            if (p1Outside&& p2Outside)
+            dir = dir.Normalize();
+            if (!IntersectWithLine(from, dir, out point1, out point2))
+                return false;
+
+            if (!point1.IsNull())
+            {
+                var dist1 = (point1 - from).Dot(dir);
+                if (dist1 < 0 || dist1 * dist1 > lSqd)
+                    point1 = Vector2.Null;
+            }
+            if (!point2.IsNull())
+            {
+                var dist2 = (point2 - from).Dot(dir);
+                if (dist2 < 0 || dist2 * dist2 > lSqd)
+                    point2 = Vector2.Null;
+            }
+            return !point1.IsNull() || !point2.IsNull();
+        }
+
+        /// <summary>
+        /// Determines whether the specified line intersects with this circle.
+        /// </summary>
+        /// <param name="anchor"></param>
+        /// <param name="dir"></param>
+        /// <param name="point1"></param>
+        /// <param name="point2"></param>
+        /// <returns></returns>
+        public bool IntersectWithLine(Vector2 anchor, Vector2 dir, out Vector2 point1, out Vector2 point2)
+        {
+            var v = anchor - Center;
+            dir = dir.Normalize();
+            var normal = new Vector2(-dir.Y, dir.X);
+            var chordDist = Vector2.Dot(normal, v);
+            var chordDSqd = chordDist * chordDist;
+            var chordCenter = Center + normal * chordDist;
+            if (RadiusSquared.IsPracticallySame(chordDSqd))
+            {
+                point1 = chordCenter;
+                point2 = Vector2.Null;
+                return true;
+            }
+            if (RadiusSquared < chordDSqd)
             {
                 point1 = Vector2.Null;
                 point2 = Vector2.Null;
                 return false;
             }
-            if (p1Outside)
-            {
-                point1 = point2;
-                point2 = Vector2.Null;
-                return true;
-            }
-            if (p2Outside)
-            {
-                point2 = Vector2.Null;
-                return true;
-            }
+            var halfChord = Math.Sqrt(RadiusSquared - chordDSqd);
+            point1 = chordCenter - dir * halfChord;
+            point2 = chordCenter + dir * halfChord;
             return true;
         }
     }

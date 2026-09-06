@@ -848,20 +848,15 @@ new Color(KnownColors.HotPink)];
         /// <returns>IEnumerable&lt;Color&gt;.</returns>
         public static IEnumerable<Color> GetRandomColors(int seed = int.MinValue)
         {
-            var random = seed == int.MinValue ? new Random() : new Random(seed);
-            var families = ColorDictionary.Values.OrderBy(dummy => random.NextDouble())
-                .Select(dict => dict.Values.OrderBy(dummy2 => random.NextDouble()).ToList()).ToList();
-            var innerIndex = 0;
-            for (int i = 0; i < families.Count; i++)
+            while (true)
             {
-                yield return families[i][innerIndex % families[i].Count];
-                if (i == families.Count - 1)
-                {
-                    innerIndex++;
-                    i = 0; //this will make it cycle forever
-                }
+                var family = ColorDictionary.Values.ElementAt(
+                        Random.Shared.Next(ColorDictionary.Count));
+
+                yield return family.Values.ElementAt(Random.Shared.Next(family.Count));
             }
         }
+
         /// <summary>
         /// Gets the name of the color from.
         /// </summary>

@@ -191,7 +191,7 @@ namespace TVGL
         /// </summary>
         /// <param name="fromNode">From node.</param>
         /// <param name="toNode">To node.</param>
-        internal PolygonEdge(Vertex2D fromNode, Vertex2D toNode)
+        public PolygonEdge(Vertex2D fromNode, Vertex2D toNode)
         {
             FromPoint = fromNode;
             ToPoint = toNode;

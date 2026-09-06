@@ -779,8 +779,8 @@ namespace TVGL
             }
             var numPolygonPoints = polygon.AllPolygons.Sum(p => p.Vertices.Count);
             var numHoles = polygon.InnerPolygons.Length;
-            // the number of internal vertices to add it determined from Euler–Poincaré characteristic. I know there's a way to do it
-            // for a disc but the following equation is derived by assuming the polygon is made into a 3D solid by replicating the faces 
+            // the number of internal vertices to add it determined from Euler–Poincaré characteristic. I think there may be a published
+            // equation for a disc but the following equation is derived by assuming the polygon is made into a 3D solid by replicating the faces 
             // on the back side
             var numNewVertices = 1 + (targetNumTriangles - numPolygonPoints) / 2 - numHoles;
             allVertices.AddRange(polygon.CreateInternalPointsPoissonDisk(targetSideLength, numNewVertices).Select(p => new Vertex2D(new Vector2(p.X, p.Y), vertID++, -1)));
