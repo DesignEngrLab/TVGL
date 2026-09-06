@@ -129,29 +129,44 @@ namespace TVGL
            IEnumerable<double> lineThicknesses = null, IEnumerable<Color> colors = null, string title = "",
            HoldType holdType = HoldType.Immediate, int timetoShow = -1, int id = -1, params Solid[] solids);
 
-        /// <summary>Displays a sequence of transformed paths and solids as an interactive progression.</summary>
-        /// <param name="paths">The path groups for each step.</param>
-        /// <param name="pathTransforms">The transforms applied to each path group.</param>
-        /// <param name="solids">The solid groups for each step.</param>
-        /// <param name="solidTransforms">The transforms applied to each solid group.</param>
-        /// <param name="closePaths">Whether paths should be closed.</param>
-        /// <param name="lineThicknesses">Optional path line thicknesses.</param>
-        /// <param name="colors">Optional path colors.</param>
+        /// <summary>Displays groups of paths and solids over a shared interactive timestep progression.</summary>
+        /// <param name="paths">Path groups, where each inner path occupies its corresponding timestep.</param>
+        /// <param name="pathTransforms">One transform timeline per path group.</param>
+        /// <param name="solids">Solid groups, where each inner solid occupies its corresponding timestep.</param>
+        /// <param name="solidTransforms">One transform timeline per solid group.</param>
+        /// <param name="closePaths">Optional per-path closed flags for each path group. The last value is repeated when needed.</param>
+        /// <param name="lineThicknesses">Optional per-path world-space widths for each path group. The last value is repeated when needed.</param>
+        /// <param name="colors">Optional per-path colors for each path group. The last value is repeated when needed.</param>
         void ShowStepsAndHang(IList<IEnumerable<IEnumerable<Vector3>>> paths, IList<IEnumerable<Matrix4x4>> pathTransforms,
            IList<IEnumerable<Solid>> solids, IList<IEnumerable<Matrix4x4>> solidTransforms, IList<IEnumerable<bool>> closePaths = null,
            IList<IEnumerable<double>> lineThicknesses = null, IList<IEnumerable<Color>> colors = null);
 
-        /// <summary>Displays a sequence of transformed paths and triangle-face groups as an interactive progression.</summary>
-        /// <param name="paths">The path groups for each step.</param>
-        /// <param name="pathTransforms">The transforms applied to each path group.</param>
-        /// <param name="faceGroups">The face groups for each step.</param>
-        /// <param name="fGTransforms">The transforms applied to each face group.</param>
-        /// <param name="closePaths">Whether paths should be closed.</param>
-        /// <param name="lineThicknesses">Optional path line thicknesses.</param>
-        /// <param name="pathColors">Optional path colors.</param>
+        /// <summary>Displays transformed path and solid groups using explicit stepped-presentation options.</summary>
         void ShowStepsAndHang(IList<IEnumerable<IEnumerable<Vector3>>> paths, IList<IEnumerable<Matrix4x4>> pathTransforms,
-      IList<IEnumerable<IEnumerable<TriangleFace>>> faceGroups, IList<IEnumerable<Matrix4x4>> fGTransforms, IList<IEnumerable<bool>> closePaths = null,
-      IList<IEnumerable<double>> lineThicknesses = null, IList<IEnumerable<Color>> pathColors = null);
+            IList<IEnumerable<Solid>> solids, IList<IEnumerable<Matrix4x4>> solidTransforms,
+            IList<IEnumerable<bool>> closePaths, IList<IEnumerable<double>> lineThicknesses,
+            IList<IEnumerable<Color>> colors, SteppedPresentationOptions options)
+            => ShowStepsAndHang(paths, pathTransforms, solids, solidTransforms, closePaths, lineThicknesses, colors);
+
+        /// <summary>Displays groups of paths and triangle faces over a shared interactive timestep progression.</summary>
+        /// <param name="paths">Path groups, where each inner path occupies its corresponding timestep.</param>
+        /// <param name="pathTransforms">One transform timeline per path group.</param>
+        /// <param name="faceGroups">Face groups, where each inner face collection occupies its corresponding timestep.</param>
+        /// <param name="fGTransforms">One transform timeline per face group.</param>
+        /// <param name="closePaths">Optional per-path closed flags for each path group. The last value is repeated when needed.</param>
+        /// <param name="lineThicknesses">Optional per-path world-space widths for each path group. The last value is repeated when needed.</param>
+        /// <param name="pathColors">Optional per-path colors for each path group. The last value is repeated when needed.</param>
+        void ShowStepsAndHang(IList<IEnumerable<IEnumerable<Vector3>>> paths, IList<IEnumerable<Matrix4x4>> pathTransforms,
+            IList<IEnumerable<IEnumerable<TriangleFace>>> faceGroups, IList<IEnumerable<Matrix4x4>> fGTransforms,
+            IList<IEnumerable<bool>> closePaths = null, IList<IEnumerable<double>> lineThicknesses = null,
+            IList<IEnumerable<Color>> pathColors = null);
+
+        /// <summary>Displays transformed path and face groups using explicit stepped-presentation options.</summary>
+        void ShowStepsAndHang(IList<IEnumerable<IEnumerable<Vector3>>> paths, IList<IEnumerable<Matrix4x4>> pathTransforms,
+            IList<IEnumerable<IEnumerable<TriangleFace>>> faceGroups, IList<IEnumerable<Matrix4x4>> fGTransforms,
+            IList<IEnumerable<bool>> closePaths, IList<IEnumerable<double>> lineThicknesses,
+            IList<IEnumerable<Color>> pathColors, SteppedPresentationOptions options)
+            => ShowStepsAndHang(paths, pathTransforms, faceGroups, fGTransforms, closePaths, lineThicknesses, pathColors);
         #endregion
     }
 }

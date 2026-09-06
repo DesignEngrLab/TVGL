@@ -1,6 +1,7 @@
 ﻿using OxyPlot;
 using System;
 using System.Windows;
+using System.Windows.Threading;
 
 namespace WindowsDesktopPresenter
 {
@@ -54,6 +55,8 @@ namespace WindowsDesktopPresenter
         private void Window3DStepped_Loaded(object sender, RoutedEventArgs e)
         {
             ScrollBar_ValueChanged(sender, new RoutedPropertyChangedEventArgs<double>(0, 0));
+            Dispatcher.BeginInvoke(DispatcherPriority.Loaded,
+                new Action(stepViewModel.ResetCameraCommand));
         }
     }
 }

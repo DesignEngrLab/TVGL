@@ -45,6 +45,11 @@
                     <option value="3000">1 frame / 3 sec</option>
                 </select>
             </label>
+            <label class="step-speed-control">
+                Step stride
+                <input type="number" min="1" max="@Math.Max(1, StepCount - 1)"
+                       @bind="autoplayStepIncrement" />
+            </label>
         </div>
     }
     <div class="scene-viewer-canvas">
@@ -65,6 +70,7 @@
 
     private int step;
     private int autoplayDelayMilliseconds = 333;
+    private int autoplayStepIncrement = 1;
     private CancellationTokenSource? autoplayCancellation;
     private Task? autoplayTask;
     private bool IsAutoplaying => autoplayCancellation is not null;
@@ -91,6 +97,10 @@
     private readonly Dictionary<string, RenderSignature> renderedMeshSignatures = [];
     private readonly Dictionary<string, RenderSignature> renderedLineSignatures = [];
     private readonly SemaphoreSlim renderLock = new(1, 1);
+    private readonly object renderRequestGate = new();
+    private Task? renderLoopTask;
+    private int? pendingRenderStep;
+    private bool disposing;
     private readonly IReadOnlyList<string> inspectionKeys = ["g", "v", "f", "p"];
 
     protected override async Task OnParametersSetAsync()
@@ -143,7 +153,8 @@
             while (!cancellationToken.IsCancellationRequested && StepCount > 1)
             {
                 await Task.Delay(autoplayDelayMilliseconds, cancellationToken);
-                step = (step + 1) % StepCount;
+                var increment = Math.Clamp(autoplayStepIncrement, 1, Math.Max(1, StepCount - 1));
+                step = (step + increment) % StepCount;
                 await RenderSceneAsync();
                 if (!cancellationToken.IsCancellationRequested)
                     await InvokeAsync(StateHasChanged);
@@ -169,18 +180,23 @@
         cancellation.Dispose();
     }
 
-    private IEnumerable<SceneRequest> VisibleScenes()
+    private SceneRequest CurrentAtStep(int stepIndex) => CurrentRequest is { Steps.Count: > 0 } stepped
+        ? stepped.Steps[Math.Clamp(stepIndex, 0, stepped.Steps.Count - 1)]
+        : CurrentRequest;
+
+    private IEnumerable<SceneRequest> VisibleScenes(int stepIndex)
     {
         for (var index = 0; index < Scenes.Count - 1; index++)
             yield return Scenes[index];
         if (Scenes.Count > 0)
-            yield return Current;
+            yield return CurrentAtStep(stepIndex);
     }
 
     private static IEnumerable<(T Element, Matrix4x4? Transform)> ResolveStepElements<T>(
-        IReadOnlyList<T?> elements, IReadOnlyList<Matrix4x4?>? transforms, int stepIndex)
+        SceneStepGroup group, IReadOnlyList<T?> elements, int stepIndex)
         where T : class
     {
+        var transforms = group.Transforms;
         if (transforms is null)
         {
             foreach (var element in elements)
@@ -189,7 +205,7 @@
             yield break;
         }
 
-        if (stepIndex >= transforms.Count || transforms[stepIndex] is null)
+        if (stepIndex >= transforms.Count || transforms[stepIndex].IsNull())
         {
             if (stepIndex < elements.Count && elements[stepIndex] is { } element)
                 yield return (element, null);
@@ -197,25 +213,61 @@
         }
 
         var transform = transforms[stepIndex];
-        for (var timeIndex = stepIndex; timeIndex >= 0; timeIndex--)
+        var lowerBound = group.LastNullTransformAtOrBefore(stepIndex) + 1;
+        for (var timeIndex = Math.Min(stepIndex, elements.Count - 1); timeIndex >= lowerBound; timeIndex--)
         {
-            if (transforms[timeIndex] is null)
-                yield break;
-            if (timeIndex < elements.Count && elements[timeIndex] is { } element)
+            if (elements[timeIndex] is { } element)
                 yield return (element, transform);
         }
     }
 
-    private async Task RenderSceneAsync()
+    private Task RenderSceneAsync()
     {
-        await renderLock.WaitAsync();
+        lock (renderRequestGate)
+        {
+            if (disposing)
+                return Task.CompletedTask;
+            pendingRenderStep = step;
+            renderLoopTask ??= ProcessRenderRequestsAsync();
+        }
+        return Task.CompletedTask;
+    }
+
+    private async Task ProcessRenderRequestsAsync()
+    {
+        await Task.Yield();
         try
         {
-            await RenderSceneCoreAsync(step);
+            while (true)
+            {
+                int stepToRender;
+                lock (renderRequestGate)
+                {
+                    if (pendingRenderStep is not { } requestedStep)
+                        return;
+                    stepToRender = requestedStep;
+                    pendingRenderStep = null;
+                }
+
+                await renderLock.WaitAsync();
+                try
+                {
+                    await RenderSceneCoreAsync(stepToRender);
+                }
+                finally
+                {
+                    renderLock.Release();
+                }
+            }
         }
         finally
         {
-            renderLock.Release();
+            lock (renderRequestGate)
+            {
+                renderLoopTask = null;
+                if (!disposing && pendingRenderStep.HasValue)
+                    renderLoopTask = ProcessRenderRequestsAsync();
+            }
         }
     }
 
@@ -228,7 +280,7 @@
         var desiredLines = new List<LineData>();
         var desiredMeshSignatures = new Dictionary<string, RenderSignature>();
         var desiredLineSignatures = new Dictionary<string, RenderSignature>();
-        foreach (var scene in VisibleScenes())
+        foreach (var scene in VisibleScenes(stepIndex))
         {
             foreach (var mesh in scene.Meshes)
             {
@@ -248,15 +300,21 @@
             }
             foreach (var group in scene.StepGroups)
             {
-                foreach (var (mesh, transform) in ResolveStepElements(group.Meshes, group.Transforms, stepIndex))
+                foreach (var (mesh, transform) in ResolveStepElements(group, group.Meshes, stepIndex))
                 {
                     desiredMeshes.Add(ToMeshData(mesh, transform));
                     desiredMeshSignatures.Add(mesh.Id, new RenderSignature(mesh, transform));
                 }
-                foreach (var (path, transform) in ResolveStepElements(group.Paths, group.Transforms, stepIndex))
+                if (group.PathSource is { } pathSource
+                    && StepPathBatchBuilder.Build(group, pathSource, stepIndex) is { } pathBatch)
                 {
-                    desiredLines.Add(ToLineData(path, transform));
-                    desiredLineSignatures.Add(path.Id, new RenderSignature(path, transform));
+                    desiredLines.Add(pathBatch);
+                    var transform = group.Transforms is not null && stepIndex < group.Transforms.Count
+                        && !group.Transforms[stepIndex].IsNull()
+                        ? group.Transforms[stepIndex]
+                        : (Matrix4x4?)null;
+                    desiredLineSignatures.Add(pathBatch.Id,
+                        new RenderSignature(pathSource, transform, stepIndex));
                 }
             }
         }
@@ -292,13 +350,14 @@
                 await viewer.AddMeshesAsync(meshesToAdd);
             if (linesToAdd.Count > 0)
                 await viewer.AddLinesAsync(linesToAdd);
-            if (appliedFaceDisplayRequestId != Current.RequestId)
+            var currentScene = CurrentAtStep(stepIndex);
+            if (appliedFaceDisplayRequestId != currentScene.RequestId)
             {
                 // Apply this only after the new meshes are present. BugViewer cannot use
                 // primitive-surface normals while its scene is still empty and otherwise
                 // correctly falls back to triangle normals.
-                viewer.Options.ShowSurfacesAs = Current.ShowSurfacesAs;
-                appliedFaceDisplayRequestId = Current.RequestId;
+                viewer.Options.ShowSurfacesAs = currentScene.ShowSurfacesAs;
+                appliedFaceDisplayRequestId = currentScene.RequestId;
             }
         }
         finally
@@ -532,12 +591,12 @@
 
     private IEnumerable<(SceneRequest Scene, SceneMesh Mesh)> VisibleSceneMeshes()
     {
-        foreach (var scene in VisibleScenes())
+        foreach (var scene in VisibleScenes(step))
         {
             foreach (var mesh in scene.Meshes)
                 yield return (scene, mesh);
             foreach (var group in scene.StepGroups)
-                foreach (var (mesh, _) in ResolveStepElements(group.Meshes, group.Transforms, step))
+                foreach (var (mesh, _) in ResolveStepElements(group, group.Meshes, step))
                     yield return (scene, mesh);
         }
     }
@@ -590,6 +649,7 @@
             ColorMode = MeshColoring.PerTriangle
         };
     }
+
     private LineData ToLineData(ScenePath path, Matrix4x4? transform = null)
     {
         var segmentCount = Math.Max(0, path.Vertices.Count - 1);
@@ -634,10 +694,19 @@
     public async ValueTask DisposeAsync()
     {
         await StopAutoplayAsync();
+        Task? pendingRender;
+        lock (renderRequestGate)
+        {
+            disposing = true;
+            pendingRenderStep = null;
+            pendingRender = renderLoopTask;
+        }
+        if (pendingRender is not null)
+            await pendingRender;
         await renderLock.WaitAsync();
         renderLock.Release();
         renderLock.Dispose();
     }
 
-    private readonly record struct RenderSignature(object Source, Matrix4x4? Transform);
+    private readonly record struct RenderSignature(object Source, Matrix4x4? Transform, int StepIndex = -1);
 }

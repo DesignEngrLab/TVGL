@@ -15,4 +15,8 @@
 		<PackageReference Include="HelixToolkit.SharpDX.Core.Wpf" Version="2.27.3" />
 	</ItemGroup>
 
+	<ItemGroup>
+		<InternalsVisibleTo Include="Testing" />
+	</ItemGroup>
+
 </Project>

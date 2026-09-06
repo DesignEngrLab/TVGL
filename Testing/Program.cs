@@ -20,6 +20,11 @@ namespace TVGLUnitTestsAndBenchmarking
         [STAThread]
         private static void Main(string[] args)
         {
+            if (string.Equals(args.FirstOrDefault(), "stepped-resolution-tests", StringComparison.OrdinalIgnoreCase))
+            {
+                RunSteppedResolutionTests();
+                return;
+            }
             OutputServices.Presenter2D = new Presenter2D();
             OutputServices.Presenter3D = new Presenter3D();
             var dirInfo = IO.BackoutToFolder(inputFolder);
@@ -34,6 +39,138 @@ namespace TVGLUnitTestsAndBenchmarking
                 Presenter.ShowAndHang(ts);
                 Presenter.ShowAndHang(GetRandomPolygonThroughSolids(ts));
             }
+        }
+
+        private static void RunSteppedResolutionTests()
+        {
+            var path = new[] { Vector3.Zero, Vector3.UnitX };
+            var millionPaths = new RepeatedReadOnlyList<IEnumerable<Vector3>>(path, 1_000_000);
+            var millionTransforms = new RepeatedReadOnlyList<Matrix4x4>(Matrix4x4.Identity, 1_000_000);
+            var windowsGroup = new WindowsDesktopPresenter.SteppedPathGroup(
+                millionPaths, millionTransforms, [], [], [], 500, new Color(KnownColors.Black),
+                (_, _, _, _) => throw new InvalidOperationException("Resolution tests must not create geometry."),
+                _ => null);
+            var windowsIndices = windowsGroup.ResolveIndicesForTesting(999_999);
+            Assert(windowsIndices.Count == 500 && windowsIndices[0] == 999_999 && windowsIndices[^1] == 999_500,
+                "Windows history resolution was not bounded to the latest 500 timesteps.");
+
+            var webSource = new SceneStepPathSource
+            {
+                Id = "scale-test",
+                Paths = millionPaths,
+                HistoryStepLimit = 500
+            };
+            var webGroup = new SceneStepGroup { PathSource = webSource, Transforms = millionTransforms };
+            var webIndices = webGroup.ResolvePathIndices(999_999).ToArray();
+            Assert(webIndices.Length == 500 && webIndices[0] == 999_500 && webIndices[^1] == 999_999,
+                "WebGPU history resolution was not bounded to the latest 500 timesteps.");
+            Assert(millionTransforms.EnumeratorRequestCount == 0
+                && millionTransforms.IndexerAccessCount <= 1_002,
+                "Bounded history resolution inspected the full transform timeline.");
+
+            var batchSource = new SceneStepPathSource
+            {
+                Id = "batch-test",
+                Paths =
+                [
+                    new[] { new Vector3(0, 0, 0), new Vector3(1, 0, 0) },
+                    new[] { new Vector3(10, 0, 0), new Vector3(11, 0, 0) }
+                ],
+                Thicknesses = [2.0, 3.0],
+                Colors = [new Color(KnownColors.Red), new Color(KnownColors.Blue)],
+                HistoryStepLimit = 2
+            };
+            var batchGroup = new SceneStepGroup
+            {
+                PathSource = batchSource,
+                Transforms =
+                [
+                    Matrix4x4.CreateTranslation(5, 0, 0),
+                    Matrix4x4.CreateTranslation(5, 0, 0)
+                ]
+            };
+            var batch = StepPathBatchBuilder.Build(batchGroup, batchSource, 1);
+            Assert(batch is not null && batch.Vertices.Count == 4,
+                "WebGPU did not combine the active path window into one batch.");
+            Assert(batch.Thicknesses.SequenceEqual(new[] { 2f, 0f, 3f }),
+                "WebGPU did not insert a zero-thickness connector between independent paths.");
+            Assert(Math.Abs(batch.Vertices[0].X - 5f) < 1e-6f && Math.Abs(batch.Vertices[^1].X - 16f) < 1e-6f,
+                "WebGPU did not apply the selected transform to the batched path.");
+
+            var barrierTransforms = Enumerable.Repeat(Matrix4x4.Identity, 8).ToArray();
+            barrierTransforms[4] = Matrix4x4.Null;
+            var barrierPaths = new RepeatedReadOnlyList<IEnumerable<Vector3>>(path, barrierTransforms.Length);
+            var windowsBarrierGroup = new WindowsDesktopPresenter.SteppedPathGroup(
+                barrierPaths, barrierTransforms, [], [], [], 5, new Color(KnownColors.Black),
+                (_, _, _, _) => throw new InvalidOperationException("Resolution tests must not create geometry."),
+                _ => null);
+            AssertSequence(windowsBarrierGroup.ResolveIndicesForTesting(7), [7, 6, 5],
+                "Windows resolution crossed a null-transform barrier.");
+            AssertSequence(windowsBarrierGroup.ResolveIndicesForTesting(4), [4],
+                "Windows did not preserve selected-null-transform semantics.");
+
+            var webBarrierGroup = new SceneStepGroup
+            {
+                PathSource = new SceneStepPathSource
+                {
+                    Id = "barrier-test",
+                    Paths = barrierPaths,
+                    HistoryStepLimit = 5
+                },
+                Transforms = barrierTransforms
+            };
+            AssertSequence(webBarrierGroup.ResolvePathIndices(7), [5, 6, 7],
+                "WebGPU resolution crossed a null-transform barrier.");
+            AssertSequence(webBarrierGroup.ResolvePathIndices(4), [4],
+                "WebGPU did not preserve selected-null-transform semantics.");
+
+            var rejectedNegativeLimit = false;
+            try
+            {
+                new SteppedPresentationOptions { PathHistoryStepLimit = -1 }.Validate();
+            }
+            catch (ArgumentOutOfRangeException)
+            {
+                rejectedNegativeLimit = true;
+            }
+            Assert(rejectedNegativeLimit, "Negative history limits must be rejected.");
+            Console.WriteLine("Stepped resolution tests passed.");
+        }
+
+        private static void AssertSequence(IEnumerable<int> actual, IReadOnlyList<int> expected, string message)
+        {
+            var actualList = actual.ToList();
+            Assert(actualList.SequenceEqual(expected),
+                $"{message} Actual: [{string.Join(", ", actualList)}].");
+        }
+
+        private static void Assert(bool condition, string message)
+        {
+            if (!condition)
+                throw new InvalidOperationException(message);
+        }
+
+        private sealed class RepeatedReadOnlyList<T>(T value, int count) : IReadOnlyList<T>
+        {
+            public int Count { get; } = count;
+            public int IndexerAccessCount { get; private set; }
+            public int EnumeratorRequestCount { get; private set; }
+            public T this[int index]
+            {
+                get
+                {
+                    IndexerAccessCount++;
+                    return index >= 0 && index < Count
+                        ? value
+                        : throw new ArgumentOutOfRangeException(nameof(index));
+                }
+            }
+            public IEnumerator<T> GetEnumerator()
+            {
+                EnumeratorRequestCount++;
+                return Enumerable.Repeat(value, Count).GetEnumerator();
+            }
+            System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => GetEnumerator();
         }
 
         /// <summary>
@@ -165,12 +302,16 @@ namespace TVGLUnitTestsAndBenchmarking
             var solidSteps = new[] { new Solid[] { sample, shifted } };
             var solidTransforms = new[] { new[] { Matrix4x4.Identity, Matrix4x4.Null } };
             presenter.ShowStepsAndHang(pathSteps, pathTransforms, solidSteps, solidTransforms,
-                new[] { true, false }, new[] { 2.0, 5.0 }, new[] { new Color(KnownColors.Green), new Color(KnownColors.Red) });
+                new[] { new[] { true, false }.AsEnumerable() },
+                new[] { new[] { 2.0, 5.0 }.AsEnumerable() },
+                new[] { new[] { new Color(KnownColors.Green), new Color(KnownColors.Red) }.AsEnumerable() });
 
             var faceSteps = new[] { new IEnumerable<TriangleFace>[] { sample.Faces.Take(60), sample.Faces.Skip(60).Take(60) } };
             var faceTransforms = new[] { new[] { Matrix4x4.Identity, Matrix4x4.CreateTranslation(sample.XMax - sample.XMin, 0, 0) } };
             presenter.ShowStepsAndHang(pathSteps, pathTransforms, faceSteps, faceTransforms,
-                new[] { true, false }, new[] { 2.0, 5.0 }, new[] { new Color(KnownColors.Blue), new Color(KnownColors.Orange) });
+                new[] { new[] { true, false }.AsEnumerable() },
+                new[] { new[] { 2.0, 5.0 }.AsEnumerable() },
+                new[] { new[] { new Color(KnownColors.Blue), new Color(KnownColors.Orange) }.AsEnumerable() });
         }
 
         private static double[,] MakeHeatmap(double phase)

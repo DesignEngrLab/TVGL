@@ -117,12 +117,28 @@ namespace TVGL
             IList<IEnumerable<double>> lineThicknesses = null, IList<IEnumerable<Color>> colors = null)
             => OutputServices.Presenter3D.ShowStepsAndHang(paths, pathTransforms, solids, solidTransforms, closePaths,
                 lineThicknesses, colors);
+        /// <summary>Displays a sequence of transformed paths and solids using explicit stepped-presentation options.</summary>
+        public static void ShowStepsAndHang(IList<IEnumerable<IEnumerable<Vector3>>> paths,
+            IList<IEnumerable<Matrix4x4>> pathTransforms, IList<IEnumerable<Solid>> solids,
+            IList<IEnumerable<Matrix4x4>> solidTransforms, IList<IEnumerable<bool>> closePaths,
+            IList<IEnumerable<double>> lineThicknesses, IList<IEnumerable<Color>> colors,
+            SteppedPresentationOptions options)
+            => OutputServices.Presenter3D.ShowStepsAndHang(paths, pathTransforms, solids, solidTransforms, closePaths,
+                lineThicknesses, colors, options);
         /// <summary>Displays a sequence of transformed paths and triangle-face groups.</summary>
         public static void ShowStepsAndHang(IList<IEnumerable<IEnumerable<Vector3>>> paths, IList<IEnumerable<Matrix4x4>> pathTransforms,
        IList<IEnumerable<IEnumerable<TriangleFace>>> faceGroups, IList<IEnumerable<Matrix4x4>> fGTransforms, IList<IEnumerable<bool>> closePaths = null,
        IList<IEnumerable<double>> lineThicknesses = null, IList<IEnumerable<Color>> pathColors = null)
-                => OutputServices.Presenter3D.ShowStepsAndHang(paths, pathTransforms, faceGroups, fGTransforms, closePaths,
-                    lineThicknesses, pathColors);
+                 => OutputServices.Presenter3D.ShowStepsAndHang(paths, pathTransforms, faceGroups, fGTransforms, closePaths,
+                     lineThicknesses, pathColors);
+        /// <summary>Displays transformed paths and triangle-face groups using explicit stepped-presentation options.</summary>
+        public static void ShowStepsAndHang(IList<IEnumerable<IEnumerable<Vector3>>> paths,
+            IList<IEnumerable<Matrix4x4>> pathTransforms, IList<IEnumerable<IEnumerable<TriangleFace>>> faceGroups,
+            IList<IEnumerable<Matrix4x4>> fGTransforms, IList<IEnumerable<bool>> closePaths,
+            IList<IEnumerable<double>> lineThicknesses, IList<IEnumerable<Color>> pathColors,
+            SteppedPresentationOptions options)
+            => OutputServices.Presenter3D.ShowStepsAndHang(paths, pathTransforms, faceGroups, fGTransforms, closePaths,
+                lineThicknesses, pathColors, options);
     }
 
 

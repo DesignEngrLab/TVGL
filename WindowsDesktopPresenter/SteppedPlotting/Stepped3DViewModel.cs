@@ -13,7 +13,7 @@ using Vector3D = System.Windows.Media.Media3D.Vector3D;
 
 namespace WindowsDesktopPresenter
 {
-    internal class Stepped3DViewModel : INotifyPropertyChanged
+    internal class Stepped3DViewModel : INotifyPropertyChanged, IDisposable
     {
         /// <summary>
         /// Gets the maximum step index for the scroll bar (ModelSeries count - 1)
@@ -22,9 +22,9 @@ namespace WindowsDesktopPresenter
         {
             get
             {
-                return 
-                Math.Max(GeometryGroups.Max(g => g?.Count ?? 0),
-                         Transforms.Max(t => t?.Count ?? 0)) - 1;
+                var pathStepCount = PathGroups.Select(group => group.Count).DefaultIfEmpty().Max();
+                var geometryStepCount = GeometryGroups.Select(group => group.Count).DefaultIfEmpty().Max();
+                return Math.Max(0, Math.Max(pathStepCount, geometryStepCount) - 1);
             }
         }
 
@@ -56,36 +56,12 @@ namespace WindowsDesktopPresenter
         internal bool Update(int stepIndex)
         {
             Elements.Clear();
-            var k = 0;
-            foreach (var timeGroup in GeometryGroups)
-            {
-                var transforms = Transforms[k++];
-                if (transforms is null)
-                    foreach (var element in timeGroup)
-                        Elements.Add(element);
-                else if (stepIndex >= transforms.Count || transforms[stepIndex] == null)
-                {
-                    if (stepIndex < timeGroup.Count && timeGroup[stepIndex] != null)
-                        Elements.Add(timeGroup[stepIndex]);
-                }
-                else
-                {
-                    var t = transforms[stepIndex];
-                    var timeIndex = stepIndex;
-                    while (timeIndex >= 0)
-                    {
-                        if (transforms[timeIndex] is null)
-                            break;
-                        if (timeIndex < timeGroup.Count && timeGroup[timeIndex] != null)
-                        {
-                            timeGroup[timeIndex].Transform = t;
-                            Elements.Add(timeGroup[timeIndex]);
-                        }
-                        timeIndex--;
-                    }
-                }
-            }
-            //Elements = newSolids;
+            foreach (var pathGroup in PathGroups)
+                foreach (var path in pathGroup.Resolve(stepIndex))
+                    Elements.Add(path);
+            foreach (var geometryGroup in GeometryGroups)
+                foreach (var geometry in geometryGroup.Resolve(stepIndex))
+                    Elements.Add(geometry);
             RaisePropertyChanged("Elements");
             return true;
         }
@@ -159,7 +135,6 @@ namespace WindowsDesktopPresenter
                     camera.LookDirection = lookPosition;
                     camera.UpDirection = upDirection;
                 }
-                ResetCameraCommand();
             }
         }
 
@@ -204,9 +179,8 @@ namespace WindowsDesktopPresenter
 
         public ObservableElement3DCollection Elements { private set; get; } = [];
         public Material SelectedMaterial { get; } = new PhongMaterial() { EmissiveColor = SharpDX.Color.LightYellow };
-        public List<IList<System.Windows.Media.Media3D.Transform3D>> Transforms { get; internal set; } = [];
-
-        public List<IList<GeometryModel3D>> GeometryGroups { get; private set; } = [];
+        internal List<SteppedPathGroup> PathGroups { get; } = [];
+        internal List<SteppedGeometryGroup> GeometryGroups { get; } = [];
         public Vector3D DirectionalLightDirection1 { get; private set; }
         public Vector3D DirectionalLightDirection2 { get; private set; }
         public Vector3D DirectionalLightDirection3 { get; private set; }
@@ -329,7 +303,6 @@ namespace WindowsDesktopPresenter
             };
             this.view = view;
             Camera = defaultPerspectiveCamera;
-            ResetCameraCommand();
         }
         internal void ResetCameraCommand()
         {
@@ -340,6 +313,15 @@ namespace WindowsDesktopPresenter
             //    (Camera as OrthographicCamera).FarPlaneDistance = 5000;
             //    (Camera as OrthographicCamera).NearPlaneDistance = 0.1f;
             //});
+        }
+
+        public void Dispose()
+        {
+            Elements.Clear();
+            foreach (var pathGroup in PathGroups)
+                pathGroup.Dispose();
+            PathGroups.Clear();
+            GeometryGroups.Clear();
         }
 
 

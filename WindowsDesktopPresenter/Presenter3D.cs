@@ -201,13 +201,23 @@ namespace WindowsDesktopPresenter
         /// <param name="lineThicknesses"></param>
         /// <param name="colors"></param>
         public void ShowStepsAndHang(IList<IEnumerable<IEnumerable<Vector3>>> paths,
-            IList<IEnumerable<Matrix4x4>> pathTransforms, IList<IEnumerable<Solid>> solids, IList<IEnumerable<Matrix4x4>> solidTransforms, IList<IEnumerable<bool>> closePaths = null, IList<IEnumerable<double>> lineThicknesses = null, IList<IEnumerable<Color>> colors = null)
+            IList<IEnumerable<Matrix4x4>> pathTransforms, IList<IEnumerable<Solid>> solids,
+            IList<IEnumerable<Matrix4x4>> solidTransforms, IList<IEnumerable<bool>> closePaths = null,
+            IList<IEnumerable<double>> lineThicknesses = null, IList<IEnumerable<Color>> colors = null)
+            => ShowStepsAndHang(paths, pathTransforms, solids, solidTransforms, closePaths,
+                lineThicknesses, colors, null);
+
+        public void ShowStepsAndHang(IList<IEnumerable<IEnumerable<Vector3>>> paths,
+            IList<IEnumerable<Matrix4x4>> pathTransforms, IList<IEnumerable<Solid>> solids,
+            IList<IEnumerable<Matrix4x4>> solidTransforms, IList<IEnumerable<bool>> closePaths,
+            IList<IEnumerable<double>> lineThicknesses, IList<IEnumerable<Color>> colors,
+            SteppedPresentationOptions options)
         {
-            var faceGroups = new IEnumerable<IEnumerable<TriangleFace>>[solids.Count];
-            for (var groupIndex = 0; groupIndex < solids.Count; groupIndex++)
+            var faceGroups = new List<IEnumerable<IEnumerable<TriangleFace>>>();
+            foreach (var solidGroup in solids ?? [])
             {
                 var facesInGroup = new List<IEnumerable<TriangleFace>>();
-                foreach (var solid in solids[groupIndex])
+                foreach (var solid in solidGroup ?? [])
                 {
                     IEnumerable<TriangleFace> faces = solid switch
                     {
@@ -218,16 +228,17 @@ namespace WindowsDesktopPresenter
                     };
                     facesInGroup.Add(faces);
                 }
-                faceGroups[groupIndex] = facesInGroup;
+                faceGroups.Add(facesInGroup);
             }
-            ShowStepsAndHang(paths, pathTransforms, faceGroups, solidTransforms, closePaths, lineThicknesses, colors);
+            ShowStepsAndHang(paths, pathTransforms, faceGroups, solidTransforms, closePaths,
+                lineThicknesses, colors, options);
         }
 
         /// <summary>
-        /// Steps through the various paths and face groups, applying transforms as provided. The outermost collection for both paths and solids 
-        /// is a group of objects that have the same behavior. the second collection is the object at a particular timestep. Now, the transforms
-        /// are aligned one-to-one with the groups. If they are null, then the shapes only appear in the one time step that they have been provided.
-        /// Otherwise, the previous object groups survive and are transformed accordingly.
+        /// Steps through the paths and face groups, applying transforms as provided. Each outer collection is a group and each inner
+        /// element occupies its corresponding timestep. Transform timelines are aligned one-to-one with the outer groups. A null
+        /// transform timeline keeps every element in that group visible. A null transform at a particular timestep shows only the
+        /// element at that timestep; otherwise, earlier elements survive and receive the selected timestep's transform.
         /// </summary>
         /// <param name="paths"></param>
         /// <param name="pathTransforms"></param>
@@ -241,43 +252,37 @@ namespace WindowsDesktopPresenter
             IList<IEnumerable<IEnumerable<TriangleFace>>> faceGroups, IList<IEnumerable<Matrix4x4>> fGTransforms,
             IList<IEnumerable<bool>> closePaths = null, IList<IEnumerable<double>> lineThicknesses = null,
             IList<IEnumerable<Color>> pathColors = null)
+            => ShowStepsAndHang(paths, pathTransforms, faceGroups, fGTransforms, closePaths,
+                lineThicknesses, pathColors, null);
+
+        public void ShowStepsAndHang(IList<IEnumerable<IEnumerable<Vector3>>> paths,
+            IList<IEnumerable<Matrix4x4>> pathTransforms,
+            IList<IEnumerable<IEnumerable<TriangleFace>>> faceGroups, IList<IEnumerable<Matrix4x4>> fGTransforms,
+            IList<IEnumerable<bool>> closePaths, IList<IEnumerable<double>> lineThicknesses,
+            IList<IEnumerable<Color>> pathColors, SteppedPresentationOptions options)
         {
+            options?.Validate();
             var vm = new Stepped3DViewModel();
 
-            for (var i = 0; i < paths.Count; i++)
+            for (var groupIndex = 0; groupIndex < (paths?.Count ?? 0); groupIndex++)
             {
-                var closePath = i < closePaths?.Count ? closePaths[i] : [];
-                var thickness = i < lineThicknesses?.Count ? lineThicknesses[i] : [];
-                var color = i < pathColors?.Count ? pathColors[i] : []; Color.GetRandomColors().First();
-                var pathTransform = i < pathTransforms.Count ? pathTransforms[i] : [];
-                var pathI = paths[i];
-                var plotPaths = new List<GeometryModel3D>();
-                using var closeEnumerator = closePath.GetEnumerator();
-                using var thicknessEnumerator = thickness.GetEnumerator();
-                using var colorEnumerator = color.GetEnumerator();
-                using var pathTransformEnumerator = pathTransform.GetEnumerator();
-                foreach (var pathGroup in pathI)
-                {
-                    var closed = closeEnumerator.MoveNext() ? closeEnumerator.Current : false;
-                    var lineThickness = thicknessEnumerator.MoveNext() ? thicknessEnumerator.Current : 1;
-                    var pathColor = colorEnumerator.MoveNext() ? colorEnumerator.Current : new Color(KnownColors.Black);
-                    var innerTransformSteps = pathTransformEnumerator.MoveNext() ? pathTransformEnumerator.Current : Matrix4x4.Identity;
-                    var helixPathSteps = new List<GeometryModel3D>();
-                    var transformSteps = innerTransformSteps == null ? null : new List<System.Windows.Media.Media3D.Transform3D>();
-                    //foreach (var pathStep in pathGroup)
-                    //{
-                        //if (innerTransformSteps != null)
-                        //    transformSteps.Add(innerTransformSteps.MoveNext() ? ConvertToWindowsTransform3D(innerTransformSteps.Current) : null);
-                        helixPathSteps.Add(pathGroup == null ? null : ConvertPathToLineModel(pathGroup, lineThickness, pathColor, closed));
-                    //}
-                    vm.GeometryGroups.Add(helixPathSteps);
-                    vm.Transforms.Add(transformSteps);
-                }
+                var pathGroup = AsReadOnlyList(paths[groupIndex]) ?? [];
+                var closeValues = groupIndex < (closePaths?.Count ?? 0) ? closePaths[groupIndex] : null;
+                var thicknessValues = groupIndex < (lineThicknesses?.Count ?? 0) ? lineThicknesses[groupIndex] : null;
+                var colorValues = groupIndex < (pathColors?.Count ?? 0) ? pathColors[groupIndex] : null;
+                var transformSteps = groupIndex < (pathTransforms?.Count ?? 0)
+                    ? AsReadOnlyList(pathTransforms[groupIndex])
+                    : null;
+                vm.PathGroups.Add(new SteppedPathGroup(pathGroup, transformSteps,
+                    AsReadOnlyList(closeValues) ?? [], AsReadOnlyList(thicknessValues) ?? [],
+                    AsReadOnlyList(colorValues) ?? [], options?.PathHistoryStepLimit,
+                    Color.GetRandomColors().First(), ConvertSteppedPathToLineModel, ConvertToWindowsTransform3D));
             }
+
             var defColor = new Color(TVGL.Constants.DefaultColor);
-            using var outerTransformEnumerator = fGTransforms != null ? fGTransforms.GetEnumerator() : new Repeater<IEnumerable<Matrix4x4>>(null);
-            foreach (var solidGroup in faceGroups)
+            for (var groupIndex = 0; groupIndex < (faceGroups?.Count ?? 0); groupIndex++)
             {
+                var solidGroup = faceGroups[groupIndex] ?? [];
                 var numInGroup = 1;
                 var subGroupSteps = new List<GeometryModel3D[]>();
                 foreach (var solidStep in solidGroup)
@@ -286,12 +291,12 @@ namespace WindowsDesktopPresenter
                     subGroupSteps.Add(geom3Ds);
                     numInGroup = Math.Max(numInGroup, geom3Ds.Length);
                 }
-                var innerTransformSteps = outerTransformEnumerator.MoveNext() ? outerTransformEnumerator.Current?.GetEnumerator() : null;
-                var transformSteps = innerTransformSteps == null ? null : new List<System.Windows.Media.Media3D.Transform3D>();
+
+                var transformSteps = groupIndex < (fGTransforms?.Count ?? 0)
+                    ? AsReadOnlyList(fGTransforms[groupIndex])
+                    : null;
                 for (int i = 0; i < numInGroup; i++)
                 {
-                    if (innerTransformSteps != null)
-                        transformSteps.Add(innerTransformSteps.MoveNext() ? ConvertToWindowsTransform3D(innerTransformSteps.Current) : null);
                     var helixsolidSteps = new List<GeometryModel3D>();
                     for (int j = 0; j < subGroupSteps.Count; j++)
                     {
@@ -302,11 +307,8 @@ namespace WindowsDesktopPresenter
                     //numSolidTimeSteps = Math.Max(numSolidTimeSteps, helixsolidSteps.Count);
                     while (helixsolidSteps.Count > 1 && helixsolidSteps[^1] == null)
                         helixsolidSteps.RemoveAt(helixsolidSteps.Count - 1);
-                    vm.GeometryGroups.Add(helixsolidSteps);
-                    //if (innerTransformSteps.Length == helixsolidSteps.Count)
-                    vm.Transforms.Add(transformSteps);
-                    //else
-                    //    vm.SolidTransforms.Add(innerTransformSteps.Take(helixsolidSteps.Count).ToArray());
+                    vm.GeometryGroups.Add(new SteppedGeometryGroup(helixsolidSteps,
+                        transformSteps, ConvertToWindowsTransform3D));
                 }
             }
             var window = new Window3DSteppedPlot(vm);
@@ -338,6 +340,14 @@ namespace WindowsDesktopPresenter
                   m.M41, m.M42, m.M43, m.M44
               ));
         }
+
+        private static IReadOnlyList<T> AsReadOnlyList<T>(IEnumerable<T> values)
+            => values switch
+            {
+                null => null,
+                IReadOnlyList<T> list => list,
+                _ => values.ToList()
+            };
 
         private IEnumerable<LineGeometryModel3D> ConvertPathsToLineModels(IEnumerable<IEnumerable<Vector3>> paths,
             IEnumerable<bool> closePaths, IEnumerable<double> lineThicknesses, IEnumerable<Color> colors, bool randomColors)
@@ -426,6 +436,14 @@ namespace WindowsDesktopPresenter
                 Thickness = thickness,
                 Color = mediaColor
             };
+        }
+
+        private static GeometryModel3D ConvertSteppedPathToLineModel(
+            IEnumerable<Vector3> path, double thickness, Color color, bool closePath)
+        {
+            var model = ConvertPathToLineModel(path, thickness, color, closePath);
+            model.FixedSize = false;
+            return model;
         }
 
         #endregion

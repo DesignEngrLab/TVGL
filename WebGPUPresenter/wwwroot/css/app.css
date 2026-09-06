@@ -19,7 +19,8 @@ body { margin: 0; background: #f4f4f8; }
 .presenter-controls button { padding: .35rem .8rem; font-weight: 600; }
 .plot-viewer { flex: 1 1 auto; width: 100%; min-height: 18rem; }
 .step-controls { display: flex; gap: .5rem; align-items: center; margin: .5rem 0; }
-.step-controls input { flex: 1; }
+.step-controls input[type="range"] { flex: 1; }
+.step-controls input[type="number"] { width: 5rem; }
 .step-speed-control { display: flex; gap: .35rem; align-items: center; white-space: nowrap; }
 
 h1:focus {
