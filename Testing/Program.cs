@@ -97,6 +97,8 @@ namespace TVGLUnitTestsAndBenchmarking
             Assert(Math.Abs(batch.Vertices[0].X - 5f) < 1e-6f && Math.Abs(batch.Vertices[^1].X - 16f) < 1e-6f,
                 "WebGPU did not apply the selected transform to the batched path.");
 
+            RunScenePathBatchTests();
+
             var barrierTransforms = Enumerable.Repeat(Matrix4x4.Identity, 8).ToArray();
             barrierTransforms[4] = Matrix4x4.Null;
             var barrierPaths = new RepeatedReadOnlyList<IEnumerable<Vector3>>(path, barrierTransforms.Length);
@@ -135,6 +137,92 @@ namespace TVGLUnitTestsAndBenchmarking
             }
             Assert(rejectedNegativeLimit, "Negative history limits must be rejected.");
             Console.WriteLine("Stepped resolution tests passed.");
+        }
+
+        private static void RunScenePathBatchTests()
+        {
+            var requestId = Guid.Parse("6E6AE766-48CD-43DD-A034-F8A563865297");
+            var scene = new SceneRequest { RequestId = requestId };
+            scene.Paths.Add(new ScenePath
+            {
+                Id = "red-path",
+                Vertices = [[0, 0, 0], [1, 0, 0]],
+                Thickness = 2,
+                Color = new BugViewer.ColorRgba(255, 0, 0)
+            });
+            scene.Paths.Add(new ScenePath
+            {
+                Id = "blue-path",
+                Vertices = [[10, 0, 0], [11, 0, 0]],
+                Thickness = 3,
+                Color = new BugViewer.ColorRgba(0, 0, 255)
+            });
+            scene.Paths.Add(new ScenePath
+            {
+                Id = "polyline",
+                Vertices = [[20, 0, 0], [21, 0, 0], [22, 0, 0], [23, 0, 0]],
+                Thickness = 4,
+                Color = new BugViewer.ColorRgba(0, 255, 0)
+            });
+
+            var batches = ScenePathBatchBuilder.Build(scene, maxSegmentsPerBatch: 2);
+            Assert(batches.Count == 3,
+                "Ordinary WebGPU paths were not split at the requested real-segment bound.");
+            Assert(batches.All(item => item.Thicknesses.Count(thickness => thickness != 0f) <= 2),
+                "An ordinary path batch exceeded its real-segment bound.");
+            Assert(batches[0].Vertices.Count == 4
+                && batches[0].Thicknesses.SequenceEqual(new[] { 2f, 0f, 3f }),
+                "Independent ordinary paths were not separated with a zero-thickness interval.");
+            Assert(batches[0].Colors.SequenceEqual(new[]
+                {
+                    new BugViewer.ColorRgba(255, 0, 0),
+                    new BugViewer.ColorRgba(0, 0, 255),
+                    new BugViewer.ColorRgba(0, 0, 255)
+                }),
+                "Ordinary path batching did not preserve per-segment colors.");
+            Assert(batches.SelectMany(item => item.Thicknesses).Count(thickness => thickness != 0f) == 5,
+                "Ordinary path batching lost or duplicated rendered segments.");
+            Assert(batches.Select(item => item.Id).SequenceEqual(new[]
+                {
+                    $"scene-path-batch-{requestId:N}-0",
+                    $"scene-path-batch-{requestId:N}-1",
+                    $"scene-path-batch-{requestId:N}-2"
+                }),
+                "Ordinary path batch IDs are not stable for a scene request.");
+
+            const int scalePathCount = 669_696;
+            var scaleRequestId = Guid.NewGuid();
+            var scalePath = new ScenePath
+            {
+                Id = "scale-path",
+                Vertices = [[0, 0, 0], [0.5f, 0, 0]]
+            };
+            var scaleBatches = ScenePathBatchBuilder.Build(
+                scaleRequestId,
+                Enumerable.Repeat(scalePath, scalePathCount));
+            Assert(scaleBatches.Count == 21,
+                "Large ordinary path input did not resolve to a bounded number of WebGPU buffers.");
+            Assert(scaleBatches.SelectMany(item => item.Thicknesses)
+                    .Count(thickness => thickness != 0f) == scalePathCount,
+                "Large ordinary path batching lost or duplicated rendered segments.");
+
+            var rejectedNonFiniteCoordinate = false;
+            var invalidScene = new SceneRequest { RequestId = Guid.NewGuid() };
+            invalidScene.Paths.Add(new ScenePath
+            {
+                Id = "invalid-coordinate",
+                Vertices = [[0, 0, 0], [float.PositiveInfinity, 0, 0]]
+            });
+            try
+            {
+                ScenePathBatchBuilder.Build(invalidScene);
+            }
+            catch (InvalidOperationException)
+            {
+                rejectedNonFiniteCoordinate = true;
+            }
+            Assert(rejectedNonFiniteCoordinate,
+                "Ordinary path batching must reject non-finite coordinates before JS serialization.");
         }
 
         private static void AssertSequence(IEnumerable<int> actual, IReadOnlyList<int> expected, string message)

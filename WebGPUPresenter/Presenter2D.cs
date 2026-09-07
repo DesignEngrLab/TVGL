@@ -87,18 +87,20 @@ public sealed class Presenter2D : IPresenter2D
     }
     private static SceneRequest Steps(ICollection<double[,]> data, IEnumerable<IEnumerable<IEnumerable<Vector2>>>? overlays, IEnumerable<bool>? closed, string title)
     {
+        var dataList = data.ToList();
         var overlayList = overlays?.ToList();
         var closedPaths = closed ?? Repeat(false);
+        var stepCount = Math.Max(dataList.Count, overlayList?.Count ?? 0);
         return new SceneRequest {
             RequestId = Guid.NewGuid(),
             Kind = PresentationKind.TwoDimensional,
             Title = title, 
-            Steps = data.Select((d, i) => new SceneRequest {
+            Steps = Enumerable.Range(0, stepCount).Select(i => new SceneRequest {
                 RequestId = Guid.NewGuid(), 
                 Kind = PresentationKind.TwoDimensional,
                 Title = title,
                 Plot = new PlotRequest {
-                    Heatmap = ToJagged(d),
+                    Heatmap = i < dataList.Count ? ToJagged(dataList[i]) : null,
                     Traces = overlayList is not null && i < overlayList.Count 
                     ? Plot(overlayList[i], title, Plot2DType.Line, closedPaths, Repeat(MarkerType.None)).Plot!.Traces : [] 
                 }

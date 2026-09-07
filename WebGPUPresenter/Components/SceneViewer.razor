@@ -286,10 +286,15 @@
                 desiredMeshes.Add(ToMeshData(mesh));
                 desiredMeshSignatures.Add(mesh.Id, new RenderSignature(mesh, null));
             }
-            foreach (var path in scene.Paths)
+            foreach (var pathBatch in scene.PathBatches)
             {
-                desiredLines.Add(ToLineData(path));
-                desiredLineSignatures.Add(path.Id, new RenderSignature(path, null));
+                desiredLines.Add(pathBatch);
+                desiredLineSignatures.Add(pathBatch.Id, new RenderSignature(pathBatch, null));
+            }
+            foreach (var pathBatch in ScenePathBatchBuilder.Build(scene))
+            {
+                desiredLines.Add(pathBatch);
+                desiredLineSignatures.Add(pathBatch.Id, new RenderSignature(scene, null));
             }
             foreach (var points in scene.PointSets)
             {
@@ -648,23 +653,6 @@
             HasPrimitiveSurfaces = mesh.HasPrimitiveSurfaces,
             Colors = ExpandedColors(mesh),
             ColorMode = MeshColoring.PerTriangle
-        };
-    }
-
-    private LineData ToLineData(ScenePath path, Matrix4x4? transform = null)
-    {
-        var segmentCount = Math.Max(0, path.Vertices.Count - 1);
-        var color = new ColorRgba(path.Color.R, path.Color.G, path.Color.B, path.Color.A);
-        // Preserve automatic thickness until BugViewer has added every object in this scene to its bounds.
-        return new LineData
-        {
-            Id = path.Id,
-            Vertices = path.Vertices.Select(vertex => TransformVertex(vertex, transform)).ToList(),
-            Thicknesses = Enumerable.Repeat(path.Thickness < 0
-                ? LineData.AutomaticThickness
-                : (float)path.Thickness, segmentCount).ToList(),
-            Colors = Enumerable.Repeat(color, segmentCount).ToList(),
-            FadeFactors = Enumerable.Repeat(0f, segmentCount).ToList()
         };
     }
 

@@ -18,6 +18,7 @@ public sealed class SceneRequest
     public string Subtitle { get; init; } = "";
     public List<SceneMesh> Meshes { get; init; } = [];
     public List<ScenePath> Paths { get; init; } = [];
+    internal List<LineData> PathBatches { get; init; } = [];
     public List<ScenePointSet> PointSets { get; init; } = [];
     public PlotRequest? Plot { get; init; }
     public List<SceneRequest> Steps { get; init; } = [];

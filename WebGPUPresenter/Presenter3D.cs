@@ -61,6 +61,7 @@ public sealed class Presenter3D : IPresenter3D
                 RequestId = Guid.NewGuid(),
                 Meshes = scene.Meshes,
                 Paths = scene.Paths,
+                PathBatches = scene.PathBatches,
                 PointSets = scene.PointSets,
                 Heading = heading,
                 Title = title,
@@ -97,9 +98,7 @@ public sealed class Presenter3D : IPresenter3D
         {
             RequestId = Guid.NewGuid(),
         };
-        var pathGroups = paths.Select(path => path.ToList()).ToList();
-        AddPaths(scene, pathGroups, closePaths, lineThicknesses,
-            ExpandPathColors(pathGroups.Count, colors));
+        AddPaths(scene, paths, closePaths, lineThicknesses, colors, expandMissingColors: true);
 
         var primitivesExist = true;
         foreach (var solid in solids)
@@ -113,6 +112,7 @@ public sealed class Presenter3D : IPresenter3D
             {
                 Meshes = scene.Meshes,
                 Paths = scene.Paths,
+                PathBatches = scene.PathBatches,
                 PointSets = scene.PointSets,
                 RequestId = scene.RequestId,
                 ShowSurfacesAs = MeshFaceDisplay.Triangles
@@ -144,8 +144,8 @@ public sealed class Presenter3D : IPresenter3D
         params Solid[] solids)
     {
         var pathGroups = paths.Select(pathSet => pathSet.ToList()).ToList();
-        var flattenedPaths = pathGroups.SelectMany(pathSet => pathSet).ToList();
-        IList<Color> colorList = colors?.ToList();
+        var flattenedPaths = pathGroups.SelectMany(pathSet => pathSet);
+        IList<Color>? colorList = colors?.ToList();
         if (colorList is null)
             colorList = Color.Distinct64Colors;
         var expandedColors =
@@ -307,8 +307,7 @@ public sealed class Presenter3D : IPresenter3D
             HoldType = holdType,
             DisplayIntervalMilliseconds = timeToShow
         };
-        var pathGroups = paths.Select(path => path.ToList()).ToList();
-        AddPaths(scene, pathGroups, closePaths, lineThicknesses, ExpandPathColors(pathGroups.Count, colors));
+        AddPaths(scene, paths, closePaths, lineThicknesses, colors, expandMissingColors: true);
         foreach (var solid in solids)
             AddSolid(scene, solid);
 
@@ -536,33 +535,55 @@ public sealed class Presenter3D : IPresenter3D
         IEnumerable<IEnumerable<Vector3>> paths,
         IEnumerable<bool>? closePaths,
         IEnumerable<double>? lineThicknesses,
-        IEnumerable<Color>? colors)
+        IEnumerable<Color>? colors,
+        bool expandMissingColors = false)
     {
-        var closePathList = closePaths?.ToList() ?? [];
-        var lineThicknessList = lineThicknesses?.ToList() ?? [];
-        var colorList = colors?.ToList() ?? [];
-        var pathIndex = 0;
+        var closePathList = AsReadOnlyList(closePaths) ?? [];
+        var lineThicknessList = AsReadOnlyList(lineThicknesses) ?? [];
+        var colorList = AsReadOnlyList(colors) ?? [];
+        var fallbackColors = expandMissingColors ? Color.Distinct64Colors.ToList() : [];
+        using var randomColors = expandMissingColors ? Color.GetRandomColors().GetEnumerator() : null;
 
-        foreach (var path in paths)
+        scene.PathBatches.AddRange(ScenePathBatchBuilder.Build(scene.RequestId, EnumeratePaths()));
+
+        IEnumerable<ScenePath> EnumeratePaths()
         {
-            var vertices = path.Where(vertex => !vertex.IsNull())
-                .Select(vertex => new[] { (float)vertex.X, (float)vertex.Y, (float)vertex.Z })
-                .ToList();
-            if (vertices.Count >= 2)
+            var pathIndex = 0;
+            foreach (var path in paths)
             {
+                var vertices = path.Where(vertex => !vertex.IsNull())
+                    .Select(vertex => new[] { (float)vertex.X, (float)vertex.Y, (float)vertex.Z })
+                    .ToList();
+                if (vertices.Count < 2)
+                {
+                    pathIndex++;
+                    continue;
+                }
                 if (pathIndex < closePathList.Count && closePathList[pathIndex])
                     vertices.Add(vertices[0]);
-                scene.Paths.Add(new ScenePath
+                Color color;
+                if (pathIndex < colorList.Count)
+                    color = colorList[pathIndex];
+                else if (!expandMissingColors)
+                    color = new Color(KnownColors.Black);
+                else if (pathIndex < fallbackColors.Count)
+                    color = fallbackColors[pathIndex];
+                else
                 {
-                    Id = $"path-{Guid.NewGuid():N}",
+                    randomColors!.MoveNext();
+                    color = randomColors.Current;
+                }
+                yield return new ScenePath
+                {
+                    // These source paths are consumed immediately into request-scoped batches;
+                    // individual IDs would create hundreds of thousands of short-lived strings.
+                    Id = "presenter-path",
                     Vertices = vertices,
                     Thickness = pathIndex < lineThicknessList.Count ? lineThicknessList[pathIndex] : -1,
-                    Color = pathIndex < colorList.Count ? new ColorRgba(colorList[pathIndex].R, colorList[pathIndex].G,
-                        colorList[pathIndex].B, colorList[pathIndex].A)
-                    : ColorRgba.Black
-                });
+                    Color = new ColorRgba(color.R, color.G, color.B, color.A)
+                };
+                pathIndex++;
             }
-            pathIndex++;
         }
     }
 
@@ -599,13 +620,4 @@ public sealed class Presenter3D : IPresenter3D
             (byte)((i * 57 + 90) % 220),
             (byte)((i * 131 + 20) % 220));
 
-    private static IList<Color> ExpandPathColors(int pathCount, IEnumerable<Color>? colors)
-    {
-        var colorList = colors?.ToList() ?? Color.Distinct64Colors.ToList();
-        return Enumerable.Range(0, pathCount)
-            .Select(index => index < colorList.Count
-                ? colorList[index]
-                : Color.GetRandomColors().First())
-            .ToList();
-    }
 }

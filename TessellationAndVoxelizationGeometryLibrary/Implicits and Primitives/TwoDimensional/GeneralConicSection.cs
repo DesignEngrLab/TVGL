@@ -147,27 +147,39 @@ namespace TVGL
 
         private void SetConicType()
         {
-            if (A.IsNegligible(Constants.BaseTolerance) && B.IsNegligible(Constants.BaseTolerance) && C.IsNegligible(Constants.BaseTolerance))
+            // The equation uses B as the coefficient of the full xy term. Consequently, the
+            // quadratic-part discriminant is B^2 - 4AC (not B^2 - AC). Scale all comparisons
+            // so classification is unchanged when the entire equation is multiplied by a
+            // nonzero constant.
+            var quadraticScale = Math.Max(Math.Abs(A), Math.Max(Math.Abs(B), Math.Abs(C)));
+            var equationScale = Math.Max(quadraticScale,
+                Math.Max(Math.Abs(D), Math.Max(Math.Abs(E), ConstantIsZero ? 0.0 : 1.0)));
+
+            if (quadraticScale <= Constants.BaseTolerance * equationScale)
             {
-                A = B = C = 0;
                 CurveType = PrimitiveCurveType.StraightLine;
-            }
-            else if (B.IsNegligible(Constants.BaseTolerance) && A.IsPracticallySame(C, Constants.BaseTolerance))
-            {
-                B = 0;
-                A = C = 0.5 * (A + C);
-                CurveType = PrimitiveCurveType.Circle;
-            }
-            else if ((B * B).IsPracticallySame(A * C, Constants.BaseTolerance))
-            {
-                B = Math.Sqrt(A * C);
-                CurveType = PrimitiveCurveType.Parabola;
             }
             else
             {
-                var det = A * C - B * B;
-                if (det > 0) CurveType = PrimitiveCurveType.Ellipse;
-                else CurveType = PrimitiveCurveType.Hyperbola;
+                // Normalize only local values used for classification. Keeping the stored coefficients
+                // unchanged is essential because callers evaluate and intersect this exact polynomial.
+                var normalizedA = A / quadraticScale;
+                var normalizedB = B / quadraticScale;
+                var normalizedC = C / quadraticScale;
+                if (Math.Abs(normalizedB) <= Constants.BaseTolerance
+                    && Math.Abs(normalizedA - normalizedC) <= Constants.BaseTolerance)
+                {
+                    CurveType = PrimitiveCurveType.Circle;
+                    return;
+                }
+
+                var discriminant = normalizedB * normalizedB - 4.0 * normalizedA * normalizedC;
+                if (Math.Abs(discriminant) <= Constants.BaseTolerance)
+                    CurveType = PrimitiveCurveType.Parabola;
+                else if (discriminant < 0.0)
+                    CurveType = PrimitiveCurveType.Ellipse;
+                else
+                    CurveType = PrimitiveCurveType.Hyperbola;
             }
         }
 
