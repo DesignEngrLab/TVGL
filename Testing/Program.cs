@@ -8,7 +8,7 @@ using WebGPUPresenter;
 
 namespace TVGLUnitTestsAndBenchmarking
 {
-    internal class Program
+    internal partial class Program
     {
         public static string inputFolder = "Input";
 
@@ -20,6 +20,8 @@ namespace TVGLUnitTestsAndBenchmarking
         [STAThread]
         private static void Main(string[] args)
         {
+            HeatMethodTest(args);
+            return;
             if (string.Equals(args.FirstOrDefault(), "stepped-resolution-tests", StringComparison.OrdinalIgnoreCase))
             {
                 RunSteppedResolutionTests();

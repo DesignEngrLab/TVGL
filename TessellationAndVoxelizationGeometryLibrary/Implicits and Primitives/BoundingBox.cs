@@ -413,6 +413,7 @@ namespace TVGL
                     faces[i].IndexInList = i;
                 var tessellatedSolidBuildOptions = new TessellatedSolidBuildOptions();
                 tessellatedSolidBuildOptions.CopyElementsPassedToConstructor = false;
+                tessellatedSolidBuildOptions.CheckModelIntegrity = false;
                 _tessellatedSolid = new TessellatedSolid(faces, vertices, tessellatedSolidBuildOptions);
                 _tessellatedSolid.Primitives = new List<PrimitiveSurface>();
                 for (var i = 0; i < 12; i += 2)
