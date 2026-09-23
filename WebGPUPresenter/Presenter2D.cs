@@ -66,7 +66,7 @@ public sealed class Presenter2D : IPresenter2D
                 Name = $"series {i + 1}",
                 X = p.Select(v => v.X).ToList(),
                 Y = p.Select(v => v.Y).ToList(),
-                Type = type,
+                Type = !cs ? Plot2DType.Line : type,
                 Closed = cs,
                 Marker = ms,
                 Color = ColorAt(i++)
@@ -91,20 +91,24 @@ public sealed class Presenter2D : IPresenter2D
         var overlayList = overlays?.ToList();
         var closedPaths = closed ?? Repeat(false);
         var stepCount = Math.Max(dataList.Count, overlayList?.Count ?? 0);
-        return new SceneRequest {
+        return new SceneRequest
+        {
             RequestId = Guid.NewGuid(),
             Kind = PresentationKind.TwoDimensional,
-            Title = title, 
-            Steps = Enumerable.Range(0, stepCount).Select(i => new SceneRequest {
-                RequestId = Guid.NewGuid(), 
+            Title = title,
+            Steps = Enumerable.Range(0, stepCount).Select(i => new SceneRequest
+            {
+                RequestId = Guid.NewGuid(),
                 Kind = PresentationKind.TwoDimensional,
                 Title = title,
-                Plot = new PlotRequest {
+                Plot = new PlotRequest
+                {
                     Heatmap = i < dataList.Count ? ToJagged(dataList[i]) : null,
-                    Traces = overlayList is not null && i < overlayList.Count 
-                    ? Plot(overlayList[i], title, Plot2DType.Line, closedPaths, Repeat(MarkerType.None)).Plot!.Traces : [] 
+                    Traces = overlayList is not null && i < overlayList.Count
+                    ? Plot(overlayList[i], title, Plot2DType.Line, closedPaths, Repeat(MarkerType.None)).Plot!.Traces : []
                 }
-            }).ToList() };
+            }).ToList()
+        };
     }
     private static double[][] ToJagged(double[,] data)
     {

@@ -69,6 +69,8 @@ namespace TVGL
             foreach (var vertex in polygon.Vertices)
             {
                 if (vertex.EndLine == null || vertex.StartLine == null) continue;
+                if (!polygon.IsClosed && (vertex == polygon.Vertices[0] || vertex == polygon.Vertices[^1]))
+                        continue;
                 if (vertex.EndLine.Vector.Cross(vertex.StartLine.Vector).IsNegligible())
                     vertex.DeleteVertex();
             }
