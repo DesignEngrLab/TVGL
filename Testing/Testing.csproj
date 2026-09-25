@@ -10,7 +10,9 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-	  <Compile Remove="ThreeD_Methods\Voxels.cs" />
+	  <Compile Remove="ThreeD_Methods\**" />
+	  <EmbeddedResource Remove="ThreeD_Methods\**" />
+	  <None Remove="ThreeD_Methods\**" />
 	</ItemGroup>
 
 	<ItemGroup>
@@ -21,11 +23,6 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <Folder Include="ThreeD_Methods\" />
-	</ItemGroup>
-
-	<ItemGroup>
-	  <ProjectReference Include="..\PolygonImportExport\PolygonImportExport.csproj" />
 	  <ProjectReference Include="..\TessellationAndVoxelizationGeometryLibrary\TessellationAndVoxelizationGeometryLibrary.csproj" />
 	  <ProjectReference Include="..\WebGPUPresenter\WebGPUPresenter.csproj" />
 	  <ProjectReference Include="..\WindowsDesktopPresenter\WindowsDesktopPresenter.csproj" />
