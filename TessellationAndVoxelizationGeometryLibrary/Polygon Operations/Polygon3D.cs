@@ -11,6 +11,7 @@
 // </copyright>
 // <summary></summary>
 // ***********************************************************************
+using Newtonsoft.Json;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -68,17 +69,53 @@ namespace TVGL
         /// <summary>
         /// Gets the primary outer vertices of the polygon.
         /// </summary>
-        public IList<Vector3> Vertices { get; init; }
+        [JsonIgnore]
+        public IList<Vector3> Vertices { get; set; }
 
         /// <summary>
         /// Gets or sets the holes in the polygon.
         /// </summary>
+        [JsonIgnore]
         public IList<IList<Vector3>> Holes { get; set; }
+
+        [JsonProperty("Coordinates")]
+        private IEnumerable<double> SerializedCoordinates
+        {
+            get => Vertices?.ConvertTo1DDoublesCollection();
+            set => Vertices = ConvertToVector3s(value);
+        }
+
+        [JsonProperty("HoleCoordinates")]
+        private IList<IList<double>> SerializedHoleCoordinates
+        {
+            get => Holes?.Select(hole => hole.ConvertTo1DDoublesCollection().ToList()).Cast<IList<double>>().ToList();
+            set => Holes = value?.Select(ConvertToVector3s).Cast<IList<Vector3>>().ToList();
+        }
+
+        [JsonProperty("Vertices")]
+        private IList<Vector3> LegacyVertices
+        {
+            set
+            {
+                if (Vertices == null || Vertices.Count == 0)
+                    Vertices = value;
+            }
+        }
+
+        [JsonProperty("Holes")]
+        private IList<IList<Vector3>> LegacyHoles
+        {
+            set
+            {
+                if (Holes == null || Holes.Count == 0)
+                    Holes = value;
+            }
+        }
 
         /// <summary>
         /// Gets a value indicating whether this <see cref="Polygon3D"/> is closed.
         /// </summary>
-        public bool IsClosed { get; }
+        public bool IsClosed { get; init; }
 
         /// <summary>
         /// Iterates over all paths starting with the outer perimeter and 
@@ -133,5 +170,17 @@ namespace TVGL
         /// Gets or sets the index of the polygon.
         /// </summary>
         public int Index { get;  set; }
+
+        private static List<Vector3> ConvertToVector3s(IEnumerable<double> coordinates)
+        {
+            var result = new List<Vector3>();
+            if (coordinates == null) return result;
+
+            var values = coordinates.ToList();
+            for (int i = 0; i + 2 < values.Count; i += 3)
+                result.Add(new Vector3(values[i], values[i + 1], values[i + 2]));
+
+            return result;
+        }
     }
 }

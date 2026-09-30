@@ -487,6 +487,37 @@ namespace TVGL
             return false;
         }
 
+
+        /// <summary>
+        /// Opens the 3D polygon
+        /// </summary>
+        /// <param name="filename">The filename.</param>
+        /// <param name="solid">The solid.</param>
+        /// <returns>A list of TessellatedSolids.</returns>
+        /// <exception cref="System.IO.FileNotFoundException">The file was not found at: " + filename</exception>
+        public static bool Open<T>(string filename, out T polygon3D)
+            where T : Polygon3D
+        {
+            polygon3D = null;
+            if (File.Exists(filename))
+            {
+                string jsonString = File.ReadAllText(filename);
+                try
+                {
+                    polygon3D = JsonConvert.DeserializeObject<T>(jsonString);
+                }
+                catch (JsonSerializationException ex)
+                {
+                    return false;
+                    //throw new Exception("Failed to deserialize the JSON content into a Polygon3D object. Please ensure the JSON structure matches the expected format.", ex);
+                }
+            }
+            else return false; // throw new FileNotFoundException("The file was not found at: " + filename);
+            return true;
+        }
+
+
+
         [Obsolete("This method is obsolete. Use the separate project PolygonImportExport in TVGL to open svg, dxf and dwg files.")]
         private static bool OpenPolygonFromSVG(out Polygon polygon, StreamReader sr)
         {
@@ -605,9 +636,9 @@ namespace TVGL
                         var prevVertex = i > 0 ? polygon.Vertices[i - 1] : polygon.Vertices[^1];
                         var nextVertex = i == polygon.Vertices.Count - 1 ? polygon.Vertices[0] : polygon.Vertices[i + 1];
                         var skipLength = (prevVertex.Coordinates - nextVertex.Coordinates).LengthSquared();
-                        if ((prevVertex.Coordinates - zeroVertex.Coordinates).LengthSquared() > skipLength && 
+                        if ((prevVertex.Coordinates - zeroVertex.Coordinates).LengthSquared() > skipLength &&
                             (nextVertex.Coordinates - zeroVertex.Coordinates).LengthSquared() > skipLength)
-                        { 
+                        {
                             polygon.Vertices.RemoveAt(i);
                             polygon.Reset();
                         }
@@ -1507,6 +1538,48 @@ namespace TVGL
                 NullValueHandling = NullValueHandling.Ignore,
                 DefaultValueHandling = DefaultValueHandling.Ignore,
                 TypeNameHandling = TypeNameHandling.Auto,
+                Formatting = Formatting.Indented,
+                ReferenceLoopHandling = ReferenceLoopHandling.Ignore,
+            };
+
+            var NumberOfRetries = 3;
+            var DelayOnRetry = 1000;
+            for (int i = 0; i < NumberOfRetries; ++i)
+            {
+                try
+                {
+                    File.Delete(filename);//Delete before writing, so that we don't have a malformed JSON.
+                    using var fileStream = File.OpenWrite(filename);
+                    using var sw = new StreamWriter(fileStream);
+                    using var writer = new JsonTextWriter(sw);
+                    var jObject = JObject.FromObject(polygon, serializer);
+                    jObject.WriteTo(writer);
+                    writer.Flush();
+                    break; // When done we can break loop
+                }
+                catch (IOException e) when (i < NumberOfRetries - 1)
+                {
+                    // You may check error code to filter some exceptions, not every error
+                    // can be recovered.
+                    Thread.Sleep(DelayOnRetry);
+                }
+                catch (IOException e) when (i == NumberOfRetries - 1)
+                { return false; }
+            }
+            return true;
+        }
+        /// <summary>
+        /// Saves the specified polygon.
+        /// </summary>
+        /// <param name="polygon">The polygon.</param>
+        /// <param name="filename">The filename.</param>
+        public static bool Save(Polygon3D polygon, string filename)
+        {
+            var serializer = new JsonSerializer
+            {
+                NullValueHandling = NullValueHandling.Ignore,
+                DefaultValueHandling = DefaultValueHandling.Ignore,
+                TypeNameHandling = TypeNameHandling.None,
                 Formatting = Formatting.Indented,
                 ReferenceLoopHandling = ReferenceLoopHandling.Ignore,
             };
