@@ -321,6 +321,7 @@ namespace TVGL
         /// <param name="direction">The direction.</param>
         /// <param name="additionalRotation">An additional counterclockwise rotation (in radians) about the direction.</param>
         /// <returns>TVGL.Vector3.</returns>
+        [Obsolete("Use GetPerpendicularDirection instead.")]
         public static Vector3 GetOrthogonalDirection(this Vector3 direction, double additionalRotation = 0)
         => direction.GetPerpendicularDirection(additionalRotation);
 

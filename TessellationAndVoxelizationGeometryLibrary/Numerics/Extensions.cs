@@ -394,6 +394,37 @@ namespace TVGL
         { return Vector3.Multiply(value, rotation); }
 
         /// <summary>
+        /// Computes the outer product of two vectors, which results in a matrix.
+        /// </summary>
+        /// <param name="a"></param>
+        /// <param name="b"></param>
+        /// <returns></returns>
+        public static Matrix3x3 OuterProduct(this Vector3 a, Vector3 b)
+        {
+            return new Matrix3x3(
+                a.X * b.X, a.X * b.Y, a.X * b.Z,
+                a.Y * b.X, a.Y * b.Y, a.Y * b.Z,
+                a.Z * b.X, a.Z * b.Y, a.Z * b.Z);
+        }
+
+        /// <summary>
+        /// Computes the outer product of two vectors, which results in a matrix.
+        /// </summary>
+        /// <param name="a"></param>
+        /// <param name="b"></param>
+        /// <returns></returns>
+        public static Matrix4x4 OuterProduct(this Vector4 a, Vector4 b)
+        {
+            return new Matrix4x4(
+                a.X * b.X, a.X * b.Y, a.X * b.Z, a.X * b.W,
+                a.Y * b.X, a.Y * b.Y, a.Y * b.Z, a.Y * b.W,
+                a.Z * b.X, a.Z * b.Y, a.Z * b.Z, a.Z * b.W,
+                a.W * b.X, a.W * b.Y, a.W * b.Z, a.W * b.W);
+           }
+
+
+
+        /// <summary>
         /// Adds two vectors together.
         /// </summary>
         /// <param name="left">The first source vector.</param>
