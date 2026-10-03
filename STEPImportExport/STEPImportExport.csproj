@@ -1,0 +1,47 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <AssemblyName>TVGL.STEPImportExport</AssemblyName>
+    <RootNamespace>TVGL.STEPImportExport</RootNamespace>
+    <Version>1.0.0</Version>
+    <Product>TVGL STEP Import and Export</Product>
+    <PackageId>TVGL.STEPImportExport</PackageId>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <Authors>Matt Campbell, Brandon Massoni</Authors>
+    <Company>Design Engineering Lab</Company>
+    <Description>Import and export CAD models in STEP format (ISO 10303) into TVGL TessellatedSolids and SolidAssemblies, preserving analytic primitives.</Description>
+    <Copyright>2026</Copyright>
+    <PackageLicenseFile>LICENSE</PackageLicenseFile>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <EnablePackageValidation>true</EnablePackageValidation>
+    <PackageProjectUrl>https://designengrlab.github.io/TVGL/</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/DesignEngrLab/TVGL.git</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>step;stp;cad;opencascade;tvgl;tessellation;brep;computational-geometry</PackageTags>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\TessellationAndVoxelizationGeometryLibrary\TessellationAndVoxelizationGeometryLibrary.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="runtimes\**">
+      <PackagePath>runtimes</PackagePath>
+      <Pack>true</Pack>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+    <None Include="..\LICENSE" Pack="true" PackagePath="\" Link="LICENSE" />
+  </ItemGroup>
+
+</Project>

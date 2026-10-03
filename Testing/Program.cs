@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using TVGL;
+using TVGL.STEPImportExport;
 using WebGPUPresenter;
 //using WindowsDesktopPresenter;
 
@@ -25,6 +26,11 @@ namespace TVGLUnitTestsAndBenchmarking
                 RunSteppedResolutionTests();
                 return;
             }
+            if (string.Equals(args.FirstOrDefault(), "test-step", StringComparison.OrdinalIgnoreCase))
+            {
+                RunStepImporterTest();
+                return;
+            }
             OutputServices.Presenter2D = new Presenter2D();
             OutputServices.Presenter3D = new Presenter3D();
             var dirInfo = IO.BackoutToFolder(inputFolder);
@@ -38,6 +44,99 @@ namespace TVGLUnitTestsAndBenchmarking
                     continue;
                 Presenter.ShowAndHang(ts);
                 Presenter.ShowAndHang(GetRandomPolygonThroughSolids(ts));
+            }
+        }
+
+        private static void RunStepImporterTest()
+        {
+            Console.WriteLine("=== TVGL STEP Importer Verification Test ===");
+            var tempPath = Path.Combine(Path.GetTempPath(), $"tvgl_test_{Guid.NewGuid():N}.step");
+            try
+            {
+                Console.WriteLine($"1. Creating test STEP model at: {tempPath}");
+                bool created = STEP.CreateTestStepFile(tempPath);
+                if (!created || !File.Exists(tempPath))
+                {
+                    throw new Exception("Failed to create test STEP file.");
+                }
+                Console.WriteLine($"   File created successfully ({new FileInfo(tempPath).Length} bytes).");
+
+                Console.WriteLine("2. Importing STEP model into TVGL TessellatedSolid...");
+                var solid = STEP.Open(tempPath, linearDeflection: 0.1, angularDeflection: 0.5);
+                if (solid == null)
+                {
+                    throw new Exception("STEP.Open returned null.");
+                }
+
+                Console.WriteLine($"   Solid Name: {solid.Name}");
+                Console.WriteLine($"   Vertices: {solid.NumberOfVertices}");
+                Console.WriteLine($"   Faces: {solid.NumberOfFaces}");
+                Console.WriteLine($"   Edges: {solid.NumberOfEdges}");
+                Console.WriteLine($"   Primitives: {solid.Primitives?.Count ?? 0}");
+
+                if (solid.NumberOfVertices < 8)
+                    throw new Exception($"Unexpectedly low vertex count: {solid.NumberOfVertices}");
+                if (solid.NumberOfFaces < 12)
+                    throw new Exception($"Unexpectedly low face count: {solid.NumberOfFaces}");
+
+                // Theoretical volume: Box (50*40*30 = 60000) - Cylinder (pi*10^2*30 = 9424.778) = 50575.222
+                double expectedVolume = 50.0 * 40.0 * 30.0 - Math.PI * 10.0 * 10.0 * 30.0;
+                double actualVolume = solid.Volume;
+                double volError = Math.Abs(actualVolume - expectedVolume) / expectedVolume;
+                Console.WriteLine($"   Theoretical Volume: {expectedVolume:F3}");
+                Console.WriteLine($"   Calculated Volume:  {actualVolume:F3} (relative error: {volError:P3})");
+                if (volError > 0.05)
+                {
+                    throw new Exception($"Solid volume mismatch: actual {actualVolume} vs expected {expectedVolume}");
+                }
+
+                // Verify primitives: 6 planes + 1 cylinder
+                var planes = solid.Primitives.OfType<Plane>().ToList();
+                var cylinders = solid.Primitives.OfType<Cylinder>().ToList();
+                Console.WriteLine($"   Planes found: {planes.Count}");
+                Console.WriteLine($"   Cylinders found: {cylinders.Count}");
+                if (planes.Count < 6)
+                    throw new Exception($"Expected at least 6 plane primitives, got {planes.Count}");
+                if (cylinders.Count < 1)
+                    throw new Exception($"Expected at least 1 cylinder primitive, got {cylinders.Count}");
+
+                var cyl = cylinders.First();
+                Console.WriteLine($"   Cylinder Radius: {cyl.Radius:F4} (expected: 10.0)");
+                if (Math.Abs(cyl.Radius - 10.0) > 0.01)
+                    throw new Exception($"Cylinder radius error: {cyl.Radius} vs 10.0");
+
+                // Verify double-linking
+                Console.WriteLine("3. Verifying primitive and face double-linking...");
+                int totalFacesInPrimitives = 0;
+                foreach (var prim in solid.Primitives)
+                {
+                    if (prim.Faces == null || prim.Faces.Count == 0)
+                        throw new Exception($"Primitive {prim.GetType().Name} has empty Faces set!");
+
+                    foreach (var face in prim.Faces)
+                    {
+                        if (!ReferenceEquals(face.BelongsToPrimitive, prim))
+                            throw new Exception($"Face {face.IndexInList} BelongsToPrimitive did not match primitive reference!");
+                        totalFacesInPrimitives++;
+                    }
+                }
+                Console.WriteLine($"   Double-linking confirmed for all {totalFacesInPrimitives} constituent faces.");
+
+                // Verify SolidAssembly
+                Console.WriteLine("4. Testing SolidAssembly import...");
+                var assembly = STEP.OpenSolidAssembly(tempPath);
+                if (assembly == null || assembly.Solids == null || assembly.Solids.Length != 1)
+                    throw new Exception($"SolidAssembly expected 1 solid, got {assembly?.Solids?.Length}");
+                Console.WriteLine($"   Assembly loaded successfully with {assembly.Solids.Length} solid.");
+
+                Console.WriteLine("=== ALL STEP IMPORTER VERIFICATION CHECKS PASSED! ===");
+            }
+            finally
+            {
+                if (File.Exists(tempPath))
+                {
+                    try { File.Delete(tempPath); } catch { }
+                }
             }
         }
 
