@@ -40,9 +40,9 @@ namespace TVGL
             Color color = null)
         {
             PaintSurfaces(ts, primitives, randomColors);
-            if (showBorders)
-                ts.ShowWireFrame(false, null, primitives, lineThickness, color);
-            else
+            //if (showBorders)
+            //    ts.ShowWireFrame(false, null, primitives, lineThickness, color);
+            //else
                 OutputServices.Presenter3D.ShowAndHang(ts);
         }
 

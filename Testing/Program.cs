@@ -35,15 +35,17 @@ namespace TVGLUnitTestsAndBenchmarking
             OutputServices.Presenter3D = new Presenter3D();
             var dirInfo = IO.BackoutToFolder(inputFolder);
 
-            var files = dirInfo.GetFiles("*.tvgl*");
-            foreach (var fileName in files.Skip(1))
+            var files = dirInfo.GetFiles("*.st*");
+            foreach (var fileName in files.Skip(0))
             {
                 Console.WriteLine("Attempting to open: " + fileName.Name);
-                var solids = IO.Open(fileName.FullName);
-                if (solids is not TessellatedSolid ts)
-                    continue;
-                Presenter.ShowAndHang(ts);
-                Presenter.ShowAndHang(GetRandomPolygonThroughSolids(ts));
+                var solid = STEP.Open(fileName.FullName, linearDeflection: 0.1, angularDeflection: 0.5);
+                DebugUtilities.ShowPrimitives(solid);
+                //var solids = IO.Open(fileName.FullName);
+                //if (solids is not TessellatedSolid ts)
+                //    continue;
+                //Presenter.ShowAndHang(solid);
+                //Presenter.ShowAndHang(GetRandomPolygonThroughSolids(solid));
             }
         }
 
